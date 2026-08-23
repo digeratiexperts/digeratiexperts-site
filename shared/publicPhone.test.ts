@@ -35,6 +35,8 @@ function walk(dir: string, acc: string[] = []): string[] {
   return acc;
 }
 
+const repoPath = (file: string): string => relative(ROOT, file).replaceAll("\\", "/");
+
 describe("public phone NAP", () => {
   it("exposes one primary number", () => {
     expect(PRIMARY_PHONE.display).toBe("325-480-9870");
@@ -45,7 +47,7 @@ describe("public phone NAP", () => {
     const hits: string[] = [];
     for (const dir of SCAN_DIRS) {
       for (const file of walk(join(ROOT, dir))) {
-        const rel = relative(ROOT, file);
+        const rel = repoPath(file);
         if (rel === "shared/publicPhone.test.ts") continue;
         const text = readFileSync(file, "utf8");
         for (const needle of BANNED_480) {
@@ -60,7 +62,7 @@ describe("public phone NAP", () => {
     const hits: string[] = [];
     for (const dir of SCAN_DIRS) {
       for (const file of walk(join(ROOT, dir))) {
-        const rel = relative(ROOT, file);
+        const rel = repoPath(file);
         if (ALLOW_325.has(rel)) continue;
         const text = readFileSync(file, "utf8");
         if (text.includes("325-480-9870") || text.includes("tel:+13254809870")) {

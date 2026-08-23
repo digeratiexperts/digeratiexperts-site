@@ -21,10 +21,17 @@ import { CartProvider } from "@/contexts/CartContext";
 import { BookingProvider } from "@/contexts/BookingContext";
 import { BookingModal } from "@/components/BookingModal";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
-import { ShoppingCart } from "@/components/store/ShoppingCart";
-import { SolutionMobileBar } from "@/components/store/SolutionMobileBar";
 
-import { DigeratiHomepage } from "@/pages/DigeratiHomepage";
+const ShoppingCart = lazy(() =>
+  import("@/components/store/ShoppingCart").then((module) => ({ default: module.ShoppingCart })),
+);
+const SolutionMobileBar = lazy(() =>
+  import("@/components/store/SolutionMobileBar").then((module) => ({ default: module.SolutionMobileBar })),
+);
+
+const DigeratiHomepage = lazy(() =>
+  import("@/pages/DigeratiHomepage").then((module) => ({ default: module.DigeratiHomepage })),
+);
 
 const SolutionsIndex = lazy(() => import("@/pages/solutions/SolutionsIndex"));
 const ManagedITSupport = lazy(() => import("@/pages/solutions/ManagedITSupport"));
@@ -166,7 +173,11 @@ function Router() {
   return (
     <Switch>
       {/* Homepage */}
-      <Route path="/" component={DigeratiHomepage} />
+      <Route path="/" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <DigeratiHomepage />
+        </Suspense>
+      )} />
       
       {/* Solutions Pages */}
       <Route path="/solutions" component={() => (
@@ -941,6 +952,18 @@ function AppContent() {
   );
 }
 
+function StoreOverlays() {
+  const [location] = useLocation();
+  if (!location.startsWith("/store")) return null;
+
+  return (
+    <Suspense fallback={null}>
+      <ShoppingCart />
+      <SolutionMobileBar />
+    </Suspense>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -950,8 +973,7 @@ function App() {
             <BookingProvider>
               <TooltipProvider>
                 <Toaster />
-                <ShoppingCart />
-                <SolutionMobileBar />
+                <StoreOverlays />
                 <BookingModal />
                 <AppContent />
               </TooltipProvider>

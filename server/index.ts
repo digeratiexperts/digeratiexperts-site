@@ -67,7 +67,7 @@ app.use((req, _res, next) => {
 });
 
 app.all("/api/health", async (_req, res) => {
-  const port = process.env.REPLIT_SERVER_PORT || process.env.PORT || "unknown";
+  const port = process.env.PORT || "unknown";
   let dbAvailable = false;
   try {
     const { pool } = await import("./db");
@@ -480,13 +480,13 @@ function listEndpoints(): Array<{ method: string; path: string }> {
   });
 
   const port = parseInt(
-    process.env.REPLIT_SERVER_PORT || process.env.PORT || "8080",
+    process.env.PORT || "8080",
     10,
   );
   const host = "0.0.0.0";
 
   log(
-    `🌐 Using port: ${port} (PORT=${process.env.PORT || "unset"}, REPLIT_SERVER_PORT=${process.env.REPLIT_SERVER_PORT || "unset"})`,
+    `🌐 Using port: ${port} (PORT=${process.env.PORT || "unset"})`,
   );
 
   server.listen(port, host, () => {

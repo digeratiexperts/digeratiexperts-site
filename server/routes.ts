@@ -112,6 +112,7 @@ import {
 } from "./integrations/techSalesClient";
 import { registerDeSyncRoutes } from "./integrations/deSyncRoutes";
 import { enqueueOutbox } from "./integrations/deSyncStore";
+import { resolveLivePortalAuthorization } from "./portalLiveAuth";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 
 const JWT_SECRET = process.env.JWT_SECRET || randomBytes(32).toString('hex');
@@ -172,6 +173,8 @@ interface JWTPayload {
   departmentId?: string | null;
   managerUserId?: string | null;
   isCompanyItContact?: boolean;
+  impersonatingCompanyId?: string | null;
+  impersonatingCompanyName?: string | null;
   iat?: number;
   exp?: number;
 }
@@ -200,22 +203,15 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
   
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
-    const live = portalAuthGetUser(decoded.email) || (decoded.userId ? findUserById(decoded.userId) : null);
-    req.user = {
-      id: decoded.userId,
-      email: decoded.email,
-      role: decoded.role,
-      storeRole: decoded.storeRole || "public",
-      clientId: live?.clientId ?? decoded.clientId ?? null,
-      orgRole: live?.orgRole ?? decoded.orgRole ?? "staff",
-      departmentId: live?.departmentId ?? decoded.departmentId ?? null,
-      managerUserId: live?.managerUserId ?? decoded.managerUserId ?? null,
-      isCompanyItContact: live?.isCompanyItContact ?? decoded.isCompanyItContact ?? false,
-      fullName: live?.fullName,
-      impersonatingCompanyId: (decoded as any).impersonatingCompanyId || null,
-      impersonatingCompanyName: (decoded as any).impersonatingCompanyName || null,
-    };
-    req.userId = decoded.userId;
+    const live = portalAuthListUsers().find((user) => user.id === decoded.userId)
+      || portalAuthGetUser(decoded.email);
+    const authorization = resolveLivePortalAuthorization(decoded, live);
+    if (!authorization.ok) {
+      clearPortalAuthCookies(res);
+      return res.status(authorization.status).json({ error: authorization.error });
+    }
+    req.user = authorization.user;
+    req.userId = authorization.user.id;
     
     // Optional session validation from cookies
     const sessionId = req.cookies?.sessionId;
@@ -5409,11 +5405,7 @@ export async function registerRoutes(app: Express) {
       
       const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-      const baseUrl = process.env.APP_URL || (process.env.REPLIT_DEPLOYMENT === "1" 
-        ? `https://${process.env.REPLIT_DEPLOYMENT_URL || process.env.REPL_SLUG + '.replit.app'}`
-        : process.env.REPLIT_DOMAINS 
-          ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
-          : "https://digeratiexperts.com");
+      const baseUrl = process.env.APP_URL || "https://digeratiexperts.com";
 
       const { db } = await import("./db");
       const { storeOrders } = await import("@shared/schema");
