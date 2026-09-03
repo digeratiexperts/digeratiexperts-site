@@ -642,11 +642,6 @@ export default function SalesProcess() {
   })();
   const isAdmin = portalUser?.role === "admin";
 
-  useEffect(() => {
-    if (!localStorage.getItem("portalToken")) {
-      window.location.href = "/portal/login";
-    }
-  }, []);
 
   // Internal sales playbook — clients must use TechSales, not the Client Portal
   if (!isAdmin) {

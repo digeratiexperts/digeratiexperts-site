@@ -133,21 +133,22 @@ export default function PortalLogin() {
 
   useEffect(() => {
     if (readQueryParam("zoho_sso") === "1") return;
-    const token = localStorage.getItem("portalToken");
-    if (!token) return;
     let cancelled = false;
     (async () => {
       try {
         const meRes = await fetch("/api/portal/me", {
-          headers: { Authorization: `Bearer ${token}` },
           credentials: "include",
+          cache: "no-store",
         });
         if (!meRes.ok || cancelled) return;
         const meData = await meRes.json();
         if (cancelled || !meData?.user) return;
+        localStorage.setItem("portalUser", JSON.stringify(meData.user));
+        localStorage.setItem("portalUserId", meData.user.id || "portal-user");
+        if (meData.user.email) localStorage.setItem("userEmail", meData.user.email);
         navigate(marketplaceReturnTo(readQueryParam("returnTo")));
       } catch {
-        /* stay on login when the stored token is stale */
+        /* stay on login when no shared browser session exists */
       }
     })();
     return () => {
