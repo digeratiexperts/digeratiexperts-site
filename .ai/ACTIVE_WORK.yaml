@@ -153,38 +153,13 @@ claims:
       and no new scroll treatment on any route until the plan's phase gates
       pass (Phase 2 briefs approved, Phase 3 materials board-tested, Phase 4
       storyboards approved). Any agent, any session. Planning documents only.
-  - id: claude-code-skill-installs
-    issue: 179
-    owner: claude
-    subsystem: agent-tooling
-    branch: claude/nano-banana-2-setup-itot5a
-    base_sha: 2d7d12adda68ea9565a927fc7d214bccdedf6d96
-    files:
-      - .claude/skills/nano-banana-images/**
-      - .claude/skills/frontend-design/**
-      - .claude/skills/video-to-website/**
-      - .claude/skills/excalidraw-visuals/**
-      - .claude/skills/excalidraw-diagram/**
-      - .claude/skills/skill-builder/**
-      - .claude/skills/web-design-rules/**
-      - .claude/skills/wat-framework/**
-      - .claude/skills/trigger-dev/**
-      - .claude/skills/trigger-ref/**
-      - .mcp.json
-      - .agents/skills/**
-      - .claude/install-user-skills.sh
-      - .env.example
-      - .gitignore
-      - AGENTS.md
-      - CLAUDE.md
-    status: active
-    started: 2026-09-02
-    note: >-
-      Vendors ten Claude Code project skills requested by Joe. No production
-      client/ or server/ paths. Disjoint from issue #167 / PR #168
-      (scripts/kie-assets.mjs); the kie.ai scripts here accept both
-      KIE_AI_API_KEY and KIE_API_KEY and write candidates under
-      artifacts/kie-ai/. No key is committed; installing makes no network call.
+# claude-code-skill-installs (issue 179, branch claude/nano-banana-2-setup-itot5a)
+# RETIRED 2026-09-02: merged via PR #180 (main @ 2bfd111). CI run 33616441400
+# green including "Deploy and verify production VPS"; VERIFIED LIVE. Verified on
+# main: nano-banana-images + frontend-design present once (agents mirror is
+# symlinks), KIE_AI_API_KEY provided by the environment, nb2 dry-run matches the
+# vendored request, api.kie.ai and kieai.redpandaai.co reachable. Follow-ups
+# outside this claim: de-agent-skills plugin repo (branch plugin/de-agent-skills-package).
 # de-desk-inline-login-card (issue 153, branch claude/dynamic-login-card-chat-ve39il)
 # RETIRED 2026-09-01: merged via PR #160 (main @ 3fc5709). Deploy job
 # "Deploy and verify production VPS" on run 33469181603 succeeded, including
