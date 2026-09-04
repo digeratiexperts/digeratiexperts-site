@@ -10,6 +10,7 @@ import {
   portalOrderForms,
 } from "@shared/schema";
 import { PRIMARY_PHONE } from "@shared/companyContact";
+import { decryptTotpSecret, encryptTotpSecret, prepareBackupCodesForStorage } from "./portalMfaCrypto";
 
 type StoreRole = "public" | "prospect" | "managed" | "comanaged" | "admin";
 
@@ -81,7 +82,7 @@ function rowToUser(row: typeof portalUsersTable.$inferSelect): PortalAuthUser {
     isActive: row.isActive ?? true,
     mfaEnabled: row.mfaEnabled ?? false,
     mfaMethod: row.mfaMethod,
-    mfaTotpSecret: row.mfaTotpSecret,
+    mfaTotpSecret: decryptTotpSecret(row.mfaTotpSecret),
     mfaBackupCodes: Array.isArray(row.mfaBackupCodes) ? row.mfaBackupCodes : [],
     lastLogin: row.lastLogin,
     createdAt: row.createdAt,
@@ -161,8 +162,8 @@ async function upsertUserDb(user: PortalAuthUser) {
       isActive: user.isActive ?? true,
       mfaEnabled: user.mfaEnabled ?? false,
       mfaMethod: user.mfaMethod || null,
-      mfaTotpSecret: user.mfaTotpSecret || null,
-      mfaBackupCodes: user.mfaBackupCodes || [],
+      mfaTotpSecret: encryptTotpSecret(user.mfaTotpSecret),
+      mfaBackupCodes: prepareBackupCodesForStorage(user.mfaBackupCodes || []),
       lastLogin: user.lastLogin || null,
     };
     await db

@@ -87,6 +87,10 @@ export function validateProductionConfig(): string[] {
     errors.push('JWT_SECRET must be set to a secure value in production');
   }
 
+  if (!process.env.MFA_ENCRYPTION_KEY) {
+    errors.push('MFA_ENCRYPTION_KEY is required to protect portal MFA secrets in production');
+  }
+
   return errors;
 }
 
