@@ -72,7 +72,7 @@ const navItems: NavItem[] = [
   { href: "/portal/invoices", label: "Invoices", icon: FileText, key: "billing" },
   { href: "/portal/orders", label: "Orders", icon: ShoppingCart, key: "other" },
   { href: "/portal/vpn", label: "VPN Access", icon: Shield, key: "other" },
-  { href: "/portal/cytracom", label: "ControlOne Phone", icon: Phone, key: "other" },
+  { href: "/portal/cytracom", label: "Cytracom Phone", icon: Phone, key: "other" },
   { href: "/portal/ship-center", label: "Ship Center", icon: Truck, key: "other" },
   { href: "/portal/marketplace", label: "Client Marketplace", icon: ShoppingCart, key: "other" },
   { href: "/portal/procurement", label: "Procurement Store", icon: ShoppingCart, key: "other" },

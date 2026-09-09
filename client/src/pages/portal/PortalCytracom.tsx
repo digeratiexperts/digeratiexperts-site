@@ -37,7 +37,7 @@ export default function PortalCytracom() {
   };
 
   return (
-    <PortalLayout title="Cytracom ControlOne">
+    <PortalLayout title="Cytracom Phone">
       <div className="space-y-6">
         {/* Status Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -101,8 +101,8 @@ export default function PortalCytracom() {
         {/* Download Softphone */}
         <Card>
           <CardHeader>
-            <CardTitle>Download ControlOne Softphone</CardTitle>
-            <CardDescription>Install the Cytracom ControlOne app for desktop and mobile calling</CardDescription>
+            <CardTitle>Download Cytracom Softphone</CardTitle>
+            <CardDescription>Install the Cytracom app for desktop and mobile calling</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -253,7 +253,7 @@ export default function PortalCytracom() {
             <div className="flex items-start gap-4">
               <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
               <div>
-                <p className="font-medium text-blue-900 dark:text-blue-100">Cytracom ControlOne Support</p>
+                <p className="font-medium text-blue-900 dark:text-blue-100">Cytracom Phone Support</p>
                 <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
                   For phone system issues, check our <a href="/portal/kb" className="underline">Knowledge Base</a> or 
                   contact support at <strong>support@digeratiexperts.com</strong>. For urgent issues, call <strong>{PRIMARY_PHONE.display}</strong>.
