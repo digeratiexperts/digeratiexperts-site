@@ -32,14 +32,17 @@ export interface RenderOptions {
   /** Show the title/caption row (default true). */
   caption?: boolean;
   /**
-   * Diagram-specific overrides. protection: `{ layers: {code,label,answers}[] }`
-   * lets a page name its own six layers (e.g. the six-domain deck) while the
-   * grammar and classification stay the diagram's.
+   * Diagram-specific overrides. protection: `{ layers: {code,label,answers,continuous?}[] }`
+   * lets a page name its own layers (four to eight; the homepage deck passes
+   * the eight cybersecurity blocks) while the grammar and classification stay
+   * the diagram's. A layer marked `continuous` draws as the band beneath the
+   * rings rather than as a ring: Risk & Exposure is the visibility layer, not a
+   * peer control.
    */
   data?: Record<string, unknown>;
 }
 
-export interface ProtectionLayer { code: string; label: string; answers: string }
+export interface ProtectionLayer { code: string; label: string; answers: string; continuous?: boolean }
 
 export interface DiagramMeta {
   id: DiagramId;
@@ -211,8 +214,8 @@ const ENVIRONMENT_META: DiagramMeta = {
   classification: "ILLUSTRATIVE",
   label: "explanatory architecture",
   nodes: ENV_NODES.length,
-  stages: ["fragmented: each system works alone", "designed: identity becomes the spine", "operated: security operations frame the whole"],
-  source: "Domains map to DE's managed security and managed IT services. Illustrative structure, not a client environment.",
+  stages: ["fragmented: each system works alone", "designed: identity becomes the spine", "operated: detection and response frame the whole"],
+  source: "The parts of a client environment DE operates across, framed by continuous detection and response. Illustrative structure, not a client environment.",
 };
 function renderEnvironment(o: Required<RenderOptions>): string {
   const pos = o.layout === "wide" ? ENV_WIDE : ENV_NARROW;
@@ -221,8 +224,8 @@ function renderEnvironment(o: Required<RenderOptions>): string {
   const nodes = ENV_NODES.map((n) => nodeSvg({ ...n, at: 0 }, pos[n.id], w)).join("");
   const edges = ENV_EDGES.map(([a, b]) => edgeSvg(pos[a], pos[b], 1, false, w)).join("");
   const frame = o.layout === "wide"
-    ? boundarySvg(24, 44, 552, 348, "SECURITY OPERATIONS · 24/7", 2)
-    : boundarySvg(16, 18, 328, 384, "SECURITY OPERATIONS · 24/7", 2);
+    ? boundarySvg(24, 44, 552, 348, "DETECTION & RESPONSE · 24/7", 2)
+    : boundarySvg(16, 18, 328, 384, "DETECTION & RESPONSE · 24/7", 2);
   const gates = o.layout === "wide"
     ? gateSvg({ x: 366, y: 76 }, "MFA", 2) + gateSvg({ x: 366, y: 324 }, "RESTORE DRILL", 2)
     // narrow: the drill gate sits on the perimeter under the backup node, label to its left, so nothing crosses the frame
@@ -232,13 +235,23 @@ function renderEnvironment(o: Required<RenderOptions>): string {
 }
 
 /* ======================================================= 2 · protection */
+/**
+ * The eight cybersecurity blocks of the DE 2026 service model
+ * (docs/DE-SERVICE-MODEL-2026.md). Seven are control layers drawn as rings
+ * around the business; Risk & Exposure is retained as the eighth block but
+ * drawn as the continuous band beneath them, because it is the visibility and
+ * intelligence layer rather than a peer control. This is a separate system
+ * from the 12 capability lanes and the 14 internal domains.
+ */
 const DEFAULT_LAYERS: ProtectionLayer[] = [
-  { code: "01", label: "Identity", answers: "credential theft" },
+  { code: "01", label: "Identity & access", answers: "credential theft" },
   { code: "02", label: "Endpoint", answers: "malware" },
-  { code: "03", label: "Network", answers: "lateral movement" },
-  { code: "04", label: "Email", answers: "phishing" },
-  { code: "05", label: "Backup", answers: "ransomware encryption" },
-  { code: "06", label: "Security operations", answers: "persistence" },
+  { code: "03", label: "Email & collaboration", answers: "phishing" },
+  { code: "04", label: "Browser & web", answers: "web-borne compromise" },
+  { code: "05", label: "Network", answers: "lateral movement" },
+  { code: "06", label: "Detection & response", answers: "persistence" },
+  { code: "07", label: "Human risk", answers: "social engineering" },
+  { code: "08", label: "Risk & exposure", answers: "unknown exposure", continuous: true },
 ];
 const PROTECTION_META: DiagramMeta = {
   id: "protection",
@@ -246,37 +259,75 @@ const PROTECTION_META: DiagramMeta = {
   classification: "ILLUSTRATIVE",
   label: "explanatory boundaries",
   nodes: DEFAULT_LAYERS.length + 1,
-  stages: ["the business, exposed", "identity", "endpoint", "network", "email", "backup", "security operations"],
-  source: "Six control layers DE operates, each named for the threat class it answers. Illustrative, not a customer's posture.",
+  stages: [
+    "the business, exposed",
+    "identity & access",
+    "endpoint",
+    "email & collaboration",
+    "browser & web",
+    "network",
+    "detection & response",
+    "human risk",
+    "risk & exposure, continuous",
+  ],
+  source: "The eight cybersecurity blocks DE operates: seven control layers, each named for the threat class it answers, and Risk & Exposure as the continuous visibility layer beneath them. Illustrative, not a customer's posture.",
 };
+const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight"];
 function renderProtection(o: Required<RenderOptions>): string {
   const custom = (o.data && Array.isArray((o.data as { layers?: unknown }).layers))
-    ? ((o.data as { layers: ProtectionLayer[] }).layers).slice(0, 6)
+    ? ((o.data as { layers: ProtectionLayer[] }).layers)
     : null;
-  const LAYERS = custom && custom.length === 6 ? custom : DEFAULT_LAYERS;
+  const LAYERS = custom && custom.length >= 4 && custom.length <= 8 ? custom : DEFAULT_LAYERS;
+  // rings first, then the continuous band(s): a band is never a ring, whatever
+  // order a page lists its layers in
+  const rings = LAYERS.filter((l) => !l.continuous);
+  const bands = LAYERS.filter((l) => l.continuous);
+  const beneath = `runs continuously beneath all ${NUMBER_WORDS[rings.length] ?? rings.length}`;
   if (o.layout === "wide") {
     const cx = 300;
-    const cy = 218;
+    const outerW = 156 + rings.length * 56;
+    const outerH = 68 + rings.length * 44;
+    const top = 30;
+    const cy = top + outerH / 2;
     const core = `<g class="dg-node dg-node--core" data-dg-at="0"><rect x="${cx - 78}" y="${cy - 34}" width="156" height="68" rx="6"/><text class="dg-code" x="${cx - 68}" y="${cy - 17}">THE BUSINESS</text><text class="dg-label" x="${cx - 68}" y="${cy + 2}">People · devices · systems</text><text class="dg-sub" x="${cx - 68}" y="${cy + 22}">what every layer protects</text></g>`;
-    const rings = LAYERS.map((l, i) => {
+    const ringSvg = rings.map((l, i) => {
       const k = i + 1;
-      const w = 156 + k * 68;
-      const h = 68 + k * 52;
+      const w = 156 + k * 56;
+      const h = 68 + k * 44;
       const x = cx - w / 2;
       const y = cy - h / 2;
+      // the code sits in the ring's top band, the answer in its bottom band:
+      // each band is its own 22px strip, so long block names never collide
+      // with their threat class on the innermost rings
       return (
         `<g class="dg-layer" data-dg-at="${k}">` +
         `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${8 + k * 2}" pathLength="1"/>` +
         `<text class="dg-code" x="${x + 10}" y="${y + 14}">${l.code} / ${esc(l.label.toUpperCase())}</text>` +
-        `<text class="dg-sub" x="${x + w - 10}" y="${y + 14}" text-anchor="end">answers ${esc(l.answers)}</text>` +
+        `<text class="dg-sub" x="${x + w - 10}" y="${y + h - 8}" text-anchor="end">answers ${esc(l.answers)}</text>` +
         `</g>`
       );
     }).join("");
-    return wrap(PROTECTION_META, rings + core, "0 0 600 436", o);
+    const ringsBottom = top + outerH;
+    const bandSvg = bands.map((l, i) => {
+      const k = rings.length + i + 1;
+      const x = cx - outerW / 2;
+      const y = ringsBottom + 14 + i * 50;
+      return (
+        `<g class="dg-layer dg-layer--band" data-dg-at="${k}">` +
+        `<rect x="${x}" y="${y}" width="${outerW}" height="36" rx="6" pathLength="1"/>` +
+        `<text class="dg-code" x="${x + 10}" y="${y + 15}">${l.code} / ${esc(l.label.toUpperCase())}</text>` +
+        `<text class="dg-sub" x="${x + outerW - 10}" y="${y + 15}" text-anchor="end">answers ${esc(l.answers)}</text>` +
+        `<text class="dg-sub" x="${x + 10}" y="${y + 29}">${beneath}</text>` +
+        `</g>`
+      );
+    }).join("");
+    const vbH = ringsBottom + (bands.length ? 14 + bands.length * 50 : 0) + 16;
+    return wrap(PROTECTION_META, ringSvg + bandSvg + core, `0 0 600 ${vbH}`, o);
   }
-  // narrow: the core at the top, layers stacked as bars beneath it, outermost last
+  // narrow: the core at the top, layers stacked as bars beneath it, outermost
+  // last, then the continuous band under the stack
   const core = `<g class="dg-node dg-node--core" data-dg-at="0"><rect x="30" y="16" width="300" height="60" rx="6"/><text class="dg-code" x="42" y="34">THE BUSINESS</text><text class="dg-label" x="42" y="54">People · devices · systems</text></g>`;
-  const bars = LAYERS.map((l, i) => {
+  const barSvg = rings.map((l, i) => {
     const k = i + 1;
     const y = 92 + i * 56;
     return (
@@ -287,7 +338,23 @@ function renderProtection(o: Required<RenderOptions>): string {
       `</g>`
     );
   }).join("");
-  return wrap(PROTECTION_META, core + bars, "0 0 360 440", o);
+  const barsBottom = 92 + rings.length * 56 - 14;
+  // the band carries three lines on a phone (code, answer, continuity), so
+  // it is taller than a bar and nothing shares a line
+  const bandSvg = bands.map((l, i) => {
+    const k = rings.length + i + 1;
+    const y = barsBottom + 16 + i * 70;
+    return (
+      `<g class="dg-layer dg-layer--band" data-dg-at="${k}">` +
+      `<rect x="30" y="${y}" width="300" height="56" rx="6" pathLength="1"/>` +
+      `<text class="dg-code" x="42" y="${y + 17}">${l.code} / ${esc(l.label.toUpperCase())}</text>` +
+      `<text class="dg-sub" x="42" y="${y + 33}">answers ${esc(l.answers)}</text>` +
+      `<text class="dg-sub" x="42" y="${y + 48}">${beneath}</text>` +
+      `</g>`
+    );
+  }).join("");
+  const vbH = barsBottom + (bands.length ? 16 + bands.length * 70 : 0) + 16;
+  return wrap(PROTECTION_META, core + barSvg + bandSvg, `0 0 360 ${vbH}`, o);
 }
 
 /* ======================================================= 3 · assessment */

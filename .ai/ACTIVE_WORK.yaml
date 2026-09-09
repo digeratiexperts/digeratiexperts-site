@@ -46,32 +46,6 @@ claims:
       - package.json
     status: active
     started: 2026-08-31
-  - id: restore-homepage-v1
-    owner: claude
-    subsystem: homepage
-    branch: claude/restore-homepage-v1
-    base_sha: 80ce2f47a43bcf99f3a5545a525f17a8ee30ccb5
-    files:
-      - client/src/components/EcosystemProgression.tsx
-      - client/src/pages/sections/DigeratiCTASection.tsx
-      - client/src/pages/sections/DigeratiHowWeProtectSection.tsx
-      - client/src/pages/sections/DigeratiMeetExpertsSection.tsx
-      - client/src/pages/sections/DigeratiNewsletterSection.tsx
-      - client/src/pages/sections/DigeratiServicesSection.tsx
-      - client/src/pages/sections/DigeratiTestimonialsSection.tsx
-      - client/src/pages/sections/ReferenceHeroSection.tsx
-      - client/src/pages/versions/registry.ts
-    status: active
-    started: 2026-09-03
-    note: >-
-      Joe, 2026-09-03: "I want the version before the scrollcraft was on the
-      live site back." Version 1 of the archive (main @ 2d7d12a) is that
-      homepage. This restores the eight files PR #178 rebuilt to their
-      2d7d12a content; the diagram system, EvidenceFrame's plain-language
-      disclosure, the evidence capture and the /version-3 snapshot stay.
-      The eight-block correction (PR #189) is re-cut against these restored
-      files afterwards. The new experience is published on its own page
-      (/experience-v1 -> /scrollcraft/experience-v1/) until Joe approves it.
   - id: de-experience-v1
     owner: claude
     subsystem: flagship-creative-reset
@@ -101,6 +75,41 @@ claims:
       and public/scrollcraft/; no client/, server/ or shared/ files;
       production is never replaced without Joe's explicit approval. The
       2026-09-01 Scrollcraft freeze stands for every other route.
+  - id: de-eight-block-correction
+    owner: claude
+    subsystem: homepage-protection-model
+    branch: claude/eight-block-recut
+    base_sha: aa7ebaaab32fbf04a9207d5cdbaf1188248ba407
+    files:
+      - client/src/components/visual/ProtectionCommandDeck.tsx
+      - client/src/pages/sections/DigeratiHowWeProtectSection.tsx (heading and body copy only)
+      - client/src/diagrams/diagrams.ts
+      - client/src/diagrams/diagrams.css
+      - client/src/diagrams/diagrams.test.ts
+      - client/src/components/evidence/evidencePrimitives.test.ts
+      - client/src/pages/GenericServicePage.tsx (one ProofChip)
+      - client/src/pages/solutions/ProActiveEcosystemPage.tsx (one ProofChip)
+      - client/src/pages/solutions/SolutionsIndex.tsx (one ProofChip)
+      - design/PROOF_SYSTEM.md
+      - docs/CLAIMS-REGISTER.md
+    status: active
+    started: 2026-09-02
+    note: >-
+      Joe-routed, small, content-only: the live homepage presented the stale
+      six-domain protection model. The current architecture is eight
+      cybersecurity blocks (docs/DE-SERVICE-MODEL-2026.md on PR #185), Risk &
+      Exposure retained as the continuous visibility layer. Updates the
+      protection deck, the layered-protection and one-environment diagrams,
+      and every copy string that named six. Not a homepage redesign; the 14
+      internal domains stay unenumerated. RE-CUT 2026-09-06 against the
+      restored Version 1 homepage (PR #192): the restored layout is kept
+      exactly as Joe asked for it, so the diagram beside the copy and the
+      hero trust-strip rewrite from the first attempt are dropped; only the
+      stale six-domain claim is corrected. The restored hero and newsletter
+      make no domain-count claim and are untouched. The frozen version
+      snapshots under client/src/pages/versions/ stay as historical record.
+    supersedes: PR #189 (branch claude/eight-block-correction, based on
+      pre-restore main; closed in favour of this re-cut)
   - id: de-site-v2-scrollcraft
     owner: claude
     subsystem: site-v2-experiment
