@@ -8,12 +8,13 @@ authority: digeratiexperts/Intelligence-Hub .agents/memory/account-lifecycle-sta
 classification: internal
 ---
 
-> **MIRROR.** The canonical sections below are a verbatim copy. The authority is
+> **MIRROR.** The **canonical section** below is **byte-identical** to the authority:
 > [`digeratiexperts/Intelligence-Hub`](https://github.com/digeratiexperts/Intelligence-Hub) →
 > `.agents/memory/account-lifecycle-status-source-of-truth.md`.
+> A **repo-local application section is permitted after the canonical section** — here,
+> **"Application in this repository"** — and is the only repo-local content in this file.
 > Do not edit the vocabulary, semantics, or disclosure boundary here. Change the authority
-> first, then propagate to this repository in the same change set. Only the
-> **"Application in this repository"** section at the end is repo-local.
+> first, then propagate to this repository in the same change set.
 
 
 # DE Account Lifecycle Status — Source of Truth
@@ -26,7 +27,7 @@ classification: internal
 
 This file is the authoritative definition of the DE **Account Lifecycle Status** field.
 
-**Authority and mirrors.** This file, in `digeratiexperts/Intelligence-Hub`, is the single authority. Verbatim mirrors are maintained at `docs/ACCOUNT-LIFECYCLE-STATUS.md` in `digeratiexperts-site`, `de-platform`, and `vulnerability-management`. Mirrors carry a repo-specific application section only; they may not alter the vocabulary, the semantics, or the disclosure boundary. Change this file first, then propagate.
+**Authority and mirrors.** This file, in `digeratiexperts/Intelligence-Hub`, is the single authority. Mirrors are maintained at `docs/ACCOUNT-LIFECYCLE-STATUS.md` in `digeratiexperts-site`, `de-platform`, and `vulnerability-management`. In each mirror the **canonical section is byte-identical** to this file; a **repo-local application section is permitted after the canonical section** and is the only repo-local content. A mirror may not alter the vocabulary, the semantics, or the disclosure boundary. Change this file first, then propagate.
 
 **v1.1 change:** adds the internal-only disclosure boundary. The 13 values and their definitions are unchanged from v1.0.
 
@@ -181,7 +182,7 @@ When choosing a lifecycle value, ask:
 
 - Account lifecycle and deal pipeline are separate domains even when both appear on the same client/account UI.
 - Deal-stage chips may continue to display deal/pipeline state; they must not be treated as the account lifecycle authority.
-- Code, database enums, `POSITIVE_RANK`, `floorLifecycle`, boot migrations, API labels, and UI strips that still encode the superseded July 2026 lifecycle taxonomy are **legacy implementation surfaces that require migration** to this v1.0 model.
+- Code, database enums, `POSITIVE_RANK`, `floorLifecycle`, boot migrations, API labels, and UI strips that still encode the superseded July 2026 lifecycle taxonomy are **legacy implementation surfaces that require migration** to this v1.1 model.
 - Until that migration is complete, do not add new code that depends on the superseded `Lead → Opportunity → Client` account-lifecycle ordering.
 - Existing one-account-per-organization, exact merge-key, race-safe-create, Zoho ID separation, quote-linking, and demo-clear integrity rules remain valid unless separately superseded.
 
