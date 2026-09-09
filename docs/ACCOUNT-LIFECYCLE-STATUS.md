@@ -241,6 +241,22 @@ These are legacy surfaces requiring migration to the canonical 13-value model. T
 
 `MATURITY_STAGES` and `mapPortalMaturity()` produce a portal-side derived stage. Derived or not, it inherits this document's disclosure boundary: `prospect`, `former`, and `closed` must not surface to a client. If any maturity signal is ever shown client-side, it must go through an approved presentation mapping.
 
+### Automated enforcement
+
+The boundary is enforced by tests, not only by review. `server/integrations/tenantIdentity.ts` exports:
+
+- `ACCOUNT_LIFECYCLE_STATUSES` — the canonical 13 values;
+- `findLifecycleDisclosures(payload)` — walks a client-bound payload and returns every disclosure, by path;
+- `assertNoLifecycleDisclosure(payload, label)` — throws on any disclosure.
+
+Detection is deliberately asymmetric. A **lifecycle-named key** (`lifecycle`, `lifecycleStatus`, `accountLifecycleStatus`, `hubLifecycle`, in any casing or separator style) is always a violation — naming a field that way and putting anything in it discloses the classification. A **value** match only fires on unambiguous terms, so a portal user's `status: "active"`, a request's `state: "pending"`, and the existing client-visible `storeRole: "prospect"` do not trip it.
+
+`server/integrations/lifecycleDisclosure.test.ts` feeds each client-bound serializer a source record deliberately polluted with lifecycle fields — the shape a future schema addition or a Hub sync would produce — and asserts the output is clean. An allowlist serializer drops them; a serializer that starts spreading its source (`...user`) fails the test. This has been verified to fail on a deliberately leaky serializer, so it is a real guard rather than a vacuous one.
+
+**When you add a client-scoped serializer, add it to `CLIENT_BOUND_SERIALIZERS` in that test.** The guard cannot find a serializer it has never been given.
+
+Its limits, stated honestly: it covers serializers registered in that list, not every route handler that builds a response inline, and it cannot see values assembled only at runtime from live data. It raises the floor; it does not make a leak impossible.
+
 ### Checklist before merging a portal or website change
 
 1. Does any response reaching an unauthenticated visitor or a portal client contain a lifecycle value? If yes, remove it from the payload.

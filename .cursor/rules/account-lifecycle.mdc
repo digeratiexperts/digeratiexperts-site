@@ -28,6 +28,12 @@ Canonical values (v1.1, exactly one per account):
 3. Client-visible wording about the relationship comes from an approved presentation mapping, never the raw value. No mapping entry → show nothing.
 4. Leaking a lifecycle value to a client or the public is a **P0 defect**.
 
+## Enforcement — this is tested, not just documented
+
+`server/integrations/tenantIdentity.ts` exports `findLifecycleDisclosures(payload)` and `assertNoLifecycleDisclosure(payload, label)`. `server/integrations/lifecycleDisclosure.test.ts` feeds each client-bound serializer a source record polluted with lifecycle fields and asserts the output is clean — a serializer that starts spreading its source fails CI.
+
+**Adding a client-scoped serializer means adding it to `CLIENT_BOUND_SERIALIZERS` in that test.** The guard only covers serializers it has been given; it does not cover response objects built inline in a route handler, so review still matters there.
+
 ## Two different "lifecycles" — do not conflate
 
 `/portal/admin/lifecycle`, `AdminLifecycle.tsx`, `server/lifecycleOrchestrator.ts`, and `/api/portal/admin/lifecycle/*` are the **JumpCloud + Blackpoint employee identity lifecycle** (onboarding/offboarding a client's own staff). That is a different domain from **Account Lifecycle Status** (DE's relationship with the client organization). Do not merge, rename into, cross-wire, or infer one from the other.
