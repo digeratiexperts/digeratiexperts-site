@@ -46,32 +46,6 @@ claims:
       - package.json
     status: active
     started: 2026-08-31
-  - id: restore-homepage-v1
-    owner: claude
-    subsystem: homepage
-    branch: claude/restore-homepage-v1
-    base_sha: 80ce2f47a43bcf99f3a5545a525f17a8ee30ccb5
-    files:
-      - client/src/components/EcosystemProgression.tsx
-      - client/src/pages/sections/DigeratiCTASection.tsx
-      - client/src/pages/sections/DigeratiHowWeProtectSection.tsx
-      - client/src/pages/sections/DigeratiMeetExpertsSection.tsx
-      - client/src/pages/sections/DigeratiNewsletterSection.tsx
-      - client/src/pages/sections/DigeratiServicesSection.tsx
-      - client/src/pages/sections/DigeratiTestimonialsSection.tsx
-      - client/src/pages/sections/ReferenceHeroSection.tsx
-      - client/src/pages/versions/registry.ts
-    status: active
-    started: 2026-09-03
-    note: >-
-      Joe, 2026-09-03: "I want the version before the scrollcraft was on the
-      live site back." Version 1 of the archive (main @ 2d7d12a) is that
-      homepage. This restores the eight files PR #178 rebuilt to their
-      2d7d12a content; the diagram system, EvidenceFrame's plain-language
-      disclosure, the evidence capture and the /version-3 snapshot stay.
-      The eight-block correction (PR #189) is re-cut against these restored
-      files afterwards. The new experience is published on its own page
-      (/experience-v1 -> /scrollcraft/experience-v1/) until Joe approves it.
   - id: de-experience-v1
     owner: claude
     subsystem: flagship-creative-reset
@@ -185,6 +159,15 @@ claims:
       (scripts/kie-assets.mjs); the kie.ai scripts here accept both
       KIE_AI_API_KEY and KIE_API_KEY and write candidates under
       artifacts/kie-ai/. No key is committed; installing makes no network call.
+# restore-homepage-v1 (branch claude/restore-homepage-v1) RETIRED 2026-09-09:
+# the claim was still listed active while the work was already fully contained
+# in main. Verified at main @ 611acfdb: `git rev-list --count
+# origin/main..origin/claude/restore-homepage-v1` is 0 — no unique commits
+# remain on that branch. The claim was therefore holding a concurrency lock on
+# eight homepage section files with nothing behind it, which would make any
+# other agent stand off those files for no reason. PR #199 (eight-block re-cut)
+# is already built on the restored files, which corroborates that the
+# restoration landed. See docs/OPEN-WORK-AUDIT-20260909.md §3.
 # de-desk-inline-login-card (issue 153, branch claude/dynamic-login-card-chat-ve39il)
 # RETIRED 2026-09-01: merged via PR #160 (main @ 3fc5709). Deploy job
 # "Deploy and verify production VPS" on run 33469181603 succeeded, including
