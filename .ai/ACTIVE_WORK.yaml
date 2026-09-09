@@ -108,7 +108,8 @@ claims:
       stale six-domain claim is corrected. The restored hero and newsletter
       make no domain-count claim and are untouched. The frozen version
       snapshots under client/src/pages/versions/ stay as historical record.
-    supersedes: PR #189 (branch claude/eight-block-correction, based on
+    supersedes: >-
+      PR #189 (branch claude/eight-block-correction, based on
       pre-restore main; closed in favour of this re-cut)
   - id: de-site-v2-scrollcraft
     owner: claude

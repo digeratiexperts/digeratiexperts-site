@@ -13,6 +13,44 @@ decisions are Joe's. This is the audit those decisions need.
 
 ---
 
+## 0. Actions taken 2026-09-09 (post-audit, on Joe's authorization)
+
+Joe authorized four items after reading this audit. Three completed, one blocked, one refused by tooling:
+
+| Action | Result |
+|---|---|
+| Merge #197 (vector logo system) | **Merged** — `7efc2001` |
+| Merge #198 (favicon + social card) | **Merged** — `f7cdf395` |
+| Merge #199 (eight blocks) | **Merged** — `667aa7d2` |
+| Close #189 (superseded) | **Closed** with a pointer to #199 |
+| Merge #196 (security) | **BLOCKED — must not merge.** See §10 |
+| Branch protection on `main` | **Could not perform** — see §8 |
+
+One regression was introduced and fixed in the same pass: **#199 carried a YAML syntax error into
+`.ai/ACTIVE_WORK.yaml`**, which merging it put on `main`. In its new `de-eight-block-correction`
+claim, the value
+
+```yaml
+    supersedes: PR #189 (branch claude/eight-block-correction, based on
+      pre-restore main; closed in favour of this re-cut)
+```
+
+is not valid YAML: an unquoted ` #` opens a comment, so the value truncates to `PR` and the
+continuation line raises `ParserError: expected <block end>`. The whole registry stopped parsing.
+Converted to a `>-` folded scalar, matching every other multi-line value in the file; the sentence
+is preserved verbatim.
+
+**This got through because nothing validates this file.** CI runs typecheck, test, build, audit and
+smoke — none of which parse `.ai/ACTIVE_WORK.yaml`. The register that every agent is required to
+read before touching code can be syntactically broken by any merge without a single check going
+red. Adding a YAML parse step to CI is a small, obvious follow-up; it is not done here because it
+widens this change beyond documentation, but it should be its own PR.
+
+`origin/main` is now `667aa7d2`. The §2 table below records the pre-merge state and is left
+unedited as the audit of record; §0 and §10 are the corrections on top of it.
+
+---
+
 ## 1. Headline findings
 
 1. **No open PR conflicts with `main`.** All 17 open PR branches merge clean. The blocker on this
@@ -185,7 +223,29 @@ it is not enforced by the platform. Issues #100, #115 and #124 all ask for enfor
 been actioned; #124 is the most complete statement and should be the survivor.
 
 Enabling branch protection with required checks is the single change that prevents recurrence.
-It is listed here as a finding, not performed — it changes repository governance and is Joe's call.
+
+**Attempted 2026-09-09 on Joe's authorization, and refused by the platform.** The session's
+GitHub credential is an App installation token without the `administration` permission:
+
+```
+GET /repos/digeratiexperts/digeratiexperts-site/branches/main/protection
+403 "Resource not accessible by integration"
+```
+
+Branch protection needs repository-admin scope, which no agent in this setup holds. **This one
+has to be done by a human in the GitHub UI** — Settings → Branches → Add branch protection rule
+for `main`. The minimum that satisfies #124:
+
+- Require a pull request before merging
+- Require status checks to pass, with **`Typecheck, test, build, audit, and smoke`** as the
+  required check (that is the exact check-run name this repo's CI publishes)
+
+A note on required approvals: adding "require N approving reviews" would be stricter, but every
+PR in this repo is authored by the `digeratiexperts` account, and GitHub does not let an account
+approve its own pull request. Turning that on with one human would deadlock the queue. Require the
+PR and the check first; add mandatory review only alongside a second reviewer account.
+
+Had this been enforced already, §10 would not have been possible.
 
 ---
 
@@ -194,6 +254,41 @@ It is listed here as a finding, not performed — it changes repository governan
 `origin/main` @ `611acfdb` is the current integration head. This audit does **not** assert that
 `611acfdb` is what production is serving — that requires a deploy-log or live check, which is
 tracked as its own step rather than assumed here.
+
+---
+
+## 10. PR #196 is corrupted and must not be merged
+
+Found on 2026-09-09 while attempting to land it. This supersedes the "**Land**" disposition given
+for #196 in §2, which was based on its stated scope before its CI failure was diagnosed.
+
+### `server/routes.ts` is a binary blob on `chatgpt/finish-bug-hunt`
+
+CI reports `error TS1490: File appears to be binary`. Confirmed at byte level — on that branch the
+file is 150,060 bytes of high-entropy binary data beginning `Y 252 347 212 x - 256 351`, where on
+`main` it begins `import express, {`. `git diff --numstat` classifies it as binary (`-  -`).
+
+Merging would replace **6,274 lines of production routing** — the authenticated store, portal and
+auth endpoints — with garbage.
+
+### The branch also deletes ~1,200 lines of unrelated subsystems
+
+The single commit `dbcc79d4` removes in full: `server/services/shipping.ts` (547 lines),
+`agent-installer/` (6 files, 485 lines), and `electron/main.ts` + `electron/preload.ts` (178
+lines). None of that is MFA storage, migrations or session preservation.
+
+### What is salvageable
+
+The additive security work looks sound and is worth re-cutting: `server/portalMfaCrypto.ts` and
+its test, `migrations/0001_portal_auth_durable.sql`, `migrations/0002_portal_org_approvals.sql`,
+`scripts/run-migrations.mjs`, and small edits to `portalAuthStore.ts`, `use-auth.tsx`,
+`portalApi.ts`, `production.config.ts` and deploy config.
+
+Whatever session-preservation changes lived inside `routes.ts` are **not recoverable** from the
+binary blob and must be rewritten against `main`'s copy. That rewrite was not attempted here:
+reconstructing an auth-path change from a corrupted diff means guessing at security intent.
+
+Issue #195 stays open. Recorded on the PR thread as well.
 
 ---
 
