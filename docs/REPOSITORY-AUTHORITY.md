@@ -31,6 +31,7 @@ The old website PRs created from that blocked state should not be merged merely 
 ## Related policy
 
 - Website source of truth: [`docs/SOURCE-OF-TRUTH.md`](./SOURCE-OF-TRUTH.md)
+- Account Lifecycle Status (internal-only, Hub-authored mirror): [`docs/ACCOUNT-LIFECYCLE-STATUS.md`](./ACCOUNT-LIFECYCLE-STATUS.md)
 - Site/agent workflow: [`AGENTS.md`](../AGENTS.md)
 - Brand naming rule: [`.cursor/rules/digerati-naming.mdc`](../.cursor/rules/digerati-naming.mdc)
 - Ecosystem control plane (always-applied agent rule): [`.cursor/rules/de-ecosystem.mdc`](../.cursor/rules/de-ecosystem.mdc)
