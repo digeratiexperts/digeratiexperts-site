@@ -33,6 +33,125 @@ export const HUB_LIFECYCLES = [
 
 export type HubLifecycle = (typeof HUB_LIFECYCLES)[number];
 
+/**
+ * Account Lifecycle Status disclosure boundary.
+ *
+ * See docs/ACCOUNT-LIFECYCLE-STATUS.md. The field is internal classification:
+ * governed everywhere, displayed nowhere client-facing. Compliance means the
+ * value is absent from the payload a client or the public receives — hiding it
+ * in the UI does not count.
+ *
+ * The canonical v1.1 vocabulary. Storage/wire forms vary (spacing, case,
+ * snake_case), so comparison is normalized.
+ */
+export const ACCOUNT_LIFECYCLE_STATUSES = [
+  "Suspect",
+  "Prospect",
+  "Tentative",
+  "Pending",
+  "Onboarding",
+  "Active",
+  "Paused",
+  "At Risk",
+  "Offboarding",
+  "Inactive",
+  "Former",
+  "Disqualified",
+  "Do Not Engage",
+] as const;
+
+export type AccountLifecycleStatus = (typeof ACCOUNT_LIFECYCLE_STATUSES)[number];
+
+/** Field names that carry the lifecycle value and must not reach a client. */
+export const LIFECYCLE_DISCLOSURE_KEYS = [
+  "accountlifecyclestatus",
+  "lifecyclestatus",
+  "hublifecycle",
+  "accountlifecycle",
+  "lifecycle",
+] as const;
+
+function normalizeToken(value: string): string {
+  return value.trim().toLowerCase().replace(/[\s_-]+/g, "");
+}
+
+const LIFECYCLE_VALUE_TOKENS: ReadonlySet<string> = new Set([
+  ...ACCOUNT_LIFECYCLE_STATUSES.map((s) => normalizeToken(s)),
+  ...HUB_LIFECYCLES.map((s) => normalizeToken(s)),
+]);
+
+/**
+ * Values that are legitimately client-visible in their own domain and must not
+ * be mistaken for a lifecycle disclosure. `active`/`inactive` describe a portal
+ * user account; `pending` describes a request; `prospect` is an existing
+ * client-visible storeRole. They are only a violation under a lifecycle key.
+ */
+const AMBIGUOUS_VALUE_TOKENS: ReadonlySet<string> = new Set([
+  "active",
+  "inactive",
+  "pending",
+  "prospect",
+  "paused",
+  "former",
+]);
+
+export type LifecycleDisclosure = { path: string; reason: "key" | "value"; found: string };
+
+/**
+ * Walk a client-bound payload and report every Account Lifecycle Status
+ * disclosure. Returns [] when the payload is clean.
+ *
+ * A key match is always a violation: naming a field `lifecycle` and putting
+ * anything in it discloses the classification. A value match is a violation
+ * only for unambiguous lifecycle terms, so this does not fire on a portal
+ * user's `status: "active"`.
+ */
+export function findLifecycleDisclosures(
+  payload: unknown,
+  path = "$",
+  seen = new WeakSet<object>(),
+): LifecycleDisclosure[] {
+  if (payload === null || payload === undefined) return [];
+
+  if (typeof payload === "string") {
+    const token = normalizeToken(payload);
+    if (LIFECYCLE_VALUE_TOKENS.has(token) && !AMBIGUOUS_VALUE_TOKENS.has(token)) {
+      return [{ path, reason: "value", found: payload }];
+    }
+    return [];
+  }
+
+  if (typeof payload !== "object") return [];
+  if (seen.has(payload as object)) return [];
+  seen.add(payload as object);
+
+  if (Array.isArray(payload)) {
+    return payload.flatMap((item, i) => findLifecycleDisclosures(item, `${path}[${i}]`, seen));
+  }
+
+  const out: LifecycleDisclosure[] = [];
+  for (const [key, value] of Object.entries(payload as Record<string, unknown>)) {
+    const keyPath = `${path}.${key}`;
+    if (LIFECYCLE_DISCLOSURE_KEYS.includes(normalizeToken(key) as any)) {
+      out.push({ path: keyPath, reason: "key", found: key });
+      continue;
+    }
+    out.push(...findLifecycleDisclosures(value, keyPath, seen));
+  }
+  return out;
+}
+
+/** Throw if a client-bound payload discloses Account Lifecycle Status. */
+export function assertNoLifecycleDisclosure(payload: unknown, label = "payload"): void {
+  const found = findLifecycleDisclosures(payload);
+  if (found.length === 0) return;
+  const detail = found.map((f) => `${f.path} (${f.reason}: ${f.found})`).join(", ");
+  throw new Error(
+    `Account Lifecycle Status disclosed in client-bound ${label}: ${detail}. ` +
+      `See docs/ACCOUNT-LIFECYCLE-STATUS.md — omit it at the serialization boundary.`,
+  );
+}
+
 export type TenantIds = {
   portalClientId?: string | null;
   hubAccountId?: string | null;

@@ -2,7 +2,7 @@
 name: DE Account Lifecycle Status — Source of Truth (mirror)
 description: Mirror of the canonical DE Account Lifecycle Status model. Internal classification — governed everywhere, never client-facing.
 status: mirror
-version: 1.1
+version: 1.2
 effective_date: 2026-09-09
 authority: digeratiexperts/Intelligence-Hub .agents/memory/account-lifecycle-status-source-of-truth.md
 classification: internal
@@ -20,7 +20,7 @@ classification: internal
 # DE Account Lifecycle Status — Source of Truth
 
 **Status:** Canonical  
-**Version:** 1.1  
+**Version:** 1.2  
 **Effective:** 2026-09-09  
 **Classification:** Internal — governed everywhere, displayed nowhere client-facing (see [Disclosure boundary](#disclosure-boundary--internal-only))  
 **Scope:** Digerati Experts account/client relationship lifecycle across TechSales, Zoho, Sales OS, portals, reporting, automations, integrations, and future systems.
@@ -30,6 +30,8 @@ This file is the authoritative definition of the DE **Account Lifecycle Status**
 **Authority and mirrors.** This file, in `digeratiexperts/Intelligence-Hub`, is the single authority. Mirrors are maintained at `docs/ACCOUNT-LIFECYCLE-STATUS.md` in `digeratiexperts-site`, `de-platform`, and `vulnerability-management`. In each mirror the **canonical section is byte-identical** to this file; a **repo-local application section is permitted after the canonical section** and is the only repo-local content. A mirror may not alter the vocabulary, the semantics, or the disclosure boundary. Change this file first, then propagate.
 
 **v1.1 change:** adds the internal-only disclosure boundary. The 13 values and their definitions are unchanged from v1.0.
+
+**v1.2 change:** sharpens the `Prospect` / `Tentative` boundary (whose side the evidence comes from) and adds the approved legacy migration mapping. The 13 values are still unchanged.
 
 > **Supersedes:** the previous account lifecycle taxonomy `Suspect → Prospect → Lead → Opportunity → Client` as a business-status model. `Lead`, `Opportunity`, `Qualified`, `Proposal Sent`, `Negotiation`, `Closed Won`, and similar terms remain valid **sales/deal pipeline concepts**, but they are **not Account Lifecycle Status values**.
 
@@ -49,7 +51,7 @@ The following 13 values are the complete approved vocabulary, in canonical order
 |---:|---|---|
 | 1 | **Suspect** | An organization appears potentially relevant to DE or plausibly fits the ICP, but DE has not established that a real opportunity exists. Research, list membership, enrichment, or apparent fit alone can support Suspect status. |
 | 2 | **Prospect** | There is enough evidence of fit, need, interest, engagement, access, timing, or opportunity to justify active sales pursuit. A Prospect is materially more qualified for pursuit than a Suspect. |
-| 3 | **Tentative** | The organization has indicated meaningful intent to move forward, but the commercial or client relationship is not yet finalized. |
+| 3 | **Tentative** | The organization has indicated meaningful intent to move forward, but the commercial or client relationship is not yet finalized. The intent must come from the **customer** — see the Prospect/Tentative boundary below. |
 | 4 | **Pending** | The relationship is effectively approved or expected to begin, but activation is waiting on a required dependency such as signature, payment, assessment, scheduling, provisioning, or another start condition. |
 | 5 | **Onboarding** | The organization is an official client and implementation, discovery, migration, remediation, stabilization, or initial service activation is underway. |
 | 6 | **Active** | The client relationship is operational and the client is receiving normal active services. |
@@ -80,6 +82,56 @@ A **Prospect** answers:
 Promotion from Suspect to Prospect requires more than mere existence on a list. The evidence can include fit, a recognizable need, interest, engagement, access to a relevant person, timing, a trigger event, or another credible opportunity signal.
 
 **Governance rule:** imported, scraped, enriched, or researched companies must not automatically inflate the Prospect population merely because they were discovered.
+
+## Prospect and Tentative — whose evidence?
+
+The boundary is **which side the evidence comes from**:
+
+> **Prospect** = DE believes pursuit is justified.  
+> **Tentative** = the customer has indicated meaningful intent to proceed.
+
+A qualified opportunity does **not** make an account Tentative. DE deciding that an opportunity is qualified is DE-side evidence, and DE-side confidence never advances the relationship on its own.
+
+Tentative becomes appropriate when the customer does something materially stronger — agreeing in principle, asking DE to proceed with onboarding or procurement steps, selecting a solution pending final approval, or otherwise expressing meaningful commitment.
+
+This keeps sales-pipeline granularity out of the lifecycle field. Do not duplicate deal stages inside Account Lifecycle Status.
+
+## An account has one lifecycle; its deals have their own stages
+
+Account Lifecycle Status and Deal Stage are independent. One account may simultaneously hold deals at different stages:
+
+```
+Account:  Prospect
+  Deal A: Closed Lost
+  Deal B: Qualification
+  Deal C: Closed Won
+```
+
+No single deal outcome dictates the account's lifecycle. A lost deal ends an opportunity, not a relationship.
+
+## Legacy migration mapping — approved
+
+The superseded taxonomy maps to v1.2 as follows. **Relationship evidence takes precedence over the legacy value**: where an account already shows `Active`, `Onboarding`, `Pending`, `Paused`, `At Risk`, `Offboarding`, or `Former` relationship state, preserve that status rather than applying the row below.
+
+| Legacy value | Maps to | Reasoning |
+|---|---|---|
+| `suspect` | `Suspect` | Direct equivalent. |
+| `prospect` | `Prospect` | Direct equivalent. |
+| `lead` | `Prospect` | A sales-funnel state, not a relationship state. Interest shown already satisfies Prospect; the funnel detail lives in the deal/SDR stage. |
+| `qualified_opportunity` | `Prospect` | DE-side qualification is not customer-side intent, so this is not Tentative. |
+| `client_pending_activation` | `Pending` | Direct equivalent. |
+| `active_client` | `Active` | Direct equivalent. |
+| `former_client` | `Former` | Direct equivalent. |
+| `disqualified` | `Disqualified` | Direct equivalent. |
+| `closed_lost` | `Prospect` | A deal outcome, not a relationship state — unless stronger account-level evidence establishes another status. |
+
+### Rules that constrain the migration
+
+- **`Closed Lost → Prospect`, unless stronger account-level evidence establishes another lifecycle status.** A future deal can be opened against the same Prospect without first undoing a false disqualification.
+- **`Disqualified` only** where DE explicitly determined the account is not viable for current pursuit. Never derive it from a lost deal.
+- **`Do Not Engage` only** for an explicit prohibition. Never derived.
+- **`Inactive` never means "we lost a deal."** It describes a dormant relationship or non-active service state.
+- No lifecycle value may be derived from deal stages. Any migration or automation that reads a deal stage to set the lifecycle is invalid under this document.
 
 ## Disclosure boundary — internal only
 
@@ -184,6 +236,27 @@ When choosing a lifecycle value, ask:
 - Deal-stage chips may continue to display deal/pipeline state; they must not be treated as the account lifecycle authority.
 - Code, database enums, `POSITIVE_RANK`, `floorLifecycle`, boot migrations, API labels, and UI strips that still encode the superseded July 2026 lifecycle taxonomy are **legacy implementation surfaces that require migration** to this v1.1 model.
 - Until that migration is complete, do not add new code that depends on the superseded `Lead → Opportunity → Client` account-lifecycle ordering.
+
+### Approved migration pattern — add, backfill, cut over
+
+`accounts.lifecycle` is a `NOT NULL` production column whose **semantics** change, not merely its spelling. It is migrated by adding a parallel field, never by an in-place enum swap: an in-place swap combines schema change, semantic transformation, and production data migration into one irreversible operation.
+
+1. Add the new lifecycle field using the v1.2 vocabulary.
+2. Leave the legacy field untouched.
+3. Backfill using the approved mapping above, preserving stronger relationship states.
+4. Produce a comparison report: legacy value → migrated value → reason.
+5. Validate that every production account has a valid new lifecycle value.
+6. Switch application reads to the new field.
+7. Switch writes to the new field.
+8. Observe production briefly for mismatches and errors.
+9. Remove the legacy column only after validation.
+
+The translation layer is temporary scaffolding with a defined end. Do not leave it in place indefinitely — a permanent dual taxonomy is the outcome this document exists to prevent.
+
+### Logic that is invalid under this model
+
+- Any function that **derives lifecycle from deal stages**. Deal pipeline state is a separate domain; reading it to set the lifecycle is forbidden regardless of how the result is labelled.
+- Any **numeric-rank ladder** used as the general transition rule. A single ordered rank cannot express `Paused`, `At Risk`, `Inactive`, `Former`, `Disqualified`, or `Do Not Engage`, which are legitimate non-linear states. Transitions follow explicit business rules and evidence.
 - Existing one-account-per-organization, exact merge-key, race-safe-create, Zoho ID separation, quote-linking, and demo-clear integrity rules remain valid unless separately superseded.
 
 ## Change control
@@ -240,6 +313,22 @@ Do not merge, rename into, cross-wire, or infer one from the other. An employee 
 These are legacy surfaces requiring migration to the canonical 13-value model. They are **not** authority to redefine the vocabulary. Until migrated, do not add new code that depends on the superseded ordering.
 
 `MATURITY_STAGES` and `mapPortalMaturity()` produce a portal-side derived stage. Derived or not, it inherits this document's disclosure boundary: `prospect`, `former`, and `closed` must not surface to a client. If any maturity signal is ever shown client-side, it must go through an approved presentation mapping.
+
+### Automated enforcement
+
+The boundary is enforced by tests, not only by review. `server/integrations/tenantIdentity.ts` exports:
+
+- `ACCOUNT_LIFECYCLE_STATUSES` — the canonical 13 values;
+- `findLifecycleDisclosures(payload)` — walks a client-bound payload and returns every disclosure, by path;
+- `assertNoLifecycleDisclosure(payload, label)` — throws on any disclosure.
+
+Detection is deliberately asymmetric. A **lifecycle-named key** (`lifecycle`, `lifecycleStatus`, `accountLifecycleStatus`, `hubLifecycle`, in any casing or separator style) is always a violation — naming a field that way and putting anything in it discloses the classification. A **value** match only fires on unambiguous terms, so a portal user's `status: "active"`, a request's `state: "pending"`, and the existing client-visible `storeRole: "prospect"` do not trip it.
+
+`server/integrations/lifecycleDisclosure.test.ts` feeds each client-bound serializer a source record deliberately polluted with lifecycle fields — the shape a future schema addition or a Hub sync would produce — and asserts the output is clean. An allowlist serializer drops them; a serializer that starts spreading its source (`...user`) fails the test. This has been verified to fail on a deliberately leaky serializer, so it is a real guard rather than a vacuous one.
+
+**When you add a client-scoped serializer, add it to `CLIENT_BOUND_SERIALIZERS` in that test.** The guard cannot find a serializer it has never been given.
+
+Its limits, stated honestly: it covers serializers registered in that list, not every route handler that builds a response inline, and it cannot see values assembled only at runtime from live data. It raises the floor; it does not make a leak impossible.
 
 ### Checklist before merging a portal or website change
 
