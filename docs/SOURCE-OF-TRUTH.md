@@ -11,7 +11,7 @@ This repository is the canonical source for the Digerati Experts public website.
 
 The authoritative repository matrix is maintained in [`docs/REPOSITORY-AUTHORITY.md`](./REPOSITORY-AUTHORITY.md).
 
-This file is the **website application/content** source of truth (GitHub). Operational and commercial truth (accounts, deals, catalog, pricing, entitlements, approved claims) lives in Intelligence Hub (`digeratiexperts/Intelligence-Hub`). Executable agent rule: [`.cursor/rules/de-ecosystem.mdc`](../.cursor/rules/de-ecosystem.mdc). `git commit` ≠ merged ≠ deployed ≠ production verified (**MERGED ≠ LIVE**; website PR #88 closed without merge — deploy reliability still unresolved). Ecosystem scoreboard: [Intelligence-Hub#122](https://github.com/digeratiexperts/Intelligence-Hub/issues/122) — not a competing website ledger.
+This file is the **website application/content** source of truth (GitHub). Operational and commercial truth (accounts, deals, catalog, pricing, entitlements, approved claims) lives in Intelligence Hub (`digeratiexperts/Intelligence-Hub`). Account relationship lifecycle is governed by [`docs/ACCOUNT-LIFECYCLE-STATUS.md`](./ACCOUNT-LIFECYCLE-STATUS.md) — a mirror of the Hub authority; it is internal-only and must never reach a public or client-visible surface. Executable agent rule: [`.cursor/rules/de-ecosystem.mdc`](../.cursor/rules/de-ecosystem.mdc). `git commit` ≠ merged ≠ deployed ≠ production verified (**MERGED ≠ LIVE**; website PR #88 closed without merge — deploy reliability still unresolved). Ecosystem scoreboard: [Intelligence-Hub#122](https://github.com/digeratiexperts/Intelligence-Hub/issues/122) — not a competing website ledger.
 
 For website work:
 

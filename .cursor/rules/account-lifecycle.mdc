@@ -1,0 +1,39 @@
+---
+description: Account Lifecycle Status is internal-only — enforced server-side, never rendered on the public website or in client-visible portal surfaces
+alwaysApply: true
+---
+
+# Account Lifecycle Status — internal only
+
+Canonical model: `docs/ACCOUNT-LIFECYCLE-STATUS.md` (mirror). Authority: `digeratiexperts/Intelligence-Hub` → `.agents/memory/account-lifecycle-status-source-of-truth.md`.
+
+Canonical values (v1.1, exactly one per account):
+
+`Suspect, Prospect, Tentative, Pending, Onboarding, Active, Paused, At Risk, Offboarding, Inactive, Former, Disqualified, Do Not Engage`
+
+## The rule
+
+**Governed everywhere. Displayed nowhere client-facing.**
+
+- **Never** on `digeratiexperts.com` — marketing, Store, pricing, solution builders, lead/quote wizards, confirmation pages, HTML source, meta tags, structured data, or any unauthenticated JSON.
+- **Never** in client-visible Client Portal UI, client-delivered artifacts (quotes, invoices, reports, exports, email), or client-scoped API responses.
+- **Always** enforced server-side: authorization, entitlement, feature gating, tenant joins, automation, reporting, internal/admin UI.
+
+`Suspect`, `At Risk`, `Inactive`, `Former`, `Disqualified`, `Do Not Engage` must never reach a client or the public in any wording, abbreviation, colour, icon, sort position, or inferable proxy.
+
+## Implementation
+
+1. Omit lifecycle at the **serialization boundary** for client-scoped responses. Do not return it and hide it in the UI — CSS, `display:none`, a flag, or client-side filtering is **not** compliance.
+2. Lifecycle must not cross into `client/src/**` as a prop, query-key payload, cached response, or debug field.
+3. Client-visible wording about the relationship comes from an approved presentation mapping, never the raw value. No mapping entry → show nothing.
+4. Leaking a lifecycle value to a client or the public is a **P0 defect**.
+
+## Two different "lifecycles" — do not conflate
+
+`/portal/admin/lifecycle`, `AdminLifecycle.tsx`, `server/lifecycleOrchestrator.ts`, and `/api/portal/admin/lifecycle/*` are the **JumpCloud + Blackpoint employee identity lifecycle** (onboarding/offboarding a client's own staff). That is a different domain from **Account Lifecycle Status** (DE's relationship with the client organization). Do not merge, rename into, cross-wire, or infer one from the other.
+
+## Legacy — migration target, not authority
+
+`server/integrations/tenantIdentity.ts` still encodes the superseded taxonomy in `HUB_LIFECYCLES` (`lead`, `qualified_opportunity`, `client_pending_activation`, `active_client`, `former_client`, `closed_lost`) and `mapHubLifecycleToMaturity()`. Treat as legacy requiring migration. Do not add new dependencies on that ordering. `mapPortalMaturity()` output is derived but inherits the same disclosure boundary.
+
+Deal/sales pipeline stages (`Lead`, `Opportunity`, `Qualified`, `Proposal Sent`, `Closed Won`) are a **separate domain** and are not Account Lifecycle Status values.
