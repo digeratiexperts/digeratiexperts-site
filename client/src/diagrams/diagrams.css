@@ -84,16 +84,19 @@
 /* ------------------------------------------------ stage visibility rules
    data-dg-at = the stage an element belongs to. Elements at or below the
    current stage are shown; the current stage draws with --dg-p; later
-   stages are hidden. Generated for stages 0..6. */
+   stages are hidden. Generated for stages 0..8 (the protection diagram has
+   nine stages: the exposed business, seven blocks, the continuous layer). */
 .dg [data-dg-at] { transition: opacity var(--dg-draw-ms) var(--dg-ease); }
 .dg [data-dg-at] [pathLength], .dg [data-dg-at][pathLength] { transition: stroke-dashoffset var(--dg-draw-ms) var(--dg-ease), opacity var(--dg-draw-ms) var(--dg-ease); }
 
-.dg[data-dg-stage="0"] [data-dg-at="1"], .dg[data-dg-stage="0"] [data-dg-at="2"], .dg[data-dg-stage="0"] [data-dg-at="3"], .dg[data-dg-stage="0"] [data-dg-at="4"], .dg[data-dg-stage="0"] [data-dg-at="5"], .dg[data-dg-stage="0"] [data-dg-at="6"],
-.dg[data-dg-stage="1"] [data-dg-at="2"], .dg[data-dg-stage="1"] [data-dg-at="3"], .dg[data-dg-stage="1"] [data-dg-at="4"], .dg[data-dg-stage="1"] [data-dg-at="5"], .dg[data-dg-stage="1"] [data-dg-at="6"],
-.dg[data-dg-stage="2"] [data-dg-at="3"], .dg[data-dg-stage="2"] [data-dg-at="4"], .dg[data-dg-stage="2"] [data-dg-at="5"], .dg[data-dg-stage="2"] [data-dg-at="6"],
-.dg[data-dg-stage="3"] [data-dg-at="4"], .dg[data-dg-stage="3"] [data-dg-at="5"], .dg[data-dg-stage="3"] [data-dg-at="6"],
-.dg[data-dg-stage="4"] [data-dg-at="5"], .dg[data-dg-stage="4"] [data-dg-at="6"],
-.dg[data-dg-stage="5"] [data-dg-at="6"] { opacity: 0; }
+.dg[data-dg-stage="0"] [data-dg-at="1"], .dg[data-dg-stage="0"] [data-dg-at="2"], .dg[data-dg-stage="0"] [data-dg-at="3"], .dg[data-dg-stage="0"] [data-dg-at="4"], .dg[data-dg-stage="0"] [data-dg-at="5"], .dg[data-dg-stage="0"] [data-dg-at="6"], .dg[data-dg-stage="0"] [data-dg-at="7"], .dg[data-dg-stage="0"] [data-dg-at="8"],
+.dg[data-dg-stage="1"] [data-dg-at="2"], .dg[data-dg-stage="1"] [data-dg-at="3"], .dg[data-dg-stage="1"] [data-dg-at="4"], .dg[data-dg-stage="1"] [data-dg-at="5"], .dg[data-dg-stage="1"] [data-dg-at="6"], .dg[data-dg-stage="1"] [data-dg-at="7"], .dg[data-dg-stage="1"] [data-dg-at="8"],
+.dg[data-dg-stage="2"] [data-dg-at="3"], .dg[data-dg-stage="2"] [data-dg-at="4"], .dg[data-dg-stage="2"] [data-dg-at="5"], .dg[data-dg-stage="2"] [data-dg-at="6"], .dg[data-dg-stage="2"] [data-dg-at="7"], .dg[data-dg-stage="2"] [data-dg-at="8"],
+.dg[data-dg-stage="3"] [data-dg-at="4"], .dg[data-dg-stage="3"] [data-dg-at="5"], .dg[data-dg-stage="3"] [data-dg-at="6"], .dg[data-dg-stage="3"] [data-dg-at="7"], .dg[data-dg-stage="3"] [data-dg-at="8"],
+.dg[data-dg-stage="4"] [data-dg-at="5"], .dg[data-dg-stage="4"] [data-dg-at="6"], .dg[data-dg-stage="4"] [data-dg-at="7"], .dg[data-dg-stage="4"] [data-dg-at="8"],
+.dg[data-dg-stage="5"] [data-dg-at="6"], .dg[data-dg-stage="5"] [data-dg-at="7"], .dg[data-dg-stage="5"] [data-dg-at="8"],
+.dg[data-dg-stage="6"] [data-dg-at="7"], .dg[data-dg-stage="6"] [data-dg-at="8"],
+.dg[data-dg-stage="7"] [data-dg-at="8"] { opacity: 0; }
 
 /* the current stage's strokes draw with --dg-p (0 → 1) */
 .dg[data-dg-stage="1"] [data-dg-at="1"][pathLength], .dg[data-dg-stage="1"] [data-dg-at="1"] [pathLength],
@@ -101,15 +104,19 @@
 .dg[data-dg-stage="3"] [data-dg-at="3"][pathLength], .dg[data-dg-stage="3"] [data-dg-at="3"] [pathLength],
 .dg[data-dg-stage="4"] [data-dg-at="4"][pathLength], .dg[data-dg-stage="4"] [data-dg-at="4"] [pathLength],
 .dg[data-dg-stage="5"] [data-dg-at="5"][pathLength], .dg[data-dg-stage="5"] [data-dg-at="5"] [pathLength],
-.dg[data-dg-stage="6"] [data-dg-at="6"][pathLength], .dg[data-dg-stage="6"] [data-dg-at="6"] [pathLength] {
+.dg[data-dg-stage="6"] [data-dg-at="6"][pathLength], .dg[data-dg-stage="6"] [data-dg-at="6"] [pathLength],
+.dg[data-dg-stage="7"] [data-dg-at="7"][pathLength], .dg[data-dg-stage="7"] [data-dg-at="7"] [pathLength],
+.dg[data-dg-stage="8"] [data-dg-at="8"][pathLength], .dg[data-dg-stage="8"] [data-dg-at="8"] [pathLength] {
   stroke-dashoffset: calc(1 - var(--dg-p));
 }
 
 /* the active layer / ring / stage takes the accent: selected state only */
 .dg[data-dg-stage="1"] .dg-layer[data-dg-at="1"] rect, .dg[data-dg-stage="2"] .dg-layer[data-dg-at="2"] rect, .dg[data-dg-stage="3"] .dg-layer[data-dg-at="3"] rect,
-.dg[data-dg-stage="4"] .dg-layer[data-dg-at="4"] rect, .dg[data-dg-stage="5"] .dg-layer[data-dg-at="5"] rect, .dg[data-dg-stage="6"] .dg-layer[data-dg-at="6"] rect { stroke: var(--dg-accent); }
+.dg[data-dg-stage="4"] .dg-layer[data-dg-at="4"] rect, .dg[data-dg-stage="5"] .dg-layer[data-dg-at="5"] rect, .dg[data-dg-stage="6"] .dg-layer[data-dg-at="6"] rect,
+.dg[data-dg-stage="7"] .dg-layer[data-dg-at="7"] rect, .dg[data-dg-stage="8"] .dg-layer[data-dg-at="8"] rect { stroke: var(--dg-accent); }
 .dg[data-dg-stage="1"] .dg-layer[data-dg-at="1"] .dg-code, .dg[data-dg-stage="2"] .dg-layer[data-dg-at="2"] .dg-code, .dg[data-dg-stage="3"] .dg-layer[data-dg-at="3"] .dg-code,
-.dg[data-dg-stage="4"] .dg-layer[data-dg-at="4"] .dg-code, .dg[data-dg-stage="5"] .dg-layer[data-dg-at="5"] .dg-code, .dg[data-dg-stage="6"] .dg-layer[data-dg-at="6"] .dg-code { fill: var(--dg-accent-ink); }
+.dg[data-dg-stage="4"] .dg-layer[data-dg-at="4"] .dg-code, .dg[data-dg-stage="5"] .dg-layer[data-dg-at="5"] .dg-code, .dg[data-dg-stage="6"] .dg-layer[data-dg-at="6"] .dg-code,
+.dg[data-dg-stage="7"] .dg-layer[data-dg-at="7"] .dg-code, .dg[data-dg-stage="8"] .dg-layer[data-dg-at="8"] .dg-code { fill: var(--dg-accent-ink); }
 
 .dg[data-dg-stage="0"] .dg-ring[data-dg-at="0"] circle, .dg[data-dg-stage="1"] .dg-ring[data-dg-at="1"] circle,
 .dg[data-dg-stage="2"] .dg-ring[data-dg-at="2"] circle, .dg[data-dg-stage="3"] .dg-ring[data-dg-at="3"] circle { stroke: var(--dg-accent); stroke-width: 2; }
@@ -139,10 +146,12 @@
 .dg[data-focus^="layer-"][data-dg-stage] .dg-layer rect { stroke: var(--dg-hairline); stroke-width: 1; }
 .dg[data-focus^="layer-"][data-dg-stage] .dg-layer .dg-code { fill: var(--dg-soft); }
 .dg[data-focus="layer-1"] .dg-layer[data-dg-at="1"] rect, .dg[data-focus="layer-2"] .dg-layer[data-dg-at="2"] rect, .dg[data-focus="layer-3"] .dg-layer[data-dg-at="3"] rect,
-.dg[data-focus="layer-4"] .dg-layer[data-dg-at="4"] rect, .dg[data-focus="layer-5"] .dg-layer[data-dg-at="5"] rect, .dg[data-focus="layer-6"] .dg-layer[data-dg-at="6"] rect { stroke: var(--dg-accent); stroke-width: 1.5; }
+.dg[data-focus="layer-4"] .dg-layer[data-dg-at="4"] rect, .dg[data-focus="layer-5"] .dg-layer[data-dg-at="5"] rect, .dg[data-focus="layer-6"] .dg-layer[data-dg-at="6"] rect,
+.dg[data-focus="layer-7"] .dg-layer[data-dg-at="7"] rect, .dg[data-focus="layer-8"] .dg-layer[data-dg-at="8"] rect { stroke: var(--dg-accent); stroke-width: 1.5; }
 .dg[data-focus="layer-1"] .dg-layer[data-dg-at="1"] .dg-code, .dg[data-focus="layer-2"] .dg-layer[data-dg-at="2"] .dg-code, .dg[data-focus="layer-3"] .dg-layer[data-dg-at="3"] .dg-code,
-.dg[data-focus="layer-4"] .dg-layer[data-dg-at="4"] .dg-code, .dg[data-focus="layer-5"] .dg-layer[data-dg-at="5"] .dg-code, .dg[data-focus="layer-6"] .dg-layer[data-dg-at="6"] .dg-code { fill: var(--dg-accent-ink); }
-.dg[data-focus^="layer-"][data-dg-stage="6"] .dg-layer rect { transition: stroke 200ms var(--dg-ease), stroke-width 200ms var(--dg-ease); }
+.dg[data-focus="layer-4"] .dg-layer[data-dg-at="4"] .dg-code, .dg[data-focus="layer-5"] .dg-layer[data-dg-at="5"] .dg-code, .dg[data-focus="layer-6"] .dg-layer[data-dg-at="6"] .dg-code,
+.dg[data-focus="layer-7"] .dg-layer[data-dg-at="7"] .dg-code, .dg[data-focus="layer-8"] .dg-layer[data-dg-at="8"] .dg-code { fill: var(--dg-accent-ink); }
+.dg[data-focus^="layer-"][data-dg-stage="8"] .dg-layer rect { transition: stroke 200ms var(--dg-ease), stroke-width 200ms var(--dg-ease); }
 
 @media (prefers-reduced-motion: reduce) {
   .dg [data-dg-at], .dg [data-dg-at] [pathLength], .dg [data-dg-at][pathLength] { transition: none; }

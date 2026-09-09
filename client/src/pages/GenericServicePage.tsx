@@ -135,7 +135,7 @@ export default function GenericServicePage({
         <div className="flex flex-wrap items-center gap-3">
           <ProofChip metric="24/7" label="Human-Led SOC" icon={Shield} />
           <ProofChip metric="ARIZONA" label="Local Engineering Team" icon={Users} />
-          <ProofChip metric="6 DOMAINS" label="Managed Protection" icon={Award} />
+          <ProofChip metric="8 BLOCKS" label="Managed Protection" icon={Award} />
           <ProofChip metric="SLA" label="Defined Response Times" icon={Clock} />
         </div>
 

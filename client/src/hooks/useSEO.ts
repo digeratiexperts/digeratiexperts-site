@@ -11,7 +11,7 @@ interface SEOProps {
 const BASE_TITLE = 'Digerati Experts';
 const DEFAULT_DESCRIPTION = "Cybersecurity-first managed IT for Arizona businesses. Assessment-led recommendations, partner-backed monitoring, and accountable day-to-day IT.";
 const SITE_URL = 'https://digeratiexperts.com';
-const DEFAULT_IMAGE = `${SITE_URL}/favicon-512x512.png`;
+const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`;
 
 function buildFullTitle(title: string): string {
   const trimmed = title.trim();

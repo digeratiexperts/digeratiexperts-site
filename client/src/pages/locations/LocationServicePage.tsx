@@ -131,7 +131,7 @@ export function LocationServicePage(props: LocationPageProps) {
         },
       ],
       priceRange: "$$",
-      image: "https://digeratiexperts.com/logo.png",
+      image: "https://digeratiexperts.com/og-image.png",
       sameAs: [COMPANY_SOCIAL.linkedin.href, COMPANY_SOCIAL.facebook.href, COMPANY_SOCIAL.twitter.href],
       hasOfferCatalog: {
         "@type": "OfferCatalog",

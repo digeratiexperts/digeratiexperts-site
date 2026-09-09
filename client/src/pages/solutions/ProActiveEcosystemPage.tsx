@@ -77,7 +77,7 @@ export default function ProActiveEcosystemPage() {
           {/* Sourced Contextual Proof Chips */}
           <div className="flex flex-wrap items-center gap-3">
             <ProofChip metric="4 MODELS" label="IT · Office · Business · Enterprise" icon={Layers} />
-            <ProofChip metric="6 DOMAINS" label="Engineered Architecture" icon={Shield} />
+            <ProofChip metric="8 BLOCKS" label="Engineered Architecture" icon={Shield} />
             <ProofChip metric="ARIZONA" label="Principal-Led Engagement" icon={Users} />
           </div>
 

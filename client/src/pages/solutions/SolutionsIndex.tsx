@@ -196,7 +196,7 @@ const SolutionsIndex = () => {
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
               <ProofChip metric="24/7" label="Human-Led SOC" icon={Lock} />
               <ProofChip metric="ARIZONA" label="Local Engineering Team" icon={Users} />
-              <ProofChip metric="6 DOMAINS" label="Assessed & Protected" icon={Shield} />
+              <ProofChip metric="8 BLOCKS" label="Assessed & Protected" icon={Shield} />
               <ProofChip metric="RTO/RPO" label="Defined SLA Commitments" icon={Activity} />
             </div>
           </motion.div>
