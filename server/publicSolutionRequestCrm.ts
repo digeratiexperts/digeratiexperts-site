@@ -1,6 +1,7 @@
 import { curatedSolutionFamilies } from "../client/src/data/curatedSolutions";
 import { zohoClient } from "./zoho/zohoClient";
 import { zohoCRMService } from "./zoho/zohoCRM";
+import { websiteLeadTaxonomy } from "./zoho/leadTaxonomy";
 import type { PublicSolutionRequest } from "./publicSolutionRequestStore";
 
 function splitName(fullName: string): { first: string; last: string } {
@@ -87,15 +88,16 @@ export async function syncPublicSolutionRequestToCrm(
   try {
     const { first, last } = splitName(record.contactName);
     const description = buildPublicSolutionRequestDescription(record);
+    const taxonomy = websiteLeadTaxonomy("solution_request");
     const created = await zohoCRMService.createLead({
       First_Name: first || undefined,
       Last_Name: last,
       Email: record.contactEmail,
       Phone: record.contactPhone || undefined,
       Company: record.organizationName || "Solution request prospect",
-      Lead_Source: "Website Solution Request",
+      Lead_Source: taxonomy.leadSource,
       Description: description,
-      Lead_Status: "Not Contacted",
+      Lead_Status: taxonomy.leadStatus,
     });
     if (created?.id) return "recorded";
     return "pending";
