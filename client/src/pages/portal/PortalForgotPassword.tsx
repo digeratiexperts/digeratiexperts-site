@@ -42,7 +42,7 @@ export default function PortalForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
+    <main className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
           <img src={logoImage} alt="Digerati Experts" className="h-10 w-auto" />
@@ -118,6 +118,6 @@ export default function PortalForgotPassword() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
   );
 }
