@@ -112,7 +112,7 @@ export default function DowntimeCalculator() {
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#D3126A]/10 border border-[#D3126A]/30 mb-6">
               <Calculator className="w-4 h-4 text-[#D3126A]" />
-              <span className="text-sm text-[#D3126A] font-medium">Business Impact Calculator</span>
+              <span className="text-sm text-de-magenta-ink font-medium">Business Impact Calculator</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
               IT Cost <span className="text-[#D3126A]">Calculators</span>
@@ -127,10 +127,12 @@ export default function DowntimeCalculator() {
             {/* Tabs */}
             <div className="flex border-b-2 border-[#D3126A]/15">
               <button
+                type="button"
+                aria-pressed={activeTab === 'downtime'}
                 onClick={() => setActiveTab('downtime')}
                 className={`flex-1 px-6 py-5 text-sm font-bold uppercase tracking-wider transition-all duration-300 border-b-3 ${
                   activeTab === 'downtime'
-                    ? 'text-[#D3126A] bg-[#D3126A]/10 border-b-[#D3126A] shadow-[0_0_10px_rgba(211,18,106),0.3)]'
+                    ? 'text-de-magenta-ink bg-[#D3126A]/10 border-b-[#D3126A] shadow-[0_0_10px_rgba(211,18,106,0.3)]'
                     : 'text-gray-400 hover:text-white hover:bg-[#D3126A]/5 border-b-transparent'
                 }`}
                 data-testid="tab-downtime-cost"
@@ -139,10 +141,12 @@ export default function DowntimeCalculator() {
                 Downtime Cost
               </button>
               <button
+                type="button"
+                aria-pressed={activeTab === 'service'}
                 onClick={() => setActiveTab('service')}
                 className={`flex-1 px-6 py-5 text-sm font-bold uppercase tracking-wider transition-all duration-300 border-b-3 ${
                   activeTab === 'service'
-                    ? 'text-[#D3126A] bg-[#D3126A]/10 border-b-[#D3126A] shadow-[0_0_10px_rgba(211,18,106),0.3)]'
+                    ? 'text-de-magenta-ink bg-[#D3126A]/10 border-b-[#D3126A] shadow-[0_0_10px_rgba(211,18,106,0.3)]'
                     : 'text-gray-400 hover:text-white hover:bg-[#D3126A]/5 border-b-transparent'
                 }`}
                 data-testid="tab-service-cost"
@@ -166,9 +170,9 @@ export default function DowntimeCalculator() {
 
                   {/* Industry Select */}
                   <div className="mb-6">
-                    <Label className="text-xs font-semibold uppercase tracking-wide text-white mb-2 block">Industry</Label>
+                    <Label id="calc-industry-label" className="text-xs font-semibold uppercase tracking-wide text-white mb-2 block">Industry</Label>
                     <Select value={industry} onValueChange={setIndustry}>
-                      <SelectTrigger className="h-14 bg-[#151217] border-2 border-[#D3126A]/15 text-white hover:border-[#D3126A] focus:border-[#D3126A] focus:ring-2 focus:ring-[#D3126A]/30 transition-all" data-testid="select-calc-industry">
+                      <SelectTrigger aria-labelledby="calc-industry-label" className="h-14 bg-[#151217] border-2 border-[#D3126A]/15 text-white hover:border-[#D3126A] focus:border-[#D3126A] focus:ring-2 focus:ring-[#D3126A]/30 transition-all" data-testid="select-calc-industry">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-[#151217] border-[#D3126A]/30">

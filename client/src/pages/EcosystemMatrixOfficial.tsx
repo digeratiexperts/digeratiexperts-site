@@ -152,35 +152,40 @@ export default function EcosystemMatrixOfficial() {
               <Button 
                 variant={showUpgrades ? "default" : "outline"}
                 size="sm"
-                className={showUpgrades ? "bg-de-magenta" : "border-white/10"}
+                aria-pressed={showUpgrades}
+                className={showUpgrades ? "bg-de-magenta text-white" : "border-white/20 text-white hover:text-white"}
                 onClick={() => setShowUpgrades(!showUpgrades)}
               >
-                <Zap className="w-4 h-4 mr-2" /> Highlight Upgrades
+                <Zap className="w-4 h-4 mr-2" aria-hidden="true" /> Highlight Upgrades
               </Button>
               <div className="flex rounded-md border border-de-hairline bg-de-raised p-1">
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className={density === "cozy" ? "bg-white/10" : ""}
+                  aria-pressed={density === "cozy"}
+                  className={density === "cozy" ? "bg-white/10 text-white" : "text-white"}
                   onClick={() => setDensity("cozy")}
                 >Cozy</Button>
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className={density === "compact" ? "bg-white/10" : ""}
+                  aria-pressed={density === "compact"}
+                  className={density === "compact" ? "bg-white/10 text-white" : "text-white"}
                   onClick={() => setDensity("compact")}
                 >Compact</Button>
               </div>
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="border-white/10"
+                className="border-white/20 text-white hover:text-white"
+                aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+                aria-pressed={isDark}
                 onClick={() => setIsDark(!isDark)}
               >
-                {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {isDark ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
               </Button>
-              <Button variant="outline" size="sm" className="border-white/10" onClick={() => window.print()}>
-                <Printer className="w-4 h-4" />
+              <Button variant="outline" size="sm" className="border-white/20 text-white hover:text-white" aria-label="Print this matrix" onClick={() => window.print()}>
+                <Printer className="w-4 h-4" aria-hidden="true" />
               </Button>
             </div>
           </div>
@@ -216,6 +221,8 @@ export default function EcosystemMatrixOfficial() {
           {filteredData.map((section) => (
             <div key={section.id} className="overflow-hidden rounded-2xl border border-de-hairline bg-de-raised">
               <button 
+                type="button"
+                aria-expanded={expandedSections.includes(section.id)}
                 className="flex w-full items-center justify-between border-b border-de-hairline bg-de-raised p-4 transition-colors hover:bg-de-bg"
                 onClick={() => toggleSection(section.id)}
               >
@@ -223,7 +230,7 @@ export default function EcosystemMatrixOfficial() {
                   <span className="w-1.5 h-6 bg-de-magenta rounded-full"></span>
                   {section.title}
                 </h2>
-                <ChevronDown className={`w-5 h-5 text-white/55 transition-transform ${expandedSections.includes(section.id) ? "" : "-rotate-90"}`} />
+                <ChevronDown aria-hidden="true" className={`w-5 h-5 text-white/55 transition-transform ${expandedSections.includes(section.id) ? "" : "-rotate-90"}`} />
               </button>
               
               {expandedSections.includes(section.id) && (
@@ -237,7 +244,7 @@ export default function EcosystemMatrixOfficial() {
                         <span className="text-sm font-medium text-white/80 group-hover:text-white transition-colors">{feature.name}</span>
                         <TooltipProvider>
                           <Tooltip>
-                            <TooltipTrigger><Info className="w-3.5 h-3.5 text-white/20 hover:text-white/55" /></TooltipTrigger>
+                            <TooltipTrigger aria-label={`About ${feature.name}`} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink"><Info className="w-3.5 h-3.5 text-white/55 hover:text-white" aria-hidden="true" /></TooltipTrigger>
                             <TooltipContent><p className="max-w-xs text-xs">Standard industry definition for {feature.name}.</p></TooltipContent>
                           </Tooltip>
                         </TooltipProvider>

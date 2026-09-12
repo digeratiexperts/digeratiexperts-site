@@ -212,7 +212,7 @@ export default function PublicStoreCheckout() {
                         <h3 className="font-semibold text-white">{family.label}</h3>
                         <p className="mt-1 text-sm leading-relaxed text-white/55">{family.description}</p>
                       </div>
-                      <button type="button" onClick={() => removeDraftNeed(item.familyId)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-white/45 hover:bg-white/5 hover:text-white" aria-label={`Remove ${family.label}`}>
+                      <button type="button" onClick={() => removeDraftNeed(item.familyId)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-white/55 hover:bg-white/5 hover:text-white" aria-label={`Remove ${family.label}`}>
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -259,7 +259,7 @@ export default function PublicStoreCheckout() {
                       <div className="flex flex-col gap-3 bg-black/20 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <h3 className="font-semibold text-white">{packageView.offerName}</h3>
-                          <p className="mt-1 text-xs text-white/45">{packageView.relationshipLabel} · {packageView.pricingLabel}</p>
+                          <p className="mt-1 text-xs text-white/55">{packageView.relationshipLabel} · {packageView.pricingLabel}</p>
                         </div>
                         <span className="text-xs text-de-accent-ink">{assessmentPolicyLabel(packageView.assessmentPolicy)}</span>
                       </div>
@@ -267,7 +267,7 @@ export default function PublicStoreCheckout() {
                         {packageView.lineItems.map((line, index) => (
                           <div key={line.label} className={`grid grid-cols-[minmax(0,1fr)_auto] gap-4 px-4 py-3 text-sm ${index ? "border-t border-white/10" : ""}`}>
                             <span className="text-white/75">{line.label}</span>
-                            <span className="text-right text-white/45">{line.quantity}</span>
+                            <span className="text-right text-white/55">{line.quantity}</span>
                           </div>
                         ))}
                       </div>
