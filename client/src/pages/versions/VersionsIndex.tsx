@@ -66,7 +66,7 @@ export default function VersionsIndex(): JSX.Element {
                 <p className="mt-3 text-base leading-relaxed text-white/70">{v.summary}</p>
                 <div className="mt-3">
                   {v.kind === "planned" ? (
-                    <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/40">
+                    <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/65">
                       {v.path} · reserved
                     </span>
                   ) : (
