@@ -19,6 +19,12 @@ interface EvidenceFrameProps {
   sourceNote?: string;
   variant?: "dark" | "paper" | "interactive";
   className?: string;
+  /**
+   * Document outline level of the frame title. Frames sit under a section
+   * h2 (or a card h3), so h3 is the level that never skips; pass h4 only when
+   * the frame is nested under an h3.
+   */
+  headingLevel?: "h2" | "h3" | "h4";
 }
 
 const classificationConfig: Record<
@@ -61,7 +67,9 @@ export const EvidenceFrame: React.FC<EvidenceFrameProps> = ({
   sourceNote,
   variant = "dark",
   className = "",
+  headingLevel = "h3",
 }) => {
+  const TitleTag = headingLevel;
   const isDark = variant === "dark" || variant === "interactive";
   const classMeta = classificationConfig[classification];
   const ClassIcon = classMeta.icon;
@@ -104,9 +112,9 @@ export const EvidenceFrame: React.FC<EvidenceFrameProps> = ({
       </div>
 
       <div className="px-5 pb-2 pt-4 md:px-6">
-        <h4 className={`font-heading text-lg font-bold tracking-tight md:text-xl ${isDark ? "text-white" : "text-[#1A1228]"}`}>
+        <TitleTag className={`font-heading text-lg font-bold tracking-tight md:text-xl ${isDark ? "text-white" : "text-[#1A1228]"}`}>
           {title}
-        </h4>
+        </TitleTag>
         {subtitle && <p className={`mt-1 text-sm leading-relaxed ${isDark ? "text-white/70" : "text-[#3A3448]"}`}>{subtitle}</p>}
       </div>
 

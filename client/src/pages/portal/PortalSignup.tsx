@@ -82,7 +82,7 @@ export default function PortalSignup() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
+      <main className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <Card className="bg-white/10 border-white/20 backdrop-blur">
             <CardContent className="pt-12 pb-12 text-center">
@@ -95,12 +95,12 @@ export default function PortalSignup() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
+    <main className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
@@ -217,6 +217,6 @@ export default function PortalSignup() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
   );
 }
