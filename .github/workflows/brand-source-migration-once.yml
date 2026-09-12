@@ -1,0 +1,70 @@
+name: One-shot brand source migration
+
+on:
+  push:
+    branches: [chatgpt/brand-source-migration-20260912]
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace legacy live logo imports only
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          targets = [
+              'client/src/components/MegaMenu.tsx',
+              'client/src/components/BookingModal.tsx',
+              'client/src/components/ExitIntentPopup.tsx',
+              'client/src/pages/sections/DigeratiEnhancedFooterSection.tsx',
+              'client/src/pages/portal/PortalLogin.tsx',
+              'client/src/pages/portal/PortalSignup.tsx',
+              'client/src/pages/portal/PortalForgotPassword.tsx',
+              'client/src/pages/portal/PortalResetPassword.tsx',
+              'client/src/pages/portal/PortalLayout.tsx',
+          ]
+
+          legacy_import = re.compile(
+              r"import\s+logoImage\s+from\s+['\"]@assets/DE-Logo-new_1762461524794\.webp['\"];?"
+          )
+          replacement_import = "import { DE_LOGO_REVERSE } from '@/lib/brandAssets';"
+
+          for rel in targets:
+              path = Path(rel)
+              text = path.read_text()
+              text, count = legacy_import.subn(replacement_import, text)
+              if count != 1:
+                  raise SystemExit(f'{rel}: expected exactly one legacy logo import, found {count}')
+              use_count = text.count('src={logoImage}')
+              if use_count < 1:
+                  raise SystemExit(f'{rel}: no logoImage render use found')
+              text = text.replace('src={logoImage}', 'src={DE_LOGO_REVERSE}')
+              if 'logoImage' in text:
+                  raise SystemExit(f'{rel}: unexpected logoImage reference remains')
+              path.write_text(text)
+              print(f'{rel}: migrated {use_count} render use(s)')
+
+          # This workflow is intentionally one-shot and must not survive its migration commit.
+          Path('.github/workflows/brand-source-migration-once.yml').unlink()
+          PY
+
+      - name: Commit migration and remove this workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Digerati Brand Migration'
+          git config user.email '53747291+digeratiexperts@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'brand: migrate live logo imports to canonical asset module'
+          git push origin HEAD:chatgpt/brand-source-migration-20260912
