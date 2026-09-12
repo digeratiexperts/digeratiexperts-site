@@ -218,6 +218,7 @@ export function LocationServicePage(props: LocationPageProps) {
     <>
       <MegaMenu />
 
+      <main id="page-main">
       <section className="relative overflow-hidden bg-[var(--de-bg)]">
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <img
@@ -690,6 +691,7 @@ export function LocationServicePage(props: LocationPageProps) {
           />
         </div>
       </section>
+      </main>
 
       <DigeratiEnhancedFooterSection />
     </>

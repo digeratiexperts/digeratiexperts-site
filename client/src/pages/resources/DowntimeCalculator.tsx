@@ -100,7 +100,8 @@ export default function DowntimeCalculator() {
   return (
     <div className="min-h-screen bg-[#050312]">
       <MegaMenu />
-      
+
+      <main id="page-main">
       {/* Hero Section */}
       <section className="de-nav-clear pb-16 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
@@ -422,6 +423,7 @@ export default function DowntimeCalculator() {
           </div>
         </div>
       </section>
+      </main>
 
       <DigeratiEnhancedFooterSection />
     </div>
