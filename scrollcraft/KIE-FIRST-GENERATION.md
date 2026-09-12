@@ -1,88 +1,63 @@
-# First kie.ai generation: proposal, not approved
+# First kie.ai generation: withdrawn for now (version 3)
 
-Status: **PROPOSED, NOT APPROVED, NOTHING SENT.** Owner: Claude Code. Date:
-2026-09-02. Governed by `docs/kie/KIE-RULES.md`. Joe approves or changes this
-in a message that names the still and gives the cap; only then is one
-`createTask` call made.
+Status: **NO REQUEST OPEN. NOTHING SENT.** Owner: Claude Code. Date:
+2026-09-02, late evening. Governed by `docs/kie/KIE-RULES.md`.
 
-## What would be generated
+Version 1 (GPT Image 2, a prose prompt, one still) was not approved. Version 2
+(Nano Banana 2 through the skill-pack method, two scopes) was written before
+the Why DE passage existed as a build. Joe then set the order of things: the
+flagship in PR #186 is judged first, no Version 4 opens beside it, no paid
+generation is approved, and any future request must first explain what a
+generated asset adds that code, typography, diagrams or the existing
+Scrollcraft mechanics cannot do better. This version answers that test, and the
+answer withdraws the request.
 
-One still. Family **F-02 "The environment: fragmented → designed → operated"**,
-frame **environment-01 (establishing)**, for the homepage peak scene and the
-Version 4 story (`scrollcraft/ASSET-PLAN.md` §3, F-02). This is the frame the
-whole homepage story turns on, and the one that tests the art direction
-hardest: real objects, one warm light, a graphite field, room for type.
+## The reconciliation with the Why DE passage (PR #186)
 
-| Field | Value |
-| --- | --- |
-| Model | First model marked AVAILABLE in Joe's order (GPT Image 2 → Nano Banana 2 → Imagen 4 Ultra/Fast → Flux-2 Pro → Seedream 5 Pro). The read-only probe of 2026-09-02 fills this in (`docs/kie/AVAIL-*.md`). Seedream 5 Pro is already known NOT-AUTHORIZED for this key. |
-| Listed price | GPT Image 2: 9 credits ($0.045). Nano Banana 2: about 8 credits ($0.04). Flux-2 Pro: 5 credits at 1K ($0.025). Imagen 4: not listed in what could be read. At $0.005 per credit. Listed prices are pre-checks; the manifest records the real debit. |
-| Proposed cap | **10 credits ($0.05)** for GPT Image 2 or Nano Banana 2; 6 credits for Flux-2 Pro. Joe sets the actual cap. |
-| Aspect | 16:9 at the model's 1K tier (the desktop peak frame). The 4:5 mobile alternate is a separate, later approval. |
-| Prompt | `scrollcraft/assets/f02/environment-01.prompt.txt`, reproduced below, sent verbatim. |
-| Output | `scrollcraft/assets/f02/environment-01.png` plus a provenance entry in `scrollcraft/assets/f02/manifest.json` (model, prompt, task id, result URL, sha256, credits before/after/spent, cap, approval text). |
-| Classification | ILLUSTRATIVE, status `candidate`. Labelled "Illustration" wherever it might later appear. |
-| Where it goes | Nowhere on the site. The file lands on the PR #183 branch for Joe to see, with a crop sheet at 1440 / 768 / 390. No page mounts it until Joe approves that separately. |
-| Retry | None. If kie.ai fails the task, the manifest records it and the run stops. |
+What the flagship actually is, read from its build, not its description: seven
+acts of type and motion on the graphite ground, one paper chapter, a course
+line and a bearing gauge drawn in code, a lateral rail of eight cybersecurity
+blocks with Risk & Exposure as a spanning violet band, an assess-first entry
+door above three pathways, the published refusals, and the heading correction
+as the single peak. **Zero images. By design**: "the chart, the course line and
+the bearing gauge are drawn, not photographed, which suits the subject better
+than any stock plate would."
 
-The exact request, produced by `kie.mjs still ... --dry-run` (no network), is:
+The F-02 scene was conceived for the earlier homepage plan: a small office's
+technology as separate objects on a dark desk, fragmenting, then designed, then
+operated. Tested against the passage:
 
-```json
-{
-  "model": "gpt-image-2-text-to-image",
-  "input": {
-    "prompt": "<the prompt file, verbatim>",
-    "aspect_ratio": "16:9"
-  }
-}
-```
+| Job the still was meant to do | Who does it in the passage | Verdict |
+| --- | --- | --- |
+| Make the visitor recognise their own tangle ("everything works, nothing connects") | The off-axis type and the copy of Act 1, and the tilt that reads as wrongness before anything names it | Done better by type and motion; a photo would name it literally, which `design/IMAGERY.md` forbids |
+| Carry the belief shift, fragmented to designed | The heading correction: the page rolls level under the reader at the operating principle | Done by a transform; a second image of the same scene cannot compete with the page itself changing state |
+| Show the breadth of what is held | The eight-block rail with the continuous layer beneath | Done by a diagram with the current architecture; the desk scene would show devices, not blocks, and would re-encode the stale device-centric picture |
+| Add material warmth, physical texture, Arizona light | Nothing in the passage does this | The one thing a still adds, and it is the one thing the passage decided against: a photoreal plate would open a second world inside "one unbroken passage" |
 
-(If a different model is first available, the `input` follows that model's
-documented fields; the dry run prints it before Joe approves.)
+So the asset adds atmosphere the flagship deliberately does without, and
+nothing the flagship needs. The request is withdrawn. The prompt file
+`artifacts/kie-ai/nano-banana/prompts/homepage/2026-09-02-f02-environment-01.json`
+stays in the repository as a worked example of the method, unrun.
 
-## The prompt (verbatim)
+## What this leaves standing
 
-```
-Premium editorial product photograph, physical technology, technically credible, quiet Arizona evening atmosphere. Real materials with real texture: brushed aluminium, matte plastic, paper, glass. One warm key light from the right, like a low desert sun through a window. Graphite field: a near-black desk surface and background, restrained violet ambient fill, no glow, no neon. No people, no readable text, no logos, no padlocks, no shields, no holograms, no data streams, no dashboards, no screens showing content, no cyberpunk styling.
+- **The tooling.** `kie.mjs` (`still`, `nb2`, `fetch`, the approval and cap
+  gate, price and balance checks, one call and no retry, image-only download,
+  provenance manifest with kie.ai's own credit count), the model registry, the
+  two result hosts. Useful whichever homepage direction wins.
+- **Excalidraw visuals** for explainers, documentation, proposals, blog, social
+  and OG material, never as the visual language of the flagship homepage. Each
+  one is its own request with a cap, when Joe asks for one.
+- **Photography** (F-01 hero, F-04 cadence, F-05 Chandler, F-06 captures) as
+  the plan always said: real captures from the shoot, not generated stand-ins.
+- **The homepage's own correction.** The live homepage still presents the
+  six-domain model through `ProtectionCommandDeck` and the diagram system's
+  "one environment" and "layered protection" figures. That is content, not a
+  scroll treatment, and it sits in the `de-site-v2-scrollcraft` claim. It is
+  not started here; it is a separate lane for Joe to route.
 
-A small professional-services office's technology laid out as separate physical objects on one wide dark desk plane, seen from a 30-degree tilt: a closed laptop, a phone face down, a small router, a two-bay NAS, a compact printer, an employee badge card, and a paper binder. The objects sit apart from each other with clear gaps and hard shadows, no cables joining them, nothing lit up. Wide composition with the objects grouped in the right two thirds and the left third open and dark for typography. Photoreal, natural lens rendering, 16:9.
-```
+## What would reopen a request
 
-Why this scene represents DE (rule 15): it is the buyer's own office as
-physical objects, not a hacker or a padlock; the "fragmented" state is the
-belief DE changes; the same scene, same camera, becomes "designed" (hairline
-connections drawn in code, not in the image) and "operated" (one soft-lit
-boundary, the badge lit) in frames 02 and 03, which would be image-to-image
-from this frame so the set stays consistent (rule 11).
-
-## The command that would run, once approved
-
-```
-node .claude/skills/scrollcraft/scripts/kie.mjs still \
-  @scrollcraft/assets/f02/environment-01.prompt.txt \
-  scrollcraft/assets/f02/environment-01.png \
-  --model gpt-image-2-text-to-image --ar 16:9 \
-  --family F-02 --frame environment-01 --page "homepage / peak: the environment, fragmented" \
-  --approved "Joe, <date and words of the approving message>" --cap <credits Joe gives>
-```
-
-The script refuses without `--approved` and `--cap`, refuses if the listed
-price is above the cap or the balance cannot cover it, makes one
-`createTask`, records the task id before polling, never retries, reads the
-balance after, and flags any spend above the cap.
-
-## What is deliberately not in this proposal
-
-- No video. The F-02 motion plate in the asset plan is dropped under the
-  image-only rule; the "lighting comes up" moment will be built in code
-  (opacity and mask on the resolved frame) instead.
-- No F-03 macros, no mobile alternate, no second frame. Each is its own
-  approval with its own cap.
-- No page changes and no publishing.
-
-## After Joe sees the result
-
-1. Keep / reroll / change direction. A reroll is a new approval.
-2. If kept: frames 02 and 03 by image-to-image from frame 01 (two approvals),
-   then the 4:5 mobile alternate, then F-03's six macros.
-3. Only then does the Version 4 homepage work resume against real material.
+A scene the flagship's grammar cannot carry and photography cannot supply in
+time, named against this same table. Until then the money gate stays closed by
+this document's own recommendation, not only by the rule.

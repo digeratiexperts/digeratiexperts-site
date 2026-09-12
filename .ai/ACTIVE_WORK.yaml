@@ -155,7 +155,15 @@ claims:
       that main for the kie.ai workflow lane (PR #183): key alias, model
       registry, spend guards, provenance manifest, docs/kie/KIE-RULES.md.
       kie.ai spend: NONE without Joe's approval and cap in the same message;
-      image models only; the first proposal is scrollcraft/KIE-FIRST-GENERATION.md.
+      image models only. 2026-09-02 evening (Joe): the money gate is closed,
+      the F-02 request is withdrawn after reconciling with PR #186
+      (scrollcraft/KIE-FIRST-GENERATION.md v3), Version 4 does not start,
+      and PR #184 stays a draft scoped to tooling and asset planning.
+      OPEN, for Joe to route: the live homepage still presents the
+      six-domain model (ProtectionCommandDeck, the "one environment" and
+      "layered protection" diagrams); the current architecture is eight
+      blocks per docs/DE-SERVICE-MODEL-2026.md (PR #185). That correction
+      is content inside this claim and has not been started.
       FREEZE (2026-09-01, Joe): Scrollcraft implementation on ANY route is
       gated by the approved DE Scrollcraft Experience Plan at
       scrollcraft/EXPERIENCE-PLAN.md. No page code, no material production,
