@@ -1758,13 +1758,16 @@ html {
    Do NOT force `color: white` on every `.bg-gradient-to-r:hover`.
    Portal Quick Actions and other light/lavender cards use that class as a
    surface tint; white type then inherits onto outline buttons (white on white).
-   Only pin white when the control is already labeled white. */
-@layer utilities {
-  button.text-white:hover,
-  a.text-white:hover,
-  [role="button"].text-white:hover {
-    color: white;
-  }
+   Only pin white when the control is already labeled white.
+   Kept OUT of @layer utilities on purpose: inside that layer Tailwind treats
+   `.text-white` here as a utility definition and emits broken variant
+   selectors (`.dark\:text-white:is(.dark *)button:hover`), which the CSS
+   minifier warned about on every build and dropped. Specificity (0,2,1)
+   already beats any `hover:text-*` utility, so placement is unchanged. */
+button.text-white:hover,
+a.text-white:hover,
+[role="button"].text-white:hover {
+  color: white;
 }
 
 /* Wave separator animations */
