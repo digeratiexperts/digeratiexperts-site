@@ -123,15 +123,16 @@ claims:
     status: active
     started: 2026-09-12
     note: >-
-      DE Completion Program, Claude visual/UI lane, 2026-09-12: eleven
+      DE Completion Program, Claude visual/UI lane, 2026-09-12: thirteen
       commits (C1 a11y repairs; C3 Store status rail + save state; C4
       portal auth h1 + marketplace copy/links/contrast; C5 DE Desk graphite
       shell override; C6 favicon/manifest wiring from the vector brand
       package; C8 fail-closed client price rendering + main landmark +
       EvidenceFrame heading level; C8 97-route a11y sweep closure — prose
       :where() specificity, control names, focusable table regions,
-      contrast; C8 <main> landmark on every marketing page). All
-      local-only; delivered as ordered git-am patches 0001-0013 in DE/Evidence/2026-09-12-claude-c1/patches,
+      contrast; C8 <main> landmark on every marketing page; versions-index label;
+      warning-free CSS build). All local-only; delivered as ordered
+      git-am patches 0001-0017 in DE/Evidence/2026-09-12-claude-c1/patches,
       verified to apply cleanly onto origin/main fe4a5216 with tsc clean,
       94 files / 418 tests and a green production build. Not claimed:
       client/src/pages/DigeratiHomepageChallenger.tsx and *Challenger.tsx
