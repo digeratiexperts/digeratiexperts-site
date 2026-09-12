@@ -357,6 +357,24 @@ export default function PublicStoreCheckout() {
                 <StatusLine ready={fulfillmentReady} label="Delivery" detail={fulfillmentReady ? "Selected" : "Choose setup + support"} />
               </div>
 
+              {/* Save state lives in the rail as well as the form column: the rail
+                  is what stays on screen while the visitor works, so this is where
+                  "is my draft safe?" gets answered. Same handler, same state. */}
+              <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/15 p-3" data-testid="solution-rail-save" aria-live="polite">
+                <p className="min-w-0 text-xs leading-relaxed text-white/60">
+                  {saveError ? (
+                    <span className="text-red-300">{saveError}</span>
+                  ) : savedAt ? (
+                    <span className="text-emerald-300"><Check className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />Saved to DE at {savedAt}</span>
+                  ) : (
+                    <>Autosaved on this device. Save to DE to keep it across devices.</>
+                  )}
+                </p>
+                <Button type="button" size="sm" variant="outline" className="h-9 shrink-0 border-white/20 text-white hover:bg-white/10" onClick={saveProgress} disabled={saving} aria-label={saving ? "Saving progress" : "Save progress to DE"}>
+                  <Save className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />{saving ? "Saving…" : "Save"}
+                </Button>
+              </div>
+
               <div className="mt-6 border-t border-white/10 pt-5">
                 <p className="text-xs uppercase tracking-wide text-white/55">Next</p>
                 <p className="mt-2 text-sm leading-relaxed text-white/60">
