@@ -382,7 +382,7 @@ const chapters: Chapter[] = [
           <p className="text-white/60 text-sm">
             © {new Date().getFullYear()} Digerati Experts. All rights reserved.
           </p>
-          <p className="text-white/45 text-sm mt-2">
+          <p className="text-white/55 text-sm mt-2">
             Joe Petro — Founder, Digerati Experts
           </p>
         </div>
@@ -652,12 +652,12 @@ export default function Ebook() {
                             }`}
                           >
                             <div className="flex items-center gap-3">
-                              <span className={`font-mono text-sm ${currentChapter === idx ? 'text-de-accent-ink' : 'text-white/45'}`}>
+                              <span className={`font-mono text-sm ${currentChapter === idx ? 'text-de-accent-ink' : 'text-white/55'}`}>
                                 {String(chapter.id).padStart(2, '0')}
                               </span>
                               <div>
                                 <p className="font-medium text-sm">{chapter.title}</p>
-                                <p className="text-xs text-white/45 mt-1">{chapter.subtitle}</p>
+                                <p className="text-xs text-white/55 mt-1">{chapter.subtitle}</p>
                               </div>
                               {bookmarks.includes(idx) && (
                                 <BookMarked className="w-4 h-4 text-de-accent-ink ml-auto" />
@@ -734,7 +734,7 @@ export default function Ebook() {
                       >
                         <ZoomOut className="w-4 h-4" />
                       </button>
-                      <span className="text-xs text-white/45 w-8 text-center">{fontSize}</span>
+                      <span className="text-xs text-white/55 w-8 text-center">{fontSize}</span>
                       <button
                         onClick={() => setFontSize(prev => Math.min(28, prev + 2))}
                         className="p-2 text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-all"
@@ -784,7 +784,7 @@ export default function Ebook() {
                       <Badge className="bg-gradient-to-r from-[#D3126A]/20 to-[#D3126A]/10 text-de-accent-ink border-[#D3126A]/30 font-mono">
                         CHAPTER {chapters[currentChapter].id}
                       </Badge>
-                      <span className="text-xs text-white/45 font-mono">
+                      <span className="text-xs text-white/55 font-mono">
                         Page {currentChapter + 1} of {chapters.length}
                       </span>
                     </div>
@@ -844,7 +844,7 @@ export default function Ebook() {
                   
                   {/* Page indicator */}
                   <div className="text-center mt-4">
-                    <span className="text-sm text-white/45 font-mono">
+                    <span className="text-sm text-white/55 font-mono">
                       {currentChapter + 1} of {chapters.length}
                     </span>
                   </div>

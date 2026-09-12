@@ -544,7 +544,7 @@ export function LocationServicePage(props: LocationPageProps) {
                 viewport={{ once: true }}
                 transition={{ duration: prefersReducedMotion ? 0 : 0.35 }}
               >
-                <p className="mb-2 text-xs uppercase tracking-wider text-[#D3126A]">Arizona context</p>
+                <p className="mb-2 text-xs uppercase tracking-wider text-de-magenta-ink">Arizona context</p>
                 <p className="text-sm leading-relaxed text-white/90 md:text-base">
                   <span className="font-bold text-white">{azFact.metric}</span> {azFact.statement} — relevant for{" "}
                   {props.city} and Greater Phoenix SMBs planning insurance-ready IT and breach readiness.

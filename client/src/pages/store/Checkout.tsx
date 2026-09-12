@@ -345,7 +345,7 @@ const Checkout = () => {
                       )}
                     </label>
                   </RadioGroup>
-                  <p className="mt-4 text-sm text-white/45">
+                  <p className="mt-4 text-sm text-white/55">
                     Already a co-managed client?{" "}
                     <a
                       href={portalLoginWithReturn(
@@ -396,11 +396,11 @@ const Checkout = () => {
                       </Button>
                       <p className="mt-4 text-center text-xs text-white/55">
                         By completing this order, you agree to our{" "}
-                        <Link href="/legal/terms-of-use" className="text-de-accent-ink hover:underline">
+                        <Link href="/legal/terms-of-use" className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
                           Terms of Service
                         </Link>{" "}
                         and{" "}
-                        <Link href="/legal/privacy-policy" className="text-de-accent-ink hover:underline">
+                        <Link href="/legal/privacy-policy" className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
                           Privacy Policy
                         </Link>
                       </p>
