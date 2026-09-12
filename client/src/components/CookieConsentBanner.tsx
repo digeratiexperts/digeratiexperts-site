@@ -8,6 +8,19 @@ import { cn } from "@/lib/utils";
 const LEGACY_KEY = "de_cookie_consent";
 const CONSENT_KEY = "de_cookie_consent_v2";
 
+/**
+ * The consent banner is a public-site control. Inside the authenticated
+ * portal it stacked over the app chrome on phones and repeated a prompt the
+ * client already answered on the marketing site (Joe, 2026-09-12: suppress).
+ * The portal's public auth pages (login, signup, password reset) still show it.
+ */
+const PORTAL_PUBLIC_PATHS = ["/portal/login", "/portal/signup", "/portal/forgot-password", "/portal/reset-password"];
+export function isAuthenticatedPortalPath(pathname: string): boolean {
+  const path = pathname.replace(/[?#].*$/, "").replace(/\/+$/, "") || "/";
+  if (!(path === "/portal" || path.startsWith("/portal/"))) return false;
+  return !PORTAL_PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"));
+}
+
 function hasStoredConsent(): boolean {
   try {
     return !!localStorage.getItem(CONSENT_KEY) || !!localStorage.getItem(LEGACY_KEY);
@@ -84,9 +97,11 @@ export function CookieConsentBanner() {
     finishConsent();
   };
 
+  const suppressed = isAuthenticatedPortalPath(location);
+
   return (
     <AnimatePresence>
-      {visible && (
+      {visible && !suppressed && (
         <>
           {showPreferences && !deskOpen && (
             <motion.div
