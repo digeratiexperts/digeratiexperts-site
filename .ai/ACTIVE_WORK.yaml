@@ -56,6 +56,7 @@ claims:
       - client/src/components/evidence/HUDFrame.tsx
       - client/src/components/evidence/IncidentFlow.tsx
       - client/src/components/graphics/DashboardMockup.tsx
+      - client/src/components/portal/MfaSetup.tsx
       - client/src/components/pricing/ProActiveCoverageMap.tsx
       - client/src/components/store/GuidedBuyingWizard.tsx
       - client/src/components/store/SolutionProfileForm.tsx
@@ -82,13 +83,24 @@ claims:
       - client/src/pages/campaigns/CampaignLanding.tsx
       - client/src/pages/legal/TermsOfUse.tsx
       - client/src/pages/locations/LocationServicePage.tsx
+      - client/src/pages/portal/AdminCompanies.tsx
+      - client/src/pages/portal/OrderForm.tsx
       - client/src/pages/portal/PortalChat.tsx
+      - client/src/pages/portal/PortalCompany.tsx
+      - client/src/pages/portal/PortalCreateTicket.tsx
       - client/src/pages/portal/PortalDashboard.tsx
       - client/src/pages/portal/PortalForgotPassword.tsx
+      - client/src/pages/portal/PortalInvoices.tsx
       - client/src/pages/portal/PortalLogin.tsx
       - client/src/pages/portal/PortalMarketplace.tsx
+      - client/src/pages/portal/PortalOrders.tsx
+      - client/src/pages/portal/PortalPeople.tsx
+      - client/src/pages/portal/PortalQBR.tsx
+      - client/src/pages/portal/PortalQuestionnaireCalendar.tsx
       - client/src/pages/portal/PortalResetPassword.tsx
+      - client/src/pages/portal/PortalRoadmap.tsx
       - client/src/pages/portal/PortalServices.tsx
+      - client/src/pages/portal/PortalSettings.tsx
       - client/src/pages/portal/PortalSignup.tsx
       - client/src/pages/portal/SalesProcess.tsx
       - client/src/pages/resources/Datasheets.tsx
@@ -123,7 +135,7 @@ claims:
     status: active
     started: 2026-09-12
     note: >-
-      DE Completion Program, Claude visual/UI lane, 2026-09-12: thirteen
+      DE Completion Program, Claude visual/UI lane, 2026-09-12: fifteen
       commits (C1 a11y repairs; C3 Store status rail + save state; C4
       portal auth h1 + marketplace copy/links/contrast; C5 DE Desk graphite
       shell override; C6 favicon/manifest wiring from the vector brand
@@ -131,8 +143,9 @@ claims:
       EvidenceFrame heading level; C8 97-route a11y sweep closure — prose
       :where() specificity, control names, focusable table regions,
       contrast; C8 <main> landmark on every marketing page; versions-index label;
-      warning-free CSS build). All local-only; delivered as ordered
-      git-am patches 0001-0017 in DE/Evidence/2026-09-12-claude-c1/patches,
+      warning-free CSS build; C4 authenticated portal a11y sweep —
+      light-theme contrast, control names, nested anchors). All
+      local-only; delivered as ordered git-am patches 0001-0019 in DE/Evidence/2026-09-12-claude-c1/patches,
       verified to apply cleanly onto origin/main fe4a5216 with tsc clean,
       94 files / 418 tests and a green production build. Not claimed:
       client/src/pages/DigeratiHomepageChallenger.tsx and *Challenger.tsx
