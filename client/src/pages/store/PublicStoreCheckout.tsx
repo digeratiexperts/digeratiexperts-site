@@ -170,7 +170,7 @@ export default function PublicStoreCheckout() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0a0a0a]">
+    <div className="relative min-h-screen overflow-clip bg-[#0a0a0a]">
       <StorePageAtmosphere />
       <div className="relative z-10">
         <MegaMenu />
@@ -285,7 +285,7 @@ export default function PublicStoreCheckout() {
               </section>
 
               <section className="rounded-2xl border border-white/10 bg-[#111111] p-5 sm:p-7" aria-labelledby="delivery-heading">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-de-accent-ink">Step 3 · Delivery & setup</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-de-accent-ink">Step 4 · Delivery & setup</p>
                 <h2 id="delivery-heading" className="mt-2 text-2xl font-semibold text-white">How should this be implemented?</h2>
                 <p className="mt-2 text-sm text-white/55">Not every package needs shipping or a technician. Unsupported choices are disabled automatically.</p>
 
@@ -342,7 +342,11 @@ export default function PublicStoreCheckout() {
               </section>
             </div>
 
-            <aside className="h-fit rounded-2xl border border-white/10 bg-[#121212] p-6 lg:sticky lg:top-28">
+            {/* Sticky at lg, but capped to the viewport slot under the fixed header
+                (top-28 = 7rem, plus 1rem breathing room) and scrollable inside,
+                so the Continue / Ask DE controls at the bottom of the rail are
+                reachable at 900px-tall desktops instead of only at page end. */}
+            <aside className="h-fit rounded-2xl border border-white/10 bg-[#121212] p-6 lg:sticky lg:top-28 lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto lg:overscroll-contain">
               <Layers className="h-8 w-8 text-de-accent-ink" />
               <h2 className="mt-4 text-xl font-semibold text-white">Solution status</h2>
               <div className="mt-5 space-y-3 text-sm">
