@@ -108,7 +108,8 @@ claims:
       stale six-domain claim is corrected. The restored hero and newsletter
       make no domain-count claim and are untouched. The frozen version
       snapshots under client/src/pages/versions/ stay as historical record.
-    supersedes: PR #189 (branch claude/eight-block-correction, based on
+    supersedes: >-
+      PR #189 (branch claude/eight-block-correction, based on
       pre-restore main; closed in favour of this re-cut)
   - id: de-site-v2-scrollcraft
     owner: claude
@@ -194,6 +195,15 @@ claims:
       (scripts/kie-assets.mjs); the kie.ai scripts here accept both
       KIE_AI_API_KEY and KIE_API_KEY and write candidates under
       artifacts/kie-ai/. No key is committed; installing makes no network call.
+# restore-homepage-v1 (branch claude/restore-homepage-v1) RETIRED 2026-09-09:
+# the claim was still listed active while the work was already fully contained
+# in main. Verified at main @ 611acfdb: `git rev-list --count
+# origin/main..origin/claude/restore-homepage-v1` is 0 — no unique commits
+# remain on that branch. The claim was therefore holding a concurrency lock on
+# eight homepage section files with nothing behind it, which would make any
+# other agent stand off those files for no reason. PR #199 (eight-block re-cut)
+# is already built on the restored files, which corroborates that the
+# restoration landed. See docs/OPEN-WORK-AUDIT-20260909.md §3.
 # de-desk-inline-login-card (issue 153, branch claude/dynamic-login-card-chat-ve39il)
 # RETIRED 2026-09-01: merged via PR #160 (main @ 3fc5709). Deploy job
 # "Deploy and verify production VPS" on run 33469181603 succeeded, including
