@@ -35,6 +35,30 @@ Historical content recovered from Replit or older branches can remain in this re
 
 Examples of previously recovered website content include Journal/read-aloud assets and resource registry material. Their presence does not make Replit the source of truth.
 
+## Shipping code is not architectural authority
+
+This file establishes where the **website application and content** truth lives.
+It does not make the current implementation authoritative about **business
+architecture**: the service model, taxonomies, tier contents, commercial rules,
+security architecture and customer pathways.
+
+Shipping code is implementation evidence. It proves what was built, not what is
+currently true. A component can render an obsolete model faithfully, ship it to
+production, and pass every test, because tests assert that the code does what
+the code says.
+
+For business-architecture facts, the authority order is Joe or a document Joe
+has ratified, then governing documents in this repository that cite their basis,
+then Intelligence Hub for operational and commercial truth, and only then the
+code — **as a signal to verify, never as the answer.**
+
+Where code disagrees with a ratified document, the code is a defect to report,
+not a source to copy. Report it; route the fix to whoever owns those paths.
+
+This mirrors the pattern already established above for `Replit-Site`: something
+can exist, be real, and still not be authoritative. Full rule and the incident
+that produced it: [`AI-ENGINEERING-GOVERNANCE.md` §19](./AI-ENGINEERING-GOVERNANCE.md).
+
 ## Non-destructive rule
 
 Do not archive, delete, force-push, or replace another DE repository merely because it is not canonical for the website. Repository retirement is a separate decision and requires explicit verification/approval.

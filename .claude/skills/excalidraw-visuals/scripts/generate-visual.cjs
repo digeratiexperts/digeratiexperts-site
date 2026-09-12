@@ -175,6 +175,18 @@ async function prepareImageInputs(images) {
   return results;
 }
 
+// A non-2xx body (an egress-proxy refusal, an expired link, a login page) is not
+// an image. Without these guards it was written to the output path and reported
+// as "Saved to:", so a generation that had already cost credits looked like a
+// success and left a text file with a .png extension.
+function isImageBuffer(buf) {
+  if (buf.length < 12) return false;
+  const png = buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+  const jpeg = buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+  const webp = buf.slice(0, 4).toString('ascii') === 'RIFF' && buf.slice(8, 12).toString('ascii') === 'WEBP';
+  return png || jpeg || webp;
+}
+
 function downloadImage(url) {
   const client = url.startsWith('https') ? https : http;
   return new Promise((resolve, reject) => {
@@ -185,7 +197,23 @@ function downloadImage(url) {
       }
       const chunks = [];
       res.on('data', (chunk) => chunks.push(chunk));
-      res.on('end', () => resolve(Buffer.concat(chunks)));
+      res.on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        if (res.statusCode !== 200) {
+          reject(new Error(
+            `download failed with HTTP ${res.statusCode}: ${buffer.toString('utf-8').slice(0, 300).trim()}`
+          ));
+          return;
+        }
+        if (!isImageBuffer(buffer)) {
+          reject(new Error(
+            `download did not return an image (${buffer.length} bytes): ` +
+            `${buffer.toString('utf-8').slice(0, 300).trim()}`
+          ));
+          return;
+        }
+        resolve(buffer);
+      });
       res.on('error', reject);
     }).on('error', reject);
   });
@@ -278,7 +306,23 @@ async function main() {
       if (imageUrl) {
         console.log('Downloading image...');
 
-        const imageBuffer = await downloadImage(imageUrl);
+        let imageBuffer;
+        try {
+          imageBuffer = await downloadImage(imageUrl);
+        } catch (downloadErr) {
+          // The credits are already spent and the image exists on kie.ai. Print
+          // what is needed to fetch it again without generating a second time.
+          console.error(`Error: ${downloadErr.message}`);
+          console.error('');
+          console.error('The image WAS generated and the credits are already spent.');
+          console.error('Retrieve it without paying again:');
+          console.error(`  task id:    ${taskId}`);
+          console.error(`  result url: ${imageUrl}`);
+          console.error('If the message above says a host is not in the allowlist, add that');
+          console.error('host to the environment network egress settings, then download the');
+          console.error('result url directly.');
+          process.exit(1);
+        }
 
         // Ensure output directory exists
         const outputDir = path.dirname(OUTPUT_FILE);
