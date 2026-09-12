@@ -30,34 +30,61 @@
 
 version: 2
 claims:
-  - id: c1-visual-a11y-repairs
+  - id: claude-completion-program-lane
     owner: claude
-    subsystem: website-visual-qa
-    branch: claude/c1-visual-a11y-repairs-20260912
-    base_sha: 7498822
+    subsystem: website-visual-ui
+    branch: claude/c8-cross-surface
+    branch_stack: "c1-visual-a11y-repairs-20260912 -> c3-store-status-rail -> c4-portal-auth-headings -> c5-ask-de-graphite-shell -> c6-brand-favicon-wiring -> c8-cross-surface"
+    base_sha: fe4a5216
     files:
-      - client/src/pages/sections/DigeratiServicesSection.tsx
-      - client/src/pages/sections/DigeratiServicesSection.tabValue.test.ts
-      - client/src/pages/sections/DigeratiNewsletterSection.tsx
+      - brand/README.md
+      - client/index.html
+      - client/public/favicon-16x16.png
+      - client/public/favicon-256x256.png
+      - client/public/favicon-32x32.png
+      - client/public/favicon.ico
+      - client/public/favicon.svg
+      - client/public/site.webmanifest
+      - client/src/components/MarketingChrome.tsx
       - client/src/components/SiteBottomBar.tsx
-      - client/src/components/graphics/DashboardMockup.tsx
-      - client/src/components/evidence/IncidentFlow.tsx
+      - client/src/components/deDeskGraphiteStyle.ts
       - client/src/components/evidence/AssessmentReportSample.tsx
+      - client/src/components/evidence/EvidenceFrame.tsx
+      - client/src/components/evidence/IncidentFlow.tsx
+      - client/src/components/graphics/DashboardMockup.tsx
       - client/src/components/store/SolutionProfileForm.tsx
+      - client/src/components/store/StoreProductCard.tsx
+      - client/src/data/storeProducts.price.test.ts
+      - client/src/data/storeProducts.ts
+      - client/src/pages/DigeratiHomepage.tsx
+      - client/src/pages/portal/PortalDashboard.tsx
+      - client/src/pages/portal/PortalForgotPassword.tsx
+      - client/src/pages/portal/PortalLogin.tsx
+      - client/src/pages/portal/PortalMarketplace.tsx
+      - client/src/pages/portal/PortalResetPassword.tsx
+      - client/src/pages/portal/PortalServices.tsx
+      - client/src/pages/portal/PortalSignup.tsx
+      - client/src/pages/sections/DigeratiNewsletterSection.tsx
+      - client/src/pages/sections/DigeratiServicesSection.tabValue.test.ts
+      - client/src/pages/sections/DigeratiServicesSection.tsx
       - client/src/pages/store/ManagedStore.tsx
       - client/src/pages/store/PublicStoreCheckout.tsx
     status: active
     started: 2026-09-12
     note: >-
-      DE Completion Program, Claude lane C1 (current-main visual/UX
-      reconciliation). Safe, content-preserving accessibility repairs found
-      by rendered QA of /, /experience, /homepage-challenger, /store and
-      /store/solution at 390/768/1440 with axe-core: Radix tab ids built
-      from titles with spaces/slashes (critical), collapsed dock menu left
-      focusable under aria-hidden (serious), and low-opacity 10-14px labels
-      below 4.5:1 (serious). No layout, copy, palette or route changes. The
-      /homepage-challenger files are NOT claimed here — PR #211 is landing
-      on them from another lane. The same YAML parse fix as
+      DE Completion Program, Claude visual/UI lane, 2026-09-12: nine
+      commits (C1 a11y repairs; C3 Store status rail + save state; C4
+      portal auth h1 + marketplace copy/links/contrast; C5 DE Desk graphite
+      shell override; C6 favicon/manifest wiring from the vector brand
+      package; C8 fail-closed client price rendering + main landmark +
+      EvidenceFrame heading level). All local-only; delivered as ordered
+      git-am patches 0001-0009 in DE/Evidence/2026-09-12-claude-c1/patches,
+      verified to apply cleanly onto origin/main fe4a5216 with tsc clean,
+      94 files / 418 tests and a green production build. Not claimed:
+      client/src/pages/DigeratiHomepageChallenger.tsx and *Challenger.tsx
+      sections (PR #211/#213 lane), server/**, shared/**, migrations/**,
+      scripts/** (released to Cursor for R5/R6), scrollcraft/**,
+      client/src/pages/versions/**. The same YAML parse fix as
       claude/unfinished-threads-survey-y92doz is carried so this file loads.
   - id: pronunciation-flipbook-recovery
     issue: 152
