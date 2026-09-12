@@ -30,6 +30,35 @@
 
 version: 2
 claims:
+  - id: c1-visual-a11y-repairs
+    owner: claude
+    subsystem: website-visual-qa
+    branch: claude/c1-visual-a11y-repairs-20260912
+    base_sha: 7498822
+    files:
+      - client/src/pages/sections/DigeratiServicesSection.tsx
+      - client/src/pages/sections/DigeratiServicesSection.tabValue.test.ts
+      - client/src/pages/sections/DigeratiNewsletterSection.tsx
+      - client/src/components/SiteBottomBar.tsx
+      - client/src/components/graphics/DashboardMockup.tsx
+      - client/src/components/evidence/IncidentFlow.tsx
+      - client/src/components/evidence/AssessmentReportSample.tsx
+      - client/src/components/store/SolutionProfileForm.tsx
+      - client/src/pages/store/ManagedStore.tsx
+      - client/src/pages/store/PublicStoreCheckout.tsx
+    status: active
+    started: 2026-09-12
+    note: >-
+      DE Completion Program, Claude lane C1 (current-main visual/UX
+      reconciliation). Safe, content-preserving accessibility repairs found
+      by rendered QA of /, /experience, /homepage-challenger, /store and
+      /store/solution at 390/768/1440 with axe-core: Radix tab ids built
+      from titles with spaces/slashes (critical), collapsed dock menu left
+      focusable under aria-hidden (serious), and low-opacity 10-14px labels
+      below 4.5:1 (serious). No layout, copy, palette or route changes. The
+      /homepage-challenger files are NOT claimed here — PR #211 is landing
+      on them from another lane. The same YAML parse fix as
+      claude/unfinished-threads-survey-y92doz is carried so this file loads.
   - id: pronunciation-flipbook-recovery
     issue: 152
     owner: chatgpt
@@ -108,7 +137,8 @@ claims:
       stale six-domain claim is corrected. The restored hero and newsletter
       make no domain-count claim and are untouched. The frozen version
       snapshots under client/src/pages/versions/ stay as historical record.
-    supersedes: PR #189 (branch claude/eight-block-correction, based on
+    supersedes: >-
+      PR #189 (branch claude/eight-block-correction, based on
       pre-restore main; closed in favour of this re-cut)
   - id: de-site-v2-scrollcraft
     owner: claude

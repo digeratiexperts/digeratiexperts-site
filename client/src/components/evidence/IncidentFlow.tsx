@@ -129,7 +129,7 @@ export const IncidentFlow: React.FC<{ scenarios?: ScenarioDefinition[] }> = ({ s
               <p className="mt-1 text-sm leading-relaxed text-white/85">{activeScenario.outcome}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-white/40">
+          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-white/60">
             <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             Actual response depends on the client stack, permissions, policy, and event context.
           </div>
