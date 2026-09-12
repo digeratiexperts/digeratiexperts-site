@@ -42,12 +42,6 @@ export function redirectToPortalLogin(returnTo?: string) {
   window.location.href = `${PORTAL_LOGIN}?${qs.toString()}`;
 }
 
-function handlePortalAuthFailure(status: number) {
-  if (status === 401 || status === 403) {
-    redirectToPortalLogin();
-  }
-}
-
 export async function portalFetch(url: string, options: RequestInit = {}) {
   const headers = portalAuthHeaders(options.headers);
 
@@ -62,10 +56,12 @@ export async function portalFetch(url: string, options: RequestInit = {}) {
   });
 
   if (response.status === 401 && typeof window !== "undefined") {
-    const path = window.location.pathname || "";
-    if (path.startsWith("/portal") && path !== PORTAL_LOGIN_PATH) {
-      handlePortalAuthFailure(401);
-    }
+    // A background query must never hard-navigate away from a form or ticket
+    // draft. The portal shell can present a re-auth prompt and explicitly call
+    // redirectToPortalLogin after it has preserved the user's work.
+    window.dispatchEvent(new CustomEvent("de-portal-session-expired", {
+      detail: { returnTo: `${window.location.pathname}${window.location.search}` },
+    }));
   }
 
   return response;
