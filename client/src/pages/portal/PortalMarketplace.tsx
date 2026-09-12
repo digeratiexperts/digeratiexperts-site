@@ -26,8 +26,8 @@ export default function PortalMarketplace() {
         <div className="space-y-1">
           <h2 className="text-2xl font-bold">Client Marketplace</h2>
           <p className="text-gray-600 dark:text-gray-400">
-            Standardized items for your organization. Pay Now is not available until Hub
-            entitlements exist.
+            Standardized items for your organization. Purchases here go through DE approval
+            before anything is ordered.
           </p>
         </div>
 
@@ -50,9 +50,11 @@ export default function PortalMarketplace() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Eligibility for this surface is <code>{data?.eligibility || MARKETPLACE_ELIGIBILITY}</code>.
-              No warehouse SKUs, vendors, costs, or margins are listed here.
+            {/* The eligibility value is an internal state token; it is not client-facing
+                copy. Clients see what the state means for them, not the enum. */}
+            <p className="text-sm text-gray-600 dark:text-gray-400" data-eligibility={data?.eligibility || MARKETPLACE_ELIGIBILITY}>
+              Your organization can request items here and DE will confirm scope and pricing
+              before anything is ordered. Nothing is charged from this page.
             </p>
             <div className="flex flex-wrap gap-3">
               <Button asChild className="bg-[#D3126A] text-white hover:bg-[#D3126A]/90">
