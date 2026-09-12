@@ -147,10 +147,8 @@ export default function PortalDashboard() {
                   <CardTitle>Recent Support Tickets</CardTitle>
                   <CardDescription>Your latest ticket activity</CardDescription>
                 </div>
-                <Link href="/portal/tickets">
-                  <a className="text-[#D3126A] hover:underline text-sm font-medium">
-                    View All
-                  </a>
+                <Link href="/portal/tickets" className="text-[#D3126A] hover:underline text-sm font-medium">
+                  View All
                 </Link>
               </div>
             </CardHeader>
@@ -205,10 +203,8 @@ export default function PortalDashboard() {
                   <CardTitle>Your Services</CardTitle>
                   <CardDescription>Currently active services</CardDescription>
                 </div>
-                <Link href="/portal/services">
-                  <a className="text-[#D3126A] hover:underline text-sm font-medium">
-                    View All
-                  </a>
+                <Link href="/portal/services" className="text-[#D3126A] hover:underline text-sm font-medium">
+                  View All
                 </Link>
               </div>
             </CardHeader>
