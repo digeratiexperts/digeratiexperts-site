@@ -45,18 +45,43 @@ claims:
       - client/public/favicon.ico
       - client/public/favicon.svg
       - client/public/site.webmanifest
+      - client/src/components/BlogAudioPlayer.tsx
+      - client/src/components/ConversionPathBar.tsx
       - client/src/components/MarketingChrome.tsx
       - client/src/components/SiteBottomBar.tsx
       - client/src/components/deDeskGraphiteStyle.ts
       - client/src/components/evidence/AssessmentReportSample.tsx
       - client/src/components/evidence/EvidenceFrame.tsx
+      - client/src/components/evidence/HUDFrame.tsx
       - client/src/components/evidence/IncidentFlow.tsx
       - client/src/components/graphics/DashboardMockup.tsx
+      - client/src/components/pricing/ProActiveCoverageMap.tsx
+      - client/src/components/store/GuidedBuyingWizard.tsx
       - client/src/components/store/SolutionProfileForm.tsx
+      - client/src/components/store/StoreAssessmentPanel.tsx
+      - client/src/components/store/StoreBundlesSection.tsx
       - client/src/components/store/StoreProductCard.tsx
+      - client/src/components/ui/premium-slider.tsx
+      - client/src/components/ui/slider.tsx
+      - client/src/components/visual/ProActiveEcosystemDiagram.tsx
       - client/src/data/storeProducts.price.test.ts
       - client/src/data/storeProducts.ts
+      - client/src/index.css
       - client/src/pages/DigeratiHomepage.tsx
+      - client/src/pages/EcosystemMatrixOfficial.tsx
+      - client/src/pages/GenericServicePage.tsx
+      - client/src/pages/ProActiveEcosystemPricing.tsx
+      - client/src/pages/ThankYouSuccess.tsx
+      - client/src/pages/about/ClientBillOfRights.tsx
+      - client/src/pages/about/ComplianceCertifications.tsx
+      - client/src/pages/about/Guarantee.tsx
+      - client/src/pages/about/Press.tsx
+      - client/src/pages/about/TwentyOneQuestions.tsx
+      - client/src/pages/campaigns/CampaignIndex.tsx
+      - client/src/pages/campaigns/CampaignLanding.tsx
+      - client/src/pages/legal/TermsOfUse.tsx
+      - client/src/pages/locations/LocationServicePage.tsx
+      - client/src/pages/portal/PortalChat.tsx
       - client/src/pages/portal/PortalDashboard.tsx
       - client/src/pages/portal/PortalForgotPassword.tsx
       - client/src/pages/portal/PortalLogin.tsx
@@ -64,21 +89,47 @@ claims:
       - client/src/pages/portal/PortalResetPassword.tsx
       - client/src/pages/portal/PortalServices.tsx
       - client/src/pages/portal/PortalSignup.tsx
+      - client/src/pages/portal/SalesProcess.tsx
+      - client/src/pages/resources/Datasheets.tsx
+      - client/src/pages/resources/DocumentFlipbook.tsx
+      - client/src/pages/resources/DowntimeCalculator.tsx
+      - client/src/pages/resources/Ebook.tsx
+      - client/src/pages/resources/ResourceAssetPage.tsx
+      - client/src/pages/sections/DigeratiCalculatorsSection.tsx
       - client/src/pages/sections/DigeratiNewsletterSection.tsx
       - client/src/pages/sections/DigeratiServicesSection.tabValue.test.ts
       - client/src/pages/sections/DigeratiServicesSection.tsx
+      - client/src/pages/sections/DigeratiTestimonialsSection.tsx
+      - client/src/pages/sections/DigeratiThreatsInsightsSection.tsx
+      - client/src/pages/sections/DigeratiThreeDoorsChallenger.tsx
+      - client/src/pages/services/UCaaS.tsx
+      - client/src/pages/solutions/BackupDisasterRecovery.tsx
+      - client/src/pages/solutions/BusinessNeedsFamily.tsx
+      - client/src/pages/solutions/BusinessNeedsIndex.tsx
+      - client/src/pages/solutions/CoManagedIT.tsx
+      - client/src/pages/solutions/ManagedWorkplace.tsx
+      - client/src/pages/solutions/SolutionRequest.tsx
+      - client/src/pages/solutions/StandaloneServices.tsx
+      - client/src/pages/store/Checkout.tsx
       - client/src/pages/store/ManagedStore.tsx
       - client/src/pages/store/PublicStoreCheckout.tsx
+      - client/src/pages/store/StoreLanding.tsx
+      - client/src/pages/support/KnowledgeBase.tsx
+      - client/src/pages/support/PayInvoice.tsx
+      - client/src/pages/support/SubmitTicket.tsx
+      - client/src/pages/trust/TrustCenter.tsx
     status: active
     started: 2026-09-12
     note: >-
-      DE Completion Program, Claude visual/UI lane, 2026-09-12: nine
+      DE Completion Program, Claude visual/UI lane, 2026-09-12: ten
       commits (C1 a11y repairs; C3 Store status rail + save state; C4
       portal auth h1 + marketplace copy/links/contrast; C5 DE Desk graphite
       shell override; C6 favicon/manifest wiring from the vector brand
       package; C8 fail-closed client price rendering + main landmark +
-      EvidenceFrame heading level). All local-only; delivered as ordered
-      git-am patches 0001-0009 in DE/Evidence/2026-09-12-claude-c1/patches,
+      EvidenceFrame heading level; C8 97-route a11y sweep closure — prose
+      :where() specificity, control names, focusable table regions,
+      contrast). All local-only; delivered as ordered git-am patches
+      0001-0011 in DE/Evidence/2026-09-12-claude-c1/patches,
       verified to apply cleanly onto origin/main fe4a5216 with tsc clean,
       94 files / 418 tests and a green production build. Not claimed:
       client/src/pages/DigeratiHomepageChallenger.tsx and *Challenger.tsx
