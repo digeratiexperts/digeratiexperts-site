@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, Mail, Lock, User, ArrowRight, CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
-import logoImage from "@assets/DE-Logo-new_1762461524794.webp";
+import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
 
 export default function PortalSignup() {
   const [email, setEmail] = useState("");
@@ -105,7 +105,7 @@ export default function PortalSignup() {
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <img
-            src={logoImage}
+            src={DE_LOGO_REVERSE}
             alt="Digerati Experts"
             className="h-10 w-auto"
           />
