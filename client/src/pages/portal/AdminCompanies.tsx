@@ -193,7 +193,7 @@ export function AdminCompanies() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white" data-testid="text-page-title">Manage Companies</h1>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white" data-testid="text-page-title">Manage Companies</h2>
           <p className="text-slate-600 dark:text-slate-400">View and manage all client companies in the portal</p>
         </div>
         
