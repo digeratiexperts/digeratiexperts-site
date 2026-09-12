@@ -3,8 +3,7 @@ import type { ClientType } from "@/data/storeProducts";
 import { portalLoginWithReturn } from "@/lib/portalUrls";
 import { marketplaceReturnTo } from "@shared/portalReturnTo";
 
-// Store role types for RBAC
-export type StoreRole = 'public' | 'prospect' | 'managed' | 'comanaged' | 'admin';
+export type StoreRole = "public" | "prospect" | "managed" | "comanaged" | "admin";
 
 export interface PortalUser {
   id: string;
@@ -49,14 +48,9 @@ export function useStoreAuth(): StoreAuthState {
   const [clientType, setClientType] = useState<ClientType>("public");
   const [clientPricing, setClientPricing] = useState<ClientPricing[]>([]);
 
-  const fetchClientInfo = useCallback(async (authToken: string) => {
+  const fetchClientInfo = useCallback(async () => {
     try {
-      const response = await fetch("/api/store/client-info", {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
+      const response = await fetch("/api/store/client-info", { credentials: "include", cache: "no-store" });
       if (response.ok) {
         const data = await response.json();
         setClientType(data.clientType || "public");
@@ -70,14 +64,9 @@ export function useStoreAuth(): StoreAuthState {
     return "public" as ClientType;
   }, []);
 
-  const fetchClientPricing = useCallback(async (authToken: string) => {
+  const fetchClientPricing = useCallback(async () => {
     try {
-      const response = await fetch("/api/store/client-pricing", {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
+      const response = await fetch("/api/store/client-pricing", { credentials: "include", cache: "no-store" });
       if (response.ok) {
         const data = await response.json();
         setClientPricing(Array.isArray(data.pricing) ? data.pricing : []);
@@ -91,50 +80,59 @@ export function useStoreAuth(): StoreAuthState {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     const initAuth = async () => {
       setIsLoading(true);
       try {
-        const storedUser = localStorage.getItem(PORTAL_USER_KEY);
-        const storedToken = localStorage.getItem(PORTAL_TOKEN_KEY);
-
-        if (storedUser && storedToken) {
-          const parsedUser = JSON.parse(storedUser) as PortalUser;
-          setUser(parsedUser);
-          setToken(storedToken);
-
-          await fetchClientInfo(storedToken);
-          await fetchClientPricing(storedToken);
-        } else {
+        const response = await fetch("/api/portal/me", {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          localStorage.removeItem(PORTAL_USER_KEY);
+          localStorage.removeItem(PORTAL_TOKEN_KEY);
+          if (!cancelled) {
+            setUser(null);
+            setToken(null);
+            setClientType("public");
+            setClientPricing([]);
+          }
+          return;
+        }
+        const data = (await response.json()) as { user?: PortalUser };
+        if (!data.user || cancelled) return;
+        localStorage.setItem(PORTAL_USER_KEY, JSON.stringify(data.user));
+        localStorage.setItem("portalUserId", data.user.id || "portal-user");
+        if (data.user.email) localStorage.setItem("userEmail", data.user.email);
+        setUser(data.user);
+        setToken(localStorage.getItem(PORTAL_TOKEN_KEY));
+        await Promise.all([fetchClientInfo(), fetchClientPricing()]);
+      } catch (error) {
+        console.error("Failed to initialize store auth:", error);
+        if (!cancelled) {
           setUser(null);
           setToken(null);
           setClientType("public");
           setClientPricing([]);
         }
-      } catch (error) {
-        console.error("Failed to initialize store auth:", error);
-        setUser(null);
-        setToken(null);
-        setClientType("public");
-        setClientPricing([]);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
-    initAuth();
-
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === PORTAL_USER_KEY || e.key === PORTAL_TOKEN_KEY) {
-        initAuth();
+    void initAuth();
+    const handleAuthChange = () => void initAuth();
+    const handleStorageChange = (event: StorageEvent) => {
+      if (!event.key || event.key === PORTAL_USER_KEY || event.key === PORTAL_TOKEN_KEY) {
+        void initAuth();
       }
     };
-    // storage events only fire in other tabs; in-page sign-in (DE Desk login
-    // card) announces itself with this custom event instead.
-    const handleAuthChange = () => initAuth();
-
+    window.addEventListener("focus", handleAuthChange);
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("de-portal-auth-changed", handleAuthChange);
     return () => {
+      cancelled = true;
+      window.removeEventListener("focus", handleAuthChange);
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("de-portal-auth-changed", handleAuthChange);
     };
@@ -143,26 +141,27 @@ export function useStoreAuth(): StoreAuthState {
   const loginRedirect = useCallback(() => {
     const currentPath = window.location.pathname;
     localStorage.setItem("storeRedirectAfterLogin", currentPath);
-    // Absolute portal host — apex /portal/login is mangled by Cloudflare to //login
     window.location.href = portalLoginWithReturn(marketplaceReturnTo(currentPath));
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem(PORTAL_USER_KEY);
     localStorage.removeItem(PORTAL_TOKEN_KEY);
+    localStorage.removeItem("portalUserId");
+    localStorage.removeItem("impersonatingCompany");
     setUser(null);
     setToken(null);
     setClientType("public");
     setClientPricing([]);
+    void fetch("/api/portal/logout", { method: "POST", credentials: "include" }).finally(() => {
+      window.dispatchEvent(new CustomEvent("de-portal-auth-changed"));
+    });
   }, []);
 
   const refreshPricing = useCallback(async () => {
-    if (token) {
-      await fetchClientPricing(token);
-    } else {
-      setClientPricing([]);
-    }
-  }, [token, fetchClientPricing]);
+    if (user) await fetchClientPricing();
+    else setClientPricing([]);
+  }, [user, fetchClientPricing]);
 
   const getProductPrice = useCallback(
     (productId: string, basePrice: number) => {
@@ -174,31 +173,16 @@ export function useStoreAuth(): StoreAuthState {
           discountPercent: pricing.discountPercent,
         };
       }
-      return {
-        price: basePrice,
-        hasDiscount: false,
-        discountPercent: 0,
-      };
+      return { price: basePrice, hasDiscount: false, discountPercent: 0 };
     },
-    [clientPricing]
+    [clientPricing],
   );
 
-  const isLoggedIn = useMemo(() => !!user && !!token, [user, token]);
+  const isLoggedIn = useMemo(() => !!user, [user]);
   const clientId = useMemo(() => user?.clientId || null, [user]);
-  
-  // Derive store role from user data - defaults to 'public' for unauthenticated
-  const storeRole: StoreRole = useMemo(() => {
-    if (!user) return 'public';
-    return user.storeRole || 'prospect';
-  }, [user]);
-  
-  // Check if user can purchase (comanaged or admin only)
-  const canPurchase = useMemo(() => {
-    return storeRole === 'comanaged' || storeRole === 'admin';
-  }, [storeRole]);
-  
-  // Check if user is admin
-  const isAdmin = useMemo(() => storeRole === 'admin', [storeRole]);
+  const storeRole: StoreRole = useMemo(() => user?.storeRole || (user ? "prospect" : "public"), [user]);
+  const canPurchase = useMemo(() => storeRole === "comanaged" || storeRole === "admin", [storeRole]);
+  const isAdmin = useMemo(() => storeRole === "admin", [storeRole]);
 
   return {
     isLoggedIn,

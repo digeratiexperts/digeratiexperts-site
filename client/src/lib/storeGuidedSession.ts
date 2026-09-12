@@ -171,17 +171,14 @@ export async function startStoreBuyerAuth(email: string): Promise<StoreBuyerAuth
     return { captured, sessionPresent, zohoConfigured };
   }
 
-  const token = window.localStorage.getItem("portalToken");
-  if (token) {
-    try {
-      const me = await fetch("/api/portal/me", {
-        headers: { Authorization: `Bearer ${token}` },
-        credentials: "include",
-      });
-      sessionPresent = me.ok;
-    } catch {
-      sessionPresent = false;
-    }
+  try {
+    const me = await fetch("/api/portal/me", {
+      credentials: "include",
+      cache: "no-store",
+    });
+    sessionPresent = me.ok;
+  } catch {
+    sessionPresent = false;
   }
 
   try {

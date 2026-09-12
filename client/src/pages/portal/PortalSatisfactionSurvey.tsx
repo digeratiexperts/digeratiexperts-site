@@ -88,20 +88,26 @@ function formatDate(iso: string | null): string {
   }
 }
 
-function hasAuthToken(): boolean {
-  return !!localStorage.getItem("portalToken");
-}
-
 export function PortalSatisfactionSurvey() {
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [hoveredStar, setHoveredStar] = useState<Record<string, number>>({});
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [authed, setAuthed] = useState(hasAuthToken());
+  const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
-    setAuthed(hasAuthToken());
+    let cancelled = false;
+    void portalGet<{ user?: unknown }>("/api/portal/me")
+      .then(() => {
+        if (!cancelled) setAuthed(true);
+      })
+      .catch(() => {
+        if (!cancelled) setAuthed(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const listQuery = useQuery<SurveysListResponse>({

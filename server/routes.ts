@@ -211,7 +211,9 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
     typeof req.cookies?.[PORTAL_AUTH_COOKIE] === "string"
       ? req.cookies[PORTAL_AUTH_COOKIE]
       : "";
-  const token = bearer || cookieToken;
+  // Browser sessions are canonical across digeratiexperts.com + portal subdomains.
+  // Prefer the shared HttpOnly cookie; Bearer remains a fallback for non-browser/API clients.
+  const token = cookieToken || bearer;
   if (!token) {
     return res.status(401).json({ error: "Authentication required" });
   }

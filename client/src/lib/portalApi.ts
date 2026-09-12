@@ -14,10 +14,6 @@ function portalAuthHeaders(extra?: HeadersInit): Record<string, string> {
       Object.assign(headers, extra);
     }
   }
-  const token = localStorage.getItem("portalToken");
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
   return headers;
 }
 

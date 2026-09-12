@@ -156,12 +156,12 @@ export default function PortalChat() {
     openDeskIdsRef.current = openDeskIds;
   }, [openDeskIds]);
 
-  const loadLiveMessages = useCallback(async (authToken: string, since?: string) => {
+  const loadLiveMessages = useCallback(async (authToken: string | null, since?: string) => {
     const url = since
       ? `/api/portal/chat/messages?since=${encodeURIComponent(since)}`
       : "/api/portal/chat/messages";
     const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${authToken}` },
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
       credentials: "include",
     });
     if (res.status === 403) {
@@ -225,11 +225,10 @@ export default function PortalChat() {
 
   useEffect(() => {
     const authToken = localStorage.getItem("portalToken");
-    if (!authToken) return;
-    setToken(authToken);
+    setToken(authToken || "");
 
     fetch("/api/portal/chat/status", {
-      headers: { Authorization: `Bearer ${authToken}` },
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
       credentials: "include",
     })
       .then((r) => r.json())
