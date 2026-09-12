@@ -354,7 +354,7 @@ export default function PublicStoreCheckout() {
               </div>
 
               <div className="mt-6 border-t border-white/10 pt-5">
-                <p className="text-xs uppercase tracking-wide text-white/40">Next</p>
+                <p className="text-xs uppercase tracking-wide text-white/55">Next</p>
                 <p className="mt-2 text-sm leading-relaxed text-white/60">
                   {draft.deliveryPreference === "unsure"
                     ? "Ask DE to recommend Standalone or Co-Managed before final package submission."
@@ -387,9 +387,9 @@ function StatusLine({ ready, label, detail }: { ready: boolean; label: string; d
     <div className="rounded-xl border border-white/10 bg-black/15 p-3">
       <div className="flex items-center justify-between gap-3">
         <span className="font-medium text-white">{label}</span>
-        <span className={`text-xs ${ready ? "text-emerald-300" : "text-white/35"}`}>{ready ? "Ready" : "Needed"}</span>
+        <span className={`text-xs ${ready ? "text-emerald-300" : "text-white/55"}`}>{ready ? "Ready" : "Needed"}</span>
       </div>
-      <p className="mt-1 truncate text-xs text-white/40">{detail}</p>
+      <p className="mt-1 truncate text-xs text-white/55">{detail}</p>
     </div>
   );
 }

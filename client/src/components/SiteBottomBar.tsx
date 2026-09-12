@@ -414,6 +414,11 @@ export function SiteBottomBar() {
               : "pointer-events-none grid-cols-[0fr] opacity-0"
           }`}
           aria-hidden={!expanded}
+          // aria-hidden alone leaves the collapsed menu's links in the tab
+          // order (axe: aria-hidden-focus, serious). `inert` removes them from
+          // focus and the accessibility tree while collapsed. React 18 passes
+          // the attribute through as a string, hence "" rather than a boolean.
+          {...(!expanded ? { inert: "" } : {})}
         >
           <div className="w-full min-w-0 overflow-hidden">
             <HomepageDockMenu />

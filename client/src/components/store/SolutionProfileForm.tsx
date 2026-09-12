@@ -48,7 +48,7 @@ export function SolutionProfileForm({
           </div>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/55">{description}</p>
         </div>
-        <div className={`inline-flex h-9 items-center gap-2 self-start rounded-full border px-3 text-xs font-medium ${complete ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200" : "border-white/10 bg-white/5 text-white/45"}`}>
+        <div className={`inline-flex h-9 items-center gap-2 self-start rounded-full border px-3 text-xs font-medium ${complete ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200" : "border-white/10 bg-white/5 text-white/60"}`}>
           {complete ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : null}
           {complete ? "Profile saved" : "Autosaves on this device"}
         </div>

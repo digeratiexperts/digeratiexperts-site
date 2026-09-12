@@ -79,7 +79,7 @@ export const AssessmentReportSample: React.FC = () => {
           <p>When an approved sanitized real report is available, it can replace this example using the SANITIZED REAL classification and documented redaction review.</p>
         </div>
 
-        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-white/40">
+        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-white/60">
           <CheckCircle2 className="h-3.5 w-3.5 text-[#F04C97]" aria-hidden="true" />
           Structure first; real evidence only after verification and approval.
         </div>
