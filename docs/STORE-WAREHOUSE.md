@@ -14,7 +14,7 @@ The former public `/store` workshop (SKU catalog, vendor marks, coverage heurist
 | Public curated Store | `/store`, `/store/solutions/:family`, `/store/solution` (`/store/checkout` alias) | Public Solution Builder — no vendor catalog, no Pay Now |
 | Legacy catalog paths | `/store/managed`, `/store/co-managed` | 301 to the appropriate public solution path |
 | Staff-only SKU URLs | `/store/product/:sku` except four ProActive models | Generic 404 — same body as unknown, no `Location` |
-| Client Marketplace | `/portal/marketplace` | Authenticated client; fail-safe Request Approval (no Hub catalog) |
+| Client Marketplace | `/portal/marketplace` | Authenticated client; fail-safe Request Approval (no Hub catalog). Live `admin` sees a staff notice pointing at `/internal/warehouse` instead of Request Approval — still no catalog data on this surface. |
 
 ## How staff open it
 

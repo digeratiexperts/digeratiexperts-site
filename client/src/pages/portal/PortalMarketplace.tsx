@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { ClipboardCheck, ShoppingCart } from "lucide-react";
+import { ClipboardCheck, ShoppingCart, Warehouse } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PortalLayout } from "./PortalLayout";
@@ -10,8 +10,9 @@ import { MARKETPLACE_ELIGIBILITY } from "@shared/checkoutEligibility";
 type MarketplaceResponse = {
   eligibility: typeof MARKETPLACE_ELIGIBILITY;
   items: unknown[];
-  status: "unavailable" | "unmapped";
+  status: "unavailable" | "unmapped" | "staff";
   reason: string;
+  warehouseUrl?: string;
 };
 
 export default function PortalMarketplace() {
@@ -19,6 +20,8 @@ export default function PortalMarketplace() {
     queryKey: ["/api/portal/marketplace"],
     queryFn: () => portalGet<MarketplaceResponse>("/api/portal/marketplace"),
   });
+
+  const isStaff = data?.status === "staff";
 
   return (
     <PortalLayout title="Client Marketplace">
@@ -37,36 +40,68 @@ export default function PortalMarketplace() {
           </div>
         )}
 
-        <Card data-testid="marketplace-empty">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5 text-[#D3126A]" />
-              Request Approval
-            </CardTitle>
-            <CardDescription>
-              {isLoading
-                ? "Checking your tenant catalog…"
-                : data?.reason || "Tenant catalog is not available from Hub yet."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Eligibility for this surface is <code>{data?.eligibility || MARKETPLACE_ELIGIBILITY}</code>.
-              No warehouse SKUs, vendors, costs, or margins are listed here.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button asChild className="bg-[#D3126A] text-white hover:bg-[#D3126A]/90">
-                <Link href="/portal/forms">
-                  <ClipboardCheck className="mr-2 h-4 w-4" />
-                  Request Approval
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/portal/procurement">Open procurement</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {isStaff ? (
+          <Card data-testid="marketplace-staff">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Warehouse className="h-5 w-5 text-[#D3126A]" />
+                DE Staff — Digital Warehouse
+              </CardTitle>
+              <CardDescription>
+                You are signed in as DE staff. This page is the client view — no approval
+                request is needed for your account.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                The full catalog with vendors, costs, and Pay Now lives in the staff-only
+                Digital Warehouse.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild className="bg-[#D3126A] text-white hover:bg-[#D3126A]/90">
+                  <Link href={data?.warehouseUrl || "/internal/warehouse"}>
+                    <Warehouse className="mr-2 h-4 w-4" />
+                    Open Digital Warehouse
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/portal/procurement">Open procurement</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card data-testid="marketplace-empty">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5 text-[#D3126A]" />
+                Request Approval
+              </CardTitle>
+              <CardDescription>
+                {isLoading
+                  ? "Checking your tenant catalog…"
+                  : data?.reason || "Tenant catalog is not available from Hub yet."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Eligibility for this surface is <code>{data?.eligibility || MARKETPLACE_ELIGIBILITY}</code>.
+                No warehouse SKUs, vendors, costs, or margins are listed here.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild className="bg-[#D3126A] text-white hover:bg-[#D3126A]/90">
+                  <Link href="/portal/forms">
+                    <ClipboardCheck className="mr-2 h-4 w-4" />
+                    Request Approval
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/portal/procurement">Open procurement</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </PortalLayout>
   );
