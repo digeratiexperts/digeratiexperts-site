@@ -1038,8 +1038,13 @@ html[data-dock-hidden="true"] .de-bottom-bar {
   color: var(--de-muted);
 }
 
-.de-prose-dark p,
-.de-prose-dark li {
+/* Prose defaults are wrapped in :where() so they carry zero specificity for the
+ * wrapper: an explicit Tailwind colour utility on the element (text-white on a
+ * magenta ConversionPathBar, text-de-magenta-ink on an eyebrow) wins instead of
+ * being dimmed to --de-muted, which was pushing white-on-magenta copy to 4.25:1
+ * across every PageTemplate page (a11y sweep 2026-09-12). */
+:where(.de-prose-dark) p,
+:where(.de-prose-dark) li {
   color: var(--de-muted);
   line-height: 1.75;
 }
@@ -1068,8 +1073,8 @@ html[data-dock-hidden="true"] .de-bottom-bar {
   color: #fce7f3;
 }
 
-.de-prose-light p,
-.de-prose-light li {
+:where(.de-prose-light) p,
+:where(.de-prose-light) li {
   color: #374151;
   line-height: 1.75;
 }

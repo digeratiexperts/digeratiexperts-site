@@ -38,7 +38,7 @@ function SkipCatalogLink({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="text-sm text-white/45 underline-offset-4 hover:text-white/70 hover:underline"
+      className="text-sm text-white/55 underline-offset-4 hover:text-white/70 hover:underline"
       data-testid="button-skip-full-catalog"
     >
       Browse the full catalog
@@ -151,7 +151,7 @@ export function GuidedBuyingWizard({
         <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
           <div className="h-full rounded-full bg-de-accent transition-all" style={{ width: `${progress}%` }} />
         </div>
-        <p className="mt-2 text-xs text-white/45">
+        <p className="mt-2 text-xs text-white/55">
           Slide {step + 1} of {SLIDE_COUNT}
         </p>
       </div>
@@ -288,7 +288,7 @@ export function GuidedBuyingWizard({
             ) : authHint ? (
               <p className="mt-2 text-sm text-white/55">{authHint}</p>
             ) : (
-              <p className="mt-2 text-sm text-white/45">
+              <p className="mt-2 text-sm text-white/55">
                 Used to continue checkout later. We do not invent a new store role here.
               </p>
             )}

@@ -408,6 +408,7 @@ export function BlogAudioPlayer({
         className="h-7 w-7 rounded-full bg-de-accent hover:bg-de-accent p-0 disabled:opacity-50"
         onClick={togglePlay}
         disabled={loading}
+        aria-label={isPlaying && !isPaused ? "Pause audio" : "Play audio"}
         data-testid="button-audio-play"
       >
         {isPlaying && !isPaused ? (
@@ -426,9 +427,10 @@ export function BlogAudioPlayer({
         className="h-7 w-7 rounded-full p-0 text-white/50 hover:text-white hover:bg-white/10"
         onClick={stop}
         disabled={!isPlaying && !isPaused && !audioUrl}
+        aria-label="Stop audio"
         data-testid="button-audio-stop"
       >
-        <Square className="h-3 w-3" />
+        <Square className="h-3 w-3" aria-hidden="true" />
       </Button>
 
       <div className="hidden sm:flex items-center gap-1.5">

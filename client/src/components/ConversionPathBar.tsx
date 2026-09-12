@@ -35,12 +35,12 @@ export function ConversionPathBar({
   return (
     <div className="rounded-2xl border border-[#D3126A]/40 bg-[#D3126A] px-6 py-8 text-center md:px-12 md:py-10 shadow-[0_20px_50px_-15px_rgba(211,18,106,0.35)]">
       {kicker ? (
-        <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-white/80 font-mono">
+        <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-white font-mono">
           {kicker}
         </p>
       ) : null}
       <h2 className="mb-3 font-heading text-2xl font-bold text-white md:text-3xl lg:text-4xl tracking-tight">{headline}</h2>
-      <p className="mx-auto mb-6 max-w-2xl text-base text-white/90 md:text-lg">{body}</p>
+      <p className="mx-auto mb-6 max-w-2xl text-base text-white md:text-lg">{body}</p>
 
       {perks && perks.length > 0 ? (
         <div className="mx-auto mb-7 max-w-xl grid grid-cols-1 gap-2 rounded-xl bg-black/20 p-3 sm:grid-cols-2 text-left">

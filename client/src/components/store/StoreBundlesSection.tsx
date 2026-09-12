@@ -52,7 +52,7 @@ function OfferCard({ offer }: { offer: CuratedSolutionOffer }) {
           <p><span className="font-semibold text-white/85">Commercial model:</span> {offer.commercialModel}</p>
         </div>
       </details>
-      <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-white/45">
+      <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-white/55">
         Next step: {offer.nextStep}
       </p>
     </article>

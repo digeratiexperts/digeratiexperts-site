@@ -116,7 +116,7 @@ export default function BusinessNeedsIndex() {
                 <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/65 md:text-lg">
                   Set your users, devices, and sites once. Then DE can size every preconfigured solution consistently while you browse—without forcing you into a managed-services contract or exposing a vendor catalog.
                 </p>
-                <p className="mt-8 text-sm text-white/45">
+                <p className="mt-8 text-sm text-white/55">
                   Existing client or DE staff?{" "}
                   <a
                     href={portalMarketplaceLoginUrl()}

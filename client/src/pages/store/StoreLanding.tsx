@@ -290,7 +290,7 @@ const StoreLanding = () => {
 
                   {recommendation.proactiveTier && (
                     <div className="mt-6 rounded-2xl border border-white/10 bg-[#141414] p-6">
-                      <p className="text-xs font-medium uppercase tracking-[0.14em] text-white/45">
+                      <p className="text-xs font-medium uppercase tracking-[0.14em] text-white/55">
                         One ProActive tier
                       </p>
                       <h3 className="mt-2 text-2xl font-semibold text-white">
@@ -339,7 +339,7 @@ const StoreLanding = () => {
                     <button
                       type="button"
                       onClick={revealFullCatalog}
-                      className="text-sm text-white/45 underline-offset-4 hover:text-white/70 hover:underline"
+                      className="text-sm text-white/55 underline-offset-4 hover:text-white/70 hover:underline"
                       data-testid="button-browse-catalog"
                     >
                       Browse the full catalog

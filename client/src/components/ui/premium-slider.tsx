@@ -11,7 +11,7 @@ interface PremiumSliderProps extends React.ComponentPropsWithoutRef<typeof Slide
 const PremiumSlider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
   PremiumSliderProps
->(({ className, showValue, valuePrefix = "", valueSuffix = "", ...props }, ref) => {
+>(({ className, showValue, valuePrefix = "", valueSuffix = "", "aria-label": ariaLabel, "aria-labelledby": ariaLabelledBy, ...props }, ref) => {
   const value = props.value?.[0] ?? props.defaultValue?.[0] ?? 0;
   const max = props.max ?? 100;
   const min = props.min ?? 0;
@@ -35,8 +35,11 @@ const PremiumSlider = React.forwardRef<
           />
         </SliderPrimitive.Track>
         
-        {/* Premium thumb with glow effect */}
+        {/* Premium thumb with glow effect. The thumb is the focusable role="slider"
+            element, so the accessible name is forwarded here (a11y sweep 2026-09-12). */}
         <SliderPrimitive.Thumb 
+          aria-label={ariaLabel}
+          aria-labelledby={ariaLabelledBy}
           className="block h-5 w-5 rounded-full bg-white shadow-[0_0_0_3px_rgb(var(--de-accent-rgb)/0.3),0_4px_12px_rgba(0,0,0,0.3)] 
                      ring-offset-background transition-all duration-200 
                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-accent focus-visible:ring-offset-2 

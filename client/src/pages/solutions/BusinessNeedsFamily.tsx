@@ -126,11 +126,11 @@ export default function BusinessNeedsFamily() {
               {family.label}
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/65">{family.description}</p>
-            <p className="mt-4 text-sm text-white/45">Profile: {profileSummary(draft.environment)}</p>
+            <p className="mt-4 text-sm text-white/55">Profile: {profileSummary(draft.environment)}</p>
           </header>
 
           <section aria-labelledby="offer-type-heading">
-            <h2 id="offer-type-heading" className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/45">
+            <h2 id="offer-type-heading" className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/55">
               Choose the operating relationship
             </h2>
             <div className="mb-8 grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Choose an offer type">
@@ -164,7 +164,7 @@ export default function BusinessNeedsFamily() {
                   <p className="mt-4 max-w-2xl leading-relaxed text-white/75">{packageView.relationshipSummary}</p>
                 </div>
                 <aside className="rounded-xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-xs uppercase tracking-wide text-white/45">Commercial position</p>
+                  <p className="text-xs uppercase tracking-wide text-white/55">Commercial position</p>
                   <p className="mt-2 font-semibold text-white">{packageView.pricingLabel}</p>
                   <p className="mt-2 text-xs leading-relaxed text-white/50">{assessmentPolicyLabel(packageView.assessmentPolicy)}</p>
                 </aside>
@@ -188,7 +188,7 @@ export default function BusinessNeedsFamily() {
                     {packageView.lineItems.map((line, index) => (
                       <div key={line.label} className={`grid grid-cols-[minmax(0,1fr)_auto] gap-4 px-4 py-3 text-sm ${index ? "border-t border-white/10" : ""}`}>
                         <span className="text-white/75">{line.label}</span>
-                        <span className="text-right text-white/45">{line.quantity}</span>
+                        <span className="text-right text-white/55">{line.quantity}</span>
                       </div>
                     ))}
                   </div>

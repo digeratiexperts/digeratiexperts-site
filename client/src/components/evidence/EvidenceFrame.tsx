@@ -105,7 +105,7 @@ export const EvidenceFrame: React.FC<EvidenceFrameProps> = ({
           {status && <StatusToken status={status} label={statusLabel} />}
         </div>
         {timestamp && (
-          <span className={`font-mono text-[11px] ${isDark ? "text-white/45" : "text-[#5A5368]"}`}>
+          <span className={`font-mono text-[11px] ${isDark ? "text-white/55" : "text-[#5A5368]"}`}>
             {timestamp}
           </span>
         )}

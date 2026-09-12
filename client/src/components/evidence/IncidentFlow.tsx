@@ -106,7 +106,7 @@ export const IncidentFlow: React.FC<{ scenarios?: ScenarioDefinition[] }> = ({ s
             <p className="mt-1 text-sm leading-relaxed text-white/70">{activeScenario.vector}</p>
           </div>
           <div className="space-y-3">
-            <p className="font-mono text-[11px] uppercase tracking-widest text-white/45">Example response sequence</p>
+            <p className="font-mono text-[11px] uppercase tracking-widest text-white/55">Example response sequence</p>
             <ol className="space-y-3">
               {activeScenario.steps.map((step, stepIdx) => (
                 <li key={`${activeScenario.id}-${step.label}`} className="grid grid-cols-[2rem_1fr] gap-3">
