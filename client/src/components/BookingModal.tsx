@@ -4,7 +4,7 @@ import { useBooking } from "@/contexts/BookingContext";
 import { ZohoBookingWidget } from "@/components/ZohoBookingWidget";
 import { COMPANY } from "@/data/companyContact";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import logoImage from "@assets/DE-Logo-new_1762461524794.webp";
+import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
 
 const STEPS = [
   {
@@ -114,7 +114,7 @@ export function BookingModal() {
 
               <div className="flex shrink-0 items-center justify-between gap-3 bg-[#0a0a0a] px-4 py-3 md:px-5">
                 <img
-                  src={logoImage}
+                  src={DE_LOGO_REVERSE}
                   alt="Digerati Experts"
                   className="h-8 w-auto md:h-9"
                   width={160}

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, Lock, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import logoImage from "@assets/DE-Logo-new_1762461524794.webp";
+import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
 
 export default function PortalResetPassword() {
   const [location] = useLocation();
@@ -54,7 +54,7 @@ export default function PortalResetPassword() {
       <div className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="flex justify-center mb-8">
-            <img src={logoImage} alt="Digerati Experts" className="h-10 w-auto" />
+            <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
           </div>
           <Card className="bg-white/10 border-white/20 backdrop-blur">
             <CardContent className="pt-6 space-y-4">
@@ -78,7 +78,7 @@ export default function PortalResetPassword() {
     <div className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
-          <img src={logoImage} alt="Digerati Experts" className="h-10 w-auto" />
+          <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
         </div>
 
         <Card className="bg-white/10 border-white/20 backdrop-blur">

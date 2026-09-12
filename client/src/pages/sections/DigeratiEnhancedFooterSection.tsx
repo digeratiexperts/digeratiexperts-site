@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { COMPANY, COMPANY_SOCIAL } from "@/data/companyContact";
 import { CTA } from "@/lib/ctaCopy";
 import { BookingLink } from "@/components/BookingButton";
-import logoImage from "@assets/DE-Logo-new_1762461524794.webp";
+import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
 
 const FooterLink = ({ href, children, testId }: { href: string; children: React.ReactNode; testId: string }) => {
   const isExternal = /^https?:\/\//i.test(href);
@@ -111,7 +111,7 @@ export const DigeratiEnhancedFooterSection = (): JSX.Element => {
         <div className="grid grid-cols-1 items-start gap-10 md:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           <div className="min-w-0 md:col-span-2 lg:col-span-4">
             <img
-              src={logoImage}
+              src={DE_LOGO_REVERSE}
               alt="Digerati Experts Logo"
               className="mb-4 h-12 w-auto"
               data-testid="logo-footer"
