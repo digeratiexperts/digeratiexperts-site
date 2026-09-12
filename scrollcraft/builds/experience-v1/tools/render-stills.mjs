@@ -23,7 +23,10 @@ const FFMPEG = process.env.FFMPEG || "/root/.cache/scrollcraft/node_modules/ffmp
 const BEATS = [
   ["01", 0.45], // movement 1: the whole floor, nothing quite lined up
   ["02", 1.6],  // movement 2: glass floor, relationships, weak points
-  ["03", 3.6],  // movement 3: level, joined, one boundary
+  // movement 3: level, joined, one boundary. Sampled just before the evidence
+  // tail begins dimming the world at t 3.02, because under reduced motion and
+  // without WebGL these stills are the only picture of it anyone gets.
+  ["03", 2.95],
 ];
 const SHAPES = [["s", 1600, 1000], ["m", 800, 1000]];
 mkdirSync(OUT, { recursive: true });

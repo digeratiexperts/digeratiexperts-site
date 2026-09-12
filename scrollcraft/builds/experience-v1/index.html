@@ -38,8 +38,10 @@ html,body{background:var(--sc-canvas);color:var(--sc-ink);overflow-x:clip}
 .x-skip:focus,.x-skip:focus-visible{top:16px;outline:2px solid #fff;outline-offset:2px}
 
 /* ── the world: one fixed scene behind the pinned story ─────────────────── */
+/* The world is behind the WHOLE page now, in both presentations. Revision 3
+   hid it outside the pinned story, which is what made the sections below cut
+   to a flat ground. */
 .x-world{position:fixed;inset:0;z-index:0;pointer-events:none;background:var(--sc-canvas)}
-html:not(.x-pin) .x-world{display:none}
 .x-world canvas{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity 700ms ease}
 .x-world.live canvas{opacity:1}
 .x-poster{position:absolute;inset:0}
@@ -62,13 +64,21 @@ html:not(.x-pin) .x-world{display:none}
 
 /* ── page furniture ─────────────────────────────────────────────────────── */
 .x-bar{position:fixed;top:0;left:0;right:0;z-index:42;display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:14px var(--gutter);background:linear-gradient(rgba(5,3,18,.85),rgba(5,3,18,0))}
-html:not(.x-pin) .x-bar{position:sticky;background:rgba(5,3,18,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--hair)}
+  padding:14px var(--gutter)}
+/* The scrim is taller than the bar and holds near-solid across the bar's own
+   height. Without that, a heading or a line of body copy scrolling under a
+   fixed header arrives at full brightness and collides with the logo and the
+   button; the speed pass caught exactly that three times. */
+.x-bar::before{content:"";position:absolute;left:0;right:0;top:0;height:136px;pointer-events:none;
+  background:linear-gradient(rgba(5,3,18,.97) 0,rgba(5,3,18,.95) 58px,rgba(5,3,18,.6) 88px,rgba(5,3,18,0) 136px)}
+.x-bar > *{position:relative}
+html:not(.x-pin) .x-bar{position:sticky;background:rgba(5,3,18,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--hair)}
+html:not(.x-pin) .x-bar::before{display:none}
 .x-bar .mk{display:block;line-height:0}
 .x-bar .mk img{display:block;height:30px;width:auto}
 @media(max-width:560px){.x-bar .mk img{height:24px}}
 .x-cta{font-family:var(--util);font-size:11px;letter-spacing:.14em;text-transform:uppercase;border:1px solid rgba(255,255,255,.28);
-  padding:10px 14px;color:var(--sc-ink);text-decoration:none;background:rgba(5,3,18,.55);white-space:nowrap;border-radius:3px;
+  padding:10px 14px;color:var(--sc-ink);text-decoration:none;background:rgba(5,3,18,.8);white-space:nowrap;border-radius:3px;
   transition:border-color .18s ease,background .18s ease}
 .x-cta:hover,.x-cta:focus-visible{border-color:var(--sc-accent);background:rgba(211,18,106,.16)}
 .x-cta .short{display:none}
@@ -107,11 +117,23 @@ h1.x-line{font-size:clamp(31px,4.3vw,56px)}
 main{position:relative;z-index:1}
 .x-act{position:relative}
 .x-stage{position:relative;padding:clamp(28px,5vh,52px) var(--gutter) 0}
+/* flow mode: the copy sits on its own plate so it reads over the live world */
+html.x-flow .x-m{background:linear-gradient(rgba(5,3,18,0),rgba(5,3,18,.84) 6%,rgba(5,3,18,.88) 94%,rgba(5,3,18,0));
+  padding-left:var(--gutter);padding-right:var(--gutter);margin-left:calc(var(--gutter) * -1);margin-right:calc(var(--gutter) * -1)}
 .x-m{position:relative;max-width:62rem;margin:0 auto;padding:0 0 clamp(44px,7vh,80px)}
-.x-m + .x-m{border-top:1px solid var(--hair);padding-top:clamp(36px,6vh,60px)}
+.x-m + .x-m{padding-top:clamp(36px,6vh,60px)}
 .x-copy{max-width:min(48ch,100%)}
 .x-still{margin:28px 0 0}
 .x-still img{width:100%;height:auto;border-radius:8px;border:1px solid var(--hair);background:#0a0718}
+/* A frozen frame of the world inside a bordered box, sitting directly on top
+   of the live world at a different moment, is the worst thing the speed pass
+   found on a phone. The stills exist for the cases where #world never gets
+   .live — reduced motion, no WebGL, low power — so tie them to exactly that.
+   With them gone the movements need a real band of world between them, which
+   is what the page is for. */
+html.x-flow #world.live ~ main .x-still{display:none}
+html.x-flow #world.live ~ main .x-m + .x-m{padding-top:clamp(140px,24vh,280px)}
+html.x-flow #world.live ~ main .x-act + .x-sec{padding-top:clamp(120px,20vh,220px)}
 html:not(.x-pin) [data-sc-cue]{opacity:1!important;transform:none!important}
 
 /* the stage pins: declared here as well as in the engine's device CSS, because
@@ -131,8 +153,8 @@ html.x-pin .x-m[inert]{visibility:hidden}
 html.x-pin:not(.sc-ready) [data-x-m="1"] [data-sc-cue]{opacity:1}
 
 /* ── where to begin: on the page, after the story ───────────────────────── */
-.x-close{position:relative;z-index:1;background:var(--sc-canvas);border-top:1px solid var(--hair);
-  padding:clamp(56px,10vh,110px) var(--gutter) clamp(56px,9vh,96px)}
+.x-close{position:relative;z-index:1;padding:clamp(56px,10vh,110px) var(--gutter) clamp(56px,9vh,96px);
+  background:linear-gradient(rgba(5,3,18,0) 0%,rgba(5,3,18,.78) 7%,rgba(5,3,18,.9) 50%,rgba(5,3,18,.78) 93%,rgba(5,3,18,0) 100%)}
 html.x-pin .x-close{box-shadow:0 -60px 120px rgba(5,3,18,.95)}
 .x-close .wrap{width:min(1060px,100%);margin-inline:auto}
 .x-close .x-line{font-size:clamp(26px,3.6vw,46px)}
@@ -145,13 +167,18 @@ html.x-pin .x-close{box-shadow:0 -60px 120px rgba(5,3,18,.95)}
 .x-paths a span{color:var(--sc-ink-soft);font-family:var(--sc-font-text);font-size:14px;line-height:1.5}
 .x-paths a:hover b{color:var(--sc-accent)}
 .x-who{margin:44px 0 0;max-width:64ch;font-family:var(--util);font-size:11px;letter-spacing:.12em;text-transform:uppercase;line-height:1.8;color:var(--sc-ink-soft)}
-.x-foot{position:relative;z-index:1;background:var(--sc-canvas);padding:20px var(--gutter) 36px;
+.x-foot{position:relative;z-index:1;background:linear-gradient(rgba(5,3,18,0),var(--sc-canvas) 40%);padding:44px var(--gutter) 36px;
   font-family:var(--util);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--sc-ink-soft);line-height:1.8}
 .x-foot p{margin:0;width:min(1060px,100%);margin-inline:auto}
 .x-foot a{color:inherit}
 
 /* ── acts 5–10 and the final frame: the evidence layer, on the page ────── */
-.x-sec{position:relative;z-index:1;background:var(--sc-canvas);border-top:1px solid var(--hair);padding:clamp(56px,9vh,100px) var(--gutter)}
+/* No solid ground and no rule between sections: each one is a soft plate over
+   the world, and the world keeps moving underneath. The plate is dark enough
+   that the copy always wins, which is the audience-leads rule in CSS form. */
+.x-sec{position:relative;z-index:1;padding:clamp(56px,9vh,100px) var(--gutter);
+  background:linear-gradient(rgba(5,3,18,0) 0%,rgba(5,3,18,.72) 8%,rgba(5,3,18,.86) 50%,rgba(5,3,18,.72) 92%,rgba(5,3,18,0) 100%)}
+.x-sec + .x-sec{margin-top:-1px}
 .x-sec .wrap{width:min(1060px,100%);margin-inline:auto}
 .x-sec .x-line{font-size:clamp(26px,3.6vw,46px)}
 .x-blocks{margin-top:36px;display:grid;grid-template-columns:repeat(7,1fr);gap:10px}

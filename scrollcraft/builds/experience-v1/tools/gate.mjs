@@ -9,7 +9,8 @@
  *   - a first screen without the thesis H1 and a visible, tappable
  *     assessment control
  *   - flow mode (phones, reduced motion) that still pins, hides copy, or
- *     fails to show its stills
+ *     carries the wrong number of pictures of the world: the boxed stills on
+ *     top of the live world, or neither of the two when one is required
  *   - missing landmarks (header, main, nav, footer), more than one h1, or a
  *     heading order that does not start with it
  *   - console errors
@@ -132,18 +133,27 @@ for (const run of RUNS) {
   if (blank.length) F("blank stops at y=" + blank.join(","));
   if (mode === "pin" && minContrast < 4.5) F("contrast proxy " + minContrast.toFixed(2) + " at " + JSON.stringify(contrastAt));
 
-  // flow mode: no pin, all copy present, stills shown
+  // flow mode: no pin, all copy present, exactly one picture of the world
   let stills = null;
   if (mode === "flow") {
     const flow = await page.evaluate(() => ({
       pinned: !!document.querySelector(".sc-act--pinned"),
       hidden: [...document.querySelectorAll("main [data-sc-cue]")].filter((el) => getComputedStyle(el).opacity !== "1" || el.closest("[inert]")).length,
+      live: !!document.getElementById("world")?.classList.contains("live"),
       stills: [...document.querySelectorAll(".x-still img")].map((i) => ({ shown: getComputedStyle(i).display !== "none" && i.getBoundingClientRect().width > 0, ok: i.complete && i.naturalWidth > 0, src: i.currentSrc.split("/").pop() })),
     }));
     if (flow.pinned) F("flow mode still pins");
     if (flow.hidden) F("flow mode hides " + flow.hidden + " copy elements");
-    if (flow.stills.length < 3 || flow.stills.some((s) => !s.shown || !s.ok)) F("flow stills missing: " + JSON.stringify(flow.stills));
-    stills = flow.stills.map((s) => s.src);
+    // One picture of the world, never two and never none. Where the live world
+    // runs behind the page (phones, since revision 4) a boxed still is a second
+    // frozen copy of it at a different moment sitting on top of the first —
+    // the worst thing the speed pass found. Where it cannot run (reduced
+    // motion, no WebGL, low power) the stills are the only picture there is.
+    const shown = flow.stills.filter((s) => s.shown);
+    if (flow.stills.some((s) => !s.ok)) F("flow stills failed to load: " + JSON.stringify(flow.stills));
+    if (flow.live && shown.length) F("flow shows " + shown.length + " still(s) on top of the live world: " + JSON.stringify(shown));
+    if (!flow.live && (flow.stills.length < 3 || shown.length !== flow.stills.length)) F("flow stills missing: " + JSON.stringify(flow.stills));
+    stills = (flow.live ? ["(live world)"] : flow.stills.map((s) => s.src));
   }
 
   // keyboard: every focus lands inside the viewport, never on an inert control

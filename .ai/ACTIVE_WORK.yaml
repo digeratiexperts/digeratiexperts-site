@@ -54,6 +54,9 @@ claims:
     files:
       - scrollcraft/experience-v1/**
       - scrollcraft/builds/experience-v1/**
+      - scrollcraft/FINGERPRINTS.md
+      - public/scrollcraft/experience-v1/**
+      - client/src/pages/ExperienceInSite.tsx
     status: active
     started: 2026-09-03
     note: >-
@@ -71,8 +74,21 @@ claims:
       for the keyboard, the thesis and one assessment control on screen
       one, the journey cut to about 5 vh, telemetry removed, the world
       leaned abstract with exposure raised, and tools/gate.mjs as the
-      release gate. Act 4 onward is not built. Isolated under scrollcraft/
-      and public/scrollcraft/; no client/, server/ or shared/ files;
+      release gate. Revision 3: Acts 5-10 and the final frame added as the
+      evidence layer on the page, and the whole thing shown inside the
+      site's own chrome at /experience (client/src/pages/ExperienceInSite.tsx
+      wraps the same static build; /experience-v1 forwards there).
+      Revision 4 (Joe, 2026-09-06): the world is fully abstract (light,
+      line and plane, no furniture and no floor plane), the camera arcs
+      laterally and reverses direction on the correction, one continuous
+      timeline runs the whole page so every section flows over a world that
+      never freezes or cuts to flat, and phones get the live world.
+      Joe's standing rule from the same day - always scroll-test at
+      multiple speeds and look for anything that looks off - is enforced by
+      tools/motion.mjs (four speeds, two viewports, sampled mid-motion) and
+      applies to every future Scrollcraft change here, not just this one.
+      Isolated under scrollcraft/ and public/scrollcraft/ plus the single
+      review route; the homepage and every other page are untouched, and
       production is never replaced without Joe's explicit approval. The
       2026-09-01 Scrollcraft freeze stands for every other route.
   - id: de-eight-block-correction
