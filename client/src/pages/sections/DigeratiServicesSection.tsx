@@ -64,6 +64,16 @@ const paths: {
   },
 ];
 
+/**
+ * Radix derives the trigger/content element ids from the tab value. A value
+ * such as "SOC / MDR Monitoring" produces ids containing spaces and slashes,
+ * which makes aria-controls / aria-labelledby point at invalid id tokens
+ * (axe: aria-valid-attr-value, critical). Use a slug for the value and keep
+ * the human title for display.
+ */
+export const tabValue = (title: string) =>
+  title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
 const capabilityPreview: {
   icon: LucideIcon;
   title: string;
@@ -216,7 +226,7 @@ export const DigeratiServicesSection = (): JSX.Element => {
             </p>
           </div>
 
-          <Tabs defaultValue={capabilityPreview[0].title} className="mt-8 md:mt-10">
+          <Tabs defaultValue={tabValue(capabilityPreview[0].title)} className="mt-8 md:mt-10">
             <div className="relative">
               <div
                 className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-[var(--de-surface)] to-transparent md:hidden"
@@ -231,7 +241,7 @@ export const DigeratiServicesSection = (): JSX.Element => {
                   return (
                     <TabsTrigger
                       key={item.title}
-                      value={item.title}
+                      value={tabValue(item.title)}
                       className={cn(
                         "group h-auto min-h-11 shrink-0 rounded-xl border bg-transparent px-3.5 py-2.5 text-base font-medium text-white shadow-none",
                         "hover:bg-white/[0.03] hover:text-white",
@@ -254,7 +264,7 @@ export const DigeratiServicesSection = (): JSX.Element => {
             {capabilityPreview.map((item) => (
               <TabsContent
                 key={item.title}
-                value={item.title}
+                value={tabValue(item.title)}
                 className="mt-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)]"
               >
                 <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
