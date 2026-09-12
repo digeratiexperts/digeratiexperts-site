@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { AlertCircle, Mail, CheckCircle2 } from "lucide-react";
 import { Link } from "wouter";
 import logoImage from "@assets/DE-Logo-new_1762461524794.webp";
@@ -50,7 +50,7 @@ export default function PortalForgotPassword() {
 
         <Card className="bg-white/10 border-white/20 backdrop-blur">
           <CardHeader className="space-y-2">
-            <CardTitle className="text-2xl text-white">Reset Password</CardTitle>
+            <h1 className="text-2xl font-semibold leading-none tracking-tight text-white">Reset Password</h1>
             <CardDescription className="text-gray-300">
               Enter your email and we'll send you a reset link
             </CardDescription>
