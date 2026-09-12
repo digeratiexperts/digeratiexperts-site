@@ -1146,7 +1146,7 @@ export default function PortalChat() {
             9 AM–6 PM EST. Outside hours, open a ticket anytime from DE Desk or{" "}
             <Link
               href="/portal/tickets/create"
-              className="text-[#D3126A] hover:underline dark:text-[#F04C97]"
+              className="text-[#D3126A] underline underline-offset-2 hover:text-[#A30E52] dark:text-[#F04C97]"
             >
               create a ticket
             </Link>

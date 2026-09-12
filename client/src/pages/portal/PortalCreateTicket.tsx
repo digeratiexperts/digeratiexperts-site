@@ -275,14 +275,14 @@ export default function PortalCreateTicket() {
 
               {/* Category */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Category *</label>
+                <label id="ticket-category-label" className="text-sm font-medium">Category *</label>
                 <Select
                   value={formData.category}
                   onValueChange={(value) =>
                     setFormData({ ...formData, category: value })
                   }
                 >
-                  <SelectTrigger data-testid="select-category">
+                  <SelectTrigger aria-labelledby="ticket-category-label" data-testid="select-category">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -297,14 +297,14 @@ export default function PortalCreateTicket() {
 
               {/* Priority */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Priority *</label>
+                <label id="ticket-priority-label" className="text-sm font-medium">Priority *</label>
                 <Select
                   value={formData.priority}
                   onValueChange={(value) =>
                     setFormData({ ...formData, priority: value })
                   }
                 >
-                  <SelectTrigger data-testid="select-priority">
+                  <SelectTrigger aria-labelledby="ticket-priority-label" data-testid="select-priority">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -340,6 +340,7 @@ export default function PortalCreateTicket() {
                 <input
                   ref={fileInputRef}
                   type="file"
+                  aria-label="Add ticket attachments"
                   multiple
                   accept={PORTAL_TICKET_ACCEPT}
                   className="sr-only"
