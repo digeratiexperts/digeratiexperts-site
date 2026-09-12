@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   categoryLabels,
   formatPrice,
+  isResolvedPrice,
   type ProductCategory,
   type StoreProduct,
 } from "@/data/storeProducts";
@@ -190,7 +191,7 @@ export function StoreProductCard({
 
         <div className="mt-auto border-t border-black/10 pt-3.5">
           <div className="mb-3 flex items-baseline justify-between gap-2">
-            {hasDiscount ? (
+            {hasDiscount && isResolvedPrice(price) && isResolvedPrice(product.basePrice) ? (
               <div>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-lg sm:text-xl font-bold text-[#1A1228]" data-testid={`price-${product.id}`}>
@@ -207,7 +208,7 @@ export function StoreProductCard({
               </div>
             ) : (
               <span className="text-lg sm:text-xl font-bold text-[#1A1228]" data-testid={`price-${product.id}`}>
-                {product.basePrice === 0 && isContract ? "Custom quote" : formatPrice(product)}
+                {isContract && !isResolvedPrice(product.basePrice) ? "Custom quote" : formatPrice(product)}
               </span>
             )}
           </div>
