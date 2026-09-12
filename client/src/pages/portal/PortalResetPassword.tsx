@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { AlertCircle, Lock, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import logoImage from "@assets/DE-Logo-new_1762461524794.webp";
@@ -83,7 +83,7 @@ export default function PortalResetPassword() {
 
         <Card className="bg-white/10 border-white/20 backdrop-blur">
           <CardHeader className="space-y-2">
-            <CardTitle className="text-2xl text-white">Choose New Password</CardTitle>
+            <h1 className="text-2xl font-semibold leading-none tracking-tight text-white">Choose New Password</h1>
             <CardDescription className="text-gray-300">
               At least 8 characters with 1 uppercase letter and 1 number
             </CardDescription>
