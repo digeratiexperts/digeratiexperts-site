@@ -26,6 +26,15 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      // Compatibility bridge for live surfaces that still import the legacy
+      // raster asset. The canonical artwork is the vector master in brand/.
+      // Keep this exact alias before the broader @assets alias below.
+      "@assets/DE-Logo-new_1762461524794.webp": path.resolve(
+        import.meta.dirname,
+        "brand",
+        "digerati-logo-reverse.svg",
+      ),
+      "@brand": path.resolve(import.meta.dirname, "brand"),
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
