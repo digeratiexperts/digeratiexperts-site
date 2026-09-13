@@ -15,7 +15,9 @@ export const SITE_ORIGIN = "https://digeratiexperts.com";
  */
 export function DefaultCanonical() {
   const [location] = useLocation();
-  const path = location.replace(/[?#].*$/, "").replace(/\/+$/, "") || "/";
+  // Routes are all lowercase and wouter matches case-insensitively, so /Pricing
+  // and /pricing/ both canonicalise to /pricing.
+  const path = location.replace(/[?#].*$/, "").replace(/\/+$/, "").toLowerCase() || "/";
   return (
     <Helmet>
       <link rel="canonical" href={path === "/" ? `${SITE_ORIGIN}/` : `${SITE_ORIGIN}${path}`} />
