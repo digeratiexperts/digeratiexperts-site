@@ -123,7 +123,9 @@ describe("DE Desk shell positioning", () => {
   it("styles Ask DE discovery and Get Support issues as graphite grouped stacks", () => {
     expect(src).toMatch(/de-desk-discover/);
     expect(src).toMatch(/de-desk-discover-list/);
-    expect(src).toMatch(/How can our Arizona team assist you\?/);
+    expect(src).toMatch(/ask-de-starter-chips/);
+    expect(src).toMatch(/Suggested questions/);
+    expect(src).toMatch(/startersForPage/);
     expect(src).toMatch(/de-desk-ticket-upper/);
     expect(src).toMatch(/de-desk-perk-list/);
     expect(src).toMatch(/\.de-desk-issue-list \{[\s\S]*?border-radius: 15px;/);
@@ -134,5 +136,18 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/de-desk-btn-grad/);
     expect(src).toMatch(/de-desk-urgency/);
     expect(src).toMatch(/\.de-desk-scroll > \* \{ flex-shrink: 0; \}/);
+  });
+
+  it("keeps Ask DE motion as presentation-only over canonical message content", () => {
+    expect(src).toMatch(/from "@\/lib\/deskAskDeMotion"/);
+    expect(src).toMatch(/typewriteText\(/);
+    expect(src).toMatch(/streamWords\(/);
+    expect(src).toMatch(/greetingVisible/);
+    expect(src).toMatch(/setReveal\(/);
+    expect(src).toMatch(/className="sr-only"/);
+    expect(src).toMatch(/de-desk-typing/);
+    expect(src).not.toMatch(/Thinking it through/);
+    expect(src).toMatch(/aria-live="polite"/);
+    expect(src).toMatch(/prefersReducedMotion/);
   });
 });

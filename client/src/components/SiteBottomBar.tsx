@@ -21,6 +21,14 @@ import { PRIMARY_PHONE } from "@shared/companyContact";
 import { AskDeGlyph } from "@/components/icons/AskDeGlyph";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  hasDeskNudgeBeenShown,
+  isCookieBannerBlocking,
+  isDeskNudgeDismissed,
+  markDeskNudgeDismissed,
+  markDeskNudgeShown,
+  prefersReducedMotion,
+} from "@/lib/deskAskDeMotion";
 
 /** Original used 0.28s easeOut layout + 300ms grid. Keep that pacing without transform. */
 const EXPAND_S = 0.4;
@@ -42,11 +50,26 @@ type QuickMenuItem = {
  */
 function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
   const [showMenu, setShowMenu] = useState(false);
+  const [showNudge, setShowNudge] = useState(false);
   const isMobile = useIsMobile();
   // Focus trap keeps Tab inside the chooser and restores focus to the
   // launcher when it closes (Escape, outside tap, X, or a selection).
   const popoverRef = useFocusTrap<HTMLDivElement>({ enabled: showMenu });
   const launcherRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (showMenu || showNudge) return;
+    if (isDeskNudgeDismissed() || hasDeskNudgeBeenShown()) return;
+    const delay = prefersReducedMotion() ? 0 : 6000;
+    const timer = window.setTimeout(() => {
+      if (isDeskNudgeDismissed() || hasDeskNudgeBeenShown()) return;
+      if (isCookieBannerBlocking()) return;
+      if (document.documentElement.hasAttribute("data-de-desk-open")) return;
+      markDeskNudgeShown();
+      setShowNudge(true);
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [showMenu, showNudge]);
 
   useEffect(() => {
     if (!showMenu) return;
@@ -71,7 +94,14 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
 
   const openDesk = (detail: Parameters<typeof openMspAdvisor>[0]) => {
     setShowMenu(false);
+    setShowNudge(false);
+    markDeskNudgeDismissed();
     openMspAdvisor(detail);
+  };
+
+  const dismissNudge = () => {
+    setShowNudge(false);
+    markDeskNudgeDismissed();
   };
 
   const menuItems: QuickMenuItem[] = [
@@ -111,6 +141,44 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className="relative flex shrink-0 items-center">
+      {showNudge ? (
+        <div
+          className="de-ask-nudge fixed z-[10035] max-w-[240px] cursor-pointer rounded-[14px_14px_4px_14px] bg-[#fbfbfa] px-3 py-2.5 text-left text-[13px] font-medium leading-snug text-[#0a0a0a] shadow-[0_12px_40px_rgba(0,0,0,0.5)]"
+          style={{
+            // Fixed outside document flow so the nudge cannot cause CLS.
+            right: "max(1rem, env(safe-area-inset-right))",
+            bottom: "calc(var(--de-unified-bar-h, 3.5rem) + 0.75rem + env(safe-area-inset-bottom, 0px))",
+          }}
+          role="dialog"
+          aria-label="Ask DE suggestion"
+          data-testid="ask-de-nudge"
+          onClick={() => openDesk({ tab: "chat" })}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              openDesk({ tab: "chat" });
+            }
+          }}
+          tabIndex={0}
+        >
+          <button
+            type="button"
+            className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#fbfbfa] bg-[#0a0a0a] text-[11px] leading-none text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
+            aria-label="Dismiss Ask DE suggestion"
+            data-testid="ask-de-nudge-dismiss"
+            onClick={(event) => {
+              event.stopPropagation();
+              dismissNudge();
+            }}
+          >
+            ×
+          </button>
+          Stuck on something IT or security?
+          <small className="mt-0.5 block text-[12px] font-normal text-[#5F6E84]">
+            Ask DE — real engineers, clear next step.
+          </small>
+        </div>
+      ) : null}
       <AnimatePresence>
         {showMenu && isMobile && (
           <motion.div
@@ -208,15 +276,23 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
       <button
         ref={launcherRef}
         type="button"
-        onClick={() => setShowMenu((open) => !open)}
+        onClick={() => {
+          setShowNudge(false);
+          setShowMenu((open) => !open);
+        }}
         className="group flex h-10 shrink-0 items-center gap-2 rounded-full px-1 pr-1.5 text-white transition-colors duration-200 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
         data-testid="button-open-asap-widget"
         aria-label={compact ? "Open Ask DE support options" : "Open Ask DE"}
         aria-expanded={showMenu}
         aria-haspopup="dialog"
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white text-[#111116] shadow-[0_4px_14px_rgba(0,0,0,0.18)] transition-transform duration-150 group-hover:scale-[1.04]">
+        <span className="de-ask-fab relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white text-[#111116] shadow-[0_4px_14px_rgba(0,0,0,0.18)] transition-transform duration-150 group-hover:scale-[1.04]">
           <AskDeGlyph className="h-[26px] w-[26px]" />
+          <span
+            className="de-ask-fab-dot absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0a0a0a] bg-[#22c55e]"
+            title="Engineers on shift"
+            aria-hidden="true"
+          />
         </span>
         {!compact && (
           <span className="hidden text-left sm:block">
@@ -225,6 +301,29 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
           </span>
         )}
       </button>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            .de-ask-fab::before {
+              content: "";
+              position: absolute;
+              inset: -6px;
+              border-radius: 50%;
+              border: 2px solid rgba(211, 18, 106, 0.55);
+              animation: de-ask-breathe 2.8s ease-out infinite;
+              pointer-events: none;
+            }
+            @keyframes de-ask-breathe {
+              0% { transform: scale(0.86); opacity: 0.9; }
+              70% { transform: scale(1.18); opacity: 0; }
+              100% { transform: scale(1.18); opacity: 0; }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .de-ask-fab::before { animation: none; opacity: 0; }
+            }
+          `,
+        }}
+      />
     </div>
   );
 }
