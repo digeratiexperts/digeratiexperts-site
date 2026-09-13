@@ -351,7 +351,8 @@ function seedDemoIfNotProduction() {
 
   // Shared demo-user passwords come from the same runtime env hash when present.
   // Do not embed fixed bootstrap credential material in source.
-  const sharedDemoHash = resolveDevPortalAdminPasswordHash();
+  const sharedDemoHash =
+    isDevPortalBootstrapAllowed() ? resolveDevPortalAdminPasswordHash() : null;
   const demos: PortalAuthUser[] = [];
   if (sharedDemoHash) {
     demos.push(
@@ -359,10 +360,6 @@ function seedDemoIfNotProduction() {
       { id: "user-002", email: "sarah.jones@phoenixmedical.com", username: "sarahjones", password: sharedDemoHash, role: "user", storeRole: "managed", fullName: "Sarah Jones", clientId: "client-2", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
     );
   }
-  demos.push(
-    { id: "user-003", email: "admin@alamoindustries.com", username: "alamoadmin", password: "$2b$12$N9Ys4.kLCKht2rMjK4x0TOJHlQlxY7dRzAT6vmC7.mGrjck7TUI7O", role: "user", storeRole: "comanaged", fullName: "Maria Garcia", clientId: "client-5", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
-    { id: "user-004", email: "admin@selmachining.com", username: "seladmin", password: "$2b$12$m6eyC5YfWBIG4/beE40TxOeG5BG4v/MxsowQ4Ays9RrjhOzcVxx.a", role: "user", storeRole: "comanaged", fullName: "Sel Operations", clientId: "client-6", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
-  );
   for (const u of demos) {
     if (!getUser(u.email)) setUser(u);
   }

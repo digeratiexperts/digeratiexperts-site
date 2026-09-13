@@ -202,11 +202,13 @@ export class MemStorage implements IStorage {
   }
 
   private seedDemoData() {
+    // Never embed known login credential material in MemStorage. Structural
+    // demo users/clients for UI fallback may exist without usable passwords.
     const adminUser: User = {
       id: "admin-1",
       username: "admin@digerati-experts.com",
       email: "admin@digerati-experts.com",
-      password: "$2b$10$GI4G0Wfv.JGucTnjjcLH6ebHF2FRZVCXF6DeWlaEK7OWZRranaeTm",
+      password: "",
       fullName: "Admin User",
       avatar: null,
       createdAt: new Date(),
@@ -771,12 +773,17 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      const bcryptHash = "$2b$12$Bf.sDD1gQ6391SrTebkd4.9BeiteKKOswHl63vyCN0/51CmDldT7K";
+      // Login-capable demo users only when explicit dev bootstrap hash is provided.
+      // Never embed fixed credential hashes in source.
+      const { resolveDevPortalAdminPasswordHash, isDevPortalBootstrapAllowed } = await import("./portalAuthStore");
+      const demoHash =
+        isDevPortalBootstrapAllowed() ? resolveDevPortalAdminPasswordHash() : null;
+      if (!demoHash) {
+        return;
+      }
       const demoPortalUsers = [
-        { id: "user-001", clientId: "client-1", email: "john.smith@acme.com", username: "johnsmith", password: bcryptHash, fullName: "John Smith", role: "admin" as const, storeRole: "managed" as const, emailVerified: true },
-        { id: "user-002", clientId: "client-2", email: "sarah.jones@phoenixmedical.com", username: "sarahjones", password: bcryptHash, fullName: "Sarah Jones", role: "user" as const, storeRole: "managed" as const, emailVerified: true },
-        { id: "user-003", clientId: "client-5", email: "admin@alamoindustries.com", username: "alamoadmin", password: "$2b$12$N9Ys4.kLCKht2rMjK4x0TOJHlQlxY7dRzAT6vmC7.mGrjck7TUI7O", fullName: "Maria Garcia", role: "user" as const, storeRole: "comanaged" as const, emailVerified: true },
-        { id: "user-004", clientId: "client-6", email: "admin@selmachining.com", username: "seladmin", password: "$2b$12$m6eyC5YfWBIG4/beE40TxOeG5BG4v/MxsowQ4Ays9RrjhOzcVxx.a", fullName: "Sel Operations", role: "user" as const, storeRole: "comanaged" as const, emailVerified: true },
+        { id: "user-001", clientId: "client-1", email: "john.smith@acme.com", username: "johnsmith", password: demoHash, fullName: "John Smith", role: "admin" as const, storeRole: "managed" as const, emailVerified: true },
+        { id: "user-002", clientId: "client-2", email: "sarah.jones@phoenixmedical.com", username: "sarahjones", password: demoHash, fullName: "Sarah Jones", role: "user" as const, storeRole: "managed" as const, emailVerified: true },
       ];
       for (const user of demoPortalUsers) {
         const [existing] = await db.select().from(portalUsersTable).where(eq(portalUsersTable.id, user.id));
