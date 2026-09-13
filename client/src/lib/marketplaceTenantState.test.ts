@@ -8,10 +8,21 @@ import {
 } from "./marketplaceTenantState";
 
 describe("parseTenantScopeState", () => {
-  it("accepts each contract state on the canonical field", () => {
+  it("accepts each contract state on the accepted `status` field (Cursor 26b8c609)", () => {
+    for (const state of TENANT_SCOPE_STATES) {
+      expect(parseTenantScopeState({ status: state })).toBe(state);
+      expect(parseTenantScopeState({ status: state, items: [], failClosed: state === "UNMAPPED" })).toBe(state);
+    }
+  });
+
+  it("still accepts the earlier working field names", () => {
     for (const state of TENANT_SCOPE_STATES) {
       expect(parseTenantScopeState({ tenantState: state })).toBe(state);
     }
+  });
+
+  it("prefers the contract `status` over a stray alias", () => {
+    expect(parseTenantScopeState({ status: "UNMAPPED", tenantState: "SCOPED" })).toBe("UNMAPPED");
   });
 
   it("normalises case and whitespace but nothing else", () => {
@@ -33,11 +44,11 @@ describe("parseTenantScopeState", () => {
     expect(parseTenantScopeState({ tenantState: "bogus", status: "unavailable" })).toBe(FAIL_CLOSED_STATE);
   });
 
-  it("bridges the pre-contract status field only to restricted states", () => {
+  it("bridges the pre-contract lowercase status only to restricted states", () => {
     expect(parseTenantScopeState({ status: "unmapped" })).toBe("UNMAPPED");
     expect(parseTenantScopeState({ status: "unavailable" })).toBe("AUTHORITY_UNAVAILABLE");
     expect(parseTenantScopeState({ status: "ok" })).toBe(FAIL_CLOSED_STATE);
-    expect(parseTenantScopeState({ status: "scoped" })).toBe(FAIL_CLOSED_STATE);
+    expect(parseTenantScopeState({ status: "granted" })).toBe(FAIL_CLOSED_STATE);
   });
 });
 

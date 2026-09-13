@@ -22,12 +22,17 @@ export type TenantScopeState = (typeof TENANT_SCOPE_STATES)[number];
 
 export const FAIL_CLOSED_STATE: TenantScopeState = "AUTHORITY_UNAVAILABLE";
 
-/** Field names the contract may use; the first present, valid one wins. */
-const STATE_FIELDS = ["tenantState", "tenantScopeState", "scopeState"] as const;
+/**
+ * The accepted website contract (Cursor `26b8c609`, 2026-09-13) carries the
+ * enum on `status`. The earlier working names stay accepted so nothing that
+ * already speaks them breaks; the first present, valid one wins.
+ */
+const STATE_FIELDS = ["status", "tenantState", "tenantScopeState", "scopeState"] as const;
 
 /**
- * Pre-contract bridge: the current route only sends `status: "unavailable" | "unmapped"`.
- * Both map to restricted states, so nothing here can widen access.
+ * Pre-contract bridge: the previous route sent `status: "unavailable" | "unmapped"`
+ * (lowercase, non-enum). Both map to restricted states, so nothing here can
+ * widen access; any other unrecognised `status` fails closed.
  */
 const LEGACY_STATUS: Record<string, TenantScopeState> = {
   unmapped: "UNMAPPED",
@@ -43,12 +48,12 @@ export function parseTenantScopeState(payload: unknown): TenantScopeState {
   const record = payload as Record<string, unknown>;
   for (const field of STATE_FIELDS) {
     const raw = record[field];
+    if (raw === undefined) continue;
     const candidate = typeof raw === "string" ? raw.trim().toUpperCase() : raw;
     if (isTenantScopeState(candidate)) return candidate;
-    if (raw !== undefined) return FAIL_CLOSED_STATE; // present but not a known state
+    if (field === "status" && typeof raw === "string" && raw in LEGACY_STATUS) return LEGACY_STATUS[raw];
+    return FAIL_CLOSED_STATE; // present but not a known state
   }
-  const legacy = record.status;
-  if (typeof legacy === "string" && legacy in LEGACY_STATUS) return LEGACY_STATUS[legacy];
   return FAIL_CLOSED_STATE;
 }
 

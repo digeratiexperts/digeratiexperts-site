@@ -33,7 +33,8 @@ type MarketplaceResponse = {
   eligibility?: typeof MARKETPLACE_ELIGIBILITY;
   tenantState?: string;
   items?: unknown[];
-  status?: "unavailable" | "unmapped";
+  /** Contract enum (Cursor 26b8c609) — or the pre-contract lowercase status. */
+  status?: string;
   reason?: string;
 };
 
