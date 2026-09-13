@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { AlertCircle, Mail, Lock, ArrowRight, ShieldCheck, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
-import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
+import logoImage from "@assets/DE-Logo-new_1762461524794.webp";
 import TurnstileWidget from "@/components/TurnstileWidget";
 import { useSEO } from "@/hooks/useSEO";
 import { portalReturnLabel } from "@/lib/portalUrls";
@@ -133,21 +133,22 @@ export default function PortalLogin() {
 
   useEffect(() => {
     if (readQueryParam("zoho_sso") === "1") return;
-    const token = localStorage.getItem("portalToken");
-    if (!token) return;
     let cancelled = false;
     (async () => {
       try {
         const meRes = await fetch("/api/portal/me", {
-          headers: { Authorization: `Bearer ${token}` },
           credentials: "include",
+          cache: "no-store",
         });
         if (!meRes.ok || cancelled) return;
         const meData = await meRes.json();
         if (cancelled || !meData?.user) return;
+        localStorage.setItem("portalUser", JSON.stringify(meData.user));
+        localStorage.setItem("portalUserId", meData.user.id || "portal-user");
+        if (meData.user.email) localStorage.setItem("userEmail", meData.user.email);
         navigate(marketplaceReturnTo(readQueryParam("returnTo")));
       } catch {
-        /* stay on login when the stored token is stale */
+        /* stay on login when no shared browser session exists */
       }
     })();
     return () => {
@@ -238,7 +239,7 @@ export default function PortalLogin() {
     <main className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
-          <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
+          <img src={logoImage} alt="Digerati Experts" className="h-10 w-auto" />
         </div>
 
         <Card className="bg-white/10 border-white/20 backdrop-blur">

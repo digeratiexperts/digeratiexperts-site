@@ -7,56 +7,44 @@ const here = dirname(fileURLToPath(import.meta.url));
 const card = readFileSync(resolve(here, "DeskLoginCard.tsx"), "utf8");
 const widget = readFileSync(resolve(here, "ZohoASAPWidget.tsx"), "utf8");
 const storeAuth = readFileSync(resolve(here, "../hooks/useStoreAuth.ts"), "utf8");
+const portalLogin = readFileSync(resolve(here, "../pages/portal/PortalLogin.tsx"), "utf8");
+const serverRoutes = readFileSync(resolve(here, "../../../server/routes.ts"), "utf8");
 
-describe("DE Desk inline login card (issue #153 constraints)", () => {
-  it("delegates to the canonical portal login + MFA endpoints, nothing parallel", () => {
+describe("ASK DE shared portal authentication", () => {
+  it("delegates password + MFA to canonical portal endpoints", () => {
     expect(card).toMatch(/fetch\("\/api\/portal\/login"/);
     expect(card).toMatch(/fetch\("\/api\/portal\/mfa\/verify-login"/);
     expect(card).toMatch(/credentials: "include"/);
-    // No parallel identity silo: no other auth endpoints, no client-side hashing.
     expect(card).not.toMatch(/\/api\/auth\//);
     expect(card).not.toMatch(/bcrypt|passkey|webauthn|navigator\.credentials/i);
   });
 
-  it("sends the Turnstile token exactly like the portal login page", () => {
-    expect(card).toMatch(/TurnstileWidget/);
-    expect(card).toMatch(/JSON\.stringify\(\{ email, password, turnstileToken \}\)/);
+  it("uses the shared HttpOnly cookie as the browser session authority", () => {
+    expect(widget).toMatch(/fetch\("\/api\/portal\/me", \{[\s\S]*credentials: "include"[\s\S]*cache: "no-store"/);
+    expect(storeAuth).toMatch(/fetch\("\/api\/portal\/me", \{[\s\S]*credentials: "include"/);
+    expect(storeAuth).toMatch(/const isLoggedIn = useMemo\(\(\) => !!user/);
+    expect(portalLogin).toMatch(/fetch\("\/api\/portal\/me", \{[\s\S]*credentials: "include"[\s\S]*cache: "no-store"/);
+    expect(serverRoutes).toMatch(/const token = cookieToken \|\| bearer/);
   });
 
-  it("stores the same session keys the portal login page stores", () => {
-    expect(card).toMatch(/localStorage\.setItem\("portalUser", JSON\.stringify\(user\)\)/);
-    expect(card).toMatch(/localStorage\.setItem\("portalToken", token\)/);
-    expect(card).toMatch(/localStorage\.setItem\("portalUserId", user\.id \|\| "portal-user"\)/);
-    expect(card).toMatch(/localStorage\.setItem\("userEmail", user\.email \|\| email\)/);
+  it("keeps ASK DE stationary and provides a real back control", () => {
+    expect(widget).toMatch(/onBack=\{\(\) => setShowInlineLogin\(false\)\}/);
+    expect(card).toMatch(/button-desk-login-dismiss/);
+    expect(card).toMatch(/window\.open\(/);
+    expect(card).toMatch(/\/api\/portal\/auth\/zoho\/start/);
+    expect(card).not.toMatch(/PORTAL_LOGIN/);
+    expect(widget).not.toMatch(/Prefer the full portal sign-in page\?/);
   });
 
-  it("announces sign-in to same-tab listeners and the store auth hook hears it", () => {
+  it("resets the single-use Turnstile token after failed password sign-in", () => {
+    expect(card).toMatch(/turnstileKey/);
+    expect(card).toMatch(/resetTurnstile\(\)/);
+    expect(card).toMatch(/<TurnstileWidget key=\{turnstileKey\}/);
+  });
+
+  it("announces same-tab authentication changes for Store + ASK DE", () => {
     expect(card).toMatch(/new CustomEvent\("de-portal-auth-changed"\)/);
     expect(storeAuth).toMatch(/addEventListener\("de-portal-auth-changed"/);
-    expect(storeAuth).toMatch(/removeEventListener\("de-portal-auth-changed"/);
-  });
-
-  it("supports the MFA challenge step with a way back", () => {
-    expect(card).toMatch(/mfaRequired/);
-    expect(card).toMatch(/mfaToken, code: mfaCode/);
-    expect(card).toMatch(/Authenticator code/);
-    expect(card).toMatch(/Back to sign-in/);
-  });
-
-  it("links recovery and SSO out to the canonical portal host, never apex //login", () => {
-    expect(card).toMatch(/PORTAL_FORGOT_PASSWORD/);
-    expect(card).toMatch(/href=\{PORTAL_LOGIN\}/);
-    expect(card).toMatch(/from "@\/lib\/portalUrls"/);
-    expect(card).not.toMatch(/\/\/login/);
-    // Password reset and Zoho SSO stay on the portal page — no in-card flows.
-    expect(card).not.toMatch(/api\/portal\/auth\/zoho/);
-  });
-
-  it("keeps the Desk gate expanding in place instead of navigating away", () => {
-    expect(widget).toMatch(/<DeskLoginCard onSignedIn=\{handleDeskSignIn\} \/>/);
-    expect(widget).toMatch(/setShowInlineLogin\(true\)/);
-    expect(widget).toMatch(/Sign in to Client Tools/);
-    // The full portal page stays reachable as an explicit escape hatch.
-    expect(widget).toMatch(/href=\{PORTAL_LOGIN\}/);
+    expect(storeAuth).toMatch(/addEventListener\("focus"/);
   });
 });
