@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-import ebookCover from "@/assets/images/ebook-defending-digital-realm-cover.png";
+import ebookCover from "@/assets/images/ebook-defending-digital-realm-cover.webp";
 import { ConversionPathBar } from "@/components/ConversionPathBar";
 import { CTA } from "@/lib/ctaCopy";
 
