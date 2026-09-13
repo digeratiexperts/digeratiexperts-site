@@ -43,7 +43,7 @@ import { readPortalUser, type PortalUserSession } from "@/lib/portalRoles";
 import DeskLoginCard from "@/components/DeskLoginCard";
 import { acquireBodyScrollLock } from "@/lib/bodyScrollLock";
 import type { OpenMspAdvisorDetail } from "@/lib/openMspAdvisor";
-import { STORE_ADVISOR_SEED } from "@/lib/openMspAdvisor";
+import { STORE_ADVISOR_SEED, clearPendingMspAdvisorOpen, takePendingMspAdvisorOpen } from "@/lib/openMspAdvisor";
 import { analytics } from "@/lib/analytics";
 import { useDraggableWindow } from "@/hooks/useDraggableWindow";
 import { useEscapeKey } from "@/hooks/useFocusTrap";
@@ -481,6 +481,7 @@ export const ZohoASAPWidget = ({
   useEffect(() => {
     const onOpen = (event: Event) => {
       const detail = (event as CustomEvent<OpenMspAdvisorDetail>).detail || {};
+      clearPendingMspAdvisorOpen();
       ignoreDismissUntilRef.current = Date.now() + 400;
       setIsOpen(true);
       setActiveTab(detail.tab ?? "chat");
@@ -493,6 +494,9 @@ export const ZohoASAPWidget = ({
       if (seed) setPendingSeed(seed);
     };
     window.addEventListener("de-open-msp-advisor", onOpen as EventListener);
+    // Replay a launcher click that happened before this (code-split) widget mounted.
+    const pending = takePendingMspAdvisorOpen();
+    if (pending) onOpen(new CustomEvent("de-open-msp-advisor", { detail: pending }));
     return () => window.removeEventListener("de-open-msp-advisor", onOpen as EventListener);
   }, []);
 
