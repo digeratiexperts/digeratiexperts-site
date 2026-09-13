@@ -16,6 +16,7 @@ import { VersionFrame } from "@/pages/versions/VersionFrame";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageLoadingSkeleton } from "@/components/LoadingSkeleton";
 import { AnnouncerProvider } from "@/components/AccessibleAnnouncer";
+import { SkipToContent } from "@/components/SkipToContent";
 import { useGlobalShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useStoreChromeGestures } from "@/hooks/useStoreChromeGestures";
 import { BookingProvider } from "@/contexts/BookingContext";
@@ -972,13 +973,11 @@ function AppContent() {
 
   return (
     <AnnouncerProvider>
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
+      <SkipToContent />
       <ScrollProgress />
       <SpaPageViews />
       <div
-        id="main-content"
+        id="app-canvas"
         data-accent={accent}
         className={isPortal ? undefined : "de-site-canvas"}
       >
