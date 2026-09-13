@@ -1997,7 +1997,7 @@ export const ZohoASAPWidget = ({
               width: 2px; height: 1em;
               margin-left: 1px;
               vertical-align: text-bottom;
-              background: #D3126A;
+              background: var(--desk-pink);
               animation: de-desk-caret-blink 0.9s step-end infinite;
             }
             @keyframes de-desk-caret-blink {
@@ -2009,7 +2009,7 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-typing i {
               width: 6px; height: 6px; border-radius: 50%;
-              background: rgba(255,255,255,0.55);
+              background: var(--desk-ink-muted, rgba(255,255,255,0.55));
               animation: de-desk-typing-dot 1.2s ease-in-out infinite;
             }
             .de-desk-typing i:nth-child(2) { animation-delay: 0.15s; }
@@ -2038,7 +2038,7 @@ export const ZohoASAPWidget = ({
               animation: de-desk-chip-in 280ms ease forwards;
             }
             .de-desk-discover-row.is-incident {
-              box-shadow: inset 3px 0 0 #D3126A;
+              box-shadow: inset 3px 0 0 var(--desk-pink);
             }
             @media (prefers-reduced-motion: reduce) {
               .de-desk-avatar-idle,

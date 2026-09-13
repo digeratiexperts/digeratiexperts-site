@@ -143,7 +143,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
     <div className="relative flex shrink-0 items-center">
       {showNudge ? (
         <div
-          className="de-ask-nudge fixed z-[10035] max-w-[240px] cursor-pointer rounded-[14px_14px_4px_14px] bg-[#fbfbfa] px-3 py-2.5 text-left text-[13px] font-medium leading-snug text-[#0a0a0a] shadow-[0_12px_40px_rgba(0,0,0,0.5)]"
+          className="de-ask-nudge fixed z-[10035] max-w-[240px] cursor-pointer rounded-[14px_14px_4px_14px] px-3 py-2.5 text-left text-[13px] font-medium leading-snug shadow-[0_12px_40px_rgba(0,0,0,0.5)]"
           style={{
             // Fixed outside document flow so the nudge cannot cause CLS.
             right: "max(1rem, env(safe-area-inset-right))",
@@ -163,7 +163,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
         >
           <button
             type="button"
-            className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#fbfbfa] bg-[#0a0a0a] text-[11px] leading-none text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
+            className="de-ask-nudge-x absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full text-[11px] leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink"
             aria-label="Dismiss Ask DE suggestion"
             data-testid="ask-de-nudge-dismiss"
             onClick={(event) => {
@@ -174,7 +174,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
             ×
           </button>
           Stuck on something IT or security?
-          <small className="mt-0.5 block text-[12px] font-normal text-[#5F6E84]">
+          <small className="de-ask-nudge-sub mt-0.5 block text-[12px] font-normal">
             Ask DE — real engineers, clear next step.
           </small>
         </div>
@@ -280,7 +280,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
           setShowNudge(false);
           setShowMenu((open) => !open);
         }}
-        className="group flex h-10 shrink-0 items-center gap-2 rounded-full px-1 pr-1.5 text-white transition-colors duration-200 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+        className="group flex h-10 shrink-0 items-center gap-2 rounded-full px-1 pr-1.5 text-white transition-colors duration-200 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink focus-visible:ring-offset-2 focus-visible:ring-offset-black"
         data-testid="button-open-asap-widget"
         aria-label={compact ? "Open Ask DE support options" : "Open Ask DE"}
         aria-expanded={showMenu}
@@ -289,7 +289,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
         <span className="de-ask-fab relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white text-[#111116] shadow-[0_4px_14px_rgba(0,0,0,0.18)] transition-transform duration-150 group-hover:scale-[1.04]">
           <AskDeGlyph className="h-[26px] w-[26px]" />
           <span
-            className="de-ask-fab-dot absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0a0a0a] bg-[#22c55e]"
+            className="de-ask-fab-dot absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2"
             title="Engineers on shift"
             aria-hidden="true"
           />
@@ -304,14 +304,32 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
       <style
         dangerouslySetInnerHTML={{
           __html: `
+            /* Motion chrome: token-based so paper vs graphite Desk skins both work. */
+            .de-ask-nudge {
+              background: var(--de-ask-nudge-bg, var(--de-raised, #fff));
+              color: var(--de-ask-nudge-ink, var(--de-ink, #111116));
+              border: 1px solid var(--de-ask-nudge-border, var(--de-hairline, rgba(0,0,0,0.10)));
+            }
+            .de-ask-nudge-sub {
+              color: var(--de-ask-nudge-muted, var(--de-ink-muted, #5F6E84));
+            }
+            .de-ask-nudge-x {
+              background: var(--de-ask-nudge-ink, var(--de-ink, #111116));
+              color: var(--de-ask-nudge-bg, var(--de-raised, #fff));
+              border: 2px solid var(--de-ask-nudge-bg, var(--de-raised, #fff));
+            }
             .de-ask-fab::before {
               content: "";
               position: absolute;
               inset: -6px;
               border-radius: 50%;
-              border: 2px solid rgba(211, 18, 106, 0.55);
+              border: 2px solid color-mix(in srgb, var(--de-magenta-ink, #D3126A) 55%, transparent);
               animation: de-ask-breathe 2.8s ease-out infinite;
               pointer-events: none;
+            }
+            .de-ask-fab-dot {
+              background: var(--de-ask-status, #22c55e);
+              border-color: var(--de-ask-fab-dot-border, #fff);
             }
             @keyframes de-ask-breathe {
               0% { transform: scale(0.86); opacity: 0.9; }
