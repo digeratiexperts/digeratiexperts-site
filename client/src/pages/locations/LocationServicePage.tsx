@@ -55,6 +55,8 @@ interface LocationPageProps {
   title: string;
   subtitle: string;
   description: string;
+  /** ≤155-char search snippet; `description` doubles as on-page copy and was 250–280 chars. */
+  metaDescription?: string;
   heroImage: string;
   keywordPhrase: string;
   whyChooseUs: string[];
@@ -85,7 +87,7 @@ export function LocationServicePage(props: LocationPageProps) {
 
   useSEO({
     title: props.title,
-    description: props.description,
+    description: props.metaDescription ?? props.description,
     canonical: `/locations/${currentSlug}`,
   });
 
