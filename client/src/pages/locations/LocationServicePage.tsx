@@ -230,7 +230,8 @@ export function LocationServicePage(props: LocationPageProps) {
             height={1066}
             loading="eager"
             decoding="async"
-            fetchPriority="low"
+            // React 18 only knows the lowercase attribute; camelCase logs a DOM warning.
+            {...({ fetchpriority: "low" } as Record<string, string>)}
             className="absolute inset-0 h-full w-full object-cover object-[center_82%] opacity-45"
             style={{
               WebkitMaskImage:
