@@ -774,6 +774,8 @@ export function MegaMenu() {
               <img
                 src={logoImage}
                 alt="Digerati Experts Logo"
+                width={300}
+                height={72}
                 className={`transition-all duration-300 ${
                   isScrolled ? 'h-10' : 'h-[3.25rem]'
                 }`}

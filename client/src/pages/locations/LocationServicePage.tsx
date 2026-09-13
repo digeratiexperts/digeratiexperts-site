@@ -34,7 +34,7 @@ import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE } from "@/data/companyContact";
 import { GREATER_PHOENIX_CITIES, cityPageSlug } from "@/data/greaterPhoenixCities";
 import { IconWell } from "@/components/visual/IconWell";
 import { ConversionPathBar } from "@/components/ConversionPathBar";
-import heroBgImage from "@assets/de-hero-arizona-dusk.png";
+import heroBgImage from "@assets/de-hero-arizona-dusk-1600.webp";
 
 const assessmentFormSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters").max(50),
@@ -224,8 +224,11 @@ export function LocationServicePage(props: LocationPageProps) {
           <img
             src={heroBgImage}
             alt=""
+            width={1600}
+            height={1066}
             loading="eager"
             decoding="async"
+            fetchPriority="low"
             className="absolute inset-0 h-full w-full object-cover object-[center_82%] opacity-45"
             style={{
               WebkitMaskImage:

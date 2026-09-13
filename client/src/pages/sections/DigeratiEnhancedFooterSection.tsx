@@ -113,6 +113,8 @@ export const DigeratiEnhancedFooterSection = (): JSX.Element => {
             <img
               src={logoImage}
               alt="Digerati Experts Logo"
+              width={300}
+              height={72}
               className="mb-4 h-12 w-auto"
               data-testid="logo-footer"
             />
