@@ -17,6 +17,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageLoadingSkeleton } from "@/components/LoadingSkeleton";
 import { AnnouncerProvider } from "@/components/AccessibleAnnouncer";
 import { SkipToContent } from "@/components/SkipToContent";
+import { DefaultCanonical } from "@/components/DefaultCanonical";
 import { useGlobalShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useStoreChromeGestures } from "@/hooks/useStoreChromeGestures";
 import { BookingProvider } from "@/contexts/BookingContext";
@@ -973,6 +974,7 @@ function AppContent() {
 
   return (
     <AnnouncerProvider>
+      <DefaultCanonical />
       <SkipToContent />
       <ScrollProgress />
       <SpaPageViews />
