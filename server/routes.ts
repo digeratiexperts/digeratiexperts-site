@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_integrations/object_storage";
 import { zohoClient, zohoDeskService, splitVisitorName, zohoCRMService, zohoBillingService } from "./zoho";
 import { websiteLeadTaxonomy } from "./zoho/leadTaxonomy";
+import { findBackupCodeIndex } from "./portalMfaCrypto";
 import {
   parseZohoTicketId,
   validatePortalTicketUpload,
@@ -212,7 +213,9 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
     typeof req.cookies?.[PORTAL_AUTH_COOKIE] === "string"
       ? req.cookies[PORTAL_AUTH_COOKIE]
       : "";
-  const token = bearer || cookieToken;
+  // Browser sessions are canonical across digeratiexperts.com + portal subdomains.
+  // Prefer the shared HttpOnly cookie; Bearer remains a fallback for non-browser/API clients.
+  const token = cookieToken || bearer;
   if (!token) {
     return res.status(401).json({ error: "Authentication required" });
   }
@@ -2875,8 +2878,7 @@ export async function registerRoutes(app: Express) {
 
       const backupCodes = (user as any).mfaBackupCodes || [];
       if (!verified && backupCodes.length > 0) {
-        const codeUpper = code.trim().toUpperCase();
-        const idx = backupCodes.indexOf(codeUpper);
+        const idx = findBackupCodeIndex(backupCodes, code);
         if (idx !== -1) {
           verified = true;
           backupCodes.splice(idx, 1);
