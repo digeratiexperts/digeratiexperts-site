@@ -4,6 +4,7 @@ import {
   DESK_PAGE_COPY,
   greetingForPage,
   inferDeskPageType,
+  isCookieBannerBlocking,
   prefersReducedMotion,
   startersForPage,
   streamWords,
@@ -76,5 +77,24 @@ describe("deskAskDeMotion", () => {
     );
     expect(streamed).toEqual(["one two three"]);
     expect(streamDone).toBe(true);
+  });
+
+  it("treats missing cookie consent as blocking even before the banner mounts", () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => void store.set(k, v),
+    });
+    const banner = { present: false };
+    vi.stubGlobal("document", { querySelector: () => (banner.present ? {} : null) });
+
+    // No consent stored, banner not yet in the DOM (it mounts ~1.2 s after load): still blocking.
+    expect(isCookieBannerBlocking()).toBe(true);
+    // Consent stored and banner gone: not blocking.
+    store.set("de_cookie_consent_v2", "{}");
+    expect(isCookieBannerBlocking()).toBe(false);
+    // Consent stored but banner still animating out: blocking until it is gone.
+    banner.present = true;
+    expect(isCookieBannerBlocking()).toBe(true);
   });
 });

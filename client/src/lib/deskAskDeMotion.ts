@@ -182,6 +182,13 @@ export function markDeskNudgeShown(): void {
   }
 }
 
+/**
+ * True while the cookie banner is, or is about to be, on screen. Consent is
+ * decided from storage, not from the DOM: the banner mounts ~1.2 s after load,
+ * so a DOM-only check answers "no banner" during that window and the nudge can
+ * land on top of it — and over the launcher — for reduced-motion visitors,
+ * whose nudge delay is 0. No stored consent ⇒ the banner will show ⇒ blocking.
+ */
 export function isCookieBannerBlocking(): boolean {
   if (typeof document === "undefined") return false;
   try {
@@ -189,12 +196,12 @@ export function isCookieBannerBlocking(): boolean {
       localStorage.getItem("de_cookie_consent_v2") ||
       localStorage.getItem("de_cookie_consent")
     ) {
-      return false;
+      return !!document.querySelector("[data-testid='cookie-consent-banner']");
     }
   } catch {
-    /* treat as blocking until known */
+    /* storage unavailable — treat as blocking until known */
   }
-  return !!document.querySelector("[data-testid='cookie-consent-banner']");
+  return true;
 }
 
 /** Char-by-char typewriter (~55 cps) with punctuation pauses. */
