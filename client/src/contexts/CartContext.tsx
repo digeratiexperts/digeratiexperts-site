@@ -190,7 +190,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const solutionIdRef = useRef<string | null>(null);
   const hydratedRef = useRef(false);
   const persistTimer = useRef<number | null>(null);
-  const lastTokenRef = useRef<string | null>(null);
+  const lastClaimedUserRef = useRef<string | null>(null);
 
   const announce = useCallback((message: string) => {
     setAnnouncement(message);
@@ -208,12 +208,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const sessionId = sessionIdRef.current;
     void fetch(`/api/store/solutions/current?sessionId=${encodeURIComponent(sessionId)}`, {
       credentials: "include",
-      headers: (() => {
-        const headers: Record<string, string> = {};
-        const token = localStorage.getItem("portalToken");
-        if (token) headers.Authorization = `Bearer ${token}`;
-        return headers;
-      })(),
     })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
@@ -257,13 +251,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!hydratedRef.current || !sessionIdRef.current) return;
     if (persistTimer.current) window.clearTimeout(persistTimer.current);
     persistTimer.current = window.setTimeout(() => {
-      const token = localStorage.getItem("portalToken");
       void fetch("/api/store/solutions/current", {
         method: "PUT",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           id: solutionIdRef.current,
@@ -300,25 +292,38 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, savedForLater, persistRemote, syncReady]);
 
   useEffect(() => {
-    const claimIfLoggedIn = () => {
-      const token = localStorage.getItem("portalToken");
-      if (!token || token === lastTokenRef.current || !sessionIdRef.current) return;
-      lastTokenRef.current = token;
-      void fetch("/api/store/solutions/claim", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ sessionId: sessionIdRef.current }),
-      }).catch(() => {
+    const claimIfLoggedIn = async () => {
+      if (!sessionIdRef.current) return;
+      try {
+        const me = await fetch("/api/portal/me", { credentials: "include", cache: "no-store" });
+        if (!me.ok) {
+          lastClaimedUserRef.current = null;
+          return;
+        }
+        const data = await me.json().catch(() => ({}));
+        const userId = data?.user?.id || data?.user?.email || "portal-user";
+        if (userId === lastClaimedUserRef.current) return;
+        lastClaimedUserRef.current = userId;
+        await fetch("/api/store/solutions/claim", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: sessionIdRef.current }),
+        });
+      } catch {
         /* guest solution stays local until auth is valid */
-      });
+      }
     };
-    claimIfLoggedIn();
-    window.addEventListener("storage", claimIfLoggedIn);
-    return () => window.removeEventListener("storage", claimIfLoggedIn);
+    void claimIfLoggedIn();
+    const claim = () => void claimIfLoggedIn();
+    window.addEventListener("focus", claim);
+    window.addEventListener("storage", claim);
+    window.addEventListener("de-portal-auth-changed", claim);
+    return () => {
+      window.removeEventListener("focus", claim);
+      window.removeEventListener("storage", claim);
+      window.removeEventListener("de-portal-auth-changed", claim);
+    };
   }, []);
 
   const setClientPricing = useCallback((pricing: ClientPricing[]) => {

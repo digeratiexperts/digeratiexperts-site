@@ -169,10 +169,10 @@ export function ProActiveCoverageMap({
                   aria-hidden="true"
                 />
                 <span>
-                  <span className={`block text-sm font-semibold ${active ? "text-[#F7A8C8]" : lit ? "text-white" : "text-white/45"}`}>
+                  <span className={`block text-sm font-semibold ${active ? "text-[#F7A8C8]" : lit ? "text-white" : "text-white/55"}`}>
                     {ring.label}
                   </span>
-                  <span className="block text-xs text-white/45">{ring.desc}</span>
+                  <span className="block text-xs text-white/55">{ring.desc}</span>
                 </span>
               </button>
             );
@@ -205,7 +205,7 @@ export function ProActiveCoverageMap({
               );
             })}
           </div>
-          <p className="mt-2 text-xs text-white/45">{complianceMeta.desc}</p>
+          <p className="mt-2 text-xs text-white/55">{complianceMeta.desc}</p>
         </div>
 
         <div>
@@ -232,7 +232,7 @@ export function ProActiveCoverageMap({
               );
             })}
           </div>
-          <p className="mt-2 text-xs text-white/45">{coverageMeta.desc}</p>
+          <p className="mt-2 text-xs text-white/55">{coverageMeta.desc}</p>
         </div>
       </div>
 

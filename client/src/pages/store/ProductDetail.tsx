@@ -23,7 +23,7 @@ import {
   getProductBySku,
   getRelatedProducts,
 } from "@/data/storeMerchandising";
-import { getProductVisual } from "@/data/productImages";
+import { getProductVisual, toOgImageUrl } from "@/data/productImages";
 import {
   ArrowRight,
   ArrowLeft,
@@ -128,7 +128,7 @@ const ProductDetail = () => {
     .filter((p): p is NonNullable<typeof p> => !!p);
   const seoImage = visual.heroUrl.startsWith("http")
     ? visual.heroUrl
-    : `https://digeratiexperts.com${visual.heroUrl}`;
+    : `https://digeratiexperts.com${toOgImageUrl(visual.heroUrl)}`;
   const solutionChips = getSolutionChips(
     product,
     items.map((item) => item.product),

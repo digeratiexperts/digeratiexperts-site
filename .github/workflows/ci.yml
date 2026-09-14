@@ -63,10 +63,13 @@ jobs:
         run: |
           set -euo pipefail
           LOG=/tmp/digerati-ci-production.log
-          # The production build now fails closed without a JWT secret; give
-          # the smoke run an ephemeral one and explicitly allow memory-only DB.
+          # The production build fails closed without a JWT secret and (since the
+          # MFA crypto landed) without an MFA encryption key; give the smoke run
+          # ephemeral ones and explicitly allow memory-only DB. Neither value
+          # leaves this job.
           NODE_ENV=production PORT=3300 \
             JWT_SECRET="$(openssl rand -hex 32)" \
+            MFA_ENCRYPTION_KEY="$(openssl rand -hex 32)" \
             DE_SMOKE_ALLOW_MEMORY_ONLY=1 \
             node dist/index.js >"$LOG" 2>&1 &
           SERVER_PID=$!

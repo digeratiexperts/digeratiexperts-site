@@ -76,23 +76,10 @@ const QuoteRequest = () => {
     try {
       const requestedItems = snapshotSubmitLines(snapshot);
 
-      const portalToken = localStorage.getItem("portalToken");
-      if (!portalToken) {
-        toast({
-          title: "Sign in required",
-          description: "Please sign in to the Client Portal to submit a quote request.",
-          variant: "destructive",
-        });
-        navigate(
-          `/portal/login?returnTo=${encodeURIComponent("/internal/warehouse/quote-request")}`,
-        );
-        return;
-      }
       const response = await fetch("/api/store/quote-requests", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${portalToken}`,
         },
         credentials: "include",
         body: JSON.stringify({
@@ -106,6 +93,14 @@ const QuoteRequest = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          toast({
+            title: "Sign in required",
+            description: "Open ASK DE and sign in once, then submit your quote again.",
+            variant: "destructive",
+          });
+          return;
+        }
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to create quote request");
       }

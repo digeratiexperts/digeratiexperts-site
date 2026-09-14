@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { AlertCircle, Lock, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import logoImage from "@assets/DE-Logo-new_1762461524794.webp";
+import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
 
 export default function PortalResetPassword() {
   const [location] = useLocation();
@@ -51,10 +51,10 @@ export default function PortalResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
+      <main className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="flex justify-center mb-8">
-            <img src={logoImage} alt="Digerati Experts" className="h-10 w-auto" />
+            <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
           </div>
           <Card className="bg-white/10 border-white/20 backdrop-blur">
             <CardContent className="pt-6 space-y-4">
@@ -70,20 +70,20 @@ export default function PortalResetPassword() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
+    <main className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
-          <img src={logoImage} alt="Digerati Experts" className="h-10 w-auto" />
+          <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
         </div>
 
         <Card className="bg-white/10 border-white/20 backdrop-blur">
           <CardHeader className="space-y-2">
-            <CardTitle className="text-2xl text-white">Choose New Password</CardTitle>
+            <h1 className="text-2xl font-semibold leading-none tracking-tight text-white">Choose New Password</h1>
             <CardDescription className="text-gray-300">
               At least 8 characters with 1 uppercase letter and 1 number
             </CardDescription>
@@ -171,6 +171,6 @@ export default function PortalResetPassword() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
   );
 }

@@ -34,7 +34,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import logoImage from "@assets/DE-Logo-new_1762461524794.webp";
+import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
 import { TenantSelector } from "@/components/portal/TenantSelector";
 import { useSEO } from "@/hooks/useSEO";
 import { navAllowed, readImpersonatingCompany, readPortalUser, type NavKey } from "@/lib/portalRoles";
@@ -212,7 +212,7 @@ export function PortalLayout({ children, title }: PortalLayoutProps) {
       >
         <div className="flex flex-col h-full">
           <div className="p-6 border-b border-white/10">
-            <img src={logoImage} alt="Digerati Experts" className="h-8 w-auto" />
+            <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-8 w-auto" />
           </div>
 
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">

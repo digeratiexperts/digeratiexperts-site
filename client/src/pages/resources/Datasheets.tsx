@@ -37,7 +37,7 @@ export default function Datasheets() {
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/55">
                     {RESOURCE_TYPE_LABEL[resource.type]}
                   </p>
                   <h2 className="mt-2 font-heading text-xl font-semibold text-white">

@@ -257,7 +257,7 @@ export default function UCaaS() {
                 <ul className="space-y-3">
                   {hiddenBillItems.business.map((item, index) => (
                     <li key={index} className="flex items-start gap-3">
-                      <X className="mt-0.5 h-5 w-5 shrink-0 text-white/45" />
+                      <X className="mt-0.5 h-5 w-5 shrink-0 text-white/55" />
                       <span className="text-gray-300">{item}</span>
                     </li>
                   ))}

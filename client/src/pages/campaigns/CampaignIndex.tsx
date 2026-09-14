@@ -37,7 +37,7 @@ export default function CampaignIndex() {
               >
                 <span className="font-mono text-sm text-de-accent-ink">0{index + 1}</span>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/55">
                     {campaign.eyebrow}
                   </p>
                   <h2 className="mt-2 font-heading text-2xl font-semibold text-white group-hover:text-de-accent-ink">

@@ -211,7 +211,7 @@ export const DigeratiNewsletterSection = (): JSX.Element => {
               <p className="mt-5 text-base text-white/50">
                 Monthly security notes for Arizona operators.
                 <br />
-                <span className="text-base text-white/45">Unsubscribe anytime. We respect your privacy.</span>
+                <span className="text-base text-white/50">Unsubscribe anytime. We respect your privacy.</span>
               </p>
             </div>
 

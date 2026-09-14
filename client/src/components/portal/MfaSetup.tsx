@@ -98,7 +98,7 @@ export default function MfaSetup() {
 
   if (isLoading) {
     return (
-      <Card className="bg-white/5 border-white/10">
+      <Card>
         <CardContent className="flex items-center justify-center py-8">
           <Loader className="h-6 w-6 animate-spin text-de-magenta-ink" />
         </CardContent>
@@ -108,22 +108,22 @@ export default function MfaSetup() {
 
   return (
     <>
-      <Card className="bg-white/5 border-white/10">
+      <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <ShieldCheck className="h-5 w-5 text-de-magenta-ink" />
               <div>
-                <CardTitle className="text-white text-lg">Two-Factor Authentication</CardTitle>
-                <CardDescription className="text-gray-400">
+                <CardTitle className="text-lg">Two-Factor Authentication</CardTitle>
+                <CardDescription>
                   Add an extra layer of security to your account
                 </CardDescription>
               </div>
             </div>
             {status?.mfaEnabled ? (
-              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Enabled</Badge>
+              <Badge className="border-emerald-700/30 bg-emerald-50 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300">Enabled</Badge>
             ) : (
-              <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30">Disabled</Badge>
+              <Badge variant="outline" className="text-muted-foreground">Disabled</Badge>
             )}
           </div>
         </CardHeader>
@@ -131,11 +131,11 @@ export default function MfaSetup() {
         <CardContent className="space-y-4">
           {status?.mfaEnabled ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                <CheckCircle2 className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-emerald-700/20 bg-emerald-50 dark:bg-emerald-500/10">
+                <CheckCircle2 className="h-5 w-5 text-emerald-700 dark:text-emerald-400 flex-shrink-0" aria-hidden="true" />
                 <div>
-                  <p className="text-sm text-white font-medium">MFA is active</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-sm font-medium text-foreground">MFA is active</p>
+                  <p className="text-xs text-muted-foreground">
                     Method: {status.mfaMethod === "totp" ? "Authenticator App" : "Email Verification"}
                     {status.backupCodesRemaining > 0 && ` · ${status.backupCodesRemaining} backup codes remaining`}
                   </p>
@@ -147,7 +147,6 @@ export default function MfaSetup() {
                   variant="outline"
                   size="sm"
                   onClick={() => setRegenDialog(true)}
-                  className="border-white/20 text-white hover:bg-white/10"
                   data-testid="button-regen-backup"
                 >
                   <Key className="mr-2 h-4 w-4" />
@@ -157,7 +156,7 @@ export default function MfaSetup() {
                   variant="outline"
                   size="sm"
                   onClick={() => setDisableDialog(true)}
-                  className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                  className="border-red-700/30 text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
                   data-testid="button-disable-mfa"
                 >
                   <ShieldOff className="mr-2 h-4 w-4" />
@@ -171,42 +170,42 @@ export default function MfaSetup() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
                     onClick={() => { setSetupStep("totp"); setupMutation.mutate("totp"); }}
-                    className="p-4 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition text-left"
+                    className="p-4 rounded-lg border border-border bg-card text-left transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
                     data-testid="button-setup-totp"
                   >
                     <Smartphone className="h-6 w-6 text-de-magenta-ink mb-2" />
-                    <p className="text-sm font-medium text-white">Authenticator App</p>
-                    <p className="text-xs text-gray-400 mt-1">Use Google Authenticator, Authy, or Microsoft Authenticator</p>
+                    <p className="text-sm font-medium text-foreground">Authenticator App</p>
+                    <p className="text-xs text-muted-foreground mt-1">Use Google Authenticator, Authy, or Microsoft Authenticator</p>
                   </button>
                   <button
                     onClick={() => { setSetupStep("email"); setupMutation.mutate("email"); }}
-                    className="p-4 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition text-left"
+                    className="p-4 rounded-lg border border-border bg-card text-left transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
                     data-testid="button-setup-email"
                   >
                     <Mail className="h-6 w-6 text-de-magenta-ink mb-2" />
-                    <p className="text-sm font-medium text-white">Email Verification</p>
-                    <p className="text-xs text-gray-400 mt-1">Receive a code via email each time you log in</p>
+                    <p className="text-sm font-medium text-foreground">Email Verification</p>
+                    <p className="text-xs text-muted-foreground mt-1">Receive a code via email each time you log in</p>
                   </button>
                 </div>
               ) : setupStep === "confirm" && setupData ? (
                 <div className="space-y-4">
                   {setupData.method === "totp" && setupData.qrCode && (
                     <div className="text-center space-y-3">
-                      <p className="text-sm text-gray-300">Scan this QR code with your authenticator app:</p>
+                      <p className="text-sm text-foreground">Scan this QR code with your authenticator app:</p>
                       <img src={setupData.qrCode} alt="TOTP QR Code" className="mx-auto w-48 h-48 rounded-lg" data-testid="img-totp-qr" />
-                      <p className="text-xs text-gray-500">
-                        Or enter manually: <code className="bg-white/10 px-2 py-1 rounded text-de-magenta-ink">{setupData.secret}</code>
+                      <p className="text-xs text-muted-foreground">
+                        Or enter manually: <code className="rounded bg-muted px-2 py-1 text-[#A30E52] dark:text-de-magenta-ink">{setupData.secret}</code>
                       </p>
                     </div>
                   )}
                   {setupData.method === "email" && (
-                    <div className="flex items-center gap-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-sm">
+                    <div className="flex items-center gap-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-800 dark:text-blue-300 text-sm">
                       <Mail className="h-4 w-4 flex-shrink-0" />
                       A verification code has been sent to your email.
                     </div>
                   )}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-white">Enter Verification Code</label>
+                    <label htmlFor="mfa-setup-code" className="text-sm font-medium text-foreground">Enter Verification Code</label>
                     <Input
                       type="text"
                       inputMode="numeric"
@@ -214,7 +213,8 @@ export default function MfaSetup() {
                       placeholder="Enter 6-digit code"
                       value={verifyCode}
                       onChange={(e) => setVerifyCode(e.target.value)}
-                      className="bg-white/10 border-white/20 text-white text-center text-lg tracking-widest"
+                      className="text-center text-lg tracking-widest"
+                      id="mfa-setup-code"
                       autoFocus
                       data-testid="input-setup-code"
                     />
@@ -231,7 +231,6 @@ export default function MfaSetup() {
                     <Button
                       variant="outline"
                       onClick={() => { setSetupStep(null); setSetupData(null); setVerifyCode(""); }}
-                      className="border-white/20 text-white hover:bg-white/10"
                       data-testid="button-cancel-setup"
                     >
                       Cancel
@@ -241,7 +240,7 @@ export default function MfaSetup() {
               ) : (
                 <div className="flex items-center justify-center py-4">
                   <Loader className="h-6 w-6 animate-spin text-de-magenta-ink" />
-                  <span className="ml-2 text-gray-400 text-sm">Setting up...</span>
+                  <span className="ml-2 text-muted-foreground text-sm">Setting up...</span>
                 </div>
               )}
             </div>

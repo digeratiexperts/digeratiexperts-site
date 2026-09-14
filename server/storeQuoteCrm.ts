@@ -3,6 +3,7 @@ import { zohoCRMService } from "./zoho/zohoCRM";
 import { money } from "@shared/storeCommerce";
 import type { CanonicalQuoteLine } from "./storeQuoteCommerce";
 import { quoteTotals } from "./storeQuoteCommerce";
+import { websiteLeadTaxonomy } from "./zoho/leadTaxonomy";
 
 export type StoreQuoteCrmInput = {
   quoteNumber: string;
@@ -126,15 +127,16 @@ export async function syncStoreQuoteToCrm(quote: StoreQuoteCrmInput): Promise<St
     if (existingLead?.id) {
       result.leadId = existingLead.id;
     } else {
+      const taxonomy = websiteLeadTaxonomy("store_quote");
       const created = await zohoCRMService.createLead({
         First_Name: first || undefined,
         Last_Name: last,
         Email: email,
         Phone: quote.contactPhone || undefined,
         Company: company,
-        Lead_Source: "Store Quote",
+        Lead_Source: taxonomy.leadSource,
         Description: description,
-        Lead_Status: "Not Contacted",
+        Lead_Status: taxonomy.leadStatus,
       });
       result.leadId = (created as { details?: { id?: string }; id?: string }).details?.id || created.id;
     }
