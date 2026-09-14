@@ -143,23 +143,13 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
     <div className="relative flex shrink-0 items-center">
       {showNudge ? (
         <div
-          className="de-ask-nudge fixed z-[10035] max-w-[240px] cursor-pointer rounded-[14px_14px_4px_14px] px-3 py-2.5 text-left text-[13px] font-medium leading-snug shadow-[0_12px_40px_rgba(0,0,0,0.5)]"
+          className="de-ask-nudge fixed z-[10035] max-w-[240px] rounded-[14px_14px_4px_14px] px-3 py-2.5 text-left text-[13px] font-medium leading-snug shadow-[0_12px_40px_rgba(0,0,0,0.5)]"
           style={{
             // Fixed outside document flow so the nudge cannot cause CLS.
             right: "max(1rem, env(safe-area-inset-right))",
             bottom: "calc(var(--de-unified-bar-h, 3.5rem) + 0.75rem + env(safe-area-inset-bottom, 0px))",
           }}
-          role="dialog"
-          aria-label="Ask DE suggestion"
           data-testid="ask-de-nudge"
-          onClick={() => openDesk({ tab: "chat" })}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              openDesk({ tab: "chat" });
-            }
-          }}
-          tabIndex={0}
         >
           <button
             type="button"
@@ -173,10 +163,18 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
           >
             ×
           </button>
-          Stuck on something IT or security?
-          <small className="de-ask-nudge-sub mt-0.5 block text-[12px] font-normal">
-            Ask DE — real engineers, clear next step.
-          </small>
+          {/* R1: primary action is a real <button>, not a focusable dialog div. */}
+          <button
+            type="button"
+            className="de-ask-nudge-body block w-full cursor-pointer rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink"
+            aria-label="Ask DE suggestion"
+            onClick={() => openDesk({ tab: "chat" })}
+          >
+            Stuck on something IT or security?
+            <small className="de-ask-nudge-sub mt-0.5 block text-[12px] font-normal">
+              Ask DE — real engineers, clear next step.
+            </small>
+          </button>
         </div>
       ) : null}
       <AnimatePresence>
@@ -304,19 +302,26 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
       <style
         dangerouslySetInnerHTML={{
           __html: `
-            /* Motion chrome: token-based so paper vs graphite Desk skins both work. */
+            /* B2: nudge sits on dark site chrome — paper site tokens only (not --desk-*). */
             .de-ask-nudge {
-              background: var(--de-ask-nudge-bg, var(--de-raised, #fff));
-              color: var(--de-ask-nudge-ink, var(--de-ink, #111116));
-              border: 1px solid var(--de-ask-nudge-border, var(--de-hairline, rgba(0,0,0,0.10)));
+              background: var(--de-paper-raised);
+              color: var(--de-bg);
+              border: 1px solid var(--de-paper-hairline);
+            }
+            .de-ask-nudge-body {
+              background: transparent;
+              border: 0;
+              padding: 0;
+              color: inherit;
+              font: inherit;
             }
             .de-ask-nudge-sub {
-              color: var(--de-ask-nudge-muted, var(--de-ink-muted, #5F6E84));
+              color: color-mix(in srgb, var(--de-bg) 60%, transparent);
             }
             .de-ask-nudge-x {
-              background: var(--de-ask-nudge-ink, var(--de-ink, #111116));
-              color: var(--de-ask-nudge-bg, var(--de-raised, #fff));
-              border: 2px solid var(--de-ask-nudge-bg, var(--de-raised, #fff));
+              background: var(--de-bg);
+              color: var(--de-paper-raised);
+              border: 2px solid var(--de-paper-raised);
             }
             .de-ask-fab::before {
               content: "";

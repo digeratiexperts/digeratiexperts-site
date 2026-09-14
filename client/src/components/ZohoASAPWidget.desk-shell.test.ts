@@ -7,6 +7,10 @@ const src = readFileSync(
   resolve(dirname(fileURLToPath(import.meta.url)), "ZohoASAPWidget.tsx"),
   "utf8",
 );
+const bottomBarSrc = readFileSync(
+  resolve(dirname(fileURLToPath(import.meta.url)), "SiteBottomBar.tsx"),
+  "utf8",
+);
 
 describe("DE Desk shell positioning", () => {
   it("keeps the dialog position:fixed in unlayered CSS so Tailwind `fixed` cannot lose to `relative`", () => {
@@ -149,5 +153,32 @@ describe("DE Desk shell positioning", () => {
     expect(src).not.toMatch(/Thinking it through/);
     expect(src).toMatch(/aria-live="polite"/);
     expect(src).toMatch(/prefersReducedMotion/);
+  });
+
+  it("B1: reopen after mid-greeting cancel snaps to complete greeting + chips", () => {
+    expect(src).toMatch(/closing mid-greeting cancels typewrite/);
+    expect(src).toMatch(/if \(greetedOnceRef\.current\) \{\s*if \(!greetingComplete\)/);
+    expect(src).toMatch(/setGreetingVisible\(full\);\s*setGreetingComplete\(true\);\s*setShowStarterChips\(true\);/);
+  });
+
+  it("R2: typing dots stay off under reduced motion; R3: sr-only only while caret hides the p", () => {
+    expect(src).toMatch(/typing dots OFF under reduced motion/);
+    expect(src).toMatch(/if \(prefersReducedMotion\(\)\) \{\s*setShowTypingDots\(false\);/);
+    expect(src).toMatch(/\{showCaret \? \(\s*<span className="sr-only">\{chatMessage\.content\}<\/span>/);
+  });
+
+  it("R4: typing-dot colour stays on Desk tokens (skin-independent)", () => {
+    expect(src).toMatch(/background: var\(--desk-ink-muted/);
+    expect(src).toMatch(/--desk-pink:/);
+  });
+
+  it("R1 + B2: nudge uses a real button and paper site tokens (not Desk raised/ink)", () => {
+    expect(bottomBarSrc).toMatch(/de-ask-nudge-body/);
+    expect(bottomBarSrc).not.toMatch(/ask-de-nudge[\s\S]{0,400}role="dialog"/);
+    expect(bottomBarSrc).toMatch(/background: var\(--de-paper-raised\)/);
+    expect(bottomBarSrc).toMatch(/border: 1px solid var\(--de-paper-hairline\)/);
+    expect(bottomBarSrc).toMatch(/color: var\(--de-bg\)/);
+    expect(bottomBarSrc).not.toMatch(/--de-ask-nudge-bg/);
+    expect(bottomBarSrc).not.toMatch(/var\(--de-ink/);
   });
 });

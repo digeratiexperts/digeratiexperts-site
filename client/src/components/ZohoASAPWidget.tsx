@@ -487,7 +487,17 @@ export const ZohoASAPWidget = ({
     setAssistantAvailable(true);
     analytics.chatOpened();
 
-    if (greetedOnceRef.current) return;
+    // B1: closing mid-greeting cancels typewrite; on reopen snap to the full
+    // greeting + starters instead of leaving a stranded partial and no chips.
+    if (greetedOnceRef.current) {
+      if (!greetingComplete) {
+        const full = greetingForPage(deskPage);
+        setGreetingVisible(full);
+        setGreetingComplete(true);
+        setShowStarterChips(true);
+      }
+      return;
+    }
     greetedOnceRef.current = true;
     const full = greetingForPage(deskPage);
     setChatMessages((current) => {
@@ -520,8 +530,12 @@ export const ZohoASAPWidget = ({
       setShowTypingDots(false);
       return;
     }
-    const delay = prefersReducedMotion() ? 0 : 250;
-    const id = window.setTimeout(() => setShowTypingDots(true), delay);
+    // R2: typing dots OFF under reduced motion (not just animation paused).
+    if (prefersReducedMotion()) {
+      setShowTypingDots(false);
+      return;
+    }
+    const id = window.setTimeout(() => setShowTypingDots(true), 250);
     return () => window.clearTimeout(id);
   }, [isChatSending]);
 
@@ -1286,9 +1300,10 @@ export const ZohoASAPWidget = ({
                                 isUser ? "is-user" : isAgent ? "is-agent" : "is-bot"
                               }`}
                             >
-                              <span className="sr-only">
-                                {isOpening || isRevealing ? chatMessage.content : ""}
-                              </span>
+                              {/* R3: sr-only only while the visible <p> is aria-hidden (during caret reveal). */}
+                              {showCaret ? (
+                                <span className="sr-only">{chatMessage.content}</span>
+                              ) : null}
                               <p className="whitespace-pre-wrap" aria-hidden={showCaret || undefined}>
                                 {bubbleText}
                                 {showCaret ? <span className="de-desk-caret" aria-hidden="true" /> : null}
