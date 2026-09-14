@@ -13,7 +13,7 @@
 | Meshy Batch 01 (all 5) | **Complete** — refined dark + violet/fuchsia; public derivatives published + placed selectively |
 | Meshy Identity v4 | **Approved** — on outcomes “Protect identities and devices” |
 | Envato `4THD2PH` | **Not arrived** — scaffold / drop zone only under `assets/licensed/envato-4THD2PH/` |
-| DE / Joseph Petro headshots | **Missing** — founder spotlight stays gated; drop path prepared |
+| DE / Joseph Petro headshots | **Present** — derived 2026-09 from public studio-blazer photo; `/about/team` spotlight unlocked |
 
 ---
 
@@ -38,7 +38,7 @@ Optimize script: `scripts/optimize-meshy-batch01.mjs` (uses local `sharp`; not a
 
 ## 2. DE photography / headshots search
 
-Searched (no Joseph Petro / founder headshot found):
+Principal portrait is present, derived from the already-public Meet-the-Experts studio-blazer photo (Joe/ChatGPT F1 approval 2026-09-13). Runtime: `/images/founder/joe-petro-studio-blazer-white.{jpg,webp}` plus team derivatives `/images/team/joseph-petro-headshot.{webp,png}` and `-480.webp`. Historical search notes below are kept for provenance:
 
 | Location | Result |
 |---|---|
@@ -110,7 +110,7 @@ Registry accents: `homepageSectionAccents` in `visualAssets.ts`
 | Email | `.../email.webp` | Engagement assessment band (homepage) | Future email-security page | Done for Batch 01 |
 | Network | `.../network.webp` | Outcomes: “Protect and monitor…” | Process intro + Solutions: Managed Network | Done for Batch 01 |
 | Backup | `.../backup.webp` | Outcomes: “Keep the business recoverable” | Solutions: Backup & DR | Done for Batch 01 |
-| Founder headshot | `/images/team/joseph-petro-headshot.webp` | `/about/team` founder spotlight | Ebook / trust / About | Waiting for DE drop |
+| Founder headshot | `/images/founder/joe-petro-studio-blazer-white.webp` (+ team WebP/PNG derivatives) | `/about/team` founder spotlight | — | Present, 2026-09 |
 | Hero ecosystem | composed still / GLB | `ModernHeroSection` replace/augment `DashboardMockup` | ProActive pages | Needs Batch 10 composition + inventory support |
 | Envato pack | TBD derivatives | Selective fill for gaps Meshy doesn’t cover | — | Waiting for ZIP |
 
@@ -120,7 +120,7 @@ Registry: `client/src/lib/visualAssets.ts`
 
 ## 6. What’s still needed from DE
 
-1. **Drop founder headshot(s)** into `assets/photography/de-headshots/ORIGINAL/` (spotlight stays gated).
+1. **Founder portrait** — unlocked from the public studio-blazer still (no additional drop required). Keep ORIGINALS out of git.
 2. **Drop Envato `4THD2PH` ZIP** into `assets/licensed/envato-4THD2PH/ORIGINAL/` when ready.
 3. **Rotate Meshy API key** if it was exposed in chat — do not leave the old key active.
 4. **Go-ahead for Batch 02** when ready (Essential security — large set; next phase).
@@ -134,4 +134,4 @@ Registry: `client/src/lib/visualAssets.ts`
 - Licensed sources stay private; only optimized derivatives public
 - Identity placed once (outcomes card) — not icon salad
 - Hero mockup left for composition stage
-- Founder / Envato still waiting on DE drops — no invented photos or fake ZIP
+- Founder portrait is the approved studio-blazer still; Envato pack still waiting — no invented photos or fake ZIP

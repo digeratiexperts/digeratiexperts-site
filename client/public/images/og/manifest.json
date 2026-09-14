@@ -1,0 +1,44 @@
+[
+  {
+    "path": "/",
+    "title": "Managed IT & cybersecurity",
+    "theme": "paper",
+    "file": "/images/og/home.png"
+  },
+  {
+    "path": "/about",
+    "title": "About Digerati Experts",
+    "theme": "paper",
+    "file": "/images/og/about.png"
+  },
+  {
+    "path": "/about/team",
+    "title": "Meet the team",
+    "theme": "paper",
+    "file": "/images/og/about-team.png"
+  },
+  {
+    "path": "/store",
+    "title": "Technology store",
+    "theme": "paper",
+    "file": "/images/og/store.png"
+  },
+  {
+    "path": "/resources/blog",
+    "title": "Journal",
+    "theme": "paper",
+    "file": "/images/og/blog.png"
+  },
+  {
+    "path": "/portal/login",
+    "title": "Client portal",
+    "theme": "graphite",
+    "file": "/images/og/portal-login.png"
+  },
+  {
+    "path": "/portal/dashboard",
+    "title": "Portal dashboard",
+    "theme": "graphite",
+    "file": "/images/og/portal-dashboard.png"
+  }
+]

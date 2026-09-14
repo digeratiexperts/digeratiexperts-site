@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { absoluteOgImageForPath } from '@/lib/routeOgImages';
 
 interface SEOProps {
   title: string;
@@ -26,7 +27,10 @@ export function useSEO({ title, description, canonical, ogImage, noIndex }: SEOP
     const fullTitle = buildFullTitle(title);
     const metaDescription = description || DEFAULT_DESCRIPTION;
     const canonicalUrl = canonical ? `${SITE_URL}${canonical}` : undefined;
-    const image = ogImage || DEFAULT_IMAGE;
+    const pathForOg =
+      canonical ||
+      (typeof window !== 'undefined' ? window.location.pathname : undefined);
+    const image = ogImage || (pathForOg && absoluteOgImageForPath(pathForOg)) || DEFAULT_IMAGE;
 
     document.title = fullTitle;
 

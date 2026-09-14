@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>DE route OG — {{TITLE}}</title>
+  <style>
+    :root {
+      --paper: #f3efe6;
+      --ink: #1a1714;
+      --muted: #5c554c;
+      --magenta: #D3126A;
+      --graphite: #121014;
+      --graphite-ink: #f4f1ec;
+      --graphite-muted: rgba(244,241,236,0.62);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+    .frame {
+      width: 1200px;
+      height: 630px;
+      padding: 56px 64px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .frame.paper {
+      background:
+        radial-gradient(1200px 500px at 10% -10%, rgba(211,18,106,0.08), transparent 55%),
+        linear-gradient(180deg, #f7f3ea 0%, var(--paper) 100%);
+      color: var(--ink);
+    }
+    .frame.graphite {
+      background:
+        radial-gradient(900px 420px at 90% 0%, rgba(211,18,106,0.18), transparent 50%),
+        linear-gradient(180deg, #1a171f 0%, var(--graphite) 100%);
+      color: var(--graphite-ink);
+    }
+    .brand {
+      font-size: 18px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-weight: 650;
+    }
+    .brand span { letter-spacing: 0.08em; opacity: 0.72; font-weight: 500; }
+    .rule {
+      width: 72px;
+      height: 3px;
+      background: var(--magenta);
+      margin: 28px 0 24px;
+    }
+    h1 {
+      font-size: 64px;
+      line-height: 1.05;
+      font-weight: 700;
+      max-width: 920px;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      font-size: 20px;
+    }
+    .paper .meta { color: var(--muted); }
+    .graphite .meta { color: var(--graphite-muted); }
+    .path { font-family: ui-monospace, Consolas, monospace; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <!--
+    B-5 route OG template.
+    Themes: paper (default marketing) | graphite (Desk/portal).
+    Replace {{THEME}} {{TITLE}} {{PATH}} before render, or use scripts/render-route-og.mjs.
+  -->
+  <div class="frame {{THEME}}">
+    <div>
+      <div class="brand">Digerati <span>Experts</span></div>
+      <div class="rule"></div>
+      <h1>{{TITLE}}</h1>
+    </div>
+    <div class="meta">
+      <div>Arizona · principal-led</div>
+      <div class="path">{{PATH}}</div>
+    </div>
+  </div>
+</body>
+</html>

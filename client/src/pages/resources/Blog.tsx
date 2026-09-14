@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { toWebImageUrl } from "@/lib/webImage";
 import { Link } from "wouter";
 import { Helmet } from "react-helmet-async";
+import { useSEO } from "@/hooks/useSEO";
 import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
 import { Card, CardContent } from "@/components/ui/card";
@@ -86,6 +87,13 @@ export default function Blog() {
 
   const pageTitle =
     activeCategory === "All" ? "All Posts" : activeCategory;
+
+  useSEO({
+    title: "The Digerati Journal — Cybersecurity & Managed IT Insights",
+    description:
+      "The Digerati Journal: cybersecurity-first insights for Arizona small and growing businesses — managed IT, ransomware defense, cyber risk assessments, AI governance, and compliance.",
+    canonical: "/resources/blog",
+  });
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">

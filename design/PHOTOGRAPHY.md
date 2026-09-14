@@ -22,7 +22,7 @@ editorial photography → atmospheric environment → icon.
 
 | Set | Job | Notes |
 |-----|-----|-------|
-| Principal / founder | Recognizable human, not a silhouette | Drop path already noted in `docs/VISUAL-ASSET-INVENTORY.md` and `assets/photography/de-headshots/`. Do not invent a face. |
+| Principal / founder | Recognizable human, not a silhouette | Present: studio-blazer still at `/images/founder/joe-petro-studio-blazer-white.webp` (derived 2026-09). Do not invent a face. |
 | Working sessions | Assessment, review, whiteboard — process, not pose-with-laptop cliché | Graphite/paper wardrobe and rooms; magenta is not a lighting gel |
 | Place / Arizona | Chandler / Valley context without postcard kitsch | Supports “Arizona-based · principal-led” without fake civic telemetry |
 | Client-safe operations | Hands, rooms, documentation — **no client screens with secrets** | If a screen is readable, it is SANITIZED REAL or it is not shown |
@@ -83,7 +83,7 @@ Plates must not be mistaken for the proof chapter. Classify ILLUSTRATIVE if they
 
 ## Inventory pointers
 
-- `docs/VISUAL-ASSET-INVENTORY.md` — founder still missing as of last inventory
+- `docs/VISUAL-ASSET-INVENTORY.md` — founder present, derived from studio-blazer photo (2026-09)
 - `client/src/lib/visualAssets.ts` — public stills registry; Meshy retired from public marketing
 - `design/approved/engage-sculpture-set-2026-08.md` — quality bar for 3D; photos should be at least that intentional
 

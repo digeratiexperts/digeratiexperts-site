@@ -80,10 +80,11 @@ export const photography = {
   founderHeadshot: {
     id: "founder-joseph-petro",
     label: "Joseph Petro — Founder",
-    src: "/images/founder/joe-petro-studio-blazer-white.jpg",
+    src: "/images/founder/joe-petro-studio-blazer-white.webp",
     srcPng: "/images/founder/joe-petro-studio-blazer-white.jpg",
     alt: "Joseph Petro, Founder of Digerati Experts",
     available: true as boolean,
+    sourceOf: "/images/founder/joe-petro-studio-blazer-white.jpg",
     dropOriginalsAt: "assets/photography/de-headshots/ORIGINAL/",
     publicDerivativesAt: "client/public/images/founder/",
   },
