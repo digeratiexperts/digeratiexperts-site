@@ -9,7 +9,7 @@
     "vendor:pdfjs": "node scripts/vendor-pdfjs.mjs",
     "sitemap": "node scripts/generate-sitemap.mjs",
     "prebuild": "npm run vendor:pdfjs",
-    "build": "node scripts/generate-sitemap.mjs && vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build": "node scripts/check-asset-imports.mjs && node scripts/generate-sitemap.mjs && vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "cross-env NODE_ENV=production node dist/index.js",
     "check": "tsc",
     "test": "vitest run",
