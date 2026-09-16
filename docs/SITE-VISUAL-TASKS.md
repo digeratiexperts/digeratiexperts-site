@@ -2,6 +2,8 @@
 
 Shared ledger for Digerati Experts site visual completion. Canonical rules: `design/VISUAL_SYSTEM_V2.md`. Governance PR: VIS-001.
 
+> **Ledger, not design law (`design/DESIGN-AUTHORITY.md`).** Ownership and status rows coordinate work and are binding for concurrency. The "do not restyle / do not touch" notes inside rows are per-task scope from the time they were written (Tier 3); they do not bind an Exploration Mode concept Joe requests later.
+
 **Rule: No agent starts something marked IN PROGRESS by another owner.** One task = one owner = one branch.
 
 **VIS-001 through VIS-005 should happen before agents start spraying new design treatments across 138 pages.** Vocabulary first. Do not add HUD ticks independently.

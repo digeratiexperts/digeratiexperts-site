@@ -1,6 +1,8 @@
 # Design System
 
-Source of truth for Digerati Experts visual tokens. Extracted from the live codebase (`client/src/index.css`, `tailwind.config.ts`, `client/src/components/ui/button.tsx`, DE Desk tokens). Do not invent new brand colors.
+Source of truth for the **current** Digerati Experts visual tokens (Tier 2 — `DESIGN-AUTHORITY.md`). Extracted from the live codebase (`client/src/index.css`, `tailwind.config.ts`, `client/src/components/ui/button.tsx`, DE Desk tokens).
+
+Maintenance Mode: use these tokens; do not invent new brand colors, one-off radii or arbitrary values — promote repeated values into tokens instead. Exploration Mode: a concept may propose new or replacement tokens (colors, type, radii, motion) as a *token set*, never as scattered inline values, and must say which current tokens it keeps. Gold-as-wordmark-only and the Blog/Store accents are Joe-decided.
 
 Quality bar: `design/approved/` — match or elevate toward those examples. Do not copy Linear/Stripe; analyze principles (hierarchy, restraint, composition) and apply them in DE’s language.
 
@@ -65,7 +67,7 @@ Focus:
 Button brand variant:
 `from-fuchsia-600 via-pink-600 to-rose-500` with pink shadow; violet→magenta gradients (`#7c3aed` → `#D3126A`) on portal/Desk submits.
 
-Do not introduce a new purple, magenta, or near-black. Reuse these.
+Maintenance Mode: do not introduce a new purple, magenta, or near-black — reuse these. Exploration Mode: propose changes as tokens with a rationale.
 
 ## Typography
 
@@ -80,7 +82,7 @@ Do not introduce a new purple, magenta, or near-black. Reuse these.
 
 - Token: `--radius: 0.5rem` → `rounded-lg` / `md` / `sm`
 - Common UI: `rounded-xl`, `rounded-2xl` (cards), `rounded-3xl` (large panels)
-- Do not invent one-off radii (e.g. 13px, 17px)
+- Do not invent one-off radii (e.g. 13px, 17px); a new radius scale is a token proposal, not an inline value
 
 ## Spacing / layout
 
@@ -100,7 +102,7 @@ Do not introduce a new purple, magenta, or near-black. Reuse these.
 
 ## Imagery
 
-Locked engage-path system: dark technical sculpture — graphite / smoked glass / violet-as-light. Registry: `client/src/lib/visualAssets.ts`. See `IMAGERY.md`.
+Current engage-path system (Tier 2): dark technical sculpture — graphite / smoked glass / violet-as-light. Registry: `client/src/lib/visualAssets.ts`. See `IMAGERY.md`.
 
 ## Principles
 

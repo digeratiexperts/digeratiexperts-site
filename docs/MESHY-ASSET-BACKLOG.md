@@ -1,5 +1,7 @@
 # Meshy / Digerati 3D asset backlog
 
+> **HISTORICAL RECORD (Tier 3 — `design/DESIGN-AUTHORITY.md`).** This document records what was decided, placed or guarded at a point in time. It explains *why* things are the way they are. Its "do not", "unchanged", "leave alone" and "keep" lines were the guardrails of that task; they do not prohibit future maintenance or redesign work unless a Tier 0–2 file promotes the decision.
+
 **Date:** 2026-08-08  
 **Source:** DE production backlog (full Batches 01–10)  
 **Related:** `docs/MESHY-BATCH-01.md`, `docs/MESHY-MCP.md`, `docs/VISUAL-SHOPPING-LIST.md`, `docs/VISUAL-ASSET-INVENTORY.md`

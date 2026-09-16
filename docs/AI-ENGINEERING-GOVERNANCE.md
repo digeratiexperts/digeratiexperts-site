@@ -150,20 +150,23 @@ Merely matching a prompt is insufficient.
 
 ## 9. Design-system law
 
-Agents must compose from the canonical DE visual system before inventing new patterns.
+How much authority each design rule carries is defined in **`design/DESIGN-AUTHORITY.md`** (Tier 0 non-negotiables, Tier 1 brand identity, Tier 2 current design system, Tier 3 historical record) together with the two task modes, Maintenance and Exploration. This section is the engineering side of that model.
 
-Locked foundation and rules live in:
+**Maintenance Mode (default):** agents compose from the current DE visual system before inventing new patterns. The current system lives in:
 
 - `design/BRAND.md`
 - `design/DESIGN_SYSTEM.md`
 - `design/UX_PRINCIPLES.md`
 - `design/VISUAL_SYSTEM_V2.md`
+- `design/UI-STYLE-RULES.md`
 - `.cursor/rules/ui-ux.mdc`
 - `.cursor/rules/visual-system-v2.mdc`
 
 Before creating a new visual primitive, search for an existing one. If the desired UI cannot be expressed cleanly with existing primitives, propose the new reusable primitive explicitly rather than silently creating a one-off dialect.
 
-Do not let separate agents invent competing versions of the same control, card, modal, dock, icon treatment, spacing language, or interaction pattern.
+**Exploration Mode (Joe asks to redesign, rethink, reimagine, modernize, explore, propose concepts, make it materially better or make it feel different):** the current system is a starting point and a benchmark, not a boundary. Agents may propose new primitives, layout systems, art direction, typography, motion and structure, provided each concept states what it keeps and changes and why, respects Tier 0 and Tier 1, produces materially distinct alternatives before converging, and stays isolated from production paths (`artifacts/design-concepts/<task>/`, `scrollcraft/builds/<name>/`, or an isolated branch) until Joe picks a direction.
+
+**In every mode:** do not let separate agents invent competing versions of the same control, card, modal, dock, icon treatment, spacing language, or interaction pattern *inside one shipped system*. Exploration produces alternatives on purpose; integration must converge on one.
 
 ## 10. UI controls must be designed for their physical context
 
@@ -258,11 +261,13 @@ No agent may create a permanent exception by precedent.
 
 ## 18. DE Product Preservation Law
 
+**Scope.** This law governs what ships: Maintenance Mode work and the *integration* of any chosen redesign into the production product. It does not govern ideation. An Exploration Mode concept (see `design/DESIGN-AUTHORITY.md`) may replace anything in Tier 2 on its isolated branch; when Joe picks a concept, this law decides how that concept is integrated — what is kept, upgraded, added and replaced — and Tier 0 functional preservation (routes, forms, integrations, SEO, business logic, customer workflows) remains mandatory throughout.
+
 Existing production DE identity, content, imagery, functionality, information architecture, business rules, integrations, customer workflows, and branded elements are canonical product assets.
 
 Visual references, competitor sites, generated mockups, Figma/Fable concepts, screenshots, and AI design proposals establish **design intent and quality targets, not replacement authority**.
 
-Unless Joe explicitly approves a material replacement, agents must improve the existing DE implementation through **preservation, refinement, composition, and addition**.
+Unless Joe explicitly approves a material replacement, agents must improve the existing DE implementation through **preservation, refinement, composition, and addition**. A redesign Joe requested is the documented reason at the concept level. Joe's pick of a concept approves the direction; the integration PR still lists every REPLACE and every removal of existing content, CTAs, navigation, stats or functionality, and each needs Joe's explicit approval.
 
 The default decision hierarchy is:
 
@@ -295,3 +300,5 @@ The governing question is:
 > Does this feel like a materially upgraded Digerati Experts product, or like a different product wearing the DE name?
 
 If the answer is the latter, preserve more and replace less.
+
+"DE identity" in this question means Tier 1 identity (`design/DESIGN-AUTHORITY.md`): premium, cybersecurity-first, precise, trustworthy, principal-led, with its differentiators intact. A product that keeps that identity but implements it with a different palette, type stack or layout system because Joe asked for a redesign is a materially upgraded Digerati Experts product, not a different product wearing the DE name.

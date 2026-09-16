@@ -1,8 +1,8 @@
-# DE UI Style Rules — canonical execution layer
+# DE UI Style Rules — current design reference (Tier 2)
 
-Consolidated rules for **all UI work** on the Digerati Experts site. This document processes the design corpus (`BRAND.md`, `DESIGN_SYSTEM.md`, `UX_PRINCIPLES.md`, `VISUAL_SYSTEM_V2.md`, `.cursor/rules/*`, `design/approved|rejected/`, the 2026-08-30 approved homepage/Ask DE reference) into one place an implementer can follow start-to-finish.
+The consolidated **current** DE design system: one place an implementer can follow start-to-finish when working inside the system. It processes the design corpus (`BRAND.md`, `DESIGN_SYSTEM.md`, `UX_PRINCIPLES.md`, `VISUAL_SYSTEM_V2.md`, `.cursor/rules/*`, `design/approved|rejected/`, the 2026-08-30 approved homepage/Ask DE reference).
 
-**Authority chain (this doc does not replace it):** root `.cursorrules` (§9A) → `VISUAL_SYSTEM_V2.md` → `BRAND.md` / `DESIGN_SYSTEM.md` / `UX_PRINCIPLES.md` → locked scoped rules (`blog-store-color-lock.mdc`, `dark-field-accent-pop.mdc`, `de-desk-design.mdc`). If anything here conflicts with those, they win — and ask Joe. Joe is final visual authority; rendered quality is an acceptance gate separate from code correctness.
+**Authority (`DESIGN-AUTHORITY.md`):** this document is **Tier 2**. In **Maintenance Mode** (the default) it is mandatory — build with these tokens, archetypes and recipes. In **Exploration Mode** it is the benchmark and the record of what exists, not the boundary: a concept may change the theme, accent doctrine, archetypes or page doctrine below, provided it says what it changed and why, keeps the Tier 1 identity, and stays isolated until Joe picks. The items in §7 marked Tier 0 hold in every mode; the items marked Joe-decided may be challenged only explicitly. Authority chain above this doc: root `.cursorrules` §0 → `DESIGN-AUTHORITY.md` → `VISUAL_SYSTEM_V2.md` → `BRAND.md` / `DESIGN_SYSTEM.md` / `UX_PRINCIPLES.md` → scoped rules (`blog-store-color-lock.mdc`, `dark-field-accent-pop.mdc`, `de-desk-design.mdc`). Joe is final visual authority; rendered quality is an acceptance gate separate from code correctness.
 
 ---
 
@@ -37,7 +37,7 @@ Rules that hold across every surface:
 | Violet | — | `#5B45E0` / `#8B5CF6` / `#A78BFA` | **Lighting only** — glows, gradients-as-light, never a panel/chip/section fill |
 | Chrome black | — | `#000` / `#0a0a0a` | Nav bar, announcement strip, utility strip |
 
-Type: **Space Grotesk** headings (600–700, tracking −0.015 to −0.045em, leading ~1.05–1.15); **Inter** body (400, leading 1.6); **Oxanium** for stats/labels/sequence IDs only — never paragraphs. Radius from `--radius` (`rounded-lg/xl/2xl`, `rounded-3xl` for large panels — no one-off radii). Section padding `py-10 md:py-14 lg:py-16`. Touch targets ≥ ~44px. Focus ring pink `#ec4899`, 2px, offset 2. Buttons: `duration-200 ease-out`, `active:scale-[0.98]`; respect `prefers-reduced-motion`; motion communicates state/hierarchy/continuity/feedback — never decoration. **Do not invent new colors, purples, near-blacks, radii, or tracking values — reuse these.**
+Type: **Space Grotesk** headings (600–700, tracking −0.015 to −0.045em, leading ~1.05–1.15); **Inter** body (400, leading 1.6); **Oxanium** for stats/labels/sequence IDs only — never paragraphs. Radius from `--radius` (`rounded-lg/xl/2xl`, `rounded-3xl` for large panels — no one-off radii). Section padding `py-10 md:py-14 lg:py-16`. Touch targets ≥ ~44px. Focus ring pink `#ec4899`, 2px, offset 2. Buttons: `duration-200 ease-out`, `active:scale-[0.98]`; respect `prefers-reduced-motion`; motion communicates state/hierarchy/continuity/feedback — never decoration. **Maintenance Mode: do not invent new colors, purples, near-blacks, radii, or tracking values — reuse these.** Exploration Mode: propose changes as a token set with a rationale, never as scattered inline values.
 
 CSS budget discipline: the entry stylesheet is capped (290KB, `check-bundle-budget.mjs`) and the budget is never raised for a restyle. Reuse existing utility classes; put one-off values in inline styles rather than minting new arbitrary Tailwind classes.
 
@@ -105,25 +105,30 @@ Choose the **page type**, then compose chapters by these rhythm rules instead of
 - **Editorial (Journal, guides, case studies):** reading-first. Charcoal masthead (amber accent), then generous paper/long-form measure (~65–75ch), restrained imagery, no HUD, no loud bands. Chrome stays minimal so the content is the design.
 - **Catalog / utility (Store, calculators, tools):** task density beats atmosphere. Electric accent, persistent "Your Solution" chrome, form controls and cards optimized for scanning and input; marketing flourish only at the top. Never let marketing chrome cover task chrome.
 - **Trust / legal / contact:** quiet wells, evidence-first (real documents, real addresses, real hours), forms on white cards, zero decoration.
-- **Support chrome (Ask DE / Desk):** white precision panel language — `#fbfbfa` panel, `border-black/10`, near-black text, one decision at a time, magenta only for submit/incident. Bottom-sheet + scrim < 768px; popover with tail ≥ 768px.
+- **Support chrome (Ask DE / Desk):** what is *live today* is the white precision panel — `#fbfbfa` panel, `border-black/10`, near-black text, one decision at a time, magenta only for submit/incident. Bottom-sheet + scrim < 768px; popover with tail ≥ 768px. The *release target* is the Joe-decided graphite shell (2026-09-14) in `.cursor/rules/de-desk-design.mdc` / `.cursor/skills/de-desk-ui/SKILL.md`; Desk work follows that, not this line.
 
-**Composing a page that doesn't exist yet:** pick the page type → list what the visitor must understand/believe in order → assign one archetype per belief → apply rhythm rules → reuse existing section components before inventing (preserve → elevate → consolidate → relocate). If a new pattern is genuinely needed, build it as a reusable primitive first and get it approved — never style a one-off.
+**Composing a page that doesn't exist yet (Maintenance Mode):** pick the page type → list what the visitor must understand/believe in order → assign one archetype per belief → apply rhythm rules → reuse existing section components before inventing (preserve → elevate → consolidate → relocate). If a new pattern is genuinely needed, build it as a reusable primitive first and get it approved — never style a one-off.
 
-## 7. Hard rules (non-negotiable)
+**Exploration Mode:** the archetypes and page doctrine above describe the current system. A concept may propose new archetypes, a different rhythm model or a different page doctrine; it still lists what the visitor must understand or believe, still builds reusable primitives rather than one-offs, and still renders at 390 / 768 / 1440.
 
-- **DE Product Preservation Law** (`docs/AI-ENGINEERING-GOVERNANCE.md` §18): existing DE identity, content, imagery, functionality, IA, business rules, integrations, and recognizable branded elements are canonical product assets. References/mockups/Fable/Figma set quality targets, **not replacement authority**. Work in order **KEEP → UPGRADE → ADD → REPLACE**; REPLACE requires a documented reason and Joe's explicit approval. Visual QA compares against two baselines — the pre-change DE page (did anything valuable disappear?) and the approved reference (what quality to adopt?). Resembling the reference while losing DE identity **fails acceptance**.
-- **No overlapping chrome.** Two independently-interactive fixed/floating elements never occupy the same space. Every floating element positions via the shared vars (`--de-chrome-inset`, `--de-unified-bar-h`, `--de-cookie-h`, `--de-sticky-cta-h`, `--de-store-cart-h`, `--de-nav-offset`…) and publishes its own height var. Scrim-dimmed layers are the only sanctioned overlay.
-- **Never judge UI from source.** Code → render → screenshot → critique → iterate, at **390 / 768 / 1440** minimum (Playwright; consent pre-seeded via `de_cookie_consent_v2`). Evidence goes to `artifacts/visual-qa/<task>/`; accepted/rejected directions get a screenshot + note in `design/approved|rejected/`.
-- **Never fabricate**: clients, quotes, metrics, response times ("replies in minutes"), partnerships, vendor logos DE doesn't use, telemetry, compliance status, or product behavior. Classify evidence LIVE / SANITIZED REAL / EXAMPLE / ILLUSTRATIVE.
-- **No vendor names on the public homepage hero** (Joe, 2026-08-30). Vendor marks live in Store merchandising where they're already sanctioned.
-- **Preserve content**: existing copy, CTAs, nav, routes, SEO/JSON-LD, analytics, and functionality survive restyles. Elevate, don't delete.
-- **All states designed**: default, hover, focus-visible, active, disabled, loading, empty (honest), error, success. Keyboard: focus traps in dialogs, Escape closes + restores focus, WCAG 2.2 AA contrast.
-- **Company naming**: "Digerati Experts" or "DE" — never standalone "Digerati". Portal login is `https://portal.digeratiexperts.com/portal/login`.
-- **Definition of done**: rendered result is coherent, responsive, accessible, consistent — verified in the browser and (for visual tasks) approved by Joe from screenshots, not tests alone.
+## 7. Hard rules
+
+Tier is marked per rule. **Tier 0** holds in every task mode. **Integration** rules govern Maintenance Mode and the integration of a chosen Exploration concept into production. **Joe-decided** rules may be challenged by a concept only explicitly and ship only with Joe.
+
+- **DE Product Preservation Law** (Integration) (`docs/AI-ENGINEERING-GOVERNANCE.md` §18): existing DE identity, content, imagery, functionality, IA, business rules, integrations, and recognizable branded elements are canonical product assets. References/mockups/Fable/Figma set quality targets, **not replacement authority**. Work in order **KEEP → UPGRADE → ADD → REPLACE**; REPLACE requires a documented reason and Joe's explicit approval — a Joe-requested redesign is that documented reason at the concept level; Joe's pick approves the direction, and the integration PR still lists each REPLACE/removal for Joe's approval. Visual QA compares against two baselines — the pre-change DE page (did anything valuable disappear?) and the approved reference (what quality to adopt?). Resembling the reference while losing DE identity **fails acceptance**.
+- **No overlapping chrome.** (Tier 0) Two independently-interactive fixed/floating elements never occupy the same space. Every floating element positions via the shared vars (`--de-chrome-inset`, `--de-unified-bar-h`, `--de-cookie-h`, `--de-sticky-cta-h`, `--de-store-cart-h`, `--de-nav-offset`…) and publishes its own height var. Scrim-dimmed layers are the only sanctioned overlay.
+- **Never judge UI from source.** (Tier 0) Code → render → screenshot → critique → iterate, at **390 / 768 / 1440** minimum (Playwright; consent pre-seeded via `de_cookie_consent_v2`). Evidence goes to `artifacts/visual-qa/<task>/`; accepted/rejected directions get a screenshot + note in `design/approved|rejected/`.
+- **Never fabricate** (Tier 0): clients, quotes, metrics, response times ("replies in minutes"), partnerships, vendor logos DE doesn't use, telemetry, compliance status, or product behavior. Classify evidence LIVE / SANITIZED REAL / EXAMPLE / ILLUSTRATIVE.
+- **No vendor names on the public homepage hero** (Joe-decided, 2026-08-30). Vendor marks live in Store merchandising where they're already sanctioned.
+- **Preserve content** (Integration; functionality/routes/SEO are Tier 0): existing copy, CTAs, nav, routes, SEO/JSON-LD, analytics, and functionality survive restyles. Elevate, don't delete.
+- **All states designed** (Tier 0): default, hover, focus-visible, active, disabled, loading, empty (honest), error, success. Keyboard: focus traps in dialogs, Escape closes + restores focus, WCAG 2.2 AA contrast.
+- **Company naming** (Tier 0): "Digerati Experts" or "DE" — never standalone "Digerati". Portal login is `https://portal.digeratiexperts.com/portal/login`.
+- **Definition of done** (Tier 0): rendered result is coherent, responsive, accessible, consistent — verified in the browser and (for visual tasks) approved by Joe from screenshots, not tests alone.
 
 ## 8. Quick pre-flight for any UI task
 
-1. Read this doc + the scoped lock rules for the surface you're touching.
+0. Read `DESIGN-AUTHORITY.md`; state the mode. Steps 1–6 below are the Maintenance Mode path. In Exploration Mode, steps 1–2 are evidence gathering, step 3–4 become "diverge into materially distinct concepts", and step 6 ends with Joe picking a direction rather than merging.
+1. Read this doc + the scoped rules for the surface you're touching.
 2. Scan `design/approved/` (target quality) and `design/rejected/` (paid-for mistakes).
 3. Identify page type (§6) and section archetypes (§5); find the existing component to reuse.
 4. Confirm accent channel (§3) and field steps (§2) before writing classes.

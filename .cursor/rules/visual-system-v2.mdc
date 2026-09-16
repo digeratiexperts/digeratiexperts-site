@@ -1,17 +1,23 @@
 ---
-description: Visual System v2 — master design rule, layers, evidence classification, no ad-hoc HUD
+description: Visual System v2 — current layer model, evidence classification (Tier 0), HUD/aesthetic grammar (Tier 2, Maintenance Mode)
 alwaysApply: true
 ---
 
 # Visual System v2
 
-Canonical layer governance on top of the locked brand. Full source: `design/VISUAL_SYSTEM_V2.md`. Ledger: `docs/SITE-VISUAL-TASKS.md`.
+The current layer governance on top of the current brand foundation. Full source: `design/VISUAL_SYSTEM_V2.md`. Ledger: `docs/SITE-VISUAL-TASKS.md`. Authority tiers and task modes: `design/DESIGN-AUTHORITY.md`.
 
-This does **not** replace `.cursorrules` §§1–42, `design/BRAND.md`, `DESIGN_SYSTEM.md`, `UX_PRINCIPLES.md`, or `IMAGERY.md`. Huntress-like precision is a **controlled upper layer**, not a new visual direction.
+This does **not** replace `.cursorrules`, `design/BRAND.md`, `DESIGN_SYSTEM.md`, `UX_PRINCIPLES.md`, or `IMAGERY.md`. Huntress-like precision is a **controlled upper layer**, not a new visual direction.
 
 **DE needs more technical precision, visual evidence, and interactivity — but not more visual noise.**
 
-Do not restyle Blog/Journal (amber) or Store (electric + 14 pills). Do not touch `ZohoASAPWidget.tsx` unless the ledger assigns it to you.
+## What in this rule is which tier
+
+- **Tier 0 (every mode):** the truthfulness rules below — classification, no invented telemetry / customers / metrics / incidents / compliance / capabilities, emerald only when genuinely live, no fake pulses.
+- **Tier 2 (Maintenance Mode mandatory; Exploration Mode default):** the layer model, the foundation tokens, the HUD yes/no grammar, IconWell on small cards, "vocabulary first", "no new site-wide pattern until an approved primitive exists".
+- **Joe-decided Tier 2:** Blog/Journal amber and Store electric + 14 pills (`blog-store-color-lock.mdc`); DE Desk graphite shell (`de-desk-design.mdc`). Maintenance: keep. Exploration: may propose, Joe ships.
+
+Do not touch `ZohoASAPWidget.tsx` unless the ledger or Joe assigns it to you (ownership, not aesthetics).
 
 ---
 
@@ -19,21 +25,19 @@ Do not restyle Blog/Journal (amber) or Store (electric + 14 pills). Do not touch
 
 Before creating any substantial visual element, determine what the visitor needs to understand or believe. Then select the strongest evidence form in this order: real artifact → real data → real person → explanatory diagram → sanitized interface → illustrative scenario → editorial photography → atmospheric environment → icon. Decorative visual treatment comes last.
 
-DE’s visual identity remains Midnight Obsidian `#050312`, Warm Paper `#F7F5F2`, Electric Magenta `#D3126A`, restrained violet illumination, Space Grotesk/Inter/Oxanium. Store electric blue remains Store-specific.
+Current identity implementation (Tier 2): Midnight Obsidian `#050312`, Warm Paper `#F7F5F2`, Electric Magenta `#D3126A`, restrained violet illumination, Space Grotesk/Inter/Oxanium. Store electric blue remains Store-specific.
 
 Technical HUD elements are restrained precision details, not a cyberpunk theme.
 
-Never invent telemetry, customers, metrics, performance numbers, incidents, compliance status, or product capabilities.
+**Tier 0:** Never invent telemetry, customers, metrics, performance numbers, incidents, compliance status, or product capabilities. Clearly classify visual evidence as LIVE, SANITIZED REAL, EXAMPLE, or ILLUSTRATIVE.
 
-Clearly classify visual evidence as LIVE, SANITIZED REAL, EXAMPLE, or ILLUSTRATIVE.
+Maintenance Mode: do not introduce new site-wide design patterns until an approved reusable primitive exists. Large visual placements should favor evidence and explanation. Small functional cards continue using the established IconWell system where appropriate.
 
-Do not introduce new site-wide design patterns until an approved reusable primitive exists.
-
-Large visual placements should favor evidence and explanation. Small functional cards should continue using the established IconWell system where appropriate.
+Exploration Mode: a concept may propose a new vocabulary or layer model; build it as reusable primitives, keep it isolated until Joe picks, and state which v2 defaults it keeps or replaces.
 
 ---
 
-## HUD
+## HUD (Tier 2 grammar)
 
 Yes: tiny corner ticks, alignment markers, subtle crosshair intersections, understated grid/dot matrix, small section IDs, tiny telemetry labels, precision rulers/lines.
 
@@ -41,30 +45,10 @@ No: every card having `+` signs, every section looking like a SOC terminal, endl
 
 HUD chrome is metadata and framing, not decoration. Use on evidence, diagrams, operational visualizations, coverage, security telemetry, Store technical product media. Not FAQ, forms, long prose, testimonials, editorial paper.
 
-**Do not add HUD independently.** Vocabulary first (VIS-001 → VIS-002/003/004). See `design/HUD_CHROME.md`.
+Maintenance Mode: **do not add HUD independently.** Vocabulary first (VIS-001 → VIS-002/003/004). See `design/HUD_CHROME.md`.
 
 ---
 
-## DE SITE-WIDE VISUAL COMPLETION DIRECTIVE
+## Working in this repository
 
-You are working in a multi-agent repository. Other agents may be modifying the site concurrently.
-
-**Before working:**
-
-1. Fetch the latest `origin/main`.
-2. Read `design/BRAND.md`, `DESIGN_SYSTEM.md`, `UX_PRINCIPLES.md`, `IMAGERY.md`, and the Visual System v2 documents.
-3. Read `docs/SITE-VISUAL-TASKS.md`.
-4. Confirm your task has one assigned owner and is not already IN PROGRESS elsewhere.
-5. Work on an isolated branch/worktree.
-
-**Brand foundation is locked:** graphite `#050312`, warm paper `#F7F5F2`, magenta `#D3126A`, restrained violet illumination, Space Grotesk / Inter / Oxanium, Store electric blue remains Store-specific. Do not redesign the foundational palette or typography.
-
-**New visual philosophy:** Prefer real artifact → real data → real person → diagram → sanitized UI → illustrative scenario → editorial photography → environment plate → icon. Use technical HUD chrome only to communicate precision, metadata, state, or structure. Do not turn DE into a cyberpunk terminal. Classify operational visuals as LIVE / SANITIZED REAL / EXAMPLE / ILLUSTRATIVE. Never fabricate clients, testimonials, metrics, incident-response times, security events, telemetry, compliance claims, partnerships, or product behavior. Build reusable primitives before duplicating patterns across pages.
-
-**During implementation:** inspect → architect → implement → render → screenshot → critique → refine. Verify at 390 / 768 / 1440.
-
-**Before PR:** Fetch origin/main again. Identify every commit that landed on main since your branch began. Compare overlapping files. Preserve newer unrelated work. Never resolve conflicts by blindly taking a whole-file “ours” or “theirs.” Run typecheck/tests/build. Include the concurrency report and visual evidence in the PR. **Do not merge your own PR.**
-
-A task is not finished until reviewed, merged, production-verified, and marked LIVE in the shared task ledger.
-
-Concurrency report template: `docs/PR-CONCURRENCY-AUDIT.md`.
+The multi-agent procedure (fetch `origin/main`, claims, isolated branch, render at 390 / 768 / 1440, concurrency report before PR, never merge your own PR, MERGED ≠ LIVE) lives in `AGENTS.md` and `docs/AI-ENGINEERING-GOVERNANCE.md` and is Tier 0. It is not repeated here. Concurrency report template: `docs/PR-CONCURRENCY-AUDIT.md`.

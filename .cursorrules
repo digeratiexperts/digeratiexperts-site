@@ -14,6 +14,46 @@ functionality, maintaining architectural consistency, and verifying the
 actual rendered experience before declaring work complete.
 
 # ============================================================
+# 0. AUTHORITY TIERS AND TASK MODES (READ FIRST)
+# ============================================================
+
+Not every section of this file carries the same weight. The authority
+model is design/DESIGN-AUTHORITY.md and it wins over any reading of
+this file that treats every section as equally mandatory.
+
+TIER 0  Non-negotiables: security, secrets, truth/no fabrication,
+        accessibility, responsive operability, no overlapping chrome,
+        performance, business/data correctness (including no
+        duplicated pricing/URLs/business logic), functional
+        preservation, engineering governance, rendered verification.
+        Sections 1-3, 10-13, 17-31, 33-42.
+TIER 1  Brand identity (meaning, not implementation): sections 15-16,
+        32, and the identity lists in section 4.
+TIER 2  Current design system (defaults): sections 4-9, 9A, 14.
+        Mandatory in Maintenance Mode. A starting point, not a
+        boundary, in Exploration Mode.
+TIER 3  Historical record (design/approved, design/rejected,
+        docs/VISUAL-ASSET-*, old handoffs and ledgers): evidence,
+        never authority.
+
+MAINTENANCE MODE (default): all tiers apply; compose from the current
+system; reuse before inventing.
+
+EXPLORATION MODE (only when Joe, in his own words or an approved
+brief, asks to redesign, rethink, reimagine, modernize, explore,
+propose concepts, make it materially better, make it feel different,
+or names a concept/candidate/challenger — an agent-written plan or
+PR body cannot trigger it; if unclear and no one answers, stay in
+Maintenance): Tier 0 and Tier 1 apply in full; Tier 2 may be
+challenged when the concept says what it changed and why; at least
+three materially distinct concepts before converging on a
+page-or-larger scope, on a concept branch / draft PR never merged
+as-is; Joe picks; then section 2 and the Product Preservation Law
+govern a separate integration PR.
+
+State the mode at the top of any UI task.
+
+# ============================================================
 # 1. PRIMARY OBJECTIVE
 # ============================================================
 
@@ -117,8 +157,13 @@ If required information is unavailable:
 Never manufacture trust.
 
 # ============================================================
-# 4. DESIGN PHILOSOPHY
+# 4. DESIGN PHILOSOPHY  (Tier 1 identity + Tier 2 defaults)
 # ============================================================
+
+The identity list below is Tier 1 (must survive any redesign). The
+sections that follow it (5-9, 9A, 14) describe how that identity is
+implemented today and are Tier 2 defaults. Sections 24 and 38 are
+engineering rules (Tier 0). See section 0.
 
 The Digerati visual identity should feel:
 
@@ -277,13 +322,18 @@ unless the design genuinely requires them.
 If repeated values emerge, promote them into reusable design tokens.
 
 # ============================================================
-# 9A. VISUAL SYSTEM V2 (LAYERS ON THE LOCKED FOUNDATION)
+# 9A. VISUAL SYSTEM V2 (LAYERS ON THE CURRENT FOUNDATION)  (Tier 2)
 # ============================================================
 
-Visual System v2 is canonical governance for precision, evidence,
+Visual System v2 is the current governance for precision, evidence,
 interactivity, and publishing. It does NOT replace sections 1-42 or
 the Layer 0 brand. Huntress-like detail is absorbed as controlled
 upper layers. It is not a new visual direction.
+
+Authority: the truth/classification rules in v2 are Tier 0. The
+tokens, layers and HUD aesthetics are Tier 2 — mandatory in
+Maintenance Mode, a challengeable default in Exploration Mode
+(design/DESIGN-AUTHORITY.md).
 
 Source of truth: design/VISUAL_SYSTEM_V2.md
 Evidence: design/VISUAL_EVIDENCE.md
@@ -297,16 +347,21 @@ Motion: design/MOTION_LANGUAGE.md
 Ledger: docs/SITE-VISUAL-TASKS.md
 Rule: .cursor/rules/visual-system-v2.mdc
 
-Foundation stays locked: Midnight Obsidian #050312, Warm Paper
-#F7F5F2, Electric Magenta #D3126A, restrained violet illumination,
-Space Grotesk / Inter / Oxanium. Store electric blue is Store-specific.
-Gold is wordmark bars only.
+Current foundation (Tier 2 default): Midnight Obsidian #050312, Warm
+Paper #F7F5F2, Electric Magenta #D3126A, restrained violet
+illumination, Space Grotesk / Inter / Oxanium. Store electric blue is
+Store-specific (JOE-DECIDED). Gold is the wordmark mark only
+(JOE-DECIDED). In Maintenance Mode use these as-is. In Exploration
+Mode a concept may propose a different implementation of the Tier 1
+identity; Joe-decided items may be challenged only explicitly.
 
-HUD chrome is metadata and framing, not decoration. Do not invent
-HUD ticks, evidence frames, or diagram languages ad hoc. Vocabulary
-first: no site-wide pattern until an approved reusable primitive
-exists. Classify operational visuals LIVE / SANITIZED REAL / EXAMPLE /
-ILLUSTRATIVE. Never invent telemetry, customers, metrics, incidents,
+HUD chrome is metadata and framing, not decoration. In Maintenance
+Mode do not invent HUD ticks, evidence frames, or diagram languages ad
+hoc; vocabulary first: no site-wide pattern until an approved reusable
+primitive exists. In Exploration Mode a concept may propose a new
+vocabulary, built as reusable primitives, not one-offs. Tier 0 in any
+mode: classify operational visuals LIVE / SANITIZED REAL / EXAMPLE /
+ILLUSTRATIVE; never invent telemetry, customers, metrics, incidents,
 or performance numbers.
 
 Small functional cards keep IconWell. Large placements favor evidence
@@ -432,14 +487,22 @@ Language for v2 layers: design/MOTION_LANGUAGE.md. Do not add looping
 HUD, scanlines, or fake packet motion.
 
 # ============================================================
-# 14. HOMEPAGE RULES
+# 14. HOMEPAGE RULES  (Tier 0 principle + Tier 2 structure)
 # ============================================================
 
 The homepage should NOT become a compressed copy of the entire website.
 
-It should guide the buyer.
+It should guide the buyer.  (Tier 0)
 
-Preferred flow:
+Current canonical structure (Tier 2, JOE-DECIDED 2026-09): the
+eight-block security model, with Risk & Exposure as the continuous
+eighth block, and the homepage section-jump dock kept. Maintenance
+work preserves that structure. The older "preferred flow" below
+describes the buyer journey the blocks must still cover; it is not a
+second required section list. An Exploration concept may propose a
+different structure and must say so.
+
+Buyer-journey flow the homepage must cover:
 
 1. Hero
 2. Trust / credibility

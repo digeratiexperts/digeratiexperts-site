@@ -112,13 +112,11 @@ A UI task is not complete merely because:
 - the code compiles
 - the component renders
 - the requested element exists
-It is complete when the rendered experience is visually coherent, responsive, accessible, and consistent with the site's design system.
+It is complete when the rendered experience is visually coherent, responsive, accessible, and consistent with the site's design system (Maintenance Mode) or with the concept's own stated system (Exploration Mode).
 
 ## DE execution layer
-Root `.cursorrules` remains authoritative (sections 1–42). This file is the UI/UX execution layer — do not dilute or contradict it.
-Canonical portal login: `https://portal.digeratiexperts.com/portal/login` — never invent `//login`.
-Preserve existing DE content, CTAs, nav, and stats unless DE explicitly approves removal.
-Inspect rendered UI at 390 / 768 / 1440 at minimum. Never judge UI from source code alone.
-Dark fields stay black/charcoal so `#D3126A` pops — see `.cursor/rules/dark-field-accent-pop.mdc`. No purple-filled boxes.
-Blog/Journal stays amber; Store stays electric + the 14 category-pill hues — `.cursor/rules/blog-store-color-lock.mdc`. Do not restyle those colors.
-Visual System v2 (`design/VISUAL_SYSTEM_V2.md`) is layers on this foundation — HUD/evidence primitives must not be invented ad hoc. Ledger: `docs/SITE-VISUAL-TASKS.md`.
+Everything above this line is method and Tier 0 (accessibility, states, responsiveness, visual QA) and applies in every task mode. Root `.cursorrules` remains authoritative, read through `design/DESIGN-AUTHORITY.md`.
+Tier 0 in every mode: canonical portal login `https://portal.digeratiexperts.com/portal/login` — never invent `//login`. Inspect rendered UI at 390 / 768 / 1440 at minimum. Never judge UI from source code alone. Functionality, routes, forms, SEO and integrations survive any restyle.
+Maintenance Mode (default) — Tier 2 current system applies: preserve existing DE content, CTAs, nav, and stats unless DE explicitly approves removal; dark fields stay black/charcoal so `#D3126A` pops (`.cursor/rules/dark-field-accent-pop.mdc`), no purple-filled boxes; Visual System v2 layers on this foundation and HUD/evidence primitives are not invented ad hoc (`design/VISUAL_SYSTEM_V2.md`; ledger `docs/SITE-VISUAL-TASKS.md`).
+Joe-decided (any mode: propose only, Joe ships): Blog/Journal amber; Store electric + the 14 category-pill hues — `.cursor/rules/blog-store-color-lock.mdc`.
+Exploration Mode (Joe asks to redesign / rethink / explore / propose concepts): the Tier 2 items above are the benchmark, not the boundary; produce materially distinct concepts on an isolated branch, keep them out of production paths until Joe picks, and state what each concept keeps and changes.

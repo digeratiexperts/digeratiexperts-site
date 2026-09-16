@@ -1,9 +1,16 @@
 ---
-description: Brand and visual identity system
+description: Brand identity (Tier 1, always) and current art direction (Tier 2, Maintenance Mode default)
 globs: ["**/*"]
 alwaysApply: true
 ---
 # BRAND SYSTEM
+
+Two tiers live in this file (`design/DESIGN-AUTHORITY.md`):
+
+- **Tier 1 — Brand identity.** The "communicate / should NOT feel" lists, the imagery concept-not-noun principle, and the design principle at the end. These hold in every task mode. Any redesign must still deliver them.
+- **Tier 2 — Current art direction.** Everything from "VISUAL LANGUAGE" through "TYPOGRAPHY" and "CARDS": the specific palette, materials, lighting, type stack and card language that implement the identity today. Mandatory in Maintenance Mode. In Exploration Mode a concept may propose a different implementation of the same identity and must say what it changed and why. Gold as wordmark-only and the Blog/Store palettes are Joe-decided; challenge them only explicitly.
+
+## TIER 1 — IDENTITY
 The website represents a premium enterprise managed IT and cybersecurity company.
 The visual identity should communicate:
 - trust
@@ -24,8 +31,9 @@ The website should NOT feel:
 - AI-generated
 - stock-photo driven
 - visually noisy
+## TIER 2 — CURRENT ART DIRECTION
 # VISUAL LANGUAGE
-The core visual direction is:
+The current visual direction is:
 PREMIUM ENTERPRISE TECHNOLOGY
 +
 DARK TECHNICAL ENVIRONMENT
@@ -102,7 +110,7 @@ Prefer:
 - controlled contrast
 - clear hierarchy
 - strong internal composition
-## IMAGERY
+## IMAGERY (concept-not-noun is Tier 1; the rendering language is Tier 2)
 Do not automatically represent concepts literally.
 Avoid default imagery such as:
 - shield for cybersecurity
@@ -126,7 +134,7 @@ Identity:
 controlled access architecture
 Backup:
 redundancy and layered infrastructure
-## DESIGN PRINCIPLE
+## DESIGN PRINCIPLE (Tier 1)
 Every visual element should have a reason to exist.
 When choosing between:
 "more visual effects"
@@ -140,4 +148,4 @@ and
 choose better hierarchy.
 Premium design should feel intentional, not busy.
 
-Visual System v2 (`design/VISUAL_SYSTEM_V2.md`) adds precision, evidence, and interactivity as upper layers on this foundation — not a cyberpunk or Huntress restyle. Do not invent HUD chrome ad hoc.
+Visual System v2 (`design/VISUAL_SYSTEM_V2.md`) adds precision, evidence, and interactivity as upper layers on this foundation — not a cyberpunk or Huntress restyle. In Maintenance Mode do not invent HUD chrome ad hoc.

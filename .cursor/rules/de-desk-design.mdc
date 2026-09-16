@@ -6,9 +6,9 @@ alwaysApply: false
 
 # DE Desk design
 
-Primary file: `client/src/components/ZohoASAPWidget.tsx`. Full playbook: `.cursor/skills/de-desk-ui/SKILL.md`.
+Primary file: `client/src/components/ZohoASAPWidget.tsx`. Full playbook: `.cursor/skills/de-desk-ui/SKILL.md`. Authority: `design/DESIGN-AUTHORITY.md` — the **Logic** and **Copy** sections below are Tier 0 (every mode); the **Shell** and **Tab content** presentation is the Joe-decided Tier 2 direction (graphite shell, 2026-09-14): mandatory in Maintenance Mode, challengeable only explicitly in Exploration Mode, shipped only by Joe.
 
-## Shell (all tabs)
+## Shell (all tabs) — JOE-DECIDED current direction
 
 - **One graphite shell** (`--de-surface` / hairline). No purple glow. No cream-in-purple nested card.
 - Magenta `#D3126A` for avatar emphasis, active underline, send, CTAs, incident rail. Violet is lighting only.
@@ -25,13 +25,13 @@ Primary file: `client/src/components/ZohoASAPWidget.tsx`. Full playbook: `.curso
 
 Do not put Cyber Risk Assessment, billing, or a 2×2 grid on Client Tools.
 
-## Copy
+## Copy (Tier 0)
 
 - Label **functions**, not vendor products.
 - Keep links/endpoints; change visible titles only.
 - Portal login via `PORTAL_LOGIN` — never invent `//login`.
 
-## Logic
+## Logic (Tier 0)
 
 Preserve chat send/poll, agent live, ticket submit (fail-closed), resources links, analytics, ASAP bootstrap, cookie offset, `de-open-msp-advisor`, drag/resize/expand, unread/heads-up.
 
