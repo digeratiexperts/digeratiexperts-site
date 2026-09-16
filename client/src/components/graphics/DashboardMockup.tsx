@@ -134,12 +134,12 @@ export const DashboardMockup = ({ className = "" }: { className?: string }) => {
                 <p className="text-[13px] font-medium text-white">Posture across key areas</p>
               </div>
               <p className="text-right">
-                <span className="block text-[10px] font-medium uppercase tracking-[0.08em] text-white/40">
+                <span className="block text-[10px] font-medium uppercase tracking-[0.08em] text-white/60">
                   {activeBar?.overall || !active ? "Overall posture" : `${activeBar?.label} posture`}
                 </span>
                 <span className="text-[15px] font-semibold tabular-nums text-white">
                   {activeBar?.level ?? OVERALL_SCORE}
-                  <span className="text-[12px] font-medium text-white/45"> / 100</span>
+                  <span className="text-[12px] font-medium text-white/65"> / 100</span>
                 </span>
                 <span className="ml-1.5 text-[10px] text-white/60">Illustrative</span>
               </p>

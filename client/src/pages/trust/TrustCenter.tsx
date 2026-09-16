@@ -255,7 +255,7 @@ export default function TrustCenter() {
           transition={{ duration: 0.5 }}
         >
           <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl">Need Security Documentation?</h2>
-          <p className="mx-auto mb-8 max-w-2xl text-lg text-white/90 md:text-xl">
+          <p className="mx-auto mb-8 max-w-2xl text-lg text-white md:text-xl">
             Request security questionnaires or framework-alignment documentation for vendor onboarding.
           </p>
           <div className="flex flex-col justify-center gap-4 sm:flex-row">

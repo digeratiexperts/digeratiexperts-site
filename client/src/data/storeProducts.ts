@@ -1285,8 +1285,20 @@ const PRICE_UNIT_BY_TYPE: Record<PricingType, string | null> = {
 };
 
 /** Owns the entire public price string. Do not append `per {unit}` beside this. */
+/**
+ * A price the client cannot resolve — missing, non-finite, or zero — is never
+ * rendered as a currency amount. Zero is a legitimate monetary value, so it
+ * cannot double as "unknown"; the fail-closed rule (DE source-of-truth
+ * contract, ECO-002) is that an unresolved price reads as a quote state.
+ */
+export const isResolvedPrice = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value) && value > 0;
+
 export const formatPrice = (product: StoreProduct, unitPrice = product.basePrice): string => {
-  if (product.basePrice === 0 && product.isContractOnly) {
+  if (product.isContractOnly && !isResolvedPrice(product.basePrice)) {
+    return "Contact for Quote";
+  }
+  if (!isResolvedPrice(unitPrice)) {
     return "Contact for Quote";
   }
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { AlertCircle, Mail, Lock, ArrowRight, ShieldCheck, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
 import logoImage from "@assets/DE-Logo-new_1762461524794.webp";
@@ -235,7 +235,7 @@ export default function PortalLogin() {
   const showZoho = zohoConfigured !== false;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
+    <main className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
           <img src={logoImage} alt="Digerati Experts" className="h-10 w-auto" />
@@ -245,7 +245,7 @@ export default function PortalLogin() {
           {step === "credentials" ? (
             <>
               <CardHeader className="space-y-2">
-                <CardTitle className="text-2xl text-white">Client Portal</CardTitle>
+                <h1 className="text-2xl font-semibold leading-none tracking-tight text-white">Client Portal</h1>
                 <CardDescription className="text-gray-300">
                   {returnToForZoho === "/portal/marketplace"
                     ? "Sign in to continue to the Client Marketplace."
@@ -358,7 +358,7 @@ export default function PortalLogin() {
               <CardHeader className="space-y-2">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="h-6 w-6 text-de-magenta-ink" />
-                  <CardTitle className="text-2xl text-white">Verify Your Identity</CardTitle>
+                  <h1 className="text-2xl font-semibold leading-none tracking-tight text-white">Verify Your Identity</h1>
                 </div>
                 <CardDescription className="text-gray-300">
                   {mfaMessage}
@@ -420,6 +420,6 @@ export default function PortalLogin() {
           )}
         </Card>
       </div>
-    </div>
+    </main>
   );
 }

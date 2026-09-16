@@ -140,7 +140,7 @@ export function DigeratiThreeDoorsChallenger(): JSX.Element {
           })}
         </div>
 
-        <p className="mt-6 max-w-3xl text-sm leading-relaxed text-white/45 md:text-base">
+        <p className="mt-6 max-w-3xl text-sm leading-relaxed text-white/55 md:text-base">
           Standalone work does not silently include full managed IT, SOC, backup, network, compliance, or help-desk coverage. Scope stays explicit.
         </p>
       </div>

@@ -85,14 +85,14 @@ export default function KnowledgeBase() {
             Search knowledge base topics
           </label>
           <div className="relative flex items-center rounded-xl border border-de-hairline bg-de-raised">
-            <Search className="absolute left-4 h-5 w-5 text-white/45" aria-hidden="true" />
+            <Search className="absolute left-4 h-5 w-5 text-white/55" aria-hidden="true" />
             <Input
               id="kb-search"
               type="search"
               placeholder="Search topics…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="border-0 bg-transparent py-3 pl-12 pr-4 text-lg text-white placeholder:text-white/45"
+              className="border-0 bg-transparent py-3 pl-12 pr-4 text-lg text-white placeholder:text-white/55"
               data-testid="input-search-kb"
             />
           </div>

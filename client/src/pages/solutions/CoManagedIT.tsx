@@ -84,7 +84,7 @@ export default function CoManagedIT() {
                 <Link href="/solutions/standalone-services">Compare Standalone</Link>
               </Button>
             </div>
-            <p className="mt-4 text-sm text-white/45">Preferred pricing is a commercial position, not a promise of a fixed percentage discount on every product or service.</p>
+            <p className="mt-4 text-sm text-white/55">Preferred pricing is a commercial position, not a promise of a fixed percentage discount on every product or service.</p>
           </header>
 
           <section className="border-y border-white/10 py-12" aria-labelledby="co-managed-means">
@@ -160,7 +160,7 @@ export default function CoManagedIT() {
 
           <section className="py-14" aria-labelledby="relationship-choice">
             <h2 id="relationship-choice" className="text-3xl font-semibold tracking-tight">Three relationships. One clear boundary between them.</h2>
-            <div className="mt-7 overflow-x-auto rounded-2xl border border-white/10">
+            <div className="mt-7 overflow-x-auto rounded-2xl border border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink" tabIndex={0} role="region" aria-label="Co-managed IT responsibility table">
               <table className="w-full min-w-[760px] border-collapse bg-de-raised text-left text-sm">
                 <thead>
                   <tr className="border-b border-white/10 text-white/50">
