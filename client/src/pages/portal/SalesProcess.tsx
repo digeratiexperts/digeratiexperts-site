@@ -819,13 +819,13 @@ export default function SalesProcess() {
             {/* Search + Controls */}
             <div className="mt-4 flex flex-wrap gap-3 items-center">
               <div className="relative flex-1 min-w-[280px] max-w-[560px]">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/45" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/55" />
                 <input
                   type="text"
                   placeholder="Search stages, meetings, paperwork..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 rounded-full border border-white/10 bg-black/35 text-white placeholder:text-white/45 outline-none transition-all focus:border-amber-500/55 focus:ring-2 focus:ring-amber-500/20"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-full border border-white/10 bg-black/35 text-white placeholder:text-white/55 outline-none transition-all focus:border-amber-500/55 focus:ring-2 focus:ring-amber-500/20"
                   data-testid="input-search"
                 />
               </div>

@@ -49,6 +49,9 @@ export const PageTemplate = ({
     <div className={`min-h-screen ${pageClass}`}>
       <MegaMenu />
 
+      {/* One <main> landmark per templated page: hero + content, chrome outside
+          (a11y sweep 2026-09-12 — 41 pages had no main landmark). */}
+      <main id="page-main">
       <section className={`relative overflow-hidden ${heroClass}`}>
         <div className="relative z-10 mx-auto max-w-7xl px-4 pt-[calc(var(--de-nav-offset)+1rem)] pb-12 sm:px-6 md:pt-[calc(var(--de-nav-offset)+1.5rem)] md:pb-16 lg:px-8">
           {breadcrumbs && breadcrumbs.length > 0 && (
@@ -161,6 +164,7 @@ export const PageTemplate = ({
           {children}
         </div>
       </section>
+      </main>
 
       <DigeratiEnhancedFooterSection />
     </div>

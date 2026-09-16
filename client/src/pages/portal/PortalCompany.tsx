@@ -192,7 +192,7 @@ export default function PortalCompany() {
               <div className="text-center py-8">
                 <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-500 dark:text-gray-400">No company information found</p>
-                <p className="text-sm text-gray-400 mt-1">Contact support to link your account</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Contact support to link your account</p>
               </div>
             )}
           </CardContent>

@@ -152,6 +152,7 @@ export const DigeratiCalculatorsSection = (props: CalculatorProps): JSX.Element 
                             <div className="pt-2">
                               <PremiumSlider 
                                 id="employees-affected"
+                                aria-label="Employees affected"
                                 value={[employees]} 
                                 onValueChange={(value) => setEmployees(value[0])}
                                 max={100} 
@@ -171,6 +172,7 @@ export const DigeratiCalculatorsSection = (props: CalculatorProps): JSX.Element 
                             <div className="pt-2">
                               <PremiumSlider 
                                 id="hourly-wage"
+                                aria-label="Average hourly wage in dollars"
                                 value={[hourlyWage]} 
                                 onValueChange={(value) => setHourlyWage(value[0])}
                                 max={200} 
@@ -190,6 +192,7 @@ export const DigeratiCalculatorsSection = (props: CalculatorProps): JSX.Element 
                             <div className="pt-2">
                               <PremiumSlider 
                                 id="downtime-hours"
+                                aria-label="Expected downtime in hours"
                                 value={[downtime]} 
                                 onValueChange={(value) => setDowntime(value[0])}
                                 max={24} 
@@ -300,6 +303,7 @@ export const DigeratiCalculatorsSection = (props: CalculatorProps): JSX.Element 
                             <div className="pt-2">
                               <PremiumSlider 
                                 id="service-employees"
+                                aria-label="Number of employees"
                                 value={[serviceEmployees]} 
                                 onValueChange={(value) => setServiceEmployees(value[0])}
                                 max={100} 

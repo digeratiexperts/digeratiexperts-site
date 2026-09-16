@@ -107,3 +107,16 @@ The wordmark outlines themselves came from a two-zone trace of the legacy
 raster (sharp corner detection for `DIGERATI`, smoothing for `Experts`), then
 near-straight curves flattened to lines and near-axis edges snapped. If the
 original vector or the wordmark's typeface ever surfaces, re-cut from it.
+
+## Where each surface uses it (audited 2026-09-12)
+
+| Surface | Today | Rule |
+|---|---|---|
+| Website header / footer, Store, Portal auth cards | `digerati-logo-reverse.svg` via `@/lib/brandAssets` (PRs #212, #214) — 166×40 in the nav, 199×48 in the footer | Keep. Never import a raster logo on a runtime surface; the `brandRuntime` test forbids it. |
+| Browser tab / bookmarks / home-screen | `favicon.ico` (16/32/48) → `favicon.svg` (the tile) → 16/32/512 PNG → `apple-touch-icon` 180 → `site.webmanifest` (180/256/512), all exports of `digerati-mark-tile.svg` | Regenerate from the tile SVG; do not hand-edit the PNGs. |
+| Link previews (OG / Twitter) | `og-image.png` = `png/digerati-social-card-1200.png` byte-for-byte | Re-export from `digerati-social-card.svg` when the card changes; re-scrape after deploy. |
+| ASK DE / DE Desk | text avatar "DE" in the shell header and message rail | Recommendation: use `digerati-mark-tile.svg` at 32px for the desk identity so the product carries the mark; keep "DE Desk" as the spoken name. Not changed yet — visual approval first. |
+| TechSales / Intelligence Hub, proposals, SOWs, PDFs | outside this repo | Use `png/digerati-logo-600.png` for document headers and `digerati-logo.svg` where the PDF engine accepts SVG; stacked lockup on cover pages; mono-black for print/fax. |
+| Email signature | outside this repo | `png/digerati-logo-600.png` on a light ground (gold mark + graphite wordmark), max 180px wide in the signature. |
+
+**Small-size finding.** Measured on the exported tiles: 64px and 32px are crisp; at **16px the two short bars merge** and the tile ground is barely visible (see `DE/Evidence/2026-09-12-claude-c1/qa/c6-small-size-board.png`). The mark is recognisable, not sharp. If a 16px-specific cut is wanted, snap the bars to a 2px pitch on a 16px grid (4 × 2px bars, 1px gaps, 1px inset) and export only the 16px tile from it — a proposal for visual approval, not done here.

@@ -24,24 +24,24 @@ interface RoadmapItem {
 }
 
 const categoryConfig = {
-  security: { label: "Security", icon: Shield, color: "text-red-400", bg: "bg-red-500/20" },
-  infrastructure: { label: "Infrastructure", icon: Server, color: "text-blue-400", bg: "bg-blue-500/20" },
-  productivity: { label: "Productivity", icon: MonitorSmartphone, color: "text-green-400", bg: "bg-green-500/20" },
-  compliance: { label: "Compliance", icon: FileText, color: "text-amber-400", bg: "bg-amber-500/20" },
+  security: { label: "Security", icon: Shield, color: "text-red-700 dark:text-red-400", bg: "bg-red-100 dark:bg-red-500/20" },
+  infrastructure: { label: "Infrastructure", icon: Server, color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-500/20" },
+  productivity: { label: "Productivity", icon: MonitorSmartphone, color: "text-green-700 dark:text-green-400", bg: "bg-green-100 dark:bg-green-500/20" },
+  compliance: { label: "Compliance", icon: FileText, color: "text-amber-800 dark:text-amber-400", bg: "bg-amber-100 dark:bg-amber-500/20" },
 };
 
 const priorityConfig = {
-  critical: { label: "Critical", color: "bg-red-500 text-white" },
-  high: { label: "High", color: "bg-orange-500 text-white" },
+  critical: { label: "Critical", color: "bg-red-700 text-white" },
+  high: { label: "High", color: "bg-orange-100 text-orange-900 border border-orange-700/30" },
   medium: { label: "Medium", color: "bg-yellow-500 text-black" },
-  low: { label: "Low", color: "bg-blue-500 text-white" },
+  low: { label: "Low", color: "bg-blue-700 text-white" },
 };
 
 const statusConfig = {
-  completed: { label: "Completed", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
-  "in-progress": { label: "In Progress", color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-  planned: { label: "Planned", color: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
-  proposed: { label: "Proposed", color: "bg-gray-500/20 text-gray-400 border-gray-500/30" },
+  completed: { label: "Completed", color: "bg-emerald-50 text-emerald-800 border-emerald-700/30 dark:bg-emerald-500/20 dark:text-emerald-300" },
+  "in-progress": { label: "In Progress", color: "bg-blue-50 text-blue-800 border-blue-700/30 dark:bg-blue-500/20 dark:text-blue-300" },
+  planned: { label: "Planned", color: "bg-purple-50 text-purple-800 border-purple-700/30 dark:bg-purple-500/20 dark:text-purple-300" },
+  proposed: { label: "Proposed", color: "bg-gray-100 text-gray-700 border-gray-400/50 dark:bg-gray-500/20 dark:text-gray-300" },
 };
 
 const sampleRoadmapItems: RoadmapItem[] = [
@@ -292,6 +292,7 @@ export default function PortalRoadmap() {
 
         <div className="flex flex-wrap gap-3">
           <select
+            aria-label="Filter roadmap by category"
             className="px-3 py-2 rounded-lg border bg-white dark:bg-slate-800 dark:border-slate-700 text-sm"
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
@@ -304,6 +305,7 @@ export default function PortalRoadmap() {
             <option value="compliance">Compliance</option>
           </select>
           <select
+            aria-label="Filter roadmap by status"
             className="px-3 py-2 rounded-lg border bg-white dark:bg-slate-800 dark:border-slate-700 text-sm"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -363,7 +365,7 @@ export default function PortalRoadmap() {
                             <span className="text-gray-500 dark:text-gray-400">Progress</span>
                             <span className="text-gray-500 dark:text-gray-400">{item.completionPercent}%</span>
                           </div>
-                          <Progress value={item.completionPercent} className="h-2" />
+                          <Progress value={item.completionPercent} className="h-2" aria-label={`${item.title} progress`} />
                         </div>
                       )}
 

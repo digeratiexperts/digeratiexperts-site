@@ -78,7 +78,7 @@ export default function Guarantee() {
         </div>
 
         <div className="rounded-2xl border border-[#D3126A]/40 bg-[#D3126A] px-8 py-10 text-center">
-          <p className="mb-4 text-xl text-white/90">Call us today to see what Elite IT & Cybersecurity is all about</p>
+          <p className="mb-4 text-xl text-white">Call us today to see what Elite IT & Cybersecurity is all about</p>
           <a
             href={PRIMARY_PHONE.telHref}
             className="inline-flex items-center gap-3 text-2xl font-bold text-white md:text-3xl"

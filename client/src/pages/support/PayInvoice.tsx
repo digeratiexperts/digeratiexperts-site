@@ -49,7 +49,7 @@ export default function PayInvoice() {
           <h2 className="mb-3 font-heading text-2xl font-semibold text-white md:text-3xl">
             Pay invoices in the Client Portal
           </h2>
-          <p className="mx-auto mb-6 max-w-2xl leading-relaxed text-white/90">
+          <p className="mx-auto mb-6 max-w-2xl leading-relaxed text-white">
             This marketing page does not process payments. Sign in to the Client Portal to view open invoices and pay securely. If you&apos;re already logged in, go straight to Invoices.
           </p>
           <div className="flex flex-col justify-center gap-4 sm:flex-row">
@@ -72,7 +72,7 @@ export default function PayInvoice() {
               </a>
             </Button>
           </div>
-          <p className="mt-4 text-sm text-white/75">
+          <p className="mt-4 text-sm text-white">
             Portal login: portal.digeratiexperts.com/portal/login
           </p>
         </div>

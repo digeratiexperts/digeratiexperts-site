@@ -332,7 +332,7 @@ export function OrderForm() {
 
             {orderPricing.monthlyTotal > 0 && (
               <div className="flex justify-between text-xs">
-                <span className="text-slate-400">Annual Value</span>
+                <span className="text-slate-600">Annual Value</span>
                 <span className="text-slate-500">${orderPricing.annualTotal.toLocaleString()}/yr</span>
               </div>
             )}
@@ -387,7 +387,7 @@ export function OrderForm() {
                 {i > 0 && <ChevronRight className="w-4 h-4 text-slate-300 hidden sm:block" />}
                 <div
                   className={`flex items-center gap-2 ${
-                    active ? "text-[#D3126A]" : done ? "text-slate-700" : "text-slate-400"
+                    active ? "text-[#D3126A]" : done ? "text-slate-700" : "text-slate-600"
                   }`}
                 >
                   <div
@@ -500,7 +500,7 @@ export function OrderForm() {
                                       {price.primary}
                                     </div>
                                     {price.secondary && (
-                                      <div className="text-sm text-slate-400">{price.secondary}</div>
+                                      <div className="text-sm text-slate-600">{price.secondary}</div>
                                     )}
                                   </div>
                                 </div>

@@ -137,7 +137,7 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
 
   return (
     <section
-      id="testimonials"
+      data-section="testimonials"
       className="de-dark-well de-chapter-hairline de-field-grain relative overflow-hidden py-14 md:py-18 lg:py-20"
       data-testid="section-client-proof"
     >
