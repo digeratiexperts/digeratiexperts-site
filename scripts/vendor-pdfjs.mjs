@@ -16,7 +16,13 @@ const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 const tarCommand = process.platform === "win32" ? "tar.exe" : "tar";
 
 function run(command, args) {
-  const result = spawnSync(command, args, { cwd: root, encoding: "utf8", windowsHide: true });
+  const result = spawnSync(command, args, {
+    cwd: root,
+    encoding: "utf8",
+    windowsHide: true,
+    // .cmd shims need a shell on Windows; Node 20+ spawnSync EINVAL otherwise.
+    shell: process.platform === "win32",
+  });
   if (result.error) throw result.error;
   if (result.status !== 0) {
     throw new Error(`${command} ${args.join(" ")} failed (${result.status}): ${result.stderr || result.stdout}`);
