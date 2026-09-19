@@ -155,6 +155,15 @@ export function PortalLayout({ children, title }: PortalLayoutProps) {
     };
   }, []);
 
+  useEffect(() => {
+    const onExpired = (event: Event) => {
+      const returnTo = (event as CustomEvent<{ returnTo?: string }>).detail?.returnTo;
+      redirectToPortalLogin(returnTo);
+    };
+    window.addEventListener("de-portal-session-expired", onExpired);
+    return () => window.removeEventListener("de-portal-session-expired", onExpired);
+  }, []);
+
   const visibleNav = useMemo(
     () => navItems.filter((item) => navAllowed(user, item.key)),
     [user?.id, user?.orgRole, user?.role, user?.isCompanyItContact],
