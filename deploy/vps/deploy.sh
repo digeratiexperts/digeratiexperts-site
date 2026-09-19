@@ -143,6 +143,16 @@ npm ci --no-audit --no-fund
 log "Building production bundle"
 npm run build
 
+# Apply additive, versioned migrations before activating the new release. Each
+# file is transactional and checksum-protected; a failure leaves the currently
+# active application untouched.
+log "Applying database migrations"
+set -a
+# shellcheck disable=SC1090
+. "$SHARED_ENV"
+set +a
+npm run db:migrate
+
 # ---------------------------------------------------------------- validate
 [ -f dist/index.js ] || fail "build validation failed: dist/index.js missing"
 [ -f dist/public/index.html ] || fail "build validation failed: dist/public/index.html missing"

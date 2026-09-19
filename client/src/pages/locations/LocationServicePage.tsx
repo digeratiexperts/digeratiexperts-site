@@ -34,7 +34,7 @@ import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE } from "@/data/companyContact";
 import { GREATER_PHOENIX_CITIES, cityPageSlug } from "@/data/greaterPhoenixCities";
 import { IconWell } from "@/components/visual/IconWell";
 import { ConversionPathBar } from "@/components/ConversionPathBar";
-import heroBgImage from "@assets/de-hero-arizona-dusk.png";
+import heroBgImage from "@assets/de-hero-arizona-dusk-1600.webp";
 
 const assessmentFormSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters").max(50),
@@ -55,6 +55,8 @@ interface LocationPageProps {
   title: string;
   subtitle: string;
   description: string;
+  /** ≤155-char search snippet; `description` doubles as on-page copy and was 250–280 chars. */
+  metaDescription?: string;
   heroImage: string;
   keywordPhrase: string;
   whyChooseUs: string[];
@@ -85,7 +87,7 @@ export function LocationServicePage(props: LocationPageProps) {
 
   useSEO({
     title: props.title,
-    description: props.description,
+    description: props.metaDescription ?? props.description,
     canonical: `/locations/${currentSlug}`,
   });
 
@@ -218,13 +220,18 @@ export function LocationServicePage(props: LocationPageProps) {
     <>
       <MegaMenu />
 
+      <main id="page-main">
       <section className="relative overflow-hidden bg-[var(--de-bg)]">
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <img
             src={heroBgImage}
             alt=""
+            width={1600}
+            height={1066}
             loading="eager"
             decoding="async"
+            // React 18 only knows the lowercase attribute; camelCase logs a DOM warning.
+            {...({ fetchpriority: "low" } as Record<string, string>)}
             className="absolute inset-0 h-full w-full object-cover object-[center_82%] opacity-45"
             style={{
               WebkitMaskImage:
@@ -544,7 +551,7 @@ export function LocationServicePage(props: LocationPageProps) {
                 viewport={{ once: true }}
                 transition={{ duration: prefersReducedMotion ? 0 : 0.35 }}
               >
-                <p className="mb-2 text-xs uppercase tracking-wider text-[#D3126A]">Arizona context</p>
+                <p className="mb-2 text-xs uppercase tracking-wider text-de-magenta-ink">Arizona context</p>
                 <p className="text-sm leading-relaxed text-white/90 md:text-base">
                   <span className="font-bold text-white">{azFact.metric}</span> {azFact.statement} — relevant for{" "}
                   {props.city} and Greater Phoenix SMBs planning insurance-ready IT and breach readiness.
@@ -690,6 +697,7 @@ export function LocationServicePage(props: LocationPageProps) {
           />
         </div>
       </section>
+      </main>
 
       <DigeratiEnhancedFooterSection />
     </>

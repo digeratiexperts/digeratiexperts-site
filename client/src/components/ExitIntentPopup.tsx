@@ -5,7 +5,7 @@ import { X, ArrowRight, Mail, CheckCircle2, Phone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { CTA } from "@/lib/ctaCopy";
-import logoImage from "@assets/DE-Logo-new_1762461524794.webp";
+import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { isDoor2Path } from "@/lib/isDoor2Path";
 import { isWarehousePath } from "@/lib/warehousePaths";
@@ -254,7 +254,7 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
 
                 <div className="flex items-center justify-between gap-3 bg-[#0a0a0a] px-4 py-3 md:px-5">
                   <img
-                    src={logoImage}
+                    src={DE_LOGO_REVERSE}
                     alt="Digerati Experts"
                     className="h-8 w-auto md:h-9"
                     width={160}

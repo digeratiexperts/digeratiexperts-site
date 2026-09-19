@@ -2,8 +2,8 @@ import { useState, useRef, useEffect, useCallback, useId } from 'react';
 import { Link } from 'wouter';
 import { ChevronDown, Shield, Server, Users, FileCheck, Phone, ExternalLink, X, ArrowRight, Monitor, Cloud, Lock, Zap, HeadphonesIcon, Building, BarChart3, ClipboardCheck, Layers, TrendingUp, Star, CheckCircle, Award, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import logoImage from '@assets/DE-Logo-new_1762461524794.webp';
-import ebookCover from '@/assets/images/ebook-defending-digital-realm-cover.png';
+import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
+import ebookCover from '@/assets/images/ebook-defending-digital-realm-cover.webp';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { pricing } from '@/data/pricing';
@@ -772,8 +772,10 @@ export function MegaMenu() {
               aria-label="Digerati Experts home"
             >
               <img
-                src={logoImage}
+                src={DE_LOGO_REVERSE}
                 alt="Digerati Experts Logo"
+                width={300}
+                height={72}
                 className={`transition-all duration-300 ${
                   isScrolled ? 'h-10' : 'h-[3.25rem]'
                 }`}

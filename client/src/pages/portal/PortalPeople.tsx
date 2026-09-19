@@ -186,7 +186,7 @@ export function PortalPeople() {
                       onValueChange={(orgRole) => savePerson(person, { orgRole })}
                       disabled={savingId === person.id}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger aria-label={`Role for ${person.fullName}`}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -206,7 +206,7 @@ export function PortalPeople() {
                       }
                       disabled={savingId === person.id}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger aria-label={`Manager for ${person.fullName}`}>
                         <SelectValue placeholder="Select manager" />
                       </SelectTrigger>
                       <SelectContent>
@@ -230,7 +230,7 @@ export function PortalPeople() {
                       }
                       disabled={savingId === person.id}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger aria-label={`Department for ${person.fullName}`}>
                         <SelectValue placeholder="Department" />
                       </SelectTrigger>
                       <SelectContent>

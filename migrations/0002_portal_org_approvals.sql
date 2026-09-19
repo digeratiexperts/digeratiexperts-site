@@ -1,5 +1,10 @@
 -- Portal multi-role org hierarchy + approval workflow
 DO $$ BEGIN
+  CREATE TYPE ticket_priority AS ENUM ('low', 'medium', 'high', 'critical');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
   CREATE TYPE portal_org_role AS ENUM ('staff', 'manager', 'dept_it_contact', 'company_it_contact');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;

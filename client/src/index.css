@@ -1038,8 +1038,13 @@ html[data-dock-hidden="true"] .de-bottom-bar {
   color: var(--de-muted);
 }
 
-.de-prose-dark p,
-.de-prose-dark li {
+/* Prose defaults are wrapped in :where() so they carry zero specificity for the
+ * wrapper: an explicit Tailwind colour utility on the element (text-white on a
+ * magenta ConversionPathBar, text-de-magenta-ink on an eyebrow) wins instead of
+ * being dimmed to --de-muted, which was pushing white-on-magenta copy to 4.25:1
+ * across every PageTemplate page (a11y sweep 2026-09-12). */
+:where(.de-prose-dark) p,
+:where(.de-prose-dark) li {
   color: var(--de-muted);
   line-height: 1.75;
 }
@@ -1068,8 +1073,8 @@ html[data-dock-hidden="true"] .de-bottom-bar {
   color: #fce7f3;
 }
 
-.de-prose-light p,
-.de-prose-light li {
+:where(.de-prose-light) p,
+:where(.de-prose-light) li {
   color: #374151;
   line-height: 1.75;
 }
@@ -1633,7 +1638,9 @@ html {
     --foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* 42% (was 46.9%): muted text on --muted / tinted card surfaces was 4.2–4.3:1
+       across the portal (tabs, learning cards); 42% clears 4.5:1 on both. */
+    --muted-foreground: 215.4 16.3% 42%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 47.4% 11.2%;
@@ -1653,7 +1660,8 @@ html {
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 100% 50%;
+    /* 0 84% 45% (was 0 100% 50%): pure red under near-white text was 4.0:1. */
+    --destructive: 0 84% 45%;
     --destructive-foreground: 210 40% 98%;
 
     --ring: 215 20.2% 65.1%;
@@ -1753,13 +1761,16 @@ html {
    Do NOT force `color: white` on every `.bg-gradient-to-r:hover`.
    Portal Quick Actions and other light/lavender cards use that class as a
    surface tint; white type then inherits onto outline buttons (white on white).
-   Only pin white when the control is already labeled white. */
-@layer utilities {
-  button.text-white:hover,
-  a.text-white:hover,
-  [role="button"].text-white:hover {
-    color: white;
-  }
+   Only pin white when the control is already labeled white.
+   Kept OUT of @layer utilities on purpose: inside that layer Tailwind treats
+   `.text-white` here as a utility definition and emits broken variant
+   selectors (`.dark\:text-white:is(.dark *)button:hover`), which the CSS
+   minifier warned about on every build and dropped. Specificity (0,2,1)
+   already beats any `hover:text-*` utility, so placement is unchanged. */
+button.text-white:hover,
+a.text-white:hover,
+[role="button"].text-white:hover {
+  color: white;
 }
 
 /* Wave separator animations */

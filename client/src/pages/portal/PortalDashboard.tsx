@@ -147,10 +147,8 @@ export default function PortalDashboard() {
                   <CardTitle>Recent Support Tickets</CardTitle>
                   <CardDescription>Your latest ticket activity</CardDescription>
                 </div>
-                <Link href="/portal/tickets">
-                  <a className="text-[#D3126A] hover:underline text-sm font-medium">
-                    View All
-                  </a>
+                <Link href="/portal/tickets" className="text-[#D3126A] hover:underline text-sm font-medium">
+                  View All
                 </Link>
               </div>
             </CardHeader>
@@ -205,10 +203,8 @@ export default function PortalDashboard() {
                   <CardTitle>Your Services</CardTitle>
                   <CardDescription>Currently active services</CardDescription>
                 </div>
-                <Link href="/portal/services">
-                  <a className="text-[#D3126A] hover:underline text-sm font-medium">
-                    View All
-                  </a>
+                <Link href="/portal/services" className="text-[#D3126A] hover:underline text-sm font-medium">
+                  View All
                 </Link>
               </div>
             </CardHeader>
@@ -273,42 +269,24 @@ export default function PortalDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link href="/portal/tickets?new=true">
-                <a>
-                  <Button
-                    variant="outline"
-                    className={quickActionClass}
-                    data-testid="button-new-ticket"
-                  >
-                    <Ticket className="h-4 w-4 mr-2" />
-                    Create Ticket
-                  </Button>
-                </a>
-              </Link>
-              <Link href="/portal/kb">
-                <a>
-                  <Button
-                    variant="outline"
-                    className={quickActionClass}
-                    data-testid="button-view-kb"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Browse KB
-                  </Button>
-                </a>
-              </Link>
-              <Link href="/portal/invoices">
-                <a>
-                  <Button
-                    variant="outline"
-                    className={quickActionClass}
-                    data-testid="button-view-invoices"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    View Invoices
-                  </Button>
-                </a>
-              </Link>
+              <Button asChild variant="outline" className={quickActionClass}>
+                <Link href="/portal/tickets?new=true" data-testid="button-new-ticket">
+                  <Ticket className="h-4 w-4 mr-2" aria-hidden="true" />
+                  Create Ticket
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className={quickActionClass}>
+                <Link href="/portal/kb" data-testid="button-view-kb">
+                  <FileText className="h-4 w-4 mr-2" aria-hidden="true" />
+                  Browse KB
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className={quickActionClass}>
+                <Link href="/portal/invoices" data-testid="button-view-invoices">
+                  <FileText className="h-4 w-4 mr-2" aria-hidden="true" />
+                  View Invoices
+                </Link>
+              </Button>
             </div>
           </CardContent>
         </Card>

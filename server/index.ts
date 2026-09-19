@@ -16,6 +16,7 @@ import { registerPublicSolutionRoutes } from "./publicSolutionRoutes";
 import { registerWarehouseGates } from "./warehouseRoutes";
 import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
+import { isKnownSpaPath } from "./spaKnownPaths";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import fs from "fs";
@@ -523,7 +524,9 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       }
       
       if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
+        // Known SPA routes → 200; unknown paths still get the shell but HTTP 404.
+        const status = isKnownSpaPath(req.path) ? 200 : 404;
+        res.status(status).sendFile(indexPath);
       } else {
         log(`⚠️ Production build not found at ${distPath}`);
         res.status(404).send(`

@@ -170,7 +170,7 @@ export default function PublicStoreCheckout() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0a0a0a]">
+    <div className="relative min-h-screen overflow-clip bg-[#0a0a0a]">
       <StorePageAtmosphere />
       <div className="relative z-10">
         <MegaMenu />
@@ -212,7 +212,7 @@ export default function PublicStoreCheckout() {
                         <h3 className="font-semibold text-white">{family.label}</h3>
                         <p className="mt-1 text-sm leading-relaxed text-white/55">{family.description}</p>
                       </div>
-                      <button type="button" onClick={() => removeDraftNeed(item.familyId)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-white/45 hover:bg-white/5 hover:text-white" aria-label={`Remove ${family.label}`}>
+                      <button type="button" onClick={() => removeDraftNeed(item.familyId)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-white/55 hover:bg-white/5 hover:text-white" aria-label={`Remove ${family.label}`}>
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -259,7 +259,7 @@ export default function PublicStoreCheckout() {
                       <div className="flex flex-col gap-3 bg-black/20 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <h3 className="font-semibold text-white">{packageView.offerName}</h3>
-                          <p className="mt-1 text-xs text-white/45">{packageView.relationshipLabel} · {packageView.pricingLabel}</p>
+                          <p className="mt-1 text-xs text-white/55">{packageView.relationshipLabel} · {packageView.pricingLabel}</p>
                         </div>
                         <span className="text-xs text-de-accent-ink">{assessmentPolicyLabel(packageView.assessmentPolicy)}</span>
                       </div>
@@ -267,7 +267,7 @@ export default function PublicStoreCheckout() {
                         {packageView.lineItems.map((line, index) => (
                           <div key={line.label} className={`grid grid-cols-[minmax(0,1fr)_auto] gap-4 px-4 py-3 text-sm ${index ? "border-t border-white/10" : ""}`}>
                             <span className="text-white/75">{line.label}</span>
-                            <span className="text-right text-white/45">{line.quantity}</span>
+                            <span className="text-right text-white/55">{line.quantity}</span>
                           </div>
                         ))}
                       </div>
@@ -285,7 +285,7 @@ export default function PublicStoreCheckout() {
               </section>
 
               <section className="rounded-2xl border border-white/10 bg-[#111111] p-5 sm:p-7" aria-labelledby="delivery-heading">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-de-accent-ink">Step 3 · Delivery & setup</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-de-accent-ink">Step 4 · Delivery & setup</p>
                 <h2 id="delivery-heading" className="mt-2 text-2xl font-semibold text-white">How should this be implemented?</h2>
                 <p className="mt-2 text-sm text-white/55">Not every package needs shipping or a technician. Unsupported choices are disabled automatically.</p>
 
@@ -342,7 +342,11 @@ export default function PublicStoreCheckout() {
               </section>
             </div>
 
-            <aside className="h-fit rounded-2xl border border-white/10 bg-[#121212] p-6 lg:sticky lg:top-28">
+            {/* Sticky at lg, but capped to the viewport slot under the fixed header
+                (top-28 = 7rem, plus 1rem breathing room) and scrollable inside,
+                so the Continue / Ask DE controls at the bottom of the rail are
+                reachable at 900px-tall desktops instead of only at page end. */}
+            <aside className="h-fit rounded-2xl border border-white/10 bg-[#121212] p-6 lg:sticky lg:top-28 lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto lg:overscroll-contain">
               <Layers className="h-8 w-8 text-de-accent-ink" />
               <h2 className="mt-4 text-xl font-semibold text-white">Solution status</h2>
               <div className="mt-5 space-y-3 text-sm">
@@ -353,8 +357,26 @@ export default function PublicStoreCheckout() {
                 <StatusLine ready={fulfillmentReady} label="Delivery" detail={fulfillmentReady ? "Selected" : "Choose setup + support"} />
               </div>
 
+              {/* Save state lives in the rail as well as the form column: the rail
+                  is what stays on screen while the visitor works, so this is where
+                  "is my draft safe?" gets answered. Same handler, same state. */}
+              <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/15 p-3" data-testid="solution-rail-save" aria-live="polite">
+                <p className="min-w-0 text-xs leading-relaxed text-white/60">
+                  {saveError ? (
+                    <span className="text-red-300">{saveError}</span>
+                  ) : savedAt ? (
+                    <span className="text-emerald-300"><Check className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />Saved to DE at {savedAt}</span>
+                  ) : (
+                    <>Autosaved on this device. Save to DE to keep it across devices.</>
+                  )}
+                </p>
+                <Button type="button" size="sm" variant="outline" className="h-9 shrink-0 border-white/20 text-white hover:bg-white/10" onClick={saveProgress} disabled={saving} aria-label={saving ? "Saving progress" : "Save progress to DE"}>
+                  <Save className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />{saving ? "Saving…" : "Save"}
+                </Button>
+              </div>
+
               <div className="mt-6 border-t border-white/10 pt-5">
-                <p className="text-xs uppercase tracking-wide text-white/40">Next</p>
+                <p className="text-xs uppercase tracking-wide text-white/55">Next</p>
                 <p className="mt-2 text-sm leading-relaxed text-white/60">
                   {draft.deliveryPreference === "unsure"
                     ? "Ask DE to recommend Standalone or Co-Managed before final package submission."
@@ -387,9 +409,9 @@ function StatusLine({ ready, label, detail }: { ready: boolean; label: string; d
     <div className="rounded-xl border border-white/10 bg-black/15 p-3">
       <div className="flex items-center justify-between gap-3">
         <span className="font-medium text-white">{label}</span>
-        <span className={`text-xs ${ready ? "text-emerald-300" : "text-white/35"}`}>{ready ? "Ready" : "Needed"}</span>
+        <span className={`text-xs ${ready ? "text-emerald-300" : "text-white/55"}`}>{ready ? "Ready" : "Needed"}</span>
       </div>
-      <p className="mt-1 truncate text-xs text-white/40">{detail}</p>
+      <p className="mt-1 truncate text-xs text-white/55">{detail}</p>
     </div>
   );
 }

@@ -1,4 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { PortalLayout } from "./PortalLayout";
 import { CheckCircle2, AlertCircle, TrendingUp } from "lucide-react";
@@ -109,9 +111,9 @@ export default function PortalStatus() {
 
         {/* Overall Status */}
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-900/30 rounded-lg p-6">
-          <div className="flex items-center gap-3">
-            <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
-            <div>
+          <div className="flex flex-wrap items-center gap-3">
+            <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
               <h2 className="text-2xl font-bold text-green-900 dark:text-green-100">
                 All Systems Operational
               </h2>
@@ -119,6 +121,11 @@ export default function PortalStatus() {
                 Last updated: {new Date().toLocaleTimeString()}
               </p>
             </div>
+            {/* The page had no focusable content, so its scrollable main was unreachable by
+                keyboard (a11y sweep). Reporting an issue is the natural action here. */}
+            <Button asChild variant="outline" size="sm">
+              <Link href="/portal/tickets/new" data-testid="status-report-issue">Report an issue</Link>
+            </Button>
           </div>
         </div>
 

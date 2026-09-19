@@ -45,6 +45,21 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // Split stable vendor code out of the app entry so it caches across
+        // deploys and the entry chunk stays well under the 500 kB warning
+        // (it was a single 916 kB chunk; perf audit 2026-09-13).
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler|wouter)[\\/]/.test(id)) return "vendor-react";
+          if (/[\\/]node_modules[\\/]framer-motion[\\/]/.test(id)) return "vendor-motion";
+          if (/[\\/]node_modules[\\/]@radix-ui[\\/]/.test(id)) return "vendor-radix";
+          if (/[\\/]node_modules[\\/]@tanstack[\\/]/.test(id)) return "vendor-query";
+          return undefined;
+        },
+      },
+    },
   },
   server: {
     fs: {
