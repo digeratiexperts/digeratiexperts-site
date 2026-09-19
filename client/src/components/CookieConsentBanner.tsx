@@ -79,7 +79,7 @@ export function CookieConsentBanner() {
   const finishConsent = () => {
     setVisible(false);
     setShowPreferences(false);
-    window.dispatchEvent(new Event("de-cookie-consent"));
+    window.dispatchEvent(new CustomEvent("de-cookie-consent"));
   };
 
   const accept = () => {
