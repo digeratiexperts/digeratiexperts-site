@@ -143,12 +143,8 @@ describe("portal auth bootstrap initialization (seeded-admin P0)", () => {
   it("source no longer contains the old fixed bootstrap credential material", () => {
     const sourcePath = path.resolve(__dirname, "portalAuthStore.ts");
     const source = readFileSync(sourcePath, "utf8");
-    // Split so this test file does not embed the forbidden literal itself.
-    const legacyHash = ["$2b$12$Bf.sDD1gQ6391SrTebkd4", ".9BeiteKKOswHl63vyCN0/51CmDldT7K"].join(
-      "",
-    );
     const legacyPlain = ["Admin", "123!"].join("");
-    expect(source).not.toContain(legacyHash);
+    expect(source).not.toMatch(/\$2[aby]\$\d{2}\$/);
     expect(source).not.toContain(legacyPlain);
     expect(source).not.toMatch(/seedAdmins\s*\(/);
     expect(source).toMatch(/ENABLE_DEV_PORTAL_BOOTSTRAP/);

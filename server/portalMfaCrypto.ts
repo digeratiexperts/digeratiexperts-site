@@ -1,7 +1,7 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEqual } from "crypto";
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
 
 const ENCRYPTED_PREFIX = "enc:v1:";
-const HASH_PREFIX = "sha256:v1:";
+const HASH_PREFIX = "hmac-sha256:v1:";
 let developmentKey: Buffer | null = null;
 
 function encryptionKey(): Buffer {
@@ -36,7 +36,11 @@ export function decryptTotpSecret(stored: string | null | undefined): string | n
 }
 
 export function hashBackupCode(code: string): string {
-  return `${HASH_PREFIX}${createHash("sha256").update(code.trim().toUpperCase(), "utf8").digest("hex")}`;
+  return `${HASH_PREFIX}${createHmac("sha256", encryptionKey()).update(code.trim().toUpperCase(), "utf8").digest("hex")}`;
+}
+
+export function generateBackupCodes(count = 8): string[] {
+  return Array.from({ length: count }, () => randomBytes(5).toString("hex").toUpperCase());
 }
 
 export function prepareBackupCodesForStorage(codes: string[]): string[] {
