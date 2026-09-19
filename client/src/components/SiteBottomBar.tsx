@@ -286,11 +286,6 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
       >
         <span className="de-ask-fab relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white text-[#111116] shadow-[0_4px_14px_rgba(0,0,0,0.18)] transition-transform duration-150 group-hover:scale-[1.04]">
           <AskDeGlyph className="h-[26px] w-[26px]" />
-          <span
-            className="de-ask-fab-dot absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2"
-            title="Engineers on shift"
-            aria-hidden="true"
-          />
         </span>
         {!compact && (
           <span className="hidden text-left sm:block">
@@ -331,10 +326,6 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
               border: 2px solid color-mix(in srgb, var(--de-magenta-ink, #D3126A) 55%, transparent);
               animation: de-ask-breathe 2.8s ease-out infinite;
               pointer-events: none;
-            }
-            .de-ask-fab-dot {
-              background: var(--de-ask-status, #22c55e);
-              border-color: var(--de-ask-fab-dot-border, #fff);
             }
             @keyframes de-ask-breathe {
               0% { transform: scale(0.86); opacity: 0.9; }
