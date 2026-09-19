@@ -73,19 +73,20 @@ export const meshyBatch01 = {
 } as const;
 
 /**
- * Real photography — flip `available` after DE drops optimized files into
- * `client/public/images/team/` (sources under `assets/photography/de-headshots/ORIGINAL/`).
+ * Real photography — principal portrait is the Meet-the-Experts studio-blazer
+ * photo already public at `/images/founder/` (Joe/ChatGPT F1 approval 2026-09-13).
  */
 export const photography = {
   founderHeadshot: {
     id: "founder-joseph-petro",
     label: "Joseph Petro — Founder",
-    src: "/images/team/joseph-petro-headshot.webp",
-    srcPng: "/images/team/joseph-petro-headshot.png",
+    src: "/images/founder/joe-petro-studio-blazer-white.webp",
+    srcPng: "/images/founder/joe-petro-studio-blazer-white.jpg",
     alt: "Joseph Petro, Founder of Digerati Experts",
-    available: false as boolean,
+    available: true as boolean,
+    sourceOf: "/images/founder/joe-petro-studio-blazer-white.jpg",
     dropOriginalsAt: "assets/photography/de-headshots/ORIGINAL/",
-    publicDerivativesAt: "client/public/images/team/",
+    publicDerivativesAt: "client/public/images/founder/",
   },
 } as const;
 

@@ -21,6 +21,7 @@ export default function PortalLogin() {
   useSEO({
     title: "Client Portal Login",
     description: "Sign in to the Digerati Experts Client Portal. For existing clients only.",
+    canonical: "/portal/login",
     noIndex: true,
   });
   const [step, setStep] = useState<LoginStep>("credentials");
