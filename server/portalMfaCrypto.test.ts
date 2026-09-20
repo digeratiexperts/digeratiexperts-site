@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   decryptTotpSecret,
@@ -30,6 +31,20 @@ describe("portal MFA storage protection", () => {
     expect(stored[0]).toMatch(/^hmac-sha256:v1:/);
     expect(findBackupCodeIndex(stored, "abc123")).toBe(0);
     expect(findBackupCodeIndex(stored, "wrong")).toBe(-1);
+  });
+
+  it("verifies legacy sha256 backup codes without re-hashing either prefix", () => {
+    process.env.MFA_ENCRYPTION_KEY = "test-key-with-enough-entropy-for-the-test";
+    const legacy = `sha256:v1:${createHash("sha256").update("ABC123", "utf8").digest("hex")}`;
+    const hmac = prepareBackupCodesForStorage(["DEF456"])[0];
+
+    // Neither prefix is re-hashed on the way back into storage.
+    expect(prepareBackupCodesForStorage([legacy, hmac])).toEqual([legacy, hmac]);
+
+    // Legacy rows verify against plain SHA-256, HMAC rows against the keyed hash.
+    expect(findBackupCodeIndex([legacy, hmac], "abc123")).toBe(0);
+    expect(findBackupCodeIndex([legacy, hmac], "def456")).toBe(1);
+    expect(findBackupCodeIndex([legacy, hmac], "wrong")).toBe(-1);
   });
 
   it("issues 10-character hex backup codes", () => {
