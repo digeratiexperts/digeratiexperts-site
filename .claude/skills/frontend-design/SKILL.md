@@ -5,15 +5,31 @@ license: Complete terms in LICENSE.txt
 ---
 
 > **Digerati Experts repository note (local addition, not upstream text).**
-> On production surfaces of this repository the brand foundation is locked by
-> `AGENTS.md` and `.cursorrules` section 9A: graphite `#050312`, warm paper
-> `#F7F5F2`, magenta `#D3126A`, restrained violet illumination, and the
-> Space Grotesk / Inter / Oxanium type stack (Store electric blue stays
-> Store-specific). Where the guidance below says to avoid Inter or Space
-> Grotesk or to invent a new palette, that applies to standalone experiments
-> (for example `scrollcraft/builds/*` or a video-to-website build), never to
-> `client/` pages. Read `design/UI-STYLE-RULES.md` first for anything that
-> ships on digeratiexperts.com, and verify rendered output at 390 / 768 / 1440.
+> Which parts of this skill apply on `client/` is decided by the task mode in
+> `design/DESIGN-AUTHORITY.md`, not by the path.
+>
+> - **Maintenance Mode (default):** the current DE system (Tier 2) applies on
+>   `client/`: graphite `#050312`, warm paper `#F7F5F2`, magenta `#D3126A`,
+>   restrained violet illumination, Space Grotesk / Inter / Oxanium (Store
+>   electric blue stays Store-specific). Where the guidance below says to avoid
+>   Inter or Space Grotesk or to invent a new palette, apply that only to
+>   standalone experiments (`scrollcraft/builds/*`, a video-to-website build).
+>   Read `design/UI-STYLE-RULES.md` first.
+> - **Exploration Mode (Joe asks to redesign / rethink / explore / propose
+>   concepts / make it materially better):** the creative guidance below applies
+>   on `client/` too. The work is bounded by all of Tier 0 (`design/DESIGN-AUTHORITY.md`
+>   §1: security, secrets, truth, accessibility, responsive operability, no
+>   overlapping chrome, performance, data correctness, functional preservation,
+>   engineering governance, rendered verification) and Tier 1 (the DE identity:
+>   premium, cybersecurity-first, precise, trustworthy; never cyberpunk, hacker,
+>   generic SaaS). Produce materially distinct
+>   concepts on an isolated branch, state what each keeps and changes from the
+>   current system, flag any challenge to a Joe-decided item (Blog/Store colors,
+>   Desk graphite shell, no vendor names in the hero), and open concept work as a
+>   draft PR labelled `concept` that is never merged as-is; integration is a
+>   separate PR after Joe picks.
+> - In every mode: never fabricate clients, metrics, faces or partners even in a
+>   mockup; verify rendered output at 390 / 768 / 1440.
 
 This skill guides creation of distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.
 

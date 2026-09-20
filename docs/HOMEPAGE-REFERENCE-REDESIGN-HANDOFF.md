@@ -1,6 +1,8 @@
 # Digerati Experts — Full Homepage + Ask DE Visual Integration Handoff
 
-Status: **authoritative design/integration handoff for PR #116**
+> **HISTORICAL RECORD (Tier 3 — `design/DESIGN-AUTHORITY.md`).** This document records what was decided, placed or guarded at a point in time. It explains *why* things are the way they are. Its "do not", "unchanged", "leave alone" and "keep" lines were the guardrails of that task; they do not prohibit future maintenance or redesign work unless a Tier 0–2 file promotes the decision.
+
+Status: historical — was the design/integration handoff for PR #116 (August 2026); superseded by later merges (#147, #148) and by `design/DESIGN-AUTHORITY.md`
 
 This document tells the lead integration agent how to merge the approved visual direction into the **current site** without losing current functionality, content, Store work, or newer `main` changes.
 

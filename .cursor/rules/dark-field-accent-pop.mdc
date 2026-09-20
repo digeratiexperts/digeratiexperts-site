@@ -1,10 +1,12 @@
 ---
-description: Dark wells + charcoal boxes so brand magenta pops. Apply on any marketing UI with sections, cards, chips, or CTAs.
+description: Tier 2 field recipe (Maintenance Mode) — dark wells + charcoal boxes so brand magenta pops. Attach on marketing UI with sections, cards, chips, or CTAs.
 globs: ["**/*.tsx", "**/*.css"]
 alwaysApply: true
 ---
 
 # Dark field, accent pop
+
+**Tier 2 — the current field recipe** (`design/DESIGN-AUTHORITY.md`). Mandatory in Maintenance Mode. In Exploration Mode it is the benchmark a concept is measured against, not a boundary: a concept may propose a different field/contrast model if it says why and still reads as premium, precise and cybersecurity-first (Tier 1). The "Do not" list at the bottom records directions that failed in this system; a concept that revisits one must answer the reason it failed.
 
 Vibrant color pops **because** the field is black/charcoal and quiet — not because boxes are filled with purple.
 

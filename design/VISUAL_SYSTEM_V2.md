@@ -1,6 +1,8 @@
 # Visual System v2
 
-Canonical governance for Digerati Experts site visuals. Locked by VIS-001. **Set in stone** until DE explicitly revises it.
+Current governance for Digerati Experts site visuals. Established by VIS-001 (August 2026). Versioned, not eternal: Joe revises it, and an Exploration Mode concept may propose a v3.
+
+**Authority tiers (`DESIGN-AUTHORITY.md`):** the truthfulness and classification rules in this document (LIVE / SANITIZED REAL / EXAMPLE / ILLUSTRATIVE, never invent telemetry, emerald only when live, no fake pulses) are **Tier 0** and hold in every task mode. The layer model, foundation tokens, HUD grammar and "vocabulary first" sequencing are **Tier 2** — mandatory in Maintenance Mode, a challengeable starting point in Exploration Mode. Blog/Store accents and the DE Desk shell are Joe-decided Tier 2 items.
 
 This document does **not** replace `BRAND.md`, `DESIGN_SYSTEM.md`, `UX_PRINCIPLES.md`, or `IMAGERY.md`. Those remain the authoritative foundation. Visual System v2 is the **layer model** on top of that foundation: how precision, evidence, interactivity, and publishing sit on graphite / paper / magenta without becoming a new brand.
 
@@ -8,7 +10,7 @@ This document does **not** replace `BRAND.md`, `DESIGN_SYSTEM.md`, `UX_PRINCIPLE
 
 > **DE needs more technical precision, visual evidence, and interactivity — but not more visual noise.**
 
-Existing brand already rejects cyberpunk, generic SaaS, excessive glow, purple-filled panels, and decorative effects without purpose. Graphite / paper / magenta and Space Grotesk / Inter / Oxanium stay locked. Huntress ideas become **controlled upper layers** on DE’s existing foundation.
+Existing brand already rejects cyberpunk, generic SaaS, excessive glow, purple-filled panels, and decorative effects without purpose (Tier 1). Graphite / paper / magenta and Space Grotesk / Inter / Oxanium are the current implementation (Tier 2). Huntress ideas become **controlled upper layers** on DE’s existing foundation.
 
 Task ledger: `docs/SITE-VISUAL-TASKS.md`. Agent rule: `.cursor/rules/visual-system-v2.mdc`. Policy: root `.cursorrules` §9A.
 
@@ -31,7 +33,7 @@ Task ledger: `docs/SITE-VISUAL-TASKS.md`. Agent rule: `.cursor/rules/visual-syst
 | `EDITORIAL_ASSETS.md` | Layer 7 publication templates / threat storytelling |
 | `MOTION_LANGUAGE.md` | Motion: state / hierarchy / continuity / feedback |
 
-Do not invent HUD ticks, evidence frames, or diagram chrome on pages until the approved primitive for that pattern exists (VIS-002+).
+Maintenance Mode: do not invent HUD ticks, evidence frames, or diagram chrome on pages until the approved primitive for that pattern exists (VIS-002+). Exploration Mode: propose new vocabulary as reusable primitives, isolated until Joe picks.
 
 ---
 
@@ -43,7 +45,7 @@ Before creating any substantial visual element, determine what the visitor needs
 
 Decorative visual treatment comes last.
 
-DE’s visual identity remains Midnight Obsidian `#050312`, Warm Paper `#F7F5F2`, Electric Magenta `#D3126A`, restrained violet illumination, Space Grotesk / Inter / Oxanium. Store electric blue remains Store-specific.
+DE’s current visual implementation (Tier 2) is Midnight Obsidian `#050312`, Warm Paper `#F7F5F2`, Electric Magenta `#D3126A`, restrained violet illumination, Space Grotesk / Inter / Oxanium. Store electric blue remains Store-specific (Joe-decided).
 
 Technical HUD elements are restrained precision details, not a cyberpunk theme.
 
@@ -51,7 +53,7 @@ Never invent telemetry, customers, metrics, performance numbers, incidents, comp
 
 Clearly classify visual evidence as **LIVE**, **SANITIZED REAL**, **EXAMPLE**, or **ILLUSTRATIVE**.
 
-Do not introduce new site-wide design patterns until an approved reusable primitive exists.
+Maintenance Mode: do not introduce new site-wide design patterns until an approved reusable primitive exists.
 
 Large visual placements should favor evidence and explanation. Small functional cards should continue using the established `IconWell` system where appropriate (`client/src/components/visual/IconWell.tsx`).
 
@@ -70,11 +72,11 @@ Large visual placements should favor evidence and explanation. Small functional 
 | 6 | Human + client proof | Real people, reviews, customer evidence, real operational proof. Honest empty states over invented trust. See `PROOF_SYSTEM.md`. |
 | 7 | Publishing / product universe | Store media, threat stories, guides, datasheets, report covers. See `PRODUCT_MEDIA.md` and `EDITORIAL_ASSETS.md`. |
 
-Layers 2–5 are **upper layers**. They must not rewrite Layer 0. If a treatment would make the site look like a SOC wall, Huntress clone, or neon terminal, it is wrong.
+Layers 2–5 are **upper layers**. In Maintenance Mode they must not rewrite Layer 0. In any mode, if a treatment would make the site look like a SOC wall, Huntress clone, or neon terminal, it is wrong (Tier 1).
 
 ---
 
-## Foundation lock (Layer 0 — do not redesign)
+## Current foundation (Layer 0 — Tier 2; Maintenance Mode keeps it, Exploration Mode may propose against it)
 
 | Role | Token / value | Notes |
 |------|----------------|-------|
@@ -178,12 +180,14 @@ Never invent telemetry, customers, metrics, performance numbers, incidents, comp
 
 Visual System v2 is **not**:
 
-- a Huntress visual clone
-- a cyberpunk / SOC-terminal theme
-- permission to spray HUD on 138 pages
-- a replacement for IconWell on small functional cards
-- a Store or Journal recolor
-- a DE Desk restyle (owned elsewhere; do not touch `ZohoASAPWidget.tsx` from visual-system tasks unless the ledger says so)
+- a Huntress visual clone (Tier 1)
+- a cyberpunk / SOC-terminal theme (Tier 1)
+- permission to spray HUD on 138 pages (Maintenance Mode)
+- a replacement for IconWell on small functional cards (Maintenance Mode)
+- a Store or Journal recolor (Joe-decided)
+- a DE Desk restyle (owned elsewhere; do not touch `ZohoASAPWidget.tsx` from visual-system tasks unless the ledger or Joe says so)
+
+It is also not a ceiling. An Exploration Mode concept may propose a different layer model, HUD grammar or foundation; it must keep the Tier 0 truth rules and the Tier 1 identity, and it ships only when Joe picks it.
 
 ---
 

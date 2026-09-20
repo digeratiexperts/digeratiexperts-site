@@ -1,5 +1,7 @@
 # Brand sweep — next pass
 
+> **HISTORICAL RECORD (Tier 3 — `design/DESIGN-AUTHORITY.md`).** This document records what was decided, placed or guarded at a point in time. It explains *why* things are the way they are. Its "do not", "unchanged", "leave alone" and "keep" lines were the guardrails of that task; they do not prohibit future maintenance or redesign work unless a Tier 0–2 file promotes the decision.
+
 **Date:** 2026-08-16  
 **Settled on:** `cursor/homepage-retire-leftover-purple-chrome-3080` / PR #20  
 **Do not start** another full-site rewrite. Start from the named flags below.

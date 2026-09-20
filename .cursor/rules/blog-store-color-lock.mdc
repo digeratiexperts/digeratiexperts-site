@@ -1,5 +1,5 @@
 ---
-description: Freeze current Blog (Journal) and Store color systems — do not restyle
+description: JOE-DECIDED (2026-08) Blog (Journal) and Store color systems — keep in Maintenance Mode; Exploration may propose, only Joe ships a change
 globs:
   - client/src/pages/resources/**
   - client/src/pages/store/**
@@ -11,9 +11,10 @@ alwaysApply: true
 
 # Blog and Store color lock
 
-DE settled these palettes. Do **not** restyle them to magenta, paper, cyan, or another family’s hue. Size, layout, and type may change. **Colors stay.**
+**JOE-DECIDED Tier 2 direction** (`design/DESIGN-AUTHORITY.md`). Joe settled these palettes in August 2026. This is not an AI-invented lock and no agent may treat it as a default it can override.
 
-Ask DE before changing any value below.
+- **Maintenance Mode:** do **not** restyle them to magenta, paper, cyan, or another family's hue. Size, layout, and type may change. **Colors stay.** Ask DE before changing any value below.
+- **Exploration Mode:** a concept may propose a different Journal or Store identity, but must name this decision explicitly, show the alternative beside the current one, and state that shipping it requires Joe's yes. Nothing below changes in `client/` until Joe says so.
 
 ## Blog / Journal (`/resources/blog`, `/resources/blog/*`)
 
