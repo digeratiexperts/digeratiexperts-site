@@ -12,7 +12,6 @@ import { DigeratiAIAssistanceSection } from "./sections/DigeratiAIAssistanceSect
 import { DigeratiIndustriesSection } from "./sections/DigeratiIndustriesSection";
 import { DigeratiPricingSection } from "./sections/DigeratiPricingSection";
 import { DigeratiTestimonialsSection } from "./sections/DigeratiTestimonialsSection";
-import { HomepageProofSection } from "./sections/HomepageProofSection";
 import { DigeratiMeetExpertsSection } from "./sections/DigeratiMeetExpertsSection";
 import { DigeratiFAQSection } from "./sections/DigeratiFAQSection";
 import { DigeratiNewsletterSection } from "./sections/DigeratiNewsletterSection";
@@ -81,9 +80,10 @@ export const DigeratiHomepageChallenger = (): JSX.Element => {
           <DigeratiHowWeProtectSection />
         </ScrollSectionAuto>
 
+        {/* One proof chapter is enough: reviews, case studies, Bill of Rights,
+            Guarantee, Trust Center, and industries are all reachable here. */}
         <ScrollSectionAuto id="testimonials">
           <DigeratiTestimonialsSection />
-          <HomepageProofSection />
         </ScrollSectionAuto>
 
         <ScrollSectionAuto id="trust">
