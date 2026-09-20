@@ -64,6 +64,18 @@ function indexUser(user: PortalAuthUser) {
   }
 }
 
+function decryptUserTotpSecret(userId: string, stored: string | null | undefined): string | null {
+  try {
+    return decryptTotpSecret(stored);
+  } catch (err: any) {
+    console.warn(
+      `[portalAuthStore] MFA secret decrypt failed for user ${userId}; keeping mfaEnabled`,
+      err?.message || err,
+    );
+    return null;
+  }
+}
+
 function rowToUser(row: typeof portalUsersTable.$inferSelect): PortalAuthUser {
   return {
     id: row.id,
@@ -82,7 +94,7 @@ function rowToUser(row: typeof portalUsersTable.$inferSelect): PortalAuthUser {
     isActive: row.isActive ?? true,
     mfaEnabled: row.mfaEnabled ?? false,
     mfaMethod: row.mfaMethod,
-    mfaTotpSecret: decryptTotpSecret(row.mfaTotpSecret),
+    mfaTotpSecret: decryptUserTotpSecret(row.id, row.mfaTotpSecret),
     mfaBackupCodes: Array.isArray(row.mfaBackupCodes) ? row.mfaBackupCodes : [],
     lastLogin: row.lastLogin,
     createdAt: row.createdAt,
@@ -406,6 +418,11 @@ export async function initPortalAuthStore(): Promise<void> {
   if (initialized) return;
   await initPromise;
   await ensureSchema();
+  if (process.env.NODE_ENV !== "production" && !process.env.MFA_ENCRYPTION_KEY?.trim()) {
+    console.warn(
+      "⚠️ MFA_ENCRYPTION_KEY is unset — stored MFA secrets will not survive process restart",
+    );
+  }
 
   if (dbReady && db) {
     try {

@@ -1,7 +1,9 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEqual } from "crypto";
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
 
 const ENCRYPTED_PREFIX = "enc:v1:";
-const HASH_PREFIX = "sha256:v1:";
+const HASH_PREFIX = "hmac-sha256:v1:";
+// Rows written before the HMAC migration. They stay verifiable and are never re-hashed.
+const LEGACY_HASH_PREFIX = "sha256:v1:";
 let developmentKey: Buffer | null = null;
 
 function encryptionKey(): Buffer {
@@ -35,20 +37,38 @@ export function decryptTotpSecret(stored: string | null | undefined): string | n
   return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
 }
 
+function normalizeBackupCode(code: string): string {
+  return code.trim().toUpperCase();
+}
+
 export function hashBackupCode(code: string): string {
-  return `${HASH_PREFIX}${createHash("sha256").update(code.trim().toUpperCase(), "utf8").digest("hex")}`;
+  return `${HASH_PREFIX}${createHmac("sha256", encryptionKey()).update(normalizeBackupCode(code), "utf8").digest("hex")}`;
+}
+
+function hashBackupCodeLegacy(code: string): string {
+  return `${LEGACY_HASH_PREFIX}${createHash("sha256").update(normalizeBackupCode(code), "utf8").digest("hex")}`;
+}
+
+export function generateBackupCodes(count = 8): string[] {
+  return Array.from({ length: count }, () => randomBytes(5).toString("hex").toUpperCase());
 }
 
 export function prepareBackupCodesForStorage(codes: string[]): string[] {
-  return codes.map((code) => code.startsWith(HASH_PREFIX) ? code : hashBackupCode(code));
+  return codes.map((code) =>
+    code.startsWith(HASH_PREFIX) || code.startsWith(LEGACY_HASH_PREFIX) ? code : hashBackupCode(code),
+  );
 }
 
 export function findBackupCodeIndex(storedCodes: string[], candidate: string): number {
   const candidateHash = hashBackupCode(candidate);
+  const legacyCandidateHash = hashBackupCodeLegacy(candidate);
   return storedCodes.findIndex((stored) => {
-    const normalized = stored.startsWith(HASH_PREFIX) ? stored : hashBackupCode(stored);
+    // Legacy rows are verified against plain SHA-256; everything else against the HMAC.
+    const isLegacy = stored.startsWith(LEGACY_HASH_PREFIX);
+    const expected = isLegacy ? legacyCandidateHash : candidateHash;
+    const normalized = isLegacy || stored.startsWith(HASH_PREFIX) ? stored : hashBackupCode(stored);
     const left = Buffer.from(normalized);
-    const right = Buffer.from(candidateHash);
+    const right = Buffer.from(expected);
     return left.length === right.length && timingSafeEqual(left, right);
   });
 }

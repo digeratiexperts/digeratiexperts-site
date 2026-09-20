@@ -19,4 +19,11 @@ describe("spaKnownPaths", () => {
     expect(isKnownSpaPath("/this-is-not-a-real-page")).toBe(false);
     expect(isKnownSpaPath("/store/product/secret-sku")).toBe(false);
   });
+
+  it("treats wouter-style case variants as known SPA paths", () => {
+    expect(normalizeSpaPath("/Store")).toBe("/store");
+    expect(normalizeSpaPath("/Pricing")).toBe("/pricing");
+    expect(isKnownSpaPath("/Store")).toBe(true);
+    expect(isKnownSpaPath("/Pricing")).toBe(true);
+  });
 });

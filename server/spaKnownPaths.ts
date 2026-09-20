@@ -115,7 +115,7 @@ const PREFIXES = [
 ];
 
 export function normalizeSpaPath(pathname: string): string {
-  const raw = pathname.split("?")[0] || pathname;
+  const raw = (pathname.split("?")[0] || pathname).toLowerCase();
   if (raw.length <= 1) return raw || "/";
   return raw.replace(/\/+$/, "") || "/";
 }

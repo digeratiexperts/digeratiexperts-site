@@ -525,6 +525,10 @@ export const ZohoASAPWidget = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  useEffect(() => () => {
+    revealCancelRef.current.cancelled = true;
+  }, []);
+
   useEffect(() => {
     if (!isChatSending) {
       setShowTypingDots(false);
@@ -1381,14 +1385,22 @@ export const ZohoASAPWidget = ({
                       </div>
                     ) : null}
 
-                    {isChatSending && showTypingDots && (
-                      <div className="de-desk-msg is-bot" aria-live="polite" aria-label="DE Desk is typing">
+                    {/* The status is announced for the whole send; the bubble only renders once it has something to show. */}
+                    {isChatSending && (
+                      <span className="sr-only" aria-live="polite">DE Desk is typing…</span>
+                    )}
+                    {isChatSending && (showTypingDots || prefersReducedMotion()) && (
+                      <div className="de-desk-msg is-bot">
                         <div className="de-desk-msg-id" aria-hidden="true">DE</div>
                         <div className="de-desk-msg-col">
                           <div className="de-desk-bubble is-bot">
-                            <span className="de-desk-typing" aria-hidden="true">
-                              <i /><i /><i />
-                            </span>
+                            {prefersReducedMotion() ? (
+                              <span>Working on it…</span>
+                            ) : (
+                              <span className="de-desk-typing" aria-hidden="true">
+                                <i /><i /><i />
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

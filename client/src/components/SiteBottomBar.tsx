@@ -51,6 +51,7 @@ type QuickMenuItem = {
 function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
   const [showMenu, setShowMenu] = useState(false);
   const [showNudge, setShowNudge] = useState(false);
+  const [askMotionAllowed, setAskMotionAllowed] = useState(false);
   const isMobile = useIsMobile();
   // Focus trap keeps Tab inside the chooser and restores focus to the
   // launcher when it closes (Escape, outside tap, X, or a selection).
@@ -58,17 +59,37 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
   const launcherRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (showMenu || showNudge) return;
-    if (isDeskNudgeDismissed() || hasDeskNudgeBeenShown()) return;
-    const delay = prefersReducedMotion() ? 0 : 6000;
-    const timer = window.setTimeout(() => {
+    const syncAskMotion = () => {
+      setAskMotionAllowed(!isCookieBannerBlocking() && !isDeskNudgeDismissed());
+    };
+    syncAskMotion();
+
+    let timer = 0;
+    const fireNudge = () => {
       if (isDeskNudgeDismissed() || hasDeskNudgeBeenShown()) return;
-      if (isCookieBannerBlocking()) return;
       if (document.documentElement.hasAttribute("data-de-desk-open")) return;
       markDeskNudgeShown();
       setShowNudge(true);
-    }, delay);
-    return () => window.clearTimeout(timer);
+    };
+    const arm = (ignoreBanner = false) => {
+      window.clearTimeout(timer);
+      if (showMenu || showNudge) return;
+      if (isDeskNudgeDismissed() || hasDeskNudgeBeenShown()) return;
+      if (!ignoreBanner && isCookieBannerBlocking()) return;
+      const delay = prefersReducedMotion() ? 0 : 6000;
+      timer = window.setTimeout(fireNudge, delay);
+    };
+
+    arm();
+    const onConsent = () => {
+      setAskMotionAllowed(!isDeskNudgeDismissed());
+      arm(true);
+    };
+    window.addEventListener("de-cookie-consent", onConsent);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("de-cookie-consent", onConsent);
+    };
   }, [showMenu, showNudge]);
 
   useEffect(() => {
@@ -96,12 +117,14 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
     setShowMenu(false);
     setShowNudge(false);
     markDeskNudgeDismissed();
+    setAskMotionAllowed(false);
     openMspAdvisor(detail);
   };
 
   const dismissNudge = () => {
     setShowNudge(false);
     markDeskNudgeDismissed();
+    setAskMotionAllowed(false);
   };
 
   const menuItems: QuickMenuItem[] = [
@@ -153,7 +176,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
         >
           <button
             type="button"
-            className="de-ask-nudge-x absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full text-[11px] leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink"
+            className="de-ask-nudge-x absolute -right-3 -top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full text-[11px] leading-none before:absolute before:-inset-3 before:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink"
             aria-label="Dismiss Ask DE suggestion"
             data-testid="ask-de-nudge-dismiss"
             onClick={(event) => {
@@ -284,13 +307,8 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
         aria-expanded={showMenu}
         aria-haspopup="dialog"
       >
-        <span className="de-ask-fab relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white text-[#111116] shadow-[0_4px_14px_rgba(0,0,0,0.18)] transition-transform duration-150 group-hover:scale-[1.04]">
+        <span className={`de-ask-fab relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white text-[#111116] shadow-[0_4px_14px_rgba(0,0,0,0.18)] transition-transform duration-150 group-hover:scale-[1.04]${askMotionAllowed ? " de-ask-fab--breathe" : ""}`}>
           <AskDeGlyph className="h-[26px] w-[26px]" />
-          <span
-            className="de-ask-fab-dot absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2"
-            title="Engineers on shift"
-            aria-hidden="true"
-          />
         </span>
         {!compact && (
           <span className="hidden text-left sm:block">
@@ -323,18 +341,15 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
               color: var(--de-paper-raised);
               border: 2px solid var(--de-paper-raised);
             }
-            .de-ask-fab::before {
+            .de-ask-fab.de-ask-fab--breathe::before {
               content: "";
               position: absolute;
               inset: -6px;
               border-radius: 50%;
               border: 2px solid color-mix(in srgb, var(--de-magenta-ink, #D3126A) 55%, transparent);
-              animation: de-ask-breathe 2.8s ease-out infinite;
+              animation: de-ask-breathe 2.8s ease-out 3;
+              animation-iteration-count: 3;
               pointer-events: none;
-            }
-            .de-ask-fab-dot {
-              background: var(--de-ask-status, #22c55e);
-              border-color: var(--de-ask-fab-dot-border, #fff);
             }
             @keyframes de-ask-breathe {
               0% { transform: scale(0.86); opacity: 0.9; }
@@ -342,7 +357,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
               100% { transform: scale(1.18); opacity: 0; }
             }
             @media (prefers-reduced-motion: reduce) {
-              .de-ask-fab::before { animation: none; opacity: 0; }
+              .de-ask-fab.de-ask-fab--breathe::before { animation: none; opacity: 0; }
             }
           `,
         }}

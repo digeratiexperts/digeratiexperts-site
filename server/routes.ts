@@ -7,7 +7,7 @@ import jwt from "jsonwebtoken";
 import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_integrations/object_storage";
 import { zohoClient, zohoDeskService, splitVisitorName, zohoCRMService, zohoBillingService } from "./zoho";
 import { websiteLeadTaxonomy } from "./zoho/leadTaxonomy";
-import { findBackupCodeIndex } from "./portalMfaCrypto";
+import { findBackupCodeIndex, generateBackupCodes } from "./portalMfaCrypto";
 import {
   parseZohoTicketId,
   validatePortalTicketUpload,
@@ -721,6 +721,9 @@ export async function registerRoutes(app: Express) {
       
       const user = await storage.getUserByEmail(email);
       if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      if (!user.password) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
       
@@ -2767,6 +2770,10 @@ export async function registerRoutes(app: Express) {
         logSecurityEvent("PORTAL_LOGIN_FAILED", req, { email });
         return res.status(401).json({ message: "Invalid email or password" });
       }
+      if (!user.password) {
+        logSecurityEvent("PORTAL_LOGIN_FAILED", req, { email });
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
 
       const bcrypt = await import('bcrypt');
       const passwordValid = await bcrypt.compare(password, user.password);
@@ -3035,11 +3042,7 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ message: "Invalid verification code. Please try again." });
       }
 
-      // Generate backup codes
-      const backupCodes: string[] = [];
-      for (let i = 0; i < 8; i++) {
-        backupCodes.push(randomBytes(3).toString('hex').toUpperCase());
-      }
+      const backupCodes = generateBackupCodes(8);
 
       // Enable MFA on user
       user.mfaEnabled = true;
@@ -3106,10 +3109,7 @@ export async function registerRoutes(app: Express) {
       const valid = await bcrypt.compare(password, user.password);
       if (!valid) return res.status(401).json({ message: "Invalid password" });
 
-      const backupCodes: string[] = [];
-      for (let i = 0; i < 8; i++) {
-        backupCodes.push(randomBytes(3).toString('hex').toUpperCase());
-      }
+      const backupCodes = generateBackupCodes(8);
       user.mfaBackupCodes = backupCodes;
       portalUsers.set(user.email, user);
       if (user.username) portalUsers.set(user.username, user);
