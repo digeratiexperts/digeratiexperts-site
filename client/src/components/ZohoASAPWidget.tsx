@@ -1385,19 +1385,22 @@ export const ZohoASAPWidget = ({
                       </div>
                     ) : null}
 
+                    {/* The status is announced for the whole send; the bubble only renders once it has something to show. */}
                     {isChatSending && (
-                      <div className="de-desk-msg is-bot" aria-live="polite">
-                        <span className="sr-only">DE Desk is typing…</span>
+                      <span className="sr-only" aria-live="polite">DE Desk is typing…</span>
+                    )}
+                    {isChatSending && (showTypingDots || prefersReducedMotion()) && (
+                      <div className="de-desk-msg is-bot">
                         <div className="de-desk-msg-id" aria-hidden="true">DE</div>
                         <div className="de-desk-msg-col">
                           <div className="de-desk-bubble is-bot">
                             {prefersReducedMotion() ? (
                               <span>Working on it…</span>
-                            ) : showTypingDots ? (
+                            ) : (
                               <span className="de-desk-typing" aria-hidden="true">
                                 <i /><i /><i />
                               </span>
-                            ) : null}
+                            )}
                           </div>
                         </div>
                       </div>
