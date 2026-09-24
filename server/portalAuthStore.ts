@@ -237,7 +237,7 @@ async function upsertClientDb(client: PortalAuthClient) {
           primaryContact: client.primaryContact || null,
           status: client.status || "active",
           serviceType: client.serviceType || "prospect",
-          hubAccountId: client.hubAccountId || null,
+          ...(client.hubAccountId ? { hubAccountId: client.hubAccountId } : {}),
           updatedAt: new Date(),
         },
       });
@@ -547,6 +547,18 @@ export async function createProspectClientForUser(user: PortalAuthUser, companyN
   user.clientId = client.id;
   user.storeRole = "prospect";
   setUser(user);
+  void import("./integrations/linkPortalIdentity")
+    .then(({ queuePortalIdentityLink }) =>
+      queuePortalIdentityLink({
+        portalClientId: client.id,
+        companyName: client.companyName,
+        email: client.contactEmail,
+        name: client.primaryContact || client.companyName,
+      }),
+    )
+    .catch((err: { message?: string }) => {
+      console.warn("[portal-identity] link queue failed:", err?.message || err);
+    });
   return client;
 }
 

@@ -302,10 +302,28 @@ export function websitePathForEvent(eventType: DeSyncEventType): string {
   return WEBSITE_PATHS[eventType] || "/api/integrations/v1/portal/commands";
 }
 
+export function readHubDeliveryResult(body: unknown): {
+  canonicalAccountId: string | null;
+  duplicate: boolean;
+} {
+  if (!body || typeof body !== "object") {
+    return { canonicalAccountId: null, duplicate: false };
+  }
+  const record = body as Record<string, unknown>;
+  const raw = record.canonicalAccountId;
+  const canonicalAccountId =
+    typeof raw === "string" && raw.trim()
+      ? raw.trim()
+      : typeof raw === "number" && Number.isInteger(raw) && raw > 0
+        ? String(raw)
+        : null;
+  return { canonicalAccountId, duplicate: record.duplicate === true };
+}
+
 export async function deliverEnvelopeToHub(
   envelope: DeSyncEnvelope,
   destination: "hub" | "website" | "portal",
-): Promise<void> {
+): Promise<{ canonicalAccountId: string | null; duplicate: boolean }> {
   // Review instances never emit Hub events. Throwing keeps the envelope in the
   // outbox (retryable) rather than marking it delivered.
   assertMutationAllowed(`Hub event delivery: ${envelope.eventType}`);
@@ -331,7 +349,10 @@ export async function deliverEnvelopeToHub(
   });
 
   const response = await fetch(`${origin}${path}`, { method: "POST", headers, body });
-  if (response.ok) return;
+  if (response.ok) {
+    const data = typeof response.json === "function" ? await response.json().catch(() => null) : null;
+    return readHubDeliveryResult(data);
+  }
 
   // Compatibility: lead-like website commands can still hit the live webhook.
   const legacyUrl = (process.env.TECHSALES_SYNC_URL || "").trim();
@@ -356,7 +377,7 @@ export async function deliverEnvelopeToHub(
       },
       body: legacyBody,
     });
-    if (legacy.ok) return;
+    if (legacy.ok) return { canonicalAccountId: null, duplicate: false };
     const text = await legacy.text().catch(() => "");
     throw new Error(`Hub legacy lead webhook ${legacy.status}: ${text.slice(0, 200)}`);
   }

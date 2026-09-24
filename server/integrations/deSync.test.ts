@@ -10,6 +10,7 @@ import {
 import { resetInboxLifecycleMemory } from "./deSyncInboxLifecycle";
 import { enqueueWebsiteCommand } from "./enqueueWebsiteCommand";
 import { handleHubEvents, resetHubProjections } from "./hubEvents";
+import { readHubDeliveryResult } from "./techSalesClient";
 import type { Request, Response } from "express";
 
 function mockReq(overrides: Partial<Request> & { body?: unknown; headers?: Record<string, string> }): Request {
@@ -278,5 +279,32 @@ describe("lifecycle A–H", () => {
     await handleHubEvents(mockReq({ body: envelope }), res);
     expect((res.body as { ok?: boolean }).ok).toBe(true);
     expect(envelope.canonicalAccountId).toBe("12");
+  });
+
+  it("keeps portalClientId on a website lead envelope", async () => {
+    await enqueueWebsiteCommand(
+      {
+        id: "prospect-1",
+        name: "Pat",
+        email: "pat@example.com",
+        company: "Acme",
+        source: "portal_register",
+        portalClientId: "prospect-1",
+      },
+      "lead.created",
+    );
+    const pending = await listOutbox("pending");
+    expect(pending[0].payload.portalClientId).toBe("prospect-1");
+  });
+
+  it("reads the Hub account id from a delivery ack", () => {
+    expect(readHubDeliveryResult({ ok: true, canonicalAccountId: "41" })).toEqual({
+      canonicalAccountId: "41",
+      duplicate: false,
+    });
+    expect(readHubDeliveryResult({ duplicate: true })).toEqual({
+      canonicalAccountId: null,
+      duplicate: true,
+    });
   });
 });
