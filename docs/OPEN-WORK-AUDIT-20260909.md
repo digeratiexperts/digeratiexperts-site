@@ -296,3 +296,66 @@ Issue #195 stays open. Recorded on the PR thread as well.
 
 Programs and per-thread tracking for everything above live in Zoho Projects under
 `DE 01`–`DE 06` in the `digeratiexperts` portal.
+
+---
+
+## 11. Refresh — 2026-09-25
+
+The audit above is a point-in-time record of 2026-09-09 and is left unedited. `main` advanced
+roughly 90 commits in the sixteen days since, so this section restates what is still true. Where
+the two disagree, this section wins.
+
+### What the audit recommended, and what actually happened
+
+| PR | 09-09 disposition | State on 09-25 | Outcome |
+|---|---|---|---|
+| #199 | Land | merged | done |
+| #198 | Land | merged | done |
+| #197 | Land | merged | done |
+| #189 | Close (superseded by #199) | closed | done |
+| #196 | Land → **revised to Do not merge** (§10) | open, draft | **now closeable — see below** |
+| #200, #190, #188, #187, #186, #185, #184, #176, #168, #157, #156, #149 | Hold / Decide / Split / Rebase | all still open | unchanged |
+
+Twelve of the seventeen audited PRs are exactly where they were. The three "Land" items landed,
+the one "Close" item closed, and #196 is resolved by other means.
+
+### #196 is now closeable, not just unmergeable
+
+§10 concluded that `chatgpt/finish-bug-hunt` must not be merged because `server/routes.ts` on that
+branch is a 150,060-byte binary blob. That is still true — the blob is unchanged on the branch as
+of 09-25.
+
+Every file §10 listed as salvageable has since reached `main` by other routes (commits `2d784ea7`
+"Harvest #187/#196 auth-security minimum" and `ca42d1e1` "Complete MFA crypto, cookie-session
+portalApi"):
+
+- `server/portalMfaCrypto.ts` — present
+- `server/portalMfaCrypto.test.ts` — present
+- `scripts/run-migrations.mjs` — present
+- `migrations/0001_portal_auth_durable.sql` — present
+- `migrations/0002_portal_org_approvals.sql` — present
+
+So #196 holds no unharvested value and cannot be merged. It should be closed with a pointer to
+those commits. Issue #195 stays open for the session-preservation work that was lost inside the
+blob and still has to be rewritten against `main`.
+
+### Ten PRs opened after the audit
+
+Not covered by §2 and not triaged here: #202, #209, #213, #214, #217, #218, #219, #220, #221,
+#222. The open-PR count went from 17 to 23 over sixteen days. Any re-audit should start from the
+live list, not from §2.
+
+### §8 (the structural cause) has gotten worse, not better
+
+`main` is still unprotected. The audit argued that an unprotected `main` with many concurrent
+agents is what produces corrupted branches, stale claims and silent regressions. Since then the
+open-PR count rose by six and a claim-register value shipped broken through a green CI run.
+
+One class of that is now closed: `.ai/ACTIVE_WORK.yaml` is validated on every PR by
+`scripts/check-active-work.mjs` (`npm run check:active-work`), which runs ahead of typecheck. It
+rejects a file that fails to parse, a claim missing a required key, duplicate claim ids, a
+non-list `files:`, and the unquoted `" #"` plain scalar that broke the register in #199.
+
+Branch protection itself still requires a human: the API returns
+`403 Resource not accessible by integration` for the installation token, which has no
+`administration` scope. Tracking issues #100, #115 and #124 all describe this same gap.
