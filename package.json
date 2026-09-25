@@ -19,7 +19,8 @@
     "db:push": "drizzle-kit push",
     "db:migrate": "node scripts/run-migrations.mjs",
     "test:advisor": "tsx --test server/services/msp-advisor/*.test.ts",
-    "eval:advisor": "tsx server/services/msp-advisor/eval/score.ts"
+    "eval:advisor": "tsx server/services/msp-advisor/eval/score.ts",
+    "check:active-work": "node scripts/check-active-work.mjs"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.18.0",
@@ -142,7 +143,8 @@
     "tsx": "^4.20.5",
     "typescript": "5.6.3",
     "vite": "^5.4.20",
-    "vitest": "^3.2.7"
+    "vitest": "^3.2.7",
+    "yaml": "^2.9.0"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
