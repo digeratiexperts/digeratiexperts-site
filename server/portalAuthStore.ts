@@ -2,13 +2,15 @@
  * Durable portal auth store — Neon-backed with in-memory cache.
  * Sync get/set API matches the former Map so routes can migrate cleanly.
  */
-import { eq, or, sql } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { db, dbReady, initPromise } from "./db";
 import {
   portalUsers as portalUsersTable,
   portalClients as portalClientsTable,
   portalOrderForms,
+  externalIntegrationMappings,
 } from "@shared/schema";
+import { selectBackfillUpdates } from "./integrations/backfillHubIdentity";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { decryptTotpSecret, encryptTotpSecret, prepareBackupCodesForStorage } from "./portalMfaCrypto";
 
@@ -430,6 +432,25 @@ export async function initPortalAuthStore(): Promise<void> {
       for (const c of clients) clientsById.set(c.id, rowToClient(c));
       const users = await db.select().from(portalUsersTable);
       for (const u of users) indexUser(rowToUser(u));
+      const mappings = await db
+        .select({
+          clientId: externalIntegrationMappings.clientId,
+          externalId: externalIntegrationMappings.externalId,
+          hubAccountId: portalClientsTable.hubAccountId,
+        })
+        .from(externalIntegrationMappings)
+        .innerJoin(portalClientsTable, eq(portalClientsTable.id, externalIntegrationMappings.clientId))
+        .where(eq(externalIntegrationMappings.integrationType, "techsales_hub"));
+      for (const update of selectBackfillUpdates(mappings)) {
+        await db
+          .update(portalClientsTable)
+          .set({ hubAccountId: update.hubAccountId, updatedAt: new Date() })
+          .where(and(eq(portalClientsTable.id, update.clientId), isNull(portalClientsTable.hubAccountId)));
+        const cached = clientsById.get(update.clientId);
+        if (cached && !cached.hubAccountId) {
+          clientsById.set(update.clientId, { ...cached, hubAccountId: update.hubAccountId });
+        }
+      }
       console.log(`✅ Portal auth store loaded ${users.length} users, ${clients.length} clients from DB`);
     } catch (err: any) {
       console.warn("[portalAuthStore] load from DB failed:", err?.message);

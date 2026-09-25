@@ -5615,6 +5615,17 @@ export async function registerRoutes(app: Express) {
 
       console.log(`[QUOTE REQUEST] Created: ${quoteRequest.quoteNumber} for ${contactEmail}`);
 
+      const hubAccountId = req.user?.clientId ? portalClients.get(req.user.clientId)?.hubAccountId : null;
+      const { buildCommercialSnapshot } = await import("./integrations/commercialSnapshot");
+      const commercial = buildCommercialSnapshot({
+        reference: quoteRequest.quoteNumber,
+        status: "requested",
+        portalClientId: req.user?.clientId || null,
+        company: companyName,
+        email: contactEmail,
+        lineItems: canonicalItems,
+      });
+
       void eventBus.emit(EventTypes.QUOTE_REQUESTED, {
         id: quoteRequest.id,
         quoteId: quoteRequest.id,
@@ -5625,11 +5636,16 @@ export async function registerRoutes(app: Express) {
         companyName,
         message,
         source: "store_quote",
-        canonicalAccountId: req.user?.clientId ? portalClients.get(req.user.clientId)?.hubAccountId : null,
+        canonicalAccountId: hubAccountId,
+        portalClientId: req.user?.clientId || null,
+        commercial,
       });
 
       void import("./storeQuoteCrm")
-        .then(({ syncStoreQuoteToCrm }) => syncStoreQuoteToCrm(quoteRequest))
+        .then(({ syncStoreQuoteToCrm }) => syncStoreQuoteToCrm({
+          ...quoteRequest,
+          canonicalAccountId: hubAccountId,
+        }))
         .catch((error: any) => {
           console.warn("[store-quote] CRM sync skipped:", error?.message || error);
         });

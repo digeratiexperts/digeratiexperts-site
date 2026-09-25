@@ -159,6 +159,8 @@ export function setupCrossServiceHandlers() {
           message: data.message,
           source: data.source || "store_quote",
           canonicalAccountId: data.canonicalAccountId || null,
+          portalClientId: data.portalClientId || null,
+          commercial: data.commercial || null,
         },
         "quote.requested",
       );
