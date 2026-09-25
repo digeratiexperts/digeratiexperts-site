@@ -29,7 +29,9 @@ export function toWarehousePath(storePath: string): string {
 }
 
 export function classifyLegacyStorePath(pathname: string): LegacyStoreClassification {
-  const path = pathname.split("?")[0] || pathname;
+  const raw = pathname.split("?")[0] || pathname;
+  // /store/ must classify like /store (same for checkout/solution trailing slash).
+  const path = raw.length > 1 ? raw.replace(/\/+$/, "") : raw;
   if (PUBLIC_STORE_PATH_REDIRECTS[path]) {
     return { kind: "public_redirect", to: PUBLIC_STORE_PATH_REDIRECTS[path] };
   }

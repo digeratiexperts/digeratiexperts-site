@@ -26,6 +26,15 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
+      // Compatibility bridge for live surfaces that still import the legacy
+      // raster asset. The canonical artwork is the vector master in brand/.
+      // Keep this exact alias before the broader @assets alias below.
+      "@assets/DE-Logo-new_1762461524794.webp": path.resolve(
+        import.meta.dirname,
+        "brand",
+        "digerati-logo-reverse.svg",
+      ),
+      "@brand": path.resolve(import.meta.dirname, "brand"),
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
@@ -36,6 +45,21 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // Split stable vendor code out of the app entry so it caches across
+        // deploys and the entry chunk stays well under the 500 kB warning
+        // (it was a single 916 kB chunk; perf audit 2026-09-13).
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler|wouter)[\\/]/.test(id)) return "vendor-react";
+          if (/[\\/]node_modules[\\/]framer-motion[\\/]/.test(id)) return "vendor-motion";
+          if (/[\\/]node_modules[\\/]@radix-ui[\\/]/.test(id)) return "vendor-radix";
+          if (/[\\/]node_modules[\\/]@tanstack[\\/]/.test(id)) return "vendor-query";
+          return undefined;
+        },
+      },
+    },
   },
   server: {
     fs: {

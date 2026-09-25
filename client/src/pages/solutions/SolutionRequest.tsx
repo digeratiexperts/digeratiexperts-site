@@ -192,7 +192,7 @@ export default function SolutionRequest() {
                   <article key={family.id} className="overflow-hidden rounded-xl border border-white/10">
                     <div className="bg-black/15 px-4 py-3">
                       <h2 className="font-semibold text-white">{packageView.offerName}</h2>
-                      <p className="mt-1 text-xs text-white/45">{packageView.pricingLabel}</p>
+                      <p className="mt-1 text-xs text-white/55">{packageView.pricingLabel}</p>
                     </div>
                     <div>
                       {packageView.lineItems.map((line, index) => (
@@ -247,7 +247,7 @@ export default function SolutionRequest() {
                 <Button type="submit" variant="brand" className="h-11 w-full sm:w-auto" disabled={submitting || packageRows.length === 0}>
                   {submitting ? "Submitting…" : intent === "assessment" ? "Submit & continue to assessment" : "Submit solution"}
                 </Button>
-                <p className="mt-3 text-xs text-white/45">No payment is taken here. DE confirms package fit, scope, fulfillment, and pricing before commitment.</p>
+                <p className="mt-3 text-xs text-white/55">No payment is taken here. DE confirms package fit, scope, fulfillment, and pricing before commitment.</p>
               </div>
             </form>
           )}

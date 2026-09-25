@@ -21,6 +21,14 @@ import { PRIMARY_PHONE } from "@shared/companyContact";
 import { AskDeGlyph } from "@/components/icons/AskDeGlyph";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  hasDeskNudgeBeenShown,
+  isCookieBannerBlocking,
+  isDeskNudgeDismissed,
+  markDeskNudgeDismissed,
+  markDeskNudgeShown,
+  prefersReducedMotion,
+} from "@/lib/deskAskDeMotion";
 
 /** Original used 0.28s easeOut layout + 300ms grid. Keep that pacing without transform. */
 const EXPAND_S = 0.4;
@@ -42,11 +50,47 @@ type QuickMenuItem = {
  */
 function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
   const [showMenu, setShowMenu] = useState(false);
+  const [showNudge, setShowNudge] = useState(false);
+  const [askMotionAllowed, setAskMotionAllowed] = useState(false);
   const isMobile = useIsMobile();
   // Focus trap keeps Tab inside the chooser and restores focus to the
   // launcher when it closes (Escape, outside tap, X, or a selection).
   const popoverRef = useFocusTrap<HTMLDivElement>({ enabled: showMenu });
   const launcherRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const syncAskMotion = () => {
+      setAskMotionAllowed(!isCookieBannerBlocking() && !isDeskNudgeDismissed());
+    };
+    syncAskMotion();
+
+    let timer = 0;
+    const fireNudge = () => {
+      if (isDeskNudgeDismissed() || hasDeskNudgeBeenShown()) return;
+      if (document.documentElement.hasAttribute("data-de-desk-open")) return;
+      markDeskNudgeShown();
+      setShowNudge(true);
+    };
+    const arm = (ignoreBanner = false) => {
+      window.clearTimeout(timer);
+      if (showMenu || showNudge) return;
+      if (isDeskNudgeDismissed() || hasDeskNudgeBeenShown()) return;
+      if (!ignoreBanner && isCookieBannerBlocking()) return;
+      const delay = prefersReducedMotion() ? 0 : 6000;
+      timer = window.setTimeout(fireNudge, delay);
+    };
+
+    arm();
+    const onConsent = () => {
+      setAskMotionAllowed(!isDeskNudgeDismissed());
+      arm(true);
+    };
+    window.addEventListener("de-cookie-consent", onConsent);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("de-cookie-consent", onConsent);
+    };
+  }, [showMenu, showNudge]);
 
   useEffect(() => {
     if (!showMenu) return;
@@ -71,7 +115,16 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
 
   const openDesk = (detail: Parameters<typeof openMspAdvisor>[0]) => {
     setShowMenu(false);
+    setShowNudge(false);
+    markDeskNudgeDismissed();
+    setAskMotionAllowed(false);
     openMspAdvisor(detail);
+  };
+
+  const dismissNudge = () => {
+    setShowNudge(false);
+    markDeskNudgeDismissed();
+    setAskMotionAllowed(false);
   };
 
   const menuItems: QuickMenuItem[] = [
@@ -111,6 +164,42 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className="relative flex shrink-0 items-center">
+      {showNudge ? (
+        <div
+          className="de-ask-nudge fixed z-[10035] max-w-[240px] rounded-[14px_14px_4px_14px] px-3 py-2.5 text-left text-[13px] font-medium leading-snug shadow-[0_12px_40px_rgba(0,0,0,0.5)]"
+          style={{
+            // Fixed outside document flow so the nudge cannot cause CLS.
+            right: "max(1rem, env(safe-area-inset-right))",
+            bottom: "calc(var(--de-unified-bar-h, 3.5rem) + 0.75rem + env(safe-area-inset-bottom, 0px))",
+          }}
+          data-testid="ask-de-nudge"
+        >
+          <button
+            type="button"
+            className="de-ask-nudge-x absolute -right-3 -top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full text-[11px] leading-none before:absolute before:-inset-3 before:content-[''] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink"
+            aria-label="Dismiss Ask DE suggestion"
+            data-testid="ask-de-nudge-dismiss"
+            onClick={(event) => {
+              event.stopPropagation();
+              dismissNudge();
+            }}
+          >
+            ×
+          </button>
+          {/* R1: primary action is a real <button>, not a focusable dialog div. */}
+          <button
+            type="button"
+            className="de-ask-nudge-body block w-full cursor-pointer rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink"
+            aria-label="Ask DE suggestion"
+            onClick={() => openDesk({ tab: "chat" })}
+          >
+            Stuck on something IT or security?
+            <small className="de-ask-nudge-sub mt-0.5 block text-[12px] font-normal">
+              Ask DE — real engineers, clear next step.
+            </small>
+          </button>
+        </div>
+      ) : null}
       <AnimatePresence>
         {showMenu && isMobile && (
           <motion.div
@@ -208,14 +297,17 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
       <button
         ref={launcherRef}
         type="button"
-        onClick={() => setShowMenu((open) => !open)}
-        className="group flex h-10 shrink-0 items-center gap-2 rounded-full px-1 pr-1.5 text-white transition-colors duration-200 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+        onClick={() => {
+          setShowNudge(false);
+          setShowMenu((open) => !open);
+        }}
+        className="group flex h-10 shrink-0 items-center gap-2 rounded-full px-1 pr-1.5 text-white transition-colors duration-200 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink focus-visible:ring-offset-2 focus-visible:ring-offset-black"
         data-testid="button-open-asap-widget"
         aria-label={compact ? "Open Ask DE support options" : "Open Ask DE"}
         aria-expanded={showMenu}
         aria-haspopup="dialog"
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white text-[#111116] shadow-[0_4px_14px_rgba(0,0,0,0.18)] transition-transform duration-150 group-hover:scale-[1.04]">
+        <span className={`de-ask-fab relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white text-[#111116] shadow-[0_4px_14px_rgba(0,0,0,0.18)] transition-transform duration-150 group-hover:scale-[1.04]${askMotionAllowed ? " de-ask-fab--breathe" : ""}`}>
           <AskDeGlyph className="h-[26px] w-[26px]" />
         </span>
         {!compact && (
@@ -225,6 +317,51 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
           </span>
         )}
       </button>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            /* B2: nudge sits on dark site chrome — paper site tokens only (not --desk-*). */
+            .de-ask-nudge {
+              background: var(--de-paper-raised);
+              color: var(--de-bg);
+              border: 1px solid var(--de-paper-hairline);
+            }
+            .de-ask-nudge-body {
+              background: transparent;
+              border: 0;
+              padding: 0;
+              color: inherit;
+              font: inherit;
+            }
+            .de-ask-nudge-sub {
+              color: color-mix(in srgb, var(--de-bg) 60%, transparent);
+            }
+            .de-ask-nudge-x {
+              background: var(--de-bg);
+              color: var(--de-paper-raised);
+              border: 2px solid var(--de-paper-raised);
+            }
+            .de-ask-fab.de-ask-fab--breathe::before {
+              content: "";
+              position: absolute;
+              inset: -6px;
+              border-radius: 50%;
+              border: 2px solid color-mix(in srgb, var(--de-magenta-ink, #D3126A) 55%, transparent);
+              animation: de-ask-breathe 2.8s ease-out 3;
+              animation-iteration-count: 3;
+              pointer-events: none;
+            }
+            @keyframes de-ask-breathe {
+              0% { transform: scale(0.86); opacity: 0.9; }
+              70% { transform: scale(1.18); opacity: 0; }
+              100% { transform: scale(1.18); opacity: 0; }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .de-ask-fab.de-ask-fab--breathe::before { animation: none; opacity: 0; }
+            }
+          `,
+        }}
+      />
     </div>
   );
 }
@@ -414,6 +551,11 @@ export function SiteBottomBar() {
               : "pointer-events-none grid-cols-[0fr] opacity-0"
           }`}
           aria-hidden={!expanded}
+          // aria-hidden alone leaves the collapsed menu's links in the tab
+          // order (axe: aria-hidden-focus, serious). `inert` removes them from
+          // focus and the accessibility tree while collapsed. React 18 passes
+          // the attribute through as a string, hence "" rather than a boolean.
+          {...(!expanded ? { inert: "" } : {})}
         >
           <div className="w-full min-w-0 overflow-hidden">
             <HomepageDockMenu />

@@ -6,6 +6,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_integrations/object_storage";
 import { zohoClient, zohoDeskService, splitVisitorName, zohoCRMService, zohoBillingService } from "./zoho";
+import { websiteLeadTaxonomy } from "./zoho/leadTaxonomy";
+import { findBackupCodeIndex, generateBackupCodes } from "./portalMfaCrypto";
 import {
   parseZohoTicketId,
   validatePortalTicketUpload,
@@ -211,7 +213,9 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
     typeof req.cookies?.[PORTAL_AUTH_COOKIE] === "string"
       ? req.cookies[PORTAL_AUTH_COOKIE]
       : "";
-  const token = bearer || cookieToken;
+  // Browser sessions are canonical across digeratiexperts.com + portal subdomains.
+  // Prefer the shared HttpOnly cookie; Bearer remains a fallback for non-browser/API clients.
+  const token = cookieToken || bearer;
   if (!token) {
     return res.status(401).json({ error: "Authentication required" });
   }
@@ -717,6 +721,9 @@ export async function registerRoutes(app: Express) {
       
       const user = await storage.getUserByEmail(email);
       if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      if (!user.password) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
       
@@ -2763,6 +2770,10 @@ export async function registerRoutes(app: Express) {
         logSecurityEvent("PORTAL_LOGIN_FAILED", req, { email });
         return res.status(401).json({ message: "Invalid email or password" });
       }
+      if (!user.password) {
+        logSecurityEvent("PORTAL_LOGIN_FAILED", req, { email });
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
 
       const bcrypt = await import('bcrypt');
       const passwordValid = await bcrypt.compare(password, user.password);
@@ -2874,8 +2885,7 @@ export async function registerRoutes(app: Express) {
 
       const backupCodes = (user as any).mfaBackupCodes || [];
       if (!verified && backupCodes.length > 0) {
-        const codeUpper = code.trim().toUpperCase();
-        const idx = backupCodes.indexOf(codeUpper);
+        const idx = findBackupCodeIndex(backupCodes, code);
         if (idx !== -1) {
           verified = true;
           backupCodes.splice(idx, 1);
@@ -3032,11 +3042,7 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ message: "Invalid verification code. Please try again." });
       }
 
-      // Generate backup codes
-      const backupCodes: string[] = [];
-      for (let i = 0; i < 8; i++) {
-        backupCodes.push(randomBytes(3).toString('hex').toUpperCase());
-      }
+      const backupCodes = generateBackupCodes(8);
 
       // Enable MFA on user
       user.mfaEnabled = true;
@@ -3103,10 +3109,7 @@ export async function registerRoutes(app: Express) {
       const valid = await bcrypt.compare(password, user.password);
       if (!valid) return res.status(401).json({ message: "Invalid password" });
 
-      const backupCodes: string[] = [];
-      for (let i = 0; i < 8; i++) {
-        backupCodes.push(randomBytes(3).toString('hex').toUpperCase());
-      }
+      const backupCodes = generateBackupCodes(8);
       user.mfaBackupCodes = backupCodes;
       portalUsers.set(user.email, user);
       if (user.username) portalUsers.set(user.username, user);
@@ -4886,13 +4889,14 @@ export async function registerRoutes(app: Express) {
       // Push lead to Zoho CRM
       let zohoLeadId = null;
       try {
+        const taxonomy = websiteLeadTaxonomy("quote_wizard");
         const zohoLead = await zohoCRMService.createLead({
           First_Name: firstName,
           Last_Name: lastName,
           Email: email,
           Company: company || 'Not Specified',
-          Lead_Source: 'Website Quote Wizard',
-          Lead_Status: 'New',
+          Lead_Source: taxonomy.leadSource,
+          Lead_Status: taxonomy.leadStatus,
           Description: `Quote Wizard: Recommended Plan: ${recommendedPlan}, Seats: ${seats}, Connectivity: ${connectivity}, Devices: ${devices}`,
         });
         zohoLeadId = (zohoLead as any)?.details?.id || zohoLead?.id;
@@ -5106,14 +5110,21 @@ export async function registerRoutes(app: Express) {
         const nameParts = name.trim().split(/\s+/);
         const firstName = nameParts[0] || "";
         const lastName = nameParts.slice(1).join(" ") || name;
+        const taxonomy = websiteLeadTaxonomy(
+          action === "request_assessment"
+            ? "advisor_assessment"
+            : action === "request_callback"
+              ? "advisor_callback"
+              : "advisor_lead",
+        );
         const zohoLead = await zohoCRMService.createLead({
           First_Name: firstName,
           Last_Name: lastName,
           Email: email,
           Phone: phone || "",
           Company: company || "Not Specified",
-          Lead_Source: sourceLabel,
-          Lead_Status: "New",
+          Lead_Source: taxonomy.leadSource,
+          Lead_Status: taxonomy.leadStatus,
           Description: summary.slice(0, 32000),
         });
         zohoLeadId = (zohoLead as any)?.details?.id || zohoLead?.id;
@@ -5183,6 +5194,7 @@ export async function registerRoutes(app: Express) {
         const nameParts = fullName.trim().split(' ');
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || fullName;
+        const taxonomy = websiteLeadTaxonomy("assessment");
 
         const zohoLead = await zohoCRMService.createLead({
           First_Name: firstName,
@@ -5190,8 +5202,8 @@ export async function registerRoutes(app: Express) {
           Email: email,
           Phone: phone || '',
           Company: company || 'Not Specified',
-          Lead_Source: source === 'lead_form' ? 'Website Lead Form' : 'Website Assessment',
-          Lead_Status: 'New',
+          Lead_Source: taxonomy.leadSource,
+          Lead_Status: taxonomy.leadStatus,
           Description: `Free assessment request submitted from ${source || "homepage hero"}`,
         });
         zohoLeadId = (zohoLead as any)?.details?.id || zohoLead?.id;
@@ -5264,6 +5276,7 @@ export async function registerRoutes(app: Express) {
         const nameParts = name.trim().split(' ');
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || name;
+        const taxonomy = websiteLeadTaxonomy("contact");
         
         const zohoLead = await zohoCRMService.createLead({
           First_Name: firstName,
@@ -5271,9 +5284,9 @@ export async function registerRoutes(app: Express) {
           Email: email,
           Phone: phone,
           Company: company || 'Not Specified',
-          Lead_Source: 'Website Contact Form',
+          Lead_Source: taxonomy.leadSource,
           Description: message || '',
-          Lead_Status: 'New',
+          Lead_Status: taxonomy.leadStatus,
         });
         zohoLeadId = (zohoLead as any)?.details?.id || (zohoLead as any)?.id;
         console.log("[ZOHO] Lead created:", zohoLeadId);
@@ -5344,11 +5357,12 @@ export async function registerRoutes(app: Express) {
         // Check if lead already exists
         const existingLead = await zohoCRMService.getLeadByEmail(email);
         if (!existingLead) {
+          const taxonomy = websiteLeadTaxonomy("newsletter");
           const zohoLead = await zohoCRMService.createLead({
             Last_Name: email.split('@')[0], // Use email prefix as name
             Email: email,
-            Lead_Source: 'Newsletter Signup',
-            Lead_Status: 'New',
+            Lead_Source: taxonomy.leadSource,
+            Lead_Status: taxonomy.leadStatus,
             Description: 'Subscribed to newsletter',
           });
           zohoLeadId = (zohoLead as any)?.details?.id || (zohoLead as any)?.id;

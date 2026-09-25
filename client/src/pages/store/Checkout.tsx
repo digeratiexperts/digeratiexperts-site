@@ -81,23 +81,10 @@ const Checkout = () => {
       const lineItems = snapshotSubmitLines(snapshot);
 
       if (paymentMethod === "zoho") {
-        const portalToken = localStorage.getItem("portalToken");
-        if (!portalToken) {
-          toast({
-            title: "Identity captured — portal sign-in still required to pay",
-            description:
-              data.email
-                ? `We have ${data.email}. Existing clients can finish in the portal, or request a quote without waiting on a 403.`
-                : "Request a quote, or sign in if you already have a Client Portal session.",
-          });
-          setPaymentMethod("quote_request");
-          return;
-        }
         const response = await fetch("/api/store/checkout/zoho", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${portalToken}`,
           },
           credentials: "include",
           body: JSON.stringify({
@@ -108,6 +95,14 @@ const Checkout = () => {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
+          if (response.status === 401) {
+            toast({
+              title: "Sign in required to pay online",
+              description: "Open ASK DE and sign in once, then retry checkout. Your solution is still here.",
+            });
+            setPaymentMethod("quote_request");
+            return;
+          }
           if (response.status === 403) {
             toast({
               title: "This cart needs a Client Portal role to pay online",
@@ -345,7 +340,7 @@ const Checkout = () => {
                       )}
                     </label>
                   </RadioGroup>
-                  <p className="mt-4 text-sm text-white/45">
+                  <p className="mt-4 text-sm text-white/55">
                     Already a co-managed client?{" "}
                     <a
                       href={portalLoginWithReturn(
@@ -396,11 +391,11 @@ const Checkout = () => {
                       </Button>
                       <p className="mt-4 text-center text-xs text-white/55">
                         By completing this order, you agree to our{" "}
-                        <Link href="/legal/terms-of-use" className="text-de-accent-ink hover:underline">
+                        <Link href="/legal/terms-of-use" className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
                           Terms of Service
                         </Link>{" "}
                         and{" "}
-                        <Link href="/legal/privacy-policy" className="text-de-accent-ink hover:underline">
+                        <Link href="/legal/privacy-policy" className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
                           Privacy Policy
                         </Link>
                       </p>

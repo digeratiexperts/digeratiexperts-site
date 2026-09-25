@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { toWebImageUrl } from "@/lib/webImage";
 import { Link } from "wouter";
 import { Helmet } from "react-helmet-async";
 import { MegaMenu } from "@/components/MegaMenu";
@@ -19,7 +20,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { blogs, blogBodies } from "@/data/resourceRegistry";
-import ebookCover from "@/assets/images/ebook-defending-digital-realm-cover.png";
+import ebookCover from "@/assets/images/ebook-defending-digital-realm-cover.webp";
 
 const APPROVED_CATEGORIES = [
   "Cybersecurity",
@@ -52,7 +53,7 @@ export default function Blog() {
           ...b,
           href: `/resources/blog/${b.slug}`,
           readTime: blogBodies[b.slug]?.readTime ?? "5 min read",
-          image: b.coverImage,
+          image: toWebImageUrl(b.coverImage),
         }))
         .sort((a, b) => (a.date < b.date ? 1 : -1)),
     [],

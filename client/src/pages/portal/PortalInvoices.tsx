@@ -132,7 +132,7 @@ export default function PortalInvoices() {
                 ))}
               </div>
             ) : invoices.length > 0 ? (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]" tabIndex={0} role="region" aria-label="Invoices table">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b dark:border-slate-700">

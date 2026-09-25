@@ -20,11 +20,13 @@ import {
   Send,
   Shield,
   ShieldAlert,
+  ShoppingCart,
   Ticket,
   User,
   Wifi,
   Wrench,
   X,
+  DollarSign,
 } from "lucide-react";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { Input } from "@/components/ui/input";
@@ -43,7 +45,7 @@ import { readPortalUser, type PortalUserSession } from "@/lib/portalRoles";
 import DeskLoginCard from "@/components/DeskLoginCard";
 import { acquireBodyScrollLock } from "@/lib/bodyScrollLock";
 import type { OpenMspAdvisorDetail } from "@/lib/openMspAdvisor";
-import { STORE_ADVISOR_SEED } from "@/lib/openMspAdvisor";
+import { STORE_ADVISOR_SEED, clearPendingMspAdvisorOpen, takePendingMspAdvisorOpen } from "@/lib/openMspAdvisor";
 import { analytics } from "@/lib/analytics";
 import { useDraggableWindow } from "@/hooks/useDraggableWindow";
 import { useEscapeKey } from "@/hooks/useFocusTrap";
@@ -57,6 +59,16 @@ import {
   type DeskTicketChipId,
   type DeskTicketPriority,
 } from "@/lib/deskTicketChips";
+import {
+  greetingForPage,
+  inferDeskPageType,
+  prefersReducedMotion,
+  startersForPage,
+  streamWords,
+  typewriteText,
+  type DeskMotionChip,
+  type DeskMotionChipIcon,
+} from "@/lib/deskAskDeMotion";
 
 interface ZohoASAPWidgetProps {
   isEnabled?: boolean;
@@ -146,24 +158,17 @@ function getDeskChipIcon(id: DeskTicketChipId) {
   }
 }
 
-const CHAT_WELCOME: ChatMessage = {
-  id: "welcome",
-  role: "assistant",
-  content:
-    "DE Desk is here. Describe the outage, the risk, or the question — we'll take it and give you a clear next step.",
-};
+const CHAT_WELCOME_ID = "welcome";
 
-const QUICK_CHAT_PROMPTS: Array<{
-  label: string;
-  ticketChip?: DeskTicketChipId;
-  icon: typeof Wrench;
-}> = [
-  { label: "I need IT help", icon: Wrench },
-  { label: "I'm concerned about cybersecurity", icon: Shield },
-  { label: "I need help with compliance", icon: FileText },
-  { label: "I'm evaluating managed IT", icon: LayoutGrid },
-  { label: "Possible security incident", ticketChip: "security-incident", icon: ShieldAlert },
-];
+const MOTION_CHIP_ICONS: Record<DeskMotionChipIcon, typeof Wrench> = {
+  wrench: Wrench,
+  shield: Shield,
+  file: FileText,
+  grid: LayoutGrid,
+  alert: ShieldAlert,
+  dollar: DollarSign,
+  cart: ShoppingCart,
+};
 
 const ASK_IT_HELP_CHIPS: DeskTicketChipId[] = [
   "something-not-working",
@@ -220,13 +225,27 @@ export const ZohoASAPWidget = ({
     return { fullName: cached.fullName, email: cached.email };
   });
   const [location] = useLocation();
+  const deskPage = inferDeskPageType(location);
   const [advisorSessionId, setAdvisorSessionId] = useState<string | null>(null);
   const [pendingSeed, setPendingSeed] = useState<string | null>(null);
   const [showInlineLogin, setShowInlineLogin] = useState(false);
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => [
-    { ...CHAT_WELCOME, createdAt: new Date().toISOString() },
+    {
+      id: CHAT_WELCOME_ID,
+      role: "assistant",
+      content: greetingForPage(inferDeskPageType(typeof window !== "undefined" ? window.location.pathname : "/")),
+      createdAt: new Date().toISOString(),
+    },
   ]);
+  const [greetingVisible, setGreetingVisible] = useState("");
+  const [greetingComplete, setGreetingComplete] = useState(false);
+  const [showStarterChips, setShowStarterChips] = useState(false);
+  const [showTypingDots, setShowTypingDots] = useState(false);
+  const [reveal, setReveal] = useState<{ id: string; shown: string; done: boolean } | null>(null);
+  const greetingCancelRef = useRef({ cancelled: false });
+  const revealCancelRef = useRef({ cancelled: false });
+  const greetedOnceRef = useRef(false);
   const [chatInput, setChatInput] = useState("");
   const [isChatSending, setIsChatSending] = useState(false);
   const [assistantAvailable, setAssistantAvailable] = useState<boolean | null>(null);
@@ -234,7 +253,7 @@ export const ZohoASAPWidget = ({
   const [agentName, setAgentName] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const pollSinceRef = useRef<string | null>(null);
-  const knownMsgIdsRef = useRef<Set<string>>(new Set(["welcome"]));
+  const knownMsgIdsRef = useRef<Set<string>>(new Set([CHAT_WELCOME_ID]));
   const activeTabRef = useRef<ActiveTab>(activeTab);
   const agentNameRef = useRef<string | null>(null);
   const headsUpTimerRef = useRef<number | null>(null);
@@ -467,7 +486,62 @@ export const ZohoASAPWidget = ({
     // DE Desk (advisor API) powers the Desk tab on the public site.
     setAssistantAvailable(true);
     analytics.chatOpened();
+
+    // B1: closing mid-greeting cancels typewrite; on reopen snap to the full
+    // greeting + starters instead of leaving a stranded partial and no chips.
+    if (greetedOnceRef.current) {
+      if (!greetingComplete) {
+        const full = greetingForPage(deskPage);
+        setGreetingVisible(full);
+        setGreetingComplete(true);
+        setShowStarterChips(true);
+      }
+      return;
+    }
+    greetedOnceRef.current = true;
+    const full = greetingForPage(deskPage);
+    setChatMessages((current) => {
+      if (current.length === 1 && current[0]?.id === CHAT_WELCOME_ID) {
+        return [{ ...current[0], content: full, createdAt: new Date().toISOString() }];
+      }
+      return current;
+    });
+    greetingCancelRef.current.cancelled = false;
+    setGreetingComplete(false);
+    setShowStarterChips(false);
+    typewriteText(
+      full,
+      (partial) => setGreetingVisible(partial),
+      () => {
+        setGreetingVisible(full);
+        setGreetingComplete(true);
+        setShowStarterChips(true);
+      },
+      { signal: greetingCancelRef.current },
+    );
+    return () => {
+      greetingCancelRef.current.cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  useEffect(() => () => {
+    revealCancelRef.current.cancelled = true;
+  }, []);
+
+  useEffect(() => {
+    if (!isChatSending) {
+      setShowTypingDots(false);
+      return;
+    }
+    // R2: typing dots OFF under reduced motion (not just animation paused).
+    if (prefersReducedMotion()) {
+      setShowTypingDots(false);
+      return;
+    }
+    const id = window.setTimeout(() => setShowTypingDots(true), 250);
+    return () => window.clearTimeout(id);
+  }, [isChatSending]);
 
   useEffect(() => {
     document.documentElement.toggleAttribute("data-de-desk-open", isOpen);
@@ -481,6 +555,7 @@ export const ZohoASAPWidget = ({
   useEffect(() => {
     const onOpen = (event: Event) => {
       const detail = (event as CustomEvent<OpenMspAdvisorDetail>).detail || {};
+      clearPendingMspAdvisorOpen();
       ignoreDismissUntilRef.current = Date.now() + 400;
       setIsOpen(true);
       setActiveTab(detail.tab ?? "chat");
@@ -493,13 +568,16 @@ export const ZohoASAPWidget = ({
       if (seed) setPendingSeed(seed);
     };
     window.addEventListener("de-open-msp-advisor", onOpen as EventListener);
+    // Replay a launcher click that happened before this (code-split) widget mounted.
+    const pending = takePendingMspAdvisorOpen();
+    if (pending) onOpen(new CustomEvent("de-open-msp-advisor", { detail: pending }));
     return () => window.removeEventListener("de-open-msp-advisor", onOpen as EventListener);
   }, []);
 
   useEffect(() => {
     if (activeTab !== "chat") return;
     chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [activeTab, chatMessages]);
+  }, [activeTab, chatMessages, greetingVisible, reveal, showTypingDots, showStarterChips]);
 
   useEffect(() => {
     if (activeTab === "chat" || !isChatSending) return;
@@ -619,6 +697,10 @@ export const ZohoASAPWidget = ({
       return;
     }
 
+    setShowStarterChips(false);
+    revealCancelRef.current.cancelled = true;
+    setReveal(null);
+
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       role: "user",
@@ -649,13 +731,7 @@ export const ZohoASAPWidget = ({
           pageContext: {
             pathname: location,
             pageTitle: typeof document !== "undefined" ? document.title : undefined,
-            pageType: location.includes("/store")
-              ? "store"
-              : location.includes("cyber")
-                ? "cybersecurity"
-                : location === "/"
-                  ? "home"
-                  : "other",
+            pageType: inferDeskPageType(location),
           },
         }),
       });
@@ -704,6 +780,16 @@ export const ZohoASAPWidget = ({
           supportChips,
         },
       ]);
+
+      revealCancelRef.current = { cancelled: false };
+      setReveal({ id: assistantId, shown: "", done: false });
+      streamWords(
+        replyContent,
+        (partial) => setReveal({ id: assistantId, shown: partial, done: false }),
+        () => setReveal({ id: assistantId, shown: replyContent, done: true }),
+        { signal: revealCancelRef.current },
+      );
+
       if (activeTabRef.current !== "chat") {
         setUnreadChatCount((count) => count + 1);
         showHeadsUp({
@@ -963,6 +1049,8 @@ export const ZohoASAPWidget = ({
 
   if (!isEnabled) return null;
 
+  const reduceMotion = prefersReducedMotion();
+
   const dockClear =
     "calc(var(--de-chrome-inset) + env(safe-area-inset-bottom, 0px) + var(--de-cookie-h, 0px) + var(--de-unified-bar-h, 0px))";
 
@@ -1040,7 +1128,7 @@ export const ZohoASAPWidget = ({
                 data-testid="desk-drag-handle"
                 aria-label={canDrag && !isDeskFullscreen ? "Move DE Desk window. Double-click to reset size and position." : undefined}
               >
-                <div className="de-desk-avatar">
+                <div className="de-desk-avatar de-desk-avatar-idle">
                   DE
                   <span className="de-desk-avatar-dot" />
                 </div>
@@ -1175,14 +1263,26 @@ export const ZohoASAPWidget = ({
                   data-testid="panel-support-chat"
                 >
                   <div className="de-desk-scroll" aria-live="polite">
-                    {chatMessages.map((chatMessage, index) => {
+                    {chatMessages.map((chatMessage) => {
                       const isUser = chatMessage.role === "user";
                       const isAgent = chatMessage.role === "agent";
-                      const isOpening = !isUser && index === 0;
+                      const isOpening = !isUser && chatMessage.id === CHAT_WELCOME_ID;
+                      const isRevealing = reveal?.id === chatMessage.id;
+                      const bubbleText = isOpening
+                        ? greetingVisible || (greetingComplete ? chatMessage.content : "")
+                        : isRevealing && !reveal.done
+                          ? reveal.shown
+                          : chatMessage.content;
+                      const showCaret =
+                        !reduceMotion &&
+                        ((isOpening && !greetingComplete) || (isRevealing && !reveal.done));
+                      const actionsReady =
+                        !!chatMessage.supportChips?.length &&
+                        (!isRevealing || reveal.done);
                       return (
                         <div
                           key={chatMessage.id}
-                          className={`de-desk-msg ${isUser ? "is-user" : "is-bot"}`}
+                          className={`de-desk-msg ${isUser ? "is-user de-desk-msg-pop" : "is-bot"}`}
                         >
                           {!isUser ? (
                             <div className="de-desk-msg-id" aria-hidden="true">
@@ -1204,7 +1304,14 @@ export const ZohoASAPWidget = ({
                                 isUser ? "is-user" : isAgent ? "is-agent" : "is-bot"
                               }`}
                             >
-                              <p className="whitespace-pre-wrap">{chatMessage.content}</p>
+                              {/* R3: sr-only only while the visible <p> is aria-hidden (during caret reveal). */}
+                              {showCaret ? (
+                                <span className="sr-only">{chatMessage.content}</span>
+                              ) : null}
+                              <p className="whitespace-pre-wrap" aria-hidden={showCaret || undefined}>
+                                {bubbleText}
+                                {showCaret ? <span className="de-desk-caret" aria-hidden="true" /> : null}
+                              </p>
                             </div>
                             {chatMessage.createdAt && formatDeskMessageTime(chatMessage.createdAt) ? (
                               <time
@@ -1214,9 +1321,9 @@ export const ZohoASAPWidget = ({
                                 {formatDeskMessageTime(chatMessage.createdAt)}
                               </time>
                             ) : null}
-                            {chatMessage.supportChips?.length ? (
+                            {actionsReady ? (
                               <div className="de-desk-chips" role="group" aria-label="Open a support ticket">
-                                {chatMessage.supportChips.map((chipId) => {
+                                {chatMessage.supportChips!.map((chipId, chipIndex) => {
                                   const chip = DESK_TICKET_CHIPS.find((item) => item.id === chipId);
                                   if (!chip) return null;
                                   return (
@@ -1225,7 +1332,8 @@ export const ZohoASAPWidget = ({
                                       type="button"
                                       data-testid={`ask-support-chip-${chip.id}`}
                                       onClick={() => openSupportWithChip(chip.id)}
-                                      className="de-desk-chip"
+                                      className="de-desk-chip de-desk-action-fade"
+                                      style={{ animationDelay: `${chipIndex * 80}ms` }}
                                     >
                                       <span className="de-desk-chip-icon">{getDeskChipIcon(chip.id)}</span>
                                       <span className="de-desk-chip-label">{chip.label}</span>
@@ -1240,49 +1348,59 @@ export const ZohoASAPWidget = ({
                       );
                     })}
 
-                    {chatMessages.length === 1 && chatMessages[0]?.id === "welcome" ? (
-                      <div className="de-desk-discover">
-                        <div className="de-desk-discover-intro">
-                          <p className="de-desk-launch-heading">Engineering &amp; IT advisor</p>
-                          <h3>How can our Arizona team assist you?</h3>
-                          <p>Choose a prompt or type below for real-time guidance:</p>
-                        </div>
-                        <div className="de-desk-discover-list" role="group" aria-label="Common questions">
-                          {QUICK_CHAT_PROMPTS.map(({ label, ticketChip, icon: PromptIcon }) => (
-                            <button
-                              key={label}
-                              type="button"
-                              data-testid={`ask-prompt-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
-                              onClick={() => {
-                                if (ticketChip) {
-                                  selectTab("ticket");
-                                  applyTicketChip(ticketChip);
-                                  return;
-                                }
-                                void handleSendChat(label);
-                              }}
-                              className={`de-desk-discover-row${ticketChip ? " is-incident" : ""}`}
-                            >
-                              <span className="de-desk-discover-icon">
-                                <PromptIcon aria-hidden="true" />
-                              </span>
-                              <span className="de-desk-discover-label">{label}</span>
-                              <ChevronRight className="de-desk-discover-arrow" aria-hidden="true" />
-                            </button>
-                          ))}
+                    {showStarterChips &&
+                    chatMessages.length === 1 &&
+                    chatMessages[0]?.id === CHAT_WELCOME_ID &&
+                    greetingComplete ? (
+                      <div className="de-desk-discover" data-testid="ask-de-starter-chips">
+                        <div className="de-desk-discover-list" role="group" aria-label="Suggested questions">
+                          {startersForPage(deskPage).map((chip: DeskMotionChip, chipIndex) => {
+                            const PromptIcon = MOTION_CHIP_ICONS[chip.icon];
+                            return (
+                              <button
+                                key={chip.label}
+                                type="button"
+                                data-testid={`ask-prompt-${chip.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                                style={{ animationDelay: `${chipIndex * 90}ms` }}
+                                onClick={() => {
+                                  setShowStarterChips(false);
+                                  if (chip.ticketChip) {
+                                    selectTab("ticket");
+                                    applyTicketChip(chip.ticketChip);
+                                    return;
+                                  }
+                                  void handleSendChat(chip.label);
+                                }}
+                                className={`de-desk-discover-row de-desk-chip-in${chip.ticketChip ? " is-incident" : ""}`}
+                              >
+                                <span className="de-desk-discover-icon">
+                                  <PromptIcon aria-hidden="true" />
+                                </span>
+                                <span className="de-desk-discover-label">{chip.label}</span>
+                                <ChevronRight className="de-desk-discover-arrow" aria-hidden="true" />
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     ) : null}
 
+                    {/* The status is announced for the whole send; the bubble only renders once it has something to show. */}
                     {isChatSending && (
-                      <div className="de-desk-msg is-bot" aria-live="polite">
+                      <span className="sr-only" aria-live="polite">DE Desk is typing…</span>
+                    )}
+                    {isChatSending && (showTypingDots || prefersReducedMotion()) && (
+                      <div className="de-desk-msg is-bot">
                         <div className="de-desk-msg-id" aria-hidden="true">DE</div>
                         <div className="de-desk-msg-col">
                           <div className="de-desk-bubble is-bot">
-                            <span className="inline-flex items-center gap-2">
-                              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#D3126A]" />
-                              {agentLive ? "Delivering to specialist…" : "Thinking it through…"}
-                            </span>
+                            {prefersReducedMotion() ? (
+                              <span>Working on it…</span>
+                            ) : (
+                              <span className="de-desk-typing" aria-hidden="true">
+                                <i /><i /><i />
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1891,19 +2009,72 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-avatar-dot::after,
             .de-desk-status-dot.is-on::after {
-              content: "";
-              position: absolute; inset: -3px; border-radius: 50%;
-              background: var(--desk-green);
-              opacity: 0.4;
-              animation: de-desk-pulse 2s ease-out infinite;
+              content: none;
             }
-            @keyframes de-desk-pulse {
-              0% { transform: scale(0.6); opacity: 0.5; }
-              100% { transform: scale(2.2); opacity: 0; }
+            .de-desk-avatar-idle {
+              animation: de-desk-idle 5s ease-in-out infinite;
+            }
+            @keyframes de-desk-idle {
+              0%, 100% { transform: translateY(0) rotate(0); }
+              30% { transform: translateY(-2px) rotate(-2deg); }
+              60% { transform: translateY(1px) rotate(1.5deg); }
+            }
+            .de-desk-caret {
+              display: inline-block;
+              width: 2px; height: 1em;
+              margin-left: 1px;
+              vertical-align: text-bottom;
+              background: var(--desk-pink);
+              animation: de-desk-caret-blink 0.9s step-end infinite;
+            }
+            @keyframes de-desk-caret-blink {
+              50% { opacity: 0; }
+            }
+            .de-desk-typing {
+              display: inline-flex; align-items: center; gap: 5px;
+              min-height: 1.2em;
+            }
+            .de-desk-typing i {
+              width: 6px; height: 6px; border-radius: 50%;
+              background: var(--desk-ink-muted, rgba(255,255,255,0.55));
+              animation: de-desk-typing-dot 1.2s ease-in-out infinite;
+            }
+            .de-desk-typing i:nth-child(2) { animation-delay: 0.15s; }
+            .de-desk-typing i:nth-child(3) { animation-delay: 0.3s; }
+            @keyframes de-desk-typing-dot {
+              0%, 80%, 100% { opacity: 0.35; transform: translateY(0); }
+              40% { opacity: 1; transform: translateY(-3px); }
+            }
+            .de-desk-msg-pop {
+              animation: de-desk-pop 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+            }
+            @keyframes de-desk-pop {
+              from { opacity: 0; transform: translateY(8px) scale(0.96); }
+              to { opacity: 1; transform: none; }
+            }
+            .de-desk-chip-in {
+              opacity: 0;
+              animation: de-desk-chip-in 280ms ease forwards;
+            }
+            @keyframes de-desk-chip-in {
+              from { opacity: 0; transform: translateY(6px); }
+              to { opacity: 1; transform: none; }
+            }
+            .de-desk-action-fade {
+              opacity: 0;
+              animation: de-desk-chip-in 280ms ease forwards;
+            }
+            .de-desk-discover-row.is-incident {
+              box-shadow: inset 3px 0 0 var(--desk-pink);
             }
             @media (prefers-reduced-motion: reduce) {
-              .de-desk-avatar-dot::after,
-              .de-desk-status-dot.is-on::after,
+              .de-desk-avatar-idle,
+              .de-desk-caret,
+              .de-desk-typing i,
+              .de-desk-msg-pop,
+              .de-desk-chip-in,
+              .de-desk-action-fade { animation: none !important; opacity: 1 !important; transform: none !important; }
+              .de-desk-caret { display: none !important; }
               .de-desk-shell .animate-pulse { animation: none !important; }
             }
             .de-desk-id h2 {

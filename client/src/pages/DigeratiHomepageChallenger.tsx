@@ -4,7 +4,7 @@ import { useSEO } from "@/hooks/useSEO";
 
 import { ReferenceHeroSection } from "./sections/ReferenceHeroSection";
 import { DigeratiAlertBanner } from "./sections/DigeratiAlertBanner";
-import { DigeratiServicesSection } from "./sections/DigeratiServicesSection";
+import { DigeratiThreeDoorsChallenger } from "./sections/DigeratiThreeDoorsChallenger";
 import { DigeratiHowWeProtectSection } from "./sections/DigeratiHowWeProtectSection";
 import { DigeratiLeadFormSection } from "./sections/DigeratiLeadFormSection";
 import { DigeratiWhatWeTackleSection } from "./sections/DigeratiWhatWeTackleSection";
@@ -42,9 +42,10 @@ const challengerSections: { id: string; label: string; theme: 'dark' | 'light'; 
 /**
  * Hidden review-only homepage challenger.
  *
- * This page reuses the production sections so comparisons are meaningful,
- * but changes the story order and two challenger-only surfaces. It is noindex,
- * absent from navigation, and intentionally separate from `/` until approved.
+ * This page reuses production sections where that makes comparison meaningful,
+ * but challenger-only surfaces are free to test the current DE architecture.
+ * It is noindex, absent from navigation, and intentionally separate from `/`
+ * until approved.
  */
 export const DigeratiHomepageChallenger = (): JSX.Element => {
   useSEO({
@@ -69,7 +70,7 @@ export const DigeratiHomepageChallenger = (): JSX.Element => {
         </ScrollSectionAuto>
 
         <ScrollSectionAuto id="services" chapter>
-          <DigeratiServicesSection />
+          <DigeratiThreeDoorsChallenger />
         </ScrollSectionAuto>
 
         <ScrollSectionAuto id="pricing" chapter>

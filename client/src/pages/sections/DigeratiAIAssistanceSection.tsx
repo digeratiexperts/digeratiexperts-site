@@ -5,7 +5,7 @@ import { revealTransition, revealViewport } from "@/lib/animations";
 import { useBooking } from "@/contexts/BookingContext";
 import { CTA } from "@/lib/ctaCopy";
 import { ParallaxStill } from "@/components/visual/ParallaxStill";
-import officeEveningImg from "@assets/de-arizona-office-evening.png";
+import officeEveningImg from "@assets/de-arizona-office-evening-960.webp";
 
 const capabilities = [
   "Partner-backed detection and alerting across endpoints and identity",
@@ -40,8 +40,8 @@ export const DigeratiAIAssistanceSection = (): JSX.Element => {
                   src={officeEveningImg}
                   alt="Arizona professional office where Digerati Experts supports local businesses"
                   travel={6}
-                  width={448}
-                  height={300}
+                  width={960}
+                  height={640}
                   className="absolute inset-0 opacity-90 transition-opacity duration-500 hover:opacity-100"
                 />
                 <div className="relative mt-auto w-full bg-gradient-to-t from-black/95 via-black/60 to-transparent p-6 pt-20">

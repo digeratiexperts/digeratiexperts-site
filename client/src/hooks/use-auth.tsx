@@ -17,12 +17,9 @@ interface AuthState {
 export const useAuth = create<AuthState>()(
   persist(
     (set) => ({
-      user: {
-        id: 'demo-user',
-        username: 'demo',
-        email: 'demo@taskflow.app',
-        fullName: 'Demo User',
-      },
+      // Authentication must be established by a real login flow. Shipping a
+      // synthetic user here silently granted every visitor an authenticated UI.
+      user: null,
       setUser: (user) => set({ user }),
       logout: () => set({ user: null }),
     }),

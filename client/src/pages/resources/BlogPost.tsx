@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { toWebImageUrl } from "@/lib/webImage";
 import { useParams, Link, Redirect } from "wouter";
 import { useSEO } from "@/hooks/useSEO";
 import { Helmet } from "react-helmet-async";
@@ -371,7 +372,7 @@ export default function BlogPost() {
           aria-hidden
           className="absolute inset-0 opacity-30"
           style={{
-            backgroundImage: `url(${post.coverImage})`,
+            backgroundImage: `url(${toWebImageUrl(post.coverImage)})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             filter: "blur(60px) saturate(1.4)",
@@ -544,7 +545,7 @@ export default function BlogPost() {
           {/* Hero image with frame */}
           <div className="relative aspect-video rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-[0_30px_120px_-30px_rgba(179,0,255,0.5)]">
             <img
-              src={post.coverImage}
+              src={toWebImageUrl(post.coverImage)}
               alt={post.title}
               loading="eager"
               decoding="async"
@@ -1084,10 +1085,12 @@ export default function BlogPost() {
                     >
                       <div className="relative aspect-[16/9] overflow-hidden">
                         <img
-                          src={rp.coverImage}
+                          src={toWebImageUrl(rp.coverImage)}
                           alt={rp.title}
                           loading="lazy"
                           decoding="async"
+                          width={960}
+                          height={540}
                           className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/90 via-transparent to-transparent" />

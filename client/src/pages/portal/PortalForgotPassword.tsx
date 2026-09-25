@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { AlertCircle, Mail, CheckCircle2 } from "lucide-react";
 import { Link } from "wouter";
-import logoImage from "@assets/DE-Logo-new_1762461524794.webp";
+import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
 import TurnstileWidget from "@/components/TurnstileWidget";
 
 export default function PortalForgotPassword() {
@@ -42,15 +42,15 @@ export default function PortalForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
+    <main className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
-          <img src={logoImage} alt="Digerati Experts" className="h-10 w-auto" />
+          <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
         </div>
 
         <Card className="bg-white/10 border-white/20 backdrop-blur">
           <CardHeader className="space-y-2">
-            <CardTitle className="text-2xl text-white">Reset Password</CardTitle>
+            <h1 className="text-2xl font-semibold leading-none tracking-tight text-white">Reset Password</h1>
             <CardDescription className="text-gray-300">
               Enter your email and we'll send you a reset link
             </CardDescription>
@@ -118,6 +118,6 @@ export default function PortalForgotPassword() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
   );
 }
