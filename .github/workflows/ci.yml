@@ -41,6 +41,9 @@ jobs:
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=high
 
+      - name: Validate agent claim register
+        run: npm run check:active-work
+
       - name: Typecheck
         run: npm run check
 
