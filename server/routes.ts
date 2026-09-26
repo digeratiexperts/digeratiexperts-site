@@ -3129,6 +3129,9 @@ export async function registerRoutes(app: Express) {
       const user = portalUsers.get(req.user?.email || "");
       if (!user) return res.status(404).json({ message: "User not found" });
       const mgr = managerSummaryForUser(user as OrgUserFields);
+      const client = user.clientId ? portalAuthGetClient(user.clientId) : undefined;
+      const { companyNameForPortal } = await import("./integrations/profileSync");
+      const companyName = await companyNameForPortal(client?.hubAccountId, client?.companyName ?? null);
       return res.json({
         id: user.id,
         email: user.email,
@@ -3143,6 +3146,7 @@ export async function registerRoutes(app: Express) {
         managerUserId: mgr.managerUserId,
         manager: mgr.manager,
         companyDomains: mgr.companyDomains,
+        companyName,
       });
     } catch (error: any) {
       return res.status(500).json({ message: "Failed to load profile" });
