@@ -4,12 +4,13 @@ import { createDeSyncEnvelope, parseDeSyncEnvelope, shouldEchoToHub } from "./de
 import { signDeSyncRequest, timingSafeStringEqual, verifySignedRequest } from "./deSyncAuth";
 import {
   enqueueOutbox,
+  getHubProjectionRecord,
   listOutbox,
   resetDeSyncMemory,
 } from "./deSyncStore";
 import { resetInboxLifecycleMemory } from "./deSyncInboxLifecycle";
 import { enqueueWebsiteCommand } from "./enqueueWebsiteCommand";
-import { handleHubEvents, resetHubProjections } from "./hubEvents";
+import { getHubProjection, handleHubEvents, resetHubProjections } from "./hubEvents";
 import { readHubDeliveryResult } from "./techSalesClient";
 import type { Request, Response } from "express";
 
@@ -279,6 +280,42 @@ describe("lifecycle A–H", () => {
     await handleHubEvents(mockReq({ body: envelope }), res);
     expect((res.body as { ok?: boolean }).ok).toBe(true);
     expect(envelope.canonicalAccountId).toBe("12");
+  });
+
+  it("stores a Hub projection for the canonical account and ignores an older event", async () => {
+    const newer = createDeSyncEnvelope({
+      eventType: "quote.accepted",
+      source: "techsales",
+      entityType: "quote",
+      entityId: "88",
+      canonicalAccountId: "12",
+      payload: { status: "accepted", quoteId: 88 },
+    });
+    const accepted = mockRes();
+    await handleHubEvents(mockReq({ body: newer }), accepted);
+    expect(accepted.statusCode).toBe(200);
+
+    const replay = mockRes();
+    await handleHubEvents(mockReq({ body: newer }), replay);
+    expect((replay.body as { duplicate?: boolean }).duplicate).toBe(true);
+
+    const older = createDeSyncEnvelope({
+      eventType: "quote.updated",
+      source: "techsales",
+      entityType: "quote",
+      entityId: "88",
+      payload: { status: "draft" },
+    });
+    older.occurredAt = new Date(Date.parse(newer.occurredAt) - 60_000).toISOString();
+    const stale = mockRes();
+    await handleHubEvents(mockReq({ body: older }), stale);
+    expect(stale.statusCode).toBe(200);
+
+    const row = await getHubProjectionRecord("quote", "88");
+    expect(row?.canonicalAccountId).toBe("12");
+    expect(row?.eventId).toBe(newer.eventId);
+    expect(row?.payload.status).toBe("accepted");
+    expect(await getHubProjection("quote", "88")).toMatchObject({ status: "accepted" });
   });
 
   it("keeps portalClientId on a website lead envelope", async () => {
