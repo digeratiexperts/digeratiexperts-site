@@ -40,6 +40,8 @@ Guardz is the default platform for new ProActive implementations. Blackpoint Cyb
 
 This mapping is the packaging baseline. Commercial cost and margin still require verified vendor source data before quoting or margin decisions.
 
+**GCC High / CUI guardrail:** Business-GCCH and Enterprise-GCCH inherit the DE Security Foundation service requirement, but they do not automatically inherit the standard Guardz implementation. Provider eligibility, data residency, government-cloud compatibility, and compliance scope must be verified separately before assigning a platform.
+
 ## Blackpoint commercial rule
 
 Blackpoint remains the active backup provider. Its exact package mapping, current costs, minimums, entitlements, and margin model must be stored from verified commercial evidence. Unknown values remain **review-required**; never substitute Guardz economics or invent a Blackpoint cost.
