@@ -178,12 +178,13 @@ export const resourceLandingMeta: Record<string, ResourceLandingMeta> = {
   },
   "proactive-it-ecosystem-datasheet": {
     tagline:
-      "Entry-level managed IT with baseline cybersecurity for businesses that want a real partner instead of break/fix support.",
+      "Entry-level managed IT with the DE Security Foundation included for businesses that want a real partner instead of break/fix support.",
     forWho:
       "Small businesses moving off reactive IT support and looking for predictable coverage on the essentials.",
     inside: [
       "Managed service desk and Microsoft 365 / Google Workspace support",
-      "Baseline endpoint security, email protection, and MFA",
+      "Managed endpoint security, email protection, MFA, and security monitoring baseline",
+      "Security awareness and phishing resilience",
       "Basic IT planning and ownership",
       "Optional add-ons: Managed Workplace, BCDR, UCaaS",
     ],
@@ -192,18 +193,19 @@ export const resourceLandingMeta: Record<string, ResourceLandingMeta> = {
   },
   "proactive-office-ecosystem-datasheet": {
     tagline:
-      "The small-office operating package — managed IT, stronger identity, included endpoint backup, and a real annual review.",
+      "The small-office operating package — managed IT, 24/7 managed detection and response, stronger identity, endpoint backup, and a real annual review.",
     forWho:
       "Growing offices that need their network, devices, identity, and backup managed as one package.",
     inside: [
       "Everything in ProActive IT, plus full Managed Workplace",
       "Stronger endpoint security, email protection, and identity controls",
+      "Security awareness training, phishing simulation, and 24/7 managed detection and response",
       "Managed network and connectivity",
       "Endpoint backup included; BCDR available as add-on",
       "1× combined technology + cybersecurity review per year",
     ],
     positioning:
-      "The right starting point for offices that have outgrown reactive IT but don’t yet need full security operations.",
+      "The right starting point for offices that need 24/7 managed threat response but not yet the deeper BCDR, compliance, and governance scope of ProActive Business.",
   },
   "proactive-business-ecosystem-datasheet": {
     tagline:

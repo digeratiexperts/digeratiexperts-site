@@ -12,8 +12,8 @@ Your Digerati portal integrates with 8 key vendors across 3 categories:
 
 ### 2️⃣ Security & Device Management (3)
 - **JumpCloud** - Directory & device management
-- **Coro.net** - Managed security
-- **BlackPoint** - EDR/MDR
+- **Guardz** - Primary/default DE managed security platform
+- **Blackpoint Cyber** - Approved backup/alternate MDR provider
 
 ### 3️⃣ Sales Intelligence (1)
 - **Seamless.ai** - B2B contact data

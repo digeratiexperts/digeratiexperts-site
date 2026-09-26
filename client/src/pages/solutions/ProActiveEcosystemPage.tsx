@@ -29,7 +29,7 @@ const lifecycle = [
   { title: "Assessment", body: "Review identity, endpoints, email, backups, network, and operating reality — not a sales script." },
   { title: "Roadmap", body: "Match the operating model to the environment. If Office would need heavy modification, Business is the fit." },
   { title: "Implementation", body: "Documented credentials, owned by you. Controls, backup, and monitoring sized to the model." },
-  { title: "Operations", body: "Day-to-day support, security operations where included, and reviews at the cadence of that tier." },
+  { title: "Operations", body: "Day-to-day support and managed security are included at every tier; detection, response, recovery, compliance, and review depth increase with the operating model." },
 ];
 
 export default function ProActiveEcosystemPage() {
@@ -90,7 +90,7 @@ export default function ProActiveEcosystemPage() {
             className="grid gap-6 md:grid-cols-3"
           >
             {[
-              { icon: Shield, title: "Cybersecurity-first IT", body: "Identity, endpoints, email, and recovery are designed in — not bolted on after a help-desk contract." },
+              { icon: Shield, title: "Cybersecurity-first IT", body: "Every ProActive tier includes the DE Security Foundation across identity, endpoint, email, awareness, and managed security monitoring. Higher tiers add deeper response, recovery, compliance, and governance." },
               { icon: Layers, title: "One accountable model", body: "Support, workplace, security operations, and strategy sit in one operating relationship instead of a pile of vendors." },
               { icon: GitBranch, title: "Fit, not upsell theater", body: "We match users, devices, locations, infrastructure, compliance, and whether you need fully managed or co-managed coverage." },
             ].map((item) => (
@@ -161,13 +161,13 @@ export default function ProActiveEcosystemPage() {
               <h2 className="font-heading text-2xl font-semibold text-white">Capabilities added per tier</h2>
               <ul className="mt-6 space-y-4">
                 <li className="text-sm leading-relaxed text-white/70">
-                  <span className="font-semibold text-white">IT</span> — service desk, endpoint foundation, identity guidance, documented environment. Starts at {formatUserPrice("it")} ({formatPrice(pricing.it.monthlyMin)}/mo minimum).
+                  <span className="font-semibold text-white">IT</span> — service desk plus the DE Security Foundation: managed endpoint, identity, email, awareness, and security monitoring baseline. Starts at {formatUserPrice("it")} ({formatPrice(pricing.it.monthlyMin)}/mo minimum).
                 </li>
                 <li className="text-sm leading-relaxed text-white/70">
-                  <span className="font-semibold text-white">Office</span> — adds managed network, stronger identity/email hygiene, endpoint backup, annual technology + cyber review. Starts at {formatUserPrice("office")} ({formatPrice(pricing.office.monthlyMin)}/mo minimum).
+                  <span className="font-semibold text-white">Office</span> — adds 24/7 managed detection and response, managed network, stronger identity/email protection, endpoint backup, and an annual technology + cyber review. Starts at {formatUserPrice("office")} ({formatPrice(pricing.office.monthlyMin)}/mo minimum).
                 </li>
                 <li className="text-sm leading-relaxed text-white/70">
-                  <span className="font-semibold text-white">Business</span> — adds security operations / threat detection, awareness training, BCDR posture, compliance/risk reporting support, semi-annual reviews. Starts at {formatUserPrice("business")} ({formatPrice(pricing.business.monthlyMin)}/mo minimum).
+                  <span className="font-semibold text-white">Business</span> — deepens security operations and response, adds BCDR posture, compliance/risk reporting support, and semi-annual reviews. Starts at {formatUserPrice("business")} ({formatPrice(pricing.business.monthlyMin)}/mo minimum).
                 </li>
                 <li className="text-sm leading-relaxed text-white/70">
                   <span className="font-semibold text-white">Enterprise</span> — adds unified posture reporting, deeper compliance reporting, custom BCDR architecture support, privileged access program elements, quarterly executive reviews. Starts at {formatUserPrice("enterprise")} ({formatPrice(pricing.enterprise.monthlyMin)}/mo minimum).

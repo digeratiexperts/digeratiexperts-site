@@ -26,7 +26,8 @@ const config: TierPageConfig = {
     "A standing semi-annual review where leadership sees risk, spend, and roadmap in plain English",
   ],
   included: [
-    "Everything in ProActive IT Ecosystem",
+    "Everything in ProActive Office Ecosystem",
+    "DE Security Foundation with 24/7 Managed Detection & Response",
     "24/7 Security Operations Center (SOC)",
     "Managed Detection & Response (MDR)",
     "Threat Detection & response across endpoints, identity, and email",
