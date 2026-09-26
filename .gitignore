@@ -76,3 +76,8 @@ scrollcraft/builds/*/out/
 scrollcraft/diagrams/lab/
 # web-design-rules screenshot helper output (regenerated per run)
 temporary screenshots/
+
+# Raw visual-review capture PNGs are regenerable at any time with
+# scripts/capture-page-review.mjs; only the compressed web/ set and the review
+# board are tracked, so a capture run does not add ~20 MB per route.
+artifacts/visual-qa/*-review/*.png
