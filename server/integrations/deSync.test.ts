@@ -289,7 +289,15 @@ describe("lifecycle A–H", () => {
       entityType: "quote",
       entityId: "88",
       canonicalAccountId: "12",
-      payload: { status: "accepted", quoteId: 88 },
+      payload: {
+        status: "accepted",
+        quoteId: 88,
+        margin: 40,
+        sku: "VEEAM-1",
+        vendorName: "Veeam",
+        unitCost: 9,
+        accountLifecycleStatus: "At Risk",
+      },
     });
     const accepted = mockRes();
     await handleHubEvents(mockReq({ body: newer }), accepted);
@@ -315,7 +323,12 @@ describe("lifecycle A–H", () => {
     expect(row?.canonicalAccountId).toBe("12");
     expect(row?.eventId).toBe(newer.eventId);
     expect(row?.payload.status).toBe("accepted");
-    expect(await getHubProjection("quote", "88")).toMatchObject({ status: "accepted" });
+    expect(row?.payload).not.toHaveProperty("margin");
+    expect(row?.payload).not.toHaveProperty("sku");
+    expect(row?.payload).not.toHaveProperty("vendorName");
+    expect(row?.payload).not.toHaveProperty("unitCost");
+    expect(row?.payload).not.toHaveProperty("accountLifecycleStatus");
+    expect(await getHubProjection("quote", "88")).toMatchObject({ status: "accepted", quoteId: 88 });
   });
 
   it("keeps portalClientId on a website lead envelope", async () => {

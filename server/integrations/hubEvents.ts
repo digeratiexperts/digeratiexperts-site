@@ -14,13 +14,14 @@ import {
 import { beginInbox, markInboxApplied } from "./deSyncInboxLifecycle";
 import { persistHubAccountId } from "./techSalesClient";
 import { publishPortalProjection } from "./portalSse";
+import { toClientProjection, toPublicCatalog } from "./clientProjection";
 
 export async function getHubProjection(
   entityType: string,
   entityId: string,
 ): Promise<Record<string, unknown> | undefined> {
   const row = await getHubProjectionRecord(entityType, entityId);
-  return row?.payload;
+  return row ? toClientProjection(row.payload) : undefined;
 }
 
 export function resetHubProjections(): void {
@@ -59,12 +60,12 @@ async function applyHubEvent(envelope: DeSyncEnvelope): Promise<void> {
       canonicalAccountId: envelope.canonicalAccountId ?? existing?.canonicalAccountId ?? null,
       eventType: envelope.eventType,
       eventId: envelope.eventId,
-      payload: {
+      payload: toClientProjection({
         ...(previous || {}),
         ...envelope.payload,
         eventType: envelope.eventType,
         updatedAt: envelope.occurredAt,
-      },
+      }),
       updatedAt: Number.isFinite(occurredAt.getTime()) ? occurredAt : new Date(),
     });
 
@@ -77,7 +78,7 @@ async function applyHubEvent(envelope: DeSyncEnvelope): Promise<void> {
         envelope.payload.catalog && typeof envelope.payload.catalog === "object"
           ? (envelope.payload.catalog as Record<string, unknown>)
           : envelope.payload;
-      await saveCatalogSnapshot(snapshot, envelope.eventId);
+      await saveCatalogSnapshot(toPublicCatalog(snapshot), envelope.eventId);
     }
 
     await eventBus.emit(

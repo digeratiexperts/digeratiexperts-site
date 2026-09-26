@@ -18,6 +18,7 @@ import { getClient, listUniqueUsers } from "../portalAuthStore";
 import { ensureDeSyncSchema } from "./ensureDeSyncSchema";
 import { logger } from "../logger";
 import { assertPortalCommandAllowed } from "./tenantIdentity";
+import { toPublicCatalog } from "./clientProjection";
 
 type AuthedRequest = Request & {
   user?: { role?: string; clientId?: string | null };
@@ -88,12 +89,17 @@ export function registerDeSyncRoutes(app: Express, authMiddleware: AuthMiddlewar
   app.get("/api/integrations/v1/public-catalog", requireDeSyncSchema, async (_req: Request, res: Response) => {
     const cached = await getCatalogSnapshot();
     if (cached) {
-      return res.json({ source: "last_known_good", publishedAt: cached.publishedAt, ...cached.snapshot });
+      return res.json({
+        source: "last_known_good",
+        publishedAt: cached.publishedAt,
+        ...toPublicCatalog(cached.snapshot),
+      });
     }
     const live = await fetchPublicCatalog();
     if (live) {
-      await saveCatalogSnapshot(live);
-      return res.json({ source: "hub", ...live });
+      const safe = toPublicCatalog(live);
+      await saveCatalogSnapshot(safe);
+      return res.json({ source: "hub", ...safe });
     }
     return res.json({
       source: "none",
