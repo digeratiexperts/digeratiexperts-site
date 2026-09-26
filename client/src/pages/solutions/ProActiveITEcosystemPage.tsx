@@ -8,28 +8,31 @@ const config: TierPageConfig = {
   canonicalPath: "/solutions/proactive-it-ecosystem",
   seoTitle: "ProActive IT Ecosystem | Digerati Experts",
   seoDescription:
-    `Entry managed IT package from Digerati Experts. Starts at ${formatUserPrice("it")} with a ${formatPrice(pricing.it.monthlyMin)}/mo minimum. Foundational identity, endpoint, network, and help-desk coverage. Backup is not included by default.`,
+    `Entry managed IT package from Digerati Experts. Starts at ${formatUserPrice("it")} with a ${formatPrice(pricing.it.monthlyMin)}/mo minimum. Includes the DE Security Foundation across identity, endpoint, email, awareness, and managed security monitoring. Backup is not included by default.`,
   heroBadge: "Entry managed IT",
-  tagline: "Foundational managed IT — keep the lights on, the doors locked, and the help desk reachable.",
+  tagline: "Foundational managed IT with managed cybersecurity included from day one.",
   positioning:
-    "ProActive IT Ecosystem is the floor we will operate against, not a security-led plan. It is built for Arizona SMBs that need dependable identity, endpoint, network, and help-desk coverage with predictable per-user pricing — without yet committing to the full security-first stack we deliver in Business and Enterprise. Most clients use IT as a stepping stone: stabilize the environment, document everything, then graduate into security-first packages once the foundation is clean.",
+    "ProActive IT Ecosystem is the operating floor for DE, and that floor includes managed cybersecurity. It is built for Arizona SMBs that need dependable identity, endpoint, email, security awareness, monitoring, network, and help-desk coverage with predictable per-user pricing. Higher tiers deepen detection, response, backup, compliance, and governance; security itself is never something we wait to add later.",
   whoFor: [
     "Small teams (typically 5–25 users) replacing a break-fix or in-house IT person",
     "Companies that have not yet been through a Cyber Risk Assessment and want a clean baseline first",
-    "Organizations without regulated data (no HIPAA, CMMC, PCI scope) that still want professional IT operations",
-    "Buyers who want a transparent per-user price before stepping into the full security stack",
+    "Organizations without regulated data (no HIPAA, CMMC, PCI scope) that still want a managed security baseline",
+    "Buyers who want a transparent per-user price with cybersecurity included rather than bolted on later",
   ],
   outcomes: [
     "A documented, professionally managed Microsoft 365 and endpoint environment",
     "A single accountable help desk with response-time commitments — no more guessing who to call",
     "Clear visibility into user lifecycle, licensing, and device health",
-    "A clean foundation to step up into ProActive Business when security maturity is required",
+    "A managed security foundation that can step up cleanly into 24/7 MDR, deeper recovery, compliance, and governance",
   ],
   included: [
     "Microsoft 365 / Entra ID tenant management",
     "Multi-Factor Authentication (MFA) enforcement",
     "Endpoint management & patching (Intune / RMM)",
-    "Standard antivirus / next-gen endpoint protection",
+    "Managed endpoint protection",
+    "Managed email security / anti-phishing baseline",
+    "Security Awareness Training & phishing resilience",
+    "Managed security monitoring baseline",
     "Network monitoring & basic firewall management",
     "DNS filtering / web security",
     "User onboarding & offboarding",
@@ -41,7 +44,6 @@ const config: TierPageConfig = {
   notIncluded: [
     "Endpoint Backup, BCDR, and User Cloud Storage Backup (add-on or step up to Business)",
     "24/7 Security Operations Center (SOC) and Managed Detection & Response (MDR)",
-    "Security Awareness Training program",
     "Compliance and risk reporting (HIPAA, CMMC, PCI, SOC 2 mapping)",
     "Semi-annual technology + security reviews (vCIO / QBR cadence)",
   ],
@@ -55,8 +57,8 @@ const config: TierPageConfig = {
       desc: "Image-level backup for laptops and workstations to protect against ransomware, theft, and hardware failure.",
     },
     {
-      label: "Step up to ProActive Business",
-      desc: "Adds the full security stack — SOC, MDR, Security Awareness Training, BCDR, compliance/risk reporting, and semi-annual reviews.",
+      label: "Step up to ProActive Office or Business",
+      desc: "Office adds 24/7 managed detection and response plus managed network and endpoint backup; Business adds deeper security operations, BCDR, compliance/risk reporting, and semi-annual reviews.",
     },
   ],
   reviewCadence:
