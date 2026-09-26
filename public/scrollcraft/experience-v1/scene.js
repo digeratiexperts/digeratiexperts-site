@@ -1,22 +1,42 @@
 /**
- * The DE world — Experience v1, flagship prototype.
+ * The DE world — Experience v1, revision 4.
  *
- * One environment, built in code, that every act transforms. Nothing here is
- * text and nothing here is a photograph: a floor, desks, screens, people as
- * presence, three cloud slabs, a vault, a closet, an access point, and the
- * threads that connect them. The scene is a pure function of the timeline
- * t ∈ [0, 4):
+ * Light, line and plane. Nothing else.
  *
- *   0..1  Act 1  Disconnected: everything exists, nothing lines up (1.2° off)
- *   1..2  Act 2  What's underneath: relationships, dependencies, vendors,
- *                boundaries, exceptions
- *   2..3  Act 3  The heading is wrong → the operating principle → the world
- *                corrects; DE enters as the navigator
- *   3..4  Coda   DE sees the whole environment (first state of Act 4)
+ * Revision 3 drew an office: desks as boxes, monitors as planes, people as
+ * capsules. Joe's read of it (2026-09-06) was that it sat between "deliberately
+ * abstract" and "a rendered environment" and worked as neither, and he was
+ * right. So there is no furniture here at all. A person is a point of light. A
+ * device is a small lit quad. A cloud system is a pane of glass. The ground is
+ * a grid of lines, not a surface. Nothing in this file can read as a greybox
+ * model, because nothing in it is a box.
+ *
+ * Two consequences beyond the look:
+ *   - It is far cheaper to draw (no shadow map, no standard materials, no
+ *     environment probe), which is what lets phones run it.
+ *   - Everything is additive, so overlapping light blooms for free. That is the
+ *     premium cue this scene was missing, and it costs nothing.
+ *
+ * The timeline t is the WHOLE PAGE now, not just the pinned story:
+ *
+ *   0..1  Unmanaged complexity  points scattered off a grid that is visibly
+ *                               there and unmet; threads stop short
+ *   1..2  Visible relationships the room turns to glass, threads draw in the
+ *                               spine's order, dependencies cross, four amber
+ *                               exceptions appear
+ *   2..3  Digerati direction    THE PEAK: everything snaps to the grid, gaps
+ *                               close, amber goes out, magenta runs the
+ *                               identity chains, one boundary completes
+ *   3..5  The evidence tail     the corrected world holds, keeps arcing, and
+ *                               dims behind the copy. It never cuts to flat.
+ *
+ * The camera arcs laterally the whole way and REVERSES at t≈3, on the beat
+ * where the world corrects. That reversal is the signature move: vertical
+ * scroll, lateral world, and one deliberate change of direction placed on the
+ * one moment the page exists to deliver.
  *
  * Brand floor: graphite ground, magenta only where DE acts, violet as lighting
- * only, warm dawn → cool exposure → clean level light. design/BRAND.md,
- * design/IMAGERY.md ("the idea, not the literal noun").
+ * only, warm points for people. design/BRAND.md, design/IMAGERY.md.
  */
 import * as THREE from './assets/vendor/three.module.min.js';
 
@@ -26,83 +46,56 @@ const ramp = (t, a, b) => smooth((t - a) / (b - a));
 const lerp = (a, b, k) => a + (b - a) * k;
 const rnd = (seed) => { const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
 const r2 = (seed) => rnd(seed) * 2 - 1;
+const DEG = Math.PI / 180;
 
 const C = {
-  canvas: 0x050312, floor: 0x2a2450, wall: 0x1c1636, desk: 0x3a3262, closet: 0x2a2450,
-  screen: 0xcfd8ff, warm: 0xffb27a, violet: 0x5b45e0, magenta: 0xd3126a, amber: 0xf2a13a,
-  ink: 0xf2eff5, cool: 0x8fa0ff, thread: 0xb9c4ff,
+  canvas: 0x050312,
+  warm: 0xffc79a,     // people
+  cool: 0x8fa0ff,     // systems, devices, network
+  thread: 0xb9c4ff,   // relationships
+  grid: 0x3d3570,     // the ground that is waiting to be met
+  magenta: 0xd3126a,  // DE, and only DE
+  amber: 0xf2a13a,    // an exception nobody owns
+  ink: 0xf2eff5,
 };
 
-/* ------------------------------------------------------------ materials */
-function fresnel(color, { power = 2.6, intensity = 1.3, base = 0.06, additive = true, side = THREE.FrontSide } = {}) {
-  return new THREE.ShaderMaterial({
-    uniforms: {
-      uColor: { value: new THREE.Color(color) },
-      uPower: { value: power }, uIntensity: { value: intensity }, uBase: { value: base }, uOpacity: { value: 1 },
-    },
-    vertexShader: `varying vec3 vN; varying vec3 vV;
-      void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
-    fragmentShader: `uniform vec3 uColor; uniform float uPower, uIntensity, uBase, uOpacity; varying vec3 vN; varying vec3 vV;
-      void main(){ float f = pow(1.0 - clamp(dot(normalize(vN), normalize(vV)), 0.0, 1.0), uPower); float k = uBase + f * uIntensity; gl_FragColor = vec4(uColor * k, k * uOpacity); }`,
-    transparent: true, depthWrite: false, side,
-    blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
-  });
-}
-
-function gradientTexture(stops, w = 2, h = 128) {
-  const c = document.createElement('canvas'); c.width = w; c.height = h;
-  const g = c.getContext('2d'); const grad = g.createLinearGradient(0, h, 0, 0);
-  stops.forEach(([o, col]) => grad.addColorStop(o, col));
-  g.fillStyle = grad; g.fillRect(0, 0, w, h);
-  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; return tex;
-}
-
-/** A screen: a cool interface gradient with two faint bands, never a logo. */
-function screenTexture() {
-  const c = document.createElement('canvas'); c.width = 128; c.height = 80;
+/* A soft round falloff, used for every point of light in the scene. One
+   texture, drawn once, shared: this is the whole "material" budget. */
+function glowTexture(size = 128) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
   const g = c.getContext('2d');
-  const grad = g.createLinearGradient(0, 0, 0, 80);
-  grad.addColorStop(0, '#c9d3ff'); grad.addColorStop(0.55, '#8d9ce6'); grad.addColorStop(1, '#5b67b3');
-  g.fillStyle = grad; g.fillRect(0, 0, 128, 80);
-  g.fillStyle = 'rgba(255,255,255,0.28)'; g.fillRect(10, 12, 62, 6); g.fillRect(10, 26, 92, 4); g.fillRect(10, 36, 74, 4);
-  g.fillStyle = 'rgba(20,16,40,0.35)'; g.fillRect(0, 0, 128, 8);
+  const grad = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  grad.addColorStop(0.0, 'rgba(255,255,255,1)');
+  grad.addColorStop(0.18, 'rgba(255,255,255,0.85)');
+  grad.addColorStop(0.42, 'rgba(255,255,255,0.28)');
+  grad.addColorStop(1.0, 'rgba(255,255,255,0)');
+  g.fillStyle = grad; g.fillRect(0, 0, size, size);
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; return tex;
 }
 
-/**
- * A procedural environment: a dark room with one warm wall (the window) and a
- * faint cool ceiling. Gives every standard material a sheen to reflect, which
- * is most of what separates "lit object" from "coloured box".
- */
-function roomEnvironment() {
-  const size = 64;
-  const face = (top, bottom, mid) => {
-    const c = document.createElement('canvas'); c.width = size; c.height = size;
-    const g = c.getContext('2d'); const grad = g.createLinearGradient(0, 0, 0, size);
-    grad.addColorStop(0, top); if (mid) grad.addColorStop(0.5, mid); grad.addColorStop(1, bottom);
-    g.fillStyle = grad; g.fillRect(0, 0, size, size); return c;
-  };
-  const faces = [
-    face('#1a1630', '#0a0716'),            // +x
-    face('#3a2214', '#7a4322', '#5a301a'), // -x : the window wall, warm
-    face('#2a2444', '#2a2444'),            // +y : ceiling, cool
-    face('#06040c', '#06040c'),            // -y : floor
-    face('#141026', '#0a0716'),            // +z
-    face('#100c20', '#0a0716'),            // -z
-  ];
-  const tex = new THREE.CubeTexture(faces); tex.colorSpace = THREE.SRGBColorSpace; tex.needsUpdate = true;
-  return tex;
+/* The backdrop: one vertical gradient behind everything, so the frame is never
+   flat black and the horizon reads without a wall being modelled. */
+function backdropTexture() {
+  const c = document.createElement('canvas'); c.width = 4; c.height = 256;
+  const g = c.getContext('2d');
+  const grad = g.createLinearGradient(0, 256, 0, 0);
+  grad.addColorStop(0.00, '#05030f');
+  grad.addColorStop(0.34, '#0d0a22');
+  grad.addColorStop(0.62, '#181140');
+  grad.addColorStop(1.00, '#070518');
+  g.fillStyle = grad; g.fillRect(0, 0, 4, 256);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; return tex;
 }
 
-/* --------------------------------------------------------------- thread */
+/* ------------------------------------------------------------------ thread */
 const RADIAL = 5;
 class Thread {
-  constructor(color, { seg = 40, radius = 0.014, lift = 0.55, additive = true } = {}) {
+  constructor(color, { seg = 34, radius = 0.012, lift = 0.55 } = {}) {
     this.seg = seg; this.radius = radius; this.lift = lift;
-    this.mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9, depthWrite: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending });
+    this.mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending });
     this.mesh = new THREE.Mesh(new THREE.BufferGeometry(), this.mat);
     this.mesh.frustumCulled = false;
-    this.head = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshBasicMaterial({ color: C.magenta, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+    this.head = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshBasicMaterial({ color: C.magenta, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
     this.from = new THREE.Vector3(); this.to = new THREE.Vector3(); this.progress = 0; this.curve = null;
   }
   set(from, to) {
@@ -127,345 +120,362 @@ class Thread {
   }
 }
 
-/* ----------------------------------------------------------------- world */
+/* ------------------------------------------------------------------- world */
 export function createWorld(canvas, opts = {}) {
   const portrait = () => canvas.clientHeight > canvas.clientWidth;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, opts.maxDpr || 1.5));
   renderer.setClearColor(C.canvas, 1);
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.45;
-  renderer.shadowMap.enabled = !!opts.shadows;
-  renderer.shadowMap.type = THREE.PCFShadowMap;
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(C.canvas, 20, 44);
-  scene.environment = roomEnvironment();
-  scene.environmentIntensity = 0.85;
-  const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 80);
+  scene.fog = new THREE.Fog(C.canvas, 16, 46);
+  const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 90);
   const world = new THREE.Group(); scene.add(world);
+  const glow = glowTexture();
 
-  /* lights */
-  const sun = new THREE.DirectionalLight(C.warm, 3.2); sun.position.set(-7, 4.5, 2.5); sun.target.position.set(1, 0, -1);
-  scene.add(sun, sun.target);
-  if (opts.shadows) { sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); const s = sun.shadow.camera; s.left = -9; s.right = 9; s.top = 8; s.bottom = -8; s.near = 1; s.far = 30; sun.shadow.bias = -0.0008; }
-  const ambient = new THREE.AmbientLight(C.violet, 0.6); scene.add(ambient);
-  const hemi = new THREE.HemisphereLight(0x4a4270, 0x14102a, 1.3); scene.add(hemi);
-  const closetLight = new THREE.PointLight(C.cool, 0, 7, 2); closetLight.position.set(5.2, 1.6, -3.4); scene.add(closetLight);
-  const deLight = new THREE.PointLight(C.magenta, 0, 9, 2); deLight.position.set(0, 2.2, 0); scene.add(deLight);
-  // a warm practical near the door so the opening frame has a lit foreground
-  const doorLight = new THREE.PointLight(0xffc48a, 6, 9, 2); doorLight.position.set(1.2, 2.4, 3.2); scene.add(doorLight);
+  // The backdrop is a sphere seen from the inside, not a plane. A plane leaves
+  // a hard edge in frame the moment the camera arcs far enough to see past it,
+  // and this camera arcs a long way on purpose.
+  const backdrop = new THREE.Mesh(
+    new THREE.SphereGeometry(46, 24, 16),
+    new THREE.MeshBasicMaterial({ map: backdropTexture(), side: THREE.BackSide, depthWrite: false, fog: false }),
+  );
+  scene.add(backdrop);
 
-  /* floor, walls, window */
-  const floorMat = new THREE.MeshStandardMaterial({ color: C.floor, roughness: 0.62, metalness: 0.12, envMapIntensity: 0.9, transparent: true, opacity: 1 });
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(14, 9), floorMat); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; world.add(floor);
-  const wallMat = new THREE.MeshStandardMaterial({ color: C.wall, roughness: 0.95, transparent: true, opacity: 1 });
-  const farWall = new THREE.Mesh(new THREE.PlaneGeometry(14, 3.2), wallMat); farWall.position.set(0, 1.6, -4.5); world.add(farWall);
-  const windowTex = gradientTexture([[0, '#3b2416'], [0.35, '#6a3a1e'], [0.7, '#20172e'], [1, '#0a0716']]);
-  const windowMat = new THREE.MeshBasicMaterial({ map: windowTex, transparent: true, opacity: 1 });
-  const win = new THREE.Mesh(new THREE.PlaneGeometry(9.2, 3.2), windowMat); win.position.set(-7.02, 1.6, -0.2); win.rotation.y = Math.PI / 2; world.add(win);
-  // outside: the horizon beyond the far wall
-  const horizon = new THREE.Mesh(new THREE.PlaneGeometry(40, 0.03), new THREE.MeshBasicMaterial({ color: C.cool, transparent: true, opacity: 0.0, blending: THREE.AdditiveBlending, depthWrite: false }));
-  horizon.position.set(0, 0.9, -10.5); world.add(horizon);
+  /* ---------------------------------------------------------------- ground */
+  // A grid of lines, not a surface. In act 1 it is dim and nothing sits on it;
+  // the correction is the moment every point finally meets it.
+  const gridMat = new THREE.LineBasicMaterial({ color: C.grid, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false });
+  const gridPts = [];
+  const EXT = 9, STEP = 1.2;
+  for (let x = -EXT; x <= EXT; x += STEP) gridPts.push(new THREE.Vector3(x, 0, -EXT), new THREE.Vector3(x, 0, EXT));
+  for (let z = -EXT; z <= EXT; z += STEP) gridPts.push(new THREE.Vector3(-EXT, 0, z), new THREE.Vector3(EXT, 0, z));
+  const grid = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gridPts), gridMat);
+  world.add(grid);
 
-  // No door frame, chairs, keyboards or phones: since Joe's 2026-09-03 verdict
-  // the world leans deliberately abstract, a lit model of a business rather
-  // than a furniture render.
+  /* --------------------------------------------------------- points of light */
+  // People. Warm, soft, unportraited: presence, never a figure.
+  const SEATS = [[-3.6, -1.5], [0, -1.5], [3.6, -1.5], [-3.6, 1.2], [0, 1.2], [3.6, 1.2]];
+  const PEOPLE = [0, 2, 3, 4];
+  const personMat = new THREE.SpriteMaterial({ map: glow, color: C.warm, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false });
+  const people = PEOPLE.map((seat, i) => {
+    const s = new THREE.Sprite(personMat.clone());
+    s.scale.setScalar(0.9);
+    s.userData = { seat, dx: 0.5 * r2(i + 1), dz: 0.42 * r2(i + 11), phase: rnd(i + 5) * 6.28 };
+    world.add(s);
+    // the ring that appears when identity is drawn
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.32, 0.008, 6, 40),
+      new THREE.MeshBasicMaterial({ color: C.ink, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }),
+    );
+    ring.rotation.x = Math.PI / 2; world.add(ring); s.userData.ring = ring;
+    return s;
+  });
 
-  /* desks: base grid + per-desk disorder */
-  const DESKS = [[-3.6, -1.5], [0, -1.5], [3.6, -1.5], [-3.6, 1.2], [0, 1.2], [3.6, 1.2]];
-  const deskMat = new THREE.MeshStandardMaterial({ color: C.desk, roughness: 0.38, metalness: 0.2, envMapIntensity: 0.8 });
-  const legMat = new THREE.MeshStandardMaterial({ color: 0x110e1c, roughness: 0.6, metalness: 0.3 });
-  const standMat = new THREE.MeshStandardMaterial({ color: 0x0c0a14, roughness: 0.5, metalness: 0.4 });
-  const screenTex = screenTexture();
-  // A desk is a plinth: one slab on two blades and a lit screen with a bezel.
-  const desks = DESKS.map(([x, z], i) => {
-    const g = new THREE.Group(); g.userData = { x, z, dx: 0.38 * r2(i + 1), dz: 0.3 * r2(i + 11), ry: 0.16 * r2(i + 21) };
-    const top = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.05, 0.86), deskMat); top.position.y = 0.74; top.castShadow = top.receiveShadow = true; g.add(top);
-    const legL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.72, 0.7), legMat); legL.position.set(-0.78, 0.36, 0); g.add(legL);
-    const legR = legL.clone(); legR.position.x = 0.78; g.add(legR);
-    const stand = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.24, 0.1), standMat); stand.position.set(0, 0.87, -0.24); g.add(stand);
-    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.015, 0.2), standMat); foot.position.set(0, 0.775, -0.22); g.add(foot);
-    // screens: a lit interface with depth (bezel behind), never a white card
-    const screenMat = new THREE.MeshBasicMaterial({ map: screenTex, transparent: true, opacity: 0.0 });
-    const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.36), screenMat); screen.position.set(0, 1.16, -0.2); screen.rotation.x = -0.1; g.add(screen);
-    const bezel = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.42, 0.025), standMat); bezel.position.set(0, 1.16, -0.214); bezel.rotation.x = -0.1; g.add(bezel);
-    g.userData.screen = screenMat;
+  /* ------------------------------------------------------------ device quads */
+  // A device is a small lit rectangle standing where a screen would be. It is
+  // a plane of light, not a monitor: no bezel, no stand, no desk.
+  const deviceMat = new THREE.MeshBasicMaterial({ color: C.cool, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+  const devices = SEATS.map(([x, z], i) => {
+    const g = new THREE.Group();
+    const quad = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.38), deviceMat.clone());
+    quad.position.y = 0.86; g.add(quad);
+    // a hairline under it: the only thing that implies a surface
+    const bar = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.9, 0.006),
+      new THREE.MeshBasicMaterial({ color: C.cool, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }),
+    );
+    bar.rotation.x = -Math.PI / 2; bar.position.y = 0.6; g.add(bar);
+    g.userData = { x, z, dx: 0.46 * r2(i + 21), dz: 0.36 * r2(i + 31), ry: 0.22 * r2(i + 41), quad: quad.material, bar: bar.material };
     world.add(g); return g;
   });
-  const deskScreenAnchor = (i) => { const v = new THREE.Vector3(0, 1.13, -0.2); return desks[i].localToWorld(v); };
+  const deviceAnchor = (i) => devices[i].localToWorld(new THREE.Vector3(0, 0.86, 0));
 
-  /* meeting table, closet, access point */
-  const table = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.05, 1.05), deskMat); table.position.set(0.3, 0.74, -3.3); table.castShadow = table.receiveShadow = true; world.add(table);
-  const tableBase = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.5), legMat); tableBase.position.set(0.3, 0.36, -3.3); world.add(tableBase);
-  const closet = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.0, 0.6), new THREE.MeshStandardMaterial({ color: C.closet, roughness: 0.5, metalness: 0.2 })); closet.position.set(5.6, 1.0, -3.95); closet.castShadow = true; world.add(closet);
-  const switchMat = new THREE.MeshBasicMaterial({ color: C.cool, transparent: true, opacity: 0.15 });
-  const sw = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.08), switchMat); sw.position.set(5.6, 1.35, -3.64); world.add(sw);
-  const swAnchor = new THREE.Vector3(5.6, 1.35, -3.6);
-  const apGroup = new THREE.Group(); apGroup.userData = { x: 0, z: -0.1, dx: 0.7, dz: 0.5 };
-  const ap = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.05, 24), new THREE.MeshStandardMaterial({ color: 0x2b2640, roughness: 0.5 })); ap.position.y = 2.95; apGroup.add(ap);
-  const apRingMat = fresnel(C.cool, { power: 1.6, intensity: 1.0, base: 0.15 });
-  const apRing = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.01, 8, 48), apRingMat); apRing.rotation.x = Math.PI / 2; apRing.position.y = 2.9; apGroup.add(apRing);
-  world.add(apGroup);
-
-  /* people as presence */
-  const personMat = fresnel(0xffe7d2, { power: 2.2, intensity: 1.15, base: 0.05 });
-  const PEOPLE = [
-    { seat: 3, x: -3.6, z: 1.75, y: 0.95 },          // P1 at desk 4 (near-left), seated
-    { seat: 2, x: 3.6, z: -0.95, y: 0.95 },          // P2 at desk 3 (far-right), seated
-    { seat: -1, x: 0.3, z: -2.6, y: 0.95 },          // P3 at the table
-    { seat: 4, x: -2.4, z: 3.4, y: 1.06, walker: true }, // P4 walks in from the side and sits at desk 5 (near-middle)
-  ];
-  const people = PEOPLE.map((p) => {
-    // a figure, not a pill: shoulders and a head, both as presence
-    const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.19, 0.4, 6, 14), personMat); m.position.set(p.x, p.y, p.z); m.userData = p; world.add(m);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.115, 14, 12), personMat); head.position.y = 0.5; m.add(head);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.012, 8, 48), fresnel(C.ink, { power: 1.4, intensity: 1.2, base: 0.25 }));
-    ring.rotation.x = Math.PI / 2; ring.scale.setScalar(0.001); world.add(ring); m.userData.ring = ring; return m;
-  });
-
-  /* cloud slabs: present from the first frame, misaligned */
-  const slabMat = new THREE.MeshStandardMaterial({ color: C.cool, roughness: 0.2, metalness: 0.1, transparent: true, opacity: 0.22, depthWrite: false });
-  const edgeMat = new THREE.LineBasicMaterial({ color: C.cool, transparent: true, opacity: 0.7 });
-  const SLABS = [{ x: -3.6, name: 'email' }, { x: 0, name: 'apps' }, { x: 3.6, name: 'system' }];
+  /* ------------------------------------------------------------ glass planes */
+  // Cloud systems: panes above the floor. Edges carry them; the fill is almost
+  // nothing, so they read as glass rather than as slabs.
+  const SLABS = [{ x: -3.6 }, { x: 0 }, { x: 3.6 }];
   const slabs = SLABS.map((s, i) => {
-    const g = new THREE.Group(); g.userData = { x: s.x, y: 3.35, z: -0.15, dy: 0.5 * r2(i + 31), rx: 0.11 * r2(i + 41), rz: 0.09 * r2(i + 51), dx: 0.25 * r2(i + 61), name: s.name };
-    const box = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.06, 1.3), slabMat); g.add(box);
-    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(box.geometry), edgeMat); g.add(edges);
+    const g = new THREE.Group();
+    const geo = new THREE.PlaneGeometry(2.5, 1.35);
+    const fill = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: C.cool, transparent: true, opacity: 0.05, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    fill.rotation.x = -Math.PI / 2; g.add(fill);
+    const edge = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: C.cool, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false }));
+    edge.rotation.x = -Math.PI / 2; g.add(edge);
+    g.userData = { x: s.x, y: 3.3, z: -0.15, dy: 0.55 * r2(i + 51), dx: 0.4 * r2(i + 61), rx: 0.13 * r2(i + 71), rz: 0.11 * r2(i + 81), fill: fill.material, edge: edge.material };
     world.add(g); return g;
   });
-  const slabAnchor = (i) => slabs[i].localToWorld(new THREE.Vector3(0, -0.03, 0));
+  const slabAnchor = (i) => slabs[i].localToWorld(new THREE.Vector3(0, 0, 0));
 
-  /* the vault below the floor */
-  const vaultMat = new THREE.MeshStandardMaterial({ color: 0x6f7fcc, roughness: 0.3, transparent: true, opacity: 0, depthWrite: false });
-  const vault = new THREE.Mesh(new THREE.BoxGeometry(7, 0.5, 3.4), vaultMat); vault.position.set(0, -0.78, -0.2); world.add(vault);
-  const vaultEdges = new THREE.LineSegments(new THREE.EdgesGeometry(vault.geometry), new THREE.LineBasicMaterial({ color: C.cool, transparent: true, opacity: 0 })); vaultEdges.position.copy(vault.position); world.add(vaultEdges);
-  const vaultAnchor = new THREE.Vector3(0, -0.53, -0.2);
+  /* ------------------------------------------------------- data, below floor */
+  const vaultGeo = new THREE.PlaneGeometry(7, 3.2);
+  const vaultEdge = new THREE.LineSegments(new THREE.EdgesGeometry(vaultGeo), new THREE.LineBasicMaterial({ color: C.cool, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+  vaultEdge.rotation.x = -Math.PI / 2; vaultEdge.position.set(0, -0.85, -0.2); world.add(vaultEdge);
+  const vaultAnchor = new THREE.Vector3(0, -0.85, -0.2);
 
-  /* threads */
+  /* ------------------------------------------------------------ network node */
+  const netSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: C.cool, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+  netSprite.scale.setScalar(0.8); netSprite.position.set(5.4, 1.3, -3.5); world.add(netSprite);
+  const swAnchor = new THREE.Vector3(5.4, 1.3, -3.5);
+
+  /* ---------------------------------------------------------------- threads */
   const threads = [];
   const T = (color, o) => { const th = new Thread(color, o); world.add(th.mesh, th.head); threads.push(th); return th; };
-  // identity chain per person: person → ring → device ; device → slab
   const chains = people.map((p, i) => ({
-    up: T(C.thread, { lift: 0.05, seg: 12 }),
-    down: T(C.thread, { lift: 0.25 }),
-    cloud: T(C.thread, { lift: 0.9 }),
+    up: T(C.thread, { lift: 0.04, seg: 10, radius: 0.009 }),
+    down: T(C.thread, { lift: 0.22, radius: 0.011 }),
+    cloud: T(C.thread, { lift: 0.85, radius: 0.011 }),
     slab: [0, 2, 1, 0][i],
-    gap: 0.72 + 0.16 * rnd(i + 71),
+    gap: 0.68 + 0.18 * rnd(i + 91),
   }));
-  const dataT = slabs.map((s, i) => ({ th: T(C.cool, { lift: -0.4 }), gap: 0.6 + 0.2 * rnd(i + 81) }));
-  const netT = desks.map((d, i) => ({ th: T(C.thread, { lift: 0.15, radius: 0.011 }), gap: 0.7 + 0.2 * rnd(i + 91) }));
-  const edgeT = { th: T(C.cool, { lift: 0.4 }), gap: 0.55 };
-  const custT = [0, 2].map((si, i) => ({ th: T(C.cool, { lift: 1.2 }), slab: si, gap: 0.5 + 0.2 * rnd(i + 101) }));
-  const outside = new THREE.Vector3(2.5, 1.2, -10.4);
-  const outsideCloud = new THREE.Vector3(-4, 6.5, -10.4);
+  const dataT = slabs.map((s, i) => ({ th: T(C.cool, { lift: -0.4, radius: 0.01 }), gap: 0.6 + 0.2 * rnd(i + 101) }));
+  const netT = devices.map((d, i) => ({ th: T(C.thread, { lift: 0.14, radius: 0.008 }), gap: 0.7 + 0.2 * rnd(i + 111) }));
+  const edgeT = { th: T(C.cool, { lift: 0.4, radius: 0.01 }), gap: 0.55 };
+  const custT = [0, 2].map((si, i) => ({ th: T(C.cool, { lift: 1.15, radius: 0.009 }), slab: si, gap: 0.5 + 0.2 * rnd(i + 121) }));
+  const outside = new THREE.Vector3(2.5, 1.2, -11.5);
+  const outsideCloud = new THREE.Vector3(-4, 6.4, -11.5);
 
-  /* dependencies: dashed crossings */
-  const depMat = new THREE.LineDashedMaterial({ color: C.cool, dashSize: 0.18, gapSize: 0.12, transparent: true, opacity: 0 });
-  const deps = [[() => slabAnchor(0), () => slabAnchor(1)], [() => slabAnchor(1), () => slabAnchor(2)], [() => slabAnchor(0), () => slabAnchor(2)],
-    [() => deskScreenAnchor(0), () => deskScreenAnchor(5)], [() => deskScreenAnchor(2), () => deskScreenAnchor(3)], [() => deskScreenAnchor(1), () => slabAnchor(2)]]
-    .map(([a, b]) => { const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([a(), b()]), depMat); l.userData = { a, b }; l.computeLineDistances(); world.add(l); return l; });
+  /* ----------------------------------------------------------- dependencies */
+  const depMat = new THREE.LineDashedMaterial({ color: C.cool, dashSize: 0.18, gapSize: 0.14, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+  const deps = [
+    [() => slabAnchor(0), () => slabAnchor(1)], [() => slabAnchor(1), () => slabAnchor(2)], [() => slabAnchor(0), () => slabAnchor(2)],
+    [() => deviceAnchor(0), () => deviceAnchor(5)], [() => deviceAnchor(2), () => deviceAnchor(3)], [() => deviceAnchor(1), () => slabAnchor(2)],
+  ].map(([a, b]) => {
+    const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([a(), b()]), depMat);
+    l.userData = { a, b }; l.computeLineDistances(); world.add(l); return l;
+  });
 
-  /* boundaries: loops around the desk cluster, the closet, the slabs, and the perimeter (DE's) */
+  /* -------------------------------------------------------------- boundaries */
   const loop = (pts, color, opacity) => {
-    const closed = [...pts, pts[0]];
-    const curve = new THREE.CatmullRomCurve3(closed, false, 'catmullrom', 0);
+    const curve = new THREE.CatmullRomCurve3([...pts, pts[0]], false, 'catmullrom', 0);
     const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(96));
-    const l = new THREE.Line(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity }));
+    const l = new THREE.Line(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false }));
     l.userData.total = 97; world.add(l); return l;
   };
   const rect = (x0, z0, x1, z1, y) => [new THREE.Vector3(x0, y, z0), new THREE.Vector3(x1, y, z0), new THREE.Vector3(x1, y, z1), new THREE.Vector3(x0, y, z1)];
   const bounds = [
-    loop(rect(-5.0, -2.6, 5.0, 2.4, 0.03), C.cool, 0),
-    loop(rect(4.9, -4.5, 6.3, -3.3, 0.03), C.cool, 0),
+    loop(rect(-5.0, -2.6, 5.0, 2.4, 0.02), C.cool, 0),
+    loop(rect(4.7, -4.4, 6.1, -2.6, 0.02), C.cool, 0),
     loop(rect(-5.2, -1.1, 5.2, 0.8, 3.0), C.cool, 0),
   ];
-  const perimeter = loop(rect(-6.9, -4.45, 6.9, 4.45, 0.02), C.magenta, 0);
-  const setLoop = (l, frac, opacity) => { l.geometry.setDrawRange(0, Math.max(0, Math.round(l.userData.total * clamp01(frac)))); l.material.opacity = opacity; l.visible = opacity > 0.01 && frac > 0.01; };
+  const perimeter = loop(rect(-7.2, -4.8, 7.2, 4.8, 0.015), C.magenta, 0);
+  const setLoop = (l, frac, opacity) => {
+    l.geometry.setDrawRange(0, Math.max(0, Math.round(l.userData.total * clamp01(frac))));
+    l.material.opacity = opacity; l.visible = opacity > 0.01 && frac > 0.01;
+  };
 
-  /* exceptions: hollow amber markers at four weak points */
-  const excMat = fresnel(C.amber, { power: 1.2, intensity: 1.3, base: 0.3 });
+  /* -------------------------------------------------------------- exceptions */
   const EXC = [
-    { at: () => vaultAnchor.clone().add(new THREE.Vector3(2.4, 0.1, 1.2)), label: 'backup untested', m: false },
-    { at: () => deskScreenAnchor(1).add(new THREE.Vector3(0, 0.35, 0)), label: 'unpatched', m: true },
-    { at: () => slabAnchor(0).add(new THREE.Vector3(0.9, 0.3, 0.4)), label: 'shared mailbox', m: false },
-    { at: () => apGroup.localToWorld(new THREE.Vector3(0, 3.25, 0)), label: 'guest network open', m: true },
+    { at: () => vaultAnchor.clone().add(new THREE.Vector3(2.4, 0.12, 1.2)) },
+    { at: () => deviceAnchor(1).add(new THREE.Vector3(0, 0.34, 0)) },
+    { at: () => slabAnchor(0).add(new THREE.Vector3(0.9, 0.28, 0.4)) },
+    { at: () => netSprite.position.clone().add(new THREE.Vector3(0, 0.5, 0)) },
   ];
-  const excs = EXC.map((e) => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.012, 8, 32), excMat); m.rotation.x = Math.PI / 2; m.scale.setScalar(0.001); world.add(m); m.userData = e; return m; });
+  const excs = EXC.map((e) => {
+    const m = new THREE.Mesh(
+      new THREE.TorusGeometry(0.17, 0.009, 6, 32),
+      new THREE.MeshBasicMaterial({ color: C.amber, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }),
+    );
+    m.rotation.x = Math.PI / 2; m.scale.setScalar(0.001); m.userData = e; world.add(m); return m;
+  });
 
-  /* ----------------------------------------------------- camera keyframes */
+  /* ------------------------------------------------------- camera, laterally */
+  // Polar keyframes so the arc is a real orbit, not a lerp between two points.
+  // theta sweeps RIGHT -> LEFT through the story, then REVERSES at the
+  // correction and travels back right through the evidence tail. That reversal
+  // is the signature move and it is placed on the peak, deliberately.
   const KEYS = [
-    [0.0, [3.3, 2.7, 5.9], [0.3, 0.9, -1.0]],   // the establishing view: the whole floor, three-quarter, slightly low
-    [0.9, [3.9, 3.5, 6.3], [0.2, 1.0, -0.9]],
-    [1.35, [4.6, 4.8, 7.1], [0.2, 1.2, -0.6]],
-    [1.95, [5.7, 6.5, 7.6], [0.0, 1.3, -0.4]],
-    [2.45, [5.7, 6.5, 7.6], [0.0, 1.3, -0.4]],
-    [3.05, [5.2, 5.9, 6.9], [0.0, 1.3, -0.3]],
-    [3.95, [7.2, 8.2, 9.6], [0.0, 1.2, -0.3]],
+    // t,   theta°, radius, height, lookY
+    [0.0,    34,    11.4,   2.6,   0.80],
+    [1.0,    14,    10.8,   4.4,   0.85],
+    [2.0,   -10,    10.6,   6.2,   0.90],
+    [3.0,     5,    11.2,   5.5,   0.90],   // the reversal
+    [5.0,    29,    13.6,   6.4,   0.80],
   ];
-  const camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3();
+  const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
   function cameraAt(t) {
     let i = 0; while (i < KEYS.length - 2 && t >= KEYS[i + 1][0]) i++;
-    const [ta, pa, la] = KEYS[i], [tb, pb, lb] = KEYS[i + 1];
-    const k = smooth((t - ta) / (tb - ta));
-    camPos.set(...pa).lerp(tmpA.set(...pb), k); camLook.set(...la).lerp(tmpB.set(...lb), k);
-    if (portrait()) { // further back and higher so the whole floor fits a portrait frame
-      tmpA.copy(camPos).sub(camLook).multiplyScalar(1.3); camPos.copy(camLook).add(tmpA); camLook.y += 0.1;
-    } else {
-      // the copy owns the left column on a wide screen: look left of the
-      // room's centre so the room itself sits in the right two thirds
-      camLook.x -= 1.6;
-    }
+    const a = KEYS[i], b = KEYS[i + 1];
+    const k = smooth((t - a[0]) / (b[0] - a[0]));
+    const theta = lerp(a[1], b[1], k) * DEG;
+    let radius = lerp(a[2], b[2], k);
+    const height = lerp(a[3], b[3], k);
+    const lookY = lerp(a[4], b[4], k);
+    if (portrait()) radius *= 1.26;           // the whole floor has to fit a phone
+    camPos.set(Math.sin(theta) * radius, height, Math.cos(theta) * radius);
+    // On a wide screen the copy owns the left column, so look left of centre and
+    // the world composes into the right two thirds. On a phone it is centred.
+    camLook.set(portrait() ? 0 : -1.7, lookY, -0.3);
   }
 
-  /* ---------------------------------------------------------------- update */
+  /* ------------------------------------------------------------------ update */
   const anchors = {};
-  let idleClock = 0;
-  const upVec = new THREE.Vector3();
+  let idle = 0;
   const v = new THREE.Vector3();
+  const tmpCol = new THREE.Color();
 
   function update(t, dt = 0.016) {
-    t = Math.max(0, Math.min(3.999, t)); idleClock += dt;
-    /* the four dials of the story */
-    const disorder = 1 - ramp(t, 2.45, 2.88);          // 1 → 0 : the world corrects
-    // heading off true, then level: 2° reads in a still and on a phone; the
-    // #186 passage used 1.2° on type, where the eye is more sensitive
-    const tilt = -(portrait() ? 1.4 : 2.0) * (Math.PI / 180) * disorder;
-    const reveal = ramp(t, 1.02, 1.42);                // relationships
-    const depR = ramp(t, 1.38, 1.56);                  // dependencies
-    const bndR = ramp(t, 1.58, 1.82);                  // boundaries
-    const excR = ramp(t, 1.74, 1.96);                  // exceptions
-    const de = ramp(t, 2.55, 2.92);                    // DE enters
-    const settle = ramp(t, 2.85, 3.25);                // hierarchy, calm
-    const glass = ramp(t, 1.0, 1.3);
+    t = Math.max(0, Math.min(4.999, t)); idle += dt;
 
-    /* placement: disorder → grid */
-    desks.forEach((g) => { const u = g.userData; g.position.set(u.x + u.dx * disorder, 0, u.z + u.dz * disorder); g.rotation.y = u.ry * disorder; });
-    slabs.forEach((g) => { const u = g.userData; g.position.set(u.x + u.dx * disorder, u.y + u.dy * disorder, u.z); g.rotation.set(u.rx * disorder, 0, u.rz * disorder); });
-    apGroup.position.set(apGroup.userData.dx * disorder, 0, apGroup.userData.dz * disorder);
-
-    /* people: the walker comes in and sits */
-    people.forEach((m) => {
-      const p = m.userData;
-      if (p.walker) {
-        const w = ramp(t, 0.12, 0.82);
-        const seat = desks[p.seat].position;
-        m.position.set(lerp(p.x, seat.x, w), lerp(1.06, 0.95, ramp(t, 0.78, 0.9)), lerp(p.z, seat.z + 0.55, w));
-      } else if (p.seat >= 0) { const s = desks[p.seat].position; m.position.set(s.x, p.y, s.z + 0.55); }
-      m.material.uniforms.uIntensity.value = 1.15 + 0.1 * Math.sin(idleClock * 0.8 + p.x);
-      const ring = p.ring; ring.position.set(m.position.x, m.position.y + 0.82, m.position.z);
-      const rs = reveal; ring.scale.setScalar(Math.max(0.001, rs));
-      ring.material.uniforms.uColor.value.setHex(C.ink).lerp(new THREE.Color(C.magenta), de * (1 - settle * 0.8));
-      ring.material.uniforms.uIntensity.value = 1.2 + de * 1.2 - settle * 0.6;
-    });
-
-    /* screens flicker on through act 1, then hold; the closet lights in act 2 */
-    desks.forEach((g, i) => {
-      // the first screens are already on in the frame at rest; the rest wake as the camera moves
-      const on = 1; // every screen is lit from the first frame: the establishing view shows the whole floor
-      const flick = t < 0.5 ? 0.85 + 0.15 * Math.abs(Math.sin(idleClock * 23 + i * 7)) : 1;
-      g.userData.screen.opacity = on * flick * lerp(0.92, 0.7, glass);
-    });
-    switchMat.opacity = lerp(0.12, 0.9, reveal) ; closetLight.intensity = lerp(0, 5, reveal) * (1 - 0.3 * disorder);
-    horizon.material.opacity = lerp(0, 0.55, ramp(t, 1.2, 1.5));
-
-    /* materials: the room becomes dark glass in act 2 */
-    floorMat.opacity = lerp(1, 0.34, glass); floorMat.color.setHex(C.floor).lerp(new THREE.Color(0x121734), glass);
-    wallMat.opacity = lerp(1, 0.2, glass); windowMat.opacity = lerp(1, 0.55, glass);
-    vaultMat.opacity = lerp(0, 0.36, ramp(t, 1.2, 1.4)); vaultEdges.material.opacity = lerp(0, 0.85, ramp(t, 1.2, 1.4));
-    slabMat.opacity = lerp(0.18, 0.26, reveal); edgeMat.opacity = lerp(0.6, 0.85, reveal);
-
-    /* threads: draw in layers, stop short while disordered, close when the world corrects */
+    /* the dials */
+    const disorder = 1 - ramp(t, 2.10, 2.62);   // 1 -> 0 : the world meets the grid
+    const reveal = ramp(t, 1.02, 1.42);         // relationships
+    const depR = ramp(t, 1.36, 1.56);           // dependencies
+    const bndR = ramp(t, 1.56, 1.80);           // boundaries
+    const excR = ramp(t, 1.72, 1.94);           // exceptions
+    const de = ramp(t, 2.24, 2.66);             // DE enters
+    const settle = ramp(t, 2.60, 3.00);         // calm after the correction
+    const glass = ramp(t, 1.00, 1.30);          // the room turns to glass
+    const tail = ramp(t, 3.02, 4.05);           // the evidence sections take over
     const close = 1 - disorder;
+
+    /* placement: scattered -> on the grid */
+    people.forEach((s, i) => {
+      const u = s.userData, seat = SEATS[u.seat];
+      const breathe = 0.045 * Math.sin(idle * 0.9 + u.phase);
+      s.position.set(seat[0] + u.dx * disorder, 1.05 + breathe, seat[1] + 0.55 + u.dz * disorder);
+      s.material.opacity = lerp(0.95, 0.34, tail);
+      s.scale.setScalar(lerp(0.9, 0.98, reveal) + 0.03 * Math.sin(idle * 0.7 + u.phase));
+      const ring = u.ring;
+      ring.position.set(s.position.x, s.position.y - 0.02, s.position.z);
+      ring.scale.setScalar(Math.max(0.001, reveal));
+      tmpCol.setHex(C.ink).lerp(new THREE.Color(C.magenta), de * (1 - settle * 0.75));
+      ring.material.color.copy(tmpCol);
+      ring.material.opacity = reveal * lerp(0.55, 0.14, tail);
+    });
+
+    devices.forEach((g, i) => {
+      const u = g.userData;
+      g.position.set(u.x + u.dx * disorder, 0, u.z + u.dz * disorder);
+      g.rotation.y = u.ry * disorder;
+      const on = ramp(t, i * 0.02 - 0.02, i * 0.02 + 0.16);
+      u.quad.opacity = on * lerp(0.5, 0.34, glass) * lerp(1, 0.3, tail);
+      u.bar.opacity = on * 0.5 * lerp(1, 0.26, tail);
+    });
+
+    slabs.forEach((g) => {
+      const u = g.userData;
+      g.position.set(u.x + u.dx * disorder, u.y + u.dy * disorder, u.z);
+      g.rotation.set(u.rx * disorder, 0, u.rz * disorder);
+      u.fill.opacity = lerp(0.05, 0.1, reveal) * lerp(1, 0.3, tail);
+      u.edge.opacity = lerp(0.34, 0.62, reveal) * lerp(1, 0.26, tail);
+    });
+
+    // the grid brightens as the world approaches it, and is brightest the
+    // instant everything lands on it
+    // The grid is visible from the first frame: it is the order the world has
+    // not met yet, so it has to be legible before the correction, not after.
+    gridMat.opacity = (0.26 + 0.26 * close + 0.08 * reveal) * lerp(1, 0.26, tail);
+
+    vaultEdge.material.opacity = lerp(0, 0.55, ramp(t, 1.18, 1.42)) * lerp(1, 0.24, tail);
+    netSprite.material.opacity = lerp(0, 0.8, reveal) * lerp(1, 0.26, tail);
+
+    /* threads */
     chains.forEach((c, i) => {
-      const person = people[i], ring = person.userData.ring;
-      const top = v.set(person.position.x, person.position.y + 0.62, person.position.z).clone();
+      const p = people[i], ring = p.userData.ring;
+      const top = v.set(p.position.x, p.position.y + 0.1, p.position.z).clone();
       const ringP = ring.position.clone();
-      const dev = deskScreenAnchor(person.userData.seat >= 0 ? person.userData.seat : 1);
+      const dev = deviceAnchor(p.userData.seat);
       const slab = slabAnchor(c.slab);
       c.up.set(top, ringP); c.down.set(ringP, dev); c.cloud.set(dev, slab);
       const g = lerp(c.gap, 1, close);
       c.up.setProgress(ramp(t, 1.03 + i * 0.03, 1.13 + i * 0.03));
-      c.down.setProgress(ramp(t, 1.1 + i * 0.03, 1.22 + i * 0.03) * g);
+      c.down.setProgress(ramp(t, 1.10 + i * 0.03, 1.22 + i * 0.03) * g);
       c.cloud.setProgress(ramp(t, 1.18 + i * 0.03, 1.32 + i * 0.03) * g);
-      // DE enters: a magenta head runs the identity chain, then the threads brighten
-      const run = ramp(t, 2.56 + i * 0.05, 2.86 + i * 0.05);
+      const run = ramp(t, 2.26 + i * 0.05, 2.56 + i * 0.05);
       c.down.setHead(run, run > 0 && run < 1 ? 1 : 0);
-      c.cloud.setHead(ramp(t, 2.7 + i * 0.05, 2.98 + i * 0.05), run >= 1 && settle < 1 ? 0.9 : 0);
-      const col = new THREE.Color(C.thread).lerp(new THREE.Color(C.magenta), de * (1 - settle) * 0.85).lerp(new THREE.Color(C.ink), settle * 0.7);
-      c.up.mat.color.copy(col); c.down.mat.color.copy(col); c.cloud.mat.color.copy(col);
+      c.cloud.setHead(ramp(t, 2.40 + i * 0.05, 2.68 + i * 0.05), run >= 1 && settle < 1 ? 0.9 : 0);
+      tmpCol.setHex(C.thread).lerp(new THREE.Color(C.magenta), de * (1 - settle) * 0.85).lerp(new THREE.Color(C.ink), settle * 0.6);
+      const op = lerp(0.9, 0.2, tail);
+      [c.up, c.down, c.cloud].forEach((th) => { th.mat.color.copy(tmpCol); th.mat.opacity = op; });
     });
-    dataT.forEach((d, i) => { d.th.set(slabAnchor(i), vaultAnchor.clone().add(new THREE.Vector3((i - 1) * 2.2, 0, 0))); d.th.setProgress(ramp(t, 1.2 + i * 0.03, 1.32 + i * 0.03) * lerp(d.gap, 1, close)); });
-    // In act 1 the network threads exist only as stubs that reach toward the
-    // closet and stop short: connections that almost meet, before anything is
-    // named. Act 2 draws them properly; the correction closes the gaps.
-    const stub = 0.16 * ramp(t, 0.2, 0.6) * (1 - reveal);
+
+    dataT.forEach((d, i) => {
+      d.th.set(slabAnchor(i), vaultAnchor.clone().add(new THREE.Vector3((i - 1) * 2.2, 0, 0)));
+      d.th.setProgress(ramp(t, 1.18 + i * 0.03, 1.30 + i * 0.03) * lerp(d.gap, 1, close));
+      d.th.mat.opacity = lerp(0.75, 0.16, tail);
+    });
+
+    // In act 1 the network threads are stubs that reach toward the node and
+    // stop: connections that almost meet, before anything is named.
+    const stub = 0.15 * ramp(t, 0.18, 0.55) * (1 - reveal);
     netT.forEach((n, i) => {
-      n.th.set(deskScreenAnchor(i), swAnchor);
-      n.th.setProgress(Math.max(stub * (0.6 + 0.4 * rnd(i + 111)), ramp(t, 1.24 + i * 0.02, 1.36 + i * 0.02) * lerp(n.gap, 1, close)));
-      n.th.mat.opacity = lerp(0.22, 0.9, reveal);
-      doorLight.intensity = 6 * (1 - 0.8 * glass);
-      n.th.mat.color.setHex(C.thread).lerp(new THREE.Color(C.ink), settle * 0.5);
+      n.th.set(deviceAnchor(i), swAnchor);
+      n.th.setProgress(Math.max(stub * (0.6 + 0.4 * rnd(i + 131)), ramp(t, 1.24 + i * 0.02, 1.36 + i * 0.02) * lerp(n.gap, 1, close)));
+      n.th.mat.opacity = lerp(0.24, 0.8, reveal) * lerp(1, 0.2, tail);
+      tmpCol.setHex(C.thread).lerp(new THREE.Color(C.ink), settle * 0.5);
+      n.th.mat.color.copy(tmpCol);
     });
-    edgeT.th.set(swAnchor, outside); edgeT.th.setProgress(ramp(t, 1.3, 1.42) * lerp(edgeT.gap, 1, close));
-    custT.forEach((c, i) => { c.th.set(outsideCloud.clone().add(new THREE.Vector3(i * 3, 0, 0)), slabAnchor(c.slab)); c.th.setProgress(ramp(t, 1.34 + i * 0.03, 1.46 + i * 0.03) * lerp(c.gap, 1, close)); });
+
+    edgeT.th.set(swAnchor, outside);
+    edgeT.th.setProgress(ramp(t, 1.28, 1.42) * lerp(edgeT.gap, 1, close));
+    edgeT.th.mat.opacity = lerp(0.7, 0.15, tail);
+    custT.forEach((c, i) => {
+      c.th.set(outsideCloud.clone().add(new THREE.Vector3(i * 3, 0, 0)), slabAnchor(c.slab));
+      c.th.setProgress(ramp(t, 1.32 + i * 0.03, 1.46 + i * 0.03) * lerp(c.gap, 1, close));
+      c.th.mat.opacity = lerp(0.7, 0.15, tail);
+    });
 
     /* dependencies, boundaries, exceptions */
-    deps.forEach((l) => { const pos = l.geometry.attributes.position; const a = l.userData.a(), b = l.userData.b(); pos.setXYZ(0, a.x, a.y, a.z); pos.setXYZ(1, b.x, b.y, b.z); pos.needsUpdate = true; l.computeLineDistances(); });
-    depMat.opacity = 0.55 * depR * (1 - settle * 0.85); depMat.visible = depMat.opacity > 0.01;
-    bounds.forEach((b, i) => setLoop(b, lerp(0.42 + 0.1 * i, 1, close) , 0.5 * ramp(t, 1.58 + i * 0.06, 1.72 + i * 0.06)));
-    setLoop(perimeter, ramp(t, 2.74, 3.05), 0.75 * ramp(t, 2.74, 2.9));
-    excs.forEach((m, i) => { m.position.copy(m.userData.at()); const s = ramp(t, 1.74 + i * 0.05, 1.86 + i * 0.05) * (1 - ramp(t, 2.66 + i * 0.05, 2.9 + i * 0.05)); m.scale.setScalar(Math.max(0.001, s)); m.material.uniforms.uIntensity.value = 1.2 + 0.35 * Math.sin(idleClock * 2.4 + i); });
+    deps.forEach((l) => {
+      const pos = l.geometry.attributes.position, a = l.userData.a(), b = l.userData.b();
+      pos.setXYZ(0, a.x, a.y, a.z); pos.setXYZ(1, b.x, b.y, b.z);
+      pos.needsUpdate = true; l.computeLineDistances();
+    });
+    depMat.opacity = 0.5 * depR * (1 - settle * 0.8) * lerp(1, 0.2, tail);
+    depMat.visible = depMat.opacity > 0.01;
 
-    /* the access point: off-centre and quiet, then breathing once the world is level */
-    const breathe = settle * (0.5 + 0.5 * Math.sin(idleClock * 1.4));
-    apRing.scale.setScalar(1 + 0.35 * breathe); apRingMat.uniforms.uOpacity.value = lerp(0.35, 1, settle) * (1 - 0.5 * breathe);
+    bounds.forEach((b, i) => setLoop(b, lerp(0.42 + 0.1 * i, 1, close), 0.45 * ramp(t, 1.56 + i * 0.06, 1.70 + i * 0.06) * lerp(1, 0.22, tail)));
+    // the one boundary DE is accountable for, and it is the last thing to close
+    setLoop(perimeter, ramp(t, 2.44, 2.80), 0.8 * ramp(t, 2.44, 2.60) * lerp(1, 0.3, tail));
 
-    /* light: dawn → exposed → level and clean */
-    const exposed = ramp(t, 1.0, 1.5);
-    sun.color.setHex(C.warm).lerp(new THREE.Color(0x9fb0ff), exposed).lerp(new THREE.Color(0xffe6d2), settle);
-    sun.intensity = lerp(3.8, 2.0, exposed) + settle * 1.2;
-    ambient.intensity = 0.62 + 0.15 * exposed;
-    hemi.intensity = lerp(1.4, 1.0, exposed);
-    deLight.intensity = 9 * de * (1 - settle * 0.7); deLight.position.set(people[1].position.x - 1.2, 2.4, people[1].position.z + 0.6);
-    renderer.toneMappingExposure = lerp(1.45, 1.25, exposed) + 0.2 * settle;
+    excs.forEach((m, i) => {
+      m.position.copy(m.userData.at());
+      const s = ramp(t, 1.72 + i * 0.05, 1.84 + i * 0.05) * (1 - ramp(t, 2.34 + i * 0.05, 2.58 + i * 0.05));
+      m.scale.setScalar(Math.max(0.001, s));
+      m.material.opacity = 0.9 * s * (0.75 + 0.25 * Math.sin(idle * 2.2 + i));
+    });
 
-    /* camera and heading */
+    /* the frame itself dims as the evidence takes over, so the copy always wins */
+    backdrop.material.opacity = 1;
+    backdrop.material.color.setScalar(lerp(1, 0.42, tail));
+    scene.fog.near = lerp(16, 12, tail);
+    scene.fog.far = lerp(46, 34, tail);
+
+    /* camera */
     cameraAt(t);
     camera.position.copy(camPos);
-    upVec.set(Math.sin(tilt), Math.cos(tilt), 0); camera.up.copy(upVec);
+    camera.up.set(0, 1, 0);
     camera.lookAt(camLook);
 
-    /* label anchors for the DOM */
-    anchors.identity = people[0].userData.ring.position.clone().add(new THREE.Vector3(0, 0.25, 0));
-    anchors.devices = deskScreenAnchor(0).add(new THREE.Vector3(0, 0.45, 0));
-    anchors.email = slabAnchor(0).add(new THREE.Vector3(-0.9, 0.35, 0));
+    /* anchors for the DOM labels */
+    anchors.identity = people[0].userData.ring.position.clone().add(new THREE.Vector3(0, 0.3, 0));
+    anchors.devices = deviceAnchor(0).add(new THREE.Vector3(0, 0.34, 0));
+    anchors.email = slabAnchor(0).add(new THREE.Vector3(-0.9, 0.3, 0));
     anchors.data = vaultAnchor.clone().add(new THREE.Vector3(-2.6, 0, 1.3));
-    anchors.network = swAnchor.clone().add(new THREE.Vector3(0, 0.55, 0));
-    anchors.applications = slabAnchor(1).add(new THREE.Vector3(1.05, 0.35, -0.55));
+    anchors.network = swAnchor.clone().add(new THREE.Vector3(0, 0.5, 0));
+    anchors.applications = slabAnchor(1).add(new THREE.Vector3(1.05, 0.3, -0.55));
     anchors.customers = outsideCloud.clone().add(new THREE.Vector3(1.5, -0.6, 0));
     anchors.vendor0 = slabAnchor(0).add(new THREE.Vector3(1.0, -0.2, 0.8));
     anchors.vendor1 = slabAnchor(2).add(new THREE.Vector3(1.0, -0.2, 0.8));
-    anchors.vendor2 = new THREE.Vector3(5.6, 2.25, -3.9);
-    excs.forEach((m, i) => { anchors['exc' + i] = m.position.clone().add(new THREE.Vector3(0, 0.22, 0)); });
-    anchors.de = people[1].userData.ring.position.clone().add(new THREE.Vector3(0.2, 0.55, 0));
+    anchors.vendor2 = swAnchor.clone().add(new THREE.Vector3(0.2, 0.95, 0));
+    excs.forEach((m, i) => { anchors['exc' + i] = m.position.clone().add(new THREE.Vector3(0, 0.24, 0)); });
+    anchors.de = people[1].userData.ring.position.clone().add(new THREE.Vector3(0.2, 0.6, 0));
 
-    return {
-      disorder, reveal, depR, bndR, excR, de, settle,
-      heading: Math.round(lerp(348, 360, 1 - disorder)),
-    };
+    return { disorder, reveal, depR, bndR, excR, de, settle, tail };
   }
 
   function project(vec, out) {
     v.copy(vec).project(camera);
-    out.x = (v.x * 0.5 + 0.5) * canvas.clientWidth; out.y = (-v.y * 0.5 + 0.5) * canvas.clientHeight;
+    out.x = (v.x * 0.5 + 0.5) * canvas.clientWidth;
+    out.y = (-v.y * 0.5 + 0.5) * canvas.clientHeight;
     out.behind = v.z > 1; return out;
   }
 
   function resize() {
     const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight;
     renderer.setSize(w, h, false);
-    camera.aspect = w / h; camera.fov = portrait() ? 54 : 42; camera.updateProjectionMatrix();
+    camera.aspect = w / h; camera.fov = portrait() ? 52 : 42; camera.updateProjectionMatrix();
   }
   function render() { renderer.render(scene, camera); }
 

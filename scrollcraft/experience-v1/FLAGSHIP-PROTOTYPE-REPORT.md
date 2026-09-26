@@ -268,3 +268,92 @@ upgraded site … show me it with the site is what I meant, not all by itself."
   untouched.
 - **Not upgraded:** every other page of the site is as it was. This revision
   adds one review route and changes one redirect.
+
+---
+
+## Revision 4 · 2026-09-06 · the world becomes the ground, and a speed gate
+
+Joe, on the artwork: *"do you think that graphic / animation is the right one
+or it is defined and built up enough? Did you do enough passes to make it as
+good as it can be because these things either work or they absolutely don't."*
+The honest answer, recorded in BRIEF.md, was no. Three passes, all
+defect-driven, no art pass, placeholder people; the result sat between
+"deliberately abstract" and "rendered environment" and read as neither.
+
+Then the direction: *"I like when its an animation or the scrollcraft makes
+the scroll go different directions while all the before and after sections of
+the page smoothly flow into the current one. Just consider what we are saying
+as well to not over do it but do it fully and right."*
+
+And the standing rule that now governs every Scrollcraft build here:
+
+> "one major rule if we are going to do this, you must always scroll at
+> different speeds and test if it has any type of thing that looks off. right
+> now you would have a red fail."
+
+### What changed
+
+- **Fully abstract world.** No desks, monitors, capsule people, walls or floor
+  plane. Points of light for people, thin lit quads for devices, glass planes
+  for cloud, a line grid for the ground, an inside-out sphere for the sky.
+  Nothing that can read as a greybox model, because there are no boxes. It is
+  also far cheaper to draw, which is what pays for the next item.
+- **The scroll changes direction.** The camera arcs laterally on a polar path
+  and reverses at t = 3, on the beat where the world corrects. Vertical
+  scroll, lateral world movement, one direction change, on the peak.
+- **One continuous timeline over the whole page.** The world is driven by page
+  scroll, not by the pinned act's own progress, so it runs behind every
+  section from the first screen to the footer and no scroll position anywhere
+  has a frozen or absent world. The evidence sections lost their solid grounds
+  and hard rules; they are gradient plates over the world now.
+- **Phones get the world.** There is no pin to squeeze onto a phone, so the
+  document-flow layout that fixed the blank-screen failure keeps working and
+  now has the live scene behind it. Reduced motion, no WebGL and low power
+  still fall back to the rendered stills.
+
+### The motion gate (`tools/motion.mjs`)
+
+The static gate walks the page and waits ~320 ms at each stop for everything
+to settle, so anything that only goes wrong *while* the page moves was
+invisible to it. Joe was right that it would have passed this build.
+
+The motion gate walks the page with a real wheel at four speeds — crawl 12px,
+read 60px, brisk 180px ×2, fling 420px ×3 — across desktop-1440 and phone-390,
+samples after a single animation frame with no settle, and fails on BLANK (no
+readable copy during the motion), FROZEN (the timeline did not advance while
+the page moved), STALE (the world is behind where the scroll already is) and
+FLASH (a large brightness swing between consecutive frames). It writes every
+sampled frame, because the part no assertion covers is looking at them.
+
+**What looking at them found, which the assertions did not:**
+
+| Defect | Cause | Fix |
+|---|---|---|
+| A heading, a CTA and a paragraph collided with the fixed header's button at full brightness | the bar's scrim faded to nothing across its own height | scrim is now taller than the bar and near-solid across it; the bar's control is more opaque |
+| On phones, a bordered box holding a frozen frame of the world sat on top of the live world running behind it, at a different moment | the flow-mode stills were written when flow mode had no live world | the stills are shown only when `#world` never goes `.live`; the gate now fails if both appear, or neither |
+| The world competed with the copy through the evidence tail | the tail dimming was too gentle and finished too late | tail ramp 3.15–4.60 → 3.02–4.05, and every tail endpoint roughly halved |
+| Floating labels landed on the copy on phones, and clipped under the header | flow mode has no copy column to guard, and the top guard ignored the label's own height | labels are a wide-screen device only; the guard now clears the header by the label's height |
+
+Third movement's fallback still moved from t = 3.6 to t = 2.95, so the
+corrected world is captured before the tail starts dimming it — under reduced
+motion those stills are the only picture of it anyone gets.
+
+### Verification
+
+- **Motion gate:** 8/8 runs pass (crawl / read / brisk / fling × desktop-1440 /
+  phone-390), 164 frames sampled mid-motion, all written to `lab/motion/` and
+  reviewed by eye.
+- **Static release gate:** 6/6 runs pass — desktop-1440, tablet-768, phone-390,
+  phone-360, and reduced motion at both widths. Contrast proxy ≥ 9.07:1.
+  Decision point at 6.1–7.3 vh, first assessment control at 0 vh.
+- **In-site at `/experience`:** pin at 1440, flow at 390, no console errors,
+  no horizontal overflow, site menu and footer intact, `noindex` intact.
+- **Not verified here:** a real phone. Headless Chrome with SwiftShader is not
+  an iPhone's GPU, thermal budget or Low Power Mode. The world is much cheaper
+  than revision 3's, but "cheap enough on a real phone" is a claim only a real
+  phone can settle.
+
+### Status after revision 4
+
+Prototype, `noindex`, on its own route. The homepage is untouched. Zero kie.ai
+spend; the world is code-built, as the imagery rule requires.
