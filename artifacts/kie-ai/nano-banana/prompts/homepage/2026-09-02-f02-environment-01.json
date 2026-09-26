@@ -1,0 +1,16 @@
+{
+  "prompt": "Editorial still life for a managed IT and cybersecurity company in Chandler, Arizona: a small professional-services office's technology laid out as separate physical objects on one wide dark desk plane, seen from a 30-degree tilt, three-quarter view, eye level slightly above the desk. A closed matte-black laptop, a phone face down, a small desktop router, a two-bay NAS, a compact printer, an employee badge card on a short lanyard, and a paper binder. The objects sit apart from each other with clear gaps and hard shadows; no cables join them; nothing is lit up. The objects are grouped in the right two thirds of the frame and the left third is open and dark, left free for typography. One warm key light from the right, like a low desert sun through a window, with restrained deep-violet ambient fill used as light rather than paint, no glow. Near-black graphite desk surface and background. Real materials with real micro-texture: brushed aluminium with faint micro-scratches, matte plastic with slight surface dust, paper with visible fibre, glass with a faint fingerprint. 35mm lens at f/5.6, ISO 200, tripod, slight perspective correction, photoreal architectural-visualization quality, no retouching. Do not add people, readable text, logos, padlocks, shields, holograms, data streams, dashboards, screens showing content, neon, or cables connecting the devices.",
+  "negative_prompt": "people, faces, hands, readable text, logos, watermark, padlock, shield, hologram, data stream, dashboard, glowing screen, neon, cyberpunk, rainbow gradient, excessive glow, toy-like 3D, cartoon, illustration, stock imagery, CGI plastic sheen, oversaturated, blurry, low resolution, cables connecting devices, hacker hoodie, server rack",
+  "api_parameters": {
+    "aspect_ratio": "16:9",
+    "resolution": "1K",
+    "output_format": "png"
+  },
+  "settings": {
+    "style": "photorealistic editorial still life, premium and quiet",
+    "lighting": "single warm key from the right, restrained violet fill, no glow",
+    "camera_angle": "30-degree tilt, three-quarter view, eye level slightly above the desk",
+    "depth_of_field": "moderate, f/5.6, every object in focus",
+    "quality": "high detail, realistic micro-roughness, unretouched"
+  }
+}
