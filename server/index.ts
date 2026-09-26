@@ -241,6 +241,20 @@ app.post(
               })
               .where(eq(storeOrders.id, existingOrder.id));
 
+            const paidLines = Array.isArray(existingOrder.lineItems) ? existingOrder.lineItems : [];
+            void import("./integrations/enqueueStoreOrder")
+              .then(({ enqueueStoreOrderCreated }) => enqueueStoreOrderCreated({
+                id: existingOrder.id,
+                orderNumber: existingOrder.orderNumber,
+                status: "paid",
+                clientId: existingOrder.clientId,
+                billingEmail: existingOrder.billingEmail,
+                billingName: existingOrder.billingName,
+                billingCompany: existingOrder.billingCompany,
+                lineItems: paidLines,
+              }))
+              .catch((error) => console.warn("[store-order] Hub enqueue skipped:", error?.message || error));
+
             console.log("[SECURITY] ORDER_STATUS_CHANGED", {
               orderId: existingOrder.id,
               orderNumber: existingOrder.orderNumber,

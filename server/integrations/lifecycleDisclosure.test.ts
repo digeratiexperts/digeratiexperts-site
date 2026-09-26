@@ -14,6 +14,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { orgPublicUser } from "../portalOrg";
+import { toClientProjection } from "./clientProjection";
 import {
   ACCOUNT_LIFECYCLE_STATUSES,
   assertNoLifecycleDisclosure,
@@ -40,6 +41,19 @@ const pollutedUser = {
 
 const CLIENT_BOUND_SERIALIZERS: Array<{ name: string; run: () => unknown }> = [
   { name: "orgPublicUser", run: () => orgPublicUser(pollutedUser) },
+  {
+    name: "toClientProjection",
+    run: () =>
+      toClientProjection({
+        ...pollutedUser,
+        status: "accepted",
+        quoteId: 88,
+        margin: 55,
+        sku: "SKU-1",
+        vendorName: "Secret Vendor",
+        unitCost: 12,
+      }),
+  },
 ];
 
 describe("Account Lifecycle Status — disclosure boundary", () => {

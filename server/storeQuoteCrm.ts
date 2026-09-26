@@ -13,7 +13,17 @@ export type StoreQuoteCrmInput = {
   companyName?: string | null;
   message?: string | null;
   requestedItems: CanonicalQuoteLine[];
+  canonicalAccountId?: string | null;
+  zohoAccountId?: string | null;
 };
+
+export function crmAccountAction(
+  quote: Pick<StoreQuoteCrmInput, "canonicalAccountId" | "zohoAccountId">,
+): "use_zoho" | "skip_name_match" | "name_match" {
+  if (quote.zohoAccountId?.trim()) return "use_zoho";
+  if (quote.canonicalAccountId?.trim()) return "skip_name_match";
+  return "name_match";
+}
 
 export type StoreQuoteCrmResult = {
   accountId?: string;
@@ -36,6 +46,7 @@ export function buildCrmQuoteDescription(quote: StoreQuoteCrmInput): string {
     .slice(0, 25)
     .map((item) => `${item.quantity} x ${item.sku} ${item.name} @ $${item.unitPrice.toFixed(2)}`);
   return [
+    "Path: website.syncStoreQuoteToCrm",
     `Store quote ${quote.quoteNumber}`,
     quote.companyName ? `Company: ${quote.companyName}` : "",
     `Due today $${totals.dueToday.toFixed(2)} / Monthly $${totals.monthly.toFixed(2)} / Annual $${totals.annual.toFixed(2)}`,
@@ -73,17 +84,22 @@ export async function syncStoreQuoteToCrm(quote: StoreQuoteCrmInput): Promise<St
   const totals = quoteTotals(quote.requestedItems);
   const amount = money(totals.dueToday + totals.monthly + totals.annual);
 
+  const accountAction = crmAccountAction(quote);
   try {
-    const accounts = await zohoCRMService.searchAccounts(`(Account_Name:equals:${company.replace(/[()]/g, "")})`);
-    if (accounts[0]?.id) {
-      result.accountId = accounts[0].id;
-    } else {
-      const created = await zohoCRMService.createAccount({
-        Account_Name: company,
-        Phone: quote.contactPhone || "",
-        Description: `Created from store quote ${quote.quoteNumber}`,
-      });
-      result.accountId = (created as { details?: { id?: string }; id?: string }).details?.id || created.id;
+    if (accountAction === "use_zoho") {
+      result.accountId = quote.zohoAccountId?.trim();
+    } else if (accountAction === "name_match") {
+      const accounts = await zohoCRMService.searchAccounts(`(Account_Name:equals:${company.replace(/[()]/g, "")})`);
+      if (accounts[0]?.id) {
+        result.accountId = accounts[0].id;
+      } else {
+        const created = await zohoCRMService.createAccount({
+          Account_Name: company,
+          Phone: quote.contactPhone || "",
+          Description: `Path: website.syncStoreQuoteToCrm\nCreated from store quote ${quote.quoteNumber}`,
+        });
+        result.accountId = (created as { details?: { id?: string }; id?: string }).details?.id || created.id;
+      }
     }
   } catch (error: any) {
     console.warn("[store-quote] CRM account sync failed:", error?.message || error);
@@ -107,9 +123,16 @@ export async function syncStoreQuoteToCrm(quote: StoreQuoteCrmInput): Promise<St
     console.warn("[store-quote] CRM contact sync failed:", error?.message || error);
   }
 
+  const dealName = `Store quote ${quote.quoteNumber}${quote.companyName ? ` — ${quote.companyName}` : ""}`.slice(0, 120);
   try {
+    const existingDeals = await zohoCRMService.searchDeals(
+      `(Deal_Name:equals:${dealName.replace(/[()]/g, "")})`,
+    );
+    if (existingDeals[0]?.id) {
+      result.dealId = existingDeals[0].id;
+    } else {
     const created = await zohoCRMService.createDeal({
-      Deal_Name: `Store quote ${quote.quoteNumber}${quote.companyName ? ` — ${quote.companyName}` : ""}`.slice(0, 120),
+      Deal_Name: dealName,
       Amount: amount,
       Stage: "Qualification",
       Closing_Date: closingDate(),
@@ -118,6 +141,7 @@ export async function syncStoreQuoteToCrm(quote: StoreQuoteCrmInput): Promise<St
       Description: description,
     } as any);
     result.dealId = (created as { details?: { id?: string }; id?: string }).details?.id || created.id;
+    }
   } catch (error: any) {
     console.warn("[store-quote] CRM deal sync failed:", error?.message || error);
   }

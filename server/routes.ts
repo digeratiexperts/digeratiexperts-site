@@ -112,6 +112,7 @@ import {
   fetchHubCompanyDocuments,
   fetchHubCompanyOrders,
   fetchHubContractDownload,
+  mayPersistHubAccount,
   persistHubAccountId,
   resolvePortalCompanyName,
   resolvePortalHubAccountId,
@@ -3128,6 +3129,9 @@ export async function registerRoutes(app: Express) {
       const user = portalUsers.get(req.user?.email || "");
       if (!user) return res.status(404).json({ message: "User not found" });
       const mgr = managerSummaryForUser(user as OrgUserFields);
+      const client = user.clientId ? portalAuthGetClient(user.clientId) : undefined;
+      const { companyNameForPortal } = await import("./integrations/profileSync");
+      const companyName = await companyNameForPortal(client?.hubAccountId, client?.companyName ?? null);
       return res.json({
         id: user.id,
         email: user.email,
@@ -3142,6 +3146,7 @@ export async function registerRoutes(app: Express) {
         managerUserId: mgr.managerUserId,
         manager: mgr.manager,
         companyDomains: mgr.companyDomains,
+        companyName,
       });
     } catch (error: any) {
       return res.status(500).json({ message: "Failed to load profile" });
@@ -3549,9 +3554,13 @@ export async function registerRoutes(app: Express) {
       let hubSource: "techsales" | "none" | "unconfigured" = "unconfigured";
 
       try {
-        const { companyName } = portalCompanyContext(req);
-        if (companyName) {
-          const hub = await fetchHubCompanyDocuments(companyName);
+        const learningCompany = portalCompanyContext(req);
+        if (learningCompany.companyName || learningCompany.hubAccountId) {
+          const hub = await fetchHubCompanyDocuments(
+            learningCompany.companyName || "",
+            learningCompany.hubAccountId,
+            learningCompany.companyId,
+          );
           if (hub?.library?.length) {
             hubSource = "techsales";
             hubResources = hub.library
@@ -4006,10 +4015,9 @@ export async function registerRoutes(app: Express) {
         const ctx = portalCompanyContext(req);
         companyName = ctx.companyName;
         if (companyName || ctx.hubAccountId) {
-          const hub = await fetchHubCompanyOrders(companyName || "", ctx.hubAccountId);
-          const mappedAccountId = hub?.accountId || hub?.matchedDeals?.find((d) => d.accountId)?.accountId;
-          if (ctx.companyId && mappedAccountId) {
-            await persistHubAccountId(ctx.companyId, mappedAccountId);
+          const hub = await fetchHubCompanyOrders(companyName || "", ctx.hubAccountId, ctx.companyId);
+          if (ctx.companyId && mayPersistHubAccount(hub?.identitySource) && hub?.accountId) {
+            await persistHubAccountId(ctx.companyId, hub.accountId);
           }
           if (hub?.orders) {
             hubSource = "ok";
@@ -4331,10 +4339,9 @@ export async function registerRoutes(app: Express) {
         });
       }
 
-      const hub = await fetchHubCompanyDocuments(companyName || "", hubAccountId);
-      const mappedAccountId = hub?.accountId || hub?.matchedDeals?.find((d) => d.accountId)?.accountId;
-      if (companyId && mappedAccountId) {
-        await persistHubAccountId(companyId, mappedAccountId);
+      const hub = await fetchHubCompanyDocuments(companyName || "", hubAccountId, companyId);
+      if (companyId && mayPersistHubAccount(hub?.identitySource) && hub?.accountId) {
+        await persistHubAccountId(companyId, hub.accountId);
       }
       if (companyId && hub) {
         void import("./services/de-intelligence/techSalesIngestion")
@@ -4390,12 +4397,12 @@ export async function registerRoutes(app: Express) {
       if (Number.isNaN(signatureId)) {
         return res.status(400).json({ message: "Invalid contract id" });
       }
-      const { companyName, hubAccountId } = portalCompanyContext(req);
+      const { companyId, companyName, hubAccountId } = portalCompanyContext(req);
       if (!companyName && !hubAccountId) {
         return res.status(400).json({ message: "No company profile loaded" });
       }
       const kind = typeof req.query.kind === "string" ? req.query.kind : "signed_pdf";
-      const file = await fetchHubContractDownload(signatureId, companyName || "", kind, hubAccountId);
+      const file = await fetchHubContractDownload(signatureId, companyName || "", kind, hubAccountId, companyId);
       if (!file) {
         return res.status(404).json({ message: "Document not available" });
       }
@@ -5615,6 +5622,17 @@ export async function registerRoutes(app: Express) {
 
       console.log(`[QUOTE REQUEST] Created: ${quoteRequest.quoteNumber} for ${contactEmail}`);
 
+      const hubAccountId = req.user?.clientId ? portalClients.get(req.user.clientId)?.hubAccountId : null;
+      const { buildCommercialSnapshot } = await import("./integrations/commercialSnapshot");
+      const commercial = buildCommercialSnapshot({
+        reference: quoteRequest.quoteNumber,
+        status: "requested",
+        portalClientId: req.user?.clientId || null,
+        company: companyName,
+        email: contactEmail,
+        lineItems: canonicalItems,
+      });
+
       void eventBus.emit(EventTypes.QUOTE_REQUESTED, {
         id: quoteRequest.id,
         quoteId: quoteRequest.id,
@@ -5625,11 +5643,16 @@ export async function registerRoutes(app: Express) {
         companyName,
         message,
         source: "store_quote",
-        canonicalAccountId: req.user?.clientId ? portalClients.get(req.user.clientId)?.hubAccountId : null,
+        canonicalAccountId: hubAccountId,
+        portalClientId: req.user?.clientId || null,
+        commercial,
       });
 
       void import("./storeQuoteCrm")
-        .then(({ syncStoreQuoteToCrm }) => syncStoreQuoteToCrm(quoteRequest))
+        .then(({ syncStoreQuoteToCrm }) => syncStoreQuoteToCrm({
+          ...quoteRequest,
+          canonicalAccountId: hubAccountId,
+        }))
         .catch((error: any) => {
           console.warn("[store-quote] CRM sync skipped:", error?.message || error);
         });

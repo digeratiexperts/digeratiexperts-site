@@ -3,82 +3,103 @@ import { eventBus } from "../eventBus";
 import { logger } from "../logger";
 import { parseDeSyncEnvelope, shouldEchoToHub, type DeSyncEnvelope } from "./deSyncContract";
 import { requireDeSyncAuth } from "./deSyncAuth";
-import { recordConflict, saveCatalogSnapshot } from "./deSyncStore";
+import {
+  clearMemoryProjections,
+  getHubProjectionRecord,
+  isNewerProjection,
+  recordConflict,
+  saveCatalogSnapshot,
+  saveHubProjection,
+} from "./deSyncStore";
 import { beginInbox, markInboxApplied } from "./deSyncInboxLifecycle";
 import { persistHubAccountId } from "./techSalesClient";
 import { publishPortalProjection } from "./portalSse";
+import { toClientProjection, toPublicCatalog } from "./clientProjection";
 
-const projections = new Map<string, Record<string, unknown>>();
-
-export function getHubProjection(entityType: string, entityId: string): Record<string, unknown> | undefined {
-  return projections.get(`${entityType}:${entityId}`);
+export async function getHubProjection(
+  entityType: string,
+  entityId: string,
+): Promise<Record<string, unknown> | undefined> {
+  const row = await getHubProjectionRecord(entityType, entityId);
+  return row ? toClientProjection(row.payload) : undefined;
 }
 
 export function resetHubProjections(): void {
-  projections.clear();
+  clearMemoryProjections();
 }
 
 async function applyHubEvent(envelope: DeSyncEnvelope): Promise<void> {
   if (shouldEchoToHub(envelope)) return;
 
-  const key = `${envelope.entityType}:${envelope.entityId}`;
-  const existing = projections.get(key);
+  const existing = await getHubProjectionRecord(envelope.entityType, envelope.entityId);
+  const occurredAt = new Date(envelope.occurredAt);
+  const apply = isNewerProjection(existing?.updatedAt ?? null, envelope.occurredAt);
 
-  if (
-    existing &&
-    envelope.eventType.startsWith("account.") &&
-    envelope.payload &&
-    existing.name &&
-    envelope.payload.name &&
-    existing.name !== envelope.payload.name
-  ) {
-    await recordConflict({
-      canonicalAccountId: envelope.canonicalAccountId,
+  if (apply) {
+    const previous = existing?.payload;
+    if (
+      previous &&
+      envelope.eventType.startsWith("account.") &&
+      previous.name &&
+      envelope.payload.name &&
+      previous.name !== envelope.payload.name
+    ) {
+      await recordConflict({
+        canonicalAccountId: envelope.canonicalAccountId ?? existing?.canonicalAccountId,
+        entityType: envelope.entityType,
+        entityId: envelope.entityId,
+        field: "name",
+        hubValue: envelope.payload.name,
+        peerValue: previous.name,
+      });
+    }
+
+    await saveHubProjection({
       entityType: envelope.entityType,
       entityId: envelope.entityId,
-      field: "name",
-      hubValue: envelope.payload.name,
-      peerValue: existing.name,
+      canonicalAccountId: envelope.canonicalAccountId ?? existing?.canonicalAccountId ?? null,
+      eventType: envelope.eventType,
+      eventId: envelope.eventId,
+      payload: toClientProjection({
+        ...(previous || {}),
+        ...envelope.payload,
+        eventType: envelope.eventType,
+        updatedAt: envelope.occurredAt,
+      }),
+      updatedAt: Number.isFinite(occurredAt.getTime()) ? occurredAt : new Date(),
     });
-  }
 
-  projections.set(key, {
-    ...(existing || {}),
-    ...envelope.payload,
-    eventType: envelope.eventType,
-    updatedAt: envelope.occurredAt,
-  });
+    if (
+      envelope.eventType === "catalog.published" ||
+      envelope.eventType === "pricing.updated" ||
+      envelope.eventType === "bundle.updated"
+    ) {
+      const snapshot =
+        envelope.payload.catalog && typeof envelope.payload.catalog === "object"
+          ? (envelope.payload.catalog as Record<string, unknown>)
+          : envelope.payload;
+      await saveCatalogSnapshot(toPublicCatalog(snapshot), envelope.eventId);
+    }
+
+    await eventBus.emit(
+      `hub:${envelope.eventType}`,
+      {
+        eventId: envelope.eventId,
+        entityType: envelope.entityType,
+        entityId: envelope.entityId,
+        canonicalAccountId: envelope.canonicalAccountId,
+      },
+      "techsales",
+    );
+
+    publishPortalProjection({ eventType: envelope.eventType, entityId: envelope.entityId });
+  }
 
   const portalClientId =
     typeof envelope.payload.portalClientId === "string" ? envelope.payload.portalClientId : null;
   if (envelope.canonicalAccountId && portalClientId) {
     await persistHubAccountId(portalClientId, envelope.canonicalAccountId);
   }
-
-  if (
-    envelope.eventType === "catalog.published" ||
-    envelope.eventType === "pricing.updated" ||
-    envelope.eventType === "bundle.updated"
-  ) {
-    const snapshot =
-      envelope.payload.catalog && typeof envelope.payload.catalog === "object"
-        ? (envelope.payload.catalog as Record<string, unknown>)
-        : envelope.payload;
-    await saveCatalogSnapshot(snapshot, envelope.eventId);
-  }
-
-  await eventBus.emit(
-    `hub:${envelope.eventType}`,
-    {
-      eventId: envelope.eventId,
-      entityType: envelope.entityType,
-      entityId: envelope.entityId,
-      canonicalAccountId: envelope.canonicalAccountId,
-    },
-    "techsales",
-  );
-
-  publishPortalProjection({ eventType: envelope.eventType, entityId: envelope.entityId });
 }
 
 export async function handleHubEvents(req: Request, res: Response): Promise<void> {

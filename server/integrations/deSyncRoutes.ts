@@ -18,6 +18,8 @@ import { getClient, listUniqueUsers } from "../portalAuthStore";
 import { ensureDeSyncSchema } from "./ensureDeSyncSchema";
 import { logger } from "../logger";
 import { assertPortalCommandAllowed } from "./tenantIdentity";
+import { toPublicCatalog } from "./clientProjection";
+import { buildPortalProfileCommand } from "./profileSync";
 
 type AuthedRequest = Request & {
   user?: { role?: string; clientId?: string | null };
@@ -88,12 +90,17 @@ export function registerDeSyncRoutes(app: Express, authMiddleware: AuthMiddlewar
   app.get("/api/integrations/v1/public-catalog", requireDeSyncSchema, async (_req: Request, res: Response) => {
     const cached = await getCatalogSnapshot();
     if (cached) {
-      return res.json({ source: "last_known_good", publishedAt: cached.publishedAt, ...cached.snapshot });
+      return res.json({
+        source: "last_known_good",
+        publishedAt: cached.publishedAt,
+        ...toPublicCatalog(cached.snapshot),
+      });
     }
     const live = await fetchPublicCatalog();
     if (live) {
-      await saveCatalogSnapshot(live);
-      return res.json({ source: "hub", ...live });
+      const safe = toPublicCatalog(live);
+      await saveCatalogSnapshot(safe);
+      return res.json({ source: "hub", ...safe });
     }
     return res.json({
       source: "none",
@@ -168,18 +175,35 @@ export function registerDeSyncRoutes(app: Express, authMiddleware: AuthMiddlewar
       if (!commandGate.ok) {
         return res.status(commandGate.status).json({ error: commandGate.error, code: commandGate.code });
       }
+      const rawPayload =
+        req.body?.payload && typeof req.body.payload === "object" ? req.body.payload : {};
+      let canonicalAccountId = client?.hubAccountId || null;
+      let payload: Record<string, unknown> = {
+        ...rawPayload,
+        portalClientId: req.user?.clientId || null,
+        actorUserId: req.userId || null,
+      };
+      if (eventType === "account.profile_update_requested") {
+        const command = buildPortalProfileCommand({
+          hubAccountId: client?.hubAccountId,
+          portalClientId: req.user?.clientId || "",
+          actorUserId: req.userId || null,
+          payload: rawPayload,
+        });
+        if (!command.ok) {
+          return res.status(command.status).json({ error: command.error, code: command.code });
+        }
+        canonicalAccountId = command.canonicalAccountId;
+        payload = command.payload;
+      }
       const envelope = await enqueueOutbox({
         eventType,
         source: "portal",
         destination: "hub",
         entityType: typeof req.body?.entityType === "string" ? req.body.entityType : "command",
         entityId: typeof req.body?.entityId === "string" ? req.body.entityId : undefined,
-        canonicalAccountId: client?.hubAccountId || null,
-        payload: {
-          ...(req.body?.payload && typeof req.body.payload === "object" ? req.body.payload : {}),
-          portalClientId: req.user?.clientId || null,
-          actorUserId: req.userId || null,
-        },
+        canonicalAccountId,
+        payload,
       });
       res.status(202).json({ ok: true, eventId: envelope.eventId });
     },
