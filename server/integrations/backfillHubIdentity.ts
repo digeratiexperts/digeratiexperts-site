@@ -8,6 +8,25 @@ export function trustedHubAccountId(externalId: string | null | undefined): stri
   return /^[1-9]\d*$/.test(value) ? value : null;
 }
 
+export type HubAccountWrite =
+  | { action: "set"; hubAccountId: string }
+  | { action: "keep"; hubAccountId: string }
+  | { action: "ignore" }
+  | { action: "conflict"; existing: string; incoming: string };
+
+/** An existing Hub account id is never replaced by a different id or a name. */
+export function retainHubAccountMapping(
+  existing: string | null | undefined,
+  incoming: string | null | undefined,
+): HubAccountWrite {
+  const next = trustedHubAccountId(incoming);
+  const current = trustedHubAccountId(existing);
+  if (!next) return { action: "ignore" };
+  if (!current) return { action: "set", hubAccountId: next };
+  if (current === next) return { action: "keep", hubAccountId: current };
+  return { action: "conflict", existing: current, incoming: next };
+}
+
 export function selectBackfillUpdates(
   rows: Array<{ clientId: string; hubAccountId: string | null; externalId: string | null }>,
 ): Array<{ clientId: string; hubAccountId: string }> {

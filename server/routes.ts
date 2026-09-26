@@ -112,6 +112,7 @@ import {
   fetchHubCompanyDocuments,
   fetchHubCompanyOrders,
   fetchHubContractDownload,
+  mayPersistHubAccount,
   persistHubAccountId,
   resolvePortalCompanyName,
   resolvePortalHubAccountId,
@@ -3549,9 +3550,13 @@ export async function registerRoutes(app: Express) {
       let hubSource: "techsales" | "none" | "unconfigured" = "unconfigured";
 
       try {
-        const { companyName } = portalCompanyContext(req);
-        if (companyName) {
-          const hub = await fetchHubCompanyDocuments(companyName);
+        const learningCompany = portalCompanyContext(req);
+        if (learningCompany.companyName || learningCompany.hubAccountId) {
+          const hub = await fetchHubCompanyDocuments(
+            learningCompany.companyName || "",
+            learningCompany.hubAccountId,
+            learningCompany.companyId,
+          );
           if (hub?.library?.length) {
             hubSource = "techsales";
             hubResources = hub.library
@@ -4006,10 +4011,9 @@ export async function registerRoutes(app: Express) {
         const ctx = portalCompanyContext(req);
         companyName = ctx.companyName;
         if (companyName || ctx.hubAccountId) {
-          const hub = await fetchHubCompanyOrders(companyName || "", ctx.hubAccountId);
-          const mappedAccountId = hub?.accountId || hub?.matchedDeals?.find((d) => d.accountId)?.accountId;
-          if (ctx.companyId && mappedAccountId) {
-            await persistHubAccountId(ctx.companyId, mappedAccountId);
+          const hub = await fetchHubCompanyOrders(companyName || "", ctx.hubAccountId, ctx.companyId);
+          if (ctx.companyId && mayPersistHubAccount(hub?.identitySource) && hub?.accountId) {
+            await persistHubAccountId(ctx.companyId, hub.accountId);
           }
           if (hub?.orders) {
             hubSource = "ok";
@@ -4331,10 +4335,9 @@ export async function registerRoutes(app: Express) {
         });
       }
 
-      const hub = await fetchHubCompanyDocuments(companyName || "", hubAccountId);
-      const mappedAccountId = hub?.accountId || hub?.matchedDeals?.find((d) => d.accountId)?.accountId;
-      if (companyId && mappedAccountId) {
-        await persistHubAccountId(companyId, mappedAccountId);
+      const hub = await fetchHubCompanyDocuments(companyName || "", hubAccountId, companyId);
+      if (companyId && mayPersistHubAccount(hub?.identitySource) && hub?.accountId) {
+        await persistHubAccountId(companyId, hub.accountId);
       }
       if (companyId && hub) {
         void import("./services/de-intelligence/techSalesIngestion")
@@ -4390,12 +4393,12 @@ export async function registerRoutes(app: Express) {
       if (Number.isNaN(signatureId)) {
         return res.status(400).json({ message: "Invalid contract id" });
       }
-      const { companyName, hubAccountId } = portalCompanyContext(req);
+      const { companyId, companyName, hubAccountId } = portalCompanyContext(req);
       if (!companyName && !hubAccountId) {
         return res.status(400).json({ message: "No company profile loaded" });
       }
       const kind = typeof req.query.kind === "string" ? req.query.kind : "signed_pdf";
-      const file = await fetchHubContractDownload(signatureId, companyName || "", kind, hubAccountId);
+      const file = await fetchHubContractDownload(signatureId, companyName || "", kind, hubAccountId, companyId);
       if (!file) {
         return res.status(404).json({ message: "Document not available" });
       }

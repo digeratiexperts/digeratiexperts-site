@@ -2,6 +2,7 @@
  * Unified TechSales Hub client: reads, signed command delivery, and identity.
  * Absorbs the former techSalesDocuments.ts surface.
  */
+import { retainHubAccountMapping } from "./backfillHubIdentity";
 import { logger } from "../logger";
 import { getClient, setClient } from "../portalAuthStore";
 import { assertMutationAllowed } from "../stagingReviewGuard";
@@ -12,6 +13,7 @@ export type HubCompanyDocumentsResponse = {
   success?: boolean;
   companyName?: string;
   accountId?: number | string | null;
+  identitySource?: "canonical_account_id" | "legacy_exact_name" | "unmapped" | string;
   matchedDeals?: Array<{ id: number; accountName: string; accountId: number | null; stage: string }>;
   contracts?: any[];
   library?: any[];
@@ -43,6 +45,7 @@ export type HubCompanyOrdersResponse = {
   success?: boolean;
   companyName?: string;
   accountId?: number | string | null;
+  identitySource?: "canonical_account_id" | "legacy_exact_name" | "unmapped" | string;
   matchedDeals?: Array<{ id: number; accountName: string; accountId: number | null; stage: string }>;
   orders?: HubCompanyOrder[];
   counts?: { deals?: number; quotes?: number; packages?: number; total?: number };
@@ -136,14 +139,28 @@ export function resolvePortalHubAccountId(opts: {
   return opts.getClient(id)?.hubAccountId?.trim() || null;
 }
 
+export function mayPersistHubAccount(identitySource: string | null | undefined): boolean {
+  return identitySource === "canonical_account_id";
+}
+
 export async function persistHubAccountId(clientId: string, accountId: string | number): Promise<void> {
   const id = String(accountId).trim();
   if (!clientId || !id) return;
   const client = getClient(clientId);
   if (!client) return;
-  if (client.hubAccountId !== id) {
-    setClient({ ...client, hubAccountId: id });
-    logger.info("Persisted Hub account mapping", { clientId, hubAccountId: id });
+  const write = retainHubAccountMapping(client.hubAccountId, id);
+  if (write.action === "conflict") {
+    logger.warn("Refused to replace Hub account mapping", {
+      clientId,
+      existing: write.existing,
+      incoming: write.incoming,
+    });
+    return;
+  }
+  if (write.action === "ignore") return;
+  if (write.action === "set") {
+    setClient({ ...client, hubAccountId: write.hubAccountId });
+    logger.info("Persisted Hub account mapping", { clientId, hubAccountId: write.hubAccountId });
   }
   try {
     const { db } = await import("../db");
@@ -160,16 +177,26 @@ export async function persistHubAccountId(clientId: string, accountId: string | 
         ),
       )
       .limit(1);
+    const storedId = write.hubAccountId;
     if (existing[0]) {
+      const rowWrite = retainHubAccountMapping(existing[0].externalId, storedId);
+      if (rowWrite.action === "conflict") {
+        logger.warn("Refused to replace stored Hub account mapping", {
+          clientId,
+          existing: rowWrite.existing,
+          incoming: rowWrite.incoming,
+        });
+        return;
+      }
       await db
         .update(externalIntegrationMappings)
-        .set({ externalId: id, lastSyncedAt: new Date(), updatedAt: new Date() })
+        .set({ externalId: storedId, lastSyncedAt: new Date(), updatedAt: new Date() })
         .where(eq(externalIntegrationMappings.id, existing[0].id));
     } else {
       await db.insert(externalIntegrationMappings).values({
         clientId,
         integrationType: "techsales_hub",
-        externalId: id,
+        externalId: storedId,
         externalType: "account",
         mappedPortalId: clientId,
         mappedType: "client",
@@ -182,16 +209,22 @@ export async function persistHubAccountId(clientId: string, accountId: string | 
   }
 }
 
-function documentsQuery(companyName: string | null, accountId: string | null): string {
+function documentsQuery(
+  companyName: string | null,
+  accountId: string | null,
+  portalClientId?: string | null,
+): string {
   const params = new URLSearchParams();
   if (accountId) params.set("accountId", accountId);
   else if (companyName) params.set("companyName", companyName);
+  if (portalClientId) params.set("portalClientId", portalClientId);
   return params.toString();
 }
 
 export async function fetchHubCompanyDocuments(
   companyName: string,
   accountId?: string | null,
+  portalClientId?: string | null,
 ): Promise<HubCompanyDocumentsResponse | null> {
   const base = hubApiBase();
   const token = syncToken();
@@ -199,7 +232,7 @@ export async function fetchHubCompanyDocuments(
     logger.warn("TechSales document bridge skipped — TECHSALES_HUB_URL/SYNC_URL or TOKEN not set");
     return null;
   }
-  const qs = documentsQuery(companyName, accountId || null);
+  const qs = documentsQuery(companyName, accountId || null, portalClientId);
   if (!qs) return null;
   const url = `${base}/webhooks/portal/company-documents?${qs}`;
   try {
@@ -226,6 +259,7 @@ export async function fetchHubCompanyDocuments(
 export async function fetchHubCompanyOrders(
   companyName: string,
   accountId?: string | null,
+  portalClientId?: string | null,
 ): Promise<HubCompanyOrdersResponse | null> {
   const base = hubApiBase();
   const token = syncToken();
@@ -233,7 +267,7 @@ export async function fetchHubCompanyOrders(
     logger.warn("TechSales orders bridge skipped — TECHSALES_HUB_URL/SYNC_URL or TOKEN not set");
     return null;
   }
-  const qs = documentsQuery(companyName, accountId || null);
+  const qs = documentsQuery(companyName, accountId || null, portalClientId);
   if (!qs) return null;
   const url = `${base}/webhooks/portal/company-orders?${qs}`;
   try {
@@ -262,6 +296,7 @@ export async function fetchHubContractDownload(
   companyName: string,
   kind: string = "signed_pdf",
   accountId?: string | null,
+  portalClientId?: string | null,
 ): Promise<{ buffer: Buffer; contentType: string; fileName: string } | null> {
   const base = hubApiBase();
   const token = syncToken();
@@ -269,6 +304,7 @@ export async function fetchHubContractDownload(
   const qs = new URLSearchParams();
   if (accountId) qs.set("accountId", accountId);
   else qs.set("companyName", companyName);
+  if (portalClientId) qs.set("portalClientId", portalClientId);
   qs.set("kind", kind);
   const url = `${base}/webhooks/portal/company-documents/${signatureId}/download?${qs.toString()}`;
   try {
