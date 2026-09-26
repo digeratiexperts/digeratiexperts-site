@@ -536,6 +536,7 @@ Use canonical pricing/service data from existing project sources.
 - Internal provider policy: **Guardz = primary/default managed-security provider; Blackpoint Cyber = approved backup/alternate MDR provider.**
 - Guardz packaging baseline: **IT = Pro; Office = Ultimate; Business = Ultimate; Enterprise = Elite.**
 - Office and above include 24/7 managed detection and response; IT includes the managed-security platform baseline without claiming 24/7 human MDR.
+- GCC High / CUI variants inherit the DE Security Foundation requirement, but do **not** automatically inherit a Guardz implementation. Provider eligibility for government-cloud / regulated scope must be verified separately.
 - Provider role belongs on the solution↔provider relationship. Preserve verified cost, margin, entitlements, paid extras, contract terms, source freshness, and standalone/ProActive packaging internally.
 - Do not expose vendor identity, internal SKUs, costs, or margins on public surfaces unless an explicit disclosure rule requires it.
 - Do not silently substitute the backup provider's economics for the primary provider. Unknown Blackpoint tier/cost mapping remains review-required until verified.
