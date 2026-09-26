@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three Theme Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: #0d0d10;
+    color: #e8e8ea;
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  img { max-width: 100%; display: block; }
+
+  /* ---------- Shell: the switcher and the framing chrome, not part of any direction ---------- */
+  .shell-bar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    padding: 12px 16px;
+    background: rgba(13,13,16,.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+  .shell-bar h1 {
+    margin: 0; font-size: .72rem; font-family: "IBM Plex Mono", monospace;
+    text-transform: uppercase; letter-spacing: .18em; color: #8d8d96; font-weight: 500;
+    margin-right: auto;
+  }
+  .switch { display: flex; gap: 6px; flex-wrap: wrap; }
+  .switch button {
+    font: 500 .72rem/1 "IBM Plex Mono", monospace;
+    letter-spacing: .1em; text-transform: uppercase;
+    padding: 9px 13px; border-radius: 999px; cursor: pointer;
+    background: transparent; color: #a6a6ae;
+    border: 1px solid rgba(255,255,255,.18);
+    transition: background .16s ease, color .16s ease, border-color .16s ease;
+  }
+  .switch button:hover { color: #fff; border-color: rgba(255,255,255,.42); }
+  .switch button:focus-visible { outline: 2px solid #D3126A; outline-offset: 2px; }
+  .switch button[aria-pressed="true"] { background: #f2f2f4; color: #0d0d10; border-color: #f2f2f4; }
+
+  .panel { display: none; }
+  .panel.is-on { display: block; }
+
+  /* Verdict strip under each direction */
+  .verdict {
+    background: #0d0d10; color: #e8e8ea;
+    border-top: 1px solid rgba(255,255,255,.12);
+    padding: 28px 16px 56px;
+  }
+  .verdict-in { max-width: 980px; margin: 0 auto; }
+  .verdict h3 {
+    margin: 0 0 6px; font: 500 .7rem/1 "IBM Plex Mono", monospace;
+    text-transform: uppercase; letter-spacing: .18em; color: #8d8d96;
+  }
+  .verdict p { margin: 0 0 18px; color: #b6b6bf; max-width: 62ch; font-size: .95rem; }
+  .vote { display: flex; gap: 8px; flex-wrap: wrap; }
+  .vote button {
+    font: 500 .78rem/1 "IBM Plex Sans", sans-serif;
+    padding: 10px 16px; border-radius: 6px; cursor: pointer;
+    background: transparent; color: #cfcfd6; border: 1px solid rgba(255,255,255,.2);
+    transition: background .16s ease, color .16s ease, border-color .16s ease;
+  }
+  .vote button:hover { border-color: rgba(255,255,255,.5); color: #fff; }
+  .vote button:focus-visible { outline: 2px solid #D3126A; outline-offset: 2px; }
+  .vote button[aria-pressed="true"] { background: #D3126A; border-color: #D3126A; color: #fff; }
+  .vote-note { margin-top: 12px; font: 400 .78rem/1.5 "IBM Plex Mono", monospace; color: #6f6f78; }
+
+  /* Missing-data marker. Takes each direction's own accent so a theme that
+     drops magenta does not smuggle it back in through the gap list. */
+  .gap { color: #D3126A; font-family: "IBM Plex Mono", monospace; font-size: .82em; }
+  .B .gap { color: #FF2D7E; }
+  .C .gap { color: #E0A94F; }
+
+  /* ================================================================
+     DIRECTION A — DOSSIER
+     Warm paper, ink, one magenta rule. Editorial consulting report.
+     ================================================================ */
+  .A {
+    --paper: #f4f1ec; --paper-2: #fffefc; --ink: #14120f; --ink-2: #5a544c;
+    --rule: rgba(20,18,15,.14); --mag: #D3126A;
+    background: var(--paper); color: var(--ink);
+    font-family: "IBM Plex Sans", sans-serif;
+  }
+  .A .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  .A .masthead {
+    display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+    border-bottom: 2px solid var(--ink); padding: 22px 0 12px;
+  }
+  .A .wordmark { font: 400 1.5rem/1 "Instrument Serif", serif; letter-spacing: -.01em; }
+  .A .masthead .meta {
+    margin-left: auto; font: 400 .7rem/1 "IBM Plex Mono", monospace;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2);
+  }
+  .A .lede { padding: 64px 0 52px; border-bottom: 1px solid var(--rule); }
+  @media (min-width: 1000px) {
+    .A .lede, .A .close { display: grid; grid-template-columns: 1.35fr 1fr; gap: 56px; align-items: end; }
+    .A .lede .kicker, .A .lede h2 { grid-column: 1; }
+    .A .lede h2 { margin-bottom: 0; }
+    .A .lede .col { grid-column: 2; grid-row: 2; }
+    .A .close .col { grid-column: 2; align-self: center; }
+    .A .close h3 { margin-bottom: 0; }
+  }
+  .A .col p { margin: 0; }
+  .A .col .cta-row { margin-top: 26px; }
+  .A .index { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); }
+  .A .index li {
+    display: flex; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--rule);
+    font: 400 .78rem/1.3 "IBM Plex Mono", monospace; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--ink-2);
+  }
+  .A .index li b { color: var(--ink); font-weight: 500; min-width: 2.2em; }
+  .A .kicker {
+    font: 500 .7rem/1 "IBM Plex Mono", monospace; letter-spacing: .2em;
+    text-transform: uppercase; color: var(--mag); margin-bottom: 22px;
+  }
+  .A h2 {
+    margin: 0 0 24px; font: 400 clamp(2.5rem, 6.4vw, 4.6rem)/1.02 "Instrument Serif", serif;
+    letter-spacing: -.02em; max-width: 17ch;
+  }
+  .A h2 em { font-style: italic; color: var(--mag); }
+  .A .lede p { margin: 0; max-width: 58ch; font-size: 1.12rem; line-height: 1.65; color: var(--ink-2); }
+  .A .cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
+  .A .btn {
+    display: inline-block; text-decoration: none; font: 500 .9rem/1 "IBM Plex Sans", sans-serif;
+    padding: 15px 26px; border-radius: 2px; transition: background .16s ease, color .16s ease;
+  }
+  .A .btn-p { background: var(--ink); color: var(--paper); }
+  .A .btn-p:hover { background: var(--mag); }
+  .A .btn-s { border: 1px solid var(--ink); color: var(--ink); }
+  .A .btn-s:hover { background: var(--ink); color: var(--paper); }
+  .A .btn:focus-visible { outline: 2px solid var(--mag); outline-offset: 3px; }
+
+  .A .facts { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--rule); }
+  .A .fact { padding: 32px 22px 32px 0; border-right: 1px solid var(--rule); }
+  .A .fact:last-child { border-right: 0; }
+  .A .fact b { display: block; font: 400 2.5rem/1 "Instrument Serif", serif; letter-spacing: -.02em; }
+  .A .fact span {
+    display: block; margin-top: 8px; font: 400 .74rem/1.45 "IBM Plex Mono", monospace;
+    text-transform: uppercase; letter-spacing: .1em; color: var(--ink-2);
+  }
+
+  .A .sec { padding: 60px 0; border-bottom: 1px solid var(--rule); }
+  .A .sec > h3 {
+    margin: 0 0 28px; font: 500 .72rem/1 "IBM Plex Mono", monospace;
+    letter-spacing: .2em; text-transform: uppercase; color: var(--ink-2);
+  }
+  .A table { width: 100%; border-collapse: collapse; }
+  .A thead th {
+    text-align: left; padding: 0 16px 12px 0; border-bottom: 2px solid var(--ink);
+    font: 500 .72rem/1 "IBM Plex Mono", monospace; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--ink-2); vertical-align: bottom;
+  }
+  .A tbody td { padding: 20px 16px 20px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  .A tbody tr:hover { background: rgba(211,18,106,.04); }
+  .A .plan { font: 500 1.16rem/1.2 "IBM Plex Sans", sans-serif; }
+  .A .plan small {
+    display: block; margin-top: 5px; font: 400 .72rem/1 "IBM Plex Mono", monospace;
+    text-transform: uppercase; letter-spacing: .1em; color: var(--ink-2);
+  }
+  .A .price { font: 400 1.7rem/1 "Instrument Serif", serif; white-space: nowrap; }
+  .A .price sub { font: 400 .7rem/1 "IBM Plex Mono", monospace; color: var(--ink-2); vertical-align: baseline; }
+  .A .fit { max-width: 42ch; font-size: .92rem; color: var(--ink-2); }
+  .A .scope { margin: 22px 0 0; font-size: .86rem; color: var(--ink-2); max-width: 70ch; }
+  .A .pull {
+    margin: 0; padding: 36px 0 0; font: 400 clamp(1.4rem,3vw,2rem)/1.35 "Instrument Serif", serif;
+    max-width: 30ch; border-top: 1px solid var(--rule); margin-top: 36px;
+  }
+  .A .close { padding: 72px 0 88px; }
+  .A .close h3 { margin: 0 0 18px; font: 400 clamp(2rem,4.6vw,3.2rem)/1.06 "Instrument Serif", serif; letter-spacing: -.02em; max-width: 18ch; }
+
+  /* ================================================================
+     DIRECTION B — INSTRUMENT
+     Near black, monospace, hairline grid. A readout, not a brochure.
+     ================================================================ */
+  .B {
+    --bg: #08090a; --raised: #0f1113; --line: rgba(255,255,255,.09);
+    --fg: #d6d9dd; --dim: #7c828a; --mag: #FF2D7E;
+    background: var(--bg); color: var(--fg);
+    font-family: "IBM Plex Mono", monospace;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 100% 96px, 96px 100%;
+  }
+  .B .wrap { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+  .B .bar {
+    display: flex; gap: 18px; align-items: center; flex-wrap: wrap;
+    padding: 14px 0; border-bottom: 1px solid var(--line);
+    font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--dim);
+  }
+  .B .bar .id { color: var(--fg); letter-spacing: .24em; }
+  .B .live { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; color: var(--fg); }
+  .B .dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--mag);
+    box-shadow: 0 0 0 0 rgba(255,45,126,.6); animation: pulse 2.4s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255,45,126,.55); }
+    70% { box-shadow: 0 0 0 9px rgba(255,45,126,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,45,126,0); }
+  }
+  .B .head { padding: 76px 0 56px; }
+  .B .head p.tag { margin: 0 0 26px; font-size: .7rem; letter-spacing: .24em; text-transform: uppercase; color: var(--mag); }
+  .B .head h2 {
+    margin: 0 0 26px; font: 400 clamp(1.7rem,4.1vw,3.1rem)/1.22 "IBM Plex Mono", monospace;
+    letter-spacing: -.01em; max-width: 24ch; color: #fff;
+  }
+  .B .head h2 span { color: var(--dim); }
+  .B .head > p.sub {
+    margin: 0; max-width: 62ch; font-family: "IBM Plex Sans", sans-serif;
+    font-size: 1.02rem; line-height: 1.7; color: var(--dim);
+  }
+  .B .readout { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+  .B .cell { background: var(--bg); padding: 26px 20px; }
+  .B .cell b { display: block; font: 500 2.1rem/1 "IBM Plex Mono", monospace; color: #fff; letter-spacing: -.02em; }
+  .B .cell span { display: block; margin-top: 10px; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+  .B .sec { padding: 60px 0 0; }
+  .B .sec h3 { margin: 0 0 22px; font-size: .7rem; letter-spacing: .22em; text-transform: uppercase; color: var(--dim); }
+  .B .rows { border-top: 1px solid var(--line); }
+  .B .row {
+    display: grid; grid-template-columns: 1.1fr .8fr 2fr; gap: 20px; align-items: baseline;
+    padding: 22px 0; border-bottom: 1px solid var(--line);
+    transition: background .16s ease;
+  }
+  .B .row:hover { background: var(--raised); }
+  .B .row .n { color: #fff; font-size: 1rem; letter-spacing: .02em; }
+  .B .row .n i { display: block; font-style: normal; margin-top: 6px; font-size: .66rem; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+  .B .row .v { font-size: 1.32rem; color: var(--mag); white-space: nowrap; }
+  .B .row .v i { font-style: normal; font-size: .66rem; color: var(--dim); letter-spacing: .1em; }
+  .B .row .d { font-family: "IBM Plex Sans", sans-serif; font-size: .92rem; line-height: 1.6; color: var(--dim); }
+  .B .note { margin: 22px 0 0; font-family: "IBM Plex Sans", sans-serif; font-size: .86rem; color: var(--dim); max-width: 72ch; }
+  .B .close { padding: 72px 0 90px; }
+  .B .close h3 { margin: 0 0 20px; font: 400 clamp(1.5rem,3.4vw,2.4rem)/1.25 "IBM Plex Mono", monospace; color: #fff; max-width: 22ch; letter-spacing: -.01em; }
+  .B .btn {
+    display: inline-block; text-decoration: none; font: 500 .8rem/1 "IBM Plex Mono", monospace;
+    letter-spacing: .1em; text-transform: uppercase; padding: 16px 24px;
+    border: 1px solid var(--mag); color: var(--mag); border-radius: 2px;
+    transition: background .16s ease, color .16s ease;
+  }
+  .B .btn:hover { background: var(--mag); color: #08090a; }
+  .B .btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+  .B .btn.ghost { border-color: var(--line); color: var(--dim); }
+  .B .btn.ghost:hover { background: transparent; border-color: var(--fg); color: #fff; }
+  .B .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  /* ================================================================
+     DIRECTION C — SIGNAL
+     Brand-lock break: no magenta. Cold ink-navy, mint signal, huge type.
+     ================================================================ */
+  .C {
+    --bg: #05080f; --fg: #eef2f5; --dim: #8994a3;
+    --sig: #6FE3C8; --line: rgba(238,242,245,.1);
+    background: var(--bg); color: var(--fg);
+    font-family: "IBM Plex Sans", sans-serif;
+    position: relative; overflow: hidden;
+  }
+  .C::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(70% 48% at 14% 0%, rgba(111,227,200,.14), transparent 62%),
+      radial-gradient(56% 44% at 92% 22%, rgba(60,110,190,.16), transparent 66%);
+  }
+  .C .wrap { position: relative; max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  .C .bar {
+    display: flex; gap: 14px; align-items: center; padding: 18px 0;
+    font: 500 .68rem/1 "IBM Plex Mono", monospace; letter-spacing: .22em;
+    text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--line);
+  }
+  .C .bar b { color: var(--fg); letter-spacing: .28em; font-weight: 600; }
+  .C .bar .warn { margin-left: auto; color: var(--sig); }
+  .C .head { padding: 84px 0 64px; }
+  .C .head p.tag { margin: 0 0 24px; font: 500 .7rem/1 "IBM Plex Mono", monospace; letter-spacing: .24em; text-transform: uppercase; color: var(--sig); }
+  .C h2 {
+    margin: 0 0 28px;
+    font: 800 clamp(2.9rem,9vw,7rem)/.94 "Bricolage Grotesque", sans-serif;
+    letter-spacing: -.035em; max-width: 13ch;
+  }
+  .C h2 u { text-decoration: none; color: var(--sig); }
+  .C .head p.sub { margin: 0; max-width: 54ch; font-size: 1.1rem; line-height: 1.66; color: var(--dim); }
+  .C .cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 36px; }
+  .C .btn {
+    display: inline-block; text-decoration: none; border-radius: 999px;
+    font: 600 .92rem/1 "IBM Plex Sans", sans-serif; padding: 16px 28px;
+    transition: transform .16s cubic-bezier(.2,.8,.3,1), background .16s ease, color .16s ease;
+  }
+  .C .btn-p { background: var(--sig); color: #04231d; }
+  .C .btn-p:hover { transform: translateY(-2px); }
+  .C .btn-s { border: 1px solid var(--line); color: var(--fg); }
+  .C .btn-s:hover { border-color: var(--sig); color: var(--sig); }
+  .C .btn:focus-visible { outline: 2px solid var(--sig); outline-offset: 3px; }
+  .C .facts { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; padding: 0 0 64px; }
+  .C .fact { border-top: 2px solid var(--sig); padding-top: 18px; }
+  .C .fact b { display: block; font: 800 clamp(2rem,3.6vw,3.1rem)/1 "Bricolage Grotesque", sans-serif; letter-spacing: -.03em; }
+  .C .fact span { display: block; margin-top: 10px; font: 500 .7rem/1.45 "IBM Plex Mono", monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+  .C .sec { padding: 0 0 64px; }
+  .C .sec h3 { margin: 0 0 26px; font: 500 .7rem/1 "IBM Plex Mono", monospace; letter-spacing: .22em; text-transform: uppercase; color: var(--dim); }
+  .C .cards { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+  .C .card {
+    border: 1px solid var(--line); border-radius: 14px; padding: 24px 20px 26px;
+    background: linear-gradient(180deg, rgba(238,242,245,.05), rgba(238,242,245,.015));
+    transition: transform .18s cubic-bezier(.2,.8,.3,1), border-color .18s ease;
+  }
+  .C .card:hover { transform: translateY(-4px); border-color: rgba(111,227,200,.45); }
+  .C .card h4 { margin: 0 0 4px; font: 600 1.16rem/1.2 "IBM Plex Sans", sans-serif; }
+  .C .card .t { font: 500 .66rem/1 "IBM Plex Mono", monospace; letter-spacing: .16em; text-transform: uppercase; color: var(--sig); }
+  .C .card .p { margin: 18px 0 0; font: 800 2.2rem/1 "Bricolage Grotesque", sans-serif; letter-spacing: -.03em; }
+  .C .card .p i { font-style: normal; font-size: .8rem; font-weight: 500; color: var(--dim); font-family: "IBM Plex Mono", monospace; }
+  .C .card .f { margin: 8px 0 0; font: 500 .74rem/1 "IBM Plex Mono", monospace; color: var(--dim); }
+  .C .card .w { margin: 16px 0 0; font-size: .88rem; line-height: 1.55; color: var(--dim); }
+  .C .note { margin: 22px 0 0; font-size: .86rem; color: var(--dim); max-width: 72ch; }
+  .C .close { padding: 24px 0 96px; }
+  .C .close h3 { margin: 0 0 20px; font: 800 clamp(2rem,5vw,3.6rem)/1.02 "Bricolage Grotesque", sans-serif; letter-spacing: -.03em; max-width: 16ch; color: var(--fg); text-transform: none; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 900px) {
+    .A .facts, .B .readout, .C .facts, .C .cards { grid-template-columns: repeat(2, 1fr); }
+    .B .row { grid-template-columns: 1fr; gap: 8px; }
+  }
+  @media (max-width: 560px) {
+    .A .wrap, .B .wrap, .C .wrap { padding: 0 16px; }
+    .A .facts, .B .readout, .C .facts, .C .cards { grid-template-columns: 1fr; }
+    .A .fact { border-right: 0; border-bottom: 1px solid var(--rule); padding: 22px 0; }
+    .A .fact:last-child { border-bottom: 0; }
+    .A thead { display: none; }
+    .A tbody td { display: block; padding: 6px 0; border-bottom: 0; }
+    .A tbody tr { display: block; padding: 20px 0; border-bottom: 1px solid var(--rule); }
+    .A .lede, .B .head, .C .head { padding-top: 48px; padding-bottom: 40px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell-bar">
+  <h1>Digerati Experts · homepage theme directions · mockup, not a route</h1>
+  <div class="switch" role="group" aria-label="Choose a theme direction">
+    <button type="button" data-go="A" aria-pressed="true">A · Dossier</button>
+    <button type="button" data-go="B" aria-pressed="false">B · Instrument</button>
+    <button type="button" data-go="C" aria-pressed="false">C · Signal</button>
+  </div>
+</div>
+
+<!-- ============================ A ============================ -->
+<section class="panel is-on" id="p-A" aria-label="Direction A, Dossier">
+<div class="A">
+  <div class="wrap">
+    <div class="masthead">
+      <div class="wordmark">Digerati Experts</div>
+      <div class="meta">Managed IT &amp; Security · Est. figures, not quotes</div>
+    </div>
+
+    <div class="lede">
+      <div class="kicker">No black-box IT</div>
+      <h2>You will know what you are buying, what you pay, and <em>who owns it.</em></h2>
+      <div class="col">
+        <p>Four operating tiers. Published starting rates. The DE Security Foundation in every one of them. Your Cyber Risk Assessment confirms the final scope before anything is signed.</p>
+        <div class="cta-row">
+          <a class="btn btn-p" href="#">Book the Cyber Risk Assessment</a>
+          <a class="btn btn-s" href="#">Read a sample scope</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="facts">
+      <div class="fact"><b>$125</b><span>Per user / month, entry tier</span></div>
+      <div class="fact"><b>4</b><span>Operating tiers, one ladder</span></div>
+      <div class="fact"><b>100%</b><span>Plans include DE Security Foundation</span></div>
+      <div class="fact"><b class="gap">[ ? ]</b><span class="gap">Response time — real figure needed</span></div>
+    </div>
+
+    <div class="sec">
+      <h3>The ladder</h3>
+      <table>
+        <thead>
+          <tr><th>Plan</th><th>Per user</th><th>Monthly floor</th><th>Who it is for</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="plan">ProActive IT<small>Entry</small></span></td>
+            <td class="price">$125<sub>/user/mo</sub></td>
+            <td class="price">$1,600<sub>/mo</sub></td>
+            <td class="fit">Smaller, less complex environments that need essential protection and a documented baseline.</td>
+          </tr>
+          <tr>
+            <td><span class="plan">ProActive Office<small>Foundation</small></span></td>
+            <td class="price">$165<sub>/user/mo</sub></td>
+            <td class="price">$2,400<sub>/mo</sub></td>
+            <td class="fit">A broader managed workplace — more users, devices, and a professionally operated network.</td>
+          </tr>
+          <tr>
+            <td><span class="plan">ProActive Business<small>Operations</small></span></td>
+            <td class="price">$245<sub>/user/mo</sub></td>
+            <td class="price">$5,400<sub>/mo</sub></td>
+            <td class="fit">Deeper infrastructure, cyber operations, recovery, governance, and strategy.</td>
+          </tr>
+          <tr>
+            <td><span class="plan">ProActive Enterprise<small>Compliance</small></span></td>
+            <td class="price">$345<sub>/user/mo</sub></td>
+            <td class="price">$9,000<sub>/mo</sub></td>
+            <td class="fit">Multi-site, regulated, or security-sensitive environments that need the greatest operating depth.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="scope">Final pricing depends on users, endpoints, locations, infrastructure, backup requirements, and security/compliance scope. Estimates are not quotes — your Cyber Risk Assessment confirms final scope.</p>
+      <p class="pull">Every competitor makes you ask for the price. We printed it on the front page.</p>
+    </div>
+
+    <div class="close">
+      <h3>Start with the assessment, not the contract.</h3>
+      <div class="col">
+        <ul class="index">
+          <li><b>01</b> Scope call, 30 minutes</li>
+          <li><b>02</b> Cyber Risk Assessment</li>
+          <li><b>03</b> Written scope and fixed rate</li>
+          <li><b>04</b> Onboarding</li>
+        </ul>
+        <div class="cta-row">
+          <a class="btn btn-p" href="#">Book the assessment</a>
+          <a class="btn btn-s" href="#">Talk to an engineer</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="verdict"><div class="verdict-in">
+  <h3>Direction A — Dossier</h3>
+  <p><b>The move:</b> full inversion of today's dark slab into warm paper and ink, with magenta demoted to a single accent. Content is set as a report — tables, rules, a pull quote — not cards. <b>Costs you:</b> the whole "dark technical environment" line in <code>design/BRAND.md</code>, and every 3D/render asset built for a dark ground. <b>Buys you:</b> the fastest page on the site to actually read, and a price table a CFO can forward.</p>
+  <div class="vote" data-dir="A" role="group" aria-label="Verdict for direction A">
+    <button type="button" data-v="build">Build this</button>
+    <button type="button" data-v="blend">Take parts of it</button>
+    <button type="button" data-v="no">No</button>
+  </div>
+  <p class="vote-note" data-note="A">no verdict saved</p>
+</div></div>
+</section>
+
+<!-- ============================ B ============================ -->
+<section class="panel" id="p-B" aria-label="Direction B, Instrument">
+<div class="B">
+  <div class="wrap">
+    <div class="bar">
+      <span class="id">DIGERATI EXPERTS</span>
+      <span>Managed IT · Security operations</span>
+      <span class="live"><span class="dot" aria-hidden="true"></span> Operations running</span>
+    </div>
+
+    <div class="head">
+      <p class="tag">Instrumented, not advertised</p>
+      <h2>We publish the numbers. <span>Everything else on this page is evidence for them.</span></h2>
+      <p class="sub">No hero render, no stock photography, no adjectives we cannot measure. Four tiers, four floors, one security baseline that is not optional in any of them.</p>
+    </div>
+
+    <div class="readout">
+      <div class="cell"><b>125</b><span>USD / user / mo · entry</span></div>
+      <div class="cell"><b>1,600</b><span>USD / mo · floor</span></div>
+      <div class="cell"><b>4 / 4</b><span>Tiers with Security Foundation</span></div>
+      <div class="cell"><b class="gap">—</b><span class="gap">Uptime · real figure needed</span></div>
+    </div>
+
+    <div class="sec">
+      <h3>Tier readout</h3>
+      <div class="rows">
+        <div class="row">
+          <div class="n">ProActive IT<i>Entry</i></div>
+          <div class="v">$125 <i>/user/mo · floor $1,600</i></div>
+          <div class="d">Smaller, less complex environments that need essential protection and a documented baseline.</div>
+        </div>
+        <div class="row">
+          <div class="n">ProActive Office<i>Foundation</i></div>
+          <div class="v">$165 <i>/user/mo · floor $2,400</i></div>
+          <div class="d">A broader managed workplace — more users, devices, and a professionally operated network.</div>
+        </div>
+        <div class="row">
+          <div class="n">ProActive Business<i>Operations</i></div>
+          <div class="v">$245 <i>/user/mo · floor $5,400</i></div>
+          <div class="d">Deeper infrastructure, cyber operations, recovery, governance, and strategy.</div>
+        </div>
+        <div class="row">
+          <div class="n">ProActive Enterprise<i>Compliance</i></div>
+          <div class="v">$345 <i>/user/mo · floor $9,000</i></div>
+          <div class="d">Multi-site, regulated, or security-sensitive environments that need the greatest operating depth.</div>
+        </div>
+      </div>
+      <p class="note">Final pricing depends on users, endpoints, locations, infrastructure, backup requirements, and security/compliance scope. Estimates are not quotes — your Cyber Risk Assessment confirms final scope.</p>
+    </div>
+
+    <div class="close">
+      <h3>Request the assessment. We will send the scope in writing.</h3>
+      <div class="cta-row">
+        <a class="btn" href="#">Book assessment</a>
+        <a class="btn ghost" href="#">See a sample scope</a>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="verdict"><div class="verdict-in">
+  <h3>Direction B — Instrument</h3>
+  <p><b>The move:</b> stays dark, but strips the page to a control surface — monospace, hairline grid, a single live indicator. Nothing on the page is decorative. <b>Costs you:</b> warmth; this reads as cold to a non-technical buyer, and it has nowhere to put the team photos or the testimonial section. <b>Buys you:</b> total credibility with the technical evaluator, and it is the cheapest of the three to build because it needs no imagery at all.</p>
+  <div class="vote" data-dir="B" role="group" aria-label="Verdict for direction B">
+    <button type="button" data-v="build">Build this</button>
+    <button type="button" data-v="blend">Take parts of it</button>
+    <button type="button" data-v="no">No</button>
+  </div>
+  <p class="vote-note" data-note="B">no verdict saved</p>
+</div></div>
+</section>
+
+<!-- ============================ C ============================ -->
+<section class="panel" id="p-C" aria-label="Direction C, Signal">
+<div class="C">
+  <div class="wrap">
+    <div class="bar">
+      <b>DIGERATI EXPERTS</b>
+      <span>Managed IT &amp; Security</span>
+      <span class="warn">⚠ Breaks the magenta brand lock — needs your call</span>
+    </div>
+
+    <div class="head">
+      <p class="tag">One claim, one page</p>
+      <h2>Stop guessing what <u>your IT costs.</u></h2>
+      <p class="sub">Four tiers, published rates, and one security baseline included in all of them. The assessment confirms your scope before you sign anything.</p>
+      <div class="cta-row">
+        <a class="btn btn-p" href="#">Book the assessment</a>
+        <a class="btn btn-s" href="#">See what is included</a>
+      </div>
+    </div>
+
+    <div class="facts">
+      <div class="fact"><b>$125</b><span>Per user / month · entry</span></div>
+      <div class="fact"><b>$1,600</b><span>Monthly floor · entry</span></div>
+      <div class="fact"><b>4 / 4</b><span>Tiers with Security Foundation</span></div>
+      <div class="fact"><b class="gap">[ ? ]</b><span class="gap">Clients served — real figure needed</span></div>
+    </div>
+
+    <div class="sec">
+      <h3>Pick your floor</h3>
+      <div class="cards">
+        <div class="card">
+          <div class="t">Entry</div><h4>ProActive IT</h4>
+          <div class="p">$125<i> /user/mo</i></div><div class="f">Floor $1,600/mo</div>
+          <p class="w">Smaller, less complex environments needing essential protection and a documented baseline.</p>
+        </div>
+        <div class="card">
+          <div class="t">Foundation</div><h4>ProActive Office</h4>
+          <div class="p">$165<i> /user/mo</i></div><div class="f">Floor $2,400/mo</div>
+          <p class="w">A broader managed workplace — more users, devices, a professionally operated network.</p>
+        </div>
+        <div class="card">
+          <div class="t">Operations</div><h4>ProActive Business</h4>
+          <div class="p">$245<i> /user/mo</i></div><div class="f">Floor $5,400/mo</div>
+          <p class="w">Deeper infrastructure, cyber operations, recovery, governance, and strategy.</p>
+        </div>
+        <div class="card">
+          <div class="t">Compliance</div><h4>ProActive Enterprise</h4>
+          <div class="p">$345<i> /user/mo</i></div><div class="f">Floor $9,000/mo</div>
+          <p class="w">Multi-site, regulated, or security-sensitive environments needing the greatest depth.</p>
+        </div>
+      </div>
+      <p class="note">Final pricing depends on users, endpoints, locations, infrastructure, backup requirements, and security/compliance scope. Estimates are not quotes — your Cyber Risk Assessment confirms final scope.</p>
+    </div>
+
+    <div class="close">
+      <h3>One page. One decision.</h3>
+      <div class="cta-row">
+        <a class="btn btn-p" href="#">Book the assessment</a>
+        <a class="btn btn-s" href="#">Talk to an engineer</a>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="verdict"><div class="verdict-in">
+  <h3>Direction C — Signal</h3>
+  <p><b>The move:</b> the genuinely extreme one. Magenta is gone, replaced by a cold mint signal on ink-navy, and the page is compressed to roughly four screens instead of forty. <b>Costs you:</b> the brand lock in <code>AGENTS.md</code> §9A and <code>.cursorrules</code>, every magenta asset, and eight sections that would have to be cut or moved off the homepage. That is your call, not an agent's. <b>Buys you:</b> the shortest path from landing to booking, and a page that looks nothing like any competitor in the market.</p>
+  <div class="vote" data-dir="C" role="group" aria-label="Verdict for direction C">
+    <button type="button" data-v="build">Build this</button>
+    <button type="button" data-v="blend">Take parts of it</button>
+    <button type="button" data-v="no">No</button>
+  </div>
+  <p class="vote-note" data-note="C">no verdict saved</p>
+</div></div>
+</section>
+
+<script>
+  // Direction switcher
+  var buttons = document.querySelectorAll('.switch button');
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var go = b.dataset.go;
+      buttons.forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+      document.querySelectorAll('.panel').forEach(function (p) {
+        p.classList.toggle('is-on', p.id === 'p-' + go);
+      });
+      window.scrollTo(0, 0);
+    });
+  });
+
+  // Verdicts. Kept in the artifact's shared store, not in this page, so they
+  // survive a republish and can be read back without reopening the page.
+  // The page must render and switch themes with no store at all.
+  (async function () {
+    var db = window.claude && claude.use ? await claude.use('db') : null;
+    var groups = document.querySelectorAll('.vote');
+
+    function paint(dir, verdict, when) {
+      var g = document.querySelector('.vote[data-dir="' + dir + '"]');
+      if (!g) return;
+      g.querySelectorAll('button').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b.dataset.v === verdict));
+      });
+      var note = document.querySelector('[data-note="' + dir + '"]');
+      if (note) {
+        note.textContent = verdict
+          ? 'saved: ' + verdict + (when ? ' \u00b7 ' + when : '')
+          : 'no verdict saved';
+      }
+    }
+
+    groups.forEach(function (g) {
+      g.querySelectorAll('button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var dir = g.dataset.dir, v = b.dataset.v;
+          paint(dir, v, 'just now');
+          if (!db) {
+            var note = document.querySelector('[data-note="' + dir + '"]');
+            if (note) note.textContent = 'not saved \u2014 no store in this view';
+            return;
+          }
+          db.doc('theme-verdicts/' + dir)
+            .set({ direction: dir, verdict: v, at: new Date().toISOString() })
+            .catch(function (e) {
+              var note = document.querySelector('[data-note="' + dir + '"]');
+              if (note) note.textContent = 'not saved (' + (e && e.code) + ')';
+            });
+        });
+      });
+    });
+
+    if (!db) return;
+    ['A', 'B', 'C'].forEach(function (dir) {
+      db.doc('theme-verdicts/' + dir).onSnapshot(function (snap) {
+        var d = snap.exists ? snap.data() : null;
+        paint(dir, d && d.verdict, d && d.at ? String(d.at).slice(0, 16).replace('T', ' ') + 'Z' : '');
+      }, function () { /* store unavailable; the buttons still show this visit */ });
+    });
+  })();
+</script>
+</body>
+</html>

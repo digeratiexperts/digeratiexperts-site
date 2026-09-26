@@ -81,3 +81,4 @@ temporary screenshots/
 # scripts/capture-page-review.mjs; only the compressed web/ set and the review
 # board are tracked, so a capture run does not add ~20 MB per route.
 artifacts/visual-qa/*-review/*.png
+artifacts/visual-qa/*-directions/shots/*.png
