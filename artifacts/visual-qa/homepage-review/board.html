@@ -1,0 +1,415 @@
+<title>Homepage Review Board</title>
+<style>
+  :root {
+    color-scheme: light;
+    --ink: #10131c;
+    --surface: #ffffff;
+    --surface-2: #f4f5f8;
+    --hairline: #dcdfe8;
+    --text: #171b26;
+    --muted: #5d6478;
+    --accent: #2f5fd0;
+    --accent-soft: #e6ecfb;
+    --keep: #1f7a52;
+    --keep-soft: #e2f3ea;
+    --rework: #8a5a10;
+    --rework-soft: #fbf0dc;
+    --move: #2a5f77;
+    --move-soft: #e2f0f5;
+    --cut: #a3342f;
+    --cut-soft: #fbe6e5;
+    --shadow: 0 1px 2px rgba(16,19,28,.06), 0 8px 24px rgba(16,19,28,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ink: #05060b;
+      --surface: #14171f;
+      --surface-2: #1b1f29;
+      --hairline: #2a3040;
+      --text: #e7eaf2;
+      --muted: #939cb4;
+      --accent: #7aa2f7;
+      --accent-soft: #1d2740;
+      --keep: #63d3a0;
+      --keep-soft: #16301f;
+      --rework: #e6b45c;
+      --rework-soft: #322614;
+      --move: #6cc2dd;
+      --move-soft: #142a33;
+      --cut: #f08d88;
+      --cut-soft: #351916;
+      --shadow: 0 1px 2px rgba(0,0,0,.5), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ink: #05060b;
+    --surface: #14171f;
+    --surface-2: #1b1f29;
+    --hairline: #2a3040;
+    --text: #e7eaf2;
+    --muted: #939cb4;
+    --accent: #7aa2f7;
+    --accent-soft: #1d2740;
+    --keep: #63d3a0;
+    --keep-soft: #16301f;
+    --rework: #e6b45c;
+    --rework-soft: #322614;
+    --move: #6cc2dd;
+    --move-soft: #142a33;
+    --cut: #f08d88;
+    --cut-soft: #351916;
+    --shadow: 0 1px 2px rgba(0,0,0,.5), 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--text);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 0 72px; }
+
+  header.top {
+    padding-block: 34px 22px;
+    border-bottom: 1px solid var(--hairline);
+    margin-bottom: 26px;
+  }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 10px;
+  }
+  h1 {
+    font-size: clamp(26px, 4.4vw, 40px); line-height: 1.12; margin: 0 0 12px;
+    letter-spacing: -.02em; text-wrap: balance; font-weight: 600;
+  }
+  .lede { margin: 0; max-width: 62ch; color: var(--muted); font-size: 16px; }
+
+  .facts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .fact {
+    background: var(--surface); border: 1px solid var(--hairline); border-radius: 8px;
+    padding: 11px 14px; min-width: 132px;
+  }
+  .fact b {
+    display: block; font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 21px; font-weight: 600; letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .fact span { font-size: 12px; color: var(--muted); }
+  .fact.warn b { color: var(--cut); }
+
+  nav.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--hairline); margin-bottom: 26px; flex-wrap: wrap; }
+  nav.tabs button {
+    appearance: none; background: none; border: 0; border-bottom: 2px solid transparent;
+    color: var(--muted); font: inherit; font-size: 14px; padding: 9px 13px; cursor: pointer;
+  }
+  nav.tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); font-weight: 500; }
+  nav.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px 4px 0 0; }
+
+  .stops { display: grid; gap: 18px; }
+  @media (min-width: 760px) { .stops { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+  .stop {
+    background: var(--surface); border: 1px solid var(--hairline); border-radius: 10px;
+    overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column;
+  }
+  .stop > figure { margin: 0; background: var(--surface-2); border-bottom: 1px solid var(--hairline); }
+  .stop img { display: block; width: 100%; max-width: 100%; height: auto; }
+  .stop .meta { padding: 13px 15px 15px; display: flex; flex-direction: column; gap: 11px; flex: 1; }
+
+  .row { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+  .ord {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px;
+    color: var(--muted); font-variant-numeric: tabular-nums;
+  }
+  .sname { font-weight: 600; font-size: 15.5px; letter-spacing: -.01em; }
+  .sid {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11.5px; color: var(--muted);
+  }
+  .tag {
+    font-size: 11px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--hairline);
+    color: var(--muted); white-space: nowrap;
+  }
+  .tag.hidden-nav { color: var(--rework); background: var(--rework-soft); border-color: transparent; }
+
+  .proposal { font-size: 13.5px; color: var(--muted); margin: 0; }
+  .proposal strong { color: var(--text); font-weight: 600; }
+
+  .verdicts { display: flex; gap: 6px; flex-wrap: wrap; }
+  .verdicts button {
+    appearance: none; font: inherit; font-size: 12.5px; cursor: pointer;
+    padding: 5px 11px; border-radius: 6px; border: 1px solid var(--hairline);
+    background: var(--surface-2); color: var(--muted);
+  }
+  .verdicts button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .verdicts button[aria-pressed="true"] { font-weight: 600; border-color: transparent; }
+  .verdicts button[data-v="keep"][aria-pressed="true"] { background: var(--keep-soft); color: var(--keep); }
+  .verdicts button[data-v="rework"][aria-pressed="true"] { background: var(--rework-soft); color: var(--rework); }
+  .verdicts button[data-v="move"][aria-pressed="true"] { background: var(--move-soft); color: var(--move); }
+  .verdicts button[data-v="cut"][aria-pressed="true"] { background: var(--cut-soft); color: var(--cut); }
+
+  textarea {
+    width: 100%; min-height: 40px; resize: vertical; font: inherit; font-size: 13px;
+    background: var(--surface-2); color: var(--text);
+    border: 1px solid var(--hairline); border-radius: 6px; padding: 7px 9px;
+  }
+  textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+  .saved {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px;
+    color: var(--muted); min-height: 15px;
+  }
+
+  .banner {
+    background: var(--accent-soft); border: 1px solid var(--hairline);
+    border-radius: 8px; padding: 12px 14px; font-size: 13.5px; margin-bottom: 22px;
+  }
+  .banner.warn { background: var(--cut-soft); }
+  .banner p { margin: 0 0 6px; }
+  .banner p:last-child { margin-bottom: 0; }
+
+  .strip { display: flex; flex-direction: column; align-items: center; gap: 0; margin-top: 8px; }
+  .strip img { display: block; width: 320px; max-width: 100%; height: auto; }
+  .strip.wide img { width: 560px; }
+  .ruler {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11.5px; color: var(--muted);
+    border-left: 2px solid var(--hairline); padding-left: 10px; margin: 14px 0 0;
+  }
+  .scrollwrap { overflow-x: auto; }
+  h2 { font-size: 20px; margin: 0 0 6px; letter-spacing: -.015em; font-weight: 600; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 18px; max-width: 66ch; }
+  footer.foot {
+    margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--hairline);
+    color: var(--muted); font-size: 12.5px;
+  }
+  footer.foot code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px;
+    background: var(--surface-2); padding: 1px 5px; border-radius: 4px;
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">digeratiexperts.com · captured from main @ a266b497</p>
+    <h1>Homepage Review Board</h1>
+    <p class="lede">Every scroll stop on the live homepage, shot from a running build. Mark a verdict on each one — the decisions save server-side, so I can read them back and act on them without you repeating yourself.</p>
+    <div class="facts">
+      <div class="fact"><b>14</b><span>scroll stops</span></div>
+      <div class="fact"><b>19</b><span>section components</span></div>
+      <div class="fact warn"><b>8</b><span>hidden from nav</span></div>
+      <div class="fact warn"><b>40.4</b><span>phone screens tall</span></div>
+      <div class="fact"><b>0</b><span>prices shown</span></div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Review views">
+    <button role="tab" id="tab-stops" aria-controls="panel-stops" aria-selected="true">Desktop stops · 1440</button>
+    <button role="tab" id="tab-mobile" aria-controls="panel-mobile" aria-selected="false">Mobile length · 390</button>
+    <button role="tab" id="tab-tablet" aria-controls="panel-tablet" aria-selected="false">Tablet · 768</button>
+  </nav>
+
+  <section role="tabpanel" id="panel-stops" aria-labelledby="tab-stops">
+    <div class="banner" id="dbnote">
+      <p><strong>Proposed</strong> is my recommendation from reading the code, pre-marked so you can override rather than start blank. Your click is what counts.</p>
+      <p id="dbstate" class="saved">Connecting to saved decisions…</p>
+    </div>
+    <div class="stops" id="stops"></div>
+  </section>
+
+  <section role="tabpanel" id="panel-mobile" aria-labelledby="tab-mobile" hidden>
+    <h2>34,118 pixels tall</h2>
+    <p class="sub">At 390px wide the homepage document is 34,118px tall — about 40 phone screens. This is the whole page, sliced into eight segments end to end. Desktop gets scroll-snapping; mobile does not (<code>enableOnMobile={false}</code>), so this is the real experience for phone visitors.</p>
+    <p class="ruler">Segment 1 of 8 begins at the hero. A visitor reaching the Contact section has scrolled roughly 40 viewport heights.</p>
+    <div class="strip" id="strip390"></div>
+  </section>
+
+  <section role="tabpanel" id="panel-tablet" aria-labelledby="tab-tablet" hidden>
+    <h2>27,289 pixels tall</h2>
+    <p class="sub">At 768px wide, about 32 viewport heights, in six segments.</p>
+    <div class="strip wide scrollwrap" id="strip768"></div>
+  </section>
+
+  <footer class="foot">
+    Captured with Playwright/Chromium against a local production-mode build of <code>main @ a266b497</code>.
+    Source screenshots live in <code>artifacts/visual-qa/homepage-review/</code>.
+    Production itself has not deployed since 2026-09-19 (issue #224), so this reflects <code>main</code>, not the live site.
+  </footer>
+</div>
+
+<script>
+  const SECTIONS = [
+    { n: 1,  id: "hero",         label: "Home",         nav: true,  img: "1440-01-hero.webp",         v: "keep",   why: "One claim, one ask. Fold the stats strip in here." },
+    { n: 2,  id: "stats",        label: "Why DE",       nav: true,  img: "1440-02-stats.webp",        v: "move",   why: "Fold into the hero as a proof strip rather than its own stop." },
+    { n: 3,  id: "challenges",   label: "Problems",     nav: false, img: "1440-03-challenges.webp",   v: "keep",   why: "Earns the right to talk about yourselves. Tighten, keep." },
+    { n: 4,  id: "services",     label: "How It Works", nav: true,  img: "1440-04-services.webp",     v: "keep",   why: "The actual differentiator — the only stop that explains why DE." },
+    { n: 5,  id: "protection",   label: "Protect",      nav: false, img: "1440-05-protection.webp",   v: "move",   why: "Detail belongs on the service page, not the homepage." },
+    { n: 6,  id: "testimonials", label: "Proof",        nav: false, img: "1440-06-testimonials.webp", v: "rework", why: "Merge stops 6–8 into one proof section. Also has an empty-state path." },
+    { n: 7,  id: "trust",        label: "Trust",        nav: false, img: "1440-07-trust.webp",        v: "move",   why: "Merge into the single proof section, or move to /trust." },
+    { n: 8,  id: "team",         label: "Team",         nav: false, img: "1440-08-team.webp",         v: "move",   why: "Move to /about/team. Nobody scrolls eight stops to meet the team." },
+    { n: 9,  id: "industries",   label: "Industries",   nav: true,  img: "1440-09-industries.webp",   v: "move",   why: "Move to the /industries index; link from the nav." },
+    { n: 10, id: "pricing",      label: "Packages",     nav: true,  img: "1440-10-pricing.webp",      v: "rework", why: "Keep, but add price bands. Zero dollar figures contradicts No Black-Box IT." },
+    { n: 11, id: "insights",     label: "Insights",     nav: false, img: "1440-11-insights.webp",     v: "move",   why: "Insights and AI teasers belong on /resources." },
+    { n: 12, id: "faq",          label: "FAQ",          nav: false, img: "1440-12-faq.webp",          v: "rework", why: "Trim to four questions, or move off entirely." },
+    { n: 13, id: "cta",          label: "Next step",    nav: false, img: "1440-13-cta.webp",          v: "keep",   why: "The assessment booking. This is the page's job." },
+    { n: 14, id: "contact",      label: "Contact",      nav: true,  img: "1440-14-contact.webp",      v: "rework", why: "451 lines — the biggest section on the page is a contact form. Slim to footer." }
+  ];
+  const LABELS = { keep: "Keep", rework: "Rework", move: "Move off", cut: "Cut" };
+
+  let db = null;
+  const state = new Map();
+
+  function render() {
+    const host = document.getElementById("stops");
+    host.textContent = "";
+    for (const s of SECTIONS) {
+      const card = document.createElement("article");
+      card.className = "stop";
+
+      const fig = document.createElement("figure");
+      const img = document.createElement("img");
+      img.src = s.img;
+      img.alt = `Homepage section ${s.n}, ${s.label}, at 1440px wide`;
+      img.loading = s.n > 2 ? "lazy" : "eager";
+      fig.appendChild(img);
+      card.appendChild(fig);
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+
+      const row = document.createElement("div");
+      row.className = "row";
+      const ord = document.createElement("span");
+      ord.className = "ord";
+      ord.textContent = String(s.n).padStart(2, "0");
+      const nm = document.createElement("span");
+      nm.className = "sname";
+      nm.textContent = s.label;
+      const sid = document.createElement("span");
+      sid.className = "sid";
+      sid.textContent = "#" + s.id;
+      row.append(ord, nm, sid);
+      if (!s.nav) {
+        const t = document.createElement("span");
+        t.className = "tag hidden-nav";
+        t.textContent = "hidden from nav";
+        row.appendChild(t);
+      }
+      meta.appendChild(row);
+
+      const prop = document.createElement("p");
+      prop.className = "proposal";
+      const pb = document.createElement("strong");
+      pb.textContent = "Proposed " + LABELS[s.v] + ". ";
+      prop.append(pb, document.createTextNode(s.why));
+      meta.appendChild(prop);
+
+      const vs = document.createElement("div");
+      vs.className = "verdicts";
+      const current = state.get(s.id)?.decision ?? s.v;
+      for (const key of ["keep", "rework", "move", "cut"]) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.dataset.v = key;
+        b.textContent = LABELS[key];
+        b.setAttribute("aria-pressed", String(current === key));
+        b.addEventListener("click", () => save(s.id, { decision: key }));
+        vs.appendChild(b);
+      }
+      meta.appendChild(vs);
+
+      const ta = document.createElement("textarea");
+      ta.id = "note-" + s.id;
+      ta.placeholder = "Direction for this section…";
+      ta.value = state.get(s.id)?.note ?? "";
+      let timer;
+      ta.addEventListener("input", () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => save(s.id, { note: ta.value }), 700);
+      });
+      meta.appendChild(ta);
+
+      const st = document.createElement("p");
+      st.className = "saved";
+      st.id = "st-" + s.id;
+      const rec = state.get(s.id);
+      st.textContent = rec ? "Your call: " + LABELS[rec.decision ?? s.v] + (rec.at ? " · " + rec.at : "") : "";
+      meta.appendChild(st);
+
+      card.appendChild(meta);
+      host.appendChild(card);
+    }
+  }
+
+  async function save(id, patch) {
+    const prev = state.get(id) ?? {};
+    const rec = { ...prev, ...patch, at: new Date().toISOString().slice(0, 16).replace("T", " ") + "Z" };
+    state.set(id, rec);
+    render();
+    const st = document.getElementById("st-" + id);
+    if (!db) { if (st) st.textContent = "Not saved — no shared store in this view."; return; }
+    try {
+      await db.doc("verdicts/" + id).set({ section: id, ...rec });
+      if (st) st.textContent = "Saved · " + rec.at;
+    } catch (e) {
+      if (st) st.textContent = "Could not save (" + (e?.code || "error") + ")";
+    }
+  }
+
+  function strips(hostId, prefix, count) {
+    const host = document.getElementById(hostId);
+    for (let i = 1; i <= count; i++) {
+      const img = document.createElement("img");
+      img.src = prefix + "-part" + String(i).padStart(2, "0") + ".webp";
+      img.alt = `Segment ${i} of ${count} of the homepage at ${prefix}px wide`;
+      img.loading = i > 1 ? "lazy" : "eager";
+      host.appendChild(img);
+    }
+  }
+
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  for (const t of tabs) {
+    t.addEventListener("click", () => {
+      for (const o of tabs) {
+        const on = o === t;
+        o.setAttribute("aria-selected", String(on));
+        document.getElementById(o.getAttribute("aria-controls")).hidden = !on;
+      }
+    });
+  }
+
+  render();
+  strips("strip390", "390", 8);
+  strips("strip768", "768", 6);
+
+  (async () => {
+    const note = document.getElementById("dbstate");
+    try {
+      db = await window.claude?.use?.("db");
+    } catch { db = null; }
+    if (!db) {
+      note.textContent = "Read-only view — verdicts will not be saved from here.";
+      return;
+    }
+    try {
+      const rows = await db.collection("verdicts").get();
+      const list = rows?.docs ?? rows ?? [];
+      for (const d of list) {
+        const data = typeof d?.data === "function" ? d.data() : (d?.data ?? d);
+        if (data?.section) state.set(data.section, data);
+      }
+      note.textContent = state.size
+        ? state.size + " of 14 decided. Change any of them any time."
+        : "Connected. Nothing decided yet — the marks below are my proposals.";
+      render();
+    } catch (e) {
+      note.textContent = "Connected, but could not load earlier decisions (" + (e?.code || "error") + ").";
+    }
+  })();
+</script>
