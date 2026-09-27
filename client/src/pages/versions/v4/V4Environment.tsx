@@ -53,12 +53,19 @@ function polar(angleDeg: number, radius: number) {
 }
 
 /**
- * Chords drawn once the estate is one system. Ring neighbours plus a few
- * crossings, so it reads as connected rather than merely circular.
+ * Chords drawn once the estate is one system: each node to its neighbour, and
+ * each to the one beyond it. A woven net rather than a figure.
+ *
+ * Long cross-chords were tried first and rejected on sight. With nine nodes,
+ * links at a constant four- or five-step offset generate a regular star
+ * polygon — the render came back with a clean pentagram sitting in the middle
+ * of the page. On a cybersecurity company's homepage that reads as occult
+ * rather than engineered. Neighbour and next-neighbour hops cannot produce
+ * one: every chord is short, so the interior stays open.
  */
 const CHORDS: Array<[number, number]> = [
   [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 0],
-  [0, 4], [1, 6], [2, 7], [3, 8], [5, 0],
+  [0, 2], [1, 3], [2, 4], [3, 5], [4, 6], [5, 7], [6, 8], [7, 0], [8, 1],
 ];
 
 export function V4Environment({
@@ -133,6 +140,10 @@ export function V4Environment({
           strokeLinecap="round"
         />
 
+        {/* The ring belongs to the resolved state. Drawing it while the estate
+            is still disconnected pre-announces the order and makes the parts
+            look organised before anything has been done to them — which is
+            exactly the claim chapter 02 is supposed to deny. */}
         <circle
           cx={CENTER}
           cy={CENTER}
@@ -140,6 +151,7 @@ export function V4Environment({
           fill="none"
           stroke="rgba(255,255,255,0.08)"
           strokeWidth="1"
+          opacity={state.link}
         />
 
         {/* Connective tissue. Zero-length until the estate is one system, so
