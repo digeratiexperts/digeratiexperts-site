@@ -30,6 +30,28 @@
 
 version: 2
 claims:
+  - id: de-desk-launcher-graphite
+    owner: claude
+    subsystem: de-desk
+    branch: claude/desk-launcher-graphite
+    base_sha: a8bf3351dcbf4e25b8c65323e8fb6202232c1c2e
+    files:
+      - client/src/components/SiteBottomBar.tsx
+    status: active
+    started: 2026-09-27
+    note: >-
+      Joe, 2026-09-27: "the DE Desk looks like 2 different version merged into
+      one and it looks horrible, if you click an option you'll see." Reproduced:
+      the Ask DE launcher popover in SiteBottomBar.tsx was still the retired
+      paper Desk design (bg-[#fbfbfa], bg-white rows, #151219 ink) while the
+      Desk modal it opens is the graphite shell. The de-desk-design rule's globs
+      cover only ZohoASAPWidget.tsx and PortalChat.tsx, which is why this file
+      was missed when the Desk moved to graphite (C5, 2026-09-12). This brings
+      the launcher onto the same tokens the modal uses: --de-raised ground,
+      hairline borders, white ink, magenta-tinted icons. Implements the
+      Joe-decided Tier 2 direction ("one graphite shell ... no cream-in-purple
+      nested card"), so Maintenance Mode, not a redesign. No logic, copy,
+      routing, testids or analytics changed.
   - id: claude-completion-program-lane
     owner: claude
     subsystem: website-visual-ui
