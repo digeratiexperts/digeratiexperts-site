@@ -112,9 +112,64 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/\.de-desk-incident \{[\s\S]*?background: var\(--desk-box\);/);
     // The whole Desk resolves through one token set. These were the values the
     // deleted deDeskGraphiteStyle.ts override had to force with !important.
-    expect(src).not.toMatch(/background: #fff;/);
     expect(src).not.toMatch(/#17141f/);
     expect(src).not.toMatch(/#f7f5f2/);
+  });
+
+  it("keeps every background declaration off an opaque paper ground", () => {
+    // A single-line /background: #fff;/ match is not enough, and shipping one
+    // is how a paper ground survived this guard: the remaining white sat at the
+    // end of a multi-line composite (a gradient layer, newline, then #fff), so
+    // the literal never matched.
+    //
+    // Matching white anywhere in the declaration is too blunt in the other
+    // direction — the Get Support row glow is a radial gradient whose centre
+    // stop is #fff fading to transparent, which is a highlight, not a ground.
+    // So split each declaration into its top-level layers and judge those: a
+    // layer that is a solid white, or a ground mixed with white, is the defect.
+    // White inside a gradient is a stop and is allowed.
+    const layersOf = (value: string) => {
+      const layers: string[] = [];
+      let depth = 0;
+      let current = "";
+      for (const ch of value) {
+        if (ch === "(") depth += 1;
+        if (ch === ")") depth -= 1;
+        if (ch === "," && depth === 0) {
+          layers.push(current.trim());
+          current = "";
+          continue;
+        }
+        current += ch;
+      }
+      if (current.trim()) layers.push(current.trim());
+      return layers;
+    };
+
+    const isWhite = /^(#fff|#ffffff|white)$/i;
+    const declarations = src.match(/background:([^;]*);/gs) ?? [];
+    expect(declarations.length).toBeGreaterThan(20);
+
+    const paperGrounds = declarations.filter((declaration) => {
+      const value = declaration.replace(/^background:/, "").replace(/;$/, "");
+      return layersOf(value).some(
+        (layer) =>
+          isWhite.test(layer) ||
+          (layer.startsWith("color-mix(") && /#fff\b|#ffffff\b|\bwhite\b/i.test(layer)),
+      );
+    });
+    expect(paperGrounds).toEqual([]);
+  });
+
+  it("never uses a background token as a foreground colour", () => {
+    // --desk-surface / --desk-well / --desk-box are grounds, all near-black.
+    // Setting one as `color` paints dark text on a dark row — which is what
+    // happened when paper #f7f5f2 was tokenised by value rather than by role:
+    // the same literal was a ground in some rules and text in others.
+    const groundTokens = ["--desk-surface", "--desk-well", "--desk-box"];
+    for (const token of groundTokens) {
+      expect(src).not.toMatch(new RegExp(`color:\\s*var\\(${token}[,)]`));
+    }
   });
 
   it("opens a tad wider with one-step larger type on chrome, Client Tools, and Ask DE", () => {

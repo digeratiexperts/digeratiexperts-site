@@ -2392,7 +2392,11 @@ export const ZohoASAPWidget = ({
               }
             }
             .de-desk-issue-row.is-on {
-              background: color-mix(in srgb, #D3126A 6%, #fff);
+              /* Mixed into the graphite ground, not #fff. With white it was a
+                 near-white row carrying --desk-ink white text: the selected
+                 issue was the one row you could not read. The :hover state
+                 below already had the correct form. */
+              background: color-mix(in srgb, #D3126A 6%, var(--desk-box));
               box-shadow: inset 3px 0 0 #D3126A;
               color: var(--desk-ink);
             }
@@ -2984,13 +2988,13 @@ export const ZohoASAPWidget = ({
             .de-desk-shell[data-tab="resources"] .de-desk-row,
             .de-desk-shell[data-tab="ticket"] .de-desk-row {
               background: #16121e;
-              color: var(--desk-surface);
+              color: var(--desk-ink);
             }
             .de-desk-shell[data-tab="resources"] .de-desk-row-t,
-            .de-desk-shell[data-tab="ticket"] .de-desk-row-t { color: var(--desk-surface); }
-            .de-desk-shell[data-tab="resources"] .de-desk-row-d { color: rgba(247,245,242,0.65); }
+            .de-desk-shell[data-tab="ticket"] .de-desk-row-t { color: var(--desk-ink); }
+            .de-desk-shell[data-tab="resources"] .de-desk-row-d { color: var(--desk-ink-muted); }
             .de-desk-shell[data-tab="ticket"] .de-desk-heads-up-top strong,
-            .de-desk-shell[data-tab="resources"] .de-desk-heads-up-top strong { color: var(--desk-surface); }
+            .de-desk-shell[data-tab="resources"] .de-desk-heads-up-top strong { color: var(--desk-ink); }
             .de-desk-tools-panel .de-desk-scroll {
               gap: 0;
               padding: 16px 16px 14px;
@@ -3123,7 +3127,7 @@ export const ZohoASAPWidget = ({
               border: 1px solid var(--de-hairline, rgba(255,255,255,0.10));
               border-radius: 10px;
               background: var(--de-raised, #151217);
-              color: var(--desk-surface);
+              color: var(--desk-ink);
               text-align: left;
               text-decoration: none;
             }
@@ -3167,14 +3171,18 @@ export const ZohoASAPWidget = ({
               border-bottom: 0;
             }
             .de-desk-tool-group.is-featured {
+              /* The base group is transparent, so the featured variant is a
+                 magenta wash over the panel, with no ground of its own. It
+                 used to end in #fff: a paper ground the tint was mixed for.
+                 The alphas are raised because a wash tuned for white reads as
+                 nothing on graphite; the ::before rail stays the primary cue. */
               background:
                 linear-gradient(
                   90deg,
-                  rgba(211,18,106,0.055),
-                  rgba(211,18,106,0.018) 62%,
+                  rgba(211,18,106,0.10),
+                  rgba(211,18,106,0.035) 62%,
                   transparent
-                ),
-                #fff;
+                );
             }
             .de-desk-tool-group.is-featured::before {
               content: "";
@@ -3223,7 +3231,8 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-tool-group.is-featured .de-desk-tool-icon {
               border-color: color-mix(in srgb, #D3126A 38%, transparent);
-              background: color-mix(in srgb, #D3126A 8%, #fff);
+              /* Same ground the unfeatured icon well uses, tinted. */
+              background: color-mix(in srgb, #D3126A 8%, var(--desk-surface));
             }
             .de-desk-tool-icon svg { width: 17px; height: 17px; stroke-width: 1.9; }
             .de-desk-tool-copy {
