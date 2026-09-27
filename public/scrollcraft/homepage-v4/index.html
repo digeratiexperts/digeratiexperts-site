@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Digerati Experts · two environments, one seam</title>
+<meta name="description" content="A preview of the next Digerati Experts homepage. The live site stays at the root.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="scrollcraft.css">
+<style>
+  :root {
+    --sc-canvas: #f7f5f2;
+    --sc-surface: #ffffff;
+    --sc-ink: #1a1228;
+    --sc-ink-soft: #3a3448;
+    --sc-accent: #d3126a;
+    --sc-accent-ink: #ffffff;
+    --sc-font-display: "Space Grotesk", system-ui, sans-serif;
+    --sc-font-text: Inter, system-ui, sans-serif;
+    --seam: 50%;
+    --left: #f7f5f2;
+    --right: #050312;
+  }
+  body { background: var(--left); color: var(--sc-ink); }
+  .skip {
+    position: absolute; left: 12px; top: -8rem; z-index: 20;
+    background: #d3126a; color: #fff; padding: 8px 12px;
+  }
+  .skip:focus { top: 12px; }
+  .split {
+    display: grid;
+    grid-template-columns: var(--seam) minmax(0, 1fr);
+    min-height: 100vh;
+  }
+  .col { min-width: 0; padding: clamp(1.5rem, 4vw, 4rem); }
+  .col--have { background: var(--left); color: #1a1228; }
+  .col--hold { background: var(--right); color: #f7f5f2; }
+  .kicker {
+    font-family: var(--sc-font-text);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #d3126a;
+    margin: 0 0 0.75rem;
+  }
+  .col h1, .col h2 {
+    font-family: var(--sc-font-display);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    margin: 0;
+    font-size: clamp(1.8rem, 3.4vw, 3.4rem);
+  }
+  .col p { font-size: 1.05rem; line-height: 1.55; max-width: 36rem; }
+  .col--hold p { color: rgba(247,245,242,0.78); }
+  .seam {
+    position: fixed;
+    top: 0; bottom: 0;
+    left: var(--seam);
+    width: 2px;
+    background: #d3126a;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .chooser {
+    position: fixed;
+    z-index: 6;
+    left: clamp(1rem, calc(var(--seam) - 8.5rem), calc(100vw - 18rem));
+    bottom: 1.25rem;
+    display: grid;
+    gap: 8px;
+    width: min(16rem, calc(100vw - 2rem));
+  }
+  body.is-resolving .chooser { opacity: 0; pointer-events: none; }
+  .chooser button {
+    min-height: 44px;
+    border: 1px solid rgba(26,18,40,0.2);
+    background: #fff;
+    color: #1a1228;
+    font: 600 0.85rem/1.3 Inter, system-ui, sans-serif;
+    padding: 8px 10px;
+    cursor: pointer;
+    text-align: left;
+  }
+  .chooser button[aria-checked="true"] {
+    border-color: #d3126a;
+    box-shadow: inset 3px 0 0 #d3126a;
+  }
+  .chooser button:focus-visible { outline: 2px solid #d3126a; outline-offset: 2px; }
+  .live {
+    margin-top: 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  .facts { list-style: none; padding: 0; margin: 1.5rem 0 0; }
+  .facts li { padding: 1rem 0; border-top: 1px solid rgba(26,18,40,0.12); }
+  .facts strong { font-family: var(--sc-font-display); font-size: 2rem; display: block; }
+  .facts a { color: #d3126a; }
+  .paths { display: grid; gap: 1.25rem; margin-top: 1.5rem; }
+  .paths a { color: inherit; text-decoration: none; border-bottom: 1px solid currentColor; }
+  .paths a:focus-visible { outline: 2px solid #d3126a; }
+  .close-link {
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    padding: 0 1.1rem;
+    background: #d3126a;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .close-link:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+  .quiet { color: rgba(247,245,242,0.8); }
+  .phone { color: #f7f5f2; }
+  @media (max-width: 800px) {
+    .split { grid-template-columns: 1fr; }
+    .seam, .chooser { position: static; transform: none; width: auto; left: auto; }
+    .chooser { padding: 1rem 1.25rem 0; background: #f7f5f2; }
+    .col--hold { min-height: 70vh; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .seam { display: none; }
+    .split { grid-template-columns: 1fr; }
+    .chooser { position: static; transform: none; width: auto; }
+  }
+</style>
+</head>
+<body data-choice="unsure">
+<a class="skip" href="#ask">Skip to the assessment</a>
+<div class="seam" aria-hidden="true"></div>
+<div class="chooser" role="radiogroup" aria-label="Where are you today?">
+  <button type="button" role="radio" data-choice="unsure" aria-checked="true">We don't know the gap yet</button>
+  <button type="button" role="radio" data-choice="managed" aria-checked="false">No IT team in-house</button>
+  <button type="button" role="radio" data-choice="comanaged" aria-checked="false">We have IT. We need depth.</button>
+</div>
+
+<main id="top">
+  <section data-sc-act="pin" data-sc-span="2.2" id="open">
+    <div data-sc-stage class="split">
+      <div class="col col--have">
+        <p class="kicker">What you have</p>
+        <h1>The environment, as it stands.</h1>
+        <p>Tools bought separately. Ownership unclear. Downtime that nobody owns.</p>
+      </div>
+      <div class="col col--hold">
+        <p class="kicker">What Digerati Experts holds with you</p>
+        <h2>Cybersecurity-first IT that powers your business.</h2>
+        <p>Managed IT, security, and compliance for Arizona businesses that cannot afford downtime.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sc-section" data-sc-act="flow">
+    <div class="split">
+      <div class="col col--have" data-sc-reveal="left" data-sc-reveal-at="0.05 0.45">
+        <h2>The gaps have names.</h2>
+        <ul class="paths">
+          <li><a href="/solutions/threat-detection">Ransomware and unpatched exposure</a></li>
+          <li><a href="/solutions/backup-disaster-recovery">Backups that have never been restored</a></li>
+          <li><a href="/solutions/security-operations">Phishing that reaches the inbox</a></li>
+          <li><a href="/solutions/unified-security">Admin rights nobody can audit</a></li>
+        </ul>
+      </div>
+      <div class="col col--hold" data-sc-reveal="right" data-sc-reveal-at="0.2 0.7">
+        <h2>This side waits.</h2>
+        <p class="live" id="coach" aria-live="polite">The assessment comes first. The package is a result, not a starting guess.</p>
+      </div>
+    </div>
+  </section>
+
+  <section data-sc-act="pin" data-sc-span="2.6">
+    <div data-sc-stage class="split">
+      <div class="col col--have">
+        <p class="kicker">Industry context, not a DE score</p>
+        <h2>The risk is already published.</h2>
+        <ul class="facts">
+          <li>
+            <strong><span data-sc-count="0 48" data-sc-count-at="0.15 0.55">0</span>%</strong>
+            of breaches involve ransomware.
+            <a href="https://www.verizon.com/business/resources/reports/dbir/">Verizon DBIR 2026</a>
+          </li>
+          <li>
+            <strong>$392M</strong>
+            in internet crime losses reported from Arizona in 2024.
+            <a href="https://www.ic3.gov/AnnualReport/Reports/2024_IC3Report.pdf">FBI IC3 2024</a>
+          </li>
+        </ul>
+      </div>
+      <div class="col col--hold">
+        <h2>Four operating models. No prices on this page.</h2>
+        <p>IT, Office, Business, and Enterprise. Security is in every ProActive tier. The assessment decides the fit.</p>
+        <p><a class="quiet" href="/proactive-ecosystem-pricing">See Plans &amp; Pricing</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sc-section" data-sc-act="flow">
+    <div class="split">
+      <div class="col col--have">
+        <h2>Your technology. Your data. Your keys.</h2>
+        <p>Credentials, documentation, and access stay yours.</p>
+        <p><a href="/about/client-bill-of-rights">Client Bill of Rights</a></p>
+      </div>
+      <div class="col col--hold">
+        <h2>How you come in.</h2>
+        <ul class="paths">
+          <li><a href="/solutions/proactive-ecosystem">Fully managed</a></li>
+          <li><a href="/solutions/co-managed-it">Co-managed, beside your team</a></li>
+          <li><a href="/book">Assessment first</a></li>
+          <li><a href="/about/team">The people</a></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="ask" data-sc-act="pin" data-sc-span="3.4">
+    <div data-sc-stage class="split">
+      <div class="col col--have">
+        <h2>This side gives way.</h2>
+        <p>The comparison ends when one environment is the one you are choosing.</p>
+      </div>
+      <div class="col col--hold">
+        <p class="kicker">Next step</p>
+        <h2>Start by understanding what you have.</h2>
+        <p><a class="close-link" href="/book">Get My Cyber Risk Assessment</a></p>
+        <p class="quiet"><a class="phone" href="tel:+13254809870">Call 325-480-9870</a></p>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="scrollcraft.js"></script>
+<script>
+(function () {
+  if (window.ScrollCraft) ScrollCraft.mount(document.body);
+  var lines = {
+    unsure: "The assessment comes first. The package is a result, not a starting guess.",
+    managed: "One team runs support, identity, endpoints, email, backup, and security operations. You keep the systems, the data, and the keys.",
+    comanaged: "Your team stays. Digerati Experts adds security operations beside them."
+  };
+  var coach = document.getElementById("coach");
+  var buttons = document.querySelectorAll(".chooser button");
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function setChoice(id) {
+    document.body.dataset.choice = id;
+    buttons.forEach(function (btn) {
+      btn.setAttribute("aria-checked", btn.getAttribute("data-choice") === id ? "true" : "false");
+    });
+    if (coach) coach.textContent = lines[id] || lines.unsure;
+    place();
+  }
+
+  function progress(id) {
+    var el = document.getElementById(id);
+    if (!el) return 0;
+    var raw = el.style.getPropertyValue("--sc-p");
+    var n = parseFloat(raw);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function place() {
+    if (reduce || window.innerWidth < 801) {
+      document.documentElement.style.setProperty("--seam", "100%");
+      return;
+    }
+    var choice = document.body.dataset.choice || "unsure";
+    var bias = choice === "managed" ? -12 : choice === "comanaged" ? 8 : 0;
+    var openP = progress("open");
+    var askP = progress("ask");
+    var left = 50 + bias - openP * 8;
+    left = left * (1 - askP);
+    if (left < 0) left = 0;
+    if (left > 72) left = 72;
+    document.documentElement.style.setProperty("--seam", left.toFixed(2) + "%");
+    document.body.classList.toggle("is-resolving", askP > 0.55);
+  }
+
+  buttons.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      setChoice(btn.getAttribute("data-choice"));
+    });
+  });
+  window.addEventListener("resize", place);
+  function tick() {
+    place();
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
