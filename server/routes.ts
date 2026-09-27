@@ -121,7 +121,7 @@ import { registerDeSyncRoutes } from "./integrations/deSyncRoutes";
 import { resolveJwtSecret } from "./config/authSecrets";
 import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter } from "./middleware/rateLimiter";
 import { enqueueOutbox } from "./integrations/deSyncStore";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
 
 // Canonical JWT secret — resolved per call so dotenv/env load order cannot
 // split signing and verification across different secrets (see config/authSecrets).
@@ -3843,7 +3843,7 @@ export async function registerRoutes(app: Express) {
       const { zohoPayments } = await import("./zohoPayments");
 
       if (!zohoPayments.isConfigured()) {
-        return res.status(503).json({ error: "Online payments are not configured. Please contact billing@digeratiexperts.com." });
+        return res.status(503).json({ error: `Online payments are not configured. Please contact ${COMPANY.billingEmail}.` });
       }
       if (!zohoClient.isConfigured()) {
         return res.status(503).json({ error: "Billing integration not configured" });
