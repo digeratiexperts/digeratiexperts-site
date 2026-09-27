@@ -52,6 +52,31 @@ claims:
       Joe-decided Tier 2 direction ("one graphite shell ... no cream-in-purple
       nested card"), so Maintenance Mode, not a redesign. No logic, copy,
       routing, testids or analytics changed.
+  - id: de-design-concepts-directions
+    owner: claude
+    subsystem: flagship-visual-reset
+    branch: claude/design-concepts-directions
+    base_sha: a8bf3351dcbf4e25b8c65323e8fb6202232c1c2e
+    files:
+      - scrollcraft/builds/directions-v1/**
+      - public/scrollcraft/directions/**
+    status: active
+    started: 2026-09-27
+    note: >-
+      Exploration Mode concept set for the flagship visual reset, published at
+      /scrollcraft/directions/ (noindex, static, no client/server/shared files).
+      Joe rejected the previous visual language and directed a clean-sheet reset
+      keeping the scroll-driven concept. He marked 22 references (10 yes, 9
+      maybe, 3 no) and named three directions: Calm Engineered Confidence (base
+      register), Precision Product Company (product and technical surfaces) and
+      Bright Cinematic Story (a motion layer over both, never its own dark
+      universe). Satisfies DESIGN-AUTHORITY divergence-before-convergence with
+      three materially distinct concepts, each briefed with hypothesis, Tier 2
+      defaults kept and changed, and what it does for Tier 1. Proposes against
+      no Joe-decided item. Two decisions remain with Joe: pine vs magenta as the
+      page accent, and whether this is the development site or the future live
+      site. Uses brand/digerati-logo.svg, the real light-ground lockup, and
+      never recolours the mark.
   - id: claude-completion-program-lane
     owner: claude
     subsystem: website-visual-ui

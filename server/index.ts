@@ -86,15 +86,8 @@ app.use((req, _res, next) => {
 
 app.all("/api/health", async (_req, res) => {
   const port = process.env.REPLIT_SERVER_PORT || process.env.PORT || "unknown";
-  let dbAvailable = false;
-  try {
-    const { pool } = await import("./db");
-    if (pool) {
-      const client = await pool.connect();
-      client.release();
-      dbAvailable = true;
-    }
-  } catch { dbAvailable = false; }
+  const { databaseAcceptsConnections } = await import("./healthProbe");
+  const dbAvailable = await databaseAcceptsConnections();
   const openaiConfigured = !!(
     process.env.OPENAI_API_KEY ||
     process.env.OPENAI_API ||
@@ -120,8 +113,21 @@ app.all("/api/health", async (_req, res) => {
   res.status(200).json(health);
 });
 
-app.all("/healthz", (_req, res) => res.status(200).send("ok"));
-app.all("/ready", (_req, res) => res.status(200).json({ ready: true }));
+app.all("/healthz", async (_req, res) => {
+  const { databaseAcceptsConnections, probeStatus } = await import("./healthProbe");
+  const status = probeStatus(await databaseAcceptsConnections());
+  res.status(status).type("text/plain").send(status === 200 ? "ok" : "unavailable");
+});
+
+app.all("/ready", async (_req, res) => {
+  const { databaseAcceptsConnections, probeStatus } = await import("./healthProbe");
+  const status = probeStatus(await databaseAcceptsConnections());
+  if (status === 200) {
+    res.status(200).json({ ready: true });
+    return;
+  }
+  res.status(503).json({ ready: false, database: "unavailable" });
+});
 
 /**
  * Portal routing heal — Cloudflare on digeratexperts.com strips `/portal` when
