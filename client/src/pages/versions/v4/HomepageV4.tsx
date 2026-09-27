@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "wouter";
-import { ArrowRight } from "lucide-react";
 import { V4Environment } from "./V4Environment";
+import { PrimaryAction, ChapterLabel } from "./V4Primitives";
+import {
+  ChapterAssessFirst,
+  ChapterSecurityFoundation,
+  ChapterOperatingSystem,
+  ChapterOutcomes,
+} from "./V4ProductChapters";
 import { useChapterProgress, ease, ramp } from "./useChapterProgress";
 
 /**
@@ -42,30 +47,6 @@ function useReducedMotion(): boolean {
   return reduced;
 }
 
-/** The one action the page asks for, in both places it is asked. */
-function PrimaryAction({ testId }: { testId: string }) {
-  return (
-    <Link
-      href="/book"
-      data-testid={testId}
-      className="group inline-flex items-center gap-2.5 rounded-full bg-[#D3126A] px-6 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-[#b80f5b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F04C97] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050312]"
-    >
-      Understand Your Environment
-      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-    </Link>
-  );
-}
-
-function ChapterLabel({ n, children }: { n: string; children: React.ReactNode }) {
-  return (
-    <p className="mb-5 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em] text-white/35">
-      <span className="text-[#F04C97]">{n}</span>
-      <span className="h-px w-8 bg-white/15" />
-      {children}
-    </p>
-  );
-}
-
 export default function HomepageV4() {
   const stageRef = useRef<HTMLDivElement>(null);
   const progress = useChapterProgress(stageRef);
@@ -79,7 +60,7 @@ export default function HomepageV4() {
 
   return (
     <main className="min-w-0 bg-[#050312] text-[#F7F5F2]">
-      <div ref={stageRef} className="relative mx-auto w-full max-w-[1240px] px-5 sm:px-8">
+      <div ref={stageRef} data-testid="v4-stage" className="relative mx-auto w-full max-w-[1240px] px-5 sm:px-8">
         {/* ── The environment. One instance in the DOM at every width.
                It is an absolutely-positioned layer spanning the whole stage so
                that `sticky` has the full three chapters to travel through: a
@@ -152,7 +133,11 @@ export default function HomepageV4() {
                  margin, and the only one that resolves the environment. ── */}
           <section
             aria-labelledby="v4-ch3"
-            className="flex min-h-[110vh] flex-col justify-center py-16 lg:min-h-[150vh] lg:py-24"
+            // No trailing padding: a sticky element parks when its container bottom is
+            // reached, so any tail below the last chapter's content is a band where the
+            // environment has already left while its own stage is still on screen.
+            // Chapter 04 supplies the breathing room instead.
+            className="flex min-h-[110vh] flex-col justify-center pt-16 pb-0 lg:min-h-[150vh] lg:pt-24 lg:pb-0"
             style={{ opacity: reduced ? 1 : 0.25 + 0.75 * showAlign }}
           >
             <ChapterLabel n="03">Why Digerati Experts</ChapterLabel>
@@ -191,13 +176,18 @@ export default function HomepageV4() {
         </div>
       </div>
 
-      {/* Chapters 04–10 land here in the next build stages. */}
+      <ChapterAssessFirst />
+      <ChapterSecurityFoundation />
+      <ChapterOperatingSystem />
+      <ChapterOutcomes />
+
+      {/* Chapters 08–10 land here in the next build stage. */}
       <div
         className="mx-auto max-w-[1240px] border-t border-white/10 px-5 py-14 sm:px-8"
         data-testid="v4-stage-marker"
       >
         <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/30">
-          Chapters 04–10 — in build
+          Chapters 08–10 — in build
         </p>
       </div>
     </main>
