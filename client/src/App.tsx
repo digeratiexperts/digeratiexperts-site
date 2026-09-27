@@ -160,6 +160,7 @@ const VersionTwoForward = lazy(() => import("@/pages/versions/VersionTwoForward"
 const HomepageV1 = lazy(() => import("@/pages/versions/v1/DigeratiHomepage").then((m) => ({ default: m.DigeratiHomepage })));
 const ExperienceInSite = lazy(() => import("@/pages/ExperienceInSite"));
 const HomepageV3 = lazy(() => import("@/pages/versions/v3/DigeratiHomepage").then((m) => ({ default: m.DigeratiHomepage })));
+const HomepageV4 = lazy(() => import("@/pages/versions/v4/HomepageV4"));
 
 const WarehouseGate = lazy(() => import("@/pages/store/WarehouseGate"));
 const PublicStoreCheckout = lazy(() => import("@/pages/store/PublicStoreCheckout"));
@@ -208,6 +209,13 @@ function Router() {
         <Suspense fallback={<PageLoadingSkeleton />}>
           <VersionFrame n={3}>
             <HomepageV3 />
+          </VersionFrame>
+        </Suspense>
+      )} />
+      <Route path="/version-4" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <VersionFrame n={4}>
+            <HomepageV4 />
           </VersionFrame>
         </Suspense>
       )} />
