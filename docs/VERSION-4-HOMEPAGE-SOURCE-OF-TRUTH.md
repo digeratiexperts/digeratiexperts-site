@@ -236,12 +236,45 @@ wordmark). Its gold was corrected `#F5E48A → #E3B23C` precisely because the ol
 failed contrast on warm paper. This was gotten wrong once already; it is recorded here
 so it is not gotten wrong again.
 
-**Typography.** Strong, technically precise, generous whitespace, clear hierarchy.
-Type carries structure so that containers do not have to. As a standalone preview
-build, V4 is not bound to the `client/` production stack lock (Space Grotesk / Inter /
-Oxanium) — and the merged directions brief explicitly moves direction 01 off it. The
-chosen stack is recorded in the build's own brief and reviewed before any promotion
-to `/`.
+**Typography — the Foundation lock applies. Corrected 2026-09-27.**
+
+An earlier draft of this section claimed V4 was free of the `client/` type lock,
+reasoning from the merged directions brief, which moves direction 01 off Space Grotesk
+/ Inter / Oxanium. **That reasoning was wrong for where V4 actually lives.** The
+directions brief governs a standalone build under `scrollcraft/builds/directions-v1/`.
+V4 is a `client/` page at `/version-4`, and `design/VISUAL_SYSTEM_V2.md` §Foundation
+lock (Layer 0 — do not redesign) binds every `client/` surface:
+
+| Role | Token | Value |
+|---|---|---|
+| Deep well | `--de-bg` | `#050312` Midnight Obsidian |
+| Marketing field | `--de-surface` | `#0a0a0a` |
+| Raised / panel | `--de-raised` + `--de-hairline` | `#151217` |
+| Paper | `--de-paper` | `#F7F5F2` (paper-raised `#ffffff`) |
+| Pop | — | `#D3126A` — CTA fill, active border, icon |
+| Violet | — | `#5B45E0` / `#8B5CF6` / `#A78BFA` — **lighting only, never panel fills** |
+| Gold | — | `#e7b20d` — wordmark mark only, **never a CTA or numeral fill** |
+| Headings | — | Space Grotesk |
+| Body / UI | — | Inter |
+| Tactical labels | — | Oxanium (JetBrains Mono fallback) — metadata, stats, sequence IDs, **not paragraphs** |
+
+So "strong typography" in V4 means using this stack *well* — real scale, weight,
+measure and spacing discipline — **not** swapping the faces. Catching this before
+building matters: a V4 built on a different typeface could never be promoted to `/`
+without being rebuilt.
+
+Also binding, from the same document's **Master design rule** — the evidence ladder,
+strongest first:
+
+> real artifact → real data → real person → explanatory diagram → sanitized interface
+> → illustrative scenario → editorial photography → atmospheric environment → icon.
+> **Decorative visual treatment comes last.**
+
+And: do not introduce new site-wide patterns until an approved reusable primitive
+exists. Small functional cards keep the established `IconWell` system
+(`client/src/components/visual/IconWell.tsx`) where it is genuinely right — this is the
+"reuse shared primitives only when they are actually correct" clause, not licence to
+assemble old sections.
 
 **Structural rules**
 
@@ -329,6 +362,11 @@ Required:
   status before the page is proposed for `/`.
 - DE's published boundaries and refusals are shown as evidence of responsibility
   (chapter 08).
+- **Every visual carrying evidence is classified** — `LIVE`, `SANITIZED REAL`,
+  `EXAMPLE` or `ILLUSTRATIVE` — per `design/VISUAL_SYSTEM_V2.md` §Truthfulness. An
+  unclassified evidence visual does not ship.
+- `design/MOTION_LANGUAGE.md`: **never animate numbers up to an invented SLA.** No
+  count-ups on V4 unless the end value has a row in the claims register.
 
 > Do not make V4 prettier by making DE less truthful.
 
