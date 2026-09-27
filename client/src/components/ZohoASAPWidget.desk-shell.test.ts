@@ -66,9 +66,22 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/useEscapeKey/);
   });
 
-  it("keeps Arizona perk copy in Get Support and does not add extra Tools phone chrome", () => {
-    expect(src).toMatch(/100% Arizona-based engineering desk/);
-    expect(src).toMatch(/Direct portal tracking &amp; phone escalation/);
+  it("keeps exactly one theme: no second token declaration, no external override", () => {
+    // The Desk used to carry two themes at once - a paper set re-declared inside
+    // .de-desk-tools-list, dragged back to graphite by an !important file in
+    // another module. Both are gone; a Desk colour is wrong in one place only.
+    expect(src).not.toMatch(/\.de-desk-tools-list \{[^}]*--desk-ink:/);
+    expect(src).not.toMatch(/--desk-shell-/);
+    expect(src).not.toMatch(/#d3126a/); // one casing for the brand magenta
+  });
+
+  it("keeps Get Support free of marketing perks and extra Tools phone chrome", () => {
+    // The perk bullets were marketing inside a support tool, and the "100%"
+    // claim was not sourced anywhere. Get Support states the function and the
+    // routing, nothing else.
+    expect(src).not.toMatch(/100% Arizona-based engineering desk/);
+    expect(src).not.toMatch(/de-desk-perk-list/);
+    expect(src).toMatch(/route your request straight to the Arizona desk/);
     expect(src).not.toMatch(/Direct Desk:/);
     expect(src).not.toMatch(/resource-link-phone-support/);
     expect(src).not.toMatch(/className="de-desk-foot"/);
@@ -93,12 +106,15 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/0 0 0 1px rgba\(255,255,255,0\.5\)/);
   });
 
-  it("paints Get Support issue choices white with black type and a slow hover wash", () => {
+  it("paints Get Support issue choices on the graphite token set, never paper", () => {
     expect(src).toMatch(/trackDeskSupportRowGlow/);
-    expect(src).toMatch(/\.de-desk-issue-list \{[\s\S]*?background: #fff;/);
-    expect(src).toMatch(/\.de-desk-issue-row \{[\s\S]*?color: #17141f;/);
-    expect(src).toMatch(/\.de-desk-incident \{[\s\S]*?background: #fff;/);
-    expect(src).toMatch(/\.de-desk-incident-copy strong \{[\s\S]*?color: #17141f;/);
+    expect(src).toMatch(/\.de-desk-issue-list \{[\s\S]*?background: var\(--desk-box\);/);
+    expect(src).toMatch(/\.de-desk-incident \{[\s\S]*?background: var\(--desk-box\);/);
+    // The whole Desk resolves through one token set. These were the values the
+    // deleted deDeskGraphiteStyle.ts override had to force with !important.
+    expect(src).not.toMatch(/background: #fff;/);
+    expect(src).not.toMatch(/#17141f/);
+    expect(src).not.toMatch(/#f7f5f2/);
   });
 
   it("opens a tad wider with one-step larger type on chrome, Client Tools, and Ask DE", () => {
@@ -131,10 +147,8 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/Suggested questions/);
     expect(src).toMatch(/startersForPage/);
     expect(src).toMatch(/de-desk-ticket-upper/);
-    expect(src).toMatch(/de-desk-perk-list/);
     expect(src).toMatch(/\.de-desk-issue-list \{[\s\S]*?border-radius: 15px;/);
     expect(src).not.toMatch(/linear-gradient\(135deg, rgba\(211,18,106,0\.16\)/);
-    expect(src).toMatch(/background: #fff;/);
     expect(src).toMatch(/Sign in to Client Tools/);
     expect(src).toMatch(/Create ticket/);
     expect(src).toMatch(/de-desk-btn-grad/);
