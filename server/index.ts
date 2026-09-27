@@ -113,6 +113,12 @@ app.all("/api/health", async (_req, res) => {
   res.status(200).json(health);
 });
 
+/** Public, secret-free flag so marketing and the portal do not promise card checkout when it is off. */
+app.get("/api/payments/availability", (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ cardCheckout: zohoPayments.isConfigured() });
+});
+
 app.all("/healthz", async (_req, res) => {
   const { databaseAcceptsConnections, probeStatus } = await import("./healthProbe");
   const status = probeStatus(await databaseAcceptsConnections());

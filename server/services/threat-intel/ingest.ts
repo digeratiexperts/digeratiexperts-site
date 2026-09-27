@@ -286,7 +286,27 @@ export function startThreatIntelScheduler(): void {
   }, REFRESH_MS).unref();
 }
 
-export function isLocalRequest(req: { socket?: { remoteAddress?: string } }): boolean {
-  const ip = req.socket?.remoteAddress || "";
-  return ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1";
+function headerValue(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] || "";
+  return value || "";
+}
+
+function isLoopback(ip: string): boolean {
+  const host = ip.trim().toLowerCase().replace(/^::ffff:/, "");
+  return host === "127.0.0.1" || host === "::1" || host === "localhost";
+}
+
+export function isLocalRequest(req: {
+  socket?: { remoteAddress?: string };
+  headers?: Record<string, string | string[] | undefined>;
+}): boolean {
+  const peer = req.socket?.remoteAddress || "";
+  if (!isLoopback(peer)) return false;
+  // OpenLiteSpeed connects to Node on localhost, so the peer is always loopback
+  // in production. A forwarded client address means the request came from outside.
+  const forwarded = headerValue(req.headers?.["x-forwarded-for"]).split(",")[0] || "";
+  const realIp = headerValue(req.headers?.["x-real-ip"]);
+  const client = (forwarded || realIp).trim();
+  if (!client) return true;
+  return isLoopback(client);
 }

@@ -1,9 +1,12 @@
+import { useEffect, useState } from "react";
 import { PageTemplate } from "@/components/PageTemplate";
 import { IconWell } from "@/components/visual/IconWell";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, CreditCard, Lock, Download, Zap, Shield, ExternalLink, ArrowRight } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { COMPANY } from "@/data/companyContact";
+import { loadCardCheckoutAvailable } from "@/lib/invoicePaymentAvailability";
 
 const PORTAL_LOGIN = "https://portal.digeratiexperts.com/portal/login";
 const PORTAL_INVOICES = "https://portal.digeratiexperts.com/portal/invoices";
@@ -11,10 +14,23 @@ const PORTAL_INVOICES = "https://portal.digeratiexperts.com/portal/invoices";
 const cardClass = "rounded-2xl border border-de-hairline bg-de-raised";
 
 export default function PayInvoice() {
+  const [cardCheckout, setCardCheckout] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadCardCheckoutAvailable().then((available) => {
+      if (!cancelled) setCardCheckout(available);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useSEO({
     title: "Pay Invoice | Digerati Experts",
-    description:
-      "Pay Digerati Experts invoices in the Client Portal. Credit card and ACH are processed there — not on this marketing page.",
+    description: cardCheckout
+      ? "View Digerati Experts invoices in the Client Portal. Card checkout is available after you sign in. This page does not process payments."
+      : "View Digerati Experts invoices in the Client Portal. Card checkout is not connected on the site yet. This page does not process payments.",
     canonical: "/support/pay-invoice",
   });
 
@@ -22,19 +38,29 @@ export default function PayInvoice() {
     {
       icon: CreditCard,
       title: "Credit/Debit Card",
-      features: ["Visa, MasterCard, Amex", "Processed in the Client Portal", "Secure payment gateway"],
+      features: cardCheckout
+        ? ["Visa, MasterCard, Amex", "Processed in the Client Portal", "Secure payment gateway"]
+        : [
+            "Not connected in the Client Portal yet",
+            "This page does not charge a card",
+            `Email ${COMPANY.billingEmail} with the invoice number`,
+          ],
     },
     {
       icon: Lock,
-      title: "Bank Transfer (ACH)",
-      features: ["Direct account transfer", "1-3 business days", "No credit card fees"],
+      title: "Bank transfer",
+      features: [
+        "ACH, wire, and check are arranged with billing",
+        "Not collected on this page",
+        "Ask support for the instructions on your invoice",
+      ],
     },
   ];
 
   const features = [
     { icon: Download, title: "Download Invoices", desc: "View and download all invoices and receipts in the portal" },
-    { icon: Zap, title: "Auto-Pay Setup", desc: "Set up automatic monthly payments where available" },
-    { icon: Shield, title: "Secure Payments", desc: "Encrypted checkout through the Client Portal" },
+    { icon: Zap, title: "Auto-Pay Setup", desc: cardCheckout ? "Set up automatic monthly payments where available" : "Automatic card payments are not available until checkout is connected" },
+    { icon: Shield, title: "Secure Payments", desc: cardCheckout ? "Encrypted checkout through the Client Portal" : "Invoices stay in the Client Portal. Card checkout is not connected yet" },
     { icon: CreditCard, title: "Payment History", desc: "Complete transaction records in your account" },
   ];
 
@@ -50,7 +76,10 @@ export default function PayInvoice() {
             Pay invoices in the Client Portal
           </h2>
           <p className="mx-auto mb-6 max-w-2xl leading-relaxed text-white">
-            This marketing page does not process payments. Sign in to the Client Portal to view open invoices and pay securely. If you&apos;re already logged in, go straight to Invoices.
+            This page does not process payments. Sign in to the Client Portal to view open invoices.
+            {cardCheckout
+              ? " Card checkout is available after you sign in."
+              : " Card checkout is not connected yet, so billing takes those payments another way."}
           </p>
           <div className="flex flex-col justify-center gap-4 sm:flex-row">
             <Button asChild size="lg" className="h-12 bg-white px-8 font-semibold text-[#D3126A] hover:bg-white/95" data-testid="button-portal-login-pay">
@@ -80,7 +109,9 @@ export default function PayInvoice() {
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="mb-6 text-3xl font-bold text-white">Multiple Payment Options</h2>
           <p className="text-xl leading-relaxed text-white/70">
-            Once signed in, you can use credit cards and bank transfers for your convenience. All payments are processed securely through the Client Portal — not on this page.
+            {cardCheckout
+              ? "Card checkout runs in the Client Portal after you sign in. Bank transfers are arranged with billing, not on this page."
+              : "The portal shows your invoices. Card checkout is not connected on the site yet, and bank transfers are arranged with billing rather than collected here."}
           </p>
         </div>
 

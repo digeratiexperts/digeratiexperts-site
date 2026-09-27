@@ -73,6 +73,7 @@ export interface IStorage {
   createLabel(label: InsertLabel): Promise<Label>;
   deleteLabel(id: string): Promise<void>;
 
+  getComment(id: string): Promise<Comment | undefined>;
   getCommentsByTaskId(taskId: string): Promise<Comment[]>;
   createComment(comment: InsertComment): Promise<Comment>;
   deleteComment(id: string): Promise<void>;
@@ -566,6 +567,10 @@ export class MemStorage implements IStorage {
     this.labels.delete(id);
   }
 
+  async getComment(id: string): Promise<Comment | undefined> {
+    return this.comments.get(id);
+  }
+
   async getCommentsByTaskId(taskId: string): Promise<Comment[]> {
     return Array.from(this.comments.values()).filter(c => c.taskId === taskId);
   }
@@ -1016,6 +1021,12 @@ export class DatabaseStorage implements IStorage {
   async deleteLabel(id: string): Promise<void> {
     const db = await this.getDb();
     await db.delete(labels).where(eq(labels.id, id));
+  }
+
+  async getComment(id: string): Promise<Comment | undefined> {
+    const db = await this.getDb();
+    const [comment] = await db.select().from(comments).where(eq(comments.id, id));
+    return comment || undefined;
   }
 
   async getCommentsByTaskId(taskId: string): Promise<Comment[]> {

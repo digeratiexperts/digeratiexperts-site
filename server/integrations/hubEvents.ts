@@ -92,7 +92,11 @@ async function applyHubEvent(envelope: DeSyncEnvelope): Promise<void> {
       "techsales",
     );
 
-    publishPortalProjection({ eventType: envelope.eventType, entityId: envelope.entityId });
+    publishPortalProjection({
+      eventType: envelope.eventType,
+      entityId: envelope.entityId,
+      canonicalAccountId: envelope.canonicalAccountId ?? null,
+    });
   }
 
   const portalClientId =
