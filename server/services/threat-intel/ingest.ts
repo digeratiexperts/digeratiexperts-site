@@ -303,10 +303,12 @@ export function isLocalRequest(req: {
   const peer = req.socket?.remoteAddress || "";
   if (!isLoopback(peer)) return false;
   // OpenLiteSpeed connects to Node on localhost, so the peer is always loopback
-  // in production. A forwarded client address means the request came from outside.
-  const forwarded = headerValue(req.headers?.["x-forwarded-for"]).split(",")[0] || "";
-  const realIp = headerValue(req.headers?.["x-real-ip"]);
-  const client = (forwarded || realIp).trim();
-  if (!client) return true;
-  return isLoopback(client);
+  // in production. Forwarding headers are not proof of a local caller: a client
+  // can put 127.0.0.1 first and a proxy that appends keeps that value. The
+  // in-process refresh and the localhost timer call the app port with no
+  // forwarding header. Any proxied request is refused.
+  const forwarded = headerValue(req.headers?.["x-forwarded-for"]).trim();
+  const realIp = headerValue(req.headers?.["x-real-ip"]).trim();
+  if (forwarded || realIp) return false;
+  return true;
 }
