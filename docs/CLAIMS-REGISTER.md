@@ -55,6 +55,36 @@ from how the site is built (canonical data, product capture) · **Unsupported**
 | Cadence chapter | MFA blocks 99%+ of unauthorized access attempts — Microsoft 2025 | Matches `microsoft-mfa-blocks-2025` | Sourced | Same |
 | Range rail | "Fourteen domains" DE operates | DE's domain taxonomy used across the site and the Experience Plan; no file in the repository enumerates the fourteen (open discrepancy in `docs/DE-SERVICE-MODEL-2026.md`) | Unsupported | The 2026-09-02 review found fourteen domains too many for a buying decision on a homepage; the homepage leads with the eight cybersecurity blocks. The fourteen stay unenumerated until Joe resolves the taxonomy; do not conflate them with the eight blocks or the 12 capability lanes. |
 
+## Version 4 preview `/version-4` (noindex)
+
+Every quoted artifact on V4 is verbatim from the DE page that publishes it, and
+says so on the page. Rows marked **Practice** are statements of how DE works
+(not metrics, results or certifications); they need Joe's confirmation before
+V4 is proposed for `/`, per `docs/VERSION-4-HOMEPAGE-SOURCE-OF-TRUTH.md` §10.
+
+| Where | Claim | Basis | Status | Action |
+| --- | --- | --- | --- | --- |
+| 01 Hero, guarantee figure | "Digerati Experts 30-day, no-questions-asked money-back guarantee on managed IT and cybersecurity services." / "Release from contracts without penalties. No questions asked, no fine print." | Verbatim from `client/src/pages/about/Guarantee.tsx` (page description and bullet list) | Published | None. Linked to `/about/guarantee` beside the quote. |
+| 01 Hero | "Cybersecurity-first managed technology for Arizona businesses" | DE positioning as the production hero and `/solutions/proactive-ecosystem` state it | Structural | None |
+| 02 Sizer | "They stay on this device, and this step asks for no contact details." | `client/src/lib/solutionDraft.ts` writes `localStorage` only; the sizer has three numeric inputs and no contact field | Structural | Re-verify if the sizer ever gains a network call |
+| 02 Sizer | "It is the same profile the store sizes every solution from, so nothing is asked twice." | `BusinessNeedsIndex.tsx` reads the same draft on mount and on `SOLUTION_DRAFT_EVENT`; harness verifies the draft round-trip | Structural | None |
+| 03 Scope | Eight questions, one per block, sized to the visitor's numbers | The eight-block model (`docs/DE-SERVICE-MODEL-2026.md` via PR #185); the counts are the visitor's own input | Structural | None. No result or score is shown. |
+| 03 Scope, "Then" | "You get the findings in plain English, and you keep them whichever way you go — including the way where the answer is that you do not need us for this." | "Plain English" is the Bill of Rights pledge; "you keep the findings" and the no-engagement outcome are practice statements with no published page | Practice | Joe: confirm the assessment findings are the client's to keep regardless of engagement, or reword to "you get the findings" |
+| 04 Path | "what we would not take on" · exit D "No engagement … You keep the findings." | Practice statement | Practice | Same confirmation as the row above |
+| 05 Blocks | Eight blocks, Risk & Exposure continuous | Same basis as the homepage row above; code-drawn, caption says "states no metric" | Structural | None |
+| 06 Desk | DE Desk capture, `client/public/images/evidence/de-desk-shell.webp` | Captured from this site's own support widget (`ZohoASAPWidget`); QA placeholder details removed; labelled "Real, details removed" with `data-classification="SANITIZED_REAL"` | Structural | The capture carries the widget's own line "100% Arizona-based engineering desk" (`ZohoASAPWidget.tsx:1456`); that claim is the widget's, already live, and is not restated in V4 copy |
+| 07 Ledger, right column | Service names: DE Security Foundation, Managed Workplace, DE Desk, Threadline Inbox / Continuity / Recovery, Switchboard, Compliance Evidence & Risk Reporting, BCDR, ProActive IT → Office → Business → Enterprise, Hybrid / Multi-Site | `docs/DE-NAMING-CANON.md`; package lines in `client/src/pages/ProActiveEcosystemPricing.tsx` | Structural | None. Footnote on the page: no supplier named, no tier priced |
+| 07 Ledger, Comply | "Framework alignment — HIPAA, SOC 2, cyber insurance" | Trust Center compliance-support list; the page's own boundary is quoted in 08 | Published | Never present a framework as a DE certification |
+| 08 Proof | Two pledges, verbatim: "We Pledge to never recommend or deliver a service that would put you at risk for non-compliance." / "We Pledge to deliver solutions on budget with straightforward, clear billing—without mistakes, hidden fees, or unexpected expenses." | `client/src/pages/about/ClientBillOfRights.tsx` | Published | None. Linked to `/about/client-bill-of-rights` |
+| 08 Proof | "These names describe frameworks and customer requirements Digerati Experts helps organizations address. They are not certifications DE holds." | `client/src/pages/trust/TrustCenter.tsx` | Published | None |
+| 08 Proof | "Critical (Active Breach/System Down) · 15 minutes" | `client/src/pages/legal/SLA.tsx`, Standard Response Times | Published | Shown with the tier name and the note that lower tiers are slower — never as a blanket "15-minute response" |
+| 08 Proof | Joseph Petro, "Founder & Chief Technology Strategist", Chandler, Arizona; "Directly involved in the assessments, the architecture and the milestones that matter" | Production homepage `DigeratiMeetExpertsSection` (same photograph, title and involvement copy) | Published | None |
+| 09 Fit | "You want the solution without changing IT providers." / "You have IT capability and want DE involved." / "You want DE to act as the IT department." | Verbatim "Best fit" row, `client/src/pages/solutions/StandaloneServices.tsx` and `CoManagedIT.tsx` | Published | None |
+| 09 Fit | "progressing IT → Office → Business → Enterprise. Each tier is a fit for a different environment, not a merchandising rank." | `client/src/pages/solutions/ProActiveEcosystemPage.tsx` subtitle | Published | None |
+| 09 Fit | Pricing scope note | `PRICING_SCOPE_NOTE`, `client/src/data/pricing.ts` | Published | None |
+| 10 Close (nothing typed) | Guarantee body, verbatim: "If you are not over-the-top thrilled … no questions asked." | `client/src/pages/about/Guarantee.tsx` | Published | None |
+| Absent by design | Reviews, case studies, client logos, counters, telemetry, certifications | `reviewsCatalog` and `publishedCaseStudies` are empty; nothing is faked | — | Add real reviews only through the catalog / live API per `design/PROOF_SYSTEM.md` |
+
 ## Elsewhere on the site (outside this PR, listed so they are not forgotten)
 
 | Where | Claim | Status | Action |

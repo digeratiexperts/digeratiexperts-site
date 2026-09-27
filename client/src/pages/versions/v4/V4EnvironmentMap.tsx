@@ -12,6 +12,7 @@ import { useMemo } from "react";
  * sites they told us about. The transformation still happens — an unknown
  * environment becomes a counted one — and it is THEIR environment, with
  * their numbers, which is the only version of this idea that earns the space.
+ * Chapter 10 draws it once more with one edge around all of it.
  *
  * People appear as presence, never as faces, per design/IMAGERY.md.
  * Code-built; no generated imagery; nothing here claims a metric.
@@ -32,7 +33,7 @@ function clampInt(v: string, max: number): number {
   return Math.min(n, max);
 }
 
-export function parseEstate(users: string, devices: string, sites: string): EnvironmentCounts {
+export function parseEnvironment(users: string, devices: string, sites: string): EnvironmentCounts {
   return {
     users: clampInt(users, 9999),
     devices: clampInt(devices, 9999),
@@ -49,8 +50,17 @@ function marksFor(count: number, cols: number) {
   }));
 }
 
-export function V4Estate({ estate, reduced }: { estate: EnvironmentCounts; reduced: boolean }) {
-  const { users, devices, sites } = estate;
+export function EnvironmentMap({
+  environment,
+  reduced,
+  /** The final frame draws the same environment with one accountable edge around it. */
+  framed = false,
+}: {
+  environment: EnvironmentCounts;
+  reduced: boolean;
+  framed?: boolean;
+}) {
+  const { users, devices, sites } = environment;
   const empty = users === 0 && devices === 0 && sites === 0;
 
   const layout = useMemo(() => {
@@ -67,10 +77,11 @@ export function V4Estate({ estate, reduced }: { estate: EnvironmentCounts; reduc
 
   return (
     <div
-      className="w-full"
-      data-testid="v4-estate"
+      className={framed ? "w-full rounded-2xl border border-[#D3126A]/50 p-3 sm:p-4" : "w-full"}
+      data-testid="v4-environment"
       data-empty={empty ? "true" : "false"}
       data-sites={sites}
+      data-framed={framed ? "true" : "false"}
     >
       <div
         className={`grid gap-3 ${cols === 1 ? "grid-cols-1" : cols === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}
@@ -142,6 +153,7 @@ export function V4Estate({ estate, reduced }: { estate: EnvironmentCounts; reduc
           {devices === 1 ? "1 device" : `${devices} devices`}
         </span>
         <span>{sites === 1 ? "1 site" : `${sites} sites`}</span>
+        {framed && <span className="text-[#F04C97]">· one accountable team</span>}
       </div>
     </div>
   );

@@ -3,38 +3,38 @@ import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import { PrimaryAction, ChapterLabel } from "./V4Primitives";
 import { V4Sizer } from "./V4Sizer";
-import {
-  ChapterAssessFirst,
-  ChapterSecurityFoundation,
-  ChapterOperatingSystem,
-  ChapterOutcomes,
-} from "./V4ProductChapters";
+import { V4ScopeChapter } from "./V4ScopeChapter";
+import { V4PathChapter } from "./V4PathChapter";
+import { V4BlocksChapter } from "./V4BlocksChapter";
+import { V4DeskChapter } from "./V4DeskChapter";
+import { V4OutcomesChapter } from "./V4OutcomesChapter";
+import { V4ProofChapter } from "./V4ProofChapter";
+import { V4FitChapter } from "./V4FitChapter";
+import { V4CloseChapter } from "./V4CloseChapter";
 
 /**
  * Digerati Experts homepage — Version 4.
  *
  * Governed by docs/VERSION-4-HOMEPAGE-SOURCE-OF-TRUTH.md.
  *
- * Second cut of the opening. The first cut led with an abstract constellation
- * — nine unnamed dots resolving into a ring. It measured well and read as
- * generic: nothing on screen belonged to the visitor, and it was the same
- * "abstract lines" idiom already rejected on Experience v1. This cut leads
- * with real things, in evidence-ladder order:
+ * Third cut. The first led with an abstract constellation and read as
+ * generic; the second put real things on the first two screens and left
+ * chapters 04–07 as four identical grids. This cut gives every chapter its
+ * own form, and every chapter leads with something real:
  *
- *   01  the promise, who it is for, one action — and beside it the one thing
- *       DE publishes that its competitors do not: the guarantee, quoted from
- *       the page that publishes it. A real artifact where a slogan would go.
- *   02  a working tool: three numbers in, the visitor's OWN environment out,
- *       written to the same draft the store reads so nothing is asked twice
- *   03  assess-first, stated plainly
+ *   01  the promise, one action, and the published guarantee beside it
+ *   02  a working tool: three numbers in, the visitor's own environment out
+ *   03  the assessment's scope, sized to those numbers — the peak
+ *   04  the assessment as the trunk, three ways in, and the honest fourth exit
+ *   05  the eight blocks drawn as a wall standing on a continuous slab
+ *   06  the real DE Desk capture beside the nine capabilities
+ *   07  a paper ledger: each outcome, and the named thing that delivers it
+ *   08  the founder, and DE's own published words quoted verbatim
+ *   09  the three operating models as a spectrum, in their published words
+ *   10  return to the visitor's environment, one edge around it, one action
  *
- * The sizer is deliberately NOT in the hero. The audience rule outranks the
- * product: someone arriving from a breach scare or an insurance form wants
- * to know DE is real before being asked to type anything. So screen one
- * orients — and proves — and screen two is where the page starts working
- * for them.
- *
- * Native scroll throughout. No sticky stage, no scroll-driven state.
+ * Native scroll throughout. No sticky stage, no scroll-driven state. The
+ * only state on the page is the environment draft the store already keeps.
  */
 
 function useReducedMotion(): boolean {
@@ -136,7 +136,8 @@ export default function HomepageV4() {
               </p>
               <p className="mt-4 max-w-[46ch] text-[15.5px] leading-relaxed text-white/45">
                 Most providers put a phone number here. We would rather you see the
-                shape of your own environment first.
+                shape of your own environment first — and the rest of this page will
+                use it.
               </p>
             </div>
             <V4Sizer reduced={reduced} />
@@ -144,39 +145,14 @@ export default function HomepageV4() {
         </div>
       </section>
 
-      {/* ── 03 Before anything is proposed. ── */}
-      <section aria-labelledby="v4-ch3" className="border-t border-white/10">
-        <div className="mx-auto w-full max-w-[1240px] px-5 py-20 sm:px-8 lg:py-28">
-          <ChapterLabel n="03">Before anything is proposed</ChapterLabel>
-          <h2
-            id="v4-ch3"
-            className="max-w-[22ch] font-['Space_Grotesk',sans-serif] text-[clamp(1.9rem,4.8vw,3.15rem)] font-bold leading-[1.06] tracking-[-0.015em] text-balance"
-          >
-            We do not promise outcomes before we understand the environment.
-          </h2>
-          <p className="mt-6 max-w-[56ch] text-[15.5px] leading-relaxed text-white/60">
-            Any provider can list the same services. The difference is whether they
-            looked first. We assess what you have, name what is exposed, and tell you
-            what we would not do — before anyone signs anything.
-          </p>
-        </div>
-      </section>
-
-      {/* Chapters 04–07 stand as first built and are queued for the same
-          treatment: each a different form, each leading with a real thing. */}
-      <ChapterAssessFirst />
-      <ChapterSecurityFoundation />
-      <ChapterOperatingSystem />
-      <ChapterOutcomes />
-
-      <div
-        className="mx-auto max-w-[1240px] border-t border-white/10 px-5 py-14 sm:px-8"
-        data-testid="v4-stage-marker"
-      >
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/30">
-          Chapters 08–10 — in build
-        </p>
-      </div>
+      <V4ScopeChapter />
+      <V4PathChapter />
+      <V4BlocksChapter />
+      <V4DeskChapter />
+      <V4OutcomesChapter />
+      <V4ProofChapter />
+      <V4FitChapter />
+      <V4CloseChapter reduced={reduced} />
     </main>
   );
 }

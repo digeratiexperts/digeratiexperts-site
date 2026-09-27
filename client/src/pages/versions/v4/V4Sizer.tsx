@@ -7,10 +7,10 @@ import {
   patchEnvironment,
   SOLUTION_DRAFT_EVENT,
 } from "@/lib/solutionDraft";
-import { V4Estate, parseEstate } from "./V4Estate";
+import { EnvironmentMap, parseEnvironment } from "./V4EnvironmentMap";
 
 /**
- * The hero's working part: three numbers in, the visitor's estate out.
+ * Chapter 02's working part: three numbers in, the visitor's environment out.
  *
  * It writes to the SAME solution draft the store reads
  * (client/src/lib/solutionDraft.ts, key "de-solution-draft-v2"), so someone
@@ -19,8 +19,9 @@ import { V4Estate, parseEstate } from "./V4Estate";
  * correct": the store's own headline is "Set your users, devices, and sites
  * once," and this is that once.
  *
- * No contract, no sales call, no vendor catalog — the store's own promise,
- * now made on the first screen of the site instead of three clicks in.
+ * No contract, no vendor catalog — the store's own promise, now made on the
+ * second screen of the site instead of three clicks in. Chapters 03 and 10
+ * read the same draft back through useEnvironmentDraft.
  */
 
 type Field = "userCount" | "workstationCount" | "siteCount";
@@ -72,11 +73,11 @@ export function V4Sizer({ reduced }: { reduced: boolean }) {
     }
   };
 
-  const estate = useMemo(
-    () => parseEstate(values.userCount, values.workstationCount, values.siteCount),
+  const environment = useMemo(
+    () => parseEnvironment(values.userCount, values.workstationCount, values.siteCount),
     [values],
   );
-  const started = estate.users > 0 || estate.devices > 0 || estate.sites > 0;
+  const started = environment.users > 0 || environment.devices > 0 || environment.sites > 0;
 
   return (
     <div className="w-full" data-testid="v4-sizer" data-started={started ? "true" : "false"}>
@@ -105,7 +106,7 @@ export function V4Sizer({ reduced }: { reduced: boolean }) {
 
       <div className="mt-6 min-h-[132px]">
         {started ? (
-          <V4Estate estate={estate} reduced={reduced} />
+          <EnvironmentMap environment={environment} reduced={reduced} />
         ) : (
           <p className="max-w-[44ch] text-[13.5px] leading-relaxed text-white/45">
             Three numbers is all it takes. They stay on this device, and this step asks

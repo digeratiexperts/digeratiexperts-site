@@ -3,12 +3,11 @@ import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 
 /**
- * The V4 vocabulary. Every chapter composes from these, which is the whole
- * point: the production homepage failed partly because each section brought
- * its own card style, gradient and rhythm, so twenty sections read as twenty
- * decisions rather than one product.
- *
- * Hairlines and space before containers. Not everything is a card.
+ * The V4 vocabulary. Deliberately small: one action, one chapter label, one
+ * chapter frame, one quiet link. The first cut also carried a grid cell and a
+ * hairline grid, and four chapters composed from them read as the same
+ * chapter four times — Joe's verdict was "generic trash". Each chapter now
+ * builds its own form, so the shared vocabulary stops at the frame.
  */
 
 /** The one action the page asks for, wherever it asks. */
@@ -25,11 +24,51 @@ export function PrimaryAction({ testId }: { testId: string }) {
   );
 }
 
-export function ChapterLabel({ n, children }: { n: string; children: ReactNode }) {
+/** A chapter's single forward link — text with an arrow, never a second button. */
+export function QuietLink({
+  href,
+  testId,
+  paper = false,
+  children,
+}: {
+  href: string;
+  testId: string;
+  paper?: boolean;
+  children: ReactNode;
+}) {
   return (
-    <p className="mb-5 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em] text-white/35">
-      <span className="text-[#F04C97]">{n}</span>
-      <span className="h-px w-8 bg-white/15" />
+    <Link
+      href={href}
+      data-testid={testId}
+      className={`group inline-flex items-center gap-2 text-[13.5px] font-semibold underline underline-offset-4 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F04C97] focus-visible:ring-offset-2 ${
+        paper
+          ? "text-[#14121a] decoration-black/25 hover:decoration-black focus-visible:ring-offset-[#F7F5F2]"
+          : "text-[#F7F5F2] decoration-white/25 hover:decoration-white focus-visible:ring-offset-[#050312]"
+      }`}
+    >
+      {children}
+      <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+    </Link>
+  );
+}
+
+export function ChapterLabel({
+  n,
+  paper = false,
+  children,
+}: {
+  n: string;
+  paper?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <p
+      className={`mb-5 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em] ${
+        paper ? "text-black/40" : "text-white/35"
+      }`}
+    >
+      <span className={paper ? "text-[#D3126A]" : "text-[#F04C97]"}>{n}</span>
+      <span className={`h-px w-8 ${paper ? "bg-black/15" : "bg-white/15"}`} />
       {children}
     </p>
   );
@@ -44,32 +83,33 @@ export function Chapter({
   lede,
   children,
   tone = "graphite",
+  testId,
 }: {
   id: string;
   n: string;
   eyebrow: string;
-  heading: string;
-  lede?: string;
+  heading: ReactNode;
+  lede?: ReactNode;
   children?: ReactNode;
   /** Paper is a deliberate contrast for one chapter, never decoration. */
   tone?: "graphite" | "paper";
+  testId?: string;
 }) {
   const paper = tone === "paper";
   return (
     <section
       aria-labelledby={id}
-      className={paper ? "bg-[#F7F5F2] text-[#14121a]" : "bg-[#050312] text-[#F7F5F2]"}
+      data-testid={testId}
+      className={
+        paper
+          ? "bg-[#F7F5F2] text-[#14121a]"
+          : "border-t border-white/10 bg-[#050312] text-[#F7F5F2]"
+      }
     >
       <div className="mx-auto w-full max-w-[1240px] px-5 py-20 sm:px-8 lg:py-28">
-        <p
-          className={`mb-5 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em] ${
-            paper ? "text-black/40" : "text-white/35"
-          }`}
-        >
-          <span className={paper ? "text-[#D3126A]" : "text-[#F04C97]"}>{n}</span>
-          <span className={`h-px w-8 ${paper ? "bg-black/15" : "bg-white/15"}`} />
+        <ChapterLabel n={n} paper={paper}>
           {eyebrow}
-        </p>
+        </ChapterLabel>
         <h2
           id={id}
           className="max-w-[24ch] font-['Space_Grotesk',sans-serif] text-[clamp(1.75rem,4vw,2.7rem)] font-bold leading-[1.08] tracking-[-0.015em] text-balance"
@@ -89,75 +129,4 @@ export function Chapter({
       </div>
     </section>
   );
-}
-
-/**
- * A cell of a hard grid. The grid itself carries the structure — hairlines
- * between cells rather than a border around each one, so a row of these reads
- * as one model instead of a handful of separate objects.
- */
-export function GridCell({
-  label,
-  title,
-  detail,
-  paper = false,
-}: {
-  label?: string;
-  title: string;
-  detail?: string;
-  paper?: boolean;
-}) {
-  return (
-    <div
-      className={`min-w-0 border-t py-5 ${paper ? "border-black/10" : "border-white/10"}`}
-    >
-      {label && (
-        <p
-          className={`mb-2 font-mono text-[10px] uppercase tracking-[0.18em] ${
-            paper ? "text-black/35" : "text-white/30"
-          }`}
-        >
-          {label}
-        </p>
-      )}
-      <h3
-        className={`text-[14.5px] font-semibold leading-snug ${
-          paper ? "text-[#14121a]" : "text-[#F7F5F2]"
-        }`}
-      >
-        {title}
-      </h3>
-      {detail && (
-        <p
-          className={`mt-1.5 text-[13px] leading-relaxed ${
-            paper ? "text-black/55" : "text-white/50"
-          }`}
-        >
-          {detail}
-        </p>
-      )}
-    </div>
-  );
-}
-
-/**
- * Hairline-ruled grid. Each cell carries its own top rule and the columns are
- * separated by space.
- *
- * `divide-x` was tried first and is wrong here: on a grid whose item count
- * does not fill the last row it draws a vertical rule beside the empty cells,
- * so a seven-item four-column grid renders a dangling line under nothing and
- * the whole section reads as unfinished. Per-cell top rules wrap correctly at
- * every column count and every breakpoint.
- */
-export function HairGrid({
-  cols = "sm:grid-cols-2 lg:grid-cols-4",
-  children,
-}: {
-  cols?: string;
-  /** Kept for call-site symmetry; cells carry their own paper styling. */
-  paper?: boolean;
-  children: ReactNode;
-}) {
-  return <div className={`mt-10 grid grid-cols-1 gap-x-8 ${cols}`}>{children}</div>;
 }
