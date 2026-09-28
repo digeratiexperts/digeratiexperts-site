@@ -326,7 +326,7 @@ function Register-DEAction {
         [switch]$Destructive,
         [switch]$RequiresReboot,
         [switch]$RequiresElevation,
-        [string[]]$Modes = @('new', 'takeover', 'replacement', 'repair', 'co-managed', 'audit', 'deprovision'),
+        [string[]]$Modes = @('new', 'dropship', 'takeover', 'replacement', 'repair', 'co-managed', 'audit', 'deprovision'),
         [Parameter(Mandatory = $true)][scriptblock]$Detect,
         [scriptblock]$Desired = { @{ ok = $true } },
         [scriptblock]$Compare,
