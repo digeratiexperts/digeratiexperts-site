@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "wouter";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 
 /**
  * The V4 vocabulary. Deliberately small: one action, one chapter label, one
@@ -64,28 +64,39 @@ export function PrimaryAction({ testId }: { testId: string }) {
   );
 }
 
-/** A chapter's single forward link — text with an arrow, never a second button. */
+/**
+ * A chapter's single forward link — text with an arrow, never a second button.
+ * `external` opens another site in a new tab and says so with its arrow.
+ */
 export function QuietLink({
   href,
   testId,
   paper = false,
+  external = false,
   children,
 }: {
   href: string;
   testId: string;
   paper?: boolean;
+  external?: boolean;
   children: ReactNode;
 }) {
+  const className = `group inline-flex items-center gap-2 text-[13.5px] font-semibold underline underline-offset-4 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-accent-ink focus-visible:ring-offset-2 ${
+    paper
+      ? "text-de-bg decoration-black/25 hover:decoration-black focus-visible:ring-offset-de-paper"
+      : "text-de-paper decoration-white/25 hover:decoration-white focus-visible:ring-offset-de-bg"
+  }`;
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" data-testid={testId} className={className}>
+        {children}
+        <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+        <span className="sr-only">(opens in a new tab)</span>
+      </a>
+    );
+  }
   return (
-    <Link
-      href={href}
-      data-testid={testId}
-      className={`group inline-flex items-center gap-2 text-[13.5px] font-semibold underline underline-offset-4 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-accent-ink focus-visible:ring-offset-2 ${
-        paper
-          ? "text-de-bg decoration-black/25 hover:decoration-black focus-visible:ring-offset-de-paper"
-          : "text-de-paper decoration-white/25 hover:decoration-white focus-visible:ring-offset-de-bg"
-      }`}
-    >
+    <Link href={href} data-testid={testId} className={className}>
       {children}
       <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
     </Link>

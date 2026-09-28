@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import { MegaMenu } from "@/components/MegaMenu";
+import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/JsonLd";
+import { useSEO } from "@/hooks/useSEO";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
 import { PrimaryAction, ChapterLabel, RING, T } from "./V4Primitives";
 import { V4Sizer } from "./V4Sizer";
@@ -85,8 +87,22 @@ function GuaranteeFigure() {
 export default function HomepageV4() {
   const reduced = useReducedMotion();
 
+  // Production's own title, description and structured data (DigeratiHomepage),
+  // so promoting V4 to / loses none of them. On /version-4, VersionFrame's
+  // useSEO runs after this one — parent effects run after children, and
+  // neither re-runs because both depend only on primitives — so the preview
+  // stays noindex with its canonical on /. The harness asserts that.
+  useSEO({
+    title: "Managed Security Service Provider",
+    description:
+      "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 operations, and a Cyber Risk Assessment that matches the operating model to your environment.",
+    canonical: "/",
+  });
+
   return (
     <div className="min-h-screen bg-de-bg text-de-paper">
+      <OrganizationJsonLd />
+      <WebSiteJsonLd />
       <MegaMenu />
 
       <main className="min-w-0">

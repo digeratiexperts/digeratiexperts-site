@@ -1,4 +1,5 @@
 import { Chapter, QuietLink, T } from "./V4Primitives";
+import { V4Reviews } from "./V4Reviews";
 
 /**
  * 08 — In writing.
@@ -13,10 +14,12 @@ import { Chapter, QuietLink, T } from "./V4Primitives";
  *     Center's own boundary on certifications (trust/TrustCenter.tsx), and the
  *     Critical response target from the SLA (legal/SLA.tsx).
  *
- * What is deliberately absent: reviews (the catalog is empty — see
- * client/src/data/reviewsCatalog.ts), case studies (publishedCaseStudies is
- * an empty array), client logos, counters. design/PROOF_SYSTEM.md: an honest
- * gap beats an invented row.
+ * Reviews come through V4Reviews, from the same live-plus-catalog feed the
+ * production homepage uses; while that feed is empty the row says so in
+ * production's own words and links to the Google listing. What is
+ * deliberately absent: case studies (publishedCaseStudies is an empty
+ * array), client logos, counters. design/PROOF_SYSTEM.md: an honest gap
+ * beats an invented row.
  */
 
 const EXCERPTS: Array<{ source: string; title: string; quote: string; note?: string }> = [
@@ -118,6 +121,8 @@ export function V4ProofChapter() {
           </div>
         </div>
       </div>
+
+      <V4Reviews />
     </Chapter>
   );
 }
