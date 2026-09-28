@@ -40,11 +40,14 @@ param(
     [string]$PoNumber,
     [string]$Distributor,
     [string]$Technician = 'jrpetro',
-    [string]$WindowsRoot = (Split-Path -Parent $PSScriptRoot),
-    [string]$OutDir = (Join-Path $PSScriptRoot 'out\dropship')
+    [string]$WindowsRoot,
+    [string]$OutDir
 )
 Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
+$here = $(if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path })   # $PSScriptRoot can be empty in param defaults on Windows PowerShell 5.1
+if (-not $WindowsRoot) { $WindowsRoot = Split-Path -Parent $here }
+if (-not $OutDir) { $OutDir = Join-Path (Join-Path $here 'out') 'dropship' }
 $consoleRoot = Join-Path $WindowsRoot 'console'
 
 Import-Module (Join-Path (Join-Path (Join-Path $consoleRoot 'modules') 'DE.Workflow') 'DE.Workflow.psm1') -Force -DisableNameChecking
