@@ -11,9 +11,11 @@
     Run this after editing either catalog; a Pester test fails if a playbook is missing or stale.
 #>
 [CmdletBinding()]
-param([string]$WindowsRoot = (Split-Path -Parent $PSScriptRoot), [string]$OutDir)
+param([string]$WindowsRoot, [string]$OutDir)
 Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
+$here = $(if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path })   # $PSScriptRoot can be empty in param defaults on Windows PowerShell 5.1
+if (-not $WindowsRoot) { $WindowsRoot = Split-Path -Parent $here }
 $catalog = Join-Path (Join-Path $WindowsRoot 'console') 'catalog'
 $outDir = $(if ($OutDir) { $OutDir } else { Join-Path $WindowsRoot 'playbooks' })
 New-Item -ItemType Directory -Path $outDir -Force | Out-Null

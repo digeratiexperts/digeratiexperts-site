@@ -17,12 +17,15 @@
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
-    [string]$Root = (Split-Path -Parent $PSScriptRoot),
-    [string]$OutDir = (Join-Path $PSScriptRoot 'out\intune'),
+    [string]$Root,
+    [string]$OutDir,
     [string]$IntuneWinAppUtil
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$here = $(if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path })   # $PSScriptRoot can be empty in param defaults on Windows PowerShell 5.1
+if (-not $Root) { $Root = Split-Path -Parent $here }
+if (-not $OutDir) { $OutDir = Join-Path (Join-Path $here 'out') 'intune' }
 $version = '0.0.0'; $vf = Join-Path (Split-Path -Parent $Root) 'kit.version'; if (Test-Path -LiteralPath $vf) { $version = (Get-Content -LiteralPath $vf -Raw).Trim() }
 $src = Join-Path $OutDir 'source'
 if (-not $PSCmdlet.ShouldProcess($OutDir, "stage Intune package $version")) { return }

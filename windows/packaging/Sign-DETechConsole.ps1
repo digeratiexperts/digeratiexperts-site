@@ -21,12 +21,14 @@
 param(
     [string]$Thumbprint,
     [string]$TimestampServer = 'http://timestamp.digicert.com',
-    [string]$Root = (Split-Path -Parent $PSScriptRoot),
+    [string]$Root,
     [switch]$Verify,
     [switch]$SkipSigning
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$here = $(if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path })   # $PSScriptRoot can be empty in param defaults on Windows PowerShell 5.1
+if (-not $Root) { $Root = Split-Path -Parent $here }
 
 $scriptExt = @('.ps1', '.psm1', '.psd1')
 $shipExt = @('.ps1', '.psm1', '.psd1', '.json', '.cmd', '.ttf', '.txt', '.md', '.xaml')
