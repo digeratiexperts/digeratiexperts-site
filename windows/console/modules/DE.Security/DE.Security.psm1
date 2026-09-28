@@ -50,6 +50,7 @@ function Get-DESanitizedInstallerDiagnostics {
 function Register-DESecurityActions {
     param($ClientProfile)
     $deployBlackpoint = (@(Get-DEHashPath -Object $ClientProfile -Path 'security.mdr.deploy' | Where-Object { $null -ne $_ }) -contains 'blackpoint')
+    $deployGuardz = (@(Get-DEHashPath -Object $ClientProfile -Path 'security.mdr.deploy' | Where-Object { $null -ne $_ }) -contains 'guardz') -or (-not (Get-DEHashPath -Object $ClientProfile -Path 'security.mdr.deploy'))
 
     Register-DEAction -Id 'security.edr-conflicts' -Module 'security' -Title 'No conflicting EDR / AV before SentinelOne' -Phase 8 `
         -Detect { $a = Get-DESecurityAgentState; @{ conflicts = @($a.conflictingEdr).Count; names = (@($a.conflictingEdr) -join ', ') } } -Desired { @{ conflicts = 0 } } `
@@ -63,13 +64,19 @@ function Register-DESecurityActions {
         -Verify { param($after) $svc = Get-DEServiceState -Name 'SentinelAgent'; @{ ok = ($svc.present -and $svc.status -eq 'Running'); detail = "SentinelAgent $($svc.status)" } } `
         -Description 'Site token is runtime-only. Console health (Sentinels > this device) is the final word on registration.'
 
-    Register-DEAction -Id 'security.guardz' -Module 'security' -Title 'Guardz Device Agent installed and running (primary security platform)' -Phase 8 -Gates @('gate.elevated') -RequiresElevation -RequiresSecrets @('GUARDZ_ORG_KEY') `
-        -Detect { $p = Get-DEPackage -Id 'guardz-agent'; $d = Test-DEPackageInstalled -Package $p -ClientProfile $ClientProfile; $a = Get-DESecurityAgentState; @{ installed = $d.installed; running = $a.agents['guardz'].running } }.GetNewClosure() `
-        -Desired { @{ installed = $true; running = $true } } `
-        -Apply { param($s) $r = Invoke-DEPackageInstall -Id 'guardz-agent' -ClientProfile $ClientProfile; if (-not $r.ok -and -not (Get-DEPkgProp $r 'planned')) { throw $r.detail }; Start-Sleep -Seconds 20; $r.detail }.GetNewClosure() `
-        -Remediate { param($s) $null = Invoke-DEPackageInstall -Id 'guardz-agent' -ClientProfile $ClientProfile -Repair }.GetNewClosure() `
-        -Verify { param($after) $a = Get-DESecurityAgentState; @{ ok = ($a.agents['guardz'].installed -and $a.agents['guardz'].running); detail = "guardz installed=$($a.agents['guardz'].installed) running=$($a.agents['guardz'].running)" } } `
-        -Description 'Organization key is runtime-only. Organization association is confirmed in app.us.guardz.com/msp > Devices; the console records the check, it cannot query Guardz without an API.'
+    if ($deployGuardz) {
+        Register-DEAction -Id 'security.guardz' -Module 'security' -Title 'Guardz Device Agent installed and running (primary security platform)' -Phase 8 -Gates @('gate.elevated') -RequiresElevation -RequiresSecrets @('GUARDZ_ORG_KEY') `
+            -Detect { $p = Get-DEPackage -Id 'guardz-agent'; $d = Test-DEPackageInstalled -Package $p -ClientProfile $ClientProfile; $a = Get-DESecurityAgentState; @{ installed = $d.installed; running = $a.agents['guardz'].running } }.GetNewClosure() `
+            -Desired { @{ installed = $true; running = $true } } `
+            -Apply { param($s) $r = Invoke-DEPackageInstall -Id 'guardz-agent' -ClientProfile $ClientProfile; if (-not $r.ok -and -not (Get-DEPkgProp $r 'planned')) { throw $r.detail }; Start-Sleep -Seconds 20; $r.detail }.GetNewClosure() `
+            -Remediate { param($s) $null = Invoke-DEPackageInstall -Id 'guardz-agent' -ClientProfile $ClientProfile -Repair }.GetNewClosure() `
+            -Verify { param($after) $a = Get-DESecurityAgentState; @{ ok = ($a.agents['guardz'].installed -and $a.agents['guardz'].running); detail = "guardz installed=$($a.agents['guardz'].installed) running=$($a.agents['guardz'].running)" } } `
+            -Description 'Organization key is runtime-only. Organization association is confirmed in app.us.guardz.com/msp > Devices; the console records the check, it cannot query Guardz without an API.'
+    } else {
+        Register-DEAction -Id 'security.guardz' -Module 'security' -Title 'Guardz not deployed for this client' -Phase 8 `
+            -Detect { $a = Get-DESecurityAgentState; @{ installed = $a.agents['guardz'].installed } } -Desired { @{ installed = $false } } `
+            -ManualAction 'Guardz is not selected in security.mdr.deploy. If present from a prior deployment, review the client profile and remove it only through an approved offboarding action.'
+    }
 
     if ($deployBlackpoint) {
         Register-DEAction -Id 'security.blackpoint' -Module 'security' -Title 'Blackpoint SNAP agent installed (backup MDR per client profile)' -Phase 8 -Gates @('gate.elevated') -RequiresElevation `
