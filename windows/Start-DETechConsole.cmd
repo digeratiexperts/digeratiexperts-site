@@ -1,5 +1,5 @@
 @echo off
-rem DE Technician Console launcher. Double-click to open the console.
+rem DE Tech Tool launcher (compatibility alias; Start-DETechTool.cmd is canonical). Double-click to open it.
 rem Requests elevation (identity, security and baseline work need it); the AI Toolkit and
 rem audit pages also work unelevated if you decline.
 rem   Start-DETechConsole.cmd                       open the window

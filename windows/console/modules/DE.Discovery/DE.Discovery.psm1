@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    DE Technician Console discovery engines: device, identity (dsregcmd), MDM
+    DE Tech Tool discovery engines: device, identity (dsregcmd), MDM
     authority, BitLocker, OneDrive, Windows Hello, updates, installed apps,
     management and security agents, network, pending reboot.
 

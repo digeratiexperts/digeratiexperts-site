@@ -33,24 +33,28 @@ $script:Areas = [ordered]@{
     backup = @{ title = 'Backup'; prefixes = @('ops.backup') }
     remote = @{ title = 'Remote support'; prefixes = @('ops.remote-support', 'jumpcloud.remote-assist') }
     network = @{ title = 'Network / site'; prefixes = @('net.') }
+    plan = @{ title = 'Plan steps and handoff'; prefixes = @('plan.', 'order.') }   # confirm-to-complete steps count: never READY with one open
 }
 
 function Get-DEReadiness {
     <# Rolls the latest evidence per action into area cards and an overall readiness state. Never green on failure; EXCEPTION shows as its own state. #>
     $latest = @{}
     foreach ($e in Get-DEEvidence) { $latest[$e.step] = $e }
+    $planActions = @(Get-DEActions | ForEach-Object { $_.Id })
     $cards = [ordered]@{}
     foreach ($k in $script:Areas.Keys) {
         $a = $script:Areas[$k]
         $recs = @($latest.Values | Where-Object { $r = $_; $r -and ($a.prefixes | Where-Object { $r.step -like "$_*" }) })
         $state = 'NOT RUN'
+        # An area the loaded plan does not cover (bundle scope, standalone solution) is NOT IN PLAN, never a gap.
+        if (-not $recs.Count -and $planActions.Count -and -not @($planActions | Where-Object { $id = $_; @($a.prefixes | Where-Object { $id -like "$_*" }).Count }).Count) { $state = 'NOT IN PLAN' }
         if ($recs.Count) {
             $results = @($recs | ForEach-Object { $_.result })
             if ($results -contains 'FAIL') { $state = 'FAIL' } elseif ($results -contains 'BLOCKED') { $state = 'BLOCKED' } elseif ($results -contains 'WARN') { $state = 'WARN' } elseif ($results -contains 'PLANNED') { $state = 'PLANNED' } elseif ($results -contains 'EXCEPTION') { $state = 'EXCEPTION' } elseif (-not ($results | Where-Object { $_ -notin @('PASS', 'NO CHANGE', 'SKIPPED', 'INFO') })) { $state = 'PASS' } else { $state = 'WARN' }
         }
         $cards[$k] = [pscustomobject]@{ id = $k; title = $a.title; state = $state; count = $recs.Count; last = $(if ($recs.Count) { ($recs | Sort-Object timestamp -Descending | Select-Object -First 1).timestamp } else { $null }) }
     }
-    $states = @($cards.Values | Where-Object { $_ -and $_.state -ne 'NOT RUN' } | ForEach-Object { $_.state })
+    $states = @($cards.Values | Where-Object { $_ -and $_.state -notin @('NOT RUN', 'NOT IN PLAN') } | ForEach-Object { $_.state })
     $overall = if (-not $states.Count) { 'NOT RUN' } elseif ($states -contains 'FAIL' -or $states -contains 'BLOCKED') { 'NOT READY' } elseif ($states -contains 'WARN' -or $states -contains 'PLANNED') { 'IN PROGRESS' } elseif ($states -contains 'EXCEPTION') { 'READY WITH EXCEPTIONS' } else { 'READY' }
     return [pscustomobject]@{ overall = $overall; cards = @($cards.Values) }
 }

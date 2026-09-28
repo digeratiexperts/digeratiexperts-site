@@ -14,7 +14,7 @@
     never read or written; timestamped log plus a JSON receipt.
 
 .PARAMETER Action
-    Menu (default: the DE Technician Console window at its AI Toolkit page when
+    Menu (default: the DE Tech Tool window at its AI Toolkit page when
     interactive on Windows, else the text menu), Gui (force the window),
     Console (force the text menu), Build, Install, Clipboard, Upstream, Verify,
     Uninstall, All (Build + Install + Verify), Update (check and apply a newer
@@ -846,8 +846,8 @@ function Main {
         'Console' { Show-Menu -Root $root -ProfileName $profileName -PackDir $packDir -Config $config }
         'Gui' {
             $exe = (Get-Process -Id $PID).Path
-            if ($PSCmdlet.ShouldProcess($script:GuiFile, 'open the DE Technician Console (AI Toolkit page)')) { Start-Process -FilePath $exe -ArgumentList @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', $script:GuiFile, '-Page', 'AiToolkit') | Out-Null }
-            Add-Evidence -Step 'gui' -Before 'loader' -ActionTaken 'opened the DE Technician Console' -Result 'INFO'
+            if ($PSCmdlet.ShouldProcess($script:GuiFile, 'open DE Tech Tool (AI Toolkit page)')) { Start-Process -FilePath $exe -ArgumentList @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', $script:GuiFile, '-Page', 'AiToolkit') | Out-Null }
+            Add-Evidence -Step 'gui' -Before 'loader' -ActionTaken 'opened DE Tech Tool' -Result 'INFO'
         }
         'Update' { $null = Update-Kit -Root $root -Config $cfg }
         'Cleanup' { $null = Invoke-Cleanup -Config $cfg -PackDir $packDir }

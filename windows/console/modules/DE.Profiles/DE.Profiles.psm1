@@ -36,7 +36,9 @@ function New-DEClientProfileTemplate {
     return [ordered]@{
         schemaVersion = $script:ProfileSchemaVersion
         id = $Id; name = $Name; shortName = $Name
-        tier = 'Business'                                  # Office | Business | Enterprise
+        tier = 'Business'                                  # IT | Office | Business | Enterprise | Co-managed
+        plan = @{ bundle = 'proactive-business'; addOns = @(); solutions = @() }   # catalog\bundles.json (tiers, variants, standalone solutions)
+        coManaged = @{ deOwns = @() }                      # co-managed path: identity | security | apps | baseline | browser | updates | backup | network | support | mfa
         packages = @('Core IT', 'Security Operations')     # DE package lines included
         gcch = $false                                      # GCC High eligibility rules apply
         identity = @{ authority = 'jumpcloud'; jumpcloudDeviceTrust = $false; entraTenantName = ''; entraTenantId = ''; leaveEntra = $true; keepEntraRegistration = $false; jumpcloudSystemGroups = @(); jumpcloudUserGroups = @(); usernameConvention = 'first-initial-lastname' }

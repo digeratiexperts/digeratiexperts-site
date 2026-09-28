@@ -73,7 +73,7 @@ Release packages are code-signed and sha256-pinned. The server advertises versio
 
 ## Implementation order
 
-1. Finish planning/bundle layer and Dropship.
+1. ~~Finish planning/bundle layer and Dropship.~~ Done in 1.5.0: one catalog (`console/catalog/bundles.json`: tiers, GCC High and Co-Managed variants, add-ons, 13 standalone solutions), plan composition and gates in `DE.Planning`, generated `playbooks/`, and dropship kits (`packaging/New-DEDropshipKit.ps1`) that refuse a device other than the ordered one.
 2. Keep DE Tech Tool naming and packaged DE/Alamo assets consistent.
 3. Validate on a real DE Windows laptop in audit mode.
 4. Confirm remaining installer sources/hashes without weakening trust policy.

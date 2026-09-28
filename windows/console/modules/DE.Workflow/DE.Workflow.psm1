@@ -14,7 +14,7 @@ $ErrorActionPreference = 'Stop'
 $script:ModeActions = @{
     audit = @{ title = 'Audit only'; apply = $false; description = 'Detect everything, change nothing, produce a gap report. For inherited or takeover machines before any work.' }
     new = @{ title = 'New machine'; apply = $true; description = 'Out-of-box device for a known user: full provisioning.' }
-    dropship = @{ title = 'Dropship / pre-provision'; apply = $true; description = 'New device prepared by DE before direct shipment or handoff. Uses the client profile, verifies every applied control, and produces handoff evidence.' }
+    dropship = @{ title = 'Dropship / pre-provision'; apply = $true; description = 'New device prepared by DE before direct shipment, or shipped by the distributor straight to the end user. With an order manifest (no secrets) it first proves this is the unit on the order, then provisions it for that user with the order''s bundle, verifies every applied control and produces handoff evidence. Identity migration never runs in this mode.' }
     takeover = @{ title = 'Takeover'; apply = $true; description = 'Device inherited from another provider or Entra-only: identity migration, stale MDM cleanup, then the DE stack.' }
     replacement = @{ title = 'Replacement machine'; apply = $true; description = 'New device replacing an old one for the same user; same profile, new hardware record.' }
     repair = @{ title = 'Repair / reprovision'; apply = $true; description = 'Existing DE endpoint: health assessment, fix only what is missing or broken.' }
@@ -35,6 +35,8 @@ function Initialize-DEWorkflow {
     param($ClientProfile, [string]$Mode = 'audit')
     $de = Get-DEConsole
     $de.Actions.Clear(); $de.Gates.Clear(); Reset-DEGateCache
+    # Bundle / add-ons / standalone solutions from the profile become one plan (catalog\bundles.json).
+    $ClientProfile = New-DEComposedProfile -ClientProfile $ClientProfile
     Register-DEIdentityGates
     Register-DEOperationsActions -ClientProfile $ClientProfile
     Register-DEIdentityActions -ClientProfile $ClientProfile
@@ -45,9 +47,10 @@ function Initialize-DEWorkflow {
     Register-DEBrowserActions -ClientProfile $ClientProfile
     Register-DEBrandingActions -ClientProfile $ClientProfile
     if ($Mode -eq 'deprovision') { Register-DEDeprovisionActions -ClientProfile $ClientProfile }
+    $outOfPlan = @(Select-DEPlanActions -ClientProfile $ClientProfile -Mode $Mode)
     $plan = Get-DEExecutionPlan -ClientProfile $ClientProfile -Mode $Mode
     $ids = @($plan.actions | ForEach-Object { $_.id })
-    Set-DEStateValue -Path 'workflow' -Value @{ mode = $Mode; client = (Get-DEHashPath -Object $ClientProfile -Path 'id'); tier = $plan.tier; capabilities = @($plan.capabilities); actions = $ids.Count; initialised = (Get-Date).ToString('o') }
+    Set-DEStateValue -Path 'workflow' -Value @{ mode = $Mode; client = (Get-DEHashPath -Object $ClientProfile -Path 'id'); tier = $plan.tier; capabilities = @($plan.capabilities); bundle = (Get-DEHashPath -Object $ClientProfile -Path 'plan.bundle'); solutions = @(Get-DEHashPath -Object $ClientProfile -Path 'plan.solutions'); managed = (Get-DEHashPath -Object $ClientProfile -Path 'plan.managed'); actions = $ids.Count; outOfPlan = $outOfPlan.Count; initialised = (Get-Date).ToString('o') }
     return $ids
 }
 
