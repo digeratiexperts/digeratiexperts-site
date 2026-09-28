@@ -110,7 +110,7 @@ test("build: default profile fits every budget with nothing unresolved and ships
     assert.ok(!/\bDigerati\b(?! Experts)/.test(f.content.replace(/"Digerati" alone/g, "")), `${f.name} uses Digerati alone`);
   }
   const names = r.files.map((f) => f.name);
-  for (const n of ["INDEX.md", "chatgpt-custom-instructions.md", "custom-gpt-instructions.md", "claude-project-instructions.md", "agent-instructions.md", "prompt-library.md", "cheat-sheet.html", "msp-ai-kit-claude-skill.zip", "manifest.json", path.join("cursor", "msp-ai-kit.mdc"), path.join("references", "de-scripting-msp-skill-pack.md")]) assert.ok(names.includes(n), `missing ${n}`);
+  for (const n of ["INDEX.md", "chatgpt-custom-instructions.md", "custom-gpt-instructions.md", "claude-project-instructions.md", "agent-instructions.md", "prompt-library.md", "cheat-sheet.html", "msp-ai-kit-claude-skill.zip", "manifest.json", "cursor/msp-ai-kit.mdc", "references/de-scripting-msp-skill-pack.md"]) assert.ok(names.includes(n), `missing ${n}`);
   const lib = r.files.find((f) => f.name === "prompt-library.md").content;
   assert.ok(lib.includes("Worked example (abridged):"));
   const manifest = JSON.parse(r.files.find((f) => f.name === "manifest.json").content);

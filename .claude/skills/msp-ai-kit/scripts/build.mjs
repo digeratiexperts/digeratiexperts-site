@@ -530,7 +530,7 @@ function buildAll(config, modules, args) {
   if (wantTarget("cursor-rule")) {
     const mdc = ["---", `description: ${co.name} MSP/MSSP operating rules and playbook commands (msp-ai-kit)`, "globs: []", "alwaysApply: false", "---", agentBody].join("\n");
     report["cursor-rule"] = { chars: mdc.length, dropped: [] };
-    files.push({ name: path.join("cursor", "msp-ai-kit.mdc"), content: mdc });
+    files.push({ name: path.posix.join("cursor", "msp-ai-kit.mdc"), content: mdc });
   }
   if (wantTarget("copilot-instructions")) {
     const text = ["<!-- Save as .github/copilot-instructions.md in a repository that hosts MSP scripts or docs. -->", "", agentBody].join("\n");
@@ -558,14 +558,14 @@ function buildAll(config, modules, args) {
     files.push({ name: "prompt-library.md", content: text });
   }
   if (wantTarget("prompt-files")) {
-    for (const m of work) files.push({ name: path.join("prompts", `${m.id}.md`), content: promptDoc(m) });
+    for (const m of work) files.push({ name: path.posix.join("prompts", `${m.id}.md`), content: promptDoc(m) });
     report["prompt-files"] = { count: work.length };
   }
 
   // 5b. Reference documents shipped verbatim
   const refs = fs.existsSync(REFERENCES_DIR) ? fs.readdirSync(REFERENCES_DIR).filter((f) => f.endsWith(".md")).sort() : [];
   if (wantTarget("reference-files")) {
-    for (const f of refs) files.push({ name: path.join("references", f), content: fs.readFileSync(path.join(REFERENCES_DIR, f), "utf8") });
+    for (const f of refs) files.push({ name: path.posix.join("references", f), content: fs.readFileSync(path.join(REFERENCES_DIR, f), "utf8") });
     report["reference-files"] = { count: refs.length };
   }
 
@@ -725,7 +725,7 @@ function verifyDir(dir, files) {
     const want = Buffer.isBuffer(f.content) ? f.content : Buffer.from(f.content, "utf8");
     if (!on.equals(want)) diffs.push(`differs: ${f.name}`);
   }
-  const walk = (d, rel = "") => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walk(path.join(d, e.name), path.join(rel, e.name)) : [path.join(rel, e.name)]);
+  const walk = (d, rel = "") => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walk(path.join(d, e.name), path.posix.join(rel, e.name)) : [path.posix.join(rel, e.name)]);
   if (fs.existsSync(dir)) for (const rel of walk(dir)) if (!files.some((f) => f.name === rel) && !VOLATILE_FILES.has(rel)) diffs.push(`stale: ${rel}`);
   return diffs;
 }
