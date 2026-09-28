@@ -1,4 +1,4 @@
-# DE Technician Console (Windows)
+# DE Tech Tool (Windows)
 
 One Windows application for DE technicians. It holds the AI Toolkit, endpoint provisioning, identity
 migration (Entra to JumpCloud through ADMU), the JumpCloud controller, the OS baseline, the browser
@@ -18,14 +18,14 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-DETechConsole.
 
 It unpacks the newest `DE-TechConsole*.zip` into `DE-TechConsole\`, clears Windows' downloaded-file block,
 keeps the previous copy as `DE-TechConsole.previous`, and opens the console. The window title shows the
-version (for example `DE Technician Console v1.3.4`), so you always know which build is running. The zip
+version (for example `DE Tech Tool v1.3.4`), so you always know which build is running. The zip
 itself is not a script; do not pass it to `-File`.
 
 ## Start
 
 | You want | Do |
 |---|---|
-| The window | Double-click `Start-DETechConsole.cmd`. It asks for elevation because provisioning changes the machine. |
+| The window | Double-click `Start-DETechTool.cmd`. It asks for elevation because provisioning changes the machine. `Start-DETechConsole.cmd` remains as a compatibility alias for older packages. |
 | Only the AI prompt packs | Double-click `Start-MspAiKit.cmd`. The console opens on the AI Toolkit page. |
 | RMM, no window | `console\DETechConsole.ps1 -Headless -Client alamo -Mode takeover`. It audits and changes nothing. |
 | RMM, apply | Add `-Apply`. Run the console with `-WhatIf` first to see the plan. |
