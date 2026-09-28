@@ -37,7 +37,7 @@ function New-DEClientProfileTemplate {
         tier = 'Business'                                  # Office | Business | Enterprise
         packages = @('Core IT', 'Security Operations')     # DE package lines included
         gcch = $false                                      # GCC High eligibility rules apply
-        identity = @{ authority = 'jumpcloud'; entraTenantName = ''; entraTenantId = ''; leaveEntra = $true; keepEntraRegistration = $false; jumpcloudSystemGroups = @(); jumpcloudUserGroups = @(); usernameConvention = 'first-initial-lastname' }
+        identity = @{ authority = 'jumpcloud'; jumpcloudDeviceTrust = $false; entraTenantName = ''; entraTenantId = ''; leaveEntra = $true; keepEntraRegistration = $false; jumpcloudSystemGroups = @(); jumpcloudUserGroups = @(); usernameConvention = 'first-initial-lastname' }
         mdm = @{ authority = 'jumpcloud'; allowCoManagement = $false; removeStaleEnrollments = $true }
         security = @{ mdr = @{ primary = 'guardz'; backup = 'blackpoint'; deploy = @('guardz') }; edr = 'sentinelone'; browserSecurity = @('pabx'); emailSecurity = 'mimecast'; siem = 'wazuh'; awareness = 'ninjio'; baselineProfile = 'de-windows-baseline' }
         cloudStorage = @{ standard = 'onedrive'; removeConflicting = $false; allowBoth = $false }   # onedrive | dropbox | both | none

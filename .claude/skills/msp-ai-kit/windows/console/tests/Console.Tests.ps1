@@ -322,3 +322,33 @@ Describe 'Module surface and phase runner' {
         (Resolve-DEVendorUrl -Vendor $v -Kind tenant -ClientProfile $p2).missing | Should -Be @('b')
     }
 }
+
+Describe 'Secret vault, device trust and PDF helpers' {
+    BeforeAll { . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $null = Initialize-TestConsole }
+    It 'loads secrets from a SecretManagement vault into memory and redacts them' {
+        function global:Get-Secret { param($Name, $Vault) if ($Name -eq 'JC_API_KEY') { return (ConvertTo-SecureString 'jcapikeyfromvault0123456789' -AsPlainText -Force) } throw "secret $Name was not found" }
+        try {
+            $rows = Import-DESecretsFromVault -Vault 'DE' -Names @('JC_API_KEY', 'S1_SITE_TOKEN')
+            ($rows | Where-Object { $_.name -eq 'JC_API_KEY' }).status | Should -Be 'loaded'
+            ($rows | Where-Object { $_.name -eq 'S1_SITE_TOKEN' }).status | Should -Be 'missing'
+            Test-DESecret -Name 'JC_API_KEY' | Should -Be $true
+            (Protect-DEText 'key jcapikeyfromvault0123456789') | Should -Not -Match 'jcapikeyfromvault'
+        } finally { Remove-Item Function:\Get-Secret -ErrorAction SilentlyContinue; Clear-DESecrets }
+    }
+    It 'registers the device-trust check only when the client profile asks for it' {
+        $p = New-DEClientProfileTemplate -Id 'dt' -Name 'DT'
+        Register-DEJumpCloudActions -ClientProfile $p
+        { Get-DEAction -Id 'jumpcloud.device-trust' } | Should -Throw
+        $p.identity.jumpcloudDeviceTrust = $true
+        Register-DEJumpCloudActions -ClientProfile $p
+        (Get-DEAction -Id 'jumpcloud.device-trust').Module | Should -Be 'jumpcloud'
+    }
+    It 'device trust state never throws and reports no certificate off Windows' {
+        $t = Get-DEDeviceTrustState
+        if ($env:OS -ne 'Windows_NT') { $t.certificatePresent | Should -Be $false }
+    }
+    It 'PDF conversion degrades to nothing instead of failing' {
+        $h = Join-Path ([IO.Path]::GetTempPath()) 'de-pdf-test.html'; Set-Content -LiteralPath $h -Value '<p>x</p>'
+        { Convert-DEHtmlToPdf -HtmlPath $h -PdfPath ($h + '.pdf') -TimeoutSeconds 20 } | Should -Not -Throw
+    }
+}

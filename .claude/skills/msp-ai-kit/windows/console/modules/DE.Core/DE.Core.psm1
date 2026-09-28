@@ -132,6 +132,36 @@ function Set-DESecret {
     if ($script:DE.SecretNames -notcontains $Name) { $script:DE.SecretNames += $Name }
     Write-DELog -Level DEBUG -Message "secret '$Name' set for this session (value not logged)"
 }
+function Import-DESecretsFromVault {
+    <#
+    Loads runtime secrets from an approved secret store instead of a technician pasting them. Uses
+    Microsoft.PowerShell.SecretManagement (any registered vault: SecretStore, Azure Key Vault, 1Password,
+    Keeper, etc.). Values arrive as SecureString, are registered for redaction, and stay in memory only.
+    Returns one row per requested name: loaded | missing | error. Never throws for a single missing secret.
+    #>
+    [CmdletBinding()]
+    param([Parameter(Mandatory = $true)][string]$Vault, [Parameter(Mandatory = $true)][string[]]$Names, [string]$Prefix = '')
+    if (-not (Get-Command -Name Get-Secret -ErrorAction SilentlyContinue)) {
+        try { Import-Module Microsoft.PowerShell.SecretManagement -ErrorAction Stop } catch { throw 'Microsoft.PowerShell.SecretManagement is not installed; install it and register the DE vault first' }
+    }
+    $rows = @()
+    foreach ($n in $Names) {
+        try {
+            $sec = Get-Secret -Name ($Prefix + $n) -Vault $Vault -ErrorAction Stop
+            if ($sec -is [string]) { Set-DESecret -Name $n -Plain $sec }
+            elseif ($sec -is [System.Security.SecureString]) {
+                Set-DESecret -Name $n -SecureValue $sec
+                $null = Get-DESecretPlain -Name $n   # registers the value for redaction; the return value is discarded
+            } else { throw "unsupported secret type $($sec.GetType().Name)" }
+            $rows += [pscustomobject]@{ name = $n; status = 'loaded' }
+        } catch {
+            $msg = "$($_.Exception.Message)"
+            $rows += [pscustomobject]@{ name = $n; status = $(if ($msg -match 'not found|could not be found|does not exist') { 'missing' } else { 'error' }); detail = (Protect-DEText $msg) }
+        }
+    }
+    Add-DEEvidence -Step 'secrets.vault' -Module 'core' -Before 'runtime secrets' -ActionTaken "loaded from vault '$Vault'" -Result $(if (@($rows | Where-Object { $_.status -ne 'loaded' }).Count) { 'WARN' } else { 'INFO' }) -Verification (($rows | ForEach-Object { "$($_.name)=$($_.status)" }) -join ', ') | Out-Null
+    return $rows
+}
 function Test-DESecret { param([Parameter(Mandatory = $true)][string]$Name) return $script:DE.Secrets.ContainsKey($Name) }
 function Get-DESecretPlain {
     <# Returns the plaintext for the duration of an action. Callers must never persist it. #>
