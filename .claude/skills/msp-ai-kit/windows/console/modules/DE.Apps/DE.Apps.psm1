@@ -49,12 +49,12 @@ function Test-DEPackageInstalled {
     $det = Get-DEPkgProp $Package 'detect'
     $ev = @(); $installed = $false; $version = $null; $registryOk = $null
     if ($det) {
-        foreach ($s in @(Get-DEPkgProp $det 'services')) { if ($s) { $st = Get-DEServiceState -Name $s; if ($st.present) { $installed = $true; $ev += "service $s $($st.status)" } } }
-        foreach ($p in @(Get-DEPkgProp $det 'processes')) { if ($p -and (Get-Process -Name $p -ErrorAction SilentlyContinue)) { $installed = $true; $ev += "process $p running" } }
-        foreach ($p in @(Get-DEPkgProp $det 'paths')) { $x = Expand-DEPath $p; if ($x -and (Test-Path -LiteralPath $x -ErrorAction SilentlyContinue)) { $installed = $true; $ev += "path $x"; if (-not $version -and $x -match '\.exe$') { try { $version = (Get-Item -LiteralPath $x).VersionInfo.ProductVersion } catch { } } } }
+        foreach ($s in @(Get-DEPkgProp $det 'services' | Where-Object { $null -ne $_ })) { if ($s) { $st = Get-DEServiceState -Name $s; if ($st.present) { $installed = $true; $ev += "service $s $($st.status)" } } }
+        foreach ($p in @(Get-DEPkgProp $det 'processes' | Where-Object { $null -ne $_ })) { if ($p -and (Get-Process -Name $p -ErrorAction SilentlyContinue)) { $installed = $true; $ev += "process $p running" } }
+        foreach ($p in @(Get-DEPkgProp $det 'paths' | Where-Object { $null -ne $_ })) { $x = Expand-DEPath $p; if ($x -and (Test-Path -LiteralPath $x -ErrorAction SilentlyContinue)) { $installed = $true; $ev += "path $x"; if (-not $version -and $x -match '\.exe$') { try { $version = (Get-Item -LiteralPath $x).VersionInfo.ProductVersion } catch { } } } }
         $rx = Get-DEPkgProp $det 'appNameRegex'
         if ($rx) { if (-not $Apps) { $Apps = Get-DEInstalledApps }; $hit = @($Apps | Where-Object { $_ -and $_.name -match $rx }) | Select-Object -First 1; if ($hit) { $installed = $true; $ev += "app '$($hit.name)' $($hit.version)"; if (-not $version) { $version = $hit.version } } }
-        $rules = @(Get-DEPkgProp $det 'registry')
+        $rules = @(Get-DEPkgProp $det 'registry' | Where-Object { $null -ne $_ })
         if ($rules.Count) {
             $registryOk = $true
             foreach ($r in $rules) {
@@ -114,7 +114,7 @@ function Invoke-DEPackageInstall {
     param([Parameter(Mandatory = $true)][string]$Id, $ClientProfile, [switch]$AllowUnverified, [string]$OverrideReason = '', [switch]$Repair)
     $pkg = Get-DEPackage -Id $Id
     $name = $pkg.name
-    $missing = @(@(Get-DEPkgProp $pkg 'secrets') | Where-Object { $_ -and -not (Test-DESecret -Name $_) })
+    $missing = @(@(Get-DEPkgProp $pkg 'secrets' | Where-Object { $null -ne $_ }) | Where-Object { $_ -and -not (Test-DESecret -Name $_) })
     if ($missing.Count) { throw "runtime secret(s) required: $($missing -join ', ')" }
     $file = Get-DEPackageFile -Package $pkg -AllowUnverified:$AllowUnverified
     if (Get-DEPkgProp $file 'planned') { return [pscustomobject]@{ ok = $false; planned = $true; detail = 'download planned' } }
@@ -123,8 +123,8 @@ function Invoke-DEPackageInstall {
     $inst = Get-DEPkgProp $pkg 'install'
     $type = Get-DEPkgProp $inst 'type'
     $timeout = Get-DEPkgProp $inst 'timeoutSeconds'; if (-not $timeout) { $timeout = 900 }
-    $success = @(Get-DEPkgProp $inst 'successExitCodes'); if (-not $success.Count) { $success = @(0) }
-    $rebootCodes = @(Get-DEPkgProp $inst 'rebootExitCodes')
+    $success = @(Get-DEPkgProp $inst 'successExitCodes' | Where-Object { $null -ne $_ }); if (-not $success.Count) { $success = @(0) }
+    $rebootCodes = @(Get-DEPkgProp $inst 'rebootExitCodes' | Where-Object { $null -ne $_ })
     $argsText = Resolve-DEPackageTokens -Text (Get-DEPkgProp $inst 'args') -Package $pkg -ClientProfile $ClientProfile -File $file.path
     $exe = $null; $argList = @()
     switch ($type) {
@@ -176,7 +176,7 @@ function New-DEOfficeConfigXml {
     $s = Get-DEPkgProp $Package 'settings'
     $channel = Get-DEPkgProp $s 'channel'; if (-not $channel) { $channel = 'Current' }
     $product = Get-DEPkgProp $s 'productId'; if (-not $product) { $product = 'O365BusinessRetail' }
-    $exclude = @(Get-DEPkgProp $s 'excludeApps')
+    $exclude = @(Get-DEPkgProp $s 'excludeApps' | Where-Object { $null -ne $_ })
     $standard = Get-DEHashPath -Object $ClientProfile -Path 'cloudStorage.standard'
     if ($standard -eq 'dropbox' -and $exclude -notcontains 'OneDrive') { $exclude += 'OneDrive' }
     $xml = @"
@@ -228,17 +228,17 @@ function Get-DECloudStorageState {
 # ------------------------------------------------------------------ actions registered with the core
 function Register-DEAppsActions {
     param($ClientProfile)
-    $required = @(Get-DEHashPath -Object $ClientProfile -Path 'apps.required'); if (-not $required.Count) { $required = @('m365-apps', 'teams', 'edge', 'chrome', 'pdf-reader') }
+    $required = @(Get-DEHashPath -Object $ClientProfile -Path 'apps.required' | Where-Object { $null -ne $_ }); if (-not $required.Count) { $required = @('m365-apps', 'teams', 'edge', 'chrome', 'pdf-reader') }
     $standard = Get-DEHashPath -Object $ClientProfile -Path 'cloudStorage.standard'; if (-not $standard) { $standard = 'onedrive' }
     $required = @($required | Where-Object { $_ -ne 'onedrive' -and $_ -ne 'dropbox' })
     if ($standard -in @('onedrive', 'both')) { $required += 'onedrive' }
     if ($standard -in @('dropbox', 'both')) { $required += 'dropbox' }
-    $lob = @(Get-DEHashPath -Object $ClientProfile -Path 'apps.lineOfBusiness')
+    $lob = @(Get-DEHashPath -Object $ClientProfile -Path 'apps.lineOfBusiness' | Where-Object { $null -ne $_ })
     foreach ($id in ($required + $lob | Select-Object -Unique)) {
         $pkg = $null; try { $pkg = Get-DEPackage -Id $id } catch { Write-DELog -Level WARN -Message "profile requires unknown package '$id'"; continue }
         $pkgId = $id
         $mfr = Get-DEPkgProp $pkg 'applicableManufacturer'
-        Register-DEAction -Id "apps.$pkgId" -Module 'apps' -Title "Install $($pkg.name)" -Phase 9 -Gates @('gate.elevated') -RequiresElevation -RequiresSecrets @(@(Get-DEPkgProp $pkg 'secrets') | Where-Object { $_ }) `
+        Register-DEAction -Id "apps.$pkgId" -Module 'apps' -Title "Install $($pkg.name)" -Phase 9 -Gates @('gate.elevated') -RequiresElevation -RequiresSecrets @(@(Get-DEPkgProp $pkg 'secrets' | Where-Object { $null -ne $_ }) | Where-Object { $_ }) `
             -Description $(if ((Get-DEPkgProp $pkg 'confirmed') -eq $false) { 'Catalog entry not yet confirmed against the vendor guide.' } else { '' }) `
             -Detect { $p = Get-DEPackage -Id $pkgId; $d = Test-DEPackageInstalled -Package $p -ClientProfile $ClientProfile; @{ installed = $d.installed; versionOk = $d.versionOk; evidence = $d.evidence } }.GetNewClosure() `
             -Desired { @{ installed = $true; versionOk = $true } } `
@@ -246,7 +246,7 @@ function Register-DEAppsActions {
             -Remediate { param($state) $null = Invoke-DEPackageInstall -Id $pkgId -ClientProfile $ClientProfile -Repair }.GetNewClosure() `
             -ManualAction $(if ($mfr) { "Only for $mfr hardware." } else { '' })
     }
-    $remove = @(Get-DEHashPath -Object $ClientProfile -Path 'apps.remove')
+    $remove = @(Get-DEHashPath -Object $ClientProfile -Path 'apps.remove' | Where-Object { $null -ne $_ })
     $cs = Get-DECloudStorageState -ClientProfile $ClientProfile
     if ($cs.conflict) { $remove += $(if ($standard -eq 'onedrive') { 'dropbox' } else { 'onedrive' }) }
     foreach ($id in ($remove | Select-Object -Unique)) {

@@ -159,8 +159,8 @@ function Get-DEDeviceTrustState {
 }
 function Register-DEJumpCloudActions {
     param($ClientProfile)
-    $groups = @(Get-DEHashPath -Object $ClientProfile -Path 'identity.jumpcloudSystemGroups')
-    $userGroups = @(Get-DEHashPath -Object $ClientProfile -Path 'identity.jumpcloudUserGroups')
+    $groups = @(Get-DEHashPath -Object $ClientProfile -Path 'identity.jumpcloudSystemGroups' | Where-Object { $null -ne $_ })
+    $userGroups = @(Get-DEHashPath -Object $ClientProfile -Path 'identity.jumpcloudUserGroups' | Where-Object { $null -ne $_ })
 
     Register-DEAction -Id 'jumpcloud.agent' -Module 'jumpcloud' -Title 'JumpCloud agent installed and registered' -Phase 7 -Gates @('gate.elevated', 'gate.connectivity') -RequiresElevation -RequiresSecrets @('JC_CONNECT_KEY') `
         -Detect { $a = Get-DEJumpCloudAgentState; @{ installed = $a.installed; running = ($a.service.status -eq 'Running'); registered = $a.registered } } `

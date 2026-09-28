@@ -86,7 +86,7 @@ function New-DEAssetRecord {
         identity = @{ joinType = (Get-DEHashPath -Object $Snapshot -Path 'identity.joinType'); tenant = (Get-DEHashPath -Object $Snapshot -Path 'identity.dsreg.tenantName') }
         management = @{ mdmAuthority = (Get-DEHashPath -Object $Snapshot -Path 'mdm.authority'); jumpcloudRegistered = (Get-DEHashPath -Object $Snapshot -Path 'mdm.jumpcloud.registered') }
         agents = $(if ($sec) { $o = [ordered]@{}; foreach ($k in $sec.Keys) { if ($sec[$k].installed) { $o[$k] = @{ running = $sec[$k].running } } }; $o } else { @{} })
-        applications = @(@(Get-DEHashPath -Object $Snapshot -Path 'apps') | Where-Object { $_ } | Select-Object -First 400 | ForEach-Object { "$($_.name) $($_.version)" })
+        applications = @(@(Get-DEHashPath -Object $Snapshot -Path 'apps' | Where-Object { $null -ne $_ }) | Where-Object { $_ } | Select-Object -First 400 | ForEach-Object { "$($_.name) $($_.version)" })
         network = @{ gateway = (Get-DEHashPath -Object $Snapshot -Path 'network.gateway'); dns = (Get-DEHashPath -Object $Snapshot -Path 'network.dns') }
         readiness = $r.overall; areas = @($r.cards | ForEach-Object { @{ area = $_.title; state = $_.state } })
         exceptions = @(Get-DEExceptions | ForEach-Object { @{ target = $_.target; reason = $_.reason; approver = $_.approver; expiresOn = $_.expiresOn } })

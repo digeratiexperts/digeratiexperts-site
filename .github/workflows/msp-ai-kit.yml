@@ -93,6 +93,13 @@ jobs:
             if ($errs.Count) { $errs | ForEach-Object { Write-Host "$($f.Name):$($_.Extent.StartLineNumber) $($_.Message)" }; throw "parse errors in $($f.Name)" }
           }
           Write-Host "all scripts parse under $($PSVersionTable.PSVersion)"
+      - name: Kit builder tests on Windows (paths, line endings)
+        shell: pwsh
+        run: |
+          node --test "$env:KIT/scripts/build.test.mjs"
+          if ($LASTEXITCODE -ne 0) { throw "builder tests failed on Windows" }
+          node "$env:KIT/scripts/build.mjs" --verify "$env:KIT/examples/digerati-experts"
+          if ($LASTEXITCODE -ne 0) { throw "example pack drifted on a Windows checkout" }
       - name: Pester tests (Windows PowerShell 5.1)
         shell: powershell
         run: |

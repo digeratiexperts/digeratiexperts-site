@@ -84,7 +84,7 @@ function New-DEManagedBookmarks {
     }
     $browser = Get-DEProp $ClientProfile 'browser'
     $extra = Get-DEProp $browser 'extraBookmarks'
-    if ($extra) { foreach ($b in @($extra)) { if (Get-DEProp $b 'url') { $folders = @(@{ name = (Get-DEProp $b 'name'); url = (Get-DEProp $b 'url') }) + $folders } } }
+    if ($extra) { foreach ($b in @($extra | Where-Object { $null -ne $_ })) { if (Get-DEProp $b 'url') { $folders = @(@{ name = (Get-DEProp $b 'name'); url = (Get-DEProp $b 'url') }) + $folders } } }
     $list = @(@{ toplevel_name = $ToplevelName }) + $folders
     return ($list | ConvertTo-Json -Depth 6 -Compress)
 }
