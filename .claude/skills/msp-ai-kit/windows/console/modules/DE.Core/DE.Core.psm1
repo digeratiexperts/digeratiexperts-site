@@ -573,7 +573,9 @@ function Test-DEConsoleIntegrity {
             }
         }
         $signed = 0; $unsigned = 0
-        foreach ($f in Get-ChildItem -LiteralPath $Root -Recurse -File -Include *.ps1, *.psm1, *.psd1 -ErrorAction SilentlyContinue) {
+        # Filter by extension: Windows PowerShell 5.1 ignores -Include with -LiteralPath, and Authenticode reports
+        # non-script files (json, txt, fonts) as unsupported, which would read as tampering on a clean copy.
+        foreach ($f in @(Get-ChildItem -LiteralPath $Root -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in @('.ps1', '.psm1', '.psd1') })) {
             $files += $f.FullName
             if (-not $script:DE.IsWindows) { continue }
             $sig = Get-AuthenticodeSignature -LiteralPath $f.FullName
