@@ -401,6 +401,9 @@ function Invoke-DEAction {
     if ($Mode -eq 'Audit') {
         $gateNote = ''
         if (-not $gateCheck.Ok) { $gateNote = ' | gates not passed: ' + (($gateCheck.Failing | ForEach-Object { "$($_.Id)=$($_.Status)" }) -join ', ') }
+        # A check that needs a runtime secret nobody entered was not verified; it did not fail. Say which secret opens it.
+        $auditMissing = @($a.RequiresSecrets | Where-Object { $_ -and -not (Test-DESecret -Name $_) })
+        if ($auditMissing.Count) { return (Add-DEEvidence -Step $step -Module $a.Module -Before 'not checked' -ActionTaken 'audit: not verified' -Result 'WARN' -Verification ("needs runtime secret(s): " + ($auditMissing -join ', ') + $gateNote) -Remediation ('Enter ' + ($auditMissing -join ', ') + ' on the Settings page (runtime only), then audit again.')) }
         $st = Get-DEActionState -Id $Id
         $bf = if ($st.Detected) { (($st.Detected | ConvertTo-Json -Compress -Depth 4) -replace '\s+', ' ') } else { 'unknown' }
         if ($bf.Length -gt 400) { $bf = $bf.Substring(0, 400) + '...' }

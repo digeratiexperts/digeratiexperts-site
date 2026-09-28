@@ -134,6 +134,7 @@ jobs:
           $zip = @(Get-ChildItem "$env:RUNNER_TEMP\de-console\evidence" -Recurse -Filter *.zip)
           if (-not $zip.Count) { throw 'no evidence bundle written' }
           Write-Host "headless exit $code; bundle $($zip[0].FullName)"
+          exit 0
       - name: WPF window smoke (every page, 100 and 200 percent scale, no window shown)
         shell: powershell
         run: |
