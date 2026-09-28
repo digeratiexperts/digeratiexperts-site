@@ -17,7 +17,7 @@ modules/NN-<id>.md       <- one playbook per file: Line (1 sentence), Rules, Pro
 references/*.md          <- DE-authored packs shipped verbatim with every build (the scripting pack)
 scripts/build.mjs        <- renders modules x config into packs; --list --check --verify --dry-run --set
 scripts/install-upstream.sh <- optional: fetch RTFM / Servosity / WYRE / cmmc-advisor into a gitignored vendor dir
-windows/                 <- Start-MspAiKit.cmd + Install-MspAiKit.ps1: technician menu / RMM loader for Windows
+windows/                 <- DE Technician Console (console/), AI-pack loader (Install-MspAiKit.ps1), packaging/, tests/
 examples/digerati-experts/  <- the committed, rendered DE pack (kept in sync by the tests)
 ```
 
@@ -34,7 +34,9 @@ examples/digerati-experts/  <- the committed, rendered DE pack (kept in sync by 
 | Refresh the committed example | `... --out .claude/skills/msp-ai-kit/examples/digerati-experts` |
 | Tests | `node --test .claude/skills/msp-ai-kit/scripts/build.test.mjs` |
 | External kits | `bash .claude/skills/msp-ai-kit/scripts/install-upstream.sh --list` then `--only cmmc --link` |
-| Windows technician or RMM | `windows\Start-MspAiKit.cmd` (menu) or `windows\Install-MspAiKit.ps1 -Action All -NonInteractive` |
+| Windows technician | `windows\Start-DETechConsole.cmd` (full console) or `windows\Start-MspAiKit.cmd` (AI Toolkit page) |
+| RMM | `windows\console\DETechConsole.ps1 -Headless -Client <id> -Mode <mode>` (audit), or `windows\Install-MspAiKit.ps1 -Action All -NonInteractive` (packs only) |
+| Windows tests | `Invoke-Pester -Path windows/tests, windows/console/tests` and `windows/tests/Invoke-GuiSmoke.ps1` |
 
 ## Procedure
 
@@ -80,6 +82,9 @@ any chat.
 - The upstream installer only clones. It never runs a remote installer and
   never touches credentials. RTFM's kit is CC BY-NC-SA: use it, do not copy its
   text into this repository.
+- The Technician Console changes endpoints. Every change goes through its gate and evidence engine.
+  Runtime secrets stay in memory, and client-safe reports carry no vendor names, keys or costs. Do not
+  add a code path that writes a secret to disk or quietly turns a failed control into PASS.
 - Nothing here changes `client/`, `server/` or `shared/`. If a request needs
   the website's DE Desk advisor to change, that is a separate task under the
   governance in `AGENTS.md`.

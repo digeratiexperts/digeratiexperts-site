@@ -49,3 +49,16 @@ Rules this playbook assumes:
 - The first reply to the client restates the problem in one sentence, names the priority in plain words, states the next action and when they will hear back. No jargon, no blame.
 - Capture the minimum facts for Tier 2: who, what, since when, how many, what changed, error text, device or account identifiers.
 - Suggested category, subcategory, and tags follow the Zoho Desk scheme in use; do not invent new categories.
+
+Worked example (abridged):
+
+Input (abridged): Subject "Outlook keeps asking for password". Requester: office manager at a 30-seat law firm. Body: "Since this morning three of us get a password prompt every few minutes; entering it does nothing." Known context: Business tier, no VIP flag, MFA rolled out last week.
+Output (abridged):
+1. Summary: Three users at the firm are getting repeated Outlook credential prompts since this morning, starting after last week's MFA rollout.
+2. Priority: P2 High. Impact: a team, not one user. Urgency: no workaround, mail is core to a law practice.
+3. Security check: ESCALATE. Repeated prompts after an MFA change can be MFA fatigue or token revocation; check sign-in logs before treating it as a client bug.
+4. Category: Microsoft 365 / Authentication / Outlook; tags mfa, m365-auth.
+5. Missing facts: Are the three on the same site or network? Any sign-in denied emails? Did anyone approve an MFA prompt they did not start?
+6. First reply: "Thanks, we have this. Three of you are being asked for passwords repeatedly since this morning; we are treating it as high priority because it stops mail for your team. We are checking sign-in activity first. You will hear from us within the hour." (plus who to contact if it spreads)
+7. Internal note: likely causes ranked: conditional-access policy scoped to Outlook desktop; stale token after MFA enrolment; credential-manager entries. First checks: Entra sign-in logs for the three users, CA policy report-only results, Outlook connectivity status.
+8. Time budget: 30 minutes, then Tier 2.

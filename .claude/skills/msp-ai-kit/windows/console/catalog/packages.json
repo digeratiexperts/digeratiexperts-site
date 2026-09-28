@@ -1,0 +1,96 @@
+{
+  "_readme": "Approved package catalog for the DE Technician Console. Every install goes through Invoke-DEPackageInstall, which enforces the trust policy: a winget id is trusted by winget; a URL or local file needs sha256 and/or an Authenticode publisher; anything else is refused unless the technician overrides with a reason (recorded as WARN, never PASS). {SECRET:NAME} tokens are resolved from the runtime secret store at the moment of execution and never written anywhere. {VALUE:key} tokens come from the client profile or the entry's settings. confirmed:false means the exact URL or switch must be confirmed against the vendor's current deployment guide or the DE-supplied installer before first production use; the console shows this on the action.",
+  "version": "1.0.0",
+  "localPackagesDir": "%ProgramData%\\DE\\TechConsole\\packages",
+  "packages": [
+    {
+      "id": "jumpcloud-agent", "name": "JumpCloud Agent", "vendor": "JumpCloud", "category": "identity", "arch": "x64", "confirmed": true,
+      "source": { "type": "url", "url": "https://cdn02.jumpcloud.com/production/jcagent-msi-signed.msi", "publisher": "JumpCloud Inc." },
+      "install": { "type": "msi", "args": "/quiet /norestart JCINSTALLERARGUMENTS=\"-k {SECRET:JC_CONNECT_KEY}\"", "timeoutSeconds": 900, "successExitCodes": [0, 3010, 1641], "rebootExitCodes": [3010, 1641] },
+      "detect": { "services": ["jumpcloud-agent"], "processes": ["jumpcloud-agent"], "paths": ["%ProgramFiles%\\JumpCloud\\jumpcloud-agent.exe"], "appNameRegex": "^JumpCloud Agent" },
+      "secrets": ["JC_CONNECT_KEY"],
+      "notes": "Connect key is org-specific and runtime-only. Registration is verified through jcagent.conf systemKey plus the JumpCloud API, not by the installer exit code."
+    },
+    {
+      "id": "jumpcloud-remote-assist", "name": "JumpCloud Remote Assist", "vendor": "JumpCloud", "category": "remote-support", "arch": "x64", "confirmed": false,
+      "source": { "type": "url", "url": "https://cdn02.jumpcloud.com/production/jumpcloud-remote-assist-agent.msi", "publisher": "JumpCloud Inc." },
+      "install": { "type": "msi", "args": "/quiet /norestart", "timeoutSeconds": 600, "successExitCodes": [0, 3010], "rebootExitCodes": [3010] },
+      "detect": { "services": ["jumpcloud-remote-assist"], "processes": ["jumpcloud-remote-assist"], "paths": ["%ProgramFiles%\\JumpCloud Remote Assist"], "appNameRegex": "^JumpCloud Remote Assist" },
+      "notes": "Confirm the current MSI URL in the JumpCloud Remote Assist deployment guide; Remote Assist can also be pushed from the JumpCloud console."
+    },
+    {
+      "id": "sentinelone-agent", "name": "SentinelOne Agent (managed)", "vendor": "SentinelOne", "category": "security", "arch": "x64", "confirmed": false,
+      "source": { "type": "local", "localPath": "SentinelOneInstaller_windows_64bit.exe", "publisher": "SentinelOne" },
+      "install": { "type": "exe", "args": "-t {SECRET:S1_SITE_TOKEN} -q", "altMsiArgs": "/i \"{FILE}\" SITE_TOKEN={SECRET:S1_SITE_TOKEN} /quiet /norestart", "timeoutSeconds": 1200, "successExitCodes": [0, 3010], "rebootExitCodes": [3010] },
+      "detect": { "services": ["SentinelAgent"], "processes": ["SentinelAgent"], "paths": ["%ProgramFiles%\\SentinelOne"], "appNameRegex": "^Sentinel Agent", "minVersion": "23.0" },
+      "secrets": ["S1_SITE_TOKEN"],
+      "preChecks": ["no-conflicting-edr"],
+      "notes": "Use the DE-supplied managed installer from the S1 console (Sentinels > Packages). EXE installers take -t <site token> -q; legacy MSI packages take SITE_TOKEN=. Site token is runtime-only."
+    },
+    {
+      "id": "guardz-agent", "name": "Guardz Device Agent", "vendor": "Guardz", "category": "security", "arch": "x64", "confirmed": false,
+      "source": { "type": "local", "localPath": "GuardzDeviceAgent.msi", "publisher": "Guardz" },
+      "install": { "type": "msi", "args": "/quiet /norestart ORGKEY={SECRET:GUARDZ_ORG_KEY}", "altPs1": "Install-GuardzAgent.ps1 -OrganizationKey {SECRET:GUARDZ_ORG_KEY}", "timeoutSeconds": 900, "successExitCodes": [0, 3010], "rebootExitCodes": [3010] },
+      "detect": { "services": ["GuardzAgent", "Guardz Agent", "guardz-agent"], "processes": ["GuardzAgent", "guardz-agent"], "paths": ["%ProgramFiles%\\Guardz", "%ProgramFiles(x86)%\\Guardz"], "appNameRegex": "Guardz" },
+      "secrets": ["GUARDZ_ORG_KEY"],
+      "notes": "Primary DE security platform. Take the MSI or PowerShell installer and the exact organization-key switch from app.us.guardz.com/msp > Devices > Deploy; both the MSI property name and the script parameter here are placeholders until confirmed. Organization key is runtime-only."
+    },
+    {
+      "id": "blackpoint-snap", "name": "Blackpoint SNAP Agent", "vendor": "Blackpoint Cyber", "category": "security", "arch": "x64", "confirmed": false, "role": "backup",
+      "source": { "type": "local", "localPath": "BlackpointSnapAgent.msi", "publisher": "Blackpoint" },
+      "install": { "type": "msi", "args": "/quiet /norestart", "timeoutSeconds": 900, "successExitCodes": [0, 3010], "rebootExitCodes": [3010] },
+      "detect": { "services": ["SnapAgent", "Blackpoint SNAP Agent"], "processes": ["SnapAgent"], "paths": ["%ProgramFiles%\\Blackpoint", "%ProgramFiles(x86)%\\Blackpoint"], "appNameRegex": "Blackpoint|SNAP" },
+      "notes": "Backup / approved alternate MDR. Deploy only when the client profile's security.mdr.deploy includes blackpoint. Customer-specific installer from the Blackpoint portal."
+    },
+    {
+      "id": "pabx-policy", "name": "Prisma Browser Extension policy (PABX, no private browsing)", "vendor": "DE / Palo Alto Networks", "category": "browser", "arch": "any", "confirmed": false,
+      "source": { "type": "local", "localPath": "install-pabx_no-private-browsing.ps1", "publisher": "Digerati Experts" },
+      "install": { "type": "ps1", "args": "", "timeoutSeconds": 600, "successExitCodes": [0] },
+      "detect": { "registry": [
+        { "path": "HKLM:\\SOFTWARE\\Policies\\Google\\Chrome\\ExtensionInstallForcelist", "containsValueMatching": "{VALUE:pabx_extension_id_chrome}" },
+        { "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge\\ExtensionInstallForcelist", "containsValueMatching": "{VALUE:pabx_extension_id_edge}" },
+        { "path": "HKLM:\\SOFTWARE\\Policies\\Google\\Chrome", "name": "IncognitoModeAvailability", "equals": 1 },
+        { "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge", "name": "InPrivateModeAvailability", "equals": 1 } ] },
+      "settings": { "pabx_extension_id_chrome": "", "pabx_extension_id_edge": "" },
+      "notes": "Runs the DE-supplied script; verification reads the force-install lists and the private-browsing policies. Fill the two extension ids so verification can name them."
+    },
+    {
+      "id": "msp360-backup", "name": "MSP360 Managed Backup agent", "vendor": "MSP360", "category": "backup", "arch": "x64", "confirmed": false,
+      "source": { "type": "local", "localPath": "MSP360Backup.exe", "publisher": "MSP360" },
+      "install": { "type": "exe", "args": "/S", "timeoutSeconds": 900, "successExitCodes": [0, 3010] },
+      "detect": { "services": ["Online Backup Service", "CloudBerry Backup"], "processes": ["CBBackupPlan", "cbb"], "paths": ["%ProgramFiles%\\Online Backup", "%ProgramFiles%\\MSP360"], "appNameRegex": "MSP360|Online Backup|CloudBerry" },
+      "notes": "Download the company-branded build from console.msp360.com (Downloads). Device registration and the first backup are verified through the MSP360 console, not by install."
+    },
+    {
+      "id": "wazuh-agent", "name": "Wazuh Agent", "vendor": "Wazuh", "category": "security", "arch": "x64", "confirmed": false,
+      "source": { "type": "url", "url": "https://packages.wazuh.com/4.x/windows/wazuh-agent-4.9.2-1.msi", "publisher": "Wazuh" },
+      "install": { "type": "msi", "args": "/q WAZUH_MANAGER=\"{VALUE:wazuh_manager}\" WAZUH_REGISTRATION_PASSWORD=\"{SECRET:WAZUH_REG_PASSWORD}\" WAZUH_AGENT_GROUP=\"{VALUE:wazuh_group}\"", "timeoutSeconds": 600, "successExitCodes": [0, 3010] },
+      "detect": { "services": ["WazuhSvc"], "processes": ["wazuh-agent"], "paths": ["%ProgramFiles(x86)%\\ossec-agent"], "appNameRegex": "Wazuh Agent" },
+      "secrets": ["WAZUH_REG_PASSWORD"], "settings": { "wazuh_manager": "", "wazuh_group": "default" },
+      "notes": "Pin the version to the one the Wazuh Cloud tenant runs; the sha256 should be added once the file is downloaded and checked."
+    },
+    {
+      "id": "timus-connect", "name": "Timus Connect", "vendor": "Timus Networks", "category": "network", "arch": "x64", "confirmed": false,
+      "source": { "type": "local", "localPath": "TimusConnect.msi", "publisher": "Timus" },
+      "install": { "type": "msi", "args": "/quiet /norestart", "timeoutSeconds": 600, "successExitCodes": [0, 3010] },
+      "detect": { "services": ["TimusConnect"], "processes": ["TimusConnect"], "paths": ["%ProgramFiles%\\Timus"], "appNameRegex": "Timus" },
+      "notes": "SASE client; deploy when the client profile's network.sase.required is true. Site or gateway enrolment happens in manage.timusnetworks.com."
+    },
+    {
+      "id": "m365-apps", "name": "Microsoft 365 Apps for business/enterprise", "vendor": "Microsoft", "category": "apps", "arch": "x64", "confirmed": true,
+      "source": { "type": "url", "url": "https://officecdn.microsoft.com/pr/wsus/setup.exe", "publisher": "Microsoft Corporation" },
+      "install": { "type": "odt", "args": "/configure \"{FILE_DIR}\\m365-config.xml\"", "timeoutSeconds": 3600, "successExitCodes": [0] },
+      "detect": { "appNameRegex": "^Microsoft 365 Apps|^Microsoft Office", "paths": ["%ProgramFiles%\\Microsoft Office\\root\\Office16\\WINWORD.EXE"] },
+      "settings": { "channel": "Current", "productId": "O365BusinessRetail", "excludeApps": ["Groove", "Lync", "Bing"] },
+      "notes": "The console writes the Office Deployment Tool XML from settings and the client profile (shared computer licensing off, updates on, OneDrive excluded when the client standard is Dropbox)."
+    },
+    { "id": "teams", "name": "Microsoft Teams", "vendor": "Microsoft", "category": "apps", "arch": "x64", "confirmed": true, "source": { "type": "winget", "id": "Microsoft.Teams" }, "install": { "type": "winget", "args": "--scope machine --silent --accept-package-agreements --accept-source-agreements", "timeoutSeconds": 900, "successExitCodes": [0] }, "detect": { "appNameRegex": "^Microsoft Teams", "processes": ["ms-teams"] } },
+    { "id": "onedrive", "name": "Microsoft OneDrive", "vendor": "Microsoft", "category": "apps", "arch": "x64", "confirmed": true, "source": { "type": "winget", "id": "Microsoft.OneDrive" }, "install": { "type": "winget", "args": "--scope machine --silent --accept-package-agreements --accept-source-agreements", "timeoutSeconds": 600, "successExitCodes": [0] }, "detect": { "appNameRegex": "^Microsoft OneDrive", "paths": ["%ProgramFiles%\\Microsoft OneDrive\\OneDrive.exe", "%LOCALAPPDATA%\\Microsoft\\OneDrive\\OneDrive.exe"] } },
+    { "id": "dropbox", "name": "Dropbox", "vendor": "Dropbox", "category": "apps", "arch": "x64", "confirmed": true, "source": { "type": "winget", "id": "Dropbox.Dropbox" }, "install": { "type": "winget", "args": "--silent --accept-package-agreements --accept-source-agreements", "timeoutSeconds": 900, "successExitCodes": [0] }, "detect": { "appNameRegex": "^Dropbox", "paths": ["%ProgramFiles%\\Dropbox\\Client\\Dropbox.exe", "%LOCALAPPDATA%\\Dropbox\\Client\\Dropbox.exe"] } },
+    { "id": "edge", "name": "Microsoft Edge", "vendor": "Microsoft", "category": "browser", "arch": "x64", "confirmed": true, "source": { "type": "winget", "id": "Microsoft.Edge" }, "install": { "type": "winget", "args": "--silent --accept-package-agreements --accept-source-agreements", "timeoutSeconds": 600, "successExitCodes": [0] }, "detect": { "paths": ["%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe", "%ProgramFiles%\\Microsoft\\Edge\\Application\\msedge.exe"] } },
+    { "id": "chrome", "name": "Google Chrome", "vendor": "Google", "category": "browser", "arch": "x64", "confirmed": true, "source": { "type": "winget", "id": "Google.Chrome" }, "install": { "type": "winget", "args": "--scope machine --silent --accept-package-agreements --accept-source-agreements", "timeoutSeconds": 600, "successExitCodes": [0] }, "detect": { "paths": ["%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe", "%ProgramFiles(x86)%\\Google\\Chrome\\Application\\chrome.exe"] } },
+    { "id": "pdf-reader", "name": "Adobe Acrobat Reader (64-bit)", "vendor": "Adobe", "category": "apps", "arch": "x64", "confirmed": true, "source": { "type": "winget", "id": "Adobe.Acrobat.Reader.64-bit" }, "install": { "type": "winget", "args": "--scope machine --silent --accept-package-agreements --accept-source-agreements", "timeoutSeconds": 900, "successExitCodes": [0] }, "detect": { "appNameRegex": "^Adobe Acrobat" } },
+    { "id": "dell-command-update", "name": "Dell Command | Update", "vendor": "Dell", "category": "maintenance", "arch": "x64", "confirmed": true, "applicableManufacturer": "Dell", "source": { "type": "winget", "id": "Dell.CommandUpdate" }, "install": { "type": "winget", "args": "--scope machine --silent --accept-package-agreements --accept-source-agreements", "timeoutSeconds": 900, "successExitCodes": [0] }, "detect": { "paths": ["%ProgramFiles%\\Dell\\CommandUpdate\\dcu-cli.exe", "%ProgramFiles(x86)%\\Dell\\CommandUpdate\\dcu-cli.exe"], "appNameRegex": "^Dell Command \\| Update" } },
+    { "id": "powershell-7", "name": "PowerShell 7", "vendor": "Microsoft", "category": "tools", "arch": "x64", "confirmed": true, "source": { "type": "winget", "id": "Microsoft.PowerShell" }, "install": { "type": "winget", "args": "--scope machine --silent --accept-package-agreements --accept-source-agreements", "timeoutSeconds": 600, "successExitCodes": [0] }, "detect": { "paths": ["%ProgramFiles%\\PowerShell\\7\\pwsh.exe"] } }
+  ]
+}

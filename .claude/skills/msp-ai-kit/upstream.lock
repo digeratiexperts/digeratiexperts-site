@@ -1,0 +1,7 @@
+# Pinned upstream kits. Columns: id  url  commit  license  link-globs(':'-separated, '-' for none)
+# Update pins with: bash .claude/skills/msp-ai-kit/scripts/install-upstream.sh --update-pins
+# Both scripts/install-upstream.sh and windows/Install-MspAiKit.ps1 read this file.
+rtfm       https://github.com/RTFM-IT-Services-LLC/msp-claude-skills   7215c5424ea10a00a81ae630cc86b7679a7196ab  CC-BY-NC-SA-4.0  skills/*
+servosity  https://github.com/Servosity/msp-skills                     d54c756dd9fba3c3fd9719cd935c53c7a100def7  Apache-2.0       -
+wyre       https://github.com/wyre-technology/msp-claude-plugins       9dad81e23a2f5a868fd6a66e1b0b8c1a1612a243  Apache-2.0       -
+cmmc       https://github.com/LV-262/cmmc-advisor                      0828704c4d591a3d41dbcf3f3b2a7c523e58f369  MIT              .

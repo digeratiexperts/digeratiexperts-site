@@ -35,5 +35,18 @@ Then:
 - Tags and category for {{stack.documentation}}.
 - Open questions: anything in the thread that was unclear and needs the engineer to confirm before publishing.
 
+## Brief
+- Two articles: an internal runbook with exact steps and a client how-to without admin steps.
+- Symptom-titled, numbered steps with the expected result after each, verification, rollback, last-verified date.
+- Redact client identifiers and never include credentials; one problem per article.
+
+## Example
+Input (abridged): Ticket thread where a user's Teams showed "We ran into a problem"; fix was to sign out, clear %appdata%\Microsoft\Teams cache, sign back in. Audience BOTH. Product: Teams (new client), Windows 11.
+Output (abridged):
+INTERNAL: Title "Teams shows 'We ran into a problem' at sign-in". Applies to: new Teams on Windows 11. Cause: corrupted local cache after a profile change. Resolution: 1. Fully quit Teams from the system tray (expected: no Teams process in Task Manager). 2. In PowerShell as the user run `Remove-Item "$env:LOCALAPPDATA\Packages\MSTeams_8wekyb3d8bbwe\LocalCache" -Recurse -Force` (expected: folder removed). 3. Start Teams and sign in (expected: home screen loads). Verification: user can join a test meeting. Rollback: none needed; cache rebuilds. Escalate if: error persists on a second device, which points to the account, not the client. Last verified: [DATE] by Tier 2.
+CLIENT: Title "Teams says 'We ran into a problem' when you open it". When you will see this: usually after a password change. What to do: 1. Right-click the Teams icon near the clock and choose Quit. 2. Restart your computer. 3. Open Teams and sign in again. If this does not work: contact support at {{company.support_email}} or through {{company.portal}}.
+Redaction report: removed the user's name, machine name LAP-0231 and the ticket number.
+Tags: teams, m365, cache. Open questions: confirm the LocalCache path on the classic Teams client before publishing.
+
 ## Notes
 Ask for a "diff" when updating an existing article so the reviewer sees only what changed.

@@ -20,15 +20,16 @@ Cursor and Copilot all follow the same playbooks in the same voice.
 3. **Check before you paste.** `--check` validates the config and modules and
    confirms the ChatGPT and Custom GPT budgets; `--dry-run` shows the plan.
 
-## Windows
+## Windows: DE Technician Console
 
-Technicians on Windows do not need the command line: double-click
-`windows\Start-MspAiKit.cmd` for a menu that builds the packs, installs the kit
-as a Claude Code / Codex skill for the current user, copies the ChatGPT blocks
-to the clipboard, verifies, and fetches the upstream kits. For the RMM,
-`windows\Install-MspAiKit.ps1 -Action All -NonInteractive` does build, install
-and verify with an exit code, a log under `%ProgramData%\DE\logs` and a JSON
-receipt. Details and every option: `windows\README-WINDOWS.md`.
+`windows\Start-DETechConsole.cmd` opens the DE Technician Console. It is one DE-styled window for the
+AI Toolkit and every endpoint job: provisioning, Entra to JumpCloud migration with break-glass,
+BitLocker and OneDrive gates, the security stack (Guardz primary, Blackpoint backup, SentinelOne, PABX),
+apps, OS baseline, browser policy, branding, network, the Vendor Admin Center, and evidence with
+Intelligence Hub handoff.
+
+`windows\Start-MspAiKit.cmd` opens the console on the AI Toolkit page, which builds these packs. RMM
+runs use `-Headless`, and packaging covers signing, RMM deploy and Intune. See `windows\README-WINDOWS.md`.
 
 ## What is inside
 
@@ -99,9 +100,11 @@ bash .claude/skills/msp-ai-kit/scripts/install-upstream.sh --only cmmc,rtfm --li
 ## Tests
 
 ```bash
-node --test .claude/skills/msp-ai-kit/scripts/build.test.mjs
+npm run test:msp-ai-kit
 ```
 
-The suite renders the templates, checks budgets and naming, exercises the CLI,
-and verifies `examples/digerati-experts/` against a fresh build so a module
-edit without a rebuild fails loudly.
+That runs the builder tests, `--check`, the example drift check, the eval goldens and the company-facts
+check. The Windows side has Pester suites for the loader and the Technician Console engine. It also has
+PSScriptAnalyzer and a GUI smoke that renders every page at 100 and 200 percent. CI runs these under
+Windows PowerShell 5.1 in `.github/workflows/msp-ai-kit.yml`. See `windows/README-WINDOWS.md` to run
+them locally.

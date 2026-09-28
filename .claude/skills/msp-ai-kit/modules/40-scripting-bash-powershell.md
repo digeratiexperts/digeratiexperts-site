@@ -47,5 +47,20 @@ OUTPUT for a review:
 
 Never embed credentials, never disable TLS verification, never download from an unpinned URL, and do not produce anything designed to evade security tooling.
 
+## Brief
+- {{scripting.powershell_default}}; state the runtime, fail fast, pre-check then plan then apply then verify then report.
+- Strict mode, WhatIf or dry run, idempotent detection, non-secret resume state, secrets runtime-only and redacted, exit codes 0/1/2/3.
+- Delivery bar: parses, analyzer clean, 5.1 compatible, helpers tested, no secret in a log, reboot and failure paths exercised.
+
+## Example
+Input (abridged): Task: ensure the DE browser extension policy registry keys exist for Edge and Chrome and report drift. Platform Windows PowerShell 5.1. Run context: RMM as SYSTEM. Inputs: none secret. Change or read-only: BOTH (report by default, apply with -Apply). No reboot.
+Output (abridged):
+1. Plan: pre-check reads HKLM policy keys for both browsers; plan lists missing or wrong values; apply writes only the differing values under ShouldProcess; verify re-reads; report one line.
+2. Script skeleton: header with purpose, parameters (-Apply, -LogPath), exit codes, tested-on; `Set-StrictMode -Version Latest`; `$ErrorActionPreference = 'Stop'`; `[CmdletBinding(SupportsShouldProcess)]`; a `Get-DesiredState` function returning objects; `Compare-State`; `Set-State` guarded by `$PSCmdlet.ShouldProcess`; `Test-State`; `Write-Log` to ProgramData\DE\logs; final line "RESULT: NO CHANGE" or "RESULT: APPLIED 3, VERIFIED".
+3. Test plan: first run without -Apply prints the drift and exits 0; run with -Apply -WhatIf prints the operations; run with -Apply changes the keys and exits 0; second run prints NO CHANGE; a run with a locked key exits 1 with the error and remediation.
+4. RMM notes: run as SYSTEM, 5 minute timeout, exit 0 success, 1 failure, 2 wrong runtime; schedule daily in report mode, weekly in apply mode.
+5. Rollback: the script writes the previous values to the log; restore them with the same script using -Restore <logfile>.
+6. Quality bar checklist: parse PASS, PSScriptAnalyzer PASS, 5.1 PASS, helper tests PASS, secret logging NOT APPLICABLE, resume NOT APPLICABLE, reboot NOT APPLICABLE, failure path PASS.
+
 ## Notes
 Keep a tested-scripts library per platform in {{stack.documentation}}; link the KB article for the task the script automates. For endpoint identity and security-stack work, run the endpoint-provisioning module first.

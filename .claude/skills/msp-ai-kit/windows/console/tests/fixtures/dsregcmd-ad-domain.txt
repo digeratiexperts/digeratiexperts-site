@@ -1,0 +1,6 @@
+             AzureAdJoined : NO
+          EnterpriseJoined : NO
+              DomainJoined : YES
+                DomainName : OLDCORP
+                    NgcSet : NO
+           WorkplaceJoined : NO

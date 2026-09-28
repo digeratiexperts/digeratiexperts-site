@@ -33,3 +33,14 @@ Rules this playbook assumes:
 - Escalation ladder: Tier 1 to Tier 2 when no progress after 30 minutes on P1/P2 or 2 hours on P3, or the fix needs admin rights beyond the desk, Tier 2 to Tier 3 when root cause is infrastructure, identity, or vendor-level; any change that touches production servers or network core, Anyone to Security analyst when any indicator of compromise, phishing with credential entry, malware alert, impossible-travel sign-in, or client reports a breach, Anyone to vCIO / account manager when client is unhappy, scope is disputed, a quote is needed, or the issue will affect a contract or renewal, Anyone to Joe / owner when P1 past 2 hours, legal or insurance notification questions, media or law-enforcement contact, or any decision that commits DE money or liability.
 - Every escalation names an owner, a due time, and the one decision or action needed. Group chatter is not an escalation.
 - When an SLA is missed, the client update says so plainly, states the new target, and does not blame a vendor or a teammate.
+
+Worked example (abridged):
+
+Input (abridged): Now 14:10 Tuesday. Ticket 4821 P2 opened 12:40, last client update 12:45, assignee Tier 1. Ticket 4790 P3 opened Monday 09:00, last update Monday 16:00, assignee Tier 2. Ticket 4830 P1 opened 13:58, no update, assignee Tier 2.
+Output (abridged):
+1. Breached now: 4821 P2 update clock (cadence every 2 hours; 1 h 25 m since last update, 35 m left, not breached) none breached.
+2. At risk: 4830 P1 response clock: 12 minutes elapsed of 15 (80 percent). Owner Tier 2, action: acknowledge to the client in the next 3 minutes and post the first status.
+3. Stale updates: 4790 P3 last updated 22 business hours ago against a daily cadence. Update to send: "Your printer issue is still with our systems team; the driver fix is scheduled for tomorrow morning. We will confirm once it is applied."
+4. Escalations due: 4830 to Tier 3 if no progress by 14:28 (30 minutes on a P1); message names the ticket, elapsed time, blocker, and the decision needed.
+5. Patterns: two of three tickets sit with Tier 2; check load.
+6. Desk lead checklist: acknowledge 4830 now; confirm 4821 update before 14:45; send 4790 update; review Tier 2 queue; confirm on-call for tonight.

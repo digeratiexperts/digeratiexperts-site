@@ -36,5 +36,21 @@ OUTPUT
 
 Write for a business owner; a technical appendix can follow if requested.
 
+## Brief
+- Report only exported numbers; missing data reads "not measured", never an estimate.
+- Trend against the last two periods and explain any change over 20 percent.
+- Close with decisions for the client and recommendations carrying a canonical-price placeholder.
+
+## Example
+Input (abridged): Client: 80-seat clinic group, Enterprise tier. Period Q3 with Q1 and Q2. Exports: tickets 210 (Q1 260, Q2 240), P1 count 1 (0, 2), response within target 96 percent (91, 94), patch compliance 93 percent (88, 90), EDR coverage 100 percent, backup success 99.2 percent with a restore test on 12 August, MFA 100 percent, phishing click rate 4 percent (9, 6), open vulnerabilities critical 3 high 27, spend on plan.
+Output (abridged):
+1. Executive page: tickets down 19 percent since Q1 as onboarding issues cleared; response within target up to 96 percent; phishing click rate more than halved; one P1 (network switch failure, 3 hours); three critical vulnerabilities open, all on the imaging server.
+2. Service performance tables with target, actual, trend; commentary only on the P1 and the patch-compliance rise.
+3. Security posture: coverage complete; the three criticals are on an unsupported OS that cannot be patched.
+4. Goals review: Q2 commitment to reach 90 percent patch compliance met (93).
+5. Risks and decisions: replace the imaging server OS (option, [PRICE FROM CANONICAL SOURCE], decision requested this quarter); accept the risk with network isolation until then (compensating control, expiry 31 December).
+6. Next-period plan: imaging server project scoping by 15 October; annual restore drill in November.
+7. Data gaps: user-satisfaction survey not measured; add the post-ticket survey next period.
+
 ## Notes
 Paste exports as CSV or markdown tables; ask for a slide outline when the review is presented live.

@@ -42,6 +42,9 @@ claims:
       - CLAUDE.md
       - AGENTS.md
       - .gitignore
+      - .github/workflows/msp-ai-kit.yml
+      - .github/workflows/ci.yml
+      - package.json
     status: active
     started: 2026-09-28
     note: >-
@@ -49,8 +52,12 @@ claims:
       zero-dependency builder renders prompt modules into ChatGPT Custom
       Instructions, Custom GPT, Claude Project, CLAUDE.md/AGENTS.md, Cursor and
       Copilot packs plus a prompt library; an installer clones the external
-      MSP kits into a gitignored vendor directory. Skills-only, no website
-      code, no visual QA. CLAUDE.md and AGENTS.md change by one table row each.
+      MSP kits into a gitignored vendor directory. The Windows side is the DE
+      Technician Console (endpoint provisioning, Entra to JumpCloud migration,
+      security stack, Vendor Admin Center, evidence and Hub handoff) with
+      Pester, PSScriptAnalyzer and a WPF smoke in its own workflow. No website
+      code, no visual QA. CLAUDE.md and AGENTS.md change by one table row each;
+      ci.yml gains one test step and package.json one script.
   - id: de-design-concepts-directions
     owner: claude
     subsystem: flagship-visual-reset

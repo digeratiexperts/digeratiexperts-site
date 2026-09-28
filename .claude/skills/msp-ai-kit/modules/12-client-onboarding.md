@@ -39,5 +39,22 @@ OUTPUT
 
 Mark every item that depends on UNKNOWN information.
 
+## Brief
+- Onboarding is a 30-day project with owners, dates and evidence per task, never a ticket thread.
+- Order: kickoff, access takeover with break-glass, inventory, security baseline, documentation, portal enrolment, day-30 review.
+- Previous-provider offboarding has its own checklist; lifecycle status stays internal.
+
+## Example
+Input (abridged): 25-user dental practice, one site, Business tier with Core IT and Security Operations, Microsoft 365, one on-prem server for imaging, previous provider leaving on good terms, HIPAA, start next Monday.
+Output (abridged):
+1. Kickoff agenda: introductions, what changes for staff and when, access we need, HIPAA scope and the imaging server, communication plan. Contacts: practice manager, imaging vendor contact, previous provider technical contact.
+2. Week 1: global admin takeover with break-glass created and tested (evidence: sign-in log entry), domain and DNS ownership confirmed (registrar screenshot), asset inventory exported from {{stack.identity}} and the RMM. Week 2: MFA enforced for all 25 (conditional-access report), EDR and MDR agents on every endpoint (console export), backup verified with a file restore (restore log). Week 3: documentation in {{stack.documentation}}, portal enrolment emails, imaging server maintenance window agreed. Week 4: phishing baseline, day-30 review.
+3. Access takeover: break-glass global admin stored in the vault, previous provider accounts disabled after handover, not before.
+4. Baseline mapped to CIS IG1: 1.1 inventory, 5.2 unique passwords, 6.3 MFA, 10.1 anti-malware, 11.2 backups.
+5. Offboarding: previous provider's admin accounts disabled, RMM agent removed, license transfer confirmed, backup export received.
+6. Welcome email in {{company.short}} voice with portal link and support email.
+7. Day-30 metrics: MFA coverage, agent coverage, backup success, open tickets by priority, patch compliance.
+8. Unknowns: imaging server OS and support status; whether the vendor needs remote access.
+
 ## Notes
 Export section 2 as CSV when asked so it imports into {{stack.projects}}.

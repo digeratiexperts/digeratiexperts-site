@@ -49,3 +49,14 @@ Rules this playbook assumes:
 - Never disable a security control globally to make automation easier, never disable TLS verification, never download from an unpinned URL, and never write anything meant to evade security tooling.
 - Quality bar before delivery: parses; PSScriptAnalyzer or ShellCheck clean; PowerShell 5.1 compatibility confirmed for Windows endpoint scripts; every referenced command exists or has a fallback; helper functions tested on their own; no secret reaches a log; resume and reboot paths exercised; non-happy paths tested; ships as an operational tool with header (purpose, parameters, exit codes, tested-on), dry-run example, rollback note, and one-line verification command.
 - Full DE conventions and the endpoint provisioning model: `references/de-scripting-msp-skill-pack.md` in this kit.
+
+Worked example (abridged):
+
+Input (abridged): Task: ensure the DE browser extension policy registry keys exist for Edge and Chrome and report drift. Platform Windows PowerShell 5.1. Run context: RMM as SYSTEM. Inputs: none secret. Change or read-only: BOTH (report by default, apply with -Apply). No reboot.
+Output (abridged):
+1. Plan: pre-check reads HKLM policy keys for both browsers; plan lists missing or wrong values; apply writes only the differing values under ShouldProcess; verify re-reads; report one line.
+2. Script skeleton: header with purpose, parameters (-Apply, -LogPath), exit codes, tested-on; `Set-StrictMode -Version Latest`; `$ErrorActionPreference = 'Stop'`; `[CmdletBinding(SupportsShouldProcess)]`; a `Get-DesiredState` function returning objects; `Compare-State`; `Set-State` guarded by `$PSCmdlet.ShouldProcess`; `Test-State`; `Write-Log` to ProgramData\DE\logs; final line "RESULT: NO CHANGE" or "RESULT: APPLIED 3, VERIFIED".
+3. Test plan: first run without -Apply prints the drift and exits 0; run with -Apply -WhatIf prints the operations; run with -Apply changes the keys and exits 0; second run prints NO CHANGE; a run with a locked key exits 1 with the error and remediation.
+4. RMM notes: run as SYSTEM, 5 minute timeout, exit 0 success, 1 failure, 2 wrong runtime; schedule daily in report mode, weekly in apply mode.
+5. Rollback: the script writes the previous values to the log; restore them with the same script using -Restore <logfile>.
+6. Quality bar checklist: parse PASS, PSScriptAnalyzer PASS, 5.1 PASS, helper tests PASS, secret logging NOT APPLICABLE, resume NOT APPLICABLE, reboot NOT APPLICABLE, failure path PASS.

@@ -35,3 +35,13 @@ Rules this playbook assumes:
 - Immediate client guidance: isolate affected machines from the network, do not power off, do not pay, do not wipe or "clean" anything, reset critical passwords only from a known-clean device, call DE on the emergency line.
 - Notification obligations (regulators, insurers, affected individuals, law enforcement) are decided by the client with counsel and Joe / owner; DE supplies facts and preserves evidence. Never state attribution or scope as certain before it is.
 - Updates go out on the stated cadence even when there is nothing new; "no change since the last update" is a valid update.
+
+Worked example (abridged):
+
+Input (abridged): Incident: 40-seat client, ransomware on two workstations, declared 09:12. Timeline: 09:05 EDR alert, 09:12 declared, 09:15 both hosts isolated, 09:40 no encryption found on servers, 10:05 backups verified intact. State: contained, investigating. Audience: client primary contact. Approvals: security lead approved. Next update 12:00.
+Output (abridged):
+1. Update: "As of 10:15 on 28 September, two workstations at your main office were found running ransomware. Both were isolated from the network by 09:15. We have checked your servers and found no encrypted files, and your backups are intact. We do not yet know how the software arrived, and we are reviewing email and sign-in records. Please keep the two affected desks unplugged, do not power them off, and do not attempt to clean them. If any staff see unusual files or messages, tell your office manager, who should call us. Next update at 12:00."
+2. Holding statement: "We are aware of a security issue affecting a small number of computers and are handling it with our IT provider. Questions go to [designated contact]."
+3. Timeline additions: 10:15 client primary updated (this message), approved by the security lead.
+4. Decisions: whether to notify the cyber-insurer today (deadline: policy notice period, check the policy); whether to engage counsel on notification obligations; approval to reimage the two hosts after evidence capture.
+5. Do-not-say list: "the attack came from phishing" (not established); "no data was taken" (not established).
