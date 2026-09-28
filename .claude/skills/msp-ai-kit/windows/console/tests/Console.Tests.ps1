@@ -426,3 +426,26 @@ Describe 'Console integrity on a clean, unsigned copy' {
         $i.files | Should -Be $scripts
     }
 }
+
+Describe 'Loading a client plan (the "Use this client and mode" button)' {
+    BeforeAll { . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $null = Initialize-TestConsole }
+    It 'says to choose a client before any plan exists, not that everything is done' {
+        (Get-DENextAction -Mode 'takeover').title | Should -Be 'Choose a client and mode'
+    }
+    It 'builds the plan without scanning the machine (fast, safe on the window thread)' {
+        & (Get-Module DE.Apps) { $script:SavedWin2 = $script:IsWindowsHost; $script:IsWindowsHost = $true }
+        try {
+            Mock -ModuleName DE.Apps Test-DEPackageInstalled { throw 'machine scan during plan registration' }
+            Mock -ModuleName DE.Apps Get-DECloudStorageState { throw 'machine scan during plan registration' }
+            $p = Get-DEClientProfile -Id 'alamo'
+            $p.cloudStorage.removeConflicting = $true
+            $ids = @(Initialize-DEWorkflow -ClientProfile $p -Mode 'takeover')
+            $ids.Count | Should -BeGreaterThan 60
+            $ids | Should -Contain 'apps.remove.dropbox'
+        } finally { & (Get-Module DE.Apps) { $script:IsWindowsHost = $script:SavedWin2 } }
+    }
+    It 'asks for an audit when the plan exists but nothing has run' {
+        Clear-DEEvidence
+        (Get-DENextAction -Mode 'takeover').title | Should -Not -Be 'All actions for this mode are in desired state'
+    }
+}

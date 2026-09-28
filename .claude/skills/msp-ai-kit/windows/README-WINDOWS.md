@@ -7,6 +7,20 @@ evidence with Intelligence Hub handoff. Every change goes through one engine: de
 desired state, apply, verify, retry, then remediate or roll back. The evidence log records what happened
 at each step.
 
+## Install or update (one file)
+
+Download the zip and `Install-DETechConsole.ps1` into the same folder (for example `C:\DE-Provisioning`), then:
+
+```powershell
+cd C:\DE-Provisioning
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-DETechConsole.ps1
+```
+
+It unpacks the newest `DE-TechConsole*.zip` into `DE-TechConsole\`, clears Windows' downloaded-file block,
+keeps the previous copy as `DE-TechConsole.previous`, and opens the console. The window title shows the
+version (for example `DE Technician Console v1.3.4`), so you always know which build is running. The zip
+itself is not a script; do not pass it to `-File`.
+
 ## Start
 
 | You want | Do |

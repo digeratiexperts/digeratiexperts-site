@@ -72,6 +72,13 @@ function Get-DENextAction {
         }
     }
     if ($blocked) { return $blocked }
+    if (-not @(Get-DEActions -Mode $Mode).Count) {
+        return [pscustomobject]@{ id = $null; title = 'Choose a client and mode'; module = ''; phase = 0; runnable = $false; why = 'no plan is loaded yet: pick the client profile and mode on the Dashboard and choose "Use this client and mode"'; manual = ''; destructive = $false; secrets = @() }
+    }
+    $unrun = @(Get-DEActions -Mode $Mode | Where-Object { $_ -and -not $latest.ContainsKey($_.Id) }).Count
+    if ($unrun) {
+        return [pscustomobject]@{ id = $null; title = 'Run an audit first'; module = ''; phase = 0; runnable = $false; why = "$unrun check(s) have not run yet; choose Audit everything (change nothing)"; manual = ''; destructive = $false; secrets = @() }
+    }
     return [pscustomobject]@{ id = $null; title = 'All actions for this mode are in desired state'; module = ''; phase = 99; runnable = $false; why = 'export the evidence bundle and push to the Hub'; manual = ''; destructive = $false; secrets = @() }
 }
 
