@@ -20,6 +20,16 @@ Cursor and Copilot all follow the same playbooks in the same voice.
 3. **Check before you paste.** `--check` validates the config and modules and
    confirms the ChatGPT and Custom GPT budgets; `--dry-run` shows the plan.
 
+## Windows
+
+Technicians on Windows do not need the command line: double-click
+`windows\Start-MspAiKit.cmd` for a menu that builds the packs, installs the kit
+as a Claude Code / Codex skill for the current user, copies the ChatGPT blocks
+to the clipboard, verifies, and fetches the upstream kits. For the RMM,
+`windows\Install-MspAiKit.ps1 -Action All -NonInteractive` does build, install
+and verify with an exit code, a log under `%ProgramData%\DE\logs` and a JSON
+receipt. Details and every option: `windows\README-WINDOWS.md`.
+
 ## What is inside
 
 | Module | Command | Area | What it produces |

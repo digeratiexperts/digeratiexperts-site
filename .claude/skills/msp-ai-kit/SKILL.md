@@ -17,6 +17,7 @@ modules/NN-<id>.md       <- one playbook per file: Line (1 sentence), Rules, Pro
 references/*.md          <- DE-authored packs shipped verbatim with every build (the scripting pack)
 scripts/build.mjs        <- renders modules x config into packs; --list --check --verify --dry-run --set
 scripts/install-upstream.sh <- optional: fetch RTFM / Servosity / WYRE / cmmc-advisor into a gitignored vendor dir
+windows/                 <- Start-MspAiKit.cmd + Install-MspAiKit.ps1: technician menu / RMM loader for Windows
 examples/digerati-experts/  <- the committed, rendered DE pack (kept in sync by the tests)
 ```
 
@@ -33,6 +34,7 @@ examples/digerati-experts/  <- the committed, rendered DE pack (kept in sync by 
 | Refresh the committed example | `... --out .claude/skills/msp-ai-kit/examples/digerati-experts` |
 | Tests | `node --test .claude/skills/msp-ai-kit/scripts/build.test.mjs` |
 | External kits | `bash .claude/skills/msp-ai-kit/scripts/install-upstream.sh --list` then `--only cmmc --link` |
+| Windows technician or RMM | `windows\Start-MspAiKit.cmd` (menu) or `windows\Install-MspAiKit.ps1 -Action All -NonInteractive` |
 
 ## Procedure
 

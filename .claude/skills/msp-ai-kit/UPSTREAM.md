@@ -40,6 +40,11 @@ its default branch at shallow depth; run it again to update.
   never runs a remote script and never reads or writes credentials. Connector
   credentials for the Servosity and WYRE kits are supplied by the user as
   environment variables when they follow those kits' own instructions.
+- `windows/Install-MspAiKit.ps1`: runs the local `node` and `git` binaries
+  only. With `-InstallNode` (or a yes at the interactive prompt) it calls
+  `winget install OpenJS.NodeJS.LTS`; that is the only software it installs.
+  It writes under the user's profile, `%LOCALAPPDATA%\DE` and
+  `%ProgramData%\DE\logs`, never elevates, and never touches credentials.
 - Generated packs are pasted by a person into ChatGPT, Claude, Cursor or a
   repository. Client data pasted into those tools afterwards is governed by
   the guardrails module and DE's own data-handling rules, not by this skill.
