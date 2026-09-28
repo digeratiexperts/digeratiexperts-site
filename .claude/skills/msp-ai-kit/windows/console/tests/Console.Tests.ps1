@@ -315,6 +315,21 @@ Describe 'Module surface and phase runner' {
         Register-DEAction -Id 'p.drift' -Module 'test' -Title 'drift' -Detect { @{ v = 1 } } -Desired { @{ v = 2 } }
         (Get-DEActionState -Id 'p.drift').Status | Should -Be 'DRIFT'
     }
+    It 'classifies existing app drift without running an installer' {
+        $global:DETestInstallCalls = 0
+        Register-DEAction -Id 'apps.synthetic' -Module 'apps' -Title 'Synthetic app' -Detect { @{ installed = $true; configured = $false; versionOk = $true; kind = 'app' } } -Desired { @{ installed = $true; configured = $true; versionOk = $true } } -Apply { $global:DETestInstallCalls++ }
+        (Get-DEActionState -Id 'apps.synthetic').Operation | Should -Be 'Configure'
+        $r = Invoke-DEAction -Id 'apps.synthetic' -Mode Apply
+        $r.result | Should -Be 'WARN'
+        $global:DETestInstallCalls | Should -Be 0
+    }
+    It 'skips an already configured app and records detected state' {
+        $global:DETestInstallCalls = 0
+        Register-DEAction -Id 'apps.ready' -Module 'apps' -Title 'Ready app' -Detect { @{ installed = $true; configured = $true; versionOk = $true; kind = 'app' } } -Desired { @{ installed = $true; configured = $true; versionOk = $true } } -Apply { $global:DETestInstallCalls++ }
+        (Get-DEActionState -Id 'apps.ready').Operation | Should -Be 'No change'
+        (Invoke-DEAction -Id 'apps.ready' -Mode Apply).result | Should -Be 'NO CHANGE'
+        $global:DETestInstallCalls | Should -Be 0
+    }
     It 'resolves the Vendor URL placeholders from the client profile' {
         $v = [pscustomobject]@{ id = 'x'; urls = [pscustomobject]@{}; tenantUrlTemplate = 'https://{a}.example.com/{b}' }
         $p = [pscustomobject]@{ vendorTenants = [pscustomobject]@{ a = 'acme'; b = 'home' } }
@@ -399,6 +414,16 @@ Describe 'Package detection with the Windows code path forced on' {
     AfterAll { & (Get-Module DE.Apps) { $script:IsWindowsHost = $script:SavedWin } }
     It 'detects every catalog package without throwing (packages with no registry rules included)' {
         foreach ($p in Get-DEPackages) { { $null = Test-DEPackageInstalled -Package $p -Apps @() } | Should -Not -Throw }
+    }
+    It 'keeps installed evidence when a registry configuration rule drifts' {
+        $appPath = Join-Path ([IO.Path]::GetTempPath()) ("de-existing-{0}" -f [guid]::NewGuid())
+        Set-Content -LiteralPath $appPath -Value 'installed'
+        try {
+            $pkg = @{ detect = @{ paths = @($appPath); registry = @(@{ path = 'HKLM:\Software\DETest'; name = 'Configured'; equals = 1 }) } }
+            $d = Test-DEPackageInstalled -Package $pkg -Apps @()
+            $d.installed | Should -Be $true
+            $d.configured | Should -Be $false
+        } finally { Remove-Item -LiteralPath $appPath -Force }
     }
     It 'reads the cloud-storage standard for Alamo without throwing' {
         { $null = Get-DECloudStorageState -ClientProfile (Get-DEClientProfile -Id 'alamo') } | Should -Not -Throw
