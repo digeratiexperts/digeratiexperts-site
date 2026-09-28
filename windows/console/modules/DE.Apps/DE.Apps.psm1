@@ -77,7 +77,7 @@ function Test-DEPackageInstalled {
     $versionOk = $true
     if ($installed -and $minVersion -and $version) { try { $versionOk = ([version]($version -replace '[^\d\.].*$', '') -ge [version]$minVersion) } catch { $versionOk = $true } }
     # Registry policy is configuration evidence. A broken policy must not erase evidence that an app is installed.
-    $policyOnly = ([bool]$det -and -not @(Get-DEPkgProp $det 'services' | Where-Object { $_ }).Count -and -not @(Get-DEPkgProp $det 'processes' | Where-Object { $_ }).Count -and -not @(Get-DEPkgProp $det 'paths' | Where-Object { $_ }).Count -and -not (Get-DEPkgProp $det 'appNameRegex'))
+    $policyOnly = ($null -ne $registryOk -and -not @(Get-DEPkgProp $det 'services' | Where-Object { $_ }).Count -and -not @(Get-DEPkgProp $det 'processes' | Where-Object { $_ }).Count -and -not @(Get-DEPkgProp $det 'paths' | Where-Object { $_ }).Count -and -not (Get-DEPkgProp $det 'appNameRegex'))
     if ($policyOnly -and $registryOk -eq $true) { $installed = $true }
     return @{ installed = $installed; configured = ($registryOk -ne $false); kind = $(if ($policyOnly) { 'policy' } else { 'app' }); version = $version; versionOk = $versionOk; evidence = $ev }
 }
