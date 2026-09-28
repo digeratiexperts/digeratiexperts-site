@@ -472,3 +472,25 @@ Describe 'DE Tech Tool planning, tiers and client branding' {
         (New-DEClientProfileTemplate).branding.clientLogo | Should -Be ''
     }
 }
+
+Describe 'Security provider selection' {
+    BeforeAll { . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $null = Initialize-TestConsole }
+
+    It 'does not install Guardz or request its key for a Blackpoint-only client' {
+        $profile = ConvertTo-DEHashtable (Get-DEClientProfile -Id 'alamo')
+        $profile.security.mdr.deploy = @('blackpoint')
+        Register-DESecurityActions -ClientProfile $profile
+        $guardz = Get-DEAction -Id 'security.guardz'
+        @($guardz.RequiresSecrets).Count | Should -Be 0
+        [bool]$guardz.Apply | Should -Be $false
+        [bool](Get-DEAction -Id 'security.blackpoint').Apply | Should -Be $true
+    }
+
+    It 'retains the Guardz install action when Guardz is selected' {
+        $profile = ConvertTo-DEHashtable (Get-DEClientProfile -Id 'alamo')
+        Register-DESecurityActions -ClientProfile $profile
+        $guardz = Get-DEAction -Id 'security.guardz'
+        @($guardz.RequiresSecrets) | Should -Contain 'GUARDZ_ORG_KEY'
+        [bool]$guardz.Apply | Should -Be $true
+    }
+}
