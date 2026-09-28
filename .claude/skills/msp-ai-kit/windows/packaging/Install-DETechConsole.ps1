@@ -51,20 +51,31 @@ try {
         Write-Step "sha256 verified ($hash)" 'Green'
     } else { Write-Step "sha256 $hash (not checked: no -Sha256 given)" 'Yellow' }
 
+    $InstallDir = [IO.Path]::GetFullPath($InstallDir)
+    $ZipPath = (Get-Item -LiteralPath $ZipPath -ErrorAction Stop).FullName
     if (-not $PSCmdlet.ShouldProcess($InstallDir, 'install DE Tech Tool')) { return }
-    $stage = Join-Path ([IO.Path]::GetTempPath()) ("de-techconsole-{0}" -f ([guid]::NewGuid()))
+    $stage = Join-Path -Path ([IO.Path]::GetTempPath()) -ChildPath ("de-techconsole-{0}" -f ([guid]::NewGuid()))
+    $step = 'extract package'
     Expand-Archive -LiteralPath $ZipPath -DestinationPath $stage -Force
+    $step = 'locate launcher'
     $launcher = @(Get-ChildItem -LiteralPath $stage -Recurse -File -Filter 'Start-DETechTool.cmd' | Select-Object -First 1)
     if (-not $launcher.Count) { throw 'This zip does not contain Start-DETechTool.cmd; it is not a DE Tech Tool package.' }
-    $kitRoot = Split-Path -Parent (Split-Path -Parent $launcher[0].FullName)   # ...\msp-ai-kit
+    $kitRoot = $launcher[0].Directory.Parent.FullName   # ...\msp-ai-kit
+    if (-not (Test-Path -LiteralPath (Join-Path -Path $kitRoot -ChildPath 'windows\console\DETechConsole.ps1'))) {
+        throw 'This zip does not contain the DE Tech Tool console beside the launcher.'
+    }
 
+    $step = 'replace previous copy'
     if (Test-Path -LiteralPath $InstallDir) {
         $backup = "$InstallDir.previous"
         if (Test-Path -LiteralPath $backup) { Remove-Item -LiteralPath $backup -Recurse -Force }
         Move-Item -LiteralPath $InstallDir -Destination $backup
         Write-Step "Previous copy kept at $backup" 'Yellow'
     }
-    New-Item -ItemType Directory -Path (Split-Path -Parent $InstallDir) -Force | Out-Null
+    $parent = [IO.Path]::GetDirectoryName($InstallDir.TrimEnd('\'))
+    if ([string]::IsNullOrWhiteSpace($parent)) { throw "Invalid install destination: $InstallDir" }
+    New-Item -ItemType Directory -Path $parent -Force | Out-Null
+    $step = 'move new copy into place'
     Move-Item -LiteralPath $kitRoot -Destination $InstallDir
     Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue
     if ($env:OS -eq 'Windows_NT') { Get-ChildItem -LiteralPath $InstallDir -Recurse -File | Unblock-File }   # clears the downloaded-from-internet mark
@@ -77,6 +88,7 @@ try {
     if (-not $NoLaunch) { Start-Process -FilePath $start -WorkingDirectory (Split-Path -Parent $start) | Out-Null }
     exit 0
 } catch {
-    Write-Step "Install failed: $($_.Exception.Message)" 'Red'
+    Write-Step "Install failed during $($step): $($_.Exception.Message)" 'Red'
+    Write-Step "At: $($_.InvocationInfo.ScriptName):$($_.InvocationInfo.ScriptLineNumber)" 'Red'
     exit 1
 }
