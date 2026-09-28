@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    RMM deployment of the DE Technician Console: download, verify, install, optionally run headless.
+    RMM deployment of the DE Tech Tool: download, verify, install, optionally run headless.
 
 .DESCRIPTION
     Built for MSP360 / JumpCloud Commands / any RMM that runs PowerShell as SYSTEM.
@@ -62,7 +62,7 @@ try {
     } elseif ($RequireSignature) { Write-DeployLog FAIL 'package has no integrity.json and -RequireSignature was given; refused'; exit 3 }
     else { Write-DeployLog WARN 'package has no integrity.json (unsigned development build)' }
 
-    if ($PSCmdlet.ShouldProcess($InstallDir, 'install DE Technician Console')) {
+    if ($PSCmdlet.ShouldProcess($InstallDir, 'install DE Tech Tool')) {
         $backup = "$InstallDir.previous"
         if (Test-Path -LiteralPath $backup) { Remove-Item -LiteralPath $backup -Recurse -Force }
         if (Test-Path -LiteralPath $InstallDir) { Move-Item -LiteralPath $InstallDir -Destination $backup }
