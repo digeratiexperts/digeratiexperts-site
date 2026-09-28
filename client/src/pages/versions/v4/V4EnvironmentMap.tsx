@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 /**
  * The visitor's own environment, drawn from numbers they typed.
@@ -13,6 +13,11 @@ import { useMemo } from "react";
  * environment becomes a counted one — and it is THEIR environment, with
  * their numbers, which is the only version of this idea that earns the space.
  * Chapter 10 draws it once more with one edge around all of it.
+ *
+ * Motion, deliberately small and only on the visitor's own data: a newly
+ * typed number is answered by its marks settling in (240ms, staggered), and
+ * the final frame's edge draws itself once the frame is in view. Under
+ * prefers-reduced-motion both are simply there.
  *
  * People appear as presence, never as faces, per design/IMAGERY.md.
  * Code-built; no generated imagery; nothing here claims a metric.
@@ -41,13 +46,48 @@ export function parseEnvironment(users: string, devices: string, sites: string):
   };
 }
 
-/** Lay marks in a tidy block, so a site reads as a place rather than a spray. */
-function marksFor(count: number, cols: number) {
-  const drawn = Math.min(count, MAX_MARKS_PER_SITE);
-  return Array.from({ length: drawn }, (_, i) => ({
-    col: i % cols,
-    row: Math.floor(i / cols),
-  }));
+/** Two frames later, so the browser has painted the "before" state and the transition has somewhere to start. */
+function useSettled(reduced: boolean): boolean {
+  const [settled, setSettled] = useState(reduced);
+  useEffect(() => {
+    if (reduced) {
+      setSettled(true);
+      return;
+    }
+    let inner = 0;
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => setSettled(true));
+    });
+    return () => {
+      cancelAnimationFrame(outer);
+      cancelAnimationFrame(inner);
+    };
+  }, [reduced]);
+  return settled;
+}
+
+/** One person or one device. New marks settle in; marks already on screen stay put. */
+function Mark({ kind, index, reduced }: { kind: "person" | "device"; index: number; reduced: boolean }) {
+  const settled = useSettled(reduced);
+  const shape =
+    kind === "person"
+      ? "block h-[10px] w-[10px] rounded-full bg-[#F7F5F2]/80"
+      : "block h-[10px] w-[10px] rounded-[1.5px] border border-white/30";
+  return (
+    <span
+      className={shape}
+      style={
+        reduced
+          ? undefined
+          : {
+              opacity: settled ? 1 : 0,
+              transform: settled ? "scale(1)" : "scale(0.4)",
+              transition: "opacity 240ms ease, transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+              transitionDelay: `${Math.min(index, 24) * 14}ms`,
+            }
+      }
+    />
+  );
 }
 
 export function EnvironmentMap({
@@ -75,49 +115,72 @@ export function EnvironmentMap({
 
   const cols = layout.length > 3 ? 3 : layout.length > 1 ? 2 : 1;
 
+  // The frame draws its edge once it is actually on screen — once, and only
+  // when framed. Reduced motion: the edge is there from the start.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(!framed || reduced);
+  useEffect(() => {
+    if (!framed || reduced || inView) return;
+    const el = rootRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setInView(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.35 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [framed, reduced, inView]);
+
   return (
     <div
-      className={framed ? "w-full rounded-2xl border border-[#D3126A]/50 p-3 sm:p-4" : "w-full"}
+      ref={rootRef}
+      className={framed ? "w-full rounded-2xl border p-3 sm:p-4" : "w-full"}
+      style={
+        framed
+          ? {
+              borderColor: inView ? "rgba(211, 18, 106, 0.5)" : "rgba(211, 18, 106, 0)",
+              transition: reduced ? undefined : "border-color 700ms ease",
+            }
+          : undefined
+      }
       data-testid="v4-environment"
       data-empty={empty ? "true" : "false"}
       data-sites={sites}
       data-framed={framed ? "true" : "false"}
+      data-in={inView ? "true" : "false"}
     >
       <div
         className={`grid gap-3 ${cols === 1 ? "grid-cols-1" : cols === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}
       >
         {layout.map((site, i) => (
-          <div
-            key={i}
-            className="rounded-xl border border-white/10 bg-white/[0.02] p-4"
-            style={
-              reduced
-                ? undefined
-                : { transition: "border-color 220ms ease, background-color 220ms ease" }
-            }
-          >
+          <div key={i} className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
             <div className="mb-3 flex items-baseline justify-between gap-2">
-              <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-white/35">
+              <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-white/55">
                 {sites > MAX_SITES_DRAWN && i === MAX_SITES_DRAWN - 1
                   ? `+${sites - MAX_SITES_DRAWN + 1} sites`
                   : `Site ${i + 1}`}
               </span>
               {/* Each site reads as a place with people and devices in it. */}
-              <span className="font-mono text-[9.5px] tabular-nums text-white/35">
+              <span className="font-mono text-[9.5px] tabular-nums text-white/55">
                 {site.users} · {site.devices}
               </span>
             </div>
 
             {/* People — presence, never faces. */}
             <div className="flex flex-wrap gap-[3px]">
-              {marksFor(site.users, 10).map((_, k) => (
-                <span
-                  key={`u${k}`}
-                  className="block h-[10px] w-[10px] rounded-full bg-[#F7F5F2]/80"
-                />
+              {Array.from({ length: Math.min(site.users, MAX_MARKS_PER_SITE) }, (_, k) => (
+                <Mark key={`u${k}`} kind="person" index={k} reduced={reduced} />
               ))}
               {site.users > MAX_MARKS_PER_SITE && (
-                <span className="ml-1 font-mono text-[9px] text-white/40">
+                <span className="ml-1 font-mono text-[9px] text-white/55">
                   +{site.users - MAX_MARKS_PER_SITE}
                 </span>
               )}
@@ -126,14 +189,11 @@ export function EnvironmentMap({
             {/* Devices — squares, so the two never read as the same thing. */}
             {site.devices > 0 && (
               <div className="mt-2 flex flex-wrap gap-[3px]">
-                {marksFor(site.devices, 10).map((_, k) => (
-                  <span
-                    key={`d${k}`}
-                    className="block h-[10px] w-[10px] rounded-[1.5px] border border-white/30"
-                  />
+                {Array.from({ length: Math.min(site.devices, MAX_MARKS_PER_SITE) }, (_, k) => (
+                  <Mark key={`d${k}`} kind="device" index={k} reduced={reduced} />
                 ))}
                 {site.devices > MAX_MARKS_PER_SITE && (
-                  <span className="ml-1 font-mono text-[9px] text-white/40">
+                  <span className="ml-1 font-mono text-[9px] text-white/55">
                     +{site.devices - MAX_MARKS_PER_SITE}
                   </span>
                 )}
@@ -143,7 +203,7 @@ export function EnvironmentMap({
         ))}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-white/35">
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-white/55">
         <span className="inline-flex items-center gap-1.5">
           <span className="block h-[10px] w-[10px] rounded-full bg-[#F7F5F2]/80" />
           {users === 1 ? "1 person" : `${users} people`}
@@ -152,8 +212,21 @@ export function EnvironmentMap({
           <span className="block h-[10px] w-[10px] rounded-[1.5px] border border-white/30" />
           {devices === 1 ? "1 device" : `${devices} devices`}
         </span>
-        <span>{sites === 1 ? "1 site" : `${sites} sites`}</span>
-        {framed && <span className="text-[#F04C97]">· one accountable team</span>}
+        {/* One site is drawn until a count is typed; the legend says so
+            instead of reporting "0 sites" beside a drawn site. */}
+        <span>{sites > 0 ? (sites === 1 ? "1 site" : `${sites} sites`) : "sites not set"}</span>
+        {framed && (
+          <span
+            className="text-[#F04C97]"
+            style={
+              reduced
+                ? undefined
+                : { opacity: inView ? 1 : 0, transition: "opacity 400ms ease 300ms" }
+            }
+          >
+            · one accountable team
+          </span>
+        )}
       </div>
     </div>
   );

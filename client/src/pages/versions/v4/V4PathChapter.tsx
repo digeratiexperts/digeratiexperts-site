@@ -99,7 +99,7 @@ export function V4PathChapter() {
                 className="absolute -left-[31px] top-2 h-2 w-2 rounded-full border border-white/40 bg-[#050312] sm:hidden"
               />
               <div className="border-t border-white/15 pt-4 sm:border-t-0 sm:pt-0">
-                <p className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-white/40">
+                <p className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-white/55">
                   <span className="mr-2 text-[#F7F5F2]">{door.n}</span>
                   {door.kind}
                 </p>
@@ -120,7 +120,7 @@ export function V4PathChapter() {
             aria-hidden="true"
             className="absolute -left-[5px] top-2 h-2 w-2 rounded-full border border-dashed border-white/40 bg-[#050312]"
           />
-          <p className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-white/40">
+          <p className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-white/55">
             <span className="mr-2 text-white/60">D</span>
             No engagement
           </p>

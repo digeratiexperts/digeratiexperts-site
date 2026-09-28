@@ -64,7 +64,7 @@ export function ChapterLabel({
   return (
     <p
       className={`mb-5 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em] ${
-        paper ? "text-black/40" : "text-white/35"
+        paper ? "text-black/60" : "text-white/55"
       }`}
     >
       <span className={paper ? "text-[#D3126A]" : "text-[#F04C97]"}>{n}</span>

@@ -45,7 +45,7 @@ export function V4BlocksChapter() {
               // unevenness reads as natural rather than as a mistake.
               className="flex min-w-0 flex-col bg-[#0a0a0a] px-4 py-4 sm:min-h-[168px] sm:px-3.5 lg:px-4"
             >
-              <p className="font-mono text-[10px] tabular-nums text-white/30">0{i + 1}</p>
+              <p className="font-mono text-[10px] tabular-nums text-white/50">0{i + 1}</p>
               <div className="mt-3 sm:mt-6">
                 <h3 className="font-['Space_Grotesk',sans-serif] text-[14.5px] font-bold leading-tight text-[#F7F5F2] sm:text-[13.5px] lg:text-[14.5px]">
                   {name}
@@ -78,7 +78,7 @@ export function V4BlocksChapter() {
             </p>
           </div>
         </div>
-        <figcaption className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-white/30">
+        <figcaption className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-white/50">
           The DE security model · eight blocks · code-drawn, states no metric
         </figcaption>
       </figure>

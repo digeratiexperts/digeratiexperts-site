@@ -50,7 +50,7 @@ export function V4CloseChapter({ reduced }: { reduced: boolean }) {
               <EnvironmentMap environment={env} reduced={reduced} framed />
             ) : (
               <div className="border-l border-white/20 pl-6 sm:pl-8">
-                <p className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-white/40">
+                <p className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-white/55">
                   Thirty days, in writing
                 </p>
                 {/* Verbatim from client/src/pages/about/Guarantee.tsx — the

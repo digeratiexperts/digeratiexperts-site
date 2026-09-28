@@ -90,7 +90,7 @@ export function V4ScopeChapter() {
         data-testid="v4-scope-sheet"
         data-personal={personal ? "true" : "false"}
       >
-        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 py-3 font-mono text-[10.5px] uppercase tracking-[0.2em] text-white/40">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 py-3 font-mono text-[10.5px] uppercase tracking-[0.2em] text-white/55">
           <span>Assessment scope</span>
           <span className={personal ? "text-[#F04C97]" : ""}>
             {personal
@@ -106,14 +106,19 @@ export function V4ScopeChapter() {
               className="grid gap-x-8 gap-y-1.5 py-5 sm:grid-cols-[minmax(0,2fr)_minmax(0,5fr)_minmax(0,2fr)] sm:items-baseline"
               data-testid={`v4-scope-row-${i + 1}`}
             >
-              <p className="font-mono text-[12.5px] tabular-nums text-white/55">
-                <span className="mr-3 text-white/30">{String(i + 1).padStart(2, "0")}</span>
+              {/* The subject brightens once it carries the visitor's own number. */}
+              <p
+                className={`font-mono text-[12.5px] tabular-nums transition-colors duration-500 ${
+                  personal ? "text-[#F7F5F2]" : "text-white/55"
+                }`}
+              >
+                <span className="mr-3 text-white/50">{String(i + 1).padStart(2, "0")}</span>
                 {row.subject(env)}
               </p>
               <p className="font-['Space_Grotesk',sans-serif] text-[clamp(1.05rem,1.6vw,1.3rem)] font-bold leading-snug text-[#F7F5F2]">
                 {row.question}
               </p>
-              <p className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-white/35 sm:text-right">
+              <p className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-white/55 sm:text-right">
                 {row.block}
               </p>
             </li>
@@ -121,7 +126,7 @@ export function V4ScopeChapter() {
         </ol>
 
         <div className="border-t border-white/15 pt-6 sm:grid sm:grid-cols-[minmax(0,2fr)_minmax(0,7fr)] sm:gap-x-8">
-          <p className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-white/40">Then</p>
+          <p className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-white/55">Then</p>
           <p className="mt-2 max-w-[56ch] text-[15.5px] leading-relaxed text-white/60 sm:mt-0">
             You get the findings in plain English, and you keep them whichever way you go —
             including the way where the answer is that you do not need us for this.

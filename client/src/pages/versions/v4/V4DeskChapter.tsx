@@ -45,7 +45,7 @@ export function V4DeskChapter() {
               key={name}
               className="grid grid-cols-[2.5rem_minmax(0,1fr)] items-baseline gap-x-3 border-b border-white/10 py-3.5 sm:grid-cols-[2.5rem_minmax(0,11rem)_minmax(0,1fr)]"
             >
-              <span className="font-mono text-[10.5px] tabular-nums text-white/30">
+              <span className="font-mono text-[10.5px] tabular-nums text-white/50">
                 {String(i + 1).padStart(2, "0")}
               </span>
               <h3 className="text-[15px] font-semibold leading-snug text-[#F7F5F2]">{name}</h3>
@@ -77,7 +77,10 @@ export function V4DeskChapter() {
             <span className="inline-flex items-center rounded border border-white/15 bg-[#151217] px-2 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.12em] text-white/80">
               Real, details removed
             </span>
-            <span>DE Desk — the support surface every visitor to this site can open.</span>
+            <span>
+              DE Desk — the support surface on every page of this site. Open the real one
+              from the launcher at the bottom right.
+            </span>
           </figcaption>
         </figure>
       </div>

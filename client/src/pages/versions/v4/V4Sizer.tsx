@@ -84,7 +84,7 @@ export function V4Sizer({ reduced }: { reduced: boolean }) {
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {FIELDS.map((f) => (
           <label key={f.key} className="block min-w-0">
-            <span className="block font-mono text-[10px] uppercase tracking-[0.16em] text-white/45">
+            <span className="block font-mono text-[10px] uppercase tracking-[0.16em] text-white/60">
               {f.label}
             </span>
             <input
@@ -97,9 +97,9 @@ export function V4Sizer({ reduced }: { reduced: boolean }) {
               onChange={(e) => set(f.key, e.target.value)}
               aria-label={`${f.label}, ${f.hint}`}
               data-testid={`v4-sizer-${f.key}`}
-              className="mt-1.5 w-full rounded-xl border border-white/15 bg-white/[0.04] px-3 py-3 font-['Space_Grotesk',sans-serif] text-[clamp(1.4rem,3vw,2rem)] font-bold tabular-nums text-[#F7F5F2] outline-none placeholder:text-white/20 focus-visible:border-[#F04C97] focus-visible:ring-2 focus-visible:ring-[#F04C97]/40"
+              className="mt-1.5 w-full rounded-xl border border-white/15 bg-white/[0.04] px-3 py-3 font-['Space_Grotesk',sans-serif] text-[clamp(1.4rem,3vw,2rem)] font-bold tabular-nums text-[#F7F5F2] outline-none placeholder:text-white/55 focus-visible:border-[#F04C97] focus-visible:ring-2 focus-visible:ring-[#F04C97]/40"
             />
-            <span className="mt-1 block text-[11px] text-white/35">{f.hint}</span>
+            <span className="mt-1 block text-[11px] text-white/55">{f.hint}</span>
           </label>
         ))}
       </div>
@@ -108,7 +108,7 @@ export function V4Sizer({ reduced }: { reduced: boolean }) {
         {started ? (
           <EnvironmentMap environment={environment} reduced={reduced} />
         ) : (
-          <p className="max-w-[44ch] text-[13.5px] leading-relaxed text-white/45">
+          <p className="max-w-[44ch] text-[13.5px] leading-relaxed text-white/60">
             Three numbers is all it takes. They stay on this device, and this step asks
             for no contact details.
           </p>

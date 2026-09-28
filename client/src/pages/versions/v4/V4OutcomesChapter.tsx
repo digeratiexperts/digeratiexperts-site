@@ -26,9 +26,12 @@ const LEDGER: Array<{ verb: string; meaning: string; runs: string[] }> = [
     runs: ["Managed Workplace", "DE Desk"],
   },
   {
+    // Threadline and Switchboard are canon names with no published page or
+    // package behind them yet (docs/DE-NAMING-CANON.md only). Until a page
+    // exists, this column names the lines the pricing page actually lists.
     verb: "Communicate",
-    meaning: "Mail and voice that keep working when a provider does not.",
-    runs: ["Threadline Inbox · Threadline Continuity", "Switchboard"],
+    meaning: "Mail, voice and meetings run as one system, not three vendors.",
+    runs: ["Microsoft 365 / Google Workspace / Zoho workspace support", "UCaaS: Voice & Meetings"],
   },
   {
     verb: "Automate",
@@ -43,7 +46,7 @@ const LEDGER: Array<{ verb: string; meaning: string; runs: string[] }> = [
   {
     verb: "Recover",
     meaning: "A failure becomes an interruption rather than an event.",
-    runs: ["Backup & Disaster Recovery (BCDR)", "Threadline Recovery"],
+    runs: ["Backup & Disaster Recovery (BCDR)", "Endpoint Backup · User Cloud Storage Backup"],
   },
   {
     verb: "Grow",
@@ -73,7 +76,7 @@ export function V4OutcomesChapter() {
               {row.verb}
             </dt>
             <dd className="text-[15px] leading-relaxed text-black/60">{row.meaning}</dd>
-            <dd className="flex flex-col gap-1 font-mono text-[11px] uppercase leading-relaxed tracking-[0.12em] text-black/45 sm:text-right">
+            <dd className="flex flex-col gap-1 font-mono text-[11px] uppercase leading-relaxed tracking-[0.12em] text-black/60 sm:text-right">
               {row.runs.map((r) => (
                 <span key={r}>{r}</span>
               ))}
@@ -81,7 +84,7 @@ export function V4OutcomesChapter() {
           </div>
         ))}
       </dl>
-      <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-black/35">
+      <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-black/60">
         Right column: service names as DE publishes them · no supplier is named · no tier is priced here
       </p>
     </Chapter>

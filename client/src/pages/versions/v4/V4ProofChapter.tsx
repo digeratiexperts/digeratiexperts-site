@@ -61,15 +61,20 @@ export function V4ProofChapter() {
         {/* The person. Real photograph, already approved for production. */}
         <figure className="max-w-[420px]" data-testid="v4-founder">
           <div className="overflow-hidden rounded-2xl border border-white/15 bg-[#151217]">
-            <img
-              src="/images/founder/joe-petro-studio-blazer-white.jpg"
-              alt="Joseph Petro, Founder of Digerati Experts"
-              width={768}
-              height={1024}
-              loading="lazy"
-              decoding="async"
-              className="block aspect-[3/4] w-full object-cover object-[center_20%]"
-            />
+            {/* Same photograph production serves as JPEG (142 KB); the WebP
+                derivative is 44 KB and the JPEG stays as the fallback. */}
+            <picture>
+              <source srcSet="/images/founder/joe-petro-studio-blazer-white.webp" type="image/webp" />
+              <img
+                src="/images/founder/joe-petro-studio-blazer-white.jpg"
+                alt="Joseph Petro, Founder of Digerati Experts"
+                width={768}
+                height={1024}
+                loading="lazy"
+                decoding="async"
+                className="block aspect-[3/4] w-full object-cover object-[center_20%]"
+              />
+            </picture>
           </div>
           <figcaption className="mt-4">
             <p className="font-['Space_Grotesk',sans-serif] text-[20px] font-bold text-[#F7F5F2]">
@@ -94,7 +99,7 @@ export function V4ProofChapter() {
                 className="border-b border-white/10 py-6"
                 data-testid={`v4-excerpt-${i + 1}`}
               >
-                <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-[10.5px] uppercase tracking-[0.18em] text-white/40">
+                <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-[10.5px] uppercase tracking-[0.18em] text-white/55">
                   <span className="text-white/60">{x.source}</span>
                   <span className="h-px w-5 self-center bg-white/15" />
                   <span>{x.title}</span>
@@ -107,7 +112,7 @@ export function V4ProofChapter() {
                   {x.quote.length < 20 ? x.quote : `“${x.quote}”`}
                 </blockquote>
                 {x.note && (
-                  <p className="mt-2 max-w-[56ch] text-[13px] leading-relaxed text-white/45">{x.note}</p>
+                  <p className="mt-2 max-w-[56ch] text-[13px] leading-relaxed text-white/60">{x.note}</p>
                 )}
               </li>
             ))}
