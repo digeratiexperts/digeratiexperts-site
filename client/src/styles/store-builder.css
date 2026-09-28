@@ -144,6 +144,16 @@
   --d2-ink-soft: rgba(5, 3, 18, 0.6);
   --d2-accent-ink: rgb(var(--de-accent-rgb));
 }
+/* On paper the electric ink fails 4.5:1 at label size, so numbers, quantities and links take the paper ink. */
+.d2-chapter--paper .d2-step__n,
+.d2-chapter--paper .d2-qty,
+.d2-chapter--paper .d2-accent-ink,
+.d2-chapter--paper .d2-link {
+  color: var(--d2-ink-strong);
+}
+.d2-chapter--paper .d2-link {
+  text-decoration-color: rgba(5, 3, 18, 0.35);
+}
 .d2-ink {
   color: var(--d2-ink);
 }

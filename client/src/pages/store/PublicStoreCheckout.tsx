@@ -7,7 +7,7 @@ import { useAnnouncer } from "@/components/AccessibleAnnouncer";
 import { useMinWidth, useSolutionDraft } from "@/hooks/useSolutionDraft";
 import { Door2Frame } from "@/components/store/door2/Door2Frame";
 import { SolutionProfileForm } from "@/components/store/SolutionProfileForm";
-import { HairGrid, LiveLine, StepLabel, StoreAction, StoreChapter, UndoRow } from "@/components/store/door2/primitives";
+import { HairGrid, HelpRow, LiveLine, StepLabel, StoreAction, StoreChapter, UndoRow } from "@/components/store/door2/primitives";
 import { ChoiceTiles, type ChoiceOption } from "@/components/store/door2/ChoiceTiles";
 import { PackageSheet } from "@/components/store/door2/PackageSheet";
 import { CoverageBand } from "@/components/store/door2/Coverage";
@@ -1140,6 +1140,7 @@ export default function PublicSolutionWorkspace() {
                         See Handle Our IT.
                       </Link>
                     </p>
+                    {wide ? null : <HelpRow seed={helpSeed} className="mt-8" />}
                   </StoreChapter>
                 </div>
               )}

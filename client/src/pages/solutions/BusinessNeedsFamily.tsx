@@ -5,10 +5,10 @@ import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhanced
 import NotFound from "@/pages/not-found";
 import { useSEO } from "@/hooks/useSEO";
 import { useAnnouncer } from "@/components/AccessibleAnnouncer";
-import { useSolutionDraft } from "@/hooks/useSolutionDraft";
+import { useMinWidth, useSolutionDraft } from "@/hooks/useSolutionDraft";
 import { Door2Frame } from "@/components/store/door2/Door2Frame";
 import { ProfileLine, SolutionProfileForm } from "@/components/store/SolutionProfileForm";
-import { StepLabel, StoreAction, StoreChapter, UndoRow } from "@/components/store/door2/primitives";
+import { HelpRow, StepLabel, StoreAction, StoreChapter, UndoRow } from "@/components/store/door2/primitives";
 import { RelationshipCompare } from "@/components/store/door2/RelationshipCompare";
 import { CoverageChips } from "@/components/store/door2/Coverage";
 import { SolutionBar, SolutionRail, type SolutionChromeProps, type SolutionPrimary } from "@/components/store/door2/SolutionChrome";
@@ -78,6 +78,7 @@ export default function BusinessNeedsFamily() {
   const [, navigate] = useLocation();
   const draft = useSolutionDraft();
   const { announce } = useAnnouncer();
+  const wide = useMinWidth(1024);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileExpandKey, setProfileExpandKey] = useState(0);
   const [undoPending, setUndoPending] = useState(false);
@@ -320,6 +321,7 @@ export default function BusinessNeedsFamily() {
                     See Handle Our IT.
                   </Link>
                 </p>
+                {wide ? null : <HelpRow seed={helpSeed} askLabel="Ask DE about this need" className="mt-8" />}
               </div>
             </div>
 

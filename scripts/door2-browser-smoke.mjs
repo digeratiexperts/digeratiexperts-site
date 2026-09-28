@@ -59,9 +59,16 @@ const fixedOverlaps = (page) =>
     });
     // Keep only outermost fixed elements (a fixed child of a fixed parent is the same chrome).
     const outer = fixed.filter((el) => !fixed.some((other) => other !== el && other.contains(el)));
+    // The gate is the Store's bar against the bottom chrome (dock, banner, Desk launcher) and the nav.
+    // The MegaMenu's own utility bar and nav container are one header, measured by their own tests.
+    const isHeaderChrome = (el) => {
+      const cls = el.className?.toString() ?? "";
+      return /mega-menu-container|min-h-\[var\(--de-utility-h\)\]|scroll-progress/.test(cls) || el.getAttribute("data-testid") === "scroll-progress";
+    };
     const hits = [];
     for (let i = 0; i < outer.length; i += 1) {
       for (let j = i + 1; j < outer.length; j += 1) {
+        if (isHeaderChrome(outer[i]) && isHeaderChrome(outer[j])) continue;
         const a = outer[i].getBoundingClientRect();
         const b = outer[j].getBoundingClientRect();
         const overlap = a.left < b.right - 2 && b.left < a.right - 2 && a.top < b.bottom - 2 && b.top < a.bottom - 2;
