@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    DE Technician Console core: state, evidence, secrets runtime, gate engine,
+    DE Tech Tool core: state, evidence, secrets runtime, gate engine,
     action framework (detect / desired / apply / verify / retry / remediate /
     rollback), reboot-resume, exceptions, hashing and signature checks, HTTP.
 
@@ -81,7 +81,7 @@ function Initialize-DEConsole {
     $script:DE.GateCache = @{}
     Import-DEState | Out-Null
     Import-DEExceptions | Out-Null
-    Write-DELog -Level STEP -Message ("DE Technician Console {0} initialised; mode {1}; dry run {2}; data {3}" -f $script:DE.ConsoleVersion, $Mode, [bool]$DryRun, $base)
+    Write-DELog -Level STEP -Message ("DE Tech Tool {0} initialised; mode {1}; dry run {2}; data {3}" -f $script:DE.ConsoleVersion, $Mode, [bool]$DryRun, $base)
     return $script:DE.Dirs
 }
 
@@ -220,11 +220,17 @@ function Set-DEStateValue { param([Parameter(Mandatory = $true)][string]$Path, [
 function Get-DEHashPath { param($Object, [string]$Path) $cur = $Object; foreach ($k in $Path.Split('.')) { if ($null -eq $cur) { return $null }; if ($cur -is [System.Collections.IDictionary]) { if ($cur.Contains($k)) { $cur = $cur[$k] } else { return $null } } else { $p = $cur.PSObject.Properties[$k]; if ($p) { $cur = $p.Value } else { return $null } } }; return $cur }
 function Set-DEHashPath { param([System.Collections.IDictionary]$Object, [string]$Path, $Value) $ks = $Path.Split('.'); $cur = $Object; for ($i = 0; $i -lt $ks.Length - 1; $i++) { if (-not $cur.Contains($ks[$i]) -or -not ($cur[$ks[$i]] -is [System.Collections.IDictionary])) { $cur[$ks[$i]] = @{} }; $cur = $cur[$ks[$i]] }; $cur[$ks[$ks.Length - 1]] = $Value }
 function ConvertTo-DEHashtable {
+    <# JSON objects -> hashtables, recursively. Strings and numbers stay themselves; lists stay lists (also with one item). #>
     param([AllowNull()]$InputObject)
     if ($null -eq $InputObject) { return $null }
-    if ($InputObject -is [System.Collections.IDictionary]) { $h = @{}; foreach ($k in $InputObject.Keys) { $h[$k] = ConvertTo-DEHashtable $InputObject[$k] }; return $h }
-    if ($InputObject -is [System.Collections.IEnumerable] -and -not ($InputObject -is [string])) { return @($InputObject | ForEach-Object { ConvertTo-DEHashtable $_ }) }
-    if ($InputObject -is [pscustomobject]) { $h = @{}; foreach ($p in $InputObject.PSObject.Properties) { $h[$p.Name] = ConvertTo-DEHashtable $p.Value }; return $h }
+    # Unwrap first: a value that came through the pipeline is PSObject-wrapped, and `-is [pscustomobject]` is true
+    # for every wrapped value, which used to turn each string of a list into a hashtable of its properties.
+    $base = $InputObject
+    if ($InputObject -is [System.Management.Automation.PSObject]) { $base = $InputObject.PSObject.BaseObject }
+    if ($base -is [string] -or $base -is [System.ValueType]) { return $base }
+    if ($base -is [System.Collections.IDictionary]) { $h = @{}; foreach ($k in $base.Keys) { $h[$k] = ConvertTo-DEHashtable $base[$k] }; return $h }
+    if ($base -is [System.Management.Automation.PSCustomObject]) { $h = @{}; foreach ($p in $InputObject.PSObject.Properties) { $h[$p.Name] = ConvertTo-DEHashtable $p.Value }; return $h }
+    if ($base -is [System.Collections.IEnumerable]) { $list = New-Object System.Collections.Generic.List[object]; foreach ($i in $base) { $list.Add((ConvertTo-DEHashtable $i)) }; return , $list.ToArray() }
     return $InputObject
 }
 
@@ -520,7 +526,7 @@ function Clear-DEResume {
 function Get-DEResume { return (Get-DEState -Path 'resume') }
 function Invoke-DERestart {
     [CmdletBinding(SupportsShouldProcess = $true)]
-    param([int]$DelaySeconds = 30, [string]$Comment = 'DE Technician Console: restart required to continue provisioning')
+    param([int]$DelaySeconds = 30, [string]$Comment = 'DE Tech Tool: restart required to continue provisioning')
     if (-not $script:DE.IsWindows) { Write-DELog -Level WARN -Message 'restart skipped: not Windows'; return }
     if ($script:DE.DryRun -or -not $PSCmdlet.ShouldProcess($env:COMPUTERNAME, "Restart in $DelaySeconds s")) { Add-DEEvidence -Step 'reboot' -Before 'pending' -ActionTaken 'restart (planned)' -Result 'PLANNED' | Out-Null; return }
     Add-DEEvidence -Step 'reboot' -Before 'pending' -ActionTaken "shutdown /r /t $DelaySeconds" -Result 'INFO' -Verification $Comment | Out-Null

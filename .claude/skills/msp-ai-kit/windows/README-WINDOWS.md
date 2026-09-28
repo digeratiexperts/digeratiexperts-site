@@ -16,10 +16,10 @@ cd C:\DE-Provisioning
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-DETechConsole.ps1
 ```
 
-It unpacks the newest `DE-TechConsole*.zip` into `DE-TechConsole\`, clears Windows' downloaded-file block,
-keeps the previous copy as `DE-TechConsole.previous`, and opens the console. The window title shows the
-version (for example `DE Tech Tool v1.3.4`), so you always know which build is running. The zip
-itself is not a script; do not pass it to `-File`.
+It unpacks the newest `DE-TechTool*.zip` (or an older `DE-TechConsole*.zip`) into `DE-TechConsole\`, clears
+Windows' downloaded-file block, keeps the previous copy as `DE-TechConsole.previous`, and opens DE Tech Tool.
+The window title shows the version (for example `DE Tech Tool v1.5.0`), so you always know which build is
+running. The zip itself is not a script; do not pass it to `-File`.
 
 ## Start
 
@@ -29,6 +29,9 @@ itself is not a script; do not pass it to `-File`.
 | Only the AI prompt packs | Double-click `Start-MspAiKit.cmd`. The console opens on the AI Toolkit page. |
 | RMM, no window | `console\DETechConsole.ps1 -Headless -Client alamo -Mode takeover`. It audits and changes nothing. |
 | RMM, apply | Add `-Apply`. Run the console with `-WhatIf` first to see the plan. |
+| A ProActive tier or standalone solution | Run its script in `playbooks\` (below), or add `-Bundle <id>` / `-Solution <id>` to the headless command. |
+| Let discovery choose the mode | `-Mode auto`. DE Tech Tool prints the recommended mode and why, then runs it. |
+| A dropship device | Build a kit with `packaging\New-DEDropshipKit.ps1` (below); the device runs `FirstBoot.cmd`. |
 | Old loader actions | `Install-MspAiKit.ps1 -Action Build|Install|Clipboard|Verify|Update|Cleanup|All` still work and are used by the AI Toolkit page. |
 
 Requirements: Windows 10 or 11, Windows PowerShell 5.1 or PowerShell 7. Node 22 is needed only to
@@ -44,8 +47,11 @@ build the AI packs, and the AI Toolkit page offers to install it for the current
 3. **The technician stays separate from the end user.** The technician is Joe (`jrpetro`) by default.
    The end user is detected separately: for example `AzureAD\SuzetteThompson` at Alamo becomes the
    local account `sthompson`.
-4. **Pick a mode.** The modes are audit, new, takeover, replacement, repair, co-managed and deprovision.
-   The mode decides which actions are planned.
+4. **Pick a plan and a mode.** The plan is a ProActive tier, a variant (GCC High, Co-Managed IT), or a
+   standalone solution; the client profile's `plan` section is the default. The modes are audit, new,
+   dropship, takeover, replacement, repair, co-managed and deprovision. After discovery, the Dashboard
+   recommends a mode with its reasons (for example "another MDM manages this device (intune)" means
+   takeover); the technician decides.
 5. **The Guided workflow page always shows the next action and why.** Actions run in phases. Each
    action waits for its gates, and a closed gate names the step that opens it.
 6. **Restarts resume.** A step that needs a restart registers the console to reopen after sign-in and
@@ -105,6 +111,65 @@ on screen. There are three ways to provide them:
 | `WAZUH_REG_PASSWORD` | Wazuh agent registration |
 | `DE_HUB_TOKEN` | Intelligence Hub device endpoint |
 
+## Plans: ProActive tiers, variants, add-ons and standalone solutions
+
+`console\catalog\bundles.json` is the one catalog. It carries the four ProActive tiers (IT, Office,
+Business, Enterprise), the variants (Business and Enterprise GCC High, Co-Managed IT), the add-ons and the
+13 standalone solution families. Tier defaults feed the profile; each plan's `exclude` or `includeOnly`
+patterns decide which actions run. No prices.
+
+| Plan | What changes on the device |
+|---|---|
+| ProActive IT | Full endpoint plan without endpoint backup, managed site network or SASE. The `endpoint-backup`, `managed-network` and `sase` add-ons put those back. Guardz Pro, no 24/7 human MDR claim. |
+| ProActive Office / Business / Enterprise | Full plan (SASE is an add-on). Guardz Ultimate, Ultimate, Elite. |
+| GCC High variants | Same as the tier, but every security agent waits on the gate "Security providers verified for GCC High" until a technician confirms it. |
+| Co-Managed IT | Only the areas in the client profile's `coManaged.deOwns` (identity, security, apps, baseline, browser, updates, backup, network, support, mfa). |
+| Standalone solution | Only that solution's actions and confirm steps. It is never labelled DE managed, and DE support shortcuts and remote-support agents stay off unless the solution is IT Operations. Areas outside it read NOT IN PLAN, never a gap. |
+
+Work done off the device (a restore test, a tenant email baseline, a user enrolled in awareness training,
+the dropship handoff) is a **plan step**: choose **Confirm done** and DE Tech Tool records who and when.
+A solution's **prerequisite** (for example "Cyber risk assessment completed") gates every change until it
+is confirmed. Open plan steps keep readiness from READY.
+
+## Playbooks (one script per plan)
+
+`playbooks\` holds one ready-to-run script per ProActive tier, per variant and per standalone solution,
+for example `ProActive-Business.ps1`, `ProActive-Business-GCC-High.ps1`, `Co-Managed-IT.ps1` and
+`Standalone-Identity-and-Access.ps1`. Each one audits by default and exits 0 (ready), 1 (not ready) or
+2 (blocked):
+
+```powershell
+.\playbooks\ProActive-Office.ps1 -Client alamo                            # audit, change nothing
+.\playbooks\ProActive-Office.ps1 -Client alamo -Mode auto -Apply          # discovery picks the mode
+.\playbooks\ProActive-IT.ps1 -Client alamo -AddOn endpoint-backup -Apply  # tier plus an add-on
+```
+
+The scripts are generated from the catalog by `packaging\New-DEPlaybooks.ps1`. Run it after editing
+`bundles.json`; a test fails if a playbook is missing or stale.
+
+## Dropship (the device ships straight to the end user)
+
+```powershell
+.\packaging\New-DEDropshipKit.ps1 -Client alamo -Bundle proactive-business -OrderId DE-ORD-2026-0142 `
+    -EndUserName 'Suzette Thompson' -EndUserUpn sthompson@alamo.example -Serial 7XK2Q14 -Model 'Latitude 7450' `
+    -Hostname ALAMO-LAP-0231
+.\packaging\New-DEDropshipKit.ps1 -OrderFile .\order.json
+```
+
+This writes `packaging\out\dropship\DE-Dropship-<order>\` and a zip with a `.sha256` file. The kit holds
+`order.json`, `FirstBoot.cmd`, a one-page `README.txt`, and DE Tech Tool with the composed client profile.
+On the new device, `FirstBoot.cmd` elevates and runs DE Tech Tool headless in dropship mode:
+
+- It first checks this is the unit on the order (serial, then model). On a different machine it stops
+  before changing anything and reports `REFUSED: wrong device` (exit 2).
+- Identity migration, Entra leave and MDM cleanup never run in dropship mode.
+- Secrets are never in the kit. The technician types them when asked (masked, memory only), or RMM
+  supplies `DE_SECRET_<NAME>`. With no console to type into, DE Tech Tool says which secrets it did not
+  ask for, and the steps that need them read BLOCKED.
+- It says READY only when the tool's own result is READY. Otherwise it says NOT READY with the next step.
+
+An order without a serial still works, but only the model is checked, and the builder warns you.
+
 ## Client profiles
 
 Profiles live in `console\catalog\profiles\` as examples and in `%ProgramData%\DE\TechConsole\profiles\`
@@ -140,8 +205,8 @@ DE fills in the real download source and hash:
 | Code | Meaning |
 |---|---|
 | 0 | Ready, or ready with exceptions |
-| 1 | Not ready: at least one control failed |
-| 2 | Blocked: a gate, secret or elevation is missing, or the console files were changed after packaging |
+| 1 | Not ready: a control failed, or work is still in progress or has not run |
+| 2 | Blocked: a gate, secret or elevation is missing, the console files were changed after packaging, or a dropship order names a different device |
 | 3 | RMM deploy only: download or verification failure |
 
 ## Data folders

@@ -31,8 +31,13 @@ param(
     [switch]$Resume,
     [switch]$Headless,
     [string]$Client,
-    [ValidateSet('audit', 'new', 'dropship', 'takeover', 'replacement', 'repair', 'co-managed', 'deprovision')]
+    [ValidateSet('auto', 'audit', 'new', 'dropship', 'takeover', 'replacement', 'repair', 'co-managed', 'deprovision')]
     [string]$Mode = 'audit',
+    [string]$Bundle,
+    [string[]]$AddOn = @(),
+    [string[]]$Solution = @(),
+    [string]$Order,
+    [switch]$PromptSecrets,
     [switch]$Apply,
     [string]$Technician = 'jrpetro',
     [string]$DataDir,
@@ -50,28 +55,72 @@ Import-DEConsoleModules -Root $ConsoleRoot
 
 # ============================================================== headless
 if ($Headless) {
-    if (-not $Client) { Write-Error '-Headless needs -Client <profile id>'; exit 2 }
     $null = Initialize-DEConsole -Root $ConsoleRoot -Mode $(if ($Apply) { 'Apply' } else { 'Audit' }) -DataDir $DataDir -DryRun:$WhatIfPreference
     $integrity = Write-DEIntegrityEvidence
     if ($Apply -and $integrity.status -eq 'tampered') { Write-Host ('REFUSED: console files changed after packaging: ' + ($integrity.problems -join '; ')); exit 2 }
+    # powershell.exe -File passes '-Solution a,b' as one string: accept comma-separated lists from RMM command lines
+    $AddOn = @($AddOn | ForEach-Object { "$_" -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    $Solution = @($Solution | ForEach-Object { "$_" -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    # A dropship order (no secrets) names the client, bundle, end user and the exact device.
+    if ($Order) {
+        try { $ord = Import-DEOrderManifest -Path $Order } catch { Write-Host "REFUSED: $($_.Exception.Message)"; exit 2 }
+        if (-not $Client) { $Client = $ord['client'] }
+        if (-not $Bundle -and $ord['bundle']) { $Bundle = $ord['bundle'] }
+        if (-not @($AddOn | Where-Object { $_ }).Count -and $ord['addOns']) { $AddOn = @($ord['addOns']) }
+        if (-not @($Solution | Where-Object { $_ }).Count -and $ord['solutions']) { $Solution = @($ord['solutions']) }
+        if ($Mode -in @('audit', 'auto') -and $Apply) { $Mode = 'dropship' }
+    }
+    if (-not $Client) { Write-Error '-Headless needs -Client <profile id> (or -Order <order.json>)'; exit 2 }
     # RMM secure variables arrive as DE_SECRET_<NAME> environment variables; they move into the in-memory
     # SecureString store and are removed from the process environment straight away.
     foreach ($ev in @(Get-ChildItem Env: | Where-Object { $_.Name -like 'DE_SECRET_*' })) {
         Set-DESecret -Name ($ev.Name.Substring(10)) -Plain $ev.Value
         Remove-Item -LiteralPath ("Env:\" + $ev.Name) -ErrorAction SilentlyContinue
     }
-    $clientProf = Get-DEClientProfile -Id $Client
-    $null = Initialize-DEWorkflow -ClientProfile $clientProf -Mode $Mode
+    $clientProf = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $Client) -Bundle $Bundle -AddOn $AddOn -Solution $Solution
     $snap = Get-DEDiscoverySnapshot
-    $null = New-DEProvisioningContext -Snapshot $snap -ClientId $Client -Mode $Mode -Technician $Technician
+    if ($Mode -eq 'auto') {
+        $rec = Get-DERecommendedMode -Snapshot $snap -ClientProfile $clientProf
+        $Mode = $rec.mode
+        Write-Host ("MODE: {0} (recommended: {1})" -f $Mode, ($rec.reasons -join '; '))
+        Add-DEEvidence -Step 'plan.mode' -Module 'plan' -Before 'auto' -ActionTaken "mode $Mode chosen from discovery" -Result 'INFO' -Verification ($rec.reasons -join '; ') | Out-Null
+    }
+    $ids = @(Initialize-DEWorkflow -ClientProfile $clientProf -Mode $Mode)
+    $planName = $(if ($clientProf.plan.bundleName) { $clientProf.plan.bundleName } elseif (@($clientProf.plan.solutions).Count) { 'standalone: ' + (@($clientProf.plan.solutions) -join ', ') } else { 'client profile' })
+    Write-Host ("PLAN: {0}; mode {1}; {2} step(s)" -f $planName, $Mode, $ids.Count)
+    $null = New-DEProvisioningContext -Snapshot $snap -ClientId $Client -Mode $(if ($Mode -eq 'auto') { 'audit' } else { $Mode }) -Technician $Technician
+    if ($Order) {
+        $null = Import-DEOrderManifest -Path $Order   # re-apply the order's end user over the discovered one
+        $match = Test-DEOrderMatch -Device (Get-DEHashPath -Object $snap -Path 'device')
+        Write-Host ("ORDER: {0} ({1})" -f $match.Status, $match.Detail)
+        if ($Apply -and $match.Status -eq 'BLOCKED') {
+            # the wrong unit is never provisioned: stop before any change, with evidence of why
+            Add-DEEvidence -Step 'order.verify-device' -Module 'order' -Before 'order loaded' -ActionTaken 'provisioning refused' -Result 'BLOCKED' -Verification $match.Detail | Out-Null
+            $b = Export-DEEvidenceBundle -Snapshot $snap -ClientProfile $clientProf
+            Write-Host ("REFUSED: {0}. Nothing was changed. Evidence: {1}" -f $match.Detail, $b.zip)
+            Clear-DESecrets; exit 2
+        }
+    }
+    if ($PromptSecrets) {
+        # A technician on the call types each runtime secret the plan needs (masked; memory only).
+        # Without a console to type into (RMM, redirected input) Read-Host would end the process with exit 0
+        # before any work, which a caller could read as READY; skip the prompts and let the gates say BLOCKED.
+        $canPrompt = [Environment]::UserInteractive; try { if ([Console]::IsInputRedirected) { $canPrompt = $false } } catch { $canPrompt = $false }
+        $needed = @(Get-DEActions -Mode $Mode | ForEach-Object { $_.RequiresSecrets } | Where-Object { $_ } | Select-Object -Unique)
+        if (-not $canPrompt) { if ($needed.Count) { Write-Host ("SECRETS: no console to type into; not asked for {0}. Use DE_SECRET_<NAME> variables or the DE vault." -f ($needed -join ', ')) } }
+        else { foreach ($n in $needed) { if (-not (Test-DESecret -Name $n)) { try { $sec = Read-Host -AsSecureString -Prompt "$n (runtime only, press Enter to skip)"; if ($sec -and $sec.Length -gt 0) { Set-DESecret -Name $n -SecureValue $sec } } catch { Write-Host "SECRETS: could not read $n ($($_.Exception.Message)); skipped" } } } }
+    }
     if ($Apply -and $Mode -ne 'audit') { foreach ($ph in (Get-DEActions -Mode $Mode | ForEach-Object { $_.Phase } | Sort-Object -Unique)) { $null = Invoke-DEPhase -Phase $ph -Mode $Mode } }
     else { $null = Invoke-DEAudit -Mode $Mode }
     $b = Export-DEEvidenceBundle -Snapshot $snap -ClientProfile $clientProf
     $null = Send-DEHubPayload -Payload (New-DEHubPayload -Record $b.record -BundleSha256 $b.sha256 -BundlePath $b.zip)
     $r = Get-DEReadiness
+    $next = Get-DENextAction -Mode $Mode
     Write-Host ("RESULT: {0}; bundle {1} (sha256 {2})" -f $r.overall, $b.zip, $b.sha256)
+    Write-Host ("NEXT: {0} ({1})" -f $next.title, $next.why)
     Clear-DESecrets
-    exit $(switch ($r.overall) { 'READY' { 0 } 'READY WITH EXCEPTIONS' { 0 } 'NOT READY' { 1 } default { $(if ((Get-DEConsole).ExitCode) { (Get-DEConsole).ExitCode } else { 0 }) } })
+    # 0 only for READY; anything unfinished (NOT READY, IN PROGRESS, NOT RUN) is 1 so a caller never reads it as done
+    exit $(switch ($r.overall) { 'READY' { 0 } 'READY WITH EXCEPTIONS' { 0 } 'NOT READY' { 1 } default { $(if ((Get-DEConsole).ExitCode) { (Get-DEConsole).ExitCode } else { 1 }) } })
 }
 
 # ============================================================== window
@@ -390,10 +439,19 @@ function New-ActionGrid {
         (New-Button 'Rollback selected' { & $runSel 'Rollback' }.GetNewClosure())
         (New-Button 'Skip with reason' { $row = & $sel; if (-not $row) { return }; $why = Read-GuiText 'Skip reason' "Why is '$($row.Title)' being skipped?"; if ($why) { $null = Invoke-DEAction -Id $row.Id -SkipReason $why; Show-Page $S.CurrentPage } }.GetNewClosure())
         (New-Button 'Record exception' { $row = & $sel; if (-not $row) { return }; Show-ExceptionDialog -Target $row.Id }.GetNewClosure())
+        $(if (@($rows | Where-Object { $_.Id -like 'plan.*' }).Count) { New-Button 'Confirm done' { $row = & $sel; if (-not $row -or $row.Id -notlike 'plan.*') { Set-Status 'Select a plan step (portal, people or handoff work) first.'; return }; Confirm-GuiPlanStep -Id $row.Id -Title $row.Title }.GetNewClosure() -A11y 'Confirm the selected plan step is done' })
     )
     return (New-Card @((New-Text $Title 15 -Bold), (New-Text 'Detect, compare, apply, verify, retry, remediate. Locked rows unlock when their gates pass; exceptions show as EXCEPTION, never PASS.' -Muted -Wrap), $buttons, $grid))
 }
 function Confirm-Gui { param([string]$Title, [string]$Message) return ([System.Windows.MessageBox]::Show($Win, $Message, $Title, 'YesNo', 'Warning', 'No') -eq 'Yes') }
+function Confirm-GuiPlanStep {
+    <# A plan step is work done off the device (a portal, a person, a handoff): the technician confirms it, with an optional note. #>
+    param([string]$Id, [string]$Title)
+    if (-not (Confirm-Gui 'Confirm done' "Confirm that this is done?`r`n`r`n$Title`r`n`r`nDE Tech Tool records who and when.")) { return }
+    $note = Read-GuiText 'Confirm done' 'Optional note (ticket number, who confirmed). Never a password or key.'
+    try { Confirm-DEPlanStep -Key $Id -Note "$note"; $null = Invoke-DEAction -Id $Id -Mode Audit; Set-Status "Confirmed: $Title"; Show-Page $S.CurrentPage } catch { Set-Status $_.Exception.Message }
+}
+function Get-LauncherPath { foreach ($n in @('Start-DETechTool.cmd', 'Start-DETechConsole.cmd')) { $p = Join-Path (Split-Path -Parent $ConsoleRoot) $n; if (Test-Path -LiteralPath $p) { return $p } }; return (Join-Path (Split-Path -Parent $ConsoleRoot) 'Start-DETechTool.cmd') }
 function Read-GuiText {
     param([string]$Title, [string]$Prompt, [switch]$Secret)
     $dlg = New-Object System.Windows.Window; $dlg.Title = $Title; $dlg.Width = 460; $dlg.SizeToContent = 'Height'; $dlg.WindowStartupLocation = 'CenterOwner'; $dlg.Owner = $Win; $dlg.Background = $Win.Background; $dlg.Foreground = $Win.Foreground; $dlg.FontFamily = $Win.FontFamily
@@ -461,15 +519,17 @@ function Show-Page {
 function Use-ClientAndMode {
     <# The Dashboard's "Use this client and mode": loads the profile, saves the choice, builds the action plan for
        the mode and, when discovery has run, the provisioning context. Shared with the smoke test. #>
-    param([string]$ProfileId, [string]$Mode, [string]$Technician)
+    param([string]$ProfileId, [string]$Mode, [string]$Technician, [string]$Bundle, [string[]]$Solution = @())
     if (-not $ProfileId) { Set-Status 'Pick a client profile first.'; return }
-    $S.Profile = Get-DEClientProfile -Id $ProfileId; $Settings.client = $S.Profile.id
+    # the plan picker: a ProActive tier or variant, a standalone solution, or the client profile's own default
+    $S.Profile = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $ProfileId) -Bundle $Bundle -Solution $Solution; $Settings.client = $S.Profile.id
     if ($Mode) { $S.Mode = $Mode }; $Settings.mode = $S.Mode
     if ($Technician) { $Settings.technician = $Technician }
     Save-GuiSettings
     $ids = @(Initialize-DEWorkflow -ClientProfile $S.Profile -Mode $S.Mode)
     if ($S.Snapshot) { $null = New-DEProvisioningContext -Snapshot $S.Snapshot -ClientId $S.Profile.id -Mode $S.Mode -Technician $Settings.technician }
-    Set-Status ("Loaded {0} ({1}): {2} planned step(s). {3}" -f $S.Profile.name, $S.Mode, $ids.Count, $(if ($S.Snapshot) { 'Audit next to see what differs.' } else { 'Run discovery next.' }))
+    $planName = $(if ($S.Profile.plan.bundleName) { $S.Profile.plan.bundleName } elseif (@($S.Profile.plan.solutions).Count) { 'standalone ' + (@($S.Profile.plan.solutions) -join ', ') } else { 'client profile' })
+    Set-Status ("Loaded {0}, {1} ({2}): {3} planned step(s). {4}" -f $S.Profile.name, $planName, $S.Mode, $ids.Count, $(if ($S.Snapshot) { 'Audit next to see what differs.' } else { 'Run discovery next.' }))
     Show-Page 'Dashboard'
 }
 
@@ -480,16 +540,33 @@ function Build-Dashboard {
     if ($S.Profile) { $cbClient.SelectedIndex = [array]::IndexOf(@($profiles | ForEach-Object { $_.id }), $S.Profile.id) }
     $cbMode = New-El ComboBox @{ Name = 'Mode'; Width = 220 }; $modes = Get-DEModes; foreach ($k in $modes.Keys) { [void]$cbMode.Items.Add("$k · $($modes[$k].title)") }; $cbMode.SelectedIndex = [array]::IndexOf(@($modes.Keys), $S.Mode)
     $tbTech = New-El TextBox @{ Text = $Settings.technician; Width = 160; Name = 'Technician' }
+    # plan picker: client default, the ProActive tiers and variants, then each standalone solution
+    $plans = @([pscustomobject]@{ label = 'Client profile default'; bundle = ''; solution = '' })
+    foreach ($b in @(Get-DEBundles)) { $plans += [pscustomobject]@{ label = $b['name']; bundle = $b['id']; solution = '' } }
+    foreach ($so in @(Get-DESolutions)) { $plans += [pscustomobject]@{ label = "Standalone: $($so['name'])"; bundle = ''; solution = $so['id'] } }
+    $cbPlan = New-El ComboBox @{ Name = 'Plan'; Width = 300 }; foreach ($pl in $plans) { [void]$cbPlan.Items.Add($pl.label) }
+    $current = 0
+    if ($S.Profile -and $S.Profile.plan) { for ($i = 0; $i -lt $plans.Count; $i++) { if (($plans[$i].bundle -and $plans[$i].bundle -eq "$($S.Profile.plan.bundle)") -or ($plans[$i].solution -and @($S.Profile.plan.solutions) -contains $plans[$i].solution -and -not $S.Profile.plan.bundle)) { $current = $i; break } } }
+    $cbPlan.SelectedIndex = $current
     $apply = New-Button 'Use this client and mode' {
         $pid2 = $(if ($cbClient.SelectedIndex -ge 0) { $profiles[$cbClient.SelectedIndex].id } else { $null })
         $mode2 = $(if ($cbMode.SelectedIndex -ge 0) { @((Get-DEModes).Keys)[$cbMode.SelectedIndex] } else { $S.Mode })
-        Use-ClientAndMode -ProfileId $pid2 -Mode $mode2 -Technician $tbTech.Text
+        $pl = $plans[[Math]::Max(0, $cbPlan.SelectedIndex)]
+        Use-ClientAndMode -ProfileId $pid2 -Mode $mode2 -Technician $tbTech.Text -Bundle $pl.bundle -Solution @($pl.solution | Where-Object { $_ })
     }.GetNewClosure() -Primary
+    # recommended mode from what discovery found; the technician still decides
+    $recCard = $null
+    if ($S.Snapshot) {
+        $rec = Get-DERecommendedMode -Snapshot $S.Snapshot -ClientProfile $S.Profile
+        $useRec = New-Button "Use $($rec.mode)" { $m = $rec.mode; $cbMode.SelectedIndex = [array]::IndexOf(@((Get-DEModes).Keys), $m); Set-Status "Mode set to $m (recommended). Choose Use this client and mode to load the plan." }.GetNewClosure() -A11y "Use the recommended mode $($rec.mode)"
+        $recCard = New-Wrap @((New-Text ("Recommended mode: {0}. {1}" -f $rec.mode, $rec.reason) -Wrap), $useRec)
+    }
     $modeDesc = New-Text ((Get-DEModes)[$S.Mode].description) -Muted -Wrap
     [void]$root.Children.Add((New-Card @(
                 (New-Text 'Session' 15 -Bold),
-                (New-Wrap @((New-El StackPanel @{ Margin = '0,0,16,0' } @((New-Label 'Client profile'), $cbClient)), (New-El StackPanel @{ Margin = '0,0,16,0' } @((New-Label 'Mode'), $cbMode)), (New-El StackPanel @{} @((New-Label 'Technician (defaults to Joe, not the Windows session)'), $tbTech)))),
+                (New-Wrap @((New-El StackPanel @{ Margin = '0,0,16,0' } @((New-Label 'Client profile'), $cbClient)), (New-El StackPanel @{ Margin = '0,0,16,0' } @((New-Label 'Plan (ProActive tier or standalone solution)'), $cbPlan)), (New-El StackPanel @{ Margin = '0,0,16,0' } @((New-Label 'Mode'), $cbMode)), (New-El StackPanel @{} @((New-Label 'Technician (defaults to Joe, not the Windows session)'), $tbTech)))),
                 $modeDesc,
+                $recCard,
                 (New-Wrap @($apply, (New-Button 'Run discovery' { Invoke-Discovery }), (New-Button 'Quick discovery' { Invoke-Discovery -Quick }), (New-Button 'Audit everything (change nothing)' { if (-not $S.Profile) { Set-Status 'Pick a client first.'; return }; Start-DEJob -Label 'Full audit' -Work { $null = Invoke-DEAudit -Mode $JobMode } })))
             )))
     # readiness cards
@@ -505,7 +582,8 @@ function Build-Dashboard {
     # next action
     if ($S.Profile) {
         $n = Get-DENextAction -Mode $S.Mode
-        $go = New-Button $(if ($n.runnable) { 'Run it' } else { 'Show me' }) { if ($n.id -and $n.runnable) { $a = Get-DEAction -Id $n.id; if ($a.Destructive -and -not (Confirm-Gui "Run '$($a.Title)'?" 'This is a consequential step. Continue?')) { return }; Start-DEJob -Label $n.title -Params @{ id = $n.id } -Work { Invoke-DEAction -Id $JobParams.id -Mode Apply } } elseif ($n.module) { Show-Page (Get-PageForModule $n.module) } }.GetNewClosure() -Primary
+        if ($n.id -like 'plan.*') { $go = New-Button 'Confirm done' { Confirm-GuiPlanStep -Id $n.id -Title $n.title }.GetNewClosure() -Primary }
+        else { $go = New-Button $(if ($n.runnable) { 'Run it' } else { 'Show me' }) { if ($n.id -and $n.runnable) { $a = Get-DEAction -Id $n.id; if ($a.Destructive -and -not (Confirm-Gui "Run '$($a.Title)'?" 'This is a consequential step. Continue?')) { return }; Start-DEJob -Label $n.title -Params @{ id = $n.id } -Work { Invoke-DEAction -Id $JobParams.id -Mode Apply } } elseif ($n.module) { Show-Page (Get-PageForModule $n.module) } }.GetNewClosure() -Primary }
         [void]$root.Children.Add((New-Card @((New-Label 'Next recommended action'), (New-Text $n.title 17 -Bold -Wrap), (New-Text "Why: $($n.why)" -Muted -Wrap), $(if ($n.manual) { New-Text "Manual step: $($n.manual)" -Wrap }), $(if ($n.secrets.Count) { New-Text "Enter in Settings & secrets: $($n.secrets -join ', ')" -Wrap }), $go)))
         # gate board
         $gates = Get-DEGateBoard -Refresh
@@ -520,9 +598,9 @@ function Get-PageForModule { param([string]$Module) switch ($Module) { 'identity
 function Build-Workflow {
     param($root)
     $phases = @(Get-DEActions -Mode $S.Mode | Group-Object Phase | Sort-Object { [int]$_.Name })
-    $phaseNames = @{ 1 = 'Intake'; 2 = 'Hardware and readiness'; 3 = 'Updates and firmware'; 5 = 'Break-glass'; 6 = 'Encryption, OneDrive, Hello gates'; 7 = 'Identity and JumpCloud'; 8 = 'Security stack'; 9 = 'Applications'; 10 = 'Microsoft 365 and MFA'; 11 = 'Windows baseline'; 12 = 'Browser'; 13 = 'Branding'; 14 = 'Network, backup, remote support' }
+    $phaseNames = @{ 0 = 'Plan prerequisites and order check'; 15 = 'Plan steps (portal and people work)'; 16 = 'Handoff'; 1 = 'Intake'; 2 = 'Hardware and readiness'; 3 = 'Updates and firmware'; 5 = 'Break-glass'; 6 = 'Encryption, OneDrive, Hello gates'; 7 = 'Identity and JumpCloud'; 8 = 'Security stack'; 9 = 'Applications'; 10 = 'Microsoft 365 and MFA'; 11 = 'Windows baseline'; 12 = 'Browser'; 13 = 'Branding'; 14 = 'Network, backup, remote support' }
     $n = Get-DENextAction -Mode $S.Mode
-    [void]$root.Children.Add((New-Card @((New-Label 'Next'), (New-Text $n.title 17 -Bold -Wrap), (New-Text $n.why -Muted -Wrap), (New-Wrap @((New-Button 'Run next' { if ($n.runnable) { Start-DEJob -Label $n.title -Params @{ id = $n.id } -Work { Invoke-DEAction -Id $JobParams.id -Mode Apply } } else { Set-Status "Not runnable yet: $($n.why)" } }.GetNewClosure() -Primary), (New-Button 'Restart now and resume' { if (Confirm-Gui 'Restart?' 'The console will reopen after sign-in at the queued step.') { Set-DEResume -Launcher (Join-Path (Split-Path -Parent $ConsoleRoot) 'Start-DETechConsole.cmd') -NextAction $n.id -LoginAs "$((Get-DEContext)['localUserName'])"; Invoke-DERestart -DelaySeconds 20 } }), (New-Button 'Export evidence' { Show-Page 'Evidence' }))))))
+    [void]$root.Children.Add((New-Card @((New-Label 'Next'), (New-Text $n.title 17 -Bold -Wrap), (New-Text $n.why -Muted -Wrap), (New-Wrap @((New-Button $(if ($n.id -like 'plan.*') { 'Confirm done' } else { 'Run next' }) { if ($n.id -like 'plan.*') { Confirm-GuiPlanStep -Id $n.id -Title $n.title; return }; if ($n.runnable) { Start-DEJob -Label $n.title -Params @{ id = $n.id } -Work { Invoke-DEAction -Id $JobParams.id -Mode Apply } } else { Set-Status "Not runnable yet: $($n.why)" } }.GetNewClosure() -Primary), (New-Button 'Restart now and resume' { if (Confirm-Gui 'Restart?' 'The console will reopen after sign-in at the queued step.') { Set-DEResume -Launcher (Get-LauncherPath) -NextAction $n.id -LoginAs "$((Get-DEContext)['localUserName'])"; Invoke-DERestart -DelaySeconds 20 } }), (New-Button 'Export evidence' { Show-Page 'Evidence' }))))))
     foreach ($ph in $phases) {
         $title = $phaseNames[[int]$ph.Name]; if (-not $title) { $title = "Phase $($ph.Name)" }
         $mods = @($ph.Group | ForEach-Object { $_.Module } | Select-Object -Unique)
@@ -740,6 +818,12 @@ if ($SmokeTest) {
         if (-not @(Get-DEActions).Count) { $failed += 'discovery job: no workflow actions registered' }
         Start-DEJob -Label 'Full audit' -Work { $null = Invoke-DEAudit -Mode $JobMode }
         $e = Wait-SmokeJob 'audit job'; if ($e) { $failed += $e } else { Write-Host ("SMOKE PASS audit job ({0} evidence rows)" -f @(Get-DEEvidence).Count) }
+        # the plan picker: a standalone solution loads as not DE managed, then a ProActive tier for the page renders
+        Use-ClientAndMode -ProfileId $SmokeClient -Mode 'new' -Technician $Technician -Solution @('identity_access')
+        if ($S.Profile.plan.managed -ne $false -or -not @(Get-DEActions -Mode 'new').Count) { $failed += 'standalone plan did not load' } else { Write-Host 'SMOKE PASS standalone plan' }
+        Use-ClientAndMode -ProfileId $SmokeClient -Mode 'takeover' -Technician $Technician -Bundle 'proactive-business'
+        if ("$($S.Profile.plan.bundle)" -ne 'proactive-business') { $failed += 'ProActive plan did not load' } else { Write-Host 'SMOKE PASS ProActive plan' }
+        $rec = Get-DERecommendedMode -Snapshot $S.Snapshot -ClientProfile $S.Profile; if (-not $rec.mode) { $failed += 'no recommended mode' } else { Write-Host "SMOKE PASS recommended mode $($rec.mode)" }
     } catch { $failed += "setup: $($_.Exception.Message)" }
     $w = 1440; $h = 900
     foreach ($name in @($Pages.Keys | Where-Object { $null -ne $_ })) {

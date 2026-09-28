@@ -1,5 +1,5 @@
 @echo off
-rem MSP AI Kit launcher (kept for existing shortcuts). Opens the DE Technician Console at its
+rem MSP AI Kit launcher (kept for existing shortcuts). Opens DE Tech Tool at its
 rem AI Toolkit page; with arguments it runs the AI-kit loader directly, for example:
 rem   Start-MspAiKit.cmd -Action All -NonInteractive
 rem   Start-MspAiKit.cmd -Action Update -WhatIf

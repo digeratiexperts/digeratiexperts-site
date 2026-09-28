@@ -5,6 +5,7 @@
   "name": "Alamo Industries",
   "shortName": "Alamo",
   "tier": "Business",
+  "plan": { "bundle": "proactive-business", "addOns": [], "solutions": [] },
   "packages": ["Core IT", "Security Operations"],
   "gcch": false,
   "identity": {

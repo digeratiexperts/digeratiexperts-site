@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    Signs the DE Technician Console and MSP AI Kit loader scripts and writes integrity.json.
+    Signs DE Tech Tool and MSP AI Kit loader scripts and writes integrity.json.
 
 .DESCRIPTION
     Release step, run on the DE build workstation that holds the code-signing certificate.
