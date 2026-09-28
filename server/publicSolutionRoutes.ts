@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Express, Request, Response } from "express";
+import rateLimit from "express-rate-limit";
 import {
   getFamilyById,
   publicSolutionFamilies,
@@ -7,7 +8,7 @@ import {
   toPublicFamily,
 } from "../client/src/lib/businessNeeds";
 import { eventBus, EventTypes } from "./eventBus";
-import { syncPublicSolutionRequestToCrm } from "./publicSolutionRequestCrm";
+import { buildPublicSolutionRequestDescription, syncPublicSolutionRequestToCrm } from "./publicSolutionRequestCrm";
 import {
   createPublicSolutionRequest,
   findPublicSolutionRequestDurable,
@@ -16,12 +17,44 @@ import {
   publicFamilyExists,
   publicSolutionRequestView,
   submitPublicSolutionRequestDurable,
+  unsubmitPublicSolutionRequest,
   upsertPublicSolutionRequestDurable,
   type PublicSolutionRequest,
 } from "./publicSolutionRequestStore";
 
 const SESSION_COOKIE = "de_solution_request";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const SESSION_COOKIE_OPTIONS = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  secure: process.env.NODE_ENV === "production",
+  path: "/",
+  maxAge: 1000 * 60 * 60 * 24 * 30,
+};
+
+/**
+ * Every accepted submission creates a lead, an admin email and an outbox row,
+ * so the public POST gets its own ceiling. Twenty an hour per address is far
+ * above any real buyer and far below a script. Tests run many submits from one
+ * address inside a minute and are exempt.
+ */
+const submitRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.VITEST === "true",
+  message: { error: "Too many submissions from this connection. Please try again later." },
+});
+
+/**
+ * Memory-only acceptance is a development and smoke-test convenience, never a
+ * production behaviour: the same pass the health probe honours.
+ */
+function memoryOnlySubmissionAllowed(): boolean {
+  return process.env.NODE_ENV !== "production" || process.env.DE_SMOKE_ALLOW_MEMORY_ONLY === "1";
+}
 
 function readSessionId(req: Request): string {
   const fromCookie = typeof req.cookies?.[SESSION_COOKIE] === "string" ? req.cookies[SESSION_COOKIE] : "";
@@ -31,13 +64,16 @@ function readSessionId(req: Request): string {
 }
 
 function ensureSession(req: Request, res: Response): string {
+  // Drafts and submissions carry contact details; nothing here is cacheable.
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Vary", "Cookie");
   const existing = readSessionId(req);
   if (existing) {
-    res.cookie(SESSION_COOKIE, existing, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 1000 * 60 * 60 * 24 * 30 });
+    res.cookie(SESSION_COOKIE, existing, SESSION_COOKIE_OPTIONS);
     return existing;
   }
   const sessionId = randomUUID();
-  res.cookie(SESSION_COOKIE, sessionId, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 1000 * 60 * 60 * 24 * 30 });
+  res.cookie(SESSION_COOKIE, sessionId, SESSION_COOKIE_OPTIONS);
   return sessionId;
 }
 
@@ -100,12 +136,7 @@ export function registerPublicSolutionRoutes(app: Express): void {
       record = createPublicSolutionRequest(sessionId);
     }
     if (resolvedSessionId !== sessionId) {
-      res.cookie(SESSION_COOKIE, resolvedSessionId, {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 1000 * 60 * 60 * 24 * 30,
-      });
+      res.cookie(SESSION_COOKIE, resolvedSessionId, SESSION_COOKIE_OPTIONS);
     }
     return res.json({ request: publicSolutionRequestView(record) });
   });
@@ -117,7 +148,7 @@ export function registerPublicSolutionRoutes(app: Express): void {
     return res.json({ request: publicSolutionRequestView(record) });
   });
 
-  app.post("/api/public/solutions/request", async (req, res) => {
+  app.post("/api/public/solutions/request", submitRateLimiter, async (req, res) => {
     const sessionId = ensureSession(req, res);
     const organizationName = typeof req.body?.organizationName === "string" ? req.body.organizationName.trim() : "";
     const contactName = typeof req.body?.contactName === "string" ? req.body.contactName.trim() : "";
@@ -156,31 +187,74 @@ export function registerPublicSolutionRoutes(app: Express): void {
       return res.status(500).json({ error: "We could not save your solution request. Please try again." });
     }
 
-    if (!submitted.replayed) {
-      void eventBus.emit(EventTypes.LEAD_CREATED, {
-        source: "solution_request",
-        correlationId: submitted.record.correlationId,
-        familyId: submitted.record.familyId,
-        offerId: submitted.record.offerId,
-        deliveryModel: submitted.record.deliveryModel,
-        deliveryPreference: submitted.record.deliveryPreference,
-        selectedNeeds: submitted.record.selectedNeeds.map((need) => need.familyId),
-        installation: submitted.record.fulfillment.installation,
-        remoteSupport: submitted.record.fulfillment.remoteSupport,
-        intent: submitted.record.intent,
-      });
-      void syncPublicSolutionRequestToCrm(submitted.record)
-        .then((crmStatus) => markPublicSolutionRequestCrmDurable(submitted.record.id, crmStatus))
-        .catch((error: any) => console.warn("[solution-request] CRM follow-up pending:", error?.message || error));
+    // A submitted solution is a lead, not disposable UI state. In production a
+    // submit that could not be written durably is accepted only if the CRM has
+    // recorded it; otherwise the visitor is told to retry and the memory record
+    // is rolled back to a draft so the retry is a real submit, not a "replay".
+    let durable: "database" | "crm" | "memory" = submitted.persisted ? "database" : "memory";
+    let crmSyncedInline = false;
+    if (!submitted.persisted && !submitted.replayed && !memoryOnlySubmissionAllowed()) {
+      let crmStatus: "pending" | "recorded" = "pending";
+      try {
+        crmStatus = await syncPublicSolutionRequestToCrm(submitted.record);
+      } catch (error: any) {
+        console.warn("[solution-request] CRM sync failed while storage was unavailable:", error?.message || error);
+      }
+      if (crmStatus === "recorded") {
+        durable = "crm";
+        crmSyncedInline = true;
+        await markPublicSolutionRequestCrmDurable(submitted.record.id, "recorded");
+      } else {
+        unsubmitPublicSolutionRequest(submitted.record.id);
+        console.error("[solution-request] DURABLE_STORAGE_REQUIRED", { id: submitted.record.id });
+        return res.status(503).json({
+          code: "DURABLE_STORAGE_REQUIRED",
+          error:
+            "We could not save your solution just now. Nothing you entered was lost on this device; please try again in a moment.",
+        });
+      }
     }
 
-    const latest = await markPublicSolutionRequestCrmDurable(submitted.record.id, "pending");
+    if (!submitted.replayed) {
+      const record = submitted.record;
+      // The listener sends the admin email and writes the Hub outbox from
+      // these fields; without them the notification read "New Lead: undefined".
+      void eventBus.emit(EventTypes.LEAD_CREATED, {
+        id: record.id,
+        name: record.contactName,
+        email: record.contactEmail,
+        company: record.organizationName,
+        phone: record.contactPhone,
+        message: buildPublicSolutionRequestDescription(record),
+        source: "solution_request",
+        correlationId: record.correlationId,
+        familyId: record.familyId,
+        offerId: record.offerId,
+        deliveryModel: record.deliveryModel,
+        deliveryPreference: record.deliveryPreference,
+        selectedNeeds: record.selectedNeeds.map((need) => need.familyId),
+        installation: record.fulfillment.installation,
+        remoteSupport: record.fulfillment.remoteSupport,
+        intent: record.intent,
+      });
+      if (!crmSyncedInline) {
+        void syncPublicSolutionRequestToCrm(record)
+          .then((crmStatus) => markPublicSolutionRequestCrmDurable(record.id, crmStatus))
+          .catch((error: any) => console.warn("[solution-request] CRM follow-up pending:", error?.message || error));
+      }
+    }
+
+    // A replay must not downgrade a CRM status the first submission already earned.
+    const latest = submitted.replayed || crmSyncedInline
+      ? await getPublicSolutionRequestDurable(submitted.record.id)
+      : await markPublicSolutionRequestCrmDurable(submitted.record.id, "pending");
     const view = publicSolutionRequestView(latest ?? submitted.record);
     return res.json({
       request: view,
       correlationId: view.correlationId,
       crm: view.crmStatus,
       replayed: submitted.replayed,
+      durable,
       message: "Your solution was saved. DE will confirm package fit, scope, fulfillment, and pricing before you commit.",
     });
   });

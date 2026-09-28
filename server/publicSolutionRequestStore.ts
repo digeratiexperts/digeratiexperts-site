@@ -339,6 +339,28 @@ export function submitPublicSolutionRequest(
   return { record: cloneRequest(submitted), replayed: false };
 }
 
+/**
+ * Roll a submission back to a draft when it could not be made durable. Without
+ * this, a 503'd submit would leave a memory record in status "submitted" and
+ * the visitor's retry would be treated as a replay of a success that never
+ * happened.
+ */
+export function unsubmitPublicSolutionRequest(id: string): PublicSolutionRequest | undefined {
+  const record = records.get(id);
+  if (!record || record.status !== "submitted") return record ? cloneRequest(record) : undefined;
+  for (const [key, value] of idempotency.entries()) {
+    if (value === id) idempotency.delete(key);
+  }
+  const next: PublicSolutionRequest = {
+    ...record,
+    status: "draft",
+    crmStatus: "not_requested",
+    updatedAt: new Date().toISOString(),
+  };
+  records.set(id, next);
+  return cloneRequest(next);
+}
+
 export function markPublicSolutionRequestCrm(
   id: string,
   crmStatus: "pending" | "recorded",
@@ -428,10 +450,12 @@ export async function submitPublicSolutionRequestDurable(
   record: PublicSolutionRequest,
   contact: { name: string; email: string; phone?: string; organizationName?: string },
   idempotencyKey?: string,
-): Promise<{ record: PublicSolutionRequest; replayed: boolean }> {
+): Promise<{ record: PublicSolutionRequest; replayed: boolean; persisted: boolean }> {
   const result = submitPublicSolutionRequest(record, contact, idempotencyKey);
-  await persistPublicSolutionRequest(result.record);
-  return result;
+  // The route decides what a non-durable submit means (see publicSolutionRoutes.ts);
+  // the store only reports it instead of swallowing it.
+  const persisted = await persistPublicSolutionRequest(result.record);
+  return { ...result, persisted };
 }
 
 export async function markPublicSolutionRequestCrmDurable(

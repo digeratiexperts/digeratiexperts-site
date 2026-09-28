@@ -4,10 +4,16 @@ import { createServer, type Server } from "http";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { registerPublicSolutionRoutes } from "./publicSolutionRoutes";
 import { resetPublicSolutionRequestsForTests } from "./publicSolutionRequestStore";
+import { eventBus, EventTypes } from "./eventBus";
+import { syncPublicSolutionRequestToCrm } from "./publicSolutionRequestCrm";
 
-vi.mock("./publicSolutionRequestCrm", () => ({
-  syncPublicSolutionRequestToCrm: vi.fn(async () => "pending"),
-}));
+vi.mock("./publicSolutionRequestCrm", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./publicSolutionRequestCrm")>();
+  return {
+    ...actual,
+    syncPublicSolutionRequestToCrm: vi.fn(async () => "pending"),
+  };
+});
 
 const prohibited = [
   "coro",
@@ -201,5 +207,89 @@ describe("public solution Door 2 API", () => {
     const secondBody = await second.json();
     expect(secondBody.replayed).toBe(true);
     expect(secondBody.request.id).toBe(firstBody.request.id);
+  });
+
+  const fourFieldSubmit = (extra: Record<string, unknown> = {}) =>
+    fetch(`${baseUrl}/api/public/solutions/request`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        familyId: "backup_continuity",
+        offerId: "de-continuity-standalone",
+        deliveryModel: "standalone",
+        deliveryPreference: "standalone",
+        intent: "quote",
+        contactName: "Riley Owner",
+        contactEmail: "riley@example.com",
+        contactPhone: "480-555-0199",
+        organizationName: "Riley Accounting",
+        environment: { userCount: "12", workstationCount: "14", mobileDeviceCount: "6", siteCount: "1", deviceOwnership: "company", internalIt: "no" },
+        ...extra,
+      }),
+    });
+
+  it("emits a lead the admin notification and Hub outbox can actually read", async () => {
+    const emitted: Array<[string, any]> = [];
+    const spy = vi.spyOn(eventBus, "emit").mockImplementation(async (type: any, data: any) => {
+      emitted.push([type, data]);
+      return undefined as any;
+    });
+    try {
+      const response = await fourFieldSubmit({ idempotencyKey: "lead-payload-test" });
+      expect(response.status).toBe(200);
+      const lead = emitted.find(([type]) => type === EventTypes.LEAD_CREATED)?.[1];
+      expect(lead).toBeDefined();
+      expect(lead).toMatchObject({
+        source: "solution_request",
+        name: "Riley Owner",
+        email: "riley@example.com",
+        company: "Riley Accounting",
+        phone: "480-555-0199",
+      });
+      expect(typeof lead.id).toBe("string");
+      expect(lead.message).toContain("Backup & Business Continuity");
+      expect(lead.message).toContain("Users: 12");
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("refuses a production submit that is neither durable nor in the CRM, and lets the retry be a real submit", async () => {
+    const originalEnv = process.env.NODE_ENV;
+    const originalSmoke = process.env.DE_SMOKE_ALLOW_MEMORY_ONLY;
+    process.env.NODE_ENV = "production";
+    delete process.env.DE_SMOKE_ALLOW_MEMORY_ONLY;
+    const emitSpy = vi.spyOn(eventBus, "emit").mockImplementation(async () => undefined as any);
+    try {
+      const refused = await fourFieldSubmit({ idempotencyKey: "durability-test" });
+      expect(refused.status).toBe(503);
+      const body = await refused.json();
+      expect(body.code).toBe("DURABLE_STORAGE_REQUIRED");
+      expect(emitSpy).not.toHaveBeenCalledWith(EventTypes.LEAD_CREATED, expect.anything());
+
+      // Once the CRM records it, the same submit is accepted and is not a replay.
+      vi.mocked(syncPublicSolutionRequestToCrm).mockResolvedValueOnce("recorded");
+      const accepted = await fourFieldSubmit({ idempotencyKey: "durability-test" });
+      expect(accepted.status).toBe(200);
+      const acceptedBody = await accepted.json();
+      expect(acceptedBody.replayed).toBe(false);
+      expect(acceptedBody.durable).toBe("crm");
+      expect(acceptedBody.crm).toBe("recorded");
+      expect(emitSpy).toHaveBeenCalledWith(EventTypes.LEAD_CREATED, expect.objectContaining({ email: "riley@example.com" }));
+    } finally {
+      emitSpy.mockRestore();
+      process.env.NODE_ENV = originalEnv;
+      if (originalSmoke === undefined) delete process.env.DE_SMOKE_ALLOW_MEMORY_ONLY;
+      else process.env.DE_SMOKE_ALLOW_MEMORY_ONLY = originalSmoke;
+    }
+  });
+
+  it("accepts memory-only submits outside production, labelled as such, and sends no-store", async () => {
+    const response = await fourFieldSubmit({ idempotencyKey: "memory-label-test" });
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    const body = await response.json();
+    expect(body.durable).toBe("memory");
+    expect(body.replayed).toBe(false);
   });
 });
