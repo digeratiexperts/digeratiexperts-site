@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    Stages the DE Technician Console as an Intune Win32 app (.intunewin) with install, uninstall and detection.
+    Stages the DE Tech Tool as an Intune Win32 app (.intunewin) with install, uninstall and detection.
 
 .DESCRIPTION
     Writes packaging\out\intune\source with:
@@ -42,26 +42,26 @@ Set-Content -LiteralPath (Join-Path $src 'windows\VERSION') -Value $version -Enc
 
 $install = @'
 @echo off
-rem DE Technician Console - Intune install (runs as SYSTEM)
+rem DE Tech Tool - Intune install (runs as SYSTEM)
 set "DEST=%ProgramFiles%\DE\TechConsole"
 if exist "%DEST%" rmdir /s /q "%DEST%"
 mkdir "%DEST%"
 xcopy "%~dp0windows\*" "%DEST%\" /e /i /q /y >nul || exit /b 1
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$s=(New-Object -ComObject WScript.Shell).CreateShortcut(\"$env:ProgramData\Microsoft\Windows\Start Menu\Programs\DE Technician Console.lnk\"); $s.TargetPath=\"$env:ProgramFiles\DE\TechConsole\Start-DETechConsole.cmd\"; $s.WorkingDirectory=\"$env:ProgramFiles\DE\TechConsole\"; $s.Save()"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$s=(New-Object -ComObject WScript.Shell).CreateShortcut(\"$env:ProgramData\Microsoft\Windows\Start Menu\Programs\DE Tech Tool.lnk\"); $s.TargetPath=\"$env:ProgramFiles\DE\TechConsole\Start-DETechTool.cmd\"; $s.WorkingDirectory=\"$env:ProgramFiles\DE\TechConsole\"; $s.Save()"
 exit /b 0
 '@
 $uninstall = @'
 @echo off
-rem DE Technician Console - Intune uninstall. Client evidence under %ProgramData%\DE is kept on purpose.
-del /q "%ProgramData%\Microsoft\Windows\Start Menu\Programs\DE Technician Console.lnk" 2>nul
+rem DE Tech Tool - Intune uninstall. Client evidence under %ProgramData%\DE is kept on purpose.
+del /q "%ProgramData%\Microsoft\Windows\Start Menu\Programs\DE Tech Tool.lnk" 2>nul
 if exist "%ProgramFiles%\DE\TechConsole" rmdir /s /q "%ProgramFiles%\DE\TechConsole"
 exit /b 0
 '@
 $detect = @"
-# Intune detection rule for the DE Technician Console $version. Exit 0 with output = installed.
+# Intune detection rule for the DE Tech Tool $version. Exit 0 with output = installed.
 `$dir = Join-Path `$env:ProgramFiles 'DE\TechConsole'
 `$v = Join-Path `$dir 'VERSION'
-if ((Test-Path -LiteralPath (Join-Path `$dir 'console\DETechConsole.ps1')) -and (Test-Path -LiteralPath `$v) -and ((Get-Content -LiteralPath `$v -Raw).Trim() -eq '$version')) { Write-Output 'DE Technician Console $version installed'; exit 0 }
+if ((Test-Path -LiteralPath (Join-Path `$dir 'console\DETechConsole.ps1')) -and (Test-Path -LiteralPath `$v) -and ((Get-Content -LiteralPath `$v -Raw).Trim() -eq '$version')) { Write-Output 'DE Tech Tool $version installed'; exit 0 }
 exit 1
 "@
 Set-Content -LiteralPath (Join-Path $src 'install.cmd') -Value $install -Encoding ASCII
