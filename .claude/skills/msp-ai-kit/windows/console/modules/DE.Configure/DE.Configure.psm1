@@ -200,9 +200,15 @@ function Register-DEBrowserActions {
 function Get-DEBrandingAssets {
     param($ClientProfile)
     $de = Get-DEConsole
-    $deLogo = Join-Path $de.Root 'assets\de-logo.png'
+    $deLogo = Join-Path $de.Root 'assets\brand\digerati-logo-600.png'
+    if (-not (Test-Path -LiteralPath $deLogo)) { $deLogo = Join-Path $de.Root 'assets\de-logo.png' }
     $client = Get-DEHashPath -Object $ClientProfile -Path 'branding.clientLogo'
-    if ($client -and -not [IO.Path]::IsPathRooted($client)) { $client = Join-Path $de.Dirs.Profiles $client }
+    if ($client -and $client -like 'asset:*') {
+        $assetRel = $client.Substring(6).TrimStart('/', '\\').Replace('/', '\\')
+        $client = Join-Path (Join-Path $de.Root 'assets') $assetRel
+    } elseif ($client -and -not [IO.Path]::IsPathRooted($client)) {
+        $client = Join-Path $de.Dirs.Profiles $client
+    }
     return @{ deLogo = $(if (Test-Path -LiteralPath $deLogo) { $deLogo } else { $null }); clientLogo = $(if ($client -and (Test-Path -LiteralPath $client)) { $client } else { $null }) }
 }
 
@@ -327,7 +333,7 @@ function Set-DESupportShortcuts {
 
 function Register-DEBrandingActions {
     param($ClientProfile)
-    Register-DEAction -Id 'branding.apply' -Module 'branding' -Title 'DE and client branding (wallpaper, lock screen, OEM support info)' -Phase 13 -Gates @('gate.elevated') -RequiresElevation -Modes @('new', 'takeover', 'replacement', 'repair') `
+    Register-DEAction -Id 'branding.apply' -Module 'branding' -Title 'DE and client branding (wallpaper, lock screen, OEM support info)' -Phase 13 -Gates @('gate.elevated') -RequiresElevation -Modes @('new', 'dropship', 'takeover', 'replacement', 'repair') `
         -Detect { $s = Get-DEBrandingState; @{ applied = $s.applied } } -Desired { @{ applied = $true } } `
         -Apply { param($s) Set-DEBranding -ClientProfile $ClientProfile }.GetNewClosure() `
         -Rollback { param($s) Undo-DEBranding } -ManualAction 'Preview the wallpaper in the Branding page before applying.'
@@ -335,7 +341,7 @@ function Register-DEBrandingActions {
         -Detect { @{ present = (Test-Path -LiteralPath (Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\Digerati Experts')) } } -Desired { @{ present = $true } } `
         -Apply { param($s) Set-DESupportShortcuts -ClientProfile $ClientProfile }.GetNewClosure() `
         -Rollback { param($s) Remove-Item -LiteralPath (Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\Digerati Experts') -Recurse -Force -ErrorAction SilentlyContinue; Remove-Item -LiteralPath (Join-Path $env:PUBLIC 'Desktop\DE Support.url') -Force -ErrorAction SilentlyContinue; 'removed' }
-    Register-DEAction -Id 'branding.hostname' -Module 'branding' -Title 'Hostname follows the client pattern' -Phase 13 -Gates @('gate.elevated') -RequiresElevation -RequiresReboot -Modes @('new', 'replacement') `
+    Register-DEAction -Id 'branding.hostname' -Module 'branding' -Title 'Hostname follows the client pattern' -Phase 13 -Gates @('gate.elevated') -RequiresElevation -RequiresReboot -Modes @('new', 'dropship', 'replacement') `
         -Detect { $ctx = Get-DEContext; $want = $(if ($ctx['device'] -and $ctx['device'].desiredHostname) { $ctx['device'].desiredHostname } else { New-DEHostname -ClientProfile $ClientProfile -Role "$(if ($ctx['device']) { $ctx['device'].role } else { 'LAP' })".Substring(0, 3) }); @{ matches = ($env:COMPUTERNAME -ieq $want); want = $want } }.GetNewClosure() -Desired { @{ matches = $true } } `
         -Apply { param($s) $want = $s.Detected.want; Rename-Computer -NewName $want -Force; "renamed to $want (restart required)" }
 }
