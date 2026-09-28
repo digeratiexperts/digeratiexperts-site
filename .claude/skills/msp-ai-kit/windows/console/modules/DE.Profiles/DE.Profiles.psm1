@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     Client profiles (reusable, per client, no credentials) and provisioning
@@ -16,7 +16,9 @@
     Machine-specific state (this device, this user, this run) lives in the
     core state store, never in the profile.
 #>
-Set-StrictMode -Version Latest
+# StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
+# (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
+Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 
 $script:ProfileSchemaVersion = 1

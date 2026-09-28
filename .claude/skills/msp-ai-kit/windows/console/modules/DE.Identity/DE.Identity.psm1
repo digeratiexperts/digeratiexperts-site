@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     Identity engine: DE break-glass administrator, BitLocker / OneDrive / Hello
@@ -12,7 +12,9 @@
     user is signed in, and requires a verified break-glass administrator and a
     passing BitLocker gate first. Passwords and recovery keys are runtime-only.
 #>
-Set-StrictMode -Version Latest
+# StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
+# (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
+Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 $script:IsWindowsHost = ($env:OS -eq 'Windows_NT')
 $script:BreakGlassName = 'DE-BreakGlass'

@@ -1,4 +1,4 @@
-# Pester tests for the MSP AI Kit loader (Install-MspAiKit.ps1). Compatible with Pester 4.10 and 5.x.
+﻿# Pester tests for the MSP AI Kit loader (Install-MspAiKit.ps1). Compatible with Pester 4.10 and 5.x.
 # Paths are set inside BeforeAll so the file works under Pester 4 and 5.
 
 Describe 'Loader script' {
@@ -34,7 +34,7 @@ Describe 'Loader runs (non-interactive, isolated HOME)' {
     }
     It 'dry run changes nothing and exits 0' {
         $r = & $script:Run @('-Action', 'All', '-NonInteractive', '-WhatIf', '-OutDir', $script:Out)
-        $r.Code | Should -Be 0
+        $r.Code | Should -Be 0 -Because ("loader output:`n" + (($r.Text -split "`n" | Where-Object { $_ -match 'FAIL|BLOCKED|WARN|error|Exception' }) -join "`n"))
         $r.Text | Should -Match 'DRY RUN'
         Test-Path -LiteralPath (Join-Path $script:Out 'INDEX.md') | Should -Be $false
     }

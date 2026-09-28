@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     DE Technician Console discovery engines: device, identity (dsregcmd), MDM
@@ -12,7 +12,9 @@
     are separated from collectors so they can be unit-tested with fixtures on
     any platform. Windows PowerShell 5.1 compatible; CIM instead of WMIC.
 #>
-Set-StrictMode -Version Latest
+# StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
+# (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
+Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 $script:IsWindowsHost = ($env:OS -eq 'Windows_NT')
 

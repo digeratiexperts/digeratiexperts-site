@@ -132,15 +132,21 @@ jobs:
         run: |
           & "$env:KIT/windows/tests/Invoke-GuiSmoke.ps1" -OutDir "$env:RUNNER_TEMP\de-smoke"
           if ($LASTEXITCODE -ne 0) { throw "GUI smoke exit $LASTEXITCODE" }
-      - name: Upload receipts and logs
+      - name: Collect logs into the workspace
+        if: always()
+        shell: powershell
+        run: |
+          $dest = Join-Path $env:GITHUB_WORKSPACE 'ci-artifacts'
+          New-Item -ItemType Directory -Path $dest -Force | Out-Null
+          foreach ($src in @("$env:ProgramData\DE\logs", "$env:LOCALAPPDATA\DE\logs", "$env:RUNNER_TEMP\de-smoke", "$env:RUNNER_TEMP\de-console\logs")) {
+            if (Test-Path $src) { Copy-Item -Path $src -Destination (Join-Path $dest (Split-Path $src -Leaf)) -Recurse -Force -ErrorAction SilentlyContinue }
+          }
+          Get-ChildItem "$env:RUNNER_TEMP\de-console\evidence" -Recurse -Include report-*.html -ErrorAction SilentlyContinue | Copy-Item -Destination $dest -ErrorAction SilentlyContinue
+          if (Test-Path "$env:RUNNER_TEMP\packs\INDEX.md") { Copy-Item "$env:RUNNER_TEMP\packs\INDEX.md" $dest }
+      - name: Upload receipts, logs and smoke renders
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: msp-ai-kit-windows-logs
-          path: |
-            ${{ runner.temp }}\packs\INDEX.md
-            ${{ runner.temp }}\de-smoke\*.png
-            ${{ runner.temp }}\de-console\evidence\**\report-*.html
-            C:\ProgramData\DE\logs\*
-            ${{ env.LOCALAPPDATA }}\DE\logs\*
+          path: ci-artifacts
           if-no-files-found: ignore

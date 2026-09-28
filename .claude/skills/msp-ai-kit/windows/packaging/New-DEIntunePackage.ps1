@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Stages the DE Technician Console as an Intune Win32 app (.intunewin) with install, uninstall and detection.
 

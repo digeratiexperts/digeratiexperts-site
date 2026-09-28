@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     JumpCloud controller: agent install / repair / registration verification,
@@ -13,7 +13,9 @@
     lookup, binding through the association list, groups and policies through
     their own endpoints. All write calls honour -WhatIf.
 #>
-Set-StrictMode -Version Latest
+# StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
+# (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
+Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 $script:JcApi = 'https://console.jumpcloud.com/api'
 

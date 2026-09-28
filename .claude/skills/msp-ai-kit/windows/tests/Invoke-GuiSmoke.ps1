@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     CI / technician smoke test for the DE Technician Console window.
 .DESCRIPTION
