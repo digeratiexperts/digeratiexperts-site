@@ -490,7 +490,7 @@ Describe 'Security provider selection' {
         $profile = ConvertTo-DEHashtable (Get-DEClientProfile -Id 'alamo')
         Register-DESecurityActions -ClientProfile $profile
         $guardz = Get-DEAction -Id 'security.guardz'
-        @($guardz.RequiresSecrets) | Should -Contain 'GUARDZ_ORG_KEY'
+        ($guardz.RequiresSecrets -contains 'GUARDZ_ORG_KEY') | Should -Be $true
         [bool]$guardz.Apply | Should -Be $true
     }
 }
