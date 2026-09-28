@@ -6,6 +6,7 @@ import { useCart } from "@/contexts/CartContext";
 import { formatSnapshotMoney } from "@/lib/solutionSnapshotView";
 import { cn } from "@/lib/utils";
 import { rectOverlapsPageContent } from "@/lib/stickyCtaVisibility";
+import { isWarehousePath, isWarehouseTransactionalPath, warehousePath } from "@/lib/warehousePaths";
 
 /**
  * Persistent Your Solution dock on /store/* — desktop bottom-right, mobile sticky.
@@ -21,11 +22,12 @@ import { rectOverlapsPageContent } from "@/lib/stickyCtaVisibility";
 export function SolutionMobileBar() {
   const [location] = useLocation();
   const { items, totals, openCart, isOpen } = useCart();
-  const onStore = location.startsWith("/internal/warehouse");
-  const onCheckoutFlow = /\/store\/(checkout|quote-request|quote-confirmation|order-confirmation)/.test(
-    location,
-  );
-  const onPdp = location.startsWith("/internal/warehouse/product/");
+  // Canonical Warehouse route helpers, not a hand-written /store/ regex: the
+  // transactional routes moved to /internal/warehouse/* and the old pattern
+  // could never match them, so the dock rendered over checkout (issue #239).
+  const onStore = isWarehousePath(location);
+  const onCheckoutFlow = isWarehouseTransactionalPath(location);
+  const onPdp = location.startsWith(warehousePath("/product/"));
   const barRef = useRef<HTMLDivElement>(null);
   const [overlapping, setOverlapping] = useState(false);
 
