@@ -18,7 +18,7 @@
 
 .EXAMPLE
     .\Install-DETechConsole.ps1
-    .\Install-DETechConsole.ps1 -ZipPath C:\Temp\DE-TechConsole-and-MSP-AI-Kit-v1.3.4.zip -Sha256 <hash>
+    .\Install-DETechConsole.ps1 -ZipPath C:\Temp\DE-TechTool-v1.5.0.zip -Sha256 <hash>
     .\Install-DETechConsole.ps1 -NoLaunch
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
@@ -37,8 +37,9 @@ try {
     if (-not $ZipPath) {
         $here = $(if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path })
         $places = @($here, (Get-Location).Path, (Join-Path $env:USERPROFILE 'Downloads')) | Select-Object -Unique
-        $found = @(foreach ($p in $places) { if (Test-Path -LiteralPath $p) { Get-ChildItem -LiteralPath $p -File -Filter 'DE-TechTool*.zip' -ErrorAction SilentlyContinue } })
-        if (-not $found.Count) { throw "No DE-TechTool*.zip found in: $($places -join '; '). Pass -ZipPath <file>." }
+        # DE-TechTool*.zip is the canonical package name; DE-TechConsole*.zip is what builds before 1.4 were called
+        $found = @(foreach ($p in $places) { if (Test-Path -LiteralPath $p) { foreach ($pattern in @('DE-TechTool*.zip', 'DE-TechConsole*.zip')) { Get-ChildItem -LiteralPath $p -File -Filter $pattern -ErrorAction SilentlyContinue } } })
+        if (-not $found.Count) { throw "No DE-TechTool*.zip (or older DE-TechConsole*.zip) found in: $($places -join '; '). Pass -ZipPath <file>." }
         $ZipPath = ($found | Sort-Object LastWriteTime -Descending | Select-Object -First 1).FullName
     }
     if (-not (Test-Path -LiteralPath $ZipPath)) { throw "Zip not found: $ZipPath" }
@@ -54,8 +55,10 @@ try {
     if (-not $PSCmdlet.ShouldProcess($InstallDir, 'install DE Tech Tool')) { return }
     $stage = Join-Path ([IO.Path]::GetTempPath()) ("de-techconsole-{0}" -f ([guid]::NewGuid()))
     Expand-Archive -LiteralPath $ZipPath -DestinationPath $stage -Force
-    $launcher = @(Get-ChildItem -LiteralPath $stage -Recurse -File -Filter 'Start-DETechTool.cmd' | Select-Object -First 1)
-    if (-not $launcher.Count) { throw 'This zip does not contain Start-DETechTool.cmd; it is not a DE Tech Tool package.' }
+    # Start-DETechTool.cmd is the canonical launcher; Start-DETechConsole.cmd is the compatibility alias older packages carry
+    $launcher = @(foreach ($name in @('Start-DETechTool.cmd', 'Start-DETechConsole.cmd')) { Get-ChildItem -LiteralPath $stage -Recurse -File -Filter $name })
+    if (-not $launcher.Count) { throw 'This zip contains neither Start-DETechTool.cmd nor Start-DETechConsole.cmd; it is not a DE Tech Tool package.' }
+    $launcherName = $launcher[0].Name
     $kitRoot = Split-Path -Parent (Split-Path -Parent $launcher[0].FullName)   # ...\msp-ai-kit
 
     if (Test-Path -LiteralPath $InstallDir) {
@@ -71,7 +74,7 @@ try {
 
     $versionFile = Join-Path $InstallDir 'windows\console\VERSION'
     $version = $(if (Test-Path -LiteralPath $versionFile) { (Get-Content -LiteralPath $versionFile -Raw).Trim() } else { 'unknown' })
-    $start = Join-Path $InstallDir 'windows\Start-DETechTool.cmd'
+    $start = Join-Path (Join-Path $InstallDir 'windows') $launcherName
     Write-Step "Installed DE Tech Tool v$version to $InstallDir" 'Green'
     Write-Step "Start it any time with: $start"
     if (-not $NoLaunch) { Start-Process -FilePath $start -WorkingDirectory (Split-Path -Parent $start) | Out-Null }

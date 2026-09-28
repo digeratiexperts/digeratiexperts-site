@@ -112,6 +112,19 @@ Describe 'One-file installer' {
         & $script:Exe -NoProfile -ExecutionPolicy Bypass -File $script:Inst -ZipPath $script:Zip -InstallDir $dest -NoLaunch | Out-Null
         Test-Path -LiteralPath "$dest.previous" | Should -Be $true
     }
+    It 'finds a canonical DE-TechTool zip on its own and installs the Start-DETechTool launcher' {
+        $src = Join-Path $script:Work 'canon/msp-ai-kit/windows/console'
+        New-Item -ItemType Directory -Path $src -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $script:Work 'canon/msp-ai-kit/windows/Start-DETechTool.cmd') -Value '@echo off'
+        Set-Content -LiteralPath (Join-Path $src 'VERSION') -Value '9.9.10'
+        $drop = Join-Path $script:Work 'drop'; New-Item -ItemType Directory -Path $drop -Force | Out-Null
+        Compress-Archive -Path (Join-Path $script:Work 'canon/msp-ai-kit') -DestinationPath (Join-Path $drop 'DE-TechTool-v9.9.10.zip')
+        Copy-Item -LiteralPath $script:Inst -Destination $drop
+        $dest = Join-Path $script:Work 'DE-TechTool'
+        & $script:Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $drop 'Install-DETechConsole.ps1') -InstallDir $dest -NoLaunch | Out-Null
+        $LASTEXITCODE | Should -Be 0
+        Test-Path -LiteralPath (Join-Path $dest 'windows/Start-DETechTool.cmd') | Should -Be $true
+    }
     It 'refuses a zip whose sha256 does not match' {
         & $script:Exe -NoProfile -ExecutionPolicy Bypass -File $script:Inst -ZipPath $script:Zip -Sha256 ('0' * 64) -InstallDir (Join-Path $script:Work 'x') -NoLaunch | Out-Null
         $LASTEXITCODE | Should -Be 1
