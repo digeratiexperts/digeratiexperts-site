@@ -385,11 +385,22 @@ Describe 'File encoding (Windows PowerShell 5.1 reads BOM-less files as ANSI)' {
     It 'every PowerShell file with non-ASCII characters starts with a UTF-8 BOM' {
         $root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
         $bad = @()
-        foreach ($f in Get-ChildItem -LiteralPath $root -Recurse -File -Include *.ps1, *.psm1, *.psd1) {
+        foreach ($f in @(Get-ChildItem -LiteralPath $root -Recurse -File | Where-Object { $_.Extension -in @('.ps1', '.psm1', '.psd1') })) {
             $b = [IO.File]::ReadAllBytes($f.FullName)
             $bom = $b.Length -ge 3 -and $b[0] -eq 0xEF -and $b[1] -eq 0xBB -and $b[2] -eq 0xBF
             if (-not $bom -and @($b | Where-Object { $_ -gt 127 }).Count) { $bad += $f.Name }
         }
         $bad | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'Package detection with the Windows code path forced on' {
+    BeforeAll { . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $null = Initialize-TestConsole; & (Get-Module DE.Apps) { $script:SavedWin = $script:IsWindowsHost; $script:IsWindowsHost = $true } }
+    AfterAll { & (Get-Module DE.Apps) { $script:IsWindowsHost = $script:SavedWin } }
+    It 'detects every catalog package without throwing (packages with no registry rules included)' {
+        foreach ($p in Get-DEPackages) { { $null = Test-DEPackageInstalled -Package $p -Apps @() } | Should -Not -Throw }
+    }
+    It 'reads the cloud-storage standard for Alamo without throwing' {
+        { $null = Get-DECloudStorageState -ClientProfile (Get-DEClientProfile -Id 'alamo') } | Should -Not -Throw
     }
 }

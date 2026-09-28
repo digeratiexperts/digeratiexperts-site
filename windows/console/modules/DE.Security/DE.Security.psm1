@@ -22,10 +22,10 @@ function Get-DESecurityPosture {
     param($ClientProfile)
     $agents = Get-DESecurityAgentState
     $want = @{
-        guardz = (@(Get-DEHashPath -Object $ClientProfile -Path 'security.mdr.deploy') -contains 'guardz') -or (-not (Get-DEHashPath -Object $ClientProfile -Path 'security.mdr.deploy'))
-        blackpoint = (@(Get-DEHashPath -Object $ClientProfile -Path 'security.mdr.deploy') -contains 'blackpoint')
+        guardz = (@(Get-DEHashPath -Object $ClientProfile -Path 'security.mdr.deploy' | Where-Object { $null -ne $_ }) -contains 'guardz') -or (-not (Get-DEHashPath -Object $ClientProfile -Path 'security.mdr.deploy'))
+        blackpoint = (@(Get-DEHashPath -Object $ClientProfile -Path 'security.mdr.deploy' | Where-Object { $null -ne $_ }) -contains 'blackpoint')
         sentinelone = ((Get-DEHashPath -Object $ClientProfile -Path 'security.edr') -in @('sentinelone', $null, ''))
-        pabx = (@(Get-DEHashPath -Object $ClientProfile -Path 'security.browserSecurity') -contains 'pabx') -or (-not (Get-DEHashPath -Object $ClientProfile -Path 'security.browserSecurity'))
+        pabx = (@(Get-DEHashPath -Object $ClientProfile -Path 'security.browserSecurity' | Where-Object { $null -ne $_ }) -contains 'pabx') -or (-not (Get-DEHashPath -Object $ClientProfile -Path 'security.browserSecurity'))
     }
     $pabx = Test-DEPackageInstalled -Package (Get-DEPackage -Id 'pabx-policy') -ClientProfile $ClientProfile
     return @{
@@ -49,7 +49,7 @@ function Get-DESanitizedInstallerDiagnostics {
 
 function Register-DESecurityActions {
     param($ClientProfile)
-    $deployBlackpoint = (@(Get-DEHashPath -Object $ClientProfile -Path 'security.mdr.deploy') -contains 'blackpoint')
+    $deployBlackpoint = (@(Get-DEHashPath -Object $ClientProfile -Path 'security.mdr.deploy' | Where-Object { $null -ne $_ }) -contains 'blackpoint')
 
     Register-DEAction -Id 'security.edr-conflicts' -Module 'security' -Title 'No conflicting EDR / AV before SentinelOne' -Phase 8 `
         -Detect { $a = Get-DESecurityAgentState; @{ conflicts = @($a.conflictingEdr).Count; names = (@($a.conflictingEdr) -join ', ') } } -Desired { @{ conflicts = 0 } } `

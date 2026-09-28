@@ -267,7 +267,7 @@ function Clear-DEEvidence { $script:DE.Evidence.Clear(); $script:DE.ExitCode = 0
 
 # ------------------------------------------------------------------ exceptions
 function Get-DEExceptionsPath { return (Join-Path $script:DE.Dirs.State 'exceptions.json') }
-function Import-DEExceptions { $p = Get-DEExceptionsPath; $script:DE.Exceptions = @{}; if (Test-Path -LiteralPath $p) { try { $list = Get-Content -LiteralPath $p -Raw | ConvertFrom-Json; foreach ($e in @($list)) { $script:DE.Exceptions[$e.target] = $e } } catch { } }; return $script:DE.Exceptions }
+function Import-DEExceptions { $p = Get-DEExceptionsPath; $script:DE.Exceptions = @{}; if (Test-Path -LiteralPath $p) { try { $list = Get-Content -LiteralPath $p -Raw | ConvertFrom-Json; foreach ($e in @($list | Where-Object { $null -ne $_ })) { $script:DE.Exceptions[$e.target] = $e } } catch { } }; return $script:DE.Exceptions }
 function Save-DEExceptions { @($script:DE.Exceptions.Values) | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Get-DEExceptionsPath) -Encoding UTF8 -WhatIf:$false }
 function Add-DEException {
     <# Records an approved exception for a gate or action. The item never reads PASS; it reads EXCEPTION until the expiry. #>
@@ -308,7 +308,7 @@ function Test-DEGate {
 }
 function Reset-DEGateCache { $script:DE.GateCache = @{} }
 function Get-DEGateBoard { param([switch]$Refresh) return @($script:DE.Gates.Keys | ForEach-Object { Test-DEGate -Id $_ -Refresh:$Refresh }) }
-function Test-DEGatesSatisfied { param([string[]]$Ids) $bad = @(); foreach ($id in @($Ids)) { $g = Test-DEGate -Id $id; if ($g.Status -notin @('PASS', 'EXCEPTION')) { $bad += $g } }; return [pscustomobject]@{ Ok = ($bad.Count -eq 0); Failing = $bad; ViaException = @(@($Ids) | ForEach-Object { Test-DEGate -Id $_ } | Where-Object { $_ -and $_.Status -eq 'EXCEPTION' }) }
+function Test-DEGatesSatisfied { param([string[]]$Ids) $bad = @(); foreach ($id in @($Ids | Where-Object { $null -ne $_ })) { $g = Test-DEGate -Id $id; if ($g.Status -notin @('PASS', 'EXCEPTION')) { $bad += $g } }; return [pscustomobject]@{ Ok = ($bad.Count -eq 0); Failing = $bad; ViaException = @(@($Ids) | ForEach-Object { Test-DEGate -Id $_ } | Where-Object { $_ -and $_.Status -eq 'EXCEPTION' }) }
 }
 
 # ------------------------------------------------------------------ actions
@@ -562,7 +562,7 @@ function Test-DEConsoleIntegrity {
         $manifestPath = Join-Path $base 'integrity.json'
         if (Test-Path -LiteralPath $manifestPath) {
             $m = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-            foreach ($f in @($m.files)) {
+            foreach ($f in @($m.files | Where-Object { $null -ne $_ })) {
                 $full = Join-Path $base ($f.path -replace '/', [IO.Path]::DirectorySeparatorChar)
                 if (-not (Test-Path -LiteralPath $full)) { $problems += "missing: $($f.path)"; continue }
                 $h = (Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash.ToLowerInvariant()

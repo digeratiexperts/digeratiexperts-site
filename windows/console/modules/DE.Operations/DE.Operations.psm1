@@ -90,7 +90,7 @@ function Import-DECertificate { [CmdletBinding(SupportsShouldProcess = $true)] p
 function Test-DESiteResources {
     param($ClientProfile, [string]$SiteId)
     $net = Get-DENetworkState
-    $shares = @(Get-DEHashPath -Object $ClientProfile -Path 'network.shares'); $printers = @(Get-DEHashPath -Object $ClientProfile -Path 'network.printers'); $wifi = @(Get-DEHashPath -Object $ClientProfile -Path 'network.wifiProfiles')
+    $shares = @(Get-DEHashPath -Object $ClientProfile -Path 'network.shares' | Where-Object { $null -ne $_ }); $printers = @(Get-DEHashPath -Object $ClientProfile -Path 'network.printers' | Where-Object { $null -ne $_ }); $wifi = @(Get-DEHashPath -Object $ClientProfile -Path 'network.wifiProfiles' | Where-Object { $null -ne $_ })
     $shareResults = @($shares | Where-Object { $_ } | ForEach-Object { $p = "$(Get-DEOpsProp $_ 'path')"; @{ path = $p; reachable = $(if ($p) { Test-Path -LiteralPath $p -ErrorAction SilentlyContinue } else { $false }) } })
     $printerResults = @($printers | Where-Object { $_ } | ForEach-Object { $n = "$(Get-DEOpsProp $_ 'name')"; @{ name = $n; installed = [bool](Get-Printer -Name $n -ErrorAction SilentlyContinue) } })
     $wifiResults = @($wifi | Where-Object { $_ } | ForEach-Object { $s = "$(Get-DEOpsProp $_ 'ssid')"; @{ ssid = $s; present = ($net.wifiProfiles -contains $s) } })

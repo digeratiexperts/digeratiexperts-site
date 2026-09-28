@@ -95,24 +95,24 @@ function Get-DEBrowserDesiredPolicy {
     $out = @{ chrome = [ordered]@{}; edge = [ordered]@{}; lists = @{ chrome = @{}; edge = @{} } }
     foreach ($b in @('chrome', 'edge')) {
         foreach ($prop in @((Get-DECfgProp $p 'common').PSObject.Properties)) { $out[$b][$prop.Name] = $prop.Value }
-        $spec = Get-DECfgProp $p $b; if ($spec) { foreach ($prop in @($spec.PSObject.Properties)) { $out[$b][$prop.Name] = $prop.Value } }
+        $spec = Get-DECfgProp $p $b; if ($spec) { foreach ($prop in @($spec.PSObject.Properties | Where-Object { $null -ne $_ })) { $out[$b][$prop.Name] = $prop.Value } }
         $homePage = Get-DEHashPath -Object $ClientProfile -Path 'browser.homepage'
-        if ($homePage) { $out[$b]['HomepageLocation'] = $homePage; $out[$b]['HomepageIsNewTabPage'] = 0; $out[$b]['RestoreOnStartup'] = 4; $out.lists[$b]['RestoreOnStartupURLs'] = @(@($homePage) + @(Get-DEHashPath -Object $ClientProfile -Path 'browser.startupPages') | Where-Object { $_ }) }
+        if ($homePage) { $out[$b]['HomepageLocation'] = $homePage; $out[$b]['HomepageIsNewTabPage'] = 0; $out[$b]['RestoreOnStartup'] = 4; $out.lists[$b]['RestoreOnStartupURLs'] = @(@($homePage) + @(Get-DEHashPath -Object $ClientProfile -Path 'browser.startupPages' | Where-Object { $null -ne $_ }) | Where-Object { $_ }) }
         $bookmarksJson = $null
         if ((Get-DEHashPath -Object $ClientProfile -Path 'browser.managedBookmarksFromVendors') -or (Get-DEHashPath -Object $ClientProfile -Path 'browser.extraBookmarks')) { $bookmarksJson = New-DEManagedBookmarks -ClientProfile $ClientProfile -IncludeReference:$false }
         if ($bookmarksJson -and -not (Get-DEHashPath -Object $ClientProfile -Path 'browser.managedBookmarksFromVendors')) {
-            $extra = @(Get-DEHashPath -Object $ClientProfile -Path 'browser.extraBookmarks'); $bookmarksJson = (@(@{ toplevel_name = 'DE' }) + @($extra | ForEach-Object { @{ name = (Get-DECfgProp $_ 'name'); url = (Get-DECfgProp $_ 'url') } })) | ConvertTo-Json -Compress -Depth 4
+            $extra = @(Get-DEHashPath -Object $ClientProfile -Path 'browser.extraBookmarks' | Where-Object { $null -ne $_ }); $bookmarksJson = (@(@{ toplevel_name = 'DE' }) + @($extra | ForEach-Object { @{ name = (Get-DECfgProp $_ 'name'); url = (Get-DECfgProp $_ 'url') } })) | ConvertTo-Json -Compress -Depth 4
         }
         if ($bookmarksJson) { $out[$b]['ManagedBookmarks'] = $bookmarksJson; $out[$b]['BookmarkBarEnabled'] = 1 }
         $ext = Get-DECfgProp $p 'extensions'
-        $force = @(); foreach ($e in @(Get-DECfgProp $ext 'forceInstall')) { $id = Get-DECfgProp $e $b; if ($id) { $force += $(if ($b -eq 'chrome') { "$id;https://clients2.google.com/service/update2/crx" } else { "$id;https://edge.microsoft.com/extensionwebstorebase/v1/crx" }) } }
+        $force = @(); foreach ($e in @(Get-DECfgProp $ext 'forceInstall' | Where-Object { $null -ne $_ })) { $id = Get-DECfgProp $e $b; if ($id) { $force += $(if ($b -eq 'chrome') { "$id;https://clients2.google.com/service/update2/crx" } else { "$id;https://edge.microsoft.com/extensionwebstorebase/v1/crx" }) } }
         $pabx = $null; try { $pabx = Get-DEPkgProp (Get-DEPkgProp (Get-DEPackage -Id 'pabx-policy') 'settings') "pabx_extension_id_$b" } catch { }
         if ($pabx) { $force += $(if ($b -eq 'chrome') { "$pabx;https://clients2.google.com/service/update2/crx" } else { "$pabx;https://edge.microsoft.com/extensionwebstorebase/v1/crx" }) }
         $out.lists[$b]['ExtensionInstallForcelist'] = $force
-        $out.lists[$b]['ExtensionInstallAllowlist'] = @(Get-DECfgProp $ext 'allow')
-        $out.lists[$b]['ExtensionInstallBlocklist'] = $(if ($force.Count -or @(Get-DECfgProp $ext 'allow').Count) { @(Get-DECfgProp $ext 'block') } else { @() })   # never block '*' with an empty allow/force list
-        $out.lists[$b]['URLBlocklist'] = @(Get-DECfgProp $p 'urlBlocklist')
-        $out.lists[$b]['URLAllowlist'] = @(Get-DECfgProp $p 'urlAllowlist')
+        $out.lists[$b]['ExtensionInstallAllowlist'] = @(Get-DECfgProp $ext 'allow' | Where-Object { $null -ne $_ })
+        $out.lists[$b]['ExtensionInstallBlocklist'] = $(if ($force.Count -or @(Get-DECfgProp $ext 'allow' | Where-Object { $null -ne $_ }).Count) { @(Get-DECfgProp $ext 'block' | Where-Object { $null -ne $_ }) } else { @() })   # never block '*' with an empty allow/force list
+        $out.lists[$b]['URLBlocklist'] = @(Get-DECfgProp $p 'urlBlocklist' | Where-Object { $null -ne $_ })
+        $out.lists[$b]['URLAllowlist'] = @(Get-DECfgProp $p 'urlAllowlist' | Where-Object { $null -ne $_ })
     }
     $out.default = Get-DEHashPath -Object $ClientProfile -Path 'browser.default'
     return $out
@@ -307,7 +307,7 @@ function Get-DEShortcutDefinitions {
         @{ id = 'remote-support'; name = 'DE Remote Support'; url = 'https://console.jumpcloud.com/userconsole' }
         @{ id = 'book-time'; name = 'DE - book time'; url = 'https://meet.digerati-experts.com/' }
     )
-    $want = @(Get-DEHashPath -Object $ClientProfile -Path 'branding.shortcuts'); if (-not $want.Count) { $want = @('client-portal', 'support-ticket', 'remote-support') }
+    $want = @(Get-DEHashPath -Object $ClientProfile -Path 'branding.shortcuts' | Where-Object { $null -ne $_ }); if (-not $want.Count) { $want = @('client-portal', 'support-ticket', 'remote-support') }
     return @($all | Where-Object { $_ -and $want -contains $_.id })
 }
 function Set-DESupportShortcuts {

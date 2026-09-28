@@ -111,15 +111,15 @@ function Resolve-DEClientContext {
     $candidates = @()
     $hostName = "$(Get-DEHashPath -Object $Snapshot -Path 'device.hostname')"
     $tenantName = "$(Get-DEHashPath -Object $Snapshot -Path 'identity.dsreg.tenantName')"; $tenantId = "$(Get-DEHashPath -Object $Snapshot -Path 'identity.dsreg.tenantId')"
-    $profileNames = @(@(Get-DEHashPath -Object $Snapshot -Path 'identity.profiles') | Where-Object { $_ } | ForEach-Object { Split-Path -Leaf $_.path })
+    $profileNames = @(@(Get-DEHashPath -Object $Snapshot -Path 'identity.profiles' | Where-Object { $null -ne $_ }) | Where-Object { $_ } | ForEach-Object { Split-Path -Leaf $_.path })
     foreach ($entry in Get-DEClientProfiles) {
         $p = $entry.profile; $score = 0; $why = @()
         $det = $p.detection
         if ($det) {
-            foreach ($pat in @($det.hostnamePatterns)) { if ($pat -and $hostName -like $pat) { $score += 3; $why += "hostname matches $pat" } }
-            foreach ($t in @($det.entraTenantIds)) { if ($t -and $tenantId -and $t -ieq $tenantId) { $score += 5; $why += 'Entra tenant id' } }
-            foreach ($t in @($det.entraTenantNames)) { if ($t -and $tenantName -and $tenantName -like "*$t*") { $score += 4; $why += "Entra tenant name '$tenantName'" } }
-            foreach ($h in @($det.profileFolderHints)) { if ($h -and ($profileNames | Where-Object { $_ -like "*$h*" })) { $score += 2; $why += "profile folder like $h" } }
+            foreach ($pat in @($det.hostnamePatterns | Where-Object { $null -ne $_ })) { if ($pat -and $hostName -like $pat) { $score += 3; $why += "hostname matches $pat" } }
+            foreach ($t in @($det.entraTenantIds | Where-Object { $null -ne $_ })) { if ($t -and $tenantId -and $t -ieq $tenantId) { $score += 5; $why += 'Entra tenant id' } }
+            foreach ($t in @($det.entraTenantNames | Where-Object { $null -ne $_ })) { if ($t -and $tenantName -and $tenantName -like "*$t*") { $score += 4; $why += "Entra tenant name '$tenantName'" } }
+            foreach ($h in @($det.profileFolderHints | Where-Object { $null -ne $_ })) { if ($h -and ($profileNames | Where-Object { $_ -like "*$h*" })) { $score += 2; $why += "profile folder like $h" } }
         }
         if ($p.identity -and $p.identity.entraTenantName -and $tenantName -and $tenantName -like "*$($p.identity.entraTenantName)*") { $score += 4; $why += 'identity.entraTenantName' }
         if ($score -gt 0) { $candidates += [pscustomobject]@{ id = $p.id; name = $p.name; score = $score; reasons = $why } }
@@ -135,7 +135,7 @@ function Resolve-DEEndUser {
     $current = "$(Get-DEHashPath -Object $Snapshot -Path 'identity.currentPrincipal')"
     $tech = $Technician
     if (-not $tech) { $tech = $current }
-    $allProfiles = @(@(Get-DEHashPath -Object $Snapshot -Path 'identity.profiles') | Where-Object { $_ })
+    $allProfiles = @(@(Get-DEHashPath -Object $Snapshot -Path 'identity.profiles' | Where-Object { $null -ne $_ }) | Where-Object { $_ })
     $profiles = @($allProfiles | Where-Object { $_ -and $_.path -notmatch '\\(Administrator|Default|Public|DE-BreakGlass|jrpetro)$' } | Sort-Object { $_.lastUse } -Descending)
     $mostUsed = $profiles | Select-Object -First 1
     $endUser = $null; $how = ''

@@ -144,7 +144,7 @@ function Start-DEBackgroundJob {
         Import-DEConsoleModules -Root $JobRoot
         $null = Initialize-DEConsole -Root $JobRoot -Mode $(if ($JobDryRun) { 'Audit' } else { 'Apply' }) -DataDir $JobDataDir -DryRun:$JobDryRun
         $c = Get-DEConsole; if ($JobLogFile) { $c.LogFile = $JobLogFile }
-        foreach ($k in @($JobSecrets.Keys)) { Set-DESecret -Name $k -SecureValue $JobSecrets[$k] }
+        foreach ($k in @($JobSecrets.Keys | Where-Object { $null -ne $_ })) { Set-DESecret -Name $k -SecureValue $JobSecrets[$k] }
         foreach ($r in $JobRedactions) { Register-DERedaction -Value $r }
         if ($JobContext) { Set-DEContext -Values $JobContext }
         $JobProfile = $null; if ($JobProfileId) { $JobProfile = Get-DEClientProfile -Id $JobProfileId; $null = Initialize-DEWorkflow -ClientProfile $JobProfile -Mode $JobMode }

@@ -509,7 +509,7 @@ function Build-Discovery {
     $wrap = New-Object System.Windows.Controls.WrapPanel
     foreach ($k in $sections.Keys) {
         $sp = New-El StackPanel; [void]$sp.Children.Add((New-Text $k 14 -Bold))
-        $h = $sections[$k]; foreach ($f in @($h.Keys)) { $v = $h[$f]; if ($v -is [array]) { $v = ($v | ForEach-Object { if ($_ -is [hashtable]) { ($_.Values -join ' ') } else { "$_" } }) -join '; ' }; [void]$sp.Children.Add((New-El TextBlock @{ Text = "$f  $v"; Style = 'Mono'; TextWrapping = 'Wrap' })) }
+        $h = $sections[$k]; foreach ($f in @($h.Keys | Where-Object { $null -ne $_ })) { $v = $h[$f]; if ($v -is [array]) { $v = ($v | ForEach-Object { if ($_ -is [hashtable]) { ($_.Values -join ' ') } else { "$_" } }) -join '; ' }; [void]$sp.Children.Add((New-El TextBlock @{ Text = "$f  $v"; Style = 'Mono'; TextWrapping = 'Wrap' })) }
         $b = New-Object System.Windows.Controls.Border; $b.Style = $Win.Resources['Card']; $b.Width = 440; $b.Margin = '0,0,12,12'; $b.Child = $sp; [void]$wrap.Children.Add($b)
     }
     [void]$root.Children.Add($wrap)
@@ -549,7 +549,7 @@ function Build-PackageCatalog {
     param($root)
     $grid = New-El DataGrid @{ Height = 320; Name = 'Package catalog' }
     foreach ($c in @(@{ h = 'Package'; b = 'Name'; w = 280 }, @{ h = 'Category'; b = 'Category'; w = 110 }, @{ h = 'Source'; b = 'Source'; w = 110 }, @{ h = 'Trust'; b = 'Trust'; w = 240 }, @{ h = 'Confirmed'; b = 'Confirmed'; w = 90 }, @{ h = 'Secrets'; b = 'Secrets'; w = 150 })) { $col = New-Object System.Windows.Controls.DataGridTextColumn; $col.Header = $c.h; $col.Binding = New-Object System.Windows.Data.Binding $c.b; $col.Width = $c.w; $grid.Columns.Add($col) }
-    $grid.ItemsSource = @(Get-DEPackages | ForEach-Object { $src = $_.source; [pscustomobject]@{ Name = $_.name; Category = $_.category; Source = $src.type; Trust = $(if ($src.type -eq 'winget') { "winget $($src.id)" } else { "sha256: $(if ((Get-DEPkgProp $src 'sha256')) { 'set' } else { 'not set' }); publisher: $(Get-DEPkgProp $src 'publisher')" }); Confirmed = $(if ($_.confirmed) { 'yes' } else { 'confirm first' }); Secrets = (@(Get-DEPkgProp $_ 'secrets') -join ', ') } })
+    $grid.ItemsSource = @(Get-DEPackages | ForEach-Object { $src = $_.source; [pscustomobject]@{ Name = $_.name; Category = $_.category; Source = $src.type; Trust = $(if ($src.type -eq 'winget') { "winget $($src.id)" } else { "sha256: $(if ((Get-DEPkgProp $src 'sha256')) { 'set' } else { 'not set' }); publisher: $(Get-DEPkgProp $src 'publisher')" }); Confirmed = $(if ($_.confirmed) { 'yes' } else { 'confirm first' }); Secrets = (@(Get-DEPkgProp $_ 'secrets' | Where-Object { $null -ne $_ }) -join ', ') } })
     $folder = New-Button 'Open packages folder' { Start-Process (Get-DELocalPackagesDir) }
     [void]$root.Children.Add((New-Card @((New-Text 'Installer repository' 15 -Bold), (New-Text 'Put DE-supplied installers (Guardz MSI, SentinelOne managed installer, PABX script, MSP360 build) in the packages folder. Unverified files are refused unless you override with a reason, which is recorded as WARN.' -Muted -Wrap), $folder, $grid)))
 }
@@ -695,7 +695,7 @@ if ($SmokeTest) {
         $e = Wait-SmokeJob 'audit job'; if ($e) { $failed += $e } else { Write-Host ("SMOKE PASS audit job ({0} evidence rows)" -f @(Get-DEEvidence).Count) }
     } catch { $failed += "setup: $($_.Exception.Message)" }
     $w = 1440; $h = 900
-    foreach ($name in @($Pages.Keys)) {
+    foreach ($name in @($Pages.Keys | Where-Object { $null -ne $_ })) {
         try {
             Show-Page $name
             if ($S.CurrentPage -ne $name -or -not $UI.PageHost.Content) { throw 'page did not load' }
