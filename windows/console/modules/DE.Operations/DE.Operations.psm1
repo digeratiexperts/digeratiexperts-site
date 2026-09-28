@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     Windows / OEM maintenance, network and site configuration, backup, RMM,
@@ -12,7 +12,9 @@
     remote agent verification. MFA and TAP steps record completion only; the
     console never holds an end user's credentials.
 #>
-Set-StrictMode -Version Latest
+# StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
+# (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
+Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 $script:IsWindowsHost = ($env:OS -eq 'Windows_NT')
 

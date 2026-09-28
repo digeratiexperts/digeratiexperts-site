@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     DE Technician Console: one shell for AI Toolkit, Endpoint Provisioning,
     Identity, JumpCloud, Security, Apps, OS baseline, Browser, Branding,
@@ -40,7 +40,9 @@ param(
     [string]$SmokeClient = 'alamo',
     [string]$SmokeOut
 )
-Set-StrictMode -Version Latest
+# StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
+# (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
+Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 $ConsoleRoot = $PSScriptRoot
 Import-Module (Join-Path $ConsoleRoot 'modules\DE.Workflow\DE.Workflow.psm1') -Force -DisableNameChecking
@@ -214,7 +216,7 @@ $UI.Brand.FontFamily = New-Object System.Windows.Media.FontFamily $FontDisplay
 $UI.TxtVersion.Text = "console $((Get-DEConsole).ConsoleVersion)"
 
 # ============================================================== session state
-$S = @{ Profile = $null; Snapshot = $null; Mode = $Settings.mode; Job = $null; Timer = $null; LogPos = 0; CurrentPage = $Page; LastBundle = $null }
+$S = @{ Profile = $null; Snapshot = $null; Mode = $Settings.mode; Job = $null; Timer = $null; LogPos = 0; CurrentPage = $Page; LastBundle = $null; LastJobError = $null; LogBox = $null }
 function Get-Brush { param([string]$Key) return $Win.Resources[$Key] }
 function Get-StateBrush { param([string]$State) switch -Regex ($State) { '^(PASS|NO CHANGE|READY)$' { Get-Brush 'Pass' } '^(WARN|DRIFT|IN PROGRESS|NOT RUN)$' { Get-Brush 'Warn' } '^(EXCEPTION|PLANNED|READY WITH EXCEPTIONS)$' { Get-Brush 'Lavender' } default { Get-Brush 'Magenta' } } }
 function Set-Status { param([string]$Text) $UI.TxtStatus.Text = (Protect-DEText $Text) }
@@ -251,33 +253,8 @@ function Start-DEJob {
     param([Parameter(Mandatory = $true)][string]$Label, [Parameter(Mandatory = $true)][scriptblock]$Work, [hashtable]$Params = @{}, [scriptblock]$OnDone)
     if ($S.Job) { Set-Status 'A job is already running.'; return }
     $de = Get-DEConsole
-    $rs = [RunspaceFactory]::CreateRunspace(); $rs.ApartmentState = 'MTA'; $rs.Open()
-    $rs.SessionStateProxy.SetVariable('JobRoot', $ConsoleRoot)
-    $rs.SessionStateProxy.SetVariable('JobDataDir', $de.Dirs.Base)
-    $rs.SessionStateProxy.SetVariable('JobSecrets', $de.Secrets)
-    $rs.SessionStateProxy.SetVariable('JobRedactions', @($de.Redactions))
-    $rs.SessionStateProxy.SetVariable('JobContext', $de.Context)
-    $rs.SessionStateProxy.SetVariable('JobProfileId', $(if ($S.Profile) { $S.Profile.id } else { $null }))
-    $rs.SessionStateProxy.SetVariable('JobMode', $S.Mode)
-    $rs.SessionStateProxy.SetVariable('JobDryRun', [bool]$de.DryRun)
-    $rs.SessionStateProxy.SetVariable('JobParams', $Params)
-    $rs.SessionStateProxy.SetVariable('JobLogFile', $de.LogFile)
-    $ps = [PowerShell]::Create(); $ps.Runspace = $rs
-    $prelude = {
-        $ErrorActionPreference = 'Stop'
-        Import-Module (Join-Path $JobRoot 'modules\DE.Workflow\DE.Workflow.psm1') -Force -DisableNameChecking
-        Import-DEConsoleModules -Root $JobRoot
-        $null = Initialize-DEConsole -Root $JobRoot -Mode $(if ($JobDryRun) { 'Audit' } else { 'Apply' }) -DataDir $JobDataDir -DryRun:$JobDryRun
-        $c = Get-DEConsole; $c.LogFile = $JobLogFile
-        foreach ($k in $JobSecrets.Keys) { Set-DESecret -Name $k -SecureValue $JobSecrets[$k] }
-        foreach ($r in $JobRedactions) { Register-DERedaction -Value $r }
-        Set-DEContext -Values $JobContext
-        $JobProfile = $null; if ($JobProfileId) { $JobProfile = Get-DEClientProfile -Id $JobProfileId; $null = Initialize-DEWorkflow -ClientProfile $JobProfile -Mode $JobMode }
-    }
-    $script = [scriptblock]::Create($prelude.ToString() + "`n" + '$__out = & {' + $Work.ToString() + '}' + "`n" + '@{ out = $__out; evidence = @(Get-DEEvidence); context = (Get-DEContext) }')
-    [void]$ps.AddScript($script)
-    $handle = $ps.BeginInvoke()
-    $S.Job = @{ ps = $ps; rs = $rs; handle = $handle; label = $Label; started = Get-Date; onDone = $OnDone }
+    $core = Start-DEBackgroundJob -Work $Work -Params $Params -ProfileId $(if ($S.Profile) { $S.Profile.id } else { $null }) -Mode $S.Mode
+    $S.Job = @{ core = $core; handle = $core.handle; label = $Label; started = $core.started; onDone = $OnDone }
     $UI.Progress.Visibility = 'Visible'; $UI.Progress.IsIndeterminate = $true; $UI.BtnCancel.Visibility = 'Visible'
     Set-Status "Running: $Label"
     try { $S.LogPos = (Get-Item -LiteralPath $de.LogFile).Length } catch { $S.LogPos = 0 }
@@ -299,21 +276,27 @@ function Update-DEJob {
     if (-not $S.Job.handle.IsCompleted) { return }
     $job = $S.Job; $S.Job = $null; $S.Timer.Stop()
     $UI.Progress.Visibility = 'Hidden'; $UI.BtnCancel.Visibility = 'Collapsed'
-    $result = $null
-    try {
-        $out = $job.ps.EndInvoke($job.handle)
-        $result = $out | Select-Object -Last 1
-        foreach ($e in @($result.evidence)) { if ($e) { [void](Get-DEConsole).Evidence.Add($e); if ($e.result -eq 'FAIL' -and (Get-DEConsole).ExitCode -eq 0) { (Get-DEConsole).ExitCode = 1 } } }
-        if ($result.context) { Set-DEContext -Values (ConvertTo-DEHashtable $result.context) }
-        $errs = @($job.ps.Streams.Error | ForEach-Object { Protect-DEText "$_" })
-        if ($errs.Count) { Set-Status "$($job.label) finished with errors: $($errs[0])" } else { Set-Status "$($job.label) finished in $([int]((Get-Date) - $job.started).TotalSeconds) s" }
-    } catch { Set-Status "$($job.label) failed: $(Protect-DEText $_.Exception.Message)" }
-    finally { $job.ps.Dispose(); $job.rs.Close(); $job.rs.Dispose() }
+    $done = Complete-DEBackgroundJob -Job $job.core
+    $result = $done.result; $failure = $done.failure
+    if ($failure) {
+        $msg = "$($job.label) failed: $(Protect-DEText $failure)"
+        Write-DELog -Level FAIL -Message $msg
+        $S.LastJobError = $msg
+        Set-Status $msg
+        Update-Header
+        return
+    }
+    $S.LastJobError = $null
+    $errs = @($done.warnings)
+    if ($errs.Count) { Write-DELog -Level WARN -Message "$($job.label): $($errs.Count) non-fatal error(s); first: $($errs[0])" }
+    Set-Status $(if ($errs.Count) { "$($job.label) finished with $($errs.Count) warning(s): $($errs[0])" } else { "$($job.label) finished in $([int]((Get-Date) - $job.started).TotalSeconds) s" })
     Update-Header
-    if ($job.onDone) { try { & $job.onDone $result } catch { Set-Status "refresh failed: $($_.Exception.Message)" } }
-    else { Show-Page $S.CurrentPage }
+    if ($job.onDone) {
+        try { & $job.onDone $result }
+        catch { $m = "$($job.label): the page could not refresh: $(Protect-DEText $_.Exception.Message)"; Write-DELog -Level FAIL -Message $m; $S.LastJobError = $m; Set-Status $m }
+    } else { Show-Page $S.CurrentPage }
 }
-$UI.BtnCancel.Add_Click({ if ($S.Job) { try { $S.Job.ps.Stop() } catch { }; Set-Status 'Cancel requested; the current step finishes or stops at its next checkpoint.' } })
+$UI.BtnCancel.Add_Click({ if ($S.Job) { try { $S.Job.core.ps.Stop() } catch { }; Set-Status 'Cancel requested; the current step finishes or stops at its next checkpoint.' } })
 
 # ============================================================== header + context
 function Update-Header {
@@ -338,7 +321,7 @@ function Invoke-Discovery {
         $snap
     } -OnDone {
         param($r)
-        $S.Snapshot = $r.out
+        $S.Snapshot = $r['out']
         $match = Resolve-DEClientContext -Snapshot $S.Snapshot
         if (-not $S.Profile -and $match.best) { $S.Profile = Get-DEClientProfile -Id $match.best.id; $UI.HdrClientWhy.Text = "detected ($($match.confidence)): $($match.best.reasons -join '; ')" }
         if ($S.Profile) {
@@ -692,11 +675,24 @@ if ($SmokeTest) {
     if (-not $SmokeOut) { $SmokeOut = Join-Path (Get-DEConsole).Dirs.Base 'smoke' }
     New-Item -ItemType Directory -Path $SmokeOut -Force | Out-Null
     $failed = @()
+    # Drive the same background-job path the buttons use (runspace, EndInvoke, OnDone) and fail on any job error.
+    function Wait-SmokeJob {
+        param([string]$Name)
+        $deadline = (Get-Date).AddMinutes(8)
+        while ($S.Job -and -not $S.Job.handle.IsCompleted -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 250 }
+        if ($S.Job -and -not $S.Job.handle.IsCompleted) { return "${Name}: timed out" }
+        if ($S.Job) { Update-DEJob }
+        if ($S.LastJobError) { return "${Name}: $($S.LastJobError)" }
+        return $null
+    }
     try {
-        $S.Profile = Get-DEClientProfile -Id $SmokeClient; $S.Mode = 'takeover'
-        $S.Snapshot = Get-DEDiscoverySnapshot -SkipApps -SkipUpdates -SkipConnectivity
-        $null = New-DEProvisioningContext -Snapshot $S.Snapshot -ClientId $S.Profile.id -Mode $S.Mode -Technician $Technician
-        $null = Initialize-DEWorkflow -ClientProfile $S.Profile -Mode $S.Mode
+        $S.Profile = Get-DEClientProfile -Id $SmokeClient; $S.Mode = 'takeover'; $Settings.technician = $Technician
+        Invoke-Discovery -Quick
+        $e = Wait-SmokeJob 'discovery job'; if ($e) { $failed += $e } else { Write-Host 'SMOKE PASS discovery job' }
+        if (-not $S.Snapshot) { $failed += 'discovery job: no snapshot came back' }
+        if (-not @(Get-DEActions).Count) { $failed += 'discovery job: no workflow actions registered' }
+        Start-DEJob -Label 'Full audit' -Work { $null = Invoke-DEAudit -Mode $JobMode }
+        $e = Wait-SmokeJob 'audit job'; if ($e) { $failed += $e } else { Write-Host ("SMOKE PASS audit job ({0} evidence rows)" -f @(Get-DEEvidence).Count) }
     } catch { $failed += "setup: $($_.Exception.Message)" }
     $w = 1440; $h = 900
     foreach ($name in @($Pages.Keys)) {

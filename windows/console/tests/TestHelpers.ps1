@@ -1,4 +1,4 @@
-# Shared by Console.Tests.ps1. Dot-sourced from each Describe's BeforeAll so it works under Pester 4 and 5
+﻿# Shared by Console.Tests.ps1. Dot-sourced from each Describe's BeforeAll so it works under Pester 4 and 5
 # (Pester 5 runs top-level file code only during discovery).
 $script:ConsoleRoot = Split-Path -Parent $PSScriptRoot
 $script:Fixtures = Join-Path $PSScriptRoot 'fixtures'

@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     Evidence bundle (sanitized JSON + internal HTML + client-safe HTML +
@@ -12,7 +12,9 @@
     metadata. The Hub payload carries device identity, mapping, state,
     verification timestamps, exceptions and evidence references only.
 #>
-Set-StrictMode -Version Latest
+# StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
+# (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
+Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 
 $script:Areas = [ordered]@{

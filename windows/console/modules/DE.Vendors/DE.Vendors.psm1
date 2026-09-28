@@ -1,11 +1,13 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     Vendor Admin Center: the DE vendor / admin launcher catalog with categories,
     primary / backup roles, tenant-specific URL resolution, managed-bookmark
     generation for the Browser Configurator and an HTML launcher page.
 #>
-Set-StrictMode -Version Latest
+# StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
+# (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
+Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 
 function Get-DEVendorCatalog {

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Signs the DE Technician Console and MSP AI Kit loader scripts and writes integrity.json.
 

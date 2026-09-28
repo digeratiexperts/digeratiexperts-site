@@ -1,4 +1,4 @@
-# Pester tests for the DE Technician Console engine. Compatible with Pester 4.10 and 5.x.
+﻿# Pester tests for the DE Technician Console engine. Compatible with Pester 4.10 and 5.x.
 #   Invoke-Pester -Path .claude/skills/msp-ai-kit/windows/console/tests
 # Helpers live in TestHelpers.ps1 and are dot-sourced inside every BeforeAll.
 # Windows-only behaviour (registry, CIM, services) is mocked so the suite also runs on Linux/macOS.
@@ -290,7 +290,8 @@ Describe 'Module surface and phase runner' {
     BeforeAll { . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $null = Initialize-TestConsole }
     It 'no two console modules export the same function (last import would silently win)' {
         $seen = @{}; $dupes = @()
-        foreach ($m in Get-Module | Where-Object { $_.Name -like 'DE.*' }) { foreach ($f in $m.ExportedFunctions.Keys) { if ($seen.ContainsKey($f)) { $dupes += "$f ($($seen[$f]) and $($m.Name))" } else { $seen[$f] = $m.Name } } }
+        # Pester 5 lists a module once per importer; compare distinct modules only
+        foreach ($m in @(Get-Module | Where-Object { $_.Name -like 'DE.*' } | Group-Object Name | ForEach-Object { $_.Group[0] })) { foreach ($f in $m.ExportedFunctions.Keys) { if ($seen.ContainsKey($f)) { $dupes += "$f ($($seen[$f]) and $($m.Name))" } else { $seen[$f] = $m.Name } } }
         $dupes | Should -BeNullOrEmpty
     }
     It 'runs every action in a phase instead of stopping after the first' {
@@ -350,5 +351,45 @@ Describe 'Secret vault, device trust and PDF helpers' {
     It 'PDF conversion degrades to nothing instead of failing' {
         $h = Join-Path ([IO.Path]::GetTempPath()) 'de-pdf-test.html'; Set-Content -LiteralPath $h -Value '<p>x</p>'
         { Convert-DEHtmlToPdf -HtmlPath $h -PdfPath ($h + '.pdf') -TimeoutSeconds 20 } | Should -Not -Throw
+    }
+}
+
+Describe 'Background jobs (the path every console button uses)' {
+    BeforeAll { . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $null = Initialize-TestConsole }
+    It 'runs discovery in a runspace and returns the snapshot, evidence and context' {
+        $j = Start-DEBackgroundJob -Work { Get-DEDiscoverySnapshot -SkipApps -SkipUpdates -SkipConnectivity } -Params @{ quick = $true }
+        $null = $j.handle.AsyncWaitHandle.WaitOne(180000)
+        $d = Complete-DEBackgroundJob -Job $j
+        $d.failure | Should -BeNullOrEmpty
+        $d.ok | Should -Be $true
+        $d.result['out'] | Should -Not -BeNullOrEmpty
+        $d.result['out']['device'] | Should -Not -BeNullOrEmpty
+    }
+    It 'runs a full takeover audit for the Alamo profile in a runspace' {
+        $j = Start-DEBackgroundJob -Work { $null = Invoke-DEAudit -Mode $JobMode; @(Get-DEEvidence).Count } -ProfileId 'alamo' -Mode 'takeover'
+        $null = $j.handle.AsyncWaitHandle.WaitOne(300000)
+        $d = Complete-DEBackgroundJob -Job $j
+        $d.failure | Should -BeNullOrEmpty
+        [int]$d.result['out'] | Should -BeGreaterThan 20
+    }
+    It 'reports a failing job with its real error instead of an empty result' {
+        $j = Start-DEBackgroundJob -Work { throw 'discovery exploded on purpose' }
+        $null = $j.handle.AsyncWaitHandle.WaitOne(60000)
+        $d = Complete-DEBackgroundJob -Job $j
+        $d.ok | Should -Be $false
+        $d.failure | Should -Match 'exploded on purpose'
+    }
+}
+
+Describe 'File encoding (Windows PowerShell 5.1 reads BOM-less files as ANSI)' {
+    It 'every PowerShell file with non-ASCII characters starts with a UTF-8 BOM' {
+        $root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+        $bad = @()
+        foreach ($f in Get-ChildItem -LiteralPath $root -Recurse -File -Include *.ps1, *.psm1, *.psd1) {
+            $b = [IO.File]::ReadAllBytes($f.FullName)
+            $bom = $b.Length -ge 3 -and $b[0] -eq 0xEF -and $b[1] -eq 0xBB -and $b[2] -eq 0xBF
+            if (-not $bom -and @($b | Where-Object { $_ -gt 127 }).Count) { $bad += $f.Name }
+        }
+        $bad | Should -BeNullOrEmpty
     }
 }

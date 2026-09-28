@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     RMM deployment of the DE Technician Console: download, verify, install, optionally run headless.
 
@@ -30,7 +30,9 @@ param(
     [ValidateSet('audit', 'new', 'takeover', 'replacement', 'repair', 'co-managed', 'deprovision')][string]$Mode = 'audit',
     [switch]$Apply
 )
-Set-StrictMode -Version Latest
+# StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
+# (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
+Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 $logDir = Join-Path $env:ProgramData 'DE\TechConsole\logs'; New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $log = Join-Path $logDir ("deploy-{0:yyyyMMdd-HHmmss}.log" -f (Get-Date))

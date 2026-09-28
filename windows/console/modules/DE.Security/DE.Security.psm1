@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     Security deployment engine: Guardz Device Agent (primary), SentinelOne
@@ -12,7 +12,9 @@
     state, never the installer's exit code. Organization keys and site tokens
     are never persisted.
 #>
-Set-StrictMode -Version Latest
+# StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
+# (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
+Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 
 function Get-DESecurityPosture {

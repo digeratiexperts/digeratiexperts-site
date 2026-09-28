@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     Application deployment engine: approved package catalog, trust checks
@@ -6,7 +6,9 @@
     uninstall with runtime-only secrets, per-client manifests, Microsoft 365
     readiness and the OneDrive / Dropbox client standard.
 #>
-Set-StrictMode -Version Latest
+# StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
+# (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
+Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 $script:IsWindowsHost = ($env:OS -eq 'Windows_NT')
 

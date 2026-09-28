@@ -1,4 +1,4 @@
-@{
+﻿@{
     # DE Technician Console / MSP AI Kit loader analyzer policy.
     # Errors fail CI; warnings are reported. Excluded rules are deliberate:
     #  - PSAvoidUsingWriteHost: the loader and console write coloured progress for technicians; reusable
@@ -17,7 +17,6 @@
         'PSUseApprovedVerbs',
         'PSReviewUnusedParameter',
         'PSAvoidGlobalVars',
-        'PSUseBOMForUnicodeEncodedFile',
         'PSAvoidUsingPositionalParameters',
         'PSUseDeclaredVarsMoreThanAssignments'
     )
