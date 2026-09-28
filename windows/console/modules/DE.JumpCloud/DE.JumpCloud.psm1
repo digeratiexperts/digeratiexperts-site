@@ -141,6 +141,20 @@ function Get-DEJumpCloudComponents {
     return @{ remoteAssist = $ra; go = $go; passwordManager = $pm; forcedExtensions = $ext; jumpcloudGoExtensionForced = [bool]($ext | Where-Object { $_ -match 'jumpcloud' }) }
 }
 
+function Get-DEDeviceTrustState {
+    <#
+    JumpCloud Device Trust / Conditional Access readiness: the JumpCloud-issued device certificate must be
+    present, valid and unexpired in the machine or user store. Returns non-secret metadata only.
+    #>
+    $certs = @()
+    if ($env:OS -eq 'Windows_NT') {
+        foreach ($store in @('Cert:\LocalMachine\My', 'Cert:\CurrentUser\My')) {
+            try { $certs += @(Get-ChildItem -Path $store -ErrorAction Stop | Where-Object { $_ -and ($_.Issuer -like '*JumpCloud*') } | ForEach-Object { [pscustomobject]@{ store = $store; subject = $_.Subject; issuer = $_.Issuer; thumbprint = $_.Thumbprint; notAfter = $_.NotAfter.ToString('o'); valid = ($_.NotAfter -gt (Get-Date) -and $_.NotBefore -lt (Get-Date)) } }) } catch { }
+        }
+    }
+    $good = @($certs | Where-Object { $_.valid })
+    return @{ certificatePresent = ($good.Count -gt 0); certificates = $certs; expiringSoon = @($good | Where-Object { [datetime]$_.notAfter -lt (Get-Date).AddDays(30) }).Count -gt 0 }
+}
 function Register-DEJumpCloudActions {
     param($ClientProfile)
     $groups = @(Get-DEHashPath -Object $ClientProfile -Path 'identity.jumpcloudSystemGroups')
@@ -185,9 +199,15 @@ function Register-DEJumpCloudActions {
         -Detect { $c = Get-DEJumpCloudComponents; @{ installed = $c.remoteAssist.present } } -Desired { @{ installed = $true } } `
         -Apply { param($s) $r = Invoke-DEPackageInstall -Id 'jumpcloud-remote-assist' -ClientProfile $ClientProfile; if (-not $r.ok -and -not (Get-DEJcProp $r 'planned')) { throw $r.detail }; $r.detail }.GetNewClosure()
 
+    if (Get-DEHashPath -Object $ClientProfile -Path 'identity.jumpcloudDeviceTrust') {
+        Register-DEAction -Id 'jumpcloud.device-trust' -Module 'jumpcloud' -Title 'JumpCloud Device Trust certificate present (Conditional Access)' -Phase 8 `
+            -Detect { $t = Get-DEDeviceTrustState; @{ certificatePresent = $t.certificatePresent; expiringSoon = $t.expiringSoon; count = @($t.certificates).Count } } -Desired { @{ certificatePresent = $true; expiringSoon = $false } } `
+            -ManualAction 'Confirm the device is in the JumpCloud Device Trust policy scope and the agent has issued its certificate (JumpCloud console > Device Management > Device Trust); sign-in through Conditional Access fails until it has.'
+    }
+
     Register-DEAction -Id 'jumpcloud.go-extension' -Module 'jumpcloud' -Title 'JumpCloud Go browser extension force-installed' -Phase 8 `
         -Detect { $c = Get-DEJumpCloudComponents; @{ forced = $c.jumpcloudGoExtensionForced } } -Desired { @{ forced = $true } } `
         -ManualAction 'Apply through the Browser Configurator (extension allow/force list) or a JumpCloud browser policy.'
 }
 
-Export-ModuleMember -Function Invoke-DEJumpCloudApi, Get-DEJumpCloudSystem, Get-DEJumpCloudUser, Get-DEJumpCloudBoundUsers, Get-DEJumpCloudSystemGroupsOf, Get-DEJumpCloudGroupByName, Get-DEJumpCloudPolicyResults, Test-DEJumpCloudUserMapping, Set-DEJumpCloudUserBinding, Add-DEJumpCloudSystemToGroup, Add-DEJumpCloudUserToGroup, Get-DEJumpCloudPolicySummary, Get-DEJumpCloudComponents, Register-DEJumpCloudActions
+Export-ModuleMember -Function Get-DEDeviceTrustState, Invoke-DEJumpCloudApi, Get-DEJumpCloudSystem, Get-DEJumpCloudUser, Get-DEJumpCloudBoundUsers, Get-DEJumpCloudSystemGroupsOf, Get-DEJumpCloudGroupByName, Get-DEJumpCloudPolicyResults, Test-DEJumpCloudUserMapping, Set-DEJumpCloudUserBinding, Add-DEJumpCloudSystemToGroup, Add-DEJumpCloudUserToGroup, Get-DEJumpCloudPolicySummary, Get-DEJumpCloudComponents, Register-DEJumpCloudActions

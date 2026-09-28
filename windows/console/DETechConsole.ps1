@@ -669,7 +669,11 @@ function Build-Settings {
         [void]$sp.Children.Add($row)
     }
     $clear = New-Button 'Clear all secrets now' { Clear-DESecrets; Show-Page 'Settings' }
-    [void]$root.Children.Add((New-Card @((New-Text 'Runtime secrets' 15 -Bold), (New-Text 'Held in memory as SecureString for this session only. Never written to state, logs, receipts, profiles or Hub payloads; anything that looks like one is redacted on screen. Cleared when the console closes.' -Muted -Wrap), $sp, $clear)))
+    $vaultBox = New-El TextBox @{ Text = $(if ($Settings.ContainsKey('secretVault')) { $Settings.secretVault } else { '' }); Width = 240; Name = 'Secret vault name' }
+    $allNames = @($known | ForEach-Object { $_.n })
+    $vaultBtn = New-Button 'Load from vault' { if (-not $vaultBox.Text) { Set-Status 'Enter the SecretManagement vault name first.'; return }; $Settings.secretVault = $vaultBox.Text; Save-GuiSettings; try { $rows = Import-DESecretsFromVault -Vault $vaultBox.Text -Names $allNames; Set-Status ('Vault: ' + (($rows | ForEach-Object { "$($_.name) $($_.status)" }) -join ', ')); Show-Page 'Settings' } catch { Set-Status $_.Exception.Message } }.GetNewClosure()
+    $vaultRow = New-Wrap @((New-Label 'Approved secret vault (PowerShell SecretManagement)'), $vaultBox, $vaultBtn)
+    [void]$root.Children.Add((New-Card @((New-Text 'Runtime secrets' 15 -Bold), (New-Text 'Held in memory as SecureString for this session only. Never written to state, logs, receipts, profiles or Hub payloads; anything that looks like one is redacted on screen. Cleared when the console closes.' -Muted -Wrap), $sp, $vaultRow, $clear)))
     $hubBox = New-El TextBox @{ Text = $Settings.hubEndpoint; Width = 520; Name = 'Hub endpoint' }
     $dry = New-El CheckBox @{ Content = 'Dry run (every action plans, nothing changes)'; IsChecked = [bool]$Settings.dryRun }
     $save = New-Button 'Save settings' { $Settings.hubEndpoint = $hubBox.Text; $Settings.dryRun = [bool]$dry.IsChecked; Save-GuiSettings; Set-DEStateValue -Path 'settings.hub.endpoint' -Value $hubBox.Text; Set-DEMode -Mode $(if ($dry.IsChecked) { 'Audit' } else { 'Apply' }) -DryRun:([bool]$dry.IsChecked); Update-Header; Set-Status 'Settings saved.' }.GetNewClosure() -Primary

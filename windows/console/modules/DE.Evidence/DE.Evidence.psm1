@@ -144,6 +144,8 @@ function Export-DEEvidenceBundle {
     Set-DEJsonFile -Path (Join-Path $OutDir 'snapshot.json') -Object $Snapshot
     Set-Content -LiteralPath (Join-Path $OutDir 'report-internal.html') -Value (ConvertTo-DEHtmlReport -Record $record -ClientProfile $ClientProfile -Gaps $gaps -Evidence $evidence) -Encoding UTF8
     Set-Content -LiteralPath (Join-Path $OutDir 'report-client.html') -Value (ConvertTo-DEHtmlReport -Record $record -ClientProfile $ClientProfile -ClientSafe) -Encoding UTF8
+    # PDF copies of both reports for email and the client file; skipped quietly when no Edge/Chrome is present.
+    foreach ($r in @('report-client', 'report-internal')) { $null = Convert-DEHtmlToPdf -HtmlPath (Join-Path $OutDir "$r.html") -PdfPath (Join-Path $OutDir "$r.pdf") }
     if ($de.LogFile -and (Test-Path -LiteralPath $de.LogFile)) { (Get-Content -LiteralPath $de.LogFile | ForEach-Object { Protect-DEText $_ }) | Set-Content -LiteralPath (Join-Path $OutDir 'console.log') -Encoding UTF8 }
     $manifest = @(Get-ChildItem -LiteralPath $OutDir -File | Where-Object { $_ -and $_.Name -ne 'manifest.sha256' } | Sort-Object Name | ForEach-Object { "{0}  {1}" -f (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name })
     Set-Content -LiteralPath (Join-Path $OutDir 'manifest.sha256') -Value $manifest -Encoding ASCII
@@ -157,6 +159,27 @@ function Export-DEEvidenceBundle {
     if ($leak) { Remove-Item -LiteralPath $zip -Force; throw 'evidence bundle contained a registered secret and was withheld; report this as a console bug' }
     Add-DEEvidence -Step 'evidence.bundle' -Module 'evidence' -Before 'no bundle' -ActionTaken 'bundle written' -Result 'INFO' -Verification "$zip sha256 $bundleHash" -Artifacts @($zip) | Out-Null
     return [pscustomobject]@{ folder = $OutDir; zip = $zip; sha256 = $bundleHash; record = $record; gaps = @($gaps).Count }
+}
+
+function Convert-DEHtmlToPdf {
+    <# Prints an HTML report to PDF with headless Edge (or Chrome). Returns the PDF path, or $null when no browser is available. Never throws. #>
+    param([Parameter(Mandatory = $true)][string]$HtmlPath, [Parameter(Mandatory = $true)][string]$PdfPath, [int]$TimeoutSeconds = 60)
+    if ($env:OS -ne 'Windows_NT') { return $null }
+    $candidates = @(
+        (Join-Path ${env:ProgramFiles(x86)} 'Microsoft\Edge\Application\msedge.exe'), (Join-Path $env:ProgramFiles 'Microsoft\Edge\Application\msedge.exe'),
+        (Join-Path $env:ProgramFiles 'Google\Chrome\Application\chrome.exe'), (Join-Path ${env:ProgramFiles(x86)} 'Google\Chrome\Application\chrome.exe'))
+    $browser = $candidates | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -First 1
+    if (-not $browser) { return $null }
+    try {
+        $uri = ([Uri](Resolve-Path -LiteralPath $HtmlPath).Path).AbsoluteUri
+        $profileDir = Join-Path ([IO.Path]::GetTempPath()) ("de-pdf-{0}" -f ([guid]::NewGuid()))
+        $argList = @('--headless=new', '--disable-gpu', '--no-first-run', "--user-data-dir=`"$profileDir`"", '--no-pdf-header-footer', "--print-to-pdf=`"$PdfPath`"", $uri)
+        $p = Start-Process -FilePath $browser -ArgumentList $argList -PassThru -WindowStyle Hidden
+        if (-not $p.WaitForExit($TimeoutSeconds * 1000)) { try { $p.Kill() } catch { } }
+        Remove-Item -LiteralPath $profileDir -Recurse -Force -ErrorAction SilentlyContinue
+        if (Test-Path -LiteralPath $PdfPath) { return $PdfPath }
+    } catch { }
+    return $null
 }
 
 function New-DEHubPayload {
@@ -195,4 +218,4 @@ function Send-DEHubPayload {
     } catch { Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken 'send failed; saved for manual upload' -Result 'FAIL' -Verification $_.Exception.Message -Remediation $file | Out-Null; return @{ sent = $false; file = $file } }
 }
 
-Export-ModuleMember -Function Get-DEReadiness, Get-DEGapReport, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload
+Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload

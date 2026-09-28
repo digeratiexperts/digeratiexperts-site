@@ -37,7 +37,8 @@ build the AI packs, and the AI Toolkit page offers to install it for the current
 6. **Restarts resume.** A step that needs a restart registers the console to reopen after sign-in and
    continue where it stopped.
 7. **Evidence and Hub.** The Evidence page writes a hashed bundle and pushes it to the Hub. The bundle
-   holds JSON, an internal report, a client-safe report and a sha256 manifest.
+   holds JSON, internal and client-safe reports and a sha256 manifest. Each report comes as HTML and
+   as a PDF printed by headless Edge or Chrome.
 
 ## Gates that protect the migration
 
@@ -56,6 +57,12 @@ exception:
 A failed or skipped control never shows as a green check. An exception needs a reason, an approver and an
 expiry date. It shows as EXCEPTION everywhere, including readiness.
 
+## JumpCloud Device Trust
+
+When a client profile sets `identity.jumpcloudDeviceTrust` to true, the console checks for a valid
+JumpCloud-issued device certificate. A missing or expiring certificate reads WARN with the fix, because
+Conditional Access sign-in fails without it.
+
 ## Security stack
 
 Guardz is the primary MDR. Blackpoint is the approved backup and installs only when the client profile
@@ -66,8 +73,13 @@ mode where appropriate, and applies the PABX policy.
 
 Secrets live in memory as SecureString for the session only. They are never written to state, logs,
 receipts, client profiles, evidence bundles or Hub payloads, and anything that looks like one is redacted
-on screen. Enter them on the Settings page. For RMM runs, define secure variables named `DE_SECRET_<NAME>`.
-The console moves them into memory and clears them from the environment.
+on screen. There are three ways to provide them:
+
+- **Settings page.** Type each secret into its password box.
+- **Approved vault.** Enter a PowerShell SecretManagement vault name on the Settings page and choose
+  "Load from vault". Any registered vault works, such as SecretStore, Azure Key Vault, 1Password or Keeper.
+- **RMM secure variables.** Name them `DE_SECRET_<NAME>`. The console moves them into memory and clears
+  them from the environment.
 
 | Name | Used for |
 |---|---|

@@ -15,6 +15,7 @@
     "keepEntraRegistration": false,
     "jumpcloudSystemGroups": ["Alamo - Workstations"],
     "jumpcloudUserGroups": ["Alamo - Users"],
+    "jumpcloudDeviceTrust": false,
     "usernameConvention": "first-initial-lastname"
   },
   "mdm": { "authority": "jumpcloud", "allowCoManagement": false, "removeStaleEnrollments": true },
