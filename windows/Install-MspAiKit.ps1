@@ -120,6 +120,9 @@ param(
 # StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
 # (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
 Set-StrictMode -Version 1.0
+# No console to answer (RMM, redirected input): Read-Host would end the process with exit 0, which a caller reads as
+# success. Treat such a run as -NonInteractive so every prompt takes its safe default instead.
+if (-not $NonInteractive) { try { if ([Console]::IsInputRedirected -or -not [Environment]::UserInteractive) { $NonInteractive = [switch]$true } } catch { $NonInteractive = [switch]$true } }
 $ErrorActionPreference = 'Stop'
 if ($DryRun) { $WhatIfPreference = $true }
 
@@ -846,7 +849,7 @@ function Main {
         'Console' { Show-Menu -Root $root -ProfileName $profileName -PackDir $packDir -Config $config }
         'Gui' {
             $exe = (Get-Process -Id $PID).Path
-            if ($PSCmdlet.ShouldProcess($script:GuiFile, 'open DE Tech Tool (AI Toolkit page)')) { Start-Process -FilePath $exe -ArgumentList @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', $script:GuiFile, '-Page', 'AiToolkit') | Out-Null }
+            if ($PSCmdlet.ShouldProcess($script:GuiFile, 'open DE Tech Tool (AI Toolkit page)')) { Start-Process -FilePath $exe -ArgumentList @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', ('"{0}"' -f $script:GuiFile), '-Page', 'AiToolkit') | Out-Null }
             Add-Evidence -Step 'gui' -Before 'loader' -ActionTaken 'opened DE Tech Tool' -Result 'INFO'
         }
         'Update' { $null = Update-Kit -Root $root -Config $cfg }

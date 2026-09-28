@@ -176,10 +176,10 @@ function Get-DESecretPlain {
     Register-DERedaction -Value $plain
     return $plain
 }
-function Clear-DESecrets { foreach ($k in @($script:DE.Secrets.Keys)) { try { $script:DE.Secrets[$k].Dispose() } catch { } }; $script:DE.Secrets = @{}; [GC]::Collect(); Write-DELog -Level DEBUG -Message 'secrets cleared' }
+function Clear-DESecrets { foreach ($k in @($script:DE.Secrets.Keys)) { try { $script:DE.Secrets[$k].Dispose() } catch { } }; $script:DE.Secrets = @{}; $script:DE.SecretNames = @(); [GC]::Collect(); Write-DELog -Level DEBUG -Message 'secrets cleared' }
 function Get-DESecretNames { return @($script:DE.SecretNames) }
 
-$script:SecretKeyPattern = '(?i)(password|passwd|secret|token|apikey|api_key|connectkey|connect_key|orgkey|org_key|sitetoken|site_token|recoverypassword|recovery_password|tap\b|bearer|credential)'
+$script:SecretKeyPattern = '(?i)(password|passwd|passphrase|secret|token|apikey|api_key|connectkey|connect_key|orgkey|org_key|sitetoken|site_token|recoverypassword|recovery_password|recoverykey|recovery_key|privatekey|private_key|psk\b|tap\b|bearer|credential)'
 function Remove-DESecretKeys {
     <# Deep-copies an object and drops any key whose name looks like a secret; scrubs string values. #>
     param([Parameter(Mandatory = $true)][AllowNull()]$Object)
@@ -190,7 +190,7 @@ function Remove-DESecretKeys {
         foreach ($k in $Object.Keys) { if ("$k" -match $script:SecretKeyPattern) { $o[$k] = '[REDACTED]' } else { $o[$k] = Remove-DESecretKeys -Object $Object[$k] } }
         return $o
     }
-    if ($Object -is [System.Collections.IEnumerable] -and -not ($Object -is [string])) { return @($Object | ForEach-Object { Remove-DESecretKeys -Object $_ }) }
+    if ($Object -is [System.Collections.IEnumerable] -and -not ($Object -is [string])) { $list = New-Object System.Collections.Generic.List[object]; foreach ($i in $Object) { $list.Add((Remove-DESecretKeys -Object $i)) }; return , $list.ToArray() }   # a list stays a list, also with one or no item
     if ($Object -is [pscustomobject]) {
         $o = [ordered]@{}
         foreach ($p in $Object.PSObject.Properties) { if ($p.Name -match $script:SecretKeyPattern) { $o[$p.Name] = '[REDACTED]' } else { $o[$p.Name] = Remove-DESecretKeys -Object $p.Value } }
@@ -203,7 +203,12 @@ function Remove-DESecretKeys {
 function Get-DEStatePath { return (Join-Path $script:DE.Dirs.State ("{0}.json" -f ($env:COMPUTERNAME, 'machine' | Where-Object { $_ } | Select-Object -First 1))) }
 function Import-DEState {
     $p = Get-DEStatePath
-    if (Test-Path -LiteralPath $p) { try { $script:DE.State = ConvertTo-DEHashtable (Get-Content -LiteralPath $p -Raw | ConvertFrom-Json) } catch { $script:DE.State = @{} } } else { $script:DE.State = @{} }
+    $script:DE.State = @{}
+    if (Test-Path -LiteralPath $p) {
+        # a torn or foreign state file is kept aside for review, never silently replaced by an empty one
+        try { $loaded = ConvertTo-DEHashtable (Get-Content -LiteralPath $p -Raw | ConvertFrom-Json); if ($loaded -is [System.Collections.IDictionary]) { $script:DE.State = $loaded } else { throw 'state root is not an object' } }
+        catch { $bad = "$p.corrupt-$(Get-Date -Format 'yyyyMMdd-HHmmss')"; try { Copy-Item -LiteralPath $p -Destination $bad -Force } catch { }; Write-DELog -Level WARN -Message "state file unreadable ($($_.Exception.Message)); kept as $bad and starting clean" }
+    }
     if (-not $script:DE.State.ContainsKey('created')) { $script:DE.State['created'] = (Get-Date).ToString('o') }
     return $script:DE.State
 }
@@ -213,7 +218,10 @@ function Save-DEState {
     $clean['consoleVersion'] = $script:DE.ConsoleVersion
     $json = $clean | ConvertTo-Json -Depth 12
     if ($json -match $script:SecretKeyPattern -and $json -notmatch '\[REDACTED\]') { Write-DELog -Level WARN -Message 'state contains a secret-like key name; scrubbed before write' }
-    Set-Content -LiteralPath (Get-DEStatePath) -Value $json -Encoding UTF8 -WhatIf:$false
+    # write-then-rename so a power cut never leaves a half-written state file
+    $target = Get-DEStatePath; $tmp = "$target.tmp"
+    Set-Content -LiteralPath $tmp -Value $json -Encoding UTF8 -WhatIf:$false
+    Move-Item -LiteralPath $tmp -Destination $target -Force -WhatIf:$false
 }
 function Get-DEState { param([string]$Path) if (-not $Path) { return $script:DE.State }; return (Get-DEHashPath -Object $script:DE.State -Path $Path) }
 function Set-DEStateValue { param([Parameter(Mandatory = $true)][string]$Path, [AllowNull()]$Value) Set-DEHashPath -Object $script:DE.State -Path $Path -Value $Value; Save-DEState }
@@ -282,6 +290,7 @@ function Add-DEException {
     [CmdletBinding()]
     param([Parameter(Mandatory = $true)][string]$Target, [Parameter(Mandatory = $true)][string]$Reason, [Parameter(Mandatory = $true)][string]$Approver, [Parameter(Mandatory = $true)][datetime]$ExpiresOn, [string]$Remediation = '', [string]$Technician = '')
     if ($ExpiresOn -le (Get-Date)) { throw 'an exception needs a future expiry date' }
+    if ($script:DE.Gates.Contains($Target) -and $script:DE.Gates[$Target].NoException) { throw "$Target is a safety gate; an exception cannot open it" }
     $rec = [pscustomobject]@{ target = $Target; reason = $Reason; approver = $Approver; technician = $(if ($Technician) { $Technician } else { "$($script:DE.Context['technician'])" }); created = (Get-Date).ToString('o'); expiresOn = $ExpiresOn.ToString('o'); remediation = $Remediation }
     $script:DE.Exceptions[$Target] = $rec
     Save-DEExceptions
@@ -295,8 +304,9 @@ function Get-DEExceptions { return @($script:DE.Exceptions.Values | Where-Object
 # ------------------------------------------------------------------ gates
 function Register-DEGate {
     [CmdletBinding()]
-    param([Parameter(Mandatory = $true)][string]$Id, [Parameter(Mandatory = $true)][string]$Title, [string]$Module = 'core', [Parameter(Mandatory = $true)][scriptblock]$Check, [string]$Unblock = '')
-    $script:DE.Gates[$Id] = [pscustomobject]@{ Id = $Id; Title = $Title; Module = $Module; Check = $Check; Unblock = $Unblock }
+    # -NoException: a safety gate (wrong dropship device, unconfirmed data, no client admin, GCC High) that no approval can open
+    param([Parameter(Mandatory = $true)][string]$Id, [Parameter(Mandatory = $true)][string]$Title, [string]$Module = 'core', [Parameter(Mandatory = $true)][scriptblock]$Check, [string]$Unblock = '', [switch]$NoException)
+    $script:DE.Gates[$Id] = [pscustomobject]@{ Id = $Id; Title = $Title; Module = $Module; Check = $Check; Unblock = $Unblock; NoException = [bool]$NoException }
 }
 function Test-DEGate {
     <# Returns @{Id; Status = PASS|WARN|BLOCKED|READY|EXCEPTION; Detail; Unblock}. Results are cached until Reset-DEGateCache. #>
@@ -309,14 +319,14 @@ function Test-DEGate {
     if ($null -eq $r) { $r = @{ Status = 'BLOCKED'; Detail = 'gate returned nothing' } }
     $status = "$($r.Status)"; if ($status -notin @('PASS', 'WARN', 'BLOCKED', 'READY')) { $status = 'BLOCKED' }
     $detail = "$($r.Detail)"
-    if ($status -ne 'PASS') { $ex = Get-DEException -Target $Id; if ($ex) { $status = 'EXCEPTION'; $detail = "$detail | exception by $($ex.approver) until $(([datetime]$ex.expiresOn).ToString('yyyy-MM-dd')): $($ex.reason)" } }
+    if ($status -ne 'PASS' -and -not $g.NoException) { $ex = Get-DEException -Target $Id; if ($ex) { $status = 'EXCEPTION'; $detail = "$detail | exception by $($ex.approver) until $(([datetime]$ex.expiresOn).ToString('yyyy-MM-dd')): $($ex.reason)" } }
     $res = [pscustomobject]@{ Id = $Id; Title = $g.Title; Module = $g.Module; Status = $status; Detail = (Protect-DEText $detail); Unblock = $g.Unblock; CheckedAt = (Get-Date).ToString('o') }
     $script:DE.GateCache[$Id] = $res
     return $res
 }
 function Reset-DEGateCache { $script:DE.GateCache = @{} }
 function Get-DEGateBoard { param([switch]$Refresh) return @($script:DE.Gates.Keys | ForEach-Object { Test-DEGate -Id $_ -Refresh:$Refresh }) }
-function Test-DEGatesSatisfied { param([string[]]$Ids) $bad = @(); foreach ($id in @($Ids | Where-Object { $null -ne $_ })) { $g = Test-DEGate -Id $id; if ($g.Status -notin @('PASS', 'EXCEPTION')) { $bad += $g } }; return [pscustomobject]@{ Ok = ($bad.Count -eq 0); Failing = $bad; ViaException = @(@($Ids) | ForEach-Object { Test-DEGate -Id $_ } | Where-Object { $_ -and $_.Status -eq 'EXCEPTION' }) }
+function Test-DEGatesSatisfied { param([string[]]$Ids) $bad = @(); foreach ($id in @($Ids | Where-Object { $null -ne $_ })) { $g = Test-DEGate -Id $id; if ($g.Status -notin @('PASS', 'EXCEPTION')) { $bad += $g } }; return [pscustomobject]@{ Ok = ($bad.Count -eq 0); Failing = $bad; ViaException = @(@($Ids | Where-Object { $_ }) | ForEach-Object { Test-DEGate -Id $_ } | Where-Object { $_ -and $_.Status -eq 'EXCEPTION' }) }
 }
 
 # ------------------------------------------------------------------ actions
@@ -332,7 +342,7 @@ function Register-DEAction {
         [switch]$Destructive,
         [switch]$RequiresReboot,
         [switch]$RequiresElevation,
-        [string[]]$Modes = @('new', 'dropship', 'takeover', 'replacement', 'repair', 'co-managed', 'audit', 'deprovision'),
+        [string[]]$Modes = @('new', 'dropship', 'takeover', 'replacement', 'repair', 'co-managed', 'audit'),   # deprovision runs only the deprov.* actions that name it
         [Parameter(Mandatory = $true)][scriptblock]$Detect,
         [scriptblock]$Desired = { @{ ok = $true } },
         [scriptblock]$Compare,
@@ -417,7 +427,7 @@ function Invoke-DEAction {
         if ($bf.Length -gt 400) { $bf = $bf.Substring(0, 400) + '...' }
         switch ($st.Status) {
             'PASS' { return (Add-DEEvidence -Step $step -Module $a.Module -Before $bf -ActionTaken 'audit: in desired state' -Result 'PASS' -Verification "desired state matched$gateNote" -Data @{ detected = $st.Detected }) }
-            'DRIFT' { return (Add-DEEvidence -Step $step -Module $a.Module -Before $bf -ActionTaken 'audit: drift' -Result 'WARN' -Verification (($st.Drift -join '; ') + $gateNote) -Remediation $(if ($a.ManualAction) { $a.ManualAction } else { 'Run in Apply mode once the gates pass.' }) -Data @{ detected = $st.Detected; drift = $st.Drift }) }
+            'DRIFT' { $actEx = Get-DEException -Target $Id; if ($actEx) { return (Add-DEEvidence -Step $step -Module $a.Module -Before $bf -ActionTaken 'audit: drift under an approved exception' -Result 'EXCEPTION' -Verification (($st.Drift -join '; ') + " | exception by $($actEx.approver) until $(([datetime]$actEx.expiresOn).ToString('yyyy-MM-dd')): $($actEx.reason)")) }; return (Add-DEEvidence -Step $step -Module $a.Module -Before $bf -ActionTaken 'audit: drift' -Result 'WARN' -Verification (($st.Drift -join '; ') + $gateNote) -Remediation $(if ($a.ManualAction) { $a.ManualAction } else { 'Run in Apply mode once the gates pass.' }) -Data @{ detected = $st.Detected; drift = $st.Drift }) }
             default { return (Add-DEEvidence -Step $step -Module $a.Module -Before 'unknown' -ActionTaken 'audit: detect failed' -Result 'FAIL' -Verification (($st.Drift -join '; ') + $gateNote)) }
         }
     }
@@ -465,7 +475,8 @@ function Invoke-DEAction {
             $applyOut = & $a.Apply $state
             $after = Get-DEActionState -Id $Id
             $verifyOk = $true; $verifyDetail = ''
-            if ($a.Verify) { $v = & $a.Verify $after; if ($v -is [bool]) { $verifyOk = $v } elseif ($v -is [System.Collections.IDictionary] -or $v -is [pscustomobject]) { $verifyOk = [bool]$v.ok; $verifyDetail = "$($v.detail)" } else { $verifyOk = [bool]$v } }
+            # the last value a Verify block outputs is its verdict; stray output before it must never read as success
+            if ($a.Verify) { $vOut = @(& $a.Verify $after); $v = $(if ($vOut.Count) { $vOut[$vOut.Count - 1] } else { $false }); if ($v -is [bool]) { $verifyOk = $v } elseif ($v -is [System.Collections.IDictionary] -or $v -is [pscustomobject]) { $verifyOk = [bool]$v.ok; $verifyDetail = "$($v.detail)" } else { $verifyOk = [bool]$v } }
             if ($verifyOk -and $after.Status -ne 'PASS' -and -not $a.Verify) { $verifyOk = $false; $verifyDetail = 'desired state not reached: ' + ($after.Drift -join '; ') }
             if ($verifyOk) {
                 $verified = $true
@@ -484,19 +495,31 @@ function Invoke-DEAction {
 }
 
 function Invoke-DERollback {
+    <#
+    Runs an action's rollback. PASS or FAIL only when the rollback reports @{ ok; detail } (it checked its own
+    result); a rollback that returns instructions or plain text reads WARN, because nothing proved the undo.
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param([Parameter(Mandatory = $true)][string]$Id)
     $a = Get-DEAction -Id $Id
     if (-not $a.Rollback) { return (Add-DEEvidence -Step "$Id.rollback" -Module $a.Module -Before 'n/a' -ActionTaken 'rollback requested' -Result 'SKIPPED' -Verification 'no rollback defined for this action') }
+    if ($a.RequiresElevation -and $script:DE.IsWindows -and -not (Test-DEIsElevated)) { return (Add-DEEvidence -Step "$Id.rollback" -Module $a.Module -Before 'applied' -ActionTaken 'rollback refused: needs an elevated session' -Result 'BLOCKED' -Remediation 'Relaunch the console as administrator.') }
     if ($script:DE.DryRun -or -not $PSCmdlet.ShouldProcess($a.Title, 'Rollback')) { return (Add-DEEvidence -Step "$Id.rollback" -Module $a.Module -Before 'n/a' -ActionTaken 'rollback (planned)' -Result 'PLANNED') }
-    try { $out = & $a.Rollback (Get-DEActionState -Id $Id); return (Add-DEEvidence -Step "$Id.rollback" -Module $a.Module -Before 'applied' -ActionTaken 'rolled back' -Result 'PASS' -Verification "$out") }
+    try {
+        $out = @(& $a.Rollback (Get-DEActionState -Id $Id))
+        $last = $(if ($out.Count) { $out[$out.Count - 1] } else { $null })
+        $okProp = $null
+        if ($last -is [System.Collections.IDictionary]) { if ($last.Contains('ok')) { $okProp = [bool]$last['ok'] } } elseif ($last -is [pscustomobject] -and $last.PSObject.Properties['ok']) { $okProp = [bool]$last.ok }
+        if ($null -ne $okProp) { return (Add-DEEvidence -Step "$Id.rollback" -Module $a.Module -Before 'applied' -ActionTaken $(if ($okProp) { 'rolled back and verified' } else { 'rollback did not restore the previous state' }) -Result $(if ($okProp) { 'PASS' } else { 'FAIL' }) -Verification "$(Get-DEHashPath -Object $last -Path 'detail')") }
+        return (Add-DEEvidence -Step "$Id.rollback" -Module $a.Module -Before 'applied' -ActionTaken 'rollback ran; not verified' -Result 'WARN' -Verification ($out -join ' ') -Remediation 'Check the previous state by hand; this rollback does not verify itself.')
+    }
     catch { return (Add-DEEvidence -Step "$Id.rollback" -Module $a.Module -Before 'applied' -ActionTaken 'rollback' -Result 'FAIL' -Verification $_.Exception.Message) }
 }
 
 # ------------------------------------------------------------------ reboot and resume
 function Request-DEReboot {
     param([Parameter(Mandatory = $true)][string]$Reason, [string]$ResumeAction = '', [string]$LoginAs = '')
-    $pending = @(Get-DEState -Path 'reboot.pending'); if ($null -eq $pending) { $pending = @() }
+    $pending = @(Get-DEState -Path 'reboot.pending' | Where-Object { $null -ne $_ })
     $entry = @{ reason = $Reason; resumeAction = $ResumeAction; requested = (Get-Date).ToString('o'); loginAs = $LoginAs }
     Set-DEStateValue -Path 'reboot.pending' -Value (@($pending) + @($entry))
     Write-DELog -Level WARN -Message "restart required: $Reason (resume: $ResumeAction)"
@@ -504,7 +527,18 @@ function Request-DEReboot {
 }
 function Get-DERebootQueue {
     <# Restarts the console itself queued this session (Request-DEReboot). Machine-level pending reboots are Get-DEPendingReboot in DE.Discovery. #>
-    $p = Get-DEState -Path 'reboot.pending'; if ($null -eq $p) { return @() }; return @($p) }
+    return @(Get-DEState -Path 'reboot.pending' | Where-Object { $null -ne $_ }) }
+function Clear-DERebootQueueIfRestarted {
+    <# Drops queued restarts the machine has already done (requested before the last boot). Returns what is still pending. #>
+    $queue = @(Get-DERebootQueue)
+    if (-not $queue.Count) { return @() }
+    $boot = $null
+    if ($script:DE.IsWindows) { try { $boot = (Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop).LastBootUpTime } catch { $boot = $null } }
+    if (-not $boot) { return $queue }
+    $left = @($queue | Where-Object { try { [datetime]$_['requested'] -gt $boot } catch { $true } })
+    if ($left.Count -ne $queue.Count) { Set-DEStateValue -Path 'reboot.pending' -Value $left; Write-DELog -Level INFO -Message "restart done; cleared $($queue.Count - $left.Count) queued restart(s)" }
+    return $left
+}
 function Set-DEResume {
     <# Registers the console to reopen after the next sign-in (HKLM RunOnce when elevated, else HKCU) and records who should sign in. #>
     [CmdletBinding(SupportsShouldProcess = $true)]
@@ -514,7 +548,8 @@ function Set-DEResume {
     $hive = if (Test-DEIsElevated) { 'HKLM:' } else { 'HKCU:' }
     $key = "$hive\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
     if ($PSCmdlet.ShouldProcess($key, 'Register DETechConsole resume')) {
-        New-Item -Path $key -Force | Out-Null
+        # never New-Item -Force an existing RunOnce key: that wipes other installers' pending entries
+        if (-not (Test-Path -Path $key)) { New-Item -Path $key | Out-Null }
         New-ItemProperty -Path $key -Name 'DETechConsoleResume' -Value ("cmd /c start `"DE`" `"{0}`" {1}" -f $Launcher, $Arguments) -PropertyType String -Force | Out-Null
     }
 }
@@ -535,16 +570,40 @@ function Invoke-DERestart {
 
 # ------------------------------------------------------------------ helpers: native, hashing, signatures, http, json
 function Invoke-DENative {
+    <#
+    Runs a native program and returns @{ ExitCode; Output; Text; TimedOut }. With -TimeoutSeconds it runs as a
+    process whose output is read asynchronously (a chatty installer cannot fill the pipe and hang), and it is
+    killed and reported as timed out (exit -1) when the time is up. Arguments are logged redacted.
+    #>
     param([Parameter(Mandatory = $true)][string]$FilePath, [string[]]$Arguments = @(), [string]$WorkingDirectory, [int]$TimeoutSeconds = 0)
     $prev = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
-    $output = @()
+    $output = @(); $code = $null; $timedOut = $false
     try {
-        if ($WorkingDirectory) { Push-Location -LiteralPath $WorkingDirectory }
-        $output = @(& $FilePath @Arguments 2>&1 | ForEach-Object { "$_" })
-        $code = $LASTEXITCODE
-    } finally { if ($WorkingDirectory) { Pop-Location }; $ErrorActionPreference = $prev }
-    Write-DELog -Level DEBUG -Message ("native: {0} {1} -> exit {2}" -f $FilePath, (($Arguments | ForEach-Object { Protect-DEText $_ }) -join ' '), $code)
-    return [pscustomobject]@{ ExitCode = $code; Output = $output; Text = ($output -join "`n") }
+        if ($TimeoutSeconds -gt 0) {
+            $psi = New-Object System.Diagnostics.ProcessStartInfo
+            $psi.FileName = $FilePath; $psi.Arguments = ConvertTo-DEArgumentString -Arguments $Arguments
+            $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
+            if ($WorkingDirectory) { $psi.WorkingDirectory = $WorkingDirectory }
+            $proc = [System.Diagnostics.Process]::Start($psi)
+            $outTask = $proc.StandardOutput.ReadToEndAsync(); $errTask = $proc.StandardError.ReadToEndAsync()
+            if (-not $proc.WaitForExit($TimeoutSeconds * 1000)) { try { $proc.Kill() } catch { }; $timedOut = $true; $code = -1 } else { $proc.WaitForExit(); $code = $proc.ExitCode }
+            $text = "$(try { $outTask.Result } catch { '' })`n$(try { $errTask.Result } catch { '' })"
+            $output = @($text -split "`r?`n" | Where-Object { $_ -ne '' })
+        } else {
+            if ($WorkingDirectory) { Push-Location -LiteralPath $WorkingDirectory }
+            try { $output = @(& $FilePath @Arguments 2>&1 | ForEach-Object { "$_" }); $code = $LASTEXITCODE } finally { if ($WorkingDirectory) { Pop-Location } }
+        }
+    } finally { $ErrorActionPreference = $prev }
+    Write-DELog -Level DEBUG -Message ("native: {0} {1} -> exit {2}{3}" -f $FilePath, (($Arguments | ForEach-Object { Protect-DEText $_ }) -join ' '), $code, $(if ($timedOut) { " (killed after $TimeoutSeconds s)" } else { '' }))
+    return [pscustomobject]@{ ExitCode = $code; Output = $output; Text = ($output -join "`n"); TimedOut = $timedOut }
+}
+function ConvertTo-DEArgumentString {
+    <#
+    Joins arguments for ProcessStartInfo: an argument with a space and no quotes of its own is quoted; one that
+    already carries quotes (PROPERTY="a b", "C:\path") is passed as written, never wrapped a second time.
+    #>
+    param([string[]]$Arguments = @())
+    return ((@($Arguments | Where-Object { $null -ne $_ }) | ForEach-Object { if ($_ -match '\s' -and $_ -notmatch '"') { '"' + $_ + '"' } else { $_ } }) -join ' ')
 }
 function Get-DEFileSha256 { param([Parameter(Mandatory = $true)][string]$Path) return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
 function Test-DEFileHash { param([Parameter(Mandatory = $true)][string]$Path, [Parameter(Mandatory = $true)][string]$Sha256) if (-not (Test-Path -LiteralPath $Path)) { return $false }; return ((Get-DEFileSha256 -Path $Path) -eq $Sha256.ToLowerInvariant()) }
@@ -555,7 +614,12 @@ function Test-DEAuthenticode {
     try {
         $sig = Get-AuthenticodeSignature -LiteralPath $Path
         $subject = ''; if ($sig.SignerCertificate) { $subject = $sig.SignerCertificate.Subject }
-        $ok = ($sig.Status -eq 'Valid') -and ((-not $Publisher) -or ($subject -like "*$Publisher*"))
+        # the publisher must BE the certificate's organisation or common name (a legal-form suffix allowed), not merely
+        # appear somewhere in the subject: 'CN=Not Guardz Tools' must not pass for 'Guardz'
+        $names = @([regex]::Matches($subject, '(?:^|,\s*)(?:CN|O)=("[^"]+"|[^,]+)') | ForEach-Object { $_.Groups[1].Value.Trim('"', ' ') })
+        $suffix = '(,?\s+(Inc\.?|LLC|Ltd\.?|Limited|Corp\.?|Corporation|GmbH|B\.V\.|S\.A\.|AG|Pty\.? Ltd\.?|Co\.?))?$'
+        $pubOk = (-not $Publisher) -or [bool](@($names | Where-Object { $_ -match ('^' + [regex]::Escape($Publisher) + $suffix) }).Count)
+        $ok = ($sig.Status -eq 'Valid') -and $pubOk
         return [pscustomobject]@{ Ok = $ok; Status = "$($sig.Status)"; Publisher = $subject; Detail = "$($sig.StatusMessage)" }
     } catch { return [pscustomobject]@{ Ok = $false; Status = 'Error'; Publisher = ''; Detail = $_.Exception.Message } }
 }
@@ -579,6 +643,12 @@ function Test-DEConsoleIntegrity {
                 $h = (Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash.ToLowerInvariant()
                 if ($h -ne "$($f.sha256)".ToLowerInvariant()) { $problems += "changed since packaging: $($f.path)" }
             }
+            # a console script the manifest does not list was added after packaging
+            $listed = @($m.files | ForEach-Object { "$($_.path)".ToLowerInvariant() })
+            foreach ($sf in @(Get-ChildItem -LiteralPath $Root -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in @('.ps1', '.psm1', '.psd1') -and $_.FullName -notmatch '[\\/]tests[\\/]' })) {
+                $rel = ($sf.FullName.Substring($base.Length).TrimStart('\', '/') -replace '\\', '/').ToLowerInvariant()
+                if ($listed -notcontains $rel) { $problems += "not in integrity.json (added after packaging): $rel" }
+            }
         }
         $signed = 0; $unsigned = 0
         # Filter by extension: Windows PowerShell 5.1 ignores -Include with -LiteralPath, and Authenticode reports
@@ -594,6 +664,8 @@ function Test-DEConsoleIntegrity {
                 default { $problems += "signature $($sig.Status): $($f.Name)" }
             }
         }
+        # signed scripts without their manifest: someone removed integrity.json to hide an edited catalog or profile
+        if (-not (Test-Path -LiteralPath $manifestPath) -and $signed -gt 0) { $problems += 'integrity.json is missing from a signed build' }
         $status = if ($problems.Count) { 'tampered' } elseif (-not $script:DE.IsWindows) { 'unknown' } elseif ($unsigned -eq 0 -and $signed -gt 0) { 'signed' } else { 'unsigned' }
         return [pscustomobject]@{ status = $status; files = $files.Count; signed = $signed; unsigned = $unsigned; problems = $problems }
     } catch { return [pscustomobject]@{ status = 'unknown'; files = $files.Count; signed = 0; unsigned = 0; problems = @("integrity check failed: $($_.Exception.Message)") } }

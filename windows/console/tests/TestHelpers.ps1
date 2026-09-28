@@ -10,3 +10,6 @@ function Initialize-TestConsole {
     $null = Initialize-DEConsole -Root $script:ConsoleRoot -Mode Audit -DataDir $dir
     return $dir
 }
+
+# Pester 4 and 5 match -Throw messages differently (substring versus wildcard); tests read the message and use -Match.
+function Get-DEThrown { param([Parameter(Mandatory = $true)][scriptblock]$Script) try { $null = & $Script; return '<no exception>' } catch { return $_.Exception.Message } }

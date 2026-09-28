@@ -130,3 +130,21 @@ Describe 'One-file installer' {
         $LASTEXITCODE | Should -Be 1
     }
 }
+
+Describe 'Launchers pass the exit code through (cmd.exe)' {
+    BeforeAll { $script:Win = Split-Path -Parent $PSScriptRoot }
+    It 'Start-DETechTool.cmd and its Start-DETechConsole.cmd alias return 2 for a refused headless run, not 0' -Skip:($env:OS -ne 'Windows_NT') {
+        $data = Join-Path ([IO.Path]::GetTempPath()) ("de-launch-{0}" -f ([guid]::NewGuid()))
+        foreach ($l in @('Start-DETechTool.cmd', 'Start-DETechConsole.cmd')) {
+            & cmd.exe /c ('"{0}" -Headless -Client no-such-client -DataDir "{1}"' -f (Join-Path $script:Win $l), $data) | Out-Null
+            $LASTEXITCODE | Should -Be 2 -Because "$l must return the tool's exit code"
+        }
+    }
+    It 'launchers keep %ERRORLEVEL% out of ( ) blocks, where cmd expands it too early' {
+        foreach ($l in @('Start-DETechTool.cmd', 'Start-DETechConsole.cmd', 'Start-MspAiKit.cmd')) {
+            $text = Get-Content -LiteralPath (Join-Path $script:Win $l) -Raw
+            $inBlock = [regex]::Matches($text, '\((?:[^()]|\([^()]*\))*\)') | Where-Object { $_.Value -match '%ERRORLEVEL%|errorlevel%' }
+            @($inBlock).Count | Should -Be 0 -Because "$l"
+        }
+    }
+}

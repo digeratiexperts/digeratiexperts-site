@@ -9,7 +9,8 @@
       FirstBoot.cmd           double-click on the new device (asks for administrator rights)
       Invoke-DEFirstBoot.ps1  runs DE Tech Tool headless in dropship mode, then opens it on the workflow
       README.txt              the one-page card for whoever is at the device
-      DE-TechTool\            DE Tech Tool, with the composed client profile (bundle applied, no secrets)
+      profile.json            the composed client profile (bundle applied, no secrets), passed with -ProfileFile
+      DE-TechTool\            DE Tech Tool, copied unchanged so a signed release stays signed
     First boot refuses to change anything if the serial number does not match the order (gate.order-match).
     Secrets (JumpCloud connect key, SentinelOne site token, Guardz org key, break-glass password) are never in
     the kit: they come from RMM secure variables (DE_SECRET_<NAME>), the DE vault, or the technician types them
@@ -84,40 +85,53 @@ if (Test-Path -LiteralPath $kit) { Remove-Item -LiteralPath $kit -Recurse -Force
 New-Item -ItemType Directory -Path $kit -Force | Out-Null
 $app = Join-Path $kit 'DE-TechTool'
 New-Item -ItemType Directory -Path $app -Force | Out-Null
+# The tool is copied unchanged (tests aside, which integrity.json skips), so a signed release stays signed and
+# its manifest still matches at first boot. Order-specific data (order.json, profile.json) sits beside it.
 foreach ($item in Get-ChildItem -LiteralPath $WindowsRoot) {
-    if ($item.Name -in @('tests', 'packaging')) { continue }
+    if ($item.Name -eq 'tests') { continue }
+    if ($item.Name -eq 'packaging') {
+        $pk = Join-Path $app 'packaging'; New-Item -ItemType Directory -Path $pk -Force | Out-Null
+        foreach ($p in Get-ChildItem -LiteralPath $item.FullName) { if ($p.Name -ne 'out') { Copy-Item -LiteralPath $p.FullName -Destination $pk -Recurse -Force } }
+        continue
+    }
     Copy-Item -LiteralPath $item.FullName -Destination $app -Recurse -Force
 }
-$profileOut = Join-Path (Join-Path (Join-Path (Join-Path $app 'console') 'catalog') 'profiles') "$($order['client']).json"
-$composed | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $profileOut -Encoding UTF8
+$composed | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $kit 'profile.json') -Encoding UTF8
 $order | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $kit 'order.json') -Encoding UTF8
 
 $firstBoot = @'
 <#
-.SYNOPSIS  DE dropship first boot: provisions this device for the order in order.json, then opens the console.
+.SYNOPSIS  DE dropship first boot: provisions this device for the order in order.json, then opens DE Tech Tool.
+.DESCRIPTION
+    Runs DE Tech Tool headless in dropship mode with the kit's profile.json. The tool refuses a device other than
+    the ordered one before changing anything. The outcome is read from the tool's result file, never guessed from
+    its output: READY only when the tool itself says READY.
 #>
 param([switch]$AuditOnly)
-$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version 1.0
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $console = Join-Path (Join-Path (Join-Path $here 'DE-TechTool') 'console') 'DETechConsole.ps1'
-$order = Join-Path $here 'order.json'
+$resultFile = Join-Path $here 'first-boot-result.json'
+if (Test-Path -LiteralPath $resultFile) { Remove-Item -LiteralPath $resultFile -Force }
 if ($env:OS -eq 'Windows_NT') { Get-ChildItem -LiteralPath $here -Recurse -File | Unblock-File }
-$args2 = @('-Headless', '-Order', $order, '-Technician', 'jrpetro', '-PromptSecrets')
-if (-not $AuditOnly) { $args2 += @('-Apply', '-Mode', 'dropship') } else { $args2 += @('-Mode', 'audit') }
-# a child process, so the tool's exit code comes back here and the result message below always shows
-$out = @(& (Get-Process -Id $PID).Path -NoProfile -ExecutionPolicy Bypass -File $console @args2 2>&1 | ForEach-Object { Write-Host "$_"; "$_" })
+$argList = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $console, '-Headless', '-Order', (Join-Path $here 'order.json'), '-ProfileFile', (Join-Path $here 'profile.json'), '-ResultFile', $resultFile, '-Technician', 'jrpetro', '-PromptSecrets')
+if (-not $AuditOnly) { $argList += @('-Apply', '-Mode', 'dropship') } else { $argList += @('-Mode', 'audit') }
+# the tool runs in this console window (no pipe), so the technician sees each masked secret prompt
+$shell = (Get-Process -Id $PID).Path; if ([IO.Path]::GetFileNameWithoutExtension($shell) -notin @('powershell', 'pwsh')) { $shell = 'powershell.exe' }
+& $shell @argList
 $code = $LASTEXITCODE
-# READY needs both exit 0 and the tool's own RESULT line: a run that stopped early is never reported as done
-$result = @($out | Where-Object { $_ -like 'RESULT: *' } | Select-Object -Last 1)
-if ($code -eq 0 -and -not ($result.Count -and $result[0] -match '^RESULT: READY')) { $code = 1 }
+$result = $null; if (Test-Path -LiteralPath $resultFile) { try { $result = Get-Content -LiteralPath $resultFile -Raw | ConvertFrom-Json } catch { $result = $null } }
+$overall = $(if ($result) { "$($result.overall)" } else { 'NO RESULT' })
+if ($code -eq 0 -and $overall -notlike 'READY*') { $code = 1 }   # exit 0 without a READY result is never reported as done
+if (-not $result -and $code -eq 0) { $code = 1 }
 Write-Host ''
 switch ($code) {
-    0 { Write-Host 'READY. The device is provisioned for its user.' -ForegroundColor Green }
-    1 { Write-Host 'NOT READY yet. DE Tech Tool lists what is left; a restart may be needed, then run FirstBoot again.' -ForegroundColor Yellow }
-    default { Write-Host 'BLOCKED. Read the reason above (for example: this is not the device on the order, or a secret was not entered).' -ForegroundColor Red }
+    0 { Write-Host "READY ($overall). The device is provisioned for its user." -ForegroundColor Green }
+    1 { Write-Host "NOT READY yet ($overall). $(if ($result) { $result.next })" -ForegroundColor Yellow }
+    default { Write-Host "BLOCKED ($overall). $(if ($result) { $result.message }) $(if ($result) { $result.next })" -ForegroundColor Red }
 }
 # Open DE Tech Tool on the workflow so the technician sees the next step.
-if ($env:OS -eq 'Windows_NT') { Start-Process -FilePath (Join-Path $here 'DE-TechTool\Start-DETechTool.cmd') -ArgumentList '-Page', 'Workflow' | Out-Null }
+if ($env:OS -eq 'Windows_NT') { Start-Process -FilePath (Join-Path (Join-Path $here 'DE-TechTool') 'Start-DETechTool.cmd') -ArgumentList '-Page', 'Workflow' | Out-Null }
 exit $code
 '@
 [IO.File]::WriteAllText((Join-Path $kit 'Invoke-DEFirstBoot.ps1'), $firstBoot, (New-Object Text.UTF8Encoding $true))

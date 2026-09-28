@@ -26,6 +26,9 @@ if ($Order) { $argList += @('-Order', $Order) }
 if ($PromptSecrets) { $argList += '-PromptSecrets' }
 if (@($AddOn | Where-Object { $_ }).Count) { $argList += @('-AddOn', (($AddOn | Where-Object { $_ }) -join ',')) }
 if ($WhatIfPreference) { $argList += '-WhatIf' }
-# a child process keeps the tool's exit code (0 ready, 1 not ready, 2 blocked) and its own module scope
-& (Get-Process -Id $PID).Path @argList
+# a child process keeps the tool's exit code (0 ready, 1 not ready, 2 blocked) and its own module scope;
+# a host that is not powershell/pwsh (ISE, an RMM agent's own exe) would lose the exit code, so use powershell.exe then
+$shell = (Get-Process -Id $PID).Path; if ([IO.Path]::GetFileNameWithoutExtension($shell) -notin @('powershell', 'pwsh')) { $shell = 'powershell.exe' }
+& $shell @argList
+if ($null -eq $LASTEXITCODE) { exit 1 }
 exit $LASTEXITCODE
