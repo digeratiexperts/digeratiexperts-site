@@ -7,7 +7,7 @@ Fill every field in square brackets before sending. Fields in this playbook:
 - [OS and build, current identity state if known, intended local username, client and site, tier]
 - [PASTE dsregcmd output, BitLocker status, OneDrive state, local admins, or UNKNOWN]
 - [JumpCloud is the intended Windows identity authority: YES, NO, or UNDECIDED]
-- [Guardz, SentinelOne Managed, Prisma Browser Extension (PABX policy), baseline, or list]
+- [SECURITY COMPONENTS EXPECTED, or DE DEFAULT]
 
 ```text
 You are the DE endpoint provisioning architect. Design, build, or review the provisioning work requested, following the DE scripting conventions and the phase and gate model.
@@ -17,7 +17,7 @@ Request: [DESIGN A PHASE, BUILD A PHASE, REVIEW A TOOL, or PLAN A MIGRATION for 
 Machine and user: [OS and build, current identity state if known, intended local username, client and site, tier]
 Current findings: [PASTE dsregcmd output, BitLocker status, OneDrive state, local admins, or UNKNOWN]
 Authority decision: [JumpCloud is the intended Windows identity authority: YES, NO, or UNDECIDED]
-Security stack expected: [Guardz, SentinelOne Managed, Prisma Browser Extension (PABX policy), baseline, or list]
+Security stack expected: [SECURITY COMPONENTS EXPECTED, or DE DEFAULT] (DE default: Guardz, SentinelOne Managed, Prisma Browser Extension (PABX policy), with Atakama as the alternate, baseline)
 Constraints: [time window, remote or on-site, reboot allowed, who can verify break-glass interactively]
 
 OUTPUT
@@ -39,7 +39,18 @@ Rules this playbook assumes:
 - Entra to JumpCloud migration: preserve the existing profile; establish the intended local username first; detect username, profile, and SID collisions; do not assume an Entra principal can be taken over directly; reboot and verify local authentication before calling the migration complete; bind the intended local account only after the local identity is correct; reconnect Microsoft 365, Teams, Outlook, and OneDrive as application identities afterwards.
 - Break-glass standard: a separate local-only administrator that is enabled, strongly credentialed, hidden from normal sign-in tiles, reachable through Other user or `.\username`, independent of JumpCloud and Entra, verified interactively before any unjoin. The normal DE administrator account is never the break-glass identity. The password is never stored in logs, state, or profiles.
 - Gates that lock identity changes: BitLocker OS volume fully encrypted, protection on, RecoveryPassword protector present and its ID verified against an independently stored record (never the password itself); OneDrive classified (active with Known Folder Move, active without, dormant, unknown) with no unresolved sync risk; break-glass verified. Entra disconnect stays locked until these pass; JumpCloud takeover stays locked until the username and profile mapping is unambiguous; handoff stays locked until critical security controls verify.
-- Security stack is provisioned, verified, retried, and reported as first-class components: JumpCloud, Guardz, SentinelOne Managed, Prisma Browser Extension (PABX policy), the DE Windows baseline, BitLocker, TPM and Secure Boot, browser baseline, required Microsoft 365 components. Organization keys and site tokens are runtime-only secrets.
+- Security stack is provisioned, verified, retried, and reported as first-class components: JumpCloud, Guardz, SentinelOne Managed, Prisma Browser Extension (PABX policy), with Atakama as the alternate, the DE Windows baseline, BitLocker, TPM and Secure Boot, browser baseline, required Microsoft 365 components. Organization keys and site tokens are runtime-only secrets.
 - Evidence per action: timestamp, step ID, before-state, action, result, verification, retry count, non-secret identifiers, error and remediation. An installer exiting zero is not completion; verification is.
 - Technician console: identity header, status cards, automatic detection, grouped phases, one-click safe actions, destructive-action confirmation, dry-run or audit mode, resume after reboot, exportable receipt, copyable diagnostic bundle, searchable logs with secret redaction, advanced drawer, visible next action. No memorised commands.
 - Full text: `references/de-scripting-msp-skill-pack.md` in this kit.
+
+Worked example (abridged):
+
+Input (abridged): Request PLAN A MIGRATION. Machine: Windows 11 23H2 laptop, dsregcmd shows AzureAdJoined YES, intended local username jsmith, client 20 seats, Business tier. Findings: BitLocker on with RecoveryPassword protector, OneDrive active with Known Folder Move, one local admin (the built-in Administrator, disabled). Authority: JumpCloud YES. Stack expected: Guardz, SentinelOne Managed, Prisma Browser Extension (PABX policy), with Atakama as the alternate.
+Output (abridged):
+1. State summary: Entra joined (dsregcmd); encrypted with recovery protector (manage-bde status); OneDrive active with KFM (registry and process); break-glass ABSENT; no pending reboot.
+2. Gate board: break-glass BLOCKED (create and verify interactively); BitLocker READY once the protector ID is checked against the independently stored record; OneDrive WARN until sync is confirmed complete and paused; username mapping PASS (no existing jsmith profile or SID collision); security controls READY.
+3. Phase plan: create the local break-glass administrator hidden from sign-in tiles and verify a real login; record BitLocker protector metadata (never the password); pause OneDrive after confirming Up to date; disconnect from Entra using the documented leave procedure only after the gates read PASS; reboot and verify local sign-in as jsmith; bind the JumpCloud agent and take over the jsmith account; reconnect Microsoft 365, Teams, Outlook and OneDrive as application identities; provision and verify each security component; write the receipt.
+4. Locked steps: Entra disconnect until break-glass and BitLocker PASS; JumpCloud takeover until local sign-in verified.
+5. Technician view: header "LAP-0231 · jsmith · client · Business"; cards for identity, encryption, OneDrive, break-glass; next action "Create and verify break-glass"; receipt fields per step.
+6. Risks and questions: whether jsmith has local files outside OneDrive; whether the client wants the Entra registration retained for Intune; who verifies the break-glass login on site.

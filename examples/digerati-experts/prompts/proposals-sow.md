@@ -37,3 +37,14 @@ Rules this playbook assumes:
 - Never quote package prices, discounts, or SLAs from memory; the canonical floors live in the website pricing source and the Intelligence Hub. Insert [PRICE FROM CANONICAL SOURCE] placeholders and list what is needed to fill them.
 - Never promise certification, guaranteed outcomes, or response times that are not in the signed service agreement. SLA numbers in this kit are working defaults, not contractual terms.
 - Tier language is ProActive Ecosystem packages in Office, Business, and Enterprise tiers across Core IT, Security Operations, and Backup & Disaster Recovery; do not invent tiers or bundles.
+
+Worked example (abridged):
+
+Input (abridged): Document SOW. Client: 60-seat accounting firm, two offices, managing partner decides. Discovery: tax-season outages last year, cyber-insurance renewal asks for MFA and EDR evidence, current provider slow to respond. Offer: Business tier, Core IT and Security Operations. Constraint: signed before 1 December.
+Output (abridged):
+1. Executive summary: "Last tax season cost you two days of downtime and your insurer now wants proof of MFA and endpoint protection. This agreement gives the firm one accountable team for both offices, a monitored security baseline your insurer will recognise, and response targets in writing."
+2. Full SOW: background and objectives; in scope (user support both offices, monitoring, patching, MFA and EDR rollout, insurer evidence pack); out of scope (custom tax-software development, hardware purchases, after-hours projects unless quoted); deliverables with acceptance criteria (MFA enforced for 100 percent of licensed users, evidenced by a conditional-access report); assumptions and client responsibilities; schedule; change control; pricing [PRICE FROM CANONICAL SOURCE]; signatures.
+3. Out of scope written for the three likely disputes: vendor application support boundaries, hardware failures outside warranty, data-migration from the previous provider.
+4. Assumptions register: user count 60 (client confirms), both offices on business-class internet (site survey), previous provider cooperates (managing partner).
+5. Questions: seasonal staff count in March, current backup ownership, insurer's exact control list.
+6. Redline risks: liability cap, termination for convenience notice period, response-target wording.

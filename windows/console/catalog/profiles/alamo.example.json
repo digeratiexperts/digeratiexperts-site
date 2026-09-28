@@ -1,0 +1,73 @@
+{
+  "_readme": "Example client profile built from the Alamo takeover findings. No credentials, ever: connect keys, site tokens, org keys and passwords are entered at run time. Copy to a saved profile from the console and adjust.",
+  "schemaVersion": 1,
+  "id": "alamo",
+  "name": "Alamo",
+  "shortName": "Alamo",
+  "tier": "Business",
+  "packages": ["Core IT", "Security Operations"],
+  "gcch": false,
+  "identity": {
+    "authority": "jumpcloud",
+    "entraTenantName": "Alamo",
+    "entraTenantId": "",
+    "leaveEntra": true,
+    "keepEntraRegistration": false,
+    "jumpcloudSystemGroups": ["Alamo - Workstations"],
+    "jumpcloudUserGroups": ["Alamo - Users"],
+    "usernameConvention": "first-initial-lastname"
+  },
+  "mdm": { "authority": "jumpcloud", "allowCoManagement": false, "removeStaleEnrollments": true },
+  "security": {
+    "mdr": { "primary": "guardz", "backup": "blackpoint", "deploy": ["guardz"] },
+    "edr": "sentinelone",
+    "browserSecurity": ["pabx"],
+    "emailSecurity": "mimecast",
+    "siem": "wazuh",
+    "awareness": "ninjio",
+    "baselineProfile": "de-windows-baseline"
+  },
+  "cloudStorage": { "standard": "onedrive", "removeConflicting": false, "allowBoth": false },
+  "browser": {
+    "default": "edge",
+    "policyProfile": "de-browser-policy",
+    "homepage": "https://portal.digeratiexperts.com/portal/login",
+    "startupPages": [],
+    "managedBookmarksFromVendors": false,
+    "extraBookmarks": [ { "name": "DE Client Portal", "url": "https://portal.digeratiexperts.com/portal/login" } ]
+  },
+  "apps": {
+    "required": ["m365-apps", "teams", "onedrive", "edge", "chrome", "pdf-reader"],
+    "optional": [],
+    "lineOfBusiness": [],
+    "remove": []
+  },
+  "m365": { "tenantDomain": "", "licenseSku": "", "verifyUpn": true },
+  "branding": {
+    "clientLogo": "",
+    "wallpaperStyle": "dual-logo",
+    "accent": "#D3126A",
+    "supportText": "Support: support@digeratiexperts.com  |  portal.digeratiexperts.com",
+    "hostnamePattern": "ALAMO-{ROLE}-{SERIAL4}",
+    "shortcuts": ["client-portal", "support-ticket", "remote-support"]
+  },
+  "network": { "wifiProfiles": [], "printers": [], "shares": [], "certificates": [], "vpn": [], "sase": { "provider": "timus", "required": false } },
+  "backup": { "provider": "msp360", "required": true },
+  "remoteSupport": { "provider": "jumpcloud-remote-assist", "required": true },
+  "rmm": { "provider": "msp360", "required": false },
+  "sites": [ { "id": "main", "name": "Main office", "address": "", "notes": "" } ],
+  "vendorTenants": { "hudu_host": "", "wazuh_cloud_id": "", "qualys_platform_url": "", "s1_console": "", "pabx_console": "", "optix_portal": "" },
+  "detection": {
+    "hostnamePatterns": ["ALAMO-*"],
+    "entraTenantNames": ["Alamo"],
+    "entraTenantIds": [],
+    "jumpcloudSystemGroups": ["Alamo - Workstations"],
+    "profileFolderHints": ["SuzetteThompson"]
+  },
+  "knownUsers": [
+    { "displayName": "Suzette Thompson", "sourcePrincipal": "AzureAD\\SuzetteThompson", "localUserName": "sthompson", "jumpcloudUser": "sthompson", "role": "standard", "notes": "Takeover finding: JumpCloud mapping showed 'Owner' while the Windows principal was AzureAD\\SuzetteThompson; migrate to local sthompson before takeover." }
+  ],
+  "clientSafe": { "serviceNames": { "mdr": "Managed detection and response", "edr": "Endpoint protection", "backup": "Managed backup", "emailSecurity": "Email security" } },
+  "notes": "Takeover client. Verify break-glass and BitLocker before any Entra change.",
+  "updated": "2026-09-28T00:00:00Z"
+}

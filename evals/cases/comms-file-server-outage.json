@@ -1,0 +1,18 @@
+{
+  "id": "comms-file-server-outage",
+  "module": "client-comms",
+  "title": "Outage notice to all users during a hardware failure",
+  "inputs": {
+    "[STATUS UPDATE, OUTAGE NOTICE, RESOLUTION, MAINTENANCE WINDOW, CHANGE APPROVAL REQUEST, SECURITY ADVISORY, or BILLING or SCOPE CLARIFICATION]": "OUTAGE NOTICE",
+    "[ALL USERS, PRIMARY CONTACT, EXECUTIVES, or A SINGLE USER]": "ALL USERS",
+    "[WHAT HAPPENED, WHO IS AFFECTED, SINCE WHEN, CURRENT STATE, NEXT STEP, NEXT UPDATE TIME]": "file server RAID controller failed at 08:20; shared drives unavailable for everyone; replacement part arriving 13:00; last night's backup verified; next update 13:30",
+    "[NONE or the specific action and deadline]": "work from OneDrive or local copies until restored",
+    "[ROUTINE, SENSITIVE, or ESCALATED]": "ESCALATED"
+  },
+  "mustMention": [
+    "13:30"
+  ],
+  "mustNotMention": [
+    "RAID"
+  ]
+}

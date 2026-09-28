@@ -1,0 +1,46 @@
+{
+  "_readme": "Browser policy profiles for Chrome and Edge (HKLM machine policy). Values follow the Chromium enterprise policy list. Extension ids here are the public store ids; PABX ids come from the package catalog settings. The Browser Configurator writes these, backs up the previous policy keys for rollback, and verifies by re-reading the registry and (optionally) chrome://policy after a browser restart.",
+  "version": "1.0.0",
+  "profiles": {
+    "de-browser-policy": {
+      "title": "DE standard browser policy",
+      "common": {
+        "PasswordManagerEnabled": 0,
+        "SafeBrowsingProtectionLevel": 1,
+        "BrowserSignin": 1,
+        "SyncDisabled": 0,
+        "DownloadRestrictions": 1,
+        "BlockThirdPartyCookies": 0,
+        "RestoreOnStartup": 4,
+        "ShowHomeButton": 1,
+        "DefaultBrowserSettingEnabled": 0,
+        "AutofillCreditCardEnabled": 0,
+        "BackgroundModeEnabled": 0,
+        "PromptForDownloadLocation": 0
+      },
+      "chrome": { "IncognitoModeAvailability": 1, "ChromeCleanupEnabled": 1 },
+      "edge": { "InPrivateModeAvailability": 1, "SmartScreenEnabled": 1, "SmartScreenPuaEnabled": 1, "HideFirstRunExperience": 1, "EdgeShoppingAssistantEnabled": 0, "PersonalizationReportingEnabled": 0 },
+      "extensions": {
+        "forceInstall": [
+          { "name": "JumpCloud Go", "chrome": "", "edge": "", "note": "Fill the store ids from JumpCloud's Go extension page before enabling." }
+        ],
+        "allow": [],
+        "block": ["*"],
+        "blockNote": "block '*' plus explicit allow/force lists; the force-install list always wins in Chromium."
+      },
+      "urlBlocklist": [],
+      "urlAllowlist": [],
+      "updates": { "chromeUpdatePolicy": 1, "edgeUpdatePolicy": 1 }
+    },
+    "de-browser-policy-relaxed": {
+      "title": "DE relaxed (co-managed / developer seats)",
+      "common": { "PasswordManagerEnabled": 0, "SafeBrowsingProtectionLevel": 1, "DownloadRestrictions": 0, "RestoreOnStartup": 1 },
+      "chrome": { "IncognitoModeAvailability": 0 },
+      "edge": { "InPrivateModeAvailability": 0, "SmartScreenEnabled": 1 },
+      "extensions": { "forceInstall": [], "allow": [], "block": [] },
+      "urlBlocklist": [],
+      "urlAllowlist": [],
+      "updates": { "chromeUpdatePolicy": 1, "edgeUpdatePolicy": 1 }
+    }
+  }
+}

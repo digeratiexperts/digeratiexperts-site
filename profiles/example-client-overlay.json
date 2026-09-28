@@ -1,0 +1,24 @@
+{
+  "_readme": "Overlay example: a second profile that inherits everything from kit.config.json and changes only what differs. Build it with: node .claude/skills/msp-ai-kit/scripts/build.mjs --config .claude/skills/msp-ai-kit/profiles/example-client-overlay.json. Objects merge key by key; arrays and scalars replace the base value.",
+  "extends": "../kit.config.json",
+  "profile": "example-client",
+  "company": {
+    "clients": "one co-managed client: a 40-seat professional-services firm with an internal IT lead",
+    "packaging": "ProActive Ecosystem Business tier, co-managed"
+  },
+  "stack": {
+    "rmm": "the client's existing RMM (co-managed console access)",
+    "backup": "the client's existing backup platform (verified monthly)"
+  },
+  "team": {
+    "after_hours": "P1 only; the client's internal IT lead is the first call, DE on-call is the second"
+  },
+  "modules": {
+    "proposals-sow": false,
+    "business-dev-roi": false
+  },
+  "targets": {
+    "copilot-instructions": false,
+    "cursor-rule": false
+  }
+}

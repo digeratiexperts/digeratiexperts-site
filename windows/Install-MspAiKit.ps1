@@ -14,9 +14,11 @@
     never read or written; timestamped log plus a JSON receipt.
 
 .PARAMETER Action
-    Menu (default: the DE window when interactive on Windows, else the text
-    menu), Gui (force the window), Console (force the text menu), Build,
-    Install, Clipboard, Upstream, Verify, Uninstall, All (Build + Install + Verify).
+    Menu (default: the DE Technician Console window at its AI Toolkit page when
+    interactive on Windows, else the text menu), Gui (force the window),
+    Console (force the text menu), Build, Install, Clipboard, Upstream, Verify,
+    Uninstall, All (Build + Install + Verify), Update (check and apply a newer
+    kit), Cleanup (retention), Version (print local and remote versions).
 
 .PARAMETER KitRoot
     Folder that holds kit.config.json and scripts\build.mjs. Default: the
@@ -52,6 +54,25 @@
 .PARAMETER DryRun
     Same as -WhatIf for the whole run.
 
+.PARAMETER ReceiptUploadUrl
+    HTTPS webhook that receives the JSON receipt after every run (falls back to
+    distribution.receipt_url in kit.config.json). Bearer token from the
+    environment variable DE_RECEIPT_TOKEN when set. Receipts contain no secrets.
+
+.PARAMETER UpdateUrl, UpdateSha256
+    Action Update: zip that contains the msp-ai-kit folder (falls back to
+    distribution.update_url) and its expected sha256. The current kit is backed
+    up next to itself before files are replaced; kit.config.json and profiles
+    are kept.
+
+.PARAMETER RetentionDays
+    Action Cleanup: delete logs, receipts and old pack folders older than this
+    (falls back to distribution.retention_days, default 90).
+
+.PARAMETER Latest
+    Action Upstream: take each upstream default branch head instead of the
+    commits pinned in upstream.lock.
+
 .EXAMPLE
     .\Install-MspAiKit.ps1
     Interactive menu.
@@ -72,7 +93,7 @@
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
-    [ValidateSet('Menu', 'Gui', 'Console', 'Build', 'Install', 'Clipboard', 'Upstream', 'Verify', 'Uninstall', 'All')]
+    [ValidateSet('Menu', 'Gui', 'Console', 'Build', 'Install', 'Clipboard', 'Upstream', 'Verify', 'Uninstall', 'All', 'Update', 'Cleanup', 'Version')]
     [string]$Action = 'Menu',
     [string]$KitRoot,
     [string]$OutDir,
@@ -88,7 +109,12 @@ param(
     [switch]$InstallNode,
     [switch]$Force,
     [switch]$NonInteractive,
-    [switch]$DryRun
+    [switch]$DryRun,
+    [string]$ReceiptUploadUrl,
+    [string]$UpdateUrl,
+    [string]$UpdateSha256,
+    [int]$RetentionDays = 0,
+    [switch]$Latest
 )
 
 Set-StrictMode -Version Latest
@@ -96,13 +122,12 @@ $ErrorActionPreference = 'Stop'
 if ($DryRun) { $WhatIfPreference = $true }
 
 $script:ToolName = 'msp-ai-kit loader'
-$script:ToolVersion = '1.0.0'
+$script:ToolVersion = '1.1.0'
 $script:Evidence = New-Object System.Collections.ArrayList
 $script:ExitCode = 0
 $script:IsWindowsHost = ($env:OS -eq 'Windows_NT')
 $script:LogSink = $null
-$script:GuiFile = Join-Path $PSScriptRoot 'MspAiKit.Gui.ps1'
-if (Test-Path -LiteralPath $script:GuiFile) { . $script:GuiFile }
+$script:GuiFile = Join-Path $PSScriptRoot 'console\DETechConsole.ps1'
 
 # ------------------------------------------------------------------ logging
 function Get-LogDirectory {
@@ -130,7 +155,7 @@ if ($script:LogDir) {
     $script:LogFile = Join-Path $script:LogDir ("msp-ai-kit-{0}.log" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
 }
 
-function Write-Log {
+function Write-KitLog {
     param(
         [Parameter(Mandatory = $true)][string]$Message,
         [ValidateSet('INFO', 'PASS', 'WARN', 'FAIL', 'STEP', 'PLAN')][string]$Level = 'INFO'
@@ -147,7 +172,7 @@ function Add-Evidence {
         [Parameter(Mandatory = $true)][string]$Step,
         [Parameter(Mandatory = $true)][string]$Before,
         [Parameter(Mandatory = $true)][string]$ActionTaken,
-        [Parameter(Mandatory = $true)][ValidateSet('PASS', 'WARN', 'BLOCKED', 'FAIL', 'NO CHANGE', 'SKIPPED', 'PLANNED')][string]$Result,
+        [Parameter(Mandatory = $true)][ValidateSet('PASS', 'WARN', 'BLOCKED', 'FAIL', 'NO CHANGE', 'SKIPPED', 'PLANNED', 'INFO')][string]$Result,
         [string]$Verification = '',
         [string]$Remediation = ''
     )
@@ -160,10 +185,10 @@ function Add-Evidence {
             verification = $Verification
             remediation  = $Remediation
         })
-    $level = switch ($Result) { 'PASS' { 'PASS' } 'NO CHANGE' { 'PASS' } 'PLANNED' { 'PLAN' } 'WARN' { 'WARN' } 'SKIPPED' { 'INFO' } default { 'FAIL' } }
+    $level = switch ($Result) { 'PASS' { 'PASS' } 'NO CHANGE' { 'PASS' } 'PLANNED' { 'PLAN' } 'WARN' { 'WARN' } 'SKIPPED' { 'INFO' } 'INFO' { 'INFO' } default { 'FAIL' } }
     $suffix = ''
     if ($Remediation) { $suffix = " | fix: $Remediation" }
-    Write-Log -Level $level -Message ("{0}: {1} ({2}){3}" -f $Step, $Result, $ActionTaken, $suffix)
+    Write-KitLog -Level $level -Message ("{0}: {1} ({2}){3}" -f $Step, $Result, $ActionTaken, $suffix)
     if ($Result -eq 'FAIL' -and $script:ExitCode -eq 0) { $script:ExitCode = 1 }
     if ($Result -eq 'BLOCKED' -and $script:ExitCode -eq 0) { $script:ExitCode = 2 }
 }
@@ -233,32 +258,47 @@ function Get-NodeVersion {
 }
 
 function Install-NodeWithWinget {
+    <#
+    Installs Node.js without needing elevation when possible: winget --scope user first, then the
+    official portable zip from nodejs.org into %LOCALAPPDATA%\DE\node, verified against the release's
+    SHASUMS256.txt. Machine-wide winget is the last resort and needs elevation.
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
-    param()
+    param([string]$Version = '22.14.0')
     $winget = Get-CommandPath 'winget'
-    if ($null -eq $winget) {
-        Add-Evidence -Step 'node' -Before 'missing' -ActionTaken 'winget install' -Result 'BLOCKED' -Remediation 'Install Node.js LTS from https://nodejs.org (or App Installer for winget), then rerun.'
+    if ($winget -and $PSCmdlet.ShouldProcess('Node.js LTS (per user)', 'winget install OpenJS.NodeJS.LTS --scope user')) {
+        $r = Invoke-Native -FilePath $winget -Arguments @('install', '--id', 'OpenJS.NodeJS.LTS', '-e', '--silent', '--scope', 'user', '--accept-source-agreements', '--accept-package-agreements')
+        foreach ($c in @((Join-Path $env:LOCALAPPDATA 'Programs\nodejs'), (Join-Path $env:ProgramFiles 'nodejs'))) { if ($c -and (Test-Path -LiteralPath $c)) { $env:Path = "$c;$env:Path" } }
+        $v = Get-NodeVersion
+        if ($null -ne $v) { Add-Evidence -Step 'node' -Before 'missing' -ActionTaken 'winget install --scope user' -Result 'PASS' -Verification ("node {0}" -f $v); return $true }
+        Write-KitLog -Level WARN -Message ("winget per-user install exit {0}; trying the portable build" -f $r.ExitCode)
+    }
+    $arch = $(if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x64' })
+    $name = "node-v$Version-win-$arch"
+    $base = "https://nodejs.org/dist/v$Version"
+    $dest = Join-Path $env:LOCALAPPDATA 'DE\node'
+    if (-not $PSCmdlet.ShouldProcess("$base/$name.zip", "download portable Node.js to $dest")) { Add-Evidence -Step 'node' -Before 'missing' -ActionTaken "portable Node.js $Version" -Result 'PLANNED'; return $false }
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+        New-Item -ItemType Directory -Path $dest -Force | Out-Null
+        $zip = Join-Path $dest "$name.zip"
+        Invoke-WebRequest -Uri "$base/$name.zip" -OutFile $zip -UseBasicParsing
+        $sums = (Invoke-WebRequest -Uri "$base/SHASUMS256.txt" -UseBasicParsing).Content
+        $want = ($sums -split "`n" | Where-Object { $_ -match [regex]::Escape("$name.zip") } | Select-Object -First 1) -replace '\s+.*$', ''
+        $have = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+        if (-not $want -or $have -ne $want.ToLowerInvariant()) { Remove-Item -LiteralPath $zip -Force; throw "sha256 mismatch for $name.zip (have $have, want $want)" }
+        Expand-Archive -LiteralPath $zip -DestinationPath $dest -Force
+        Remove-Item -LiteralPath $zip -Force
+        $bin = Join-Path $dest $name
+        $env:Path = "$bin;$env:Path"
+        $userPath = [Environment]::GetEnvironmentVariable('Path', 'User'); if ($userPath -notlike "*$bin*") { [Environment]::SetEnvironmentVariable('Path', "$bin;$userPath", 'User') }
+        $v = Get-NodeVersion
+        Add-Evidence -Step 'node' -Before 'missing' -ActionTaken "portable Node.js $Version (sha256 verified)" -Result $(if ($v) { 'PASS' } else { 'FAIL' }) -Verification $bin
+        return [bool]$v
+    } catch {
+        Add-Evidence -Step 'node' -Before 'missing' -ActionTaken 'portable Node.js' -Result 'BLOCKED' -Verification $_.Exception.Message -Remediation 'Install Node.js LTS from https://nodejs.org, then rerun.'
         return $false
     }
-    if (-not $PSCmdlet.ShouldProcess('Node.js LTS', 'winget install OpenJS.NodeJS.LTS')) {
-        Add-Evidence -Step 'node' -Before 'missing' -ActionTaken 'winget install OpenJS.NodeJS.LTS' -Result 'PLANNED'
-        return $false
-    }
-    $r = Invoke-Native -FilePath $winget -Arguments @('install', '--id', 'OpenJS.NodeJS.LTS', '-e', '--silent', '--accept-source-agreements', '--accept-package-agreements')
-    if ($r.ExitCode -ne 0) {
-        Add-Evidence -Step 'node' -Before 'missing' -ActionTaken 'winget install' -Result 'FAIL' -Remediation ("winget exit {0}; install Node.js LTS manually from https://nodejs.org" -f $r.ExitCode)
-        return $false
-    }
-    # winget updates PATH for new shells; pick up the usual install location for this one.
-    $candidate = Join-Path $env:ProgramFiles 'nodejs'
-    if (Test-Path -LiteralPath $candidate) { $env:Path = "$candidate;$env:Path" }
-    $v = Get-NodeVersion
-    if ($null -eq $v) {
-        Add-Evidence -Step 'node' -Before 'missing' -ActionTaken 'winget install' -Result 'WARN' -Verification 'node not on PATH in this session' -Remediation 'Open a new PowerShell window and rerun.'
-        return $false
-    }
-    Add-Evidence -Step 'node' -Before 'missing' -ActionTaken 'winget install' -Result 'PASS' -Verification ("node {0}" -f $v)
-    return $true
 }
 
 function Test-Prerequisites {
@@ -273,7 +313,9 @@ function Test-Prerequisites {
     }
     if ($NeedNode) {
         $v = Get-NodeVersion
-        if ($null -eq $v -and $InstallNode) { if (Install-NodeWithWinget) { $v = Get-NodeVersion } }
+        $nodeWanted = '22.14.0'
+        if ($script:Cfg -and $script:Cfg.PSObject.Properties['distribution'] -and $script:Cfg.distribution.PSObject.Properties['node_version'] -and $script:Cfg.distribution.node_version) { $nodeWanted = $script:Cfg.distribution.node_version }
+        if ($null -eq $v -and $InstallNode) { if (Install-NodeWithWinget -Version $nodeWanted) { $v = Get-NodeVersion } }
         if ($null -eq $v -and -not $InstallNode -and -not $NonInteractive) {
             if (Confirm-Interactive 'Node.js is not installed. Install Node.js LTS with winget now?') { if (Install-NodeWithWinget) { $v = Get-NodeVersion } }
         }
@@ -497,51 +539,137 @@ function Copy-ChatGptBlocks {
     return $true
 }
 
-$script:UpstreamRegistry = @(
-    [pscustomobject]@{ Id = 'rtfm'; Url = 'https://github.com/RTFM-IT-Services-LLC/msp-claude-skills'; License = 'CC BY-NC-SA 4.0'; Note = 'Use to run your own MSP; do not resell or copy its text into DE repositories.' },
-    [pscustomobject]@{ Id = 'servosity'; Url = 'https://github.com/Servosity/msp-skills'; License = 'Apache-2.0'; Note = 'Read skills\<name>\install.ps1 before running it; connector credentials come from environment variables.' },
-    [pscustomobject]@{ Id = 'wyre'; Url = 'https://github.com/wyre-technology/msp-claude-plugins'; License = 'Apache-2.0'; Note = 'Install in Claude Code: /plugin marketplace add wyre-technology/msp-claude-plugins' },
-    [pscustomobject]@{ Id = 'cmmc'; Url = 'https://github.com/LV-262/cmmc-advisor'; License = 'MIT'; Note = 'Linked as ~/.claude/skills/cmmc-advisor when present.' }
-)
+function Get-UpstreamLock {
+    param([Parameter(Mandatory = $true)][string]$Root)
+    $lock = Join-Path $Root 'upstream.lock'
+    $notes = @{ rtfm = 'Use to run your own MSP; do not resell or copy its text into DE repositories.'; servosity = 'Read skills\<name>\install.ps1 before running it; connector credentials come from environment variables.'; wyre = 'Install in Claude Code: /plugin marketplace add wyre-technology/msp-claude-plugins'; cmmc = 'Linked as ~/.claude/skills/cmmc-advisor.' }
+    $out = @()
+    foreach ($line in @(Get-Content -LiteralPath $lock)) {
+        if ($line -match '^\s*#' -or -not $line.Trim()) { continue }
+        $f = @($line.Trim() -split '\s+')
+        $out += [pscustomobject]@{ Id = $f[0]; Url = $f[1]; Commit = $f[2]; License = $f[3]; Links = $f[4]; Note = $notes[$f[0]] }
+    }
+    return $out
+}
 
 function Install-UpstreamKits {
+    <# Clones each kit at the commit pinned in upstream.lock (or the head with -Latest), copies its LICENSE, links Claude Code skills (RTFM skills/*, cmmc-advisor). Nothing is executed. #>
     [CmdletBinding(SupportsShouldProcess = $true)]
-    param([Parameter(Mandatory = $true)][string]$Vendor)
+    param([Parameter(Mandatory = $true)][string]$Vendor, [Parameter(Mandatory = $true)][string]$Root)
     $git = Get-CommandPath 'git'
     $ok = $true
-    if (-not (Test-Path -LiteralPath $Vendor)) {
-        if ($PSCmdlet.ShouldProcess($Vendor, 'Create vendor directory')) { New-Item -ItemType Directory -Path $Vendor -Force | Out-Null }
-    }
-    foreach ($kit in $script:UpstreamRegistry) {
+    $licDir = Join-Path $Vendor 'LICENSES'
+    if ($PSCmdlet.ShouldProcess($Vendor, 'Create vendor directory')) { New-Item -ItemType Directory -Path $licDir -Force | Out-Null }
+    foreach ($kit in Get-UpstreamLock -Root $Root) {
         if ($UpstreamKits -notcontains $kit.Id) { continue }
         $target = Join-Path $Vendor $kit.Id
         $step = "upstream.{0}" -f $kit.Id
-        $present = Test-Path -LiteralPath (Join-Path $target '.git')
-        $verb = 'git clone --depth 1'
-        if ($present) { $verb = 'git fetch + reset to origin' }
-        if (-not $PSCmdlet.ShouldProcess($target, ("{0} {1} ({2})" -f $verb, $kit.Url, $kit.License))) {
-            Add-Evidence -Step $step -Before $(if ($present) { 'cloned' } else { 'absent' }) -ActionTaken $verb -Result 'PLANNED' -Verification $kit.License
-            continue
-        }
-        if ($present) {
-            $r = Invoke-Native -FilePath $git -Arguments @('-C', $target, 'fetch', '--depth', '1', 'origin')
-            if ($r.ExitCode -eq 0) { $r = Invoke-Native -FilePath $git -Arguments @('-C', $target, 'reset', '--hard', '--quiet', 'origin/HEAD') }
-        } else {
-            $r = Invoke-Native -FilePath $git -Arguments @('clone', '--depth', '1', '--quiet', $kit.Url, $target)
-        }
-        if ($r.ExitCode -ne 0) {
-            Add-Evidence -Step $step -Before $(if ($present) { 'cloned' } else { 'absent' }) -ActionTaken $verb -Result 'FAIL' -Verification (($r.Output | Select-Object -Last 3) -join ' / ') -Remediation 'Check network access to github.com and rerun.'
-            $ok = $false
-            continue
-        }
-        $head = Invoke-Native -FilePath $git -Arguments @('-C', $target, 'rev-parse', '--short', 'HEAD')
-        Add-Evidence -Step $step -Before $(if ($present) { 'cloned' } else { 'absent' }) -ActionTaken $verb -Result 'PASS' -Verification ("{0} @ {1}; {2}; {3}" -f $target, ($head.Output -join ''), $kit.License, $kit.Note)
-        if ($kit.Id -eq 'cmmc' -and (Test-Path -LiteralPath (Join-Path $target 'SKILL.md'))) {
-            $null = Install-SkillLink -Root $target -Destination (Join-Path (Join-Path $HOME '.claude') 'skills\cmmc-advisor') -Label 'upstream.cmmc.link'
+        $ref = $(if ($Latest) { 'HEAD' } else { $kit.Commit })
+        if (-not $PSCmdlet.ShouldProcess($target, ("fetch {0} @ {1} ({2})" -f $kit.Url, $ref.Substring(0, [Math]::Min(12, $ref.Length)), $kit.License))) { Add-Evidence -Step $step -Before 'n/a' -ActionTaken "fetch @ $ref" -Result 'PLANNED' -Verification $kit.License; continue }
+        if (-not (Test-Path -LiteralPath (Join-Path $target '.git'))) { $null = Invoke-Native -FilePath $git -Arguments @('init', '--quiet', $target); $null = Invoke-Native -FilePath $git -Arguments @('-C', $target, 'remote', 'add', 'origin', $kit.Url) }
+        $r = Invoke-Native -FilePath $git -Arguments @('-C', $target, 'fetch', '--depth', '1', '--quiet', 'origin', $ref)
+        if ($r.ExitCode -eq 0) { $r = Invoke-Native -FilePath $git -Arguments @('-C', $target, 'checkout', '--quiet', '--force', 'FETCH_HEAD') }
+        if ($r.ExitCode -ne 0) { Add-Evidence -Step $step -Before 'n/a' -ActionTaken "fetch @ $ref" -Result 'FAIL' -Verification (($r.Output | Select-Object -Last 3) -join ' / ') -Remediation 'Check network access to github.com and rerun.'; $ok = $false; continue }
+        $head = ((Invoke-Native -FilePath $git -Arguments @('-C', $target, 'rev-parse', 'HEAD')).Output -join '').Trim()
+        if (-not $Latest -and $head -ne $kit.Commit) { Add-Evidence -Step $step -Before 'n/a' -ActionTaken 'pin check' -Result 'FAIL' -Verification "wanted $($kit.Commit) got $head"; $ok = $false; continue }
+        $lic = Get-ChildItem -LiteralPath $target -Filter 'LICENSE*' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($lic) { Copy-Item -LiteralPath $lic.FullName -Destination (Join-Path $licDir "$($kit.Id)-LICENSE.txt") -Force }
+        Add-Evidence -Step $step -Before 'n/a' -ActionTaken ("checked out {0}" -f $head.Substring(0, 12)) -Result 'PASS' -Verification ("{0}; {1}; license file {2}" -f $kit.License, $kit.Note, $(if ($lic) { 'copied' } else { 'not found' }))
+        if ($kit.Links -and $kit.Links -ne '-') {
+            foreach ($g in $kit.Links.Split(':')) {
+                $dirs = $(if ($g -eq '.') { @(Get-Item -LiteralPath $target) } else { @(Get-ChildItem -Path (Join-Path $target $g) -Directory -ErrorAction SilentlyContinue) })
+                foreach ($d in $dirs) {
+                    if (-not (Test-Path -LiteralPath (Join-Path $d.FullName 'SKILL.md'))) { continue }
+                    $name = $(if ($g -eq '.') { "$($kit.Id)-advisor" } else { $d.Name })
+                    $null = Install-SkillLink -Root $d.FullName -Destination (Join-Path (Join-Path $HOME '.claude') "skills\$name") -Label "upstream.$($kit.Id).link.$name"
+                }
+            }
         }
     }
-    Write-Log -Level INFO -Message 'Upstream kits are cloned only. Read each README and LICENSE; nothing from them was executed.'
+    Write-KitLog -Level INFO -Message 'Upstream kits are cloned at pinned commits only. Read each README and LICENSE; nothing from them was executed.'
     return $ok
+}
+
+# ------------------------------------------------------------------ version, update, cleanup, receipt upload
+function Get-KitVersionInfo {
+    param([Parameter(Mandatory = $true)][string]$Root, $Config)
+    $local = $null; $vf = Join-Path $Root 'kit.version'; if (Test-Path -LiteralPath $vf) { $local = (Get-Content -LiteralPath $vf -Raw).Trim() }
+    $remote = $null; $url = $null
+    if ($Config -and $Config.PSObject.Properties['distribution'] -and $Config.distribution.PSObject.Properties['version_url']) { $url = $Config.distribution.version_url }
+    if ($url -and $url -match '^https://') { try { $remote = (Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 20).Content.Trim() } catch { Write-KitLog -Level WARN -Message "version check failed: $($_.Exception.Message)" } }
+    $newer = $false; if ($local -and $remote) { try { $newer = ([version]$remote -gt [version]$local) } catch { $newer = ($remote -ne $local) } }
+    return [pscustomobject]@{ local = $local; remote = $remote; updateAvailable = $newer; versionUrl = $url }
+}
+
+function Update-Kit {
+    <# Downloads the kit zip, checks its sha256, backs up the current kit, replaces files, keeps kit.config.json and profiles/. #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param([Parameter(Mandatory = $true)][string]$Root, $Config)
+    $info = Get-KitVersionInfo -Root $Root -Config $Config
+    $url = $UpdateUrl; if (-not $url -and $Config -and $Config.PSObject.Properties['distribution'] -and $Config.distribution.PSObject.Properties['update_url']) { $url = $Config.distribution.update_url }
+    if (-not $url) { Add-Evidence -Step 'update' -Before "local $($info.local)" -ActionTaken 'check' -Result 'SKIPPED' -Verification 'no update_url configured' -Remediation 'Set distribution.update_url (and version_url) in kit.config.json or pass -UpdateUrl.'; return $false }
+    if ($url -notmatch '^https://') { Add-Evidence -Step 'update' -Before "local $($info.local)" -ActionTaken 'check' -Result 'BLOCKED' -Verification 'update URL must be HTTPS'; return $false }
+    if ($info.versionUrl -and -not $info.updateAvailable -and -not $UpdateUrl) { Add-Evidence -Step 'update' -Before "local $($info.local)" -ActionTaken 'check' -Result 'NO CHANGE' -Verification "remote $($info.remote)"; return $true }
+    $tmp = Join-Path ([IO.Path]::GetTempPath()) ("msp-ai-kit-update-{0}" -f ([guid]::NewGuid()))
+    if (-not $PSCmdlet.ShouldProcess($Root, "update from $url")) { Add-Evidence -Step 'update' -Before "local $($info.local)" -ActionTaken "download $url" -Result 'PLANNED' -Verification "remote $($info.remote)"; return $true }
+    try {
+        New-Item -ItemType Directory -Path $tmp -Force | Out-Null
+        $zip = Join-Path $tmp 'kit.zip'
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+        Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
+        $have = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($UpdateSha256 -and $have -ne $UpdateSha256.ToLowerInvariant()) { throw "sha256 mismatch (have $have)" }
+        if (-not $UpdateSha256) { Write-KitLog -Level WARN -Message "no expected sha256 given; downloaded file sha256 $have" }
+        Expand-Archive -LiteralPath $zip -DestinationPath $tmp -Force
+        $newRoot = Get-ChildItem -LiteralPath $tmp -Directory -Recurse | Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'scripts\build.mjs') } | Select-Object -First 1
+        if (-not $newRoot) { throw 'the zip does not contain an msp-ai-kit folder (scripts\build.mjs missing)' }
+        $sig = Get-AuthenticodeSignature -LiteralPath (Join-Path $newRoot.FullName 'windows\Install-MspAiKit.ps1') -ErrorAction SilentlyContinue
+        if ($sig -and $sig.Status -eq 'HashMismatch') { throw 'the new loader signature does not match its content' }
+        $backup = "$Root.bak-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+        Copy-Item -LiteralPath $Root -Destination $backup -Recurse -Force
+        $keep = @('kit.config.json', 'profiles')
+        foreach ($item in Get-ChildItem -LiteralPath $newRoot.FullName -Force) { if ($keep -contains $item.Name -and (Test-Path -LiteralPath (Join-Path $Root $item.Name))) { continue }; Copy-Item -LiteralPath $item.FullName -Destination $Root -Recurse -Force }
+        $after = Get-KitVersionInfo -Root $Root -Config $Config
+        Add-Evidence -Step 'update' -Before "local $($info.local)" -ActionTaken "updated from $url" -Result 'PASS' -Verification ("now {0}; sha256 {1}; backup {2}; kit.config.json and profiles kept" -f $after.local, $have, $backup)
+        return $true
+    } catch { Add-Evidence -Step 'update' -Before "local $($info.local)" -ActionTaken 'update' -Result 'FAIL' -Verification $_.Exception.Message -Remediation 'The previous kit is untouched unless a backup path was reported.'; return $false }
+    finally { Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue }
+}
+
+function Invoke-Cleanup {
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param($Config, [string]$PackDir)
+    $days = $RetentionDays
+    if (-not $days -and $Config -and $Config.PSObject.Properties['distribution'] -and $Config.distribution.PSObject.Properties['retention_days']) { $days = [int]$Config.distribution.retention_days }
+    if (-not $days) { $days = 90 }
+    $cut = (Get-Date).AddDays(-$days)
+    $targets = @()
+    if ($script:LogDir) { $targets += @(Get-ChildItem -LiteralPath $script:LogDir -File -Filter 'msp-ai-kit*' -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -lt $cut -and $_.FullName -ne $script:LogFile }) }
+    $base = Split-Path -Parent $PackDir
+    if ($base -and (Test-Path -LiteralPath $base)) { $targets += @(Get-ChildItem -LiteralPath $base -Directory -ErrorAction SilentlyContinue | Where-Object { $_.FullName -ne $PackDir -and $_.LastWriteTime -lt $cut -and (Test-Path -LiteralPath (Join-Path $_.FullName 'manifest.json')) }) }
+    $root = Split-Path -Parent $PSScriptRoot
+    $targets += @(Get-ChildItem -LiteralPath (Split-Path -Parent $root) -Directory -Filter "$(Split-Path -Leaf $root).bak-*" -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -lt $cut })
+    $removed = 0
+    foreach ($t in $targets) { if ($PSCmdlet.ShouldProcess($t.FullName, "remove (older than $days days)")) { Remove-Item -LiteralPath $t.FullName -Recurse -Force -ErrorAction SilentlyContinue; $removed++ } }
+    Add-Evidence -Step 'cleanup' -Before ("{0} item(s) older than {1} days" -f $targets.Count, $days) -ActionTaken 'retention' -Result $(if ($targets.Count -eq 0) { 'NO CHANGE' } elseif ($WhatIfPreference) { 'PLANNED' } else { 'PASS' }) -Verification ("removed {0}" -f $removed)
+    return $removed
+}
+
+function Send-Receipt {
+    <# POSTs the receipt JSON (no secrets) to the configured webhook. Failure is a WARN, never a crash. #>
+    param([Parameter(Mandatory = $true)][string]$ReceiptPath, $Config)
+    $url = $ReceiptUploadUrl
+    if (-not $url -and $Config -and $Config.PSObject.Properties['distribution'] -and $Config.distribution.PSObject.Properties['receipt_url']) { $url = $Config.distribution.receipt_url }
+    if (-not $url) { return }
+    if ($url -notmatch '^https://') { Write-KitLog -Level WARN -Message 'receipt upload skipped: URL must be HTTPS'; return }
+    if ($WhatIfPreference) { Write-KitLog -Level PLAN -Message "would upload receipt to $url"; return }
+    try {
+        $headers = @{ 'Content-Type' = 'application/json' }
+        if ($env:DE_RECEIPT_TOKEN) { $headers['Authorization'] = "Bearer $($env:DE_RECEIPT_TOKEN)" }
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+        $null = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -Body (Get-Content -LiteralPath $ReceiptPath -Raw) -TimeoutSec 30
+        Write-KitLog -Level PASS -Message "receipt uploaded to $url"
+    } catch { Write-KitLog -Level WARN -Message "receipt upload failed: $($_.Exception.Message)" }
 }
 
 function Test-Kit {
@@ -639,9 +767,9 @@ function Show-Menu {
             '1' { if (Test-Prerequisites -NeedNode) { $null = Invoke-KitBuild -Root $Root -Destination $PackDir -Config $Config } }
             '2' { $null = Install-Kit -Root $Root -PackDir $PackDir }
             '3' { $null = Copy-ChatGptBlocks -PackDir $PackDir }
-            '4' { if (Test-Path -LiteralPath $PackDir) { Invoke-Item -LiteralPath $PackDir } else { Write-Log -Level WARN -Message 'Build first.' } }
+            '4' { if (Test-Path -LiteralPath $PackDir) { Invoke-Item -LiteralPath $PackDir } else { Write-KitLog -Level WARN -Message 'Build first.' } }
             '5' { if (Test-Prerequisites -NeedNode) { $null = Test-Kit -Root $Root } }
-            '6' { if (Test-Prerequisites -NeedGit) { $null = Install-UpstreamKits -Vendor $script:VendorPath } }
+            '6' { if (Test-Prerequisites -NeedGit) { $null = Install-UpstreamKits -Vendor $script:VendorPath -Root $Root } }
             '7' { if (Test-Prerequisites -NeedNode) { if (Invoke-KitBuild -Root $Root -Destination $PackDir -Config $Config) { $null = Install-Kit -Root $Root -PackDir $PackDir; $null = Test-Kit -Root $Root } } }
             '8' {
                 $saved = $WhatIfPreference; $WhatIfPreference = $true
@@ -650,7 +778,7 @@ function Show-Menu {
             '9' { $null = Uninstall-Kit -Root $Root }
             'L' { if ($script:LogDir) { Invoke-Item -LiteralPath $script:LogDir } }
             'Q' { return }
-            default { Write-Log -Level WARN -Message "Unknown choice '$choice'." }
+            default { Write-KitLog -Level WARN -Message "Unknown choice '$choice'." }
         }
         Write-Host ''
         Read-Host ' Press Enter to return to the menu' | Out-Null
@@ -661,14 +789,15 @@ function Test-GuiAvailable {
     if ($NonInteractive) { return $false }
     if (-not $script:IsWindowsHost) { return $false }
     if (-not (Test-Path -LiteralPath $script:GuiFile)) { return $false }
-    if ([Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') { return $false }
     try { Add-Type -AssemblyName PresentationFramework -ErrorAction Stop; return $true } catch { return $false }
 }
 
 # -------------------------------------------------------------------- main
 function Main {
-    Write-Log -Level STEP -Message ("{0} {1} starting; action {2}; dry run {3}" -f $script:ToolName, $script:ToolVersion, $Action, [bool]$WhatIfPreference)
-    if (-not $script:LogFile) { Write-Log -Level WARN -Message 'No writable log directory found; console output only.' }
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param()
+    Write-KitLog -Level STEP -Message ("{0} {1} starting; action {2}; dry run {3}" -f $script:ToolName, $script:ToolVersion, $Action, [bool]$WhatIfPreference)
+    if (-not $script:LogFile) { Write-KitLog -Level WARN -Message 'No writable log directory found; console output only.' }
 
     $root = Resolve-KitRoot -Requested $KitRoot
     if (-not $root) {
@@ -689,6 +818,7 @@ function Main {
         $null = Write-Receipt
         return
     }
+    $script:Cfg = $cfg
     $profileName = "$($cfg.profile)"
     if (-not $profileName) { $profileName = 'default' }
     Add-Evidence -Step 'kit' -Before $root -ActionTaken ("profile {0}" -f $profileName) -Result 'PASS' -Verification $config
@@ -706,19 +836,24 @@ function Main {
     if ($effective -eq 'Menu' -and $NonInteractive) { $effective = 'Build' }
     if ($effective -eq 'Menu') { $effective = $(if (Test-GuiAvailable) { 'Gui' } else { 'Console' }) }
     if ($effective -eq 'Gui' -and -not (Test-GuiAvailable)) {
-        Write-Log -Level WARN -Message 'The window needs Windows with PresentationFramework and an interactive session; falling back to the text menu.'
+        Write-KitLog -Level WARN -Message 'The window needs Windows with PresentationFramework and an interactive session; falling back to the text menu.'
         $effective = 'Console'
     }
 
     switch ($effective) {
         'Console' { Show-Menu -Root $root -ProfileName $profileName -PackDir $packDir -Config $config }
         'Gui' {
-            Show-MspAiKitWindow -Root $root -ProfileName $profileName -PackDir $packDir -Config $config -Vendor $script:VendorPath
+            $exe = (Get-Process -Id $PID).Path
+            if ($PSCmdlet.ShouldProcess($script:GuiFile, 'open the DE Technician Console (AI Toolkit page)')) { Start-Process -FilePath $exe -ArgumentList @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', $script:GuiFile, '-Page', 'AiToolkit') | Out-Null }
+            Add-Evidence -Step 'gui' -Before 'loader' -ActionTaken 'opened the DE Technician Console' -Result 'INFO'
         }
+        'Update' { $null = Update-Kit -Root $root -Config $cfg }
+        'Cleanup' { $null = Invoke-Cleanup -Config $cfg -PackDir $packDir }
+        'Version' { $v = Get-KitVersionInfo -Root $root -Config $cfg; Write-Host ("local {0}; remote {1}; update available {2}" -f $v.local, $(if ($v.remote) { $v.remote } else { 'unknown' }), $v.updateAvailable); Add-Evidence -Step 'version' -Before $v.local -ActionTaken 'compare' -Result 'INFO' -Verification ("remote {0}" -f $v.remote) }
         'Build' { if (Test-Prerequisites -NeedNode) { $null = Invoke-KitBuild -Root $root -Destination $packDir -Config $config } }
         'Install' { if (Test-Prerequisites) { $null = Install-Kit -Root $root -PackDir $packDir } }
         'Clipboard' { $null = Copy-ChatGptBlocks -PackDir $packDir }
-        'Upstream' { if (Test-Prerequisites -NeedGit) { $null = Install-UpstreamKits -Vendor $script:VendorPath } }
+        'Upstream' { if (Test-Prerequisites -NeedGit) { $null = Install-UpstreamKits -Vendor $script:VendorPath -Root $root } }
         'Verify' { if (Test-Prerequisites -NeedNode) { $null = Test-Kit -Root $root } }
         'Uninstall' { $null = Uninstall-Kit -Root $root }
         'All' {
@@ -730,14 +865,15 @@ function Main {
             }
         }
     }
-    $null = Write-Receipt -PackDir $packDir
+    $receipt = Write-Receipt -PackDir $packDir
+    if ($receipt) { Send-Receipt -ReceiptPath $receipt -Config $cfg }
 }
 
 try {
-    Main
+    Main -WhatIf:$WhatIfPreference
 } catch {
     Add-Evidence -Step 'loader' -Before 'running' -ActionTaken 'unhandled error' -Result 'FAIL' -Verification $_.Exception.Message -Remediation 'See the log; rerun with -Verbose.'
-    Write-Log -Level FAIL -Message ($_.ScriptStackTrace)
+    Write-KitLog -Level FAIL -Message ($_.ScriptStackTrace)
     if ($script:ExitCode -eq 0) { $script:ExitCode = 1 }
 }
 exit $script:ExitCode

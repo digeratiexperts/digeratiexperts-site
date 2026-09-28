@@ -1,0 +1,20 @@
+{
+  "id": "onboarding-dental-25",
+  "module": "client-onboarding",
+  "title": "25-user dental practice, HIPAA, previous provider cooperative",
+  "inputs": {
+    "[NAME, INDUSTRY, USERS, SITES]": "Sunrise Dental, dental practice, 25 users, 1 site",
+    "[Office / Business / Enterprise, and which of Core IT, Security Operations, BCDR]": "Business tier; Core IT and Security Operations",
+    "[Microsoft 365 or Google Workspace, servers, network gear, line-of-business apps, existing security tools, or UNKNOWN]": "Microsoft 365; one on-prem imaging server; consumer-grade router; Dentrix; no EDR",
+    "[NAME and relationship state, or NONE]": "Valley IT, leaving on good terms",
+    "[HIPAA, CMMC, PCI, cyber-insurance, NONE, or UNKNOWN]": "HIPAA",
+    "[DATE]": "next Monday"
+  },
+  "mustMention": [
+    "break-glass",
+    "restore"
+  ],
+  "mustNotMention": [
+    "lifecycle status"
+  ]
+}

@@ -28,7 +28,7 @@ Request: [DESIGN A PHASE, BUILD A PHASE, REVIEW A TOOL, or PLAN A MIGRATION for 
 Machine and user: [OS and build, current identity state if known, intended local username, client and site, tier]
 Current findings: [PASTE dsregcmd output, BitLocker status, OneDrive state, local admins, or UNKNOWN]
 Authority decision: [{{stack.identity}} is the intended Windows identity authority: YES, NO, or UNDECIDED]
-Security stack expected: [{{stack.security_platform}}, {{stack.edr}}, {{stack.browser_security}}, baseline, or list]
+Security stack expected: [SECURITY COMPONENTS EXPECTED, or DE DEFAULT] (DE default: {{stack.security_platform}}, {{stack.edr}}, {{stack.browser_security}}, baseline)
 Constraints: [time window, remote or on-site, reboot allowed, who can verify break-glass interactively]
 
 OUTPUT
@@ -41,6 +41,21 @@ OUTPUT
 7. Risks and questions: collisions, data-loss risks, and the decisions the technician or {{company.short}} lead must make before proceeding.
 
 Never emit a BitLocker recovery password, a break-glass credential, an organization key, or a site token in any output.
+
+## Brief
+- A stateful engine of 13 phases; every phase shows detected state, desired state, gate, action, verification, evidence.
+- Identity graph first, never a blind Entra leave; break-glass, BitLocker and OneDrive gates lock identity changes.
+- Security stack components are provisioned and verified as first-class; installer exit zero is not completion.
+
+## Example
+Input (abridged): Request PLAN A MIGRATION. Machine: Windows 11 23H2 laptop, dsregcmd shows AzureAdJoined YES, intended local username jsmith, client 20 seats, Business tier. Findings: BitLocker on with RecoveryPassword protector, OneDrive active with Known Folder Move, one local admin (the built-in Administrator, disabled). Authority: {{stack.identity}} YES. Stack expected: {{stack.security_platform}}, {{stack.edr}}, {{stack.browser_security}}.
+Output (abridged):
+1. State summary: Entra joined (dsregcmd); encrypted with recovery protector (manage-bde status); OneDrive active with KFM (registry and process); break-glass ABSENT; no pending reboot.
+2. Gate board: break-glass BLOCKED (create and verify interactively); BitLocker READY once the protector ID is checked against the independently stored record; OneDrive WARN until sync is confirmed complete and paused; username mapping PASS (no existing jsmith profile or SID collision); security controls READY.
+3. Phase plan: create the local break-glass administrator hidden from sign-in tiles and verify a real login; record BitLocker protector metadata (never the password); pause OneDrive after confirming Up to date; disconnect from Entra using the documented leave procedure only after the gates read PASS; reboot and verify local sign-in as jsmith; bind the {{stack.identity}} agent and take over the jsmith account; reconnect Microsoft 365, Teams, Outlook and OneDrive as application identities; provision and verify each security component; write the receipt.
+4. Locked steps: Entra disconnect until break-glass and BitLocker PASS; {{stack.identity}} takeover until local sign-in verified.
+5. Technician view: header "LAP-0231 · jsmith · client · Business"; cards for identity, encryption, OneDrive, break-glass; next action "Create and verify break-glass"; receipt fields per step.
+6. Risks and questions: whether jsmith has local files outside OneDrive; whether the client wants the Entra registration retained for Intune; who verifies the break-glass login on site.
 
 ## Notes
 Distilled from the DE Scripting and MSP Skill Pack v1.0 supplied by Joe (sections 5 to 17). The reference file carries the complete text; keep the two in step when the pack changes.

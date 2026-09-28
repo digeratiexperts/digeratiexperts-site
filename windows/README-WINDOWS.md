@@ -1,101 +1,174 @@
-# MSP AI Kit on Windows
+# DE Technician Console (Windows)
 
-Three files in this folder turn the kit into a double-click tool with a DE-styled window:
+One Windows application for DE technicians. It holds the AI Toolkit, endpoint provisioning, identity
+migration (Entra to JumpCloud through ADMU), the JumpCloud controller, the OS baseline, the browser
+configurator, the security stack, apps, branding, network and site checks, the Vendor Admin Center, and
+evidence with Intelligence Hub handoff. Every change goes through one engine: detect, compare with the
+desired state, apply, verify, retry, then remediate or roll back. The evidence log records what happened
+at each step.
 
-| File | Purpose |
+## Start
+
+| You want | Do |
 |---|---|
-| `Start-MspAiKit.cmd` | Launcher. Double-click for the window, or pass options through to the loader. Runs Windows PowerShell 5.1 in STA mode with the execution policy bypassed for that process only. |
-| `Install-MspAiKit.ps1` | The engine: pre-check, plan, apply, verify, report. Idempotent. `-WhatIf` / `-DryRun` on every change. Writes a log and a JSON receipt. Also the RMM entry point. |
-| `MspAiKit.Gui.ps1` | The window (WPF, ships with Windows). Loaded by the engine when the session is interactive; nothing extra to install. |
+| The window | Double-click `Start-DETechConsole.cmd`. It asks for elevation because provisioning changes the machine. |
+| Only the AI prompt packs | Double-click `Start-MspAiKit.cmd`. The console opens on the AI Toolkit page. |
+| RMM, no window | `console\DETechConsole.ps1 -Headless -Client alamo -Mode takeover`. It audits and changes nothing. |
+| RMM, apply | Add `-Apply`. Run the console with `-WhatIf` first to see the plan. |
+| Old loader actions | `Install-MspAiKit.ps1 -Action Build|Install|Clipboard|Verify|Update|Cleanup|All` still work and are used by the AI Toolkit page. |
 
-## The window
+Requirements: Windows 10 or 11, Windows PowerShell 5.1 or PowerShell 7. Node 22 is needed only to
+build the AI packs, and the AI Toolkit page offers to install it for the current user.
 
-Double-click `Start-MspAiKit.cmd`.
+## How a session works
 
-- **Identity header**: machine, user, kit path, profile. Magenta rail, graphite ground, paper text, the DE tokens.
-- **Status cards**: PowerShell, Node.js, Skill install, Packs. Each shows PASS, READY, WARN, or BLOCKED and one line of detail.
-- **Next recommended action** with a Go button. The window works out what is missing (Node.js, packs, skill link) and offers only that.
-- **Actions**: Do everything (build, install, verify), Build, Install, Verify, Fetch upstream kits, plus Install Node.js when it is missing.
-- **ChatGPT**: Copy Block A, Copy Block B, Open packs. The clipboard is the paste surface; no waiting on Enter.
-- **Run mode**: Dry run (every action reports its plan and changes nothing), Force (replace a foreign skill folder; asks first).
-- **Output folder** with a picker; **Advanced** drawer for config file, module and target filters, key=value overrides, Cursor repo, vendor folder, and Uninstall (asks first).
-- **Steps and evidence** grid: step, result, action, verification, fix. Colour by result. Export receipt writes the JSON receipt and puts its path on the clipboard. Copy diagnostic bundle puts header, steps and the last 200 log lines (redacted) on the clipboard for a ticket.
-- **Log** pane with search; anything that looks like a key, token, password or BitLocker key is redacted before it is shown or copied.
-- **Footer**: overall result and loader version.
+1. **Discovery** reads the machine and classifies it. It covers the join type (local, Entra registered,
+   Entra joined, hybrid, AD), the MDM authority (JumpCloud, Intune or both), security agents, BitLocker,
+   OneDrive, apps, updates and network.
+2. **Client detection** picks the client profile from the tenant, hostname pattern and profile folders.
+   It shows why it chose that client, and the technician confirms or picks another.
+3. **The technician stays separate from the end user.** The technician is Joe (`jrpetro`) by default.
+   The end user is detected separately: for example `AzureAD\SuzetteThompson` at Alamo becomes the
+   local account `sthompson`.
+4. **Pick a mode.** The modes are audit, new, takeover, replacement, repair, co-managed and deprovision.
+   The mode decides which actions are planned.
+5. **The Guided workflow page always shows the next action and why.** Actions run in phases. Each
+   action waits for its gates, and a closed gate names the step that opens it.
+6. **Restarts resume.** A step that needs a restart registers the console to reopen after sign-in and
+   continue where it stopped.
+7. **Evidence and Hub.** The Evidence page writes a hashed bundle and pushes it to the Hub. The bundle
+   holds JSON, an internal report, a client-safe report and a sha256 manifest.
 
-Fonts: Space Grotesk and Oxanium are used when installed, with Segoe UI as the fallback; Cascadia Mono or Consolas for paths and detail.
+## Gates that protect the migration
 
-If the window cannot open (no desktop session, PowerShell not in STA, or `-NonInteractive`), the engine falls back to a text menu with the same actions. `-Action Console` forces the text menu; `-Action Gui` forces the window.
+The identity migration refuses to run until every one of these gates passes, or has an approved
+exception:
 
-## RMM or scripted use
+- The console is elevated and the machine is online.
+- A hidden local `DE-BreakGlass` administrator exists and its password was proven with a real logon.
+  `jrpetro` is never the break-glass account.
+- BitLocker is on and the recovery protector id is recorded. The recovery password itself is never stored.
+- OneDrive has finished syncing, or the technician confirmed the data is safe.
+- The source user is signed out, and no reboot is pending.
+- The JumpCloud user exists and maps to the intended local account.
+- There is no dual MDM, and the security stack verified.
+
+A failed or skipped control never shows as a green check. An exception needs a reason, an approver and an
+expiry date. It shows as EXCEPTION everywhere, including readiness.
+
+## Security stack
+
+Guardz is the primary MDR. Blackpoint is the approved backup and installs only when the client profile
+selects it. SentinelOne is the EDR. The console also checks for conflicting EDR, sets Defender passive
+mode where appropriate, and applies the PABX policy.
+
+## Runtime secrets
+
+Secrets live in memory as SecureString for the session only. They are never written to state, logs,
+receipts, client profiles, evidence bundles or Hub payloads, and anything that looks like one is redacted
+on screen. Enter them on the Settings page. For RMM runs, define secure variables named `DE_SECRET_<NAME>`.
+The console moves them into memory and clears them from the environment.
+
+| Name | Used for |
+|---|---|
+| `BREAKGLASS_PASSWORD` | DE-BreakGlass account (16+ characters) |
+| `MIGRATION_TEMP_PASSWORD` | Temporary password for the new local account (ADMU) |
+| `JC_CONNECT_KEY`, `JC_API_KEY`, `JC_ORG_ID` | JumpCloud agent install, and mapping, binding, groups and policies |
+| `S1_SITE_TOKEN` | SentinelOne site token |
+| `GUARDZ_ORG_KEY` | Guardz organization key |
+| `WAZUH_REG_PASSWORD` | Wazuh agent registration |
+| `DE_HUB_TOKEN` | Intelligence Hub device endpoint |
+
+## Client profiles
+
+Profiles live in `console\catalog\profiles\` as examples and in `%ProgramData%\DE\TechConsole\profiles\`
+on a machine. Each one holds the tier, stack roles, apps, branding, sites, vendor tenant ids and
+detection rules. The console refuses to save a profile that contains a secret. Start from
+`alamo.example.json` or the "New client profile" button.
+
+## Vendor Admin Center
+
+The Vendor Admin Center covers 18 categories and 76 vendors. Each vendor has admin, partner, client,
+support, docs and status links, plus its SSO method, DE service and role (primary, backup or alternate).
+Tenant-specific links fill in from the client profile. When a value is missing, the console names it
+instead of guessing a URL. The same catalog exports a launcher page and the Chrome/Edge managed bookmarks.
+
+## Packages
+
+`console\catalog\packages.json` lists every installer with its source and trust policy: sha256, the
+Authenticode publisher, or winget. A download that fails the policy is refused unless the technician
+overrides it, and the override is recorded as WARN. These entries are marked `confirmed: false` until
+DE fills in the real download source and hash:
+
+- JumpCloud Remote Assist
+- SentinelOne
+- Guardz
+- Blackpoint SNAP
+- PABX policy
+- MSP360 backup
+- Wazuh
+- Timus
+
+## Exit codes (headless and loader)
+
+| Code | Meaning |
+|---|---|
+| 0 | Ready, or ready with exceptions |
+| 1 | Not ready: at least one control failed |
+| 2 | Blocked: a gate, secret or elevation is missing, or the console files were changed after packaging |
+| 3 | RMM deploy only: download or verification failure |
+
+## Data folders
+
+`%ProgramData%\DE\TechConsole\` holds `state`, `logs`, `profiles`, `evidence`, `packages` and
+`backups`. Registry and policy changes are backed up before they are made, and rollback uses those
+backups.
+
+## Packaging and release
+
+| Step | Command |
+|---|---|
+| Sign and write the integrity manifest | `packaging\Sign-DETechConsole.ps1 -Thumbprint <code-signing cert>` |
+| Check a package | `packaging\Sign-DETechConsole.ps1 -Verify` |
+| Deploy from the RMM | `packaging\Deploy-DETechConsole.ps1 -PackageUrl https://... -Sha256 <hash> [-Client alamo -Mode takeover]` |
+| Intune Win32 app | `packaging\New-DEIntunePackage.ps1 -IntuneWinAppUtil C:\Tools\IntuneWinAppUtil.exe` |
+
+The deploy script refuses any package whose sha256 differs from the one you pass. There is no switch
+to skip that check.
+
+At start, the console checks its own files against `integrity.json` and their Authenticode signatures.
+A file changed after packaging makes the console report TAMPERED, and headless `-Apply` then refuses to
+run. An unsigned development build runs with a warning.
+
+`integrity.json` is created at release time and is not committed.
+
+There is no winget manifest. winget installs only exe, MSI or MSIX packages, and this is a script
+package, so Intune and RMM are the supported deployment routes.
+
+## Tests
 
 ```powershell
-# build + install for the current user + verify; exit code carries the result
-.\Install-MspAiKit.ps1 -Action All -NonInteractive
-
-# build only, to a chosen folder, with a config override
-.\Install-MspAiKit.ps1 -Action Build -OutDir 'D:\DE\packs' -Set 'sla.confirmed=true' -NonInteractive
-
-# let winget install Node.js LTS if it is missing (asks first unless -NonInteractive)
-.\Install-MspAiKit.ps1 -Action All -InstallNode -NonInteractive
-
-# plan only
-.\Install-MspAiKit.ps1 -Action All -WhatIf
+Invoke-Pester -Path .\tests, .\console\tests          # Pester 4.10 or 5.x
+Invoke-ScriptAnalyzer -Path . -Recurse -Settings .\tests\PSScriptAnalyzerSettings.psd1
+.\tests\Invoke-GuiSmoke.ps1 -OutDir $env:TEMP\de-smoke
 ```
 
-Exit codes: 0 success, 1 failure, 2 blocked (missing Node.js or git, bad input,
-kit not found). Every run prints a step table with PASS / WARN / BLOCKED /
-FAIL / NO CHANGE / PLANNED and writes:
+The Pester suites run on Windows and Linux because Windows-only calls are mocked. They cover:
 
-- log: `%ProgramData%\DE\logs\msp-ai-kit-<timestamp>.log` (falls back to `%LOCALAPPDATA%\DE\logs`)
-- receipt: `msp-ai-kit-receipt-<timestamp>.json` next to the log (timestamp, step, before-state, action, result, verification, remediation)
+- the dsregcmd parser for every join type
+- secrets, redaction and state scrubbing
+- gates, exceptions, idempotence, retry and remediation, and WhatIf planning
+- mocked identity states: Entra joined, local or workgroup, Intune-managed, JumpCloud-managed, dual MDM,
+  and username collisions
+- the Alamo JumpCloud mapping case, and break-glass refusing `jrpetro`
+- vendor URL resolution, the package trust policy and client-safe reports
+- the phase runner, module export clashes, the loader, and packaging tamper detection
 
-## What each action does
+The GUI smoke builds every page against the Alamo example profile. It renders each page to PNG at 100
+and 200 percent scale, which is the high-DPI check. It never shows a window, so CI runs it on each
+pull request.
 
-- **Build** runs `scripts\build.mjs` through Node.js. Packs land in
-  `%USERPROFILE%\Documents\DE\msp-ai-kit\<profile>\` unless the output folder
-  says otherwise. Start with `INDEX.md` there.
-- **Install** creates junctions `%USERPROFILE%\.claude\skills\msp-ai-kit` and
-  `%USERPROFILE%\.agents\skills\msp-ai-kit` pointing at this kit (no admin
-  rights needed). An existing entry that is not this kit is kept unless Force
-  is on. With a Cursor repo set, the built Cursor rule is copied to that
-  repo's `.cursor\rules\`.
-- **ChatGPT blocks** go to the clipboard from the window; from the command
-  line `-Action Clipboard` copies Block A, waits for Enter, then Block B, and
-  always saves `chatgpt-block-A.txt` and `chatgpt-block-B.txt` in the packs
-  folder (the only output when `-NonInteractive`).
-- **Upstream** clones the four external kits into
-  `%LOCALAPPDATA%\DE\msp-ai-kit\vendor\` and links cmmc-advisor as a skill.
-  Nothing from those repositories is executed; read each README and LICENSE.
-- **Verify** runs `build.mjs --check` and the test suite.
-- **Uninstall** removes the two junctions and nothing else.
+## Fonts
 
-## Requirements
-
-- Windows 10 or 11, Windows PowerShell 5.1 (built in) or PowerShell 7.
-- Node.js 18 or newer for Build and Verify. The loader can install the LTS
-  release through winget when asked (the window's Install Node.js button,
-  `-InstallNode`, or the console prompt).
-- Git for Windows only for Upstream.
-
-## Safety
-
-- No secrets are read, prompted for, or written. The kit contains none, and
-  the on-screen log and diagnostic bundle are redacted anyway.
-- Nothing runs elevated. Junctions, `%LOCALAPPDATA%`, and Documents are all
-  per-user locations.
-- Machine-wide state is never changed: the execution policy bypass is
-  process-scoped, and PATH is only extended inside the running session after a
-  winget install of Node.js.
-- Every mutating step honours dry run; destructive steps (Force replace,
-  Uninstall, Node.js install) ask first in the window.
-
-## Validation status
-
-The engine (build, install, verify, clipboard files, uninstall, dry run,
-blocked paths, receipts) was exercised end to end with PowerShell 7 on Linux
-in the build environment. Both scripts parse cleanly and the XAML is
-well-formed XML. The window itself needs a Windows desktop to render, so its
-first run on a DE machine is the acceptance test: open it, run "Dry run", then
-"Do everything", and copy the diagnostic bundle into the ticket if anything
-reads WARN or FAIL.
+`fonts\` ships Space Grotesk and Oxanium under the SIL Open Font License 1.1 (see the OFL files). The window
+falls back to Segoe UI when they are missing, and uses Windows high-contrast colours when that mode is on.

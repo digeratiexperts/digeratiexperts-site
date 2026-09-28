@@ -1,0 +1,8 @@
+1. Summary: Three staff at Mesa Legal Group get repeated Outlook password prompts since this morning, which started after MFA was enforced last Thursday.
+2. Priority: P2 High. Impact: a team of three cannot use mail reliably. Urgency: no workaround for a law practice that runs on email.
+3. Security check: ESCALATE. Repeated prompts right after an MFA change can be token revocation or an MFA-fatigue attempt; sign-in logs must be reviewed before this is treated as a client-side fault.
+4. Category / subcategory / tags: Microsoft 365 / Authentication / Outlook; tags mfa, m365-auth, outlook.
+5. Missing facts: Are all three on the same network or site? Has anyone received an MFA prompt they did not start? Does Outlook on the web work for them? Exact error text or a screenshot.
+6. First reply to client: Thanks Dana, we have this. Three of you are being asked for your password repeatedly since this morning, and we are treating it as high priority because it stops mail for your team. We are checking your sign-in activity first to rule out anything suspicious. Please do not approve any MFA prompt you did not start. You will hear from us within the hour.
+7. Internal note for the tech: Probable causes ranked: conditional-access policy scoped to desktop Outlook; stale tokens after MFA enrolment; saved credentials in Windows Credential Manager. First three checks: Entra sign-in logs for the three users (failure reason, IP, client app), conditional-access report-only results, Outlook connectivity status. Escalate to the security analyst if any sign-in comes from an unknown location or legacy authentication.
+8. Time budget: 30 minutes for Tier 1, then Tier 2.

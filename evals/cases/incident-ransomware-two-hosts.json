@@ -1,0 +1,20 @@
+{
+  "id": "incident-ransomware-two-hosts",
+  "module": "incident-comms",
+  "title": "Contained ransomware on two workstations, client update at 10:15",
+  "inputs": {
+    "[CLIENT, TYPE (ransomware, account compromise, data exposure, outage with security cause), DECLARED AT]": "Mesa Legal Group, ransomware, declared 09:12 on 28 September",
+    "[PASTE time-stamped entries]": "09:05 EDR alert on LAP-0140 and LAP-0142; 09:12 declared; 09:15 both hosts isolated; 09:40 servers checked, no encrypted files; 10:05 backups verified intact",
+    "[contained, investigating, recovering, or unknown]": "contained, investigating",
+    "[CLIENT PRIMARY CONTACT, ALL CLIENT USERS, EXECUTIVES, INTERNAL TEAM, or INSURER FACT SHEET]": "CLIENT PRIMARY CONTACT",
+    "[who has approved release of this update, or NONE YET]": "security lead",
+    "[TIME]": "12:00"
+  },
+  "mustMention": [
+    "12:00",
+    "do not power off"
+  ],
+  "mustNotMention": [
+    "phishing"
+  ]
+}

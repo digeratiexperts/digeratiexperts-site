@@ -1,0 +1,19 @@
+{
+  "id": "roi-engineering-45",
+  "module": "business-dev-roi",
+  "title": "ROI model from client-supplied downtime figures",
+  "inputs": {
+    "[ROI MODEL, BUSINESS CASE, OUTREACH SEQUENCE, OBJECTION RESPONSE, or DISCOVERY QUESTION SET]": "ROI MODEL",
+    "[NAME, INDUSTRY, USERS, SITES, REVENUE OR PAYROLL if known, LOCATION]": "Copperline Engineering, civil engineering, 45 users, 1 site, Tempe",
+    "[HOURLY LOADED COST, DOWNTIME HOURS LAST YEAR, INCIDENTS, CURRENT IT SPEND, TOOLS PAID FOR, or UNKNOWN]": "loaded cost 85 dollars per hour; 30 downtime hours last year; 2 ransomware scares; 4,000 dollars a month break-fix",
+    "[PACKAGE AND TIER, or UNKNOWN]": "Business tier",
+    "[PASTE or NONE]": "NONE"
+  },
+  "mustMention": [
+    "assumption",
+    "PRICE FROM CANONICAL SOURCE"
+  ],
+  "mustNotMention": [
+    "60% of SMBs"
+  ]
+}

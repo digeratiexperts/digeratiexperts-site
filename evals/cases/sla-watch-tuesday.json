@@ -1,0 +1,14 @@
+{
+  "id": "sla-watch-tuesday",
+  "module": "sla-escalation",
+  "title": "Mid-afternoon SLA watch with one P1 near its response clock",
+  "inputs": {
+    "[DATE TIME America/Phoenix]": "Tuesday 14:10 America/Phoenix",
+    "[PASTE a list with ticket id, priority, opened at, last client update at, status, assignee, one-line summary]": "4821 | P2 | 12:40 | 12:45 | in progress | Tier 1 | line-of-business app down for accounting\n4790 | P3 | Monday 09:00 | Monday 16:00 | waiting on parts | Tier 2 | printer on 2nd floor offline\n4830 | P1 | 13:58 | none | new | Tier 2 | main office cannot reach the file server"
+  },
+  "mustMention": [
+    "4830",
+    "P1"
+  ],
+  "mustNotMention": []
+}
