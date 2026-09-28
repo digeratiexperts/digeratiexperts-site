@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useAnnouncer } from "@/components/AccessibleAnnouncer";
 import { Link } from "wouter";
 import { ChevronUp, Layers } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useDockHiddenWhileOpen } from "@/hooks/useDockHiddenWhileOpen";
 import { useMinWidth } from "@/hooks/useSolutionDraft";
-import { getFamilyById, SOLUTION_WORKSPACE_PATH, STORE_STEPS, type StoreStepId } from "@/lib/businessNeeds";
-import { isProfileComplete, removeDraftNeed, type SolutionDraft } from "@/lib/solutionDraft";
-import { HelpRow, StoreAction } from "./primitives";
+import { getFamilyById, SOLUTION_WORKSPACE_PATH, STORE_STEPS, type CuratedSolutionFamily, type StoreStepId } from "@/lib/businessNeeds";
+import { addDraftNeed, isProfileComplete, readSolutionDraft, removeDraftNeed, type SolutionDraft } from "@/lib/solutionDraft";
+import { HelpRow, StoreAction, UndoRow } from "./primitives";
 import { ProfileLine } from "@/components/store/SolutionProfileForm";
 
 /*
@@ -39,7 +40,7 @@ export type SolutionChromeProps = {
   status?: SolutionStatusLine[];
   primary: SolutionPrimary;
   /** null on /store, where the SiteBottomBar dock is the one help option. */
-  help?: { seed: string } | null;
+  help?: { seed: string; askLabel?: string } | null;
   suggestion?: ReactNode;
   saveState?: ReactNode;
   nextStepLine?: string;
@@ -56,6 +57,8 @@ export type SolutionChromeProps = {
   compactVariant?: "primary" | "secondary";
   /** Review mode hides the bar while the draft is empty on /store; the family page keeps it (it carries the primary). */
   mountWhenEmpty?: boolean;
+  /** The bar's short action word beside the status; the sheet carries the full primary label. Must say what the tap does. */
+  compactLabel?: string;
 };
 
 const STEP_LABEL: Record<StoreStepId, string> = Object.fromEntries(STORE_STEPS.map((step) => [step.id, step.label])) as Record<
@@ -66,7 +69,7 @@ const STEP_LABEL: Record<StoreStepId, string> = Object.fromEntries(STORE_STEPS.m
 function countLine(draft: SolutionDraft): string {
   const n = draft.needs.length;
   const needs = n === 1 ? "1 need" : `${n} needs`;
-  return isProfileComplete(draft.environment) ? `${needs} · sized` : needs;
+  return isProfileComplete(draft.environment) ? `${needs} · sized` : `${needs} · not sized yet`;
 }
 
 function StatusList({ status, onNavigate }: { status: SolutionStatusLine[]; onNavigate?: () => void }) {
@@ -93,31 +96,50 @@ function StatusList({ status, onNavigate }: { status: SolutionStatusLine[]; onNa
   );
 }
 
-function NeedsList({ draft, onNavigate }: { draft: SolutionDraft; onNavigate?: () => void }) {
-  if (draft.needs.length === 0) return null;
+/** The needs as a list with Remove; a remove is announced and undoable in place, and never closes the sheet. */
+function NeedsList({ draft }: { draft: SolutionDraft }) {
+  const { announce } = useAnnouncer();
+  const [undo, setUndo] = useState<{ familyId: CuratedSolutionFamily["id"]; label: string; source?: string } | null>(null);
+  const undoStillValid = undo && !draft.needs.some((need) => need.familyId === undo.familyId);
+  if (draft.needs.length === 0 && !undoStillValid) return null;
   return (
-    <ul className="d2-rows mt-3" data-testid="solution-needs">
-      {draft.needs.map((need) => {
-        const family = getFamilyById(need.familyId);
-        if (!family) return null;
-        return (
-          <li key={need.familyId} className="flex items-start justify-between gap-3 d2-small">
-            <span className="min-w-0">{family.label}</span>
-            <button
-              type="button"
-              className="d2-action d2-action--quiet"
-              onClick={() => {
-                removeDraftNeed(need.familyId);
-                onNavigate?.();
-              }}
-              aria-label={`Remove ${family.label}`}
-            >
-              Remove
-            </button>
-          </li>
-        );
-      })}
-    </ul>
+    <>
+      <ul className="d2-rows mt-3" data-testid="solution-needs">
+        {draft.needs.map((need) => {
+          const family = getFamilyById(need.familyId);
+          if (!family) return null;
+          return (
+            <li key={need.familyId} className="flex items-start justify-between gap-3 d2-small">
+              <span className="min-w-0">{family.label}</span>
+              <button
+                type="button"
+                className="d2-action d2-action--quiet"
+                onClick={() => {
+                  const before = readSolutionDraft().needs.find((entry) => entry.familyId === need.familyId);
+                  removeDraftNeed(need.familyId);
+                  setUndo({ familyId: need.familyId, label: family.label, source: before?.source });
+                  announce(`${family.label} removed from Your Solution`);
+                }}
+                aria-label={`Remove ${family.label}`}
+              >
+                Remove
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {undoStillValid ? (
+        <UndoRow
+          text={`${undo.label} removed from Your Solution`}
+          onUndo={() => {
+            addDraftNeed(undo.source ? { familyId: undo.familyId, source: undo.source } : { familyId: undo.familyId });
+            announce(`${undo.label} added back to Your Solution`);
+            setUndo(null);
+          }}
+          testId="chrome-undo"
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -160,13 +182,14 @@ function ChromeBody({
       ) : null}
       {mode === "continue" && status ? <StatusList status={status} onNavigate={onNavigate} /> : null}
       {mode === "review" ? (
-        empty ? (
-          <p className="d2-small d2-ink mt-3" data-testid="solution-empty">
-            {emptyText ?? "Nothing added yet. Start from a situation or add a need."}
-          </p>
-        ) : (
-          <NeedsList draft={draft} onNavigate={onNavigate} />
-        )
+        <>
+          {empty ? (
+            <p className="d2-small d2-ink mt-3" data-testid="solution-empty">
+              {emptyText ?? "Nothing added yet. Start from a situation or add a need."}
+            </p>
+          ) : null}
+          <NeedsList draft={draft} />
+        </>
       ) : null}
       {suggestion ? <div className="mt-3">{suggestion}</div> : null}
       {nextStepLine ? <p className="d2-small d2-ink-soft mt-3">{nextStepLine}</p> : null}
@@ -191,7 +214,7 @@ export function SolutionRail(props: SolutionChromeProps) {
       <div className="mt-5">
         <Primary primary={props.primary} />
       </div>
-      {props.help ? <HelpRow seed={props.help.seed} className="mt-4" /> : null}
+      {props.help ? <HelpRow seed={props.help.seed} askLabel={props.help.askLabel} className="mt-4" /> : null}
     </aside>
   );
 }
@@ -272,8 +295,15 @@ export function SolutionBar(props: SolutionChromeProps) {
             <ChevronUp className="h-4 w-4" aria-hidden="true" />
           </button>
         ) : (
-          <StoreAction variant={props.compactVariant ?? "primary"} size="sm" href={props.primary.href} onClick={props.primary.onClick} testId="solution-bar-primary">
-            {props.mode === "continue" ? "Continue" : "Review"}
+          <StoreAction
+            variant={props.compactVariant ?? "primary"}
+            size="sm"
+            href={props.primary.href}
+            onClick={props.primary.onClick}
+            ariaLabel={props.primary.label}
+            testId="solution-bar-primary"
+          >
+            {props.compactLabel ?? (props.mode === "continue" ? "Continue" : "Review")}
           </StoreAction>
         )}
       </div>
@@ -290,7 +320,7 @@ export function SolutionBar(props: SolutionChromeProps) {
           <div className="d2-sheet-panel__foot">
             <Primary primary={props.primary} onNavigate={close} />
             {props.help ? (
-              <HelpRow seed={props.help.seed} />
+              <HelpRow seed={props.help.seed} askLabel={props.help.askLabel} onBeforeAsk={close} />
             ) : (
               <Link href={SOLUTION_WORKSPACE_PATH} className="d2-action d2-action--quiet" onClick={close}>
                 Open Your Solution

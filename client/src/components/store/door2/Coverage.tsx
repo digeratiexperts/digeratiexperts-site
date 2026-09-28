@@ -46,16 +46,16 @@ export function CoverageBand({
                   `Available · ${label(cell.addFamilyId)}`
                 ) : onAdd ? (
                   <button type="button" className="d2-link" onClick={() => onAdd(cell.addFamilyId!)}>
-                    Available · Add {label(cell.addFamilyId)} →
+                    Available · Add {label(cell.addFamilyId)}<span aria-hidden="true"> →</span>
                   </button>
                 ) : (
                   <Link href={familyPath(cell.addFamilyId)} className="d2-link">
-                    Available · Add {label(cell.addFamilyId)} →
+                    Available · Add {label(cell.addFamilyId)}<span aria-hidden="true"> →</span>
                   </Link>
                 )
               ) : (
                 <Link href={HANDLE_OUR_IT_PATH} className="d2-link">
-                  Part of Handle Our IT →
+                  Part of Handle Our IT<span aria-hidden="true"> →</span>
                 </Link>
               )}
             </span>
@@ -73,12 +73,12 @@ export function CoverageBand({
                     : onAdd
                     ? (
                         <button type="button" className="d2-link" onClick={() => onAdd(band.addFamilyId!)}>
-                          Available · Add {label(band.addFamilyId)} →
+                          Available · Add {label(band.addFamilyId)}<span aria-hidden="true"> →</span>
                         </button>
                       )
                     : (
                         <Link href={familyPath(band.addFamilyId)} className="d2-link">
-                          Available · Add {label(band.addFamilyId)} →
+                          Available · Add {label(band.addFamilyId)}<span aria-hidden="true"> →</span>
                         </Link>
                       )
                   : "Continuous layer"}
@@ -91,7 +91,7 @@ export function CoverageBand({
           Also in this solution: {coverage.outsideBlocks.map(label).join(", ")} (operating layer, not security blocks)
         </p>
       ) : null}
-      <p className="d2-micro d2-ink-soft mt-3">Structure, not a score.</p>
+      <p className="d2-micro d2-ink-soft mt-3">Structure, not a rating.</p>
     </div>
   );
 }

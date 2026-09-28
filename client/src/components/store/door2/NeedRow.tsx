@@ -25,7 +25,7 @@ export function NeedRow({
       </div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         <Link href={changeHref} className="d2-action d2-action--quiet">
-          Change need →
+          Change need<span aria-hidden="true"> →</span>
         </Link>
         <button type="button" className="d2-action d2-action--quiet" onClick={onRemove} aria-label={`Remove ${family.label}`}>
           Remove

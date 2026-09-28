@@ -161,7 +161,7 @@ export default function SolutionSubmitted() {
 
   const [lookup, setLookup] = useState<Lookup>({ state: "loading" });
   const [retryCount, setRetryCount] = useState(0);
-  const statusRegionRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     if (!reference) return;
@@ -193,7 +193,7 @@ export default function SolutionSubmitted() {
 
   // The h1 sits in the status region and receives focus on arrival (§11); the scroll reset owns the position.
   useEffect(() => {
-    statusRegionRef.current?.focus({ preventScroll: true });
+    headingRef.current?.focus({ preventScroll: true });
   }, []);
 
   if (!reference || lookup.state === "missing") return <NotFound />;
@@ -215,8 +215,8 @@ export default function SolutionSubmitted() {
           <div className="max-w-3xl min-w-0">
             <header className="d2-chapter d2-chapter--first d2-no-print" data-testid="submitted-header">
               <StepLabel>SUBMITTED</StepLabel>
-              <div ref={statusRegionRef} role="status" tabIndex={-1} data-testid="submitted-status-region">
-                <h1 className="d2-display" data-testid="heading-submitted">
+              <div role="status" data-testid="submitted-status-region">
+                <h1 ref={headingRef} tabIndex={-1} className="d2-display" data-testid="heading-submitted">
                   {durable ? HEADING_DURABLE : HEADING_RECORDED}
                 </h1>
                 <span className="d2-hairline-draw" aria-hidden="true" />

@@ -1,4 +1,5 @@
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useAnnouncer } from "@/components/AccessibleAnnouncer";
 import { ChoiceTiles } from "@/components/store/door2/ChoiceTiles";
 import { LiveLine } from "@/components/store/door2/primitives";
 import {
@@ -155,8 +156,34 @@ export function SolutionProfileForm({
   // Empty: a closed 48px row. Partial: expanded. Complete: the ProfileLine.
   const [open, setOpen] = useState(() => (!collapsible ? true : !complete && !empty));
   const [focusWithin, setFocusWithin] = useState(false);
+  const [focusNext, setFocusNext] = useState<"first" | "edit" | null>(null);
   const headingId = useId();
   const Heading = `h${headingLevel}` as "h2" | "h3";
+  const { announce } = useAnnouncer();
+  const sizing = sizingLine(environment);
+
+  // The sizing line is plain text on the page; the sitewide announcer (the one polite region) hears it after a pause.
+  const firstSizing = useRef(true);
+  useEffect(() => {
+    if (!open) return undefined;
+    if (firstSizing.current) {
+      firstSizing.current = false;
+      return undefined;
+    }
+    const timer = window.setTimeout(() => announce(sizing), 700);
+    return () => window.clearTimeout(timer);
+  }, [sizing, open, announce]);
+
+  // A buyer who opens or closes the strip keeps a focus stop: the first count, or the Edit control.
+  useEffect(() => {
+    if (!focusNext) return;
+    const target =
+      focusNext === "first"
+        ? document.getElementById("profile-users")
+        : (document.querySelector("[data-testid='profile-edit'], [data-testid='profile-open']") as HTMLElement | null);
+    target?.focus({ preventScroll: true });
+    setFocusNext(null);
+  }, [focusNext, open]);
 
   // Collapse once the profile completes, but never under the buyer's focus:
   // the strip waits until focus leaves it, so a keyboard user is not dropped.
@@ -184,7 +211,16 @@ export function SolutionProfileForm({
         <Heading id={headingId} className="sr-only">
           {heading}
         </Heading>
-        <button type="button" className="d2-profile-empty" onClick={() => setOpen(true)} data-testid="profile-open" aria-expanded={false}>
+        <button
+          type="button"
+          className="d2-profile-empty"
+          onClick={() => {
+            setOpen(true);
+            setFocusNext("first");
+          }}
+          data-testid="profile-open"
+          aria-expanded={false}
+        >
           <span className="d2-body font-semibold">{heading}</span>
           <span className="d2-profile-empty__fields d2-small">Users · Computers · Mobile devices · Sites</span>
           <span className="d2-accent-ink d2-small font-semibold">Open</span>
@@ -196,7 +232,13 @@ export function SolutionProfileForm({
   if (!open) {
     return (
       <div data-testid={testId} data-state="collapsed">
-        <ProfileLine environment={environment} onEdit={() => setOpen(true)} />
+        <ProfileLine
+          environment={environment}
+          onEdit={() => {
+            setOpen(true);
+            setFocusNext("first");
+          }}
+        />
       </div>
     );
   }
@@ -220,7 +262,14 @@ export function SolutionProfileForm({
           <p className="d2-small d2-ink-soft mt-2">{description}</p>
         </div>
         {complete && collapsible ? (
-          <button type="button" className="d2-action d2-action--quiet" onClick={() => setOpen(false)}>
+          <button
+            type="button"
+            className="d2-action d2-action--quiet"
+            onClick={() => {
+              setOpen(false);
+              setFocusNext("edit");
+            }}
+          >
             Done
           </button>
         ) : null}
@@ -248,8 +297,12 @@ export function SolutionProfileForm({
             </button>
           </div>
         </CountField>
-        <CountField id="profile-mobile" label="Mobile devices" value={environment.mobileDeviceCount} placeholder="15" allowZero onChange={set("mobileDeviceCount")} />
-        <CountField id="profile-sites" label="Sites" value={environment.siteCount} placeholder="1" allowZero={false} onChange={set("siteCount")} />
+        <CountField id="profile-mobile" label="Mobile devices" value={environment.mobileDeviceCount} placeholder="15" allowZero onChange={set("mobileDeviceCount")}>
+          <p className="d2-small d2-ink-soft mt-1">Phones and tablets that open company email or files. 0 is fine.</p>
+        </CountField>
+        <CountField id="profile-sites" label="Sites" value={environment.siteCount} placeholder="1" allowZero={false} onChange={set("siteCount")}>
+          <p className="d2-small d2-ink-soft mt-1">Offices DE would need to reach. Home workers are not sites. At least 1.</p>
+        </CountField>
       </div>
 
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
@@ -275,8 +328,8 @@ export function SolutionProfileForm({
         />
       </div>
 
-      <LiveLine status className="mt-5" testId="profile-live">
-        {sizingLine(environment)}
+      <LiveLine className="mt-5" testId="profile-live">
+        {sizing}
       </LiveLine>
       {suggestionSlot}
     </div>

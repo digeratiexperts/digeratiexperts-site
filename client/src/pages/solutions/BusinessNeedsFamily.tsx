@@ -167,11 +167,12 @@ export default function BusinessNeedsFamily() {
     mode: "review",
     draft,
     primary,
-    help: { seed: helpSeed },
+    help: { seed: helpSeed, askLabel: "Ask DE about this need" },
     pulseKey,
     onEditProfile: openProfile,
     compactVariant: "secondary",
     mountWhenEmpty: true,
+    compactLabel: included ? "Review" : "Add & review",
   };
 
   const installModes = sortInstallModes(standaloneView.installModes);
@@ -217,7 +218,7 @@ export default function BusinessNeedsFamily() {
                     <SolutionProfileForm
                       environment={environment}
                       onChange={setEnvironmentField}
-                      headingLevel={3}
+                      headingLevel={2}
                       collapsible
                       expandKey={profileExpandKey}
                     />

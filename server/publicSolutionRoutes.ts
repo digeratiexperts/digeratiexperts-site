@@ -323,7 +323,10 @@ export function registerPublicSolutionRoutes(app: Express): void {
       nextStep: nextStepFor(final),
       // No acknowledgement email is sent yet (owner decision pending); the page and the reference are the record.
       acknowledged: false,
-      message: "Your solution was saved. DE will confirm package fit, scope, fulfillment, and pricing before you commit.",
+      message:
+        (submitted.replayed ? (final.durable ?? durable) : durable) === "memory"
+          ? "Your solution is recorded. DE will confirm package fit, scope, fulfillment, and pricing before you commit."
+          : "Recorded with DE. DE will confirm package fit, scope, fulfillment, and pricing before you commit.",
     });
   });
 }

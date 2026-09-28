@@ -250,11 +250,16 @@ export default function SolutionRequest() {
 
   const placeProblems = (next: Problems) => {
     setProblems(next);
-    const first = FIELDS.find((field) => next[field.key]);
-    if (first) inputs.current[first.key]?.focus();
     const labels = FIELDS.filter((field) => next[field.key]).map((field) => field.label);
     if (labels.length) announce(`Check ${labels.length === 1 ? "one field" : `${labels.length} fields`}: ${labels.join(", ")}.`);
   };
+
+  // Focus lands on the first invalid field once the form is enabled again (a server 400 arrives while it is still inert).
+  useEffect(() => {
+    if (sending) return;
+    const first = FIELDS.find((field) => problems[field.key]);
+    if (first) inputs.current[first.key]?.focus();
+  }, [problems, sending]);
 
   const send = async (key: string) => {
     const contact = trimFields(fields);

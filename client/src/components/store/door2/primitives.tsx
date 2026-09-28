@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Check, Copy, MessageCircle, Phone } from "lucide-react";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { openMspAdvisor } from "@/lib/openMspAdvisor";
+import { useAnnouncer } from "@/components/AccessibleAnnouncer";
 
 /*
  * The Store's vocabulary (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §8): V4's
@@ -268,17 +269,23 @@ export function HelpRow({
   seed,
   askLabel = "Ask DE about this solution",
   className = "",
+  onBeforeAsk,
 }: {
   seed: string;
   askLabel?: string;
   className?: string;
+  /** Inside a modal sheet: close it first so the Desk opens outside a focus trap. */
+  onBeforeAsk?: () => void;
 }) {
   return (
     <div className={`d2-help ${className}`}>
       <button
         type="button"
         className="d2-action d2-action--quiet"
-        onClick={() => openMspAdvisor({ context: "store", seedMessage: seed, tab: "chat" })}
+        onClick={() => {
+          onBeforeAsk?.();
+          openMspAdvisor({ context: "store", seedMessage: seed, tab: "chat" });
+        }}
         data-testid="ask-de-solution"
       >
         <MessageCircle className="h-4 w-4" aria-hidden="true" />
@@ -300,6 +307,7 @@ export function HelpRow({
 /** The short reference DE can quote back, with a copy control and the full correlation id in a disclosure. */
 export function ReferenceMark({ reference, correlationId }: { reference: string; correlationId?: string }) {
   const [copied, setCopied] = useState(false);
+  const { announce } = useAnnouncer();
   useEffect(() => {
     if (!copied) return;
     const timer = window.setTimeout(() => setCopied(false), 2000);
@@ -309,8 +317,10 @@ export function ReferenceMark({ reference, correlationId }: { reference: string;
     try {
       await navigator.clipboard.writeText(reference);
       setCopied(true);
+      announce("Reference copied");
     } catch {
       setCopied(false);
+      announce("The reference could not be copied; it is shown on the page");
     }
   };
   return (
@@ -320,9 +330,10 @@ export function ReferenceMark({ reference, correlationId }: { reference: string;
         <span className="d2-reference__code" data-testid="solution-reference">
           {reference}
         </span>
-        <button type="button" className="d2-action d2-action--quiet" onClick={copy} aria-label={`Copy reference ${reference}`}>
+        <button type="button" className="d2-action d2-action--quiet" onClick={copy}>
           {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
           {copied ? "Copied" : "Copy"}
+          <span className="sr-only"> reference {reference}</span>
         </button>
       </p>
       <p className="d2-small d2-ink mt-2">Quote this if you call.</p>

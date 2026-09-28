@@ -1,6 +1,6 @@
 import type { CuratedSolutionFamily } from "@/data/curatedSolutions";
 import type { RelationshipSuggestion } from "@/lib/solutionGuidance";
-import { ASSESSMENT_LABELS, buildSolutionPackage, PRICING_LABELS } from "@/lib/solutionPackage";
+import { ASSESSMENT_LABELS, buildSolutionPackage, PRICING_LABELS, publicBoundary, RELATIONSHIP_LABELS } from "@/lib/solutionPackage";
 import type { SolutionEnvironment } from "@/lib/solutionDraft";
 import { SheetRows } from "./PackageSheet";
 
@@ -51,7 +51,7 @@ export function RelationshipCompare({
             data-testid={`offer-panel-${delivery}`}
           >
             <p className="d2-label d2-ink-soft">
-              {view.relationshipLabel} · {delivery === "standalone" ? PRICING_LABELS.standard : PRICING_LABELS.preferred}
+              {RELATIONSHIP_LABELS[delivery]} · {delivery === "standalone" ? PRICING_LABELS.standard : PRICING_LABELS.preferred}
             </p>
             <h3 className="d2-h3 mt-2">{view.offerName}</h3>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -87,8 +87,8 @@ export function RelationshipCompare({
             <div className="d2-compare__section">
               <h4 className="d2-label">Not included</h4>
               <ul className="d2-rows d2-small d2-ink">
-                {offer.boundaries.map((item) => (
-                  <li key={item}>{item}</li>
+                {offer.boundaries.map((item, index) => (
+                  <li key={item}>{publicBoundary(offer.id, index, item)}</li>
                 ))}
               </ul>
             </div>

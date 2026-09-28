@@ -84,7 +84,7 @@ export function buildPublicSolutionRequestDescription(record: PublicSolutionRequ
   return [
     `Solution ${record.reference ?? "(draft)"} · correlation ${record.correlationId}`,
     `Intent: ${INTENT_WORDS[record.intent] ?? record.intent}`,
-    `Relationship: ${RELATIONSHIP_LABELS[relationship] ?? RELATIONSHIP_LABELS[""]}`,
+    `Relationship: ${relationship === "unsure" ? "DE to recommend" : (RELATIONSHIP_LABELS[relationship] ?? RELATIONSHIP_LABELS[""])}`,
     suggestion?.value
       ? `Suggestion shown: ${RELATIONSHIP_LABELS[suggestion.value as "standalone" | "co_managed"]} (${suggestion.accepted ? "used" : "declined"})`
       : "",

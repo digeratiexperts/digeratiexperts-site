@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "wouter";
-import { ASSESSMENT_LABELS, PRICING_LABELS, type SolutionLineItem, type SolutionPackageView } from "@/lib/solutionPackage";
+import { ASSESSMENT_LABELS, PRICING_LABELS, RELATIONSHIP_LABELS, type SolutionLineItem, type SolutionPackageView } from "@/lib/solutionPackage";
 
 export type PackagePair = { standalone: SolutionPackageView; coManaged: SolutionPackageView };
 
@@ -143,7 +143,7 @@ export function PackageSheet({
       <div className="d2-sheet__foot d2-small">
         {changeHref ? (
           <Link href={changeHref} className="d2-action d2-action--quiet">
-            Change need →
+            Change need<span aria-hidden="true"> →</span>
           </Link>
         ) : null}
         {onRemove ? (
@@ -172,7 +172,7 @@ export function PackageSheet({
           {columns.map(([column, price]) => (
             <div key={column.offerId} className="d2-compare__col">
               <p className="d2-small d2-ink font-semibold">
-                {column.relationshipLabel} · {price}
+                {RELATIONSHIP_LABELS[column.pricingPosition === "preferred" ? "co_managed" : "standalone"]} · {price}
               </p>
               <p className="d2-small d2-ink-soft mt-1">{column.offerName}</p>
               <SheetRows lineItems={column.lineItems} sized={sized} settle={settle} className="mt-3" />

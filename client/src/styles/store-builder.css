@@ -832,7 +832,7 @@ html.de-store-jelly .d2-toggle[data-de-just-selected="true"] {
   width: 100%;
   min-height: 3rem;
   padding: 0 0.9rem;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.42);
   border-radius: 0.6rem;
   background: rgba(0, 0, 0, 0.25);
   color: var(--d2-ink-strong);
@@ -843,13 +843,13 @@ html.de-store-jelly .d2-toggle[data-de-just-selected="true"] {
   color: rgba(255, 255, 255, 0.3);
 }
 .d2-input:hover {
-  border-color: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.6);
 }
 .d2-input[aria-invalid="true"] {
   border-color: #f5b4c8;
 }
 .d2-chapter--paper .d2-input {
-  border-color: rgba(5, 3, 18, 0.2);
+  border-color: rgba(5, 3, 18, 0.5);
   background: var(--de-paper-raised);
   color: var(--de-bg);
 }

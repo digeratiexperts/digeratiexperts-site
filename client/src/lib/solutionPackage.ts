@@ -293,6 +293,22 @@ export function lineBasisFor(offerId: string, _familyId: CuratedSolutionFamily["
 /* Labels — the only place an enum becomes words                             */
 /* ------------------------------------------------------------------------ */
 
+/**
+ * Public rendering of two approved offer boundaries. `curatedSolutions.ts` is
+ * never edited; the Store's copy rules bar the word these two lines use, so
+ * the screens print these instead (the meaning is unchanged).
+ */
+export const PUBLIC_BOUNDARY_COPY: Record<`${string}:${number}`, string> = {
+  "de-cybersecurity-standalone:0":
+    "This service does not include full IT management, legal determinations, insurance decisions, or a promise that nothing gets through.",
+  "de-awareness-standalone:0":
+    "Training reduces risk but cannot promise how every employee behaves, and it does not replace technical security controls.",
+};
+
+export function publicBoundary(offerId: string, index: number, line: string): string {
+  return PUBLIC_BOUNDARY_COPY[`${offerId}:${index}`] ?? line;
+}
+
 export const RELATIONSHIP_LABELS: Record<CuratedDeliveryModel | "unsure" | "", string> = {
   standalone: "Standalone",
   co_managed: "Co-Managed",

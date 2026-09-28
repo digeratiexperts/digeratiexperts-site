@@ -556,6 +556,7 @@ export default function PublicSolutionWorkspace() {
     saveInFlight.current = true;
     setSaving(true);
     setSaveFailed(false);
+    announce("Saving…");
     const current = readSolutionDraft();
     const key = contentKey(current);
     try {

@@ -395,6 +395,7 @@ export default function BusinessNeedsIndex() {
   };
 
   const momentIndex = scenarioMoment ? solutionScenarios.findIndex((scenario) => scenario.id === scenarioMoment.scenarioId) : -1;
+  const momentScenario = momentIndex >= 0 ? solutionScenarios[momentIndex] : null;
   // The Undo row spans the grid, so it sits under the row that holds the tapped tile and nothing shifts.
   const undoAfterIndex =
     momentIndex < 0 ? -1 : Math.min(solutionScenarios.length - 1, twoColumns ? Math.floor(momentIndex / 2) * 2 + 1 : momentIndex);
@@ -486,6 +487,13 @@ export default function BusinessNeedsIndex() {
                         {scenarioMoment && index === undoAfterIndex ? (
                           <li className="min-w-0 d2-grid__span" data-testid="scenario-moment">
                             <UndoRow text={`Added ${scenarioMoment.added.map(familyLabel).join(", ")}`} onUndo={undoScenario} testId="scenario-undo" />
+                            <ul className="d2-rows d2-small d2-ink-soft mt-2" data-testid="scenario-why">
+                              {scenarioMoment.added.map((familyId) => (
+                                <li key={familyId}>
+                                  <span className="d2-ink-strong">{familyLabel(familyId)}</span> · {momentScenario?.why[familyId] ?? ""}
+                                </li>
+                              ))}
+                            </ul>
                             {renderScenarioSuggestion("scenario-suggestion")}
                           </li>
                         ) : null}

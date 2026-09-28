@@ -145,7 +145,8 @@ describe("public solution Door 2 API", () => {
     expect(body.request.environment.userCount).toBe("42");
     expect(body.request.environment.workstationCount).toBe("48");
     expect(body.request.fulfillment.remoteSupport).toBe("ongoing");
-    expect(body.message).toContain("saved");
+    expect(body.message).toContain("recorded");
+    expect(body.message).not.toContain("saved");
     expect(JSON.stringify(body).toLowerCase()).not.toContain("sku");
   });
 
@@ -171,7 +172,7 @@ describe("public solution Door 2 API", () => {
     expect(body.request.status).toBe("submitted");
     expect(body.correlationId).toMatch(/-/);
     expect(body.crm).toBe("pending");
-    expect(body.message).toContain("saved");
+    expect(body.message).toContain("recorded");
   });
 
   it("rejects missing four-field contact and replays idempotent submits", async () => {
