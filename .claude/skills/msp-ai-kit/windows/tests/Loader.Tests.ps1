@@ -100,13 +100,17 @@ Describe 'One-file installer' {
         $script:Work = Join-Path ([IO.Path]::GetTempPath()) ("de-inst-{0}" -f ([guid]::NewGuid()))
         New-Item -ItemType Directory -Path (Join-Path $script:Work 'src/msp-ai-kit/windows/console') -Force | Out-Null
         Set-Content -LiteralPath (Join-Path $script:Work 'src/msp-ai-kit/windows/Start-DETechTool.cmd') -Value '@echo off'
+        Set-Content -LiteralPath (Join-Path $script:Work 'src/msp-ai-kit/windows/console/DETechConsole.ps1') -Value '# test console entry point'
         Set-Content -LiteralPath (Join-Path $script:Work 'src/msp-ai-kit/windows/console/VERSION') -Value '9.9.9'
         $script:Zip = Join-Path $script:Work 'DE-TechConsole-and-MSP-AI-Kit-v9.9.9.zip'
         Compress-Archive -Path (Join-Path $script:Work 'src/msp-ai-kit') -DestinationPath $script:Zip
     }
     It 'installs the zip, keeps one backup of the old copy, and never launches with -NoLaunch' {
         $dest = Join-Path $script:Work 'DE-TechConsole'
-        & $script:Exe -NoProfile -ExecutionPolicy Bypass -File $script:Inst -ZipPath $script:Zip -InstallDir $dest -NoLaunch | Out-Null
+        Push-Location $script:Work
+        try {
+            & $script:Exe -NoProfile -ExecutionPolicy Bypass -File $script:Inst -ZipPath ('.\' + (Split-Path -Leaf $script:Zip)) -InstallDir $dest -NoLaunch | Out-Null
+        } finally { Pop-Location }
         $LASTEXITCODE | Should -Be 0
         Test-Path -LiteralPath (Join-Path $dest 'windows/Start-DETechTool.cmd') | Should -Be $true
         & $script:Exe -NoProfile -ExecutionPolicy Bypass -File $script:Inst -ZipPath $script:Zip -InstallDir $dest -NoLaunch | Out-Null
