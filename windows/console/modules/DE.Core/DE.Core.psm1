@@ -373,9 +373,11 @@ function Get-DEActionState {
         $desired = & $a.Desired
         # @() outside the if: an if-expression unrolls a one-item array to a scalar, and StrictMode then throws on .Count
         $drift = @(if ($a.Compare) { & $a.Compare $detected $desired } else { Compare-DEDesired -Detected $detected -Desired $desired })
-        return [pscustomobject]@{ Id = $Id; Status = $(if ($drift.Count -eq 0) { 'PASS' } else { 'DRIFT' }); Drift = $drift; Detected = (Remove-DESecretKeys -Object $detected); Desired = $desired }
+        $status = if ($drift.Count -eq 0) { 'PASS' } else { 'DRIFT' }
+        $operation = if ($status -eq 'PASS') { 'No change' } elseif ($a.Module -eq 'apps' -and $Id -like 'apps.remove.*') { 'Remove (explicit policy)' } elseif ($a.Module -eq 'apps' -and (Get-DEHashPath -Object $detected -Path 'kind') -eq 'policy') { 'Configure' } elseif ($a.Module -eq 'apps' -and $Id -notlike 'apps.*.*' -and -not (Get-DEHashPath -Object $detected -Path 'installed')) { 'Install' } elseif ($a.Module -eq 'apps' -and (Get-DEHashPath -Object $detected -Path 'versionOk') -eq $false) { 'Repair' } elseif ($a.Module -eq 'apps') { 'Configure' } else { 'Configure or repair' }
+        return [pscustomobject]@{ Id = $Id; Status = $status; Operation = $operation; Drift = $drift; Detected = (Remove-DESecretKeys -Object $detected); Desired = $desired }
     } catch {
-        return [pscustomobject]@{ Id = $Id; Status = 'UNKNOWN'; Drift = @("detect failed: $($_.Exception.Message)"); Detected = $null; Desired = $null }
+        return [pscustomobject]@{ Id = $Id; Status = 'UNKNOWN'; Operation = 'Investigate'; Drift = @("detect failed: $($_.Exception.Message)"); Detected = $null; Desired = $null }
     }
 }
 
@@ -411,7 +413,7 @@ function Invoke-DEAction {
         if ($bf.Length -gt 400) { $bf = $bf.Substring(0, 400) + '...' }
         switch ($st.Status) {
             'PASS' { return (Add-DEEvidence -Step $step -Module $a.Module -Before $bf -ActionTaken 'audit: in desired state' -Result 'PASS' -Verification "desired state matched$gateNote" -Data @{ detected = $st.Detected }) }
-            'DRIFT' { return (Add-DEEvidence -Step $step -Module $a.Module -Before $bf -ActionTaken 'audit: drift' -Result 'WARN' -Verification (($st.Drift -join '; ') + $gateNote) -Remediation $(if ($a.ManualAction) { $a.ManualAction } else { 'Run in Apply mode once the gates pass.' }) -Data @{ detected = $st.Detected; drift = $st.Drift }) }
+            'DRIFT' { return (Add-DEEvidence -Step $step -Module $a.Module -Before $bf -ActionTaken "audit: $($st.Operation) needed" -Result 'WARN' -Verification (($st.Drift -join '; ') + $gateNote) -Remediation $(if ($a.ManualAction) { $a.ManualAction } else { 'Run in Apply mode once the gates pass.' }) -Data @{ detected = $st.Detected; desired = $st.Desired; operation = $st.Operation; drift = $st.Drift }) }
             default { return (Add-DEEvidence -Step $step -Module $a.Module -Before 'unknown' -ActionTaken 'audit: detect failed' -Result 'FAIL' -Verification (($st.Drift -join '; ') + $gateNote)) }
         }
     }
@@ -439,6 +441,10 @@ function Invoke-DEAction {
     if ($state.Status -eq 'PASS') {
         $r = if ($viaException) { 'EXCEPTION' } else { 'NO CHANGE' }
         return (Add-DEEvidence -Step $step -Module $a.Module -Before $before -ActionTaken 'detect: already in desired state' -Result $r -Verification 'desired state matched before any change' -Data @{ detected = $state.Detected })
+    }
+    Write-DELog -Level INFO -Message "$Id preflight: $($state.Operation); $($state.Drift -join '; ')"
+    if ($state.Operation -eq 'Configure' -and $a.Module -eq 'apps' -and (Get-DEHashPath -Object $state.Detected -Path 'kind') -eq 'app') {
+        return (Add-DEEvidence -Step $step -Module $a.Module -Before $before -ActionTaken 'preflight: configuration needs a reviewed recipe' -Result 'WARN' -Verification ($state.Drift -join '; ') -Remediation 'Review the existing app configuration and register a safe configuration recipe; no installer was run.' -Data @{ detected = $state.Detected; desired = $state.Desired; operation = $state.Operation })
     }
     if ($Mode -eq 'Audit' -or -not $a.Apply) {
         $why = if (-not $a.Apply) { 'no apply step; manual action required' } else { 'audit mode' }
