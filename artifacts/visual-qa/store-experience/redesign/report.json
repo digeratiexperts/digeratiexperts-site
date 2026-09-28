@@ -1,0 +1,1143 @@
+{
+  "generatedAt": "2026-09-28T03:18:43.126Z",
+  "base": "http://127.0.0.1:5000",
+  "viewports": {
+    "390": {
+      "indexEmpty": {
+        "scrollY": 0,
+        "overflow": 0,
+        "viewports": 6.34,
+        "controlsInMain": 51,
+        "linksInMain": 25,
+        "h1": [
+          "Start with your business. Then solve what hurts."
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              0,
+              0,
+              390,
+              32
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              390,
+              65
+            ]
+          },
+          {
+            "id": "site-bottom-bar",
+            "rect": [
+              12,
+              778,
+              366,
+              54
+            ]
+          }
+        ],
+        "askDe": 0,
+        "tel": 3,
+        "accent": "electric",
+        "axe": []
+      },
+      "indexScenario": {
+        "scrollY": 852,
+        "overflow": 0,
+        "viewports": 8.08,
+        "controlsInMain": 69,
+        "linksInMain": 25,
+        "h1": [
+          "Start with your business. Then solve what hurts."
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              0,
+              0,
+              390,
+              32
+            ]
+          },
+          {
+            "id": "scroll-progress",
+            "rect": [
+              0,
+              0,
+              65,
+              3
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              390,
+              61
+            ]
+          },
+          {
+            "id": "solution-bar",
+            "rect": [
+              12,
+              722,
+              366,
+              56
+            ]
+          },
+          {
+            "id": "site-bottom-bar",
+            "rect": [
+              12,
+              778,
+              366,
+              54
+            ]
+          }
+        ],
+        "askDe": 0,
+        "tel": 3,
+        "accent": "electric",
+        "undoRow": 1,
+        "addedCells": 3
+      },
+      "indexPartial": {
+        "live": "Missing: mobile devices, sites, device ownership, internal IT"
+      },
+      "indexComplete": {
+        "live": "Sized for 25 users · 32 computers · 18 mobile devices · 2 sites",
+        "suggestion": 3
+      },
+      "indexCollapsed": {
+        "profileLine": 0
+      },
+      "sheet": {
+        "dockHidden": true
+      },
+      "family": {
+        "scrollY": 0,
+        "overflow": 0,
+        "viewports": 6.55,
+        "controlsInMain": 8,
+        "linksInMain": 4,
+        "h1": [
+          "Identity & Access"
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              0,
+              0,
+              390,
+              32
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              390,
+              65
+            ]
+          },
+          {
+            "id": "solution-bar",
+            "rect": [
+              12,
+              776,
+              366,
+              56
+            ]
+          }
+        ],
+        "askDe": 1,
+        "tel": 1,
+        "accent": "electric",
+        "axe": []
+      },
+      "workspaceUnchosen": {
+        "scrollY": 0,
+        "overflow": 0,
+        "viewports": 10.16,
+        "controlsInMain": 41,
+        "linksInMain": 12,
+        "h1": [
+          "Your Solution, assembled."
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              0,
+              0,
+              390,
+              32
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              390,
+              65
+            ]
+          },
+          {
+            "id": "solution-bar",
+            "rect": [
+              12,
+              776,
+              366,
+              56
+            ]
+          }
+        ],
+        "askDe": 1,
+        "tel": 1,
+        "accent": "electric",
+        "axe": [],
+        "status": ""
+      },
+      "workspaceSaved": {
+        "sentence": "Saved on this device. Couldn't save to DE just now.\nTry again"
+      },
+      "contact": {
+        "scrollY": 0,
+        "overflow": 0,
+        "viewports": 3.59,
+        "controlsInMain": 9,
+        "linksInMain": 2,
+        "h1": [
+          "Who should DE follow up with?"
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              0,
+              0,
+              390,
+              32
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              390,
+              65
+            ]
+          }
+        ],
+        "askDe": 1,
+        "tel": 1,
+        "accent": "electric",
+        "axe": []
+      },
+      "contactInvalid": {
+        "invalid": 4,
+        "focused": "sr-org"
+      },
+      "contact503": {
+        "text": "DE couldn't record this yet.\n\nNothing was lost; your solution is still here on this device.\n\nTry again\nEmail this summary to DE\n\nOr call DE using the number below."
+      },
+      "contact429": {
+        "text": "Too many attempts from this connection.\n\nTry again in a while, or call 325-480-9870.\n\nEmail this summary to DE\n\nOr call DE using the number below."
+      },
+      "submitted": {
+        "scrollY": 0,
+        "overflow": 0,
+        "viewports": 5.84,
+        "controlsInMain": 6,
+        "linksInMain": 3,
+        "h1": [
+          "Your solution is recorded."
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              0,
+              0,
+              390,
+              32
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              390,
+              65
+            ]
+          }
+        ],
+        "askDe": 1,
+        "tel": 1,
+        "accent": "electric",
+        "axe": [],
+        "reference": "DE-T6924Q",
+        "focusInStatus": true,
+        "draftNeeds": 0,
+        "archive": true
+      },
+      "submittedRefresh": {
+        "reference": "DE-T6924Q"
+      },
+      "submittedNoArchive": {
+        "summaryAbsent": 1
+      },
+      "unknownReference": {
+        "notFound": 1
+      },
+      "bannerIndex": {
+        "scrollY": 3209,
+        "overflow": 0,
+        "viewports": 8.73,
+        "controlsInMain": 66,
+        "linksInMain": 25,
+        "h1": [
+          "Start with your business. Then solve what hurts."
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              0,
+              0,
+              390,
+              32
+            ]
+          },
+          {
+            "id": "scroll-progress",
+            "rect": [
+              0,
+              0,
+              227,
+              3
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              390,
+              61
+            ]
+          },
+          {
+            "id": "solution-bar",
+            "rect": [
+              12,
+              627,
+              366,
+              56
+            ]
+          },
+          {
+            "id": "site-bottom-bar",
+            "rect": [
+              12,
+              683,
+              366,
+              54
+            ]
+          },
+          {
+            "id": "cookie-consent-banner",
+            "rect": [
+              0,
+              781,
+              390,
+              95
+            ]
+          }
+        ],
+        "askDe": 0,
+        "tel": 3,
+        "accent": "electric"
+      }
+    },
+    "768": {
+      "indexEmpty": {
+        "scrollY": 0,
+        "overflow": 0,
+        "viewports": 5.79,
+        "controlsInMain": 51,
+        "linksInMain": 25,
+        "h1": [
+          "Start with your business. Then solve what hurts."
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              348,
+              926,
+              420,
+              32
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              768,
+              65
+            ]
+          },
+          {
+            "id": "site-bottom-bar",
+            "rect": [
+              12,
+              958,
+              744,
+              54
+            ]
+          }
+        ],
+        "askDe": 0,
+        "tel": 3,
+        "accent": "electric",
+        "axe": []
+      },
+      "indexScenario": {
+        "scrollY": 683,
+        "overflow": 0,
+        "viewports": 6.84,
+        "controlsInMain": 69,
+        "linksInMain": 25,
+        "h1": [
+          "Start with your business. Then solve what hurts."
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              348,
+              858,
+              420,
+              32
+            ]
+          },
+          {
+            "id": "scroll-progress",
+            "rect": [
+              0,
+              0,
+              98,
+              3
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              768,
+              61
+            ]
+          },
+          {
+            "id": "solution-bar",
+            "rect": [
+              12,
+              902,
+              744,
+              56
+            ]
+          },
+          {
+            "id": "site-bottom-bar",
+            "rect": [
+              12,
+              958,
+              744,
+              54
+            ]
+          }
+        ],
+        "askDe": 0,
+        "tel": 3,
+        "accent": "electric",
+        "undoRow": 1,
+        "addedCells": 3
+      },
+      "indexPartial": {
+        "live": "Missing: mobile devices, sites, device ownership, internal IT"
+      },
+      "indexComplete": {
+        "live": "Sized for 25 users · 32 computers · 18 mobile devices · 2 sites",
+        "suggestion": 3
+      },
+      "indexCollapsed": {
+        "profileLine": 0
+      },
+      "sheet": {
+        "dockHidden": true
+      },
+      "family": {
+        "scrollY": 0,
+        "overflow": 0,
+        "viewports": 4.03,
+        "controlsInMain": 8,
+        "linksInMain": 4,
+        "h1": [
+          "Identity & Access"
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              348,
+              912,
+              420,
+              32
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              768,
+              65
+            ]
+          },
+          {
+            "id": "solution-bar",
+            "rect": [
+              12,
+              956,
+              744,
+              56
+            ]
+          }
+        ],
+        "askDe": 1,
+        "tel": 1,
+        "accent": "electric",
+        "axe": []
+      },
+      "workspaceUnchosen": {
+        "scrollY": 0,
+        "overflow": 0,
+        "viewports": 6.54,
+        "controlsInMain": 41,
+        "linksInMain": 12,
+        "h1": [
+          "Your Solution, assembled."
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              348,
+              912,
+              420,
+              32
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              768,
+              65
+            ]
+          },
+          {
+            "id": "solution-bar",
+            "rect": [
+              12,
+              956,
+              744,
+              56
+            ]
+          }
+        ],
+        "askDe": 1,
+        "tel": 1,
+        "accent": "electric",
+        "axe": [],
+        "status": ""
+      },
+      "workspaceSaved": {
+        "sentence": "Saved on this device. Couldn't save to DE just now.\nTry again"
+      },
+      "contact": {
+        "scrollY": 0,
+        "overflow": 0,
+        "viewports": 2.41,
+        "controlsInMain": 9,
+        "linksInMain": 2,
+        "h1": [
+          "Who should DE follow up with?"
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              348,
+              980,
+              420,
+              32
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              768,
+              65
+            ]
+          }
+        ],
+        "askDe": 1,
+        "tel": 1,
+        "accent": "electric",
+        "axe": []
+      },
+      "contactInvalid": {
+        "invalid": 4,
+        "focused": "sr-org"
+      },
+      "contact503": {
+        "text": "DE couldn't record this yet.\n\nNothing was lost; your solution is still here on this device.\n\nTry again\nEmail this summary to DE\n\nOr call DE using the number below."
+      },
+      "contact429": {
+        "text": "Too many attempts from this connection.\n\nTry again in a while, or call 325-480-9870.\n\nEmail this summary to DE\n\nOr call DE using the number below."
+      },
+      "submitted": {
+        "scrollY": 0,
+        "overflow": 0,
+        "viewports": 3.88,
+        "controlsInMain": 6,
+        "linksInMain": 3,
+        "h1": [
+          "Your solution is recorded."
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              348,
+              980,
+              420,
+              32
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              768,
+              65
+            ]
+          }
+        ],
+        "askDe": 1,
+        "tel": 1,
+        "accent": "electric",
+        "axe": [],
+        "reference": "DE-QN07DW",
+        "focusInStatus": true,
+        "draftNeeds": 0,
+        "archive": true
+      },
+      "submittedRefresh": {
+        "reference": "DE-QN07DW"
+      },
+      "submittedNoArchive": {
+        "summaryAbsent": 1
+      },
+      "unknownReference": {
+        "notFound": 1
+      },
+      "bannerIndex": {
+        "scrollY": 2728,
+        "overflow": 0,
+        "viewports": 6.56,
+        "controlsInMain": 66,
+        "linksInMain": 25,
+        "h1": [
+          "Start with your business. Then solve what hurts."
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              348,
+              763,
+              420,
+              32
+            ]
+          },
+          {
+            "id": "scroll-progress",
+            "rect": [
+              0,
+              0,
+              427,
+              3
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              768,
+              61
+            ]
+          },
+          {
+            "id": "solution-bar",
+            "rect": [
+              12,
+              807,
+              744,
+              56
+            ]
+          },
+          {
+            "id": "site-bottom-bar",
+            "rect": [
+              12,
+              863,
+              744,
+              54
+            ]
+          },
+          {
+            "id": "cookie-consent-banner",
+            "rect": [
+              0,
+              987,
+              768,
+              95
+            ]
+          }
+        ],
+        "askDe": 0,
+        "tel": 3,
+        "accent": "electric"
+      }
+    },
+    "1440": {
+      "indexEmpty": {
+        "scrollY": 0,
+        "overflow": 0,
+        "viewports": 5.39,
+        "controlsInMain": 53,
+        "linksInMain": 25,
+        "h1": [
+          "Start with your business. Then solve what hurts."
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              1020,
+              802,
+              420,
+              32
+            ]
+          },
+          {
+            "id": "fixed top-0 de-fixed-in-canvas z-[60] hi",
+            "rect": [
+              0,
+              0,
+              1440,
+              67
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              67,
+              1440,
+              89
+            ]
+          },
+          {
+            "id": "site-bottom-bar",
+            "rect": [
+              12,
+              834,
+              1416,
+              54
+            ]
+          }
+        ],
+        "askDe": 0,
+        "tel": 3,
+        "accent": "electric",
+        "axe": []
+      },
+      "indexScenario": {
+        "scrollY": 889,
+        "overflow": 0,
+        "viewports": 6.29,
+        "controlsInMain": 76,
+        "linksInMain": 26,
+        "h1": [
+          "Start with your business. Then solve what hurts."
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              1020,
+              802,
+              420,
+              32
+            ]
+          },
+          {
+            "id": "scroll-progress",
+            "rect": [
+              0,
+              0,
+              298,
+              3
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              1440,
+              73
+            ]
+          },
+          {
+            "id": "site-bottom-bar",
+            "rect": [
+              12,
+              834,
+              1416,
+              54
+            ]
+          }
+        ],
+        "askDe": 0,
+        "tel": 3,
+        "accent": "electric",
+        "undoRow": 1,
+        "addedCells": 3
+      },
+      "indexPartial": {
+        "live": "Missing: mobile devices, sites, device ownership, internal IT"
+      },
+      "indexComplete": {
+        "live": "Sized for 25 users · 32 computers · 18 mobile devices · 2 sites",
+        "suggestion": 3
+      },
+      "indexCollapsed": {
+        "profileLine": 0
+      },
+      "family": {
+        "scrollY": 0,
+        "overflow": 0,
+        "viewports": 3.99,
+        "controlsInMain": 13,
+        "linksInMain": 4,
+        "h1": [
+          "Identity & Access"
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              1020,
+              856,
+              420,
+              32
+            ]
+          },
+          {
+            "id": "fixed top-0 de-fixed-in-canvas z-[60] hi",
+            "rect": [
+              0,
+              0,
+              1440,
+              67
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              67,
+              1440,
+              89
+            ]
+          }
+        ],
+        "askDe": 1,
+        "tel": 1,
+        "accent": "electric",
+        "axe": []
+      },
+      "workspaceUnchosen": {
+        "scrollY": 0,
+        "overflow": 0,
+        "viewports": 7.18,
+        "controlsInMain": 44,
+        "linksInMain": 13,
+        "h1": [
+          "Your Solution, assembled."
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              1020,
+              856,
+              420,
+              32
+            ]
+          },
+          {
+            "id": "fixed top-0 de-fixed-in-canvas z-[60] hi",
+            "rect": [
+              0,
+              0,
+              1440,
+              67
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              67,
+              1440,
+              89
+            ]
+          }
+        ],
+        "askDe": 1,
+        "tel": 1,
+        "accent": "electric",
+        "axe": [],
+        "status": "✓\nPROFILESized for 25 users · 32 computers · 18 mobile devices · 2 sites\n✓\nPAIN OR NEED4 needs\n✓\nRELATIONSHIPChoose above, or let DE recommend\n✓\nPACKAGEWaiting on the relationship\n✓\nDELIVERY & SETUPRemote DE setup\n✓\nCONTACTNext step"
+      },
+      "workspaceSaved": {
+        "sentence": "Saved on this device. Couldn't save to DE just now.\nTry again"
+      },
+      "contact": {
+        "scrollY": 0,
+        "overflow": 0,
+        "viewports": 2.31,
+        "controlsInMain": 9,
+        "linksInMain": 2,
+        "h1": [
+          "Who should DE follow up with?"
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              1020,
+              856,
+              420,
+              32
+            ]
+          },
+          {
+            "id": "fixed top-0 de-fixed-in-canvas z-[60] hi",
+            "rect": [
+              0,
+              0,
+              1440,
+              67
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              67,
+              1440,
+              89
+            ]
+          }
+        ],
+        "askDe": 1,
+        "tel": 1,
+        "accent": "electric",
+        "axe": []
+      },
+      "contactInvalid": {
+        "invalid": 4,
+        "focused": "sr-org"
+      },
+      "contact503": {
+        "text": "DE couldn't record this yet.\n\nNothing was lost; your solution is still here on this device.\n\nTry again\nEmail this summary to DE\n\nOr call DE using the number below."
+      },
+      "contact429": {
+        "text": "Too many attempts from this connection.\n\nTry again in a while, or call 325-480-9870.\n\nEmail this summary to DE\n\nOr call DE using the number below."
+      },
+      "submitted": {
+        "scrollY": 0,
+        "overflow": 0,
+        "viewports": 4.06,
+        "controlsInMain": 6,
+        "linksInMain": 3,
+        "h1": [
+          "Your solution is recorded."
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              1020,
+              856,
+              420,
+              32
+            ]
+          },
+          {
+            "id": "fixed top-0 de-fixed-in-canvas z-[60] hi",
+            "rect": [
+              0,
+              0,
+              1440,
+              67
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              67,
+              1440,
+              89
+            ]
+          }
+        ],
+        "askDe": 1,
+        "tel": 1,
+        "accent": "electric",
+        "axe": [],
+        "reference": "DE-CMGQKT",
+        "focusInStatus": true,
+        "draftNeeds": 0,
+        "archive": true
+      },
+      "submittedRefresh": {
+        "reference": "DE-CMGQKT"
+      },
+      "submittedNoArchive": {
+        "summaryAbsent": 1
+      },
+      "unknownReference": {
+        "notFound": 1
+      },
+      "bannerIndex": {
+        "scrollY": 2720,
+        "overflow": 0,
+        "viewports": 5.98,
+        "controlsInMain": 69,
+        "linksInMain": 26,
+        "h1": [
+          "Start with your business. Then solve what hurts."
+        ],
+        "liveRegions": 1,
+        "fixed": [
+          {
+            "id": "pointer-events-none fixed top-0 z-[100] ",
+            "rect": [
+              1020,
+              725,
+              420,
+              32
+            ]
+          },
+          {
+            "id": "scroll-progress",
+            "rect": [
+              0,
+              0,
+              992,
+              3
+            ]
+          },
+          {
+            "id": "fixed de-fixed-in-canvas z-[55] mega-men",
+            "rect": [
+              0,
+              0,
+              1440,
+              73
+            ]
+          },
+          {
+            "id": "site-bottom-bar",
+            "rect": [
+              12,
+              757,
+              1416,
+              54
+            ]
+          },
+          {
+            "id": "cookie-consent-banner",
+            "rect": [
+              0,
+              823,
+              1440,
+              77
+            ]
+          }
+        ],
+        "askDe": 0,
+        "tel": 3,
+        "accent": "electric"
+      }
+    }
+  }
+}
