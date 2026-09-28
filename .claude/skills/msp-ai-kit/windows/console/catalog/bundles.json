@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "product": "DE Tech Tool",
+  "proactive": {
+    "IT": {
+      "id": "it",
+      "label": "ProActive IT",
+      "capabilities": ["it_operations","endpoint_devices","identity_access","email_collaboration","cybersecurity_operations","security_awareness","documentation_standards"],
+      "defaults": {
+        "identity": "jumpcloud",
+        "edr": "sentinelone",
+        "mdr": "guardz",
+        "guardzPackage": "Pro",
+        "humanMdr": false,
+        "browserSecurity": ["pabx"],
+        "baseline": "de-windows-baseline",
+        "emailSecurity": "mimecast",
+        "awareness": "ninjio",
+        "remoteSupport": "jumpcloud-remote-assist",
+        "backup": null,
+        "networkManaged": false
+      },
+      "optional": ["managed-network","endpoint-backup","siem","sase","vulnerability-scanning"],
+      "rules": ["DE Security Foundation is included. Guardz Pro is the primary platform baseline; do not describe this tier as 24/7 human MDR."]
+    },
+    "Office": {
+      "id": "office",
+      "label": "ProActive Office",
+      "capabilities": ["it_operations","endpoint_devices","identity_access","email_collaboration","cybersecurity_operations","network_connectivity","backup_continuity","security_awareness","documentation_standards","technology_strategy"],
+      "defaults": {
+        "identity": "jumpcloud",
+        "edr": "sentinelone",
+        "mdr": "guardz",
+        "guardzPackage": "Ultimate",
+        "humanMdr": true,
+        "browserSecurity": ["pabx"],
+        "baseline": "de-windows-baseline",
+        "emailSecurity": "mimecast",
+        "awareness": "ninjio",
+        "remoteSupport": "jumpcloud-remote-assist",
+        "backup": "msp360",
+        "networkManaged": true
+      },
+      "optional": ["siem","sase","vulnerability-scanning"],
+      "rules": ["DE Security Foundation includes 24/7 managed detection and response at this tier."]
+    },
+    "Business": {
+      "id": "business",
+      "label": "ProActive Business",
+      "capabilities": ["it_operations","endpoint_devices","identity_access","email_collaboration","cybersecurity_operations","network_connectivity","backup_continuity","compliance_risk","security_awareness","business_communications","hardware_lifecycle","documentation_standards","technology_strategy"],
+      "defaults": {
+        "identity": "jumpcloud",
+        "edr": "sentinelone",
+        "mdr": "guardz",
+        "guardzPackage": "Ultimate",
+        "humanMdr": true,
+        "browserSecurity": ["pabx"],
+        "baseline": "de-windows-baseline",
+        "emailSecurity": "mimecast",
+        "awareness": "ninjio",
+        "remoteSupport": "jumpcloud-remote-assist",
+        "backup": "msp360",
+        "networkManaged": true,
+        "siem": "wazuh",
+        "recoveryDepth": "bcdr-posture"
+      },
+      "optional": ["sase","vulnerability-scanning","blackpoint-mdr-backup"],
+      "rules": ["Deeper DE security operations, recovery and reporting apply; Blackpoint remains an approved alternate/backup, not the default MDR."]
+    },
+    "Enterprise": {
+      "id": "enterprise",
+      "label": "ProActive Enterprise",
+      "capabilities": ["it_operations","endpoint_devices","identity_access","email_collaboration","cybersecurity_operations","network_connectivity","backup_continuity","compliance_risk","security_awareness","business_communications","hardware_lifecycle","documentation_standards","technology_strategy"],
+      "defaults": {
+        "identity": "jumpcloud",
+        "edr": "sentinelone",
+        "mdr": "guardz",
+        "guardzPackage": "Elite",
+        "humanMdr": true,
+        "browserSecurity": ["pabx"],
+        "baseline": "de-windows-baseline",
+        "emailSecurity": "mimecast",
+        "awareness": "ninjio",
+        "remoteSupport": "jumpcloud-remote-assist",
+        "backup": "msp360",
+        "networkManaged": true,
+        "siem": "wazuh",
+        "sase": "timus",
+        "vulnerability": "qualys",
+        "privilegedAccess": true,
+        "complianceDepth": "advanced"
+      },
+      "optional": ["blackpoint-mdr-backup"],
+      "rules": ["Deepest managed-security posture plus DE governance/compliance depth. Regulated/GCC High eligibility remains verification-required."]
+    }
+  },
+  "standaloneSolutions": {
+    "it_operations": {"id":"it_operations","label":"IT Operations & Support","actionModules":["maintenance","operations"]},
+    "endpoint_devices": {"id":"endpoint_devices","label":"Endpoint & Device Management","actionModules":["apps","baseline","branding"]},
+    "identity_access": {"id":"identity_access","label":"Identity & Access","actionModules":["identity","jumpcloud"]},
+    "email_collaboration": {"id":"email_collaboration","label":"Email & Collaboration","actionModules":["apps","operations"]},
+    "cybersecurity_operations": {"id":"cybersecurity_operations","label":"Cybersecurity Operations","actionModules":["security"]},
+    "network_connectivity": {"id":"network_connectivity","label":"Network & Connectivity","actionModules":["network"]},
+    "backup_continuity": {"id":"backup_continuity","label":"Backup & Business Continuity","actionModules":["operations","apps"]},
+    "compliance_risk": {"id":"compliance_risk","label":"Compliance & Risk Readiness","actionModules":["baseline","evidence"]},
+    "security_awareness": {"id":"security_awareness","label":"Security Awareness & Human Risk","actionModules":["operations"]},
+    "business_communications": {"id":"business_communications","label":"Business Communications","actionModules":["apps"]},
+    "hardware_lifecycle": {"id":"hardware_lifecycle","label":"Hardware & Lifecycle","actionModules":["maintenance"]},
+    "documentation_standards": {"id":"documentation_standards","label":"Documentation & Standards","actionModules":["branding","evidence"]},
+    "technology_strategy": {"id":"technology_strategy","label":"Technology Strategy & Advisory","actionModules":["evidence"]}
+  },
+  "modes": {
+    "dropship": {
+      "label": "Dropship / pre-provision",
+      "description": "DE prepares a known client device before direct shipment or handoff. The local engine remains usable offline; connected mode can later sync the signed result to the Hub.",
+      "excludedActionIds": ["identity.migrate","identity.verify-migration","identity.entra-leave","identity.mdm-cleanup","identity.hello-reset"]
+    }
+  }
+}
