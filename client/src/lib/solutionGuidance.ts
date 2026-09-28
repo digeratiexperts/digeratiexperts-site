@@ -324,13 +324,16 @@ export const HINT_RULES: HintRule[] = [
       kind: "relationship",
       title: "Co-Managed is built for teams like yours",
       reason:
-        "Standalone is a fine choice. With an internal IT team, Co-Managed shares defined responsibilities and can carry preferred pricing where that lowers delivery effort — never a blanket discount.",
+        "Standalone is a fine choice. With an internal IT team, Co-Managed shares defined responsibilities and can carry preferred pricing where that lowers delivery effort, never a blanket price cut.",
       sourceFamilyId: "it_operations",
       action: { type: "set_relationship", value: "co_managed" },
       actionLabel: "Compare Co-Managed",
     }),
   },
 ];
+
+/** The one dismissible suggestion id shared by every screen that shows the relationship suggestion. */
+export const RELATIONSHIP_SUGGESTION_HINT = "relationship-suggestion";
 
 export const MAX_HINTS = 3;
 

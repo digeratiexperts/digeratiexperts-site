@@ -333,12 +333,20 @@ describe("public solution Door 2 API", () => {
   it("refuses a submit with no profile before it stores any contact detail, and swallows honeypot bots", async () => {
     const noProfile = await fourFieldSubmit({ environment: { userCount: "12" }, idempotencyKey: "no-profile" });
     expect(noProfile.status).toBe(400);
-    expect((await noProfile.json()).error).toMatch(/business profile/i);
+    const noProfileBody = await noProfile.json();
+    expect(noProfileBody.code).toBe("PROFILE_INCOMPLETE");
+    expect(noProfileBody.error).toMatch(/business profile/i);
+    const noRelationship = await fourFieldSubmit({ deliveryPreference: "", deliveryModel: "", idempotencyKey: "no-relationship" });
+    expect(noRelationship.status).toBe(400);
+    expect((await noRelationship.json()).code).toBe("RELATIONSHIP_REQUIRED");
+    const noNeeds = await fourFieldSubmit({ familyId: "", selectedNeeds: [], idempotencyKey: "no-needs" });
+    expect((await noNeeds.json()).code).toBe("NEEDS_REQUIRED");
     const draft = await (await fetch(`${baseUrl}/api/public/solutions/request`)).json();
     expect(draft.request.contactEmail).toBe("");
 
     const bot = await fourFieldSubmit({ company_website: "http://spam.example", idempotencyKey: "bot" });
     expect(bot.status).toBe(400);
+    expect((await bot.json()).code).toBe("CONTACT_REQUIRED");
   });
 
   it("never trusts a body intent or an installation the package does not offer, and reads the session from the cookie only", async () => {

@@ -70,6 +70,11 @@ claims:
       - server/storeLegacyRedirects.ts
       - server/warehouseRoutes.ts (the /solutions/business-needs 301 only)
       - client/src/lib/solutionGuidance.ts
+      - client/src/lib/openMspAdvisor.ts (STORE_ADVISOR_SEED text only)
+      - client/src/lib/storeChromeGestures.ts (isStorePath only)
+      - client/src/hooks/useSolutionDraft.ts
+      - client/src/index.css (the .de-site-canvas padding-bottom line only)
+      - shared/publicContact.ts
       - client/src/lib/publicSolutionCart.ts (removed)
       - client/src/data/solutionScenarios.ts
       - client/src/pages/store/SolutionSubmitted.tsx

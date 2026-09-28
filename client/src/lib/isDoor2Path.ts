@@ -6,6 +6,7 @@ export function isDoor2Path(path: string): boolean {
     pathname === "/store/checkout" ||
     pathname === "/store/solution" ||
     pathname.startsWith("/store/solutions/") ||
+    pathname.startsWith("/store/solution/submitted/") ||
     pathname === "/solutions/business-needs" ||
     pathname.startsWith("/solutions/business-needs/") ||
     pathname === "/solutions/request" ||

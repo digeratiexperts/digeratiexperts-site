@@ -31,7 +31,7 @@ import {
 } from "./publicSolutionRequestStore";
 
 const SESSION_COOKIE = "de_solution_request";
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { EMAIL_RE } from "../shared/publicContact";
 
 const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
@@ -199,7 +199,7 @@ export function registerPublicSolutionRoutes(app: Express): void {
   app.post("/api/public/solutions/request", submitRateLimiter, async (req, res) => {
     const sessionId = ensureSession(req, res);
     if (honeypotTripped(req.body)) {
-      return res.status(400).json({ error: "Company, name, email, and phone are required." });
+      return res.status(400).json({ code: "CONTACT_REQUIRED", error: "Company, name, email, and phone are required." });
     }
     const organizationName = typeof req.body?.organizationName === "string" ? req.body.organizationName.trim() : "";
     const contactName = typeof req.body?.contactName === "string" ? req.body.contactName.trim() : "";
@@ -211,16 +211,17 @@ export function registerPublicSolutionRoutes(app: Express): void {
       !EMAIL_RE.test(contactEmail) ||
       contactPhone.replace(/\D/g, "").length < 7
     ) {
-      return res.status(400).json({ error: "Company, name, email, and phone are required." });
+      return res.status(400).json({ code: "CONTACT_REQUIRED", error: "Company, name, email, and phone are required." });
     }
 
-    // Needs and profile are checked before any contact detail is persisted.
+    // Needs, profile and relationship are checked before any contact detail is persisted.
     const problem = submissionProblem({
       selectedNeeds: req.body?.selectedNeeds,
       familyId: req.body?.familyId,
       environment: req.body?.environment,
+      deliveryPreference: req.body?.deliveryPreference ?? req.body?.deliveryModel,
     });
-    if (problem) return res.status(400).json({ error: problem });
+    if (problem) return res.status(400).json(problem);
 
     const saved = await upsertPublicSolutionRequestDurable({
       ...draftInput(req, sessionId),

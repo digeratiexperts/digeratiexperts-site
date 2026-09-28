@@ -338,7 +338,8 @@ html.de-marketing-canvas body {
   background-color: var(--de-bg);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04);
   padding-bottom: calc(
-    var(--de-unified-bar-h) + var(--de-sticky-cta-h) + var(--de-cookie-h) + var(--de-chrome-inset)
+    var(--de-unified-bar-h) + var(--de-sticky-cta-h) + var(--de-cookie-h) + var(--de-store-cart-h, 0px) +
+      var(--de-chrome-inset)
   );
 }
 

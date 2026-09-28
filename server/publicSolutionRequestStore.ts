@@ -155,14 +155,28 @@ export function isPublicProfileComplete(environment: PublicSolutionEnvironment):
  * Checks a submission body before anything is persisted: at least one real
  * need and a complete profile. Contact details are validated by the route.
  */
-export function submissionProblem(input: { selectedNeeds?: unknown; familyId?: unknown; environment?: unknown }): string | null {
+export type SubmissionProblemCode = "NEEDS_REQUIRED" | "PROFILE_INCOMPLETE" | "RELATIONSHIP_REQUIRED";
+
+export function submissionProblem(input: {
+  selectedNeeds?: unknown;
+  familyId?: unknown;
+  environment?: unknown;
+  deliveryPreference?: unknown;
+}): { code: SubmissionProblemCode; error: string } | null {
   const needs = parseSelectedNeeds(input.selectedNeeds, []);
   const familyId = clip(input.familyId, 80);
   if (needs.length === 0 && !(familyId && publicFamilyExists(familyId))) {
-    return "Select at least one business need before submitting.";
+    return { code: "NEEDS_REQUIRED", error: "Select at least one business need before submitting." };
   }
   if (!isPublicProfileComplete(parseEnvironment(input.environment, emptyEnvironment()))) {
-    return "Finish the business profile (users, computers, mobile devices, sites, device ownership, internal IT) before submitting.";
+    return {
+      code: "PROFILE_INCOMPLETE",
+      error: "Finish the business profile (users, computers, mobile devices, sites, device ownership, internal IT) before submitting.",
+    };
+  }
+  // "Help me choose" (unsure) is submittable; only an unmade choice is not.
+  if (!asDelivery(input.deliveryPreference)) {
+    return { code: "RELATIONSHIP_REQUIRED", error: "Choose Standalone, Co-Managed, or Help me choose before submitting." };
   }
   return null;
 }

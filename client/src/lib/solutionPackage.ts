@@ -280,18 +280,13 @@ export function formatQuantity(basis: LineBasis, profile: SolutionSizingProfile)
   }
 }
 
-/** Fallback for a line that has no entry in LINE_BASIS (future data); the table is the truth. */
-function inferBasis(familyId: CuratedSolutionFamily["id"], label: string): LineBasis {
-  const lower = label.toLowerCase();
-  if (/site|location|network|internet|wan|office/.test(lower)) return "site";
-  if (/endpoint|device|workstation|computer|patch|health|inventory/.test(lower)) return "device";
-  if (/user|identity|account|mailbox|training|license|access|mfa|onboarding/.test(lower)) return "user";
-  if (familyId === "hardware_lifecycle") return "computer";
-  return "once";
-}
-
-export function lineBasisFor(offerId: string, familyId: CuratedSolutionFamily["id"], index: number, label: string): LineBasis {
-  return LINE_BASIS[offerId]?.[index] ?? inferBasis(familyId, label);
+/**
+ * The table is the sole truth. A line without an entry is "included once";
+ * the sizing test fails on any include line without a basis, so a new offer
+ * line cannot ship unsized by accident.
+ */
+export function lineBasisFor(offerId: string, _familyId: CuratedSolutionFamily["id"], index: number, _label: string): LineBasis {
+  return LINE_BASIS[offerId]?.[index] ?? "once";
 }
 
 /* ------------------------------------------------------------------------ */
