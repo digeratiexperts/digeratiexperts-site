@@ -68,11 +68,13 @@ claims:
       - server/index.ts (the request-log redaction line only)
       - server/spaKnownPaths.ts
       - server/storeLegacyRedirects.ts
-      - server/warehouseRoutes.ts (the /solutions/business-needs 301 only)
+      - server/warehouseRoutes.ts (the /solutions/business-needs 301 and the de_store_preview staff preview only)
+      - server/warehouseRoutes.test.ts
       - client/src/lib/solutionGuidance.ts
       - client/src/lib/openMspAdvisor.ts (STORE_ADVISOR_SEED text only)
       - client/src/lib/storeChromeGestures.ts (isStorePath only)
-      - client/src/hooks/useStoreChromeGestures.ts (the .de-store-h-rail gate only; §16.1 for Joe)
+      - client/src/hooks/useStoreChromeGestures.ts (the warehouse route gate only; approved §16.1)
+      - client/src/hooks/useStoreChromeGestures.test.ts
       - client/src/hooks/useSolutionDraft.ts
       - client/src/index.css (the .de-site-canvas padding-bottom line only)
       - shared/publicContact.ts
@@ -81,7 +83,14 @@ claims:
       - client/src/pages/store/SolutionSubmitted.tsx
       - client/src/styles/store-builder.css
       - client/src/components/MegaMenu.tsx (announcement strip suppression on Door 2 only)
-      - client/src/components/Footer.tsx (store variant only)
+      - client/src/pages/sections/DigeratiEnhancedFooterSection.tsx (the variant="store" prop only)
+      - client/src/lib/deskAskDeMotion.ts (the store page classification and its copy only)
+      - client/src/lib/deskAskDeMotion.test.ts
+      - client/src/components/VirtualMspAdvisor.tsx (removed, unimported)
+      - client/src/components/store/ShoppingCart.tsx (the staff drawer title only)
+      - client/src/pages/BookingPage.tsx (the /book copy and the ?ref= reader only; §16.6 PR 0)
+      - .cursor/rules/blog-store-color-lock.mdc (the public Store / warehouse split)
+      - docs/STORE-ARCHITECTURE-DESIGN.md (the packet item 8 resolution line only)
       - scripts/door2-browser-smoke.mjs
       - scripts/generate-sitemap.mjs (the /solutions/request row only)
       - docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md
@@ -103,7 +112,11 @@ claims:
       well-thought-out use cases; and the DE fulfillment rule that remote
       support and shipping come before Truck-Roll, Trip Charge and Tech Labor.
       Baseline A evidence, a code map, a judged design and the source of truth
-      precede the rebuild. Also closes the warehouse quote-flow defects in
+      precede the rebuild. Joe, 2026-09-28: every open decision in the source of
+      truth §16 approved ("All approved, continue"); the PR 3 chrome and the
+      PR 0 /book copy build inside PR 267 with the files above. Stood off, held
+      by draft PR 229 (DE Desk launcher and modal): client/src/components/
+      SiteBottomBar.tsx and client/src/components/ZohoASAPWidget.tsx. Also closes the warehouse quote-flow defects in
       issues 239, 240, 257 (re-scoped: the GET exists; its payload is now a
       client-safe projection), 235 and 258, and the public store's lead-loss
       defects (lead event without contact fields; non-durable submit reported

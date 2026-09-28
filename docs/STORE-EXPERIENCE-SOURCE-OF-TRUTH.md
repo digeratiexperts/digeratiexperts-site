@@ -557,7 +557,7 @@ The list is `client/src/data/solutionScenarios.ts` (committed in `0d2f6df4`, tes
 
 | # | id | Title (buyer's words) | Composes | Relationship hint |
 |---|---|---|---|---|
-| 1 | phishing-close-call | A phishing email almost worked → **proposed amendment (§16.3a):** `A phishing or spoofed email got through` / pressure `Someone clicked, or a client got mail pretending to be us.` | security_awareness, email_collaboration, identity_access | profile |
+| 1 | phishing-close-call | `A phishing or spoofed email got through` / pressure `Someone clicked, or a client got mail pretending to be us.` (amended per §16.3a, approved 2026-09-28; the id is kept so drafts that recorded it as `source` still resolve) | security_awareness, email_collaboration, identity_access | profile |
 | 2 | insurance-questionnaire | Cyber-insurance renewal sent a questionnaire we can't answer | compliance_risk, identity_access, backup_continuity | profile |
 | 3 | second-location | We're opening a second office | network_connectivity, business_communications, hardware_lifecycle | profile |
 | 4 | it-person-left | Our only IT person just left | it_operations, documentation_standards, endpoint_devices | standalone, reason shown |
@@ -792,7 +792,7 @@ Three PRs, in order, each reviewable against the Preservation Law and each rende
 
 Out of scope for PR 2: MegaMenu, footer, SiteBottomBar, CookieConsentBanner, warehouse UI, the naming sweep of `curatedSolutions.ts`, the acknowledgement email, `/book`.
 
-**PR 3 · Chrome (outside the claim; after Joe answers §16.1, §16.2, §16.10)**
+**PR 3 · Chrome (approved 2026-09-28; built in PR #267 with the claim extended first)**
 
 | Commit | Files | Closes |
 |---|---|---|
@@ -807,9 +807,9 @@ Out of scope for PR 2: MegaMenu, footer, SiteBottomBar, CookieConsentBanner, war
 
 ---
 
-## 16. Open decisions for Joe
+## 16. Decisions for Joe — answered
 
-Only what is genuinely his. Everything else in this document is decided.
+**Answered 2026-09-28: Joe approved every recommendation below ("All approved, continue").** Each item keeps its recommendation text as the record of what was approved; the resulting work is listed in §15 (PR 3 and PR 0 now build inside PR #267, since the lane's one designated branch is `claude/nifty-newton-uk9g7t`). Two items touch files an active lane holds and stand off until it lands: the Ask DE nudge position in `SiteBottomBar.tsx` and the pathname fallback in `ZohoASAPWidget.tsx`, both in draft PR #229 (DE Desk launcher and modal).
 
 1. **Electric scope for the contact step.** The colour lock names `/store/*` and says ask before changing any value. The working tree already extends `isStorePath` with `/solutions/request` and the design adds `["/solutions/request", "electric"]` to `ACCENT_BY_PREFIX` so the last step stays electric with the white cookie surface (defect 17); jelly and the gesture listeners stay off the form regardless (§5.4). **Recommendation: approve.** The alternative (a new `/store/solution/contact` route) adds registry surface and a double hop through the existing legacy 301s for no buyer benefit. §14.16's contact clauses are conditional on this answer.
 2. **Announcement strip off and footer `store` variant on Door 2.** Both are REPLACEs of shared chrome outside the claim (PR 3). **Recommendation: approve.** The strip sells an assessment the policy says is not universal, over a task page.
@@ -818,25 +818,25 @@ Only what is genuinely his. Everything else in this document is decided.
    - **3b. Scenario 7's third family.** Keep `technology_strategy` in "A client or auditor asked for our policies and evidence" (as committed, so every family is reachable from a situation) or make strategy catalog-only again (the earlier staged intent: "advisory is chosen, not triggered by a pressure") and let the every-family test carry that one exception. **Recommendation: keep it**; the build defaults to what is committed.
 4. **Retire the 13 `FAMILY_ACCENTS` icon hues** for one electric IconWell (§16.12 R6). The lock says ask before changing any Store colour, even though these hues are named by no lock. **Recommendation: retire.**
 5. **Naming.** Nav "Store"; page and pathway "Solve a Business Need"; object "Your Solution"; page `<title>` "Solve a Business Need | Digerati Experts"; the staff `ShoppingCart` title renamed "Warehouse cart" (`map:open_questions_for_owner` 4). **Recommendation: confirm**, and mark packet item 8 resolved.
-6. **`/book` when reached with `?ref=`.** `BookingPage.tsx:43,84` say "free"; the canonical CSRA is $2,500 when scoped. The confirmation's magenta CTA to `/book` is behind `BOOK_ALIGNED = false` until the `/book` copy PR (PR 0) is **MERGED**; until then the assessment band offers Call and Ask DE and says "DE contacts you to schedule the conversation first". **Recommendation: approve PR 0 first.** ☐ PR 0 merged → flip `BOOK_ALIGNED`.
+6. **`/book` when reached with `?ref=`.** `BookingPage.tsx:43,84` say "free"; the canonical CSRA is $2,500 when scoped. The confirmation's magenta CTA to `/book` is behind `BOOK_ALIGNED = false` until the `/book` copy PR (PR 0) is **MERGED**; until then the assessment band offers Call and Ask DE and says "DE contacts you to schedule the conversation first". **Recommendation: approve PR 0 first.** ☑ Approved 2026-09-28. The `/book` copy change ships in the same PR as the confirmation, so `BOOK_ALIGNED` flips in that PR: the magenta action and the aligned `/book` reach production in one merge, never apart.
 7. **Acknowledgement email.** A receipt for the request the buyer made, but it adds a send to a four-field form and needs a consent line. **Recommendation: defer**; the confirmation carries `acknowledged: false` copy until decided.
 8. **Retention of submitted PII behind possession-keyed ids.** GET `?draftId=` no longer returns submitted records and the status endpoint is PII-free. Whether older submitted records should be redacted after a period is a policy call. **Recommendation: revisit retention when the drizzle migration question is settled.**
 9. **Jelly per-surface list (roadmap 2.1).** This design opts in only ChoiceTiles and ScenarioTiles (press/settle on change), on the three building pages. **Recommendation: confirm that list.**
 10. **Staff preview cookie.** A deliberate, scoped hole in the staff 302 so internal visual QA can walk the public Store as a buyer. **Recommendation: approve, PR 3.**
 11. **Office hours.** Not shown in the Store until they live in `shared/companyContact.ts`. **Recommendation: promote them later in a shared NAP change; the Store shows the phone only.**
 12. **REPLACE and removal register.** Each line is a REPLACE or removal under the Preservation Law, with its reason; each waits for a tick.
-    - ☐ **R1** Retire `PublicSolutionCart.tsx` (floating chip + sheet) for SolutionBar / SolutionRail / YourSolutionSheet. Reason: defects 10 and 11 (no internal scroll; covers the profile pill and the Desk corner at 390). The var-publishing pattern is kept verbatim.
-    - ☐ **R2** Remove every Door 2 toast (`useToast` in the four pages). Reason: CRITIQUE item 9 (toasts cover the drawer header, the rail and the confirmation card); replaced by in-place state, persistent Undo rows and one live region.
-    - ☐ **R3** Stop writing `needs[].delivery` (done in `0d2f6df4`; parse-and-lift keeps old drafts). Reason: two owners for one decision (defect 2).
-    - ☐ **R4** Delete `recommendedCtaLabel`, `SOLUTION_CART_EVENT`, `publicSolutionCart.ts`, `parseDeliveryModel` (done in `0d2f6df4`). Reason: dead exports, zero callers by `git grep` (defect 57).
-    - ☐ **R5** Replace `quantityForLine` regex sizing with `LINE_BASIS` (done in `0d2f6df4`) and delete the `inferBasis` fallback (PR 2). Reason: verified wrong quantities on real labels (defect 7).
-    - ☐ **R6** Retire the 13 `FAMILY_ACCENTS` icon hues for one electric IconWell (= §16.4).
-    - ☐ **R7** Remove the index "How the Solution Builder works" explainer (five h2s, `BusinessNeedsIndex.tsx:135-143`). Reason: heading soup (defect 52) and the numbering it carries contradicts `STORE_STEPS`; the JourneyRail on the workspace and the numbered StepLabels carry the same information.
-    - ☐ **R8** Replace the visible eyebrow "Business Solution Builder" and the `<title>` "IT Solutions Store" with "Solve a Business Need" (= §16.5). Reason: five names for one door (`map:ux_gaps_ranked` 12).
-    - ☐ **R9** Remove the client twins of `/solutions/business-needs[/:family]` (`App.tsx:283-292`, the two `isDoor2Path` branches, the `:974` exemption). Reason: the server 301 exists; the twins render a magenta duplicate (defect 39).
-    - ☐ **R10** Renumber `docs/PUBLIC-SOLUTION-BUILDER.md` to six steps and rewrite the leakage locks (`Step 1 · Pain or need` → `Step 2 · Pain or need`, `Step 4 · Contact` → `Step 6 · Contact`, the journey sentence). Reason: defect 30; done in `0d2f6df4` for the doc, PR 2 commit 16 for the locks.
-    - ☐ **R11** Read `sessionId` from the cookie only (body/query readers removed, done in `0d2f6df4`). Reason: a body value lets anyone name a session (defect 23); `map:open_questions_for_owner` 9 asked whether the readers were intended.
-    - ☐ **R12** Evict submitted records from the memory cache after 24 h (done in `0d2f6df4`). Reason: unbounded growth (defect 59); the record is Postgres and never expires (§7).
-    - ☐ **R13** Announcement strip and footer on Door 2 (= §16.2).
+    - ☑ **R1** Retire `PublicSolutionCart.tsx` (floating chip + sheet) for SolutionBar / SolutionRail / YourSolutionSheet. Reason: defects 10 and 11 (no internal scroll; covers the profile pill and the Desk corner at 390). The var-publishing pattern is kept verbatim.
+    - ☑ **R2** Remove every Door 2 toast (`useToast` in the four pages). Reason: CRITIQUE item 9 (toasts cover the drawer header, the rail and the confirmation card); replaced by in-place state, persistent Undo rows and one live region.
+    - ☑ **R3** Stop writing `needs[].delivery` (done in `0d2f6df4`; parse-and-lift keeps old drafts). Reason: two owners for one decision (defect 2).
+    - ☑ **R4** Delete `recommendedCtaLabel`, `SOLUTION_CART_EVENT`, `publicSolutionCart.ts`, `parseDeliveryModel` (done in `0d2f6df4`). Reason: dead exports, zero callers by `git grep` (defect 57).
+    - ☑ **R5** Replace `quantityForLine` regex sizing with `LINE_BASIS` (done in `0d2f6df4`) and delete the `inferBasis` fallback (PR 2). Reason: verified wrong quantities on real labels (defect 7).
+    - ☑ **R6** Retire the 13 `FAMILY_ACCENTS` icon hues for one electric IconWell (= §16.4).
+    - ☑ **R7** Remove the index "How the Solution Builder works" explainer (five h2s, `BusinessNeedsIndex.tsx:135-143`). Reason: heading soup (defect 52) and the numbering it carries contradicts `STORE_STEPS`; the JourneyRail on the workspace and the numbered StepLabels carry the same information.
+    - ☑ **R8** Replace the visible eyebrow "Business Solution Builder" and the `<title>` "IT Solutions Store" with "Solve a Business Need" (= §16.5). Reason: five names for one door (`map:ux_gaps_ranked` 12).
+    - ☑ **R9** Remove the client twins of `/solutions/business-needs[/:family]` (`App.tsx:283-292`, the two `isDoor2Path` branches, the `:974` exemption). Reason: the server 301 exists; the twins render a magenta duplicate (defect 39).
+    - ☑ **R10** Renumber `docs/PUBLIC-SOLUTION-BUILDER.md` to six steps and rewrite the leakage locks (`Step 1 · Pain or need` → `Step 2 · Pain or need`, `Step 4 · Contact` → `Step 6 · Contact`, the journey sentence). Reason: defect 30; done in `0d2f6df4` for the doc, PR 2 commit 16 for the locks.
+    - ☑ **R11** Read `sessionId` from the cookie only (body/query readers removed, done in `0d2f6df4`). Reason: a body value lets anyone name a session (defect 23); `map:open_questions_for_owner` 9 asked whether the readers were intended.
+    - ☑ **R12** Evict submitted records from the memory cache after 24 h (done in `0d2f6df4`). Reason: unbounded growth (defect 59); the record is Postgres and never expires (§7).
+    - ☑ **R13** Announcement strip and footer on Door 2 (= §16.2).
 13. **Honeypot on the public POST.** Already in `0d2f6df4` (`company_website`, `website`, `fax`; non-empty → quiet 400, no record). It is a fifth input on a form the rules define as four, so it is Joe's call under the no-friction rule (`map:open_questions_for_owner` 10). If kept: rendered outside the four-field group with `tabindex="-1"`, `autocomplete="off"`, `aria-hidden="true"`, visually hidden, never `required`, so a password manager cannot fill it; §14.22 keeps the bot case. **Recommendation: keep**, with those attributes; no timing floor (a slow-typing rule punishes real buyers on prefilled forms).
 14. **Focus ring on Door 2.** `design/UI-STYLE-RULES.md` §2 binds `client/` to pink `#ec4899`; V4's `RING` is `ring-de-accent-ink`. The Store follows the style rules (pink) unless Joe wants the V4 ring sitewide. **Recommendation: pink now; revisit with V4's promotion.**

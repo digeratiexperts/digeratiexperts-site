@@ -580,7 +580,7 @@ No other open store, portal, cart, checkout, or TechSales website PRs.
 5. Door 3 URL: `/portal/marketplace` vs public `/client/marketplace` alias?
 6. How are **DE staff** identified for the warehouse (admin-only vs new role vs Hub)?
 7. Which unverified ManagedStore claims (`<15 min`, `99.9%`, `24/7`, `$50K+`, “Real humans, always”) have a source — keep, rewrite, or remove **after** you say so?
-8. Solution Request vs “Your Solution” naming — confirm **Solution Request**.
+8. Solution Request vs “Your Solution” naming — confirm **Solution Request**. **Resolved 2026-09-28 (Joe, via docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §16.5):** the Door 2 object is “Your Solution”; the page and pathway are “Solve a Business Need”; the staff drawer is renamed “Warehouse cart”.
 9. Guest Solution Request submit **without** portal login (recommended) vs reuse authenticated quote API?
 10. Compatibility / enhancement fields: extend #101 later, or honest empty states in Phase 1?
 

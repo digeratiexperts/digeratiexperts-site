@@ -35,8 +35,9 @@ export type SolutionScenario = {
 export const solutionScenarios: SolutionScenario[] = [
   {
     id: "phishing-close-call",
-    title: "A phishing email almost worked",
-    pressure: "Someone clicked, or nearly did, and nobody is sure what else got through.",
+    // Wording approved by Joe 2026-09-28 (§16.3a): an owner whose domain is being spoofed recognises it too.
+    title: "A phishing or spoofed email got through",
+    pressure: "Someone clicked, or a client got mail pretending to be us.",
     familyIds: ["security_awareness", "email_collaboration", "identity_access"],
     why: {
       security_awareness: "Phishing resilience and measurable behavior improvement for the people who got the email.",
