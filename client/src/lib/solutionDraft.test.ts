@@ -1,25 +1,20 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   FAMILY_IDS,
-  draftStorageBlocked,
   emptyDraft,
-  ensureSubmitAttemptId,
   isProfileComplete,
   parseDraft,
   patchEnvironment,
   patchFulfillment,
   profileGaps,
   profileSummary,
-  readSolutionDraft,
   recommendedIntent,
   removeNeed,
-  resetSolutionKeepingProfile,
   resolvedPackages,
   summarizeForArchive,
   toRequestNeeds,
   toggleNeed,
   upsertNeed,
-  writeSolutionDraft,
 } from "./solutionDraft";
 
 const sized = {
@@ -181,41 +176,60 @@ describe("SolutionDraft", () => {
       };
       return { dispatched };
     }
+    /** A fresh module instance per test: the memory copy of the draft is module state. */
+    async function fresh() {
+      vi.resetModules();
+      return import("./solutionDraft");
+    }
     afterEach(() => {
       delete (globalThis as { window?: unknown }).window;
     });
 
-    it("keeps working from memory when storage refuses every write, and says so", () => {
+    it("keeps working from memory when storage refuses every write, and says so", async () => {
+      const m = await fresh();
       const store: Store = {};
       installWindow(store, { setItemThrows: true });
-      const written = writeSolutionDraft(toggleNeed(emptyDraft(), "identity_access"));
+      const written = m.writeSolutionDraft(m.toggleNeed(m.emptyDraft(), "identity_access"));
       expect(Object.keys(store)).toEqual([]);
-      expect(draftStorageBlocked()).toBe(true);
-      expect(readSolutionDraft().needs).toEqual(written.needs);
-      expect(readSolutionDraft().updatedAt).toBe(written.updatedAt);
+      expect(m.draftStorageBlocked()).toBe(true);
+      expect(m.readSolutionDraft().needs).toEqual(written.needs);
+      expect(m.readSolutionDraft().updatedAt).toBe(written.updatedAt);
     });
 
-    it("repairs a v1 key without re-entering itself when the write is refused", () => {
-      const store: Store = { "de-solution-draft-v1": JSON.stringify({ ...emptyDraft(), needs: [{ familyId: "email_collaboration" }] }) };
+    it("repairs a v1 key without re-entering itself when the write is refused", async () => {
+      const m = await fresh();
+      const store: Store = { "de-solution-draft-v1": JSON.stringify({ ...m.emptyDraft(), needs: [{ familyId: "email_collaboration" }] }) };
       const { dispatched } = installWindow(store, { setItemThrows: true });
       // A listener that re-reads on every draft event: the migration must not fire one.
-      const first = readSolutionDraft();
+      const first = m.readSolutionDraft();
       expect(first.needs.map((need) => need.familyId)).toEqual(["email_collaboration"]);
       expect(dispatched).toEqual([]);
-      expect(readSolutionDraft().needs).toEqual(first.needs);
+      expect(m.readSolutionDraft().needs).toEqual(first.needs);
     });
 
-    it("mints one submit attempt id per solution and clears it with Start another", () => {
+    it("lets this tab's later writes win over a v1 key that a refused write could not retire", async () => {
+      const m = await fresh();
+      const store: Store = { "de-solution-draft-v1": JSON.stringify({ ...m.emptyDraft(), needs: [{ familyId: "email_collaboration" }] }) };
+      installWindow(store, { setItemThrows: true });
+      expect(m.readSolutionDraft().needs.map((need) => need.familyId)).toEqual(["email_collaboration"]);
+      const later = m.writeSolutionDraft(m.toggleNeed(m.readSolutionDraft(), "identity_access"));
+      expect(later.needs.map((need) => need.familyId)).toEqual(["email_collaboration", "identity_access"]);
+      expect(store["de-solution-draft-v1"]).toBeDefined();
+      expect(m.readSolutionDraft().needs).toEqual(later.needs);
+    });
+
+    it("mints one submit attempt id per solution and clears it with Start another", async () => {
+      const m = await fresh();
       const store: Store = {};
       installWindow(store);
-      writeSolutionDraft(toggleNeed(emptyDraft(), "identity_access"));
-      const minted = ensureSubmitAttemptId();
+      m.writeSolutionDraft(m.toggleNeed(m.emptyDraft(), "identity_access"));
+      const minted = m.ensureSubmitAttemptId();
       expect(minted.length).toBeGreaterThan(8);
-      expect(ensureSubmitAttemptId()).toBe(minted);
-      expect(readSolutionDraft().submitAttemptId).toBe(minted);
-      resetSolutionKeepingProfile();
-      expect(readSolutionDraft().submitAttemptId).toBeNull();
-      expect(ensureSubmitAttemptId()).not.toBe(minted);
+      expect(m.ensureSubmitAttemptId()).toBe(minted);
+      expect(m.readSolutionDraft().submitAttemptId).toBe(minted);
+      m.resetSolutionKeepingProfile();
+      expect(m.readSolutionDraft().submitAttemptId).toBeNull();
+      expect(m.ensureSubmitAttemptId()).not.toBe(minted);
     });
   });
 });

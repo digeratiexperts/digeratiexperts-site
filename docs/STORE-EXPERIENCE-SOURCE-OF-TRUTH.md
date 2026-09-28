@@ -327,11 +327,13 @@ New route (ADD). Registered in `client/src/App.tsx` (lazy, Door 2), already in `
 | replayed | Banner `We already have this request as DE-4K7Q2M. Nothing was sent twice.` |
 | refresh | Re-renders from the archive and the status endpoint |
 | direct visit, no archive on this device | Status-only page: h1, reference, status line, `Start another solution`; summary absent with the line `The summary is on the device you used to send it.` |
+| lookup pending, no archive on this device | H1 `Checking your reference…`; nothing about the record is asserted until DE answers (§12) |
+| lookup failed, no archive on this device | H1 `Keep this reference.` with the line `DE could not check this reference just now. Keep it, try again, or call.` and `Try again`; the archive's own durability is used instead when this device holds one |
 | unknown or expired reference | Generic 404 |
 | print | Sheet only |
 | reduced motion | hairline static |
 
-**Copy (exact)**: `Your solution is with DE.` · `Reference DE-4K7Q2M. Quote this if you call.` · `Start another solution (your profile is kept)`.
+**Copy (exact)**: `Your solution is with DE.` · `Your solution is recorded.` (memory variant) · `Checking your reference…` (lookup pending, no archive) · `Keep this reference.` (lookup failed, no archive) · `Reference DE-4K7Q2M. Quote this if you call.` · `Start another solution (your profile is kept)`.
 
 ### 5.6 Shared Store chrome: Door2Frame, SolutionBar, SolutionRail, ProfileStrip, help
 

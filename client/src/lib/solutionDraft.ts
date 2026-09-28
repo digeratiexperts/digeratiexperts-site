@@ -475,9 +475,14 @@ function readStoredDraft(): SolutionDraft | null {
     current = window.localStorage.getItem(STORAGE_KEY);
     if (!current) legacyV1 = window.localStorage.getItem(LEGACY_V1_KEY);
   } catch {
+    // Site data off: reads throw too. The persistence line says so from the first read.
+    storageBlocked = true;
     return memoryDraft;
   }
   if (current) return parseDraft(JSON.parse(current));
+  // No v2 key: this tab's own last write wins over a v1 key that a refused write
+  // could not retire, so a blocked device keeps working from memory.
+  if (memoryDraft) return memoryDraft;
   if (legacyV1) {
     // Read repair for the v1 key. Silent: a listener that re-reads on the draft
     // event would re-enter here while storage refuses the write (defect: unbounded recursion).
@@ -486,7 +491,7 @@ function readStoredDraft(): SolutionDraft | null {
     persistDraft(draft);
     return draft;
   }
-  return memoryDraft;
+  return null;
 }
 
 export function readSolutionDraft(): SolutionDraft {
