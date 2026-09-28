@@ -125,7 +125,7 @@ export default function HomepageV4() {
                   id="v4-ch1"
                   className={`max-w-[16ch] ${T.display} lg:max-w-none lg:whitespace-nowrap lg:text-[clamp(2.4rem,3.6vw,3.3rem)]`}
                 >
-                  You lead the business.
+                  You lead the business.{" "}
                   <span className="block text-white/55">We lead the technology.</span>
                 </h1>
                 <p className={`mt-5 max-w-[58ch] ${T.lede} text-white/60`}>

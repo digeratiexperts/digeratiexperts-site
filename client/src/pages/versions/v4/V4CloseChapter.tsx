@@ -29,7 +29,7 @@ export function V4CloseChapter({ reduced }: { reduced: boolean }) {
           <div>
             <ChapterLabel n="10">Where this ends up</ChapterLabel>
             <h2 id="v4-ch10" className={`max-w-[16ch] ${T.display}`}>
-              You lead the business.
+              You lead the business.{" "}
               <span className="block text-white/55">We lead the technology.</span>
             </h2>
             <p className={`mt-6 max-w-[58ch] ${T.lede} text-white/60`}>
