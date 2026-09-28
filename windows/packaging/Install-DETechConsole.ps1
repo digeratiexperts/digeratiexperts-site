@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    One-file installer for the DE Technician Console: unpack the newest zip, unblock it, replace the old copy,
+    One-file installer for the DE Tech Tool: unpack the newest zip, unblock it, replace the old copy,
     and launch the console.
 
 .DESCRIPTION
@@ -9,7 +9,7 @@
         powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-DETechConsole.ps1
 
     It:
-      1. picks the newest DE-TechConsole*.zip next to this script, in the current folder or in Downloads;
+      1. picks the newest DE-TechTool*.zip next to this script, in the current folder or in Downloads;
       2. checks its sha256 when you pass -Sha256 (or when a matching .sha256 file sits next to it);
       3. moves any previous copy aside (one backup kept), so an old build can never be run by mistake;
       4. unpacks, clears the "downloaded from the internet" block on every file (Unblock-File);
@@ -37,8 +37,8 @@ try {
     if (-not $ZipPath) {
         $here = $(if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path })
         $places = @($here, (Get-Location).Path, (Join-Path $env:USERPROFILE 'Downloads')) | Select-Object -Unique
-        $found = @(foreach ($p in $places) { if (Test-Path -LiteralPath $p) { Get-ChildItem -LiteralPath $p -File -Filter 'DE-TechConsole*.zip' -ErrorAction SilentlyContinue } })
-        if (-not $found.Count) { throw "No DE-TechConsole*.zip found in: $($places -join '; '). Pass -ZipPath <file>." }
+        $found = @(foreach ($p in $places) { if (Test-Path -LiteralPath $p) { Get-ChildItem -LiteralPath $p -File -Filter 'DE-TechTool*.zip' -ErrorAction SilentlyContinue } })
+        if (-not $found.Count) { throw "No DE-TechTool*.zip found in: $($places -join '; '). Pass -ZipPath <file>." }
         $ZipPath = ($found | Sort-Object LastWriteTime -Descending | Select-Object -First 1).FullName
     }
     if (-not (Test-Path -LiteralPath $ZipPath)) { throw "Zip not found: $ZipPath" }
@@ -51,11 +51,11 @@ try {
         Write-Step "sha256 verified ($hash)" 'Green'
     } else { Write-Step "sha256 $hash (not checked: no -Sha256 given)" 'Yellow' }
 
-    if (-not $PSCmdlet.ShouldProcess($InstallDir, 'install DE Technician Console')) { return }
+    if (-not $PSCmdlet.ShouldProcess($InstallDir, 'install DE Tech Tool')) { return }
     $stage = Join-Path ([IO.Path]::GetTempPath()) ("de-techconsole-{0}" -f ([guid]::NewGuid()))
     Expand-Archive -LiteralPath $ZipPath -DestinationPath $stage -Force
-    $launcher = @(Get-ChildItem -LiteralPath $stage -Recurse -File -Filter 'Start-DETechConsole.cmd' | Select-Object -First 1)
-    if (-not $launcher.Count) { throw 'This zip does not contain Start-DETechConsole.cmd; it is not a DE Technician Console package.' }
+    $launcher = @(Get-ChildItem -LiteralPath $stage -Recurse -File -Filter 'Start-DETechTool.cmd' | Select-Object -First 1)
+    if (-not $launcher.Count) { throw 'This zip does not contain Start-DETechTool.cmd; it is not a DE Tech Tool package.' }
     $kitRoot = Split-Path -Parent (Split-Path -Parent $launcher[0].FullName)   # ...\msp-ai-kit
 
     if (Test-Path -LiteralPath $InstallDir) {
@@ -71,8 +71,8 @@ try {
 
     $versionFile = Join-Path $InstallDir 'windows\console\VERSION'
     $version = $(if (Test-Path -LiteralPath $versionFile) { (Get-Content -LiteralPath $versionFile -Raw).Trim() } else { 'unknown' })
-    $start = Join-Path $InstallDir 'windows\Start-DETechConsole.cmd'
-    Write-Step "Installed DE Technician Console v$version to $InstallDir" 'Green'
+    $start = Join-Path $InstallDir 'windows\Start-DETechTool.cmd'
+    Write-Step "Installed DE Tech Tool v$version to $InstallDir" 'Green'
     Write-Step "Start it any time with: $start"
     if (-not $NoLaunch) { Start-Process -FilePath $start -WorkingDirectory (Split-Path -Parent $start) | Out-Null }
     exit 0
