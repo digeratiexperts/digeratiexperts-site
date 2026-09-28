@@ -213,7 +213,7 @@ if ($highContrast) {
 $UI = @{}
 foreach ($n in @('NavPanel', 'PageHost', 'TxtVersion', 'TxtModeBadge', 'HdrTech', 'HdrClient', 'HdrClientWhy', 'HdrUser', 'HdrUserWhy', 'HdrDevice', 'HdrDeviceSub', 'HdrReady', 'TxtStatus', 'Progress', 'BtnCancel', 'Brand')) { $UI[$n] = $Win.FindName($n) }
 $UI.Brand.FontFamily = New-Object System.Windows.Media.FontFamily $FontDisplay
-$UI.TxtVersion.Text = "console $((Get-DEConsole).ConsoleVersion)"
+$UI.TxtVersion.Text = "v$((Get-DEConsole).ConsoleVersion)"; $Win.Title = "DE Technician Console v$((Get-DEConsole).ConsoleVersion)"
 
 # ============================================================== session state
 $S = @{ Profile = $null; Snapshot = $null; Mode = $Settings.mode; Job = $null; Timer = $null; LogPos = 0; CurrentPage = $Page; LastBundle = $null; LastJobError = $null; LogBox = $null }
@@ -240,7 +240,21 @@ function New-El {
 function New-Card { param([object[]]$Children, [string]$Margin = '0,0,0,12') $b = New-Object System.Windows.Controls.Border; $b.Style = $Win.Resources['Card']; $b.Margin = $Margin; $sp = New-Object System.Windows.Controls.StackPanel; foreach ($c in $Children) { if ($null -ne $c) { [void]$sp.Children.Add($c) } }; $b.Child = $sp; return $b }
 function New-Label { param([string]$Text) return (New-El TextBlock @{ Text = $Text; Style = 'Eyebrow'; Margin = '0,6,0,2' }) }
 function New-Text { param([string]$Text, [double]$Size = 13, [switch]$Bold, [switch]$Muted, [switch]$Wrap) $t = New-El TextBlock @{ Text = $Text; FontSize = $Size }; if ($Bold) { $t.FontWeight = 'SemiBold' }; if ($Muted) { $t.Foreground = Get-Brush 'Muted' }; if ($Wrap) { $t.TextWrapping = 'Wrap' }; return $t }
-function New-Button { param([string]$Text, [scriptblock]$OnClick, [switch]$Primary, [string]$A11y) $b = New-El Button @{ Content = $Text; Style = $(if ($Primary) { 'Primary' } else { 'Btn' }); Click = $OnClick }; [System.Windows.Automation.AutomationProperties]::SetName($b, $(if ($A11y) { $A11y } else { $Text })); return $b }
+function Invoke-GuiSafely {
+    <# Runs a UI handler. An error is shown in the status bar and logged instead of escaping into WPF, where an
+       unhandled exception in a PowerShell event handler closes the whole window. #>
+    param([string]$Label, [scriptblock]$Action)
+    try { & $Action }
+    catch {
+        $ex = $_.Exception; while ($ex.InnerException) { $ex = $ex.InnerException }
+        $where = ''; if ($_.InvocationInfo -and $_.InvocationInfo.ScriptName) { $where = " ($(Split-Path -Leaf $_.InvocationInfo.ScriptName):$($_.InvocationInfo.ScriptLineNumber))" }
+        $msg = "${Label}: $($ex.Message)$where"
+        try { Write-DELog -Level FAIL -Message $msg } catch { }
+        $S.LastJobError = $msg
+        try { Set-Status $msg } catch { }
+    }
+}
+function New-Button { param([string]$Text, [scriptblock]$OnClick, [switch]$Primary, [string]$A11y) $label = $Text; $handler = $OnClick; $safe = { Invoke-GuiSafely -Label $label -Action $handler }.GetNewClosure(); $b = New-El Button @{ Content = $Text; Style = $(if ($Primary) { 'Primary' } else { 'Btn' }); Click = $safe }; [System.Windows.Automation.AutomationProperties]::SetName($b, $(if ($A11y) { $A11y } else { $Text })); return $b }
 function New-Wrap { param([object[]]$Children) $w = New-Object System.Windows.Controls.WrapPanel; foreach ($c in $Children) { if ($null -ne $c) { [void]$w.Children.Add($c) } }; return $w }
 
 # ============================================================== background jobs (async, progress, cancel)
@@ -431,6 +445,21 @@ function Show-Page {
     Update-Header
 }
 
+function Use-ClientAndMode {
+    <# The Dashboard's "Use this client and mode": loads the profile, saves the choice, builds the action plan for
+       the mode and, when discovery has run, the provisioning context. Shared with the smoke test. #>
+    param([string]$ProfileId, [string]$Mode, [string]$Technician)
+    if (-not $ProfileId) { Set-Status 'Pick a client profile first.'; return }
+    $S.Profile = Get-DEClientProfile -Id $ProfileId; $Settings.client = $S.Profile.id
+    if ($Mode) { $S.Mode = $Mode }; $Settings.mode = $S.Mode
+    if ($Technician) { $Settings.technician = $Technician }
+    Save-GuiSettings
+    $ids = @(Initialize-DEWorkflow -ClientProfile $S.Profile -Mode $S.Mode)
+    if ($S.Snapshot) { $null = New-DEProvisioningContext -Snapshot $S.Snapshot -ClientId $S.Profile.id -Mode $S.Mode -Technician $Settings.technician }
+    Set-Status ("Loaded {0} ({1}): {2} planned step(s). {3}" -f $S.Profile.name, $S.Mode, $ids.Count, $(if ($S.Snapshot) { 'Audit next to see what differs.' } else { 'Run discovery next.' }))
+    Show-Page 'Dashboard'
+}
+
 function Build-Dashboard {
     param($root)
     $profiles = @(Get-DEClientProfiles)
@@ -439,10 +468,9 @@ function Build-Dashboard {
     $cbMode = New-El ComboBox @{ Name = 'Mode'; Width = 220 }; $modes = Get-DEModes; foreach ($k in $modes.Keys) { [void]$cbMode.Items.Add("$k · $($modes[$k].title)") }; $cbMode.SelectedIndex = [array]::IndexOf(@($modes.Keys), $S.Mode)
     $tbTech = New-El TextBox @{ Text = $Settings.technician; Width = 160; Name = 'Technician' }
     $apply = New-Button 'Use this client and mode' {
-        if ($cbClient.SelectedIndex -ge 0) { $S.Profile = Get-DEClientProfile -Id $profiles[$cbClient.SelectedIndex].id; $Settings.client = $S.Profile.id }
-        $S.Mode = @((Get-DEModes).Keys)[$cbMode.SelectedIndex]; $Settings.mode = $S.Mode; $Settings.technician = $tbTech.Text; Save-GuiSettings
-        if ($S.Profile) { $null = Initialize-DEWorkflow -ClientProfile $S.Profile -Mode $S.Mode; if ($S.Snapshot) { $null = New-DEProvisioningContext -Snapshot $S.Snapshot -ClientId $S.Profile.id -Mode $S.Mode -Technician $Settings.technician } }
-        Show-Page 'Dashboard'
+        $pid2 = $(if ($cbClient.SelectedIndex -ge 0) { $profiles[$cbClient.SelectedIndex].id } else { $null })
+        $mode2 = $(if ($cbMode.SelectedIndex -ge 0) { @((Get-DEModes).Keys)[$cbMode.SelectedIndex] } else { $S.Mode })
+        Use-ClientAndMode -ProfileId $pid2 -Mode $mode2 -Technician $tbTech.Text
     }.GetNewClosure() -Primary
     $modeDesc = New-Text ((Get-DEModes)[$S.Mode].description) -Muted -Wrap
     [void]$root.Children.Add((New-Card @(
@@ -686,7 +714,13 @@ if ($SmokeTest) {
         return $null
     }
     try {
-        $S.Profile = Get-DEClientProfile -Id $SmokeClient; $S.Mode = 'takeover'; $Settings.technician = $Technician
+        $S.Mode = 'takeover'; $Settings.technician = $Technician
+        Use-ClientAndMode -ProfileId $SmokeClient -Mode 'takeover' -Technician $Technician
+        if ($S.LastJobError) { $failed += "use client and mode: $($S.LastJobError)" }
+        if (-not @(Get-DEActions -Mode 'takeover').Count) { $failed += 'use client and mode: no plan was built' } else { Write-Host 'SMOKE PASS use client and mode' }
+        # A failing button must report, not throw.
+        Invoke-GuiSafely -Label 'smoke' -Action { throw 'handler error on purpose' }
+        if ($S.LastJobError -notmatch 'on purpose') { $failed += 'button error guard did not report' } else { Write-Host 'SMOKE PASS button error guard'; $S.LastJobError = $null }
         Invoke-Discovery -Quick
         $e = Wait-SmokeJob 'discovery job'; if ($e) { $failed += $e } else { Write-Host 'SMOKE PASS discovery job' }
         if (-not $S.Snapshot) { $failed += 'discovery job: no snapshot came back' }
@@ -719,6 +753,14 @@ if ($SmokeTest) {
 # ============================================================== start
 if ($Settings.dryRun) { Set-DEMode -Mode Audit -DryRun } else { Set-DEMode -Mode Apply }
 $Win.Add_Closed({ Clear-DESecrets; Save-GuiSettings })
+# Last line of defence: anything that still escapes a handler is reported, never allowed to close the console.
+$Win.Dispatcher.Add_UnhandledException({
+    param($src, $e)
+    $e.Handled = $true
+    $msg = "Unexpected error: $($e.Exception.Message)"
+    try { Write-DELog -Level FAIL -Message $msg } catch { }
+    try { Set-Status $msg } catch { }
+})
 $Win.Add_ContentRendered({
     if ($Settings.client) { try { $S.Profile = Get-DEClientProfile -Id $Settings.client } catch { } }
     if ($Resume) { $r = Resume-DEWorkflow; Set-Status "Resumed after restart. Next: $(Get-DEHashPath -Object $r -Path 'nextAction')"; $S.CurrentPage = 'Workflow' }

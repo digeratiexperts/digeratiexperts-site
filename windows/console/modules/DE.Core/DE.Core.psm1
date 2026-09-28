@@ -67,6 +67,8 @@ function Initialize-DEConsole {
         [string]$DataDir
     )
     $script:DE.Root = (Resolve-Path -LiteralPath $Root).Path
+    # The build version comes from console\VERSION so the window, logs and bundles say which copy is running.
+    $vf = Join-Path $script:DE.Root 'VERSION'; if (Test-Path -LiteralPath $vf) { $v = (Get-Content -LiteralPath $vf -Raw).Trim(); if ($v) { $script:DE.ConsoleVersion = $v } }
     $script:DE.Mode = $Mode
     $script:DE.DryRun = [bool]$DryRun
     $base = $DataDir

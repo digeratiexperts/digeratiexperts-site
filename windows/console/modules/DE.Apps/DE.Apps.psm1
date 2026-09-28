@@ -247,8 +247,11 @@ function Register-DEAppsActions {
             -ManualAction $(if ($mfr) { "Only for $mfr hardware." } else { '' })
     }
     $remove = @(Get-DEHashPath -Object $ClientProfile -Path 'apps.remove' | Where-Object { $null -ne $_ })
-    $cs = Get-DECloudStorageState -ClientProfile $ClientProfile
-    if ($cs.conflict) { $remove += $(if ($standard -eq 'onedrive') { 'dropbox' } else { 'onedrive' }) }
+    # Plan from policy, not from a live scan: registering actions must stay fast and side-effect free (it runs on
+    # the window thread). The removal action's own Detect checks what is installed when it runs.
+    $removeConflicting = [bool](Get-DEHashPath -Object $ClientProfile -Path 'cloudStorage.removeConflicting')
+    $allowBoth = [bool](Get-DEHashPath -Object $ClientProfile -Path 'cloudStorage.allowBoth')
+    if ($removeConflicting -and -not $allowBoth -and $standard -in @('onedrive', 'dropbox')) { $remove += $(if ($standard -eq 'onedrive') { 'dropbox' } else { 'onedrive' }) }
     foreach ($id in ($remove | Select-Object -Unique)) {
         $pkgId = $id
         Register-DEAction -Id "apps.remove.$pkgId" -Module 'apps' -Title "Remove $pkgId (client standard)" -Phase 9 -Gates @('gate.elevated') -RequiresElevation -Destructive `
