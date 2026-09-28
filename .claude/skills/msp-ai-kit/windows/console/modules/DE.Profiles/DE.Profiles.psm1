@@ -2,7 +2,7 @@
 <#
 .SYNOPSIS
     Client profiles (reusable, per client, no credentials) and provisioning
-    context (technician, end user, device role, mode) for the DE Technician Console.
+    context (technician, end user, device role, mode) for the DE Tech Tool.
 
 .DESCRIPTION
     A client profile describes what a finished endpoint looks like for that
@@ -22,8 +22,8 @@ Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 
 $script:ProfileSchemaVersion = 1
-$script:Modes = @('new', 'takeover', 'replacement', 'repair', 'co-managed', 'audit', 'deprovision')
-$script:Tiers = @('Office', 'Business', 'Enterprise')
+$script:Modes = @('new', 'dropship', 'takeover', 'replacement', 'repair', 'co-managed', 'audit', 'deprovision')
+$script:Tiers = @('IT', 'Office', 'Business', 'Enterprise')
 
 function Get-DEProfileDirectories {
     $de = Get-DEConsole
@@ -151,7 +151,7 @@ function New-DEProvisioningContext {
         [Parameter(Mandatory = $true)]$Snapshot,
         [string]$Technician = 'jrpetro',
         [string]$ClientId,
-        [ValidateSet('new', 'takeover', 'replacement', 'repair', 'co-managed', 'audit', 'deprovision')][string]$Mode = 'audit',
+        [ValidateSet('new', 'dropship', 'takeover', 'replacement', 'repair', 'co-managed', 'audit', 'deprovision')][string]$Mode = 'audit',
         [string]$EndUser, [string]$EndUserEmail, [string]$JumpCloudUser, [string]$LocalUserName,
         [string]$Site = '', [string]$DeviceRole = 'laptop', [string]$AssetTag = '', [string]$OrderNumber = '', [string]$WarrantyEnd = '', [string]$DesiredHostname = ''
     )
@@ -192,18 +192,19 @@ function ConvertTo-DELocalUserName {
 }
 
 function Get-DETierDefaults {
-    <# DE package/tier awareness: what a tier includes by default and what is optional. Names only; no prices. #>
-    param([Parameter(Mandatory = $true)][ValidateSet('Office', 'Business', 'Enterprise')][string]$Tier, [switch]$Gcch)
-    $base = @{ identity = 'jumpcloud'; edr = 'sentinelone'; mdr = 'guardz'; browserSecurity = @('pabx'); baseline = 'de-windows-baseline'; backup = 'msp360'; emailSecurity = 'mimecast'; remoteSupport = 'jumpcloud-remote-assist'; awareness = 'ninjio' }
-    $optional = @()
-    switch ($Tier) {
-        'Office' { $optional = @('siem', 'sase', 'vulnerability-scanning'); $base.mdr = 'guardz' }
-        'Business' { $optional = @('sase', 'vulnerability-scanning'); $base.siem = 'wazuh' }
-        'Enterprise' { $base.siem = 'wazuh'; $base.sase = 'timus'; $base.vulnerability = 'qualys'; $optional = @('blackpoint-mdr-backup') }
-    }
-    $rules = @('Security Foundation: MFA everywhere, EDR on every endpoint, encrypted disks, tested backups, email security, awareness training.')
+    <# Internal DE tier defaults. Source of truth is catalog\bundles.json; no prices are carried here. #>
+    param([Parameter(Mandatory = $true)][ValidateSet('IT', 'Office', 'Business', 'Enterprise')][string]$Tier, [switch]$Gcch)
+    $path = Join-Path (Get-DEConsole).Root 'catalog\bundles.json'
+    if (-not (Test-Path -LiteralPath $path)) { throw "DE Tech Tool bundle catalog missing: $path" }
+    $catalog = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+    $prop = $catalog.proactive.PSObject.Properties[$Tier]
+    if (-not $prop) { throw "unknown ProActive tier '$Tier'" }
+    $bundle = $prop.Value
+    $included = ConvertTo-DEHashtable $bundle.defaults
+    $optional = @($bundle.optional | Where-Object { $null -ne $_ })
+    $rules = @($bundle.rules | Where-Object { $null -ne $_ })
     if ($Gcch) { $rules += 'GCC High: verify each vendor component is authorised for the GCCH boundary before deployment; commercial packaging does not transfer automatically.' }
-    return @{ tier = $Tier; included = $base; optional = $optional; rules = $rules }
+    return @{ tier = $Tier; included = $included; optional = $optional; rules = $rules; capabilities = @($bundle.capabilities); label = "$($bundle.label)" }
 }
 
 Export-ModuleMember -Function New-DEClientProfileTemplate, Test-DEProfileHasSecrets, Get-DEClientProfiles, Get-DEClientProfile, Save-DEClientProfile, Resolve-DEClientContext, Resolve-DEEndUser, New-DEProvisioningContext, ConvertTo-DELocalUserName, Get-DETierDefaults
