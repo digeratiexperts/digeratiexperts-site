@@ -30,10 +30,10 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/Date\.now\(\) \+ 400/);
   });
 
-  it("keeps graphite chrome with a magenta cap instead of purple-wash or cream fields", () => {
+  it("keeps the white precision panel with a magenta cap instead of purple-wash or cream fields", () => {
     expect(src).toMatch(/inset 0 1px 0 #D3126A/);
     expect(src).toMatch(/\.de-desk-shell::before \{\s*content:\s*none;/);
-    expect(src).toMatch(/background-color: var\(--de-raised, #151217\) !important;/);
+    expect(src).toMatch(/background-color: var\(--desk-box\) !important;/);
     expect(src).toMatch(/background-clip: padding-box, border-box;/);
     expect(src).not.toMatch(/radial-gradient\(ellipse 70% 36% at 50% 0%, rgba\(91,69,224/);
     expect(src).not.toMatch(/background:\s*#fcfaf7/);
@@ -70,12 +70,10 @@ describe("DE Desk shell positioning", () => {
     expect(src).not.toMatch(/we're ready now/);
   });
 
-  it("gives the grouped lists a graphite top edge, not the paper list's white rim", () => {
-    // 0 1px 0 rgba(255,255,255,0.9) inset was the white card's rim. On graphite
-    // it drew a stark white arc along the top of the Get Support and Client
-    // Tools lists while their sides stayed dim.
+  it("draws both grouped lists with the same hairline", () => {
+    // Get Support's issue list and Client Tools' list are one kind of object and
+    // are drawn the same: one --desk-border-strong hairline, no bright inset rim.
     expect(src).not.toMatch(/0 1px 0 rgba\(255,\s*255,\s*255,\s*0\.[3-9]\d*\) inset/);
-    // Both grouped lists draw the same graphite hairline.
     expect(src).toMatch(/\.de-desk-issue-list \{[\s\S]*?border: 1px solid var\(--desk-border-strong\);/);
     expect(src).toMatch(/\.de-desk-tools-list \{[\s\S]*?border: 1px solid var\(--desk-border-strong\);/);
   });
@@ -111,88 +109,70 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/support-submit-error/);
   });
 
-  it("gives Get Support fields a brighter interactive white outline and magenta focus", () => {
+  it("gives Get Support fields a hairline outline on white and magenta focus", () => {
     expect(src).toMatch(/trackDeskSupportFieldSpotlight/);
     expect(src).toMatch(/onPointerMove=\{trackDeskSupportFieldSpotlight\}/);
-    expect(src).toMatch(/linear-gradient\(rgba\(255,255,255,0\.88\), rgba\(255,255,255,0\.88\)\)/);
+    expect(src).toMatch(/linear-gradient\(rgba\(15,15,18,0\.22\), rgba\(15,15,18,0\.22\)\)/);
     expect(src).toMatch(/radial-gradient\([\s\S]*--desk-spot-x/);
     expect(src).toMatch(/linear-gradient\(#D3126A, #D3126A\)/);
-    expect(src).toMatch(/0 0 0 1px rgba\(255,255,255,0\.5\)/);
+    expect(src).toMatch(/0 0 0 1px rgba\(15,15,18,0\.06\)/);
   });
 
-  it("paints Get Support issue choices on the graphite token set, never paper", () => {
+  it("paints Get Support issue choices on the one Desk token set", () => {
     expect(src).toMatch(/trackDeskSupportRowGlow/);
     expect(src).toMatch(/\.de-desk-issue-list \{[\s\S]*?background: var\(--desk-box\);/);
     expect(src).toMatch(/\.de-desk-incident \{[\s\S]*?background: var\(--desk-box\);/);
-    // The whole Desk resolves through one token set. These were the values the
-    // deleted deDeskGraphiteStyle.ts override had to force with !important.
+    // The whole Desk resolves through one token set; these literals belonged to
+    // the retired override files and must not come back as raw values.
     expect(src).not.toMatch(/#17141f/);
     expect(src).not.toMatch(/#f7f5f2/);
   });
 
-  it("keeps every background declaration off an opaque paper ground", () => {
-    // A single-line /background: #fff;/ match is not enough, and shipping one
-    // is how a paper ground survived this guard: the remaining white sat at the
-    // end of a multi-line composite (a gradient layer, newline, then #fff), so
-    // the literal never matched.
-    //
-    // Matching white anywhere in the declaration is too blunt in the other
-    // direction — the Get Support row glow is a radial gradient of white
-    // fading to transparent, which is a highlight, not a ground. So split each
-    // declaration into its top-level layers and judge those: a layer that is a
-    // solid white, or a ground mixed with white, is the defect. White inside a
-    // gradient is a stop and is allowed here; how bright that stop may be when
-    // it sits under text is the next test's job.
-    const layersOf = (value: string) => {
-      const layers: string[] = [];
-      let depth = 0;
-      let current = "";
-      for (const ch of value) {
-        if (ch === "(") depth += 1;
-        if (ch === ")") depth -= 1;
-        if (ch === "," && depth === 0) {
-          layers.push(current.trim());
-          current = "";
-          continue;
-        }
-        current += ch;
-      }
-      if (current.trim()) layers.push(current.trim());
-      return layers;
-    };
+  it("is the white precision panel from design/UI-STYLE-RULES.md, not graphite", () => {
+    // Joe, 2026-09-28: the DE Desk is a white theme. The support-chrome rule
+    // (approved 2026-08-30) is a #fbfbfa panel, black/10 hairlines, near-black
+    // ink, and magenta only for submit and incident. One token set carries it.
+    const tokens = src.match(/\.de-desk-shell \{[\s\S]*?--desk-green:[^;]+;/)?.[0] ?? "";
+    expect(tokens).toMatch(/--desk-surface: #fbfbfa;/);
+    expect(tokens).toMatch(/--desk-box: #ffffff;/);
+    expect(tokens).toMatch(/--desk-border: rgba\(15,15,18,0\.12\);/);
+    expect(tokens).toMatch(/--desk-ink: #111116;/);
+    expect(tokens).toMatch(/--desk-pink-ink: #A30E52;/);
+    // No ground or hairline may borrow the site's dark palette or graphite literals.
+    expect(src).not.toMatch(/var\(--de-(raised|surface|bg|hairline)\b/);
+    expect(src).not.toMatch(/#151217|#0a0a0a|#050312|#1b1720/);
+    // White text survives only on magenta (buttons, badges, the user's bubble).
+    // Judged per CSS rule: a rule that sets white text must also paint magenta.
+    const rules = [...src.matchAll(/([^{}]+)\{([^{}]*)\}/g)];
+    const whiteOnWhite = rules
+      .filter(([, , body]) => /(^|[\s;])color: #fff\b/.test(body))
+      .filter(([, selector, body]) => !/#D3126A|--desk-pink/.test(body) && !/\.de-desk-send svg/.test(selector))
+      .map(([, selector]) => selector.trim());
+    expect(whiteOnWhite).toEqual([]);
+    // No second, dark ink declaration inside a block (the old security card did this).
+    expect(src).not.toMatch(/--desk-ink: #fff/);
+    expect(src).toMatch(/color-scheme: light;/);
+    expect(src).not.toMatch(/color-scheme: dark;/);
+    // The panel itself carries a black/10 hairline, not a magenta ring
+    // (magenta rings stay only on the selected incident / issue state).
+    const shellRule = src.match(/\.de-desk-shell \{[\s\S]*?box-shadow:[^}]+\}/)?.[0] ?? "";
+    expect(shellRule).toMatch(/border: 1px solid var\(--desk-border\);/);
+    expect(shellRule).not.toMatch(/rgba\(211,18,106/);
+  });
 
-    const isWhite = /^(#fff|#ffffff|white)$/i;
-    const declarations = src.match(/background:([^;]*);/gs) ?? [];
-    expect(declarations.length).toBeGreaterThan(20);
-
-    const paperGrounds = declarations.filter((declaration) => {
-      const value = declaration.replace(/^background:/, "").replace(/;$/, "");
-      return layersOf(value).some(
-        (layer) =>
-          isWhite.test(layer) ||
-          (layer.startsWith("color-mix(") && /#fff\b|#ffffff\b|\bwhite\b/i.test(layer)),
-      );
-    });
-    expect(paperGrounds).toEqual([]);
+  it("paints the Ask DE chooser as the white support chrome too", () => {
+    expect(bottomBarSrc).toMatch(/bg-\[#fbfbfa\] p-5 text-left text-\[#111116\]/);
+    expect(bottomBarSrc).not.toMatch(/bg-\[#151217\]/);
   });
 
   it("keeps the pointer light under Get Support row text dim enough to read through", () => {
-    // The test above allows white as a gradient stop, and that is how the
-    // hover light survived the move to graphite: drawn for the white list at
-    // #fff, it sat under white text and measured 1.01:1 with the pointer on
-    // the label. So judge the light by what it does to the text: stack every
-    // layer at its brightest white stop over the row's hovered ground, and
-    // check the white label and the muted blurb both still clear 4.5:1.
+    // The hover light is drawn over white rows carrying near-black ink. Judge it
+    // by what it does to the text: stack every layer at its strongest stop over
+    // the row's ground and check the ink and the muted blurb still clear 4.5:1.
     const rule = (selector: string) => {
       const start = src.indexOf(`${selector} {`);
       expect(start, selector).toBeGreaterThan(-1);
-      // Judge the declarations, not the comments that explain them.
       return src.slice(start, src.indexOf("}", start)).replace(/\/\*[\s\S]*?\*\//g, "");
-    };
-    const brightestWhite = (css: string) => {
-      const alphas = [...css.matchAll(/rgba\(255,\s*255,\s*255,\s*([\d.]+)\)/g)].map((m) => Number(m[1]));
-      if (/#fff\b|#ffffff\b|\bwhite\b/i.test(css)) alphas.push(1);
-      return Math.max(0, ...alphas);
     };
     const token = (name: string) => {
       const hex = src.match(new RegExp(`${name}:[^;]*#([0-9a-f]{6})\\)?;`, "i"))?.[1];
@@ -200,38 +180,42 @@ describe("DE Desk shell positioning", () => {
       return [0, 2, 4].map((i) => parseInt(hex!.slice(i, i + 2), 16));
     };
     const lin = (c: number) => {
-      const s = c / 255;
-      return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+      const v = c / 255;
+      return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
     };
     const lum = (rgb: number[]) => 0.2126 * lin(rgb[0]) + 0.7152 * lin(rgb[1]) + 0.0722 * lin(rgb[2]);
     const contrast = (a: number[], b: number[]) => {
       const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m);
       return (x + 0.05) / (y + 0.05);
     };
-    const whiteOver = (rgb: number[], alpha: number) => rgb.map((c) => c * (1 - alpha) + 255 * alpha);
-
+    const over = (ground: number[], rgb: number[], alpha: number) => ground.map((c, i) => c * (1 - alpha) + rgb[i] * alpha);
+    // Every rgba() stop in the layer, applied at full strength: the darkest the row can get.
+    const light = (ground: number[], css: string) =>
+      [...css.matchAll(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/g)].reduce(
+        (g, m) => over(g, [Number(m[1]), Number(m[2]), Number(m[3])], Number(m[4])),
+        ground,
+      );
     const rows = [
-      // Issue rows sit on the list's --desk-box and add a 5% wash on hover.
-      { ground: whiteOver(token("--desk-box"), 0.05), layers: [".de-desk-issue-row::before", ".de-desk-issue-row::after"] },
-      // The incident row turns --desk-box-hover on hover.
-      { ground: token("--desk-box-hover"), layers: [".de-desk-incident::before"] },
+      { ground: token("--desk-box"), layers: [".de-desk-issue-row::before", ".de-desk-issue-row::after"] },
+      { ground: token("--desk-box"), layers: [".de-desk-incident::before"] },
     ];
     for (const row of rows) {
-      const lit = row.layers.reduce((ground, layer) => whiteOver(ground, brightestWhite(rule(layer))), row.ground);
+      const lit = row.layers.reduce((g, layer) => light(g, rule(layer)), row.ground);
       const label = row.layers.join(" + ");
-      expect(contrast([255, 255, 255], lit), label).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(whiteOver(lit, 0.72), lit), `${label} (muted)`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(token("--desk-ink"), lit), label).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(token("--desk-ink-muted"), lit), `${label} (muted)`).toBeGreaterThanOrEqual(4.5);
     }
   });
 
   it("never uses a background token as a foreground colour", () => {
-    // --desk-surface / --desk-well / --desk-box are grounds, all near-black.
-    // Setting one as `color` paints dark text on a dark row — which is what
+    // --desk-surface / --desk-well / --desk-box are grounds, all white or near-white.
+    // Setting one as `color` paints white text on a white row — which is what
     // happened when paper #f7f5f2 was tokenised by value rather than by role:
     // the same literal was a ground in some rules and text in others.
     const groundTokens = ["--desk-surface", "--desk-well", "--desk-box"];
     for (const token of groundTokens) {
-      expect(src).not.toMatch(new RegExp(`color:\\s*var\\(${token}[,)]`));
+      // (?<![-\\w]) keeps background-color: from counting as a foreground colour
+      expect(src).not.toMatch(new RegExp(`(?<![-\\w])color:\\s*var\\(${token}[,)]`));
     }
   });
 
@@ -258,7 +242,7 @@ describe("DE Desk shell positioning", () => {
     expect(src).not.toMatch(/AZ SOC Live/);
   });
 
-  it("styles Ask DE discovery and Get Support issues as graphite grouped stacks", () => {
+  it("styles Ask DE discovery and Get Support issues as grouped stacks", () => {
     expect(src).toMatch(/de-desk-discover/);
     expect(src).toMatch(/de-desk-discover-list/);
     expect(src).toMatch(/ask-de-starter-chips/);

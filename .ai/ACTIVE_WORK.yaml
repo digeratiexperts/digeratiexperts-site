@@ -30,6 +30,29 @@
 
 version: 2
 claims:
+  - id: de-desk-white-theme
+    owner: claude
+    subsystem: de-desk
+    branch: claude/desk-white-theme
+    base_sha: 405be75
+    files:
+      - client/src/components/ZohoASAPWidget.tsx
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
+      - client/src/components/SiteBottomBar.tsx
+      - .cursor/rules/de-desk-design.mdc
+      - .cursor/skills/de-desk-ui/SKILL.md
+    status: active
+    started: 2026-09-28
+    note: >-
+      Joe, 2026-09-28, on a phone screenshot of the graphite Desk: "This is
+      wrong still. It's supposed to be white theme." Built on
+      claude/desk-launcher-graphite (PR #229), whose one-token-set structure is
+      kept; only the values change, to the approved support-chrome rule in
+      design/UI-STYLE-RULES.md (#fbfbfa panel, black/10 hairlines, near-black
+      ink, magenta only for submit and incident). The Ask DE chooser follows.
+      Supersedes the graphite direction recorded in de-desk-launcher-graphite
+      and the C5 graphite override; the Cursor Desk rule and skill are updated
+      so agents stop steering it back to graphite.
   - id: de-desk-launcher-graphite
     owner: claude
     subsystem: de-desk

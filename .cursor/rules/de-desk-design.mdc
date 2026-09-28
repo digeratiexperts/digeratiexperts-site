@@ -1,6 +1,6 @@
 ---
-description: DE Desk widget visual + copy playbook (graphite shell, Client Tools launcher)
-globs: client/src/components/ZohoASAPWidget.tsx,client/src/pages/portal/PortalChat.tsx
+description: DE Desk widget visual + copy playbook (white precision panel, Client Tools launcher)
+globs: client/src/components/ZohoASAPWidget.tsx,client/src/components/SiteBottomBar.tsx,client/src/pages/portal/PortalChat.tsx
 alwaysApply: false
 ---
 
@@ -10,17 +10,17 @@ Primary file: `client/src/components/ZohoASAPWidget.tsx`. Full playbook: `.curso
 
 ## Shell (all tabs)
 
-- **One graphite shell** (`--de-surface` / hairline). No purple glow. No cream-in-purple nested card.
+- **One white precision panel** (Joe, 2026-09-28; `design/UI-STYLE-RULES.md` support chrome): `#fbfbfa` panel, black/10 hairline, near-black ink, all through the one `--desk-*` token set in the widget. No purple glow, no magenta ring on the panel, no second theme or `!important` override.
 - Magenta `#D3126A` for avatar emphasis, active underline, send, CTAs, incident rail. Violet is lighting only.
-- Active tab: light label + magenta underline.
+- Active tab: near-black label + magenta underline.
 - Composer, status strip, and repeated footer stay off Client Tools.
 
 ## Tab content
 
 | Tab | Job |
 |-----|-----|
-| **Ask DE** | Conversational UI on graphite. Composer dominant. Discovery chips. |
-| **Get Support** | Incident rail + focused issue list + dark form + magenta submit. |
+| **Ask DE** | Conversational UI on the white panel. Composer dominant. Discovery chips. |
+| **Get Support** | Incident rail + focused issue list + light form + magenta submit. |
 | **Client Tools** | Unauth: sign-in front door. Auth: Support / Secure services / Account launcher. Never a fake RMM or portal. |
 
 Do not put Cyber Risk Assessment, billing, or a 2×2 grid on Client Tools.
