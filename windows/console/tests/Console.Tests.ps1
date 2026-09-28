@@ -1,4 +1,4 @@
-﻿# Pester tests for the DE Technician Console engine. Compatible with Pester 4.10 and 5.x.
+﻿# Pester tests for the DE Tech Tool engine. Compatible with Pester 4.10 and 5.x.
 #   Invoke-Pester -Path .claude/skills/msp-ai-kit/windows/console/tests
 # Helpers live in TestHelpers.ps1 and are dot-sourced inside every BeforeAll.
 # Windows-only behaviour (registry, CIM, services) is mocked so the suite also runs on Linux/macOS.
@@ -447,5 +447,28 @@ Describe 'Loading a client plan (the "Use this client and mode" button)' {
     It 'asks for an audit when the plan exists but nothing has run' {
         Clear-DEEvidence
         (Get-DENextAction -Mode 'takeover').title | Should -Not -Be 'All actions for this mode are in desired state'
+    }
+}
+
+
+Describe 'DE Tech Tool planning, tiers and client branding' {
+    BeforeAll { . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $null = Initialize-TestConsole }
+    It 'has all four canonical ProActive tiers and does not claim human MDR for IT' {
+        (Get-DETierDefaults -Tier IT).included.guardzPackage | Should -Be 'Pro'
+        (Get-DETierDefaults -Tier IT).included.humanMdr | Should -Be $false
+        (Get-DETierDefaults -Tier Office).included.guardzPackage | Should -Be 'Ultimate'
+        (Get-DETierDefaults -Tier Enterprise).included.guardzPackage | Should -Be 'Elite'
+    }
+    It 'exposes exactly thirteen standalone solution families' {
+        @(Get-DEStandaloneSolutions).Count | Should -Be 13
+    }
+    It 'supports dropship as a first-class mode' {
+        (Get-DEModes).ContainsKey('dropship') | Should -Be $true
+    }
+    It 'scopes the Alamo logo to the Alamo profile only' {
+        $a = Get-DEClientProfile -Id 'alamo'
+        $a.name | Should -Be 'Alamo Industries'
+        $a.branding.clientLogo | Should -Be 'asset:clients/alamo/alamo-mark.png'
+        (New-DEClientProfileTemplate).branding.clientLogo | Should -Be ''
     }
 }
