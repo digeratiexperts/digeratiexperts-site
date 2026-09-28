@@ -76,8 +76,10 @@ function Test-DEPackageInstalled {
     $minVersion = Get-DEPkgProp $det 'minVersion'
     $versionOk = $true
     if ($installed -and $minVersion -and $version) { try { $versionOk = ([version]($version -replace '[^\d\.].*$', '') -ge [version]$minVersion) } catch { $versionOk = $true } }
-    if ($registryOk -eq $false) { $installed = $false }
-    return @{ installed = $installed; version = $version; versionOk = $versionOk; evidence = $ev }
+    # Registry policy is configuration evidence. A broken policy must not erase evidence that an app is installed.
+    $policyOnly = ([bool]$det -and -not @(Get-DEPkgProp $det 'services' | Where-Object { $_ }).Count -and -not @(Get-DEPkgProp $det 'paths' | Where-Object { $_ }).Count -and -not (Get-DEPkgProp $det 'appNameRegex'))
+    if ($policyOnly -and $registryOk -eq $true) { $installed = $true }
+    return @{ installed = $installed; configured = ($registryOk -ne $false); kind = $(if ($policyOnly) { 'policy' } else { 'app' }); version = $version; versionOk = $versionOk; evidence = $ev }
 }
 
 function Get-DEPackageFile {
@@ -240,9 +242,15 @@ function Register-DEAppsActions {
         $mfr = Get-DEPkgProp $pkg 'applicableManufacturer'
         Register-DEAction -Id "apps.$pkgId" -Module 'apps' -Title "Install $($pkg.name)" -Phase 9 -Gates @('gate.elevated') -RequiresElevation -RequiresSecrets @(@(Get-DEPkgProp $pkg 'secrets' | Where-Object { $null -ne $_ }) | Where-Object { $_ }) `
             -Description $(if ((Get-DEPkgProp $pkg 'confirmed') -eq $false) { 'Catalog entry not yet confirmed against the vendor guide.' } else { '' }) `
-            -Detect { $p = Get-DEPackage -Id $pkgId; $d = Test-DEPackageInstalled -Package $p -ClientProfile $ClientProfile; @{ installed = $d.installed; versionOk = $d.versionOk; evidence = $d.evidence } }.GetNewClosure() `
-            -Desired { @{ installed = $true; versionOk = $true } } `
-            -Apply { param($state) $r = Invoke-DEPackageInstall -Id $pkgId -ClientProfile $ClientProfile; if (-not $r.ok -and -not (Get-DEPkgProp $r 'planned')) { throw $r.detail }; if ($r.rebootRequired) { Request-DEReboot -Reason "$pkgId installer requested a restart" -ResumeAction "apps.$pkgId" | Out-Null }; $r.detail }.GetNewClosure() `
+            -Detect { $p = Get-DEPackage -Id $pkgId; $d = Test-DEPackageInstalled -Package $p -ClientProfile $ClientProfile; @{ installed = $d.installed; configured = $d.configured; kind = $d.kind; versionOk = $d.versionOk; evidence = $d.evidence } }.GetNewClosure() `
+            -Desired { @{ installed = $true; configured = $true; versionOk = $true } } `
+            -Apply { param($state)
+                if ($state.Operation -eq 'Configure' -and $state.Detected.kind -ne 'policy') { throw "Existing $pkgId needs configuration; no safe configuration recipe is registered. Review detected settings before changing it." }
+                $r = Invoke-DEPackageInstall -Id $pkgId -ClientProfile $ClientProfile -Repair:($state.Operation -eq 'Repair')
+                if (-not $r.ok -and -not (Get-DEPkgProp $r 'planned')) { throw $r.detail }
+                if ($r.rebootRequired) { Request-DEReboot -Reason "$pkgId installer requested a restart" -ResumeAction "apps.$pkgId" | Out-Null }
+                $r.detail
+            }.GetNewClosure() `
             -Remediate { param($state) $null = Invoke-DEPackageInstall -Id $pkgId -ClientProfile $ClientProfile -Repair }.GetNewClosure() `
             -ManualAction $(if ($mfr) { "Only for $mfr hardware." } else { '' })
     }
