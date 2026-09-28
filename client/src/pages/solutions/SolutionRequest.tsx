@@ -1,96 +1,216 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Link, useSearch } from "wouter";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useLocation, useSearch } from "wouter";
 import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useSEO } from "@/hooks/useSEO";
-import {
-  BUSINESS_NEEDS_INDEX_PATH,
-  getFamilyById,
-  getFamilyBySlug,
-  parseDeliveryPreference,
-  SOLUTION_WORKSPACE_PATH,
-} from "@/lib/businessNeeds";
-import { DOOR_2_ELIGIBILITY } from "@shared/checkoutEligibility";
+import { useAnnouncer } from "@/components/AccessibleAnnouncer";
+import { useMinWidth, useSolutionDraft } from "@/hooks/useSolutionDraft";
+import { Door2Frame } from "@/components/store/door2/Door2Frame";
+import { HelpRow, StoreAction, StoreChapter } from "@/components/store/door2/primitives";
+import { OfflinePanel, type OfflineKind } from "@/components/store/door2/OfflinePanel";
+import { getFamilyBySlug, SOLUTION_WORKSPACE_PATH, STORE_STEPS, submittedPath } from "@/lib/businessNeeds";
 import {
   addDraftNeed,
-  emptyDraft,
-  isProfileComplete,
-  patchSolutionDraft,
+  archiveSubmittedDraft,
+  profileGaps,
   profileSummary,
   readSolutionDraft,
   recommendedIntent,
+  resolvedPackages,
+  summarizeForArchive,
   toRequestNeeds,
   type SolutionDraft,
-  type SolutionRequestIntent,
+  type SubmittedSolutionArchive,
 } from "@/lib/solutionDraft";
-import { buildSolutionPackage } from "@/lib/solutionPackage";
+import { ASSESSMENT_LABELS, installModeDetail, RELATIONSHIP_LABELS, resolveInstallMode, SUPPORT_LABELS } from "@/lib/solutionPackage";
+import { coverageForFamilies, solutionAdvisorSeed } from "@/lib/solutionGuidance";
+import { PUBLIC_CONTACT_MESSAGES, publicContactProblems, type PublicContactField, type PublicContactFields } from "@shared/publicContact";
+import { COMPANY } from "@shared/companyContact";
+import { DOOR_2_ELIGIBILITY } from "@shared/checkoutEligibility";
 
-type FormState = {
-  organizationName: string;
-  contactName: string;
-  contactEmail: string;
-  contactPhone: string;
+/*
+ * D · Sign (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §5.4). The one paper
+ * chapter in the flow: what the buyer is sending, in plain words, beside a
+ * white card with four fields and nothing else. No payment, no rail, no bar.
+ */
+
+const REQUEST_ENDPOINT = "/api/public/solutions/request";
+const CONTACT_STEP = STORE_STEPS[5];
+
+const H1 = "Who should DE follow up with?";
+const LEDE = "You already did the solution work. Four fields, then it's DE's turn.";
+const SANCTIONED_LINE = "No payment is taken here. DE confirms package fit, scope, fulfillment, and pricing before commitment.";
+const NEXT_STEPS = [
+  "A person at DE reads Your Solution.",
+  "DE emails or calls to confirm fit, scope, delivery and pricing.",
+  "Nothing is billed until you say yes.",
+] as const;
+const PRIMARY_SUBMIT = "Submit Solution";
+const PRIMARY_RECOMMEND = "Submit & have DE recommend";
+const PRIMARY_SENDING = "Sending…";
+const OPEN_RELATIONSHIP = "Left with DE to recommend";
+const REASON_NO_NEEDS = "Add at least one need first";
+const BACK_LABEL = "Back to Your Solution";
+
+type FieldSpec = {
+  key: PublicContactField;
+  id: string;
+  label: string;
+  autoComplete: string;
+  type?: "email" | "tel";
+  inputMode?: "email" | "tel";
 };
 
-function parseIntent(value: string | null): SolutionRequestIntent | null {
-  if (value === "quote" || value === "assessment" || value === "consultation" || value === "request") return value;
-  return null;
+const FIELDS: readonly FieldSpec[] = [
+  { key: "organizationName", id: "sr-org", label: "Company name", autoComplete: "organization" },
+  { key: "contactName", id: "sr-name", label: "Name", autoComplete: "name" },
+  { key: "contactEmail", id: "sr-email", label: "Email", autoComplete: "email", type: "email", inputMode: "email" },
+  { key: "contactPhone", id: "sr-phone", label: "Phone", autoComplete: "tel", type: "tel", inputMode: "tel" },
+];
+
+const EMPTY_FIELDS: PublicContactFields = { organizationName: "", contactName: "", contactEmail: "", contactPhone: "" };
+
+type Problems = Partial<Record<PublicContactField, string>>;
+type SummaryRow = { label: string; text: string };
+
+function joinNames(names: readonly string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
-function relationshipLabel(value: string): string {
-  if (value === "standalone") return "Standalone · standard pricing";
-  if (value === "co_managed") return "Co-managed · preferred pricing";
-  return "DE will recommend the operating relationship";
+function trimFields(fields: PublicContactFields): PublicContactFields {
+  return {
+    organizationName: fields.organizationName.trim(),
+    contactName: fields.contactName.trim(),
+    contactEmail: fields.contactEmail.trim(),
+    contactPhone: fields.contactPhone.trim(),
+  };
+}
+
+/** Which field a server message is about, when it is about exactly one. */
+function fieldNamedBy(text: string): PublicContactField | null {
+  const exact = (Object.keys(PUBLIC_CONTACT_MESSAGES) as PublicContactField[]).find((key) => PUBLIC_CONTACT_MESSAGES[key] === text);
+  if (exact) return exact;
+  const named: PublicContactField[] = [];
+  if (/\bemail\b/i.test(text)) named.push("contactEmail");
+  if (/\bphone\b/i.test(text)) named.push("contactPhone");
+  if (/\bcompany\b/i.test(text)) named.push("organizationName");
+  else if (/\bname\b/i.test(text)) named.push("contactName");
+  return named.length === 1 ? named[0] : null;
+}
+
+function asDurable(value: unknown): SubmittedSolutionArchive["durable"] {
+  return value === "database" || value === "crm" ? value : "memory";
+}
+
+function asNextStep(value: unknown, draft: SolutionDraft): SubmittedSolutionArchive["nextStep"] {
+  if (value === "quote" || value === "consultation" || value === "assessment") return value;
+  const intent = recommendedIntent(draft);
+  return intent === "assessment" || intent === "consultation" ? intent : "quote";
+}
+
+/** The summary in public words: every row the buyer sees on the left, reused for the email fallback. */
+function summaryRows(draft: SolutionDraft): SummaryRow[] {
+  const packages = resolvedPackages(draft);
+  const relationship = draft.deliveryPreference;
+  const open = relationship === "unsure" || relationship === "";
+  const gaps = profileGaps(draft.environment);
+  const rows: SummaryRow[] = [];
+
+  rows.push({
+    label: "Profile",
+    text: gaps.length ? `${profileSummary(draft.environment)} · still needed: ${gaps.join(", ")}` : profileSummary(draft.environment),
+  });
+  rows.push({
+    label: "Relationship",
+    text: relationship === "" ? "Choose on Your Solution" : open ? OPEN_RELATIONSHIP : RELATIONSHIP_LABELS[relationship],
+  });
+
+  for (const { family, policyView } of packages) {
+    const name = open ? `${family.label} · DE confirms Standalone or Co-Managed` : policyView.offerName;
+    const install = installModeDetail(resolveInstallMode(draft.fulfillment.installation, policyView).mode, policyView.shipmentMode).label;
+    const parts = [name, install];
+    if (policyView.assessmentPolicy !== "not_required") parts.push(ASSESSMENT_LABELS[policyView.assessmentPolicy]);
+    rows.push({ label: "Package", text: parts.join(" · ") });
+  }
+
+  const support = draft.fulfillment.remoteSupport;
+  rows.push({ label: "Remote support", text: support ? SUPPORT_LABELS[support].label : OPEN_RELATIONSHIP });
+
+  const blocks = coverageForFamilies(draft.needs.map((need) => need.familyId))
+    .cells.filter((cell) => cell.state === "in_solution")
+    .map((cell) => cell.label);
+  if (blocks.length) rows.push({ label: "Works in", text: blocks.join(", ") });
+
+  return rows;
+}
+
+function buildMailto(rows: SummaryRow[], fields: PublicContactFields): string {
+  const lines = ["Solution request for Digerati Experts", "", ...rows.map((row) => `${row.label}: ${row.text}`)];
+  const contact = trimFields(fields);
+  const contactLines = FIELDS.filter((field) => contact[field.key]).map((field) => `${field.label}: ${contact[field.key]}`);
+  if (contactLines.length) lines.push("", ...contactLines);
+  return `mailto:${COMPANY.email}?subject=${encodeURIComponent("Solution request")}&body=${encodeURIComponent(lines.join("\n"))}`;
 }
 
 export default function SolutionRequest() {
-  const search = useSearch();
-  const params = useMemo(() => new URLSearchParams(search), [search]);
-  const [draft, setDraft] = useState<SolutionDraft>(emptyDraft);
-  const [form, setForm] = useState<FormState>({ organizationName: "", contactName: "", contactEmail: "", contactPhone: "" });
-  const [requestId, setRequestId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [result, setResult] = useState<{ correlationId: string; message: string } | null>(null);
-
   useSEO({
-    title: "Contact | Your Solution",
-    description: "Provide the four contact fields needed for Digerati Experts to continue the solution you built.",
+    title: "Contact | Your Solution | Digerati Experts",
+    description: "Four contact fields so Digerati Experts can confirm the solution you built. No payment is taken here.",
     canonical: "/solutions/request",
     noIndex: true,
   });
 
-  useEffect(() => {
-    const current = readSolutionDraft();
-    const family = getFamilyBySlug(params.get("family") || "");
-    const delivery = parseDeliveryPreference(params.get("delivery"));
-    const queryIntent = parseIntent(params.get("intent"));
-    let next = current;
-    if (family) {
-      next = addDraftNeed({ familyId: family.id, ...(delivery ? { delivery } : {}) });
-    }
-    if (delivery && !next.deliveryPreference) next = patchSolutionDraft({ deliveryPreference: delivery });
-    if (queryIntent) next = patchSolutionDraft({ intent: queryIntent });
-    setDraft(next);
-  }, [params]);
+  const search = useSearch();
+  const [, navigate] = useLocation();
+  const draft = useSolutionDraft();
+  const { announce } = useAnnouncer();
+  const wide = useMinWidth(1024);
 
+  const [fields, setFields] = useState<PublicContactFields>(EMPTY_FIELDS);
+  const [problems, setProblems] = useState<Problems>({});
+  const [formError, setFormError] = useState("");
+  const [honeypot, setHoneypot] = useState("");
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [offline, setOffline] = useState<OfflineKind | null>(null);
+  const [serverBlock, setServerBlock] = useState<string | null>(null);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  useEffect(() => {
+    setServerBlock(null);
+  }, [draft.updatedAt]);
+  const inputs = useRef<Partial<Record<PublicContactField, HTMLInputElement | null>>>({});
+  const lastKey = useRef<string | null>(null);
+
+  /* A `?family=` link seeds an EMPTY draft only, then lands on the workspace so the buyer sees the package before signing. */
+  useEffect(() => {
+    const slug = new URLSearchParams(search).get("family") || "";
+    if (!slug) return;
+    const family = getFamilyBySlug(slug);
+    if (!family) return;
+    if (readSolutionDraft().needs.length > 0) return;
+    addDraftNeed({ familyId: family.id });
+    announce(`${family.label} added to Your Solution`);
+    navigate(`${SOLUTION_WORKSPACE_PATH}?seeded=${encodeURIComponent(slug)}`, { replace: true });
+  }, [search, announce, navigate]);
+
+  /* Prefill from the server draft when it already carries contact fields; remember its id. */
   useEffect(() => {
     let cancelled = false;
-    void fetch("/api/public/solutions/request", { credentials: "include" })
+    void fetch(REQUEST_ENDPOINT, { credentials: "include" })
       .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
+      .then((data: { request?: Record<string, unknown> } | null) => {
         if (cancelled || !data?.request) return;
-        setRequestId(data.request.id || null);
-        setForm((current) => ({
-          organizationName: data.request.organizationName || current.organizationName,
-          contactName: data.request.contactName || current.contactName,
-          contactEmail: data.request.contactEmail || current.contactEmail,
-          contactPhone: data.request.contactPhone || current.contactPhone,
-        }));
+        const record = data.request;
+        if (typeof record.id === "string" && record.id) setRequestId(record.id);
+        setFields((current) => {
+          const next = { ...current };
+          for (const field of FIELDS) {
+            const value = record[field.key];
+            if (!next[field.key] && typeof value === "string" && value.trim()) next[field.key] = value;
+          }
+          return next;
+        });
       })
       .catch(() => undefined);
     return () => {
@@ -98,162 +218,304 @@ export default function SolutionRequest() {
     };
   }, []);
 
-  const intent = parseIntent(params.get("intent")) ?? recommendedIntent(draft);
-  const needs = toRequestNeeds(draft);
-  const packageRows = needs.flatMap((need) => {
-    const family = getFamilyById(need.familyId);
-    if (!family || (need.deliveryModel !== "standalone" && need.deliveryModel !== "co_managed")) return [];
-    return [{ family, packageView: buildSolutionPackage(family, need.deliveryModel, draft.environment) }];
-  });
+  const packages = resolvedPackages(draft);
+  const relationship = draft.deliveryPreference;
+  const gaps = profileGaps(draft.environment);
+  const rows = summaryRows(draft);
+  const assessmentFamilies = packages.filter((entry) => entry.policyView.assessmentPolicy === "required").map((entry) => entry.family.label);
+  const showAssessmentLine = recommendedIntent(draft) === "assessment" && assessmentFamilies.length > 0;
+  const blockedReason =
+    packages.length === 0
+      ? REASON_NO_NEEDS
+      : gaps.length
+        ? `Finish Your Solution: ${gaps.join(", ")}`
+        : relationship === ""
+          ? "Finish Your Solution: relationship"
+          : serverBlock;
+  const blocked = blockedReason !== null;
+  const primaryLabel = sending ? PRIMARY_SENDING : relationship === "unsure" ? PRIMARY_RECOMMEND : PRIMARY_SUBMIT;
+  const packageCount = packages.length;
+  const disclosureLabel = `What you're sending (${packageCount} ${packageCount === 1 ? "package" : "packages"})`;
 
-  const onSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    setError("");
-    setResult(null);
-    if (!isProfileComplete(draft.environment)) {
-      setError("Finish the business profile before submitting this solution.");
-      return;
-    }
-    if (needs.length === 0) {
-      setError("Select at least one business need before submitting this solution.");
-      return;
-    }
-    if (
-      form.organizationName.trim().length < 2 ||
-      form.contactName.trim().length < 2 ||
-      !form.contactEmail.includes("@") ||
-      form.contactPhone.replace(/\D/g, "").length < 7
-    ) {
-      setError("Company, name, email, and phone are required.");
-      return;
-    }
+  const onFieldChange = (key: PublicContactField) => (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setFields((current) => ({ ...current, [key]: value }));
+    setProblems((current) => {
+      if (!current[key]) return current;
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+  };
 
-    setSubmitting(true);
+  const placeProblems = (next: Problems) => {
+    setProblems(next);
+    const first = FIELDS.find((field) => next[field.key]);
+    if (first) inputs.current[first.key]?.focus();
+    const labels = FIELDS.filter((field) => next[field.key]).map((field) => field.label);
+    if (labels.length) announce(`Check ${labels.length === 1 ? "one field" : `${labels.length} fields`}: ${labels.join(", ")}.`);
+  };
+
+  const send = async (key: string) => {
+    const contact = trimFields(fields);
+    const needs = toRequestNeeds(draft);
+    const lead = needs[0];
+    setSending(true);
+    setOffline(null);
+    setFormError("");
     try {
-      const response = await fetch("/api/public/solutions/request", {
+      const response = await fetch(REQUEST_ENDPOINT, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: requestId,
-          familyId: needs[0]?.familyId,
-          offerId: needs[0]?.offerId,
-          deliveryModel: needs[0]?.deliveryModel,
-          deliveryPreference: draft.deliveryPreference || "unsure",
+          id: draft.serverDraftId ?? requestId,
+          familyId: lead?.familyId,
+          offerId: lead?.offerId,
+          deliveryModel: lead?.deliveryModel,
+          deliveryPreference: relationship || "unsure",
           selectedNeeds: needs,
           environment: draft.environment,
           fulfillment: draft.fulfillment,
-          intent,
-          organizationName: form.organizationName,
-          contactName: form.contactName,
-          contactEmail: form.contactEmail,
-          contactPhone: form.contactPhone,
-          idempotencyKey: `${form.contactEmail.trim().toLowerCase()}|${needs.map((need) => need.familyId).sort().join(",")}|${draft.deliveryPreference || "unsure"}|${intent}`,
+          organizationName: contact.organizationName,
+          contactName: contact.contactName,
+          contactEmail: contact.contactEmail,
+          contactPhone: contact.contactPhone,
+          idempotencyKey: key,
+          company_website: honeypot,
         }),
       });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError(typeof data.error === "string" ? data.error : "We could not save your solution. Please try again.");
+      const data: Record<string, unknown> = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        const reference = typeof data.reference === "string" ? data.reference : "";
+        if (!reference) {
+          setOffline("durable");
+          return;
+        }
+        const archive = summarizeForArchive(draft, contact, {
+          reference,
+          correlationId: typeof data.correlationId === "string" ? data.correlationId : "",
+          durable: asDurable(data.durable),
+          nextStep: asNextStep(data.nextStep, draft),
+          replayed: data.replayed === true,
+        });
+        archiveSubmittedDraft(archive);
+        navigate(submittedPath(reference));
         return;
       }
-      setResult({ correlationId: data.correlationId, message: data.message });
+
+      const message = typeof data.error === "string" ? data.error : "";
+      if (response.status === 429) {
+        setOffline("rate");
+        return;
+      }
+      if (response.status >= 500) {
+        setOffline("durable");
+        return;
+      }
+      if (response.status === 400) {
+        const code = typeof data.code === "string" ? data.code : "";
+        if (code === "NEEDS_REQUIRED" || code === "PROFILE_INCOMPLETE" || code === "RELATIONSHIP_REQUIRED") {
+          setServerBlock(
+            code === "NEEDS_REQUIRED"
+              ? REASON_NO_NEEDS
+              : code === "PROFILE_INCOMPLETE"
+                ? `Finish Your Solution: ${profileGaps(readSolutionDraft().environment).join(", ") || "profile"}`
+                : "Finish Your Solution: relationship",
+          );
+          return;
+        }
+        const local = publicContactProblems(contact);
+        if (Object.keys(local).length) {
+          placeProblems(local);
+          return;
+        }
+        const field = message ? fieldNamedBy(message) : null;
+        if (field) {
+          placeProblems({ [field]: message });
+          return;
+        }
+        setFormError(message || "DE couldn't take this yet. Check the four fields and try again.");
+        return;
+      }
+      setFormError(message || "DE couldn't take this yet. Try again in a moment.");
     } catch {
-      setError("We could not save your solution. Please try again.");
+      setOffline("network");
     } finally {
-      setSubmitting(false);
+      setSending(false);
     }
   };
 
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (sending || blocked) return;
+    const contact = trimFields(fields);
+    const local = publicContactProblems(contact);
+    if (Object.keys(local).length) {
+      placeProblems(local);
+      return;
+    }
+    setProblems({});
+    const familyIds = draft.needs.map((need) => need.familyId).sort();
+    const key = `${contact.contactEmail.toLowerCase()}|${familyIds.join(",")}|${relationship || "unsure"}`;
+    lastKey.current = key;
+    void send(key);
+  };
+
+  const onRetry = () => {
+    if (sending) return;
+    void send(lastKey.current ?? `${fields.contactEmail.trim().toLowerCase()}|${draft.needs.map((need) => need.familyId).sort().join(",")}|${relationship || "unsure"}`);
+  };
+
+  const selectionList = (
+    <ul className="d2-rows d2-small mt-4" data-testid="request-selection">
+      {rows.map((row, index) => (
+        <li key={`${row.label}-${index}`} className="grid gap-1 sm:grid-cols-12 sm:gap-4">
+          <span className="d2-label d2-ink-soft sm:col-span-3 pt-1">{row.label}</span>
+          <span className="d2-ink-strong min-w-0 break-words sm:col-span-9">{row.text}</span>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
-    <div className="relative min-h-screen overflow-hidden bg-de-bg">
-      <div className="relative z-10">
+    <Door2Frame intensity={0}>
         <MegaMenu />
-        <main className="de-nav-clear mx-auto max-w-4xl px-4 pb-40 sm:px-6 lg:px-8">
-          <Link href={SOLUTION_WORKSPACE_PATH} className="mb-8 inline-flex h-11 items-center text-sm text-white/65 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]">
-            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
-            Back to Your Solution
-          </Link>
+        <main className="d2-main de-nav-clear pb-24">
+          <StoreChapter tone="paper" first id="contact" n={CONTACT_STEP.n} eyebrow={CONTACT_STEP.label} srText={CONTACT_STEP.sr} className="rounded-2xl px-5 sm:px-8">
+            <h1 className="d2-h2 d2-measure" data-testid="heading-solution-request">
+              {H1}
+            </h1>
+            <p className="d2-lede d2-ink d2-measure mt-4">{LEDE}</p>
 
-          <header className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-de-accent-ink">Step 4 · Contact</p>
-            <h1 className="mt-3 text-4xl font-bold text-white" data-testid="heading-solution-request">Who should DE follow up with?</h1>
-            <p className="mt-4 text-white/70">You already did the solution work. We only need four contact fields to continue.</p>
-          </header>
+            <div className="grid gap-8 mt-8 lg:grid-cols-12 lg:gap-12">
+              {/* The card first in DOM: at 390 the buyer signs before reading the summary again. */}
+              <div className="min-w-0 lg:col-span-5 lg:order-2">
+                <div className="d2-card">
+                  <form noValidate onSubmit={onSubmit} data-eligibility={DOOR_2_ELIGIBILITY} data-testid="request-form">
+                    <fieldset disabled={sending || blocked} className="min-w-0 space-y-5">
+                      {FIELDS.map((field) => {
+                        const problem = problems[field.key];
+                        const errorId = `${field.id}-error`;
+                        return (
+                          <div key={field.id} className="d2-field">
+                            <label htmlFor={field.id} className="d2-field__label">
+                              {field.label}
+                            </label>
+                            <input
+                              id={field.id}
+                              name={field.key}
+                              className="d2-input"
+                              type={field.type ?? "text"}
+                              inputMode={field.inputMode}
+                              autoComplete={field.autoComplete}
+                              value={fields[field.key]}
+                              onChange={onFieldChange(field.key)}
+                              aria-invalid={problem ? true : undefined}
+                              aria-describedby={problem ? errorId : undefined}
+                              ref={(node) => {
+                                inputs.current[field.key] = node;
+                              }}
+                              data-testid={`input-${field.id}`}
+                            />
+                            {problem ? (
+                              <p id={errorId} className="d2-field__error" data-testid={`${field.id}-error`}>
+                                {problem}
+                              </p>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </fieldset>
 
-          <section className="my-8 rounded-2xl border border-de-hairline bg-de-raised p-6" data-testid="request-selection">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-de-accent-ink">Solution summary</p>
-            <p className="mt-3 text-sm text-white/55">Profile: {profileSummary(draft.environment)}</p>
-            <p className="mt-1 text-sm text-white/55">Offer: {relationshipLabel(draft.deliveryPreference)}</p>
-            <p className="mt-1 text-sm text-white/55">Installation: {draft.fulfillment.installation || "Not selected"} · Remote support: {draft.fulfillment.remoteSupport || "Not selected"}</p>
-
-            {packageRows.length ? (
-              <div className="mt-6 space-y-5">
-                {packageRows.map(({ family, packageView }) => (
-                  <article key={family.id} className="overflow-hidden rounded-xl border border-white/10">
-                    <div className="bg-black/15 px-4 py-3">
-                      <h2 className="font-semibold text-white">{packageView.offerName}</h2>
-                      <p className="mt-1 text-xs text-white/55">{packageView.pricingLabel}</p>
+                    <div className="sr-only" aria-hidden="true">
+                      <label>
+                        Website
+                        <input name="company_website" tabIndex={-1} autoComplete="off" value={honeypot} onChange={(event) => setHoneypot(event.target.value)} />
+                      </label>
                     </div>
-                    <div>
-                      {packageView.lineItems.map((line, index) => (
-                        <div key={line.label} className={`grid grid-cols-[minmax(0,1fr)_auto] gap-4 px-4 py-2.5 text-sm ${index ? "border-t border-white/10" : ""}`}>
-                          <span className="text-white/70">{line.label}</span>
-                          <span className="text-right text-white/40">{line.quantity}</span>
-                        </div>
+
+                    <p className="d2-small d2-ink mt-6">{SANCTIONED_LINE}</p>
+
+                    <h2 className="d2-label d2-ink-soft mt-6">What happens next</h2>
+                    <ol className="d2-rows d2-small mt-3">
+                      {NEXT_STEPS.map((step, index) => (
+                        <li key={step} className="flex gap-3">
+                          <span className="d2-qty" aria-hidden="true">
+                            {index + 1}
+                          </span>
+                          <span className="d2-ink min-w-0">{step}</span>
+                        </li>
                       ))}
+                    </ol>
+
+                    {showAssessmentLine ? (
+                      <p className="d2-small d2-ink mt-6" data-testid="assessment-line">
+                        An assessment comes next for {joinNames(assessmentFamilies)}. DE contacts you to schedule it after you submit.
+                      </p>
+                    ) : null}
+
+                    {formError ? (
+                      <p role="alert" className="d2-field__error mt-6" data-testid="request-error">
+                        {formError}
+                      </p>
+                    ) : null}
+
+                    <div className="mt-6">
+                      {offline ? (
+                        <OfflinePanel kind={offline} onRetry={onRetry} mailto={buildMailto(rows, fields)} retrying={sending} />
+                      ) : (
+                        <>
+                          <StoreAction type="submit" variant="primary" block disabled={blocked} reason={blockedReason ?? undefined} ariaBusy={sending} testId="submit-solution">
+                            {primaryLabel}
+                          </StoreAction>
+                          {blocked ? (
+                            <div className="mt-2">
+                              <StoreAction variant="quiet" href={SOLUTION_WORKSPACE_PATH} testId="back-to-solution">
+                                {BACK_LABEL}
+                              </StoreAction>
+                            </div>
+                          ) : null}
+                        </>
+                      )}
                     </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-5 text-sm text-white/65">
-                No complete package is selected. <Link href={BUSINESS_NEEDS_INDEX_PATH} className="text-de-accent-ink underline">Return to the Store</Link>.
-              </p>
-            )}
-          </section>
+                  </form>
 
-          {result ? (
-            <section className="rounded-2xl border border-emerald-400/20 bg-emerald-400/5 p-6" data-testid="request-confirmation">
-              <CheckCircle2 className="h-7 w-7 text-emerald-300" aria-hidden="true" />
-              <h2 className="mt-4 text-xl font-semibold text-white">Solution submitted</h2>
-              <p className="mt-3 text-white/75">{result.message}</p>
-              <p className="mt-3 text-sm text-white/55">Reference: {result.correlationId}</p>
-              <Button asChild variant="outline" className="mt-6 h-11 border-white/20 text-white hover:bg-white/10">
-                <Link href={BUSINESS_NEEDS_INDEX_PATH}>Return to the Store</Link>
-              </Button>
-            </section>
-          ) : (
-            <form onSubmit={onSubmit} className="grid gap-5 sm:grid-cols-2" noValidate data-eligibility={DOOR_2_ELIGIBILITY}>
-              <div className="space-y-2">
-                <Label htmlFor="sr-org" className="text-white/80">Company name</Label>
-                <Input id="sr-org" required value={form.organizationName} onChange={(event) => setForm((current) => ({ ...current, organizationName: event.target.value }))} className="h-11 border-white/15 bg-de-raised text-white" autoComplete="organization" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="sr-name" className="text-white/80">Name</Label>
-                <Input id="sr-name" required value={form.contactName} onChange={(event) => setForm((current) => ({ ...current, contactName: event.target.value }))} className="h-11 border-white/15 bg-de-raised text-white" autoComplete="name" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="sr-email" className="text-white/80">Email</Label>
-                <Input id="sr-email" type="email" required value={form.contactEmail} onChange={(event) => setForm((current) => ({ ...current, contactEmail: event.target.value }))} className="h-11 border-white/15 bg-de-raised text-white" autoComplete="email" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="sr-phone" className="text-white/80">Phone</Label>
-                <Input id="sr-phone" type="tel" required value={form.contactPhone} onChange={(event) => setForm((current) => ({ ...current, contactPhone: event.target.value }))} className="h-11 border-white/15 bg-de-raised text-white" autoComplete="tel" />
+                  <HelpRow seed={solutionAdvisorSeed(draft)} className="mt-6" />
+
+                  {blocked ? null : (
+                    <div className="mt-4">
+                      <StoreAction variant="quiet" href={SOLUTION_WORKSPACE_PATH} testId="back-to-solution">
+                        <span aria-hidden="true">← </span>
+                        {BACK_LABEL}
+                      </StoreAction>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div aria-live="polite" className="min-h-6 text-sm text-[#f5b4c8] sm:col-span-2" data-testid="request-error">{error}</div>
-
-              <div className="sm:col-span-2">
-                <Button type="submit" variant="brand" className="h-11 w-full sm:w-auto" disabled={submitting || packageRows.length === 0}>
-                  {submitting ? "Submitting…" : intent === "assessment" ? "Submit & continue to assessment" : "Submit solution"}
-                </Button>
-                <p className="mt-3 text-xs text-white/55">No payment is taken here. DE confirms package fit, scope, fulfillment, and pricing before commitment.</p>
+              <div className="min-w-0 lg:col-span-7 lg:order-1">
+                {wide ? (
+                  <section aria-labelledby="request-selection-heading" data-testid="request-summary">
+                    <h2 id="request-selection-heading" className="d2-h3">
+                      What you're sending
+                    </h2>
+                    {selectionList}
+                  </section>
+                ) : (
+                  <details className="d2-disclosure" open={summaryOpen} onToggle={(event) => setSummaryOpen(event.currentTarget.open)} data-testid="request-summary">
+                    <summary>
+                      <h2 className="d2-h3">{disclosureLabel}</h2>
+                    </summary>
+                    {selectionList}
+                  </details>
+                )}
               </div>
-            </form>
-          )}
+            </div>
+          </StoreChapter>
         </main>
         <DigeratiEnhancedFooterSection />
-      </div>
-    </div>
+    </Door2Frame>
   );
 }

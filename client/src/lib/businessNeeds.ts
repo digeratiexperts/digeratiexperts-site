@@ -34,8 +34,12 @@ export const STORE_STEPS = [
 
 export type StoreStepId = (typeof STORE_STEPS)[number]["id"];
 
-/** The workspace sequence sentence, kept verbatim: it is the journey rail's accessible name and a leakage lock. */
-export const STORE_JOURNEY_SENTENCE = "Profile → pain or need → offer → package → delivery → contact";
+/**
+ * The journey as one sentence, derived from the constant so it can never drift
+ * from the steps: "Profile → pain or need → relationship → package → delivery & setup → contact".
+ * It is the JourneyRail's accessible name and a leakage lock (§6.1).
+ */
+export const STORE_JOURNEY_SENTENCE = STORE_STEPS.map((step, index) => (index === 0 ? step.label : step.label.toLowerCase())).join(" → ");
 
 export const BUSINESS_GOALS = [
   { id: "productive", label: "Keep my team productive", familyIds: ["it_operations", "endpoint_devices"] },

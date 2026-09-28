@@ -25,6 +25,12 @@ export function useStoreChromeGestures(location: string) {
     if (!active) {
       return () => root.classList.remove(STORE_GESTURE_LOCK_CLASS);
     }
+    // The gesture claim exists for horizontal rails (the warehouse). Pages
+    // without one, the public Store's Door 2 among them, keep the browser's
+    // own swipe-back; the class alone stays for the jelly stylesheet.
+    if (!document.querySelector(".de-store-h-rail")) {
+      return () => root.classList.remove(STORE_GESTURE_LOCK_CLASS);
+    }
 
     const markHorizontal = () => {
       lastHorizontalAt.current = performance.now();

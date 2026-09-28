@@ -143,5 +143,11 @@ describe("SolutionDraft", () => {
     expect(archive.packages[0]).toMatchObject({ familyLabel: "Hardware & Lifecycle", installation: "remote_assist", shipmentMode: "physical", pricingLabel: "Standard price" });
     expect(archive.packages[0].lineItems[1].quantity).toBe("32 computers");
     expect(JSON.stringify(archive)).not.toMatch(/co_managed|self_install|remote_assist"?:/);
+    // The device keeps a masked contact only: no raw email, no run of seven or more digits.
+    expect(archive.contact).toEqual({ organizationName: "Acme", contactName: "Jo", emailMasked: "j***@acme.test", phoneLast4: "···-0100" });
+    const stored = JSON.stringify(archive);
+    expect(stored).not.toContain("jo@acme.test");
+    expect(stored.replace(/j\*\*\*@acme\.test/, "")).not.toContain("@");
+    expect(stored).not.toMatch(/\d{7,}/);
   });
 });

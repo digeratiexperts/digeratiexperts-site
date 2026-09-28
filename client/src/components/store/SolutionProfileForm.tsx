@@ -1,140 +1,284 @@
-import { Check, Users } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useEffect, useId, useState, type ReactNode } from "react";
+import { ChoiceTiles } from "@/components/store/door2/ChoiceTiles";
+import { LiveLine } from "@/components/store/door2/primitives";
 import {
   isProfileComplete,
+  profileGaps,
+  profileSummary,
   type DeviceOwnership,
   type InternalItStatus,
   type SolutionEnvironment,
 } from "@/lib/solutionDraft";
 
-const OWNERSHIP_OPTIONS: Array<[Exclude<DeviceOwnership, "">, string]> = [
-  ["company", "Company-owned"],
-  ["byod", "BYOD"],
-  ["hybrid", "Hybrid"],
-];
+/*
+ * The ProfileStrip (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §5.6): four counts
+ * and two facts, asked once and reused by every screen. Expanded while the
+ * profile is incomplete; collapsed to a ProfileLine with Edit once it is.
+ * The exported name stays SolutionProfileForm (door2Leakage.test.ts lock).
+ */
 
-const INTERNAL_IT_OPTIONS: Array<[Exclude<InternalItStatus, "">, string]> = [
-  ["yes", "Yes"],
-  ["no", "No"],
-  ["unsure", "Not sure"],
-];
+const OWNERSHIP_OPTIONS = [
+  { value: "company", label: "The company" },
+  { value: "byod", label: "People bring their own" },
+  { value: "hybrid", label: "A mix" },
+] as const satisfies ReadonlyArray<{ value: Exclude<DeviceOwnership, "">; label: string }>;
+
+const INTERNAL_IT_OPTIONS = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
+  { value: "unsure", label: "Not sure" },
+] as const satisfies ReadonlyArray<{ value: Exclude<InternalItStatus, "">; label: string }>;
+
+const QUICK_USERS = ["5", "10", "25", "50", "100"] as const;
+
+type CountKey = "userCount" | "workstationCount" | "mobileDeviceCount" | "siteCount";
+
+function countProblem(value: string, allowZero: boolean): string | null {
+  const trimmed = value.trim();
+  if (trimmed === "") return null;
+  if (!/^\d{1,6}$/.test(trimmed)) return "Numbers only, up to 6 digits";
+  if (!allowZero && Number(trimmed) === 0) return "At least 1";
+  return null;
+}
+
+function CountField({
+  id,
+  label,
+  value,
+  placeholder,
+  allowZero,
+  onChange,
+  children,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  placeholder: string;
+  allowZero: boolean;
+  onChange: (value: string) => void;
+  children?: ReactNode;
+}) {
+  const problem = countProblem(value, allowZero);
+  const errorId = `${id}-error`;
+  return (
+    <div className="d2-field">
+      <label htmlFor={id} className="d2-field__label">
+        {label}
+      </label>
+      <input
+        id={id}
+        className="d2-input"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        autoComplete="off"
+        value={value}
+        placeholder={placeholder}
+        aria-invalid={problem ? "true" : undefined}
+        aria-describedby={problem ? errorId : undefined}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {problem ? (
+        <p id={errorId} className="d2-field__error">
+          {problem}
+        </p>
+      ) : null}
+      {children}
+    </div>
+  );
+}
+
+export function sizingLine(environment: SolutionEnvironment): string {
+  const gaps = profileGaps(environment);
+  if (gaps.length === 6) return "Four counts and two facts. Then every package sizes itself.";
+  if (gaps.length > 0) return `Missing: ${gaps.join(", ")}`;
+  return `Sized for ${profileSummary(environment)}`;
+}
+
+/** The collapsed strip: one line and an Edit control. */
+export function ProfileLine({
+  environment,
+  onEdit,
+  editLabel = "Edit",
+  testId = "profile-line",
+}: {
+  environment: SolutionEnvironment;
+  onEdit: () => void;
+  editLabel?: string;
+  testId?: string;
+}) {
+  const complete = isProfileComplete(environment);
+  return (
+    <div className="d2-profile-line d2-small" data-testid={testId}>
+      <span className="min-w-0">
+        {complete ? (
+          <>
+            <span className="d2-label d2-accent-ink mr-2">Sized for</span>
+            <span className="d2-ink-strong">{profileSummary(environment)}</span>
+          </>
+        ) : (
+          <span className="d2-ink">Add your counts to size this</span>
+        )}
+      </span>
+      <button type="button" className="d2-action d2-action--quiet" onClick={onEdit} data-testid="profile-edit">
+        {complete ? editLabel : "Size it"}
+      </button>
+    </div>
+  );
+}
 
 export function SolutionProfileForm({
   environment,
   onChange,
-  heading = "Start with your business profile",
-  description = "Set these once. DE uses the same counts to size every package you browse.",
+  heading = "Size it to your business",
+  description = "Four counts and two facts. Then every package sizes itself.",
+  headingLevel = 2,
+  expandKey = 0,
+  collapsible = true,
+  suggestionSlot,
+  testId = "profile-strip",
 }: {
   environment: SolutionEnvironment;
   onChange: <K extends keyof SolutionEnvironment>(key: K, value: SolutionEnvironment[K]) => void;
   heading?: string;
   description?: string;
+  headingLevel?: 2 | 3;
+  /** Increment to force the strip open (a need was added with an empty profile). Focus never moves. */
+  expandKey?: number;
+  /** When false the strip never collapses (the contact summary, print). */
+  collapsible?: boolean;
+  /** A SuggestionLine rendered under the internal-IT question once it is answered. */
+  suggestionSlot?: ReactNode;
+  testId?: string;
 }) {
   const complete = isProfileComplete(environment);
+  const empty = profileGaps(environment).length === 6;
+  // Empty: a closed 48px row. Partial: expanded. Complete: the ProfileLine.
+  const [open, setOpen] = useState(() => (!collapsible ? true : !complete && !empty));
+  const [focusWithin, setFocusWithin] = useState(false);
+  const headingId = useId();
+  const Heading = `h${headingLevel}` as "h2" | "h3";
+
+  // Collapse once the profile completes, but never under the buyer's focus:
+  // the strip waits until focus leaves it, so a keyboard user is not dropped.
+  // A later gap re-opens it.
+  useEffect(() => {
+    if (!collapsible) return undefined;
+    if (!complete) {
+      if (!empty) setOpen(true);
+      return undefined;
+    }
+    if (focusWithin) return undefined;
+    const timer = window.setTimeout(() => setOpen(false), 900);
+    return () => window.clearTimeout(timer);
+  }, [complete, empty, collapsible, focusWithin]);
+
+  useEffect(() => {
+    if (expandKey > 0) setOpen(true);
+  }, [expandKey]);
+
+  const set = (key: CountKey) => (value: string) => onChange(key, value);
+
+  if (!open && empty) {
+    return (
+      <div data-testid={testId} data-state="empty">
+        <Heading id={headingId} className="sr-only">
+          {heading}
+        </Heading>
+        <button type="button" className="d2-profile-empty" onClick={() => setOpen(true)} data-testid="profile-open" aria-expanded={false}>
+          <span className="d2-body font-semibold">{heading}</span>
+          <span className="d2-profile-empty__fields d2-small">Users · Computers · Mobile devices · Sites</span>
+          <span className="d2-accent-ink d2-small font-semibold">Open</span>
+        </button>
+      </div>
+    );
+  }
+
+  if (!open) {
+    return (
+      <div data-testid={testId} data-state="collapsed">
+        <ProfileLine environment={environment} onEdit={() => setOpen(true)} />
+      </div>
+    );
+  }
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-[#111111] p-5 sm:p-7" aria-labelledby="solution-profile-heading">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="max-w-2xl">
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-de-accent/30 bg-de-accent/10">
-              <Users className="h-5 w-5 text-de-accent-ink" aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-de-accent-ink">Step 0 · Profile</p>
-              <h2 id="solution-profile-heading" className="mt-1 text-xl font-semibold text-white sm:text-2xl">{heading}</h2>
-            </div>
-          </div>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/55">{description}</p>
+    <div
+      data-testid={testId}
+      data-state="expanded"
+      aria-labelledby={headingId}
+      role="group"
+      onFocus={() => setFocusWithin(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocusWithin(false);
+      }}
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+        <div className="min-w-0">
+          <Heading id={headingId} className={headingLevel === 2 ? "d2-h2" : "d2-h3"}>
+            {heading}
+          </Heading>
+          <p className="d2-small d2-ink-soft mt-2">{description}</p>
         </div>
-        <div className={`inline-flex h-9 items-center gap-2 self-start rounded-full border px-3 text-xs font-medium ${complete ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-200" : "border-white/10 bg-white/5 text-white/60"}`}>
-          {complete ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : null}
-          {complete ? "Profile saved" : "Autosaves on this device"}
-        </div>
+        {complete && collapsible ? (
+          <button type="button" className="d2-action d2-action--quiet" onClick={() => setOpen(false)}>
+            Done
+          </button>
+        ) : null}
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="space-y-2">
-          <Label htmlFor="profile-users" className="text-white/80">Users</Label>
-          <Input
-            id="profile-users"
-            inputMode="numeric"
-            value={environment.userCount}
-            onChange={(event) => onChange("userCount", event.target.value)}
-            placeholder="25"
-            className="h-11 border-white/15 bg-black/20 text-white"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="profile-computers" className="text-white/80">Computers</Label>
-          <Input
-            id="profile-computers"
-            inputMode="numeric"
-            value={environment.workstationCount}
-            onChange={(event) => onChange("workstationCount", event.target.value)}
-            placeholder="30"
-            className="h-11 border-white/15 bg-black/20 text-white"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="profile-mobile" className="text-white/80">Mobile devices</Label>
-          <Input
-            id="profile-mobile"
-            inputMode="numeric"
-            value={environment.mobileDeviceCount}
-            onChange={(event) => onChange("mobileDeviceCount", event.target.value)}
-            placeholder="15"
-            className="h-11 border-white/15 bg-black/20 text-white"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="profile-sites" className="text-white/80">Sites / locations</Label>
-          <Input
-            id="profile-sites"
-            inputMode="numeric"
-            value={environment.siteCount}
-            onChange={(event) => onChange("siteCount", event.target.value)}
-            placeholder="1"
-            className="h-11 border-white/15 bg-black/20 text-white"
-          />
-        </div>
-      </div>
-
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <fieldset>
-          <legend className="text-sm font-medium text-white/80">Device ownership</legend>
-          <div className="mt-2 grid grid-cols-3 gap-2 rounded-xl border border-white/10 p-2">
-            {OWNERSHIP_OPTIONS.map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={environment.deviceOwnership === value}
-                className={`min-h-11 rounded-lg px-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] ${environment.deviceOwnership === value ? "bg-de-accent text-white" : "bg-white/5 text-white/65 hover:bg-white/10"}`}
-                onClick={() => onChange("deviceOwnership", value)}
-              >
-                {label}
+      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <CountField id="profile-users" label="Users" value={environment.userCount} placeholder="25" allowZero={false} onChange={set("userCount")}>
+          <div className="d2-chips" aria-label="Quick size">
+            {QUICK_USERS.map((count) => (
+              <button key={count} type="button" className="d2-chip" onClick={() => onChange("userCount", count)}>
+                {count}
               </button>
             ))}
           </div>
-        </fieldset>
-        <fieldset>
-          <legend className="text-sm font-medium text-white/80">Internal IT team?</legend>
-          <div className="mt-2 grid grid-cols-3 gap-2 rounded-xl border border-white/10 p-2">
-            {INTERNAL_IT_OPTIONS.map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={environment.internalIt === value}
-                className={`min-h-11 rounded-lg px-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] ${environment.internalIt === value ? "bg-de-accent text-white" : "bg-white/5 text-white/65 hover:bg-white/10"}`}
-                onClick={() => onChange("internalIt", value)}
-              >
-                {label}
-              </button>
-            ))}
+        </CountField>
+        <CountField id="profile-computers" label="Computers" value={environment.workstationCount} placeholder="30" allowZero onChange={set("workstationCount")}>
+          <div className="d2-chips">
+            <button
+              type="button"
+              className="d2-chip"
+              onClick={() => onChange("workstationCount", environment.userCount)}
+              disabled={!/^\d{1,6}$/.test(environment.userCount.trim())}
+            >
+              Match users
+            </button>
           </div>
-        </fieldset>
+        </CountField>
+        <CountField id="profile-mobile" label="Mobile devices" value={environment.mobileDeviceCount} placeholder="15" allowZero onChange={set("mobileDeviceCount")} />
+        <CountField id="profile-sites" label="Sites" value={environment.siteCount} placeholder="1" allowZero={false} onChange={set("siteCount")} />
       </div>
-    </section>
+
+      <div className="mt-6 grid gap-5 lg:grid-cols-2">
+        <ChoiceTiles
+          name="profile-ownership"
+          legend="Who owns the devices?"
+          legendVisible
+          value={environment.deviceOwnership}
+          options={OWNERSHIP_OPTIONS}
+          onChange={(value) => onChange("deviceOwnership", value)}
+          columns={3}
+          compact
+        />
+        <ChoiceTiles
+          name="profile-internal-it"
+          legend="Is anyone doing IT inside the company?"
+          legendVisible
+          value={environment.internalIt}
+          options={INTERNAL_IT_OPTIONS}
+          onChange={(value) => onChange("internalIt", value)}
+          columns={3}
+          compact
+        />
+      </div>
+
+      <LiveLine status className="mt-5" testId="profile-live">
+        {sizingLine(environment)}
+      </LiveLine>
+      {suggestionSlot}
+    </div>
   );
 }

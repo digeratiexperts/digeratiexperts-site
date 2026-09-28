@@ -72,6 +72,7 @@ claims:
       - client/src/lib/solutionGuidance.ts
       - client/src/lib/openMspAdvisor.ts (STORE_ADVISOR_SEED text only)
       - client/src/lib/storeChromeGestures.ts (isStorePath only)
+      - client/src/hooks/useStoreChromeGestures.ts (the .de-store-h-rail gate only; §16.1 for Joe)
       - client/src/hooks/useSolutionDraft.ts
       - client/src/index.css (the .de-site-canvas padding-bottom line only)
       - shared/publicContact.ts

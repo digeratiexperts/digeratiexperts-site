@@ -1,4 +1,5 @@
 import { curatedSolutionFamilies, type CuratedSolutionFamily } from "@/data/curatedSolutions";
+import { maskEmail, maskPhone } from "@shared/publicContact";
 import { getFamilyById } from "@/lib/businessNeeds";
 import {
   buildSolutionPackage,
@@ -539,12 +540,13 @@ export type SubmittedSolutionArchive = {
   environment: SolutionEnvironment;
   remoteSupport: RemoteSupportPreference;
   packages: SubmittedPackageSummary[];
-  contact: { organizationName: string; contactName: string; contactEmail: string; contactPhone: string };
+  /** Masked before the write: the raw email and phone never reach storage (§6.2). */
+  contact: { organizationName: string; contactName: string; emailMasked: string; phoneLast4: string };
 };
 
 export function summarizeForArchive(
   draft: SolutionDraft,
-  contact: SubmittedSolutionArchive["contact"],
+  contact: { organizationName: string; contactName: string; contactEmail: string; contactPhone: string },
   response: Pick<SubmittedSolutionArchive, "reference" | "correlationId" | "durable" | "nextStep" | "replayed"> & {
     submittedAt?: string;
   },
@@ -570,7 +572,12 @@ export function summarizeForArchive(
       installation: resolveInstallMode(draft.fulfillment.installation, policyView).mode,
       shipmentMode: policyView.shipmentMode,
     })),
-    contact,
+    contact: {
+      organizationName: contact.organizationName,
+      contactName: contact.contactName,
+      emailMasked: maskEmail(contact.contactEmail),
+      phoneLast4: maskPhone(contact.contactPhone),
+    },
   };
 }
 

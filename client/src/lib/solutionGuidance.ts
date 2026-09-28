@@ -286,7 +286,7 @@ export const HINT_RULES: HintRule[] = [
     "cybersecurity_operations",
     "backup_continuity",
     "cybersecurity_operations",
-    "Cybersecurity Operations does not include guaranteed prevention. Backup & Business Continuity is the recovery half of the same decision.",
+    "Cybersecurity Operations detects and responds; it never promises that nothing gets through. Backup & Business Continuity is the recovery half of the same decision.",
   ),
   addFamilyRule(
     "awareness-without-email-controls",
