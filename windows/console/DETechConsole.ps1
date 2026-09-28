@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    DE Technician Console: one shell for AI Toolkit, Endpoint Provisioning,
+    DE Tech Tool: one shell for AI Toolkit, Endpoint Provisioning,
     Identity, JumpCloud, Security, Apps, OS baseline, Browser, Branding,
     Network, Vendor Admin Center, Audit / Repair and Evidence / Hub handoff.
 
@@ -31,7 +31,7 @@ param(
     [switch]$Resume,
     [switch]$Headless,
     [string]$Client,
-    [ValidateSet('audit', 'new', 'takeover', 'replacement', 'repair', 'co-managed', 'deprovision')]
+    [ValidateSet('audit', 'new', 'dropship', 'takeover', 'replacement', 'repair', 'co-managed', 'deprovision')]
     [string]$Mode = 'audit',
     [switch]$Apply,
     [string]$Technician = 'jrpetro',
@@ -107,7 +107,7 @@ if (Test-Path -LiteralPath (Join-Path $fontDir 'SpaceGrotesk-Variable.ttf')) { $
 
 [xml]$Xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="DE Technician Console" Width="1440" Height="900" MinWidth="1180" MinHeight="720" WindowStartupLocation="CenterScreen"
+        Title="DE Tech Tool" Width="1440" Height="900" MinWidth="1180" MinHeight="720" WindowStartupLocation="CenterScreen"
         Background="#FF050312" Foreground="#FFF7F5F2" FontSize="13" UseLayoutRounding="True" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Ideal">
   <Window.Resources>
     <SolidColorBrush x:Key="Well" Color="#FF050312"/><SolidColorBrush x:Key="Surface" Color="#FF0A0A0A"/><SolidColorBrush x:Key="Raised" Color="#FF151217"/><SolidColorBrush x:Key="RaisedHover" Color="#FF1E1A22"/>
@@ -166,8 +166,8 @@ if (Test-Path -LiteralPath (Join-Path $fontDir 'SpaceGrotesk-Variable.ttf')) { $
     <Border Grid.Column="0" Background="#FF08061A" BorderBrush="{StaticResource Hairline}" BorderThickness="0,0,1,0" Padding="14,18">
       <DockPanel LastChildFill="True">
         <StackPanel DockPanel.Dock="Top" Margin="6,0,0,18">
-          <TextBlock x:Name="Brand" Text="DIGERATI EXPERTS" Foreground="{StaticResource Magenta}" FontSize="11" FontWeight="Bold"/>
-          <TextBlock Text="Technician Console" FontSize="19" FontWeight="SemiBold" Margin="0,2,0,0"/>
+          <Image x:Name="BrandLogo" Height="30" MaxWidth="188" HorizontalAlignment="Left" Stretch="Uniform" Margin="0,0,0,9" AutomationProperties.Name="Digerati Experts"/>
+          <TextBlock Text="DE Tech Tool" FontSize="19" FontWeight="SemiBold" Margin="0,2,0,0"/>
           <TextBlock x:Name="TxtVersion" Style="{StaticResource Mono}" Margin="0,2,0,0"/>
         </StackPanel>
         <StackPanel DockPanel.Dock="Bottom" Margin="4,12,0,0">
@@ -211,9 +211,22 @@ if ($highContrast) {
     $Win.Background = [System.Windows.SystemColors]::WindowBrush; $Win.Foreground = [System.Windows.SystemColors]::WindowTextBrush
 }
 $UI = @{}
-foreach ($n in @('NavPanel', 'PageHost', 'TxtVersion', 'TxtModeBadge', 'HdrTech', 'HdrClient', 'HdrClientWhy', 'HdrUser', 'HdrUserWhy', 'HdrDevice', 'HdrDeviceSub', 'HdrReady', 'TxtStatus', 'Progress', 'BtnCancel', 'Brand')) { $UI[$n] = $Win.FindName($n) }
-$UI.Brand.FontFamily = New-Object System.Windows.Media.FontFamily $FontDisplay
-$UI.TxtVersion.Text = "v$((Get-DEConsole).ConsoleVersion)"; $Win.Title = "DE Technician Console v$((Get-DEConsole).ConsoleVersion)"
+foreach ($n in @('NavPanel', 'PageHost', 'TxtVersion', 'TxtModeBadge', 'HdrTech', 'HdrClient', 'HdrClientWhy', 'HdrUser', 'HdrUserWhy', 'HdrDevice', 'HdrDeviceSub', 'HdrReady', 'TxtStatus', 'Progress', 'BtnCancel', 'BrandLogo')) { $UI[$n] = $Win.FindName($n) }
+$UI.TxtVersion.Text = "v$((Get-DEConsole).ConsoleVersion)"; $Win.Title = "DE Tech Tool v$((Get-DEConsole).ConsoleVersion)"
+$brandLogoPath = Join-Path $ConsoleRoot 'assets\brand\digerati-logo-reverse-600.png'
+$brandIconPath = Join-Path $ConsoleRoot 'assets\brand\digerati-mark-tile-64.png'
+try {
+    if ($UI.BrandLogo -and (Test-Path -LiteralPath $brandLogoPath)) {
+        $bmp = New-Object System.Windows.Media.Imaging.BitmapImage
+        $bmp.BeginInit(); $bmp.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad; $bmp.UriSource = New-Object System.Uri($brandLogoPath); $bmp.EndInit(); $bmp.Freeze()
+        $UI.BrandLogo.Source = $bmp
+    }
+    if (Test-Path -LiteralPath $brandIconPath) {
+        $ico = New-Object System.Windows.Media.Imaging.BitmapImage
+        $ico.BeginInit(); $ico.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad; $ico.UriSource = New-Object System.Uri($brandIconPath); $ico.EndInit(); $ico.Freeze()
+        $Win.Icon = $ico
+    }
+} catch { Write-DELog -Level WARN -Message "brand asset load failed: $($_.Exception.Message)" }
 
 # ============================================================== session state
 $S = @{ Profile = $null; Snapshot = $null; Mode = $Settings.mode; Job = $null; Timer = $null; LogPos = 0; CurrentPage = $Page; LastBundle = $null; LastJobError = $null; LogBox = $null }
@@ -652,7 +665,7 @@ function Build-Evidence {
     $open = New-Button 'Open internal report' { if ($S.LastBundle) { Start-Process (Join-Path $S.LastBundle.folder 'report-internal.html') } }
     $client = New-Button 'Open client report' { if ($S.LastBundle) { Start-Process (Join-Path $S.LastBundle.folder 'report-client.html') } }
     $hub = New-Button 'Send to Intelligence Hub' { if (-not $S.LastBundle) { Set-Status 'Export the bundle first.'; return }; $r = Send-DEHubPayload -Payload (New-DEHubPayload -Record $S.LastBundle.record -BundleSha256 $S.LastBundle.sha256 -BundlePath $S.LastBundle.zip); Set-Status $(if ($r.sent) { 'Sent to the Hub.' } else { "Saved for manual upload: $($r.file)" }); Show-Page 'Evidence' }
-    $bundleCopy = New-Button 'Copy diagnostic bundle' { $txt = "DE Technician Console $((Get-DEConsole).ConsoleVersion) · $env:COMPUTERNAME · mode $($S.Mode)`r`n" + ((Get-DEGapReport | ForEach-Object { "$($_.result) $($_.id) | $($_.detail) | fix: $($_.fix)" }) -join "`r`n"); [System.Windows.Clipboard]::SetText((Protect-DEText $txt)); Set-Status 'Gap report copied (redacted).' }
+    $bundleCopy = New-Button 'Copy diagnostic bundle' { $txt = "DE Tech Tool $((Get-DEConsole).ConsoleVersion) · $env:COMPUTERNAME · mode $($S.Mode)`r`n" + ((Get-DEGapReport | ForEach-Object { "$($_.result) $($_.id) | $($_.detail) | fix: $($_.fix)" }) -join "`r`n"); [System.Windows.Clipboard]::SetText((Protect-DEText $txt)); Set-Status 'Gap report copied (redacted).' }
     [void]$root.Children.Add((New-Card @((New-Text 'Evidence and handoff' 15 -Bold), (New-Text 'Sanitized JSON, internal and client-safe HTML reports, redacted log, sha256 manifest, zipped and hashed. The Hub gets identity, mapping, state, verification times, exceptions and evidence references; never secrets.' -Muted -Wrap), (New-Wrap @($export, $open, $client, $hub, $bundleCopy)), $status)))
     $gaps = @(Get-DEGapReport)
     $grid = New-El DataGrid @{ Height = 380; Name = 'Gap report' }
