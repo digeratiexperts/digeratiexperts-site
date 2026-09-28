@@ -2,7 +2,7 @@
   "_readme": "Example client profile built from the Alamo takeover findings. No credentials, ever: connect keys, site tokens, org keys and passwords are entered at run time. Copy to a saved profile from the console and adjust.",
   "schemaVersion": 1,
   "id": "alamo",
-  "name": "Alamo",
+  "name": "Alamo Industries",
   "shortName": "Alamo",
   "tier": "Business",
   "packages": ["Core IT", "Security Operations"],
@@ -45,7 +45,7 @@
   },
   "m365": { "tenantDomain": "", "licenseSku": "", "verifyUpn": true },
   "branding": {
-    "clientLogo": "",
+    "clientLogo": "asset:clients/alamo/alamo-mark.png",
     "wallpaperStyle": "dual-logo",
     "accent": "#D3126A",
     "supportText": "Support: support@digeratiexperts.com  |  portal.digeratiexperts.com",
