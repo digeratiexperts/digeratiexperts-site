@@ -36,7 +36,8 @@ function Write-Step { param([string]$Text, [string]$Color = 'Cyan') Write-Host $
 try {
     if (-not $ZipPath) {
         $here = $(if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path })
-        $places = @($here, (Get-Location).Path, (Join-Path $env:USERPROFILE 'Downloads')) | Select-Object -Unique
+        $userHome = $(if ($env:USERPROFILE) { $env:USERPROFILE } else { $HOME })
+        $places = @($here, (Get-Location).Path, $(if ($userHome) { Join-Path $userHome 'Downloads' })) | Where-Object { $_ } | Select-Object -Unique
         # DE-TechTool*.zip is the canonical package name; DE-TechConsole*.zip is what builds before 1.4 were called
         $found = @(foreach ($p in $places) { if (Test-Path -LiteralPath $p) { foreach ($pattern in @('DE-TechTool*.zip', 'DE-TechConsole*.zip')) { Get-ChildItem -LiteralPath $p -File -Filter $pattern -ErrorAction SilentlyContinue } } })
         if (-not $found.Count) { throw "No DE-TechTool*.zip (or older DE-TechConsole*.zip) found in: $($places -join '; '). Pass -ZipPath <file>." }
