@@ -404,3 +404,14 @@ Describe 'Package detection with the Windows code path forced on' {
         { $null = Get-DECloudStorageState -ClientProfile (Get-DEClientProfile -Id 'alamo') } | Should -Not -Throw
     }
 }
+
+Describe 'Audit without runtime secrets' {
+    BeforeAll { . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $null = Initialize-TestConsole }
+    It 'reports a check that needs a missing secret as not verified (WARN), never FAIL' {
+        Clear-DESecrets
+        Register-DEAction -Id 'a.needs-secret' -Module 'test' -Title 'Needs JC key' -RequiresSecrets @('JC_API_KEY') -Detect { throw 'would call the API' } -Desired { @{ v = 1 } }
+        $e = Invoke-DEAction -Id 'a.needs-secret' -Mode Audit
+        $e.result | Should -Be 'WARN'
+        $e.verification | Should -Match 'JC_API_KEY'
+    }
+}
