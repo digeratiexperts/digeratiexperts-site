@@ -14,6 +14,7 @@ $ErrorActionPreference = 'Stop'
 $script:ModeActions = @{
     audit = @{ title = 'Audit only'; apply = $false; description = 'Detect everything, change nothing, produce a gap report. For inherited or takeover machines before any work.' }
     new = @{ title = 'New machine'; apply = $true; description = 'Out-of-box device for a known user: full provisioning.' }
+    dropship = @{ title = 'Dropship / pre-provision'; apply = $true; description = 'New device prepared by DE before direct shipment or handoff. Uses the client profile, verifies every applied control, and produces handoff evidence.' }
     takeover = @{ title = 'Takeover'; apply = $true; description = 'Device inherited from another provider or Entra-only: identity migration, stale MDM cleanup, then the DE stack.' }
     replacement = @{ title = 'Replacement machine'; apply = $true; description = 'New device replacing an old one for the same user; same profile, new hardware record.' }
     repair = @{ title = 'Repair / reprovision'; apply = $true; description = 'Existing DE endpoint: health assessment, fix only what is missing or broken.' }
@@ -24,7 +25,7 @@ function Get-DEModes { return $script:ModeActions }
 
 function Import-DEConsoleModules {
     param([Parameter(Mandatory = $true)][string]$Root)
-    foreach ($m in @('DE.Core', 'DE.Discovery', 'DE.Profiles', 'DE.Vendors', 'DE.Apps', 'DE.JumpCloud', 'DE.Identity', 'DE.Security', 'DE.Configure', 'DE.Operations', 'DE.Evidence')) {
+    foreach ($m in @('DE.Core', 'DE.Discovery', 'DE.Profiles', 'DE.Planning', 'DE.Vendors', 'DE.Apps', 'DE.JumpCloud', 'DE.Identity', 'DE.Security', 'DE.Configure', 'DE.Operations', 'DE.Evidence')) {
         Import-Module (Join-Path $Root "modules\$m\$m.psm1") -Force -Global -DisableNameChecking
     }
 }
@@ -44,8 +45,9 @@ function Initialize-DEWorkflow {
     Register-DEBrowserActions -ClientProfile $ClientProfile
     Register-DEBrandingActions -ClientProfile $ClientProfile
     if ($Mode -eq 'deprovision') { Register-DEDeprovisionActions -ClientProfile $ClientProfile }
-    $ids = @(Get-DEActions -Mode $Mode | ForEach-Object { $_.Id })
-    Set-DEStateValue -Path 'workflow' -Value @{ mode = $Mode; client = (Get-DEHashPath -Object $ClientProfile -Path 'id'); actions = $ids.Count; initialised = (Get-Date).ToString('o') }
+    $plan = Get-DEExecutionPlan -ClientProfile $ClientProfile -Mode $Mode
+    $ids = @($plan.actions | ForEach-Object { $_.id })
+    Set-DEStateValue -Path 'workflow' -Value @{ mode = $Mode; client = (Get-DEHashPath -Object $ClientProfile -Path 'id'); tier = $plan.tier; capabilities = @($plan.capabilities); actions = $ids.Count; initialised = (Get-Date).ToString('o') }
     return $ids
 }
 
