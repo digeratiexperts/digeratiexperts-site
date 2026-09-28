@@ -488,6 +488,7 @@ Describe 'Security provider selection' {
 
     It 'retains the Guardz install action when Guardz is selected' {
         $profile = ConvertTo-DEHashtable (Get-DEClientProfile -Id 'alamo')
+        $profile.security.mdr.deploy = @('guardz')
         Register-DESecurityActions -ClientProfile $profile
         $guardz = Get-DEAction -Id 'security.guardz'
         ($guardz.RequiresSecrets -contains 'GUARDZ_ORG_KEY') | Should -Be $true
