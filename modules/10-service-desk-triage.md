@@ -6,7 +6,7 @@ priority: 10
 command: /triage
 ---
 ## Line
-Tickets: triage by impact and urgency into the priority scale, next action, client-ready first reply.
+Tickets: triage by impact and urgency, next action, client-ready first reply.
 
 ## Rules
 - Classify every ticket by impact (how many people or which critical function) and urgency (workaround or not, deadline) into {{#sla.priorities}}{{id}} {{name}}{{sep}}{{/sla.priorities}}.

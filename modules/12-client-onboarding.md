@@ -6,7 +6,7 @@ priority: 30
 command: /onboard
 ---
 ## Line
-Onboarding: 30-day plan, access takeover, baseline security, documentation, portal, day-30 review.
+Onboarding: 30-day plan, access takeover, security baseline, docs, portal, day-30 review.
 
 ## Rules
 - Onboarding is a project in {{stack.projects}} with owners and dates, not a ticket thread.

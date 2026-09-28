@@ -6,7 +6,7 @@ priority: 40
 command: /kb
 ---
 ## Line
-KB articles from resolved tickets: symptoms, cause, steps, verification, redacted client version.
+KB from resolved tickets: symptoms, cause, steps, verification, redacted client copy.
 
 ## Rules
 - Two audiences, two articles: an internal runbook (exact steps, commands, admin paths) and a client-facing how-to (no admin steps, no internal hostnames).

@@ -7,13 +7,14 @@ allowed-tools: Read, Grep, Glob, Edit, Write, Bash(node .claude/skills/msp-ai-ki
 
 # MSP AI Kit
 
-One control file, fifteen prompt modules, one builder. The output is a folder of
+One control file, sixteen prompt modules, one builder. The output is a folder of
 copy-paste packs for every AI surface the team uses, all saying the same thing
 in the Digerati Experts voice.
 
 ```
 kit.config.json          <- the only file most people edit (company, stack, SLAs, toggles, budgets)
 modules/NN-<id>.md       <- one playbook per file: Line (1 sentence), Rules, Prompt, Notes
+references/*.md          <- DE-authored packs shipped verbatim with every build (the scripting pack)
 scripts/build.mjs        <- renders modules x config into packs; --list --check --verify --dry-run --set
 scripts/install-upstream.sh <- optional: fetch RTFM / Servosity / WYRE / cmmc-advisor into a gitignored vendor dir
 examples/digerati-experts/  <- the committed, rendered DE pack (kept in sync by the tests)
