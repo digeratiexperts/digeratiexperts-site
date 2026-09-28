@@ -210,9 +210,22 @@ Describe 'JumpCloud mapping: the Alamo finding' {
         ($m.issues -join ' ') | Should -Match 'does not exist'
         ($m.issues -join ' ') | Should -Match 'signed in'
     }
-    It 'reports READY once the local account owns the preserved profile' {
-        Mock -ModuleName DE.JumpCloud Get-DEIdentityState { @{ localUsers = @(@{ name = 'sthompson'; enabled = $true; sid = 'S-1-5-21-5' }); profiles = @(@{ path = 'C:\Users\sthompson'; sid = 'S-1-5-21-5' }); interactiveUser = 'ALAMO\jrpetro' } }
-        (Test-DEJumpCloudUserMapping -IntendedLocalUser 'sthompson').status | Should -Be 'READY'
+    It 'reads READY only when the local account owns the preserved profile by SID and JumpCloud was checked' {
+        # the preserved folder keeps the source name (UpdateHomePath off); ownership is by SID
+        Mock -ModuleName DE.JumpCloud Get-DEIdentityState { @{ localUsers = @(@{ name = 'sthompson'; enabled = $true; sid = 'S-1-5-21-5' }); profiles = @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-5-21-5' }); interactiveUser = 'ALAMO\jrpetro' } }
+        $noKey = Test-DEJumpCloudUserMapping -IntendedLocalUser 'sthompson' -QueryApi
+        $noKey.status | Should -Be 'WARN'
+        ($noKey.issues -join ' ') | Should -Match 'not checked'
+        Set-DESecret -Name 'JC_API_KEY' -Plain 'jc-key-for-mapping-test'
+        Mock -ModuleName DE.JumpCloud Get-DEJumpCloudUser { @{ _id = 'U1' } }
+        Mock -ModuleName DE.JumpCloud Get-DEJumpCloudSystem { @{ _id = 'S1' } }
+        Mock -ModuleName DE.JumpCloud Get-DEJumpCloudBoundUsers { @(@{ id = 'JRPETRO' }) }
+        $ok = Test-DEJumpCloudUserMapping -IntendedLocalUser 'sthompson' -QueryApi
+        $ok.status | Should -Be 'READY'   # not bound yet and another user bound are notes: bind-user fixes the first, jrpetro is expected
+        ($ok.notes -join ' ') | Should -Match 'not bound'
+        Mock -ModuleName DE.JumpCloud Get-DEIdentityState { @{ localUsers = @(@{ name = 'sthompson'; enabled = $true; sid = 'S-1-5-21-5' }); profiles = @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-12-1-9' }); interactiveUser = 'ALAMO\jrpetro' } }
+        (Test-DEJumpCloudUserMapping -IntendedLocalUser 'sthompson' -QueryApi).status | Should -Not -Be 'READY'
+        Clear-DESecrets
     }
 }
 
@@ -642,13 +655,28 @@ Describe 'Playbooks and the dropship kit' {
         & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $global:DETest.Win 'packaging/New-DEDropshipKit.ps1') -Client alamo -Bundle proactive-it -AddOn endpoint-backup -OrderId 'T-42' -EndUserName 'Test User' -Serial 'SER-9' -Model 'Latitude 7450' -OutDir $out 3>$null | Out-Null
         $LASTEXITCODE | Should -Be 0
         $kit = Join-Path $out 'DE-Dropship-T-42'
-        foreach ($f in @('order.json', 'FirstBoot.cmd', 'Invoke-DEFirstBoot.ps1', 'README.txt', 'DE-TechTool/Start-DETechTool.cmd')) { Test-Path -LiteralPath (Join-Path $kit $f) | Should -Be $true }
+        foreach ($f in @('order.json', 'profile.json', 'FirstBoot.cmd', 'Invoke-DEFirstBoot.ps1', 'README.txt', 'DE-TechTool/Start-DETechTool.cmd', 'DE-TechTool/packaging/Sign-DETechConsole.ps1')) { Test-Path -LiteralPath (Join-Path $kit $f) | Should -Be $true }
         Test-Path -LiteralPath "$kit.zip" | Should -Be $true
         (Get-Content -LiteralPath "$kit.zip.sha256" -Raw) | Should -Match '^[0-9a-f]{64}  DE-Dropship-T-42\.zip'
-        $prof = Get-Content -LiteralPath (Join-Path $kit 'DE-TechTool/console/catalog/profiles/alamo.json') -Raw | ConvertFrom-Json
+        $prof = Get-Content -LiteralPath (Join-Path $kit 'profile.json') -Raw | ConvertFrom-Json
+        Test-Path -LiteralPath (Join-Path $kit 'DE-TechTool/console/catalog/profiles/alamo.json') | Should -Be $false   # the tool tree is copied unchanged
         $prof.plan.bundle | Should -Be 'proactive-it'
         @(Test-DEProfileHasSecrets -Profile (ConvertTo-DEHashtable $prof)).Count | Should -Be 0
         Test-Path -LiteralPath (Join-Path $kit 'DE-TechTool/tests') | Should -Be $false
         [IO.File]::ReadAllText((Join-Path $kit 'FirstBoot.cmd')) | Should -Match "`r`n"
+        Test-Path -LiteralPath (Join-Path $kit 'DE-TechTool/packaging/out') | Should -Be $false
+    }
+    It 'a kit built from a packaged release still matches its integrity manifest at first boot' {
+        $rel = Join-Path $global:DETest.Tmp 'release'; New-Item -ItemType Directory -Path $rel -Force | Out-Null
+        foreach ($d in Get-ChildItem -LiteralPath $global:DETest.Win) { if ($d.Name -notin @('tests')) { Copy-Item -LiteralPath $d.FullName -Destination $rel -Recurse -Force } }
+        Remove-Item -LiteralPath (Join-Path $rel 'packaging/out') -Recurse -Force -ErrorAction SilentlyContinue
+        & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $rel 'packaging/Sign-DETechConsole.ps1') -SkipSigning -Root $rel | Out-Null
+        $out = Join-Path $global:DETest.Tmp 'kits2'
+        & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $rel 'packaging/New-DEDropshipKit.ps1') -Client alamo -Bundle proactive-office -OrderId 'T-43' -Serial 'SER-1' -Model 'Latitude 7450' -OutDir $out 3>$null | Out-Null
+        $LASTEXITCODE | Should -Be 0
+        $tool = Join-Path $out 'DE-Dropship-T-43/DE-TechTool'
+        Test-Path -LiteralPath (Join-Path $tool 'integrity.json') | Should -Be $true
+        & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $tool 'packaging/Sign-DETechConsole.ps1') -Verify -Root $tool | Out-Null
+        $LASTEXITCODE | Should -Be 0
     }
 }

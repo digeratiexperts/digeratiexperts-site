@@ -26,7 +26,7 @@ function Get-DEBreakGlassState {
     $u = $null; $isAdmin = $false; $hidden = $null
     if ($script:IsWindowsHost) {
         try { $u = Get-LocalUser -Name $Name -ErrorAction Stop } catch { $u = $null }
-        if ($u) { try { $isAdmin = [bool](Get-LocalGroupMember -Group 'Administrators' -ErrorAction Stop | Where-Object { $_ -and $_.SID.Value -eq $u.SID.Value }) } catch { $r = Invoke-DENative -FilePath 'net.exe' -Arguments @('localgroup', 'Administrators'); $isAdmin = [bool]($r.Output | Where-Object { $_ -and $_.Trim() -ieq $Name }) } }
+        if ($u) { try { $isAdmin = [bool](Get-LocalGroupMember -SID 'S-1-5-32-544' -ErrorAction Stop | Where-Object { $_ -and $_.SID.Value -eq $u.SID.Value }) } catch { $r = Invoke-DENative -FilePath 'net.exe' -Arguments @('localgroup', 'Administrators'); $isAdmin = [bool]($r.Output | Where-Object { $_ -and $_.Trim() -ieq $Name }) } }
         $hidden = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList' -Name $Name)
     }
     $verified = Get-DEState -Path 'identity.breakGlass.verifiedAt'
@@ -53,7 +53,7 @@ function New-DEBreakGlassAccount {
         if (-not $state.exists) { New-LocalUser -Name $Name -Password $secure -Description 'DE local break-glass administrator (independent of JumpCloud and Entra)' -PasswordNeverExpires -AccountNeverExpires -UserMayNotChangePassword | Out-Null }
         else { Set-LocalUser -Name $Name -Password $secure -PasswordNeverExpires $true -UserMayChangePassword $false | Out-Null }
         Enable-LocalUser -Name $Name
-        if (-not $state.administrator) { Add-LocalGroupMember -Group 'Administrators' -Member $Name -ErrorAction SilentlyContinue }
+        if (-not $state.administrator) { Add-LocalGroupMember -SID 'S-1-5-32-544' -Member $Name -ErrorAction SilentlyContinue }
         Set-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList' -Name $Name -Value 0 -Type DWord
         Set-DEStateValue -Path 'identity.breakGlass.createdAt' -Value (Get-Date).ToString('o')
         Set-DEStateValue -Path 'identity.breakGlass.verifiedAt' -Value $null   # a new password invalidates any earlier verification
@@ -112,7 +112,7 @@ function Test-DEBitLockerGate {
     if (-not $os.hasRecoveryPassword) { $issues += 'no RecoveryPassword protector' }
     $expected = $ExpectedProtectorId; if (-not $expected) { $expected = Get-DEState -Path 'identity.bitlocker.expectedProtectorId' }
     if (-not $expected) { $issues += 'recovery protector id not yet recorded against the escrow record (enter the id, never the password)' }
-    elseif ($os.recoveryProtectorIds -notcontains $expected) { $issues += "recovery protector id $expected not present on the volume" }
+    elseif (@($os.recoveryProtectorIds | ForEach-Object { "$_".Trim('{', '}').ToUpperInvariant() }) -notcontains "$expected".Trim('{', '}').ToUpperInvariant()) { $issues += "recovery protector id $expected not present on the volume" }
     if ($issues.Count) { return @{ Status = $(if ($os.status -eq 'FullyEncrypted' -and $os.protection -eq 'On') { 'WARN' } else { 'BLOCKED' }); Detail = ($issues -join '; ') } }
     return @{ Status = 'PASS'; Detail = "OS volume encrypted ($($os.method)), protection on, TPM + recovery protector $expected verified" }
 }
@@ -132,11 +132,23 @@ function Resume-DEBitLocker { [CmdletBinding(SupportsShouldProcess = $true)] par
 
 # ------------------------------------------------------------------ OneDrive gate
 function Test-DEOneDriveGate {
+    <#
+    OneDrive accounts live in the signed-in user's HKCU, and migration runs with the end user signed out, so HKCU is the
+    technician's. The end user's OneDrive is also read from their profile folder ("OneDrive - <tenant>" folders): if
+    either shows a business account, the technician must confirm the sync (done while the user was still signed in).
+    #>
     $od = Get-DEOneDriveState
-    if ($od.businessAccounts.Count -eq 0) { return @{ Status = 'PASS'; Detail = "OneDrive $($od.classification); no business account to protect" } }
     $confirmed = Get-DEState -Path 'identity.onedrive.syncConfirmedAt'
-    $detail = "$($od.classification); accounts: $((@($od.businessAccounts | ForEach-Object { $_.email }) -join ', '))"
-    if (-not $od.running) { return @{ Status = 'BLOCKED'; Detail = "$detail; client not running, sync state unknown" } }
+    $src = "$((Get-DEContext)['sourcePrincipal'])"
+    $srcFolders = @()
+    if ($src) {
+        $srcProfile = @(Find-DEProfileForUser -UserName $src | Where-Object { $_ }) | Select-Object -First 1
+        if ($srcProfile -and $srcProfile.path -and (Test-Path -LiteralPath $srcProfile.path)) { $srcFolders = @(Get-ChildItem -LiteralPath $srcProfile.path -Directory -Filter 'OneDrive - *' -ErrorAction SilentlyContinue | ForEach-Object { $_.Name }) }
+    }
+    if ($od.businessAccounts.Count -eq 0 -and -not $srcFolders.Count) { return @{ Status = 'PASS'; Detail = "OneDrive $($od.classification); no business account in this session$(if ($src) { " or in $src's profile" })" } }
+    if ($confirmed) { return @{ Status = 'PASS'; Detail = "business OneDrive present; sync confirmed $confirmed" } }
+    $detail = "$($od.classification); accounts: $((@(@($od.businessAccounts | ForEach-Object { $_.email }) + $srcFolders) | Where-Object { $_ }) -join ', ')"
+    if ($od.businessAccounts.Count -and -not $od.running) { return @{ Status = 'BLOCKED'; Detail = "$detail; client not running, sync state unknown" } }
     if (-not $confirmed) { return @{ Status = 'WARN'; Detail = "$detail; technician must confirm 'Up to date' in the OneDrive client and pause sync before identity changes" } }
     return @{ Status = 'PASS'; Detail = "$detail; sync confirmed $confirmed" }
 }
@@ -188,8 +200,10 @@ function Test-DEMigrationPreconditions {
     if ($id.joinType -notin @('entra-joined', 'hybrid-entra-joined', 'entra-registered')) { $warnings += "device is $($id.joinType); ADMU migration targets Entra-joined devices" }
     if ($id.interactiveUser -and $id.interactiveUser -ieq $SourcePrincipal) { $issues += 'source user is signed in; sign out and run from the break-glass or technician session' }
     if (@($id.localUsers | Where-Object { $_ -and $_.name -ieq $LocalUserName }).Count) { $issues += "local account '$LocalUserName' already exists (username collision); pick another name or remove the stale account after confirming it owns no data" }
-    $srcProfile = @(Find-DEProfileForUser -UserName $SourcePrincipal -Profiles $id.profiles) | Select-Object -First 1
+    $srcCandidates = @(Find-DEProfileForUser -UserName $SourcePrincipal -Profiles $id.profiles | Where-Object { $_ })
+    $srcProfile = $srcCandidates | Select-Object -First 1
     if (-not $srcProfile) { $issues += "no profile folder found for $SourcePrincipal" }
+    elseif ($srcCandidates.Count -gt 1) { $issues += "several profile folders could belong to $SourcePrincipal ($((@($srcCandidates | ForEach-Object { $_.path })) -join ', ')); confirm the right one by SID before migrating" }
     $dstProfile = @(Find-DEProfileForUser -UserName $LocalUserName -Profiles $id.profiles) | Select-Object -First 1
     if ($dstProfile) { $issues += "a profile folder already exists for '$LocalUserName' ($($dstProfile.path)); SID/profile collision" }
     if ($srcProfile -and $srcProfile.loaded) { $issues += 'source profile is loaded (user still has a session)' }
@@ -221,15 +235,18 @@ function Start-DEIdentityMigration {
     $pre = Test-DEMigrationPreconditions -SourcePrincipal $SourcePrincipal -LocalUserName $LocalUserName
     if (-not $pre.ok) { throw "migration preconditions failed: $($pre.issues -join '; ')" }
     if (-not (Test-DESecret -Name 'MIGRATION_TEMP_PASSWORD')) { throw 'temporary password for the new local account not provided (secret MIGRATION_TEMP_PASSWORD)' }
+    if ($AutobindJumpCloudUser -and -not (Test-DESecret -Name 'JC_API_KEY')) { throw 'autobind needs JC_API_KEY' }
+    # a planned run changes nothing: no module install, no import, no state, no backup
+    if (-not $PSCmdlet.ShouldProcess("$SourcePrincipal -> $LocalUserName", "ADMU Start-Migration (LeaveDomain=$([bool]$LeaveEntra), UpdateHomePath=$([bool]$UpdateHomePath))")) { return @{ planned = $true } }
     $null = Install-DEAdmu
     Import-Module JumpCloud.ADMU -ErrorAction Stop
     $temp = Get-DESecretPlain -Name 'MIGRATION_TEMP_PASSWORD'
     $params = @{ JumpCloudUserName = $LocalUserName; SelectedUserName = $SourcePrincipal; TempPassword = $temp; LeaveDomain = [bool]$LeaveEntra; ForceReboot = $false; UpdateHomePath = [bool]$UpdateHomePath; InstallJCAgent = $false; AutobindJCUser = [bool]$AutobindJumpCloudUser; BindAsAdmin = [bool]$BindAsAdmin; SetDefaultWindowsUser = $true }
-    if ($AutobindJumpCloudUser) { if (-not (Test-DESecret -Name 'JC_API_KEY')) { throw 'autobind needs JC_API_KEY' }; $params.JumpCloudAPIKey = Get-DESecretPlain -Name 'JC_API_KEY'; if (Test-DESecret -Name 'JC_ORG_ID') { $params.JumpCloudOrgID = Get-DESecretPlain -Name 'JC_ORG_ID' } }
-    # rollback point: ProfileList and the source profile's registry hive location are recorded (ids only)
+    if ($AutobindJumpCloudUser) { $params.JumpCloudAPIKey = Get-DESecretPlain -Name 'JC_API_KEY'; if (Test-DESecret -Name 'JC_ORG_ID') { $params.JumpCloudOrgID = Get-DESecretPlain -Name 'JC_ORG_ID' } }
+    # the rollback point is recorded first; no backup, no migration
     $backup = Backup-DERegistryKey -Key 'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList' -Label 'ProfileList-pre-migration'
+    if (-not $backup) { $temp = $null; $params = $null; throw 'ProfileList registry backup failed; refusing to migrate without a rollback point' }
     Set-DEStateValue -Path 'identity.migration' -Value @{ source = $SourcePrincipal; target = $LocalUserName; startedAt = (Get-Date).ToString('o'); sourceProfilePath = $pre.sourceProfile.path; profileListBackup = $backup; leaveEntra = [bool]$LeaveEntra; status = 'running' }
-    if (-not $PSCmdlet.ShouldProcess("$SourcePrincipal -> $LocalUserName", "ADMU Start-Migration (LeaveDomain=$([bool]$LeaveEntra), UpdateHomePath=$([bool]$UpdateHomePath))")) { $temp = $null; $params = $null; return @{ planned = $true } }
     try {
         Write-DELog -Level STEP -Message "ADMU Start-Migration $SourcePrincipal -> $LocalUserName (profile preserved: $(-not $UpdateHomePath))"
         Start-Migration @params
@@ -253,7 +270,7 @@ function Test-DEMigrationResult {
     $prof = @($id.profiles | Where-Object { $_ -and $_.path -ieq $m.sourceProfilePath }) | Select-Object -First 1
     $checks += @{ name = "profile folder preserved ($($m.sourceProfilePath))"; ok = [bool]($prof -or (Test-Path -LiteralPath "$($m.sourceProfilePath)")) }
     $checks += @{ name = 'profile owned by the new local SID'; ok = [bool]($prof -and $local -and $prof.sid -eq $local.sid) }
-    if ($m.leaveEntra) { $checks += @{ name = 'device left Entra'; ok = ($id.joinType -notin @('entra-joined', 'hybrid-entra-joined')) } }
+    if ($m.leaveEntra) { $checks += @{ name = 'device left Entra'; ok = ($id.joinType -notin @('entra-joined', 'hybrid-entra-joined', 'unknown', '')) } }   # unknown (dsregcmd failed) is not proof of leaving
     $ok = -not ($checks | Where-Object { -not $_.ok })
     if ($ok) { Set-DEStateValue -Path 'identity.migration.status' -Value 'verified' }
     return @{ ok = $ok; checks = $checks; detail = (($checks | ForEach-Object { "$(if ($_.ok) { 'PASS' } else { 'FAIL' }) $($_.name)" }) -join '; ') }
@@ -264,7 +281,7 @@ function Invoke-DEEntraLeave {
     param()
     $id = Get-DEIdentityState
     if ($id.joinType -notin @('entra-joined', 'hybrid-entra-joined', 'entra-registered')) { return 'not Entra joined' }
-    $bg = Test-DEGate -Id 'gate.breakglass'; $bl = Test-DEGate -Id 'gate.bitlocker'; $od = Test-DEGate -Id 'gate.onedrive'
+    $bg = Test-DEGate -Id 'gate.breakglass' -Refresh; $bl = Test-DEGate -Id 'gate.bitlocker' -Refresh; $od = Test-DEGate -Id 'gate.onedrive' -Refresh
     foreach ($g in @($bg, $bl, $od)) { if ($g.Status -notin @('PASS', 'EXCEPTION')) { throw "refusing Entra leave: $($g.Id) is $($g.Status)" } }
     if ($PSCmdlet.ShouldProcess($env:COMPUTERNAME, 'dsregcmd /leave')) {
         $r = Invoke-DENative -FilePath 'dsregcmd.exe' -Arguments @('/leave')
@@ -279,16 +296,19 @@ function Remove-DEStaleMdmEnrollments {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param()
     $mdm = Get-DEMdmState
-    $removed = @()
-    foreach ($e in $mdm.staleEnrollments) {
+    $removed = @(); $kept = @()
+    foreach ($e in @($mdm.staleEnrollments | Where-Object { $null -ne $_ })) {
         $key = "HKLM\SOFTWARE\Microsoft\Enrollments\$($e.id)"
         if ($PSCmdlet.ShouldProcess($key, 'remove stale MDM enrollment')) {
-            $null = Backup-DERegistryKey -Key $key -Label "enrollment-$($e.id)"
+            # no backup, no delete: an enrollment we cannot restore is left in place and reported
+            $backup = Backup-DERegistryKey -Key $key -Label "enrollment-$($e.id)"
+            if (-not $backup) { $kept += $e.id; Write-DELog -Level WARN -Message "stale enrollment $($e.id) kept: registry backup failed"; continue }
             Remove-Item -Path "HKLM:\SOFTWARE\Microsoft\Enrollments\$($e.id)" -Recurse -Force -ErrorAction SilentlyContinue
             foreach ($p in @("HKLM:\SOFTWARE\Microsoft\EnterpriseResourceManager\Tracked\$($e.id)", "HKLM:\SOFTWARE\Microsoft\PolicyManager\AdmxInstalled\$($e.id)", "HKLM:\SOFTWARE\Microsoft\Provisioning\OMADM\Accounts\$($e.id)")) { Remove-Item -Path $p -Recurse -Force -ErrorAction SilentlyContinue }
             $removed += $e.id
         }
     }
+    if ($kept.Count) { throw "removed $($removed.Count) stale enrollment(s); kept $($kept.Count) whose registry backup failed ($($kept -join ', '))" }
     return "removed $($removed.Count) stale enrollment(s): $($removed -join ', ')"
 }
 
@@ -314,7 +334,11 @@ function Register-DEIdentityGates {
 
 function Register-DEIdentityActions {
     param($ClientProfile)
+    # Entra leave never happens blindly: by default it is its own step, run only after 'Verify migration' passes.
+    # identity.leaveEntra = false keeps the device joined (no leave step at all); identity.leaveEntraDuringMigration = true
+    # restores the one-step ADMU behaviour (LeaveDomain inside Start-Migration) for clients that ask for it.
     $leave = [bool](Get-DEHashPath -Object $ClientProfile -Path 'identity.leaveEntra'); if ($null -eq (Get-DEHashPath -Object $ClientProfile -Path 'identity.leaveEntra')) { $leave = $true }
+    $leaveDuring = $leave -and [bool](Get-DEHashPath -Object $ClientProfile -Path 'identity.leaveEntraDuringMigration')
     $removeStale = [bool](Get-DEHashPath -Object $ClientProfile -Path 'mdm.removeStaleEnrollments')
 
     Register-DEAction -Id 'identity.breakglass' -Module 'identity' -Title "Create or repair $($script:BreakGlassName) (local admin, hidden, password required)" -Phase 5 -Gates @('gate.elevated') -RequiresElevation -RequiresSecrets @('BREAKGLASS_PASSWORD') `
@@ -324,8 +348,7 @@ function Register-DEIdentityActions {
         -ManualAction "After creation sign in once as .\$($script:BreakGlassName) and press 'Confirm break-glass verified'."
     Register-DEAction -Id 'identity.breakglass.verify' -Module 'identity' -Title 'Break-glass interactive sign-in verified' -Phase 5 -Gates @() -RequiresSecrets @('BREAKGLASS_PASSWORD') `
         -Detect { $s = Get-DEBreakGlassState; @{ verified = $s.verified } } -Desired { @{ verified = $true } } `
-        -Apply { param($s) if (-not (Confirm-DEBreakGlassVerified)) { throw 'credential check failed' }; 'verified' } `
-        -ManualAction 'Perform the real sign-in first; the console only records it after the credential check passes.'
+        -ManualAction "Sign in once, interactively, as .\$($script:BreakGlassName). Then press 'Confirm break-glass verified' on the Identity page: that runs the credential check and records who confirmed the sign-in. No automated step can confirm it." 
     Register-DEAction -Id 'identity.bitlocker' -Module 'identity' -Title 'BitLocker gate (encrypted, protection on, protector id verified)' -Phase 6 -Gates @('gate.elevated') `
         -Detect { $g = Test-DEBitLockerGate; @{ status = $g.Status; detail = $g.Detail } } -Desired { @{ status = 'PASS' } } `
         -ManualAction 'Enable BitLocker with TPM + recovery password, escrow the key, then record the protector id (Identity > BitLocker protector id).'
@@ -336,30 +359,32 @@ function Register-DEIdentityActions {
         -Detect { $h = Get-DEHelloImpact; @{ pinConfigured = $h.pinConfigured; reviewed = [bool](Get-DEState -Path 'identity.hello.reviewedAt') } } -Desired { @{ reviewed = $true } } `
         -Apply { param($s) Set-DEStateValue -Path 'identity.hello.reviewedAt' -Value (Get-Date).ToString('o'); 'impact acknowledged: ' + ((Get-DEHelloImpact).impact -join ' | ') } `
         -ManualAction 'Tell the user the PIN stops working after migration and will be re-enrolled after the first local sign-in.'
-    Register-DEAction -Id 'identity.migrate' -Module 'identity' -Title 'Migrate Entra user to local account (JumpCloud ADMU, profile preserved)' -Phase 7 -Destructive -RequiresElevation -RequiresReboot `
+    Register-DEAction -Id 'identity.migrate' -Module 'identity' -Title 'Migrate Entra user to local account (JumpCloud ADMU, profile preserved)' -Phase 7 -Destructive -RequiresElevation -RequiresReboot -Modes @('takeover', 'co-managed', 'audit') `
         -Gates @('gate.elevated', 'gate.breakglass', 'gate.bitlocker', 'gate.onedrive', 'gate.source-user-signed-out', 'gate.no-dual-mdm') -RequiresSecrets @('MIGRATION_TEMP_PASSWORD') `
         -Detect { $m = Get-DEState -Path 'identity.migration'; $ctx = Get-DEContext; $id = Get-DEIdentityState; @{ migrated = [bool]($m -and "$($m.status)" -in @('migrated-pending-reboot', 'verified')); sourceIsEntra = [bool]("$($ctx['sourcePrincipal'])" -match '^AzureAD\\'); localExists = [bool]($id.localUsers | Where-Object { $_ -and $_.name -ieq "$($ctx['localUserName'])" }) } } `
         -Desired { @{ migrated = $true } } `
-        -Apply { param($s) $ctx = Get-DEContext; if (-not $ctx['sourcePrincipal'] -or -not $ctx['localUserName']) { throw 'source principal and local user name must be set in the provisioning context' }; $r = Start-DEIdentityMigration -SourcePrincipal "$($ctx['sourcePrincipal'])" -LocalUserName "$($ctx['localUserName'])" -LeaveEntra:$leave; if (Get-DEHashPath -Object $r -Path 'planned') { 'planned' } else { $r.detail } }.GetNewClosure() `
-        -Verify { param($after) $m = Get-DEState -Path 'identity.migration'; @{ ok = [bool]($m -and "$($m.status)" -in @('migrated-pending-reboot', 'verified')); detail = "status $($m.status); restart then run 'Verify migration'" } } `
+        -Apply { param($s) $ctx = Get-DEContext; if (-not $ctx['sourcePrincipal'] -or -not $ctx['localUserName']) { throw 'source principal and local user name must be set in the provisioning context' }; $r = Start-DEIdentityMigration -SourcePrincipal "$($ctx['sourcePrincipal'])" -LocalUserName "$($ctx['localUserName'])" -LeaveEntra:$leaveDuring; if (Get-DEHashPath -Object $r -Path 'planned') { 'planned' } else { $r.detail } }.GetNewClosure() `
+        -Verify { param($after) $m = Get-DEState -Path 'identity.migration'; $ctx = Get-DEContext; $localOk = [bool](@((Get-DEIdentityState).localUsers | Where-Object { $_ -and $_.name -ieq "$($ctx['localUserName'])" }).Count); @{ ok = [bool]($m -and "$($m.status)" -in @('migrated-pending-reboot', 'verified') -and $localOk); detail = "status $($m.status); local account $($ctx['localUserName']) $(if ($localOk) { 'created' } else { 'NOT found' }); restart then run 'Verify migration'" } } `
         -Rollback { param($s) 'ADMU keeps the source profile and its registry hive; to revert, sign in as break-glass, remove the new local account without deleting the profile folder, and restore ProfileList from the backup recorded in state (identity.migration.profileListBackup). Do not delete C:\Users\<source>.' } `
         -ManualAction 'Restart, sign in as the new local user (or break-glass), reopen the console; it resumes at Verify migration.'
-    Register-DEAction -Id 'identity.verify-migration' -Module 'identity' -Title 'Verify migration after restart (account, profile, ownership, Entra state)' -Phase 7 `
+    Register-DEAction -Id 'identity.verify-migration' -Module 'identity' -Title 'Verify migration after restart (account, profile, ownership, Entra state)' -Phase 7 -Modes @('takeover', 'co-managed', 'audit') `
         -Detect { $r = Test-DEMigrationResult; @{ ok = $r.ok; detail = $r.detail } } -Desired { @{ ok = $true } } `
         -ManualAction 'If a check fails, do not proceed to JumpCloud takeover; review the ADMU log under C:\Windows\Temp\jcAdmu.log.'
-    Register-DEAction -Id 'identity.entra-leave' -Module 'identity' -Title 'Leave Entra (only after migration is verified)' -Phase 7 -Destructive -RequiresElevation -RequiresReboot -Gates @('gate.elevated', 'gate.breakglass', 'gate.bitlocker', 'gate.onedrive') `
-        -Detect { $id = Get-DEIdentityState; $m = Get-DEState -Path 'identity.migration'; @{ joined = ($id.joinType -in @('entra-joined', 'hybrid-entra-joined')); migrationVerified = [bool]($m -and "$($m.status)" -eq 'verified') } } `
-        -Desired { @{ joined = $false } } -Compare { param($d, $w) if ($d.joined -and -not $d.migrationVerified) { @('device still joined and migration not verified; leave is locked') } elseif ($d.joined) { @('device still joined') } else { @() } } `
-        -Apply { param($s) if (-not $s.Detected.migrationVerified) { throw 'migration not verified; refusing to leave Entra' }; Invoke-DEEntraLeave } `
-        -ManualAction 'Only when the client profile keeps the device Entra-joined should this stay untouched.'
+    if ($leave -and -not $leaveDuring) {
+        Register-DEAction -Id 'identity.entra-leave' -Module 'identity' -Title 'Leave Entra (only after migration is verified)' -Phase 7 -Destructive -RequiresElevation -RequiresReboot -Modes @('takeover', 'co-managed', 'audit') -Gates @('gate.elevated', 'gate.breakglass', 'gate.bitlocker', 'gate.onedrive') `
+            -Detect { $id = Get-DEIdentityState; $m = Get-DEState -Path 'identity.migration'; @{ joined = $(if ("$($id.joinType)" -in @('unknown', '')) { $null } else { $id.joinType -in @('entra-joined', 'hybrid-entra-joined') }); migrationVerified = [bool]($m -and "$($m.status)" -eq 'verified') } } `
+            -Desired { @{ joined = $false } } -Compare { param($d, $w) if ($null -eq $d.joined) { @('join state unknown (dsregcmd gave no answer); cannot confirm the device left Entra') } elseif ($d.joined -and -not $d.migrationVerified) { @('device still joined and migration not verified; leave is locked') } elseif ($d.joined) { @('device still joined') } else { @() } } `
+            -Apply { param($s) if (-not $s.Detected.migrationVerified) { throw 'migration not verified; refusing to leave Entra' }; Invoke-DEEntraLeave } `
+            -ManualAction 'Only when the client profile keeps the device Entra-joined should this stay untouched.'
+    }
     Register-DEAction -Id 'identity.mdm-cleanup' -Module 'identity' -Title 'Remove stale MDM enrollments' -Phase 7 -Destructive -RequiresElevation -Gates @('gate.elevated') -Modes @('takeover', 'repair', 'replacement') `
         -Detect { $m = Get-DEMdmState; @{ stale = $m.staleEnrollments.Count; authority = $m.authority } } -Desired { @{ stale = 0 } } `
         -Apply { param($s) if (-not $removeStale) { throw 'client profile disables stale MDM removal' }; Remove-DEStaleMdmEnrollments }.GetNewClosure() `
         -ManualAction 'Only stale enrollments (no policy provider, no scheduled task) are removed; an active Intune enrollment needs a deliberate authority decision.'
     Register-DEAction -Id 'identity.hello-reset' -Module 'identity' -Title 'Clear stale Windows Hello container (after migration)' -Phase 8 -Destructive -RequiresElevation -Gates @('gate.elevated') -Modes @('takeover', 'repair') `
-        -Detect { $h = Get-DEHelloImpact; $m = Get-DEState -Path 'identity.migration'; @{ ngcPresent = [bool]$h.ngcFolderPresent; migrated = [bool]($m -and "$($m.status)" -eq 'verified') } } -Desired { @{ ngcPresent = $false } } `
-        -Compare { param($d, $w) if ($d.ngcPresent -and $d.migrated) { @('NGC container remains after migration') } else { @() } } `
-        -Apply { param($s) Clear-DEHelloContainer }
+        -Detect { $h = Get-DEHelloImpact; $m = Get-DEState -Path 'identity.migration'; @{ ngcPresent = [bool]$h.ngcFolderPresent; migrated = [bool]($m -and "$($m.status)" -eq 'verified'); resetForThisMigration = [bool]($m -and (Get-DEState -Path 'identity.hello.resetAt') -and "$(Get-DEState -Path 'identity.hello.resetFor')" -eq "$($m.startedAt)") } } -Desired { @{ ngcPresent = $false } } `
+        -Compare { param($d, $w) if ($d.ngcPresent -and $d.migrated -and -not $d.resetForThisMigration) { @('NGC container remains after migration') } else { @() } } `
+        -Apply { param($s) $r = Clear-DEHelloContainer; $m = Get-DEState -Path 'identity.migration'; Set-DEStateValue -Path 'identity.hello.resetAt' -Value (Get-Date).ToString('o'); Set-DEStateValue -Path 'identity.hello.resetFor' -Value "$($m.startedAt)"; $r }
 }
 
 Export-ModuleMember -Function Get-DEBreakGlassState, New-DEBreakGlassAccount, Test-DEBreakGlassLogon, Confirm-DEBreakGlassVerified, Test-DEBitLockerGate, Set-DEBitLockerExpectedProtector, Suspend-DEBitLockerForFirmware, Resume-DEBitLocker, Test-DEOneDriveGate, Confirm-DEOneDriveSynced, Get-DEHelloImpact, Clear-DEHelloContainer, Get-DEAdmuState, Install-DEAdmu, Test-DEMigrationPreconditions, Start-DEIdentityMigration, Test-DEMigrationResult, Invoke-DEEntraLeave, Remove-DEStaleMdmEnrollments, Register-DEIdentityGates, Register-DEIdentityActions

@@ -41,9 +41,12 @@ function Get-DESecurityPosture {
 
 function Get-DESanitizedInstallerDiagnostics {
     <# Last lines of vendor installer logs with secrets redacted, for the diagnostic bundle. #>
+    # beyond the registered-secret redaction: MSI verbose logs print property values ("Its value is '...'"), and
+    # NAME=value pairs whose name looks secret are masked even when this session never saw the value
+    $scrub = { param($l) $t = Protect-DEText $l; $t = [regex]::Replace($t, "Its value is '[^']*'", "Its value is '[REDACTED]'"); [regex]::Replace($t, '(?i)\b([A-Z0-9_]*(TOKEN|KEY|PASSWORD|PASSPHRASE|SECRET)[A-Z0-9_]*)\s*=\s*("[^"]*"|\S+)', '$1=[REDACTED]') }
     $files = @("$env:ProgramData\Sentinel\Logs\*.log", "$env:ProgramFiles\Guardz\*.log", "$env:ProgramData\Guardz\*.log", "$env:TEMP\*Sentinel*.log", "$env:TEMP\*guardz*.log", "$env:TEMP\MSI*.LOG")
     $out = @()
-    foreach ($g in $files) { foreach ($f in @(Get-ChildItem -Path $g -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 2)) { try { $tail = @(Get-Content -LiteralPath $f.FullName -Tail 40 -ErrorAction Stop) | ForEach-Object { Protect-DEText $_ }; $out += @{ file = $f.FullName; modified = $f.LastWriteTime.ToString('o'); tail = $tail } } catch { } } }
+    foreach ($g in $files) { foreach ($f in @(Get-ChildItem -Path $g -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 2)) { try { $tail = @(Get-Content -LiteralPath $f.FullName -Tail 40 -ErrorAction Stop) | ForEach-Object { & $scrub $_ }; $out += @{ file = $f.FullName; modified = $f.LastWriteTime.ToString('o'); tail = $tail } } catch { } } }
     return $out
 }
 
@@ -60,7 +63,7 @@ function Register-DESecurityActions {
         -Desired { @{ installed = $true; running = $true; versionOk = $true } } `
         -Apply { param($s) $a = Get-DESecurityAgentState; if (@($a.conflictingEdr).Count) { throw "conflicting EDR present: $($a.conflictingEdr -join ', ')" }; $r = Invoke-DEPackageInstall -Id 'sentinelone-agent' -ClientProfile $ClientProfile; if (-not $r.ok -and -not (Get-DEPkgProp $r 'planned')) { throw $r.detail }; if ($r.rebootRequired) { Request-DEReboot -Reason 'SentinelOne requested a restart' -ResumeAction 'security.sentinelone' | Out-Null }; Start-Sleep -Seconds 30; $r.detail }.GetNewClosure() `
         -Remediate { param($s) try { Start-Service -Name 'SentinelAgent' -ErrorAction Stop } catch { $null = Invoke-DEPackageInstall -Id 'sentinelone-agent' -ClientProfile $ClientProfile -Repair } }.GetNewClosure() `
-        -Verify { param($after) $svc = Get-DEServiceState -Name 'SentinelAgent'; @{ ok = ($svc.present -and $svc.status -eq 'Running'); detail = "SentinelAgent $($svc.status)" } } `
+        -Verify { param($after) $svc = Get-DEServiceState -Name 'SentinelAgent'; $vok = ($after.Detected.versionOk -ne $false); @{ ok = ($svc.present -and $svc.status -eq 'Running' -and $vok); detail = "SentinelAgent $($svc.status); version $($after.Detected.version)$(if (-not $vok) { ' is below the minimum' })" } } `
         -Description 'Site token is runtime-only. Console health (Sentinels > this device) is the final word on registration.'
 
     Register-DEAction -Id 'security.guardz' -Module 'security' -Title 'Guardz Device Agent installed and running (primary security platform)' -Phase 8 -Gates @('gate.elevated') -RequiresElevation -RequiresSecrets @('GUARDZ_ORG_KEY') `
@@ -88,7 +91,7 @@ function Register-DESecurityActions {
         -Description 'Runs the DE-supplied install-pabx_no-private-browsing.ps1 from the packages folder; browsers must be restarted for the policy to load.'
 
     Register-DEAction -Id 'security.defender-passive' -Module 'security' -Title 'Microsoft Defender in passive mode alongside the EDR' -Phase 8 `
-        -Detect { $a = Get-DESecurityAgentState; $s1 = $a.agents['sentinelone'].installed; $mode = "$(Get-DEHashPath -Object $a -Path 'defender.runningMode')"; @{ acceptable = (-not $s1) -or ($mode -match 'Passive|Not running|EDR Block') -or (-not $mode); mode = $mode } } -Desired { @{ acceptable = $true } } `
+        -Detect { $a = Get-DESecurityAgentState; $s1 = $a.agents['sentinelone'].installed; $mode = "$(Get-DEHashPath -Object $a -Path 'defender.runningMode')"; @{ acceptable = $(if (-not $s1) { $true } elseif (-not $mode) { $null } else { $mode -match 'Passive|Not running|EDR Block' }); mode = $(if ($mode) { $mode } else { 'unknown (Get-MpComputerStatus gave no answer)' }) } } -Desired { @{ acceptable = $true } } `
         -ManualAction 'Defender should drop to passive automatically once a third-party EDR registers with Windows Security Center; if it stays active, check Security Center registration of the EDR.'
 }
 

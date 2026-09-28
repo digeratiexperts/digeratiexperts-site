@@ -38,6 +38,8 @@ param(
     [string[]]$Solution = @(),
     [string]$Order,
     [switch]$PromptSecrets,
+    [string]$ProfileFile,
+    [string]$ResultFile,
     [switch]$Apply,
     [string]$Technician = 'jrpetro',
     [string]$DataDir,
@@ -55,29 +57,50 @@ Import-DEConsoleModules -Root $ConsoleRoot
 
 # ============================================================== headless
 if ($Headless) {
+    # One way out: every path prints RESULT and writes -ResultFile (JSON, no secrets) so RMM and first boot read the
+    # outcome from data, never from stdout or from an exit code a wrapper might lose.
+    function Exit-DEHeadless {
+        param([int]$Code, [string]$Overall, [string]$Message = '', [string]$Next = '', [string]$Bundle = '', [switch]$RestartRequired)
+        if ($Message) { Write-Host $Message }
+        Write-Host ("RESULT: {0}{1}" -f $Overall, $(if ($Bundle) { "; bundle $Bundle" } else { '' }))
+        if ($Next) { Write-Host "NEXT: $Next" }
+        if ($ResultFile) { try { [ordered]@{ schema = 'de.techconsole.result/v1'; overall = $Overall; exitCode = $Code; restartRequired = [bool]$RestartRequired; message = (Protect-DEText $Message); next = (Protect-DEText $Next); bundle = $Bundle; at = (Get-Date).ToString('o') } | ConvertTo-Json | Set-Content -LiteralPath $ResultFile -Encoding UTF8 -WhatIf:$false } catch { Write-Host "could not write $ResultFile : $($_.Exception.Message)" } }
+        try { Clear-DESecrets } catch { }
+        exit $Code
+    }
     $null = Initialize-DEConsole -Root $ConsoleRoot -Mode $(if ($Apply) { 'Apply' } else { 'Audit' }) -DataDir $DataDir -DryRun:$WhatIfPreference
+    $null = Clear-DERebootQueueIfRestarted   # restarts already done since they were queued no longer hold phases back
     $integrity = Write-DEIntegrityEvidence
-    if ($Apply -and $integrity.status -eq 'tampered') { Write-Host ('REFUSED: console files changed after packaging: ' + ($integrity.problems -join '; ')); exit 2 }
+    if ($Apply -and $integrity.status -eq 'tampered') { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message ('REFUSED: console files changed after packaging: ' + ($integrity.problems -join '; ')) -Next 'Re-download the signed package and compare its sha256.' }
     # powershell.exe -File passes '-Solution a,b' as one string: accept comma-separated lists from RMM command lines
     $AddOn = @($AddOn | ForEach-Object { "$_" -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
     $Solution = @($Solution | ForEach-Object { "$_" -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
     # A dropship order (no secrets) names the client, bundle, end user and the exact device.
     if ($Order) {
-        try { $ord = Import-DEOrderManifest -Path $Order } catch { Write-Host "REFUSED: $($_.Exception.Message)"; exit 2 }
+        try { $ord = Import-DEOrderManifest -Path $Order } catch { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message "REFUSED: $($_.Exception.Message)" }
         if (-not $Client) { $Client = $ord['client'] }
         if (-not $Bundle -and $ord['bundle']) { $Bundle = $ord['bundle'] }
         if (-not @($AddOn | Where-Object { $_ }).Count -and $ord['addOns']) { $AddOn = @($ord['addOns']) }
         if (-not @($Solution | Where-Object { $_ }).Count -and $ord['solutions']) { $Solution = @($ord['solutions']) }
         if ($Mode -in @('audit', 'auto') -and $Apply) { $Mode = 'dropship' }
     }
-    if (-not $Client) { Write-Error '-Headless needs -Client <profile id> (or -Order <order.json>)'; exit 2 }
+    # -ProfileFile: a client profile shipped beside the tool (dropship kits), so the signed console tree is never edited
+    $baseProfile = $null
+    if ($ProfileFile) {
+        try { $baseProfile = ConvertTo-DEHashtable (Get-Content -LiteralPath $ProfileFile -Raw | ConvertFrom-Json) } catch { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message "REFUSED: cannot read profile $ProfileFile ($($_.Exception.Message))" }
+        $hits = @(Test-DEProfileHasSecrets -Profile $baseProfile); if ($hits.Count) { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message "REFUSED: the profile file carries secret-looking fields ($($hits -join ', '))" }
+        if ($Client -and $Client -ne "$($baseProfile['id'])") { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message "REFUSED: the profile file is for '$($baseProfile['id'])', not '$Client'" }
+        $Client = "$($baseProfile['id'])"
+    }
+    if (-not $Client) { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message 'REFUSED: -Headless needs -Client <profile id>, -ProfileFile <profile.json> or -Order <order.json>' }
+    if (-not $baseProfile) { try { $baseProfile = Get-DEClientProfile -Id $Client } catch { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message "REFUSED: no client profile '$Client' ($($_.Exception.Message))" } }
     # RMM secure variables arrive as DE_SECRET_<NAME> environment variables; they move into the in-memory
     # SecureString store and are removed from the process environment straight away.
     foreach ($ev in @(Get-ChildItem Env: | Where-Object { $_.Name -like 'DE_SECRET_*' })) {
         Set-DESecret -Name ($ev.Name.Substring(10)) -Plain $ev.Value
         Remove-Item -LiteralPath ("Env:\" + $ev.Name) -ErrorAction SilentlyContinue
     }
-    $clientProf = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $Client) -Bundle $Bundle -AddOn $AddOn -Solution $Solution
+    try { $clientProf = New-DEComposedProfile -ClientProfile $baseProfile -Bundle $Bundle -AddOn $AddOn -Solution $Solution } catch { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message "REFUSED: $($_.Exception.Message)" }
     $snap = Get-DEDiscoverySnapshot
     if ($Mode -eq 'auto') {
         $rec = Get-DERecommendedMode -Snapshot $snap -ClientProfile $clientProf
@@ -88,17 +111,16 @@ if ($Headless) {
     $ids = @(Initialize-DEWorkflow -ClientProfile $clientProf -Mode $Mode)
     $planName = $(if ($clientProf.plan.bundleName) { $clientProf.plan.bundleName } elseif (@($clientProf.plan.solutions).Count) { 'standalone: ' + (@($clientProf.plan.solutions) -join ', ') } else { 'client profile' })
     Write-Host ("PLAN: {0}; mode {1}; {2} step(s)" -f $planName, $Mode, $ids.Count)
-    $null = New-DEProvisioningContext -Snapshot $snap -ClientId $Client -Mode $(if ($Mode -eq 'auto') { 'audit' } else { $Mode }) -Technician $Technician
+    $null = New-DEProvisioningContext -Snapshot $snap -ClientId $Client -Mode $Mode -Technician $Technician
     if ($Order) {
         $null = Import-DEOrderManifest -Path $Order   # re-apply the order's end user over the discovered one
         $match = Test-DEOrderMatch -Device (Get-DEHashPath -Object $snap -Path 'device')
         Write-Host ("ORDER: {0} ({1})" -f $match.Status, $match.Detail)
-        if ($Apply -and $match.Status -eq 'BLOCKED') {
-            # the wrong unit is never provisioned: stop before any change, with evidence of why
+        if ($Apply -and $match.Status -ne 'PASS' -and -not ($match.Status -eq 'WARN' -and $match.Detail -like '*names no serial*')) {
+            # the wrong (or an unidentifiable) unit is never provisioned: stop before any change, with evidence of why
             Add-DEEvidence -Step 'order.verify-device' -Module 'order' -Before 'order loaded' -ActionTaken 'provisioning refused' -Result 'BLOCKED' -Verification $match.Detail | Out-Null
             $b = Export-DEEvidenceBundle -Snapshot $snap -ClientProfile $clientProf
-            Write-Host ("REFUSED: {0}. Nothing was changed. Evidence: {1}" -f $match.Detail, $b.zip)
-            Clear-DESecrets; exit 2
+            Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message ("REFUSED: {0}. Nothing was changed." -f $match.Detail) -Bundle $b.zip -Next 'Check the serial on the chassis against the order; fix the order if the distributor shipped a different unit.'
         }
     }
     if ($PromptSecrets) {
@@ -110,29 +132,40 @@ if ($Headless) {
         if (-not $canPrompt) { if ($needed.Count) { Write-Host ("SECRETS: no console to type into; not asked for {0}. Use DE_SECRET_<NAME> variables or the DE vault." -f ($needed -join ', ')) } }
         else { foreach ($n in $needed) { if (-not (Test-DESecret -Name $n)) { try { $sec = Read-Host -AsSecureString -Prompt "$n (runtime only, press Enter to skip)"; if ($sec -and $sec.Length -gt 0) { Set-DESecret -Name $n -SecureValue $sec } } catch { Write-Host "SECRETS: could not read $n ($($_.Exception.Message)); skipped" } } } }
     }
-    if ($Apply -and $Mode -ne 'audit') { foreach ($ph in (Get-DEActions -Mode $Mode | ForEach-Object { $_.Phase } | Sort-Object -Unique)) { $null = Invoke-DEPhase -Phase $ph -Mode $Mode } }
-    else { $null = Invoke-DEAudit -Mode $Mode }
+    $restart = $false
+    if ($Apply -and $Mode -ne 'audit') {
+        foreach ($ph in (Get-DEActions -Mode $Mode | ForEach-Object { $_.Phase } | Sort-Object -Unique)) {
+            # a queued restart stops the run: later phases never apply on top of a pending restart
+            if (@(Get-DERebootQueue).Count) { $restart = $true; break }
+            $null = Invoke-DEPhase -Phase $ph -Mode $Mode
+        }
+        if (@(Get-DERebootQueue).Count) { $restart = $true }
+    } else { $null = Invoke-DEAudit -Mode $Mode }
     $b = Export-DEEvidenceBundle -Snapshot $snap -ClientProfile $clientProf
     $null = Send-DEHubPayload -Payload (New-DEHubPayload -Record $b.record -BundleSha256 $b.sha256 -BundlePath $b.zip)
     $r = Get-DEReadiness
     $next = Get-DENextAction -Mode $Mode
-    Write-Host ("RESULT: {0}; bundle {1} (sha256 {2})" -f $r.overall, $b.zip, $b.sha256)
-    Write-Host ("NEXT: {0} ({1})" -f $next.title, $next.why)
-    Clear-DESecrets
-    # 0 only for READY; anything unfinished (NOT READY, IN PROGRESS, NOT RUN) is 1 so a caller never reads it as done
-    exit $(switch ($r.overall) { 'READY' { 0 } 'READY WITH EXCEPTIONS' { 0 } 'NOT READY' { 1 } default { $(if ((Get-DEConsole).ExitCode) { (Get-DEConsole).ExitCode } else { 1 }) } })
+    $nextText = $(if ($restart) { 'Restart the device, then run the same command again; it continues where it stopped. (' + ((@(Get-DERebootQueue) | ForEach-Object { $_['reason'] }) -join '; ') + ')' } else { "$($next.title) ($($next.why))" })
+    # 0 only for READY; 2 when a gate, secret or elevation blocked the run (and nothing outright failed); 1 for anything unfinished
+    $code = $(switch ($r.overall) { 'READY' { 0 } 'READY WITH EXCEPTIONS' { 0 } 'NOT READY' { $(if ($r.blocked) { 2 } else { 1 }) } default { 1 } })
+    if ($restart -and $code -eq 0) { $code = 1 }
+    Exit-DEHeadless -Code $code -Overall $(if ($restart -and $r.overall -like 'READY*') { 'RESTART REQUIRED' } else { $r.overall }) -Bundle "$($b.zip) (sha256 $($b.sha256))" -Next $nextText -RestartRequired:$restart
 }
 
 # ============================================================== window
-if ($env:OS -ne 'Windows_NT') { Write-Error 'The window needs Windows. Use -Headless on other platforms.'; exit 2 }
+if ($env:OS -ne 'Windows_NT') { Write-Host 'The window needs Windows. Use -Headless on other platforms.'; exit 2 }
 if ($SmokeTest -and -not $DataDir) { $DataDir = Join-Path ([IO.Path]::GetTempPath()) ("de-console-smoke-{0}" -f $PID) }
 if ([Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
     $exe = (Get-Process -Id $PID).Path
+    # Start-Process joins -ArgumentList without quoting: quote every value that may hold a space (C:\Program Files\...)
+    $q = { param($v) if ("$v" -match '\s' -and "$v" -notmatch '^".*"$') { '"' + $v + '"' } else { "$v" } }
     if ($SmokeTest) {
         $smokeArgs = @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath, '-SmokeTest', '-SmokeClient', $SmokeClient, '-DataDir', $DataDir); if ($SmokeOut) { $smokeArgs += @('-SmokeOut', $SmokeOut) }
+        $smokeArgs = @($smokeArgs | ForEach-Object { & $q $_ })
         $p = Start-Process -FilePath $exe -ArgumentList $smokeArgs -Wait -PassThru -NoNewWindow; exit $p.ExitCode
     }
     $argsList = @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath, '-Page', $Page, '-Technician', $Technician); if ($Resume) { $argsList += '-Resume' }; if ($DataDir) { $argsList += @('-DataDir', $DataDir) }
+    $argsList = @($argsList | ForEach-Object { & $q $_ })
     Start-Process -FilePath $exe -ArgumentList $argsList | Out-Null; exit 0
 }
 # Per-monitor DPI awareness before WPF loads (crisp text at 150-200 percent scaling).
@@ -280,7 +313,7 @@ try {
 # ============================================================== session state
 $S = @{ Profile = $null; Snapshot = $null; Mode = $Settings.mode; Job = $null; Timer = $null; LogPos = 0; CurrentPage = $Page; LastBundle = $null; LastJobError = $null; LogBox = $null }
 function Get-Brush { param([string]$Key) return $Win.Resources[$Key] }
-function Get-StateBrush { param([string]$State) switch -Regex ($State) { '^(PASS|NO CHANGE|READY)$' { Get-Brush 'Pass' } '^(WARN|DRIFT|IN PROGRESS|NOT RUN)$' { Get-Brush 'Warn' } '^(EXCEPTION|PLANNED|READY WITH EXCEPTIONS)$' { Get-Brush 'Lavender' } default { Get-Brush 'Magenta' } } }
+function Get-StateBrush { param([string]$State) switch -Regex ($State) { '^(PASS|NO CHANGE|READY)$' { Get-Brush 'Pass' } '^(WARN|DRIFT|IN PROGRESS|NOT RUN)$' { Get-Brush 'Warn' } '^(EXCEPTION|PLANNED|SKIPPED|NOT IN PLAN|READY WITH EXCEPTIONS)$' { Get-Brush 'Lavender' } default { Get-Brush 'Magenta' } } }
 function Set-Status { param([string]$Text) $UI.TxtStatus.Text = (Protect-DEText $Text) }
 
 function New-El {
@@ -329,7 +362,8 @@ function Start-DEJob {
     param([Parameter(Mandatory = $true)][string]$Label, [Parameter(Mandatory = $true)][scriptblock]$Work, [hashtable]$Params = @{}, [scriptblock]$OnDone)
     if ($S.Job) { Set-Status 'A job is already running.'; return }
     $de = Get-DEConsole
-    $core = Start-DEBackgroundJob -Work $Work -Params $Params -ProfileId $(if ($S.Profile) { $S.Profile.id } else { $null }) -Mode $S.Mode
+    $plan = $null; if ($S.Profile -and $S.Profile.plan) { $plan = @{ bundle = "$($S.Profile.plan.bundle)"; addOns = @($S.Profile.plan.addOns | Where-Object { $_ }); solutions = @($S.Profile.plan.solutions | Where-Object { $_ }) } }
+    $core = Start-DEBackgroundJob -Work $Work -Params $Params -ProfileId $(if ($S.Profile) { $S.Profile.id } else { $null }) -Mode $S.Mode -Plan $plan
     $S.Job = @{ core = $core; handle = $core.handle; label = $Label; started = $core.started; onDone = $OnDone }
     $UI.Progress.Visibility = 'Visible'; $UI.Progress.IsIndeterminate = $true; $UI.BtnCancel.Visibility = 'Visible'
     Set-Status "Running: $Label"
@@ -399,7 +433,7 @@ function Invoke-Discovery {
         param($r)
         $S.Snapshot = $r['out']
         $match = Resolve-DEClientContext -Snapshot $S.Snapshot
-        if (-not $S.Profile -and $match.best) { $S.Profile = Get-DEClientProfile -Id $match.best.id; $UI.HdrClientWhy.Text = "detected ($($match.confidence)): $($match.best.reasons -join '; ')" }
+        if (-not $S.Profile -and $match.best) { $S.Profile = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $match.best.id); $UI.HdrClientWhy.Text = "detected ($($match.confidence)): $($match.best.reasons -join '; ')" }
         if ($S.Profile) {
             $null = New-DEProvisioningContext -Snapshot $S.Snapshot -ClientId $S.Profile.id -Mode $S.Mode -Technician $Settings.technician
             $null = Initialize-DEWorkflow -ClientProfile $S.Profile -Mode $S.Mode
@@ -523,6 +557,7 @@ function Use-ClientAndMode {
     if (-not $ProfileId) { Set-Status 'Pick a client profile first.'; return }
     # the plan picker: a ProActive tier or variant, a standalone solution, or the client profile's own default
     $S.Profile = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $ProfileId) -Bundle $Bundle -Solution $Solution; $Settings.client = $S.Profile.id
+    $Settings.planBundle = "$($S.Profile.plan.bundle)"; $Settings.planSolutions = @($S.Profile.plan.solutions | Where-Object { $_ })   # a restart or resume keeps the chosen plan
     if ($Mode) { $S.Mode = $Mode }; $Settings.mode = $S.Mode
     if ($Technician) { $Settings.technician = $Technician }
     Save-GuiSettings
@@ -600,7 +635,7 @@ function Build-Workflow {
     $phases = @(Get-DEActions -Mode $S.Mode | Group-Object Phase | Sort-Object { [int]$_.Name })
     $phaseNames = @{ 0 = 'Plan prerequisites and order check'; 15 = 'Plan steps (portal and people work)'; 16 = 'Handoff'; 1 = 'Intake'; 2 = 'Hardware and readiness'; 3 = 'Updates and firmware'; 5 = 'Break-glass'; 6 = 'Encryption, OneDrive, Hello gates'; 7 = 'Identity and JumpCloud'; 8 = 'Security stack'; 9 = 'Applications'; 10 = 'Microsoft 365 and MFA'; 11 = 'Windows baseline'; 12 = 'Browser'; 13 = 'Branding'; 14 = 'Network, backup, remote support' }
     $n = Get-DENextAction -Mode $S.Mode
-    [void]$root.Children.Add((New-Card @((New-Label 'Next'), (New-Text $n.title 17 -Bold -Wrap), (New-Text $n.why -Muted -Wrap), (New-Wrap @((New-Button $(if ($n.id -like 'plan.*') { 'Confirm done' } else { 'Run next' }) { if ($n.id -like 'plan.*') { Confirm-GuiPlanStep -Id $n.id -Title $n.title; return }; if ($n.runnable) { Start-DEJob -Label $n.title -Params @{ id = $n.id } -Work { Invoke-DEAction -Id $JobParams.id -Mode Apply } } else { Set-Status "Not runnable yet: $($n.why)" } }.GetNewClosure() -Primary), (New-Button 'Restart now and resume' { if (Confirm-Gui 'Restart?' 'The console will reopen after sign-in at the queued step.') { Set-DEResume -Launcher (Get-LauncherPath) -NextAction $n.id -LoginAs "$((Get-DEContext)['localUserName'])"; Invoke-DERestart -DelaySeconds 20 } }), (New-Button 'Export evidence' { Show-Page 'Evidence' }))))))
+    [void]$root.Children.Add((New-Card @((New-Label 'Next'), (New-Text $n.title 17 -Bold -Wrap), (New-Text $n.why -Muted -Wrap), (New-Wrap @((New-Button $(if ($n.id -like 'plan.*') { 'Confirm done' } else { 'Run next' }) { if ($n.id -like 'plan.*') { Confirm-GuiPlanStep -Id $n.id -Title $n.title; return }; if ($n.runnable) { Start-DEJob -Label $n.title -Params @{ id = $n.id } -Work { Invoke-DEAction -Id $JobParams.id -Mode Apply } } else { Set-Status "Not runnable yet: $($n.why)" } }.GetNewClosure() -Primary), (New-Button 'Restart now and resume' { if (Confirm-Gui 'Restart?' 'The console will reopen after sign-in at the queued step.') { Set-DEResume -Launcher (Get-LauncherPath) -NextAction $n.id -LoginAs "$((Get-DEContext)['localUserName'])"; Invoke-DERestart -DelaySeconds 20 } }.GetNewClosure()), (New-Button 'Export evidence' { Show-Page 'Evidence' }))))))
     foreach ($ph in $phases) {
         $title = $phaseNames[[int]$ph.Name]; if (-not $title) { $title = "Phase $($ph.Name)" }
         $mods = @($ph.Group | ForEach-Object { $_.Module } | Select-Object -Unique)
@@ -859,7 +894,7 @@ $Win.Dispatcher.Add_UnhandledException({
     try { Set-Status $msg } catch { }
 })
 $Win.Add_ContentRendered({
-    if ($Settings.client) { try { $S.Profile = Get-DEClientProfile -Id $Settings.client } catch { } }
+    if ($Settings.client) { try { $S.Profile = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $Settings.client) -Bundle "$(Get-DEHashPath -Object $Settings -Path 'planBundle')" -Solution @(Get-DEHashPath -Object $Settings -Path 'planSolutions' | Where-Object { $_ }) } catch { } }
     if ($Resume) { $r = Resume-DEWorkflow; Set-Status "Resumed after restart. Next: $(Get-DEHashPath -Object $r -Path 'nextAction')"; $S.CurrentPage = 'Workflow' }
     Show-Page $S.CurrentPage
     if ($Integrity.status -eq 'tampered') { Set-Status ('WARNING: console files changed after packaging; do not run changes from this copy. ' + (@($Integrity.problems | Select-Object -First 3) -join '; ')) }

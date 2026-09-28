@@ -112,11 +112,21 @@ function Resume-DEWorkflow {
     <# Called when the console starts with -Resume: reloads context, clears the RunOnce, re-audits and returns the next action. #>
     $r = Get-DEResume
     Clear-DEResume
+    $null = Clear-DERebootQueueIfRestarted
     $ctx = Get-DEState -Path 'context'; if ($ctx) { Set-DEContext -Values (ConvertTo-DEHashtable $ctx) }
     return $r
 }
 
 # ------------------------------------------------------------------ deprovision
+function Get-DEOtherLocalAdmins {
+    <# Enabled local administrators that are neither DE-BreakGlass nor the DE technician account. Empty off Windows. #>
+    if ($env:OS -ne 'Windows_NT') { return @() }
+    try {
+        $members = @(Get-LocalGroupMember -SID 'S-1-5-32-544' -ErrorAction Stop | Where-Object { $_ -and $_.PrincipalSource -eq 'Local' -and $_.ObjectClass -eq 'User' })
+        return @($members | ForEach-Object { ($_.Name -split '\\')[-1] } | Where-Object { $_ -and $_ -notin @('DE-BreakGlass', 'jrpetro') } | Where-Object { $u = Get-LocalUser -Name $_ -ErrorAction SilentlyContinue; $u -and $u.Enabled })
+    } catch { return @() }
+}
+
 function Register-DEDeprovisionActions {
     param($ClientProfile)
     Register-DEAction -Id 'deprov.data-preserved' -Module 'deprovision' -Title 'User data preserved (profile export or confirmed synced)' -Phase 1 -Modes @('deprovision') `
@@ -131,11 +141,16 @@ function Register-DEDeprovisionActions {
     Register-DEAction -Id 'deprov.jumpcloud' -Module 'deprovision' -Title 'Release the device from JumpCloud (keep the local account)' -Phase 4 -Modes @('deprovision') -Gates @('gate.elevated', 'deprov.gate.data') -RequiresElevation -Destructive `
         -Detect { @{ installed = (Get-DEJumpCloudAgentState).installed } } -Desired { @{ installed = $false } } `
         -ManualAction 'Delete the system from the JumpCloud console with "keep local users"; then uninstall the agent. The local account and its data stay.'
-    Register-DEAction -Id 'deprov.breakglass' -Module 'deprovision' -Title 'Remove DE break-glass access' -Phase 5 -Modes @('deprovision') -Gates @('gate.elevated', 'deprov.gate.data') -RequiresElevation -Destructive `
+    Register-DEAction -Id 'deprov.breakglass' -Module 'deprovision' -Title 'Remove DE break-glass access' -Phase 5 -Modes @('deprovision') -Gates @('gate.elevated', 'deprov.gate.data', 'deprov.gate.client-admin') -RequiresElevation -Destructive `
         -Detect { @{ exists = (Get-DEBreakGlassState).exists } } -Desired { @{ exists = $false } } `
         -Apply { param($s) Remove-LocalUser -Name 'DE-BreakGlass'; Remove-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList' -Name 'DE-BreakGlass' -ErrorAction SilentlyContinue; 'break-glass removed' } `
         -ManualAction 'Only after the client has its own administrator on the device.'
-    Register-DEGate -Id 'deprov.gate.data' -Title 'User data preservation confirmed' -Module 'deprovision' -Check { if (Get-DEState -Path 'deprovision.dataConfirmedAt') { @{ Status = 'PASS'; Detail = 'confirmed' } } else { @{ Status = 'BLOCKED'; Detail = 'data preservation not confirmed' } } } -Unblock 'Confirm data preservation first.'
+    # removing DE-BreakGlass must never leave the device without a working administrator the client controls
+    Register-DEGate -NoException -Id 'deprov.gate.client-admin' -Title 'Client has its own administrator on this device' -Module 'deprovision' -Check {
+        $others = @(Get-DEOtherLocalAdmins)
+        if ($others.Count) { @{ Status = 'PASS'; Detail = "other enabled administrator(s): $($others -join ', ')" } } else { @{ Status = 'BLOCKED'; Detail = 'no enabled local administrator other than DE-BreakGlass and the DE technician account' } }
+    } -Unblock 'Create or confirm the client''s own local administrator (not DE-BreakGlass, not jrpetro) before removing DE access.'
+    Register-DEGate -NoException -Id 'deprov.gate.data' -Title 'User data preservation confirmed' -Module 'deprovision' -Check { if (Get-DEState -Path 'deprovision.dataConfirmedAt') { @{ Status = 'PASS'; Detail = 'confirmed' } } else { @{ Status = 'BLOCKED'; Detail = 'data preservation not confirmed' } } } -Unblock 'Confirm data preservation first.'
 }
 
 # ------------------------------------------------------------------ background jobs (UI-independent)
@@ -145,10 +160,11 @@ function Start-DEBackgroundJob {
     restores the data folder, context, secrets (SecureString only), redactions, client profile and mode, then
     runs $Work with $JobParams, $JobProfile and $JobMode in scope. Complete with Complete-DEBackgroundJob.
     #>
-    param([Parameter(Mandatory = $true)][scriptblock]$Work, [hashtable]$Params = @{}, $ProfileId, [string]$Mode = 'audit')
+    # -Plan carries the plan picked in the window (bundle, addOns, solutions) so the job builds the same plan, not the profile default
+    param([Parameter(Mandatory = $true)][scriptblock]$Work, [hashtable]$Params = @{}, $ProfileId, [string]$Mode = 'audit', $Plan)
     $de = Get-DEConsole
     $rs = [RunspaceFactory]::CreateRunspace(); $rs.ApartmentState = 'MTA'; $rs.Open()
-    $vars = @{ JobRoot = $de.Root; JobDataDir = $de.Dirs.Base; JobSecrets = $de.Secrets; JobRedactions = @($de.Redactions); JobContext = $de.Context; JobProfileId = $ProfileId; JobMode = $Mode; JobDryRun = [bool]$de.DryRun; JobParams = $Params; JobLogFile = $de.LogFile }
+    $vars = @{ JobRoot = $de.Root; JobDataDir = $de.Dirs.Base; JobSecrets = $de.Secrets; JobRedactions = @($de.Redactions); JobContext = $de.Context; JobProfileId = $ProfileId; JobMode = $Mode; JobDryRun = [bool]$de.DryRun; JobParams = $Params; JobLogFile = $de.LogFile; JobPlan = $Plan }
     foreach ($k in $vars.Keys) { $rs.SessionStateProxy.SetVariable($k, $vars[$k]) }
     $prelude = {
         $ErrorActionPreference = 'Stop'
@@ -159,7 +175,12 @@ function Start-DEBackgroundJob {
         foreach ($k in @($JobSecrets.Keys | Where-Object { $null -ne $_ })) { Set-DESecret -Name $k -SecureValue $JobSecrets[$k] }
         foreach ($r in $JobRedactions) { Register-DERedaction -Value $r }
         if ($JobContext) { Set-DEContext -Values $JobContext }
-        $JobProfile = $null; if ($JobProfileId) { $JobProfile = Get-DEClientProfile -Id $JobProfileId; $null = Initialize-DEWorkflow -ClientProfile $JobProfile -Mode $JobMode }
+        $JobProfile = $null
+        if ($JobProfileId) {
+            $JobProfile = Get-DEClientProfile -Id $JobProfileId
+            if ($JobPlan) { $JobProfile = New-DEComposedProfile -ClientProfile $JobProfile -Bundle "$($JobPlan['bundle'])" -AddOn @($JobPlan['addOns'] | Where-Object { $_ }) -Solution @($JobPlan['solutions'] | Where-Object { $_ }) }
+            $null = Initialize-DEWorkflow -ClientProfile $JobProfile -Mode $JobMode
+        }
     }
     $script = [scriptblock]::Create($prelude.ToString() + "`n" + '$__out = & {' + $Work.ToString() + '}' + "`n" + '@{ out = $__out; evidence = @(Get-DEEvidence); context = (Get-DEContext) }')
     $ps = [PowerShell]::Create(); $ps.Runspace = $rs
@@ -189,6 +210,9 @@ function Complete-DEBackgroundJob {
         try { $Job.ps.Dispose() } catch { }
         try { $Job.rs.Close(); $Job.rs.Dispose() } catch { }
     }
+    # the job saved state (migration status, rollback backups) to disk: reload it before anything here saves,
+    # or this session's older copy would overwrite what the job recorded
+    try { $null = Import-DEState } catch { }
     if ($result -and -not $NoMerge) {
         $de = Get-DEConsole
         foreach ($e in @($result['evidence'])) { if ($e) { [void]$de.Evidence.Add($e); if ($e.result -eq 'FAIL' -and $de.ExitCode -eq 0) { $de.ExitCode = 1 } } }
@@ -197,4 +221,4 @@ function Complete-DEBackgroundJob {
     return @{ ok = (-not $failure); result = $result; failure = $failure; warnings = $warnings }
 }
 
-Export-ModuleMember -Function Start-DEBackgroundJob, Complete-DEBackgroundJob, Get-DEModes, Import-DEConsoleModules, Initialize-DEWorkflow, Get-DENextAction, Invoke-DEAudit, Invoke-DEPhase, Resume-DEWorkflow, Register-DEDeprovisionActions
+Export-ModuleMember -Function Start-DEBackgroundJob, Complete-DEBackgroundJob, Get-DEModes, Import-DEConsoleModules, Initialize-DEWorkflow, Get-DENextAction, Invoke-DEAudit, Invoke-DEPhase, Resume-DEWorkflow, Register-DEDeprovisionActions, Get-DEOtherLocalAdmins

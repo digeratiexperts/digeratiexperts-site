@@ -4,9 +4,10 @@ rem AI Toolkit page; with arguments it runs the AI-kit loader directly, for exam
 rem   Start-MspAiKit.cmd -Action All -NonInteractive
 rem   Start-MspAiKit.cmd -Action Update -WhatIf
 setlocal
-if "%~1"=="" (
-  call "%~dp0Start-DETechConsole.cmd" -Page AiToolkit
-  exit /b %ERRORLEVEL%
-)
+if "%~1"=="" goto :window
 powershell.exe -NoProfile -NoLogo -ExecutionPolicy Bypass -File "%~dp0Install-MspAiKit.ps1" %*
-endlocal & exit /b %ERRORLEVEL%
+exit /b %ERRORLEVEL%
+
+:window
+call "%~dp0Start-DETechTool.cmd" -Page AiToolkit
+exit /b %ERRORLEVEL%

@@ -51,7 +51,9 @@ function Test-DEPackageInstalled {
     if ($det) {
         foreach ($s in @(Get-DEPkgProp $det 'services' | Where-Object { $null -ne $_ })) { if ($s) { $st = Get-DEServiceState -Name $s; if ($st.present) { $installed = $true; $ev += "service $s $($st.status)" } } }
         foreach ($p in @(Get-DEPkgProp $det 'processes' | Where-Object { $null -ne $_ })) { if ($p -and (Get-Process -Name $p -ErrorAction SilentlyContinue)) { $installed = $true; $ev += "process $p running" } }
-        foreach ($p in @(Get-DEPkgProp $det 'paths' | Where-Object { $null -ne $_ })) { $x = Expand-DEPath $p; if ($x -and (Test-Path -LiteralPath $x -ErrorAction SilentlyContinue)) { $installed = $true; $ev += "path $x"; if (-not $version -and $x -match '\.exe$') { try { $version = (Get-Item -LiteralPath $x).VersionInfo.ProductVersion } catch { } } } }
+        # a leftover folder alone is not an install when the package has a service, process or app entry to look for
+        $strongRules = @(@(Get-DEPkgProp $det 'services') + @(Get-DEPkgProp $det 'processes') + @(Get-DEPkgProp $det 'appNameRegex') | Where-Object { $_ }).Count -gt 0
+        foreach ($p in @(Get-DEPkgProp $det 'paths' | Where-Object { $null -ne $_ })) { $x = Expand-DEPath $p; if ($x -and (Test-Path -LiteralPath $x -ErrorAction SilentlyContinue)) { if (-not $strongRules) { $installed = $true }; $ev += "path $x"; if (-not $version -and $x -match '\.exe$') { try { $version = (Get-Item -LiteralPath $x).VersionInfo.ProductVersion } catch { } } } }
         $rx = Get-DEPkgProp $det 'appNameRegex'
         if ($rx) { if (-not $Apps) { $Apps = Get-DEInstalledApps }; $hit = @($Apps | Where-Object { $_ -and $_.name -match $rx }) | Select-Object -First 1; if ($hit) { $installed = $true; $ev += "app '$($hit.name)' $($hit.version)"; if (-not $version) { $version = $hit.version } } }
         $rules = @(Get-DEPkgProp $det 'registry' | Where-Object { $null -ne $_ })
@@ -119,6 +121,7 @@ function Invoke-DEPackageInstall {
     $file = Get-DEPackageFile -Package $pkg -AllowUnverified:$AllowUnverified
     if (Get-DEPkgProp $file 'planned') { return [pscustomobject]@{ ok = $false; planned = $true; detail = 'download planned' } }
     if (-not $file.trust.Ok) { throw "trust policy refused $name : $($file.trust.Reasons -join '; '). Override with -AllowUnverified and a reason only after checking the file." }
+    if ($file.trust.Overridden -and -not $OverrideReason.Trim()) { throw "an unverified installer for $name needs -OverrideReason (who checked the file and how)" }
     if ($file.trust.Overridden) { Add-DEEvidence -Step "apps.$Id.trust" -Module 'apps' -Before 'unverified file' -ActionTaken "override: $OverrideReason" -Result 'WARN' -Verification ($file.trust.Reasons -join '; ') -Remediation 'Add the sha256 or publisher to the catalog.' | Out-Null }
     $inst = Get-DEPkgProp $pkg 'install'
     $type = Get-DEPkgProp $inst 'type'
@@ -138,13 +141,11 @@ function Invoke-DEPackageInstall {
     $shown = "$exe " + (($argList | ForEach-Object { Protect-DEText $_ }) -join ' ')
     if (-not $PSCmdlet.ShouldProcess($name, $shown)) { return [pscustomobject]@{ ok = $false; planned = $true; detail = $shown } }
     Write-DELog -Level INFO -Message "installing $name : $shown"
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = $exe; $psi.Arguments = (($argList | ForEach-Object { if ($_ -match '\s' -and $_ -notmatch '^".*"$') { '"' + $_ + '"' } else { $_ } }) -join ' '); $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
-    $proc = [System.Diagnostics.Process]::Start($psi)
-    $done = $proc.WaitForExit([int]$timeout * 1000)
-    if (-not $done) { try { $proc.Kill() } catch { }; throw "installer timed out after $timeout s" }
-    $stdout = Protect-DEText ($proc.StandardOutput.ReadToEnd()); $stderr = Protect-DEText ($proc.StandardError.ReadToEnd())
-    $code = $proc.ExitCode
+    # async output reads (a chatty installer cannot hang on a full pipe) and quoting that never double-wraps PROPERTY="a b"
+    $run = Invoke-DENative -FilePath $exe -Arguments $argList -TimeoutSeconds ([int]$timeout)
+    if ($run.TimedOut) { throw "installer timed out after $timeout s" }
+    $stdout = Protect-DEText $run.Text; $stderr = ''
+    $code = $run.ExitCode
     $argsText = $null
     $ok = ($success -contains $code)
     $reboot = ($rebootCodes -contains $code)
@@ -155,20 +156,28 @@ function Invoke-DEPackageInstall {
 }
 
 function Invoke-DEPackageUninstall {
+    <#
+    Removes a catalog package silently, never by guessing switches: winget packages through winget, MSI products
+    through msiexec /x {GUID}, others only through the vendor's QuietUninstallString. Anything else is reported
+    as a manual step. Every run has a timeout. User data folders are never touched.
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
-    param([Parameter(Mandatory = $true)][string]$Id)
+    param([Parameter(Mandatory = $true)][string]$Id, [int]$TimeoutSeconds = 900)
     $pkg = Get-DEPackage -Id $Id
+    $src = Get-DEPkgProp $pkg 'source'
     $rx = Get-DEPkgProp (Get-DEPkgProp $pkg 'detect') 'appNameRegex'
-    $apps = @(); if ($rx) { $apps = @(Find-DEApp -NamePattern $rx) }
-    if (-not $apps.Count) { $src = Get-DEPkgProp $pkg 'source'; if ((Get-DEPkgProp $src 'type') -eq 'winget' -and $PSCmdlet.ShouldProcess($pkg.name, 'winget uninstall')) { $r = Invoke-DENative -FilePath 'winget.exe' -Arguments @('uninstall', '--id', (Get-DEPkgProp $src 'id'), '--exact', '--silent'); return [pscustomobject]@{ ok = ($r.ExitCode -eq 0); detail = "winget exit $($r.ExitCode)" } }; return [pscustomobject]@{ ok = $true; detail = 'not installed' } }
-    $app = $apps[0]
-    $cmd = "$($app.uninstall)"
-    if (-not $cmd) { return [pscustomobject]@{ ok = $false; detail = 'no uninstall string' } }
-    if ($cmd -match 'MsiExec\.exe\s*/[IX]\s*(\{[0-9A-Fa-f\-]+\})') { $exe = 'msiexec.exe'; $argList = @('/x', $Matches[1], '/quiet', '/norestart') }
-    else { $exe = 'cmd.exe'; $argList = @('/c', "$cmd /quiet /norestart") }
-    if (-not $PSCmdlet.ShouldProcess($app.name, "$exe $($argList -join ' ')")) { return [pscustomobject]@{ ok = $false; planned = $true } }
-    $r = Invoke-DENative -FilePath $exe -Arguments $argList
-    return [pscustomobject]@{ ok = ($r.ExitCode -in @(0, 3010, 1605)); exitCode = $r.ExitCode; detail = "exit $($r.ExitCode)" }
+    $apps = @(); if ($rx) { $apps = @(Find-DEApp -NamePattern $rx | Where-Object { $_ }) }
+    $exe = $null; $argList = @()
+    if ((Get-DEPkgProp $src 'type') -eq 'winget') { $exe = 'winget.exe'; $argList = @('uninstall', '--id', (Get-DEPkgProp $src 'id'), '--exact', '--silent', '--accept-source-agreements') }
+    elseif (-not $apps.Count) { return [pscustomobject]@{ ok = $true; detail = 'not installed' } }
+    elseif ("$($apps[0].uninstall)" -match 'MsiExec\.exe\s*/[IX]\s*(\{[0-9A-Fa-f\-]+\})') { $exe = 'msiexec.exe'; $argList = @('/x', $Matches[1], '/quiet', '/norestart') }
+    elseif ("$($apps[0].quietUninstall)") { $exe = 'cmd.exe'; $argList = @('/c', "$($apps[0].quietUninstall)") }
+    else { return [pscustomobject]@{ ok = $false; manual = $true; detail = "no silent uninstall is published for $($apps[0].name); remove it from Settings > Apps (DE Tech Tool never guesses installer switches)" } }
+    if (-not $PSCmdlet.ShouldProcess($pkg.name, "$exe $($argList -join ' ')")) { return [pscustomobject]@{ ok = $false; planned = $true } }
+    $r = Invoke-DENative -FilePath $exe -Arguments $argList -TimeoutSeconds $TimeoutSeconds
+    if ($r.TimedOut) { return [pscustomobject]@{ ok = $false; exitCode = $null; detail = "uninstall did not finish in $TimeoutSeconds s" } }
+    # 1605 = not installed; winget reports a missing package with -1978335212 (0x8A150014)
+    return [pscustomobject]@{ ok = ($r.ExitCode -in @(0, 3010, 1605, -1978335212)); exitCode = $r.ExitCode; detail = "exit $($r.ExitCode)" }
 }
 
 function New-DEOfficeConfigXml {

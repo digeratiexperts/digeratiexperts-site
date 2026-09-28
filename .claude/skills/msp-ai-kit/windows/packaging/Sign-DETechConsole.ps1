@@ -23,6 +23,7 @@ param(
     [string]$TimestampServer = 'http://timestamp.digicert.com',
     [string]$Root,
     [switch]$Verify,
+    [switch]$RequireSignature,
     [switch]$SkipSigning
 )
 Set-StrictMode -Version Latest
@@ -50,10 +51,16 @@ if ($Verify) {
         $full = Join-Path $Root $f.path
         if (-not (Test-Path -LiteralPath $full)) { $bad += "missing $($f.path)"; continue }
         if ((Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash.ToLowerInvariant() -ne $f.sha256) { $bad += "changed $($f.path)" }
-        if ($env:OS -eq 'Windows_NT' -and ($scriptExt -contains [IO.Path]::GetExtension($full).ToLowerInvariant())) {
+        # Authenticode is checked for signed builds (the manifest names a signer) or when the caller demands it;
+        # an unsigned development build is still held to its hashes
+        if ($env:OS -eq 'Windows_NT' -and ($RequireSignature -or "$($m.signer)" -ne 'unsigned') -and ($scriptExt -contains [IO.Path]::GetExtension($full).ToLowerInvariant())) {
             $s = Get-AuthenticodeSignature -LiteralPath $full; if ($s.Status -ne 'Valid') { $bad += "signature $($s.Status) $($f.path)" }
         }
     }
+    # a script the manifest does not list was added after packaging
+    $listed = @($m.files | ForEach-Object { "$($_.path)".ToLowerInvariant() })
+    foreach ($f in Get-ShippedFile | Where-Object { $scriptExt -contains $_.Extension.ToLowerInvariant() }) { $rel = ($f.FullName.Substring($Root.Length).TrimStart('\', '/') -replace '\\', '/').ToLowerInvariant(); if ($listed -notcontains $rel) { $bad += "not in integrity.json $rel" } }
+    if ($RequireSignature -and "$($m.signer)" -eq 'unsigned') { $bad += 'the package is unsigned and -RequireSignature was given' }
     if ($bad.Count) { $bad | ForEach-Object { Write-Host "FAIL $_" }; exit 1 }
     Write-Host ("PASS {0} file(s) match integrity.json (version {1}, signed by {2})" -f @($m.files).Count, $m.version, $m.signer); exit 0
 }

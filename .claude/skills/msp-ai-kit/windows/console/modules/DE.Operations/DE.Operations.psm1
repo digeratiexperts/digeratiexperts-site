@@ -30,9 +30,10 @@ function Install-DEWindowsUpdates {
     $criteria = "IsInstalled=0 and IsHidden=0 and Type='Software'"; if ($IncludeDrivers) { $criteria = 'IsInstalled=0 and IsHidden=0' }
     $result = $searcher.Search($criteria)
     $list = New-Object -ComObject Microsoft.Update.UpdateColl
-    foreach ($u in $result.Updates) { if ($u.Title -match 'Preview') { continue }; if (-not $u.EulaAccepted) { $u.AcceptEula() }; [void]$list.Add($u) }
+    foreach ($u in $result.Updates) { if ($u.Title -match 'Preview') { continue }; [void]$list.Add($u) }
     if ($list.Count -eq 0) { return @{ found = 0; installed = 0; rebootRequired = $false } }
     if (-not $PSCmdlet.ShouldProcess("$($list.Count) update(s)", 'download and install')) { return @{ found = $list.Count; installed = 0; planned = $true } }
+    foreach ($u in $list) { if (-not $u.EulaAccepted) { $u.AcceptEula() } }   # only on a real run
     $dl = $session.CreateUpdateDownloader(); $dl.Updates = $list; $null = $dl.Download()
     $inst = $session.CreateUpdateInstaller(); $inst.Updates = $list; $r = $inst.Install()
     $ok = 0; for ($i = 0; $i -lt $list.Count; $i++) { if ($r.GetUpdateResult($i).ResultCode -eq 2) { $ok++ } }
@@ -86,7 +87,7 @@ function Add-DEWifiProfile {
     finally { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force }; $key = $null; $xml = $null }
 }
 function Add-DEPrinter { [CmdletBinding(SupportsShouldProcess = $true)] param([Parameter(Mandatory = $true)][string]$Name, [Parameter(Mandatory = $true)][string]$Address, [string]$Driver = 'Microsoft IPP Class Driver') if (-not $PSCmdlet.ShouldProcess($Name, "add printer at $Address")) { return 'planned' }; $port = "IP_$Address"; if (-not (Get-PrinterPort -Name $port -ErrorAction SilentlyContinue)) { Add-PrinterPort -Name $port -PrinterHostAddress $Address }; if (-not (Get-Printer -Name $Name -ErrorAction SilentlyContinue)) { Add-Printer -Name $Name -DriverName $Driver -PortName $port }; return "printer $Name on $Address" }
-function Import-DECertificate { [CmdletBinding(SupportsShouldProcess = $true)] param([Parameter(Mandatory = $true)][string]$Path, [ValidateSet('Root', 'CA', 'My', 'TrustedPublisher')][string]$Store = 'Root', [string]$ExpectedThumbprint) $c = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2 $Path; if ($ExpectedThumbprint -and $c.Thumbprint -ne $ExpectedThumbprint.ToUpperInvariant()) { throw "certificate thumbprint $($c.Thumbprint) does not match the expected $ExpectedThumbprint" }; if (-not $PSCmdlet.ShouldProcess($c.Subject, "import into LocalMachine\$Store")) { return 'planned' }; Import-Certificate -FilePath $Path -CertStoreLocation "Cert:\LocalMachine\$Store" | Out-Null; return "imported $($c.Subject) ($($c.Thumbprint))" }
+function Import-DECertificate { [CmdletBinding(SupportsShouldProcess = $true)] param([Parameter(Mandatory = $true)][string]$Path, [ValidateSet('Root', 'CA', 'My', 'TrustedPublisher')][string]$Store = 'Root', [string]$ExpectedThumbprint) if ($Store -in @('Root', 'CA', 'TrustedPublisher') -and -not $ExpectedThumbprint) { throw "adding to LocalMachine\$Store needs -ExpectedThumbprint (checked against the client's record)" }; $all = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection; $all.Import($Path); if ($all.Count -ne 1) { throw "$Path holds $($all.Count) certificates; import exactly one, checked by thumbprint" }; $c = $all[0]; if ($ExpectedThumbprint -and $c.Thumbprint -ne $ExpectedThumbprint.ToUpperInvariant()) { throw "certificate thumbprint $($c.Thumbprint) does not match the expected $ExpectedThumbprint" }; if (-not $PSCmdlet.ShouldProcess($c.Subject, "import into LocalMachine\$Store")) { return 'planned' }; Import-Certificate -FilePath $Path -CertStoreLocation "Cert:\LocalMachine\$Store" | Out-Null; return "imported $($c.Subject) ($($c.Thumbprint))" }
 function Test-DESiteResources {
     param($ClientProfile, [string]$SiteId)
     $net = Get-DENetworkState
@@ -112,8 +113,8 @@ function Register-DEOperationsActions {
         -Desired { @{ pending = 0 } } -Apply { param($s) $r = Install-DEWindowsUpdates; "found $($r.found), installed $($r.installed), restart $($r.rebootRequired)" } `
         -ManualAction 'Large feature updates are left to the JumpCloud patch policy.'
     Register-DEAction -Id 'maint.oem' -Module 'maintenance' -Title 'OEM drivers, firmware and dock updates' -Phase 3 -Gates @('gate.elevated') -RequiresElevation `
-        -Detect { $t = Get-DEOemTool; if ($t.applicable -ne 'dell') { @{ applicable = $false; current = $true } } else { $s = Invoke-DEOemScan; @{ applicable = $true; current = ($s.exitCode -eq 500) } } } `
-        -Desired { @{ current = $true } } -Apply { param($s) Invoke-DEOemUpdate -IncludeBios } `
+        -Detect { $t = Get-DEOemTool; if ($t.applicable -ne 'dell') { @{ applicable = $false; current = $(if (Get-DEState -Path 'maintenance.oemConfirmedAt') { $true } else { $null }); vendor = "$($t.manufacturer)" } } else { $s = Invoke-DEOemScan; @{ applicable = $true; current = ($s.exitCode -eq 500) } } } `
+        -Desired { @{ current = $true } } -Apply { param($s) if (-not $s.Detected.applicable) { throw "no automated OEM update for $($s.Detected.vendor): run the vendor tool, then confirm it on the Network page" }; Invoke-DEOemUpdate -IncludeBios } `
         -Remediate { param($s) $null = Invoke-DEPackageInstall -Id 'dell-command-update' } `
         -ManualAction 'Non-Dell hardware: run HP Image Assistant or Lenovo System Update; after BIOS updates confirm BitLocker protection is back On.'
     Register-DEAction -Id 'maint.bitlocker-resume' -Module 'maintenance' -Title 'BitLocker protection resumed after firmware work' -Phase 3 -Gates @('gate.elevated') `
@@ -130,8 +131,8 @@ function Register-DEOperationsActions {
     $sase = Get-DEHashPath -Object $ClientProfile -Path 'network.sase'
     if ($sase -and (Get-DEOpsProp $sase 'required')) {
         Register-DEAction -Id 'net.sase' -Module 'network' -Title "SASE client ($((Get-DEOpsProp $sase 'provider')))" -Phase 14 -Gates @('gate.elevated') -RequiresElevation `
-            -Detect { $a = Get-DESecurityAgentState; $p = "$(Get-DEHashPath -Object $ClientProfile -Path 'network.sase.provider')"; @{ installed = [bool]$a.agents[$(if ($p -eq 'controlone') { 'controlone' } else { 'timus' })].installed } }.GetNewClosure() -Desired { @{ installed = $true } } `
-            -Apply { param($s) $r = Invoke-DEPackageInstall -Id 'timus-connect' -ClientProfile $ClientProfile; if (-not $r.ok -and -not (Get-DEPkgProp $r 'planned')) { throw $r.detail }; $r.detail }.GetNewClosure()
+                -Detect { $a = Get-DESecurityAgentState; $p = "$(Get-DEHashPath -Object $ClientProfile -Path 'network.sase.provider')"; @{ installed = [bool]$a.agents[$(if ($p -eq 'controlone') { 'controlone' } else { 'timus' })].installed; provider = $p } }.GetNewClosure() -Desired { @{ installed = $true } } `
+            -Apply { param($s) if ("$($s.Detected.provider)" -eq 'controlone') { throw 'ControlOne is deployed from its own console; DE Tech Tool has no ControlOne package to install' }; $r = Invoke-DEPackageInstall -Id 'timus-connect' -ClientProfile $ClientProfile; if (-not $r.ok -and -not (Get-DEPkgProp $r 'planned')) { throw $r.detail }; $r.detail }.GetNewClosure()
     }
     if (Get-DEHashPath -Object $ClientProfile -Path 'backup.required') {
         Register-DEAction -Id 'ops.backup' -Module 'operations' -Title 'Backup agent installed and healthy' -Phase 14 -Gates @('gate.elevated') -RequiresElevation `
@@ -155,7 +156,7 @@ function Register-DEOperationsActions {
 function Confirm-DEOperationalCheck {
     <# Records a technician-confirmed check (first backup, remote-assist test, MFA done). Stores a timestamp and who, never a secret. #>
     [CmdletBinding(SupportsShouldProcess = $true)]
-    param([Parameter(Mandatory = $true)][ValidateSet('operations.backup.firstBackupConfirmedAt', 'operations.remoteSupport.testedAt', 'operations.emailSecurity.confirmedAt', 'operations.mfa.jumpcloudProtectAt', 'operations.mfa.microsoftAt')][string]$Check, [string]$Note = '')
+    param([Parameter(Mandatory = $true)][ValidateSet('maintenance.oemConfirmedAt', 'operations.backup.firstBackupConfirmedAt', 'operations.remoteSupport.testedAt', 'operations.emailSecurity.confirmedAt', 'operations.mfa.jumpcloudProtectAt', 'operations.mfa.microsoftAt')][string]$Check, [string]$Note = '')
     if ($PSCmdlet.ShouldProcess($Check, 'record confirmation')) { Set-DEStateValue -Path $Check -Value (Get-Date).ToString('o'); Add-DEEvidence -Step "confirm.$Check" -Module 'operations' -Before 'unconfirmed' -ActionTaken 'technician confirmed' -Result 'PASS' -Verification $Note | Out-Null }
 }
 

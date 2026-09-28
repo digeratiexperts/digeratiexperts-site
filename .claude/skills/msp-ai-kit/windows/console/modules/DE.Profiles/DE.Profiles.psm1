@@ -45,7 +45,7 @@ function New-DEClientProfileTemplate {
         mdm = @{ authority = 'jumpcloud'; allowCoManagement = $false; removeStaleEnrollments = $true }
         security = @{ mdr = @{ primary = 'guardz'; backup = 'blackpoint'; deploy = @('guardz') }; edr = 'sentinelone'; browserSecurity = @('pabx'); emailSecurity = 'mimecast'; siem = 'wazuh'; awareness = 'ninjio'; baselineProfile = 'de-windows-baseline' }
         cloudStorage = @{ standard = 'onedrive'; removeConflicting = $false; allowBoth = $false }   # onedrive | dropbox | both | none
-        browser = @{ default = 'edge'; policyProfile = 'de-browser-policy'; homepage = 'https://portal.digeratiexperts.com/portal/login'; startupPages = @(); managedBookmarksFromVendors = $true; extraBookmarks = @() }
+        browser = @{ default = 'edge'; policyProfile = 'de-browser-policy'; homepage = 'https://portal.digeratiexperts.com/portal/login'; startupPages = @(); managedBookmarksFromVendors = $false; extraBookmarks = @() }
         apps = @{ required = @('m365-apps', 'teams', 'onedrive', 'edge', 'chrome', 'pdf-reader'); optional = @(); lineOfBusiness = @(); remove = @() }
         m365 = @{ tenantDomain = ''; licenseSku = ''; verifyUpn = $true }
         branding = @{ clientLogo = ''; wallpaperStyle = 'dual-logo'; accent = '#D3126A'; supportText = 'Support: support@digeratiexperts.com'; hostnamePattern = '{CLIENT}-{ROLE}-{SERIAL4}'; shortcuts = @('client-portal', 'support-ticket', 'remote-support') }
@@ -66,8 +66,9 @@ function Test-DEProfileHasSecrets {
     param([Parameter(Mandatory = $true)]$Profile)
     $json = $Profile | ConvertTo-Json -Depth 12
     $hits = @()
-    foreach ($m in [regex]::Matches($json, '"(?<k>[^"]+)"\s*:\s*"(?<v>[^"]{8,})"')) {
-        if ($m.Groups['k'].Value -match '(?i)(password|passwd|secret|token|apikey|api_key|connectkey|connect_key|orgkey|org_key|sitetoken|site_token|recovery|credential)') { $hits += $m.Groups['k'].Value }
+    # any non-empty value counts: a Wi-Fi PSK or PIN can be shorter than 8 characters
+    foreach ($m in [regex]::Matches($json, '"(?<k>[^"]+)"\s*:\s*"(?<v>[^"]+)"')) {
+        if ($m.Groups['k'].Value -match '(?i)(password|passwd|passphrase|secret|token|apikey|api_key|connectkey|connect_key|orgkey|org_key|sitetoken|site_token|recovery|credential|privatekey|private_key|psk$|psk\b|wifikey|wifi_key)') { $hits += $m.Groups['k'].Value }
     }
     if ($json -match '\b\d{6}-\d{6}-\d{6}-\d{6}-\d{6}-\d{6}-\d{6}-\d{6}\b') { $hits += 'bitlocker-recovery-password' }
     return $hits
@@ -137,11 +138,12 @@ function Resolve-DEEndUser {
     $current = "$(Get-DEHashPath -Object $Snapshot -Path 'identity.currentPrincipal')"
     $tech = $Technician
     if (-not $tech) { $tech = $current }
+    $techShort = ("$tech" -split '\\')[-1]   # 'DOMAIN\jrpetro' and 'jrpetro' are the same technician
     $allProfiles = @(@(Get-DEHashPath -Object $Snapshot -Path 'identity.profiles' | Where-Object { $null -ne $_ }) | Where-Object { $_ })
     $profiles = @($allProfiles | Where-Object { $_ -and $_.path -notmatch '\\(Administrator|Default|Public|DE-BreakGlass|jrpetro)$' } | Sort-Object { $_.lastUse } -Descending)
     $mostUsed = $profiles | Select-Object -First 1
     $endUser = $null; $how = ''
-    if ($interactive -and $interactive -ne $tech -and $interactive -notmatch '\\(jrpetro|DE-BreakGlass)$') { $endUser = $interactive; $how = 'interactive session' }
+    if ($interactive -and ("$interactive" -split '\\')[-1] -ine $techShort -and $interactive -notmatch '\\(jrpetro|DE-BreakGlass)$') { $endUser = $interactive; $how = 'interactive session' }
     elseif ($mostUsed) { $endUser = (Split-Path -Leaf $mostUsed.path); $how = 'most recently used profile' }
     $entraStyle = ($endUser -match '^AzureAD\\')
     return [pscustomobject]@{ technician = $tech; endUser = $endUser; endUserSource = $how; endUserIsEntraPrincipal = $entraStyle; endUserProfile = $(if ($endUser -and $allProfiles.Count) { @(Find-DEProfileForUser -UserName $endUser -Profiles $allProfiles) | Select-Object -First 1 } else { $null }) }

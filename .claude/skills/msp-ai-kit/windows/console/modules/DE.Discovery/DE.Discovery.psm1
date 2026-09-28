@@ -97,7 +97,9 @@ function ConvertFrom-DEDsregcmd {
     $yes = { param($k) return ("$($kv[$k])" -match '^(YES|TRUE)$') }
     $azureJoined = & $yes 'AzureAdJoined'; $domainJoined = & $yes 'DomainJoined'; $workplace = & $yes 'WorkplaceJoined'; $enterpriseJoined = & $yes 'EnterpriseJoined'
     $joinType = 'unknown'
-    if ($kv.Count -gt 0) {
+    # local-workgroup needs dsregcmd to have actually answered the join questions; stray 'key : value' lines
+    # (an error banner, a localized message) are not enough and leave the join type unknown
+    if ($kv.ContainsKey('AzureAdJoined') -and $kv.ContainsKey('DomainJoined')) {
         if ($azureJoined -and $domainJoined) { $joinType = 'hybrid-entra-joined' }
         elseif ($azureJoined) { $joinType = 'entra-joined' }
         elseif ($domainJoined) { $joinType = 'ad-domain-joined' }
@@ -177,7 +179,10 @@ function Find-DEProfileForUser {
     param([Parameter(Mandatory = $true)][string]$UserName, [array]$Profiles)
     if (-not $Profiles) { $Profiles = (Get-DEIdentityState).profiles }
     $short = ($UserName -split '\\')[-1]
-    return @($Profiles | Where-Object { (Split-Path -Leaf $_.path) -ieq $short -or (Split-Path -Leaf $_.path) -like "$short.*" })
+    # the exact folder name wins; 'name.DOMAIN' style folders count only when there is no exact match (callers treat several as ambiguous)
+    $exact = @($Profiles | Where-Object { $_ -and (Split-Path -Leaf $_.path) -ieq $short })
+    if ($exact.Count) { return $exact }
+    return @($Profiles | Where-Object { $_ -and (Split-Path -Leaf $_.path) -like "$short.*" })
 }
 
 # ------------------------------------------------------------------ MDM authority
@@ -342,7 +347,7 @@ function Get-DEInstalledApps {
             if (-not (Test-Path $root)) { continue }
             foreach ($k in @(Get-ChildItem $root -ErrorAction SilentlyContinue)) {
                 $p = Get-ItemProperty $k.PSPath -ErrorAction SilentlyContinue
-                if ($p -and $p.DisplayName -and -not $p.SystemComponent) { $apps += @{ name = $p.DisplayName; version = "$($p.DisplayVersion)"; publisher = "$($p.Publisher)"; source = $(if ($root -like 'HKCU*') { 'user' } elseif ($root -like '*WOW6432Node*') { 'machine-x86' } else { 'machine' }); uninstall = "$($p.UninstallString)"; installDate = "$($p.InstallDate)" } }
+                if ($p -and $p.DisplayName -and -not $p.SystemComponent) { $apps += @{ name = $p.DisplayName; version = "$($p.DisplayVersion)"; publisher = "$($p.Publisher)"; source = $(if ($root -like 'HKCU*') { 'user' } elseif ($root -like '*WOW6432Node*') { 'machine-x86' } else { 'machine' }); uninstall = "$($p.UninstallString)"; quietUninstall = "$($p.QuietUninstallString)"; installDate = "$($p.InstallDate)" } }
             }
         }
         try { $apps += @(Get-AppxPackage -ErrorAction Stop | Where-Object { -not $_.IsFramework } | ForEach-Object { @{ name = $_.Name; version = "$($_.Version)"; publisher = "$($_.Publisher)"; source = 'appx'; uninstall = ''; installDate = '' } }) } catch { }

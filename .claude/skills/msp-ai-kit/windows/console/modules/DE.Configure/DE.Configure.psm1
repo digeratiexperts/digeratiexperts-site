@@ -26,7 +26,7 @@ function Get-DEBaselineControlState {
     switch ($Control.type) {
         'registry' { $have = Get-DERegistryValue -Path $Control.path -Name $Control.name; $ok = ("$have" -eq "$want"); $detail = "$($Control.path)\$($Control.name) = $have" }
         'firewall' { if ($script:IsWindowsHost) { try { $fp = Get-NetFirewallProfile -Name $Control.profile -ErrorAction Stop; $have = [bool]($fp.Enabled -eq 'True' -or $fp.Enabled -eq $true); $ok = ($have -eq [bool]$want); $detail = "$($Control.profile) enabled=$have" } catch { $detail = $_.Exception.Message } } }
-        'localuser' { if ($script:IsWindowsHost) { try { $u = Get-LocalUser -Name $Control.name -ErrorAction Stop; $have = $(if ($u.Enabled) { 'Enabled' } else { 'Disabled' }); $ok = ($have -eq $want) } catch { $have = 'absent'; $ok = $true } ; $detail = "$($Control.name) $have" } }
+        'localuser' { if ($script:IsWindowsHost) { try { $u = Get-LocalUser -Name $Control.name -ErrorAction Stop; $have = $(if ($u.Enabled) { 'Enabled' } else { 'Disabled' }); $ok = ($have -eq $want) } catch { if ($_.Exception.GetType().Name -eq 'UserNotFoundException' -or "$($_.FullyQualifiedErrorId)" -like 'UserNotFound*') { $have = 'absent'; $ok = $true } else { $have = "unknown ($($_.Exception.Message))"; $ok = $false } } ; $detail = "$($Control.name) $have" } }
         'netaccounts' { if ($script:IsWindowsHost) { $r = Invoke-DENative -FilePath 'net.exe' -Arguments @('accounts'); $line = switch ($Control.setting) { 'lockoutthreshold' { $r.Output | Where-Object { $_ -match 'Lockout threshold' } } 'minpwlen' { $r.Output | Where-Object { $_ -match 'Minimum password length' } } }; if ($line -and "$line" -match '(\d+|Never)\s*$') { $have = $Matches[1] }; $ok = ("$have" -ne 'Never' -and [int]("0$have" -replace '\D', '') -ge [int]$want -and ($Control.setting -ne 'lockoutthreshold' -or [int]("0$have" -replace '\D', '') -le [int]$want -and [int]("0$have" -replace '\D', '') -gt 0)); $detail = "$($Control.setting) = $have" } }
         'auditpol' { if ($script:IsWindowsHost) { $r = Invoke-DENative -FilePath 'auditpol.exe' -Arguments @('/get', "/subcategory:$($Control.subcategory)"); $have = "$($r.Output | Select-Object -Last 1)".Trim(); $ok = ($have -match [regex]::Escape($want)); $detail = $have } }
         'command' { if ($script:IsWindowsHost -and $Control.detect -like 'optionalfeature:*') { $f = $Control.detect.Split(':')[1]; try { $st = (Get-WindowsOptionalFeature -Online -FeatureName $f -ErrorAction Stop).State; $have = "$st"; $ok = ($have -eq $want -or $have -eq 'DisabledWithPayloadRemoved') } catch { $have = 'unknown'; $detail = $_.Exception.Message } ; $detail = "$f $have" } }
@@ -78,8 +78,8 @@ function Register-DEBaselineActions {
         Register-DEAction -Id "baseline.$($ctl.id)" -Module 'baseline' -Title $ctl.title -Phase 11 -Gates $gates -RequiresElevation:((Get-DECfgProp $ctl 'scope') -ne 'user') `
             -Detect { $s = Get-DEBaselineControlState -Control $ctl; @{ ok = $s.ok; have = "$($s.have)"; detail = $s.detail } }.GetNewClosure() `
             -Desired { @{ ok = $true } } `
-            -Apply { param($s) $bk = $null; if ($ctl.type -eq 'registry') { $bk = Backup-DERegistryKey -Key (($ctl.path -replace '^HKLM:', 'HKLM') -replace '^HKCU:', 'HKCU') -Label "baseline-$($ctl.id)" }; $r = Set-DEBaselineControl -Control $ctl; "$r$(if ($bk) { "; backup $bk" })" }.GetNewClosure() `
-            -Rollback { param($s) 'Restore with reg import of the backup file named in the evidence record for this control.' } `
+            -Apply { param($s) $bk = $null; if ($ctl.type -eq 'registry') { $bk = Backup-DERegistryKey -Key (($ctl.path -replace '^HKLM:', 'HKLM') -replace '^HKCU:', 'HKCU') -Label "baseline-$($ctl.id)"; if (-not (Get-DEState -Path "baseline.previous.$($ctl.id)")) { Set-DEStateValue -Path "baseline.previous.$($ctl.id)" -Value @{ existed = ($null -ne (Get-DERegistryValue -Path $ctl.path -Name $ctl.name)); value = (Get-DERegistryValue -Path $ctl.path -Name $ctl.name); backup = $bk } } }; $r = Set-DEBaselineControl -Control $ctl; "$r$(if ($bk) { "; backup $bk" })" }.GetNewClosure() `
+            -Rollback { param($s) if ($ctl.type -ne 'registry') { return "Undo '$($ctl.title)' by hand: $($ctl.type) controls have no automatic rollback." }; $pv = Get-DEState -Path "baseline.previous.$($ctl.id)"; if (-not $pv) { return @{ ok = $false; detail = 'no previous value was recorded before the change' } }; if ($pv['existed']) { Set-DERegistryValue -Path $ctl.path -Name $ctl.name -Value $pv['value'] -Type $ctl.valueType } else { Remove-ItemProperty -Path $ctl.path -Name $ctl.name -ErrorAction SilentlyContinue }; $now = Get-DERegistryValue -Path $ctl.path -Name $ctl.name; $ok = $(if ($pv['existed']) { "$now" -eq "$($pv['value'])" } else { $null -eq $now }); if ($ok) { Set-DEStateValue -Path "baseline.previous.$($ctl.id)" -Value $null }; @{ ok = $ok; detail = "$($ctl.path)\$($ctl.name) is now '$now' (before DE: $(if ($pv['existed']) { "'$($pv['value'])'" } else { 'not set' }))" } }.GetNewClosure() `
             -ManualAction $(if (Get-DECfgProp $ctl 'breaks') { "Known conflict: $($ctl.breaks) Record an exception with approver and expiry if the client needs it." } else { '' })
     }
 }
@@ -144,18 +144,19 @@ function Set-DEBrowserPolicy {
     $backups = @()
     foreach ($b in @('chrome', 'edge')) {
         $key = Get-DEBrowserPolicyKey -Browser $b
-        $bk = Backup-DERegistryKey -Key ($key -replace '^HKLM:', 'HKLM') -Label "browser-$b"; if ($bk) { $backups += $bk }
         if (-not $PSCmdlet.ShouldProcess($key, 'write browser policy')) { continue }
+        # the first backup is the client's own policy: later applies never replace it with DE's
+        if (-not (Get-DEState -Path "browser.policyOriginal.$b")) { $bk = Backup-DERegistryKey -Key ($key -replace '^HKLM:', 'HKLM') -Label "browser-$b"; Set-DEStateValue -Path "browser.policyOriginal.$b" -Value @{ existed = [bool](Test-Path -Path $key); backup = $bk; at = (Get-Date).ToString('o') }; if ($bk) { $backups += $bk } }
         foreach ($k in $want[$b].Keys) { $v = $want[$b][$k]; $t = $(if ($v -is [int] -or $v -is [long] -or "$v" -match '^\d+$') { 'DWord' } else { 'String' }); Set-DERegistryValue -Path $key -Name $k -Value $(if ($t -eq 'DWord') { [int]$v } else { "$v" }) -Type $t }
         foreach ($list in $want.lists[$b].Keys) {
             $sk = Join-Path $key $list
-            if (Test-Path $sk) { Remove-Item -Path $sk -Recurse -Force }
             $vals = @($want.lists[$b][$list] | Where-Object { $_ })
+            if (-not $vals.Count) { continue }   # DE sets nothing here: lists written by PABX, JumpCloud or the client stay
+            if (Test-Path $sk) { Remove-Item -Path $sk -Recurse -Force }
             if ($vals.Count) { New-Item -Path $sk -Force | Out-Null; for ($i = 0; $i -lt $vals.Count; $i++) { New-ItemProperty -Path $sk -Name ([string]($i + 1)) -Value "$($vals[$i])" -PropertyType String -Force | Out-Null } }
         }
     }
-    Set-DEStateValue -Path 'browser.policyBackups' -Value $backups
-    return "policy written; backups: $($backups -join ', '); restart browsers to load"
+    return "policy written$(if ($backups.Count) { "; original policy backed up: $($backups -join ', ')" }); restart browsers to load"
 }
 
 function Set-DEDefaultBrowserAssociations {
@@ -186,10 +187,21 @@ function Register-DEBrowserActions {
     Register-DEAction -Id 'browser.policy' -Module 'browser' -Title 'Chrome and Edge policy (homepage, bookmarks, extensions, private browsing, downloads, safe browsing)' -Phase 12 -Gates @('gate.elevated') -RequiresElevation `
         -Detect { $d = @(Compare-DEBrowserPolicy -ClientProfile $ClientProfile); @{ driftCount = $d.Count; drift = (($d | Select-Object -First 12) -join ', ') } }.GetNewClosure() -Desired { @{ driftCount = 0 } } `
         -Apply { param($s) Set-DEBrowserPolicy -ClientProfile $ClientProfile }.GetNewClosure() `
-        -Rollback { param($s) $b = @(Get-DEState -Path 'browser.policyBackups'); foreach ($f in $b) { if ($f -and (Test-Path -LiteralPath $f)) { $null = Invoke-DENative -FilePath 'reg.exe' -Arguments @('import', $f) } }; "restored $($b.Count) backup(s)" } `
+        -Rollback { param($s)
+            # reg import only merges, so DE's keys are removed first and the client's original policy imported back
+            $done = @(); $bad = @()
+            foreach ($b in @('chrome', 'edge')) {
+                $orig = Get-DEState -Path "browser.policyOriginal.$b"; if (-not $orig) { continue }
+                $key = $(if ($b -eq 'chrome') { 'HKLM:\SOFTWARE\Policies\Google\Chrome' } else { 'HKLM:\SOFTWARE\Policies\Microsoft\Edge' })
+                if (Test-Path -Path $key) { Remove-Item -Path $key -Recurse -Force }
+                if ($orig['existed']) { if ($orig['backup'] -and (Test-Path -LiteralPath $orig['backup'])) { $r = Invoke-DENative -FilePath 'reg.exe' -Arguments @('import', $orig['backup']) -TimeoutSeconds 60; if ($r.ExitCode -eq 0) { $done += $b } else { $bad += "$b import exit $($r.ExitCode)" } } else { $bad += "$b backup missing" } }
+                else { if (-not (Test-Path -Path $key)) { $done += $b } else { $bad += "$b key still present" } }
+            }
+            @{ ok = ($bad.Count -eq 0 -and $done.Count -gt 0); detail = "restored: $($done -join ', ')$(if ($bad.Count) { "; problems: $($bad -join '; ')" })" }
+        } `
         -ManualAction 'Restart Chrome and Edge, then open chrome://policy and edge://policy to confirm the values show as Machine / OK.'
     Register-DEAction -Id 'browser.default' -Module 'browser' -Title 'Default browser association' -Phase 12 -Gates @('gate.elevated') -RequiresElevation `
-        -Detect { $want = Get-DEHashPath -Object $ClientProfile -Path 'browser.default'; if (-not $want) { $want = 'edge' }; $cur = (Get-DEBrowserState).defaultBrowser; $cfg = Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' -Name 'DefaultAssociationsConfiguration'; @{ matches = ($cur -eq $want -or [bool]$cfg); current = $cur; want = $want } }.GetNewClosure() -Desired { @{ matches = $true } } `
+        -Detect { $want = Get-DEHashPath -Object $ClientProfile -Path 'browser.default'; if (-not $want) { $want = 'edge' }; $cur = (Get-DEBrowserState).defaultBrowser; $cfg = Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' -Name 'DefaultAssociationsConfiguration'; $prog = $(if ($want -eq 'chrome') { 'ChromeHTML' } else { 'MSEdgeHTM' }); $cfgOk = [bool]($cfg -and (Test-Path -LiteralPath "$cfg") -and ((Get-Content -LiteralPath "$cfg" -Raw) -match [regex]::Escape($prog))); @{ matches = ($cur -eq $want -or $cfgOk); current = $cur; want = $want; policyFile = $cfgOk } }.GetNewClosure() -Desired { @{ matches = $true } } `
         -Apply { param($s) $want = Get-DEHashPath -Object $ClientProfile -Path 'browser.default'; if (-not $want) { $want = 'edge' }; Set-DEDefaultBrowserAssociations -Browser $want }.GetNewClosure()
     Register-DEAction -Id 'browser.updates' -Module 'browser' -Title 'Browsers present and current' -Phase 12 `
         -Detect { $b = Get-DEBrowserState; @{ edge = [bool]$b.edge; chrome = [bool]$b.chrome; edgeVersion = "$(Get-DEHashPath -Object $b -Path 'edge.version')"; chromeVersion = "$(Get-DEHashPath -Object $b -Path 'chrome.version')" } } -Desired { @{ edge = $true; chrome = $true } } `
@@ -200,12 +212,14 @@ function Register-DEBrowserActions {
 function Get-DEBrandingAssets {
     param($ClientProfile)
     $de = Get-DEConsole
-    $deLogo = Join-Path $de.Root 'assets\brand\digerati-logo-600.png'
-    if (-not (Test-Path -LiteralPath $deLogo)) { $deLogo = Join-Path $de.Root 'assets\de-logo.png' }
+    $deLogo = Join-Path (Join-Path (Join-Path $de.Root 'assets') 'brand') 'digerati-logo-600.png'
+    if (-not (Test-Path -LiteralPath $deLogo)) { $deLogo = Join-Path (Join-Path $de.Root 'assets') 'de-logo.png' }
     $client = Get-DEHashPath -Object $ClientProfile -Path 'branding.clientLogo'
     if ($client -and $client -like 'asset:*') {
-        $assetRel = $client.Substring(6).TrimStart('/', '\\').Replace('/', '\\')
-        $client = Join-Path (Join-Path $de.Root 'assets') $assetRel
+        $assetSpec = $client
+        # 'asset:clients/alamo/alamo-mark.png' -> <console>\assets\clients\alamo\alamo-mark.png, one segment at a time
+        $client = Join-Path $de.Root 'assets'
+        foreach ($seg in @($assetSpec.Substring(6) -split '[\\/]' | Where-Object { $_ })) { $client = Join-Path $client $seg }
     } elseif ($client -and -not [IO.Path]::IsPathRooted($client)) {
         $client = Join-Path $de.Dirs.Profiles $client
     }
@@ -254,7 +268,7 @@ function New-DEBrandedWallpaper {
 function Get-DEBrandingState {
     $wall = Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP' -Name 'DesktopImagePath'
     $lock = Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP' -Name 'LockScreenImagePath'
-    $oem = @{ manufacturer = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'Manufacturer'); supportUrl = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'SupportURL'); supportPhone = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'SupportPhone') }
+    $oem = @{ manufacturer = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'Manufacturer'); supportUrl = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'SupportURL'); supportPhone = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'SupportPhone'); supportHours = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'SupportHours') }
     return @{ wallpaper = $wall; lockScreen = $lock; applied = [bool]($wall -and "$wall" -match '\\DE\\'); oem = $oem; hostname = $env:COMPUTERNAME }
 }
 
@@ -263,9 +277,10 @@ function Set-DEBranding {
     param($ClientProfile, [string]$Wallpaper, [string]$LockScreen)
     $de = Get-DEConsole
     $before = Get-DEBrandingState
-    Set-DEStateValue -Path 'branding.previous' -Value $before
     $dest = Join-Path $env:ProgramData 'DE\Branding'
     if (-not $PSCmdlet.ShouldProcess('desktop and lock screen', 'apply DE branding')) { return 'planned' }
+    # keep the client's original look for Undo: a re-run over DE branding must not overwrite it with DE's own
+    if (-not $before.applied -or -not (Get-DEState -Path 'branding.previous')) { Set-DEStateValue -Path 'branding.previous' -Value $before }
     New-Item -ItemType Directory -Path $dest -Force | Out-Null
     if (-not $Wallpaper) { $Wallpaper = New-DEBrandedWallpaper -ClientProfile $ClientProfile }
     if (-not $LockScreen) { $LockScreen = New-DEBrandedWallpaper -ClientProfile $ClientProfile -LockScreen }
@@ -289,8 +304,10 @@ function Undo-DEBranding {
     $csp = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP'
     foreach ($n in @('DesktopImagePath', 'DesktopImageUrl', 'DesktopImageStatus', 'LockScreenImagePath', 'LockScreenImageUrl', 'LockScreenImageStatus')) { Remove-ItemProperty -Path $csp -Name $n -ErrorAction SilentlyContinue }
     if ($prev -and (Get-DECfgProp $prev 'wallpaper')) { Set-DERegistryValue -Path $csp -Name 'DesktopImagePath' -Value (Get-DECfgProp $prev 'wallpaper') -Type String; Set-DERegistryValue -Path $csp -Name 'DesktopImageStatus' -Value 1 -Type DWord }
+    if ($prev -and (Get-DECfgProp $prev 'lockScreen')) { Set-DERegistryValue -Path $csp -Name 'LockScreenImagePath' -Value (Get-DECfgProp $prev 'lockScreen') -Type String; Set-DERegistryValue -Path $csp -Name 'LockScreenImageStatus' -Value 1 -Type DWord }
     $oem = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation'
     foreach ($n in @('Manufacturer', 'SupportURL', 'SupportHours')) { $pv = Get-DEHashPath -Object $prev -Path "oem.$($n.Substring(0,1).ToLower() + $n.Substring(1))"; if ($pv) { Set-DERegistryValue -Path $oem -Name $n -Value $pv -Type String } else { Remove-ItemProperty -Path $oem -Name $n -ErrorAction SilentlyContinue } }
+    Set-DEStateValue -Path 'branding.previous' -Value $null   # the next apply records the look it replaces again
     return 'branding restored to the recorded previous state'
 }
 
@@ -342,7 +359,7 @@ function Register-DEBrandingActions {
         -Apply { param($s) Set-DESupportShortcuts -ClientProfile $ClientProfile }.GetNewClosure() `
         -Rollback { param($s) Remove-Item -LiteralPath (Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\Digerati Experts') -Recurse -Force -ErrorAction SilentlyContinue; Remove-Item -LiteralPath (Join-Path $env:PUBLIC 'Desktop\DE Support.url') -Force -ErrorAction SilentlyContinue; 'removed' }
     Register-DEAction -Id 'branding.hostname' -Module 'branding' -Title 'Hostname follows the client pattern' -Phase 13 -Gates @('gate.elevated') -RequiresElevation -RequiresReboot -Modes @('new', 'dropship', 'replacement') `
-        -Detect { $ctx = Get-DEContext; $want = $(if ($ctx['device'] -and $ctx['device'].desiredHostname) { $ctx['device'].desiredHostname } else { New-DEHostname -ClientProfile $ClientProfile -Role "$(if ($ctx['device']) { $ctx['device'].role } else { 'LAP' })".Substring(0, 3) }); @{ matches = ($env:COMPUTERNAME -ieq $want); want = $want } }.GetNewClosure() -Desired { @{ matches = $true } } `
+        -Detect { $ctx = Get-DEContext; $role = "$(if ($ctx['device'] -and $ctx['device'].role) { $ctx['device'].role } else { 'LAP' })"; $role = $role.Substring(0, [Math]::Min(3, $role.Length)); $want = $(if ($ctx['desiredHostname']) { "$($ctx['desiredHostname'])" } elseif ($ctx['device'] -and $ctx['device'].desiredHostname) { "$($ctx['device'].desiredHostname)" } else { New-DEHostname -ClientProfile $ClientProfile -Role $role }); $pending = Get-DERegistryValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName' -Name 'ComputerName'; @{ matches = (($env:COMPUTERNAME -ieq $want) -or ("$pending" -ieq $want)); want = $want; restartPending = ("$pending" -ieq $want -and $env:COMPUTERNAME -ine $want) } }.GetNewClosure() -Desired { @{ matches = $true } } `
         -Apply { param($s) $want = $s.Detected.want; Rename-Computer -NewName $want -Force; "renamed to $want (restart required)" }
 }
 

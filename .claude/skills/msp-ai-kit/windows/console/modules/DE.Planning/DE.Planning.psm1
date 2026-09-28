@@ -128,6 +128,9 @@ function New-DEComposedProfile {
             $areas = @(Get-DEHashPath -Object $p -Path 'coManaged.deOwns' | Where-Object { $null -ne $_ })
             if (-not $areas.Count) { $areas = @('identity', 'security', 'updates', 'support') }
             $map = ConvertTo-DEHashtable $catalog.coManagedAreas
+            # a misspelled area would silently mean "no limit": refuse it and name the valid ones
+            $unknown = @($areas | Where-Object { -not $map.Contains($_) })
+            if ($unknown.Count) { throw "unknown co-managed area(s) in coManaged.deOwns: $($unknown -join ', ') (valid: $((@($map.Keys) | Sort-Object) -join ', '))" }
             $plan.coManagedAreas = $areas
             foreach ($a in $areas) { if ($map.Contains($a)) { $plan.includeOnly += @($map[$a]) } }
         }
@@ -146,24 +149,25 @@ function New-DEComposedProfile {
         if ($extra.Count) { $p['security']['mdr']['deploy'] = @(@($p['security']['mdr']['deploy']) + $extra | Select-Object -Unique); $p['security']['mdr'].Remove('deployAdd') }
     }
 
+    if ($AddOn.Count -and -not $Bundle) { throw "add-ons ($($AddOn -join ', ')) belong to a ProActive plan; a standalone solution has none" }
     if ($Solution.Count) {
-        $keepSupport = $false
+        $keepSupport = $false; $solutionScope = @()
         foreach ($id in $Solution) {
             $s = Get-DESolution -Id $id
-            $plan.includeOnly += @($s['includeOnly'] | Where-Object { $_ })
+            $solutionScope += @($s['includeOnly'] | Where-Object { $_ })
             if ($s['keepSupport']) { $keepSupport = $true }
             foreach ($m in @($s['manualSteps'] | Where-Object { $_ })) { $plan.manualSteps += @{ key = "$id-$($m['id'])"; title = $m['title']; source = $s['name'] } }
             foreach ($q in @($s['prerequisites'] | Where-Object { $_ })) { $plan.prerequisites += @{ key = "$id-$($q['id'])"; title = $q['title']; source = $s['name'] } }
         }
         if (-not $Bundle) {
-            # standalone: the preconfigured solution without DE's managed-services model
+            # standalone: only the solutions' own actions, without DE's managed-services model
             $plan.managed = $false
+            $plan.includeOnly = @($solutionScope | Select-Object -Unique)
             if (-not $keepSupport) { $plan.exclude += @($catalog.standaloneExclude) }
             if (-not @($plan.includeOnly).Count) { $plan.includeOnly = @('^$') }   # manual-only solutions register no endpoint changes
-        } else {
-            # a bundle plus solutions: the solutions only add steps, they never narrow the bundle
-            $plan.includeOnly = @()
         }
+        # with a bundle, solutions add their steps and prerequisites only: they never narrow a ProActive plan and
+        # never widen a co-managed one past the areas DE owns (includeOnly stays whatever the bundle set)
     }
     $plan.gcch = [bool]$p['gcch']
     $p['plan'] = $plan
@@ -194,7 +198,7 @@ function Select-DEPlanActions {
         }
         # GCC High: no security agent installs until the provider is verified for the boundary
         if (Get-DEHashPath -Object $plan -Path 'gcch') {
-            Register-DEGate -Id 'gate.gcch-verified' -Title 'Security providers verified for GCC High' -Module 'plan' -Check {
+            Register-DEGate -NoException -Id 'gate.gcch-verified' -Title 'Security providers verified for GCC High' -Module 'plan' -Check {
                 if (Get-DEState -Path 'plan.confirmed.gcch-verified') { @{ Status = 'PASS'; Detail = 'verification recorded' } } else { @{ Status = 'BLOCKED'; Detail = 'GCCH: the commercial MDR/EDR packaging does not transfer automatically' } }
             } -Unblock 'Confirm with each provider that its agent and tenant are authorised for GCC High, then choose Confirm done on "GCC High providers verified".'
             foreach ($id in @($de.Actions.Keys | Where-Object { $_ -match '^security\.(guardz|sentinelone|blackpoint|pabx)$' })) { $a = $de.Actions[$id]; $a.Gates = @(@($a.Gates) + 'gate.gcch-verified' | Select-Object -Unique) }
@@ -280,7 +284,7 @@ function Test-DEOrderMatch {
 
 function Register-DEOrderActions {
     param([string]$Mode)
-    Register-DEGate -Id 'gate.order-match' -Title 'This is the device on the order' -Module 'order' -Check { Test-DEOrderMatch } `
+    Register-DEGate -NoException -Id 'gate.order-match' -Title 'This is the device on the order' -Module 'order' -Check { Test-DEOrderMatch } `
         -Unblock 'Check the serial on the box against the order; if the distributor shipped a different unit, update the order manifest (serial) before provisioning.'
     Register-DEAction -Id 'order.verify-device' -Module 'order' -Title 'Device matches the dropship order (serial and model)' -Phase 0 `
         -Detect { $r = Test-DEOrderMatch; @{ matches = ($r.Status -eq 'PASS'); detail = $r.Detail } } -Desired { @{ matches = $true } } `
@@ -332,7 +336,9 @@ function Get-DEExecutionPlan {
     param([Parameter(Mandatory = $true)]$ClientProfile, [string]$Mode = 'audit')
     $tier = "$(Get-DEHashPath -Object $ClientProfile -Path 'tier')"; if (-not $tier) { $tier = 'Office' }
     $capabilities = @()
-    if ($script:TierKeys -contains $tier) { $capabilities = @((Get-DEProActiveBundle -Tier $tier).capabilities) }
+    $standalone = (-not "$(Get-DEHashPath -Object $ClientProfile -Path 'plan.bundle')") -and @(Get-DEHashPath -Object $ClientProfile -Path 'plan.solutions' | Where-Object { $_ }).Count
+    if ($standalone) { $capabilities = @(Get-DEHashPath -Object $ClientProfile -Path 'plan.solutions' | Where-Object { $_ }) }   # a standalone buyer gets the solutions, not a tier
+    elseif ($script:TierKeys -contains $tier) { $capabilities = @((Get-DEProActiveBundle -Tier $tier).capabilities) }
     $actions = @(Get-DEActions -Mode $Mode | ForEach-Object {
             [pscustomobject]@{ id = $_.Id; module = $_.Module; title = $_.Title; phase = $_.Phase; destructive = $_.Destructive; requiresReboot = $_.RequiresReboot }
         })

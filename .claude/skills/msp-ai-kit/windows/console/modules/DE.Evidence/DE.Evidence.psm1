@@ -50,13 +50,25 @@ function Get-DEReadiness {
         if (-not $recs.Count -and $planActions.Count -and -not @($planActions | Where-Object { $id = $_; @($a.prefixes | Where-Object { $id -like "$_*" }).Count }).Count) { $state = 'NOT IN PLAN' }
         if ($recs.Count) {
             $results = @($recs | ForEach-Object { $_.result })
-            if ($results -contains 'FAIL') { $state = 'FAIL' } elseif ($results -contains 'BLOCKED') { $state = 'BLOCKED' } elseif ($results -contains 'WARN') { $state = 'WARN' } elseif ($results -contains 'PLANNED') { $state = 'PLANNED' } elseif ($results -contains 'EXCEPTION') { $state = 'EXCEPTION' } elseif (-not ($results | Where-Object { $_ -notin @('PASS', 'NO CHANGE', 'SKIPPED', 'INFO') })) { $state = 'PASS' } else { $state = 'WARN' }
+            if ($results -contains 'FAIL') { $state = 'FAIL' } elseif ($results -contains 'BLOCKED') { $state = 'BLOCKED' } elseif ($results -contains 'WARN') { $state = 'WARN' } elseif ($results -contains 'PLANNED') { $state = 'PLANNED' } elseif ($results -contains 'EXCEPTION') { $state = 'EXCEPTION' } elseif ($results -contains 'SKIPPED') { $state = 'SKIPPED' } elseif (-not ($results | Where-Object { $_ -notin @('PASS', 'NO CHANGE', 'INFO') })) { $state = 'PASS' } else { $state = 'WARN' }
         }
         $cards[$k] = [pscustomobject]@{ id = $k; title = $a.title; state = $state; count = $recs.Count; last = $(if ($recs.Count) { ($recs | Sort-Object timestamp -Descending | Select-Object -First 1).timestamp } else { $null }) }
     }
-    $states = @($cards.Values | Where-Object { $_ -and $_.state -notin @('NOT RUN', 'NOT IN PLAN') } | ForEach-Object { $_.state })
-    $overall = if (-not $states.Count) { 'NOT RUN' } elseif ($states -contains 'FAIL' -or $states -contains 'BLOCKED') { 'NOT READY' } elseif ($states -contains 'WARN' -or $states -contains 'PLANNED') { 'IN PROGRESS' } elseif ($states -contains 'EXCEPTION') { 'READY WITH EXCEPTIONS' } else { 'READY' }
-    return [pscustomobject]@{ overall = $overall; cards = @($cards.Values) }
+    # Overall comes from every in-plan action, not only the area cards: an in-plan check that never ran, was skipped,
+    # or belongs to no card still counts, and any FAIL or BLOCKED on record (integrity, order match, a rollback) blocks READY.
+    $mode = "$(Get-DEState -Path 'workflow.mode')"
+    $inPlan = @($(if ($mode) { Get-DEActions -Mode $mode } else { Get-DEActions }) | ForEach-Object { $_.Id })
+    $results = @($inPlan | ForEach-Object { if ($latest.ContainsKey($_)) { $latest[$_].result } else { 'NOT RUN' } })
+    $failures = @($latest.Values | Where-Object { $_ -and $_.result -in @('FAIL', 'BLOCKED') } | ForEach-Object { $_.result })
+    $all = @($results) + @($failures)
+    $overall = if (-not $inPlan.Count -and -not $latest.Count) { 'NOT RUN' }
+    elseif ($inPlan.Count -and -not @($results | Where-Object { $_ -ne 'NOT RUN' }).Count -and -not $failures.Count) { 'NOT RUN' }
+    elseif ($all -contains 'FAIL' -or $all -contains 'BLOCKED') { 'NOT READY' }
+    elseif ($all -contains 'WARN' -or $all -contains 'PLANNED' -or $all -contains 'NOT RUN') { 'IN PROGRESS' }
+    elseif ($all -contains 'EXCEPTION' -or $all -contains 'SKIPPED') { 'READY WITH EXCEPTIONS' }
+    else { 'READY' }
+    $blocked = ($all -contains 'BLOCKED') -and -not ($all -contains 'FAIL')
+    return [pscustomobject]@{ overall = $overall; cards = @($cards.Values); blocked = $blocked; notRun = @($results | Where-Object { $_ -eq 'NOT RUN' }).Count }
 }
 
 function Get-DEGapReport {
@@ -161,8 +173,13 @@ function Export-DEEvidenceBundle {
     $bundleHash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
     # final secret sweep: refuse to hand over a bundle that still contains a registered secret
     $leak = $false
-    foreach ($f in Get-ChildItem -LiteralPath $OutDir -File) { $txt = Get-Content -LiteralPath $f.FullName -Raw -ErrorAction SilentlyContinue; foreach ($v in $de.Redactions) { if ($v -and $txt -and $txt.Contains($v)) { $leak = $true } } }
-    if ($leak) { Remove-Item -LiteralPath $zip -Force; throw 'evidence bundle contained a registered secret and was withheld; report this as a console bug' }
+    foreach ($f in Get-ChildItem -LiteralPath $OutDir -File) {
+        $txt = Get-Content -LiteralPath $f.FullName -Raw -ErrorAction SilentlyContinue
+        # the value as typed, and as JSON and HTML would escape it
+        foreach ($v in $de.Redactions) { if ($v -and $txt) { foreach ($form in @($v, ($v | ConvertTo-Json -Compress).Trim('"'), [System.Net.WebUtility]::HtmlEncode($v))) { if ($form -and $txt.Contains($form)) { $leak = $true } } } }
+    }
+    # a withheld bundle leaves nothing behind: the zip and the unzipped folder both go
+    if ($leak) { Remove-Item -LiteralPath $zip -Force; Remove-Item -LiteralPath $OutDir -Recurse -Force -ErrorAction SilentlyContinue; throw 'evidence bundle contained a registered secret and was withheld (zip and folder deleted); report this as a console bug' }
     Add-DEEvidence -Step 'evidence.bundle' -Module 'evidence' -Before 'no bundle' -ActionTaken 'bundle written' -Result 'INFO' -Verification "$zip sha256 $bundleHash" -Artifacts @($zip) | Out-Null
     return [pscustomobject]@{ folder = $OutDir; zip = $zip; sha256 = $bundleHash; record = $record; gaps = @($gaps).Count }
 }
