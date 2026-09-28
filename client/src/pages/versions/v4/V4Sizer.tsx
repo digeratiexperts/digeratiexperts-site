@@ -8,6 +8,7 @@ import {
   SOLUTION_DRAFT_EVENT,
 } from "@/lib/solutionDraft";
 import { EnvironmentMap, parseEnvironment } from "./V4EnvironmentMap";
+import { RING, T } from "./V4Primitives";
 
 /**
  * Chapter 02's working part: three numbers in, the visitor's environment out.
@@ -68,7 +69,7 @@ export function V4Sizer({ reduced }: { reduced: boolean }) {
       writeSolutionDraft(patchEnvironment(draft, { [key]: next[key] }));
       window.dispatchEvent(new CustomEvent(SOLUTION_DRAFT_EVENT));
     } catch {
-      // Storage unavailable (private mode, blocked). The hero still works;
+      // Storage unavailable (private mode, blocked). The sizer still works;
       // the store simply will not be pre-filled.
     }
   };
@@ -84,9 +85,7 @@ export function V4Sizer({ reduced }: { reduced: boolean }) {
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {FIELDS.map((f) => (
           <label key={f.key} className="block min-w-0">
-            <span className="block font-mono text-[10px] uppercase tracking-[0.16em] text-white/60">
-              {f.label}
-            </span>
+            <span className={`block ${T.label} text-white/60`}>{f.label}</span>
             <input
               type="text"
               inputMode="numeric"
@@ -97,18 +96,18 @@ export function V4Sizer({ reduced }: { reduced: boolean }) {
               onChange={(e) => set(f.key, e.target.value)}
               aria-label={`${f.label}, ${f.hint}`}
               data-testid={`v4-sizer-${f.key}`}
-              className="mt-1.5 w-full rounded-xl border border-white/15 bg-white/[0.04] px-3 py-3 font-['Space_Grotesk',sans-serif] text-[clamp(1.4rem,3vw,2rem)] font-bold tabular-nums text-[#F7F5F2] outline-none placeholder:text-white/55 focus-visible:border-[#F04C97] focus-visible:ring-2 focus-visible:ring-[#F04C97]/40"
+              className={`mt-1.5 w-full rounded-xl border border-white/15 bg-white/5 px-3 py-3 ${T.figure} text-de-paper outline-none placeholder:text-white/55 focus-visible:border-de-accent-ink focus-visible:ring-2 focus-visible:ring-de-accent-ink/40`}
             />
-            <span className="mt-1 block text-[11px] text-white/55">{f.hint}</span>
+            <span className="mt-1 block font-mono text-[10.5px] text-white/55">{f.hint}</span>
           </label>
         ))}
       </div>
 
-      <div className="mt-6 min-h-[132px]">
+      <div className="mt-6 min-h-36">
         {started ? (
           <EnvironmentMap environment={environment} reduced={reduced} />
         ) : (
-          <p className="max-w-[44ch] text-[13.5px] leading-relaxed text-white/60">
+          <p className={`max-w-[44ch] ${T.small} text-white/60`}>
             Three numbers is all it takes. They stay on this device, and this step asks
             for no contact details.
           </p>
@@ -119,7 +118,7 @@ export function V4Sizer({ reduced }: { reduced: boolean }) {
         <Link
           href="/store"
           data-testid="v4-cta-store"
-          className="group mt-5 inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-[13.5px] font-semibold text-[#F7F5F2] transition-colors hover:border-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F04C97] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050312]"
+          className={`group mt-5 inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-[13.5px] font-semibold text-de-paper transition-colors hover:border-white/40 ${RING}`}
         >
           See what fits this environment
           <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />

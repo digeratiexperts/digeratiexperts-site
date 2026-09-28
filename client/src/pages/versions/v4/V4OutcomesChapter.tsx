@@ -1,14 +1,14 @@
-import { Chapter } from "./V4Primitives";
+import { Chapter, T } from "./V4Primitives";
 
 /**
  * 07 — What you get to do. The one paper chapter.
  *
  * A ledger, not a grid: each outcome on its own line, the verb set large, and
- * in the right-hand column the thing DE actually runs to deliver it — named
- * with the canon vocabulary (docs/DE-NAMING-CANON.md) and the published
- * package lines (client/src/data/pricing.ts, /ecosystem-pricing). That column
- * is what makes this specific to DE rather than to any provider: an outcome
- * is only worth printing if something real stands behind it.
+ * in the right-hand column the thing DE actually runs to deliver it — the
+ * published package lines (client/src/data/pricing.ts, /ecosystem-pricing)
+ * and the canon network names (docs/DE-NAMING-CANON.md). That column is what
+ * makes this specific to DE rather than to any provider: an outcome is only
+ * worth printing if something real stands behind it.
  *
  * Capabilities and service names only. No vendor is named, no metric is
  * stated, and no tier is priced here.
@@ -70,13 +70,11 @@ export function V4OutcomesChapter() {
         {LEDGER.map((row) => (
           <div
             key={row.verb}
-            className="grid gap-x-8 gap-y-2 border-b border-black/10 py-6 sm:grid-cols-[minmax(0,4fr)_minmax(0,5fr)_minmax(0,3fr)] sm:items-baseline"
+            className="grid gap-x-8 gap-y-2 border-b border-black/10 py-6 sm:grid-cols-[minmax(0,2fr)_minmax(0,5fr)_minmax(0,2fr)] sm:items-baseline"
           >
-            <dt className="font-['Space_Grotesk',sans-serif] text-[clamp(1.6rem,3.2vw,2.3rem)] font-bold leading-none tracking-[-0.02em] text-[#14121a]">
-              {row.verb}
-            </dt>
-            <dd className="text-[15px] leading-relaxed text-black/60">{row.meaning}</dd>
-            <dd className="flex flex-col gap-1 font-mono text-[11px] uppercase leading-relaxed tracking-[0.12em] text-black/60 sm:text-right">
+            <dt className={`${T.figure} text-de-bg`}>{row.verb}</dt>
+            <dd className={`${T.body} text-black/60`}>{row.meaning}</dd>
+            <dd className={`flex flex-col gap-1 ${T.label} leading-relaxed text-black/60 sm:text-right`}>
               {row.runs.map((r) => (
                 <span key={r}>{r}</span>
               ))}
@@ -84,7 +82,7 @@ export function V4OutcomesChapter() {
           </div>
         ))}
       </dl>
-      <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-black/60">
+      <p className={`mt-4 ${T.micro} text-black/60`}>
         Right column: service names as DE publishes them · no supplier is named · no tier is priced here
       </p>
     </Chapter>

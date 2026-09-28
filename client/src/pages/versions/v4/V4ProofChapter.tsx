@@ -1,4 +1,4 @@
-import { Chapter, QuietLink } from "./V4Primitives";
+import { Chapter, QuietLink, T } from "./V4Primitives";
 
 /**
  * 08 — In writing.
@@ -59,10 +59,11 @@ export function V4ProofChapter() {
     >
       <div className="mt-12 grid gap-12 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-10 lg:gap-16">
         {/* The person. Real photograph, already approved for production. */}
-        <figure className="max-w-[420px]" data-testid="v4-founder">
-          <div className="overflow-hidden rounded-2xl border border-white/15 bg-[#151217]">
+        <figure className="max-w-sm" data-testid="v4-founder">
+          <div className="overflow-hidden rounded-2xl border border-white/15 bg-de-raised">
             {/* Same photograph production serves as JPEG (142 KB); the WebP
-                derivative is 44 KB and the JPEG stays as the fallback. */}
+                derivative is 44 KB and the JPEG stays as the fallback. The
+                file is 3:4 already, so the box crops nothing. */}
             <picture>
               <source srcSet="/images/founder/joe-petro-studio-blazer-white.webp" type="image/webp" />
               <img
@@ -72,18 +73,14 @@ export function V4ProofChapter() {
                 height={1024}
                 loading="lazy"
                 decoding="async"
-                className="block aspect-[3/4] w-full object-cover object-[center_20%]"
+                className="block aspect-[3/4] w-full object-cover"
               />
             </picture>
           </div>
           <figcaption className="mt-4">
-            <p className="font-['Space_Grotesk',sans-serif] text-[20px] font-bold text-[#F7F5F2]">
-              Joseph Petro
-            </p>
-            <p className="mt-0.5 font-mono text-[10.5px] uppercase tracking-[0.18em] text-[#F04C97]">
-              Founder &amp; Chief Technology Strategist
-            </p>
-            <p className="mt-3 max-w-[40ch] text-[13.5px] leading-relaxed text-white/55">
+            <p className={`${T.h3} text-de-paper`}>Joseph Petro</p>
+            <p className={`mt-0.5 ${T.label} text-de-accent-ink`}>Founder &amp; Chief Technology Strategist</p>
+            <p className={`mt-3 max-w-[44ch] ${T.small} text-white/55`}>
               Chandler, Arizona. Directly involved in the assessments, the architecture and the
               milestones that matter — so you are not account number four thousand.
             </p>
@@ -99,21 +96,18 @@ export function V4ProofChapter() {
                 className="border-b border-white/10 py-6"
                 data-testid={`v4-excerpt-${i + 1}`}
               >
-                <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-[10.5px] uppercase tracking-[0.18em] text-white/55">
+                <p className={`flex flex-wrap items-baseline gap-x-3 gap-y-1 ${T.label} text-white/55`}>
                   <span className="text-white/60">{x.source}</span>
                   <span className="h-px w-5 self-center bg-white/15" />
                   <span>{x.title}</span>
                 </p>
+                {/* A short figure is set at heading size; a sentence at quotation size. */}
                 <blockquote
-                  className={`mt-3 max-w-[60ch] font-['Space_Grotesk',sans-serif] font-bold leading-snug text-[#F7F5F2] text-balance ${
-                    x.quote.length < 20 ? "text-[clamp(2rem,4vw,2.8rem)]" : "text-[clamp(1.05rem,1.7vw,1.35rem)]"
-                  }`}
+                  className={`mt-3 max-w-[58ch] text-de-paper ${x.quote.length < 20 ? T.h2 : `${T.h3} text-balance`}`}
                 >
                   {x.quote.length < 20 ? x.quote : `“${x.quote}”`}
                 </blockquote>
-                {x.note && (
-                  <p className="mt-2 max-w-[56ch] text-[13px] leading-relaxed text-white/60">{x.note}</p>
-                )}
+                {x.note && <p className={`mt-2 max-w-[58ch] ${T.small} text-white/60`}>{x.note}</p>}
               </li>
             ))}
           </ol>

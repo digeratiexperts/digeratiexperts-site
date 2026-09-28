@@ -1,4 +1,4 @@
-import { Chapter, QuietLink } from "./V4Primitives";
+import { Chapter, QuietLink, T } from "./V4Primitives";
 
 /**
  * 09 — Fit.
@@ -61,14 +61,14 @@ export function V4FitChapter() {
     >
       {/* Who, before how. Named sectors, each with a page of its own. */}
       <p
-        className="mt-8 flex flex-wrap items-baseline gap-x-3 gap-y-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-white/60"
+        className={`mt-8 flex flex-wrap items-baseline gap-x-3 gap-y-1.5 ${T.label} text-white/60`}
         data-testid="v4-industries"
       >
         <span className="text-white/50">Arizona businesses in</span>
         {INDUSTRIES.map((name, i) => (
           <span key={name} className="inline-flex items-baseline gap-x-3">
             {i > 0 && <span aria-hidden="true" className="text-white/30">·</span>}
-            <span className="text-[#F7F5F2]">{name}</span>
+            <span className="text-de-paper">{name}</span>
           </span>
         ))}
         <span className="text-white/50">and beyond</span>
@@ -87,34 +87,32 @@ export function V4FitChapter() {
               style={{ right: "calc((100% - 4rem) / 3)" }}
             />
             <div className="relative grid grid-cols-3 gap-x-8">
-              <span className="h-3 w-3 rounded-full border border-white/50 bg-[#050312]" />
-              <span className="h-3 w-3 rounded-full border border-white/50 bg-[#050312]" />
-              <span className="h-3 w-3 rounded-full bg-[#D3126A]" />
+              <span className="h-3 w-3 rounded-full border border-white/50 bg-de-bg" />
+              <span className="h-3 w-3 rounded-full border border-white/50 bg-de-bg" />
+              <span className="h-3 w-3 rounded-full bg-de-accent" />
             </div>
           </div>
         </div>
 
-        <ol className="mt-6 grid gap-8 border-l border-white/20 pl-6 sm:mt-8 sm:grid-cols-3 sm:gap-x-8 sm:border-l-0 sm:pl-0">
+        <ol className="mt-6 grid gap-8 border-l border-white/20 pl-7 sm:mt-8 sm:grid-cols-3 sm:gap-x-8 sm:border-l-0 sm:pl-0">
           {STOPS.map((s, i) => (
             <li key={s.name} className="relative min-w-0" data-testid={`v4-fit-${i + 1}`}>
               <span
                 aria-hidden="true"
-                className={`absolute -left-[29px] top-1.5 h-2.5 w-2.5 rounded-full sm:hidden ${
-                  i === 2 ? "bg-[#D3126A]" : "border border-white/50 bg-[#050312]"
+                className={`absolute -left-[31px] top-1.5 h-2.5 w-2.5 rounded-full sm:hidden ${
+                  i === 2 ? "bg-de-accent" : "border border-white/50 bg-de-bg"
                 }`}
               />
-              <p className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-white/55">{s.canon}</p>
-              <h3 className="mt-2 font-['Space_Grotesk',sans-serif] text-[clamp(1.3rem,2.4vw,1.7rem)] font-bold leading-tight text-[#F7F5F2]">
-                {s.name}
-              </h3>
-              <p className="mt-3 text-[15px] font-semibold leading-snug text-[#F7F5F2]/90">{s.fit}</p>
-              <p className="mt-2 max-w-[40ch] text-[13.5px] leading-relaxed text-white/55">{s.who}</p>
+              <p className={`${T.label} text-white/55`}>{s.canon}</p>
+              <h3 className={`mt-2 ${T.h3} text-de-paper`}>{s.name}</h3>
+              <p className="mt-3 text-[15px] font-semibold leading-snug text-de-paper">{s.fit}</p>
+              <p className={`mt-2 max-w-[44ch] ${T.small} text-white/55`}>{s.who}</p>
             </li>
           ))}
         </ol>
 
         <div className="mt-10 flex flex-col gap-4 border-t border-white/15 pt-6 sm:flex-row sm:items-baseline sm:justify-between">
-          <p className="max-w-[60ch] text-[13px] leading-relaxed text-white/60">
+          <p className={`max-w-[58ch] ${T.small} text-white/60`}>
             Final pricing depends on users, endpoints, locations, infrastructure, backup
             requirements, and security/compliance scope. Estimates are not quotes — your
             Cyber Risk Assessment confirms final scope.

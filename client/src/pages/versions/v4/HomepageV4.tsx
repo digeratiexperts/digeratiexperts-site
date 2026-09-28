@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
-import { PrimaryAction, ChapterLabel } from "./V4Primitives";
+import { PrimaryAction, ChapterLabel, RING, T } from "./V4Primitives";
 import { V4Sizer } from "./V4Sizer";
 import { V4ScopeChapter } from "./V4ScopeChapter";
 import { V4PathChapter } from "./V4PathChapter";
@@ -62,20 +62,18 @@ function useReducedMotion(): boolean {
 function GuaranteeFigure() {
   return (
     <figure className="border-l border-white/20 pl-6 sm:pl-8">
-      <figcaption className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-white/55">
-        From the published guarantee
-      </figcaption>
-      <blockquote className="mt-3 font-['Space_Grotesk',sans-serif] text-[clamp(1.2rem,2vw,1.55rem)] font-bold leading-snug text-[#F7F5F2] text-balance">
+      <figcaption className={`${T.label} text-white/55`}>From the published guarantee</figcaption>
+      <blockquote className={`mt-3 ${T.h3} text-balance text-de-paper`}>
         “Digerati Experts 30-day, no-questions-asked money-back guarantee on managed IT
         and cybersecurity services.”
       </blockquote>
-      <p className="mt-3 text-[14.5px] leading-relaxed text-white/60">
+      <p className={`mt-3 ${T.small} text-white/60`}>
         Release from contracts without penalties. No questions asked, no fine print.
       </p>
       <Link
         href="/about/guarantee"
         data-testid="v4-link-guarantee"
-        className="group mt-4 inline-flex items-center gap-2 text-[13.5px] font-semibold text-[#F7F5F2] underline decoration-white/25 underline-offset-4 transition-colors hover:decoration-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F04C97] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050312]"
+        className={`group mt-4 inline-flex items-center gap-2 text-[13.5px] font-semibold text-de-paper underline decoration-white/25 underline-offset-4 transition-colors hover:decoration-white ${RING}`}
       >
         Read the guarantee
         <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -88,7 +86,7 @@ export default function HomepageV4() {
   const reduced = useReducedMotion();
 
   return (
-    <div className="min-h-screen bg-[#050312] text-[#F7F5F2]">
+    <div className="min-h-screen bg-de-bg text-de-paper">
       <MegaMenu />
 
       <main className="min-w-0">
@@ -97,7 +95,7 @@ export default function HomepageV4() {
                cookie banner publishes its height as --de-cookie-h and the
                action is kept clear of it. ── */}
         <section aria-labelledby="v4-ch1" className="de-nav-clear">
-          <div className="mx-auto w-full max-w-[1240px] px-5 pt-10 pb-[calc(3rem+var(--de-cookie-h,0px))] sm:px-8 lg:pt-3 lg:pb-[calc(3rem+var(--de-cookie-h,0px))]">
+          <div className="mx-auto w-full max-w-[1240px] px-5 pt-10 pb-[calc(3rem+var(--de-cookie-h,0px))] sm:px-8 lg:pt-3">
             <div className="grid gap-12 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-center lg:gap-16">
               <div>
                 <ChapterLabel n="01">Digerati Experts · Arizona</ChapterLabel>
@@ -109,12 +107,12 @@ export default function HomepageV4() {
                     the headline wraps normally. */}
                 <h1
                   id="v4-ch1"
-                  className="max-w-[16ch] font-['Space_Grotesk',sans-serif] text-[clamp(2.4rem,6vw,3.6rem)] font-bold leading-[1.02] tracking-[-0.02em] text-balance lg:max-w-none lg:whitespace-nowrap lg:text-[clamp(2.4rem,3.6vw,3.3rem)]"
+                  className={`max-w-[16ch] ${T.display} lg:max-w-none lg:whitespace-nowrap lg:text-[clamp(2.4rem,3.6vw,3.3rem)]`}
                 >
                   You lead the business.
                   <span className="block text-white/55">We lead the technology.</span>
                 </h1>
-                <p className="mt-5 max-w-[60ch] text-[clamp(1rem,1.4vw,1.1rem)] leading-relaxed text-white/60">
+                <p className={`mt-5 max-w-[58ch] ${T.lede} text-white/60`}>
                   Cybersecurity-first managed technology for Arizona businesses that cannot
                   afford downtime. You keep command of the business; we take ownership of
                   the technology it runs on, starting with what you actually have.
@@ -139,18 +137,15 @@ export default function HomepageV4() {
             <ChapterLabel n="02">Start with what you have</ChapterLabel>
             <div className="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
               <div>
-                <h2
-                  id="v4-ch2"
-                  className="max-w-[18ch] font-['Space_Grotesk',sans-serif] text-[clamp(1.8rem,4.4vw,2.9rem)] font-bold leading-[1.08] tracking-[-0.015em] text-balance"
-                >
+                <h2 id="v4-ch2" className={`max-w-[24ch] ${T.h2}`}>
                   Three numbers. No contract, no vendor catalog.
                 </h2>
-                <p className="mt-5 max-w-[46ch] text-[15.5px] leading-relaxed text-white/60">
+                <p className={`mt-5 max-w-[44ch] ${T.body} text-white/60`}>
                   Tell the page how many people, computers and sites you run and it draws
                   your environment. It is the same profile the store sizes every solution
                   from, so nothing is asked twice.
                 </p>
-                <p className="mt-4 max-w-[46ch] text-[15.5px] leading-relaxed text-white/60">
+                <p className={`mt-4 max-w-[44ch] ${T.body} text-white/60`}>
                   Most providers put a phone number here. We would rather you see the
                   shape of your own environment first — and the rest of this page will
                   use it.

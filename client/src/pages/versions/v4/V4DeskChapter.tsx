@@ -1,4 +1,4 @@
-import { Chapter } from "./V4Primitives";
+import { Chapter, T } from "./V4Primitives";
 
 /**
  * 06 — What sits on the foundation.
@@ -48,21 +48,19 @@ export function V4DeskChapter() {
               <span className="font-mono text-[10.5px] tabular-nums text-white/50">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <h3 className="text-[15px] font-semibold leading-snug text-[#F7F5F2]">{name}</h3>
-              <p className="col-start-2 text-[13.5px] leading-relaxed text-white/50 sm:col-start-3">
-                {line}
-              </p>
+              <h3 className="text-[15px] font-semibold leading-snug text-de-paper">{name}</h3>
+              <p className={`col-start-2 ${T.small} text-white/50 sm:col-start-3`}>{line}</p>
             </li>
           ))}
         </ol>
 
         {/* Real product, first-class. */}
         <figure
-          className="mx-auto w-full max-w-[360px] lg:mx-0 lg:justify-self-end"
+          className="mx-auto w-full max-w-sm lg:mx-0 lg:justify-self-end"
           data-testid="v4-desk-figure"
           data-classification="SANITIZED_REAL"
         >
-          <div className="overflow-hidden rounded-[22px] border border-white/15 bg-[#F7F5F2] shadow-[0_30px_80px_-30px_rgba(0,0,0,0.8)]">
+          <div className="overflow-hidden rounded-3xl border border-white/15 bg-de-paper shadow-2xl">
             <img
               src="/images/evidence/de-desk-shell.webp"
               alt="DE Desk, the support panel on this site: Direct Engineering Support, a possible-security-incident route, and the list of what you need help with."
@@ -73,8 +71,8 @@ export function V4DeskChapter() {
               className="block h-auto w-full"
             />
           </div>
-          <figcaption className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] leading-relaxed text-white/50">
-            <span className="inline-flex items-center rounded border border-white/15 bg-[#151217] px-2 py-0.5 font-mono text-[10.5px] uppercase tracking-[0.12em] text-white/80">
+          <figcaption className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12.5px] leading-relaxed text-white/50">
+            <span className={`inline-flex items-center rounded border border-white/15 bg-de-raised px-2 py-0.5 ${T.label} text-white/80`}>
               Real, details removed
             </span>
             <span>

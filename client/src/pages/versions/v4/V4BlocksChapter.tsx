@@ -1,4 +1,4 @@
-import { Chapter } from "./V4Primitives";
+import { Chapter, T } from "./V4Primitives";
 
 /**
  * 05 — The foundation, drawn as what it is.
@@ -43,11 +43,11 @@ export function V4BlocksChapter() {
               // Names hang from the same line in every block; the varying
               // description lengths fall away at the bottom, which is where
               // unevenness reads as natural rather than as a mistake.
-              className="flex min-w-0 flex-col bg-[#0a0a0a] px-4 py-4 sm:min-h-[168px] sm:px-3.5 lg:px-4"
+              className="flex min-w-0 flex-col bg-de-surface px-4 py-4 sm:min-h-40 sm:px-3.5 lg:px-4"
             >
-              <p className="font-mono text-[10px] tabular-nums text-white/50">0{i + 1}</p>
+              <p className="font-mono text-[10.5px] tabular-nums text-white/50">0{i + 1}</p>
               <div className="mt-3 sm:mt-6">
-                <h3 className="font-['Space_Grotesk',sans-serif] text-[14.5px] font-bold leading-tight text-[#F7F5F2] sm:text-[13.5px] lg:text-[14.5px]">
+                <h3 className="font-['Space_Grotesk',sans-serif] text-[13.5px] font-bold leading-tight text-de-paper">
                   {name}
                 </h3>
                 <p className="mt-1.5 text-[12.5px] leading-relaxed text-white/50 sm:hidden lg:block">
@@ -60,25 +60,21 @@ export function V4BlocksChapter() {
 
         {/* The slab. Magenta rule along the top edge, full width, deliberately
             not shaped like the blocks above it. */}
-        <div className="rounded-b-2xl border border-t-0 border-white/15 bg-[#D3126A]/[0.07]">
-          <div className="h-px w-full bg-gradient-to-r from-[#D3126A] via-[#D3126A]/60 to-[#D3126A]/15" />
+        <div className="rounded-b-2xl border border-t-0 border-white/15 bg-de-accent/10">
+          <div className="h-px w-full bg-gradient-to-r from-de-accent via-de-accent/60 to-de-accent/15" />
           <div className="flex flex-col gap-3 px-4 py-5 sm:flex-row sm:items-start sm:gap-8 sm:px-6">
-            <div className="shrink-0 sm:w-[220px]">
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#F04C97]">
-                08 · runs continuously
-              </p>
-              <h3 className="mt-1.5 font-['Space_Grotesk',sans-serif] text-[17px] font-bold text-[#F7F5F2]">
-                Risk &amp; Exposure
-              </h3>
+            <div className="shrink-0 sm:w-56">
+              <p className={`${T.label} text-de-accent-ink`}>08 · runs continuously</p>
+              <h3 className={`mt-1.5 ${T.h3} text-de-paper`}>Risk &amp; Exposure</h3>
             </div>
-            <p className="min-w-0 max-w-[62ch] text-[13.5px] leading-relaxed text-white/60">
+            <p className={`min-w-0 max-w-[58ch] ${T.small} text-white/60`}>
               Beneath and across all seven, not beside them. What is exposed, what changed,
               and what it means for this environment specifically — reviewed on a cadence
               rather than discovered during an incident.
             </p>
           </div>
         </div>
-        <figcaption className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-white/50">
+        <figcaption className={`mt-3 ${T.micro} text-white/50`}>
           The DE security model · eight blocks · code-drawn, states no metric
         </figcaption>
       </figure>

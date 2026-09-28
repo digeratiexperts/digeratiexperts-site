@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { T } from "./V4Primitives";
 
 /**
  * The visitor's own environment, drawn from numbers they typed.
@@ -66,16 +67,15 @@ function useSettled(reduced: boolean): boolean {
   return settled;
 }
 
+const PERSON = "block h-2.5 w-2.5 rounded-full bg-white/80";
+const DEVICE = "block h-2.5 w-2.5 rounded-sm border border-white/30";
+
 /** One person or one device. New marks settle in; marks already on screen stay put. */
 function Mark({ kind, index, reduced }: { kind: "person" | "device"; index: number; reduced: boolean }) {
   const settled = useSettled(reduced);
-  const shape =
-    kind === "person"
-      ? "block h-[10px] w-[10px] rounded-full bg-[#F7F5F2]/80"
-      : "block h-[10px] w-[10px] rounded-[1.5px] border border-white/30";
   return (
     <span
-      className={shape}
+      className={kind === "person" ? PERSON : DEVICE}
       style={
         reduced
           ? undefined
@@ -146,7 +146,8 @@ export function EnvironmentMap({
       style={
         framed
           ? {
-              borderColor: inView ? "rgba(211, 18, 106, 0.5)" : "rgba(211, 18, 106, 0)",
+              // The accent token, not a literal, so the frame follows the theme.
+              borderColor: inView ? "rgb(var(--de-accent-rgb) / 0.5)" : "rgb(var(--de-accent-rgb) / 0)",
               transition: reduced ? undefined : "border-color 700ms ease",
             }
           : undefined
@@ -161,9 +162,9 @@ export function EnvironmentMap({
         className={`grid gap-3 ${cols === 1 ? "grid-cols-1" : cols === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}
       >
         {layout.map((site, i) => (
-          <div key={i} className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+          <div key={i} className="rounded-xl border border-white/10 bg-white/5 p-4">
             <div className="mb-3 flex items-baseline justify-between gap-2">
-              <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-white/55">
+              <span className={`${T.micro} text-white/55`}>
                 {sites > MAX_SITES_DRAWN && i === MAX_SITES_DRAWN - 1
                   ? `+${sites - MAX_SITES_DRAWN + 1} sites`
                   : `Site ${i + 1}`}
@@ -175,12 +176,12 @@ export function EnvironmentMap({
             </div>
 
             {/* People — presence, never faces. */}
-            <div className="flex flex-wrap gap-[3px]">
+            <div className="flex flex-wrap gap-1">
               {Array.from({ length: Math.min(site.users, MAX_MARKS_PER_SITE) }, (_, k) => (
                 <Mark key={`u${k}`} kind="person" index={k} reduced={reduced} />
               ))}
               {site.users > MAX_MARKS_PER_SITE && (
-                <span className="ml-1 font-mono text-[9px] text-white/55">
+                <span className="ml-1 font-mono text-[9.5px] text-white/55">
                   +{site.users - MAX_MARKS_PER_SITE}
                 </span>
               )}
@@ -188,12 +189,12 @@ export function EnvironmentMap({
 
             {/* Devices — squares, so the two never read as the same thing. */}
             {site.devices > 0 && (
-              <div className="mt-2 flex flex-wrap gap-[3px]">
+              <div className="mt-2 flex flex-wrap gap-1">
                 {Array.from({ length: Math.min(site.devices, MAX_MARKS_PER_SITE) }, (_, k) => (
                   <Mark key={`d${k}`} kind="device" index={k} reduced={reduced} />
                 ))}
                 {site.devices > MAX_MARKS_PER_SITE && (
-                  <span className="ml-1 font-mono text-[9px] text-white/55">
+                  <span className="ml-1 font-mono text-[9.5px] text-white/55">
                     +{site.devices - MAX_MARKS_PER_SITE}
                   </span>
                 )}
@@ -203,13 +204,13 @@ export function EnvironmentMap({
         ))}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-white/55">
+      <div className={`mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 ${T.micro} text-white/55`}>
         <span className="inline-flex items-center gap-1.5">
-          <span className="block h-[10px] w-[10px] rounded-full bg-[#F7F5F2]/80" />
+          <span className={PERSON} />
           {users === 1 ? "1 person" : `${users} people`}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="block h-[10px] w-[10px] rounded-[1.5px] border border-white/30" />
+          <span className={DEVICE} />
           {devices === 1 ? "1 device" : `${devices} devices`}
         </span>
         {/* One site is drawn until a count is typed; the legend says so
@@ -217,7 +218,7 @@ export function EnvironmentMap({
         <span>{sites > 0 ? (sites === 1 ? "1 site" : `${sites} sites`) : "sites not set"}</span>
         {framed && (
           <span
-            className="text-[#F04C97]"
+            className="text-de-accent-ink"
             style={
               reduced
                 ? undefined
