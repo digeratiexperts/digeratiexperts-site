@@ -44,15 +44,49 @@ type FamilyPolicy = {
   technicianPolicy: TechnicianPolicy;
 };
 
+/**
+ * DE fulfillment rule (Joe, 2026-09-27): remote support and shipping come
+ * before Truck-Roll, Trip Charge and Tech Labor. This is the order every
+ * Delivery & Setup surface lists, defaults and prints installation options in.
+ * On-site work is the last resort, chosen only when remote setup and shipped
+ * equipment cannot do the job.
+ */
+export const INSTALL_MODE_ORDER: readonly InstallMode[] = ["remote_assist", "self_install", "onsite"];
+
+export const INSTALL_MODE_LABELS: Record<InstallMode, { label: string; detail: string }> = {
+  remote_assist: {
+    label: "Remote DE setup",
+    detail: "DE configures and verifies it remotely. First choice wherever the package allows it.",
+  },
+  self_install: {
+    label: "Ship it, set it up yourself",
+    detail: "Equipment ships to you with guided self-install; remote help is available if you get stuck.",
+  },
+  onsite: {
+    label: "On-site technician",
+    detail: "Truck-Roll, Trip Charge and Tech Labor. Scheduled only when remote setup and shipped equipment cannot do the job.",
+  },
+};
+
+/** Sort any install-mode list into DE's order of preference. */
+export function sortInstallModes(modes: readonly InstallMode[]): InstallMode[] {
+  return INSTALL_MODE_ORDER.filter((mode) => modes.includes(mode));
+}
+
+/** The default suggestion: the earliest option in DE's order that the package supports. */
+export function preferredInstallMode(modes: readonly InstallMode[]): InstallMode | null {
+  return sortInstallModes(modes)[0] ?? null;
+}
+
 const DIGITAL: Pick<FamilyPolicy, "shipmentMode" | "installModes" | "technicianPolicy"> = {
   shipmentMode: "none",
-  installModes: ["self_install", "remote_assist"],
+  installModes: ["remote_assist", "self_install"],
   technicianPolicy: "not_needed",
 };
 
 const HYBRID_DELIVERY: Pick<FamilyPolicy, "shipmentMode" | "installModes" | "technicianPolicy"> = {
   shipmentMode: "conditional",
-  installModes: ["self_install", "remote_assist", "onsite"],
+  installModes: ["remote_assist", "self_install", "onsite"],
   technicianPolicy: "scope_dependent",
 };
 
@@ -75,7 +109,7 @@ export const FAMILY_PACKAGE_POLICY: Record<CuratedSolutionFamily["id"], FamilyPo
   hardware_lifecycle: {
     assessmentPolicy: "not_required",
     shipmentMode: "physical",
-    installModes: ["self_install", "remote_assist", "onsite"],
+    installModes: ["remote_assist", "self_install", "onsite"],
     technicianPolicy: "available",
   },
   documentation_standards: { assessmentPolicy: "recommended", ...DIGITAL },
@@ -132,12 +166,12 @@ function shipmentCopy(mode: ShipmentMode): string {
 
 function technicianCopy(policy: TechnicianPolicy): string {
   if (policy === "available") {
-    return "A technician can be scheduled when implementation requires hands-on work.";
+    return "Remote setup and shipped equipment come first. An on-site technician (Truck-Roll, Trip Charge and Tech Labor) is scheduled only when hands-on work cannot be done remotely.";
   }
   if (policy === "scope_dependent") {
-    return "On-site work is available and will be marked required only when the approved design needs hands-on installation.";
+    return "Remote setup and shipped equipment come first. On-site work (Truck-Roll, Trip Charge and Tech Labor) is added only when the approved design needs hands-on installation.";
   }
-  return "An on-site technician is not normally required for this package.";
+  return "Handled remotely. An on-site technician is not normally required for this package.";
 }
 
 function primaryIntent(policy: AssessmentPolicy): SolutionActionIntent {
@@ -171,7 +205,7 @@ export function buildSolutionPackage(
     primaryIntent: primaryIntent(policy.assessmentPolicy),
     shipmentMode: policy.shipmentMode,
     shipmentCopy: shipmentCopy(policy.shipmentMode),
-    installModes: policy.installModes,
+    installModes: sortInstallModes(policy.installModes),
     technicianPolicy: policy.technicianPolicy,
     technicianCopy: technicianCopy(policy.technicianPolicy),
     remoteSupportAvailable: true,

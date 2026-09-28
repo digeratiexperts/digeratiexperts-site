@@ -73,6 +73,20 @@ Every package must publish fulfillment behavior, even when the answer is "not ap
 - on-site technician availability / scope dependency
 - remote support preference
 
+**DE fulfillment order (Joe, 2026-09-27, binding):** remote support and shipping come before
+Truck-Roll, Trip Charge and Tech Labor. Every Delivery & Setup surface lists, defaults and prints
+installation options in this order:
+
+1. Remote DE setup
+2. Ship it, set it up yourself (remote guidance available)
+3. On-site technician: Truck-Roll, Trip Charge and Tech Labor, scope-dependent, chosen only when
+   remote setup and shipped equipment cannot do the job
+
+The default suggestion is the earliest option the selected packages support. The order lives in
+`client/src/lib/solutionPackage.ts` (`INSTALL_MODE_ORDER`, `sortInstallModes`,
+`preferredInstallMode`, `INSTALL_MODE_LABELS`) and is guarded by
+`client/src/lib/solutionPackage.fulfillmentOrder.test.ts`.
+
 Do not invent a ship date before inventory, model, scope, and delivery destination can support that promise.
 
 ### Step 4 — Contact

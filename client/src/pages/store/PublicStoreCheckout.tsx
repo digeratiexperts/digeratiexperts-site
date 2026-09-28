@@ -37,10 +37,12 @@ const DELIVERY_OPTIONS: Array<[DeliveryPreference, string, string]> = [
   ["unsure", "Help me choose", "Save the need now and let DE recommend the operating relationship before final package submission."],
 ];
 
+// DE fulfillment order: remote support and shipping before Truck-Roll, Trip
+// Charge and Tech Labor (Joe, 2026-09-27). Never list on-site first.
 const INSTALL_OPTIONS: Array<[InstallationPreference, string]> = [
-  ["self_install", "Self-install"],
   ["remote_assist", "Remote DE setup"],
-  ["onsite", "Schedule a technician"],
+  ["self_install", "Ship it, set it up yourself"],
+  ["onsite", "On-site technician (Truck-Roll, Trip Charge and Tech Labor)"],
   ["unsure", "Help me choose"],
 ];
 
