@@ -21,14 +21,13 @@ export function useStoreChromeGestures(location: string) {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.toggle(STORE_GESTURE_LOCK_CLASS, active);
-    if (!active) {
-      return () => root.classList.remove(STORE_GESTURE_LOCK_CLASS);
-    }
     // The gesture claim exists for horizontal rails (the warehouse). Pages
     // without one, the public Store's Door 2 among them, keep the browser's
-    // own swipe-back; the class alone stays for the jelly stylesheet.
-    if (!document.querySelector(".de-store-h-rail")) {
+    // own swipe-back and carry no lock class, so store-jelly.css (keyed to
+    // that class) stays off them; Door 2's own jelly lives in store-builder.css.
+    const claimed = active && document.querySelector(".de-store-h-rail") !== null;
+    root.classList.toggle(STORE_GESTURE_LOCK_CLASS, claimed);
+    if (!claimed) {
       return () => root.classList.remove(STORE_GESTURE_LOCK_CLASS);
     }
 

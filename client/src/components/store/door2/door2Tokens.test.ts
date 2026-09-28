@@ -58,9 +58,13 @@ describe("Door 2 tokens match the V4 vocabulary", () => {
   });
 
   it("keeps colour in the theme tokens and reduces every motion to nothing on request", () => {
-    // The only literal colours are the locked focus ring, the two error inks and print black/white.
+    // The only literal colours are the locked focus ring and print black/white; error inks derive from --destructive.
     const hexes = [...css.matchAll(/#[0-9a-fA-F]{3,6}\b/g)].map((match) => match[0].toLowerCase());
-    expect(new Set(hexes)).toEqual(new Set(["#ec4899", "#fff", "#f5b4c8", "#b3123f", "#000", "#ccc"]));
+    expect(new Set(hexes)).toEqual(new Set(["#ec4899", "#fff", "#000", "#ccc"]));
+    expect(css).toContain("--d2-error-ink: color-mix(in srgb, hsl(var(--destructive))");
+    expect(block(".d2-need")).not.toContain("animation");
+    expect(css).toContain('.d2-need[data-d2-entered="true"]');
+    expect(css).toContain('html.de-store-jelly .d2-sheet-panel[data-state="open"]');
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
     expect(css).toContain("html[data-de-store-bar] .de-site-canvas");
     expect(css).toContain("html.de-store-jelly .d2-tile[data-de-just-selected");

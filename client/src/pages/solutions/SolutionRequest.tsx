@@ -12,6 +12,7 @@ import { getFamilyBySlug, SOLUTION_WORKSPACE_PATH, STORE_STEPS, submittedPath } 
 import {
   addDraftNeed,
   archiveSubmittedDraft,
+  ensureSubmitAttemptId,
   profileGaps,
   profileSummary,
   readSolutionDraft,
@@ -194,7 +195,7 @@ export default function SolutionRequest() {
     navigate(`${SOLUTION_WORKSPACE_PATH}?seeded=${encodeURIComponent(slug)}`, { replace: true });
   }, [search, announce, navigate]);
 
-  /* Prefill from the server draft when it already carries contact fields; remember its id. */
+  /* Remember the session's draft id so the submit lands on DE's copy. A draft never carries contact fields (§7). */
   useEffect(() => {
     let cancelled = false;
     void fetch(REQUEST_ENDPOINT, { credentials: "include" })
@@ -203,14 +204,6 @@ export default function SolutionRequest() {
         if (cancelled || !data?.request) return;
         const record = data.request;
         if (typeof record.id === "string" && record.id) setRequestId(record.id);
-        setFields((current) => {
-          const next = { ...current };
-          for (const field of FIELDS) {
-            const value = record[field.key];
-            if (!next[field.key] && typeof value === "string" && value.trim()) next[field.key] = value;
-          }
-          return next;
-        });
       })
       .catch(() => undefined);
     return () => {
@@ -266,7 +259,7 @@ export default function SolutionRequest() {
     const needs = toRequestNeeds(draft);
     const lead = needs[0];
     setSending(true);
-    setOffline(null);
+    // The OfflinePanel stays mounted through a retry (its Try again shows "Sending…"); it clears on an answer.
     setFormError("");
     try {
       const response = await fetch(REQUEST_ENDPOINT, {
@@ -278,10 +271,12 @@ export default function SolutionRequest() {
           familyId: lead?.familyId,
           offerId: lead?.offerId,
           deliveryModel: lead?.deliveryModel,
-          deliveryPreference: relationship || "unsure",
+          // "" reaches the server as "" so RELATIONSHIP_REQUIRED is its answer, never a silent Help me choose.
+          deliveryPreference: relationship,
           selectedNeeds: needs,
           environment: draft.environment,
           fulfillment: draft.fulfillment,
+          suggestion: draft.suggestion,
           organizationName: contact.organizationName,
           contactName: contact.contactName,
           contactEmail: contact.contactEmail,
@@ -319,6 +314,7 @@ export default function SolutionRequest() {
         setOffline("durable");
         return;
       }
+      setOffline(null);
       if (response.status === 400) {
         const code = typeof data.code === "string" ? data.code : "";
         if (code === "NEEDS_REQUIRED" || code === "PROFILE_INCOMPLETE" || code === "RELATIONSHIP_REQUIRED") {
@@ -362,15 +358,15 @@ export default function SolutionRequest() {
       return;
     }
     setProblems({});
-    const familyIds = draft.needs.map((need) => need.familyId).sort();
-    const key = `${contact.contactEmail.toLowerCase()}|${familyIds.join(",")}|${relationship || "unsure"}`;
+    // One key per solution and address: a retry replays, a solution built after "Start another" never does (§7).
+    const key = `${ensureSubmitAttemptId()}|${contact.contactEmail.toLowerCase()}`;
     lastKey.current = key;
     void send(key);
   };
 
   const onRetry = () => {
     if (sending) return;
-    void send(lastKey.current ?? `${fields.contactEmail.trim().toLowerCase()}|${draft.needs.map((need) => need.familyId).sort().join(",")}|${relationship || "unsure"}`);
+    void send(lastKey.current ?? `${ensureSubmitAttemptId()}|${fields.contactEmail.trim().toLowerCase()}`);
   };
 
   const selectionList = (

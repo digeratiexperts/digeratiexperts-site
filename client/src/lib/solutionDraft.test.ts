@@ -1,20 +1,25 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   FAMILY_IDS,
+  draftStorageBlocked,
   emptyDraft,
+  ensureSubmitAttemptId,
   isProfileComplete,
   parseDraft,
   patchEnvironment,
   patchFulfillment,
   profileGaps,
   profileSummary,
+  readSolutionDraft,
   recommendedIntent,
   removeNeed,
+  resetSolutionKeepingProfile,
   resolvedPackages,
   summarizeForArchive,
   toRequestNeeds,
   toggleNeed,
   upsertNeed,
+  writeSolutionDraft,
 } from "./solutionDraft";
 
 const sized = {
@@ -143,11 +148,74 @@ describe("SolutionDraft", () => {
     expect(archive.packages[0]).toMatchObject({ familyLabel: "Hardware & Lifecycle", installation: "remote_assist", shipmentMode: "physical", pricingLabel: "Standard price" });
     expect(archive.packages[0].lineItems[1].quantity).toBe("32 computers");
     expect(JSON.stringify(archive)).not.toMatch(/co_managed|self_install|remote_assist"?:/);
-    // The device keeps a masked contact only: no raw email, no run of seven or more digits.
-    expect(archive.contact).toEqual({ organizationName: "Acme", contactName: "Jo", emailMasked: "j***@acme.test", phoneLast4: "···-0100" });
+    // The device keeps a masked contact only: no names, no raw email, no run of seven or more digits.
+    expect(archive.contact).toEqual({ emailMasked: "j***@acme.test", phoneLast4: "···-0100" });
     const stored = JSON.stringify(archive);
     expect(stored).not.toContain("jo@acme.test");
+    expect(stored).not.toContain("Acme");
+    expect(stored).not.toContain("Jo");
     expect(stored.replace(/j\*\*\*@acme\.test/, "")).not.toContain("@");
     expect(stored).not.toMatch(/\d{7,}/);
+  });
+
+  describe("with this device's storage", () => {
+    type Store = Record<string, string>;
+    function installWindow(store: Store, options: { setItemThrows?: boolean } = {}) {
+      const dispatched: string[] = [];
+      const localStorage = {
+        getItem: (key: string) => (key in store ? store[key] : null),
+        setItem: (key: string, value: string) => {
+          if (options.setItemThrows) throw new Error("QuotaExceededError");
+          store[key] = value;
+        },
+        removeItem: (key: string) => {
+          delete store[key];
+        },
+      };
+      (globalThis as { window?: unknown }).window = {
+        localStorage,
+        dispatchEvent: (event: Event) => {
+          dispatched.push(event.type);
+          return true;
+        },
+      };
+      return { dispatched };
+    }
+    afterEach(() => {
+      delete (globalThis as { window?: unknown }).window;
+    });
+
+    it("keeps working from memory when storage refuses every write, and says so", () => {
+      const store: Store = {};
+      installWindow(store, { setItemThrows: true });
+      const written = writeSolutionDraft(toggleNeed(emptyDraft(), "identity_access"));
+      expect(Object.keys(store)).toEqual([]);
+      expect(draftStorageBlocked()).toBe(true);
+      expect(readSolutionDraft().needs).toEqual(written.needs);
+      expect(readSolutionDraft().updatedAt).toBe(written.updatedAt);
+    });
+
+    it("repairs a v1 key without re-entering itself when the write is refused", () => {
+      const store: Store = { "de-solution-draft-v1": JSON.stringify({ ...emptyDraft(), needs: [{ familyId: "email_collaboration" }] }) };
+      const { dispatched } = installWindow(store, { setItemThrows: true });
+      // A listener that re-reads on every draft event: the migration must not fire one.
+      const first = readSolutionDraft();
+      expect(first.needs.map((need) => need.familyId)).toEqual(["email_collaboration"]);
+      expect(dispatched).toEqual([]);
+      expect(readSolutionDraft().needs).toEqual(first.needs);
+    });
+
+    it("mints one submit attempt id per solution and clears it with Start another", () => {
+      const store: Store = {};
+      installWindow(store);
+      writeSolutionDraft(toggleNeed(emptyDraft(), "identity_access"));
+      const minted = ensureSubmitAttemptId();
+      expect(minted.length).toBeGreaterThan(8);
+      expect(ensureSubmitAttemptId()).toBe(minted);
+      expect(readSolutionDraft().submitAttemptId).toBe(minted);
+      resetSolutionKeepingProfile();
+      expect(readSolutionDraft().submitAttemptId).toBeNull();
+      expect(ensureSubmitAttemptId()).not.toBe(minted);
+    });
   });
 });

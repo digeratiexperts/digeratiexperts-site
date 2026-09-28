@@ -79,14 +79,14 @@ export function buildPublicSolutionRequestDescription(record: PublicSolutionRequ
   });
 
   const support = record.fulfillment.remoteSupport;
-  const suggestion = (record as { suggestion?: { value?: string; accepted?: boolean } | null }).suggestion;
+  const suggestion = record.suggestion;
 
   return [
     `Solution ${record.reference ?? "(draft)"} · correlation ${record.correlationId}`,
     `Intent: ${INTENT_WORDS[record.intent] ?? record.intent}`,
     `Relationship: ${relationship === "unsure" ? "DE to recommend" : (RELATIONSHIP_LABELS[relationship] ?? RELATIONSHIP_LABELS[""])}`,
     suggestion?.value
-      ? `Suggestion shown: ${RELATIONSHIP_LABELS[suggestion.value as "standalone" | "co_managed"]} (${suggestion.accepted ? "used" : "declined"})`
+      ? `Suggestion shown: ${RELATIONSHIP_LABELS[suggestion.value]} (${suggestion.accepted ? "used" : "declined"})`
       : "",
     "",
     "Profile:",

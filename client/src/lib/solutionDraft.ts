@@ -74,6 +74,12 @@ export type SolutionDraft = {
   suggestion: SolutionSuggestion;
   acceptedHints: string[];
   dismissedHints: string[];
+  /**
+   * Minted on the first submit attempt of this solution and cleared with it, so a
+   * retry (Try again, or a reload after a lost response) replays and a new solution
+   * built after "Start another" never does, whatever it shares with the last one.
+   */
+  submitAttemptId: string | null;
 };
 
 const STORAGE_KEY = "de-solution-draft-v2";
@@ -121,6 +127,7 @@ export function emptyDraft(): SolutionDraft {
     suggestion: null,
     acceptedHints: [],
     dismissedHints: [],
+    submitAttemptId: null,
   };
 }
 
@@ -253,6 +260,7 @@ export function parseDraft(raw: unknown): SolutionDraft {
     suggestion: asSuggestion(input.suggestion),
     acceptedHints: asIdList(input.acceptedHints),
     dismissedHints: asIdList(input.dismissedHints),
+    submitAttemptId: clip(input.submitAttemptId, 80) || null,
   };
 }
 
@@ -433,46 +441,95 @@ function migrateLegacyCart(): SolutionDraftNeed[] {
   }
 }
 
+/*
+ * The draft this tab last wrote. When storage is blocked (private mode, quota,
+ * site data off) every read falls back to it, so the Store keeps working from
+ * memory and only the sentence "Not saving on this device" changes (§5.1).
+ */
+let memoryDraft: SolutionDraft | null = null;
+let storageBlocked = false;
+
+/** True once a write to this device's storage has failed; the persistence line says so. */
+export function draftStorageBlocked(): boolean {
+  return storageBlocked;
+}
+
+/** Writes the draft to storage without telling listeners; never throws. */
+function persistDraft(draft: SolutionDraft): boolean {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+    window.localStorage.removeItem(LEGACY_V1_KEY);
+    storageBlocked = false;
+    return true;
+  } catch {
+    storageBlocked = true;
+    return false;
+  }
+}
+
 function readStoredDraft(): SolutionDraft | null {
   if (typeof window === "undefined") return null;
-  const current = window.localStorage.getItem(STORAGE_KEY);
+  let current: string | null = null;
+  let legacyV1: string | null = null;
+  try {
+    current = window.localStorage.getItem(STORAGE_KEY);
+    if (!current) legacyV1 = window.localStorage.getItem(LEGACY_V1_KEY);
+  } catch {
+    return memoryDraft;
+  }
   if (current) return parseDraft(JSON.parse(current));
-  const legacyV1 = window.localStorage.getItem(LEGACY_V1_KEY);
-  if (legacyV1) return parseDraft(JSON.parse(legacyV1));
-  return null;
+  if (legacyV1) {
+    // Read repair for the v1 key. Silent: a listener that re-reads on the draft
+    // event would re-enter here while storage refuses the write (defect: unbounded recursion).
+    const draft = parseDraft(JSON.parse(legacyV1));
+    memoryDraft = draft;
+    persistDraft(draft);
+    return draft;
+  }
+  return memoryDraft;
 }
 
 export function readSolutionDraft(): SolutionDraft {
   if (typeof window === "undefined") return emptyDraft();
   try {
     const stored = readStoredDraft();
-    if (stored) {
-      if (!window.localStorage.getItem(STORAGE_KEY)) writeSolutionDraft(stored);
-      return stored;
-    }
+    if (stored) return stored;
     const migrated = migrateLegacyCart();
     if (migrated.length === 0) return emptyDraft();
-    const draft = { ...emptyDraft(), needs: migrated };
-    writeSolutionDraft(draft);
-    window.localStorage.removeItem(LEGACY_CART_KEY);
+    const draft = parseDraft({ ...emptyDraft(), needs: migrated });
+    memoryDraft = draft;
+    persistDraft(draft);
+    try {
+      window.localStorage.removeItem(LEGACY_CART_KEY);
+    } catch {
+      // Storage refused the removal; the v2 key (or memory) already wins on the next read.
+    }
     return draft;
   } catch {
-    return emptyDraft();
+    return memoryDraft ?? emptyDraft();
   }
 }
 
 export function writeSolutionDraft(draft: SolutionDraft): SolutionDraft {
   const next = parseDraft({ ...draft, updatedAt: new Date().toISOString() });
   if (typeof window !== "undefined") {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      window.localStorage.removeItem(LEGACY_V1_KEY);
-    } catch {
-      // Storage may be blocked (private mode, quota). The page keeps working from memory.
-    }
+    memoryDraft = next;
+    persistDraft(next);
     window.dispatchEvent(new CustomEvent(SOLUTION_DRAFT_EVENT));
   }
   return next;
+}
+
+/** The attempt id the contact step keys its submit on; minted once per solution (§7). */
+export function ensureSubmitAttemptId(): string {
+  const current = readSolutionDraft();
+  if (current.submitAttemptId) return current.submitAttemptId;
+  const minted =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+  writeSolutionDraft({ ...current, submitAttemptId: minted });
+  return minted;
 }
 
 export function addDraftNeed(need: SolutionDraftNeed): SolutionDraft {
@@ -540,8 +597,8 @@ export type SubmittedSolutionArchive = {
   environment: SolutionEnvironment;
   remoteSupport: RemoteSupportPreference;
   packages: SubmittedPackageSummary[];
-  /** Masked before the write: the raw email and phone never reach storage (§6.2). */
-  contact: { organizationName: string; contactName: string; emailMasked: string; phoneLast4: string };
+  /** Masked before the write: no raw contact detail reaches storage (§6.2); the names are not kept either. */
+  contact: { emailMasked: string; phoneLast4: string };
 };
 
 export function summarizeForArchive(
@@ -573,8 +630,6 @@ export function summarizeForArchive(
       shipmentMode: policyView.shipmentMode,
     })),
     contact: {
-      organizationName: contact.organizationName,
-      contactName: contact.contactName,
       emailMasked: maskEmail(contact.contactEmail),
       phoneLast4: maskPhone(contact.contactPhone),
     },

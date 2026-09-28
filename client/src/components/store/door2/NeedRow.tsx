@@ -9,15 +9,18 @@ export function NeedRow({
   family,
   changeHref,
   onRemove,
+  entered = false,
 }: {
   need: SolutionDraftNeed;
   family: CuratedSolutionFamily;
   changeHref: string;
   onRemove: () => void;
+  /** True for a row added after the page painted: it rises in; rows present at mount stand still (§9). */
+  entered?: boolean;
 }) {
   const scenario = need.source ? getScenarioById(need.source) : null;
   return (
-    <li className="d2-need" data-testid={`need-row-${need.familyId}`}>
+    <li className="d2-need" data-testid={`need-row-${need.familyId}`} data-d2-entered={entered ? "true" : undefined}>
       <div className="min-w-0">
         <p className="d2-body font-semibold">{family.label}</p>
         <p className="d2-small d2-ink-soft mt-0.5">{family.description}</p>

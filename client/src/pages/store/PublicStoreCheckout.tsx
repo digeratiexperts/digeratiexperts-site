@@ -53,6 +53,7 @@ import {
   toRequestNeeds,
   upsertNeed,
   writeSolutionDraft,
+  draftStorageBlocked,
   type DeliveryPreference,
   type SolutionDraft,
   type SolutionEnvironment,
@@ -111,6 +112,9 @@ const PREVIEW_BADGE = "Preview · choose above";
 const RESUME_WARNING = "Anyone with this link can open your draft. It never includes your contact details.";
 const COPIED_LINE = "Copied. Anyone with this link can open your draft.";
 const SAVED_DEVICE = "Saved on this device";
+const NOT_SAVING = "Not saving on this device";
+const LINK_SENT = (reference: string) => `That solution was already sent as ${reference}. This is a new one.`;
+const LINK_STALE = "That link no longer opens a saved solution. Your solution on this device is open.";
 const SAVED_DE = "Saved to DE";
 const SAVE_UNAVAILABLE = "Saved on this device. Couldn't save to DE just now.";
 const CONFLICT_QUESTION = "Use the saved copy from DE, or keep what is on this device?";
@@ -142,6 +146,7 @@ type ServerRequest = {
   deliveryPreference?: unknown;
   environment?: unknown;
   fulfillment?: unknown;
+  updatedAt?: unknown;
 };
 
 type UndoEntry = { familyId: CuratedSolutionFamily["id"]; source?: string; label: string };
@@ -179,22 +184,32 @@ function draftFromServer(request: ServerRequest): SolutionDraft {
     environment: request.environment,
     fulfillment: request.fulfillment,
     serverDraftId: request.id,
+    updatedAt: request.updatedAt,
   });
+}
+
+/** Nothing to keep: no need and none of the six profile facts (§6.5's "empty"). */
+function isEmptyDraft(draft: SolutionDraft): boolean {
+  return draft.needs.length === 0 && profileGaps(draft.environment).length === 6;
 }
 
 function prefersReducedMotion(): boolean {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-/** Scrolls a chapter under the fixed nav without moving focus. */
+/** Scrolls a chapter under the fixed nav without moving focus; the chapter's own scroll offset (CSS) clears the nav. */
 function scrollToChapter(id: string): void {
-  const element = document.getElementById(id);
-  if (!element) return;
-  const top = element.getBoundingClientRect().top + window.scrollY - 96;
-  window.scrollTo({ top: Math.max(0, top), behavior: prefersReducedMotion() ? "auto" : "smooth" });
+  document.getElementById(id)?.scrollIntoView({ block: "start", behavior: prefersReducedMotion() ? "auto" : "smooth" });
 }
 
 type SaveState = "idle" | "saving" | "durable" | "unavailable";
+
+/** The setup that just stopped being offered, in the short words of the live line (§5.3). */
+const SHORT_MODE_WORDS: Record<InstallMode, string> = {
+  remote_assist: "remote setup",
+  self_install: "shipped or guided self-setup",
+  onsite: "on-site",
+};
 
 /** The persistence sentence, exact by state. Rendered in the save row and again in the rail. */
 function SaveLine({
@@ -239,9 +254,9 @@ function SaveLine({
           </button>
         </span>
       ) : (
-        <span>{SAVED_DEVICE}</span>
+        <span>{draftStorageBlocked() ? NOT_SAVING : SAVED_DEVICE}</span>
       )}
-      {forkedFrom ? <p className="d2-ink-soft mt-1">That solution was already sent as {forkedFrom}. This is a new one.</p> : null}
+      {forkedFrom ? <p className="d2-ink-soft mt-1">{LINK_SENT(forkedFrom)}</p> : null}
     </div>
   );
 }
@@ -273,7 +288,10 @@ export default function PublicSolutionWorkspace() {
 
   const saveInFlight = useRef(false);
   const saveQueued = useRef(false);
-  const lastSavedKey = useRef<string | null>(null);
+  /** The content DE last confirmed holding (a PUT 2xx, or the copy hydration read). Null until known. */
+  const [savedKey, setSavedKey] = useState<string | null>(null);
+  /** Needs on the page at mount or hydrated from DE; only rows added after that rise (§9). */
+  const presentFamilyIds = useRef<Set<string> | null>(null);
   const lastSupportSuggestion = useRef<RemoteSupportMode | null>(null);
 
   useSEO({
@@ -291,6 +309,7 @@ export default function PublicSolutionWorkspace() {
   const sized = isProfileComplete(environment);
   const needCount = draft.needs.length;
   const familyIds = useMemo(() => draft.needs.map((need) => need.familyId), [draft.needs]);
+  if (presentFamilyIds.current === null) presentFamilyIds.current = new Set(familyIds);
   const packages = useMemo(() => resolvedPackages(draft), [draft]);
   const relationship = draft.deliveryPreference;
 
@@ -363,11 +382,13 @@ export default function PublicSolutionWorkspace() {
 
   const undoVisible = undoRows.filter((entry) => !familyIds.includes(entry.familyId));
 
+  // "Saved to DE" is claimed only for the content DE confirmed; anything changed since reads as saved on this device.
+  const currentKey = contentKey(draft);
   const saveState: SaveState = saving
     ? "saving"
     : saveFailed || draft.serverDurable === false
       ? "unavailable"
-      : draft.serverDurable === true && draft.serverDraftId
+      : draft.serverDurable === true && draft.serverDraftId && savedKey === currentKey
         ? "durable"
         : "idle";
   const resumeUrl =
@@ -525,7 +546,7 @@ export default function PublicSolutionWorkspace() {
     }
     if (!installUnion.includes(current)) {
       writeSolutionDraft(patchFulfillment(readSolutionDraft(), { installation: preferred }));
-      announce(`Setup reset to ${preferredLabel}: ${INSTALL_MODE_LABELS[current].label.toLowerCase()} is not offered for the packages left`);
+      announce(`Setup reset to ${preferredLabel}: ${SHORT_MODE_WORDS[current]} is not offered for the packages left`);
     }
     // unionKey stands in for installUnion's identity; tileShipment follows packages.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -567,9 +588,11 @@ export default function PublicSolutionWorkspace() {
         body: JSON.stringify({
           id: current.serverDraftId ?? undefined,
           selectedNeeds: toRequestNeeds(current),
-          deliveryPreference: current.deliveryPreference || "unsure",
+          // "" is an unmade choice and stays one; only the buyer or Use this writes a relationship.
+          deliveryPreference: current.deliveryPreference,
           environment: current.environment,
           fulfillment: current.fulfillment,
+          suggestion: current.suggestion,
         }),
       });
       if (!response.ok) throw new Error(String(response.status));
@@ -581,7 +604,7 @@ export default function PublicSolutionWorkspace() {
       };
       const id = typeof data.request?.id === "string" ? data.request.id : current.serverDraftId;
       const durable = data.durable === true;
-      lastSavedKey.current = key;
+      setSavedKey(key);
       patchSolutionDraft({ serverDraftId: id, serverDurable: durable });
       if (data.forked === true && typeof data.previousReference === "string" && data.previousReference) {
         setForkedFrom(data.previousReference);
@@ -600,20 +623,15 @@ export default function PublicSolutionWorkspace() {
     }
   }, [announce]);
 
-  // Autosave, debounced, once DE already holds this draft. Keyed on content, never on ids or timestamps.
-  const currentKey = contentKey(draft);
+  // Autosave, debounced, once DE already holds this draft and we know what it holds
+  // (the hydration read below, or the last PUT). Keyed on content, never on ids or timestamps.
   useEffect(() => {
-    if (!draft.serverDraftId) return undefined;
-    if (lastSavedKey.current === null) {
-      lastSavedKey.current = currentKey;
-      return undefined;
-    }
-    if (lastSavedKey.current === currentKey) return undefined;
+    if (!draft.serverDraftId || savedKey === null || savedKey === currentKey) return undefined;
     const timer = window.setTimeout(() => {
       void saveProgress();
     }, 2000);
     return () => window.clearTimeout(timer);
-  }, [currentKey, draft.serverDraftId, saveProgress]);
+  }, [currentKey, draft.serverDraftId, savedKey, saveProgress]);
 
   const copyResumeLink = useCallback(async () => {
     if (!resumeUrl) return;
@@ -644,22 +662,50 @@ export default function PublicSolutionWorkspace() {
     }
     fetch(url, { credentials: "include" })
       .then((response) => (response.ok ? response.json() : null))
-      .then((data: { request?: ServerRequest; durable?: unknown } | null) => {
+      .then((data: { request?: ServerRequest; durable?: unknown; previousReference?: unknown } | null) => {
         if (cancelled || !data?.request) return;
         const server = draftFromServer(data.request);
         const local = readSolutionDraft();
         if (!server.serverDraftId) return;
+        const durable = data.durable === true;
+        const adopt = (draft: SolutionDraft) => {
+          const hydrated = { ...draft, serverDurable: durable };
+          setSavedKey(contentKey(hydrated));
+          writeSolutionDraft(hydrated);
+          hydrated.needs.forEach((need) => presentFamilyIds.current?.add(need.familyId));
+        };
         if (draftId) {
-          if (local.needs.length === 0) {
-            const hydrated = { ...server, serverDurable: data.durable === true };
-            lastSavedKey.current = contentKey(hydrated);
-            writeSolutionDraft(hydrated);
+          if (server.serverDraftId !== draftId) {
+            // The link no longer opens a draft: that solution was sent (DE answers with a fresh
+            // draft and its reference) or the id is unknown. This device's solution stays.
+            const previous = typeof data.previousReference === "string" ? data.previousReference : "";
+            if (previous) setForkedFrom(previous);
+            announce(previous ? LINK_SENT(previous) : LINK_STALE);
+            if (!local.serverDraftId) patchSolutionDraft({ serverDraftId: server.serverDraftId, serverDurable: durable });
+            setSavedKey(contentKey(server));
+            return;
+          }
+          if (isEmptyDraft(local)) {
+            adopt(server);
             announce("Your saved solution is open");
           } else if (contentKey(local) !== contentKey(server)) {
-            setConflict({ ...server, serverDurable: data.durable === true });
+            // §6.5: a differing local copy that is newer asks; an older one is replaced by DE's.
+            const localNewer = !local.updatedAt || !server.updatedAt || local.updatedAt > server.updatedAt;
+            if (localNewer) {
+              setConflict({ ...server, serverDurable: durable });
+            } else {
+              adopt(server);
+              announce("Your saved solution is open");
+            }
           } else {
-            patchSolutionDraft({ serverDraftId: server.serverDraftId, serverDurable: data.durable === true });
+            setSavedKey(contentKey(server));
+            patchSolutionDraft({ serverDraftId: server.serverDraftId, serverDurable: durable });
           }
+          return;
+        }
+        if (server.serverDraftId === local.serverDraftId) {
+          // DE's copy of this draft; a change made since (on another page, or before a reload) autosaves from here.
+          setSavedKey(contentKey(server));
           return;
         }
         if (server.needs.length > 0 && local.needs.length === 0 && !local.serverDraftId) {
@@ -679,15 +725,18 @@ export default function PublicSolutionWorkspace() {
 
   const useServerCopy = useCallback(() => {
     if (!conflict) return;
-    lastSavedKey.current = contentKey(conflict);
+    setSavedKey(contentKey(conflict));
     writeSolutionDraft(conflict);
+    conflict.needs.forEach((need) => presentFamilyIds.current?.add(need.familyId));
     setConflict(null);
     announce("DE's copy is open");
   }, [announce, conflict]);
 
   const keepLocalCopy = useCallback(() => {
     if (!conflict) return;
-    patchSolutionDraft({ serverDraftId: conflict.serverDraftId });
+    // DE holds the other copy; the autosave carries this device's over it.
+    setSavedKey(contentKey(conflict));
+    patchSolutionDraft({ serverDraftId: conflict.serverDraftId, serverDurable: conflict.serverDurable });
     setConflict(null);
     announce("Keeping this device's solution");
   }, [announce, conflict]);
@@ -908,6 +957,7 @@ export default function PublicSolutionWorkspace() {
                               family={entry.family}
                               changeHref={familyPath(entry.family.id)}
                               onRemove={() => removeFamily(entry.family.id)}
+                              entered={!presentFamilyIds.current?.has(entry.need.familyId)}
                             />
                           ))}
                         </ul>

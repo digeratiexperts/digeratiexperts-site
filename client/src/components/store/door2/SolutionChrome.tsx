@@ -282,7 +282,7 @@ export function SolutionBar(props: SolutionChromeProps) {
       >
         <button type="button" className="d2-bar__status" onClick={() => setOpen(true)} aria-expanded={open} data-testid="solution-bar-open">
           <span className="d2-label">
-            <Layers className="mr-1 inline h-3 w-3 align-[-2px]" aria-hidden="true" />
+            <Layers className="d2-bar__icon mr-1 inline h-3 w-3" aria-hidden="true" />
             Your Solution
             <span className="d2-bar__count ml-1 inline-block" data-d2-pulse={pulse ? "true" : undefined}>
               · {props.draft.needs.length}
@@ -309,7 +309,7 @@ export function SolutionBar(props: SolutionChromeProps) {
       </div>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="bottom" className="d2-sheet-panel de-store-jelly-sheet border-0" data-testid="your-solution-sheet">
+        <SheetContent side="bottom" className="d2-sheet-panel border-0" data-testid="your-solution-sheet">
           <div className="d2-sheet-panel__scroll">
             <SheetHeader className="pt-5 text-left">
               <SheetTitle className="d2-h3 text-white">Your Solution</SheetTitle>

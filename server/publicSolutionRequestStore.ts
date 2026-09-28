@@ -43,6 +43,8 @@ export type PublicSolutionFulfillment = {
   remoteSupport: "none" | "as_needed" | "ongoing" | "unsure" | "";
 };
 
+export type PublicSolutionSuggestion = { value: "standalone" | "co_managed"; accepted: boolean };
+
 export type PublicSolutionRequest = {
   id: string;
   sessionId: string;
@@ -60,6 +62,8 @@ export type PublicSolutionRequest = {
   contactEmail: string;
   contactPhone: string;
   notes: string;
+  /** The relationship suggestion the buyer saw on the workspace and whether they used it (lead payload). */
+  suggestion: PublicSolutionSuggestion | null;
   status: SolutionRequestStatus;
   crmStatus: "not_requested" | "pending" | "recorded";
   /** Short human reference (DE-XXXXXX), minted when the solution is submitted. Never a bearer for contact details. */
@@ -244,6 +248,7 @@ export function createPublicSolutionRequest(sessionId: string): PublicSolutionRe
     contactEmail: "",
     contactPhone: "",
     notes: "",
+    suggestion: null,
     status: "draft",
     crmStatus: "not_requested",
     reference: null,
@@ -294,6 +299,13 @@ function asIntent(value: unknown): SolutionRequestIntent {
 function asDelivery(value: unknown): DeliveryPreference | "" {
   if (value === "co_managed" || value === "standalone" || value === "unsure") return value;
   return "";
+}
+
+function asSuggestion(value: unknown): PublicSolutionSuggestion | null {
+  if (!value || typeof value !== "object") return null;
+  const suggestion = value as { value?: unknown; accepted?: unknown };
+  if (suggestion.value !== "standalone" && suggestion.value !== "co_managed") return null;
+  return { value: suggestion.value, accepted: suggestion.accepted === true };
 }
 
 function asInstallation(value: unknown): PublicSolutionFulfillment["installation"] {
@@ -410,6 +422,7 @@ export function upsertPublicSolutionRequest(input: {
   contactEmail?: unknown;
   contactPhone?: unknown;
   notes?: unknown;
+  suggestion?: unknown;
 }): PublicSolutionRequest {
   expireDrafts();
   const existing =
@@ -446,6 +459,7 @@ export function upsertPublicSolutionRequest(input: {
     contactEmail: clip(input.contactEmail ?? base.contactEmail, 200).toLowerCase(),
     contactPhone: clip(input.contactPhone ?? base.contactPhone, 40),
     notes: clip(input.notes ?? base.notes, 2000),
+    suggestion: input.suggestion === undefined ? base.suggestion : asSuggestion(input.suggestion),
     updatedAt: new Date().toISOString(),
   };
   records.set(next.id, next);
@@ -543,6 +557,17 @@ export function markPublicSolutionRequestCrm(
   return cloneRequest(next);
 }
 
+/**
+ * A draft as GET and PUT return it: never the contact fields, so a resume link
+ * (or a session re-pointed by one) cannot read what a rolled-back submit left
+ * on the record. The full view is the submitter's own POST answer.
+ */
+export function publicSolutionDraftView(record: PublicSolutionRequest) {
+  const { organizationName: _organizationName, contactName: _contactName, contactEmail: _contactEmail, contactPhone: _contactPhone, notes: _notes, ...view } =
+    publicSolutionRequestView(record);
+  return view;
+}
+
 export function publicSolutionRequestView(record: PublicSolutionRequest) {
   return {
     id: record.id,
@@ -560,6 +585,7 @@ export function publicSolutionRequestView(record: PublicSolutionRequest) {
     contactEmail: record.contactEmail,
     contactPhone: record.contactPhone,
     notes: record.notes,
+    suggestion: record.suggestion,
     status: record.status,
     crmStatus: record.crmStatus,
     reference: record.reference,

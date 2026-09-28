@@ -254,7 +254,10 @@ Conventions used in every subsection:
 | saved on this device | "Saved on this device" |
 | saved to DE (durable true) | "Saved to DE · Copy resume link"; on copy: "Copied. Anyone with this link can open your draft." |
 | save unavailable (durable false or PUT failed) | "Saved on this device. Couldn't save to DE just now · Try again" |
-| hydrating from `?draftId=` | Rail skeleton only; empty local draft hydrates silently; different local draft → "Use the saved copy from DE, or keep what is on this device?" two buttons |
+| hydrating from `?draftId=` | Rail skeleton only; an empty local draft (no need, none of the six profile facts) hydrates silently; a different local draft that is newer by `updatedAt` → "Use the saved copy from DE, or keep what is on this device?" two buttons; an older one is replaced by DE's copy silently |
+| `?draftId=` of a sent solution | DE answers with a fresh draft and `previousReference`; this device's solution stays and the line "That solution was already sent as DE-4K7Q2M. This is a new one." is shown and announced |
+| `?draftId=` unknown | This device's solution stays; live region "That link no longer opens a saved solution. Your solution on this device is open." |
+| storage blocked on this device | The persistence sentence reads "Not saving on this device"; the page works from memory |
 | submitted base (server `forked`) | Line "That solution was already sent as DE-4K7Q2M. This is a new one." |
 | print | `window.print()`; the print sheet renders the summary as "Solution summary · draft", no prices |
 | reduced motion | all instant |
@@ -382,7 +385,8 @@ Step 03 is **Relationship** everywhere, the buyer's word. `STORE_JOURNEY_SENTENC
 | `intent` | Parsed only; derived by `recommendedIntent` (assessment > consultation > quote) on the client and recomputed on the server | defect 4 |
 | `updatedAt` | ADD ISO string on every write | resume conflict rule |
 | `serverDraftId`, `serverDurable` | ADD | resume link and persistence sentence |
-| `suggestion` | ADD `{ value, accepted } \| null` | lead payload |
+| `suggestion` | ADD `{ value, accepted } \| null`; sent on every PUT and POST, stored on the record, read by the CRM description | lead payload |
+| `submitAttemptId` | ADD (PR 2): minted by `ensureSubmitAttemptId()` on the first submit attempt, cleared by `resetSolutionKeepingProfile`; the POST `idempotencyKey` is `${submitAttemptId}\|${email}` | a retry replays; a solution built after "Start another" never does, whatever it shares with the last one |
 | `acceptedHints[]`, `dismissedHints[]` | ADD | hints persist across reloads |
 | `FAMILY_IDS` | derived from `curatedSolutionFamilies` (`:85`) | defect 29 |
 | `recommendedCtaLabel`, `SOLUTION_CART_EVENT`, `publicSolutionCart.ts`, `parseDeliveryModel` | deleted (verified dead by `git grep` before deletion) | §16.12 R4 |
@@ -455,7 +459,8 @@ Asked exactly once: six profile facts (A), which needs (A or B), the relationshi
 
 - Local autosave on every change through `writeSolutionDraft` (kept). Sentence: **Saved on this device**.
 - Save to DE: the one control labelled **Save progress** (kept) PUTs the draft (no contact, no notes); also debounced 2 s after a change once `serverDraftId` exists. Sentence when the PUT returns `durable: true`: **Saved to DE · Copy resume link**. When it returns `durable: false` or fails: **Saved on this device. Couldn't save to DE just now · Try again**. No service, store or CRM is ever named (`docs/PUBLIC-SOLUTION-BUILDER.md` "Public language rules"). "Across devices" appears only inside the resume-link copy.
-- Resume link: `${origin}/store/solution?draftId=<serverDraftId>` with the warning "Anyone with this link can open your draft. It never includes your contact details." Hydration on load: if the local draft is empty, hydrate silently; if it differs and is newer by `updatedAt`, ask.
+- "Saved to DE" is claimed only for the content DE confirmed: the last PUT 2xx, or the copy the mount-time GET returned. A change made since (on another page, or before a reload) reads as "Saved on this device" until the autosave, which the mount-time read arms, has carried it. Storage blocked on the device: "Not saving on this device", and the page keeps working from a memory copy of the draft.
+- Resume link: `${origin}/store/solution?draftId=<serverDraftId>` with the warning "Anyone with this link can open your draft. It never includes your contact details." Hydration on load: if the local draft is empty (no need and none of the six profile facts), hydrate silently; if it differs and is newer by `updatedAt`, ask; if it differs and is older, DE's copy replaces it. A link to a sent solution or an unknown id leaves this device's draft in place and says so (§5.3).
 
 ---
 
@@ -463,9 +468,9 @@ Asked exactly once: six profile facts (A), which needs (A or B), the relationshi
 
 All of this is in `server/publicSolutionRoutes.ts`, `publicSolutionRequestStore.ts`, `publicSolutionRequestPersistence.ts` and `publicSolutionRequestCrm.ts` at `0d2f6df4` except the three items marked **PR 2 server touch**. Nothing from 4cee840c is renamed or re-implemented.
 
-**GET `/api/public/solutions/request`** (`routes:136-176`): returns the session's most recent **draft**, never a submitted record; when the session's or `?draftId=`'s record is submitted the response is a fresh draft with `previousReference`. Returns `durable: boolean` (`durablePersistenceAvailable()`). `sessionId` is read from the cookie only (`readSessionId`, `:78-81`). Rate limited by `apiGeneralRateLimiter`; `server/index.ts:82-86` **redacts** (not hashes) `draftId`, `reference` and `sessionId` query values.
+**GET `/api/public/solutions/request`** (`routes:136-176`): returns the session's most recent **draft**, never a submitted record; when the session's or `?draftId=`'s record is submitted the response is a fresh draft with `previousReference`. The draft view (`publicSolutionDraftView`, also PUT's answer) never carries the four contact fields or notes, so a resume link, or a session it re-pointed, cannot read what a rolled-back submit left on the record; the contact step no longer prefills from it. Returns `durable: boolean` (`durablePersistenceAvailable()`). `sessionId` is read from the cookie only (`readSessionId`, `:78-81`). Rate limited by `apiGeneralRateLimiter`; `server/index.ts:82-86` **redacts** (not hashes) `draftId`, `reference` and `sessionId` query values.
 
-**PUT** (`:184-193`): `draftInput` carries no contact fields and no notes (the documented contract; `map:contradictions` 9 closed). Accepts `selectedNeeds[].source` and `selectedNeeds[].installation`. `upsertPublicSolutionRequestDurable(…, { forkSubmitted: true })` forks a fresh draft on a submitted base and returns `{ request, durable, forked, previousReference }`.
+**PUT** (`:184-193`): `draftInput` carries no contact fields and no notes (the documented contract; `map:contradictions` 9 closed). Accepts `selectedNeeds[].source`, `selectedNeeds[].installation` and `suggestion` (`{ value: standalone | co_managed, accepted }` or null; anything else is stored as null). `deliveryPreference` `""` is stored as `""`: only the buyer or Use this writes a relationship. `upsertPublicSolutionRequestDurable(…, { forkSubmitted: true })` forks a fresh draft on a submitted base and returns `{ request, durable, forked, previousReference }`.
 
 **POST** (`:195-300`; keeps the 20/hour limiter, fail-closed 503 with rollback, `durable: database | crm | memory`, `WebsiteLeadLike` `LEAD_CREATED`, no-downgrade replay):
 1. Honeypot (`company_website`, `website`, `fax`) non-empty → 400, no record, no lead (`honeypotTripped`, `:84-88`; §16.13).
@@ -490,7 +495,7 @@ All of this is in `server/publicSolutionRoutes.ts`, `publicSolutionRequestStore.
 
 **Wording under DB-down**: production returns 503 `DURABLE_STORAGE_REQUIRED` unless the CRM recorded it synchronously. The contact page renders the `OfflinePanel` (§5.4) and never says "saved". Outside production the `memory` path renders the "recorded" variant (§5.5). The buyer is never told which store, service or CRM was involved.
 
-**Retry**: `Try again` re-POSTs with the same `idempotencyKey`; the server's rollback (`unsubmitPublicSolutionRequest`) made the memory record a draft again so the retry is a real submit, not a replay.
+**Retry**: `Try again` re-POSTs with the same `idempotencyKey` (`${submitAttemptId}|${email}`, §6.2) and the OfflinePanel stays mounted with its button reading "Sending…"; the server's rollback (`unsubmitPublicSolutionRequest`) made the memory record a draft again so the retry is a real submit, not a replay. A reload after a lost response keeps the attempt id on the draft, so that retry replays; "Start another solution" clears it, so a second solution that happens to share needs, relationship and address is a new submit.
 
 **Rejected critique.** Two findings said the tree mints references at random from an alphabet with L and U, serves `/api/public/solutions/submitted/:reference`, and exposes `crmStatus`, `deliveryPreference`, `selectedNeeds` and `environment` in the status view. Verified against `0d2f6df4`: `publicSolutionRequestStore.ts:85-104` derives from the correlation id's SHA-256 with the alphabet above; `publicSolutionRoutes.ts:178` registers `…/request/status/:reference`; `publicSolutionStatusView` (`store:563-571`) returns the five fields and nothing else; `publicSolutionRoutes.test.ts:299-328` asserts the same pattern and path. The design matches the code; only the `replayed` key was wrong in the draft and is removed above. Kept from those findings: the `VITEST` skip on the limiter (`routes:55`) and `resolveInstallMode` returning an object, both applied in §14.
 
@@ -500,7 +505,7 @@ All of this is in `server/publicSolutionRoutes.ts`, `publicSolutionRequestStore.
 
 **Named theme:** *One product, electric channel.* The one DE theme (`design/UI-STYLE-RULES.md` §1) expressed through the Store's locked accent and V4's discipline, at catalog density.
 
-**Field steps.** Page canvas `--de-surface` (`#0a0a0a`, the field the Store already stands on and the atmosphere gradient ends in) under `StorePageAtmosphere` (KEEP today's 0.44 on `/store`; 0.28 on family and workspace; 0 on contact and confirmation; the header band on `/store` is the only atmospheric moment). Chapters are hairlines (`--de-hairline`) and space (`py-10 md:py-14`), never rounded islands. `--de-raised #151217` is spent on exactly two things: the SolutionRail panel and the SolutionBar sheet. Paper `--de-paper` with white cards appears exactly twice in the flow: the contact step, where the buyer signs (`design/UI-STYLE-RULES.md` §6 rule 3), and the held record on the confirmation and in print; paper ink is `text-de-bg` (`#050312`), as V4's paper `Chapter`, and no near-black is invented. Graphite is where the buyer builds; paper is where the buyer signs and holds.
+**Field steps.** Page canvas `--de-surface` (`#0a0a0a`, the field the Store already stands on and the atmosphere gradient ends in) under `StorePageAtmosphere` (KEEP today's 0.44 on `/store`; 0.28 on family and workspace; 0 on contact and confirmation; the header band on `/store` is the only atmospheric moment). Chapters are hairlines (`--de-hairline`) and space (`py-10 md:py-14`), never rounded islands. `--de-raised #151217` is spent on exactly two things: the SolutionRail panel and the SolutionBar (its sheet, and its launcher pill at 96%). Invalid-field lines and error text derive from the theme's `--destructive` (lifted toward white on graphite, as is on paper); no error colour is invented. Paper `--de-paper` with white cards appears exactly twice in the flow: the contact step, where the buyer signs (`design/UI-STYLE-RULES.md` §6 rule 3), and the held record on the confirmation and in print; paper ink is `text-de-bg` (`#050312`), as V4's paper `Chapter`, and no near-black is invented. Graphite is where the buyer builds; paper is where the buyer signs and holds.
 
 **Electric channel** (`--de-accent-rgb 29 111 242`, ink `111 179 255`, via `text-de-accent-ink` / `bg-de-accent` / `border-de-accent`): wayfinding and state only. Step numbers, the journey rail's fill, checked ChoiceTile borders, the "Added ✓" state, quantities and counts in Oxanium ink, links, the pathway "You are here", suggestion chips, touched coverage blocks, the Risk & Exposure slab's top rule (V4's magenta rule becomes electric here), the confirmation's hairline draw. Never a wash, never a filled panel, never a purple tile.
 
@@ -596,7 +601,7 @@ Every automation shows its input and its reason, can be undone or declined, and 
 
 Motion communicates state, hierarchy, continuity and feedback (`design/MOTION_LANGUAGE.md`; `map:constraint_set` 32). Native scroll everywhere. Nothing animates on mount: the jelly settle keys on a transient `data-de-just-selected` attribute set on change, not on steady-state `aria-checked` (defect 48). All durations `ease-out` from the two existing easings in `store-jelly.css`.
 
-**Scoping (decoupled from the gesture lock).** `store-jelly.css` selectors are re-prefixed from `html.de-store-gesture-lock` to `html.de-store-jelly`, which `Door2Frame` sets on `/store`, the family pages and the workspace only, and which `WarehouseApp` sets for the warehouse. The gesture lock keeps its own class and is gated on the presence of `.de-store-h-rail` (§10). The contact form and the confirmation therefore carry no jelly and no transform motion whatever `isStorePath` says.
+**Scoping (decoupled from the gesture lock).** `store-jelly.css` stays keyed to `html.de-store-gesture-lock`, and `useStoreChromeGestures` sets that class only where a `.de-store-h-rail` exists (the warehouse), so none of its rules, the side-sheet keyframe and the steady-state `aria-pressed` settle among them, reach Door 2. Door 2's jelly lives in `store-builder.css` under `html.de-store-jelly`, which `Door2Frame` sets on `/store`, the family pages and the workspace only: tile, toggle and `[data-de-jelly-choice]` press/settle keyed on the transient attribute, and the bottom sheet's own rise (`d2-sheet-in`). The contact form and the confirmation therefore carry no jelly and no transform motion whatever `isStorePath` says.
 
 | What moves | Why | Duration | Reduced motion |
 |---|---|---|---|
@@ -625,7 +630,7 @@ No hover wobble (`data-de-jelly="feature"`) anywhere on Door 2. No transform mot
 - **768**: two-column scenarios, families and profile fields; the comparison side by side; the SolutionBar persists (the rail appears at ≥ 1024); goal groups all open.
 - **1440**: the two-column grid with the sticky rail; contained canvas rules from `client/src/index.css:229-290` apply.
 - **Lengths** (reported in the completion report): `/store` ≤ 7 viewports at 390 (pass) with ≤ 5 the reported target, ≤ 4 at 1440; `/store/solution` with two needs ≤ 6 at 390; family ≤ 5 at 390.
-- The horizontal gesture lock (`useStoreChromeGestures`) attaches its listeners only when `document.querySelector(".de-store-h-rail")` is non-null on that route (a MutationObserver-free check on mount and on location change), so swipe-back returns on Door 2 pages, which have no rails (defect 47); `isStorePath` keeps deciding the class and the white cookie surface.
+- The horizontal gesture lock (`useStoreChromeGestures`) attaches its listeners and sets `html.de-store-gesture-lock` only when `document.querySelector(".de-store-h-rail")` is non-null on that route (a MutationObserver-free check on mount and on location change), so swipe-back returns on Door 2 pages, which have no rails and carry no lock class (defect 47); `isStorePath` keeps deciding the white cookie surface.
 
 ---
 

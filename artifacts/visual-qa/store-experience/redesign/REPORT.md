@@ -1,6 +1,6 @@
 # Store redesign — visual QA evidence
 
-Captured 2026-09-28 on the dev server (memory mode), Chrome 1194, consent pre-seeded, plus one pass with the cookie banner present. Script: the evidence walk in the session scratchpad (`walk-redesign.mjs`), the same gates as `docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md` §14. Raw numbers in `report.json`. Baseline A for comparison: `../baseline/`.
+Captured 2026-09-28 on the dev server (memory mode), Chrome 1194, consent pre-seeded, plus one pass with the cookie banner present. Re-captured the same day after the round-2 review fixes (electric washes removed, error inks from `--destructive`, rail header wrap, bottom-sheet rise, need rows still at mount): every gate below unchanged within rounding; only the screenshots whose pixels moved are refreshed. Script: the evidence walk in the session scratchpad (`walk-redesign.mjs`), the same gates as `docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md` §14. Raw numbers in `report.json`. Baseline A for comparison: `../baseline/`.
 
 ## Gates
 
@@ -31,6 +31,6 @@ Captured 2026-09-28 on the dev server (memory mode), Chrome 1194, consent pre-se
 
 ## States captured (file prefix)
 
-01 index empty · 02 scenario tapped (undo + reasons) · 03 profile partial (gap line) · 04 profile complete (sized line + suggestion) · 05 after completion (strip stays open under focus) · 06 the sheet at 390 · 07 search with no result · 08 family (sized, suggestion chip) · 09 workspace unchosen (preview sheets, disabled continue) · 10 help me choose (compare sheets) · 11 on-site chosen (fallback lines, hint) · 12 saved (memory: "Couldn't save to DE just now") · 13 contact · 14 four invalid fields · 15 the 503 panel · 16 the 429 panel · 17 the confirmation · 19 the confirmation on a device without the archive · 20 index with the cookie banner.
+01 index empty · 02 scenario tapped (undo + reasons) · 03 profile partial (gap line) · 04 profile complete (sized line + suggestion) · 05 after completion (strip stays open under focus) · 06 the sheet at 390 · 07 search with no result · 08 family (sized, suggestion chip) · 09 workspace unchosen (preview sheets, disabled continue) · 10 help me choose (compare sheets) · 11 on-site chosen (fallback lines, hint) · 12 saved (memory: "Couldn't save to DE just now") · 13 contact · 14 four invalid fields · 15 the 503 panel · 16 the 429 panel · 17 the confirmation (a fresh submit) · 18 the confirmation of a replayed submit (the banner "We already have this request as DE-…"; captured before the attempt-id key, when every walk run replayed the first) · 19 the confirmation on a device without the archive · 20 index with the cookie banner.
 
-Each at 390, 768 and 1440; `-fold-` files are the first viewport only.
+Each at 390, 768 and 1440; `-fold-` files are the first viewport only. Refreshed after the round-2 fixes: the index at 1440 (rail header on one line), the sheet at 390 and 768 (radius), the workspace states 10–12 (checked tiles without the electric wash), the invalid contact fields (error inks) and the confirmation (a fresh submit); the other captures are unchanged and kept from the first pass.

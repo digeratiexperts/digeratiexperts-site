@@ -72,6 +72,7 @@ function parseRecord(value: unknown): PublicSolutionRequest | null {
   // Rows written before references existed.
   if (typeof record.reference !== "string") record.reference = null;
   if (record.durable !== "database" && record.durable !== "crm" && record.durable !== "memory") record.durable = null;
+  if (record.suggestion === undefined) record.suggestion = null;
   return record;
 }
 

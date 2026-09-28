@@ -58,6 +58,9 @@ const STATUS_PATH = "/api/public/solutions/request/status/";
 
 const HEADING_DURABLE = "Your solution is with DE.";
 const HEADING_RECORDED = "Your solution is recorded.";
+/* Nothing is asserted before DE's answer (§12): a bare visit reads as checking, then as unchecked. */
+const HEADING_CHECKING = "Checking your reference…";
+const HEADING_UNCHECKED = "Keep this reference.";
 const STATUS_DURABLE = "Recorded with DE. Keep this reference.";
 const STATUS_PENDING = "DE is confirming the record. Keep this reference and call if you do not hear from us.";
 const RECORD_LINE = "This page and the reference are your record. Print or save it.";
@@ -207,6 +210,7 @@ export default function SolutionSubmitted() {
   const showBody = !loading && known;
   const unreachable = lookup.state === "unavailable" && archive === null;
   const contact = archive ? contactLine(archive) : null;
+  const heading = loading && archive === null ? HEADING_CHECKING : unreachable ? HEADING_UNCHECKED : durable ? HEADING_DURABLE : HEADING_RECORDED;
 
   return (
     <Door2Frame intensity={0}>
@@ -217,7 +221,7 @@ export default function SolutionSubmitted() {
               <StepLabel>SUBMITTED</StepLabel>
               <div role="status" data-testid="submitted-status-region">
                 <h1 ref={headingRef} tabIndex={-1} className="d2-display" data-testid="heading-submitted">
-                  {durable ? HEADING_DURABLE : HEADING_RECORDED}
+                  {heading}
                 </h1>
                 <span className="d2-hairline-draw" aria-hidden="true" />
               </div>

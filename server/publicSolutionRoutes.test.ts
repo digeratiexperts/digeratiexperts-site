@@ -100,7 +100,8 @@ describe("public solution Door 2 API", () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.request.status).toBe("draft");
-    expect(body.request.contactEmail).toBe("");
+    // A draft view never carries a contact field, sent or not.
+    expect(body.request).not.toHaveProperty("contactEmail");
     expect(body.request.environment.workstationCount).toBe("32");
     expect(body.request.environment.mobileDeviceCount).toBe("18");
     expect(body.request.fulfillment).toEqual({ installation: "remote_assist", remoteSupport: "as_needed" });
@@ -244,7 +245,7 @@ describe("public solution Door 2 API", () => {
       return undefined as any;
     });
     try {
-      const response = await fourFieldSubmit({ idempotencyKey: "lead-payload-test" });
+      const response = await fourFieldSubmit({ idempotencyKey: "lead-payload-test", suggestion: { value: "co_managed", accepted: false } });
       expect(response.status).toBe(200);
       const lead = emitted.find(([type]) => type === EventTypes.LEAD_CREATED)?.[1];
       expect(lead).toBeDefined();
@@ -258,6 +259,10 @@ describe("public solution Door 2 API", () => {
       expect(typeof lead.id).toBe("string");
       expect(lead.message).toContain("Backup & Business Continuity");
       expect(lead.message).toContain("Users: 12");
+      // The suggestion the buyer saw reaches DE with whether it was used; a malformed one is dropped, not stored.
+      expect(lead.message).toContain("Suggestion shown: Co-Managed (declined)");
+      const malformed = await fourFieldSubmit({ idempotencyKey: "lead-payload-malformed", suggestion: { value: "dropship", accepted: "yes" } });
+      expect((await malformed.json()).request.suggestion).toBeNull();
     } finally {
       spy.mockRestore();
     }
@@ -343,7 +348,7 @@ describe("public solution Door 2 API", () => {
     const noNeeds = await fourFieldSubmit({ familyId: "", selectedNeeds: [], idempotencyKey: "no-needs" });
     expect((await noNeeds.json()).code).toBe("NEEDS_REQUIRED");
     const draft = await (await fetch(`${baseUrl}/api/public/solutions/request`)).json();
-    expect(draft.request.contactEmail).toBe("");
+    expect(draft.request).not.toHaveProperty("contactEmail");
 
     const bot = await fourFieldSubmit({ company_website: "http://spam.example", idempotencyKey: "bot" });
     expect(bot.status).toBe(400);
@@ -378,7 +383,8 @@ describe("public solution Door 2 API", () => {
     });
     expect(body.request.selectedNeeds[1].installation).toBe("onsite");
     // A draft never carries contact details; a query or body session id is ignored.
-    expect(body.request.contactEmail).toBe("");
+    expect(body.request).not.toHaveProperty("contactEmail");
+    expect(body.request).not.toHaveProperty("organizationName");
     expect(body.durable).toBe(false);
     expect(body.forked).toBe(false);
     const other = await (await fetch(`${baseUrl}/api/public/solutions/request?sessionId=someone-else`)).json();

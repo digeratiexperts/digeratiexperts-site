@@ -23,6 +23,7 @@ import {
   submissionProblem,
   markPublicSolutionRequestCrmDurable,
   publicFamilyExists,
+  publicSolutionDraftView,
   publicSolutionRequestView,
   submitPublicSolutionRequestDurable,
   unsubmitPublicSolutionRequest,
@@ -117,6 +118,7 @@ function draftInput(req: Request, sessionId: string) {
     selectedNeeds: req.body?.selectedNeeds,
     environment: req.body?.environment,
     fulfillment: req.body?.fulfillment,
+    suggestion: req.body?.suggestion,
   };
 }
 
@@ -166,7 +168,7 @@ export function registerPublicSolutionRoutes(app: Express): void {
       res.cookie(SESSION_COOKIE, resolvedSessionId, SESSION_COOKIE_OPTIONS);
     }
     return res.json({
-      request: publicSolutionRequestView(record),
+      request: publicSolutionDraftView(record),
       durable: await durablePersistenceAvailable(),
       previousReference,
     });
@@ -189,7 +191,7 @@ export function registerPublicSolutionRoutes(app: Express): void {
     const sessionId = ensureSession(req, res);
     const saved = await upsertPublicSolutionRequestDurable(draftInput(req, sessionId), { forkSubmitted: true });
     return res.json({
-      request: publicSolutionRequestView(saved.record),
+      request: publicSolutionDraftView(saved.record),
       durable: saved.persisted,
       forked: saved.forked,
       previousReference: saved.previousReference,

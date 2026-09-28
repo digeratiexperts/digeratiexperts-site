@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T03:18:43.126Z",
+  "generatedAt": "2026-09-28T03:49:03.464Z",
   "base": "http://127.0.0.1:5000",
   "viewports": {
     "390": {
@@ -263,7 +263,7 @@
       "submitted": {
         "scrollY": 0,
         "overflow": 0,
-        "viewports": 5.84,
+        "viewports": 5.77,
         "controlsInMain": 6,
         "linksInMain": 3,
         "h1": [
@@ -294,13 +294,13 @@
         "tel": 1,
         "accent": "electric",
         "axe": [],
-        "reference": "DE-T6924Q",
+        "reference": "DE-4HHK7A",
         "focusInStatus": true,
         "draftNeeds": 0,
         "archive": true
       },
       "submittedRefresh": {
-        "reference": "DE-T6924Q"
+        "reference": "DE-4HHK7A"
       },
       "submittedNoArchive": {
         "summaryAbsent": 1
@@ -368,7 +368,7 @@
             "id": "cookie-consent-banner",
             "rect": [
               0,
-              781,
+              820,
               390,
               95
             ]
@@ -640,7 +640,7 @@
       "submitted": {
         "scrollY": 0,
         "overflow": 0,
-        "viewports": 3.88,
+        "viewports": 3.84,
         "controlsInMain": 6,
         "linksInMain": 3,
         "h1": [
@@ -671,13 +671,13 @@
         "tel": 1,
         "accent": "electric",
         "axe": [],
-        "reference": "DE-QN07DW",
+        "reference": "DE-NYJZ4R",
         "focusInStatus": true,
         "draftNeeds": 0,
         "archive": true
       },
       "submittedRefresh": {
-        "reference": "DE-QN07DW"
+        "reference": "DE-NYJZ4R"
       },
       "submittedNoArchive": {
         "summaryAbsent": 1
@@ -745,7 +745,7 @@
             "id": "cookie-consent-banner",
             "rect": [
               0,
-              987,
+              996,
               768,
               95
             ]
@@ -1023,7 +1023,7 @@
       "submitted": {
         "scrollY": 0,
         "overflow": 0,
-        "viewports": 4.06,
+        "viewports": 4.02,
         "controlsInMain": 6,
         "linksInMain": 3,
         "h1": [
@@ -1063,13 +1063,13 @@
         "tel": 1,
         "accent": "electric",
         "axe": [],
-        "reference": "DE-CMGQKT",
+        "reference": "DE-83XFTZ",
         "focusInStatus": true,
         "draftNeeds": 0,
         "archive": true
       },
       "submittedRefresh": {
-        "reference": "DE-CMGQKT"
+        "reference": "DE-83XFTZ"
       },
       "submittedNoArchive": {
         "summaryAbsent": 1
@@ -1128,7 +1128,7 @@
             "id": "cookie-consent-banner",
             "rect": [
               0,
-              823,
+              849,
               1440,
               77
             ]

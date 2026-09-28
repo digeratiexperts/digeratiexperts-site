@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { SolutionScenario } from "@/data/solutionScenarios";
 import { getFamilyById } from "@/lib/businessNeeds";
 
@@ -25,6 +25,13 @@ export function ScenarioTile({
   /** One in-flow line beneath the action (the incident scenarios carry the phone). */
   footer?: ReactNode;
 }) {
+  // The press/settle of the jelly tier keys on a transient attribute set on the tap, never on steady state (§9).
+  const [justSelected, setJustSelected] = useState(false);
+  useEffect(() => {
+    if (!justSelected) return;
+    const timer = window.setTimeout(() => setJustSelected(false), 340);
+    return () => window.clearTimeout(timer);
+  }, [justSelected]);
   const total = scenario.familyIds.length;
   const allIn = compose.add.length === 0;
   const someIn = compose.alreadyIn.length > 0 && !allIn;
@@ -42,8 +49,14 @@ export function ScenarioTile({
         <button
           type="button"
           className={`d2-action d2-action--sm ${allIn ? "d2-action--quiet" : "d2-action--secondary"}`}
-          onClick={() => (allIn ? onReview() : onStart(scenario))}
+          onClick={() => {
+            setJustSelected(true);
+            if (allIn) onReview();
+            else onStart(scenario);
+          }}
           data-testid={`scenario-${scenario.id}-action`}
+          data-de-jelly-choice=""
+          data-de-just-selected={justSelected ? "true" : undefined}
         >
           {actionLabel}
         </button>
