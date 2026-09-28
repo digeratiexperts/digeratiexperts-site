@@ -1,0 +1,176 @@
+{
+  "_readme": "Single control file for the MSP AI Kit. Edit values here, then run: node .claude/skills/msp-ai-kit/scripts/build.mjs. Keys starting with an underscore are comments and are ignored. Nothing in this file is secret; never put API keys or credentials here.",
+  "profile": "digerati-experts",
+  "output_dir": "artifacts/msp-ai-kit/out",
+
+  "company": {
+    "name": "Digerati Experts",
+    "short": "DE",
+    "type": "cybersecurity-first managed IT provider (MSP/MSSP)",
+    "location": "Chandler, Arizona",
+    "area_served": "Arizona and Greater Phoenix (Chandler, Phoenix, Scottsdale, Tempe, Mesa, Gilbert)",
+    "website": "https://digeratiexperts.com",
+    "portal": "https://portal.digeratiexperts.com/portal/login",
+    "support_email": "support@digeratiexperts.com",
+    "booking_url": "https://meet.digerati-experts.com/",
+    "clients": "small and mid-sized businesses, professional services, healthcare, and organizations with compliance or cyber-insurance pressure",
+    "packaging": "ProActive Ecosystem packages in Office, Business, and Enterprise tiers across Core IT, Security Operations, and Backup & Disaster Recovery",
+    "pricing_rule": "Never quote package prices, discounts, or SLAs from memory; the canonical floors live in the website pricing source and the Intelligence Hub."
+  },
+
+  "naming": {
+    "full": "Digerati Experts",
+    "short": "DE",
+    "never": "\"Digerati\" alone"
+  },
+
+  "voice": {
+    "tone": [
+      "competent, calm, specific",
+      "plain English before jargon, translating technical findings into business risk",
+      "dry confidence, with any joke landing on the problem or the attackers, never on the client",
+      "brief by default, matching the reader's register"
+    ],
+    "avoid": [
+      "\"in today's digital landscape\" and other filler",
+      "emoji spam and exclamation marks",
+      "\"As an AI\" disclaimers",
+      "stacked calls to action",
+      "humor during an active incident"
+    ]
+  },
+
+  "team": {
+    "roles": [
+      "Tier 1 service desk",
+      "Tier 2 systems and network",
+      "Tier 3 engineering",
+      "Security analyst (MSSP)",
+      "vCIO / account manager"
+    ],
+    "business_hours": "Monday to Friday, 8:00 to 17:00 America/Phoenix (Arizona does not observe daylight saving time)",
+    "after_hours": "P1 only; on-call engineer via the emergency line, everything else next business day"
+  },
+
+  "stack": {
+    "psa_ticketing": "Zoho Desk",
+    "crm": "Zoho CRM",
+    "billing": "Zoho Books",
+    "projects": "Zoho Projects",
+    "documentation": "Zoho WorkDrive and the Intelligence Hub",
+    "rmm": "RMM (set stack.rmm to your RMM product)",
+    "identity": "JumpCloud",
+    "mdr": "Blackpoint",
+    "siem_xdr": "Wazuh",
+    "scanners": ["Greenbone Community", "Nuclei", "Naabu", "OWASP ZAP", "Trivy"],
+    "productivity": "Microsoft 365 and Google Workspace",
+    "backup": "Backup / BCDR (set stack.backup to your backup product)",
+    "email_security": "Email security (set stack.email_security to your product)"
+  },
+
+  "sla": {
+    "_note": "Defaults for internal triage. Set confirmed to true once Joe has approved these numbers; until then generated text labels them as working defaults and never publishes them client-facing.",
+    "confirmed": false,
+    "priorities": [
+      {
+        "id": "P1",
+        "name": "Critical",
+        "definition": "Business-wide outage, active security incident, data loss in progress, or a regulatory deadline at risk today.",
+        "response": "15 minutes",
+        "update_cadence": "every 30 minutes",
+        "resolution_target": "4 hours or continuous effort",
+        "examples": "ransomware indicators, site down, mail flow stopped for everyone, compromised admin account"
+      },
+      {
+        "id": "P2",
+        "name": "High",
+        "definition": "A department or critical role cannot work, or a single-user issue with no workaround for a revenue-critical task.",
+        "response": "1 hour",
+        "update_cadence": "every 2 hours",
+        "resolution_target": "1 business day",
+        "examples": "line-of-business app down for a team, executive locked out, backup job failing for 24 hours"
+      },
+      {
+        "id": "P3",
+        "name": "Normal",
+        "definition": "One user impaired with a workaround, or a non-urgent fault.",
+        "response": "4 business hours",
+        "update_cadence": "daily",
+        "resolution_target": "3 business days",
+        "examples": "printer issue, slow laptop, MFA re-enrollment, shared mailbox permission"
+      },
+      {
+        "id": "P4",
+        "name": "Low / Request",
+        "definition": "Service requests, how-to questions, scheduled changes, and improvements.",
+        "response": "next business day",
+        "update_cadence": "at milestones",
+        "resolution_target": "as scheduled",
+        "examples": "new user onboarding, software install, license change, report request"
+      }
+    ]
+  },
+
+  "escalation": [
+    { "level": "Tier 1 to Tier 2", "when": "no progress after 30 minutes on P1/P2 or 2 hours on P3, or the fix needs admin rights beyond the desk" },
+    { "level": "Tier 2 to Tier 3", "when": "root cause is infrastructure, identity, or vendor-level; any change that touches production servers or network core" },
+    { "level": "Anyone to Security analyst", "when": "any indicator of compromise, phishing with credential entry, malware alert, impossible-travel sign-in, or client reports a breach" },
+    { "level": "Anyone to vCIO / account manager", "when": "client is unhappy, scope is disputed, a quote is needed, or the issue will affect a contract or renewal" },
+    { "level": "Anyone to Joe / owner", "when": "P1 past 2 hours, legal or insurance notification questions, media or law-enforcement contact, or any decision that commits DE money or liability" }
+  ],
+
+  "compliance_frameworks": [
+    "CIS Controls v8 (IG1 baseline)",
+    "NIST CSF 2.0",
+    "HIPAA Security Rule",
+    "CMMC 2.0 (Level 1 and 2)",
+    "PCI DSS 4.0",
+    "SOC 2",
+    "cyber-insurance questionnaires"
+  ],
+
+  "scripting": {
+    "powershell_minimum": "Windows PowerShell 5.1",
+    "powershell_preferred": "PowerShell 7.4",
+    "bash": "bash 5 (POSIX sh when the target may be busybox or macOS /bin/sh)",
+    "deployment": "pushed through the RMM as SYSTEM or root, non-interactive, one script per task",
+    "logging": "write a timestamped log under ProgramData\\DE\\logs (Windows) or /var/log/de/ (Linux and macOS) and echo a one-line summary for the RMM output"
+  },
+
+  "modules": {
+    "_note": "true = include, false = leave out. Order and budget priority come from each module's frontmatter, not from this list.",
+    "profile": true,
+    "guardrails": true,
+    "service-desk-triage": true,
+    "sla-escalation": true,
+    "client-onboarding": true,
+    "kb-articles": true,
+    "client-comms": true,
+    "proposals-sow": true,
+    "business-dev-roi": true,
+    "qbr-metrics": true,
+    "security-alert-triage": true,
+    "vulnerability-prioritization": true,
+    "compliance-mapping": true,
+    "incident-comms": true,
+    "scripting-bash-powershell": true
+  },
+
+  "targets": {
+    "_note": "true = generate this output. Budgets are the hard character limits of the destination; the builder trims by module priority and reports what it dropped.",
+    "chatgpt-custom-instructions": true,
+    "custom-gpt-instructions": true,
+    "claude-project-instructions": true,
+    "agent-instructions": true,
+    "cursor-rule": true,
+    "copilot-instructions": true,
+    "prompt-library": true,
+    "prompt-files": true
+  },
+
+  "budgets": {
+    "chatgpt-custom-instructions": 1500,
+    "custom-gpt-instructions": 8000,
+    "claude-project-instructions": 40000
+  }
+}

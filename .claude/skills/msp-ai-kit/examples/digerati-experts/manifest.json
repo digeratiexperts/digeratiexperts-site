@@ -1,0 +1,166 @@
+{
+  "builder": "1.0.0",
+  "profile": "digerati-experts",
+  "configHash": "7b335ebf8231",
+  "modules": [
+    {
+      "id": "security-alert-triage",
+      "title": "Security alert triage (MSSP)",
+      "area": "security",
+      "priority": 5,
+      "command": "/alert"
+    },
+    {
+      "id": "incident-comms",
+      "title": "Incident response communications",
+      "area": "security",
+      "priority": 8,
+      "command": "/incident"
+    },
+    {
+      "id": "service-desk-triage",
+      "title": "Service desk ticket triage",
+      "area": "operations",
+      "priority": 10,
+      "command": "/triage"
+    },
+    {
+      "id": "sla-escalation",
+      "title": "SLA monitoring and escalation",
+      "area": "operations",
+      "priority": 15,
+      "command": "/sla"
+    },
+    {
+      "id": "vulnerability-prioritization",
+      "title": "Vulnerability prioritization and remediation",
+      "area": "security",
+      "priority": 20,
+      "command": "/vuln"
+    },
+    {
+      "id": "scripting-bash-powershell",
+      "title": "Bash and PowerShell scripting for RMM deployment",
+      "area": "engineering",
+      "priority": 25,
+      "command": "/script"
+    },
+    {
+      "id": "client-onboarding",
+      "title": "Client onboarding workflow",
+      "area": "operations",
+      "priority": 30,
+      "command": "/onboard"
+    },
+    {
+      "id": "compliance-mapping",
+      "title": "Compliance mapping and evidence",
+      "area": "security",
+      "priority": 35,
+      "command": "/comply"
+    },
+    {
+      "id": "kb-articles",
+      "title": "Knowledge base articles",
+      "area": "operations",
+      "priority": 40,
+      "command": "/kb"
+    },
+    {
+      "id": "client-comms",
+      "title": "Client communication templates",
+      "area": "operations",
+      "priority": 45,
+      "command": "/comms"
+    },
+    {
+      "id": "proposals-sow",
+      "title": "Proposals and statements of work",
+      "area": "sales",
+      "priority": 50,
+      "command": "/sow"
+    },
+    {
+      "id": "business-dev-roi",
+      "title": "Business development and ROI analysis",
+      "area": "sales",
+      "priority": 55,
+      "command": "/roi"
+    },
+    {
+      "id": "qbr-metrics",
+      "title": "QBRs and monthly metrics",
+      "area": "sales",
+      "priority": 60,
+      "command": "/qbr"
+    }
+  ],
+  "core": [
+    "profile",
+    "guardrails"
+  ],
+  "targets": {
+    "chatgpt-custom-instructions": {
+      "budget": 1500,
+      "blockA": 1072,
+      "blockB": 1494,
+      "dropped": []
+    },
+    "custom-gpt-instructions": {
+      "budget": 8000,
+      "chars": 7771,
+      "dropped": [
+        "service-desk-triage",
+        "sla-escalation",
+        "vulnerability-prioritization",
+        "scripting-bash-powershell",
+        "client-onboarding",
+        "compliance-mapping",
+        "kb-articles",
+        "client-comms",
+        "proposals-sow",
+        "business-dev-roi",
+        "qbr-metrics"
+      ],
+      "oneLineOnly": [
+        "service-desk-triage",
+        "sla-escalation",
+        "vulnerability-prioritization",
+        "scripting-bash-powershell",
+        "client-onboarding",
+        "compliance-mapping",
+        "kb-articles",
+        "client-comms",
+        "proposals-sow",
+        "business-dev-roi",
+        "qbr-metrics"
+      ]
+    },
+    "claude-project-instructions": {
+      "budget": 40000,
+      "chars": 36097,
+      "dropped": []
+    },
+    "agent-instructions": {
+      "chars": 15965,
+      "dropped": []
+    },
+    "cursor-rule": {
+      "chars": 16092,
+      "dropped": []
+    },
+    "copilot-instructions": {
+      "chars": 16063,
+      "dropped": []
+    },
+    "prompt-library": {
+      "chars": 40294,
+      "dropped": []
+    },
+    "prompt-files": {
+      "count": 13
+    }
+  },
+  "slaConfirmed": false,
+  "warnings": []
+}
