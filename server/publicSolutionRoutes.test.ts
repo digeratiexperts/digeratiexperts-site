@@ -391,6 +391,20 @@ describe("public solution Door 2 API", () => {
     expect(other.request.selectedNeeds).toEqual([]);
   });
 
+  it("stores an explicit empty relationship as empty on a save, and keeps DE's copy when the field is absent", async () => {
+    const put = (body: Record<string, unknown>, cookie: string) =>
+      fetch(`${baseUrl}/api/public/solutions/request`, { method: "PUT", headers: { "Content-Type": "application/json", ...(cookie ? { cookie } : {}) }, body: JSON.stringify(body) });
+    const first = await put({ deliveryPreference: "standalone", selectedNeeds: [{ familyId: "identity_access", deliveryModel: "standalone", offerId: "de-identity-standalone" }] }, "");
+    const cookie = first.headers.get("set-cookie")?.split(";")[0] ?? "";
+    expect((await first.json()).request.deliveryPreference).toBe("standalone");
+    const kept = await (await put({ selectedNeeds: [{ familyId: "identity_access", deliveryModel: "unsure", offerId: null }] }, cookie)).json();
+    expect(kept.request.deliveryPreference).toBe("standalone");
+    const cleared = await (await put({ deliveryPreference: "", selectedNeeds: [{ familyId: "identity_access", deliveryModel: "unsure", offerId: null }] }, cookie)).json();
+    expect(cleared.request.deliveryPreference).toBe("");
+    const read = await (await fetch(`${baseUrl}/api/public/solutions/request?draftId=${cleared.request.id}`)).json();
+    expect(read.request.deliveryPreference).toBe("");
+  });
+
   it("gives a session a fresh draft after it submits, and forks a write that lands on a submitted record", async () => {
     const submitted = await fourFieldSubmit({ idempotencyKey: "fork-test" });
     expect(submitted.status).toBe(200);

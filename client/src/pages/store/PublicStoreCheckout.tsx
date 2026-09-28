@@ -147,6 +147,7 @@ type ServerRequest = {
   environment?: unknown;
   fulfillment?: unknown;
   updatedAt?: unknown;
+  suggestion?: unknown;
 };
 
 type UndoEntry = { familyId: CuratedSolutionFamily["id"]; source?: string; label: string };
@@ -185,6 +186,8 @@ function draftFromServer(request: ServerRequest): SolutionDraft {
     fulfillment: request.fulfillment,
     serverDraftId: request.id,
     updatedAt: request.updatedAt,
+    // DE's copy of the suggestion shown rides along, so a device that opens the link never overwrites it with null.
+    suggestion: request.suggestion,
   });
 }
 
@@ -203,6 +206,9 @@ function scrollToChapter(id: string): void {
 }
 
 type SaveState = "idle" | "saving" | "durable" | "unavailable";
+
+/** A device clock this far behind DE's is not read as "older" (§6.5); inside it the buyer is asked. */
+const CLOCK_TOLERANCE_MS = 5 * 60 * 1000;
 
 /** The setup that just stopped being offered, in the short words of the live line (§5.3). */
 const SHORT_MODE_WORDS: Record<InstallMode, string> = {
@@ -668,6 +674,7 @@ export default function PublicSolutionWorkspace() {
         const local = readSolutionDraft();
         if (!server.serverDraftId) return;
         const durable = data.durable === true;
+        const previous = typeof data.previousReference === "string" ? data.previousReference : "";
         const adopt = (draft: SolutionDraft) => {
           const hydrated = { ...draft, serverDurable: durable };
           setSavedKey(contentKey(hydrated));
@@ -675,27 +682,31 @@ export default function PublicSolutionWorkspace() {
           hydrated.needs.forEach((need) => presentFamilyIds.current?.add(need.familyId));
         };
         if (draftId) {
+          // Handled once: a reload is a plain workspace load, not a second announcement or another fresh draft.
+          window.history.replaceState(null, "", window.location.pathname);
           if (server.serverDraftId !== draftId) {
             // The link no longer opens a draft: that solution was sent (DE answers with a fresh
-            // draft and its reference) or the id is unknown. This device's solution stays.
-            const previous = typeof data.previousReference === "string" ? data.previousReference : "";
+            // draft and its reference) or the id is unknown. This device's solution stays; the
+            // draft DE minted is not "saved" until the autosave below has carried this content.
             if (previous) setForkedFrom(previous);
             announce(previous ? LINK_SENT(previous) : LINK_STALE);
-            if (!local.serverDraftId) patchSolutionDraft({ serverDraftId: server.serverDraftId, serverDurable: durable });
-            setSavedKey(contentKey(server));
+            if (!local.serverDraftId) patchSolutionDraft({ serverDraftId: server.serverDraftId, serverDurable: null });
+            setSavedKey("");
             return;
           }
           if (isEmptyDraft(local)) {
             adopt(server);
             announce("Your saved solution is open");
           } else if (contentKey(local) !== contentKey(server)) {
-            // §6.5: a differing local copy that is newer asks; an older one is replaced by DE's.
-            const localNewer = !local.updatedAt || !server.updatedAt || local.updatedAt > server.updatedAt;
-            if (localNewer) {
-              setConflict({ ...server, serverDurable: durable });
-            } else {
+            // §6.5: a differing local copy that is newer asks. DE's copy replaces it silently only
+            // when clearly newer (beyond a clock tolerance); the silent branch is the destructive one.
+            const gap = Date.parse(server.updatedAt) - Date.parse(local.updatedAt);
+            const serverClearlyNewer = Number.isFinite(gap) && gap > CLOCK_TOLERANCE_MS;
+            if (serverClearlyNewer) {
               adopt(server);
               announce("Your saved solution is open");
+            } else {
+              setConflict({ ...server, serverDurable: durable });
             }
           } else {
             setSavedKey(contentKey(server));
@@ -708,11 +719,22 @@ export default function PublicSolutionWorkspace() {
           setSavedKey(contentKey(server));
           return;
         }
-        if (server.needs.length > 0 && local.needs.length === 0 && !local.serverDraftId) {
-          patchSolutionDraft({ serverDraftId: server.serverDraftId });
+        if (local.serverDraftId) {
+          // DE answered with another draft (the session moved on, or that solution was sent): what DE
+          // holds under this device's id is unknown, so the autosave carries this content and confirms.
+          if (previous) setForkedFrom(previous);
+          setSavedKey("");
+          return;
+        }
+        if (server.needs.length > 0 && local.needs.length === 0) {
+          patchSolutionDraft({ serverDraftId: server.serverDraftId, serverDurable: null });
         }
       })
-      .catch(() => undefined)
+      .catch(() => {
+        // The read failed (offline, rate limited): DE's copy is unknown, so a draft DE already
+        // holds autosaves this content and the PUT's answer settles the sentence.
+        if (!cancelled && readSolutionDraft().serverDraftId) setSavedKey("");
+      })
       .finally(() => {
         if (!cancelled) setHydrating(false);
       });

@@ -37,7 +37,8 @@ export function OfflinePanel({
       <p className="d2-small d2-ink mt-1">{copy.detail}</p>
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3">
         {kind !== "rate" ? (
-          <StoreAction variant="primary" onClick={onRetry} ariaBusy={retrying} disabled={retrying} testId="offline-retry">
+          {/* Busy, never disabled: a disabled control drops focus in Chromium and WebKit; onRetry ignores a second press while sending. */}
+          <StoreAction variant="primary" onClick={onRetry} ariaBusy={retrying} testId="offline-retry">
             {retrying ? "Sending…" : "Try again"}
           </StoreAction>
         ) : null}

@@ -429,7 +429,9 @@ export function upsertPublicSolutionRequest(input: {
     (input.id ? records.get(input.id) : undefined) ??
     [...records.values()].find((record) => record.sessionId === input.sessionId && record.status === "draft");
   const base = existing ?? createPublicSolutionRequest(input.sessionId);
-  const deliveryPreference = asDelivery(input.deliveryPreference) || asDelivery(input.deliveryModel) || base.deliveryPreference;
+  // An explicit "" is the buyer un-choosing (a kept local copy over DE's); an absent field keeps what DE holds.
+  const deliveryPreference =
+    input.deliveryPreference === "" ? "" : asDelivery(input.deliveryPreference) || asDelivery(input.deliveryModel) || base.deliveryPreference;
   const selectedNeeds = parseSelectedNeeds(input.selectedNeeds, base.selectedNeeds);
   const familyId = clip(input.familyId, 80) || selectedNeeds[0]?.familyId || base.familyId;
   const deliveryModel =
