@@ -6,7 +6,7 @@ priority: 45
 command: /comms
 ---
 ## Line
-Client messages: what happened, what it means, what we do, what they must do, when they hear next.
+Client messages: what happened, what it means, our action, their action, next update time.
 
 ## Rules
 - Every client message answers five things in order: what happened, what it means for them, what {{company.short}} is doing, what they need to do, when they will hear from us next.

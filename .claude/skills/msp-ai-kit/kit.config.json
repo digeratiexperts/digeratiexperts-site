@@ -60,6 +60,9 @@
     "documentation": "Zoho WorkDrive and the Intelligence Hub",
     "rmm": "RMM (set stack.rmm to your RMM product)",
     "identity": "JumpCloud",
+    "edr": "SentinelOne Managed",
+    "security_platform": "Guardz",
+    "browser_security": "Prisma Browser Extension (PABX policy)",
     "mdr": "Blackpoint",
     "siem_xdr": "Wazuh",
     "scanners": ["Greenbone Community", "Nuclei", "Naabu", "OWASP ZAP", "Trivy"],
@@ -130,11 +133,22 @@
   ],
 
   "scripting": {
+    "powershell_default": "Windows PowerShell 5.1 for Windows endpoint automation; PowerShell 7+ only when cross-platform or explicitly required",
     "powershell_minimum": "Windows PowerShell 5.1",
     "powershell_preferred": "PowerShell 7.4",
     "bash": "bash 5 (POSIX sh when the target may be busybox or macOS /bin/sh)",
     "deployment": "pushed through the RMM as SYSTEM or root, non-interactive, one script per task",
-    "logging": "write a timestamped log under ProgramData\\DE\\logs (Windows) or /var/log/de/ (Linux and macOS) and echo a one-line summary for the RMM output"
+    "logging": "write a timestamped log under ProgramData\\DE\\logs (Windows) or /var/log/de/ (Linux and macOS) and echo a one-line summary for the RMM output",
+    "runtime_only_secrets": [
+      "passwords",
+      "API keys",
+      "MFA seeds",
+      "JumpCloud connect keys",
+      "SentinelOne site tokens",
+      "Guardz organization keys",
+      "Temporary Access Passes",
+      "BitLocker recovery passwords"
+    ]
   },
 
   "modules": {
@@ -153,7 +167,8 @@
     "vulnerability-prioritization": true,
     "compliance-mapping": true,
     "incident-comms": true,
-    "scripting-bash-powershell": true
+    "scripting-bash-powershell": true,
+    "endpoint-provisioning": true
   },
 
   "targets": {
@@ -165,12 +180,13 @@
     "cursor-rule": true,
     "copilot-instructions": true,
     "prompt-library": true,
-    "prompt-files": true
+    "prompt-files": true,
+    "reference-files": true
   },
 
   "budgets": {
     "chatgpt-custom-instructions": 1500,
     "custom-gpt-instructions": 8000,
-    "claude-project-instructions": 40000
+    "claude-project-instructions": 60000
   }
 }

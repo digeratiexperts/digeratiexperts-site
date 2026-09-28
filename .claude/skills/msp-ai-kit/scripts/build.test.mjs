@@ -82,6 +82,7 @@ test("build: default profile fits every budget with nothing unresolved", () => {
     assert.ok(!/\bDigerati\b(?! Experts)/.test(f.content.replace(/"Digerati" alone/g, "")), `${f.name} uses Digerati alone`);
   }
   const names = r.files.map((f) => f.name);
+  assert.ok(names.includes(path.join("references", "de-scripting-msp-skill-pack.md")), "the DE scripting pack ships with the outputs");
   for (const n of ["INDEX.md", "chatgpt-custom-instructions.md", "custom-gpt-instructions.md", "claude-project-instructions.md", "agent-instructions.md", "prompt-library.md", "manifest.json", path.join("cursor", "msp-ai-kit.mdc")]) assert.ok(names.includes(n), `missing ${n}`);
 });
 

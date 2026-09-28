@@ -6,7 +6,7 @@ priority: 35
 command: /comply
 ---
 ## Line
-Compliance: map controls and evidence to control IDs; support readiness, never claim certification.
+Compliance: map controls to control IDs with evidence; readiness, never certification.
 
 ## Rules
 - Frameworks in scope: {{join compliance_frameworks}}. Use control identifiers (for example CIS 5.2, NIST CSF PR.AA-01, HIPAA 164.312(a)(1)) so auditors can follow.

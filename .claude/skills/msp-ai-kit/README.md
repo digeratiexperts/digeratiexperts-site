@@ -36,8 +36,14 @@ Cursor and Copilot all follow the same playbooks in the same voice.
 | vulnerability-prioritization | /vuln | security | KEV / EPSS / exposure ranking, remediation plan, compensating controls |
 | compliance-mapping | /comply | security | control matrix with evidence, gap plan, questionnaire answers |
 | incident-comms | /incident | security | incident updates from the log only, holding statement, decision list |
-| scripting-bash-powershell | /script | engineering | RMM-ready PowerShell or Bash with dry-run, logging, exit codes, test plan |
+| scripting-bash-powershell | /script | engineering | RMM-ready PowerShell 5.1 or Bash with dry-run, logging, exit codes, quality-bar checklist |
+| endpoint-provisioning | /provision | engineering | phase and gate model for endpoint onboarding, Entra to JumpCloud migration, break-glass, BitLocker and OneDrive gates, security stack, evidence |
 | profile, guardrails | always | core | company facts, voice, and the never-fabricate / defensive-only rules |
+
+`references/de-scripting-msp-skill-pack.md` is Joe's DE Scripting and MSP
+Skill Pack, shipped verbatim into every build under `references/` so the
+/script and /provision playbooks can cite it and a Custom GPT or Claude
+Project can hold it as knowledge.
 
 Outputs: ChatGPT Custom Instructions (two 1,500-character blocks), Custom GPT
 instructions (8,000 characters, with `prompt-library.md` as the knowledge

@@ -1,7 +1,7 @@
 {
   "builder": "1.0.0",
   "profile": "digerati-experts",
-  "configHash": "7b335ebf8231",
+  "configHash": "7376d1c5c1ba",
   "modules": [
     {
       "id": "security-alert-triage",
@@ -44,6 +44,13 @@
       "area": "engineering",
       "priority": 25,
       "command": "/script"
+    },
+    {
+      "id": "endpoint-provisioning",
+      "title": "Endpoint provisioning and identity migration engine",
+      "area": "engineering",
+      "priority": 28,
+      "command": "/provision"
     },
     {
       "id": "client-onboarding",
@@ -102,18 +109,19 @@
   "targets": {
     "chatgpt-custom-instructions": {
       "budget": 1500,
-      "blockA": 1072,
-      "blockB": 1494,
+      "blockA": 1109,
+      "blockB": 1481,
       "dropped": []
     },
     "custom-gpt-instructions": {
       "budget": 8000,
-      "chars": 7771,
+      "chars": 7942,
       "dropped": [
         "service-desk-triage",
         "sla-escalation",
         "vulnerability-prioritization",
         "scripting-bash-powershell",
+        "endpoint-provisioning",
         "client-onboarding",
         "compliance-mapping",
         "kb-articles",
@@ -127,6 +135,7 @@
         "sla-escalation",
         "vulnerability-prioritization",
         "scripting-bash-powershell",
+        "endpoint-provisioning",
         "client-onboarding",
         "compliance-mapping",
         "kb-articles",
@@ -137,28 +146,31 @@
       ]
     },
     "claude-project-instructions": {
-      "budget": 40000,
-      "chars": 36097,
+      "budget": 60000,
+      "chars": 43947,
       "dropped": []
     },
     "agent-instructions": {
-      "chars": 15965,
+      "chars": 21263,
       "dropped": []
     },
     "cursor-rule": {
-      "chars": 16092,
+      "chars": 21390,
       "dropped": []
     },
     "copilot-instructions": {
-      "chars": 16063,
+      "chars": 21361,
       "dropped": []
     },
     "prompt-library": {
-      "chars": 40294,
+      "chars": 48837,
       "dropped": []
     },
     "prompt-files": {
-      "count": 13
+      "count": 14
+    },
+    "reference-files": {
+      "count": 1
     }
   },
   "slaConfirmed": false,

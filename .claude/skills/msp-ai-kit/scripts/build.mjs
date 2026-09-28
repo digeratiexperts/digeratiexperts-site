@@ -20,6 +20,9 @@
 //   --json                 machine-readable summary on stdout
 //   --quiet                errors only
 //
+// Files under ../references/*.md are copied verbatim into <out>/references/ (target
+// reference-files) so playbooks that cite them travel with the pack.
+//
 // Module file format (modules/NN-id.md): YAML-ish frontmatter (id, title, area,
 // priority, command) then sections "## About", "## Line", "## Rules", "## Prompt",
 // "## Notes". Templates use {{path}}, {{join path}}, {{#path}}...{{/path}} (repeat for
@@ -45,7 +48,9 @@ const TARGET_IDS = [
   "copilot-instructions",
   "prompt-library",
   "prompt-files",
+  "reference-files",
 ];
+const REFERENCES_DIR = path.join(SKILL_DIR, "references");
 
 // ---------------------------------------------------------------- arguments
 function parseArgs(argv) {
@@ -514,6 +519,13 @@ function buildAll(config, modules, args) {
     report["prompt-files"] = { count: work.length };
   }
 
+  // 5b. Reference documents shipped verbatim (DE-authored packs the modules cite)
+  if (wantTarget("reference-files") && fs.existsSync(REFERENCES_DIR)) {
+    const refs = fs.readdirSync(REFERENCES_DIR).filter((f) => f.endsWith(".md")).sort();
+    for (const f of refs) files.push({ name: path.join("references", f), content: fs.readFileSync(path.join(REFERENCES_DIR, f), "utf8") });
+    report["reference-files"] = { count: refs.length };
+  }
+
   // 6. Index and manifest
   const configHash = crypto.createHash("sha256").update(JSON.stringify(config)).digest("hex").slice(0, 12);
   const index = [
@@ -548,6 +560,7 @@ function buildAll(config, modules, args) {
 
 function destination(name) {
   if (name.startsWith("prompts/") || name.startsWith("prompts\\")) return "any chat, one playbook at a time";
+  if (name.startsWith("references/") || name.startsWith("references\\")) return "knowledge file next to prompt-library.md; cited by the /script and /provision playbooks";
   return {
     "INDEX.md": "read first",
     "chatgpt-custom-instructions.md": "ChatGPT > Settings > Personalization > Custom instructions",

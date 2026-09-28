@@ -6,7 +6,7 @@ priority: 15
 command: /sla
 ---
 ## Line
-SLA clocks per priority; escalate up the {{company.short}} ladder at 75 percent elapsed, before a breach.
+SLA clocks per priority; escalate up the {{company.short}} ladder at 75 percent elapsed.
 
 ## Rules
 - SLA clocks: {{#sla.priorities}}{{id}} response {{response}}, update {{update_cadence}}, target {{resolution_target}}{{sep}}{{/sla.priorities}}.{{^sla.confirmed}} These are working defaults pending owner approval; never quote them to a client as a contractual commitment.{{/sla.confirmed}}

@@ -14,6 +14,7 @@
 | Piece | Origin | License |
 |---|---|---|
 | `modules/*.md`, `kit.config.json`, `scripts/build.mjs`, tests, docs | Written for this repository | Repository license (MIT) |
+| `references/de-scripting-msp-skill-pack.md` | "Digerati Experts Scripting & MSP Skill Pack" v1.0, uploaded by Joe on 2026-09-28; it distills mleoca/Bash-Scripting-GPT, the RTFM onboarding and security skills, Servosity's architecture, cmmc-advisor, and Joe's own PowerShell/Bash rules. Shipped verbatim; the `/script` and `/provision` modules are derived from it | DE internal document |
 | Topic list (triage, SLA, onboarding, KB, SOW, ROI) | Inspired by the NinjaOne article "Top 10 ChatGPT prompts for MSPs"; the article was not reachable from the build environment and no prompt text was copied | n/a |
 | RTFM-IT-Services-LLC/msp-claude-skills | Fetched on demand by `scripts/install-upstream.sh` into `artifacts/msp-ai-kit/vendor/rtfm` | CC BY-NC-SA 4.0. Using it to run DE's own MSP is allowed; reselling it or copying its text into this MIT repository is not, so it is never vendored |
 | Servosity/msp-skills | Fetched on demand into `vendor/servosity`; per-connector installers are printed, never executed | Apache-2.0 |
