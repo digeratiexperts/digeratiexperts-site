@@ -207,6 +207,19 @@ describe("SolutionDraft", () => {
       expect(m.readSolutionDraft().needs).toEqual(first.needs);
     });
 
+    it("prefers the memory copy over a stored v2 draft once a write has been refused (quota)", async () => {
+      const m = await fresh();
+      const store: Store = {};
+      installWindow(store);
+      m.writeSolutionDraft(m.toggleNeed(m.emptyDraft(), "email_collaboration"));
+      expect(store["de-solution-draft-v2"]).toBeDefined();
+      installWindow(store, { setItemThrows: true });
+      const later = m.writeSolutionDraft(m.toggleNeed(m.readSolutionDraft(), "identity_access"));
+      expect(m.draftStorageBlocked()).toBe(true);
+      expect(m.readSolutionDraft().needs).toEqual(later.needs);
+      expect(JSON.parse(store["de-solution-draft-v2"]).needs).toHaveLength(1);
+    });
+
     it("lets this tab's later writes win over a v1 key that a refused write could not retire", async () => {
       const m = await fresh();
       const store: Store = { "de-solution-draft-v1": JSON.stringify({ ...m.emptyDraft(), needs: [{ familyId: "email_collaboration" }] }) };

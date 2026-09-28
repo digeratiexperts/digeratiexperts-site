@@ -8,24 +8,31 @@ import {
   isTraverseNavigateEvent,
   shouldInterceptTraverse,
 } from "@/lib/storeChromeGestures";
+import { isWarehousePath } from "@/lib/warehousePaths";
 
 /**
  * While the visitor is in the store, claim horizontal trackpad / touch
  * swipes so Chrome and Safari do not fire Back / Forward. Rails keep
  * GPU-composited scrolling; the real back button still leaves the store.
  */
+/**
+ * The gesture claim exists for the warehouse's horizontal rails. Decided by
+ * route, not by DOM presence: the rails mount lazily behind the warehouse
+ * gate, after the effect has run. Door 2 and the contact step keep the
+ * browser's own swipe-back and carry no lock class, so store-jelly.css
+ * (keyed to that class) stays off them; Door 2's jelly is store-builder.css.
+ */
+export function gestureLockClaimed(location: string): boolean {
+  return isStorePath(location) && isWarehousePath(location);
+}
+
 export function useStoreChromeGestures(location: string) {
   const lastHorizontalAt = useRef(0);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
-  const active = isStorePath(location);
+  const claimed = gestureLockClaimed(location);
 
   useEffect(() => {
     const root = document.documentElement;
-    // The gesture claim exists for horizontal rails (the warehouse). Pages
-    // without one, the public Store's Door 2 among them, keep the browser's
-    // own swipe-back and carry no lock class, so store-jelly.css (keyed to
-    // that class) stays off them; Door 2's own jelly lives in store-builder.css.
-    const claimed = active && document.querySelector(".de-store-h-rail") !== null;
     root.classList.toggle(STORE_GESTURE_LOCK_CLASS, claimed);
     if (!claimed) {
       return () => root.classList.remove(STORE_GESTURE_LOCK_CLASS);
@@ -96,5 +103,5 @@ export function useStoreChromeGestures(location: string) {
       window.removeEventListener("touchcancel", onTouchEnd, true);
       navigation?.removeEventListener("navigate", onNavigate);
     };
-  }, [active]);
+  }, [claimed]);
 }

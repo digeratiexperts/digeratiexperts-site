@@ -131,6 +131,13 @@ function FamilyCell({
 }) {
   const Icon = FAMILY_ICONS[family.id];
   const lead = family.offers[0]?.outcomes[0];
+  // The jelly settle keys on a transient attribute set on the tap, never on the steady aria-pressed state (§9).
+  const [justSelected, setJustSelected] = useState(false);
+  useEffect(() => {
+    if (!justSelected) return;
+    const timer = window.setTimeout(() => setJustSelected(false), 340);
+    return () => window.clearTimeout(timer);
+  }, [justSelected]);
   return (
     <GridCell
       as="li"
@@ -144,7 +151,17 @@ function FamilyCell({
       className="d2-cell--row"
     >
       {lead ? <p className="d2-cell__lead d2-small d2-ink d2-clamp-2 w-full">{lead}</p> : null}
-      <button type="button" className="d2-toggle" aria-pressed={included} onClick={onToggle} data-testid={`family-toggle-${family.id}`}>
+      <button
+        type="button"
+        className="d2-toggle"
+        aria-pressed={included}
+        onClick={() => {
+          setJustSelected(true);
+          onToggle();
+        }}
+        data-de-just-selected={justSelected ? "true" : undefined}
+        data-testid={`family-toggle-${family.id}`}
+      >
         {included ? "Added ✓" : "Add need"}
       </button>
       {undo ? (

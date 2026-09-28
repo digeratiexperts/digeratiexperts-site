@@ -114,7 +114,7 @@ The browser draft is `de-solution-draft-v2` (`client/src/lib/solutionDraft.ts`).
 
 Intent (quote / consultation / assessment) is derived from policy on both sides and is never stored as buyer state or carried in a URL.
 
-The same draft is rendered by the Store, family pages, `/store/solution`, and the final contact page. A submitted solution is archived on the device (`de-solution-submitted-v1`) so the confirmation page can show contact details without the server ever serving them by reference.
+The same draft is rendered by the Store, family pages, `/store/solution`, and the final contact page. A submitted solution is archived on the device (`de-solution-submitted-v1`) so the confirmation page can show a masked contact line (the email masked, the last four digits of the phone) without the server ever serving contact details by reference.
 
 The server companion is `/api/public/solutions/request` (contract in `docs/STORE-SOLUTION-ENGINE.md` → Persistence):
 

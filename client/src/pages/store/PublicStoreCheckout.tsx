@@ -117,6 +117,7 @@ const LINK_SENT = (reference: string) => `That solution was already sent as ${re
 const LINK_STALE = "That link no longer opens a saved solution. Your solution on this device is open.";
 const SAVED_DE = "Saved to DE";
 const SAVE_UNAVAILABLE = "Saved on this device. Couldn't save to DE just now.";
+const SAVE_UNAVAILABLE_BLOCKED = "Not saving on this device. Couldn't save to DE just now.";
 const CONFLICT_QUESTION = "Use the saved copy from DE, or keep what is on this device?";
 
 const RELATIONSHIP_OPTIONS: ReadonlyArray<ChoiceOption<DeliveryPreference>> = [
@@ -254,7 +255,7 @@ function SaveLine({
         </>
       ) : state === "unavailable" ? (
         <span className="inline-flex flex-wrap items-center gap-x-2">
-          <span>{SAVE_UNAVAILABLE}</span>
+          <span>{draftStorageBlocked() ? SAVE_UNAVAILABLE_BLOCKED : SAVE_UNAVAILABLE}</span>
           <button type="button" className="d2-action d2-action--quiet" onClick={onRetry}>
             Try again
           </button>
@@ -430,6 +431,8 @@ export default function PublicSolutionWorkspace() {
       const need = readSolutionDraft().needs.find((entry) => entry.familyId === familyId);
       const family = getFamilyById(familyId);
       removeDraftNeed(familyId);
+      // Any row that comes back after a remove (Undo, re-add) is an add again and rises.
+      presentFamilyIds.current?.delete(familyId);
       if (!family) return;
       setUndoRows((rows) => [
         ...rows.filter((entry) => entry.familyId !== familyId),
@@ -667,7 +670,11 @@ export default function PublicSolutionWorkspace() {
       announce("Opening your saved solution");
     }
     fetch(url, { credentials: "include" })
-      .then((response) => (response.ok ? response.json() : null))
+      .then((response) => {
+        // A refused read (rate limited, server error) is handled like a failed one below.
+        if (!response.ok) throw new Error(String(response.status));
+        return response.json();
+      })
       .then((data: { request?: ServerRequest; durable?: unknown; previousReference?: unknown } | null) => {
         if (cancelled || !data?.request) return;
         const server = draftFromServer(data.request);
@@ -677,9 +684,10 @@ export default function PublicSolutionWorkspace() {
         const previous = typeof data.previousReference === "string" ? data.previousReference : "";
         const adopt = (draft: SolutionDraft) => {
           const hydrated = { ...draft, serverDurable: durable };
+          // Hydrated rows were never "added" here: mark them present before the write notifies listeners.
+          hydrated.needs.forEach((need) => presentFamilyIds.current?.add(need.familyId));
           setSavedKey(contentKey(hydrated));
           writeSolutionDraft(hydrated);
-          hydrated.needs.forEach((need) => presentFamilyIds.current?.add(need.familyId));
         };
         if (draftId) {
           // Handled once: a reload is a plain workspace load, not a second announcement or another fresh draft.
@@ -726,8 +734,18 @@ export default function PublicSolutionWorkspace() {
           setSavedKey("");
           return;
         }
-        if (server.needs.length > 0 && local.needs.length === 0) {
-          patchSolutionDraft({ serverDraftId: server.serverDraftId, serverDurable: null });
+        if (server.needs.length > 0) {
+          // DE holds a session draft this device never saved from (storage cleared or blocked since).
+          // Nothing to keep adopts it; a differing local draft is the buyer's call; the same content adopts the id.
+          if (isEmptyDraft(local)) {
+            adopt(server);
+            announce("Your saved solution is open");
+          } else if (contentKey(local) !== contentKey(server)) {
+            setConflict({ ...server, serverDurable: durable });
+          } else {
+            setSavedKey(contentKey(server));
+            patchSolutionDraft({ serverDraftId: server.serverDraftId, serverDurable: durable });
+          }
         }
       })
       .catch(() => {
@@ -747,9 +765,9 @@ export default function PublicSolutionWorkspace() {
 
   const useServerCopy = useCallback(() => {
     if (!conflict) return;
+    conflict.needs.forEach((need) => presentFamilyIds.current?.add(need.familyId));
     setSavedKey(contentKey(conflict));
     writeSolutionDraft(conflict);
-    conflict.needs.forEach((need) => presentFamilyIds.current?.add(need.familyId));
     setConflict(null);
     announce("DE's copy is open");
   }, [announce, conflict]);

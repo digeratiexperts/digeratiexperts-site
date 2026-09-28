@@ -189,10 +189,10 @@
   background: var(--d2-rule);
 }
 
-/* Chapters are anchors for the rail's status lines: land below the fixed nav. */
+/* Chapters are anchors for the rail's status lines. The root's scroll-padding (index.css) already clears the fixed nav for scrollIntoView and fragment jumps; this is only the breathing room below it. */
 .d2-chapter[id],
 .d2-page [id].d2-cell {
-  scroll-margin-top: calc(var(--de-nav-offset, 6rem) + 1rem);
+  scroll-margin-top: 1rem;
 }
 
 /* A native disclosure in the Store's voice (coverage band under 1024, the contact summary on phones). */
@@ -589,6 +589,9 @@
   width: 100%;
   white-space: normal;
   text-align: center;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  line-height: 1.25;
 }
 .d2-action--sm {
   min-height: 2.25rem;
@@ -794,6 +797,15 @@ html.de-store-jelly .d2-toggle[data-de-just-selected="true"] {
   animation: de-jelly-select 320ms var(--de-jelly-soft, var(--d2-ease));
 }
 /* Any other control in the jelly tier (a ScenarioTile's action) presses and settles the same way. */
+html.de-store-jelly [data-de-jelly-choice] {
+  transform: translate3d(0, 0, 0);
+  transform-origin: 50% 70%;
+  transition:
+    transform 300ms var(--de-jelly-spring, var(--d2-ease)),
+    background-color 150ms var(--d2-ease),
+    border-color 150ms var(--d2-ease),
+    color 150ms var(--d2-ease);
+}
 html.de-store-jelly [data-de-jelly-choice]:active:not(:disabled) {
   transform: translate3d(0, 1px, 0) scale3d(0.985, 1.01, 1);
   transition-duration: 90ms;
@@ -1358,20 +1370,17 @@ html[data-de-store-bar] .de-site-canvas {
   background: var(--de-raised);
   color: var(--d2-ink-strong);
 }
-/* The sheet rises from the bottom edge with one soft settle; the side-sheet keyframe in store-jelly.css is not for it. */
+/* The sheet rises from the bottom edge, ease-out and never past it (an overshoot would bare the overlay beneath); the side-sheet keyframe in store-jelly.css is not for it. */
 @keyframes d2-sheet-in {
   0% {
     transform: translate3d(0, 100%, 0);
-  }
-  72% {
-    transform: translate3d(0, -0.35rem, 0);
   }
   100% {
     transform: translate3d(0, 0, 0);
   }
 }
 html.de-store-jelly .d2-sheet-panel[data-state="open"] {
-  animation: d2-sheet-in 360ms var(--de-jelly-soft, var(--d2-ease)) both;
+  animation: d2-sheet-in 320ms var(--d2-ease) both;
 }
 .d2-sheet-panel__scroll {
   flex: 1 1 auto;

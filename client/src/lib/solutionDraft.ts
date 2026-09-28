@@ -469,6 +469,8 @@ function persistDraft(draft: SolutionDraft): boolean {
 
 function readStoredDraft(): SolutionDraft | null {
   if (typeof window === "undefined") return null;
+  // Once a write has been refused, this tab's memory copy is newer than anything storage holds.
+  if (storageBlocked && memoryDraft) return memoryDraft;
   let current: string | null = null;
   let legacyV1: string | null = null;
   try {
