@@ -634,7 +634,7 @@ export default function BusinessNeedsIndex() {
             </div>
           </main>
       <SolutionBar {...chrome} />
-      <DigeratiEnhancedFooterSection />
+      <DigeratiEnhancedFooterSection variant="store" />
     </Door2Frame>
   );
 }

@@ -1245,7 +1245,7 @@ export default function PublicSolutionWorkspace() {
           </div>
         </main>
         <SolutionBar {...chrome} />
-        <DigeratiEnhancedFooterSection />
+        <DigeratiEnhancedFooterSection variant="store" />
     </Door2Frame>
   );
 }

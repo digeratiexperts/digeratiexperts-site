@@ -1,3 +1,4 @@
+import { useSearch } from "wouter";
 import { PageTemplate } from "@/components/PageTemplate";
 import { Calendar, Phone, Shield, Clock, CheckCircle } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
@@ -5,9 +6,17 @@ import { ZohoBookingWidget } from "@/components/ZohoBookingWidget";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { IconWell } from "@/components/visual/IconWell";
 import { StatementHeading } from "@/components/visual/StatementHeading";
-import { CTA } from "@/lib/ctaCopy";
+import { CANONICAL_CSRA_ONE_TIME } from "@shared/canonicalCsra";
+import { normalizeSolutionReference } from "@shared/solutionReference";
+
+/* Campaign framing (client/src/data/campaigns.ts): the booking is a no-obligation
+ * working session; the documented Cyber Security Risk Assessment is a scoped
+ * product at the canonical price when it is the right next step. */
+const CSRA_PRICE = `$${CANONICAL_CSRA_ONE_TIME.toLocaleString("en-US")}`;
 
 export default function BookingPage() {
+  // A buyer arriving from the Store's confirmation carries their reference (`/book?ref=DE-XXXXXX`).
+  const reference = normalizeSolutionReference(new URLSearchParams(useSearch()).get("ref") ?? "");
   useSEO({
     title: "Get My Cyber Risk Assessment",
     description:
@@ -22,6 +31,12 @@ export default function BookingPage() {
     >
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
+          {reference ? (
+            <p className="mb-4 rounded-2xl border border-de-hairline bg-de-raised px-5 py-4 text-base text-white/80" data-testid="booking-reference">
+              Reference <span className="font-mono font-semibold tracking-wide text-white">{reference}</span>. Mention it when
+              you book so DE has your solution in front of them.
+            </p>
+          ) : null}
           <ZohoBookingWidget instanceId="page" className="overflow-hidden rounded-2xl border border-de-hairline" />
         </div>
 
@@ -39,8 +54,8 @@ export default function BookingPage() {
                 },
                 {
                   icon: Shield,
-                  title: "Security Assessment",
-                  desc: "Free evaluation of your current cybersecurity posture",
+                  title: "Conversation First",
+                  desc: "A no-obligation working session on your current security posture",
                 },
                 {
                   icon: CheckCircle,
@@ -81,9 +96,10 @@ export default function BookingPage() {
               </StatementHeading>
             </div>
             <p className="text-sm leading-relaxed text-white/70">
-              This {CTA.primaryShort.toLowerCase()} is completely free with no strings attached.
-              We&apos;ll assess your current IT setup and provide honest
-              recommendations — even if that means you don&apos;t need us.
+              This first conversation costs nothing and commits you to nothing. When a documented
+              Cyber Security Risk Assessment is the right next step, DE scopes it with you first: it is{" "}
+              {CSRA_PRICE} when scoped, and nothing is billed until you say yes. You get honest
+              recommendations, even if that means you don&apos;t need us.
             </p>
           </div>
         </div>

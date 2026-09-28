@@ -516,7 +516,7 @@ export default function SolutionRequest() {
             </div>
           </StoreChapter>
         </main>
-        <DigeratiEnhancedFooterSection />
+        <DigeratiEnhancedFooterSection variant="store" />
     </Door2Frame>
   );
 }

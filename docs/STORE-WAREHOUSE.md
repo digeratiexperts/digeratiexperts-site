@@ -22,6 +22,7 @@ The former public `/store` workshop (SKU catalog, vendor marks, coverage heurist
 1. Sign in at `https://portal.digeratiexperts.com/portal/login`.
 2. Open `/internal/warehouse`.
 3. An admin bookmark to `/store` 302s into the warehouse. Unauthorized users never receive `Location: /internal/...`.
+4. To walk the public Store as a buyer while signed in (internal visual QA), open `/store?as=buyer`: it sets the `de_store_preview` cookie (httpOnly, 8 hours) and the `/store` redirect stops for that browser. `/store?as=staff` clears it and returns to the warehouse. The cookie only relaxes that redirect for a request that is already staff; a buyer who sets it by hand sees what they saw before (`server/warehouseRoutes.test.ts`).
 
 ## Authorization
 

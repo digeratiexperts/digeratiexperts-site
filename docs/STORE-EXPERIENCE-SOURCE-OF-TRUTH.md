@@ -322,7 +322,7 @@ New route (ADD). Registered in `client/src/App.tsx` (lazy, Door 2), already in `
 | durable memory (never in production without the smoke flag) | H1 `Your solution is recorded.`; status line `DE is confirming the record. Keep this reference and call if you do not hear from us.` |
 | nextStep quote | Rows: `DE reads the solution` · `DE calls or emails to confirm scope` · `You receive pricing to approve` |
 | nextStep consultation | First row `DE recommends Standalone or Co-Managed and says why` |
-| nextStep assessment | Paper band `This package needs an assessment before final scope. DE contacts you to schedule the conversation first; the formal Cyber Security Risk Assessment is $2,500 when that document is scoped.` with `Call 325-480-9870` and `Ask DE about DE-4K7Q2M`. The magenta `CTA.primary` → `/book?ref=DE-4K7Q2M` renders only when `BOOK_ALIGNED === true`, a constant flipped by the `/book` copy PR (§16.6); until then the band has no magenta |
+| nextStep assessment | Paper band `This package needs an assessment before final scope. DE contacts you to schedule the conversation first; the formal Cyber Security Risk Assessment is $2,500 when that document is scoped.` with `Call 325-480-9870` and `Ask DE about DE-4K7Q2M`. The magenta `CTA.primary` → `/book?ref=DE-4K7Q2M` renders only when `BOOK_ALIGNED === true`; flipped to `true` in PR #267 together with the `/book` copy (§16.6), so the band carries the screen's one magenta and `/book?ref=` shows `Reference DE-4K7Q2M` above the widget |
 | acknowledged false (always, until §16.7 is decided) | Line `This page and the reference are your record. Print or save it.` No email is promised |
 | replayed | Banner `We already have this request as DE-4K7Q2M. Nothing was sent twice.` |
 | refresh | Re-renders from the archive and the status endpoint |
@@ -349,7 +349,7 @@ New route (ADD). Registered in `client/src/App.tsx` (lazy, Door 2), already in `
 
 **Help**: exactly one Ask DE control and one `tel:` link **inside `<main>`** per Door 2 page, in addition to whatever shared chrome renders (the MegaMenu utility bar phone at ≥ 1024, `MegaMenu.tsx:711-716`; the dock on `/store`). `/store`: the dock (no in-content Ask DE) plus the incident scenarios' Call line. Family, workspace, contact, confirmation: the HelpRow (rail, bar sheet, or in flow on contact and confirmation). The dock stays hidden on those routes as today (`client/src/App.tsx:974`).
 
-**Announcement strip and footer**: the MegaMenu announcement strip does not render on `isDoor2Path`; `DigeratiEnhancedFooterSection` takes `variant="store"` swapping the assessment CTA block for "Back to Your Solution". Both files sit outside the `store-experience-v2` claim; they ship as PR 3 after Joe's approval (§15, §16.2).
+**Announcement strip and footer**: the MegaMenu announcement strip does not render on `isDoor2Path`; `DigeratiEnhancedFooterSection` takes `variant="store"` swapping the magenta assessment CTA for an outline "Back to Your Solution" link to `/store/solution` (so the page's own primary stays the one magenta action). Approved 2026-09-28 (§16.2); built in PR #267 with the claim extended first. The compact cookie banner is not built: §14.13's banner gate passes as measured.
 
 **Scroll**: native everywhere. `Door2Frame` owns the reset.
 
@@ -801,7 +801,7 @@ Out of scope for PR 2: MegaMenu, footer, SiteBottomBar, CookieConsentBanner, war
 | 19. `de_store_preview` cookie so signed-in staff can view the public Store as a buyer | `server/warehouseRoutes.ts`, `server/warehouseAccess.test.ts` | open question 28 |
 | 20. `.cursor/rules/blog-store-color-lock.mdc` split into public-Store and warehouse scopes; staff `ShoppingCart` title → "Warehouse cart" | those | 13, 41 |
 
-**PR 0 · `/book` copy** (§16.6, separate, before `BOOK_ALIGNED` flips): `BookingPage.tsx:43,84` aligned to the campaign framing and a `?ref=` reader that shows "Reference DE-XXXXXX" above the widget.
+**PR 0 · `/book` copy** (§16.6; approved 2026-09-28 and built in PR #267, since the lane has one designated branch): `BookingPage.tsx` aligned to the campaign framing (a no-obligation conversation first; the formal CSRA at `CANONICAL_CSRA_ONE_TIME` when scoped; nothing billed until the buyer says yes) and a `?ref=` reader (`shared/solutionReference.ts`, the one pattern and normalizer the server also uses) that shows "Reference DE-XXXXXX" above the widget. `BOOK_ALIGNED` flips in the same commit series, so neither reaches production without the other.
 
 **Explicitly out of scope of this design**: warehouse defects (`map:defects_ranked` 1, 14, 15, 45, 46, 67, 68, 69, in flight under caa29e47), the copy-only naming sweep of standalone offer records, promoting office hours into `shared/companyContact.ts`, a drizzle migration for `public_solution_requests`, Turnstile, cross-device marketing.
 

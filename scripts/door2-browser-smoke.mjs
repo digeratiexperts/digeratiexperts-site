@@ -46,6 +46,14 @@ const forbiddenHits = async (page) => {
   return FORBIDDEN_VISIBLE.filter((re) => re.test(text)).map((re) => String(re));
 };
 
+/** Door 2 chrome (§16.2): no assessment strip over the task, and the footer leads back to the draft, not to /book. */
+const chromeState = (page) =>
+  page.evaluate(() => ({
+    strip: document.querySelectorAll("[data-testid='announce-start-assessment']").length,
+    footerBack: document.querySelectorAll("[data-testid='footer-back-to-solution']").length,
+    footerAssessment: document.querySelectorAll("[data-testid='footer-cta-assessment']").length,
+  }));
+
 /** Two independently interactive fixed elements must never share pixels. */
 const fixedOverlaps = (page) =>
   page.evaluate(() => {
@@ -88,7 +96,7 @@ for (const viewport of viewports) {
   });
   const page = await context.newPage();
   page.setDefaultTimeout(20000);
-  const row = { viewport: viewport.name, overflow: {}, forbidden: {}, fixedOverlap: {}, scrollTop: {} };
+  const row = { viewport: viewport.name, overflow: {}, forbidden: {}, fixedOverlap: {}, scrollTop: {}, chrome: {} };
   const wide = viewport.width >= 1024;
 
   // A · Enter
@@ -98,6 +106,7 @@ for (const viewport of viewports) {
   row.scenarioCount = await page.locator("[data-testid^='scenario-']").filter({ hasNot: page.locator("button") }).count() || (await page.locator("li[data-testid^='scenario-']").count());
   row.emailInputs = await page.locator("main input[type='email']").count();
   row.h1Count = await page.locator("h1").count();
+  row.chrome.index = await chromeState(page);
   // Profile (01) before the situations and families (02): the strip may be a closed row, so compare chapters.
   row.profileBeforeFamilies = await page.evaluate(() => {
     const profile = document.querySelector("[data-testid='store-profile']");
@@ -151,6 +160,7 @@ for (const viewport of viewports) {
   const deliveryList = await page.locator("#delivery").innerText();
   row.deliveryRemoteFirst = deliveryList.indexOf("Remote DE setup") > -1 && deliveryList.indexOf("Remote DE setup") < Math.max(deliveryList.indexOf("On-site"), deliveryList.length);
   row.overflow.family = await hasHorizontalOverflow(page);
+  row.chrome.family = await chromeState(page);
   row.forbidden.family = await forbiddenHits(page);
   row.fixedOverlap.family = await fixedOverlaps(page);
   await page.screenshot({ path: `${outDir}/family-${viewport.name}.png`, fullPage: true });
@@ -172,6 +182,7 @@ for (const viewport of viewports) {
   await page.getByText(/Saved (on this device|to DE)/).first().waitFor();
   row.saveSentence = await page.getByTestId("solution-rail-save").innerText();
   row.overflow.workspace = await hasHorizontalOverflow(page);
+  row.chrome.workspace = await chromeState(page);
   row.forbidden.workspace = await forbiddenHits(page);
   row.fixedOverlap.workspace = await fixedOverlaps(page);
   row.workspaceViewports = await page.evaluate(() => document.documentElement.scrollHeight / window.innerHeight);
@@ -192,6 +203,7 @@ for (const viewport of viewports) {
   row.contactBar = await page.getByTestId("solution-bar").count();
   row.sanctionedLine = await page.getByText("No payment is taken here. DE confirms package fit, scope, fulfillment, and pricing before commitment.", { exact: true }).count();
   row.overflow.contact = await hasHorizontalOverflow(page);
+  row.chrome.contact = await chromeState(page);
   row.forbidden.contact = await forbiddenHits(page);
   row.fixedOverlap.contact = await fixedOverlaps(page);
   await page.screenshot({ path: `${outDir}/contact-${viewport.name}.png`, fullPage: true });
@@ -209,6 +221,7 @@ for (const viewport of viewports) {
     row.reference = await page.getByTestId("solution-reference").innerText();
     row.submittedFocus = await page.evaluate(() => document.activeElement?.getAttribute("role") === "status" || !!document.activeElement?.closest("[role='status']"));
     row.overflow.submitted = await hasHorizontalOverflow(page);
+    row.chrome.submitted = await chromeState(page);
     row.forbidden.submitted = await forbiddenHits(page);
     await page.screenshot({ path: `${outDir}/submitted-${viewport.name}.png`, fullPage: true });
   }
@@ -254,6 +267,7 @@ const failed = results.some((row) =>
   Object.values(row.overflow).some(Boolean) ||
   Object.values(row.forbidden).some((hits) => hits.length > 0) ||
   Object.values(row.fixedOverlap).some((hits) => hits.length > 0) ||
+  Object.values(row.chrome).some((chrome) => chrome.strip > 0 || chrome.footerAssessment > 0 || chrome.footerBack !== 1) ||
   (process.env.DOOR2_SUBMIT === "1" && !/^DE-[0-9A-HJKMNP-TV-Z]{6}$/.test(row.reference || "")),
 );
 

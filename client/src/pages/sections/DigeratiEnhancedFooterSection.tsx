@@ -1,5 +1,6 @@
 import { Linkedin, Twitter, Facebook, Instagram, CheckCircle, Send, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { COMPANY, COMPANY_SOCIAL } from "@/data/companyContact";
 import { CTA } from "@/lib/ctaCopy";
@@ -58,7 +59,15 @@ const footerColumns = [
   { title: "Trust & Legal", links: trustLegalLinks, testIdPrefix: "footer-trust-legal" },
 ];
 
-export const DigeratiEnhancedFooterSection = (): JSX.Element => {
+/**
+ * The public Store (Door 2) passes variant="store": the assessment CTA gives way
+ * to a way back to the buyer's draft, and the page's own primary stays the one
+ * magenta action on screen (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §16.2).
+ * The workspace path is written out so the entry chunk never imports Store code.
+ */
+const STORE_WORKSPACE_PATH = "/store/solution";
+
+export const DigeratiEnhancedFooterSection = ({ variant = "default" }: { variant?: "default" | "store" } = {}): JSX.Element => {
   const currentYear = new Date().getFullYear();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
@@ -132,13 +141,23 @@ export const DigeratiEnhancedFooterSection = (): JSX.Element => {
               </a>
             </p>
 
-            <BookingLink
-              source="footer"
-              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-[#D3126A] px-5 text-base font-semibold text-white transition-colors hover:bg-[#e01874] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
-              data-testid="footer-cta-assessment"
-            >
-              {CTA.primary}
-            </BookingLink>
+            {variant === "store" ? (
+              <Link
+                href={STORE_WORKSPACE_PATH}
+                className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg border border-white/25 px-5 text-base font-semibold text-white transition-colors hover:border-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
+                data-testid="footer-back-to-solution"
+              >
+                Back to Your Solution
+              </Link>
+            ) : (
+              <BookingLink
+                source="footer"
+                className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-[#D3126A] px-5 text-base font-semibold text-white transition-colors hover:bg-[#e01874] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
+                data-testid="footer-cta-assessment"
+              >
+                {CTA.primary}
+              </BookingLink>
+            )}
 
             <div className="mt-8 max-w-sm">
               <h4 className="mb-2 text-base font-semibold uppercase tracking-[0.16em] text-white">

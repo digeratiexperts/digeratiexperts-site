@@ -14,6 +14,30 @@ function withQuery(req: Request, dest: string): string {
   return `${dest}${q}`;
 }
 
+/**
+ * Signed-in staff are sent from /store into the warehouse. This cookie lets them
+ * walk the public Store as a buyer for internal visual QA (source of truth
+ * §16.10, approved 2026-09-28): `?as=buyer` sets it, `?as=staff` clears it.
+ * It only relaxes that one redirect for a request that is already staff; it
+ * grants nothing, and a buyer who sets it by hand sees what they saw before.
+ */
+export const STORE_PREVIEW_COOKIE = "de_store_preview";
+const STORE_PREVIEW_COOKIE_OPTIONS = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  secure: process.env.NODE_ENV === "production",
+  path: "/",
+  maxAge: 1000 * 60 * 60 * 8,
+};
+
+/** The request's query without the `as` toggle, so a reload does not toggle again. */
+function queryWithoutToggle(req: Request): string {
+  const url = new URL(req.originalUrl || req.url, "http://local");
+  url.searchParams.delete("as");
+  const query = url.searchParams.toString();
+  return query ? `?${query}` : "";
+}
+
 export function registerWarehouseGates(app: Express): void {
   app.get("/api/internal/warehouse/session", (req: Request, res: Response) => {
     applyPrivateCacheHeaders(res);
@@ -44,7 +68,19 @@ export function registerWarehouseGates(app: Express): void {
     applyPrivateCacheHeaders(res);
     const staff = resolveWarehouseStaff(req);
     if (staff) {
-      return res.redirect(302, withQuery(req, toWarehousePath(path)));
+      const toggle = typeof req.query.as === "string" ? req.query.as : "";
+      if (toggle === "buyer") {
+        res.cookie(STORE_PREVIEW_COOKIE, "1", STORE_PREVIEW_COOKIE_OPTIONS);
+        return res.redirect(302, `${path}${queryWithoutToggle(req)}`);
+      }
+      if (toggle === "staff") {
+        res.clearCookie(STORE_PREVIEW_COOKIE, { path: "/" });
+        return res.redirect(302, `${toWarehousePath(path)}${queryWithoutToggle(req)}`);
+      }
+      if (req.cookies?.[STORE_PREVIEW_COOKIE] !== "1") {
+        return res.redirect(302, withQuery(req, toWarehousePath(path)));
+      }
+      // Previewing as a buyer: fall through to exactly what a buyer gets.
     }
 
     const classified = classifyLegacyStorePath(path);

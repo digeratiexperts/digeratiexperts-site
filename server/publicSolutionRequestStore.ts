@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "crypto";
+import { normalizeSolutionReference, REFERENCE_PATTERN } from "@shared/solutionReference";
 import { curatedSolutionFamilies, type CuratedDeliveryModel, type CuratedSolutionFamily } from "../client/src/data/curatedSolutions";
 import { FAMILY_PACKAGE_POLICY, preferredInstallMode, type InstallMode } from "../client/src/lib/solutionPackage";
 import {
@@ -87,7 +88,8 @@ const SUBMITTED_MEMORY_TTL_MS = 1000 * 60 * 60 * 24;
  * yields the same reference without any shared state.
  */
 const REFERENCE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-export const REFERENCE_PATTERN = /^DE-[0-9A-HJKMNP-TV-Z]{6}$/;
+// The pattern and the normalizer are shared with the client (the confirmation and /book?ref=).
+export { REFERENCE_PATTERN, normalizeSolutionReference };
 
 export function makeSolutionReference(seed: string, attempt = 0): string {
   const digest = createHash("sha256").update(attempt ? `${seed}:${attempt}` : seed).digest();
@@ -104,15 +106,6 @@ export function makeSolutionReference(seed: string, attempt = 0): string {
     if (out.length >= 9) break;
   }
   return out;
-}
-
-/** Accepts what a buyer types or reads back: lower case, missing hyphen, I/L for 1, O for 0. */
-export function normalizeSolutionReference(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  let cleaned = value.trim().toUpperCase().replace(/[\s-]/g, "");
-  if (!cleaned.startsWith("DE")) return null;
-  cleaned = `DE-${cleaned.slice(2).replace(/[IL]/g, "1").replace(/O/g, "0")}`;
-  return REFERENCE_PATTERN.test(cleaned) ? cleaned : null;
 }
 
 /* ------------------------------------------------------------------------ */

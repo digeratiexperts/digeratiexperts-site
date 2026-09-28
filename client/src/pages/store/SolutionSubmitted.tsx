@@ -72,11 +72,12 @@ const SHEET_TITLE = "Submitted solution";
 const ASSESSMENT_BAND =
   "This package needs an assessment before final scope. DE contacts you to schedule the conversation first; the formal Cyber Security Risk Assessment is $2,500 when that document is scoped.";
 /**
- * The magenta /book?ref= action renders only once the /book copy PR (source of
- * truth §16.6, "PR 0") is MERGED: today /book still says "free" beside an
- * assessment the Store frames at $2,500 when scoped. Flip when that lands.
+ * The magenta /book?ref= action renders only while /book tells the same story
+ * as this band (source of truth §16.6, "PR 0"): a no-obligation conversation
+ * first, the formal assessment at $2,500 when scoped. The /book copy and this
+ * flip ship in the same PR (#267), so the two reach production together.
  */
-const BOOK_ALIGNED = false;
+const BOOK_ALIGNED = true;
 const START_ANOTHER = "Start another solution (your profile is kept)";
 const MARKETPLACE = "Client? Open Client Marketplace";
 const PRINT_SAVE = "Print / save";
@@ -334,7 +335,7 @@ export default function SolutionSubmitted() {
             ) : null}
           </div>
         </main>
-        <DigeratiEnhancedFooterSection />
+        <DigeratiEnhancedFooterSection variant="store" />
     </Door2Frame>
   );
 }

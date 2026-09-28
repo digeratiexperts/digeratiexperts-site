@@ -177,6 +177,30 @@ describe("Door 2 public leakage and flow contract", () => {
     expect(submitted).not.toContain("contactEmail:");
   });
 
+  it("keeps the assessment strip and footer CTA off Door 2, and links to /book only while /book tells the same story", () => {
+    // §16.2: every Door 2 page renders the store footer; the header strip is suppressed by path.
+    for (const relative of [
+      "client/src/pages/solutions/BusinessNeedsIndex.tsx",
+      "client/src/pages/solutions/BusinessNeedsFamily.tsx",
+      "client/src/pages/solutions/SolutionRequest.tsx",
+      "client/src/pages/store/PublicStoreCheckout.tsx",
+      "client/src/pages/store/SolutionSubmitted.tsx",
+    ]) {
+      expect(read(relative), relative).toContain('<DigeratiEnhancedFooterSection variant="store" />');
+    }
+    expect(read("client/src/components/MegaMenu.tsx")).toMatch(/!announceDismissed && !onDoor2/);
+    const footer = read("client/src/pages/sections/DigeratiEnhancedFooterSection.tsx");
+    expect(footer).toContain("Back to Your Solution");
+    expect(footer).toContain('const STORE_WORKSPACE_PATH = "/store/solution"');
+
+    // §16.6: the confirmation's /book action and the /book copy ship together.
+    const booking = read("client/src/pages/BookingPage.tsx");
+    expect(read("client/src/pages/store/SolutionSubmitted.tsx")).toContain("const BOOK_ALIGNED = true;");
+    expect(booking.toLowerCase()).not.toMatch(/completely free|free evaluation|no strings attached/);
+    expect(booking).toContain("CANONICAL_CSRA_ONE_TIME");
+    expect(booking).toContain("normalizeSolutionReference");
+  });
+
   it("never writes a per-need relationship anywhere", () => {
     for (const relative of door2Files.filter((file) => file.startsWith("client/"))) {
       expect(read(relative), relative).not.toMatch(/needs\[\d*\]\.delivery|need\.delivery\b|delivery: "(standalone|co_managed)"/);

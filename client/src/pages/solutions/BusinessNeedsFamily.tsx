@@ -330,7 +330,7 @@ export default function BusinessNeedsFamily() {
           </div>
         </main>
         <SolutionBar {...chrome} />
-        <DigeratiEnhancedFooterSection />
+        <DigeratiEnhancedFooterSection variant="store" />
     </Door2Frame>
   );
 }

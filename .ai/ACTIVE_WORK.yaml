@@ -78,6 +78,8 @@ claims:
       - client/src/hooks/useSolutionDraft.ts
       - client/src/index.css (the .de-site-canvas padding-bottom line only)
       - shared/publicContact.ts
+      - shared/solutionReference.ts
+      - shared/solutionReference.test.ts
       - client/src/lib/publicSolutionCart.ts (removed)
       - client/src/data/solutionScenarios.ts
       - client/src/pages/store/SolutionSubmitted.tsx

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useId } from 'react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { ChevronDown, Shield, Server, Users, FileCheck, Phone, ExternalLink, X, ArrowRight, Monitor, Cloud, Lock, Zap, HeadphonesIcon, Building, BarChart3, ClipboardCheck, Layers, TrendingUp, Star, CheckCircle, Award, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
@@ -13,6 +13,7 @@ import { HomepageOnPageNav } from '@/components/HomepageSectionNav';
 import { PORTAL_LOGIN } from '@/lib/portalUrls';
 import { CTA } from '@/lib/ctaCopy';
 import { PRIMARY_PHONE } from '@/data/companyContact';
+import { isDoor2Path } from '@/lib/isDoor2Path';
 
 const NoiseTexture = ({ id }: { id: string }) => (
   <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.025]" aria-hidden="true">
@@ -195,6 +196,10 @@ export function MegaMenu() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const { openBooking } = useBooking();
+  const [location] = useLocation();
+  // The public Store is a task surface: the assessment strip does not sell over
+  // it (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §16.2, approved 2026-09-28).
+  const onDoor2 = isDoor2Path(location);
   // Top assessment announcement strip (reference direction). Dismiss lasts the
   // tab session so it never nags on every navigation.
   const [announceDismissed, setAnnounceDismissed] = useState(() => {
@@ -677,7 +682,7 @@ export function MegaMenu() {
           }}
         />
         {/* Assessment announcement strip — reference-style top bar */}
-        {!announceDismissed && (
+        {!announceDismissed && !onDoor2 && (
           <div className="relative z-10 w-full border-b border-white/[0.08] bg-black">
             <div className="max-w-[var(--de-canvas)] mx-auto relative flex w-full items-center justify-center gap-x-4 px-12 py-2">
               <p className="text-base font-medium leading-snug text-white/90">
