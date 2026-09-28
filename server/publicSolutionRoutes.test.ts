@@ -163,6 +163,7 @@ describe("public solution Door 2 API", () => {
         contactEmail: "jordan@example.com",
         contactPhone: "480-555-0100",
         organizationName: "Example Medical",
+        environment: { userCount: "9", workstationCount: "9", mobileDeviceCount: "4", siteCount: "1", deviceOwnership: "company", internalIt: "unsure" },
       }),
     });
     expect(response.status).toBe(200);
@@ -177,9 +178,15 @@ describe("public solution Door 2 API", () => {
     const missing = await fetch(`${baseUrl}/api/public/solutions/request`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ familyId: "identity_access", contactName: "Jordan Buyer", contactEmail: "jordan@example.com" }),
+      body: JSON.stringify({
+        familyId: "identity_access",
+        contactName: "Jordan Buyer",
+        contactEmail: "jordan@example.com",
+        environment: { userCount: "9", workstationCount: "9", mobileDeviceCount: "4", siteCount: "1", deviceOwnership: "company", internalIt: "unsure" },
+      }),
     });
     expect(missing.status).toBe(400);
+    expect((await missing.json()).error).toMatch(/phone/i);
 
     const payload = {
       familyId: "identity_access",
@@ -190,6 +197,7 @@ describe("public solution Door 2 API", () => {
       contactEmail: "jordan@example.com",
       contactPhone: "480-555-0100",
       organizationName: "Example Medical",
+      environment: { userCount: "9", workstationCount: "9", mobileDeviceCount: "4", siteCount: "1", deviceOwnership: "company", internalIt: "unsure" },
       idempotencyKey: "door2-test-key",
     };
     const first = await fetch(`${baseUrl}/api/public/solutions/request`, {
@@ -282,6 +290,110 @@ describe("public solution Door 2 API", () => {
       if (originalSmoke === undefined) delete process.env.DE_SMOKE_ALLOW_MEMORY_ONLY;
       else process.env.DE_SMOKE_ALLOW_MEMORY_ONLY = originalSmoke;
     }
+  });
+
+  it("mints a short human reference on submit and serves its status without contact details", async () => {
+    const response = await fourFieldSubmit({ idempotencyKey: "reference-test" });
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.request.reference).toMatch(/^DE-[0-9A-HJKMNP-TV-Z]{6}$/);
+    expect(body.reference).toBe(body.request.reference);
+    expect(body.nextStep).toBe("quote");
+    expect(body.acknowledged).toBe(false);
+    // A replay returns the same reference, not a second one.
+    const replay = await (await fourFieldSubmit({ idempotencyKey: "reference-test" })).json();
+    expect(replay.replayed).toBe(true);
+    expect(replay.request.reference).toBe(body.request.reference);
+
+    // Read back the way a person types it: lower case, no hyphen.
+    const typed = body.request.reference.toLowerCase().replace("-", "");
+    const status = await fetch(`${baseUrl}/api/public/solutions/request/status/${typed}`);
+    expect(status.status).toBe(200);
+    expect(status.headers.get("cache-control")).toBe("no-store");
+    const view = (await status.json()).solution;
+    expect(view).toEqual({
+      reference: body.request.reference,
+      status: "submitted",
+      submittedAt: expect.any(String),
+      durable: false,
+      nextStep: "quote",
+    });
+    const serialized = JSON.stringify(view).toLowerCase();
+    for (const secret of ["riley", "example.com", "0199", "accounting", "sessionid", "\"id\"", "backup_continuity", "12"]) {
+      expect(serialized, `status view leaks ${secret}`).not.toContain(secret);
+    }
+
+    expect((await fetch(`${baseUrl}/api/public/solutions/request/status/DE-ZZZZZZ`)).status).toBe(404);
+    expect((await fetch(`${baseUrl}/api/public/solutions/request/status/not-a-reference`)).status).toBe(404);
+    expect((await fetch(`${baseUrl}/api/public/solutions/request/status/DE-OOOOOO`)).status).toBe(404);
+  });
+
+  it("refuses a submit with no profile before it stores any contact detail, and swallows honeypot bots", async () => {
+    const noProfile = await fourFieldSubmit({ environment: { userCount: "12" }, idempotencyKey: "no-profile" });
+    expect(noProfile.status).toBe(400);
+    expect((await noProfile.json()).error).toMatch(/business profile/i);
+    const draft = await (await fetch(`${baseUrl}/api/public/solutions/request`)).json();
+    expect(draft.request.contactEmail).toBe("");
+
+    const bot = await fourFieldSubmit({ company_website: "http://spam.example", idempotencyKey: "bot" });
+    expect(bot.status).toBe(400);
+  });
+
+  it("never trusts a body intent or an installation the package does not offer, and reads the session from the cookie only", async () => {
+    const response = await fetch(`${baseUrl}/api/public/solutions/request?sessionId=someone-else`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId: "someone-else",
+        selectedNeeds: [
+          { familyId: "compliance_risk", offerId: "de-compliance-standalone", deliveryModel: "standalone", installation: "onsite", source: "auditor-evidence" },
+          { familyId: "hardware_lifecycle", offerId: "de-hardware-standalone", deliveryModel: "standalone", installation: "onsite" },
+        ],
+        deliveryPreference: "standalone",
+        intent: "request",
+        contactEmail: "leak@example.com",
+      }),
+    });
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.request.intent).toBe("assessment");
+    expect(body.request.nextStep).toBe("assessment");
+    expect(body.request.selectedNeeds[0]).toEqual({
+      familyId: "compliance_risk",
+      offerId: "de-compliance-standalone",
+      deliveryModel: "standalone",
+      source: "auditor-evidence",
+      installation: "remote_assist",
+    });
+    expect(body.request.selectedNeeds[1].installation).toBe("onsite");
+    // A draft never carries contact details; a query or body session id is ignored.
+    expect(body.request.contactEmail).toBe("");
+    expect(body.durable).toBe(false);
+    expect(body.forked).toBe(false);
+    const other = await (await fetch(`${baseUrl}/api/public/solutions/request?sessionId=someone-else`)).json();
+    expect(other.request.selectedNeeds).toEqual([]);
+  });
+
+  it("gives a session a fresh draft after it submits, and forks a write that lands on a submitted record", async () => {
+    const submitted = await fourFieldSubmit({ idempotencyKey: "fork-test" });
+    expect(submitted.status).toBe(200);
+    const cookie = submitted.headers.get("set-cookie")?.split(";")[0] ?? "";
+    const reference = (await submitted.json()).reference;
+
+    const next = await (await fetch(`${baseUrl}/api/public/solutions/request`, { headers: { cookie } })).json();
+    expect(next.request.status).toBe("draft");
+    expect(next.request.selectedNeeds).toEqual([]);
+    expect(next.previousReference).toBe(reference);
+
+    const written = await (
+      await fetch(`${baseUrl}/api/public/solutions/request`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", cookie },
+        body: JSON.stringify({ selectedNeeds: [{ familyId: "identity_access", deliveryModel: "standalone", offerId: "de-identity-standalone" }] }),
+      })
+    ).json();
+    expect(written.request.status).toBe("draft");
+    expect(written.request.reference).toBeNull();
   });
 
   it("accepts memory-only submits outside production, labelled as such, and sends no-store", async () => {

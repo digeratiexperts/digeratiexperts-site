@@ -40,6 +40,8 @@ async function ensureSchema(): Promise<boolean> {
           ON public_solution_requests (session_id, updated_at DESC)`);
         await client.query(`CREATE INDEX IF NOT EXISTS public_solution_requests_expiry_idx
           ON public_solution_requests (status, expires_at)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS public_solution_requests_reference_idx
+          ON public_solution_requests ((payload->>'reference'))`);
       } finally {
         client.release();
       }
@@ -67,7 +69,15 @@ function parseRecord(value: unknown): PublicSolutionRequest | null {
   if (!value || typeof value !== "object") return null;
   const record = value as PublicSolutionRequest;
   if (!record.id || !record.sessionId || !record.updatedAt || !record.status) return null;
+  // Rows written before references existed.
+  if (typeof record.reference !== "string") record.reference = null;
+  if (record.durable !== "database" && record.durable !== "crm" && record.durable !== "memory") record.durable = null;
   return record;
+}
+
+/** Whether Postgres is available for public drafts right now; what "Saved to DE" may honestly claim. */
+export async function durablePersistenceAvailable(): Promise<boolean> {
+  return ensureSchema();
 }
 
 /** Write-through. Never throws — a persistence failure must not break the in-memory save. */
@@ -157,6 +167,27 @@ export async function loadPublicSolutionRequestById(id: string): Promise<PublicS
     return parseRecord(result.rows[0]?.payload);
   } catch (error: any) {
     console.warn("[solution-request] durable load-by-id skipped:", error?.message || error);
+    return null;
+  }
+}
+
+/** A submitted solution by its short human reference. */
+export async function loadPublicSolutionRequestByReference(reference: string): Promise<PublicSolutionRequest | null> {
+  const enabled = await ensureSchema();
+  if (!enabled || !pool) return null;
+  try {
+    const result = await pool.query(
+      `SELECT payload
+         FROM public_solution_requests
+        WHERE status = 'submitted'
+          AND payload->>'reference' = $1
+        ORDER BY updated_at DESC
+        LIMIT 1`,
+      [reference],
+    );
+    return parseRecord(result.rows[0]?.payload);
+  } catch (error: any) {
+    console.warn("[solution-request] durable load-by-reference skipped:", error?.message || error);
     return null;
   }
 }

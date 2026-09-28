@@ -29,6 +29,14 @@ export function registerWarehouseGates(app: Express): void {
     return requireWarehouseStaffApi(req, res, next);
   });
 
+  // The Store's old public home. One address for the Business Solution Builder now.
+  app.use((req, res, next) => {
+    const path = req.path.replace(/\/+$/, "") || "/";
+    if (path !== "/solutions/business-needs" && !path.startsWith("/solutions/business-needs/")) return next();
+    const rest = path.slice("/solutions/business-needs".length);
+    return res.redirect(301, withQuery(req, rest ? `/store/solutions${rest}` : "/store"));
+  });
+
   app.use((req, res, next) => {
     const path = req.path;
     if (path !== "/store" && !path.startsWith("/store/")) return next();

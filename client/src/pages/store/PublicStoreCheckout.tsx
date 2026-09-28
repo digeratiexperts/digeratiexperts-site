@@ -388,7 +388,7 @@ export default function PublicStoreCheckout() {
                 </p>
                 {readyForContact ? (
                   <Button asChild className="mt-5 h-11 w-full bg-[#D3126A] text-white hover:bg-[#b90f5d]">
-                    <Link href={requestPath({ intent })}>Continue to contact details</Link>
+                    <Link href={requestPath()}>Continue to contact details</Link>
                   </Button>
                 ) : (
                   <Button className="mt-5 h-11 w-full" disabled>Finish the steps above</Button>

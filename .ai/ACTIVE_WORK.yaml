@@ -65,9 +65,25 @@ claims:
       - server/publicSolutionRequestCrm.ts
       - server/storeQuoteStore.ts
       - server/routes.ts (the /api/store/quote-requests handlers only)
+      - server/index.ts (the request-log redaction line only)
+      - server/spaKnownPaths.ts
+      - server/storeLegacyRedirects.ts
+      - server/warehouseRoutes.ts (the /solutions/business-needs 301 only)
+      - client/src/lib/solutionGuidance.ts
+      - client/src/lib/publicSolutionCart.ts (removed)
+      - client/src/data/solutionScenarios.ts
+      - client/src/pages/store/SolutionSubmitted.tsx
+      - client/src/styles/store-builder.css
+      - client/src/components/MegaMenu.tsx (announcement strip suppression on Door 2 only)
+      - client/src/components/Footer.tsx (store variant only)
       - scripts/door2-browser-smoke.mjs
+      - scripts/generate-sitemap.mjs (the /solutions/request row only)
       - docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md
       - docs/PUBLIC-SOLUTION-BUILDER.md
+      - docs/STORE-SOLUTION-ENGINE.md
+      - docs/STORE-WAREHOUSE.md
+      - docs/STORE-DOOR-2.md
+      - design/STORE_DOOR2_GRAMMAR.md
       - artifacts/visual-qa/store-experience/**
     status: active
     started: 2026-09-27

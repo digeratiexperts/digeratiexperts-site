@@ -57,9 +57,7 @@ export default function BusinessNeedsFamily() {
   useEffect(() => {
     if (!family) return;
     const draft = readSolutionDraft();
-    setDelivery(
-      draft.needs.find((need) => need.familyId === family.id)?.delivery || draft.deliveryPreference || "",
-    );
+    setDelivery(draft.deliveryPreference || "");
   }, [family?.id]);
 
   const draft = readSolutionDraft();
@@ -99,7 +97,7 @@ export default function BusinessNeedsFamily() {
 
   const addAndReview = () => {
     if (!delivery) return;
-    addDraftNeed({ familyId: family.id, delivery });
+    addDraftNeed({ familyId: family.id });
     const current = readSolutionDraft();
     if (!current.deliveryPreference) patchSolutionDraft({ deliveryPreference: delivery });
     toast({ title: "Added to Your Solution", description: `${family.label} is ready to review.` });

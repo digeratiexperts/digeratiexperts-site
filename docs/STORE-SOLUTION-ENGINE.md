@@ -116,18 +116,21 @@ Co-managed means shared responsibilities and may qualify for preferred pricing w
 
 Public browser draft: `de-solution-draft-v2`.
 
-Public server-session draft:
+Public server-session draft (`server/publicSolutionRoutes.ts`, `server/publicSolutionRequestStore.ts`, `server/publicSolutionRequestPersistence.ts`):
 
-- 30-day browser-session cookie
-- `GET` creates/returns current draft record
-- `PUT` saves progress without contact information and without creating a lead
-- `POST` submits after company, name, email, and phone are supplied
+- 30-day httpOnly browser-session cookie `de_solution_request`. The cookie is the only session identity; a `sessionId` in a body or query is ignored.
+- `GET` creates/returns the current draft record and reports `durable` (Postgres reachable right now). A session whose last record was submitted gets a fresh draft plus `previousReference`.
+- `PUT` saves progress without contact information and without creating a lead. Contact fields and notes in a PUT body are dropped. Each need may carry `source` (scenario) and `installation`; an installation the package's policy does not offer is replaced by the package's first choice (remote → shipped → on-site). `intent` is recomputed from policy on every write. A PUT that lands on a submitted record forks a new draft (`forked: true`, `previousReference`).
+- `POST` submits after company, name, email, and phone are supplied. Order of checks: honeypot → four contact fields → at least one need and a complete profile (users, computers, mobile devices, sites, ownership, internal IT) → persist contact → submit. The response carries `reference` (`DE-XXXXXX`, Crockford base32 derived from the correlation id, so a replay after a restart yields the same one), `durable` (`database` / `crm` / `memory`), `intent`, `nextStep` (`quote` / `consultation` / `assessment`) and `acknowledged: false` (no acknowledgement email is sent yet).
+- `GET /api/public/solutions/request/status/:reference` returns `{ reference, status, submittedAt, durable, nextStep }` and nothing else: no contact details, no profile, no packages. A confirmation page renders those from the submitter's own device archive (`de-solution-submitted-v1`). Lookups are rate limited and unknown references are a generic 404.
 
-The current server request store is memory-backed. Durable database persistence remains a follow-on requirement before the public save feature should be marketed as cross-device or guaranteed long-term storage.
+Durable storage is Postgres when `DATABASE_URL` is configured (`public_solution_requests`, JSONB payload, lazily provisioned). In production a submit that can reach neither Postgres nor the CRM is refused with 503 `DURABLE_STORAGE_REQUIRED` and rolled back to a draft so the retry is a real submit. Outside production a memory-only submit is accepted and labelled `durable: "memory"`. Memory keeps submitted records and idempotency keys for 24 hours; drafts for 30 days.
+
+Draft ids, references and session ids are redacted from the request log (`server/index.ts`).
 
 ## Follow-on engineering priorities
 
-1. Persist public solution drafts in the database instead of memory-only server storage.
+1. Decide the acknowledgement email (owner decision, see `docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md` §16); until then `acknowledged` is always `false`.
 2. Add package-specific compatibility questions and dependencies without duplicating the Step 0 profile.
 3. Connect preferred co-managed pricing to the authoritative pricing engine rather than hardcoding discounts in UI.
 4. Add inventory/availability-backed shipment estimates for hardware-bearing packages.
