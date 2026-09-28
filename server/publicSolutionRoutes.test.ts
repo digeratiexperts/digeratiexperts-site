@@ -319,7 +319,9 @@ describe("public solution Door 2 API", () => {
       nextStep: "quote",
     });
     const serialized = JSON.stringify(view).toLowerCase();
-    for (const secret of ["riley", "example.com", "0199", "accounting", "sessionid", "\"id\"", "backup_continuity", "12"]) {
+    // Contact, session and profile facts never leave by reference. The exact shape above already
+    // proves it; these names guard the next person who adds a field (never a bare digit: timestamps).
+    for (const secret of ["riley", "example.com", "0199", "accounting", "sessionid", "\"id\"", "backup_continuity", "usercount", "environment", "selectedneeds"]) {
       expect(serialized, `status view leaks ${secret}`).not.toContain(secret);
     }
 
