@@ -415,3 +415,14 @@ Describe 'Audit without runtime secrets' {
         $e.verification | Should -Match 'JC_API_KEY'
     }
 }
+
+Describe 'Console integrity on a clean, unsigned copy' {
+    BeforeAll { . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $null = Initialize-TestConsole }
+    It 'never reads as tampered and only inspects PowerShell files' {
+        $root = Split-Path -Parent $PSScriptRoot
+        $i = Test-DEConsoleIntegrity -Root $root
+        $i.status | Should -Not -Be 'tampered' -Because (($i.problems | Select-Object -First 5) -join '; ')
+        $scripts = @(Get-ChildItem -LiteralPath $root -Recurse -File | Where-Object { $_.Extension -in @('.ps1', '.psm1', '.psd1') }).Count
+        $i.files | Should -Be $scripts
+    }
+}
