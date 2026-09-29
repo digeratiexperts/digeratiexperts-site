@@ -37,6 +37,8 @@ function Initialize-DEWorkflow {
     $de.Actions.Clear(); $de.Gates.Clear(); Reset-DEGateCache
     # Bundle / add-ons / standalone solutions from the profile become one plan (catalog\bundles.json).
     $ClientProfile = New-DEComposedProfile -ClientProfile $ClientProfile
+    # The Hub files devices under the client's canonical account id (profile hub.accountId); signed sends carry it.
+    $hubAccount = "$(Get-DEHashPath -Object $ClientProfile -Path 'hub.accountId')"; if ($hubAccount) { Set-DEContext -Values @{ hubAccountId = $hubAccount } }
     Register-DEIdentityGates
     Register-DEOperationsActions -ClientProfile $ClientProfile
     Register-DEWarrantyActions -ClientProfile $ClientProfile

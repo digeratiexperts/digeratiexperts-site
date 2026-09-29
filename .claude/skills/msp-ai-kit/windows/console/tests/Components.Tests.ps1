@@ -49,6 +49,10 @@ Describe 'Shared contracts' {
     It 'Send-DEHubPayload sends one signed device.observed event the Hub can verify, and never the secret' {
         Set-DEStateValue -Path 'settings.hub.endpoint' -Value 'https://hub.example/api/whatever'
         Set-DESecret -Name 'DE_HUB_SIGNING_SECRET' -Plain 'signing-secret-9876'
+        Set-DEContext -Values @{ hubAccountId = '' }
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp { throw 'must not be called without an account' }
+        (Send-DEHubPayload -Payload (New-DEHubPayload -Record @{ client = 'alamo'; serial = 'PF3ABC12'; manufacturer = 'LENOVO'; exceptions = @() }) -Confirm:$false).error | Should -Match 'hub.accountId'
+        Set-DEContext -Values @{ hubAccountId = '42' }
         Mock -ModuleName DE.Contracts Invoke-DEHubHttp { $global:DETest.Sent = @{ Uri = $Uri; Headers = $Headers; Body = $Body }; @{ ok = $true } }
         $rec = @{ client = 'alamo'; serial = 'PF3ABC12'; manufacturer = 'LENOVO'; model = 'X1'; exceptions = @() }
         $r = Send-DEHubPayload -Payload (New-DEHubPayload -Record $rec) -Confirm:$false
@@ -59,13 +63,14 @@ Describe 'Shared contracts' {
         $s.Body | Should -Not -Match 'signing-secret-9876'
         ($s.Headers.Values -join ' ') | Should -Not -Match 'signing-secret-9876'
         $ev = $s.Body | ConvertFrom-Json
-        $ev.eventType | Should -Be 'device.observed'; $ev.entityId | Should -Be 'lenovo:PF3ABC12'; $ev.version | Should -Be 1
+        $ev.eventType | Should -Be 'device.observed'; $ev.entityId | Should -Be 'lenovo:PF3ABC12'; $ev.version | Should -Be 1; $ev.canonicalAccountId | Should -Be '42'
         $ev.eventId | Should -Be $s.Headers['X-DE-Event-ID']
         Get-DEHubSignature -Method POST -Path '/api/integrations/v1/techconsole/events' -Timestamp $s.Headers['X-DE-Timestamp'] -EventId $ev.eventId -Body $s.Body -Secret 'signing-secret-9876' | Should -Be $s.Headers['X-DE-Signature']
         Clear-DESecrets
     }
     It 'a record without a usable serial is not sent and is saved for manual upload' {
         Set-DEStateValue -Path 'settings.hub.endpoint' -Value 'https://hub.example'
+        Set-DEContext -Values @{ hubAccountId = '42' }
         Set-DESecret -Name 'DE_HUB_SIGNING_SECRET' -Plain 'signing-secret-9876'
         Mock -ModuleName DE.Contracts Invoke-DEHubHttp { throw 'must not be called' }
         $r = Send-DEHubPayload -Payload (New-DEHubPayload -Record @{ client = 'alamo'; serial = 'Default string'; manufacturer = 'x'; exceptions = @() }) -Confirm:$false

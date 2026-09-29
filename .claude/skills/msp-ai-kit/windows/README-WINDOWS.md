@@ -282,7 +282,10 @@ handoffs and warranty. The shared contracts are in `console/contracts/`.
 
 - **Signed sending.** When `DE_HUB_SIGNING_SECRET` is entered as a runtime secret, `Send-DEHubPayload`
   sends a signed `device.observed` event to `<Hub>/api/integrations/v1/techconsole/events`.
-- **Legacy sending.** Without it, the older Bearer POST (`DE_HUB_TOKEN`) is used.
+- **Account number.** The client profile needs the client's Hub account number, set as
+  `"hub": { "accountId": 123 }`. Without it the signed send is refused and the record is saved for
+  manual upload.
+- **Legacy sending.** Without a signing secret, the older Bearer POST (`DE_HUB_TOKEN`) is used.
 - **Not live yet.** The Hub route is in a draft Intelligence-Hub PR. Merging it deploys to production,
   so it waits for DE approval. Until then, sends that fail are saved to evidence for manual upload.
 
