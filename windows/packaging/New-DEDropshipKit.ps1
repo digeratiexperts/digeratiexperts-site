@@ -96,6 +96,11 @@ foreach ($item in Get-ChildItem -LiteralPath $WindowsRoot) {
     }
     Copy-Item -LiteralPath $item.FullName -Destination $app -Recurse -Force
 }
+# Pinned community tools (LSUClient, HardeningKitty) travel with the kit so first boot works before the network is
+# trusted; each file is re-verified against catalog\community.json when it is used. Missing ones are fetched at first boot.
+foreach ($toolId in @('lsuclient', 'hardeningkitty')) {
+    try { $null = Save-DECommunityTool -Id $toolId -Destination (Join-Path $app 'community') } catch { Write-Warning "community tool $toolId not staged ($($_.Exception.Message)); first boot downloads it" }
+}
 $composed | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $kit 'profile.json') -Encoding UTF8
 $order | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $kit 'order.json') -Encoding UTF8
 

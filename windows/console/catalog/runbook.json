@@ -183,6 +183,8 @@
     "jumpcloud.bind-user": "Binding makes JumpCloud take over the local account and sync the user's JumpCloud password.",
     "security.edr-conflicts": "Two EDRs on one device fight each other and slow it down.",
     "maint.update-authority": "Exactly one system should control Windows updates (JumpCloud by default).",
-    "maint.warranty": "An expired warranty turns a hardware fault into a purchase; the client should hear about it before the failure, not after."
+    "maint.warranty": "An expired warranty turns a hardware fault into a purchase; the client should hear about it before the failure, not after.",
+    "maint.oem": "Old BIOS and drivers cause the crashes and dock problems users call about. Dell uses Command | Update, Lenovo uses LSUClient (pinned), HP uses HP Image Assistant; BitLocker is suspended for one restart around firmware.",
+    "baseline.cis-audit": "A read-only CIS or Microsoft baseline report shows what the DE baseline does not cover yet. It changes nothing on the device."
   }
 }

@@ -243,6 +243,68 @@ DE fills in the real download source and hash:
 - Wazuh
 - Timus
 
+## Warranty
+
+The `maint.warranty` step shows when the device's warranty ends and where that answer came from.
+The sources are listed in `console\catalog\warranty.json`. The tool only talks to the manufacturer
+itself, never to a third-party lookup service, so client serial numbers stay between DE and the maker.
+
+- **Dell:** looked up through the TechDirect warranty API. Enter `DELL_API_KEY` and `DELL_API_SECRET`
+  as runtime secrets; without them you get Dell's check page.
+- **Lenovo:** looked up from Lenovo's public support site. No key is needed.
+- **HP:** HP's warranty API needs an approved key and its endpoints are not filled in yet. Until they
+  are, you get HP's check page.
+- **Other makers:** Surface, Apple, Acer, ASUS, Dynabook, Samsung, Panasonic, Framework, MSI, Getac and
+  Gigabyte open the maker's check page. The technician records the end date on the Scan & fix page, and
+  the tool stores who recorded it.
+
+Answers are cached for 7 days. The step warns when fewer than 90 days are left. The end date goes into
+the asset record.
+
+## Community tools (pinned)
+
+`console\catalog\community.json` lists the community PowerShell projects DE reviewed. Each entry is
+pinned to one commit, with its licence and how DE may use it:
+
+| Tool | Licence | Use | What DE does with it |
+|---|---|---|---|
+| LSUClient (jantari) | MIT | loaded | `maint.oem` on Lenovo: drivers, BIOS and firmware from Lenovo's own catalog, no Lenovo System Update needed |
+| HardeningKitty (scipag) | MIT | loaded | `baseline.cis-audit`: read-only CIS or Microsoft baseline report, saved to evidence. Its write modes are never used. |
+| Win11Debloat, Winget-AutoUpdate | MIT | reviewed | candidates, not wired yet |
+| winget-install, PSAppDeployToolkit, limehawk rmm-scripts | GPL / LGPL | separate program only | never copied into DE code |
+| dszp, flatlinebb MSP scripts | no licence | reference | read for ideas, no code used |
+| PowerShellWarrantyReports | AGPL | reference | not used: AGPL, and it sends serials to a third-party proxy |
+
+How a loaded tool is fetched and checked:
+
+- It is downloaded from `raw.githubusercontent.com` at the pinned commit.
+- Every file is checked against its sha256 before anything is imported. A single mismatch refuses the
+  tool, and nothing half-downloaded is kept.
+- The verified copy is cached under the data folder, in `community\<id>\<commit>`.
+- Offline and OOBE runs use a copy staged in `community\` beside `console\`. The release zip and every
+  dropship kit carry one, and the files are checked again each time they are used.
+- The staged copy sits outside `console\` so that `integrity.json` and code signing cover DE's own
+  code only.
+
+To move a pin, review the upstream diff and clone the new commit. Then run:
+
+```
+python3 packaging/update-community-catalog.py --clones <dir> --pin <id>=<commit>
+```
+
+`--check` fails when any pin is out of date.
+
+**OEM updates in `maint.oem`:**
+
+| Maker | Tool | Notes |
+|---|---|---|
+| Dell | Dell Command \| Update | installs itself if it is missing |
+| Lenovo | LSUClient | Packages that cannot install silently are listed for the technician. A BIOS update that needs a full shutdown asks for one. |
+| HP | HP Image Assistant, when it is installed | Exit 0 or 256 means done, 3010 means a restart is needed, and anything else fails the step. |
+
+Any failed package fails the step. BitLocker is suspended for one restart whenever BIOS or firmware is
+included, and `maint.bitlocker-resume` checks that protection comes back on.
+
 ## Exit codes (headless and loader)
 
 | Code | Meaning |
