@@ -83,7 +83,9 @@ if ($Headless) {
     # powershell.exe -File passes '-Solution a,b' as one string: accept comma-separated lists from RMM command lines
     $AddOn = @($AddOn | ForEach-Object { "$_" -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
     $Solution = @($Solution | ForEach-Object { "$_" -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-    # A dropship order (no secrets) names the client, bundle, end user and the exact device.
+    # A dropship order (no secrets) names the client, bundle, end user and the exact device. An order from an
+    # earlier run never carries over: without -Order this run has none.
+    if (-not $Order) { Set-DEStateValue -Path 'order' -Value $null }
     if ($Order) {
         try { $ord = Import-DEOrderManifest -Path $Order } catch { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message "REFUSED: $($_.Exception.Message)" }
         if (-not $Client) { $Client = $ord['client'] }
@@ -583,6 +585,7 @@ function Use-ClientAndMode {
     $S.Profile = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $ProfileId) -Bundle $Bundle -Solution $Solution; $Settings.client = $S.Profile.id
     $Settings.planBundle = "$($S.Profile.plan.bundle)"; $Settings.planSolutions = @($S.Profile.plan.solutions | Where-Object { $_ })   # a restart or resume keeps the chosen plan
     if ($Mode) { $S.Mode = $Mode }; $Settings.mode = $S.Mode
+    if ($S.Mode -ne 'dropship') { Set-DEStateValue -Path 'order' -Value $null }   # an order only applies to its dropship run
     if ($Technician) { $Settings.technician = $Technician }
     Save-GuiSettings
     $ids = @(Initialize-DEWorkflow -ClientProfile $S.Profile -Mode $S.Mode)
