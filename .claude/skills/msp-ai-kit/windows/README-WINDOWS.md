@@ -504,6 +504,8 @@ package, so Intune and RMM are the supported deployment routes.
 
 ## Tests
 
+The tests live in the repository (they are not in release packages):
+
 ```powershell
 Invoke-Pester -Path .\tests, .\console\tests          # Pester 4.10 or 5.x
 Invoke-ScriptAnalyzer -Path . -Recurse -Settings .\tests\PSScriptAnalyzerSettings.psd1
