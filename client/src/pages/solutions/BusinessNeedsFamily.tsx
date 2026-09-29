@@ -1,81 +1,93 @@
+import { useCallback, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, PackageCheck, Truck, Wrench } from "lucide-react";
 import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
-import { Button } from "@/components/ui/button";
-import { useSEO } from "@/hooks/useSEO";
 import NotFound from "@/pages/not-found";
+import { useSEO } from "@/hooks/useSEO";
+import { useAnnouncer } from "@/components/AccessibleAnnouncer";
+import { useMinWidth, useSolutionDraft } from "@/hooks/useSolutionDraft";
+import { Door2Frame } from "@/components/store/door2/Door2Frame";
+import { ProfileLine, SolutionProfileForm } from "@/components/store/SolutionProfileForm";
+import { HelpRow, StepLabel, StoreAction, StoreChapter, UndoRow } from "@/components/store/door2/primitives";
+import { RelationshipCompare } from "@/components/store/door2/RelationshipCompare";
+import { CoverageChips } from "@/components/store/door2/Coverage";
+import { SolutionBar, SolutionRail, type SolutionChromeProps, type SolutionPrimary } from "@/components/store/door2/SolutionChrome";
 import {
   BUSINESS_NEEDS_INDEX_PATH,
   familyPath,
   getFamilyBySlug,
-  offerForDelivery,
   SOLUTION_WORKSPACE_PATH,
+  STORE_STEPS,
+  type CuratedSolutionFamily,
 } from "@/lib/businessNeeds";
-import { openMspAdvisor } from "@/lib/openMspAdvisor";
-import { StorePageAtmosphere } from "@/components/store/StorePageAtmosphere";
-import { PublicSolutionCart } from "@/components/store/PublicSolutionCart";
 import {
   addDraftNeed,
-  patchSolutionDraft,
-  profileSummary,
+  isProfileComplete,
+  patchEnvironment,
   readSolutionDraft,
-  type DeliveryPreference,
+  removeDraftNeed,
+  writeSolutionDraft,
+  type SolutionEnvironment,
 } from "@/lib/solutionDraft";
-import { assessmentPolicyLabel, buildSolutionPackage } from "@/lib/solutionPackage";
-import { useToast } from "@/hooks/use-toast";
+import { buildSolutionPackage, installModeDetail, sortInstallModes } from "@/lib/solutionPackage";
+import { solutionAdvisorSeed, suggestRelationship } from "@/lib/solutionGuidance";
 
-function OfferList({ title, items }: { title: string; items: string[] }) {
-  return (
-    <section>
-      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/55">{title}</h3>
-      <ul className="space-y-2">
-        {items.map((item) => (
-          <li key={item} className="text-sm leading-relaxed text-white/75">
-            {item}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
+/*
+ * B · Compare (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §5.2). One family under
+ * both relationships, sized from the one profile, before any commercial
+ * choice. The page never asks for the relationship: that control lives once
+ * on the workspace. Add is never gated.
+ */
+
+const HANDLE_OUR_IT_PATH = "/solutions/proactive-ecosystem";
+const RELATIONSHIP_SUGGESTION_HINT = "relationship-suggestion";
+const MAX_OUTCOMES = 3;
+
+const PRIMARY_ADD = "Add & review package";
+const PRIMARY_ADDED = "Added ✓ · Review Your Solution";
+const SECONDARY_ADD = "Add and keep browsing";
+const SECONDARY_REMOVE = "Remove from Your Solution";
+
+const COMPARE_HEADING = "Two ways to have it. Same package, different hands on it.";
+const NO_SUGGESTION_LINE = "Not sure? Help me choose is a real option on the next step.";
+const DELIVERY_HEADING = "Delivery & Setup for this package";
+const DELIVERY_RULE = "DE's rule: remote first, shipped second, on-site only when nothing else will do.";
+const FIRST_CHOICE_TAG = "DE's first choice";
+const COVERAGE_HEADING = "Where this sits in DE's eight security blocks";
+const HONESTY_LINE =
+  "Standalone never means DE runs your IT. It means DE builds this and you, or your IT provider, run it day to day.";
+
+/** The standalone offer's outcomes first, then anything co-managed adds; unique; at most three. */
+function familyOutcomes(family: CuratedSolutionFamily): string[] {
+  const standalone = family.offers.find((offer) => offer.deliveryModel === "standalone");
+  const coManaged = family.offers.find((offer) => offer.deliveryModel === "co_managed");
+  const seen = new Set<string>();
+  const outcomes: string[] = [];
+  for (const item of [...(standalone?.outcomes ?? []), ...(coManaged?.outcomes ?? [])]) {
+    if (seen.has(item)) continue;
+    seen.add(item);
+    outcomes.push(item);
+    if (outcomes.length === MAX_OUTCOMES) break;
+  }
+  return outcomes;
 }
-
-const DELIVERY_OPTIONS: Array<[DeliveryPreference, string, string]> = [
-  ["standalone", "Standalone", "Standard price · your business owns implementation and operation"],
-  ["co_managed", "Co-Managed", "Preferred pricing · your team and DE share defined responsibilities"],
-  ["unsure", "Help me choose", "Keep building and let DE recommend the right operating relationship"],
-];
 
 export default function BusinessNeedsFamily() {
   const params = useParams<{ family?: string }>();
   const family = getFamilyBySlug(params.family || "");
-  const [delivery, setDelivery] = useState<DeliveryPreference | "">("");
   const [, navigate] = useLocation();
-  const { toast } = useToast();
-
-  useEffect(() => {
-    if (!family) return;
-    const draft = readSolutionDraft();
-    setDelivery(
-      draft.needs.find((need) => need.familyId === family.id)?.delivery || draft.deliveryPreference || "",
-    );
-  }, [family?.id]);
-
-  const draft = readSolutionDraft();
-  const offer = useMemo(() => {
-    if (!family || (delivery !== "co_managed" && delivery !== "standalone")) return null;
-    return offerForDelivery(family, delivery);
-  }, [family, delivery]);
-  const packageView = useMemo(() => {
-    if (!family || (delivery !== "co_managed" && delivery !== "standalone")) return null;
-    return buildSolutionPackage(family, delivery, draft.environment);
-  }, [family, delivery, draft.environment]);
+  const draft = useSolutionDraft();
+  const { announce } = useAnnouncer();
+  const wide = useMinWidth(1024);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileExpandKey, setProfileExpandKey] = useState(0);
+  const [undoPending, setUndoPending] = useState(false);
+  const [pulseKey, setPulseKey] = useState(0);
 
   useSEO(
     family
       ? {
-          title: `${family.label} | Solve a Business Need`,
+          title: `${family.label} | Store | Digerati Experts`,
           description: family.description,
           canonical: familyPath(family.id),
         }
@@ -86,163 +98,239 @@ export default function BusinessNeedsFamily() {
         },
   );
 
-  if (!family) {
+  const environment = draft.environment;
+  const sized = isProfileComplete(environment);
+  const included = family ? draft.needs.some((need) => need.familyId === family.id) : false;
+  const suggestionDismissed = draft.dismissedHints.includes(RELATIONSHIP_SUGGESTION_HINT);
+  const suggestion = suggestionDismissed ? null : suggestRelationship(environment);
+
+  const standaloneView = useMemo(
+    () => (family ? buildSolutionPackage(family, "standalone", environment) : null),
+    [family, environment],
+  );
+  const outcomes = useMemo(() => (family ? familyOutcomes(family) : []), [family]);
+  const helpSeed = useMemo(
+    () => solutionAdvisorSeed(draft, family ? { familyLabel: family.label } : {}),
+    [draft, family],
+  );
+
+  const setEnvironmentField = useCallback(
+    <K extends keyof SolutionEnvironment>(key: K, value: SolutionEnvironment[K]) => {
+      const patch: Partial<SolutionEnvironment> = {};
+      patch[key] = value;
+      writeSolutionDraft(patchEnvironment(readSolutionDraft(), patch));
+    },
+    [],
+  );
+
+  const openProfile = useCallback(() => {
+    setProfileOpen(true);
+    setProfileExpandKey((key) => key + 1);
+  }, []);
+
+  if (!family || !standaloneView) {
     return <NotFound />;
   }
 
-  const askAbout = () => {
-    openMspAdvisor({
-      context: "other",
-      seedMessage: `I am reviewing the Digerati Experts ${family.label} solution and want to ask about package fit, implementation, pricing, and next steps.`,
-    });
+  const addNeed = () => {
+    addDraftNeed({ familyId: family.id });
+    setUndoPending(false);
+    setPulseKey((key) => key + 1);
   };
 
   const addAndReview = () => {
-    if (!delivery) return;
-    addDraftNeed({ familyId: family.id, delivery });
-    const current = readSolutionDraft();
-    if (!current.deliveryPreference) patchSolutionDraft({ deliveryPreference: delivery });
-    toast({ title: "Added to Your Solution", description: `${family.label} is ready to review.` });
+    addNeed();
     navigate(SOLUTION_WORKSPACE_PATH);
   };
 
+  const addAndStay = () => {
+    addNeed();
+    announce(`${family.label} added to Your Solution`);
+  };
+
+  const removeNeed = () => {
+    removeDraftNeed(family.id);
+    setUndoPending(true);
+    announce(`${family.label} removed from Your Solution`);
+  };
+
+  const undoRemove = () => {
+    addNeed();
+    announce(`${family.label} added back to Your Solution`);
+  };
+
+  const primary: SolutionPrimary = included
+    ? { label: PRIMARY_ADDED, href: SOLUTION_WORKSPACE_PATH }
+    : { label: PRIMARY_ADD, onClick: addAndReview };
+
+  const chrome: SolutionChromeProps = {
+    mode: "review",
+    draft,
+    primary,
+    help: { seed: helpSeed, askLabel: "Ask DE about this need" },
+    pulseKey,
+    onEditProfile: openProfile,
+    compactVariant: "secondary",
+    mountWhenEmpty: true,
+    compactLabel: included ? "Review" : "Add & review",
+  };
+
+  const installModes = sortInstallModes(standaloneView.installModes);
+
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0a0a0a]">
-      <StorePageAtmosphere />
-      <div className="relative z-10">
+    <Door2Frame intensity={0.28} jelly>
         <MegaMenu />
-        <main className="de-nav-clear mx-auto max-w-5xl px-4 pb-40 sm:px-6 lg:px-8">
-          <Link
-            href={BUSINESS_NEEDS_INDEX_PATH}
-            className="mb-10 inline-flex h-11 items-center text-sm text-white/55 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050312]"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
-            Back to pains & needs
-          </Link>
+        <main className="d2-main de-nav-clear pb-24">
+          <div className="d2-layout">
+            <div className="min-w-0">
+              <header className="d2-chapter d2-chapter--first" data-testid="family-header">
+                <StoreAction variant="quiet" href={BUSINESS_NEEDS_INDEX_PATH} testId="back-to-store">
+                  <span aria-hidden="true">← </span>All needs
+                </StoreAction>
 
-          <header className="max-w-3xl pb-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-de-accent-ink">Step 2 · Solution</p>
-            <h1 className="mt-4 text-[clamp(2.25rem,5vw,3.75rem)] font-bold leading-[1.08] tracking-[-0.035em] text-white" data-testid="heading-family">
-              {family.label}
-            </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/65">{family.description}</p>
-            <p className="mt-4 text-sm text-white/55">Profile: {profileSummary(draft.environment)}</p>
-          </header>
-
-          <section aria-labelledby="offer-type-heading">
-            <h2 id="offer-type-heading" className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/55">
-              Choose the operating relationship
-            </h2>
-            <div className="mb-8 grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Choose an offer type">
-              {DELIVERY_OPTIONS.map(([value, label, description]) => (
-                <button
-                  key={value}
-                  type="button"
-                  role="radio"
-                  aria-checked={delivery === value}
-                  className={`min-h-[7.25rem] rounded-xl border p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] ${
-                    delivery === value
-                      ? "border-de-accent bg-de-accent/10 text-white"
-                      : "border-white/10 bg-[#121212] text-white/75 hover:border-white/20"
-                  }`}
-                  onClick={() => setDelivery(value)}
-                  data-testid={`delivery-${value}`}
-                >
-                  <span className="block font-semibold">{label}</span>
-                  <span className="mt-2 block text-xs leading-relaxed text-white/50">{description}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          {packageView && offer ? (
-            <article className="rounded-2xl border border-de-hairline bg-de-raised p-6 md:p-8" data-testid="offer-panel">
-              <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-de-accent-ink">{packageView.relationshipLabel}</p>
-                  <h2 className="mt-2 text-2xl font-semibold text-white">{packageView.offerName}</h2>
-                  <p className="mt-4 max-w-2xl leading-relaxed text-white/75">{packageView.relationshipSummary}</p>
+                <div className="mt-6">
+                  <StepLabel n="02" srText={STORE_STEPS[1].sr}>
+                    Pain or need · {family.label}
+                  </StepLabel>
+                  <h1 className="d2-h2 d2-measure" data-testid="heading-family">
+                    {family.label}
+                  </h1>
+                  <p className="d2-lede d2-ink d2-measure mt-4">{family.description}</p>
+                  <div className="mt-4 lg:hidden">
+                    <StoreAction variant="quiet" href="#compare" external testId="jump-compare">
+                      Compare<span aria-hidden="true"> ↓</span>
+                    </StoreAction>
+                  </div>
                 </div>
-                <aside className="rounded-xl border border-white/10 bg-black/20 p-4">
-                  <p className="text-xs uppercase tracking-wide text-white/55">Commercial position</p>
-                  <p className="mt-2 font-semibold text-white">{packageView.pricingLabel}</p>
-                  <p className="mt-2 text-xs leading-relaxed text-white/50">{assessmentPolicyLabel(packageView.assessmentPolicy)}</p>
-                </aside>
-              </div>
 
-              <div className="mt-8 grid gap-8 md:grid-cols-2">
-                <section>
-                  <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/55">What this helps you achieve</h3>
-                  <ul className="space-y-2">
-                    {offer.outcomes.map((item) => (
-                      <li key={item} className="flex gap-2 text-sm leading-relaxed text-white/75">
-                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-de-accent-ink" aria-hidden="true" />
-                        {item}
+                {outcomes.length > 0 ? (
+                  <ul className="d2-rows d2-measure mt-8" data-testid="family-outcomes">
+                    {outcomes.map((outcome) => (
+                      <li key={outcome} className="d2-body d2-ink-strong">
+                        {outcome}
                       </li>
                     ))}
                   </ul>
-                </section>
-                <section>
-                  <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/55">Pre-configured package</h3>
-                  <div className="overflow-hidden rounded-xl border border-white/10">
-                    {packageView.lineItems.map((line, index) => (
-                      <div key={line.label} className={`grid grid-cols-[minmax(0,1fr)_auto] gap-4 px-4 py-3 text-sm ${index ? "border-t border-white/10" : ""}`}>
-                        <span className="text-white/75">{line.label}</span>
-                        <span className="text-right text-white/55">{line.quantity}</span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-                <OfferList title="Prerequisites" items={offer.prerequisites} />
-                <OfferList title="Scoped separately" items={offer.boundaries} />
-              </div>
+                ) : null}
 
-              <section className="mt-8 border-t border-white/10 pt-6" aria-labelledby="fulfillment-preview-heading">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-de-accent-ink">Step 3 preview</p>
-                <h3 id="fulfillment-preview-heading" className="mt-2 text-xl font-semibold text-white">Delivery & setup</h3>
-                <div className="mt-5 grid gap-4 md:grid-cols-3">
-                  <div className="rounded-xl border border-white/10 p-4">
-                    <Truck className="h-5 w-5 text-de-accent-ink" aria-hidden="true" />
-                    <p className="mt-3 text-sm font-semibold text-white">Shipping / provisioning</p>
-                    <p className="mt-2 text-xs leading-relaxed text-white/55">{packageView.shipmentCopy}</p>
-                  </div>
-                  <div className="rounded-xl border border-white/10 p-4">
-                    <Wrench className="h-5 w-5 text-de-accent-ink" aria-hidden="true" />
-                    <p className="mt-3 text-sm font-semibold text-white">Technician</p>
-                    <p className="mt-2 text-xs leading-relaxed text-white/55">{packageView.technicianCopy}</p>
-                  </div>
-                  <div className="rounded-xl border border-white/10 p-4">
-                    <PackageCheck className="h-5 w-5 text-de-accent-ink" aria-hidden="true" />
-                    <p className="mt-3 text-sm font-semibold text-white">Remote support</p>
-                    <p className="mt-2 text-xs leading-relaxed text-white/55">{packageView.remoteSupportCopy}</p>
-                  </div>
+                <div className="mt-8" data-testid="family-profile">
+                  {profileOpen ? (
+                    <SolutionProfileForm
+                      environment={environment}
+                      onChange={setEnvironmentField}
+                      headingLevel={2}
+                      collapsible
+                      expandKey={profileExpandKey}
+                    />
+                  ) : (
+                    <ProfileLine environment={environment} onEdit={openProfile} />
+                  )}
                 </div>
-              </section>
-            </article>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-white/15 bg-[#121212] p-7 text-white/65">
-              Choose Standalone, Co-Managed, or Help me choose. If you are unsure, DE can recommend the relationship after reviewing your profile and business need.
-            </div>
-          )}
+              </header>
 
-          <section className="mt-8" aria-label="Solution actions">
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Button variant="brand" className="h-11" disabled={!delivery} data-testid="continue-building" onClick={addAndReview}>
-                Add & review package
-              </Button>
-              <Button type="button" variant="outline" className="h-11 border-white/20 text-white hover:bg-white/10" onClick={askAbout} data-testid="ask-de-solution">
-                Ask DE
-              </Button>
+              <StoreChapter id="compare" heading={COMPARE_HEADING} testId="compare-chapter">
+                <div className="mt-8">
+                  <RelationshipCompare
+                    family={family}
+                    environment={environment}
+                    sized={sized}
+                    suggestion={suggestion}
+                    current={draft.deliveryPreference}
+                  />
+                </div>
+                {suggestion ? null : (
+                  <p className="d2-small d2-ink-soft d2-measure mt-6" data-testid="no-suggestion-line">
+                    {NO_SUGGESTION_LINE}
+                  </p>
+                )}
+              </StoreChapter>
+
+              <StoreChapter
+                id="delivery"
+                n="05"
+                eyebrow="Delivery & Setup"
+                srText={STORE_STEPS[4].sr}
+                heading={DELIVERY_HEADING}
+                testId="delivery-chapter"
+              >
+                <p className="d2-body d2-ink d2-measure mt-4">{DELIVERY_RULE}</p>
+                <ol className="d2-rows d2-measure mt-6" data-testid="delivery-modes">
+                  {installModes.map((mode, index) => {
+                    const detail = installModeDetail(mode, standaloneView.shipmentMode);
+                    return (
+                      <li key={mode} className="flex gap-4" data-testid={`delivery-mode-${index + 1}`}>
+                        <span className="d2-mono d2-ink-soft pt-1" aria-hidden="true">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="d2-body d2-ink-strong font-semibold inline-flex flex-wrap items-baseline gap-3">
+                            <span>{detail.label}</span>
+                            {index === 0 ? <span className="d2-micro d2-accent-ink">{FIRST_CHOICE_TAG}</span> : null}
+                          </p>
+                          <p className="d2-small d2-ink mt-1">{detail.detail}</p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+                <p className="d2-small d2-ink d2-measure mt-6" data-testid="shipment-line">
+                  {standaloneView.shipmentCopy}
+                </p>
+                <p className="d2-small d2-ink d2-measure mt-2" data-testid="technician-line">
+                  {standaloneView.technicianCopy}
+                </p>
+              </StoreChapter>
+
+              <StoreChapter id="coverage" heading={COVERAGE_HEADING} testId="coverage-chapter">
+                <div className="mt-6">
+                  <CoverageChips familyId={family.id} />
+                </div>
+              </StoreChapter>
+
+              <div className="d2-chapter" data-testid="family-actions">
+                <div className="flex flex-wrap items-center gap-3">
+                  {included ? (
+                    <StoreAction variant="primary" href={SOLUTION_WORKSPACE_PATH} testId="continue-building">
+                      {PRIMARY_ADDED}
+                    </StoreAction>
+                  ) : (
+                    <StoreAction variant="primary" onClick={addAndReview} testId="continue-building">
+                      {PRIMARY_ADD}
+                    </StoreAction>
+                  )}
+                  {included ? (
+                    <StoreAction variant="secondary" onClick={removeNeed} testId="remove-need">
+                      {SECONDARY_REMOVE}
+                    </StoreAction>
+                  ) : (
+                    <StoreAction variant="secondary" onClick={addAndStay} testId="add-keep-browsing">
+                      {SECONDARY_ADD}
+                    </StoreAction>
+                  )}
+                </div>
+                {undoPending && !included ? (
+                  <div className="mt-4">
+                    <UndoRow text={`${family.label} removed from Your Solution`} onUndo={undoRemove} testId="undo-remove" />
+                  </div>
+                ) : null}
+                <p className="d2-small d2-ink d2-measure mt-6" data-testid="honesty-line">
+                  {HONESTY_LINE}
+                </p>
+                <p className="d2-small d2-ink-soft mt-4" data-testid="handle-our-it-link">
+                  Prefer DE to run all of IT?{" "}
+                  <Link href={HANDLE_OUR_IT_PATH} className="d2-link">
+                    See Handle Our IT.
+                  </Link>
+                </p>
+                {wide ? null : <HelpRow seed={helpSeed} askLabel="Ask DE about this need" className="mt-8" />}
+              </div>
             </div>
-            <p className="mt-4 flex items-start gap-2 text-sm text-white/50">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-de-accent-ink" />
-              Standalone does not enroll you in managed IT. Co-managed means DE and your team share an approved responsibility model.
-            </p>
-          </section>
+
+            <SolutionRail {...chrome} />
+          </div>
         </main>
-        <PublicSolutionCart />
-        <DigeratiEnhancedFooterSection />
-      </div>
-    </div>
+        <SolutionBar {...chrome} />
+        <DigeratiEnhancedFooterSection variant="store" />
+    </Door2Frame>
   );
 }
