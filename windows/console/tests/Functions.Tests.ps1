@@ -811,3 +811,83 @@ Describe 'Leaving Microsoft and backing up BitLocker before JumpCloud owns the d
     }
 }
 
+Describe 'What the real Alamo laptop showed' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1')
+        $global:DETest = @{ Dir = Initialize-TestConsole; Alamo = Get-DEClientProfile -Id 'alamo' }
+        $null = Initialize-DEWorkflow -ClientProfile $global:DETest.Alamo -Mode 'takeover'
+    }
+    It 'run from jrpetro, the end user is still found: the Entra profile, named by its account' {
+        $snap = @{ identity = @{ interactiveUser = 'DE-ALAMO-LAPTOP\jrpetro'; currentPrincipal = 'DE-ALAMO-LAPTOP\jrpetro'; profiles = @(
+                    @{ path = 'C:\Users\jrpetro'; sid = 'S-1-5-21-100-200-300-1001'; account = 'DE-ALAMO-LAPTOP\jrpetro'; lastUse = '2026-09-29T01:00:00' },
+                    @{ path = 'C:\Users\Owner'; sid = 'S-1-5-21-100-200-300-1000'; account = 'DE-ALAMO-LAPTOP\Owner'; lastUse = '2026-09-29T00:59:00' },
+                    @{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-12-1-11-22-33-44'; account = 'AzureAD\SuzetteThompson'; lastUse = '2026-09-28T17:00:00' }) } }
+        $eu = Resolve-DEEndUser -Snapshot $snap -Technician 'jrpetro'
+        $eu.endUser | Should -Be 'AzureAD\SuzetteThompson'; $eu.endUserIsEntraPrincipal | Should -Be $true
+        $snap.identity.profiles[2].Remove('account')
+        (Resolve-DEEndUser -Snapshot $snap -Technician 'jrpetro').endUser | Should -Be 'AzureAD\SuzetteThompson'   # no account name: the folder names it
+    }
+    It 'an unmapped end user never reads green while an Entra profile waits to be migrated' {
+        Set-DEContext -Values @{ sourcePrincipal = $null }
+        Mock -ModuleName DE.Identity Get-DEIdentityState { @{ joinType = 'entra-joined'; interactiveUser = 'PC\jrpetro'; localUsers = @(@{ name = 'jrpetro'; sid = 'S-1-5-21-100-200-300-1001' }); profiles = @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-12-1-11-22-33-44' }) } }
+        Mock -ModuleName DE.Identity Get-DEOneDriveState { @{ businessAccounts = @(); running = $false; classification = 'dormant-or-unconfigured' } }
+        $g = Test-DEGate -Id 'gate.source-user-signed-out' -Refresh; $g.Status | Should -Be 'BLOCKED'; $g.Detail | Should -Match 'not mapped'
+        $o = Test-DEOneDriveGate; $o.Status | Should -Be 'WARN'; $o.Detail | Should -Match 'not checked'
+        Mock -ModuleName DE.Identity Get-DEIdentityState { @{ joinType = 'local-workgroup'; localUsers = @(); profiles = @() } }
+        (Test-DEGate -Id 'gate.source-user-signed-out' -Refresh).Status | Should -Be 'PASS'   # nothing to migrate
+    }
+    It 'pre-migration checks refuse what ADMU refuses: a long name, a JumpCloud user bound too early, an unknown JumpCloud user' {
+        Mock -ModuleName DE.Identity Get-DEIdentityState { @{ joinType = 'entra-joined'; localUsers = @(); profiles = @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-12-1-11-22-33-44' }) } }
+        Mock -ModuleName DE.Identity Test-DEGate { [pscustomobject]@{ Id = $Id; Status = 'PASS'; Detail = 'ok' } }
+        Mock -ModuleName DE.Identity Test-DESecret { $true }
+        Mock -ModuleName DE.Identity Test-DEJumpCloudUserMapping { @{ localAccount = $null; jumpcloud = @{ bound = $true; userExists = $true; userState = 'ACTIVATED' } } }
+        $p = Test-DEMigrationPreconditions -SourcePrincipal 'AzureAD\SuzetteThompson' -LocalUserName 'sthompson'
+        $p.ok | Should -Be $false; ($p.issues -join ' ') | Should -Match 'already bound to this device'
+        Mock -ModuleName DE.Identity Test-DEJumpCloudUserMapping { @{ localAccount = $null; jumpcloud = @{ bound = $false; userExists = $false } } }
+        ((Test-DEMigrationPreconditions -SourcePrincipal 'AzureAD\SuzetteThompson' -LocalUserName 'sthompson').issues -join ' ') | Should -Match 'no user'
+        ((Test-DEMigrationPreconditions -SourcePrincipal 'AzureAD\SuzetteThompson' -LocalUserName 'suzette.thompson.alamo').issues -join ' ') | Should -Match '20 characters'
+        Mock -ModuleName DE.Identity Test-DEJumpCloudUserMapping { @{ localAccount = $null; jumpcloud = @{ bound = $false; userExists = $true; userState = 'STAGED' } } }
+        ((Test-DEMigrationPreconditions -SourcePrincipal 'AzureAD\SuzetteThompson' -LocalUserName 'sthompson').warnings -join ' ') | Should -Match 'STAGED'
+    }
+}
+
+Describe 'The job runbook (what to do, in what order, and why it is blocked)' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1')
+        $global:DETest = @{ Dir = Initialize-TestConsole; Alamo = Get-DEClientProfile -Id 'alamo' }
+    }
+    It 'orders a takeover into stages the way a technician works it, every step placed exactly once' {
+        $ids = @(Initialize-DEWorkflow -ClientProfile $global:DETest.Alamo -Mode 'takeover')
+        $rb = Get-DERunbook -Mode 'takeover'
+        @($rb.stages | ForEach-Object { $_.id }) -join ',' | Should -Be 'check,protect,migrate,leave,jumpcloud,security,updates,apps,configure,finish'
+        $rb.total | Should -Be @(Get-DEActions -Mode 'takeover').Count
+        @($rb.stages | ForEach-Object { $_.steps } | ForEach-Object { $_.id } | Select-Object -Unique).Count | Should -Be $rb.total
+        $protect = @(($rb.stages | Where-Object { $_.id -eq 'protect' }).steps | ForEach-Object { $_.id })
+        [array]::IndexOf($protect, 'jumpcloud.agent') | Should -BeLessThan ([array]::IndexOf($protect, 'identity.bitlocker-backup'))   # the agent escrows the key
+        $order = @($rb.stages | ForEach-Object { $_.steps } | ForEach-Object { $_.id })
+        [array]::IndexOf($order, 'identity.migrate') | Should -BeLessThan ([array]::IndexOf($order, 'identity.entra-leave'))
+        [array]::IndexOf($order, 'identity.entra-leave') | Should -BeLessThan ([array]::IndexOf($order, 'jumpcloud.bind-user'))
+        (@($rb.stages | ForEach-Object { $_.steps }) | Where-Object { $_.id -eq 'identity.migrate' }).why | Should -Match 'ADMU'
+    }
+    It 'names the current step and says in plain words what blocks it' {
+        $null = Initialize-DEWorkflow -ClientProfile $global:DETest.Alamo -Mode 'takeover'
+        Set-DEContext -Values @{ sourcePrincipal = $null; localUserName = $null }
+        $rb = Get-DERunbook -Mode 'takeover'
+        $rb.current.id | Should -Be 'net.connectivity'
+        ($rb.stages | Where-Object { $_.id -eq 'check' }).state | Should -Be 'current'
+        $m = @($rb.stages | ForEach-Object { $_.steps }) | Where-Object { $_.id -eq 'identity.migrate' }
+        $m.needsMapping | Should -Be $true; $m.secretsMissing | Should -Contain 'MIGRATION_TEMP_PASSWORD'; $m.ready | Should -Be $false
+        @($m.blockers | ForEach-Object { $_.title }) | Should -Contain 'DE break-glass administrator verified'
+        @($m.blockers | Where-Object { $_.unblock }).Count | Should -BeGreaterThan 0
+        # finishing the first stage moves the job on
+        foreach ($sid in @(($rb.stages | Where-Object { $_.id -eq 'check' }).steps | ForEach-Object { $_.id })) { Add-DEEvidence -Step $sid -Module 'test' -Before 'x' -ActionTaken 'checked' -Result 'PASS' -Verification 'ok' | Out-Null }
+        $rb2 = Get-DERunbook -Mode 'takeover'
+        ($rb2.stages | Where-Object { $_.id -eq 'check' }).state | Should -Be 'done'
+        $rb2.current.stage | Should -Be 'protect'
+    }
+    It 'deprovision gets its own stage' {
+        $null = Initialize-DEWorkflow -ClientProfile $global:DETest.Alamo -Mode 'deprovision'
+        @((Get-DERunbook -Mode 'deprovision').stages | ForEach-Object { $_.id }) | Should -Contain 'deprovision'
+    }
+}
+

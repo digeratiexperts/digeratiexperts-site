@@ -221,4 +221,55 @@ function Complete-DEBackgroundJob {
     return @{ ok = (-not $failure); result = $result; failure = $failure; warnings = $warnings }
 }
 
-Export-ModuleMember -Function Start-DEBackgroundJob, Complete-DEBackgroundJob, Get-DEModes, Import-DEConsoleModules, Initialize-DEWorkflow, Get-DENextAction, Invoke-DEAudit, Invoke-DEPhase, Resume-DEWorkflow, Register-DEDeprovisionActions, Get-DEOtherLocalAdmins
+function Get-DERunbookCatalog { return (Get-Content -LiteralPath (Join-Path (Get-DEConsole).Root 'catalog\runbook.json') -Raw -Encoding UTF8 | ConvertFrom-Json) }
+
+function Get-DERunbook {
+    <#
+    The plan as a job: stages in the order a technician works them (catalog\runbook.json), each step with its state,
+    what blocks it (gate titles and how to unlock them, missing secrets, a missing user mapping), what to do by hand,
+    why it matters, and the one current step: the first step, in job order, that is not done. Reads evidence and
+    cached gate results only; it never runs a detector.
+    #>
+    param([string]$Mode = 'takeover')
+    $cat = Get-DERunbookCatalog
+    $latest = @{}; foreach ($e in Get-DEEvidence) { $latest[$e.step] = $e }
+    $actions = @(Get-DEActions -Mode $Mode | Where-Object { $_ })
+    $doneStates = @('PASS', 'NO CHANGE', 'EXCEPTION', 'SKIPPED', 'READY')
+    $ctx = Get-DEContext
+    $prop = { param($obj, $name) if ($null -eq $obj) { return $null }; $pp = $obj.PSObject.Properties[$name]; if ($pp) { $pp.Value } else { $null } }
+    $placed = @{}; $stages = @(); $n = 0
+    $defs = @($cat.stages) + @([pscustomobject]@{ id = 'other'; title = 'Other checks'; purpose = 'Steps in this plan without a stage of their own.'; steps = @('.') })
+    foreach ($sd in $defs) {
+        $steps = @()
+        foreach ($pat in @($sd.steps)) {
+            foreach ($a in @($actions | Where-Object { -not $placed.ContainsKey($_.Id) -and $_.Id -match $pat } | Sort-Object Phase, Id)) {
+                $placed[$a.Id] = $true
+                $e = $latest[$a.Id]
+                $state = $(if ($e) { "$($e.result)" } else { 'NOT RUN' })
+                $gates = Test-DEGatesSatisfied -Ids $a.Gates
+                $blockers = @(@($gates.Failing) | Where-Object { $_ } | ForEach-Object { [pscustomobject]@{ id = $_.Id; title = $_.Title; status = $_.Status; detail = $_.Detail; unblock = $_.Unblock } })
+                $missing = @($a.RequiresSecrets | Where-Object { $_ -and -not (Test-DESecret -Name $_) })
+                $inputs = @(& $prop $cat.inputs $a.Id | Where-Object { $_ })
+                $needsMapping = ($inputs -contains 'mapping') -and (-not $ctx['localUserName'] -or ($a.Id -like 'identity.*' -and -not $ctx['sourcePrincipal']))
+                $steps += [pscustomobject]@{
+                    id = $a.Id; title = $a.Title; module = $a.Module; stage = $sd.id; state = $state
+                    detail = $(if ($e) { "$($e.verification)" } else { "$($a.Description)" }); done = ($state -in $doneStates)
+                    runnable = [bool]$a.Apply; manual = $a.ManualAction; destructive = [bool]$a.Destructive; requiresReboot = [bool]$a.RequiresReboot
+                    blockers = $blockers; secretsMissing = $missing; inputs = $inputs; needsMapping = [bool]$needsMapping
+                    why = "$(& $prop $cat.why $a.Id)"; ready = (-not $blockers.Count -and -not $missing.Count -and -not $needsMapping)
+                }
+            }
+        }
+        if (-not $steps.Count) { continue }
+        $n++
+        $doneCount = @($steps | Where-Object { $_.done }).Count
+        $stages += [pscustomobject]@{ id = $sd.id; number = $n; title = $sd.title; purpose = $sd.purpose; steps = $steps; done = $doneCount; total = $steps.Count; complete = ($doneCount -eq $steps.Count); state = '' }
+    }
+    $current = $null
+    foreach ($st in $stages) { $current = @($st.steps | Where-Object { -not $_.done }) | Select-Object -First 1; if ($current) { break } }
+    foreach ($st in $stages) { $st.state = $(if ($st.complete) { 'done' } elseif ($current -and $current.stage -eq $st.id) { 'current' } else { 'todo' }) }
+    $all = @($stages | ForEach-Object { $_.steps })
+    return [pscustomobject]@{ mode = $Mode; stages = $stages; current = $current; total = $all.Count; done = @($all | Where-Object { $_.done }).Count; notRun = @($all | Where-Object { $_.state -eq 'NOT RUN' }).Count; complete = (-not $current) }
+}
+
+Export-ModuleMember -Function Get-DERunbook, Get-DERunbookCatalog, Start-DEBackgroundJob, Complete-DEBackgroundJob, Get-DEModes, Import-DEConsoleModules, Initialize-DEWorkflow, Get-DENextAction, Invoke-DEAudit, Invoke-DEPhase, Resume-DEWorkflow, Register-DEDeprovisionActions, Get-DEOtherLocalAdmins
