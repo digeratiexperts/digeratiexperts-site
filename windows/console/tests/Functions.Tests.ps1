@@ -445,6 +445,7 @@ Describe 'Configuration: baseline, browser, branding, shortcuts' {
         Get-DEState -Path 'branding.previous' | Should -BeNullOrEmpty
         Undo-DEBranding -WhatIf | Should -Be 'planned'
         $null = Get-DEBrandingState
+        (Get-DEBrandingState).Keys | Should -Contain 'policyLockScreen'
     }
     It 'the hostname follows the client pattern and fits the 15-character limit' {
         Mock -ModuleName DE.Configure Get-DEDeviceInventory { @{ serial = 'ABCD-7XK2Q14' } }

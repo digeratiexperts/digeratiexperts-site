@@ -49,6 +49,7 @@ function New-DEClientProfileTemplate {
         browser = @{ default = 'edge'; policyProfile = 'de-browser-policy'; homepage = 'https://portal.digeratiexperts.com/portal/login'; startupPages = @(); managedBookmarksFromVendors = $false; extraBookmarks = @() }
         apps = @{ required = @('m365-apps', 'teams', 'onedrive', 'edge', 'chrome', 'pdf-reader'); optional = @(); lineOfBusiness = @(); remove = @() }
         m365 = @{ tenantDomain = ''; licenseSku = ''; verifyUpn = $true }
+        hub = @{ accountId = '' }                            # Intelligence Hub canonical account number; no secrets
         branding = @{ clientLogo = ''; wallpaperStyle = 'dual-logo'; accent = '#D3126A'; supportText = 'Support: support@digeratiexperts.com'; hostnamePattern = '{CLIENT}-{ROLE}-{SERIAL4}'; shortcuts = @('client-portal', 'support-ticket', 'remote-support') }
         network = @{ wifiProfiles = @(); printers = @(); shares = @(); certificates = @(); vpn = @(); sase = @{ provider = 'timus'; required = $false } }
         backup = @{ provider = 'msp360'; required = $true }
@@ -185,6 +186,7 @@ function New-DEProvisioningContext {
         endUser = $EndUser; endUserEmail = $EndUserEmail; endUserSource = $eu.endUserSource; sourcePrincipal = $(if ($eu.endUserIsEntraPrincipal) { $eu.endUser } elseif ($EndUser -match '\\') { $EndUser } else { $null })
         localUserName = $LocalUserName; jumpcloudUser = $JumpCloudUser
         device = @{ hostname = (Get-DEHashPath -Object $Snapshot -Path 'device.hostname'); serial = (Get-DEHashPath -Object $Snapshot -Path 'device.serial'); model = (Get-DEHashPath -Object $Snapshot -Path 'device.model'); role = $DeviceRole; assetTag = $AssetTag; orderNumber = $OrderNumber; warrantyEnd = $WarrantyEnd; desiredHostname = $DesiredHostname }
+        hubAccountId = $(if ($client) { "$(Get-DEHashPath -Object $client -Path 'hub.accountId')" } else { '' })
         started = (Get-Date).ToString('o')
     }
     Set-DEContext -Values $ctx
