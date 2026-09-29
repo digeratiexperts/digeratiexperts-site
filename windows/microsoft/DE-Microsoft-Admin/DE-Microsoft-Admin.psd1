@@ -1,6 +1,6 @@
 ﻿@{
     RootModule        = 'DE-Microsoft-Admin.psm1'
-    ModuleVersion     = '0.4.0'
+    ModuleVersion     = '0.4.1'
     GUID              = '4fbb9cc8-52a6-4c83-93fb-6c9d0f7e2f6c'
     Author            = 'Digerati Experts'
     CompanyName       = 'Digerati Experts'

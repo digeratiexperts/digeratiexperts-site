@@ -1,4 +1,4 @@
-# DE Microsoft Admin (v0.4)
+# DE Microsoft Admin (v0.4.1)
 
 A standalone PowerShell module that Digerati Experts uses to administer Microsoft 365, Entra ID, Exchange
 Online, Intune, Windows Autopilot and Azure.
@@ -8,6 +8,14 @@ Online, Intune, Windows Autopilot and Azure.
 - The Intelligence Hub can run it through signed jobs.
 
 It works on Windows PowerShell 5.1 and PowerShell 7.
+
+**0.4.1:**
+- `Get-DEMailClientInventory -AllProfiles` scans every Windows account on a PC. Another account's Credential
+  Manager is reported as not checked, never as clean.
+- `Import-DEMailClientInventory` records a scan made on a client PC onto the project on the admin PC.
+- `Get-DEMigrationNextStep` gives the next step and its command, worked out from what was recorded.
+- `Export-DEMigrationRecord` writes the record so the Intelligence Hub accepts it: checks as a list, `multiFactor`,
+  and `null` rather than `{}` on Windows PowerShell 5.1.
 
 ## Rules it keeps
 
