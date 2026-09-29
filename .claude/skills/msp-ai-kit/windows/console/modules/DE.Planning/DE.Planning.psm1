@@ -18,7 +18,7 @@ $script:TierKeys = @('IT', 'Office', 'Business', 'Enterprise')
 function Get-DEPlanCatalog {
     $path = Join-Path (Get-DEConsole).Root 'catalog\bundles.json'
     if (-not (Test-Path -LiteralPath $path)) { throw "DE Tech Tool bundle catalog missing: $path" }
-    return (Get-Content -LiteralPath $path -Raw | ConvertFrom-Json)
+    return (Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json)
 }
 
 function Get-DEProActiveBundle {
@@ -250,7 +250,7 @@ function Import-DEOrderManifest {
     model) was ordered. DE Tech Tool refuses to provision a different machine against it.
     #>
     param([Parameter(Mandatory = $true)][string]$Path)
-    $o = ConvertTo-DEHashtable (Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json)
+    $o = ConvertTo-DEHashtable (Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json)
     if ("$($o['schema'])" -ne 'de.techconsole.order/v1') { throw "not a DE order manifest (schema '$($o['schema'])')" }
     $hits = @(Test-DEProfileHasSecrets -Profile $o)
     if ($hits.Count) { throw "order manifest contains secret-looking fields ($($hits -join ', ')); secrets are entered at run time, never shipped in an order" }

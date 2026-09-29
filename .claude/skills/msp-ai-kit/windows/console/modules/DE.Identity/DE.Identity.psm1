@@ -29,7 +29,7 @@ function Get-DEBreakGlassState {
     $u = $null; $isAdmin = $false; $hidden = $null
     if ($script:IsWindowsHost) {
         try { $u = Get-LocalUser -Name $Name -ErrorAction Stop } catch { $u = $null }
-        if ($u) { try { $isAdmin = [bool](Get-LocalGroupMember -SID 'S-1-5-32-544' -ErrorAction Stop | Where-Object { $_ -and $_.SID.Value -eq $u.SID.Value }) } catch { $r = Invoke-DENative -FilePath 'net.exe' -Arguments @('localgroup', 'Administrators'); $isAdmin = [bool]($r.Output | Where-Object { $_ -and $_.Trim() -ieq $Name }) } }
+        if ($u) { try { $isAdmin = [bool](Get-LocalGroupMember -SID 'S-1-5-32-544' -ErrorAction Stop | Where-Object { $_ -and $_.SID.Value -eq $u.SID.Value }) } catch { $r = Invoke-DENative -FilePath 'net.exe' -Arguments @('localgroup', (Get-DEAdministratorsGroupName)); $isAdmin = [bool]($r.Output | Where-Object { $_ -and $_.Trim() -ieq $Name }) } }
         $hidden = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList' -Name $Name)
     }
     $verified = Get-DEState -Path 'identity.breakGlass.verifiedAt'
@@ -180,8 +180,9 @@ function Clear-DEHelloContainer {
     $ngc = Join-Path $env:SystemRoot 'ServiceProfiles\LocalService\AppData\Local\Microsoft\Ngc'
     if (-not (Test-Path -LiteralPath $ngc)) { return 'no NGC container' }
     if ($PSCmdlet.ShouldProcess($ngc, 'take ownership and remove NGC container')) {
-        $null = Invoke-DENative -FilePath 'takeown.exe' -Arguments @('/f', $ngc, '/r', '/d', 'y')
-        $null = Invoke-DENative -FilePath 'icacls.exe' -Arguments @($ngc, '/grant', 'Administrators:F', '/t')
+        # by SID: 'takeown /d y' needs the localized Yes letter and the group name is translated on non-English Windows
+        $null = Invoke-DENative -FilePath 'icacls.exe' -Arguments @($ngc, '/setowner', '*S-1-5-32-544', '/t', '/c')
+        $null = Invoke-DENative -FilePath 'icacls.exe' -Arguments @($ngc, '/grant', '*S-1-5-32-544:F', '/t', '/c')
         Remove-Item -LiteralPath $ngc -Recurse -Force
         return 'NGC container removed; users re-enrol Hello after first sign-in'
     }

@@ -108,6 +108,8 @@ Describe 'Boot rescue' {
         $v.Count | Should -Be 2
         $v[0].drive | Should -Be 'C:'; $v[0].locked | Should -Be $true; $v[0].label | Should -Be 'OSDisk'
         $v[1].encrypted | Should -Be $false; $v[1].percent | Should -Be 0
+        $txt2 = "Volume C: [OSDisk]`n    Lock Status:          Unlocked`n    Conversion Status:    Fully Encrypted`n`nVolume \\?\Volume{1b2c}\ [Recovery]`n    Conversion Status:    Fully Decrypted`n    Lock Status:          Unlocked"
+        $w = @(ConvertFrom-DEManageBdeStatus -Text $txt2); $w.Count | Should -Be 1; $w[0].encrypted | Should -Be $true
     }
     It 'unlocks with the typed key, never logs it, and does not try a mistyped one' {
         Mock -ModuleName DE.Rescue Invoke-DERescueNative { [pscustomobject]@{ ExitCode = 0; Output = @('ok'); Text = 'ok' } }
@@ -159,10 +161,14 @@ Describe 'Boot rescue' {
     }
     It 'boot repair and update revert only run when confirmed' {
         Mock -ModuleName DE.Rescue Invoke-DERescueNative { [pscustomobject]@{ ExitCode = 0; Output = @('done'); Text = 'done' } }
+        Mock -ModuleName DE.Rescue Get-DERescueSystemPartition { [pscustomobject]@{ partition = $null; letter = 'S:'; firmware = 'UEFI'; disk = 0 } }
         (Invoke-DERescueBootRepair -WindowsDrive 'D:' -Mode bcdboot -WhatIf).result | Should -Be 'SKIPPED'
         Assert-MockCalled -ModuleName DE.Rescue Invoke-DERescueNative -Scope It -Times 0
         (Invoke-DERescueBootRepair -WindowsDrive 'D:' -Mode revert-pending -Confirm:$false).result | Should -Be 'PASS'
         Assert-MockCalled -ModuleName DE.Rescue Invoke-DERescueNative -Scope It -Times 1 -ParameterFilter { $FilePath -eq 'dism.exe' -and $Arguments -contains '/RevertPendingActions' }
+        # bcdboot targets the Windows disk's own system partition, never the firmware default (the rescue USB)
+        (Invoke-DERescueBootRepair -WindowsDrive 'D:' -Mode bcdboot -Confirm:$false).result | Should -Be 'PASS'
+        Assert-MockCalled -ModuleName DE.Rescue Invoke-DERescueNative -Scope It -Times 1 -ParameterFilter { $FilePath -eq 'bcdboot.exe' -and ($Arguments -join ' ') -eq 'D:\Windows /s S: /f UEFI' }
     }
     It 'the handoff lands on the USB and the Windows volume, validates, and carries recommendations' {
         $h = New-DEHandoff -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -Model 'X1' -Technician 'jrpetro' -Version '1.7.0'

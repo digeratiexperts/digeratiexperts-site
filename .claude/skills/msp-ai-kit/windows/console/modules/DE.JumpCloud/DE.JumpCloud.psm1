@@ -17,6 +17,7 @@
 # (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
 Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'   # Windows PowerShell 5.1 downloads run many times slower with the progress bar
 $script:JcApi = 'https://console.jumpcloud.com/api'
 
 function Get-DEJcProp { param($Object, [string]$Name) if ($null -eq $Object) { return $null }; if ($Object -is [System.Collections.IDictionary]) { if ($Object.Contains($Name)) { return $Object[$Name] }; return $null }; $p = $Object.PSObject.Properties[$Name]; if ($p) { return $p.Value }; return $null }
@@ -37,8 +38,9 @@ function Invoke-DEJumpCloudApi {
     $json = $null; if ($null -ne $Body) { $json = ($Body | ConvertTo-Json -Depth 8 -Compress) }
     Write-DELog -Level DEBUG -Message "jumpcloud $Method $uri"
     try {
-        if ($json) { return Invoke-RestMethod -Method $Method -Uri $uri -Headers $headers -Body $json -TimeoutSec 60 }
-        return Invoke-RestMethod -Method $Method -Uri $uri -Headers $headers -TimeoutSec 60
+        # UTF-8 bytes: Windows PowerShell 5.1 sends a string body as ISO-8859-1, mangling names like "José"
+        if ($json) { return Invoke-RestMethod -Method $Method -Uri $uri -Headers $headers -Body ((New-Object Text.UTF8Encoding $false).GetBytes($json)) -ContentType 'application/json; charset=utf-8' -TimeoutSec 60 -UseBasicParsing }
+        return Invoke-RestMethod -Method $Method -Uri $uri -Headers $headers -TimeoutSec 60 -UseBasicParsing
     } finally { $key = $null }
 }
 

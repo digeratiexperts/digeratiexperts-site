@@ -51,7 +51,7 @@ try {
     Write-Step "Package: $ZipPath"
 
     $hash = (Get-FileHash -LiteralPath $ZipPath -Algorithm SHA256).Hash
-    if (-not $Sha256) { $side = "$ZipPath.sha256"; if (Test-Path -LiteralPath $side) { $Sha256 = ((Get-Content -LiteralPath $side -Raw) -split '\s+')[0] } }
+    if (-not $Sha256) { $side = "$ZipPath.sha256"; if (Test-Path -LiteralPath $side) { $Sha256 = ((Get-Content -LiteralPath $side -Raw -Encoding UTF8) -split '\s+')[0] } }
     if ($Sha256) {
         if ($hash -ne $Sha256.ToUpperInvariant()) { throw "sha256 mismatch: file is $hash, expected $($Sha256.ToUpperInvariant()). Re-download the package." }
         Write-Step "sha256 verified ($hash)" 'Green'
@@ -86,7 +86,7 @@ try {
     if ($env:OS -eq 'Windows_NT') { Get-ChildItem -LiteralPath $InstallDir -Recurse -File | Unblock-File }   # clears the downloaded-from-internet mark
 
     $versionFile = Join-Path $InstallDir 'windows\console\VERSION'
-    $version = $(if (Test-Path -LiteralPath $versionFile) { (Get-Content -LiteralPath $versionFile -Raw).Trim() } else { 'unknown' })
+    $version = $(if (Test-Path -LiteralPath $versionFile) { (Get-Content -LiteralPath $versionFile -Raw -Encoding UTF8).Trim() } else { 'unknown' })
     $start = Join-Path (Join-Path $InstallDir 'windows') $launcherName
     Write-Step "Installed DE Tech Tool v$version to $InstallDir" 'Green'
     Write-Step "Start it any time with: $start"

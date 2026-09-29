@@ -47,7 +47,7 @@ function Get-ShippedFile {
 if ($Verify) {
     $manifest = Join-Path $Root 'integrity.json'
     if (-not (Test-Path -LiteralPath $manifest)) { Write-Host 'integrity.json not found; package was not signed.'; exit 2 }
-    $m = Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json
+    $m = Get-Content -LiteralPath $manifest -Raw -Encoding UTF8 | ConvertFrom-Json
     $bad = @()
     foreach ($f in @($m.files)) {
         $full = Join-Path $Root $f.path
@@ -87,7 +87,7 @@ if (-not $SkipSigning) {
 $version = '0.0.0'
 # the manifest records the DE Tech Tool version (console\VERSION); the AI kit's kit.version is only a fallback
 $vf = Join-Path (Join-Path $Root 'console') 'VERSION'; if (-not (Test-Path -LiteralPath $vf)) { $vf = Join-Path (Split-Path -Parent $Root) 'kit.version' }
-if (Test-Path -LiteralPath $vf) { $version = (Get-Content -LiteralPath $vf -Raw).Trim() }
+if (Test-Path -LiteralPath $vf) { $version = (Get-Content -LiteralPath $vf -Raw -Encoding UTF8).Trim() }
 $entries = @(foreach ($f in Get-ShippedFile | Sort-Object FullName) {
     [ordered]@{ path = ($f.FullName.Substring($Root.Length).TrimStart('\', '/') -replace '\\', '/'); sha256 = (Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash.ToLowerInvariant(); bytes = $f.Length }
 })

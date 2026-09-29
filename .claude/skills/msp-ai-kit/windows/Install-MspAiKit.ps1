@@ -124,6 +124,7 @@ Set-StrictMode -Version 1.0
 # success. Treat such a run as -NonInteractive so every prompt takes its safe default instead.
 if (-not $NonInteractive) { try { if ([Console]::IsInputRedirected -or -not [Environment]::UserInteractive) { $NonInteractive = [switch]$true } } catch { $NonInteractive = [switch]$true } }
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'   # Windows PowerShell 5.1 downloads run many times slower with the progress bar
 if ($DryRun) { $WhatIfPreference = $true }
 
 $script:ToolName = 'msp-ai-kit loader'
@@ -598,7 +599,7 @@ function Install-UpstreamKits {
 # ------------------------------------------------------------------ version, update, cleanup, receipt upload
 function Get-KitVersionInfo {
     param([Parameter(Mandatory = $true)][string]$Root, $Config)
-    $local = $null; $vf = Join-Path $Root 'kit.version'; if (Test-Path -LiteralPath $vf) { $local = (Get-Content -LiteralPath $vf -Raw).Trim() }
+    $local = $null; $vf = Join-Path $Root 'kit.version'; if (Test-Path -LiteralPath $vf) { $local = (Get-Content -LiteralPath $vf -Raw -Encoding UTF8).Trim() }
     $remote = $null; $url = $null
     if ($Config -and $Config.PSObject.Properties['distribution'] -and $Config.distribution.PSObject.Properties['version_url']) { $url = $Config.distribution.version_url }
     if ($url -and $url -match '^https://') { try { $remote = (Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 20).Content.Trim() } catch { Write-KitLog -Level WARN -Message "version check failed: $($_.Exception.Message)" } }
@@ -672,7 +673,7 @@ function Send-Receipt {
         $headers = @{ 'Content-Type' = 'application/json' }
         if ($env:DE_RECEIPT_TOKEN) { $headers['Authorization'] = "Bearer $($env:DE_RECEIPT_TOKEN)" }
         [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-        $null = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -Body (Get-Content -LiteralPath $ReceiptPath -Raw) -TimeoutSec 30
+        $null = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -Body ([IO.File]::ReadAllBytes($ReceiptPath)) -ContentType 'application/json; charset=utf-8' -TimeoutSec 30 -UseBasicParsing
         Write-KitLog -Level PASS -Message "receipt uploaded to $url"
     } catch { Write-KitLog -Level WARN -Message "receipt upload failed: $($_.Exception.Message)" }
 }

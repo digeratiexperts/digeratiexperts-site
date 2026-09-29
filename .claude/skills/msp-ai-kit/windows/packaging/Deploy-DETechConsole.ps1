@@ -36,6 +36,7 @@ param(
 # (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
 Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'   # Windows PowerShell 5.1 downloads run many times slower with the progress bar
 $logDir = Join-Path $env:ProgramData 'DE\TechConsole\logs'; New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $log = Join-Path $logDir ("deploy-{0:yyyyMMdd-HHmmss}.log" -f (Get-Date))
 function Write-DeployLog { param([string]$Level, [string]$Message) $line = "{0:yyyy-MM-dd HH:mm:ss} [{1}] {2}" -f (Get-Date), $Level, $Message; Write-Host $line; Add-Content -LiteralPath $log -Value $line }

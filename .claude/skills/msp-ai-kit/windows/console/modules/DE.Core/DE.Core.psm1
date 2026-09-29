@@ -29,6 +29,7 @@
 # (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
 Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'   # Windows PowerShell 5.1 downloads run many times slower with the progress bar
 
 $script:DE = @{
     Root         = $null
@@ -68,7 +69,7 @@ function Initialize-DEConsole {
     )
     $script:DE.Root = (Resolve-Path -LiteralPath $Root).Path
     # The build version comes from console\VERSION so the window, logs and bundles say which copy is running.
-    $vf = Join-Path $script:DE.Root 'VERSION'; if (Test-Path -LiteralPath $vf) { $v = (Get-Content -LiteralPath $vf -Raw).Trim(); if ($v) { $script:DE.ConsoleVersion = $v } }
+    $vf = Join-Path $script:DE.Root 'VERSION'; if (Test-Path -LiteralPath $vf) { $v = (Get-Content -LiteralPath $vf -Raw -Encoding UTF8).Trim(); if ($v) { $script:DE.ConsoleVersion = $v } }
     $script:DE.Mode = $Mode
     $script:DE.DryRun = [bool]$DryRun
     $base = $DataDir
@@ -117,7 +118,7 @@ function Protect-DEText {
 function Write-DELog {
     param([Parameter(Mandatory = $true)][string]$Message, [ValidateSet('INFO', 'PASS', 'WARN', 'FAIL', 'STEP', 'PLAN', 'DEBUG')][string]$Level = 'INFO')
     $line = "{0} [{1}] {2}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Level, (Protect-DEText $Message)
-    if ($script:DE.LogFile) { try { Add-Content -LiteralPath $script:DE.LogFile -Value $line -WhatIf:$false } catch { } }
+    if ($script:DE.LogFile) { try { Add-Content -LiteralPath $script:DE.LogFile -Value $line -Encoding UTF8 -WhatIf:$false } catch { } }
     if ($script:DE.LogSink) { try { & $script:DE.LogSink $line $Level } catch { } }
     if ($Level -ne 'DEBUG') {
         $color = switch ($Level) { 'PASS' { 'Green' } 'WARN' { 'Yellow' } 'FAIL' { 'Red' } 'STEP' { 'Cyan' } 'PLAN' { 'DarkGray' } default { 'Gray' } }
@@ -212,7 +213,7 @@ function Import-DEState {
     $script:DE.State = @{}
     if (Test-Path -LiteralPath $p) {
         # a torn or foreign state file is kept aside for review, never silently replaced by an empty one
-        try { $loaded = ConvertTo-DEHashtable (Get-Content -LiteralPath $p -Raw | ConvertFrom-Json); if ($loaded -is [System.Collections.IDictionary]) { $script:DE.State = $loaded } else { throw 'state root is not an object' } }
+        try { $loaded = ConvertTo-DEHashtable (Get-Content -LiteralPath $p -Raw -Encoding UTF8 | ConvertFrom-Json); if ($loaded -is [System.Collections.IDictionary]) { $script:DE.State = $loaded } else { throw 'state root is not an object' } }
         catch { $bad = "$p.corrupt-$(Get-Date -Format 'yyyyMMdd-HHmmss')"; try { Copy-Item -LiteralPath $p -Destination $bad -Force } catch { }; Write-DELog -Level WARN -Message "state file unreadable ($($_.Exception.Message)); kept as $bad and starting clean" }
     }
     if (-not $script:DE.State.ContainsKey('created')) { $script:DE.State['created'] = (Get-Date).ToString('o') }
@@ -289,7 +290,7 @@ function Clear-DEEvidence { $script:DE.Evidence.Clear(); $script:DE.ExitCode = 0
 
 # ------------------------------------------------------------------ exceptions
 function Get-DEExceptionsPath { return (Join-Path $script:DE.Dirs.State 'exceptions.json') }
-function Import-DEExceptions { $p = Get-DEExceptionsPath; $script:DE.Exceptions = @{}; if (Test-Path -LiteralPath $p) { try { $list = Get-Content -LiteralPath $p -Raw | ConvertFrom-Json; foreach ($e in @($list | Where-Object { $null -ne $_ })) { $script:DE.Exceptions[$e.target] = $e } } catch { } }; return $script:DE.Exceptions }
+function Import-DEExceptions { $p = Get-DEExceptionsPath; $script:DE.Exceptions = @{}; if (Test-Path -LiteralPath $p) { try { $list = Get-Content -LiteralPath $p -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($e in @($list | Where-Object { $null -ne $_ })) { $script:DE.Exceptions[$e.target] = $e } } catch { } }; return $script:DE.Exceptions }
 function Save-DEExceptions { @($script:DE.Exceptions.Values) | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Get-DEExceptionsPath) -Encoding UTF8 -WhatIf:$false }
 function Add-DEException {
     <# Records an approved exception for a gate or action. The item never reads PASS; it reads EXCEPTION until the expiry. #>
@@ -588,12 +589,19 @@ function Invoke-DENative {
         if ($TimeoutSeconds -gt 0) {
             $psi = New-Object System.Diagnostics.ProcessStartInfo
             $psi.FileName = $FilePath; $psi.Arguments = ConvertTo-DEArgumentString -Arguments $Arguments
-            $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
+            $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true; $psi.RedirectStandardInput = $true
             if ($WorkingDirectory) { $psi.WorkingDirectory = $WorkingDirectory }
             $proc = [System.Diagnostics.Process]::Start($psi)
+            try { $proc.StandardInput.Close() } catch { }   # a stray prompt reads end-of-input instead of waiting forever
             $outTask = $proc.StandardOutput.ReadToEndAsync(); $errTask = $proc.StandardError.ReadToEndAsync()
-            if (-not $proc.WaitForExit($TimeoutSeconds * 1000)) { try { $proc.Kill() } catch { }; $timedOut = $true; $code = -1 } else { $proc.WaitForExit(); $code = $proc.ExitCode }
-            $text = "$(try { $outTask.Result } catch { '' })`n$(try { $errTask.Result } catch { '' })"
+            if (-not $proc.WaitForExit($TimeoutSeconds * 1000)) {
+                # the whole tree: installers leave children (bootstrappers, auto-launched apps) that Kill() alone would orphan
+                if ($script:DE.IsWindows) { try { $null = & taskkill.exe /PID $proc.Id /T /F 2>&1 } catch { } }; try { if (-not $proc.HasExited) { $proc.Kill() } } catch { }
+                $timedOut = $true; $code = -1
+            } else { $proc.WaitForExit(); $code = $proc.ExitCode }
+            # a child that inherited the pipes keeps them open after the parent exits: read what arrived, never wait unbounded
+            $null = [Threading.Tasks.Task]::WaitAll([Threading.Tasks.Task[]]@($outTask, $errTask), 10000)
+            $text = "$(if ($outTask.IsCompleted) { try { $outTask.Result } catch { '' } })`n$(if ($errTask.IsCompleted) { try { $errTask.Result } catch { '' } })"
             $output = @($text -split "`r?`n" | Where-Object { $_ -ne '' })
         } else {
             if ($WorkingDirectory) { Push-Location -LiteralPath $WorkingDirectory }
@@ -606,12 +614,49 @@ function Invoke-DENative {
 function ConvertTo-DEArgumentString {
     <#
     Joins arguments for ProcessStartInfo: an argument with a space and no quotes of its own is quoted; one that
-    already carries quotes (PROPERTY="a b", "C:\path") is passed as written, never wrapped a second time.
+    already carries quotes (PROPERTY="a b", "C:\path") is passed as written, never wrapped a second time. Trailing
+    backslashes inside added quotes are doubled (else "D:\Data\" would escape its own closing quote) and an empty
+    argument is kept as "".
     #>
     param([string[]]$Arguments = @())
-    return ((@($Arguments | Where-Object { $null -ne $_ }) | ForEach-Object { if ($_ -match '\s' -and $_ -notmatch '"') { '"' + $_ + '"' } else { $_ } }) -join ' ')
+    return ((@($Arguments | Where-Object { $null -ne $_ }) | ForEach-Object {
+                if ($_ -eq '') { '""' }
+                elseif ($_ -match '\s' -and $_ -notmatch '"') { $t = [regex]::Match($_, '\\*$').Value; '"' + $_ + $t + '"' }
+                else { $_ } }) -join ' ')
 }
-function Get-DEFileSha256 { param([Parameter(Mandatory = $true)][string]$Path) return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
+function Get-DEAdministratorsGroupName {
+    <# The local Administrators group's name in this Windows language (S-1-5-32-544), for tools that only take names. #>
+    try { return (([Security.Principal.SecurityIdentifier]'S-1-5-32-544').Translate([Security.Principal.NTAccount]).Value -split '\\')[-1] } catch { return 'Administrators' }
+}
+function Get-DELocalSecurityPolicy {
+    <# Password and lockout policy from 'secedit /export' (key names are not translated, unlike 'net accounts' output). #>
+    $f = Join-Path ([IO.Path]::GetTempPath()) ("de-secpol-{0}.inf" -f [guid]::NewGuid().ToString('N'))
+    try {
+        $r = Invoke-DENative -FilePath 'secedit.exe' -Arguments @('/export', '/cfg', $f, '/areas', 'SECURITYPOLICY', '/quiet')
+        $out = @{}; if ($r.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $f)) { return $out }
+        foreach ($line in [IO.File]::ReadAllLines($f, [Text.Encoding]::Unicode)) { if ($line -match '^\s*(\w+)\s*=\s*(-?\d+)\s*$') { $out[$Matches[1]] = [int]$Matches[2] } }
+        return $out
+    } finally { Remove-Item -LiteralPath $f -Force -ErrorAction SilentlyContinue -WhatIf:$false }
+}
+function Get-DEAuditSettingValue {
+    <# 0 none, 1 success, 2 failure, 3 both, from 'auditpol /backup' (a numeric column; /get output is translated). $null when unknown. #>
+    param([Parameter(Mandatory = $true)][string]$Subcategory)
+    $f = Join-Path ([IO.Path]::GetTempPath()) ("de-audit-{0}.csv" -f [guid]::NewGuid().ToString('N'))
+    try {
+        $r = Invoke-DENative -FilePath 'auditpol.exe' -Arguments @('/backup', "/file:$f")
+        if ($r.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $f)) { return $null }
+        $want = $Subcategory.Trim('{', '}').ToLowerInvariant()
+        foreach ($line in [IO.File]::ReadAllLines($f)) { $c = $line -split ','; if ($c.Count -ge 7 -and $c[3].Trim('{', '}', ' ').ToLowerInvariant() -eq $want) { $n = 0; if ([int]::TryParse($c[6].Trim(), [ref]$n)) { return $n } } }
+        return 0   # not listed in the backup = no auditing configured
+    } finally { Remove-Item -LiteralPath $f -Force -ErrorAction SilentlyContinue -WhatIf:$false }
+}
+function Get-DEFileSha256 {
+    <# sha256 read through a shared stream: Windows PowerShell 5.1's Get-FileHash returns nothing for a file another process holds open. #>
+    param([Parameter(Mandatory = $true)][string]$Path)
+    $fs = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, ([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete))
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return (-join ($sha.ComputeHash($fs) | ForEach-Object { $_.ToString('x2') })) } finally { $sha.Dispose(); $fs.Dispose() }
+}
 function Test-DEFileHash { param([Parameter(Mandatory = $true)][string]$Path, [Parameter(Mandatory = $true)][string]$Sha256) if (-not (Test-Path -LiteralPath $Path)) { return $false }; return ((Get-DEFileSha256 -Path $Path) -eq $Sha256.ToLowerInvariant()) }
 function Test-DEAuthenticode {
     <# Returns @{Ok; Status; Publisher; Detail}. Ok requires a Valid signature and, when -Publisher is given, a subject containing it. #>
@@ -642,7 +687,7 @@ function Test-DEConsoleIntegrity {
         $base = Split-Path -Parent $Root
         $manifestPath = Join-Path $base 'integrity.json'
         if (Test-Path -LiteralPath $manifestPath) {
-            $m = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+            $m = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
             foreach ($f in @($m.files | Where-Object { $null -ne $_ })) {
                 $full = Join-Path $base ($f.path -replace '/', [IO.Path]::DirectorySeparatorChar)
                 if (-not (Test-Path -LiteralPath $full)) { $problems += "missing: $($f.path)"; continue }
@@ -708,12 +753,13 @@ function Invoke-DEJsonPost {
     if ($token) { $headers['Authorization'] = "Bearer $token" }
     $json = (Remove-DESecretKeys -Object $Body) | ConvertTo-Json -Depth 12
     try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }
-    $resp = Invoke-RestMethod -Uri $Uri -Method Post -Headers $headers -Body $json -TimeoutSec $TimeoutSeconds
+    $headers.Remove('Content-Type')
+    $resp = Invoke-RestMethod -Uri $Uri -Method Post -Headers $headers -Body ((New-Object Text.UTF8Encoding $false).GetBytes($json)) -ContentType 'application/json; charset=utf-8' -TimeoutSec $TimeoutSeconds -UseBasicParsing
     $token = $null
     return $resp
 }
 function Get-DEJsonFile { param([Parameter(Mandatory = $true)][string]$Path) return (Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json) }
-function Set-DEJsonFile { param([Parameter(Mandatory = $true)][string]$Path, [Parameter(Mandatory = $true)]$Object, [switch]$AllowSecretsForbidden) $clean = Remove-DESecretKeys -Object $Object; New-Item -ItemType Directory -Path (Split-Path -Parent $Path) -Force -WhatIf:$false | Out-Null; $clean | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $Path -Encoding UTF8 -WhatIf:$false }
+function Set-DEJsonFile { param([Parameter(Mandatory = $true)][string]$Path, [Parameter(Mandatory = $true)]$Object, [switch]$AllowSecretsForbidden) $clean = Remove-DESecretKeys -Object $Object; New-Item -ItemType Directory -Path (Split-Path -Parent $Path) -Force -WhatIf:$false | Out-Null; [IO.File]::WriteAllText($Path, ($clean | ConvertTo-Json -Depth 12), (New-Object Text.UTF8Encoding $false)) }   # no BOM: Node, Python and RMM parsers reject one
 function Get-DERegistryValue { param([Parameter(Mandatory = $true)][string]$Path, [Parameter(Mandatory = $true)][string]$Name) try { $i = Get-ItemProperty -Path $Path -Name $Name -ErrorAction Stop; return $i.$Name } catch { return $null } }
 function Set-DERegistryValue {
     [CmdletBinding(SupportsShouldProcess = $true)]

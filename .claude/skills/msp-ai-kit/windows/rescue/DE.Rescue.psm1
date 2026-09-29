@@ -18,7 +18,7 @@ $ErrorActionPreference = 'Stop'
 $script:RescueRoot = $PSScriptRoot
 $script:ConsoleRoot = Join-Path (Split-Path -Parent $PSScriptRoot) 'console'
 Import-Module (Join-Path $script:ConsoleRoot 'modules\DE.Contracts\DE.Contracts.psm1') -Force -Global -DisableNameChecking
-$script:Version = $(try { (Get-Content -LiteralPath (Join-Path $script:ConsoleRoot 'VERSION') -Raw).Trim() } catch { '0.0.0' })
+$script:Version = $(try { (Get-Content -LiteralPath (Join-Path $script:ConsoleRoot 'VERSION') -Raw -Encoding UTF8).Trim() } catch { '0.0.0' })
 $script:Log = New-Object System.Collections.Generic.List[string]
 
 function Get-DERescueVersion { return $script:Version }
@@ -38,8 +38,11 @@ function Get-DERescueLog { return @($script:Log) }
 function Invoke-DERescueNative {
     <# The only place native tools run, so tests replace it. Returns @{ ExitCode; Output; Text }. #>
     param([Parameter(Mandatory = $true)][string]$FilePath, [string[]]$Arguments = @())
-    $out = @(& $FilePath @Arguments 2>&1 | ForEach-Object { "$_" })
-    return [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = $out; Text = ($out -join "`n") }
+    # Windows PowerShell 5.1 turns a redirected stderr line into a terminating error under 'Stop' (reg.exe writes
+    # ERROR: there), losing the exit code; so run with Continue and judge by the exit code.
+    $prev = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+    try { $out = @(& $FilePath @Arguments 2>&1 | ForEach-Object { "$_" }); $code = $LASTEXITCODE } finally { $ErrorActionPreference = $prev }
+    return [pscustomobject]@{ ExitCode = $code; Output = $out; Text = ($out -join "`n") }
 }
 
 # ------------------------------------------------------------------ BitLocker
@@ -66,6 +69,8 @@ function ConvertFrom-DEManageBdeStatus {
         $line = $raw.Trim()
         $m = [regex]::Match($line, '^Volume ([A-Z]:)\s*(\[(.*)\])?')
         if ($m.Success) { if ($cur) { $vols += [pscustomobject]$cur }; $cur = [ordered]@{ drive = $m.Groups[1].Value; label = $m.Groups[3].Value; conversion = ''; percent = $null; protection = ''; lock = ''; locked = $false; encrypted = $false }; continue }
+        # a volume without a letter (Volume \\?\Volume{GUID}\) must not overwrite the previous lettered volume's status
+        if ($line -match '^Volume ') { if ($cur) { $vols += [pscustomobject]$cur }; $cur = $null; continue }
         if (-not $cur) { continue }
         $kv = [regex]::Match($line, '^([A-Za-z ]+):\s*(.*)$'); if (-not $kv.Success) { continue }
         $val = $kv.Groups[2].Value.Trim()
@@ -114,7 +119,7 @@ function Get-DERescueVolumes {
             sizeGB = [math]::Round($v.Size / 1GB, 1); freeGB = [math]::Round($v.SizeRemaining / 1GB, 1); freeBytes = [long]$v.SizeRemaining
             bitlocker = $(if (-not $b -or -not $b.encrypted) { 'none' } elseif ($locked) { 'locked' } else { 'unlocked' })
             hasWindows = ((-not $locked) -and (Test-Path -LiteralPath "$d\Windows\System32\config\SYSTEM"))
-            isBootMedia = ($d -eq "$env:SystemDrive")
+            isBootMedia = (($d -eq "$env:SystemDrive") -or (Test-Path -LiteralPath "$d\sources\boot.wim"))   # X: and the rescue USB itself
         }
     }
     return $out
@@ -129,10 +134,46 @@ function Invoke-DEOfflineHive {
     <# Loads <Drive>\Windows\System32\config\<Hive> under HKLM\DE_RESCUE_<Hive>, runs -ScriptBlock with the key path, always unloads. #>
     param([Parameter(Mandatory = $true)][string]$Drive, [Parameter(Mandatory = $true)][ValidateSet('SOFTWARE', 'SYSTEM')][string]$Hive, [Parameter(Mandatory = $true)][scriptblock]$ScriptBlock)
     $name = "DE_RESCUE_$Hive"
+    # a hive left loaded by an earlier crash would make every load fail (and block DISM /Image) until reboot
+    if (Test-Path -LiteralPath "Registry::HKEY_LOCAL_MACHINE\$name") { $null = Remove-DEOfflineHive -Name $name }
     $r = Invoke-DERescueNative -FilePath 'reg.exe' -Arguments @('load', "HKLM\$name", "$Drive\Windows\System32\config\$Hive")
-    if ($r.ExitCode -ne 0) { throw "could not load the offline $Hive hive from $Drive (exit $($r.ExitCode))" }
+    if ($r.ExitCode -ne 0) { throw "could not load the offline $Hive hive from $Drive (exit $($r.ExitCode)): $($r.Text)" }
     try { return (& $ScriptBlock "Registry::HKEY_LOCAL_MACHINE\$name") }
-    finally { [GC]::Collect(); [GC]::WaitForPendingFinalizers(); $null = Invoke-DERescueNative -FilePath 'reg.exe' -Arguments @('unload', "HKLM\$name") }
+    finally { if (-not (Remove-DEOfflineHive -Name $name)) { $null = Write-DERescueLog "warning: HKLM\$name could not be unloaded; restart the rescue before running DISM on this drive" } }
+}
+function Remove-DEOfflineHive {
+    <# Unloads HKLM\<Name>, retrying: PowerShell's registry provider keeps key handles until they are finalised. #>
+    param([Parameter(Mandatory = $true)][string]$Name)
+    for ($i = 0; $i -lt 6; $i++) {
+        [GC]::Collect(); [GC]::WaitForPendingFinalizers()
+        $r = Invoke-DERescueNative -FilePath 'reg.exe' -Arguments @('unload', "HKLM\$Name")
+        if ($r.ExitCode -eq 0) { return $true }
+        Start-Sleep -Milliseconds 500
+    }
+    return $false
+}
+function Set-DERescueTimeZone {
+    <#
+        WinPE assumes Pacific time and reads the hardware clock as local time, so every UTC timestamp (handoff, Hub
+        signature) is off by the client's offset unless the zone matches the installed Windows. Sets it with tzutil.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Drive)
+    $tz = Invoke-DEOfflineHive -Drive $Drive -Hive SYSTEM -ScriptBlock { param($k) $cur = Get-DERegValue "$k\Select" 'Current'; if (-not $cur) { $cur = 1 }; Get-DERegValue ("$k\ControlSet{0:d3}\Control\TimeZoneInformation" -f [int]$cur) 'TimeZoneKeyName' }
+    if (-not $tz) { return $null }
+    $r = Invoke-DERescueNative -FilePath 'tzutil.exe' -Arguments @('/s', "$tz")
+    if ($r.ExitCode -ne 0) { $null = Write-DERescueLog "time zone '$tz' not set (tzutil exit $($r.ExitCode))"; return $null }
+    $null = Write-DERescueLog "time zone set to $tz (from the installed Windows)"
+    return "$tz"
+}
+function Install-DERescueRootCertificates {
+    <# WinPE ships a minimal root store and never updates it; certificates baked into X:\DE\certs make HTTPS to the Hub trustworthy. #>
+    param([string]$Directory = (Join-Path (Split-Path -Parent $PSScriptRoot) 'certs'))
+    $n = 0
+    foreach ($c in @(Get-ChildItem -LiteralPath $Directory -Include '*.cer', '*.crt' -File -Recurse -ErrorAction SilentlyContinue)) {
+        $r = Invoke-DERescueNative -FilePath 'certutil.exe' -Arguments @('-addstore', 'Root', $c.FullName)
+        if ($r.ExitCode -eq 0) { $n++ } else { $null = Write-DERescueLog "certificate $($c.Name) not added (certutil exit $($r.ExitCode))" }
+    }
+    return $n
 }
 function Get-DERegValue { param([string]$Path, [string]$Name) try { $p = Get-ItemProperty -LiteralPath $Path -Name $Name -ErrorAction Stop; return $p.$Name } catch { return $null } }
 function ConvertTo-DEOfflineProfile {
@@ -190,7 +231,7 @@ function Get-DERescueDiskHealth {
 function Get-DEProfileExcludes {
     <# Caches and temp folders that are rebuilt on their own; copying them only costs time and space. #>
     param([Parameter(Mandatory = $true)][string]$ProfilePath)
-    return @('AppData\Local\Temp', 'AppData\Local\Microsoft\Windows\INetCache', 'AppData\Local\Microsoft\Windows\WebCache', 'AppData\Local\CrashDumps', 'AppData\Local\Packages\*\AC\INetCache',
+    return @('AppData\Local\Temp', 'AppData\Local\Microsoft\Windows\INetCache', 'AppData\Local\Microsoft\Windows\WebCache', 'AppData\Local\CrashDumps',
         'AppData\Local\Google\Chrome\User Data\Default\Cache', 'AppData\Local\Google\Chrome\User Data\Default\Code Cache', 'AppData\Local\Microsoft\Edge\User Data\Default\Cache', 'AppData\Local\Microsoft\Edge\User Data\Default\Code Cache',
         'AppData\Local\Microsoft\Teams\Cache', 'AppData\Local\D3DSCache', 'AppData\Local\NVIDIA\DXCache') | ForEach-Object { Join-Path $ProfilePath ($_.Replace('\', [string][IO.Path]::DirectorySeparatorChar)) }
 }
@@ -232,12 +273,14 @@ function Backup-DERescueProfile {
     if (-not $PSCmdlet.ShouldProcess($ProfilePath, "copy $($src.files) files ($([math]::Round($src.bytes / 1GB, 2)) GB) to $dest")) { return @{ result = 'SKIPPED'; detail = 'planned'; path = $dest } }
     New-Item -ItemType Directory -Path $dest -Force -WhatIf:$false | Out-Null
     $log = Join-Path $base "robocopy-$name.log"
-    $rcArgs = @($ProfilePath, $dest, '/E', '/COPY:DAT', '/DCOPY:T', '/R:1', '/W:1', '/XJ', '/MT:8', '/NP', '/NFL', '/NDL', "/LOG:$log", '/XD') + $exclude
+        # /B: backup mode (WinPE runs as SYSTEM with SeBackupPrivilege) gets past profile ACLs. /XA:O skips OneDrive
+    # online-only files: their content is in the cloud and cannot be read without the OneDrive driver.
+    $rcArgs = @($ProfilePath, $dest, '/E', '/B', '/COPY:DAT', '/DCOPY:T', '/R:1', '/W:1', '/XJ', '/XA:O', '/MT:8', '/NP', '/NFL', '/NDL', "/LOG:$log", '/XD') + $exclude
     $r = Invoke-DERescueNative -FilePath 'robocopy.exe' -Arguments $rcArgs
     $rc = Test-DERobocopyExit -Code $r.ExitCode
     $manifest = Join-Path $base "manifest-$name.csv"
     $rows = @(Get-ChildItem -LiteralPath $dest -Recurse -File -Force -ErrorAction SilentlyContinue | ForEach-Object { [pscustomobject]@{ path = $_.FullName.Substring($dest.Length).TrimStart('\', '/'); bytes = $_.Length; modifiedUtc = $_.LastWriteTimeUtc.ToString('o') } })
-    $rows | Export-Csv -LiteralPath $manifest -NoTypeInformation -Encoding UTF8
+    if ($rows.Count) { $rows | Export-Csv -LiteralPath $manifest -NoTypeInformation -Encoding UTF8 } else { [IO.File]::WriteAllText($manifest, "`"path`",`"bytes`",`"modifiedUtc`"`r`n") }
     $sha = (Get-FileHash -LiteralPath $manifest -Algorithm SHA256).Hash.ToLowerInvariant()
     [long]$copiedBytes = 0; foreach ($x in $rows) { $copiedBytes += [long]$x.bytes }
     $result = $(if (-not $rc.ok) { 'FAIL' } elseif ($rows.Count -lt $src.files) { 'WARN' } else { 'PASS' })
@@ -252,7 +295,8 @@ function Export-DERescueDrivers {
     $dest = Join-Path (Join-Path (Join-Path $DestinationRoot 'DE-Rescue') ($Serial -replace '[^A-Za-z0-9-]', '_')) 'drivers'
     if (-not $PSCmdlet.ShouldProcess($WindowsDrive, "export drivers to $dest")) { return @{ result = 'SKIPPED'; detail = 'planned'; path = $dest } }
     New-Item -ItemType Directory -Path $dest -Force -WhatIf:$false | Out-Null
-    $r = Invoke-DERescueNative -FilePath 'dism.exe' -Arguments @("/Image:$WindowsDrive\", '/Export-Driver', "/Destination:$dest")
+    $scratch = Join-Path (Split-Path -Parent $dest) 'dism-scratch'; New-Item -ItemType Directory -Path $scratch -Force -WhatIf:$false | Out-Null
+    $r = Invoke-DERescueNative -FilePath 'dism.exe' -Arguments @("/Image:$WindowsDrive\", '/Export-Driver', "/Destination:$dest", "/ScratchDir:$scratch")
     $infs = @(Get-ChildItem -LiteralPath $dest -Recurse -Filter '*.inf' -File -ErrorAction SilentlyContinue).Count
     $result = $(if ($r.ExitCode -ne 0) { 'FAIL' } elseif ($infs -eq 0) { 'WARN' } else { 'PASS' })
     return @{ result = $result; detail = "dism exit $($r.ExitCode); $infs driver package(s)"; path = $dest; files = $infs }
@@ -260,17 +304,48 @@ function Export-DERescueDrivers {
 function Invoke-DERescueBootRepair {
     <# bcdboot rebuilds the boot files from the offline Windows; revert-pending undoes updates stuck mid-install. Both need -Confirm or YES in the menu. #>
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
-    param([Parameter(Mandatory = $true)][string]$WindowsDrive, [Parameter(Mandatory = $true)][ValidateSet('bcdboot', 'revert-pending')][string]$Mode)
+    param([Parameter(Mandatory = $true)][string]$WindowsDrive, [Parameter(Mandatory = $true)][ValidateSet('bcdboot', 'revert-pending')][string]$Mode, [string]$ScratchDir)
     if ($Mode -eq 'bcdboot') {
-        if (-not $PSCmdlet.ShouldProcess("$WindowsDrive\Windows", 'rebuild boot files (bcdboot /f ALL)')) { return @{ result = 'SKIPPED'; detail = 'planned' } }
-        $r = Invoke-DERescueNative -FilePath 'bcdboot.exe' -Arguments @("$WindowsDrive\Windows", '/f', 'ALL')
+        # Target the system partition on the SAME disk as Windows (never the rescue USB): EFI partition on GPT, active partition on MBR.
+        $sp = Get-DERescueSystemPartition -WindowsDrive $WindowsDrive
+        if (-not $PSCmdlet.ShouldProcess("$WindowsDrive\Windows", "rebuild boot files on $($sp.letter) ($($sp.firmware))")) { return @{ result = 'SKIPPED'; detail = 'planned' } }
+        $letter = $sp.letter
+        if (-not $letter) { $letter = Add-DERescueSystemPartitionLetter -Partition $sp.partition }
+        $r = Invoke-DERescueNative -FilePath 'bcdboot.exe' -Arguments @("$WindowsDrive\Windows", '/s', $letter, '/f', $sp.firmware)
     } else {
         if (-not $PSCmdlet.ShouldProcess("$WindowsDrive\", 'revert pending update actions (DISM /RevertPendingActions)')) { return @{ result = 'SKIPPED'; detail = 'planned' } }
-        $r = Invoke-DERescueNative -FilePath 'dism.exe' -Arguments @("/Image:$WindowsDrive\", '/Cleanup-Image', '/RevertPendingActions')
+        $dargs = @("/Image:$WindowsDrive\", '/Cleanup-Image', '/RevertPendingActions'); if ($ScratchDir) { $dargs += "/ScratchDir:$ScratchDir" }
+        $r = Invoke-DERescueNative -FilePath 'dism.exe' -Arguments $dargs
     }
     $res = $(if ($r.ExitCode -eq 0) { 'PASS' } else { 'FAIL' })
     $null = Write-DERescueLog "$Mode on $WindowsDrive : exit $($r.ExitCode)"
     return @{ result = $res; detail = "$Mode exit $($r.ExitCode): $(@($r.Output) | Select-Object -Last 2)" }
+}
+
+function Get-DERescueSystemPartition {
+    <# The Windows disk's EFI system partition (GPT -> UEFI) or active partition (MBR -> BIOS). #>
+    param([Parameter(Mandatory = $true)][string]$WindowsDrive)
+    $win = Get-Partition -DriveLetter $WindowsDrive.TrimEnd(':') -ErrorAction Stop
+    $disk = Get-Disk -Number $win.DiskNumber -ErrorAction Stop
+    if ("$($disk.PartitionStyle)" -eq 'GPT') {
+        $p = @(Get-Partition -DiskNumber $win.DiskNumber | Where-Object { "$($_.GptType)" -eq '{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}' }) | Select-Object -First 1
+        if (-not $p) { throw "no EFI system partition on disk $($win.DiskNumber); bcdboot would write to the wrong place" }
+        $fw = 'UEFI'
+    } else {
+        $p = @(Get-Partition -DiskNumber $win.DiskNumber | Where-Object { $_.IsActive }) | Select-Object -First 1
+        if (-not $p) { $p = $win }
+        $fw = 'BIOS'
+    }
+    return [pscustomobject]@{ partition = $p; letter = $(if ($p.DriveLetter -and "$($p.DriveLetter)" -match '^[A-Z]$') { "$($p.DriveLetter):" } else { $null }); firmware = $fw; disk = $win.DiskNumber }
+}
+function Add-DERescueSystemPartitionLetter {
+    <# Gives the system partition a free letter (S: first) for bcdboot. #>
+    param([Parameter(Mandatory = $true)]$Partition)
+    $used = @(Get-Volume -ErrorAction SilentlyContinue | Where-Object { $_.DriveLetter } | ForEach-Object { "$($_.DriveLetter)" })
+    $free = @('S', 'T', 'U', 'V', 'W', 'R', 'Q', 'P') | Where-Object { $used -notcontains $_ } | Select-Object -First 1
+    if (-not $free) { throw 'no free drive letter for the system partition' }
+    $Partition | Add-PartitionAccessPath -AccessPath "${free}:\" -ErrorAction Stop
+    return "${free}:"
 }
 
 # ------------------------------------------------------------------ handoff
@@ -308,7 +383,7 @@ function Get-DERescueBuildPlan {
         only describes the work, so it can be reviewed (-WhatIf) and tested. Optional components are added with their
         en-us language packs, in dependency order.
     #>
-    param([Parameter(Mandatory = $true)][string]$AdkRoot, [Parameter(Mandatory = $true)][string]$WorkDir, [Parameter(Mandatory = $true)][string]$WindowsRoot, [string]$IsoPath, [string]$UsbDrive, [string]$DriverPath, [string]$Arch = 'amd64')
+    param([Parameter(Mandatory = $true)][string]$AdkRoot, [Parameter(Mandatory = $true)][string]$WorkDir, [Parameter(Mandatory = $true)][string]$WindowsRoot, [string]$IsoPath, [string]$UsbDrive, [string]$DriverPath, [string]$Arch = 'amd64', [string[]]$RootCertificate = @(), [switch]$SecureBoot2023)
     $pe = Join-DEWinPath $AdkRoot 'Windows Preinstallation Environment'
     $ocs = Join-DEWinPath (Join-DEWinPath $pe $Arch) 'WinPE_OCs'
     $mount = Join-DEWinPath $WorkDir 'mount'
@@ -325,12 +400,14 @@ function Get-DERescueBuildPlan {
         @{ from = (Join-DEWinPath $WindowsRoot 'console\modules\DE.Contracts'); to = (Join-DEWinPath $mount 'DE\console\modules\DE.Contracts') },
         @{ from = (Join-DEWinPath $WindowsRoot 'console\contracts'); to = (Join-DEWinPath $mount 'DE\console\contracts') },
         @{ from = (Join-DEWinPath $WindowsRoot 'console\VERSION'); to = (Join-DEWinPath $mount 'DE\console\VERSION') }) })
-    $steps.Add(@{ id = 'startnet'; what = 'start the DE rescue menu at boot'; write = @{ path = (Join-DEWinPath $mount 'Windows\System32\startnet.cmd'); text = "wpeinit`r`npowershell.exe -NoProfile -ExecutionPolicy Bypass -File X:\DE\rescue\Start-DERescue.ps1`r`n" } })
+    if ($RootCertificate.Count) { $steps.Add(@{ id = 'certs'; what = 'add root certificates for HTTPS to the Hub (installed at rescue start)'; copy = @($RootCertificate | ForEach-Object { @{ from = $_; to = (Join-DEWinPath $mount "DE\certs\$(Split-Path -Leaf $_)") } }) }) }
+    $steps.Add(@{ id = 'scratch'; what = 'raise WinPE scratch space to 512 MB (DISM and robocopy need it)'; cmd = 'dism.exe'; args = @("/Image:$mount", '/Set-ScratchSpace:512') })
+    $steps.Add(@{ id = 'startnet'; what = 'start the DE rescue menu at boot'; write = @{ path = (Join-DEWinPath $mount 'Windows\System32\startnet.cmd'); text = "wpeinit`r`nX:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File X:\DE\rescue\Start-DERescue.ps1`r`n" } })
     $steps.Add(@{ id = 'unmount'; what = 'save and unmount boot.wim'; cmdlet = 'Dismount-WindowsImage'; params = @{ Path = $mount; Save = $true } })
     $mk = Join-DEWinPath $pe 'MakeWinPEMedia.cmd'
-    if ($IsoPath) { $steps.Add(@{ id = 'iso'; what = "write ISO $IsoPath"; cmd = 'cmd.exe'; args = @('/c', "call `"$(Join-DEWinPath $AdkRoot 'Deployment Tools\DandISetEnv.bat')`" && `"$mk`" /ISO `"$WorkDir`" `"$IsoPath`"") }) }
-    if ($UsbDrive) { $steps.Add(@{ id = 'usb'; what = "FORMAT $UsbDrive and write the rescue USB (everything on $UsbDrive is erased)"; destructive = $true; cmd = 'cmd.exe'; args = @('/c', "call `"$(Join-DEWinPath $AdkRoot 'Deployment Tools\DandISetEnv.bat')`" && `"$mk`" /UFD /F `"$WorkDir`" $UsbDrive") }) }
+    if ($IsoPath) { $steps.Add(@{ id = 'iso'; what = "write ISO $IsoPath"; cmd = 'cmd.exe'; args = @('/c', "call `"$(Join-DEWinPath $AdkRoot 'Deployment Tools\DandISetEnv.bat')`" && `"$mk`"$(if ($SecureBoot2023) { ' /bootex' }) /ISO /F `"$WorkDir`" `"$IsoPath`"") }) }
+    if ($UsbDrive) { $steps.Add(@{ id = 'usb'; what = "FORMAT $UsbDrive and write the rescue USB (everything on $UsbDrive is erased)"; destructive = $true; cmd = 'cmd.exe'; args = @('/c', "call `"$(Join-DEWinPath $AdkRoot 'Deployment Tools\DandISetEnv.bat')`" && `"$mk`"$(if ($SecureBoot2023) { ' /bootex' }) /UFD /F `"$WorkDir`" $UsbDrive") }) }
     return , $steps.ToArray()
 }
 
-Export-ModuleMember -Function Get-DERescueVersion, Join-DEWinPath, Write-DERescueLog, Get-DERescueLog, Invoke-DERescueNative, Test-DERecoveryPasswordFormat, ConvertFrom-DEManageBdeStatus, Get-DERescueBitLocker, Unlock-DERescueVolume, Get-DERescueVolumes, Find-DEWindowsVolume, Get-DERescueDestinations, Invoke-DEOfflineHive, Get-DERegValue, ConvertTo-DEOfflineProfile, Get-DERescueOfflineInfo, Get-DERescueHardware, Get-DERescueDiskHealth, Get-DEProfileExcludes, Test-DERobocopyExit, Get-DEFolderStats, Backup-DERescueProfile, Export-DERescueDrivers, Invoke-DERescueBootRepair, Get-DERescueRecommendations, Save-DERescueHandoff, Get-DERescueBuildPlan
+Export-ModuleMember -Function Get-DERescueVersion, Join-DEWinPath, Write-DERescueLog, Get-DERescueLog, Invoke-DERescueNative, Test-DERecoveryPasswordFormat, ConvertFrom-DEManageBdeStatus, Get-DERescueBitLocker, Unlock-DERescueVolume, Get-DERescueVolumes, Find-DEWindowsVolume, Get-DERescueDestinations, Invoke-DEOfflineHive, Remove-DEOfflineHive, Set-DERescueTimeZone, Install-DERescueRootCertificates, Get-DERescueSystemPartition, Add-DERescueSystemPartitionLetter, Get-DERegValue, ConvertTo-DEOfflineProfile, Get-DERescueOfflineInfo, Get-DERescueHardware, Get-DERescueDiskHealth, Get-DEProfileExcludes, Test-DERobocopyExit, Get-DEFolderStats, Backup-DERescueProfile, Export-DERescueDrivers, Invoke-DERescueBootRepair, Get-DERescueRecommendations, Save-DERescueHandoff, Get-DERescueBuildPlan
