@@ -2241,10 +2241,13 @@ export const ZohoASAPWidget = ({
               inset: 0;
               pointer-events: none;
               opacity: 0;
+              /* A light on graphite, not paper. At #fff this was drawn for the
+                 white list: under the pointer it erased the white title
+                 (1.01:1). Dim enough that the row text reads through it. */
               background: radial-gradient(
                 160px circle at var(--desk-row-x) var(--desk-row-y),
-                #fff 0%,
-                rgba(255,255,255,0.7) 38%,
+                rgba(255,255,255,0.12) 0%,
+                rgba(255,255,255,0.05) 38%,
                 transparent 70%
               );
               transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
@@ -2348,10 +2351,13 @@ export const ZohoASAPWidget = ({
               pointer-events: none;
               z-index: 0;
               opacity: 0;
+              /* Same light as the incident row, same reason: sized for a dark
+                 row carrying white text, so it lifts the row without washing
+                 out the label under the pointer. */
               background: radial-gradient(
                 170px circle at var(--desk-row-x) var(--desk-row-y),
-                #fff 0%,
-                rgba(255,255,255,0.72) 36%,
+                rgba(255,255,255,0.12) 0%,
+                rgba(255,255,255,0.05) 36%,
                 transparent 68%
               );
               transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
@@ -2365,7 +2371,7 @@ export const ZohoASAPWidget = ({
               background: linear-gradient(
                 108deg,
                 transparent 28%,
-                rgba(255,255,255,0.95) 48%,
+                rgba(255,255,255,0.08) 48%,
                 transparent 68%
               );
               transform: translateX(-42%);

@@ -123,11 +123,12 @@ describe("DE Desk shell positioning", () => {
     // the literal never matched.
     //
     // Matching white anywhere in the declaration is too blunt in the other
-    // direction — the Get Support row glow is a radial gradient whose centre
-    // stop is #fff fading to transparent, which is a highlight, not a ground.
-    // So split each declaration into its top-level layers and judge those: a
-    // layer that is a solid white, or a ground mixed with white, is the defect.
-    // White inside a gradient is a stop and is allowed.
+    // direction — the Get Support row glow is a radial gradient of white
+    // fading to transparent, which is a highlight, not a ground. So split each
+    // declaration into its top-level layers and judge those: a layer that is a
+    // solid white, or a ground mixed with white, is the defect. White inside a
+    // gradient is a stop and is allowed here; how bright that stop may be when
+    // it sits under text is the next test's job.
     const layersOf = (value: string) => {
       const layers: string[] = [];
       let depth = 0;
@@ -159,6 +160,54 @@ describe("DE Desk shell positioning", () => {
       );
     });
     expect(paperGrounds).toEqual([]);
+  });
+
+  it("keeps the pointer light under Get Support row text dim enough to read through", () => {
+    // The test above allows white as a gradient stop, and that is how the
+    // hover light survived the move to graphite: drawn for the white list at
+    // #fff, it sat under white text and measured 1.01:1 with the pointer on
+    // the label. So judge the light by what it does to the text: stack every
+    // layer at its brightest white stop over the row's hovered ground, and
+    // check the white label and the muted blurb both still clear 4.5:1.
+    const rule = (selector: string) => {
+      const start = src.indexOf(`${selector} {`);
+      expect(start, selector).toBeGreaterThan(-1);
+      // Judge the declarations, not the comments that explain them.
+      return src.slice(start, src.indexOf("}", start)).replace(/\/\*[\s\S]*?\*\//g, "");
+    };
+    const brightestWhite = (css: string) => {
+      const alphas = [...css.matchAll(/rgba\(255,\s*255,\s*255,\s*([\d.]+)\)/g)].map((m) => Number(m[1]));
+      if (/#fff\b|#ffffff\b|\bwhite\b/i.test(css)) alphas.push(1);
+      return Math.max(0, ...alphas);
+    };
+    const token = (name: string) => {
+      const hex = src.match(new RegExp(`${name}:[^;]*#([0-9a-f]{6})\\)?;`, "i"))?.[1];
+      expect(hex, name).toBeTruthy();
+      return [0, 2, 4].map((i) => parseInt(hex!.slice(i, i + 2), 16));
+    };
+    const lin = (c: number) => {
+      const s = c / 255;
+      return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+    };
+    const lum = (rgb: number[]) => 0.2126 * lin(rgb[0]) + 0.7152 * lin(rgb[1]) + 0.0722 * lin(rgb[2]);
+    const contrast = (a: number[], b: number[]) => {
+      const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m);
+      return (x + 0.05) / (y + 0.05);
+    };
+    const whiteOver = (rgb: number[], alpha: number) => rgb.map((c) => c * (1 - alpha) + 255 * alpha);
+
+    const rows = [
+      // Issue rows sit on the list's --desk-box and add a 5% wash on hover.
+      { ground: whiteOver(token("--desk-box"), 0.05), layers: [".de-desk-issue-row::before", ".de-desk-issue-row::after"] },
+      // The incident row turns --desk-box-hover on hover.
+      { ground: token("--desk-box-hover"), layers: [".de-desk-incident::before"] },
+    ];
+    for (const row of rows) {
+      const lit = row.layers.reduce((ground, layer) => whiteOver(ground, brightestWhite(rule(layer))), row.ground);
+      const label = row.layers.join(" + ");
+      expect(contrast([255, 255, 255], lit), label).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(whiteOver(lit, 0.72), lit), `${label} (muted)`).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   it("never uses a background token as a foreground colour", () => {
