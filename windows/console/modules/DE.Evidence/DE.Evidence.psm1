@@ -95,8 +95,8 @@ function New-DEAssetRecord {
         assignedUser = $ctx['endUser']; localUserName = $ctx['localUserName']; jumpcloudUser = $ctx['jumpcloudUser']; email = $ctx['endUserEmail']
         hostname = (Get-DEHashPath -Object $Snapshot -Path 'device.hostname'); serial = (Get-DEHashPath -Object $Snapshot -Path 'device.serial'); manufacturer = (Get-DEHashPath -Object $Snapshot -Path 'device.manufacturer'); model = (Get-DEHashPath -Object $Snapshot -Path 'device.model')
         assetTag = (Get-DEHashPath -Object $ctx -Path 'device.assetTag'); orderNumber = (Get-DEHashPath -Object $ctx -Path 'device.orderNumber'); warrantyEnd = $(if (Get-DEHashPath -Object $ctx -Path 'device.warrantyEnd') { Get-DEHashPath -Object $ctx -Path 'device.warrantyEnd' } else { Get-DEState -Path 'warranty.current.end' }); warrantySource = (Get-DEState -Path 'warranty.current.source'); role = (Get-DEHashPath -Object $ctx -Path 'device.role')
-        os = "$(Get-DEHashPath -Object $Snapshot -Path 'device.osCaption') $(Get-DEHashPath -Object $Snapshot -Path 'device.osDisplayVersion') ($(Get-DEHashPath -Object $Snapshot -Path 'device.osBuild'))"
-        bios = "$(Get-DEHashPath -Object $Snapshot -Path 'device.biosVersion') $(Get-DEHashPath -Object $Snapshot -Path 'device.biosDate')"
+        os = ((@((Get-DEHashPath -Object $Snapshot -Path 'device.osCaption'), (Get-DEHashPath -Object $Snapshot -Path 'device.osDisplayVersion')) | Where-Object { "$_".Trim() }) -join ' ') + $(if ("$(Get-DEHashPath -Object $Snapshot -Path 'device.osBuild')".Trim()) { " (build $(Get-DEHashPath -Object $Snapshot -Path 'device.osBuild'))" } else { '' })
+        bios = (@((Get-DEHashPath -Object $Snapshot -Path 'device.biosVersion'), (Get-DEHashPath -Object $Snapshot -Path 'device.biosDate')) | Where-Object { "$_".Trim() }) -join ' '
         cpu = (Get-DEHashPath -Object $Snapshot -Path 'device.cpu'); ramGB = (Get-DEHashPath -Object $Snapshot -Path 'device.ramGB')
         encryption = @{ osEncrypted = (Get-DEHashPath -Object $Snapshot -Path 'bitlocker.osEncrypted'); protectionOn = (Get-DEHashPath -Object $Snapshot -Path 'bitlocker.osProtectionOn'); recoveryProtectorIds = (Get-DEHashPath -Object $Snapshot -Path 'bitlocker.os.recoveryProtectorIds') }
         identity = @{ joinType = (Get-DEHashPath -Object $Snapshot -Path 'identity.joinType'); tenant = (Get-DEHashPath -Object $Snapshot -Path 'identity.dsreg.tenantName') }
@@ -111,40 +111,99 @@ function New-DEAssetRecord {
 }
 
 function ConvertTo-DEHtmlReport {
+    <#
+        The internal report (technical, for DE) or the client-safe handover summary (plain words, service names from the
+        client profile, no vendor names, keys or internal detail). Both open with the overall readiness, show missing
+        values as 'Not recorded', and print cleanly.
+    #>
     param([Parameter(Mandatory = $true)]$Record, [switch]$ClientSafe, $ClientProfile, [array]$Gaps = @(), [array]$Evidence = @())
     $e = { param($s) [System.Net.WebUtility]::HtmlEncode("$s") }
+    $none = '<span class="none">Not recorded</span>'
+    $val = { param($s) $t = "$s".Trim(); if ($t -and $t -notmatch '^[\s(),.:-]*$') { & $e $t } else { $none } }
+    $cls = { param($s) ("$s" -replace '[^A-Za-z]', '').ToLowerInvariant() }
+    $clientWords = @{ 'PASS' = 'In place'; 'WARN' = 'Needs attention'; 'FAIL' = 'Not in place'; 'BLOCKED' = 'Not in place'; 'EXCEPTION' = 'Agreed exception'; 'NOT IN PLAN' = 'Not in plan'; 'NOT RUN' = 'Not checked'; 'PLANNED' = 'Planned'; 'NO CHANGE' = 'In place' }
+    $overallWords = @{ 'READY' = 'Ready'; 'READY WITH EXCEPTIONS' = 'Ready, with agreed exceptions'; 'NOT READY' = 'Not ready yet'; 'IN PROGRESS' = 'In progress'; 'NOT RUN' = 'Not checked' }
+    $pill = { param($state) $word = $(if ($ClientSafe -and $clientWords.ContainsKey("$state")) { $clientWords["$state"] } else { "$state" }); "<span class=`"pill $(& $cls $state)`">$(& $e $word)</span>" }
+    $when = { param($iso) $d = [DateTimeOffset]::MinValue; if ([DateTimeOffset]::TryParse("$iso", [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::None, [ref]$d)) { $off = $d.Offset; $zone = $(if ($off -eq [TimeSpan]::Zero) { 'UTC' } else { 'UTC' + $(if ($off -lt [TimeSpan]::Zero) { '-' } else { '+' }) + $off.ToString('hh\:mm') }); $d.ToString('d MMM yyyy, HH:mm', [Globalization.CultureInfo]::InvariantCulture) + " $zone" } else { "$iso" } }
     $names = Get-DEHashPath -Object $ClientProfile -Path 'clientSafe.serviceNames'
+    $named = { param($key, $fallback) $n = $(if ($names) { Get-DEHashPath -Object $names -Path $key } else { $null }); if ($n) { "$n" } else { $fallback } }
     $title = $(if ($ClientSafe) { 'Device handover summary' } else { 'Device provisioning report (internal)' })
-    $areaRows = foreach ($a in @($Record.areas | Where-Object { $_ })) {
+    $areas = @($Record.areas | Where-Object { $_ })
+    $areaRows = foreach ($a in $areas) {
         $label = $a.area
-        if ($ClientSafe) { $label = switch -Regex ($a.area) { 'Guardz|Blackpoint' { $(if ($names -and (Get-DEHashPath -Object $names -Path 'mdr')) { Get-DEHashPath -Object $names -Path 'mdr' } else { 'Managed detection and response' }) } 'SentinelOne' { $(if ($names -and (Get-DEHashPath -Object $names -Path 'edr')) { Get-DEHashPath -Object $names -Path 'edr' } else { 'Endpoint protection' }) } 'JumpCloud' { 'Device and sign-in management' } 'Backup' { 'Managed backup' } 'Browser security' { 'Safe browsing protection' } default { $a.area } } }
-        $cls = ($a.state -replace '\s', '').ToLower()
-        $st = $a.state; if ($ClientSafe -and $st -eq 'EXCEPTION') { $st = 'Agreed exception' }
-        "<tr><td>$(& $e $label)</td><td class=`"s $cls`">$(& $e $st)</td></tr>"
+        if ($ClientSafe) {
+            $label = switch -Regex ($a.area) {
+                'Guardz' { & $named 'mdr' 'Managed detection and response' }
+                'Blackpoint' { & $named 'mdrBackup' 'Backup detection and response' }
+                'SentinelOne' { & $named 'edr' 'Endpoint protection' }
+                'JumpCloud' { 'Device and sign-in management' }
+                'Backup' { 'Managed backup' }
+                'Browser security' { 'Safe browsing protection' }
+                default { $a.area }
+            }
+        }
+        $st = "$($a.state)"
+        "<tr><td>$(& $e $label)</td><td class=`"state`">$(& $pill $st)</td></tr>"
     }
+    $inPlace = @($areas | Where-Object { "$($_.state)" -in @('PASS', 'NO CHANGE', 'EXCEPTION') }).Count
+    $attention = @($areas | Where-Object { "$($_.state)" -eq 'WARN' }).Count
+    $missing = @($areas | Where-Object { "$($_.state)" -in @('FAIL', 'BLOCKED') }).Count
+    $counted = @($areas | Where-Object { "$($_.state)" -notin @('NOT IN PLAN') }).Count
+    $overall = "$($Record.readiness)"
+    $overallText = $(if ($ClientSafe -and $overallWords.ContainsKey($overall)) { $overallWords[$overall] } else { $overall })
+    $summaryParts = @("$inPlace of $counted $(if ($ClientSafe) { 'services in place' } else { 'areas passing' })"); if ($attention) { $summaryParts += "$attention $(if ($ClientSafe) { 'need attention' } else { 'warning' })" }; if ($missing) { $summaryParts += "$missing $(if ($ClientSafe) { 'not in place yet' } else { 'failing' })" }
+    $device = (@($Record.manufacturer, $Record.model) | Where-Object { "$_".Trim() }) -join ' '
+    $meta = (@($Record.clientName, $Record.site, $Record.hostname) | Where-Object { "$_".Trim() } | ForEach-Object { & $e $_ }) -join ' &middot; '
     $internal = ''
     if (-not $ClientSafe) {
-        $gapRows = (@($Gaps) | Where-Object { $_ } | ForEach-Object { "<tr><td>$(& $e $_.id)</td><td>$(& $e $_.result)</td><td>$(& $e $_.detail)</td><td>$(& $e $_.fix)</td></tr>" }) -join ''
-        $evRows = (@($Evidence) | Where-Object { $_ } | Select-Object -Last 300 | ForEach-Object { "<tr><td>$(& $e $_.timestamp)</td><td>$(& $e $_.step)</td><td class=`"s $(($_.result -replace '\s','').ToLower())`">$(& $e $_.result)</td><td>$(& $e $_.action)</td><td>$(& $e $_.verification)</td></tr>" }) -join ''
-        $agents = ($Record.agents.Keys | ForEach-Object { "$_ (running: $($Record.agents[$_].running))" }) -join ', '
+        $yes = { param($b) if ($null -eq $b -or "$b" -eq '') { $none } elseif ($b -eq $true -or "$b" -eq 'True') { 'Yes' } else { 'No' } }
+        $gapRows = (@($Gaps) | Where-Object { $_ } | ForEach-Object { "<tr><td class=`"mono`">$(& $e $_.id)</td><td class=`"state`">$(& $pill $_.result)</td><td>$(& $val $_.detail)</td><td>$(& $val $_.fix)</td></tr>" }) -join ''
+        if (-not $gapRows) { $gapRows = '<tr><td colspan="4" class="none">Nothing open.</td></tr>' }
+        $exRows = (@($Record.exceptions) | Where-Object { $_ } | ForEach-Object { "<tr><td class=`"mono`">$(& $e $_.target)</td><td>$(& $val $_.reason)</td><td>$(& $val $_.approver)</td><td>$(& $val $_.expiresOn)</td></tr>" }) -join ''
+        if (-not $exRows) { $exRows = '<tr><td colspan="4" class="none">No exceptions.</td></tr>' }
+        $evRows = (@($Evidence) | Where-Object { $_ } | Select-Object -Last 300 | ForEach-Object { $t = "$($_.timestamp)"; if ($t -match 'T(\d\d:\d\d:\d\d)') { $t = $Matches[1] }; "<tr><td class=`"mono`">$(& $e $t)</td><td class=`"mono`">$(& $e $_.step)</td><td class=`"state`">$(& $pill $_.result)</td><td>$(& $val $_.action)</td><td>$(& $val $_.verification)</td></tr>" }) -join ''
+        $agentList = @(@($Record.agents.Keys) | ForEach-Object { "$_ ($(if ($Record.agents[$_].running) { 'running' } else { 'not running' }))" })
+        $protectors = @(@($Record.encryption.recoveryProtectorIds) | Where-Object { $_ })
         $internal = @"
-<h2>Identity and management</h2><table><tr><th>Join type</th><td>$(& $e $Record.identity.joinType)</td></tr><tr><th>Tenant</th><td>$(& $e $Record.identity.tenant)</td></tr><tr><th>MDM authority</th><td>$(& $e $Record.management.mdmAuthority)</td></tr><tr><th>JumpCloud registered</th><td>$(& $e $Record.management.jumpcloudRegistered)</td></tr><tr><th>Agents</th><td>$(& $e $agents)</td></tr><tr><th>BitLocker</th><td>encrypted $(& $e $Record.encryption.osEncrypted), protection $(& $e $Record.encryption.protectionOn), recovery protector ids $(& $e (@($Record.encryption.recoveryProtectorIds) -join ', '))</td></tr></table>
-<h2>Open items</h2><table><tr><th>Item</th><th>State</th><th>Detail</th><th>Fix</th></tr>$gapRows</table>
-<h2>Exceptions</h2><table><tr><th>Item</th><th>Reason</th><th>Approver</th><th>Expires</th></tr>$((@($Record.exceptions) | Where-Object { $_ } | ForEach-Object { "<tr><td>$(& $e $_.target)</td><td>$(& $e $_.reason)</td><td>$(& $e $_.approver)</td><td>$(& $e $_.expiresOn)</td></tr>" }) -join '')</table>
-<h2>Evidence log</h2><table><tr><th>Time</th><th>Step</th><th>Result</th><th>Action</th><th>Verification</th></tr>$evRows</table>
+<h2>Identity and management</h2><table class="kv"><tr><th>Join type</th><td>$(& $val $Record.identity.joinType)</td></tr><tr><th>Tenant</th><td>$(& $val $Record.identity.tenant)</td></tr><tr><th>MDM authority</th><td>$(& $val $Record.management.mdmAuthority)</td></tr><tr><th>JumpCloud registered</th><td>$(& $yes $Record.management.jumpcloudRegistered)</td></tr><tr><th>Security agents</th><td>$(if ($agentList.Count) { & $e ($agentList -join ', ') } else { '<span class="none">None found</span>' })</td></tr><tr><th>BitLocker</th><td>Encrypted: $(& $yes $Record.encryption.osEncrypted) &middot; Protection on: $(& $yes $Record.encryption.protectionOn) &middot; Recovery protectors: $(if ($protectors.Count) { & $e ($protectors -join ', ') } else { 'none' })</td></tr></table>
+<h2>Open items</h2><table class="grid"><tr><th>Item</th><th>State</th><th>Detail</th><th>Fix</th></tr>$gapRows</table>
+<h2>Exceptions</h2><table class="grid"><tr><th>Item</th><th>Reason</th><th>Approver</th><th>Expires</th></tr>$exRows</table>
+<h2>Evidence log</h2><table class="grid log"><tr><th>Time</th><th>Step</th><th>Result</th><th>Action</th><th>Verification</th></tr>$evRows</table>
 "@
     }
     return @"
-<!doctype html><html lang="en"><head><meta charset="utf-8"><title>$(& $e $title)</title>
-<style>:root{--well:#050312;--paper:#f7f5f2;--mag:#D3126A;--ink:#1a1620;--muted:#6b6672}body{margin:0;font:14px/1.5 "Space Grotesk","Segoe UI",sans-serif;color:var(--ink);background:#fff}header{background:var(--well);color:var(--paper);padding:24px 32px;border-bottom:4px solid var(--mag)}header .b{color:var(--mag);font:700 11px Oxanium,"Space Grotesk",sans-serif;letter-spacing:.12em}header h1{margin:4px 0;font-size:22px}header p{margin:0;color:rgba(247,245,242,.7)}main{padding:20px 32px;max-width:1100px}h2{font-size:15px;margin:24px 0 8px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #eee;vertical-align:top}th{color:var(--muted);font-weight:600;width:220px}.s{font-weight:700}.pass,.nochange,.ready{color:#0f8a5f}.warn,.planned,.inprogress{color:#a36b00}.fail,.blocked,.notready{color:var(--mag)}.exception,.agreedexception,.readywithexceptions{color:#6d4bd8}.notrun{color:var(--muted)}footer{padding:16px 32px;color:var(--muted);font-size:12px}@media print{header{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head>
-<body><header><div class="b">DIGERATI EXPERTS</div><h1>$(& $e $title)</h1><p>$(& $e $Record.clientName) $(if ($Record.site) { "· $(& $e $Record.site)" }) · $(& $e $Record.hostname) · $(& $e $Record.completed)</p></header><main>
-<h2>Device</h2><table><tr><th>Assigned user</th><td>$(& $e $Record.assignedUser)</td></tr><tr><th>Device</th><td>$(& $e $Record.manufacturer) $(& $e $Record.model), serial $(& $e $Record.serial)</td></tr><tr><th>Asset tag</th><td>$(& $e $Record.assetTag)</td></tr><tr><th>Operating system</th><td>$(& $e $Record.os)</td></tr><tr><th>Warranty</th><td>$(& $e $Record.warrantyEnd)</td></tr><tr><th>Overall readiness</th><td class="s $(($Record.readiness -replace '\s','').ToLower())">$(& $e $Record.readiness)</td></tr></table>
-<h2>$(if ($ClientSafe) { 'Services in place' } else { 'Readiness by area' })</h2><table>$($areaRows -join '')</table>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>$(& $e $title)$(if ($Record.clientName) { " - $(& $e $Record.clientName)" })</title>
+<style>
+:root{--well:#050312;--paper:#f7f5f2;--mag:#D3126A;--ink:#1a1620;--muted:#6b6672;--line:#ebe8e4;--ok:#0f7a55;--okbg:#e6f4ee;--warn:#8a5a00;--warnbg:#fbf1dc;--bad:#b0104f;--badbg:#fbe6ee;--ex:#5b3fc4;--exbg:#eeeafb;--na:#6b6672;--nabg:#f1efec}
+*{box-sizing:border-box}body{margin:0;font:14px/1.55 "Space Grotesk","Segoe UI",system-ui,sans-serif;color:var(--ink);background:var(--paper)}
+header{background:var(--well);color:var(--paper);padding:28px 40px 24px;border-bottom:4px solid var(--mag)}
+header .b{color:var(--mag);font:700 11px/1 Oxanium,"Space Grotesk","Segoe UI",sans-serif;letter-spacing:.14em}
+header h1{margin:8px 0 6px;font-size:24px;line-height:1.2;font-weight:700}header p{margin:0;color:rgba(247,245,242,.72)}header p+p{margin-top:2px;font-size:13px}
+main{padding:28px 40px 8px;max-width:1040px}
+.summary{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;background:#fff;border:1px solid var(--line);border-left:6px solid var(--na);border-radius:10px;padding:18px 22px}
+.summary.ready{border-left-color:var(--ok)}.summary.readywithexceptions{border-left-color:var(--ex)}.summary.notready{border-left-color:var(--bad)}.summary.inprogress{border-left-color:var(--warn)}
+.summary .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}.summary .big{font-size:22px;font-weight:700}.summary .counts{color:var(--muted);flex-basis:100%}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:30px 0 10px}
+table{border-collapse:collapse;width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:top}tr:last-child td,tr:last-child th{border-bottom:0}
+.kv th{width:32%;color:var(--muted);font-weight:600}.st td.state,.grid td.state{width:1%;white-space:nowrap}
+.grid th{background:#faf9f7;color:var(--muted);font-weight:600;font-size:12px}.log{font-size:12px}.mono{font-family:Consolas,"Cascadia Mono",monospace;font-size:12px;white-space:nowrap}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.02em;background:var(--nabg);color:var(--na)}
+.pill.pass,.pill.nochange,.pill.ready{background:var(--okbg);color:var(--ok)}.pill.warn,.pill.planned,.pill.inprogress{background:var(--warnbg);color:var(--warn)}
+.pill.fail,.pill.blocked,.pill.notready{background:var(--badbg);color:var(--bad)}.pill.exception,.pill.readywithexceptions{background:var(--exbg);color:var(--ex)}
+.none{color:var(--muted);font-style:italic}
+footer{padding:22px 40px 32px;color:var(--muted);font-size:12px;max-width:1040px}
+@media (max-width:640px){header{padding:22px 18px}main{padding:20px 18px 4px}footer{padding:18px}.kv th{width:42%}th,td{padding:8px 10px}.grid{display:block;overflow-x:auto}}
+@media print{body{background:#fff}header,.pill,.summary{-webkit-print-color-adjust:exact;print-color-adjust:exact}tr{break-inside:avoid}h2{break-after:avoid}main,footer{max-width:none}}
+</style></head>
+<body><header><div class="b">DIGERATI EXPERTS</div><h1>$(& $e $title)</h1>$(if ($meta) { "<p>$meta</p>" })<p>Completed $(& $e (& $when $Record.completed))</p></header><main>
+<section class="summary $(& $cls $overall)"><div><div class="label">Overall</div><div class="big">$(& $e $overallText)</div></div><div class="counts">$(& $e ($summaryParts -join ' · '))</div></section>
+<h2>Device</h2><table class="kv"><tr><th>Assigned user</th><td>$(& $val $Record.assignedUser)</td></tr><tr><th>Device</th><td>$(& $val $device)</td></tr><tr><th>Serial number</th><td>$(& $val $Record.serial)</td></tr><tr><th>Asset tag</th><td>$(& $val $Record.assetTag)</td></tr><tr><th>Operating system</th><td>$(& $val $Record.os)</td></tr><tr><th>Warranty until</th><td>$(& $val $Record.warrantyEnd)</td></tr></table>
+<h2>$(if ($ClientSafe) { 'Services' } else { 'Readiness by area' })</h2><table class="st">$($areaRows -join '')</table>
 $internal
-</main><footer>$(if ($ClientSafe) { 'Prepared by Digerati Experts. Questions: support@digeratiexperts.com or portal.digeratiexperts.com.' } else { "Technician $(& $e $Record.technician) · mode $(& $e $Record.mode) · internal: contains technical detail; do not send to the client." })</footer></body></html>
+</main><footer>$(if ($ClientSafe) { 'Prepared by Digerati Experts. Questions: support@digeratiexperts.com or portal.digeratiexperts.com.' } else { "Technician $(& $e $(if ($Record.technician) { $Record.technician } else { 'not recorded' })) &middot; mode $(& $e $Record.mode) &middot; Internal: contains technical detail; do not send to the client." })</footer></body></html>
 "@
 }
-
 function Get-DEBundleFileHash {
     <# sha256 of a bundle file. Windows PowerShell's Get-FileHash returns nothing for a file it cannot open, so read
        it here with a short retry and fail with the file's name and the real reason instead of a null. #>
