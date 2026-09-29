@@ -145,6 +145,20 @@ $internal
 "@
 }
 
+function Get-DEBundleFileHash {
+    <# sha256 of a bundle file. Windows PowerShell's Get-FileHash returns nothing for a file it cannot open, so read
+       it here with a short retry and fail with the file's name and the real reason instead of a null. #>
+    param([Parameter(Mandatory = $true)][string]$Path, [int]$Attempts = 5)
+    $last = $null
+    for ($i = 1; $i -le $Attempts; $i++) {
+        try {
+            $stream = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+            try { $sha = [Security.Cryptography.SHA256]::Create(); return (([BitConverter]::ToString($sha.ComputeHash($stream))) -replace '-', '').ToLowerInvariant() } finally { $stream.Dispose() }
+        } catch { $last = $_.Exception.Message; if ($i -lt $Attempts) { Start-Sleep -Seconds 1 } }
+    }
+    throw ("cannot read {0} for the evidence manifest: {1}" -f [IO.Path]::GetFileName($Path), $last)
+}
+
 function Export-DEEvidenceBundle {
     <# Writes the bundle folder + zip: evidence.json, asset.json, gaps.json, report-internal.html, report-client.html, logs (redacted), manifest.sha256. #>
     param([Parameter(Mandatory = $true)]$Snapshot, $ClientProfile, [string]$OutDir)
@@ -165,13 +179,13 @@ function Export-DEEvidenceBundle {
     # PDF copies of both reports for email and the client file; skipped quietly when no Edge/Chrome is present.
     foreach ($r in @('report-client', 'report-internal')) { $null = Convert-DEHtmlToPdf -HtmlPath (Join-Path $OutDir "$r.html") -PdfPath (Join-Path $OutDir "$r.pdf") }
     if ($de.LogFile -and (Test-Path -LiteralPath $de.LogFile)) { (Get-Content -LiteralPath $de.LogFile | ForEach-Object { Protect-DEText $_ }) | Set-Content -LiteralPath (Join-Path $OutDir 'console.log') -Encoding UTF8 -WhatIf:$false }
-    $manifest = @(Get-ChildItem -LiteralPath $OutDir -File | Where-Object { $_ -and $_.Name -ne 'manifest.sha256' } | Sort-Object Name | ForEach-Object { "{0}  {1}" -f (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name })
+    $manifest = @(Get-ChildItem -LiteralPath $OutDir -File | Where-Object { $_ -and $_.Name -ne 'manifest.sha256' } | Sort-Object Name | ForEach-Object { "{0}  {1}" -f (Get-DEBundleFileHash -Path $_.FullName), $_.Name })
     Set-Content -LiteralPath (Join-Path $OutDir 'manifest.sha256') -Value $manifest -Encoding ASCII -WhatIf:$false
     $zip = "$OutDir.zip"
     # the bundle is the local record of the run, a plan-only (-WhatIf) run included, so these writes never skip
     if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force -WhatIf:$false }
     Compress-Archive -Path (Join-Path $OutDir '*') -DestinationPath $zip -WhatIf:$false
-    $bundleHash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+    $bundleHash = Get-DEBundleFileHash -Path $zip
     # final secret sweep: refuse to hand over a bundle that still contains a registered secret
     $leak = $false
     foreach ($f in Get-ChildItem -LiteralPath $OutDir -File) {
@@ -194,15 +208,29 @@ function Convert-DEHtmlToPdf {
         (Join-Path $env:ProgramFiles 'Google\Chrome\Application\chrome.exe'), (Join-Path ${env:ProgramFiles(x86)} 'Google\Chrome\Application\chrome.exe'))
     $browser = $candidates | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -First 1
     if (-not $browser) { return $null }
+    # Edge prints to a temp file and only a readable copy lands beside the report, so a browser process that is
+    # slow to let go (or was killed at the timeout) can never hold a file inside the evidence bundle.
+    $profileDir = Join-Path ([IO.Path]::GetTempPath()) ("de-pdf-{0}" -f ([guid]::NewGuid()))
+    $tmpPdf = "$profileDir.pdf"
     try {
         $uri = ([Uri](Resolve-Path -LiteralPath $HtmlPath).Path).AbsoluteUri
-        $profileDir = Join-Path ([IO.Path]::GetTempPath()) ("de-pdf-{0}" -f ([guid]::NewGuid()))
-        $argList = @('--headless=new', '--disable-gpu', '--no-first-run', "--user-data-dir=`"$profileDir`"", '--no-pdf-header-footer', "--print-to-pdf=`"$PdfPath`"", $uri)
+        $argList = @('--headless=new', '--disable-gpu', '--no-first-run', "--user-data-dir=`"$profileDir`"", '--no-pdf-header-footer', "--print-to-pdf=`"$tmpPdf`"", $uri)
         $p = Start-Process -FilePath $browser -ArgumentList $argList -PassThru -WindowStyle Hidden -WhatIf:$false   # a local PDF of the report, part of the run's record
-        if (-not $p.WaitForExit($TimeoutSeconds * 1000)) { try { $p.Kill() } catch { } }
+        if (-not $p.WaitForExit($TimeoutSeconds * 1000)) {
+            # a timed-out print is never used: its PDF may be partial. End the whole browser tree, not just the launcher.
+            try { $null = & taskkill.exe /PID $p.Id /T /F 2>&1 } catch { }
+            try { $p.Kill() } catch { }
+            return $null
+        }
+        for ($i = 1; $i -le 5; $i++) {
+            if (Test-Path -LiteralPath $tmpPdf) { try { Copy-Item -LiteralPath $tmpPdf -Destination $PdfPath -Force -ErrorAction Stop -WhatIf:$false; return $PdfPath } catch { Remove-Item -LiteralPath $PdfPath -Force -ErrorAction SilentlyContinue -WhatIf:$false } }
+            Start-Sleep -Seconds 1
+        }
+    } catch {
+    } finally {
+        Remove-Item -LiteralPath $tmpPdf -Force -ErrorAction SilentlyContinue -WhatIf:$false
         Remove-Item -LiteralPath $profileDir -Recurse -Force -ErrorAction SilentlyContinue -WhatIf:$false
-        if (Test-Path -LiteralPath $PdfPath) { return $PdfPath }
-    } catch { }
+    }
     return $null
 }
 
