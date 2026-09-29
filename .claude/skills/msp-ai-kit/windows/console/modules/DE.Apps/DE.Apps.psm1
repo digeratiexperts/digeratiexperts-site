@@ -267,7 +267,7 @@ function Register-DEAppsActions {
             -Detect { $p = Get-DEPackage -Id $pkgId; @{ installed = (Test-DEPackageInstalled -Package $p).installed } }.GetNewClosure() -Desired { @{ installed = $false } } `
             -Apply { param($state) $r = Invoke-DEPackageUninstall -Id $pkgId; if (-not $r.ok) { throw $r.detail }; $r.detail }.GetNewClosure()
     }
-    Register-DEAction -Id 'apps.m365.readiness' -Module 'apps' -Title 'Microsoft 365 readiness (UPN, Office, Outlook, Teams, OneDrive sign-in)' -Phase 10 `
+    Register-DEAction -Id 'apps.m365.readiness' -Module 'apps' -Title 'Microsoft 365 readiness (UPN, Office, Outlook, Teams, OneDrive sign-in)' -Phase 10 -Gates @('gate.user-session') `
         -Detect { $ctx = Get-DEContext; $r = Get-DEM365Readiness -ExpectedUpn $ctx['endUserEmail']; @{ officeInstalled = $r.officeInstalled; teamsInstalled = $r.teamsInstalled; upnMatches = $(if ($null -eq $r.upnMatches) { 'unknown' } else { $r.upnMatches }); outlookProfiles = $r.outlookProfiles.Count } } `
         -Desired { @{ officeInstalled = $true; teamsInstalled = $true; upnMatches = $true } } `
         -ManualAction 'Sign the end user into Office, Outlook, Teams and OneDrive with their work account after the identity migration; the console verifies, it cannot enter their credentials.'
