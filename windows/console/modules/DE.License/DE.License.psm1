@@ -108,7 +108,7 @@ function Get-DELicenseStatus {
     $t = Test-DELicenseToken -Token $tok
     if ($t.valid) { $now = (Get-Date).ToUniversalTime(); $last = Get-DEState -Path 'license.lastSeen'; if (-not $last -or $now -gt ([datetime]$last).ToUniversalTime()) { Set-DEStateValue -Path 'license.lastSeen' -Value $now.ToString('o') } }
     $c = $t.claims
-    return [pscustomobject]@{ state = $t.state; valid = $t.valid; reason = $t.reason; technician = $(if ($c) { "$($c.sub)" }); clients = @($(if ($c) { $c.clients })); features = @($(if ($c) { $c.features })); expires = $(if ($t.valid) { $t.expires.ToString('o') }); id = $(if ($c) { "$($c.jti)" }); enforce = $pol.enforce; build = $b.buildId }
+    return [pscustomobject]@{ state = $t.state; valid = $t.valid; reason = $t.reason; technician = $(if ($c) { "$($c.sub)" } else { $null }); clients = @($(if ($c) { $c.clients })); features = @($(if ($c) { $c.features })); expires = $(if ($t.valid) { $t.expires.ToString('o') } else { $null }); id = $(if ($c) { "$($c.jti)" } else { $null }); enforce = $pol.enforce; build = $b.buildId }
 }
 function Test-DELicenseFor {
     <#

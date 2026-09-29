@@ -65,3 +65,25 @@ Describe 'Boot rescue never writes key digits' {
         $r.ok | Should -Be $false; $r.badGroup | Should -Be 1; $r.reason | Should -Not -Match '\d{6}'
     }
 }
+
+Describe 'Windows PowerShell 5.1: an unset value is {} in JSON' {
+    It 'no object literal holds $(if ...) without an else (5.1 writes the empty result as {}, which reads back as a truthy object and breaks Hub contracts)' {
+        $root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+        $files = @(Get-ChildItem -LiteralPath (Join-Path $root 'console/modules'), (Join-Path $root 'microsoft'), (Join-Path $root 'rescue') -Recurse -Include '*.ps1', '*.psm1' -File) + @(Get-Item -LiteralPath (Join-Path $root 'console/DETechConsole.ps1'))
+        $hits = foreach ($f in $files) {
+            $t = $null; $e = $null
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$t, [ref]$e)
+            foreach ($h in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.HashtableAst] }, $true)) {
+                foreach ($kv in $h.KeyValuePairs) {
+                    $v = $kv.Item2
+                    if (-not ($v -is [System.Management.Automation.Language.PipelineAst] -and $v.PipelineElements.Count -eq 1)) { continue }
+                    $x = $v.PipelineElements[0].Expression
+                    if ($x -isnot [System.Management.Automation.Language.SubExpressionAst]) { continue }
+                    $st = @($x.SubExpression.Statements)
+                    if ($st.Count -eq 1 -and $st[0] -is [System.Management.Automation.Language.IfStatementAst] -and -not $st[0].ElseClause) { "$($f.Name):$($kv.Item1.Extent.StartLineNumber) $($kv.Item1.Extent.Text)" }
+                }
+            }
+        }
+        @($hits) -join '; ' | Should -Be ''
+    }
+}

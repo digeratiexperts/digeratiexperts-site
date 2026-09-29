@@ -1016,7 +1016,7 @@ function Build-Discovery {
         'BitLocker' = @{ osEncrypted = $snap.bitlocker.osEncrypted; protectionOn = $snap.bitlocker.osProtectionOn; recoveryProtectorIds = (@($snap.bitlocker.os.recoveryProtectorIds) -join ', ') }
         'OneDrive' = @{ classification = $snap.onedrive.classification; running = $snap.onedrive.running; accounts = (@($snap.onedrive.accounts | ForEach-Object { "$($_.type):$($_.email)" }) -join ', ') }
         'Security agents' = @{ edr = ($snap.agents.edrPresent -join ', '); conflicting = ($snap.agents.conflictingEdr -join ', '); installed = (@($snap.agents.agents.Keys | Where-Object { $snap.agents.agents[$_].installed }) -join ', ') }
-        'Browsers' = @{ default = $snap.browsers.defaultBrowser; chrome = $(if ($snap.browsers.chrome) { $snap.browsers.chrome.version }); edge = $(if ($snap.browsers.edge) { $snap.browsers.edge.version }) }
+        'Browsers' = @{ default = $snap.browsers.defaultBrowser; chrome = $(if ($snap.browsers.chrome) { $snap.browsers.chrome.version } else { $null }); edge = $(if ($snap.browsers.edge) { $snap.browsers.edge.version } else { $null }) }
         'Network' = @{ gateway = $snap.network.gateway; dns = ($snap.network.dns -join ', '); wifiProfiles = ($snap.network.wifiProfiles -join ', ') }
     }
     $wrap = New-Object System.Windows.Controls.WrapPanel

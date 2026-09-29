@@ -42,7 +42,7 @@ function New-DEWarrantyResult {
     return [pscustomobject]@{
         serial = $Serial; manufacturer = $Manufacturer; vendor = $Vendor; source = $Source; status = $Status
         start = $(if ($start) { $start.ToString('yyyy-MM-dd') } else { $null }); end = $(if ($end) { $end.ToString('yyyy-MM-dd') } else { $null }); daysLeft = $days
-        entitlements = @($Entitlements | ForEach-Object { [pscustomobject]@{ name = $_.name; start = $(if ($_.start) { $_.start.ToString('yyyy-MM-dd') }); end = $(if ($_.end) { $_.end.ToString('yyyy-MM-dd') }) } })
+        entitlements = @($Entitlements | ForEach-Object { [pscustomobject]@{ name = $_.name; start = $(if ($_.start) { $_.start.ToString('yyyy-MM-dd') } else { $null }); end = $(if ($_.end) { $_.end.ToString('yyyy-MM-dd') } else { $null }) } })
         checkUrl = $CheckUrl; detail = $Detail; fetchedAt = (Get-Date).ToString('o')
     }
 }
@@ -134,7 +134,7 @@ function Set-DEWarrantyManual {
     param([Parameter(Mandatory = $true)][string]$Serial, [Parameter(Mandatory = $true)][datetime]$End, [datetime]$Start, [string]$Note, [string]$Technician)
     if ($PSCmdlet.ShouldProcess($Serial, "record warranty end $($End.ToString('yyyy-MM-dd'))")) {
         $by = $(if ($Technician) { $Technician } else { "$(Get-DEState -Path 'settings.technician')" })
-        Set-DEStateValue -Path "warranty.manual.$($Serial -replace '[^A-Za-z0-9]', '')" -Value @{ end = $End.ToString('yyyy-MM-dd'); start = $(if ($Start) { $Start.ToString('yyyy-MM-dd') }); note = $Note; by = $by; at = (Get-Date).ToString('o') }
+        Set-DEStateValue -Path "warranty.manual.$($Serial -replace '[^A-Za-z0-9]', '')" -Value @{ end = $End.ToString('yyyy-MM-dd'); start = $(if ($Start) { $Start.ToString('yyyy-MM-dd') } else { $null }); note = $Note; by = $by; at = (Get-Date).ToString('o') }
         Set-DEStateValue -Path "warranty.lookups.$($Serial -replace '[^A-Za-z0-9]', '')" -Value $null
     }
 }
