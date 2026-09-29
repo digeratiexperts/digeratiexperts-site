@@ -335,6 +335,26 @@ the email migration engine (consumer Gmail to Microsoft 365):
 Start with its [README](microsoft/DE-Microsoft-Admin/README.md). The rules every migration follows are
 in [MIGRATION-STANDARD.md](microsoft/DE-Microsoft-Admin/MIGRATION-STANDARD.md).
 
+### The Email migration page
+
+The window's **Email migration** page does the on-device part and shows where a project stands.
+
+- **Scan this PC for Gmail.** Run as administrator, it reads every Windows account on the PC: Outlook
+  profiles, Thunderbird and scheduled scripts. Saved Windows passwords (Credential Manager) are private to
+  each account. For accounts other than the one running the tool, the scan lists them as not checked and
+  never counts them as clean. The result is saved under `evidence\migration` and added to the evidence
+  bundle.
+- **Record the scan.** If the project is on this PC, the scan is recorded on it. If not, take the saved
+  file to the admin PC and use **Import a PC's scan** there, or run `Import-DEMailClientInventory`.
+- **Where the project stands.** On the PC that holds the project, the page shows its stage, the next step
+  and the exact command for it, the sign-off checklist, each mailbox, each PC and the bounces.
+  `Get-DEMigrationNextStep` works out the next step from what has been recorded.
+- **Bounces.** **Diagnose a bounce** opens a saved `.eml`. **Record what was changed** closes a finding.
+- **Hub record.** **Export the record** writes the Hub record.
+
+Changes to the tenant stay in PowerShell, where you sign in to it: batches, DNS, sign-off and close. The
+page never asks for a password.
+
 ## Evidence reports
 
 Each run writes a hashed evidence bundle to `evidence\` containing two reports, both as HTML and as PDF:
