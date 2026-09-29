@@ -4,6 +4,9 @@ $script:ConsoleRoot = Split-Path -Parent $PSScriptRoot
 $script:Fixtures = Join-Path $PSScriptRoot 'fixtures'
 
 function Initialize-TestConsole {
+    # Pester 5 runs every test file in one session: drop console modules another test imported from a copy, or
+    # 'Mock -ModuleName DE.Core' refuses to run with two modules of that name loaded
+    Get-Module -Name 'DE.*' | Where-Object { $_.Path -and $_.Path -notlike "$script:ConsoleRoot*" } | Remove-Module -Force -ErrorAction SilentlyContinue
     Import-Module (Join-Path $script:ConsoleRoot 'modules/DE.Workflow/DE.Workflow.psm1') -Force -DisableNameChecking
     Import-DEConsoleModules -Root $script:ConsoleRoot
     $dir = Join-Path ([IO.Path]::GetTempPath()) ("de-console-test-{0}" -f ([guid]::NewGuid()))

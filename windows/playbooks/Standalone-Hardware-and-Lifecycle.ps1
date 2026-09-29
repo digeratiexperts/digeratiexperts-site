@@ -16,11 +16,12 @@ param(
     [string[]]$AddOn = @(),
     [string]$Order,
     [switch]$PromptSecrets,
-    [string]$Technician = 'jrpetro'
+    [string]$Technician   # asked once per machine and remembered when not given
 )
 $console = Join-Path (Join-Path (Split-Path -Parent $PSScriptRoot) 'console') 'DETechConsole.ps1'
 if (-not (Test-Path -LiteralPath $console)) { Write-Error "DE Tech Tool not found at $console (keep this script in windows\playbooks)"; exit 2 }
-$argList = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $console, '-Headless', '-Client', $Client, '-Mode', $Mode, '-Technician', $Technician, '-Solution', 'hardware_lifecycle')
+$argList = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $console, '-Headless', '-Client', $Client, '-Mode', $Mode, '-Solution', 'hardware_lifecycle')
+if ($Technician) { $argList += @('-Technician', $Technician) }
 if ($Apply) { $argList += '-Apply' }
 if ($Order) { $argList += @('-Order', $Order) }
 if ($PromptSecrets) { $argList += '-PromptSecrets' }

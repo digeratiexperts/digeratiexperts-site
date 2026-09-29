@@ -44,6 +44,7 @@
     "lineOfBusiness": [],
     "remove": []
   },
+  "updates": { "authority": "jumpcloud", "_note": "jumpcloud (default) | intune for Microsoft-only clients | windows when DE Tech Tool sets the automatic-update policy" },
   "m365": { "tenantDomain": "", "licenseSku": "", "verifyUpn": true },
   "branding": {
     "clientLogo": "asset:clients/alamo/alamo-mark.png",

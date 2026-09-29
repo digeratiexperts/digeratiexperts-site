@@ -27,7 +27,7 @@ running. The zip itself is not a script; do not pass it to `-File`.
 |---|---|
 | The window | Double-click `Start-DETechTool.cmd`. It asks for elevation because provisioning changes the machine. `Start-DETechConsole.cmd` remains as a compatibility alias for older packages. |
 | Only the AI prompt packs | Double-click `Start-MspAiKit.cmd`. The console opens on the AI Toolkit page. |
-| RMM, no window | `console\DETechConsole.ps1 -Headless -Client alamo -Mode takeover`. It audits and changes nothing. |
+| RMM, no window | `console\DETechConsole.ps1 -Headless -Client alamo -Mode takeover -Technician jrpetro -ResultFile C:\DE\result.json`. It audits and changes nothing. `-ResultFile` writes the outcome as JSON (overall, exit code, restart needed, next step). |
 | RMM, apply | Add `-Apply`. Run the console with `-WhatIf` first to see the plan. |
 | A ProActive tier or standalone solution | Run its script in `playbooks\` (below), or add `-Bundle <id>` / `-Solution <id>` to the headless command. |
 | Let discovery choose the mode | `-Mode auto`. DE Tech Tool prints the recommended mode and why, then runs it. |
@@ -44,8 +44,9 @@ build the AI packs, and the AI Toolkit page offers to install it for the current
    OneDrive, apps, updates and network.
 2. **Client detection** picks the client profile from the tenant, hostname pattern and profile folders.
    It shows why it chose that client, and the technician confirms or picks another.
-3. **The technician stays separate from the end user.** The technician is Joe (`jrpetro`) by default.
-   The end user is detected separately: for example `AzureAD\SuzetteThompson` at Alamo becomes the
+3. **The technician stays separate from the end user.** The first time DE Tech Tool opens on a machine it
+   asks who is running it (Enter keeps `jrpetro`) and remembers the answer; RMM runs pass `-Technician`.
+   Evidence and the Hub record name that person. The end user is detected separately: for example `AzureAD\SuzetteThompson` at Alamo becomes the
    local account `sthompson`.
 4. **Pick a plan and a mode.** The plan is a ProActive tier, a variant (GCC High, Co-Managed IT), or a
    standalone solution; the client profile's `plan` section is the default. The modes are audit, new,
@@ -55,7 +56,8 @@ build the AI packs, and the AI Toolkit page offers to install it for the current
 5. **The Guided workflow page always shows the next action and why.** Actions run in phases. Each
    action waits for its gates, and a closed gate names the step that opens it.
 6. **Restarts resume.** A step that needs a restart registers the console to reopen after sign-in and
-   continue where it stopped.
+   continue where it stopped. Headless runs stop at a queued restart (`RESULT: RESTART REQUIRED`, exit 1)
+   instead of applying later phases on top of it; run the same command again after the restart.
 7. **Evidence and Hub.** The Evidence page writes a hashed bundle and pushes it to the Hub. The bundle
    holds JSON, internal and client-safe reports and a sha256 manifest. Each report comes as HTML and
    as a PDF printed by headless Edge or Chrome.
@@ -73,6 +75,21 @@ exception:
 - The source user is signed out, and no reboot is pending.
 - The JumpCloud user exists and maps to the intended local account.
 - There is no dual MDM, and the security stack verified.
+- The migration takes a registry backup of ProfileList first and refuses to run without one.
+
+**Entra leave is its own step.** By default the migration keeps the laptop Entra-joined; "Leave Entra"
+unlocks only after "Verify migration" passes (local account exists, owns the preserved profile by SID).
+A client profile can keep the device joined for good (`identity.leaveEntra: false`: only the user moves to
+the local, JumpCloud-bound account), or opt into ADMU's one-step leave (`identity.leaveEntraDuringMigration:
+true`). A device that stays Entra-joined and Intune-enrolled trips the dual-MDM gate once JumpCloud manages it.
+
+**Updates.** `updates.authority` in the client profile says who keeps Windows updated after handoff:
+`jumpcloud` (default: JumpCloud Patch Management), `intune` (Microsoft-only clients) or `windows` (DE Tech
+Tool sets the automatic-update policy). The check "Update authority in place" always runs, whichever it is.
+
+**Deprovision** removes DE-BreakGlass only when the client has its own enabled local administrator, and
+only after user data preservation is confirmed. The order-match, GCC High, data and client-admin gates
+cannot be opened by an exception.
 
 A failed or skipped control never shows as a green check. An exception needs a reason, an approver and an
 expiry date. It shows as EXCEPTION everywhere, including readiness.
@@ -157,7 +174,8 @@ The scripts are generated from the catalog by `packaging\New-DEPlaybooks.ps1`. R
 ```
 
 This writes `packaging\out\dropship\DE-Dropship-<order>\` and a zip with a `.sha256` file. The kit holds
-`order.json`, `FirstBoot.cmd`, a one-page `README.txt`, and DE Tech Tool with the composed client profile.
+`order.json`, `profile.json` (the composed client profile), `FirstBoot.cmd`, a one-page `README.txt`, and
+DE Tech Tool copied unchanged, so a signed release still matches its integrity manifest at first boot.
 On the new device, `FirstBoot.cmd` elevates and runs DE Tech Tool headless in dropship mode:
 
 - It first checks this is the unit on the order (serial, then model). On a different machine it stops
@@ -166,9 +184,12 @@ On the new device, `FirstBoot.cmd` elevates and runs DE Tech Tool headless in dr
 - Secrets are never in the kit. The technician types them when asked (masked, memory only), or RMM
   supplies `DE_SECRET_<NAME>`. With no console to type into, DE Tech Tool says which secrets it did not
   ask for, and the steps that need them read BLOCKED.
-- It says READY only when the tool's own result is READY. Otherwise it says NOT READY with the next step.
+- It says READY only when the tool's own result file says READY. Otherwise it says NOT READY or BLOCKED
+  with the next step.
 
-An order without a serial still works, but only the model is checked, and the builder warns you.
+**Order without a serial.** The kit still builds (the builder warns). At first boot the technician types the
+serial from the chassis sticker; it must equal this machine's own serial, and the order's model is still
+checked. With nobody at the device (RMM), such an order is refused before any change.
 
 ## Client profiles
 
@@ -206,7 +227,10 @@ DE fills in the real download source and hash:
 |---|---|
 | 0 | Ready, or ready with exceptions |
 | 1 | Not ready: a control failed, or work is still in progress or has not run |
-| 2 | Blocked: a gate, secret or elevation is missing, the console files were changed after packaging, or a dropship order names a different device |
+| 2 | Blocked or refused: a gate, secret or elevation is missing, the console files were changed after packaging, the client profile is unknown, or a dropship order names a different device |
+
+The launchers (`Start-DETechTool.cmd`, and `Start-DETechConsole.cmd`, which forwards to it) return these
+codes unchanged.
 | 3 | RMM deploy only: download or verification failure |
 
 ## Data folders

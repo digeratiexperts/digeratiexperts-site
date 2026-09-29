@@ -70,10 +70,12 @@ function Invoke-DEBaselineAssessment {
 function Register-DEBaselineActions {
     param($ClientProfile)
     $profileName = Get-DEHashPath -Object $ClientProfile -Path 'security.baselineProfile'; if (-not $profileName) { $profileName = 'de-windows-baseline' }
-    $jcPatch = $true
+    # the Windows automatic-update setting is DE Tech Tool's to enforce only when the client's update authority is
+    # 'windows'; JumpCloud (the default) and Intune enforce their own, and maint.update-authority checks whichever it is
+    $authority = "$(Get-DEHashPath -Object $ClientProfile -Path 'updates.authority')"; if (-not $authority) { $authority = 'jumpcloud' }
     foreach ($c in Get-DEBaselineControls -Profile $profileName) {
         $ctl = $c
-        if ($ctl.id -eq 'wu-auto' -and $jcPatch) { continue }  # JumpCloud patch policy is the update authority for DE-managed endpoints
+        if ($ctl.id -eq 'wu-auto' -and $authority -ne 'windows') { continue }
         $gates = @('gate.elevated'); if ((Get-DECfgProp $ctl 'scope') -eq 'user') { $gates = @() }
         Register-DEAction -Id "baseline.$($ctl.id)" -Module 'baseline' -Title $ctl.title -Phase 11 -Gates $gates -RequiresElevation:((Get-DECfgProp $ctl 'scope') -ne 'user') `
             -Detect { $s = Get-DEBaselineControlState -Control $ctl; @{ ok = $s.ok; have = "$($s.have)"; detail = $s.detail } }.GetNewClosure() `

@@ -638,3 +638,41 @@ Describe 'Fixes from the function-by-function review' {
         $res.overall | Should -Not -Match '^READY'
     }
 }
+
+Describe 'Choices Joe made in review' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1')
+        $global:DETest = @{ Dir = Initialize-TestConsole; Exe = (Get-Process -Id $PID).Path; Alamo = Get-DEClientProfile -Id 'alamo' }
+    }
+    It 'updates: JumpCloud is the default authority and is checked; Intune and Windows are per-client options' {
+        $ids = @(Initialize-DEWorkflow -ClientProfile $global:DETest.Alamo -Mode 'new')
+        $ids | Should -Contain 'maint.update-authority'
+        $ids | Should -Not -Contain 'baseline.wu-auto'
+        (Get-DEAction 'maint.update-authority').Title | Should -Match 'jumpcloud'
+        $p = ConvertTo-DEHashtable $global:DETest.Alamo; $p['updates'] = @{ authority = 'windows' }
+        @(Initialize-DEWorkflow -ClientProfile $p -Mode 'new') | Should -Contain 'baseline.wu-auto'
+        $p['updates'] = @{ authority = 'intune' }
+        $null = Initialize-DEWorkflow -ClientProfile $p -Mode 'new'
+        # this test machine is not Intune-enrolled, so an Intune authority must read as not in place
+        if ($env:OS -ne 'Windows_NT') { (Get-DEActionState -Id 'maint.update-authority').Status | Should -Be 'DRIFT' }
+        $p['updates'] = @{ authority = 'jumpcloudd' }
+        $null = Initialize-DEWorkflow -ClientProfile $p -Mode 'new'
+        (Get-DEActionState -Id 'maint.update-authority').Drift -join ' ' | Should -Match 'ready'
+    }
+    It 'an order without a serial is refused when there is no one at the device to read it' {
+        $o = Get-Content -LiteralPath (Join-Path $script:ConsoleRoot 'catalog/orders/example-dropship-order.json') -Raw | ConvertFrom-Json
+        $o.device.serial = ''
+        $f = Join-Path $global:DETest.Dir 'noserial.json'; $o | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $f -Encoding UTF8
+        $out = $null | & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $script:ConsoleRoot 'DETechConsole.ps1') -Headless -Order $f -Apply -Mode dropship -Technician 'test' -DataDir (Join-Path $global:DETest.Dir 'ns') 2>&1 | ForEach-Object { "$_" }
+        $LASTEXITCODE | Should -Be 2
+        ($out -join "`n") | Should -Match 'no serial number and there is no one at the device'
+    }
+    It 'the technician is remembered on the machine after the first run' {
+        $data = Join-Path $global:DETest.Dir 'tech'
+        $null | & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $script:ConsoleRoot 'DETechConsole.ps1') -Headless -Client alamo -Solution technology_strategy -Technician 'akim' -DataDir $data 2>&1 | Out-Null
+        $state = Get-ChildItem -LiteralPath (Join-Path $data 'state') -Filter '*.json' | Where-Object { $_.Name -notlike 'exceptions*' -and $_.Name -notlike 'gui-*' } | Select-Object -First 1
+        (Get-Content -LiteralPath $state.FullName -Raw | ConvertFrom-Json).settings.technician | Should -Be 'akim'
+        $out = $null | & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $script:ConsoleRoot 'DETechConsole.ps1') -Headless -Client alamo -Solution technology_strategy -DataDir $data 2>&1 | ForEach-Object { "$_" }
+        ($out -join "`n") | Should -Not -Match 'recorded as jrpetro'
+    }
+}

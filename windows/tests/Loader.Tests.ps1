@@ -83,6 +83,7 @@ Describe 'Packaging: integrity manifest and tamper detection' {
         $i = Test-DEConsoleIntegrity -Root (Join-Path $script:Copy 'console')
         $i.status | Should -Be 'tampered'
         ($i.problems -join ' ') | Should -Match 'vendors.json'
+        Get-Module -Name 'DE.*' | Where-Object { $_.Path -like "$script:Copy*" } | Remove-Module -Force   # leave no second DE.Core behind for later test files
     }
     It 'the RMM deploy script refuses a package whose sha256 does not match' {
         $zip = Join-Path $script:Copy 'pkg.zip'; Compress-Archive -Path (Join-Path $script:Copy 'console') -DestinationPath $zip

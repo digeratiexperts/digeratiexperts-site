@@ -41,7 +41,7 @@ param(
     [string]$ProfileFile,
     [string]$ResultFile,
     [switch]$Apply,
-    [string]$Technician = 'jrpetro',
+    [string]$Technician,   # asked once on this machine and remembered; RMM passes it
     [string]$DataDir,
     [switch]$SmokeTest,
     [string]$SmokeClient = 'alamo',
@@ -70,6 +70,14 @@ if ($Headless) {
     }
     $null = Initialize-DEConsole -Root $ConsoleRoot -Mode $(if ($Apply) { 'Apply' } else { 'Audit' }) -DataDir $DataDir -DryRun:$WhatIfPreference
     $null = Clear-DERebootQueueIfRestarted   # restarts already done since they were queued no longer hold phases back
+    # the technician is asked once per machine and remembered; an RMM run without -Technician is recorded as jrpetro
+    $interactiveRun = [Environment]::UserInteractive; try { if ([Console]::IsInputRedirected) { $interactiveRun = $false } } catch { $interactiveRun = $false }
+    if ($Technician) { Set-DEStateValue -Path 'settings.technician' -Value $Technician }
+    else {
+        $Technician = "$(Get-DEState -Path 'settings.technician')"
+        if (-not $Technician -and $interactiveRun) { $t = "$(Read-Host -Prompt 'DE technician running this (press Enter for jrpetro)')".Trim(); $Technician = $(if ($t) { $t } else { 'jrpetro' }); Set-DEStateValue -Path 'settings.technician' -Value $Technician }
+        if (-not $Technician) { $Technician = 'jrpetro'; Write-Host 'TECHNICIAN: not given; recorded as jrpetro (pass -Technician <name> from RMM)' }
+    }
     $integrity = Write-DEIntegrityEvidence
     if ($Apply -and $integrity.status -eq 'tampered') { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message ('REFUSED: console files changed after packaging: ' + ($integrity.problems -join '; ')) -Next 'Re-download the signed package and compare its sha256.' }
     # powershell.exe -File passes '-Solution a,b' as one string: accept comma-separated lists from RMM command lines
@@ -114,9 +122,23 @@ if ($Headless) {
     $null = New-DEProvisioningContext -Snapshot $snap -ClientId $Client -Mode $Mode -Technician $Technician
     if ($Order) {
         $null = Import-DEOrderManifest -Path $Order   # re-apply the order's end user over the discovered one
+        $canAsk = [Environment]::UserInteractive; try { if ([Console]::IsInputRedirected) { $canAsk = $false } } catch { $canAsk = $false }
+        if ($Apply -and -not "$(Get-DEHashPath -Object (Get-DEOrder) -Path 'device.serial')".Trim()) {
+            # the order has no serial yet: the technician at the device reads it off the chassis sticker, and it must be
+            # this machine's own serial; the order's model is still checked below. No console means no one to ask.
+            $haveSerial = "$(Get-DEHashPath -Object $snap -Path 'device.serial')".Trim()
+            if (-not $canAsk) { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message 'REFUSED: the order has no serial number and there is no one at the device to read it. Nothing was changed.' -Next 'Add the serial from the ship notice to order.json, or run FirstBoot at the device.' }
+            $typed = "$(Read-Host -Prompt 'The order has no serial yet. Type the serial number from the sticker on this device')".Trim()
+            if (-not $typed -or -not $haveSerial -or $typed -ine $haveSerial) {
+                Add-DEEvidence -Step 'order.verify-device' -Module 'order' -Before 'order without serial' -ActionTaken 'serial typed at the device did not match' -Result 'BLOCKED' -Verification ("typed '{0}', device reports '{1}'" -f $typed, $haveSerial) | Out-Null
+                Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message ("REFUSED: the serial typed ('{0}') is not this device's serial ('{1}'). Nothing was changed." -f $typed, $haveSerial) -Next 'Check you are at the right device and read the sticker again.'
+            }
+            $o = Get-DEOrder; $o['device']['serial'] = $haveSerial; $o['device']['serialSource'] = 'typed at first boot, matched the device'; Set-DEStateValue -Path 'order' -Value $o
+            Add-DEEvidence -Step 'order.serial-confirmed' -Module 'order' -Before 'order without serial' -ActionTaken 'serial read from the sticker and matched the device' -Result 'PASS' -Verification "serial $haveSerial" | Out-Null
+        }
         $match = Test-DEOrderMatch -Device (Get-DEHashPath -Object $snap -Path 'device')
         Write-Host ("ORDER: {0} ({1})" -f $match.Status, $match.Detail)
-        if ($Apply -and $match.Status -ne 'PASS' -and -not ($match.Status -eq 'WARN' -and $match.Detail -like '*names no serial*')) {
+        if ($Apply -and $match.Status -ne 'PASS') {
             # the wrong (or an unidentifiable) unit is never provisioned: stop before any change, with evidence of why
             Add-DEEvidence -Step 'order.verify-device' -Module 'order' -Before 'order loaded' -ActionTaken 'provisioning refused' -Result 'BLOCKED' -Verification $match.Detail | Out-Null
             $b = Export-DEEvidenceBundle -Snapshot $snap -ClientProfile $clientProf
@@ -164,7 +186,7 @@ if ([Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
         $smokeArgs = @($smokeArgs | ForEach-Object { & $q $_ })
         $p = Start-Process -FilePath $exe -ArgumentList $smokeArgs -Wait -PassThru -NoNewWindow; exit $p.ExitCode
     }
-    $argsList = @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath, '-Page', $Page, '-Technician', $Technician); if ($Resume) { $argsList += '-Resume' }; if ($DataDir) { $argsList += @('-DataDir', $DataDir) }
+    $argsList = @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath, '-Page', $Page); if ($Technician) { $argsList += @('-Technician', $Technician) }; if ($Resume) { $argsList += '-Resume' }; if ($DataDir) { $argsList += @('-DataDir', $DataDir) }
     $argsList = @($argsList | ForEach-Object { & $q $_ })
     Start-Process -FilePath $exe -ArgumentList $argsList | Out-Null; exit 0
 }
@@ -177,9 +199,11 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, Sys
 
 $null = Initialize-DEConsole -Root $ConsoleRoot -Mode Audit -DataDir $DataDir
 $settingsPath = Join-Path (Get-DEConsole).Dirs.State 'gui-settings.json'
-$Settings = @{ technician = $Technician; client = ''; mode = 'audit'; lastPage = $Page; hubEndpoint = ''; dryRun = $true }
+$Settings = @{ technician = "$Technician"; client = ''; mode = 'audit'; lastPage = $Page; hubEndpoint = ''; dryRun = $true }
 if (Test-Path -LiteralPath $settingsPath) { try { $loaded = ConvertTo-DEHashtable (Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json); foreach ($k in $loaded.Keys) { $Settings[$k] = $loaded[$k] } } catch { } }
 function Save-GuiSettings { try { $Settings | ConvertTo-Json | Set-Content -LiteralPath $settingsPath -Encoding UTF8 } catch { } }
+if ($Technician) { $Settings.technician = $Technician }
+if (-not $Settings.technician) { $Settings.technician = "$(Get-DEState -Path 'settings.technician')" }
 if ($Settings.hubEndpoint) { Set-DEStateValue -Path 'settings.hub.endpoint' -Value $Settings.hubEndpoint }
 
 $highContrast = [System.Windows.SystemParameters]::HighContrast
@@ -487,11 +511,11 @@ function Confirm-GuiPlanStep {
 }
 function Get-LauncherPath { foreach ($n in @('Start-DETechTool.cmd', 'Start-DETechConsole.cmd')) { $p = Join-Path (Split-Path -Parent $ConsoleRoot) $n; if (Test-Path -LiteralPath $p) { return $p } }; return (Join-Path (Split-Path -Parent $ConsoleRoot) 'Start-DETechTool.cmd') }
 function Read-GuiText {
-    param([string]$Title, [string]$Prompt, [switch]$Secret)
+    param([string]$Title, [string]$Prompt, [switch]$Secret, [string]$Default = '')
     $dlg = New-Object System.Windows.Window; $dlg.Title = $Title; $dlg.Width = 460; $dlg.SizeToContent = 'Height'; $dlg.WindowStartupLocation = 'CenterOwner'; $dlg.Owner = $Win; $dlg.Background = $Win.Background; $dlg.Foreground = $Win.Foreground; $dlg.FontFamily = $Win.FontFamily
     $sp = New-El StackPanel @{ Margin = '18' }
     [void]$sp.Children.Add((New-Text $Prompt -Wrap))
-    $box = $(if ($Secret) { New-El PasswordBox @{ Name = $Prompt } } else { New-El TextBox @{ Name = $Prompt } }); [void]$sp.Children.Add($box)
+    $box = $(if ($Secret) { New-El PasswordBox @{ Name = $Prompt } } else { New-El TextBox @{ Name = $Prompt; Text = $Default } }); [void]$sp.Children.Add($box)
     $ok = New-Button 'OK' { $dlg.DialogResult = $true }.GetNewClosure() -Primary; $cancel = New-Button 'Cancel' { $dlg.DialogResult = $false }.GetNewClosure()
     [void]$sp.Children.Add((New-Wrap @($ok, $cancel))); $dlg.Content = $sp; $box.Focus() | Out-Null
     if ($dlg.ShowDialog()) { if ($Secret) { return $box.SecurePassword } else { return $box.Text } }
@@ -840,8 +864,8 @@ if ($SmokeTest) {
         return $null
     }
     try {
-        $S.Mode = 'takeover'; $Settings.technician = $Technician
-        Use-ClientAndMode -ProfileId $SmokeClient -Mode 'takeover' -Technician $Technician
+        $S.Mode = 'takeover'; $Settings.technician = $(if ($Technician) { $Technician } else { 'jrpetro' })
+        Use-ClientAndMode -ProfileId $SmokeClient -Mode 'takeover' -Technician $Settings.technician
         if ($S.LastJobError) { $failed += "use client and mode: $($S.LastJobError)" }
         if (-not @(Get-DEActions -Mode 'takeover').Count) { $failed += 'use client and mode: no plan was built' } else { Write-Host 'SMOKE PASS use client and mode' }
         # A failing button must report, not throw.
@@ -854,9 +878,9 @@ if ($SmokeTest) {
         Start-DEJob -Label 'Full audit' -Work { $null = Invoke-DEAudit -Mode $JobMode }
         $e = Wait-SmokeJob 'audit job'; if ($e) { $failed += $e } else { Write-Host ("SMOKE PASS audit job ({0} evidence rows)" -f @(Get-DEEvidence).Count) }
         # the plan picker: a standalone solution loads as not DE managed, then a ProActive tier for the page renders
-        Use-ClientAndMode -ProfileId $SmokeClient -Mode 'new' -Technician $Technician -Solution @('identity_access')
+        Use-ClientAndMode -ProfileId $SmokeClient -Mode 'new' -Technician $Settings.technician -Solution @('identity_access')
         if ($S.Profile.plan.managed -ne $false -or -not @(Get-DEActions -Mode 'new').Count) { $failed += 'standalone plan did not load' } else { Write-Host 'SMOKE PASS standalone plan' }
-        Use-ClientAndMode -ProfileId $SmokeClient -Mode 'takeover' -Technician $Technician -Bundle 'proactive-business'
+        Use-ClientAndMode -ProfileId $SmokeClient -Mode 'takeover' -Technician $Settings.technician -Bundle 'proactive-business'
         if ("$($S.Profile.plan.bundle)" -ne 'proactive-business') { $failed += 'ProActive plan did not load' } else { Write-Host 'SMOKE PASS ProActive plan' }
         $rec = Get-DERecommendedMode -Snapshot $S.Snapshot -ClientProfile $S.Profile; if (-not $rec.mode) { $failed += 'no recommended mode' } else { Write-Host "SMOKE PASS recommended mode $($rec.mode)" }
     } catch { $failed += "setup: $($_.Exception.Message)" }
@@ -894,6 +918,12 @@ $Win.Dispatcher.Add_UnhandledException({
     try { Set-Status $msg } catch { }
 })
 $Win.Add_ContentRendered({
+    if (-not $Settings.technician -and -not $SmokeTest) {
+        # first time on this machine: ask who is running the tool, once; evidence and the Hub record name this person
+        $t = Read-GuiText 'Technician' 'Who is running DE Tech Tool on this machine? Evidence and the Hub record name this person.' -Default 'jrpetro'
+        $Settings.technician = $(if ("$t".Trim()) { "$t".Trim() } else { 'jrpetro' }); Save-GuiSettings; Set-DEStateValue -Path 'settings.technician' -Value $Settings.technician
+    }
+    if (-not $Settings.technician) { $Settings.technician = 'jrpetro' }
     if ($Settings.client) { try { $S.Profile = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $Settings.client) -Bundle "$(Get-DEHashPath -Object $Settings -Path 'planBundle')" -Solution @(Get-DEHashPath -Object $Settings -Path 'planSolutions' | Where-Object { $_ }) } catch { } }
     if ($Resume) { $r = Resume-DEWorkflow; Set-Status "Resumed after restart. Next: $(Get-DEHashPath -Object $r -Path 'nextAction')"; $S.CurrentPage = 'Workflow' }
     Show-Page $S.CurrentPage
