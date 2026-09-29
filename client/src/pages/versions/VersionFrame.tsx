@@ -22,18 +22,21 @@ export function VersionFrame({ n, children }: { n: number; children: ReactNode }
     <>
       {children}
       {/*
-        Review scaffolding, not part of any version's design. It stays collapsed to a
-        single marker so it cannot sit on top of the page being reviewed, and reveals
-        the title and the index link on hover or keyboard focus. No transition: the
-        version pages are checked under prefers-reduced-motion.
+        Review scaffolding, not part of any version's design. Collapsed, it is an
+        11px tab flush with the viewport edge, narrower than the smallest text
+        margin on any version page (12px: v1, v3 and the site footer at 390), so no
+        line of copy scrolls beneath it. A 39px chip at left-3 covered the first
+        letters of every line below 1280px.
+        It reveals the title and the index link on hover or keyboard focus. No
+        transition: the version pages are checked under prefers-reduced-motion.
       */}
       <div
-        className="group fixed bottom-24 left-3 z-[70] flex items-center gap-2 rounded-full border border-[#D3126A]/60 bg-[#050312]/90 px-3 py-1.5 font-mono text-[11px] font-semibold tracking-[0.12em] text-white shadow-lg shadow-black/40 backdrop-blur"
+        className="group fixed bottom-24 left-0 z-[70] flex items-center gap-2 rounded-r-md border border-l-0 border-[#D3126A]/60 bg-[#050312]/90 py-1.5 font-mono text-[11px] font-semibold tracking-[0.12em] text-white shadow-lg shadow-black/40 backdrop-blur focus-within:pr-3 hover:pr-3"
         data-testid="homepage-version-ribbon"
         role="note"
         aria-label={`Homepage version ${n}, reference copy`}
       >
-        <span className="text-[#F04C97]">V{n}</span>
+        <span className="text-[10px] leading-none text-[#F04C97] [writing-mode:vertical-rl]">V{n}</span>
         <span className="hidden text-white/80 group-focus-within:inline group-hover:inline">
           {v?.title ?? "Homepage version"}
         </span>
