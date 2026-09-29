@@ -54,7 +54,7 @@ function New-DEResult {
     <# One result shape for every operation: Succeeded | DryRun | Failed | Refused | Partial. #>
     param([Parameter(Mandatory = $true)][string]$Operation, [ValidateSet('Succeeded', 'DryRun', 'Failed', 'Refused', 'Partial')][string]$Status = 'Succeeded', [object]$Data, [string]$Message = '', [string]$Target = '', [string]$JobId)
     Write-DEMsAudit -Operation $Operation -Status $Status -Target $Target -Message $Message -JobId $JobId
-    return [pscustomobject][ordered]@{ product = 'DE Microsoft Admin'; version = '0.4.0'; operation = $Operation; status = $Status; target = $Target; tenant = $script:Ctx.TenantId; at = (Get-Date).ToUniversalTime().ToString('o'); message = $Message; data = $Data }
+    return [pscustomobject][ordered]@{ product = 'DE Microsoft Admin'; version = '0.4.1'; operation = $Operation; status = $Status; target = $Target; tenant = $script:Ctx.TenantId; at = (Get-Date).ToUniversalTime().ToString('o'); message = $Message; data = $Data }
 }
 function Export-DEResult {
     <# Writes a result as UTF-8 JSON without a BOM (Node, Python and the Hub reject one). #>
