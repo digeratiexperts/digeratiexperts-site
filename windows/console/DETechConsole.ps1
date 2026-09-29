@@ -467,18 +467,23 @@ function Invoke-GuiSafely {
 function New-Button { param([string]$Text, [scriptblock]$OnClick, [switch]$Primary, [string]$A11y) $label = $Text; $handler = $OnClick; $safe = { Invoke-GuiSafely -Label $label -Action $handler }.GetNewClosure(); $b = New-El Button @{ Content = $Text; Style = $(if ($Primary) { 'Primary' } else { 'Btn' }); Click = $safe }; [System.Windows.Automation.AutomationProperties]::SetName($b, $(if ($A11y) { $A11y } else { $Text })); return $b }
 function New-Wrap { param([object[]]$Children) $w = New-Object System.Windows.Controls.WrapPanel; foreach ($c in $Children) { if ($null -ne $c) { [void]$w.Children.Add($c) } }; return $w }
 function Add-DEGridColumns {
-    <# Columns for a read-only DataGrid: w is pixels or 'N*' (a share of what is left). Text wraps, so a narrow window
-       shows every word on taller rows instead of hiding columns behind a sideways scrollbar. #>
-    param([Parameter(Mandatory = $true)]$Grid, [Parameter(Mandatory = $true)][object[]]$Columns)
+    <# Columns for a read-only DataGrid: w is pixels or 'N*' (a share of what is left of a 900 px budget, which fits
+       the page at the window's default size). Widths are fixed pixels, not WPF star sizing: star columns are only
+       shared out after the grid is on screen, so they cannot be checked in the off-screen smoke render. Text wraps;
+       a narrower window scrolls sideways instead of hiding a column. #>
+    param([Parameter(Mandatory = $true)]$Grid, [Parameter(Mandatory = $true)][object[]]$Columns, [double]$Budget = 900)
+    $fixed = 0.0; $shares = 0.0
+    foreach ($c in $Columns) { $w = "$($c.w)"; if ($w -match '^(\d*\.?\d*)\*$') { $shares += $(if ($Matches[1]) { [double]$Matches[1] } else { 1.0 }) } else { $fixed += [double]$w } }
+    $unit = $(if ($shares -gt 0) { [math]::Max(0, $Budget - $fixed) / $shares } else { 0 })
     foreach ($c in $Columns) {
         $col = New-Object System.Windows.Controls.DataGridTextColumn; $col.Header = $c.h; $col.Binding = New-Object System.Windows.Data.Binding $c.b
         $w = "$($c.w)"
-        if ($w -match '^(\d*\.?\d*)\*$') { $col.Width = New-Object System.Windows.Controls.DataGridLength($(if ($Matches[1]) { [double]$Matches[1] } else { 1.0 }), ([System.Windows.Controls.DataGridLengthUnitType]::Star)); $col.MinWidth = 90 }
-        else { $col.Width = New-Object System.Windows.Controls.DataGridLength([double]$w) }
+        $px = $(if ($w -match '^(\d*\.?\d*)\*$') { [math]::Max(90, [math]::Floor($unit * $(if ($Matches[1]) { [double]$Matches[1] } else { 1.0 }))) } else { [double]$w })
+        $col.Width = New-Object System.Windows.Controls.DataGridLength($px)
         $st = New-Object System.Windows.Style ([System.Windows.Controls.TextBlock]); $st.Setters.Add((New-Object System.Windows.Setter ([System.Windows.Controls.TextBlock]::TextWrappingProperty), ([System.Windows.TextWrapping]::Wrap))); $col.ElementStyle = $st
         [void]$Grid.Columns.Add($col)
     }
-    $Grid.HorizontalScrollBarVisibility = 'Disabled'
+    $Grid.HorizontalScrollBarVisibility = 'Auto'
 }
 
 # ============================================================== background jobs (async, progress, cancel)
