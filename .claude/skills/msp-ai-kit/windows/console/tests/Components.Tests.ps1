@@ -7,7 +7,7 @@ Describe 'Shared contracts' {
         $global:DETest = @{ Dir = Initialize-TestConsole }
     }
     It 'every schema parses and the example order validates' {
-        foreach ($n in 'device', 'order', 'handoff', 'warranty', 'job') { (Get-DEContractSchema -Name $n).title | Should -Not -BeNullOrEmpty }
+        foreach ($n in 'device', 'order', 'handoff', 'warranty', 'job', 'migration') { (Get-DEContractSchema -Name $n).title | Should -Not -BeNullOrEmpty }
         $o = Get-Content -LiteralPath (Join-Path (Get-DEConsole).Root 'catalog/orders/example-dropship-order.json') -Raw | ConvertFrom-Json
         @(Test-DEContract -Name order -Object $o).Count | Should -Be 0
         @(Test-DEContract -Name order -Object @{ schema = 'de.techconsole.order/v1' }) -join ' ' | Should -Match 'orderId: required'
@@ -77,6 +77,40 @@ Describe 'Shared contracts' {
         $r.sent | Should -Be $false; $r.error | Should -Match 'device key'
         Test-Path -LiteralPath $r.file | Should -Be $true
         Clear-DESecrets
+    }
+    It 'a migration record from DE Microsoft Admin goes to the Hub as one signed email_migration.recorded event' {
+        Import-Module (Join-Path (Split-Path -Parent (Get-DEConsole).Root) 'microsoft/DE-Microsoft-Admin/DE-Microsoft-Admin.psd1') -Force -DisableNameChecking
+        $mig = Join-Path $global:DETest.Dir 'migrations'; New-Item -ItemType Directory -Path $mig -Force | Out-Null; $null = Set-DEMigrationDirectory -Path $mig
+        $null = Set-DEMsAuditPath -Path (Join-Path $global:DETest.Dir 'msaudit.jsonl')
+        $chk = [pscustomobject]@{ 'MFA' = [pscustomobject]@{ status = 'Pass'; detail = '4 of 4 registered'; by = 'jrpetro'; at = '2026-09-28T10:00:00Z' }; 'Replies' = [pscustomobject]@{ status = 'Pending'; detail = ''; by = ''; at = '' } }
+        $proj = [pscustomobject]@{ schema = 'de.email-migration.project/v1'; projectId = 'alamo-mail'; client = 'Alamo Industries'; tenantId = 't-1'; targetDomain = 'alamo-industries.com'; sourceType = 'PersonalGmail'; mailPath = 'IMAP'; stage = 'Devices'; updatedAt = $null
+            users = @([pscustomobject]@{ source = 'helen.x@gmail.com'; destination = 'helen@alamo-industries.com'; displayName = 'Helen'; devices = @('HELENU'); preflight = [pscustomobject]@{ ok = $true }; migration = $null; contacts = $null; calendar = $null; mfa = [pscustomobject]@{ registered = $true; methods = @('microsoftAuthenticator') } })
+            sharedMailboxes = @(); devices = @('HELENU', [pscustomobject]@{ name = 'FRONTDESK'; checkedAt = '2026-09-28T09:00:00Z'; accounts = @('suzette'); gmailReferences = @(); notChecked = @(); source = 'scan' })
+            batches = @([pscustomobject]@{ name = 'alamo-mail-pilot'; type = 'Pilot'; status = 'Synced'; users = @('helen@alamo-industries.com'); failed = 0; confirmedBy = 'jrpetro' }); dns = $null; bounce = @(); verification = $chk; signoff = $null; events = @() }
+        [IO.File]::WriteAllText((Join-Path $mig 'alamo-mail.json'), ($proj | ConvertTo-Json -Depth 20), (New-Object Text.UTF8Encoding $false))
+        $out = Join-Path $global:DETest.Dir 'alamo-mail-record.json'; $null = Export-DEMigrationRecord -ProjectId 'alamo-mail' -Path $out
+        @(Test-DEContract -Name migration -Object (Get-Content -LiteralPath $out -Raw | ConvertFrom-Json)) -join ' | ' | Should -Be ''
+        Set-DEStateValue -Path 'settings.hub.endpoint' -Value 'https://hub.example/api/whatever'
+        Set-DESecret -Name 'DE_HUB_SIGNING_SECRET' -Plain 'signing-secret-9876'
+        Set-DEContext -Values @{ hubAccountId = '' }
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp { throw 'must not be called' }
+        (Get-DEThrown { Send-DEHubMigrationRecord -Path $out -Confirm:$false }) | Should -Match 'account number'
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp { $global:DETest.Sent = @{ Uri = $Uri; Headers = $Headers; Body = $Body }; @{ status = 'applied' } }
+        $r = Send-DEHubMigrationRecord -Path $out -AccountId '42' -Confirm:$false
+        $r.sent | Should -Be $true
+        $s = $global:DETest.Sent; $ev = $s.Body | ConvertFrom-Json
+        $s.Uri | Should -Be 'https://hub.example/api/integrations/v1/techconsole/events'
+        $ev.eventType | Should -Be 'email_migration.recorded'; $ev.entityType | Should -Be 'email_migration'; $ev.entityId | Should -Be 'alamo-mail'; $ev.canonicalAccountId | Should -Be '42'
+        @($ev.payload.checks).Count | Should -Be 2; $ev.payload.identityMap[0].multiFactor.registered | Should -Be $true
+        @($ev.payload.devices | ForEach-Object { $_.name }) -join ',' | Should -Be 'HELENU,FRONTDESK'
+        $s.Body | Should -Not -Match 'signing-secret-9876'; $s.Body | Should -Not -Match '"[^"]*(?i:mfa)[^"]*":'
+        Get-DEHubSignature -Method POST -Path '/api/integrations/v1/techconsole/events' -Timestamp $s.Headers['X-DE-Timestamp'] -EventId $ev.eventId -Body $s.Body -Secret 'signing-secret-9876' | Should -Be $s.Headers['X-DE-Signature']
+        # a record carrying a secret-looking key is refused before anything is signed
+        $bad = Get-Content -LiteralPath $out -Raw | ConvertFrom-Json; $bad | Add-Member -NotePropertyName mfaSeed -NotePropertyValue 'x'
+        $badFile = Join-Path $global:DETest.Dir 'bad-record.json'; [IO.File]::WriteAllText($badFile, ($bad | ConvertTo-Json -Depth 20))
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp { throw 'must not be called' }
+        (Get-DEThrown { Send-DEHubMigrationRecord -Path $badFile -AccountId '42' -Confirm:$false }) | Should -Match 'mfaSeed: secrets never go'
+        Clear-DESecrets; Remove-Module DE-Microsoft-Admin -Force -ErrorAction SilentlyContinue
     }
     It 'Send-DEHubEvent refuses plain http' {
         $ev = New-DEHubEvent -EventType 'device.warranty' -EntityId 'dell:ABC' -Payload @{ serial = 'ABC'; source = 'manual'; status = 'manual' }

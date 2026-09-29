@@ -1350,9 +1350,17 @@ function Build-Migration {
     [void]$root.Children.Add((New-Card @($bp)))
 
     # the Hub record
-    [void]$root.Children.Add((New-Card @((New-Text 'Intelligence Hub record' 14 -Bold), (New-Text 'The whole project as the Hub keeps it: identities, counts, checks, devices, bounces, sign-off and the event trail. It never holds a credential.' -Muted -Wrap), (New-Wrap @((New-Button 'Export the record' {
+    [void]$root.Children.Add((New-Card @((New-Text 'Intelligence Hub record' 14 -Bold), (New-Text 'The whole project as the Hub keeps it: identities, counts, checks, devices, bounces, sign-off and the event trail. It never holds a credential. Sending signs it with the Hub signing secret from Settings and files it under the client''s Hub account; the Hub keeps the newest record per project.' -Muted -Wrap), (New-Wrap @((New-Button 'Export the record' {
         $d = New-Object Microsoft.Win32.SaveFileDialog; $d.Filter = 'JSON (*.json)|*.json'; $d.FileName = "$pid_-record.json"; $d.Title = 'Save the migration record'
         if ($d.ShowDialog($Win)) { $r = Export-DEMigrationRecord -ProjectId $pid_ -Path $d.FileName; Set-Status "$($r.message)" }
+    }.GetNewClosure()), (New-Button 'Send to Intelligence Hub' {
+        $acct = "$((Get-DEContext)['hubAccountId'])"
+        if ($acct -notmatch '^[1-9]\d*$') { $acct = Read-GuiText -Title 'Intelligence Hub account' -Prompt "The client's Intelligence Hub account number (from the account's page in the Hub)"; if (-not $acct) { return } }
+        $out = Join-Path (Join-Path (Get-DEConsole).Dirs.Evidence 'migration') "$pid_-record.json"
+        $null = Export-DEMigrationRecord -ProjectId $pid_ -Path $out
+        if ((Get-DEConsole).DryRun) { $r = Send-DEHubMigrationRecord -Path $out -AccountId $acct -WhatIf; Set-Status "PLAN ONLY: would send $pid_ to the Hub as signed event $($r.eventId). Switch to LIVE on Scan & fix to send."; return }
+        $r = Send-DEHubMigrationRecord -Path $out -AccountId $acct -Confirm:$false
+        Set-Status "Sent $pid_ to the Intelligence Hub (event $($r.eventId), $($r.response.status))."
     }.GetNewClosure() -Primary))))))
 }
 function Build-Vendors {
