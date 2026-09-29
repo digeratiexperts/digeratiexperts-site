@@ -76,13 +76,13 @@ jobs:
         run: |
           Set-PSRepository PSGallery -InstallationPolicy Trusted
           Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
-          Install-Module Pester -MinimumVersion 5.5 -Scope CurrentUser -Force
+          Install-Module Pester -MinimumVersion 5.5 -MaximumVersion 5.99.99 -Scope CurrentUser -Force   # Pester 6 drops Assert-MockCalled; the suite is written for 5
       - name: Install Pester for Windows PowerShell 5.1
         shell: powershell
         run: |
           [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
           Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope CurrentUser -Force | Out-Null
-          Install-Module Pester -MinimumVersion 5.5 -Scope CurrentUser -Force -SkipPublisherCheck
+          Install-Module Pester -MinimumVersion 5.5 -MaximumVersion 5.99.99 -Scope CurrentUser -Force -SkipPublisherCheck
       - name: PSScriptAnalyzer
         shell: pwsh
         run: |
@@ -109,7 +109,7 @@ jobs:
       - name: Pester tests (Windows PowerShell 5.1)
         shell: powershell
         run: |
-          Import-Module Pester -MinimumVersion 5.5
+          Import-Module Pester -MinimumVersion 5.5 -MaximumVersion 5.99.99
           $cfg = New-PesterConfiguration
           $cfg.Run.Path = @("$env:KIT/windows/tests", "$env:KIT/windows/console/tests")
           $cfg.Run.Exit = $true
