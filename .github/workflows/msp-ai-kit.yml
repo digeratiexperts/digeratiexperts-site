@@ -154,6 +154,25 @@ jobs:
         run: |
           & "$env:KIT/windows/tests/Invoke-GuiSmoke.ps1" -OutDir "$env:RUNNER_TEMP\de-smoke"
           if ($LASTEXITCODE -ne 0) { throw "GUI smoke exit $LASTEXITCODE" }
+      - name: Page renders into the log (small JPEGs, base64, for visual review where artifacts can't be downloaded)
+        if: always()
+        shell: powershell
+        run: |
+          Add-Type -AssemblyName System.Drawing
+          $codec = [Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq 'image/jpeg' }
+          $q = New-Object Drawing.Imaging.EncoderParameters 1; $q.Param[0] = New-Object Drawing.Imaging.EncoderParameter ([Drawing.Imaging.Encoder]::Quality, [long]62)
+          foreach ($f in @(Get-ChildItem "$env:RUNNER_TEMP\de-smoke" -Filter '*-96dpi.png' -ErrorAction SilentlyContinue | Sort-Object Name)) {
+            $img = [Drawing.Image]::FromFile($f.FullName)
+            try {
+              $w = [Math]::Min(1000, $img.Width); $h = [int]($img.Height * $w / $img.Width)
+              $bmp = New-Object Drawing.Bitmap $w, $h; $g = [Drawing.Graphics]::FromImage($bmp); $g.InterpolationMode = 'HighQualityBicubic'; $g.DrawImage($img, 0, 0, $w, $h); $g.Dispose()
+              $ms = New-Object IO.MemoryStream; $bmp.Save($ms, $codec, $q); $bmp.Dispose()
+              $b64 = [Convert]::ToBase64String($ms.ToArray())
+              Write-Host "===RENDER-BEGIN $($f.BaseName) ${w}x${h}==="
+              for ($i = 0; $i -lt $b64.Length; $i += 3000) { Write-Host ('RENDER:' + $b64.Substring($i, [Math]::Min(3000, $b64.Length - $i))) }
+              Write-Host "===RENDER-END $($f.BaseName)==="
+            } finally { $img.Dispose() }
+          }
       - name: Collect logs into the workspace
         if: always()
         shell: powershell
