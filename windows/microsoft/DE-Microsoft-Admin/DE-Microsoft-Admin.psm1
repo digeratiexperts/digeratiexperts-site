@@ -35,6 +35,7 @@ $script:ScopeSets = [ordered]@{
     Intune    = @('DeviceManagementManagedDevices.ReadWrite.All', 'DeviceManagementConfiguration.Read.All', 'DeviceManagementManagedDevices.PrivilegedOperations.All')
     Autopilot = @('DeviceManagementServiceConfig.ReadWrite.All', 'DeviceManagementManagedDevices.ReadWrite.All')
     BitLocker = @('BitLockerKey.ReadBasic.All', 'Device.Read.All')
+    Migration = @('Contacts.ReadWrite', 'Calendars.ReadWrite', 'Domain.Read.All', 'UserAuthenticationMethod.Read.All', 'AuditLog.Read.All')
     Reports   = @('AuditLog.Read.All', 'Reports.Read.All')
 }
 
@@ -53,7 +54,7 @@ function New-DEResult {
     <# One result shape for every operation: Succeeded | DryRun | Failed | Refused | Partial. #>
     param([Parameter(Mandatory = $true)][string]$Operation, [ValidateSet('Succeeded', 'DryRun', 'Failed', 'Refused', 'Partial')][string]$Status = 'Succeeded', [object]$Data, [string]$Message = '', [string]$Target = '', [string]$JobId)
     Write-DEMsAudit -Operation $Operation -Status $Status -Target $Target -Message $Message -JobId $JobId
-    return [pscustomobject][ordered]@{ product = 'DE Microsoft Admin'; version = '0.3.0'; operation = $Operation; status = $Status; target = $Target; tenant = $script:Ctx.TenantId; at = (Get-Date).ToUniversalTime().ToString('o'); message = $Message; data = $Data }
+    return [pscustomobject][ordered]@{ product = 'DE Microsoft Admin'; version = '0.4.0'; operation = $Operation; status = $Status; target = $Target; tenant = $script:Ctx.TenantId; at = (Get-Date).ToUniversalTime().ToString('o'); message = $Message; data = $Data }
 }
 function Export-DEResult {
     <# Writes a result as UTF-8 JSON without a BOM (Node, Python and the Hub reject one). #>
@@ -64,7 +65,7 @@ function Export-DEResult {
 }
 
 # ============================================================ connection
-function Get-DEMsScopeSet { param([ValidateSet('Read', 'Users', 'Groups', 'Policy', 'Intune', 'Autopilot', 'BitLocker', 'Reports')][string[]]$Scenario = @('Read')) return @(@('Read') + @($Scenario) | Select-Object -Unique | ForEach-Object { $script:ScopeSets[$_] } | Select-Object -Unique) }
+function Get-DEMsScopeSet { param([ValidateSet('Read', 'Users', 'Groups', 'Policy', 'Intune', 'Autopilot', 'BitLocker', 'Migration', 'Reports')][string[]]$Scenario = @('Read')) return @(@('Read') + @($Scenario) | Select-Object -Unique | ForEach-Object { $script:ScopeSets[$_] } | Select-Object -Unique) }
 function Assert-DECommand { param([Parameter(Mandatory = $true)][string]$Name, [string]$Module) if (-not (Get-Command -Name $Name -ErrorAction SilentlyContinue)) { throw "'$Name' is not available. Install $(if ($Module) { $Module } else { 'its module' }) (Install-DEMicrosoftDependencies.ps1)." } }
 function Connect-DEMicrosoft {
     <#
@@ -74,7 +75,7 @@ function Connect-DEMicrosoft {
     [CmdletBinding(DefaultParameterSetName = 'Delegated')]
     param(
         [Parameter(Mandatory = $true)][string]$TenantId,
-        [Parameter(ParameterSetName = 'Delegated')][ValidateSet('Read', 'Users', 'Groups', 'Policy', 'Intune', 'Autopilot', 'BitLocker', 'Reports')][string[]]$Scenario = @('Read'),
+        [Parameter(ParameterSetName = 'Delegated')][ValidateSet('Read', 'Users', 'Groups', 'Policy', 'Intune', 'Autopilot', 'BitLocker', 'Migration', 'Reports')][string[]]$Scenario = @('Read'),
         [Parameter(ParameterSetName = 'App', Mandatory = $true)][string]$ClientId,
         [Parameter(ParameterSetName = 'App', Mandatory = $true)][string]$CertificateThumbprint
     )
@@ -328,7 +329,7 @@ function Test-DEEntraBitLockerEscrow {
     #>
     [CmdletBinding()] param([Parameter(Mandatory = $true)][string]$DeviceId, [string]$KeyProtectorId)
     # Graph requires ocp-client-name / ocp-client-version on BitLocker key reads (they go to the audit log)
-    $keys = @(Invoke-DEGraphRequest -Uri ('informationProtection/bitlocker/recoveryKeys?$filter=deviceId eq {0}' -f (ConvertTo-DEODataLiteral $DeviceId)) -All -Headers @{ 'ocp-client-name' = 'DE Microsoft Admin'; 'ocp-client-version' = '0.3.0' })
+    $keys = @(Invoke-DEGraphRequest -Uri ('informationProtection/bitlocker/recoveryKeys?$filter=deviceId eq {0}' -f (ConvertTo-DEODataLiteral $DeviceId)) -All -Headers @{ 'ocp-client-name' = 'DE Microsoft Admin'; 'ocp-client-version' = '0.4.0' })
     $rows = @($keys | ForEach-Object { [pscustomobject]@{ keyId = "$($_.id)"; created = $_.createdDateTime; volumeType = "$($_.volumeType)" } })
     $want = "$KeyProtectorId".Trim('{', '}').ToLowerInvariant()
     # @(...) outside: $() would unwrap one match into a [pscustomobject], which has no .Count on Windows PowerShell 5.1
@@ -735,9 +736,13 @@ function Invoke-DEMicrosoftJob {
     return $r
 }
 
+# email migration (Gmail IMAP -> Microsoft 365); MIGRATION-STANDARD.md is its contract
+. (Join-Path $PSScriptRoot 'DE-Migration.ps1')
+
 Export-ModuleMember -Function Set-DEMsAuditPath, Get-DEMsAuditPath, New-DEResult, Export-DEResult, Get-DEMsScopeSet, Connect-DEMicrosoft, Get-DEMsContext, ConvertTo-DEODataLiteral, Invoke-DEGraphRequest,
     Get-DETenantSummary, Get-DEUser, New-DEUser, Set-DEUserAccountState, Get-DEGroup, New-DEGroup, Add-DEGroupMember, Get-DELicenseInventory, Get-DEConditionalAccessPolicy, Set-DEConditionalAccessPolicyState, Get-DEMfaRegistration,
     Get-DEEntraDevice, Test-DEEntraBitLockerEscrow, Connect-DEExchange, Get-DEMailbox, New-DESharedMailbox, Set-DEMailboxPermission, Set-DEMailboxAlias, Set-DEMailboxForwarding, Get-DETransportRule,
     Connect-DEAzure, Get-DEAzureSubscription, Get-DEAzureInventory, New-DEAzureResourceGroup, New-DEAzureResourceLock,
     Get-DEIntuneDevice, Get-DEIntuneCompliancePolicy, Get-DEIntuneConfigurationProfile, Sync-DEIntuneDevice, Invoke-DEIntuneDeviceAction, Get-DEAutopilotDevice, Get-DEAutopilotProfile, Set-DEAutopilotGroupTag, Remove-DEAutopilotDevice,
-    ConvertTo-DEJobCanonical, Get-DEJobSignature, New-DEMicrosoftJob, Invoke-DEMicrosoftJob
+    ConvertTo-DEJobCanonical, Get-DEJobSignature, New-DEMicrosoftJob, Invoke-DEMicrosoftJob,
+    Get-DEMigrationProject, Get-DEMigrationSourceType, New-DEMigrationProject, Add-DEMigrationUser, Test-DEGmailImapAccess, Set-DEMigrationSharedMailbox, Test-DEMigrationSharedMailbox, New-DEMigrationBatch, Get-DEMigrationStatus, Confirm-DEMigrationPilot, Complete-DEMigrationBatch, Import-DEMigrationContacts, Import-DEMigrationCalendar, Test-DEMigrationDns, Test-DEMigrationMailFlow, Test-DEMigrationMfa, Get-DEMailClientInventory, Invoke-DEBounceDiagnostic, Resolve-DEMigrationBounce, Set-DEMigrationCheck, New-DEMigrationSignoff, Close-DEMigrationProject, Export-DEMigrationRecord, Set-DEMigrationDirectory

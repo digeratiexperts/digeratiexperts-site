@@ -1,6 +1,6 @@
 ﻿@{
     RootModule        = 'DE-Microsoft-Admin.psm1'
-    ModuleVersion     = '0.3.0'
+    ModuleVersion     = '0.4.0'
     GUID              = '4fbb9cc8-52a6-4c83-93fb-6c9d0f7e2f6c'
     Author            = 'Digerati Experts'
     CompanyName       = 'Digerati Experts'
@@ -53,8 +53,33 @@
         'ConvertTo-DEJobCanonical',
         'Get-DEJobSignature',
         'New-DEMicrosoftJob',
-        'Invoke-DEMicrosoftJob'
+        'Invoke-DEMicrosoftJob',
+        'Get-DEMigrationProject',
+        'Get-DEMigrationSourceType',
+        'New-DEMigrationProject',
+        'Add-DEMigrationUser',
+        'Test-DEGmailImapAccess',
+        'Set-DEMigrationSharedMailbox',
+        'Test-DEMigrationSharedMailbox',
+        'New-DEMigrationBatch',
+        'Get-DEMigrationStatus',
+        'Confirm-DEMigrationPilot',
+        'Complete-DEMigrationBatch',
+        'Import-DEMigrationContacts',
+        'Import-DEMigrationCalendar',
+        'Test-DEMigrationDns',
+        'Test-DEMigrationMailFlow',
+        'Test-DEMigrationMfa',
+        'Get-DEMailClientInventory',
+        'Invoke-DEBounceDiagnostic',
+        'Resolve-DEMigrationBounce',
+        'Set-DEMigrationCheck',
+        'New-DEMigrationSignoff',
+        'Close-DEMigrationProject',
+        'Export-DEMigrationRecord',
+        'Set-DEMigrationDirectory'
     )
+    FileList          = @('DE-Microsoft-Admin.psm1', 'DE-Migration.ps1', 'Install-DEMicrosoftDependencies.ps1', 'README.md', 'MIGRATION-STANDARD.md')
     CmdletsToExport   = @()
     VariablesToExport = @()
     AliasesToExport   = @()
