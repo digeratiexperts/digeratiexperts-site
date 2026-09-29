@@ -94,9 +94,22 @@ for (const viewport of viewports) {
       window.localStorage.setItem("de_cookie_consent_v2", JSON.stringify({ necessary: true, analytics: false, marketing: false, at: 0 }));
     } catch {}
   });
+  // Runtime errors the browser reports on window (a ResizeObserver loop from a layout
+  // feedback cycle among them) fail the walk; third-party resource loads do not count.
+  await context.addInitScript(() => {
+    window.addEventListener("error", (event) => {
+      if (event.target && event.target !== window) return;
+      console.log(`D2RUNTIME ${event.message}`);
+    });
+    window.addEventListener("unhandledrejection", (event) => console.log(`D2RUNTIME unhandled: ${String(event.reason).slice(0, 200)}`));
+  });
   const page = await context.newPage();
   page.setDefaultTimeout(20000);
-  const row = { viewport: viewport.name, overflow: {}, forbidden: {}, fixedOverlap: {}, scrollTop: {}, chrome: {} };
+  const row = { viewport: viewport.name, overflow: {}, forbidden: {}, fixedOverlap: {}, scrollTop: {}, chrome: {}, runtimeErrors: [] };
+  page.on("console", (message) => {
+    const text = message.text();
+    if (text.startsWith("D2RUNTIME ")) row.runtimeErrors.push(text.slice(10));
+  });
   const wide = viewport.width >= 1024;
 
   // A · Enter
@@ -280,6 +293,7 @@ const failed = results.some((row) =>
   Object.values(row.fixedOverlap).some((hits) => hits.length > 0) ||
   Object.values(row.chrome).some((chrome) => chrome.strip > 0 || chrome.footerAssessment > 0 || chrome.footerBack !== 1) ||
   row.accentInk !== "rgb(111, 179, 255)" ||
+  row.runtimeErrors.length > 0 ||
   row.book.strip > 0 || row.book.freeAssessment || !row.book.reference ||
   (process.env.DOOR2_SUBMIT === "1" && !/^DE-[0-9A-HJKMNP-TV-Z]{6}$/.test(row.reference || "")),
 );

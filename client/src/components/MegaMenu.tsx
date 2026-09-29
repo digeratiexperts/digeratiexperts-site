@@ -587,22 +587,18 @@ export function MegaMenu() {
         utilityNaturalHRef.current = 0;
         root.style.setProperty('--de-utility-h', '0px');
       } else if (utilityEl && !isScrolled && utilityEl.offsetHeight > 0) {
-        // Measure the bar's natural height, not the min-height the last published
-        // value pins it to: pinned, the value could only grow, so a page without the
-        // announcement strip kept the strip's height after a client-side navigation.
-        // The bar transitions every property, so the read happens with transitions
-        // off (a transitioning min-height still reports its old value), and the
-        // restore is flushed before they come back so nothing animates.
-        const pinned = utilityEl.style.minHeight;
-        const transition = utilityEl.style.transition;
-        utilityEl.style.transition = 'none';
-        utilityEl.style.minHeight = '0px';
-        const naturalH = utilityEl.offsetHeight;
+        // The bar's natural height is its in-flow rows (the announcement strip when
+        // shown, and the utility row), read without touching the bar. Its own
+        // offsetHeight is pinned by min-height to the last published value, so it
+        // could only grow: a page without the strip kept the strip's height after a
+        // client-side navigation.
+        const naturalH = Array.from(utilityEl.children).reduce((sum, child) => {
+          const style = window.getComputedStyle(child);
+          if (style.position === 'absolute' || style.position === 'fixed' || style.display === 'none') return sum;
+          return sum + (child as HTMLElement).offsetHeight;
+        }, 0);
         utilityNaturalHRef.current = naturalH;
         root.style.setProperty('--de-utility-h', `${naturalH}px`);
-        utilityEl.style.minHeight = pinned;
-        void utilityEl.offsetHeight;
-        utilityEl.style.transition = transition;
       }
 
       // Live bottom tracks the collapsed/expanded chrome for drawers + dropdowns.
@@ -621,12 +617,19 @@ export function MegaMenu() {
     };
 
     publish();
-    const ro = new ResizeObserver(() => publish());
+    // Publish on the next frame: resizing an observed box from inside the observer's
+    // callback leaves notifications undelivered ("ResizeObserver loop completed…").
+    let frame = 0;
+    const ro = new ResizeObserver(() => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(publish);
+    });
     if (utilityBarRef.current) ro.observe(utilityBarRef.current);
     if (navBarRef.current) ro.observe(navBarRef.current);
     if (spyBarRef.current) ro.observe(spyBarRef.current);
     window.addEventListener('resize', publish);
     return () => {
+      window.cancelAnimationFrame(frame);
       ro.disconnect();
       window.removeEventListener('resize', publish);
     };
