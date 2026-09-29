@@ -1124,7 +1124,7 @@ function Export-DEMigrationRecord {
         devices = @($p.devices | ForEach-Object { if ($_ -is [string]) { [pscustomobject]@{ name = $_; checkedAt = $null; accounts = @(); gmailReferences = @(); notChecked = @(); source = 'named' } } else { $_ } })
         sharedMailboxes = @($p.sharedMailboxes); batches = @($p.batches); dns = $p.dns; bounce = @($p.bounce)
         # checks as a list: the Hub refuses any key that looks like a secret (an 'MFA' key included), so check names are values
-        checks = @($p.verification.PSObject.Properties | ForEach-Object { [pscustomobject][ordered]@{ check = $_.Name; status = "$($_.Value.status)"; detail = "$($_.Value.detail)"; by = "$($_.Value.by)"; at = $(if ($_.Value.at) { "$($_.Value.at)" } else { $null }) } })
+        checks = @($p.verification.PSObject.Properties | ForEach-Object { [pscustomobject][ordered]@{ check = $_.Name; status = "$($_.Value.status)"; detail = "$($_.Value.detail)"; by = "$($_.Value.by)"; at = $(if ($_.Value.at -is [datetime]) { $_.Value.at.ToUniversalTime().ToString('o', [Globalization.CultureInfo]::InvariantCulture) } elseif ($_.Value.at) { "$($_.Value.at)" } else { $null }) } })
         signoff = $p.signoff; events = @($p.events); exportedAt = (Get-Date).ToUniversalTime().ToString('o')
     }
     $hits = @(Find-DEMigrationSecret -Node $rec); if ($hits.Count) { throw "refusing to export: credential-like fields at $($hits -join ', ')" }

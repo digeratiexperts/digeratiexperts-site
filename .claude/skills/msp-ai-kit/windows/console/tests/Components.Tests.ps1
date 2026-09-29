@@ -98,7 +98,8 @@ Describe 'Shared contracts' {
         Mock -ModuleName DE.Contracts Invoke-DEHubHttp { $global:DETest.Sent = @{ Uri = $Uri; Headers = $Headers; Body = $Body }; @{ status = 'applied' } }
         $r = Send-DEHubMigrationRecord -Path $out -AccountId '42' -Confirm:$false
         $r.sent | Should -Be $true
-        $s = $global:DETest.Sent; $ev = $s.Body | ConvertFrom-Json
+        $s = $global:DETest.Sent
+        try { $ev = $s.Body | ConvertFrom-Json } catch { Write-Host "RECORD: $(Get-Content -LiteralPath $out -Raw)"; Write-Host "BODY: $($s.Body)"; throw }
         $s.Uri | Should -Be 'https://hub.example/api/integrations/v1/techconsole/events'
         $ev.eventType | Should -Be 'email_migration.recorded'; $ev.entityType | Should -Be 'email_migration'; $ev.entityId | Should -Be 'alamo-mail'; $ev.canonicalAccountId | Should -Be '42'
         @($ev.payload.checks).Count | Should -Be 2; $ev.payload.identityMap[0].multiFactor.registered | Should -Be $true
