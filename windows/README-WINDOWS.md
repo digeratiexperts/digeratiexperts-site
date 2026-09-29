@@ -79,11 +79,22 @@ exception:
 - There is no dual MDM, and the security stack verified.
 - The migration takes a registry backup of ProfileList first and refuses to run without one.
 
-**Entra leave is its own step.** By default the migration keeps the laptop Entra-joined; "Leave Entra"
-unlocks only after "Verify migration" passes (local account exists, owns the preserved profile by SID).
-A client profile can keep the device joined for good (`identity.leaveEntra: false`: only the user moves to
-the local, JumpCloud-bound account), or opt into ADMU's one-step leave (`identity.leaveEntraDuringMigration:
-true`). A device that stays Entra-joined and Intune-enrolled trips the dual-MDM gate once JumpCloud manages it.
+**Putting JumpCloud on takes the device off Microsoft, as its own step.** "Disconnect from Microsoft"
+(`identity.entra-leave`) leaves Entra ID (`dsregcmd /leave`) and any on-prem AD domain, hybrid included
+(unjoined to WORKGROUP without deleting the AD computer object, so no domain credential is needed). It is
+planned in every mode that puts JumpCloud on (new, replacement, repair, takeover, co-managed) and unlocks only when:
+- every Entra or domain profile has been migrated (or the technician accepts a leftover one on the Identity page);
+- the BitLocker recovery key is backed up outside Entra. "Back up the BitLocker recovery key" backs it up to
+  Entra while the device is still joined, then asks JumpCloud for the key it holds and compares it with the
+  volume in memory. Otherwise the technician records the protector id and the escrow (Hudu, IT Glue, vault).
+  The recovery password is never written to logs, state or bundles;
+- break-glass and OneDrive are confirmed.
+
+JumpCloud binds the user only after the device is off Microsoft (`gate.microsoft-left`), because JumpCloud
+warns against binding onto an Entra-joined device. A client profile can keep the device joined for good
+(`identity.leaveEntra: false`: only the user moves to the local, JumpCloud-bound account), or opt into ADMU's
+one-step leave (`identity.leaveEntraDuringMigration: true`). A device that stays Entra-joined and
+Intune-enrolled trips the dual-MDM gate once JumpCloud manages it.
 
 **Updates.** `updates.authority` in the client profile says who keeps Windows updated after handoff:
 `jumpcloud` (default: JumpCloud Patch Management), `intune` (Microsoft-only clients) or `windows` (DE Tech

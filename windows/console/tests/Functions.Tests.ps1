@@ -209,10 +209,10 @@ Describe 'Identity: gates and refusals' {
     It 'Entra leave does nothing off Entra and refuses while a gate is closed' {
         Mock -ModuleName DE.Identity Invoke-DENative { throw 'dsregcmd /leave ran' }
         Mock -ModuleName DE.Identity Get-DEIdentityState { @{ joinType = 'local-workgroup' } }
-        Invoke-DEEntraLeave | Should -Be 'not Entra joined'
+        Invoke-DEEntraLeave | Should -Be 'not joined to Entra ID or a domain'
         Mock -ModuleName DE.Identity Get-DEIdentityState { @{ joinType = 'entra-joined' } }
         Mock -ModuleName DE.Identity Test-DEGate { [pscustomobject]@{ Id = $Id; Status = 'BLOCKED'; Detail = 'x' } }
-        (Get-DEThrown { Invoke-DEEntraLeave -Confirm:$false }) | Should -Match 'refusing Entra leave'
+        (Get-DEThrown { Invoke-DEEntraLeave -Confirm:$false }) | Should -Match 'refusing to leave Microsoft'
     }
     It 'stale MDM cleanup keeps any enrollment whose registry backup failed' {
         Mock -ModuleName DE.Identity Get-DEMdmState { @{ staleEnrollments = @(@{ id = 'E1' }, @{ id = 'E2' }) } }
@@ -715,3 +715,99 @@ Describe 'A dropship order never leaks into later runs' {
         ($out -join "`n") | Should -Not -Match 'dropship order'
     }
 }
+
+Describe 'Leaving Microsoft and backing up BitLocker before JumpCloud owns the device' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1')
+        $global:DETest = @{ Dir = Initialize-TestConsole; Alamo = Get-DEClientProfile -Id 'alamo' }
+        $null = Initialize-DEWorkflow -ClientProfile $global:DETest.Alamo -Mode 'takeover'
+        $global:DETest.Key = '111111-222222-333333-444444-555555-666666-777777-888888'
+    }
+    It 'reads every Microsoft join: Entra, AD domain, hybrid, registration, unknown' {
+        Mock -ModuleName DE.Identity Get-DEIdentityState { @{ joinType = 'hybrid-entra-joined'; dsreg = @{ azureAdJoined = $true; domainJoined = $true; tenantName = 'Alamo'; domainName = 'ALAMO' } } }
+        $j = Get-DEMicrosoftJoinState
+        $j.entraJoined | Should -Be $true; $j.domainJoined | Should -Be $true; $j.summary | Should -Match 'Entra ID \(Alamo\) \+ AD domain ALAMO'
+        Mock -ModuleName DE.Identity Get-DEIdentityState { @{ joinType = 'unknown' } }
+        (Get-DEMicrosoftJoinState).known | Should -Be $false
+        (Get-DEThrown { Invoke-DEMicrosoftLeave -Confirm:$false }) | Should -Match 'join state unknown'
+    }
+    It 'finds Entra and domain profiles that would be stranded, and honours accepted ones' {
+        $idn = @{ localUsers = @(@{ name = 'jrpetro'; sid = 'S-1-5-21-100-200-300-1001' }); profiles = @(
+                @{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-12-1-11-22-33-44' }, @{ path = 'C:\Users\old.admin'; sid = 'S-1-5-21-900-800-700-1105' }, @{ path = 'C:\Users\jrpetro'; sid = 'S-1-5-21-100-200-300-1001' }) }
+        $paths = @(Get-DEUnmigratedDomainProfiles -Identity $idn | ForEach-Object { $_.path })
+        $paths | Should -Contain 'C:\Users\SuzetteThompson'; $paths | Should -Contain 'C:\Users\old.admin'; $paths | Should -Not -Contain 'C:\Users\jrpetro'
+        Confirm-DEStrandedProfilesAccepted -Paths @('C:\Users\old.admin') -Technician 'tester' -Confirm:$false
+        @(Get-DEUnmigratedDomainProfiles -Identity $idn | ForEach-Object { $_.path }) | Should -Not -Contain 'C:\Users\old.admin'
+        Set-DEStateValue -Path 'identity.leave' -Value $null
+    }
+    It 'refuses to leave while a profile would be stranded, then leaves Entra and the AD domain' {
+        Mock -ModuleName DE.Identity Test-DEGate { [pscustomobject]@{ Id = $Id; Status = 'PASS'; Detail = 'ok' } }
+        Mock -ModuleName DE.Identity Get-DEIdentityState { @{ joinType = 'hybrid-entra-joined'; dsreg = @{ azureAdJoined = $true; domainJoined = $true; domainName = 'ALAMO' }; localUsers = @(@{ name = 'jrpetro'; sid = 'S-1-5-21-100-200-300-1001' }); profiles = @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-12-1-11-22-33-44' }) } }
+        Mock -ModuleName DE.Identity Invoke-DENative { throw 'dsregcmd ran while a profile was stranded' }
+        (Get-DEThrown { Invoke-DEMicrosoftLeave -Confirm:$false }) | Should -Match 'would be stranded: C:\\Users\\SuzetteThompson'
+        Mock -ModuleName DE.Identity Get-DEIdentityState { @{ joinType = 'hybrid-entra-joined'; dsreg = @{ azureAdJoined = $true; domainJoined = $true; domainName = 'ALAMO' }; localUsers = @(@{ name = 'sthompson'; sid = 'S-1-5-21-100-200-300-1002' }); profiles = @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-5-21-100-200-300-1002' }) } }
+        Mock -ModuleName DE.Identity Invoke-DENative { [pscustomobject]@{ ExitCode = 0; Text = ''; Output = @() } }
+        Mock -ModuleName DE.Identity Invoke-DEDomainUnjoin { 0 }
+        Invoke-DEMicrosoftLeave -WhatIf | Should -Be 'planned'
+        Assert-MockCalled -ModuleName DE.Identity Invoke-DEDomainUnjoin -Times 0 -Exactly
+        $r = Invoke-DEMicrosoftLeave -Confirm:$false
+        $r | Should -Match 'left Entra ID'; $r | Should -Match 'left AD domain ALAMO'; $r | Should -Match 'restart pending'
+        Assert-MockCalled -ModuleName DE.Identity Invoke-DENative -Times 1 -Exactly -ParameterFilter { $FilePath -eq 'dsregcmd.exe' -and $Arguments -contains '/leave' }
+        Assert-MockCalled -ModuleName DE.Identity Invoke-DEDomainUnjoin -Times 1 -Exactly
+        Mock -ModuleName DE.Identity Invoke-DEDomainUnjoin { 1355 }
+        (Get-DEThrown { Invoke-DEMicrosoftLeave -Confirm:$false }) | Should -Match 'returned 1355'
+        Set-DEStateValue -Path 'identity.leftMicrosoft' -Value $null
+    }
+    It 'the BitLocker backup gate needs a copy outside Entra before leaving; Entra is enough only when the device stays joined' {
+        Mock -ModuleName DE.Identity Get-DEBitLockerState { @{ os = @{ status = 'FullyDecrypted'; hasRecoveryPassword = $false; recoveryProtectorIds = @() } } }
+        (Test-DEBitLockerBackupGate -Offline).Status | Should -Be 'BLOCKED'
+        Mock -ModuleName DE.Identity Get-DEBitLockerState { @{ os = @{ status = 'FullyEncrypted'; protection = 'On'; hasTpm = $true; hasRecoveryPassword = $true; recoveryProtectorIds = @('{AAA}') } } }
+        (Test-DEBitLockerBackupGate -Offline).Status | Should -Be 'BLOCKED'
+        Set-DEStateValue -Path 'identity.bitlocker.entraBackup' -Value @{ protectorIds = @('{AAA}'); at = 'now' }
+        $g = Test-DEBitLockerBackupGate -Offline; $g.Status | Should -Be 'WARN'; $g.Detail | Should -Match 'Entra ID only'
+        & (Get-Module DE.Identity) { $script:LeaveMicrosoft = $false }
+        (Test-DEBitLockerBackupGate -Offline).Status | Should -Be 'PASS'
+        & (Get-Module DE.Identity) { $script:LeaveMicrosoft = $true }
+        Set-DEBitLockerExpectedProtector -ProtectorId '{AAA}' -Location 'entra' -Technician 'tester' -Confirm:$false
+        (Test-DEBitLockerBackupGate -Offline).Status | Should -Not -Be 'PASS'
+        Set-DEBitLockerExpectedProtector -ProtectorId '{AAA}' -Location 'hudu' -Technician 'tester' -Confirm:$false
+        $g = Test-DEBitLockerBackupGate -Offline; $g.Status | Should -Be 'PASS'; $g.Detail | Should -Match 'hudu by tester'
+        (Get-DEState -Path 'identity.bitlocker.escrow.location') | Should -Be 'hudu'
+        Set-DEBitLockerExpectedProtector -ProtectorId '{BBB}' -Location 'hudu' -Confirm:$false
+        (Test-DEBitLockerBackupGate -Offline).Status | Should -Not -Be 'PASS'   # the recorded id is not on this volume
+        foreach ($k in @('identity.bitlocker.escrow', 'identity.bitlocker.entraBackup', 'identity.bitlocker.expectedProtectorId')) { Set-DEStateValue -Path $k -Value $null }
+    }
+    It 'proves the JumpCloud escrow against the volume without ever returning, logging or storing the key' {
+        Mock -ModuleName DE.Identity Get-DEJumpCloudSystem { @{ _id = 'SYS1' } }
+        Mock -ModuleName DE.Identity Invoke-DEJumpCloudApi { @{ key = $global:DETest.Key } } -ParameterFilter { $Path -eq '/systems/SYS1/fdekey' -and $V2 }
+        Mock -ModuleName DE.Identity Get-DEBitLockerRecoveryPasswords { @(@{ id = '{AAA}'; password = $global:DETest.Key }) }
+        $r = Test-DEBitLockerKeyInJumpCloud
+        $r.ok | Should -Be $true; $r.protectorId | Should -Be '{AAA}'
+        ($r | ConvertTo-Json -Compress) | Should -Not -Match '111111'
+        (Protect-DEText "key $($global:DETest.Key)") | Should -Not -Match '111111'
+        Mock -ModuleName DE.Identity Get-DEBitLockerRecoveryPasswords { @(@{ id = '{CCC}'; password = '999999-999999-999999-999999-999999-999999-999999-999999' }) }
+        $r = Test-DEBitLockerKeyInJumpCloud; $r.ok | Should -Be $false; $r.detail | Should -Match 'does not match'
+        Mock -ModuleName DE.Identity Get-DEBitLockerRecoveryPasswords { @(@{ id = '{AAA}'; password = $global:DETest.Key }) }
+        Mock -ModuleName DE.Identity Test-DESecret { $true }
+        Mock -ModuleName DE.Identity Get-DEBitLockerState { @{ os = @{ status = 'FullyEncrypted'; protection = 'On'; hasTpm = $true; hasRecoveryPassword = $true; recoveryProtectorIds = @('{AAA}') } } }
+        $g = Test-DEBitLockerBackupGate; $g.Status | Should -Be 'PASS'; $g.Detail | Should -Match 'JumpCloud holds the recovery key for protector \{AAA\}'
+        (Get-DEState -Path 'identity.bitlocker.jumpcloudEscrow.protectorId') | Should -Be '{AAA}'
+        ((Get-DEState) | ConvertTo-Json -Depth 12 -Compress) | Should -Not -Match '111111'
+        Set-DEStateValue -Path 'identity.bitlocker.jumpcloudEscrow' -Value $null
+    }
+    It 'plans the backup and the Microsoft leave wherever JumpCloud goes on, and binds only after leaving' {
+        foreach ($m in @('takeover', 'repair', 'new', 'replacement')) {
+            $ids = @(Initialize-DEWorkflow -ClientProfile $global:DETest.Alamo -Mode $m)
+            $ids | Should -Contain 'identity.entra-leave'; $ids | Should -Contain 'identity.bitlocker-backup'
+        }
+        (Get-DEAction -Id 'identity.entra-leave').Gates | Should -Contain 'gate.bitlocker-backup'
+        (Get-DEAction -Id 'jumpcloud.bind-user').Gates | Should -Contain 'gate.microsoft-left'
+        Mock -ModuleName DE.Identity Get-DEIdentityState { @{ joinType = 'entra-joined'; dsreg = @{ azureAdJoined = $true; tenantName = 'Alamo' } } }
+        (Test-DEGate -Id 'gate.microsoft-left' -Refresh).Status | Should -Be 'BLOCKED'
+        $p = ConvertTo-DEHashtable $global:DETest.Alamo; $p['identity']['leaveEntra'] = $false
+        $null = Initialize-DEWorkflow -ClientProfile $p -Mode 'takeover'
+        $g = Test-DEGate -Id 'gate.microsoft-left' -Refresh; $g.Status | Should -Be 'PASS'; $g.Detail | Should -Match 'keeps this device joined'
+        $null = Initialize-DEWorkflow -ClientProfile $global:DETest.Alamo -Mode 'takeover'
+    }
+}
+
