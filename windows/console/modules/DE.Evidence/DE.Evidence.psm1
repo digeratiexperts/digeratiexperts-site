@@ -272,7 +272,8 @@ function Send-DEHubPayload {
         if (-not $PSCmdlet.ShouldProcess($base, 'send signed device.observed event')) { return @{ sent = $false; planned = $true; file = $file } }
         try {
             if (-not $Payload.deviceKey) { throw 'the record has no usable serial, so it has no device key' }
-            $ev = New-DEHubEvent -EventType 'device.observed' -EntityId $Payload.deviceKey -Payload $Payload
+            $acct = "$((Get-DEContext)['hubAccountId'])"; if ($acct -notmatch '^[1-9]\d*$') { throw 'the client profile has no hub.accountId (the client''s Intelligence Hub account number), so the Hub cannot file this device' }
+            $ev = New-DEHubEvent -EventType 'device.observed' -EntityId $Payload.deviceKey -Payload $Payload -AccountId $acct
             $resp = Send-DEHubEvent -BaseUrl $base -Event $ev -Secret (Get-DESecretSecure -Name 'DE_HUB_SIGNING_SECRET')
             Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken "sent to Hub as signed event $($ev.eventId)" -Result 'PASS' -Verification $base | Out-Null
             return @{ sent = $true; file = $file; response = $resp; eventId = $ev.eventId }
