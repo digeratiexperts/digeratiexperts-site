@@ -2,10 +2,12 @@
 Describe 'DE Microsoft Admin' {
     BeforeAll {
         # stand-ins so the module's calls resolve without the Microsoft modules installed; each test mocks them
-        # (with the real parameter names, so mocks can read $Uri, $Method and $Headers)
-        if (-not (Get-Command -Name 'Invoke-MgGraphRequest' -ErrorAction SilentlyContinue)) { function global:Invoke-MgGraphRequest { param([string]$Method, [string]$Uri, $Body, [hashtable]$Headers, [string]$ContentType, [string]$OutputType) throw 'not mocked' } }
-        if (-not (Get-Command -Name 'Get-MgContext' -ErrorAction SilentlyContinue)) { function global:Get-MgContext { param() throw 'not mocked' } }
-        if (-not (Get-Command -Name 'Connect-MgGraph' -ErrorAction SilentlyContinue)) { function global:Connect-MgGraph { param([string]$TenantId, [string[]]$Scopes, [string]$ClientId, [string]$CertificateThumbprint, [switch]$NoWelcome) throw 'not mocked' } }
+        # (with the real parameter names, so mocks can read $Uri, $Method and $Headers). Always defined: a function wins
+        # over a cmdlet, so a runner that has Microsoft.Graph installed mocks the same stand-in (the real cmdlet types
+        # -Uri as [uri], whose string form un-escapes a%40b to a@b and would hide what the module actually sends)
+        function global:Invoke-MgGraphRequest { param([string]$Method, [string]$Uri, $Body, [hashtable]$Headers, [string]$ContentType, [string]$OutputType) throw 'not mocked' }
+        function global:Get-MgContext { param() throw 'not mocked' }
+        function global:Connect-MgGraph { param([string]$TenantId, [string[]]$Scopes, [string]$ClientId, [string]$CertificateThumbprint, [switch]$NoWelcome) throw 'not mocked' }
         # repo layout (windows/tests) or the standalone zip (DE-Microsoft-Admin/tests)
         $mod = @((Join-Path (Split-Path -Parent $PSScriptRoot) 'microsoft/DE-Microsoft-Admin/DE-Microsoft-Admin.psd1'), (Join-Path (Split-Path -Parent $PSScriptRoot) 'DE-Microsoft-Admin.psd1')) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
         Import-Module $mod -Force
@@ -15,7 +17,7 @@ Describe 'DE Microsoft Admin' {
         $global:MsT.Secret = New-Object Security.SecureString; foreach ($c in 'job-signing-secret-1'.ToCharArray()) { $global:MsT.Secret.AppendChar($c) }
         function global:Get-MsThrown { param([scriptblock]$S) try { $null = & $S; '<none>' } catch { $_.Exception.Message } }
     }
-    AfterAll { Remove-Item -LiteralPath $global:MsT.Dir -Recurse -Force -ErrorAction SilentlyContinue; Remove-Module DE-Microsoft-Admin -Force -ErrorAction SilentlyContinue }
+    AfterAll { Remove-Item -LiteralPath $global:MsT.Dir -Recurse -Force -ErrorAction SilentlyContinue; Remove-Module DE-Microsoft-Admin -Force -ErrorAction SilentlyContinue; Remove-Item -Path Function:\Invoke-MgGraphRequest, Function:\Get-MgContext, Function:\Connect-MgGraph -ErrorAction SilentlyContinue }
 
     It 'scope sets are least privilege: Read reads, and nothing asks for mail' {
         $r = @(Get-DEMsScopeSet -Scenario Read)

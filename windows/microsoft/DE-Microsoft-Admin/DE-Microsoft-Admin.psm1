@@ -195,7 +195,8 @@ function Get-DELicenseInventory {
 }
 function Get-DEConditionalAccessPolicy {
     [CmdletBinding()] param([string]$PolicyId)
-    $r = $(if ($PolicyId) { @(Invoke-DEGraphRequest -Uri "identity/conditionalAccess/policies/$PolicyId") } else { @(Invoke-DEGraphRequest -Uri 'identity/conditionalAccess/policies' -All) })
+    # @(...) outside, not $(...): $() unwraps a single item, and on Windows PowerShell 5.1 a lone object has no .Count
+    $r = @(if ($PolicyId) { Invoke-DEGraphRequest -Uri "identity/conditionalAccess/policies/$PolicyId" } else { Invoke-DEGraphRequest -Uri 'identity/conditionalAccess/policies' -All })
     return (New-DEResult -Operation 'Get-DEConditionalAccessPolicy' -Message "$($r.Count) polic(ies); $(@($r | Where-Object { $_.state -eq 'enabled' }).Count) enabled" -Data $r)
 }
 function Get-DEMfaRegistration {
@@ -226,8 +227,10 @@ function Test-DEEntraBitLockerEscrow {
     $keys = @(Invoke-DEGraphRequest -Uri ('informationProtection/bitlocker/recoveryKeys?$filter=deviceId eq {0}' -f (ConvertTo-DEODataLiteral $DeviceId)) -All -Headers @{ 'ocp-client-name' = 'DE Microsoft Admin'; 'ocp-client-version' = '0.2.0' })
     $rows = @($keys | ForEach-Object { [pscustomobject]@{ keyId = "$($_.id)"; created = $_.createdDateTime; volumeType = "$($_.volumeType)" } })
     $want = "$KeyProtectorId".Trim('{', '}').ToLowerInvariant()
-    $match = $(if ($want) { @($rows | Where-Object { $_.keyId.ToLowerInvariant() -eq $want }) } else { $rows })
-    $ok = [bool]$match.Count
+    # @(...) outside: $() would unwrap one match into a [pscustomobject], which has no .Count on Windows PowerShell 5.1
+    # (the escrowed key would read as missing)
+    $match = @(if ($want) { $rows | Where-Object { $_.keyId.ToLowerInvariant() -eq $want } } else { $rows })
+    $ok = $match.Count -gt 0
     $msg = $(if (-not $rows.Count) { 'no recovery key for this device in Entra ID' } elseif ($want -and -not $ok) { "Entra holds $($rows.Count) key(s) but not protector $KeyProtectorId" } else { "escrowed: $(@($match | ForEach-Object { $_.keyId }) -join ', ')" })
     return (New-DEResult -Operation 'Test-DEEntraBitLockerEscrow' -Status $(if ($ok) { 'Succeeded' } else { 'Failed' }) -Target $DeviceId -Message $msg -Data ([pscustomobject]@{ deviceId = $DeviceId; escrowed = $ok; keys = $rows }))
 }
