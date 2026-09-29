@@ -642,7 +642,8 @@ function Get-DEBrandingState {
     $wall = Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP' -Name 'DesktopImagePath'
     $lock = Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP' -Name 'LockScreenImagePath'
     $oem = @{ manufacturer = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'Manufacturer'); supportUrl = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'SupportURL'); supportPhone = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'SupportPhone'); logo = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'Logo'); supportHours = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'SupportHours') }
-    return @{ wallpaper = $wall; lockScreen = $lock; applied = [bool]($wall -and "$wall" -match '\\DE\\'); oem = $oem; hostname = $env:COMPUTERNAME }
+    $policyLock = Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization' -Name 'LockScreenImage'
+    return @{ wallpaper = $wall; lockScreen = $lock; policyLockScreen = $policyLock; applied = [bool]($wall -and "$wall" -match '\\DE\\'); oem = $oem; hostname = $env:COMPUTERNAME }
 }
 
 function Set-DEBranding {
@@ -662,13 +663,15 @@ function Set-DEBranding {
     $csp = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP'
     Set-DERegistryValue -Path $csp -Name 'DesktopImagePath' -Value $w -Type String; Set-DERegistryValue -Path $csp -Name 'DesktopImageUrl' -Value $w -Type String; Set-DERegistryValue -Path $csp -Name 'DesktopImageStatus' -Value 1 -Type DWord
     Set-DERegistryValue -Path $csp -Name 'LockScreenImagePath' -Value $l -Type String; Set-DERegistryValue -Path $csp -Name 'LockScreenImageUrl' -Value $l -Type String; Set-DERegistryValue -Path $csp -Name 'LockScreenImageStatus' -Value 1 -Type DWord
+    # Also set the ADMX-backed lock/logon image path. Enterprise/Education enforce it directly; JumpCloud MDM should remain the fleet source of truth where enrolled.
+    Set-DERegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization' -Name 'LockScreenImage' -Value $l -Type String
     $oem = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation'
     Set-DERegistryValue -Path $oem -Name 'Manufacturer' -Value 'Managed by Digerati Experts' -Type String
     Set-DERegistryValue -Path $oem -Name 'SupportURL' -Value 'https://portal.digeratiexperts.com/portal/login' -Type String
     Set-DERegistryValue -Path $oem -Name 'SupportHours' -Value 'Monday to Friday, 8:00 to 17:00 (Arizona)' -Type String
     $logoNote = ''
     if ("$(Get-DEHashPath -Object $ClientProfile -Path 'branding.oemLogo')" -ne 'none') { try { $lb = Join-Path $dest 'oem-logo.bmp'; Copy-Item -LiteralPath (New-DEOemLogo -ClientProfile $ClientProfile) -Destination $lb -Force; Set-DERegistryValue -Path $oem -Name 'Logo' -Value $lb -Type String; $logoNote = '; About-page logo set' } catch { $logoNote = "; About-page logo skipped ($($_.Exception.Message))" } }
-    return "wallpaper $w; lock screen $l; OEM support info set$logoNote (applies at next sign-in)"
+    return "wallpaper $w; company-branded lock/sign-in screen $l; OEM support info set$logoNote (lock screen enforcement depends on Windows edition/MDM policy; applies at next sign-in)"
 }
 
 function Undo-DEBranding {
@@ -680,6 +683,8 @@ function Undo-DEBranding {
     foreach ($n in @('DesktopImagePath', 'DesktopImageUrl', 'DesktopImageStatus', 'LockScreenImagePath', 'LockScreenImageUrl', 'LockScreenImageStatus')) { Remove-ItemProperty -Path $csp -Name $n -ErrorAction SilentlyContinue }
     if ($prev -and (Get-DECfgProp $prev 'wallpaper')) { Set-DERegistryValue -Path $csp -Name 'DesktopImagePath' -Value (Get-DECfgProp $prev 'wallpaper') -Type String; Set-DERegistryValue -Path $csp -Name 'DesktopImageStatus' -Value 1 -Type DWord }
     if ($prev -and (Get-DECfgProp $prev 'lockScreen')) { Set-DERegistryValue -Path $csp -Name 'LockScreenImagePath' -Value (Get-DECfgProp $prev 'lockScreen') -Type String; Set-DERegistryValue -Path $csp -Name 'LockScreenImageStatus' -Value 1 -Type DWord }
+    $policy = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization'; $oldPolicyLock = $(if ($prev) { Get-DECfgProp $prev 'policyLockScreen' } else { $null })
+    if ($oldPolicyLock) { Set-DERegistryValue -Path $policy -Name 'LockScreenImage' -Value $oldPolicyLock -Type String } else { Remove-ItemProperty -Path $policy -Name 'LockScreenImage' -ErrorAction SilentlyContinue }
     $oem = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation'
     foreach ($n in @('Manufacturer', 'SupportURL', 'SupportHours', 'Logo')) { $pv = Get-DEHashPath -Object $prev -Path "oem.$($n.Substring(0,1).ToLower() + $n.Substring(1))"; if ($pv) { Set-DERegistryValue -Path $oem -Name $n -Value $pv -Type String } else { Remove-ItemProperty -Path $oem -Name $n -ErrorAction SilentlyContinue } }
     Set-DEStateValue -Path 'branding.previous' -Value $null   # the next apply records the look it replaces again
