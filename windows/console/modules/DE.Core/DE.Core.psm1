@@ -468,6 +468,11 @@ function Invoke-DEAction {
     if ($Mode -eq 'Apply' -and $a.RequiresElevation -and -not (Test-DEIsElevated)) {
         return (Add-DEEvidence -Step $step -Module $a.Module -Before 'not elevated' -ActionTaken 'refused: needs an elevated session' -Result 'BLOCKED' -Remediation 'Relaunch the console as administrator.')
     }
+    # licence (DE.License): changes need a DE licence for this technician, device and client under policy 'required'
+    if ($Mode -eq 'Apply' -and (Get-Command -Name 'Test-DELicenseFor' -ErrorAction SilentlyContinue)) {
+        $lic = Test-DELicenseFor -Feature 'apply' -Client "$($script:DE.Context['client'])"
+        if (-not $lic.ok) { return (Add-DEEvidence -Step $step -Module $a.Module -Before 'unlicensed' -ActionTaken 'refused: no DE licence for this change' -Result 'BLOCKED' -Verification $lic.reason -Remediation 'Settings > Licence: activate this device with your DE account.') }
+    }
 
     # 3. detect and compare
     $state = Get-DEActionState -Id $Id
@@ -526,6 +531,7 @@ function Invoke-DERollback {
     $a = Get-DEAction -Id $Id
     if (-not $a.Rollback) { return (Add-DEEvidence -Step "$Id.rollback" -Module $a.Module -Before 'n/a' -ActionTaken 'rollback requested' -Result 'SKIPPED' -Verification 'no rollback defined for this action') }
     if ($a.RequiresElevation -and $script:DE.IsWindows -and -not (Test-DEIsElevated)) { return (Add-DEEvidence -Step "$Id.rollback" -Module $a.Module -Before 'applied' -ActionTaken 'rollback refused: needs an elevated session' -Result 'BLOCKED' -Remediation 'Relaunch the console as administrator.') }
+    if (Get-Command -Name 'Test-DELicenseFor' -ErrorAction SilentlyContinue) { $lic = Test-DELicenseFor -Feature 'apply' -Client "$($script:DE.Context['client'])"; if (-not $lic.ok) { return (Add-DEEvidence -Step "$Id.rollback" -Module $a.Module -Before 'applied' -ActionTaken 'rollback refused: no DE licence' -Result 'BLOCKED' -Verification $lic.reason -Remediation 'Settings > Licence: activate this device.') } }
     if ($script:DE.DryRun -or -not $PSCmdlet.ShouldProcess($a.Title, 'Rollback')) { return (Add-DEEvidence -Step "$Id.rollback" -Module $a.Module -Before 'n/a' -ActionTaken 'rollback (planned)' -Result 'PLANNED') }
     try {
         $out = @(& $a.Rollback (Get-DEActionState -Id $Id))

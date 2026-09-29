@@ -178,6 +178,7 @@ function Invoke-DECommunityScript {
         if (-not (Test-DEInteractiveHost) -or -not $PSCmdlet.ShouldContinue($what, 'This script changes the device in ways that are hard to undo')) { return [pscustomobject]@{ key = $Key; result = 'SKIPPED'; detail = 'needs confirmation (-Force)' } }
     }
     if (-not $PSCmdlet.ShouldProcess($s.key, $what)) { return [pscustomobject]@{ key = $Key; result = 'PLANNED'; detail = $what } }
+    if (Get-Command -Name 'Test-DELicenseFor' -ErrorAction SilentlyContinue) { $lic = Test-DELicenseFor -Feature 'toolbox'; if (-not $lic.ok) { return [pscustomobject]@{ key = $Key; result = 'REFUSED'; detail = $lic.reason } } }
     $path = Get-DECommunityScriptPath -Key $Key -Offline:$Offline
     $psArgs = @('-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', $path) + @($s.arguments) + @($ExtraArguments)
     $r = Invoke-DENative -FilePath (Get-DEWindowsPowerShellPath) -Arguments $psArgs -WorkingDirectory (Split-Path -Parent $path) -TimeoutSeconds $s.timeoutSeconds
@@ -187,6 +188,20 @@ function Invoke-DECommunityScript {
     $tail = (@($r.Output | Where-Object { $_ }) | Select-Object -Last 3) -join ' | '
     Add-DEEvidence -Step "toolbox.$($s.key)" -Module 'toolbox' -Before 'run requested' -ActionTaken "$($s.title): exit $($r.ExitCode)" -Result $(if ($ok) { 'PASS' } else { 'FAIL' }) -Verification $log -Remediation $(if ($ok) { '' } else { "read $log" }) | Out-Null
     return [pscustomobject]@{ key = $Key; result = $(if ($ok) { 'PASS' } else { 'FAIL' }); exitCode = $r.ExitCode; timedOut = $r.TimedOut; log = $log; detail = $tail; reboots = $s.reboots }
+}
+
+# ------------------------------------------------------------------ command line cheat sheet
+function Get-DECheatSheet {
+    <# The Command line page: catalog\cheatsheet.json with {root} filled in, plus one line per Toolbox script key. -Search filters. #>
+    param([string]$Search)
+    $root = Split-Path -Parent (Get-DEConsole).Root
+    $doc = Get-Content -LiteralPath (Join-Path (Get-DEConsole).Root 'catalog\cheatsheet.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    $groups = @()
+    foreach ($g in @($doc.groups)) { $groups += [pscustomobject]@{ id = $g.id; title = $g.title; items = @($g.items | ForEach-Object { [pscustomobject]@{ title = $_.title; command = ("$($_.command)" -replace '\{root\}', $root); note = "$($_.note)"; shell = "$($_.shell)"; danger = [bool]($_.PSObject.Properties['danger'] -and $_.danger) } }) } }
+    $tb = @(Get-DECommunityScripts | ForEach-Object { [pscustomobject]@{ title = "$($_.title)"; command = ('& "{0}\Start-DETechTool.cmd" -Headless -Toolbox {1}{2}' -f $root, $_.key, $(if ($_.confirm) { ' -Apply' } else { '' })); note = "$($_.category)$(if ($_.confirm) { '; asks first in the window, runs only with -Apply from the command line' })$(if ($_.reboots) { '; may restart' })"; shell = 'PowerShell (admin)'; danger = [bool]$_.confirm } })
+    if ($tb.Count) { $groups += [pscustomobject]@{ id = 'toolbox-keys'; title = 'Every Toolbox script'; items = $tb } }
+    if ($Search) { $q = [regex]::Escape($Search); $groups = @($groups | ForEach-Object { $m = @($_.items | Where-Object { "$($_.title) $($_.command) $($_.note)" -match $q }); if ($m.Count) { [pscustomobject]@{ id = $_.id; title = $_.title; items = $m } } }) }
+    return $groups
 }
 
 # ------------------------------------------------------------------ LSUClient (Lenovo)
@@ -278,4 +293,4 @@ function Register-DECommunityActions {
         -ManualAction 'The audit changes nothing. High findings are fixed through the DE baseline controls or JumpCloud policies, then re-audited.'
 }
 
-Export-ModuleMember -Function Test-DEInteractiveHost, Get-DECommunityScripts, Get-DECommunityScript, Get-DECommunityScriptPath, Get-DEWindowsPowerShellPath, Invoke-DECommunityScript, Get-DECommunityCatalog, Get-DECommunityTool, Invoke-DECommunityDownload, Test-DECommunityToolFiles, Get-DECommunityToolPath, Save-DECommunityTool, Import-DECommunityTool, Invoke-DELsuClient, Get-DELenovoUpdates, Install-DELenovoUpdates, Get-DECisBenchmark, ConvertFrom-DEHardeningKittyReport, Invoke-DECisAudit, Register-DECommunityActions
+Export-ModuleMember -Function Get-DECheatSheet, Test-DEInteractiveHost, Get-DECommunityScripts, Get-DECommunityScript, Get-DECommunityScriptPath, Get-DEWindowsPowerShellPath, Invoke-DECommunityScript, Get-DECommunityCatalog, Get-DECommunityTool, Invoke-DECommunityDownload, Test-DECommunityToolFiles, Get-DECommunityToolPath, Save-DECommunityTool, Import-DECommunityTool, Invoke-DELsuClient, Get-DELenovoUpdates, Install-DELenovoUpdates, Get-DECisBenchmark, ConvertFrom-DEHardeningKittyReport, Invoke-DECisAudit, Register-DECommunityActions
