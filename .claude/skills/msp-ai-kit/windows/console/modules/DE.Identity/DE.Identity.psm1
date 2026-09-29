@@ -149,6 +149,8 @@ function Test-DEOneDriveGate {
     $od = Get-DEOneDriveState
     $confirmed = Get-DEState -Path 'identity.onedrive.syncConfirmedAt'
     $src = "$((Get-DEContext)['sourcePrincipal'])"
+    # the console runs in the technician's session, so without a mapped end user their OneDrive has not been looked at
+    if (-not $src -and -not $confirmed) { $left = @(Get-DEUnmigratedDomainProfiles); if ($left.Count) { return @{ Status = 'WARN'; Detail = "end user not mapped yet, so their OneDrive was not checked ($(($left | ForEach-Object { $_.path }) -join ', ')): save the mapping on the Identity page" } } }
     $srcFolders = @()
     if ($src) {
         $srcProfile = @(Find-DEProfileForUser -UserName $src | Where-Object { $_ }) | Select-Object -First 1
@@ -221,6 +223,16 @@ function Test-DEMigrationPreconditions {
     $od = Test-DEGate -Id 'gate.onedrive' -Refresh; if ($od.Status -notin @('PASS', 'EXCEPTION')) { $issues += "OneDrive gate $($od.Status): $($od.Detail)" }
     if (-not (Test-DEIsElevated)) { $issues += 'console is not elevated' }
     if ((Get-DEPendingReboot).pending) { $issues += 'a reboot is already pending; restart first' }
+    # ADMU's own refusals, checked before anything changes
+    if ($LocalUserName.Length -gt 20) { $issues += "local user name '$LocalUserName' is longer than 20 characters (Windows limit; ADMU refuses it)" }
+    if (Test-DESecret -Name 'JC_API_KEY') {
+        try {
+            $m = Test-DEJumpCloudUserMapping -IntendedLocalUser $LocalUserName -QueryApi
+            if ($m.jumpcloud.bound -and -not $m.localAccount) { $issues += "JumpCloud user '$LocalUserName' is already bound to this device: the agent can create an empty local '$LocalUserName' before the migration, and ADMU then refuses. Unbind it in JumpCloud until the migration is verified" }
+            if ($m.jumpcloud.userExists -eq $false) { $issues += "JumpCloud has no user '$LocalUserName'; the local name must match the JumpCloud username exactly" }
+            if ("$($m.jumpcloud.userState)" -match 'STAGED|SUSPENDED') { $warnings += "JumpCloud user '$LocalUserName' is $($m.jumpcloud.userState): activate it (set a password) before binding" }
+        } catch { $warnings += "JumpCloud not checked: $($_.Exception.Message)" }
+    } else { $warnings += 'JumpCloud not checked (enter JC_API_KEY): the user must exist, be active and not yet bound to this device' }
     $admu = Get-DEAdmuState; if (-not $admu.installed) { $warnings += 'JumpCloud.ADMU module not installed yet (the action installs it)' }
     $hello = Get-DEHelloImpact
     return @{ ok = ($issues.Count -eq 0); issues = $issues; warnings = $warnings; sourceProfile = $srcProfile; helloImpact = $hello.impact; joinType = $id.joinType }
@@ -457,7 +469,12 @@ function Register-DEIdentityGates {
     } -Unblock "Run 'Create break-glass', sign in once as .\$($script:BreakGlassName), then press 'Confirm break-glass verified'."
     Register-DEGate -Id 'gate.bitlocker' -Title 'BitLocker migration gate' -Module 'identity' -Check { Test-DEBitLockerGate } -Unblock 'Encrypt the OS volume, turn protection on, add a recovery password protector, verify its id against the escrow record and enter the id.'
     Register-DEGate -Id 'gate.onedrive' -Title 'OneDrive sync safe' -Module 'identity' -Check { Test-DEOneDriveGate } -Unblock "Open OneDrive, confirm 'Up to date', pause sync, then press 'Confirm OneDrive synced'."
-    Register-DEGate -Id 'gate.source-user-signed-out' -Title 'Source user not signed in' -Module 'identity' -Check { $ctx = Get-DEContext; $src = "$($ctx['sourcePrincipal'])"; $id = Get-DEIdentityState; if ($src -and $id.interactiveUser -and $id.interactiveUser -ieq $src) { @{ Status = 'BLOCKED'; Detail = "$src is signed in" } } else { @{ Status = 'PASS'; Detail = $(if ($src) { "$src not in the interactive session" } else { 'no source principal set' }) } } } -Unblock 'Sign the end user out; run from the break-glass or technician session.'
+    Register-DEGate -Id 'gate.source-user-signed-out' -Title 'Source user not signed in' -Module 'identity' -Check {
+        $ctx = Get-DEContext; $src = "$($ctx['sourcePrincipal'])"; $id = Get-DEIdentityState
+        # no mapped end user is not a pass while an Entra or domain profile is still waiting to be migrated
+        if (-not $src) { $left = @(Get-DEUnmigratedDomainProfiles -Identity $id); if ($left.Count) { return @{ Status = 'BLOCKED'; Detail = "end user not mapped yet ($(($left | ForEach-Object { $_.path }) -join ', ') still to migrate): save the mapping on the Identity page" } }; return @{ Status = 'PASS'; Detail = 'no Entra or domain user on this device to migrate' } }
+        if ($id.interactiveUser -and $id.interactiveUser -ieq $src) { @{ Status = 'BLOCKED'; Detail = "$src is signed in" } } else { @{ Status = 'PASS'; Detail = "$src not in the interactive session" } }
+    } -Unblock 'Sign the end user out completely (Task Manager > Users > Sign off); run the console from the break-glass or technician session.'
     Register-DEGate -Id 'gate.jc-mapping' -Title 'JumpCloud user mapping correct' -Module 'jumpcloud' -Check { $ctx = Get-DEContext; if (-not $ctx['localUserName']) { return @{ Status = 'BLOCKED'; Detail = 'no intended local user set' } }; $m = Test-DEJumpCloudUserMapping -IntendedLocalUser "$($ctx['localUserName'])" -SourcePrincipal "$($ctx['sourcePrincipal'])" -QueryApi:(Test-DESecret -Name 'JC_API_KEY'); if ($m.status -eq 'READY') { @{ Status = 'PASS'; Detail = "local account and profile ready for $($m.intendedLocalUser)" } } else { @{ Status = $(if ($m.status -eq 'WARN') { 'WARN' } else { 'BLOCKED' }); Detail = ($m.issues -join '; ') } } } -Unblock 'Complete the identity migration so the intended local account owns the profile, then fix the JumpCloud binding.'
     Register-DEGate -Id 'gate.bitlocker-backup' -Title 'BitLocker recovery key backed up (outside Entra before leaving it)' -Module 'identity' -NoException -Check { Test-DEBitLockerBackupGate } -Unblock "Run 'Back up the BitLocker recovery key': it backs the key up to Entra while still joined and checks JumpCloud holds it. If JumpCloud has no key, apply the JumpCloud BitLocker policy to this device, or record the protector id and where the key is escrowed on the Identity page."
     Register-DEGate -Id 'gate.microsoft-left' -Title 'Device off Microsoft (Entra ID / AD domain)' -Module 'identity' -Check { if (-not $script:LeaveMicrosoft) { return @{ Status = 'PASS'; Detail = 'the client profile keeps this device joined (identity.leaveEntra = false)' } }; $j = Get-DEMicrosoftJoinState; if (-not $j.known) { @{ Status = 'BLOCKED'; Detail = 'join state unknown (dsregcmd gave no answer)' } } elseif ($j.any) { @{ Status = 'BLOCKED'; Detail = "still joined to $($j.summary)" } } else { @{ Status = 'PASS'; Detail = 'not joined to Entra ID or an AD domain' } } } -Unblock "Run 'Disconnect from Microsoft' after the migration is verified and the BitLocker key is backed up, then restart."

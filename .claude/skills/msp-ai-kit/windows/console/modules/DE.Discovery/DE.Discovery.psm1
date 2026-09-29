@@ -154,7 +154,8 @@ function Get-DEIdentityState {
             foreach ($n in $names) { if ($n -match '^S-1-\d+') { $unresolvedAdmins += @{ name = $n; sid = $n; source = 'unresolved' } } else { $admins += @{ name = $n.Trim(); sid = ''; source = 'net localgroup' } } }
         }
     }
-    $profiles = @(Get-DECim Win32_UserProfile -Filter "Special=False" | ForEach-Object { @{ path = $_.LocalPath; sid = $_.SID; loaded = [bool]$_.Loaded; lastUse = $(if ($_.LastUseTime) { ([datetime]$_.LastUseTime).ToString('o') } else { $null }) } })
+    # the owning account (AzureAD\Name, DOMAIN\name, PC\name) lets the console map the end user even from the technician's session
+    $profiles = @(Get-DECim Win32_UserProfile -Filter "Special=False" | ForEach-Object { $acct = $null; try { $acct = (New-Object System.Security.Principal.SecurityIdentifier($_.SID)).Translate([System.Security.Principal.NTAccount]).Value } catch { }; @{ path = $_.LocalPath; sid = $_.SID; account = $acct; loaded = [bool]$_.Loaded; lastUse = $(if ($_.LastUseTime) { ([datetime]$_.LastUseTime).ToString('o') } else { $null }) } })
     $hello = @{ ngcSet = $ds.ngcSet; pinConfigured = $false; ngcFolderPresent = $false }
     if ($script:IsWindowsHost) {
         $ngc = Join-Path $env:SystemRoot 'ServiceProfiles\LocalService\AppData\Local\Microsoft\Ngc'

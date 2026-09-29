@@ -145,7 +145,17 @@ function Resolve-DEEndUser {
     $mostUsed = $profiles | Select-Object -First 1
     $endUser = $null; $how = ''
     if ($interactive -and ("$interactive" -split '\\')[-1] -ine $techShort -and $interactive -notmatch '\\(jrpetro|DE-BreakGlass)$') { $endUser = $interactive; $how = 'interactive session' }
-    elseif ($mostUsed) { $endUser = (Split-Path -Leaf $mostUsed.path); $how = 'most recently used profile' }
+    else {
+        # from the technician's session: the Entra (S-1-12-1-...) profile is the one to migrate, named by its account (AzureAD\Name)
+        $entraProfile = @($profiles | Where-Object { "$(Get-DEHashPath -Object $_ -Path 'sid')" -like 'S-1-12-1-*' }) | Select-Object -First 1
+        $pick = $(if ($entraProfile) { $entraProfile } else { $mostUsed })
+        if ($pick) {
+            $acct = "$(Get-DEHashPath -Object $pick -Path 'account')"
+            if (-not $acct -and "$(Get-DEHashPath -Object $pick -Path 'sid')" -like 'S-1-12-1-*') { $acct = "AzureAD\$(Split-Path -Leaf $pick.path)" }
+            $endUser = $(if ($acct -and $acct -match '\\' -and ($acct -split '\\')[0] -ine $env:COMPUTERNAME) { $acct } else { Split-Path -Leaf $pick.path })
+            $how = $(if ($entraProfile) { 'Entra profile on this device' } else { 'most recently used profile' })
+        }
+    }
     $entraStyle = ($endUser -match '^AzureAD\\')
     return [pscustomobject]@{ technician = $tech; endUser = $endUser; endUserSource = $how; endUserIsEntraPrincipal = $entraStyle; endUserProfile = $(if ($endUser -and $allProfiles.Count) { @(Find-DEProfileForUser -UserName $endUser -Profiles $allProfiles) | Select-Object -First 1 } else { $null }) }
 }

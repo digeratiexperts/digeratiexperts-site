@@ -87,11 +87,12 @@ function Test-DEJumpCloudUserMapping {
     if ($local -and -not $local.enabled) { $issues += "local account '$IntendedLocalUser' is disabled" }
     if ($SourcePrincipal -and $identity.interactiveUser -and $identity.interactiveUser -ieq $SourcePrincipal) { $issues += "source user $SourcePrincipal is signed in; migration must run from break-glass or the technician session" }
     if ($sourceProfile -and $localProfile -and $sourceProfile.path -ne $localProfile.path) { $issues += "two profiles present ($($sourceProfile.path) and $($localProfile.path)); ADMU must preserve the source profile, expect a collision" }
-    $jc = @{ userExists = $null; bound = $null; boundUsers = @(); systemFound = $null; primaryUser = $null }
+    $jc = @{ userExists = $null; userState = $null; bound = $null; boundUsers = @(); systemFound = $null; primaryUser = $null }
     if ($QueryApi -and (Test-DESecret -Name 'JC_API_KEY')) {
         try {
             $u = Get-DEJumpCloudUser -Username $IntendedLocalUser; $jc.userExists = [bool]$u
             if (-not $u) { $issues += "JumpCloud user '$IntendedLocalUser' not found" }
+            if ($u) { $jc.userState = "$(Get-DEJcProp $u 'state')"; if (-not $jc.userState -and (Get-DEJcProp $u 'activated') -eq $false) { $jc.userState = 'STAGED' }; if ($jc.userState -match 'STAGED|SUSPENDED') { $notes += "JumpCloud user '$IntendedLocalUser' is $($jc.userState): the agent creates or takes over the account only for an active user" } }
             $sys = Get-DEJumpCloudSystem; $jc.systemFound = [bool]$sys
             if ($sys) {
                 $bound = Get-DEJumpCloudBoundUsers -SystemId $sys._id
