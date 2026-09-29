@@ -20,11 +20,9 @@
       "note": "Lenovo's public support site; the warranty page carries the base and extended warranties as JSON (ds_warranties)."
     },
     {
-      "key": "hp", "name": "HP", "match": "(?i)^(hp|hewlett)", "method": "hp-api", "confirmed": false,
-      "tokenUrl": "", "queryUrl": "",
-      "secrets": ["HP_WARRANTY_API_KEY", "HP_WARRANTY_API_SECRET"],
+      "key": "hp", "name": "HP", "match": "(?i)^(hp|hewlett)", "method": "manual", "confirmed": true,
       "checkUrl": "https://support.hp.com/us-en/check-warranty",
-      "note": "HP's Product Warranty API (developers.hp.com) needs an approved key; fill tokenUrl and queryUrl from HP's current documentation, then the lookup is automatic. Until then it is the check page."
+      "note": "HP's warranty API is for approved HP partners only; open HP's check page with the serial and record the end date (Scan & fix > Warranty)."
     },
     { "key": "microsoft", "name": "Microsoft Surface", "match": "(?i)^microsoft", "method": "manual", "confirmed": false, "checkUrl": "https://mybusinessservice.surface.com/", "note": "No public Surface warranty API. Business devices: Surface Management Portal or the business service site." },
     { "key": "apple", "name": "Apple", "match": "(?i)^apple", "method": "manual", "confirmed": true, "checkUrl": "https://checkcoverage.apple.com/", "note": "Apple's coverage page needs a CAPTCHA; there is no public API." },
