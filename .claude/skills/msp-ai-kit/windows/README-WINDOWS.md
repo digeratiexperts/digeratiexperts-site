@@ -289,6 +289,64 @@ handoffs and warranty. The shared contracts are in `console/contracts/`.
 - **Not live yet.** The Hub route is in a draft Intelligence-Hub PR. Merging it deploys to production,
   so it waits for DE approval. Until then, sends that fail are saved to evidence for manual upload.
 
+## Licences and watermarked builds
+
+A copy of DE Tech Tool that leaves DE is worth little on its own:
+
+- **Licences.** Changes, rollbacks, Toolbox scripts and client profiles check a DE licence first. The
+  licence is signed by the Hub (RS256), bound to one device (`<maker>:<SERIAL>`), and short-lived: 12
+  hours for a technician, the order window for a dropship device. Activate from **Settings > Licence**, or
+  headless with `-License <token>`.
+- **Policy.** The policy is `warn` until the Hub issues licences: runs are marked UNLICENSED but not
+  refused. A release build made with `-Enforce` sets the policy to `required`.
+- **Watermarked builds.** `packaging\New-DEReleasePackage.ps1 -IssuedTo <name>` gives each copy its own
+  build ID (`console\BUILD.json`, shown in the window title) and records it in `build-register.csv`.
+
+The design and its limits are in [PROTECTING-THE-TOOL.md](PROTECTING-THE-TOOL.md).
+
+## Command line page
+
+The **Command line** page lists every command a technician needs, each with a Copy button and search:
+
+- starting the tool and running it from an RMM
+- licences and Toolbox scripts
+- the boot rescue and building releases
+- Microsoft 365 administration and email migration
+- the Windows takeover steps
+
+Every command it lists also works headless. The list lives in `console\catalog\cheatsheet.json`.
+
+## Microsoft 365 administration and email migration
+
+`microsoft\DE-Microsoft-Admin` is a standalone PowerShell module for Microsoft 365, Entra ID, Exchange
+Online, Intune, Autopilot and Azure. It uses least-privilege scopes, reads every page of every list,
+records an audit line for each operation, and runs Hub jobs only when they are signed. It also carries
+the email migration engine (consumer Gmail to Microsoft 365):
+
+- the IMAP preflight
+- Exchange Online batches with a pilot gate
+- contacts and calendar import
+- DNS readiness
+- mail flow, MFA and shared-mailbox checks
+- scans of each PC for Gmail left behind
+- the bounce diagnostic
+- client sign-off and the Hub record
+
+Start with its [README](microsoft/DE-Microsoft-Admin/README.md). The rules every migration follows are
+in [MIGRATION-STANDARD.md](microsoft/DE-Microsoft-Admin/MIGRATION-STANDARD.md).
+
+## Evidence reports
+
+Each run writes a hashed evidence bundle to `evidence\` containing two reports, both as HTML and as PDF:
+
+- **`report-internal`** is for DE. It has readiness by area, identity and management, BitLocker, open
+  items with their fixes, exceptions, and the evidence log.
+- **`report-client`** is the handover summary for the client. It is in plain words (In place, Needs
+  attention, Not in place, Agreed exception) and uses the client's own service names. It never carries
+  vendor names, keys or internal detail.
+
+Both open with the overall readiness and a count of what is in place.
+
 ## Warranty
 
 The `maint.warranty` step shows when the device's warranty ends and where that answer came from.
@@ -462,10 +520,16 @@ The Pester suites run on Windows and Linux because Windows-only calls are mocked
 - the Alamo JumpCloud mapping case, and break-glass refusing `jrpetro`
 - vendor URL resolution, the package trust policy and client-safe reports
 - the phase runner, module export clashes, the loader, and packaging tamper detection
+- the boot rescue, Hub signing (byte-for-byte with Node), licences and watermarked builds
+- the Toolbox (pinned downloads, hash checks, device requirements) and OEM update exit codes
+- DE Microsoft Admin and the email migration: a scripted IMAP server, Google contact and calendar
+  exports, DNS records, bounce messages and the sign-off rules
+- the Windows PowerShell 5.1 behaviours that pwsh hides (single-item unwrapping, culture-dependent
+  formats, `Invoke-RestMethod` arrays)
 
 The GUI smoke builds every page against the Alamo example profile. It renders each page to PNG at 100
 and 200 percent scale, which is the high-DPI check. It never shows a window, so CI runs it on each
-pull request.
+pull request and prints a small JPEG of each page into the job log for visual review.
 
 ## Fonts
 
