@@ -1,0 +1,390 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digeratiexperts.com/schemas/de.email-migration.record/v1",
+  "title": "DE email migration record",
+  "description": "One Gmail to Microsoft 365 migration project as the Hub keeps it (DE Microsoft Admin Export-DEMigrationRecord, MIGRATION-STANDARD.md). Identities, counts, statuses, checks, devices, bounces, sign-off and the event trail; never a credential. Check names travel as values because the Hub refuses secret-looking keys. The Hub keeps the latest record per account and projectId.",
+  "type": "object",
+  "required": [
+    "schema",
+    "projectId",
+    "client",
+    "targetDomain",
+    "stage",
+    "source",
+    "identityMap",
+    "devices",
+    "sharedMailboxes",
+    "batches",
+    "bounce",
+    "checks",
+    "events",
+    "exportedAt"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "de.email-migration.record/v1"
+    },
+    "projectId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9-]{1,64}$"
+    },
+    "client": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenantId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "targetDomain": {
+      "type": "string",
+      "pattern": "^[a-z0-9.-]+\\.[a-z]{2,}$"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "Assessment",
+        "Provisioning",
+        "Preflight",
+        "Pilot",
+        "Batches",
+        "ContactsCalendar",
+        "Devices",
+        "DnsCutover",
+        "FinalDelta",
+        "Verification",
+        "SignedOff",
+        "Closed"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "type",
+        "mailPath"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "PersonalGmail",
+            "GoogleWorkspace",
+            "OtherIMAP"
+          ]
+        },
+        "mailPath": {
+          "type": "string",
+          "enum": [
+            "IMAP",
+            "GoogleWorkspace"
+          ]
+        }
+      }
+    },
+    "identityMap": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "source",
+          "destination"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 3
+          },
+          "destination": {
+            "type": "string",
+            "minLength": 3
+          },
+          "displayName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "devices": {
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "preflight": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "migration": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "contacts": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "calendar": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "multiFactor": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "devices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "checkedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "accounts": {
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "gmailReferences": {
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "notChecked": {
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "sharedMailboxes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "address"
+        ],
+        "properties": {
+          "address": {
+            "type": "string",
+            "minLength": 3
+          },
+          "members": {
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "verified": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "problems": {
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "checkedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "batches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "Pilot",
+              "Production"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "users": {
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "failed": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "confirmedBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "dns": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "bounce": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "cause"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "cause": {
+            "type": "string",
+            "enum": [
+              "NdrReprocessed",
+              "AutomaticForward",
+              "RetryingClient",
+              "NewMessage"
+            ]
+          },
+          "resolved": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "check",
+          "status"
+        ],
+        "properties": {
+          "check": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Pass",
+              "Fail",
+              "NotApplicable",
+              "Pending"
+            ]
+          },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "signoff": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": [
+            "Approved",
+            "ApprovedWithExceptions",
+            "Rejected"
+          ]
+        },
+        "approvedBy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "events": {
+      "type": "array"
+    },
+    "exportedAt": {
+      "type": "string",
+      "minLength": 20
+    }
+  }
+}

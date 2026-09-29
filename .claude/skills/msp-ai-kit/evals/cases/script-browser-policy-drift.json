@@ -1,0 +1,21 @@
+{
+  "id": "script-browser-policy-drift",
+  "module": "scripting-bash-powershell",
+  "title": "PowerShell 5.1 registry drift report and apply for browser extension policy",
+  "inputs": {
+    "[WHAT THE SCRIPT MUST DO, in one paragraph]": "Ensure the DE browser-extension policy registry values exist for Edge and Chrome under HKLM and report drift; apply only when -Apply is passed.",
+    "[Windows (Windows PowerShell 5.1 for Windows endpoint automation; PowerShell 7+ only when cross-platform or explicitly required), macOS, or Linux distro and version]": "Windows PowerShell 5.1",
+    "[PARAMETERS the RMM will pass, and which are secret]": "-Apply switch; -LogPath; no secrets",
+    "[READ-ONLY REPORT, CHANGES STATE, or BOTH]": "BOTH",
+    "[YES with the phases that span a reboot, or NO]": "NO",
+    "[PASTE or NONE]": "NONE"
+  },
+  "mustMention": [
+    "Set-StrictMode",
+    "SupportsShouldProcess",
+    "exit"
+  ],
+  "mustNotMention": [
+    "Read-Host"
+  ]
+}

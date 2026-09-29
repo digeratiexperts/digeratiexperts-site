@@ -36,7 +36,7 @@ describe("de-sync contract parity", () => {
     expect(fixture.version).toBe(1);
     expect([...DE_SYNC_SOURCES]).toEqual(fixture.sources);
     expect([...DE_SYNC_EVENT_TYPES]).toEqual(fixture.eventTypes);
-    expect(fixture.eventTypes).toHaveLength(41);
+    expect(fixture.eventTypes).toHaveLength(45);
     const envelope = createDeSyncEnvelope({
       eventType: "lead.created",
       source: "website",
