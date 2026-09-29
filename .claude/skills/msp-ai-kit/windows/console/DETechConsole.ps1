@@ -1462,14 +1462,30 @@ function Build-HubConnectionCard {
         [void]$row.Children.Add($t); [void]$row.Children.Add((New-Text "$($i.detail)" -Muted -Wrap))
         [void]$sp.Children.Add($row)
     }
+    # the client's Hub account number is plain client metadata (not a secret): saved on the client profile
+    $acct = $(if ($S.Profile) { "$(Get-DEHashPath -Object $S.Profile -Path 'hub.accountId')" } else { '' })
+    $acctBox = New-El TextBox @{ Text = $acct; Width = 180; Name = 'Intelligence Hub account number' }
+    $saveAcct = New-Button 'Save to the client profile' {
+        if (-not $S.Profile) { Set-Status 'Choose a client profile on Session & readiness first.'; return }
+        $a = "$($acctBox.Text)".Trim()
+        if ($a -and $a -notmatch '^[1-9]\d*$') { Set-Status 'The Hub account number is a whole number from the account''s page in the Hub.'; return }
+        $base = ConvertTo-DEHashtable (Get-DEClientProfile -Id $S.Profile.id)
+        if (-not $base.ContainsKey('hub') -or -not $base['hub']) { $base['hub'] = @{} }
+        $base['hub']['accountId'] = $a
+        $f = Save-DEClientProfile -Profile $base
+        $S.Profile['hub'] = @{ accountId = $a }; Set-DEContext -Values @{ hubAccountId = $a }
+        Set-Status "Hub account $(if ($a) { $a } else { '(cleared)' }) saved to $f"; Show-Page 'Settings'
+    }.GetNewClosure()
+    [void]$sp.Children.Add((New-Wrap @((New-El StackPanel @{ Margin = '0,6,12,0' } @((New-Label "Client's Hub account number$(if ($S.Profile) { " ($($S.Profile.name))" })"), $acctBox)), $saveAcct)))
     $check = New-Button 'Check the Hub answers' {
         $ep = "$(Get-DEState -Path 'settings.hub.endpoint')"; if (-not $ep) { $ep = "$($Settings.hubEndpoint)" }
         if (-not $ep) { Set-Status 'Set the Hub URL in Console settings first.'; return }
         Start-DEJob -Label 'Hub check' -Params @{ ep = $ep } -Work { [pscustomobject]@{ hubCheck = (Test-DEHubReachable -Endpoint $JobParams.ep) } } -OnDone { param($r) $x = @($r | Where-Object { $_ -and $_.PSObject.Properties['hubCheck'] }) | Select-Object -Last 1; if ($x) { Set-Status "$(if ($x.hubCheck.ok) { 'Hub is up: ' } else { 'Hub check failed: ' })$($x.hubCheck.detail)" } }
     }
     $deploy = "ssh de-vps 'sudo cat /opt/intelligence-hub/current/RELEASE_SHA'"
+    $expected = $(try { "$((Get-Content -LiteralPath (Join-Path $ConsoleRoot 'contracts\deployment-config.json') -Raw -Encoding UTF8 | ConvertFrom-Json).hub.expectedReleaseSha)" } catch { '' })
     [void]$sp.Children.Add((New-Label 'Hub admin: the server side'))
-    [void]$sp.Children.Add((New-Text 'On the Hub server, TECHCONSOLE_TO_HUB_SECRET must hold the same value as the signing secret typed in here; until it is set the Hub answers 503 and the tool keeps the record for manual upload. To confirm which release the Hub runs, compare this with the merged commit:' -Muted -Wrap))
+    [void]$sp.Children.Add((New-Text 'On the Hub server, TECHCONSOLE_TO_HUB_SECRET must hold the same value as the signing secret typed in here; until it is set the Hub answers 503 and the tool keeps the record for manual upload. To confirm which release the Hub runs, compare this with the merged commit$(if ($expected) { " (expected to start $expected)" }):' -Muted -Wrap))
     [void]$sp.Children.Add((New-El TextBox @{ Text = $deploy; IsReadOnly = $true; FontFamily = 'Cascadia Mono, Consolas'; FontSize = 12; Name = 'Hub release check command'; Margin = '0,4,0,4' }))
     [void]$sp.Children.Add((New-Wrap @($check, (New-Button 'Copy the release check' { [System.Windows.Clipboard]::SetText($deploy); Set-Status 'Copied.' }.GetNewClosure()), (New-Button 'Refresh' { Show-Page 'Settings' }))))
     [void]$root.Children.Add((New-Card @($sp)))
@@ -1497,10 +1513,10 @@ function Build-CodeSigningCard {
     $tech = $(if ((Get-DEContext)['technician']) { (Get-DEContext)['technician'] } else { "$($Settings.technician)" }); if (-not $tech) { $tech = '<technician>' }
     $kit = Split-Path -Parent $ConsoleRoot
     $cmd = "& `"$kit\packaging\New-DEReleasePackage.ps1`" -IssuedTo $tech -Thumbprint $thumb"
-    $verify = "Get-AuthenticodeSignature `"$ConsoleRoot\DETechConsole.ps1`" | Format-List Status, SignerCertificate, TimeStamperCertificate"
+    $verify = "& `"$kit\packaging\Sign-DETechConsole.ps1`" -Verify -RequireSignature"
     [void]$sp.Children.Add((New-Label 'Signed rebuild (run in PowerShell with the token plugged in)'))
     [void]$sp.Children.Add((New-El TextBox @{ Text = $cmd; IsReadOnly = $true; TextWrapping = 'Wrap'; FontFamily = 'Cascadia Mono, Consolas'; FontSize = 12; Name = 'Signed rebuild command'; Margin = '0,4,0,4' }))
-    [void]$sp.Children.Add((New-Text 'Signatures are timestamped (DigiCert), so they stay valid after the certificate expires. Check a signed file with:' -Muted -Wrap))
+    [void]$sp.Children.Add((New-Text 'Signatures are timestamped (DigiCert), so they stay valid after the certificate expires. Before sending a build to a client, check the whole package is signed and unchanged (FAIL lines name every file that is not):' -Muted -Wrap))
     [void]$sp.Children.Add((New-El TextBox @{ Text = $verify; IsReadOnly = $true; TextWrapping = 'Wrap'; FontFamily = 'Cascadia Mono, Consolas'; FontSize = 12; Name = 'Signature check command'; Margin = '0,4,0,4' }))
     [void]$sp.Children.Add((New-Wrap @((New-Button 'Copy the signed rebuild' { [System.Windows.Clipboard]::SetText($cmd); Set-Status 'Copied.' }.GetNewClosure() -Primary), (New-Button 'Copy the signature check' { [System.Windows.Clipboard]::SetText($verify); Set-Status 'Copied.' }.GetNewClosure()), (New-Button 'Refresh' { Show-Page 'Settings' }))))
     [void]$root.Children.Add((New-Card @($sp)))

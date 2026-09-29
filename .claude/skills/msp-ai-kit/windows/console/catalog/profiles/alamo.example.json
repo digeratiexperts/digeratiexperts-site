@@ -56,7 +56,8 @@
     "accent": "#D3126A",
     "supportText": "Support: support@digeratiexperts.com  |  portal.digeratiexperts.com",
     "hostnamePattern": "ALAMO-{ROLE}-{SERIAL4}",
-    "shortcuts": ["client-portal", "support-ticket", "remote-support"]
+    "shortcuts": ["client-portal", "support-ticket", "remote-support"],
+    "lockScreen": { "theme": "dark", "logos": "both", "showSupport": true }
   },
   "network": { "wifiProfiles": [], "printers": [], "shares": [], "certificates": [], "vpn": [], "sase": { "provider": "timus", "required": false } },
   "backup": { "provider": "msp360", "required": true },
@@ -76,5 +77,6 @@
   ],
   "clientSafe": { "serviceNames": { "mdr": "Managed detection and response", "edr": "Endpoint protection", "backup": "Managed backup", "emailSecurity": "Email security" } },
   "notes": "Takeover client. Verify break-glass and BitLocker before any Entra change.",
-  "updated": "2026-09-28T00:00:00Z"
+  "updated": "2026-09-28T00:00:00Z",
+  "hub": { "accountId": "", "_note": "The client's account number from its page in the Intelligence Hub; never guess it. Hub URL and signing secret are per session (Settings), not per client." }
 }

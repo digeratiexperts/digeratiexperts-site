@@ -483,6 +483,7 @@ Describe 'DE Tech Tool planning, tiers and client branding' {
         $a.name | Should -Be 'Alamo Industries'
         $a.branding.clientLogo | Should -Be 'asset:clients/alamo/alamo-mark.png'
         (New-DEClientProfileTemplate).branding.clientLogo | Should -Be ''
+        (New-DEClientProfileTemplate).hub.accountId | Should -Be ''
     }
 }
 
