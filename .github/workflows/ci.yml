@@ -55,6 +55,13 @@ jobs:
       - name: MSP advisor tests
         run: npm run test:advisor
 
+      # The MSP AI Kit skill (.claude/skills/msp-ai-kit) is outside Vitest's
+      # include patterns too; its builder tests and config check run here so a
+      # module edit without a rebuilt example cannot merge green. The Windows
+      # loader has its own workflow (msp-ai-kit.yml).
+      - name: MSP AI Kit tests
+        run: npm run test:msp-ai-kit
+
       - name: Production build
         run: npm run build
 

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "de.techconsole.deployment-config/v1",
+  "schemaVersion": "de.techconsole.deployment-config/v1",
+  "product": "DE Tech Tool",
+  "hub": {
+    "expectedReleaseSha": "c622160e",
+    "releaseShaPath": "/opt/intelligence-hub/current/RELEASE_SHA",
+    "serviceName": "intelligence-hub",
+    "healthPath": "/api/healthz",
+    "endpointSetting": "settings.hub.endpoint",
+    "serverSecretName": "TECHCONSOLE_TO_HUB_SECRET",
+    "runtimeSecretName": "DE_HUB_SIGNING_SECRET",
+    "accountIdRequired": true,
+    "accountIdSource": "client profile hub.accountId",
+    "verification": [
+      "SSH release SHA matches expectedReleaseSha",
+      "Hub health endpoint returns healthy",
+      "runtime signing secret is present only in memory",
+      "signed event is accepted by the Hub for the bound account"
+    ]
+  },
+  "codeSigning": {
+    "requiredForRelease": true,
+    "algorithm": "SHA256",
+    "authenticode": true,
+    "timestamping": true,
+    "unsignedDevelopmentBuildAllowed": true,
+    "unsignedProductionBuildAllowed": false,
+    "verificationScript": "windows/packaging/Sign-DETechConsole.ps1"
+  },
+  "branding": {
+    "lockScreenRequired": true,
+    "assetRoot": "%ProgramData%\\DE\\Branding",
+    "stateSource": "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\PersonalizationCSP",
+    "mustVerify": [
+      "LockScreenImagePath points to the client-branded asset",
+      "asset remains present after cleanup/restart",
+      "client profile and DE support branding are represented",
+      "evidence record includes before and after state"
+    ]
+  },
+  "execution": "pre-check -> approval -> apply -> verify -> rollback/evidence"
+}

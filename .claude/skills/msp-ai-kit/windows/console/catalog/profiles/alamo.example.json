@@ -1,0 +1,82 @@
+{
+  "_readme": "Example client profile built from the Alamo takeover findings. No credentials, ever: connect keys, site tokens, org keys and passwords are entered at run time. Copy to a saved profile from the console and adjust.",
+  "schemaVersion": 1,
+  "id": "alamo",
+  "name": "Alamo Industries",
+  "shortName": "Alamo",
+  "tier": "Business",
+  "plan": { "bundle": "proactive-business", "addOns": [], "solutions": [] },
+  "packages": ["Core IT", "Security Operations"],
+  "gcch": false,
+  "identity": {
+    "authority": "jumpcloud",
+    "entraTenantName": "Alamo",
+    "entraTenantId": "",
+    "leaveEntra": true,
+    "keepEntraRegistration": false,
+    "jumpcloudSystemGroups": ["Alamo - Workstations"],
+    "jumpcloudUserGroups": ["Alamo - Users"],
+    "jumpcloudDeviceTrust": false,
+    "usernameConvention": "first-initial-lastname"
+  },
+  "mdm": { "authority": "jumpcloud", "allowCoManagement": false, "removeStaleEnrollments": true },
+  "security": {
+    "mdr": { "primary": "guardz", "backup": "blackpoint", "deploy": ["guardz"] },
+    "edr": "sentinelone",
+    "browserSecurity": ["pabx"],
+    "emailSecurity": "mimecast",
+    "siem": "wazuh",
+    "awareness": "ninjio",
+    "baselineProfile": "de-windows-baseline"
+  },
+  "cloudStorage": { "standard": "onedrive", "removeConflicting": false, "allowBoth": false },
+  "browser": {
+    "default": "edge",
+    "policyProfile": "de-browser-policy",
+    "homepage": "https://portal.digeratiexperts.com/portal/login",
+    "startupPages": [],
+    "managedBookmarksFromVendors": false,
+    "extraBookmarks": [ { "name": "DE Client Portal", "url": "https://portal.digeratiexperts.com/portal/login" } ],
+    "loginManager": "",
+    "_loginManagerNote": "Pick the client's approved password manager (keeper, bitwarden, onepassword, lastpass, dashlane) or 'builtin' to keep the browser's own. Until one is picked the built-in managers stay off and the console reports the missing choice.",
+    "autofill": "off",
+    "extensions": { "mode": "approved-only", "approved": [], "blocked": [] }
+  },
+  "apps": {
+    "required": ["m365-apps", "teams", "onedrive", "edge", "chrome", "pdf-reader"],
+    "optional": [],
+    "lineOfBusiness": [],
+    "remove": []
+  },
+  "updates": { "authority": "jumpcloud", "_note": "jumpcloud (default) | intune for Microsoft-only clients | windows when DE Tech Tool sets the automatic-update policy" },
+  "m365": { "tenantDomain": "", "licenseSku": "", "verifyUpn": true },
+  "branding": {
+    "clientLogo": "asset:clients/alamo/alamo-mark.png",
+    "wallpaperStyle": "dual-logo",
+    "accent": "#D3126A",
+    "supportText": "Support: support@digeratiexperts.com  |  portal.digeratiexperts.com",
+    "hostnamePattern": "ALAMO-{ROLE}-{SERIAL4}",
+    "shortcuts": ["client-portal", "support-ticket", "remote-support"],
+    "lockScreen": { "theme": "dark", "logos": "both", "showSupport": true }
+  },
+  "network": { "wifiProfiles": [], "printers": [], "shares": [], "certificates": [], "vpn": [], "sase": { "provider": "timus", "required": false } },
+  "backup": { "provider": "msp360", "required": true },
+  "remoteSupport": { "provider": "jumpcloud-remote-assist", "required": true },
+  "rmm": { "provider": "msp360", "required": false },
+  "sites": [ { "id": "main", "name": "Main office", "address": "", "notes": "" } ],
+  "vendorTenants": { "hudu_host": "", "wazuh_cloud_id": "", "qualys_platform_url": "", "s1_console": "", "pabx_console": "", "optix_portal": "" },
+  "detection": {
+    "hostnamePatterns": ["ALAMO-*"],
+    "entraTenantNames": ["Alamo"],
+    "entraTenantIds": [],
+    "jumpcloudSystemGroups": ["Alamo - Workstations"],
+    "profileFolderHints": ["SuzetteThompson"]
+  },
+  "knownUsers": [
+    { "displayName": "Suzette Thompson", "sourcePrincipal": "AzureAD\\SuzetteThompson", "localUserName": "sthompson", "jumpcloudUser": "sthompson", "role": "standard", "notes": "Takeover finding: JumpCloud mapping showed 'Owner' while the Windows principal was AzureAD\\SuzetteThompson; migrate to local sthompson before takeover." }
+  ],
+  "clientSafe": { "serviceNames": { "mdr": "Managed detection and response", "edr": "Endpoint protection", "backup": "Managed backup", "emailSecurity": "Email security" } },
+  "notes": "Takeover client. Verify break-glass and BitLocker before any Entra change.",
+  "updated": "2026-09-28T00:00:00Z",
+  "hub": { "accountId": "", "_note": "The client's account number from its page in the Intelligence Hub; never guess it. Hub URL and signing secret are per session (Settings), not per client." }
+}
