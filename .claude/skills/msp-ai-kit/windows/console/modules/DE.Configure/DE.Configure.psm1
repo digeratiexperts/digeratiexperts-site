@@ -20,9 +20,92 @@ function Get-DECatalogJson { param([string]$Name) $de = Get-DEConsole; return (G
 # ================================================================== BASELINE
 function Get-DEBaselineControls { param([Alias('Profile')][string]$BaselineProfile = 'de-windows-baseline') $b = Get-DECatalogJson 'baseline.json'; $ids = @((Get-DECfgProp (Get-DECfgProp $b.profiles $BaselineProfile) 'controls')); return @($b.controls | Where-Object { $_ -and $ids -contains $_.id }) }
 
+# ---- per-user policy: every real profile's hive plus Default (new users), never just the hive of whoever runs the tool
+function Open-DEUserHives {
+    <#
+        Registry roots for per-user settings: each real user's hive (loaded ones under HKU; unloaded ones loaded from
+        NTUSER.DAT) and the Default profile so new users get the setting too. Running as SYSTEM, from RMM, or as the
+        technician, HKCU is the wrong account. Returns @{ targets; loaded } ; pass it to Close-DEUserHives.
+    #>
+    $targets = @(); $loaded = @()
+    if (-not $script:IsWindowsHost) { return @{ targets = $targets; loaded = $loaded } }
+    $real = '^S-1-(5-21-\d+-\d+-\d+-\d+|12-1-\d+-\d+-\d+-\d+)$'
+    $present = @(Get-ChildItem -Path 'Registry::HKEY_USERS' -ErrorAction SilentlyContinue | ForEach-Object { $_.PSChildName } | Where-Object { $_ -match $real })
+    foreach ($sid in $present) { $targets += @{ sid = $sid; root = "Registry::HKEY_USERS\$sid"; name = $sid } }
+    foreach ($p in @(Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList' -ErrorAction SilentlyContinue)) {
+        $sid = $p.PSChildName; if ($sid -notmatch $real -or $present -contains $sid) { continue }
+        $dir = (Get-ItemProperty -LiteralPath $p.PSPath -Name 'ProfileImagePath' -ErrorAction SilentlyContinue).ProfileImagePath
+        $hive = $(if ($dir) { Join-Path ([Environment]::ExpandEnvironmentVariables($dir)) 'NTUSER.DAT' } else { $null })
+        if (-not $hive -or -not (Test-Path -LiteralPath $hive)) { continue }
+        $mount = "DE_$($sid -replace '-', '_')"
+        $r = Invoke-DENative -FilePath 'reg.exe' -Arguments @('load', "HKU\$mount", $hive)
+        if ($r.ExitCode -eq 0) { $loaded += $mount; $targets += @{ sid = $sid; root = "Registry::HKEY_USERS\$mount"; name = (Split-Path -Leaf $dir) } }
+    }
+    $def = Join-Path $env:SystemDrive 'Users\Default\NTUSER.DAT'
+    if (Test-Path -LiteralPath $def) { $r = Invoke-DENative -FilePath 'reg.exe' -Arguments @('load', 'HKU\DE_Default', $def); if ($r.ExitCode -eq 0) { $loaded += 'DE_Default'; $targets += @{ sid = 'Default'; root = 'Registry::HKEY_USERS\DE_Default'; name = 'Default (new users)' } } }
+    return @{ targets = $targets; loaded = $loaded }
+}
+function Close-DEUserHives {
+    param([Parameter(Mandatory = $true)]$Hives)
+    foreach ($m in @($Hives.loaded)) { for ($i = 0; $i -lt 5; $i++) { [GC]::Collect(); [GC]::WaitForPendingFinalizers(); $r = Invoke-DENative -FilePath 'reg.exe' -Arguments @('unload', "HKU\$m"); if ($r.ExitCode -eq 0) { break }; Start-Sleep -Milliseconds 400 } }
+}
+function Clear-DEStaleUserHives {
+    <# Unloads any HKU\DE_* hive this tool left loaded (a crash between load and unload); ADMU cannot migrate a profile whose NTUSER.DAT is loaded. Returns what is still loaded. #>
+    if (-not $script:IsWindowsHost) { return @() }
+    $left = @(Get-ChildItem -Path 'Registry::HKEY_USERS' -ErrorAction SilentlyContinue | ForEach-Object { $_.PSChildName } | Where-Object { $_ -like 'DE_*' })
+    if ($left.Count) { Close-DEUserHives -Hives @{ loaded = $left } }
+    return @(Get-ChildItem -Path 'Registry::HKEY_USERS' -ErrorAction SilentlyContinue | ForEach-Object { $_.PSChildName } | Where-Object { $_ -like 'DE_*' })
+}
+function Get-DEUserPolicyPath { param([Parameter(Mandatory = $true)][string]$Root, [Parameter(Mandatory = $true)][string]$Path) return ($Root + '\' + ($Path -replace '^HKCU:\\?', '')) }
+function Get-DEUserScopeState {
+    <# A per-user registry control across every profile: ok only when all of them have the value. $null when there is nothing to check (not Windows). #>
+    param([Parameter(Mandatory = $true)]$Control)
+    $h = Open-DEUserHives
+    try {
+        if (-not $h.targets.Count) { return $null }
+        $miss = @(); foreach ($t in $h.targets) { $v = Get-DERegistryValue -Path (Get-DEUserPolicyPath -Root $t.root -Path $Control.path) -Name $Control.name; if ("$v" -ne "$($Control.value)") { $miss += $t.name } }
+        return @{ ok = (-not $miss.Count); have = "$($h.targets.Count - $miss.Count) of $($h.targets.Count) profiles"; detail = $(if ($miss.Count) { "missing for: $($miss -join ', ')" } else { "set for all $($h.targets.Count) profiles including Default" }) }
+    } finally { Close-DEUserHives -Hives $h }
+}
+function Set-DEUserScopeControl {
+    <# Writes a per-user registry control into every profile (recording each previous value for rollback). #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param([Parameter(Mandatory = $true)]$Control)
+    if (-not $PSCmdlet.ShouldProcess($Control.title, "set for every user profile and Default")) { return 'planned' }
+    $h = Open-DEUserHives
+    try {
+        $prev = @{}; $n = 0
+        foreach ($t in $h.targets) {
+            $path = Get-DEUserPolicyPath -Root $t.root -Path $Control.path
+            $old = Get-DERegistryValue -Path $path -Name $Control.name; $prev[$t.sid] = @{ existed = ($null -ne $old); value = $old }
+            Set-DERegistryValue -Path $path -Name $Control.name -Value $Control.value -Type $Control.valueType -Confirm:$false; $n++
+        }
+        if (-not (Get-DEState -Path "baseline.previous.$($Control.id)")) { Set-DEStateValue -Path "baseline.previous.$($Control.id)" -Value @{ users = $prev } }
+        return "set for $n profile(s) including Default"
+    } finally { Close-DEUserHives -Hives $h }
+}
+function Undo-DEUserScopeControl {
+    param([Parameter(Mandatory = $true)]$Control)
+    $pv = Get-DEState -Path "baseline.previous.$($Control.id)"; $users = $(if ($pv) { Get-DEHashPath -Object $pv -Path 'users' } else { $null })
+    if (-not $users) { return @{ ok = $false; detail = 'no previous values were recorded before the change' } }
+    $h = Open-DEUserHives; $bad = @()
+    try {
+        foreach ($t in $h.targets) {
+            $u = Get-DEHashPath -Object $users -Path $t.sid; if (-not $u) { continue }
+            $path = Get-DEUserPolicyPath -Root $t.root -Path $Control.path
+            if (Get-DEHashPath -Object $u -Path 'existed') { Set-DERegistryValue -Path $path -Name $Control.name -Value (Get-DEHashPath -Object $u -Path 'value') -Type $Control.valueType -Confirm:$false } else { Remove-ItemProperty -Path $path -Name $Control.name -ErrorAction SilentlyContinue }
+            $now = Get-DERegistryValue -Path $path -Name $Control.name
+            $ok = $(if (Get-DEHashPath -Object $u -Path 'existed') { "$now" -eq "$(Get-DEHashPath -Object $u -Path 'value')" } else { $null -eq $now }); if (-not $ok) { $bad += $t.name }
+        }
+    } finally { Close-DEUserHives -Hives $h }
+    if (-not $bad.Count) { Set-DEStateValue -Path "baseline.previous.$($Control.id)" -Value $null }
+    return @{ ok = (-not $bad.Count); detail = $(if ($bad.Count) { "not restored for: $($bad -join ', ')" } else { 'previous values restored for every profile' }) }
+}
+
 function Get-DEBaselineControlState {
     param([Parameter(Mandatory = $true)]$Control)
     $want = $Control.value; $have = $null; $ok = $false; $detail = ''
+    if ($Control.type -eq 'registry' -and "$($Control.scope)" -eq 'user') { $u = Get-DEUserScopeState -Control $Control; if ($u) { return @{ id = $Control.id; title = $Control.title; cis = $Control.cis; want = $want; have = $u.have; ok = $u.ok; detail = $u.detail } } }
     switch ($Control.type) {
         'registry' { $have = Get-DERegistryValue -Path $Control.path -Name $Control.name; $ok = ("$have" -eq "$want"); $detail = "$($Control.path)\$($Control.name) = $have" }
         'firewall' { if ($script:IsWindowsHost) { try { $fp = Get-NetFirewallProfile -Name $Control.profile -ErrorAction Stop; $have = [bool]($fp.Enabled -eq 'True' -or $fp.Enabled -eq $true); $ok = ($have -eq [bool]$want); $detail = "$($Control.profile) enabled=$have" } catch { $detail = $_.Exception.Message } } }
@@ -76,12 +159,12 @@ function Register-DEBaselineActions {
     foreach ($c in Get-DEBaselineControls -Profile $profileName) {
         $ctl = $c
         if ($ctl.id -eq 'wu-auto' -and $authority -ne 'windows') { continue }
-        $gates = @('gate.elevated'); if ((Get-DECfgProp $ctl 'scope') -eq 'user') { $gates = @() }
-        Register-DEAction -Id "baseline.$($ctl.id)" -Module 'baseline' -Title $ctl.title -Phase 11 -Gates $gates -RequiresElevation:((Get-DECfgProp $ctl 'scope') -ne 'user') `
+        $gates = @('gate.elevated')   # per-user controls too: they write every profile's hive, not just the current user's
+        Register-DEAction -Id "baseline.$($ctl.id)" -Module 'baseline' -Title $ctl.title -Phase 11 -Gates $gates -RequiresElevation `
             -Detect { $s = Get-DEBaselineControlState -Control $ctl; @{ ok = $s.ok; have = "$($s.have)"; detail = $s.detail } }.GetNewClosure() `
             -Desired { @{ ok = $true } } `
-            -Apply { param($s) $bk = $null; if ($ctl.type -eq 'registry') { $bk = Backup-DERegistryKey -Key (($ctl.path -replace '^HKLM:', 'HKLM') -replace '^HKCU:', 'HKCU') -Label "baseline-$($ctl.id)"; if (-not (Get-DEState -Path "baseline.previous.$($ctl.id)")) { Set-DEStateValue -Path "baseline.previous.$($ctl.id)" -Value @{ existed = ($null -ne (Get-DERegistryValue -Path $ctl.path -Name $ctl.name)); value = (Get-DERegistryValue -Path $ctl.path -Name $ctl.name); backup = $bk } } }; $r = Set-DEBaselineControl -Control $ctl; "$r$(if ($bk) { "; backup $bk" })" }.GetNewClosure() `
-            -Rollback { param($s) if ($ctl.type -ne 'registry') { return "Undo '$($ctl.title)' by hand: $($ctl.type) controls have no automatic rollback." }; $pv = Get-DEState -Path "baseline.previous.$($ctl.id)"; if (-not $pv) { return @{ ok = $false; detail = 'no previous value was recorded before the change' } }; if ($pv['existed']) { Set-DERegistryValue -Path $ctl.path -Name $ctl.name -Value $pv['value'] -Type $ctl.valueType } else { Remove-ItemProperty -Path $ctl.path -Name $ctl.name -ErrorAction SilentlyContinue }; $now = Get-DERegistryValue -Path $ctl.path -Name $ctl.name; $ok = $(if ($pv['existed']) { "$now" -eq "$($pv['value'])" } else { $null -eq $now }); if ($ok) { Set-DEStateValue -Path "baseline.previous.$($ctl.id)" -Value $null }; @{ ok = $ok; detail = "$($ctl.path)\$($ctl.name) is now '$now' (before DE: $(if ($pv['existed']) { "'$($pv['value'])'" } else { 'not set' }))" } }.GetNewClosure() `
+            -Apply { param($s) if ($ctl.type -eq 'registry' -and "$($ctl.scope)" -eq 'user' -and $env:OS -eq 'Windows_NT') { return (Set-DEUserScopeControl -Control $ctl) }; $bk = $null; if ($ctl.type -eq 'registry') { $bk = Backup-DERegistryKey -Key (($ctl.path -replace '^HKLM:', 'HKLM') -replace '^HKCU:', 'HKCU') -Label "baseline-$($ctl.id)"; if (-not (Get-DEState -Path "baseline.previous.$($ctl.id)")) { Set-DEStateValue -Path "baseline.previous.$($ctl.id)" -Value @{ existed = ($null -ne (Get-DERegistryValue -Path $ctl.path -Name $ctl.name)); value = (Get-DERegistryValue -Path $ctl.path -Name $ctl.name); backup = $bk } } }; $r = Set-DEBaselineControl -Control $ctl; "$r$(if ($bk) { "; backup $bk" })" }.GetNewClosure() `
+            -Rollback { param($s) if ($ctl.type -eq 'registry' -and "$($ctl.scope)" -eq 'user' -and $env:OS -eq 'Windows_NT') { return (Undo-DEUserScopeControl -Control $ctl) }; if ($ctl.type -ne 'registry') { return "Undo '$($ctl.title)' by hand: $($ctl.type) controls have no automatic rollback." }; $pv = Get-DEState -Path "baseline.previous.$($ctl.id)"; if (-not $pv) { return @{ ok = $false; detail = 'no previous value was recorded before the change' } }; if ($pv['existed']) { Set-DERegistryValue -Path $ctl.path -Name $ctl.name -Value $pv['value'] -Type $ctl.valueType } else { Remove-ItemProperty -Path $ctl.path -Name $ctl.name -ErrorAction SilentlyContinue }; $now = Get-DERegistryValue -Path $ctl.path -Name $ctl.name; $ok = $(if ($pv['existed']) { "$now" -eq "$($pv['value'])" } else { $null -eq $now }); if ($ok) { Set-DEStateValue -Path "baseline.previous.$($ctl.id)" -Value $null }; @{ ok = $ok; detail = "$($ctl.path)\$($ctl.name) is now '$now' (before DE: $(if ($pv['existed']) { "'$($pv['value'])'" } else { 'not set' }))" } }.GetNewClosure() `
             -ManualAction $(if (Get-DECfgProp $ctl 'breaks') { "Known conflict: $($ctl.breaks) Record an exception with approver and expiry if the client needs it." } else { '' })
     }
 }
@@ -333,7 +416,7 @@ function Register-DEBrowserActions {
                 $orig = Get-DEState -Path "browser.policyOriginal.$b"; if (-not $orig) { continue }
                 $key = Get-DEBrowserPolicyKey -Browser $b
                 if (Test-Path -Path $key) { Remove-Item -Path $key -Recurse -Force }
-                if ($orig['existed']) { if ($orig['backup'] -and (Test-Path -LiteralPath $orig['backup'])) { $r = Invoke-DENative -FilePath 'reg.exe' -Arguments @('import', $orig['backup']) -TimeoutSeconds 60; if ($r.ExitCode -eq 0) { $done += $b } else { $bad += "$b import exit $($r.ExitCode)" } } else { $bad += "$b backup missing" } }
+                if ($orig['existed']) { if ($orig['backup'] -and (Test-Path -LiteralPath $orig['backup'])) { $r = Invoke-DENative -FilePath 'reg.exe' -Arguments @('import', $orig['backup'], '/reg:64') -TimeoutSeconds 60; if ($r.ExitCode -eq 0) { $done += $b } else { $bad += "$b import exit $($r.ExitCode)" } } else { $bad += "$b backup missing" } }
                 else { if (-not (Test-Path -Path $key)) { $done += $b } else { $bad += "$b key still present" } }
             }
             @{ ok = ($bad.Count -eq 0 -and $done.Count -gt 0); detail = "restored: $($done -join ', ')$(if ($bad.Count) { "; problems: $($bad -join '; ')" })" }
@@ -652,4 +735,4 @@ function Register-DEBrandingActions {
         -Apply { param($s) $want = $s.Detected.want; Rename-Computer -NewName $want -Force; "renamed to $want (restart required)" }
 }
 
-Export-ModuleMember -Function Get-DEColorLuminance, Get-DEBrandingOptions, Get-DEBrandingLayout, Get-DEPrimaryScreenSize, Get-DEImageLuminance, New-DEOemLogo, Get-DEBrowserControlCatalog, Get-DEChromiumBrowsers, Get-DEBrowserExtensionPlan, ConvertTo-DEChromiumForceEntry, Test-DEFirefoxInstalled, Get-DEFirefoxDesiredPolicy, Compare-DEFirefoxPolicy, Set-DEFirefoxPolicy, Get-DEInstalledBrowserExtensions, Test-DEBrowserExtensionConflicts, Get-DEBaselineControls, Get-DEBaselineControlState, Set-DEBaselineControl, Invoke-DEBaselineAssessment, Register-DEBaselineActions, Get-DEBrowserPolicyProfile, Get-DEBrowserDesiredPolicy, Compare-DEBrowserPolicy, Set-DEBrowserPolicy, Set-DEDefaultBrowserAssociations, Register-DEBrowserActions, Get-DEBrandingAssets, New-DEBrandedWallpaper, Get-DEBrandingState, Set-DEBranding, Undo-DEBranding, New-DEHostname, Get-DEShortcutDefinitions, Set-DESupportShortcuts, Register-DEBrandingActions
+Export-ModuleMember -Function Clear-DEStaleUserHives, Open-DEUserHives, Close-DEUserHives, Get-DEUserScopeState, Set-DEUserScopeControl, Undo-DEUserScopeControl, Get-DEColorLuminance, Get-DEBrandingOptions, Get-DEBrandingLayout, Get-DEPrimaryScreenSize, Get-DEImageLuminance, New-DEOemLogo, Get-DEBrowserControlCatalog, Get-DEChromiumBrowsers, Get-DEBrowserExtensionPlan, ConvertTo-DEChromiumForceEntry, Test-DEFirefoxInstalled, Get-DEFirefoxDesiredPolicy, Compare-DEFirefoxPolicy, Set-DEFirefoxPolicy, Get-DEInstalledBrowserExtensions, Test-DEBrowserExtensionConflicts, Get-DEBaselineControls, Get-DEBaselineControlState, Set-DEBaselineControl, Invoke-DEBaselineAssessment, Register-DEBaselineActions, Get-DEBrowserPolicyProfile, Get-DEBrowserDesiredPolicy, Compare-DEBrowserPolicy, Set-DEBrowserPolicy, Set-DEDefaultBrowserAssociations, Register-DEBrowserActions, Get-DEBrandingAssets, New-DEBrandedWallpaper, Get-DEBrandingState, Set-DEBranding, Undo-DEBranding, New-DEHostname, Get-DEShortcutDefinitions, Set-DESupportShortcuts, Register-DEBrandingActions

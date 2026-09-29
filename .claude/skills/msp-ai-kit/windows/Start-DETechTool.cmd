@@ -10,22 +10,34 @@ rem No %ERRORLEVEL% inside ( ) blocks: cmd expands those when it reads the block
 setlocal
 set "CONSOLE=%~dp0console\DETechConsole.ps1"
 if not exist "%CONSOLE%" goto :missing
-echo %* | findstr /i /c:"-Headless" >nul
-if not errorlevel 1 goto :headless
-net session >nul 2>&1
+rem Always 64-bit Windows PowerShell: a 32-bit RMM agent or cmd would otherwise start the SysWOW64 copy, which sees
+rem WOW6432Node and SysWOW64 instead of the real registry and System32.
+set "PS=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
+set "HEADLESS="
+for %%A in (%*) do if /i "%%~A"=="-Headless" set "HEADLESS=1"
+if defined HEADLESS goto :headless
+rem fltmc needs administrator rights and, unlike net session, does not depend on the Server service
+fltmc >nul 2>&1
 if errorlevel 1 goto :elevate
-powershell.exe -NoProfile -NoLogo -Sta -ExecutionPolicy Bypass -File "%CONSOLE%" %*
+"%PS%" -NoProfile -NoLogo -Sta -ExecutionPolicy Bypass -File "%CONSOLE%" %*
 exit /b %ERRORLEVEL%
 
 :headless
-powershell.exe -NoProfile -NoLogo -ExecutionPolicy Bypass -File "%CONSOLE%" %*
+"%PS%" -NoProfile -NoLogo -ExecutionPolicy Bypass -File "%CONSOLE%" %*
 exit /b %ERRORLEVEL%
 
 :elevate
-rem Ask for administrator rights once; open unelevated only when the prompt is declined.
-powershell.exe -NoProfile -Command "try { Start-Process powershell.exe -Verb RunAs -ErrorAction Stop -ArgumentList '-NoProfile -Sta -ExecutionPolicy Bypass -File \"%CONSOLE%\" %*'; exit 0 } catch { exit 1 }"
-if errorlevel 1 powershell.exe -NoProfile -Sta -ExecutionPolicy Bypass -File "%CONSOLE%" %*
-exit /b 0
+rem Ask for administrator rights once; open unelevated only when the prompt is declined. The path and arguments go
+rem through environment variables so quotes, apostrophes and ampersands survive, and a mapped drive (invisible to the
+rem elevated token) is turned into its UNC path.
+set "DE_CONSOLE=%CONSOLE%"
+set "DE_ARGS=%*"
+set "DE_PS=%PS%"
+"%PS%" -NoProfile -Command "$p = $env:DE_CONSOLE; $root = [IO.Path]::GetPathRoot($p); if ($root -match '^[A-Za-z]:') { $d = Get-PSDrive -Name $root.Substring(0,1) -ErrorAction SilentlyContinue; if ($d -and $d.DisplayRoot) { $p = $d.DisplayRoot.TrimEnd('\') + $p.Substring(2) } }; try { Start-Process -FilePath $env:DE_PS -Verb RunAs -ErrorAction Stop -ArgumentList ('-NoProfile -Sta -ExecutionPolicy Bypass -File \"' + $p + '\" ' + $env:DE_ARGS); exit 0 } catch { exit 1 }"
+if not errorlevel 1 exit /b 0
+"%PS%" -NoProfile -Sta -ExecutionPolicy Bypass -File "%CONSOLE%" %*
+exit /b %ERRORLEVEL%
 
 :missing
 echo DETechConsole.ps1 not found next to this launcher.

@@ -98,7 +98,7 @@ foreach ($item in Get-ChildItem -LiteralPath $WindowsRoot) {
 }
 # Pinned community tools (LSUClient, HardeningKitty) travel with the kit so first boot works before the network is
 # trusted; each file is re-verified against catalog\community.json when it is used. Missing ones are fetched at first boot.
-foreach ($toolId in @('lsuclient', 'hardeningkitty')) {
+foreach ($toolId in @((Get-DECommunityCatalog).tools | Where-Object { $_.use -in @('module', 'scripts') } | ForEach-Object { $_.id })) {
     try { $null = Save-DECommunityTool -Id $toolId -Destination (Join-Path $app 'community') } catch { Write-Warning "community tool $toolId not staged ($($_.Exception.Message)); first boot downloads it" }
 }
 $composed | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $kit 'profile.json') -Encoding UTF8
@@ -140,7 +140,9 @@ if ($env:OS -eq 'Windows_NT') { Start-Process -FilePath (Join-Path (Join-Path $h
 exit $code
 '@
 [IO.File]::WriteAllText((Join-Path $kit 'Invoke-DEFirstBoot.ps1'), $firstBoot, (New-Object Text.UTF8Encoding $true))
-$cmd = "@echo off`r`nrem DE dropship first boot: runs elevated`r`nnet session >nul 2>&1 || (powershell -NoProfile -Command `"Start-Process -Verb RunAs -FilePath '%~f0'`" & exit /b)`r`npowershell.exe -NoProfile -ExecutionPolicy Bypass -File `"%~dp0Invoke-DEFirstBoot.ps1`"`r`npause`r`n"
+# fltmc (admin check without the Server service), 64-bit PowerShell, and Mark-of-the-Web removed from the whole kit
+# before any script runs (a GPO execution policy ignores -ExecutionPolicy Bypass for downloaded files).
+$cmd = "@echo off`r`nrem DE dropship first boot: runs elevated`r`nfltmc >nul 2>&1 || (powershell -NoProfile -Command `"Start-Process -Verb RunAs -FilePath '%~f0'`" & exit /b)`r`nset `"PS=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`"`r`nif exist `"%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe`" set `"PS=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe`"`r`n`"%PS%`" -NoProfile -Command `"Get-ChildItem -LiteralPath '%~dp0' -Recurse -File | Unblock-File`"`r`n`"%PS%`" -NoProfile -ExecutionPolicy Bypass -File `"%~dp0Invoke-DEFirstBoot.ps1`"`r`npause`r`n"
 [IO.File]::WriteAllText((Join-Path $kit 'FirstBoot.cmd'), $cmd, [Text.Encoding]::ASCII)
 
 $bundleName = $(if ($composed['plan'] -and $order['bundle']) { (Get-DEBundle -Id $order['bundle'])['name'] } elseif (@($order['solutions']).Count) { 'Standalone: ' + (@($order['solutions']) -join ', ') } else { 'client profile' })

@@ -98,7 +98,7 @@ function Invoke-DEOemUpdate {
             $base = Join-Path (Get-DEConsole).Dirs.Packages 'hpia'
             $r = Invoke-DENative -FilePath $t.hp -Arguments @('/Operation:Analyze', '/Action:Install', "/Category:$cats", '/Selection:All', '/Silent', "/ReportFolder:$base\report", "/SoftpaqDownloadFolder:$base\softpaqs")
             if ($r.ExitCode -eq 3010) { Request-DEReboot -Reason 'HP updates require a restart' -ResumeAction 'maint.oem' | Out-Null }
-            if ($r.ExitCode -notin @(0, 256, 3010)) { throw "HP Image Assistant exit $($r.ExitCode) (3020 = an install failed, 4096 = platform not supported); report in $base\report" }
+            if ($r.ExitCode -notin @(0, 256, 257, 3010)) { throw "HP Image Assistant exit $($r.ExitCode) (3020 = an install failed, 4096 = platform not supported); report in $base\report" }
             return "HP Image Assistant exit $($r.ExitCode)"
         }
         'dell' {
@@ -147,6 +147,31 @@ function Test-DESiteResources {
     $printerResults = @($printers | Where-Object { $_ } | ForEach-Object { $n = "$(Get-DEOpsProp $_ 'name')"; @{ name = $n; installed = [bool](Get-Printer -Name $n -ErrorAction SilentlyContinue) } })
     $wifiResults = @($wifi | Where-Object { $_ } | ForEach-Object { $s = "$(Get-DEOpsProp $_ 'ssid')"; @{ ssid = $s; present = ($net.wifiProfiles -contains $s) } })
     return @{ gateway = $net.gateway; dns = $net.dns; shares = $shareResults; printers = $printerResults; wifi = $wifiResults; connectivity = (Test-DEConnectivity) }
+}
+
+function Get-DEClockSkew {
+    <# Seconds between this PC's clock and an HTTPS server's Date header (Microsoft, then Cloudflare). $null when neither answers. #>
+    foreach ($u in @('https://www.microsoft.com', 'https://www.cloudflare.com')) {
+        try {
+            $r = Invoke-WebRequest -Uri $u -Method Head -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
+            $d = "$($r.Headers['Date'])"; if (-not $d) { continue }
+            $server = [datetime]::ParseExact($d, 'r', [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::AdjustToUniversal)
+            return [int][math]::Round(((Get-Date).ToUniversalTime() - $server).TotalSeconds)
+        } catch { continue }
+    }
+    return $null
+}
+function Sync-DEClock {
+    <# Starts Windows Time and forces a resync; if the service was never registered (some images), registers it first. #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param()
+    if (-not $PSCmdlet.ShouldProcess('Windows Time', 'resync the clock')) { return 'planned' }
+    $svc = Get-Service -Name 'w32time' -ErrorAction SilentlyContinue
+    if (-not $svc) { $null = Invoke-DENative -FilePath 'w32tm.exe' -Arguments @('/register'); $svc = Get-Service -Name 'w32time' -ErrorAction SilentlyContinue }
+    if ($svc -and $svc.StartType -eq 'Disabled') { Set-Service -Name 'w32time' -StartupType Manual }
+    if ($svc -and $svc.Status -ne 'Running') { Start-Service -Name 'w32time' -ErrorAction SilentlyContinue }
+    $r = Invoke-DENative -FilePath 'w32tm.exe' -Arguments @('/resync', '/force') -TimeoutSeconds 60
+    return "w32tm /resync exit $($r.ExitCode)"
 }
 
 # ------------------------------------------------------------------ actions
@@ -214,6 +239,10 @@ function Register-DEOperationsActions {
     Register-DEAction -Id 'net.connectivity' -Module 'network' -Title 'Connectivity, DNS and cloud endpoints' -Phase 2 `
         -Detect { $c = Test-DEConnectivity; @{ allOk = $c.allOk; failing = (($c.targets | Where-Object { $_ -and -not $_.https } | ForEach-Object { $_.host }) -join ', ') } } -Desired { @{ allOk = $true } } `
         -ManualAction 'Check DNS, proxy and firewall egress on 443; SASE clients can block enrolment endpoints until the device is authorised.'
+    Register-DEAction -Id 'net.time' -Module 'network' -Title 'Clock is right (TLS, sign-in and Hub signatures depend on it)' -Phase 2 -Gates @('gate.elevated') -RequiresElevation `
+        -Detect { $k = Get-DEClockSkew; @{ skewSeconds = $k; ok = $(if ($null -eq $k) { $null } else { [math]::Abs($k) -le 300 }) } } -Desired { @{ ok = $true } } `
+        -Apply { param($s) $r = Sync-DEClock; $k = Get-DEClockSkew; if ($null -ne $k -and [math]::Abs($k) -gt 300) { throw "clock still $k s off after resync ($r); check the time zone and that UDP 123 is allowed" }; "$r; now $k s off" } `
+        -ManualAction 'Set the right time zone, then run w32tm /resync /force. At OOBE a dead CMOS battery or an unsynced clock breaks every HTTPS download.'
     Register-DEAction -Id 'net.site' -Module 'network' -Title 'Site resources (Wi-Fi, printers, shares)' -Phase 14 `
         -Detect { $r = Test-DESiteResources -ClientProfile $ClientProfile; @{ wifiMissing = @($r.wifi | Where-Object { $_ -and -not $_.present }).Count; printersMissing = @($r.printers | Where-Object { $_ -and -not $_.installed }).Count; sharesUnreachable = @($r.shares | Where-Object { $_ -and -not $_.reachable }).Count } }.GetNewClosure() `
         -Desired { @{ wifiMissing = 0; printersMissing = 0; sharesUnreachable = 0 } } `

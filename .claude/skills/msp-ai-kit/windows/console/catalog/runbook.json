@@ -9,6 +9,7 @@
       "steps": [
         "^rescue\\.",
         "^net\\.connectivity$",
+        "^net\\.time$",
         "^maint\\.pending-reboot$",
         "^order\\."
       ]
@@ -168,6 +169,7 @@
   "why": {
     "net.connectivity": "Installs and JumpCloud need the internet; nothing else is worth starting offline.",
     "rescue.handoff": "The boot rescue may have unlocked BitLocker with the recovery password, copied profiles or reverted updates; the next steps depend on what it did.",
+    "net.time": "A clock that is minutes off makes HTTPS downloads, JumpCloud sign-in and the Hub signature fail with confusing errors.",
     "maint.pending-reboot": "Changing identity on top of a pending restart is how profiles get corrupted.",
     "jumpcloud.agent": "The agent comes first: its BitLocker policy is what escrows the recovery key in JumpCloud.",
     "identity.breakglass": "A hidden local administrator that always works, in case the migration or the Microsoft disconnect locks everyone else out.",

@@ -307,30 +307,59 @@ itself, never to a third-party lookup service, so client serial numbers stay bet
 Answers are cached for 7 days. The step warns when fewer than 90 days are left. The end date goes into
 the asset record.
 
-## Community tools (pinned)
+## Community tools and the Toolbox (pinned)
 
-`console\catalog\community.json` lists the community PowerShell projects DE reviewed. Each entry is
-pinned to one commit, with its licence and how DE may use it:
+`console\catalog\community.json` lists every community project the tool uses. Each one is pinned to the
+commit DE reviewed, and every file it loads or runs has a sha256. DE uses these tools internally and does
+not redistribute them, so the licence is recorded but never blocks a useful tool.
 
-| Tool | Licence | Use | What DE does with it |
-|---|---|---|---|
-| LSUClient (jantari) | MIT | loaded | `maint.oem` on Lenovo: drivers, BIOS and firmware from Lenovo's own catalog, no Lenovo System Update needed |
-| HardeningKitty (scipag) | MIT | loaded | `baseline.cis-audit`: read-only CIS or Microsoft baseline report, saved to evidence. Its write modes are never used. |
-| Win11Debloat, Winget-AutoUpdate | MIT | reviewed | candidates, not wired yet |
-| winget-install, PSAppDeployToolkit, limehawk rmm-scripts | GPL / LGPL | separate program only | never copied into DE code |
-| dszp, flatlinebb MSP scripts | no licence | reference | read for ideas, no code used |
-| PowerShellWarrantyReports | AGPL | reference | not used: AGPL, and it sends serials to a third-party proxy |
+| Kind | Tools | How it is used |
+|---|---|---|
+| Module | LSUClient, HardeningKitty | Imported: `maint.oem` on Lenovo, and the read-only `baseline.cis-audit` |
+| Toolbox scripts | limehawk rmm-scripts, dszp msp-scripts, asheroto winget-install, Raphire Win11Debloat | Run unmodified from the **Toolbox** page |
+| Reference | PSAppDeployToolkit, flatlinebb, PowerShellWarrantyReports | Read, not run |
 
-How a loaded tool is fetched and checked:
+**How a Toolbox script runs:**
 
-- It is downloaded from `raw.githubusercontent.com` at the pinned commit.
-- Every file is checked against its sha256 before anything is imported. A single mismatch refuses the
-  tool, and nothing half-downloaded is kept.
+- Each script runs in its own 64-bit Windows PowerShell with `-NonInteractive` and stdin closed. A 32-bit
+  RMM agent can't send it to SysWOW64.
+- It gets the catalog's arguments and a timeout.
+- Its full output is saved to Evidence as `toolbox-*.log`.
+- It reads PASS only when it returns one of the success codes listed in the catalog.
+- Scripts that uninstall software, restart the device or change security settings ask first. From
+  RMM they only run with `-Force`.
+- In PLAN ONLY mode, Run shows what would happen and changes nothing.
+
+**What's in the Toolbox:**
+
+| Group | Scripts |
+|---|---|
+| Repair | Windows Update reset, DISM + SFC, WebView2 repair, print queue reset |
+| Clean up | disk clean-up |
+| Checks | SMART disk health, N-central removal preview |
+| Remove the previous MSP's tools | NinjaOne, N-central, legacy antivirus |
+| Hardening | remove PowerShell 2.0, network hardening, Windows LAPS to Entra |
+| Setup | install or repair winget (as SYSTEM and at OOBE), debloat for new user profiles |
+
+These were reviewed and left out:
+
+- limehawk `time_sync_fix`: it hard-codes Eastern time. The tool's own `net.time` check fixes clocks instead.
+- limehawk `winre_restore`: it has placeholder URLs.
+- limehawk `eset_cleanup`: it crashes when exactly one ESET service matches, and ESET's own uninstaller is
+  the right tool.
+- limehawk `winget_setup`: asheroto's winget-install does the same job better.
+
+**winget:** when an install finds winget missing, the tool runs winget-install once and tries again.
+
+**How a pinned file is fetched and checked:**
+
+- It is downloaded from `raw.githubusercontent.com` at the pinned commit, with three tries.
+- It is checked against its sha256 before it is used. One mismatch refuses it, and nothing half-downloaded
+  is kept.
 - The verified copy is cached under the data folder, in `community\<id>\<commit>`.
-- Offline and OOBE runs use a copy staged in `community\` beside `console\`. The release zip and every
-  dropship kit carry one, and the files are checked again each time they are used.
-- The staged copy sits outside `console\` so that `integrity.json` and code signing cover DE's own
-  code only.
+- The release zip and every dropship kit carry a staged copy in `community\` beside `console\`, for
+  offline and OOBE use.
+- The staged copy is outside `integrity.json` and code signing, which cover DE's own code only.
 
 To move a pin, review the upstream diff and clone the new commit. Then run:
 
@@ -339,6 +368,31 @@ python3 packaging/update-community-catalog.py --clones <dir> --pin <id>=<commit>
 ```
 
 `--check` fails when any pin is out of date.
+
+## Windows behaviour (what the tool does for you)
+
+- **32-bit hosts.** When a 32-bit host (many RMM agents) starts the tool, it re-runs itself in 64-bit
+  Windows PowerShell and passes the exit code on. The launchers, first boot and Intune package pick 64-bit
+  directly.
+- **Running as SYSTEM** (RMM, Intune, first boot):
+  - winget is found under WindowsApps, and App Installer is registered if it isn't yet.
+  - Per-user settings go to every user profile and the Default profile, not to SYSTEM's own hive.
+  - OneDrive is read from each user's hive.
+  - A window never opens without a desktop session; use `-Headless`.
+- **Any Windows language.** Groups and ACLs use well-known SIDs. Password and audit policy come from
+  `secedit` and `auditpol /backup` values, and Wi-Fi profiles from their XML files. No translated command
+  output is parsed.
+- **Locked-down PCs.** Under WDAC/AppLocker Constrained Language Mode the tool refuses with exit 2 and
+  says why. Mark-of-the-Web is removed when installing (the installer, Intune and FirstBoot.cmd do it).
+- **Resume after a restart.** This uses a scheduled task. It triggers at any user's logon, then asks UAC
+  for the technician, so it works even when the first sign-in after migration is a standard user.
+  Headless resume runs as SYSTEM at startup.
+- **Data folder.** `%ProgramData%\DE\TechConsole` is locked to SYSTEM and Administrators, so a standard
+  user can't plant approved exceptions or profiles.
+- **Clock.** `net.time` compares the clock with an HTTPS server. More than 5 minutes off breaks TLS,
+  sign-in and Hub signatures, and it resyncs Windows Time.
+- **Small screens and high contrast.** The window fits a 1366x768 laptop at 125% scaling, and high
+  contrast uses the system colours. The CI smoke test renders every page at both sizes.
 
 **OEM updates in `maint.oem`:**
 
