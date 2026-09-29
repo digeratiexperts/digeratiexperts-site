@@ -4,14 +4,42 @@
 
 Compatibility names such as DE Technician Console, TechConsole and MSP AI Kit may remain in file paths or launch aliases where changing them would break installed automation.
 
-## Product rule
+## Product rule: three components, one contract
 
-DE Tech Tool is one engine with two operating shapes:
+DE Tech Tool has three parts. Each one works on its own, and all three were designed to work together.
 
-1. **Standalone / offline-first.** The WPF app and headless CLI can discover, audit, plan, apply, verify, retry, roll back and produce evidence without any server connection.
-2. **Connected control-plane mode.** The same engine can optionally call home to the Digerati Experts Intelligence Hub for signed profiles/catalogs, queued jobs, inventory, evidence and status.
+| Component | Runs where | Works alone | Code |
+|---|---|---|---|
+| **Online** (Intelligence Hub) | techsales.digerati-experts.com | Device registry, orders/jobs, evidence and rescue intake, warranty history, fleet views | Intelligence-Hub repo, `POST /api/integrations/v1/techconsole/events` (draft PR; merging is a production deploy and needs DE approval) |
+| **On-device** (DE Tech Tool) | The Windows device: OOBE, after first sign-in, configured | Discover, audit, plan, apply, verify, roll back and keep evidence, with no server | `console/` (WPF plus headless) |
+| **Boot rescue** | WinPE from USB or ISO, when Windows will not boot or must not be booted | Unlock BitLocker with a typed recovery password, copy profiles, export drivers, check disk health, repair boot, revert stuck updates | `rescue/` (`New-DERescueMedia.ps1`, `Start-DERescue.ps1`, `DE.Rescue.psm1`) |
 
-The standalone engine is never disabled merely because the Hub is unavailable.
+The contracts they share live in `console/contracts/*.schema.json` (JSON Schema). The Hub validates with
+the same files, and `DE.Contracts` validates them on the device and in WinPE.
+
+| Contract | Written by | Read by |
+|---|---|---|
+| `de.techconsole.device/v1` | on-device (`New-DEHubPayload`), rescue | Hub |
+| `de.techconsole.order/v1` | DE / Hub | dropship kit, first boot |
+| `de.techconsole.handoff/v1` | rescue | on-device (the `rescue.handoff` step), Hub |
+| `de.techconsole.warranty/v1` | on-device (`DE.Warranty`) | Hub |
+| `de.techconsole.job/v1` | Hub | on-device (planned: the signed DE Tech Agent) |
+
+- **Device key.** Every component names a device `<maker>:<SERIAL>` (`ConvertTo-DEDeviceKey`), so the
+  three agree without talking to each other. An OEM placeholder serial is refused, and the technician
+  types the serial from the sticker.
+- **No secrets in any contract.** Validators refuse secret-looking keys and any value shaped like a
+  BitLocker recovery password.
+- **Transport to the Hub.** The Hub's de-sync envelope (version 1, source `techconsole`), signed with
+  HMAC-SHA256 over `METHOD\npath\ntimestamp\neventId\nsha256(body)`. The body is written byte for byte
+  as JavaScript's `JSON.stringify` writes it, because that is what the Hub hashes. The signing secret is
+  `TECHCONSOLE_TO_HUB_SECRET` on the Hub and `DE_HUB_SIGNING_SECRET` at runtime on the device. The rescue
+  prompts for it and never stores it.
+- **Handoffs work offline.** The rescue leaves its handoff in two places: on the USB, and in
+  `ProgramData\DE\TechConsole\handoff` on the Windows volume. On the next start, DE Tech Tool shows it
+  as the first step to review, and the review records who did it.
+
+The on-device engine is never disabled because the Hub is unavailable, and the rescue never needs either.
 
 ## Call-home design
 
@@ -77,7 +105,7 @@ Release packages are code-signed and sha256-pinned. The server advertises versio
 2. Keep DE Tech Tool naming and packaged DE/Alamo assets consistent.
 3. Validate on a real DE Windows laptop in audit mode.
 4. Confirm remaining installer sources/hashes without weakening trust policy.
-5. Define Hub device-intake/call-home API.
+5. ~~Define Hub device-intake/call-home API.~~ 1.7.0: contracts in `console/contracts`, signed `techconsole` events, Hub intake route in a draft Intelligence-Hub PR.
 6. Build the outbound-only DE Tech Agent with mTLS, signed jobs and evidence sync.
 7. Integrate remote assist as a provider rather than building a remote-desktop protocol first.
 8. Add connected fleet/device views to Intelligence Hub Tech Hub.

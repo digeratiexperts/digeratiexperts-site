@@ -236,11 +236,16 @@ function Convert-DEHtmlToPdf {
 
 function New-DEHubPayload {
     <# The Intelligence Hub device record: identity, mapping, onboarding state, controls, verification timestamps, evidence references, exceptions. No secrets. #>
-    param([Parameter(Mandatory = $true)]$Record, [string]$BundleSha256 = '', [string]$BundlePath = '')
+    param([Parameter(Mandatory = $true)]$Record, [string]$BundleSha256 = '', [string]$BundlePath = '', [string]$Lifecycle)
     $de = Get-DEConsole
+    # deviceKey (<maker>:<SERIAL>) is how the Hub, the boot rescue and this tool name the same device (contracts\device.schema.json).
+    $key = $null; try { if ($Record.serial) { $key = ConvertTo-DEDeviceKey -Manufacturer "$($Record.manufacturer)" -Serial "$($Record.serial)" } } catch { $key = $null }
+    $w = Get-DEState -Path 'warranty.current'
     $controls = @(Get-DEEvidence | Group-Object step | ForEach-Object { $last = $_.Group | Sort-Object timestamp -Descending | Select-Object -First 1; @{ control = $_.Name; module = $last.module; result = $last.result; verifiedAt = $last.timestamp } })
     return [ordered]@{
         schema = 'de.techconsole.device/v1'; source = "DETechConsole/$($de.ConsoleVersion)"; sentAt = (Get-Date).ToString('o')
+        deviceKey = $key; lifecycle = $(if ($Lifecycle) { $Lifecycle } else { $null })
+        warranty = $(if ($w) { @{ status = "$(Get-DEHashPath -Object $w -Path 'status')"; end = (Get-DEHashPath -Object $w -Path 'end'); source = (Get-DEHashPath -Object $w -Path 'source') } } else { $null })
         client = $Record.client; site = $Record.site; device = @{ hostname = $Record.hostname; serial = $Record.serial; manufacturer = $Record.manufacturer; model = $Record.model; assetTag = $Record.assetTag; role = $Record.role; os = $Record.os }
         user = @{ assigned = $Record.assignedUser; localUserName = $Record.localUserName; jumpcloudUser = $Record.jumpcloudUser; email = $Record.email }
         onboarding = @{ mode = $Record.mode; readiness = $Record.readiness; areas = $Record.areas; started = $Record.started; completed = $Record.completed; technician = $Record.technician }
@@ -250,9 +255,10 @@ function New-DEHubPayload {
 }
 function Send-DEHubPayload {
     <#
-    POSTs the device record to the Hub integration endpoint. URL comes from the console settings
-    (hub.endpoint), the bearer token from the runtime secret DE_HUB_TOKEN or the environment variable
-    DE_HUB_TOKEN. Nothing is sent when either is missing; the payload is saved for manual upload instead.
+    Sends the device record to the Intelligence Hub. URL comes from the console settings (hub.endpoint).
+    Preferred: a signed de-sync event (device.observed) to <Hub>/api/integrations/v1/techconsole/events, signed with
+    the runtime secret DE_HUB_SIGNING_SECRET (TECHCONSOLE_TO_HUB_SECRET on the Hub). Legacy: a Bearer POST to the
+    configured URL with DE_HUB_TOKEN. Nothing is sent when neither is present; the payload is saved for manual upload.
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param([Parameter(Mandatory = $true)]$Payload, [string]$Endpoint)
@@ -261,6 +267,17 @@ function Send-DEHubPayload {
     Set-DEJsonFile -Path $file -Object $Payload
     if (-not $Endpoint) { $Endpoint = Get-DEState -Path 'settings.hub.endpoint' }
     if (-not $Endpoint) { Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken 'saved for manual upload (no Hub endpoint configured)' -Result 'WARN' -Verification $file -Remediation 'Set the Hub endpoint in Settings.' | Out-Null; return @{ sent = $false; file = $file } }
+    if (Test-DESecret -Name 'DE_HUB_SIGNING_SECRET') {
+        $base = ([uri]$Endpoint).GetLeftPart([UriPartial]::Authority)
+        if (-not $PSCmdlet.ShouldProcess($base, 'send signed device.observed event')) { return @{ sent = $false; planned = $true; file = $file } }
+        try {
+            if (-not $Payload.deviceKey) { throw 'the record has no usable serial, so it has no device key' }
+            $ev = New-DEHubEvent -EventType 'device.observed' -EntityId $Payload.deviceKey -Payload $Payload
+            $resp = Send-DEHubEvent -BaseUrl $base -Event $ev -Secret (Get-DESecretSecure -Name 'DE_HUB_SIGNING_SECRET')
+            Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken "sent to Hub as signed event $($ev.eventId)" -Result 'PASS' -Verification $base | Out-Null
+            return @{ sent = $true; file = $file; response = $resp; eventId = $ev.eventId }
+        } catch { Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken 'signed send failed; saved for manual upload' -Result 'FAIL' -Verification $_.Exception.Message -Remediation $file | Out-Null; return @{ sent = $false; file = $file; error = $_.Exception.Message } }
+    }
     if (-not ((Test-DESecret -Name 'DE_HUB_TOKEN') -or $env:DE_HUB_TOKEN)) { Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken 'saved for manual upload (no Hub token this session)' -Result 'WARN' -Verification $file | Out-Null; return @{ sent = $false; file = $file } }
     if (-not $PSCmdlet.ShouldProcess($Endpoint, 'POST device record')) { return @{ sent = $false; planned = $true; file = $file } }
     try {

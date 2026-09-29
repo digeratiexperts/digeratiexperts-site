@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digeratiexperts.com/schemas/de.techconsole.device/v1",
+  "title": "DE device record",
+  "description": "What the on-device tool sends to the Hub (New-DEHubPayload) and what the Hub keeps per device. The boot rescue and online components read and write the same shape. deviceKey is <maker>:<SERIAL> so all three components name a device the same way without talking to each other. No secrets: validators refuse secret-looking keys and any value shaped like a BitLocker recovery password.",
+  "type": "object",
+  "required": [
+    "schema",
+    "source",
+    "sentAt",
+    "device"
+  ],
+  "properties": {
+    "schema": {
+      "const": "de.techconsole.device/v1"
+    },
+    "source": {
+      "type": "string",
+      "description": "Component and version, e.g. DETechConsole/1.7.0, DERescue/1.7.0, DEHub/1.0",
+      "pattern": "^(DETechConsole|DERescue|DEHub)/"
+    },
+    "sentAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deviceKey": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-z0-9-]+:[A-Z0-9-]+$"
+    },
+    "client": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "site": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "device": {
+      "type": "object",
+      "required": [
+        "serial"
+      ],
+      "properties": {
+        "hostname": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "serial": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "manufacturer": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "assetTag": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "role": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "os": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "user": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "assigned": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "localUserName": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "jumpcloudUser": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "email": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "lifecycle": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "oobe",
+        "first-login",
+        "configured",
+        "rescue",
+        null
+      ]
+    },
+    "warranty": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "status": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "end": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "onboarding": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "controls": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "required": [
+          "control",
+          "result"
+        ],
+        "properties": {
+          "control": {
+            "type": "string"
+          },
+          "module": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "result": {
+            "type": "string"
+          },
+          "verifiedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "exceptions": {
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "evidence": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "bundleSha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "bundleName": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

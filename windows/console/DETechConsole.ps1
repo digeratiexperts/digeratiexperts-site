@@ -1096,7 +1096,7 @@ function Build-Settings {
     $known = @(
         @{ n = 'BREAKGLASS_PASSWORD'; d = 'DE-BreakGlass password (16+ characters)' }, @{ n = 'MIGRATION_TEMP_PASSWORD'; d = 'Temporary password for the new local account (ADMU)' },
         @{ n = 'JC_CONNECT_KEY'; d = 'JumpCloud connect key (agent install)' }, @{ n = 'JC_API_KEY'; d = 'JumpCloud API key (mapping, binding, groups, policies)' }, @{ n = 'JC_ORG_ID'; d = 'JumpCloud org id (multi-tenant admins)' },
-        @{ n = 'S1_SITE_TOKEN'; d = 'SentinelOne site token' }, @{ n = 'GUARDZ_ORG_KEY'; d = 'Guardz organization key' }, @{ n = 'WAZUH_REG_PASSWORD'; d = 'Wazuh registration password' }, @{ n = 'DE_HUB_TOKEN'; d = 'Intelligence Hub integration token' }, @{ n = 'DELL_API_KEY'; d = 'Dell TechDirect API key (warranty)' }, @{ n = 'DELL_API_SECRET'; d = 'Dell TechDirect API secret (warranty)' }, @{ n = 'HP_WARRANTY_API_KEY'; d = 'HP warranty API key' }, @{ n = 'HP_WARRANTY_API_SECRET'; d = 'HP warranty API secret' }
+        @{ n = 'S1_SITE_TOKEN'; d = 'SentinelOne site token' }, @{ n = 'GUARDZ_ORG_KEY'; d = 'Guardz organization key' }, @{ n = 'WAZUH_REG_PASSWORD'; d = 'Wazuh registration password' }, @{ n = 'DE_HUB_SIGNING_SECRET'; d = 'Intelligence Hub signing secret (signed events)' }, @{ n = 'DE_HUB_TOKEN'; d = 'Intelligence Hub integration token (legacy)' }, @{ n = 'DELL_API_KEY'; d = 'Dell TechDirect API key (warranty)' }, @{ n = 'DELL_API_SECRET'; d = 'Dell TechDirect API secret (warranty)' }, @{ n = 'HP_WARRANTY_API_KEY'; d = 'HP warranty API key' }, @{ n = 'HP_WARRANTY_API_SECRET'; d = 'HP warranty API secret' }
     )
     $sp = New-El StackPanel
     foreach ($k in $known) {

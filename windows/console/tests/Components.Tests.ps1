@@ -1,0 +1,216 @@
+﻿# Three components, one set of contracts: the boot rescue (WinPE), this tool, and the Intelligence Hub.
+# Compatible with Pester 4.10 and 5.x. Native tools (manage-bde, robocopy, dism, reg, bcdboot) are mocked.
+
+Describe 'Shared contracts' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1')
+        $global:DETest = @{ Dir = Initialize-TestConsole }
+    }
+    It 'every schema parses and the example order validates' {
+        foreach ($n in 'device', 'order', 'handoff', 'warranty', 'job') { (Get-DEContractSchema -Name $n).title | Should -Not -BeNullOrEmpty }
+        $o = Get-Content -LiteralPath (Join-Path (Get-DEConsole).Root 'catalog/orders/example-dropship-order.json') -Raw | ConvertFrom-Json
+        @(Test-DEContract -Name order -Object $o).Count | Should -Be 0
+        @(Test-DEContract -Name order -Object @{ schema = 'de.techconsole.order/v1' }) -join ' ' | Should -Match 'orderId: required'
+    }
+    It 'refuses secret keys and recovery-password-shaped values anywhere' {
+        $bad = @{ schema = 'de.techconsole.order/v1'; orderId = 'o'; client = 'c'; device = @{ serial = 'S' }; procurement = @{ apiKey = 'x' }; endUser = @{ displayName = '111111-222222-333333-444444-555555-666666-000011-719873' } }
+        $p = @(Test-DEContract -Name order -Object $bad) -join ' | '
+        $p | Should -Match 'apiKey: secrets never go'
+        $p | Should -Match 'recovery-password-shaped'
+    }
+    It 'device keys are the same on every component and refuse OEM placeholders' {
+        ConvertTo-DEDeviceKey -Manufacturer 'LENOVO' -Serial ' pf3abc12 ' | Should -Be 'lenovo:PF3ABC12'
+        ConvertTo-DEDeviceKey -Manufacturer 'Hewlett-Packard' -Serial '5CG1234' | Should -Be 'hp:5CG1234'
+        ConvertTo-DEDeviceKey -Manufacturer 'Contoso Ltd.' -Serial 'A1' | Should -Be 'contoso-ltd:A1'
+        (Get-DEThrown { ConvertTo-DEDeviceKey -Manufacturer 'x' -Serial 'To be filled by O.E.M.' }) | Should -Match 'placeholder'
+    }
+    It 'writes JSON exactly as JSON.stringify does, so the Hub re-serialises the same bytes it verifies' {
+        $o = [ordered]@{ a = 'x<y>&z"q'; n = 1; f = 1.5; b = $true; z = $null; arr = @(1, 'two', [ordered]@{ k = 'v' }); one = @('single'); empty = @(); nested = [ordered]@{ t = "tab`there" } }
+        ConvertTo-DECanonicalJson $o | Should -BeExactly '{"a":"x<y>&z\"q","n":1,"f":1.5,"b":true,"z":null,"arr":[1,"two",{"k":"v"}],"one":["single"],"empty":[],"nested":{"t":"tab\there"}}'
+    }
+    It 'signs exactly like the Hub (vector cross-checked with Node crypto)' {
+        $body = '{"a":"x<y>&z\"q","n":1,"f":1.5,"b":true,"z":null,"arr":[1,"two",{"k":"v"}]}'
+        # node: createHmac('sha256','k').update(['POST',path,ts,'e1',sha256hex(body)].join('\n'))
+        $sig = Get-DEHubSignature -Method POST -Path '/api/integrations/v1/techconsole/events' -Timestamp '2026-09-29T00:00:00.000Z' -EventId 'e1' -Body $body -Secret 'k'
+        $sig | Should -Match '^[0-9a-f]{64}$'
+        $sha = [Security.Cryptography.SHA256]::Create(); $bh = -join ($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($body)) | ForEach-Object { $_.ToString('x2') })
+        $mac = New-Object Security.Cryptography.HMACSHA256 (, [Text.Encoding]::UTF8.GetBytes('k'))
+        $expect = -join ($mac.ComputeHash([Text.Encoding]::UTF8.GetBytes("POST`n/api/integrations/v1/techconsole/events`n2026-09-29T00:00:00.000Z`ne1`n$bh")) | ForEach-Object { $_.ToString('x2') })
+        $sig | Should -Be $expect
+    }
+    It 'the device record the tool builds is a valid device contract with a device key and warranty' {
+        Set-DEStateValue -Path 'warranty.current' -Value @{ status = 'active'; end = '2027-01-31'; source = 'lenovo-support-site' }
+        $rec = @{ client = 'alamo'; site = 'hq'; hostname = 'ALAMO-LAP-1'; serial = 'PF3ABC12'; manufacturer = 'LENOVO'; model = 'ThinkPad X1'; assetTag = 'A1'; role = 'laptop'; os = 'Windows 11'; assignedUser = 'Suzette'; localUserName = 'sthompson'; jumpcloudUser = 'sthompson'; email = 's@x'; mode = 'takeover'; readiness = 'READY'; areas = @(); started = 'x'; completed = 'y'; technician = 'jrpetro'; exceptions = @() }
+        $p = New-DEHubPayload -Record $rec -Lifecycle 'configured'
+        $p.deviceKey | Should -Be 'lenovo:PF3ABC12'
+        $p.warranty.end | Should -Be '2027-01-31'
+        @(Test-DEContract -Name device -Object $p) -join ' | ' | Should -Be ''
+    }
+    It 'Send-DEHubPayload sends one signed device.observed event the Hub can verify, and never the secret' {
+        Set-DEStateValue -Path 'settings.hub.endpoint' -Value 'https://hub.example/api/whatever'
+        Set-DESecret -Name 'DE_HUB_SIGNING_SECRET' -Plain 'signing-secret-9876'
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp { $global:DETest.Sent = @{ Uri = $Uri; Headers = $Headers; Body = $Body }; @{ ok = $true } }
+        $rec = @{ client = 'alamo'; serial = 'PF3ABC12'; manufacturer = 'LENOVO'; model = 'X1'; exceptions = @() }
+        $r = Send-DEHubPayload -Payload (New-DEHubPayload -Record $rec) -Confirm:$false
+        $r.sent | Should -Be $true
+        $s = $global:DETest.Sent
+        $s.Uri | Should -Be 'https://hub.example/api/integrations/v1/techconsole/events'
+        $s.Headers['X-DE-Source'] | Should -Be 'techconsole'
+        $s.Body | Should -Not -Match 'signing-secret-9876'
+        ($s.Headers.Values -join ' ') | Should -Not -Match 'signing-secret-9876'
+        $ev = $s.Body | ConvertFrom-Json
+        $ev.eventType | Should -Be 'device.observed'; $ev.entityId | Should -Be 'lenovo:PF3ABC12'; $ev.version | Should -Be 1
+        $ev.eventId | Should -Be $s.Headers['X-DE-Event-ID']
+        Get-DEHubSignature -Method POST -Path '/api/integrations/v1/techconsole/events' -Timestamp $s.Headers['X-DE-Timestamp'] -EventId $ev.eventId -Body $s.Body -Secret 'signing-secret-9876' | Should -Be $s.Headers['X-DE-Signature']
+        Clear-DESecrets
+    }
+    It 'a record without a usable serial is not sent and is saved for manual upload' {
+        Set-DEStateValue -Path 'settings.hub.endpoint' -Value 'https://hub.example'
+        Set-DESecret -Name 'DE_HUB_SIGNING_SECRET' -Plain 'signing-secret-9876'
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp { throw 'must not be called' }
+        $r = Send-DEHubPayload -Payload (New-DEHubPayload -Record @{ client = 'alamo'; serial = 'Default string'; manufacturer = 'x'; exceptions = @() }) -Confirm:$false
+        $r.sent | Should -Be $false; $r.error | Should -Match 'device key'
+        Test-Path -LiteralPath $r.file | Should -Be $true
+        Clear-DESecrets
+    }
+    It 'Send-DEHubEvent refuses plain http' {
+        $ev = New-DEHubEvent -EventType 'device.warranty' -EntityId 'dell:ABC' -Payload @{ serial = 'ABC'; source = 'manual'; status = 'manual' }
+        (Get-DEThrown { Send-DEHubEvent -BaseUrl 'http://hub.example' -Event $ev -Secret (New-Object Security.SecureString) }) | Should -Match 'https'
+        (Get-DEThrown { New-DEHubEvent -EventType 'device.warranty' -EntityId 'dell:ABC' -Payload @{ serial = 'ABC'; status = 'nope'; source = 's' } }) | Should -Match 'not sending'
+    }
+}
+
+Describe 'Boot rescue' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1')
+        $global:DETest = @{ Dir = Initialize-TestConsole }
+        Import-Module (Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'rescue/DE.Rescue.psm1') -Force -DisableNameChecking
+        $global:DETest.Key = '111111-222222-333333-444444-555555-666666-000011-719873'
+        $global:DETest.Tmp = Join-Path ([IO.Path]::GetTempPath()) ("de-rescue-" + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $global:DETest.Tmp -Force | Out-Null
+    }
+    AfterAll { Remove-Item -LiteralPath $global:DETest.Tmp -Recurse -Force -ErrorAction SilentlyContinue }
+    It 'checks a recovery password for typos before trying it' {
+        (Test-DERecoveryPasswordFormat -Value $global:DETest.Key).ok | Should -Be $true
+        (Test-DERecoveryPasswordFormat -Value ($global:DETest.Key -replace '-', '')).normalized | Should -Be $global:DETest.Key
+        $r = Test-DERecoveryPasswordFormat -Value '111112-222222-333333-444444-555555-666666-000011-719873'; $r.ok | Should -Be $false; $r.badGroup | Should -Be 1
+        (Test-DERecoveryPasswordFormat -Value '111111-222222').ok | Should -Be $false
+        (Test-DERecoveryPasswordFormat -Value '111111-222222-333333-444444-555555-666666-000011-720896').reason | Should -Match 'group 8'
+    }
+    It 'reads manage-bde status' {
+        $txt = "BitLocker Drive Encryption: Configuration Tool`n`nVolume C: [OSDisk]`n[OS Volume]`n    Size:                 475.83 GB`n    Conversion Status:    Unknown`n    Percentage Encrypted: Unknown`n    Protection Status:    Unknown`n    Lock Status:          Locked`n`nVolume E: [USB]`n    Conversion Status:    Fully Decrypted`n    Percentage Encrypted: 0.0%`n    Protection Status:    Protection Off`n    Lock Status:          Unlocked"
+        $v = @(ConvertFrom-DEManageBdeStatus -Text $txt)
+        $v.Count | Should -Be 2
+        $v[0].drive | Should -Be 'C:'; $v[0].locked | Should -Be $true; $v[0].label | Should -Be 'OSDisk'
+        $v[1].encrypted | Should -Be $false; $v[1].percent | Should -Be 0
+    }
+    It 'unlocks with the typed key, never logs it, and does not try a mistyped one' {
+        Mock -ModuleName DE.Rescue Invoke-DERescueNative { [pscustomobject]@{ ExitCode = 0; Output = @('ok'); Text = 'ok' } }
+        $sec = New-Object Security.SecureString; foreach ($c in $global:DETest.Key.ToCharArray()) { $sec.AppendChar($c) }
+        Unlock-DERescueVolume -Drive 'C:' -RecoveryPassword $sec -Confirm:$false | Should -Be 'unlocked'
+        Assert-MockCalled -ModuleName DE.Rescue Invoke-DERescueNative -Scope It -Times 1 -ParameterFilter { $FilePath -eq 'manage-bde.exe' -and $Arguments[0] -eq '-unlock' }
+        (Get-DERescueLog) -join ' ' | Should -Not -Match '\d{6}-\d{6}'
+        $bad = New-Object Security.SecureString; foreach ($c in '111112-222222-333333-444444-555555-666666-000011-719873'.ToCharArray()) { $bad.AppendChar($c) }
+        (Get-DEThrown { Unlock-DERescueVolume -Drive 'C:' -RecoveryPassword $bad -Confirm:$false }) | Should -Match 'not tried: group 1'
+        Assert-MockCalled -ModuleName DE.Rescue Invoke-DERescueNative -Scope It -Times 1 -Exactly
+        Write-DERescueLog "oops $($global:DETest.Key)" | Should -Match 'recovery password removed'
+    }
+    It 'robocopy exit codes: below 8 is fine, 8 and above is a failure' {
+        (Test-DERobocopyExit -Code 1).ok | Should -Be $true
+        (Test-DERobocopyExit -Code 3).meaning | Should -Match 'extra files'
+        (Test-DERobocopyExit -Code 8).ok | Should -Be $false
+        (Test-DERobocopyExit -Code 0).meaning | Should -Be 'nothing to copy'
+    }
+    It 'maps offline profiles onto the rescue drive letter and names Entra accounts' {
+        $p = ConvertTo-DEOfflineProfile -Sid 'S-1-12-1-1-2-3-4' -ImagePath 'C:\Users\SuzetteThompson' -Drive 'D:'
+        $p.kind | Should -Be 'entra'; $p.path | Should -Be 'D:\Users\SuzetteThompson'; $p.name | Should -Be 'SuzetteThompson'
+        (ConvertTo-DEOfflineProfile -Sid 'S-1-5-18' -ImagePath '%systemroot%\system32\config\systemprofile' -Drive 'D:').kind | Should -Be 'system'
+    }
+    It 'backs up a profile with a manifest, refuses too little space and FAT32 over 4 GB, and never deletes the source' {
+        $src = Join-Path $global:DETest.Tmp 'Users/sthompson'; New-Item -ItemType Directory -Path (Join-Path $src 'Documents') -Force | Out-Null; New-Item -ItemType Directory -Path (Join-Path $src 'AppData/Local/Temp') -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $src 'Documents/a.txt') -Value 'hello'; Set-Content -LiteralPath (Join-Path $src 'AppData/Local/Temp/junk.tmp') -Value 'junk'
+        $usb = Join-Path $global:DETest.Tmp 'usb'
+        Mock -ModuleName DE.Rescue Invoke-DERescueNative { $d = $Arguments[1]; New-Item -ItemType Directory -Path (Join-Path $d 'Documents') -Force | Out-Null; Copy-Item -LiteralPath (Join-Path $Arguments[0] 'Documents/a.txt') -Destination (Join-Path $d 'Documents/a.txt'); [pscustomobject]@{ ExitCode = 1; Output = @(); Text = '' } } -ParameterFilter { $FilePath -eq 'robocopy.exe' }
+        $b = Backup-DERescueProfile -ProfilePath $src -DestinationRoot $usb -Serial 'PF3ABC12' -Confirm:$false
+        $b.result | Should -Be 'PASS'; $b.files | Should -Be 1; $b.manifestSha256 | Should -Match '^[0-9a-f]{64}$'
+        Test-Path -LiteralPath (Join-Path $usb 'DE-Rescue/PF3ABC12/profiles/manifest-sthompson.csv') | Should -Be $true
+        Assert-MockCalled -ModuleName DE.Rescue Invoke-DERescueNative -Scope It -Times 1 -ParameterFilter { $FilePath -eq 'robocopy.exe' -and $Arguments -contains '/XJ' -and ($Arguments -join ' ') -match 'AppData.Local.Temp' }
+        Test-Path -LiteralPath (Join-Path $src 'Documents/a.txt') | Should -Be $true
+        (Get-DEThrown { Backup-DERescueProfile -ProfilePath $src -DestinationRoot $usb -Serial 'X' -DestinationFreeBytes 1 -Confirm:$false }) | Should -Match 'not enough space'
+    }
+    Context 'a profile with a file over 4 GB' {
+        It 'refuses a FAT32 destination' {
+            $src = Join-Path $global:DETest.Tmp 'Users/big'; New-Item -ItemType Directory -Path $src -Force | Out-Null
+            Mock -ModuleName DE.Rescue Get-DEFolderStats { @{ files = 1; bytes = 5GB; largest = 5GB } }
+            (Get-DEThrown { Backup-DERescueProfile -ProfilePath $src -DestinationRoot (Join-Path $global:DETest.Tmp 'usb9') -Serial 'X' -DestinationFat32 -Confirm:$false }) | Should -Match 'FAT32'
+        }
+    }
+    It 'a copy that misses files is WARN and a robocopy failure is FAIL' {
+        $src = Join-Path $global:DETest.Tmp 'Users/second'; New-Item -ItemType Directory -Path $src -Force | Out-Null; Set-Content -LiteralPath (Join-Path $src 'a.txt') -Value 'a'; Set-Content -LiteralPath (Join-Path $src 'b.txt') -Value 'b'
+        Mock -ModuleName DE.Rescue Invoke-DERescueNative { Copy-Item -LiteralPath (Join-Path $Arguments[0] 'a.txt') -Destination $Arguments[1]; [pscustomobject]@{ ExitCode = 1; Output = @(); Text = '' } } -ParameterFilter { $FilePath -eq 'robocopy.exe' }
+        (Backup-DERescueProfile -ProfilePath $src -DestinationRoot (Join-Path $global:DETest.Tmp 'usb2') -Serial 'S1' -Confirm:$false).result | Should -Be 'WARN'
+        Mock -ModuleName DE.Rescue Invoke-DERescueNative { [pscustomobject]@{ ExitCode = 16; Output = @(); Text = '' } } -ParameterFilter { $FilePath -eq 'robocopy.exe' }
+        (Backup-DERescueProfile -ProfilePath $src -DestinationRoot (Join-Path $global:DETest.Tmp 'usb3') -Serial 'S1' -Confirm:$false).result | Should -Be 'FAIL'
+    }
+    It 'boot repair and update revert only run when confirmed' {
+        Mock -ModuleName DE.Rescue Invoke-DERescueNative { [pscustomobject]@{ ExitCode = 0; Output = @('done'); Text = 'done' } }
+        (Invoke-DERescueBootRepair -WindowsDrive 'D:' -Mode bcdboot -WhatIf).result | Should -Be 'SKIPPED'
+        Assert-MockCalled -ModuleName DE.Rescue Invoke-DERescueNative -Scope It -Times 0
+        (Invoke-DERescueBootRepair -WindowsDrive 'D:' -Mode revert-pending -Confirm:$false).result | Should -Be 'PASS'
+        Assert-MockCalled -ModuleName DE.Rescue Invoke-DERescueNative -Scope It -Times 1 -ParameterFilter { $FilePath -eq 'dism.exe' -and $Arguments -contains '/RevertPendingActions' }
+    }
+    It 'the handoff lands on the USB and the Windows volume, validates, and carries recommendations' {
+        $h = New-DEHandoff -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -Model 'X1' -Technician 'jrpetro' -Version '1.7.0'
+        $h.windows = [ordered]@{ drive = 'D:'; bitlocker = 'unlocked'; joinType = 'entra'; jumpcloudAgent = $true; pendingUpdates = $true }
+        $null = Add-DEHandoffAction -Handoff $h -Action 'unlock' -Result 'PASS' -Detail 'D: unlocked'
+        $null = Add-DEHandoffAction -Handoff $h -Action 'profile-backup' -Result 'PASS' -Detail 'ok' -Path 'E:\DE-Rescue\PF3ABC12\profiles\sthompson' -ManifestSha256 ('a' * 64) -Files 10 -Bytes 100
+        $usb = Join-Path $global:DETest.Tmp 'usb4'; $win = Join-Path $global:DETest.Tmp 'win'
+        New-Item -ItemType Directory -Path (Join-Path $usb 'DE-Rescue/PF3ABC12') -Force | Out-Null
+        Mock -ModuleName DE.Rescue Save-DEHandoff { $Path }
+        $paths = @(Save-DERescueHandoff -Handoff $h -DestinationRoot $usb -WindowsDrive 'D:')
+        $paths.Count | Should -Be 2
+        $paths[1] | Should -Match 'ProgramData.DE.TechConsole.handoff.rescue-'
+        (@($h.recommendations) -join ' ') | Should -Match 'rotate|add a new recovery password'
+        (@($h.recommendations) -join ' ') | Should -Match 'takeover'
+        (@($h.recommendations) -join ' ') | Should -Match 'revert pending'
+        @(Test-DEContract -Name handoff -Object $h).Count | Should -Be 0
+    }
+    It 'DE Tech Tool shows an unreviewed handoff as a step and records who reviewed it' {
+        $dir = Join-Path (Get-DEConsole).Dirs.Base 'handoff'
+        $h = New-DEHandoff -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -Model 'X1' -Technician 'jrpetro' -Version '1.7.0'
+        $null = Add-DEHandoffAction -Handoff $h -Action 'unlock' -Result 'PASS' -Detail 'D: unlocked'
+        $null = Save-DEHandoff -Handoff $h -Path (Join-Path $dir 'rescue-1.json')
+        Mock -ModuleName DE.Discovery Get-DEDeviceInventory { @{ manufacturer = 'LENOVO'; serial = 'PF3ABC12' } }
+        @(Initialize-DEWorkflow -ClientProfile (Get-DEClientProfile -Id 'alamo') -Mode 'takeover') | Should -Contain 'rescue.handoff'
+        (@((Get-DERunbook -Mode 'takeover').stages | Where-Object { $_.id -eq 'check' })[0].steps | ForEach-Object { $_.id })[0] | Should -Be 'rescue.handoff'
+        $a = Get-DEAction -Id 'rescue.handoff'
+        $d = & $a.Detect; $d.unreviewed | Should -Be 1; $d.otherDevice | Should -Be 0; $d.detail | Should -Match 'unlock PASS'
+        Set-DEContext -Values @{ technician = '' }
+        (Get-DEThrown { & $a.Apply @{ Detected = $d } }) | Should -Match 'technician'
+        Set-DEContext -Values @{ technician = 'jrpetro' }
+        & $a.Apply @{ Detected = $d } | Should -Match 'marked 1'
+        (& $a.Detect).unreviewed | Should -Be 0
+        (Get-Content -LiteralPath (Join-Path $dir 'rescue-1.json') -Raw | ConvertFrom-Json).reviewedBy | Should -Be 'jrpetro'
+    }
+    It 'the media build plan adds components in dependency order, copies the contracts, and marks the USB step destructive' {
+        $plan = @(Get-DERescueBuildPlan -AdkRoot 'C:\ADK' -WorkDir 'C:\W' -WindowsRoot 'C:\DE\windows' -IsoPath 'C:\out\r.iso' -UsbDrive 'E:')
+        $ids = @($plan | ForEach-Object { $_.id })
+        $ids[0] | Should -Be 'copype'; $ids[-1] | Should -Be 'usb'
+        [array]::IndexOf($ids, 'oc:WinPE-WMI') | Should -BeLessThan ([array]::IndexOf($ids, 'oc:WinPE-PowerShell'))
+        [array]::IndexOf($ids, 'oc:WinPE-NetFx') | Should -BeLessThan ([array]::IndexOf($ids, 'oc:WinPE-PowerShell'))
+        $ids | Should -Contain 'oc:WinPE-SecureStartup-en-us'
+        ($plan | Where-Object { $_.id -eq 'usb' }).destructive | Should -Be $true
+        (($plan | Where-Object { $_.id -eq 'copy-rescue' }).copy | ForEach-Object { $_.from }) -join ' ' | Should -Match 'DE.Contracts'
+        ($plan | Where-Object { $_.id -eq 'startnet' }).write.text | Should -Match 'Start-DERescue.ps1'
+        [array]::IndexOf($ids, 'unmount') | Should -BeLessThan ([array]::IndexOf($ids, 'iso'))
+    }
+    It 'rescue scripts parse and use no PowerShell 7-only syntax' {
+        foreach ($f in @(Get-ChildItem -LiteralPath (Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'rescue') -Include '*.ps1', '*.psm1' -Recurse)) {
+            $tokens = $null; $errs = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$tokens, [ref]$errs)
+            @($errs).Count | Should -Be 0 -Because $f.Name
+            @($tokens | Where-Object { $_.Kind -in @('QuestionQuestion', 'QuestionQuestionEquals', 'AndAnd', 'OrOr') }).Count | Should -Be 0 -Because $f.Name
+            [IO.File]::ReadAllBytes($f.FullName)[0] | Should -Be 0xEF -Because "$($f.Name) needs a UTF-8 BOM for Windows PowerShell 5.1"
+        }
+    }
+}

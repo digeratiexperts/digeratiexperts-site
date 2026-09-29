@@ -176,6 +176,12 @@ function Get-DESecretPlain {
     Register-DERedaction -Value $plain
     return $plain
 }
+function Get-DESecretSecure {
+    <# The SecureString itself, for APIs that take one (Hub signing). Never converted or stored here. #>
+    param([Parameter(Mandatory = $true)][string]$Name)
+    if (-not $script:DE.Secrets.ContainsKey($Name)) { throw "secret '$Name' has not been provided this session" }
+    return $script:DE.Secrets[$Name]
+}
 function Clear-DESecrets { foreach ($k in @($script:DE.Secrets.Keys)) { try { $script:DE.Secrets[$k].Dispose() } catch { } }; $script:DE.Secrets = @{}; $script:DE.SecretNames = @(); [GC]::Collect(); Write-DELog -Level DEBUG -Message 'secrets cleared' }
 function Get-DESecretNames { return @($script:DE.SecretNames) }
 

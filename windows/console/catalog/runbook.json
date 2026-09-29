@@ -7,6 +7,7 @@
       "title": "Check the device",
       "purpose": "Make sure the device is online, not waiting on a restart, and (for dropship) is the unit that was ordered.",
       "steps": [
+        "^rescue\\.",
         "^net\\.connectivity$",
         "^maint\\.pending-reboot$",
         "^order\\."
@@ -166,6 +167,7 @@
   },
   "why": {
     "net.connectivity": "Installs and JumpCloud need the internet; nothing else is worth starting offline.",
+    "rescue.handoff": "The boot rescue may have unlocked BitLocker with the recovery password, copied profiles or reverted updates; the next steps depend on what it did.",
     "maint.pending-reboot": "Changing identity on top of a pending restart is how profiles get corrupted.",
     "jumpcloud.agent": "The agent comes first: its BitLocker policy is what escrows the recovery key in JumpCloud.",
     "identity.breakglass": "A hidden local administrator that always works, in case the migration or the Microsoft disconnect locks everyone else out.",
