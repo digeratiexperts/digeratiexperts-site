@@ -56,7 +56,8 @@ Import-Module (Join-Path $ConsoleRoot 'modules\DE.Workflow\DE.Workflow.psm1') -F
 Import-DEConsoleModules -Root $ConsoleRoot
 
 # ============================================================== headless
-if ($Headless) {
+# the headless body runs in its own scope so its trap never touches the window path below
+if ($Headless) { & {
     # One way out: every path prints RESULT and writes -ResultFile (JSON, no secrets) so RMM and first boot read the
     # outcome from data, never from stdout or from an exit code a wrapper might lose.
     function Exit-DEHeadless {
@@ -67,6 +68,11 @@ if ($Headless) {
         if ($ResultFile) { try { [ordered]@{ schema = 'de.techconsole.result/v1'; overall = $Overall; exitCode = $Code; restartRequired = [bool]$RestartRequired; message = (Protect-DEText $Message); next = (Protect-DEText $Next); bundle = $Bundle; at = (Get-Date).ToString('o') } | ConvertTo-Json | Set-Content -LiteralPath $ResultFile -Encoding UTF8 -WhatIf:$false } catch { Write-Host "could not write $ResultFile : $($_.Exception.Message)" } }
         try { Clear-DESecrets } catch { }
         exit $Code
+    }
+    # an unexpected error still leaves by the one way out (RESULT line + -ResultFile), never as a bare crash with no result
+    trap {
+        $where = $(if ($_.InvocationInfo -and $_.InvocationInfo.ScriptLineNumber) { " ($([IO.Path]::GetFileName($_.InvocationInfo.ScriptName)) line $($_.InvocationInfo.ScriptLineNumber))" } else { '' })
+        Exit-DEHeadless -Code 1 -Overall 'ERROR' -Message ("ERROR: {0}{1}. Nothing after this point ran." -f $_.Exception.Message, $where) -Next 'Send the console log and evidence folder to DE engineering; the run can be repeated once the cause is fixed.'
     }
     $null = Initialize-DEConsole -Root $ConsoleRoot -Mode $(if ($Apply) { 'Apply' } else { 'Audit' }) -DataDir $DataDir -DryRun:$WhatIfPreference
     $null = Clear-DERebootQueueIfRestarted   # restarts already done since they were queued no longer hold phases back
@@ -174,7 +180,7 @@ if ($Headless) {
     $code = $(switch ($r.overall) { 'READY' { 0 } 'READY WITH EXCEPTIONS' { 0 } 'NOT READY' { $(if ($r.blocked) { 2 } else { 1 }) } default { 1 } })
     if ($restart -and $code -eq 0) { $code = 1 }
     Exit-DEHeadless -Code $code -Overall $(if ($restart -and $r.overall -like 'READY*') { 'RESTART REQUIRED' } else { $r.overall }) -Bundle "$($b.zip) (sha256 $($b.sha256))" -Next $nextText -RestartRequired:$restart
-}
+} }
 
 # ============================================================== window
 if ($env:OS -ne 'Windows_NT') { Write-Host 'The window needs Windows. Use -Headless on other platforms.'; exit 2 }

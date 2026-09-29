@@ -152,7 +152,7 @@ function Export-DEEvidenceBundle {
     $ctx = Get-DEContext
     $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
     if (-not $OutDir) { $OutDir = Join-Path $de.Dirs.Evidence ("{0}-{1}-{2}" -f ($(if ($ctx['client']) { $ctx['client'] } else { 'unassigned' })), $env:COMPUTERNAME, $stamp) }
-    New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
+    New-Item -ItemType Directory -Path $OutDir -Force -WhatIf:$false | Out-Null
     $record = New-DEAssetRecord -Snapshot $Snapshot -ClientProfile $ClientProfile
     $gaps = Get-DEGapReport
     $evidence = @(Get-DEEvidence)
@@ -160,16 +160,17 @@ function Export-DEEvidenceBundle {
     Set-DEJsonFile -Path (Join-Path $OutDir 'asset.json') -Object $record
     Set-DEJsonFile -Path (Join-Path $OutDir 'gaps.json') -Object @{ gaps = $gaps }
     Set-DEJsonFile -Path (Join-Path $OutDir 'snapshot.json') -Object $Snapshot
-    Set-Content -LiteralPath (Join-Path $OutDir 'report-internal.html') -Value (ConvertTo-DEHtmlReport -Record $record -ClientProfile $ClientProfile -Gaps $gaps -Evidence $evidence) -Encoding UTF8
-    Set-Content -LiteralPath (Join-Path $OutDir 'report-client.html') -Value (ConvertTo-DEHtmlReport -Record $record -ClientProfile $ClientProfile -ClientSafe) -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $OutDir 'report-internal.html') -Value (ConvertTo-DEHtmlReport -Record $record -ClientProfile $ClientProfile -Gaps $gaps -Evidence $evidence) -Encoding UTF8 -WhatIf:$false
+    Set-Content -LiteralPath (Join-Path $OutDir 'report-client.html') -Value (ConvertTo-DEHtmlReport -Record $record -ClientProfile $ClientProfile -ClientSafe) -Encoding UTF8 -WhatIf:$false
     # PDF copies of both reports for email and the client file; skipped quietly when no Edge/Chrome is present.
     foreach ($r in @('report-client', 'report-internal')) { $null = Convert-DEHtmlToPdf -HtmlPath (Join-Path $OutDir "$r.html") -PdfPath (Join-Path $OutDir "$r.pdf") }
-    if ($de.LogFile -and (Test-Path -LiteralPath $de.LogFile)) { (Get-Content -LiteralPath $de.LogFile | ForEach-Object { Protect-DEText $_ }) | Set-Content -LiteralPath (Join-Path $OutDir 'console.log') -Encoding UTF8 }
+    if ($de.LogFile -and (Test-Path -LiteralPath $de.LogFile)) { (Get-Content -LiteralPath $de.LogFile | ForEach-Object { Protect-DEText $_ }) | Set-Content -LiteralPath (Join-Path $OutDir 'console.log') -Encoding UTF8 -WhatIf:$false }
     $manifest = @(Get-ChildItem -LiteralPath $OutDir -File | Where-Object { $_ -and $_.Name -ne 'manifest.sha256' } | Sort-Object Name | ForEach-Object { "{0}  {1}" -f (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name })
-    Set-Content -LiteralPath (Join-Path $OutDir 'manifest.sha256') -Value $manifest -Encoding ASCII
+    Set-Content -LiteralPath (Join-Path $OutDir 'manifest.sha256') -Value $manifest -Encoding ASCII -WhatIf:$false
     $zip = "$OutDir.zip"
-    if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
-    Compress-Archive -Path (Join-Path $OutDir '*') -DestinationPath $zip
+    # the bundle is the local record of the run, a plan-only (-WhatIf) run included, so these writes never skip
+    if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force -WhatIf:$false }
+    Compress-Archive -Path (Join-Path $OutDir '*') -DestinationPath $zip -WhatIf:$false
     $bundleHash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
     # final secret sweep: refuse to hand over a bundle that still contains a registered secret
     $leak = $false
@@ -179,7 +180,7 @@ function Export-DEEvidenceBundle {
         foreach ($v in $de.Redactions) { if ($v -and $txt) { foreach ($form in @($v, ($v | ConvertTo-Json -Compress).Trim('"'), [System.Net.WebUtility]::HtmlEncode($v))) { if ($form -and $txt.Contains($form)) { $leak = $true } } } }
     }
     # a withheld bundle leaves nothing behind: the zip and the unzipped folder both go
-    if ($leak) { Remove-Item -LiteralPath $zip -Force; Remove-Item -LiteralPath $OutDir -Recurse -Force -ErrorAction SilentlyContinue; throw 'evidence bundle contained a registered secret and was withheld (zip and folder deleted); report this as a console bug' }
+    if ($leak) { Remove-Item -LiteralPath $zip -Force -WhatIf:$false; Remove-Item -LiteralPath $OutDir -Recurse -Force -ErrorAction SilentlyContinue -WhatIf:$false; throw 'evidence bundle contained a registered secret and was withheld (zip and folder deleted); report this as a console bug' }
     Add-DEEvidence -Step 'evidence.bundle' -Module 'evidence' -Before 'no bundle' -ActionTaken 'bundle written' -Result 'INFO' -Verification "$zip sha256 $bundleHash" -Artifacts @($zip) | Out-Null
     return [pscustomobject]@{ folder = $OutDir; zip = $zip; sha256 = $bundleHash; record = $record; gaps = @($gaps).Count }
 }
@@ -199,7 +200,7 @@ function Convert-DEHtmlToPdf {
         $argList = @('--headless=new', '--disable-gpu', '--no-first-run', "--user-data-dir=`"$profileDir`"", '--no-pdf-header-footer', "--print-to-pdf=`"$PdfPath`"", $uri)
         $p = Start-Process -FilePath $browser -ArgumentList $argList -PassThru -WindowStyle Hidden
         if (-not $p.WaitForExit($TimeoutSeconds * 1000)) { try { $p.Kill() } catch { } }
-        Remove-Item -LiteralPath $profileDir -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $profileDir -Recurse -Force -ErrorAction SilentlyContinue -WhatIf:$false
         if (Test-Path -LiteralPath $PdfPath) { return $PdfPath }
     } catch { }
     return $null

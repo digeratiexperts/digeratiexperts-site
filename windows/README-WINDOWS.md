@@ -57,7 +57,9 @@ build the AI packs, and the AI Toolkit page offers to install it for the current
    action waits for its gates, and a closed gate names the step that opens it.
 6. **Restarts resume.** A step that needs a restart registers the console to reopen after sign-in and
    continue where it stopped. Headless runs stop at a queued restart (`RESULT: RESTART REQUIRED`, exit 1)
-   instead of applying later phases on top of it; run the same command again after the restart.
+   instead of applying later phases on top of it; run the same command again after the restart. An
+   unexpected error in a headless run still ends with a RESULT line and `-ResultFile` (`ERROR`, exit 1).
+   A plan-only run (`-WhatIf`) changes nothing on the device but still writes its evidence bundle.
 7. **Evidence and Hub.** The Evidence page writes a hashed bundle and pushes it to the Hub. The bundle
    holds JSON, internal and client-safe reports and a sha256 manifest. Each report comes as HTML and
    as a PDF printed by headless Edge or Chrome.
