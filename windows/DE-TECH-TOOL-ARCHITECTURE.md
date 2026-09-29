@@ -106,6 +106,7 @@ Release packages are code-signed and sha256-pinned. The server advertises versio
 3. Validate on a real DE Windows laptop in audit mode.
 4. Confirm remaining installer sources/hashes without weakening trust policy.
 5. ~~Define Hub device-intake/call-home API.~~ 1.7.0: contracts in `console/contracts`, signed `techconsole` events, Hub intake route in a draft Intelligence-Hub PR.
+   1.8.0: device-bound Hub-signed licences and watermarked builds, the pinned Toolbox of proven MSP scripts, the Command line page, a Windows PowerShell 5.1 and fail-closed bug hunt, DE Microsoft Admin 0.4 (Microsoft 365, Entra, Exchange, Intune, Autopilot, Azure, and the Gmail-to-Microsoft 365 migration engine), redesigned evidence reports and dark window controls.
 6. Build the outbound-only DE Tech Agent with mTLS, signed jobs and evidence sync.
 7. Integrate remote assist as a provider rather than building a remote-desktop protocol first.
 8. Add connected fleet/device views to Intelligence Hub Tech Hub.
