@@ -1482,7 +1482,47 @@ function Build-Settings {
     $hubAccountBox = New-El TextBox @{ Text = $hubAccount; Width = 180; Name = 'Intelligence Hub account number' }
     $saveHubAccount = New-Button 'Save Hub account to client profile' {
         if (-not $S.Profile) { Set-Status 'Select a client profile first.'; return }
-        $acct = "$($hubAccountBox.Text)".Trim(); if ($acct -and $acct -notmatch '^[1-9]\\d* { $id = Read-GuiText 'New profile' 'Profile id (lowercase, hyphens):'; if ($id) { $p = New-DEClientProfileTemplate -Id $id -Name $id; try { $f = Save-DEClientProfile -Profile $p; Start-Process notepad.exe $f } catch { Set-Status $_.Exception.Message } } }
+        $acct = "$($hubAccountBox.Text)".Trim()
+        if ($acct -and $acct -notmatch '^[1-9]\d*$') { Set-Status 'Hub account number must be a positive whole number.'; return }
+        try {
+            $base = ConvertTo-DEHashtable (Get-DEClientProfile -Id $S.Profile.id)
+            if (-not $base.ContainsKey('hub') -or -not $base['hub']) { $base['hub'] = @{} }
+            $base['hub']['accountId'] = $acct
+            $f = Save-DEClientProfile -Profile $base
+            $S.Profile = ConvertTo-DEHashtable $base
+            Set-DEContext -Values @{ hubAccountId = $acct }
+            Set-Status "Hub account $acct saved to $f"
+        } catch { Set-Status $_.Exception.Message }
+    }.GetNewClosure()
+
+    $certs = @()
+    foreach ($store in @('Cert:\CurrentUser\My', 'Cert:\LocalMachine\My')) {
+        try { $certs += @(Get-ChildItem -Path $store -CodeSigningCert -ErrorAction SilentlyContinue | Where-Object { $_.NotAfter -gt (Get-Date) -and $_.HasPrivateKey }) } catch { }
+    }
+    $certStatus = $(if ($certs.Count -eq 1) { "READY: $($certs[0].Subject) · expires $($certs[0].NotAfter.ToString('yyyy-MM-dd'))" } elseif ($certs.Count -gt 1) { "ACTION: $($certs.Count) valid code-signing certificates found; choose the release certificate thumbprint." } else { 'ACTION: no valid code-signing certificate with a private key found in CurrentUser or LocalMachine.' })
+    $hubSecretStatus = $(if (Test-DESecret -Name 'DE_HUB_SIGNING_SECRET') { 'READY: Hub signing secret is loaded for this session.' } else { 'ACTION: set DE_HUB_SIGNING_SECRET here. The server value is TECHCONSOLE_TO_HUB_SECRET and must match.' })
+    $hubAccountStatus = $(if ($hubAccount -match '^[1-9]\d*$') { "READY: Hub account $hubAccount" } else { 'ACTION: save the client Intelligence Hub account number below.' })
+    $signScript = Join-Path (Split-Path -Parent (Get-DEConsole).Root) 'packaging\Sign-DETechConsole.ps1'
+    $thumb = $(if ($certs.Count -eq 1) { $certs[0].Thumbprint } else { '<CERT_THUMBPRINT>' })
+    $copyDeploy = New-Button 'Copy Hub deploy check' { [System.Windows.Clipboard]::SetText("ssh de-vps 'sudo cat /opt/intelligence-hub/current/RELEASE_SHA'"); Set-Status 'Hub RELEASE_SHA check copied. Expected release starts c622160e.' }
+    $copySign = New-Button 'Copy signing command' { [System.Windows.Clipboard]::SetText("& '$signScript' -Thumbprint $thumb"); Set-Status 'Signing command copied.' }.GetNewClosure()
+    $copyVerify = New-Button 'Copy signature verification' { [System.Windows.Clipboard]::SetText("& '$signScript' -Verify -RequireSignature"); Set-Status 'Signature verification command copied.' }.GetNewClosure()
+    $checkText = "1. Hub deployment · expected RELEASE_SHA c622160e…" + [Environment]::NewLine +
+        "2. Hub shared secret · $hubSecretStatus" + [Environment]::NewLine +
+        "3. Client Hub account · $hubAccountStatus" + [Environment]::NewLine +
+        "4. Code signing · $certStatus" + [Environment]::NewLine +
+        "5. Verify signed package before client deployment"
+    $goLive = @(
+        (New-Text 'Go-live checklist' 15 -Bold),
+        (New-Text 'These are the release steps for the installed DE Tech Tool and Intelligence Hub. Secrets stay runtime-only; the account number is non-secret client metadata.' -Muted -Wrap),
+        (New-El TextBlock @{ Text = $checkText; Style = 'Mono'; TextWrapping = 'Wrap'; Margin = '0,6,0,8' }),
+        (New-Wrap @((New-Label 'Hub account number'), $hubAccountBox, $saveHubAccount)),
+        (New-Wrap @($copyDeploy, $copySign, $copyVerify)),
+        (New-Text 'Signing uses packaging\Sign-DETechConsole.ps1 with SHA-256 Authenticode plus a timestamp. The certificate private key stays in the Windows certificate store. The Hub secret must be configured as TECHCONSOLE_TO_HUB_SECRET on the server and entered here as DE_HUB_SIGNING_SECRET.' -Muted -Wrap)
+    )
+    [void]$root.Children.Add((New-Card $goLive))
+
+    $profileBtn = New-Button 'New client profile from template' { $id = Read-GuiText 'New profile' 'Profile id (lowercase, hyphens):'; if ($id) { $p = New-DEClientProfileTemplate -Id $id -Name $id; try { $f = Save-DEClientProfile -Profile $p; Start-Process notepad.exe $f } catch { Set-Status $_.Exception.Message } } }
     [void]$root.Children.Add((New-Card @((New-Text 'Client profiles' 15 -Bold), (New-Text 'Profiles hold tier, stack roles, apps, branding, sites, vendor tenant ids and detection rules. Saving one that contains a secret is refused.' -Muted -Wrap), $profileBtn)))
 }
 
