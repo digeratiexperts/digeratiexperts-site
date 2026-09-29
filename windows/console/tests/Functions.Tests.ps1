@@ -951,3 +951,35 @@ Describe 'Browser control: login manager, autofill, approved and blocked extensi
     }
 }
 
+Describe 'Device lifecycle: OOBE, after first sign-in, configured' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1')
+        $global:DETest = @{ Dir = Initialize-TestConsole; Alamo = Get-DEClientProfile -Id 'alamo' }
+        $null = Initialize-DEWorkflow -ClientProfile $global:DETest.Alamo -Mode 'new'
+    }
+    It 'reads OOBE from the setup flags and the defaultuser0 session, and recommends new with user steps deferred' {
+        $snap = @{ setup = @{ oobeInProgress = $true }; identity = @{ joinType = 'local-workgroup'; profiles = @() }; mdm = @{ authority = 'none' } }
+        $l = Get-DEDeviceLifecycle -Snapshot $snap; $l.stage | Should -Be 'oobe'; ($l.reasons -join ' ') | Should -Match 'OOBE'
+        (Get-DEDeviceLifecycle -Snapshot @{ identity = @{ joinType = 'local-workgroup'; interactiveUser = 'DESKTOP-1\defaultuser0'; profiles = @() } }).stage | Should -Be 'oobe'
+        $r = Get-DERecommendedMode -Snapshot $snap -ClientProfile @{ id = 'x' }
+        $r.mode | Should -Be 'new'; $r.reason | Should -Match 'first sign-in'
+    }
+    It 'after first sign-in until the DE stack is on, then configured' {
+        $snap = @{ identity = @{ joinType = 'local-workgroup'; profiles = @(@{ path = 'C:\Users\sthompson'; sid = 'S-1-5-21-1-2-3-1001' }) }; mdm = @{ authority = 'none' }; agents = @{ agents = @{} } }
+        $l = Get-DEDeviceLifecycle -Snapshot $snap; $l.stage | Should -Be 'first-login'; ($l.reasons -join ' ') | Should -Match 'JumpCloud, SentinelOne, Guardz'
+        $snap.mdm.authority = 'jumpcloud'; $snap.agents.agents = @{ sentinelone = @{ installed = $true }; guardz = @{ installed = $true } }
+        (Get-DEDeviceLifecycle -Snapshot $snap).stage | Should -Be 'configured'
+        (Get-DEDeviceLifecycle -Snapshot @{ identity = @{ joinType = 'local-workgroup'; profiles = @(@{ path = 'C:\Users\jrpetro' }, @{ path = 'C:\Users\DE-BreakGlass' }) } }).stage | Should -Be 'oobe'   # only DE accounts so far
+    }
+    It 'per-user steps wait for a real user session' {
+        (Get-DEAction -Id 'apps.m365.readiness').Gates | Should -Contain 'gate.user-session'
+        Mock -ModuleName DE.Identity Get-DESetupState { @{ oobeInProgress = $true } }
+        Mock -ModuleName DE.Identity Get-DEIdentityState { @{ joinType = 'local-workgroup'; profiles = @() } }
+        Mock -ModuleName DE.Identity Get-DEMdmState { @{ authority = 'none' } }
+        $g = Test-DEGate -Id 'gate.user-session' -Refresh; $g.Status | Should -Be 'BLOCKED'; $g.Detail | Should -Match "user's own session"
+        Mock -ModuleName DE.Identity Get-DESetupState { @{ oobeInProgress = $false } }
+        Mock -ModuleName DE.Identity Get-DEIdentityState { @{ joinType = 'local-workgroup'; profiles = @(@{ path = 'C:\Users\sthompson' }) } }
+        (Test-DEGate -Id 'gate.user-session' -Refresh).Status | Should -Be 'PASS'
+    }
+}
+

@@ -411,12 +411,46 @@ function Get-DEBrowserState {
 }
 
 # ------------------------------------------------------------------ full snapshot
+function Get-DESetupState {
+    <# Windows setup flags: OOBE still running, or system setup in progress (HKLM\SYSTEM\Setup). #>
+    $oobe = $null; $sys = $null; $type = $null
+    if ($script:IsWindowsHost) { $oobe = Get-DEReg 'HKLM:\SYSTEM\Setup' 'OOBEInProgress'; $sys = Get-DEReg 'HKLM:\SYSTEM\Setup' 'SystemSetupInProgress'; $type = Get-DEReg 'HKLM:\SYSTEM\Setup' 'SetupType' }
+    return @{ oobeInProgress = ("$oobe" -eq '1'); systemSetupInProgress = ("$sys" -eq '1'); setupType = $type }
+}
+function Get-DEDeviceLifecycle {
+    <#
+    Where the device is in its life, with reasons:
+      oobe        Windows setup (OOBE) is still running, the session is defaultuser0, or nobody has signed in yet on a
+                  device no one manages: machine-wide settings can be applied now, per-user ones wait for the first sign-in.
+      first-login a real user has signed in but the DE stack (JumpCloud + EDR + MDR) is not in place yet.
+      configured  JumpCloud, SentinelOne and Guardz are present: check health and fix drift.
+    #>
+    param($Snapshot)
+    $reasons = @()
+    $setup = Get-DEHashPath -Object $Snapshot -Path 'setup'
+    $interactive = "$(Get-DEHashPath -Object $Snapshot -Path 'identity.interactiveUser')"
+    $join = "$(Get-DEHashPath -Object $Snapshot -Path 'identity.joinType')"
+    $auth = "$(Get-DEHashPath -Object $Snapshot -Path 'mdm.authority')"
+    $users = @(@(Get-DEHashPath -Object $Snapshot -Path 'identity.profiles') | Where-Object { $_ -and "$(Get-DEHashPath -Object $_ -Path 'path')" -notmatch '\\(Administrator|Default|Default User|Public|defaultuser\d*|DE-BreakGlass|jrpetro|systemprofile|LocalService|NetworkService)$' })
+    $agents = Get-DEHashPath -Object $Snapshot -Path 'agents.agents'
+    $has = { param($id) [bool](Get-DEHashPath -Object $agents -Path "$id.installed") }
+    $jc = ($auth -eq 'jumpcloud') -or [bool](Get-DEHashPath -Object $Snapshot -Path 'mdm.jumpcloud.installed') -or (& $has 'jumpcloud')
+    if ((Get-DEHashPath -Object $setup -Path 'oobeInProgress') -or (Get-DEHashPath -Object $setup -Path 'systemSetupInProgress')) { $reasons += 'Windows setup (OOBE) is still running' }
+    if ($interactive -match '\\defaultuser\d*$') { $reasons += "signed in as $interactive (the OOBE account)" }
+    if (-not $reasons.Count -and -not $users.Count -and $join -match '^(local|unknown|$)' -and $auth -notmatch 'intune|dual|other') { $reasons += 'no user has signed in yet (only built-in and DE accounts have profiles)' }
+    if ($reasons.Count) { return [pscustomobject]@{ stage = 'oobe'; title = 'OOBE / before first sign-in'; reasons = $reasons; userCount = $users.Count } }
+    if ($jc -and (& $has 'sentinelone') -and (& $has 'guardz')) { return [pscustomobject]@{ stage = 'configured'; title = 'Configured (DE stack in place)'; reasons = @('JumpCloud, SentinelOne and Guardz are present'); userCount = $users.Count } }
+    $missing = @(); if (-not $jc) { $missing += 'JumpCloud' }; if (-not (& $has 'sentinelone')) { $missing += 'SentinelOne' }; if (-not (& $has 'guardz')) { $missing += 'Guardz' }
+    return [pscustomobject]@{ stage = 'first-login'; title = 'After first sign-in'; reasons = @("$($users.Count) user profile(s); not in place yet: $($missing -join ', ')"); userCount = $users.Count }
+}
+
 function Get-DEDiscoverySnapshot {
     <# Everything above in one object; the workflow, gates and evidence use this. Slow parts (apps, updates) can be skipped. #>
     param([switch]$SkipApps, [switch]$SkipUpdates, [switch]$SkipConnectivity)
     $snap = [ordered]@{
         device = Get-DEDeviceInventory
         pendingReboot = Get-DEPendingReboot
+        setup = Get-DESetupState
         identity = Get-DEIdentityState
         mdm = Get-DEMdmState
         agents = Get-DESecurityAgentState
@@ -433,4 +467,4 @@ function Get-DEDiscoverySnapshot {
     return $snap
 }
 
-Export-ModuleMember -Function Get-DEDeviceInventory, Get-DEPendingReboot, ConvertFrom-DEDsregcmd, Get-DEIdentityState, Find-DEProfileForUser, Get-DEMdmState, Get-DEJumpCloudAgentState, Get-DESecurityAgentState, Get-DEServiceState, Get-DEBitLockerState, Get-DEOneDriveState, Get-DEDropboxState, Get-DEWindowsUpdateState, Get-DEInstalledApps, Find-DEApp, Get-DENetworkState, Test-DEConnectivity, Get-DEBrowserState, Get-DEDiscoverySnapshot
+Export-ModuleMember -Function Get-DESetupState, Get-DEDeviceLifecycle, Get-DEDeviceInventory, Get-DEPendingReboot, ConvertFrom-DEDsregcmd, Get-DEIdentityState, Find-DEProfileForUser, Get-DEMdmState, Get-DEJumpCloudAgentState, Get-DESecurityAgentState, Get-DEServiceState, Get-DEBitLockerState, Get-DEOneDriveState, Get-DEDropboxState, Get-DEWindowsUpdateState, Get-DEInstalledApps, Find-DEApp, Get-DENetworkState, Test-DEConnectivity, Get-DEBrowserState, Get-DEDiscoverySnapshot

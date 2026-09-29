@@ -310,6 +310,8 @@ function Get-DERecommendedMode {
     if ("$(Get-DEHashPath -Object $ClientProfile -Path 'delivery.mode')" -eq 'dropship') { return (& $result 'dropship' @('client profile marks this device as a dropship / pre-provision build')) }
     if ("$(Get-DEHashPath -Object $ClientProfile -Path 'tier')" -eq 'Co-managed' -or "$(Get-DEHashPath -Object $ClientProfile -Path 'plan.bundle')" -eq 'co-managed') { return (& $result 'co-managed' @('the client profile is on the Co-Managed IT path')) }
     if (-not $Snapshot) { return (& $result 'audit' @('discovery has not run yet: audit first, change nothing')) }
+    $life = Get-DEDeviceLifecycle -Snapshot $Snapshot
+    if ($life.stage -eq 'oobe' -and $life.reasons -notmatch 'no user has signed in') { return (& $result 'new' @(@($life.reasons) + 'machine-wide settings now; per-user steps wait for the first sign-in')) }
     $join = "$(Get-DEHashPath -Object $Snapshot -Path 'identity.joinType')"
     if (-not $join) { $join = "$(Get-DEHashPath -Object $Snapshot -Path 'identity.dsreg.joinType')" }
     if (-not $join) { $join = "$(Get-DEHashPath -Object $Snapshot -Path 'joinType')" }
