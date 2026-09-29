@@ -15,6 +15,9 @@ import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { SolutionOrderSummary } from "@/components/store/SolutionOrderSummary";
 import { snapshotSubmitLines } from "@/lib/solutionSnapshotView";
+import { readGuidedSession } from "@/lib/storeGuidedSession";
+import { clearContactHandoff, readContactHandoff } from "@/lib/warehouseContactHandoff";
+import { warehousePath } from "@/lib/warehousePaths";
 import {
   ArrowLeft,
   FileText,
@@ -47,6 +50,10 @@ const QuoteRequest = () => {
     noIndex: true,
   });
 
+  // Defaults come from the Checkout handoff first (issues #235 / #258), then the
+  // guided-session email, then the remembered buyer email. Fresh edits here are
+  // never overwritten: defaults are read once, on mount.
+  const [handoff] = useState(() => readContactHandoff());
   const {
     register,
     handleSubmit,
@@ -54,10 +61,13 @@ const QuoteRequest = () => {
   } = useForm<QuoteRequestFormData>({
     resolver: zodResolver(quoteRequestSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      company: "",
+      name: handoff?.name ?? "",
+      email:
+        handoff?.email ||
+        readGuidedSession()?.workEmail ||
+        (typeof window !== "undefined" ? window.localStorage.getItem("userEmail") || "" : ""),
+      phone: handoff?.phone ?? "",
+      company: handoff?.company ?? "",
       message: "",
     },
   });
@@ -101,13 +111,23 @@ const QuoteRequest = () => {
           });
           return;
         }
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
+        if (errorData.code === "DURABLE_DATABASE_REQUIRED") {
+          toast({
+            title: "Quote requests are temporarily unavailable",
+            description:
+              "We will not record a quote without durable storage. Your solution and contact details are intact; please try again shortly.",
+            variant: "destructive",
+          });
+          return;
+        }
         throw new Error(errorData.error || "Failed to create quote request");
       }
 
       const result = await response.json();
+      clearContactHandoff();
       clearCart();
-      navigate(`/internal/warehouse/quote-confirmation/${result.id}`);
+      navigate(warehousePath(`/quote-confirmation/${result.id}`));
     } catch (error: any) {
       console.error("Quote request error:", error);
       toast({

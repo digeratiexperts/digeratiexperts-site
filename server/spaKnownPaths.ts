@@ -23,7 +23,6 @@ const EXACT = new Set([
   "/solutions/proactive-enterprise-ecosystem",
   "/solutions/standalone-services",
   "/solutions/co-managed-it",
-  "/solutions/business-needs",
   "/solutions/request",
   "/solutions/endpoint-management",
   "/solutions/identity-management",
@@ -102,8 +101,8 @@ const EXACT = new Set([
 ]);
 
 const PREFIXES = [
-  "/solutions/business-needs/",
   "/store/solutions/",
+  "/store/solution/submitted/",
   "/resources/case-studies/",
   "/resources/blog/",
   "/portal/",

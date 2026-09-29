@@ -26,6 +26,21 @@ export type StoredQuoteRequest = {
 
 const quotes = new Map<string, StoredQuoteRequest>();
 
+/**
+ * A quote request is a commercial lead, not disposable UI state. When durable
+ * storage is unavailable the request must fail closed (issue #240): the route
+ * turns this into a 503 with the same DURABLE_DATABASE_REQUIRED contract card
+ * checkout already uses, and the client keeps the buyer's cart and contact
+ * draft for a retry.
+ */
+export class QuoteDurabilityError extends Error {
+  readonly code = "DURABLE_DATABASE_REQUIRED";
+  constructor(message = "Quote requests require durable database storage.") {
+    super(message);
+    this.name = "QuoteDurabilityError";
+  }
+}
+
 export function makeQuoteNumber(now = new Date()): string {
   const dateStr = now.toISOString().slice(0, 10).replace(/-/g, "");
   const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -91,12 +106,15 @@ export async function insertQuoteRequest(input: {
     createdAt: now,
     updatedAt: now,
   };
-  remember(record);
-
   await initPromise;
-  if (dbReady && db) {
-    try {
-      const [row] = await db
+  if (!dbReady || !db) {
+    throw new QuoteDurabilityError();
+  }
+
+  // Only a row that the database returned is remembered. Remembering before
+  // the insert let a failed write masquerade as a submitted quote.
+  try {
+    const [row] = await db
         .insert(storeQuoteRequests)
         .values({
           id: record.id,
@@ -113,13 +131,15 @@ export async function insertQuoteRequest(input: {
           quoteSentAt: record.quoteSentAt,
         })
         .returning();
-      if (row) return remember(rowToQuote(row));
-    } catch (error: any) {
-      console.warn("[store-quote] database insert skipped:", error?.message || error);
-    }
+    if (row) return remember(rowToQuote(row));
+    throw new QuoteDurabilityError("The quote request was not written to durable storage.");
+  } catch (error: any) {
+    if (error instanceof QuoteDurabilityError) throw error;
+    console.error("[store-quote] database insert failed:", error?.message || error);
+    throw new QuoteDurabilityError(
+      `Quote request storage failed: ${error?.message || "database error"}`,
+    );
   }
-
-  return record;
 }
 
 export async function getQuoteRequest(idOrNumber: string): Promise<StoredQuoteRequest | undefined> {

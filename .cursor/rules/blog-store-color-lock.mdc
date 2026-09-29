@@ -4,6 +4,11 @@ globs:
   - client/src/pages/resources/**
   - client/src/pages/store/**
   - client/src/components/store/**
+  - client/src/pages/solutions/BusinessNeedsIndex.tsx
+  - client/src/pages/solutions/BusinessNeedsFamily.tsx
+  - client/src/pages/solutions/SolutionRequest.tsx
+  - client/src/styles/store-builder.css
+  - client/src/styles/store-jelly.css
   - client/src/App.tsx
   - client/src/index.css
 alwaysApply: true
@@ -22,10 +27,26 @@ Ask DE before changing any value below.
 - Masthead stays the charcoal ladder (`#050312` → `#0a0a0a` → `#151217`). “Journal” uses `text-de-accent-ink` (amber), not magenta.
 - Do not flatten the Journal to a paper chapter or repaint it electric/magenta/cyan.
 
-## Store (`/store`, `/store/*`)
+## Store — two surfaces, one electric accent
 
-- Page accent: `data-accent="electric"`.
+Split 2026-09-28 (Joe approved `docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md` §16): the pills and vendor marks render only in the staff warehouse; the public Store has neither.
+
+Both surfaces:
+
+- Page accent: `data-accent="electric"` via `ACCENT_BY_PREFIX`.
 - Tokens: `--de-accent-rgb: 29 111 242`; `--de-accent-ink-rgb: 111 179 255`.
+
+### Public Store — Door 2 (`/store`, `/store/solutions/*`, `/store/solution`, `/store/checkout`, `/store/solution/submitted/*`, `/solutions/request`)
+
+- Electric is wayfinding and state only: step numbers, checked borders, the "Added ✓" state, quantities, links. Never a wash, never a filled panel, never a purple tile.
+- One magenta (`#D3126A`) primary per screen. Focus ring pink `#ec4899`.
+- Family icons use one electric IconWell. The 13 per-family icon hues are retired (§16.4, R6); do not reintroduce them.
+- Colour comes from theme tokens. Door 2 CSS lives in `client/src/styles/store-builder.css` (the Store chunk), pinned by `door2Tokens.test.ts`; error inks derive from `--destructive`. Accent-derived variables are declared on `:root, [data-accent]`, never `:root` alone (a `:root`-only declaration resolves to the default magenta under the electric canvas); portalled Door 2 surfaces carry `data-accent="electric"`.
+- No category pills, vendor marks, product media or catalog colours on Door 2 (`door2Leakage.test.ts`).
+- The one sanctioned electric field is `StorePageAtmosphere` (0.44 on `/store`, 0.28 on the family and workspace pages, none on contact and confirmation), as the source of truth §8 keeps it; it is not a wash on components.
+
+### Staff warehouse (`/internal/warehouse`, `/internal/warehouse/*`)
+
 - Category pills stay **pill-only** with the 14 distinct hues in `categoryAccent` (`StoreProductCard.tsx`). Guard: `categoryAccent.test.ts`.
   - `comanaged_subscriptions` violet-300, `comanaged_onboarding` purple-300, `digital_templates` indigo-300. Those three are intentional taxonomy colours from before the sweep — do not collapse them, and do not restyle them under the marketing-page “remove purple” rule.
   - `professional_services` pink-300. Blues, cyan, green, orange, and the other current pill hues stay as they are.
