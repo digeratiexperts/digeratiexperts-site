@@ -143,14 +143,19 @@ function Get-DEIdentityState {
     if ($script:IsWindowsHost) {
         try { $localUsers = @(Get-LocalUser -ErrorAction Stop | ForEach-Object { @{ name = $_.Name; enabled = [bool]$_.Enabled; sid = $_.SID.Value; passwordRequired = [bool]$_.PasswordRequired; lastLogon = $(if ($_.LastLogon) { $_.LastLogon.ToString('o') } else { $null }); description = $_.Description } }) } catch { }
         try {
-            foreach ($m in @(Get-LocalGroupMember -Group 'Administrators' -ErrorAction Stop)) {
+            # by SID: the group is 'Administratoren', 'Administrateurs', ... on localized Windows
+            foreach ($m in @(Get-LocalGroupMember -SID 'S-1-5-32-544' -ErrorAction Stop)) {
                 $entry = @{ name = $m.Name; sid = $m.SID.Value; source = "$($m.PrincipalSource)"; objectClass = $m.ObjectClass }
                 if ($m.Name -match '^S-1-\d+' -or -not $m.Name) { $unresolvedAdmins += $entry } else { $admins += $entry }
             }
         } catch {
             # Get-LocalGroupMember fails on some Entra-joined machines with orphaned SIDs; fall back to net localgroup
-            $r = Invoke-DEDiscoveryNative -FilePath 'net.exe' -Arguments @('localgroup', 'Administrators')
-            $names = @($r.Output | Where-Object { $_ -and $_ -notmatch '^(Alias name|Comment|Members|-+|The command completed)' })
+            # (also the path in 32-bit PowerShell, where the LocalAccounts module does not exist)
+            $grp = Get-DEAdministratorsGroupName
+            $r = Invoke-DEDiscoveryNative -FilePath 'net.exe' -Arguments @('localgroup', $grp)
+            # net localgroup prints the members between the dashed rule and the closing line; both are language-neutral positions
+            $lines = @($r.Output); $start = -1; for ($i = 0; $i -lt $lines.Count; $i++) { if ("$($lines[$i])" -match '^-{5,}') { $start = $i + 1; break } }
+            $names = $(if ($start -ge 0 -and $r.ExitCode -eq 0) { @($lines[$start..([Math]::Max($start, $lines.Count - 2))] | Where-Object { "$_".Trim() }) } else { @() })
             foreach ($n in $names) { if ($n -match '^S-1-\d+') { $unresolvedAdmins += @{ name = $n; sid = $n; source = 'unresolved' } } else { $admins += @{ name = $n.Trim(); sid = ''; source = 'net localgroup' } } }
         }
     }
@@ -223,7 +228,7 @@ function Get-DEJumpCloudAgentState {
     $conf = $null; $systemKey = $null
     if ($script:IsWindowsHost) {
         $confPath = Join-Path $env:ProgramFiles 'JumpCloud\Plugins\Contrib\jcagent.conf'
-        if (Test-Path -LiteralPath $confPath) { try { $conf = Get-Content -LiteralPath $confPath -Raw | ConvertFrom-Json; $systemKey = $conf.systemKey } catch { } }
+        if (Test-Path -LiteralPath $confPath) { try { $conf = Get-Content -LiteralPath $confPath -Raw -Encoding UTF8 | ConvertFrom-Json; $systemKey = $conf.systemKey } catch { } }
     }
     $version = $null
     if ($script:IsWindowsHost) { $exe = Join-Path $env:ProgramFiles 'JumpCloud\jumpcloud-agent.exe'; if (Test-Path -LiteralPath $exe) { try { $version = (Get-Item -LiteralPath $exe).VersionInfo.ProductVersion } catch { } } }
@@ -247,7 +252,7 @@ function Get-DESecurityAgentState {
         @{ id = 'msp360'; name = 'MSP360 Backup / RMM'; services = @('Online Backup Service', 'CloudBerry Backup', 'MSP360 RMM Agent', 'CBRMMAgent'); processes = @('CBBackupPlan', 'CBRMMAgent'); paths = @("$env:ProgramFiles\Online Backup", "$env:ProgramFiles\MSP360") }
         @{ id = 'timus'; name = 'Timus Connect'; services = @('TimusConnect', 'Timus Connect'); processes = @('TimusConnect'); paths = @("$env:ProgramFiles\Timus") }
         @{ id = 'controlone'; name = 'ControlOne'; services = @('ControlOne', 'Cytracom ControlOne'); processes = @('ControlOne'); paths = @("$env:ProgramFiles\Cytracom") }
-        @{ id = 'wazuh'; name = 'Wazuh Agent'; services = @('WazuhSvc', 'Wazuh'); processes = @('wazuh-agent'); paths = @("$env:ProgramFiles (x86)\ossec-agent") }
+        @{ id = 'wazuh'; name = 'Wazuh Agent'; services = @('WazuhSvc', 'Wazuh'); processes = @('wazuh-agent'); paths = @("${env:ProgramFiles(x86)}\ossec-agent") }
         @{ id = 'qualys'; name = 'Qualys Cloud Agent'; services = @('QualysAgent'); processes = @('QualysAgent'); paths = @() }
     )
     foreach ($d in $defs) {
@@ -269,15 +274,16 @@ function Get-DESecurityAgentState {
 function Get-DEBitLockerState {
     $vols = @()
     if ($script:IsWindowsHost) {
+        $readable = $true; $err = $null
         try {
             foreach ($v in @(Get-BitLockerVolume -ErrorAction Stop)) {
                 $prot = @($v.KeyProtector | ForEach-Object { @{ type = "$($_.KeyProtectorType)"; id = "$($_.KeyProtectorId)" } })  # never the RecoveryPassword value
                 $vols += @{ mount = $v.MountPoint; volumeType = "$($v.VolumeType)"; status = "$($v.VolumeStatus)"; protection = "$($v.ProtectionStatus)"; encryptionPercentage = $v.EncryptionPercentage; method = "$($v.EncryptionMethod)"; protectors = $prot; hasTpm = [bool]($prot | Where-Object { $_ -and $_.type -match 'Tpm' }); hasRecoveryPassword = [bool]($prot | Where-Object { $_ -and $_.type -eq 'RecoveryPassword' }); recoveryProtectorIds = @($prot | Where-Object { $_ -and $_.type -eq 'RecoveryPassword' } | ForEach-Object { $_.id }) }
             }
-        } catch { }
-    }
+        } catch { $readable = $false; $err = $_.Exception.Message }   # not elevated, or 32-bit PowerShell: unknown, not "unencrypted"
+    } else { $readable = $false; $err = 'not Windows' }
     $osVol = $vols | Where-Object { $_ -and $_.volumeType -eq 'OperatingSystem' } | Select-Object -First 1
-    return @{ volumes = $vols; os = $osVol; osEncrypted = [bool]($osVol -and $osVol.status -eq 'FullyEncrypted'); osProtectionOn = [bool]($osVol -and $osVol.protection -eq 'On'); collectedAt = (Get-Date).ToString('o') }
+    return @{ readable = $readable; error = $err; volumes = $vols; os = $osVol; osEncrypted = [bool]($osVol -and $osVol.status -eq 'FullyEncrypted'); osProtectionOn = [bool]($osVol -and $osVol.protection -eq 'On'); collectedAt = (Get-Date).ToString('o') }
 }
 
 # ------------------------------------------------------------------ OneDrive
@@ -319,7 +325,7 @@ function Get-DEDropboxState {
         $running = [bool](Get-Process -Name 'Dropbox' -ErrorAction SilentlyContinue)
         $installed = (Test-Path -LiteralPath (Join-Path $env:LOCALAPPDATA 'Dropbox\Client\Dropbox.exe')) -or (Test-Path -LiteralPath (Join-Path $env:ProgramFiles 'Dropbox\Client\Dropbox.exe')) -or (Test-Path -LiteralPath (Join-Path ${env:ProgramFiles(x86)} 'Dropbox\Client\Dropbox.exe'))
         $info = Join-Path $env:LOCALAPPDATA 'Dropbox\info.json'
-        if (Test-Path -LiteralPath $info) { try { $j = Get-Content -LiteralPath $info -Raw | ConvertFrom-Json; foreach ($p in $j.PSObject.Properties) { $folder = $p.Value.path } } catch { } }
+        if (Test-Path -LiteralPath $info) { try { $j = Get-Content -LiteralPath $info -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($p in $j.PSObject.Properties) { $folder = $p.Value.path } } catch { } }
     }
     return @{ installed = $installed; running = $running; folder = $folder }
 }
@@ -364,7 +370,8 @@ function Get-DENetworkState {
         try { $adapters = @(Get-NetIPConfiguration -ErrorAction Stop | Where-Object { $_ -and $_.NetAdapter.Status -eq 'Up' } | ForEach-Object { @{ alias = $_.InterfaceAlias; ipv4 = @($_.IPv4Address | ForEach-Object { $_.IPAddress }); gateway = @($_.IPv4DefaultGateway | ForEach-Object { $_.NextHop }); dns = @($_.DNSServer | ForEach-Object { $_.ServerAddresses } | ForEach-Object { $_ }) } }) } catch { }
         $gateway = ($adapters | ForEach-Object { $_.gateway } | Where-Object { $_ } | Select-Object -First 1)
         $dns = @($adapters | ForEach-Object { $_.dns } | Where-Object { $_ } | Select-Object -Unique)
-        $r = Invoke-DEDiscoveryNative -FilePath 'netsh.exe' -Arguments @('wlan', 'show', 'profiles'); $wifi = @($r.Output | Where-Object { $_ -match 'All User Profile\s*:\s*(.+)$' } | ForEach-Object { $Matches[1].Trim() })
+        # profile names from the WLAN service's own XML files (netsh output is translated on non-English Windows)
+        $wifi = @(Get-ChildItem -Path "$env:ProgramData\Microsoft\Wlansvc\Profiles\Interfaces\*\*.xml" -ErrorAction SilentlyContinue | ForEach-Object { try { ([xml](Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8)).WLANProfile.name } catch { } } | Where-Object { $_ } | Select-Object -Unique)
         try { $vpn = @(Get-VpnConnection -AllUserConnection -ErrorAction Stop | ForEach-Object { @{ name = $_.Name; server = $_.ServerAddress; type = "$($_.TunnelType)" } }) } catch { }
     }
     return @{ adapters = $adapters; gateway = $gateway; dns = $dns; wifiProfiles = $wifi; vpnConnections = $vpn; collectedAt = (Get-Date).ToString('o') }

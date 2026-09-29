@@ -51,6 +51,38 @@ param(
 # (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
 Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
+
+# ============================================================== host checks (before any module loads)
+# Constrained Language Mode (WDAC/AppLocker without trust for this build) blocks the .NET calls the tool needs; refuse
+# clearly instead of failing half way.
+if ($ExecutionContext.SessionState.LanguageMode -ne 'FullLanguage') {
+    $msg = "REFUSED: PowerShell is in $($ExecutionContext.SessionState.LanguageMode) (application control). Allow this signed build in the WDAC/AppLocker policy, then run it again."
+    Write-Output $msg
+    if ($ResultFile) { @{ overall = 'REFUSED'; exitCode = 2; message = $msg } | ConvertTo-Json | Set-Content -LiteralPath $ResultFile -Encoding ASCII }
+    exit 2
+}
+# A 32-bit host (many RMM agents) sees WOW6432Node and SysWOW64 instead of the real registry and System32: app
+# detection, MDM, BitLocker, local accounts and branding would read and write the wrong place. Re-run in 64-bit
+# Windows PowerShell, dot-sourced so the window's handlers still resolve at global scope, and pass the exit code on.
+if ($env:OS -eq 'Windows_NT' -and -not [Environment]::Is64BitProcess -and [Environment]::Is64BitOperatingSystem) {
+    $ps64 = Join-Path $env:WINDIR 'Sysnative\WindowsPowerShell\v1.0\powershell.exe'
+    if (Test-Path -LiteralPath $ps64) {
+        $lit = { param($v) "'" + ("$v" -replace "'", "''") + "'" }
+        $parts = @(". $(& $lit $PSCommandPath)")
+        foreach ($k in $PSBoundParameters.Keys) {
+            $v = $PSBoundParameters[$k]
+            if ($v -is [switch]) { $parts += "-$($k):`$$([bool]$v)" }
+            elseif ($v -is [array]) { $parts += "-$k @($((@($v) | ForEach-Object { & $lit $_ }) -join ','))" }
+            else { $parts += "-$k $(& $lit $v)" }
+        }
+        if ($WhatIfPreference) { $parts += '-WhatIf' }
+        $cmd = ($parts -join ' ') + '; exit $LASTEXITCODE'
+        $enc = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($cmd))
+        $sta = $(if ($Headless) { @() } else { @('-Sta') })
+        & $ps64 -NoProfile -ExecutionPolicy Bypass @sta -EncodedCommand $enc
+        exit $LASTEXITCODE
+    }
+}
 $ConsoleRoot = $PSScriptRoot
 Import-Module (Join-Path $ConsoleRoot 'modules\DE.Workflow\DE.Workflow.psm1') -Force -DisableNameChecking
 Import-DEConsoleModules -Root $ConsoleRoot
@@ -65,7 +97,8 @@ if ($Headless) { & {
         if ($Message) { Write-Host $Message }
         Write-Host ("RESULT: {0}{1}" -f $Overall, $(if ($Bundle) { "; bundle $Bundle" } else { '' }))
         if ($Next) { Write-Host "NEXT: $Next" }
-        if ($ResultFile) { try { [ordered]@{ schema = 'de.techconsole.result/v1'; overall = $Overall; exitCode = $Code; restartRequired = [bool]$RestartRequired; message = (Protect-DEText $Message); next = (Protect-DEText $Next); bundle = $Bundle; at = (Get-Date).ToString('o') } | ConvertTo-Json | Set-Content -LiteralPath $ResultFile -Encoding UTF8 -WhatIf:$false } catch { Write-Host "could not write $ResultFile : $($_.Exception.Message)" } }
+        # no BOM in the result file: RMM and first boot parse it
+        if ($ResultFile) { try { [ordered]@{ schema = 'de.techconsole.result/v1'; overall = $Overall; exitCode = $Code; restartRequired = [bool]$RestartRequired; message = (Protect-DEText $Message); next = (Protect-DEText $Next); bundle = $Bundle; at = (Get-Date).ToString('o') } | ConvertTo-Json | ForEach-Object { [IO.File]::WriteAllText($ResultFile, $_, (New-Object Text.UTF8Encoding $false)) } } catch { Write-Host "could not write $ResultFile : $($_.Exception.Message)" } }
         try { Clear-DESecrets } catch { }
         exit $Code
     }
@@ -103,7 +136,7 @@ if ($Headless) { & {
     # -ProfileFile: a client profile shipped beside the tool (dropship kits), so the signed console tree is never edited
     $baseProfile = $null
     if ($ProfileFile) {
-        try { $baseProfile = ConvertTo-DEHashtable (Get-Content -LiteralPath $ProfileFile -Raw | ConvertFrom-Json) } catch { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message "REFUSED: cannot read profile $ProfileFile ($($_.Exception.Message))" }
+        try { $baseProfile = ConvertTo-DEHashtable (Get-Content -LiteralPath $ProfileFile -Raw -Encoding UTF8 | ConvertFrom-Json) } catch { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message "REFUSED: cannot read profile $ProfileFile ($($_.Exception.Message))" }
         $hits = @(Test-DEProfileHasSecrets -Profile $baseProfile); if ($hits.Count) { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message "REFUSED: the profile file carries secret-looking fields ($($hits -join ', '))" }
         if ($Client -and $Client -ne "$($baseProfile['id'])") { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message "REFUSED: the profile file is for '$($baseProfile['id'])', not '$Client'" }
         $Client = "$($baseProfile['id'])"
@@ -184,11 +217,15 @@ if ($Headless) { & {
 
 # ============================================================== window
 if ($env:OS -ne 'Windows_NT') { Write-Host 'The window needs Windows. Use -Headless on other platforms.'; exit 2 }
+if (-not $SmokeTest -and -not [Environment]::UserInteractive) { Write-Output 'No desktop session (service, SYSTEM or RMM): the window cannot open here. Run with -Headless.'; exit 2 }
 if ($SmokeTest -and -not $DataDir) { $DataDir = Join-Path ([IO.Path]::GetTempPath()) ("de-console-smoke-{0}" -f $PID) }
-if ([Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
+# The window's button handlers are closures that only see global-scope functions: started with '& script.ps1',
+# 'Run with PowerShell' or the ISE, the script runs in a child scope and every button would fail. Relaunch via -File.
+$atGlobalScope = [bool](Get-Variable -Name ConsoleRoot -Scope Global -ErrorAction SilentlyContinue)
+if ([Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA' -or -not $atGlobalScope) {
     $exe = (Get-Process -Id $PID).Path
     # Start-Process joins -ArgumentList without quoting: quote every value that may hold a space (C:\Program Files\...)
-    $q = { param($v) if ("$v" -match '\s' -and "$v" -notmatch '^".*"$') { '"' + $v + '"' } else { "$v" } }
+    $q = { param($v) if ("$v" -match '\s' -and "$v" -notmatch '^".*"$') { '"' + $v + [regex]::Match("$v", '\\*$').Value + '"' } else { "$v" } }
     if ($SmokeTest) {
         $smokeArgs = @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath, '-SmokeTest', '-SmokeClient', $SmokeClient, '-DataDir', $DataDir); if ($SmokeOut) { $smokeArgs += @('-SmokeOut', $SmokeOut) }
         $smokeArgs = @($smokeArgs | ForEach-Object { & $q $_ })
@@ -208,7 +245,7 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, Sys
 $null = Initialize-DEConsole -Root $ConsoleRoot -Mode Audit -DataDir $DataDir
 $settingsPath = Join-Path (Get-DEConsole).Dirs.State 'gui-settings.json'
 $Settings = @{ technician = "$Technician"; client = ''; mode = 'audit'; lastPage = $Page; hubEndpoint = ''; dryRun = $true }
-if (Test-Path -LiteralPath $settingsPath) { try { $loaded = ConvertTo-DEHashtable (Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json); foreach ($k in $loaded.Keys) { $Settings[$k] = $loaded[$k] } } catch { } }
+if (Test-Path -LiteralPath $settingsPath) { try { $loaded = ConvertTo-DEHashtable (Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json); foreach ($k in $loaded.Keys) { $Settings[$k] = $loaded[$k] } } catch { } }
 function Save-GuiSettings { try { $Settings | ConvertTo-Json | Set-Content -LiteralPath $settingsPath -Encoding UTF8 } catch { } }
 if ($Technician) { $Settings.technician = $Technician }
 if (-not $Settings.technician) { $Settings.technician = "$(Get-DEState -Path 'settings.technician')" }
@@ -1095,7 +1132,7 @@ function Build-AiToolkit {
     $log = New-El TextBox @{ Height = 260; IsReadOnly = $true; TextWrapping = 'NoWrap'; VerticalScrollBarVisibility = 'Auto'; HorizontalScrollBarVisibility = 'Auto'; Name = 'AI Toolkit log' }; $log.FontFamily = New-Object System.Windows.Media.FontFamily 'Cascadia Mono, Consolas'
     $S.LogBox = $log
     $packDir = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'DE\msp-ai-kit\digerati-experts'
-    $copy = { param($i) $f = Join-Path $packDir 'chatgpt-custom-instructions.md'; if (-not (Test-Path -LiteralPath $f)) { Set-Status 'Build the packs first.'; return }; $m = [regex]::Matches((Get-Content -LiteralPath $f -Raw), '```text\r?\n([\s\S]*?)\r?\n```'); if ($m.Count -ge 2) { [System.Windows.Clipboard]::SetText($m[$i].Groups[1].Value); Set-Status "ChatGPT block $(@('A','B')[$i]) copied ($($m[$i].Groups[1].Value.Length) chars)" } }.GetNewClosure()
+    $copy = { param($i) $f = Join-Path $packDir 'chatgpt-custom-instructions.md'; if (-not (Test-Path -LiteralPath $f)) { Set-Status 'Build the packs first.'; return }; $m = [regex]::Matches((Get-Content -LiteralPath $f -Raw -Encoding UTF8), '```text\r?\n([\s\S]*?)\r?\n```'); if ($m.Count -ge 2) { [System.Windows.Clipboard]::SetText($m[$i].Groups[1].Value); Set-Status "ChatGPT block $(@('A','B')[$i]) copied ($($m[$i].Groups[1].Value.Length) chars)" } }.GetNewClosure()
     [void]$root.Children.Add((New-Card @(
                 (New-Text 'AI Toolkit' 15 -Bold), (New-Text 'The MSP AI Kit: prompt packs for ChatGPT, Custom GPTs, Claude, Cursor and Copilot, skill install for Claude Code and Codex, and the upstream MSP kits. Runs in the background; the window stays usable.' -Muted -Wrap),
                 (New-Wrap @((New-Button 'Build, install, verify' { & $runLoader 'All' @() }.GetNewClosure() -Primary), (New-Button 'Build packs' { & $runLoader 'Build' @() }.GetNewClosure()), (New-Button 'Install skill' { & $runLoader 'Install' @() }.GetNewClosure()), (New-Button 'Verify' { & $runLoader 'Verify' @() }.GetNewClosure()), (New-Button 'Fetch upstream kits' { & $runLoader 'Upstream' @() }.GetNewClosure()), (New-Button 'Check for update' { & $runLoader 'Update' @('-WhatIf') }.GetNewClosure()), (New-Button 'Clean old logs' { & $runLoader 'Cleanup' @() }.GetNewClosure()))),

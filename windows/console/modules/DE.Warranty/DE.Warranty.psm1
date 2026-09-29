@@ -12,6 +12,7 @@
 #>
 Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'   # Windows PowerShell 5.1 downloads run many times slower with the progress bar
 
 function Get-DEWarrantyCatalog { return (Get-Content -LiteralPath (Join-Path (Get-DEConsole).Root 'catalog\warranty.json') -Raw -Encoding UTF8 | ConvertFrom-Json) }
 function Get-DEWarrantyVendor {
@@ -26,7 +27,7 @@ function Invoke-DEWarrantyWeb {
     try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }
     $h = @{ 'User-Agent' = 'DE-TechTool (Digerati Experts; warranty lookup)' }; foreach ($k in $Headers.Keys) { $h[$k] = $Headers[$k] }
     if ($Raw) { return (Invoke-WebRequest -Uri $Uri -Method $Method -Headers $h -Body $Body -UseBasicParsing -TimeoutSec 30).Content }
-    return (Invoke-RestMethod -Uri $Uri -Method $Method -Headers $h -Body $Body -TimeoutSec 30)
+    return (Invoke-RestMethod -Uri $Uri -Method $Method -Headers $h -Body $Body -TimeoutSec 30 -UseBasicParsing)
 }
 function ConvertTo-DEWarrantyDate { param($Value) if (-not $Value) { return $null }; try { return ([datetime]::Parse("$Value", [Globalization.CultureInfo]::InvariantCulture)).Date } catch { return $null } }
 function New-DEWarrantyResult {

@@ -76,11 +76,12 @@ Describe 'Core helpers' {
     It 'Invoke-DEJsonPost refuses plain HTTP and sends a bearer token and a scrubbed body over HTTPS' {
         { Invoke-DEJsonPost -Uri 'http://hub.example/x' -Body @{ a = 1 } } | Should -Throw
         Set-DESecret -Name 'T_HUB' -Plain 'hub-token-abc'
-        Mock -ModuleName DE.Core Invoke-RestMethod { $global:DETest.Post = @{ Headers = $Headers; Body = $Body; Uri = $Uri }; @{ ok = $true } }
+        Mock -ModuleName DE.Core Invoke-RestMethod { $global:DETest.Post = @{ Headers = $Headers; Body = $(if ($Body -is [byte[]]) { [Text.Encoding]::UTF8.GetString($Body) } else { $Body }); Uri = $Uri; ContentType = $ContentType }; @{ ok = $true } }
         $null = Invoke-DEJsonPost -Uri 'https://hub.example/x' -Body @{ device = 'd1'; token = 'leak-me' } -TokenSecret 'T_HUB'
         $global:DETest.Post.Headers['Authorization'] | Should -Be 'Bearer hub-token-abc'
         $global:DETest.Post.Body | Should -Not -Match 'leak-me'
         $global:DETest.Post.Body | Should -Match 'd1'
+        $global:DETest.Post.ContentType | Should -Match 'charset=utf-8'
         Clear-DESecrets
     }
     It 'Set-DERegistryValue changes nothing under WhatIf; Backup-DERegistryKey and Test-DEIsElevated are safe off Windows' {
@@ -234,7 +235,7 @@ Describe 'JumpCloud API calls' {
         $global:DETest.Calls.Clear()
         Set-DESecret -Name 'JC_API_KEY' -Plain 'jc-api-key-test-0001'
         Mock -ModuleName DE.JumpCloud Invoke-RestMethod {
-            [void]$global:DETest.Calls.Add(@{ Method = "$Method"; Uri = "$Uri"; Headers = $Headers; Body = $Body })
+            [void]$global:DETest.Calls.Add(@{ Method = "$Method"; Uri = "$Uri"; Headers = $Headers; Body = $(if ($Body -is [byte[]]) { [Text.Encoding]::UTF8.GetString($Body) } else { $Body }) })
             switch -Regex ("$Uri") {
                 '/search/systemusers$' { @{ results = @(@{ _id = 'U1'; username = 'sthompson' }) } }
                 '/search/systems$' { @{ results = @(@{ _id = 'S1'; hostname = 'ALAMO-LAP-0231' }) } }

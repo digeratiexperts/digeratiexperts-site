@@ -19,7 +19,7 @@ if (-not $WindowsRoot) { $WindowsRoot = Split-Path -Parent $here }
 $catalog = Join-Path (Join-Path $WindowsRoot 'console') 'catalog'
 $outDir = $(if ($OutDir) { $OutDir } else { Join-Path $WindowsRoot 'playbooks' })
 New-Item -ItemType Directory -Path $outDir -Force | Out-Null
-$cat = Get-Content -LiteralPath (Join-Path $catalog 'bundles.json') -Raw | ConvertFrom-Json
+$cat = Get-Content -LiteralPath (Join-Path $catalog 'bundles.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 $bundles = @(foreach ($t in $cat.proactive.PSObject.Properties) { [pscustomobject]@{ id = $t.Value.bundleId; name = $t.Value.label } }) + @(foreach ($v in @($cat.variants)) { [pscustomobject]@{ id = $v.id; name = $v.label } })
 $solutions = @(foreach ($s in $cat.standaloneSolutions.PSObject.Properties) { [pscustomobject]@{ id = $s.Value.id; name = $s.Value.label } })
 

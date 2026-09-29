@@ -25,7 +25,9 @@ param(
     [string]$WorkDir = (Join-Path $env:TEMP 'DE-WinPE'),
     [string]$AdkRoot = (Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\Assessment and Deployment Kit'),
     [string]$HubUrl,
-    [string]$Technician
+    [string]$Technician,
+    [string[]]$RootCertificate = @(),   # .cer files (e.g. the Hub's root CA): WinPE's root store is minimal
+    [switch]$SecureBoot2023             # boot files signed with the Windows UEFI CA 2023 (MakeWinPEMedia /bootex, ADK 26100.2454+)
 )
 Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
@@ -39,8 +41,12 @@ if ($HubUrl -and $HubUrl -notmatch '^https://') { throw 'The Hub URL must be htt
 if (-not (Test-Path -LiteralPath (Join-Path $AdkRoot 'Windows Preinstallation Environment'))) { throw "Windows PE add-on not found under $AdkRoot. Install the Windows ADK and the Windows PE add-on (learn.microsoft.com/windows-hardware/get-started/adk-install), or pass -AdkRoot." }
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw 'Run this from an elevated PowerShell (DISM needs administrator rights).' }
 if (Test-Path -LiteralPath $WorkDir) { throw "$WorkDir already exists; remove it or pass another -WorkDir (copype needs an empty folder)." }
+foreach ($c in $RootCertificate) { if (-not (Test-Path -LiteralPath $c)) { throw "certificate $c not found" } }
+# Use the ADK's DISM (servicing a newer WinPE with an older host DISM fails).
+$adkDism = Join-Path $AdkRoot 'Deployment Tools\amd64\DISM'
+if (Test-Path -LiteralPath (Join-Path $adkDism 'Dism.psd1')) { Import-Module (Join-Path $adkDism 'Dism.psd1') -Force }
 
-$plan = Get-DERescueBuildPlan -AdkRoot $AdkRoot -WorkDir $WorkDir -WindowsRoot $windowsRoot -IsoPath $IsoPath -UsbDrive $UsbDrive -DriverPath $DriverPath
+$plan = Get-DERescueBuildPlan -AdkRoot $AdkRoot -WorkDir $WorkDir -WindowsRoot $windowsRoot -IsoPath $IsoPath -UsbDrive $UsbDrive -DriverPath $DriverPath -RootCertificate $RootCertificate -SecureBoot2023:$SecureBoot2023
 $mount = Join-Path $WorkDir 'mount'
 $mounted = $false
 try {
@@ -49,7 +55,10 @@ try {
         Write-Host "==> $($s.what)" -ForegroundColor Cyan
         if ($s.ContainsKey('cmd')) { & $s.cmd @($s.args); if ($LASTEXITCODE -ne 0) { throw "$($s.id) failed (exit $LASTEXITCODE)" } }
         elseif ($s.ContainsKey('cmdlet')) { $p = $s.params; & $s.cmdlet @p | Out-Null; if ($s.id -eq 'mount') { $mounted = $true }; if ($s.id -eq 'unmount') { $mounted = $false } }
-        elseif ($s.ContainsKey('copy')) { foreach ($c in $s.copy) { $parent = Split-Path -Parent $c.to; New-Item -ItemType Directory -Path $parent -Force | Out-Null; Copy-Item -LiteralPath $c.from -Destination $c.to -Recurse -Force } ; $cfg = [ordered]@{ technician = $Technician; hubUrl = $HubUrl; builtAt = (Get-Date).ToString('o') }; $cfg | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $mount 'DE\rescue\rescue.config.json') -Encoding UTF8 }
+        elseif ($s.ContainsKey('copy')) {
+            foreach ($c in $s.copy) { $parent = Split-Path -Parent $c.to; New-Item -ItemType Directory -Path $parent -Force | Out-Null; Copy-Item -LiteralPath $c.from -Destination $c.to -Recurse -Force }
+            if ($s.id -eq 'copy-rescue') { $cfg = [ordered]@{ technician = $Technician; hubUrl = $HubUrl; builtAt = (Get-Date).ToString('o') }; [IO.File]::WriteAllText((Join-Path $mount 'DE\rescue\rescue.config.json'), ($cfg | ConvertTo-Json), (New-Object Text.UTF8Encoding $false)) }
+        }
         elseif ($s.ContainsKey('write')) { [IO.File]::WriteAllText($s.write.path, $s.write.text, [Text.Encoding]::ASCII) }
     }
 } finally {

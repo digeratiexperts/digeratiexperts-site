@@ -56,7 +56,7 @@ Import-DEConsoleModules -Root $consoleRoot
 $null = Initialize-DEConsole -Root $consoleRoot -Mode Audit -DataDir (Join-Path ([IO.Path]::GetTempPath()) "de-dropship-build-$PID")
 
 if ($OrderFile) {
-    $order = ConvertTo-DEHashtable (Get-Content -LiteralPath $OrderFile -Raw | ConvertFrom-Json)
+    $order = ConvertTo-DEHashtable (Get-Content -LiteralPath $OrderFile -Raw -Encoding UTF8 | ConvertFrom-Json)
 } else {
     foreach ($req in @('Client', 'OrderId')) { if (-not (Get-Variable -Name $req -ValueOnly)) { throw "-$req is required (or pass -OrderFile)" } }
     if (-not $LocalUserName -and $EndUserName) { $LocalUserName = ConvertTo-DELocalUserName -DisplayOrPrincipal $EndUserName }
@@ -125,7 +125,7 @@ if (-not $AuditOnly) { $argList += @('-Apply', '-Mode', 'dropship') } else { $ar
 $shell = (Get-Process -Id $PID).Path; if ([IO.Path]::GetFileNameWithoutExtension($shell) -notin @('powershell', 'pwsh')) { $shell = 'powershell.exe' }
 & $shell @argList
 $code = $LASTEXITCODE
-$result = $null; if (Test-Path -LiteralPath $resultFile) { try { $result = Get-Content -LiteralPath $resultFile -Raw | ConvertFrom-Json } catch { $result = $null } }
+$result = $null; if (Test-Path -LiteralPath $resultFile) { try { $result = Get-Content -LiteralPath $resultFile -Raw -Encoding UTF8 | ConvertFrom-Json } catch { $result = $null } }
 $overall = $(if ($result) { "$($result.overall)" } else { 'NO RESULT' })
 if ($code -eq 0 -and $overall -notlike 'READY*') { $code = 1 }   # exit 0 without a READY result is never reported as done
 if (-not $result -and $code -eq 0) { $code = 1 }

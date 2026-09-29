@@ -13,6 +13,7 @@
 #>
 Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'   # Windows PowerShell 5.1 downloads run many times slower with the progress bar
 
 function Get-DECommunityCatalog { return (Get-Content -LiteralPath (Join-Path (Get-DEConsole).Root 'catalog\community.json') -Raw -Encoding UTF8 | ConvertFrom-Json) }
 function Get-DECommunityTool {

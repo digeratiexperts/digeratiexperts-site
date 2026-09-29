@@ -211,7 +211,7 @@ function Get-DETierDefaults {
     param([Parameter(Mandatory = $true)][ValidateSet('IT', 'Office', 'Business', 'Enterprise')][string]$Tier, [switch]$Gcch)
     $path = Join-Path (Get-DEConsole).Root 'catalog\bundles.json'
     if (-not (Test-Path -LiteralPath $path)) { throw "DE Tech Tool bundle catalog missing: $path" }
-    $catalog = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+    $catalog = Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json
     $prop = $catalog.proactive.PSObject.Properties[$Tier]
     if (-not $prop) { throw "unknown ProActive tier '$Tier'" }
     $bundle = $prop.Value

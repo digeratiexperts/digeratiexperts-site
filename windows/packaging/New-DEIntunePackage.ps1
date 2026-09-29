@@ -26,7 +26,7 @@ $ErrorActionPreference = 'Stop'
 $here = $(if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path })   # $PSScriptRoot can be empty in param defaults on Windows PowerShell 5.1
 if (-not $Root) { $Root = Split-Path -Parent $here }
 if (-not $OutDir) { $OutDir = Join-Path (Join-Path $here 'out') 'intune' }
-$version = '0.0.0'; $vf = Join-Path (Split-Path -Parent $Root) 'kit.version'; if (Test-Path -LiteralPath $vf) { $version = (Get-Content -LiteralPath $vf -Raw).Trim() }
+$version = '0.0.0'; $vf = Join-Path (Split-Path -Parent $Root) 'kit.version'; if (Test-Path -LiteralPath $vf) { $version = (Get-Content -LiteralPath $vf -Raw -Encoding UTF8).Trim() }
 $src = Join-Path $OutDir 'source'
 if (-not $PSCmdlet.ShouldProcess($OutDir, "stage Intune package $version")) { return }
 if (Test-Path -LiteralPath $src) { Remove-Item -LiteralPath $src -Recurse -Force }
@@ -64,7 +64,7 @@ $detect = @"
 # Intune detection rule for the DE Tech Tool $version. Exit 0 with output = installed.
 `$dir = Join-Path `$env:ProgramFiles 'DE\TechConsole'
 `$v = Join-Path `$dir 'VERSION'
-if ((Test-Path -LiteralPath (Join-Path `$dir 'console\DETechConsole.ps1')) -and (Test-Path -LiteralPath `$v) -and ((Get-Content -LiteralPath `$v -Raw).Trim() -eq '$version')) { Write-Output 'DE Tech Tool $version installed'; exit 0 }
+if ((Test-Path -LiteralPath (Join-Path `$dir 'console\DETechConsole.ps1')) -and (Test-Path -LiteralPath `$v) -and ((Get-Content -LiteralPath `$v -Raw -Encoding UTF8).Trim() -eq '$version')) { Write-Output 'DE Tech Tool $version installed'; exit 0 }
 exit 1
 "@
 Set-Content -LiteralPath (Join-Path $src 'install.cmd') -Value $install -Encoding ASCII

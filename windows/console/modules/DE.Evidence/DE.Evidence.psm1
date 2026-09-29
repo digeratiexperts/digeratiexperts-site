@@ -189,7 +189,7 @@ function Export-DEEvidenceBundle {
     # final secret sweep: refuse to hand over a bundle that still contains a registered secret
     $leak = $false
     foreach ($f in Get-ChildItem -LiteralPath $OutDir -File) {
-        $txt = Get-Content -LiteralPath $f.FullName -Raw -ErrorAction SilentlyContinue
+        $txt = Get-Content -LiteralPath $f.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
         # the value as typed, and as JSON and HTML would escape it
         foreach ($v in $de.Redactions) { if ($v -and $txt) { foreach ($form in @($v, ($v | ConvertTo-Json -Compress).Trim('"'), [System.Net.WebUtility]::HtmlEncode($v))) { if ($form -and $txt.Contains($form)) { $leak = $true } } } }
     }
