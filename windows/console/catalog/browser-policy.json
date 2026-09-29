@@ -1,6 +1,6 @@
 {
-  "_readme": "Browser policy profiles for Chrome and Edge (HKLM machine policy). Values follow the Chromium enterprise policy list. Extension ids here are the public store ids; PABX ids come from the package catalog settings. The Browser Configurator writes these, backs up the previous policy keys for rollback, and verifies by re-reading the registry and (optionally) chrome://policy after a browser restart.",
-  "version": "1.0.0",
+  "_readme": "Browser policy for Chrome, Edge and Brave (HKLM Chromium policy) and Firefox (HKLM Mozilla policy). Profiles hold the settings; 'control' holds the extension catalog: DE services that are always forced in, the approved password managers (one is chosen per client with browser.loginManager), and blocked groups that conflict with DE services. Store ids marked confirmed:false must be checked against the store page before relying on them; the console reports them. The Browser Configurator backs up the previous policy for rollback and verifies by re-reading the registry.",
+  "version": "1.1.0",
   "profiles": {
     "de-browser-policy": {
       "title": "DE standard browser policy",
@@ -16,31 +16,183 @@
         "DefaultBrowserSettingEnabled": 0,
         "AutofillCreditCardEnabled": 0,
         "BackgroundModeEnabled": 0,
-        "PromptForDownloadLocation": 0
+        "PromptForDownloadLocation": 0,
+        "AutofillAddressEnabled": 0
       },
-      "chrome": { "IncognitoModeAvailability": 1, "ChromeCleanupEnabled": 1 },
-      "edge": { "InPrivateModeAvailability": 1, "SmartScreenEnabled": 1, "SmartScreenPuaEnabled": 1, "HideFirstRunExperience": 1, "EdgeShoppingAssistantEnabled": 0, "PersonalizationReportingEnabled": 0 },
+      "chrome": {
+        "IncognitoModeAvailability": 1,
+        "ChromeCleanupEnabled": 1
+      },
+      "edge": {
+        "InPrivateModeAvailability": 1,
+        "SmartScreenEnabled": 1,
+        "SmartScreenPuaEnabled": 1,
+        "HideFirstRunExperience": 1,
+        "EdgeShoppingAssistantEnabled": 0,
+        "PersonalizationReportingEnabled": 0,
+        "PasswordGeneratorEnabled": 0
+      },
       "extensions": {
-        "forceInstall": [
-          { "name": "JumpCloud Go", "chrome": "", "edge": "", "note": "Fill the store ids from JumpCloud's Go extension page before enabling." }
-        ],
-        "allow": [],
-        "block": ["*"],
-        "blockNote": "block '*' plus explicit allow/force lists; the force-install list always wins in Chromium."
+        "mode": "approved-only",
+        "approved": [],
+        "blocked": [],
+        "note": "approved-only blocks every extension except the DE services, the client's password manager and the client's approved list. 'blocklist' mode blocks only the catalog's blocked groups and the client's blocked list."
       },
       "urlBlocklist": [],
       "urlAllowlist": [],
-      "updates": { "chromeUpdatePolicy": 1, "edgeUpdatePolicy": 1 }
+      "updates": {
+        "chromeUpdatePolicy": 1,
+        "edgeUpdatePolicy": 1
+      }
     },
     "de-browser-policy-relaxed": {
       "title": "DE relaxed (co-managed / developer seats)",
-      "common": { "PasswordManagerEnabled": 0, "SafeBrowsingProtectionLevel": 1, "DownloadRestrictions": 0, "RestoreOnStartup": 1 },
-      "chrome": { "IncognitoModeAvailability": 0 },
-      "edge": { "InPrivateModeAvailability": 0, "SmartScreenEnabled": 1 },
-      "extensions": { "forceInstall": [], "allow": [], "block": [] },
+      "common": {
+        "PasswordManagerEnabled": 0,
+        "SafeBrowsingProtectionLevel": 1,
+        "DownloadRestrictions": 0,
+        "RestoreOnStartup": 1
+      },
+      "chrome": {
+        "IncognitoModeAvailability": 0
+      },
+      "edge": {
+        "InPrivateModeAvailability": 0,
+        "SmartScreenEnabled": 1
+      },
+      "extensions": {
+        "mode": "blocklist",
+        "approved": [],
+        "blocked": []
+      },
       "urlBlocklist": [],
       "urlAllowlist": [],
-      "updates": { "chromeUpdatePolicy": 1, "edgeUpdatePolicy": 1 }
+      "updates": {
+        "chromeUpdatePolicy": 1,
+        "edgeUpdatePolicy": 1
+      }
+    }
+  },
+  "control": {
+    "deServices": [
+      {
+        "key": "pabx",
+        "name": "Prisma Browser Extension (PABX)",
+        "why": "DE safe-browsing and data-loss control",
+        "chromeFromPackage": "pabx-policy:pabx_extension_id_chrome",
+        "edgeFromPackage": "pabx-policy:pabx_extension_id_edge",
+        "firefox": "",
+        "confirmed": true
+      },
+      {
+        "key": "jumpcloud-go",
+        "name": "JumpCloud Go",
+        "why": "passwordless sign-in to JumpCloud apps",
+        "chrome": "",
+        "edge": "",
+        "firefox": "",
+        "confirmed": false,
+        "note": "fill the store ids from JumpCloud's Go extension page"
+      }
+    ],
+    "loginManagers": {
+      "keeper": {
+        "name": "Keeper",
+        "chrome": "bfogiafebfohielmmehodmfbbebbbpei",
+        "edge": "lfochlioelphaglamdcakfjemolpichk",
+        "firefox": "KeeperFFStoreExtension@KeeperSecurityInc",
+        "firefoxSlug": "keeper-password-manager",
+        "confirmed": false
+      },
+      "bitwarden": {
+        "name": "Bitwarden",
+        "chrome": "nngceckbapebfimnlniiiahkandclblb",
+        "edge": "jbkfoedolllekgbhcbcoahefnbanhhlh",
+        "firefox": "{446900e4-71c2-419f-a6a7-df9c091e268b}",
+        "firefoxSlug": "bitwarden-password-manager",
+        "confirmed": true
+      },
+      "onepassword": {
+        "name": "1Password",
+        "chrome": "aeblfdkhhhdcdjpifhhbdiojplfjncoa",
+        "edge": "dppgmdbiimibapkepcbdbmkaabgiofem",
+        "firefox": "{d634138d-c276-4fc8-924b-40a0ea21d284}",
+        "firefoxSlug": "1password-x-password-manager",
+        "confirmed": false
+      },
+      "lastpass": {
+        "name": "LastPass",
+        "chrome": "hdokiejnpimakedhajhdlcegeplioahd",
+        "edge": "bbcinlkgjjkejfdpemiealijmmooekmp",
+        "firefox": "support@lastpass.com",
+        "firefoxSlug": "lastpass-password-manager",
+        "confirmed": false
+      },
+      "dashlane": {
+        "name": "Dashlane",
+        "chrome": "fdjamakpfbbddfjaooikfcpapjohcfmg",
+        "edge": "gehmmocbbkpblljhkekmfhjpfbkclbph",
+        "firefox": "jetpack-extension@dashlane.com",
+        "firefoxSlug": "dashlane",
+        "confirmed": false
+      }
+    },
+    "blockedGroups": [
+      {
+        "key": "other-password-managers",
+        "name": "Password managers other than the client's approved one",
+        "why": "two password managers fight over autofill and split the user's vault",
+        "fromLoginManagers": true
+      },
+      {
+        "key": "shopping-injectors",
+        "name": "Coupon and shopping injectors",
+        "why": "they read every page and rewrite links",
+        "items": [
+          {
+            "name": "Honey",
+            "chrome": "bmnlcjabgnpnenekpadlanbbkooimhnj"
+          },
+          {
+            "name": "Capital One Shopping",
+            "chrome": "nenlahapcbofgnanklpelkaejcehkggg"
+          },
+          {
+            "name": "Rakuten",
+            "chrome": "chhjbpecpncaggjpdakmflnfcopglcmi"
+          }
+        ],
+        "confirmed": false
+      },
+      {
+        "key": "proxy-vpn",
+        "name": "Free VPN and proxy extensions",
+        "why": "they route traffic around PABX and the SASE gateway",
+        "items": [
+          {
+            "name": "Hola VPN",
+            "chrome": "gkojfkhlekighikafcpjkiklfbnlmeio"
+          },
+          {
+            "name": "Urban VPN",
+            "chrome": "eppiocemhmnlbhjplcgkofciiegomcon"
+          },
+          {
+            "name": "Touch VPN",
+            "chrome": "bihmplhobchoageeokmgbdihknkjbknd"
+          },
+          {
+            "name": "Browsec",
+            "chrome": "omghfjlpggmjjaagoclmmobgdodcjboh"
+          }
+        ],
+        "confirmed": false
+      }
+    ],
+    "firefox": {
+      "PasswordManagerEnabled": 0,
+      "OfferToSaveLogins": 0,
+      "note": "Firefox reads HKLM\\SOFTWARE\\Policies\\Mozilla\\Firefox; ExtensionSettings is a JSON string"
     }
   }
 }

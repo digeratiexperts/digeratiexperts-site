@@ -891,3 +891,63 @@ Describe 'The job runbook (what to do, in what order, and why it is blocked)' {
     }
 }
 
+Describe 'Browser control: login manager, autofill, approved and blocked extensions' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1')
+        $global:DETest = @{ Dir = Initialize-TestConsole; Alamo = Get-DEClientProfile -Id 'alamo' }
+    }
+    It 'the chosen login manager is forced in, rivals are blocked, built-in managers and autofill are off' {
+        $p = ConvertTo-DEHashtable $global:DETest.Alamo; $p['browser']['loginManager'] = 'bitwarden'
+        $plan = Get-DEBrowserExtensionPlan -ClientProfile $p
+        $plan.loginManager | Should -Be 'Bitwarden'
+        @($plan.browsers['chrome'].force | ForEach-Object { $_.id }) | Should -Contain 'nngceckbapebfimnlniiiahkandclblb'
+        @($plan.browsers['chrome'].block | ForEach-Object { $_.id }) | Should -Contain 'hdokiejnpimakedhajhdlcegeplioahd'   # LastPass
+        @($plan.browsers['chrome'].block | ForEach-Object { $_.id }) | Should -Not -Contain 'nngceckbapebfimnlniiiahkandclblb'
+        $w = Get-DEBrowserDesiredPolicy -ClientProfile $p
+        foreach ($b in @('chrome', 'edge')) { $w[$b]['PasswordManagerEnabled'] | Should -Be 0; $w[$b]['AutofillAddressEnabled'] | Should -Be 0; $w[$b]['AutofillCreditCardEnabled'] | Should -Be 0 }
+        $w.lists.chrome.ExtensionInstallForcelist | Should -Contain 'nngceckbapebfimnlniiiahkandclblb;https://clients2.google.com/service/update2/crx'
+        $w.lists.chrome.ExtensionInstallBlocklist[0] | Should -Be '*'   # approved-only
+        @($w.lists.chrome.ExtensionInstallBlocklist | Where-Object { $_ -match ' ' }).Count | Should -Be 0   # one id per entry
+        $w.lists.chrome.ExtensionInstallAllowlist | Should -Contain 'nngceckbapebfimnlniiiahkandclblb'
+        $f = Get-DEFirefoxDesiredPolicy -ClientProfile $p
+        $f.PasswordManagerEnabled | Should -Be 0
+        $fx = $f.ExtensionSettings | ConvertFrom-Json
+        $fx.'{446900e4-71c2-419f-a6a7-df9c091e268b}'.installation_mode | Should -Be 'force_installed'
+        $fx.'support@lastpass.com'.installation_mode | Should -Be 'blocked'
+    }
+    It 'builtin keeps the browser manager; autofill on keeps autofill; blocklist mode never blocks everything; an unknown manager is refused' {
+        $p = ConvertTo-DEHashtable $global:DETest.Alamo; $p['browser']['loginManager'] = 'builtin'; $p['browser']['autofill'] = 'on'; $p['browser']['extensions']['mode'] = 'blocklist'
+        $w = Get-DEBrowserDesiredPolicy -ClientProfile $p
+        $w.chrome['PasswordManagerEnabled'] | Should -Be 1; $w.chrome['AutofillAddressEnabled'] | Should -Be 1
+        $w.lists.chrome.ExtensionInstallBlocklist | Should -Not -Contain '*'
+        @($w.lists.chrome.ExtensionInstallBlocklist) | Should -Contain 'bfogiafebfohielmmehodmfbbebbbpei'   # every catalog manager is a rival of builtin
+        $p['browser']['loginManager'] = ''; $p['browser']['extensions']['mode'] = 'approved-only'
+        # nothing forced or allowed yet (no manager, PABX ids not filled): '*' is never written, the browser would lose every extension
+        (Get-DEBrowserDesiredPolicy -ClientProfile $p).lists.chrome.ExtensionInstallBlocklist | Should -Not -Contain '*'
+        $p['browser']['loginManager'] = 'notamanager'
+        (Get-DEThrown { Get-DEBrowserExtensionPlan -ClientProfile $p }) | Should -Match 'not in the catalog'
+    }
+    It 'the login manager step asks for a decision until one is chosen, and names missing store ids' {
+        $null = Initialize-DEWorkflow -ClientProfile $global:DETest.Alamo -Mode 'new'
+        $st = Get-DEActionState -Id 'browser.login-manager'
+        $st.Status | Should -Not -Be 'PASS'
+        $st.Detected.missing | Should -Match 'Prisma Browser Extension'
+    }
+    It 'finds installed extensions in every user profile and names the ones policy will remove' {
+        $root = Join-Path $global:DETest.Dir 'Users'
+        foreach ($d in @('suzette\AppData\Local\Google\Chrome\User Data\Default\Extensions\hdokiejnpimakedhajhdlcegeplioahd\4.1_0', 'suzette\AppData\Local\Google\Chrome\User Data\Default\Extensions\nngceckbapebfimnlniiiahkandclblb\2024_0', 'suzette\AppData\Local\Microsoft\Edge\User Data\Profile 1\Extensions\abcdefghijklmnopabcdefghijklmnop\1_0', 'suzette\AppData\Roaming\Mozilla\Firefox\Profiles\x.default\extensions')) { New-Item -ItemType Directory -Force -Path (Join-Path $root $d) | Out-Null }
+        Set-Content -LiteralPath (Join-Path $root 'suzette\AppData\Local\Google\Chrome\User Data\Default\Extensions\hdokiejnpimakedhajhdlcegeplioahd\4.1_0\manifest.json') -Value '{"name":"LastPass"}'
+        Set-Content -LiteralPath (Join-Path $root 'suzette\AppData\Roaming\Mozilla\Firefox\Profiles\x.default\extensions\support@lastpass.com.xpi') -Value 'x'
+        $inst = @(Get-DEInstalledBrowserExtensions -UsersRoot $root)
+        $inst.Count | Should -Be 4
+        ($inst | Where-Object { $_.id -eq 'hdokiejnpimakedhajhdlcegeplioahd' }).name | Should -Be 'LastPass'
+        $p = ConvertTo-DEHashtable $global:DETest.Alamo; $p['browser']['loginManager'] = 'bitwarden'
+        $c = @(Test-DEBrowserExtensionConflicts -ClientProfile $p -Installed $inst)
+        @($c | ForEach-Object { $_.id }) | Should -Contain 'hdokiejnpimakedhajhdlcegeplioahd'
+        @($c | ForEach-Object { $_.id }) | Should -Contain 'support@lastpass.com'
+        @($c | ForEach-Object { $_.id }) | Should -Contain 'abcdefghijklmnopabcdefghijklmnop'   # unapproved in approved-only mode
+        @($c | ForEach-Object { $_.id }) | Should -Not -Contain 'nngceckbapebfimnlniiiahkandclblb'   # the approved manager stays
+        ($c | Where-Object { $_.id -eq 'hdokiejnpimakedhajhdlcegeplioahd' }).reason | Should -Match 'blocked'
+    }
+}
+
