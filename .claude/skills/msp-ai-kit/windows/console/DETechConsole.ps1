@@ -26,7 +26,7 @@
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
-    [ValidateSet('Scan', 'Dashboard', 'Workflow', 'Discovery', 'Identity', 'Security', 'Apps', 'Browser', 'Baseline', 'Branding', 'Network', 'Vendors', 'AiToolkit', 'Evidence', 'Settings')]
+    [ValidateSet('Scan', 'Dashboard', 'Workflow', 'Discovery', 'Identity', 'Security', 'Apps', 'Browser', 'Baseline', 'Branding', 'Network', 'Toolbox', 'Vendors', 'AiToolkit', 'Evidence', 'Settings')]
     [string]$Page = 'Scan',
     [switch]$Resume,
     [switch]$Headless,
@@ -764,7 +764,7 @@ function Build-Scan {
 # ============================================================== pages
 $Pages = [ordered]@{
     Scan = 'Scan & fix'; Dashboard = 'Session & readiness'; Discovery = 'Discovery'; Identity = 'Identity & migration'; Security = 'Security'; Apps = 'Applications'
-    Browser = 'Browser configurator'; Baseline = 'OS baseline'; Branding = 'Branding'; Network = 'Network & site'; Vendors = 'Vendor Admin Center'; AiToolkit = 'AI Toolkit'; Evidence = 'Evidence & Hub'; Settings = 'Settings & secrets'
+    Browser = 'Browser configurator'; Baseline = 'OS baseline'; Branding = 'Branding'; Network = 'Network & site'; Toolbox = 'Toolbox (fix-it scripts)'; Vendors = 'Vendor Admin Center'; AiToolkit = 'AI Toolkit'; Evidence = 'Evidence & Hub'; Settings = 'Settings & secrets'
 }
 $NavButtons = @{}
 foreach ($k in $Pages.Keys) {
@@ -785,7 +785,7 @@ function Show-Page {
     $S.DetailHost = $null
     $sv = New-Object System.Windows.Controls.ScrollViewer; $sv.VerticalScrollBarVisibility = 'Auto'
     $root = New-El StackPanel
-    $needsProfile = $Name -notin @('Dashboard', 'Discovery', 'Vendors', 'AiToolkit', 'Settings')
+    $needsProfile = $Name -notin @('Dashboard', 'Discovery', 'Toolbox', 'Vendors', 'AiToolkit', 'Settings')
     if ($needsProfile -and -not $S.Profile) { [void]$root.Children.Add((New-Card @((New-Text 'Choose a client profile first' 15 -Bold), (New-Text 'Open Dashboard, run discovery, and confirm or pick the client. Actions are built from the client profile.' -Muted -Wrap), (New-Button 'Go to Dashboard' { Show-Page 'Dashboard' } -Primary)))) }
     else {
         switch ($Name) {
@@ -799,6 +799,7 @@ function Show-Page {
             'Baseline' { [void]$root.Children.Add((New-ActionGrid -Modules @('baseline') -Title 'DE Windows baseline')) }
             'Branding' { Build-Branding $root }
             'Network' { [void]$root.Children.Add((New-ActionGrid -Modules @('network', 'maintenance', 'operations') -Title 'Network, maintenance and operations')) ; Build-OpsConfirm $root }
+            'Toolbox' { Build-Toolbox $root }
             'Vendors' { Build-Vendors $root }
             'AiToolkit' { Build-AiToolkit $root }
             'Evidence' { Build-Evidence $root }
@@ -1029,6 +1030,34 @@ function Build-OpsConfirm {
     param($root)
     $mk = { param($label, $check) New-Button $label { if (Confirm-Gui 'Confirm' "$label now?") { Confirm-DEOperationalCheck -Check $check; Show-Page 'Network' } }.GetNewClosure() }
     [void]$root.Children.Add((New-Card @((New-Text 'Technician confirmations' 15 -Bold), (New-Text 'Recorded with time and technician; no credentials are stored.' -Muted), (New-Wrap @((& $mk 'Confirm first backup succeeded' 'operations.backup.firstBackupConfirmedAt'), (& $mk 'Confirm remote support session tested' 'operations.remoteSupport.testedAt'), (& $mk 'Confirm email security in place' 'operations.emailSecurity.confirmedAt'), (& $mk 'Confirm JumpCloud Protect enrolled' 'operations.mfa.jumpcloudProtectAt'), (& $mk 'Confirm Microsoft MFA registered' 'operations.mfa.microsoftAt'))))))
+}
+function Build-Toolbox {
+    <# Proven MSP scripts (catalog\community.json), each pinned to a reviewed commit and hash-checked, run unmodified in their own 64-bit Windows PowerShell with the output kept as evidence. #>
+    param($root)
+    $names = @{ repair = 'Repair'; cleanup = 'Clean up'; 'takeover-removal' = 'Remove the previous MSP''s tools'; hardening = 'Hardening'; check = 'Checks'; setup = 'Setup' }
+    $scripts = @(Get-DECommunityScripts)
+    $live = -not (Get-DEConsole).DryRun
+    [void]$root.Children.Add((New-Card @((New-Text 'Toolbox' 15 -Bold), (New-Text "Proven scripts from other MSPs. Each one is pinned to the commit DE reviewed and checked against its hash before it runs, in its own 64-bit PowerShell; the full output goes to Evidence. $(if ($live) { 'LIVE: Run changes the device.' } else { 'PLAN ONLY: Run shows what would happen; switch to LIVE on Scan & fix to run for real.' })" -Muted -Wrap))))
+    if (-not $scripts.Count) { [void]$root.Children.Add((New-Card @((New-Text 'No toolbox scripts in the catalog.' -Muted)))); return }
+    foreach ($cat in @($scripts | ForEach-Object { $_.category } | Select-Object -Unique)) {
+        $sp = New-El StackPanel
+        [void]$sp.Children.Add((New-El TextBlock @{ Text = $(if ($names[$cat]) { $names[$cat] } else { $cat }); Style = 'Eyebrow'; Margin = '0,0,0,6' }))
+        foreach ($sc in @($scripts | Where-Object { $_.category -eq $cat })) {
+            $row = New-El StackPanel @{ Margin = '0,4,0,8' }
+            $flags = @(); if ($sc.confirm) { $flags += 'asks first' }; if ($sc.reboots) { $flags += 'may restart' }; if ($sc.needsInternet) { $flags += 'needs internet' }
+            [void]$row.Children.Add((New-Text $sc.title -Bold))
+            [void]$row.Children.Add((New-Text "$($sc.notes)" -Muted -Wrap))
+            [void]$row.Children.Add((New-El TextBlock @{ Text = "$($sc.repo) @ $($sc.commit.Substring(0, 7)) · $($sc.path) · $($sc.license)$(if ($flags.Count) { ' · ' + ($flags -join ', ') })"; Style = 'Mono'; TextWrapping = 'Wrap' }))
+            $key = $sc.key; $title = $sc.title; $needsYes = $sc.confirm
+            $run = New-Button $(if ($live) { 'Run' } else { 'Plan' }) {
+                if ($needsYes -and -not (Get-DEConsole).DryRun -and -not (Confirm-Gui -Title $title -Message "$title changes this device in ways that are hard to undo (it may uninstall software or restart). Run it now?")) { return }
+                Start-DEJob -Label $title -Params @{ key = $key; dry = [bool](Get-DEConsole).DryRun } -Work { if ($JobParams.dry) { Invoke-DECommunityScript -Key $JobParams.key -WhatIf } else { Invoke-DECommunityScript -Key $JobParams.key -Force -Confirm:$false } } -OnDone { param($r) $x = @($r | Where-Object { $_ -and $_.PSObject.Properties['result'] }) | Select-Object -Last 1; if ($x) { Set-Status "$($x.key): $($x.result)$(if ($x.PSObject.Properties['log'] -and $x.log) { " (log: $($x.log))" })" } }
+            }.GetNewClosure() -A11y "Run $($sc.title)"
+            [void]$row.Children.Add((New-Wrap @($run)))
+            [void]$sp.Children.Add($row)
+        }
+        [void]$root.Children.Add((New-Card @($sp)))
+    }
 }
 function Build-Vendors {
     param($root)

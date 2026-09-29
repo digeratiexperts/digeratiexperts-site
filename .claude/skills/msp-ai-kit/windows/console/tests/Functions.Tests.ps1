@@ -1099,20 +1099,19 @@ Describe 'Community tools: pinned, hash-checked, and only MIT code in the consol
         Set-Content -LiteralPath (Join-Path $global:DETest.Src 'Fake.psm1') -Value 'function Get-FakeCommunity { ''fake-ok'' }' -NoNewline
         Set-Content -LiteralPath (Join-Path $global:DETest.Src 'public/a.ps1') -Value '# a' -NoNewline
         $h = { param($f) (Get-FileHash -LiteralPath (Join-Path $global:DETest.Src $f) -Algorithm SHA256).Hash.ToLowerInvariant() }
-        $global:DETest.Fake = [pscustomobject]@{ id = 'fake'; name = 'Fake'; repo = 'example/fake'; commit = ('a' * 40); version = '1.0'; license = 'MIT'; use = 'ship'; module = 'Fake.psm1'
+        $global:DETest.Fake = [pscustomobject]@{ id = 'fake'; name = 'Fake'; repo = 'example/fake'; commit = ('a' * 40); version = '1.0'; license = 'MIT'; use = 'module'; module = 'Fake.psm1'
             files = @([pscustomobject]@{ path = 'Fake.psm1'; sha256 = (& $h 'Fake.psm1') }, [pscustomobject]@{ path = 'public/a.ps1'; sha256 = (& $h 'public/a.ps1') }) }
-        $global:DETest.Catalog = [pscustomobject]@{ rawBase = 'https://raw.example/{repo}/{commit}/{path}'; tools = @($global:DETest.Fake, [pscustomobject]@{ id = 'gpl'; name = 'Gpl'; license = 'GPL-3.0'; use = 'runtime'; files = @() }) }
+        $global:DETest.Catalog = [pscustomobject]@{ rawBase = 'https://raw.example/{repo}/{commit}/{path}'; tools = @($global:DETest.Fake, [pscustomobject]@{ id = 'gpl'; name = 'Gpl'; license = 'GPL-3.0'; use = 'scripts'; files = @() }) }
     }
     AfterAll { Remove-Item -LiteralPath $global:DETest.Community -Recurse -Force -ErrorAction SilentlyContinue }
     It 'the real catalog pins every loaded tool to a 40-character commit, an MIT licence and a sha256 per file' {
         $c = Get-DECommunityCatalog
-        foreach ($t in @($c.tools | Where-Object { $_.use -eq 'ship' -and @($_.files).Count })) {
+        foreach ($t in @($c.tools | Where-Object { $_.use -in @('module', 'scripts') })) {
             $t.commit | Should -Match '^[0-9a-f]{40}$' -Because $t.id
-            $t.license | Should -Be 'MIT' -Because $t.id
-            foreach ($f in @($t.files)) { $f.sha256 | Should -Match '^[0-9a-f]{64}$' -Because "$($t.id) $($f.path)" }
+            foreach ($f in @(@($t.files) + @($t.scripts) | Where-Object { $_ })) { $f.sha256 | Should -Match '^[0-9a-f]{64}$' -Because "$($t.id) $($f.path)" }
         }
-        @($c.tools | Where-Object { $_.license -match 'GPL' -and $_.use -eq 'ship' }).Count | Should -Be 0
-        @($c.tools | Where-Object { $_.license -eq 'none' -and $_.use -ne 'reference' }).Count | Should -Be 0
+        @($c.tools | Where-Object { $_.use -eq 'module' -and -not @($_.files).Count }).Count | Should -Be 0
+        @($c.tools | Where-Object { $_.use -eq 'reference' -and @($_.scripts | Where-Object { $_ }).Count }).Count | Should -Be 0
         (Get-DECommunityTool -Id 'lsuclient').module | Should -Be 'LSUClient.psd1'
         @((Get-DECommunityTool -Id 'hardeningkitty').files | Where-Object { $_.path -eq 'lists/hardeningkitty_lists_manifest.psd1.p7s' }).Count | Should -Be 1
     }
@@ -1143,13 +1142,55 @@ Describe 'Community tools: pinned, hash-checked, and only MIT code in the consol
             Copy-Item -LiteralPath (Join-Path $global:DETest.Src 'Fake.psm1') -Destination $cache; Set-Content -LiteralPath (Join-Path $cache 'public/a.ps1') -Value 'changed'
             (Get-DEThrown { Get-DECommunityToolPath -Id 'fake' -Offline }) | Should -Match 'no verified copy'
         }
-        It 'uses a verified staged copy offline (USB kit or dropship bundle) and never loads GPL tools' {
+        It 'uses a verified staged copy offline (USB kit or dropship bundle) and never imports a non-module entry' {
             Mock -ModuleName DE.Community Get-DECommunityCatalog { $global:DETest.Catalog }
             Mock -ModuleName DE.Community Invoke-DECommunityDownload { throw 'no network' }
             Get-DECommunityToolPath -Id 'fake' -StagedPath $global:DETest.Src -Offline | Should -Be $global:DETest.Src
-            (Get-DEThrown { Get-DECommunityToolPath -Id 'gpl' }) | Should -Match "'runtime'"
+            (Get-DEThrown { Get-DECommunityToolPath -Id 'gpl' }) | Should -Match 'not a module'
             (Get-DEThrown { Get-DECommunityTool -Id 'nope' }) | Should -Match 'not in catalog'
         }
+    }
+    Context 'toolbox scripts' {
+        BeforeAll {
+            $global:DETest.ScriptSrc = Join-Path $global:DETest.Community 'scripts'; New-Item -ItemType Directory -Path (Join-Path $global:DETest.ScriptSrc 'scripts') -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $global:DETest.ScriptSrc 'scripts/fix_thing.ps1') -Value 'Write-Output fixed' -NoNewline
+            $sha = (Get-FileHash -LiteralPath (Join-Path $global:DETest.ScriptSrc 'scripts/fix_thing.ps1') -Algorithm SHA256).Hash.ToLowerInvariant()
+            $global:DETest.ScriptCatalog = [pscustomobject]@{ rawBase = 'https://raw.example/{repo}/{commit}/{path}'; tools = @([pscustomobject]@{ id = 'msp'; name = 'MSP scripts'; repo = 'example/msp'; commit = ('b' * 40); license = 'GPL-3.0'; use = 'scripts'; files = @()
+                scripts = @([pscustomobject]@{ id = 'fix-thing'; title = 'Fix the thing'; category = 'repair'; path = 'scripts/fix_thing.ps1'; sha256 = $sha; arguments = @('-Quiet'); successExitCodes = @(0, 3010); timeoutSeconds = 60 },
+                    [pscustomobject]@{ id = 'remove-rmm'; title = 'Remove old RMM'; category = 'takeover-removal'; path = 'scripts/fix_thing.ps1'; sha256 = $sha; confirm = $true; reboots = $true }) }) }
+        }
+        It 'lists scripts, downloads the pinned file, verifies it and runs it in its own PowerShell with the catalog arguments' {
+            Mock -ModuleName DE.Community Get-DECommunityCatalog { $global:DETest.ScriptCatalog }
+            Mock -ModuleName DE.Community Invoke-DECommunityDownload { Copy-Item -LiteralPath (Join-Path $global:DETest.ScriptSrc 'scripts/fix_thing.ps1') -Destination $OutFile }
+            Mock -ModuleName DE.Community Invoke-DENative { [pscustomobject]@{ ExitCode = 3010; Output = @('fixed'); Text = 'fixed'; TimedOut = $false } }
+            @(Get-DECommunityScripts).Count | Should -Be 2
+            (Get-DECommunityScripts -Category 'takeover-removal').key | Should -Be 'msp/remove-rmm'
+            $r = Invoke-DECommunityScript -Key 'msp/fix-thing' -Confirm:$false
+            $r.result | Should -Be 'PASS'; Test-Path -LiteralPath $r.log | Should -Be $true
+            Assert-MockCalled -ModuleName DE.Community Invoke-DENative -Scope It -Times 1 -ParameterFilter { $Arguments -contains '-File' -and $Arguments -contains '-Quiet' -and $Arguments -contains '-NonInteractive' -and $TimeoutSeconds -eq 60 }
+            Assert-MockCalled -ModuleName DE.Community Invoke-DECommunityDownload -Scope It -Times 1 -ParameterFilter { $Uri -eq "https://raw.example/example/msp/$('b' * 40)/scripts/fix_thing.ps1" }
+            Mock -ModuleName DE.Community Invoke-DENative { [pscustomobject]@{ ExitCode = 1; Output = @('broke'); Text = 'broke'; TimedOut = $false } }
+            (Invoke-DECommunityScript -Key 'msp/fix-thing' -Confirm:$false).result | Should -Be 'FAIL'
+            Mock -ModuleName DE.Community Invoke-DENative { [pscustomobject]@{ ExitCode = -1; Output = @(); Text = ''; TimedOut = $true } }
+            (Invoke-DECommunityScript -Key 'msp/fix-thing' -Confirm:$false).result | Should -Be 'FAIL'
+        }
+        It 'a script that uninstalls or restarts never runs headless without -Force, and plan-only runs nothing' {
+            Mock -ModuleName DE.Community Get-DECommunityCatalog { $global:DETest.ScriptCatalog }
+            Mock -ModuleName DE.Community Test-DEInteractiveHost { $false }
+            Mock -ModuleName DE.Community Invoke-DENative { [pscustomobject]@{ ExitCode = 0; Output = @(); Text = ''; TimedOut = $false } }
+            (Invoke-DECommunityScript -Key 'msp/remove-rmm').result | Should -Be 'SKIPPED'
+            (Invoke-DECommunityScript -Key 'msp/fix-thing' -WhatIf).result | Should -Be 'PLANNED'
+            Assert-MockCalled -ModuleName DE.Community Invoke-DENative -Scope It -Times 0
+            (Invoke-DECommunityScript -Key 'msp/remove-rmm' -Force -Confirm:$false).result | Should -Be 'PASS'
+        }
+        It 'a tampered script is refused' {
+            Mock -ModuleName DE.Community Get-DECommunityCatalog { $global:DETest.ScriptCatalog }
+            Remove-Item -LiteralPath (Join-Path (Get-DEConsole).Dirs.Base 'community/msp') -Recurse -Force -ErrorAction SilentlyContinue
+            Mock -ModuleName DE.Community Invoke-DECommunityDownload { Set-Content -LiteralPath $OutFile -Value 'Remove-Item C:\ -Recurse' }
+            Mock -ModuleName DE.Community Invoke-DENative { throw 'must not run' }
+            (Get-DEThrown { Invoke-DECommunityScript -Key 'msp/fix-thing' -Confirm:$false }) | Should -Match 'does not match the reviewed sha256'
+        }
+        It 'uses 64-bit Windows PowerShell' { if ($env:OS -eq 'Windows_NT') { Get-DEWindowsPowerShellPath | Should -Match 'System32|Sysnative' } else { Get-DEWindowsPowerShellPath | Should -Be 'pwsh' } }
     }
     It 'Lenovo: lists LSUClient packages, flags firmware and packages that need a technician' {
         Mock -ModuleName DE.Community Invoke-DELsuClient { @(

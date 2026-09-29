@@ -28,13 +28,14 @@ def main():
         if t['id'] in pins:
             t['commit'] = pins[t['id']]
             changed.append(f"{t['id']}: pinned to {t['commit']}")
-        if not t.get('files'):
+        entries = list(t.get('files') or []) + list(t.get('scripts') or [])
+        if not entries:
             continue
         clone = os.path.join(a.clones, t['repo'].replace('/', '_'))
-        for f in t['files']:
+        for f in entries:
             data = subprocess.check_output(['git', '-C', clone, 'show', f"{t['commit']}:{f['path']}"])
             sha = hashlib.sha256(data).hexdigest()
-            if sha != f['sha256'] or len(data) != f.get('bytes'):
+            if sha != f.get('sha256') or len(data) != f.get('bytes'):
                 changed.append(f"{t['id']}: {f['path']}")
                 f['sha256'], f['bytes'] = sha, len(data)
     for c in changed:
