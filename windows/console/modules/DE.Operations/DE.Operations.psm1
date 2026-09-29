@@ -151,6 +151,7 @@ function Test-DESiteResources {
 
 function Get-DEClockSkew {
     <# Seconds between this PC's clock and an HTTPS server's Date header (Microsoft, then Cloudflare). $null when neither answers. #>
+    try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }   # 5.1 defaults to SSL3/TLS 1.0, and this runs before any other HTTPS call
     foreach ($u in @('https://www.microsoft.com', 'https://www.cloudflare.com')) {
         try {
             $r = Invoke-WebRequest -Uri $u -Method Head -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
@@ -170,7 +171,17 @@ function Sync-DEClock {
     if (-not $svc) { $null = Invoke-DENative -FilePath 'w32tm.exe' -Arguments @('/register'); $svc = Get-Service -Name 'w32time' -ErrorAction SilentlyContinue }
     if ($svc -and $svc.StartType -eq 'Disabled') { Set-Service -Name 'w32time' -StartupType Manual }
     if ($svc -and $svc.Status -ne 'Running') { Start-Service -Name 'w32time' -ErrorAction SilentlyContinue }
-    $r = Invoke-DENative -FilePath 'w32tm.exe' -Arguments @('/resync', '/force') -TimeoutSeconds 60
+    # a standalone PC refuses corrections over MaxPos/MaxNegPhaseCorrection (15 h by default), which is exactly the dead-CMOS
+    # case: lift the limit for this one resync, then put the configured values back
+    $cfg = 'HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Config'; $saved = @{}
+    foreach ($n in 'MaxPosPhaseCorrection', 'MaxNegPhaseCorrection') { $saved[$n] = Get-DERegistryValue -Path $cfg -Name $n; try { Set-ItemProperty -LiteralPath $cfg -Name $n -Value -1 -Type DWord -ErrorAction Stop } catch { $saved.Remove($n) } }
+    try {
+        $null = Invoke-DENative -FilePath 'w32tm.exe' -Arguments @('/config', '/update') -TimeoutSeconds 30
+        $r = Invoke-DENative -FilePath 'w32tm.exe' -Arguments @('/resync', '/force') -TimeoutSeconds 60
+    } finally {
+        foreach ($n in @($saved.Keys)) { if ($null -ne $saved[$n]) { Set-ItemProperty -LiteralPath $cfg -Name $n -Value $saved[$n] -Type DWord -ErrorAction SilentlyContinue } else { Remove-ItemProperty -LiteralPath $cfg -Name $n -ErrorAction SilentlyContinue } }
+        if ($saved.Count) { $null = Invoke-DENative -FilePath 'w32tm.exe' -Arguments @('/config', '/update') -TimeoutSeconds 30 }
+    }
     return "w32tm /resync exit $($r.ExitCode)"
 }
 

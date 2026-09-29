@@ -264,6 +264,8 @@ function Send-DEHubPayload {
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param([Parameter(Mandatory = $true)]$Payload, [string]$Endpoint)
+    # the same scrub as the saved copy and the legacy POST: key names and secret-shaped values never reach the Hub
+    $Payload = Remove-DESecretKeys -Object $Payload
     $de = Get-DEConsole
     $file = Join-Path $de.Dirs.Evidence ("hub-payload-{0}-{1}.json" -f $env:COMPUTERNAME, (Get-Date -Format 'yyyyMMdd-HHmmss'))
     Set-DEJsonFile -Path $file -Object $Payload

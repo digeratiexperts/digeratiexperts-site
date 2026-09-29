@@ -100,7 +100,10 @@ function Get-DEPackageFile {
             if ($PSCmdlet.ShouldProcess($url, "Download to $path")) {
                 New-Item -ItemType Directory -Path $dir -Force | Out-Null
                 try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }
-                Invoke-WebRequest -Uri $url -OutFile $path -UseBasicParsing
+                # a dropped download must not be cached as the package: write .partial, move into place when complete
+                $tmp = "$path.partial"
+                try { Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing; Move-Item -LiteralPath $tmp -Destination $path -Force }
+                finally { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue } }
             } else { return @{ path = $path; trust = [pscustomobject]@{ Ok = $false; Reasons = @('not downloaded (planned)'); Sha256 = ''; Overridden = $false }; planned = $true } }
         }
     } else { throw "unknown source type '$type'" }
@@ -176,7 +179,7 @@ function Invoke-DEPackageUninstall {
     $exe = $null; $argList = @()
     if ((Get-DEPkgProp $src 'type') -eq 'winget') { $exe = Get-DEWingetPath; $argList = @('uninstall', '--id', (Get-DEPkgProp $src 'id'), '--exact', '--silent', '--accept-source-agreements') }
     elseif (-not $apps.Count) { return [pscustomobject]@{ ok = $true; detail = 'not installed' } }
-    elseif ("$($apps[0].uninstall)" -match 'MsiExec\.exe\s*/[IX]\s*(\{[0-9A-Fa-f\-]+\})') { $exe = 'msiexec.exe'; $argList = @('/x', $Matches[1], '/quiet', '/norestart') }
+    elseif ("$($apps[0].uninstall)" -match 'MsiExec(\.exe)?"?\s*/[IX]\s*(\{[0-9A-Fa-f\-]+\})') { $exe = 'msiexec.exe'; $argList = @('/x', $Matches[2], '/quiet', '/norestart') }
     # cmd /s /c "<string>": /s makes cmd strip exactly the outer pair, so the publisher's own quoting inside survives
     elseif ("$($apps[0].quietUninstall)") { $exe = 'cmd.exe'; $argList = @('/s', '/c', ('"' + "$($apps[0].quietUninstall)" + '"')) }
     else { return [pscustomobject]@{ ok = $false; manual = $true; detail = "no silent uninstall is published for $($apps[0].name); remove it from Settings > Apps (DE Tech Tool never guesses installer switches)" } }
@@ -207,7 +210,7 @@ function Get-DEWingetPath {
     $cmd = Get-Command -Name 'winget.exe' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($cmd -and $cmd.Source -notmatch '\\Microsoft\\WindowsApps\\winget\.exe$') { return $cmd.Source }   # a real path, not the alias stub
     $pf = $(if ($env:ProgramW6432) { $env:ProgramW6432 } else { $env:ProgramFiles })
-    $find = { @(Get-ChildItem -Path (Join-Path $pf 'WindowsApps') -Filter 'Microsoft.DesktopAppInstaller_*_x64__8wekyb3d8bbwe' -Directory -ErrorAction SilentlyContinue | Sort-Object { try { [version](($_.Name -split '_')[1]) } catch { [version]'0.0' } } -Descending | ForEach-Object { Join-Path $_.FullName 'winget.exe' } | Where-Object { Test-Path -LiteralPath $_ }) | Select-Object -First 1 }
+    $find = { @(Get-ChildItem -Path (Join-Path $pf 'WindowsApps') -Filter "Microsoft.DesktopAppInstaller_*_$(if ("$env:PROCESSOR_ARCHITEW6432$env:PROCESSOR_ARCHITECTURE" -match 'ARM64') { 'arm64' } else { 'x64' })__8wekyb3d8bbwe" -Directory -ErrorAction SilentlyContinue | Sort-Object { try { [version](($_.Name -split '_')[1]) } catch { [version]'0.0' } } -Descending | ForEach-Object { Join-Path $_.FullName 'winget.exe' } | Where-Object { Test-Path -LiteralPath $_ }) | Select-Object -First 1 }
     $p = & $find
     if (-not $p -and $cmd) { return $cmd.Source }
     if (-not $p) {

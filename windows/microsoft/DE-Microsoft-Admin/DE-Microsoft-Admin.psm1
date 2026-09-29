@@ -229,7 +229,7 @@ function Test-DEEntraBitLockerEscrow {
     $want = "$KeyProtectorId".Trim('{', '}').ToLowerInvariant()
     # @(...) outside: $() would unwrap one match into a [pscustomobject], which has no .Count on Windows PowerShell 5.1
     # (the escrowed key would read as missing)
-    $match = @(if ($want) { $rows | Where-Object { $_.keyId.ToLowerInvariant() -eq $want } } else { $rows })
+    $match = @(if ($want) { $rows | Where-Object { $_.keyId.ToLowerInvariant() -eq $want } } else { $rows | Where-Object { "$($_.volumeType)" -in @('1', 'operatingSystemVolume') } })   # a data or USB drive key is not the OS key
     $ok = $match.Count -gt 0
     $msg = $(if (-not $rows.Count) { 'no recovery key for this device in Entra ID' } elseif ($want -and -not $ok) { "Entra holds $($rows.Count) key(s) but not protector $KeyProtectorId" } else { "escrowed: $(@($match | ForEach-Object { $_.keyId }) -join ', ')" })
     return (New-DEResult -Operation 'Test-DEEntraBitLockerEscrow' -Status $(if ($ok) { 'Succeeded' } else { 'Failed' }) -Target $DeviceId -Message $msg -Data ([pscustomobject]@{ deviceId = $DeviceId; escrowed = $ok; keys = $rows }))
@@ -297,7 +297,7 @@ function New-DEAzureResourceGroup {
     param([Parameter(Mandatory = $true)][string]$Name, [Parameter(Mandatory = $true)][string]$Location, [hashtable]$Tags = @{}, [switch]$DryRun)
     Assert-DECommand 'Get-AzResourceGroup' 'Az.Resources'
     $e = Get-AzResourceGroup -Name $Name -ErrorAction SilentlyContinue
-    if ($e) { return (New-DEResult -Operation 'New-DEAzureResourceGroup' -Status $(if ($e.Location -eq $Location) { 'Succeeded' } else { 'Refused' }) -Target $Name -Message $(if ($e.Location -eq $Location) { 'already exists; nothing changed' } else { "exists in $($e.Location), not $Location" })) }
+    if ($e) { return (New-DEResult -Operation 'New-DEAzureResourceGroup' -Status $(if (($e.Location -replace '\s') -eq ($Location -replace '\s')) { 'Succeeded' } else { 'Refused' }) -Target $Name -Message $(if (($e.Location -replace '\s') -eq ($Location -replace '\s')) { 'already exists; nothing changed' } else { "exists in $($e.Location), not $Location" })) }
     if ($DryRun -or -not $PSCmdlet.ShouldProcess($Name, "create resource group in $Location")) { return (New-DEResult -Operation 'New-DEAzureResourceGroup' -Status DryRun -Target $Name -Message 'no change applied' -Data ([pscustomobject]@{ name = $Name; location = $Location; tags = $Tags })) }
     $r = New-AzResourceGroup -Name $Name -Location $Location -Tag $Tags -ErrorAction Stop
     return (New-DEResult -Operation 'New-DEAzureResourceGroup' -Target $Name -Message "created in $Location" -Data ($r | Select-Object ResourceGroupName, Location, ProvisioningState))
@@ -353,6 +353,10 @@ function Remove-DEAutopilotDevice {
     if ($exact.Count -ne 1) { return (New-DEResult -Operation 'Remove-DEAutopilotDevice' -Status Refused -Target $Serial -Message "$($exact.Count) Autopilot record(s) with exactly this serial; nothing removed") }
     $ap = $exact[0]
     $md = @(Invoke-DEGraphRequest -Uri ('deviceManagement/managedDevices?$filter=serialNumber eq {0}&$select=id,deviceName,userPrincipalName' -f (ConvertTo-DEODataLiteral $Serial)) -All)
+    # a generic serial ('Default string', 'System Serial Number') is shared by unrelated devices: only the Intune record this
+    # Autopilot identity links to is this device, and several without a link are refused rather than all deleted
+    if ("$($ap.managedDeviceId)" -and "$($ap.managedDeviceId)" -ne '00000000-0000-0000-0000-000000000000') { $md = @($md | Where-Object { "$($_.id)" -eq "$($ap.managedDeviceId)" }) }
+    if ($md.Count -gt 1) { return (New-DEResult -Operation 'Remove-DEAutopilotDevice' -Status Refused -Target $Serial -Message "$($md.Count) Intune records share serial $Serial and Autopilot links none of them; nothing removed" -Data $md) }
     if ($md.Count -and -not $RemoveIntuneRecord) { return (New-DEResult -Operation 'Remove-DEAutopilotDevice' -Status Refused -Target $Serial -Message "Intune still manages this device as '$($md[0].deviceName)'; pass -RemoveIntuneRecord to delete that record first" -Data $md) }
     $plan = [pscustomobject]@{ serial = $Serial; autopilotId = $ap.id; intuneRecords = @($md | ForEach-Object { $_.id }) }
     if ($DryRun -or -not $PSCmdlet.ShouldProcess($Serial, "remove from Autopilot$(if ($md.Count) { " after deleting $($md.Count) Intune record(s)" })")) { return (New-DEResult -Operation 'Remove-DEAutopilotDevice' -Status DryRun -Target $Serial -Message 'no change applied' -Data $plan) }
@@ -378,16 +382,37 @@ function ConvertTo-DEJsonText {
     foreach ($ch in $Text.ToCharArray()) { $c = [int]$ch; switch ($c) { 34 { [void]$sb.Append('\"') } 92 { [void]$sb.Append('\\') } 8 { [void]$sb.Append('\b') } 12 { [void]$sb.Append('\f') } 10 { [void]$sb.Append('\n') } 13 { [void]$sb.Append('\r') } 9 { [void]$sb.Append('\t') } default { if ($c -lt 32) { [void]$sb.Append(('\u{0:x4}' -f $c)) } else { [void]$sb.Append($ch) } } } }
     [void]$sb.Append('"'); return $sb.ToString()
 }
+function ConvertTo-DEJsNumber {
+    <# A number exactly as JavaScript writes it (JSON.stringify / Number.prototype.toString): shortest round-trip
+       digits, plain notation from 1e-7 to 1e21, exponent 'e+N' / 'e-N' outside it, NaN and Infinity as null. #>
+    param([Parameter(Mandatory = $true)][double]$Value)
+    if ([double]::IsNaN($Value) -or [double]::IsInfinity($Value)) { return 'null' }
+    if ($Value -eq 0) { return '0' }
+    $inv = [Globalization.CultureInfo]::InvariantCulture
+    $s = $Value.ToString('R', $inv)
+    # .NET Framework 'R' can give 17 digits where 16 round-trip (JavaScript prints the shortest)
+    $g16 = $Value.ToString('G16', $inv); if ([double]::Parse($g16, $inv) -eq $Value -and $g16.Length -lt $s.Length) { $s = $g16 }
+    $neg = ''; if ($s.StartsWith('-')) { $neg = '-'; $s = $s.Substring(1) }
+    $exp = 0; $i = $s.IndexOfAny([char[]]'Ee'); if ($i -ge 0) { $exp = [int]::Parse($s.Substring($i + 1), $inv); $s = $s.Substring(0, $i) }
+    $dot = $s.IndexOf('.'); if ($dot -ge 0) { $exp += $dot; $s = $s.Remove($dot, 1) } else { $exp += $s.Length }
+    $lead = $s.Length - $s.TrimStart('0').Length; $dg = $s.Trim('0'); $n = $exp - $lead; $k = $dg.Length
+    if ($k -le $n -and $n -le 21) { return $neg + $dg + ('0' * ($n - $k)) }
+    if (0 -lt $n -and $n -le 21) { return $neg + $dg.Substring(0, $n) + '.' + $dg.Substring($n) }
+    if (-6 -lt $n -and $n -le 0) { return $neg + '0.' + ('0' * (-$n)) + $dg }
+    $e = $n - 1; return $neg + $dg.Substring(0, 1) + $(if ($k -gt 1) { '.' + $dg.Substring(1) }) + 'e' + $(if ($e -ge 0) { "+$e" } else { "$e" })
+}
 function ConvertTo-DEJobCanonical {
     <# Sorted-key compact JSON of the job without its signature: the bytes both sides sign. #>
     param([Parameter(Mandatory = $true)][AllowNull()]$Object)
     if ($null -eq $Object) { return 'null' }
     if ($Object -is [bool]) { if ($Object) { return 'true' } else { return 'false' } }
-    if ($Object -is [int] -or $Object -is [long] -or $Object -is [double] -or $Object -is [decimal]) { return ([decimal]$Object).ToString([Globalization.CultureInfo]::InvariantCulture) }
+    if ($Object -is [int] -or $Object -is [long] -or $Object -is [double] -or $Object -is [decimal] -or $Object -is [single] -or $Object -is [int16] -or $Object -is [byte]) { return (ConvertTo-DEJsNumber ([double]$Object)) }
     if ($Object -is [datetime]) { return (ConvertTo-DEJsonText $Object.ToUniversalTime().ToString('o')) }   # PowerShell 7.0-7.4 parsed a date: sign it as ISO 8601
     if ($Object -is [string]) { return (ConvertTo-DEJsonText $Object) }
-    if ($Object -is [System.Collections.IDictionary]) { $keys = @($Object.Keys | ForEach-Object { "$_" } | Where-Object { $_ -ne 'signature' } | Sort-Object -CaseSensitive); return '{' + (($keys | ForEach-Object { (ConvertTo-DEJsonText $_) + ':' + (ConvertTo-DEJobCanonical $Object[$_]) }) -join ',') + '}' }
-    if ($Object -is [pscustomobject]) { $keys = @($Object.PSObject.Properties | ForEach-Object { $_.Name } | Where-Object { $_ -ne 'signature' } | Sort-Object -CaseSensitive); return '{' + (($keys | ForEach-Object { (ConvertTo-DEJsonText $_) + ':' + (ConvertTo-DEJobCanonical $Object.$_) }) -join ',') + '}' }
+    # keys in ordinal (UTF-16 code unit) order, as JavaScript's sort() does; Sort-Object is culture-aware and puts 'Owner' after 'environment'
+    if ($Object -is [System.Collections.IDictionary]) { [string[]]$keys = @($Object.Keys | ForEach-Object { "$_" } | Where-Object { $_ -ne 'signature' }); [Array]::Sort($keys, [StringComparer]::Ordinal); return '{' + (($keys | ForEach-Object { (ConvertTo-DEJsonText $_) + ':' + (ConvertTo-DEJobCanonical $Object[$_]) }) -join ',') + '}' }
+    # PSCustomObject, not [pscustomobject] (= PSObject): a nested array element arrives PSObject-wrapped
+    if ($Object -is [System.Management.Automation.PSCustomObject]) { [string[]]$keys = @($Object.PSObject.Properties | ForEach-Object { $_.Name } | Where-Object { $_ -ne 'signature' }); [Array]::Sort($keys, [StringComparer]::Ordinal); return '{' + (($keys | ForEach-Object { (ConvertTo-DEJsonText $_) + ':' + (ConvertTo-DEJobCanonical $Object.$_) }) -join ',') + '}' }
     if ($Object -is [System.Collections.IEnumerable]) { return '[' + ((@($Object) | ForEach-Object { ConvertTo-DEJobCanonical $_ }) -join ',') + ']' }
     return (ConvertTo-DEJsonText "$Object")
 }

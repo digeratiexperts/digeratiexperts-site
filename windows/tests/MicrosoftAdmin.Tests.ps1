@@ -98,6 +98,24 @@ Describe 'DE Microsoft Admin' {
         $global:MsT.Last.Uri | Should -Not -Match 'select=key'
         (Test-DEEntraBitLockerEscrow -DeviceId 'dev-1' -KeyProtectorId '{00000000-0000-0000-0000-000000000000}').status | Should -Be 'Failed'
     }
+    It 'a generic serial never deletes unrelated Intune devices, and a data-drive key is not the OS key' {
+        Mock -ModuleName DE-Microsoft-Admin Get-MgContext { @{ TenantId = 't1' } }
+        Mock -ModuleName DE-Microsoft-Admin Start-Sleep { }
+        $global:MsT.Deleted = @()
+        Mock -ModuleName DE-Microsoft-Admin Invoke-MgGraphRequest {
+            if ($Method -eq 'DELETE') { $global:MsT.Deleted += , $Uri; return $null }
+            if ($Uri -like '*managedDevices*') { return @{ value = @(@{ id = 'md1'; deviceName = 'A' }, @{ id = 'md2'; deviceName = 'B' }, @{ id = 'md3'; deviceName = 'C' }) } }
+            @{ value = @(@{ id = 'a1'; serialNumber = 'Default string'; managedDeviceId = '00000000-0000-0000-0000-000000000000' }) }
+        }
+        (Remove-DEAutopilotDevice -Serial 'Default string' -RemoveIntuneRecord -Confirm:$false).status | Should -Be 'Refused'
+        $global:MsT.Deleted.Count | Should -Be 0
+        Mock -ModuleName DE-Microsoft-Admin Invoke-MgGraphRequest { @{ value = @(@{ id = 'k1'; createdDateTime = '2026-01-01T00:00:00Z'; volumeType = 'fixedDataVolume' }) } }
+        (Test-DEEntraBitLockerEscrow -DeviceId 'dev-1').status | Should -Be 'Failed'
+    }
+    It 'job canonical JSON orders keys by code unit and keeps nested arrays, like a Node signer' {
+        ConvertTo-DEJobCanonical ([ordered]@{ environment = 1; Owner = 2; a_b = 3; aB = 4 }) | Should -Be '{"Owner":2,"aB":4,"a_b":3,"environment":1}'
+        ConvertTo-DEJobCanonical ('{"p":[[1,2]],"n":0.00001}' | ConvertFrom-Json) | Should -Be '{"n":0.00001,"p":[[1,2]]}'
+    }
     It 'Autopilot profiles come from Graph beta (they are not in v1.0)' {
         Mock -ModuleName DE-Microsoft-Admin Get-MgContext { @{ TenantId = 't1' } }
         Mock -ModuleName DE-Microsoft-Admin Invoke-MgGraphRequest { $global:MsT.Last = $Uri; @{ value = @() } }
