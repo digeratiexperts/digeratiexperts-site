@@ -192,6 +192,72 @@
       ]
     },
     {
+      "id": "migration",
+      "title": "Email migration: Gmail to Microsoft 365 (MIGRATION-STANDARD.md)",
+      "items": [
+        {
+          "title": "Connect for a migration",
+          "command": "Import-Module \"{root}\\microsoft\\DE-Microsoft-Admin\\DE-Microsoft-Admin.psd1\"; Connect-DEMicrosoft -TenantId alamo-industries.com -Scenario Read, Users, Migration; Connect-DEExchange -UserPrincipalName jrpetro@alamo-industries.com",
+          "note": "Graph plus Exchange Online; contacts and calendars for other users need the app-only worker.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Start the project and map a mailbox",
+          "command": "New-DEMigrationProject -ClientName 'Alamo Industries' -TargetDomain alamo-industries.com -ProjectId alamo-mail; Add-DEMigrationUser -ProjectId alamo-mail -SourceAddress helen.x@gmail.com -DestinationAddress helen@alamo-industries.com -Devices HelenU, equip.alamo",
+          "note": "The domain must be verified in the tenant; the destination must be a licensed user mailbox.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Shared mailbox with Full Access and Send As",
+          "command": "Set-DEMigrationSharedMailbox -ProjectId alamo-mail -Address office@alamo-industries.com -DisplayName Office -Members norma@alamo-industries.com, helen@alamo-industries.com, suzette@alamo-industries.com, mike@alamo-industries.com",
+          "note": "Creates it if missing, grants each member, blocks its own sign-in, then proves it.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Gmail IMAP preflight",
+          "command": "Test-DEGmailImapAccess -Credential (Get-Credential helen.x@gmail.com) -ProjectId alamo-mail",
+          "note": "Use the Gmail app password; it is only held in memory. Records folders, counts and size.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Pilot, confirm, then the rest",
+          "command": "New-DEMigrationBatch -ProjectId alamo-mail -Type Pilot -Credential (Get-Credential suzette.x@gmail.com); Get-DEMigrationStatus -ProjectId alamo-mail; Confirm-DEMigrationPilot -ProjectId alamo-mail -Technician jrpetro -Note 'checked in Outlook'",
+          "note": "Production batches are refused until a pilot finished cleanly and was confirmed.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Contacts and calendar from the Google exports",
+          "command": "Import-DEMigrationContacts -ProjectId alamo-mail -SourceAddress helen.x@gmail.com -Path .\\contacts.csv; Import-DEMigrationCalendar -ProjectId alamo-mail -SourceAddress helen.x@gmail.com -Path .\\helen.ics",
+          "note": "Duplicates are skipped; nobody is invited; a rerun adds nothing twice.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Find Gmail left on this PC",
+          "command": "Import-Module \"{root}\\microsoft\\DE-Microsoft-Admin\\DE-Microsoft-Admin.psd1\"; Get-DEMailClientInventory -ProjectId alamo-mail",
+          "note": "Run as the PC's user: Outlook profiles, Credential Manager, Thunderbird, scheduled scripts.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "DNS, final delta, verification",
+          "command": "Test-DEMigrationDns -ProjectId alamo-mail -Server 1.1.1.1; Complete-DEMigrationBatch -ProjectId alamo-mail -BatchName <batch>; Test-DEMigrationMailFlow -ProjectId alamo-mail; Test-DEMigrationMfa -ProjectId alamo-mail",
+          "note": "The final delta is refused until MX points to Microsoft 365.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Explain a bounce",
+          "command": "Invoke-DEBounceDiagnostic -ProjectId alamo-mail -Path .\\bounce.eml -MessageTrace",
+          "note": "Forward, retrying client, bounce of a bounce or new message; names the device and the fix.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Sign-off, close and the Hub record",
+          "command": "New-DEMigrationSignoff -ProjectId alamo-mail -ApprovedBy 'Mike Daniels' -Decision Approved; Close-DEMigrationProject -ProjectId alamo-mail; Export-DEMigrationRecord -ProjectId alamo-mail -Path .\\alamo-mail-record.json",
+          "note": "Approved needs every check passed; closing removes the batches and the credentials Exchange stored.",
+          "shell": "PowerShell"
+        }
+      ]
+    },
+    {
       "id": "windows",
       "title": "Windows commands for takeovers",
       "items": [
