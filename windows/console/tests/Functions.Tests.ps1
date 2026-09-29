@@ -646,7 +646,13 @@ Describe 'Fixes from the function-by-function review' {
         $res.overall | Should -Not -Be 'ERROR' -Because "$($res.message)"
         $zip = ($res.bundle -replace ' \(sha256 .*$', '')
         Test-Path -LiteralPath $zip | Should -Be $true
-        foreach ($f in @('report-client.html', 'report-internal.html', 'manifest.sha256')) { Test-Path -LiteralPath (Join-Path ($zip -replace '\.zip$', '') $f) | Should -Be $true }
+        $folder = $zip -replace '\.zip$', ''
+        foreach ($f in @('report-client.html', 'report-internal.html', 'manifest.sha256')) { Test-Path -LiteralPath (Join-Path $folder $f) | Should -Be $true }
+        # every manifest line is the file's real sha256
+        foreach ($line in @(Get-Content -LiteralPath (Join-Path $folder 'manifest.sha256'))) {
+            $hash, $name = $line -split '  ', 2
+            $hash | Should -Be (Get-FileHash -LiteralPath (Join-Path $folder $name) -Algorithm SHA256).Hash.ToLowerInvariant()
+        }
     }
     It 'headless: an unexpected error still leaves through RESULT with an ERROR result file' {
         $rf = Join-Path $global:DETest.Dir 'result-error.json'
