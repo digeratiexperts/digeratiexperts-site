@@ -356,8 +356,8 @@ itself, never to a third-party lookup service, so client serial numbers stay bet
 - **Dell:** looked up through the TechDirect warranty API. Enter `DELL_API_KEY` and `DELL_API_SECRET`
   as runtime secrets; without them you get Dell's check page.
 - **Lenovo:** looked up from Lenovo's public support site. No key is needed.
-- **HP:** HP's warranty API needs an approved key and its endpoints are not filled in yet. Until they
-  are, you get HP's check page.
+- **HP:** HP's warranty API is open only to approved HP partners, so HP uses its check page like the
+  makers below.
 - **Other makers:** Surface, Apple, Acer, ASUS, Dynabook, Samsung, Panasonic, Framework, MSI, Getac and
   Gigabyte open the maker's check page. The technician records the end date on the Scan & fix page, and
   the tool stores who recorded it.

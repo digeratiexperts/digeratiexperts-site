@@ -122,11 +122,6 @@ function Get-DEWarranty {
                 if (-not @($ents | Where-Object { $_.end }).Count) { $result = & $manual 'Dell returned no entitlements for this service tag.'; break }
                 $result = New-DEWarrantyResult -Serial $Serial -Manufacturer $Manufacturer -Vendor 'dell' -Source 'dell-techdirect' -Entitlements $ents -CheckUrl $check -Detail "$(@($resp)[0].productLineDescription)"
             }
-            'hp-api' {
-                if (-not $v.tokenUrl -or -not $v.queryUrl) { $result = & $manual 'HP warranty API endpoints are not configured yet (catalog\warranty.json).'; break }
-                if (-not ((Test-DESecret -Name 'HP_WARRANTY_API_KEY') -and (Test-DESecret -Name 'HP_WARRANTY_API_SECRET'))) { $result = & $manual 'No HP warranty API key this session.'; break }
-                $result = & $manual 'HP API lookups are not implemented until the endpoints are confirmed.'
-            }
             default { $result = & $manual "$(if ($v) { "$($v.name) has no public warranty API." } else { "No warranty source for '$Manufacturer'." })" }
         }
     } catch { $result = & $manual "Lookup failed: $($_.Exception.Message)." }
