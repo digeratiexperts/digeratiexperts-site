@@ -43,6 +43,7 @@ Both surfaces:
 - Family icons use one electric IconWell. The 13 per-family icon hues are retired (§16.4, R6); do not reintroduce them.
 - Colour comes from theme tokens. Door 2 CSS lives in `client/src/styles/store-builder.css` (the Store chunk), pinned by `door2Tokens.test.ts`; error inks derive from `--destructive`. Accent-derived variables are declared on `:root, [data-accent]`, never `:root` alone (a `:root`-only declaration resolves to the default magenta under the electric canvas); portalled Door 2 surfaces carry `data-accent="electric"`.
 - No category pills, vendor marks, product media or catalog colours on Door 2 (`door2Leakage.test.ts`).
+- The one sanctioned electric field is `StorePageAtmosphere` (0.44 on `/store`, 0.28 on the family and workspace pages, none on contact and confirmation), as the source of truth §8 keeps it; it is not a wash on components.
 
 ### Staff warehouse (`/internal/warehouse`, `/internal/warehouse/*`)
 

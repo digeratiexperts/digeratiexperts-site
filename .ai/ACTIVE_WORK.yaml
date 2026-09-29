@@ -119,7 +119,10 @@ claims:
       truth §16 approved ("All approved, continue"); the PR 3 chrome and the
       PR 0 /book copy build inside PR 267 with the files above. Stood off, held
       by draft PR 229 (DE Desk launcher and modal): client/src/components/
-      SiteBottomBar.tsx and client/src/components/ZohoASAPWidget.tsx. Also closes the warehouse quote-flow defects in
+      SiteBottomBar.tsx and client/src/components/ZohoASAPWidget.tsx. Overlaps
+      recorded in PR 267 and the source of truth §15: the four Door 2 pages with
+      the completion-program lane (frozen PRs 219/220); the colour lock with
+      draft PR 217 (disjoint hunks); docs/STORE-WAREHOUSE.md with PR 149. Also closes the warehouse quote-flow defects in
       issues 239, 240, 257 (re-scoped: the GET exists; its payload is now a
       client-safe projection), 235 and 258, and the public store's lead-loss
       defects (lead event without contact fields; non-durable submit reported

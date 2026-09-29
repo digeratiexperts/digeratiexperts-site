@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T05:13:33.151Z",
+  "generatedAt": "2026-09-29T04:28:40.481Z",
   "base": "http://127.0.0.1:5000",
   "viewports": {
     "390": {
@@ -26,7 +26,7 @@
         "footerAssessment": 0,
         "magentaInMain": 0,
         "overflow": false,
-        "viewports": 8.93
+        "viewports": 8.07
       },
       "contactStep": {
         "strip": 0,
@@ -41,18 +41,18 @@
         "footerAssessment": 0,
         "magentaInMain": 1,
         "overflow": false,
-        "reference": "DE-E57VBP",
+        "reference": "DE-VY0JNT",
         "band": 1,
-        "bookHref": "/book?ref=DE-E57VBP",
+        "bookHref": "/book?ref=DE-VY0JNT",
         "axe": []
       },
       "book": {
-        "strip": 1,
+        "strip": 0,
         "footerBack": 0,
         "footerAssessment": 1,
         "magentaInMain": 1,
         "overflow": false,
-        "referenceLine": "Reference DE-E57VBP. Mention it when you book so DE has your solution in front of them.",
+        "referenceLine": "Reference DE-VY0JNT. Mention it when you book.",
         "freeInMain": false,
         "priceInMain": true,
         "axe": []
@@ -83,63 +83,6 @@
         "footerAssessment": 0,
         "magentaInMain": 0,
         "overflow": false,
-        "viewports": 5.32
-      },
-      "contactStep": {
-        "strip": 0,
-        "footerBack": 1,
-        "footerAssessment": 0,
-        "magentaInMain": 1,
-        "overflow": false
-      },
-      "submitted": {
-        "strip": 0,
-        "footerBack": 1,
-        "footerAssessment": 0,
-        "magentaInMain": 1,
-        "overflow": false,
-        "reference": "DE-1C8JGZ",
-        "band": 1,
-        "bookHref": "/book?ref=DE-1C8JGZ",
-        "axe": []
-      },
-      "book": {
-        "strip": 1,
-        "footerBack": 0,
-        "footerAssessment": 1,
-        "magentaInMain": 1,
-        "overflow": false,
-        "referenceLine": "Reference DE-1C8JGZ. Mention it when you book so DE has your solution in front of them.",
-        "freeInMain": false,
-        "priceInMain": true,
-        "axe": []
-      },
-      "bookBadRef": 0
-    },
-    "1440": {
-      "store": {
-        "strip": 0,
-        "footerBack": 1,
-        "footerAssessment": 0,
-        "magentaInMain": 1,
-        "overflow": false,
-        "h1Top": 233,
-        "viewports": 5.34,
-        "axe": []
-      },
-      "contactPage": {
-        "strip": 1,
-        "footerBack": 0,
-        "footerAssessment": 1,
-        "magentaInMain": 1,
-        "overflow": false
-      },
-      "workspace": {
-        "strip": 0,
-        "footerBack": 1,
-        "footerAssessment": 0,
-        "magentaInMain": 1,
-        "overflow": false,
         "viewports": 5.81
       },
       "contactStep": {
@@ -155,18 +98,75 @@
         "footerAssessment": 0,
         "magentaInMain": 1,
         "overflow": false,
-        "reference": "DE-Z03YYK",
+        "reference": "DE-189M70",
         "band": 1,
-        "bookHref": "/book?ref=DE-Z03YYK",
+        "bookHref": "/book?ref=DE-189M70",
         "axe": []
       },
       "book": {
-        "strip": 1,
+        "strip": 0,
         "footerBack": 0,
         "footerAssessment": 1,
         "magentaInMain": 1,
         "overflow": false,
-        "referenceLine": "Reference DE-Z03YYK. Mention it when you book so DE has your solution in front of them.",
+        "referenceLine": "Reference DE-189M70. Mention it when you book.",
+        "freeInMain": false,
+        "priceInMain": true,
+        "axe": []
+      },
+      "bookBadRef": 0
+    },
+    "1440": {
+      "store": {
+        "strip": 0,
+        "footerBack": 1,
+        "footerAssessment": 0,
+        "magentaInMain": 1,
+        "overflow": false,
+        "h1Top": 221,
+        "viewports": 5.33,
+        "axe": []
+      },
+      "contactPage": {
+        "strip": 1,
+        "footerBack": 0,
+        "footerAssessment": 1,
+        "magentaInMain": 1,
+        "overflow": false
+      },
+      "workspace": {
+        "strip": 0,
+        "footerBack": 1,
+        "footerAssessment": 0,
+        "magentaInMain": 1,
+        "overflow": false,
+        "viewports": 5.24
+      },
+      "contactStep": {
+        "strip": 0,
+        "footerBack": 1,
+        "footerAssessment": 0,
+        "magentaInMain": 1,
+        "overflow": false
+      },
+      "submitted": {
+        "strip": 0,
+        "footerBack": 1,
+        "footerAssessment": 0,
+        "magentaInMain": 1,
+        "overflow": false,
+        "reference": "DE-VKG9WE",
+        "band": 1,
+        "bookHref": "/book?ref=DE-VKG9WE",
+        "axe": []
+      },
+      "book": {
+        "strip": 0,
+        "footerBack": 0,
+        "footerAssessment": 1,
+        "magentaInMain": 1,
+        "overflow": false,
+        "referenceLine": "Reference DE-VKG9WE. Mention it when you book.",
         "freeInMain": false,
         "priceInMain": true,
         "axe": []

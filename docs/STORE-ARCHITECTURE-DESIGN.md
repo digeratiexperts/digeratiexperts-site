@@ -105,7 +105,7 @@ Classifications: **Public solution** · **Client marketplace** · **Internal war
 | `ProductDetail.tsx` | Legacy / warehouse | Public SKU PDP. |
 | `ManagedStore.tsx` | Door 1 ancestor | Keep for Door 1; strip unverified claims only with Joe approval + source. |
 | `CoManagedStore.tsx` | Internal warehouse leaked | Relocate later. |
-| `ShoppingCart.tsx` (“Your Solution” 3-pane) | Legacy cart / Internal + thin cart | SKU cart. **Do not** use for Door 2 composed solutions. Name collision: existing drawer is already “Your Solution.” Door 2 workspace should be **Solution Request** to stay truthful. |
+| `ShoppingCart.tsx` (“Your Solution” 3-pane) | Legacy cart / Internal + thin cart | SKU cart. **Do not** use for Door 2 composed solutions. Name collision: existing drawer is already “Your Solution.” Door 2 workspace should be **Solution Request** to stay truthful. *(Superseded 2026-09-28 by item 8's resolution: Door 2 is “Your Solution”; the staff drawer is “Warehouse cart”.)* |
 | `CoverageScorePanel.tsx` + `computeCoverageScore` | Internal warehouse — **experimental heuristic** | See §7. |
 | `ConfigureProductDrawer.tsx` | Warehouse / Pay Now | Qty/config for SKUs. |
 | `StoreAssessmentPanel.tsx` | Reusable / Door 1–2 later | Assessment CTA. Must not auto-add paid assessment to a cart. |
@@ -417,7 +417,7 @@ Avoid redirect loops (`/solutions/proactive-ecosystem-packages` already redirect
 
 ### Door 2 workspace (new object)
 
-Name: **Solution Request** (recommended). Do not call it Cart unless payment is available.
+Name: **Solution Request** (recommended). Do not call it Cart unless payment is available. *(Superseded 2026-09-28: “Your Solution”, see item 8.)*
 
 Holds: family id, delivery model, enhancement refs, org fields, eligibility answers, assessment status, quote/request status, saved flag, next action.
 
@@ -564,7 +564,7 @@ No other open store, portal, cart, checkout, or TechSales website PRs.
 ### Risks
 
 - **Public bundle leak** remains until warehouse is gated (later). Phase 1 must not worsen it; Door 2 must ship without importing the catalog.
-- **Name collision:** existing cart is “Your Solution.” Door 2 should use **Solution Request**.
+- **Name collision:** existing cart is “Your Solution.” Door 2 should use **Solution Request**. *(Superseded 2026-09-28: Door 2 keeps “Your Solution”; the staff drawer is renamed “Warehouse cart”, see item 8.)*
 - **Guided email-for-recs** will still exist on `/store` until destaged — dual experiences.
 - **Unverified ManagedStore claims** remain until Joe approves change (do not silently delete).
 - **Staff identity** undefined → cannot honestly ship Door 4.
