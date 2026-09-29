@@ -802,9 +802,7 @@ Describe 'Leaving Microsoft and backing up BitLocker before JumpCloud owns the d
         (Test-DEBitLockerBackupGate -Offline).Status | Should -Be 'BLOCKED'
         Set-DEStateValue -Path 'identity.bitlocker.entraBackup' -Value @{ protectorIds = @('{AAA}'); at = 'now' }
         $g = Test-DEBitLockerBackupGate -Offline; $g.Status | Should -Be 'WARN'; $g.Detail | Should -Match 'Entra ID only'
-        & (Get-Module DE.Identity) { $script:LeaveMicrosoft = $false }
-        (Test-DEBitLockerBackupGate -Offline).Status | Should -Be 'PASS'
-        & (Get-Module DE.Identity) { $script:LeaveMicrosoft = $true }
+        # keep-joined (Entra copy is enough only while the device is Entra joined): 'fail-closed refusals' context below
         Set-DEBitLockerExpectedProtector -ProtectorId '{AAA}' -Location 'entra' -Technician 'tester' -Confirm:$false
         (Test-DEBitLockerBackupGate -Offline).Status | Should -Not -Be 'PASS'
         Set-DEBitLockerExpectedProtector -ProtectorId '{AAA}' -Location 'hudu' -Technician 'tester' -Confirm:$false
