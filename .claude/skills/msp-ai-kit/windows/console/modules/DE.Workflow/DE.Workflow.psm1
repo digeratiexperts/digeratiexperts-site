@@ -25,7 +25,7 @@ function Get-DEModes { return $script:ModeActions }
 
 function Import-DEConsoleModules {
     param([Parameter(Mandatory = $true)][string]$Root)
-    foreach ($m in @('DE.Core', 'DE.Discovery', 'DE.Profiles', 'DE.Planning', 'DE.Vendors', 'DE.Apps', 'DE.JumpCloud', 'DE.Identity', 'DE.Security', 'DE.Configure', 'DE.Operations', 'DE.Warranty', 'DE.Evidence')) {
+    foreach ($m in @('DE.Core', 'DE.Discovery', 'DE.Profiles', 'DE.Planning', 'DE.Vendors', 'DE.Apps', 'DE.JumpCloud', 'DE.Identity', 'DE.Security', 'DE.Configure', 'DE.Operations', 'DE.Warranty', 'DE.Community', 'DE.Evidence')) {
         Import-Module (Join-Path $Root "modules\$m\$m.psm1") -Force -Global -DisableNameChecking
     }
 }
@@ -40,6 +40,7 @@ function Initialize-DEWorkflow {
     Register-DEIdentityGates
     Register-DEOperationsActions -ClientProfile $ClientProfile
     Register-DEWarrantyActions -ClientProfile $ClientProfile
+    Register-DECommunityActions -ClientProfile $ClientProfile
     Register-DEIdentityActions -ClientProfile $ClientProfile
     Register-DEJumpCloudActions -ClientProfile $ClientProfile
     Register-DESecurityActions -ClientProfile $ClientProfile

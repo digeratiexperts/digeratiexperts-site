@@ -1089,3 +1089,142 @@ Describe 'Warranty: when does it end, and where did the answer come from' {
     }
 }
 
+Describe 'Community tools: pinned, hash-checked, and only MIT code in the console' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1')
+        $global:DETest = @{ Dir = Initialize-TestConsole }
+        $global:DETest.Community = Join-Path ([IO.Path]::GetTempPath()) ("de-community-" + [guid]::NewGuid().ToString('N'))
+        # A fake tool with two files; its catalog entry pins their real sha256.
+        $global:DETest.Src = Join-Path $global:DETest.Community 'src'; New-Item -ItemType Directory -Path (Join-Path $global:DETest.Src 'public') -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $global:DETest.Src 'Fake.psm1') -Value 'function Get-FakeCommunity { ''fake-ok'' }' -NoNewline
+        Set-Content -LiteralPath (Join-Path $global:DETest.Src 'public/a.ps1') -Value '# a' -NoNewline
+        $h = { param($f) (Get-FileHash -LiteralPath (Join-Path $global:DETest.Src $f) -Algorithm SHA256).Hash.ToLowerInvariant() }
+        $global:DETest.Fake = [pscustomobject]@{ id = 'fake'; name = 'Fake'; repo = 'example/fake'; commit = ('a' * 40); version = '1.0'; license = 'MIT'; use = 'ship'; module = 'Fake.psm1'
+            files = @([pscustomobject]@{ path = 'Fake.psm1'; sha256 = (& $h 'Fake.psm1') }, [pscustomobject]@{ path = 'public/a.ps1'; sha256 = (& $h 'public/a.ps1') }) }
+        $global:DETest.Catalog = [pscustomobject]@{ rawBase = 'https://raw.example/{repo}/{commit}/{path}'; tools = @($global:DETest.Fake, [pscustomobject]@{ id = 'gpl'; name = 'Gpl'; license = 'GPL-3.0'; use = 'runtime'; files = @() }) }
+    }
+    AfterAll { Remove-Item -LiteralPath $global:DETest.Community -Recurse -Force -ErrorAction SilentlyContinue }
+    It 'the real catalog pins every loaded tool to a 40-character commit, an MIT licence and a sha256 per file' {
+        $c = Get-DECommunityCatalog
+        foreach ($t in @($c.tools | Where-Object { $_.use -eq 'ship' -and @($_.files).Count })) {
+            $t.commit | Should -Match '^[0-9a-f]{40}$' -Because $t.id
+            $t.license | Should -Be 'MIT' -Because $t.id
+            foreach ($f in @($t.files)) { $f.sha256 | Should -Match '^[0-9a-f]{64}$' -Because "$($t.id) $($f.path)" }
+        }
+        @($c.tools | Where-Object { $_.license -match 'GPL' -and $_.use -eq 'ship' }).Count | Should -Be 0
+        @($c.tools | Where-Object { $_.license -eq 'none' -and $_.use -ne 'reference' }).Count | Should -Be 0
+        (Get-DECommunityTool -Id 'lsuclient').module | Should -Be 'LSUClient.psd1'
+        @((Get-DECommunityTool -Id 'hardeningkitty').files | Where-Object { $_.path -eq 'lists/hardeningkitty_lists_manifest.psd1.p7s' }).Count | Should -Be 1
+    }
+    Context 'a fake pinned tool' {
+        It 'downloads each file at the pinned commit, verifies it, caches it, and loads it' {
+            Mock -ModuleName DE.Community Get-DECommunityCatalog { $global:DETest.Catalog }
+            Mock -ModuleName DE.Community Invoke-DECommunityDownload { $rel = $Uri -replace '^https://raw.example/example/fake/a{40}/', ''; Copy-Item -LiteralPath (Join-Path $global:DETest.Src $rel) -Destination $OutFile }
+            $p = Get-DECommunityToolPath -Id 'fake'
+            $p | Should -Match 'community[\\/]fake[\\/]a{40}$'
+            Assert-MockCalled -ModuleName DE.Community Invoke-DECommunityDownload -Times 1 -ParameterFilter { $Uri -eq "https://raw.example/example/fake/$('a' * 40)/public/a.ps1" }
+            (Test-DECommunityToolFiles -Tool $global:DETest.Fake -Path $p).ok | Should -Be $true
+            # Second call uses the verified cache: no more downloads.
+            Get-DECommunityToolPath -Id 'fake' | Should -Be $p
+            Assert-MockCalled -ModuleName DE.Community Invoke-DECommunityDownload -Times 2 -Exactly
+            $m = Import-DECommunityTool -Id 'fake'; $m.Name | Should -Be 'Fake'
+            Get-FakeCommunity | Should -Be 'fake-ok'
+            Remove-Module Fake -Force -ErrorAction SilentlyContinue
+        }
+        It 'refuses a download that does not match the pin and leaves nothing half-written' {
+            Mock -ModuleName DE.Community Get-DECommunityCatalog { $global:DETest.Catalog }
+            Remove-Item -LiteralPath (Join-Path (Get-DEConsole).Dirs.Base 'community') -Recurse -Force -ErrorAction SilentlyContinue
+            Mock -ModuleName DE.Community Invoke-DECommunityDownload { Set-Content -LiteralPath $OutFile -Value 'tampered' -NoNewline }
+            (Get-DEThrown { Get-DECommunityToolPath -Id 'fake' }) | Should -Match 'does not match the reviewed sha256'
+            Test-Path -LiteralPath (Join-Path (Get-DEConsole).Dirs.Base "community/fake/$('a' * 40)") | Should -Be $false
+            Test-Path -LiteralPath (Join-Path (Get-DEConsole).Dirs.Base "community/fake/$('a' * 40).download") | Should -Be $false
+            # A cached copy that was changed after download is not used either.
+            $cache = Join-Path (Get-DEConsole).Dirs.Base "community/fake/$('a' * 40)"; New-Item -ItemType Directory -Path (Join-Path $cache 'public') -Force | Out-Null
+            Copy-Item -LiteralPath (Join-Path $global:DETest.Src 'Fake.psm1') -Destination $cache; Set-Content -LiteralPath (Join-Path $cache 'public/a.ps1') -Value 'changed'
+            (Get-DEThrown { Get-DECommunityToolPath -Id 'fake' -Offline }) | Should -Match 'no verified copy'
+        }
+        It 'uses a verified staged copy offline (USB kit or dropship bundle) and never loads GPL tools' {
+            Mock -ModuleName DE.Community Get-DECommunityCatalog { $global:DETest.Catalog }
+            Mock -ModuleName DE.Community Invoke-DECommunityDownload { throw 'no network' }
+            Get-DECommunityToolPath -Id 'fake' -StagedPath $global:DETest.Src -Offline | Should -Be $global:DETest.Src
+            (Get-DEThrown { Get-DECommunityToolPath -Id 'gpl' }) | Should -Match "'runtime'"
+            (Get-DEThrown { Get-DECommunityTool -Id 'nope' }) | Should -Match 'not in catalog'
+        }
+    }
+    It 'Lenovo: lists LSUClient packages, flags firmware and packages that need a technician' {
+        Mock -ModuleName DE.Community Invoke-DELsuClient { @(
+            [pscustomobject]@{ ID = 'n1'; Title = 'Intel Graphics Driver'; Type = 'Driver'; Category = 'Display'; Severity = 'Recommended'; Version = '31.0'; Installer = [pscustomobject]@{ Unattended = $true } },
+            [pscustomobject]@{ ID = 'b1'; Title = 'BIOS Update'; Type = 'BIOS'; Category = 'BIOS'; Severity = 'Critical'; Version = '1.40'; Installer = [pscustomobject]@{ Unattended = $true } },
+            [pscustomobject]@{ ID = 'm1'; Title = 'Dock Firmware'; Type = 'Firmware'; Category = 'Dock'; Severity = 'Recommended'; Version = '2.0'; Installer = [pscustomobject]@{ Unattended = $false } }) } -ParameterFilter { $Operation -eq 'Get' }
+        $u = @(Get-DELenovoUpdates)
+        $u.Count | Should -Be 3
+        @($u | Where-Object { $_.firmware }).Count | Should -Be 2
+        ($u | Where-Object { $_.id -eq 'm1' }).unattended | Should -Be $false
+    }
+    It 'Lenovo: BIOS suspends BitLocker, a shutdown is requested, and a failed package fails the step' {
+        Mock -ModuleName DE.Operations Get-DEOemTool { @{ manufacturer = 'LENOVO'; lenovo = $null; applicable = 'lenovo' } }
+        Mock -ModuleName DE.Operations Get-DELenovoUpdates { @(
+            [pscustomobject]@{ id = 'n1'; title = 'Graphics'; type = 'Driver'; firmware = $false; unattended = $true; package = 'p1' },
+            [pscustomobject]@{ id = 'b1'; title = 'BIOS'; type = 'BIOS'; firmware = $true; unattended = $true; package = 'p2' },
+            [pscustomobject]@{ id = 'm1'; title = 'Dock'; type = 'Firmware'; firmware = $true; unattended = $false; package = 'p3' }) }
+        Mock -ModuleName DE.Operations Get-DEBitLockerState { @{ osProtectionOn = $true } }
+        Mock -ModuleName DE.Operations Suspend-DEBitLockerForFirmware { }
+        Mock -ModuleName DE.Operations Request-DEReboot { }
+        Mock -ModuleName DE.Community Invoke-DELsuClient { @([pscustomobject]@{ Title = 'Graphics'; Success = $true; PendingAction = 'NONE' }, [pscustomobject]@{ Title = 'BIOS'; Success = $true; PendingAction = 'SHUTDOWN' }) } -ParameterFilter { $Operation -eq 'Install' }
+        Invoke-DEOemUpdate -IncludeBios -WhatIf | Should -Be 'planned'
+        Assert-MockCalled -ModuleName DE.Operations Suspend-DEBitLockerForFirmware -Times 0
+        $r = Invoke-DEOemUpdate -IncludeBios -Confirm:$false
+        $r | Should -Match 'installed 2'; $r | Should -Match 'install by hand: Dock'
+        Assert-MockCalled -ModuleName DE.Community Invoke-DELsuClient -Times 1 -ParameterFilter { $Operation -eq 'Install' -and @($Packages).Count -eq 2 }
+        Assert-MockCalled -ModuleName DE.Operations Suspend-DEBitLockerForFirmware -Times 1
+        Assert-MockCalled -ModuleName DE.Operations Request-DEReboot -Times 1 -ParameterFilter { $Reason -match 'shutdown' }
+        # Without -IncludeBios only the driver goes, and nothing suspends BitLocker.
+        Mock -ModuleName DE.Community Invoke-DELsuClient { @([pscustomobject]@{ Title = 'Graphics'; Success = $false; FailureReason = 'INSTALLER_EXITCODE'; ExitCode = 1603; PendingAction = 'NONE' }) } -ParameterFilter { $Operation -eq 'Install' }
+        (Get-DEThrown { Invoke-DEOemUpdate -Confirm:$false }) | Should -Match 'Lenovo: 1 package\(s\) failed: Graphics \(INSTALLER_EXITCODE\)'
+        Assert-MockCalled -ModuleName DE.Operations Suspend-DEBitLockerForFirmware -Times 1 -Exactly
+    }
+    It 'Lenovo scan: up to date, waiting, or unknown when the check fails (never a quiet green)' {
+        Mock -ModuleName DE.Operations Get-DEOemTool { @{ manufacturer = 'LENOVO'; applicable = 'lenovo' } }
+        Mock -ModuleName DE.Operations Get-DELenovoUpdates { @() }
+        (Invoke-DEOemScan).current | Should -Be $true
+        Mock -ModuleName DE.Operations Get-DELenovoUpdates { @([pscustomobject]@{ title = 'BIOS'; type = 'BIOS'; firmware = $true; unattended = $true }) }
+        $s = Invoke-DEOemScan; $s.current | Should -Be $false; $s.count | Should -Be 1; $s.tool | Should -Be 'lsuclient'
+        Mock -ModuleName DE.Operations Get-DELenovoUpdates { throw 'download.lenovo.com unreachable' }
+        $s = Invoke-DEOemScan; $s.current | Should -BeNullOrEmpty; $s.output | Should -Match 'unreachable'
+    }
+    It 'HP: HP Image Assistant exit codes decide, and an unknown code fails' {
+        Mock -ModuleName DE.Operations Get-DEOemTool { @{ manufacturer = 'HP'; hp = 'C:\HPIA\HPImageAssistant.exe'; applicable = 'hp' } }
+        Mock -ModuleName DE.Operations Invoke-DENative { [pscustomobject]@{ ExitCode = 256; Text = ''; Output = @() } }
+        (Invoke-DEOemScan).current | Should -Be $true
+        Mock -ModuleName DE.Operations Get-DEBitLockerState { @{ osProtectionOn = $false } }
+        Mock -ModuleName DE.Operations Request-DEReboot { }
+        Mock -ModuleName DE.Operations Invoke-DENative { [pscustomobject]@{ ExitCode = 3010; Text = ''; Output = @() } }
+        Invoke-DEOemUpdate -Confirm:$false | Should -Match 'exit 3010'
+        Assert-MockCalled -ModuleName DE.Operations Invoke-DENative -Times 1 -ParameterFilter { $Arguments -contains '/Category:Drivers,Software,Accessories' }
+        Assert-MockCalled -ModuleName DE.Operations Request-DEReboot -Times 1
+        Mock -ModuleName DE.Operations Invoke-DENative { [pscustomobject]@{ ExitCode = 3020; Text = ''; Output = @() } }
+        (Get-DEThrown { Invoke-DEOemUpdate -Confirm:$false }) | Should -Match '3020'
+        Mock -ModuleName DE.Operations Get-DEOemTool { @{ manufacturer = 'HP'; hp = $null; applicable = 'hp' } }
+        (Get-DEThrown { Invoke-DEOemUpdate -Confirm:$false }) | Should -Match 'HP Image Assistant is not installed'
+    }
+    It 'CIS audit: picks the benchmark by Windows version or profile, and summarises the report' {
+        Mock -ModuleName DE.Community Get-DEDeviceInventory { @{ osBuild = '19045.4000' } }
+        (Get-DECisBenchmark).key | Should -Be 'cis-win10-22h2'
+        Mock -ModuleName DE.Community Get-DEDeviceInventory { @{ osBuild = '26100.2000' } }
+        (Get-DECisBenchmark).key | Should -Be 'cis-win11-24h2'
+        (Get-DECisBenchmark -ClientProfile @{ baseline = @{ cisBenchmark = 'msft-win11-25h2' } }).machine | Should -Match 'msft_security_baseline_windows_11_25h2_machine'
+        (Get-DEThrown { Get-DECisBenchmark -Key 'nope' }) | Should -Match 'unknown benchmark'
+        $csv = Join-Path $global:DETest.Community 'r.csv'
+        "ID,Category,Name,Severity,Result,Recommended`n1,A,One,Passed,1,1`n2,A,Two,High,0,1`n3,B,Three,Medium,0,1`n4,B,Four,Passed,1,1" | Set-Content -LiteralPath $csv
+        $s = ConvertFrom-DEHardeningKittyReport -Path $csv
+        $s.total | Should -Be 4; $s.passed | Should -Be 2; $s.high | Should -Be 1; $s.percentPassed | Should -Be 50; $s.highFindings | Should -Be @('2 Two')
+        Invoke-DECisAudit -WhatIf | Should -Be 'planned'
+    }
+    It 'the CIS audit step is registered, placed in the runbook, and not green until audited' {
+        @(Initialize-DEWorkflow -ClientProfile (Get-DEClientProfile -Id 'alamo') -Mode 'takeover') | Should -Contain 'baseline.cis-audit'
+        (@((Get-DERunbook -Mode 'takeover').stages | Where-Object { $_.id -eq 'configure' })[0].steps | ForEach-Object { $_.id }) | Should -Contain 'baseline.cis-audit'
+        Set-DEStateValue -Path 'baseline.cisAudit' -Value $null
+        $d = & (Get-DEAction -Id 'baseline.cis-audit').Detect
+        $d.audited | Should -Be $false
+    }
+}

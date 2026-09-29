@@ -33,7 +33,9 @@ if (-not $Root) { $Root = Split-Path -Parent $here }
 
 $scriptExt = @('.ps1', '.psm1', '.psd1')
 $shipExt = @('.ps1', '.psm1', '.psd1', '.json', '.cmd', '.ttf', '.txt', '.md', '.xaml')
-$skipDirs = @('tests', 'packaging\out', 'packaging/out')
+# community\ holds pinned third-party tools (LSUClient, HardeningKitty): DE does not sign other people's code, and each
+# file is checked against its sha256 in console\catalog\community.json (itself covered here) every time it is used.
+$skipDirs = @('tests', 'packaging\out', 'packaging/out', 'community\', 'community/')
 
 function Get-ShippedFile {
     Get-ChildItem -LiteralPath $Root -Recurse -File | Where-Object {

@@ -49,22 +49,73 @@ function Get-DEOemTool {
     $lsu = @("${env:ProgramFiles(x86)}\Lenovo\System Update\tvsu.exe") | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -First 1
     return @{ manufacturer = $mfr; dell = $dcu; hp = $hpia; lenovo = $lsu; applicable = $(if ($mfr -match 'Dell') { 'dell' } elseif ($mfr -match 'HP|Hewlett') { 'hp' } elseif ($mfr -match 'Lenovo') { 'lenovo' } else { 'none' }) }
 }
-function Invoke-DEOemScan { $t = Get-DEOemTool; if ($t.applicable -eq 'dell' -and $t.dell) { $r = Invoke-DENative -FilePath $t.dell -Arguments @('/scan', '-silent'); return @{ tool = 'dcu'; exitCode = $r.ExitCode; updatesAvailable = ($r.ExitCode -eq 0 -and $r.Text -match 'available'); output = ($r.Output | Select-Object -Last 15) } }; return @{ tool = $t.applicable; exitCode = $null; updatesAvailable = $null; output = @('no supported OEM tool installed') } }
+function Invoke-DEOemScan {
+    <# What the OEM tool says this machine needs. current: $true up to date, $false updates waiting, $null could not tell. #>
+    $t = Get-DEOemTool
+    if ($t.applicable -eq 'dell' -and $t.dell) { $r = Invoke-DENative -FilePath $t.dell -Arguments @('/scan', '-silent'); return @{ tool = 'dcu'; exitCode = $r.ExitCode; current = ($r.ExitCode -eq 500); updatesAvailable = ($r.ExitCode -eq 0 -and $r.Text -match 'available'); output = ($r.Output | Select-Object -Last 15) } }
+    if ($t.applicable -eq 'lenovo') {
+        # LSUClient (MIT, pinned in catalog\community.json) reads Lenovo's own update catalog; Lenovo System Update is not needed.
+        try { $u = @(Get-DELenovoUpdates) } catch { return @{ tool = 'lsuclient'; exitCode = $null; current = $null; updatesAvailable = $null; output = @("Lenovo update check failed: $($_.Exception.Message)") } }
+        return @{ tool = 'lsuclient'; exitCode = 0; current = ($u.Count -eq 0); updatesAvailable = ($u.Count -gt 0); count = $u.Count; firmware = @($u | Where-Object { $_.firmware }).Count; output = @($u | ForEach-Object { "$($_.type): $($_.title)$(if (-not $_.unattended) { ' (needs a technician)' })" }) }
+    }
+    if ($t.applicable -eq 'hp' -and $t.hp) {
+        # HP Image Assistant exit codes (HP's HPIA user guide): 0 done / recommendations found, 256 no recommendations, 3010 restart needed, 3020 an install failed, 4096 platform not supported.
+        $report = Join-Path (Get-DEConsole).Dirs.Logs 'hpia-analyze'
+        $r = Invoke-DENative -FilePath $t.hp -Arguments @('/Operation:Analyze', '/Action:List', '/Category:All', '/Selection:All', '/Silent', "/ReportFolder:$report")
+        return @{ tool = 'hpia'; exitCode = $r.ExitCode; current = $(if ($r.ExitCode -eq 256) { $true } elseif ($r.ExitCode -eq 0) { $false } else { $null }); updatesAvailable = ($r.ExitCode -eq 0); output = @("HPIA analyze exit $($r.ExitCode)") }
+    }
+    if ($t.applicable -eq 'dell') { return @{ tool = 'dcu'; exitCode = $null; current = $false; updatesAvailable = $null; output = @('Dell Command | Update is not installed') } }
+    return @{ tool = $t.applicable; exitCode = $null; current = $null; updatesAvailable = $null; output = @('no supported OEM tool installed') }
+}
 function Invoke-DEOemUpdate {
-    <# Applies OEM updates; suspends BitLocker for one restart when BIOS/firmware may be included, then records that protection must be verified On after the restart. #>
+    <#
+        Applies OEM updates (Dell Command | Update, Lenovo through LSUClient, HP Image Assistant). Suspends BitLocker for one
+        restart when BIOS/firmware is included, then records that protection must be verified On after the restart.
+        Any package that fails throws after the restart request is recorded: a partial update is never reported as done.
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param([switch]$IncludeBios)
     $t = Get-DEOemTool
-    if ($t.applicable -ne 'dell' -or -not $t.dell) { throw "no automated OEM update path for $($t.manufacturer); use the vendor tool manually" }
-    $types = 'driver,application,utility'; if ($IncludeBios) { $types = 'bios,firmware,driver,application,utility' }
-    if (-not $PSCmdlet.ShouldProcess('Dell Command | Update', "applyUpdates ($types)")) { return 'planned' }
-    if ($IncludeBios -and (Get-DEBitLockerState).osProtectionOn) { Suspend-DEBitLockerForFirmware -RebootCount 1; Set-DEStateValue -Path 'maintenance.bitlockerResumeRequired' -Value $true }
-    $r = Invoke-DENative -FilePath $t.dell -Arguments @('/applyUpdates', "-updateType=$types", '-reboot=disable', '-silent')
-    # DCU exit codes: 0 ok, 1 reboot required, 5 reboot pending, 500 no updates
-    if ($r.ExitCode -in @(1, 5)) { Request-DEReboot -Reason 'OEM updates require a restart' -ResumeAction 'maint.oem' | Out-Null }
-    if ($r.ExitCode -notin @(0, 1, 5, 500)) { throw "dcu-cli exit $($r.ExitCode)" }
-    return "dcu-cli exit $($r.ExitCode)"
+    $suspend = { if ((Get-DEBitLockerState).osProtectionOn) { Suspend-DEBitLockerForFirmware -RebootCount 1; Set-DEStateValue -Path 'maintenance.bitlockerResumeRequired' -Value $true } }
+    switch ($t.applicable) {
+        'lenovo' {
+            $all = @(Get-DELenovoUpdates)
+            $pick = @($all | Where-Object { $_.unattended -and ($IncludeBios -or -not $_.firmware) })
+            $manual = @($all | Where-Object { -not $_.unattended } | ForEach-Object { $_.title })
+            if (-not $pick.Count) { return "Lenovo: nothing to install silently$(if ($manual.Count) { "; install by hand: $($manual -join '; ')" })" }
+            if (-not $PSCmdlet.ShouldProcess('Lenovo (LSUClient)', "install $($pick.Count) package(s): $((@($pick | ForEach-Object { $_.title })) -join '; ')")) { return 'planned' }
+            if (@($pick | Where-Object { $_.firmware }).Count) { & $suspend }
+            $r = Install-DELenovoUpdates -Updates $pick
+            if ($r.pending.Count) { Request-DEReboot -Reason $(if ($r.shutdown) { 'Lenovo BIOS update finishes on a full shutdown, then power on' } else { 'Lenovo updates require a restart' }) -ResumeAction 'maint.oem' | Out-Null }
+            if ($r.failed.Count) { throw "Lenovo: $($r.failed.Count) package(s) failed: $($r.failed -join '; ')" }
+            return "Lenovo: installed $($r.installed.Count)$(if ($r.pending.Count) { "; pending $($r.pending -join ', ')" })$(if ($manual.Count) { "; install by hand: $($manual -join '; ')" })"
+        }
+        'hp' {
+            if (-not $t.hp) { throw 'HP Image Assistant is not installed: install HPIA from hp.com/go/hpia, then run this again' }
+            $cats = $(if ($IncludeBios) { 'All' } else { 'Drivers,Software,Accessories' })
+            if (-not $PSCmdlet.ShouldProcess('HP Image Assistant', "install ($cats)")) { return 'planned' }
+            if ($IncludeBios) { & $suspend }
+            $base = Join-Path (Get-DEConsole).Dirs.Packages 'hpia'
+            $r = Invoke-DENative -FilePath $t.hp -Arguments @('/Operation:Analyze', '/Action:Install', "/Category:$cats", '/Selection:All', '/Silent', "/ReportFolder:$base\report", "/SoftpaqDownloadFolder:$base\softpaqs")
+            if ($r.ExitCode -eq 3010) { Request-DEReboot -Reason 'HP updates require a restart' -ResumeAction 'maint.oem' | Out-Null }
+            if ($r.ExitCode -notin @(0, 256, 3010)) { throw "HP Image Assistant exit $($r.ExitCode) (3020 = an install failed, 4096 = platform not supported); report in $base\report" }
+            return "HP Image Assistant exit $($r.ExitCode)"
+        }
+        'dell' {
+            if (-not $t.dell) { throw 'Dell Command | Update is not installed' }
+            $types = 'driver,application,utility'; if ($IncludeBios) { $types = 'bios,firmware,driver,application,utility' }
+            if (-not $PSCmdlet.ShouldProcess('Dell Command | Update', "applyUpdates ($types)")) { return 'planned' }
+            if ($IncludeBios) { & $suspend }
+            $r = Invoke-DENative -FilePath $t.dell -Arguments @('/applyUpdates', "-updateType=$types", '-reboot=disable', '-silent')
+            # DCU exit codes: 0 ok, 1 reboot required, 5 reboot pending, 500 no updates
+            if ($r.ExitCode -in @(1, 5)) { Request-DEReboot -Reason 'OEM updates require a restart' -ResumeAction 'maint.oem' | Out-Null }
+            if ($r.ExitCode -notin @(0, 1, 5, 500)) { throw "dcu-cli exit $($r.ExitCode)" }
+            return "dcu-cli exit $($r.ExitCode)"
+        }
+        default { throw "no automated OEM update path for $($t.manufacturer); use the vendor tool manually" }
+    }
 }
+
 function Get-DEBatteryHealth {
     if (-not $script:IsWindowsHost) { return $null }
     $full = Get-CimInstance -Namespace root/wmi -ClassName BatteryFullChargedCapacity -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -131,10 +182,15 @@ function Register-DEOperationsActions {
         }.GetNewClosure() -Desired { @{ ready = $true } } `
         -ManualAction $(switch ($updAuthority) { 'jumpcloud' { 'Assign the client''s Windows patch policy to this system in JumpCloud (Policies > Patch Management).' } 'intune' { 'Assign the Windows Update ring / feature update policy to this device in Intune.' } 'windows' { 'Apply the DE Windows baseline (wu-auto control) from the Baseline page.' } default { 'Set updates.authority in the client profile.' } })
     Register-DEAction -Id 'maint.oem' -Module 'maintenance' -Title 'OEM drivers, firmware and dock updates' -Phase 3 -Gates @('gate.elevated') -RequiresElevation `
-        -Detect { $t = Get-DEOemTool; if ($t.applicable -ne 'dell') { @{ applicable = $false; current = $(if (Get-DEState -Path 'maintenance.oemConfirmedAt') { $true } else { $null }); vendor = "$($t.manufacturer)" } } else { $s = Invoke-DEOemScan; @{ applicable = $true; current = ($s.exitCode -eq 500) } } } `
+        -Detect {
+            $t = Get-DEOemTool
+            $auto = ($t.applicable -in @('dell', 'lenovo')) -or ($t.applicable -eq 'hp' -and $t.hp)
+            if (-not $auto) { @{ applicable = $false; current = $(if (Get-DEState -Path 'maintenance.oemConfirmedAt') { $true } else { $null }); vendor = "$($t.manufacturer)" } }
+            else { $s = Invoke-DEOemScan; @{ applicable = $true; vendor = "$($t.manufacturer)"; tool = $s.tool; current = $s.current; waiting = $(if ($s.ContainsKey('count')) { $s.count } else { $null }); detail = (@($s.output) | Select-Object -First 6) -join ' | ' } }
+        } `
         -Desired { @{ current = $true } } -Apply { param($s) if (-not $s.Detected.applicable) { throw "no automated OEM update for $($s.Detected.vendor): run the vendor tool, then confirm it on the Network page" }; Invoke-DEOemUpdate -IncludeBios } `
-        -Remediate { param($s) $null = Invoke-DEPackageInstall -Id 'dell-command-update' } `
-        -ManualAction 'Non-Dell hardware: run HP Image Assistant or Lenovo System Update; after BIOS updates confirm BitLocker protection is back On.'
+        -Remediate { param($s) if ((Get-DEOemTool).applicable -eq 'dell') { $null = Invoke-DEPackageInstall -Id 'dell-command-update' } } `
+        -ManualAction 'Dell: Dell Command | Update. Lenovo: LSUClient (pinned, needs internet). HP: install HP Image Assistant first. Other makers: run the vendor tool; after BIOS updates confirm BitLocker protection is back On.'
     Register-DEAction -Id 'maint.bitlocker-resume' -Module 'maintenance' -Title 'BitLocker protection resumed after firmware work' -Phase 3 -Gates @('gate.elevated') `
         -Detect { @{ protectionOn = (Get-DEBitLockerState).osProtectionOn; required = [bool](Get-DEState -Path 'maintenance.bitlockerResumeRequired') } } -Desired { @{ protectionOn = $true } } `
         -Compare { param($d, $w) if ($d.required -and -not $d.protectionOn) { @('protection still suspended') } else { @() } } `

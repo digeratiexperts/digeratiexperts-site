@@ -1,0 +1,403 @@
+{
+  "version": 1,
+  "about": "Community PowerShell tools DE Tech Tool uses or has reviewed. Every entry is pinned to one commit. 'ship' tools (MIT) are fetched from raw.githubusercontent.com at that commit, every file checked against its sha256 before import, and cached under the data folder; a mismatch refuses the tool. 'runtime' tools (GPL/LGPL) may only be downloaded and run as separate, unmodified programs; none are bundled or copied into DE code. 'reference' repos have no licence: read for ideas and endpoints only, never copied or run. Update a pin by running packaging/update-community-catalog.py against reviewed clones, never by hand.",
+  "rawBase": "https://raw.githubusercontent.com/{repo}/{commit}/{path}",
+  "tools": [
+    {
+      "id": "lsuclient",
+      "name": "LSUClient",
+      "repo": "jantari/LSUClient",
+      "commit": "cc82c9f0163c4ae6b76289ccbb57d5b645890ee6",
+      "version": "1.8.2",
+      "license": "MIT",
+      "use": "ship",
+      "status": "wired",
+      "usedFor": "maint.oem on Lenovo: finds and installs applicable Lenovo drivers, BIOS and firmware straight from Lenovo's update catalog, without Lenovo System Update installed.",
+      "module": "LSUClient.psd1",
+      "reviewed": "2026-09-29",
+      "reviewNotes": "Talks only to download.lenovo.com. BIOS installs report SHUTDOWN / REBOOT_MANDATORY in PendingAction; DE suspends BitLocker first. Install-LSUpdate downloads to %TEMP%\\LSUPackages.",
+      "files": [
+        {
+          "path": "LICENSE",
+          "sha256": "1f3f02cf7069d845018092c4e59bc79bdb6724912857796fc538655273b9056c",
+          "bytes": 1064
+        },
+        {
+          "path": "LSUClient.psd1",
+          "sha256": "736e7c3c1497be1bb12e223dc2b9ed1ce984a872b83a900f664d629f66a87c60",
+          "bytes": 4967
+        },
+        {
+          "path": "LSUClient.psm1",
+          "sha256": "91a7132e30d91cac541611b15b41a16b6aab4e44ef7962330a67a56af87bc01d",
+          "bytes": 13240
+        },
+        {
+          "path": "LSUClient.Types.cs",
+          "sha256": "866c683eaaa6e69e087d67436047d9f54f1389541b221fb6cc0e106d163d13dc",
+          "bytes": 6355
+        },
+        {
+          "path": "LSUClient.Format.ps1xml",
+          "sha256": "3797b35ddeb34860526977ebe2bcdd833080a64e8de6e2c1993a11a4c2d07090",
+          "bytes": 4770
+        },
+        {
+          "path": "private/Compare-Array.ps1",
+          "sha256": "6bc9a9429ef971fb154fa7ecbf8513e003889f81a98bb2a05e7a2517ef0dc262",
+          "bytes": 1598
+        },
+        {
+          "path": "private/Compare-Version.ps1",
+          "sha256": "d99bf1e83b1f898a4ce6a21a890f29d533f45aa89eb3156c0baeed722cfe6028",
+          "bytes": 1153
+        },
+        {
+          "path": "private/Debug-LongRunningProcess.ps1",
+          "sha256": "02317066f7d8a74fe319394e35cf51ee584defeed279132f0ef319b8b357ad42",
+          "bytes": 8830
+        },
+        {
+          "path": "private/Get-PackagePathInfo.ps1",
+          "sha256": "4777be5397356afd4196ad62a142e7d6450df6e14f0377862c8985027b232758",
+          "bytes": 7659
+        },
+        {
+          "path": "private/Get-PackagesInRepository.ps1",
+          "sha256": "fbe4fbb7ed60f51912fd9a57d146296f0326253b64a2618b5868b08b24462c4d",
+          "bytes": 6886
+        },
+        {
+          "path": "private/Get-WindowsVersion.ps1",
+          "sha256": "5b9c7d7fff0b905e7c6dba648b1842befd80b12be19d1586b8740dd7f6e4d295",
+          "bytes": 2109
+        },
+        {
+          "path": "private/Install-BiosUpdate.ps1",
+          "sha256": "c804bfacd0b5bac80bf618890b4ebdcd719c4ece06337d00c5496e9d84a16921",
+          "bytes": 5932
+        },
+        {
+          "path": "private/Invoke-PackageCommand.ps1",
+          "sha256": "be7681559872fffb8a2d81f6f9d907e6ebec62bd6d092b4f8f541a81f80490e3",
+          "bytes": 23381
+        },
+        {
+          "path": "private/New-WebClient.ps1",
+          "sha256": "703f30542d36c302fd818aea91fcf198ad58a103079d971e6f28dab3ff121a2b",
+          "bytes": 1194
+        },
+        {
+          "path": "private/Remove-CmdEscapeCharacter.ps1",
+          "sha256": "27f8a7fe6ca8af8de1add4cd4b846f6e2656416359c92fea39c923d9d9c20af4",
+          "bytes": 2138
+        },
+        {
+          "path": "private/Resolve-CmdVariable.ps1",
+          "sha256": "c5f1a77b43f9071c59e28343716f75797a2637c8638138881a7d153b367a3110",
+          "bytes": 673
+        },
+        {
+          "path": "private/Resolve-XMLDependencies.ps1",
+          "sha256": "afbfd35f3102414234f67bf98a0303c8a5137a5ad6eebe8fb514127ff41a40bb",
+          "bytes": 3155
+        },
+        {
+          "path": "private/Save-PackageFile.ps1",
+          "sha256": "a7fc01a347f0c5a2db92d1796e9d01b01e9fd16434a522f3ec750ef6dd5e5296",
+          "bytes": 2841
+        },
+        {
+          "path": "private/Set-BIOSUpdateRegistryFlag.ps1",
+          "sha256": "fdd581cbc0725c37d09a342cfa49720ebf6b0d3759629a198e817d3df3962ce9",
+          "bytes": 716
+        },
+        {
+          "path": "private/Show-DownloadProgress.ps1",
+          "sha256": "bd83942c69b4ac547ef0a5cd9dd6cebddad2e51b05baea2f52c97c82a3780034",
+          "bytes": 1692
+        },
+        {
+          "path": "private/Split-ExecutableAndArguments.ps1",
+          "sha256": "1d6a585edfde904491124a558a54bb8170872993311ca4bfa8fb89f1da87a327",
+          "bytes": 3692
+        },
+        {
+          "path": "private/Test-MachineSatisfiesDependency.ps1",
+          "sha256": "1b57efd4bd384c73944c98f10f9e58a410508f9e7e14170c4d09181e94232c6c",
+          "bytes": 25064
+        },
+        {
+          "path": "private/Test-RunningAsAdmin.ps1",
+          "sha256": "3167d41a1975164455d4a0a81d1064c1165c1f89406b0f4f46598a282c391532",
+          "bytes": 422
+        },
+        {
+          "path": "private/Test-VersionPattern.ps1",
+          "sha256": "698bba631ab5e07c48935607a0519bc3e4b6d8483bb9ff3c268f7a5728ab127f",
+          "bytes": 4477
+        },
+        {
+          "path": "private/Test-Wflash2ForSCCMParameter.ps1",
+          "sha256": "c6244cf0d6ebf030395f1df28827ae9d69b1f93cf79698fd0bc632648e4d2eb2",
+          "bytes": 3241
+        },
+        {
+          "path": "public/Expand-LSUpdate.ps1",
+          "sha256": "26305003e4ab5efe97860329318d13a606402478fbd66c0ecf38d7d0ad2ea704",
+          "bytes": 1932
+        },
+        {
+          "path": "public/Get-LSUClientConfiguration.ps1",
+          "sha256": "b2ea518587c8630722ea2bb0fc137aaecaf5cb7375459def4a95e9988c23f982",
+          "bytes": 385
+        },
+        {
+          "path": "public/Get-LSUpdate.ps1",
+          "sha256": "7adbb29f72f8efd7efbf06a28ca1c45ee9ac40a79db59cdf1631148d92a710a1",
+          "bytes": 22789
+        },
+        {
+          "path": "public/Install-LSUpdate.ps1",
+          "sha256": "348d9a1c1974dc6b988303318b5296268dbc48ca86367e6ae2bfbbaa708043b2",
+          "bytes": 11930
+        },
+        {
+          "path": "public/Save-LSUpdate.ps1",
+          "sha256": "ebf59c3c914ba45bbb9d7a773b66fab50db0584651ef96da3b9da0d6c697d574",
+          "bytes": 5517
+        },
+        {
+          "path": "public/Set-LSUClientConfiguration.ps1",
+          "sha256": "888768f09b635fe943c391aa0c6361be6f55eeacd39a5896cfed206f916fe754",
+          "bytes": 3825
+        }
+      ]
+    },
+    {
+      "id": "hardeningkitty",
+      "name": "HardeningKitty",
+      "repo": "scipag/HardeningKitty",
+      "commit": "da0976073caad006c48b2478588c2f7fa572ab46",
+      "version": "0.9.4",
+      "license": "MIT",
+      "use": "ship",
+      "status": "wired",
+      "usedFor": "baseline.audit-cis: read-only audit against a CIS or Microsoft security baseline finding list; the CSV report goes into the job evidence. DE never runs its HailMary (write) mode.",
+      "module": "HardeningKitty.psd1",
+      "reviewed": "2026-09-29",
+      "reviewNotes": "Audit mode reads registry, secedit, auditpol and CIM only. Official lists are verified by HardeningKitty against its signed manifest; DE also pins each list by sha256.",
+      "benchmarks": [
+        {
+          "key": "cis-win11-24h2",
+          "name": "CIS Microsoft Windows 11 Enterprise 24H2",
+          "machine": "lists/finding_list_cis_microsoft_windows_11_enterprise_24h2_machine.csv",
+          "user": "lists/finding_list_cis_microsoft_windows_11_enterprise_24h2_user.csv"
+        },
+        {
+          "key": "cis-win10-22h2",
+          "name": "CIS Microsoft Windows 10 Enterprise 22H2 (3.0.0)",
+          "machine": "lists/finding_list_cis_microsoft_windows_10_enterprise_22h2_3.0.0_machine.csv",
+          "user": "lists/finding_list_cis_microsoft_windows_10_enterprise_22h2_3.0.0_user.csv"
+        },
+        {
+          "key": "msft-win11-25h2",
+          "name": "Microsoft Security Baseline Windows 11 25H2",
+          "machine": "lists/finding_list_msft_security_baseline_windows_11_25h2_machine.csv",
+          "user": "lists/finding_list_msft_security_baseline_windows_11_25h2_user.csv"
+        },
+        {
+          "key": "msft-win11-24h2",
+          "name": "Microsoft Security Baseline Windows 11 24H2",
+          "machine": "lists/finding_list_msft_security_baseline_windows_11_24h2_machine.csv",
+          "user": "lists/finding_list_msft_security_baseline_windows_11_24h2_user.csv"
+        },
+        {
+          "key": "tls",
+          "name": "Microsoft Windows TLS settings",
+          "machine": "lists/finding_list_microsoft_windows_tls.csv",
+          "user": null
+        },
+        {
+          "key": "msft-edge-139",
+          "name": "Microsoft Security Baseline Edge 139",
+          "machine": "lists/finding_list_msft_security_baseline_edge_139_machine.csv",
+          "user": null
+        }
+      ],
+      "files": [
+        {
+          "path": "LICENSE",
+          "sha256": "113588f4cbc8ee7cac9ae1725d9934a95ef084a16e4008fec776bb9a0113575b",
+          "bytes": 1064
+        },
+        {
+          "path": "HardeningKitty.psd1",
+          "sha256": "9789ff549f0e9d4fff0d1dd31620459b9af3bb47968d202a83c24b0ea5641bde",
+          "bytes": 4361
+        },
+        {
+          "path": "HardeningKitty.psm1",
+          "sha256": "01eba5f0f4f11fa21616946bd9ea7eccd56079abb9cafdc7b8e7c60c75f63aee",
+          "bytes": 183743
+        },
+        {
+          "path": "lists/hardeningkitty_lists_manifest.psd1",
+          "sha256": "2762b4e3876d2f583131d970e9c4a28ac8cd09f9b8a5501cedc3d814ca3fa44d",
+          "bytes": 18907
+        },
+        {
+          "path": "lists/hardeningkitty_lists_manifest.psd1.p7s",
+          "sha256": "7109619075ae6709413bbc66ca8c00903b8f9b2e1e8c171a6daf759a4b0d3c4f",
+          "bytes": 2456
+        },
+        {
+          "path": "lists/finding_list_cis_microsoft_windows_11_enterprise_24h2_machine.csv",
+          "sha256": "ad20bd522495af9023f163629bdbfb803d8f5e1d90d8b40ab88126e0caf67aa7",
+          "bytes": 229356
+        },
+        {
+          "path": "lists/finding_list_cis_microsoft_windows_11_enterprise_24h2_user.csv",
+          "sha256": "02779ea283ef5ddf18cfeb14a05fbb244604e7c042e96b1839dad6b92411a563",
+          "bytes": 5749
+        },
+        {
+          "path": "lists/finding_list_cis_microsoft_windows_10_enterprise_22h2_3.0.0_machine.csv",
+          "sha256": "87d1950ae593446ce7fbbfa698a160027a935361b4d6bfcd928ee34ed195de6d",
+          "bytes": 208579
+        },
+        {
+          "path": "lists/finding_list_cis_microsoft_windows_10_enterprise_22h2_3.0.0_user.csv",
+          "sha256": "d3d8e3df310719fb3f006a933fecda4f35a6ec4c22eacd6eecf29986ed232254",
+          "bytes": 5348
+        },
+        {
+          "path": "lists/finding_list_msft_security_baseline_windows_11_25h2_machine.csv",
+          "sha256": "baa410992d0dee824ee7c3df399fe6c76403775d7d998c104b2e666eeef15e25",
+          "bytes": 167506
+        },
+        {
+          "path": "lists/finding_list_msft_security_baseline_windows_11_25h2_user.csv",
+          "sha256": "d9bf1d53ff063b4690a49d2c3e75d65818cb33158d419022fc5ddd4eca4fc277",
+          "bytes": 2467
+        },
+        {
+          "path": "lists/finding_list_msft_security_baseline_windows_11_24h2_machine.csv",
+          "sha256": "ba30bd32a61013a6ab6810ded234cd810d672a023bf19175be12e8b02af3951b",
+          "bytes": 167368
+        },
+        {
+          "path": "lists/finding_list_msft_security_baseline_windows_11_24h2_user.csv",
+          "sha256": "d9bf1d53ff063b4690a49d2c3e75d65818cb33158d419022fc5ddd4eca4fc277",
+          "bytes": 2467
+        },
+        {
+          "path": "lists/finding_list_microsoft_windows_tls.csv",
+          "sha256": "e2a4fc5ea430764131fc1f2f7bef370bc77c140fc9540e87a630814b55a76d15",
+          "bytes": 13105
+        },
+        {
+          "path": "lists/finding_list_msft_security_baseline_edge_139_machine.csv",
+          "sha256": "4f6354db6f1fe005359ea5e6ea3f6d871664caa538f8f9bb5da9403bc9db3e2a",
+          "bytes": 9273
+        }
+      ]
+    },
+    {
+      "id": "win11debloat",
+      "name": "Win11Debloat",
+      "repo": "Raphire/Win11Debloat",
+      "commit": "32024662f3c602442e7af82bbf52c89143b31aeb",
+      "license": "MIT",
+      "use": "ship",
+      "status": "reviewed",
+      "usedFor": "Candidate for a client-profile debloat step (remove consumer apps, telemetry, Bing in Start). Not wired: DE baseline controls already cover telemetry; app removal needs a per-client approved list first.",
+      "reviewed": "2026-09-29",
+      "files": []
+    },
+    {
+      "id": "winget-autoupdate",
+      "name": "Winget-AutoUpdate (WAU)",
+      "repo": "Romanitho/Winget-AutoUpdate",
+      "commit": "084d39de1fb81f7fa475cc1448538011feacc8e0",
+      "license": "MIT",
+      "use": "ship",
+      "status": "reviewed",
+      "usedFor": "Candidate third-party app update authority for clients without JumpCloud patch management. Not wired: JumpCloud remains the default update authority.",
+      "reviewed": "2026-09-29",
+      "files": []
+    },
+    {
+      "id": "winget-install",
+      "name": "winget-install",
+      "repo": "asheroto/winget-install",
+      "commit": "58e3688f7f52707b273c019766207d82693df6d1",
+      "license": "GPL-3.0",
+      "use": "runtime",
+      "status": "reviewed",
+      "usedFor": "Repairs or installs winget on images where App Installer is missing (common at OOBE and on LTSC). May be downloaded and run unmodified as a separate program; never copied into DE code.",
+      "reviewed": "2026-09-29",
+      "files": []
+    },
+    {
+      "id": "psadt",
+      "name": "PSAppDeployToolkit",
+      "repo": "PSAppDeployToolkit/PSAppDeployToolkit",
+      "commit": "2da0cd95ac49de44ac73a00244d2dfc3a7eecbd4",
+      "license": "LGPL-3.0",
+      "use": "runtime",
+      "status": "reviewed",
+      "usedFor": "Packaging format for client line-of-business installers that need user prompts or deferrals. Used as its own toolkit inside a package, never merged into DE modules.",
+      "reviewed": "2026-09-29",
+      "files": []
+    },
+    {
+      "id": "limehawk-rmm-scripts",
+      "name": "limehawk rmm-scripts",
+      "repo": "limehawk/rmm-scripts",
+      "commit": "3c45afbdf3c9e9f473fa7dfcb4261acd1cc5d31f",
+      "license": "GPL-3.0",
+      "use": "runtime",
+      "status": "reviewed",
+      "usedFor": "RMM script collection. GPL: not copied; individual scripts could run unmodified as separate programs if a need appears.",
+      "reviewed": "2026-09-29",
+      "files": []
+    },
+    {
+      "id": "dszp-msp-scripts",
+      "name": "dszp msp-scripts",
+      "repo": "dszp/msp-scripts",
+      "commit": "e73beb97a3ed1419da52b99970d180db4f3eb5f3",
+      "license": "none",
+      "use": "reference",
+      "status": "reviewed",
+      "usedFor": "No licence: read for ideas only; no code used.",
+      "reviewed": "2026-09-29",
+      "files": []
+    },
+    {
+      "id": "flatlinebb-mspscripts",
+      "name": "flatlinebb MSPscripts",
+      "repo": "flatlinebb/MSPscripts",
+      "commit": "1595ec5d8c7cc196d89872c913c76fa1de05af5a",
+      "license": "none",
+      "use": "reference",
+      "status": "reviewed",
+      "usedFor": "No licence: read for ideas only; no code used.",
+      "reviewed": "2026-09-29",
+      "files": []
+    },
+    {
+      "id": "pswarranty",
+      "name": "PowerShellWarrantyReports",
+      "repo": "KelvinTegelaar/PowerShellWarrantyReports",
+      "commit": null,
+      "license": "AGPL-3.0",
+      "use": "reference",
+      "status": "reviewed",
+      "usedFor": "Read for warranty source ideas only. Not used: AGPL, and its HP and Lenovo lookups go through a third-party proxy, which would send client serials to someone other than the manufacturer.",
+      "reviewed": "2026-09-29",
+      "files": []
+    }
+  ]
+}
