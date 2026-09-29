@@ -358,66 +358,203 @@ function Register-DEBrowserActions {
 }
 
 # ================================================================== BRANDING
-function Get-DEBrandingAssets {
-    param($ClientProfile)
-    $de = Get-DEConsole
-    $deLogo = Join-Path (Join-Path (Join-Path $de.Root 'assets') 'brand') 'digerati-logo-600.png'
-    if (-not (Test-Path -LiteralPath $deLogo)) { $deLogo = Join-Path (Join-Path $de.Root 'assets') 'de-logo.png' }
-    $client = Get-DEHashPath -Object $ClientProfile -Path 'branding.clientLogo'
-    if ($client -and $client -like 'asset:*') {
-        $assetSpec = $client
-        # 'asset:clients/alamo/alamo-mark.png' -> <console>\assets\clients\alamo\alamo-mark.png, one segment at a time
-        $client = Join-Path $de.Root 'assets'
-        foreach ($seg in @($assetSpec.Substring(6) -split '[\\/]' | Where-Object { $_ })) { $client = Join-Path $client $seg }
-    } elseif ($client -and -not [IO.Path]::IsPathRooted($client)) {
-        $client = Join-Path $de.Dirs.Profiles $client
-    }
-    return @{ deLogo = $(if (Test-Path -LiteralPath $deLogo) { $deLogo } else { $null }); clientLogo = $(if ($client -and (Test-Path -LiteralPath $client)) { $client } else { $null }) }
+function Get-DEColorLuminance {
+    <# Relative luminance (0 black .. 1 white) of a #RRGGBB colour, WCAG formula. #>
+    param([Parameter(Mandatory = $true)][string]$Hex)
+    $h = $Hex.TrimStart('#'); if ($h.Length -ne 6) { throw "colour '$Hex' is not #RRGGBB" }
+    $lin = foreach ($i in 0, 2, 4) { $c = [Convert]::ToInt32($h.Substring($i, 2), 16) / 255.0; if ($c -le 0.03928) { $c / 12.92 } else { [math]::Pow(($c + 0.055) / 1.055, 2.4) } }
+    return [math]::Round(0.2126 * $lin[0] + 0.7152 * $lin[1] + 0.0722 * $lin[2], 4)
 }
-
+function Get-DEBrandingOptions {
+    <#
+    Wallpaper and lock-screen options: DE defaults, then the client profile's branding.wallpaper (and .lockScreen for the
+    lock screen). Every knob the Branding page offers lives here.
+    #>
+    param($ClientProfile, [switch]$LockScreen)
+    $o = [ordered]@{
+        theme = 'dark'; background = ''; image = ''; imageDim = 0.45; gradient = $true
+        position = 'lower-left'; logos = 'both'; deLogoStyle = 'horizontal'; logoHeightPct = 9.0; deLogoHeightPct = 6.0; logoPlate = 'auto'
+        showClientName = $true; showManagedBy = $true; showSupport = $true; showHostname = $true; customLine = ''
+        accent = '#D3126A'; accentBar = $true; resolution = 'auto'
+    }
+    if ($LockScreen) { $o.position = 'center'; $o.logoHeightPct = 13.0; $o.deLogoHeightPct = 8.0; $o.showHostname = $false }
+    $acc = Get-DEHashPath -Object $ClientProfile -Path 'branding.accent'; if ($acc) { $o.accent = "$acc" }
+    foreach ($src in @('branding.wallpaper', $(if ($LockScreen) { 'branding.lockScreen' }))) {
+        if (-not $src) { continue }
+        $set = Get-DEHashPath -Object $ClientProfile -Path $src; if (-not $set) { continue }
+        $keys = $(if ($set -is [System.Collections.IDictionary]) { @($set.Keys) } else { @($set.PSObject.Properties | ForEach-Object { $_.Name }) })
+        foreach ($k in $keys) { if ($o.Contains($k)) { $o[$k] = Get-DEHashPath -Object $set -Path $k } }
+    }
+    if (-not $o.background) { $o.background = switch ($o.theme) { 'light' { '#F7F5F2' } 'accent' { $o.accent } default { '#050312' } } }
+    return $o
+}
+function Get-DEBrandingAssets {
+    <# Logo files: the client's logo (and optional reverse variant for dark backgrounds) and the DE logo in the variant that reads on the background. #>
+    param($ClientProfile, [string]$Background = '#050312', [ValidateSet('horizontal', 'stacked', 'mark')][string]$DeLogoStyle = 'horizontal')
+    $de = Get-DEConsole
+    $brand = Join-Path (Join-Path $de.Root 'assets') 'brand'
+    $dark = (Get-DEColorLuminance -Hex $Background) -lt 0.4
+    $candidates = switch ($DeLogoStyle) {
+        'stacked' { @($(if ($dark) { 'digerati-logo-stacked-reverse-1600.png' } else { 'digerati-logo-stacked-1600.png' })) }
+        'mark' { @('digerati-mark-1024.png', 'digerati-mark-tile-256.png') }
+        default { @($(if ($dark) { 'digerati-logo-reverse-2400.png'; 'digerati-logo-reverse-600.png' } else { 'digerati-logo-2400.png'; 'digerati-logo-600.png' })) }
+    }
+    $deLogo = @($candidates | ForEach-Object { Join-Path $brand $_ } | Where-Object { Test-Path -LiteralPath $_ }) | Select-Object -First 1
+    if (-not $deLogo) { $deLogo = Join-Path (Join-Path $de.Root 'assets') 'de-logo.png' }
+    $resolve = { param($spec) if (-not $spec) { return $null }; $spec = "$spec"
+        if ($spec -like 'asset:*') { $pth = Join-Path $de.Root 'assets'; foreach ($seg in @($spec.Substring(6) -split '[\\/]' | Where-Object { $_ })) { $pth = Join-Path $pth $seg }; return $pth }
+        if (-not [IO.Path]::IsPathRooted($spec)) { return (Join-Path $de.Dirs.Profiles $spec) }
+        return $spec }
+    $client = & $resolve (Get-DEHashPath -Object $ClientProfile -Path 'branding.clientLogo')
+    $clientRev = & $resolve (Get-DEHashPath -Object $ClientProfile -Path 'branding.clientLogoReverse')
+    if ($dark -and $clientRev -and (Test-Path -LiteralPath $clientRev)) { $client = $clientRev }
+    return @{ deLogo = $(if (Test-Path -LiteralPath $deLogo) { $deLogo } else { $null }); clientLogo = $(if ($client -and (Test-Path -LiteralPath $client)) { $client } else { $null }); onDark = $dark }
+}
+function Get-DEBrandingLayout {
+    <#
+    Where everything goes, before anything is drawn (so the layout is testable anywhere): logo boxes sized from the screen
+    height, text lines and sizes, the accent bar, and the hostname badge, anchored by the chosen position.
+    LogoSizes: @{ client = @(w, h); de = @(w, h) } in source pixels (missing logos are left out).
+    #>
+    param([int]$Width, [int]$Height, $Options, [hashtable]$LogoSizes = @{}, [string[]]$Lines = @())
+    $margin = [int]($Height * 0.07); $gap = [int]($Height * 0.03)
+    $boxes = @()
+    $order = switch ($Options.logos) { 'client' { @('client') } 'de' { @('de') } default { @('client', 'de') } }
+    foreach ($k in $order) {
+        $sz = $LogoSizes[$k]; if (-not $sz) { continue }
+        $h = [int]($Height * ([double]$(if ($k -eq 'de' -and @($order).Count -gt 1 -and $LogoSizes['client']) { $Options.deLogoHeightPct } else { $Options.logoHeightPct }) / 100))
+        $w = [int]($sz[0] * ($h / [double]$sz[1]))
+        if ($w -gt [int]($Width * 0.42)) { $w = [int]($Width * 0.42); $h = [int]($sz[1] * ($w / [double]$sz[0])) }   # very wide wordmarks stay inside the screen
+        $boxes += @{ kind = 'logo'; which = $k; w = $w; h = $h }
+    }
+    $big = [int]($Height * 0.026); $small = [int]($Height * 0.018)
+    $text = @(); for ($i = 0; $i -lt $Lines.Count; $i++) { $sz = $(if ($i -eq 0) { $big } else { $small }); $text += @{ kind = 'text'; text = $Lines[$i]; size = $sz; muted = ($i -gt 0); w = [int]($Lines[$i].Length * $sz * 0.56); h = [int]($sz * 1.45) } }
+    $rowH = [int](@($boxes | ForEach-Object { $_.h } | Measure-Object -Maximum).Maximum); if (-not $rowH) { $rowH = 0 }
+    $rowW = [int](@($boxes | ForEach-Object { $_.w } | Measure-Object -Sum).Sum) + [math]::Max(0, @($boxes).Count - 1) * [int]($Height * 0.045)
+    $textH = [int](@($text | ForEach-Object { $_.h } | Measure-Object -Sum).Sum)
+    $blockW = [math]::Max($rowW, [int](@($text | ForEach-Object { $_.w } | Measure-Object -Maximum).Maximum)); $blockH = $rowH + $(if ($text.Count -and $rowH) { $gap } else { 0 }) + $textH
+    $bar = $(if ($Options.accentBar -and $Options.position -notlike '*center*') { [int]([math]::Max(6, $Height * 0.006)) } else { 0 }); $barGap = $(if ($bar) { [int]($Height * 0.02) } else { 0 })
+    $pos = "$($Options.position)"
+    $x0 = switch -Regex ($pos) { 'left' { $margin + $bar + $barGap } 'right' { $Width - $margin - $blockW } default { [int](($Width - $blockW) / 2) } }
+    $y0 = switch -Regex ($pos) { '^upper' { $margin } '^lower' { $Height - $margin - $blockH - $(if ($Options.showHostname) { [int]($Height * 0.03) } else { 0 }) } default { [int](($Height - $blockH) / 2) } }
+    $centered = ($pos -eq 'center' -or $pos -eq 'lower-center')
+    $x = $(if ($centered) { [int](($Width - $rowW) / 2) } else { $x0 }); $y = $y0
+    foreach ($b in $boxes) { $b.x = $x; $b.y = $y + [int](($rowH - $b.h) / 2); $x += $b.w + [int]($Height * 0.045) }
+    $ty = $y0 + $rowH + $(if ($rowH -and $text.Count) { $gap } else { 0 })
+    foreach ($t in $text) { $t.x = $(if ($centered) { [int](($Width - $t.w) / 2) } elseif ($pos -like '*right') { $Width - $margin - $t.w } else { $x0 }); $t.y = $ty; $ty += $t.h }
+    $out = @{ width = $Width; height = $Height; margin = $margin; centered = $centered; alignRight = ($pos -like '*right'); items = @(@($boxes) + @($text)); block = @{ x = $x0; y = $y0; w = $blockW; h = $blockH } }
+    if ($bar) { $out.accentBar = @{ x = $(if ($pos -like '*right') { $Width - $margin + $barGap } else { $margin }); y = $y0; w = $bar; h = $blockH } }
+    if ($Options.showHostname) { $hs = [int]($Height * 0.016); $out.hostname = @{ size = $hs; x = $Width - $margin - [int]($env:COMPUTERNAME.Length * $hs * 0.62); y = $Height - [int]($margin * 0.6) } }
+    return $out
+}
+function Get-DEPrimaryScreenSize {
+    <# The native resolution of the primary display (what the wallpaper is rendered at), 2560x1440 when unknown. #>
+    $w = 0; $h = 0
+    try { $v = @(Get-CimInstance -ClassName Win32_VideoController -ErrorAction Stop | Where-Object { $_.CurrentHorizontalResolution }) | Sort-Object CurrentHorizontalResolution -Descending | Select-Object -First 1; if ($v) { $w = [int]$v.CurrentHorizontalResolution; $h = [int]$v.CurrentVerticalResolution } } catch { }
+    if ($w -lt 1280 -or $h -lt 720) { $w = 2560; $h = 1440 }
+    return @($w, $h)
+}
 function New-DEBrandedWallpaper {
-    <# Renders a 16:9 wallpaper (graphite, magenta rule, both logos, support line) with System.Drawing; returns the file path. #>
-    param($ClientProfile, [int]$Width = 2560, [int]$Height = 1440, [string]$OutFile, [switch]$LockScreen)
+    <#
+    Renders the wallpaper (or lock screen) with System.Drawing: background by theme (graphite, paper, accent or the
+    client's photo dimmed), the DE logo in the variant that reads on that background, the client logo on a contrasting
+    plate when it would otherwise blend in, the accent bar, the text lines and the hostname badge, at native resolution.
+    #>
+    param($ClientProfile, [int]$Width, [int]$Height, [string]$OutFile, [switch]$LockScreen)
     Add-Type -AssemblyName System.Drawing
     $de = Get-DEConsole
-    if (-not $OutFile) { $OutFile = Join-Path $de.Dirs.Base ("branding\{0}-{1}.png" -f $(if ($LockScreen) { 'lockscreen' } else { 'wallpaper' }), (Get-Date -Format 'yyyyMMddHHmmss')) }
-    New-Item -ItemType Directory -Path (Split-Path -Parent $OutFile) -Force | Out-Null
-    $assets = Get-DEBrandingAssets -ClientProfile $ClientProfile
-    $accentHex = Get-DEHashPath -Object $ClientProfile -Path 'branding.accent'; if (-not $accentHex) { $accentHex = '#D3126A' }
+    $o = Get-DEBrandingOptions -ClientProfile $ClientProfile -LockScreen:$LockScreen
+    if (-not $Width -or -not $Height) {
+        if ("$($o.resolution)" -match '^(\d{3,5})x(\d{3,5})$') { $Width = [int]$Matches[1]; $Height = [int]$Matches[2] } else { $sz = Get-DEPrimaryScreenSize; $Width = $sz[0]; $Height = $sz[1] }
+    }
+    $Width = [math]::Min(7680, [math]::Max(1280, $Width)); $Height = [math]::Min(4320, [math]::Max(720, $Height))
+    if (-not $OutFile) { $OutFile = Join-Path $de.Dirs.Base ("branding\{0}-{1}x{2}-{3}.png" -f $(if ($LockScreen) { 'lockscreen' } else { 'wallpaper' }), $Width, $Height, (Get-Date -Format 'yyyyMMddHHmmss')) }
+    New-Item -ItemType Directory -Path (Split-Path -Parent $OutFile) -Force -WhatIf:$false | Out-Null
+    $assets = Get-DEBrandingAssets -ClientProfile $ClientProfile -Background $o.background -DeLogoStyle $o.deLogoStyle
+    $imgs = @{}; $sizes = @{}
+    foreach ($k in @('client', 'de')) { $f = $(if ($k -eq 'client') { $assets.clientLogo } else { $assets.deLogo }); if ($f) { $imgs[$k] = [System.Drawing.Image]::FromFile($f); $sizes[$k] = @($imgs[$k].Width, $imgs[$k].Height) } }
+    $name = "$(Get-DEHashPath -Object $ClientProfile -Path 'name')"
+    $support = "$(Get-DEHashPath -Object $ClientProfile -Path 'branding.supportText')"; if (-not $support) { $support = 'Support: support@digeratiexperts.com' }
+    $lines = @(); $first = @(); if ($o.showClientName -and $name) { $first += $name }; if ($o.showManagedBy) { $first += 'managed by Digerati Experts' }; if ($first.Count) { $lines += ($first -join '  |  ') }
+    if ($o.showSupport) { $lines += $support }; if ($o.customLine) { $lines += "$($o.customLine)" }
+    $layout = Get-DEBrandingLayout -Width $Width -Height $Height -Options $o -LogoSizes $sizes -Lines $lines
+    $bgColor = [System.Drawing.ColorTranslator]::FromHtml($o.background)
+    $onDark = $assets.onDark
+    $ink = $(if ($onDark) { [System.Drawing.ColorTranslator]::FromHtml('#F7F5F2') } else { [System.Drawing.ColorTranslator]::FromHtml('#1A1620') })
     $bmp = New-Object System.Drawing.Bitmap $Width, $Height
     $g = [System.Drawing.Graphics]::FromImage($bmp)
     try {
-        $g.SmoothingMode = 'AntiAlias'; $g.TextRenderingHint = 'AntiAliasGridFit'; $g.InterpolationMode = 'HighQualityBicubic'
-        $bg = [System.Drawing.ColorTranslator]::FromHtml('#050312'); $g.Clear($bg)
-        $glow = New-Object System.Drawing.Drawing2D.LinearGradientBrush((New-Object System.Drawing.Point 0, 0), (New-Object System.Drawing.Point $Width, $Height), [System.Drawing.Color]::FromArgb(40, 124, 58, 237), [System.Drawing.Color]::FromArgb(0, 5, 3, 18))
-        $g.FillRectangle($glow, 0, 0, $Width, $Height)
-        $accent = [System.Drawing.ColorTranslator]::FromHtml($accentHex)
-        $g.FillRectangle((New-Object System.Drawing.SolidBrush $accent), [int]($Width * 0.08), [int]($Height * 0.72), 8, [int]($Height * 0.12))
-        $x = [int]($Width * 0.08) + 40; $y = [int]($Height * 0.72)
-        foreach ($logo in @($assets.clientLogo, $assets.deLogo)) {
-            if (-not $logo) { continue }
-            $img = [System.Drawing.Image]::FromFile($logo)
-            try { $h = [int]($Height * 0.06); $w = [int]($img.Width * ($h / $img.Height)); $g.DrawImage($img, $x, $y, $w, $h); $x += $w + 60 } finally { $img.Dispose() }
+        $g.SmoothingMode = 'AntiAlias'; $g.TextRenderingHint = 'AntiAliasGridFit'; $g.InterpolationMode = 'HighQualityBicubic'; $g.PixelOffsetMode = 'HighQuality'
+        $g.Clear($bgColor)
+        if ($o.theme -eq 'image' -and $o.image -and (Test-Path -LiteralPath "$($o.image)")) {
+            $photo = [System.Drawing.Image]::FromFile("$($o.image)")
+            try { $scale = [math]::Max($Width / $photo.Width, $Height / $photo.Height); $pw = [int]($photo.Width * $scale); $ph = [int]($photo.Height * $scale); $g.DrawImage($photo, [int](($Width - $pw) / 2), [int](($Height - $ph) / 2), $pw, $ph) } finally { $photo.Dispose() }
+            $dim = [double]$o.imageDim; if ($dim -gt 1) { $dim = $dim / 100 }   # the Branding page slider stores percent
+            $g.FillRectangle((New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb([int](255 * [math]::Min(0.95, [math]::Max(0, $dim))), $bgColor))), 0, 0, $Width, $Height)
+        } elseif ($o.gradient) {
+            $glow = New-Object System.Drawing.Drawing2D.LinearGradientBrush((New-Object System.Drawing.Point 0, 0), (New-Object System.Drawing.Point $Width, $Height), [System.Drawing.Color]::FromArgb($(if ($onDark) { 46 } else { 22 }), 124, 58, 237), [System.Drawing.Color]::FromArgb(0, $bgColor))
+            $g.FillRectangle($glow, 0, 0, $Width, $Height); $glow.Dispose()
         }
+        $accent = [System.Drawing.ColorTranslator]::FromHtml($o.accent)
+        if ($layout.accentBar) { $g.FillRectangle((New-Object System.Drawing.SolidBrush $accent), $layout.accentBar.x, $layout.accentBar.y, $layout.accentBar.w, $layout.accentBar.h) }
         $fontFamily = 'Segoe UI'; try { $null = New-Object System.Drawing.FontFamily 'Space Grotesk'; $fontFamily = 'Space Grotesk' } catch { }
-        $f1 = New-Object System.Drawing.Font($fontFamily, [single]($Height * 0.022), [System.Drawing.FontStyle]::Regular, [System.Drawing.GraphicsUnit]::Pixel)
-        $f2 = New-Object System.Drawing.Font($fontFamily, [single]($Height * 0.016), [System.Drawing.FontStyle]::Regular, [System.Drawing.GraphicsUnit]::Pixel)
-        $paper = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml('#F7F5F2'))
-        $muted = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(160, 247, 245, 242))
-        $name = "$(Get-DEHashPath -Object $ClientProfile -Path 'name')"
-        $support = "$(Get-DEHashPath -Object $ClientProfile -Path 'branding.supportText')"; if (-not $support) { $support = 'Support: support@digeratiexperts.com' }
-        $g.DrawString($(if ($name) { "$name  |  managed by Digerati Experts" } else { 'Managed by Digerati Experts' }), $f1, $paper, [single]([int]($Width * 0.08) + 40), [single]($y + [int]($Height * 0.075)))
-        $g.DrawString($support, $f2, $muted, [single]([int]($Width * 0.08) + 40), [single]($y + [int]($Height * 0.105)))
-        if (-not $LockScreen) { $g.DrawString($env:COMPUTERNAME, $f2, $muted, [single]($Width - [int]($Width * 0.08) - 300), [single]($Height - [int]($Height * 0.06))) }
-    } finally { $g.Dispose() }
+        foreach ($it in $layout.items) {
+            if ($it.kind -eq 'logo') {
+                $img = $imgs[$it.which]
+                # a logo whose own colours sit too close to the background gets a contrasting plate behind it
+                $needPlate = "$($o.logoPlate)" -eq 'always'
+                if ("$($o.logoPlate)" -eq 'auto') { $needPlate = [math]::Abs((Get-DEImageLuminance -Image $img) - (Get-DEColorLuminance -Hex $o.background)) -lt 0.3 }
+                if ($needPlate) {
+                    $pad = [int]($it.h * 0.18); $plate = $(if ($onDark) { [System.Drawing.ColorTranslator]::FromHtml('#F7F5F2') } else { [System.Drawing.ColorTranslator]::FromHtml('#050312') })
+                    $path = New-DERoundedRectPath -X ($it.x - $pad) -Y ($it.y - $pad) -W ($it.w + 2 * $pad) -H ($it.h + 2 * $pad) -R ([int]($pad * 1.2))
+                    $g.FillPath((New-Object System.Drawing.SolidBrush $plate), $path); $path.Dispose()
+                }
+                $g.DrawImage($img, $it.x, $it.y, $it.w, $it.h)
+            } else {
+                $f = New-Object System.Drawing.Font($fontFamily, [single]$it.size, $(if ($it.muted) { [System.Drawing.FontStyle]::Regular } else { [System.Drawing.FontStyle]::Bold }), [System.Drawing.GraphicsUnit]::Pixel)
+                $br = New-Object System.Drawing.SolidBrush ($(if ($it.muted) { [System.Drawing.Color]::FromArgb(185, $ink) } else { $ink }))
+                # the layout estimated the width; centred and right-aligned lines use the measured width of this font
+                $tx = [single]$it.x; $mw = $g.MeasureString($it.text, $f).Width
+                if ($layout.centered) { $tx = [single](($Width - $mw) / 2) } elseif ($layout.alignRight) { $tx = [single]($Width - $layout.margin - $mw) }
+                $g.DrawString($it.text, $f, $br, $tx, [single]$it.y); $f.Dispose(); $br.Dispose()
+            }
+        }
+        if ($layout.hostname) { $hf = New-Object System.Drawing.Font('Consolas', [single]$layout.hostname.size, [System.Drawing.FontStyle]::Regular, [System.Drawing.GraphicsUnit]::Pixel); $hw = $g.MeasureString($env:COMPUTERNAME, $hf).Width; $g.DrawString($env:COMPUTERNAME, $hf, (New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(150, $ink))), [single]($Width - $layout.margin - $hw), [single]$layout.hostname.y); $hf.Dispose() }
+    } finally { $g.Dispose(); foreach ($i in $imgs.Values) { $i.Dispose() } }
     $bmp.Save($OutFile, [System.Drawing.Imaging.ImageFormat]::Png); $bmp.Dispose()
+    return $OutFile
+}
+function Get-DEImageLuminance {
+    <# Average luminance of an image's visible (non-transparent) pixels, sampled on a small copy. #>
+    param([Parameter(Mandatory = $true)]$Image)
+    $thumb = New-Object System.Drawing.Bitmap $Image, 32, 32
+    try {
+        $sum = 0.0; $n = 0
+        for ($x = 0; $x -lt 32; $x++) { for ($y = 0; $y -lt 32; $y++) { $c = $thumb.GetPixel($x, $y); if ($c.A -gt 64) { $sum += (0.2126 * $c.R + 0.7152 * $c.G + 0.0722 * $c.B) / 255.0; $n++ } } }
+        if (-not $n) { return 0.5 }
+        return [math]::Round($sum / $n, 3)
+    } finally { $thumb.Dispose() }
+}
+function New-DERoundedRectPath { param([int]$X, [int]$Y, [int]$W, [int]$H, [int]$R) $p = New-Object System.Drawing.Drawing2D.GraphicsPath; $d = [math]::Max(2, 2 * $R); $p.AddArc($X, $Y, $d, $d, 180, 90); $p.AddArc($X + $W - $d, $Y, $d, $d, 270, 90); $p.AddArc($X + $W - $d, $Y + $H - $d, $d, $d, 0, 90); $p.AddArc($X, $Y + $H - $d, $d, $d, 90, 90); $p.CloseFigure(); return $p }
+function New-DEOemLogo {
+    <# The 120x120 BMP Windows shows on Settings > System > About ("Managed by"): the DE mark (or the client's logo when branding.oemLogo = 'client'). #>
+    param($ClientProfile, [string]$OutFile)
+    Add-Type -AssemblyName System.Drawing
+    $de = Get-DEConsole
+    if (-not $OutFile) { $OutFile = Join-Path $de.Dirs.Base 'branding\oem-logo.bmp' }
+    New-Item -ItemType Directory -Path (Split-Path -Parent $OutFile) -Force -WhatIf:$false | Out-Null
+    $src = Join-Path (Join-Path (Join-Path $de.Root 'assets') 'brand') 'digerati-mark-1024.png'
+    if ("$(Get-DEHashPath -Object $ClientProfile -Path 'branding.oemLogo')" -eq 'client') { $a = Get-DEBrandingAssets -ClientProfile $ClientProfile -Background '#FFFFFF'; if ($a.clientLogo) { $src = $a.clientLogo } }
+    $bmp = New-Object System.Drawing.Bitmap 120, 120; $g = [System.Drawing.Graphics]::FromImage($bmp)
+    try { $g.Clear([System.Drawing.Color]::White); $g.InterpolationMode = 'HighQualityBicubic'; $img = [System.Drawing.Image]::FromFile($src); try { $s = [math]::Min(104 / $img.Width, 104 / $img.Height); $w = [int]($img.Width * $s); $h = [int]($img.Height * $s); $g.DrawImage($img, [int]((120 - $w) / 2), [int]((120 - $h) / 2), $w, $h) } finally { $img.Dispose() } } finally { $g.Dispose() }
+    $bmp.Save($OutFile, [System.Drawing.Imaging.ImageFormat]::Bmp); $bmp.Dispose()
     return $OutFile
 }
 
 function Get-DEBrandingState {
     $wall = Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP' -Name 'DesktopImagePath'
     $lock = Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP' -Name 'LockScreenImagePath'
-    $oem = @{ manufacturer = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'Manufacturer'); supportUrl = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'SupportURL'); supportPhone = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'SupportPhone'); supportHours = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'SupportHours') }
+    $oem = @{ manufacturer = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'Manufacturer'); supportUrl = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'SupportURL'); supportPhone = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'SupportPhone'); logo = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'Logo'); supportHours = (Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation' -Name 'SupportHours') }
     return @{ wallpaper = $wall; lockScreen = $lock; applied = [bool]($wall -and "$wall" -match '\\DE\\'); oem = $oem; hostname = $env:COMPUTERNAME }
 }
 
@@ -442,7 +579,9 @@ function Set-DEBranding {
     Set-DERegistryValue -Path $oem -Name 'Manufacturer' -Value 'Managed by Digerati Experts' -Type String
     Set-DERegistryValue -Path $oem -Name 'SupportURL' -Value 'https://portal.digeratiexperts.com/portal/login' -Type String
     Set-DERegistryValue -Path $oem -Name 'SupportHours' -Value 'Monday to Friday, 8:00 to 17:00 (Arizona)' -Type String
-    return "wallpaper $w; lock screen $l; OEM support info set (applies at next sign-in)"
+    $logoNote = ''
+    if ("$(Get-DEHashPath -Object $ClientProfile -Path 'branding.oemLogo')" -ne 'none') { try { $lb = Join-Path $dest 'oem-logo.bmp'; Copy-Item -LiteralPath (New-DEOemLogo -ClientProfile $ClientProfile) -Destination $lb -Force; Set-DERegistryValue -Path $oem -Name 'Logo' -Value $lb -Type String; $logoNote = '; About-page logo set' } catch { $logoNote = "; About-page logo skipped ($($_.Exception.Message))" } }
+    return "wallpaper $w; lock screen $l; OEM support info set$logoNote (applies at next sign-in)"
 }
 
 function Undo-DEBranding {
@@ -455,7 +594,7 @@ function Undo-DEBranding {
     if ($prev -and (Get-DECfgProp $prev 'wallpaper')) { Set-DERegistryValue -Path $csp -Name 'DesktopImagePath' -Value (Get-DECfgProp $prev 'wallpaper') -Type String; Set-DERegistryValue -Path $csp -Name 'DesktopImageStatus' -Value 1 -Type DWord }
     if ($prev -and (Get-DECfgProp $prev 'lockScreen')) { Set-DERegistryValue -Path $csp -Name 'LockScreenImagePath' -Value (Get-DECfgProp $prev 'lockScreen') -Type String; Set-DERegistryValue -Path $csp -Name 'LockScreenImageStatus' -Value 1 -Type DWord }
     $oem = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation'
-    foreach ($n in @('Manufacturer', 'SupportURL', 'SupportHours')) { $pv = Get-DEHashPath -Object $prev -Path "oem.$($n.Substring(0,1).ToLower() + $n.Substring(1))"; if ($pv) { Set-DERegistryValue -Path $oem -Name $n -Value $pv -Type String } else { Remove-ItemProperty -Path $oem -Name $n -ErrorAction SilentlyContinue } }
+    foreach ($n in @('Manufacturer', 'SupportURL', 'SupportHours', 'Logo')) { $pv = Get-DEHashPath -Object $prev -Path "oem.$($n.Substring(0,1).ToLower() + $n.Substring(1))"; if ($pv) { Set-DERegistryValue -Path $oem -Name $n -Value $pv -Type String } else { Remove-ItemProperty -Path $oem -Name $n -ErrorAction SilentlyContinue } }
     Set-DEStateValue -Path 'branding.previous' -Value $null   # the next apply records the look it replaces again
     return 'branding restored to the recorded previous state'
 }
@@ -512,4 +651,4 @@ function Register-DEBrandingActions {
         -Apply { param($s) $want = $s.Detected.want; Rename-Computer -NewName $want -Force; "renamed to $want (restart required)" }
 }
 
-Export-ModuleMember -Function Get-DEBrowserControlCatalog, Get-DEChromiumBrowsers, Get-DEBrowserExtensionPlan, ConvertTo-DEChromiumForceEntry, Test-DEFirefoxInstalled, Get-DEFirefoxDesiredPolicy, Compare-DEFirefoxPolicy, Set-DEFirefoxPolicy, Get-DEInstalledBrowserExtensions, Test-DEBrowserExtensionConflicts, Get-DEBaselineControls, Get-DEBaselineControlState, Set-DEBaselineControl, Invoke-DEBaselineAssessment, Register-DEBaselineActions, Get-DEBrowserPolicyProfile, Get-DEBrowserDesiredPolicy, Compare-DEBrowserPolicy, Set-DEBrowserPolicy, Set-DEDefaultBrowserAssociations, Register-DEBrowserActions, Get-DEBrandingAssets, New-DEBrandedWallpaper, Get-DEBrandingState, Set-DEBranding, Undo-DEBranding, New-DEHostname, Get-DEShortcutDefinitions, Set-DESupportShortcuts, Register-DEBrandingActions
+Export-ModuleMember -Function Get-DEColorLuminance, Get-DEBrandingOptions, Get-DEBrandingLayout, Get-DEPrimaryScreenSize, Get-DEImageLuminance, New-DEOemLogo, Get-DEBrowserControlCatalog, Get-DEChromiumBrowsers, Get-DEBrowserExtensionPlan, ConvertTo-DEChromiumForceEntry, Test-DEFirefoxInstalled, Get-DEFirefoxDesiredPolicy, Compare-DEFirefoxPolicy, Set-DEFirefoxPolicy, Get-DEInstalledBrowserExtensions, Test-DEBrowserExtensionConflicts, Get-DEBaselineControls, Get-DEBaselineControlState, Set-DEBaselineControl, Invoke-DEBaselineAssessment, Register-DEBaselineActions, Get-DEBrowserPolicyProfile, Get-DEBrowserDesiredPolicy, Compare-DEBrowserPolicy, Set-DEBrowserPolicy, Set-DEDefaultBrowserAssociations, Register-DEBrowserActions, Get-DEBrandingAssets, New-DEBrandedWallpaper, Get-DEBrandingState, Set-DEBranding, Undo-DEBranding, New-DEHostname, Get-DEShortcutDefinitions, Set-DESupportShortcuts, Register-DEBrandingActions

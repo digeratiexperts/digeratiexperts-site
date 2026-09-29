@@ -327,7 +327,7 @@ if ($highContrast) {
 $UI = @{}
 foreach ($n in @('NavPanel', 'PageHost', 'TxtVersion', 'TxtModeBadge', 'HdrTech', 'HdrClient', 'HdrClientWhy', 'HdrUser', 'HdrUserWhy', 'HdrDevice', 'HdrDeviceSub', 'HdrReady', 'TxtStatus', 'Progress', 'BtnCancel', 'BrandLogo')) { $UI[$n] = $Win.FindName($n) }
 $UI.TxtVersion.Text = "v$((Get-DEConsole).ConsoleVersion)"; $Win.Title = "DE Tech Tool v$((Get-DEConsole).ConsoleVersion)"
-$brandLogoPath = Join-Path $ConsoleRoot 'assets\brand\digerati-logo-reverse-600.png'
+$brandLogoPath = Join-Path $ConsoleRoot 'assets\brand\digerati-logo-reverse-2400.png'; if (-not (Test-Path -LiteralPath $brandLogoPath)) { $brandLogoPath = Join-Path $ConsoleRoot 'assets\brand\digerati-logo-reverse-600.png' }
 $brandIconPath = Join-Path $ConsoleRoot 'assets\brand\digerati-mark-tile-64.png'
 try {
     if ($UI.BrandLogo -and (Test-Path -LiteralPath $brandLogoPath)) {
@@ -973,11 +973,50 @@ function Build-BrowserPreview {
 }
 function Build-Branding {
     param($root)
-    $img = New-El Image @{ Height = 320; Stretch = 'Uniform'; HorizontalAlignment = 'Left'; Margin = '0,8,0,8' }
-    $preview = New-Button 'Generate preview' { try { $f = New-DEBrandedWallpaper -ClientProfile $S.Profile -Width 1600 -Height 900; $bi = New-Object System.Windows.Media.Imaging.BitmapImage; $bi.BeginInit(); $bi.CacheOption = 'OnLoad'; $bi.UriSource = [uri]$f; $bi.EndInit(); $img.Source = $bi; Set-Status "preview: $f" } catch { Set-Status $_.Exception.Message } }.GetNewClosure() -Primary
-    $logo = New-Button 'Choose client logo' { $d = New-Object System.Windows.Forms.OpenFileDialog; $d.Filter = 'Images|*.png;*.jpg;*.jpeg'; if ($d.ShowDialog() -eq 'OK') { $dest = Join-Path (Get-DEConsole).Dirs.Profiles ("{0}-logo{1}" -f $S.Profile.id, [IO.Path]::GetExtension($d.FileName)); Copy-Item -LiteralPath $d.FileName -Destination $dest -Force; $S.Profile.branding.clientLogo = (Split-Path -Leaf $dest); $null = Save-DEClientProfile -Profile $S.Profile; Set-Status "client logo saved to the profile" } }
-    $undo = New-Button 'Undo branding' { if (Confirm-Gui 'Undo branding' 'Restore the previous wallpaper, lock screen and OEM info?') { Start-DEJob -Label 'Undo branding' -Work { Undo-DEBranding } } }
-    [void]$root.Children.Add((New-Card @((New-Text 'Branding' 15 -Bold), (New-Text "Hostname pattern $($S.Profile.branding.hostnamePattern) -> $(New-DEHostname -ClientProfile $S.Profile)" -Muted), (New-Wrap @($preview, $logo, $undo)), $img)))
+    # the options edit the loaded profile for this session; 'Save to client profile' writes them to the client's profile file
+    if (-not $S.Profile.branding) { $S.Profile.branding = @{} }
+    if (-not $S.BrandTarget) { $S.BrandTarget = 'wallpaper' }
+    $key = $S.BrandTarget
+    if (-not $S.Profile.branding[$key]) { $S.Profile.branding[$key] = @{} }
+    $o = Get-DEBrandingOptions -ClientProfile $S.Profile -LockScreen:($key -eq 'lockScreen')
+    $set = { param($name, $value) $S.Profile.branding[$S.BrandTarget][$name] = $value }
+    $combo = { param($label, $name, [string[]]$items, $current) $cb = New-El ComboBox @{ Width = 150; Name = $label }; foreach ($i in $items) { [void]$cb.Items.Add($i) }; $cb.SelectedIndex = [math]::Max(0, [array]::IndexOf($items, "$current")); $n = $name; $cb.Add_SelectionChanged({ & $set $n "$($cb.SelectedItem)" }.GetNewClosure()); New-El StackPanel @{ Margin = '0,0,12,0' } @((New-Label $label), $cb) }
+    $slider = { param($label, $name, $min, $max, $current) $sl = New-El Slider @{ Minimum = $min; Maximum = $max; Value = [double]$current; Width = 170; TickFrequency = 1; IsSnapToTickEnabled = $true; Name = $label }; $lb = New-El TextBlock @{ Text = "$label  $([double]$current)%"; Style = 'Eyebrow'; Margin = '0,6,0,2' }; $n = $name; $sl.Add_ValueChanged({ & $set $n ([double]$sl.Value); $lb.Text = "$label  $([double]$sl.Value)%" }.GetNewClosure()); New-El StackPanel @{ Margin = '0,0,12,0' } @($lb, $sl) }
+    $check = { param($label, $name, $current) $c = New-El CheckBox @{ Content = $label; IsChecked = [bool]$current; Margin = '0,4,14,4' }; $n = $name; $c.Add_Click({ & $set $n ([bool]$c.IsChecked) }.GetNewClosure()); $c }
+    $text = { param($label, $name, $current, $w) $t = New-El TextBox @{ Text = "$current"; Width = $w; Name = $label }; $n = $name; $t.Add_LostFocus({ & $set $n $t.Text }.GetNewClosure()); New-El StackPanel @{ Margin = '0,0,12,0' } @((New-Label $label), $t) }
+    $pick = { param($title, [scriptblock]$onFile) $d = New-Object System.Windows.Forms.OpenFileDialog; $d.Filter = 'Images|*.png;*.jpg;*.jpeg'; $d.Title = $title; if ($d.ShowDialog() -eq 'OK') { & $onFile $d.FileName } }
+    $img = New-El Image @{ Height = 440; Stretch = 'Uniform'; HorizontalAlignment = 'Left'; Margin = '0,8,0,8' }
+    $info = New-El TextBlock @{ Style = 'Mono'; Text = 'No preview yet.' }
+    $render = { param([switch]$Lock) try { $f = New-DEBrandedWallpaper -ClientProfile $S.Profile -LockScreen:$Lock; $bi = New-Object System.Windows.Media.Imaging.BitmapImage; $bi.BeginInit(); $bi.CacheOption = 'OnLoad'; $bi.UriSource = [uri]$f; $bi.EndInit(); $img.Source = $bi; $info.Text = "$(if ($Lock) { 'Lock screen' } else { 'Wallpaper' }) $($bi.PixelWidth)x$($bi.PixelHeight): $f" } catch { Set-Status $_.Exception.Message } }.GetNewClosure()
+    $copyLogo = { param($src, $suffix) $dest = Join-Path (Get-DEConsole).Dirs.Profiles ("{0}-logo{1}{2}" -f $S.Profile.id, $suffix, [IO.Path]::GetExtension($src)); Copy-Item -LiteralPath $src -Destination $dest -Force; Split-Path -Leaf $dest }
+    $targetSwitch = New-Wrap @(
+        (New-Button $(if ($key -eq 'wallpaper') { '> Editing: wallpaper' } else { 'Edit wallpaper' }) { $S.BrandTarget = 'wallpaper'; Show-Page 'Branding' } -Primary:($key -eq 'wallpaper')),
+        (New-Button $(if ($key -eq 'lockScreen') { '> Editing: lock screen' } else { 'Edit lock screen' }) { $S.BrandTarget = 'lockScreen'; Show-Page 'Branding' } -Primary:($key -eq 'lockScreen')))
+    $look = New-Wrap @(
+        (& $combo 'Background' 'theme' @('dark', 'light', 'accent', 'image') $o.theme),
+        (& $text 'Background colour (#RRGGBB)' 'background' $o.background 120),
+        (& $combo 'Position' 'position' @('lower-left', 'lower-center', 'lower-right', 'center', 'upper-left', 'upper-right') $o.position),
+        (& $combo 'Logos' 'logos' @('both', 'client', 'de') $o.logos),
+        (& $combo 'DE logo' 'deLogoStyle' @('horizontal', 'stacked', 'mark') $o.deLogoStyle),
+        (& $combo 'Logo backing' 'logoPlate' @('auto', 'always', 'never') $o.logoPlate),
+        (& $combo 'Resolution' 'resolution' @('auto', '1920x1080', '2560x1440', '3440x1440', '3840x2160', '5120x2880') $o.resolution))
+    $sizes = New-Wrap @((& $slider 'Client logo height' 'logoHeightPct' 4 24 $o.logoHeightPct), (& $slider 'DE logo height (with client logo)' 'deLogoHeightPct' 3 18 $o.deLogoHeightPct), (& $slider 'Photo dimming' 'imageDim' 0 90 ([double]$o.imageDim * 100)))
+    $lines = New-Wrap @((& $check 'Client name' 'showClientName' $o.showClientName), (& $check 'Managed by Digerati Experts' 'showManagedBy' $o.showManagedBy), (& $check 'Support line' 'showSupport' $o.showSupport), (& $check 'Hostname badge' 'showHostname' $o.showHostname), (& $check 'Accent bar' 'accentBar' $o.accentBar), (& $check 'Gradient glow' 'gradient' $o.gradient), (& $text 'Extra line' 'customLine' $o.customLine 300), (& $text 'Accent colour' 'accent' $o.accent 100))
+    $files = New-Wrap @(
+        (New-Button 'Client logo...' { & $pick 'Client logo (transparent PNG, at least 1200 px wide)' { param($f) $S.Profile.branding.clientLogo = (& $copyLogo $f ''); Set-Status 'Client logo set for this session.' } }.GetNewClosure()),
+        (New-Button 'Client logo for dark backgrounds...' { & $pick 'Light or white version of the client logo' { param($f) $S.Profile.branding.clientLogoReverse = (& $copyLogo $f '-reverse'); Set-Status 'Dark-background logo set for this session.' } }.GetNewClosure()),
+        (New-Button 'Background photo...' { & $pick 'Background photo (at least the screen resolution)' { param($f) & $set 'image' (Join-Path (Get-DEConsole).Dirs.Profiles (& $copyLogo $f '-background')); & $set 'theme' 'image'; Show-Page 'Branding' } }.GetNewClosure()),
+        (New-El ComboBox @{ Width = 170; Name = 'About page logo' }))
+    $oemCb = $files.Children[3]; foreach ($i in @('DE mark (About page)', 'Client logo (About page)', 'No About page logo')) { [void]$oemCb.Items.Add($i) }; $oemCb.SelectedIndex = [math]::Max(0, [array]::IndexOf(@('de', 'client', 'none'), "$(if ($S.Profile.branding.oemLogo) { $S.Profile.branding.oemLogo } else { 'de' })")); $oemCb.Add_SelectionChanged({ $S.Profile.branding.oemLogo = @('de', 'client', 'none')[[math]::Max(0, $oemCb.SelectedIndex)] }.GetNewClosure())
+    $actions = New-Wrap @(
+        (New-Button 'Preview wallpaper' { & $render } -Primary),
+        (New-Button 'Preview lock screen' { & $render -Lock }),
+        (New-Button 'Save to client profile' { try { $base = ConvertTo-DEHashtable (Get-DEClientProfile -Id $S.Profile.id); $base['branding'] = ConvertTo-DEHashtable $S.Profile.branding; $f = Save-DEClientProfile -Profile $base; Set-Status "Branding saved to $f" } catch { Set-Status $_.Exception.Message } }),
+        (New-Button 'Reset these options' { $S.Profile.branding[$S.BrandTarget] = @{}; Show-Page 'Branding' }),
+        (New-Button 'Apply to this device' { if (Confirm-Gui 'Apply branding' 'Set the wallpaper, lock screen and About-page info on this device now? Undo branding restores the previous look.') { Start-DEJob -Label 'Apply branding' -Work { Invoke-DEAction -Id 'branding.apply' -Mode Apply } } }),
+        (New-Button 'Undo branding' { if (Confirm-Gui 'Undo branding' 'Restore the previous wallpaper, lock screen and OEM info?') { Start-DEJob -Label 'Undo branding' -Work { Undo-DEBranding } } }))
+    $tips = New-Text 'Tips: use transparent PNG logos at least 1200 px wide; give a light version for dark backgrounds (otherwise the logo gets a light backing plate automatically). The DE logo switches to its white version on dark backgrounds by itself. Previews render at the chosen resolution (auto = this screen).' -Muted -Wrap
+    [void]$root.Children.Add((New-Card @((New-Text 'Branding' 15 -Bold), (New-Text "Hostname pattern $($S.Profile.branding.hostnamePattern) -> $(New-DEHostname -ClientProfile $S.Profile)" -Muted), $targetSwitch, (New-Label 'Look'), $look, (New-Label 'Sizes'), $sizes, (New-Label 'Text'), $lines, (New-Label 'Files'), $files, $tips, $actions, $info, $img)))
     [void]$root.Children.Add((New-ActionGrid -Modules @('branding') -Title 'Branding actions'))
 }
 function Build-OpsConfirm {
