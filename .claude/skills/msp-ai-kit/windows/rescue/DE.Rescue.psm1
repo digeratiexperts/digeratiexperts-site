@@ -226,7 +226,7 @@ function Get-DERescueDiskHealth {
         foreach ($d in @(Get-PhysicalDisk -ErrorAction Stop)) {
             $rel = $null; try { $rel = $d | Get-StorageReliabilityCounter -ErrorAction Stop } catch { $rel = $null }
             $out += [pscustomobject]@{ name = "$($d.FriendlyName)"; mediaType = "$($d.MediaType)"; health = "$($d.HealthStatus)"; sizeGB = [math]::Round($d.Size / 1GB, 0)
-                wear = $(if ($rel) { $rel.Wear }); temperature = $(if ($rel) { $rel.Temperature }); readErrors = $(if ($rel) { $rel.ReadErrorsUncorrected }) }
+                wear = $(if ($rel) { $rel.Wear } else { $null }); temperature = $(if ($rel) { $rel.Temperature } else { $null }); readErrors = $(if ($rel) { $rel.ReadErrorsUncorrected } else { $null }) }
         }
     } catch { $out += [pscustomobject]@{ name = 'unknown'; mediaType = ''; health = "not readable here: $($_.Exception.Message)"; sizeGB = $null; wear = $null; temperature = $null; readErrors = $null } }
     return $out

@@ -28,6 +28,10 @@ Describe 'Shared contracts' {
         $o = [ordered]@{ a = 'x<y>&z"q'; n = 1; f = 1.5; b = $true; z = $null; arr = @(1, 'two', [ordered]@{ k = 'v' }); one = @('single'); empty = @(); nested = [ordered]@{ t = "tab`there" } }
         ConvertTo-DECanonicalJson $o | Should -BeExactly '{"a":"x<y>&z\"q","n":1,"f":1.5,"b":true,"z":null,"arr":[1,"two",{"k":"v"}],"one":["single"],"empty":[],"nested":{"t":"tab\there"}}'
     }
+    It 'an empty object is written {}, never a nameless key, including after a JSON round trip' {
+        ConvertTo-DECanonicalJson ('{"a":{},"b":{"c":null},"d":[{}]}' | ConvertFrom-Json) | Should -BeExactly '{"a":{},"b":{"c":null},"d":[{}]}'
+        ConvertTo-DECanonicalJson ([ordered]@{ x = $(if ($false) { 1 } else { $null }); y = @{}; z = [pscustomobject]@{} }) | Should -BeExactly '{"x":null,"y":{},"z":{}}'
+    }
     It 'signs exactly like the Hub (vector cross-checked with Node crypto)' {
         $body = '{"a":"x<y>&z\"q","n":1,"f":1.5,"b":true,"z":null,"arr":[1,"two",{"k":"v"}]}'
         # node: createHmac('sha256','k').update(['POST',path,ts,'e1',sha256hex(body)].join('\n'))
@@ -99,7 +103,9 @@ Describe 'Shared contracts' {
         $r = Send-DEHubMigrationRecord -Path $out -AccountId '42' -Confirm:$false
         $r.sent | Should -Be $true
         $s = $global:DETest.Sent
-        try { $ev = $s.Body | ConvertFrom-Json } catch { Write-Host "RECORD: $(Get-Content -LiteralPath $out -Raw)"; Write-Host "BODY: $($s.Body)"; throw }
+        $s.Body | Should -Not -Match '"":'
+        $ev = $s.Body | ConvertFrom-Json
+        $ev.payload.identityMap[0].contacts | Should -BeNullOrEmpty
         $s.Uri | Should -Be 'https://hub.example/api/integrations/v1/techconsole/events'
         $ev.eventType | Should -Be 'email_migration.recorded'; $ev.entityType | Should -Be 'email_migration'; $ev.entityId | Should -Be 'alamo-mail'; $ev.canonicalAccountId | Should -Be '42'
         @($ev.payload.checks).Count | Should -Be 2; $ev.payload.identityMap[0].multiFactor.registered | Should -Be $true

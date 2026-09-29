@@ -271,6 +271,8 @@ Describe 'DE email migration' {
             # the Hub's intake refuses secret-looking keys ('mfa' among them): check names travel as values
             @($rec.checks).Count | Should -Be 13; @($rec.checks | Where-Object { $_.check -eq 'MFA' }).Count | Should -Be 1
             $rec.PSObject.Properties['verification'] | Should -BeNullOrEmpty
+            # a person with nothing imported exports null, not {} (Windows PowerShell 5.1 writes an unset value as {})
+            (Get-Content -LiteralPath $out -Raw) | Should -Not -Match '"(contacts|calendar)":\s*\{\s*\}'
             (Get-Content -LiteralPath $out -Raw) | Should -Not -Match '"[^"]*(?i:passw|secret|token|mfa|seed)[^"]*"\s*:'
         }
         It 'the PC scan runs anywhere and reports nothing when no mail app points at Gmail' {

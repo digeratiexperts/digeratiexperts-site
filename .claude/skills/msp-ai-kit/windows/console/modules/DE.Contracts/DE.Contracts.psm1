@@ -42,7 +42,13 @@ function Get-DEContractProp {
     else { $p = $Object.PSObject.Properties[$Name]; if ($p) { $has = $true; $v = $p.Value } }
     return @{ has = $has; value = $v }
 }
-function Get-DEContractKeys { param($Object) if ($Object -is [System.Collections.IDictionary]) { return @($Object.Keys | ForEach-Object { "$_" }) }; return @($Object.PSObject.Properties | ForEach-Object { $_.Name }) }
+function Get-DEContractKeys {
+    # Named keys only. Windows PowerShell 5.1 writes an unset value ($() that produced nothing) as {} and reads {} back
+    # as an object whose property list holds one nameless entry; emitting it as "" makes JSON 5.1 cannot read again.
+    param($Object)
+    if ($Object -is [System.Collections.IDictionary]) { return @($Object.Keys | ForEach-Object { "$_" } | Where-Object { $_ -ne '' }) }
+    return @($Object.PSObject.Properties | ForEach-Object { "$($_.Name)" } | Where-Object { $_ -ne '' })
+}
 function Test-DEContractNode {
     param($Node, $Schema, [string]$Path)
     $out = New-Object System.Collections.Generic.List[string]
@@ -222,7 +228,11 @@ function ConvertTo-DECanonicalJson {
         'number' { return (ConvertTo-DEJsNumber ([double]$Object)) }
         'string' { if ($Object -is [datetime]) { return (ConvertTo-DEJsonString $Object.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", [Globalization.CultureInfo]::InvariantCulture)) }; return (ConvertTo-DEJsonString "$Object") }
         'array' { return '[' + ((@($Object) | ForEach-Object { ConvertTo-DECanonicalJson $_ }) -join ',') + ']' }
-        default { return '{' + ((Get-DEJsKeyOrder (Get-DEContractKeys $Object) | ForEach-Object { (ConvertTo-DEJsonString $_) + ':' + (ConvertTo-DECanonicalJson (Get-DEContractProp $Object $_).value) }) -join ',') + '}' }
+        default {
+            # an empty object has no keys: passing an empty list on would bind as $null and come back as one nameless key
+            $keys = @(Get-DEContractKeys $Object); if (-not $keys.Count) { return '{}' }
+            return '{' + ((Get-DEJsKeyOrder $keys | ForEach-Object { (ConvertTo-DEJsonString $_) + ':' + (ConvertTo-DECanonicalJson (Get-DEContractProp $Object $_).value) }) -join ',') + '}'
+        }
     }
 }
 function Get-DEHubSignature {
