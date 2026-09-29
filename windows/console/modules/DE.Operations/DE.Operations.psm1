@@ -174,6 +174,17 @@ function Sync-DEClock {
     return "w32tm /resync exit $($r.ExitCode)"
 }
 
+function Get-DERescueHandoffState {
+    <# Boot rescue handoffs waiting for review, ones failing their contract, and ones for a different device than this one. #>
+    param([Parameter(Mandatory = $true)][string]$Directory)
+    $all = @(Get-DEHandoffs -Directory $Directory)
+    $inv = Get-DEDeviceInventory; $mine = $null; try { $mine = ConvertTo-DEDeviceKey -Manufacturer "$($inv.manufacturer)" -Serial "$($inv.serial)" } catch { $mine = $null }
+    $open = @($all | Where-Object { -not $_.reviewed })
+    $other = @($all | Where-Object { $_.handoff -and $mine -and "$($_.handoff.deviceKey)" -ne $mine })
+    $notes = @($open | Where-Object { $_.handoff } | ForEach-Object { @($_.handoff.actions | ForEach-Object { "$($_.action) $($_.result)" }) + @($_.handoff.recommendations) } | Select-Object -First 12)
+    return @{ unreviewed = $open.Count; invalid = @($all | Where-Object { $_.problems.Count }).Count; otherDevice = $other.Count; detail = ($notes -join ' | ') }
+}
+
 # ------------------------------------------------------------------ actions
 function Register-DEOperationsActions {
     param($ClientProfile)
@@ -221,14 +232,7 @@ function Register-DEOperationsActions {
     $handoffDir = Join-Path (Get-DEConsole).Dirs.Base 'handoff'
     if (@(Get-ChildItem -LiteralPath $handoffDir -Filter '*.json' -File -ErrorAction SilentlyContinue).Count) {
         Register-DEAction -Id 'rescue.handoff' -Module 'maintenance' -Title 'Review what the boot rescue did' -Phase 1 `
-            -Detect {
-                $all = @(Get-DEHandoffs -Directory $handoffDir)
-                $inv = Get-DEDeviceInventory; $mine = $null; try { $mine = ConvertTo-DEDeviceKey -Manufacturer "$($inv.manufacturer)" -Serial "$($inv.serial)" } catch { $mine = $null }
-                $open = @($all | Where-Object { -not $_.reviewed })
-                $other = @($all | Where-Object { $_.handoff -and $mine -and "$($_.handoff.deviceKey)" -ne $mine })
-                $notes = @($open | Where-Object { $_.handoff } | ForEach-Object { @($_.handoff.actions | ForEach-Object { "$($_.action) $($_.result)" }) + @($_.handoff.recommendations) } | Select-Object -First 12)
-                @{ unreviewed = $open.Count; invalid = @($all | Where-Object { $_.problems.Count }).Count; otherDevice = $other.Count; detail = ($notes -join ' | ') }
-            }.GetNewClosure() -Desired { @{ unreviewed = 0; invalid = 0; otherDevice = 0 } } `
+            -Detect { Get-DERescueHandoffState -Directory $handoffDir }.GetNewClosure() -Desired { @{ unreviewed = 0; invalid = 0; otherDevice = 0 } } `
             -Apply { param($s) $tech = "$((Get-DEContext)['technician'])"; if (-not $tech) { throw 'set the technician first (Session page) so the review is recorded against a name' }; $n = 0; foreach ($h in @(Get-DEHandoffs -Directory $handoffDir | Where-Object { -not $_.reviewed -and -not $_.problems.Count })) { $null = Confirm-DEHandoffReviewed -Path $h.path -Technician $tech; $n++ }; "marked $n handoff(s) reviewed by $tech" }.GetNewClosure() `
             -ManualAction 'Read the rescue recommendations (rotate a used BitLocker recovery password, keep the profile USB until the user confirms). A handoff for another device or one that fails its contract is investigated, not marked reviewed.'
     }
@@ -279,4 +283,4 @@ function Confirm-DEOperationalCheck {
     if ($PSCmdlet.ShouldProcess($Check, 'record confirmation')) { Set-DEStateValue -Path $Check -Value (Get-Date).ToString('o'); Add-DEEvidence -Step "confirm.$Check" -Module 'operations' -Before 'unconfirmed' -ActionTaken 'technician confirmed' -Result 'PASS' -Verification $Note | Out-Null }
 }
 
-Export-ModuleMember -Function Install-DEWindowsUpdates, Get-DEOemTool, Invoke-DEOemScan, Invoke-DEOemUpdate, Get-DEBatteryHealth, Add-DEWifiProfile, Add-DEPrinter, Import-DECertificate, Test-DESiteResources, Register-DEOperationsActions, Confirm-DEOperationalCheck
+Export-ModuleMember -Function Get-DERescueHandoffState, Install-DEWindowsUpdates, Get-DEOemTool, Invoke-DEOemScan, Invoke-DEOemUpdate, Get-DEBatteryHealth, Add-DEWifiProfile, Add-DEPrinter, Import-DECertificate, Test-DESiteResources, Register-DEOperationsActions, Confirm-DEOperationalCheck
