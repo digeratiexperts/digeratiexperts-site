@@ -191,7 +191,9 @@ Describe 'Boot rescue' {
         $h = New-DEHandoff -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -Model 'X1' -Technician 'jrpetro' -Version '1.7.0'
         $null = Add-DEHandoffAction -Handoff $h -Action 'unlock' -Result 'PASS' -Detail 'D: unlocked'
         $null = Save-DEHandoff -Handoff $h -Path (Join-Path $dir 'rescue-1.json')
-        Mock -ModuleName DE.Discovery Get-DEDeviceInventory { @{ manufacturer = 'LENOVO'; serial = 'PF3ABC12' } }
+        # the step's Detect is a closure made in DE.Operations, so that is where the call must be mocked (Windows CI
+        # otherwise reads the runner's real serial and, rightly, calls the handoff another device's)
+        Mock -ModuleName DE.Operations Get-DEDeviceInventory { @{ manufacturer = 'LENOVO'; serial = 'PF3ABC12' } }
         @(Initialize-DEWorkflow -ClientProfile (Get-DEClientProfile -Id 'alamo') -Mode 'takeover') | Should -Contain 'rescue.handoff'
         (@((Get-DERunbook -Mode 'takeover').stages | Where-Object { $_.id -eq 'check' })[0].steps | ForEach-Object { $_.id })[0] | Should -Be 'rescue.handoff'
         $a = Get-DEAction -Id 'rescue.handoff'
@@ -202,6 +204,9 @@ Describe 'Boot rescue' {
         & $a.Apply @{ Detected = $d } | Should -Match 'marked 1'
         (& $a.Detect).unreviewed | Should -Be 0
         (Get-Content -LiteralPath (Join-Path $dir 'rescue-1.json') -Raw | ConvertFrom-Json).reviewedBy | Should -Be 'jrpetro'
+        # a handoff from another laptop (a rescue USB reused) is flagged, never passed
+        Mock -ModuleName DE.Operations Get-DEDeviceInventory { @{ manufacturer = 'LENOVO'; serial = 'OTHER999' } }
+        (& $a.Detect).otherDevice | Should -Be 1
     }
     It 'the media build plan adds components in dependency order, copies the contracts, and marks the USB step destructive' {
         $plan = @(Get-DERescueBuildPlan -AdkRoot 'C:\ADK' -WorkDir 'C:\W' -WindowsRoot 'C:\DE\windows' -IsoPath 'C:\out\r.iso' -UsbDrive 'E:')
