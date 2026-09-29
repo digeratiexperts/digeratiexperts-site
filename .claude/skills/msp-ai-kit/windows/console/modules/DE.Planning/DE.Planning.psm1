@@ -215,7 +215,9 @@ function Select-DEPlanActions {
         }
         foreach ($m in @(Get-DEHashPath -Object $plan -Path 'manualSteps' | Where-Object { $_ })) { Register-DEPlanStep -Key $m['key'] -Title $m['title'] -Source $m['source'] }
     }
-    if (Get-DEOrder) { Register-DEOrderActions -Mode $Mode }
+    # an order belongs to one client's device: a leftover order for another client never adds its gates here
+    $order = Get-DEOrder
+    if ($order -and "$($order['client'])" -eq "$(Get-DEHashPath -Object $ClientProfile -Path 'id')") { Register-DEOrderActions -Mode $Mode }
     Set-DEStateValue -Path 'workflow.outOfPlan' -Value $out
     return $out
 }

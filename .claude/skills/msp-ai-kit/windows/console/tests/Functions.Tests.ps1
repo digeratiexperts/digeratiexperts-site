@@ -676,3 +676,16 @@ Describe 'Choices Joe made in review' {
         ($out -join "`n") | Should -Not -Match 'recorded as jrpetro'
     }
 }
+
+Describe 'A dropship order never leaks into later runs' {
+    BeforeAll { . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $global:DETest = @{ Dir = Initialize-TestConsole; Exe = (Get-Process -Id $PID).Path } }
+    It 'an order for another client adds no order checks, and a headless run without -Order clears a leftover one' {
+        $null = Import-DEOrderManifest -Path (Join-Path $script:ConsoleRoot 'catalog/orders/example-dropship-order.json')
+        $other = New-DEClientProfileTemplate; $other['id'] = 'contoso'
+        @(Initialize-DEWorkflow -ClientProfile $other -Mode 'new') | Should -Not -Contain 'order.verify-device'
+        $data = Join-Path $global:DETest.Dir 'leak'
+        $null | & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $script:ConsoleRoot 'DETechConsole.ps1') -Headless -Order (Join-Path $script:ConsoleRoot 'catalog/orders/example-dropship-order.json') -Technician t -DataDir $data 2>&1 | Out-Null
+        $out = $null | & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $script:ConsoleRoot 'DETechConsole.ps1') -Headless -Client alamo -Bundle proactive-office -Technician t -DataDir $data 2>&1 | ForEach-Object { "$_" }
+        ($out -join "`n") | Should -Not -Match 'dropship order'
+    }
+}
