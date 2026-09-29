@@ -83,6 +83,7 @@
         "^maint\\.oem$",
         "^maint\\.bitlocker-resume$",
         "^maint\\.hardware$",
+        "^maint\\.warranty$",
         "^maint\\."
       ]
     },
@@ -158,6 +159,9 @@
     ],
     "jumpcloud.agent": [
       "secret:JC_CONNECT_KEY"
+    ],
+    "maint.warranty": [
+      "warranty-manual"
     ]
   },
   "why": {
@@ -178,6 +182,7 @@
     "jumpcloud.user-mapping": "The local account, the JumpCloud user and the profile must all be the same person before binding.",
     "jumpcloud.bind-user": "Binding makes JumpCloud take over the local account and sync the user's JumpCloud password.",
     "security.edr-conflicts": "Two EDRs on one device fight each other and slow it down.",
-    "maint.update-authority": "Exactly one system should control Windows updates (JumpCloud by default)."
+    "maint.update-authority": "Exactly one system should control Windows updates (JumpCloud by default).",
+    "maint.warranty": "An expired warranty turns a hardware fault into a purchase; the client should hear about it before the failure, not after."
   }
 }

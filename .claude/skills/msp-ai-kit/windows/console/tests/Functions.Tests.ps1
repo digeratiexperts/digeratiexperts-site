@@ -1039,3 +1039,53 @@ Describe 'Branding: readable logos, sizes and options' {
     }
 }
 
+Describe 'Warranty: when does it end, and where did the answer come from' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1')
+        $global:DETest = @{ Dir = Initialize-TestConsole; Alamo = Get-DEClientProfile -Id 'alamo' }
+        $global:DETest.LenovoHtml = "<html><script>`nvar ds_warranties = window.ds_warranties || {""BaseWarranties"":[{""Name"":""Depot"",""Start"":""2024-02-01"",""End"":""$((Get-Date).AddYears(1).ToString('yyyy-MM-dd'))""}],""UpmaWarranties"":[{""Name"":""Premier Support"",""Start"":""2024-02-01"",""End"":""$((Get-Date).AddYears(2).ToString('yyyy-MM-dd'))""}]};`nvar other = 1;</script></html>"
+    }
+    It 'parses the Lenovo support page and picks the latest end date' {
+        $e = @(ConvertFrom-DELenovoWarrantyPage -Html $global:DETest.LenovoHtml)
+        $e.Count | Should -Be 2; $e[1].name | Should -Be 'Premier Support'
+        @(ConvertFrom-DELenovoWarrantyPage -Html '<html>nothing here</html>').Count | Should -Be 0
+        Mock -ModuleName DE.Warranty Invoke-DEWarrantyWeb { @(@{ Id = 'Laptops-and-netbooks/ThinkPad-X1/21X0' }) } -ParameterFilter { $Uri -like '*getproducts*' }
+        Mock -ModuleName DE.Warranty Invoke-DEWarrantyWeb { $global:DETest.LenovoHtml } -ParameterFilter { $Uri -like '*/warranty' }
+        $w = Get-DEWarranty -Serial 'PF6CLF01' -Manufacturer 'LENOVO' -Model '21X00004US' -Refresh
+        $w.source | Should -Be 'lenovo-support-site'; $w.status | Should -Be 'active'
+        $w.end | Should -Be ((Get-Date).AddYears(2).ToString('yyyy-MM-dd')); $w.daysLeft | Should -BeGreaterThan 700
+        Assert-MockCalled -ModuleName DE.Warranty Invoke-DEWarrantyWeb -Times 1 -ParameterFilter { $Uri -like '*/products/laptops-and-netbooks/thinkpad-x1/21x0/warranty' }
+        (Get-DEWarranty -Serial 'PF6CLF01' -Manufacturer 'LENOVO').cached | Should -Be $true   # second read comes from the cache
+    }
+    It 'Dell uses TechDirect only with a key, and the key and token never land in the result or state' {
+        (Get-DEWarranty -Serial 'ABC1234' -Manufacturer 'Dell Inc.' -Refresh).status | Should -Be 'manual'   # no key: the check page
+        Mock -ModuleName DE.Warranty Test-DESecret { $true }
+        Mock -ModuleName DE.Warranty Get-DESecretPlain { if ($Name -eq 'DELL_API_KEY') { 'dell-key-123' } else { 'dell-secret-456' } }
+        Mock -ModuleName DE.Warranty Invoke-DEWarrantyWeb { @{ access_token = 'tok-789' } } -ParameterFilter { $Uri -like '*oauth*' }
+        Mock -ModuleName DE.Warranty Invoke-DEWarrantyWeb { @(@{ serviceTag = 'ABC1234'; productLineDescription = 'LATITUDE 7450'; shipDate = '2023-03-01T00:00:00Z'; entitlements = @(@{ serviceLevelDescription = 'ProSupport'; startDate = '2023-03-01T00:00:00Z'; endDate = '2024-03-01T00:00:00Z' }) }) } -ParameterFilter { $Uri -like '*asset-entitlements*' }
+        $w = Get-DEWarranty -Serial 'ABC1234' -Manufacturer 'Dell Inc.' -Refresh
+        $w.source | Should -Be 'dell-techdirect'; $w.status | Should -Be 'expired'; $w.end | Should -Be '2024-03-01'; $w.detail | Should -Be 'LATITUDE 7450'
+        Assert-MockCalled -ModuleName DE.Warranty Invoke-DEWarrantyWeb -Times 1 -ParameterFilter { $Headers.Authorization -eq 'Bearer tok-789' }
+        (($w | ConvertTo-Json -Depth 5) + ((Get-DEState) | ConvertTo-Json -Depth 12)) | Should -Not -Match 'dell-key-123|dell-secret-456|tok-789'
+    }
+    It 'every other maker: the check page, then the date the technician records; virtual machines need none' {
+        $w = Get-DEWarranty -Serial 'S0123456789' -Manufacturer 'Microsoft Corporation' -Model 'Surface Laptop 5' -Refresh
+        $w.status | Should -Be 'manual'; $w.checkUrl | Should -Match 'surface'
+        Set-DEWarrantyManual -Serial 'S0123456789' -End (Get-Date).AddDays(30) -Note 'Surface business portal' -Technician 'tester' -Confirm:$false
+        $w2 = Get-DEWarranty -Serial 'S0123456789' -Manufacturer 'Microsoft Corporation' -Model 'Surface Laptop 5'
+        $w2.source | Should -Be 'technician'; $w2.status | Should -Be 'active'; $w2.daysLeft | Should -Be 30; $w2.detail | Should -Match 'tester'
+        (Get-DEWarranty -Serial '1234' -Manufacturer 'Microsoft Corporation' -Model 'Virtual Machine').status | Should -Be 'not-applicable'
+        (Get-DEWarranty -Serial 'To be filled by O.E.M.' -Manufacturer 'Acme').status | Should -Be 'unknown'
+    }
+    It 'the warranty step flags expired, ending soon and unknown, and the evidence record carries the end date' {
+        $null = Initialize-DEWorkflow -ClientProfile $global:DETest.Alamo -Mode 'repair'
+        Mock -ModuleName DE.Warranty Get-DEWarranty { [pscustomobject]@{ status = 'active'; end = (Get-Date).AddDays(40).ToString('yyyy-MM-dd'); daysLeft = 40; source = 'lenovo-support-site'; checkUrl = 'u'; detail = '' } }
+        $st = Get-DEActionState -Id 'maint.warranty'; $st.Status | Should -Not -Be 'PASS'; ($st.Drift -join ' ') | Should -Match 'in 40 days'
+        Mock -ModuleName DE.Warranty Get-DEWarranty { [pscustomobject]@{ status = 'active'; end = '2030-01-01'; daysLeft = 1200; source = 'lenovo-support-site'; checkUrl = 'u'; detail = '' } }
+        (Get-DEActionState -Id 'maint.warranty').Status | Should -Be 'PASS'
+        (New-DEAssetRecord -Snapshot @{ device = @{ hostname = 'H' } } -ClientProfile $global:DETest.Alamo).warrantyEnd | Should -Be '2030-01-01'
+        Mock -ModuleName DE.Warranty Get-DEWarranty { [pscustomobject]@{ status = 'expired'; end = '2024-01-01'; daysLeft = -600; source = 'dell-techdirect'; checkUrl = 'u'; detail = '' } }
+        ((Get-DEActionState -Id 'maint.warranty').Drift -join ' ') | Should -Match 'ended 2024-01-01'
+    }
+}
+

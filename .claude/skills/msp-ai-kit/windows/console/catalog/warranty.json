@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "about": "Warranty sources by manufacturer. 'match' is a regex on the BIOS/WMI manufacturer. Automatic methods talk only to the manufacturer's own services (never a third-party proxy: client serials stay between DE and the OEM). 'manual' vendors give the technician the check page; the end date they record is stored with who recorded it. API keys are runtime secrets, never stored. Entries marked confirmed:false have not been verified against the vendor's current documentation.",
+  "cacheDays": 7,
+  "warnDays": 90,
+  "vendors": [
+    {
+      "key": "dell", "name": "Dell", "match": "(?i)^dell", "method": "dell-techdirect", "confirmed": true,
+      "tokenUrl": "https://apigtwb2c.us.dell.com/auth/oauth/v2/token",
+      "entitlementsUrl": "https://apigtwb2c.us.dell.com/PROD/sbil/eapi/v5/asset-entitlements?servicetags={serial}",
+      "secrets": ["DELL_API_KEY", "DELL_API_SECRET"],
+      "checkUrl": "https://www.dell.com/support/home/en-us/product-support/servicetag/{serial}/overview",
+      "note": "Request API access in Dell TechDirect (Warranty API). Without the key the tool falls back to the check page."
+    },
+    {
+      "key": "lenovo", "name": "Lenovo", "match": "(?i)^lenovo", "method": "lenovo-support-site", "confirmed": true,
+      "productsUrl": "https://pcsupport.lenovo.com/us/en/api/v4/mse/getproducts?productId={serial}",
+      "warrantyUrl": "https://pcsupport.lenovo.com/us/en/products/{productId}/warranty",
+      "checkUrl": "https://pcsupport.lenovo.com/us/en/warrantylookup",
+      "note": "Lenovo's public support site; the warranty page carries the base and extended warranties as JSON (ds_warranties)."
+    },
+    {
+      "key": "hp", "name": "HP", "match": "(?i)^(hp|hewlett)", "method": "hp-api", "confirmed": false,
+      "tokenUrl": "", "queryUrl": "",
+      "secrets": ["HP_WARRANTY_API_KEY", "HP_WARRANTY_API_SECRET"],
+      "checkUrl": "https://support.hp.com/us-en/check-warranty",
+      "note": "HP's Product Warranty API (developers.hp.com) needs an approved key; fill tokenUrl and queryUrl from HP's current documentation, then the lookup is automatic. Until then it is the check page."
+    },
+    { "key": "microsoft", "name": "Microsoft Surface", "match": "(?i)^microsoft", "method": "manual", "confirmed": false, "checkUrl": "https://mybusinessservice.surface.com/", "note": "No public Surface warranty API. Business devices: Surface Management Portal or the business service site." },
+    { "key": "apple", "name": "Apple", "match": "(?i)^apple", "method": "manual", "confirmed": true, "checkUrl": "https://checkcoverage.apple.com/", "note": "Apple's coverage page needs a CAPTCHA; there is no public API." },
+    { "key": "acer", "name": "Acer", "match": "(?i)^acer", "method": "manual", "confirmed": false, "checkUrl": "https://www.acer.com/us-en/support/warranty" },
+    { "key": "asus", "name": "ASUS", "match": "(?i)^asus", "method": "manual", "confirmed": false, "checkUrl": "https://www.asus.com/support/warranty-status-inquiry/" },
+    { "key": "dynabook", "name": "Dynabook / Toshiba", "match": "(?i)^(dynabook|toshiba)", "method": "manual", "confirmed": false, "checkUrl": "https://support.dynabook.com/" },
+    { "key": "samsung", "name": "Samsung", "match": "(?i)^samsung", "method": "manual", "confirmed": false, "checkUrl": "https://www.samsung.com/us/support/warranty/" },
+    { "key": "panasonic", "name": "Panasonic", "match": "(?i)^panasonic", "method": "manual", "confirmed": false, "checkUrl": "https://na.panasonic.com/us/support" },
+    { "key": "framework", "name": "Framework", "match": "(?i)^framework", "method": "manual", "confirmed": false, "checkUrl": "https://frame.work/support", "note": "Framework warranty runs from the order date; use the order record." },
+    { "key": "msi", "name": "MSI", "match": "(?i)^(micro-star|msi)", "method": "manual", "confirmed": false, "checkUrl": "https://www.msi.com/support" },
+    { "key": "getac", "name": "Getac", "match": "(?i)^getac", "method": "manual", "confirmed": false, "checkUrl": "https://www.getac.com/us/support/" },
+    { "key": "gigabyte", "name": "Gigabyte", "match": "(?i)^gigabyte", "method": "manual", "confirmed": false, "checkUrl": "https://www.gigabyte.com/Support" }
+  ],
+  "virtualModels": "(?i)(virtual machine|vmware|virtualbox|kvm|qemu|hvm domu|parallels)"
+}

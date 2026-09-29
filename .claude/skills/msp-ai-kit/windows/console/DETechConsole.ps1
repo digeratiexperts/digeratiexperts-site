@@ -653,6 +653,12 @@ function Update-ScanDetail {
     }
     if ($x.inputs -contains 'confirm:breakglass') { [void]$sp.Children.Add((New-Button 'I signed in as .\DE-BreakGlass: verify it' { if (-not (Test-DESecret -Name 'BREAKGLASS_PASSWORD')) { Set-Status 'Set BREAKGLASS_PASSWORD first.'; return }; $null = Confirm-DEBreakGlassVerified -Technician $Settings.technician; Reset-DEGateCache; Show-Page 'Scan' })) }
     if ($x.inputs -contains 'confirm:onedrive') { [void]$sp.Children.Add((New-Button "OneDrive shows 'Up to date' and sync is paused" { Confirm-DEOneDriveSynced; Reset-DEGateCache; Show-Page 'Scan' })) }
+    if ($x.inputs -contains 'warranty-manual') {
+        $serial = "$(Get-DEHashPath -Object $S.Snapshot -Path 'device.serial')"; $url = "$(Get-DEHashPath -Object (Get-DEState -Path 'warranty.current') -Path 'checkUrl')"
+        $dp = New-El DatePicker @{ Width = 150; Name = 'Warranty end date' }; $note = New-El TextBox @{ Width = 220; Name = 'Where the date came from' }
+        [void]$sp.Children.Add((New-Label "Warranty end for serial $serial (from the manufacturer's page)"))
+        [void]$sp.Children.Add((New-Wrap @($dp, $note, (New-Button 'Record' { if (-not $dp.SelectedDate) { Set-Status 'Pick the end date.'; return }; Set-DEWarrantyManual -Serial $serial -End $dp.SelectedDate -Note $note.Text -Technician $Settings.technician; $S.Selected = @{ 'maint.warranty' = $true }; Invoke-DEScanBatch -How Audit }.GetNewClosure() -Primary), $(if ($url) { New-Button 'Open check page' { Start-Process $url }.GetNewClosure() }))))
+    }
     if ($x.inputs -contains 'accept-profiles') { [void]$sp.Children.Add((New-Button 'Accept leftover profiles...' { $left = @(Get-DEUnmigratedDomainProfiles); if (-not $left.Count) { Set-Status 'No unmigrated Entra or domain profiles.'; return }; if (Confirm-Gui 'Leave these behind?' ("Nobody can sign in to these after the device leaves Microsoft:`n`n{0}`n`nOnly accept profiles nobody needs." -f (($left | ForEach-Object { $_.path }) -join "`n"))) { Confirm-DEStrandedProfilesAccepted -Paths @($left | ForEach-Object { $_.path }) -Technician $Settings.technician; Reset-DEGateCache; Show-Page 'Scan' } })) }
     # this item alone
     $id = $x.id
@@ -1090,7 +1096,7 @@ function Build-Settings {
     $known = @(
         @{ n = 'BREAKGLASS_PASSWORD'; d = 'DE-BreakGlass password (16+ characters)' }, @{ n = 'MIGRATION_TEMP_PASSWORD'; d = 'Temporary password for the new local account (ADMU)' },
         @{ n = 'JC_CONNECT_KEY'; d = 'JumpCloud connect key (agent install)' }, @{ n = 'JC_API_KEY'; d = 'JumpCloud API key (mapping, binding, groups, policies)' }, @{ n = 'JC_ORG_ID'; d = 'JumpCloud org id (multi-tenant admins)' },
-        @{ n = 'S1_SITE_TOKEN'; d = 'SentinelOne site token' }, @{ n = 'GUARDZ_ORG_KEY'; d = 'Guardz organization key' }, @{ n = 'WAZUH_REG_PASSWORD'; d = 'Wazuh registration password' }, @{ n = 'DE_HUB_TOKEN'; d = 'Intelligence Hub integration token' }
+        @{ n = 'S1_SITE_TOKEN'; d = 'SentinelOne site token' }, @{ n = 'GUARDZ_ORG_KEY'; d = 'Guardz organization key' }, @{ n = 'WAZUH_REG_PASSWORD'; d = 'Wazuh registration password' }, @{ n = 'DE_HUB_TOKEN'; d = 'Intelligence Hub integration token' }, @{ n = 'DELL_API_KEY'; d = 'Dell TechDirect API key (warranty)' }, @{ n = 'DELL_API_SECRET'; d = 'Dell TechDirect API secret (warranty)' }, @{ n = 'HP_WARRANTY_API_KEY'; d = 'HP warranty API key' }, @{ n = 'HP_WARRANTY_API_SECRET'; d = 'HP warranty API secret' }
     )
     $sp = New-El StackPanel
     foreach ($k in $known) {
