@@ -71,6 +71,8 @@
         'Test-DEMigrationMailFlow',
         'Test-DEMigrationMfa',
         'Get-DEMailClientInventory',
+        'Import-DEMailClientInventory',
+        'Get-DEMigrationNextStep',
         'Invoke-DEBounceDiagnostic',
         'Resolve-DEMigrationBounce',
         'Set-DEMigrationCheck',

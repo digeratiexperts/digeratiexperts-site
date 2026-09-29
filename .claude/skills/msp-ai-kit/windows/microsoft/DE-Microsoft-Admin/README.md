@@ -58,7 +58,7 @@ $r = New-DEUser -DisplayName 'New Hire' -UserPrincipalName new.hire@alamo-indust
 | Intune | `Get-DEIntuneDevice` (by serial or user, filtered on the server), `Get-DEIntuneCompliancePolicy`, `Get-DEIntuneConfigurationProfile` (classic and Settings Catalog), `Sync-DEIntuneDevice`, `Invoke-DEIntuneDeviceAction` (Sync, Restart, Lock, Retire, Wipe, FreshStart) |
 | Autopilot | `Get-DEAutopilotDevice`, `Get-DEAutopilotProfile` (Graph beta), `Set-DEAutopilotGroupTag`, `Remove-DEAutopilotDevice` |
 | Results | `New-DEResult`, `Export-DEResult` (UTF-8 without a BOM), `Set-DEMsAuditPath` |
-| Email migration | `New-DEMigrationProject`, `Get-DEMigrationProject`, `Get-DEMigrationSourceType`, `Add-DEMigrationUser`, `Test-DEGmailImapAccess`, `Set-DEMigrationSharedMailbox`, `Test-DEMigrationSharedMailbox`, `New-DEMigrationBatch`, `Get-DEMigrationStatus`, `Confirm-DEMigrationPilot`, `Complete-DEMigrationBatch`, `Import-DEMigrationContacts`, `Import-DEMigrationCalendar`, `Get-DEMailClientInventory`, `Test-DEMigrationDns`, `Test-DEMigrationMailFlow`, `Test-DEMigrationMfa`, `Invoke-DEBounceDiagnostic`, `Resolve-DEMigrationBounce`, `Set-DEMigrationCheck`, `New-DEMigrationSignoff`, `Close-DEMigrationProject`, `Export-DEMigrationRecord`, `Set-DEMigrationDirectory` |
+| Email migration | `New-DEMigrationProject`, `Get-DEMigrationProject`, `Get-DEMigrationSourceType`, `Add-DEMigrationUser`, `Test-DEGmailImapAccess`, `Set-DEMigrationSharedMailbox`, `Test-DEMigrationSharedMailbox`, `New-DEMigrationBatch`, `Get-DEMigrationStatus`, `Confirm-DEMigrationPilot`, `Complete-DEMigrationBatch`, `Import-DEMigrationContacts`, `Import-DEMigrationCalendar`, `Get-DEMailClientInventory`, `Import-DEMailClientInventory`, `Get-DEMigrationNextStep`, `Test-DEMigrationDns`, `Test-DEMigrationMailFlow`, `Test-DEMigrationMfa`, `Invoke-DEBounceDiagnostic`, `Resolve-DEMigrationBounce`, `Set-DEMigrationCheck`, `New-DEMigrationSignoff`, `Close-DEMigrationProject`, `Export-DEMigrationRecord`, `Set-DEMigrationDirectory` |
 | Hub jobs | `New-DEMicrosoftJob`, `Invoke-DEMicrosoftJob`, `Get-DEJobSignature`, `ConvertTo-DEJobCanonical` |
 
 Scenarios for `Connect-DEMicrosoft -Scenario`: `Read` (always included), `Users`, `Groups`, `Policy`
@@ -101,7 +101,9 @@ Confirm-DEMigrationPilot -ProjectId alamo-mail -Technician jrpetro -Note 'opened
 New-DEMigrationBatch -ProjectId alamo-mail -Type Production -Credential $norma, $helen, $mike
 Import-DEMigrationContacts -ProjectId alamo-mail -SourceAddress helen.x@gmail.com -Path .\helen-contacts.csv
 Import-DEMigrationCalendar -ProjectId alamo-mail -SourceAddress helen.x@gmail.com -Path .\helen.ics
-Get-DEMailClientInventory -ProjectId alamo-mail            # on each PC, signed in as its user (HelenU, equip.alamo, ...)
+Get-DEMailClientInventory -AllProfiles -ProjectId alamo-mail   # on each PC, elevated (HelenU, equip.alamo, ...); or the DE Tech Tool's Email migration page
+Import-DEMailClientInventory -ProjectId alamo-mail -Path .\HELENU-gmail-scan.json   # a scan saved on a PC that does not hold the project
+Get-DEMigrationNextStep -ProjectId alamo-mail              # what to do next, with the command
 Test-DEMigrationDns -ProjectId alamo-mail -Server 1.1.1.1  # after the MX change
 Complete-DEMigrationBatch -ProjectId alamo-mail -BatchName <batch>   # final delta, only once DNS points to Microsoft 365
 Test-DEMigrationMailFlow -ProjectId alamo-mail; Test-DEMigrationMfa -ProjectId alamo-mail

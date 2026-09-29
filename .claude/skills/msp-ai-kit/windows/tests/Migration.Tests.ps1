@@ -274,4 +274,47 @@ Describe 'DE email migration' {
             $r.status | Should -BeIn @('Succeeded', 'Partial'); $r.target | Should -Be 'TEST-PC'
         }
     }
+    Context 'the next step and PC scans made on client PCs' {
+        It 'reads the next step from what was recorded, with a command that names the project and never a password' {
+            $dir = & (Get-Module DE-Microsoft-Admin) { $script:MigrationDir }
+            $write = { param($o) [IO.File]::WriteAllText((Join-Path $dir 'next-mail.json'), ($o | ConvertTo-Json -Depth 20), (New-Object Text.UTF8Encoding $false)) }
+            $chk = [pscustomobject]@{}; foreach ($c in @('Inbound mail', 'Replies', 'Bounce diagnostic')) { $chk | Add-Member -NotePropertyName $c -NotePropertyValue ([pscustomobject]@{ status = 'Pending'; detail = ''; by = ''; at = '' }) }
+            $p = [pscustomobject]@{ projectId = 'next-mail'; client = 'Alamo'; targetDomain = 'alamo-industries.com'; sourceType = 'PersonalGmail'; mailPath = 'IMAP'; stage = 'Assessment'; updatedAt = $null; users = @(); sharedMailboxes = @(); devices = @(); batches = @(); dns = $null; bounce = @(); verification = $chk; signoff = $null; events = @() }
+            & $write $p; (Get-DEMigrationNextStep -ProjectId 'next-mail').step | Should -Be 'Map each mailbox'
+            $u = [pscustomobject]@{ source = 'helen.x@gmail.com'; destination = 'helen@alamo-industries.com'; devices = @('HELENU'); destinationReady = $false; destinationIssues = @('no licence'); preflight = $null; batch = $null; migration = $null; contacts = $null; calendar = $null; mfa = $null }
+            $p.users = @($u); & $write $p; $n = Get-DEMigrationNextStep -ProjectId 'next-mail'; $n.step | Should -Be 'Get helen@alamo-industries.com ready'; $n.why | Should -Match 'no licence'
+            $u.destinationReady = $true; & $write $p; $n = Get-DEMigrationNextStep -ProjectId 'next-mail'; $n.step | Should -Match 'IMAP preflight for helen.x@gmail.com'; $n.command | Should -Match 'Get-Credential helen.x@gmail.com'; $n.command | Should -Match '-ProjectId next-mail'
+            $u.preflight = [pscustomobject]@{ ok = $true }; & $write $p; (Get-DEMigrationNextStep -ProjectId 'next-mail').step | Should -Be 'Start the pilot'
+            $p.batches = @([pscustomobject]@{ name = 'b1'; type = 'Pilot'; status = 'Synced'; confirmedBy = $null }); $u.batch = 'b1'; & $write $p; (Get-DEMigrationNextStep -ProjectId 'next-mail' -Technician 'jrpetro').command | Should -Match 'Confirm-DEMigrationPilot -ProjectId next-mail -Technician jrpetro'
+            $p.batches[0].confirmedBy = 'jrpetro'; & $write $p; (Get-DEMigrationNextStep -ProjectId 'next-mail').step | Should -Match '^Contacts and calendar'
+            $u.contacts = [pscustomobject]@{ imported = 3 }; $u.calendar = [pscustomobject]@{ imported = 4 }; & $write $p; $n = Get-DEMigrationNextStep -ProjectId 'next-mail'; $n.step | Should -Be 'Scan each PC for Gmail'; $n.why | Should -Match 'HELENU'
+            $p.devices = @([pscustomobject]@{ name = 'HELENU'; checkedAt = '2026-09-01T00:00:00Z'; gmailReferences = @() }); & $write $p; (Get-DEMigrationNextStep -ProjectId 'next-mail').step | Should -Be 'Point DNS to Microsoft 365'
+            $p.dns = [pscustomobject]@{ mxOk = $true }; & $write $p; (Get-DEMigrationNextStep -ProjectId 'next-mail').command | Should -Match 'Complete-DEMigrationBatch -ProjectId next-mail -BatchName b1'
+            $p.batches[0].status = 'Completed'; & $write $p; $n = Get-DEMigrationNextStep -ProjectId 'next-mail'; $n.step | Should -Be 'Finish verification'
+            $n.command | Should -Match 'Test-DEMigrationMailFlow -ProjectId next-mail'; $n.command | Should -Match "Set-DEMigrationCheck -ProjectId next-mail -Check 'Replies' -Status Pass -Note"; $n.command | Should -Match "'Bounce diagnostic' -Status NotApplicable"
+            foreach ($c in @('Inbound mail', 'Replies', 'Bounce diagnostic')) { $p.verification.$c.status = 'Pass' }; & $write $p; (Get-DEMigrationNextStep -ProjectId 'next-mail').step | Should -Be 'Client sign-off'
+            $p.signoff = [pscustomobject]@{ decision = 'Approved' }; & $write $p; (Get-DEMigrationNextStep -ProjectId 'next-mail').step | Should -Be 'Close the project'
+            $p.stage = 'Closed'; & $write $p; (Get-DEMigrationNextStep -ProjectId 'next-mail').command | Should -Match 'Export-DEMigrationRecord'
+        }
+        It 'records a scan made on a client PC, keeps what was not checked, and refuses a file that is not a scan' {
+            $bad = Join-Path $global:MigT.Dir 'not-a-scan.json'; [IO.File]::WriteAllText($bad, '{"operation":"Get-DEUser","target":"x"}')
+            (Import-DEMailClientInventory -ProjectId 'next-mail' -Path $bad -Confirm:$false).status | Should -Be 'Refused'
+            (Import-DEMailClientInventory -ProjectId 'next-mail' -Path (Join-Path $global:MigT.Dir 'missing.json') -Confirm:$false).status | Should -Be 'Refused'
+            $scan = [pscustomobject]@{ product = 'DE Microsoft Admin'; operation = 'Get-DEMailClientInventory'; status = 'Partial'; target = 'FRONTDESK'; at = '2026-09-02T10:00:00Z'; message = '1 place(s)'
+                data = @([pscustomobject]@{ account = 'suzette'; where = "Outlook 16.0 profile 'Outlook'"; what = 'IMAP Server=imap.gmail.com'; fix = 'remove this account' }); accounts = @('suzette', 'norma'); notChecked = @('Credential Manager for norma (encrypted for that account)') }
+            $f = Join-Path $global:MigT.Dir 'FRONTDESK-gmail-scan.json'; $null = Export-DEResult -Result $scan -Path $f
+            $r = Import-DEMailClientInventory -ProjectId 'next-mail' -Path $f -Confirm:$false
+            $r.status | Should -Be 'Succeeded'; $r.message | Should -Match 'FRONTDESK recorded: 1 Gmail reference\(s\), 1 part\(s\) not checked'
+            $d = @((Get-DEMigrationProject -ProjectId 'next-mail').devices | Where-Object { $_.name -eq 'FRONTDESK' })
+            $d.Count | Should -Be 1; $d[0].source | Should -Be 'imported'; @($d[0].accounts) -join ',' | Should -Be 'suzette,norma'; @($d[0].gmailReferences).Count | Should -Be 1; @($d[0].notChecked).Count | Should -Be 1
+            $null = Import-DEMailClientInventory -ProjectId 'next-mail' -Path $f -Confirm:$false
+            @((Get-DEMigrationProject -ProjectId 'next-mail').devices | Where-Object { $_.name -eq 'FRONTDESK' }).Count | Should -Be 1
+        }
+        It 'the scan result lists the accounts it read and what it could not check' {
+            $r = Get-DEMailClientInventory -DeviceName 'TEST-PC'
+            $r.PSObject.Properties['accounts'] | Should -Not -BeNullOrEmpty; $r.PSObject.Properties['notChecked'] | Should -Not -BeNullOrEmpty
+            @($r.accounts).Count | Should -Be 1
+            if (@($r.notChecked).Count) { $r.status | Should -Be 'Partial' }
+        }
+    }
 }
