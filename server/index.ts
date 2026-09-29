@@ -80,7 +80,9 @@ import { setSecurityHeaders } from "./middleware/security";
 app.use(setSecurityHeaders);
 
 app.use((req, _res, next) => {
-  log(`→ ${req.method} ${req.originalUrl}`);
+  // Draft ids and references are possession-keyed; they do not belong in plaintext logs.
+  const shown = req.originalUrl.replace(/([?&](?:draftId|reference|sessionId)=)[^&]*/gi, "$1[redacted]");
+  log(`→ ${req.method} ${shown}`);
   next();
 });
 

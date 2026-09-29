@@ -30,6 +30,104 @@
 
 version: 2
 claims:
+  - id: store-experience-v2
+    owner: claude
+    subsystem: public-store-door2
+    branch: claude/nifty-newton-uk9g7t
+    pr: 267
+    base_sha: dd6a1f8825ebb444d85e7601aa856859facc9cdd
+    files:
+      - client/src/pages/solutions/BusinessNeedsIndex.tsx
+      - client/src/pages/solutions/BusinessNeedsFamily.tsx
+      - client/src/pages/solutions/SolutionRequest.tsx
+      - client/src/pages/solutions/door2Leakage.test.ts
+      - client/src/pages/store/PublicStoreCheckout.tsx
+      - client/src/pages/store/Checkout.tsx
+      - client/src/pages/store/QuoteRequest.tsx
+      - client/src/pages/store/QuoteConfirmation.tsx
+      - client/src/components/store/PublicSolutionCart.tsx
+      - client/src/components/store/SolutionProfileForm.tsx
+      - client/src/components/store/StorePageAtmosphere.tsx
+      - client/src/components/store/SolutionMobileBar.tsx
+      - client/src/components/store/door2/**
+      - client/src/lib/solutionDraft.ts
+      - client/src/lib/solutionPackage.ts
+      - client/src/lib/businessNeeds.ts
+      - client/src/lib/isDoor2Path.ts
+      - client/src/lib/warehousePaths.ts
+      - client/src/lib/warehouseContactHandoff.ts
+      - client/src/data/curatedSolutions.ts
+      - client/src/styles/store-jelly.css
+      - client/src/App.tsx (Door 2 routes and ACCENT_BY_PREFIX only)
+      - server/publicSolutionRoutes.ts
+      - server/publicSolutionRequestStore.ts
+      - server/publicSolutionRequestPersistence.ts
+      - server/publicSolutionRequestCrm.ts
+      - server/storeQuoteStore.ts
+      - server/routes.ts (the /api/store/quote-requests handlers only)
+      - server/index.ts (the request-log redaction line only)
+      - server/spaKnownPaths.ts
+      - server/storeLegacyRedirects.ts
+      - server/warehouseRoutes.ts (the /solutions/business-needs 301 and the de_store_preview staff preview only)
+      - server/warehouseRoutes.test.ts
+      - client/src/lib/solutionGuidance.ts
+      - client/src/lib/openMspAdvisor.ts (STORE_ADVISOR_SEED text only)
+      - client/src/lib/storeChromeGestures.ts (isStorePath only)
+      - client/src/hooks/useStoreChromeGestures.ts (the warehouse route gate only; approved §16.1)
+      - client/src/hooks/useStoreChromeGestures.test.ts
+      - client/src/hooks/useSolutionDraft.ts
+      - client/src/index.css (the .de-site-canvas padding-bottom line only)
+      - shared/publicContact.ts
+      - shared/solutionReference.ts
+      - shared/solutionReference.test.ts
+      - client/src/lib/publicSolutionCart.ts (removed)
+      - client/src/data/solutionScenarios.ts
+      - client/src/pages/store/SolutionSubmitted.tsx
+      - client/src/styles/store-builder.css
+      - client/src/components/MegaMenu.tsx (announcement strip suppression on Door 2 and /book, and the utility-height measurement it depends on)
+      - client/src/components/store/CartButton.tsx (the warehouse trigger's name only)
+      - client/src/pages/sections/DigeratiEnhancedFooterSection.tsx (the variant="store" prop only)
+      - client/src/lib/deskAskDeMotion.ts (the store page classification and its copy only)
+      - client/src/lib/deskAskDeMotion.test.ts
+      - client/src/components/VirtualMspAdvisor.tsx (removed, unimported)
+      - client/src/components/store/ShoppingCart.tsx (the staff drawer title only)
+      - client/src/pages/BookingPage.tsx (the /book copy and the ?ref= reader only; §16.6 PR 0)
+      - .cursor/rules/blog-store-color-lock.mdc (the public Store / warehouse split)
+      - docs/STORE-ARCHITECTURE-DESIGN.md (the packet item 8 resolution line only)
+      - scripts/door2-browser-smoke.mjs
+      - scripts/generate-sitemap.mjs (the /solutions/request row only)
+      - docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md
+      - docs/PUBLIC-SOLUTION-BUILDER.md
+      - docs/STORE-SOLUTION-ENGINE.md
+      - docs/STORE-WAREHOUSE.md
+      - docs/STORE-DOOR-2.md
+      - design/STORE_DOOR2_GRAMMAR.md
+      - artifacts/visual-qa/store-experience/**
+    status: active
+    started: 2026-09-27
+    note: >-
+      Joe, 2026-09-27: think out how the Store experience and flow can be
+      perfectly designed, then make it, in parallel with the homepage V4 lane
+      (PR 266, client/src/pages/versions/v4/**, not touched here). The public
+      Store is Door 2 (/store, /store/solutions/:family, /store/solution,
+      /solutions/request). Owner direction the same day: a fun, enjoyable,
+      modern store that engages, automates, leads and is feature-rich for
+      well-thought-out use cases; and the DE fulfillment rule that remote
+      support and shipping come before Truck-Roll, Trip Charge and Tech Labor.
+      Baseline A evidence, a code map, a judged design and the source of truth
+      precede the rebuild. Joe, 2026-09-28: every open decision in the source of
+      truth §16 approved ("All approved, continue"); the PR 3 chrome and the
+      PR 0 /book copy build inside PR 267 with the files above. Stood off, held
+      by draft PR 229 (DE Desk launcher and modal): client/src/components/
+      SiteBottomBar.tsx and client/src/components/ZohoASAPWidget.tsx. Overlaps
+      recorded in PR 267 and the source of truth §15: the four Door 2 pages with
+      the completion-program lane (frozen PRs 219/220); the colour lock with
+      draft PR 217 (disjoint hunks); docs/STORE-WAREHOUSE.md with PR 149. Also closes the warehouse quote-flow defects in
+      issues 239, 240, 257 (re-scoped: the GET exists; its payload is now a
+      client-safe projection), 235 and 258, and the public store's lead-loss
+      defects (lead event without contact fields; non-durable submit reported
+      as saved). Not claimed: server/storeQuoteCrm.ts (issue 206, Codex),
+      client/src/pages/versions/**, scrollcraft/**.
   - id: de-design-concepts-directions
     owner: claude
     subsystem: flagship-visual-reset
