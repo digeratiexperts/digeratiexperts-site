@@ -170,7 +170,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
           style={{
             // Fixed outside document flow so the nudge cannot cause CLS.
             right: "max(1rem, env(safe-area-inset-right))",
-            bottom: "calc(var(--de-unified-bar-h, 3.5rem) + 0.75rem + env(safe-area-inset-bottom, 0px))",
+            bottom: "calc(var(--de-unified-bar-h, 3.5rem) + var(--de-store-cart-h, 0px) + 0.75rem + env(safe-area-inset-bottom, 0px))",
           }}
           data-testid="ask-de-nudge"
         >

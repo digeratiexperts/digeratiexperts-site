@@ -28,6 +28,8 @@ export const COMPANY = {
   legalName: "Digerati Experts",
   email: "info@digeratiexperts.com",
   supportEmail: "support@digeratiexperts.com",
+  /** Invoice questions when card checkout is not connected. Already used by the portal pay route. */
+  billingEmail: "billing@digeratiexperts.com",
   privacyEmail: "privacy@digeratiexperts.com",
   website: "https://digeratiexperts.com",
   bookingUrl: "https://meet.digerati-experts.com/",

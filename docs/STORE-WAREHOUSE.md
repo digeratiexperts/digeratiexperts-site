@@ -11,8 +11,9 @@ The former public `/store` workshop (SKU catalog, vendor marks, coverage heurist
 | Surface | Route | Auth |
 | --- | --- | --- |
 | Warehouse | `/internal/warehouse` and product/checkout subroutes | Live `admin` at route **and** catalog API |
-| Public curated Store | `/store`, `/store/solutions/:family`, `/store/solution` (`/store/checkout` alias) | Public Solution Builder — no vendor catalog, no Pay Now |
+| Public curated Store | `/store`, `/store/solutions/:family`, `/store/solution` (`/store/checkout` alias), `/store/solution/submitted/:reference` | Public Solution Builder — no vendor catalog, no Pay Now |
 | Legacy catalog paths | `/store/managed`, `/store/co-managed` | 301 to the appropriate public solution path |
+| Legacy builder paths | `/solutions/business-needs`, `/solutions/business-needs/:family` | 301 to `/store`, `/store/solutions/:family` (query kept) |
 | Staff-only SKU URLs | `/store/product/:sku` except four ProActive models | Generic 404 — same body as unknown, no `Location` |
 | Client Marketplace | `/portal/marketplace` | Authenticated client; fail-safe Request Approval (no Hub catalog) |
 
@@ -21,6 +22,7 @@ The former public `/store` workshop (SKU catalog, vendor marks, coverage heurist
 1. Sign in at `https://portal.digeratiexperts.com/portal/login`.
 2. Open `/internal/warehouse`.
 3. An admin bookmark to `/store` 302s into the warehouse. Unauthorized users never receive `Location: /internal/...`.
+4. To walk the public Store as a buyer while signed in (internal visual QA), open `/store?as=buyer`: it sets the `de_store_preview` cookie (httpOnly, 8 hours) and the `/store` redirect stops for that browser. `/store?as=staff` clears it and returns to the warehouse. The cookie only relaxes that redirect for a request that is already staff; a buyer who sets it by hand sees what they saw before (`server/warehouseRoutes.test.ts`).
 
 ## Authorization
 

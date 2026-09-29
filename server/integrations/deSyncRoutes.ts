@@ -139,7 +139,12 @@ export function registerDeSyncRoutes(app: Express, authMiddleware: AuthMiddlewar
     res.setHeader("Connection", "keep-alive");
     res.flushHeaders?.();
     res.write(`data: ${JSON.stringify({ eventType: "stream.ready", entityId: req.userId || "anon" })}\n\n`);
-    addPortalSseClient(res);
+    const clientRecord = req.user?.clientId ? getClient(req.user.clientId) : undefined;
+    addPortalSseClient(res, {
+      role: req.user?.role || "user",
+      clientId: req.user?.clientId || null,
+      hubAccountId: clientRecord?.hubAccountId || null,
+    });
   });
 
   app.post(

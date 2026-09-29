@@ -38,5 +38,11 @@ export function clearPendingMspAdvisorOpen() {
   (window as PendingWindow)[PENDING_KEY] = null;
 }
 
+/**
+ * Fallback seed when the Desk opens from a Store page without a seeded
+ * message. Public words only: the Store composes solutions from business
+ * needs; it has no catalog to "add" from. Screens pass a richer seed built by
+ * solutionAdvisorSeed() in client/src/lib/solutionGuidance.ts.
+ */
 export const STORE_ADVISOR_SEED =
-  "I'm shopping the IT store and want help building a solution. Ask me about company size, industry, Microsoft 365 vs Google, whether we have internal IT, and our main objective — then recommend real catalog services I can add.";
+  "I'm building a solution in the DE Store. Ask me about my business profile (users, computers, sites, whether we have internal IT) and what's in the way, then help me decide what fits and whether Standalone or Co-Managed is right.";

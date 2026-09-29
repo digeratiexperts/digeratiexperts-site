@@ -80,7 +80,9 @@ import { setSecurityHeaders } from "./middleware/security";
 app.use(setSecurityHeaders);
 
 app.use((req, _res, next) => {
-  log(`→ ${req.method} ${req.originalUrl}`);
+  // Draft ids and references are possession-keyed; they do not belong in plaintext logs.
+  const shown = req.originalUrl.replace(/([?&](?:draftId|reference|sessionId)=)[^&]*/gi, "$1[redacted]");
+  log(`→ ${req.method} ${shown}`);
   next();
 });
 
@@ -111,6 +113,12 @@ app.all("/api/health", async (_req, res) => {
   };
   
   res.status(200).json(health);
+});
+
+/** Public, secret-free flag so marketing and the portal do not promise card checkout when it is off. */
+app.get("/api/payments/availability", (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ cardCheckout: zohoPayments.isConfigured() });
 });
 
 app.all("/healthz", async (_req, res) => {

@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Express, Request, Response } from "express";
+import rateLimit from "express-rate-limit";
 import {
   getFamilyById,
   publicSolutionFamilies,
@@ -7,37 +8,97 @@ import {
   toPublicFamily,
 } from "../client/src/lib/businessNeeds";
 import { eventBus, EventTypes } from "./eventBus";
-import { syncPublicSolutionRequestToCrm } from "./publicSolutionRequestCrm";
+import { apiGeneralRateLimiter } from "./middleware/rateLimiter";
+import { buildPublicSolutionRequestDescription, syncPublicSolutionRequestToCrm } from "./publicSolutionRequestCrm";
+import { durablePersistenceAvailable } from "./publicSolutionRequestPersistence";
 import {
   createPublicSolutionRequest,
   findPublicSolutionRequestDurable,
+  getPublicSolutionRequestByReferenceDurable,
   getPublicSolutionRequestDurable,
+  markPublicSolutionRequestDurabilityDurable,
+  nextStepFor,
+  normalizeSolutionReference,
+  publicSolutionStatusView,
+  submissionProblem,
   markPublicSolutionRequestCrmDurable,
   publicFamilyExists,
+  publicSolutionDraftView,
   publicSolutionRequestView,
   submitPublicSolutionRequestDurable,
+  unsubmitPublicSolutionRequest,
   upsertPublicSolutionRequestDurable,
   type PublicSolutionRequest,
 } from "./publicSolutionRequestStore";
 
 const SESSION_COOKIE = "de_solution_request";
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { EMAIL_RE } from "../shared/publicContact";
 
+const SESSION_COOKIE_OPTIONS = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  secure: process.env.NODE_ENV === "production",
+  path: "/",
+  maxAge: 1000 * 60 * 60 * 24 * 30,
+};
+
+/**
+ * Every accepted submission creates a lead, an admin email and an outbox row,
+ * so the public POST gets its own ceiling. Twenty an hour per address is far
+ * above any real buyer and far below a script. Tests run many submits from one
+ * address inside a minute and are exempt.
+ */
+const submitRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.VITEST === "true",
+  message: { error: "Too many submissions from this connection. Please try again later." },
+});
+
+/** Reference lookups are cheap and reveal no contact data, but a scan of the 32^6 space is still not welcome. */
+const referenceLookupRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.VITEST === "true",
+  message: { error: "Too many lookups from this connection. Please try again later." },
+});
+
+/**
+ * Memory-only acceptance is a development and smoke-test convenience, never a
+ * production behaviour: the same pass the health probe honours.
+ */
+function memoryOnlySubmissionAllowed(): boolean {
+  return process.env.NODE_ENV !== "production" || process.env.DE_SMOKE_ALLOW_MEMORY_ONLY === "1";
+}
+
+/** The session is the httpOnly cookie and nothing else: a body or query value would let anyone name a session. */
 function readSessionId(req: Request): string {
   const fromCookie = typeof req.cookies?.[SESSION_COOKIE] === "string" ? req.cookies[SESSION_COOKIE] : "";
-  const fromBody = typeof req.body?.sessionId === "string" ? req.body.sessionId : "";
-  const fromQuery = typeof req.query.sessionId === "string" ? req.query.sessionId : "";
-  return (fromCookie || fromBody || fromQuery).trim().slice(0, 80);
+  return fromCookie.trim().slice(0, 80);
+}
+
+/** A hidden field no person fills in. A value there is a bot, and a bot gets a quiet 400 and no record. */
+function honeypotTripped(body: unknown): boolean {
+  if (!body || typeof body !== "object") return false;
+  const input = body as Record<string, unknown>;
+  return [input.company_website, input.website, input.fax].some((value) => typeof value === "string" && value.trim() !== "");
 }
 
 function ensureSession(req: Request, res: Response): string {
+  // Drafts and submissions carry contact details; nothing here is cacheable.
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Vary", "Cookie");
   const existing = readSessionId(req);
   if (existing) {
-    res.cookie(SESSION_COOKIE, existing, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 1000 * 60 * 60 * 24 * 30 });
+    res.cookie(SESSION_COOKIE, existing, SESSION_COOKIE_OPTIONS);
     return existing;
   }
   const sessionId = randomUUID();
-  res.cookie(SESSION_COOKIE, sessionId, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 1000 * 60 * 60 * 24 * 30 });
+  res.cookie(SESSION_COOKIE, sessionId, SESSION_COOKIE_OPTIONS);
   return sessionId;
 }
 
@@ -45,7 +106,8 @@ function genericNotFound(res: Response) {
   return res.status(404).json({ error: "Not found" });
 }
 
-function requestInput(req: Request, sessionId: string) {
+/** The draft fields. Contact details and notes are not part of a draft (the documented PUT contract). */
+function draftInput(req: Request, sessionId: string) {
   return {
     sessionId,
     id: typeof req.body?.id === "string" ? req.body.id : undefined,
@@ -56,12 +118,7 @@ function requestInput(req: Request, sessionId: string) {
     selectedNeeds: req.body?.selectedNeeds,
     environment: req.body?.environment,
     fulfillment: req.body?.fulfillment,
-    intent: req.body?.intent,
-    organizationName: req.body?.organizationName,
-    contactName: req.body?.contactName,
-    contactEmail: req.body?.contactEmail,
-    contactPhone: req.body?.contactPhone,
-    notes: req.body?.notes,
+    suggestion: req.body?.suggestion,
   };
 }
 
@@ -78,7 +135,7 @@ export function registerPublicSolutionRoutes(app: Express): void {
     return res.json({ family: toPublicFamily(family) });
   });
 
-  app.get("/api/public/solutions/request", async (req, res) => {
+  app.get("/api/public/solutions/request", apiGeneralRateLimiter, async (req, res) => {
     const sessionId = ensureSession(req, res);
     // A "resume" link (?draftId=) lets a visitor continue a saved draft from
     // a different browser/device. The id is an unguessable random UUID, so
@@ -96,29 +153,56 @@ export function registerPublicSolutionRoutes(app: Express): void {
     if (!record) {
       record = await findPublicSolutionRequestDurable(sessionId);
     }
+    // A submitted solution is a record DE holds, not something to keep editing:
+    // the visitor gets a fresh draft and the reference of what was sent.
+    let previousReference: string | null = null;
+    if (record?.status === "submitted") {
+      previousReference = record.reference;
+      resolvedSessionId = sessionId;
+      record = undefined;
+    }
     if (!record) {
       record = createPublicSolutionRequest(sessionId);
     }
     if (resolvedSessionId !== sessionId) {
-      res.cookie(SESSION_COOKIE, resolvedSessionId, {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 1000 * 60 * 60 * 24 * 30,
-      });
+      res.cookie(SESSION_COOKIE, resolvedSessionId, SESSION_COOKIE_OPTIONS);
     }
-    return res.json({ request: publicSolutionRequestView(record) });
+    return res.json({
+      request: publicSolutionDraftView(record),
+      durable: await durablePersistenceAvailable(),
+      previousReference,
+    });
+  });
+
+  // The confirmation page's source after a refresh, a restart or on another
+  // device: the state and shape of a submitted solution by its short reference.
+  // Never the contact details — those render from the submitter's own device.
+  app.get("/api/public/solutions/request/status/:reference", referenceLookupRateLimiter, async (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    const reference = normalizeSolutionReference(req.params.reference);
+    if (!reference) return genericNotFound(res);
+    const record = await getPublicSolutionRequestByReferenceDurable(reference);
+    if (!record || record.status !== "submitted") return genericNotFound(res);
+    return res.json({ solution: publicSolutionStatusView(record) });
   });
 
   // Save progress without collecting contact information. This does not create a lead.
-  app.put("/api/public/solutions/request", async (req, res) => {
+  app.put("/api/public/solutions/request", apiGeneralRateLimiter, async (req, res) => {
     const sessionId = ensureSession(req, res);
-    const record = await upsertPublicSolutionRequestDurable(requestInput(req, sessionId));
-    return res.json({ request: publicSolutionRequestView(record) });
+    const saved = await upsertPublicSolutionRequestDurable(draftInput(req, sessionId), { forkSubmitted: true });
+    return res.json({
+      request: publicSolutionDraftView(saved.record),
+      durable: saved.persisted,
+      forked: saved.forked,
+      previousReference: saved.previousReference,
+    });
   });
 
-  app.post("/api/public/solutions/request", async (req, res) => {
+  app.post("/api/public/solutions/request", submitRateLimiter, async (req, res) => {
     const sessionId = ensureSession(req, res);
+    if (honeypotTripped(req.body)) {
+      return res.status(400).json({ code: "CONTACT_REQUIRED", error: "Company, name, email, and phone are required." });
+    }
     const organizationName = typeof req.body?.organizationName === "string" ? req.body.organizationName.trim() : "";
     const contactName = typeof req.body?.contactName === "string" ? req.body.contactName.trim() : "";
     const contactEmail = typeof req.body?.contactEmail === "string" ? req.body.contactEmail.trim() : "";
@@ -129,20 +213,27 @@ export function registerPublicSolutionRoutes(app: Express): void {
       !EMAIL_RE.test(contactEmail) ||
       contactPhone.replace(/\D/g, "").length < 7
     ) {
-      return res.status(400).json({ error: "Company, name, email, and phone are required." });
+      return res.status(400).json({ code: "CONTACT_REQUIRED", error: "Company, name, email, and phone are required." });
     }
 
-    const draft = await upsertPublicSolutionRequestDurable({
-      ...requestInput(req, sessionId),
+    // Needs, profile and relationship are checked before any contact detail is persisted.
+    const problem = submissionProblem({
+      selectedNeeds: req.body?.selectedNeeds,
+      familyId: req.body?.familyId,
+      environment: req.body?.environment,
+      deliveryPreference: req.body?.deliveryPreference ?? req.body?.deliveryModel,
+    });
+    if (problem) return res.status(400).json(problem);
+
+    const saved = await upsertPublicSolutionRequestDurable({
+      ...draftInput(req, sessionId),
       organizationName,
       contactName,
       contactEmail,
       contactPhone,
+      notes: req.body?.notes,
     });
-
-    if (!draft.familyId && draft.selectedNeeds.length === 0) {
-      return res.status(400).json({ error: "Select at least one business need before submitting." });
-    }
+    const draft = saved.record;
 
     let submitted;
     try {
@@ -156,32 +247,88 @@ export function registerPublicSolutionRoutes(app: Express): void {
       return res.status(500).json({ error: "We could not save your solution request. Please try again." });
     }
 
-    if (!submitted.replayed) {
-      void eventBus.emit(EventTypes.LEAD_CREATED, {
-        source: "solution_request",
-        correlationId: submitted.record.correlationId,
-        familyId: submitted.record.familyId,
-        offerId: submitted.record.offerId,
-        deliveryModel: submitted.record.deliveryModel,
-        deliveryPreference: submitted.record.deliveryPreference,
-        selectedNeeds: submitted.record.selectedNeeds.map((need) => need.familyId),
-        installation: submitted.record.fulfillment.installation,
-        remoteSupport: submitted.record.fulfillment.remoteSupport,
-        intent: submitted.record.intent,
-      });
-      void syncPublicSolutionRequestToCrm(submitted.record)
-        .then((crmStatus) => markPublicSolutionRequestCrmDurable(submitted.record.id, crmStatus))
-        .catch((error: any) => console.warn("[solution-request] CRM follow-up pending:", error?.message || error));
+    // A submitted solution is a lead, not disposable UI state. In production a
+    // submit that could not be written durably is accepted only if the CRM has
+    // recorded it; otherwise the visitor is told to retry and the memory record
+    // is rolled back to a draft so the retry is a real submit, not a "replay".
+    let durable: "database" | "crm" | "memory" = submitted.persisted ? "database" : "memory";
+    let crmSyncedInline = false;
+    if (!submitted.persisted && !submitted.replayed && !memoryOnlySubmissionAllowed()) {
+      let crmStatus: "pending" | "recorded" = "pending";
+      try {
+        crmStatus = await syncPublicSolutionRequestToCrm(submitted.record);
+      } catch (error: any) {
+        console.warn("[solution-request] CRM sync failed while storage was unavailable:", error?.message || error);
+      }
+      if (crmStatus === "recorded") {
+        durable = "crm";
+        crmSyncedInline = true;
+        await markPublicSolutionRequestCrmDurable(submitted.record.id, "recorded");
+      } else {
+        unsubmitPublicSolutionRequest(submitted.record.id);
+        console.error("[solution-request] DURABLE_STORAGE_REQUIRED", { id: submitted.record.id });
+        return res.status(503).json({
+          code: "DURABLE_STORAGE_REQUIRED",
+          error:
+            "We could not save your solution just now. Nothing you entered was lost on this device; please try again in a moment.",
+        });
+      }
     }
 
-    const latest = await markPublicSolutionRequestCrmDurable(submitted.record.id, "pending");
-    const view = publicSolutionRequestView(latest ?? submitted.record);
+    if (!submitted.replayed) {
+      const record = submitted.record;
+      // The listener sends the admin email and writes the Hub outbox from
+      // these fields; without them the notification read "New Lead: undefined".
+      void eventBus.emit(EventTypes.LEAD_CREATED, {
+        id: record.id,
+        name: record.contactName,
+        email: record.contactEmail,
+        company: record.organizationName,
+        phone: record.contactPhone,
+        message: buildPublicSolutionRequestDescription(record),
+        source: "solution_request",
+        correlationId: record.correlationId,
+        familyId: record.familyId,
+        offerId: record.offerId,
+        deliveryModel: record.deliveryModel,
+        deliveryPreference: record.deliveryPreference,
+        selectedNeeds: record.selectedNeeds.map((need) => need.familyId),
+        installation: record.fulfillment.installation,
+        remoteSupport: record.fulfillment.remoteSupport,
+        intent: record.intent,
+      });
+      if (!crmSyncedInline) {
+        void syncPublicSolutionRequestToCrm(record)
+          .then((crmStatus) => markPublicSolutionRequestCrmDurable(record.id, crmStatus))
+          .catch((error: any) => console.warn("[solution-request] CRM follow-up pending:", error?.message || error));
+      }
+    }
+
+    if (!submitted.replayed) {
+      await markPublicSolutionRequestDurabilityDurable(submitted.record.id, durable);
+    }
+
+    // A replay must not downgrade a CRM status the first submission already earned.
+    const latest = submitted.replayed || crmSyncedInline
+      ? await getPublicSolutionRequestDurable(submitted.record.id)
+      : await markPublicSolutionRequestCrmDurable(submitted.record.id, "pending");
+    const final = latest ?? submitted.record;
+    const view = publicSolutionRequestView(final);
     return res.json({
       request: view,
       correlationId: view.correlationId,
+      reference: view.reference,
       crm: view.crmStatus,
       replayed: submitted.replayed,
-      message: "Your solution was saved. DE will confirm package fit, scope, fulfillment, and pricing before you commit.",
+      durable: submitted.replayed ? (final.durable ?? durable) : durable,
+      intent: view.intent,
+      nextStep: nextStepFor(final),
+      // No acknowledgement email is sent yet (owner decision pending); the page and the reference are the record.
+      acknowledged: false,
+      message:
+        (submitted.replayed ? (final.durable ?? durable) : durable) === "memory"
+          ? "Your solution is recorded. DE will confirm package fit, scope, fulfillment, and pricing before you commit."
+          : "Recorded with DE. DE will confirm package fit, scope, fulfillment, and pricing before you commit.",
     });
   });
 }
