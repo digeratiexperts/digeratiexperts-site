@@ -91,11 +91,17 @@ function Save-DECommunityTool {
         $check = Test-DECommunityToolFiles -Tool $t -Path $to
         if (-not $check.ok) { throw "copy of $Id at $to did not verify (missing $($check.missing -join ', '); changed $($check.mismatched -join ', '))" }
     }
+    # one file per path: two catalog entries can run the same script with different arguments (preview / remove), and
+    # once the first is staged the lookup finds it there, so copying the second would copy the file onto itself
+    $staged = @{}
     foreach ($sc in @($t.scripts | Where-Object { $_ -and -not @($t.files | Where-Object { $_ }).Count })) {
-        $from = Get-DECommunityScriptPath -Key "$Id/$($sc.id)"
         $dest = Join-Path $to ($sc.path -replace '/', [IO.Path]::DirectorySeparatorChar)
-        $dir = Split-Path -Parent $dest; if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force -WhatIf:$false | Out-Null }
-        Copy-Item -LiteralPath $from -Destination $dest -Force -WhatIf:$false
+        if (-not $staged.ContainsKey($dest)) {
+            $from = Get-DECommunityScriptPath -Key "$Id/$($sc.id)"
+            $dir = Split-Path -Parent $dest; if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force -WhatIf:$false | Out-Null }
+            if ([IO.Path]::GetFullPath($from) -ne [IO.Path]::GetFullPath($dest)) { Copy-Item -LiteralPath $from -Destination $dest -Force -WhatIf:$false }
+            $staged[$dest] = $true
+        }
         if (-not (Test-DEFileHash -Path $dest -Sha256 $sc.sha256)) { throw "staged $Id/$($sc.id) did not verify" }
     }
     return $to
