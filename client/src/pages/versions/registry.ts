@@ -64,12 +64,13 @@ export const HOMEPAGE_VERSIONS: HomepageVersion[] = [
   {
     n: 4,
     path: "/version-4",
-    title: "Sections recomposed to flow on scroll",
-    date: "",
-    status: "Not started",
+    title: "Clean sheet: one environment, then the way in",
+    date: "2026-09-29",
+    status: "Preview at /version-4. Not the live homepage.",
     summary:
-      "The next homepage: the same substance recomposed so the page reads as one scroll, conversion in the first viewport and at every chapter close, six domains leading, an eight-viewport length budget (Experience Plan §09).",
-    kind: "planned",
+      "Graphite product page. The same environment starts slightly off and settles. Assessment sits above three doors. Eight blocks, with Risk & Exposure as the continuous layer. No prices, no invented proof. Does not replace /.",
+    kind: "react",
+    source: "cursor/homepage-v4-20260927",
   },
 ];
 

@@ -160,6 +160,7 @@ const VersionTwoForward = lazy(() => import("@/pages/versions/VersionTwoForward"
 const HomepageV1 = lazy(() => import("@/pages/versions/v1/DigeratiHomepage").then((m) => ({ default: m.DigeratiHomepage })));
 const ExperienceInSite = lazy(() => import("@/pages/ExperienceInSite"));
 const HomepageV3 = lazy(() => import("@/pages/versions/v3/DigeratiHomepage").then((m) => ({ default: m.DigeratiHomepage })));
+const HomepageV4 = lazy(() => import("@/pages/versions/v4/DigeratiHomepage").then((m) => ({ default: m.DigeratiHomepage })));
 
 const WarehouseGate = lazy(() => import("@/pages/store/WarehouseGate"));
 const PublicStoreCheckout = lazy(() => import("@/pages/store/PublicStoreCheckout"));
@@ -208,6 +209,13 @@ function Router() {
         <Suspense fallback={<PageLoadingSkeleton />}>
           <VersionFrame n={3}>
             <HomepageV3 />
+          </VersionFrame>
+        </Suspense>
+      )} />
+      <Route path="/version-4" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <VersionFrame n={4}>
+            <HomepageV4 />
           </VersionFrame>
         </Suspense>
       )} />
@@ -963,6 +971,7 @@ function AppContent() {
   useStoreChromeGestures(location);
   const isPortal = location.startsWith("/portal");
   const isHome = location === "/";
+  const isVersionArchive = location === "/versions" || location.startsWith("/version-");
   const hideDoor2HelpDock = isDoor2Path(location) && !["/store", "/solutions/business-needs"].includes(location.split("?")[0]);
   const hideWarehouseChrome = isWarehousePath(location);
   const accent = isPortal ? undefined : accentFor(location);
@@ -976,7 +985,7 @@ function AppContent() {
     <AnnouncerProvider>
       <DefaultCanonical />
       <SkipToContent />
-      <ScrollProgress />
+      {!isVersionArchive && <ScrollProgress />}
       <SpaPageViews />
       <div
         id="app-canvas"
@@ -986,9 +995,9 @@ function AppContent() {
         <Router />
       </div>
       <MarketingChrome />
-      {!isHome && !hideDoor2HelpDock && !hideWarehouseChrome && <SiteBottomBar />}
-      <StickyCTABar />
-      <ExitIntentPopup delay={5000} />
+      {!isHome && !isVersionArchive && !hideDoor2HelpDock && !hideWarehouseChrome && <SiteBottomBar />}
+      {!isVersionArchive && <StickyCTABar />}
+      {!isVersionArchive && <ExitIntentPopup delay={5000} />}
       <CookieConsentBanner />
       <StagingReviewBadge />
     </AnnouncerProvider>

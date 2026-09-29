@@ -41,6 +41,8 @@ export function isStickyCtaRouteAllowed(path: string): boolean {
   return (
     pathname !== "/" &&
     !pathname.startsWith("/portal") &&
+    !pathname.startsWith("/version") &&
+    pathname !== "/versions" &&
     !pathname.startsWith("/store") &&
     !isDoor2Path(pathname) &&
     !isWarehousePath(pathname)

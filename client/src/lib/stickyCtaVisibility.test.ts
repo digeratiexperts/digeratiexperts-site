@@ -19,6 +19,8 @@ describe("sticky CTA visibility", () => {
     expect(isStickyCtaRouteAllowed("/internal/warehouse")).toBe(false);
     expect(isStickyCtaRouteAllowed("/solutions/business-needs")).toBe(false);
     expect(isStickyCtaRouteAllowed("/solutions/request")).toBe(false);
+    expect(isStickyCtaRouteAllowed("/version-4")).toBe(false);
+    expect(isStickyCtaRouteAllowed("/versions")).toBe(false);
   });
 
   it("pins checkout and quote even when the page is too short to scroll", () => {
