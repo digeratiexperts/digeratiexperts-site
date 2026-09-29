@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "sources": ["website", "portal", "techsales"],
+  "sources": ["website", "portal", "techsales", "techconsole"],
   "eventTypes": [
     "lead.created",
     "quote.requested",
@@ -42,7 +42,11 @@
     "service_entitlement.ended",
     "catalog.published",
     "pricing.updated",
-    "bundle.updated"
+    "bundle.updated",
+    "device.observed",
+    "device.rescue_handoff",
+    "device.warranty",
+    "email_migration.recorded"
   ],
   "envelopeFields": [
     "eventId",
