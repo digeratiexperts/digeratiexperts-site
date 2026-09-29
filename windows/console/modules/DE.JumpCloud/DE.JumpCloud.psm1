@@ -87,7 +87,7 @@ function Test-DEJumpCloudUserMapping {
     if ($local -and -not $ownedProfile) { $issues += "local account '$IntendedLocalUser' owns no profile yet (run the identity migration)" }
     if ($ownedProfile) { $localProfile = $ownedProfile }
     if ($local -and -not $local.enabled) { $issues += "local account '$IntendedLocalUser' is disabled" }
-    if ($SourcePrincipal -and $identity.interactiveUser -and $identity.interactiveUser -ieq $SourcePrincipal) { $issues += "source user $SourcePrincipal is signed in; migration must run from break-glass or the technician session" }
+    if ($SourcePrincipal -and $identity.interactiveUser -and (($identity.interactiveUser -split '\\')[-1]) -ieq (($SourcePrincipal -split '\\')[-1])) { $issues += "source user $SourcePrincipal is signed in; migration must run from break-glass or the technician session" }
     if ($sourceProfile -and $localProfile -and $sourceProfile.path -ne $localProfile.path) { $issues += "two profiles present ($($sourceProfile.path) and $($localProfile.path)); ADMU must preserve the source profile, expect a collision" }
     $jc = @{ userExists = $null; userState = $null; bound = $null; boundUsers = @(); systemFound = $null; primaryUser = $null }
     if ($QueryApi -and (Test-DESecret -Name 'JC_API_KEY')) {

@@ -122,7 +122,7 @@ function Get-DECommunityScripts {
                 id = $sc.id; title = $sc.title; category = (& $p 'category' 'repair'); path = $sc.path; sha256 = $sc.sha256
                 arguments = @(& $p 'arguments' @()); confirm = [bool](& $p 'confirm' $false); reboots = [bool](& $p 'reboots' $false)
                 needsInternet = [bool](& $p 'needsInternet' $false); timeoutSeconds = [int](& $p 'timeoutSeconds' 1800); successExitCodes = @(& $p 'successExitCodes' @(0))
-                notes = (& $p 'notes' ''); bundle = [bool]@($t.files | Where-Object { $_ }).Count
+                notes = (& $p 'notes' ''); bundle = [bool]@($t.files | Where-Object { $_ }).Count; requires = @(& $p 'requires' @())
             }
             if (-not $Category -or $o.category -eq $Category) { $out += $o }
         }
@@ -173,6 +173,16 @@ function Invoke-DECommunityScript {
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
     param([Parameter(Mandatory = $true)][string]$Key, [string[]]$ExtraArguments = @(), [switch]$Offline, [switch]$Force)
     $s = Get-DECommunityScript -Key $Key
+    # device requirements (catalog 'requires'): unknown counts as not met, so a script never runs where it cannot work
+    foreach ($req in @($s.requires | Where-Object { $_ })) {
+        $met = $null
+        if ($req -eq 'entra-joined' -and (Get-Command -Name 'Get-DEMicrosoftJoinState' -ErrorAction SilentlyContinue)) { $j = Get-DEMicrosoftJoinState; if ($j.known) { $met = [bool]$j.entraJoined } }
+        if ($met -ne $true) {
+            $why = $(if ($null -eq $met) { "cannot confirm the device is $req (join state unknown)" } else { "this device is not $req (JumpCloud-only devices: not applicable)" })
+            if (-not $WhatIfPreference) { Add-DEEvidence -Step "toolbox.$($s.key)" -Module 'toolbox' -Before 'run requested' -ActionTaken 'refused: device requirement not met' -Result 'BLOCKED' -Verification $why | Out-Null }
+            return [pscustomobject]@{ key = $Key; result = 'REFUSED'; detail = $why }
+        }
+    }
     $what = "run $($s.title) ($($s.toolName) $($s.commit.Substring(0, 7)))$(if ($s.reboots) { ' - may restart the device' })"
     if ($s.confirm -and -not $Force -and -not $WhatIfPreference) {
         if (-not (Test-DEInteractiveHost) -or -not $PSCmdlet.ShouldContinue($what, 'This script changes the device in ways that are hard to undo')) { return [pscustomobject]@{ key = $Key; result = 'SKIPPED'; detail = 'needs confirmation (-Force)' } }
