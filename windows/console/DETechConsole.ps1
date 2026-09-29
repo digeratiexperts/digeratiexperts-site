@@ -26,7 +26,7 @@
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
-    [ValidateSet('Scan', 'Dashboard', 'Workflow', 'Discovery', 'Identity', 'Security', 'Apps', 'Browser', 'Baseline', 'Branding', 'Network', 'Toolbox', 'CommandLine', 'Vendors', 'AiToolkit', 'Evidence', 'Settings')]
+    [ValidateSet('Scan', 'Dashboard', 'Workflow', 'Discovery', 'Identity', 'Security', 'Apps', 'Browser', 'Baseline', 'Branding', 'Network', 'Toolbox', 'CommandLine', 'Migration', 'Vendors', 'AiToolkit', 'Evidence', 'Settings')]
     [string]$Page = 'Scan',
     [switch]$Resume,
     [switch]$Headless,
@@ -347,7 +347,7 @@ $XamlText = @"
         <DataTrigger Binding="{Binding State}" Value="FAIL"><Setter Property="Foreground" Value="{StaticResource Magenta}"/></DataTrigger>
       </Style.Triggers></Style>
   </Window.Resources>
-  <Grid>
+  <Grid Background="{Binding Background, RelativeSource={RelativeSource AncestorType=Window}}">
     <Grid.ColumnDefinitions><ColumnDefinition Width="232"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
     <!-- nav rail -->
     <Border Grid.Column="0" Background="#FF08061A" BorderBrush="{StaticResource Hairline}" BorderThickness="0,0,1,0" Padding="14,18">
@@ -434,6 +434,7 @@ function New-El {
     <# Tiny element factory to keep page code readable. #>
     param([string]$Type, [hashtable]$Props = @{}, [object[]]$Children = @())
     $el = New-Object "System.Windows.Controls.$Type"
+    if ($Type -in @('TextBox', 'PasswordBox', 'ComboBox') -and $Props.ContainsKey('Width') -and -not $Props.ContainsKey('HorizontalAlignment')) { $el.HorizontalAlignment = 'Left' }   # a fixed width in a stretching panel would float to the middle
     foreach ($k in $Props.Keys) {
         if ($k -eq 'Style') { $el.Style = $Win.Resources[$Props[$k]] }
         elseif ($k -eq 'Name') { [System.Windows.Automation.AutomationProperties]::SetName($el, $Props[$k]) }
@@ -465,6 +466,20 @@ function Invoke-GuiSafely {
 }
 function New-Button { param([string]$Text, [scriptblock]$OnClick, [switch]$Primary, [string]$A11y) $label = $Text; $handler = $OnClick; $safe = { Invoke-GuiSafely -Label $label -Action $handler }.GetNewClosure(); $b = New-El Button @{ Content = $Text; Style = $(if ($Primary) { 'Primary' } else { 'Btn' }); Click = $safe }; [System.Windows.Automation.AutomationProperties]::SetName($b, $(if ($A11y) { $A11y } else { $Text })); return $b }
 function New-Wrap { param([object[]]$Children) $w = New-Object System.Windows.Controls.WrapPanel; foreach ($c in $Children) { if ($null -ne $c) { [void]$w.Children.Add($c) } }; return $w }
+function Add-DEGridColumns {
+    <# Columns for a read-only DataGrid: w is pixels or 'N*' (a share of what is left). Text wraps, so a narrow window
+       shows every word on taller rows instead of hiding columns behind a sideways scrollbar. #>
+    param([Parameter(Mandatory = $true)]$Grid, [Parameter(Mandatory = $true)][object[]]$Columns)
+    foreach ($c in $Columns) {
+        $col = New-Object System.Windows.Controls.DataGridTextColumn; $col.Header = $c.h; $col.Binding = New-Object System.Windows.Data.Binding $c.b
+        $w = "$($c.w)"
+        if ($w -match '^(\d*\.?\d*)\*$') { $col.Width = New-Object System.Windows.Controls.DataGridLength($(if ($Matches[1]) { [double]$Matches[1] } else { 1.0 }), ([System.Windows.Controls.DataGridLengthUnitType]::Star)); $col.MinWidth = 90 }
+        else { $col.Width = New-Object System.Windows.Controls.DataGridLength([double]$w) }
+        $st = New-Object System.Windows.Style ([System.Windows.Controls.TextBlock]); $st.Setters.Add((New-Object System.Windows.Setter ([System.Windows.Controls.TextBlock]::TextWrappingProperty), ([System.Windows.TextWrapping]::Wrap))); $col.ElementStyle = $st
+        [void]$Grid.Columns.Add($col)
+    }
+    $Grid.HorizontalScrollBarVisibility = 'Disabled'
+}
 
 # ============================================================== background jobs (async, progress, cancel)
 function Start-DEJob {
@@ -569,9 +584,7 @@ function New-ActionGrid {
         $rows.Add([pscustomobject]@{ Id = $a.Id; Title = $a.Title; State = $(if ($e) { $e.result } else { 'NOT RUN' }); Detail = $(if ($e) { $e.verification } else { $a.Description }); Gates = $(if ($a.Gates.Count) { $(if ($g.Ok) { 'open' } else { 'locked: ' + (($g.Failing | ForEach-Object { $_.Title }) -join ', ') }) } else { '' }); Secrets = ($a.RequiresSecrets -join ', '); Destructive = $(if ($a.Destructive) { 'yes' } else { '' }) })
     }
     $grid = New-El DataGrid @{ Height = 380; Name = "$Title actions" }
-    foreach ($c in @(@{ h = 'Action'; b = 'Title'; w = 330 }, @{ h = 'State'; b = 'State'; w = 100 }, @{ h = 'Detail'; b = 'Detail'; w = 360 }, @{ h = 'Gates'; b = 'Gates'; w = 220 }, @{ h = 'Secrets'; b = 'Secrets'; w = 140 }, @{ h = 'Destructive'; b = 'Destructive'; w = 80 })) {
-        $col = New-Object System.Windows.Controls.DataGridTextColumn; $col.Header = $c.h; $col.Binding = New-Object System.Windows.Data.Binding $c.b; $col.Width = $c.w; $grid.Columns.Add($col)
-    }
+    Add-DEGridColumns -Grid $grid -Columns @(@{ h = 'Action'; b = 'Title'; w = '2*' }, @{ h = 'State'; b = 'State'; w = 84 }, @{ h = 'Detail'; b = 'Detail'; w = '2.4*' }, @{ h = 'Gates'; b = 'Gates'; w = '1.3*' }, @{ h = 'Secrets'; b = 'Secrets'; w = '1*' }, @{ h = 'Destructive'; b = 'Destructive'; w = 86 })
     $grid.ItemsSource = $rows
     $sel = { $grid.SelectedItem }.GetNewClosure()
     $runSel = {
@@ -846,7 +859,7 @@ function Build-Scan {
 
 # ============================================================== pages
 $Pages = [ordered]@{
-    Scan = 'Scan & fix'; Dashboard = 'Session & readiness'; Discovery = 'Discovery'; Identity = 'Identity & migration'; Security = 'Security'; Apps = 'Applications'
+    Scan = 'Scan & fix'; Dashboard = 'Session & readiness'; Discovery = 'Discovery'; Identity = 'Identity & migration'; Migration = 'Email migration'; Security = 'Security'; Apps = 'Applications'
     Browser = 'Browser configurator'; Baseline = 'OS baseline'; Branding = 'Branding'; Network = 'Network & site'; Toolbox = 'Toolbox (fix-it scripts)'; CommandLine = 'Command line'; Vendors = 'Vendor Admin Center'; AiToolkit = 'AI Toolkit'; Evidence = 'Evidence & Hub'; Settings = 'Settings & secrets'
 }
 $NavButtons = @{}
@@ -868,7 +881,7 @@ function Show-Page {
     $S.DetailHost = $null
     $sv = New-Object System.Windows.Controls.ScrollViewer; $sv.VerticalScrollBarVisibility = 'Auto'
     $root = New-El StackPanel
-    $needsProfile = $Name -notin @('Dashboard', 'Discovery', 'Toolbox', 'CommandLine', 'Vendors', 'AiToolkit', 'Settings')
+    $needsProfile = $Name -notin @('Dashboard', 'Discovery', 'Toolbox', 'CommandLine', 'Migration', 'Vendors', 'AiToolkit', 'Settings')
     if ($needsProfile -and -not $S.Profile) { [void]$root.Children.Add((New-Card @((New-Text 'Choose a client profile first' 15 -Bold), (New-Text 'Open Dashboard, run discovery, and confirm or pick the client. Actions are built from the client profile.' -Muted -Wrap), (New-Button 'Go to Dashboard' { Show-Page 'Dashboard' } -Primary)))) }
     else {
         switch ($Name) {
@@ -884,6 +897,7 @@ function Show-Page {
             'Network' { [void]$root.Children.Add((New-ActionGrid -Modules @('network', 'maintenance', 'operations') -Title 'Network, maintenance and operations')) ; Build-OpsConfirm $root }
             'Toolbox' { Build-Toolbox $root }
             'CommandLine' { Build-CommandLine $root }
+            'Migration' { Build-Migration $root }
             'Vendors' { Build-Vendors $root }
             'AiToolkit' { Build-AiToolkit $root }
             'Evidence' { Build-Evidence $root }
@@ -968,7 +982,7 @@ function Build-Dashboard {
         # gate board
         $gates = Get-DEGateBoard -Refresh
         $gridG = New-El DataGrid @{ Height = 250; Name = 'Gate board' }
-        foreach ($c in @(@{ h = 'Gate'; b = 'Title'; w = 260 }, @{ h = 'State'; b = 'State'; w = 100 }, @{ h = 'Detail'; b = 'Detail'; w = 520 }, @{ h = 'How to unlock'; b = 'Unblock'; w = 360 })) { $col = New-Object System.Windows.Controls.DataGridTextColumn; $col.Header = $c.h; $col.Binding = New-Object System.Windows.Data.Binding $c.b; $col.Width = $c.w; $gridG.Columns.Add($col) }
+        Add-DEGridColumns -Grid $gridG -Columns @(@{ h = 'Gate'; b = 'Title'; w = '1.6*' }, @{ h = 'State'; b = 'State'; w = 84 }, @{ h = 'Detail'; b = 'Detail'; w = '2.4*' }, @{ h = 'How to unlock'; b = 'Unblock'; w = '2*' })
         $gridG.ItemsSource = @($gates | ForEach-Object { [pscustomobject]@{ Title = $_.Title; State = $_.Status; Detail = $_.Detail; Unblock = $_.Unblock } })
         [void]$root.Children.Add((New-Card @((New-Text 'Gate engine' 15 -Bold), (New-Text 'Consequential actions stay disabled until their gates read PASS (or an approved, unexpired exception).' -Muted -Wrap), $gridG)))
     }
@@ -1051,7 +1065,7 @@ function Build-SecurityPosture {
 function Build-PackageCatalog {
     param($root)
     $grid = New-El DataGrid @{ Height = 320; Name = 'Package catalog' }
-    foreach ($c in @(@{ h = 'Package'; b = 'Name'; w = 280 }, @{ h = 'Category'; b = 'Category'; w = 110 }, @{ h = 'Source'; b = 'Source'; w = 110 }, @{ h = 'Trust'; b = 'Trust'; w = 240 }, @{ h = 'Confirmed'; b = 'Confirmed'; w = 90 }, @{ h = 'Secrets'; b = 'Secrets'; w = 150 })) { $col = New-Object System.Windows.Controls.DataGridTextColumn; $col.Header = $c.h; $col.Binding = New-Object System.Windows.Data.Binding $c.b; $col.Width = $c.w; $grid.Columns.Add($col) }
+    Add-DEGridColumns -Grid $grid -Columns @(@{ h = 'Package'; b = 'Name'; w = '2*' }, @{ h = 'Category'; b = 'Category'; w = 100 }, @{ h = 'Source'; b = 'Source'; w = 80 }, @{ h = 'Trust'; b = 'Trust'; w = '2*' }, @{ h = 'Confirmed'; b = 'Confirmed'; w = 100 }, @{ h = 'Secrets'; b = 'Secrets'; w = '1*' })
     $grid.ItemsSource = @(Get-DEPackages | ForEach-Object { $src = $_.source; [pscustomobject]@{ Name = $_.name; Category = $_.category; Source = $src.type; Trust = $(if ($src.type -eq 'winget') { "winget $($src.id)" } else { "sha256: $(if ((Get-DEPkgProp $src 'sha256')) { 'set' } else { 'not set' }); publisher: $(Get-DEPkgProp $src 'publisher')" }); Confirmed = $(if ($_.confirmed) { 'yes' } else { 'confirm first' }); Secrets = (@(Get-DEPkgProp $_ 'secrets' | Where-Object { $null -ne $_ }) -join ', ') } })
     $folder = New-Button 'Open packages folder' { Start-Process (Get-DELocalPackagesDir) }
     [void]$root.Children.Add((New-Card @((New-Text 'Installer repository' 15 -Bold), (New-Text 'Put DE-supplied installers (Guardz MSI, SentinelOne managed installer, PABX script, MSP360 build) in the packages folder. Unverified files are refused unless you override with a reason, which is recorded as WARN.' -Muted -Wrap), $folder, $grid)))
@@ -1171,6 +1185,176 @@ function Build-CommandLine {
     [void]$root.Children.Add((New-Card @((New-Text 'Command line' 15 -Bold), (New-Text 'Start the tool, run it from RMM, install a licence, run Toolbox scripts, build rescue media and releases, Microsoft 365 admin, and the Windows commands used on takeovers. Exit codes: 0 done, 1 not finished, 2 blocked or refused.' -Muted -Wrap), (New-Wrap @((New-El StackPanel @{} @((New-Label 'Search'), $search)), $all)))))
     [void]$root.Children.Add($list); & $render
 }
+function Import-DEMsAdmin {
+    <# DE Microsoft Admin ships beside the console (..\microsoft); the Migration page loads it the first time it is opened. #>
+    if (Get-Module -Name 'DE-Microsoft-Admin') { return $true }
+    $m = Join-Path (Split-Path -Parent $ConsoleRoot) 'microsoft\DE-Microsoft-Admin\DE-Microsoft-Admin.psd1'
+    if (-not (Test-Path -LiteralPath $m)) { return $false }
+    Import-Module $m -DisableNameChecking -ErrorAction Stop -WarningAction SilentlyContinue | Out-Null
+    return $true
+}
+function New-DEGrid {
+    <# A read-only DataGrid from rows and @(@{ h = header; b = property; w = width }). #>
+    param([object[]]$Rows, [object[]]$Columns, [string]$Name, [double]$MaxHeight = 320)
+    $g = New-El DataGrid @{ Name = $Name; MaxHeight = $MaxHeight; Margin = '0,4,0,4' }
+    Add-DEGridColumns -Grid $g -Columns $Columns
+    $g.ItemsSource = @($Rows)
+    return $g
+}
+function Build-Migration {
+    <#
+        Gmail -> Microsoft 365 (MIGRATION-STANDARD.md). On a client PC: scan every Windows account for Gmail left in
+        Outlook, Credential Manager, Thunderbird and scheduled scripts, and save the result for the project. On the
+        admin PC that holds the project: where it stands, the next command, the checklist, mailboxes, devices, bounces.
+        Tenant changes (batches, DNS, sign-off) stay in PowerShell with DE Microsoft Admin, where the sign-in is.
+    #>
+    param($root)
+    if (-not (Import-DEMsAdmin)) { [void]$root.Children.Add((New-Card @((New-Text 'Email migration' 15 -Bold), (New-Text 'DE Microsoft Admin is missing from this copy of the tool (microsoft\DE-Microsoft-Admin). Reinstall DE Tech Tool from a release package.' -Wrap)))); return }
+    $projects = @(Get-DEMigrationProject | Where-Object { $_ })
+    $elevated = Test-DEIsElevated
+    $tech = $(if ((Get-DEContext)['technician']) { (Get-DEContext)['technician'] } else { "$($Settings.technician)" })
+    if (-not $S.ContainsKey('MigrationProject')) { $S.MigrationProject = $(if ($projects.Count) { $projects[-1].projectId } else { '' }) }
+    if ($S.MigrationProject -and -not @($projects | Where-Object { $_.projectId -eq $S.MigrationProject }).Count) { $S.MigrationProject = '' }
+
+    [void]$root.Children.Add((New-Card @((New-Text 'Email migration: Gmail to Microsoft 365' 15 -Bold), (New-Text 'On each PC the client uses, scan for Gmail that is still set up and save the result. On the PC that holds the migration project, see where it stands and the next command. Nothing here asks for or keeps a password: Gmail app passwords are typed only into the PowerShell command that needs them.' -Muted -Wrap))))
+
+    # ---- project picker (only projects on this PC; they are created in PowerShell after signing in to the tenant)
+    $cb = New-El ComboBox @{ Width = 360; Name = 'Migration project' }
+    [void]$cb.Items.Add('No project on this PC (save the scan to a file)')
+    foreach ($p in $projects) { [void]$cb.Items.Add("$($p.client) · $($p.projectId) · $($p.stage)") }
+    $ids = @(''); $ids += @($projects | ForEach-Object { "$($_.projectId)" })
+    $cb.SelectedIndex = [math]::Max(0, [array]::IndexOf($ids, "$($S.MigrationProject)"))
+    $cb.Add_SelectionChanged({ $S.MigrationProject = $ids[[math]::Max(0, $cb.SelectedIndex)]; Show-Page 'Migration' }.GetNewClosure())
+
+    # ---- this PC
+    $all = New-El CheckBox @{ Content = 'Every Windows account on this PC'; IsChecked = $elevated; IsEnabled = $elevated; Margin = '0,6,0,6' }
+    [System.Windows.Automation.AutomationProperties]::SetName($all, 'Scan every Windows account on this PC')
+    $ms = Join-Path (Split-Path -Parent $ConsoleRoot) 'microsoft\DE-Microsoft-Admin\DE-Microsoft-Admin.psd1'
+    $scan = New-Button 'Scan this PC for Gmail' {
+        $dir = Join-Path (Get-DEConsole).Dirs.Evidence 'migration'
+        $out = Join-Path $dir ("{0}-gmail-scan-{1}.json" -f $env:COMPUTERNAME, (Get-Date -Format 'yyyyMMdd-HHmmss'))
+        Start-DEJob -Label 'Gmail scan' -Params @{ ms = $ms; all = [bool]$all.IsChecked; project = "$($S.MigrationProject)"; out = $out } -Work {
+            Import-Module $JobParams.ms -DisableNameChecking -ErrorAction Stop -WarningAction SilentlyContinue | Out-Null
+            $a = @{ AllProfiles = [bool]$JobParams.all }; if ($JobParams.project) { $a.ProjectId = $JobParams.project }
+            $r = Get-DEMailClientInventory @a
+            $null = Export-DEResult -Result $r -Path $JobParams.out
+            Add-DEEvidence -Step 'migration.mail-clients' -Module 'migration' -Before '' -ActionTaken "Scanned $env:COMPUTERNAME for Gmail ($(if ($JobParams.all) { 'every Windows account' } else { 'this Windows account' }))$(if ($JobParams.project) { " for project $($JobParams.project)" })" -Result $(if ($r.status -eq 'Succeeded') { 'PASS' } else { 'WARN' }) -Verification "$($r.message)" -Remediation $(if (@($r.data).Count) { (@($r.data | ForEach-Object { "$($_.where): $($_.fix)" }) -join ' | ') } else { '' }) -Artifacts @($JobParams.out) | Out-Null
+            [pscustomobject]@{ migrationScan = $r; file = $JobParams.out }
+        } -OnDone { param($res) $x = @($res | Where-Object { $_ -and $_.PSObject.Properties['migrationScan'] }) | Select-Object -Last 1; if ($x) { $S.MigrationScan = $x; Set-Status "$($x.migrationScan.message)" }; Show-Page 'Migration' }
+    }.GetNewClosure() -Primary -A11y 'Scan this PC for Gmail'
+    $pc = New-El StackPanel
+    [void]$pc.Children.Add((New-Text "This PC: $env:COMPUTERNAME" 14 -Bold))
+    [void]$pc.Children.Add((New-Text $(if ($elevated) { 'Running as administrator, so every Windows account on this PC can be scanned. Saved Windows passwords (Credential Manager) are private to each account; for the others they are listed as not checked.' } else { 'Not running as administrator: only this Windows account can be scanned. Start DE Tech Tool as administrator to scan every account.' }) -Muted -Wrap))
+    [void]$pc.Children.Add($all)
+    [void]$pc.Children.Add((New-Wrap @((New-El StackPanel @{ Margin = '0,0,12,0' } @((New-Label 'Record the scan on'), $cb)), $scan)))
+    $last = $S.MigrationScan
+    if ($last -and "$($last.migrationScan.target)" -ieq $env:COMPUTERNAME) {
+        $r = $last.migrationScan; $items = @($r.data | Where-Object { $_ })
+        [void]$pc.Children.Add((New-Label "Last scan · $(([datetime]$r.at).ToLocalTime().ToString('g'))"))
+        $tone = $(if ($r.status -eq 'Succeeded') { 'PASS' } else { 'WARN' })
+        $msg = New-Text $(if ($items.Count) { "$($items.Count) place(s) still use Gmail." } else { 'Nothing on this PC still points at Gmail.' }) -Bold; $msg.Foreground = Get-StateBrush $tone; [void]$pc.Children.Add($msg)
+        if ($items.Count) { [void]$pc.Children.Add((New-DEGrid -Name 'Gmail found on this PC' -Rows @($items | ForEach-Object { [pscustomobject]@{ Account = "$($_.account)"; Where = "$($_.where)"; Found = (Protect-DEText "$($_.what)"); Fix = "$($_.fix)" } }) -Columns @(@{ h = 'Account'; b = 'Account'; w = 110 }, @{ h = 'Where'; b = 'Where'; w = 200 }, @{ h = 'Found'; b = 'Found'; w = 260 }, @{ h = 'What to do'; b = 'Fix'; w = '*' }))) }
+        foreach ($g in @($r.notChecked | Where-Object { $_ })) { [void]$pc.Children.Add((New-Text "Not checked: $g" -Muted -Wrap)) }
+        $file = "$($last.file)"; $cmdkey = @($items | Where-Object { $_.fix -like 'remove it: cmdkey*' } | ForEach-Object { $_.fix -replace '^remove it: ', '' })
+        $btns = @((New-Button 'Show the saved file' { if (Test-Path -LiteralPath $file) { Start-Process -FilePath 'explorer.exe' -ArgumentList "/select,`"$file`"" } else { Set-Status "The file is gone: $file" } }.GetNewClosure()))
+        if ($cmdkey.Count) { $btns += New-Button 'Copy the Credential Manager commands' { [System.Windows.Clipboard]::SetText(($cmdkey -join "`r`n")); Set-Status 'Copied. Run them as the account they belong to.' }.GetNewClosure() }
+        [void]$pc.Children.Add((New-Wrap $btns))
+        [void]$pc.Children.Add((New-Text $(if ($S.MigrationProject) { "Recorded on project $($S.MigrationProject)." } else { "Saved to $file. On the PC with the project: Import-DEMailClientInventory -ProjectId <id> -Path <this file>, or Import a PC's scan below." }) -Muted -Wrap))
+    }
+    [void]$root.Children.Add((New-Card @($pc)))
+
+    # ---- the project
+    if (-not $S.MigrationProject) {
+        [void]$root.Children.Add((New-Card @((New-Text 'Migration project' 14 -Bold), (New-Text $(if ($projects.Count) { 'Pick a project above to see where it stands.' } else { "No migration project on this PC. Projects are created on the technician's admin PC after signing in to the client's tenant, and kept in $env:ProgramData\DE\MicrosoftAdmin\migrations. This PC's part is the scan above." }) -Muted -Wrap), (New-Button 'Copy the command that starts a project' { [System.Windows.Clipboard]::SetText("Import-Module `"$ms`"; Connect-DEMicrosoft -TenantId <domain> -Scenario Read, Users, Migration; Connect-DEExchange -UserPrincipalName <admin UPN>; New-DEMigrationProject -ClientName '<client>' -TargetDomain <domain>"); Set-Status 'Copied.' }.GetNewClosure()))))
+        return
+    }
+    $pid_ = "$($S.MigrationProject)"
+    try { $p = Get-DEMigrationProject -ProjectId $pid_ } catch { [void]$root.Children.Add((New-Card @((New-Text "Project $pid_ could not be read: $($_.Exception.Message)" -Wrap)))); return }
+    $next = Get-DEMigrationNextStep -ProjectId $pid_ -Technician $(if ($tech) { $tech } else { $env:USERNAME })
+    $stages = @('Assessment', 'Provisioning', 'Preflight', 'Pilot', 'Batches', 'ContactsCalendar', 'Devices', 'DnsCutover', 'FinalDelta', 'Verification', 'SignedOff', 'Closed')
+    $si = [array]::IndexOf($stages, "$($p.stage)")
+    $head = New-El StackPanel
+    [void]$head.Children.Add((New-Text "$($p.client) · $($p.targetDomain)" 15 -Bold))
+    [void]$head.Children.Add((New-Text "$($p.sourceType) to Microsoft 365 over $($p.mailPath) · project $($p.projectId) · updated $(if ($p.updatedAt) { ([datetime]$p.updatedAt).ToLocalTime().ToString('g') } else { 'never' })" -Muted -Wrap))
+    $bar = New-Object System.Windows.Controls.ProgressBar; $bar.Minimum = 0; $bar.Maximum = $stages.Count - 1; $bar.Value = [math]::Max(0, $si); $bar.Height = 6; $bar.Margin = '0,10,0,4'; [System.Windows.Automation.AutomationProperties]::SetName($bar, "Stage $($si + 1) of $($stages.Count): $($p.stage)")
+    [void]$head.Children.Add($bar)
+    [void]$head.Children.Add((New-Text "Stage $($si + 1) of $($stages.Count): $($p.stage)" -Muted))
+    [void]$head.Children.Add((New-Label 'Next'))
+    [void]$head.Children.Add((New-Text "$($next.step)" 14 -Bold))
+    [void]$head.Children.Add((New-Text "$($next.why)" -Wrap))
+    $nextCmd = "$($next.command)"
+    [void]$head.Children.Add((New-El TextBox @{ Text = $nextCmd; IsReadOnly = $true; TextWrapping = 'Wrap'; FontFamily = 'Cascadia Mono, Consolas'; FontSize = 12; Name = 'Next command'; Margin = '0,6,0,6' }))
+    [void]$head.Children.Add((New-Wrap @(
+        (New-Button 'Copy the next command' { [System.Windows.Clipboard]::SetText("Import-Module `"$ms`"`r`n$nextCmd"); Set-Status 'Copied with the Import-Module line. Run it in PowerShell signed in to the tenant.' }.GetNewClosure() -Primary),
+        (New-Button 'Refresh' { Show-Page 'Migration' })
+    )))
+    [void]$root.Children.Add((New-Card @($head)))
+
+    # checklist
+    $checkRows = @(foreach ($pr in @($p.verification.PSObject.Properties)) { $v = $pr.Value; [pscustomobject]@{ Check = $pr.Name; Status = $(switch ("$($v.status)") { 'Pass' { 'Passed' } 'Fail' { 'Failed' } 'NotApplicable' { 'Not applicable' } default { 'Not done' } }); Detail = "$($v.detail)"; By = $(if ($v.status -ne 'Pending' -and $v.by) { "$($v.by)" } else { '' }) } })
+    $passed = @($checkRows | Where-Object { $_.Status -in @('Passed', 'Not applicable') }).Count
+    [void]$root.Children.Add((New-Card @((New-Text "Sign-off checklist · $passed of $($checkRows.Count) done" 14 -Bold), (New-DEGrid -Name 'Sign-off checklist' -Rows $checkRows -Columns @(@{ h = 'Check'; b = 'Check'; w = 150 }, @{ h = 'Status'; b = 'Status'; w = 110 }, @{ h = 'Detail'; b = 'Detail'; w = '*' }, @{ h = 'By'; b = 'By'; w = 140 }) -MaxHeight 420))))
+
+    # mailboxes
+    $userRows = @(foreach ($u in @($p.users | Where-Object { $_ })) {
+        [pscustomobject]@{
+            From = "$($u.source)"; To = "$($u.destination)"
+            Ready = $(if ($u.destinationReady) { 'Yes' } else { "No: $(@($u.destinationIssues) -join '; ')" })
+            Preflight = $(if (-not $u.preflight) { 'Not run' } elseif ($u.preflight.ok) { "OK, $(@($u.preflight.folders).Count) folders" } else { "Failed: $($u.preflight.reason)" })
+            Mail = $(if ($u.migration) { "$($u.migration.status)$(if ($null -ne $u.migration.synced) { ", $($u.migration.synced) items" })$(if ($u.migration.error) { " · $($u.migration.error)" })" } elseif ($u.batch) { "in $($u.batch)" } else { 'Not started' })
+            Contacts = $(if ($u.contacts) { "$($u.contacts.imported) imported" } else { 'Not imported' })
+            Calendar = $(if ($u.calendar) { "$($u.calendar.imported) imported" } else { 'Not imported' })
+            MFA = $(if ($u.mfa) { $(if ($u.mfa.registered) { 'Registered' } else { 'Not registered' }) } else { 'Not checked' })
+        }
+    })
+    [void]$root.Children.Add((New-Card @((New-Text "Mailboxes · $($userRows.Count)" 14 -Bold), $(if ($userRows.Count) { New-DEGrid -Name 'Mailboxes' -Rows $userRows -Columns @(@{ h = 'Gmail'; b = 'From'; w = 170 }, @{ h = 'Microsoft 365'; b = 'To'; w = 170 }, @{ h = 'Ready'; b = 'Ready'; w = 90 }, @{ h = 'Preflight'; b = 'Preflight'; w = 120 }, @{ h = 'Mail'; b = 'Mail'; w = '*' }, @{ h = 'Contacts'; b = 'Contacts'; w = 95 }, @{ h = 'Calendar'; b = 'Calendar'; w = 95 }, @{ h = 'MFA'; b = 'MFA'; w = 95 }) } else { New-Text 'No mailbox mapped yet.' -Muted }))))
+
+    # devices
+    $scannedDev = @($p.devices | Where-Object { $_ -isnot [string] -and $_.PSObject.Properties['checkedAt'] })
+    $namedDev = @(@($p.devices | Where-Object { $_ -is [string] }) + @($p.users | ForEach-Object { @($_.devices) }) | Where-Object { $_ } | Select-Object -Unique)
+    $devRows = @(foreach ($d in $scannedDev) { [pscustomobject]@{ Device = "$($d.name)"; Checked = ([datetime]$d.checkedAt).ToLocalTime().ToString('g'); Gmail = $(if (@($d.gmailReferences).Count) { "$(@($d.gmailReferences).Count) place(s): $(@($d.gmailReferences | ForEach-Object { $_.where }) -join '; ')" } else { 'None' }); Gaps = $(if ($d.PSObject.Properties['notChecked'] -and @($d.notChecked).Count) { "$(@($d.notChecked).Count) not checked" } else { '' }) } })
+    foreach ($n in @($namedDev | Where-Object { @($scannedDev | ForEach-Object { "$($_.name)" }) -notcontains $_ })) { $devRows += [pscustomobject]@{ Device = "$n"; Checked = 'Not scanned'; Gmail = ''; Gaps = '' } }
+    $importScan = New-Button "Import a PC's scan (.json)" {
+        $d = New-Object Microsoft.Win32.OpenFileDialog; $d.Filter = 'Gmail scan (*.json)|*.json'; $d.Title = "Import a PC's Gmail scan"
+        if ($d.ShowDialog($Win)) { $r = Import-DEMailClientInventory -ProjectId $pid_ -Path $d.FileName -Confirm:$false; Set-Status "$($r.message)"; Show-Page 'Migration' }
+    }.GetNewClosure()
+    [void]$root.Children.Add((New-Card @((New-Text "PCs · $($scannedDev.Count) of $($devRows.Count) scanned" 14 -Bold), $(if ($devRows.Count) { New-DEGrid -Name 'PCs' -Rows $devRows -Columns @(@{ h = 'PC'; b = 'Device'; w = 140 }, @{ h = 'Scanned'; b = 'Checked'; w = 140 }, @{ h = 'Gmail still set up'; b = 'Gmail'; w = '*' }, @{ h = 'Gaps'; b = 'Gaps'; w = 110 }) } else { New-Text 'No PC named or scanned yet.' -Muted }), (New-Wrap @($importScan)))))
+
+    # bounces
+    $bounces = @($p.bounce | Where-Object { $_ })
+    $bp = New-El StackPanel
+    [void]$bp.Children.Add((New-Text "Bounces · $(@($bounces | Where-Object { -not $_.resolved }).Count) open of $($bounces.Count)" 14 -Bold))
+    [void]$bp.Children.Add((New-Text 'Save the bounce (non-delivery report) from Outlook as a .eml file and open it here. It says what is sending: a forward, a device retrying, a bounce of a bounce, or someone writing to a dead address. With Exchange connected in PowerShell, Invoke-DEBounceDiagnostic -MessageTrace also counts repeats.' -Muted -Wrap))
+    foreach ($b in $bounces) {
+        $row = New-El StackPanel @{ Margin = '0,8,0,4' }
+        $t = New-Text "$($b.cause) · $($b.bouncedRecipient)$(if ($b.smtpStatus) { " · $($b.smtpStatus)" })$(if ($b.resolved) { ' · resolved' })" -Bold; $t.Foreground = Get-StateBrush $(if ($b.resolved) { 'PASS' } else { 'WARN' }); [void]$row.Children.Add($t)
+        [void]$row.Children.Add((New-Text "$($b.why).$(if ($b.meaning) { " $($b.meaning)." })$(if (@($b.matchedDevices | Where-Object { $_ }).Count) { " Devices named in the headers: $(@($b.matchedDevices) -join ', ')." })$(if ($b.sendingClient) { " Sent by: $($b.sendingClient)." })" -Wrap))
+        if ($b.resolved) { [void]$row.Children.Add((New-Text "Resolved by $($b.resolvedBy): $($b.resolution)" -Muted -Wrap)) }
+        else {
+            [void]$row.Children.Add((New-Text "Next: $($b.fix)" -Muted -Wrap))
+            $fid = "$($b.id)"
+            [void]$row.Children.Add((New-Wrap @((New-Button 'Record what was changed' {
+                $what = Read-GuiText -Title 'Resolve the bounce' -Prompt 'What was changed to stop it (for example: removed the Gmail account from Outlook on HELENU)'
+                if (-not $what) { return }
+                $who = $(if ($tech) { $tech } else { Read-GuiText -Title 'Technician' -Prompt 'Your name' })
+                if (-not $who) { return }
+                $r = Resolve-DEMigrationBounce -ProjectId $pid_ -FindingId $fid -Resolution $what -Technician $who -Confirm:$false; Set-Status "$($r.message)"; Show-Page 'Migration'
+            }.GetNewClosure() -A11y "Resolve bounce $fid"))))
+        }
+        [void]$bp.Children.Add($row)
+    }
+    [void]$bp.Children.Add((New-Wrap @((New-Button 'Diagnose a bounce (.eml)' {
+        $d = New-Object Microsoft.Win32.OpenFileDialog; $d.Filter = 'Saved email (*.eml;*.txt)|*.eml;*.txt'; $d.Title = 'Open the bounce'
+        if ($d.ShowDialog($Win)) { $r = Invoke-DEBounceDiagnostic -ProjectId $pid_ -Path $d.FileName; Set-Status "$($r.message)"; Show-Page 'Migration' }
+    }.GetNewClosure()))))
+    [void]$root.Children.Add((New-Card @($bp)))
+
+    # the Hub record
+    [void]$root.Children.Add((New-Card @((New-Text 'Intelligence Hub record' 14 -Bold), (New-Text 'The whole project as the Hub keeps it: identities, counts, checks, devices, bounces, sign-off and the event trail. It never holds a credential.' -Muted -Wrap), (New-Wrap @((New-Button 'Export the record' {
+        $d = New-Object Microsoft.Win32.SaveFileDialog; $d.Filter = 'JSON (*.json)|*.json'; $d.FileName = "$pid_-record.json"; $d.Title = 'Save the migration record'
+        if ($d.ShowDialog($Win)) { $r = Export-DEMigrationRecord -ProjectId $pid_ -Path $d.FileName; Set-Status "$($r.message)" }
+    }.GetNewClosure() -Primary))))))
+}
 function Build-Vendors {
     param($root)
     $search = New-El TextBox @{ Width = 320; Name = 'Search vendors' }
@@ -1227,7 +1411,7 @@ function Build-Evidence {
     [void]$root.Children.Add((New-Card @((New-Text 'Evidence and handoff' 15 -Bold), (New-Text 'Sanitized JSON, internal and client-safe HTML reports, redacted log, sha256 manifest, zipped and hashed. The Hub gets identity, mapping, state, verification times, exceptions and evidence references; never secrets.' -Muted -Wrap), (New-Wrap @($export, $open, $client, $hub, $bundleCopy)), $status)))
     $gaps = @(Get-DEGapReport)
     $grid = New-El DataGrid @{ Height = 380; Name = 'Gap report' }
-    foreach ($c in @(@{ h = 'Phase'; b = 'phase'; w = 60 }, @{ h = 'Item'; b = 'title'; w = 340 }, @{ h = 'State'; b = 'State'; w = 100 }, @{ h = 'Detail'; b = 'detail'; w = 360 }, @{ h = 'Fix'; b = 'fix'; w = 360 })) { $col = New-Object System.Windows.Controls.DataGridTextColumn; $col.Header = $c.h; $col.Binding = New-Object System.Windows.Data.Binding $c.b; $col.Width = $c.w; $grid.Columns.Add($col) }
+    Add-DEGridColumns -Grid $grid -Columns @(@{ h = 'Phase'; b = 'phase'; w = 56 }, @{ h = 'Item'; b = 'title'; w = '2*' }, @{ h = 'State'; b = 'State'; w = 84 }, @{ h = 'Detail'; b = 'detail'; w = '2*' }, @{ h = 'Fix'; b = 'fix'; w = '2.4*' })
     $grid.ItemsSource = @($gaps | ForEach-Object { [pscustomobject]@{ phase = $_.phase; title = $_.title; State = $_.result; detail = $_.detail; fix = $_.fix } })
     [void]$root.Children.Add((New-Card @((New-Text "Gap report ($($gaps.Count) open)" 15 -Bold), $grid)))
     $ex = @(Get-DEExceptions)
@@ -1330,6 +1514,32 @@ if ($SmokeTest) {
         Use-ClientAndMode -ProfileId $SmokeClient -Mode 'takeover' -Technician $Settings.technician -Bundle 'proactive-business'
         if ("$($S.Profile.plan.bundle)" -ne 'proactive-business') { $failed += 'ProActive plan did not load' } else { Write-Host 'SMOKE PASS ProActive plan' }
         $rec = Get-DERecommendedMode -Snapshot $S.Snapshot -ClientProfile $S.Profile; if (-not $rec.mode) { $failed += 'no recommended mode' } else { Write-Host "SMOKE PASS recommended mode $($rec.mode)" }
+        # Email migration: a mid-project fixture (no tenant needed), a real scan of this account, and the next step
+        if (Import-DEMsAdmin) {
+            $migDir = Join-Path $SmokeOut 'migrations'; New-Item -ItemType Directory -Path $migDir -Force | Out-Null; $null = Set-DEMigrationDirectory -Path $migDir
+            $now = (Get-Date).ToUniversalTime()
+            $chk = [pscustomobject]@{}; foreach ($c in @('Inbound mail', 'Outbound mail', 'Replies', 'Attachments', 'Folders', 'Contacts', 'Calendar', 'MFA', 'Outlook desktop', 'Outlook mobile', 'Shared mailbox', 'DNS and forwarding', 'Bounce diagnostic')) { $chk | Add-Member -NotePropertyName $c -NotePropertyValue ([pscustomobject]@{ status = 'Pending'; detail = ''; by = ''; at = $now.ToString('o') }) }
+            $chk.'Shared mailbox' = [pscustomobject]@{ status = 'Pass'; detail = 'office@ : 4 members with Full Access and Send As, sign-in blocked'; by = 'smoke'; at = $now.ToString('o') }
+            $chk.'Bounce diagnostic' = [pscustomobject]@{ status = 'Fail'; detail = '1 open bounce finding(s); latest: RetryingClient for helen.x@gmail.com'; by = 'smoke'; at = $now.ToString('o') }
+            $fx = [pscustomobject][ordered]@{
+                schema = 'de.email-migration.project/v1'; projectId = 'smoke-mail'; client = 'Alamo Industries'; tenantId = '00000000-0000-0000-0000-000000000000'; targetDomain = 'alamo-industries.com'
+                sourceType = 'PersonalGmail'; mailPath = 'IMAP'; stage = 'Pilot'; requestedBy = 'smoke'; createdAt = $now.AddDays(-3).ToString('o'); updatedAt = $now.ToString('o')
+                users = @(
+                    [pscustomobject][ordered]@{ source = 'suzette.x@gmail.com'; destination = 'suzette@alamo-industries.com'; displayName = 'Suzette'; userId = '1'; sourceType = 'PersonalGmail'; devices = @('FRONTDESK'); destinationReady = $true; destinationIssues = @(); preflight = [pscustomobject]@{ at = $now.ToString('o'); ok = $true; reason = ''; folders = @(1..14 | ForEach-Object { [pscustomobject]@{ name = "f$_"; messages = 10 } }); allMailCount = 18211; storageKB = 5242880 }; batch = 'smoke-mail-pilot'; migration = [pscustomobject]@{ destination = 'suzette@alamo-industries.com'; status = 'Synced'; synced = 18190; skipped = 21; error = '' }; contacts = $null; calendar = $null; mfa = [pscustomobject]@{ registered = $true } }
+                    [pscustomobject][ordered]@{ source = 'helen.x@gmail.com'; destination = 'helen@alamo-industries.com'; displayName = 'Helen'; userId = '2'; sourceType = 'PersonalGmail'; devices = @('HELENU'); destinationReady = $true; destinationIssues = @(); preflight = [pscustomobject]@{ at = $now.ToString('o'); ok = $true; reason = ''; folders = @(1..9 | ForEach-Object { [pscustomobject]@{ name = "f$_"; messages = 10 } }); allMailCount = 40377; storageKB = 9437184 }; batch = $null; migration = $null; contacts = $null; calendar = $null; mfa = $null }
+                )
+                sharedMailboxes = @([pscustomobject]@{ address = 'office@alamo-industries.com'; members = @('norma@alamo-industries.com', 'helen@alamo-industries.com', 'suzette@alamo-industries.com', 'mike@alamo-industries.com'); verified = $true; problems = @(); checkedAt = $now.ToString('o') })
+                devices = @('FRONTDESK', 'HELENU'); batches = @([pscustomobject]@{ name = 'smoke-mail-pilot'; type = 'Pilot'; users = @('suzette@alamo-industries.com'); status = 'Synced'; startedAt = $now.AddDays(-1).ToString('o'); completedAt = $null; confirmedBy = $null; confirmedAt = $null; failed = 0 })
+                dns = $null; bounce = @([pscustomobject]@{ id = 'b1'; file = 'bounce.eml'; cause = 'RetryingClient'; why = 'the original is 4 days older than the bounce: a device or app keeps retrying it'; bouncedRecipient = 'helen.x@gmail.com'; smtpStatus = '5.1.1'; meaning = 'the address does not exist'; matchedDevices = @('HELENU'); sendingClient = 'Microsoft Outlook 16.0'; fix = 'remove the Gmail account from Outlook on HELENU'; resolved = $false; resolution = $null; resolvedBy = $null })
+                verification = $chk; signoff = $null; events = @()
+            }
+            [IO.File]::WriteAllText((Join-Path $migDir 'smoke-mail.json'), ($fx | ConvertTo-Json -Depth 20), (New-Object Text.UTF8Encoding $false))
+            $S.MigrationProject = 'smoke-mail'
+            $scan = Get-DEMailClientInventory -ProjectId 'smoke-mail'
+            $S.MigrationScan = [pscustomobject]@{ migrationScan = $scan; file = (Join-Path $migDir 'scan.json') }
+            $nx = Get-DEMigrationNextStep -ProjectId 'smoke-mail'
+            if ($nx.step -notlike 'Confirm the pilot*') { $failed += "migration next step: '$($nx.step)'" } else { Write-Host "SMOKE PASS migration next step ($($nx.step)); scan: $($scan.message)" }
+        } else { $failed += 'DE Microsoft Admin did not load' }
     } catch { $failed += "setup: $($_.Exception.Message)" }
     # Two layouts: the design size, and a 1366x768 laptop at 125 % scaling (1093x582 device-independent units less the
     # taskbar, rendered at 120 dpi). At the small size the footer (status and Cancel) must stay inside the window.

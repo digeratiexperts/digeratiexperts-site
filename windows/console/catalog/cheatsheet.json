@@ -232,9 +232,15 @@
           "shell": "PowerShell"
         },
         {
-          "title": "Find Gmail left on this PC",
-          "command": "Import-Module \"{root}\\microsoft\\DE-Microsoft-Admin\\DE-Microsoft-Admin.psd1\"; Get-DEMailClientInventory -ProjectId alamo-mail",
-          "note": "Run as the PC's user: Outlook profiles, Credential Manager, Thunderbird, scheduled scripts.",
+          "title": "Find Gmail left on a client PC (every Windows account)",
+          "command": "Import-Module \"{root}\\microsoft\\DE-Microsoft-Admin\\DE-Microsoft-Admin.psd1\"; Export-DEResult -Result (Get-DEMailClientInventory -AllProfiles) -Path \"$env:PUBLIC\\Documents\\$env:COMPUTERNAME-gmail-scan.json\"",
+          "note": "Run elevated (technician, SYSTEM or RMM): Outlook profiles, Thunderbird and scheduled scripts for every account. Credential Manager is per user, so it is listed as not checked for the others. The Migration page does the same with one button.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Record a client PC's scan on the project (admin PC)",
+          "command": "Import-DEMailClientInventory -ProjectId alamo-mail -Path .\\HELENU-gmail-scan.json",
+          "note": "Refuses anything that is not a mail-client scan. The device then counts for the bounce diagnostic.",
           "shell": "PowerShell"
         },
         {
