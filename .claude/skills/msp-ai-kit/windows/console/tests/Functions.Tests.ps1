@@ -635,6 +635,7 @@ Describe 'Fixes from the function-by-function review' {
         ($out -join "`n") | Should -Match 'PLAN: standalone: technology_strategy'
         $res = Get-Content -LiteralPath $rf -Raw | ConvertFrom-Json
         $res.exitCode | Should -Be $LASTEXITCODE
+        $res.overall | Should -Not -Be 'ERROR' -Because "$($res.message)"
         $res.overall | Should -Not -Match '^READY'
     }
     It 'headless plan-only (-WhatIf) still writes the whole evidence bundle and a result file' {
@@ -642,7 +643,7 @@ Describe 'Fixes from the function-by-function review' {
         & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $script:ConsoleRoot 'DETechConsole.ps1') -Headless -Mode audit -Client 'alamo' -Technician 'tester' -WhatIf -ResultFile $rf -DataDir (Join-Path $global:DETest.Dir 'd3') | Out-Null
         $res = Get-Content -LiteralPath $rf -Raw | ConvertFrom-Json
         $res.exitCode | Should -Be $LASTEXITCODE
-        $res.overall | Should -Not -Be 'ERROR'
+        $res.overall | Should -Not -Be 'ERROR' -Because "$($res.message)"
         $zip = ($res.bundle -replace ' \(sha256 .*$', '')
         Test-Path -LiteralPath $zip | Should -Be $true
         foreach ($f in @('report-client.html', 'report-internal.html', 'manifest.sha256')) { Test-Path -LiteralPath (Join-Path ($zip -replace '\.zip$', '') $f) | Should -Be $true }
