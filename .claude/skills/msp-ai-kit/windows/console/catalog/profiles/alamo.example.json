@@ -36,7 +36,11 @@
     "homepage": "https://portal.digeratiexperts.com/portal/login",
     "startupPages": [],
     "managedBookmarksFromVendors": false,
-    "extraBookmarks": [ { "name": "DE Client Portal", "url": "https://portal.digeratiexperts.com/portal/login" } ]
+    "extraBookmarks": [ { "name": "DE Client Portal", "url": "https://portal.digeratiexperts.com/portal/login" } ],
+    "loginManager": "",
+    "_loginManagerNote": "Pick the client's approved password manager (keeper, bitwarden, onepassword, lastpass, dashlane) or 'builtin' to keep the browser's own. Until one is picked the built-in managers stay off and the console reports the missing choice.",
+    "autofill": "off",
+    "extensions": { "mode": "approved-only", "approved": [], "blocked": [] }
   },
   "apps": {
     "required": ["m365-apps", "teams", "onedrive", "edge", "chrome", "pdf-reader"],

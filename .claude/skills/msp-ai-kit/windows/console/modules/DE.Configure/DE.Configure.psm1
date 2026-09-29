@@ -89,15 +89,79 @@ function Register-DEBaselineActions {
 # ================================================================== BROWSER
 function Get-DEBrowserPolicyProfile { param([string]$Name = 'de-browser-policy') $b = Get-DECatalogJson 'browser-policy.json'; $p = Get-DECfgProp $b.profiles $Name; if (-not $p) { throw "browser policy profile '$Name' not found" }; return $p }
 
+function Get-DEBrowserControlCatalog { return (Get-DECfgProp (Get-DECatalogJson 'browser-policy.json') 'control') }
+function Get-DEChromiumBrowsers {
+    <# Chromium browsers DE manages: Chrome and Edge always (policy is harmless when absent), Brave when installed or listed by the client. #>
+    param($ClientProfile)
+    $list = @('chrome', 'edge')
+    $want = @(Get-DEHashPath -Object $ClientProfile -Path 'browser.browsers' | Where-Object { $_ })
+    $braveHere = $script:IsWindowsHost -and ((Test-Path -LiteralPath "$env:ProgramFiles\BraveSoftware\Brave-Browser\Application\brave.exe") -or (Test-Path -LiteralPath "${env:ProgramFiles(x86)}\BraveSoftware\Brave-Browser\Application\brave.exe"))
+    if ($braveHere -or $want -contains 'brave') { $list += 'brave' }
+    return $list
+}
+function Get-DEBrowserExtensionPlan {
+    <#
+    What each browser forces, allows and blocks for this client. DE services (PABX, JumpCloud Go) and the client's approved
+    login manager are forced in; other login managers, coupon injectors and free VPN/proxy extensions are blocked; in
+    approved-only mode everything else is blocked too. Store ids the catalog has not confirmed are listed in 'unconfirmed'.
+    #>
+    param($ClientProfile)
+    $ctl = Get-DEBrowserControlCatalog
+    $name = Get-DEHashPath -Object $ClientProfile -Path 'browser.policyProfile'; if (-not $name) { $name = 'de-browser-policy' }
+    $pext = Get-DECfgProp (Get-DEBrowserPolicyProfile -Name $name) 'extensions'
+    $mode = "$(Get-DEHashPath -Object $ClientProfile -Path 'browser.extensions.mode')"; if (-not $mode) { $mode = "$(Get-DECfgProp $pext 'mode')" }; if (-not $mode) { $mode = 'blocklist' }
+    $lmKey = "$(Get-DEHashPath -Object $ClientProfile -Path 'browser.loginManager')".ToLowerInvariant()
+    $managers = Get-DECfgProp $ctl 'loginManagers'
+    $lm = $(if ($lmKey -and $lmKey -ne 'builtin') { Get-DECfgProp $managers $lmKey } else { $null })
+    if ($lmKey -and $lmKey -ne 'builtin' -and -not $lm) { throw "browser.loginManager '$lmKey' is not in the catalog (choose: $((@($managers.PSObject.Properties | ForEach-Object { $_.Name }) + 'builtin') -join ', '))" }
+    $pkgId = { param($ref) if (-not $ref) { return $null }; $pkg, $setting = "$ref" -split ':', 2; try { Get-DEPkgProp (Get-DEPkgProp (Get-DEPackage -Id $pkg) 'settings') $setting } catch { $null } }
+    $clientApproved = @(@(Get-DECfgProp $pext 'approved') + @(Get-DEHashPath -Object $ClientProfile -Path 'browser.extensions.approved') | Where-Object { $_ })
+    $clientBlocked = @(@(Get-DECfgProp $pext 'blocked') + @(Get-DEHashPath -Object $ClientProfile -Path 'browser.extensions.blocked') | Where-Object { $_ })
+    $browsers = @{}
+    foreach ($b in @(@(Get-DEChromiumBrowsers -ClientProfile $ClientProfile) + 'firefox')) {
+        $store = $(if ($b -eq 'brave') { 'chrome' } else { $b })   # Brave installs from the Chrome Web Store
+        $force = @(); $allow = @(); $block = @(); $missing = @(); $unconfirmed = @()
+        # forced entries: DE services first, then the login manager. Edge takes a Chrome Web Store id when it has no Add-ons id.
+        $wanted = @()
+        foreach ($svc in @(Get-DECfgProp $ctl 'deServices' | Where-Object { $_ })) {
+            $id = Get-DECfgProp $svc $store; if (-not $id) { $id = & $pkgId (Get-DECfgProp $svc "$($store)FromPackage") }
+            $wanted += @{ entry = $svc; id = $id; chromeId = $(if (Get-DECfgProp $svc 'chrome') { Get-DECfgProp $svc 'chrome' } else { & $pkgId (Get-DECfgProp $svc 'chromeFromPackage') }) }
+        }
+        if ($lm) { $wanted += @{ entry = $lm; id = (Get-DECfgProp $lm $store); chromeId = (Get-DECfgProp $lm 'chrome') } }
+        foreach ($w in $wanted) {
+            $nm = "$(Get-DECfgProp $w.entry 'name')"; $id = $w.id; $from = $store
+            if (-not $id -and $b -eq 'edge' -and $w.chromeId) { $id = $w.chromeId; $from = 'chrome' }
+            if (-not $id) { $missing += $nm; continue }
+            $force += [pscustomobject]@{ id = "$id"; name = $nm; store = $from; slug = "$(Get-DECfgProp $w.entry 'firefoxSlug')" }
+            if ((Get-DECfgProp $w.entry 'confirmed') -eq $false) { $unconfirmed += $nm }
+        }
+        foreach ($x in $clientApproved) { $allow += [pscustomobject]@{ id = "$x"; name = "$x"; store = $store } }
+        foreach ($grp in @(Get-DECfgProp $ctl 'blockedGroups' | Where-Object { $_ })) {
+            $items = @(); if (Get-DECfgProp $grp 'fromLoginManagers') { foreach ($pp in @($managers.PSObject.Properties)) { if ($pp.Name -ne $lmKey) { $items += $pp.Value } } } else { $items = @(Get-DECfgProp $grp 'items' | Where-Object { $_ }) }
+            foreach ($it in $items) { foreach ($idKey in @($store, $(if ($b -eq 'edge') { 'chrome' }))) { if (-not $idKey) { continue }; $id = Get-DECfgProp $it $idKey; if ($id) { $block += [pscustomobject]@{ id = "$id"; name = "$(Get-DECfgProp $it 'name') ($(Get-DECfgProp $grp 'name'))"; store = $idKey } } } }
+        }
+        foreach ($x in $clientBlocked) { $block += [pscustomobject]@{ id = "$x"; name = "$x (client blocked list)"; store = $store } }
+        $keep = @(@($force) + @($allow) | ForEach-Object { $_.id })
+        $block = @($block | Where-Object { $keep -notcontains $_.id } | Sort-Object id -Unique)
+        $browsers[$b] = [pscustomobject]@{ force = $force; allow = $allow; block = $block; blockAll = ($mode -eq 'approved-only'); missing = @($missing | Select-Object -Unique); unconfirmed = @($unconfirmed | Select-Object -Unique) }
+    }
+    return [pscustomobject]@{ mode = $mode; loginManager = $(if ($lm) { Get-DECfgProp $lm 'name' } elseif ($lmKey -eq 'builtin') { 'built-in browser manager' } else { '' }); loginManagerKey = $lmKey; builtinAllowed = ($lmKey -eq 'builtin'); browsers = $browsers }
+}
+function ConvertTo-DEChromiumForceEntry { param($Item) $url = $(if ($Item.store -eq 'edge') { 'https://edge.microsoft.com/extensionwebstorebase/v1/crx' } else { 'https://clients2.google.com/service/update2/crx' }); return "$($Item.id);$url" }
+
 function Get-DEBrowserDesiredPolicy {
     <# Merges the policy profile, client overrides, homepage/startup and managed bookmarks into per-browser key/value sets. #>
     param($ClientProfile)
     $name = Get-DEHashPath -Object $ClientProfile -Path 'browser.policyProfile'; if (-not $name) { $name = 'de-browser-policy' }
     $p = Get-DEBrowserPolicyProfile -Name $name
-    $out = @{ chrome = [ordered]@{}; edge = [ordered]@{}; lists = @{ chrome = @{}; edge = @{} } }
-    foreach ($b in @('chrome', 'edge')) {
+    $plan = Get-DEBrowserExtensionPlan -ClientProfile $ClientProfile
+    $chromium = @(Get-DEChromiumBrowsers -ClientProfile $ClientProfile)
+    $out = @{ browsers = $chromium; plan = $plan; lists = @{} }
+    foreach ($b in $chromium) { $out[$b] = [ordered]@{}; $out.lists[$b] = @{} }
+    $autofillOn = ("$(Get-DEHashPath -Object $ClientProfile -Path 'browser.autofill')" -eq 'on')
+    foreach ($b in $chromium) {
         foreach ($prop in @((Get-DECfgProp $p 'common').PSObject.Properties)) { $out[$b][$prop.Name] = $prop.Value }
-        $spec = Get-DECfgProp $p $b; if ($spec) { foreach ($prop in @($spec.PSObject.Properties | Where-Object { $null -ne $_ })) { $out[$b][$prop.Name] = $prop.Value } }
+        $spec = Get-DECfgProp $p $(if ($b -eq 'brave') { 'chrome' } else { $b }); if ($spec) { foreach ($prop in @($spec.PSObject.Properties | Where-Object { $null -ne $_ })) { $out[$b][$prop.Name] = $prop.Value } }
         $homePage = Get-DEHashPath -Object $ClientProfile -Path 'browser.homepage'
         if ($homePage) { $out[$b]['HomepageLocation'] = $homePage; $out[$b]['HomepageIsNewTabPage'] = 0; $out[$b]['RestoreOnStartup'] = 4; $out.lists[$b]['RestoreOnStartupURLs'] = @(@($homePage) + @(Get-DEHashPath -Object $ClientProfile -Path 'browser.startupPages' | Where-Object { $null -ne $_ }) | Where-Object { $_ }) }
         $bookmarksJson = $null
@@ -106,13 +170,15 @@ function Get-DEBrowserDesiredPolicy {
             $extra = @(Get-DEHashPath -Object $ClientProfile -Path 'browser.extraBookmarks' | Where-Object { $null -ne $_ }); $bookmarksJson = (@(@{ toplevel_name = 'DE' }) + @($extra | ForEach-Object { @{ name = (Get-DECfgProp $_ 'name'); url = (Get-DECfgProp $_ 'url') } })) | ConvertTo-Json -Compress -Depth 4
         }
         if ($bookmarksJson) { $out[$b]['ManagedBookmarks'] = $bookmarksJson; $out[$b]['BookmarkBarEnabled'] = 1 }
-        $ext = Get-DECfgProp $p 'extensions'
-        $force = @(); foreach ($e in @(Get-DECfgProp $ext 'forceInstall' | Where-Object { $null -ne $_ })) { $id = Get-DECfgProp $e $b; if ($id) { $force += $(if ($b -eq 'chrome') { "$id;https://clients2.google.com/service/update2/crx" } else { "$id;https://edge.microsoft.com/extensionwebstorebase/v1/crx" }) } }
-        $pabx = $null; try { $pabx = Get-DEPkgProp (Get-DEPkgProp (Get-DEPackage -Id 'pabx-policy') 'settings') "pabx_extension_id_$b" } catch { }
-        if ($pabx) { $force += $(if ($b -eq 'chrome') { "$pabx;https://clients2.google.com/service/update2/crx" } else { "$pabx;https://edge.microsoft.com/extensionwebstorebase/v1/crx" }) }
-        $out.lists[$b]['ExtensionInstallForcelist'] = $force
-        $out.lists[$b]['ExtensionInstallAllowlist'] = @(Get-DECfgProp $ext 'allow' | Where-Object { $null -ne $_ })
-        $out.lists[$b]['ExtensionInstallBlocklist'] = $(if ($force.Count -or @(Get-DECfgProp $ext 'allow' | Where-Object { $null -ne $_ }).Count) { @(Get-DECfgProp $ext 'block' | Where-Object { $null -ne $_ }) } else { @() })   # never block '*' with an empty allow/force list
+        # the approved login manager replaces the browser's own password manager and autofill
+        $out[$b]['PasswordManagerEnabled'] = $(if ($plan.builtinAllowed) { 1 } else { 0 })
+        $out[$b]['AutofillAddressEnabled'] = $(if ($autofillOn) { 1 } else { 0 }); $out[$b]['AutofillCreditCardEnabled'] = $(if ($autofillOn) { 1 } else { 0 })
+        if ($b -eq 'brave') { foreach ($k in @('IncognitoModeAvailability', 'ChromeCleanupEnabled')) { $out[$b].Remove($k) } }
+        $bp = $plan.browsers[$b]
+        $out.lists[$b]['ExtensionInstallForcelist'] = @($bp.force | ForEach-Object { ConvertTo-DEChromiumForceEntry -Item $_ })
+        $out.lists[$b]['ExtensionInstallAllowlist'] = @(@($bp.force) + @($bp.allow) | ForEach-Object { $_.id } | Select-Object -Unique)
+        # approved-only blocks '*' (force and allow lists still win); never block '*' when nothing is forced or allowed
+        $blockIds = @(); if ($bp.blockAll -and ($bp.force.Count -or $bp.allow.Count)) { $blockIds += '*' }; $blockIds += @($bp.block | ForEach-Object { $_.id }); $out.lists[$b]['ExtensionInstallBlocklist'] = @($blockIds | Where-Object { $_ } | Select-Object -Unique)
         $out.lists[$b]['URLBlocklist'] = @(Get-DECfgProp $p 'urlBlocklist' | Where-Object { $null -ne $_ })
         $out.lists[$b]['URLAllowlist'] = @(Get-DECfgProp $p 'urlAllowlist' | Where-Object { $null -ne $_ })
     }
@@ -120,13 +186,13 @@ function Get-DEBrowserDesiredPolicy {
     return $out
 }
 
-function Get-DEBrowserPolicyKey { param([ValidateSet('chrome', 'edge')][string]$Browser) if ($Browser -eq 'chrome') { return 'HKLM:\SOFTWARE\Policies\Google\Chrome' }; return 'HKLM:\SOFTWARE\Policies\Microsoft\Edge' }
+function Get-DEBrowserPolicyKey { param([ValidateSet('chrome', 'edge', 'brave')][string]$Browser) switch ($Browser) { 'chrome' { 'HKLM:\SOFTWARE\Policies\Google\Chrome' } 'brave' { 'HKLM:\SOFTWARE\Policies\BraveSoftware\Brave' } default { 'HKLM:\SOFTWARE\Policies\Microsoft\Edge' } } }
 
 function Compare-DEBrowserPolicy {
     param($ClientProfile)
     $want = Get-DEBrowserDesiredPolicy -ClientProfile $ClientProfile
     $drift = @()
-    foreach ($b in @('chrome', 'edge')) {
+    foreach ($b in @($want.browsers)) {
         $key = Get-DEBrowserPolicyKey -Browser $b
         foreach ($k in $want[$b].Keys) { $have = Get-DERegistryValue -Path $key -Name $k; if ("$have" -ne "$($want[$b][$k])") { $drift += "$b.$k" } }
         foreach ($list in $want.lists[$b].Keys) {
@@ -144,7 +210,7 @@ function Set-DEBrowserPolicy {
     param($ClientProfile)
     $want = Get-DEBrowserDesiredPolicy -ClientProfile $ClientProfile
     $backups = @()
-    foreach ($b in @('chrome', 'edge')) {
+    foreach ($b in @($want.browsers)) {
         $key = Get-DEBrowserPolicyKey -Browser $b
         if (-not $PSCmdlet.ShouldProcess($key, 'write browser policy')) { continue }
         # the first backup is the client's own policy: later applies never replace it with DE's
@@ -159,6 +225,76 @@ function Set-DEBrowserPolicy {
         }
     }
     return "policy written$(if ($backups.Count) { "; original policy backed up: $($backups -join ', ')" }); restart browsers to load"
+}
+
+function Test-DEFirefoxInstalled { return [bool]($script:IsWindowsHost -and ((Test-Path -LiteralPath "$env:ProgramFiles\Mozilla Firefox\firefox.exe") -or (Test-Path -LiteralPath "${env:ProgramFiles(x86)}\Mozilla Firefox\firefox.exe"))) }
+function Get-DEFirefoxDesiredPolicy {
+    <# Firefox machine policy (HKLM\SOFTWARE\Policies\Mozilla\Firefox): built-in logins and autofill off unless the client keeps them, and ExtensionSettings (JSON) with the same forced/blocked lists. #>
+    param($ClientProfile)
+    $plan = Get-DEBrowserExtensionPlan -ClientProfile $ClientProfile
+    $fp = $plan.browsers['firefox']
+    $autofillOn = ("$(Get-DEHashPath -Object $ClientProfile -Path 'browser.autofill')" -eq 'on')
+    $settings = [ordered]@{}
+    if ($fp.blockAll -and ($fp.force.Count -or $fp.allow.Count)) { $settings['*'] = @{ installation_mode = 'blocked'; blocked_install_message = 'Extensions are managed by Digerati Experts. Ask support@digeratiexperts.com.' } }
+    foreach ($x in @($fp.block)) { $settings[$x.id] = @{ installation_mode = 'blocked' } }
+    foreach ($x in @($fp.allow)) { $settings[$x.id] = @{ installation_mode = 'allowed' } }
+    foreach ($x in @($fp.force)) { if ($x.slug) { $settings[$x.id] = @{ installation_mode = 'force_installed'; install_url = "https://addons.mozilla.org/firefox/downloads/latest/$($x.slug)/latest.xpi" } } else { $settings[$x.id] = @{ installation_mode = 'allowed' } } }
+    $values = [ordered]@{ PasswordManagerEnabled = $(if ($plan.builtinAllowed) { 1 } else { 0 }); OfferToSaveLogins = $(if ($plan.builtinAllowed) { 1 } else { 0 }); AutofillAddressEnabled = $(if ($autofillOn) { 1 } else { 0 }); AutofillCreditCardEnabled = $(if ($autofillOn) { 1 } else { 0 }) }
+    if ($settings.Count) { $values['ExtensionSettings'] = ($settings | ConvertTo-Json -Compress -Depth 4) }
+    return $values
+}
+function Compare-DEFirefoxPolicy {
+    param($ClientProfile)
+    $want = Get-DEFirefoxDesiredPolicy -ClientProfile $ClientProfile
+    return @(foreach ($k in $want.Keys) { $have = Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Policies\Mozilla\Firefox' -Name $k; if ("$have" -ne "$($want[$k])") { "firefox.$k" } })
+}
+function Set-DEFirefoxPolicy {
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param($ClientProfile)
+    $key = 'HKLM:\SOFTWARE\Policies\Mozilla\Firefox'
+    $want = Get-DEFirefoxDesiredPolicy -ClientProfile $ClientProfile
+    if (-not $PSCmdlet.ShouldProcess($key, 'write Firefox policy')) { return 'planned' }
+    $bk = $null; if (-not (Get-DEState -Path 'browser.policyOriginal.firefox')) { $bk = Backup-DERegistryKey -Key ($key -replace '^HKLM:', 'HKLM') -Label 'browser-firefox'; Set-DEStateValue -Path 'browser.policyOriginal.firefox' -Value @{ existed = [bool](Test-Path -Path $key); backup = $bk; at = (Get-Date).ToString('o') } }
+    foreach ($k in $want.Keys) { $v = $want[$k]; if ($v -is [int]) { Set-DERegistryValue -Path $key -Name $k -Value $v -Type DWord } else { Set-DERegistryValue -Path $key -Name $k -Value "$v" -Type String } }
+    return "Firefox policy written$(if ($bk) { "; original backed up: $bk" }); restart Firefox to load"
+}
+function Get-DEInstalledBrowserExtensions {
+    <# Extensions installed in every local user profile (Chrome, Edge, Brave, Firefox), read from the profile folders; no browser has to run. #>
+    param([string]$UsersRoot = "$env:SystemDrive\Users")
+    $out = @()
+    if (-not $script:IsWindowsHost -and -not (Test-Path -LiteralPath $UsersRoot)) { return $out }
+    $roots = [ordered]@{ chrome = 'AppData\Local\Google\Chrome\User Data'; edge = 'AppData\Local\Microsoft\Edge\User Data'; brave = 'AppData\Local\BraveSoftware\Brave-Browser\User Data' }
+    foreach ($u in @(Get-ChildItem -LiteralPath $UsersRoot -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -notin @('Public', 'Default', 'Default User', 'All Users') })) {
+        foreach ($b in $roots.Keys) {
+            $ud = Join-Path $u.FullName $roots[$b]; if (-not (Test-Path -LiteralPath $ud)) { continue }
+            foreach ($prof in @(Get-ChildItem -LiteralPath $ud -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -eq 'Default' -or $_.Name -like 'Profile *' })) {
+                $ext = Join-Path $prof.FullName 'Extensions'; if (-not (Test-Path -LiteralPath $ext)) { continue }
+                foreach ($e in @(Get-ChildItem -LiteralPath $ext -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^[a-p]{32}$' })) {
+                    $nm = ''
+                    try { $mf = @(Get-ChildItem -LiteralPath $e.FullName -Directory | Sort-Object Name -Descending | ForEach-Object { Join-Path $_.FullName 'manifest.json' } | Where-Object { Test-Path -LiteralPath $_ }) | Select-Object -First 1; if ($mf) { $nm = "$((Get-Content -LiteralPath $mf -Raw | ConvertFrom-Json).name)"; if ($nm -like '__MSG_*') { $nm = '' } } } catch { }
+                    $out += [pscustomobject]@{ user = $u.Name; browser = $b; profile = $prof.Name; id = $e.Name; name = $nm }
+                }
+            }
+        }
+        $ff = Join-Path $u.FullName 'AppData\Roaming\Mozilla\Firefox\Profiles'
+        if (Test-Path -LiteralPath $ff) { foreach ($x in @(Get-ChildItem -LiteralPath $ff -Recurse -Filter '*.xpi' -ErrorAction SilentlyContinue | Where-Object { $_.Directory.Name -eq 'extensions' })) { $out += [pscustomobject]@{ user = $u.Name; browser = 'firefox'; profile = $x.Directory.Parent.Name; id = $x.BaseName; name = '' } } }
+    }
+    return $out
+}
+function Test-DEBrowserExtensionConflicts {
+    <# Installed extensions the client's policy does not allow: on the blocked list, or anything unapproved in approved-only mode. Browsers remove them at their next start once the policy is in place. #>
+    param($ClientProfile, [array]$Installed)
+    if ($null -eq $Installed) { $Installed = @(Get-DEInstalledBrowserExtensions) }
+    $plan = Get-DEBrowserExtensionPlan -ClientProfile $ClientProfile
+    $out = @()
+    foreach ($x in @($Installed | Where-Object { $_ })) {
+        $bp = $plan.browsers[$x.browser]; if (-not $bp) { continue }
+        $ok = @(@($bp.force) + @($bp.allow) | ForEach-Object { $_.id })
+        $hit = @($bp.block | Where-Object { $_.id -eq $x.id }) | Select-Object -First 1
+        if ($hit) { $out += [pscustomobject]@{ user = $x.user; browser = $x.browser; id = $x.id; name = $(if ($x.name) { $x.name } else { $hit.name }); reason = "blocked: $($hit.name)" } }
+        elseif ($bp.blockAll -and $ok -notcontains $x.id) { $out += [pscustomobject]@{ user = $x.user; browser = $x.browser; id = $x.id; name = $x.name; reason = 'not on the approved list' } }
+    }
+    return $out
 }
 
 function Set-DEDefaultBrowserAssociations {
@@ -186,15 +322,15 @@ function Set-DEDefaultBrowserAssociations {
 
 function Register-DEBrowserActions {
     param($ClientProfile)
-    Register-DEAction -Id 'browser.policy' -Module 'browser' -Title 'Chrome and Edge policy (homepage, bookmarks, extensions, private browsing, downloads, safe browsing)' -Phase 12 -Gates @('gate.elevated') -RequiresElevation `
+    Register-DEAction -Id 'browser.policy' -Module 'browser' -Title 'Chrome, Edge and Brave policy (logins, autofill, extensions, homepage, bookmarks, private browsing, downloads, safe browsing)' -Phase 12 -Gates @('gate.elevated') -RequiresElevation `
         -Detect { $d = @(Compare-DEBrowserPolicy -ClientProfile $ClientProfile); @{ driftCount = $d.Count; drift = (($d | Select-Object -First 12) -join ', ') } }.GetNewClosure() -Desired { @{ driftCount = 0 } } `
         -Apply { param($s) Set-DEBrowserPolicy -ClientProfile $ClientProfile }.GetNewClosure() `
         -Rollback { param($s)
             # reg import only merges, so DE's keys are removed first and the client's original policy imported back
             $done = @(); $bad = @()
-            foreach ($b in @('chrome', 'edge')) {
+            foreach ($b in @('chrome', 'edge', 'brave')) {
                 $orig = Get-DEState -Path "browser.policyOriginal.$b"; if (-not $orig) { continue }
-                $key = $(if ($b -eq 'chrome') { 'HKLM:\SOFTWARE\Policies\Google\Chrome' } else { 'HKLM:\SOFTWARE\Policies\Microsoft\Edge' })
+                $key = Get-DEBrowserPolicyKey -Browser $b
                 if (Test-Path -Path $key) { Remove-Item -Path $key -Recurse -Force }
                 if ($orig['existed']) { if ($orig['backup'] -and (Test-Path -LiteralPath $orig['backup'])) { $r = Invoke-DENative -FilePath 'reg.exe' -Arguments @('import', $orig['backup']) -TimeoutSeconds 60; if ($r.ExitCode -eq 0) { $done += $b } else { $bad += "$b import exit $($r.ExitCode)" } } else { $bad += "$b backup missing" } }
                 else { if (-not (Test-Path -Path $key)) { $done += $b } else { $bad += "$b key still present" } }
@@ -202,6 +338,17 @@ function Register-DEBrowserActions {
             @{ ok = ($bad.Count -eq 0 -and $done.Count -gt 0); detail = "restored: $($done -join ', ')$(if ($bad.Count) { "; problems: $($bad -join '; ')" })" }
         } `
         -ManualAction 'Restart Chrome and Edge, then open chrome://policy and edge://policy to confirm the values show as Machine / OK.'
+    Register-DEAction -Id 'browser.login-manager' -Module 'browser' -Title 'Approved login manager chosen (replaces built-in password managers and autofill)' -Phase 12 `
+        -Detect { $pl = Get-DEBrowserExtensionPlan -ClientProfile $ClientProfile; @{ chosen = [bool]$pl.loginManagerKey; name = $pl.loginManager; unconfirmed = ((@($pl.browsers.Values | ForEach-Object { $_.unconfirmed }) | Select-Object -Unique) -join ', '); missing = ((@($pl.browsers.Values | ForEach-Object { $_.missing }) | Select-Object -Unique) -join ', ') } }.GetNewClosure() `
+        -Desired { @{ chosen = $true } } `
+        -ManualAction "Set browser.loginManager in the client profile (keeper, bitwarden, onepassword, lastpass, dashlane, or builtin). Until then every built-in browser password manager stays off. Fill any missing or unconfirmed store ids in catalog\browser-policy.json."
+    Register-DEAction -Id 'browser.firefox' -Module 'browser' -Title 'Firefox policy (logins, autofill, extensions)' -Phase 12 -Gates @('gate.elevated') -RequiresElevation `
+        -Detect { $inst = Test-DEFirefoxInstalled; $d = $(if ($inst) { @(Compare-DEFirefoxPolicy -ClientProfile $ClientProfile) } else { @() }); @{ installed = $inst; driftCount = $d.Count; drift = ($d -join ', ') } }.GetNewClosure() -Desired { @{ driftCount = 0 } } `
+        -Apply { param($s) Set-DEFirefoxPolicy -ClientProfile $ClientProfile }.GetNewClosure() `
+        -ManualAction 'Restart Firefox and open about:policies to confirm the values are Active.'
+    Register-DEAction -Id 'browser.extensions' -Module 'browser' -Title 'No unapproved or conflicting browser extensions installed (all users)' -Phase 12 `
+        -Detect { $c = @(Test-DEBrowserExtensionConflicts -ClientProfile $ClientProfile); @{ conflicts = $c.Count; list = (($c | Select-Object -First 12 | ForEach-Object { "$($_.browser):$(if ($_.name) { $_.name } else { $_.id }) ($($_.user); $($_.reason))" }) -join '; ') } }.GetNewClosure() -Desired { @{ conflicts = 0 } } `
+        -ManualAction 'Apply the browser policy, then restart each browser: Chrome, Edge, Brave and Firefox remove blocked and unapproved extensions at their next start. Run this check again to confirm.'
     Register-DEAction -Id 'browser.default' -Module 'browser' -Title 'Default browser association' -Phase 12 -Gates @('gate.elevated') -RequiresElevation `
         -Detect { $want = Get-DEHashPath -Object $ClientProfile -Path 'browser.default'; if (-not $want) { $want = 'edge' }; $cur = (Get-DEBrowserState).defaultBrowser; $cfg = Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System' -Name 'DefaultAssociationsConfiguration'; $prog = $(if ($want -eq 'chrome') { 'ChromeHTML' } else { 'MSEdgeHTM' }); $cfgOk = [bool]($cfg -and (Test-Path -LiteralPath "$cfg") -and ((Get-Content -LiteralPath "$cfg" -Raw) -match [regex]::Escape($prog))); @{ matches = ($cur -eq $want -or $cfgOk); current = $cur; want = $want; policyFile = $cfgOk } }.GetNewClosure() -Desired { @{ matches = $true } } `
         -Apply { param($s) $want = Get-DEHashPath -Object $ClientProfile -Path 'browser.default'; if (-not $want) { $want = 'edge' }; Set-DEDefaultBrowserAssociations -Browser $want }.GetNewClosure()
@@ -365,4 +512,4 @@ function Register-DEBrandingActions {
         -Apply { param($s) $want = $s.Detected.want; Rename-Computer -NewName $want -Force; "renamed to $want (restart required)" }
 }
 
-Export-ModuleMember -Function Get-DEBaselineControls, Get-DEBaselineControlState, Set-DEBaselineControl, Invoke-DEBaselineAssessment, Register-DEBaselineActions, Get-DEBrowserPolicyProfile, Get-DEBrowserDesiredPolicy, Compare-DEBrowserPolicy, Set-DEBrowserPolicy, Set-DEDefaultBrowserAssociations, Register-DEBrowserActions, Get-DEBrandingAssets, New-DEBrandedWallpaper, Get-DEBrandingState, Set-DEBranding, Undo-DEBranding, New-DEHostname, Get-DEShortcutDefinitions, Set-DESupportShortcuts, Register-DEBrandingActions
+Export-ModuleMember -Function Get-DEBrowserControlCatalog, Get-DEChromiumBrowsers, Get-DEBrowserExtensionPlan, ConvertTo-DEChromiumForceEntry, Test-DEFirefoxInstalled, Get-DEFirefoxDesiredPolicy, Compare-DEFirefoxPolicy, Set-DEFirefoxPolicy, Get-DEInstalledBrowserExtensions, Test-DEBrowserExtensionConflicts, Get-DEBaselineControls, Get-DEBaselineControlState, Set-DEBaselineControl, Invoke-DEBaselineAssessment, Register-DEBaselineActions, Get-DEBrowserPolicyProfile, Get-DEBrowserDesiredPolicy, Compare-DEBrowserPolicy, Set-DEBrowserPolicy, Set-DEDefaultBrowserAssociations, Register-DEBrowserActions, Get-DEBrandingAssets, New-DEBrandedWallpaper, Get-DEBrandingState, Set-DEBranding, Undo-DEBranding, New-DEHostname, Get-DEShortcutDefinitions, Set-DESupportShortcuts, Register-DEBrandingActions
