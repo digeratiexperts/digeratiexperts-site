@@ -1123,9 +1123,9 @@ function Build-Branding {
         (New-Button 'Preview lock screen' { & $render -Lock }),
         (New-Button 'Save to client profile' { try { $base = ConvertTo-DEHashtable (Get-DEClientProfile -Id $S.Profile.id); $base['branding'] = ConvertTo-DEHashtable $S.Profile.branding; $f = Save-DEClientProfile -Profile $base; Set-Status "Branding saved to $f" } catch { Set-Status $_.Exception.Message } }),
         (New-Button 'Reset these options' { $S.Profile.branding[$S.BrandTarget] = @{}; Show-Page 'Branding' }),
-        (New-Button 'Apply to this device' { if (Confirm-Gui 'Apply branding' 'Set the wallpaper, lock screen and About-page info on this device now? Undo branding restores the previous look.') { Start-DEJob -Label 'Apply branding' -Work { Invoke-DEAction -Id 'branding.apply' -Mode Apply } } }),
+        (New-Button 'Apply wallpaper + branded lock screen' { if (Confirm-Gui 'Apply branding' 'Set the wallpaper, company-branded lock/sign-in screen and About-page info on this device now? Undo branding restores the previous look.') { Start-DEJob -Label 'Apply branding and lock screen' -Work { Invoke-DEAction -Id 'branding.apply' -Mode Apply } } }),
         (New-Button 'Undo branding' { if (Confirm-Gui 'Undo branding' 'Restore the previous wallpaper, lock screen and OEM info?') { Start-DEJob -Label 'Undo branding' -Work { Undo-DEBranding } } }))
-    $tips = New-Text 'Tips: use transparent PNG logos at least 1200 px wide; give a light version for dark backgrounds (otherwise the logo gets a light backing plate automatically). The DE logo switches to its white version on dark backgrounds by itself. Previews render at the chosen resolution (auto = this screen).' -Muted -Wrap
+    $tips = New-Text 'Tips: use transparent PNG logos at least 1200 px wide; give a light version for dark backgrounds (otherwise the logo gets a light backing plate automatically). The DE logo switches to its white version on dark backgrounds by itself. Apply writes the rendered company image as both the Windows lock/sign-in image and the PersonalizationCSP lock-screen image. For JumpCloud MDM fleets, also bind a Desktop and Lock Screen Settings policy so the branded image is continuously enforced; Windows Pro needs the JumpCloud/Microsoft SharedPC SetEduPolicies prerequisite for that MDM policy.' -Muted -Wrap
     [void]$root.Children.Add((New-Card @((New-Text 'Branding' 15 -Bold), (New-Text "Hostname pattern $($S.Profile.branding.hostnamePattern) -> $(New-DEHostname -ClientProfile $S.Profile)" -Muted), $targetSwitch, (New-Label 'Look'), $look, (New-Label 'Sizes'), $sizes, (New-Label 'Text'), $lines, (New-Label 'Files'), $files, $tips, $actions, $info, $img)))
     [void]$root.Children.Add((New-ActionGrid -Modules @('branding') -Title 'Branding actions'))
 }
@@ -1476,6 +1476,310 @@ function Build-Settings {
     $dry = New-El CheckBox @{ Content = 'Dry run (every action plans, nothing changes)'; IsChecked = [bool]$Settings.dryRun }
     $save = New-Button 'Save settings' { $Settings.hubEndpoint = $hubBox.Text; $Settings.dryRun = [bool]$dry.IsChecked; Save-GuiSettings; Set-DEStateValue -Path 'settings.hub.endpoint' -Value $hubBox.Text; Set-DEMode -Mode $(if ($dry.IsChecked) { 'Audit' } else { 'Apply' }) -DryRun:([bool]$dry.IsChecked); Update-Header; Set-Status 'Settings saved.' }.GetNewClosure() -Primary
     [void]$root.Children.Add((New-Card @((New-Text 'Console settings' 15 -Bold), (New-Label 'Intelligence Hub device endpoint (HTTPS)'), $hubBox, $dry, $save, (New-Text "Data folder: $((Get-DEConsole).Dirs.Base)" -Muted), (New-Button 'Open data folder' { Start-Process (Get-DEConsole).Dirs.Base }))))
+
+    # Go-live wiring belongs in the tool instead of a forgotten chat transcript.
+    $hubAccount = $(if ($S.Profile) { "$(Get-DEHashPath -Object $S.Profile -Path 'hub.accountId')" } else { '' })
+    $hubAccountBox = New-El TextBox @{ Text = $hubAccount; Width = 180; Name = 'Intelligence Hub account number' }
+    $saveHubAccount = New-Button 'Save Hub account to client profile' {
+        if (-not $S.Profile) { Set-Status 'Select a client profile first.'; return }
+        $acct = "$($hubAccountBox.Text)".Trim(); if ($acct -and $acct -notmatch '^[1-9]\\d* { $id = Read-GuiText 'New profile' 'Profile id (lowercase, hyphens):'; if ($id) { $p = New-DEClientProfileTemplate -Id $id -Name $id; try { $f = Save-DEClientProfile -Profile $p; Start-Process notepad.exe $f } catch { Set-Status $_.Exception.Message } } }
+    [void]$root.Children.Add((New-Card @((New-Text 'Client profiles' 15 -Bold), (New-Text 'Profiles hold tier, stack roles, apps, branding, sites, vendor tenant ids and detection rules. Saving one that contains a secret is refused.' -Muted -Wrap), $profileBtn)))
+}
+
+$Integrity = Write-DEIntegrityEvidence
+
+# ============================================================== smoke test
+if ($SmokeTest) {
+    # Builds every page against a real client profile without a message loop or a visible window, then renders
+    # each page at 96 and 192 DPI (100 and 200 percent) so layout faults and high-DPI clipping show up in CI.
+    Set-DEMode -Mode Audit -DryRun
+    if (-not $SmokeOut) { $SmokeOut = Join-Path (Get-DEConsole).Dirs.Base 'smoke' }
+    New-Item -ItemType Directory -Path $SmokeOut -Force | Out-Null
+    $failed = @()
+    # Drive the same background-job path the buttons use (runspace, EndInvoke, OnDone) and fail on any job error.
+    function Wait-SmokeJob {
+        param([string]$Name)
+        $deadline = (Get-Date).AddMinutes(8)
+        while ($S.Job -and -not $S.Job.handle.IsCompleted -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 250 }
+        if ($S.Job -and -not $S.Job.handle.IsCompleted) { return "${Name}: timed out" }
+        if ($S.Job) { Update-DEJob }
+        if ($S.LastJobError) { return "${Name}: $($S.LastJobError)" }
+        return $null
+    }
+    try {
+        $S.Mode = 'takeover'; $Settings.technician = $(if ($Technician) { $Technician } else { 'jrpetro' })
+        Use-ClientAndMode -ProfileId $SmokeClient -Mode 'takeover' -Technician $Settings.technician
+        if ($S.LastJobError) { $failed += "use client and mode: $($S.LastJobError)" }
+        if (-not @(Get-DEActions -Mode 'takeover').Count) { $failed += 'use client and mode: no plan was built' } else { Write-Host 'SMOKE PASS use client and mode' }
+        # A failing button must report, not throw.
+        Invoke-GuiSafely -Label 'smoke' -Action { throw 'handler error on purpose' }
+        if ($S.LastJobError -notmatch 'on purpose') { $failed += 'button error guard did not report' } else { Write-Host 'SMOKE PASS button error guard'; $S.LastJobError = $null }
+        Invoke-Discovery -Quick
+        $e = Wait-SmokeJob 'discovery job'; if ($e) { $failed += $e } else { Write-Host 'SMOKE PASS discovery job' }
+        if (-not $S.Snapshot) { $failed += 'discovery job: no snapshot came back' }
+        if (-not @(Get-DEActions).Count) { $failed += 'discovery job: no workflow actions registered' }
+        Start-DEJob -Label 'Full audit' -Work { $null = Invoke-DEAudit -Mode $JobMode }
+        $e = Wait-SmokeJob 'audit job'; if ($e) { $failed += $e } else { Write-Host ("SMOKE PASS audit job ({0} evidence rows)" -f @(Get-DEEvidence).Count) }
+        # Scan & fix: the list builds from the runbook, rows and checkboxes exist, and a ticked batch runs through the job path
+        $S.ScanDone = $true; Select-DEScanDefaults; Show-Page 'Scan'
+        if (-not @($S.RowBorders.Keys).Count) { $failed += 'scan page: no rows' } else { Write-Host ("SMOKE PASS scan page ({0} rows, {1} pre-ticked)" -f @($S.RowBorders.Keys).Count, @($S.Selected.Keys).Count) }
+        $S.Selected = @{}; foreach ($i in @(@($S.RowBorders.Keys) | Select-Object -First 2)) { $S.Selected[$i] = $true }
+        Invoke-DEScanBatch -How Audit
+        $e = Wait-SmokeJob 'scan batch'; if ($e) { $failed += $e } else { Write-Host 'SMOKE PASS scan batch (check selected)' }
+        $S.Focus = @($S.RowBorders.Keys)[0]; Update-ScanDetail; if (-not $S.DetailHost.Content) { $failed += 'scan detail panel empty' } else { Write-Host 'SMOKE PASS scan detail panel' }
+        # the plan picker: a standalone solution loads as not DE managed, then a ProActive tier for the page renders
+        Use-ClientAndMode -ProfileId $SmokeClient -Mode 'new' -Technician $Settings.technician -Solution @('identity_access')
+        if ($S.Profile.plan.managed -ne $false -or -not @(Get-DEActions -Mode 'new').Count) { $failed += 'standalone plan did not load' } else { Write-Host 'SMOKE PASS standalone plan' }
+        Use-ClientAndMode -ProfileId $SmokeClient -Mode 'takeover' -Technician $Settings.technician -Bundle 'proactive-business'
+        if ("$($S.Profile.plan.bundle)" -ne 'proactive-business') { $failed += 'ProActive plan did not load' } else { Write-Host 'SMOKE PASS ProActive plan' }
+        $rec = Get-DERecommendedMode -Snapshot $S.Snapshot -ClientProfile $S.Profile; if (-not $rec.mode) { $failed += 'no recommended mode' } else { Write-Host "SMOKE PASS recommended mode $($rec.mode)" }
+        # Email migration: a mid-project fixture (no tenant needed), a real scan of this account, and the next step
+        if (Import-DEMsAdmin) {
+            $migDir = Join-Path $SmokeOut 'migrations'; New-Item -ItemType Directory -Path $migDir -Force | Out-Null; $null = Set-DEMigrationDirectory -Path $migDir
+            $now = (Get-Date).ToUniversalTime()
+            $chk = [pscustomobject]@{}; foreach ($c in @('Inbound mail', 'Outbound mail', 'Replies', 'Attachments', 'Folders', 'Contacts', 'Calendar', 'MFA', 'Outlook desktop', 'Outlook mobile', 'Shared mailbox', 'DNS and forwarding', 'Bounce diagnostic')) { $chk | Add-Member -NotePropertyName $c -NotePropertyValue ([pscustomobject]@{ status = 'Pending'; detail = ''; by = ''; at = $now.ToString('o') }) }
+            $chk.'Shared mailbox' = [pscustomobject]@{ status = 'Pass'; detail = 'office@ : 4 members with Full Access and Send As, sign-in blocked'; by = 'smoke'; at = $now.ToString('o') }
+            $chk.'Bounce diagnostic' = [pscustomobject]@{ status = 'Fail'; detail = '1 open bounce finding(s); latest: RetryingClient for helen.x@gmail.com'; by = 'smoke'; at = $now.ToString('o') }
+            $fx = [pscustomobject][ordered]@{
+                schema = 'de.email-migration.project/v1'; projectId = 'smoke-mail'; client = 'Alamo Industries'; tenantId = '00000000-0000-0000-0000-000000000000'; targetDomain = 'alamo-industries.com'
+                sourceType = 'PersonalGmail'; mailPath = 'IMAP'; stage = 'Pilot'; requestedBy = 'smoke'; createdAt = $now.AddDays(-3).ToString('o'); updatedAt = $now.ToString('o')
+                users = @(
+                    [pscustomobject][ordered]@{ source = 'suzette.x@gmail.com'; destination = 'suzette@alamo-industries.com'; displayName = 'Suzette'; userId = '1'; sourceType = 'PersonalGmail'; devices = @('FRONTDESK'); destinationReady = $true; destinationIssues = @(); preflight = [pscustomobject]@{ at = $now.ToString('o'); ok = $true; reason = ''; folders = @(1..14 | ForEach-Object { [pscustomobject]@{ name = "f$_"; messages = 10 } }); allMailCount = 18211; storageKB = 5242880 }; batch = 'smoke-mail-pilot'; migration = [pscustomobject]@{ destination = 'suzette@alamo-industries.com'; status = 'Synced'; synced = 18190; skipped = 21; error = '' }; contacts = $null; calendar = $null; mfa = [pscustomobject]@{ registered = $true } }
+                    [pscustomobject][ordered]@{ source = 'helen.x@gmail.com'; destination = 'helen@alamo-industries.com'; displayName = 'Helen'; userId = '2'; sourceType = 'PersonalGmail'; devices = @('HELENU'); destinationReady = $true; destinationIssues = @(); preflight = [pscustomobject]@{ at = $now.ToString('o'); ok = $true; reason = ''; folders = @(1..9 | ForEach-Object { [pscustomobject]@{ name = "f$_"; messages = 10 } }); allMailCount = 40377; storageKB = 9437184 }; batch = $null; migration = $null; contacts = $null; calendar = $null; mfa = $null }
+                )
+                sharedMailboxes = @([pscustomobject]@{ address = 'office@alamo-industries.com'; members = @('norma@alamo-industries.com', 'helen@alamo-industries.com', 'suzette@alamo-industries.com', 'mike@alamo-industries.com'); verified = $true; problems = @(); checkedAt = $now.ToString('o') })
+                devices = @('FRONTDESK', 'HELENU'); batches = @([pscustomobject]@{ name = 'smoke-mail-pilot'; type = 'Pilot'; users = @('suzette@alamo-industries.com'); status = 'Synced'; startedAt = $now.AddDays(-1).ToString('o'); completedAt = $null; confirmedBy = $null; confirmedAt = $null; failed = 0 })
+                dns = $null; bounce = @([pscustomobject]@{ id = 'b1'; file = 'bounce.eml'; cause = 'RetryingClient'; why = 'the original is 4 days older than the bounce: a device or app keeps retrying it'; bouncedRecipient = 'helen.x@gmail.com'; smtpStatus = '5.1.1'; meaning = 'the address does not exist'; matchedDevices = @('HELENU'); sendingClient = 'Microsoft Outlook 16.0'; fix = 'remove the Gmail account from Outlook on HELENU'; resolved = $false; resolution = $null; resolvedBy = $null })
+                verification = $chk; signoff = $null; events = @()
+            }
+            [IO.File]::WriteAllText((Join-Path $migDir 'smoke-mail.json'), ($fx | ConvertTo-Json -Depth 20), (New-Object Text.UTF8Encoding $false))
+            $S.MigrationProject = 'smoke-mail'
+            $scan = Get-DEMailClientInventory -ProjectId 'smoke-mail'
+            $S.MigrationScan = [pscustomobject]@{ migrationScan = $scan; file = (Join-Path $migDir 'scan.json') }
+            $nx = Get-DEMigrationNextStep -ProjectId 'smoke-mail'
+            if ($nx.step -notlike 'Confirm the pilot*') { $failed += "migration next step: '$($nx.step)'" } else { Write-Host "SMOKE PASS migration next step ($($nx.step)); scan: $($scan.message)" }
+        } else { $failed += 'DE Microsoft Admin did not load' }
+    } catch { $failed += "setup: $($_.Exception.Message)" }
+    # Two layouts: the design size, and a 1366x768 laptop at 125 % scaling (1093x582 device-independent units less the
+    # taskbar, rendered at 120 dpi). At the small size the footer (status and Cancel) must stay inside the window.
+    $layouts = @(@{ tag = '96dpi'; w = 1440; h = 900; dpi = 96 }, @{ tag = 'small-120dpi'; w = 1093; h = 552; dpi = 120 })
+    foreach ($name in @($Pages.Keys | Where-Object { $null -ne $_ })) {
+        try {
+            Show-Page $name
+            if ($S.CurrentPage -ne $name -or -not $UI.PageHost.Content) { throw 'page did not load' }
+            foreach ($l in $layouts) {
+                $w = $l.w; $h = $l.h
+                $Win.Content.Measure((New-Object System.Windows.Size($w, $h))); $Win.Content.Arrange((New-Object System.Windows.Rect(0, 0, $w, $h))); $Win.Content.UpdateLayout()
+                if ($l.tag -like 'small*') {
+                    foreach ($el in @($UI.TxtStatus, $UI.BtnCancel)) {
+                        if (-not $el -or -not $el.IsVisible) { continue }
+                        $pt = $el.TranslatePoint((New-Object System.Windows.Point(0, 0)), $Win.Content)
+                        if ($pt.Y + $el.ActualHeight -gt $h + 1 -or $pt.X + $el.ActualWidth -gt $w + 1) { throw "$($el.Name) is off-screen at $w x $h" }
+                    }
+                }
+                $scale = $l.dpi / 96
+                $bmp = New-Object System.Windows.Media.Imaging.RenderTargetBitmap([int]($w * $scale), [int]($h * $scale), $l.dpi, $l.dpi, [System.Windows.Media.PixelFormats]::Pbgra32)
+                $bmp.Render($Win.Content)
+                $enc = New-Object System.Windows.Media.Imaging.PngBitmapEncoder; $enc.Frames.Add([System.Windows.Media.Imaging.BitmapFrame]::Create($bmp))
+                $fs = [IO.File]::Create((Join-Path $SmokeOut ("{0}-{1}.png" -f $name, $l.tag))); try { $enc.Save($fs) } finally { $fs.Dispose() }
+            }
+            Write-Host ("SMOKE PASS {0}" -f $name)
+        } catch { $failed += "${name}: $($_.Exception.Message)"; Write-Host ("SMOKE FAIL {0}: {1}" -f $name, $_.Exception.Message) }
+    }
+    Clear-DESecrets
+    Write-Host ("SMOKE {0}: {1} page(s), {2} failure(s); renders in {3}" -f $(if ($failed.Count) { 'FAIL' } else { 'PASS' }), @($Pages.Keys).Count, $failed.Count, $SmokeOut)
+    $failed | ForEach-Object { Write-Host "  $_" }
+    exit $(if ($failed.Count) { 1 } else { 0 })
+}
+
+# ============================================================== start
+if ($Settings.dryRun) { Set-DEMode -Mode Audit -DryRun } else { Set-DEMode -Mode Apply }
+$Win.Add_Closed({ Clear-DESecrets; Save-GuiSettings })
+# Last line of defence: anything that still escapes a handler is reported, never allowed to close the console.
+$Win.Dispatcher.Add_UnhandledException({
+    param($src, $e)
+    $e.Handled = $true
+    $msg = "Unexpected error: $($e.Exception.Message)"
+    try { Write-DELog -Level FAIL -Message $msg } catch { }
+    try { Set-Status $msg } catch { }
+})
+$Win.Add_ContentRendered({
+    if (-not $Settings.technician -and -not $SmokeTest) {
+        # first time on this machine: ask who is running the tool, once; evidence and the Hub record name this person
+        $t = Read-GuiText 'Technician' 'Who is running DE Tech Tool on this machine? Evidence and the Hub record name this person.' -Default 'jrpetro'
+        $Settings.technician = $(if ("$t".Trim()) { "$t".Trim() } else { 'jrpetro' }); Save-GuiSettings; Set-DEStateValue -Path 'settings.technician' -Value $Settings.technician
+    }
+    if (-not $Settings.technician) { $Settings.technician = 'jrpetro' }
+    if ($Settings.client) { try { $S.Profile = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $Settings.client) -Bundle "$(Get-DEHashPath -Object $Settings -Path 'planBundle')" -Solution @(Get-DEHashPath -Object $Settings -Path 'planSolutions' | Where-Object { $_ }) } catch { } }
+    if ($Resume) { $r = Resume-DEWorkflow; Set-Status "Resumed after restart. Next: $(Get-DEHashPath -Object $r -Path 'nextAction')"; $S.CurrentPage = 'Scan' }
+    Show-Page $S.CurrentPage
+    if ($Integrity.status -eq 'tampered') { Set-Status ('WARNING: console files changed after packaging; do not run changes from this copy. ' + (@($Integrity.problems | Select-Object -First 3) -join '; ')) }
+    elseif ($Integrity.status -eq 'unsigned') { Set-Status 'Unsigned development build. Use the signed release for client work.' }
+    if ($S.Profile) { $S.ModeChosen = [bool]$Resume }   # a resumed job keeps its mode; a fresh start follows what the scan recommends
+    Start-DEScan   # every category is scanned on launch; nothing changes until the technician ticks items and goes live
+})
+$null = $Win.ShowDialog()
+) { Set-Status 'Hub account number must be a positive whole number.'; return }
+        try {
+            $base = ConvertTo-DEHashtable (Get-DEClientProfile -Id $S.Profile.id); if (-not $base.ContainsKey('hub') -or -not $base['hub']) { $base['hub'] = @{} }; $base['hub']['accountId'] = $acct
+            $f = Save-DEClientProfile -Profile $base; $S.Profile = ConvertTo-DEHashtable $base; Set-DEContext -Values @{ hubAccountId = $acct }; Set-Status "Hub account $acct saved to $f"
+        } catch { Set-Status $_.Exception.Message }
+    }.GetNewClosure()
+    $certs = @(); foreach ($store in @('Cert:\\CurrentUser\\My', 'Cert:\\LocalMachine\\My')) { try { $certs += @(Get-ChildItem -Path $store -CodeSigningCert -ErrorAction SilentlyContinue | Where-Object { $_.NotAfter -gt (Get-Date) -and $_.HasPrivateKey }) } catch { } }
+    $certStatus = $(if ($certs.Count -eq 1) { "READY: $($certs[0].Subject) · expires $($certs[0].NotAfter.ToString('yyyy-MM-dd'))" } elseif ($certs.Count -gt 1) { "ACTION: $($certs.Count) valid code-signing certificates found; choose the release certificate thumbprint." } else { 'ACTION: no valid code-signing certificate with a private key found in CurrentUser or LocalMachine.' })
+    $hubSecretStatus = $(if (Test-DESecret -Name 'DE_HUB_SIGNING_SECRET') { 'READY: Hub signing secret is loaded for this session.' } else { 'ACTION: set DE_HUB_SIGNING_SECRET here. The server value is TECHCONSOLE_TO_HUB_SECRET and must match.' })
+    $hubAccountStatus = $(if ($hubAccount -match '^[1-9]\\d* { $id = Read-GuiText 'New profile' 'Profile id (lowercase, hyphens):'; if ($id) { $p = New-DEClientProfileTemplate -Id $id -Name $id; try { $f = Save-DEClientProfile -Profile $p; Start-Process notepad.exe $f } catch { Set-Status $_.Exception.Message } } }
+    [void]$root.Children.Add((New-Card @((New-Text 'Client profiles' 15 -Bold), (New-Text 'Profiles hold tier, stack roles, apps, branding, sites, vendor tenant ids and detection rules. Saving one that contains a secret is refused.' -Muted -Wrap), $profileBtn)))
+}
+
+$Integrity = Write-DEIntegrityEvidence
+
+# ============================================================== smoke test
+if ($SmokeTest) {
+    # Builds every page against a real client profile without a message loop or a visible window, then renders
+    # each page at 96 and 192 DPI (100 and 200 percent) so layout faults and high-DPI clipping show up in CI.
+    Set-DEMode -Mode Audit -DryRun
+    if (-not $SmokeOut) { $SmokeOut = Join-Path (Get-DEConsole).Dirs.Base 'smoke' }
+    New-Item -ItemType Directory -Path $SmokeOut -Force | Out-Null
+    $failed = @()
+    # Drive the same background-job path the buttons use (runspace, EndInvoke, OnDone) and fail on any job error.
+    function Wait-SmokeJob {
+        param([string]$Name)
+        $deadline = (Get-Date).AddMinutes(8)
+        while ($S.Job -and -not $S.Job.handle.IsCompleted -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 250 }
+        if ($S.Job -and -not $S.Job.handle.IsCompleted) { return "${Name}: timed out" }
+        if ($S.Job) { Update-DEJob }
+        if ($S.LastJobError) { return "${Name}: $($S.LastJobError)" }
+        return $null
+    }
+    try {
+        $S.Mode = 'takeover'; $Settings.technician = $(if ($Technician) { $Technician } else { 'jrpetro' })
+        Use-ClientAndMode -ProfileId $SmokeClient -Mode 'takeover' -Technician $Settings.technician
+        if ($S.LastJobError) { $failed += "use client and mode: $($S.LastJobError)" }
+        if (-not @(Get-DEActions -Mode 'takeover').Count) { $failed += 'use client and mode: no plan was built' } else { Write-Host 'SMOKE PASS use client and mode' }
+        # A failing button must report, not throw.
+        Invoke-GuiSafely -Label 'smoke' -Action { throw 'handler error on purpose' }
+        if ($S.LastJobError -notmatch 'on purpose') { $failed += 'button error guard did not report' } else { Write-Host 'SMOKE PASS button error guard'; $S.LastJobError = $null }
+        Invoke-Discovery -Quick
+        $e = Wait-SmokeJob 'discovery job'; if ($e) { $failed += $e } else { Write-Host 'SMOKE PASS discovery job' }
+        if (-not $S.Snapshot) { $failed += 'discovery job: no snapshot came back' }
+        if (-not @(Get-DEActions).Count) { $failed += 'discovery job: no workflow actions registered' }
+        Start-DEJob -Label 'Full audit' -Work { $null = Invoke-DEAudit -Mode $JobMode }
+        $e = Wait-SmokeJob 'audit job'; if ($e) { $failed += $e } else { Write-Host ("SMOKE PASS audit job ({0} evidence rows)" -f @(Get-DEEvidence).Count) }
+        # Scan & fix: the list builds from the runbook, rows and checkboxes exist, and a ticked batch runs through the job path
+        $S.ScanDone = $true; Select-DEScanDefaults; Show-Page 'Scan'
+        if (-not @($S.RowBorders.Keys).Count) { $failed += 'scan page: no rows' } else { Write-Host ("SMOKE PASS scan page ({0} rows, {1} pre-ticked)" -f @($S.RowBorders.Keys).Count, @($S.Selected.Keys).Count) }
+        $S.Selected = @{}; foreach ($i in @(@($S.RowBorders.Keys) | Select-Object -First 2)) { $S.Selected[$i] = $true }
+        Invoke-DEScanBatch -How Audit
+        $e = Wait-SmokeJob 'scan batch'; if ($e) { $failed += $e } else { Write-Host 'SMOKE PASS scan batch (check selected)' }
+        $S.Focus = @($S.RowBorders.Keys)[0]; Update-ScanDetail; if (-not $S.DetailHost.Content) { $failed += 'scan detail panel empty' } else { Write-Host 'SMOKE PASS scan detail panel' }
+        # the plan picker: a standalone solution loads as not DE managed, then a ProActive tier for the page renders
+        Use-ClientAndMode -ProfileId $SmokeClient -Mode 'new' -Technician $Settings.technician -Solution @('identity_access')
+        if ($S.Profile.plan.managed -ne $false -or -not @(Get-DEActions -Mode 'new').Count) { $failed += 'standalone plan did not load' } else { Write-Host 'SMOKE PASS standalone plan' }
+        Use-ClientAndMode -ProfileId $SmokeClient -Mode 'takeover' -Technician $Settings.technician -Bundle 'proactive-business'
+        if ("$($S.Profile.plan.bundle)" -ne 'proactive-business') { $failed += 'ProActive plan did not load' } else { Write-Host 'SMOKE PASS ProActive plan' }
+        $rec = Get-DERecommendedMode -Snapshot $S.Snapshot -ClientProfile $S.Profile; if (-not $rec.mode) { $failed += 'no recommended mode' } else { Write-Host "SMOKE PASS recommended mode $($rec.mode)" }
+        # Email migration: a mid-project fixture (no tenant needed), a real scan of this account, and the next step
+        if (Import-DEMsAdmin) {
+            $migDir = Join-Path $SmokeOut 'migrations'; New-Item -ItemType Directory -Path $migDir -Force | Out-Null; $null = Set-DEMigrationDirectory -Path $migDir
+            $now = (Get-Date).ToUniversalTime()
+            $chk = [pscustomobject]@{}; foreach ($c in @('Inbound mail', 'Outbound mail', 'Replies', 'Attachments', 'Folders', 'Contacts', 'Calendar', 'MFA', 'Outlook desktop', 'Outlook mobile', 'Shared mailbox', 'DNS and forwarding', 'Bounce diagnostic')) { $chk | Add-Member -NotePropertyName $c -NotePropertyValue ([pscustomobject]@{ status = 'Pending'; detail = ''; by = ''; at = $now.ToString('o') }) }
+            $chk.'Shared mailbox' = [pscustomobject]@{ status = 'Pass'; detail = 'office@ : 4 members with Full Access and Send As, sign-in blocked'; by = 'smoke'; at = $now.ToString('o') }
+            $chk.'Bounce diagnostic' = [pscustomobject]@{ status = 'Fail'; detail = '1 open bounce finding(s); latest: RetryingClient for helen.x@gmail.com'; by = 'smoke'; at = $now.ToString('o') }
+            $fx = [pscustomobject][ordered]@{
+                schema = 'de.email-migration.project/v1'; projectId = 'smoke-mail'; client = 'Alamo Industries'; tenantId = '00000000-0000-0000-0000-000000000000'; targetDomain = 'alamo-industries.com'
+                sourceType = 'PersonalGmail'; mailPath = 'IMAP'; stage = 'Pilot'; requestedBy = 'smoke'; createdAt = $now.AddDays(-3).ToString('o'); updatedAt = $now.ToString('o')
+                users = @(
+                    [pscustomobject][ordered]@{ source = 'suzette.x@gmail.com'; destination = 'suzette@alamo-industries.com'; displayName = 'Suzette'; userId = '1'; sourceType = 'PersonalGmail'; devices = @('FRONTDESK'); destinationReady = $true; destinationIssues = @(); preflight = [pscustomobject]@{ at = $now.ToString('o'); ok = $true; reason = ''; folders = @(1..14 | ForEach-Object { [pscustomobject]@{ name = "f$_"; messages = 10 } }); allMailCount = 18211; storageKB = 5242880 }; batch = 'smoke-mail-pilot'; migration = [pscustomobject]@{ destination = 'suzette@alamo-industries.com'; status = 'Synced'; synced = 18190; skipped = 21; error = '' }; contacts = $null; calendar = $null; mfa = [pscustomobject]@{ registered = $true } }
+                    [pscustomobject][ordered]@{ source = 'helen.x@gmail.com'; destination = 'helen@alamo-industries.com'; displayName = 'Helen'; userId = '2'; sourceType = 'PersonalGmail'; devices = @('HELENU'); destinationReady = $true; destinationIssues = @(); preflight = [pscustomobject]@{ at = $now.ToString('o'); ok = $true; reason = ''; folders = @(1..9 | ForEach-Object { [pscustomobject]@{ name = "f$_"; messages = 10 } }); allMailCount = 40377; storageKB = 9437184 }; batch = $null; migration = $null; contacts = $null; calendar = $null; mfa = $null }
+                )
+                sharedMailboxes = @([pscustomobject]@{ address = 'office@alamo-industries.com'; members = @('norma@alamo-industries.com', 'helen@alamo-industries.com', 'suzette@alamo-industries.com', 'mike@alamo-industries.com'); verified = $true; problems = @(); checkedAt = $now.ToString('o') })
+                devices = @('FRONTDESK', 'HELENU'); batches = @([pscustomobject]@{ name = 'smoke-mail-pilot'; type = 'Pilot'; users = @('suzette@alamo-industries.com'); status = 'Synced'; startedAt = $now.AddDays(-1).ToString('o'); completedAt = $null; confirmedBy = $null; confirmedAt = $null; failed = 0 })
+                dns = $null; bounce = @([pscustomobject]@{ id = 'b1'; file = 'bounce.eml'; cause = 'RetryingClient'; why = 'the original is 4 days older than the bounce: a device or app keeps retrying it'; bouncedRecipient = 'helen.x@gmail.com'; smtpStatus = '5.1.1'; meaning = 'the address does not exist'; matchedDevices = @('HELENU'); sendingClient = 'Microsoft Outlook 16.0'; fix = 'remove the Gmail account from Outlook on HELENU'; resolved = $false; resolution = $null; resolvedBy = $null })
+                verification = $chk; signoff = $null; events = @()
+            }
+            [IO.File]::WriteAllText((Join-Path $migDir 'smoke-mail.json'), ($fx | ConvertTo-Json -Depth 20), (New-Object Text.UTF8Encoding $false))
+            $S.MigrationProject = 'smoke-mail'
+            $scan = Get-DEMailClientInventory -ProjectId 'smoke-mail'
+            $S.MigrationScan = [pscustomobject]@{ migrationScan = $scan; file = (Join-Path $migDir 'scan.json') }
+            $nx = Get-DEMigrationNextStep -ProjectId 'smoke-mail'
+            if ($nx.step -notlike 'Confirm the pilot*') { $failed += "migration next step: '$($nx.step)'" } else { Write-Host "SMOKE PASS migration next step ($($nx.step)); scan: $($scan.message)" }
+        } else { $failed += 'DE Microsoft Admin did not load' }
+    } catch { $failed += "setup: $($_.Exception.Message)" }
+    # Two layouts: the design size, and a 1366x768 laptop at 125 % scaling (1093x582 device-independent units less the
+    # taskbar, rendered at 120 dpi). At the small size the footer (status and Cancel) must stay inside the window.
+    $layouts = @(@{ tag = '96dpi'; w = 1440; h = 900; dpi = 96 }, @{ tag = 'small-120dpi'; w = 1093; h = 552; dpi = 120 })
+    foreach ($name in @($Pages.Keys | Where-Object { $null -ne $_ })) {
+        try {
+            Show-Page $name
+            if ($S.CurrentPage -ne $name -or -not $UI.PageHost.Content) { throw 'page did not load' }
+            foreach ($l in $layouts) {
+                $w = $l.w; $h = $l.h
+                $Win.Content.Measure((New-Object System.Windows.Size($w, $h))); $Win.Content.Arrange((New-Object System.Windows.Rect(0, 0, $w, $h))); $Win.Content.UpdateLayout()
+                if ($l.tag -like 'small*') {
+                    foreach ($el in @($UI.TxtStatus, $UI.BtnCancel)) {
+                        if (-not $el -or -not $el.IsVisible) { continue }
+                        $pt = $el.TranslatePoint((New-Object System.Windows.Point(0, 0)), $Win.Content)
+                        if ($pt.Y + $el.ActualHeight -gt $h + 1 -or $pt.X + $el.ActualWidth -gt $w + 1) { throw "$($el.Name) is off-screen at $w x $h" }
+                    }
+                }
+                $scale = $l.dpi / 96
+                $bmp = New-Object System.Windows.Media.Imaging.RenderTargetBitmap([int]($w * $scale), [int]($h * $scale), $l.dpi, $l.dpi, [System.Windows.Media.PixelFormats]::Pbgra32)
+                $bmp.Render($Win.Content)
+                $enc = New-Object System.Windows.Media.Imaging.PngBitmapEncoder; $enc.Frames.Add([System.Windows.Media.Imaging.BitmapFrame]::Create($bmp))
+                $fs = [IO.File]::Create((Join-Path $SmokeOut ("{0}-{1}.png" -f $name, $l.tag))); try { $enc.Save($fs) } finally { $fs.Dispose() }
+            }
+            Write-Host ("SMOKE PASS {0}" -f $name)
+        } catch { $failed += "${name}: $($_.Exception.Message)"; Write-Host ("SMOKE FAIL {0}: {1}" -f $name, $_.Exception.Message) }
+    }
+    Clear-DESecrets
+    Write-Host ("SMOKE {0}: {1} page(s), {2} failure(s); renders in {3}" -f $(if ($failed.Count) { 'FAIL' } else { 'PASS' }), @($Pages.Keys).Count, $failed.Count, $SmokeOut)
+    $failed | ForEach-Object { Write-Host "  $_" }
+    exit $(if ($failed.Count) { 1 } else { 0 })
+}
+
+# ============================================================== start
+if ($Settings.dryRun) { Set-DEMode -Mode Audit -DryRun } else { Set-DEMode -Mode Apply }
+$Win.Add_Closed({ Clear-DESecrets; Save-GuiSettings })
+# Last line of defence: anything that still escapes a handler is reported, never allowed to close the console.
+$Win.Dispatcher.Add_UnhandledException({
+    param($src, $e)
+    $e.Handled = $true
+    $msg = "Unexpected error: $($e.Exception.Message)"
+    try { Write-DELog -Level FAIL -Message $msg } catch { }
+    try { Set-Status $msg } catch { }
+})
+$Win.Add_ContentRendered({
+    if (-not $Settings.technician -and -not $SmokeTest) {
+        # first time on this machine: ask who is running the tool, once; evidence and the Hub record name this person
+        $t = Read-GuiText 'Technician' 'Who is running DE Tech Tool on this machine? Evidence and the Hub record name this person.' -Default 'jrpetro'
+        $Settings.technician = $(if ("$t".Trim()) { "$t".Trim() } else { 'jrpetro' }); Save-GuiSettings; Set-DEStateValue -Path 'settings.technician' -Value $Settings.technician
+    }
+    if (-not $Settings.technician) { $Settings.technician = 'jrpetro' }
+    if ($Settings.client) { try { $S.Profile = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $Settings.client) -Bundle "$(Get-DEHashPath -Object $Settings -Path 'planBundle')" -Solution @(Get-DEHashPath -Object $Settings -Path 'planSolutions' | Where-Object { $_ }) } catch { } }
+    if ($Resume) { $r = Resume-DEWorkflow; Set-Status "Resumed after restart. Next: $(Get-DEHashPath -Object $r -Path 'nextAction')"; $S.CurrentPage = 'Scan' }
+    Show-Page $S.CurrentPage
+    if ($Integrity.status -eq 'tampered') { Set-Status ('WARNING: console files changed after packaging; do not run changes from this copy. ' + (@($Integrity.problems | Select-Object -First 3) -join '; ')) }
+    elseif ($Integrity.status -eq 'unsigned') { Set-Status 'Unsigned development build. Use the signed release for client work.' }
+    if ($S.Profile) { $S.ModeChosen = [bool]$Resume }   # a resumed job keeps its mode; a fresh start follows what the scan recommends
+    Start-DEScan   # every category is scanned on launch; nothing changes until the technician ticks items and goes live
+})
+$null = $Win.ShowDialog()
+) { "READY: Hub account $hubAccount" } else { 'ACTION: save the client Intelligence Hub account number below.' })
+    $signScript = Join-Path (Split-Path -Parent (Get-DEConsole).Root) 'packaging\\Sign-DETechConsole.ps1'
+    $thumb = $(if ($certs.Count -eq 1) { $certs[0].Thumbprint } else { '<CERT_THUMBPRINT>' })
+    $copyDeploy = New-Button 'Copy Hub deploy check' { [System.Windows.Clipboard]::SetText("ssh de-vps 'sudo cat /opt/intelligence-hub/current/RELEASE_SHA'"); Set-Status 'Hub RELEASE_SHA check copied. Expected release starts c622160e.' }
+    $copySign = New-Button 'Copy signing command' { [System.Windows.Clipboard]::SetText("& '$signScript' -Thumbprint $thumb"); Set-Status 'Signing command copied.' }.GetNewClosure()
+    $copyVerify = New-Button 'Copy signature verification' { [System.Windows.Clipboard]::SetText("& '$signScript' -Verify -RequireSignature"); Set-Status 'Signature verification command copied.' }.GetNewClosure()
+    $goLive = @(
+        (New-Text 'Go-live checklist' 15 -Bold),
+        (New-Text 'These are the release steps for the installed DE Tech Tool and Intelligence Hub. Secrets stay runtime-only; the account number is non-secret client metadata.' -Muted -Wrap),
+        (New-El TextBlock @{ Text = "1. Hub deployment · expected RELEASE_SHA c622160e…\\n2. Hub shared secret · $hubSecretStatus\\n3. Client Hub account · $hubAccountStatus\\n4. Code signing · $certStatus\\n5. Verify signed package before client deployment"; Style = 'Mono'; TextWrapping = 'Wrap'; Margin = '0,6,0,8' }),
+        (New-Wrap @((New-Label 'Hub account number'), $hubAccountBox, $saveHubAccount)),
+        (New-Wrap @($copyDeploy, $copySign, $copyVerify)),
+        (New-Text 'Signing uses packaging\\Sign-DETechConsole.ps1 with SHA-256 Authenticode plus a timestamp. The certificate private key stays in the Windows certificate store. The Hub secret must be configured as TECHCONSOLE_TO_HUB_SECRET on the server and entered here as DE_HUB_SIGNING_SECRET.' -Muted -Wrap)
+    )
+    [void]$root.Children.Add((New-Card $goLive))
     $profileBtn = New-Button 'New client profile from template' { $id = Read-GuiText 'New profile' 'Profile id (lowercase, hyphens):'; if ($id) { $p = New-DEClientProfileTemplate -Id $id -Name $id; try { $f = Save-DEClientProfile -Profile $p; Start-Process notepad.exe $f } catch { Set-Status $_.Exception.Message } } }
     [void]$root.Children.Add((New-Card @((New-Text 'Client profiles' 15 -Bold), (New-Text 'Profiles hold tier, stack roles, apps, branding, sites, vendor tenant ids and detection rules. Saving one that contains a secret is refused.' -Muted -Wrap), $profileBtn)))
 }
