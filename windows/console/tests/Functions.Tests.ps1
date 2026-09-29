@@ -983,3 +983,59 @@ Describe 'Device lifecycle: OOBE, after first sign-in, configured' {
     }
 }
 
+Describe 'Branding: readable logos, sizes and options' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1')
+        $global:DETest = @{ Dir = Initialize-TestConsole; Alamo = Get-DEClientProfile -Id 'alamo' }
+    }
+    It 'luminance and logo variants: the white DE logo on dark backgrounds, the dark one on light' {
+        (Get-DEColorLuminance -Hex '#050312') | Should -BeLessThan 0.05
+        (Get-DEColorLuminance -Hex '#F7F5F2') | Should -BeGreaterThan 0.85
+        (Get-DEBrandingAssets -ClientProfile $global:DETest.Alamo -Background '#050312').deLogo | Should -Match 'reverse-2400'
+        (Get-DEBrandingAssets -ClientProfile $global:DETest.Alamo -Background '#F7F5F2').deLogo | Should -Match 'digerati-logo-2400'
+        (Get-DEBrandingAssets -ClientProfile $global:DETest.Alamo -Background '#050312' -DeLogoStyle stacked).deLogo | Should -Match 'stacked-reverse'
+        foreach ($f in @('digerati-logo-2400.png', 'digerati-logo-reverse-2400.png', 'digerati-logo-stacked-1600.png', 'digerati-logo-stacked-reverse-1600.png', 'digerati-mark-1024.png')) { Test-Path -LiteralPath (Join-Path $script:ConsoleRoot "assets\brand\$f") | Should -Be $true }
+    }
+    It 'a light client logo is used on dark backgrounds when the profile has one' {
+        $p = ConvertTo-DEHashtable $global:DETest.Alamo; $p['branding']['clientLogoReverse'] = 'asset:brand/digerati-mark-1024.png'
+        (Get-DEBrandingAssets -ClientProfile $p -Background '#050312').clientLogo | Should -Match 'digerati-mark-1024'
+        (Get-DEBrandingAssets -ClientProfile $p -Background '#F7F5F2').clientLogo | Should -Match 'alamo-mark'
+    }
+    It 'options: DE defaults, the profile overrides, a centred lock screen with bigger logos' {
+        $o = Get-DEBrandingOptions -ClientProfile $global:DETest.Alamo
+        $o.position | Should -Be 'lower-left'; $o.logoHeightPct | Should -BeGreaterOrEqual 9; $o.background | Should -Be '#050312'
+        $l = Get-DEBrandingOptions -ClientProfile $global:DETest.Alamo -LockScreen
+        $l.position | Should -Be 'center'; $l.logoHeightPct | Should -BeGreaterThan $o.logoHeightPct; $l.showHostname | Should -Be $false
+        $p = ConvertTo-DEHashtable $global:DETest.Alamo; $p['branding']['wallpaper'] = @{ theme = 'light'; position = 'upper-right'; logoHeightPct = 14 }
+        $o2 = Get-DEBrandingOptions -ClientProfile $p
+        $o2.background | Should -Be '#F7F5F2'; $o2.position | Should -Be 'upper-right'; $o2.logoHeightPct | Should -Be 14
+    }
+    It 'layout: logos sized from the screen height, inside the screen, where the position says' {
+        $o = Get-DEBrandingOptions -ClientProfile $global:DETest.Alamo
+        foreach ($res in @(@(1920, 1080), @(3840, 2160))) {
+            $L = Get-DEBrandingLayout -Width $res[0] -Height $res[1] -Options $o -LogoSizes @{ client = @(96, 100); de = @(2400, 578) } -Lines @('Alamo Industries  |  managed by Digerati Experts', 'Support: support@digeratiexperts.com')
+            $client = $L.items | Where-Object { $_.which -eq 'client' }; $deL = $L.items | Where-Object { $_.which -eq 'de' }
+            $client.h | Should -Be ([int]($res[1] * 0.09))                 # 9% of the screen: about 97 px at 1080p, 194 px at 4K
+            $deL.h | Should -Be ([int]($res[1] * 0.06))
+            foreach ($it in $L.items) { $it.x | Should -BeGreaterOrEqual 0; ($it.x + $it.w) | Should -BeLessOrEqual $res[0]; ($it.y + $it.h) | Should -BeLessOrEqual $res[1] }
+            $L.block.x | Should -BeLessThan ($res[0] / 3)                  # lower-left
+            $L.block.y | Should -BeGreaterThan ($res[1] / 2)
+        }
+        $c = Get-DEBrandingLayout -Width 1920 -Height 1080 -Options (Get-DEBrandingOptions -ClientProfile $global:DETest.Alamo -LockScreen) -LogoSizes @{ client = @(96, 100); de = @(2400, 578) } -Lines @('x')
+        $mid = $c.block.x + $c.block.w / 2; [math]::Abs($mid - 960) | Should -BeLessThan 60   # centred
+        $w = Get-DEBrandingLayout -Width 1920 -Height 1080 -Options (Get-DEBrandingOptions -ClientProfile @{ branding = @{ wallpaper = @{ logos = 'de'; logoHeightPct = 30 } } }) -LogoSizes @{ de = @(2400, 578) } -Lines @()
+        ($w.items | Where-Object { $_.which -eq 'de' }).w | Should -BeLessOrEqual ([int](1920 * 0.42))   # a very wide wordmark stays on screen
+    }
+    It 'renders a wallpaper where the DE logo stands out from the background (Windows)' -Skip:($env:OS -ne 'Windows_NT') {
+        $f = New-DEBrandedWallpaper -ClientProfile $global:DETest.Alamo -Width 1920 -Height 1080 -OutFile (Join-Path $global:DETest.Dir 'contrast.png')
+        Add-Type -AssemblyName System.Drawing
+        $o = Get-DEBrandingOptions -ClientProfile $global:DETest.Alamo; $a = Get-DEBrandingAssets -ClientProfile $global:DETest.Alamo -Background $o.background
+        $sizes = @{}; foreach ($k in @('client', 'de')) { $src = $(if ($k -eq 'client') { $a.clientLogo } else { $a.deLogo }); if ($src) { $im = [System.Drawing.Image]::FromFile($src); $sizes[$k] = @($im.Width, $im.Height); $im.Dispose() } }
+        $box = (Get-DEBrandingLayout -Width 1920 -Height 1080 -Options $o -LogoSizes $sizes -Lines @('a', 'b')).items | Where-Object { $_.which -eq 'de' }
+        $bmp = [System.Drawing.Bitmap]::FromFile($f)
+        try { $bright = 0; for ($x = $box.x; $x -lt ($box.x + $box.w); $x += 4) { for ($y = $box.y; $y -lt ($box.y + $box.h); $y += 4) { $c = $bmp.GetPixel($x, $y); if ((0.2126 * $c.R + 0.7152 * $c.G + 0.0722 * $c.B) -gt 150) { $bright++ } } } } finally { $bmp.Dispose() }
+        $bright | Should -BeGreaterThan 40    # the white wordmark is visible on graphite (the dark one drew about zero bright pixels)
+        (New-DEOemLogo -ClientProfile $global:DETest.Alamo -OutFile (Join-Path $global:DETest.Dir 'oem.bmp')) | Should -Exist
+    }
+}
+
