@@ -47,7 +47,7 @@ $commit = $null; try { $commit = (& git -C $kit rev-parse HEAD 2>$null) } catch 
 $stage = Join-Path ([IO.Path]::GetTempPath()) "de-release-$buildId"
 $dst = Join-Path $stage 'msp-ai-kit'
 New-Item -ItemType Directory -Path $dst -Force | Out-Null
-$skip = '[\\/](\.git|node_modules|out|community)([\\/]|$)'
+$skip = '[\\/](\.git|node_modules|out|community|tests)([\\/]|$)'   # tests stay in the repo (integrity.json never covered them)
 foreach ($f in @(Get-ChildItem -LiteralPath $kit -Recurse -File -Force | Where-Object { $_.FullName.Substring($kit.Length) -notmatch $skip -and $_.Name -ne 'integrity.json' -and $_.Name -ne 'BUILD.json' })) {
     $rel = $f.FullName.Substring($kit.Length).TrimStart('\', '/'); $to = Join-Path $dst $rel
     $d = Split-Path -Parent $to; if (-not (Test-Path -LiteralPath $d)) { New-Item -ItemType Directory -Path $d -Force | Out-Null }
