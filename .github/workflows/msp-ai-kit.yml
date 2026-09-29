@@ -136,6 +136,8 @@ jobs:
           %SystemRoot%\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%KIT%\windows\console\DETechConsole.ps1" -Headless -Client no-such-client -DataDir "%RUNNER_TEMP%\de-console-32"
           if %ERRORLEVEL% NEQ 2 (echo expected exit 2 from a refused run under a 32-bit host & exit /b 1)
           echo 32-bit host: exit code passed through
+          rem echo leaves ERRORLEVEL at 2, which cmd would hand back as the step's result
+          exit /b 0
       - name: Technician Console headless audit (5.1, changes nothing)
         shell: powershell
         run: |
