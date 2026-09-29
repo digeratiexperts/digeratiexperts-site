@@ -9,7 +9,7 @@ import { rectOverlapsPageContent } from "@/lib/stickyCtaVisibility";
 import { isWarehousePath, isWarehouseTransactionalPath, warehousePath } from "@/lib/warehousePaths";
 
 /**
- * Persistent Your Solution dock on /store/* — desktop bottom-right, mobile sticky.
+ * Persistent warehouse cart dock (staff warehouse only) — desktop bottom-right, mobile sticky.
  * Sits above Ask DE / sticky CTA. Does not replace the marketing assessment bar.
  *
  * Its own fixed position is a stable offset from the bottom chrome, so unlike
@@ -76,7 +76,7 @@ export function SolutionMobileBar() {
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-xs font-medium uppercase tracking-wide text-white/55">
-            Your solution · {items.length} item{items.length === 1 ? "" : "s"}
+            Warehouse cart · {items.length} item{items.length === 1 ? "" : "s"}
           </p>
           <p className="truncate text-sm font-medium text-white">
             Due today {formatSnapshotMoney(totals.dueToday)}
@@ -89,7 +89,7 @@ export function SolutionMobileBar() {
           onClick={openCart}
           data-testid="button-mobile-view-solution"
         >
-          View Solution
+          View cart
         </Button>
       </div>
     </div>

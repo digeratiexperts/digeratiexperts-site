@@ -40,7 +40,7 @@ export const solutionScenarios: SolutionScenario[] = [
     pressure: "Someone clicked, or a client got mail pretending to be us.",
     familyIds: ["security_awareness", "email_collaboration", "identity_access"],
     why: {
-      security_awareness: "Phishing resilience and measurable behavior improvement for the people who got the email.",
+      security_awareness: "Phishing resilience and measurable behavior improvement, so your people spot the next one and report it.",
       email_collaboration: "An email protection baseline so fewer of them arrive.",
       identity_access: "Stronger authentication so a stolen password is not enough.",
     },

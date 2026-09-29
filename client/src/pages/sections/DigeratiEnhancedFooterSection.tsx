@@ -67,7 +67,14 @@ const footerColumns = [
  */
 const STORE_WORKSPACE_PATH = "/store/solution";
 
-export const DigeratiEnhancedFooterSection = ({ variant = "default" }: { variant?: "default" | "store" } = {}): JSX.Element => {
+export const DigeratiEnhancedFooterSection = ({
+  variant = "default",
+  storeBack = { label: "Back to Your Solution", href: STORE_WORKSPACE_PATH },
+}: {
+  variant?: "default" | "store";
+  /** The store variant's link; the confirmation points at the Store because its draft was just sent. */
+  storeBack?: { label: string; href: string };
+} = {}): JSX.Element => {
   const currentYear = new Date().getFullYear();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
@@ -143,11 +150,11 @@ export const DigeratiEnhancedFooterSection = ({ variant = "default" }: { variant
 
             {variant === "store" ? (
               <Link
-                href={STORE_WORKSPACE_PATH}
+                href={storeBack.href}
                 className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg border border-white/25 px-5 text-base font-semibold text-white transition-colors hover:border-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
                 data-testid="footer-back-to-solution"
               >
-                Back to Your Solution
+                {storeBack.label}
               </Link>
             ) : (
               <BookingLink

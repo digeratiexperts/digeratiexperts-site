@@ -107,6 +107,8 @@ for (const viewport of viewports) {
   row.emailInputs = await page.locator("main input[type='email']").count();
   row.h1Count = await page.locator("h1").count();
   row.chrome.index = await chromeState(page);
+  // The electric channel must compute electric (a :root-scoped token once froze it to magenta).
+  row.accentInk = await page.evaluate(() => getComputedStyle(document.querySelector(".d2-step__n")).color);
   // Profile (01) before the situations and families (02): the strip may be a closed row, so compare chapters.
   row.profileBeforeFamilies = await page.evaluate(() => {
     const profile = document.querySelector("[data-testid='store-profile']");
@@ -226,6 +228,15 @@ for (const viewport of viewports) {
     await page.screenshot({ path: `${outDir}/submitted-${viewport.name}.png`, fullPage: true });
   }
 
+  // /book?ref= from the confirmation: the reference shows, no strip sells a "free" assessment over the priced one.
+  await page.goto(`${base}/book?ref=DE-4K7Q2M`, { waitUntil: "domcontentloaded" });
+  await page.getByTestId("booking-reference").waitFor();
+  row.book = await page.evaluate(() => ({
+    strip: document.querySelectorAll("[data-testid='announce-start-assessment']").length,
+    freeAssessment: /free[^.]{0,40}assessment|assessment[^.]{0,40}free/i.test(document.body.innerText),
+    reference: document.querySelector("[data-testid='booking-reference']")?.textContent?.includes("DE-4K7Q2M") ?? false,
+  }));
+
   await page.goto(`${base}/store/solutions/not-a-real-family`, { waitUntil: "domcontentloaded" });
   await page.getByText("Page not found", { exact: false }).first().waitFor({ timeout: 15000 }).catch(() => undefined);
   row.notFound = await page.getByText("Page not found", { exact: false }).count();
@@ -268,6 +279,8 @@ const failed = results.some((row) =>
   Object.values(row.forbidden).some((hits) => hits.length > 0) ||
   Object.values(row.fixedOverlap).some((hits) => hits.length > 0) ||
   Object.values(row.chrome).some((chrome) => chrome.strip > 0 || chrome.footerAssessment > 0 || chrome.footerBack !== 1) ||
+  row.accentInk !== "rgb(111, 179, 255)" ||
+  row.book.strip > 0 || row.book.freeAssessment || !row.book.reference ||
   (process.env.DOOR2_SUBMIT === "1" && !/^DE-[0-9A-HJKMNP-TV-Z]{6}$/.test(row.reference || "")),
 );
 

@@ -200,6 +200,9 @@ export function MegaMenu() {
   // The public Store is a task surface: the assessment strip does not sell over
   // it (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §16.2, approved 2026-09-28).
   const onDoor2 = isDoor2Path(location);
+  // Nor on /book, the page the strip sells: it would read "free" above the page's own
+  // conversation-first copy and the assessment's price (§16.6, §14.24).
+  const onBook = (location.split('?')[0] ?? '').replace(/\/+$/, '') === '/book';
   // Top assessment announcement strip (reference direction). Dismiss lasts the
   // tab session so it never nags on every navigation.
   const [announceDismissed, setAnnounceDismissed] = useState(() => {
@@ -210,6 +213,7 @@ export function MegaMenu() {
       return false;
     }
   });
+  const hideAnnounce = announceDismissed || onDoor2 || onBook;
   const dismissAnnounce = () => {
     setAnnounceDismissed(true);
     try {
@@ -583,8 +587,22 @@ export function MegaMenu() {
         utilityNaturalHRef.current = 0;
         root.style.setProperty('--de-utility-h', '0px');
       } else if (utilityEl && !isScrolled && utilityEl.offsetHeight > 0) {
-        utilityNaturalHRef.current = utilityEl.offsetHeight;
-        root.style.setProperty('--de-utility-h', `${utilityEl.offsetHeight}px`);
+        // Measure the bar's natural height, not the min-height the last published
+        // value pins it to: pinned, the value could only grow, so a page without the
+        // announcement strip kept the strip's height after a client-side navigation.
+        // The bar transitions every property, so the read happens with transitions
+        // off (a transitioning min-height still reports its old value), and the
+        // restore is flushed before they come back so nothing animates.
+        const pinned = utilityEl.style.minHeight;
+        const transition = utilityEl.style.transition;
+        utilityEl.style.transition = 'none';
+        utilityEl.style.minHeight = '0px';
+        const naturalH = utilityEl.offsetHeight;
+        utilityNaturalHRef.current = naturalH;
+        root.style.setProperty('--de-utility-h', `${naturalH}px`);
+        utilityEl.style.minHeight = pinned;
+        void utilityEl.offsetHeight;
+        utilityEl.style.transition = transition;
       }
 
       // Live bottom tracks the collapsed/expanded chrome for drawers + dropdowns.
@@ -612,7 +630,7 @@ export function MegaMenu() {
       ro.disconnect();
       window.removeEventListener('resize', publish);
     };
-  }, [isScrolled]);
+  }, [isScrolled, hideAnnounce]);
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -682,7 +700,7 @@ export function MegaMenu() {
           }}
         />
         {/* Assessment announcement strip — reference-style top bar */}
-        {!announceDismissed && !onDoor2 && (
+        {!hideAnnounce && (
           <div className="relative z-10 w-full border-b border-white/[0.08] bg-black">
             <div className="max-w-[var(--de-canvas)] mx-auto relative flex w-full items-center justify-center gap-x-4 px-12 py-2">
               <p className="text-base font-medium leading-snug text-white/90">

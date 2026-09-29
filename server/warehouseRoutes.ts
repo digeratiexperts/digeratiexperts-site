@@ -32,9 +32,11 @@ const STORE_PREVIEW_COOKIE_OPTIONS = {
 
 /** The request's query without the `as` toggle, so a reload does not toggle again. */
 function queryWithoutToggle(req: Request): string {
-  const url = new URL(req.originalUrl || req.url, "http://local");
-  url.searchParams.delete("as");
-  const query = url.searchParams.toString();
+  // Only the query is parsed, never the request target: an absolute-form target with a bad port must not throw.
+  const target = req.originalUrl || req.url;
+  const params = new URLSearchParams(target.includes("?") ? target.slice(target.indexOf("?") + 1) : "");
+  params.delete("as");
+  const query = params.toString();
   return query ? `?${query}` : "";
 }
 

@@ -65,6 +65,9 @@ describe("Door 2 tokens match the V4 vocabulary", () => {
     expect(block(".d2-need")).not.toContain("animation");
     expect(css).toContain('.d2-need[data-d2-entered="true"]');
     expect(css).toContain('html.de-store-jelly .d2-sheet-panel[data-state="open"]');
+    // The accent resolves where the page accent is set; declared on :root alone it froze to magenta.
+    expect(css).toMatch(/:root,\n\[data-accent\] \{\n  --d2-accent: rgb\(var\(--de-accent-rgb\)\);\n  --d2-accent-ink: rgb\(var\(--de-accent-ink-rgb\)\);/);
+    expect(css.slice(css.indexOf(":root {"), css.indexOf("}", css.indexOf(":root {")))).not.toContain("--d2-accent");
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
     expect(css).toContain("html[data-de-store-bar] .de-site-canvas");
     expect(css).toContain("html.de-store-jelly .d2-tile[data-de-just-selected");

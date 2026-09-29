@@ -41,7 +41,7 @@ Both surfaces:
 - Electric is wayfinding and state only: step numbers, checked borders, the "Added ✓" state, quantities, links. Never a wash, never a filled panel, never a purple tile.
 - One magenta (`#D3126A`) primary per screen. Focus ring pink `#ec4899`.
 - Family icons use one electric IconWell. The 13 per-family icon hues are retired (§16.4, R6); do not reintroduce them.
-- Colour comes from theme tokens. Door 2 CSS lives in `client/src/styles/store-builder.css` (the Store chunk), pinned by `door2Tokens.test.ts`; error inks derive from `--destructive`.
+- Colour comes from theme tokens. Door 2 CSS lives in `client/src/styles/store-builder.css` (the Store chunk), pinned by `door2Tokens.test.ts`; error inks derive from `--destructive`. Accent-derived variables are declared on `:root, [data-accent]`, never `:root` alone (a `:root`-only declaration resolves to the default magenta under the electric canvas); portalled Door 2 surfaces carry `data-accent="electric"`.
 - No category pills, vendor marks, product media or catalog colours on Door 2 (`door2Leakage.test.ts`).
 
 ### Staff warehouse (`/internal/warehouse`, `/internal/warehouse/*`)

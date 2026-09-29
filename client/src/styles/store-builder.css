@@ -16,13 +16,25 @@
   --d2-ink-strong: rgba(255, 255, 255, 0.92);
   --d2-ink: rgba(255, 255, 255, 0.72);
   --d2-ink-soft: rgba(255, 255, 255, 0.55);
-  --d2-accent: rgb(var(--de-accent-rgb));
-  --d2-accent-ink: rgb(var(--de-accent-ink-rgb));
   --d2-measure: 58ch;
   /* Error inks derive from the theme's --destructive: lifted toward white for text and lines on graphite. */
   --d2-error-ink: color-mix(in srgb, hsl(var(--destructive)) 55%, white);
   --d2-error-line: color-mix(in srgb, hsl(var(--destructive)) 70%, white);
   --d2-error-ink-paper: hsl(var(--destructive));
+}
+
+/*
+ * The accent is resolved where the page accent is set, never at :root. A custom
+ * property substitutes var() on the element that declares it, so declaring these
+ * on :root alone froze them to :root's default (magenta) and every descendant
+ * inherited that, even inside [data-accent="electric"]. Re-declaring them on
+ * every [data-accent] element (the canvas, and the portalled Your Solution sheet)
+ * makes Door 2's electric channel electric.
+ */
+:root,
+[data-accent] {
+  --d2-accent: rgb(var(--de-accent-rgb));
+  --d2-accent-ink: rgb(var(--de-accent-ink-rgb));
 }
 
 /* ---------------------------------------------------------------------- */

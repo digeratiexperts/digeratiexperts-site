@@ -309,7 +309,8 @@ export function SolutionBar(props: SolutionChromeProps) {
       </div>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="bottom" className="d2-sheet-panel border-0" data-testid="your-solution-sheet">
+        {/* The sheet renders in a portal outside #app-canvas, so it carries the Store's accent itself. */}
+        <SheetContent side="bottom" className="d2-sheet-panel border-0" data-accent="electric" data-testid="your-solution-sheet">
           <div className="d2-sheet-panel__scroll">
             <SheetHeader className="pt-5 text-left">
               <SheetTitle className="d2-h3 text-white">Your Solution</SheetTitle>

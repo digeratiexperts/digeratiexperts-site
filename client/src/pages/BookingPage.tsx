@@ -20,7 +20,7 @@ export default function BookingPage() {
   useSEO({
     title: "Get My Cyber Risk Assessment",
     description:
-      "Book a Cyber Risk Assessment with Digerati Experts. We review your Arizona environment and recommend a fit — no obligation.",
+      "Book a Cyber Risk Assessment conversation with Digerati Experts. We review your Arizona environment and recommend a fit — no obligation.",
     canonical: "/book",
   });
 
@@ -34,7 +34,7 @@ export default function BookingPage() {
           {reference ? (
             <p className="mb-4 rounded-2xl border border-de-hairline bg-de-raised px-5 py-4 text-base text-white/80" data-testid="booking-reference">
               Reference <span className="font-mono font-semibold tracking-wide text-white">{reference}</span>. Mention it when
-              you book so DE has your solution in front of them.
+              you book.
             </p>
           ) : null}
           <ZohoBookingWidget instanceId="page" className="overflow-hidden rounded-2xl border border-de-hairline" />

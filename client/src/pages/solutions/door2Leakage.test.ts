@@ -186,9 +186,13 @@ describe("Door 2 public leakage and flow contract", () => {
       "client/src/pages/store/PublicStoreCheckout.tsx",
       "client/src/pages/store/SolutionSubmitted.tsx",
     ]) {
-      expect(read(relative), relative).toContain('<DigeratiEnhancedFooterSection variant="store" />');
+      expect(read(relative), relative).toContain('<DigeratiEnhancedFooterSection variant="store"');
     }
-    expect(read("client/src/components/MegaMenu.tsx")).toMatch(/!announceDismissed && !onDoor2/);
+    const megaMenu = read("client/src/components/MegaMenu.tsx");
+    expect(megaMenu).toContain("const hideAnnounce = announceDismissed || onDoor2 || onBook;");
+    expect(megaMenu).toContain("{!hideAnnounce && (");
+    // The portalled sheet sits outside #app-canvas and carries the Store accent itself.
+    expect(read("client/src/components/store/door2/SolutionChrome.tsx")).toContain('data-accent="electric"');
     const footer = read("client/src/pages/sections/DigeratiEnhancedFooterSection.tsx");
     expect(footer).toContain("Back to Your Solution");
     expect(footer).toContain('const STORE_WORKSPACE_PATH = "/store/solution"');
@@ -199,6 +203,8 @@ describe("Door 2 public leakage and flow contract", () => {
     expect(booking.toLowerCase()).not.toMatch(/completely free|free evaluation|no strings attached/);
     expect(booking).toContain("CANONICAL_CSRA_ONE_TIME");
     expect(booking).toContain("normalizeSolutionReference");
+    // Both sides of the booking action read one price.
+    expect(read("client/src/pages/store/SolutionSubmitted.tsx")).toContain("CANONICAL_CSRA_ONE_TIME.toLocaleString(\"en-US\")");
   });
 
   it("never writes a per-need relationship anywhere", () => {

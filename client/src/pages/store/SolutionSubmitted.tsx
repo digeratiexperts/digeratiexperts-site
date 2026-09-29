@@ -26,6 +26,7 @@ import {
 import { solutionAdvisorSeed } from "@/lib/solutionGuidance";
 import { portalMarketplaceLoginUrl } from "@/lib/portalUrls";
 import { CTA } from "@/lib/ctaCopy";
+import { CANONICAL_CSRA_ONE_TIME } from "@shared/canonicalCsra";
 import { maskEmail, maskPhone } from "@shared/publicContact";
 
 /*
@@ -69,8 +70,11 @@ const UNAVAILABLE_LINE = "DE could not check this reference just now. Keep it, t
 const NEXT_HEADING = "What happens next";
 const SUMMARY_HEADING = "Your submitted solution";
 const SHEET_TITLE = "Submitted solution";
-const ASSESSMENT_BAND =
-  "This package needs an assessment before final scope. DE contacts you to schedule the conversation first; the formal Cyber Security Risk Assessment is $2,500 when that document is scoped.";
+/* The price is the canonical constant, formatted as /book formats it, so the two sides of the button never disagree. */
+const CSRA_PRICE = `$${CANONICAL_CSRA_ONE_TIME.toLocaleString("en-US")}`;
+const ASSESSMENT_BAND = `This package needs an assessment before final scope. DE contacts you to schedule the conversation first; the formal Cyber Security Risk Assessment is ${CSRA_PRICE} when that document is scoped.`;
+/** Ties the live booking action to the band: an optional, no-cost first step, not the priced document. */
+const BOOK_BRIDGE = "Or pick a time for that first conversation yourself. It costs nothing.";
 /**
  * The magenta /book?ref= action renders only while /book tells the same story
  * as this band (source of truth §16.6, "PR 0"): a no-obligation conversation
@@ -280,6 +284,9 @@ export default function SolutionSubmitted() {
                     <p className="d2-body d2-measure">{ASSESSMENT_BAND}</p>
                     {BOOK_ALIGNED ? (
                       <div className="mt-6">
+                        <p className="d2-small d2-measure mb-3" data-testid="book-bridge">
+                          {BOOK_BRIDGE}
+                        </p>
                         <StoreAction variant="primary" href={`/book?ref=${encodeURIComponent(reference)}`} testId="book-assessment">
                           {CTA.primary}
                         </StoreAction>
@@ -335,7 +342,7 @@ export default function SolutionSubmitted() {
             ) : null}
           </div>
         </main>
-        <DigeratiEnhancedFooterSection variant="store" />
+        <DigeratiEnhancedFooterSection variant="store" storeBack={{ label: "Back to the Store", href: BUSINESS_NEEDS_INDEX_PATH }} />
     </Door2Frame>
   );
 }

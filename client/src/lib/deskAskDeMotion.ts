@@ -75,12 +75,16 @@ export const DESK_PAGE_COPY: Record<DeskMotionPage, DeskMotionPageCopy> = {
   // The public Store (Door 2): a solution is built from needs, sized from the
   // profile and confirmed by DE. No catalog, no cart, nothing priced here.
   store: {
+    // Only what the Desk can answer from its own knowledge: it does not carry the
+    // Store's sizing table, and its store mode quotes ProActive floors when asked
+    // about price, so no starter invites a price question (DE confirms pricing
+    // after it reads the solution).
     greet:
-      "Building a solution? I can explain what a package includes, how Standalone and Co-Managed differ, and how DE sizes it from your profile.",
+      "Building a solution? I can explain what each need covers and how Standalone and Co-Managed differ. DE confirms scope with you after you send it.",
     chips: [
       { label: "What's the difference between Standalone and Co-Managed?", icon: "grid" },
-      { label: "How does DE size a package?", icon: "file" },
-      { label: "When do I see pricing?", icon: "dollar" },
+      { label: "Which need fits our situation?", icon: "file" },
+      { label: "What happens after I send my solution?", icon: "shield" },
       { label: "Can I talk to an engineer first?", icon: "wrench" },
     ],
   },

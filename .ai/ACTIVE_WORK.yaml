@@ -84,7 +84,8 @@ claims:
       - client/src/data/solutionScenarios.ts
       - client/src/pages/store/SolutionSubmitted.tsx
       - client/src/styles/store-builder.css
-      - client/src/components/MegaMenu.tsx (announcement strip suppression on Door 2 only)
+      - client/src/components/MegaMenu.tsx (announcement strip suppression on Door 2 and /book, and the utility-height measurement it depends on)
+      - client/src/components/store/CartButton.tsx (the warehouse trigger's name only)
       - client/src/pages/sections/DigeratiEnhancedFooterSection.tsx (the variant="store" prop only)
       - client/src/lib/deskAskDeMotion.ts (the store page classification and its copy only)
       - client/src/lib/deskAskDeMotion.test.ts
