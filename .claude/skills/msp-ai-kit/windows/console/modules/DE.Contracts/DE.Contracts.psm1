@@ -15,7 +15,7 @@ $ErrorActionPreference = 'Stop'
 
 $script:ContractsRoot = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'contracts'
 $script:SecretKey = '(?i)(passw|secret|token|api.?key|recovery.?pass|recovery.?key|connect.?key|private.?key|mfa|seed|^tap$|^pin$)'
-$script:RecoveryShape = '(?<!\d)\d{6}(-\d{6}){7}(?!\d)'
+$script:RecoveryShape = '(?<!\d)\d{6}([- ]?\d{6}){7}(?!\d)'   # dashes, spaces or nothing between the groups
 
 function Get-DEContractsRoot { return $script:ContractsRoot }
 function Get-DEContractSchema {
@@ -26,10 +26,11 @@ function Get-DEJsonKind {
     param($Value)
     if ($null -eq $Value) { return 'null' }
     if ($Value -is [bool]) { return 'boolean' }
-    if ($Value -is [int] -or $Value -is [long] -or $Value -is [int16] -or $Value -is [byte]) { return 'integer' }
+    if ($Value -is [int] -or $Value -is [long] -or $Value -is [int16] -or $Value -is [byte] -or $Value -is [sbyte] -or $Value -is [uint16] -or $Value -is [uint32] -or $Value -is [uint64]) { return 'integer' }
     if ($Value -is [double] -or $Value -is [decimal] -or $Value -is [single]) { if ([math]::Floor([double]$Value) -eq [double]$Value) { return 'integer' }; return 'number' }
-    if ($Value -is [string] -or $Value -is [datetime] -or $Value -is [char]) { return 'string' }
-    if ($Value -is [System.Collections.IDictionary] -or $Value -is [pscustomobject]) { return 'object' }
+    if ($Value -is [string] -or $Value -is [datetime] -or $Value -is [char] -or $Value -is [guid]) { return 'string' }
+    # PSCustomObject, not [pscustomobject] (= PSObject): an array element from the pipeline is PSObject-wrapped
+    if ($Value -is [System.Collections.IDictionary] -or $Value -is [System.Management.Automation.PSCustomObject]) { return 'object' }
     if ($Value -is [System.Collections.IEnumerable]) { return 'array' }
     return 'object'
 }
@@ -92,7 +93,9 @@ function Test-DEContract {
     # Round-trip so hashtables, ordered dictionaries and objects all validate the same way they will be read.
     $node = $Object | ConvertTo-Json -Depth 20 | ConvertFrom-Json
     $problems = @(Test-DEContractNode -Node $node -Schema (Get-DEContractSchema -Name $Name) -Path '$')
-    $problems += @(Find-DEContractSecrets -Object $node | ForEach-Object { "${_}: secrets never go in a $Name record" })
+    # secrets are looked for in the caller's object: the round trip flattens anything deeper than 20 levels, and the
+    # canonical JSON that is sent does not
+    $problems += @(Find-DEContractSecrets -Object $Object | ForEach-Object { "${_}: secrets never go in a $Name record" })
     return $problems
 }
 function ConvertTo-DEDeviceKey {
@@ -182,6 +185,31 @@ function ConvertTo-DEJsonString {
     [void]$sb.Append('"')
     return $sb.ToString()
 }
+function ConvertTo-DEJsNumber {
+    <# A number exactly as JavaScript writes it (JSON.stringify / Number.prototype.toString): shortest round-trip
+       digits, plain notation from 1e-7 to 1e21, exponent 'e+N' / 'e-N' outside it, NaN and Infinity as null. #>
+    param([Parameter(Mandatory = $true)][double]$Value)
+    if ([double]::IsNaN($Value) -or [double]::IsInfinity($Value)) { return 'null' }
+    if ($Value -eq 0) { return '0' }
+    $inv = [Globalization.CultureInfo]::InvariantCulture
+    $s = $Value.ToString('R', $inv)
+    # .NET Framework 'R' can give 17 digits where 16 round-trip (JavaScript prints the shortest)
+    $g16 = $Value.ToString('G16', $inv); if ([double]::Parse($g16, $inv) -eq $Value -and $g16.Length -lt $s.Length) { $s = $g16 }
+    $neg = ''; if ($s.StartsWith('-')) { $neg = '-'; $s = $s.Substring(1) }
+    $exp = 0; $i = $s.IndexOfAny([char[]]'Ee'); if ($i -ge 0) { $exp = [int]::Parse($s.Substring($i + 1), $inv); $s = $s.Substring(0, $i) }
+    $dot = $s.IndexOf('.'); if ($dot -ge 0) { $exp += $dot; $s = $s.Remove($dot, 1) } else { $exp += $s.Length }
+    $lead = $s.Length - $s.TrimStart('0').Length; $dg = $s.Trim('0'); $n = $exp - $lead; $k = $dg.Length
+    if ($k -le $n -and $n -le 21) { return $neg + $dg + ('0' * ($n - $k)) }
+    if (0 -lt $n -and $n -le 21) { return $neg + $dg.Substring(0, $n) + '.' + $dg.Substring($n) }
+    if (-6 -lt $n -and $n -le 0) { return $neg + '0.' + ('0' * (-$n)) + $dg }
+    $e = $n - 1; return $neg + $dg.Substring(0, 1) + $(if ($k -gt 1) { '.' + $dg.Substring(1) }) + 'e' + $(if ($e -ge 0) { "+$e" } else { "$e" })
+}
+function Get-DEJsKeyOrder {
+    <# JavaScript enumerates array-index keys ('0'..'4294967294') first in ascending order, then the rest in insertion order. #>
+    param([string[]]$Keys)
+    $idx = @($Keys | Where-Object { $_ -match '^(0|[1-9]\d{0,9})$' -and [double]$_ -lt 4294967295 } | Sort-Object { [double]$_ })
+    return @($idx) + @($Keys | Where-Object { $idx -notcontains $_ })
+}
 function ConvertTo-DECanonicalJson {
     <# JSON exactly as JavaScript's JSON.stringify writes it (no whitespace, insertion order kept, nulls kept). #>
     param([AllowNull()]$Object)
@@ -189,11 +217,12 @@ function ConvertTo-DECanonicalJson {
     switch ($kind) {
         'null' { return 'null' }
         'boolean' { if ($Object) { return 'true' }; return 'false' }
-        'integer' { return ([decimal]$Object).ToString([Globalization.CultureInfo]::InvariantCulture) }
-        'number' { $d = [double]$Object; if ([double]::IsNaN($d) -or [double]::IsInfinity($d)) { return 'null' }; return $d.ToString('R', [Globalization.CultureInfo]::InvariantCulture).Replace('E+', 'e+').Replace('E-', 'e-') }
-        'string' { if ($Object -is [datetime]) { return (ConvertTo-DEJsonString $Object.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'")) }; return (ConvertTo-DEJsonString "$Object") }
+        # the Hub re-serialises the parsed body with JSON.stringify, so every number is written as a JavaScript double would be
+        'integer' { return (ConvertTo-DEJsNumber ([double]$Object)) }
+        'number' { return (ConvertTo-DEJsNumber ([double]$Object)) }
+        'string' { if ($Object -is [datetime]) { return (ConvertTo-DEJsonString $Object.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", [Globalization.CultureInfo]::InvariantCulture)) }; return (ConvertTo-DEJsonString "$Object") }
         'array' { return '[' + ((@($Object) | ForEach-Object { ConvertTo-DECanonicalJson $_ }) -join ',') + ']' }
-        default { return '{' + ((Get-DEContractKeys $Object | ForEach-Object { (ConvertTo-DEJsonString $_) + ':' + (ConvertTo-DECanonicalJson (Get-DEContractProp $Object $_).value) }) -join ',') + '}' }
+        default { return '{' + ((Get-DEJsKeyOrder (Get-DEContractKeys $Object) | ForEach-Object { (ConvertTo-DEJsonString $_) + ':' + (ConvertTo-DECanonicalJson (Get-DEContractProp $Object $_).value) }) -join ',') + '}' }
     }
 }
 function Get-DEHubSignature {
@@ -216,7 +245,7 @@ function New-DEHubEvent {
     if ($problems.Count) { throw "not sending $EventType : $($problems -join '; ')" }
     return [ordered]@{
         eventId = [guid]::NewGuid().ToString(); eventType = $EventType; version = 1; source = 'techconsole'
-        occurredAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'")
+        occurredAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", [Globalization.CultureInfo]::InvariantCulture)   # invariant: ':' is the culture's time separator otherwise (fi-FI writes '.')
         correlationId = $(if ($CorrelationId) { $CorrelationId } else { [guid]::NewGuid().ToString() })
         entityType = 'device'; entityId = $EntityId; canonicalAccountId = $(if ($AccountId) { $AccountId } else { $null }); originEventId = $null
         payload = $Payload
@@ -238,7 +267,7 @@ function Send-DEHubEvent {
     param([Parameter(Mandatory = $true)][string]$BaseUrl, [Parameter(Mandatory = $true)]$Event, [Parameter(Mandatory = $true)][securestring]$Secret)
     if ($BaseUrl -notmatch '^https://') { throw "Hub URL must be https:// (got '$BaseUrl')" }
     $body = ConvertTo-DECanonicalJson $Event
-    $ts = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'")
+    $ts = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", [Globalization.CultureInfo]::InvariantCulture)
     $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($Secret)
     try { $plain = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr); $sig = Get-DEHubSignature -Method 'POST' -Path $script:HubEventsPath -Timestamp $ts -EventId $Event.eventId -Body $body -Secret $plain }
     finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr); $plain = $null }

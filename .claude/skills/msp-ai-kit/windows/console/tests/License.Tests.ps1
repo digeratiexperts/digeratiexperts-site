@@ -20,6 +20,9 @@ Describe 'Licences: device-bound, short-lived, Hub-signed' {
         }
     }
     AfterAll { Set-DELicensePolicyOverride $null; Clear-DELicense }
+    It 'refuses a licence without an id (it could never be revoked)' {
+        (Test-DELicenseToken -Token (New-TestLicense -Claims @{ jti = '' }) -DeviceKey 'lenovo:PF3ABC12').reason | Should -Match 'no id'
+    }
     It 'ships public keys only and the policy in warn until the Hub issues licences' {
         $k = Get-Content -LiteralPath (Join-Path (Get-DEConsole).Root 'trust/license-keys.json') -Raw | ConvertFrom-Json
         foreach ($x in @($k.keys)) { foreach ($priv in 'd', 'p', 'q', 'dp', 'dq', 'qi') { $x.PSObject.Properties[$priv] | Should -BeNullOrEmpty } }

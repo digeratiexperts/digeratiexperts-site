@@ -25,7 +25,7 @@ function Get-DELicensePolicy {
     $f = Join-Path (Get-DELicenseRoot) 'license-policy.json'
     $p = $(if (Test-Path -LiteralPath $f) { Get-Content -LiteralPath $f -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null })
     $g = { param($n, $d) if ($p -and $p.PSObject.Properties[$n] -and $null -ne $p.$n) { $p.$n } else { $d } }
-    return [pscustomobject]@{ enforce = "$(& $g 'enforce' 'warn')"; maxTechnicianHours = [double](& $g 'maxTechnicianHours' 12); maxOrderDays = [double](& $g 'maxOrderDays' 45); clockSkewMinutes = [double](& $g 'clockSkewMinutes' 5); issuer = "$(& $g 'issuer' 'de-hub')"; audience = "$(& $g 'audience' 'de-techtool')" }
+    return [pscustomobject]@{ enforce = $(if ("$(& $g 'enforce' 'warn')".Trim() -ieq 'warn') { 'warn' } else { 'required' }); maxTechnicianHours = [double](& $g 'maxTechnicianHours' 12); maxOrderDays = [double](& $g 'maxOrderDays' 45); clockSkewMinutes = [double](& $g 'clockSkewMinutes' 5); issuer = "$(& $g 'issuer' 'de-hub')"; audience = "$(& $g 'audience' 'de-techtool')" }
 }
 function Set-DELicensePolicyOverride { <# Session only (tests, rehearsals). #> param($Policy) $script:PolicyOverride = $Policy; $script:Warned = @{} }
 function Get-DELicenseTrustedKeys {
@@ -82,6 +82,7 @@ function Test-DELicenseToken {
     $dev = @($claims.dev | Where-Object { $_ })
     if (-not $dev.Count -or $dev -contains '*') { return (& $bad 'invalid' 'a licence must name its device' $claims) }
     if (-not $DeviceKey -or $dev -notcontains $DeviceKey) { return (& $bad 'wrong-device' "issued for $($dev -join ', '), this device is $(if ($DeviceKey) { $DeviceKey } else { 'unknown (no usable serial)' })" $claims) }
+    if (-not "$($claims.jti)") { return (& $bad 'invalid' 'licence has no id (jti), so it could never be revoked' $claims) }
     $rev = Join-Path (Get-DELicenseRoot) 'revoked.json'
     if ((Test-Path -LiteralPath $rev) -and (@((Get-Content -LiteralPath $rev -Raw -Encoding UTF8 | ConvertFrom-Json).jti) -contains "$($claims.jti)")) { return (& $bad 'revoked' "licence $($claims.jti) was revoked" $claims) }
     return [pscustomobject]@{ valid = $true; state = 'valid'; reason = "licensed to $($claims.sub) until $($exp.ToString('u'))"; claims = $claims; expires = $exp }

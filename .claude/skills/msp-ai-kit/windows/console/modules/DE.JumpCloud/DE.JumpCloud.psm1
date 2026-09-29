@@ -39,8 +39,11 @@ function Invoke-DEJumpCloudApi {
     Write-DELog -Level DEBUG -Message "jumpcloud $Method $uri"
     try {
         # UTF-8 bytes: Windows PowerShell 5.1 sends a string body as ISO-8859-1, mangling names like "José"
-        if ($json) { return Invoke-RestMethod -Method $Method -Uri $uri -Headers $headers -Body ((New-Object Text.UTF8Encoding $false).GetBytes($json)) -ContentType 'application/json; charset=utf-8' -TimeoutSec 60 -UseBasicParsing }
-        return Invoke-RestMethod -Method $Method -Uri $uri -Headers $headers -TimeoutSec 60 -UseBasicParsing
+        if ($json) { $r = Invoke-RestMethod -Method $Method -Uri $uri -Headers $headers -Body ((New-Object Text.UTF8Encoding $false).GetBytes($json)) -ContentType 'application/json; charset=utf-8' -TimeoutSec 60 -UseBasicParsing }
+        else { $r = Invoke-RestMethod -Method $Method -Uri $uri -Headers $headers -TimeoutSec 60 -UseBasicParsing }
+        # 'return $r' unrolls the list: 5.1's Invoke-RestMethod writes a JSON array as ONE object, which cut paging at
+        # the first page and hid group memberships from the callers' Where-Object
+        return $r
     } finally { $key = $null }
 }
 

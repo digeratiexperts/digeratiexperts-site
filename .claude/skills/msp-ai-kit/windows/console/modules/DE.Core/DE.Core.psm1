@@ -123,7 +123,7 @@ function Protect-DEText {
     foreach ($v in $script:DE.Redactions) { if ($v) { $t = $t.Replace($v, '[REDACTED]') } }
     $t = [regex]::Replace($t, '(?i)\b(api[_ -]?key|token|secret|password|passwd|pwd|connect[_ -]?key|site[_ -]?token|org(anization)?[_ -]?key|recovery ?password|tap|temporary access pass)\b(\s*[:=]\s*)\S+', '$1$2[REDACTED]')
     $t = [regex]::Replace($t, '(?i)\bBearer\s+[A-Za-z0-9\-\._~\+\/]+=*', 'Bearer [REDACTED]')
-    $t = [regex]::Replace($t, '\b\d{6}-\d{6}-\d{6}-\d{6}-\d{6}-\d{6}-\d{6}-\d{6}\b', '[REDACTED BITLOCKER KEY]')
+    $t = [regex]::Replace($t, '(?<!\d)\d{6}([- ]?\d{6}){7}(?!\d)', '[REDACTED BITLOCKER KEY]')   # dashes, spaces or none
     $t = [regex]::Replace($t, '\b(AKIA|ASIA)[A-Z0-9]{16}\b', '[REDACTED AWS KEY]')
     $t = [regex]::Replace($t, '\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b', '[REDACTED JWT]')
     $t = [regex]::Replace($t, '(?i)(-k|--key|/key[:=]|SITE_TOKEN=|ORG_KEY=|JCINSTALLERARGUMENTS=)\s*"?[A-Za-z0-9+/=_\-]{16,}', '$1 [REDACTED]')
@@ -499,7 +499,11 @@ function Invoke-DEAction {
     while ($attempt -le $MaxRetries -and -not $verified) {
         $attempt++
         try {
+            $queued = @(Get-DERebootQueue | Where-Object { $_ }).Count
             $applyOut = & $a.Apply $state
+            # an apply that queued a restart (firmware, updates) cannot be verified until after it: re-detecting now would
+            # read drift, re-apply and remediate what already installed
+            if (@(Get-DERebootQueue | Where-Object { $_ }).Count -gt $queued) { return (Add-DEEvidence -Step $step -Module $a.Module -Before $before -ActionTaken ("applied (attempt {0}); restart queued" -f $attempt) -Result 'WARN' -Verification 'verify after the restart (the console resumes and checks again)' -Remediation 'Restart the device; the step is checked again when the console resumes.' -Data @{ before = $state.Detected; output = "$applyOut" }) }
             $after = Get-DEActionState -Id $Id
             $verifyOk = $true; $verifyDetail = ''
             # the last value a Verify block outputs is its verdict; stray output before it must never read as success
@@ -732,7 +736,9 @@ function Test-DEConsoleIntegrity {
             foreach ($f in @($m.files | Where-Object { $null -ne $_ })) {
                 $full = Join-Path $base ($f.path -replace '/', [IO.Path]::DirectorySeparatorChar)
                 if (-not (Test-Path -LiteralPath $full)) { $problems += "missing: $($f.path)"; continue }
-                $h = (Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash.ToLowerInvariant()
+                # Get-FileHash returns nothing for a file another process holds open for writing: that is a finding, never 'unknown'
+                $h = $null; try { $h = Get-DEFileSha256 -Path $full } catch { $h = $null }
+                if (-not $h) { $problems += "unreadable: $($f.path)"; continue }
                 if ($h -ne "$($f.sha256)".ToLowerInvariant()) { $problems += "changed since packaging: $($f.path)" }
             }
             # a console script the manifest does not list was added after packaging

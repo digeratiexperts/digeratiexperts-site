@@ -30,7 +30,7 @@ function Join-DEWinPath {
 function Write-DERescueLog {
     <# Keeps a session log for the handoff folder. Never pass a key or password here. #>
     param([Parameter(Mandatory = $true)][string]$Message)
-    $line = '{0} {1}' -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), ($Message -replace '(?<!\d)\d{6}(-\d{6}){7}(?!\d)', '[recovery password removed]')
+    $line = '{0} {1}' -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), ($Message -replace '(?<!\d)\d{6}([- ]?\d{6}){7}(?!\d)', '[recovery password removed]')
     $script:Log.Add($line)
     return $line
 }
@@ -57,7 +57,7 @@ function Test-DERecoveryPasswordFormat {
     $groups = @([regex]::Matches(($v -replace '-', ''), '\d{6}') | ForEach-Object { $_.Value })
     for ($i = 0; $i -lt 8; $i++) {
         $n = [int]$groups[$i]
-        if (($n % 11) -ne 0 -or $n -ge 720896) { return @{ ok = $false; reason = "group $($i + 1) ($($groups[$i])) is not valid: check it against the key"; badGroup = $i + 1 } }
+        if (($n % 11) -ne 0 -or $n -ge 720896) { return @{ ok = $false; reason = "group $($i + 1) is not valid: check it against the key"; badGroup = $i + 1 } }
     }
     return @{ ok = $true; reason = ''; badGroup = 0; normalized = ($groups -join '-') }
 }
@@ -160,8 +160,13 @@ function Set-DERescueTimeZone {
     param([Parameter(Mandatory = $true)][string]$Drive)
     $tz = Invoke-DEOfflineHive -Drive $Drive -Hive SYSTEM -ScriptBlock { param($k) $cur = Get-DERegValue "$k\Select" 'Current'; if (-not $cur) { $cur = 1 }; Get-DERegValue ("$k\ControlSet{0:d3}\Control\TimeZoneInformation" -f [int]$cur) 'TimeZoneKeyName' }
     if (-not $tz) { return $null }
+    # Windows keeps UTC across a zone change and rewrites the hardware clock, so WinPE's wrong UTC (the local clock read as
+    # Pacific) would survive and the clock would move. The hardware clock already holds the client's local time: keep it.
+    $utcClock = [bool](Invoke-DEOfflineHive -Drive $Drive -Hive SYSTEM -ScriptBlock { param($k) $cur = Get-DERegValue "$k\Select" 'Current'; if (-not $cur) { $cur = 1 }; Get-DERegValue ("$k\ControlSet{0:d3}\Control\TimeZoneInformation" -f [int]$cur) 'RealTimeIsUniversal' })
+    $sw = [Diagnostics.Stopwatch]::StartNew(); $wall = Get-Date
     $r = Invoke-DERescueNative -FilePath 'tzutil.exe' -Arguments @('/s', "$tz")
     if ($r.ExitCode -ne 0) { $null = Write-DERescueLog "time zone '$tz' not set (tzutil exit $($r.ExitCode))"; return $null }
+    if (-not $utcClock) { try { $null = Set-Date -Date ($wall + $sw.Elapsed) -ErrorAction Stop } catch { $null = Write-DERescueLog "local time not kept after the zone change: $($_.Exception.Message)" } }
     $null = Write-DERescueLog "time zone set to $tz (from the installed Windows)"
     return "$tz"
 }

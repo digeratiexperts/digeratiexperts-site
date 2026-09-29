@@ -602,7 +602,7 @@ function Get-KitVersionInfo {
     $local = $null; $vf = Join-Path $Root 'kit.version'; if (Test-Path -LiteralPath $vf) { $local = (Get-Content -LiteralPath $vf -Raw -Encoding UTF8).Trim() }
     $remote = $null; $url = $null
     if ($Config -and $Config.PSObject.Properties['distribution'] -and $Config.distribution.PSObject.Properties['version_url']) { $url = $Config.distribution.version_url }
-    if ($url -and $url -match '^https://') { try { $remote = (Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 20).Content.Trim() } catch { Write-KitLog -Level WARN -Message "version check failed: $($_.Exception.Message)" } }
+    if ($url -and $url -match '^https://') { try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }; try { $remote = (Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 20).Content.Trim() } catch { Write-KitLog -Level WARN -Message "version check failed: $($_.Exception.Message)" } }
     $newer = $false; if ($local -and $remote) { try { $newer = ([version]$remote -gt [version]$local) } catch { $newer = ($remote -ne $local) } }
     return [pscustomobject]@{ local = $local; remote = $remote; updateAvailable = $newer; versionUrl = $url }
 }
@@ -713,7 +713,8 @@ function Write-Receipt {
     $receiptPath = $null
     if ($script:LogDir) {
         $receiptPath = Join-Path $script:LogDir ("msp-ai-kit-receipt-{0}.json" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
-        try { $summary | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $receiptPath -Encoding UTF8 -WhatIf:$false } catch { $receiptPath = $null }
+        # no BOM: the receipt is POSTed byte for byte, and 5.1's -Encoding UTF8 writes one (webhooks reject it)
+        try { [IO.File]::WriteAllText($receiptPath, ($summary | ConvertTo-Json -Depth 5), (New-Object Text.UTF8Encoding $false)) } catch { $receiptPath = $null }
     }
     Write-Host ""
     Write-Host ("{0} {1} summary" -f $script:ToolName, $script:ToolVersion) -ForegroundColor Cyan

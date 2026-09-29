@@ -27,8 +27,8 @@ function Open-DEUserHives {
         NTUSER.DAT) and the Default profile so new users get the setting too. Running as SYSTEM, from RMM, or as the
         technician, HKCU is the wrong account. Returns @{ targets; loaded } ; pass it to Close-DEUserHives.
     #>
-    $targets = @(); $loaded = @()
-    if (-not $script:IsWindowsHost) { return @{ targets = $targets; loaded = $loaded } }
+    $targets = @(); $loaded = @(); $failed = @()
+    if (-not $script:IsWindowsHost) { return @{ targets = $targets; loaded = $loaded; failed = $failed } }
     $real = '^S-1-(5-21-\d+-\d+-\d+-\d+|12-1-\d+-\d+-\d+-\d+)$'
     $present = @(Get-ChildItem -Path 'Registry::HKEY_USERS' -ErrorAction SilentlyContinue | ForEach-Object { $_.PSChildName } | Where-Object { $_ -match $real })
     foreach ($sid in $present) { $targets += @{ sid = $sid; root = "Registry::HKEY_USERS\$sid"; name = $sid } }
@@ -39,11 +39,11 @@ function Open-DEUserHives {
         if (-not $hive -or -not (Test-Path -LiteralPath $hive)) { continue }
         $mount = "DE_$($sid -replace '-', '_')"
         $r = Invoke-DENative -FilePath 'reg.exe' -Arguments @('load', "HKU\$mount", $hive)
-        if ($r.ExitCode -eq 0) { $loaded += $mount; $targets += @{ sid = $sid; root = "Registry::HKEY_USERS\$mount"; name = (Split-Path -Leaf $dir) } }
+        if ($r.ExitCode -eq 0) { $loaded += $mount; $targets += @{ sid = $sid; root = "Registry::HKEY_USERS\$mount"; name = (Split-Path -Leaf $dir) } } else { $failed += (Split-Path -Leaf $dir) }
     }
     $def = Join-Path $env:SystemDrive 'Users\Default\NTUSER.DAT'
     if (Test-Path -LiteralPath $def) { $r = Invoke-DENative -FilePath 'reg.exe' -Arguments @('load', 'HKU\DE_Default', $def); if ($r.ExitCode -eq 0) { $loaded += 'DE_Default'; $targets += @{ sid = 'Default'; root = 'Registry::HKEY_USERS\DE_Default'; name = 'Default (new users)' } } }
-    return @{ targets = $targets; loaded = $loaded }
+    return @{ targets = $targets; loaded = $loaded; failed = $failed }
 }
 function Close-DEUserHives {
     param([Parameter(Mandatory = $true)]$Hives)
@@ -62,9 +62,11 @@ function Get-DEUserScopeState {
     param([Parameter(Mandatory = $true)]$Control)
     $h = Open-DEUserHives
     try {
-        if (-not $h.targets.Count) { return $null }
-        $miss = @(); foreach ($t in $h.targets) { $v = Get-DERegistryValue -Path (Get-DEUserPolicyPath -Root $t.root -Path $Control.path) -Name $Control.name; if ("$v" -ne "$($Control.value)") { $miss += $t.name } }
-        return @{ ok = (-not $miss.Count); have = "$($h.targets.Count - $miss.Count) of $($h.targets.Count) profiles"; detail = $(if ($miss.Count) { "missing for: $($miss -join ', ')" } else { "set for all $($h.targets.Count) profiles including Default" }) }
+        $failed = @($h['failed'] | Where-Object { $_ })
+        if (-not $h.targets.Count -and -not $failed.Count) { return $null }
+        # a profile whose hive could not be loaded (locked or corrupt NTUSER.DAT) was not checked: never 'set for all'
+        $miss = @($failed | ForEach-Object { "$_ (hive not loaded)" }); foreach ($t in $h.targets) { $v = Get-DERegistryValue -Path (Get-DEUserPolicyPath -Root $t.root -Path $Control.path) -Name $Control.name; if ("$v" -ne "$($Control.value)") { $miss += $t.name } }
+        return @{ ok = (-not $miss.Count); have = "$($h.targets.Count + $failed.Count - $miss.Count) of $($h.targets.Count + $failed.Count) profiles"; detail = $(if ($miss.Count) { "missing for: $($miss -join ', ')" } else { "set for all $($h.targets.Count) profiles including Default" }) }
     } finally { Close-DEUserHives -Hives $h }
 }
 function Set-DEUserScopeControl {
@@ -283,6 +285,7 @@ function Compare-DEBrowserPolicy {
             $vals = @(); $sk = Join-Path $key $list
             if ($script:IsWindowsHost -and (Test-Path $sk)) { $vals = @((Get-ItemProperty $sk).PSObject.Properties | Where-Object { $_ -and $_.Name -notmatch '^PS' } | ForEach-Object { "$($_.Value)" }) }
             $w = @($want.lists[$b][$list] | Where-Object { $_ })
+            if (-not $w.Count) { continue }   # Set-DEBrowserPolicy leaves an empty list to PABX, JumpCloud or the client
             if ((@($w) -join '|') -ne (@($vals) -join '|')) { $drift += "$b.$list" }
         }
     }
