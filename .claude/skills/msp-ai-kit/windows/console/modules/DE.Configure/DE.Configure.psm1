@@ -427,7 +427,7 @@ function Register-DEBrowserActions {
         -Desired { @{ chosen = $true } } `
         -ManualAction "Set browser.loginManager in the client profile (keeper, bitwarden, onepassword, lastpass, dashlane, or builtin). Until then every built-in browser password manager stays off. Fill any missing or unconfirmed store ids in catalog\browser-policy.json."
     Register-DEAction -Id 'browser.firefox' -Module 'browser' -Title 'Firefox policy (logins, autofill, extensions)' -Phase 12 -Gates @('gate.elevated') -RequiresElevation `
-        -Detect { $inst = Test-DEFirefoxInstalled; $d = $(if ($inst) { @(Compare-DEFirefoxPolicy -ClientProfile $ClientProfile) } else { @() }); @{ installed = $inst; driftCount = $d.Count; drift = ($d -join ', ') } }.GetNewClosure() -Desired { @{ driftCount = 0 } } `
+        -Detect { $inst = Test-DEFirefoxInstalled; $d = @(if ($inst) { Compare-DEFirefoxPolicy -ClientProfile $ClientProfile }); @{ installed = $inst; driftCount = $d.Count; drift = ($d -join ', ') } }.GetNewClosure() -Desired { @{ driftCount = 0 } } `
         -Apply { param($s) Set-DEFirefoxPolicy -ClientProfile $ClientProfile }.GetNewClosure() `
         -ManualAction 'Restart Firefox and open about:policies to confirm the values are Active.'
     Register-DEAction -Id 'browser.extensions' -Module 'browser' -Title 'No unapproved or conflicting browser extensions installed (all users)' -Phase 12 `
