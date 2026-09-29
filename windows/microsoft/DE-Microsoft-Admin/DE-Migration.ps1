@@ -772,46 +772,122 @@ function Test-DEMigrationMfa {
 }
 
 # ============================================================ devices and bounces
+function Get-DEMailProfileTargets {
+    <# The Windows accounts to scan: this account only, or with -AllProfiles every real profile (loaded hives under HKU,
+       unloaded ones loaded from NTUSER.DAT and unloaded again by Close-DEMailProfileTargets). #>
+    param([switch]$AllProfiles)
+    $sid = ''; try { $me = [Security.Principal.WindowsIdentity]::GetCurrent(); if ($me.User) { $sid = $me.User.Value } } catch { }   # not Windows: no SID, no other profiles
+    $mine = [pscustomobject]@{ name = $(if ($env:USERNAME) { $env:USERNAME } else { $env:USER }); sid = $sid; root = 'HKCU:'; appData = $env:APPDATA; current = $true }
+    if (-not $AllProfiles) { return @{ targets = @($mine); loaded = @(); failed = @() } }
+    $real = '^S-1-(5-21-\d+-\d+-\d+-\d+|12-1-\d+-\d+-\d+-\d+)$'
+    $targets = @(); $loaded = @(); $failed = @()
+    $present = @(Get-ChildItem -Path 'Registry::HKEY_USERS' -ErrorAction SilentlyContinue | ForEach-Object { $_.PSChildName } | Where-Object { $_ -match $real })
+    foreach ($pl in @(Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList' -ErrorAction SilentlyContinue)) {
+        $sid = $pl.PSChildName; if ($sid -notmatch $real) { continue }
+        $dir = (Get-ItemProperty -LiteralPath $pl.PSPath -Name 'ProfileImagePath' -ErrorAction SilentlyContinue).ProfileImagePath
+        if (-not $dir) { continue }
+        $dir = [Environment]::ExpandEnvironmentVariables($dir); $name = Split-Path -Leaf $dir
+        $isMe = ($sid -eq $mine.sid)
+        if ($isMe) { $root = 'HKCU:' }
+        elseif ($present -contains $sid) { $root = "Registry::HKEY_USERS\$sid" }
+        else {
+            $hive = Join-Path $dir 'NTUSER.DAT'; if (-not (Test-Path -LiteralPath $hive)) { continue }
+            $mount = "DE_MIG_$($sid -replace '-', '_')"
+            $null = & reg.exe load "HKU\$mount" $hive 2>&1
+            if ($LASTEXITCODE -ne 0) { $failed += $name; continue }
+            $loaded += $mount; $root = "Registry::HKEY_USERS\$mount"
+        }
+        $targets += [pscustomobject]@{ name = $name; sid = $sid; root = $root; appData = $(if ($isMe -and $env:APPDATA) { $env:APPDATA } else { Join-Path $dir 'AppData\Roaming' }); current = $isMe }
+    }
+    return @{ targets = $targets; loaded = $loaded; failed = $failed }
+}
+function Close-DEMailProfileTargets {
+    param([Parameter(Mandatory = $true)]$Targets)
+    foreach ($m in @($Targets.loaded)) { for ($i = 0; $i -lt 5; $i++) { [GC]::Collect(); [GC]::WaitForPendingFinalizers(); $null = & reg.exe unload "HKU\$m" 2>&1; if ($LASTEXITCODE -eq 0) { break }; Start-Sleep -Milliseconds 400 } }
+}
 function Get-DEMailClientInventory {
     <#
-        Run on each PC the client uses (as the signed-in user): every place this Windows account still talks to Gmail.
-        Outlook classic profiles (IMAP/SMTP servers and addresses), Windows Credential Manager entries, Thunderbird
-        accounts, and scheduled tasks whose command lines mention Gmail's SMTP/IMAP servers (scanners, scripts). With
-        -ProjectId the findings are recorded under this device name for the bounce and cutover checks.
+        Run on each PC the client uses: every place a Windows account on it still talks to Gmail. Outlook classic
+        profiles (IMAP/SMTP servers and addresses), Windows Credential Manager entries, Thunderbird accounts, and
+        scheduled tasks whose command lines mention Gmail's servers (scanners, scripts).
+          default        this Windows account only (run it as the signed-in user)
+          -AllProfiles   every profile on the PC (run elevated, as the technician, SYSTEM or RMM). Credential Manager
+                         is encrypted per user, so for the other accounts it is listed as not checked, never as clean.
+        With -ProjectId the findings are recorded under this device name. On a client PC without the project, save
+        the result with Export-DEResult and record it on the admin PC with Import-DEMailClientInventory.
     #>
-    [CmdletBinding()] param([string]$ProjectId, [string]$DeviceName = $env:COMPUTERNAME, [string]$Pattern = 'gmail\.com|googlemail\.com|imap\.gmail|smtp\.gmail')
+    [CmdletBinding()] param([string]$ProjectId, [string]$DeviceName = $env:COMPUTERNAME, [string]$Pattern = 'gmail\.com|googlemail\.com|imap\.gmail|smtp\.gmail', [switch]$AllProfiles)
     $found = New-Object System.Collections.Generic.List[object]
+    $notChecked = New-Object System.Collections.Generic.List[string]
     $decode = { param($v) if ($v -is [byte[]]) { ([Text.Encoding]::Unicode.GetString($v)).TrimEnd([char]0) } else { "$v" } }
-    foreach ($ver in @('16.0', '15.0')) {
-        $root = "HKCU:\Software\Microsoft\Office\$ver\Outlook\Profiles"
-        if (-not (Test-Path -LiteralPath $root)) { continue }
-        foreach ($acct in @(Get-ChildItem -LiteralPath $root -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.PSPath -match '9375CFF0413111d3B88A00104B2A6676\\[0-9a-fA-F]{8}$' })) {
-            $props = Get-ItemProperty -LiteralPath $acct.PSPath -ErrorAction SilentlyContinue; if (-not $props) { continue }
-            $vals = @{}; foreach ($n in @('Account Name', 'Email', 'IMAP Server', 'SMTP Server', 'POP3 Server')) { if ($props.PSObject.Properties[$n]) { $vals[$n] = & $decode $props.$n } }
-            $text = ($vals.Values -join ' ')
-            if ($text -match $Pattern) { $profName = ($acct.PSPath -split '\\Profiles\\')[1].Split('\')[0]; $found.Add([pscustomobject]@{ where = "Outlook $ver profile '$profName'"; what = (($vals.GetEnumerator() | Where-Object { $_.Value } | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join '; '); fix = 'remove this account from the Outlook profile (File > Account Settings) once the Microsoft 365 mailbox is added' }) }
+    $scope = Get-DEMailProfileTargets -AllProfiles:$AllProfiles
+    foreach ($f in @($scope.failed)) { $notChecked.Add("$f (its registry hive could not be loaded; it is in use or damaged)") }
+    try {
+        foreach ($t in @($scope.targets)) {
+            foreach ($ver in @('16.0', '15.0')) {
+                $root = "$($t.root)\Software\Microsoft\Office\$ver\Outlook\Profiles"
+                if (-not (Test-Path -LiteralPath $root)) { continue }
+                foreach ($acct in @(Get-ChildItem -LiteralPath $root -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.PSPath -match '9375CFF0413111d3B88A00104B2A6676\\[0-9a-fA-F]{8}$' })) {
+                    $props = Get-ItemProperty -LiteralPath $acct.PSPath -ErrorAction SilentlyContinue; if (-not $props) { continue }
+                    $vals = @{}; foreach ($n in @('Account Name', 'Email', 'IMAP Server', 'SMTP Server', 'POP3 Server')) { if ($props.PSObject.Properties[$n]) { $vals[$n] = & $decode $props.$n } }
+                    $text = ($vals.Values -join ' ')
+                    if ($text -match $Pattern) { $profName = ($acct.PSPath -split '\\Profiles\\')[1].Split('\')[0]; $found.Add([pscustomobject]@{ account = $t.name; where = "Outlook $ver profile '$profName'"; what = (($vals.GetEnumerator() | Sort-Object Key | Where-Object { $_.Value } | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join '; '); fix = 'remove this account from the Outlook profile (File > Account Settings) once the Microsoft 365 mailbox is added' }) }
+                }
+            }
+            if ($t.current) {
+                if (Get-Command -Name 'cmdkey.exe' -ErrorAction SilentlyContinue) {
+                    foreach ($l in @(& cmdkey.exe /list 2>$null)) { if ("$l" -match '^\s*Target:\s*(.+)$' -and $Matches[1] -match $Pattern) { $found.Add([pscustomobject]@{ account = $t.name; where = 'Windows Credential Manager'; what = $Matches[1].Trim(); fix = "remove it: cmdkey /delete:`"$($Matches[1].Trim() -replace '^(LegacyGeneric|Domain):target=', '')`"" }) } }
+                }
+            }
+            else { $notChecked.Add("Credential Manager for $($t.name) (encrypted for that account: sign in as $($t.name) and run the scan without -AllProfiles)") }
+            $tb = $(if ($t.appData) { Join-Path $t.appData 'Thunderbird\Profiles' } else { $null })
+            if ($tb -and (Test-Path -LiteralPath $tb)) {
+                foreach ($pf in @(Get-ChildItem -LiteralPath $tb -Filter 'prefs.js' -Recurse -ErrorAction SilentlyContinue)) {
+                    foreach ($l in @(Get-Content -LiteralPath $pf.FullName -Encoding UTF8 -ErrorAction SilentlyContinue | Where-Object { $_ -match '\.(hostname|useremail)",\s*"([^"]+)"' -and $_ -match $Pattern })) { $found.Add([pscustomobject]@{ account = $t.name; where = "Thunderbird ($($pf.Directory.Name))"; what = ($l -replace '^user_pref\(|\);$', ''); fix = 'remove or repoint this Thunderbird account' }) }
+                }
+            }
         }
     }
-    if (Get-Command -Name 'cmdkey.exe' -ErrorAction SilentlyContinue) {
-        foreach ($l in @(& cmdkey.exe /list 2>$null)) { if ("$l" -match '^\s*Target:\s*(.+)$' -and $Matches[1] -match $Pattern) { $found.Add([pscustomobject]@{ where = 'Windows Credential Manager'; what = $Matches[1].Trim(); fix = "remove it: cmdkey /delete:`"$($Matches[1].Trim() -replace '^(LegacyGeneric|Domain):target=', '')`"" }) } }
-    }
-    $tb = $(if ($env:APPDATA) { Join-Path $env:APPDATA 'Thunderbird\Profiles' } else { $null })
-    if ($tb -and (Test-Path -LiteralPath $tb)) {
-        foreach ($pf in @(Get-ChildItem -LiteralPath $tb -Filter 'prefs.js' -Recurse -ErrorAction SilentlyContinue)) {
-            foreach ($l in @(Get-Content -LiteralPath $pf.FullName -Encoding UTF8 -ErrorAction SilentlyContinue | Where-Object { $_ -match '\.(hostname|useremail)",\s*"([^"]+)"' -and $_ -match $Pattern })) { $found.Add([pscustomobject]@{ where = "Thunderbird ($($pf.Directory.Name))"; what = ($l -replace '^user_pref\(|\);$', ''); fix = 'remove or repoint this Thunderbird account' }) }
-        }
-    }
+    finally { Close-DEMailProfileTargets -Targets $scope }
     if (Get-Command -Name 'Get-ScheduledTask' -ErrorAction SilentlyContinue) {
-        foreach ($t in @(Get-ScheduledTask -ErrorAction SilentlyContinue)) { foreach ($a in @($t.Actions)) { $cmd = "$($a.Execute) $($a.Arguments)"; if ($cmd -match $Pattern) { $found.Add([pscustomobject]@{ where = "scheduled task $($t.TaskPath)$($t.TaskName)"; what = $cmd.Trim(); fix = 'repoint the script to smtp.office365.com (or SMTP relay) or retire it' }) } } }
+        foreach ($t in @(Get-ScheduledTask -ErrorAction SilentlyContinue)) { foreach ($a in @($t.Actions)) { $cmd = "$($a.Execute) $($a.Arguments)"; if ($cmd -match $Pattern) { $found.Add([pscustomobject]@{ account = '(this PC)'; where = "scheduled task $($t.TaskPath)$($t.TaskName)"; what = $cmd.Trim(); fix = 'repoint the script to smtp.office365.com (or SMTP relay) or retire it' }) } } }
     }
-    $items = $found.ToArray()
-    if ($ProjectId) {
-        $p = Get-DEMigrationProject -ProjectId $ProjectId
-        $p.devices = @(@($p.devices | Where-Object { -not ($_ -is [string] -and $_ -ieq $DeviceName) -and -not ($_.PSObject.Properties['name'] -and $_.name -ieq $DeviceName) }) + @([pscustomobject]@{ name = $DeviceName; checkedAt = (Get-Date).ToUniversalTime().ToString('o'); gmailReferences = $items }))
-        Set-DEMigrationStage -Project $p -Stage 'Devices'
-        $null = Save-DEMigrationProject -Project $p -Entry "device $DeviceName : $($items.Count) Gmail reference(s)"
-    }
-    return (New-DEResult -Operation 'Get-DEMailClientInventory' -Status $(if ($items.Count) { 'Partial' } else { 'Succeeded' }) -Target $DeviceName -Message $(if ($items.Count) { "$($items.Count) place(s) on $DeviceName still use Gmail: " + (($items | ForEach-Object { $_.where }) -join '; ') } else { "nothing on $DeviceName (this Windows account) still points at Gmail" }) -Data $items)
+    $items = $found.ToArray(); $gaps = $notChecked.ToArray()
+    $accounts = @($scope.targets | ForEach-Object { $_.name })
+    if ($ProjectId) { $null = Add-DEMigrationDeviceRecord -ProjectId $ProjectId -DeviceName $DeviceName -Findings $items -Accounts $accounts -NotChecked $gaps -CheckedAt (Get-Date).ToUniversalTime().ToString('o') }
+    $msg = $(if ($items.Count) { "$($items.Count) place(s) on $DeviceName still use Gmail: " + (($items | ForEach-Object { "$($_.where) [$($_.account)]" }) -join '; ') } else { "nothing on $DeviceName ($($accounts -join ', ')) still points at Gmail" })
+    if ($gaps.Count) { $msg += ". Not checked: $($gaps -join '; ')" }
+    $res = New-DEResult -Operation 'Get-DEMailClientInventory' -Status $(if ($items.Count -or $gaps.Count) { 'Partial' } else { 'Succeeded' }) -Target $DeviceName -Message $msg -Data $items
+    $res | Add-Member -NotePropertyName accounts -NotePropertyValue $accounts
+    $res | Add-Member -NotePropertyName notChecked -NotePropertyValue $gaps
+    return $res
+}
+function Add-DEMigrationDeviceRecord {
+    <# Records (or replaces) one device's scan on the project and moves it to the Devices stage. #>
+    param([Parameter(Mandatory = $true)][string]$ProjectId, [Parameter(Mandatory = $true)][string]$DeviceName, [AllowEmptyCollection()][object[]]$Findings = @(), [string[]]$Accounts = @(), [string[]]$NotChecked = @(), [string]$CheckedAt, [string]$Source = 'scan')
+    $p = Get-DEMigrationProject -ProjectId $ProjectId
+    $rec = [pscustomobject][ordered]@{ name = $DeviceName; checkedAt = $(if ($CheckedAt) { $CheckedAt } else { (Get-Date).ToUniversalTime().ToString('o') }); accounts = @($Accounts); gmailReferences = @($Findings); notChecked = @($NotChecked); source = $Source }
+    $p.devices = @(@($p.devices | Where-Object { -not ($_ -is [string] -and $_ -ieq $DeviceName) -and -not ($_.PSObject.Properties['name'] -and $_.name -ieq $DeviceName) }) + @($rec))
+    Set-DEMigrationStage -Project $p -Stage 'Devices'
+    $null = Save-DEMigrationProject -Project $p -Entry "device $DeviceName : $(@($Findings).Count) Gmail reference(s)$(if (@($NotChecked).Count) { ", $(@($NotChecked).Count) part(s) not checked" }) ($Source)"
+    return $rec
+}
+function Import-DEMailClientInventory {
+    <#
+        Records a device scan made on a client PC (Get-DEMailClientInventory saved with Export-DEResult, or the DE Tech
+        Tool's Migration page) on the project here. Refuses a file that is not a mail-client scan.
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true)] param([Parameter(Mandatory = $true)][string]$ProjectId, [Parameter(Mandatory = $true)][string]$Path)
+    if (-not (Test-Path -LiteralPath $Path)) { return (New-DEResult -Operation 'Import-DEMailClientInventory' -Status Refused -Target $Path -Message 'file not found') }
+    try { $r = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json } catch { return (New-DEResult -Operation 'Import-DEMailClientInventory' -Status Refused -Target $Path -Message "not JSON: $($_.Exception.Message)") }
+    if (-not $r -or -not $r.PSObject.Properties['operation'] -or "$($r.operation)" -ne 'Get-DEMailClientInventory' -or -not "$($r.target)") { return (New-DEResult -Operation 'Import-DEMailClientInventory' -Status Refused -Target $Path -Message 'not a Get-DEMailClientInventory result') }
+    $device = "$($r.target)"
+    $items = @($r.data | Where-Object { $_ -and $_.PSObject.Properties['where'] })
+    $gaps = @($(if ($r.PSObject.Properties['notChecked']) { $r.notChecked }) | Where-Object { $_ } | ForEach-Object { "$_" })
+    $accounts = @($(if ($r.PSObject.Properties['accounts']) { $r.accounts } else { $items | ForEach-Object { $_.account } }) | ForEach-Object { "$_" } | Where-Object { $_ -and $_ -ne '(this PC)' } | Select-Object -Unique)
+    if (-not $PSCmdlet.ShouldProcess($ProjectId, "record the scan of $device")) { return (New-DEResult -Operation 'Import-DEMailClientInventory' -Status DryRun -Target $device -Message 'no change applied') }
+    $rec = Add-DEMigrationDeviceRecord -ProjectId $ProjectId -DeviceName $device -Findings $items -Accounts $accounts -NotChecked $gaps -CheckedAt "$($r.at)" -Source 'imported'
+    return (New-DEResult -Operation 'Import-DEMailClientInventory' -Target $device -Message "$device recorded: $($items.Count) Gmail reference(s)$(if ($gaps.Count) { ", $($gaps.Count) part(s) not checked" })" -Data $rec)
 }
 function Get-DEMailHeaderBlock {
     <# Unfolded headers of the first header block in -Text as an ordered name -> list of values map. #>
@@ -967,6 +1043,58 @@ function Close-DEMigrationProject {
     $p | Add-Member -NotePropertyName closingList -NotePropertyValue $todo -Force
     $null = Save-DEMigrationProject -Project $p -Entry 'project closed; migration batches and their stored credentials removed from Exchange Online'
     return (New-DEResult -Operation 'Close-DEMigrationProject' -Target $ProjectId -Message "closed. Still to do by hand: $($todo -join '; ')" -Data ([pscustomobject]@{ closingList = $todo }))
+}
+function Get-DEMigrationNextStep {
+    <#
+        The next thing to do on a project, read from what has actually been recorded (not from the stage label), with
+        the command that does it. The DE Tech Tool's Migration page shows the same answer.
+    #>
+    [CmdletBinding()] param([Parameter(Mandatory = $true)][string]$ProjectId, [string]$Technician = $env:USERNAME)
+    $p = Get-DEMigrationProject -ProjectId $ProjectId; $id = $p.projectId
+    $users = @($p.users | Where-Object { $_ }); $batches = @($p.batches | Where-Object { $_ })
+    $step = { param($s, $w, $c) [pscustomobject][ordered]@{ projectId = $id; step = $s; why = $w; command = $c } }
+    if ("$($p.stage)" -eq 'Closed') { return (& $step 'Send the record to the Hub' 'The project is closed; its record is the lasting evidence.' "Export-DEMigrationRecord -ProjectId $id -Path .\$id-record.json") }
+    if (-not $users.Count) { return (& $step 'Map each mailbox' 'No Gmail address is mapped to a Microsoft 365 mailbox yet.' "Add-DEMigrationUser -ProjectId $id -SourceAddress <name@gmail.com> -DestinationAddress <name@$($p.targetDomain)> -Devices <PC names>") }
+    $notReady = @($users | Where-Object { -not $_.destinationReady })
+    if ($notReady.Count) { $u = $notReady[0]; return (& $step "Get $($u.destination) ready" "$($u.destination): $(@($u.destinationIssues) -join '; '). Licence it in the Microsoft 365 admin centre, wait for the mailbox, then map it again." "Add-DEMigrationUser -ProjectId $id -SourceAddress $($u.source) -DestinationAddress $($u.destination)") }
+    $noPre = @($users | Where-Object { -not ($_.preflight -and $_.preflight.ok) })
+    if ($p.mailPath -eq 'IMAP' -and $noPre.Count) { $u = $noPre[0]; return (& $step "IMAP preflight for $($u.source)" "$($noPre.Count) Gmail account(s) have not passed the preflight$(if ($u.preflight -and $u.preflight.reason) { " (last: $($u.preflight.reason))" }). Use the Gmail app password; it stays in memory." "Test-DEGmailImapAccess -Credential (Get-Credential $($u.source)) -ProjectId $id") }
+    $pilot = @($batches | Where-Object { $_.type -eq 'Pilot' })
+    if (-not $pilot.Count) { return (& $step 'Start the pilot' 'One mailbox first; production batches are refused until a pilot is confirmed.' "New-DEMigrationBatch -ProjectId $id -Type Pilot -Credential (Get-Credential $($users[0].source))") }
+    if (-not @($pilot | Where-Object { $_.confirmedBy }).Count) { return (& $step 'Confirm the pilot' 'Check the pilot mailbox in Outlook (folders, recent mail, attachments), then confirm it.' "Get-DEMigrationStatus -ProjectId $id; Confirm-DEMigrationPilot -ProjectId $id -Technician $Technician -Note '<what you checked>'") }
+    $noBatch = @($users | Where-Object { -not $_.batch })
+    if ($noBatch.Count) { return (& $step 'Move the remaining mailboxes' "$($noBatch.Count) mailbox(es) are not in a batch yet." "New-DEMigrationBatch -ProjectId $id -Type Production -Credential $((@($noBatch | ForEach-Object { "(Get-Credential $($_.source))" })) -join ', ')") }
+    $noCC = @($users | Where-Object { -not $_.contacts -or -not $_.calendar })
+    if ($noCC.Count) { $u = $noCC[0]; return (& $step "Contacts and calendar for $($u.source)" 'IMAP moves mail only. Import the Google Contacts CSV and the Google Calendar .ics for each person.' "Import-DEMigrationContacts -ProjectId $id -SourceAddress $($u.source) -Path .\contacts.csv; Import-DEMigrationCalendar -ProjectId $id -SourceAddress $($u.source) -Path .\calendar.ics") }
+    $scanned = @($p.devices | Where-Object { $_ -isnot [string] -and $_.PSObject.Properties['checkedAt'] } | ForEach-Object { "$($_.name)" })
+    $named = @(@($p.devices | Where-Object { $_ -is [string] }) + @($users | ForEach-Object { @($_.devices) }) | Where-Object { $_ } | Select-Object -Unique)
+    $unscanned = @($named | Where-Object { $scanned -notcontains $_ })
+    if ($unscanned.Count -or -not $scanned.Count) { return (& $step 'Scan each PC for Gmail' $(if ($unscanned.Count) { "Not scanned yet: $($unscanned -join ', '). Run the DE Tech Tool's Migration page on each PC, or the command, then import the file here." } else { 'No PC has been scanned. Run the DE Tech Tool''s Migration page on each PC the client uses.' }) "Get-DEMailClientInventory -AllProfiles -ProjectId $id") }
+    if (-not ($p.dns -and $p.dns.mxOk)) { return (& $step 'Point DNS to Microsoft 365' $(if ($p.dns) { 'MX does not point to Microsoft 365 yet. Change MX, SPF and autodiscover at the DNS host, then check again.' } else { 'DNS has not been checked.' }) "Test-DEMigrationDns -ProjectId $id -Server 1.1.1.1") }
+    $open = @($batches | Where-Object { "$($_.status)" -notin @('Completed', 'Completing', 'Removed') })
+    if ($open.Count) { return (& $step 'Run the final delta' "DNS points to Microsoft 365. Complete $(@($open | ForEach-Object { $_.name }) -join ', ') to pick up the last mail." "Complete-DEMigrationBatch -ProjectId $id -BatchName $($open[0].name)") }
+    $pending = @($script:MigrationChecks.Keys | Where-Object { $p.verification.PSObject.Properties[$_] -and "$($p.verification.$_.status)" -in @('Pending', 'Fail') })
+    if ($pending.Count) {
+        $shared = @($p.sharedMailboxes | Where-Object { $_ -and $_.PSObject.Properties['address'] })
+        $openBounce = @($p.bounce | Where-Object { $_ -and -not $_.resolved })
+        $cmds = @(foreach ($c in $pending) {
+            switch ($script:MigrationChecks[$c]) {
+                'Test-DEMigrationMailFlow' { "Test-DEMigrationMailFlow -ProjectId $id" }
+                'Test-DEMigrationMfa' { "Test-DEMigrationMfa -ProjectId $id" }
+                'Get-DEMigrationStatus' { "Get-DEMigrationStatus -ProjectId $id" }
+                'Test-DEMigrationDns' { "Test-DEMigrationDns -ProjectId $id -Server 1.1.1.1" }
+                'Test-DEMigrationSharedMailbox' { if ($shared.Count) { "Test-DEMigrationSharedMailbox -ProjectId $id -Address $($shared[0].address) -Members $(@($shared[0].members) -join ', ')" } else { "Set-DEMigrationSharedMailbox -ProjectId $id -Address <office@$($p.targetDomain)> -DisplayName <name> -Members <addresses>" } }
+                'Import-DEMigrationContacts' { "Import-DEMigrationContacts -ProjectId $id -SourceAddress <name@gmail.com> -Path .\contacts.csv" }
+                'Import-DEMigrationCalendar' { "Import-DEMigrationCalendar -ProjectId $id -SourceAddress <name@gmail.com> -Path .\calendar.ics" }
+                'Invoke-DEBounceDiagnostic' { if ($openBounce.Count) { "Resolve-DEMigrationBounce -ProjectId $id -FindingId $($openBounce[0].id) -Resolution '<what was changed>' -Technician $Technician" } else { "Set-DEMigrationCheck -ProjectId $id -Check 'Bounce diagnostic' -Status NotApplicable -Note 'no bounces reported during the transition window' -Technician $Technician" } }
+                default { "Set-DEMigrationCheck -ProjectId $id -Check '$c' -Status Pass -Note '<what you saw>' -Technician $Technician" }
+            }
+        })
+        $cmd = (@($cmds | Select-Object -Unique) -join "`r`n")
+        return (& $step 'Finish verification' "Not passed yet: $($pending -join ', ')." $cmd)
+    }
+    if (-not $p.signoff) { return (& $step 'Client sign-off' 'Every check passed or is not applicable.' "New-DEMigrationSignoff -ProjectId $id -ApprovedBy '<client name>' -Decision Approved") }
+    return (& $step 'Close the project' 'Signed off. Closing removes the batches and the Gmail credentials Exchange stored; then revoke each app password in the Google account.' "Close-DEMigrationProject -ProjectId $id")
 }
 function Export-DEMigrationRecord {
     <#

@@ -29,6 +29,8 @@ whose type does not match the project.
 
 ## Stages
 
+`Get-DEMigrationNextStep` reads what has been recorded and names the next stage's command.
+
 | # | Stage | Function |
 |---|---|---|
 | 1 | Create the project (client, verified destination domain, source type) | `New-DEMigrationProject` |
@@ -40,7 +42,7 @@ whose type does not match the project.
 | 7 | Remaining mailboxes in batches (only after a confirmed pilot) | `New-DEMigrationBatch -Type Production`, `Get-DEMigrationStatus` |
 | 8 | Contacts from the Google Contacts export | `Import-DEMigrationContacts` |
 | 9 | Calendars from the Google Calendar export | `Import-DEMigrationCalendar` |
-| 10 | Every PC: remove Gmail from Outlook, Credential Manager, Thunderbird and scheduled scripts | `Get-DEMailClientInventory` (run on each PC) |
+| 10 | Every PC: remove Gmail from Outlook, Credential Manager, Thunderbird and scheduled scripts | `Get-DEMailClientInventory -AllProfiles` on each PC (or the DE Tech Tool's Email migration page), `Import-DEMailClientInventory` on the admin PC |
 | 11 | DNS: MX, SPF and autodiscover to Microsoft 365, no stray MX, DMARC and DKIM reported | `Test-DEMigrationDns` |
 | 12 | Final delta after DNS points to Microsoft 365, then complete the batches | `Complete-DEMigrationBatch` (refused before DNS) |
 | 13 | Verify: mail flow both ways, MFA, folders, contacts, calendar, shared mailbox, bounces, plus the checks a technician does by hand | `Test-DEMigrationMailFlow`, `Test-DEMigrationMfa`, `Set-DEMigrationCheck` |
@@ -75,7 +77,7 @@ same subject hit that recipient in the last 10 days (`-MessageTrace`), and the c
 
 Archived or deleted Gmail messages do not send mail. A new bounce means something active is still sending: a
 forward, a filter, a stale account on a PC or phone, a scanner or script with old SMTP settings, or an integration
-that retries. `Get-DEMailClientInventory` finds those on each PC. Findings stay open until `Resolve-DEMigrationBounce`
+that retries. `Get-DEMailClientInventory` finds those on each PC. Anything it could not read (another account's Credential Manager, a locked profile) is recorded as not checked, never as clean. Findings stay open until `Resolve-DEMigrationBounce`
 records what was changed, and the Bounce diagnostic check passes only when none are open. Source mail is not deleted
 and forwarding is not disabled until the cause and the transition plan are written down.
 
