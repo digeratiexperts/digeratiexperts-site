@@ -83,7 +83,9 @@ if (-not $SkipSigning) {
 }
 
 $version = '0.0.0'
-$vf = Join-Path (Split-Path -Parent $Root) 'kit.version'; if (Test-Path -LiteralPath $vf) { $version = (Get-Content -LiteralPath $vf -Raw).Trim() }
+# the manifest records the DE Tech Tool version (console\VERSION); the AI kit's kit.version is only a fallback
+$vf = Join-Path (Join-Path $Root 'console') 'VERSION'; if (-not (Test-Path -LiteralPath $vf)) { $vf = Join-Path (Split-Path -Parent $Root) 'kit.version' }
+if (Test-Path -LiteralPath $vf) { $version = (Get-Content -LiteralPath $vf -Raw).Trim() }
 $entries = @(foreach ($f in Get-ShippedFile | Sort-Object FullName) {
     [ordered]@{ path = ($f.FullName.Substring($Root.Length).TrimStart('\', '/') -replace '\\', '/'); sha256 = (Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash.ToLowerInvariant(); bytes = $f.Length }
 })
