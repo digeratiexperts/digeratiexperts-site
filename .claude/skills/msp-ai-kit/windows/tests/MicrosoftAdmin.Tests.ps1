@@ -6,7 +6,9 @@ Describe 'DE Microsoft Admin' {
         if (-not (Get-Command -Name 'Invoke-MgGraphRequest' -ErrorAction SilentlyContinue)) { function global:Invoke-MgGraphRequest { param([string]$Method, [string]$Uri, $Body, [hashtable]$Headers, [string]$ContentType, [string]$OutputType) throw 'not mocked' } }
         if (-not (Get-Command -Name 'Get-MgContext' -ErrorAction SilentlyContinue)) { function global:Get-MgContext { param() throw 'not mocked' } }
         if (-not (Get-Command -Name 'Connect-MgGraph' -ErrorAction SilentlyContinue)) { function global:Connect-MgGraph { param([string]$TenantId, [string[]]$Scopes, [string]$ClientId, [string]$CertificateThumbprint, [switch]$NoWelcome) throw 'not mocked' } }
-        Import-Module (Join-Path (Split-Path -Parent $PSScriptRoot) 'microsoft/DE-Microsoft-Admin/DE-Microsoft-Admin.psd1') -Force
+        # repo layout (windows/tests) or the standalone zip (DE-Microsoft-Admin/tests)
+        $mod = @((Join-Path (Split-Path -Parent $PSScriptRoot) 'microsoft/DE-Microsoft-Admin/DE-Microsoft-Admin.psd1'), (Join-Path (Split-Path -Parent $PSScriptRoot) 'DE-Microsoft-Admin.psd1')) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+        Import-Module $mod -Force
         $global:MsT = @{ Dir = Join-Path ([IO.Path]::GetTempPath()) ("de-msadmin-" + [guid]::NewGuid().ToString('N')) }
         New-Item -ItemType Directory -Path $global:MsT.Dir -Force | Out-Null
         $null = Set-DEMsAuditPath -Path (Join-Path $global:MsT.Dir 'audit.jsonl')
