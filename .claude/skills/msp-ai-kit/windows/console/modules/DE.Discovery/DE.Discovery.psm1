@@ -184,6 +184,9 @@ function Find-DEProfileForUser {
     <# Locates the profile folder and SID for a user name (e.g. SuzetteThompson or AzureAD\SuzetteThompson). #>
     param([Parameter(Mandatory = $true)][string]$UserName, [array]$Profiles)
     if (-not $Profiles) { $Profiles = (Get-DEIdentityState).profiles }
+    # an account name with a domain (AzureAD\X, CONTOSO\X) matches the profile that account owns first: a local 'X' can
+    # own C:\Users\X while the Entra user's profile is X.000 or X.<PC>
+    if ($UserName -match '\\') { $byAcct = @($Profiles | Where-Object { $_ -and "$(Get-DEHashPath -Object $_ -Path 'account')" -ieq $UserName }); if ($byAcct.Count) { return $byAcct } }
     $short = ($UserName -split '\\')[-1]
     # the exact folder name wins; 'name.DOMAIN' style folders count only when there is no exact match (callers treat several as ambiguous)
     $exact = @($Profiles | Where-Object { $_ -and (Split-Path -Leaf $_.path) -ieq $short })

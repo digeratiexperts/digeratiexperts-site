@@ -741,6 +741,42 @@ Describe 'Leaving Microsoft and backing up BitLocker before JumpCloud owns the d
         @(Get-DEUnmigratedDomainProfiles -Identity $idn | ForEach-Object { $_.path }) | Should -Not -Contain 'C:\Users\old.admin'
         Set-DEStateValue -Path 'identity.leave' -Value $null
     }
+    Context 'fail-closed refusals (mocks stay in this context)' {
+        It 'fails closed: unreadable local users, a short-name mapping, a folder owned by another account, an Entra copy on a device that left' {
+            # local users could not be read: every domain profile counts as stranded until accepted
+            @(Get-DEUnmigratedDomainProfiles -Identity @{ localUsers = @(); profiles = @(@{ path = 'C:\Users\old.admin'; sid = 'S-1-5-21-900-800-700-1105' }) }).Count | Should -Be 1
+            # AzureAD\X is the profile that account owns, not a local X's folder
+            $profs = @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-5-21-1-2-3-1001'; account = 'PC1\SuzetteThompson' }, @{ path = 'C:\Users\SuzetteThompson.000'; sid = 'S-1-12-1-9'; account = 'AzureAD\SuzetteThompson' })
+            @(Find-DEProfileForUser -UserName 'AzureAD\SuzetteThompson' -Profiles $profs).path | Should -Be 'C:\Users\SuzetteThompson.000'
+            # the mapping typed as a short name still sees the signed-in AzureAD\ user
+            Set-DEContext -Values @{ sourcePrincipal = 'SuzetteThompson' }
+            Mock -ModuleName DE.Identity Get-DEIdentityState { @{ interactiveUser = 'AzureAD\SuzetteThompson'; profiles = @(); localUsers = @() } }
+            (Test-DEGate -Id 'gate.source-user-signed-out' -Refresh).Status | Should -Be 'BLOCKED'
+            Set-DEContext -Values @{ sourcePrincipal = $null }
+            # a keep-joined client: an Entra copy counts only while the device really is Entra joined
+            Mock -ModuleName DE.Identity Get-DEBitLockerState { @{ os = @{ status = 'FullyEncrypted'; hasRecoveryPassword = $true; recoveryProtectorIds = @('{AAAA-1}') } } }
+            Set-DEStateValue -Path 'identity.bitlocker.escrow' -Value @{ protectorId = '{AAAA-1}'; location = 'entra'; by = 'tester' }
+            Mock -ModuleName DE.Identity Get-DEMicrosoftJoinState { @{ known = $true; entraJoined = $false } }
+            $g = InModuleScope DE.Identity { $keep = $script:LeaveMicrosoft; $script:LeaveMicrosoft = $false; try { Test-DEBitLockerBackupGate -Offline } finally { $script:LeaveMicrosoft = $keep } }
+            $g.Status | Should -Not -Be 'PASS'; $g.Detail | Should -Match 'not Entra joined'
+            Mock -ModuleName DE.Identity Get-DEMicrosoftJoinState { @{ known = $true; entraJoined = $true } }
+            $g = InModuleScope DE.Identity { $keep = $script:LeaveMicrosoft; $script:LeaveMicrosoft = $false; try { Test-DEBitLockerBackupGate -Offline } finally { $script:LeaveMicrosoft = $keep } }
+            $g.Status | Should -Be 'PASS'
+            Set-DEStateValue -Path 'identity.bitlocker.escrow' -Value $null
+        }
+        It 'ADMU LeaveDomain refuses without a key backup outside Entra, and while another profile would be stranded' {
+            Mock -ModuleName DE.Identity Test-DEMigrationPreconditions { @{ ok = $true; issues = @(); warnings = @(); sourceProfile = @{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-12-1-9' } } }
+            Mock -ModuleName DE.Identity Test-DEGate { [pscustomobject]@{ Id = $Id; Status = 'WARN'; Detail = 'backed up to Entra ID only' } }
+            Mock -ModuleName DE.Identity Get-DEUnmigratedDomainProfiles { @() }
+            (Get-DEThrown { Start-DEIdentityMigration -SourcePrincipal 'AzureAD\SuzetteThompson' -LocalUserName 'sthompson' -LeaveEntra -Confirm:$false }) | Should -Match 'refusing LeaveDomain: no proven BitLocker key backup'
+            Mock -ModuleName DE.Identity Test-DEGate { [pscustomobject]@{ Id = $Id; Status = 'PASS'; Detail = 'ok' } }
+            Mock -ModuleName DE.Identity Get-DEUnmigratedDomainProfiles { @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-12-1-9' }, @{ path = 'C:\Users\old.admin'; sid = 'S-1-5-21-900-800-700-1105' }) }
+            (Get-DEThrown { Start-DEIdentityMigration -SourcePrincipal 'AzureAD\SuzetteThompson' -LocalUserName 'sthompson' -LeaveEntra -Confirm:$false }) | Should -Match 'strand C:\\Users\\old.admin$|strand C:\\Users\\old.admin;'
+            Mock -ModuleName DE.Identity Get-DEUnmigratedDomainProfiles { @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-12-1-9' }) }
+            # past both refusals it reaches the next check (the temporary password), without migrating anything
+            (Get-DEThrown { Start-DEIdentityMigration -SourcePrincipal 'AzureAD\SuzetteThompson' -LocalUserName 'sthompson' -LeaveEntra -Confirm:$false }) | Should -Match 'MIGRATION_TEMP_PASSWORD'
+        }
+    }
     It 'refuses to leave while a profile would be stranded, then leaves Entra and the AD domain' {
         Mock -ModuleName DE.Identity Test-DEGate { [pscustomobject]@{ Id = $Id; Status = 'PASS'; Detail = 'ok' } }
         Mock -ModuleName DE.Identity Get-DEIdentityState { @{ joinType = 'hybrid-entra-joined'; dsreg = @{ azureAdJoined = $true; domainJoined = $true; domainName = 'ALAMO' }; localUsers = @(@{ name = 'jrpetro'; sid = 'S-1-5-21-100-200-300-1001' }); profiles = @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-12-1-11-22-33-44' }) } }
@@ -1183,6 +1219,26 @@ Describe 'Community tools: pinned, hash-checked, and only MIT code in the consol
             (Invoke-DECommunityScript -Key 'msp/fix-thing' -WhatIf).result | Should -Be 'PLANNED'
             Assert-MockCalled -ModuleName DE.Community Invoke-DENative -Scope It -Times 0
             (Invoke-DECommunityScript -Key 'msp/remove-rmm' -Force -Confirm:$false).result | Should -Be 'PASS'
+        }
+        It 'a script that needs an Entra-joined device is refused on a JumpCloud-only device, and when the join state is unknown' {
+            $cat = $global:DETest.ScriptCatalog | ConvertTo-Json -Depth 8 | ConvertFrom-Json
+            $cat.tools[0].scripts[0] | Add-Member -NotePropertyName requires -NotePropertyValue @('entra-joined')
+            $global:DETest.ReqCatalog = $cat
+            Mock -ModuleName DE.Community Get-DECommunityCatalog { $global:DETest.ReqCatalog }
+            Mock -ModuleName DE.Community Invoke-DECommunityDownload { Copy-Item -LiteralPath (Join-Path $global:DETest.ScriptSrc 'scripts/fix_thing.ps1') -Destination $OutFile }
+            Mock -ModuleName DE.Community Invoke-DENative { [pscustomobject]@{ ExitCode = 0; Output = @(); Text = ''; TimedOut = $false } }
+            Mock -ModuleName DE.Community Get-DEMicrosoftJoinState { @{ known = $true; entraJoined = $false } }
+            $r = Invoke-DECommunityScript -Key 'msp/fix-thing' -Confirm:$false
+            $r.result | Should -Be 'REFUSED'; $r.detail | Should -Match 'not entra-joined'
+            Mock -ModuleName DE.Community Get-DEMicrosoftJoinState { @{ known = $false; entraJoined = $false } }
+            (Invoke-DECommunityScript -Key 'msp/fix-thing' -Confirm:$false).result | Should -Be 'REFUSED'
+            Assert-MockCalled -ModuleName DE.Community Invoke-DENative -Scope It -Times 0 -Exactly
+            Mock -ModuleName DE.Community Get-DEMicrosoftJoinState { @{ known = $true; entraJoined = $true } }
+            (Invoke-DECommunityScript -Key 'msp/fix-thing' -Confirm:$false).result | Should -Be 'PASS'
+        }
+        It 'the real catalog gates the LAPS-to-Entra script on an Entra-joined device' {
+            $real = Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) 'catalog/community.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+            @(@($real.tools | ForEach-Object { @($_.scripts) } | Where-Object { $_ -and $_.id -eq 'laps-entra' })[0].requires) | Should -Contain 'entra-joined'
         }
         It 'a tampered script is refused' {
             Mock -ModuleName DE.Community Get-DECommunityCatalog { $global:DETest.ScriptCatalog }

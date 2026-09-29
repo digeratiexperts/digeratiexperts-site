@@ -2254,6 +2254,7 @@
           "sha256": "70cdd1f031aea21d68031fbe821c93286d3e13d08365c9f50c97fd685d81e4a4",
           "bytes": 15454,
           "confirm": true,
+          "requires": ["entra-joined"],
           "timeoutSeconds": 600,
           "notes": "Sets Windows LAPS to back up the built-in Administrator password to Entra ID. Not for JumpCloud-only devices (JumpCloud manages local admin passwords there)."
         }
