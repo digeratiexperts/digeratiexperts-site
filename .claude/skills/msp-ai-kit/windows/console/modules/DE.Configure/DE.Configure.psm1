@@ -656,19 +656,19 @@ function Set-DEBranding {
     if (-not $before.applied -or -not (Get-DEState -Path 'branding.previous')) { Set-DEStateValue -Path 'branding.previous' -Value $before }
     New-Item -ItemType Directory -Path $dest -Force | Out-Null
     if (-not $Wallpaper) { $Wallpaper = New-DEBrandedWallpaper -ClientProfile $ClientProfile }
-    if (-not $LockScreen) { $LockScreen = New-DEBrandedWallpaper -ClientProfile $ClientProfile -LockScreen }
-    $w = Join-Path $dest 'wallpaper.png'; $l = Join-Path $dest 'lockscreen.png'
-    Copy-Item -LiteralPath $Wallpaper -Destination $w -Force; Copy-Item -LiteralPath $LockScreen -Destination $l -Force
+    $w = Join-Path $dest 'wallpaper.png'
+    Copy-Item -LiteralPath $Wallpaper -Destination $w -Force
     $csp = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP'
     Set-DERegistryValue -Path $csp -Name 'DesktopImagePath' -Value $w -Type String; Set-DERegistryValue -Path $csp -Name 'DesktopImageUrl' -Value $w -Type String; Set-DERegistryValue -Path $csp -Name 'DesktopImageStatus' -Value 1 -Type DWord
-    Set-DERegistryValue -Path $csp -Name 'LockScreenImagePath' -Value $l -Type String; Set-DERegistryValue -Path $csp -Name 'LockScreenImageUrl' -Value $l -Type String; Set-DERegistryValue -Path $csp -Name 'LockScreenImageStatus' -Value 1 -Type DWord
+    # the lock screen is its own enforced step (image, policy, Spotlight off for every profile); Windows Home is reported, not failed here
+    $lockNote = $(try { Set-DELockScreen -ClientProfile $ClientProfile -Image $LockScreen -Confirm:$false } catch { "lock screen not set: $($_.Exception.Message)" })
     $oem = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation'
     Set-DERegistryValue -Path $oem -Name 'Manufacturer' -Value 'Managed by Digerati Experts' -Type String
     Set-DERegistryValue -Path $oem -Name 'SupportURL' -Value 'https://portal.digeratiexperts.com/portal/login' -Type String
     Set-DERegistryValue -Path $oem -Name 'SupportHours' -Value 'Monday to Friday, 8:00 to 17:00 (Arizona)' -Type String
     $logoNote = ''
     if ("$(Get-DEHashPath -Object $ClientProfile -Path 'branding.oemLogo')" -ne 'none') { try { $lb = Join-Path $dest 'oem-logo.bmp'; Copy-Item -LiteralPath (New-DEOemLogo -ClientProfile $ClientProfile) -Destination $lb -Force; Set-DERegistryValue -Path $oem -Name 'Logo' -Value $lb -Type String; $logoNote = '; About-page logo set' } catch { $logoNote = "; About-page logo skipped ($($_.Exception.Message))" } }
-    return "wallpaper $w; lock screen $l; OEM support info set$logoNote (applies at next sign-in)"
+    return "wallpaper $w; $lockNote; OEM support info set$logoNote (applies at next sign-in)"
 }
 
 function Undo-DEBranding {
@@ -677,13 +677,121 @@ function Undo-DEBranding {
     $prev = Get-DEState -Path 'branding.previous'
     if (-not $PSCmdlet.ShouldProcess('branding', 'restore previous')) { return 'planned' }
     $csp = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP'
-    foreach ($n in @('DesktopImagePath', 'DesktopImageUrl', 'DesktopImageStatus', 'LockScreenImagePath', 'LockScreenImageUrl', 'LockScreenImageStatus')) { Remove-ItemProperty -Path $csp -Name $n -ErrorAction SilentlyContinue }
+    foreach ($n in @('DesktopImagePath', 'DesktopImageUrl', 'DesktopImageStatus')) { Remove-ItemProperty -Path $csp -Name $n -ErrorAction SilentlyContinue }
     if ($prev -and (Get-DECfgProp $prev 'wallpaper')) { Set-DERegistryValue -Path $csp -Name 'DesktopImagePath' -Value (Get-DECfgProp $prev 'wallpaper') -Type String; Set-DERegistryValue -Path $csp -Name 'DesktopImageStatus' -Value 1 -Type DWord }
-    if ($prev -and (Get-DECfgProp $prev 'lockScreen')) { Set-DERegistryValue -Path $csp -Name 'LockScreenImagePath' -Value (Get-DECfgProp $prev 'lockScreen') -Type String; Set-DERegistryValue -Path $csp -Name 'LockScreenImageStatus' -Value 1 -Type DWord }
+    if (Get-DEState -Path 'lockscreen.previous') { $null = Undo-DELockScreen -Confirm:$false }
+    elseif ($prev -and (Get-DECfgProp $prev 'lockScreen')) { Set-DERegistryValue -Path $csp -Name 'LockScreenImagePath' -Value (Get-DECfgProp $prev 'lockScreen') -Type String; Set-DERegistryValue -Path $csp -Name 'LockScreenImageStatus' -Value 1 -Type DWord }
     $oem = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\OEMInformation'
     foreach ($n in @('Manufacturer', 'SupportURL', 'SupportHours', 'Logo')) { $pv = Get-DEHashPath -Object $prev -Path "oem.$($n.Substring(0,1).ToLower() + $n.Substring(1))"; if ($pv) { Set-DERegistryValue -Path $oem -Name $n -Value $pv -Type String } else { Remove-ItemProperty -Path $oem -Name $n -ErrorAction SilentlyContinue } }
     Set-DEStateValue -Path 'branding.previous' -Value $null   # the next apply records the look it replaces again
     return 'branding restored to the recorded previous state'
+}
+
+# ------------------------------------------------------------------ company-branded lock screen
+# Machine: PersonalizationCSP (the image), the Personalization policy (the same image, users cannot change it, it shows
+# behind the sign-in box). Every profile and Default: Windows Spotlight rotation and its "fun facts" overlay off, so
+# Windows does not paint over the company image. Windows Home ignores lock-screen policy; it is reported, never passed.
+$script:LockCsp = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP'
+$script:LockPolicy = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization'
+$script:LockSystemPolicy = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System'
+$script:LockUserPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager'
+$script:LockUserValues = [ordered]@{ RotatingLockScreenEnabled = 0; RotatingLockScreenOverlayEnabled = 0; 'SubscribedContent-338387Enabled' = 0 }
+function Get-DEWindowsEdition { $e = Get-DERegistryValue -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -Name 'EditionID'; return $(if ($e) { "$e" } else { 'unknown' }) }
+function Get-DELockScreenState {
+    <# What the lock screen is set to, per layer: image, policy, and Spotlight for every profile. ok only when all hold. #>
+    $img = Join-Path $env:ProgramData 'DE\Branding\lockscreen.png'
+    $want = "$(Get-DEState -Path 'lockscreen.sha256')"
+    $have = $(if (Test-Path -LiteralPath $img) { try { Get-DEFileSha256 -Path $img } catch { $null } } else { $null })
+    $edition = Get-DEWindowsEdition
+    $isHome = ($edition -match '^Core')
+    $csp = ("$(Get-DERegistryValue -Path $script:LockCsp -Name 'LockScreenImagePath')" -ieq $img) -and ("$(Get-DERegistryValue -Path $script:LockCsp -Name 'LockScreenImageStatus')" -eq '1')
+    $policy = ("$(Get-DERegistryValue -Path $script:LockPolicy -Name 'LockScreenImage')" -ieq $img) -and ("$(Get-DERegistryValue -Path $script:LockPolicy -Name 'NoChangingLockScreen')" -eq '1')
+    $spot = @(); $unchecked = @()
+    # Windows Home ignores the policy, so there is nothing per user to check: do not load every profile's hive
+    if ($script:IsWindowsHost -and -not $isHome) {
+        $h = Open-DEUserHives
+        try {
+            $unchecked = @($h['failed'] | Where-Object { $_ })
+            foreach ($t in $h.targets) {
+                $path = Get-DEUserPolicyPath -Root $t.root -Path $script:LockUserPath
+                foreach ($n in $script:LockUserValues.Keys) { if ("$(Get-DERegistryValue -Path $path -Name $n)" -ne "$($script:LockUserValues[$n])") { $spot += $t.name; break } }
+            }
+        } finally { Close-DEUserHives -Hives $h }
+    }
+    $imageOk = [bool]($have -and $want -and $have -eq $want)
+    $spotOk = (-not $spot.Count -and -not $unchecked.Count)
+    return [pscustomobject][ordered]@{
+        ok = ($imageOk -and $csp -and $policy -and $spotOk -and -not $isHome); image = $img; imageOk = $imageOk; csp = $csp; policy = $policy
+        spotlightOff = $spotOk; spotlightOn = @($spot); notChecked = @($unchecked); edition = $edition; supported = (-not $isHome)
+        detail = $(if ($isHome) { "Windows $edition ignores lock screen policy: upgrade to Pro, or set the picture by hand in Settings > Personalization > Lock screen" } elseif (-not $imageOk) { 'the company lock screen image is not in place' } elseif (-not $csp -or -not $policy) { 'the lock screen policy does not point at the company image' } elseif ($unchecked.Count) { "not checked (profile could not be loaded): $($unchecked -join ', ')" } elseif ($spot.Count) { "Windows Spotlight still rotates the lock screen for: $($spot -join ', ')" } else { 'company lock screen set, users cannot change it, Spotlight off for every profile' })
+    }
+}
+function Set-DELockScreen {
+    <#
+        Sets the company-branded lock screen: renders it from the client profile (or uses -Image), stores it in
+        %ProgramData%\DE\Branding\lockscreen.png, points PersonalizationCSP and the Personalization policy at it, stops
+        users changing it, shows it behind the sign-in box, and turns Windows Spotlight off for every profile and Default.
+        Previous values are recorded once for Undo-DELockScreen. Applies at the next lock.
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param($ClientProfile, [string]$Image)
+    $edition = Get-DEWindowsEdition
+    if ($edition -match '^Core') { throw "Windows $edition ignores lock screen policy; upgrade the device to Pro, or set the picture by hand in Settings > Personalization > Lock screen" }
+    if (-not $PSCmdlet.ShouldProcess('lock screen', 'set the company-branded lock screen')) { return 'planned' }
+    $dest = Join-Path $env:ProgramData 'DE\Branding'; New-Item -ItemType Directory -Path $dest -Force | Out-Null
+    if (-not $Image) { $Image = New-DEBrandedWallpaper -ClientProfile $ClientProfile -LockScreen }
+    $img = Join-Path $dest 'lockscreen.png'
+    if ([IO.Path]::GetFullPath($Image) -ne [IO.Path]::GetFullPath($img)) { Copy-Item -LiteralPath $Image -Destination $img -Force }
+    # record what was there once, so a re-run over DE's own lock screen never overwrites the client's original
+    if (-not (Get-DEState -Path 'lockscreen.previous')) {
+        $machine = @{}
+        foreach ($p in @(@{ k = 'csp'; path = $script:LockCsp; names = @('LockScreenImagePath', 'LockScreenImageUrl', 'LockScreenImageStatus') }, @{ k = 'policy'; path = $script:LockPolicy; names = @('LockScreenImage', 'NoChangingLockScreen') }, @{ k = 'system'; path = $script:LockSystemPolicy; names = @('DisableLogonBackgroundImage') })) {
+            $vals = @{}; foreach ($n in $p.names) { $v = Get-DERegistryValue -Path $p.path -Name $n; $vals[$n] = @{ existed = ($null -ne $v); value = $v } }; $machine[$p.k] = $vals
+        }
+        $users = @{}
+        $h = Open-DEUserHives
+        try { foreach ($t in $h.targets) { $path = Get-DEUserPolicyPath -Root $t.root -Path $script:LockUserPath; $vals = @{}; foreach ($n in $script:LockUserValues.Keys) { $v = Get-DERegistryValue -Path $path -Name $n; $vals[$n] = @{ existed = ($null -ne $v); value = $v } }; $users[$t.sid] = $vals } }
+        finally { Close-DEUserHives -Hives $h }
+        Set-DEStateValue -Path 'lockscreen.previous' -Value @{ machine = $machine; users = $users }
+    }
+    Set-DERegistryValue -Path $script:LockCsp -Name 'LockScreenImagePath' -Value $img -Type String -Confirm:$false
+    Set-DERegistryValue -Path $script:LockCsp -Name 'LockScreenImageUrl' -Value $img -Type String -Confirm:$false
+    Set-DERegistryValue -Path $script:LockCsp -Name 'LockScreenImageStatus' -Value 1 -Type DWord -Confirm:$false
+    Set-DERegistryValue -Path $script:LockPolicy -Name 'LockScreenImage' -Value $img -Type String -Confirm:$false
+    Set-DERegistryValue -Path $script:LockPolicy -Name 'NoChangingLockScreen' -Value 1 -Type DWord -Confirm:$false
+    Set-DERegistryValue -Path $script:LockSystemPolicy -Name 'DisableLogonBackgroundImage' -Value 0 -Type DWord -Confirm:$false
+    $n = 0; $failed = @()
+    $h = Open-DEUserHives
+    try {
+        $failed = @($h['failed'] | Where-Object { $_ })
+        foreach ($t in $h.targets) { $path = Get-DEUserPolicyPath -Root $t.root -Path $script:LockUserPath; foreach ($k in $script:LockUserValues.Keys) { Set-DERegistryValue -Path $path -Name $k -Value $script:LockUserValues[$k] -Type DWord -Confirm:$false }; $n++ }
+    } finally { Close-DEUserHives -Hives $h }
+    Set-DEStateValue -Path 'lockscreen.sha256' -Value (Get-DEFileSha256 -Path $img)
+    return "company lock screen $img; users cannot change it; shown at sign-in; Spotlight off for $n profile(s) including Default$(if ($failed.Count) { "; not set for $($failed -join ', ') (profile could not be loaded)" }) (applies at the next lock)"
+}
+function Undo-DELockScreen {
+    <# Restores every lock-screen value recorded before Set-DELockScreen, and removes the ones that did not exist. #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param()
+    if (-not $PSCmdlet.ShouldProcess('lock screen', 'restore the previous lock screen')) { return 'planned' }
+    $prev = Get-DEState -Path 'lockscreen.previous'
+    $restore = { param($path, $vals, $types) foreach ($n in @($vals.Keys)) { $e = $vals[$n]; if (Get-DEHashPath -Object $e -Path 'existed') { Set-DERegistryValue -Path $path -Name $n -Value (Get-DEHashPath -Object $e -Path 'value') -Type $(if ($types.Contains($n)) { $types[$n] } else { 'String' }) -Confirm:$false } else { Remove-ItemProperty -Path $path -Name $n -ErrorAction SilentlyContinue } } }
+    $dw = @{ LockScreenImageStatus = 'DWord'; NoChangingLockScreen = 'DWord'; DisableLogonBackgroundImage = 'DWord' }
+    if ($prev) {
+        $m = Get-DEHashPath -Object $prev -Path 'machine'
+        foreach ($pair in @(@('csp', $script:LockCsp), @('policy', $script:LockPolicy), @('system', $script:LockSystemPolicy))) { $v = Get-DEHashPath -Object $m -Path $pair[0]; if ($v) { & $restore $pair[1] (ConvertTo-DEHashtable $v) $dw } }
+        $users = Get-DEHashPath -Object $prev -Path 'users'
+        $uw = @{}; foreach ($k in $script:LockUserValues.Keys) { $uw[$k] = 'DWord' }
+        $h = Open-DEUserHives
+        try { foreach ($t in $h.targets) { $u = Get-DEHashPath -Object $users -Path $t.sid; if ($u) { & $restore (Get-DEUserPolicyPath -Root $t.root -Path $script:LockUserPath) (ConvertTo-DEHashtable $u) $uw } } }
+        finally { Close-DEUserHives -Hives $h }
+    } else {
+        # nothing recorded (applied by an older version): take DE's values out rather than leave a locked lock screen
+        foreach ($n in @('LockScreenImagePath', 'LockScreenImageUrl', 'LockScreenImageStatus')) { Remove-ItemProperty -Path $script:LockCsp -Name $n -ErrorAction SilentlyContinue }
+        foreach ($n in @('LockScreenImage', 'NoChangingLockScreen')) { Remove-ItemProperty -Path $script:LockPolicy -Name $n -ErrorAction SilentlyContinue }
+    }
+    Set-DEStateValue -Path 'lockscreen.previous' -Value $null; Set-DEStateValue -Path 'lockscreen.sha256' -Value $null
+    return 'lock screen restored to the recorded previous state'
 }
 
 function New-DEHostname {
@@ -725,6 +833,12 @@ function Set-DESupportShortcuts {
 
 function Register-DEBrandingActions {
     param($ClientProfile)
+    Register-DEAction -Id 'branding.lockscreen' -Module 'branding' -Title 'Company-branded lock screen (users cannot change it, no Spotlight)' -Phase 13 -Gates @('gate.elevated') -RequiresElevation -Modes @('new', 'dropship', 'takeover', 'replacement', 'repair') `
+        -Detect { $s = Get-DELockScreenState; @{ applied = $s.ok; supported = $s.supported; detail = $s.detail } } -Desired { @{ applied = $true } } `
+        -Compare { param($d, $w) if ($d.applied) { @() } else { @("$($d.detail)") } } `
+        -Verify { param($after) $s = Get-DELockScreenState; @{ ok = $s.ok; detail = $s.detail } } `
+        -Apply { param($s) Set-DELockScreen -ClientProfile $ClientProfile }.GetNewClosure() `
+        -Rollback { param($s) Undo-DELockScreen -Confirm:$false } -ManualAction 'Preview the lock screen in the Branding page (Edit lock screen, then Preview lock screen) before applying. Windows Home ignores lock screen policy.'
     Register-DEAction -Id 'branding.apply' -Module 'branding' -Title 'DE and client branding (wallpaper, lock screen, OEM support info)' -Phase 13 -Gates @('gate.elevated') -RequiresElevation -Modes @('new', 'dropship', 'takeover', 'replacement', 'repair') `
         -Detect { $s = Get-DEBrandingState; @{ applied = $s.applied } } -Desired { @{ applied = $true } } `
         -Apply { param($s) Set-DEBranding -ClientProfile $ClientProfile }.GetNewClosure() `
@@ -738,4 +852,4 @@ function Register-DEBrandingActions {
         -Apply { param($s) $want = $s.Detected.want; Rename-Computer -NewName $want -Force; "renamed to $want (restart required)" }
 }
 
-Export-ModuleMember -Function Clear-DEStaleUserHives, Open-DEUserHives, Close-DEUserHives, Get-DEUserScopeState, Set-DEUserScopeControl, Undo-DEUserScopeControl, Get-DEColorLuminance, Get-DEBrandingOptions, Get-DEBrandingLayout, Get-DEPrimaryScreenSize, Get-DEImageLuminance, New-DEOemLogo, Get-DEBrowserControlCatalog, Get-DEChromiumBrowsers, Get-DEBrowserExtensionPlan, ConvertTo-DEChromiumForceEntry, Test-DEFirefoxInstalled, Get-DEFirefoxDesiredPolicy, Compare-DEFirefoxPolicy, Set-DEFirefoxPolicy, Get-DEInstalledBrowserExtensions, Test-DEBrowserExtensionConflicts, Get-DEBaselineControls, Get-DEBaselineControlState, Set-DEBaselineControl, Invoke-DEBaselineAssessment, Register-DEBaselineActions, Get-DEBrowserPolicyProfile, Get-DEBrowserDesiredPolicy, Compare-DEBrowserPolicy, Set-DEBrowserPolicy, Set-DEDefaultBrowserAssociations, Register-DEBrowserActions, Get-DEBrandingAssets, New-DEBrandedWallpaper, Get-DEBrandingState, Set-DEBranding, Undo-DEBranding, New-DEHostname, Get-DEShortcutDefinitions, Set-DESupportShortcuts, Register-DEBrandingActions
+Export-ModuleMember -Function Get-DEWindowsEdition, Get-DELockScreenState, Set-DELockScreen, Undo-DELockScreen, Clear-DEStaleUserHives, Open-DEUserHives, Close-DEUserHives, Get-DEUserScopeState, Set-DEUserScopeControl, Undo-DEUserScopeControl, Get-DEColorLuminance, Get-DEBrandingOptions, Get-DEBrandingLayout, Get-DEPrimaryScreenSize, Get-DEImageLuminance, New-DEOemLogo, Get-DEBrowserControlCatalog, Get-DEChromiumBrowsers, Get-DEBrowserExtensionPlan, ConvertTo-DEChromiumForceEntry, Test-DEFirefoxInstalled, Get-DEFirefoxDesiredPolicy, Compare-DEFirefoxPolicy, Set-DEFirefoxPolicy, Get-DEInstalledBrowserExtensions, Test-DEBrowserExtensionConflicts, Get-DEBaselineControls, Get-DEBaselineControlState, Set-DEBaselineControl, Invoke-DEBaselineAssessment, Register-DEBaselineActions, Get-DEBrowserPolicyProfile, Get-DEBrowserDesiredPolicy, Compare-DEBrowserPolicy, Set-DEBrowserPolicy, Set-DEDefaultBrowserAssociations, Register-DEBrowserActions, Get-DEBrandingAssets, New-DEBrandedWallpaper, Get-DEBrandingState, Set-DEBranding, Undo-DEBranding, New-DEHostname, Get-DEShortcutDefinitions, Set-DESupportShortcuts, Register-DEBrandingActions

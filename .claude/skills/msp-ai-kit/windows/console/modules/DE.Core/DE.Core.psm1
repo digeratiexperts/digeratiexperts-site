@@ -695,6 +695,20 @@ function Get-DEAuditSettingValue {
         return 0   # not listed in the backup = no auditing configured
     } finally { Remove-Item -LiteralPath $f -Force -ErrorAction SilentlyContinue -WhatIf:$false }
 }
+function Get-DECodeSigningCertificates {
+    <#
+        Code-signing certificates on this PC that can sign a release: in Cert:\CurrentUser\My or Cert:\LocalMachine\My,
+        with a private key, not expired. A certificate on a USB token shows up here while the token is plugged in.
+    #>
+    if (-not $script:DE.IsWindows) { return @() }
+    $now = Get-Date
+    return @(foreach ($store in @('Cert:\CurrentUser\My', 'Cert:\LocalMachine\My')) {
+        foreach ($c in @(Get-ChildItem -Path $store -CodeSigningCert -ErrorAction SilentlyContinue)) {
+            if (-not $c.HasPrivateKey -or $c.NotAfter -lt $now) { continue }
+            [pscustomobject][ordered]@{ subject = $c.Subject; issuer = $c.Issuer; thumbprint = $c.Thumbprint; expires = $c.NotAfter.ToString('yyyy-MM-dd'); store = $store; selfSigned = ($c.Subject -eq $c.Issuer) }
+        }
+    })
+}
 function Get-DEFileSha256 {
     <# sha256 read through a shared stream: Windows PowerShell 5.1's Get-FileHash returns nothing for a file another process holds open. #>
     param([Parameter(Mandatory = $true)][string]$Path)

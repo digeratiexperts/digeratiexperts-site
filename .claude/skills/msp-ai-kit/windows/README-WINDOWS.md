@@ -286,8 +286,26 @@ handoffs and warranty. The shared contracts are in `console/contracts/`.
   `"hub": { "accountId": 123 }`. Without it the signed send is refused and the record is saved for
   manual upload.
 - **Legacy sending.** Without a signing secret, the older Bearer POST (`DE_HUB_TOKEN`) is used.
-- **Not live yet.** The Hub route is in a draft Intelligence-Hub PR. Merging it deploys to production,
-  so it waits for DE approval. Until then, sends that fail are saved to evidence for manual upload.
+- **Email migration records.** The Email migration page sends a signed `email_migration.recorded` event.
+  The Hub keeps the newest record per project and shows it under IT Operations.
+- **Merged to the Hub.** The route is in Intelligence-Hub `master`, which auto-deploys. The Hub answers
+  503 until `TECHCONSOLE_TO_HUB_SECRET` is set on its server. Until a send succeeds, the record is saved
+  to evidence for manual upload.
+
+### Connecting to the Hub (Settings > Intelligence Hub connection)
+
+The Settings page lists the four things sending needs and whether each is in place on this PC:
+
+1. **Hub URL.** Set in Console settings.
+2. **Signing secret.** Entered under Runtime secrets, for this session only.
+3. **Client's Hub account number.** Set as `hub.accountId` in the client profile. The Migration page
+   asks for it if the profile doesn't have it.
+4. **The same secret on the Hub server.** It's stored there as `TECHCONSOLE_TO_HUB_SECRET`. It can't be
+   seen from the PC, so it shows as not checkable until a signed send succeeds, which proves both halves
+   match.
+
+**Check the Hub answers** probes `/api/healthz`. The card also gives a Hub admin the command that shows
+which release the Hub runs: `ssh de-vps 'sudo cat /opt/intelligence-hub/current/RELEASE_SHA'`.
 
 ## Licences and watermarked builds
 
@@ -447,6 +465,25 @@ python3 packaging/update-community-catalog.py --clones <dir> --pin <id>=<commit>
 
 `--check` fails when any pin is out of date.
 
+## Branding and the company lock screen
+
+Branding sets the client's wallpaper, the About-page support details and a company-branded lock screen,
+all rendered from the client profile. On the Branding page, **Edit lock screen** and **Preview lock
+screen** show the lock screen before it's applied.
+
+The lock screen is its own step, **Company-branded lock screen**, which Scan & fix checks, applies,
+verifies and can undo. It does four things:
+
+- **Sets the image** on the lock screen through PersonalizationCSP and the Personalization policy.
+- **Stops users changing it.**
+- **Shows the same image behind the sign-in box.**
+- **Turns off Windows Spotlight** rotation and its "fun facts" overlay for every user profile, and for
+  Default so new users get it too.
+
+The previous values are recorded, so **Undo branding** restores the old lock screen exactly. Windows
+Home ignores lock-screen policy, so the step is reported there and never passes; upgrade the device to
+Pro. **Apply lock screen only** on the Branding page applies just this step.
+
 ## Windows behaviour (what the tool does for you)
 
 - **32-bit hosts.** When a 32-bit host (many RMM agents) starts the tool, it re-runs itself in 64-bit
@@ -518,6 +555,24 @@ A file changed after packaging makes the console report TAMPERED, and headless `
 run. An unsigned development build runs with a warning.
 
 `integrity.json` is created at release time and is not committed.
+
+### Code signing (Settings > Code signing)
+
+The Settings page shows whether this copy is signed, lists the code-signing certificates on the PC (with
+thumbprints), and gives the signed rebuild command to copy. Signatures are timestamped, so they stay valid
+after the certificate expires. To get a certificate:
+
+1. **Recommended: an OV code-signing certificate from a public CA.** Sectigo, SSL.com, DigiCert and
+   GlobalSign sell them, for roughly 200 to 500 USD a year.
+   - The CA validates Digerati Experts as a business, usually in 1 to 5 business days. Have the business
+     registration, a listed business phone number and possibly a D-U-N-S number ready.
+   - Choose delivery on a USB token. Plugged in, it appears in the Settings list, and
+     `packaging\New-DEReleasePackage.ps1 -IssuedTo <technician> -Thumbprint <thumbprint>` signs the
+     release.
+2. **Microsoft Trusted Signing (Azure).** A low monthly subscription. It signs through SignTool rather
+   than the certificate store, so the signing script needs a change before it can be used.
+3. **Free: an internal certificate.** Push it to Trusted Publishers and Trusted Root on managed PCs
+   through JumpCloud. It is trusted only where you push it.
 
 There is no winget manifest. winget installs only exe, MSI or MSIX packages, and this is a script
 package, so Intune and RMM are the supported deployment routes.

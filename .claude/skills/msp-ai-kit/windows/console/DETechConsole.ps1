@@ -1124,7 +1124,8 @@ function Build-Branding {
         (New-Button 'Save to client profile' { try { $base = ConvertTo-DEHashtable (Get-DEClientProfile -Id $S.Profile.id); $base['branding'] = ConvertTo-DEHashtable $S.Profile.branding; $f = Save-DEClientProfile -Profile $base; Set-Status "Branding saved to $f" } catch { Set-Status $_.Exception.Message } }),
         (New-Button 'Reset these options' { $S.Profile.branding[$S.BrandTarget] = @{}; Show-Page 'Branding' }),
         (New-Button 'Apply to this device' { if (Confirm-Gui 'Apply branding' 'Set the wallpaper, lock screen and About-page info on this device now? Undo branding restores the previous look.') { Start-DEJob -Label 'Apply branding' -Work { Invoke-DEAction -Id 'branding.apply' -Mode Apply } } }),
-        (New-Button 'Undo branding' { if (Confirm-Gui 'Undo branding' 'Restore the previous wallpaper, lock screen and OEM info?') { Start-DEJob -Label 'Undo branding' -Work { Undo-DEBranding } } }))
+        (New-Button 'Undo branding' { if (Confirm-Gui 'Undo branding' 'Restore the previous wallpaper, lock screen and OEM info?') { Start-DEJob -Label 'Undo branding' -Work { Undo-DEBranding } } }),
+        (New-Button 'Apply lock screen only' { if (Confirm-Gui 'Company lock screen' 'Set the company-branded lock screen on this device now? Users will not be able to change it, and Windows Spotlight is turned off for every profile. Undo branding restores the previous lock screen.') { Start-DEJob -Label 'Company lock screen' -Work { Invoke-DEAction -Id 'branding.lockscreen' -Mode Apply } } }))
     $tips = New-Text 'Tips: use transparent PNG logos at least 1200 px wide; give a light version for dark backgrounds (otherwise the logo gets a light backing plate automatically). The DE logo switches to its white version on dark backgrounds by itself. Previews render at the chosen resolution (auto = this screen).' -Muted -Wrap
     [void]$root.Children.Add((New-Card @((New-Text 'Branding' 15 -Bold), (New-Text "Hostname pattern $($S.Profile.branding.hostnamePattern) -> $(New-DEHostname -ClientProfile $S.Profile)" -Muted), $targetSwitch, (New-Label 'Look'), $look, (New-Label 'Sizes'), $sizes, (New-Label 'Text'), $lines, (New-Label 'Files'), $files, $tips, $actions, $info, $img)))
     [void]$root.Children.Add((New-ActionGrid -Modules @('branding') -Title 'Branding actions'))
@@ -1448,9 +1449,67 @@ function Build-LicenseCard {
     $clear = New-Button 'Remove licence' { Clear-DELicense; Update-Header; Show-Page 'Settings' }
     [void]$root.Children.Add((New-Card @((New-Text 'Licence' 15 -Bold), (New-Text 'A DE licence is issued by the Intelligence Hub to one technician for this device, for a few hours. It cannot be copied to another device, and it expires on its own.' -Muted -Wrap), (New-El TextBlock @{ Text = ($lines -join "`n"); Style = 'Mono'; TextWrapping = 'Wrap'; Margin = '0,4,0,8' }), (New-Label 'Hub URL'), $hubBox, (New-Label 'Or paste a licence from the Hub'), $tokBox, (New-Wrap @($activate, $paste, $clear)))))
 }
+function Build-HubConnectionCard {
+    <# Settings: what sending to the Intelligence Hub needs, whether each part is in place, and a liveness check. #>
+    param($root)
+    $sp = New-El StackPanel
+    [void]$sp.Children.Add((New-Text 'Intelligence Hub connection' 15 -Bold))
+    [void]$sp.Children.Add((New-Text 'Device records and email migration records go to the Hub as signed events. Sending needs all four parts below. The signing secret is typed in for this session only and is never saved.' -Muted -Wrap))
+    foreach ($i in @(Get-DEHubConnectionChecklist)) {
+        $mark = $(if ($i.ok -eq $true) { 'PASS' } elseif ($null -eq $i.ok) { 'NOT RUN' } else { 'FAIL' })
+        $row = New-El StackPanel @{ Margin = '0,6,0,0' }
+        $t = New-Text "$(switch ($mark) { 'PASS' { 'Done' } 'NOT RUN' { 'Not checkable yet' } default { 'Missing' } }) · $($i.step)" -Bold; $t.Foreground = Get-StateBrush $mark
+        [void]$row.Children.Add($t); [void]$row.Children.Add((New-Text "$($i.detail)" -Muted -Wrap))
+        [void]$sp.Children.Add($row)
+    }
+    $check = New-Button 'Check the Hub answers' {
+        $ep = "$(Get-DEState -Path 'settings.hub.endpoint')"; if (-not $ep) { $ep = "$($Settings.hubEndpoint)" }
+        if (-not $ep) { Set-Status 'Set the Hub URL in Console settings first.'; return }
+        Start-DEJob -Label 'Hub check' -Params @{ ep = $ep } -Work { [pscustomobject]@{ hubCheck = (Test-DEHubReachable -Endpoint $JobParams.ep) } } -OnDone { param($r) $x = @($r | Where-Object { $_ -and $_.PSObject.Properties['hubCheck'] }) | Select-Object -Last 1; if ($x) { Set-Status "$(if ($x.hubCheck.ok) { 'Hub is up: ' } else { 'Hub check failed: ' })$($x.hubCheck.detail)" } }
+    }
+    $deploy = "ssh de-vps 'sudo cat /opt/intelligence-hub/current/RELEASE_SHA'"
+    [void]$sp.Children.Add((New-Label 'Hub admin: the server side'))
+    [void]$sp.Children.Add((New-Text 'On the Hub server, TECHCONSOLE_TO_HUB_SECRET must hold the same value as the signing secret typed in here; until it is set the Hub answers 503 and the tool keeps the record for manual upload. To confirm which release the Hub runs, compare this with the merged commit:' -Muted -Wrap))
+    [void]$sp.Children.Add((New-El TextBox @{ Text = $deploy; IsReadOnly = $true; FontFamily = 'Cascadia Mono, Consolas'; FontSize = 12; Name = 'Hub release check command'; Margin = '0,4,0,4' }))
+    [void]$sp.Children.Add((New-Wrap @($check, (New-Button 'Copy the release check' { [System.Windows.Clipboard]::SetText($deploy); Set-Status 'Copied.' }.GetNewClosure()), (New-Button 'Refresh' { Show-Page 'Settings' }))))
+    [void]$root.Children.Add((New-Card @($sp)))
+}
+function Build-CodeSigningCard {
+    <# Settings: whether this copy is signed, the code-signing certificates on this PC, how to get one, and the signed rebuild. #>
+    param($root)
+    $sp = New-El StackPanel
+    [void]$sp.Children.Add((New-Text 'Code signing' 15 -Bold))
+    $b = Get-DEBuildInfo; $i = $(try { Test-DEConsoleIntegrity } catch { $null })
+    $status = "$(if ($i) { $i.status } else { 'unknown' })"
+    $t = New-Text "This copy: $(switch ($status) { 'signed' { 'signed' } 'unsigned' { 'not signed' } 'tampered' { 'CHANGED SINCE PACKAGING' } default { 'signature not checkable on this system' } }) · build $($b.buildId) · issued to $($b.issuedTo)" -Bold
+    $t.Foreground = Get-StateBrush $(switch ($status) { 'signed' { 'PASS' } 'tampered' { 'FAIL' } default { 'WARN' } }); [void]$sp.Children.Add($t)
+    [void]$sp.Children.Add((New-Text 'A signed copy runs under a strict PowerShell execution policy and shows Digerati Experts as the publisher; a file changed after signing is refused. Unsigned copies still run, and the integrity check still catches changed files.' -Muted -Wrap))
+    $certs = @(Get-DECodeSigningCertificates)
+    [void]$sp.Children.Add((New-Label 'Code-signing certificates on this PC'))
+    if ($certs.Count) { foreach ($c in $certs) { [void]$sp.Children.Add((New-El TextBlock @{ Text = "$($c.subject) · thumbprint $($c.thumbprint) · expires $($c.expires) · $($c.store)$(if ($c.selfSigned) { ' · self-signed (trusted only where you deploy it)' })"; Style = 'Mono'; TextWrapping = 'Wrap' })) } }
+    else { [void]$sp.Children.Add((New-Text 'None found. Plug in the USB token that holds the certificate, then Refresh.' -Muted -Wrap)) }
+    [void]$sp.Children.Add((New-Label 'How to get one'))
+    foreach ($line in @(
+            '1. Recommended: an OV code-signing certificate from a public CA (Sectigo, SSL.com, DigiCert or GlobalSign; roughly 200 to 500 USD a year). They validate Digerati Experts as a business, usually in 1 to 5 business days: have the business registration, a listed business phone number and possibly a D-U-N-S number ready. Choose delivery on a USB token: plugged in, it appears in the list above and the signed rebuild below works as is.',
+            '2. Microsoft Trusted Signing (Azure): a low monthly subscription with identity validation. It signs through SignTool rather than the certificate store, so the signing script needs a change before it can be used.',
+            '3. Free: an internal certificate (your own CA, or a self-signed one) pushed to Trusted Publishers and Trusted Root on managed PCs through JumpCloud. It is trusted only where you push it, so a brand-new client PC at takeover shows the tool as unsigned.')) { [void]$sp.Children.Add((New-Text $line -Wrap)) }
+    $thumb = $(if ($certs.Count) { $certs[0].thumbprint } else { '<thumbprint>' })
+    $tech = $(if ((Get-DEContext)['technician']) { (Get-DEContext)['technician'] } else { "$($Settings.technician)" }); if (-not $tech) { $tech = '<technician>' }
+    $kit = Split-Path -Parent $ConsoleRoot
+    $cmd = "& `"$kit\packaging\New-DEReleasePackage.ps1`" -IssuedTo $tech -Thumbprint $thumb"
+    $verify = "Get-AuthenticodeSignature `"$ConsoleRoot\DETechConsole.ps1`" | Format-List Status, SignerCertificate, TimeStamperCertificate"
+    [void]$sp.Children.Add((New-Label 'Signed rebuild (run in PowerShell with the token plugged in)'))
+    [void]$sp.Children.Add((New-El TextBox @{ Text = $cmd; IsReadOnly = $true; TextWrapping = 'Wrap'; FontFamily = 'Cascadia Mono, Consolas'; FontSize = 12; Name = 'Signed rebuild command'; Margin = '0,4,0,4' }))
+    [void]$sp.Children.Add((New-Text 'Signatures are timestamped (DigiCert), so they stay valid after the certificate expires. Check a signed file with:' -Muted -Wrap))
+    [void]$sp.Children.Add((New-El TextBox @{ Text = $verify; IsReadOnly = $true; TextWrapping = 'Wrap'; FontFamily = 'Cascadia Mono, Consolas'; FontSize = 12; Name = 'Signature check command'; Margin = '0,4,0,4' }))
+    [void]$sp.Children.Add((New-Wrap @((New-Button 'Copy the signed rebuild' { [System.Windows.Clipboard]::SetText($cmd); Set-Status 'Copied.' }.GetNewClosure() -Primary), (New-Button 'Copy the signature check' { [System.Windows.Clipboard]::SetText($verify); Set-Status 'Copied.' }.GetNewClosure()), (New-Button 'Refresh' { Show-Page 'Settings' }))))
+    [void]$root.Children.Add((New-Card @($sp)))
+}
 function Build-Settings {
     param($root)
     Build-LicenseCard $root
+    Build-HubConnectionCard $root
+    Build-CodeSigningCard $root
     $known = @(
         @{ n = 'BREAKGLASS_PASSWORD'; d = 'DE-BreakGlass password (16+ characters)' }, @{ n = 'MIGRATION_TEMP_PASSWORD'; d = 'Temporary password for the new local account (ADMU)' },
         @{ n = 'JC_CONNECT_KEY'; d = 'JumpCloud connect key (agent install)' }, @{ n = 'JC_API_KEY'; d = 'JumpCloud API key (mapping, binding, groups, policies)' }, @{ n = 'JC_ORG_ID'; d = 'JumpCloud org id (multi-tenant admins)' },
