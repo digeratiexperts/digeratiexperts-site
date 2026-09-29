@@ -26,7 +26,11 @@ function Invoke-DECommunityDownload {
     <# One place for downloads, so tests replace it. Writes the bytes to -OutFile. #>
     param([Parameter(Mandatory = $true)][string]$Uri, [Parameter(Mandatory = $true)][string]$OutFile)
     try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }
-    Invoke-WebRequest -Uri $Uri -OutFile $OutFile -UseBasicParsing -TimeoutSec 60 -Headers @{ 'User-Agent' = 'DE-TechTool (Digerati Experts; pinned community tool)' }
+    # three tries with backoff: one dropped connection must not fail a 350-file folder
+    for ($i = 1; $i -le 3; $i++) {
+        try { Invoke-WebRequest -Uri $Uri -OutFile $OutFile -UseBasicParsing -TimeoutSec 60 -Headers @{ 'User-Agent' = 'DE-TechTool (Digerati Experts; pinned community tool)' }; return }
+        catch { if ($i -eq 3) { throw }; Start-Sleep -Seconds (2 * $i) }
+    }
 }
 function Test-DECommunityToolFiles {
     <# Checks every catalog file under -Path against its sha256. Returns @{ ok; missing; mismatched }. #>
@@ -49,8 +53,8 @@ function Get-DECommunityToolPath {
     #>
     param([Parameter(Mandatory = $true)][string]$Id, [string[]]$StagedPath = @(), [switch]$Offline)
     $t = Get-DECommunityTool -Id $Id
-    if ("$($t.use)" -ne 'module') { throw "$($t.name) is a '$($t.use)' entry, not a module DE imports" }
-    if (-not @($t.files).Count) { throw "$($t.name) has no pinned files in the catalog" }
+    if ("$($t.use)" -notin @('module', 'scripts')) { throw "$($t.name) is a '$($t.use)' entry, not a module DE imports" }
+    if (-not @($t.files).Count) { throw "$($t.name) has no pinned files in the catalog$(if ("$($t.use)" -ne 'module') { ' (not a module DE imports)' })" }
     $candidates = @($StagedPath) + @((Join-Path (Join-Path (Split-Path -Parent (Get-DEConsole).Root) 'community') $t.id), (Get-DECommunityCacheDir -Tool $t)) | Where-Object { $_ }
     foreach ($c in $candidates) { if ((Test-Path -LiteralPath $c) -and (Test-DECommunityToolFiles -Tool $t -Path $c).ok) { return $c } }
     if ($Offline) { throw "no verified copy of $($t.name) at $($candidates -join '; ') and offline: stage it with Save-DECommunityTool first" }
@@ -82,12 +86,12 @@ function Save-DECommunityTool {
     $to = Join-Path $Destination $Id
     if (Test-Path -LiteralPath $to) { Remove-Item -LiteralPath $to -Recurse -Force -WhatIf:$false }
     New-Item -ItemType Directory -Path $Destination -Force -WhatIf:$false | Out-Null
-    if ("$($t.use)" -eq 'module') {
+    if (@($t.files | Where-Object { $_ }).Count) {
         Copy-Item -LiteralPath (Get-DECommunityToolPath -Id $Id) -Destination $to -Recurse -WhatIf:$false
         $check = Test-DECommunityToolFiles -Tool $t -Path $to
         if (-not $check.ok) { throw "copy of $Id at $to did not verify (missing $($check.missing -join ', '); changed $($check.mismatched -join ', '))" }
     }
-    foreach ($sc in @($t.scripts | Where-Object { $_ })) {
+    foreach ($sc in @($t.scripts | Where-Object { $_ -and -not @($t.files | Where-Object { $_ }).Count })) {
         $from = Get-DECommunityScriptPath -Key "$Id/$($sc.id)"
         $dest = Join-Path $to ($sc.path -replace '/', [IO.Path]::DirectorySeparatorChar)
         $dir = Split-Path -Parent $dest; if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force -WhatIf:$false | Out-Null }
@@ -100,6 +104,7 @@ function Import-DECommunityTool {
     <# Imports a verified 'ship' tool's module globally and returns the module. #>
     param([Parameter(Mandatory = $true)][string]$Id, [switch]$Offline)
     $t = Get-DECommunityTool -Id $Id
+    if ("$($t.use)" -ne 'module') { throw "$($t.name) is a '$($t.use)' entry, not a module DE imports" }
     $path = Get-DECommunityToolPath -Id $Id -Offline:$Offline
     return (Import-Module (Join-Path $path $t.module) -Force -Global -PassThru -DisableNameChecking -WarningAction SilentlyContinue)
 }
@@ -117,7 +122,7 @@ function Get-DECommunityScripts {
                 id = $sc.id; title = $sc.title; category = (& $p 'category' 'repair'); path = $sc.path; sha256 = $sc.sha256
                 arguments = @(& $p 'arguments' @()); confirm = [bool](& $p 'confirm' $false); reboots = [bool](& $p 'reboots' $false)
                 needsInternet = [bool](& $p 'needsInternet' $false); timeoutSeconds = [int](& $p 'timeoutSeconds' 1800); successExitCodes = @(& $p 'successExitCodes' @(0))
-                notes = (& $p 'notes' '')
+                notes = (& $p 'notes' ''); bundle = [bool]@($t.files | Where-Object { $_ }).Count
             }
             if (-not $Category -or $o.category -eq $Category) { $out += $o }
         }
@@ -129,6 +134,8 @@ function Get-DECommunityScriptPath {
     <# A verified local copy of one script: staged (community\<tool>\<path> beside console\), else the data cache, else downloaded at the pinned commit. #>
     param([Parameter(Mandatory = $true)][string]$Key, [switch]$Offline)
     $s = Get-DECommunityScript -Key $Key
+    # a script that needs its whole repo folder (Win11Debloat): the folder is pinned file by file and verified as one
+    if ($s.bundle) { $root = Get-DECommunityToolPath -Id $s.tool -Offline:$Offline; $f = Join-Path $root ($s.path -replace '/', [IO.Path]::DirectorySeparatorChar); if (-not (Test-DEFileHash -Path $f -Sha256 $s.sha256)) { throw "$Key does not match the reviewed sha256" }; return $f }
     $rel = $s.path -replace '/', [IO.Path]::DirectorySeparatorChar
     $staged = Join-Path (Join-Path (Join-Path (Split-Path -Parent (Get-DEConsole).Root) 'community') $s.tool) $rel
     $cache = Join-Path (Join-Path (Join-Path (Join-Path (Get-DEConsole).Dirs.Base 'community') $s.tool) $s.commit) $rel

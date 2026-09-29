@@ -18,7 +18,7 @@
 .PARAMETER Apply     Headless only: apply changes (default is audit, change nothing).
 .PARAMETER DataDir   Override the data folder (default %ProgramData%\DE\TechConsole).
 .PARAMETER SmokeTest Build the window and every page with -SmokeClient (default the alamo example), render each page
-                     to PNG at 100 and 200 percent scale under -SmokeOut, never show the window, exit 0 when every
+                     to PNG at 1440x900 and at 1366x768 with 125 percent scaling under -SmokeOut, never show the window, exit 0 when every
                      page built and 1 otherwise. Used by CI and windows\tests\Invoke-GuiSmoke.ps1.
 
 .NOTES
@@ -256,9 +256,9 @@ $fontDir = Join-Path (Split-Path -Parent $ConsoleRoot) 'fonts'
 $FontUi = 'Segoe UI'; $FontDisplay = 'Segoe UI Semibold'
 if (Test-Path -LiteralPath (Join-Path $fontDir 'SpaceGrotesk-Variable.ttf')) { $FontUi = "file:///$($fontDir -replace '\\','/')/#Space Grotesk, Segoe UI"; $FontDisplay = "file:///$($fontDir -replace '\\','/')/#Oxanium, Segoe UI Semibold" }
 
-[xml]$Xaml = @"
+$XamlText = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="DE Tech Tool" Width="1440" Height="900" MinWidth="1180" MinHeight="720" WindowStartupLocation="CenterScreen"
+        Title="DE Tech Tool" Width="1280" Height="800" MinWidth="800" MinHeight="520" WindowStartupLocation="CenterScreen"
         Background="#FF050312" Foreground="#FFF7F5F2" FontSize="13" UseLayoutRounding="True" SnapsToDevicePixels="True" TextOptions.TextFormattingMode="Ideal">
   <Window.Resources>
     <SolidColorBrush x:Key="Well" Color="#FF050312"/><SolidColorBrush x:Key="Surface" Color="#FF0A0A0A"/><SolidColorBrush x:Key="Raised" Color="#FF151217"/><SolidColorBrush x:Key="RaisedHover" Color="#FF1E1A22"/>
@@ -353,14 +353,22 @@ if (Test-Path -LiteralPath (Join-Path $fontDir 'SpaceGrotesk-Variable.ttf')) { $
   </Grid>
 </Window>
 "@
-$Win = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $Xaml))
-$Win.FontFamily = New-Object System.Windows.Media.FontFamily $FontUi
 if ($highContrast) {
-    foreach ($k in @('Well', 'Surface', 'Raised', 'RaisedHover')) { $Win.Resources[$k] = [System.Windows.SystemColors]::WindowBrush }
-    foreach ($k in @('Paper', 'Muted')) { $Win.Resources[$k] = [System.Windows.SystemColors]::WindowTextBrush }
-    foreach ($k in @('Magenta', 'MagentaHover', 'Lavender', 'Violet')) { $Win.Resources[$k] = [System.Windows.SystemColors]::HighlightBrush }
-    $Win.Background = [System.Windows.SystemColors]::WindowBrush; $Win.Foreground = [System.Windows.SystemColors]::WindowTextBrush
+    # StaticResource brushes resolve once, at load: the high-contrast colours have to be in the XAML before it loads.
+    $sysColor = @{ Well = 'WindowColor'; Surface = 'WindowColor'; Raised = 'WindowColor'; RaisedHover = 'ControlColor'; Hairline = 'WindowTextColor'; Paper = 'WindowTextColor'; Muted = 'GrayTextColor'
+        Magenta = 'HighlightColor'; MagentaHover = 'HighlightColor'; Violet = 'HighlightColor'; Lavender = 'HighlightColor'; Pass = 'WindowTextColor'; Warn = 'WindowTextColor' }
+    foreach ($k in $sysColor.Keys) { $XamlText = [regex]::Replace($XamlText, "(<SolidColorBrush x:Key=`"$k`" Color=`")#[0-9A-Fa-f]{6,8}(`"/>)", ('$1{x:Static SystemColors.' + $sysColor[$k] + '}$2')) }
+    $XamlText = $XamlText -replace 'Background="#FF08061A"', 'Background="{x:Static SystemColors.WindowBrush}"' -replace 'Value="#337C3AED"', 'Value="{x:Static SystemColors.HighlightBrush}"' -replace 'Value="#0DFFFFFF"', 'Value="{x:Static SystemColors.ControlBrush}"'
+    $XamlText = $XamlText -replace 'Background="#FF050312" Foreground="#FFF7F5F2"', 'Background="{x:Static SystemColors.WindowBrush}" Foreground="{x:Static SystemColors.WindowTextBrush}"'
+    $XamlText = $XamlText -replace '<Setter Property="FocusVisualStyle" Value="\{x:Null\}"/>', ''   # keep the system focus rectangle
 }
+[xml]$Xaml = $XamlText
+$Win = [Windows.Markup.XamlReader]::Load((New-Object System.Xml.XmlNodeReader $Xaml))
+# Fit the screen: at 1366x768 with 125-150 % scaling the work area is ~1093x582 or smaller (device-independent units).
+$wa = [System.Windows.SystemParameters]::WorkArea
+$Win.Width = [Math]::Min($Win.Width, [Math]::Max(800, $wa.Width - 16)); $Win.Height = [Math]::Min($Win.Height, [Math]::Max(520, $wa.Height - 16))
+if ($wa.Width -lt 1100 -or $wa.Height -lt 700) { $Win.WindowState = 'Maximized' }
+$Win.FontFamily = New-Object System.Windows.Media.FontFamily $FontUi
 $UI = @{}
 foreach ($n in @('NavPanel', 'PageHost', 'TxtVersion', 'TxtModeBadge', 'HdrTech', 'HdrClient', 'HdrClientWhy', 'HdrUser', 'HdrUserWhy', 'HdrDevice', 'HdrDeviceSub', 'HdrReady', 'TxtStatus', 'Progress', 'BtnCancel', 'BrandLogo')) { $UI[$n] = $Win.FindName($n) }
 $UI.TxtVersion.Text = "v$((Get-DEConsole).ConsoleVersion)"; $Win.Title = "DE Tech Tool v$((Get-DEConsole).ConsoleVersion)"
@@ -475,7 +483,7 @@ function Update-DEJob {
         catch { $m = "$($job.label): the page could not refresh: $(Protect-DEText $_.Exception.Message)"; Write-DELog -Level FAIL -Message $m; $S.LastJobError = $m; Set-Status $m }
     } else { Show-Page $S.CurrentPage }
 }
-$UI.BtnCancel.Add_Click({ if ($S.Job) { try { $S.Job.core.ps.Stop() } catch { }; Set-Status 'Cancel requested; the current step finishes or stops at its next checkpoint.' } })
+$UI.BtnCancel.Add_Click({ if ($S.Job) { try { $null = $S.Job.core.ps.BeginStop($null, $null) } catch { }; Set-Status 'Cancel requested; the current step finishes or stops at its next checkpoint.' } })
 
 # ============================================================== header + context
 function Update-Header {
@@ -737,7 +745,7 @@ function Build-Scan {
     [System.Windows.Controls.Grid]::SetRow($top, 0); [void]$page.Children.Add($top)
     # --- middle: the list (left) and the focused item (right)
     $mid = New-Object System.Windows.Controls.Grid
-    $c1 = New-Object System.Windows.Controls.ColumnDefinition; $c1.Width = New-Object System.Windows.GridLength(1, 'Star'); $c2 = New-Object System.Windows.Controls.ColumnDefinition; $c2.Width = New-Object System.Windows.GridLength(430); $mid.ColumnDefinitions.Add($c1); $mid.ColumnDefinitions.Add($c2)
+    $c1 = New-Object System.Windows.Controls.ColumnDefinition; $c1.Width = New-Object System.Windows.GridLength(1, 'Star'); $c2 = New-Object System.Windows.Controls.ColumnDefinition; $c2.Width = New-Object System.Windows.GridLength(0.8, 'Star'); $c2.MaxWidth = 460; $c2.MinWidth = 280; $mid.ColumnDefinitions.Add($c1); $mid.ColumnDefinitions.Add($c2)
     $list = New-El StackPanel
     $S.RowBorders = @{}; $S.RowChecks = @{}
     if (-not $S.Profile) {
@@ -1143,10 +1151,11 @@ function Build-AiToolkit {
 function Build-Evidence {
     param($root)
     $status = New-Text $(if ($S.LastBundle) { "Last bundle: $($S.LastBundle.zip) (sha256 $($S.LastBundle.sha256))" } else { 'No bundle exported this session.' }) -Muted -Wrap
-    $export = New-Button 'Export evidence bundle' { if (-not $S.Snapshot) { Set-Status 'Run discovery first.'; return }; $S.LastBundle = Export-DEEvidenceBundle -Snapshot $S.Snapshot -ClientProfile $S.Profile; Show-Page 'Evidence' } -Primary
+    # both run in the background: two headless-Edge PDF renders plus zip and hash (minutes), and a network call
+    $export = New-Button 'Export evidence bundle' { if (-not $S.Snapshot) { Set-Status 'Run discovery first.'; return }; Start-DEJob -Label 'Exporting the evidence bundle' -Params @{ snap = $S.Snapshot } -Work { Export-DEEvidenceBundle -Snapshot $JobParams.snap -ClientProfile $JobProfile } -OnDone { param($r) $b = @($r | Where-Object { $_ -and $_.PSObject.Properties['zip'] -or ($_ -is [hashtable] -and $_.ContainsKey('zip')) }) | Select-Object -Last 1; if ($b) { $S.LastBundle = $b; Set-Status "Bundle: $($b.zip)" }; Show-Page 'Evidence' } } -Primary
     $open = New-Button 'Open internal report' { if ($S.LastBundle) { Start-Process (Join-Path $S.LastBundle.folder 'report-internal.html') } }
     $client = New-Button 'Open client report' { if ($S.LastBundle) { Start-Process (Join-Path $S.LastBundle.folder 'report-client.html') } }
-    $hub = New-Button 'Send to Intelligence Hub' { if (-not $S.LastBundle) { Set-Status 'Export the bundle first.'; return }; $r = Send-DEHubPayload -Payload (New-DEHubPayload -Record $S.LastBundle.record -BundleSha256 $S.LastBundle.sha256 -BundlePath $S.LastBundle.zip); Set-Status $(if ($r.sent) { 'Sent to the Hub.' } else { "Saved for manual upload: $($r.file)" }); Show-Page 'Evidence' }
+    $hub = New-Button 'Send to Intelligence Hub' { if (-not $S.LastBundle) { Set-Status 'Export the bundle first.'; return }; $lb = $S.LastBundle; Start-DEJob -Label 'Sending to the Intelligence Hub' -Params @{ record = $lb.record; sha = $lb.sha256; zip = $lb.zip } -Work { Send-DEHubPayload -Payload (New-DEHubPayload -Record $JobParams.record -BundleSha256 $JobParams.sha -BundlePath $JobParams.zip) -Confirm:$false } -OnDone { param($r) $x = @($r | Where-Object { $_ -is [hashtable] -and $_.ContainsKey('sent') }) | Select-Object -Last 1; Set-Status $(if ($x -and $x.sent) { 'Sent to the Hub.' } elseif ($x) { "Saved for manual upload: $($x.file)" } else { 'Hub send finished; see Evidence.' }); Show-Page 'Evidence' } }
     $bundleCopy = New-Button 'Copy diagnostic bundle' { $txt = "DE Tech Tool $((Get-DEConsole).ConsoleVersion) · $env:COMPUTERNAME · mode $($S.Mode)`r`n" + ((Get-DEGapReport | ForEach-Object { "$($_.result) $($_.id) | $($_.detail) | fix: $($_.fix)" }) -join "`r`n"); [System.Windows.Clipboard]::SetText((Protect-DEText $txt)); Set-Status 'Gap report copied (redacted).' }
     [void]$root.Children.Add((New-Card @((New-Text 'Evidence and handoff' 15 -Bold), (New-Text 'Sanitized JSON, internal and client-safe HTML reports, redacted log, sha256 manifest, zipped and hashed. The Hub gets identity, mapping, state, verification times, exceptions and evidence references; never secrets.' -Muted -Wrap), (New-Wrap @($export, $open, $client, $hub, $bundleCopy)), $status)))
     $gaps = @(Get-DEGapReport)
@@ -1177,7 +1186,7 @@ function Build-Settings {
     $clear = New-Button 'Clear all secrets now' { Clear-DESecrets; Show-Page 'Settings' }
     $vaultBox = New-El TextBox @{ Text = $(if ($Settings.ContainsKey('secretVault')) { $Settings.secretVault } else { '' }); Width = 240; Name = 'Secret vault name' }
     $allNames = @($known | ForEach-Object { $_.n })
-    $vaultBtn = New-Button 'Load from vault' { if (-not $vaultBox.Text) { Set-Status 'Enter the SecretManagement vault name first.'; return }; $Settings.secretVault = $vaultBox.Text; Save-GuiSettings; try { $rows = Import-DESecretsFromVault -Vault $vaultBox.Text -Names $allNames; Set-Status ('Vault: ' + (($rows | ForEach-Object { "$($_.name) $($_.status)" }) -join ', ')); Show-Page 'Settings' } catch { Set-Status $_.Exception.Message } }.GetNewClosure()
+    $vaultBtn = New-Button 'Load from vault' { if (-not $vaultBox.Text) { Set-Status 'Enter the SecretManagement vault name first.'; return }; $Settings.secretVault = $vaultBox.Text; Save-GuiSettings; try { $v = Get-SecretVault -Name $vaultBox.Text -ErrorAction SilentlyContinue; if ($v -and "$($v.ModuleName)" -match 'SecretStore' -and (Get-Command -Name 'Unlock-SecretStore' -ErrorAction SilentlyContinue)) { $pw = Read-GuiText -Title 'SecretStore' -Prompt "Password for the '$($vaultBox.Text)' SecretStore (a console prompt would be hidden behind this window)" -Secret; if (-not $pw) { return }; Unlock-SecretStore -Password $pw -PasswordTimeout 900 }; $rows = Import-DESecretsFromVault -Vault $vaultBox.Text -Names $allNames; Set-Status ('Vault: ' + (($rows | ForEach-Object { "$($_.name) $($_.status)" }) -join ', ')); Show-Page 'Settings' } catch { Set-Status $_.Exception.Message } }.GetNewClosure()
     $vaultRow = New-Wrap @((New-Label 'Approved secret vault (PowerShell SecretManagement)'), $vaultBox, $vaultBtn)
     [void]$root.Children.Add((New-Card @((New-Text 'Runtime secrets' 15 -Bold), (New-Text 'Held in memory as SecureString for this session only. Never written to state, logs, receipts, profiles or Hub payloads; anything that looks like one is redacted on screen. Cleared when the console closes.' -Muted -Wrap), $sp, $vaultRow, $clear)))
     $hubBox = New-El TextBox @{ Text = $Settings.hubEndpoint; Width = 520; Name = 'Hub endpoint' }
@@ -1236,18 +1245,28 @@ if ($SmokeTest) {
         if ("$($S.Profile.plan.bundle)" -ne 'proactive-business') { $failed += 'ProActive plan did not load' } else { Write-Host 'SMOKE PASS ProActive plan' }
         $rec = Get-DERecommendedMode -Snapshot $S.Snapshot -ClientProfile $S.Profile; if (-not $rec.mode) { $failed += 'no recommended mode' } else { Write-Host "SMOKE PASS recommended mode $($rec.mode)" }
     } catch { $failed += "setup: $($_.Exception.Message)" }
-    $w = 1440; $h = 900
+    # Two layouts: the design size, and a 1366x768 laptop at 125 % scaling (1093x582 device-independent units less the
+    # taskbar, rendered at 120 dpi). At the small size the footer (status and Cancel) must stay inside the window.
+    $layouts = @(@{ tag = '96dpi'; w = 1440; h = 900; dpi = 96 }, @{ tag = 'small-120dpi'; w = 1093; h = 552; dpi = 120 })
     foreach ($name in @($Pages.Keys | Where-Object { $null -ne $_ })) {
         try {
             Show-Page $name
             if ($S.CurrentPage -ne $name -or -not $UI.PageHost.Content) { throw 'page did not load' }
-            $Win.Content.Measure((New-Object System.Windows.Size($w, $h))); $Win.Content.Arrange((New-Object System.Windows.Rect(0, 0, $w, $h))); $Win.Content.UpdateLayout()
-            foreach ($dpi in @(96, 192)) {
-                $scale = $dpi / 96
-                $bmp = New-Object System.Windows.Media.Imaging.RenderTargetBitmap([int]($w * $scale), [int]($h * $scale), $dpi, $dpi, [System.Windows.Media.PixelFormats]::Pbgra32)
+            foreach ($l in $layouts) {
+                $w = $l.w; $h = $l.h
+                $Win.Content.Measure((New-Object System.Windows.Size($w, $h))); $Win.Content.Arrange((New-Object System.Windows.Rect(0, 0, $w, $h))); $Win.Content.UpdateLayout()
+                if ($l.tag -like 'small*') {
+                    foreach ($el in @($UI.TxtStatus, $UI.BtnCancel)) {
+                        if (-not $el -or -not $el.IsVisible) { continue }
+                        $pt = $el.TranslatePoint((New-Object System.Windows.Point(0, 0)), $Win.Content)
+                        if ($pt.Y + $el.ActualHeight -gt $h + 1 -or $pt.X + $el.ActualWidth -gt $w + 1) { throw "$($el.Name) is off-screen at $w x $h" }
+                    }
+                }
+                $scale = $l.dpi / 96
+                $bmp = New-Object System.Windows.Media.Imaging.RenderTargetBitmap([int]($w * $scale), [int]($h * $scale), $l.dpi, $l.dpi, [System.Windows.Media.PixelFormats]::Pbgra32)
                 $bmp.Render($Win.Content)
                 $enc = New-Object System.Windows.Media.Imaging.PngBitmapEncoder; $enc.Frames.Add([System.Windows.Media.Imaging.BitmapFrame]::Create($bmp))
-                $fs = [IO.File]::Create((Join-Path $SmokeOut ("{0}-{1}dpi.png" -f $name, $dpi))); try { $enc.Save($fs) } finally { $fs.Dispose() }
+                $fs = [IO.File]::Create((Join-Path $SmokeOut ("{0}-{1}.png" -f $name, $l.tag))); try { $enc.Save($fs) } finally { $fs.Dispose() }
             }
             Write-Host ("SMOKE PASS {0}" -f $name)
         } catch { $failed += "${name}: $($_.Exception.Message)"; Write-Host ("SMOKE FAIL {0}: {1}" -f $name, $_.Exception.Message) }

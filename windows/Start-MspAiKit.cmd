@@ -4,8 +4,10 @@ rem AI Toolkit page; with arguments it runs the AI-kit loader directly, for exam
 rem   Start-MspAiKit.cmd -Action All -NonInteractive
 rem   Start-MspAiKit.cmd -Action Update -WhatIf
 setlocal
+set "PS=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
 if "%~1"=="" goto :window
-powershell.exe -NoProfile -NoLogo -ExecutionPolicy Bypass -File "%~dp0Install-MspAiKit.ps1" %*
+"%PS%" -NoProfile -NoLogo -ExecutionPolicy Bypass -File "%~dp0Install-MspAiKit.ps1" %*
 exit /b %ERRORLEVEL%
 
 :window

@@ -45,24 +45,28 @@ Set-Content -LiteralPath (Join-Path $src 'windows\VERSION') -Value $version -Enc
 
 $install = @'
 @echo off
-rem DE Tech Tool - Intune install (runs as SYSTEM)
-set "DEST=%ProgramFiles%\DE\TechConsole"
+rem DE Tech Tool - Intune install (runs as SYSTEM, in a 32-bit process: %ProgramFiles% would be Program Files (x86))
+set "DEST=%ProgramW6432%\DE\TechConsole"
+if not defined ProgramW6432 set "DEST=%ProgramFiles%\DE\TechConsole"
 if exist "%DEST%" rmdir /s /q "%DEST%"
 mkdir "%DEST%"
 xcopy "%~dp0windows\*" "%DEST%\" /e /i /q /y >nul || exit /b 1
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$s=(New-Object -ComObject WScript.Shell).CreateShortcut(\"$env:ProgramData\Microsoft\Windows\Start Menu\Programs\DE Tech Tool.lnk\"); $s.TargetPath=\"$env:ProgramFiles\DE\TechConsole\Start-DETechTool.cmd\"; $s.WorkingDirectory=\"$env:ProgramFiles\DE\TechConsole\"; $s.Save()"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$d=$env:DEST; Get-ChildItem -LiteralPath $d -Recurse -File | Unblock-File; $s=(New-Object -ComObject WScript.Shell).CreateShortcut(\"$env:ProgramData\Microsoft\Windows\Start Menu\Programs\DE Tech Tool.lnk\"); $s.TargetPath=(Join-Path $d 'Start-DETechTool.cmd'); $s.WorkingDirectory=$d; $s.Save()"
 exit /b 0
 '@
 $uninstall = @'
 @echo off
 rem DE Tech Tool - Intune uninstall. Client evidence under %ProgramData%\DE is kept on purpose.
 del /q "%ProgramData%\Microsoft\Windows\Start Menu\Programs\DE Tech Tool.lnk" 2>nul
-if exist "%ProgramFiles%\DE\TechConsole" rmdir /s /q "%ProgramFiles%\DE\TechConsole"
+set "DEST=%ProgramW6432%\DE\TechConsole"
+if not defined ProgramW6432 set "DEST=%ProgramFiles%\DE\TechConsole"
+if exist "%DEST%" rmdir /s /q "%DEST%"
 exit /b 0
 '@
 $detect = @"
 # Intune detection rule for the DE Tech Tool $version. Exit 0 with output = installed.
-`$dir = Join-Path `$env:ProgramFiles 'DE\TechConsole'
+`$pf = `$(if (`$env:ProgramW6432) { `$env:ProgramW6432 } else { `$env:ProgramFiles })   # detection may run 32-bit
+`$dir = Join-Path `$pf 'DE\TechConsole'
 `$v = Join-Path `$dir 'VERSION'
 if ((Test-Path -LiteralPath (Join-Path `$dir 'console\DETechConsole.ps1')) -and (Test-Path -LiteralPath `$v) -and ((Get-Content -LiteralPath `$v -Raw -Encoding UTF8).Trim() -eq '$version')) { Write-Output 'DE Tech Tool $version installed'; exit 0 }
 exit 1

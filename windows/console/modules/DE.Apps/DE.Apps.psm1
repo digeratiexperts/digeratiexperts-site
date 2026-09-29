@@ -136,7 +136,7 @@ function Invoke-DEPackageInstall {
         'exe' { $exe = $file.path; $argList = @($argsText -split ' (?=(?:[^"]*"[^"]*")*[^"]*$)' | Where-Object { $_ }) }
         'ps1' { $exe = 'powershell.exe'; $argList = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $file.path) + @($argsText -split ' (?=(?:[^"]*"[^"]*")*[^"]*$)' | Where-Object { $_ }) }
         'odt' { $exe = $file.path; $cfg = Join-Path (Split-Path -Parent $file.path) 'm365-config.xml'; New-DEOfficeConfigXml -Package $pkg -ClientProfile $ClientProfile -Path $cfg | Out-Null; $argList = @('/configure', $cfg) }
-        'winget' { $exe = Get-DEWingetPath; $argList = @('install', '--id', $file.winget, '--exact') + @($argsText -split ' ' | Where-Object { $_ }); if ($Repair) { $argList = @('install', '--id', $file.winget, '--exact', '--force') + @($argsText -split ' ' | Where-Object { $_ }) } }
+        'winget' { $exe = Resolve-DEWingetOrRepair -DryRun:$WhatIfPreference; $argList = @('install', '--id', $file.winget, '--exact') + @($argsText -split ' ' | Where-Object { $_ }); if ($Repair) { $argList = @('install', '--id', $file.winget, '--exact', '--force') + @($argsText -split ' ' | Where-Object { $_ }) } }
         default { throw "unknown install type '$type'" }
     }
     $shown = "$exe " + (($argList | ForEach-Object { Protect-DEText $_ }) -join ' ')
@@ -187,6 +187,15 @@ function Invoke-DEPackageUninstall {
     return [pscustomobject]@{ ok = ($r.ExitCode -in @(0, 3010, 1641, 1605, -1978335212)); exitCode = $r.ExitCode; detail = "exit $($r.ExitCode)" }
 }
 
+function Resolve-DEWingetOrRepair {
+    <# winget's path; when it is missing (OOBE, LTSC, SYSTEM before first sign-in) runs the pinned winget-install script once and tries again. #>
+    param([switch]$DryRun)
+    try { return (Get-DEWingetPath) } catch { if ($DryRun -or -not (Get-Command -Name 'Invoke-DECommunityScript' -ErrorAction SilentlyContinue)) { throw } }
+    Write-DELog -Level STEP -Message 'winget missing: running Toolbox > Install or repair winget'
+    $r = Invoke-DECommunityScript -Key 'winget-install/install' -Force -Confirm:$false
+    if ($r.result -ne 'PASS') { throw "winget is missing and the repair did not finish ($($r.result); log $($r.log))" }
+    return (Get-DEWingetPath)
+}
 function Get-DEWingetPath {
     <#
         winget.exe is a per-user App Execution Alias: it is not on PATH for SYSTEM (RMM, Intune, first boot) nor in
@@ -300,4 +309,4 @@ function Register-DEAppsActions {
         -ManualAction 'Sign the end user into Office, Outlook, Teams and OneDrive with their work account after the identity migration; the console verifies, it cannot enter their credentials.'
 }
 
-Export-ModuleMember -Function Get-DEWingetPath, Get-DEPackageCatalog, Get-DEPackages, Get-DEPackage, Get-DELocalPackagesDir, Resolve-DEPackageTokens, Test-DEPackageInstalled, Get-DEPackageFile, Invoke-DEPackageInstall, Invoke-DEPackageUninstall, New-DEOfficeConfigXml, Get-DEM365Readiness, Get-DECloudStorageState, Register-DEAppsActions, Get-DEPkgProp, Expand-DEPath
+Export-ModuleMember -Function Resolve-DEWingetOrRepair, Get-DEWingetPath, Get-DEPackageCatalog, Get-DEPackages, Get-DEPackage, Get-DELocalPackagesDir, Resolve-DEPackageTokens, Test-DEPackageInstalled, Get-DEPackageFile, Invoke-DEPackageInstall, Invoke-DEPackageUninstall, New-DEOfficeConfigXml, Get-DEM365Readiness, Get-DECloudStorageState, Register-DEAppsActions, Get-DEPkgProp, Expand-DEPath

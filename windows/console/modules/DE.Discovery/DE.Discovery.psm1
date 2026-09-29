@@ -292,7 +292,15 @@ function Get-DEOneDriveState {
     $accounts = @(); $running = $false
     if ($script:IsWindowsHost) {
         $running = [bool](Get-Process -Name 'OneDrive' -ErrorAction SilentlyContinue)
-        $base = 'HKCU:\Software\Microsoft\OneDrive\Accounts'
+        # every profile's hive, not only HKCU: as SYSTEM or the technician, HKCU is the wrong account, and the migration
+        # gate needs the (signed-out) source user's OneDrive state. Read only.
+        $roots = @(@{ root = 'HKCU:'; owner = "$env:USERNAME"; sid = $null })
+        $hives = $null
+        if (Get-Command -Name 'Open-DEUserHives' -ErrorAction SilentlyContinue) { try { $hives = Open-DEUserHives; foreach ($t in @($hives.targets | Where-Object { $_.sid -ne 'Default' })) { $roots += @{ root = $t.root; owner = $t.name; sid = $t.sid } } } catch { $hives = $null } }
+        try {
+        $seen = @{}
+        foreach ($rt in $roots) {
+        $base = "$($rt.root)\Software\Microsoft\OneDrive\Accounts"
         if (Test-Path $base) {
             foreach ($k in @(Get-ChildItem $base -ErrorAction SilentlyContinue)) {
                 $p = Get-ItemProperty $k.PSPath -ErrorAction SilentlyContinue
@@ -302,9 +310,12 @@ function Get-DEOneDriveState {
                 if (-not $p.PSObject.Properties['KfmFoldersProtectedNow']) { $kfm = @{ desktop = $null; documents = $null; pictures = $null } }
                 $size = $null; $files = $null
                 if ($folder -and (Test-Path -LiteralPath $folder)) { try { $items = @(Get-ChildItem -LiteralPath $folder -Recurse -File -Force -ErrorAction SilentlyContinue | Select-Object -First 5000); $files = $items.Count; $size = [math]::Round((($items | Measure-Object Length -Sum).Sum) / 1MB, 0) } catch { } }
-                $accounts += @{ key = $k.PSChildName; type = $(if ($k.PSChildName -eq 'Personal') { 'personal' } else { 'business' }); email = $p.UserEmail; tenant = $p.DisplayName; folder = $folder; configured = [bool]$folder; kfm = $kfm; sampleFiles = $files; sampleSizeMB = $size; lastSignIn = $p.LastSignInTime }
+                $dedupe = "$($p.UserEmail)|$folder"; if ($seen.ContainsKey($dedupe)) { continue }; $seen[$dedupe] = $true   # HKCU and HKU\<sid> can be the same hive
+                $accounts += @{ owner = $rt.owner; ownerSid = $rt.sid; key = $k.PSChildName; type = $(if ($k.PSChildName -eq 'Personal') { 'personal' } else { 'business' }); email = $p.UserEmail; tenant = $p.DisplayName; folder = $folder; configured = [bool]$folder; kfm = $kfm; sampleFiles = $files; sampleSizeMB = $size; lastSignIn = $p.LastSignInTime }
             }
         }
+        }
+        } finally { if ($hives) { Close-DEUserHives -Hives $hives } }
     }
     $shellFolders = @{}
     if ($script:IsWindowsHost) { foreach ($n in @('Desktop', 'Personal', 'My Pictures')) { $shellFolders[$n] = Get-DEReg 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders' $n } }

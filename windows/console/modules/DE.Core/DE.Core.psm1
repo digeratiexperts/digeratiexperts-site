@@ -76,6 +76,7 @@ function Initialize-DEConsole {
     if (-not $base) { $base = Get-DEProgramData }
     $dirs = @{ Base = $base; State = (Join-Path $base 'state'); Logs = (Join-Path $base 'logs'); Profiles = (Join-Path $base 'profiles'); Evidence = (Join-Path $base 'evidence'); Packages = (Join-Path $base 'packages'); Backups = (Join-Path $base 'backups') }
     foreach ($d in $dirs.Values) { if (-not (Test-Path -LiteralPath $d)) { New-Item -ItemType Directory -Path $d -Force -WhatIf:$false | Out-Null } }
+    Protect-DEDataFolder -Path $base
     $script:DE.Dirs = $dirs
     $script:DE.LogFile = Join-Path $dirs.Logs ("techconsole-{0}.log" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
     $script:DE.Evidence.Clear()
@@ -86,6 +87,20 @@ function Initialize-DEConsole {
     return $script:DE.Dirs
 }
 
+function Protect-DEDataFolder {
+    <#
+        %ProgramData% inherits 'Users: create files': a standard user could plant state\exceptions.json or a client
+        profile that the elevated console later trusts. When elevated and the folder is the machine data folder, give
+        it an explicit ACL: SYSTEM and Administrators full control, nobody else. Done once (marker file).
+    #>
+    param([Parameter(Mandatory = $true)][string]$Path)
+    if (-not $script:DE.IsWindows -or -not $env:ProgramData -or -not $Path.StartsWith($env:ProgramData, [StringComparison]::OrdinalIgnoreCase)) { return }
+    if (-not (Test-DEIsElevated)) { return }
+    $marker = Join-Path $Path '.acl-v1'
+    if (Test-Path -LiteralPath $marker) { return }
+    $r = Invoke-DENative -FilePath 'icacls.exe' -Arguments @($Path, '/inheritance:r', '/grant:r', '*S-1-5-18:(OI)(CI)F', '*S-1-5-32-544:(OI)(CI)F', '/T', '/C', '/Q')
+    if ($r.ExitCode -eq 0) { [IO.File]::WriteAllText($marker, (Get-Date).ToString('o')) } else { Write-DELog -Level WARN -Message "data folder ACL not set (icacls exit $($r.ExitCode))" }
+}
 function Get-DEConsole { return $script:DE }
 function Set-DEMode { param([ValidateSet('Audit', 'Apply')][string]$Mode, [switch]$DryRun) $script:DE.Mode = $Mode; $script:DE.DryRun = [bool]$DryRun }
 function Set-DEContext {
@@ -547,11 +562,28 @@ function Clear-DERebootQueueIfRestarted {
     return $left
 }
 function Set-DEResume {
-    <# Registers the console to reopen after the next sign-in (HKLM RunOnce when elevated, else HKCU) and records who should sign in. #>
+    <#
+        Registers the console to reopen after the restart and records who should sign in.
+        Elevated: a scheduled task. Interactive resume triggers at ANY user's logon (HKLM RunOnce only runs for an
+        administrator's logon, so after migration a standard user's first sign-in would never resume); the launcher
+        then asks UAC for the technician. Headless resume (-Headless in the arguments) runs as SYSTEM at startup.
+        Not elevated, or if Task Scheduler is unavailable: RunOnce as before.
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param([Parameter(Mandatory = $true)][string]$Launcher, [string]$NextAction = '', [string]$LoginAs = '', [string]$Arguments = '-Resume')
     Set-DEStateValue -Path 'resume' -Value @{ nextAction = $NextAction; loginAs = $LoginAs; set = (Get-Date).ToString('o'); launcher = $Launcher }
     if (-not $script:DE.IsWindows) { return }
+    if ((Test-DEIsElevated) -and $PSCmdlet.ShouldProcess('\DE\DETechConsoleResume', 'register resume task')) {
+        try {
+            $headless = ($Arguments -match '(^|\s)-Headless(\s|$)')
+            $action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument $(if ($headless) { "/c `"`"$Launcher`" $Arguments`"" } else { "/c start `"DE`" `"$Launcher`" $Arguments" })
+            $trigger = $(if ($headless) { New-ScheduledTaskTrigger -AtStartup } else { New-ScheduledTaskTrigger -AtLogOn })
+            $principal = $(if ($headless) { New-ScheduledTaskPrincipal -UserId 'S-1-5-18' -RunLevel Highest } else { New-ScheduledTaskPrincipal -GroupId 'S-1-5-32-545' -RunLevel Highest })
+            $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero) -StartWhenAvailable
+            $null = Register-ScheduledTask -TaskName 'DETechConsoleResume' -TaskPath '\DE\' -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force -ErrorAction Stop
+            return
+        } catch { Write-DELog -Level WARN -Message "resume task not registered ($($_.Exception.Message)); using RunOnce" }
+    }
     $hive = if (Test-DEIsElevated) { 'HKLM:' } else { 'HKCU:' }
     $key = "$hive\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
     if ($PSCmdlet.ShouldProcess($key, 'Register DETechConsole resume')) {
@@ -563,7 +595,10 @@ function Set-DEResume {
 function Clear-DEResume {
     Set-DEStateValue -Path 'resume' -Value $null
     Set-DEStateValue -Path 'reboot.pending' -Value @()
-    if ($script:DE.IsWindows) { foreach ($hive in @('HKLM:', 'HKCU:')) { try { Remove-ItemProperty -Path "$hive\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" -Name 'DETechConsoleResume' -ErrorAction SilentlyContinue } catch { } } }
+    if ($script:DE.IsWindows) {
+        foreach ($hive in @('HKLM:', 'HKCU:')) { try { Remove-ItemProperty -Path "$hive\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" -Name 'DETechConsoleResume' -ErrorAction SilentlyContinue } catch { } }
+        try { Unregister-ScheduledTask -TaskName 'DETechConsoleResume' -TaskPath '\DE\' -Confirm:$false -ErrorAction SilentlyContinue } catch { }
+    }
 }
 function Get-DEResume { return (Get-DEState -Path 'resume') }
 function Invoke-DERestart {
@@ -774,7 +809,7 @@ function Backup-DERegistryKey {
     param([Parameter(Mandatory = $true)][string]$Key, [string]$Label = 'key')
     if (-not $script:DE.IsWindows) { return $null }
     $file = Join-Path $script:DE.Dirs.Backups ("{0}-{1}.reg" -f ($Label -replace '[^\w\-]', '_'), (Get-Date -Format 'yyyyMMdd-HHmmss'))
-    $r = Invoke-DENative -FilePath 'reg.exe' -Arguments @('export', $Key, $file, '/y')
+    $r = Invoke-DENative -FilePath 'reg.exe' -Arguments @('export', $Key, $file, '/y', '/reg:64')
     if ($r.ExitCode -eq 0) { return $file }
     return $null
 }

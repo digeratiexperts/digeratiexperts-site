@@ -209,6 +209,7 @@ function Test-DEMigrationPreconditions {
     param([Parameter(Mandatory = $true)][string]$SourcePrincipal, [Parameter(Mandatory = $true)][string]$LocalUserName)
     $id = Get-DEIdentityState
     $issues = @(); $warnings = @()
+    if (Get-Command -Name 'Clear-DEStaleUserHives' -ErrorAction SilentlyContinue) { $stuck = @(Clear-DEStaleUserHives); if ($stuck.Count) { $issues += "user hive(s) still loaded by DE Tech Tool ($($stuck -join ', ')); restart Windows before migrating" } }
     if ($id.joinType -notin @('entra-joined', 'hybrid-entra-joined', 'entra-registered')) { $warnings += "device is $($id.joinType); ADMU migration targets Entra-joined devices" }
     if ($id.interactiveUser -and $id.interactiveUser -ieq $SourcePrincipal) { $issues += 'source user is signed in; sign out and run from the break-glass or technician session' }
     if (@($id.localUsers | Where-Object { $_ -and $_.name -ieq $LocalUserName }).Count) { $issues += "local account '$LocalUserName' already exists (username collision); pick another name or remove the stale account after confirming it owns no data" }
