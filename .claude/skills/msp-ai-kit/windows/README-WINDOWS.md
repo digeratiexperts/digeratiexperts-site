@@ -50,11 +50,20 @@ build the AI packs, and the AI Toolkit page offers to install it for the current
    local account `sthompson`.
 4. **Pick a plan and a mode.** The plan is a ProActive tier, a variant (GCC High, Co-Managed IT), or a
    standalone solution; the client profile's `plan` section is the default. The modes are audit, new,
-   dropship, takeover, replacement, repair, co-managed and deprovision. After discovery, the Dashboard
-   recommends a mode with its reasons (for example "another MDM manages this device (intune)" means
-   takeover); the technician decides.
-5. **The Guided workflow page always shows the next action and why.** Actions run in phases. Each
-   action waits for its gates, and a closed gate names the step that opens it.
+   dropship, takeover, replacement, repair, co-managed and deprovision. After the scan the tool recommends
+   a mode with its reasons (for example "another MDM manages this device (intune)" means takeover, and a
+   device at OOBE means new); the technician decides.
+5. **Scan & fix is the main page.** When the tool opens it scans every category without changing anything,
+   and says where the device is in its life: OOBE (machine settings now, user settings after the first
+   sign-in), after first sign-in, or configured. The results are grouped into stages in the order the work
+   is done: check, protect, migrate, leave Microsoft, JumpCloud, security, updates, apps, hardening and
+   browser, sign-off (`catalog\runbook.json`). Every item has a checkbox. Items that can be fixed now are
+   pre-ticked, and destructive ones are never pre-ticked. The buttons under the list act on the ticked
+   items, in job order: Fix selected, Check selected, Skip, Undo, and Scan again. A large switch shows
+   **PLAN ONLY** (nothing changes) or **LIVE**. Click an item to see why it matters, what the scan found,
+   what it is waiting on and how to unlock it, with its inputs right there: user mapping, runtime
+   secrets, the BitLocker protector and escrow, and the break-glass and OneDrive confirmations. The
+   module pages are still available under Advanced.
 6. **Restarts resume.** A step that needs a restart registers the console to reopen after sign-in and
    continue where it stopped. Headless runs stop at a queued restart (`RESULT: RESTART REQUIRED`, exit 1)
    instead of applying later phases on top of it; run the same command again after the restart. An

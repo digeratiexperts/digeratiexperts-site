@@ -26,8 +26,8 @@
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
-    [ValidateSet('Dashboard', 'Workflow', 'Discovery', 'Identity', 'Security', 'Apps', 'Browser', 'Baseline', 'Branding', 'Network', 'Vendors', 'AiToolkit', 'Evidence', 'Settings')]
-    [string]$Page = 'Dashboard',
+    [ValidateSet('Scan', 'Dashboard', 'Workflow', 'Discovery', 'Identity', 'Security', 'Apps', 'Browser', 'Baseline', 'Branding', 'Network', 'Vendors', 'AiToolkit', 'Evidence', 'Settings')]
+    [string]$Page = 'Scan',
     [switch]$Resume,
     [switch]$Headless,
     [string]$Client,
@@ -538,13 +538,231 @@ function Show-ExceptionDialog {
     try { $null = Add-DEException -Target $Target -Reason $reason -Approver $approver -ExpiresOn (Get-Date).AddDays([int]$days) -Remediation $fix; Reset-DEGateCache; Show-Page $S.CurrentPage } catch { Set-Status $_.Exception.Message }
 }
 
+# ============================================================== scan & fix (the main page)
+# Launch scans every category without changing anything; the technician ticks what to act on and the buttons below
+# the list act on the ticked items, in job order. The detail panel explains the focused item and takes its inputs.
+$S.Selected = @{}; $S.Focus = $null; $S.ScanDone = $false; $S.ModeChosen = $false; $S.Lifecycle = $null; $S.RecommendedReason = ''
+$DoneStates = @('PASS', 'NO CHANGE', 'EXCEPTION', 'SKIPPED', 'READY')
+
+function Start-DEScan {
+    <# Full discovery, client and mode detection, then a read-only check of every category. Changes nothing. #>
+    Start-DEJob -Label 'Scanning the device (changes nothing)' -Work {
+        $snap = Get-DEDiscoverySnapshot -SkipUpdates
+        Set-DEStateValue -Path 'lastSnapshotAt' -Value (Get-Date).ToString('o')
+        $snap
+    } -OnDone {
+        param($r)
+        $S.Snapshot = $r['out']
+        $S.Lifecycle = Get-DEDeviceLifecycle -Snapshot $S.Snapshot
+        if (-not $S.Profile) { $match = Resolve-DEClientContext -Snapshot $S.Snapshot; if ($match.best) { $S.Profile = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $match.best.id); $UI.HdrClientWhy.Text = "detected ($($match.confidence)): $($match.best.reasons -join '; ')" } }
+        if (-not $S.Profile) { Update-Header; Show-Page 'Scan'; Set-Status 'Scan finished. Pick the client so every category is checked against its plan.'; return }
+        if (-not $S.ModeChosen) { $rec = Get-DERecommendedMode -Snapshot $S.Snapshot -ClientProfile $S.Profile; $S.Mode = $rec.mode; $S.RecommendedReason = $rec.reason }
+        $null = New-DEProvisioningContext -Snapshot $S.Snapshot -ClientId $S.Profile.id -Mode $S.Mode -Technician $Settings.technician
+        $null = Initialize-DEWorkflow -ClientProfile $S.Profile -Mode $S.Mode
+        Start-DEAuditAll
+    }
+}
+function Start-DEAuditAll {
+    <# Re-checks every step of the loaded plan (read-only) and refreshes the list. #>
+    if (-not $S.Profile) { Set-Status 'Pick the client first.'; return }
+    Start-DEJob -Label "Checking every category ($($S.Mode), changes nothing)" -Work { $null = Invoke-DEAudit -Mode $JobMode } -OnDone { param($r) $S.ScanDone = $true; Select-DEScanDefaults; Show-Page 'Scan' }
+}
+function Select-DEScanDefaults {
+    <# Pre-ticks what can be fixed now: not in the desired state, has an automatic fix, not destructive (those stay an explicit choice). #>
+    $S.Selected = @{}
+    $rb = Get-DERunbook -Mode $S.Mode
+    foreach ($st in @($rb.stages)) { foreach ($x in @($st.steps)) { if (-not $x.done -and $x.state -ne 'NOT RUN' -and $x.runnable -and -not $x.destructive) { $S.Selected[$x.id] = $true } } }
+    if (-not $S.Focus -and $rb.current) { $S.Focus = $rb.current.id }
+}
+function Get-DESelectedInOrder { $rb = Get-DERunbook -Mode $S.Mode; return @($rb.stages | ForEach-Object { $_.steps } | Where-Object { $S.Selected[$_.id] }) }
+function Invoke-DEScanBatch {
+    <# Runs the ticked items in job order as one background job. Stops before the next item when a restart is queued. #>
+    param([ValidateSet('Apply', 'Audit', 'Rollback')][string]$How)
+    $items = @(Get-DESelectedInOrder)
+    if (-not $items.Count) { Set-Status 'Tick at least one item first.'; return }
+    $live = -not (Get-DEConsole).DryRun
+    if ($How -eq 'Apply') {
+        $destr = @($items | Where-Object { $_.destructive } | ForEach-Object { " - $($_.title)" })
+        $msg = "{0} {1} item(s), in this order:`n`n{2}{3}" -f $(if ($live) { 'LIVE: change' } else { 'PLAN ONLY: plan (nothing changes)' }), $items.Count, ((@($items | Select-Object -First 25 | ForEach-Object { " - $($_.title)" })) -join "`n"), $(if ($destr.Count -and $live) { "`n`nThese change identity or remove software:`n$($destr -join "`n")" } else { '' })
+        if (-not (Confirm-Gui $(if ($live) { 'Make these changes?' } else { 'Plan these changes?' }) $msg)) { return }
+    }
+    if ($How -eq 'Rollback' -and -not (Confirm-Gui 'Undo?' ("Undo {0} item(s)? Each rollback reports whether it proved the undo." -f $items.Count))) { return }
+    $ids = @($items | ForEach-Object { $_.id })
+    Start-DEJob -Label $(switch ($How) { 'Apply' { if ($live) { "Fixing $($ids.Count) item(s)" } else { "Planning $($ids.Count) item(s)" } } 'Audit' { "Checking $($ids.Count) item(s)" } default { "Undoing $($ids.Count) item(s)" } }) -Params @{ ids = $ids; how = $How } -Work {
+        $done = 0
+        foreach ($i in $JobParams.ids) {
+            if ($JobParams.how -eq 'Apply' -and @(Get-DERebootQueue).Count) { Write-DELog -Level WARN -Message "stopped before $i : a restart is queued; restart, then run the rest"; break }
+            if ($JobParams.how -eq 'Rollback') { $null = Invoke-DERollback -Id $i } else { $null = Invoke-DEAction -Id $i -Mode $JobParams.how }
+            $done++
+        }
+        "$done of $($JobParams.ids.Count) done"
+    } -OnDone { param($r) Reset-DEGateCache; Show-Page 'Scan'; if (@(Get-DERebootQueue).Count) { Set-Status 'A restart is queued: restart the device (the tool reopens where it stopped), then continue.' } }
+}
+function New-StateText { param([string]$State, [double]$Width = 104) $t = New-El TextBlock @{ Text = $(if ($State -eq 'NOT RUN') { 'NOT CHECKED' } else { $State }); Width = $Width; FontWeight = 'SemiBold'; VerticalAlignment = 'Top'; Margin = '0,1,8,0' }; $t.Foreground = Get-StateBrush $State; return $t }
+function New-ModeSwitch {
+    <# One big switch: PLAN ONLY (nothing changes) or LIVE (changes are made). Going live asks first. #>
+    $live = -not (Get-DEConsole).DryRun
+    $b = New-El Button @{ Style = $(if ($live) { 'Primary' } else { 'Btn' }); Padding = '14,9'; Content = $(if ($live) { 'LIVE: changes will be made   (switch to plan only)' } else { 'PLAN ONLY: nothing will change   (switch to live)' }) }
+    [System.Windows.Automation.AutomationProperties]::SetName($b, $(if ($live) { 'Live mode is on; switch to plan only' } else { 'Plan only is on; switch to live' }))
+    if (-not $live) { $b.BorderBrush = Get-Brush 'Lavender'; $b.BorderThickness = 2 }
+    $b.Add_Click({ Invoke-GuiSafely -Label 'mode switch' -Action {
+                $isLive = -not (Get-DEConsole).DryRun
+                if (-not $isLive -and -not (Confirm-Gui 'Go live?' 'Fix selected will now change this device. Destructive steps still ask first. Continue?')) { return }
+                $Settings.dryRun = $isLive; Save-GuiSettings; Set-DEMode -Mode $(if ($isLive) { 'Audit' } else { 'Apply' }) -DryRun:$isLive
+                Show-Page 'Scan'; Set-Status $(if ($isLive) { 'Plan only: nothing will change.' } else { 'LIVE: Fix selected changes this device.' })
+            } })
+    return $b
+}
+function Update-ScanDetail {
+    <# The right-hand panel for the focused item: what it is, why it matters, what the scan found, what it waits on, and its inputs. #>
+    if (-not $S.DetailHost) { return }
+    $rb = Get-DERunbook -Mode $S.Mode
+    $x = @($rb.stages | ForEach-Object { $_.steps } | Where-Object { $_.id -eq $S.Focus }) | Select-Object -First 1
+    $sp = New-El StackPanel
+    if (-not $x) { [void]$sp.Children.Add((New-Text 'Click an item to see what it does, why, and what it is waiting on.' -Muted -Wrap)); $S.DetailHost.Content = $sp; return }
+    $stage = @($rb.stages | Where-Object { $_.id -eq $x.stage }) | Select-Object -First 1
+    [void]$sp.Children.Add((New-Label "Stage $($stage.number): $($stage.title)"))
+    [void]$sp.Children.Add((New-Text $x.title 16 -Bold -Wrap))
+    $row = New-El WrapPanel @{ Margin = '0,4,0,8' }; [void]$row.Children.Add((New-StateText $x.state 130)); if ($x.destructive) { [void]$row.Children.Add((New-El TextBlock @{ Text = 'changes identity or removes software'; Style = 'Mono' })) }; [void]$sp.Children.Add($row)
+    if ($x.why) { [void]$sp.Children.Add((New-Label 'Why it matters')); [void]$sp.Children.Add((New-Text $x.why -Wrap)) }
+    if ($x.detail) { [void]$sp.Children.Add((New-Label 'What the scan found')); [void]$sp.Children.Add((New-Text $x.detail -Wrap -Muted)) }
+    if (@($x.blockers).Count) {
+        [void]$sp.Children.Add((New-Label 'Waiting on'))
+        foreach ($g in @($x.blockers)) { $t = New-Text ("{0} ({1}): {2}" -f $g.title, $g.status, $g.detail) -Wrap; $t.Foreground = Get-StateBrush $g.status; [void]$sp.Children.Add($t); if ($g.unblock) { [void]$sp.Children.Add((New-Text "How: $($g.unblock)" -Wrap -Muted)) } }
+    }
+    if ($x.manual -and -not $x.done) { [void]$sp.Children.Add((New-Label 'By hand')); [void]$sp.Children.Add((New-Text $x.manual -Wrap)) }
+    # inputs the step needs, right here
+    foreach ($n in @($x.secretsMissing)) {
+        $pb = New-El PasswordBox @{ Width = 260; Name = $n }; $name = $n
+        [void]$sp.Children.Add((New-Label "Needs $n (kept in memory for this session only)"))
+        [void]$sp.Children.Add((New-Wrap @($pb, (New-Button 'Set' { if ($pb.SecurePassword.Length -gt 0) { Set-DESecret -Name $name -SecureValue $pb.SecurePassword.Copy(); $pb.Clear(); Reset-DEGateCache; Update-ScanDetail; Set-Status "$name set for this session." } }.GetNewClosure()))))
+    }
+    if ($x.inputs -contains 'mapping') {
+        $ctx = Get-DEContext
+        $tbS = New-El TextBox @{ Text = "$($ctx['sourcePrincipal'])"; Width = 240; Name = 'Source principal' }; $tbL = New-El TextBox @{ Text = "$($ctx['localUserName'])"; Width = 160; Name = 'Local user' }; $tbJ = New-El TextBox @{ Text = "$($ctx['jumpcloudUser'])"; Width = 160; Name = 'JumpCloud user' }
+        [void]$sp.Children.Add((New-Label 'User mapping (source Windows account, new local account, JumpCloud username)'))
+        [void]$sp.Children.Add((New-Wrap @($tbS, $tbL, $tbJ, (New-Button 'Save mapping' { Set-DEContext -Values @{ sourcePrincipal = $tbS.Text; localUserName = $tbL.Text; jumpcloudUser = $(if ($tbJ.Text) { $tbJ.Text } else { $tbL.Text }) }; Reset-DEGateCache; Update-Header; Show-Page 'Scan'; Set-Status 'Mapping saved.' }.GetNewClosure() -Primary))))
+        if ($x.needsMapping) { [void]$sp.Children.Add((New-Text 'The local name must match the JumpCloud username exactly (20 characters at most).' -Muted -Wrap)) }
+    }
+    if ($x.inputs -contains 'bitlocker-escrow') {
+        $ids = @(Get-DEHashPath -Object $S.Snapshot -Path 'bitlocker.os.recoveryProtectorIds' | Where-Object { $_ })
+        $cbId = New-El ComboBox @{ Width = 330; Name = 'Recovery protector id' }; foreach ($i in $ids) { [void]$cbId.Items.Add("$i") }; if ($ids.Count) { $cbId.SelectedIndex = 0 }
+        $cbLoc = New-El ComboBox @{ Width = 120; Name = 'Escrowed in' }; foreach ($l in @('jumpcloud', 'hudu', 'itglue', 'vault', 'entra', 'other')) { [void]$cbLoc.Items.Add($l) }; $cbLoc.SelectedIndex = 0
+        [void]$sp.Children.Add((New-Label 'BitLocker: the protector id on this disk, and where its key is escrowed (never the password)'))
+        [void]$sp.Children.Add((New-Wrap @($cbId, $cbLoc, (New-Button 'Record' { if ($cbId.SelectedItem) { Set-DEBitLockerExpectedProtector -ProtectorId "$($cbId.SelectedItem)" -Location "$($cbLoc.SelectedItem)" -Technician $Settings.technician; Reset-DEGateCache; Show-Page 'Scan' } }.GetNewClosure()), (New-Button 'Back up and prove now' { Start-DEJob -Label 'Back up the BitLocker recovery key' -Work { Invoke-DEAction -Id 'identity.bitlocker-backup' -Mode Apply } -OnDone { param($r) Reset-DEGateCache; Show-Page 'Scan' } }))))
+    }
+    if ($x.inputs -contains 'confirm:breakglass') { [void]$sp.Children.Add((New-Button 'I signed in as .\DE-BreakGlass: verify it' { if (-not (Test-DESecret -Name 'BREAKGLASS_PASSWORD')) { Set-Status 'Set BREAKGLASS_PASSWORD first.'; return }; $null = Confirm-DEBreakGlassVerified -Technician $Settings.technician; Reset-DEGateCache; Show-Page 'Scan' })) }
+    if ($x.inputs -contains 'confirm:onedrive') { [void]$sp.Children.Add((New-Button "OneDrive shows 'Up to date' and sync is paused" { Confirm-DEOneDriveSynced; Reset-DEGateCache; Show-Page 'Scan' })) }
+    if ($x.inputs -contains 'accept-profiles') { [void]$sp.Children.Add((New-Button 'Accept leftover profiles...' { $left = @(Get-DEUnmigratedDomainProfiles); if (-not $left.Count) { Set-Status 'No unmigrated Entra or domain profiles.'; return }; if (Confirm-Gui 'Leave these behind?' ("Nobody can sign in to these after the device leaves Microsoft:`n`n{0}`n`nOnly accept profiles nobody needs." -f (($left | ForEach-Object { $_.path }) -join "`n"))) { Confirm-DEStrandedProfilesAccepted -Paths @($left | ForEach-Object { $_.path }) -Technician $Settings.technician; Reset-DEGateCache; Show-Page 'Scan' } })) }
+    # this item alone
+    $id = $x.id
+    [void]$sp.Children.Add((New-Label 'This item'))
+    [void]$sp.Children.Add((New-Wrap @(
+                (New-Button $(if ((Get-DEConsole).DryRun) { 'Plan this' } else { 'Fix this' }) { $S.Selected = @{ $id = $true }; Invoke-DEScanBatch -How Apply }.GetNewClosure() -Primary),
+                (New-Button 'Check this' { $S.Selected = @{ $id = $true }; Invoke-DEScanBatch -How Audit }.GetNewClosure()),
+                (New-Button 'Skip...' { $why = Read-GuiText 'Skip' "Why is '$($x.title)' skipped?"; if ($why) { $null = Invoke-DEAction -Id $id -SkipReason $why; Show-Page 'Scan' } }.GetNewClosure()),
+                (New-Button 'Exception...' { Show-ExceptionDialog -Target $id }.GetNewClosure()),
+                $(if ((Get-DEAction -Id $id).Rollback) { New-Button 'Undo' { $S.Selected = @{ $id = $true }; Invoke-DEScanBatch -How Rollback }.GetNewClosure() })
+            )))
+    $S.DetailHost.Content = $sp
+}
+function Build-Scan {
+    <# Returns the whole page (it lays out its own scrolling: list and detail scroll separately, the button bar stays put). #>
+    $page = New-Object System.Windows.Controls.Grid
+    foreach ($h in @('Auto', '*', 'Auto')) { $rd = New-Object System.Windows.Controls.RowDefinition; $rd.Height = $(if ($h -eq '*') { New-Object System.Windows.GridLength(1, 'Star') } else { [System.Windows.GridLength]::Auto }); $page.RowDefinitions.Add($rd) }
+    # --- top: device state, client, plan, mode, plan-only/live
+    $profiles = @(Get-DEClientProfiles)
+    $cbClient = New-El ComboBox @{ Name = 'Client'; Width = 250 }; foreach ($p in $profiles) { [void]$cbClient.Items.Add("$($p.name)") }; if ($S.Profile) { $cbClient.SelectedIndex = [array]::IndexOf(@($profiles | ForEach-Object { $_.id }), $S.Profile.id) }
+    $plans = @([pscustomobject]@{ label = 'Client profile default'; bundle = ''; solution = '' }); foreach ($b in @(Get-DEBundles)) { $plans += [pscustomobject]@{ label = $b['name']; bundle = $b['id']; solution = '' } }; foreach ($so in @(Get-DESolutions)) { $plans += [pscustomobject]@{ label = "Standalone: $($so['name'])"; bundle = ''; solution = $so['id'] } }
+    $cbPlan = New-El ComboBox @{ Name = 'Plan'; Width = 250 }; foreach ($pl in $plans) { [void]$cbPlan.Items.Add($pl.label) }; $cbPlan.SelectedIndex = 0
+    if ($S.Profile -and $S.Profile.plan) { for ($i = 0; $i -lt $plans.Count; $i++) { if (($plans[$i].bundle -and $plans[$i].bundle -eq "$($S.Profile.plan.bundle)") -or ($plans[$i].solution -and -not $S.Profile.plan.bundle -and @($S.Profile.plan.solutions) -contains $plans[$i].solution)) { $cbPlan.SelectedIndex = $i; break } } }
+    $modes = Get-DEModes; $cbMode = New-El ComboBox @{ Name = 'Mode'; Width = 200 }; foreach ($k in $modes.Keys) { [void]$cbMode.Items.Add($modes[$k].title) }; $cbMode.SelectedIndex = [array]::IndexOf(@($modes.Keys), $S.Mode)
+    $load = New-Button 'Load and check' {
+        if ($cbClient.SelectedIndex -lt 0) { Set-Status 'Pick the client.'; return }
+        $pl = $plans[[Math]::Max(0, $cbPlan.SelectedIndex)]; $S.ModeChosen = $true
+        Use-ClientAndMode -ProfileId $profiles[$cbClient.SelectedIndex].id -Mode @((Get-DEModes).Keys)[[Math]::Max(0, $cbMode.SelectedIndex)] -Technician $Settings.technician -Bundle $pl.bundle -Solution @($pl.solution | Where-Object { $_ })
+        if ($S.Snapshot) { Start-DEAuditAll } else { Start-DEScan }
+    }.GetNewClosure() -Primary
+    $life = $S.Lifecycle
+    $lifeText = $(if ($life) { "Device: $($life.title). $($life.reasons -join '; ')" } else { 'Device: not scanned yet' })
+    $top = New-Card @(
+        (New-Wrap @((New-El StackPanel @{ Margin = '0,0,14,0' } @((New-Label 'Client'), $cbClient)), (New-El StackPanel @{ Margin = '0,0,14,0' } @((New-Label 'Plan'), $cbPlan)), (New-El StackPanel @{ Margin = '0,0,14,0' } @((New-Label 'Mode'), $cbMode)), (New-El StackPanel @{ Margin = '0,18,14,0' } @($load)), (New-El StackPanel @{ Margin = '0,18,0,0' } @((New-ModeSwitch))))),
+        (New-Text $lifeText -Wrap),
+        $(if ($S.RecommendedReason) { New-Text "Mode $($modes[$S.Mode].title) recommended: $($S.RecommendedReason)" -Muted -Wrap }),
+        $(if ($life -and $life.stage -eq 'oobe') { New-Wrap @((New-Text 'At OOBE: machine-wide items can run now; items that need the user wait for the first sign-in.' -Muted -Wrap), (New-Button 'Continue after first sign-in' { Set-DEResume -Launcher (Get-LauncherPath) -NextAction $null -LoginAs ''; Set-Status 'The tool reopens after the next sign-in and continues.' })) })
+    ) -Margin '0,0,0,10'
+    [System.Windows.Controls.Grid]::SetRow($top, 0); [void]$page.Children.Add($top)
+    # --- middle: the list (left) and the focused item (right)
+    $mid = New-Object System.Windows.Controls.Grid
+    $c1 = New-Object System.Windows.Controls.ColumnDefinition; $c1.Width = New-Object System.Windows.GridLength(1, 'Star'); $c2 = New-Object System.Windows.Controls.ColumnDefinition; $c2.Width = New-Object System.Windows.GridLength(430); $mid.ColumnDefinitions.Add($c1); $mid.ColumnDefinitions.Add($c2)
+    $list = New-El StackPanel
+    $S.RowBorders = @{}; $S.RowChecks = @{}
+    if (-not $S.Profile) {
+        [void]$list.Children.Add((New-Card @((New-Text 'Pick the client above and press Load and check.' 15 -Bold), (New-Text 'The device scan runs on its own when the tool opens; every category is then checked against the client''s plan. Nothing changes until you tick items, go LIVE and press Fix selected.' -Muted -Wrap))))
+    } else {
+        $rb = Get-DERunbook -Mode $S.Mode
+        $attention = @($rb.stages | ForEach-Object { $_.steps } | Where-Object { -not $_.done -and $_.state -ne 'NOT RUN' }).Count
+        [void]$list.Children.Add((New-Text ("{0} of {1} in the desired state; {2} need attention; {3} not checked yet.{4}" -f $rb.done, $rb.total, $attention, $rb.notRun, $(if (-not $S.ScanDone -and $rb.notRun) { ' Press Scan again to check everything.' } else { '' })) -Wrap))
+        foreach ($st in @($rb.stages)) {
+            $stageIds = @($st.steps | ForEach-Object { $_.id })
+            $hdrCb = New-El CheckBox @{ VerticalAlignment = 'Center'; Margin = '0,0,8,0' }; [System.Windows.Automation.AutomationProperties]::SetName($hdrCb, "Tick every item in stage $($st.number)")
+            $hdrCb.IsChecked = (@($stageIds | Where-Object { $S.Selected[$_] }).Count -eq $stageIds.Count)
+            $hdrCb.Add_Click({ param($src, $e) foreach ($i in $stageIds) { if ($src.IsChecked) { $S.Selected[$i] = $true } else { $S.Selected.Remove($i) }; if ($S.RowChecks[$i]) { $S.RowChecks[$i].IsChecked = [bool]$src.IsChecked } }; if ($S.SelCount) { $S.SelCount.Text = "$(@($S.Selected.Keys).Count) ticked" } }.GetNewClosure())
+            $hdrText = New-Text ("{0}. {1}   {2}/{3}" -f $st.number, $st.title, $st.done, $st.total) 15 -Bold; $hdrText.Foreground = $(if ($st.state -eq 'done') { Get-Brush 'Pass' } elseif ($st.state -eq 'current') { Get-Brush 'Paper' } else { Get-Brush 'Muted' })
+            $items = New-El StackPanel @{ Margin = '26,4,0,0' }
+            foreach ($x in @($st.steps)) {
+                $sid = $x.id
+                $cb = New-El CheckBox @{ VerticalAlignment = 'Top'; Margin = '0,2,8,0'; IsChecked = [bool]$S.Selected[$sid] }; [System.Windows.Automation.AutomationProperties]::SetName($cb, "Tick $($x.title)")
+                $cb.Add_Click({ param($src, $e) if ($src.IsChecked) { $S.Selected[$sid] = $true } else { $S.Selected.Remove($sid) }; if ($S.SelCount) { $S.SelCount.Text = "$(@($S.Selected.Keys).Count) ticked" } }.GetNewClosure())
+                $txt = New-El StackPanel
+                [void]$txt.Children.Add((New-Text $x.title -Bold -Wrap))
+                $sub = @(); if ($x.detail -and -not $x.done) { $sub += $x.detail }; if (@($x.blockers).Count) { $sub += 'waiting on: ' + ((@($x.blockers) | ForEach-Object { $_.title }) -join ', ') }; if (@($x.secretsMissing).Count) { $sub += 'needs ' + ($x.secretsMissing -join ', ') }; if ($x.needsMapping) { $sub += 'needs the user mapping' }
+                if ($sub.Count) { $d = New-Text ($sub -join ' · ') -Muted; $d.TextTrimming = 'CharacterEllipsis'; [void]$txt.Children.Add($d) }
+                $rowGrid = New-El DockPanel; [void]$rowGrid.Children.Add($cb); [System.Windows.Controls.DockPanel]::SetDock($cb, 'Left'); $stt = New-StateText $x.state; [void]$rowGrid.Children.Add($stt); [System.Windows.Controls.DockPanel]::SetDock($stt, 'Left'); [void]$rowGrid.Children.Add($txt)
+                $rowB = New-Object System.Windows.Controls.Border; $rowB.Padding = '8,6'; $rowB.CornerRadius = New-Object System.Windows.CornerRadius(8); $rowB.Cursor = [System.Windows.Input.Cursors]::Hand; $rowB.Child = $rowGrid; $rowB.BorderThickness = 1; $rowB.BorderBrush = [System.Windows.Media.Brushes]::Transparent; $rowB.Background = [System.Windows.Media.Brushes]::Transparent
+                if ($S.Focus -eq $sid) { $rowB.Background = Get-Brush 'RaisedHover'; $rowB.BorderBrush = Get-Brush 'Lavender' }
+                $S.RowBorders[$sid] = $rowB; $S.RowChecks[$sid] = $cb
+                # focusing a row only swaps the highlight and the detail panel: the list keeps its scroll position
+                $rowB.Add_MouseLeftButtonUp({ $old = $S.RowBorders[$S.Focus]; if ($old) { $old.Background = [System.Windows.Media.Brushes]::Transparent; $old.BorderBrush = [System.Windows.Media.Brushes]::Transparent }; $S.Focus = $sid; $me = $S.RowBorders[$sid]; if ($me) { $me.Background = Get-Brush 'RaisedHover'; $me.BorderBrush = Get-Brush 'Lavender' }; Update-ScanDetail }.GetNewClosure())
+                [void]$items.Children.Add($rowB)
+            }
+            $stageCard = New-Card @((New-El DockPanel @{} @($hdrCb, $hdrText)), (New-Text $st.purpose -Muted -Wrap), $items) -Margin '0,8,10,0'
+            [void]$list.Children.Add($stageCard)
+        }
+    }
+    $lsv = New-Object System.Windows.Controls.ScrollViewer; $lsv.VerticalScrollBarVisibility = 'Auto'; $lsv.Content = $list; [System.Windows.Controls.Grid]::SetColumn($lsv, 0); [void]$mid.Children.Add($lsv)
+    $S.DetailHost = New-El ContentControl
+    $dcard = New-Object System.Windows.Controls.Border; $dcard.Style = $Win.Resources['Card']; $dcard.Margin = '0,8,0,0'; $dsv = New-Object System.Windows.Controls.ScrollViewer; $dsv.VerticalScrollBarVisibility = 'Auto'; $dsv.Content = $S.DetailHost; $dcard.Child = $dsv
+    [System.Windows.Controls.Grid]::SetColumn($dcard, 1); [void]$mid.Children.Add($dcard)
+    [System.Windows.Controls.Grid]::SetRow($mid, 1); [void]$page.Children.Add($mid)
+    Update-ScanDetail
+    # --- bottom: what to do with the ticked items
+    $S.SelCount = New-El TextBlock @{ Text = "$(@($S.Selected.Keys).Count) ticked"; VerticalAlignment = 'Center'; Margin = '0,0,14,8'; FontWeight = 'SemiBold' }
+    $live = -not (Get-DEConsole).DryRun
+    $bar = New-Wrap @(
+        $S.SelCount,
+        (New-Button $(if ($live) { 'Fix selected' } else { 'Plan selected' }) { Invoke-DEScanBatch -How Apply } -Primary -A11y 'Act on the ticked items in job order'),
+        (New-Button 'Check selected' { Invoke-DEScanBatch -How Audit }),
+        (New-Button 'Skip selected...' { $items = @(Get-DESelectedInOrder); if (-not $items.Count) { return }; $why = Read-GuiText 'Skip' "Why are these $($items.Count) item(s) skipped?"; if ($why) { foreach ($it in $items) { $null = Invoke-DEAction -Id $it.id -SkipReason $why }; Show-Page 'Scan' } }),
+        (New-Button 'Undo selected' { Invoke-DEScanBatch -How Rollback }),
+        (New-Button 'Tick: needs attention' { Select-DEScanDefaults; Show-Page 'Scan' }),
+        (New-Button 'Untick all' { $S.Selected = @{}; Show-Page 'Scan' }),
+        (New-Button 'Scan again' { if ($S.Profile) { Start-DEScan } else { Start-DEScan } }),
+        (New-Button 'Export evidence' { Show-Page 'Evidence' })
+    )
+    $barB = New-Object System.Windows.Controls.Border; $barB.Style = $Win.Resources['Card']; $barB.Margin = '0,10,0,0'; $barB.Padding = '12,10,12,2'; $barB.Child = $bar
+    [System.Windows.Controls.Grid]::SetRow($barB, 2); [void]$page.Children.Add($barB)
+    return $page
+}
+
 # ============================================================== pages
 $Pages = [ordered]@{
-    Dashboard = 'Dashboard'; Workflow = 'Guided workflow'; Discovery = 'Discovery'; Identity = 'Identity & migration'; Security = 'Security'; Apps = 'Applications'
+    Scan = 'Scan & fix'; Dashboard = 'Session & readiness'; Discovery = 'Discovery'; Identity = 'Identity & migration'; Security = 'Security'; Apps = 'Applications'
     Browser = 'Browser configurator'; Baseline = 'OS baseline'; Branding = 'Branding'; Network = 'Network & site'; Vendors = 'Vendor Admin Center'; AiToolkit = 'AI Toolkit'; Evidence = 'Evidence & Hub'; Settings = 'Settings & secrets'
 }
 $NavButtons = @{}
 foreach ($k in $Pages.Keys) {
+    if ($k -eq 'Dashboard') { [void]$UI.NavPanel.Children.Add((New-El TextBlock @{ Text = 'Advanced'; Style = 'Eyebrow'; Margin = '12,14,0,4' })) }
     $rb = New-Object System.Windows.Controls.RadioButton; $rb.Style = $Win.Resources['Nav']; $rb.Content = $Pages[$k]; $rb.GroupName = 'nav'; $rb.Tag = $k
     [System.Windows.Automation.AutomationProperties]::SetName($rb, "Open $($Pages[$k])")
     $rb.Add_Checked({ param($src, $e) Show-Page $src.Tag })
@@ -553,9 +771,12 @@ foreach ($k in $Pages.Keys) {
 
 function Show-Page {
     param([string]$Name)
+    if ($Name -eq 'Workflow' -or -not $Pages.Contains($Name)) { $Name = 'Scan' }   # the guided workflow became Scan & fix
     $S.CurrentPage = $Name; $Settings.lastPage = $Name; Save-GuiSettings
     if (-not $NavButtons[$Name].IsChecked) { $NavButtons[$Name].IsChecked = $true; return }
     $S.LogBox = $null
+    if ($Name -eq 'Scan') { $UI.PageHost.Content = (Build-Scan); Update-Header; return }
+    $S.DetailHost = $null
     $sv = New-Object System.Windows.Controls.ScrollViewer; $sv.VerticalScrollBarVisibility = 'Auto'
     $root = New-El StackPanel
     $needsProfile = $Name -notin @('Dashboard', 'Discovery', 'Vendors', 'AiToolkit', 'Settings')
@@ -597,8 +818,8 @@ function Use-ClientAndMode {
     $ids = @(Initialize-DEWorkflow -ClientProfile $S.Profile -Mode $S.Mode)
     if ($S.Snapshot) { $null = New-DEProvisioningContext -Snapshot $S.Snapshot -ClientId $S.Profile.id -Mode $S.Mode -Technician $Settings.technician }
     $planName = $(if ($S.Profile.plan.bundleName) { $S.Profile.plan.bundleName } elseif (@($S.Profile.plan.solutions).Count) { 'standalone ' + (@($S.Profile.plan.solutions) -join ', ') } else { 'client profile' })
-    Set-Status ("Loaded {0}, {1} ({2}): {3} planned step(s). {4}" -f $S.Profile.name, $planName, $S.Mode, $ids.Count, $(if ($S.Snapshot) { 'Audit next to see what differs.' } else { 'Run discovery next.' }))
-    Show-Page 'Dashboard'
+    Set-Status ("Loaded {0}, {1} ({2}): {3} planned step(s)." -f $S.Profile.name, $planName, $S.Mode, $ids.Count)
+    Show-Page $(if ($S.CurrentPage) { $S.CurrentPage } else { 'Scan' })
 }
 
 function Build-Dashboard {
@@ -890,6 +1111,13 @@ if ($SmokeTest) {
         if (-not @(Get-DEActions).Count) { $failed += 'discovery job: no workflow actions registered' }
         Start-DEJob -Label 'Full audit' -Work { $null = Invoke-DEAudit -Mode $JobMode }
         $e = Wait-SmokeJob 'audit job'; if ($e) { $failed += $e } else { Write-Host ("SMOKE PASS audit job ({0} evidence rows)" -f @(Get-DEEvidence).Count) }
+        # Scan & fix: the list builds from the runbook, rows and checkboxes exist, and a ticked batch runs through the job path
+        $S.ScanDone = $true; Select-DEScanDefaults; Show-Page 'Scan'
+        if (-not @($S.RowBorders.Keys).Count) { $failed += 'scan page: no rows' } else { Write-Host ("SMOKE PASS scan page ({0} rows, {1} pre-ticked)" -f @($S.RowBorders.Keys).Count, @($S.Selected.Keys).Count) }
+        $S.Selected = @{}; foreach ($i in @(@($S.RowBorders.Keys) | Select-Object -First 2)) { $S.Selected[$i] = $true }
+        Invoke-DEScanBatch -How Audit
+        $e = Wait-SmokeJob 'scan batch'; if ($e) { $failed += $e } else { Write-Host 'SMOKE PASS scan batch (check selected)' }
+        $S.Focus = @($S.RowBorders.Keys)[0]; Update-ScanDetail; if (-not $S.DetailHost.Content) { $failed += 'scan detail panel empty' } else { Write-Host 'SMOKE PASS scan detail panel' }
         # the plan picker: a standalone solution loads as not DE managed, then a ProActive tier for the page renders
         Use-ClientAndMode -ProfileId $SmokeClient -Mode 'new' -Technician $Settings.technician -Solution @('identity_access')
         if ($S.Profile.plan.managed -ne $false -or -not @(Get-DEActions -Mode 'new').Count) { $failed += 'standalone plan did not load' } else { Write-Host 'SMOKE PASS standalone plan' }
@@ -938,10 +1166,11 @@ $Win.Add_ContentRendered({
     }
     if (-not $Settings.technician) { $Settings.technician = 'jrpetro' }
     if ($Settings.client) { try { $S.Profile = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $Settings.client) -Bundle "$(Get-DEHashPath -Object $Settings -Path 'planBundle')" -Solution @(Get-DEHashPath -Object $Settings -Path 'planSolutions' | Where-Object { $_ }) } catch { } }
-    if ($Resume) { $r = Resume-DEWorkflow; Set-Status "Resumed after restart. Next: $(Get-DEHashPath -Object $r -Path 'nextAction')"; $S.CurrentPage = 'Workflow' }
+    if ($Resume) { $r = Resume-DEWorkflow; Set-Status "Resumed after restart. Next: $(Get-DEHashPath -Object $r -Path 'nextAction')"; $S.CurrentPage = 'Scan' }
     Show-Page $S.CurrentPage
     if ($Integrity.status -eq 'tampered') { Set-Status ('WARNING: console files changed after packaging; do not run changes from this copy. ' + (@($Integrity.problems | Select-Object -First 3) -join '; ')) }
     elseif ($Integrity.status -eq 'unsigned') { Set-Status 'Unsigned development build. Use the signed release for client work.' }
-    Invoke-Discovery -Quick
+    if ($S.Profile) { $S.ModeChosen = [bool]$Resume }   # a resumed job keeps its mode; a fresh start follows what the scan recommends
+    Start-DEScan   # every category is scanned on launch; nothing changes until the technician ticks items and goes live
 })
 $null = $Win.ShowDialog()
