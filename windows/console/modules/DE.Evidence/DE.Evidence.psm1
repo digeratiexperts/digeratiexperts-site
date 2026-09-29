@@ -198,7 +198,7 @@ function Convert-DEHtmlToPdf {
         $uri = ([Uri](Resolve-Path -LiteralPath $HtmlPath).Path).AbsoluteUri
         $profileDir = Join-Path ([IO.Path]::GetTempPath()) ("de-pdf-{0}" -f ([guid]::NewGuid()))
         $argList = @('--headless=new', '--disable-gpu', '--no-first-run', "--user-data-dir=`"$profileDir`"", '--no-pdf-header-footer', "--print-to-pdf=`"$PdfPath`"", $uri)
-        $p = Start-Process -FilePath $browser -ArgumentList $argList -PassThru -WindowStyle Hidden
+        $p = Start-Process -FilePath $browser -ArgumentList $argList -PassThru -WindowStyle Hidden -WhatIf:$false   # a local PDF of the report, part of the run's record
         if (-not $p.WaitForExit($TimeoutSeconds * 1000)) { try { $p.Kill() } catch { } }
         Remove-Item -LiteralPath $profileDir -Recurse -Force -ErrorAction SilentlyContinue -WhatIf:$false
         if (Test-Path -LiteralPath $PdfPath) { return $PdfPath }
