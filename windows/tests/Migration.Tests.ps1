@@ -268,6 +268,10 @@ Describe 'DE email migration' {
             $rec = Get-Content -LiteralPath $out -Raw | ConvertFrom-Json
             $rec.schema | Should -Be 'de.email-migration.record/v1'; @($rec.identityMap).Count | Should -Be 3; $rec.signoff.decision | Should -Be 'ApprovedWithExceptions'
             (Get-Content -LiteralPath $out -Raw) | Should -Not -Match 'wxyz|qrst|transactionIds'
+            # the Hub's intake refuses secret-looking keys ('mfa' among them): check names travel as values
+            @($rec.checks).Count | Should -Be 13; @($rec.checks | Where-Object { $_.check -eq 'MFA' }).Count | Should -Be 1
+            $rec.PSObject.Properties['verification'] | Should -BeNullOrEmpty
+            (Get-Content -LiteralPath $out -Raw) | Should -Not -Match '"[^"]*(?i:passw|secret|token|mfa|seed)[^"]*"\s*:'
         }
         It 'the PC scan runs anywhere and reports nothing when no mail app points at Gmail' {
             $r = Get-DEMailClientInventory -DeviceName 'TEST-PC'

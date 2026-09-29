@@ -19,7 +19,7 @@ $script:RecoveryShape = '(?<!\d)\d{6}([- ]?\d{6}){7}(?!\d)'   # dashes, spaces o
 
 function Get-DEContractsRoot { return $script:ContractsRoot }
 function Get-DEContractSchema {
-    param([Parameter(Mandatory = $true)][ValidateSet('device', 'order', 'handoff', 'warranty', 'job')][string]$Name)
+    param([Parameter(Mandatory = $true)][ValidateSet('device', 'order', 'handoff', 'warranty', 'job', 'migration')][string]$Name)
     return (Get-Content -LiteralPath (Join-Path $script:ContractsRoot "$Name.schema.json") -Raw -Encoding UTF8 | ConvertFrom-Json)
 }
 function Get-DEJsonKind {
@@ -89,7 +89,7 @@ function Find-DEContractSecrets {
 }
 function Test-DEContract {
     <# Problems with -Object against contract -Name; an empty list means valid. Secrets are always a problem. #>
-    param([Parameter(Mandatory = $true)][ValidateSet('device', 'order', 'handoff', 'warranty', 'job')][string]$Name, [Parameter(Mandatory = $true)]$Object)
+    param([Parameter(Mandatory = $true)][ValidateSet('device', 'order', 'handoff', 'warranty', 'job', 'migration')][string]$Name, [Parameter(Mandatory = $true)]$Object)
     # Round-trip so hashtables, ordered dictionaries and objects all validate the same way they will be read.
     $node = $Object | ConvertTo-Json -Depth 20 | ConvertFrom-Json
     $problems = @(Test-DEContractNode -Node $node -Schema (Get-DEContractSchema -Name $Name) -Path '$')
@@ -237,17 +237,17 @@ function Get-DEHubSignature {
 function New-DEHubEvent {
     <# The Hub's de-sync envelope (version 1, source techconsole). Payloads are checked against their contract and for secrets first. #>
     param(
-        [Parameter(Mandatory = $true)][ValidateSet('device.observed', 'device.rescue_handoff', 'device.warranty')][string]$EventType,
+        [Parameter(Mandatory = $true)][ValidateSet('device.observed', 'device.rescue_handoff', 'device.warranty', 'email_migration.recorded')][string]$EventType,
         [Parameter(Mandatory = $true)][string]$EntityId, [Parameter(Mandatory = $true)]$Payload, [string]$CorrelationId, [string]$AccountId
     )
-    $contract = @{ 'device.observed' = 'device'; 'device.rescue_handoff' = 'handoff'; 'device.warranty' = 'warranty' }[$EventType]
+    $contract = @{ 'device.observed' = 'device'; 'device.rescue_handoff' = 'handoff'; 'device.warranty' = 'warranty'; 'email_migration.recorded' = 'migration' }[$EventType]
     $problems = @(Test-DEContract -Name $contract -Object $Payload)
     if ($problems.Count) { throw "not sending $EventType : $($problems -join '; ')" }
     return [ordered]@{
         eventId = [guid]::NewGuid().ToString(); eventType = $EventType; version = 1; source = 'techconsole'
         occurredAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", [Globalization.CultureInfo]::InvariantCulture)   # invariant: ':' is the culture's time separator otherwise (fi-FI writes '.')
         correlationId = $(if ($CorrelationId) { $CorrelationId } else { [guid]::NewGuid().ToString() })
-        entityType = 'device'; entityId = $EntityId; canonicalAccountId = $(if ($AccountId) { $AccountId } else { $null }); originEventId = $null
+        entityType = $(if ($contract -eq 'migration') { 'email_migration' } else { 'device' }); entityId = $EntityId; canonicalAccountId = $(if ($AccountId) { $AccountId } else { $null }); originEventId = $null
         payload = $Payload
     }
 }

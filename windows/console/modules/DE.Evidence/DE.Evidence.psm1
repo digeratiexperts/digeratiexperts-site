@@ -351,4 +351,30 @@ function Send-DEHubPayload {
     } catch { Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken 'send failed; saved for manual upload' -Result 'FAIL' -Verification $_.Exception.Message -Remediation $file | Out-Null; return @{ sent = $false; file = $file } }
 }
 
-Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload
+function Send-DEHubMigrationRecord {
+    <#
+        Sends an email migration record (DE Microsoft Admin Export-DEMigrationRecord, contracts\migration.schema.json)
+        to the Intelligence Hub as a signed email_migration.recorded event: the same endpoint (settings.hub.endpoint),
+        signing secret (DE_HUB_SIGNING_SECRET, this session only) and account rule as the device record. The record is
+        checked against its contract and for secret-looking keys before anything is signed. Throws with the reason.
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param([Parameter(Mandatory = $true)][string]$Path, [string]$AccountId, [string]$Endpoint)
+    if (-not (Test-Path -LiteralPath $Path)) { throw "no record at $Path" }
+    $rec = Get-Content -LiteralPath $Path -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ("$($rec.schema)" -ne 'de.email-migration.record/v1') { throw "not a migration record (schema '$($rec.schema)')" }
+    if (-not $Endpoint) { $Endpoint = Get-DEState -Path 'settings.hub.endpoint' }
+    if (-not $Endpoint) { throw 'set the Intelligence Hub URL in Settings first' }
+    if (-not (Test-DESecret -Name 'DE_HUB_SIGNING_SECRET')) { throw 'set the Intelligence Hub signing secret in Settings first (it is kept for this session only)' }
+    if (-not $AccountId) { $AccountId = "$((Get-DEContext)['hubAccountId'])" }
+    if ($AccountId -notmatch '^[1-9]\d*$') { throw "the client's Intelligence Hub account number is needed (a whole number, from the account's page in the Hub)" }
+    $base = ([uri]$Endpoint).GetLeftPart([UriPartial]::Authority)
+    $ev = New-DEHubEvent -EventType 'email_migration.recorded' -EntityId "$($rec.projectId)" -Payload $rec -AccountId $AccountId
+    if (-not $PSCmdlet.ShouldProcess($base, "send signed email_migration.recorded for $($rec.projectId)")) { return @{ sent = $false; planned = $true; eventId = $ev.eventId } }
+    try { $resp = Send-DEHubEvent -BaseUrl $base -Event $ev -Secret (Get-DESecretSecure -Name 'DE_HUB_SIGNING_SECRET') }
+    catch { Add-DEEvidence -Step 'hub.migration' -Module 'migration' -Before "record $($rec.projectId) ready" -ActionTaken 'signed send to the Hub failed' -Result 'FAIL' -Verification $_.Exception.Message -Remediation $Path | Out-Null; throw }
+    Add-DEEvidence -Step 'hub.migration' -Module 'migration' -Before "record $($rec.projectId) ready" -ActionTaken "sent to the Hub as signed event $($ev.eventId)" -Result 'PASS' -Verification "$base : $($resp.status)" -Artifacts @($Path) | Out-Null
+    return @{ sent = $true; eventId = $ev.eventId; response = $resp }
+}
+
+Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload, Send-DEHubMigrationRecord

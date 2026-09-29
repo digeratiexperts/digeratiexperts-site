@@ -41,6 +41,18 @@ function Find-DEMigrationSecret {
     elseif ($Node -is [System.Collections.IEnumerable] -and -not ($Node -is [string])) { $i = 0; foreach ($e in $Node) { $hits += @(Find-DEMigrationSecret -Node $e -Path "$Path[$i]"); $i++ } }
     return $hits
 }
+function Find-DEMigrationHubRefusal {
+    <# Paths the Intelligence Hub's techconsole intake refuses (its TECHCONSOLE_SECRET_KEY_RE on keys, a BitLocker recovery password shape anywhere). #>
+    param($Node, [string]$Path = '$')
+    $key = '(?i)(passw|secret|token|api.?key|recovery.?pass|recovery.?key|connect.?key|private.?key|mfa|seed|^tap$|^pin$)'
+    $bl = '(?<!\d)\d{6}(-\d{6}){7}(?!\d)'
+    if ($null -eq $Node) { return @() }
+    if ($Node -is [string]) { if ($Node -match $bl) { return @($Path) }; return @() }
+    if ($Node -is [System.Collections.IDictionary]) { return @(foreach ($k in @($Node.Keys)) { if ("$k" -match $key -or "$k" -match $bl) { "$Path.$k" } else { Find-DEMigrationHubRefusal -Node $Node[$k] -Path "$Path.$k" } }) }
+    if ($Node -is [System.Collections.IEnumerable]) { $i = 0; return @(foreach ($e in $Node) { Find-DEMigrationHubRefusal -Node $e -Path "$Path[$i]"; $i++ }) }
+    if ($Node -is [System.Management.Automation.PSCustomObject] -or ($Node -is [psobject] -and $Node.PSObject.BaseObject -is [System.Management.Automation.PSCustomObject])) { return @(foreach ($pp in $Node.PSObject.Properties) { if ($pp.Name -match $key -or $pp.Name -match $bl) { "$Path.$($pp.Name)" } else { Find-DEMigrationHubRefusal -Node $pp.Value -Path "$Path.$($pp.Name)" } }) }
+    return @()
+}
 function Save-DEMigrationProject {
     param([Parameter(Mandatory = $true)]$Project, [string]$Entry)
     $hits = @(Find-DEMigrationSecret -Node $Project)
@@ -1108,10 +1120,15 @@ function Export-DEMigrationRecord {
     $rec = [pscustomobject][ordered]@{
         schema = 'de.email-migration.record/v1'; projectId = $p.projectId; client = $p.client; tenantId = $p.tenantId; targetDomain = $p.targetDomain; stage = $p.stage
         source = [pscustomobject]@{ type = $p.sourceType; mailPath = $p.mailPath }
-        identityMap = @($p.users | ForEach-Object { [pscustomobject]@{ source = $_.source; destination = $_.destination; displayName = $_.displayName; devices = @($_.devices); preflight = $_.preflight; migration = $_.migration; contacts = $(if ($_.contacts) { $_.contacts | Select-Object file, rows, imported, duplicates, failed, at }); calendar = $(if ($_.calendar) { $_.calendar | Select-Object file, events, imported, importedBefore, deletedOccurrences, skipped, failed, at }); mfa = $_.mfa } })
-        devices = @($p.devices); sharedMailboxes = @($p.sharedMailboxes); batches = @($p.batches); dns = $p.dns; bounce = @($p.bounce); verification = $p.verification; signoff = $p.signoff; events = @($p.events); exportedAt = (Get-Date).ToUniversalTime().ToString('o')
+        identityMap = @($p.users | ForEach-Object { [pscustomobject]@{ source = $_.source; destination = $_.destination; displayName = $_.displayName; devices = @($_.devices); preflight = $_.preflight; migration = $_.migration; contacts = $(if ($_.contacts) { $_.contacts | Select-Object file, rows, imported, duplicates, failed, at }); calendar = $(if ($_.calendar) { $_.calendar | Select-Object file, events, imported, importedBefore, deletedOccurrences, skipped, failed, at }); multiFactor = $_.mfa } })
+        devices = @($p.devices | ForEach-Object { if ($_ -is [string]) { [pscustomobject]@{ name = $_; checkedAt = $null; accounts = @(); gmailReferences = @(); notChecked = @(); source = 'named' } } else { $_ } })
+        sharedMailboxes = @($p.sharedMailboxes); batches = @($p.batches); dns = $p.dns; bounce = @($p.bounce)
+        # checks as a list: the Hub refuses any key that looks like a secret (an 'MFA' key included), so check names are values
+        checks = @($p.verification.PSObject.Properties | ForEach-Object { [pscustomobject][ordered]@{ check = $_.Name; status = "$($_.Value.status)"; detail = "$($_.Value.detail)"; by = "$($_.Value.by)"; at = $(if ($_.Value.at) { "$($_.Value.at)" } else { $null }) } })
+        signoff = $p.signoff; events = @($p.events); exportedAt = (Get-Date).ToUniversalTime().ToString('o')
     }
     $hits = @(Find-DEMigrationSecret -Node $rec); if ($hits.Count) { throw "refusing to export: credential-like fields at $($hits -join ', ')" }
+    $hubHits = @(Find-DEMigrationHubRefusal -Node $rec); if ($hubHits.Count) { throw "refusing to export: the Hub would refuse keys at $($hubHits -join ', ')" }
     $dir = Split-Path -Parent $Path; if ($dir -and -not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
     [IO.File]::WriteAllText($Path, (ConvertTo-Json -InputObject $rec -Depth 20), (New-Object Text.UTF8Encoding $false))
     return (New-DEResult -Operation 'Export-DEMigrationRecord' -Target $ProjectId -Message "Hub record written to $Path" -Data (Get-Item -LiteralPath $Path))
