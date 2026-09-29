@@ -64,6 +64,20 @@ describe("DE Desk shell positioning", () => {
     expect(src).not.toMatch(/\.de-desk-tab\.is-active \{\s*background: #D3126A;/);
     expect(src).toMatch(/previous\?\.focus/);
     expect(src).toMatch(/useEscapeKey/);
+    // With nobody in the chat, the composer claims no one is waiting, and the
+    // line fits a 390px field (the old one cut to "we're ready no").
+    expect(src).toMatch(/: "Type the issue…"/);
+    expect(src).not.toMatch(/we're ready now/);
+  });
+
+  it("gives the grouped lists a graphite top edge, not the paper list's white rim", () => {
+    // 0 1px 0 rgba(255,255,255,0.9) inset was the white card's rim. On graphite
+    // it drew a stark white arc along the top of the Get Support and Client
+    // Tools lists while their sides stayed dim.
+    expect(src).not.toMatch(/0 1px 0 rgba\(255,\s*255,\s*255,\s*0\.[3-9]\d*\) inset/);
+    // Both grouped lists draw the same graphite hairline.
+    expect(src).toMatch(/\.de-desk-issue-list \{[\s\S]*?border: 1px solid var\(--desk-border-strong\);/);
+    expect(src).toMatch(/\.de-desk-tools-list \{[\s\S]*?border: 1px solid var\(--desk-border-strong\);/);
   });
 
   it("keeps exactly one theme: no second token declaration, no external override", () => {

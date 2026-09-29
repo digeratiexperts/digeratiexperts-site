@@ -1857,9 +1857,12 @@ export const ZohoASAPWidget = ({
                     }}
                     maxLength={2000}
                     placeholder={
+                      // With nobody in the chat the placeholder claims no one is
+                      // waiting (Joe, 2026-09-29). The old line also cut to
+                      // "we're ready no" in a 390px field.
                       agentLive
                         ? `Message ${agentName || "the specialist"}…`
-                        : "Type the issue — we're ready now"
+                        : "Type the issue…"
                     }
                     disabled={isChatSending}
                     data-testid="input-support-chat"
@@ -2312,11 +2315,15 @@ export const ZohoASAPWidget = ({
               display: flex;
               flex-direction: column;
               margin: 0 0 16px;
-              border: 1px solid rgba(20,16,30,0.12);
+              /* The Client Tools list's hairline. rgba(20,16,30,0.12) was paper
+                 ink: invisible on graphite, so this list had no edge at all. */
+              border: 1px solid var(--desk-border-strong);
               border-radius: 15px;
               background: var(--desk-box);
+              /* A lit top edge sized for graphite. At 0.9 this was the white
+                 list's rim and drew a stark white arc across the dark list. */
               box-shadow:
-                0 1px 0 rgba(255,255,255,0.9) inset,
+                0 1px 0 rgba(255,255,255,0.06) inset,
                 0 12px 28px -24px rgba(20,16,30,0.34);
             }
             .de-desk-issue-row {
@@ -3164,8 +3171,9 @@ export const ZohoASAPWidget = ({
               border: 1px solid var(--desk-border-strong);
               border-radius: 15px;
               background: var(--desk-box);
+              /* Same lit edge as the Get Support list. */
               box-shadow:
-                0 1px 0 rgba(255,255,255,0.9) inset,
+                0 1px 0 rgba(255,255,255,0.06) inset,
                 0 12px 28px -24px rgba(20,16,30,0.34);
             }
             .de-desk-tool-group {

@@ -37,9 +37,21 @@ claims:
     base_sha: a8bf3351dcbf4e25b8c65323e8fb6202232c1c2e
     files:
       - client/src/components/SiteBottomBar.tsx
+      - client/src/components/ZohoASAPWidget.tsx
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
+      - client/src/components/MarketingChrome.tsx
+      - client/src/components/deDeskGraphiteStyle.ts
+      - client/src/components/deDeskReferenceStyle.ts
+      - .cursor/skills/de-desk-ui/tokens-and-structure.md
     status: active
     started: 2026-09-27
     note: >-
+      Scope grew with Joe's follow-up ("make one theme for it ... no wasted
+      clutter"): the Desk theme fixed at source in ZohoASAPWidget.tsx, the two
+      override modules deleted, five listed clutter removals, the Available
+      badge truth fix, the pointer light and list edges sized for graphite, and
+      (Joe-approved 2026-09-29) the no-agent composer placeholder; the de-desk-ui
+      spec corrected to match. The first commit's note follows.
       Joe, 2026-09-27: "the DE Desk looks like 2 different version merged into
       one and it looks horrible, if you click an option you'll see." Reproduced:
       the Ask DE launcher popover in SiteBottomBar.tsx was still the retired

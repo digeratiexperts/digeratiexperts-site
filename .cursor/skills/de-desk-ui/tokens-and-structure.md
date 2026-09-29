@@ -4,7 +4,7 @@ Rejected shots (do not restore): `design/approved/desk-ask-de-target.png`, `desk
 
 ## Brand tokens
 
-Outer chrome is graphite DE app. Client Tools’ **list only** is a white grouped surface.
+Outer chrome is graphite DE app, and every tab inside it takes the same graphite token set, Client Tools included. One theme: no block re-declares the `--desk-*` tokens (a guard test fails if one does).
 
 | Token | Value | Use |
 |-------|-------|-----|
@@ -14,8 +14,8 @@ Outer chrome is graphite DE app. Client Tools’ **list only** is a white groupe
 | Magenta | `#D3126A` | Active underline, send, submit, featured rail, Fastest badge, security action, 1px shell cap |
 | Violet | `#8B5CF6` | Do not fill chrome, badges, or wells. Lighting only if used at all. |
 | Ask DE / ticket field | graphite | Light-on-dark transcript and dark raised form fields |
-| Tools list | `#fff` on paper-ink | Grouped launcher rows inside the graphite shell |
-| Tools ink | `#17141F` / `#5C5668` | Titles and blurbs on the white list |
+| Grouped lists | `--desk-box` + `--desk-border-strong` | Get Support issues and Client Tools rows: the same graphite as every tab |
+| Ink | `--desk-ink` / `--desk-ink-muted` | Titles and blurbs on every surface, lists included |
 | Available | Emerald pip | Say “available”, not “online” |
 
 Do **not** paint the whole widget paper. Do **not** nest a cream card in a purple glow.
@@ -26,23 +26,22 @@ Do **not** paint the whole widget paper. Do **not** nest a cream card in a purpl
 2. **Header** — compact DE mark + green available pip; title “DE Desk”; subtitle “DE Desk is available” (or “{name} joined · live handoff”). Expand + close. On `sm+` the header moves the window; double-click resets. Drag any edge or the south-east grip to resize.
 3. **Tabs** — Ask DE \| Get Support \| Client Tools. Active = light label + magenta underline. Unread count badges Ask DE only.
 4. **Body** — same graphite field on every tab. No status row. No footer tab list.
-5. **Composer (Ask DE only)** — raised dark input + magenta send. Placeholder: “Type the issue — we're ready now”.
+5. **Composer (Ask DE only)** — raised dark input + magenta send. Placeholder: “Type the issue…” while nobody is in the chat (it must not imply someone is waiting); “Message {name}…” once a person has joined.
 6. **Lock line (Ask DE only)** — “Never share passwords, MFA codes, or private keys.”
 
 ## Ask DE
 
-- Dark transcript. Opening: “DE” avatar + “DE Desk” + green **Available**.
-- Greeting: “DE Desk is here. Describe the outage, the risk, or the question — we'll take it and give you a clear next step.”
-- Discovery chips (IT help, cybersecurity, compliance, evaluating managed IT) plus **Possible security incident** (routes to Get Support).
+- Dark transcript. Opening bubble: “DE” avatar only. No sender line (the name is in the header) and no **Available** badge; a name and a live dot appear only when a real person joins (`agentLive`).
+- Greeting and four starter chips: per page, from `DESK_PAGE_COPY` in `client/src/lib/deskAskDeMotion.ts`, with **Possible security incident** always last (routes to Get Support).
 - After send: magenta user bubbles; raised assistant bubbles.
 
 ## Get Support
 
-- Lead: “Get support” / “Tell us what happened. We'll route it to the desk.”
+- Lead: “Direct Engineering Support” / “Tell us what happened. We'll route your request straight to the Arizona desk.”
 - Featured **Possible security incident** rail, then a vertical list from `DESK_STANDARD_TICKET_CHIPS`, then Name, Work email, What's happening?, Details, Urgency. Default **Medium**.
 - Dark raised inputs, white type, magenta **Create ticket**.
 - If the incident chip fired, show “Routed as a possible security incident.”
-- Company, category, attachment behind **Add company, category, or a file**.
+- Company and category behind **Add company or category**. No file upload in the widget (a test fails on a fake one).
 
 ## Client Tools
 
@@ -50,7 +49,7 @@ Unauthenticated (default on the marketing site):
 
 1. “Already a Digerati Experts client?”
 2. Magenta **Sign in to Client Tools** → `PORTAL_LOGIN`
-3. “Need help right now?” → Submit a support request (Get Support tab) and Start remote support (`REMOTE_SUPPORT_HREF`)
+3. “Need help right now?” → Start remote support (`REMOTE_SUPPORT_HREF`). Get Support is one click away in the tab bar, so it has no row here.
 
 Authenticated (real `/api/portal/me` session only):
 
