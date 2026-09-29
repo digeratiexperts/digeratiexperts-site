@@ -30,8 +30,9 @@ $script:RecoveryShape = '(?<!\d)\d{6}(-\d{6}){7}(?!\d)'
 $script:ScopeSets = [ordered]@{
     Read      = @('User.Read.All', 'Group.Read.All', 'Directory.Read.All', 'Organization.Read.All', 'Policy.Read.All')
     Users     = @('User.ReadWrite.All')
-    Groups    = @('GroupMember.ReadWrite.All')
-    Intune    = @('DeviceManagementManagedDevices.Read.All', 'DeviceManagementConfiguration.Read.All', 'DeviceManagementManagedDevices.PrivilegedOperations.All')
+    Groups    = @('GroupMember.ReadWrite.All', 'Group.ReadWrite.All')
+    Policy    = @('Policy.ReadWrite.ConditionalAccess', 'Application.Read.All')
+    Intune    = @('DeviceManagementManagedDevices.ReadWrite.All', 'DeviceManagementConfiguration.Read.All', 'DeviceManagementManagedDevices.PrivilegedOperations.All')
     Autopilot = @('DeviceManagementServiceConfig.ReadWrite.All', 'DeviceManagementManagedDevices.ReadWrite.All')
     BitLocker = @('BitLockerKey.ReadBasic.All', 'Device.Read.All')
     Reports   = @('AuditLog.Read.All', 'Reports.Read.All')
@@ -52,7 +53,7 @@ function New-DEResult {
     <# One result shape for every operation: Succeeded | DryRun | Failed | Refused | Partial. #>
     param([Parameter(Mandatory = $true)][string]$Operation, [ValidateSet('Succeeded', 'DryRun', 'Failed', 'Refused', 'Partial')][string]$Status = 'Succeeded', [object]$Data, [string]$Message = '', [string]$Target = '', [string]$JobId)
     Write-DEMsAudit -Operation $Operation -Status $Status -Target $Target -Message $Message -JobId $JobId
-    return [pscustomobject][ordered]@{ product = 'DE Microsoft Admin'; version = '0.2.0'; operation = $Operation; status = $Status; target = $Target; tenant = $script:Ctx.TenantId; at = (Get-Date).ToUniversalTime().ToString('o'); message = $Message; data = $Data }
+    return [pscustomobject][ordered]@{ product = 'DE Microsoft Admin'; version = '0.3.0'; operation = $Operation; status = $Status; target = $Target; tenant = $script:Ctx.TenantId; at = (Get-Date).ToUniversalTime().ToString('o'); message = $Message; data = $Data }
 }
 function Export-DEResult {
     <# Writes a result as UTF-8 JSON without a BOM (Node, Python and the Hub reject one). #>
@@ -63,7 +64,7 @@ function Export-DEResult {
 }
 
 # ============================================================ connection
-function Get-DEMsScopeSet { param([ValidateSet('Read', 'Users', 'Groups', 'Intune', 'Autopilot', 'BitLocker', 'Reports')][string[]]$Scenario = @('Read')) return @(@('Read') + @($Scenario) | Select-Object -Unique | ForEach-Object { $script:ScopeSets[$_] } | Select-Object -Unique) }
+function Get-DEMsScopeSet { param([ValidateSet('Read', 'Users', 'Groups', 'Policy', 'Intune', 'Autopilot', 'BitLocker', 'Reports')][string[]]$Scenario = @('Read')) return @(@('Read') + @($Scenario) | Select-Object -Unique | ForEach-Object { $script:ScopeSets[$_] } | Select-Object -Unique) }
 function Assert-DECommand { param([Parameter(Mandatory = $true)][string]$Name, [string]$Module) if (-not (Get-Command -Name $Name -ErrorAction SilentlyContinue)) { throw "'$Name' is not available. Install $(if ($Module) { $Module } else { 'its module' }) (Install-DEMicrosoftDependencies.ps1)." } }
 function Connect-DEMicrosoft {
     <#
@@ -73,7 +74,7 @@ function Connect-DEMicrosoft {
     [CmdletBinding(DefaultParameterSetName = 'Delegated')]
     param(
         [Parameter(Mandatory = $true)][string]$TenantId,
-        [Parameter(ParameterSetName = 'Delegated')][ValidateSet('Read', 'Users', 'Groups', 'Intune', 'Autopilot', 'BitLocker', 'Reports')][string[]]$Scenario = @('Read'),
+        [Parameter(ParameterSetName = 'Delegated')][ValidateSet('Read', 'Users', 'Groups', 'Policy', 'Intune', 'Autopilot', 'BitLocker', 'Reports')][string[]]$Scenario = @('Read'),
         [Parameter(ParameterSetName = 'App', Mandatory = $true)][string]$ClientId,
         [Parameter(ParameterSetName = 'App', Mandatory = $true)][string]$CertificateThumbprint
     )
@@ -187,6 +188,83 @@ function Add-DEGroupMember {
     $null = Invoke-DEGraphRequest -Method POST -Uri "groups/$GroupId/members/`$ref" -Body @{ '@odata.id' = "$script:GraphRoot/v1.0/directoryObjects/$DirectoryObjectId" }
     return (New-DEResult -Operation 'Add-DEGroupMember' -Target $GroupId -Message "added to $($g.displayName)" -Data ([pscustomobject]@{ groupId = $GroupId; memberId = $DirectoryObjectId; changed = $true }))
 }
+function New-DETemporaryPassword {
+    <# 16 characters from a cryptographic RNG, at least one of each class, built straight into a SecureString. #>
+    param([ValidateRange(14, 64)][int]$Length = 16)
+    $sets = @('ABCDEFGHJKLMNPQRSTUVWXYZ', 'abcdefghijkmnopqrstuvwxyz', '23456789', '!@#%^*-_=+?')
+    $all = -join $sets
+    $rng = New-Object Security.Cryptography.RNGCryptoServiceProvider
+    try {
+        $next = { param([int]$Max) $b = New-Object byte[] 4; $rng.GetBytes($b); [int]([BitConverter]::ToUInt32($b, 0) % [uint32]$Max) }
+        $chars = New-Object System.Collections.Generic.List[char]
+        foreach ($s in $sets) { $chars.Add($s[(& $next $s.Length)]) }
+        while ($chars.Count -lt $Length) { $chars.Add($all[(& $next $all.Length)]) }
+        for ($i = $chars.Count - 1; $i -gt 0; $i--) { $j = & $next ($i + 1); $t = $chars[$i]; $chars[$i] = $chars[$j]; $chars[$j] = $t }
+        $ss = New-Object Security.SecureString; foreach ($c in $chars) { $ss.AppendChar($c) }; $chars.Clear(); $ss.MakeReadOnly()
+        return $ss
+    } finally { $rng.Dispose() }
+}
+function New-DEUser {
+    <#
+        Creates a cloud user. The UPN's domain must be verified in the tenant and the UPN must be free (an existing user
+        is Refused, never a duplicate). The temporary password is generated here, never passed in and never written: it
+        comes back once as a SecureString in data.temporaryPassword and must be changed at first sign-in. A Hub job gets
+        the user but not the password (a SecureString serialises as its length): issue a Temporary Access Pass or reset
+        it in the portal. Set -UsageLocation before assigning a licence.
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param(
+        [Parameter(Mandatory = $true)][string]$DisplayName, [Parameter(Mandatory = $true)][string]$UserPrincipalName, [string]$MailNickname,
+        [string]$GivenName, [string]$Surname, [string]$JobTitle, [string]$Department, [ValidatePattern('^([A-Za-z]{2})?$')][string]$UsageLocation,
+        [bool]$AccountEnabled = $true, [switch]$DryRun
+    )
+    if ($UserPrincipalName -notmatch '^[A-Za-z0-9._''-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}$') { return (New-DEResult -Operation 'New-DEUser' -Status Refused -Target $UserPrincipalName -Message 'not a valid user principal name') }
+    $domain = ($UserPrincipalName -split '@')[1]
+    $verified = @(Invoke-DEGraphRequest -Uri 'domains?$select=id,isVerified' -All | Where-Object { "$($_.id)" -ieq $domain -and $_.isVerified })
+    if (-not $verified.Count) { return (New-DEResult -Operation 'New-DEUser' -Status Refused -Target $UserPrincipalName -Message "$domain is not a verified domain in this tenant") }
+    $existing = @(Invoke-DEGraphRequest -Uri ('users?$filter=userPrincipalName eq {0}&$select=id,displayName' -f (ConvertTo-DEODataLiteral $UserPrincipalName)))
+    if ($existing.Count) { return (New-DEResult -Operation 'New-DEUser' -Status Refused -Target $UserPrincipalName -Message "already exists: $($existing[0].displayName) ($($existing[0].id))") }
+    if (-not $MailNickname) { $MailNickname = (($UserPrincipalName -split '@')[0]) -replace '[^A-Za-z0-9._-]', '' }
+    $body = [ordered]@{ accountEnabled = $AccountEnabled; displayName = $DisplayName; userPrincipalName = $UserPrincipalName; mailNickname = $MailNickname }
+    foreach ($f in @(@('givenName', $GivenName), @('surname', $Surname), @('jobTitle', $JobTitle), @('department', $Department), @('usageLocation', $UsageLocation.ToUpperInvariant()))) { if ($f[1]) { $body[$f[0]] = $f[1] } }
+    if ($DryRun -or -not $PSCmdlet.ShouldProcess($UserPrincipalName, 'create Entra user')) { return (New-DEResult -Operation 'New-DEUser' -Status DryRun -Target $UserPrincipalName -Message 'no change applied' -Data ([pscustomobject]$body)) }
+    $pw = New-DETemporaryPassword
+    $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($pw)
+    try { $body['passwordProfile'] = @{ forceChangePasswordNextSignIn = $true; password = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr) }; $created = Invoke-DEGraphRequest -Method POST -Uri 'users' -Body $body }
+    finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr); $body.Remove('passwordProfile') }
+    $v = Invoke-DEGraphRequest -Uri ('users/{0}?$select=id,displayName,userPrincipalName,accountEnabled,usageLocation' -f $created.id)
+    $note = $(if (-not $UsageLocation) { '; no usage location yet: set one before assigning a licence' } else { '' })
+    return (New-DEResult -Operation 'New-DEUser' -Target $UserPrincipalName -Message "created $($v.userPrincipalName) (id $($v.id)); temporary password returned once as a SecureString, change required at first sign-in$note" -Data ([pscustomobject]@{ id = $v.id; userPrincipalName = $v.userPrincipalName; displayName = $v.displayName; accountEnabled = [bool]$v.accountEnabled; usageLocation = $v.usageLocation; temporaryPassword = $pw }))
+}
+function New-DEGroup {
+    <#
+        A security group or a Microsoft 365 group. Idempotent by mail nickname: the same group already there is Succeeded
+        with nothing changed, a different one with that nickname is Refused. -Owner (UPNs or ids) are resolved first; a
+        Microsoft 365 group made by an app-only session needs one.
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param(
+        [Parameter(Mandatory = $true)][string]$DisplayName, [Parameter(Mandatory = $true)][ValidatePattern('^[A-Za-z0-9._-]{1,64}$')][string]$MailNickname,
+        [ValidateSet('Security', 'Microsoft365')][string]$Type = 'Security', [string]$Description, [string[]]$Owner = @(), [ValidateSet('Private', 'Public')][string]$Visibility = 'Private', [switch]$DryRun
+    )
+    $m365 = ($Type -eq 'Microsoft365')
+    $existing = @(Invoke-DEGraphRequest -Uri ('groups?$filter=mailNickname eq {0}&$select=id,displayName,groupTypes,securityEnabled' -f (ConvertTo-DEODataLiteral $MailNickname)))
+    if ($existing.Count) {
+        $e = $existing[0]; $same = ("$($e.displayName)" -eq $DisplayName) -and ((@($e.groupTypes) -contains 'Unified') -eq $m365)
+        return (New-DEResult -Operation 'New-DEGroup' -Status $(if ($same) { 'Succeeded' } else { 'Refused' }) -Target $MailNickname -Message $(if ($same) { "already exists (id $($e.id)); nothing changed" } else { "mail nickname $MailNickname is used by '$($e.displayName)' ($($e.id))" }) -Data $e)
+    }
+    $ownerIds = @()
+    foreach ($o in @($Owner | Where-Object { $_ })) {
+        try { $ownerIds += "$((Invoke-DEGraphRequest -Uri ('users/{0}?$select=id' -f [uri]::EscapeDataString($o))).id)" } catch { return (New-DEResult -Operation 'New-DEGroup' -Status Refused -Target $MailNickname -Message "owner '$o' not found") }
+    }
+    $body = [ordered]@{ displayName = $DisplayName; mailNickname = $MailNickname; mailEnabled = $m365; securityEnabled = (-not $m365); groupTypes = @($(if ($m365) { 'Unified' })) }
+    if ($Description) { $body['description'] = $Description }
+    if ($m365) { $body['visibility'] = $Visibility }
+    if ($ownerIds.Count) { $body['owners@odata.bind'] = @($ownerIds | ForEach-Object { "$script:GraphRoot/v1.0/users/$_" }) }
+    if ($DryRun -or -not $PSCmdlet.ShouldProcess($DisplayName, "create $Type group")) { return (New-DEResult -Operation 'New-DEGroup' -Status DryRun -Target $MailNickname -Message 'no change applied' -Data ([pscustomobject]$body)) }
+    $g = Invoke-DEGraphRequest -Method POST -Uri 'groups' -Body $body
+    return (New-DEResult -Operation 'New-DEGroup' -Target $MailNickname -Message "created $Type group '$DisplayName' (id $($g.id))" -Data ([pscustomobject]@{ id = $g.id; displayName = $g.displayName; mailNickname = $MailNickname; type = $Type; owners = $ownerIds }))
+}
 function Get-DELicenseInventory {
     [CmdletBinding()] param()
     $s = @(Invoke-DEGraphRequest -Uri 'subscribedSkus')
@@ -198,6 +276,32 @@ function Get-DEConditionalAccessPolicy {
     # @(...) outside, not $(...): $() unwraps a single item, and on Windows PowerShell 5.1 a lone object has no .Count
     $r = @(if ($PolicyId) { Invoke-DEGraphRequest -Uri "identity/conditionalAccess/policies/$PolicyId" } else { Invoke-DEGraphRequest -Uri 'identity/conditionalAccess/policies' -All })
     return (New-DEResult -Operation 'Get-DEConditionalAccessPolicy' -Message "$($r.Count) polic(ies); $(@($r | Where-Object { $_.state -eq 'enabled' }).Count) enabled" -Data $r)
+}
+function Set-DEConditionalAccessPolicyState {
+    <#
+        Turns a Conditional Access policy on, off, or to report-only, then reads it back. Enforcing a policy that targets
+        all users with no excluded user or group is Refused (that is how tenants lock out their own break-glass account)
+        unless -AllowNoExclusions. Going straight from off to enforced is allowed but called out: report-only first
+        shows who it would block.
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
+    param([Parameter(Mandatory = $true)][string]$PolicyId, [Parameter(Mandatory = $true)][ValidateSet('enabled', 'disabled', 'enabledForReportingButNotEnforced')][string]$State, [switch]$AllowNoExclusions, [switch]$DryRun)
+    $id = [uri]::EscapeDataString($PolicyId)
+    $p = Invoke-DEGraphRequest -Uri "identity/conditionalAccess/policies/$id"
+    if ("$($p.state)" -eq $State) { return (New-DEResult -Operation 'Set-DEConditionalAccessPolicyState' -Target "$($p.displayName)" -Message "already $State; nothing changed" -Data ([pscustomobject]@{ id = $p.id; displayName = $p.displayName; state = $p.state })) }
+    $note = ''
+    if ($State -eq 'enabled') {
+        $u = $p.conditions.users
+        $all = @($u.includeUsers) -contains 'All'
+        $excluded = @(@($u.excludeUsers) + @($u.excludeGroups) | Where-Object { $_ })
+        if ($all -and -not $excluded.Count -and -not $AllowNoExclusions) { return (New-DEResult -Operation 'Set-DEConditionalAccessPolicyState' -Status Refused -Target "$($p.displayName)" -Message "'$($p.displayName)' applies to all users and excludes nobody: exclude the break-glass account first (or pass -AllowNoExclusions)") }
+        if ("$($p.state)" -eq 'disabled') { $note = '; went from off straight to enforced (report-only first shows who it would block)' }
+    }
+    if ($DryRun -or -not $PSCmdlet.ShouldProcess("$($p.displayName)", "set Conditional Access state $($p.state) -> $State")) { return (New-DEResult -Operation 'Set-DEConditionalAccessPolicyState' -Status DryRun -Target "$($p.displayName)" -Message "no change applied$note" -Data ([pscustomobject]@{ id = $p.id; from = $p.state; to = $State })) }
+    $null = Invoke-DEGraphRequest -Method PATCH -Uri "identity/conditionalAccess/policies/$id" -Body @{ state = $State }
+    $v = Invoke-DEGraphRequest -Uri "identity/conditionalAccess/policies/$id"
+    $ok = ("$($v.state)" -eq $State)
+    return (New-DEResult -Operation 'Set-DEConditionalAccessPolicyState' -Status $(if ($ok) { 'Succeeded' } else { 'Failed' }) -Target "$($p.displayName)" -Message $(if ($ok) { "state $($p.state) -> $State (read back)$note" } else { "read back state '$($v.state)'" }) -Data ([pscustomobject]@{ id = $v.id; displayName = $v.displayName; state = $v.state }))
 }
 function Get-DEMfaRegistration {
     <# Who can do MFA and passwordless (userRegistrationDetails). -UserPrincipalName narrows to one user. #>
@@ -224,7 +328,7 @@ function Test-DEEntraBitLockerEscrow {
     #>
     [CmdletBinding()] param([Parameter(Mandatory = $true)][string]$DeviceId, [string]$KeyProtectorId)
     # Graph requires ocp-client-name / ocp-client-version on BitLocker key reads (they go to the audit log)
-    $keys = @(Invoke-DEGraphRequest -Uri ('informationProtection/bitlocker/recoveryKeys?$filter=deviceId eq {0}' -f (ConvertTo-DEODataLiteral $DeviceId)) -All -Headers @{ 'ocp-client-name' = 'DE Microsoft Admin'; 'ocp-client-version' = '0.2.0' })
+    $keys = @(Invoke-DEGraphRequest -Uri ('informationProtection/bitlocker/recoveryKeys?$filter=deviceId eq {0}' -f (ConvertTo-DEODataLiteral $DeviceId)) -All -Headers @{ 'ocp-client-name' = 'DE Microsoft Admin'; 'ocp-client-version' = '0.3.0' })
     $rows = @($keys | ForEach-Object { [pscustomobject]@{ keyId = "$($_.id)"; created = $_.createdDateTime; volumeType = "$($_.volumeType)" } })
     $want = "$KeyProtectorId".Trim('{', '}').ToLowerInvariant()
     # @(...) outside: $() would unwrap one match into a [pscustomobject], which has no .Count on Windows PowerShell 5.1
@@ -276,6 +380,83 @@ function Set-DEMailboxPermission {
     return (New-DEResult -Operation 'Set-DEMailboxPermission' -Target $MailboxId -Message "$Permission granted to $MemberId" -Data $payload)
 }
 
+function Get-DEAcceptedDomainName { Assert-DECommand 'Get-AcceptedDomain' 'ExchangeOnlineManagement'; return @(Get-AcceptedDomain -ErrorAction Stop | ForEach-Object { "$($_.DomainName)".ToLowerInvariant() }) }
+function Set-DEMailboxAlias {
+    <#
+        Adds or removes a secondary SMTP address, then reads it back. Adding needs an accepted domain and an address no
+        other recipient uses; removing the primary address is Refused. Already there / already gone is Succeeded with
+        nothing changed.
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param([Parameter(Mandatory = $true)][string]$Identity, [Parameter(Mandatory = $true)][string]$Address, [ValidateSet('Add', 'Remove')][string]$Action = 'Add', [switch]$DryRun)
+    if ($Address -notmatch '^[A-Za-z0-9._%+''-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}$') { return (New-DEResult -Operation 'Set-DEMailboxAlias' -Status Refused -Target $Identity -Message "'$Address' is not an email address") }
+    Assert-DECommand 'Get-EXOMailbox' 'ExchangeOnlineManagement'
+    $mb = Get-EXOMailbox -Identity $Identity -Properties EmailAddresses, PrimarySmtpAddress, ExternalDirectoryObjectId -ErrorAction Stop
+    $has = [bool]@($mb.EmailAddresses | Where-Object { "$_" -ieq "smtp:$Address" }).Count
+    if (($Action -eq 'Add') -eq $has) { return (New-DEResult -Operation 'Set-DEMailboxAlias' -Target "$($mb.PrimarySmtpAddress)" -Message "$Address is $(if ($has) { 'already' } else { 'not' }) an address of this mailbox; nothing changed") }
+    if ($Action -eq 'Remove' -and "$($mb.PrimarySmtpAddress)" -ieq $Address) { return (New-DEResult -Operation 'Set-DEMailboxAlias' -Status Refused -Target "$($mb.PrimarySmtpAddress)" -Message 'that is the primary address; set another primary first') }
+    if ($Action -eq 'Add') {
+        $dom = ($Address -split '@')[1].ToLowerInvariant()
+        if ((Get-DEAcceptedDomainName) -notcontains $dom) { return (New-DEResult -Operation 'Set-DEMailboxAlias' -Status Refused -Target "$($mb.PrimarySmtpAddress)" -Message "$dom is not an accepted domain in Exchange Online") }
+        Assert-DECommand 'Get-EXORecipient' 'ExchangeOnlineManagement'
+        $other = @(Get-EXORecipient -Identity $Address -ErrorAction SilentlyContinue | Where-Object { "$($_.ExternalDirectoryObjectId)" -ne "$($mb.ExternalDirectoryObjectId)" })
+        if ($other.Count) { return (New-DEResult -Operation 'Set-DEMailboxAlias' -Status Refused -Target "$($mb.PrimarySmtpAddress)" -Message "$Address already belongs to $($other[0].RecipientTypeDetails) '$($other[0].DisplayName)'") }
+    }
+    if ($DryRun -or -not $PSCmdlet.ShouldProcess("$($mb.PrimarySmtpAddress)", "$Action address $Address")) { return (New-DEResult -Operation 'Set-DEMailboxAlias' -Status DryRun -Target "$($mb.PrimarySmtpAddress)" -Message 'no change applied' -Data ([pscustomobject]@{ mailbox = "$($mb.PrimarySmtpAddress)"; action = $Action; address = $Address })) }
+    Assert-DECommand 'Set-Mailbox' 'ExchangeOnlineManagement'
+    $null = Set-Mailbox -Identity $Identity -EmailAddresses @{ $Action = "smtp:$Address" } -ErrorAction Stop
+    $after = Get-EXOMailbox -Identity $Identity -Properties EmailAddresses -ErrorAction Stop
+    $now = [bool]@($after.EmailAddresses | Where-Object { "$_" -ieq "smtp:$Address" }).Count
+    $ok = ($now -eq ($Action -eq 'Add'))
+    return (New-DEResult -Operation 'Set-DEMailboxAlias' -Status $(if ($ok) { 'Succeeded' } else { 'Failed' }) -Target "$($mb.PrimarySmtpAddress)" -Message $(if ($ok) { "$Action $Address (read back)" } else { "read back: $Address $(if ($now) { 'still present' } else { 'missing' })" }) -Data ([pscustomobject]@{ mailbox = "$($mb.PrimarySmtpAddress)"; addresses = @($after.EmailAddresses | ForEach-Object { "$_" }) }))
+}
+function Set-DEMailboxForwarding {
+    <#
+        Forwards a mailbox (-ForwardTo) or stops forwarding (-Disable), then reads it back. A copy stays in the mailbox
+        unless -KeepCopy $false. Forwarding outside the tenant's accepted domains is Refused without -AllowExternal:
+        it is the classic way mail is exfiltrated, and Microsoft's outbound spam policy blocks automatic external
+        forwarding by default (allow it there for this mailbox too).
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
+    param([Parameter(Mandatory = $true)][string]$Identity, [string]$ForwardTo, [switch]$Disable, [bool]$KeepCopy = $true, [switch]$AllowExternal, [switch]$DryRun)
+    if ([bool]$ForwardTo -eq [bool]$Disable) { return (New-DEResult -Operation 'Set-DEMailboxForwarding' -Status Refused -Target $Identity -Message 'pass exactly one of -ForwardTo or -Disable') }
+    if ($ForwardTo -and $ForwardTo -notmatch '^[A-Za-z0-9._%+''-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}$') { return (New-DEResult -Operation 'Set-DEMailboxForwarding' -Status Refused -Target $Identity -Message "'$ForwardTo' is not an email address") }
+    Assert-DECommand 'Get-EXOMailbox' 'ExchangeOnlineManagement'
+    $mb = Get-EXOMailbox -Identity $Identity -Properties PrimarySmtpAddress, ForwardingSmtpAddress, ForwardingAddress, DeliverToMailboxAndForward -ErrorAction Stop
+    $current = ("$($mb.ForwardingSmtpAddress)" -replace '^smtp:', '')
+    if ($Disable -and -not $current -and -not "$($mb.ForwardingAddress)") { return (New-DEResult -Operation 'Set-DEMailboxForwarding' -Target "$($mb.PrimarySmtpAddress)" -Message 'not forwarding; nothing changed') }
+    if ($ForwardTo -and $current -ieq $ForwardTo -and [bool]$mb.DeliverToMailboxAndForward -eq $KeepCopy) { return (New-DEResult -Operation 'Set-DEMailboxForwarding' -Target "$($mb.PrimarySmtpAddress)" -Message "already forwarding to $ForwardTo; nothing changed") }
+    $external = $false
+    if ($ForwardTo) {
+        $external = ((Get-DEAcceptedDomainName) -notcontains ($ForwardTo -split '@')[1].ToLowerInvariant())
+        if ($external -and -not $AllowExternal) { return (New-DEResult -Operation 'Set-DEMailboxForwarding' -Status Refused -Target "$($mb.PrimarySmtpAddress)" -Message "$ForwardTo is outside this tenant: external forwarding is how mail is exfiltrated. Pass -AllowExternal if the client approved it, and allow it in the outbound spam policy for this mailbox") }
+    }
+    $what = $(if ($Disable) { 'stop forwarding' } else { "forward to $ForwardTo$(if ($external) { ' (EXTERNAL)' })$(if (-not $KeepCopy) { ' without keeping a copy' })" })
+    if ($DryRun -or -not $PSCmdlet.ShouldProcess("$($mb.PrimarySmtpAddress)", $what)) { return (New-DEResult -Operation 'Set-DEMailboxForwarding' -Status DryRun -Target "$($mb.PrimarySmtpAddress)" -Message "no change applied ($what)") }
+    Assert-DECommand 'Set-Mailbox' 'ExchangeOnlineManagement'
+    if ($Disable) { $null = Set-Mailbox -Identity $Identity -ForwardingSmtpAddress $null -ForwardingAddress $null -DeliverToMailboxAndForward $false -ErrorAction Stop }
+    else { $null = Set-Mailbox -Identity $Identity -ForwardingSmtpAddress "smtp:$ForwardTo" -DeliverToMailboxAndForward $KeepCopy -ErrorAction Stop }
+    $a = Get-EXOMailbox -Identity $Identity -Properties ForwardingSmtpAddress, ForwardingAddress, DeliverToMailboxAndForward -ErrorAction Stop
+    $now = ("$($a.ForwardingSmtpAddress)" -replace '^smtp:', '')
+    $ok = $(if ($Disable) { -not $now -and -not "$($a.ForwardingAddress)" } else { $now -ieq $ForwardTo })
+    return (New-DEResult -Operation 'Set-DEMailboxForwarding' -Status $(if ($ok) { 'Succeeded' } else { 'Failed' }) -Target "$($mb.PrimarySmtpAddress)" -Message $(if ($ok) { "$what (read back)" } else { "read back forwarding '$now'" }) -Data ([pscustomobject]@{ mailbox = "$($mb.PrimarySmtpAddress)"; forwardingSmtpAddress = $now; keepCopy = [bool]$a.DeliverToMailboxAndForward; external = $external }))
+}
+function Get-DETransportRule {
+    <# Mail flow rules, summarised, with the ones worth a look flagged: they redirect or copy mail, skip spam filtering (SCL -1) or delete messages. #>
+    [CmdletBinding()] param()
+    Assert-DECommand 'Get-TransportRule' 'ExchangeOnlineManagement'
+    $rows = @(Get-TransportRule -ErrorAction Stop | ForEach-Object {
+            $flags = @()
+            if (@($_.RedirectMessageTo | Where-Object { $_ }).Count) { $flags += 'redirects mail' }
+            if (@($_.BlindCopyTo | Where-Object { $_ }).Count -or @($_.AddToRecipients | Where-Object { $_ }).Count) { $flags += 'copies mail to others' }
+            if ("$($_.SetSCL)" -eq '-1') { $flags += 'bypasses spam filtering' }
+            if ($_.DeleteMessage -eq $true) { $flags += 'deletes messages' }
+            [pscustomobject]@{ name = "$($_.Name)"; state = "$($_.State)"; mode = "$($_.Mode)"; priority = $_.Priority; description = "$($_.Description)"; flags = $flags }
+        })
+    $risky = @($rows | Where-Object { $_.flags.Count })
+    return (New-DEResult -Operation 'Get-DETransportRule' -Message "$($rows.Count) rule(s); $($risky.Count) worth a look$(if ($risky.Count) { ': ' + (($risky | ForEach-Object { "$($_.name) ($($_.flags -join ', '))" }) -join '; ') })" -Data $rows)
+}
+
 # ============================================================ Azure
 function Connect-DEAzure {
     [CmdletBinding()] param([Parameter(Mandatory = $true)][string]$TenantId, [string]$SubscriptionId)
@@ -284,6 +465,12 @@ function Connect-DEAzure {
     if ($SubscriptionId) { Set-AzContext -SubscriptionId $SubscriptionId -ErrorAction Stop | Out-Null }
     $c = Get-AzContext
     return (New-DEResult -Operation 'Connect-DEAzure' -Target "$($c.Subscription.Name)" -Data ([pscustomobject]@{ tenant = "$($c.Tenant.Id)"; subscription = "$($c.Subscription.Name)"; subscriptionId = "$($c.Subscription.Id)"; account = "$($c.Account.Id)" }))
+}
+function Get-DEAzureSubscription {
+    [CmdletBinding()] param()
+    Assert-DECommand 'Get-AzSubscription' 'Az.Accounts'
+    $s = @(Get-AzSubscription -ErrorAction Stop | ForEach-Object { [pscustomobject]@{ name = "$($_.Name)"; id = "$($_.Id)"; state = "$($_.State)"; tenantId = "$($_.TenantId)" } })
+    return (New-DEResult -Operation 'Get-DEAzureSubscription' -Message "$($s.Count) subscription(s); $(@($s | Where-Object { $_.state -ne 'Enabled' }).Count) not enabled" -Data $s)
 }
 function Get-DEAzureInventory {
     <# Resources summarised by type and resource group (the raw list is in data.resources). #>
@@ -301,6 +488,33 @@ function New-DEAzureResourceGroup {
     if ($DryRun -or -not $PSCmdlet.ShouldProcess($Name, "create resource group in $Location")) { return (New-DEResult -Operation 'New-DEAzureResourceGroup' -Status DryRun -Target $Name -Message 'no change applied' -Data ([pscustomobject]@{ name = $Name; location = $Location; tags = $Tags })) }
     $r = New-AzResourceGroup -Name $Name -Location $Location -Tag $Tags -ErrorAction Stop
     return (New-DEResult -Operation 'New-DEAzureResourceGroup' -Target $Name -Message "created in $Location" -Data ($r | Select-Object ResourceGroupName, Location, ProvisioningState))
+}
+
+function New-DEAzureResourceLock {
+    <#
+        A management lock on a resource group, or on one resource (-ResourceName with -ResourceType, e.g.
+        Microsoft.Storage/storageAccounts). The same lock already there is Succeeded with nothing changed; a lock of
+        that name at another level is Refused. ReadOnly also blocks routine operations (for example listing storage
+        keys or scaling), so CanNotDelete is usually what a client wants.
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param([Parameter(Mandatory = $true)][string]$LockName, [ValidateSet('CanNotDelete', 'ReadOnly')][string]$LockLevel = 'CanNotDelete', [Parameter(Mandatory = $true)][string]$ResourceGroupName, [string]$ResourceName, [string]$ResourceType, [string]$Notes, [switch]$DryRun)
+    if ($ResourceName -and -not $ResourceType) { return (New-DEResult -Operation 'New-DEAzureResourceLock' -Status Refused -Target $ResourceName -Message 'a lock on one resource needs -ResourceType (for example Microsoft.Storage/storageAccounts)') }
+    Assert-DECommand 'Get-AzResourceLock' 'Az.Resources'
+    $scope = @{ ResourceGroupName = $ResourceGroupName }; if ($ResourceName) { $scope.ResourceName = $ResourceName; $scope.ResourceType = $ResourceType }
+    $target = $(if ($ResourceName) { "$ResourceGroupName/$ResourceName" } else { $ResourceGroupName })
+    $e = @(Get-AzResourceLock @scope -LockName $LockName -ErrorAction SilentlyContinue)
+    if ($e.Count) {
+        $lvl = "$($e[0].Properties.level)"
+        return (New-DEResult -Operation 'New-DEAzureResourceLock' -Status $(if ($lvl -eq $LockLevel) { 'Succeeded' } else { 'Refused' }) -Target $target -Message $(if ($lvl -eq $LockLevel) { "$LockLevel lock '$LockName' already there; nothing changed" } else { "lock '$LockName' exists at level $lvl, not $LockLevel" }))
+    }
+    $warn = $(if ($LockLevel -eq 'ReadOnly') { ' (ReadOnly also blocks routine operations such as listing keys and scaling)' } else { '' })
+    if ($DryRun -or -not $PSCmdlet.ShouldProcess($target, "add $LockLevel lock '$LockName'$warn")) { return (New-DEResult -Operation 'New-DEAzureResourceLock' -Status DryRun -Target $target -Message "no change applied$warn" -Data ([pscustomobject]@{ lock = $LockName; level = $LockLevel; scope = $target })) }
+    Assert-DECommand 'New-AzResourceLock' 'Az.Resources'
+    $p = @{ LockName = $LockName; LockLevel = $LockLevel; Force = $true; ErrorAction = 'Stop' } + $scope; if ($Notes) { $p.LockNotes = $Notes }
+    $null = New-AzResourceLock @p
+    $ok = [bool]@(Get-AzResourceLock @scope -LockName $LockName -ErrorAction SilentlyContinue).Count
+    return (New-DEResult -Operation 'New-DEAzureResourceLock' -Status $(if ($ok) { 'Succeeded' } else { 'Failed' }) -Target $target -Message $(if ($ok) { "$LockLevel lock '$LockName' added (read back)$warn" } else { 'lock not found after creating it' }) -Data ([pscustomobject]@{ lock = $LockName; level = $LockLevel; scope = $target }))
 }
 
 # ============================================================ Intune and Autopilot
@@ -328,6 +542,32 @@ function Sync-DEIntuneDevice {
     $null = Invoke-DEGraphRequest -Method POST -Uri "deviceManagement/managedDevices/$ManagedDeviceId/syncDevice"
     return (New-DEResult -Operation 'Sync-DEIntuneDevice' -Target $ManagedDeviceId -Message 'sync requested (the device checks in within minutes)')
 }
+function Invoke-DEIntuneDeviceAction {
+    <#
+        Sync, Restart, Lock, Retire, Wipe or FreshStart on one Intune device, looked up first. Retire, Wipe and FreshStart
+        remove company data (Wipe resets the device), so they need -ConfirmDeviceName with the device's exact name: an
+        id pasted from the wrong row cannot wipe the wrong laptop. Remote lock is not supported on Windows. The result
+        carries Intune's own action state (pending until the device checks in).
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
+    param([Parameter(Mandatory = $true)][string]$ManagedDeviceId, [Parameter(Mandatory = $true)][ValidateSet('Sync', 'Restart', 'Lock', 'Retire', 'Wipe', 'FreshStart')][string]$Action, [string]$ConfirmDeviceName, [switch]$KeepEnrollmentData, [switch]$KeepUserData, [switch]$ProtectedWipe, [switch]$DryRun)
+    $graphAction = @{ Sync = 'syncDevice'; Restart = 'rebootNow'; Lock = 'remoteLock'; Retire = 'retire'; Wipe = 'wipe'; FreshStart = 'cleanWindowsDevice' }[$Action]
+    $id = [uri]::EscapeDataString($ManagedDeviceId)
+    $d = Invoke-DEGraphRequest -Uri ('deviceManagement/managedDevices/{0}?$select=id,deviceName,serialNumber,operatingSystem,userPrincipalName,managementAgent' -f $id)
+    $label = "$($d.deviceName) ($($d.serialNumber), $($d.userPrincipalName))"
+    $windows = ("$($d.operatingSystem)" -like 'Windows*')
+    if ($Action -eq 'Lock' -and $windows) { return (New-DEResult -Operation 'Invoke-DEIntuneDeviceAction' -Status Refused -Target "$($d.deviceName)" -Message 'Intune remote lock is not supported on Windows; use Restart, or disable the user and revoke sessions') }
+    if ($Action -eq 'FreshStart' -and -not $windows) { return (New-DEResult -Operation 'Invoke-DEIntuneDeviceAction' -Status Refused -Target "$($d.deviceName)" -Message 'Fresh Start is Windows only') }
+    if ($Action -in @('Retire', 'Wipe', 'FreshStart') -and "$ConfirmDeviceName" -cne "$($d.deviceName)") { return (New-DEResult -Operation 'Invoke-DEIntuneDeviceAction' -Status Refused -Target "$($d.deviceName)" -Message "$Action removes company data$(if ($Action -eq 'Wipe') { ' and resets the device' }): pass -ConfirmDeviceName '$($d.deviceName)' to confirm this is the device") }
+    $body = $null
+    if ($Action -eq 'Wipe') { $body = @{ keepEnrollmentData = [bool]$KeepEnrollmentData; keepUserData = [bool]$KeepUserData; useProtectedWipe = [bool]$ProtectedWipe } }
+    elseif ($Action -eq 'FreshStart') { $body = @{ keepUserData = [bool]$KeepUserData } }
+    if ($DryRun -or -not $PSCmdlet.ShouldProcess($label, "Intune $Action")) { return (New-DEResult -Operation 'Invoke-DEIntuneDeviceAction' -Status DryRun -Target "$($d.deviceName)" -Message "no change applied ($Action $label)" -Data ([pscustomobject]@{ id = $d.id; action = $graphAction; body = $body })) }
+    $null = Invoke-DEGraphRequest -Method POST -Uri "deviceManagement/managedDevices/$id/$graphAction" -Body $body
+    $state = 'requested'
+    try { $s = @((Invoke-DEGraphRequest -Uri ('deviceManagement/managedDevices/{0}?$select=deviceActionResults' -f $id)).deviceActionResults | Where-Object { "$($_.actionName)" -ieq $graphAction }) | Select-Object -Last 1; if ($s) { $state = "$($s.actionState)" } } catch { Write-Verbose "action state not read yet: $($_.Exception.Message)" }
+    return (New-DEResult -Operation 'Invoke-DEIntuneDeviceAction' -Target "$($d.deviceName)" -Message "$Action requested for $label; Intune reports: $state (the device acts when it next checks in)" -Data ([pscustomobject]@{ id = $d.id; deviceName = $d.deviceName; action = $graphAction; actionState = $state }))
+}
 function Get-DEAutopilotDevice {
     [CmdletBinding()] param([string]$Serial)
     $uri = 'deviceManagement/windowsAutopilotDeviceIdentities' + $(if ($Serial) { '?$filter=' + "contains(serialNumber,$(ConvertTo-DEODataLiteral $Serial))" } else { '' })
@@ -340,6 +580,29 @@ function Get-DEAutopilotProfile {
     $r = @(Invoke-DEGraphRequest -Uri 'deviceManagement/windowsAutopilotDeploymentProfiles?$select=id,displayName,description,deviceNameTemplate,lastModifiedDateTime' -All -Beta)
     return (New-DEResult -Operation 'Get-DEAutopilotProfile' -Message "$($r.Count) profile(s) (Graph beta)" -Data $r)
 }
+function Find-DEAutopilotBySerial {
+    <# Autopilot identities whose serial is exactly -Serial (Graph's filter is 'contains', so near misses are dropped here). #>
+    param([Parameter(Mandatory = $true)][string]$Serial)
+    return @(Invoke-DEGraphRequest -Uri ('deviceManagement/windowsAutopilotDeviceIdentities?$filter=contains(serialNumber,{0})' -f (ConvertTo-DEODataLiteral $Serial)) -All | Where-Object { "$($_.serialNumber)".Trim() -ieq $Serial.Trim() })
+}
+function Set-DEAutopilotGroupTag {
+    <#
+        Sets the group tag (it drives dynamic groups and so profile assignment) on the Autopilot record with exactly this
+        serial; none or several is Refused. Graph needs updateDeviceProperties (a PATCH is accepted and ignored). The
+        change can take a few minutes to show: a read-back that still has the old tag is Partial, not Failed.
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param([Parameter(Mandatory = $true)][string]$Serial, [Parameter(Mandatory = $true)][AllowEmptyString()][ValidatePattern('^[A-Za-z0-9 _.-]{0,200}$')][string]$GroupTag, [switch]$DryRun)
+    $exact = @(Find-DEAutopilotBySerial -Serial $Serial)
+    if ($exact.Count -ne 1) { return (New-DEResult -Operation 'Set-DEAutopilotGroupTag' -Status Refused -Target $Serial -Message "$($exact.Count) Autopilot record(s) with exactly this serial; nothing changed") }
+    $ap = $exact[0]
+    if ("$($ap.groupTag)" -ceq $GroupTag) { return (New-DEResult -Operation 'Set-DEAutopilotGroupTag' -Target $Serial -Message "group tag is already '$GroupTag'; nothing changed") }
+    if ($DryRun -or -not $PSCmdlet.ShouldProcess($Serial, "set Autopilot group tag '$($ap.groupTag)' -> '$GroupTag'")) { return (New-DEResult -Operation 'Set-DEAutopilotGroupTag' -Status DryRun -Target $Serial -Message 'no change applied' -Data ([pscustomobject]@{ id = $ap.id; from = "$($ap.groupTag)"; to = $GroupTag })) }
+    $null = Invoke-DEGraphRequest -Method POST -Uri "deviceManagement/windowsAutopilotDeviceIdentities/$($ap.id)/updateDeviceProperties" -Body @{ groupTag = $GroupTag }
+    $now = "$((Invoke-DEGraphRequest -Uri "deviceManagement/windowsAutopilotDeviceIdentities/$($ap.id)").groupTag)"
+    $ok = ($now -ceq $GroupTag)
+    return (New-DEResult -Operation 'Set-DEAutopilotGroupTag' -Status $(if ($ok) { 'Succeeded' } else { 'Partial' }) -Target $Serial -Message $(if ($ok) { "group tag '$($ap.groupTag)' -> '$GroupTag' (read back)" } else { "accepted; Autopilot still shows '$now' (it can take a few minutes)" }) -Data ([pscustomobject]@{ id = $ap.id; groupTag = $now }))
+}
 function Remove-DEAutopilotDevice {
     <#
         Deregisters a device from Autopilot by its exact serial (the takeover step before JumpCloud). Refuses a serial
@@ -348,8 +611,7 @@ function Remove-DEAutopilotDevice {
     #>
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
     param([Parameter(Mandatory = $true)][string]$Serial, [switch]$RemoveIntuneRecord, [switch]$DryRun, [int]$WaitSeconds = 120)
-    $all = @(Invoke-DEGraphRequest -Uri ('deviceManagement/windowsAutopilotDeviceIdentities?$filter=contains(serialNumber,{0})' -f (ConvertTo-DEODataLiteral $Serial)) -All)
-    $exact = @($all | Where-Object { "$($_.serialNumber)".Trim() -ieq $Serial.Trim() })
+    $exact = @(Find-DEAutopilotBySerial -Serial $Serial)
     if ($exact.Count -ne 1) { return (New-DEResult -Operation 'Remove-DEAutopilotDevice' -Status Refused -Target $Serial -Message "$($exact.Count) Autopilot record(s) with exactly this serial; nothing removed") }
     $ap = $exact[0]
     $md = @(Invoke-DEGraphRequest -Uri ('deviceManagement/managedDevices?$filter=serialNumber eq {0}&$select=id,deviceName,userPrincipalName' -f (ConvertTo-DEODataLiteral $Serial)) -All)
@@ -363,7 +625,7 @@ function Remove-DEAutopilotDevice {
     foreach ($m in $md) { $null = Invoke-DEGraphRequest -Method DELETE -Uri "deviceManagement/managedDevices/$($m.id)" }
     $null = Invoke-DEGraphRequest -Method DELETE -Uri "deviceManagement/windowsAutopilotDeviceIdentities/$($ap.id)"
     $deadline = (Get-Date).AddSeconds($WaitSeconds); $gone = $false
-    while ((Get-Date) -lt $deadline) { $left = @(Invoke-DEGraphRequest -Uri ('deviceManagement/windowsAutopilotDeviceIdentities?$filter=contains(serialNumber,{0})' -f (ConvertTo-DEODataLiteral $Serial)) -All | Where-Object { "$($_.serialNumber)".Trim() -ieq $Serial.Trim() }); if (-not $left.Count) { $gone = $true; break }; Start-Sleep -Seconds 10 }
+    while ((Get-Date) -lt $deadline) { $left = @(Find-DEAutopilotBySerial -Serial $Serial); if (-not $left.Count) { $gone = $true; break }; Start-Sleep -Seconds 10 }
     return (New-DEResult -Operation 'Remove-DEAutopilotDevice' -Status $(if ($gone) { 'Succeeded' } else { 'Partial' }) -Target $Serial -Message $(if ($gone) { 'removed from Autopilot (read back)' } else { "delete accepted but still listed after $WaitSeconds s; Autopilot can take up to 30 minutes" }) -Data $plan)
 }
 
@@ -372,8 +634,10 @@ function Remove-DEAutopilotDevice {
 $script:JobAllowlist = @{
     'Get-DETenantSummary' = $false; 'Get-DEUser' = $false; 'Get-DEGroup' = $false; 'Get-DELicenseInventory' = $false; 'Get-DEConditionalAccessPolicy' = $false; 'Get-DEMfaRegistration' = $false
     'Get-DEEntraDevice' = $false; 'Test-DEEntraBitLockerEscrow' = $false; 'Get-DEIntuneDevice' = $false; 'Get-DEIntuneCompliancePolicy' = $false; 'Get-DEIntuneConfigurationProfile' = $false
-    'Get-DEAutopilotDevice' = $false; 'Get-DEAutopilotProfile' = $false; 'Get-DEMailbox' = $false; 'Get-DEAzureInventory' = $false
+    'Get-DEAutopilotDevice' = $false; 'Get-DEAutopilotProfile' = $false; 'Get-DEMailbox' = $false; 'Get-DEAzureInventory' = $false; 'Get-DETransportRule' = $false; 'Get-DEAzureSubscription' = $false
     'Set-DEUserAccountState' = $true; 'Add-DEGroupMember' = $true; 'Sync-DEIntuneDevice' = $true; 'Remove-DEAutopilotDevice' = $true; 'New-DESharedMailbox' = $true; 'Set-DEMailboxPermission' = $true; 'New-DEAzureResourceGroup' = $true
+    'New-DEUser' = $true; 'New-DEGroup' = $true; 'Set-DEConditionalAccessPolicyState' = $true; 'Set-DEMailboxAlias' = $true; 'Set-DEMailboxForwarding' = $true
+    'Invoke-DEIntuneDeviceAction' = $true; 'Set-DEAutopilotGroupTag' = $true; 'New-DEAzureResourceLock' = $true
 }
 function ConvertTo-DEJsonText {
     <# A JSON string exactly as JavaScript's JSON.stringify writes it (only " \ and control characters escaped), so a Node signer and this module sign the same bytes. #>
@@ -472,7 +736,8 @@ function Invoke-DEMicrosoftJob {
 }
 
 Export-ModuleMember -Function Set-DEMsAuditPath, Get-DEMsAuditPath, New-DEResult, Export-DEResult, Get-DEMsScopeSet, Connect-DEMicrosoft, Get-DEMsContext, ConvertTo-DEODataLiteral, Invoke-DEGraphRequest,
-    Get-DETenantSummary, Get-DEUser, Set-DEUserAccountState, Get-DEGroup, Add-DEGroupMember, Get-DELicenseInventory, Get-DEConditionalAccessPolicy, Get-DEMfaRegistration,
-    Get-DEEntraDevice, Test-DEEntraBitLockerEscrow, Connect-DEExchange, Get-DEMailbox, New-DESharedMailbox, Set-DEMailboxPermission, Connect-DEAzure, Get-DEAzureInventory, New-DEAzureResourceGroup,
-    Get-DEIntuneDevice, Get-DEIntuneCompliancePolicy, Get-DEIntuneConfigurationProfile, Sync-DEIntuneDevice, Get-DEAutopilotDevice, Get-DEAutopilotProfile, Remove-DEAutopilotDevice,
+    Get-DETenantSummary, Get-DEUser, New-DEUser, Set-DEUserAccountState, Get-DEGroup, New-DEGroup, Add-DEGroupMember, Get-DELicenseInventory, Get-DEConditionalAccessPolicy, Set-DEConditionalAccessPolicyState, Get-DEMfaRegistration,
+    Get-DEEntraDevice, Test-DEEntraBitLockerEscrow, Connect-DEExchange, Get-DEMailbox, New-DESharedMailbox, Set-DEMailboxPermission, Set-DEMailboxAlias, Set-DEMailboxForwarding, Get-DETransportRule,
+    Connect-DEAzure, Get-DEAzureSubscription, Get-DEAzureInventory, New-DEAzureResourceGroup, New-DEAzureResourceLock,
+    Get-DEIntuneDevice, Get-DEIntuneCompliancePolicy, Get-DEIntuneConfigurationProfile, Sync-DEIntuneDevice, Invoke-DEIntuneDeviceAction, Get-DEAutopilotDevice, Get-DEAutopilotProfile, Set-DEAutopilotGroupTag, Remove-DEAutopilotDevice,
     ConvertTo-DEJobCanonical, Get-DEJobSignature, New-DEMicrosoftJob, Invoke-DEMicrosoftJob
