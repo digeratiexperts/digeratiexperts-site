@@ -377,4 +377,35 @@ function Send-DEHubMigrationRecord {
     return @{ sent = $true; eventId = $ev.eventId; response = $resp }
 }
 
-Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload, Send-DEHubMigrationRecord
+function Test-DEHubReachable {
+    <# Anonymous liveness probe of the Hub (GET /api/healthz). Proves the Hub answers, not which release it runs. #>
+    param([Parameter(Mandatory = $true)][string]$Endpoint, [int]$TimeoutSec = 10)
+    if ($Endpoint -notmatch '^https://') { return [pscustomobject]@{ ok = $false; status = $null; detail = 'the Hub URL must start with https://' } }
+    $base = ([uri]$Endpoint).GetLeftPart([UriPartial]::Authority)
+    try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }
+    try {
+        $r = Invoke-WebRequest -Uri "$base/api/healthz" -UseBasicParsing -TimeoutSec $TimeoutSec -ErrorAction Stop
+        return [pscustomobject]@{ ok = ([int]$r.StatusCode -eq 200); status = [int]$r.StatusCode; detail = "$base answered $([int]$r.StatusCode)" }
+    } catch { return [pscustomobject]@{ ok = $false; status = $null; detail = "$base did not answer: $($_.Exception.Message)" } }
+}
+function Get-DEHubConnectionChecklist {
+    <#
+        What sending to the Intelligence Hub needs, in order, and whether each part is in place on this PC. The server
+        side (TECHCONSOLE_TO_HUB_SECRET on the Hub) cannot be seen from here: it reads 'not checkable' until a signed
+        send succeeds, which proves both halves match.
+    #>
+    param([string]$Endpoint)
+    if (-not $Endpoint) { $Endpoint = "$(Get-DEState -Path 'settings.hub.endpoint')" }
+    $acct = "$((Get-DEContext)['hubAccountId'])"
+    $last = @(Get-DEEvidence | Where-Object { $_ -and $_.step -in @('hub.push', 'hub.migration') }) | Select-Object -Last 1
+    $sentOk = [bool]($last -and $last.result -eq 'PASS' -and "$($last.action)" -match 'signed event')
+    $items = @(
+        [pscustomobject]@{ step = 'Hub URL (Settings > Console settings)'; ok = ($Endpoint -match '^https://'); detail = $(if ($Endpoint) { $Endpoint } else { 'not set' }) }
+        [pscustomobject]@{ step = 'Signing secret for this session (Runtime secrets > Intelligence Hub signing secret)'; ok = [bool](Test-DESecret -Name 'DE_HUB_SIGNING_SECRET'); detail = $(if (Test-DESecret -Name 'DE_HUB_SIGNING_SECRET') { 'set for this session' } else { 'not set' }) }
+        [pscustomobject]@{ step = "Client's Hub account number (client profile hub.accountId)"; ok = ($acct -match '^[1-9]\d*$'); detail = $(if ($acct) { $acct } else { 'the client profile has no hub.accountId; the Migration page asks for it when sending' }) }
+        [pscustomobject]@{ step = 'The same secret on the Hub server (TECHCONSOLE_TO_HUB_SECRET)'; ok = $(if ($sentOk) { $true } else { $null }); detail = $(if ($sentOk) { "a signed send succeeded at $($last.timestamp)" } elseif ($last) { "last send: $($last.result) ($($last.verification))" } else { 'not checkable from here until a signed send succeeds; a Hub admin sets it on the server' }) }
+    )
+    return $items
+}
+
+Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload, Send-DEHubMigrationRecord, Test-DEHubReachable, Get-DEHubConnectionChecklist

@@ -189,6 +189,7 @@
     "maint.update-authority": "Exactly one system should control Windows updates (JumpCloud by default).",
     "maint.warranty": "An expired warranty turns a hardware fault into a purchase; the client should hear about it before the failure, not after.",
     "maint.oem": "Old BIOS and drivers cause the crashes and dock problems users call about. Dell uses Command | Update, Lenovo uses LSUClient (pinned), HP uses HP Image Assistant; BitLocker is suspended for one restart around firmware.",
-    "baseline.cis-audit": "A read-only CIS or Microsoft baseline report shows what the DE baseline does not cover yet. It changes nothing on the device."
+    "baseline.cis-audit": "A read-only CIS or Microsoft baseline report shows what the DE baseline does not cover yet. It changes nothing on the device.",
+    "branding.lockscreen": "The client's own lock screen on every PC: the company look before anyone signs in, the same image behind the sign-in box, no Windows Spotlight ads over it, and users cannot swap it for something else."
   }
 }

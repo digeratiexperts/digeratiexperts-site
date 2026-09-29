@@ -162,6 +162,60 @@
       ]
     },
     {
+      "id": "signing-hub",
+      "title": "Code signing and the Intelligence Hub",
+      "items": [
+        {
+          "title": "Code-signing certificates on this PC",
+          "command": "Get-ChildItem Cert:\\CurrentUser\\My, Cert:\\LocalMachine\\My -CodeSigningCert | Where-Object HasPrivateKey | Select-Object Subject, Thumbprint, NotAfter",
+          "note": "A certificate on a USB token shows up while the token is plugged in. Settings > Code signing shows the same list and how to get one.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Build a signed release",
+          "command": "& \"{root}\\packaging\\New-DEReleasePackage.ps1\" -IssuedTo jrpetro -Thumbprint <thumbprint>",
+          "note": "Signs every script, timestamps the signatures (they stay valid after the certificate expires) and writes integrity.json.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Check a file's signature",
+          "command": "Get-AuthenticodeSignature \"{root}\\console\\DETechConsole.ps1\" | Format-List Status, SignerCertificate, TimeStamperCertificate",
+          "note": "Valid means signed and unchanged; HashMismatch means the file changed after signing.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Check the Hub answers",
+          "command": "Invoke-WebRequest https://techsales.digerati-experts.com/api/healthz -UseBasicParsing | Select-Object StatusCode",
+          "note": "200 means the Hub is up. It does not say which release it runs.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Which release the Hub runs (Hub admin)",
+          "command": "ssh de-vps 'sudo cat /opt/intelligence-hub/current/RELEASE_SHA'",
+          "note": "Compare with the merged commit. The Hub server also needs TECHCONSOLE_TO_HUB_SECRET set to the same value as the Tech Tool's signing secret.",
+          "shell": "Any (SSH)"
+        }
+      ]
+    },
+    {
+      "id": "branding",
+      "title": "Branding",
+      "items": [
+        {
+          "title": "Set the company-branded lock screen (RMM, one step)",
+          "command": "Import-Module \"{root}\\console\\modules\\DE.Workflow\\DE.Workflow.psm1\" -DisableNameChecking; Import-DEConsoleModules -Root \"{root}\\console\"; $null = Initialize-DEConsole -Root \"{root}\\console\" -Mode Apply; Set-DELockScreen -ClientProfile (Get-DEClientProfile -Id alamo) -Confirm:$false",
+          "note": "Users cannot change it, it shows behind the sign-in box, and Windows Spotlight is turned off for every profile. Windows Home ignores lock screen policy. Undo-DELockScreen restores the previous one.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Check the lock screen",
+          "command": "Import-Module \"{root}\\console\\modules\\DE.Workflow\\DE.Workflow.psm1\" -DisableNameChecking; Import-DEConsoleModules -Root \"{root}\\console\"; $null = Initialize-DEConsole -Root \"{root}\\console\" -Mode Audit; Get-DELockScreenState | Format-List ok, detail, edition",
+          "note": "ok only when the image, the policy and Spotlight-off for every profile are all in place.",
+          "shell": "PowerShell (admin)"
+        }
+      ]
+    },
+    {
       "id": "microsoft",
       "title": "Microsoft 365 / Entra / Intune (DE Microsoft Admin)",
       "items": [

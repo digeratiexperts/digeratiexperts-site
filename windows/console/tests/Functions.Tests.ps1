@@ -1324,3 +1324,106 @@ Describe 'Community tools: pinned, hash-checked, and only MIT code in the consol
         $d.audited | Should -Be $false
     }
 }
+
+Describe 'Company-branded lock screen' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1')
+        $global:DETest = @{ Dir = Initialize-TestConsole }
+        $global:DETest.Alamo = Get-DEClientProfile -Id 'alamo'
+        $global:DETest.PD = $env:ProgramData
+        $env:ProgramData = Join-Path $global:DETest.Dir 'programdata'; New-Item -ItemType Directory -Path $env:ProgramData -Force | Out-Null
+        $global:DETest.Png = Join-Path $global:DETest.Dir 'lock-source.png'; [IO.File]::WriteAllBytes($global:DETest.Png, [byte[]](137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3))
+        $global:DETest.WasWindows = & (Get-Module DE.Configure) { $script:IsWindowsHost }
+        & (Get-Module DE.Configure) { $script:IsWindowsHost = $true }
+    }
+    AfterAll {
+        $env:ProgramData = $global:DETest.PD
+        & (Get-Module DE.Configure) { param($w) $script:IsWindowsHost = $w } $global:DETest.WasWindows
+    }
+    Context 'on a Pro device with two profiles' {
+        BeforeAll {
+            $global:FR = @{ 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP|LockScreenImagePath' = 'C:\Windows\Web\Screen\img100.jpg'; 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP|LockScreenImageStatus' = 1 }
+            Mock -ModuleName DE.Configure Get-DEWindowsEdition { 'Professional' }
+            Mock -ModuleName DE.Configure Get-DERegistryValue { $global:FR["$Path|$Name"] }
+            Mock -ModuleName DE.Configure Set-DERegistryValue { $global:FR["$Path|$Name"] = $Value }
+            Mock -ModuleName DE.Configure Remove-ItemProperty { $global:FR.Remove("$Path|$Name") }
+            Mock -ModuleName DE.Configure Open-DEUserHives { @{ targets = @(@{ sid = 'S-1-5-21-1-2-3-1001'; root = 'Registry::HKEY_USERS\S-1-5-21-1-2-3-1001'; name = 'helen' }, @{ sid = 'Default'; root = 'Registry::HKEY_USERS\DE_Default'; name = 'Default (new users)' }); loaded = @(); failed = @() } }
+            Mock -ModuleName DE.Configure Close-DEUserHives { }
+        }
+        It 'sets the image, stops users changing it, shows it at sign-in and turns Spotlight off for every profile' {
+            (Get-DELockScreenState).ok | Should -Be $false
+            $r = Set-DELockScreen -ClientProfile $global:DETest.Alamo -Image $global:DETest.Png -Confirm:$false
+            $r | Should -Match 'Spotlight off for 2 profile\(s\)'
+            $img = Join-Path $env:ProgramData 'DE\Branding\lockscreen.png'
+            $global:FR['HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP|LockScreenImagePath'] | Should -Be $img
+            $global:FR['HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization|NoChangingLockScreen'] | Should -Be 1
+            $global:FR['HKLM:\SOFTWARE\Policies\Microsoft\Windows\System|DisableLogonBackgroundImage'] | Should -Be 0
+            $global:FR['Registry::HKEY_USERS\S-1-5-21-1-2-3-1001\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager|RotatingLockScreenEnabled'] | Should -Be 0
+            $s = Get-DELockScreenState
+            $s.ok | Should -Be $true; $s.detail | Should -Match 'users cannot change it'
+        }
+        It 'a re-run keeps the original look for Undo, and Spotlight coming back for one person is named' {
+            $null = Set-DELockScreen -ClientProfile $global:DETest.Alamo -Image $global:DETest.Png -Confirm:$false
+            Get-DEHashPath -Object (Get-DEState -Path 'lockscreen.previous') -Path 'machine.csp.LockScreenImagePath.value' | Should -Be 'C:\Windows\Web\Screen\img100.jpg'
+            $global:FR['Registry::HKEY_USERS\S-1-5-21-1-2-3-1001\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager|RotatingLockScreenEnabled'] = 1
+            $s = Get-DELockScreenState
+            $s.ok | Should -Be $false; $s.detail | Should -Match 'Spotlight still rotates the lock screen for: helen'
+        }
+        It 'undo restores the previous image and removes what did not exist before' {
+            $r = Undo-DELockScreen -Confirm:$false
+            $r | Should -Match 'restored'
+            $global:FR['HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP|LockScreenImagePath'] | Should -Be 'C:\Windows\Web\Screen\img100.jpg'
+            $global:FR.ContainsKey('HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization|NoChangingLockScreen') | Should -Be $false
+            $global:FR.ContainsKey('Registry::HKEY_USERS\S-1-5-21-1-2-3-1001\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager|RotatingLockScreenEnabled') | Should -Be $false
+            Get-DEState -Path 'lockscreen.previous' | Should -BeNullOrEmpty
+        }
+        It 'is its own step on Scan & fix, with the reason in plain words' {
+            Register-DEBrandingActions -ClientProfile $global:DETest.Alamo
+            $a = Get-DEAction -Id 'branding.lockscreen'
+            $a.Title | Should -Match 'lock screen'
+            $st = Get-DEActionState -Id 'branding.lockscreen'
+            $st.Status | Should -Be 'DRIFT'; ($st.Drift -join ' ') | Should -Match 'not in place|does not point'
+        }
+    }
+    Context 'on Windows Home' {
+        BeforeAll { Mock -ModuleName DE.Configure Get-DEWindowsEdition { 'Core' } }
+        It 'is reported, never passed, and nothing is written' {
+            Mock -ModuleName DE.Configure Set-DERegistryValue { throw 'written on Home' }
+            (Get-DEThrown { Set-DELockScreen -ClientProfile $global:DETest.Alamo -Image $global:DETest.Png -Confirm:$false }) | Should -Match 'ignores lock screen policy'
+            $s = Get-DELockScreenState
+            $s.supported | Should -Be $false; $s.ok | Should -Be $false; $s.detail | Should -Match 'upgrade to Pro'
+        }
+    }
+}
+
+Describe 'Intelligence Hub connection and code signing (Settings)' {
+    BeforeAll { . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $global:DETest = @{ Dir = Initialize-TestConsole } }
+    It 'lists the four parts, and the server secret counts only after a signed send succeeded' {
+        Set-DEStateValue -Path 'settings.hub.endpoint' -Value ''
+        Set-DEContext -Values @{ hubAccountId = '' }
+        $c = @(Get-DEHubConnectionChecklist)
+        $c.Count | Should -Be 4
+        @($c | Where-Object { $_.ok -eq $true }).Count | Should -Be 0
+        $c[3].ok | Should -BeNullOrEmpty
+        Set-DEStateValue -Path 'settings.hub.endpoint' -Value 'https://hub.example'
+        Set-DESecret -Name 'DE_HUB_SIGNING_SECRET' -Plain 'x-secret-value'
+        Set-DEContext -Values @{ hubAccountId = '42' }
+        $null = Add-DEEvidence -Step 'hub.migration' -Module 'migration' -Before 'record ready' -ActionTaken 'sent to the Hub as signed event e-1' -Result 'PASS' -Verification 'https://hub.example : applied'
+        $c = @(Get-DEHubConnectionChecklist)
+        @($c | Where-Object { $_.ok -eq $true }).Count | Should -Be 4
+        ($c | ForEach-Object { $_.detail }) -join ' ' | Should -Not -Match 'x-secret-value'
+        Clear-DESecrets
+    }
+    It 'the Hub check refuses plain http and reports what answered' {
+        (Test-DEHubReachable -Endpoint 'http://hub.example').ok | Should -Be $false
+        Mock -ModuleName DE.Evidence Invoke-WebRequest { [pscustomobject]@{ StatusCode = 200 } }
+        $r = Test-DEHubReachable -Endpoint 'https://hub.example/api/whatever'
+        $r.ok | Should -Be $true; $r.detail | Should -Be 'https://hub.example answered 200'
+        Mock -ModuleName DE.Evidence Invoke-WebRequest { throw 'no route to host' }
+        (Test-DEHubReachable -Endpoint 'https://hub.example').detail | Should -Match 'did not answer: no route to host'
+    }
+    It 'code-signing certificates are listed only on Windows, never throws' {
+        $certs = @(Get-DECodeSigningCertificates)
+        if ($env:OS -ne 'Windows_NT') { $certs.Count | Should -Be 0 } else { @($certs | Where-Object { -not $_.thumbprint }).Count | Should -Be 0 }
+    }
+}
