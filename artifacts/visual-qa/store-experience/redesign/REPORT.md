@@ -1,6 +1,6 @@
 # Store redesign — visual QA evidence
 
-Captured 2026-09-28 on the dev server (memory mode), Chrome 1194, consent pre-seeded, plus one pass with the cookie banner present. Re-captured the same day after the round-2 review fixes (electric washes removed, error inks from `--destructive`, rail header wrap, bottom-sheet rise, need rows still at mount): every gate below unchanged within rounding; only the screenshots whose pixels moved are refreshed. Script: the evidence walk in the session scratchpad (`walk-redesign.mjs`), the same gates as `docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md` §14. Raw numbers in `report.json`. Baseline A for comparison: `../baseline/`.
+Captured 2026-09-28 on the dev server (memory mode), Chrome 1194, consent pre-seeded, plus one pass with the cookie banner present. Re-captured the same day after the round-2 review fixes (electric washes removed, error inks from `--destructive`, rail header wrap, bottom-sheet rise, need rows still at mount): every gate below unchanged within rounding; only the screenshots whose pixels moved are refreshed. Script: the evidence walk in the session scratchpad (`walk-redesign.mjs`), the same gates as `docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md` §14. Raw numbers in `report.json`. Baseline A for comparison: `../baseline/`. Re-captured 2026-09-29 after the approved round and its review: the Door 2 accent now computes electric (a `:root`-scoped variable had rendered every accent magenta since the rebuild), the announcement strip is off Door 2 and `/book`, the footer is the store variant, and the confirmation's booking action is live; every capture in this folder is from that state.
 
 ## Gates
 
@@ -16,7 +16,7 @@ Captured 2026-09-28 on the dev server (memory mode), Chrome 1194, consent pre-se
 | Fixed chrome without banner (13), px | 151–153 (≤ 180) | 151–153 | 188–242 |
 | Fixed chrome with banner (13), share of viewport | 301 px = 36% (≤ 40%) | 301 px = 29% | 239 px = 27% |
 | Overlapping fixed chrome (13) | none | none | none |
-| `/store` length, empty draft (14; gate ≤ 7 at 390, target 4 at 1440) | 6.3 | 5.8 | 5.4 (target not met) |
+| `/store` length, empty draft (14; gate ≤ 7 at 390, target 4 at 1440) | 6.34 | 5.79 | 5.33 (target not met) |
 | `/store/solution` length, one need (smoke) | 7.0 | 4.7 | 5.2 |
 | `/store/solution` length, four needs (walk) | 10.2 | 6.5 | 7.2 |
 | Controls in `<main>` (17): index / family / workspace / contact / confirmation | 51 / 8 / 41† / 9 / 6 | 51 / 8 / 41† / 9 / 6 | 53 / 13 / 44† / 9 / 6 |
@@ -27,7 +27,7 @@ Captured 2026-09-28 on the dev server (memory mode), Chrome 1194, consent pre-se
 
 † measured with four needs in the draft (budget is 40 with three).
 
-**Not met, reported:** `/store` at 1440 is 5.4 viewports against the target of 4 (the footer is 0.7 of it; the ten scenarios and thirteen family rows are decided content). `/store/solution` at 390 clears 6 viewports only without the shared footer, which is 1.9 viewports there; the footer `store` variant is PR 3.
+**Not met, reported:** `/store` at 1440 is 5.33 viewports against the target of 4 (the footer is 0.7 of it; the ten scenarios and thirteen family rows are decided content). `/store/solution` at 390 clears 6 viewports only without the shared footer, which is 1.9 viewports there; the footer `store` variant is PR 3.
 
 ## States captured (file prefix)
 

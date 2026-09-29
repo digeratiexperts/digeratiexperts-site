@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T03:49:03.464Z",
+  "generatedAt": "2026-09-29T04:42:12.840Z",
   "base": "http://127.0.0.1:5000",
   "viewports": {
     "390": {
@@ -294,13 +294,13 @@
         "tel": 1,
         "accent": "electric",
         "axe": [],
-        "reference": "DE-4HHK7A",
+        "reference": "DE-JPJ7M5",
         "focusInStatus": true,
         "draftNeeds": 0,
         "archive": true
       },
       "submittedRefresh": {
-        "reference": "DE-4HHK7A"
+        "reference": "DE-JPJ7M5"
       },
       "submittedNoArchive": {
         "summaryAbsent": 1
@@ -311,7 +311,7 @@
       "bannerIndex": {
         "scrollY": 3209,
         "overflow": 0,
-        "viewports": 8.73,
+        "viewports": 8.62,
         "controlsInMain": 66,
         "linksInMain": 25,
         "h1": [
@@ -350,7 +350,7 @@
             "id": "solution-bar",
             "rect": [
               12,
-              627,
+              722,
               366,
               56
             ]
@@ -359,18 +359,9 @@
             "id": "site-bottom-bar",
             "rect": [
               12,
-              683,
+              778,
               366,
               54
-            ]
-          },
-          {
-            "id": "cookie-consent-banner",
-            "rect": [
-              0,
-              820,
-              390,
-              95
             ]
           }
         ],
@@ -671,13 +662,13 @@
         "tel": 1,
         "accent": "electric",
         "axe": [],
-        "reference": "DE-NYJZ4R",
+        "reference": "DE-RTHMED",
         "focusInStatus": true,
         "draftNeeds": 0,
         "archive": true
       },
       "submittedRefresh": {
-        "reference": "DE-NYJZ4R"
+        "reference": "DE-RTHMED"
       },
       "submittedNoArchive": {
         "summaryAbsent": 1
@@ -745,7 +736,7 @@
             "id": "cookie-consent-banner",
             "rect": [
               0,
-              996,
+              977,
               768,
               95
             ]
@@ -760,7 +751,7 @@
       "indexEmpty": {
         "scrollY": 0,
         "overflow": 0,
-        "viewports": 5.39,
+        "viewports": 5.33,
         "controlsInMain": 53,
         "linksInMain": 25,
         "h1": [
@@ -783,14 +774,14 @@
               0,
               0,
               1440,
-              67
+              30
             ]
           },
           {
             "id": "fixed de-fixed-in-canvas z-[55] mega-men",
             "rect": [
               0,
-              67,
+              30,
               1440,
               89
             ]
@@ -811,9 +802,9 @@
         "axe": []
       },
       "indexScenario": {
-        "scrollY": 889,
+        "scrollY": 858,
         "overflow": 0,
-        "viewports": 6.29,
+        "viewports": 6.23,
         "controlsInMain": 76,
         "linksInMain": 26,
         "h1": [
@@ -835,7 +826,7 @@
             "rect": [
               0,
               0,
-              298,
+              291,
               3
             ]
           },
@@ -877,7 +868,7 @@
       "family": {
         "scrollY": 0,
         "overflow": 0,
-        "viewports": 3.99,
+        "viewports": 3.94,
         "controlsInMain": 13,
         "linksInMain": 4,
         "h1": [
@@ -900,14 +891,14 @@
               0,
               0,
               1440,
-              67
+              28
             ]
           },
           {
             "id": "fixed de-fixed-in-canvas z-[55] mega-men",
             "rect": [
               0,
-              67,
+              28,
               1440,
               89
             ]
@@ -921,7 +912,7 @@
       "workspaceUnchosen": {
         "scrollY": 0,
         "overflow": 0,
-        "viewports": 7.18,
+        "viewports": 7.14,
         "controlsInMain": 44,
         "linksInMain": 13,
         "h1": [
@@ -944,14 +935,14 @@
               0,
               0,
               1440,
-              67
+              28
             ]
           },
           {
             "id": "fixed de-fixed-in-canvas z-[55] mega-men",
             "rect": [
               0,
-              67,
+              28,
               1440,
               89
             ]
@@ -969,7 +960,7 @@
       "contact": {
         "scrollY": 0,
         "overflow": 0,
-        "viewports": 2.31,
+        "viewports": 2.27,
         "controlsInMain": 9,
         "linksInMain": 2,
         "h1": [
@@ -992,14 +983,14 @@
               0,
               0,
               1440,
-              67
+              28
             ]
           },
           {
             "id": "fixed de-fixed-in-canvas z-[55] mega-men",
             "rect": [
               0,
-              67,
+              28,
               1440,
               89
             ]
@@ -1023,7 +1014,7 @@
       "submitted": {
         "scrollY": 0,
         "overflow": 0,
-        "viewports": 4.02,
+        "viewports": 3.97,
         "controlsInMain": 6,
         "linksInMain": 3,
         "h1": [
@@ -1046,14 +1037,14 @@
               0,
               0,
               1440,
-              67
+              28
             ]
           },
           {
             "id": "fixed de-fixed-in-canvas z-[55] mega-men",
             "rect": [
               0,
-              67,
+              28,
               1440,
               89
             ]
@@ -1063,13 +1054,13 @@
         "tel": 1,
         "accent": "electric",
         "axe": [],
-        "reference": "DE-83XFTZ",
+        "reference": "DE-1GC0TN",
         "focusInStatus": true,
         "draftNeeds": 0,
         "archive": true
       },
       "submittedRefresh": {
-        "reference": "DE-83XFTZ"
+        "reference": "DE-1GC0TN"
       },
       "submittedNoArchive": {
         "summaryAbsent": 1
@@ -1078,9 +1069,9 @@
         "notFound": 1
       },
       "bannerIndex": {
-        "scrollY": 2720,
+        "scrollY": 2709,
         "overflow": 0,
-        "viewports": 5.98,
+        "viewports": 5.93,
         "controlsInMain": 69,
         "linksInMain": 26,
         "h1": [
@@ -1102,7 +1093,7 @@
             "rect": [
               0,
               0,
-              992,
+              1001,
               3
             ]
           },
@@ -1128,7 +1119,7 @@
             "id": "cookie-consent-banner",
             "rect": [
               0,
-              849,
+              852,
               1440,
               77
             ]
