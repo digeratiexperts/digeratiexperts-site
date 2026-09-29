@@ -637,6 +637,25 @@ Describe 'Fixes from the function-by-function review' {
         $res.exitCode | Should -Be $LASTEXITCODE
         $res.overall | Should -Not -Match '^READY'
     }
+    It 'headless plan-only (-WhatIf) still writes the whole evidence bundle and a result file' {
+        $rf = Join-Path $global:DETest.Dir 'result-plan.json'
+        & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $script:ConsoleRoot 'DETechConsole.ps1') -Headless -Mode audit -Client 'alamo' -Technician 'tester' -WhatIf -ResultFile $rf -DataDir (Join-Path $global:DETest.Dir 'd3') | Out-Null
+        $res = Get-Content -LiteralPath $rf -Raw | ConvertFrom-Json
+        $res.exitCode | Should -Be $LASTEXITCODE
+        $res.overall | Should -Not -Be 'ERROR'
+        $zip = ($res.bundle -replace ' \(sha256 .*$', '')
+        Test-Path -LiteralPath $zip | Should -Be $true
+        foreach ($f in @('report-client.html', 'report-internal.html', 'manifest.sha256')) { Test-Path -LiteralPath (Join-Path ($zip -replace '\.zip$', '') $f) | Should -Be $true }
+    }
+    It 'headless: an unexpected error still leaves through RESULT with an ERROR result file' {
+        $rf = Join-Path $global:DETest.Dir 'result-error.json'
+        $notDir = Join-Path $global:DETest.Dir 'not-a-dir'; Set-Content -LiteralPath $notDir -Value 'x'
+        & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $script:ConsoleRoot 'DETechConsole.ps1') -Headless -Mode audit -Client 'alamo' -Technician 'tester' -ResultFile $rf -DataDir $notDir | Out-Null
+        $LASTEXITCODE | Should -Be 1
+        $res = Get-Content -LiteralPath $rf -Raw | ConvertFrom-Json
+        $res.overall | Should -Be 'ERROR'
+        $res.message | Should -Match '^ERROR: '
+    }
 }
 
 Describe 'Choices Joe made in review' {
