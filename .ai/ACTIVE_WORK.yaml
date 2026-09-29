@@ -30,34 +30,6 @@
 
 version: 2
 claims:
-  - id: msp-ai-kit
-    issue: 268
-    owner: claude
-    subsystem: project-skills
-    branch: claude/msp-ai-skills-prompts-htqi09
-    base_sha: dd6a1f8
-    files:
-      - .claude/skills/msp-ai-kit/**
-      - .agents/skills/msp-ai-kit
-      - CLAUDE.md
-      - AGENTS.md
-      - .gitignore
-      - .github/workflows/msp-ai-kit.yml
-      - .github/workflows/ci.yml
-      - package.json
-    status: active
-    started: 2026-09-28
-    note: >-
-      Vendored MSP/MSSP AI prompt and skill kit driven by kit.config.json: a
-      zero-dependency builder renders prompt modules into ChatGPT Custom
-      Instructions, Custom GPT, Claude Project, CLAUDE.md/AGENTS.md, Cursor and
-      Copilot packs plus a prompt library; an installer clones the external
-      MSP kits into a gitignored vendor directory. The Windows side is the DE
-      Technician Console (endpoint provisioning, Entra to JumpCloud migration,
-      security stack, Vendor Admin Center, evidence and Hub handoff) with
-      Pester, PSScriptAnalyzer and a WPF smoke in its own workflow. No website
-      code, no visual QA. CLAUDE.md and AGENTS.md change by one table row each;
-      ci.yml gains one test step and package.json one script.
   - id: store-experience-v2
     owner: claude
     subsystem: public-store-door2
