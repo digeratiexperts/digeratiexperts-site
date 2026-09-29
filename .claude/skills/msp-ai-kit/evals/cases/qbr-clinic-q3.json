@@ -1,0 +1,18 @@
+{
+  "id": "qbr-clinic-q3",
+  "module": "qbr-metrics",
+  "title": "Quarterly review from exported numbers with one unpatchable server",
+  "inputs": {
+    "[NAME, PACKAGE AND TIER, USERS, SITES, PRIMARY CONTACT ROLE]": "Desert Bloom Clinics, Enterprise tier, 80 users, 3 sites, practice administrator",
+    "[MONTH or QUARTER and the two prior periods]": "Q3 with Q1 and Q2",
+    "[PASTE tables: tickets, SLA, patching, EDR/MDR, backup, MFA, phishing, vulnerabilities, projects, spend]": "tickets 210 (Q1 260, Q2 240); P1 1 (0, 2); response within target 96% (91, 94); patch compliance 93% (88, 90); EDR coverage 100%; backup success 99.2%, restore test 12 Aug; MFA 100%; phishing click 4% (9, 6); vulnerabilities critical 3 high 27 (all criticals on the imaging server); spend on plan",
+    "[PASTE or NONE]": "switch failure P1 in August, 3 hours"
+  },
+  "mustMention": [
+    "not measured",
+    "imaging server"
+  ],
+  "mustNotMention": [
+    "margin"
+  ]
+}

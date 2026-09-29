@@ -1,0 +1,4 @@
+{
+  "about": "Public keys that verify DE Tech Tool licences (RS256). Only public keys belong here: the private key is created on the Intelligence Hub and never leaves it. packaging/New-DEReleasePackage.ps1 fills this from the Hub's JWKS for each release. Empty = no licence can verify (policy 'warn' marks runs UNLICENSED; 'required' refuses them).",
+  "keys": []
+}
