@@ -245,6 +245,8 @@ function New-DEHubPayload {
     return [ordered]@{
         schema = 'de.techconsole.device/v1'; source = "DETechConsole/$($de.ConsoleVersion)"; sentAt = (Get-Date).ToString('o')
         deviceKey = $key; lifecycle = $(if ($Lifecycle) { $Lifecycle } else { $null })
+        # who ran which build under which licence: a copy that should not exist shows up here the first time it reports
+        session = $(try { $ls = Get-DELicenseStatus; $bi = Get-DEBuildInfo; @{ technician = $ls.technician; licenseId = $ls.id; licenseState = $ls.state; buildId = $bi.buildId; issuedTo = $bi.issuedTo; integrity = "$(try { (Test-DEConsoleIntegrity).status } catch { 'unknown' })" } } catch { $null })
         warranty = $(if ($w) { @{ status = "$(Get-DEHashPath -Object $w -Path 'status')"; end = (Get-DEHashPath -Object $w -Path 'end'); source = (Get-DEHashPath -Object $w -Path 'source') } } else { $null })
         client = $Record.client; site = $Record.site; device = @{ hostname = $Record.hostname; serial = $Record.serial; manufacturer = $Record.manufacturer; model = $Record.model; assetTag = $Record.assetTag; role = $Record.role; os = $Record.os }
         user = @{ assigned = $Record.assignedUser; localUserName = $Record.localUserName; jumpcloudUser = $Record.jumpcloudUser; email = $Record.email }

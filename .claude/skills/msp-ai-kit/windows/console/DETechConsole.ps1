@@ -26,7 +26,7 @@
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
-    [ValidateSet('Scan', 'Dashboard', 'Workflow', 'Discovery', 'Identity', 'Security', 'Apps', 'Browser', 'Baseline', 'Branding', 'Network', 'Toolbox', 'Vendors', 'AiToolkit', 'Evidence', 'Settings')]
+    [ValidateSet('Scan', 'Dashboard', 'Workflow', 'Discovery', 'Identity', 'Security', 'Apps', 'Browser', 'Baseline', 'Branding', 'Network', 'Toolbox', 'CommandLine', 'Vendors', 'AiToolkit', 'Evidence', 'Settings')]
     [string]$Page = 'Scan',
     [switch]$Resume,
     [switch]$Headless,
@@ -45,7 +45,9 @@ param(
     [string]$DataDir,
     [switch]$SmokeTest,
     [string]$SmokeClient = 'alamo',
-    [string]$SmokeOut
+    [string]$SmokeOut,
+    [string]$Toolbox,      # headless: run one Toolbox script by key (see the Command line page); -Apply to run it for real
+    [string]$License       # install a DE licence token on this device (checked, never stored unless it verifies)
 )
 # StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
 # (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
@@ -118,6 +120,15 @@ if ($Headless) { & {
         if (-not $Technician) { $Technician = 'jrpetro'; Write-Host 'TECHNICIAN: not given; recorded as jrpetro (pass -Technician <name> from RMM)' }
     }
     $integrity = Write-DEIntegrityEvidence
+    if ($License) { try { $ls = Set-DELicense -Token $License; Write-Host "LICENCE: $($ls.reason)" } catch { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message "REFUSED: $($_.Exception.Message)" } }
+    $lic = Get-DELicenseStatus
+    Write-Host ("LICENCE: {0} (policy {1}; build {2})" -f $(if ($lic.valid) { "$($lic.technician) until $($lic.expires)" } else { "none: $($lic.reason)" }), $lic.enforce, $lic.build)
+    if ($Toolbox) {
+        # one Toolbox script, then out: plan-only unless -Apply; scripts marked 'asks first' run only with -Apply (RMM means it)
+        $r = $(if ($Apply) { Invoke-DECommunityScript -Key $Toolbox -Force -Confirm:$false } else { Invoke-DECommunityScript -Key $Toolbox -WhatIf })
+        $code = $(switch ("$($r.result)") { 'PASS' { 0 } 'PLANNED' { 0 } 'FAIL' { 1 } default { 2 } })
+        Exit-DEHeadless -Code $code -Overall "$($r.result)" -Message "TOOLBOX: $Toolbox $($r.result) $($r.detail)" -Bundle "$(if ($r.PSObject.Properties['log']) { $r.log })"
+    }
     if ($Apply -and $integrity.status -eq 'tampered') { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message ('REFUSED: console files changed after packaging: ' + ($integrity.problems -join '; ')) -Next 'Re-download the signed package and compare its sha256.' }
     # powershell.exe -File passes '-Solution a,b' as one string: accept comma-separated lists from RMM command lines
     $AddOn = @($AddOn | ForEach-Object { "$_" -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
@@ -371,7 +382,7 @@ if ($wa.Width -lt 1100 -or $wa.Height -lt 700) { $Win.WindowState = 'Maximized' 
 $Win.FontFamily = New-Object System.Windows.Media.FontFamily $FontUi
 $UI = @{}
 foreach ($n in @('NavPanel', 'PageHost', 'TxtVersion', 'TxtModeBadge', 'HdrTech', 'HdrClient', 'HdrClientWhy', 'HdrUser', 'HdrUserWhy', 'HdrDevice', 'HdrDeviceSub', 'HdrReady', 'TxtStatus', 'Progress', 'BtnCancel', 'BrandLogo')) { $UI[$n] = $Win.FindName($n) }
-$UI.TxtVersion.Text = "v$((Get-DEConsole).ConsoleVersion)"; $Win.Title = "DE Tech Tool v$((Get-DEConsole).ConsoleVersion)"
+$UI.TxtVersion.Text = "v$((Get-DEConsole).ConsoleVersion)"; $bi = Get-DEBuildInfo; $Win.Title = "DE Tech Tool v$((Get-DEConsole).ConsoleVersion) · build $($bi.buildId) · issued to $($bi.issuedTo)"
 $brandLogoPath = Join-Path $ConsoleRoot 'assets\brand\digerati-logo-reverse-2400.png'; if (-not (Test-Path -LiteralPath $brandLogoPath)) { $brandLogoPath = Join-Path $ConsoleRoot 'assets\brand\digerati-logo-reverse-600.png' }
 $brandIconPath = Join-Path $ConsoleRoot 'assets\brand\digerati-mark-tile-64.png'
 try {
@@ -498,7 +509,8 @@ function Update-Header {
     $r = Get-DEReadiness
     $UI.HdrReady.Text = $r.overall; $UI.HdrReady.Foreground = Get-StateBrush $r.overall
     $modeTitle = (Get-DEModes)[$S.Mode].title
-    $UI.TxtModeBadge.Text = "mode: $modeTitle$(if ((Get-DEConsole).DryRun) { ' · DRY RUN' })"
+    $lic = $(try { Get-DELicenseStatus } catch { $null })
+    $UI.TxtModeBadge.Text = "mode: $modeTitle$(if ((Get-DEConsole).DryRun) { ' · DRY RUN' }) · $(if ($lic -and $lic.valid) { "licensed: $($lic.technician)" } elseif ($lic -and $lic.enforce -eq 'required') { 'UNLICENSED: changes are locked' } else { 'UNLICENSED' })"
 }
 function Invoke-Discovery {
     param([switch]$Quick)
@@ -809,7 +821,7 @@ function Build-Scan {
 # ============================================================== pages
 $Pages = [ordered]@{
     Scan = 'Scan & fix'; Dashboard = 'Session & readiness'; Discovery = 'Discovery'; Identity = 'Identity & migration'; Security = 'Security'; Apps = 'Applications'
-    Browser = 'Browser configurator'; Baseline = 'OS baseline'; Branding = 'Branding'; Network = 'Network & site'; Toolbox = 'Toolbox (fix-it scripts)'; Vendors = 'Vendor Admin Center'; AiToolkit = 'AI Toolkit'; Evidence = 'Evidence & Hub'; Settings = 'Settings & secrets'
+    Browser = 'Browser configurator'; Baseline = 'OS baseline'; Branding = 'Branding'; Network = 'Network & site'; Toolbox = 'Toolbox (fix-it scripts)'; CommandLine = 'Command line'; Vendors = 'Vendor Admin Center'; AiToolkit = 'AI Toolkit'; Evidence = 'Evidence & Hub'; Settings = 'Settings & secrets'
 }
 $NavButtons = @{}
 foreach ($k in $Pages.Keys) {
@@ -830,7 +842,7 @@ function Show-Page {
     $S.DetailHost = $null
     $sv = New-Object System.Windows.Controls.ScrollViewer; $sv.VerticalScrollBarVisibility = 'Auto'
     $root = New-El StackPanel
-    $needsProfile = $Name -notin @('Dashboard', 'Discovery', 'Toolbox', 'Vendors', 'AiToolkit', 'Settings')
+    $needsProfile = $Name -notin @('Dashboard', 'Discovery', 'Toolbox', 'CommandLine', 'Vendors', 'AiToolkit', 'Settings')
     if ($needsProfile -and -not $S.Profile) { [void]$root.Children.Add((New-Card @((New-Text 'Choose a client profile first' 15 -Bold), (New-Text 'Open Dashboard, run discovery, and confirm or pick the client. Actions are built from the client profile.' -Muted -Wrap), (New-Button 'Go to Dashboard' { Show-Page 'Dashboard' } -Primary)))) }
     else {
         switch ($Name) {
@@ -845,6 +857,7 @@ function Show-Page {
             'Branding' { Build-Branding $root }
             'Network' { [void]$root.Children.Add((New-ActionGrid -Modules @('network', 'maintenance', 'operations') -Title 'Network, maintenance and operations')) ; Build-OpsConfirm $root }
             'Toolbox' { Build-Toolbox $root }
+            'CommandLine' { Build-CommandLine $root }
             'Vendors' { Build-Vendors $root }
             'AiToolkit' { Build-AiToolkit $root }
             'Evidence' { Build-Evidence $root }
@@ -1104,6 +1117,34 @@ function Build-Toolbox {
         [void]$root.Children.Add((New-Card @($sp)))
     }
 }
+function Build-CommandLine {
+    <# Every command a technician or RMM needs, with Copy. Dangerous ones are marked; {root} is this install. #>
+    param($root)
+    $search = New-El TextBox @{ Width = 360; Name = 'Search commands' }
+    $list = New-El StackPanel
+    $render = {
+        $list.Children.Clear()
+        foreach ($g in @(Get-DECheatSheet -Search $search.Text)) {
+            $sp = New-El StackPanel; [void]$sp.Children.Add((New-El TextBlock @{ Text = $g.title; Style = 'Eyebrow'; Margin = '0,0,0,6' }))
+            foreach ($i in @($g.items)) {
+                $row = New-El StackPanel @{ Margin = '0,4,0,8' }
+                [void]$row.Children.Add((New-Text "$($i.title)$(if ($i.danger) { '   (changes the device)' })" -Bold))
+                $cmdBox = New-El TextBox @{ Text = $i.command; IsReadOnly = $true; TextWrapping = 'Wrap'; FontFamily = 'Cascadia Mono, Consolas'; FontSize = 12; Name = $i.title }
+                if ($i.danger) { $cmdBox.BorderBrush = Get-Brush 'Magenta' }
+                [void]$row.Children.Add($cmdBox)
+                $cmd = $i.command
+                $copy = New-Button 'Copy' { [System.Windows.Clipboard]::SetText($cmd); Set-Status 'Copied.' }.GetNewClosure() -A11y "Copy: $($i.title)"
+                [void]$row.Children.Add((New-Wrap @($copy, (New-El TextBlock @{ Text = "$($i.shell)$(if ($i.note) { ' · ' + $i.note })"; Style = 'Mono'; TextWrapping = 'Wrap'; VerticalAlignment = 'Center'; MaxWidth = 760 }))))
+                [void]$sp.Children.Add($row)
+            }
+            [void]$list.Children.Add((New-Card @($sp)))
+        }
+    }.GetNewClosure()
+    $search.Add_TextChanged({ & $render }.GetNewClosure())
+    $all = New-Button 'Copy all as text' { $t = (@(Get-DECheatSheet -Search $search.Text) | ForEach-Object { "## $($_.title)"; foreach ($i in $_.items) { "# $($i.title)$(if ($i.note) { " - $($i.note)" })"; $i.command; '' } }) -join "`r`n"; [System.Windows.Clipboard]::SetText($t); Set-Status 'Cheat sheet copied.' }.GetNewClosure()
+    [void]$root.Children.Add((New-Card @((New-Text 'Command line' 15 -Bold), (New-Text 'Start the tool, run it from RMM, install a licence, run Toolbox scripts, build rescue media and releases, Microsoft 365 admin, and the Windows commands used on takeovers. Exit codes: 0 done, 1 not finished, 2 blocked or refused.' -Muted -Wrap), (New-Wrap @((New-El StackPanel @{} @((New-Label 'Search'), $search)), $all)))))
+    [void]$root.Children.Add($list); & $render
+}
 function Build-Vendors {
     param($root)
     $search = New-El TextBox @{ Width = 320; Name = 'Search vendors' }
@@ -1166,8 +1207,27 @@ function Build-Evidence {
     $ex = @(Get-DEExceptions)
     if ($ex.Count) { [void]$root.Children.Add((New-Card @((New-Text 'Active exceptions' 15 -Bold), (New-El TextBlock @{ Text = (($ex | ForEach-Object { "$($_.target): $($_.reason) · approved by $($_.approver) · review $(([datetime]$_.expiresOn).ToString('yyyy-MM-dd'))" }) -join "`n"); Style = 'Mono'; TextWrapping = 'Wrap' })))) }
 }
+function Build-LicenseCard {
+    <# Licence status and the two ways to get one: activate this device with the Hub, or paste a licence from the Hub. #>
+    param($root)
+    $st = Get-DELicenseStatus; $bi = Get-DEBuildInfo
+    $lines = @("Build $($bi.buildId), issued to $($bi.issuedTo)$(if ($bi.builtAt) { ", built $($bi.builtAt)" })", "Policy: $($st.enforce)$(if ($st.enforce -eq 'warn') { ' (runs work but are marked UNLICENSED)' } else { ' (changes need a licence)' })")
+    if ($st.valid) { $lines += "Licensed to $($st.technician) until $($st.expires) · clients: $(@($st.clients) -join ', ') · features: $(@($st.features) -join ', ')" } else { $lines += "Not licensed: $($st.reason)" }
+    $hubBox = New-El TextBox @{ Width = 360; Text = "$(Get-DEState -Path 'settings.hub.endpoint')"; Name = 'Hub URL for activation' }
+    $tokBox = New-El PasswordBox @{ Width = 360; Name = 'Paste a licence' }
+    $activate = New-Button 'Activate this device' {
+        $hub = $hubBox.Text; if ($hub -notmatch '^https://') { Set-Status 'Enter the Hub URL (https://...).'; return }
+        try { $a = Start-DELicenseActivation -HubUrl ([uri]$hub).GetLeftPart([UriPartial]::Authority) } catch { Set-Status "Activation not started: $($_.Exception.Message)"; return }
+        [System.Windows.MessageBox]::Show($Win, "Open $($a.verificationUrl) on your phone or PC, sign in with your DE account, and enter:`n`n    $($a.userCode)`n`nDE Tech Tool finishes on its own when you approve.", 'Activate DE Tech Tool') | Out-Null
+        Start-DEJob -Label 'Waiting for licence approval in the Hub' -Params @{ hub = ([uri]$hub).GetLeftPart([UriPartial]::Authority); code = $a.deviceCode; interval = $a.interval; ttl = $a.expiresIn } -Work { Complete-DELicenseActivation -HubUrl $JobParams.hub -DeviceCode $JobParams.code -Interval $JobParams.interval -TimeoutSeconds $JobParams.ttl } -OnDone { param($r) try { Import-DEState | Out-Null } catch { }; Update-Header; Show-Page 'Settings' }
+    }.GetNewClosure() -Primary
+    $paste = New-Button 'Use pasted licence' { $b = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($tokBox.SecurePassword); try { $t = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($b) } finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($b) }; try { $null = Set-DELicense -Token $t; Set-Status 'Licence accepted.' } catch { Set-Status $_.Exception.Message }; Update-Header; Show-Page 'Settings' }.GetNewClosure()
+    $clear = New-Button 'Remove licence' { Clear-DELicense; Update-Header; Show-Page 'Settings' }
+    [void]$root.Children.Add((New-Card @((New-Text 'Licence' 15 -Bold), (New-Text 'A DE licence is issued by the Intelligence Hub to one technician for this device, for a few hours. It cannot be copied to another device, and it expires on its own.' -Muted -Wrap), (New-El TextBlock @{ Text = ($lines -join "`n"); Style = 'Mono'; TextWrapping = 'Wrap'; Margin = '0,4,0,8' }), (New-Label 'Hub URL'), $hubBox, (New-Label 'Or paste a licence from the Hub'), $tokBox, (New-Wrap @($activate, $paste, $clear)))))
+}
 function Build-Settings {
     param($root)
+    Build-LicenseCard $root
     $known = @(
         @{ n = 'BREAKGLASS_PASSWORD'; d = 'DE-BreakGlass password (16+ characters)' }, @{ n = 'MIGRATION_TEMP_PASSWORD'; d = 'Temporary password for the new local account (ADMU)' },
         @{ n = 'JC_CONNECT_KEY'; d = 'JumpCloud connect key (agent install)' }, @{ n = 'JC_API_KEY'; d = 'JumpCloud API key (mapping, binding, groups, policies)' }, @{ n = 'JC_ORG_ID'; d = 'JumpCloud org id (multi-tenant admins)' },

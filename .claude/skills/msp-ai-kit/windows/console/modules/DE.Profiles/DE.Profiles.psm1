@@ -87,7 +87,7 @@ function Get-DEClientProfiles {
     }
     return @($map.Values)
 }
-function Get-DEClientProfile { param([Parameter(Mandatory = $true)][string]$Id) $p = Get-DEClientProfiles | Where-Object { $_ -and $_.id -eq $Id } | Select-Object -First 1; if (-not $p) { throw "client profile '$Id' not found" }; return $p.profile }
+function Get-DEClientProfile { param([Parameter(Mandatory = $true)][string]$Id) if (Get-Command -Name 'Test-DELicenseFor' -ErrorAction SilentlyContinue) { $lic = Test-DELicenseFor -Feature 'clients' -Client $Id; if (-not $lic.ok) { throw $lic.reason } }; $p = Get-DEClientProfiles | Where-Object { $_ -and $_.id -eq $Id } | Select-Object -First 1; if (-not $p) { throw "client profile '$Id' not found" }; return $p.profile }
 
 function Save-DEClientProfile {
     [CmdletBinding(SupportsShouldProcess = $true)]

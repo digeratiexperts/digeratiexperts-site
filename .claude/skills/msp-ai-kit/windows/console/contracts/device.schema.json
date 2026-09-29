@@ -227,6 +227,51 @@
           ]
         }
       }
+    },
+    "session": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Technician, licence and build behind this record (PROTECTING-THE-TOOL.md).",
+      "properties": {
+        "technician": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "licenseId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "licenseState": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "buildId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "issuedTo": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "integrity": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
     }
   }
 }
