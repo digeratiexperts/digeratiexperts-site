@@ -111,7 +111,25 @@ function Register-DEOperationsActions {
     Register-DEAction -Id 'maint.windows-update' -Module 'maintenance' -Title 'Windows updates installed' -Phase 3 -Gates @('gate.elevated') -RequiresElevation `
         -Detect { $w = Get-DEWindowsUpdateState; @{ pending = $(if ($null -eq $w.pendingCount) { -1 } else { $w.pendingCount }); lastInstall = $w.lastInstall } } `
         -Desired { @{ pending = 0 } } -Apply { param($s) $r = Install-DEWindowsUpdates; "found $($r.found), installed $($r.installed), restart $($r.rebootRequired)" } `
-        -ManualAction 'Large feature updates are left to the JumpCloud patch policy.'
+        -ManualAction 'Large feature updates are left to the client''s update authority (JumpCloud patch policy by default).'
+    # Who keeps updates flowing after handoff: JumpCloud patch management by default; Intune for Microsoft-only clients;
+    # 'windows' when DE Tech Tool itself sets the automatic-update policy (the wu-auto baseline control). Always checked.
+    $updAuthority = "$(Get-DEHashPath -Object $ClientProfile -Path 'updates.authority')"; if (-not $updAuthority) { $updAuthority = 'jumpcloud' }
+    Register-DEAction -Id 'maint.update-authority' -Module 'maintenance' -Title "Update authority in place ($updAuthority)" -Phase 3 `
+        -Detect {
+            switch ($updAuthority) {
+                'jumpcloud' {
+                    $agent = (Get-DEJumpCloudAgentState).installed
+                    $policy = $null
+                    if (Test-DESecret -Name 'JC_API_KEY') { try { $p = Get-DEJumpCloudPolicySummary; $names = @($p.policies | ForEach-Object { "$($_.policy)" } | Where-Object { $_ -match '(?i)patch|update' }); $policy = ($names.Count -gt 0 -and -not @($p.failed | Where-Object { "$_" -match '(?i)patch|update' }).Count) } catch { $policy = $null } }
+                    @{ authority = 'jumpcloud'; ready = $(if (-not $agent) { $false } elseif ($null -eq $policy) { $null } else { $policy }); detail = $(if (-not $agent) { 'JumpCloud agent not installed' } elseif ($null -eq $policy) { 'patch policy not checked (enter JC_API_KEY)' } elseif ($policy) { 'JumpCloud patch policy applied' } else { 'no successful JumpCloud patch/update policy on this system' }) }
+                }
+                'intune' { $m = Get-DEMdmState; @{ authority = 'intune'; ready = ("$($m.authority)" -match 'intune'); detail = "MDM authority: $($m.authority)" } }
+                'windows' { $c = @(Get-DEBaselineControls | Where-Object { $_.id -eq 'wu-auto' }) | Select-Object -First 1; $st = $(if ($c) { Get-DEBaselineControlState -Control $c } else { $null }); @{ authority = 'windows'; ready = [bool]($st -and $st.ok); detail = $(if ($st) { $st.detail } else { 'wu-auto control missing from the baseline catalog' }) } }
+                default { @{ authority = $updAuthority; ready = $false; detail = "unknown updates.authority '$updAuthority' (use jumpcloud, intune or windows)" } }
+            }
+        }.GetNewClosure() -Desired { @{ ready = $true } } `
+        -ManualAction $(switch ($updAuthority) { 'jumpcloud' { 'Assign the client''s Windows patch policy to this system in JumpCloud (Policies > Patch Management).' } 'intune' { 'Assign the Windows Update ring / feature update policy to this device in Intune.' } 'windows' { 'Apply the DE Windows baseline (wu-auto control) from the Baseline page.' } default { 'Set updates.authority in the client profile.' } })
     Register-DEAction -Id 'maint.oem' -Module 'maintenance' -Title 'OEM drivers, firmware and dock updates' -Phase 3 -Gates @('gate.elevated') -RequiresElevation `
         -Detect { $t = Get-DEOemTool; if ($t.applicable -ne 'dell') { @{ applicable = $false; current = $(if (Get-DEState -Path 'maintenance.oemConfirmedAt') { $true } else { $null }); vendor = "$($t.manufacturer)" } } else { $s = Invoke-DEOemScan; @{ applicable = $true; current = ($s.exitCode -eq 500) } } } `
         -Desired { @{ current = $true } } -Apply { param($s) if (-not $s.Detected.applicable) { throw "no automated OEM update for $($s.Detected.vendor): run the vendor tool, then confirm it on the Network page" }; Invoke-DEOemUpdate -IncludeBios } `

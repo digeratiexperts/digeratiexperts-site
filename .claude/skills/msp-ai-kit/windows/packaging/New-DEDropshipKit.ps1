@@ -71,7 +71,7 @@ if ($OrderFile) {
 }
 if ("$($order['schema'])" -ne 'de.techconsole.order/v1') { throw 'not a DE order manifest' }
 $hits = @(Test-DEProfileHasSecrets -Profile $order); if ($hits.Count) { throw "the order contains secret-looking fields ($($hits -join ', ')); remove them" }
-if (-not $order['device']['serial']) { Write-Warning 'No serial in the order: first boot can only check the model. Add the serial from the distributor''s ship notice for a real guard.' }
+if (-not $order['device']['serial']) { Write-Warning 'No serial in the order: at first boot the technician types it from the chassis sticker and it must match the device. Add it from the ship notice to skip that step.' }
 
 # The composed profile ships inside the kit so first boot needs nothing from DE's network to know the plan.
 $composed = New-DEComposedProfile -ClientProfile (Get-DEClientProfile -Id $order['client']) -Bundle $order['bundle'] -AddOn @($order['addOns']) -Solution @($order['solutions'])
@@ -114,7 +114,7 @@ $console = Join-Path (Join-Path (Join-Path $here 'DE-TechTool') 'console') 'DETe
 $resultFile = Join-Path $here 'first-boot-result.json'
 if (Test-Path -LiteralPath $resultFile) { Remove-Item -LiteralPath $resultFile -Force }
 if ($env:OS -eq 'Windows_NT') { Get-ChildItem -LiteralPath $here -Recurse -File | Unblock-File }
-$argList = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $console, '-Headless', '-Order', (Join-Path $here 'order.json'), '-ProfileFile', (Join-Path $here 'profile.json'), '-ResultFile', $resultFile, '-Technician', 'jrpetro', '-PromptSecrets')
+$argList = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $console, '-Headless', '-Order', (Join-Path $here 'order.json'), '-ProfileFile', (Join-Path $here 'profile.json'), '-ResultFile', $resultFile, '-PromptSecrets')   # the tool asks who the technician is, once
 if (-not $AuditOnly) { $argList += @('-Apply', '-Mode', 'dropship') } else { $argList += @('-Mode', 'audit') }
 # the tool runs in this console window (no pipe), so the technician sees each masked secret prompt
 $shell = (Get-Process -Id $PID).Path; if ([IO.Path]::GetFileNameWithoutExtension($shell) -notin @('powershell', 'pwsh')) { $shell = 'powershell.exe' }
