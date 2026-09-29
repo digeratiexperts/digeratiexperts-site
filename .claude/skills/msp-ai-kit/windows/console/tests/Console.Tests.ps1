@@ -616,6 +616,14 @@ Describe 'Dropship orders and the recommended mode' {
         (Get-DERecommendedMode -Snapshot @{ mdm = @{ authority = 'intune' }; identity = @{ joinType = 'entra-joined' } } -ClientProfile @{ id = 'x' }).mode | Should -Be 'takeover'
         (Get-DERecommendedMode -Snapshot @{ mdm = @{ authority = 'jumpcloud' }; agents = @{ agents = @{ sentinelone = @{ installed = $true }; guardz = @{ installed = $true } } }; identity = @{ joinType = 'local-workgroup' } } -ClientProfile @{ id = 'x' }).mode | Should -Be 'repair'
         (Get-DERecommendedMode -Snapshot @{ mdm = @{ authority = 'none' }; identity = @{ joinType = 'local-workgroup'; profiles = @('a') } } -ClientProfile @{ id = 'x' }).mode | Should -Be 'new'
+        # the DE stack installed but the Entra user not yet migrated is takeover, not repair
+        $stack = @{ sentinelone = @{ installed = $true }; guardz = @{ installed = $true } }
+        $r = Get-DERecommendedMode -Snapshot @{ mdm = @{ authority = 'jumpcloud' }; agents = @{ agents = $stack }; identity = @{ joinType = 'entra-joined'; interactiveUser = 'AzureAD\SuzetteThompson' } } -ClientProfile @{ id = 'x' }
+        $r.mode | Should -Be 'takeover'
+        $r.reason | Should -Match 'repair mode does not migrate'
+        (Get-DERecommendedMode -Snapshot @{ mdm = @{ authority = 'jumpcloud' }; agents = @{ agents = $stack }; identity = @{ joinType = 'entra-joined'; profiles = @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-12-1-111-222-333-444' }) } } -ClientProfile @{ id = 'x' }).mode | Should -Be 'takeover'
+        # once migrated (the profile belongs to a local SID) the device can stay Entra joined and still reads repair
+        (Get-DERecommendedMode -Snapshot @{ mdm = @{ authority = 'jumpcloud' }; agents = @{ agents = $stack }; identity = @{ joinType = 'entra-joined'; interactiveUser = 'ALAMO-LAP-0231\sthompson'; profiles = @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-5-21-1-2-3-1001' }) } } -ClientProfile @{ id = 'x' }).mode | Should -Be 'repair'
         (Get-DERecommendedMode -Snapshot @{} -ClientProfile @{ id = 'x'; delivery = @{ mode = 'dropship' } }).mode | Should -Be 'dropship'
         (Get-DERecommendedMode -Snapshot @{} -ClientProfile @{ id = 'x'; plan = @{ bundle = 'co-managed' } }).mode | Should -Be 'co-managed'
         $r = Get-DERecommendedMode -Snapshot @{ mdm = @{ authority = 'intune' } } -ClientProfile @{ id = 'x' }

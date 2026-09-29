@@ -317,6 +317,14 @@ function Get-DERecommendedMode {
     $agents = Get-DEHashPath -Object $Snapshot -Path 'agents.agents'
     $has = { param($id) [bool](Get-DEHashPath -Object $agents -Path "$id.installed") }
     $jc = ($auth -eq 'jumpcloud') -or [bool](Get-DEHashPath -Object $Snapshot -Path 'mdm.jumpcloud.installed') -or [bool](Get-DEHashPath -Object $Snapshot -Path 'jumpcloud.installed')
+    # JumpCloud on the device does not mean the user moved: an Entra account (SID S-1-12-1-...) still signed in or
+    # still owning a profile means the identity migration is unfinished, and repair mode does not migrate profiles.
+    $entraUsers = @(@(Get-DEHashPath -Object $Snapshot -Path 'identity.profiles') | Where-Object { $_ -and "$(Get-DEHashPath -Object $_ -Path 'sid')" -like 'S-1-12-1-*' } | ForEach-Object { "$(Get-DEHashPath -Object $_ -Path 'path')" })
+    $interactive = "$(Get-DEHashPath -Object $Snapshot -Path 'identity.interactiveUser')"
+    if ($jc -and ($entraUsers.Count -or $interactive -match '^AzureAD\\')) {
+        $who = $(if ($interactive -match '^AzureAD\\') { "$interactive is signed in" } else { "Entra profile(s) remain: $($entraUsers -join ', ')" })
+        return (& $result 'takeover' @("JumpCloud is present but the user is still an Entra account ($who): finish the identity migration (repair mode does not migrate profiles)"))
+    }
     if ($jc -and (& $has 'sentinelone') -and (& $has 'guardz')) { return (& $result 'repair' @('the DE stack is already on this device (JumpCloud, SentinelOne, Guardz): check health and fix only what is missing')) }
     $why = @()
     if ($auth -match 'intune|dual|other') { $why += "another MDM manages this device ($auth)" }
