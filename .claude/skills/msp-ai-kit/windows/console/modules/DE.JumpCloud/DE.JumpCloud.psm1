@@ -204,7 +204,7 @@ function Register-DEJumpCloudActions {
         -Desired { @{ status = 'READY' } } `
         -ManualAction 'Fix the mapping in the JumpCloud console or run the identity migration first; takeover stays locked until this reads READY.'
 
-    Register-DEAction -Id 'jumpcloud.bind-user' -Module 'jumpcloud' -Title 'Bind the intended user to this device (standard user, primary)' -Phase 7 -Gates @('gate.jc-mapping', 'gate.connectivity') -RequiresSecrets @('JC_API_KEY') `
+    Register-DEAction -Id 'jumpcloud.bind-user' -Module 'jumpcloud' -Title 'Bind the intended user to this device (standard user, primary)' -Phase 7 -Gates @('gate.jc-mapping', 'gate.microsoft-left', 'gate.connectivity') -RequiresSecrets @('JC_API_KEY') `
         -Detect { $ctx = Get-DEContext; $m = Test-DEJumpCloudUserMapping -IntendedLocalUser "$($ctx['jumpcloudUser'])" -QueryApi; @{ bound = [bool]$m.jumpcloud.bound } } `
         -Desired { @{ bound = $true } } `
         -Apply { param($s) $ctx = Get-DEContext; $r = Set-DEJumpCloudUserBinding -Username "$($ctx['jumpcloudUser'])" -SetPrimary; if (-not $r.bound) { throw 'binding not visible after the call' }; "bound user $($r.userId) to system $($r.systemId)" } `

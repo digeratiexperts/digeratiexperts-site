@@ -19,6 +19,9 @@ $ErrorActionPreference = 'Stop'
 $script:IsWindowsHost = ($env:OS -eq 'Windows_NT')
 $script:BreakGlassName = 'DE-BreakGlass'
 $script:NormalAdmin = 'jrpetro'
+# Putting JumpCloud on means taking the device off Microsoft (Entra ID, AD domain). A client profile can opt out
+# with identity.leaveEntra = false; Register-DEIdentityActions sets this from the profile.
+$script:LeaveMicrosoft = $true
 
 # ------------------------------------------------------------------ break-glass
 function Get-DEBreakGlassState {
@@ -111,17 +114,23 @@ function Test-DEBitLockerGate {
     if (-not $os.hasTpm) { $issues += 'no TPM protector' }
     if (-not $os.hasRecoveryPassword) { $issues += 'no RecoveryPassword protector' }
     $expected = $ExpectedProtectorId; if (-not $expected) { $expected = Get-DEState -Path 'identity.bitlocker.expectedProtectorId' }
+    if (-not $expected) { $expected = Get-DEState -Path 'identity.bitlocker.jumpcloudEscrow.protectorId' }   # proven by the backup step against JumpCloud
     if (-not $expected) { $issues += 'recovery protector id not yet recorded against the escrow record (enter the id, never the password)' }
     elseif (@($os.recoveryProtectorIds | ForEach-Object { "$_".Trim('{', '}').ToUpperInvariant() }) -notcontains "$expected".Trim('{', '}').ToUpperInvariant()) { $issues += "recovery protector id $expected not present on the volume" }
     if ($issues.Count) { return @{ Status = $(if ($os.status -eq 'FullyEncrypted' -and $os.protection -eq 'On') { 'WARN' } else { 'BLOCKED' }); Detail = ($issues -join '; ') } }
     return @{ Status = 'PASS'; Detail = "OS volume encrypted ($($os.method)), protection on, TPM + recovery protector $expected verified" }
 }
 function Set-DEBitLockerExpectedProtector {
-    <# Records the RecoveryPassword protector ID that the technician verified against the escrow (JumpCloud / Hudu / Entra). Only the ID is stored. #>
+    <# Records the RecoveryPassword protector ID the technician verified in an escrow, and where (JumpCloud, Hudu, IT Glue,
+       password vault, Entra or other). Only the ID and the location are stored, never the recovery password. #>
     [CmdletBinding(SupportsShouldProcess = $true)]
-    param([Parameter(Mandatory = $true)][string]$ProtectorId)
+    param([Parameter(Mandatory = $true)][string]$ProtectorId, [ValidateSet('jumpcloud', 'hudu', 'itglue', 'vault', 'entra', 'other')][string]$Location = 'other', [string]$Technician)
     if ($ProtectorId -match '\d{6}-\d{6}') { throw 'that looks like a recovery password, not a protector id; only the id is stored' }
-    if ($PSCmdlet.ShouldProcess($ProtectorId, 'record verified protector id')) { Set-DEStateValue -Path 'identity.bitlocker.expectedProtectorId' -Value $ProtectorId; Set-DEStateValue -Path 'identity.bitlocker.verifiedAt' -Value (Get-Date).ToString('o') }
+    if ($PSCmdlet.ShouldProcess($ProtectorId, "record verified protector id ($Location)")) {
+        $now = (Get-Date).ToString('o'); $by = $(if ($Technician) { $Technician } else { "$(Get-DEState -Path 'settings.technician')" })
+        Set-DEStateValue -Path 'identity.bitlocker.expectedProtectorId' -Value $ProtectorId; Set-DEStateValue -Path 'identity.bitlocker.verifiedAt' -Value $now
+        Set-DEStateValue -Path 'identity.bitlocker.escrow' -Value @{ protectorId = $ProtectorId; location = $Location; by = $by; at = $now }
+    }
 }
 function Suspend-DEBitLockerForFirmware {
     [CmdletBinding(SupportsShouldProcess = $true)]
@@ -276,19 +285,141 @@ function Test-DEMigrationResult {
     return @{ ok = $ok; checks = $checks; detail = (($checks | ForEach-Object { "$(if ($_.ok) { 'PASS' } else { 'FAIL' }) $($_.name)" }) -join '; ') }
 }
 
-function Invoke-DEEntraLeave {
+# ------------------------------------------------------------------ Microsoft joins and BitLocker backup (before JumpCloud owns the device)
+function Get-DEMicrosoftJoinState {
+    <# Every Microsoft join JumpCloud replaces: Entra ID join, on-prem AD domain (hybrid is both), and an Entra registration. #>
+    $id = Get-DEIdentityState
+    $ds = Get-DEHashPath -Object $id -Path 'dsreg'
+    $jt = "$(Get-DEHashPath -Object $id -Path 'joinType')"
+    $entra = ($jt -in @('entra-joined', 'hybrid-entra-joined')) -or [bool](Get-DEHashPath -Object $ds -Path 'azureAdJoined')
+    $domain = ($jt -in @('ad-domain-joined', 'hybrid-entra-joined')) -or [bool](Get-DEHashPath -Object $ds -Path 'domainJoined')
+    $registered = ($jt -eq 'entra-registered') -or [bool](Get-DEHashPath -Object $ds -Path 'workplaceJoined')
+    $what = @(); if ($entra) { $what += "Entra ID$(if (Get-DEHashPath -Object $ds -Path 'tenantName') { " ($(Get-DEHashPath -Object $ds -Path 'tenantName'))" })" }; if ($domain) { $what += "AD domain $(Get-DEHashPath -Object $ds -Path 'domainName')".Trim() }
+    return @{ known = ($jt -notin @('unknown', '')); joinType = $jt; entraJoined = $entra; domainJoined = $domain; registered = $registered; any = ($entra -or $domain); summary = ($what -join ' + ')
+        tenant = "$(Get-DEHashPath -Object $ds -Path 'tenantName')"; domainName = "$(Get-DEHashPath -Object $ds -Path 'domainName')" }
+}
+function Get-DEUnmigratedDomainProfiles {
+    <# Profiles still owned by an Entra (S-1-12-1-...) or domain account. Leaving Microsoft now would strand them:
+       nobody could sign in to them. Profiles the technician accepted as disposable are left out. #>
+    param($Identity)
+    if (-not $Identity) { $Identity = Get-DEIdentityState }
+    $localDomains = @(@(Get-DEHashPath -Object $Identity -Path 'localUsers') | Where-Object { $_ -and "$(Get-DEHashPath -Object $_ -Path 'sid')" -match '^S-1-5-21-' } | ForEach-Object { "$(Get-DEHashPath -Object $_ -Path 'sid')" -replace '-\d+$', '' } | Select-Object -Unique)
+    $accepted = @(Get-DEState -Path 'identity.leave.acceptedProfiles' | Where-Object { $_ })
+    return @(@(Get-DEHashPath -Object $Identity -Path 'profiles') | Where-Object { $_ } | Where-Object {
+            $sid = "$(Get-DEHashPath -Object $_ -Path 'sid')"
+            ($sid -like 'S-1-12-1-*') -or ($sid -match '^S-1-5-21-' -and $localDomains.Count -and ($localDomains -notcontains ($sid -replace '-\d+$', '')))
+        } | Where-Object { $accepted -notcontains "$(Get-DEHashPath -Object $_ -Path 'path')" } | ForEach-Object { @{ path = "$(Get-DEHashPath -Object $_ -Path 'path')"; sid = "$(Get-DEHashPath -Object $_ -Path 'sid')" } })
+}
+function Confirm-DEStrandedProfilesAccepted {
+    <# The technician confirms leftover Entra/domain profiles (for example an old admin sign-in) may be left behind. #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param([Parameter(Mandatory = $true)][string[]]$Paths, [string]$Technician)
+    if ($PSCmdlet.ShouldProcess(($Paths -join ', '), 'accept as left behind when the device leaves Microsoft')) {
+        $all = @(@(Get-DEState -Path 'identity.leave.acceptedProfiles' | Where-Object { $_ }) + $Paths | Select-Object -Unique)
+        Set-DEStateValue -Path 'identity.leave.acceptedProfiles' -Value $all
+        Add-DEEvidence -Step 'identity.leave.accept-profiles' -Module 'identity' -Before 'unmigrated profiles' -ActionTaken 'technician accepted them as left behind' -Result 'INFO' -Verification (($Paths -join ', ') + " by $(if ($Technician) { $Technician } else { Get-DEState -Path 'settings.technician' })") | Out-Null
+    }
+}
+function Get-DEBitLockerRecoveryPasswords {
+    <# In memory only, for comparing with an escrowed key; never returned by an exported function, logged or stored. #>
+    if (-not $script:IsWindowsHost) { return @() }
+    try { return @((Get-BitLockerVolume -MountPoint $env:SystemDrive -ErrorAction Stop).KeyProtector | Where-Object { $_ -and "$($_.KeyProtectorType)" -eq 'RecoveryPassword' } | ForEach-Object { @{ id = "$($_.KeyProtectorId)"; password = "$($_.RecoveryPassword)" } }) } catch { return @() }
+}
+function Test-DEBitLockerKeyInJumpCloud {
+    <# Reads the BitLocker key JumpCloud holds for this system (GET /v2/systems/{id}/fdekey) and compares it, in memory, with the
+       OS volume's recovery passwords. Returns the matching protector id and a detail line, never a key. #>
+    $sys = Get-DEJumpCloudSystem
+    if (-not $sys) { return @{ ok = $false; detail = 'this device is not registered in JumpCloud yet' } }
+    $sysId = "$(Get-DEJcProp $sys '_id')"; if (-not $sysId) { $sysId = "$(Get-DEJcProp $sys 'id')" }
+    $r = $null
+    try { $r = Invoke-DEJumpCloudApi -Method GET -V2 -Path "/systems/$sysId/fdekey" } catch { return @{ ok = $false; detail = "JumpCloud holds no BitLocker key for this device ($($_.Exception.Message))" } }
+    $key = "$(Get-DEJcProp $r 'key')"
+    if (-not $key) { return @{ ok = $false; detail = 'JumpCloud holds no BitLocker key for this device yet' } }
+    Register-DERedaction -Value $key
+    $digits = { param($v) ("$v" -replace '[^0-9]', '') }
+    $match = $null
+    foreach ($p in @(Get-DEBitLockerRecoveryPasswords)) { if ($p.password) { Register-DERedaction -Value $p.password; if ((& $digits $p.password) -eq (& $digits $key)) { $match = $p.id } } }
+    $key = $null
+    if ($match) { return @{ ok = $true; protectorId = $match; detail = "JumpCloud holds the recovery key for protector $match (checked against the volume)" } }
+    return @{ ok = $false; detail = 'the key JumpCloud holds does not match any recovery protector on the OS volume (rotated since it was escrowed?)' }
+}
+function Backup-DEBitLockerToEntra {
+    <# While the device is still Entra joined: BackupToAAD-BitLockerKeyProtector for each recovery protector. Returns the ids backed up. #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param()
-    $id = Get-DEIdentityState
-    if ($id.joinType -notin @('entra-joined', 'hybrid-entra-joined', 'entra-registered')) { return 'not Entra joined' }
-    $bg = Test-DEGate -Id 'gate.breakglass' -Refresh; $bl = Test-DEGate -Id 'gate.bitlocker' -Refresh; $od = Test-DEGate -Id 'gate.onedrive' -Refresh
-    foreach ($g in @($bg, $bl, $od)) { if ($g.Status -notin @('PASS', 'EXCEPTION')) { throw "refusing Entra leave: $($g.Id) is $($g.Status)" } }
-    if ($PSCmdlet.ShouldProcess($env:COMPUTERNAME, 'dsregcmd /leave')) {
-        $r = Invoke-DENative -FilePath 'dsregcmd.exe' -Arguments @('/leave')
-        if ($r.ExitCode -ne 0) { throw "dsregcmd /leave exit $($r.ExitCode): $($r.Text)" }
-        Request-DEReboot -Reason 'device left Entra; restart to complete' -ResumeAction 'identity.verify-migration' | Out-Null
-        return 'left Entra; restart pending'
+    if (-not (Get-DEMicrosoftJoinState).entraJoined) { return @() }
+    $done = @()
+    foreach ($kp in @((Get-DEBitLockerState).os.recoveryProtectorIds | Where-Object { $_ })) {
+        if ($PSCmdlet.ShouldProcess("$kp", 'BackupToAAD-BitLockerKeyProtector')) { BackupToAAD-BitLockerKeyProtector -MountPoint $env:SystemDrive -KeyProtectorId "$kp" -ErrorAction Stop | Out-Null; $done += "$kp" }
     }
+    if ($done.Count) { Set-DEStateValue -Path 'identity.bitlocker.entraBackup' -Value @{ protectorIds = $done; at = (Get-Date).ToString('o') } }
+    return $done
+}
+function Test-DEBitLockerBackupGate {
+    <# The recovery key is backed up somewhere DE can prove. Leaving Microsoft needs a copy outside Entra ID: JumpCloud
+       (checked against the volume) or an escrow the technician recorded that is not Entra. A device the client keeps
+       Entra joined can rely on the Entra backup. #>
+    param([switch]$Offline)
+    $os = (Get-DEBitLockerState).os
+    if (-not $os) { return @{ Status = 'BLOCKED'; Detail = 'no BitLocker OS volume information (not Windows, or BitLocker unavailable)' } }
+    if ($os.status -ne 'FullyEncrypted' -or -not $os.hasRecoveryPassword) { return @{ Status = 'BLOCKED'; Detail = "OS volume $($os.status) $(if (-not $os.hasRecoveryPassword) { 'without a recovery password protector' }): encrypt with TPM + recovery password first" } }
+    $norm = { param($v) "$v".Trim('{', '}').ToUpperInvariant() }
+    $ids = @($os.recoveryProtectorIds | Where-Object { $_ } | ForEach-Object { & $norm $_ })
+    $notes = @()
+    if (-not $Offline -and (Test-DESecret -Name 'JC_API_KEY')) {
+        $jc = $null; try { $jc = Test-DEBitLockerKeyInJumpCloud } catch { $jc = @{ ok = $false; detail = "JumpCloud check failed: $($_.Exception.Message)" } }
+        if ($jc.ok) { Set-DEStateValue -Path 'identity.bitlocker.jumpcloudEscrow' -Value @{ protectorId = $jc.protectorId; verifiedAt = (Get-Date).ToString('o') }; return @{ Status = 'PASS'; Detail = $jc.detail } }
+        $notes += $jc.detail
+    } elseif (-not $Offline) { $notes += 'JumpCloud not checked (no JC_API_KEY this session)' }
+    $rec = Get-DEState -Path 'identity.bitlocker.escrow'
+    $recOk = [bool]($rec -and ($ids -contains (& $norm (Get-DEHashPath -Object $rec -Path 'protectorId'))))
+    $recWhere = "$(Get-DEHashPath -Object $rec -Path 'location')"
+    if ($recOk -and $recWhere -ne 'entra') { return @{ Status = 'PASS'; Detail = "recovery key for protector $(Get-DEHashPath -Object $rec -Path 'protectorId') recorded in $recWhere by $(Get-DEHashPath -Object $rec -Path 'by')" } }
+    $eb = Get-DEState -Path 'identity.bitlocker.entraBackup'
+    $ebOk = [bool]($eb -and @(@(Get-DEHashPath -Object $eb -Path 'protectorIds') | Where-Object { $ids -contains (& $norm $_) }).Count) -or ($recOk -and $recWhere -eq 'entra')
+    if ($ebOk -and -not $script:LeaveMicrosoft) { return @{ Status = 'PASS'; Detail = 'recovery key backed up to Entra ID; the client keeps this device joined' } }
+    if ($ebOk) { $notes += 'backed up to Entra ID only, which is not enough before leaving Entra' }
+    return @{ Status = $(if ($ebOk) { 'WARN' } else { 'BLOCKED' }); Detail = ((@('no proven backup of the recovery key outside Entra ID') + $notes) -join '; ') }
+}
+function Invoke-DEDomainUnjoin {
+    <# Leaves the on-prem AD domain for WORKGROUP without deleting the AD computer object, so no domain credential or DC is needed. Returns the WMI code (0 = done). #>
+    $cs = Get-CimInstance -ClassName Win32_ComputerSystem
+    $r = Invoke-CimMethod -InputObject $cs -MethodName UnjoinDomainOrWorkgroup -Arguments @{ FUnjoinOptions = [uint32]0 }
+    return [int]$r.ReturnValue
+}
+function Invoke-DEMicrosoftLeave {
+    <# Takes the device off Microsoft before JumpCloud owns it: leaves Entra ID (dsregcmd /leave) and any on-prem AD domain.
+       Refuses while the break-glass, BitLocker backup or OneDrive gates are closed, while the join state is unknown, or
+       while an Entra/domain profile has not been migrated (it would be stranded). #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param()
+    $j = Get-DEMicrosoftJoinState
+    if (-not $j.known) { throw 'join state unknown (dsregcmd gave no answer); refusing to change joins blind' }
+    if (-not $j.any) { return $(if ($j.registered) { 'not joined to Entra ID or a domain; a work account registration remains (remove it in that user''s Settings > Access work or school)' } else { 'not joined to Entra ID or a domain' }) }
+    foreach ($gid in @('gate.breakglass', 'gate.bitlocker-backup', 'gate.onedrive')) { $g = Test-DEGate -Id $gid -Refresh; if ($g.Status -notin @('PASS', 'EXCEPTION')) { throw "refusing to leave Microsoft: $gid is $($g.Status) ($($g.Detail))" } }
+    $stranded = @(Get-DEUnmigratedDomainProfiles)
+    if ($stranded.Count) { throw ("refusing to leave Microsoft: {0} profile(s) still belong to an Entra or domain account and would be stranded: {1}. Migrate them first, or accept them as left behind on the Identity page." -f $stranded.Count, (($stranded | ForEach-Object { $_.path }) -join ', ')) }
+    $done = @()
+    if ($j.entraJoined -and $PSCmdlet.ShouldProcess($env:COMPUTERNAME, "dsregcmd /leave (leave Entra ID $($j.tenant))")) {
+        $r = Invoke-DENative -FilePath 'dsregcmd.exe' -Arguments @('/leave') -TimeoutSeconds 180
+        if ($r.ExitCode -ne 0) { throw "dsregcmd /leave exit $($r.ExitCode): $($r.Text)" }
+        $done += "left Entra ID$(if ($j.tenant) { " ($($j.tenant))" })"
+    }
+    if ($j.domainJoined -and $PSCmdlet.ShouldProcess($env:COMPUTERNAME, "leave AD domain $($j.domainName) for WORKGROUP (the AD computer object stays)")) {
+        $rc = Invoke-DEDomainUnjoin
+        if ($rc -ne 0) { throw "leaving AD domain $($j.domainName) failed (UnjoinDomainOrWorkgroup returned $rc)" }
+        $done += "left AD domain $($j.domainName)"
+    }
+    if (-not $done.Count) { return 'planned' }
+    Set-DEStateValue -Path 'identity.leftMicrosoft' -Value @{ at = (Get-Date).ToString('o'); entra = $j.entraJoined; domain = $j.domainJoined; tenant = $j.tenant; domainName = $j.domainName }
+    Request-DEReboot -Reason 'device left Microsoft (Entra ID / AD domain); restart to finish' -ResumeAction 'identity.entra-leave' | Out-Null
+    return (($done -join '; ') + '; restart pending')
+}
+function Invoke-DEEntraLeave {
+    <# Kept for callers of the earlier name; leaving Entra alone is no longer enough, so it runs the full Microsoft leave. #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param()
+    Invoke-DEMicrosoftLeave @PSBoundParameters
 }
 
 function Remove-DEStaleMdmEnrollments {
@@ -328,6 +459,8 @@ function Register-DEIdentityGates {
     Register-DEGate -Id 'gate.onedrive' -Title 'OneDrive sync safe' -Module 'identity' -Check { Test-DEOneDriveGate } -Unblock "Open OneDrive, confirm 'Up to date', pause sync, then press 'Confirm OneDrive synced'."
     Register-DEGate -Id 'gate.source-user-signed-out' -Title 'Source user not signed in' -Module 'identity' -Check { $ctx = Get-DEContext; $src = "$($ctx['sourcePrincipal'])"; $id = Get-DEIdentityState; if ($src -and $id.interactiveUser -and $id.interactiveUser -ieq $src) { @{ Status = 'BLOCKED'; Detail = "$src is signed in" } } else { @{ Status = 'PASS'; Detail = $(if ($src) { "$src not in the interactive session" } else { 'no source principal set' }) } } } -Unblock 'Sign the end user out; run from the break-glass or technician session.'
     Register-DEGate -Id 'gate.jc-mapping' -Title 'JumpCloud user mapping correct' -Module 'jumpcloud' -Check { $ctx = Get-DEContext; if (-not $ctx['localUserName']) { return @{ Status = 'BLOCKED'; Detail = 'no intended local user set' } }; $m = Test-DEJumpCloudUserMapping -IntendedLocalUser "$($ctx['localUserName'])" -SourcePrincipal "$($ctx['sourcePrincipal'])" -QueryApi:(Test-DESecret -Name 'JC_API_KEY'); if ($m.status -eq 'READY') { @{ Status = 'PASS'; Detail = "local account and profile ready for $($m.intendedLocalUser)" } } else { @{ Status = $(if ($m.status -eq 'WARN') { 'WARN' } else { 'BLOCKED' }); Detail = ($m.issues -join '; ') } } } -Unblock 'Complete the identity migration so the intended local account owns the profile, then fix the JumpCloud binding.'
+    Register-DEGate -Id 'gate.bitlocker-backup' -Title 'BitLocker recovery key backed up (outside Entra before leaving it)' -Module 'identity' -NoException -Check { Test-DEBitLockerBackupGate } -Unblock "Run 'Back up the BitLocker recovery key': it backs the key up to Entra while still joined and checks JumpCloud holds it. If JumpCloud has no key, apply the JumpCloud BitLocker policy to this device, or record the protector id and where the key is escrowed on the Identity page."
+    Register-DEGate -Id 'gate.microsoft-left' -Title 'Device off Microsoft (Entra ID / AD domain)' -Module 'identity' -Check { if (-not $script:LeaveMicrosoft) { return @{ Status = 'PASS'; Detail = 'the client profile keeps this device joined (identity.leaveEntra = false)' } }; $j = Get-DEMicrosoftJoinState; if (-not $j.known) { @{ Status = 'BLOCKED'; Detail = 'join state unknown (dsregcmd gave no answer)' } } elseif ($j.any) { @{ Status = 'BLOCKED'; Detail = "still joined to $($j.summary)" } } else { @{ Status = 'PASS'; Detail = 'not joined to Entra ID or an AD domain' } } } -Unblock "Run 'Disconnect from Microsoft' after the migration is verified and the BitLocker key is backed up, then restart."
     Register-DEGate -Id 'gate.no-dual-mdm' -Title 'Single MDM authority' -Module 'identity' -Check { $m = Get-DEMdmState; if ($m.authority -like 'dual*') { @{ Status = 'BLOCKED'; Detail = $m.authority } } else { @{ Status = 'PASS'; Detail = "authority: $($m.authority); stale: $($m.staleEnrollments.Count)" } } } -Unblock 'Remove the stale enrollment (Identity > Clean stale MDM) or decide the authority in the client profile.'
     Register-DEGate -Id 'gate.security-verified' -Title 'Security stack verified' -Module 'security' -Check { $ids = @('security.guardz', 'security.sentinelone', 'security.pabx'); $bad = @(); foreach ($i in $ids) { try { $s = Get-DEActionState -Id $i; if ($s.Status -ne 'PASS') { $bad += "$i=$($s.Status)" } } catch { $bad += "$i=missing" } }; if ($bad.Count) { @{ Status = 'BLOCKED'; Detail = ($bad -join ', ') } } else { @{ Status = 'PASS'; Detail = 'Guardz, SentinelOne and PABX verified' } } } -Unblock 'Run the Security actions until each verifies.'
 }
@@ -340,6 +473,7 @@ function Register-DEIdentityActions {
     $leave = [bool](Get-DEHashPath -Object $ClientProfile -Path 'identity.leaveEntra'); if ($null -eq (Get-DEHashPath -Object $ClientProfile -Path 'identity.leaveEntra')) { $leave = $true }
     $leaveDuring = $leave -and [bool](Get-DEHashPath -Object $ClientProfile -Path 'identity.leaveEntraDuringMigration')
     $removeStale = [bool](Get-DEHashPath -Object $ClientProfile -Path 'mdm.removeStaleEnrollments')
+    $script:LeaveMicrosoft = $leave
 
     Register-DEAction -Id 'identity.breakglass' -Module 'identity' -Title "Create or repair $($script:BreakGlassName) (local admin, hidden, password required)" -Phase 5 -Gates @('gate.elevated') -RequiresElevation -RequiresSecrets @('BREAKGLASS_PASSWORD') `
         -Detect { $s = Get-DEBreakGlassState; @{ exists = $s.exists; enabled = $s.enabled; administrator = $s.administrator; passwordRequired = $s.passwordRequired; hiddenFromLogon = $s.hiddenFromLogon; localOnly = $s.localOnly } } `
@@ -352,6 +486,12 @@ function Register-DEIdentityActions {
     Register-DEAction -Id 'identity.bitlocker' -Module 'identity' -Title 'BitLocker gate (encrypted, protection on, protector id verified)' -Phase 6 -Gates @('gate.elevated') `
         -Detect { $g = Test-DEBitLockerGate; @{ status = $g.Status; detail = $g.Detail } } -Desired { @{ status = 'PASS' } } `
         -ManualAction 'Enable BitLocker with TPM + recovery password, escrow the key, then record the protector id (Identity > BitLocker protector id).'
+    Register-DEAction -Id 'identity.bitlocker-backup' -Module 'identity' -Title 'Back up the BitLocker recovery key (Entra while joined; proven in JumpCloud)' -Phase 6 -RequiresElevation -Gates @('gate.elevated') `
+        -Detect { $g = Test-DEBitLockerBackupGate; $j = Get-DEMicrosoftJoinState; $eb = Get-DEState -Path 'identity.bitlocker.entraBackup'; @{ status = $g.Status; detail = $g.Detail; entraJoined = [bool]$j.entraJoined; entraBackedUp = [bool]$eb } } `
+        -Desired { @{ status = 'PASS' } } `
+        -Apply { param($s) $out = @(); if ($s.Detected.entraJoined -and -not $s.Detected.entraBackedUp) { $b = @(Backup-DEBitLockerToEntra); if ($b.Count) { $out += "backed up protector(s) $($b -join ', ') to Entra ID" } }; Reset-DEGateCache; $g = Test-DEBitLockerBackupGate; if ($g.Status -ne 'PASS') { throw ("$($g.Detail). Apply the JumpCloud BitLocker policy to this device and wait for its key to appear, or record the protector id and where the key is escrowed on the Identity page.") }; ($out + $g.Detail) -join '; ' } `
+        -Verify { param($after) $g = Test-DEBitLockerBackupGate; @{ ok = ($g.Status -eq 'PASS'); detail = $g.Detail } } `
+        -ManualAction 'Apply the JumpCloud BitLocker policy (it escrows the key in JumpCloud), or record the protector id and the escrow (Hudu, IT Glue, vault) on the Identity page. Never type the recovery password into the console.'
     Register-DEAction -Id 'identity.onedrive' -Module 'identity' -Title 'OneDrive sync confirmed before identity change' -Phase 6 `
         -Detect { $g = Test-DEOneDriveGate; @{ status = $g.Status; detail = $g.Detail } } -Desired { @{ status = 'PASS' } } `
         -ManualAction "Confirm 'Up to date' and pause sync, then press 'Confirm OneDrive synced'."
@@ -371,11 +511,13 @@ function Register-DEIdentityActions {
         -Detect { $r = Test-DEMigrationResult; @{ ok = $r.ok; detail = $r.detail } } -Desired { @{ ok = $true } } `
         -ManualAction 'If a check fails, do not proceed to JumpCloud takeover; review the ADMU log under C:\Windows\Temp\jcAdmu.log.'
     if ($leave -and -not $leaveDuring) {
-        Register-DEAction -Id 'identity.entra-leave' -Module 'identity' -Title 'Leave Entra (only after migration is verified)' -Phase 7 -Destructive -RequiresElevation -RequiresReboot -Modes @('takeover', 'co-managed', 'audit') -Gates @('gate.elevated', 'gate.breakglass', 'gate.bitlocker', 'gate.onedrive') `
-            -Detect { $id = Get-DEIdentityState; $m = Get-DEState -Path 'identity.migration'; @{ joined = $(if ("$($id.joinType)" -in @('unknown', '')) { $null } else { $id.joinType -in @('entra-joined', 'hybrid-entra-joined') }); migrationVerified = [bool]($m -and "$($m.status)" -eq 'verified') } } `
-            -Desired { @{ joined = $false } } -Compare { param($d, $w) if ($null -eq $d.joined) { @('join state unknown (dsregcmd gave no answer); cannot confirm the device left Entra') } elseif ($d.joined -and -not $d.migrationVerified) { @('device still joined and migration not verified; leave is locked') } elseif ($d.joined) { @('device still joined') } else { @() } } `
-            -Apply { param($s) if (-not $s.Detected.migrationVerified) { throw 'migration not verified; refusing to leave Entra' }; Invoke-DEEntraLeave } `
-            -ManualAction 'Only when the client profile keeps the device Entra-joined should this stay untouched.'
+        # The id stays identity.entra-leave for existing plans and evidence; it now leaves every Microsoft join.
+        Register-DEAction -Id 'identity.entra-leave' -Module 'identity' -Title 'Disconnect from Microsoft: leave Entra ID and any AD domain (after migration and BitLocker backup)' -Phase 7 -Destructive -RequiresElevation -Modes @('takeover', 'co-managed', 'audit', 'new', 'replacement', 'repair') -Gates @('gate.elevated', 'gate.breakglass', 'gate.bitlocker-backup', 'gate.onedrive') `
+            -Detect { $j = Get-DEMicrosoftJoinState; $st = @(Get-DEUnmigratedDomainProfiles); @{ joined = $(if (-not $j.known) { $null } else { [bool]$j.any }); joinedTo = $j.summary; strandedProfiles = $st.Count; strandedPaths = (($st | ForEach-Object { $_.path }) -join ', '); leaveRecorded = [bool](Get-DEState -Path 'identity.leftMicrosoft') } } `
+            -Desired { @{ joined = $false } } -Compare { param($d, $w) if ($null -eq $d.joined) { @('join state unknown (dsregcmd gave no answer); cannot confirm the device is off Microsoft') } elseif ($d.joined -and $d.strandedProfiles) { @("still joined to $($d.joinedTo); $($d.strandedProfiles) profile(s) not migrated yet ($($d.strandedPaths)): leave is locked") } elseif ($d.joined) { @("still joined to $($d.joinedTo)") } else { @() } } `
+            -Apply { param($s) Invoke-DEMicrosoftLeave } `
+            -Verify { param($after) $j = Get-DEMicrosoftJoinState; $queued = [bool](@(Get-DERebootQueue).Count); @{ ok = ((-not $j.any) -or ([bool](Get-DEState -Path 'identity.leftMicrosoft') -and $queued)); detail = $(if (-not $j.any) { 'not joined to Entra ID or an AD domain' } else { "leave done; restart pending to finish (still reports $($j.summary) until then)" }) } } `
+            -ManualAction 'Only a client profile with identity.leaveEntra = false keeps the device joined. After the restart the console resumes here and confirms the device is off Microsoft.'
     }
     Register-DEAction -Id 'identity.mdm-cleanup' -Module 'identity' -Title 'Remove stale MDM enrollments' -Phase 7 -Destructive -RequiresElevation -Gates @('gate.elevated') -Modes @('takeover', 'repair', 'replacement') `
         -Detect { $m = Get-DEMdmState; @{ stale = $m.staleEnrollments.Count; authority = $m.authority } } -Desired { @{ stale = 0 } } `
@@ -387,4 +529,4 @@ function Register-DEIdentityActions {
         -Apply { param($s) $r = Clear-DEHelloContainer; $m = Get-DEState -Path 'identity.migration'; Set-DEStateValue -Path 'identity.hello.resetAt' -Value (Get-Date).ToString('o'); Set-DEStateValue -Path 'identity.hello.resetFor' -Value "$($m.startedAt)"; $r }
 }
 
-Export-ModuleMember -Function Get-DEBreakGlassState, New-DEBreakGlassAccount, Test-DEBreakGlassLogon, Confirm-DEBreakGlassVerified, Test-DEBitLockerGate, Set-DEBitLockerExpectedProtector, Suspend-DEBitLockerForFirmware, Resume-DEBitLocker, Test-DEOneDriveGate, Confirm-DEOneDriveSynced, Get-DEHelloImpact, Clear-DEHelloContainer, Get-DEAdmuState, Install-DEAdmu, Test-DEMigrationPreconditions, Start-DEIdentityMigration, Test-DEMigrationResult, Invoke-DEEntraLeave, Remove-DEStaleMdmEnrollments, Register-DEIdentityGates, Register-DEIdentityActions
+Export-ModuleMember -Function Get-DEMicrosoftJoinState, Get-DEUnmigratedDomainProfiles, Confirm-DEStrandedProfilesAccepted, Test-DEBitLockerKeyInJumpCloud, Backup-DEBitLockerToEntra, Test-DEBitLockerBackupGate, Invoke-DEDomainUnjoin, Invoke-DEMicrosoftLeave, Get-DEBreakGlassState, New-DEBreakGlassAccount, Test-DEBreakGlassLogon, Confirm-DEBreakGlassVerified, Test-DEBitLockerGate, Set-DEBitLockerExpectedProtector, Suspend-DEBitLockerForFirmware, Resume-DEBitLocker, Test-DEOneDriveGate, Confirm-DEOneDriveSynced, Get-DEHelloImpact, Clear-DEHelloContainer, Get-DEAdmuState, Install-DEAdmu, Test-DEMigrationPreconditions, Start-DEIdentityMigration, Test-DEMigrationResult, Invoke-DEEntraLeave, Remove-DEStaleMdmEnrollments, Register-DEIdentityGates, Register-DEIdentityActions
