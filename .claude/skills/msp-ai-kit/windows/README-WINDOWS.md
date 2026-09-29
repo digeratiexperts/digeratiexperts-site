@@ -243,6 +243,49 @@ DE fills in the real download source and hash:
 - Wazuh
 - Timus
 
+## Boot rescue (WinPE)
+
+The rescue is for a device whose Windows will not boot, or should not be booted. It works with no
+network and no DE Tech Tool.
+
+**Build the media once**, on a DE PC with the Windows ADK and the Windows PE add-on installed. Run it
+elevated:
+
+```
+.\rescue\New-DERescueMedia.ps1 -IsoPath C:\DE\DE-Rescue.iso -HubUrl https://techsales.digerati-experts.com -Technician jrpetro
+.\rescue\New-DERescueMedia.ps1 -UsbDrive E: -ConfirmFormat       # erases E:
+```
+
+- Add `-WhatIf` to list every step without running it.
+- Add `-DriverPath` when a model needs extra storage or network drivers.
+
+**What the rescue menu does:**
+
+| Option | What it does |
+|---|---|
+| Unlock a BitLocker drive | Shows the key ID. The recovery password you type is checked for typos (each group must be a multiple of 11), used once, and never written or logged. |
+| Back up profiles | Copies profiles to a second USB drive (NTFS or exFAT; FAT32 is refused for files over 4 GB). Keeps timestamps, skips caches, writes a manifest with its sha256, compares file counts, and never deletes the source. |
+| Export drivers | Exports the drivers with DISM. |
+| Disk health | Shows health, wear and temperature for each disk. |
+| Repair boot files / Revert stuck updates | Runs `bcdboot` or `DISM /RevertPendingActions`. Only runs after you type YES. |
+| Save handoff | Writes a `de.techconsole.handoff/v1` record to the USB and to the Windows volume. It can also send it to the Hub as a signed event; the signing secret is typed and not saved. |
+
+When Windows starts again, DE Tech Tool lists **Review what the boot rescue did** as the first check. It
+shows what the rescue did and its recommendations, for example rotating a recovery password that was
+used, or running the takeover flow. The review is recorded with the technician's name. A handoff that
+fails its contract, or that belongs to another device, is flagged and not marked as reviewed.
+
+## Online component (Intelligence Hub)
+
+The Hub records each device under its device key (`<maker>:<SERIAL>`), along with its evidence, rescue
+handoffs and warranty. The shared contracts are in `console/contracts/`.
+
+- **Signed sending.** When `DE_HUB_SIGNING_SECRET` is entered as a runtime secret, `Send-DEHubPayload`
+  sends a signed `device.observed` event to `<Hub>/api/integrations/v1/techconsole/events`.
+- **Legacy sending.** Without it, the older Bearer POST (`DE_HUB_TOKEN`) is used.
+- **Not live yet.** The Hub route is in a draft Intelligence-Hub PR. Merging it deploys to production,
+  so it waits for DE approval. Until then, sends that fail are saved to evidence for manual upload.
+
 ## Warranty
 
 The `maint.warranty` step shows when the device's warranty ends and where that answer came from.

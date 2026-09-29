@@ -191,6 +191,22 @@ function Register-DEOperationsActions {
         -Desired { @{ current = $true } } -Apply { param($s) if (-not $s.Detected.applicable) { throw "no automated OEM update for $($s.Detected.vendor): run the vendor tool, then confirm it on the Network page" }; Invoke-DEOemUpdate -IncludeBios } `
         -Remediate { param($s) if ((Get-DEOemTool).applicable -eq 'dell') { $null = Invoke-DEPackageInstall -Id 'dell-command-update' } } `
         -ManualAction 'Dell: Dell Command | Update. Lenovo: LSUClient (pinned, needs internet). HP: install HP Image Assistant first. Other makers: run the vendor tool; after BIOS updates confirm BitLocker protection is back On.'
+    # The boot rescue (rescue\Start-DERescue.ps1, WinPE) leaves de.techconsole.handoff/v1 files here. The step only
+    # appears when there is something to review.
+    $handoffDir = Join-Path (Get-DEConsole).Dirs.Base 'handoff'
+    if (@(Get-ChildItem -LiteralPath $handoffDir -Filter '*.json' -File -ErrorAction SilentlyContinue).Count) {
+        Register-DEAction -Id 'rescue.handoff' -Module 'maintenance' -Title 'Review what the boot rescue did' -Phase 1 `
+            -Detect {
+                $all = @(Get-DEHandoffs -Directory $handoffDir)
+                $inv = Get-DEDeviceInventory; $mine = $null; try { $mine = ConvertTo-DEDeviceKey -Manufacturer "$($inv.manufacturer)" -Serial "$($inv.serial)" } catch { $mine = $null }
+                $open = @($all | Where-Object { -not $_.reviewed })
+                $other = @($all | Where-Object { $_.handoff -and $mine -and "$($_.handoff.deviceKey)" -ne $mine })
+                $notes = @($open | Where-Object { $_.handoff } | ForEach-Object { @($_.handoff.actions | ForEach-Object { "$($_.action) $($_.result)" }) + @($_.handoff.recommendations) } | Select-Object -First 12)
+                @{ unreviewed = $open.Count; invalid = @($all | Where-Object { $_.problems.Count }).Count; otherDevice = $other.Count; detail = ($notes -join ' | ') }
+            }.GetNewClosure() -Desired { @{ unreviewed = 0; invalid = 0; otherDevice = 0 } } `
+            -Apply { param($s) $tech = "$((Get-DEContext)['technician'])"; if (-not $tech) { throw 'set the technician first (Session page) so the review is recorded against a name' }; $n = 0; foreach ($h in @(Get-DEHandoffs -Directory $handoffDir | Where-Object { -not $_.reviewed -and -not $_.problems.Count })) { $null = Confirm-DEHandoffReviewed -Path $h.path -Technician $tech; $n++ }; "marked $n handoff(s) reviewed by $tech" }.GetNewClosure() `
+            -ManualAction 'Read the rescue recommendations (rotate a used BitLocker recovery password, keep the profile USB until the user confirms). A handoff for another device or one that fails its contract is investigated, not marked reviewed.'
+    }
     Register-DEAction -Id 'maint.bitlocker-resume' -Module 'maintenance' -Title 'BitLocker protection resumed after firmware work' -Phase 3 -Gates @('gate.elevated') `
         -Detect { @{ protectionOn = (Get-DEBitLockerState).osProtectionOn; required = [bool](Get-DEState -Path 'maintenance.bitlockerResumeRequired') } } -Desired { @{ protectionOn = $true } } `
         -Compare { param($d, $w) if ($d.required -and -not $d.protectionOn) { @('protection still suspended') } else { @() } } `
