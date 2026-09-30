@@ -78,6 +78,7 @@ claims:
     owner: claude
     subsystem: public-store-door2
     branch: claude/nifty-newton-uk9g7t
+    pr: 297
     base_sha: 74535d76e9dacade78e4f3eedd4da9651745d3b4
     files:
       - client/src/components/store/SolutionProfileForm.tsx
