@@ -34,21 +34,26 @@ export default function TurnstileWidget({ onVerify, onError, theme = "dark" }: T
 
   useEffect(() => {
     if (isTestKey) {
+      if (!SITE_KEY && import.meta.env.PROD) {
+        // Misconfigured production build: bot protection is silently off.
+        console.error("[SECURITY] VITE_TURNSTILE_SITE_KEY is not set — Turnstile is disabled in this build");
+      }
       onVerifyRef.current("dev-bypass-token");
       return;
     }
 
     if ((window as any).turnstile) {
       renderWidget();
-      return;
+    } else {
+      const script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      script.async = true;
+      script.onload = () => renderWidget();
+      document.head.appendChild(script);
     }
 
-    const script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-    script.async = true;
-    script.onload = () => renderWidget();
-    document.head.appendChild(script);
-
+    // Cleanup on both paths — the already-loaded branch previously returned
+    // without one, leaking a widget on every re-mount after the first.
     return () => {
       if (widgetIdRef.current !== null && (window as any).turnstile) {
         (window as any).turnstile.remove(widgetIdRef.current);

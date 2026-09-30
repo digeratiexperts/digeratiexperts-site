@@ -8,15 +8,15 @@ const config: TierPageConfig = {
   canonicalPath: "/solutions/proactive-office-ecosystem",
   seoTitle: "ProActive Office Ecosystem | Digerati Experts",
   seoDescription:
-    `Small office operating package from Digerati Experts. Starts at ${formatUserPrice("office")} with a ${formatPrice(pricing.office.monthlyMin)}/mo minimum. Everything in ProActive IT plus managed network & connectivity, limited managed workplace, endpoint backup, and an annual combined technology + cyber review.`,
+    `Small office operating package from Digerati Experts. Starts at ${formatUserPrice("office")} with a ${formatPrice(pricing.office.monthlyMin)}/mo minimum. Includes the DE Security Foundation with 24/7 managed detection and response, managed network & connectivity, endpoint backup, and an annual combined technology + cyber review.`,
   heroBadge: "Small office operating package",
-  tagline: "The small office operating package — managed IT, network, and endpoint backup under one accountable partner.",
+  tagline: "Managed IT, network, backup, and 24/7 managed threat response under one accountable partner.",
   positioning:
-    "ProActive Office Ecosystem is the step between entry managed IT and our security-first Business package. It takes everything in ProActive IT and adds managed network & connectivity, a limited Managed Workplace layer, endpoint backup, and an annual combined technology + cyber review — so a small office runs on documented, professionally operated infrastructure with a clear upgrade path. Security operations (SOC, MDR, training) remain available as add-ons or by stepping up to ProActive Business.",
+    "ProActive Office Ecosystem takes the DE Security Foundation from the IT tier and adds 24/7 managed detection and response, managed network & connectivity, a limited Managed Workplace layer, endpoint backup, and an annual combined technology + cyber review. Business still adds deeper security operations, BCDR, compliance/risk reporting, and a more frequent review cadence, but Office is already a managed-security plan rather than an IT plan waiting for security later.",
   whoFor: [
     "Small offices (typically 5–30 users) that need dependable IT plus a professionally managed network",
     "Teams that want endpoint backup included rather than bolted on later",
-    "Organizations preparing for a security-first posture but not yet ready for the full Business stack",
+    "Organizations that want 24/7 managed threat response without the deeper BCDR, compliance, and governance scope of Business",
     "Buyers who want transparent per-user pricing with a predictable monthly minimum",
   ],
   outcomes: [
@@ -32,27 +32,27 @@ const config: TierPageConfig = {
     "Endpoint Backup",
     "Stronger identity protection (MFA / SSO / Password Manager)",
     "Advanced email anti-phishing protection",
+    "Security Awareness Training & phishing simulation",
+    "24/7 Managed Detection & Response (MDR)",
     "Annual combined technology + cyber review",
   ],
   notIncluded: [
-    "Security Awareness Training (available as an add-on, included in Business)",
-    "Threat Detection / SOC-as-a-Service (available as an add-on, included in Business)",
     "Backup & Disaster Recovery (BCDR) and User Cloud Storage Backup (add-on or step up to Business)",
     "Compliance & risk reporting (add-on / custom, included in Business)",
     "Semi-annual technology + security reviews (Business) or quarterly executive reviews (Enterprise)",
   ],
   addOnsOrUpgrades: [
     {
-      label: "Security Awareness Training",
-      desc: "Ongoing end-user training and phishing simulation to harden your human firewall before stepping up to Business.",
+      label: "Backup & Disaster Recovery (BCDR)",
+      desc: "Add server/workload continuity and recovery depth when endpoint backup alone is not enough.",
     },
     {
-      label: "Threat Detection / SOC",
-      desc: "Add 24/7 monitored detection and response ahead of a full ProActive Business engagement.",
+      label: "Compliance & risk reporting",
+      desc: "Add scoped framework mapping and evidence support before stepping up to the broader Business operating model.",
     },
     {
       label: "Step up to ProActive Business",
-      desc: "Adds the full security stack — SOC, MDR, Security Awareness Training, BCDR, compliance/risk reporting, and semi-annual reviews.",
+      desc: "Adds deeper security operations, BCDR, user cloud backup, compliance/risk reporting, and semi-annual technology + security reviews.",
     },
   ],
   reviewCadence:

@@ -345,7 +345,7 @@ export function DocumentFlipbook(): JSX.Element {
             onDragLeave={() => setDragActive(false)}
             onDrop={onDrop}
           >
-            <input ref={inputRef} type="file" accept="application/pdf,.pdf,.doc,.docx,.ppt,.pptx" className="sr-only" onChange={onInputChange} />
+            <input ref={inputRef} type="file" aria-label="Choose a document to open in the flipbook" accept="application/pdf,.pdf,.doc,.docx,.ppt,.pptx" className="sr-only" onChange={onInputChange} />
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-de-hairline bg-de-bg text-de-accent-ink">
               <Upload className="h-5 w-5" aria-hidden="true" />
             </span>

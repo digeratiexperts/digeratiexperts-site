@@ -1,0 +1,19 @@
+{
+  "id": "comply-hipaa-clinic",
+  "module": "compliance-mapping",
+  "title": "HIPAA readiness for a small clinic before insurance renewal",
+  "inputs": {
+    "[FRAMEWORK AND LEVEL OR SCOPE]": "HIPAA Security Rule, covered entity, single clinic",
+    "[identity, endpoints, email, servers, cloud, backup, security tooling in place]": "Microsoft 365; JumpCloud with MFA; SentinelOne on all endpoints; BitLocker; nightly backups; no formal risk analysis",
+    "[PASTE list, or NONE]": "NONE",
+    "[PASTE, or \"use the framework's standard control set\"]": "use the framework's standard control set",
+    "[audit date, insurance renewal, contract requirement, or UNKNOWN]": "insurer renewal in 60 days"
+  },
+  "mustMention": [
+    "PLANNED",
+    "164.3"
+  ],
+  "mustNotMention": [
+    "makes you compliant"
+  ]
+}

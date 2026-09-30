@@ -11,6 +11,35 @@ export type { CuratedDeliveryModel, CuratedSolutionFamily, CuratedSolutionOffer 
 export const BUSINESS_NEEDS_INDEX_PATH = "/store";
 export const SOLUTION_WORKSPACE_PATH = "/store/solution";
 export const SOLUTION_REQUEST_PATH = "/solutions/request";
+export const SOLUTION_SUBMITTED_PATH = "/store/solution/submitted";
+
+/** The confirmation page for a submitted solution, keyed by its short human reference (DE-XXXXXX). */
+export function submittedPath(reference: string): string {
+  return `${SOLUTION_SUBMITTED_PATH}/${encodeURIComponent(reference)}`;
+}
+
+/**
+ * The one journey. Six concepts, one constant: every step label, the journey
+ * rail, the rail status lines and the docs read from here (source of truth
+ * §6.1). `sr` is the screen-reader form the leakage locks string-check.
+ */
+export const STORE_STEPS = [
+  { n: "01", id: "profile", label: "Profile", sr: "Step 1 · Profile" },
+  { n: "02", id: "need", label: "Pain or need", sr: "Step 2 · Pain or need" },
+  { n: "03", id: "relationship", label: "Relationship", sr: "Step 3 · Relationship" },
+  { n: "04", id: "package", label: "Package", sr: "Step 4 · Package" },
+  { n: "05", id: "delivery", label: "Delivery & Setup", sr: "Step 5 · Delivery & Setup" },
+  { n: "06", id: "contact", label: "Contact", sr: "Step 6 · Contact" },
+] as const;
+
+export type StoreStepId = (typeof STORE_STEPS)[number]["id"];
+
+/**
+ * The journey as one sentence, derived from the constant so it can never drift
+ * from the steps: "Profile → pain or need → relationship → package → delivery & setup → contact".
+ * It is the JourneyRail's accessible name and a leakage lock (§6.1).
+ */
+export const STORE_JOURNEY_SENTENCE = STORE_STEPS.map((step, index) => (index === 0 ? step.label : step.label.toLowerCase())).join(" → ");
 
 export const BUSINESS_GOALS = [
   { id: "productive", label: "Keep my team productive", familyIds: ["it_operations", "endpoint_devices"] },
@@ -51,10 +80,6 @@ export function offerForDelivery(
   delivery: CuratedDeliveryModel,
 ): CuratedSolutionOffer {
   return family.offers.find((offer) => offer.deliveryModel === delivery) ?? family.offers[0];
-}
-
-export function parseDeliveryModel(value: string | null | undefined): CuratedDeliveryModel {
-  return value === "co_managed" ? "co_managed" : "standalone";
 }
 
 export function parseDeliveryPreference(
@@ -118,15 +143,17 @@ export function publicSolutionFamilies() {
   return curatedSolutionFamilies.map(toPublicFamily);
 }
 
+/**
+ * The contact step. `?family=` may seed an EMPTY draft from a deep link;
+ * `?intent=` is gone: intent is policy, derived on both sides, never a URL.
+ */
 export function requestPath(opts?: {
   family?: CuratedSolutionFamily["id"] | string;
   delivery?: CuratedDeliveryModel | "unsure";
-  intent?: "request" | "quote" | "assessment" | "consultation";
 }): string {
   const params = new URLSearchParams();
   if (opts?.family) params.set("family", familyToSlug(opts.family as CuratedSolutionFamily["id"]));
   if (opts?.delivery) params.set("delivery", opts.delivery);
-  if (opts?.intent) params.set("intent", opts.intent);
   const query = params.toString();
   return query ? `${SOLUTION_REQUEST_PATH}?${query}` : SOLUTION_REQUEST_PATH;
 }

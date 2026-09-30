@@ -1,7 +1,10 @@
-import { randomUUID } from "crypto";
-import { curatedSolutionFamilies, type CuratedDeliveryModel } from "../client/src/data/curatedSolutions";
+import { createHash, randomUUID } from "crypto";
+import { normalizeSolutionReference, REFERENCE_PATTERN } from "@shared/solutionReference";
+import { curatedSolutionFamilies, type CuratedDeliveryModel, type CuratedSolutionFamily } from "../client/src/data/curatedSolutions";
+import { FAMILY_PACKAGE_POLICY, preferredInstallMode, type InstallMode } from "../client/src/lib/solutionPackage";
 import {
   loadPublicSolutionRequestById,
+  loadPublicSolutionRequestByReference,
   loadPublicSolutionRequestBySession,
   persistPublicSolutionRequest,
 } from "./publicSolutionRequestPersistence";
@@ -14,7 +17,14 @@ export type PublicSolutionNeed = {
   familyId: string;
   offerId: string | null;
   deliveryModel: DeliveryPreference;
+  /** Scenario starter that composed this need, when one did. */
+  source?: string;
+  /** The installation this package actually gets, validated against its policy. */
+  installation?: InstallMode;
 };
+
+export type SolutionNextStep = "quote" | "consultation" | "assessment";
+export type SolutionDurability = "database" | "crm" | "memory";
 
 export type PublicSolutionEnvironment = {
   userCount: string;
@@ -34,6 +44,8 @@ export type PublicSolutionFulfillment = {
   remoteSupport: "none" | "as_needed" | "ongoing" | "unsure" | "";
 };
 
+export type PublicSolutionSuggestion = { value: "standalone" | "co_managed"; accepted: boolean };
+
 export type PublicSolutionRequest = {
   id: string;
   sessionId: string;
@@ -51,15 +63,120 @@ export type PublicSolutionRequest = {
   contactEmail: string;
   contactPhone: string;
   notes: string;
+  /** The relationship suggestion the buyer saw on the workspace and whether they used it (lead payload). */
+  suggestion: PublicSolutionSuggestion | null;
   status: SolutionRequestStatus;
   crmStatus: "not_requested" | "pending" | "recorded";
+  /** Short human reference (DE-XXXXXX), minted when the solution is submitted. Never a bearer for contact details. */
+  reference: string | null;
+  /** Where the submitted record durably lives, decided by the route after persistence. */
+  durable: SolutionDurability | null;
   createdAt: string;
   updatedAt: string;
 };
 
 const records = new Map<string, PublicSolutionRequest>();
-const idempotency = new Map<string, string>();
+const idempotency = new Map<string, { id: string; at: number }>();
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
+/** Submitted records are durable elsewhere; memory keeps them a day for confirmations and replays. */
+const SUBMITTED_MEMORY_TTL_MS = 1000 * 60 * 60 * 24;
+
+/**
+ * Crockford base32: no I, L, O or U, so a reference read over the phone cannot
+ * be misheard, and the six characters come deterministically from the
+ * correlation id (first 30 bits of its SHA-256) so a replay after a restart
+ * yields the same reference without any shared state.
+ */
+const REFERENCE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+// The pattern and the normalizer are shared with the client (the confirmation and /book?ref=).
+export { REFERENCE_PATTERN, normalizeSolutionReference };
+
+export function makeSolutionReference(seed: string, attempt = 0): string {
+  const digest = createHash("sha256").update(attempt ? `${seed}:${attempt}` : seed).digest();
+  let bits = 0;
+  let acc = 0;
+  let out = "DE-";
+  for (const byte of digest) {
+    acc = ((acc << 8) | byte) >>> 0;
+    bits += 8;
+    while (bits >= 5 && out.length < 9) {
+      bits -= 5;
+      out += REFERENCE_ALPHABET[(acc >>> bits) & 31];
+    }
+    if (out.length >= 9) break;
+  }
+  return out;
+}
+
+/* ------------------------------------------------------------------------ */
+/* Policy derivations the server recomputes rather than trusts               */
+/* ------------------------------------------------------------------------ */
+
+function familyPolicyFor(familyId: string) {
+  return familyId in FAMILY_PACKAGE_POLICY ? FAMILY_PACKAGE_POLICY[familyId as CuratedSolutionFamily["id"]] : null;
+}
+
+/** Intent is policy: an assessment if any package requires one; DE's recommendation when the relationship was left with DE; otherwise a quote. */
+export function deriveSolutionIntent(record: Pick<PublicSolutionRequest, "selectedNeeds" | "deliveryPreference">): SolutionRequestIntent {
+  if (record.selectedNeeds.some((need) => familyPolicyFor(need.familyId)?.assessmentPolicy === "required")) return "assessment";
+  if (record.selectedNeeds.length > 0 && record.deliveryPreference === "unsure") return "consultation";
+  if (record.selectedNeeds.length > 0) return "quote";
+  return "request";
+}
+
+export function nextStepFor(record: Pick<PublicSolutionRequest, "selectedNeeds" | "deliveryPreference">): SolutionNextStep {
+  const intent = deriveSolutionIntent(record);
+  return intent === "assessment" || intent === "consultation" ? intent : "quote";
+}
+
+const COUNT_RE = /^\d{1,6}$/;
+
+function countReady(value: string, allowZero = false): boolean {
+  if (!COUNT_RE.test(String(value ?? "").trim())) return false;
+  return allowZero ? Number(value) >= 0 : Number(value) > 0;
+}
+
+/** The same six facts the client requires before it lets a buyer continue. */
+export function isPublicProfileComplete(environment: PublicSolutionEnvironment): boolean {
+  return (
+    countReady(environment.userCount) &&
+    countReady(environment.workstationCount, true) &&
+    countReady(environment.mobileDeviceCount, true) &&
+    countReady(environment.siteCount) &&
+    ["company", "byod", "hybrid"].includes(environment.deviceOwnership) &&
+    ["yes", "no", "unsure"].includes(environment.internalIt)
+  );
+}
+
+/**
+ * Checks a submission body before anything is persisted: at least one real
+ * need and a complete profile. Contact details are validated by the route.
+ */
+export type SubmissionProblemCode = "NEEDS_REQUIRED" | "PROFILE_INCOMPLETE" | "RELATIONSHIP_REQUIRED";
+
+export function submissionProblem(input: {
+  selectedNeeds?: unknown;
+  familyId?: unknown;
+  environment?: unknown;
+  deliveryPreference?: unknown;
+}): { code: SubmissionProblemCode; error: string } | null {
+  const needs = parseSelectedNeeds(input.selectedNeeds, []);
+  const familyId = clip(input.familyId, 80);
+  if (needs.length === 0 && !(familyId && publicFamilyExists(familyId))) {
+    return { code: "NEEDS_REQUIRED", error: "Select at least one business need before submitting." };
+  }
+  if (!isPublicProfileComplete(parseEnvironment(input.environment, emptyEnvironment()))) {
+    return {
+      code: "PROFILE_INCOMPLETE",
+      error: "Finish the business profile (users, computers, mobile devices, sites, device ownership, internal IT) before submitting.",
+    };
+  }
+  // "Help me choose" (unsure) is submittable; only an unmade choice is not.
+  if (!asDelivery(input.deliveryPreference)) {
+    return { code: "RELATIONSHIP_REQUIRED", error: "Choose Standalone, Co-Managed, or Help me choose before submitting." };
+  }
+  return null;
+}
 
 export function publicFamilyExists(familyId: string): boolean {
   return curatedSolutionFamilies.some((family) => family.id === familyId);
@@ -94,10 +211,13 @@ function emptyFulfillment(): PublicSolutionFulfillment {
 }
 
 function expireDrafts() {
-  const cutoff = Date.now() - SESSION_TTL_MS;
+  const now = Date.now();
   for (const [id, record] of records) {
-    if (record.status === "submitted") continue;
-    if (new Date(record.updatedAt).getTime() < cutoff) records.delete(id);
+    const age = now - new Date(record.updatedAt).getTime();
+    if (record.status === "submitted" ? age > SUBMITTED_MEMORY_TTL_MS : age > SESSION_TTL_MS) records.delete(id);
+  }
+  for (const [key, entry] of idempotency) {
+    if (now - entry.at > SUBMITTED_MEMORY_TTL_MS) idempotency.delete(key);
   }
 }
 
@@ -121,13 +241,25 @@ export function createPublicSolutionRequest(sessionId: string): PublicSolutionRe
     contactEmail: "",
     contactPhone: "",
     notes: "",
+    suggestion: null,
     status: "draft",
     crmStatus: "not_requested",
+    reference: null,
+    durable: null,
     createdAt: now,
     updatedAt: now,
   };
   records.set(record.id, record);
   return cloneRequest(record);
+}
+
+export function findPublicSolutionRequestByReference(reference: string): PublicSolutionRequest | undefined {
+  const normalized = normalizeSolutionReference(reference);
+  if (!normalized) return undefined;
+  for (const record of records.values()) {
+    if (record.status === "submitted" && record.reference === normalized) return cloneRequest(record);
+  }
+  return undefined;
 }
 
 export function findPublicSolutionRequest(sessionId: string): PublicSolutionRequest | undefined {
@@ -160,6 +292,13 @@ function asIntent(value: unknown): SolutionRequestIntent {
 function asDelivery(value: unknown): DeliveryPreference | "" {
   if (value === "co_managed" || value === "standalone" || value === "unsure") return value;
   return "";
+}
+
+function asSuggestion(value: unknown): PublicSolutionSuggestion | null {
+  if (!value || typeof value !== "object") return null;
+  const suggestion = value as { value?: unknown; accepted?: unknown };
+  if (suggestion.value !== "standalone" && suggestion.value !== "co_managed") return null;
+  return { value: suggestion.value, accepted: suggestion.accepted === true };
 }
 
 function asInstallation(value: unknown): PublicSolutionFulfillment["installation"] {
@@ -200,6 +339,10 @@ function parseFulfillment(value: unknown, fallback: PublicSolutionFulfillment): 
   };
 }
 
+function asInstallMode(value: unknown): InstallMode | null {
+  return value === "remote_assist" || value === "self_install" || value === "onsite" ? value : null;
+}
+
 function parseNeed(value: unknown): PublicSolutionNeed | null {
   if (!value || typeof value !== "object") return null;
   const input = value as Record<string, unknown>;
@@ -211,10 +354,22 @@ function parseNeed(value: unknown): PublicSolutionNeed | null {
     offerId && (delivery === "standalone" || delivery === "co_managed")
       ? publicOfferInFamily(familyId, offerId, delivery)
       : false;
+  const source = clip(input.source, 60);
+  // An installation the package does not offer is replaced by the package's
+  // own first choice (DE order: remote, shipped, on-site last), never trusted.
+  const policy = familyPolicyFor(familyId);
+  const requested = asInstallMode(input.installation);
+  const installation = policy
+    ? requested && policy.installModes.includes(requested)
+      ? requested
+      : (preferredInstallMode(policy.installModes) ?? undefined)
+    : undefined;
   return {
     familyId,
     offerId: offerOk ? offerId : null,
     deliveryModel: delivery || "unsure",
+    ...(/^[a-z0-9-]+$/.test(source) ? { source } : {}),
+    ...(installation ? { installation } : {}),
   };
 }
 
@@ -260,13 +415,16 @@ export function upsertPublicSolutionRequest(input: {
   contactEmail?: unknown;
   contactPhone?: unknown;
   notes?: unknown;
+  suggestion?: unknown;
 }): PublicSolutionRequest {
   expireDrafts();
   const existing =
     (input.id ? records.get(input.id) : undefined) ??
     [...records.values()].find((record) => record.sessionId === input.sessionId && record.status === "draft");
   const base = existing ?? createPublicSolutionRequest(input.sessionId);
-  const deliveryPreference = asDelivery(input.deliveryPreference) || asDelivery(input.deliveryModel) || base.deliveryPreference;
+  // An explicit "" is the buyer un-choosing (a kept local copy over DE's); an absent field keeps what DE holds.
+  const deliveryPreference =
+    input.deliveryPreference === "" ? "" : asDelivery(input.deliveryPreference) || asDelivery(input.deliveryModel) || base.deliveryPreference;
   const selectedNeeds = parseSelectedNeeds(input.selectedNeeds, base.selectedNeeds);
   const familyId = clip(input.familyId, 80) || selectedNeeds[0]?.familyId || base.familyId;
   const deliveryModel =
@@ -289,12 +447,14 @@ export function upsertPublicSolutionRequest(input: {
     selectedNeeds: nextNeeds,
     environment: parseEnvironment(input.environment, base.environment),
     fulfillment: parseFulfillment(input.fulfillment, base.fulfillment),
-    intent: asIntent(input.intent ?? base.intent),
+    // Intent is recomputed from policy on every write; a body value never overrides it.
+    intent: deriveSolutionIntent({ selectedNeeds: nextNeeds, deliveryPreference }),
     organizationName: clip(input.organizationName ?? base.organizationName, 200),
     contactName: clip(input.contactName ?? base.contactName, 120),
     contactEmail: clip(input.contactEmail ?? base.contactEmail, 200).toLowerCase(),
     contactPhone: clip(input.contactPhone ?? base.contactPhone, 40),
     notes: clip(input.notes ?? base.notes, 2000),
+    suggestion: input.suggestion === undefined ? base.suggestion : asSuggestion(input.suggestion),
     updatedAt: new Date().toISOString(),
   };
   records.set(next.id, next);
@@ -318,14 +478,24 @@ export function submitPublicSolutionRequest(
   const key =
     idempotencyKey?.trim().slice(0, 200) ||
     `${contact.email.trim().toLowerCase()}|${composedKey || record.familyId || ""}|${record.deliveryPreference || record.deliveryModel}|${record.intent}`;
-  const existingId = idempotency.get(key);
-  if (existingId) {
-    const prior = records.get(existingId);
+  const existing = idempotency.get(key);
+  if (existing) {
+    const prior = records.get(existing.id);
     if (prior) return { record: cloneRequest(prior), replayed: true };
+  }
+
+  let attempt = 0;
+  let reference = makeSolutionReference(record.correlationId, attempt);
+  // A collision is astronomically unlikely (32^6) but a duplicate reference is
+  // a confused customer, so mint again if this process already knows it.
+  while (findPublicSolutionRequestByReference(reference)) {
+    attempt += 1;
+    reference = makeSolutionReference(record.correlationId, attempt);
   }
 
   const submitted: PublicSolutionRequest = {
     ...record,
+    reference,
     contactName: contact.name.trim().slice(0, 120),
     contactEmail: contact.email.trim().toLowerCase().slice(0, 200),
     contactPhone: (contact.phone || "").trim().slice(0, 40),
@@ -335,8 +505,40 @@ export function submitPublicSolutionRequest(
     updatedAt: new Date().toISOString(),
   };
   records.set(submitted.id, submitted);
-  idempotency.set(key, submitted.id);
+  idempotency.set(key, { id: submitted.id, at: Date.now() });
   return { record: cloneRequest(submitted), replayed: false };
+}
+
+export function markPublicSolutionRequestDurability(id: string, durable: SolutionDurability): PublicSolutionRequest | undefined {
+  const record = records.get(id);
+  if (!record) return undefined;
+  const next = { ...record, durable };
+  records.set(id, next);
+  return cloneRequest(next);
+}
+
+/**
+ * Roll a submission back to a draft when it could not be made durable. Without
+ * this, a 503'd submit would leave a memory record in status "submitted" and
+ * the visitor's retry would be treated as a replay of a success that never
+ * happened.
+ */
+export function unsubmitPublicSolutionRequest(id: string): PublicSolutionRequest | undefined {
+  const record = records.get(id);
+  if (!record || record.status !== "submitted") return record ? cloneRequest(record) : undefined;
+  for (const [key, value] of idempotency.entries()) {
+    if (value.id === id) idempotency.delete(key);
+  }
+  const next: PublicSolutionRequest = {
+    ...record,
+    status: "draft",
+    crmStatus: "not_requested",
+    reference: null,
+    durable: null,
+    updatedAt: new Date().toISOString(),
+  };
+  records.set(id, next);
+  return cloneRequest(next);
 }
 
 export function markPublicSolutionRequestCrm(
@@ -348,6 +550,17 @@ export function markPublicSolutionRequestCrm(
   const next = { ...record, crmStatus, updatedAt: new Date().toISOString() };
   records.set(id, next);
   return cloneRequest(next);
+}
+
+/**
+ * A draft as GET and PUT return it: never the contact fields, so a resume link
+ * (or a session re-pointed by one) cannot read what a rolled-back submit left
+ * on the record. The full view is the submitter's own POST answer.
+ */
+export function publicSolutionDraftView(record: PublicSolutionRequest) {
+  const { organizationName: _organizationName, contactName: _contactName, contactEmail: _contactEmail, contactPhone: _contactPhone, notes: _notes, ...view } =
+    publicSolutionRequestView(record);
+  return view;
 }
 
 export function publicSolutionRequestView(record: PublicSolutionRequest) {
@@ -367,9 +580,28 @@ export function publicSolutionRequestView(record: PublicSolutionRequest) {
     contactEmail: record.contactEmail,
     contactPhone: record.contactPhone,
     notes: record.notes,
+    suggestion: record.suggestion,
     status: record.status,
     crmStatus: record.crmStatus,
+    reference: record.reference,
+    nextStep: nextStepFor(record),
     updatedAt: record.updatedAt,
+  };
+}
+
+/**
+ * What a confirmation page may learn from a reference alone: the state of the
+ * request and the shape of the solution, never who submitted it. Contact
+ * details render from the submitter's own device (the archived draft), so a
+ * reference typed by someone else reveals no PII.
+ */
+export function publicSolutionStatusView(record: PublicSolutionRequest) {
+  return {
+    reference: record.reference,
+    status: record.status,
+    submittedAt: record.updatedAt,
+    durable: record.durable === "database" || record.durable === "crm",
+    nextStep: nextStepFor(record),
   };
 }
 
@@ -406,32 +638,66 @@ export async function getPublicSolutionRequestDurable(id: string): Promise<Publi
   return hydrateFromDb(await loadPublicSolutionRequestById(id));
 }
 
+/** A submitted solution by its short reference (confirmation page after a refresh, restart or on another device). */
+export async function getPublicSolutionRequestByReferenceDurable(reference: string): Promise<PublicSolutionRequest | undefined> {
+  const normalized = normalizeSolutionReference(reference);
+  if (!normalized) return undefined;
+  const memory = findPublicSolutionRequestByReference(normalized);
+  if (memory) return memory;
+  return hydrateFromDb(await loadPublicSolutionRequestByReference(normalized));
+}
+
 export async function upsertPublicSolutionRequestDurable(
   input: Parameters<typeof upsertPublicSolutionRequest>[0],
-): Promise<PublicSolutionRequest> {
+  options: { forkSubmitted?: boolean } = {},
+): Promise<{ record: PublicSolutionRequest; persisted: boolean; forked: boolean; previousReference: string | null }> {
   // A returning visitor may still own a durable draft that isn't in this
   // process's memory (server restart, new instance). Recover it first so
   // upsert updates that same row instead of silently forking a duplicate
   // that shadows it. Prefer the client's own remembered draft id; fall back
   // to the session cookie if it has none yet.
-  if (input.id) {
-    await getPublicSolutionRequestDurable(input.id);
-  } else {
-    await findPublicSolutionRequestDurable(input.sessionId);
+  const recovered = input.id
+    ? await getPublicSolutionRequestDurable(input.id)
+    : await findPublicSolutionRequestDurable(input.sessionId);
+  // A submitted solution is a record, not a draft. A save (PUT) that lands on
+  // one forks a fresh draft for the session instead of mutating what DE
+  // already has. A submit (POST) that lands on one is a retry: it gets the
+  // submitted record back untouched so the submit step sees the replay.
+  let forked = false;
+  let previousReference: string | null = null;
+  let effective = input;
+  if (recovered?.status === "submitted") {
+    if (!options.forkSubmitted) {
+      return { record: recovered, persisted: false, forked: false, previousReference: recovered.reference };
+    }
+    forked = true;
+    previousReference = recovered.reference;
+    effective = { ...input, id: createPublicSolutionRequest(input.sessionId).id };
   }
-  const record = upsertPublicSolutionRequest(input);
-  await persistPublicSolutionRequest(record);
-  return record;
+  const record = upsertPublicSolutionRequest(effective);
+  const persisted = await persistPublicSolutionRequest(record);
+  return { record, persisted, forked, previousReference };
+}
+
+export async function markPublicSolutionRequestDurabilityDurable(
+  id: string,
+  durable: SolutionDurability,
+): Promise<PublicSolutionRequest | undefined> {
+  const next = markPublicSolutionRequestDurability(id, durable);
+  if (next) await persistPublicSolutionRequest(next);
+  return next;
 }
 
 export async function submitPublicSolutionRequestDurable(
   record: PublicSolutionRequest,
   contact: { name: string; email: string; phone?: string; organizationName?: string },
   idempotencyKey?: string,
-): Promise<{ record: PublicSolutionRequest; replayed: boolean }> {
+): Promise<{ record: PublicSolutionRequest; replayed: boolean; persisted: boolean }> {
   const result = submitPublicSolutionRequest(record, contact, idempotencyKey);
-  await persistPublicSolutionRequest(result.record);
-  return result;
+  // The route decides what a non-durable submit means (see publicSolutionRoutes.ts);
+  // the store only reports it instead of swallowing it.
+  const persisted = await persistPublicSolutionRequest(result.record);
+  return { ...result, persisted };
 }
 
 export async function markPublicSolutionRequestCrmDurable(

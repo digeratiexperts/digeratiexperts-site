@@ -81,7 +81,7 @@ const ManagedStore = () => {
 
       <div className="p-4 sm:p-5 flex flex-col h-[calc(100%-140px)]">
       <div className="mb-2">
-        <span className="text-[10px] text-white/40 uppercase tracking-wider">{categoryLabels[product.category]}</span>
+        <span className="text-[10px] text-white/60 uppercase tracking-wider">{categoryLabels[product.category]}</span>
         {visual.vendor && (
           <span className="ml-2 text-[10px] text-white/50">{visual.vendor.name}</span>
         )}

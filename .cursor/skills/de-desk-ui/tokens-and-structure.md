@@ -4,45 +4,53 @@ Rejected shots (do not restore): `design/approved/desk-ask-de-target.png`, `desk
 
 ## Brand tokens
 
-Outer chrome is graphite DE app. Client Tools’ **list only** is a white grouped surface.
+The Desk is the white precision panel from `design/UI-STYLE-RULES.md` (support chrome, approved 2026-08-30; Joe, 2026-09-28: "It's supposed to be white theme"). Every tab takes the same white token set, Client Tools included. One theme: no block re-declares the `--desk-*` tokens, and nothing in the Desk reads the site's dark `--de-surface` / `--de-raised` / `--de-bg` / `--de-hairline` (guard tests fail on either).
 
 | Token | Value | Use |
 |-------|-------|-----|
-| Shell | `--de-surface` `#0a0a0a` | One outer frame |
-| Shell border | `--de-hairline` `rgba(255,255,255,0.10)` | Single hairline — no lavender glow |
-| Raised | `--de-raised` `#151217` | Inputs, assistant bubbles, tool icon wells on dark |
-| Magenta | `#D3126A` | Active underline, send, submit, featured rail, Fastest badge, security action, 1px shell cap |
-| Violet | `#8B5CF6` | Do not fill chrome, badges, or wells. Lighting only if used at all. |
-| Ask DE / ticket field | graphite | Light-on-dark transcript and dark raised form fields |
-| Tools list | `#fff` on paper-ink | Grouped launcher rows inside the graphite shell |
-| Tools ink | `#17141F` / `#5C5668` | Titles and blurbs on the white list |
+| Panel | `--desk-surface` `#fbfbfa` | The one outer frame and every tab's field |
+| Well | `--desk-well` `#f4f3f1` | Inputs' resting ground, composer well |
+| Box | `--desk-box` `#ffffff` | Grouped lists, assistant bubbles, form fields |
+| Hairline | `--desk-border` `rgba(15,15,18,0.12)` | The panel border and separators — no glow, no magenta ring |
+| Ink | `--desk-ink` `#111116` / `--desk-ink-muted` `#5e5b66` / `--desk-ink-dim` `#6f6a78` | Titles, body, blurbs, timestamps and the lock line; every ink clears 4.5:1 on every Desk ground (a test fails otherwise) |
+| Magenta | `#D3126A` | Active tab underline, send, submit, incident rail, user bubbles, 1px panel cap |
+| Magenta text | `--desk-pink-ink` `#A30E52` | Magenta used as text on white (passes 4.5:1) |
+| Violet | `#8B5CF6` | Not used on the Desk |
 | Available | Emerald pip | Say “available”, not “online” |
 
-Do **not** paint the whole widget paper. Do **not** nest a cream card in a purple glow.
+White text appears only on magenta. Do **not** paint the Desk graphite, and do **not** nest a cream card in a purple glow.
 
 ## Shared chrome (top → bottom)
 
 1. **One `.de-desk-shell`** — `role="dialog"` `aria-label="DE Desk help"` `data-testid="desk-modal"`. `data-tab` is `chat` \| `ticket` \| `resources`.
-2. **Header** — compact DE mark + green available pip; title “DE Desk”; subtitle “DE Desk is available” (or “{name} joined · live handoff”). Expand + close. On `sm+` the header moves the window; double-click resets. Drag any edge or the south-east grip to resize.
-3. **Tabs** — Ask DE \| Get Support \| Client Tools. Active = light label + magenta underline. Unread count badges Ask DE only.
-4. **Body** — same graphite field on every tab. No status row. No footer tab list.
-5. **Composer (Ask DE only)** — raised dark input + magenta send. Placeholder: “Type the issue — we're ready now”.
-6. **Lock line (Ask DE only)** — “Never share passwords, MFA codes, or private keys.”
+2. **Placement** — docked, the window stops below the live bottom of the site header and the homepage section bar (`--de-nav-current-bottom` + `--de-spy-h`); it never covers the nav. On open, focus lands on the composer (desktop Ask DE) or the active tab — not the first header button.
+3. **Header** — compact DE mark + green available pip; title “DE Desk”; subtitle “DE Desk is available” (or “{name} joined · live handoff”). Expand + close. On `sm+` the header moves the window; double-click resets. Drag any edge or the south-east grip to resize.
+4. **Tabs** — Ask DE \| Get Support \| Client Tools. Active = ink label + magenta underline. Unread count badges Ask DE only.
+5. **Body** — the same white field on every tab. No status row. No footer tab list.
+6. **Composer (Ask DE only)** — white input on the well + magenta send. Placeholder: “Type the issue…” while nobody is in the chat (it must not imply someone is waiting); “Message {name}…” once a person has joined.
+7. **Lock line (Ask DE only)** — “Never share passwords, MFA codes, or private keys.”
 
 ## Ask DE
 
-- Dark transcript. Opening: “DE” avatar + “DE Desk” + green **Available**.
-- Greeting: “DE Desk is here. Describe the outage, the risk, or the question — we'll take it and give you a clear next step.”
-- Discovery chips (IT help, cybersecurity, compliance, evaluating managed IT) plus **Possible security incident** (routes to Get Support).
-- After send: magenta user bubbles; raised assistant bubbles.
+- White transcript. Opening bubble: “DE” avatar only. No sender line (the name is in the header) and no **Available** badge; a name and a live dot appear only when a real person joins (`agentLive`).
+- Greeting and four starter chips: per page, from `DESK_PAGE_COPY` in `client/src/lib/deskAskDeMotion.ts`, with **Possible security incident** always last (routes to Get Support).
+- After send: magenta user bubbles with white text; white assistant bubbles with a hairline.
+- Once the visitor has sent something, a quiet action row sits above the composer: **Make this a ticket** (Get Support, subject and details drafted from the visitor's own messages, never overwriting a draft they started; the ticket already carries the chat session id) and **Start over** (forgets the thread and the server session).
+- Replies render as elements (`client/src/lib/deskRichText.tsx`, never raw HTML): paragraphs, bullet and numbered lists, **bold**, https links (new tab), site paths (same tab, the Desk stays open) and phone numbers as tap-to-call.
+- Under the latest reply, the advisor's next steps (`client/src/lib/deskActions.ts`, client allowlist, at most three): the first is the one magenta pill, the rest are quiet. A phone step reads "Call {number}", never "Contact sales". Request a callback / Share my details / Leave a message open a small inline form that posts to `/api/public/advisor/action` with the chat session and the honeypot.
+- The composer is a textarea that grows to about five lines: Enter sends, Shift+Enter breaks the line; it stays focused (read-only) while a reply is on its way.
+- A failed send gets **Try again**, which resends the same words without duplicating the message.
+- A reader scrolled up is never yanked down; a magenta "New message" pill jumps to the end.
+- The conversation is kept for the browser tab (`client/src/lib/deskChatSession.ts`, sessionStorage, 12 hours) so a reload returns to it.
 
 ## Get Support
 
-- Lead: “Get support” / “Tell us what happened. We'll route it to the desk.”
+- Lead: “Direct Engineering Support” / “Tell us what happened. We'll route your request straight to the Arizona desk.”
 - Featured **Possible security incident** rail, then a vertical list from `DESK_STANDARD_TICKET_CHIPS`, then Name, Work email, What's happening?, Details, Urgency. Default **Medium**.
-- Dark raised inputs, white type, magenta **Create ticket**.
+- White inputs with a hairline, ink type, magenta focus ring, magenta **Create ticket**.
 - If the incident chip fired, show “Routed as a possible security incident.”
-- Company, category, attachment behind **Add company, category, or a file**.
+- The confirmation shows the ticket reference with a copy button, and "View my tickets" for a signed-in client.
+- Company and category behind **Add company or category**. No file upload in the widget (a test fails on a fake one).
 
 ## Client Tools
 
@@ -50,7 +58,7 @@ Unauthenticated (default on the marketing site):
 
 1. “Already a Digerati Experts client?”
 2. Magenta **Sign in to Client Tools** → `PORTAL_LOGIN`
-3. “Need help right now?” → Submit a support request (Get Support tab) and Start remote support (`REMOTE_SUPPORT_HREF`)
+3. “Need help right now?” → Start remote support (`REMOTE_SUPPORT_HREF`). Get Support is one click away in the tab bar, so it has no row here.
 
 Authenticated (real `/api/portal/me` session only):
 

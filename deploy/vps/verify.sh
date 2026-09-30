@@ -35,10 +35,13 @@ SITEMAP="$(curl -s -m 20 "$BASE/sitemap.xml")"
 if [ -z "$SITEMAP" ]; then
   bad "sitemap.xml empty"
 else
-  echo "$SITEMAP" | grep -oE '<loc>[^<]*</loc>' | sed 's/<[^>]*>//g' | while read -r url; do
+  # No pipeline here: a `| while` subshell would drop PASS/FAIL increments,
+  # letting the script exit 0 with broken sitemap routes.
+  SITEMAP_URLS="$(echo "$SITEMAP" | grep -oE '<loc>[^<]*</loc>' | sed 's/<[^>]*>//g')"
+  for url in $SITEMAP_URLS; do
     path="${url#https://digeratiexperts.com}"
     c="$(code "$BASE$path")"
-    [ "$c" = "200" ] && printf 'PASS  sitemap %s\n' "$path" || printf 'FAIL  sitemap %s -> %s\n' "$path" "$c"
+    [ "$c" = "200" ] && ok "sitemap $path" || bad "sitemap $path -> $c"
   done
 fi
 

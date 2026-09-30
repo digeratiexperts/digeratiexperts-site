@@ -12,8 +12,15 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      "@assets/DE-Logo-new_1762461524794.webp": path.resolve(
+        __dirname,
+        "brand",
+        "digerati-logo-reverse.svg",
+      ),
+      "@brand": path.resolve(__dirname, "brand"),
       "@": path.resolve(__dirname, "client/src"),
       "@shared": path.resolve(__dirname, "shared"),
+      "@assets": path.resolve(__dirname, "attached_assets"),
     },
   },
 });
