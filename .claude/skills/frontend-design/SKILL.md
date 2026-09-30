@@ -25,7 +25,7 @@ license: Complete terms in LICENSE.txt
 >   generic SaaS). Produce materially distinct
 >   concepts on an isolated branch, state what each keeps and changes from the
 >   current system, flag any challenge to a Joe-decided item (Blog/Store colors,
->   Desk graphite shell, no vendor names in the hero), and open concept work as a
+>   Desk white precision panel, no vendor names in the hero), and open concept work as a
 >   draft PR labelled `concept` that is never merged as-is; integration is a
 >   separate PR after Joe picks.
 > - In every mode: never fabricate clients, metrics, faces or partners even in a

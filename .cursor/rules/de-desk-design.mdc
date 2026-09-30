@@ -6,7 +6,7 @@ alwaysApply: false
 
 # DE Desk design
 
-Primary file: `client/src/components/ZohoASAPWidget.tsx`. Full playbook: `.cursor/skills/de-desk-ui/SKILL.md`. Authority: `design/DESIGN-AUTHORITY.md` — the **Logic** and **Copy** sections below are Tier 0 (every mode); the **Shell** and **Tab content** presentation is the Joe-decided Tier 2 direction (graphite shell, 2026-09-14): mandatory in Maintenance Mode, challengeable only explicitly in Exploration Mode, shipped only by Joe.
+Primary file: `client/src/components/ZohoASAPWidget.tsx`. Full playbook: `.cursor/skills/de-desk-ui/SKILL.md`. Authority: `design/DESIGN-AUTHORITY.md` — the **Logic** and **Copy** sections below are Tier 0 (every mode); the **Shell** and **Tab content** presentation is the Joe-decided Tier 2 direction (white precision panel, Joe 2026-09-28, live via PR #277 since 2026-09-30): mandatory in Maintenance Mode, challengeable only explicitly in Exploration Mode, shipped only by Joe.
 
 ## Shell (all tabs) — JOE-DECIDED current direction
 

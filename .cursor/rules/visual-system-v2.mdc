@@ -15,7 +15,7 @@ This does **not** replace `.cursorrules`, `design/BRAND.md`, `DESIGN_SYSTEM.md`,
 
 - **Tier 0 (every mode):** the truthfulness rules below — classification, no invented telemetry / customers / metrics / incidents / compliance / capabilities, emerald only when genuinely live, no fake pulses.
 - **Tier 2 (Maintenance Mode mandatory; Exploration Mode default):** the layer model, the foundation tokens, the HUD yes/no grammar, IconWell on small cards, "vocabulary first", "no new site-wide pattern until an approved primitive exists".
-- **Joe-decided Tier 2:** Blog/Journal amber and Store electric + 14 pills (`blog-store-color-lock.mdc`); DE Desk graphite shell (`de-desk-design.mdc`). Maintenance: keep. Exploration: may propose, Joe ships.
+- **Joe-decided Tier 2:** Blog/Journal amber and Store electric + 14 pills (`blog-store-color-lock.mdc`); DE Desk white precision panel (PR #277, 2026-09-30) (`de-desk-design.mdc`). Maintenance: keep. Exploration: may propose, Joe ships.
 
 Do not touch `ZohoASAPWidget.tsx` unless the ledger or Joe assigns it to you (ownership, not aesthetics).
 
