@@ -447,3 +447,34 @@ V4 is not proposable for `/` until all of these pass and the evidence is attache
 A draft PR opens once the first complete, coherent V4 exists — not before, and not a
 stack of half-chapters. `MERGED` and `LIVE` remain separate states. Joe approves
 replacing production `/`; nothing else does.
+
+---
+
+## 14. Promotion prerequisites
+
+Recorded 2026-09-28 while making V4 promotion-ready. None of these is done by a preview
+PR, because each one changes production `/`. The PR that promotes V4 does all of them in
+the same change, or CI goes red on merge.
+
+1. **The CI smoke gate asserts the current homepage.** `scripts/public-route-smoke.mjs`
+   fails `/` unless its `<h1>` contains "Cybersecurity-First IT That Powers" and "Your
+   Business", and unless five test ids are visible: `button-hero-schedule`,
+   `button-hero-pricing`, `digerati-pronunciation-card`,
+   `button-play-digerati-pronunciation`, `button-open-asap-widget`. Promotion updates
+   these assertions to V4's own (`v4-cta-hero`, `v4-link-guarantee`, the V4 `<h1>`);
+   `button-open-asap-widget` is site chrome and stays.
+2. **The `<h1>` carries no search terms.** Production's is "Cybersecurity-First IT That
+   Powers Your Business"; V4's is this brief's "You lead the business. We lead the
+   technology." The title and description keep the terms (item 4), but the `<h1>` is
+   Joe's call: keep the brief's line, or open the `<h1>` with a first line such as
+   "Cybersecurity-first managed IT · Arizona".
+3. **The pronunciation card.** Production's hero carries the "Digerati" pronunciation
+   card (claim `pronunciation-flipbook-recovery`). V4 does not. Decide whether it moves,
+   and where, before promotion.
+4. **Search metadata is already at parity.** `HomepageV4` calls production's `useSEO`
+   verbatim (title, description, canonical `/`) and renders `OrganizationJsonLd` and
+   `WebSiteJsonLd`. On `/version-4`, `VersionFrame` overrides to noindex; the V4 harness
+   asserts robots, canonical, title and JSON-LD after load and after interaction.
+5. **Two Practice rows** in `docs/CLAIMS-REGISTER.md` (Version 4 section) need Joe's
+   confirmation.
+6. **ChatGPT's adversarial review** against this document (§13).

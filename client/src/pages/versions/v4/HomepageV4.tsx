@@ -1,32 +1,50 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
-import { V4Environment } from "./V4Environment";
-import { useChapterProgress, ease, ramp } from "./useChapterProgress";
+import { MegaMenu } from "@/components/MegaMenu";
+import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/JsonLd";
+import { useSEO } from "@/hooks/useSEO";
+import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
+import { PrimaryAction, ChapterLabel, RING, T } from "./V4Primitives";
+import { V4Sizer } from "./V4Sizer";
+import { V4ScopeChapter } from "./V4ScopeChapter";
+import { V4PathChapter } from "./V4PathChapter";
+import { V4BlocksChapter } from "./V4BlocksChapter";
+import { V4DeskChapter } from "./V4DeskChapter";
+import { V4OutcomesChapter } from "./V4OutcomesChapter";
+import { V4ProofChapter } from "./V4ProofChapter";
+import { V4FitChapter } from "./V4FitChapter";
+import { V4CloseChapter } from "./V4CloseChapter";
 
 /**
- * Digerati Experts homepage — Version 4. Chapters 01–03.
+ * Digerati Experts homepage — Version 4.
  *
- * Governed by docs/VERSION-4-HOMEPAGE-SOURCE-OF-TRUTH.md. Read it before
- * changing anything here; this file implements decisions recorded there
- * rather than making them.
+ * Governed by docs/VERSION-4-HOMEPAGE-SOURCE-OF-TRUTH.md.
  *
- * Three things this file is deliberately doing differently from the
- * production homepage, each answering a measured failure:
+ * Third cut. The first led with an abstract constellation and read as
+ * generic; the second put real things on the first two screens and left
+ * chapters 04–07 as four identical grids. This cut gives every chapter its
+ * own form, and every chapter leads with something real:
  *
- *   - ONE primary action. Production's hero carries 19 links; a visitor
- *     arriving frightened gets a menu instead of a direction.
- *   - ONE environment across three chapters, transforming. Production
- *     introduces a new unrelated illustration per section.
- *   - RHYTHM. Production is 20 near-identical blocks over 23.5 viewports, so
- *     nothing is bigger because it matters more. Chapter 03 is the peak and
- *     is visibly the longest; chapter 02 is deliberately quieter before it.
+ *   01  the promise, one action, and the published guarantee beside it
+ *   02  a working tool: three numbers in, the visitor's own environment out
+ *   03  the assessment's scope, sized to those numbers — the peak
+ *   04  the assessment as the trunk, three ways in, and the honest fourth exit
+ *   05  the eight blocks drawn as a wall standing on a continuous slab
+ *   06  the real DE Desk capture beside the nine capabilities
+ *   07  a paper ledger: each outcome, and the named thing that delivers it
+ *   08  the founder, and DE's own published words quoted verbatim
+ *   09  who this is for, then the three operating models on a rail
+ *   10  return to the visitor's environment, one edge around it, one action
  *
- * Native scroll throughout. The environment is sticky across the three
- * chapters — one instance in the DOM, one on screen, never two and never
- * none — while the text scrolls past it normally. Nothing is scroll-jacked
- * and no range is dead: the text always moves and the environment always
- * changes.
+ * Rendered inside the same site chrome production uses (MegaMenu above, the
+ * site footer below), so the preview is judged as the page would actually
+ * ship: the header carries the phone number and the assessment button, and
+ * the hero has to clear it and the cookie banner at every width.
+ *
+ * Native scroll throughout. No sticky stage, no scroll-driven state. The
+ * only state on the page is the environment draft the store already keeps,
+ * and the only motion is on the visitor's own data.
  */
 
 function useReducedMotion(): boolean {
@@ -42,164 +60,129 @@ function useReducedMotion(): boolean {
   return reduced;
 }
 
-/** The one action the page asks for, in both places it is asked. */
-function PrimaryAction({ testId }: { testId: string }) {
+/** The guarantee as DE publishes it at /about/guarantee — not a paraphrase. */
+function GuaranteeFigure() {
   return (
-    <Link
-      href="/book"
-      data-testid={testId}
-      className="group inline-flex items-center gap-2.5 rounded-full bg-[#D3126A] px-6 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-[#b80f5b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F04C97] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050312]"
-    >
-      Understand Your Environment
-      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-    </Link>
-  );
-}
-
-function ChapterLabel({ n, children }: { n: string; children: React.ReactNode }) {
-  return (
-    <p className="mb-5 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em] text-white/35">
-      <span className="text-[#F04C97]">{n}</span>
-      <span className="h-px w-8 bg-white/15" />
-      {children}
-    </p>
+    <figure className="border-l border-white/20 pl-6 sm:pl-8">
+      <figcaption className={`${T.label} text-white/55`}>From the published guarantee</figcaption>
+      <blockquote className={`mt-3 ${T.h3} text-balance text-de-paper`}>
+        “Digerati Experts 30-day, no-questions-asked money-back guarantee on managed IT
+        and cybersecurity services.”
+      </blockquote>
+      <p className={`mt-3 ${T.small} text-white/60`}>
+        Release from contracts without penalties. No questions asked, no fine print.
+      </p>
+      <Link
+        href="/about/guarantee"
+        data-testid="v4-link-guarantee"
+        className={`group mt-4 inline-flex items-center gap-2 text-[13.5px] font-semibold text-de-paper underline decoration-white/25 underline-offset-4 transition-colors hover:decoration-white ${RING}`}
+      >
+        Read the guarantee
+        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+      </Link>
+    </figure>
   );
 }
 
 export default function HomepageV4() {
-  const stageRef = useRef<HTMLDivElement>(null);
-  const progress = useChapterProgress(stageRef);
   const reduced = useReducedMotion();
 
-  // Text reveals ride the same progress as the environment, so copy and
-  // picture can never disagree about where in the story the reader is.
-  const p = reduced ? 1 : progress;
-  const showDisconnect = reduced ? 1 : ease(ramp(p, 0.28, 0.42));
-  const showAlign = reduced ? 1 : ease(ramp(p, 0.6, 0.74));
+  // Production's own title, description and structured data (DigeratiHomepage),
+  // so promoting V4 to / loses none of them. On /version-4, VersionFrame's
+  // useSEO runs after this one — parent effects run after children, and
+  // neither re-runs because both depend only on primitives — so the preview
+  // stays noindex with its canonical on /. The harness asserts that.
+  useSEO({
+    title: "Managed Security Service Provider",
+    description:
+      "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
+    canonical: "/",
+  });
 
   return (
-    <main className="min-w-0 bg-[#050312] text-[#F7F5F2]">
-      <div ref={stageRef} className="relative mx-auto w-full max-w-[1240px] px-5 sm:px-8">
-        {/* ── The environment. One instance in the DOM at every width.
-               It is an absolutely-positioned layer spanning the whole stage so
-               that `sticky` has the full three chapters to travel through: a
-               sticky child can only move within its own parent, and giving it
-               a parent the height of one screen is what made it scroll away on
-               phones in the first build. ── */}
-        <div className="pointer-events-none absolute inset-0 z-0 lg:left-auto lg:right-0 lg:w-[46%]">
-          <div className="sticky top-0 flex h-[42vh] items-center justify-center lg:h-screen">
-            <div className="aspect-square w-full max-w-[min(82vw,420px)] opacity-55 lg:max-w-[460px] lg:opacity-100">
-              <V4Environment progress={p} reduced={reduced} />
+    <div className="min-h-screen bg-de-bg text-de-paper">
+      <OrganizationJsonLd />
+      <WebSiteJsonLd />
+      <MegaMenu />
+
+      <main className="min-w-0">
+        {/* ── 01 Hero. Orients, asks for one thing, and puts a real commitment
+               beside the promise. de-nav-clear clears the fixed MegaMenu; the
+               cookie banner publishes its height as --de-cookie-h and the
+               action is kept clear of it. ── */}
+        <section aria-labelledby="v4-ch1" className="de-nav-clear">
+          <div className="mx-auto w-full max-w-[1240px] px-5 pt-10 pb-[calc(3rem+var(--de-cookie-h,0px))] sm:px-8 lg:pt-3">
+            <div className="grid gap-12 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-center lg:gap-16">
+              <div>
+                <ChapterLabel n="01">Digerati Experts · Arizona</ChapterLabel>
+                {/* Two lines on desktop, one sentence each: with the real header
+                    (167px) and the cookie banner (~215px) on a 1440×844 screen,
+                    a four-line headline pushed the action under the banner. The
+                    size is tied to the viewport so each sentence keeps to its
+                    line from 1024px up; below that the grid is one column and
+                    the headline wraps normally. */}
+                <h1
+                  id="v4-ch1"
+                  className={`max-w-[16ch] ${T.display} lg:max-w-none lg:whitespace-nowrap lg:text-[clamp(2.4rem,3.6vw,3.3rem)]`}
+                >
+                  You lead the business.{" "}
+                  <span className="block text-white/55">We lead the technology.</span>
+                </h1>
+                <p className={`mt-5 max-w-[58ch] ${T.lede} text-white/60`}>
+                  Cybersecurity-first managed technology for Arizona businesses that cannot
+                  afford downtime. You keep command of the business; we take ownership of
+                  the technology it runs on, starting with what you actually have.
+                </p>
+                <div className="mt-7">
+                  <PrimaryAction testId="v4-cta-hero" />
+                </div>
+              </div>
+
+              {/* Real artifact, first screen. Where competitors put a slogan or a
+                  stock photo, DE puts the thing it actually signs its name to. */}
+              <div className="lg:pt-4">
+                <GuaranteeFigure />
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="relative z-10 lg:w-[54%]">
-          {/* ── 01 Hero. On phones the environment holds the opening frame and
-                 the headline begins below it. ── */}
-          <section
-            aria-labelledby="v4-ch1"
-            // The cookie banner publishes its height as --de-cookie-h. Reserving
-            // against it keeps the one primary action above the fold on a first
-            // visit, which is the only visit where the banner is up.
-            className="flex min-h-[62vh] flex-col justify-center pt-[30vh] pb-[calc(2rem+var(--de-cookie-h,0px))] lg:min-h-screen lg:pt-12 lg:pb-[calc(3.5rem+var(--de-cookie-h,0px))]"
-          >
-            <ChapterLabel n="01">Digerati Experts</ChapterLabel>
-            <h1
-              id="v4-ch1"
-              className="max-w-[16ch] font-['Space_Grotesk',sans-serif] text-[clamp(2.4rem,7vw,4.25rem)] font-bold leading-[1.02] tracking-[-0.02em] text-balance"
-            >
-              You lead the business.
-              <span className="block text-white/55">We lead the technology.</span>
-            </h1>
-            <p className="order-3 mt-6 max-w-[54ch] text-[clamp(1rem,1.5vw,1.15rem)] leading-relaxed text-white/60 lg:order-2 lg:mt-7">
-              Cybersecurity-first managed technology for Arizona businesses that cannot
-              afford downtime. You keep command of the business. We take ownership of the
-              technology it runs on — and we start by understanding what you actually have.
-            </p>
-            <div className="order-2 mt-7 lg:order-3 lg:mt-9">
-              <PrimaryAction testId="v4-cta-hero" />
+        {/* ── 02 Start with what you have. The page starts working here. ── */}
+        <section aria-labelledby="v4-ch2" className="border-t border-white/10">
+          <div className="mx-auto w-full max-w-[1240px] px-5 py-20 sm:px-8 lg:py-28">
+            <ChapterLabel n="02">Start with what you have</ChapterLabel>
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
+              <div>
+                <h2 id="v4-ch2" className={`max-w-[24ch] ${T.h2}`}>
+                  Three numbers. No contract, no vendor catalog.
+                </h2>
+                <p className={`mt-5 max-w-[44ch] ${T.body} text-white/60`}>
+                  Tell the page how many people, computers and sites you run and it draws
+                  your environment. It is the same profile the store sizes every solution
+                  from, so nothing is asked twice.
+                </p>
+                <p className={`mt-4 max-w-[44ch] ${T.body} text-white/60`}>
+                  Most providers put a phone number here. We would rather you see the
+                  shape of your own environment first — and the rest of this page will
+                  use it.
+                </p>
+              </div>
+              <V4Sizer reduced={reduced} />
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* ── 02 Disconnected environment. Deliberately the quieter chapter:
-                 the one before the peak is quieter than the peak. ── */}
-          <section
-            aria-labelledby="v4-ch2"
-            className="flex min-h-[70vh] flex-col justify-center py-16 lg:min-h-screen lg:py-24"
-            style={{ opacity: reduced ? 1 : 0.25 + 0.75 * showDisconnect }}
-          >
-            <ChapterLabel n="02">The environment you already have</ChapterLabel>
-            <h2
-              id="v4-ch2"
-              className="max-w-[20ch] font-['Space_Grotesk',sans-serif] text-[clamp(1.8rem,4.4vw,2.9rem)] font-bold leading-[1.08] tracking-[-0.015em] text-balance"
-            >
-              All of it exists. None of it was bought to work together.
-            </h2>
-            <p className="mt-6 max-w-[56ch] text-[15.5px] leading-relaxed text-white/60">
-              People, identity, endpoints, email, cloud, network, applications, data and
-              vendors. Every one of them was a reasonable decision on the day it was made.
-              Each arrived on its own schedule, from its own supplier, with its own
-              console and its own idea of who is responsible for it.
-            </p>
-            <p className="mt-4 max-w-[56ch] text-[15.5px] leading-relaxed text-white/45">
-              Nothing here is broken. That is what makes it hard to see. The parts work;
-              the estate does not — and the gaps between them are where the risk lives.
-            </p>
-          </section>
+        <V4ScopeChapter />
+        <V4PathChapter />
+        <V4BlocksChapter />
+        <V4DeskChapter />
+        <V4OutcomesChapter />
+        <V4ProofChapter />
+        <V4FitChapter />
+        <V4CloseChapter reduced={reduced} />
+      </main>
 
-          {/* ── 03 Alignment / Why DE — the peak. Longest chapter by a visible
-                 margin, and the only one that resolves the environment. ── */}
-          <section
-            aria-labelledby="v4-ch3"
-            className="flex min-h-[110vh] flex-col justify-center py-16 lg:min-h-[150vh] lg:py-24"
-            style={{ opacity: reduced ? 1 : 0.25 + 0.75 * showAlign }}
-          >
-            <ChapterLabel n="03">Why Digerati Experts</ChapterLabel>
-            <h2
-              id="v4-ch3"
-              className="max-w-[22ch] font-['Space_Grotesk',sans-serif] text-[clamp(1.9rem,4.8vw,3.15rem)] font-bold leading-[1.06] tracking-[-0.015em] text-balance"
-            >
-              We do not promise outcomes before we understand the environment.
-            </h2>
-            <p className="mt-6 max-w-[56ch] text-[15.5px] leading-relaxed text-white/60">
-              Any provider can list the same services. The difference is whether they
-              looked first. We assess what you have, name what is exposed, and tell you
-              what we would not do — before anyone signs anything.
-            </p>
-            <p className="mt-4 max-w-[56ch] text-[15.5px] leading-relaxed text-white/45">
-              What changes afterwards is not the parts. It is that they finally point the
-              same way, and one accountable team owns the result.
-            </p>
-
-            <dl className="mt-10 grid max-w-[46ch] grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
-              {[
-                ["Assess first", "Nothing is proposed before the estate is understood."],
-                ["One owner", "A single accountable team, not a vendor list."],
-                ["Said plainly", "Including what we will not take on."],
-                ["Continuously", "Exposure changes. The review does too."],
-              ].map(([term, detail]) => (
-                <div key={term}>
-                  <dt className="font-mono text-[11px] uppercase tracking-[0.16em] text-white/40">
-                    {term}
-                  </dt>
-                  <dd className="mt-1.5 text-[14px] leading-relaxed text-white/65">{detail}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        </div>
-      </div>
-
-      {/* Chapters 04–10 land here in the next build stages. */}
-      <div
-        className="mx-auto max-w-[1240px] border-t border-white/10 px-5 py-14 sm:px-8"
-        data-testid="v4-stage-marker"
-      >
-        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/30">
-          Chapters 04–10 — in build
-        </p>
-      </div>
-    </main>
+      <DigeratiEnhancedFooterSection />
+    </div>
   );
 }
