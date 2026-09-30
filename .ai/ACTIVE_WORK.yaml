@@ -417,3 +417,9 @@ claims:
 # (6f657dd3, next steps, readable replies, callback in chat, dark leftovers).
 # Both "Deploy and verify production VPS" jobs succeeded, including the
 # production runtime verification step. PR #229 closed as superseded.
+# Still open and now UNCLAIMED (handed to this claim by store-experience-v2,
+# source of truth §15 row 18, commit f8f8fd1b): (1) the Ask DE nudge bottom
+# offset in client/src/components/SiteBottomBar.tsx omits --de-cookie-h; (2)
+# ZohoASAPWidget.tsx seeds STORE_ADVISOR_SEED on pathname.includes("/store")
+# instead of isDoor2Path, so /solutions/request pages miss it. Whoever takes
+# them claims the two files first.
