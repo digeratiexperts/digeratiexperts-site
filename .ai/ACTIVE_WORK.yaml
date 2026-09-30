@@ -457,8 +457,8 @@ claims:
       - client/src/App.tsx (the /version-5 route only)
       - client/src/pages/versions/registry.ts (the v5 entry only)
       - client/src/pages/versions/README.md (the v5 row only)
-      - server/spaKnownPaths.ts (the /version-5 entry only)
-      - server/spaKnownPaths.test.ts (the version list only)
+      - server/spaKnownPaths.ts (the /version-5 entry and the ten data-driven /solutions/* pages)
+      - server/spaKnownPaths.test.ts (the version list and the data-driven solution pages test)
       - scripts/qa/homepage-v5-acceptance.mjs
       - docs/CLAIMS-REGISTER.md (the Version 5 section only)
       - artifacts/visual-qa/homepage-v5/**

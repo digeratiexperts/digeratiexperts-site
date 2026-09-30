@@ -29,6 +29,19 @@ const EXACT = new Set([
   "/solutions/endpoint-management",
   "/solutions/identity-management",
   "/solutions/email-security",
+  // Data-driven solution pages (client/src/pages/routes/servicePages.tsx keys
+  // routed by App.tsx). They rendered while answering HTTP 404 to crawlers and
+  // link checkers until 2026-09-30; the test below keeps the two lists in step.
+  "/solutions/cloud-backup",
+  "/solutions/security-awareness",
+  "/solutions/threat-detection",
+  "/solutions/security-operations",
+  "/solutions/vcio-strategy",
+  "/solutions/data-encryption",
+  "/solutions/compliance-reports",
+  "/solutions/unified-security",
+  "/solutions/professional-services",
+  "/solutions/system-status",
   "/store",
   "/store/checkout",
   "/store/solution",

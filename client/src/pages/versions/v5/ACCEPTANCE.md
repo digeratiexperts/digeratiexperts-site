@@ -58,3 +58,21 @@ call, in about ten seconds.
 
 Whether the page reads well, whether the photograph is cropped kindly, whether
 the copy sounds like DE. That is the human review of the frames, and Joe's.
+
+## How to run it
+
+```bash
+npm run build
+NODE_ENV=production DE_SMOKE_ALLOW_MEMORY_ONLY=1 \
+  JWT_SECRET=$(openssl rand -hex 32) MFA_ENCRYPTION_KEY=$(openssl rand -hex 32) SESSION_SECRET=$(openssl rand -hex 32) \
+  PORT=4173 node dist/index.js &
+node scripts/qa/homepage-v5-acceptance.mjs --url http://localhost:4173/version-5 --out artifacts/visual-qa/homepage-v5
+```
+
+The server must run in production mode: in development mode Vite serves
+unminified modules from `/@fs/` paths, which fails the image, transfer-size and
+console checks for reasons that have nothing to do with the page. The three
+secrets are throwaway values for the local run; the memory-only flag is the
+same one CI's smoke test uses. Google Fonts do not load inside the build
+sandbox, so the frames there show the fallback face; the checks do not depend
+on the webfont.

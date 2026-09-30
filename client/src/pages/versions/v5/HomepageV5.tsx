@@ -224,10 +224,10 @@ export default function HomepageV5(): JSX.Element {
             </ul>
           </nav>
           <div className="v5-header-actions">
-            <a className="v5-phone" href={PRIMARY_PHONE.telHref}>
+            <a className="v5-phone" href={PRIMARY_PHONE.telHref} aria-label={`Call ${PRIMARY_PHONE.display}`}>
               {PRIMARY_PHONE.display}
             </a>
-            <PrimaryAction />
+            <PrimaryAction className="v5-header-cta" />
             <details className="v5-menu">
               <summary aria-label="Open menu">Menu</summary>
               <div className="v5-menu-panel">
@@ -237,6 +237,7 @@ export default function HomepageV5(): JSX.Element {
                   </Link>
                 ))}
                 <a href={PRIMARY_PHONE.telHref}>Call {PRIMARY_PHONE.display}</a>
+                <PrimaryAction className="v5-menu-cta" />
               </div>
             </details>
           </div>
@@ -248,7 +249,7 @@ export default function HomepageV5(): JSX.Element {
           <div className="v5-wrap v5-hero-grid">
             <div className="v5-hero-copy">
               <p className="v5-eyebrow">
-                {COMPANY.addressLocality}, {COMPANY.addressRegion === "AZ" ? "Arizona" : COMPANY.addressRegion} · Managed IT and cybersecurity
+                {COMPANY.addressLocality}, {COMPANY.addressRegion === "AZ" ? "Arizona" : COMPANY.addressRegion} · Greater Phoenix
               </p>
               <h1 id="v5-h1">Managed IT and cybersecurity for Arizona businesses.</h1>
               <p className="v5-lede">
@@ -261,20 +262,6 @@ export default function HomepageV5(): JSX.Element {
                   Call {PRIMARY_PHONE.display}
                 </a>
               </div>
-              <ul className="v5-facts" aria-label="Three facts">
-                <li className="v5-fact">
-                  <strong className="v5-num">From {formatPrice(pricing.it.user)} per user a month</strong>
-                  <span className="v5-num">{formatPrice(pricing.it.monthlyMinimum)} monthly minimum. Four plans, all priced on the pricing page.</span>
-                </li>
-                <li className="v5-fact">
-                  <strong>15 minutes to a critical issue</strong>
-                  <span>Response times are written into our SLA, with service credits if we miss them.</span>
-                </li>
-                <li className="v5-fact">
-                  <strong>24/7/365 emergency response</strong>
-                  <span>Emergency incident response availability, around the clock, all year.</span>
-                </li>
-              </ul>
             </div>
             <figure className="v5-hero-figure">
               <picture>
@@ -285,6 +272,22 @@ export default function HomepageV5(): JSX.Element {
                 Joseph Petro, founder. Principal-led: accountable recommendations from the people who stand behind the work.
               </figcaption>
             </figure>
+          </div>
+          <div className="v5-wrap">
+            <ul className="v5-facts" aria-label="Three facts">
+              <li className="v5-fact">
+                <strong className="v5-num">From {formatPrice(pricing.it.user)} per user a month</strong>
+                <span className="v5-num">{formatPrice(pricing.it.monthlyMinimum)} monthly minimum. Four plans, all priced on the pricing page.</span>
+              </li>
+              <li className="v5-fact">
+                <strong>15 minutes to a critical issue</strong>
+                <span>Response times are written into our SLA, with service credits if we miss them.</span>
+              </li>
+              <li className="v5-fact">
+                <strong>24/7/365 emergency response</strong>
+                <span>Emergency incident response availability, around the clock, all year.</span>
+              </li>
+            </ul>
           </div>
         </section>
 
@@ -371,10 +374,10 @@ export default function HomepageV5(): JSX.Element {
                 <li key={t.id} className="v5-tier">
                   <p className="v5-tier-badge">{t.tier}</p>
                   <h3>{t.label}</h3>
-                  <p className="v5-price v5-num">
-                    {formatPrice(t.user)} <small>per user / month</small>
+                  <p className="v5-price v5-num">{formatPrice(t.user)}</p>
+                  <p className="v5-muted v5-num">
+                    per user per month · {formatPrice(t.monthlyMinimum)} monthly minimum
                   </p>
-                  <p className="v5-muted v5-num">{formatPrice(t.monthlyMinimum)} monthly minimum</p>
                   <p>{t.idealBuyer}</p>
                   <ul aria-label={`${t.label} includes`}>
                     {t.inclusions.slice(0, 3).map((inc) => (
@@ -405,15 +408,16 @@ export default function HomepageV5(): JSX.Element {
                 <thead>
                   <tr>
                     <th scope="col">Severity</th>
-                    <th scope="col">What it means</th>
                     <th scope="col">Response</th>
                   </tr>
                 </thead>
                 <tbody>
                   {SLA_ROWS.map((r) => (
                     <tr key={r.severity}>
-                      <td>{r.severity}</td>
-                      <td>{r.meaning}</td>
+                      <td>
+                        <strong>{r.severity}</strong>
+                        <span className="v5-table-meaning">{r.meaning}</span>
+                      </td>
                       <td className="v5-num">{r.response}</td>
                     </tr>
                   ))}

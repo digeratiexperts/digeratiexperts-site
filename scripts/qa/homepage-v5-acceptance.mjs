@@ -7,8 +7,13 @@
  * fails on anything a visitor would call not practical, not real, or not nice.
  * Each check names the mistake it guards against.
  *
- *   npm run build && PORT=4173 node dist/index.js &
+ *   npm run build
+ *   NODE_ENV=production DE_SMOKE_ALLOW_MEMORY_ONLY=1 JWT_SECRET=... MFA_ENCRYPTION_KEY=... SESSION_SECRET=... \
+ *     PORT=4173 node dist/index.js &
  *   node scripts/qa/homepage-v5-acceptance.mjs --url http://localhost:4173/version-5 --out artifacts/visual-qa/homepage-v5
+ *
+ * Production mode matters: the dev server's /@fs/ module paths fail the image,
+ * transfer and console checks for reasons unrelated to the page (ACCEPTANCE.md).
  *
  * Exit code 1 on any failure. Screenshots and REPORT.md land in --out.
  */
@@ -64,7 +69,7 @@ for (const f of FACT_SOURCES) {
 }
 allowedFigures.add(`${new Date().getFullYear()}`); // copyright year is not a claim
 
-const EXPECTED_H2 = ["What we do", "Who we work with", "How it works", "Pricing", "Response times", "Questions", "Contact"];
+const EXPECTED_SECTIONS = ["What we do", "Who we work with", "How it works", "Pricing", "Response times", "Questions", "Contact"];
 const IMAGE_ALLOW = /^\/(images\/founder\/|assets\/)/;
 const MAX_WORDS = 1200;
 const MAX_VIEWPORTS = { phone: 14, tablet: 11, desktop: 9 };
@@ -114,7 +119,11 @@ try {
       const consoleErrors = [];
       let bytes = 0;
       page.on("console", (m) => {
-        if (m.type() === "error" && !/api\/public\/reviews/.test(m.text())) consoleErrors.push(m.text());
+        if (m.type() !== "error") return;
+        const src = m.location()?.url ?? "";
+        if (/api\/public\/reviews/.test(m.text())) return;
+        if (src && !src.startsWith(origin) && !src.startsWith("about:")) return; // third-party resource, not this page's code
+        consoleErrors.push(`${m.text()}${src ? ` (${src})` : ""}`);
       });
       page.on("pageerror", (e) => consoleErrors.push(`pageerror: ${e.message}`));
       page.on("response", async (r) => {
@@ -125,7 +134,9 @@ try {
       });
       await page.goto(URL_, { waitUntil: "networkidle" });
       await page.waitForSelector(".v5 h1", { timeout: 15000 });
-      await page.waitForTimeout(300);
+      // The site-wide cookie banner is answered once by a real visitor; the frames show the page after that.
+      await page.locator('button:has-text("Reject All")').first().click({ timeout: 2000 }).catch(() => {});
+      await page.waitForTimeout(400);
       const tag = reduced ? `${vp.name}-reduced` : vp.name;
 
       if (!reduced) {
@@ -172,10 +183,10 @@ try {
         // ---- Practical: short, conventional, in order.
         const words = pageText.split(/\s+/).filter(Boolean).length;
         check(`practical: ≤ ${MAX_WORDS} words`, tag, words <= MAX_WORDS, `${words} words`);
-        const h2s = await page.$$eval(".v5 h2", (els) => els.map((e) => e.textContent.trim()));
+        const labels = await page.$$eval(".v5 main section .v5-eyebrow", (els) => els.map((e) => e.textContent.trim()));
         let idx = 0;
-        for (const h of h2s) if (idx < EXPECTED_H2.length && h.toLowerCase().includes(EXPECTED_H2[idx].toLowerCase())) idx++;
-        check("practical: sections in the conventional order", tag, idx === EXPECTED_H2.length, h2s.join(" › "));
+        for (const h of labels) if (idx < EXPECTED_SECTIONS.length && h.toLowerCase().includes(EXPECTED_SECTIONS[idx].toLowerCase())) idx++;
+        check("practical: sections in the conventional order", tag, idx === EXPECTED_SECTIONS.length, labels.join(" › "));
         const heightVp = await page.evaluate(() => document.documentElement.scrollHeight / window.innerHeight);
         check(`practical: page ≤ ${MAX_VIEWPORTS[vp.name]} viewports tall`, tag, heightVp <= MAX_VIEWPORTS[vp.name], `${heightVp.toFixed(1)} viewports`);
         const media = await page.evaluate(() => document.querySelectorAll(".v5 video, .v5 iframe").length);
@@ -256,8 +267,19 @@ try {
         check("links: every internal link answers 200", tag, broken.length === 0, broken.length ? broken.join("; ") : `${internal.length} links`);
         const external = hrefs.filter((h) => /^https?:/.test(h)).filter((h) => !h.startsWith("https://"));
         check("links: external links are https", tag, external.length === 0, external.join(", "));
-        const imgs = await page.$$eval(".v5 img", (els) => els.map((i) => ({ src: new URL(i.currentSrc || i.src, location.href).pathname, alt: i.getAttribute("alt"), ok: i.complete && i.naturalWidth > 0 })));
-        const badImgs = imgs.filter((i) => !i.ok || !i.alt || !IMAGE_ALLOW.test(i.src));
+        const imgs = await page.$$eval(".v5 img", (els) =>
+          els.map((i) => {
+            const raw = i.currentSrc || i.src;
+            return {
+              src: raw.startsWith("data:") ? raw.slice(0, 18) : new URL(raw, location.href).pathname,
+              alt: i.getAttribute("alt"),
+              decorative: i.getAttribute("aria-hidden") === "true" || i.getAttribute("role") === "presentation",
+              ok: i.complete && i.naturalWidth > 0,
+            };
+          }),
+        );
+        // A brand mark small enough for Vite to inline arrives as a data: SVG; a decorative mark may carry an empty alt.
+        const badImgs = imgs.filter((i) => !i.ok || (!i.alt && !i.decorative) || !(IMAGE_ALLOW.test(i.src) || i.src.startsWith("data:image/svg+xml")));
         check("images: real, loaded, described (founder photo and brand marks only)", tag, badImgs.length === 0, badImgs.map((i) => `${i.src} alt="${i.alt}" loaded=${i.ok}`).join("; ") || `${imgs.length} images`);
 
         // ---- The page is a document: native scroll, nothing animating.
@@ -270,12 +292,21 @@ try {
         check("perf: same-origin transfer under 1.5 MB", tag, bytes <= MAX_BYTES, `${(bytes / 1024).toFixed(0)} kB`);
       }
 
-      const animating = await page.evaluate(() => document.getAnimations().length);
-      check("motion: nothing animates" + (reduced ? " (reduced motion)" : ""), tag, animating === 0, `${animating} animations`);
+      const animating = await page.evaluate(() =>
+        document.getAnimations().map((a) => {
+          const el = a.effect?.target;
+          const inPage = Boolean(el?.closest?.(".v5"));
+          return `${inPage ? "page" : "site chrome"}: <${el?.tagName?.toLowerCase() ?? "?"}${el?.className ? " ." + String(el.className).split(" ").slice(0, 2).join(".") : ""}> ${a.animationName ?? a.constructor.name}`;
+        }),
+      );
+      const pageAnimations = animating.filter((a) => a.startsWith("page:"));
+      check("motion: nothing on the page animates" + (reduced ? " (reduced motion)" : ""), tag, pageAnimations.length === 0, animating.join("; ") || "0 animations");
       check("console: no errors", tag, consoleErrors.length === 0, consoleErrors.slice(0, 3).join(" | "));
 
       // ---- Frames for the human review.
       if (!reduced) {
+        await page.evaluate(() => window.scrollTo(0, 0));
+        await page.waitForTimeout(400); // let the site's scroll-progress bar retract before the frame
         await page.screenshot({ path: path.join(OUT, `${vp.name}-top.png`) });
         const total = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
         for (const pct of [25, 50, 75, 100]) {

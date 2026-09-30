@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { isKnownSpaPath, normalizeSpaPath } from "./spaKnownPaths";
 
@@ -22,6 +24,19 @@ describe("spaKnownPaths", () => {
       expect(isKnownSpaPath(`/version-${n}`)).toBe(true);
     }
     expect(isKnownSpaPath("/versions")).toBe(true);
+  });
+
+  it("knows every data-driven solution page, so none of them answers 404", () => {
+    // App.tsx routes every servicePageData key at /solutions/<key>. Production
+    // answered 404 for /solutions/threat-detection and friends on 2026-09-30
+    // because this allowlist only carried the hand-written routes.
+    const src = readFileSync(path.resolve(import.meta.dirname, "../client/src/pages/routes/servicePages.tsx"), "utf8");
+    const block = src.slice(src.indexOf("servicePageData"), src.indexOf("industryPageData"));
+    const keys = [...block.matchAll(/^\s{2}'([A-Za-z-]+)': \{/gm)].map((m) => m[1]);
+    expect(keys.length).toBeGreaterThan(10);
+    for (const key of keys) {
+      expect(isKnownSpaPath(`/solutions/${key}`), `/solutions/${key}`).toBe(true);
+    }
   });
 
   it("returns false for unknown paths so the SPA catch-all can send HTTP 404", () => {
