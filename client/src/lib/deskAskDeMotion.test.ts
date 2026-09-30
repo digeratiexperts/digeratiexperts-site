@@ -30,6 +30,19 @@ describe("deskAskDeMotion", () => {
     }
   });
 
+  it("gives the store greeting to the public Store's six routes only, in builder words", () => {
+    for (const path of ["/store", "/store/", "/store/solutions/it-operations", "/store/solution", "/store/solution/", "/store/checkout", "/store/solution/submitted/DE-4K7Q2M", "/solutions/request"]) {
+      expect(inferDeskPageType(path), path).toBe("store");
+    }
+    for (const path of ["/internal/warehouse", "/internal/warehouse/cart", "/store-locator", "/portal/marketplace"]) {
+      expect(inferDeskPageType(path), path).not.toBe("store");
+    }
+    const words = [DESK_PAGE_COPY.store.greet, ...DESK_PAGE_COPY.store.chips.map((chip) => chip.label)].join(" ").toLowerCase();
+    for (const term of ["bundle", "priced on approval", "add anything", "cart", "catalog", "pricing", "price", "sizes it", "size a package"]) {
+      expect(words, term).not.toContain(term);
+    }
+  });
+
   it("returns four contextual starters plus security incident last", () => {
     for (const path of ["/", "/pricing", "/compliance/hipaa", "/store"]) {
       const chips = startersForPage(inferDeskPageType(path));

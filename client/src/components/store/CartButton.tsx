@@ -15,8 +15,8 @@ export function CartButton() {
       className="relative h-11 w-11 text-white/70 hover:bg-white/10 hover:text-white"
       onClick={toggleCart}
       data-testid="button-cart"
-      aria-label={`Your solution with ${itemCount} services`}
-      title="Your Solution"
+      aria-label={`Warehouse cart with ${itemCount} services`}
+      title="Warehouse cart"
     >
       <Layers className="h-5 w-5" />
       <AnimatePresence>

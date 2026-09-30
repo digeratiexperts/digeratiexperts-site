@@ -30,9 +30,10 @@ function Install-DEWindowsUpdates {
     $criteria = "IsInstalled=0 and IsHidden=0 and Type='Software'"; if ($IncludeDrivers) { $criteria = 'IsInstalled=0 and IsHidden=0' }
     $result = $searcher.Search($criteria)
     $list = New-Object -ComObject Microsoft.Update.UpdateColl
-    foreach ($u in $result.Updates) { if ($u.Title -match 'Preview') { continue }; if (-not $u.EulaAccepted) { $u.AcceptEula() }; [void]$list.Add($u) }
+    foreach ($u in $result.Updates) { if ($u.Title -match 'Preview') { continue }; [void]$list.Add($u) }
     if ($list.Count -eq 0) { return @{ found = 0; installed = 0; rebootRequired = $false } }
     if (-not $PSCmdlet.ShouldProcess("$($list.Count) update(s)", 'download and install')) { return @{ found = $list.Count; installed = 0; planned = $true } }
+    foreach ($u in $list) { if (-not $u.EulaAccepted) { $u.AcceptEula() } }   # only on a real run
     $dl = $session.CreateUpdateDownloader(); $dl.Updates = $list; $null = $dl.Download()
     $inst = $session.CreateUpdateInstaller(); $inst.Updates = $list; $r = $inst.Install()
     $ok = 0; for ($i = 0; $i -lt $list.Count; $i++) { if ($r.GetUpdateResult($i).ResultCode -eq 2) { $ok++ } }
@@ -48,22 +49,73 @@ function Get-DEOemTool {
     $lsu = @("${env:ProgramFiles(x86)}\Lenovo\System Update\tvsu.exe") | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -First 1
     return @{ manufacturer = $mfr; dell = $dcu; hp = $hpia; lenovo = $lsu; applicable = $(if ($mfr -match 'Dell') { 'dell' } elseif ($mfr -match 'HP|Hewlett') { 'hp' } elseif ($mfr -match 'Lenovo') { 'lenovo' } else { 'none' }) }
 }
-function Invoke-DEOemScan { $t = Get-DEOemTool; if ($t.applicable -eq 'dell' -and $t.dell) { $r = Invoke-DENative -FilePath $t.dell -Arguments @('/scan', '-silent'); return @{ tool = 'dcu'; exitCode = $r.ExitCode; updatesAvailable = ($r.ExitCode -eq 0 -and $r.Text -match 'available'); output = ($r.Output | Select-Object -Last 15) } }; return @{ tool = $t.applicable; exitCode = $null; updatesAvailable = $null; output = @('no supported OEM tool installed') } }
+function Invoke-DEOemScan {
+    <# What the OEM tool says this machine needs. current: $true up to date, $false updates waiting, $null could not tell. #>
+    $t = Get-DEOemTool
+    if ($t.applicable -eq 'dell' -and $t.dell) { $r = Invoke-DENative -FilePath $t.dell -Arguments @('/scan', '-silent'); return @{ tool = 'dcu'; exitCode = $r.ExitCode; current = ($r.ExitCode -eq 500); updatesAvailable = ($r.ExitCode -eq 0 -and $r.Text -match 'available'); output = ($r.Output | Select-Object -Last 15) } }
+    if ($t.applicable -eq 'lenovo') {
+        # LSUClient (MIT, pinned in catalog\community.json) reads Lenovo's own update catalog; Lenovo System Update is not needed.
+        try { $u = @(Get-DELenovoUpdates) } catch { return @{ tool = 'lsuclient'; exitCode = $null; current = $null; updatesAvailable = $null; output = @("Lenovo update check failed: $($_.Exception.Message)") } }
+        return @{ tool = 'lsuclient'; exitCode = 0; current = ($u.Count -eq 0); updatesAvailable = ($u.Count -gt 0); count = $u.Count; firmware = @($u | Where-Object { $_.firmware }).Count; output = @($u | ForEach-Object { "$($_.type): $($_.title)$(if (-not $_.unattended) { ' (needs a technician)' })" }) }
+    }
+    if ($t.applicable -eq 'hp' -and $t.hp) {
+        # HP Image Assistant exit codes (HP's HPIA user guide): 0 done / recommendations found, 256 no recommendations, 3010 restart needed, 3020 an install failed, 4096 platform not supported.
+        $report = Join-Path (Get-DEConsole).Dirs.Logs 'hpia-analyze'
+        $r = Invoke-DENative -FilePath $t.hp -Arguments @('/Operation:Analyze', '/Action:List', '/Category:All', '/Selection:All', '/Silent', "/ReportFolder:$report")
+        return @{ tool = 'hpia'; exitCode = $r.ExitCode; current = $(if ($r.ExitCode -eq 256) { $true } elseif ($r.ExitCode -eq 0) { $false } else { $null }); updatesAvailable = ($r.ExitCode -eq 0); output = @("HPIA analyze exit $($r.ExitCode)") }
+    }
+    if ($t.applicable -eq 'dell') { return @{ tool = 'dcu'; exitCode = $null; current = $false; updatesAvailable = $null; output = @('Dell Command | Update is not installed') } }
+    return @{ tool = $t.applicable; exitCode = $null; current = $null; updatesAvailable = $null; output = @('no supported OEM tool installed') }
+}
 function Invoke-DEOemUpdate {
-    <# Applies OEM updates; suspends BitLocker for one restart when BIOS/firmware may be included, then records that protection must be verified On after the restart. #>
+    <#
+        Applies OEM updates (Dell Command | Update, Lenovo through LSUClient, HP Image Assistant). Suspends BitLocker for one
+        restart when BIOS/firmware is included, then records that protection must be verified On after the restart.
+        Any package that fails throws after the restart request is recorded: a partial update is never reported as done.
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param([switch]$IncludeBios)
     $t = Get-DEOemTool
-    if ($t.applicable -ne 'dell' -or -not $t.dell) { throw "no automated OEM update path for $($t.manufacturer); use the vendor tool manually" }
-    $types = 'driver,application,utility'; if ($IncludeBios) { $types = 'bios,firmware,driver,application,utility' }
-    if (-not $PSCmdlet.ShouldProcess('Dell Command | Update', "applyUpdates ($types)")) { return 'planned' }
-    if ($IncludeBios -and (Get-DEBitLockerState).osProtectionOn) { Suspend-DEBitLockerForFirmware -RebootCount 1; Set-DEStateValue -Path 'maintenance.bitlockerResumeRequired' -Value $true }
-    $r = Invoke-DENative -FilePath $t.dell -Arguments @('/applyUpdates', "-updateType=$types", '-reboot=disable', '-silent')
-    # DCU exit codes: 0 ok, 1 reboot required, 5 reboot pending, 500 no updates
-    if ($r.ExitCode -in @(1, 5)) { Request-DEReboot -Reason 'OEM updates require a restart' -ResumeAction 'maint.oem' | Out-Null }
-    if ($r.ExitCode -notin @(0, 1, 5, 500)) { throw "dcu-cli exit $($r.ExitCode)" }
-    return "dcu-cli exit $($r.ExitCode)"
+    $suspend = { if ((Get-DEBitLockerState).osProtectionOn) { Suspend-DEBitLockerForFirmware -RebootCount 1; Set-DEStateValue -Path 'maintenance.bitlockerResumeRequired' -Value $true } }
+    switch ($t.applicable) {
+        'lenovo' {
+            $all = @(Get-DELenovoUpdates)
+            $pick = @($all | Where-Object { $_.unattended -and ($IncludeBios -or -not $_.firmware) })
+            $manual = @($all | Where-Object { -not $_.unattended } | ForEach-Object { $_.title })
+            if (-not $pick.Count) { return "Lenovo: nothing to install silently$(if ($manual.Count) { "; install by hand: $($manual -join '; ')" })" }
+            if (-not $PSCmdlet.ShouldProcess('Lenovo (LSUClient)', "install $($pick.Count) package(s): $((@($pick | ForEach-Object { $_.title })) -join '; ')")) { return 'planned' }
+            if (@($pick | Where-Object { $_.firmware }).Count) { & $suspend }
+            $r = Install-DELenovoUpdates -Updates $pick
+            if ($r.pending.Count) { Request-DEReboot -Reason $(if ($r.shutdown) { 'Lenovo BIOS update finishes on a full shutdown, then power on' } else { 'Lenovo updates require a restart' }) -ResumeAction 'maint.oem' | Out-Null }
+            if ($r.failed.Count) { throw "Lenovo: $($r.failed.Count) package(s) failed: $($r.failed -join '; ')" }
+            return "Lenovo: installed $($r.installed.Count)$(if ($r.pending.Count) { "; pending $($r.pending -join ', ')" })$(if ($manual.Count) { "; install by hand: $($manual -join '; ')" })"
+        }
+        'hp' {
+            if (-not $t.hp) { throw 'HP Image Assistant is not installed: install HPIA from hp.com/go/hpia, then run this again' }
+            $cats = $(if ($IncludeBios) { 'All' } else { 'Drivers,Software,Accessories' })
+            if (-not $PSCmdlet.ShouldProcess('HP Image Assistant', "install ($cats)")) { return 'planned' }
+            if ($IncludeBios) { & $suspend }
+            $base = Join-Path (Get-DEConsole).Dirs.Packages 'hpia'
+            $r = Invoke-DENative -FilePath $t.hp -Arguments @('/Operation:Analyze', '/Action:Install', "/Category:$cats", '/Selection:All', '/Silent', "/ReportFolder:$base\report", "/SoftpaqDownloadFolder:$base\softpaqs")
+            if ($r.ExitCode -eq 3010) { Request-DEReboot -Reason 'HP updates require a restart' -ResumeAction 'maint.oem' | Out-Null }
+            if ($r.ExitCode -notin @(0, 256, 257, 3010)) { throw "HP Image Assistant exit $($r.ExitCode) (3020 = an install failed, 4096 = platform not supported); report in $base\report" }
+            return "HP Image Assistant exit $($r.ExitCode)"
+        }
+        'dell' {
+            if (-not $t.dell) { throw 'Dell Command | Update is not installed' }
+            $types = 'driver,application,utility'; if ($IncludeBios) { $types = 'bios,firmware,driver,application,utility' }
+            if (-not $PSCmdlet.ShouldProcess('Dell Command | Update', "applyUpdates ($types)")) { return 'planned' }
+            if ($IncludeBios) { & $suspend }
+            $r = Invoke-DENative -FilePath $t.dell -Arguments @('/applyUpdates', "-updateType=$types", '-reboot=disable', '-silent')
+            # DCU exit codes: 0 ok, 1 reboot required, 5 reboot pending, 500 no updates
+            if ($r.ExitCode -in @(1, 5)) { Request-DEReboot -Reason 'OEM updates require a restart' -ResumeAction 'maint.oem' | Out-Null }
+            if ($r.ExitCode -notin @(0, 1, 5, 500)) { throw "dcu-cli exit $($r.ExitCode)" }
+            return "dcu-cli exit $($r.ExitCode)"
+        }
+        default { throw "no automated OEM update path for $($t.manufacturer); use the vendor tool manually" }
+    }
 }
+
 function Get-DEBatteryHealth {
     if (-not $script:IsWindowsHost) { return $null }
     $full = Get-CimInstance -Namespace root/wmi -ClassName BatteryFullChargedCapacity -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -86,7 +138,7 @@ function Add-DEWifiProfile {
     finally { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force }; $key = $null; $xml = $null }
 }
 function Add-DEPrinter { [CmdletBinding(SupportsShouldProcess = $true)] param([Parameter(Mandatory = $true)][string]$Name, [Parameter(Mandatory = $true)][string]$Address, [string]$Driver = 'Microsoft IPP Class Driver') if (-not $PSCmdlet.ShouldProcess($Name, "add printer at $Address")) { return 'planned' }; $port = "IP_$Address"; if (-not (Get-PrinterPort -Name $port -ErrorAction SilentlyContinue)) { Add-PrinterPort -Name $port -PrinterHostAddress $Address }; if (-not (Get-Printer -Name $Name -ErrorAction SilentlyContinue)) { Add-Printer -Name $Name -DriverName $Driver -PortName $port }; return "printer $Name on $Address" }
-function Import-DECertificate { [CmdletBinding(SupportsShouldProcess = $true)] param([Parameter(Mandatory = $true)][string]$Path, [ValidateSet('Root', 'CA', 'My', 'TrustedPublisher')][string]$Store = 'Root', [string]$ExpectedThumbprint) $c = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2 $Path; if ($ExpectedThumbprint -and $c.Thumbprint -ne $ExpectedThumbprint.ToUpperInvariant()) { throw "certificate thumbprint $($c.Thumbprint) does not match the expected $ExpectedThumbprint" }; if (-not $PSCmdlet.ShouldProcess($c.Subject, "import into LocalMachine\$Store")) { return 'planned' }; Import-Certificate -FilePath $Path -CertStoreLocation "Cert:\LocalMachine\$Store" | Out-Null; return "imported $($c.Subject) ($($c.Thumbprint))" }
+function Import-DECertificate { [CmdletBinding(SupportsShouldProcess = $true)] param([Parameter(Mandatory = $true)][string]$Path, [ValidateSet('Root', 'CA', 'My', 'TrustedPublisher')][string]$Store = 'Root', [string]$ExpectedThumbprint) if ($Store -in @('Root', 'CA', 'TrustedPublisher') -and -not $ExpectedThumbprint) { throw "adding to LocalMachine\$Store needs -ExpectedThumbprint (checked against the client's record)" }; $all = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection; $all.Import($Path); if ($all.Count -ne 1) { throw "$Path holds $($all.Count) certificates; import exactly one, checked by thumbprint" }; $c = $all[0]; if ($ExpectedThumbprint -and $c.Thumbprint -ne $ExpectedThumbprint.ToUpperInvariant()) { throw "certificate thumbprint $($c.Thumbprint) does not match the expected $ExpectedThumbprint" }; if (-not $PSCmdlet.ShouldProcess($c.Subject, "import into LocalMachine\$Store")) { return 'planned' }; Import-Certificate -FilePath $Path -CertStoreLocation "Cert:\LocalMachine\$Store" | Out-Null; return "imported $($c.Subject) ($($c.Thumbprint))" }
 function Test-DESiteResources {
     param($ClientProfile, [string]$SiteId)
     $net = Get-DENetworkState
@@ -95,6 +147,53 @@ function Test-DESiteResources {
     $printerResults = @($printers | Where-Object { $_ } | ForEach-Object { $n = "$(Get-DEOpsProp $_ 'name')"; @{ name = $n; installed = [bool](Get-Printer -Name $n -ErrorAction SilentlyContinue) } })
     $wifiResults = @($wifi | Where-Object { $_ } | ForEach-Object { $s = "$(Get-DEOpsProp $_ 'ssid')"; @{ ssid = $s; present = ($net.wifiProfiles -contains $s) } })
     return @{ gateway = $net.gateway; dns = $net.dns; shares = $shareResults; printers = $printerResults; wifi = $wifiResults; connectivity = (Test-DEConnectivity) }
+}
+
+function Get-DEClockSkew {
+    <# Seconds between this PC's clock and an HTTPS server's Date header (Microsoft, then Cloudflare). $null when neither answers. #>
+    try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }   # 5.1 defaults to SSL3/TLS 1.0, and this runs before any other HTTPS call
+    foreach ($u in @('https://www.microsoft.com', 'https://www.cloudflare.com')) {
+        try {
+            $r = Invoke-WebRequest -Uri $u -Method Head -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
+            $d = "$($r.Headers['Date'])"; if (-not $d) { continue }
+            $server = [datetime]::ParseExact($d, 'r', [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::AdjustToUniversal)
+            return [int][math]::Round(((Get-Date).ToUniversalTime() - $server).TotalSeconds)
+        } catch { continue }
+    }
+    return $null
+}
+function Sync-DEClock {
+    <# Starts Windows Time and forces a resync; if the service was never registered (some images), registers it first. #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param()
+    if (-not $PSCmdlet.ShouldProcess('Windows Time', 'resync the clock')) { return 'planned' }
+    $svc = Get-Service -Name 'w32time' -ErrorAction SilentlyContinue
+    if (-not $svc) { $null = Invoke-DENative -FilePath 'w32tm.exe' -Arguments @('/register'); $svc = Get-Service -Name 'w32time' -ErrorAction SilentlyContinue }
+    if ($svc -and $svc.StartType -eq 'Disabled') { Set-Service -Name 'w32time' -StartupType Manual }
+    if ($svc -and $svc.Status -ne 'Running') { Start-Service -Name 'w32time' -ErrorAction SilentlyContinue }
+    # a standalone PC refuses corrections over MaxPos/MaxNegPhaseCorrection (15 h by default), which is exactly the dead-CMOS
+    # case: lift the limit for this one resync, then put the configured values back
+    $cfg = 'HKLM:\SYSTEM\CurrentControlSet\Services\W32Time\Config'; $saved = @{}
+    foreach ($n in 'MaxPosPhaseCorrection', 'MaxNegPhaseCorrection') { $saved[$n] = Get-DERegistryValue -Path $cfg -Name $n; try { Set-ItemProperty -LiteralPath $cfg -Name $n -Value -1 -Type DWord -ErrorAction Stop } catch { $saved.Remove($n) } }
+    try {
+        $null = Invoke-DENative -FilePath 'w32tm.exe' -Arguments @('/config', '/update') -TimeoutSeconds 30
+        $r = Invoke-DENative -FilePath 'w32tm.exe' -Arguments @('/resync', '/force') -TimeoutSeconds 60
+    } finally {
+        foreach ($n in @($saved.Keys)) { if ($null -ne $saved[$n]) { Set-ItemProperty -LiteralPath $cfg -Name $n -Value $saved[$n] -Type DWord -ErrorAction SilentlyContinue } else { Remove-ItemProperty -LiteralPath $cfg -Name $n -ErrorAction SilentlyContinue } }
+        if ($saved.Count) { $null = Invoke-DENative -FilePath 'w32tm.exe' -Arguments @('/config', '/update') -TimeoutSeconds 30 }
+    }
+    return "w32tm /resync exit $($r.ExitCode)"
+}
+
+function Get-DERescueHandoffState {
+    <# Boot rescue handoffs waiting for review, ones failing their contract, and ones for a different device than this one. #>
+    param([Parameter(Mandatory = $true)][string]$Directory)
+    $all = @(Get-DEHandoffs -Directory $Directory)
+    $inv = Get-DEDeviceInventory; $mine = $null; try { $mine = ConvertTo-DEDeviceKey -Manufacturer "$($inv.manufacturer)" -Serial "$($inv.serial)" } catch { $mine = $null }
+    $open = @($all | Where-Object { -not $_.reviewed })
+    $other = @($all | Where-Object { $_.handoff -and $mine -and "$($_.handoff.deviceKey)" -ne $mine })
+    $notes = @($open | Where-Object { $_.handoff } | ForEach-Object { @($_.handoff.actions | ForEach-Object { "$($_.action) $($_.result)" }) + @($_.handoff.recommendations) } | Select-Object -First 12)
+    return @{ unreviewed = $open.Count; invalid = @($all | Where-Object { $_.problems.Count }).Count; otherDevice = $other.Count; detail = ($notes -join ' | ') }
 }
 
 # ------------------------------------------------------------------ actions
@@ -110,12 +209,44 @@ function Register-DEOperationsActions {
     Register-DEAction -Id 'maint.windows-update' -Module 'maintenance' -Title 'Windows updates installed' -Phase 3 -Gates @('gate.elevated') -RequiresElevation `
         -Detect { $w = Get-DEWindowsUpdateState; @{ pending = $(if ($null -eq $w.pendingCount) { -1 } else { $w.pendingCount }); lastInstall = $w.lastInstall } } `
         -Desired { @{ pending = 0 } } -Apply { param($s) $r = Install-DEWindowsUpdates; "found $($r.found), installed $($r.installed), restart $($r.rebootRequired)" } `
-        -ManualAction 'Large feature updates are left to the JumpCloud patch policy.'
+        -ManualAction 'Large feature updates are left to the client''s update authority (JumpCloud patch policy by default).'
+    # Who keeps updates flowing after handoff: JumpCloud patch management by default; Intune for Microsoft-only clients;
+    # 'windows' when DE Tech Tool itself sets the automatic-update policy (the wu-auto baseline control). Always checked.
+    $updAuthority = "$(Get-DEHashPath -Object $ClientProfile -Path 'updates.authority')"; if (-not $updAuthority) { $updAuthority = 'jumpcloud' }
+    Register-DEAction -Id 'maint.update-authority' -Module 'maintenance' -Title "Update authority in place ($updAuthority)" -Phase 3 `
+        -Detect {
+            switch ($updAuthority) {
+                'jumpcloud' {
+                    $agent = (Get-DEJumpCloudAgentState).installed
+                    $policy = $null
+                    if (Test-DESecret -Name 'JC_API_KEY') { try { $p = Get-DEJumpCloudPolicySummary; $names = @($p.policies | ForEach-Object { "$($_.policy)" } | Where-Object { $_ -match '(?i)patch|update' }); $policy = ($names.Count -gt 0 -and -not @($p.failed | Where-Object { "$_" -match '(?i)patch|update' }).Count) } catch { $policy = $null } }
+                    @{ authority = 'jumpcloud'; ready = $(if (-not $agent) { $false } elseif ($null -eq $policy) { $null } else { $policy }); detail = $(if (-not $agent) { 'JumpCloud agent not installed' } elseif ($null -eq $policy) { 'patch policy not checked (enter JC_API_KEY)' } elseif ($policy) { 'JumpCloud patch policy applied' } else { 'no successful JumpCloud patch/update policy on this system' }) }
+                }
+                'intune' { $m = Get-DEMdmState; @{ authority = 'intune'; ready = ("$($m.authority)" -match 'intune'); detail = "MDM authority: $($m.authority)" } }
+                'windows' { $c = @(Get-DEBaselineControls | Where-Object { $_.id -eq 'wu-auto' }) | Select-Object -First 1; $st = $(if ($c) { Get-DEBaselineControlState -Control $c } else { $null }); @{ authority = 'windows'; ready = [bool]($st -and $st.ok); detail = $(if ($st) { $st.detail } else { 'wu-auto control missing from the baseline catalog' }) } }
+                default { @{ authority = $updAuthority; ready = $false; detail = "unknown updates.authority '$updAuthority' (use jumpcloud, intune or windows)" } }
+            }
+        }.GetNewClosure() -Desired { @{ ready = $true } } `
+        -ManualAction $(switch ($updAuthority) { 'jumpcloud' { 'Assign the client''s Windows patch policy to this system in JumpCloud (Policies > Patch Management).' } 'intune' { 'Assign the Windows Update ring / feature update policy to this device in Intune.' } 'windows' { 'Apply the DE Windows baseline (wu-auto control) from the Baseline page.' } default { 'Set updates.authority in the client profile.' } })
     Register-DEAction -Id 'maint.oem' -Module 'maintenance' -Title 'OEM drivers, firmware and dock updates' -Phase 3 -Gates @('gate.elevated') -RequiresElevation `
-        -Detect { $t = Get-DEOemTool; if ($t.applicable -ne 'dell') { @{ applicable = $false; current = $true } } else { $s = Invoke-DEOemScan; @{ applicable = $true; current = ($s.exitCode -eq 500) } } } `
-        -Desired { @{ current = $true } } -Apply { param($s) Invoke-DEOemUpdate -IncludeBios } `
-        -Remediate { param($s) $null = Invoke-DEPackageInstall -Id 'dell-command-update' } `
-        -ManualAction 'Non-Dell hardware: run HP Image Assistant or Lenovo System Update; after BIOS updates confirm BitLocker protection is back On.'
+        -Detect {
+            $t = Get-DEOemTool
+            $auto = ($t.applicable -in @('dell', 'lenovo')) -or ($t.applicable -eq 'hp' -and $t.hp)
+            if (-not $auto) { @{ applicable = $false; current = $(if (Get-DEState -Path 'maintenance.oemConfirmedAt') { $true } else { $null }); vendor = "$($t.manufacturer)" } }
+            else { $s = Invoke-DEOemScan; @{ applicable = $true; vendor = "$($t.manufacturer)"; tool = $s.tool; current = $s.current; waiting = $(if ($s.ContainsKey('count')) { $s.count } else { $null }); detail = (@($s.output) | Select-Object -First 6) -join ' | ' } }
+        } `
+        -Desired { @{ current = $true } } -Apply { param($s) if (-not $s.Detected.applicable) { throw "no automated OEM update for $($s.Detected.vendor): run the vendor tool, then confirm it on the Network page" }; Invoke-DEOemUpdate -IncludeBios } `
+        -Remediate { param($s) if ((Get-DEOemTool).applicable -eq 'dell') { $null = Invoke-DEPackageInstall -Id 'dell-command-update' } } `
+        -ManualAction 'Dell: Dell Command | Update. Lenovo: LSUClient (pinned, needs internet). HP: install HP Image Assistant first. Other makers: run the vendor tool; after BIOS updates confirm BitLocker protection is back On.'
+    # The boot rescue (rescue\Start-DERescue.ps1, WinPE) leaves de.techconsole.handoff/v1 files here. The step only
+    # appears when there is something to review.
+    $handoffDir = Join-Path (Get-DEConsole).Dirs.Base 'handoff'
+    if (@(Get-ChildItem -LiteralPath $handoffDir -Filter '*.json' -File -ErrorAction SilentlyContinue).Count) {
+        Register-DEAction -Id 'rescue.handoff' -Module 'maintenance' -Title 'Review what the boot rescue did' -Phase 1 `
+            -Detect { Get-DERescueHandoffState -Directory $handoffDir }.GetNewClosure() -Desired { @{ unreviewed = 0; invalid = 0; otherDevice = 0 } } `
+            -Apply { param($s) $tech = "$((Get-DEContext)['technician'])"; if (-not $tech) { throw 'set the technician first (Session page) so the review is recorded against a name' }; $n = 0; foreach ($h in @(Get-DEHandoffs -Directory $handoffDir | Where-Object { -not $_.reviewed -and -not $_.problems.Count })) { $null = Confirm-DEHandoffReviewed -Path $h.path -Technician $tech; $n++ }; "marked $n handoff(s) reviewed by $tech" }.GetNewClosure() `
+            -ManualAction 'Read the rescue recommendations (rotate a used BitLocker recovery password, keep the profile USB until the user confirms). A handoff for another device or one that fails its contract is investigated, not marked reviewed.'
+    }
     Register-DEAction -Id 'maint.bitlocker-resume' -Module 'maintenance' -Title 'BitLocker protection resumed after firmware work' -Phase 3 -Gates @('gate.elevated') `
         -Detect { @{ protectionOn = (Get-DEBitLockerState).osProtectionOn; required = [bool](Get-DEState -Path 'maintenance.bitlockerResumeRequired') } } -Desired { @{ protectionOn = $true } } `
         -Compare { param($d, $w) if ($d.required -and -not $d.protectionOn) { @('protection still suspended') } else { @() } } `
@@ -123,6 +254,10 @@ function Register-DEOperationsActions {
     Register-DEAction -Id 'net.connectivity' -Module 'network' -Title 'Connectivity, DNS and cloud endpoints' -Phase 2 `
         -Detect { $c = Test-DEConnectivity; @{ allOk = $c.allOk; failing = (($c.targets | Where-Object { $_ -and -not $_.https } | ForEach-Object { $_.host }) -join ', ') } } -Desired { @{ allOk = $true } } `
         -ManualAction 'Check DNS, proxy and firewall egress on 443; SASE clients can block enrolment endpoints until the device is authorised.'
+    Register-DEAction -Id 'net.time' -Module 'network' -Title 'Clock is right (TLS, sign-in and Hub signatures depend on it)' -Phase 2 -Gates @('gate.elevated') -RequiresElevation `
+        -Detect { $k = Get-DEClockSkew; @{ skewSeconds = $k; ok = $(if ($null -eq $k) { $null } else { [math]::Abs($k) -le 300 }) } } -Desired { @{ ok = $true } } `
+        -Apply { param($s) $r = Sync-DEClock; $k = Get-DEClockSkew; if ($null -ne $k -and [math]::Abs($k) -gt 300) { throw "clock still $k s off after resync ($r); check the time zone and that UDP 123 is allowed" }; "$r; now $k s off" } `
+        -ManualAction 'Set the right time zone, then run w32tm /resync /force. At OOBE a dead CMOS battery or an unsynced clock breaks every HTTPS download.'
     Register-DEAction -Id 'net.site' -Module 'network' -Title 'Site resources (Wi-Fi, printers, shares)' -Phase 14 `
         -Detect { $r = Test-DESiteResources -ClientProfile $ClientProfile; @{ wifiMissing = @($r.wifi | Where-Object { $_ -and -not $_.present }).Count; printersMissing = @($r.printers | Where-Object { $_ -and -not $_.installed }).Count; sharesUnreachable = @($r.shares | Where-Object { $_ -and -not $_.reachable }).Count } }.GetNewClosure() `
         -Desired { @{ wifiMissing = 0; printersMissing = 0; sharesUnreachable = 0 } } `
@@ -130,8 +265,8 @@ function Register-DEOperationsActions {
     $sase = Get-DEHashPath -Object $ClientProfile -Path 'network.sase'
     if ($sase -and (Get-DEOpsProp $sase 'required')) {
         Register-DEAction -Id 'net.sase' -Module 'network' -Title "SASE client ($((Get-DEOpsProp $sase 'provider')))" -Phase 14 -Gates @('gate.elevated') -RequiresElevation `
-            -Detect { $a = Get-DESecurityAgentState; $p = "$(Get-DEHashPath -Object $ClientProfile -Path 'network.sase.provider')"; @{ installed = [bool]$a.agents[$(if ($p -eq 'controlone') { 'controlone' } else { 'timus' })].installed } }.GetNewClosure() -Desired { @{ installed = $true } } `
-            -Apply { param($s) $r = Invoke-DEPackageInstall -Id 'timus-connect' -ClientProfile $ClientProfile; if (-not $r.ok -and -not (Get-DEPkgProp $r 'planned')) { throw $r.detail }; $r.detail }.GetNewClosure()
+                -Detect { $a = Get-DESecurityAgentState; $p = "$(Get-DEHashPath -Object $ClientProfile -Path 'network.sase.provider')"; @{ installed = [bool]$a.agents[$(if ($p -eq 'controlone') { 'controlone' } else { 'timus' })].installed; provider = $p } }.GetNewClosure() -Desired { @{ installed = $true } } `
+            -Apply { param($s) if ("$($s.Detected.provider)" -eq 'controlone') { throw 'ControlOne is deployed from its own console; DE Tech Tool has no ControlOne package to install' }; $r = Invoke-DEPackageInstall -Id 'timus-connect' -ClientProfile $ClientProfile; if (-not $r.ok -and -not (Get-DEPkgProp $r 'planned')) { throw $r.detail }; $r.detail }.GetNewClosure()
     }
     if (Get-DEHashPath -Object $ClientProfile -Path 'backup.required') {
         Register-DEAction -Id 'ops.backup' -Module 'operations' -Title 'Backup agent installed and healthy' -Phase 14 -Gates @('gate.elevated') -RequiresElevation `
@@ -155,8 +290,8 @@ function Register-DEOperationsActions {
 function Confirm-DEOperationalCheck {
     <# Records a technician-confirmed check (first backup, remote-assist test, MFA done). Stores a timestamp and who, never a secret. #>
     [CmdletBinding(SupportsShouldProcess = $true)]
-    param([Parameter(Mandatory = $true)][ValidateSet('operations.backup.firstBackupConfirmedAt', 'operations.remoteSupport.testedAt', 'operations.emailSecurity.confirmedAt', 'operations.mfa.jumpcloudProtectAt', 'operations.mfa.microsoftAt')][string]$Check, [string]$Note = '')
+    param([Parameter(Mandatory = $true)][ValidateSet('maintenance.oemConfirmedAt', 'operations.backup.firstBackupConfirmedAt', 'operations.remoteSupport.testedAt', 'operations.emailSecurity.confirmedAt', 'operations.mfa.jumpcloudProtectAt', 'operations.mfa.microsoftAt')][string]$Check, [string]$Note = '')
     if ($PSCmdlet.ShouldProcess($Check, 'record confirmation')) { Set-DEStateValue -Path $Check -Value (Get-Date).ToString('o'); Add-DEEvidence -Step "confirm.$Check" -Module 'operations' -Before 'unconfirmed' -ActionTaken 'technician confirmed' -Result 'PASS' -Verification $Note | Out-Null }
 }
 
-Export-ModuleMember -Function Install-DEWindowsUpdates, Get-DEOemTool, Invoke-DEOemScan, Invoke-DEOemUpdate, Get-DEBatteryHealth, Add-DEWifiProfile, Add-DEPrinter, Import-DECertificate, Test-DESiteResources, Register-DEOperationsActions, Confirm-DEOperationalCheck
+Export-ModuleMember -Function Get-DERescueHandoffState, Install-DEWindowsUpdates, Get-DEOemTool, Invoke-DEOemScan, Invoke-DEOemUpdate, Get-DEBatteryHealth, Add-DEWifiProfile, Add-DEPrinter, Import-DECertificate, Test-DESiteResources, Register-DEOperationsActions, Confirm-DEOperationalCheck

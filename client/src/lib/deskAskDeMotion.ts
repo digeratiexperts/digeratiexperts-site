@@ -3,6 +3,8 @@
  * Server still returns the full reply; streaming is presentation only.
  */
 
+import { isDoor2Path } from "@/lib/isDoor2Path";
+
 export type DeskMotionPage =
   | "home"
   | "pricing"
@@ -70,13 +72,19 @@ export const DESK_PAGE_COPY: Record<DeskMotionPage, DeskMotionPageCopy> = {
       { label: "Our EHR vendor says we're covered. Are we?", icon: "wrench" },
     ],
   },
+  // The public Store (Door 2): a solution is built from needs, sized from the
+  // profile and confirmed by DE. No catalog, no cart, nothing priced here.
   store: {
+    // Only what the Desk can answer from its own knowledge: it does not carry the
+    // Store's sizing table, and its store mode quotes ProActive floors when asked
+    // about price, so no starter invites a price question (DE confirms pricing
+    // after it reads the solution).
     greet:
-      "Browsing the store? I can tell you what a solution includes, what's priced on approval, and what pairs with what — before you add anything.",
+      "Building a solution? I can explain what each need covers and how Standalone and Co-Managed differ. DE confirms scope with you after you send it.",
     chips: [
-      { label: "What's in the Managed Security bundle?", icon: "cart" },
-      { label: "Why does this say 'priced on approval'?", icon: "dollar" },
-      { label: "I'm co-managed — what applies to me?", icon: "grid" },
+      { label: "What's the difference between Standalone and Co-Managed?", icon: "grid" },
+      { label: "Which need fits our situation?", icon: "file" },
+      { label: "What happens after I send my solution?", icon: "shield" },
       { label: "Can I talk to an engineer first?", icon: "wrench" },
     ],
   },
@@ -115,7 +123,8 @@ export const DESK_PAGE_COPY: Record<DeskMotionPage, DeskMotionPageCopy> = {
 export function inferDeskPageType(pathname: string): DeskMotionPage {
   const p = pathname.toLowerCase();
   if (p === "/" || p === "") return "home";
-  if (p.includes("/store")) return "store";
+  // Door 2 only: the staff warehouse and any other path containing "/store" are not the public Store.
+  if (isDoor2Path(p)) return "store";
   if (p.includes("pricing") || p.includes("ecosystem") || p.includes("proactive")) return "pricing";
   if (p.includes("compliance") || p.includes("hipaa") || p.includes("cmmc")) return "compliance";
   if (p.includes("cyber") || p.includes("ransomware") || (p.includes("security") && !p.includes("incident")))

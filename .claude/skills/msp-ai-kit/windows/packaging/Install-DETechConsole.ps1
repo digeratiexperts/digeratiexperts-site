@@ -18,14 +18,14 @@
 
 .EXAMPLE
     .\Install-DETechConsole.ps1
-    .\Install-DETechConsole.ps1 -ZipPath C:\Temp\DE-TechConsole-and-MSP-AI-Kit-v1.3.4.zip -Sha256 <hash>
+    .\Install-DETechConsole.ps1 -ZipPath C:\Temp\DE-TechTool-v1.5.0.zip -Sha256 <hash>
     .\Install-DETechConsole.ps1 -NoLaunch
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [string]$ZipPath,
     [ValidatePattern('^([0-9a-fA-F]{64})?$')][string]$Sha256 = '',
-    [string]$InstallDir = (Join-Path $(if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }) 'DE-TechConsole'),
+    [string]$InstallDir,
     [switch]$NoLaunch
 )
 Set-StrictMode -Version 1.0
@@ -33,19 +33,25 @@ $ErrorActionPreference = 'Stop'
 
 function Write-Step { param([string]$Text, [string]$Color = 'Cyan') Write-Host $Text -ForegroundColor $Color }
 
+# $PSScriptRoot is empty in param defaults on Windows PowerShell 5.1, so the default folder is worked out here
+$here = $(if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyCommand.Path) { Split-Path -Parent $MyInvocation.MyCommand.Path } else { (Get-Location).Path })
+if (-not $InstallDir) { $InstallDir = Join-Path $here 'DE-TechConsole' }
+$stage = $null
+
 try {
     if (-not $ZipPath) {
-        $here = $(if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path })
-        $places = @($here, (Get-Location).Path, (Join-Path $env:USERPROFILE 'Downloads')) | Select-Object -Unique
-        $found = @(foreach ($p in $places) { if (Test-Path -LiteralPath $p) { Get-ChildItem -LiteralPath $p -File -Filter 'DE-TechTool*.zip' -ErrorAction SilentlyContinue } })
-        if (-not $found.Count) { throw "No DE-TechTool*.zip found in: $($places -join '; '). Pass -ZipPath <file>." }
+        $userHome = $(if ($env:USERPROFILE) { $env:USERPROFILE } else { $HOME })
+        $places = @($here, (Get-Location).Path, $(if ($userHome) { Join-Path $userHome 'Downloads' })) | Where-Object { $_ } | Select-Object -Unique
+        # DE-TechTool*.zip is the canonical package name; DE-TechConsole*.zip is what builds before 1.4 were called
+        $found = @(foreach ($p in $places) { if (Test-Path -LiteralPath $p) { foreach ($pattern in @('DE-TechTool*.zip', 'DE-TechConsole*.zip')) { Get-ChildItem -LiteralPath $p -File -Filter $pattern -ErrorAction SilentlyContinue } } })
+        if (-not $found.Count) { throw "No DE-TechTool*.zip (or older DE-TechConsole*.zip) found in: $($places -join '; '). Pass -ZipPath <file>." }
         $ZipPath = ($found | Sort-Object LastWriteTime -Descending | Select-Object -First 1).FullName
     }
     if (-not (Test-Path -LiteralPath $ZipPath)) { throw "Zip not found: $ZipPath" }
     Write-Step "Package: $ZipPath"
 
     $hash = (Get-FileHash -LiteralPath $ZipPath -Algorithm SHA256).Hash
-    if (-not $Sha256) { $side = "$ZipPath.sha256"; if (Test-Path -LiteralPath $side) { $Sha256 = ((Get-Content -LiteralPath $side -Raw) -split '\s+')[0] } }
+    if (-not $Sha256) { $side = "$ZipPath.sha256"; if (Test-Path -LiteralPath $side) { $Sha256 = ((Get-Content -LiteralPath $side -Raw -Encoding UTF8) -split '\s+')[0] } }
     if ($Sha256) {
         if ($hash -ne $Sha256.ToUpperInvariant()) { throw "sha256 mismatch: file is $hash, expected $($Sha256.ToUpperInvariant()). Re-download the package." }
         Write-Step "sha256 verified ($hash)" 'Green'
@@ -54,35 +60,45 @@ try {
     $InstallDir = [IO.Path]::GetFullPath($InstallDir)
     $ZipPath = (Get-Item -LiteralPath $ZipPath -ErrorAction Stop).FullName
     if (-not $PSCmdlet.ShouldProcess($InstallDir, 'install DE Tech Tool')) { return }
-    $stage = Join-Path -Path ([IO.Path]::GetTempPath()) -ChildPath ("de-techconsole-{0}" -f ([guid]::NewGuid()))
+    $step = 'stage package'
+    # stage beside the install folder: a move within one volume cannot fail halfway (a TEMP-to-USB move can)
+    $parent = Split-Path -Parent $InstallDir; if (-not $parent) { $parent = (Get-Location).Path }
+    New-Item -ItemType Directory -Path $parent -Force | Out-Null
+    $stage = Join-Path $parent (".de-install-{0}" -f ([guid]::NewGuid().ToString('N').Substring(0, 8)))
     $step = 'extract package'
     Expand-Archive -LiteralPath $ZipPath -DestinationPath $stage -Force
     $step = 'locate launcher'
-    $launcher = @(Get-ChildItem -LiteralPath $stage -Recurse -File -Filter 'Start-DETechTool.cmd' | Select-Object -First 1)
-    if (-not $launcher.Count) { throw 'This zip does not contain Start-DETechTool.cmd; it is not a DE Tech Tool package.' }
-    $kitRoot = $launcher[0].Directory.Parent.FullName   # ...\msp-ai-kit
+    # Start-DETechTool.cmd is the canonical launcher; Start-DETechConsole.cmd is the compatibility alias older packages carry
+    $launcher = @(foreach ($name in @('Start-DETechTool.cmd', 'Start-DETechConsole.cmd')) { Get-ChildItem -LiteralPath $stage -Recurse -File -Filter $name })
+    if (-not $launcher.Count) { throw 'This zip contains neither Start-DETechTool.cmd nor Start-DETechConsole.cmd; it is not a DE Tech Tool package.' }
+    $launcherName = $launcher[0].Name
+    $kitRoot = Split-Path -Parent (Split-Path -Parent $launcher[0].FullName)   # ...\msp-ai-kit
     if (-not (Test-Path -LiteralPath (Join-Path -Path $kitRoot -ChildPath 'windows\console\DETechConsole.ps1'))) {
         throw 'This zip does not contain the DE Tech Tool console beside the launcher.'
     }
 
     $step = 'replace previous copy'
-    if (Test-Path -LiteralPath $InstallDir) {
-        $backup = "$InstallDir.previous"
+
+    # swap safely: the old copy is set aside, the new one moved in, and only then is the older backup replaced;
+    # if the move fails the old copy goes straight back, so there is always a working install
+    $backup = "$InstallDir.previous"; $aside = "$InstallDir.replacing"
+    if (Test-Path -LiteralPath $aside) { Remove-Item -LiteralPath $aside -Recurse -Force }
+    $hadOld = Test-Path -LiteralPath $InstallDir
+    if ($hadOld) { Move-Item -LiteralPath $InstallDir -Destination $aside }
+    $step = 'move new copy into place'
+    try { Move-Item -LiteralPath $kitRoot -Destination $InstallDir }
+    catch { if ($hadOld -and -not (Test-Path -LiteralPath $InstallDir)) { Move-Item -LiteralPath $aside -Destination $InstallDir }; throw }
+    if ($hadOld) {
         if (Test-Path -LiteralPath $backup) { Remove-Item -LiteralPath $backup -Recurse -Force }
-        Move-Item -LiteralPath $InstallDir -Destination $backup
+        Move-Item -LiteralPath $aside -Destination $backup
         Write-Step "Previous copy kept at $backup" 'Yellow'
     }
-    $parent = [IO.Path]::GetDirectoryName($InstallDir.TrimEnd('\'))
-    if ([string]::IsNullOrWhiteSpace($parent)) { throw "Invalid install destination: $InstallDir" }
-    New-Item -ItemType Directory -Path $parent -Force | Out-Null
-    $step = 'move new copy into place'
-    Move-Item -LiteralPath $kitRoot -Destination $InstallDir
     Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue
     if ($env:OS -eq 'Windows_NT') { Get-ChildItem -LiteralPath $InstallDir -Recurse -File | Unblock-File }   # clears the downloaded-from-internet mark
 
     $versionFile = Join-Path $InstallDir 'windows\console\VERSION'
-    $version = $(if (Test-Path -LiteralPath $versionFile) { (Get-Content -LiteralPath $versionFile -Raw).Trim() } else { 'unknown' })
-    $start = Join-Path $InstallDir 'windows\Start-DETechTool.cmd'
+    $version = $(if (Test-Path -LiteralPath $versionFile) { (Get-Content -LiteralPath $versionFile -Raw -Encoding UTF8).Trim() } else { 'unknown' })
+    $start = Join-Path (Join-Path $InstallDir 'windows') $launcherName
     Write-Step "Installed DE Tech Tool v$version to $InstallDir" 'Green'
     Write-Step "Start it any time with: $start"
     if (-not $NoLaunch) { Start-Process -FilePath $start -WorkingDirectory (Split-Path -Parent $start) | Out-Null }
@@ -90,5 +106,6 @@ try {
 } catch {
     Write-Step "Install failed during $($step): $($_.Exception.Message)" 'Red'
     Write-Step "At: $($_.InvocationInfo.ScriptName):$($_.InvocationInfo.ScriptLineNumber)" 'Red'
+    if ($stage -and (Test-Path -LiteralPath $stage)) { Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue }
     exit 1
 }

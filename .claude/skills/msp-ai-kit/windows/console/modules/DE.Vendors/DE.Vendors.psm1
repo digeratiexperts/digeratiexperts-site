@@ -86,7 +86,7 @@ function New-DEManagedBookmarks {
     $extra = Get-DEProp $browser 'extraBookmarks'
     if ($extra) { foreach ($b in @($extra | Where-Object { $null -ne $_ })) { if (Get-DEProp $b 'url') { $folders = @(@{ name = (Get-DEProp $b 'name'); url = (Get-DEProp $b 'url') }) + $folders } } }
     $list = @(@{ toplevel_name = $ToplevelName }) + $folders
-    return ($list | ConvertTo-Json -Depth 6 -Compress)
+    return (ConvertTo-Json -InputObject $list -Depth 6 -Compress)   # piping would turn a one-item list into an object
 }
 function Export-DEVendorLauncherHtml {
     <# A single-file launcher page (DE tokens) the technician can pin; resolved for the client when given. #>

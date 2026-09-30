@@ -27,13 +27,16 @@ param(
     [string]$InstallDir = (Join-Path $env:ProgramFiles 'DE\TechConsole'),
     [switch]$RequireSignature,
     [string]$Client,
-    [ValidateSet('audit', 'new', 'takeover', 'replacement', 'repair', 'co-managed', 'deprovision')][string]$Mode = 'audit',
+    [ValidateSet('auto', 'audit', 'new', 'dropship', 'takeover', 'replacement', 'repair', 'co-managed', 'deprovision')][string]$Mode = 'audit',
+    [string]$Bundle,
+    [string[]]$Solution = @(),
     [switch]$Apply
 )
 # StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
 # (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
 Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'   # Windows PowerShell 5.1 downloads run many times slower with the progress bar
 $logDir = Join-Path $env:ProgramData 'DE\TechConsole\logs'; New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $log = Join-Path $logDir ("deploy-{0:yyyyMMdd-HHmmss}.log" -f (Get-Date))
 function Write-DeployLog { param([string]$Level, [string]$Message) $line = "{0:yyyy-MM-dd HH:mm:ss} [{1}] {2}" -f (Get-Date), $Level, $Message; Write-Host $line; Add-Content -LiteralPath $log -Value $line }
@@ -57,7 +60,7 @@ try {
     $pkgWindows = Split-Path -Parent (Split-Path -Parent $winRoot[0].FullName)
     $verifier = Join-Path $pkgWindows 'packaging\Sign-DETechConsole.ps1'
     if (Test-Path -LiteralPath (Join-Path $pkgWindows 'integrity.json')) {
-        & $verifier -Verify -Root $pkgWindows
+        & $verifier -Verify -Root $pkgWindows -RequireSignature:$RequireSignature
         if ($LASTEXITCODE -ne 0) { Write-DeployLog FAIL 'integrity or signature verification failed; package refused'; exit 3 }
     } elseif ($RequireSignature) { Write-DeployLog FAIL 'package has no integrity.json and -RequireSignature was given; refused'; exit 3 }
     else { Write-DeployLog WARN 'package has no integrity.json (unsigned development build)' }
@@ -75,9 +78,14 @@ try {
 
     if (-not $Client) { exit 0 }
     $console = Join-Path $InstallDir 'console\DETechConsole.ps1'
-    $argList = @('-Headless', '-Client', $Client, '-Mode', $Mode); if ($Apply) { $argList += '-Apply' }
+    # a child process with -File: splatting '-Headless' strings to an in-process script binds them by position (to -Page)
+    $argList = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $console, '-Headless', '-Client', $Client, '-Mode', $Mode)
+    if ($Bundle) { $argList += @('-Bundle', $Bundle) }
+    if (@($Solution | Where-Object { $_ }).Count) { $argList += @('-Solution', (($Solution | Where-Object { $_ }) -join ',')) }
+    if ($Apply) { $argList += '-Apply' }
     Write-DeployLog STEP ("running console headless: client {0}, mode {1}, {2}" -f $Client, $Mode, $(if ($Apply) { 'apply' } else { 'audit only' }))
-    if ($PSCmdlet.ShouldProcess($console, ($argList -join ' '))) { & $console @argList; $code = $LASTEXITCODE; Write-DeployLog INFO "console exit $code"; exit $code }
+    $shell = Join-Path $PSHOME $(if ($PSVersionTable.PSEdition -eq 'Core') { 'pwsh.exe' } else { 'powershell.exe' }); if (-not (Test-Path -LiteralPath $shell)) { $shell = 'powershell.exe' }
+    if ($PSCmdlet.ShouldProcess($console, ($argList -join ' '))) { & $shell @argList; $code = $LASTEXITCODE; Write-DeployLog INFO "console exit $code"; exit $code }
     exit 0
 } catch {
     Write-DeployLog FAIL $_.Exception.Message

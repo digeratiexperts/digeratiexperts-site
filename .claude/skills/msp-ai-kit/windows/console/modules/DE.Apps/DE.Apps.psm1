@@ -10,6 +10,7 @@
 # (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
 Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'   # Windows PowerShell 5.1 downloads run many times slower with the progress bar
 $script:IsWindowsHost = ($env:OS -eq 'Windows_NT')
 
 function Get-DEPkgProp { param($Object, [string]$Name) if ($null -eq $Object) { return $null }; if ($Object -is [System.Collections.IDictionary]) { if ($Object.Contains($Name)) { return $Object[$Name] }; return $null }; $p = $Object.PSObject.Properties[$Name]; if ($p) { return $p.Value }; return $null }
@@ -51,7 +52,9 @@ function Test-DEPackageInstalled {
     if ($det) {
         foreach ($s in @(Get-DEPkgProp $det 'services' | Where-Object { $null -ne $_ })) { if ($s) { $st = Get-DEServiceState -Name $s; if ($st.present) { $installed = $true; $ev += "service $s $($st.status)" } } }
         foreach ($p in @(Get-DEPkgProp $det 'processes' | Where-Object { $null -ne $_ })) { if ($p -and (Get-Process -Name $p -ErrorAction SilentlyContinue)) { $installed = $true; $ev += "process $p running" } }
-        foreach ($p in @(Get-DEPkgProp $det 'paths' | Where-Object { $null -ne $_ })) { $x = Expand-DEPath $p; if ($x -and (Test-Path -LiteralPath $x -ErrorAction SilentlyContinue)) { $installed = $true; $ev += "path $x"; if (-not $version -and $x -match '\.exe$') { try { $version = (Get-Item -LiteralPath $x).VersionInfo.ProductVersion } catch { } } } }
+        # a leftover folder alone is not an install when the package has a service, process or app entry to look for
+        $strongRules = @(@(Get-DEPkgProp $det 'services') + @(Get-DEPkgProp $det 'processes') + @(Get-DEPkgProp $det 'appNameRegex') | Where-Object { $_ }).Count -gt 0
+        foreach ($p in @(Get-DEPkgProp $det 'paths' | Where-Object { $null -ne $_ })) { $x = Expand-DEPath $p; if ($x -and (Test-Path -LiteralPath $x -ErrorAction SilentlyContinue)) { if (-not $strongRules) { $installed = $true }; $ev += "path $x"; if (-not $version -and $x -match '\.exe$') { try { $version = (Get-Item -LiteralPath $x).VersionInfo.ProductVersion } catch { } } } }
         $rx = Get-DEPkgProp $det 'appNameRegex'
         if ($rx) { if (-not $Apps) { $Apps = Get-DEInstalledApps }; $hit = @($Apps | Where-Object { $_ -and $_.name -match $rx }) | Select-Object -First 1; if ($hit) { $installed = $true; $ev += "app '$($hit.name)' $($hit.version)"; if (-not $version) { $version = $hit.version } } }
         $rules = @(Get-DEPkgProp $det 'registry' | Where-Object { $null -ne $_ })
@@ -99,7 +102,10 @@ function Get-DEPackageFile {
             if ($PSCmdlet.ShouldProcess($url, "Download to $path")) {
                 New-Item -ItemType Directory -Path $dir -Force | Out-Null
                 try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }
-                Invoke-WebRequest -Uri $url -OutFile $path -UseBasicParsing
+                # a dropped download must not be cached as the package: write .partial, move into place when complete
+                $tmp = "$path.partial"
+                try { Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing; Move-Item -LiteralPath $tmp -Destination $path -Force }
+                finally { if (Test-Path -LiteralPath $tmp) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue } }
             } else { return @{ path = $path; trust = [pscustomobject]@{ Ok = $false; Reasons = @('not downloaded (planned)'); Sha256 = ''; Overridden = $false }; planned = $true } }
         }
     } else { throw "unknown source type '$type'" }
@@ -121,6 +127,7 @@ function Invoke-DEPackageInstall {
     $file = Get-DEPackageFile -Package $pkg -AllowUnverified:$AllowUnverified
     if (Get-DEPkgProp $file 'planned') { return [pscustomobject]@{ ok = $false; planned = $true; detail = 'download planned' } }
     if (-not $file.trust.Ok) { throw "trust policy refused $name : $($file.trust.Reasons -join '; '). Override with -AllowUnverified and a reason only after checking the file." }
+    if ($file.trust.Overridden -and -not $OverrideReason.Trim()) { throw "an unverified installer for $name needs -OverrideReason (who checked the file and how)" }
     if ($file.trust.Overridden) { Add-DEEvidence -Step "apps.$Id.trust" -Module 'apps' -Before 'unverified file' -ActionTaken "override: $OverrideReason" -Result 'WARN' -Verification ($file.trust.Reasons -join '; ') -Remediation 'Add the sha256 or publisher to the catalog.' | Out-Null }
     $inst = Get-DEPkgProp $pkg 'install'
     $type = Get-DEPkgProp $inst 'type'
@@ -134,22 +141,25 @@ function Invoke-DEPackageInstall {
         'exe' { $exe = $file.path; $argList = @($argsText -split ' (?=(?:[^"]*"[^"]*")*[^"]*$)' | Where-Object { $_ }) }
         'ps1' { $exe = 'powershell.exe'; $argList = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $file.path) + @($argsText -split ' (?=(?:[^"]*"[^"]*")*[^"]*$)' | Where-Object { $_ }) }
         'odt' { $exe = $file.path; $cfg = Join-Path (Split-Path -Parent $file.path) 'm365-config.xml'; New-DEOfficeConfigXml -Package $pkg -ClientProfile $ClientProfile -Path $cfg | Out-Null; $argList = @('/configure', $cfg) }
-        'winget' { $exe = 'winget.exe'; $argList = @('install', '--id', $file.winget, '--exact') + @($argsText -split ' ' | Where-Object { $_ }); if ($Repair) { $argList = @('install', '--id', $file.winget, '--exact', '--force') + @($argsText -split ' ' | Where-Object { $_ }) } }
+        'winget' { $exe = Resolve-DEWingetOrRepair -DryRun:$WhatIfPreference; $argList = @('install', '--id', $file.winget, '--exact') + @($argsText -split ' ' | Where-Object { $_ }); if ($Repair) { $argList = @('install', '--id', $file.winget, '--exact', '--force') + @($argsText -split ' ' | Where-Object { $_ }) } }
         default { throw "unknown install type '$type'" }
     }
     $shown = "$exe " + (($argList | ForEach-Object { Protect-DEText $_ }) -join ' ')
     if (-not $PSCmdlet.ShouldProcess($name, $shown)) { return [pscustomobject]@{ ok = $false; planned = $true; detail = $shown } }
     Write-DELog -Level INFO -Message "installing $name : $shown"
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = $exe; $psi.Arguments = (($argList | ForEach-Object { if ($_ -match '\s' -and $_ -notmatch '^".*"$') { '"' + $_ + '"' } else { $_ } }) -join ' '); $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
-    $proc = [System.Diagnostics.Process]::Start($psi)
-    $done = $proc.WaitForExit([int]$timeout * 1000)
-    if (-not $done) { try { $proc.Kill() } catch { }; throw "installer timed out after $timeout s" }
-    $stdout = Protect-DEText ($proc.StandardOutput.ReadToEnd()); $stderr = Protect-DEText ($proc.StandardError.ReadToEnd())
-    $code = $proc.ExitCode
+    # async output reads (a chatty installer cannot hang on a full pipe) and quoting that never double-wraps PROPERTY="a b"
+    $run = Invoke-DENative -FilePath $exe -Arguments $argList -TimeoutSeconds ([int]$timeout)
+    if ($run.TimedOut) { throw "installer timed out after $timeout s" }
+    $stdout = Protect-DEText $run.Text; $stderr = ''
+    $code = $run.ExitCode
     $argsText = $null
     $ok = ($success -contains $code)
     $reboot = ($rebootCodes -contains $code)
+    if ($type -eq 'winget') {
+        # winget's own results: already installed / no newer version are success; 0x8A150109 means it installed and needs a restart
+        if ($code -in @(-1978335189, -1978335135)) { $ok = $true }
+        if ($code -eq -1978334967) { $ok = $true; $reboot = $true }
+    }
     Write-DELog -Level $(if ($ok) { 'INFO' } else { 'WARN' }) -Message "$name exit $code$(if ($reboot) { ' (reboot required)' })"
     if ($stderr.Trim()) { Write-DELog -Level DEBUG -Message "$name stderr: $($stderr.Substring(0, [Math]::Min(500, $stderr.Length)))" }
     $after = Test-DEPackageInstalled -Package $pkg -ClientProfile $ClientProfile
@@ -157,22 +167,60 @@ function Invoke-DEPackageInstall {
 }
 
 function Invoke-DEPackageUninstall {
+    <#
+    Removes a catalog package silently, never by guessing switches: winget packages through winget, MSI products
+    through msiexec /x {GUID}, others only through the vendor's QuietUninstallString. Anything else is reported
+    as a manual step. Every run has a timeout. User data folders are never touched.
+    #>
     [CmdletBinding(SupportsShouldProcess = $true)]
-    param([Parameter(Mandatory = $true)][string]$Id)
+    param([Parameter(Mandatory = $true)][string]$Id, [int]$TimeoutSeconds = 900)
     $pkg = Get-DEPackage -Id $Id
+    $src = Get-DEPkgProp $pkg 'source'
     $rx = Get-DEPkgProp (Get-DEPkgProp $pkg 'detect') 'appNameRegex'
-    $apps = @(); if ($rx) { $apps = @(Find-DEApp -NamePattern $rx) }
-    if (-not $apps.Count) { $src = Get-DEPkgProp $pkg 'source'; if ((Get-DEPkgProp $src 'type') -eq 'winget' -and $PSCmdlet.ShouldProcess($pkg.name, 'winget uninstall')) { $r = Invoke-DENative -FilePath 'winget.exe' -Arguments @('uninstall', '--id', (Get-DEPkgProp $src 'id'), '--exact', '--silent'); return [pscustomobject]@{ ok = ($r.ExitCode -eq 0); detail = "winget exit $($r.ExitCode)" } }; return [pscustomobject]@{ ok = $true; detail = 'not installed' } }
-    $app = $apps[0]
-    $cmd = "$($app.uninstall)"
-    if (-not $cmd) { return [pscustomobject]@{ ok = $false; detail = 'no uninstall string' } }
-    if ($cmd -match 'MsiExec\.exe\s*/[IX]\s*(\{[0-9A-Fa-f\-]+\})') { $exe = 'msiexec.exe'; $argList = @('/x', $Matches[1], '/quiet', '/norestart') }
-    else { $exe = 'cmd.exe'; $argList = @('/c', "$cmd /quiet /norestart") }
-    if (-not $PSCmdlet.ShouldProcess($app.name, "$exe $($argList -join ' ')")) { return [pscustomobject]@{ ok = $false; planned = $true } }
-    $r = Invoke-DENative -FilePath $exe -Arguments $argList
-    return [pscustomobject]@{ ok = ($r.ExitCode -in @(0, 3010, 1605)); exitCode = $r.ExitCode; detail = "exit $($r.ExitCode)" }
+    $apps = @(); if ($rx) { $apps = @(Find-DEApp -NamePattern $rx | Where-Object { $_ }) }
+    $exe = $null; $argList = @()
+    if ((Get-DEPkgProp $src 'type') -eq 'winget') { $exe = Get-DEWingetPath; $argList = @('uninstall', '--id', (Get-DEPkgProp $src 'id'), '--exact', '--silent', '--accept-source-agreements') }
+    elseif (-not $apps.Count) { return [pscustomobject]@{ ok = $true; detail = 'not installed' } }
+    elseif ("$($apps[0].uninstall)" -match 'MsiExec(\.exe)?"?\s*/[IX]\s*(\{[0-9A-Fa-f\-]+\})') { $exe = 'msiexec.exe'; $argList = @('/x', $Matches[2], '/quiet', '/norestart') }
+    # cmd /s /c "<string>": /s makes cmd strip exactly the outer pair, so the publisher's own quoting inside survives
+    elseif ("$($apps[0].quietUninstall)") { $exe = 'cmd.exe'; $argList = @('/s', '/c', ('"' + "$($apps[0].quietUninstall)" + '"')) }
+    else { return [pscustomobject]@{ ok = $false; manual = $true; detail = "no silent uninstall is published for $($apps[0].name); remove it from Settings > Apps (DE Tech Tool never guesses installer switches)" } }
+    if (-not $PSCmdlet.ShouldProcess($pkg.name, "$exe $($argList -join ' ')")) { return [pscustomobject]@{ ok = $false; planned = $true } }
+    $r = Invoke-DENative -FilePath $exe -Arguments $argList -TimeoutSeconds $TimeoutSeconds
+    if ($r.TimedOut) { return [pscustomobject]@{ ok = $false; exitCode = $null; detail = "uninstall did not finish in $TimeoutSeconds s" } }
+    # 1605 = not installed; winget reports a missing package with -1978335212 (0x8A150014)
+    return [pscustomobject]@{ ok = ($r.ExitCode -in @(0, 3010, 1641, 1605, -1978335212)); exitCode = $r.ExitCode; detail = "exit $($r.ExitCode)" }
 }
 
+function Resolve-DEWingetOrRepair {
+    <# winget's path; when it is missing (OOBE, LTSC, SYSTEM before first sign-in) runs the pinned winget-install script once and tries again. #>
+    param([switch]$DryRun)
+    try { return (Get-DEWingetPath) } catch { if ($DryRun -or -not (Get-Command -Name 'Invoke-DECommunityScript' -ErrorAction SilentlyContinue)) { throw } }
+    Write-DELog -Level STEP -Message 'winget missing: running Toolbox > Install or repair winget'
+    $r = Invoke-DECommunityScript -Key 'winget-install/install' -Force -Confirm:$false
+    if ($r.result -ne 'PASS') { throw "winget is missing and the repair did not finish ($($r.result); log $($r.log))" }
+    return (Get-DEWingetPath)
+}
+function Get-DEWingetPath {
+    <#
+        winget.exe is a per-user App Execution Alias: it is not on PATH for SYSTEM (RMM, Intune, first boot) nor in
+        32-bit PowerShell. Resolve the newest x64 App Installer under WindowsApps instead. If App Installer is
+        present but not registered (typical at OOBE, before the first sign-in) register it once. Throws a clear
+        error when winget is missing: the Toolbox's winget-install repairs it.
+    #>
+    if ($env:OS -ne 'Windows_NT') { return 'winget.exe' }
+    $cmd = Get-Command -Name 'winget.exe' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($cmd -and $cmd.Source -notmatch '\\Microsoft\\WindowsApps\\winget\.exe$') { return $cmd.Source }   # a real path, not the alias stub
+    $pf = $(if ($env:ProgramW6432) { $env:ProgramW6432 } else { $env:ProgramFiles })
+    $find = { @(Get-ChildItem -Path (Join-Path $pf 'WindowsApps') -Filter "Microsoft.DesktopAppInstaller_*_$(if ("$env:PROCESSOR_ARCHITEW6432$env:PROCESSOR_ARCHITECTURE" -match 'ARM64') { 'arm64' } else { 'x64' })__8wekyb3d8bbwe" -Directory -ErrorAction SilentlyContinue | Sort-Object { try { [version](($_.Name -split '_')[1]) } catch { [version]'0.0' } } -Descending | ForEach-Object { Join-Path $_.FullName 'winget.exe' } | Where-Object { Test-Path -LiteralPath $_ }) | Select-Object -First 1 }
+    $p = & $find
+    if (-not $p -and $cmd) { return $cmd.Source }
+    if (-not $p) {
+        try { Add-AppxPackage -RegisterByFamilyName -MainPackage 'Microsoft.DesktopAppInstaller_8wekyb3d8bbwe' -ErrorAction Stop; Start-Sleep -Seconds 3; $p = & $find } catch { Write-DELog -Level DEBUG -Message "App Installer registration: $($_.Exception.Message)" }
+    }
+    if (-not $p) { throw 'winget is not available on this device (App Installer missing or not registered yet). Run Toolbox > Install or repair winget, then try again.' }
+    return $p
+}
 function New-DEOfficeConfigXml {
     param([Parameter(Mandatory = $true)]$Package, $ClientProfile, [Parameter(Mandatory = $true)][string]$Path)
     $s = Get-DEPkgProp $Package 'settings'
@@ -266,10 +314,10 @@ function Register-DEAppsActions {
             -Detect { $p = Get-DEPackage -Id $pkgId; @{ installed = (Test-DEPackageInstalled -Package $p).installed } }.GetNewClosure() -Desired { @{ installed = $false } } `
             -Apply { param($state) $r = Invoke-DEPackageUninstall -Id $pkgId; if (-not $r.ok) { throw $r.detail }; $r.detail }.GetNewClosure()
     }
-    Register-DEAction -Id 'apps.m365.readiness' -Module 'apps' -Title 'Microsoft 365 readiness (UPN, Office, Outlook, Teams, OneDrive sign-in)' -Phase 10 `
+    Register-DEAction -Id 'apps.m365.readiness' -Module 'apps' -Title 'Microsoft 365 readiness (UPN, Office, Outlook, Teams, OneDrive sign-in)' -Phase 10 -Gates @('gate.user-session') `
         -Detect { $ctx = Get-DEContext; $r = Get-DEM365Readiness -ExpectedUpn $ctx['endUserEmail']; @{ officeInstalled = $r.officeInstalled; teamsInstalled = $r.teamsInstalled; upnMatches = $(if ($null -eq $r.upnMatches) { 'unknown' } else { $r.upnMatches }); outlookProfiles = $r.outlookProfiles.Count } } `
         -Desired { @{ officeInstalled = $true; teamsInstalled = $true; upnMatches = $true } } `
         -ManualAction 'Sign the end user into Office, Outlook, Teams and OneDrive with their work account after the identity migration; the console verifies, it cannot enter their credentials.'
 }
 
-Export-ModuleMember -Function Get-DEPackageCatalog, Get-DEPackages, Get-DEPackage, Get-DELocalPackagesDir, Resolve-DEPackageTokens, Test-DEPackageInstalled, Get-DEPackageFile, Invoke-DEPackageInstall, Invoke-DEPackageUninstall, New-DEOfficeConfigXml, Get-DEM365Readiness, Get-DECloudStorageState, Register-DEAppsActions, Get-DEPkgProp, Expand-DEPath
+Export-ModuleMember -Function Resolve-DEWingetOrRepair, Get-DEWingetPath, Get-DEPackageCatalog, Get-DEPackages, Get-DEPackage, Get-DELocalPackagesDir, Resolve-DEPackageTokens, Test-DEPackageInstalled, Get-DEPackageFile, Invoke-DEPackageInstall, Invoke-DEPackageUninstall, New-DEOfficeConfigXml, Get-DEM365Readiness, Get-DECloudStorageState, Register-DEAppsActions, Get-DEPkgProp, Expand-DEPath

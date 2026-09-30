@@ -36,16 +36,20 @@ function New-DEClientProfileTemplate {
     return [ordered]@{
         schemaVersion = $script:ProfileSchemaVersion
         id = $Id; name = $Name; shortName = $Name
-        tier = 'Business'                                  # Office | Business | Enterprise
+        tier = 'Business'                                  # IT | Office | Business | Enterprise | Co-managed
+        plan = @{ bundle = 'proactive-business'; addOns = @(); solutions = @() }   # catalog\bundles.json (tiers, variants, standalone solutions)
+        coManaged = @{ deOwns = @() }                      # co-managed path: identity | security | apps | baseline | browser | updates | backup | network | support | mfa
         packages = @('Core IT', 'Security Operations')     # DE package lines included
         gcch = $false                                      # GCC High eligibility rules apply
         identity = @{ authority = 'jumpcloud'; jumpcloudDeviceTrust = $false; entraTenantName = ''; entraTenantId = ''; leaveEntra = $true; keepEntraRegistration = $false; jumpcloudSystemGroups = @(); jumpcloudUserGroups = @(); usernameConvention = 'first-initial-lastname' }
         mdm = @{ authority = 'jumpcloud'; allowCoManagement = $false; removeStaleEnrollments = $true }
         security = @{ mdr = @{ primary = 'guardz'; backup = 'blackpoint'; deploy = @('guardz') }; edr = 'sentinelone'; browserSecurity = @('pabx'); emailSecurity = 'mimecast'; siem = 'wazuh'; awareness = 'ninjio'; baselineProfile = 'de-windows-baseline' }
         cloudStorage = @{ standard = 'onedrive'; removeConflicting = $false; allowBoth = $false }   # onedrive | dropbox | both | none
-        browser = @{ default = 'edge'; policyProfile = 'de-browser-policy'; homepage = 'https://portal.digeratiexperts.com/portal/login'; startupPages = @(); managedBookmarksFromVendors = $true; extraBookmarks = @() }
+        updates = @{ authority = 'jumpcloud' }   # jumpcloud (default) | intune (Microsoft-only clients) | windows (DE Tech Tool sets the policy)
+        browser = @{ default = 'edge'; policyProfile = 'de-browser-policy'; homepage = 'https://portal.digeratiexperts.com/portal/login'; startupPages = @(); managedBookmarksFromVendors = $false; extraBookmarks = @() }
         apps = @{ required = @('m365-apps', 'teams', 'onedrive', 'edge', 'chrome', 'pdf-reader'); optional = @(); lineOfBusiness = @(); remove = @() }
         m365 = @{ tenantDomain = ''; licenseSku = ''; verifyUpn = $true }
+        hub = @{ accountId = '' }                            # Intelligence Hub canonical account number; no secrets
         branding = @{ clientLogo = ''; wallpaperStyle = 'dual-logo'; accent = '#D3126A'; supportText = 'Support: support@digeratiexperts.com'; hostnamePattern = '{CLIENT}-{ROLE}-{SERIAL4}'; shortcuts = @('client-portal', 'support-ticket', 'remote-support') }
         network = @{ wifiProfiles = @(); printers = @(); shares = @(); certificates = @(); vpn = @(); sase = @{ provider = 'timus'; required = $false } }
         backup = @{ provider = 'msp360'; required = $true }
@@ -64,8 +68,9 @@ function Test-DEProfileHasSecrets {
     param([Parameter(Mandatory = $true)]$Profile)
     $json = $Profile | ConvertTo-Json -Depth 12
     $hits = @()
-    foreach ($m in [regex]::Matches($json, '"(?<k>[^"]+)"\s*:\s*"(?<v>[^"]{8,})"')) {
-        if ($m.Groups['k'].Value -match '(?i)(password|passwd|secret|token|apikey|api_key|connectkey|connect_key|orgkey|org_key|sitetoken|site_token|recovery|credential)') { $hits += $m.Groups['k'].Value }
+    # any non-empty value counts: a Wi-Fi PSK or PIN can be shorter than 8 characters
+    foreach ($m in [regex]::Matches($json, '"(?<k>[^"]+)"\s*:\s*"(?<v>[^"]+)"')) {
+        if ($m.Groups['k'].Value -match '(?i)(password|passwd|passphrase|secret|token|apikey|api_key|connectkey|connect_key|orgkey|org_key|sitetoken|site_token|recovery|credential|privatekey|private_key|psk$|psk\b|wifikey|wifi_key)') { $hits += $m.Groups['k'].Value }
     }
     if ($json -match '\b\d{6}-\d{6}-\d{6}-\d{6}-\d{6}-\d{6}-\d{6}-\d{6}\b') { $hits += 'bitlocker-recovery-password' }
     return $hits
@@ -83,7 +88,7 @@ function Get-DEClientProfiles {
     }
     return @($map.Values)
 }
-function Get-DEClientProfile { param([Parameter(Mandatory = $true)][string]$Id) $p = Get-DEClientProfiles | Where-Object { $_ -and $_.id -eq $Id } | Select-Object -First 1; if (-not $p) { throw "client profile '$Id' not found" }; return $p.profile }
+function Get-DEClientProfile { param([Parameter(Mandatory = $true)][string]$Id) if (Get-Command -Name 'Test-DELicenseFor' -ErrorAction SilentlyContinue) { $lic = Test-DELicenseFor -Feature 'clients' -Client $Id; if (-not $lic.ok) { throw $lic.reason } }; $p = Get-DEClientProfiles | Where-Object { $_ -and $_.id -eq $Id } | Select-Object -First 1; if (-not $p) { throw "client profile '$Id' not found" }; return $p.profile }
 
 function Save-DEClientProfile {
     [CmdletBinding(SupportsShouldProcess = $true)]
@@ -135,12 +140,23 @@ function Resolve-DEEndUser {
     $current = "$(Get-DEHashPath -Object $Snapshot -Path 'identity.currentPrincipal')"
     $tech = $Technician
     if (-not $tech) { $tech = $current }
+    $techShort = ("$tech" -split '\\')[-1]   # 'DOMAIN\jrpetro' and 'jrpetro' are the same technician
     $allProfiles = @(@(Get-DEHashPath -Object $Snapshot -Path 'identity.profiles' | Where-Object { $null -ne $_ }) | Where-Object { $_ })
     $profiles = @($allProfiles | Where-Object { $_ -and $_.path -notmatch '\\(Administrator|Default|Public|DE-BreakGlass|jrpetro)$' } | Sort-Object { $_.lastUse } -Descending)
     $mostUsed = $profiles | Select-Object -First 1
     $endUser = $null; $how = ''
-    if ($interactive -and $interactive -ne $tech -and $interactive -notmatch '\\(jrpetro|DE-BreakGlass)$') { $endUser = $interactive; $how = 'interactive session' }
-    elseif ($mostUsed) { $endUser = (Split-Path -Leaf $mostUsed.path); $how = 'most recently used profile' }
+    if ($interactive -and ("$interactive" -split '\\')[-1] -ine $techShort -and $interactive -notmatch '\\(jrpetro|DE-BreakGlass)$') { $endUser = $interactive; $how = 'interactive session' }
+    else {
+        # from the technician's session: the Entra (S-1-12-1-...) profile is the one to migrate, named by its account (AzureAD\Name)
+        $entraProfile = @($profiles | Where-Object { "$(Get-DEHashPath -Object $_ -Path 'sid')" -like 'S-1-12-1-*' }) | Select-Object -First 1
+        $pick = $(if ($entraProfile) { $entraProfile } else { $mostUsed })
+        if ($pick) {
+            $acct = "$(Get-DEHashPath -Object $pick -Path 'account')"
+            if (-not $acct -and "$(Get-DEHashPath -Object $pick -Path 'sid')" -like 'S-1-12-1-*') { $acct = "AzureAD\$(Split-Path -Leaf $pick.path)" }
+            $endUser = $(if ($acct -and $acct -match '\\' -and ($acct -split '\\')[0] -ine $env:COMPUTERNAME) { $acct } else { Split-Path -Leaf $pick.path })
+            $how = $(if ($entraProfile) { 'Entra profile on this device' } else { 'most recently used profile' })
+        }
+    }
     $entraStyle = ($endUser -match '^AzureAD\\')
     return [pscustomobject]@{ technician = $tech; endUser = $endUser; endUserSource = $how; endUserIsEntraPrincipal = $entraStyle; endUserProfile = $(if ($endUser -and $allProfiles.Count) { @(Find-DEProfileForUser -UserName $endUser -Profiles $allProfiles) | Select-Object -First 1 } else { $null }) }
 }
@@ -170,6 +186,7 @@ function New-DEProvisioningContext {
         endUser = $EndUser; endUserEmail = $EndUserEmail; endUserSource = $eu.endUserSource; sourcePrincipal = $(if ($eu.endUserIsEntraPrincipal) { $eu.endUser } elseif ($EndUser -match '\\') { $EndUser } else { $null })
         localUserName = $LocalUserName; jumpcloudUser = $JumpCloudUser
         device = @{ hostname = (Get-DEHashPath -Object $Snapshot -Path 'device.hostname'); serial = (Get-DEHashPath -Object $Snapshot -Path 'device.serial'); model = (Get-DEHashPath -Object $Snapshot -Path 'device.model'); role = $DeviceRole; assetTag = $AssetTag; orderNumber = $OrderNumber; warrantyEnd = $WarrantyEnd; desiredHostname = $DesiredHostname }
+        hubAccountId = $(if ($client) { "$(Get-DEHashPath -Object $client -Path 'hub.accountId')" } else { '' })
         started = (Get-Date).ToString('o')
     }
     Set-DEContext -Values $ctx
@@ -196,7 +213,7 @@ function Get-DETierDefaults {
     param([Parameter(Mandatory = $true)][ValidateSet('IT', 'Office', 'Business', 'Enterprise')][string]$Tier, [switch]$Gcch)
     $path = Join-Path (Get-DEConsole).Root 'catalog\bundles.json'
     if (-not (Test-Path -LiteralPath $path)) { throw "DE Tech Tool bundle catalog missing: $path" }
-    $catalog = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+    $catalog = Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json
     $prop = $catalog.proactive.PSObject.Properties[$Tier]
     if (-not $prop) { throw "unknown ProActive tier '$Tier'" }
     $bundle = $prop.Value

@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    Signs the DE Technician Console and MSP AI Kit loader scripts and writes integrity.json.
+    Signs DE Tech Tool and MSP AI Kit loader scripts and writes integrity.json.
 
 .DESCRIPTION
     Release step, run on the DE build workstation that holds the code-signing certificate.
@@ -21,16 +21,21 @@
 param(
     [string]$Thumbprint,
     [string]$TimestampServer = 'http://timestamp.digicert.com',
-    [string]$Root = (Split-Path -Parent $PSScriptRoot),
+    [string]$Root,
     [switch]$Verify,
+    [switch]$RequireSignature,
     [switch]$SkipSigning
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$here = $(if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path })   # $PSScriptRoot can be empty in param defaults on Windows PowerShell 5.1
+if (-not $Root) { $Root = Split-Path -Parent $here }
 
 $scriptExt = @('.ps1', '.psm1', '.psd1')
 $shipExt = @('.ps1', '.psm1', '.psd1', '.json', '.cmd', '.ttf', '.txt', '.md', '.xaml')
-$skipDirs = @('tests', 'packaging\out', 'packaging/out')
+# community\ holds pinned third-party tools (LSUClient, HardeningKitty): DE does not sign other people's code, and each
+# file is checked against its sha256 in console\catalog\community.json (itself covered here) every time it is used.
+$skipDirs = @('tests', 'packaging\out', 'packaging/out', 'community\', 'community/')
 
 function Get-ShippedFile {
     Get-ChildItem -LiteralPath $Root -Recurse -File | Where-Object {
@@ -42,16 +47,22 @@ function Get-ShippedFile {
 if ($Verify) {
     $manifest = Join-Path $Root 'integrity.json'
     if (-not (Test-Path -LiteralPath $manifest)) { Write-Host 'integrity.json not found; package was not signed.'; exit 2 }
-    $m = Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json
+    $m = Get-Content -LiteralPath $manifest -Raw -Encoding UTF8 | ConvertFrom-Json
     $bad = @()
     foreach ($f in @($m.files)) {
         $full = Join-Path $Root $f.path
         if (-not (Test-Path -LiteralPath $full)) { $bad += "missing $($f.path)"; continue }
         if ((Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash.ToLowerInvariant() -ne $f.sha256) { $bad += "changed $($f.path)" }
-        if ($env:OS -eq 'Windows_NT' -and ($scriptExt -contains [IO.Path]::GetExtension($full).ToLowerInvariant())) {
+        # Authenticode is checked for signed builds (the manifest names a signer) or when the caller demands it;
+        # an unsigned development build is still held to its hashes
+        if ($env:OS -eq 'Windows_NT' -and ($RequireSignature -or "$($m.signer)" -ne 'unsigned') -and ($scriptExt -contains [IO.Path]::GetExtension($full).ToLowerInvariant())) {
             $s = Get-AuthenticodeSignature -LiteralPath $full; if ($s.Status -ne 'Valid') { $bad += "signature $($s.Status) $($f.path)" }
         }
     }
+    # a script the manifest does not list was added after packaging
+    $listed = @($m.files | ForEach-Object { "$($_.path)".ToLowerInvariant() })
+    foreach ($f in Get-ShippedFile | Where-Object { $scriptExt -contains $_.Extension.ToLowerInvariant() }) { $rel = ($f.FullName.Substring($Root.Length).TrimStart('\', '/') -replace '\\', '/').ToLowerInvariant(); if ($listed -notcontains $rel) { $bad += "not in integrity.json $rel" } }
+    if ($RequireSignature -and "$($m.signer)" -eq 'unsigned') { $bad += 'the package is unsigned and -RequireSignature was given' }
     if ($bad.Count) { $bad | ForEach-Object { Write-Host "FAIL $_" }; exit 1 }
     Write-Host ("PASS {0} file(s) match integrity.json (version {1}, signed by {2})" -f @($m.files).Count, $m.version, $m.signer); exit 0
 }
@@ -74,7 +85,9 @@ if (-not $SkipSigning) {
 }
 
 $version = '0.0.0'
-$vf = Join-Path (Split-Path -Parent $Root) 'kit.version'; if (Test-Path -LiteralPath $vf) { $version = (Get-Content -LiteralPath $vf -Raw).Trim() }
+# the manifest records the DE Tech Tool version (console\VERSION); the AI kit's kit.version is only a fallback
+$vf = Join-Path (Join-Path $Root 'console') 'VERSION'; if (-not (Test-Path -LiteralPath $vf)) { $vf = Join-Path (Split-Path -Parent $Root) 'kit.version' }
+if (Test-Path -LiteralPath $vf) { $version = (Get-Content -LiteralPath $vf -Raw -Encoding UTF8).Trim() }
 $entries = @(foreach ($f in Get-ShippedFile | Sort-Object FullName) {
     [ordered]@{ path = ($f.FullName.Substring($Root.Length).TrimStart('\', '/') -replace '\\', '/'); sha256 = (Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash.ToLowerInvariant(); bytes = $f.Length }
 })

@@ -30,34 +30,170 @@
 
 version: 2
 claims:
-  - id: msp-ai-kit
-    issue: 268
+  - id: de-desk-white-theme
     owner: claude
-    subsystem: project-skills
-    branch: claude/msp-ai-skills-prompts-htqi09
-    base_sha: dd6a1f8
+    subsystem: de-desk
+    branch: claude/desk-white-theme
+    base_sha: f06d3a008b32217dad3af87f5996e62f94e8ad9c
     files:
-      - .claude/skills/msp-ai-kit/**
-      - .agents/skills/msp-ai-kit
-      - CLAUDE.md
-      - AGENTS.md
-      - .gitignore
-      - .github/workflows/msp-ai-kit.yml
-      - .github/workflows/ci.yml
-      - package.json
+      - client/src/components/ZohoASAPWidget.tsx
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
+      - client/src/components/SiteBottomBar.tsx
+      - client/src/lib/deskChatSession.ts
+      - client/src/lib/deskChatSession.test.ts
+      - .cursor/rules/de-desk-design.mdc
+      - .cursor/skills/de-desk-ui/SKILL.md
+      - .cursor/skills/de-desk-ui/tokens-and-structure.md
+      - artifacts/visual-qa/desk-white-theme/**
     status: active
     started: 2026-09-28
     note: >-
-      Vendored MSP/MSSP AI prompt and skill kit driven by kit.config.json: a
-      zero-dependency builder renders prompt modules into ChatGPT Custom
-      Instructions, Custom GPT, Claude Project, CLAUDE.md/AGENTS.md, Cursor and
-      Copilot packs plus a prompt library; an installer clones the external
-      MSP kits into a gitignored vendor directory. The Windows side is the DE
-      Technician Console (endpoint provisioning, Entra to JumpCloud migration,
-      security stack, Vendor Admin Center, evidence and Hub handoff) with
-      Pester, PSScriptAnalyzer and a WPF smoke in its own workflow. No website
-      code, no visual QA. CLAUDE.md and AGENTS.md change by one table row each;
-      ci.yml gains one test step and package.json one script.
+      Joe, 2026-09-28, on a phone screenshot of the graphite Desk: "This is
+      wrong still. It's supposed to be white theme." Built on
+      claude/desk-launcher-graphite (PR #229), whose one-token-set structure is
+      kept; only the values change, to the approved support-chrome rule in
+      design/UI-STYLE-RULES.md (#fbfbfa panel, black/10 hairlines, near-black
+      ink, magenta only for submit and incident). The Ask DE chooser follows.
+      Supersedes the graphite direction recorded in de-desk-launcher-graphite
+      and the C5 graphite override; the Cursor Desk rule and skill are updated
+      so agents stop steering it back to graphite. Joe, 2026-09-30: "we had a
+      dark version (old) and light/white version (current) and some how they
+      got mixed together - rebuild it better and full featured." Rebased onto
+      PR #229's head f06d3a00 (itself level with main 674a4c5c) and extended:
+      header clearance, initial focus, AA dim ink, the conversation kept for
+      the tab with Start over, and a ticket drafted from the chat.
+  - id: de-desk-launcher-graphite
+    owner: claude
+    subsystem: de-desk
+    branch: claude/desk-launcher-graphite
+    base_sha: a8bf3351dcbf4e25b8c65323e8fb6202232c1c2e
+    files:
+      - client/src/components/SiteBottomBar.tsx
+      - client/src/components/ZohoASAPWidget.tsx
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
+      - client/src/components/MarketingChrome.tsx
+      - client/src/components/deDeskGraphiteStyle.ts
+      - client/src/components/deDeskReferenceStyle.ts
+      - .cursor/skills/de-desk-ui/tokens-and-structure.md
+    status: active
+    started: 2026-09-27
+    note: >-
+      Scope grew with Joe's follow-up ("make one theme for it ... no wasted
+      clutter"): the Desk theme fixed at source in ZohoASAPWidget.tsx, the two
+      override modules deleted, five listed clutter removals, the Available
+      badge truth fix, the pointer light and list edges sized for graphite, and
+      (Joe-approved 2026-09-29) the no-agent composer placeholder; the de-desk-ui
+      spec corrected to match. The first commit's note follows.
+      Joe, 2026-09-27: "the DE Desk looks like 2 different version merged into
+      one and it looks horrible, if you click an option you'll see." Reproduced:
+      the Ask DE launcher popover in SiteBottomBar.tsx was still the retired
+      paper Desk design (bg-[#fbfbfa], bg-white rows, #151219 ink) while the
+      Desk modal it opens is the graphite shell. The de-desk-design rule's globs
+      cover only ZohoASAPWidget.tsx and PortalChat.tsx, which is why this file
+      was missed when the Desk moved to graphite (C5, 2026-09-12). This brings
+      the launcher onto the same tokens the modal uses: --de-raised ground,
+      hairline borders, white ink, magenta-tinted icons. Implements the
+      Joe-decided Tier 2 direction ("one graphite shell ... no cream-in-purple
+      nested card"), so Maintenance Mode, not a redesign. No logic, copy,
+      routing, testids or analytics changed.
+  - id: store-experience-v2
+    owner: claude
+    subsystem: public-store-door2
+    branch: claude/nifty-newton-uk9g7t
+    pr: 267
+    base_sha: dd6a1f8825ebb444d85e7601aa856859facc9cdd
+    files:
+      - client/src/pages/solutions/BusinessNeedsIndex.tsx
+      - client/src/pages/solutions/BusinessNeedsFamily.tsx
+      - client/src/pages/solutions/SolutionRequest.tsx
+      - client/src/pages/solutions/door2Leakage.test.ts
+      - client/src/pages/store/PublicStoreCheckout.tsx
+      - client/src/pages/store/Checkout.tsx
+      - client/src/pages/store/QuoteRequest.tsx
+      - client/src/pages/store/QuoteConfirmation.tsx
+      - client/src/components/store/PublicSolutionCart.tsx
+      - client/src/components/store/SolutionProfileForm.tsx
+      - client/src/components/store/StorePageAtmosphere.tsx
+      - client/src/components/store/SolutionMobileBar.tsx
+      - client/src/components/store/door2/**
+      - client/src/lib/solutionDraft.ts
+      - client/src/lib/solutionPackage.ts
+      - client/src/lib/businessNeeds.ts
+      - client/src/lib/isDoor2Path.ts
+      - client/src/lib/warehousePaths.ts
+      - client/src/lib/warehouseContactHandoff.ts
+      - client/src/data/curatedSolutions.ts
+      - client/src/styles/store-jelly.css
+      - client/src/App.tsx (Door 2 routes and ACCENT_BY_PREFIX only)
+      - server/publicSolutionRoutes.ts
+      - server/publicSolutionRequestStore.ts
+      - server/publicSolutionRequestPersistence.ts
+      - server/publicSolutionRequestCrm.ts
+      - server/storeQuoteStore.ts
+      - server/routes.ts (the /api/store/quote-requests handlers only)
+      - server/index.ts (the request-log redaction line only)
+      - server/spaKnownPaths.ts
+      - server/storeLegacyRedirects.ts
+      - server/warehouseRoutes.ts (the /solutions/business-needs 301 and the de_store_preview staff preview only)
+      - server/warehouseRoutes.test.ts
+      - client/src/lib/solutionGuidance.ts
+      - client/src/lib/openMspAdvisor.ts (STORE_ADVISOR_SEED text only)
+      - client/src/lib/storeChromeGestures.ts (isStorePath only)
+      - client/src/hooks/useStoreChromeGestures.ts (the warehouse route gate only; approved §16.1)
+      - client/src/hooks/useStoreChromeGestures.test.ts
+      - client/src/hooks/useSolutionDraft.ts
+      - client/src/index.css (the .de-site-canvas padding-bottom line only)
+      - shared/publicContact.ts
+      - shared/solutionReference.ts
+      - shared/solutionReference.test.ts
+      - client/src/lib/publicSolutionCart.ts (removed)
+      - client/src/data/solutionScenarios.ts
+      - client/src/pages/store/SolutionSubmitted.tsx
+      - client/src/styles/store-builder.css
+      - client/src/components/MegaMenu.tsx (announcement strip suppression on Door 2 and /book, and the utility-height measurement it depends on)
+      - client/src/components/store/CartButton.tsx (the warehouse trigger's name only)
+      - client/src/pages/sections/DigeratiEnhancedFooterSection.tsx (the variant="store" prop only)
+      - client/src/lib/deskAskDeMotion.ts (the store page classification and its copy only)
+      - client/src/lib/deskAskDeMotion.test.ts
+      - client/src/components/VirtualMspAdvisor.tsx (removed, unimported)
+      - client/src/components/store/ShoppingCart.tsx (the staff drawer title only)
+      - client/src/pages/BookingPage.tsx (the /book copy and the ?ref= reader only; §16.6 PR 0)
+      - .cursor/rules/blog-store-color-lock.mdc (the public Store / warehouse split)
+      - docs/STORE-ARCHITECTURE-DESIGN.md (the packet item 8 resolution line only)
+      - scripts/door2-browser-smoke.mjs
+      - scripts/generate-sitemap.mjs (the /solutions/request row only)
+      - docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md
+      - docs/PUBLIC-SOLUTION-BUILDER.md
+      - docs/STORE-SOLUTION-ENGINE.md
+      - docs/STORE-WAREHOUSE.md
+      - docs/STORE-DOOR-2.md
+      - design/STORE_DOOR2_GRAMMAR.md
+      - artifacts/visual-qa/store-experience/**
+    status: active
+    started: 2026-09-27
+    note: >-
+      Joe, 2026-09-27: think out how the Store experience and flow can be
+      perfectly designed, then make it, in parallel with the homepage V4 lane
+      (PR 266, client/src/pages/versions/v4/**, not touched here). The public
+      Store is Door 2 (/store, /store/solutions/:family, /store/solution,
+      /solutions/request). Owner direction the same day: a fun, enjoyable,
+      modern store that engages, automates, leads and is feature-rich for
+      well-thought-out use cases; and the DE fulfillment rule that remote
+      support and shipping come before Truck-Roll, Trip Charge and Tech Labor.
+      Baseline A evidence, a code map, a judged design and the source of truth
+      precede the rebuild. Joe, 2026-09-28: every open decision in the source of
+      truth §16 approved ("All approved, continue"); the PR 3 chrome and the
+      PR 0 /book copy build inside PR 267 with the files above. Stood off, held
+      by draft PR 229 (DE Desk launcher and modal): client/src/components/
+      SiteBottomBar.tsx and client/src/components/ZohoASAPWidget.tsx. Overlaps
+      recorded in PR 267 and the source of truth §15: the four Door 2 pages with
+      the completion-program lane (frozen PRs 219/220); the colour lock with
+      draft PR 217 (disjoint hunks); docs/STORE-WAREHOUSE.md with PR 149. Also closes the warehouse quote-flow defects in
+      issues 239, 240, 257 (re-scoped: the GET exists; its payload is now a
+      client-safe projection), 235 and 258, and the public store's lead-loss
+      defects (lead event without contact fields; non-durable submit reported
+      as saved). Not claimed: server/storeQuoteCrm.ts (issue 206, Codex),
+      client/src/pages/versions/**, scrollcraft/**.
   - id: de-design-concepts-directions
     owner: claude
     subsystem: flagship-visual-reset

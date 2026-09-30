@@ -83,6 +83,7 @@ Describe 'Packaging: integrity manifest and tamper detection' {
         $i = Test-DEConsoleIntegrity -Root (Join-Path $script:Copy 'console')
         $i.status | Should -Be 'tampered'
         ($i.problems -join ' ') | Should -Match 'vendors.json'
+        Get-Module -Name 'DE.*' | Where-Object { $_.Path -like "$script:Copy*" } | Remove-Module -Force   # leave no second DE.Core behind for later test files
     }
     It 'the RMM deploy script refuses a package whose sha256 does not match' {
         $zip = Join-Path $script:Copy 'pkg.zip'; Compress-Archive -Path (Join-Path $script:Copy 'console') -DestinationPath $zip
@@ -116,8 +117,39 @@ Describe 'One-file installer' {
         & $script:Exe -NoProfile -ExecutionPolicy Bypass -File $script:Inst -ZipPath $script:Zip -InstallDir $dest -NoLaunch | Out-Null
         Test-Path -LiteralPath "$dest.previous" | Should -Be $true
     }
+    It 'finds a canonical DE-TechTool zip on its own and installs the Start-DETechTool launcher' {
+        $src = Join-Path $script:Work 'canon/msp-ai-kit/windows/console'
+        New-Item -ItemType Directory -Path $src -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $script:Work 'canon/msp-ai-kit/windows/Start-DETechTool.cmd') -Value '@echo off'
+        Set-Content -LiteralPath (Join-Path $src 'VERSION') -Value '9.9.10'
+        $drop = Join-Path $script:Work 'drop'; New-Item -ItemType Directory -Path $drop -Force | Out-Null
+        Compress-Archive -Path (Join-Path $script:Work 'canon/msp-ai-kit') -DestinationPath (Join-Path $drop 'DE-TechTool-v9.9.10.zip')
+        Copy-Item -LiteralPath $script:Inst -Destination $drop
+        $dest = Join-Path $script:Work 'DE-TechTool'
+        & $script:Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $drop 'Install-DETechConsole.ps1') -InstallDir $dest -NoLaunch | Out-Null
+        $LASTEXITCODE | Should -Be 0
+        Test-Path -LiteralPath (Join-Path $dest 'windows/Start-DETechTool.cmd') | Should -Be $true
+    }
     It 'refuses a zip whose sha256 does not match' {
         & $script:Exe -NoProfile -ExecutionPolicy Bypass -File $script:Inst -ZipPath $script:Zip -Sha256 ('0' * 64) -InstallDir (Join-Path $script:Work 'x') -NoLaunch | Out-Null
         $LASTEXITCODE | Should -Be 1
+    }
+}
+
+Describe 'Launchers pass the exit code through (cmd.exe)' {
+    BeforeAll { $script:Win = Split-Path -Parent $PSScriptRoot }
+    It 'Start-DETechTool.cmd and its Start-DETechConsole.cmd alias return 2 for a refused headless run, not 0' -Skip:($env:OS -ne 'Windows_NT') {
+        $data = Join-Path ([IO.Path]::GetTempPath()) ("de-launch-{0}" -f ([guid]::NewGuid()))
+        foreach ($l in @('Start-DETechTool.cmd', 'Start-DETechConsole.cmd')) {
+            & cmd.exe /c ('"{0}" -Headless -Client no-such-client -DataDir "{1}"' -f (Join-Path $script:Win $l), $data) | Out-Null
+            $LASTEXITCODE | Should -Be 2 -Because "$l must return the tool's exit code"
+        }
+    }
+    It 'launchers keep %ERRORLEVEL% out of ( ) blocks, where cmd expands it too early' {
+        foreach ($l in @('Start-DETechTool.cmd', 'Start-DETechConsole.cmd', 'Start-MspAiKit.cmd')) {
+            $text = Get-Content -LiteralPath (Join-Path $script:Win $l) -Raw
+            $inBlock = [regex]::Matches($text, '\((?:[^()]|\([^()]*\))*\)') | Where-Object { $_.Value -match '%ERRORLEVEL%|errorlevel%' }
+            @($inBlock).Count | Should -Be 0 -Because "$l"
+        }
     }
 }

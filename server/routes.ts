@@ -5679,16 +5679,37 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: error?.message || "Invalid quote items" });
       }
 
-      const quoteRequest = await insertQuoteRequest({
-        userId: req.userId || null,
-        clientId: req.user?.clientId || null,
-        contactName,
-        contactEmail,
-        contactPhone: contactPhone || null,
-        companyName: companyName || null,
-        message: message || null,
-        requestedItems: canonicalItems,
-      });
+      let quoteRequest;
+      try {
+        quoteRequest = await insertQuoteRequest({
+          userId: req.userId || null,
+          clientId: req.user?.clientId || null,
+          contactName,
+          contactEmail,
+          contactPhone: contactPhone || null,
+          companyName: companyName || null,
+          message: message || null,
+          requestedItems: canonicalItems,
+        });
+      } catch (error: any) {
+        // Fail closed (issue #240): no durable row means no quote number, no
+        // QUOTE_REQUESTED event, no CRM sync and no success message. Mirrors the
+        // DURABLE_DATABASE_REQUIRED contract of /api/store/checkout/zoho so the
+        // client shows the same "your solution is intact" treatment.
+        if (error?.code === "DURABLE_DATABASE_REQUIRED") {
+          console.error("[SECURITY] QUOTE_DATABASE_UNAVAILABLE", {
+            userId: req.userId,
+            clientId: req.user?.clientId,
+            reason: error?.message,
+          });
+          return res.status(503).json({
+            code: "DURABLE_DATABASE_REQUIRED",
+            error:
+              "Quote requests are temporarily unavailable because durable storage is not connected. Your solution and contact details are intact; please try again shortly.",
+          });
+        }
+        throw error;
+      }
 
       console.log(`[QUOTE REQUEST] Created: ${quoteRequest.quoteNumber} for ${contactEmail}`);
 
@@ -5793,23 +5814,23 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Quote request not found" });
       }
 
-      const { isAdmin, ownsQuote } = canAccessQuote(req, quoteRequest);
+      const { ownsQuote } = canAccessQuote(req, quoteRequest);
       if (!ownsQuote) {
         return res.status(403).json({ error: "Access denied" });
       }
 
-      const payload = {
-        ...quoteRequest,
+      // Client-safe projection only (issue #257): the confirmation page needs the
+      // reference, the contact echo and the PDF link. Requested lines with list
+      // prices, assignment, conversion and internal ids never leave the server here.
+      res.json({
+        id: quoteRequest.id,
+        quoteNumber: quoteRequest.quoteNumber,
+        contactEmail: quoteRequest.contactEmail,
+        companyName: quoteRequest.companyName,
+        status: quoteRequest.status,
+        createdAt: quoteRequest.createdAt,
         pdfUrl: `/api/store/quote-requests/${quoteRequest.id}/pdf`,
-      };
-
-      // Never return internal assignment fields to non-admins
-      if (!isAdmin) {
-        const { assignedTo, ...clientSafe } = payload;
-        return res.json(clientSafe);
-      }
-
-      res.json(payload);
+      });
     } catch (error: any) {
       console.error("[GET QUOTE REQUEST ERROR]", error);
       res.status(500).json({ error: error.message || "Failed to get quote request" });

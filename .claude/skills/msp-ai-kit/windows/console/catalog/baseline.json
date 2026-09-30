@@ -1,4 +1,4 @@
-{
+﻿{
   "_readme": "DE Windows security baseline. Each control: id, title, CIS v8 / CIS Windows benchmark reference where one exists, registry path/name/type/value (or a command check), and 'breaks' notes for known client-application conflicts. Exceptions are recorded per client through the console (approver + expiry), never by editing this file. Registry values are machine policy (HKLM) unless marked user.",
   "version": "1.0.0",
   "profiles": {
@@ -40,7 +40,7 @@
     { "id": "blank-password-console-only", "title": "Blank passwords limited to console logon", "cis": "5.x", "type": "registry", "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa", "name": "LimitBlankPasswordUse", "valueType": "DWord", "value": 1 },
     { "id": "lockout-threshold", "title": "Account lockout after 10 bad attempts", "cis": "6.x", "type": "netaccounts", "setting": "lockoutthreshold", "value": 10 },
     { "id": "min-password-length", "title": "Local minimum password length 14", "cis": "5.2", "type": "netaccounts", "setting": "minpwlen", "value": 14 },
-    { "id": "wu-auto", "title": "Windows Update: automatic download and scheduled install", "cis": "7.3", "type": "registry", "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU", "name": "AUOptions", "valueType": "DWord", "value": 4, "note": "Skipped automatically when JumpCloud patch policy is the declared authority." },
+    { "id": "wu-auto", "title": "Windows Update: automatic download and scheduled install", "cis": "7.3", "type": "registry", "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU", "name": "AUOptions", "valueType": "DWord", "value": 4, "note": "Applied only when the client profile sets updates.authority to windows; JumpCloud (default) and Intune enforce their own update policy, checked by maint.update-authority." },
     { "id": "defender-pua", "title": "Defender potentially unwanted app blocking (when Defender is active)", "cis": "10.1", "type": "registry", "path": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender", "name": "PUAProtection", "valueType": "DWord", "value": 1 },
     { "id": "lm-hash-off", "title": "Do not store LAN Manager hash", "cis": "3.10", "type": "registry", "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa", "name": "NoLMHash", "valueType": "DWord", "value": 1 },
     { "id": "anon-sam-off", "title": "No anonymous enumeration of SAM accounts and shares", "cis": "4.x", "type": "registry", "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa", "name": "RestrictAnonymous", "valueType": "DWord", "value": 1 }

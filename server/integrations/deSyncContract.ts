@@ -1,7 +1,9 @@
 import { randomUUID } from "crypto";
 import { z } from "zod";
 
-export const DE_SYNC_SOURCES = ["website", "portal", "techsales"] as const;
+// techconsole: the DE Tech Tool, which sends only to the Hub (techconsole_to_hub). Listed so both copies of the
+// contract stay identical; no website direction expects it, so the site never accepts a techconsole event.
+export const DE_SYNC_SOURCES = ["website", "portal", "techsales", "techconsole"] as const;
 export type DeSyncSource = (typeof DE_SYNC_SOURCES)[number];
 
 export const DE_SYNC_EVENT_TYPES = [
@@ -46,6 +48,10 @@ export const DE_SYNC_EVENT_TYPES = [
   "catalog.published",
   "pricing.updated",
   "bundle.updated",
+  "device.observed",
+  "device.rescue_handoff",
+  "device.warranty",
+  "email_migration.recorded",
 ] as const;
 
 export type DeSyncEventType = (typeof DE_SYNC_EVENT_TYPES)[number];
