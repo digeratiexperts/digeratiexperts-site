@@ -70,6 +70,31 @@ describe("Ask DE conversation kept for the tab", () => {
     expect(back?.messages.at(-1)?.id).toBe(`u${DESK_CHAT_MAX_MESSAGES + 9}`);
   });
 
+  it("keeps a reply's next steps, and drops any that fail the allowlist", () => {
+    writeDeskChat(
+      "s",
+      [
+        user("u1", "hi"),
+        {
+          id: "a1",
+          role: "assistant",
+          content: "Here you go",
+          actions: [
+            { type: "open_portal", label: "Open Client Portal", href: "https://portal.digeratiexperts.com/portal/login" },
+          ],
+        },
+      ],
+      10,
+    );
+    expect(readDeskChat(11)?.messages[1].actions).toEqual([
+      { type: "open_portal", label: "Open Client Portal", href: "https://portal.digeratiexperts.com/portal/login" },
+    ]);
+    const raw = JSON.parse(store.getItem(DESK_CHAT_STORAGE_KEY)!);
+    raw.messages[1].actions = [{ type: "navigate", label: "x", href: "javascript:alert(1)" }];
+    store.setItem(DESK_CHAT_STORAGE_KEY, JSON.stringify(raw));
+    expect(readDeskChat(12)?.messages[1].actions).toBeUndefined();
+  });
+
   it("clears on Start over", () => {
     writeDeskChat("s", [welcome, user("u1", "hi")]);
     clearDeskChat();
