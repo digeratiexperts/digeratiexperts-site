@@ -1,0 +1,175 @@
+/* Version 5 tokens. Scoped to the page. They do not redeclare the site theme. */
+.v5 {
+  --v5-graphite: #050312;
+  --v5-ink: #f7f5f2;
+  --v5-soft: #c9c2b6;
+  --v5-magenta: #d3126a;
+  --v5-line: rgba(247, 245, 242, 0.16);
+  --v5-measure: min(68rem, calc(100% - 2.5rem));
+  background: var(--v5-graphite);
+  color: var(--v5-ink);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.55;
+  overflow-x: clip;
+  padding-bottom: 8rem;
+}
+
+.v5 * { box-sizing: border-box; }
+
+.v5 a { color: inherit; }
+.v5 a:focus-visible {
+  outline: 2px solid var(--v5-magenta);
+  outline-offset: 3px;
+}
+
+.v5-header,
+.v5-section {
+  width: var(--v5-measure);
+  margin-inline: auto;
+}
+
+.v5-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+  padding: 1.25rem 0;
+}
+
+.v5-logo img {
+  display: block;
+  height: 36px;
+  width: auto;
+}
+
+.v5-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.25rem;
+  margin-left: auto;
+}
+
+.v5-phone {
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.v5-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0.65rem 1.1rem;
+  background: var(--v5-magenta);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.v5-section {
+  padding: 3.5rem 0 4.5rem;
+  border-top: 1px solid var(--v5-line);
+}
+
+.v5-hero {
+  border-top: 0;
+  padding-top: 1.5rem;
+}
+
+.v5-kicker {
+  margin: 0 0 0.75rem;
+  color: var(--v5-soft);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+
+.v5 h1,
+.v5 h2 {
+  margin: 0;
+  font-family: "Space Grotesk", Inter, system-ui, sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+}
+
+.v5 h1 { font-size: clamp(2.1rem, 4.4vw, 3.4rem); max-width: 16ch; }
+.v5 h2 { font-size: clamp(1.7rem, 3vw, 2.4rem); max-width: 22ch; }
+
+.v5-lede {
+  max-width: 38rem;
+  margin: 1.25rem 0 0;
+  color: var(--v5-soft);
+  font-size: 1.05rem;
+}
+
+.v5-person {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.v5-person img {
+  width: 84px;
+  height: 112px;
+  object-fit: cover;
+  object-position: center 18%;
+  border-radius: 8px;
+  border: 1px solid var(--v5-line);
+}
+
+.v5-person p { margin: 0; }
+.v5-person .v5-name {
+  font-family: "Space Grotesk", Inter, system-ui, sans-serif;
+  font-size: 1.15rem;
+}
+.v5-role,
+.v5-place {
+  color: var(--v5-soft);
+  font-size: 0.92rem;
+}
+
+.v5-hero-actions { margin-top: 1.75rem; }
+
+.v5-doors {
+  list-style: none;
+  margin: 2rem 0 0;
+  padding: 0;
+  max-width: 36rem;
+}
+
+.v5-doors li {
+  padding: 1rem 0;
+  border-top: 1px solid var(--v5-line);
+}
+
+.v5-doors li:last-child { border-bottom: 1px solid var(--v5-line); }
+
+.v5-door-name {
+  display: block;
+  font-weight: 600;
+}
+
+.v5-door-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+  margin-top: 0.35rem;
+}
+
+.v5-door-links a { text-underline-offset: 3px; }
+
+.v5-quiet {
+  margin: 2rem 0 0;
+  color: var(--v5-soft);
+  font-size: 0.95rem;
+}
+
+.v5-quiet a { text-underline-offset: 3px; }
+
+@media (max-width: 560px) {
+  .v5-header .v5-cta { display: none; }
+}

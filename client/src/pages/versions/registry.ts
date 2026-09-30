@@ -72,6 +72,17 @@ export const HOMEPAGE_VERSIONS: HomepageVersion[] = [
     kind: "react",
     source: "cursor/homepage-v4-20260927",
   },
+  {
+    n: 5,
+    path: "/version-5",
+    title: "Three screens: the person, the gap, the way in",
+    date: "2026-09-30",
+    status: "Preview at /version-5. Not the live homepage.",
+    summary:
+      "A short preview after versions 4 were longer than the live page and dropped the company. Joseph Petro, Chandler, one assessment action, the environment in words, then three ways in. No prices, no invented proof. Does not replace /.",
+    kind: "react",
+    source: "cursor/homepage-v4-20260927",
+  },
 ];
 
 export function versionByNumber(n: number): HomepageVersion | undefined {

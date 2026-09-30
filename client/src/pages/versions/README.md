@@ -28,6 +28,7 @@ one lands and any of them can be referenced in future development.
 | 2 | `/version-2` | Version B, the Scrollcraft story page (forwards to the static `/v2`) | static |
 | 3 | `/version-3` | Diagram-system sections, PR #178 with the review corrections (c03cad9) | react snapshot |
 | 4 | `/version-4` | Clean sheet: one environment that aligns, then assessment above three doors | react |
+| 5 | `/version-5` | Three screens: the person, the gap, then the way in | react |
 
 ## Adding a version
 

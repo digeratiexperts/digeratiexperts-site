@@ -1,6 +1,8 @@
 # Version 4 homepage: source of truth
 
-Written 2026-09-29. One design. Preview only at `/version-4`. Production `/` stays the live homepage until Joe approves a replacement.
+Written 2026-09-29. Preview only at `/version-4`. Production `/` stays the live homepage until Joe approves a replacement.
+
+Reviewed 2026-09-30: this ten-chapter cut, and the competing ten-chapter cut on `claude/homepage-v4`, were both longer than the live homepage and weaker as a front door. Version 4 stays frozen. The next cut is version 5 at `/version-5` (`docs/VERSION-5-HOMEPAGE-SOURCE-OF-TRUTH.md`). Do not add chapters to this page.
 
 This file is the design record. The page in `client/src/pages/versions/v4/` has to match it. A later review that contradicts this file is a bug in the page or a revision of this file, not a second design.
 
