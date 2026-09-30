@@ -5,7 +5,7 @@ description: Generate hyper-realistic, tightly controlled images with the Nano B
 
 > **Digerati Experts repository note (local addition, not upstream text).**
 >
-> - **Cost and consent.** Every run spends kie.ai credits (roughly $0.04 to $0.09
+> - **Cost and consent.** Every run spends kie.ai credits (roughly 0.04 to 0.09 USD
 >   per image). Generate only when the user asks for an image; never run the
 >   script speculatively. `--dry-run` validates a payload with no network call.
 > - **Key.** The scripts read `KIE_AI_API_KEY`, then `KIE_API_KEY`, from the

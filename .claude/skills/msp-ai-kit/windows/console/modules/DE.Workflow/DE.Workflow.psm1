@@ -94,7 +94,13 @@ function Get-DENextAction {
 function Invoke-DEAudit {
     <# Runs every action in Audit mode (detect only). #>
     param([string]$Mode = 'audit')
-    foreach ($a in Get-DEActions -Mode $(if ($Mode -eq 'audit') { 'audit' } else { $Mode })) { $null = Invoke-DEAction -Id $a.Id -Mode Audit }
+    $actions = @(Get-DEActions -Mode $(if ($Mode -eq 'audit') { 'audit' } else { $Mode }))
+    $completed = 0
+    foreach ($a in $actions) {
+        $null = Invoke-DEAction -Id $a.Id -Mode Audit
+        $completed++
+        Write-DELog -Level INFO -Message "DE_PROGRESS $completed/$($actions.Count) $($a.Title)"
+    }
     return (Get-DEGapReport)
 }
 
@@ -103,9 +109,13 @@ function Invoke-DEPhase {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param([Parameter(Mandatory = $true)][int]$Phase, [string]$Mode = 'takeover', [switch]$StopOnBlocked)
     $out = @()
-    foreach ($a in Get-DEActions -Mode $Mode | Where-Object { $_ -and $_.Phase -eq $Phase }) {
+    $actions = @(Get-DEActions -Mode $Mode | Where-Object { $_ -and $_.Phase -eq $Phase })
+    $completed = 0
+    foreach ($a in $actions) {
         $r = Invoke-DEAction -Id $a.Id -Mode Apply -WhatIf:$WhatIfPreference
         $out += $r
+        $completed++
+        Write-DELog -Level INFO -Message "DE_PROGRESS $completed/$($actions.Count) $($a.Title)"
         if ($StopOnBlocked -and $r.result -in @('BLOCKED', 'FAIL')) { break }
         if (@(Get-DERebootQueue | Where-Object { $_ }).Count) { Write-DELog -Level WARN -Message "restart queued during phase $Phase; stopping so the technician can restart"; break }
     }

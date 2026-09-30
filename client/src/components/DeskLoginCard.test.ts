@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const card = readFileSync(resolve(here, "DeskLoginCard.tsx"), "utf8");
+const widget = readFileSync(resolve(here, "ZohoASAPWidget.tsx"), "utf8");
 const storeAuth = readFileSync(resolve(here, "../hooks/useStoreAuth.ts"), "utf8");
 const portalLogin = readFileSync(resolve(here, "../pages/portal/PortalLogin.tsx"), "utf8");
 const portalApi = readFileSync(resolve(here, "../lib/portalApi.ts"), "utf8");
@@ -20,7 +21,7 @@ describe("ASK DE shared portal authentication", () => {
   });
 
   it("uses the shared HttpOnly cookie as the browser session authority", () => {
-    // ZohoASAPWidget.tsx stays on Claude freeze; assert the Cursor-owned shared-session surfaces.
+    expect(widget).toMatch(/fetch\("\/api\/portal\/me", \{[\s\S]*credentials: "include"[\s\S]*cache: "no-store"/);
     expect(storeAuth).toMatch(/fetch\("\/api\/portal\/me", \{[\s\S]*credentials: "include"/);
     expect(storeAuth).toMatch(/const isLoggedIn = useMemo\(\(\) => !!user/);
     expect(portalLogin).toMatch(/fetch\("\/api\/portal\/me", \{[\s\S]*credentials: "include"[\s\S]*cache: "no-store"/);
@@ -31,8 +32,7 @@ describe("ASK DE shared portal authentication", () => {
   });
 
   it("keeps ASK DE stationary and provides a real back control", () => {
-    // Widget wiring (onBack / remove portal-page upsell) is Claude-owned ZohoASAPWidget.
-    // DeskLoginCard itself must still own dismiss + Zoho popup start.
+    expect(widget).toMatch(/onBack=\{\(\) => setShowInlineLogin\(false\)\}/);
     expect(card).toMatch(/button-desk-login-dismiss/);
     expect(card).toMatch(/window\.open\(/);
     expect(card).toMatch(/\/api\/portal\/auth\/zoho\/start/);

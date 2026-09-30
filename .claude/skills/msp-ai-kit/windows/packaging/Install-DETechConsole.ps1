@@ -57,17 +57,27 @@ try {
         Write-Step "sha256 verified ($hash)" 'Green'
     } else { Write-Step "sha256 $hash (not checked: no -Sha256 given)" 'Yellow' }
 
+    $InstallDir = [IO.Path]::GetFullPath($InstallDir)
+    $ZipPath = (Get-Item -LiteralPath $ZipPath -ErrorAction Stop).FullName
     if (-not $PSCmdlet.ShouldProcess($InstallDir, 'install DE Tech Tool')) { return }
+    $step = 'stage package'
     # stage beside the install folder: a move within one volume cannot fail halfway (a TEMP-to-USB move can)
     $parent = Split-Path -Parent $InstallDir; if (-not $parent) { $parent = (Get-Location).Path }
     New-Item -ItemType Directory -Path $parent -Force | Out-Null
     $stage = Join-Path $parent (".de-install-{0}" -f ([guid]::NewGuid().ToString('N').Substring(0, 8)))
+    $step = 'extract package'
     Expand-Archive -LiteralPath $ZipPath -DestinationPath $stage -Force
+    $step = 'locate launcher'
     # Start-DETechTool.cmd is the canonical launcher; Start-DETechConsole.cmd is the compatibility alias older packages carry
     $launcher = @(foreach ($name in @('Start-DETechTool.cmd', 'Start-DETechConsole.cmd')) { Get-ChildItem -LiteralPath $stage -Recurse -File -Filter $name })
     if (-not $launcher.Count) { throw 'This zip contains neither Start-DETechTool.cmd nor Start-DETechConsole.cmd; it is not a DE Tech Tool package.' }
     $launcherName = $launcher[0].Name
     $kitRoot = Split-Path -Parent (Split-Path -Parent $launcher[0].FullName)   # ...\msp-ai-kit
+    if (-not (Test-Path -LiteralPath (Join-Path -Path $kitRoot -ChildPath 'windows\console\DETechConsole.ps1'))) {
+        throw 'This zip does not contain the DE Tech Tool console beside the launcher.'
+    }
+
+    $step = 'replace previous copy'
 
     # swap safely: the old copy is set aside, the new one moved in, and only then is the older backup replaced;
     # if the move fails the old copy goes straight back, so there is always a working install
@@ -75,6 +85,7 @@ try {
     if (Test-Path -LiteralPath $aside) { Remove-Item -LiteralPath $aside -Recurse -Force }
     $hadOld = Test-Path -LiteralPath $InstallDir
     if ($hadOld) { Move-Item -LiteralPath $InstallDir -Destination $aside }
+    $step = 'move new copy into place'
     try { Move-Item -LiteralPath $kitRoot -Destination $InstallDir }
     catch { if ($hadOld -and -not (Test-Path -LiteralPath $InstallDir)) { Move-Item -LiteralPath $aside -Destination $InstallDir }; throw }
     if ($hadOld) {
@@ -93,7 +104,8 @@ try {
     if (-not $NoLaunch) { Start-Process -FilePath $start -WorkingDirectory (Split-Path -Parent $start) | Out-Null }
     exit 0
 } catch {
-    Write-Step "Install failed: $($_.Exception.Message)" 'Red'
+    Write-Step "Install failed during $($step): $($_.Exception.Message)" 'Red'
+    Write-Step "At: $($_.InvocationInfo.ScriptName):$($_.InvocationInfo.ScriptLineNumber)" 'Red'
     if ($stage -and (Test-Path -LiteralPath $stage)) { Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue }
     exit 1
 }

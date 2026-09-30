@@ -8,7 +8,7 @@ Purpose: one publication universe for threat stories, guides, datasheets, and re
 
 ---
 
-## Two locked palettes in Layer 7
+## Two Joe-decided palettes in Layer 7 (Tier 2 — `DESIGN-AUTHORITY.md`)
 
 | Surface | Accent | Rule |
 |---------|--------|------|
