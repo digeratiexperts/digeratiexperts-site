@@ -19,6 +19,8 @@ import {
   Download,
 } from "lucide-react";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { portalLoginWithReturn } from "@/lib/portalUrls";
+import { warehousePath } from "@/lib/warehousePaths";
 
 const QuoteConfirmation = () => {
   const [, params] = useRoute("/internal/warehouse/quote-confirmation/:id");
@@ -36,16 +38,21 @@ const QuoteConfirmation = () => {
   const { data: quoteRequest, isLoading, error } = useQuery({
     queryKey: ['/api/store/quote-requests', quoteId],
     queryFn: async () => {
-      const token = localStorage.getItem("portalToken");
+      // The portal session cookie is the only credential the rest of the flow
+      // uses; the old localStorage bearer could only contradict a valid cookie.
       const response = await fetch(`/api/store/quote-requests/${quoteId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
         credentials: "include",
       });
-      if (response.status === 401) {
-        throw new Error("Sign in to view this quote request.");
-      }
       if (!response.ok) {
-        throw new Error("Failed to fetch quote request");
+        const failure = new Error(
+          response.status === 401
+            ? "Sign in to view this quote request."
+            : response.status === 403
+              ? "This quote request belongs to another account."
+              : "Failed to fetch quote request",
+        ) as Error & { status?: number };
+        failure.status = response.status;
+        throw failure;
       }
       return response.json();
     },
@@ -72,6 +79,19 @@ const QuoteConfirmation = () => {
   }
 
   if (error || !quoteRequest) {
+    const status = (error as (Error & { status?: number }) | null)?.status;
+    const confirmationUrl =
+      typeof window !== "undefined"
+        ? `${window.location.origin}${warehousePath(`/quote-confirmation/${quoteId}`)}`
+        : warehousePath(`/quote-confirmation/${quoteId}`);
+    const title =
+      status === 401 ? "Sign in to view this quote" : status === 403 ? "Access denied" : "Quote Not Found";
+    const message =
+      status === 401
+        ? "Your session ended before this page loaded. Sign in and you will land straight back here; the quote request itself was recorded."
+        : status === 403
+          ? "This quote request belongs to another account. If you submitted it, sign in with the account you used."
+          : "We couldn't find the quote request you're looking for.";
     return (
       <div className="min-h-screen bg-[#0a0a0a]">
         <MegaMenu />
@@ -84,16 +104,22 @@ const QuoteConfirmation = () => {
             >
               <FileText className="w-16 h-16 text-white/55 mx-auto mb-6" />
               <h1 className="text-2xl font-bold text-white mb-4" data-testid="text-error-title">
-                Quote Not Found
+                {title}
               </h1>
               <p className="text-white/60 mb-8" data-testid="text-error-message">
-                We couldn't find the quote request you're looking for.
+                {message}
               </p>
-              <Link href="/internal/warehouse">
-                <Button className="bg-de-accent hover:bg-de-accent text-white" data-testid="button-back-to-store">
-                  Back to Store
+              {status === 401 || status === 403 ? (
+                <Button asChild className="bg-de-accent hover:bg-de-accent text-white" data-testid="button-sign-in-quote">
+                  <a href={portalLoginWithReturn(confirmationUrl)}>Sign in to continue</a>
                 </Button>
-              </Link>
+              ) : (
+                <Link href={warehousePath()}>
+                  <Button className="bg-de-accent hover:bg-de-accent text-white" data-testid="button-back-to-store">
+                    Back to Store
+                  </Button>
+                </Link>
+              )}
             </motion.div>
           </div>
         </main>
@@ -146,9 +172,7 @@ const QuoteConfirmation = () => {
                     setPdfError(null);
                     setIsDownloadingPdf(true);
                     try {
-                      const token = localStorage.getItem("portalToken");
                       const response = await fetch(quoteRequest.pdfUrl || `/api/store/quote-requests/${quoteId}/pdf`, {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
                         credentials: "include",
                       });
                       if (!response.ok) {

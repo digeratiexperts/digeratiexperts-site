@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { portalGet, portalPost } from "@/lib/portalApi";
+import { COMPANY } from "@/data/companyContact";
+import { loadCardCheckoutAvailable } from "@/lib/invoicePaymentAvailability";
 import zelleQr from "@assets/qrCode_1763920410167.png";
 
 interface PaymentProps {
@@ -40,6 +42,17 @@ export default function PortalPayment({ invoiceId }: PaymentProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedMethod, setSelectedMethod] = useState<"card" | "zelle" | null>(null);
+  const [cardCheckout, setCardCheckout] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadCardCheckoutAvailable().then((available) => {
+      if (!cancelled) setCardCheckout(available);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -155,11 +168,13 @@ export default function PortalPayment({ invoiceId }: PaymentProps) {
                     <div className="flex-1">
                       <h4 className="font-semibold">Pay Online</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Secure checkout via Zoho Payments
+                        {cardCheckout
+                          ? "Secure checkout via Zoho Payments"
+                          : "Card checkout is not connected yet"}
                       </p>
                     </div>
                   </div>
-                  {selectedMethod === "card" && (
+                  {selectedMethod === "card" && cardCheckout && (
                     <Button
                       className="mt-4 w-full bg-[#D3126A] hover:bg-[#D3126A]/90 text-white"
                       onClick={handleZohoCheckout}
@@ -175,6 +190,15 @@ export default function PortalPayment({ invoiceId }: PaymentProps) {
                         `Pay $${amountDue.toFixed(2)}`
                       )}
                     </Button>
+                  )}
+                  {selectedMethod === "card" && !cardCheckout && (
+                    <p className="mt-4 text-sm text-gray-700 dark:text-gray-300">
+                      Email{" "}
+                      <a className="font-medium underline" href={`mailto:${COMPANY.billingEmail}`}>
+                        {COMPANY.billingEmail}
+                      </a>{" "}
+                      with invoice {invoiceNumber}. This screen will not start a card payment until checkout is connected.
+                    </p>
                   )}
                 </CardContent>
               </Card>

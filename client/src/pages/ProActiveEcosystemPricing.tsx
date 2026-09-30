@@ -82,12 +82,13 @@ const matrixCategories: MatrixCategory[] = [
   },
   {
     id: "security-ops",
-    title: "Security Operations",
+    title: "Security Foundation & Operations",
     icon: <Shield className="w-5 h-5" />,
     services: [
-      { name: "Security Awareness Training", it: false, office: "Basic / add-on", business: true, enterprise: true },
-      { name: "Threat Detection & Response", tooltip: "Monitoring, detection, triage, containment, and guided recovery signals from endpoint, identity, email, cloud, or other detection systems.", it: false, office: "addon", business: true, enterprise: "Advanced / custom" },
-      { name: "Security Operations / SOC-as-a-Service", tooltip: "Security monitoring, alert triage, tuning, escalation, reporting, and response coordination.", it: false, office: "addon", business: true, enterprise: "Advanced / custom" },
+      { name: "DE Security Foundation", tooltip: "Managed security is included in every ProActive tier. Higher tiers add deeper monitoring, response, recovery, compliance, and governance.", it: "Included", office: "Included", business: "Included", enterprise: "Included" },
+      { name: "Security Awareness Training", it: "Included", office: "Included + phishing simulation", business: "Enhanced", enterprise: "Role-based / advanced" },
+      { name: "Threat Detection & Response", tooltip: "Monitoring, detection, triage, containment, and guided recovery signals from endpoint, identity, email, cloud, or other detection systems.", it: "Managed platform baseline", office: "24/7 MDR", business: "24/7 MDR + deeper response", enterprise: "Advanced / custom" },
+      { name: "Security Operations / SOC-as-a-Service", tooltip: "Security monitoring, alert triage, tuning, escalation, reporting, and response coordination.", it: "Platform monitoring", office: "24/7 MDR", business: "24/7 security operations", enterprise: "Advanced / custom" },
     ],
   },
   {
@@ -143,7 +144,7 @@ const plans: PlanCard[] = [
     id: "it",
     name: "ProActive IT Ecosystem",
     shortName: "IT",
-    tagline: "Entry managed IT + baseline security",
+    tagline: "Managed IT + included security foundation",
     pricePerUser: pricing.it.user,
     priceLabel: `Starting at $${pricing.it.user}/user/mo`,
     minUsers: 5,
@@ -152,8 +153,10 @@ const plans: PlanCard[] = [
       "Managed IT Support + Service Desk",
       "Microsoft 365 / Google Workspace / Zoho workspace support",
       "MFA / SSO / Password Manager (baseline)",
-      "Endpoint security (basic)",
-      "Email protection (basic)",
+      "Endpoint security (managed baseline)",
+      "Email protection (managed baseline)",
+      "Security awareness & phishing resilience",
+      "Managed security monitoring baseline",
       "Basic IT planning",
       "Managed Workplace: limited / add-on",
       "No backup included by default",
@@ -175,8 +178,8 @@ const plans: PlanCard[] = [
       "Limited Managed Workplace",
       "Endpoint Backup",
       "Annual combined technology + cyber review",
-      "Security Awareness Training (add-on)",
-      "Threat Detection / SOC (add-on)",
+      "Security Awareness Training + phishing simulation",
+      "24/7 Managed Detection & Response",
       "BCDR, cloud backup, compliance reports (add-ons)",
     ],
     learnMoreUrl: pricing.office.learnMoreUrl,
@@ -193,8 +196,9 @@ const plans: PlanCard[] = [
     bullets: [
       "Everything in Office, plus:",
       "Enhanced Managed Workplace",
+      "Deeper security operations / response",
       "Security Awareness Training included",
-      "Threat Detection / SOC included",
+      "24/7 MDR included",
       "BCDR + user cloud storage backup included",
       "Compliance & Risk Reporting included",
       "Budgeting / planning + 2× tech & security business reviews per year",
@@ -491,20 +495,35 @@ export default function ProActiveEcosystemPricing() {
                 <div
                   key={category.id}
                   className={cn(
-                    "overflow-hidden rounded-2xl border border-de-hairline bg-de-raised",
-                    dimmed && "opacity-55",
+                    "overflow-hidden rounded-2xl border bg-de-raised",
+                    // Dimming used to fade the whole card to 55% opacity, which pushed every
+                    // row below 4.5:1. Out-of-tier categories now keep readable text and
+                    // signal state through the border, icon and an explicit chip instead
+                    // (a11y sweep 2026-09-12).
+                    dimmed ? "border-white/5" : "border-de-hairline",
                   )}
+                  data-tier-state={dimmed ? "outside-tier" : "in-tier"}
                 >
-                  <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4">
-                    <span className="text-de-magenta-ink">{category.icon}</span>
+                  <div className="flex flex-wrap items-center gap-3 border-b border-white/10 px-5 py-4">
+                    <span className={dimmed ? "text-white/60" : "text-de-magenta-ink"}>{category.icon}</span>
                     <h3 className="font-semibold text-white">{category.title}</h3>
+                    {dimmed && (
+                      <span className="rounded-full border border-white/20 px-3 py-1 text-xs font-medium text-white/80">
+                        Not in {plans.find((plan) => plan.id === selectedTier)?.shortName ?? selectedTier}
+                      </span>
+                    )}
                     {category.ribbon && (
                       <span className="ml-auto rounded-full border border-amber-400/30 px-3 py-1 text-xs text-amber-400/90">
                         {category.ribbon}
                       </span>
                     )}
                   </div>
-                  <div className="max-h-[70vh] overflow-auto">
+                  <div
+                    className="max-h-[70vh] overflow-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink"
+                    tabIndex={0}
+                    role="region"
+                    aria-label={`${category.title} coverage table`}
+                  >
                     <table className="w-full text-left">
                       <thead className="sticky top-0 z-10 bg-de-raised">
                         <tr className="text-xs uppercase tracking-wide text-white/55">

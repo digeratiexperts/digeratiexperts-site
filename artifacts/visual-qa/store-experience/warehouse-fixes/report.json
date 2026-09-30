@@ -1,0 +1,70 @@
+[
+  {
+    "vp": "390",
+    "login": 200,
+    "barOnCatalog": 1,
+    "barOnCheckout": 0,
+    "handoffAfterFallback": {
+      "version": 1,
+      "name": "Jordan Buyer",
+      "email": "jordan@example.com",
+      "company": "Example Co",
+      "phone": "602-555-1212",
+      "reason": "subscription_billing",
+      "writtenAt": 1790555492659
+    },
+    "fallbackToast": [
+      "Recurring services move through subscription setup Your solution is intact. We switched checkout to Request Quote so recurring billing can be provisioned correc",
+      ""
+    ],
+    "barOnQuoteRequest": 0,
+    "prefill": [
+      "name=Jordan Buyer",
+      "email=jordan@example.com",
+      "phone=602-555-1212",
+      "company=Example Co"
+    ],
+    "afterSubmitUrl": "http://127.0.0.1:5000/internal/warehouse/quote-request",
+    "cartIntact": 1,
+    "handoffAfterSubmit": "{\"version\":1,\"name\":\"Jordan Buyer\",\"email\":\"jordan@example.com\",\"company\":\"Example Co\",\"phone\":\"602-555-1212\",\"reason\":\"user_choice\",\"writtenAt\":1790555494641}",
+    "durabilityToast": [
+      "Quote requests are temporarily unavailable We will not record a quote without durable storage. Your solution and contact details are intact; please try again shortly.",
+      ""
+    ],
+    "errors": []
+  },
+  {
+    "vp": "1440",
+    "login": 200,
+    "barOnCatalog": 1,
+    "barOnCheckout": 0,
+    "handoffAfterFallback": {
+      "version": 1,
+      "name": "Jordan Buyer",
+      "email": "jordan@example.com",
+      "company": "Example Co",
+      "phone": "602-555-1212",
+      "reason": "subscription_billing",
+      "writtenAt": 1790555504082
+    },
+    "fallbackToast": [
+      "Recurring services move through subscription setup Your solution is intact. We switched checkout to Request Quote so recurring billing can be provisioned correc",
+      ""
+    ],
+    "barOnQuoteRequest": 0,
+    "prefill": [
+      "name=Jordan Buyer",
+      "email=jordan@example.com",
+      "phone=602-555-1212",
+      "company=Example Co"
+    ],
+    "afterSubmitUrl": "http://127.0.0.1:5000/internal/warehouse/quote-request",
+    "cartIntact": 1,
+    "handoffAfterSubmit": "{\"version\":1,\"name\":\"Jordan Buyer\",\"email\":\"jordan@example.com\",\"company\":\"Example Co\",\"phone\":\"602-555-1212\",\"reason\":\"user_choice\",\"writtenAt\":1790555506055}",
+    "durabilityToast": [
+      "Quote requests are temporarily unavailable We will not record a quote without durable storage. Your solution and contact details are intact; please try again shortly.",
+      ""
+    ],
+    "errors": []
+  }
+]

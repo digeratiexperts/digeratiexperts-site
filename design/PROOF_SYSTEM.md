@@ -30,7 +30,7 @@ Factual only. Examples that are allowed **when they remain true**:
 
 - `24/7` Human-led monitoring — only on offers that actually include 24/7 monitoring (e.g. Business / Enterprise SOC language already in package copy)
 - `ARIZONA` Principal-led
-- `6 DOMAINS` Assessed — only if the assessment genuinely covers six domains; do not invent the count
+- `8 BLOCKS` Assessed / Managed Protection — the eight cybersecurity blocks of the DE 2026 service model (Identity & Access, Endpoint, Email & Collaboration, Browser & Web, Network, Detection & Response, Human Risk, Risk & Exposure); only where the offer genuinely covers them, and never a different count
 
 Never invent. Never use ProofChip as a rating widget. Never put EXAMPLE incident numbers on a ProofChip.
 

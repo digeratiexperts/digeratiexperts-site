@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digeratiexperts.com/schemas/de.techconsole.warranty/v1",
+  "title": "DE warranty result",
+  "description": "One shape for every warranty source (DE.Warranty New-DEWarrantyResult); the Hub stores the latest per deviceKey.",
+  "type": "object",
+  "required": [
+    "serial",
+    "source",
+    "status"
+  ],
+  "properties": {
+    "serial": {
+      "type": "string"
+    },
+    "manufacturer": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "vendor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "expired",
+        "unknown",
+        "manual",
+        "not-applicable"
+      ]
+    },
+    "start": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "end": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "daysLeft": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "entitlements": {
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "checkUrl": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "detail": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "fetchedAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

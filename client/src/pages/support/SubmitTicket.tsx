@@ -13,7 +13,7 @@ import { AlertCircle, Clock, Phone, Loader2 } from "lucide-react";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 
 const cardClass = "rounded-2xl border border-de-hairline bg-de-raised";
-const fieldClass = "border-de-hairline bg-de-bg text-white placeholder:text-white/45";
+const fieldClass = "border-de-hairline bg-de-bg text-white placeholder:text-white/55";
 
 export default function SubmitTicket() {
   const { toast } = useToast();

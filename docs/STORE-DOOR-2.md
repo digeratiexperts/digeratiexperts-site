@@ -1,5 +1,11 @@
 # Door 2 — Solve a Business Need
 
+> **Superseded.** The public builder now lives at `/store` and is specified by
+> `docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md` (design) and
+> `docs/PUBLIC-SOLUTION-BUILDER.md` (rules). The `/solutions/business-needs`
+> paths below 301 to their `/store` equivalents. This note is kept as the
+> Phase 1 record only.
+
 **Phase 1 implementation.** Draft only. Do not merge or deploy from this note.
 
 ## #101 dependency

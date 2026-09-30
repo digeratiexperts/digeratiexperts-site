@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { registerPageCanonical } from '@/components/DefaultCanonical';
 
 interface SEOProps {
   title: string;
@@ -11,7 +12,7 @@ interface SEOProps {
 const BASE_TITLE = 'Digerati Experts';
 const DEFAULT_DESCRIPTION = "Cybersecurity-first managed IT for Arizona businesses. Assessment-led recommendations, partner-backed monitoring, and accountable day-to-day IT.";
 const SITE_URL = 'https://digeratiexperts.com';
-const DEFAULT_IMAGE = `${SITE_URL}/favicon-512x512.png`;
+const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`;
 
 function buildFullTitle(title: string): string {
   const trimmed = title.trim();
@@ -61,11 +62,8 @@ export function useSEO({ title, description, canonical, ogImage, noIndex }: SEOP
     if (canonicalUrl) {
       updateOrCreateMetaTag('og:url', canonicalUrl, true);
       updateOrCreateMetaTag('twitter:url', canonicalUrl);
-      let link = document.querySelector('link[rel="canonical"]');
-      if (link) {
-        link.setAttribute('href', canonicalUrl);
-      }
     }
+    registerPageCanonical(canonical);
 
     if (noIndex) {
       updateOrCreateMetaTag('robots', 'noindex, nofollow');
@@ -74,6 +72,7 @@ export function useSEO({ title, description, canonical, ogImage, noIndex }: SEOP
     }
 
     return () => {
+      registerPageCanonical(undefined);
       document.title = BASE_TITLE;
     };
   }, [title, description, canonical, ogImage, noIndex]);

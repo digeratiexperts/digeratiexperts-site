@@ -8,7 +8,7 @@ import { PronunciationCard } from "@/components/PronunciationCard";
 import { useBooking } from "@/contexts/BookingContext";
 import { analytics } from "@/lib/analytics";
 import { CTA } from "@/lib/ctaCopy";
-import { COMPANY, PRIMARY_PHONE } from "@/data/companyContact";
+import { PRIMARY_PHONE } from "@/data/companyContact";
 // 50KB WebP (was a 2.0MB PNG): at 30% opacity under the dark field, the
 // aggressive compression is invisible — review finding F1.
 import heroCityLights from "@assets/de-hero-arizona-dusk-1600.webp";
@@ -16,27 +16,23 @@ import heroCityLights from "@assets/de-hero-arizona-dusk-1600.webp";
 const trustItems = [
   {
     icon: ShieldCheck,
-    code: "01 / CYBERSECURITY FIRST",
-    title: "Six domains, one accountable team.",
-    body: "Identity, endpoints, email, network, backup and recovery, security operations.",
+    title: "Cybersecurity First",
+    body: "We secure your business from the inside out.",
   },
   {
     icon: CheckCircle2,
-    code: "02 / PROACTIVE IT",
-    title: "Operated, not watched.",
-    body: "Assessment, roadmap, implementation, then continuous management with reviews at your tier's cadence.",
+    title: "Proactive IT",
+    body: "Prevent issues before they impact your business.",
   },
   {
     icon: ClipboardCheck,
-    code: "03 / COMPLIANCE READY",
-    title: "Evidence, not claims.",
-    body: "HIPAA, PCI DSS, SOC 2 and cyber-insurance readiness support. Framework names are your requirements, not our certifications.",
+    title: "Compliance Ready",
+    body: "Stay compliant with industry standards and regulations.",
   },
   {
     icon: MapPin,
-    code: "04 / LOCAL & RESPONSIVE",
-    title: `${COMPANY.addressLocality}, Arizona.`,
-    body: `${COMPANY.streetAddress}. Call ${PRIMARY_PHONE.display}. Response targets are published in our SLA.`,
+    title: "Local & Responsive",
+    body: "Arizona-based team, always here when you need us.",
   },
 ];
 
@@ -231,27 +227,22 @@ export function ReferenceHeroSection(): JSX.Element {
       </div>
 
       <div className="relative border-t border-black/10 bg-[#f7f5f2] text-[#17141f]">
-        <div className="mx-auto max-w-[var(--de-canvas)] px-5 py-8 sm:px-8 lg:px-10 lg:py-10 xl:px-12">
-          <div className="mb-6 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-b border-black/10 pb-4">
-            <p className="text-xl font-semibold sm:text-2xl" style={{ letterSpacing: "-0.02em" }}>
-              Trusted IT Partner for Arizona Businesses
-            </p>
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-[#5e5868]">
-              Managed security · Managed IT · {COMPANY.addressLocality}, {COMPANY.addressRegion}
-            </p>
-          </div>
-          <div className="grid divide-y divide-black/10 sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4" data-testid="hero-trust-strip">
-            {trustItems.map(({ icon: Icon, code, title, body }, index) => (
+        <div className="mx-auto max-w-[var(--de-canvas)] px-5 py-8 sm:px-8 lg:px-10 xl:px-12">
+          <p className="mb-5 text-xl font-semibold sm:text-2xl" style={{ letterSpacing: "-0.02em" }}>
+            Trusted IT Partner for Arizona Businesses
+          </p>
+          <div className="grid overflow-hidden rounded-xl border border-black/10 bg-white sm:grid-cols-2 lg:grid-cols-4">
+            {trustItems.map(({ icon: Icon, title, body }, index) => (
               <div
-                key={code}
-                className={`flex flex-col gap-2 py-5 sm:px-5 ${index > 0 ? "sm:border-l sm:border-black/10" : "sm:pl-0"} ${index === 2 ? "sm:border-l-0 lg:border-l" : ""}`}
+                key={title}
+                className={`flex gap-3 px-5 py-5 ${index > 0 ? "border-t border-black/10 sm:border-t-0 sm:border-l" : ""} ${index === 2 ? "sm:border-l-0 lg:border-l" : ""}`}
+                style={{ minHeight: 128 }}
               >
-                <p className="flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-[#A30E52]">
-                  <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                  {code}
-                </p>
-                <h2 className="font-heading text-[17px] font-semibold leading-snug text-[#17141f]">{title}</h2>
-                <p className="text-sm leading-6 text-[#5e5868]">{body}</p>
+                <Icon className="mt-0.5 h-5 w-5 shrink-0 text-[#17141f]" strokeWidth={1.8} aria-hidden="true" />
+                <div>
+                  <h2 className="font-semibold" style={{ fontSize: 15 }}>{title}</h2>
+                  <p className="mt-2 text-sm leading-6 text-[#5e5868]">{body}</p>
+                </div>
               </div>
             ))}
           </div>

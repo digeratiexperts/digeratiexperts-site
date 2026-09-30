@@ -135,7 +135,7 @@ export default function ClientBillOfRights() {
         </section>
 
         <div className="rounded-2xl border border-[#D3126A]/40 bg-[#D3126A] px-8 py-10 text-center">
-          <p className="mb-6 text-white/90">See also our money-back guarantee</p>
+          <p className="mb-6 text-white">See also our money-back guarantee</p>
           <Button asChild size="lg" className="h-12 bg-white px-8 font-semibold text-[#D3126A] hover:bg-white/95">
             <Link href="/about/guarantee" data-testid="link-guarantee">
               100% Money-Back Guarantee

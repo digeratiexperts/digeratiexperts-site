@@ -1,7 +1,7 @@
 import { logger } from "../logger";
 import { claimPendingOutbox, markOutboxDelivered, markOutboxRetry } from "./deSyncStore";
 import { recoverStaleOutboxLocks } from "./deSyncOutboxRecovery";
-import { deliverEnvelopeToHub } from "./techSalesClient";
+import { deliverEnvelopeToHub, persistHubAccountId } from "./techSalesClient";
 import type { DeSyncEnvelope } from "./deSyncContract";
 import { ensureDeSyncSchema } from "./ensureDeSyncSchema";
 
@@ -52,7 +52,12 @@ export async function processDeSyncOutbox(
 
   for (const record of claimed) {
     try {
-      await deliverEnvelopeToHub(recordToEnvelope(record), record.destination);
+      const result = await deliverEnvelopeToHub(recordToEnvelope(record), record.destination);
+      const portalClientId =
+        typeof record.payload.portalClientId === "string" ? record.payload.portalClientId.trim() : "";
+      if (result.canonicalAccountId && portalClientId) {
+        await persistHubAccountId(portalClientId, result.canonicalAccountId);
+      }
       await markOutboxDelivered(record.eventId);
       delivered += 1;
     } catch (error) {

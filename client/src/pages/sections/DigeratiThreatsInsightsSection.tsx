@@ -272,7 +272,7 @@ export const DigeratiThreatsInsightsSection = (): JSX.Element => {
           </>
         )}
 
-        <p className="mx-auto mb-10 max-w-3xl text-center text-sm leading-relaxed text-white/45">
+        <p className="mx-auto mb-10 max-w-3xl text-center text-sm leading-relaxed text-white/55">
           {payload.attribution || THREAT_ATTRIBUTION}
         </p>
 

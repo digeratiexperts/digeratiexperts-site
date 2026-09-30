@@ -1,27 +1,31 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AlertCircle, ArrowLeft, Lock, LogIn, Mail, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import TurnstileWidget from "@/components/TurnstileWidget";
-import { PORTAL_FORGOT_PASSWORD, PORTAL_LOGIN } from "@/lib/portalUrls";
+import { PORTAL_FORGOT_PASSWORD } from "@/lib/portalUrls";
 import type { PortalUserSession } from "@/lib/portalRoles";
 
 type LoginStep = "credentials" | "mfa";
 
 interface DeskLoginCardProps {
-  /** Fires after the canonical portal session is stored client-side. */
+  /** Fires after the canonical portal session is established. */
   onSignedIn: (user: PortalUserSession) => void;
+  /** Returns to the Client Tools gate without closing ASK DE. */
+  onBack?: () => void;
 }
 
+const ZOHO_POPUP_NAME = "de-zoho-portal-auth";
+const ZOHO_START_URL = "/api/portal/auth/zoho/start?returnTo=%2Fportal";
+
 /**
- * Inline Client Portal sign-in for the DE Desk widget (issue #153).
+ * Inline Client Portal sign-in for ASK DE.
  *
- * This card is a thin front-end for the canonical portal auth service — the
- * same `/api/portal/login` + `/api/portal/mfa/verify-login` endpoints and the
- * same localStorage session keys the full portal login page uses. It must
- * never grow its own identity storage, hashing, or recovery paths; Zoho SSO
- * and password recovery stay on the portal host and are linked out below.
+ * Password + MFA delegate to the canonical portal endpoints. Zoho OAuth uses
+ * a popup because the identity provider must be top-level, while ASK DE stays
+ * stationary. The shared HttpOnly portalAuth cookie remains the browser
+ * session authority across the public site and portal subdomain.
  */
-export default function DeskLoginCard({ onSignedIn }: DeskLoginCardProps) {
+export default function DeskLoginCard({ onSignedIn, onBack }: DeskLoginCardProps) {
   const [step, setStep] = useState<LoginStep>("credentials");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,17 +34,108 @@ export default function DeskLoginCard({ onSignedIn }: DeskLoginCardProps) {
   const [mfaMethod, setMfaMethod] = useState<"totp" | "email">("totp");
   const [mfaMessage, setMfaMessage] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileKey, setTurnstileKey] = useState(0);
+  const [zohoConfigured, setZohoConfigured] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const zohoPopupRef = useRef<Window | null>(null);
+  const zohoPollRef = useRef<number | null>(null);
 
-  const storeSession = (user: PortalUserSession, token: string) => {
+  const resetTurnstile = () => {
+    setTurnstileToken("");
+    setTurnstileKey((value) => value + 1);
+  };
+
+  const clearZohoPoll = () => {
+    if (zohoPollRef.current !== null) {
+      window.clearInterval(zohoPollRef.current);
+      zohoPollRef.current = null;
+    }
+  };
+
+  const storeSession = (user: PortalUserSession, token?: string) => {
     localStorage.setItem("portalUser", JSON.stringify(user));
-    localStorage.setItem("portalToken", token);
+    if (token) localStorage.setItem("portalToken", token);
     localStorage.setItem("portalUserId", user.id || "portal-user");
     localStorage.setItem("userEmail", user.email || email);
-    // storage events only fire in other tabs — tell this tab's listeners too.
     window.dispatchEvent(new CustomEvent("de-portal-auth-changed"));
     onSignedIn(user);
+  };
+
+  const adoptSharedCookieSession = async (): Promise<boolean> => {
+    try {
+      const response = await fetch("/api/portal/me", {
+        credentials: "include",
+        cache: "no-store",
+      });
+      if (!response.ok) return false;
+      const data = (await response.json().catch(() => ({}))) as { user?: PortalUserSession };
+      if (!data.user) return false;
+      storeSession(data.user);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/portal/auth/zoho/status", { credentials: "include", cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (!cancelled) setZohoConfigured(Boolean(data?.configured));
+      })
+      .catch(() => {
+        if (!cancelled) setZohoConfigured(false);
+      });
+    return () => {
+      cancelled = true;
+      clearZohoPoll();
+      try {
+        zohoPopupRef.current?.close();
+      } catch {
+        /* cross-origin popup may already be gone */
+      }
+    };
+  }, []);
+
+  const handleZohoSignIn = () => {
+    setError("");
+    clearZohoPoll();
+    const popup = window.open(
+      ZOHO_START_URL,
+      ZOHO_POPUP_NAME,
+      "popup=yes,width=560,height=760,resizable=yes,scrollbars=yes",
+    );
+    if (!popup) {
+      setError("Allow the secure Zoho sign-in window, then try again.");
+      return;
+    }
+    zohoPopupRef.current = popup;
+    let attempts = 0;
+    zohoPollRef.current = window.setInterval(() => {
+      attempts += 1;
+      if (popup.closed) {
+        clearZohoPoll();
+        return;
+      }
+      if (attempts > 180) {
+        clearZohoPoll();
+        setError("Zoho sign-in was not completed. Try again when ready.");
+        return;
+      }
+      void adoptSharedCookieSession().then((signedIn) => {
+        if (!signedIn) return;
+        clearZohoPoll();
+        window.setTimeout(() => {
+          try {
+            popup.close();
+          } catch {
+            /* already closed */
+          }
+        }, 600);
+      });
+    }, 750);
   };
 
   const handleLogin = async (e: FormEvent) => {
@@ -57,6 +152,7 @@ export default function DeskLoginCard({ onSignedIn }: DeskLoginCardProps) {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         setError(data.message || data.error || "Sign-in failed. Please try again.");
+        resetTurnstile();
         return;
       }
       if (data.mfaRequired) {
@@ -69,6 +165,7 @@ export default function DeskLoginCard({ onSignedIn }: DeskLoginCardProps) {
       storeSession(data.user, data.token);
     } catch {
       setError("Connection error. Please try again.");
+      resetTurnstile();
     } finally {
       setLoading(false);
     }
@@ -98,9 +195,24 @@ export default function DeskLoginCard({ onSignedIn }: DeskLoginCardProps) {
     }
   };
 
+  const topBack = onBack ? (
+    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "0.25rem" }}>
+      <button
+        type="button"
+        className="de-desk-more-toggle"
+        onClick={onBack}
+        data-testid="button-desk-login-dismiss"
+      >
+        <ArrowLeft aria-hidden="true" />
+        Back
+      </button>
+    </div>
+  ) : null;
+
   if (step === "mfa") {
     return (
       <form className="de-desk-form de-desk-login" onSubmit={handleMfaVerify} data-testid="desk-login-card">
+        {topBack}
         <p className="de-desk-login-hint" data-testid="desk-login-mfa-hint">
           <ShieldCheck aria-hidden="true" />
           {mfaMessage || "Enter your verification code."} A backup code also works.
@@ -157,6 +269,7 @@ export default function DeskLoginCard({ onSignedIn }: DeskLoginCardProps) {
 
   return (
     <form className="de-desk-form de-desk-login" onSubmit={handleLogin} data-testid="desk-login-card">
+      {topBack}
       {error ? (
         <div className="de-desk-form-error" role="alert" data-testid="desk-login-error">
           <AlertCircle aria-hidden="true" />
@@ -197,7 +310,7 @@ export default function DeskLoginCard({ onSignedIn }: DeskLoginCardProps) {
           />
         </div>
       </div>
-      <TurnstileWidget onVerify={setTurnstileToken} theme="light" />
+      <TurnstileWidget key={turnstileKey} onVerify={setTurnstileToken} theme="light" />
       <button
         type="submit"
         className="de-desk-btn-grad"
@@ -207,6 +320,17 @@ export default function DeskLoginCard({ onSignedIn }: DeskLoginCardProps) {
         <LogIn aria-hidden="true" />
         {loading ? "Signing in…" : "Sign in"}
       </button>
+      {zohoConfigured ? (
+        <button
+          type="button"
+          className="de-desk-more-toggle"
+          onClick={handleZohoSignIn}
+          data-testid="button-desk-login-zoho"
+        >
+          <ShieldCheck aria-hidden="true" />
+          Sign in with Zoho
+        </button>
+      ) : null}
       <div className="de-desk-login-links">
         <a
           href={PORTAL_FORGOT_PASSWORD}
@@ -215,14 +339,6 @@ export default function DeskLoginCard({ onSignedIn }: DeskLoginCardProps) {
           data-testid="link-desk-login-forgot"
         >
           Forgot password?
-        </a>
-        <a
-          href={PORTAL_LOGIN}
-          target="_blank"
-          rel="noopener noreferrer"
-          data-testid="link-desk-login-full-portal"
-        >
-          Zoho sign-in &amp; more
         </a>
       </div>
     </form>

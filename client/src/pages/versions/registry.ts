@@ -3,11 +3,18 @@
  * each reachable at /version-<n> for reference, never for search.
  *
  * A version is a frozen snapshot made with
- * scripts/snapshot-homepage-version.mjs (kind "react"), or a static build
- * served by Express (kind "static"), or a placeholder for work that has not
- * started (kind "planned"). /versions lists them all.
+ * scripts/snapshot-homepage-version.mjs (kind "react"), a live build under
+ * active development in this app (kind "build"), a static build served by
+ * Express (kind "static"), or a placeholder for work that has not started
+ * (kind "planned"). /versions lists them all.
+ *
+ * "react" and "build" are deliberately different kinds. A "react" version is
+ * frozen history and must never be edited; a "build" version is work in
+ * progress and is expected to change. Conflating them would put the frozen
+ * snapshots' guard test on a moving file, and the first inconvenient failure
+ * would get the guard relaxed for everything.
  */
-export type HomepageVersionKind = "react" | "static" | "planned";
+export type HomepageVersionKind = "react" | "build" | "static" | "planned";
 
 export interface HomepageVersion {
   /** Sequential number; the URL is /version-<n>. */
@@ -30,9 +37,9 @@ export const HOMEPAGE_VERSIONS: HomepageVersion[] = [
   {
     n: 1,
     path: "/version-1",
-    title: "Production homepage until 2026-09-02",
+    title: "Production homepage until 2026-09-02, restored 2026-09-03",
     date: "2026-09-02",
-    status: "Was live at / until version 3 shipped",
+    status: "Live at / again from 2026-09-03 (Joe's direction: the homepage before the Scrollcraft-era sections)",
     summary:
       "The homepage as it ships on main: reference hero with four trust cards, sourced stats, the Six Domains command deck, four process cards, reviews and outcome tiles, team cards, package tiers, compliance marks, the assessment island, contact.",
     kind: "react",
@@ -55,7 +62,7 @@ export const HOMEPAGE_VERSIONS: HomepageVersion[] = [
     path: "/version-3",
     title: "Diagram-system sections",
     date: "2026-09-02",
-    status: "Live at / from 2026-09-02 (PR #178)",
+    status: "Was live at / from 2026-09-02 (PR #178) to 2026-09-03; retired from / at Joe's direction, kept here for reference",
     summary:
       "The nine service sections rebuilt on the DE diagram system: one environment, layered protection, the operating cadence, coverage depth, the inspection; plain-language disclosure; How DE delivers; SLA line; mobile step.",
     kind: "react",
@@ -64,12 +71,13 @@ export const HOMEPAGE_VERSIONS: HomepageVersion[] = [
   {
     n: 4,
     path: "/version-4",
-    title: "Sections recomposed to flow on scroll",
-    date: "",
-    status: "Not started",
+    title: "Clean-sheet redesign, ten chapters",
+    date: "2026-09-27",
+    status: "In build — chapters 01–03 (draft PR #264). Not proposed for /; Joe is the approval gate.",
     summary:
-      "The next homepage: the same substance recomposed so the page reads as one scroll, conversion in the first viewport and at every chapter close, six domains leading, an eight-viewport length budget (Experience Plan §09).",
-    kind: "planned",
+      "A clean-sheet homepage, not a recomposition: ten chapters, one environment that transforms across the first three rather than a new illustration per section, and one primary action. Answers the measured failures of the production page — 23.5 viewports, 20 near-identical sections, 279 links with 19 in the hero. Governed by docs/VERSION-4-HOMEPAGE-SOURCE-OF-TRUTH.md.",
+    kind: "build",
+    source: "claude/homepage-v4",
   },
 ];
 
