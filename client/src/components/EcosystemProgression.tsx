@@ -24,31 +24,41 @@ type EcosystemProgressionProps = {
   compact?: boolean;
   /** Homepage: include monthly floors and capability highlights without a second card grid. */
   detailed?: boolean;
+  /** The host chapter supplies its own eyebrow/heading/lede; render only the rail and the fit note. */
+  bare?: boolean;
 };
 
 /** Fit-based IT → Office → Business → Enterprise rail. Not a ranking ladder. */
-export function EcosystemProgression({ compact = false, detailed = false }: EcosystemProgressionProps) {
+export function EcosystemProgression({
+  compact = false,
+  detailed = false,
+  bare = false,
+}: EcosystemProgressionProps) {
   return (
     <div
       className={
-        compact
+        compact || bare
           ? ""
           : "rounded-2xl border border-[var(--de-hairline)] bg-[var(--de-surface)] p-6 md:p-8 lg:p-10"
       }
     >
-      <p className="text-base font-semibold uppercase tracking-[0.2em] text-de-magenta-ink">
-        ProActive Ecosystem
-      </p>
-      <h2 className="mt-2 font-heading text-2xl font-semibold tracking-[-0.03em] text-white md:text-3xl lg:text-4xl">
-        Four operating models. One matched to your environment.
-      </h2>
-      <p className="mt-3 max-w-3xl text-base leading-relaxed text-white/55 md:text-lg">
-        We do not start with a package and pile on add-ons. If Office would need heavy modification,
-        Business is the correct fit for that environment — not universally “better.” User count is a
-        signal, never the sole criterion.
-      </p>
+      {!bare && (
+        <>
+          <p className="text-base font-semibold uppercase tracking-[0.2em] text-de-magenta-ink">
+            ProActive Ecosystem
+          </p>
+          <h2 className="mt-2 font-heading text-2xl font-semibold tracking-[-0.03em] text-white md:text-3xl lg:text-4xl">
+            Four operating models. One matched to your environment.
+          </h2>
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-white/55 md:text-lg">
+            We do not start with a package and pile on add-ons. If Office would need heavy modification,
+            Business is the correct fit for that environment — not universally “better.” User count is a
+            signal, never the sole criterion.
+          </p>
+        </>
+      )}
 
-      <ol className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <ol className={`grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 ${bare ? "gap-4 lg:gap-5" : "mt-8"}`}>
         {pricingTiers.map((tier, index) => {
           const isFlagship = tier.id === "business";
           return (
@@ -56,10 +66,8 @@ export function EcosystemProgression({ compact = false, detailed = false }: Ecos
               <Link
                 href={tier.learnMoreUrl}
                 data-testid={detailed ? `pricing-summary-${tier.id}` : `ecosystem-model-${tier.id}`}
-                className={`de-interactive-tile group relative flex h-full flex-col rounded-xl border p-5 md:p-6 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)] ${
-                  isFlagship
-                    ? "border-[#D3126A]/60 bg-gradient-to-b from-[#1e1525] via-[#15101c] to-[#0e0c13] shadow-lg shadow-[#D3126A]/15 hover:border-[#D3126A]"
-                    : "border-white/10 bg-gradient-to-b from-[#16131b] to-[#0f0d14] hover:border-[#D3126A]/60"
+                className={`de-interactive-card group relative flex h-full flex-col rounded-xl border bg-[var(--de-raised)] p-5 md:p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)] ${
+                  isFlagship ? "border-[#D3126A]/60" : "border-[var(--de-hairline)]"
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -67,7 +75,7 @@ export function EcosystemProgression({ compact = false, detailed = false }: Ecos
                     {String(index + 1).padStart(2, "0")}
                   </p>
                   {isFlagship && (
-                    <span className="rounded-full bg-[#D3126A] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm shadow-[#D3126A]/40">
+                    <span className="rounded-full border border-[#D3126A]/60 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-de-magenta-ink">
                       Flagship Cyber
                     </span>
                   )}

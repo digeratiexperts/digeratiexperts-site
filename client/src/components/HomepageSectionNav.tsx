@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { LayoutGroup, motion, useReducedMotion, useScroll } from "framer-motion";
 import { ArrowRight, Phone, Shield } from "lucide-react";
 import { useOptionalFullPageScroll } from "@/components/FullPageScroll";
 import { useBooking } from "@/contexts/BookingContext";
@@ -46,10 +47,17 @@ function nearestNavIndex(
  * Slim homepage table of contents under the global MegaMenu.
  * Desktop secondary row only — never inside the compact logo bar below lg.
  * Mobile/tablet jumps live in the MegaMenu drawer.
+ *
+ * Its own field (raised graphite, not the nav's black) so it reads as the
+ * page's instrument rather than a second nav. Two controlled motions only:
+ * the active marker glides between chapters and a hairline fills with read
+ * progress. Both are scroll-linked or spring-damped; nothing loops or pulses.
  */
 export function HomepageOnPageNav() {
   const ctx = useOptionalFullPageScroll();
   const rootRef = useRef<HTMLElement>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll();
   const sections = ctx?.sections ?? [];
   const currentSection = ctx?.currentSection ?? 0;
   const scrollToSection = ctx?.scrollToSection;
@@ -58,6 +66,7 @@ export function HomepageOnPageNav() {
     .filter(({ section }) => TOP_CHAPTERS.has(section.id));
 
   const activeIndex = nearestNavIndex(items, currentSection);
+  const activePosition = Math.max(0, items.findIndex(({ index }) => index === activeIndex));
 
   useEffect(() => {
     const root = document.documentElement;
@@ -86,39 +95,67 @@ export function HomepageOnPageNav() {
       ref={rootRef}
       aria-label="On this page"
       data-testid="homepage-section-spy"
-      className="hidden border-t border-white/[0.08] bg-black/90 max-lg:!hidden lg:block"
+      className="relative hidden border-t border-white/[0.08] bg-[#151217] max-lg:!hidden lg:block"
     >
-      <div className="mx-auto flex max-w-[var(--de-canvas)] items-stretch px-2 sm:px-3 xl:px-5">
-        <ul className="flex w-full min-h-9 items-stretch justify-start overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] md:justify-between [&::-webkit-scrollbar]:hidden">
-          {items.map(({ section, index }) => {
-            const isActive = activeIndex === index;
-            return (
-              <li key={section.id} className="flex shrink-0 justify-center md:min-w-0 md:flex-1">
-                <a
-                  href={`#${section.id}`}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    scrollToSection?.(index);
-                  }}
-                  className={`relative inline-flex min-h-9 items-center justify-center px-2.5 py-1.5 text-base font-semibold tracking-wide whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-de-accent focus-visible:ring-inset sm:px-3 md:px-1.5 lg:min-h-9 lg:w-auto lg:px-2 ${
-                    isActive ? "text-white" : "text-de-muted-soft hover:text-white"
-                  }`}
-                  aria-current={isActive ? "true" : undefined}
-                  data-testid={`nav-dot-${section.id}`}
-                >
-                  {section.label}
-                  <span
-                    aria-hidden="true"
-                    className={`pointer-events-none absolute inset-x-1 bottom-0 h-0.5 rounded-full transition-opacity lg:inset-x-2 ${
-                      isActive ? "bg-[#D3126A] opacity-100" : "opacity-0"
+      <div className="mx-auto flex max-w-[var(--de-canvas)] items-center gap-4 px-5 sm:px-8 lg:px-10 xl:px-12">
+        <span
+          className="hidden shrink-0 font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-white/45 xl:inline"
+          aria-hidden="true"
+        >
+          On this page
+        </span>
+        <LayoutGroup id="home-spy">
+          <ul className="flex min-h-10 flex-1 items-center justify-start gap-1 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {items.map(({ section, index }) => {
+              const isActive = activeIndex === index;
+              return (
+                <li key={section.id} className="relative flex shrink-0">
+                  <a
+                    href={`#${section.id}`}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      scrollToSection?.(index);
+                    }}
+                    className={`relative inline-flex min-h-9 items-center justify-center whitespace-nowrap rounded-full px-3.5 py-1.5 text-[15px] font-semibold transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-inset ${
+                      isActive ? "text-white" : "text-white/60 hover:text-white"
                     }`}
-                  />
-                </a>
-              </li>
-            );
-          })}
-        </ul>
+                    aria-current={isActive ? "true" : undefined}
+                    data-testid={`nav-dot-${section.id}`}
+                  >
+                    {isActive && (
+                      <motion.span
+                        layoutId="home-spy-active"
+                        className="absolute inset-0 -z-10 rounded-full border border-[#D3126A]/50 bg-[#D3126A]/15"
+                        transition={
+                          prefersReducedMotion
+                            ? { duration: 0 }
+                            : { type: "spring", stiffness: 420, damping: 38, mass: 0.6 }
+                        }
+                        aria-hidden="true"
+                      />
+                    )}
+                    {section.label}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </LayoutGroup>
+        <span
+          className="hidden shrink-0 font-mono text-[11px] font-semibold tracking-[0.2em] text-white/45 lg:inline"
+          aria-hidden="true"
+        >
+          {String(activePosition + 1).padStart(2, "0")}
+          <span className="text-white/25"> / </span>
+          {String(items.length).padStart(2, "0")}
+        </span>
       </div>
+      {/* Read progress — the one hairline that moves, and only with the scroll. */}
+      <motion.div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 origin-left bg-gradient-to-r from-[#7b6cff] to-[#D3126A]"
+        style={{ scaleX: scrollYProgress }}
+        aria-hidden="true"
+      />
     </nav>
   );
 }

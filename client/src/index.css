@@ -459,18 +459,14 @@ html[data-dock-hidden="true"] .de-bottom-bar {
 }
 
 /*
- * Homepage chapters fill one viewport under sticky chrome.
- * Hidden (showInNav:false) blocks stay natural height and are not snap targets.
+ * Homepage chapters are snap targets under sticky chrome and take their
+ * natural height. (They used to be stretched to one viewport each, which
+ * left dead field under short chapters — the "empty black gaps" Joe flagged
+ * 2026-09-30. Rhythm now comes from the chapter fields, not from padding.)
+ * Hidden (showInNav:false) blocks are not snap targets.
  */
 .scroll-snap-chapter {
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
   scroll-margin-top: var(--de-nav-current-bottom, var(--de-nav-chrome));
-}
-
-.scroll-snap-chapter > *:last-child {
-  flex: 1 1 auto;
 }
 
 /* Homepage section snap — proximity only (no JS scroll hijack). */
