@@ -15,6 +15,15 @@ describe("spaKnownPaths", () => {
     expect(isKnownSpaPath("/resources/blog/some-slug")).toBe(true);
   });
 
+  it("knows every homepage version preview, so none of them answers 404", () => {
+    // /version-4 was routed in App.tsx but missing here, so the preview rendered
+    // while answering HTTP 404 to monitors, crawlers and link checkers.
+    for (const n of [1, 2, 3, 4]) {
+      expect(isKnownSpaPath(`/version-${n}`)).toBe(true);
+    }
+    expect(isKnownSpaPath("/versions")).toBe(true);
+  });
+
   it("returns false for unknown paths so the SPA catch-all can send HTTP 404", () => {
     expect(isKnownSpaPath("/this-is-not-a-real-page")).toBe(false);
     expect(isKnownSpaPath("/store/product/secret-sku")).toBe(false);

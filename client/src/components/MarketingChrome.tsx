@@ -1,6 +1,5 @@
 import { Suspense, lazy } from "react";
 import { useLocation } from "wouter";
-import { DE_DESK_GRAPHITE_STYLE } from "@/components/deDeskGraphiteStyle";
 
 // The Desk widget is ~140 KB of source and was statically bundled into the
 // entry chunk of every marketing route. It has no above-the-fold UI of its own
@@ -17,9 +16,11 @@ const ZohoASAPWidget = lazy(() =>
  * chooses what they need, this existing Desk opens directly on that function.
  * Existing chat, ticket, and Client Tools behavior remains intact.
  *
- * Visual direction (DE Completion Program C5, 2026-09-12): one graphite
- * enterprise shell. The paper reference treatment lives on in
- * deDeskReferenceStyle.ts and can be swapped back here in one line.
+ * Visual direction: one graphite enterprise shell, and only one. The theme
+ * lives entirely inside ZohoASAPWidget's own stylesheet now — no external
+ * override, and no second treatment to swap back to. Both the graphite
+ * override and the paper reference file are gone; a colour that is wrong is
+ * wrong in exactly one place.
  */
 export function MarketingChrome() {
   const [location] = useLocation();
@@ -30,7 +31,7 @@ export function MarketingChrome() {
 
   return (
     <Suspense fallback={null}>
-      <ZohoASAPWidget isEnabled customCSS={DE_DESK_GRAPHITE_STYLE} />
+      <ZohoASAPWidget isEnabled />
     </Suspense>
   );
 }

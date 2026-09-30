@@ -208,7 +208,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-40 bg-black/70"
+            className="fixed inset-0 z-40 bg-[rgba(15,15,18,0.28)]"
             aria-hidden="true"
             data-testid="ask-de-sheet-scrim"
           />
@@ -223,8 +223,8 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
             transition={{ duration: 0.18, ease: "easeOut" }}
             className={
               isMobile
-                ? "fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-2xl border-t border-black/10 bg-[#fbfbfa] p-5 text-left text-[#151219] shadow-2xl"
-                : "absolute right-0 z-20 w-[min(380px,calc(100vw-1.5rem))] overflow-visible rounded-[24px] border border-black/10 bg-[#fbfbfa] p-5 text-left text-[#151219] shadow-[0_28px_80px_rgba(5,3,18,0.28),0_8px_24px_rgba(5,3,18,0.12)]"
+                ? "fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-2xl border-t border-black/10 bg-[#fbfbfa] p-5 text-left text-[#111116] shadow-2xl"
+                : "absolute right-0 z-20 w-[min(380px,calc(100vw-1.5rem))] overflow-visible rounded-[24px] border border-black/10 bg-[#fbfbfa] p-5 text-left text-[#111116] shadow-[0_26px_72px_rgba(9,9,16,0.24),0_6px_22px_rgba(9,9,16,0.10)]"
             }
             style={
               isMobile
@@ -242,7 +242,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
             <button
               type="button"
               onClick={() => setShowMenu(false)}
-              className="absolute right-3.5 top-3.5 flex h-8 w-8 items-center justify-center rounded-full text-[#65616c] transition-colors hover:bg-black/[0.06] hover:text-[#111116] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111116]"
+              className="absolute right-3.5 top-3.5 flex h-8 w-8 items-center justify-center rounded-full text-[#5e5b66] transition-colors hover:bg-black/[0.06] hover:text-[#111116] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-paper-ink"
               aria-label="Close Ask DE"
               data-testid="ask-de-close"
             >
@@ -252,9 +252,9 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
             <div className="mb-5 flex items-start justify-between gap-4 pr-8">
               <div>
                 <p className="text-[24px] font-semibold leading-tight tracking-[-0.035em] text-[#111116]">Ask DE</p>
-                <p className="mt-1 text-[15px] leading-6 text-[#65616c]">How can we help you today?</p>
+                <p className="mt-1 text-[15px] leading-6 text-[#5e5b66]">How can we help you today?</p>
               </div>
-              <div className="mt-3 flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white shadow-[0_8px_24px_rgba(15,15,18,0.08)]">
+              <div className="mt-3 flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white">
                 <AskDeGlyph className="h-10 w-10 text-[#111116]" />
               </div>
             </div>
@@ -265,26 +265,26 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
                   key={title}
                   type="button"
                   onClick={onSelect}
-                  className="group flex min-h-[88px] w-full items-center gap-4 rounded-2xl border border-black/10 bg-white px-4 py-3 text-left transition-[background-color,border-color,transform,box-shadow] duration-150 hover:-translate-y-px hover:border-black/20 hover:bg-[#f8f7f5] hover:shadow-[0_10px_24px_-18px_rgba(15,15,18,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111116] focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbfbfa]"
+                  className="group flex min-h-[88px] w-full items-center gap-4 rounded-2xl border border-black/10 bg-white px-4 py-3 text-left transition-[background-color,border-color] duration-150 hover:border-[rgba(211,18,106,0.45)] hover:bg-[#f4f3f1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-paper-ink focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbfbfa]"
                   data-testid={testId}
                 >
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#f2f1ef] text-[#111116]">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[rgba(211,18,106,0.35)] bg-[rgba(211,18,106,0.08)] text-[#A30E52] transition-colors duration-150 group-hover:bg-[rgba(211,18,106,0.14)]">
                     <Icon className="h-6 w-6" strokeWidth={1.9} aria-hidden="true" />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[16px] font-semibold leading-5 text-[#111116]">{title}</span>
-                    <span className="mt-1 block text-[13.5px] leading-5 text-[#65616c]">{description}</span>
+                    <span className="mt-1 block text-[13.5px] leading-5 text-[#5e5b66]">{description}</span>
                   </span>
-                  <ChevronRight className="h-5 w-5 shrink-0 text-[#2c2931] transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden="true" />
+                  <ChevronRight className="h-5 w-5 shrink-0 text-[#807b88] transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden="true" />
                 </button>
               ))}
             </div>
 
-            <div className="mt-5 border-t border-black/10 pt-4 text-sm text-[#65616c]">
-              <p className="font-medium text-[#2b2830]">We&apos;re here to help!</p>
+            <div className="mt-5 border-t border-black/10 pt-4 text-sm text-[#5e5b66]">
+              <p className="font-medium text-[#111116]">We&apos;re here to help!</p>
               <a
                 href={PRIMARY_PHONE.telHref}
-                className="mt-1 inline-flex font-medium text-[#111116] underline decoration-black/20 underline-offset-4 hover:decoration-black/60"
+                className="mt-1 inline-flex font-medium text-[#111116] underline decoration-black/25 underline-offset-4 hover:decoration-black/60"
                 data-testid="ask-de-choice-phone"
               >
                 Call {PRIMARY_PHONE.display}
