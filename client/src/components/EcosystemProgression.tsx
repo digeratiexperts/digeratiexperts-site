@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { Link } from "wouter";
-import { Diagram } from "@/diagrams/Diagram";
 import { ArrowRight } from "lucide-react";
 import { pricingTiers, formatUserPrice, formatPrice, type PricingTierKey } from "@/data/pricing";
 
@@ -30,9 +28,6 @@ type EcosystemProgressionProps = {
 
 /** Fit-based IT → Office → Business → Enterprise rail. Not a ranking ladder. */
 export function EcosystemProgression({ compact = false, detailed = false }: EcosystemProgressionProps) {
-  const [litTier, setLitTier] = useState<number | null>(null);
-  const flagshipIndex = pricingTiers.findIndex((t) => t.id === "business");
-  const coverageState = (litTier ?? (flagshipIndex >= 0 ? flagshipIndex : 0)) / Math.max(1, pricingTiers.length - 1);
   return (
     <div
       className={
@@ -53,18 +48,7 @@ export function EcosystemProgression({ compact = false, detailed = false }: Ecos
         signal, never the sole criterion.
       </p>
 
-      <div className={detailed ? "mt-8 grid grid-cols-1 gap-6 xl:grid-cols-12 xl:gap-8" : "mt-8"}>
-      {detailed && (
-        <div className="xl:col-span-4">
-          <Diagram
-            id="coverage"
-            tone="dark"
-            state={coverageState}
-            className="h-full rounded-xl border border-white/10 bg-[var(--de-bg)] p-4 md:p-5"
-          />
-        </div>
-      )}
-      <ol className={detailed ? "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:col-span-8" : "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"}>
+      <ol className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {pricingTiers.map((tier, index) => {
           const isFlagship = tier.id === "business";
           return (
@@ -72,10 +56,6 @@ export function EcosystemProgression({ compact = false, detailed = false }: Ecos
               <Link
                 href={tier.learnMoreUrl}
                 data-testid={detailed ? `pricing-summary-${tier.id}` : `ecosystem-model-${tier.id}`}
-                onMouseEnter={() => setLitTier(index)}
-                onMouseLeave={() => setLitTier(null)}
-                onFocus={() => setLitTier(index)}
-                onBlur={() => setLitTier(null)}
                 className={`de-interactive-tile group relative flex h-full flex-col rounded-xl border p-5 md:p-6 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)] ${
                   isFlagship
                     ? "border-[#D3126A]/60 bg-gradient-to-b from-[#1e1525] via-[#15101c] to-[#0e0c13] shadow-lg shadow-[#D3126A]/15 hover:border-[#D3126A]"
@@ -124,7 +104,6 @@ export function EcosystemProgression({ compact = false, detailed = false }: Ecos
           );
         })}
       </ol>
-      </div>
 
       <p className="mt-6 text-base leading-relaxed text-white/55">
         Not sure which package fits? We assess your environment — users, devices, locations,

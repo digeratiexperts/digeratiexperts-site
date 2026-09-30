@@ -192,7 +192,8 @@ export function ShoppingCart() {
                 <Layers className="h-5 w-5 text-de-accent-ink" />
                 <div>
                   <h2 id="solution-drawer-title" className="text-xl font-semibold text-[color:var(--dp-text-primary)]">
-                    Your Solution
+                    {/* "Your Solution" is the public Store's object; the staff drawer has its own name (§16.5, approved 2026-09-28). */}
+                    Warehouse cart
                   </h2>
                   <span className="text-sm text-[color:var(--dp-text-50)]">
                     {items.length} service{items.length === 1 ? "" : "s"}

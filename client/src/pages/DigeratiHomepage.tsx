@@ -64,6 +64,8 @@ export const DigeratiHomepage = (): JSX.Element => {
         <MegaMenu />
         <SiteBottomBar />
 
+        {/* One main landmark for the page content; nav and the Ask DE bar stay outside it. */}
+        <main id="home-main" className="contents">
         {/* Home — reference-style presentation, existing legacy hero remains preserved in source. */}
         <ScrollSectionAuto id="hero" chapter>
           <ReferenceHeroSection />
@@ -140,6 +142,7 @@ export const DigeratiHomepage = (): JSX.Element => {
           <DigeratiContactSection />
           <DigeratiEnhancedFooterSection />
         </ScrollSectionAuto>
+        </main>
       </div>
     </FullPageScrollProvider>
   );

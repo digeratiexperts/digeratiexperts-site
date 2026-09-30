@@ -1,0 +1,9 @@
+{
+  "about": "How DE Tech Tool treats a missing or invalid licence. 'warn': the run works and is marked UNLICENSED in the window, evidence and the Hub record. 'required': applying changes, rollback, Toolbox scripts, client profiles and headless -Apply are refused without a valid licence for this technician, device, client and feature. Set by the release build (New-DEReleasePackage.ps1 -Enforce), covered by integrity.json; not edited by hand.",
+  "enforce": "warn",
+  "maxTechnicianHours": 12,
+  "maxOrderDays": 45,
+  "clockSkewMinutes": 5,
+  "issuer": "de-hub",
+  "audience": "de-techtool"
+}

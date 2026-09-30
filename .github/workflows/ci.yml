@@ -41,6 +41,9 @@ jobs:
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=high
 
+      - name: Validate agent claim register
+        run: npm run check:active-work
+
       - name: Typecheck
         run: npm run check
 
@@ -51,6 +54,13 @@ jobs:
       # collection and needs its own step to stay covered.
       - name: MSP advisor tests
         run: npm run test:advisor
+
+      # The MSP AI Kit skill (.claude/skills/msp-ai-kit) is outside Vitest's
+      # include patterns too; its builder tests and config check run here so a
+      # module edit without a rebuilt example cannot merge green. The Windows
+      # loader has its own workflow (msp-ai-kit.yml).
+      - name: MSP AI Kit tests
+        run: npm run test:msp-ai-kit
 
       - name: Production build
         run: npm run build
@@ -63,10 +73,13 @@ jobs:
         run: |
           set -euo pipefail
           LOG=/tmp/digerati-ci-production.log
-          # The production build now fails closed without a JWT secret; give
-          # the smoke run an ephemeral one and explicitly allow memory-only DB.
+          # The production build fails closed without a JWT secret and (since the
+          # MFA crypto landed) without an MFA encryption key; give the smoke run
+          # ephemeral ones and explicitly allow memory-only DB. Neither value
+          # leaves this job.
           NODE_ENV=production PORT=3300 \
             JWT_SECRET="$(openssl rand -hex 32)" \
+            MFA_ENCRYPTION_KEY="$(openssl rand -hex 32)" \
             DE_SMOKE_ALLOW_MEMORY_ONLY=1 \
             node dist/index.js >"$LOG" 2>&1 &
           SERVER_PID=$!

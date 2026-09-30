@@ -1,0 +1,21 @@
+{
+  "id": "provision-entra-to-jumpcloud",
+  "module": "endpoint-provisioning",
+  "title": "Plan an Entra-joined laptop migration to JumpCloud with gates",
+  "inputs": {
+    "[DESIGN A PHASE, BUILD A PHASE, REVIEW A TOOL, or PLAN A MIGRATION for one machine]": "PLAN A MIGRATION for one machine",
+    "[OS and build, current identity state if known, intended local username, client and site, tier]": "Windows 11 23H2, dsregcmd AzureAdJoined YES, intended local username sthompson, Alamo main office, Business tier",
+    "[PASTE dsregcmd output, BitLocker status, OneDrive state, local admins, or UNKNOWN]": "AzureAdJoined YES, DomainJoined NO, TenantName Alamo; BitLocker on with RecoveryPassword protector; OneDrive running with Known Folder Move; local Administrators: Administrator (disabled), AzureAD\\SuzetteThompson",
+    "[JumpCloud is the intended Windows identity authority: YES, NO, or UNDECIDED]": "YES",
+    "[SECURITY COMPONENTS EXPECTED, or DE DEFAULT]": "Guardz, SentinelOne Managed, Prisma Browser Extension",
+    "[time window, remote or on-site, reboot allowed, who can verify break-glass interactively]": "on-site Friday afternoon, reboot allowed, technician verifies break-glass"
+  },
+  "mustMention": [
+    "break-glass",
+    "BLOCKED",
+    "BitLocker"
+  ],
+  "mustNotMention": [
+    "recovery password is"
+  ]
+}

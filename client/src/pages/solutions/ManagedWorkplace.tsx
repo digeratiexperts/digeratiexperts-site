@@ -435,7 +435,7 @@ export default function ManagedWorkplace() {
             <p className="text-white/60">See exactly what's included at each tier</p>
           </div>
           
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink" tabIndex={0} role="region" aria-label="Managed Workplace comparison table">
             <table className="w-full border-collapse" data-testid="compare-table">
               <thead>
                 <tr className="border-b border-white/10">

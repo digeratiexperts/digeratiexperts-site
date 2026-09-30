@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, RequestHandler } from "express";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 /**
@@ -8,12 +8,13 @@ import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
  * 1. POST /api/uploads/request-url - Get a presigned URL for uploading
  * 2. The client then uploads directly to the presigned URL
  *
- * IMPORTANT: These are example routes. Customize based on your use case:
- * - Add authentication middleware for protected uploads
- * - Add file metadata storage (save to database after upload)
- * - Add ACL policies for access control
+ * Uploads are admin-only. Reads require a portal session so an anonymous
+ * request cannot fetch a stored object by guessing its path.
  */
-export function registerObjectStorageRoutes(app: Express): void {
+export function registerObjectStorageRoutes(
+  app: Express,
+  guards: { auth: RequestHandler; admin: RequestHandler },
+): void {
   const objectStorageService = new ObjectStorageService();
 
   /**
@@ -35,7 +36,7 @@ export function registerObjectStorageRoutes(app: Express): void {
    * IMPORTANT: The client should NOT send the file to this endpoint.
    * Send JSON metadata only, then upload the file directly to uploadURL.
    */
-  app.post("/api/uploads/request-url", async (req, res) => {
+  app.post("/api/uploads/request-url", guards.auth, guards.admin, async (req, res) => {
     try {
       const { name, size, contentType } = req.body;
 
@@ -63,14 +64,10 @@ export function registerObjectStorageRoutes(app: Express): void {
   });
 
   /**
-   * Serve uploaded objects.
-   *
+   * Serve uploaded objects to an authenticated portal session.
    * GET /objects/:objectPath(*)
-   *
-   * This serves files from object storage. For public files, no auth needed.
-   * For protected files, add authentication middleware and ACL checks.
    */
-  app.get("/objects/:objectPath(*)", async (req, res) => {
+  app.get("/objects/:objectPath(*)", guards.auth, async (req, res) => {
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
       await objectStorageService.downloadObject(objectFile, res);

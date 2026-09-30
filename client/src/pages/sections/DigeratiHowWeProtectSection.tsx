@@ -1,22 +1,10 @@
-import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Diagram } from "@/diagrams/Diagram";
 import { Search, FileText, Settings, Activity, KeyRound, Monitor, Mail, Wifi, Database, Radio, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { IconWell } from "@/components/visual/IconWell";
 import type { LucideIcon } from "lucide-react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
-import { ProtectionCommandDeck, protectionDomains } from "@/components/visual/ProtectionCommandDeck";
-
-/** The deck's six domains as the six layers of the protection diagram, in deck order. */
-const deckLayers = [
-  { code: "01", label: "Identity", answers: "credential theft" },
-  { code: "02", label: "Endpoint", answers: "malware" },
-  { code: "03", label: "Email", answers: "phishing" },
-  { code: "04", label: "Network", answers: "lateral movement" },
-  { code: "05", label: "Recovery", answers: "ransomware encryption" },
-  { code: "06", label: "Compliance", answers: "audit & insurance requirements" },
-];
+import { ProtectionCommandDeck } from "@/components/visual/ProtectionCommandDeck";
 
 const steps: {
   number: number;
@@ -53,7 +41,7 @@ const steps: {
   {
     number: 4,
     title: "Continuous",
-    description: "Day-to-day support, security operations where included, and reviews at that tier’s cadence.",
+    description: "Day-to-day support and the DE Security Foundation are included at every tier; detection, response, recovery, and governance deepen with the plan.",
     icon: Activity,
     testId: "step-protection",
     href: "/solutions/proactive-ecosystem",
@@ -62,8 +50,6 @@ const steps: {
 
 export const DigeratiHowWeProtectSection = (): JSX.Element => {
   const prefersReducedMotion = useReducedMotion();
-  const [domainIndex, setDomainIndex] = useState(0);
-  const [stepIndex, setStepIndex] = useState<number | null>(null);
 
   return (
     <>
@@ -71,42 +57,30 @@ export const DigeratiHowWeProtectSection = (): JSX.Element => {
         <div className="mx-auto max-w-[var(--de-canvas)] px-3 sm:px-4 lg:px-6">
           <div className="de-paper-island relative px-6 py-10 sm:px-10 sm:py-14 md:px-12 md:py-16">
             <div className="relative z-10">
-              <div className="mb-8 grid grid-cols-1 gap-8 md:mb-12 lg:grid-cols-12 lg:items-center lg:gap-10">
-                <motion.div
-                  className="max-w-2xl lg:col-span-5"
-                  initial={prefersReducedMotion ? false : revealInitial}
-                  whileInView={revealInView}
-                  viewport={revealViewport}
-                  transition={revealTransition}
-                >
-                  <p className="mb-3 text-base font-semibold uppercase tracking-[0.2em] text-[#A30E52]">
-                    What we protect
-                  </p>
-                  <h2 className="mb-4 font-heading text-3xl font-semibold tracking-[-0.02em] text-[#1A1228] md:text-4xl">
-                    Six domains. One accountable operating model.
-                  </h2>
-                  <p className="text-lg leading-relaxed text-[#3A3448]">
-                    Protection is layered around the business, and each layer answers a specific
-                    class of threat. Select a domain below to see how we operate it.
-                  </p>
-                </motion.div>
-                <div className="lg:col-span-7">
-                  <Diagram
-                    id="protection"
-                    tone="paper"
-                    state={1}
-                    focus={`layer-${domainIndex + 1}`}
-                    data={{ layers: deckLayers }}
-                    className="rounded-2xl border border-[var(--de-paper-hairline)] bg-white p-4 md:p-6"
-                  />
-                </div>
-              </div>
+              <motion.div
+                className="mb-8 max-w-2xl md:mb-12"
+                initial={prefersReducedMotion ? false : revealInitial}
+                whileInView={revealInView}
+                viewport={revealViewport}
+                transition={revealTransition}
+              >
+                <p className="mb-3 text-base font-semibold uppercase tracking-[0.2em] text-[#A30E52]">
+                  What we protect
+                </p>
+                <h2 className="mb-4 font-heading text-3xl font-semibold tracking-[-0.02em] text-[#1A1228] md:text-4xl">
+                  Eight blocks. One accountable operating model.
+                </h2>
+                <p className="text-lg leading-relaxed text-[#3A3448]">
+                  Protection is layered around the business, and each block answers a specific class
+                  of threat. Risk and exposure runs continuously beneath the other seven. Select a
+                  block below to see how we operate it.
+                </p>
+              </motion.div>
 
-              {/* Interactive Six Domains Protection Command Deck */}
+
+              {/* Interactive eight-block protection command deck */}
               <div id="protection-stack">
-                <ProtectionCommandDeck
-                  onDomainChange={(id) => setDomainIndex(Math.max(0, protectionDomains.findIndex((d) => d.id === id)))}
-                />
+                <ProtectionCommandDeck />
               </div>
             </div>
           </div>
@@ -120,7 +94,7 @@ export const DigeratiHowWeProtectSection = (): JSX.Element => {
       >
         <div className="container relative z-10 mx-auto px-3 sm:px-4 lg:px-6">
           <div className="mb-10 flex flex-wrap items-end justify-between gap-4 md:mb-12">
-            <div className="max-w-5xl">
+            <div className="max-w-3xl">
               <p className="mb-2 text-base font-semibold uppercase tracking-[0.2em] text-de-magenta-ink">
                 How protection works
               </p>
@@ -139,49 +113,36 @@ export const DigeratiHowWeProtectSection = (): JSX.Element => {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center lg:gap-12">
-            <div className="lg:col-span-6">
-              <Diagram
-                id="lifecycle"
-                tone="dark"
-                state={stepIndex === null ? 1 : (stepIndex + 0.5) / 5}
-                className="rounded-2xl border border-[var(--de-hairline)] bg-[var(--de-surface)] p-5 md:p-6"
-              />
-            </div>
-            <ol className="divide-y divide-[var(--de-hairline)] border-y border-[var(--de-hairline)] lg:col-span-6">
-              {steps.map((step, index) => {
-                const IconComponent = step.icon;
-                return (
-                  <li key={step.number}>
-                    <Link
-                      href={step.href}
-                      data-testid={step.testId}
-                      className="group flex items-start gap-4 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)] md:py-5"
-                      onMouseEnter={() => setStepIndex(index)}
-                      onMouseLeave={() => setStepIndex(null)}
-                      onFocus={() => setStepIndex(index)}
-                      onBlur={() => setStepIndex(null)}
-                    >
-                      <span className="pt-1 font-mono text-sm font-bold tracking-[0.18em] text-[#D3126A]" aria-hidden="true">
-                        {String(step.number).padStart(2, "0")}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-2 text-lg font-semibold text-white">
-                          <IconComponent className="h-4 w-4 shrink-0 text-white/60 group-hover:text-[#D3126A]" aria-hidden="true" />
-                          {step.title}
-                        </span>
-                        <span className="mt-1 block text-base leading-relaxed text-white/70">{step.description}</span>
-                      </span>
-                      <ArrowRight
-                        className="mt-2 h-4 w-4 shrink-0 text-white/35 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[#D3126A]"
-                        aria-hidden="true"
-                      />
-                    </Link>
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
+          <ol className="mx-auto grid max-w-[92rem] grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0">
+            {steps.map((step, index) => {
+              const IconComponent = step.icon;
+              return (
+                <li
+                  key={step.number}
+                  className={`${index > 0 ? "lg:border-l lg:border-[var(--de-hairline)]" : "lg:pl-0"} lg:px-6`}
+                >
+                  <Link
+                    href={step.href}
+                    data-testid={step.testId}
+                    className="de-interactive-tile group flex h-full flex-col rounded-xl border border-transparent p-3 hover:border-de-hairline hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)]"
+                  >
+                    <p className="font-mono text-sm font-bold tracking-[0.18em] text-[#D3126A]" aria-hidden="true">
+                      {String(step.number).padStart(2, "0")}
+                    </p>
+                    <span className="mt-3 mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#D3126A]/30 bg-[#D3126A]/10 text-[#D3126A] shadow-[0_0_16px_-4px_rgba(211,18,106,0.45)] transition-all group-hover:border-[#D3126A]/60 group-hover:shadow-[0_0_20px_-4px_rgba(211,18,106,0.6)]">
+                      <IconComponent className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <h4 className="mb-2 text-lg font-semibold text-white">
+                      {step.title}
+                    </h4>
+                    <p className="text-base leading-relaxed text-white/75 md:text-lg">
+                      {step.description}
+                    </p>
+                  </Link>
+                </li>
+              );
+            })}
+          </ol>
         </div>
       </section>
     </>

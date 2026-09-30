@@ -17,6 +17,8 @@ import { SolutionOrderSummary } from "@/components/store/SolutionOrderSummary";
 import { snapshotSubmitLines } from "@/lib/solutionSnapshotView";
 import { portalLoginWithReturn } from "@/lib/portalUrls";
 import { readGuidedSession } from "@/lib/storeGuidedSession";
+import { writeContactHandoff } from "@/lib/warehouseContactHandoff";
+import { warehousePath } from "@/lib/warehousePaths";
 
 import {
   ArrowLeft,
@@ -96,6 +98,7 @@ const Checkout = () => {
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           if (response.status === 401) {
+            writeContactHandoff({ ...data, reason: "auth_required" });
             toast({
               title: "Sign in required to pay online",
               description: "Open ASK DE and sign in once, then retry checkout. Your solution is still here.",
@@ -104,6 +107,7 @@ const Checkout = () => {
             return;
           }
           if (response.status === 403) {
+            writeContactHandoff({ ...data, reason: "role_required" });
             toast({
               title: "This cart needs a Client Portal role to pay online",
               description:
@@ -113,6 +117,7 @@ const Checkout = () => {
             return;
           }
           if (errorData.code === "SUBSCRIPTION_BILLING_REQUIRED" && errorData.quoteRequired) {
+            writeContactHandoff({ ...data, reason: "subscription_billing" });
             toast({
               title: "Recurring services move through subscription setup",
               description:
@@ -122,6 +127,7 @@ const Checkout = () => {
             return;
           }
           if (errorData.code === "DURABLE_DATABASE_REQUIRED") {
+            writeContactHandoff({ ...data, reason: "durable_db" });
             toast({
               title: "Online payment is temporarily unavailable",
               description:
@@ -144,7 +150,10 @@ const Checkout = () => {
           navigate(`/internal/warehouse/order-confirmation?orderId=${result.orderId}${ct}`);
         }
       } else if (paymentMethod === "quote_request") {
-        navigate("/internal/warehouse/quote-request");
+        // The contact fields travel with the buyer (issues #235 / #258): Request
+        // Quote opens pre-filled instead of blank.
+        writeContactHandoff({ ...data, reason: "user_choice" });
+        navigate(warehousePath("/quote-request"));
         return;
       }
     } catch (error: any) {
@@ -340,13 +349,13 @@ const Checkout = () => {
                       )}
                     </label>
                   </RadioGroup>
-                  <p className="mt-4 text-sm text-white/45">
+                  <p className="mt-4 text-sm text-white/55">
                     Already a co-managed client?{" "}
                     <a
                       href={portalLoginWithReturn(
                         typeof window !== "undefined"
-                          ? `${window.location.origin}/store/checkout`
-                          : "/internal/warehouse/checkout",
+                          ? `${window.location.origin}${warehousePath("/checkout")}`
+                          : warehousePath("/checkout"),
                       )}
                       className="text-de-accent-ink underline-offset-4 hover:underline"
                       data-testid="checkout-portal-login"
@@ -391,11 +400,11 @@ const Checkout = () => {
                       </Button>
                       <p className="mt-4 text-center text-xs text-white/55">
                         By completing this order, you agree to our{" "}
-                        <Link href="/legal/terms-of-use" className="text-de-accent-ink hover:underline">
+                        <Link href="/legal/terms-of-use" className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
                           Terms of Service
                         </Link>{" "}
                         and{" "}
-                        <Link href="/legal/privacy-policy" className="text-de-accent-ink hover:underline">
+                        <Link href="/legal/privacy-policy" className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
                           Privacy Policy
                         </Link>
                       </p>

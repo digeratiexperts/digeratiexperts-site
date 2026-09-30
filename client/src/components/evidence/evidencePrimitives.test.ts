@@ -65,14 +65,20 @@ describe("DE Visual System v2 Primitives Integrity", () => {
     expect(assessmentReportSrc).not.toMatch(/Delivered: Day 7/i);
   });
 
-  it("implements 6 domains in ProtectionCommandDeck with explicit ILLUSTRATIVE classification", () => {
+  it("implements the eight cybersecurity blocks in ProtectionCommandDeck with explicit ILLUSTRATIVE classification", () => {
     expect(protectionDeckSrc).toMatch(/classification="ILLUSTRATIVE"/);
-    expect(protectionDeckSrc).toMatch(/identity/);
-    expect(protectionDeckSrc).toMatch(/endpoint/);
-    expect(protectionDeckSrc).toMatch(/email/);
-    expect(protectionDeckSrc).toMatch(/network/);
-    expect(protectionDeckSrc).toMatch(/recovery/);
-    expect(protectionDeckSrc).toMatch(/compliance/);
+    // docs/DE-SERVICE-MODEL-2026.md: eight blocks, Risk & Exposure retained as
+    // the continuous visibility and intelligence layer, not dropped for an old
+    // six-count. Data & Recovery and Governance & Compliance are capability
+    // lanes, not blocks, and must not reappear here.
+    for (const id of ["identity", "endpoint", "email", "browser", "network", "detection", "human", "exposure"]) {
+      expect(protectionDeckSrc).toMatch(new RegExp(`id: "${id}"`));
+    }
+    expect(protectionDeckSrc.match(/^\s{4}id: "/gm)).toHaveLength(8);
+    expect(protectionDeckSrc).toMatch(/continuous: true/);
+    expect(protectionDeckSrc).not.toMatch(/id: "recovery"/);
+    expect(protectionDeckSrc).not.toMatch(/id: "compliance"/);
+    expect(protectionDeckSrc).not.toMatch(/Six-domain/);
   });
 
   it("implements 4-stage lifecycle in ProActiveEcosystemDiagram without claiming live telemetry", () => {

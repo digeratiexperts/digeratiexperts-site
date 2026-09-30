@@ -69,6 +69,18 @@ const statements = [
     source_version text,
     published_at timestamp NOT NULL DEFAULT now()
   )`,
+  `CREATE TABLE IF NOT EXISTS sync_projections (
+    id varchar PRIMARY KEY,
+    entity_type text NOT NULL,
+    entity_id text NOT NULL,
+    canonical_account_id varchar,
+    event_type text NOT NULL,
+    event_id varchar NOT NULL,
+    payload jsonb NOT NULL,
+    updated_at timestamp NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS sync_projections_account_idx
+    ON sync_projections (canonical_account_id)`,
 ];
 
 let schemaPromise: Promise<void> | null = null;

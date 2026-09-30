@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Diagram } from "@/diagrams/Diagram";
 import { Link } from "wouter";
 import {
   Shield,
@@ -18,6 +16,8 @@ import {
 } from "lucide-react";
 import { CTA } from "@/lib/ctaCopy";
 import { IconWell } from "@/components/visual/IconWell";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 
 /**
@@ -64,6 +64,16 @@ const paths: {
   },
 ];
 
+/**
+ * Radix derives the trigger/content element ids from the tab value. A value
+ * such as "SOC / MDR Monitoring" produces ids containing spaces and slashes,
+ * which makes aria-controls / aria-labelledby point at invalid id tokens
+ * (axe: aria-valid-attr-value, critical). Use a slug for the value and keep
+ * the human title for display.
+ */
+export const tabValue = (title: string) =>
+  title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
 const capabilityPreview: {
   icon: LucideIcon;
   title: string;
@@ -108,23 +118,12 @@ const capabilityPreview: {
   },
 ];
 
-/** Which node of the environment diagram each capability lives on. */
-const capabilityNode: Record<string, string> = {
-  "SOC / MDR Monitoring": "operations",
-  "Endpoint Security (EDR)": "devices",
-  "SMART Identity (MFA + SSO)": "identity",
-  "Privileged Access Controls": "identity",
-  "Backup & Disaster Recovery": "backup",
-  "Email Protection": "email",
-};
-
 export const DigeratiServicesSection = (): JSX.Element => {
   const prefersReducedMotion = useReducedMotion();
-  const [focusNode, setFocusNode] = useState<string | null>(null);
 
   return (
     <section
-      id="services"
+      data-section="services"
       className="de-dark-chapter de-chapter-hairline de-field-grain relative overflow-hidden py-10 md:py-18 lg:py-22"
     >
       <div className="container relative z-10 mx-auto px-3 sm:px-4 lg:px-6">
@@ -223,59 +222,64 @@ export const DigeratiServicesSection = (): JSX.Element => {
               </span>
             </h3>
             <p className="mx-auto mt-3 max-w-2xl text-base text-white/55 md:text-lg">
-              One environment, six capabilities we operate inside it. Each capability below is
-              mapped to where it lives.
+              Preview of the stack we manage — also detailed under Protect.
             </p>
           </div>
 
-          <div className="mt-8 grid grid-cols-1 gap-8 lg:mt-10 lg:grid-cols-12 lg:gap-10">
-            <div className="lg:col-span-7">
-              <Diagram
-                id="environment"
-                tone="dark"
-                focus={focusNode}
-                className="rounded-2xl border border-[var(--de-hairline)] bg-[var(--de-surface)] p-5 md:p-6"
+          <Tabs defaultValue={tabValue(capabilityPreview[0].title)} className="mt-8 md:mt-10">
+            <div className="relative">
+              <div
+                className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-[var(--de-surface)] to-transparent md:hidden"
+                aria-hidden="true"
               />
+              <TabsList
+                aria-label="Security capabilities"
+                className="h-auto w-full max-w-full justify-start gap-2.5 overflow-x-auto bg-transparent p-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:justify-center md:gap-3"
+              >
+                {capabilityPreview.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <TabsTrigger
+                      key={item.title}
+                      value={tabValue(item.title)}
+                      className={cn(
+                        "group h-auto min-h-11 shrink-0 rounded-xl border bg-transparent px-3.5 py-2.5 text-base font-medium text-white shadow-none",
+                        "hover:bg-white/[0.03] hover:text-white",
+                        "focus-visible:ring-2 focus-visible:ring-[#D3126A]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)]",
+                        "data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:text-white",
+                        "border-[var(--de-hairline)] data-[state=active]:border-[#D3126A] data-[state=active]:shadow-[inset_0_0_0_1px_#D3126A]",
+                      )}
+                    >
+                      <Icon
+                        className="mr-2 h-4 w-4 shrink-0 text-white group-data-[state=active]:text-[#D3126A]"
+                        aria-hidden="true"
+                      />
+                      {item.title}
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
             </div>
-            <ul
-              className="divide-y divide-[var(--de-hairline)] border-y border-[var(--de-hairline)] lg:col-span-5"
-              aria-label="Security capabilities"
-            >
-              {capabilityPreview.map((item, index) => {
-                const Icon = item.icon;
-                const node = capabilityNode[item.title] ?? null;
-                return (
-                  <li key={item.title}>
-                    <Link href={item.link}>
-                      <span
-                        className="group flex items-start gap-4 py-4 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)] md:py-5"
-                        onMouseEnter={() => setFocusNode(node)}
-                        onMouseLeave={() => setFocusNode(null)}
-                        onFocus={() => setFocusNode(node)}
-                        onBlur={() => setFocusNode(null)}
-                        data-testid={`capability-row-${index}`}
-                      >
-                        <span className="pt-1 font-mono text-xs font-bold tracking-[0.18em] text-[#D3126A]" aria-hidden="true">
-                          {String(index + 1).padStart(2, "0")}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="flex items-center gap-2 text-base font-semibold text-white md:text-lg">
-                            <Icon className="h-4 w-4 shrink-0 text-white/60 group-hover:text-[#D3126A]" aria-hidden="true" />
-                            {item.title}
-                          </span>
-                          <span className="mt-1 block text-sm leading-relaxed text-white/60 md:text-base">{item.desc}</span>
-                        </span>
-                        <ArrowRight
-                          className="mt-1.5 h-4 w-4 shrink-0 text-white/35 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[#D3126A]"
-                          aria-hidden="true"
-                        />
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+
+            {capabilityPreview.map((item) => (
+              <TabsContent
+                key={item.title}
+                value={tabValue(item.title)}
+                className="mt-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)]"
+              >
+                <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
+                  <p className="font-heading text-xl font-semibold text-white md:text-2xl">{item.title}</p>
+                  <p className="mt-2 text-base leading-relaxed text-white/55 md:text-lg">{item.desc}</p>
+                  <Link href={item.link}>
+                    <span className="mt-5 inline-flex min-h-11 items-center gap-2 text-base font-medium text-white/80 underline decoration-white/20 underline-offset-4 hover:text-white hover:decoration-white/50">
+                      {item.title} details
+                      <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                  </Link>
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
 
           <div className="mt-8 flex justify-center md:mt-10">
             <Link href="/#protection" data-testid="link-see-security-stack">

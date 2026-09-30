@@ -2,14 +2,17 @@
  * Durable portal auth store — Neon-backed with in-memory cache.
  * Sync get/set API matches the former Map so routes can migrate cleanly.
  */
-import { eq, or, sql } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { db, dbReady, initPromise } from "./db";
 import {
   portalUsers as portalUsersTable,
   portalClients as portalClientsTable,
   portalOrderForms,
+  externalIntegrationMappings,
 } from "@shared/schema";
+import { selectBackfillUpdates } from "./integrations/backfillHubIdentity";
 import { PRIMARY_PHONE } from "@shared/companyContact";
+import { decryptTotpSecret, encryptTotpSecret, prepareBackupCodesForStorage } from "./portalMfaCrypto";
 
 type StoreRole = "public" | "prospect" | "managed" | "comanaged" | "admin";
 
@@ -63,6 +66,18 @@ function indexUser(user: PortalAuthUser) {
   }
 }
 
+function decryptUserTotpSecret(userId: string, stored: string | null | undefined): string | null {
+  try {
+    return decryptTotpSecret(stored);
+  } catch (err: any) {
+    console.warn(
+      `[portalAuthStore] MFA secret decrypt failed for user ${userId}; keeping mfaEnabled`,
+      err?.message || err,
+    );
+    return null;
+  }
+}
+
 function rowToUser(row: typeof portalUsersTable.$inferSelect): PortalAuthUser {
   return {
     id: row.id,
@@ -81,7 +96,7 @@ function rowToUser(row: typeof portalUsersTable.$inferSelect): PortalAuthUser {
     isActive: row.isActive ?? true,
     mfaEnabled: row.mfaEnabled ?? false,
     mfaMethod: row.mfaMethod,
-    mfaTotpSecret: row.mfaTotpSecret,
+    mfaTotpSecret: decryptUserTotpSecret(row.id, row.mfaTotpSecret),
     mfaBackupCodes: Array.isArray(row.mfaBackupCodes) ? row.mfaBackupCodes : [],
     lastLogin: row.lastLogin,
     createdAt: row.createdAt,
@@ -142,6 +157,7 @@ async function ensureSchema() {
 }
 
 async function upsertUserDb(user: PortalAuthUser) {
+  persistUserObserver?.(user);
   if (!dbReady || !db) return;
   try {
     const values = {
@@ -161,8 +177,8 @@ async function upsertUserDb(user: PortalAuthUser) {
       isActive: user.isActive ?? true,
       mfaEnabled: user.mfaEnabled ?? false,
       mfaMethod: user.mfaMethod || null,
-      mfaTotpSecret: user.mfaTotpSecret || null,
-      mfaBackupCodes: user.mfaBackupCodes || [],
+      mfaTotpSecret: encryptTotpSecret(user.mfaTotpSecret),
+      mfaBackupCodes: prepareBackupCodesForStorage(user.mfaBackupCodes || []),
       lastLogin: user.lastLogin || null,
     };
     await db
@@ -223,7 +239,7 @@ async function upsertClientDb(client: PortalAuthClient) {
           primaryContact: client.primaryContact || null,
           status: client.status || "active",
           serviceType: client.serviceType || "prospect",
-          hubAccountId: client.hubAccountId || null,
+          ...(client.hubAccountId ? { hubAccountId: client.hubAccountId } : {}),
           updatedAt: new Date(),
         },
       });
@@ -232,15 +248,67 @@ async function upsertClientDb(client: PortalAuthClient) {
   }
 }
 
-const ADMIN_HASH = "$2b$12$Bf.sDD1gQ6391SrTebkd4.9BeiteKKOswHl63vyCN0/51CmDldT7K"; // Admin123!
+const DEV_PORTAL_BOOTSTRAP_FLAG = "ENABLE_DEV_PORTAL_BOOTSTRAP";
+const DEV_PORTAL_ADMIN_HASH_ENV = "DEV_PORTAL_ADMIN_PASSWORD_HASH";
 
-function seedAdmins() {
+/** True only for non-production + explicit opt-in. Production always false. */
+export function isDevPortalBootstrapAllowed(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  if (env.NODE_ENV === "production") return false;
+  return env[DEV_PORTAL_BOOTSTRAP_FLAG] === "true";
+}
+
+/** Runtime bootstrap hash only — never hard-code credentials in source. */
+export function resolveDevPortalAdminPasswordHash(
+  env: NodeJS.ProcessEnv = process.env,
+): string | null {
+  const hash = env[DEV_PORTAL_ADMIN_HASH_ENV]?.trim() ?? "";
+  if (!hash || hash.length < 20) return null;
+  return hash;
+}
+
+/** Test seam: records attempted user persistence without requiring a live DB. */
+let persistUserObserver: ((user: PortalAuthUser) => void) | null = null;
+
+export function setPersistUserObserverForTests(
+  observer: ((user: PortalAuthUser) => void) | null,
+): void {
+  if (process.env.VITEST !== "true") {
+    throw new Error("setPersistUserObserverForTests is test-only");
+  }
+  persistUserObserver = observer;
+}
+
+export function resetPortalAuthStoreForTests(): void {
+  if (process.env.VITEST !== "true") {
+    throw new Error("resetPortalAuthStoreForTests is test-only");
+  }
+  usersByKey.clear();
+  clientsById.clear();
+  initialized = false;
+  persistUserObserver = null;
+}
+
+/**
+ * Explicit development-only bootstrap administrators.
+ * Requires NODE_ENV !== "production" AND ENABLE_DEV_PORTAL_BOOTSTRAP=true
+ * AND DEV_PORTAL_ADMIN_PASSWORD_HASH. Missing any condition → no-op.
+ * Production refuses bootstrap even if the flag/hash are set.
+ */
+function seedDevPortalBootstrapIfEnabled(
+  env: NodeJS.ProcessEnv = process.env,
+): void {
+  if (!isDevPortalBootstrapAllowed(env)) return;
+  const passwordHash = resolveDevPortalAdminPasswordHash(env);
+  if (!passwordHash) return;
+
   const admins: PortalAuthUser[] = [
     {
       id: "admin-001",
       email: "admin@digeratiexperts.com",
       username: "admin",
-      password: ADMIN_HASH,
+      password: passwordHash,
       role: "admin",
       storeRole: "admin",
       fullName: "Administrator",
@@ -252,7 +320,7 @@ function seedAdmins() {
       id: "admin-002",
       email: "admin@digerati-experts.com",
       username: "admin-hyphen",
-      password: ADMIN_HASH,
+      password: passwordHash,
       role: "admin",
       storeRole: "admin",
       fullName: "Administrator",
@@ -296,12 +364,17 @@ function seedDemoIfNotProduction() {
   ];
   for (const c of demoCompanies) setClient(c);
 
-  const demos: PortalAuthUser[] = [
-    { id: "user-001", email: "john.smith@acme.com", username: "johnsmith", password: ADMIN_HASH, role: "user", storeRole: "managed", fullName: "John Smith", clientId: "client-1", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
-    { id: "user-002", email: "sarah.jones@phoenixmedical.com", username: "sarahjones", password: ADMIN_HASH, role: "user", storeRole: "managed", fullName: "Sarah Jones", clientId: "client-2", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
-    { id: "user-003", email: "admin@alamoindustries.com", username: "alamoadmin", password: "$2b$12$N9Ys4.kLCKht2rMjK4x0TOJHlQlxY7dRzAT6vmC7.mGrjck7TUI7O", role: "user", storeRole: "comanaged", fullName: "Maria Garcia", clientId: "client-5", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
-    { id: "user-004", email: "admin@selmachining.com", username: "seladmin", password: "$2b$12$m6eyC5YfWBIG4/beE40TxOeG5BG4v/MxsowQ4Ays9RrjhOzcVxx.a", role: "user", storeRole: "comanaged", fullName: "Sel Operations", clientId: "client-6", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
-  ];
+  // Shared demo-user passwords come from the same runtime env hash when present.
+  // Do not embed fixed bootstrap credential material in source.
+  const sharedDemoHash =
+    isDevPortalBootstrapAllowed() ? resolveDevPortalAdminPasswordHash() : null;
+  const demos: PortalAuthUser[] = [];
+  if (sharedDemoHash) {
+    demos.push(
+      { id: "user-001", email: "john.smith@acme.com", username: "johnsmith", password: sharedDemoHash, role: "user", storeRole: "managed", fullName: "John Smith", clientId: "client-1", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
+      { id: "user-002", email: "sarah.jones@phoenixmedical.com", username: "sarahjones", password: sharedDemoHash, role: "user", storeRole: "managed", fullName: "Sarah Jones", clientId: "client-2", orgRole: "company_it_contact", isCompanyItContact: true, emailVerified: true, isActive: true },
+    );
+  }
   for (const u of demos) {
     if (!getUser(u.email)) setUser(u);
   }
@@ -347,6 +420,11 @@ export async function initPortalAuthStore(): Promise<void> {
   if (initialized) return;
   await initPromise;
   await ensureSchema();
+  if (process.env.NODE_ENV !== "production" && !process.env.MFA_ENCRYPTION_KEY?.trim()) {
+    console.warn(
+      "⚠️ MFA_ENCRYPTION_KEY is unset — stored MFA secrets will not survive process restart",
+    );
+  }
 
   if (dbReady && db) {
     try {
@@ -354,6 +432,25 @@ export async function initPortalAuthStore(): Promise<void> {
       for (const c of clients) clientsById.set(c.id, rowToClient(c));
       const users = await db.select().from(portalUsersTable);
       for (const u of users) indexUser(rowToUser(u));
+      const mappings = await db
+        .select({
+          clientId: externalIntegrationMappings.clientId,
+          externalId: externalIntegrationMappings.externalId,
+          hubAccountId: portalClientsTable.hubAccountId,
+        })
+        .from(externalIntegrationMappings)
+        .innerJoin(portalClientsTable, eq(portalClientsTable.id, externalIntegrationMappings.clientId))
+        .where(eq(externalIntegrationMappings.integrationType, "techsales_hub"));
+      for (const update of selectBackfillUpdates(mappings)) {
+        await db
+          .update(portalClientsTable)
+          .set({ hubAccountId: update.hubAccountId, updatedAt: new Date() })
+          .where(and(eq(portalClientsTable.id, update.clientId), isNull(portalClientsTable.hubAccountId)));
+        const cached = clientsById.get(update.clientId);
+        if (cached && !cached.hubAccountId) {
+          clientsById.set(update.clientId, { ...cached, hubAccountId: update.hubAccountId });
+        }
+      }
       console.log(`✅ Portal auth store loaded ${users.length} users, ${clients.length} clients from DB`);
     } catch (err: any) {
       console.warn("[portalAuthStore] load from DB failed:", err?.message);
@@ -362,7 +459,7 @@ export async function initPortalAuthStore(): Promise<void> {
     console.warn("⚠️ Portal auth store: DB unavailable — using memory (non-durable)");
   }
 
-  seedAdmins();
+  seedDevPortalBootstrapIfEnabled();
   seedDemoIfNotProduction();
   ensureInternalMspClient();
   initialized = true;
@@ -471,6 +568,18 @@ export async function createProspectClientForUser(user: PortalAuthUser, companyN
   user.clientId = client.id;
   user.storeRole = "prospect";
   setUser(user);
+  void import("./integrations/linkPortalIdentity")
+    .then(({ queuePortalIdentityLink }) =>
+      queuePortalIdentityLink({
+        portalClientId: client.id,
+        companyName: client.companyName,
+        email: client.contactEmail,
+        name: client.primaryContact || client.companyName,
+      }),
+    )
+    .catch((err: { message?: string }) => {
+      console.warn("[portal-identity] link queue failed:", err?.message || err);
+    });
   return client;
 }
 

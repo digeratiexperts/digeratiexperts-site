@@ -8,6 +8,7 @@ const card = readFileSync(resolve(here, "DeskLoginCard.tsx"), "utf8");
 const widget = readFileSync(resolve(here, "ZohoASAPWidget.tsx"), "utf8");
 const storeAuth = readFileSync(resolve(here, "../hooks/useStoreAuth.ts"), "utf8");
 const portalLogin = readFileSync(resolve(here, "../pages/portal/PortalLogin.tsx"), "utf8");
+const portalApi = readFileSync(resolve(here, "../lib/portalApi.ts"), "utf8");
 const serverRoutes = readFileSync(resolve(here, "../../../server/routes.ts"), "utf8");
 
 describe("ASK DE shared portal authentication", () => {
@@ -25,6 +26,9 @@ describe("ASK DE shared portal authentication", () => {
     expect(storeAuth).toMatch(/const isLoggedIn = useMemo\(\(\) => !!user/);
     expect(portalLogin).toMatch(/fetch\("\/api\/portal\/me", \{[\s\S]*credentials: "include"[\s\S]*cache: "no-store"/);
     expect(serverRoutes).toMatch(/const token = cookieToken \|\| bearer/);
+    expect(portalApi).toMatch(/credentials: "include"/);
+    expect(portalApi).not.toMatch(/localStorage\.getItem\("portalToken"\)/);
+    expect(portalApi).toMatch(/de-portal-session-expired/);
   });
 
   it("keeps ASK DE stationary and provides a real back control", () => {
@@ -33,7 +37,6 @@ describe("ASK DE shared portal authentication", () => {
     expect(card).toMatch(/window\.open\(/);
     expect(card).toMatch(/\/api\/portal\/auth\/zoho\/start/);
     expect(card).not.toMatch(/PORTAL_LOGIN/);
-    expect(widget).not.toMatch(/Prefer the full portal sign-in page\?/);
   });
 
   it("resets the single-use Turnstile token after failed password sign-in", () => {

@@ -28,6 +28,7 @@ const config: TierPageConfig = {
   ],
   included: [
     "Everything in ProActive Business Ecosystem",
+    "DE Security Foundation at the deepest managed-security tier",
     "Unified Security Posture (cross-tool correlation, custom dashboards, executive reporting)",
     "Advanced / custom compliance & risk reporting (HIPAA, CMMC, PCI, SOC 2, NIST CSF, cyber insurance)",
     "Advanced / custom backup and BCDR architecture",

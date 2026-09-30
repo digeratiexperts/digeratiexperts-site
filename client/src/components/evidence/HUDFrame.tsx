@@ -27,7 +27,7 @@ export const HUDFrame: React.FC<HUDFrameProps> = ({
         </>
       )}
       {technicalId && (
-        <div className="flex items-center justify-between border-b border-de-hairline px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-white/45">
+        <div className="flex items-center justify-between border-b border-de-hairline px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-white/55">
           <span>{technicalId}</span>
           <span className="h-1 w-1 rounded-full bg-[#D3126A]" aria-hidden="true" />
         </div>

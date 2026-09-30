@@ -324,7 +324,7 @@ export default function ComplianceCertifications() {
           <h2 className="mb-6 text-3xl font-bold text-white md:text-4xl">
             Map your compliance gaps
           </h2>
-          <p className="mx-auto mb-8 max-w-2xl text-white/90">
+          <p className="mx-auto mb-8 max-w-2xl text-white">
             Start with a Cyber Risk Assessment to understand current posture, identify gaps,
             and decide what to run with your current IT or with us.
           </p>
