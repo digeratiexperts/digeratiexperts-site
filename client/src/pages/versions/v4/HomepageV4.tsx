@@ -95,7 +95,7 @@ export default function HomepageV4() {
   useSEO({
     title: "Managed Security Service Provider",
     description:
-      "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 operations, and a Cyber Risk Assessment that matches the operating model to your environment.",
+      "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
     canonical: "/",
   });
 
