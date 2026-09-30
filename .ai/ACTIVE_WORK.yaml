@@ -74,6 +74,31 @@ claims:
       so /solutions/request pages miss it). PR 229 has since landed via PR
       277 (2026-09-30); both files now sit in the active de-desk-delight
       claim, so the Desk lane or Joe decides who takes them.
+  - id: store-profile-panel
+    owner: claude
+    subsystem: public-store-door2
+    branch: claude/nifty-newton-uk9g7t
+    base_sha: 74535d76e9dacade78e4f3eedd4da9651745d3b4
+    files:
+      - client/src/components/store/SolutionProfileForm.tsx
+      - client/src/styles/store-builder.css
+      - client/src/components/store/door2/door2Tokens.test.ts
+      - docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md
+      - artifacts/visual-qa/store-profile-panel/**
+    status: active
+    started: 2026-09-30
+    note: >-
+      Joe, 2026-09-30, on the expanded "Size it to your business" form: "This
+      needs to have a light grey background to separate it from the black
+      background of the whole page". The expanded ProfileStrip gets a light
+      grey panel (.d2-profile-panel, mixed from --de-paper and --de-bg) on
+      /store, the family page and the workspace, with inks re-pointed to clear
+      contrast on it; the two radio groups stack at every width. Concurrency
+      audit 2026-09-30: no open PR touches these files except the shared
+      ledger (appends only). The stale local-only
+      claude-completion-program-lane claim (2026-09-12) lists
+      SolutionProfileForm.tsx; it has no open PR and no remote branch, so this
+      lane proceeds and records the overlap here.
   - id: de-design-concepts-directions
     owner: claude
     subsystem: flagship-visual-reset
