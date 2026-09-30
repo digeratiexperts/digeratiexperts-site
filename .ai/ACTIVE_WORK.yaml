@@ -30,47 +30,6 @@
 
 version: 2
 claims:
-  - id: de-desk-delight
-    owner: claude
-    subsystem: de-desk
-    branch: claude/desk-delight
-    base_sha: 068fd2789e994420a60001501a924edbb23d31b9
-    files:
-      - client/src/components/ZohoASAPWidget.tsx
-      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
-      - client/src/components/SiteBottomBar.tsx
-      - client/src/lib/deskChatSession.ts
-      - client/src/lib/deskChatSession.test.ts
-      - client/src/lib/deskActions.ts
-      - client/src/lib/deskActions.test.ts
-      - client/src/lib/deskRichText.tsx
-      - client/src/lib/deskRichText.test.ts
-      - .cursor/rules/de-desk-design.mdc
-      - .cursor/skills/de-desk-ui/SKILL.md
-      - .cursor/skills/de-desk-ui/tokens-and-structure.md
-      - artifacts/visual-qa/desk-white-theme/**
-      - artifacts/visual-qa/desk-delight/**
-    status: active
-    started: 2026-09-30
-    note: >-
-      Joe, 2026-09-28, on a phone screenshot of the graphite Desk: "This is
-      wrong still. It's supposed to be white theme." Built on
-      claude/desk-launcher-graphite (PR #229), whose one-token-set structure is
-      kept; only the values change, to the approved support-chrome rule in
-      design/UI-STYLE-RULES.md (#fbfbfa panel, black/10 hairlines, near-black
-      ink, magenta only for submit and incident). The Ask DE chooser follows.
-      Supersedes the graphite direction recorded in de-desk-launcher-graphite
-      and the C5 graphite override; the Cursor Desk rule and skill are updated
-      so agents stop steering it back to graphite. Joe, 2026-09-30: "we had a
-      dark version (old) and light/white version (current) and some how they
-      got mixed together - rebuild it better and full featured." Rebased onto
-      PR #229's head f06d3a00 (itself level with main 674a4c5c) and extended:
-      header clearance, initial focus, AA dim ink, the conversation kept for
-      the tab with Start over, and a ticket drafted from the chat. Merged as
-      PR #277 (068fd278) and verified by the production deploy job; PR #229
-      closed as superseded and its claim de-desk-launcher-graphite released.
-      Joe, 2026-09-30, same day: "upgrade and change things to optimize it. I
-      want users to really enjoy using it." This claim carries that follow-up.
   - id: store-experience-v2
     owner: claude
     subsystem: public-store-door2
@@ -510,3 +469,14 @@ claims:
 # homepage-ask-de-reference-redesign (branch claude/homepage-ask-de-visual-19b3aa)
 # was RETIRED earlier the same day, integrated via PR #147 (main @ 9c5e7f9).
 # PR #146 closed unmerged; that branch was never a release lane.
+# de-desk-delight (branch claude/desk-delight, earlier de-desk-white-theme)
+# RETIRED 2026-09-30: merged via PR #277 (068fd278, white Desk) and PR #281
+# (6f657dd3, next steps, readable replies, callback in chat, dark leftovers).
+# Both "Deploy and verify production VPS" jobs succeeded, including the
+# production runtime verification step. PR #229 closed as superseded.
+# Still open and now UNCLAIMED (handed to this claim by store-experience-v2,
+# source of truth §15 row 18, commit f8f8fd1b): (1) the Ask DE nudge bottom
+# offset in client/src/components/SiteBottomBar.tsx omits --de-cookie-h; (2)
+# ZohoASAPWidget.tsx seeds STORE_ADVISOR_SEED on pathname.includes("/store")
+# instead of isDoor2Path, so /solutions/request pages miss it. Whoever takes
+# them claims the two files first.
