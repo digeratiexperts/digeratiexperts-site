@@ -9,6 +9,7 @@ import { PortalLayout } from "./PortalLayout";
 import { Plus, Search, MessageSquare, Clock } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { portalGet } from "@/lib/portalApi";
+import { formatDeskTimestamp } from "@/lib/deskTimestamp";
 
 interface Ticket {
   id: string;
@@ -171,7 +172,7 @@ export default function PortalTickets() {
                       <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
                         <Clock className="h-3 w-3" />
                         <span>
-                          {new Date(ticket.createdAt).toLocaleDateString()}
+                          {formatDeskTimestamp(ticket.createdAt)}
                         </span>
                       </div>
                     </div>

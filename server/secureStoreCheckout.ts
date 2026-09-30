@@ -356,6 +356,12 @@ export function registerSecureZohoStoreCheckout(
         const { storeOrders } = await import("@shared/schema");
         const { eq } = await import("drizzle-orm");
 
+        const { quoteSalesTax } = await import("./services/salesTax");
+        const taxDecision = quoteSalesTax(trustedTotal);
+        if (!taxDecision.ok) {
+          return res.status(503).json({ code: taxDecision.code, error: taxDecision.error });
+        }
+
         const [order] = await db
           .insert(storeOrders)
           .values({
@@ -366,8 +372,8 @@ export function registerSecureZohoStoreCheckout(
             paymentMethod: "zoho",
             lineItems,
             subtotal: trustedTotal.toFixed(2),
-            tax: "0",
-            total: trustedTotal.toFixed(2),
+            tax: taxDecision.tax,
+            total: taxDecision.total,
             billingEmail,
             billingName,
             billingCompany: billingCompany || null,
@@ -394,13 +400,23 @@ export function registerSecureZohoStoreCheckout(
             orderNumber,
             customerEmail: billingEmail,
             customerName: billingName,
-            lineItems: lineItems.map((item) => ({
-              name: item.name,
-              description: `SKU: ${item.sku}`,
-              amount: item.unitPrice,
-              quantity: item.quantity,
-            })),
-            totalAmount: trustedTotal,
+            lineItems: [
+              ...lineItems.map((item) => ({
+                name: item.name,
+                description: `SKU: ${item.sku}`,
+                amount: item.unitPrice,
+                quantity: item.quantity,
+              })),
+              ...(Number(taxDecision.tax) > 0
+                ? [{
+                    name: "Arizona TPT",
+                    description: taxDecision.source,
+                    amount: Number(taxDecision.tax),
+                    quantity: 1,
+                  }]
+                : []),
+            ],
+            totalAmount: Number(taxDecision.total),
             successUrl: `${baseUrl}/internal/warehouse/order-confirmation?orderId=${order.id}${
               confirmationToken ? `&ct=${confirmationToken}` : ""
             }`,

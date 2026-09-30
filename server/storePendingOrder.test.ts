@@ -38,6 +38,7 @@ describe("pending Store order canonicalization", () => {
     expect(values.lineItems[0].total).toBe(750);
     expect(values.subtotal).toBe("750.00");
     expect(values.total).toBe("750.00");
+    expect(values.tax).toBeNull();
   });
 
   it("applies the same server-side client override model as paid checkout", () => {

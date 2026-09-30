@@ -9,6 +9,7 @@ import { PortalLayout } from "./PortalLayout";
 import { ArrowLeft, Send, MessageCircle, Clock, AlertCircle, Loader2, Upload, X } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { portalGet, portalPost } from "@/lib/portalApi";
+import { formatDeskTimestamp } from "@/lib/deskTimestamp";
 import {
   PORTAL_TICKET_ACCEPT,
   PORTAL_TICKET_MAX_FILES,
@@ -235,13 +236,13 @@ export default function PortalTicketDetail() {
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Created</p>
                   <p className="font-semibold text-sm">
-                    {new Date(ticket.createdAt).toLocaleDateString()}
+                    {formatDeskTimestamp(ticket.createdAt)}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Last Updated</p>
                   <p className="font-semibold text-sm">
-                    {new Date(ticket.updatedAt).toLocaleDateString()}
+                    {formatDeskTimestamp(ticket.updatedAt)}
                   </p>
                 </div>
               </div>
@@ -296,7 +297,7 @@ export default function PortalTicketDetail() {
                     </div>
                     <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {new Date(comment.timestamp).toLocaleString()}
+                      {formatDeskTimestamp(comment.timestamp)}
                     </span>
                   </div>
                   <p className="text-gray-700 dark:text-gray-300">{comment.content}</p>
