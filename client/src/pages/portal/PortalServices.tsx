@@ -113,7 +113,7 @@ export default function PortalServices() {
             <div className="col-span-full py-12 text-center">
               <Package className="h-12 w-12 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
               <p className="text-gray-500 dark:text-gray-400">No active services on file</p>
-              <p className="text-sm text-gray-400 dark:text-gray-500 mt-2 max-w-md mx-auto">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-md mx-auto">
                 When your Zoho Billing subscriptions are linked, they will appear here. Contact your DE account team if something is missing.
               </p>
             </div>

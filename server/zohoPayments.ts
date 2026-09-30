@@ -34,6 +34,7 @@ export interface ZohoPaymentWebhookEvent {
   referenceNumber: string | null;
   invoiceNumber: string | null;
   amount: string | null;
+  currency: string | null;
   status: string | null;
   metadata: Array<{ key: string; value: string }>;
 }
@@ -267,7 +268,11 @@ export class ZohoPaymentsService {
     return data?.payments_session || data?.payment_session || data;
   }
 
-  verifyWebhookSignature(payload: string | Buffer, signatureHeader: string): boolean {
+  verifyWebhookSignature(
+    payload: string | Buffer,
+    signatureHeader: string,
+    nowMs: number = Date.now(),
+  ): boolean {
     if (!this.looksConfigured(this.signingKey) || !signatureHeader) {
       return false;
     }
@@ -280,6 +285,18 @@ export class ZohoPaymentsService {
     const timestamp = fields.get("t") || "";
     const suppliedSignature = fields.get("v") || "";
     if (!timestamp || !suppliedSignature) {
+      return false;
+    }
+
+    // Replay window: a signed event older (or newer) than the tolerance is
+    // rejected. The timestamp may arrive in seconds or milliseconds.
+    const timestampNum = Number(timestamp);
+    if (!Number.isFinite(timestampNum)) {
+      return false;
+    }
+    const timestampMs = timestampNum > 1e12 ? timestampNum : timestampNum * 1000;
+    const REPLAY_TOLERANCE_MS = 5 * 60 * 1000;
+    if (Math.abs(nowMs - timestampMs) > REPLAY_TOLERANCE_MS) {
       return false;
     }
 
@@ -312,6 +329,7 @@ export class ZohoPaymentsService {
       referenceNumber: payment?.reference_number ? String(payment.reference_number) : null,
       invoiceNumber: payment?.invoice_number ? String(payment.invoice_number) : null,
       amount: payment?.amount !== undefined ? String(payment.amount) : null,
+      currency: payment?.currency ? String(payment.currency) : null,
       status: payment?.status ? String(payment.status) : null,
       metadata,
     };

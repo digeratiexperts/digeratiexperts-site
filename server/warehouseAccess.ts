@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { findUserById } from "./portalOrg";
 import { getUser as portalAuthGetUser } from "./portalAuthStore";
+import { getJwtSecretOrNull } from "./config/authSecrets";
 
 export const PORTAL_AUTH_COOKIE = "portalAuth";
 export const GENERIC_NOT_FOUND_JSON = { error: "Not found" } as const;
@@ -26,7 +27,7 @@ type JwtClaims = {
 };
 
 function jwtSecret(): string | null {
-  return process.env.JWT_SECRET || null;
+  return getJwtSecretOrNull();
 }
 
 function readSessionToken(req: Request): string {

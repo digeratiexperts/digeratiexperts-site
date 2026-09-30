@@ -17,7 +17,7 @@ Code union on `EvidenceFrame` (`EvidenceClassification`): `LIVE` | `SANITIZED_RE
 | Class | Code token | Meaning | When to use | Label in UI |
 |-------|------------|---------|-------------|-------------|
 | **LIVE** | `LIVE` | Data is actually live (or as-live as the product is), from a real DE system, at the time shown | Public threat feed cards from `docs/THREAT-INTEL-FEED.md`; Google/Yelp reviews from the live reviews API when configured | Visible. Include timestamp / source. |
-| **SANITIZED REAL** | `SANITIZED_REAL` | Derived from a real DE artifact, engagement, or system, with secrets and client identifiers removed | Real assessment excerpts, real (redacted) roadmap pages, real portal chrome with dummy org names | Visible. Source note: what was redacted. Landed badge copy: `SANITIZED ARTIFACT`. |
+| **SANITIZED REAL** | `SANITIZED_REAL` | Derived from a real DE artifact, engagement, or system, with secrets and client identifiers removed | Real assessment excerpts, real (redacted) roadmap pages, real portal chrome with dummy org names | Visible. Source note: what was redacted. Badge copy: `Real, details removed` (plain language, per the 2026-09-02 review: disclosure stays visible, the internal code moves to `data-classification`). |
 | **EXAMPLE** | `EXAMPLE` | Plausible DE workflow or interface, **not** a specific customer, **not** measured performance | IncidentFlow module; sample assessment scores; “how a coverage map behaves” | Visible. Never omit. |
 | **ILLUSTRATIVE** | `ILLUSTRATIVE` | Atmospheric or explanatory; not a claim about DE operations | Environment plates, diagram metaphors, editorial stages | Visible when a viewer could mistake it for operations. |
 

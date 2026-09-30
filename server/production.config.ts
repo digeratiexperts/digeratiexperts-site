@@ -23,7 +23,7 @@ export const productionConfig = {
 
   // Security Configuration
   security: {
-    jwtSecret: process.env.JWT_SECRET || 'CHANGE_THIS_IN_PRODUCTION',
+    jwtSecret: process.env.JWT_SECRET,
     jwtExpiry: process.env.JWT_EXPIRY || '24h',
     sessionSecret: process.env.SESSION_SECRET,
     bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS || '12', 10),
@@ -64,28 +64,74 @@ export const productionConfig = {
 };
 
 // Validate critical configuration
+const JWT_PLACEHOLDERS = new Set([
+  'CHANGE_THIS_IN_PRODUCTION',
+  'dev-secret-key-change-in-production',
+]);
+
 export function validateProductionConfig(): string[] {
   const errors: string[] = [];
 
   if (!process.env.DATABASE_URL) {
-    errors.push('DATABASE_URL is required for production');
-  }
-
-  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'CHANGE_THIS_IN_PRODUCTION') {
-    errors.push('JWT_SECRET must be set to a secure value in production');
-  }
-
-  if (!process.env.SESSION_SECRET) {
-    errors.push('SESSION_SECRET is required for production');
-  }
-
-  if (process.env.NODE_ENV === 'production') {
-    if (!process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_LIVE_API_KEY) {
-      errors.push('Stripe API key is required for production payment processing');
+    // CI's local production smoke boots the built server without a database
+    // on purpose (memory-only mode); the opt-out must be explicit so a real
+    // deployment can never silently run without durable storage.
+    if (process.env.DE_SMOKE_ALLOW_MEMORY_ONLY === '1') {
+      console.warn('[config] WARNING: DATABASE_URL not set — memory-only mode explicitly allowed (DE_SMOKE_ALLOW_MEMORY_ONLY=1)');
+    } else {
+      errors.push('DATABASE_URL is required for production');
     }
   }
 
+  if (!process.env.JWT_SECRET || JWT_PLACEHOLDERS.has(process.env.JWT_SECRET)) {
+    errors.push('JWT_SECRET must be set to a secure value in production');
+  }
+
+  if (!process.env.MFA_ENCRYPTION_KEY) {
+    errors.push('MFA_ENCRYPTION_KEY is required to protect portal MFA secrets in production');
+  }
+
   return errors;
+}
+
+export function collectProductionConfigWarnings(): string[] {
+  const warnings: string[] = [];
+
+  if (!process.env.SESSION_SECRET) {
+    warnings.push('SESSION_SECRET is not set (used as an OAuth state-signing fallback)');
+  }
+  if (!process.env.TURNSTILE_SECRET_KEY) {
+    warnings.push('TURNSTILE_SECRET_KEY is not set — Turnstile verification fails open without it');
+  }
+  if (
+    !process.env.ZOHO_PAYMENTS_ACCOUNT_ID ||
+    !process.env.ZOHO_PAYMENTS_SIGNING_KEY
+  ) {
+    warnings.push('Zoho Payments env is incomplete — online checkout and webhook verification are disabled');
+  }
+
+  return warnings;
+}
+
+/**
+ * Fail-closed production startup gate. Call before the server begins
+ * listening; exits the process when required configuration is unsafe/missing.
+ */
+export function enforceProductionConfig(): void {
+  if (getEnvironment() !== 'production') return;
+
+  for (const warning of collectProductionConfigWarnings()) {
+    console.warn(`[config] WARNING: ${warning}`);
+  }
+
+  const errors = validateProductionConfig();
+  if (errors.length > 0) {
+    for (const error of errors) {
+      console.error(`[config] FATAL: ${error}`);
+    }
+    console.error('[config] Refusing to start with unsafe production configuration.');
+    process.exit(1);
+  }
 }
 
 // Environment detection

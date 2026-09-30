@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>kie.ai rules · Scrollcraft lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=Oxanium:wght@500;600&display=swap">
+<style>
+:root{--bg:#050312;--ink:#ffffff;--soft:rgba(255,255,255,.68);--faint:rgba(255,255,255,.45);--line:rgba(255,255,255,.12);--accent:#F04C97;--raised:#141020}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline;text-underline-offset:4px}
+main{max-width:52rem;margin:0 auto;padding:3.5rem 1.25rem 6rem}
+.eyebrow{font-family:Oxanium,ui-monospace,monospace;font-size:.72rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0 0 .75rem}
+h1{font-family:"Space Grotesk",Inter,sans-serif;font-size:2rem;line-height:1.15;letter-spacing:-.02em;margin:0 0 1rem}
+h2{font-family:"Space Grotesk",Inter,sans-serif;font-size:1.35rem;letter-spacing:-.01em;margin:2.5rem 0 .75rem;padding-top:1.25rem;border-top:1px solid var(--line)}
+h3{font-size:1.08rem;margin:1.75rem 0 .5rem}
+h4,h5,h6{font-size:1rem;margin:1.25rem 0 .4rem}
+p,ul,ol{margin:0 0 1rem}
+li{margin:.3rem 0}
+li>ul,li>ol{margin:.3rem 0 .3rem}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;background:rgba(255,255,255,.08);padding:.1em .35em;border-radius:3px}
+pre{background:var(--raised);border:1px solid var(--line);padding:1rem;overflow-x:auto;font-size:.85rem;line-height:1.5;margin:0 0 1.25rem}
+pre code{background:none;padding:0;font-size:inherit}
+blockquote{margin:0 0 1rem;padding:.25rem 0 .25rem 1rem;border-left:2px solid var(--accent);color:var(--soft)}
+hr{border:0;border-top:1px solid var(--line);margin:2rem 0}
+.table-wrap{overflow-x:auto;margin:0 0 1.25rem;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .7rem;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--soft);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;background:var(--raised)}
+tr:last-child td{border-bottom:0}
+.back{font-family:Oxanium,ui-monospace,monospace;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase}
+.meta{color:var(--faint);font-size:.85rem;margin:0 0 2rem}
+</style>
+</head>
+<body>
+<main>
+<p class="back"><a href="/scrollcraft/">← Scrollcraft lab</a></p>
+<p class="eyebrow">Scrollcraft lab · plan document</p>
+<p class="meta">Rendered from <code>docs/kie/KIE-RULES.md</code> in the repository. The file is the source of truth; this page is a reading copy.</p>
+<h1>kie.ai rules for this repository</h1>
+<p>Source: Joe, 2026-09-02 (two messages, quoted in substance). These bind every agent and every session. <code>.claude/skills/scrollcraft/scripts/kie.mjs</code> enforces the parts a script can enforce; the rest is conduct.</p>
+<h2>The rules</h2>
+<ol><li><strong>No generation without Joe's explicit approval in that same message.</strong> Network access working, a key being present, or a plan being written is not approval.</li><li><strong>Pay-per-use, capped.</strong> Every paid call obeys the spend cap Joe gives in the approving message. With no cap given, the default maximum is <strong>$0.50 per call</strong>. At kie.ai's listed $0.005 per credit that is 100 credits.</li><li><strong>Never buy or top up credits, never change billing or payment settings.</strong></li><li><strong>Never retry a failed generation automatically.</strong> A retry needs approval.</li><li><strong>If a generation would exceed the available budget or cap, stop.</strong></li><li><strong>kie.ai is for asset creation only</strong>: hero and section imagery, backgrounds, textures, illustrations, diagrams, icons, decorative motion, optional social/OG graphics.</li><li><strong>kie.ai does not design the website.</strong> No layout, UX, routing, forms, authentication, checkout, page structure, copy, or application logic.</li><li><strong>Scrollcraft/Claude designs the experience; kie.ai supplies purpose-built assets when the design actually calls for them.</strong></li><li><strong>Use existing good assets before generating replacements.</strong></li><li><strong>Zero new spend until the six existing generated plates were audited</strong> KEEP / MODIFY / REPLACE (done: <code>scrollcraft/ASSET-PLAN.md</code> §1) <strong>and the existing kie.ai/Scrollcraft work is reviewed.</strong></li><li><strong>Prefer controlled storyboard and reference-image workflows</strong> so assets can be reproduced and stay visually consistent (<code>--ref</code> in <code>kie.mjs</code>).</li><li><strong>Every generated asset carries provenance</strong>: <code>manifest.json</code> beside it (model, prompt, refs, task id, result URLs, hash, credits, cap, approval, classification, usage). No mystery files.</li><li><strong>Generated work starts as a candidate / illustrative asset</strong>, never as approved production material.</li><li><strong>Never publish a generated asset to the live site automatically.</strong> Review first; a page mounts an asset only after Joe has seen it.</li><li><strong>The asset must represent DE's identity, offering, message, and the specific scene or section.</strong> No generic AI eye candy; no assets made from whatever happens to be on the server.</li></ol>
+<h2>Addendum, 2026-09-02 (same day, later message)</h2>
+<ul><li><strong>Worker:</strong> the cloud environment.</li><li><strong>Image-generation models only.</strong> No kie.ai video, audio, LLM, or other paid model calls. <code>kie.mjs shot</code> is gated behind <code>KIE_ALLOW_VIDEO=1</code>, which only Joe's written instruction may set.</li><li><strong>Preferred image models, in order:</strong> GPT Image 2 · Nano Banana 2 · Imagen 4 Ultra / Imagen 4 Fast · Flux-2 Pro · Seedream 5 Pro.</li><li><strong>Allowed without approval:</strong> connectivity, authentication, model availability, and credit-endpoint checks that generate nothing.</li><li><strong>Environment variable:</strong> <code>KIE_AI_API_KEY</code> (canonical). <code>KIE_API_KEY</code> is accepted as an alias for the local Windows setup script.</li><li><strong>Per paid generation:</strong> approval in the same message, a cap from Joe, no automatic retry, never exceed the cap, never top up, never publish to production without review.</li><li><strong>Process:</strong> prepare the workflow, stop before the first paid generation, and show Joe exactly what is proposed (<code>scrollcraft/KIE-FIRST-GENERATION.md</code>).</li></ul>
+<h2>What the script refuses on its own</h2>
+<div class="table-wrap"><table><thead><tr><th>Situation</th><th><code>kie.mjs</code> behaviour</th></tr></thead><tbody><tr><td><code>still</code>/<code>shot</code> without <code>--approved</code> and <code>--cap</code></td><td>refuses before any network call</td></tr><tr><td>model's listed price above <code>--cap</code></td><td>refuses, nothing sent</td></tr><tr><td>balance below the listed price (or the cap when no price is listed)</td><td>refuses; never tops up</td></tr><tr><td>model marked <code>not-authorized</code> in the registry</td><td>refuses; pick another <code>--model</code></td></tr><tr><td><code>shot</code> without <code>KIE_ALLOW_VIDEO=1</code></td><td>refuses</td></tr><tr><td>task fails</td><td>recorded in the manifest as <code>failed</code>, exit 1, no retry</td></tr><tr><td>spend above the cap after the fact</td><td>flagged <code>capExceeded: true</code> in the manifest and on stderr; report to Joe</td></tr><tr><td><code>--dry-run</code></td><td>prints the exact request and exits, no network</td></tr></tbody></table></div>
+<h2>Record of spend</h2>
+<div class="table-wrap"><table><thead><tr><th>Date (UTC)</th><th>Environment</th><th>Model</th><th>Task</th><th>Credits before → after</th><th>Outcome</th></tr></thead><tbody><tr><td>2026-09-02 04:59</td><td>Digerati KIE Restricted</td><td>seedream/5-pro-text-to-image</td><td>none</td><td>80 → 80</td><td>Attempted <strong>without Joe's approval</strong> (a rule 1 breach by Claude, acknowledged); refused by kie.ai, API code 401 &quot;not authorized to use this model&quot;; nothing spent.</td></tr></tbody></table></div>
+</main>
+</body>
+</html>

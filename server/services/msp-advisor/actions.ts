@@ -95,6 +95,30 @@ export function sanitizeActions(
   return out.length ? out : defaultActionsForMode(opts?.mode);
 }
 
+const LOGIN_INTENT = /\b(log[\s-]?in|login|log\s+on|sign[\s-]?in|signin|portal)\b/i;
+
+/**
+ * Deterministic login routing: when the visitor asks to log in, the Client
+ * Portal button always comes up in the chat, even if the model only wrote the
+ * URL into prose. (Joe, 2026-09-01.) Skipped for security_incident mode: the
+ * portal login wall must not sit in front of an anonymous incident visitor
+ * (adversarial-review correction, 2026-08-31), and the 3-action cap holds.
+ */
+export function ensureLoginAction(
+  actions: AdvisorAction[],
+  userMessage: string,
+  mode?: string,
+): AdvisorAction[] {
+  if (mode === "security_incident") return actions;
+  if (!LOGIN_INTENT.test(userMessage)) return actions;
+  if (actions.some((a) => a.type === "open_portal" || a.type === "existing_client_support")) {
+    return actions;
+  }
+  const portal = materializeAction("open_portal", "Log in to the Client Portal");
+  if (!portal) return actions;
+  return [portal, ...actions].slice(0, 3);
+}
+
 export function materializeAction(
   type: AdvisorActionType,
   label?: string,

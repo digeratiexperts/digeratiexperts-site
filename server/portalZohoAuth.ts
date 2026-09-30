@@ -14,6 +14,7 @@
 
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
 import type { Request, Response } from "express";
+import { resolveJwtSecret } from "./config/authSecrets";
 
 const ACCOUNTS_BASE = (process.env.ZOHO_OIDC_ISSUER || "https://accounts.zoho.com").replace(
   /\/$/,
@@ -64,11 +65,12 @@ export function getZohoPortalConfig(): ZohoPortalConfig {
 }
 
 function stateSecret(): string {
+  // No hardcoded fallback: resolveJwtSecret fails closed in production and
+  // supplies a stable ephemeral secret in development.
   return (
     process.env.ZOHO_OAUTH_STATE_SECRET ||
-    process.env.JWT_SECRET ||
     process.env.SESSION_SECRET ||
-    "portal-zoho-state-dev-only"
+    resolveJwtSecret()
   );
 }
 

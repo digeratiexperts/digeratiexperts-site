@@ -10,7 +10,11 @@ Every agent must use an isolated branch/worktree, check open active GitHub issue
 
 For visual work, rendered quality is an acceptance gate separate from code correctness. Inspect the actual UI in context before changing it and verify at 390 / 768 / 1440.
 
-Authoritative policy: **`.cursorrules`** (sections 1-42, including section 9A Visual System v2). Always-applied pointers: `.cursor/rules/00-follow-cursorrules.mdc`, `.cursor/rules/de-ecosystem.mdc`, `.cursor/rules/agent-governance.mdc`.
+Authoritative policy: **`.cursorrules`** (sections 1-42, including section 9A Visual System v2). Always-applied pointers: `.cursor/rules/00-follow-cursorrules.mdc`, `.cursor/rules/de-ecosystem.mdc`, `.cursor/rules/agent-governance.mdc`, `.cursor/rules/account-lifecycle.mdc`.
+
+## Account Lifecycle Status — internal only
+
+`docs/ACCOUNT-LIFECYCLE-STATUS.md` (mirror; authority is Hub `.agents/memory/account-lifecycle-status-source-of-truth.md`) defines the 13 canonical account lifecycle values. The field is **governed everywhere and displayed nowhere client-facing**: never on the public website or in client-visible portal UI, client-delivered artifacts, or client-scoped API responses — but still fully enforced server-side for authorization, entitlement, gating, automation, and internal/admin UI. Omit it at the serialization boundary; hiding it in the UI is not compliance. Always-applied rule: `.cursor/rules/account-lifecycle.mdc`. Note the naming collision: `/portal/admin/lifecycle` is the **JumpCloud employee identity** lifecycle, a different domain.
 
 Design OS (execution layer, does not replace `.cursorrules`): start with **`design/UI-STYLE-RULES.md`** (consolidated theme/surface/archetype/layout rules), then `.cursor/rules/ui-ux.mdc`, `brand.mdc`, `frontend.mdc`, `visual-system-v2.mdc` + `design/DESIGN_SYSTEM.md` + `design/VISUAL_SYSTEM_V2.md`. Never judge UI from source code alone. Blog/Journal and Store colors are locked: `.cursor/rules/blog-store-color-lock.mdc`.
 
@@ -85,3 +89,23 @@ A task is not finished until reviewed, merged, production-verified, and marked L
 
 - Figma MCP + Code Connect
 - Storybook / Chromatic if needed later
+
+## Project skills (all agents)
+
+Reusable skill packs live in `.claude/skills/<name>/SKILL.md` (Claude Code discovers them there) and are mirrored by relative symlinks under `.agents/skills/<name>/` for tools that follow the agentskills convention (Codex / ChatGPT, Cursor, Gemini). Read the skill's `SKILL.md` before doing that kind of task; each carries an `UPSTREAM.md` with provenance, local deviations and its external-service boundary. Do not fork a second copy of a skill into another directory; edit the one under `.claude/skills/` and the mirror follows.
+
+| Skill | Use for | Spends money? |
+|---|---|---|
+| `scrollcraft` | Scroll-driven experience builds under `scrollcraft/builds/<name>/` | Only if `scripts/kie.mjs` is run |
+| `nano-banana-images` | Nano Banana 2 images via kie.ai from a JSON prompt file (Python) | Yes, per image |
+| `excalidraw-visuals` | Hand-drawn-style PNG diagrams via kie.ai (Node) | Yes, per image |
+| `excalidraw-diagram` | Editable `.excalidraw` files, no API | No |
+| `frontend-design` | Distinctive frontend code; DE brand lock wins on `client/` | No |
+| `video-to-website` | FFmpeg frames + GSAP/Lenis scroll page from a video | No |
+| `web-design-rules` | Standalone page / reference-match builds with `scripts/serve.mjs` + `scripts/screenshot.mjs` | No |
+| `skill-builder` | Create or audit a skill | No |
+| `wat-framework` | Workflows / Agents / Tools pattern for automation projects | Depends on tools built |
+| `trigger-dev`, `trigger-ref` | Trigger.dev automations (in a dedicated Trigger.dev project, never deployed via this repo's CI) | Trigger.dev usage |
+| `msp-ai-kit` | MSP/MSSP operating prompts and instruction packs from `kit.config.json` (ChatGPT, Custom GPT, Claude, Cursor, Copilot); optional clone of external MSP kits into `artifacts/msp-ai-kit/vendor/` | No |
+
+Key handling: `KIE_AI_API_KEY` (and `KIE_API_KEY` for `scripts/kie-assets.mjs`) come from the environment or the gitignored `.env`; `.env.example` is the template. Never commit, print or paste a key. Generated images are ILLUSTRATIVE candidates under `artifacts/kie-ai/` until they pass `design/IMAGERY.md` review.

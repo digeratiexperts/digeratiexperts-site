@@ -1,0 +1,19 @@
+{
+  "id": "vuln-firewall-kev",
+  "module": "vulnerability-prioritization",
+  "title": "KEV firewall CVE versus low-EPSS internal findings",
+  "inputs": {
+    "[PASTE FINDINGS: host, CVE or plugin, severity, evidence]": "CVE-2024-3400 on FW-EDGE-01 (CVSS 10, KEV yes, EPSS 0.94); CVE-2023-48795 on 14 internal Linux build hosts (CVSS 5.9, KEV no, EPSS 0.02); outdated Chrome on 22 workstations (CVSS 8.8, KEV yes for one CVE, EPSS 0.31)",
+    "[criticality per host or group, internet exposure, business function, or UNKNOWN]": "firewall is the site edge and internet-facing; build hosts internal; workstations standard users",
+    "[KEV listing yes or no and EPSS score per CVE if available, or \"look up needed\"]": "as listed",
+    "[maintenance windows, change freeze dates, legacy systems that cannot be patched]": "change freeze from Friday",
+    "[TECH PLAN, CLIENT SUMMARY, or BOTH]": "BOTH"
+  },
+  "mustMention": [
+    "CVE-2024-3400",
+    "retest"
+  ],
+  "mustNotMention": [
+    "exploit code"
+  ]
+}

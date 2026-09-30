@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { useRef, useState, useEffect } from "react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 
-import lawBooksImg from "@assets/Rectangle-152058_1767027918697.png";
-import lawScalesImg from "@assets/Rectangle-152058-1_1767027918697.png";
-import healthcareImg from "@assets/Rectangle-152058-2_1767027918698.png";
-import realEstateImg from "@assets/Rectangle-152058-3_1767027918698.png";
-import animalHospitalImg from "@assets/Rectangle-152058-4_1767027918698.png";
+import lawBooksImg from "@assets/Rectangle-152058_1767027918697.webp";
+import lawScalesImg from "@assets/Rectangle-152058-1_1767027918697.webp";
+import healthcareImg from "@assets/Rectangle-152058-2_1767027918698.webp";
+import realEstateImg from "@assets/Rectangle-152058-3_1767027918698.webp";
+import animalHospitalImg from "@assets/Rectangle-152058-4_1767027918698.webp";
 
 export const DigeratiIndustriesSection = (): JSX.Element => {
   const prefersReducedMotion = useReducedMotion();

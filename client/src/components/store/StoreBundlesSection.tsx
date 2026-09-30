@@ -16,6 +16,7 @@ function OfferCard({ offer }: { offer: CuratedSolutionOffer }) {
   return (
     <article
       className="rounded-xl border border-white/10 bg-black/20 p-4"
+      data-de-jelly="feature"
       data-testid={`curated-offer-${offer.id}`}
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -51,7 +52,7 @@ function OfferCard({ offer }: { offer: CuratedSolutionOffer }) {
           <p><span className="font-semibold text-white/85">Commercial model:</span> {offer.commercialModel}</p>
         </div>
       </details>
-      <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-white/45">
+      <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-white/55">
         Next step: {offer.nextStep}
       </p>
     </article>

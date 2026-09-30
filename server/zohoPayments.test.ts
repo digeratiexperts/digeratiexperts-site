@@ -114,9 +114,10 @@ describe("ZohoPaymentsService", () => {
       .update(`${timestamp}.${payload}`)
       .digest("hex");
 
-    expect(service.verifyWebhookSignature(payload, `t=${timestamp},v=${signature}`)).toBe(true);
-    expect(service.verifyWebhookSignature(payload, `t=${timestamp},v=${"0".repeat(64)}`)).toBe(false);
-    expect(service.verifyWebhookSignature(payload, signature)).toBe(false);
+    const nowMs = Number(timestamp) * 1000;
+    expect(service.verifyWebhookSignature(payload, `t=${timestamp},v=${signature}`, nowMs)).toBe(true);
+    expect(service.verifyWebhookSignature(payload, `t=${timestamp},v=${"0".repeat(64)}`, nowMs)).toBe(false);
+    expect(service.verifyWebhookSignature(payload, signature, nowMs)).toBe(false);
   });
 
   it("parses the official payment webhook object and preserves order metadata", () => {

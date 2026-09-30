@@ -98,7 +98,6 @@ const STATIC = [
   ["/legal/terms-of-use", "yearly", "0.4"],
   ["/contact", "monthly", "0.7"],
   ["/store", "weekly", "0.8"],
-  ["/solutions/request", "monthly", "0.3"],
 ];
 
 const curatedPath = path.join(root, "client/src/data/curatedSolutions.ts");

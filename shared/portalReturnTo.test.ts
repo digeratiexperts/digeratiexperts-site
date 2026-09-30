@@ -39,4 +39,13 @@ describe("marketplaceReturnTo", () => {
   it("does not hijack unrelated portal pages", () => {
     expect(marketplaceReturnTo("/portal/tickets")).toBe("/portal/tickets");
   });
+
+  it("preserves the Digital Warehouse quote-request destination through login", () => {
+    expect(marketplaceReturnTo("/internal/warehouse/quote-request")).toBe(
+      "/internal/warehouse/quote-request",
+    );
+    expect(sanitizeReturnTo("/internal/warehouse/quote-request")).toBe(
+      "/internal/warehouse/quote-request",
+    );
+  });
 });

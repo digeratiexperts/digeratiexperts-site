@@ -2,28 +2,38 @@
  * Store jelly motion
  * Compiz-inspired elasticity for the public Solution Builder and its cart.
  * Scoped to Store routes only via html.de-store-gesture-lock.
+ *
+ * Jelly is opt-in and tiered (roadmap item 2.1 — playfulness only where it
+ * fits). Generic workspace panels, checkout, pricing math, and compliance
+ * surfaces get NO transform motion; do not re-add blanket selectors for
+ * rounded/bordered containers.
+ *
+ * Tiers, loudest to quietest:
+ *   data-de-jelly="feature"  — marketing/awareness cards (curated bundles).
+ *                              The only tier with a hover wobble.
+ *   choice tiles             — [role=radio] / button[aria-pressed] in the
+ *                              builder: tactile press + a soft select settle,
+ *                              no hover motion.
+ *   data-de-jelly-surface    — cart line items: a quiet lift, no keyframes.
+ *   cart launcher + sheet    — small springy settle on the add-to-solution
+ *                              moment itself.
  */
 
 :root {
-  --de-jelly-spring: cubic-bezier(0.18, 1.42, 0.34, 1);
-  --de-jelly-soft: cubic-bezier(0.22, 1.18, 0.36, 1);
+  --de-jelly-spring: cubic-bezier(0.2, 1.16, 0.34, 1);
+  --de-jelly-soft: cubic-bezier(0.24, 1.08, 0.36, 1);
 }
 
-@keyframes de-jelly-hover {
+/* Feature tier: one small overshoot, one settle. */
+@keyframes de-jelly-feature-hover {
   0% {
-    transform: translate3d(0, 0, 0) scale3d(1, 1, 1) rotate(0deg);
+    transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
   }
-  34% {
-    transform: translate3d(0, -4px, 0) scale3d(1.018, 0.985, 1) rotate(-0.12deg);
-  }
-  58% {
-    transform: translate3d(0, -1px, 0) scale3d(0.994, 1.008, 1) rotate(0.08deg);
-  }
-  78% {
-    transform: translate3d(0, -3px, 0) scale3d(1.006, 0.997, 1) rotate(-0.04deg);
+  45% {
+    transform: translate3d(0, -3px, 0) scale3d(1.008, 0.994, 1);
   }
   100% {
-    transform: translate3d(0, -2px, 0) scale3d(1, 1, 1) rotate(0deg);
+    transform: translate3d(0, -2px, 0) scale3d(1, 1, 1);
   }
 }
 
@@ -31,14 +41,11 @@
   0% {
     transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
   }
-  38% {
-    transform: translate3d(0, 1px, 0) scale3d(0.975, 1.025, 1);
+  40% {
+    transform: translate3d(0, 1px, 0) scale3d(0.988, 1.012, 1);
   }
-  64% {
-    transform: translate3d(0, -1px, 0) scale3d(1.012, 0.992, 1);
-  }
-  82% {
-    transform: translate3d(0, 0, 0) scale3d(0.997, 1.004, 1);
+  72% {
+    transform: translate3d(0, 0, 0) scale3d(1.005, 0.997, 1);
   }
   100% {
     transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
@@ -47,46 +54,54 @@
 
 @keyframes de-jelly-sheet-in {
   0% {
-    transform: translate3d(102%, 0, 0) skewX(-1.8deg) scaleX(0.985);
+    transform: translate3d(102%, 0, 0) skewX(-0.8deg) scaleX(0.992);
   }
-  68% {
-    transform: translate3d(-7px, 0, 0) skewX(0.35deg) scaleX(1.006);
-  }
-  84% {
-    transform: translate3d(3px, 0, 0) skewX(-0.14deg) scaleX(0.998);
+  72% {
+    transform: translate3d(-3px, 0, 0) skewX(0.15deg) scaleX(1.003);
   }
   100% {
     transform: translate3d(0, 0, 0) skewX(0deg) scaleX(1);
   }
 }
 
-/* Workspace panes and nested cards. Keep geometry stable; only the paint layer moves. */
-html.de-store-gesture-lock main section[class~="rounded-2xl"][class~="border-white/10"],
-html.de-store-gesture-lock main aside[class~="rounded-2xl"][class~="border-white/10"],
-html.de-store-gesture-lock main [class~="rounded-xl"][class~="border-white/10"],
-html.de-store-gesture-lock [data-de-jelly-surface] {
+/* Marketing/awareness cards — the one place hover motion sells something. */
+html.de-store-gesture-lock [data-de-jelly="feature"] {
   transform: translate3d(0, 0, 0);
   transform-origin: 50% 78%;
   backface-visibility: hidden;
   transition:
-    transform 440ms var(--de-jelly-spring),
+    transform 380ms var(--de-jelly-spring),
     border-color 220ms ease,
-    background-color 220ms ease,
-    box-shadow 280ms ease;
+    box-shadow 260ms ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  html.de-store-gesture-lock main section[class~="rounded-2xl"][class~="border-white/10"]:hover,
-  html.de-store-gesture-lock main aside[class~="rounded-2xl"][class~="border-white/10"]:hover,
-  html.de-store-gesture-lock main [class~="rounded-xl"][class~="border-white/10"]:hover,
-  html.de-store-gesture-lock [data-de-jelly-surface]:hover {
-    animation: de-jelly-hover 520ms var(--de-jelly-soft) both;
+  html.de-store-gesture-lock [data-de-jelly="feature"]:hover {
+    animation: de-jelly-feature-hover 420ms var(--de-jelly-soft) both;
     border-color: rgba(255, 255, 255, 0.16);
-    box-shadow: 0 18px 46px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
   }
 }
 
-/* Choice tiles get the stronger squish. */
+/* Cart line items: a quiet lift, no wobble. */
+html.de-store-gesture-lock [data-de-jelly-surface] {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  transition:
+    transform 320ms var(--de-jelly-soft),
+    border-color 200ms ease,
+    background-color 200ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html.de-store-gesture-lock [data-de-jelly-surface]:hover {
+    transform: translate3d(0, -1px, 0);
+    border-color: rgba(255, 255, 255, 0.14);
+  }
+}
+
+/* Choice tiles: feedback on press/select only — hover stays still so the
+ * builder reads as a form, not a toy. */
 html.de-store-gesture-lock main [role="radio"],
 html.de-store-gesture-lock main button[aria-pressed],
 html.de-store-gesture-lock [data-de-jelly-choice] {
@@ -94,61 +109,51 @@ html.de-store-gesture-lock [data-de-jelly-choice] {
   transform-origin: 50% 70%;
   backface-visibility: hidden;
   transition:
-    transform 360ms var(--de-jelly-spring),
+    transform 300ms var(--de-jelly-spring),
     border-color 180ms ease,
     background-color 180ms ease,
     box-shadow 220ms ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  html.de-store-gesture-lock main [role="radio"]:hover:not(:disabled),
-  html.de-store-gesture-lock main button[aria-pressed]:hover:not(:disabled),
-  html.de-store-gesture-lock [data-de-jelly-choice]:hover:not(:disabled) {
-    transform: translate3d(0, -2px, 0) scale3d(1.012, 0.992, 1);
-  }
 }
 
 html.de-store-gesture-lock main [role="radio"]:active:not(:disabled),
 html.de-store-gesture-lock main button[aria-pressed]:active:not(:disabled),
 html.de-store-gesture-lock [data-de-jelly-choice]:active:not(:disabled),
 html.de-store-gesture-lock [data-testid="public-solution-cart"]:active {
-  transform: translate3d(0, 1px, 0) scale3d(0.972, 1.025, 1);
+  transform: translate3d(0, 1px, 0) scale3d(0.988, 1.01, 1);
   transition-duration: 90ms;
 }
 
 html.de-store-gesture-lock main [role="radio"][aria-checked="true"],
 html.de-store-gesture-lock main button[aria-pressed="true"],
 html.de-store-gesture-lock [data-de-jelly-choice][aria-pressed="true"] {
-  animation: de-jelly-select 390ms var(--de-jelly-soft);
+  animation: de-jelly-select 320ms var(--de-jelly-soft);
 }
 
-/* Floating Your Solution launcher: compact jelly, no distracting rotation. */
+/* Floating Your Solution launcher: the add-to-solution moment keeps a small
+ * springy lift — awareness, not acrobatics. */
 html.de-store-gesture-lock [data-testid="public-solution-cart"] {
   transform: translate3d(0, 0, 0);
   transform-origin: 72% 100%;
   transition:
-    transform 420ms var(--de-jelly-spring),
+    transform 360ms var(--de-jelly-spring),
     box-shadow 220ms ease,
     background-color 180ms ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   html.de-store-gesture-lock [data-testid="public-solution-cart"]:hover {
-    transform: translate3d(0, -3px, 0) scale3d(1.018, 0.988, 1);
-    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.34);
+    transform: translate3d(0, -2px, 0) scale3d(1.01, 0.994, 1);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
   }
 }
 
 /* Radix Sheet has its own slide classes; this class replaces the open transform with a springy settle. */
 html.de-store-gesture-lock .de-store-jelly-sheet[data-state="open"] {
-  animation: de-jelly-sheet-in 560ms var(--de-jelly-soft) both;
-}
-
-html.de-store-gesture-lock .de-store-jelly-sheet [data-de-jelly-surface] {
-  transform-origin: 70% 50%;
+  animation: de-jelly-sheet-in 480ms var(--de-jelly-soft) both;
 }
 
 /* Keyboard focus stays crisp even while transforms are active. */
+html.de-store-gesture-lock [data-de-jelly="feature"]:focus-visible,
 html.de-store-gesture-lock [data-de-jelly-surface]:focus-visible,
 html.de-store-gesture-lock [data-de-jelly-choice]:focus-visible {
   outline: 2px solid #d3126a;
@@ -156,11 +161,9 @@ html.de-store-gesture-lock [data-de-jelly-choice]:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html.de-store-gesture-lock main section[class~="rounded-2xl"][class~="border-white/10"],
-  html.de-store-gesture-lock main aside[class~="rounded-2xl"][class~="border-white/10"],
-  html.de-store-gesture-lock main [class~="rounded-xl"][class~="border-white/10"],
   html.de-store-gesture-lock main [role="radio"],
   html.de-store-gesture-lock main button[aria-pressed],
+  html.de-store-gesture-lock [data-de-jelly="feature"],
   html.de-store-gesture-lock [data-de-jelly-surface],
   html.de-store-gesture-lock [data-de-jelly-choice],
   html.de-store-gesture-lock [data-testid="public-solution-cart"],

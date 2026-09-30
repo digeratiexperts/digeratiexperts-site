@@ -50,6 +50,7 @@ export interface DiagramNodeProps {
   icon?: LucideIcon;
   status?: "healthy" | "monitored" | "alert" | "isolated";
   metrics?: string;
+  tone?: "dark" | "paper";
   className?: string;
 }
 
@@ -60,32 +61,44 @@ export const DiagramNode: React.FC<DiagramNodeProps> = ({
   icon: Icon,
   status = "monitored",
   metrics,
+  tone = "dark",
   className = "",
 }) => {
+  const isPaper = tone === "paper";
   const statusStyles = {
     healthy: "border-emerald-500/30",
-    monitored: "border-de-hairline",
+    monitored: isPaper ? "border-[var(--de-paper-hairline)]" : "border-de-hairline",
     alert: "border-amber-500/35",
     isolated: "border-[#D3126A]/45",
   }[status];
 
   return (
-    <div className={`rounded-lg border bg-de-bg p-3 ${statusStyles} ${className}`}>
+    <div className={`rounded-lg border p-3 ${isPaper ? "bg-white" : "bg-de-bg"} ${statusStyles} ${className}`}>
       <div className="flex items-center gap-2.5">
         {Icon && (
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-de-hairline bg-de-raised">
-            <Icon className="h-4 w-4 text-[#F04C97]" aria-hidden="true" />
+          <div
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
+              isPaper ? "border-[var(--de-paper-hairline)] bg-de-paper" : "border-de-hairline bg-de-raised"
+            }`}
+          >
+            <Icon className={`h-4 w-4 ${isPaper ? "text-[#A30E52]" : "text-[#F04C97]"}`} aria-hidden="true" />
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="font-heading text-xs font-bold text-white">{title}</p>
-          {subtitle && <p className="mt-0.5 text-[11px] leading-relaxed text-white/60">{subtitle}</p>}
+          <p className={`font-heading text-xs font-bold ${isPaper ? "text-[#1A1228]" : "text-white"}`}>{title}</p>
+          {subtitle && (
+            <p className={`mt-0.5 text-[11px] leading-relaxed ${isPaper ? "text-[#5A5368]" : "text-white/60"}`}>{subtitle}</p>
+          )}
         </div>
       </div>
       {metrics && (
-        <div className="mt-2 flex items-center justify-between gap-2 border-t border-de-hairline pt-1.5 font-mono text-[10px] text-white/50">
+        <div
+          className={`mt-2 flex items-center justify-between gap-2 border-t pt-1.5 font-mono text-[10px] ${
+            isPaper ? "border-[var(--de-paper-hairline)] text-[#5A5368]" : "border-de-hairline text-white/50"
+          }`}
+        >
           <span>Detail:</span>
-          <span className="text-right font-semibold text-white/75">{metrics}</span>
+          <span className={`text-right font-semibold ${isPaper ? "text-[#3A3448]" : "text-white/75"}`}>{metrics}</span>
         </div>
       )}
     </div>
@@ -96,6 +109,7 @@ export interface ControlGateProps {
   label: string;
   policy: string;
   enforced?: boolean;
+  tone?: "dark" | "paper";
 }
 
 /**
@@ -106,12 +120,18 @@ export const ControlGate: React.FC<ControlGateProps> = ({
   label,
   policy,
   enforced = false,
+  tone = "dark",
 }) => {
+  const isPaper = tone === "paper";
   return (
-    <div className="flex items-start gap-2 rounded border border-de-hairline bg-de-bg px-3 py-2 font-mono text-[11px]">
+    <div
+      className={`flex items-start gap-2 rounded border px-3 py-2 font-mono text-[11px] ${
+        isPaper ? "border-[var(--de-paper-hairline)] bg-white" : "border-de-hairline bg-de-bg"
+      }`}
+    >
       <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${enforced ? "bg-emerald-400" : "bg-[#D3126A]"}`} aria-hidden="true" />
-      <span className="font-bold text-white">{label}:</span>
-      <span className="text-white/70">{policy}</span>
+      <span className={`font-bold ${isPaper ? "text-[#1A1228]" : "text-white"}`}>{label}:</span>
+      <span className={isPaper ? "text-[#3A3448]" : "text-white/70"}>{policy}</span>
     </div>
   );
 };

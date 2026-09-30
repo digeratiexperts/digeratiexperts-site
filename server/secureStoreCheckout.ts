@@ -1,4 +1,5 @@
 import type { Express, NextFunction, Request, Response } from "express";
+import { orderConfirmationToken } from "./orderConfirmationToken";
 import { storeProducts, type StoreProduct } from "../client/src/data/storeProducts";
 import {
   removeClientPricing,
@@ -373,6 +374,21 @@ export function registerSecureZohoStoreCheckout(
           })
           .returning();
 
+        void import("./integrations/enqueueStoreOrder")
+          .then(({ enqueueStoreOrderCreated }) => enqueueStoreOrderCreated({
+            id: order.id,
+            orderNumber: order.orderNumber,
+            status: "awaiting_payment",
+            clientId: order.clientId,
+            billingEmail: order.billingEmail,
+            billingName: order.billingName,
+            billingCompany: order.billingCompany,
+            lineItems,
+          }))
+          .catch((error) => console.warn("[store-order] Hub enqueue skipped:", error?.message || error));
+
+        const confirmationToken = orderConfirmationToken(order.id);
+
         try {
           const session = await zohoPayments.createPaymentSession({
             orderNumber,
@@ -385,7 +401,9 @@ export function registerSecureZohoStoreCheckout(
               quantity: item.quantity,
             })),
             totalAmount: trustedTotal,
-            successUrl: `${baseUrl}/store/order-confirmation?orderId=${order.id}`,
+            successUrl: `${baseUrl}/internal/warehouse/order-confirmation?orderId=${order.id}${
+              confirmationToken ? `&ct=${confirmationToken}` : ""
+            }`,
             cancelUrl: `${baseUrl}/store/checkout`,
             metadata: {
               orderId: order.id,
@@ -407,7 +425,7 @@ export function registerSecureZohoStoreCheckout(
             paymentMethod: "zoho",
           });
 
-          return res.json({ url: session.url, orderId: order.id });
+          return res.json({ url: session.url, orderId: order.id, confirmationToken });
         } catch (error) {
           await db
             .update(storeOrders)
@@ -475,6 +493,19 @@ export function registerSecureZohoStoreCheckout(
           .insert(storeOrders)
           .values(orderValues)
           .returning();
+
+        void import("./integrations/enqueueStoreOrder")
+          .then(({ enqueueStoreOrderCreated }) => enqueueStoreOrderCreated({
+            id: order.id,
+            orderNumber: order.orderNumber,
+            status: order.status,
+            clientId: order.clientId,
+            billingEmail: order.billingEmail,
+            billingName: order.billingName,
+            billingCompany: order.billingCompany,
+            lineItems: orderValues.lineItems,
+          }))
+          .catch((error) => console.warn("[store-order] Hub enqueue skipped:", error?.message || error));
 
         console.info("[SECURITY] STORE_ORDER_CREATED", {
           orderId: order.id,

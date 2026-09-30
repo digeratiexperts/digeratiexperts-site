@@ -41,7 +41,7 @@ const steps: {
   {
     number: 4,
     title: "Continuous",
-    description: "Day-to-day support, security operations where included, and reviews at that tier’s cadence.",
+    description: "Day-to-day support and the DE Security Foundation are included at every tier; detection, response, recovery, and governance deepen with the plan.",
     icon: Activity,
     testId: "step-protection",
     href: "/solutions/proactive-ecosystem",
@@ -68,14 +68,17 @@ export const DigeratiHowWeProtectSection = (): JSX.Element => {
                   What we protect
                 </p>
                 <h2 className="mb-4 font-heading text-3xl font-semibold tracking-[-0.02em] text-[#1A1228] md:text-4xl">
-                  Six domains. One accountable operating model.
+                  Eight blocks. One accountable operating model.
                 </h2>
                 <p className="text-lg leading-relaxed text-[#3A3448]">
-                  Select any domain below to inspect our architectural defense boundaries, continuous telemetry, and verified client deliverables.
+                  Protection is layered around the business, and each block answers a specific class
+                  of threat. Risk and exposure runs continuously beneath the other seven. Select a
+                  block below to see how we operate it.
                 </p>
               </motion.div>
 
-              {/* Interactive Six Domains Protection Command Deck */}
+
+              {/* Interactive eight-block protection command deck */}
               <div id="protection-stack">
                 <ProtectionCommandDeck />
               </div>

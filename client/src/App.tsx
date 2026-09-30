@@ -12,9 +12,12 @@ import { ExitIntentPopup } from "@/components/ExitIntentPopup";
 import { StickyCTABar } from "@/components/StickyCTABar";
 import { SiteBottomBar } from "@/components/SiteBottomBar";
 import { MarketingChrome } from "@/components/MarketingChrome";
+import { VersionFrame } from "@/pages/versions/VersionFrame";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageLoadingSkeleton } from "@/components/LoadingSkeleton";
 import { AnnouncerProvider } from "@/components/AccessibleAnnouncer";
+import { SkipToContent } from "@/components/SkipToContent";
+import { DefaultCanonical } from "@/components/DefaultCanonical";
 import { useGlobalShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useStoreChromeGestures } from "@/hooks/useStoreChromeGestures";
 import { BookingProvider } from "@/contexts/BookingContext";
@@ -38,6 +41,7 @@ const CoManagedIT = lazy(() => import("@/pages/solutions/CoManagedIT"));
 const BusinessNeedsIndex = lazy(() => import("@/pages/solutions/BusinessNeedsIndex"));
 const BusinessNeedsFamily = lazy(() => import("@/pages/solutions/BusinessNeedsFamily"));
 const SolutionRequest = lazy(() => import("@/pages/solutions/SolutionRequest"));
+const SolutionSubmitted = lazy(() => import("@/pages/store/SolutionSubmitted"));
 const UCaaS = lazy(() => import("@/pages/services/UCaaS"));
 const Healthcare = lazy(() => import("@/pages/industries/Healthcare"));
 const Accounting = lazy(() => import("@/pages/industries/Accounting"));
@@ -150,6 +154,15 @@ const BookingPage = lazy(() => import("@/pages/BookingPage"));
 const ContactPage = lazy(() => import("@/pages/Contact"));
 const DigeratiHomepage = lazy(() => import("@/pages/DigeratiHomepage").then((m) => ({ default: m.DigeratiHomepage })));
 
+// Homepage versions: a frozen, reachable copy of every homepage the site has
+// had or is considering (client/src/pages/versions/README.md). Reference only.
+const VersionsIndex = lazy(() => import("@/pages/versions/VersionsIndex"));
+const VersionTwoForward = lazy(() => import("@/pages/versions/VersionTwoForward"));
+const HomepageV1 = lazy(() => import("@/pages/versions/v1/DigeratiHomepage").then((m) => ({ default: m.DigeratiHomepage })));
+const ExperienceInSite = lazy(() => import("@/pages/ExperienceInSite"));
+const HomepageV3 = lazy(() => import("@/pages/versions/v3/DigeratiHomepage").then((m) => ({ default: m.DigeratiHomepage })));
+const HomepageV4 = lazy(() => import("@/pages/versions/v4/HomepageV4"));
+
 const WarehouseGate = lazy(() => import("@/pages/store/WarehouseGate"));
 const PublicStoreCheckout = lazy(() => import("@/pages/store/PublicStoreCheckout"));
 
@@ -167,7 +180,47 @@ function Router() {
           <DigeratiHomepage />
         </Suspense>
       )} />
-      
+
+      {/* Experience v1 in the site's own chrome — review only, noindex, not in navigation */}
+      <Route path="/experience" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <ExperienceInSite />
+        </Suspense>
+      )} />
+
+      {/* Homepage versions — reference archive, noindex, not in navigation */}
+      <Route path="/versions" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <VersionsIndex />
+        </Suspense>
+      )} />
+      <Route path="/version-1" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <VersionFrame n={1}>
+            <HomepageV1 />
+          </VersionFrame>
+        </Suspense>
+      )} />
+      <Route path="/version-2" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <VersionTwoForward />
+        </Suspense>
+      )} />
+      <Route path="/version-3" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <VersionFrame n={3}>
+            <HomepageV3 />
+          </VersionFrame>
+        </Suspense>
+      )} />
+      <Route path="/version-4" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <VersionFrame n={4}>
+            <HomepageV4 />
+          </VersionFrame>
+        </Suspense>
+      )} />
+
       {/* Solutions Pages */}
       <Route path="/solutions" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
@@ -228,14 +281,16 @@ function Router() {
           <CoManagedIT />
         </Suspense>
       )} />
-      <Route path="/solutions/business-needs/:family" component={() => (
+      {/* The Store's old public home: one address now (the server 301s these too). */}
+      <Route path="/solutions/business-needs/:family">
+        {(params) => <Redirect to={`/store/solutions/${params.family}`} replace />}
+      </Route>
+      <Route path="/solutions/business-needs">
+        <Redirect to="/store" replace />
+      </Route>
+      <Route path="/store/solution/submitted/:reference" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
-          <BusinessNeedsFamily />
-        </Suspense>
-      )} />
-      <Route path="/solutions/business-needs" component={() => (
-        <Suspense fallback={<PageLoadingSkeleton />}>
-          <BusinessNeedsIndex />
+          <SolutionSubmitted />
         </Suspense>
       )} />
       <Route path="/store/solutions/:family" component={() => (
@@ -904,6 +959,8 @@ function SpaPageViews() {
 const ACCENT_BY_PREFIX: ReadonlyArray<readonly [string, string]> = [
   ["/internal/warehouse", "electric"],
   ["/store", "electric"],
+  // The Store's contact step keeps the Store's channel (source of truth §16.1).
+  ["/solutions/request", "electric"],
   ["/support", "cyan"],
   ["/resources/blog", "amber"],
 ];
@@ -919,7 +976,7 @@ function AppContent() {
   useStoreChromeGestures(location);
   const isPortal = location.startsWith("/portal");
   const isHome = location === "/";
-  const hideDoor2HelpDock = isDoor2Path(location) && !["/store", "/solutions/business-needs"].includes(location.split("?")[0]);
+  const hideDoor2HelpDock = isDoor2Path(location) && location.split("?")[0] !== "/store";
   const hideWarehouseChrome = isWarehousePath(location);
   const accent = isPortal ? undefined : accentFor(location);
 
@@ -930,13 +987,12 @@ function AppContent() {
 
   return (
     <AnnouncerProvider>
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
+      <DefaultCanonical />
+      <SkipToContent />
       <ScrollProgress />
       <SpaPageViews />
       <div
-        id="main-content"
+        id="app-canvas"
         data-accent={accent}
         className={isPortal ? undefined : "de-site-canvas"}
       >

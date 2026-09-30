@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { revealTransition, revealViewport } from "@/lib/animations";
 import { Shield, ArrowRight, MapPin, UserCheck, Scale } from "lucide-react";
 import { ParallaxStill } from "@/components/visual/ParallaxStill";
-import trustDeskImg from "@assets/de-trust-assessment-desk.png";
+import trustDeskImg from "@assets/de-trust-assessment-desk-960.webp";
 import { CTA } from "@/lib/ctaCopy";
 
 const pillars = [
@@ -93,7 +93,7 @@ export const DigeratiTrustPhotoSection = (): JSX.Element => {
                   alt="Principal-led cyber risk assessment work for an Arizona business"
                   travel={6}
                   width={960}
-                  height={720}
+                  height={640}
                   className="absolute inset-0"
                   testId="img-trust-assessment-desk"
                 />

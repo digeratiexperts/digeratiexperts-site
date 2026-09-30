@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE diagram system · review gallery</title>
+<meta name="robots" content="noindex">
+<style>
+  @font-face { font-family: "Inter"; font-weight: 400 700; font-display: swap; src: url("../builds/de-v2/assets/fonts/inter-latin.woff2") format("woff2"); }
+  @font-face { font-family: "Space Grotesk"; font-weight: 500 700; font-display: swap; src: url("../builds/de-v2/assets/fonts/space-grotesk-latin.woff2") format("woff2"); }
+  @font-face { font-family: "Oxanium"; font-weight: 500 700; font-display: swap; src: url("../builds/de-v2/assets/fonts/oxanium-latin.woff2") format("woff2"); }
+  :root { --de-bg:#050312; --de-surface:#0a0a0a; --de-raised:#151217; --de-hairline:rgba(255,255,255,0.1); --de-paper:#f7f5f2; --de-paper-raised:#ffffff; --de-paper-hairline:rgba(26,18,16,0.1); }
+  html[data-tone="dark"] body { background: var(--de-bg); color: #fff; }
+  html[data-tone="paper"] body { background: var(--de-paper); color: #1a1228; }
+  body { margin: 0; font-family: "Inter", system-ui, sans-serif; }
+  .g-wrap { max-width: 80rem; margin-inline: auto; padding: 2rem clamp(1rem, 4vw, 3rem) 5rem; }
+  h1 { font-family: "Space Grotesk", sans-serif; font-size: 1.6rem; margin: 0 0 .3rem; letter-spacing: -.02em; }
+  .g-lede { opacity: .6; margin: 0 0 2.5rem; max-width: 62ch; font-size: .95rem; }
+  .g-section { margin-top: 3rem; border-top: 1px solid var(--de-hairline); padding-top: 1.2rem; }
+  html[data-tone="paper"] .g-section { border-top-color: var(--de-paper-hairline); }
+  .g-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .g-head h2 { font-family: "Space Grotesk", sans-serif; font-size: 1.15rem; margin: 0; }
+  .g-meta { font-family: "Oxanium", monospace; font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; opacity: .6; margin: 0; }
+  .g-row { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 2rem; align-items: start; }
+  @media (max-width: 900px) { .g-row { grid-template-columns: 1fr; } .g-narrow { max-width: 360px; } }
+  .g-state { display: flex; align-items: center; gap: 1rem; margin: 1.2rem 0; font-family: "Oxanium", monospace; font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; opacity: .8; }
+  .g-state input { flex: 1; max-width: 24rem; accent-color: #d3126a; }
+  .g-stages { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 1rem; }
+  .g-cell { border: 1px solid var(--de-hairline); padding: .6rem; }
+  html[data-tone="paper"] .g-cell { border-color: var(--de-paper-hairline); }
+  .g-cellname { margin: 0 0 .4rem; font-family: "Oxanium", monospace; font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; opacity: .6; }
+</style>
+<link rel="stylesheet" href="lab/gallery.css">
+</head>
+<body>
+<div class="g-wrap">
+  <h1>DE diagram system</h1>
+  <p class="g-lede">Five explanatory diagrams on the Visual System v2 grammar, each mapped to a real DE service or data source and classified. Wide and narrow layouts side by side; the slider drives the state a Scrollcraft page would drive from scroll.</p>
+  <div id="gallery"></div>
+</div>
+<script src="lab/gallery.js"></script>
+</body>
+</html>

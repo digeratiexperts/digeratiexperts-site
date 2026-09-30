@@ -1,6 +1,11 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import { enforceProductionConfig } from "./production.config";
+// Fail closed before serving traffic: missing/unsafe required production
+// config (JWT_SECRET, DATABASE_URL) terminates startup with a clear error.
+enforceProductionConfig();
+
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import { registerRoutes, authMiddleware, requireRole } from "./routes";
@@ -11,6 +16,7 @@ import { registerPublicSolutionRoutes } from "./publicSolutionRoutes";
 import { registerWarehouseGates } from "./warehouseRoutes";
 import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
+import { isKnownSpaPath } from "./spaKnownPaths";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import fs from "fs";
@@ -18,14 +24,18 @@ import cookieParser from "cookie-parser";
 import compression from "compression";
 import jwt from "jsonwebtoken";
 import { zohoPayments } from "./zohoPayments";
+import { evaluatePaymentSucceeded } from "./zohoPaymentWebhook";
+import { getJwtSecretOrNull } from "./config/authSecrets";
 import { setupCrossServiceHandlers } from "./crossServiceHandler";
 import { eventBus, EventTypes } from "./eventBus";
 
 process.on('unhandledRejection', (reason, promise) => {
   const errorStr = String(reason);
-  if (errorStr.includes('endpoint has been disabled') || 
+  if (errorStr.includes('endpoint has been disabled') ||
       errorStr.includes('Connection terminated') ||
       errorStr.includes('connection to server')) {
+    // Tolerated (transient DB connection drops) but never silent.
+    console.warn('⚠️ Unhandled rejection (database connection, tolerated):', errorStr.slice(0, 200));
     return;
   }
   console.error('Unhandled Rejection:', reason);
@@ -45,6 +55,10 @@ process.on('uncaughtException', (error) => {
 
 const app = express();
 const server = createServer(app);
+
+// One reverse-proxy hop (OpenLiteSpeed/CyberPanel) in front of the app:
+// required so express-rate-limit and req.ip see the real client address.
+app.set("trust proxy", 1);
 
 app.use(compression({
   level: 6,
@@ -66,21 +80,16 @@ import { setSecurityHeaders } from "./middleware/security";
 app.use(setSecurityHeaders);
 
 app.use((req, _res, next) => {
-  log(`→ ${req.method} ${req.originalUrl}`);
+  // Draft ids and references are possession-keyed; they do not belong in plaintext logs.
+  const shown = req.originalUrl.replace(/([?&](?:draftId|reference|sessionId)=)[^&]*/gi, "$1[redacted]");
+  log(`→ ${req.method} ${shown}`);
   next();
 });
 
 app.all("/api/health", async (_req, res) => {
   const port = process.env.REPLIT_SERVER_PORT || process.env.PORT || "unknown";
-  let dbAvailable = false;
-  try {
-    const { pool } = await import("./db");
-    if (pool) {
-      const client = await pool.connect();
-      client.release();
-      dbAvailable = true;
-    }
-  } catch { dbAvailable = false; }
+  const { databaseAcceptsConnections } = await import("./healthProbe");
+  const dbAvailable = await databaseAcceptsConnections();
   const openaiConfigured = !!(
     process.env.OPENAI_API_KEY ||
     process.env.OPENAI_API ||
@@ -106,8 +115,27 @@ app.all("/api/health", async (_req, res) => {
   res.status(200).json(health);
 });
 
-app.all("/healthz", (_req, res) => res.status(200).send("ok"));
-app.all("/ready", (_req, res) => res.status(200).json({ ready: true }));
+/** Public, secret-free flag so marketing and the portal do not promise card checkout when it is off. */
+app.get("/api/payments/availability", (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ cardCheckout: zohoPayments.isConfigured() });
+});
+
+app.all("/healthz", async (_req, res) => {
+  const { databaseAcceptsConnections, probeStatus } = await import("./healthProbe");
+  const status = probeStatus(await databaseAcceptsConnections());
+  res.status(status).type("text/plain").send(status === 200 ? "ok" : "unavailable");
+});
+
+app.all("/ready", async (_req, res) => {
+  const { databaseAcceptsConnections, probeStatus } = await import("./healthProbe");
+  const status = probeStatus(await databaseAcceptsConnections());
+  if (status === 200) {
+    res.status(200).json({ ready: true });
+    return;
+  }
+  res.status(503).json({ ready: false, database: "unavailable" });
+});
 
 /**
  * Portal routing heal — Cloudflare on digeratexperts.com strips `/portal` when
@@ -200,9 +228,24 @@ app.post(
 
         if (existingOrder) {
           const oldStatus = existingOrder.status || "unknown";
-          const alreadyPastPaid = ["paid", "processing", "provisioning", "completed"].includes(oldStatus);
+          const decision = evaluatePaymentSucceeded(existingOrder, parsed);
 
-          if (!alreadyPastPaid) {
+          if (decision.action === "reject") {
+            console.error("[SECURITY] PAYMENT_VERIFICATION_FAILED", {
+              orderId: existingOrder.id,
+              orderNumber: existingOrder.orderNumber,
+              reason: decision.reason,
+              expectedTotal: existingOrder.total,
+              eventAmount: parsed.amount,
+              eventCurrency: parsed.currency,
+              paymentId: parsed.paymentId,
+            });
+            // Acknowledge receipt (the signature was valid) but do NOT
+            // transition the order; it stays awaiting reconciliation.
+            return res.json({ received: true });
+          }
+
+          if (decision.action === "mark_paid") {
             await db.update(storeOrders)
               .set({
                 status: "paid",
@@ -211,6 +254,20 @@ app.post(
                 updatedAt: new Date(),
               })
               .where(eq(storeOrders.id, existingOrder.id));
+
+            const paidLines = Array.isArray(existingOrder.lineItems) ? existingOrder.lineItems : [];
+            void import("./integrations/enqueueStoreOrder")
+              .then(({ enqueueStoreOrderCreated }) => enqueueStoreOrderCreated({
+                id: existingOrder.id,
+                orderNumber: existingOrder.orderNumber,
+                status: "paid",
+                clientId: existingOrder.clientId,
+                billingEmail: existingOrder.billingEmail,
+                billingName: existingOrder.billingName,
+                billingCompany: existingOrder.billingCompany,
+                lineItems: paidLines,
+              }))
+              .catch((error) => console.warn("[store-order] Hub enqueue skipped:", error?.message || error));
 
             console.log("[SECURITY] ORDER_STATUS_CHANGED", {
               orderId: existingOrder.id,
@@ -339,7 +396,7 @@ app.use((req, res, next) => {
 
   const token =
     typeof req.cookies?.portalAuth === "string" ? req.cookies.portalAuth : "";
-  const secret = process.env.JWT_SECRET;
+  const secret = getJwtSecretOrNull();
   if (!token || !secret) {
     const returnTo = encodeURIComponent(req.path);
     return res.redirect(
@@ -377,6 +434,51 @@ app.use(
     maxAge: "1h",
   }),
 );
+
+// Version B preview (PR #164, Joe-authorized go-live): the isolated Scrollcraft
+// interpretation of the site, published additively at /v2. Static, committed
+// under public/v2, X-Robots-Tag noindex so the preview never competes with the
+// canonical pages in search.
+app.use(
+  "/v2",
+  express.static(path.join(publicDir, "v2"), {
+    maxAge: "1h",
+    setHeaders(res) {
+      res.setHeader("X-Robots-Tag", "noindex");
+    },
+  }),
+);
+
+// Scrollcraft lab (reference only, Joe's "URLs to see the Scrollcraft stuff"):
+// the review pages, the diagram gallery and the rendered plans, published
+// additively under /scrollcraft. Static, committed under public/scrollcraft
+// (scripts/build-scrollcraft-lab.mjs); X-Robots-Tag noindex like /v2 and
+// Disallow'd in robots.txt so none of it competes with the canonical pages.
+app.use(
+  "/scrollcraft",
+  express.static(path.join(publicDir, "scrollcraft"), {
+    maxAge: "5m",
+    setHeaders(res) {
+      res.setHeader("X-Robots-Tag", "noindex, nofollow");
+    },
+  }),
+);
+
+// Experience v1 (Joe, 2026-09-03: "published to another page until I approve
+// it", then "show me it with the site"): the speakable address forwards to the
+// React route that wraps the story in the site's own menu and footer; the
+// standalone build stays at /scrollcraft/experience-v1/ for the lab.
+app.get("/experience-v1", (_req, res) => {
+  res.setHeader("X-Robots-Tag", "noindex");
+  res.redirect(302, "/experience");
+});
+
+// Homepage version archive (client/src/pages/versions/README.md): version 2
+// is the static Version B build above, so its numbered URL forwards there.
+app.get("/version-2", (_req, res) => {
+  res.setHeader("X-Robots-Tag", "noindex");
+  res.redirect(302, "/v2");
+});
 
 function listEndpoints(): Array<{ method: string; path: string }> {
   const routes: Array<{ method: string; path: string }> = [];
@@ -450,7 +552,9 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       }
       
       if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
+        // Known SPA routes → 200; unknown paths still get the shell but HTTP 404.
+        const status = isKnownSpaPath(req.path) ? 200 : 404;
+        res.status(status).sendFile(indexPath);
       } else {
         log(`⚠️ Production build not found at ${distPath}`);
         res.status(404).send(`

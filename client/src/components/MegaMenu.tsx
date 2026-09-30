@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useCallback, useId } from 'react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { ChevronDown, Shield, Server, Users, FileCheck, Phone, ExternalLink, X, ArrowRight, Monitor, Cloud, Lock, Zap, HeadphonesIcon, Building, BarChart3, ClipboardCheck, Layers, TrendingUp, Star, CheckCircle, Award, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import logoImage from '@assets/DE-Logo-new_1762461524794.webp';
-import ebookCover from '@/assets/images/ebook-defending-digital-realm-cover.png';
+import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
+import ebookCover from '@/assets/images/ebook-defending-digital-realm-cover.webp';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { pricing } from '@/data/pricing';
@@ -13,6 +13,7 @@ import { HomepageOnPageNav } from '@/components/HomepageSectionNav';
 import { PORTAL_LOGIN } from '@/lib/portalUrls';
 import { CTA } from '@/lib/ctaCopy';
 import { PRIMARY_PHONE } from '@/data/companyContact';
+import { isDoor2Path } from '@/lib/isDoor2Path';
 
 const NoiseTexture = ({ id }: { id: string }) => (
   <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.025]" aria-hidden="true">
@@ -195,6 +196,13 @@ export function MegaMenu() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const { openBooking } = useBooking();
+  const [location] = useLocation();
+  // The public Store is a task surface: the assessment strip does not sell over
+  // it (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §16.2, approved 2026-09-28).
+  const onDoor2 = isDoor2Path(location);
+  // Nor on /book, the page the strip sells: it would read "free" above the page's own
+  // conversation-first copy and the assessment's price (§16.6, §14.24).
+  const onBook = (location.split('?')[0] ?? '').replace(/\/+$/, '') === '/book';
   // Top assessment announcement strip (reference direction). Dismiss lasts the
   // tab session so it never nags on every navigation.
   const [announceDismissed, setAnnounceDismissed] = useState(() => {
@@ -205,6 +213,7 @@ export function MegaMenu() {
       return false;
     }
   });
+  const hideAnnounce = announceDismissed || onDoor2 || onBook;
   const dismissAnnounce = () => {
     setAnnounceDismissed(true);
     try {
@@ -578,8 +587,18 @@ export function MegaMenu() {
         utilityNaturalHRef.current = 0;
         root.style.setProperty('--de-utility-h', '0px');
       } else if (utilityEl && !isScrolled && utilityEl.offsetHeight > 0) {
-        utilityNaturalHRef.current = utilityEl.offsetHeight;
-        root.style.setProperty('--de-utility-h', `${utilityEl.offsetHeight}px`);
+        // The bar's natural height is its in-flow rows (the announcement strip when
+        // shown, and the utility row), read without touching the bar. Its own
+        // offsetHeight is pinned by min-height to the last published value, so it
+        // could only grow: a page without the strip kept the strip's height after a
+        // client-side navigation.
+        const naturalH = Array.from(utilityEl.children).reduce((sum, child) => {
+          const style = window.getComputedStyle(child);
+          if (style.position === 'absolute' || style.position === 'fixed' || style.display === 'none') return sum;
+          return sum + (child as HTMLElement).offsetHeight;
+        }, 0);
+        utilityNaturalHRef.current = naturalH;
+        root.style.setProperty('--de-utility-h', `${naturalH}px`);
       }
 
       // Live bottom tracks the collapsed/expanded chrome for drawers + dropdowns.
@@ -598,16 +617,23 @@ export function MegaMenu() {
     };
 
     publish();
-    const ro = new ResizeObserver(() => publish());
+    // Publish on the next frame: resizing an observed box from inside the observer's
+    // callback leaves notifications undelivered ("ResizeObserver loop completed…").
+    let frame = 0;
+    const ro = new ResizeObserver(() => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(publish);
+    });
     if (utilityBarRef.current) ro.observe(utilityBarRef.current);
     if (navBarRef.current) ro.observe(navBarRef.current);
     if (spyBarRef.current) ro.observe(spyBarRef.current);
     window.addEventListener('resize', publish);
     return () => {
+      window.cancelAnimationFrame(frame);
       ro.disconnect();
       window.removeEventListener('resize', publish);
     };
-  }, [isScrolled]);
+  }, [isScrolled, hideAnnounce]);
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
@@ -677,7 +703,7 @@ export function MegaMenu() {
           }}
         />
         {/* Assessment announcement strip — reference-style top bar */}
-        {!announceDismissed && (
+        {!hideAnnounce && (
           <div className="relative z-10 w-full border-b border-white/[0.08] bg-black">
             <div className="max-w-[var(--de-canvas)] mx-auto relative flex w-full items-center justify-center gap-x-4 px-12 py-2">
               <p className="text-base font-medium leading-snug text-white/90">
@@ -772,8 +798,10 @@ export function MegaMenu() {
               aria-label="Digerati Experts home"
             >
               <img
-                src={logoImage}
+                src={DE_LOGO_REVERSE}
                 alt="Digerati Experts Logo"
+                width={300}
+                height={72}
                 className={`transition-all duration-300 ${
                   isScrolled ? 'h-10' : 'h-[3.25rem]'
                 }`}

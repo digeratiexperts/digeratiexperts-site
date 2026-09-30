@@ -14,6 +14,7 @@ export function isStorePath(path: string): boolean {
   return (
     pathname === "/store" ||
     pathname.startsWith("/store/") ||
+    pathname === "/solutions/request" ||
     pathname === "/internal/warehouse" ||
     pathname.startsWith("/internal/warehouse/")
   );

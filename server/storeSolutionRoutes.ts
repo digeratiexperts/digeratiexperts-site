@@ -8,6 +8,7 @@ import {
   upsertSolutionDurable,
 } from "./storeSolutionStore";
 import type { SolutionLineInput } from "@shared/storeCommerce";
+import { getJwtSecretOrNull } from "./config/authSecrets";
 
 type SolutionRequest = Request & {
   userId?: string;
@@ -24,9 +25,10 @@ function optionalUserId(req: SolutionRequest): string | null {
   const authHeader = req.headers.authorization;
   const token =
     authHeader && authHeader.startsWith("Bearer ") ? authHeader.slice("Bearer ".length).trim() : "";
-  if (!token || !process.env.JWT_SECRET) return req.userId ?? null;
+  const secret = getJwtSecretOrNull();
+  if (!token || !secret) return req.userId ?? null;
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET) as { userId?: string };
+    const decoded = jwt.verify(token, secret) as { userId?: string };
     return decoded.userId || req.userId || null;
   } catch {
     return req.userId ?? null;

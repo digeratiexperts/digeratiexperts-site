@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<style>body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#faf9f7;color-scheme:light}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<!-- Review page "DE Quiet Pages", imported 2026-09-02 from a Claude artifact by scripts/build-scrollcraft-lab.mjs; 0 embedded image(s) written to img/. Reference only, linked from /scrollcraft/. -->
+<title>DE Quiet Pages</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Oxanium:wght@500;600;700&display=swap">
+<style>
+/* ============================================================================
+   plain.css · the quiet tier of Version B
+   The same system with the theatrics off: same tokens, same faces, same
+   hairlines. No engine, no plates, no animation. Pages that are plain on
+   purpose and precise anyway.
+   ========================================================================== */
+
+:root {
+  --paper: #F7F5F2;
+  --ink: #16121F;
+  --soft: #5A5468;
+  --accent: #AE0E57;
+  --line: color-mix(in oklab, var(--ink) 78%, transparent);
+  --line-soft: color-mix(in oklab, var(--ink) 26%, transparent);
+  --display: "Space Grotesk", system-ui, sans-serif;
+  --text: "Inter", system-ui, sans-serif;
+  --mono: "Oxanium", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--text);
+  font-size: clamp(1rem, 0.96rem + 0.22vw, 1.0625rem);
+  line-height: 1.62;
+}
+.page {
+  max-width: 44rem;
+  margin-inline: auto;
+  padding: 0 clamp(1.25rem, 5vw, 2.5rem) clamp(3rem, 7vw, 5rem);
+}
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 0.22em; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+::selection { background: var(--accent); color: #fff; }
+
+/* masthead: the same flag as the story pages */
+.flag {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding: clamp(1.1rem, 3vw, 1.6rem) 0 0.7rem;
+  margin-bottom: clamp(2.4rem, 6vw, 3.6rem);
+}
+.flag__mark {
+  margin: 0; font-family: var(--display); font-weight: 700;
+  font-size: 1rem; letter-spacing: 0.14em; text-transform: uppercase;
+}
+.flag__mark span { color: var(--accent); }
+.flag__mark a { color: inherit; text-decoration: none; }
+.flag__place { margin: 0; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--soft); }
+.flag__place a { color: inherit; }
+
+h1 {
+  margin: 0 0 0.6em;
+  font-family: var(--display); font-weight: 600;
+  font-size: clamp(1.7rem, 1.4rem + 1.6vw, 2.4rem);
+  line-height: 1.08; letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.dek { margin: 0 0 2.2em; font-size: 1.125rem; line-height: 1.5; color: var(--soft); max-width: 38rem; text-wrap: pretty; }
+h2 {
+  margin: 2.2em 0 0.5em;
+  font-family: var(--display); font-weight: 600;
+  font-size: 1.2rem; letter-spacing: -0.01em;
+}
+p { margin: 0 0 1em; max-width: 62ch; text-wrap: pretty; }
+ul.plain { margin: 0 0 1em; padding-left: 1.1em; }
+ul.plain li { margin-bottom: 0.35em; }
+hr { border: 0; height: 1px; background: var(--line-soft); margin: 2.4em 0; }
+
+/* fact rows for contact-style data */
+.rows { margin: 0; }
+.rows > div {
+  display: grid; grid-template-columns: 9rem 1fr; gap: 1rem;
+  padding: 0.85em 0; border-top: 1px solid var(--line-soft);
+}
+.rows dt { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--soft); padding-top: 0.25em; }
+.rows dd { margin: 0; }
+@media (max-width: 540px) { .rows > div { grid-template-columns: 1fr; gap: 0.15rem; } }
+
+/* native, no-JS accordion for the FAQ */
+details { border-top: 1px solid var(--line-soft); }
+details:last-of-type { border-bottom: 1px solid var(--line-soft); }
+summary {
+  cursor: pointer; list-style: none;
+  padding: 1em 1.6rem 1em 0;
+  font-family: var(--display); font-weight: 600; font-size: 1.05rem;
+  position: relative;
+}
+summary::-webkit-details-marker { display: none; }
+summary::after {
+  content: ""; position: absolute; right: 0.3rem; top: 1.35em;
+  width: 0.5rem; height: 0.5rem;
+  border-right: 2px solid var(--soft); border-bottom: 2px solid var(--soft);
+  transform: rotate(45deg); transition: transform 150ms ease-out;
+}
+details[open] summary::after { transform: rotate(225deg); }
+summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+details p { padding-bottom: 1.1em; }
+
+/* the one action */
+.cta { margin: 2.4em 0 0; padding: 1.4em 0 0; border-top: 1px solid var(--line); font-size: 1.125rem; }
+.cta a { font-weight: 600; text-decoration-thickness: 2px; text-underline-offset: 0.28em; }
+.cta-side { font-size: 0.95rem; color: var(--soft); }
+
+footer {
+  margin-top: clamp(3rem, 8vw, 5rem);
+  border-top: 1px solid var(--line);
+  padding-top: 1.1rem;
+  font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--soft);
+  display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem;
+}
+footer a { color: inherit; }
+
+.sampler-nav { max-width: 44rem; margin: 0 auto; padding: 1.2rem clamp(1.25rem,5vw,2.5rem) 0; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--soft); display: flex; gap: 1.4rem; flex-wrap: wrap; }
+.sampler-nav a { color: inherit; }
+.page-break { max-width: 44rem; margin: 3.5rem auto; padding: 0 clamp(1.25rem,5vw,2.5rem); }
+.page-break hr { height: 2px; background: var(--line); margin: 0; }
+body { background: var(--paper); }
+</style>
+<nav class="sampler-nav" aria-label="Pages in this set"><span>Three quiet pages</span><a href="#pg-assessment">The assessment</a><a href="#pg-contact">Contact</a><a href="#pg-faq">Common questions</a></nav>
+<div class="page" id="pg-assessment">
+  <header class="flag">
+    <p class="flag__mark"><a href="#pg-assessment">Digerati<span> Experts</span></a></p>
+    <p class="flag__place">Chandler, Arizona · <a href="tel:+13254809870">325-480-9870</a></p>
+  </header>
+  <main>
+    <h1>The Cyber Risk Assessment</h1>
+    <p class="dek">Every engagement starts the same way: DE reads your environment before recommending anything. This page explains what that involves.</p>
+
+    <h2>What it reviews</h2>
+    <p>The assessment reads the parts of your environment where most incidents actually start:</p>
+    <ul class="plain">
+      <li>Identity and access, including MFA coverage</li>
+      <li>Endpoints and devices</li>
+      <li>Email security</li>
+      <li>Backups and recovery</li>
+      <li>The foundational security controls around all of it</li>
+    </ul>
+
+    <h2>How it runs</h2>
+    <p>You book a time. DE reviews the environment and returns findings a business owner can act on: prioritized, with business-impact context and right-sized recommendations. No obligation, and you hear back within one business day.</p>
+
+    <h2>What happens after</h2>
+    <p>The findings stand on their own; you can act on them with anyone. When the fit is right, they become the starting map for a ProActive operating model, matched to your users, devices, compliance needs, and whether you want fully or co-managed coverage.</p>
+
+    <p class="cta">Ready when you are: <a href="https://meet.digerati-experts.com/">Get My Cyber Risk Assessment</a><br>
+    <span class="cta-side">Or call <a href="tel:+13254809870">325-480-9870</a> and ask for the assessment.</span></p>
+  </main>
+  <footer>
+    <span>Digerati Experts</span>
+    <a href="#pg-contact">Contact</a>
+    <a href="#pg-faq">Common questions</a>
+    <a href="https://digeratiexperts.com/support">Client support</a>
+  </footer>
+</div>
+<div class="page-break" aria-hidden="true"><hr></div>
+<div class="page" id="pg-contact">
+  <header class="flag">
+    <p class="flag__mark"><a href="#pg-assessment">Digerati<span> Experts</span></a></p>
+    <p class="flag__place">Chandler, Arizona · <a href="tel:+13254809870">325-480-9870</a></p>
+  </header>
+  <main>
+    <h1>Contact</h1>
+    <p class="dek">A real office, a real phone, and people who answer it.</p>
+    <dl class="rows">
+      <div><dt>Phone</dt><dd><a href="tel:+13254809870">325-480-9870</a> · sales and business</dd></div>
+      <div><dt>Email</dt><dd><a href="mailto:info@digeratiexperts.com">info@digeratiexperts.com</a></dd></div>
+      <div><dt>Support</dt><dd><a href="mailto:support@digeratiexperts.com">support@digeratiexperts.com</a> · or <a href="https://digeratiexperts.com/support">client support</a></dd></div>
+      <div><dt>Book</dt><dd><a href="https://meet.digerati-experts.com/">Get My Cyber Risk Assessment</a></dd></div>
+      <div><dt>Portal</dt><dd><a href="https://portal.digeratiexperts.com/portal/login">Client portal sign-in</a></dd></div>
+      <div><dt>Office</dt><dd>3165 S Alma School Rd, Suite 29<br>Chandler, AZ 85248 · <a href="https://maps.google.com/?cid=1710856351091471339">map</a></dd></div>
+      <div><dt>Serves</dt><dd>Arizona and Greater Phoenix: Chandler, Phoenix, Scottsdale, Tempe, Mesa, and Gilbert</dd></div>
+    </dl>
+  </main>
+  <footer>
+    <span>Digerati Experts</span>
+    <a href="#pg-assessment">The assessment</a>
+    <a href="#pg-faq">Common questions</a>
+  </footer>
+</div>
+<div class="page-break" aria-hidden="true"><hr></div>
+<div class="page" id="pg-faq">
+  <header class="flag">
+    <p class="flag__mark"><a href="#pg-assessment">Digerati<span> Experts</span></a></p>
+    <p class="flag__place">Chandler, Arizona · <a href="tel:+13254809870">325-480-9870</a></p>
+  </header>
+  <main>
+    <h1>Common questions</h1>
+    <p class="dek">Straight answers on how we work, what we recommend, and why.</p>
+    <details>
+      <summary>What is your best service?</summary>
+      <p>There isn't a universally "best" package. ProActive is four operating models: IT, Office, Business, and Enterprise, matched to users, devices, locations, infrastructure, security, compliance, and whether you need fully or co-managed coverage. If Office would need heavy modification, Business is the correct fit for that environment, not a higher rank.</p>
+    </details>
+    <details>
+      <summary>How do I choose the right plan for my business?</summary>
+      <p>User count is a signal, never the sole criterion. We start with a Cyber Risk Assessment of your environment, then match IT, Office, Business, or Enterprise. We do not start with a package and pile on add-ons.</p>
+    </details>
+    <details>
+      <summary>Can I customize the solutions?</summary>
+      <p>Yes! We understand every business is unique. Our packages can be customized with additional services, and we offer both co-managed and fully managed options to fit your existing IT structure.</p>
+    </details>
+    <details>
+      <summary>Is my data secure?</summary>
+      <p>Yes. We use enterprise-grade controls, 24/7 monitoring, and documented security protocols. We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews, with clear ownership of credentials, policies, and evidence.</p>
+    </details>
+    <p class="cta">Question not here? <a href="tel:+13254809870">Call 325-480-9870</a> or write to <a href="mailto:info@digeratiexperts.com">info@digeratiexperts.com</a>.</p>
+  </main>
+  <footer>
+    <span>Digerati Experts</span>
+    <a href="#pg-assessment">The assessment</a>
+    <a href="#pg-contact">Contact</a>
+  </footer>
+</div>
+
+</body>
+</html>

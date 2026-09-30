@@ -17,5 +17,6 @@ Disallow: /quote-confirmation
 Disallow: /404
 Disallow: /login
 Disallow: /signup
+Disallow: /scrollcraft/
 
 Sitemap: https://digeratiexperts.com/sitemap.xml

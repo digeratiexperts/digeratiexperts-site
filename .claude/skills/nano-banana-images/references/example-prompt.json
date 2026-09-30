@@ -1,0 +1,17 @@
+{
+  "prompt": "Editorial environment plate for an enterprise technology company. A dim server-adjacent operations room rendered as premium architectural visualization: graphite and gunmetal surfaces, smoked-glass partitions, restrained deep-violet illumination used as light rather than paint, controlled studio key light from upper left creating soft falloff and subtle rim highlights on brushed-metal edges. Generous negative space on the right third for typography. Shot on a 35mm lens at f/4, ISO 200, tripod, slight perspective correction. Micro-scratches on anodized aluminum, faint dust in the light beam, matte finishes with realistic micro-roughness. Do not add screens with fake dashboards, logos, people, text, shields, padlocks or neon grids.",
+  "negative_prompt": "cyberpunk, neon grid, rainbow gradient, excessive glow, toy-like 3D, cartoon, illustration, stock imagery, fake dashboard, fabricated telemetry, binary code, hacker hoodie, server rack cliche, oversaturated, blurry, low resolution, CGI plastic sheen, watermark, text",
+  "api_parameters": {
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "png"
+  },
+  "settings": {
+    "resolution": "2K",
+    "style": "photorealistic architectural visualization, editorial",
+    "lighting": "controlled studio key from upper left, restrained violet fill, subtle rim light",
+    "camera_angle": "eye level, three-quarter view",
+    "depth_of_field": "moderate, f/4",
+    "quality": "high detail, realistic micro-roughness, no retouching"
+  }
+}
