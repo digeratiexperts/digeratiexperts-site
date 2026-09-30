@@ -1,0 +1,162 @@
+<!doctype html>
+<!--
+  Graphite Illumination · plate generator (vanilla canvas, zero dependencies)
+  Usage: generator.html?plate=interference&seed=7&w=1800&h=1100
+  Plates: interference | peakground | railflow | strata | assembly | ink
+  Deterministic: one seed, one plate, forever.
+-->
+<html lang="en">
+<meta charset="utf-8">
+<title>Graphite Illumination generator</title>
+<style>html,body{margin:0;background:#111}canvas{display:block}</style>
+<canvas id="c"></canvas>
+<script>
+'use strict';
+/* ------------------------------------------------ seeded PRNG + noise ---- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function makeNoise(rand){
+  var g=[],P=256,perm=[];
+  for(var i=0;i<P;i++){var th=rand()*Math.PI*2;g.push([Math.cos(th),Math.sin(th)]);perm.push(i)}
+  for(i=P-1;i>0;i--){var j=Math.floor(rand()*(i+1)),t=perm[i];perm[i]=perm[j];perm[j]=t}
+  perm=perm.concat(perm);
+  function dot(ix,iy,x,y){var gg=g[perm[(perm[ix&255]+iy)&255]];return gg[0]*(x-ix)+gg[1]*(y-iy)}
+  function fade(t){return t*t*t*(t*(t*6-15)+10)}
+  return function(x,y){
+    var x0=Math.floor(x),y0=Math.floor(y),x1=x0+1,y1=y0+1;
+    var sx=fade(x-x0),sy=fade(y-y0);
+    var n0=dot(x0,y0,x,y),n1=dot(x1,y0,x,y),ix0=n0+sx*(n1-n0);
+    n0=dot(x0,y1,x,y);n1=dot(x1,y1,x,y);var ix1=n0+sx*(n1-n0);
+    return ix0+sy*(ix1-ix0);
+  };
+}
+/* -------------------------------------------------------------- config --- */
+var q=new URLSearchParams(location.search);
+var PLATE=q.get('plate')||'assembly';
+var SEED=parseInt(q.get('seed')||'7',10);
+var W=parseInt(q.get('w')||'1800',10), H=parseInt(q.get('h')||'1100',10);
+var rand=mulberry32(SEED), noise=makeNoise(mulberry32(SEED^0x9E37));
+var n2=function(x,y,s){return noise(x*s,y*s)+0.5*noise(x*s*2.7+13.7,y*s*2.7+91.3)};
+
+var LAWS={
+  /* coherence: 0 shatter .. 1 lattice | carriers | vanishing pull | strata | lateral */
+  interference:{coh:0.16,carriers:150,pull:0.10,strata:0,lateral:0.25,signals:6, glow:0.9, ink:false},
+  peakground:  {coh:0.55,carriers:90, pull:0.55,strata:0,lateral:0.10,signals:3, glow:0.55,ink:false},
+  railflow:    {coh:0.80,carriers:120,pull:0.12,strata:0,lateral:1.0, signals:7, glow:0.8, ink:false},
+  strata:      {coh:0.90,carriers:110,pull:0.05,strata:1, lateral:0.9,signals:5, glow:0.7, ink:false},
+  assembly:    {coh:1.0, carriers:130,pull:0.75,strata:0,lateral:0.2, signals:9, glow:1.0, ink:false},
+  ink:         {coh:0.85,carriers:80, pull:0.35,strata:0.4,lateral:0.8,signals:4, glow:0,  ink:true}
+};
+var L=LAWS[PLATE]||LAWS.assembly;
+
+var cv=document.getElementById('c');cv.width=W;cv.height=H;
+var cx=cv.getContext('2d');
+
+/* ---------------------------------------------------------- the ground --- */
+if(L.ink){
+  cx.fillStyle='#F3F0EA';cx.fillRect(0,0,W,H);
+}else{
+  var bg=cx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#060414');bg.addColorStop(0.55,'#050312');bg.addColorStop(1,'#0A0620');
+  cx.fillStyle=bg;cx.fillRect(0,0,W,H);
+  /* violet volume: light pooled where the field is calm */
+  var pools=2+Math.floor(rand()*2);
+  for(var p=0;p<pools;p++){
+    var px=W*(0.2+rand()*0.6),py=H*(0.15+rand()*0.7),pr=Math.max(W,H)*(0.30+rand()*0.28);
+    var rg=cx.createRadialGradient(px,py,0,px,py,pr);
+    var a=0.10+0.08*L.glow*rand();
+    rg.addColorStop(0,'rgba(96,72,255,'+a.toFixed(3)+')');
+    rg.addColorStop(0.55,'rgba(80,56,220,'+(a*0.35).toFixed(3)+')');
+    rg.addColorStop(1,'rgba(80,56,220,0)');
+    cx.fillStyle=rg;cx.fillRect(0,0,W,H);
+  }
+}
+
+/* ------------------------------------------------------------- carriers -- */
+var vx=W*(0.35+rand()*0.3), vy=H*(0.30+rand()*0.4); /* vanishing point */
+cx.globalCompositeOperation=L.ink?'source-over':'lighter';
+function carrier(i,total){
+  var t=i/total;
+  var y0=L.strata? H*(0.08+0.84*((i%22)/22)+ (rand()-0.5)*0.012)
+                 : H*(0.05+0.9*rand());
+  var x0=-W*0.08+rand()*W*0.16;
+  var depth=0.25+0.75*rand();                     /* far..near */
+  var steps=90, dx=(W*1.16)/steps;
+  var lat=L.lateral, coh=L.coh;
+  var broken=rand()>coh*0.9+0.1;                  /* low coherence shatters */
+  var gap=0, seg=0;
+  cx.beginPath();
+  var px=x0, py=y0, drawing=true;
+  for(var s=0;s<=steps;s++){
+    var x=x0+dx*s;
+    var field=n2(x/W,py/H,2.2)* (1-coh)*H*0.16;
+    var pull=(vy-py)*L.pull*(x/W)*0.04;
+    var y=py+field*0.06+pull;
+    if(L.strata){ y=y0 + field*0.03; }
+    if(broken){
+      seg+=dx;
+      var period=40+120*rand();
+      if(drawing && seg>period*(0.4+coh)){drawing=false;seg=0;cx.moveTo(x,y);}
+      else if(!drawing && seg>period*(0.7-coh*0.4)){drawing=true;seg=0;cx.moveTo(x,y);}
+    }
+    if(s===0)cx.moveTo(x,y); else if(drawing)cx.lineTo(x,y); else cx.moveTo(x,y);
+    py=y;
+  }
+  if(L.ink){
+    cx.strokeStyle='rgba(26,20,36,'+(0.16+0.34*depth).toFixed(3)+')';
+    cx.lineWidth=0.5+depth*0.9;
+  }else{
+    var lum=0.05+0.16*depth*L.glow;
+    var warm=depth>0.92? 'rgba(238,232,255,':'rgba(150,132,235,';
+    cx.strokeStyle=warm+lum.toFixed(3)+')';
+    cx.lineWidth=0.4+depth*1.5;
+  }
+  cx.stroke();
+}
+for(var i=0;i<L.carriers;i++)carrier(i,L.carriers);
+
+/* ------------------------------------------------------------- signals --- */
+for(var sg=0;sg<L.signals;sg++){
+  var sy=H*(0.12+0.76*rand()), sx0=-W*0.05, steps=140, dx=(W*1.1)/steps;
+  cx.beginPath();
+  var py2=sy;
+  for(var s=0;s<=steps;s++){
+    var x=sx0+dx*s;
+    var y=py2+n2(x/W+sg*3.1,py2/H,3.1)*(1-L.coh*0.6)*H*0.010
+             +(vy-py2)*L.pull*0.015*(x/W);
+    if(s===0)cx.moveTo(x,y);else cx.lineTo(x,y);
+    py2=y;
+  }
+  if(L.ink){
+    cx.strokeStyle='rgba(163,14,82,0.5)';cx.lineWidth=0.9;
+  }else{
+    cx.strokeStyle='rgba(211,18,106,'+(0.16+0.22*rand()*L.glow).toFixed(3)+')';
+    cx.lineWidth=1.1;
+    cx.shadowColor='rgba(211,18,106,0.5)';cx.shadowBlur=6;
+  }
+  cx.stroke();cx.shadowBlur=0;
+}
+
+/* -------------------------------------------- assembly nodes (coh only) -- */
+if(L.coh>0.9&&!L.ink){
+  var nodes=8+Math.floor(rand()*4);
+  for(var nd=0;nd<nodes;nd++){
+    var nx=W*(0.15+0.7*rand()),ny=H*(0.15+0.7*rand());
+    cx.strokeStyle='rgba(220,210,255,0.5)';cx.lineWidth=1;
+    cx.strokeRect(nx-3,ny-3,6,6);
+    var hg=cx.createRadialGradient(nx,ny,0,nx,ny,26);
+    hg.addColorStop(0,'rgba(211,18,106,0.20)');hg.addColorStop(1,'rgba(211,18,106,0)');
+    cx.fillStyle=hg;cx.fillRect(nx-26,ny-26,52,52);
+  }
+}
+cx.globalCompositeOperation='source-over';
+
+/* ----------------------------------------------------------------- grain - */
+var gr=cx.getImageData(0,0,W,H),d=gr.data,gRand=mulberry32(SEED^0x51F7);
+for(var px2=0;px2<d.length;px2+=4){
+  var n=(gRand()-0.5)*(L.ink?7:11);
+  d[px2]+=n;d[px2+1]+=n;d[px2+2]+=n;
+}
+cx.putImageData(gr,0,0);
+document.title='ready:'+PLATE+':'+SEED;
+</script>
+</html>

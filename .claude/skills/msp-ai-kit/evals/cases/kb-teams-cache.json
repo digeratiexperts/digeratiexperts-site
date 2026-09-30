@@ -1,0 +1,19 @@
+{
+  "id": "kb-teams-cache",
+  "module": "kb-articles",
+  "title": "Teams sign-in error fixed by clearing the cache, both audiences",
+  "inputs": {
+    "[PASTE, including internal notes and the fix that worked]": "User LAP-0231 (Maria) reported Teams shows 'We ran into a problem' at sign-in after a password change. Tier 1 tried sign out; no change. Tier 2 quit Teams, removed %LOCALAPPDATA%\\Packages\\MSTeams_8wekyb3d8bbwe\\LocalCache, relaunched; user signed in and joined a test meeting. Ticket 5102.",
+    "[INTERNAL, CLIENT, or BOTH]": "BOTH",
+    "[NAME AND VERSION]": "Microsoft Teams (new client), Windows 11",
+    "[PASTE or NONE]": "NONE"
+  },
+  "mustMention": [
+    "Redaction",
+    "Verification"
+  ],
+  "mustNotMention": [
+    "LAP-0231",
+    "5102"
+  ]
+}

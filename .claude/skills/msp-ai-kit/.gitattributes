@@ -1,0 +1,7 @@
+# Keep the kit byte-identical on every OS: the example pack is verified by sha256 and a Windows checkout
+# with core.autocrlf would otherwise rewrite it. Batch files are the exception: cmd.exe needs CRLF.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.ttf binary
+*.png binary
+*.zip binary

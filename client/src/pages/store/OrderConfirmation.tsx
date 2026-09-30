@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
-import { useLocation, Link } from "wouter";
+import { useSearch, Link } from "wouter";
+import { parseOrderConfirmationParams } from "./orderConfirmationParams";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { MegaMenu } from "@/components/MegaMenu";
@@ -52,16 +53,10 @@ interface Order {
 }
 
 const OrderConfirmation = () => {
-  const [location] = useLocation();
+  const search = useSearch();
   const { clearCart } = useCart();
 
-  const params = useMemo(() => {
-    const searchParams = new URLSearchParams(location.split("?")[1] || "");
-    return {
-      orderId: searchParams.get("orderId") || searchParams.get("session_id"),
-      method: searchParams.get("method"),
-    };
-  }, [location]);
+  const params = useMemo(() => parseOrderConfirmationParams(search), [search]);
 
   useSEO({
     title: "Order Confirmation | Digerati Experts Store",
@@ -71,11 +66,14 @@ const OrderConfirmation = () => {
   });
 
   const { data: order, isLoading, error } = useQuery<Order>({
-    queryKey: ["/api/store/orders", params.orderId],
+    queryKey: ["/api/store/orders", params.orderId, params.confirmationToken],
     enabled: !!params.orderId,
     queryFn: async () => {
       const token = localStorage.getItem("portalToken");
-      const response = await fetch(`/api/store/orders/${params.orderId}`, {
+      const ctQuery = params.confirmationToken
+        ? `?ct=${encodeURIComponent(params.confirmationToken)}`
+        : "";
+      const response = await fetch(`/api/store/orders/${params.orderId}${ctQuery}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         credentials: "include",
       });

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Scrollcraft fingerprints · Scrollcraft lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=Oxanium:wght@500;600&display=swap">
+<style>
+:root{--bg:#050312;--ink:#ffffff;--soft:rgba(255,255,255,.68);--faint:rgba(255,255,255,.45);--line:rgba(255,255,255,.12);--accent:#F04C97;--raised:#141020}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline;text-underline-offset:4px}
+main{max-width:52rem;margin:0 auto;padding:3.5rem 1.25rem 6rem}
+.eyebrow{font-family:Oxanium,ui-monospace,monospace;font-size:.72rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0 0 .75rem}
+h1{font-family:"Space Grotesk",Inter,sans-serif;font-size:2rem;line-height:1.15;letter-spacing:-.02em;margin:0 0 1rem}
+h2{font-family:"Space Grotesk",Inter,sans-serif;font-size:1.35rem;letter-spacing:-.01em;margin:2.5rem 0 .75rem;padding-top:1.25rem;border-top:1px solid var(--line)}
+h3{font-size:1.08rem;margin:1.75rem 0 .5rem}
+h4,h5,h6{font-size:1rem;margin:1.25rem 0 .4rem}
+p,ul,ol{margin:0 0 1rem}
+li{margin:.3rem 0}
+li>ul,li>ol{margin:.3rem 0 .3rem}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;background:rgba(255,255,255,.08);padding:.1em .35em;border-radius:3px}
+pre{background:var(--raised);border:1px solid var(--line);padding:1rem;overflow-x:auto;font-size:.85rem;line-height:1.5;margin:0 0 1.25rem}
+pre code{background:none;padding:0;font-size:inherit}
+blockquote{margin:0 0 1rem;padding:.25rem 0 .25rem 1rem;border-left:2px solid var(--accent);color:var(--soft)}
+hr{border:0;border-top:1px solid var(--line);margin:2rem 0}
+.table-wrap{overflow-x:auto;margin:0 0 1.25rem;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .7rem;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--soft);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;background:var(--raised)}
+tr:last-child td{border-bottom:0}
+.back{font-family:Oxanium,ui-monospace,monospace;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase}
+.meta{color:var(--faint);font-size:.85rem;margin:0 0 2rem}
+</style>
+</head>
+<body>
+<main>
+<p class="back"><a href="/scrollcraft/">← Scrollcraft lab</a></p>
+<p class="eyebrow">Scrollcraft lab · plan document</p>
+<p class="meta">Rendered from <code>scrollcraft/FINGERPRINTS.md</code> in the repository. The file is the source of truth; this page is a reading copy.</p>
+<h1>Fingerprints</h1>
+<p>Every site you build with <strong>scrollcraft</strong> gets one row here, appended after it ships. The registry exists so your next build can prove it is a different page rather than a re-skin of one you already made.</p>
+<p>This file is <strong>yours</strong>. It starts empty on purpose: the gate is about not repeating <em>yourself</em>, so it has nothing to say until you have built something.</p>
+<p>The rules and the gate live in the skill's <code>references/uniqueness.md</code>. Short version:</p>
+<p><strong>A new build must differ from EVERY row below on at least 4 of the 6 dimensions.</strong> Four against each row individually, not four on average across the table. If a planned build fails, change the plan. Never edit a row to make room for it.</p>
+<p>The six dimensions are: <strong>grammar</strong>, <strong>nav treatment</strong>, <strong>hero device</strong>, <strong>act-sequence shape</strong>, <strong>close pattern</strong>, <strong>signature move</strong>.</p>
+<p>Dimension 6 is free, because a signature move is unique by definition. So the gate really asks for three more out of the remaining five, and a build that changes only grammar and world will fail it.</p>
+<hr>
+<h2>The registry</h2>
+<div class="table-wrap"><table><thead><tr><th>Build</th><th>Grammar</th><th>Nav treatment</th><th>Hero device</th><th>Act-sequence shape</th><th>Close pattern</th><th>Signature move</th><th>World</th><th>Port</th></tr></thead><tbody><tr><td>de-v2</td><td>Chaptered editorial</td><td>No bar; fixed machine-room rail: folio + live mini technology map (top ribbon under 1100px)</td><td>Title page: type on paper, kinetic lines, no media above the fold</td><td>10 chapters ≈ 14.1vh: flow, flow+field/silence, pin 2.4 (peak: figure draws itself), flow+interactive, flow+in dossier, pan 1.6, flow+reveal, flow+reveal+tilt, flow+parallax, pin 1.15 (merged edition, same build evolved)</td><td>Colophon plate on paper; CTA as running text; completed map holds</td><td>The technology map as persistent margin instrument: scatters, snaps together at the peak, answers outcome choices, stands complete at the close</td><td>Technical drawing (ink on graphite + paper) with real documentary photography</td><td>4500</td></tr><tr><td>proactive-ecosystem-amplify</td><td>Chaptered editorial (amplification of an existing React page; site chrome retained)</td><td>Global site nav + fixed margin environment folio (2xl+), chapter number, title, live map, jump list</td><td>Existing title page (PageTemplate text hero, no media) into staggered pillar chapter</td><td>flow, pin(2.2), flow(reveal), flow(parallax), flow(stagger), flow(reveal LR), flow(hold); 7 chapters</td><td>Compare panel lands and holds inside the page's existing CTA section, folio map complete</td><td>Accumulating margin environment map: one domain node lit and linked per chapter passed, complete and clickable by the close</td><td>Coded technical drawing on the site's dark ground, no photography, no generation</td><td>/solutions/proactive-ecosystem</td></tr></tbody></table></div>
+<hr>
+<h2>What is taken</h2>
+<p>Add a bullet here whenever a build claims something a later build should avoid reusing: a grammar, a nav treatment, a close pattern, a signature move, an act-count-and-length band. The shared columns are what the next build inherits as a constraint, so writing them down is the whole point.</p>
+<ul><li>Chaptered editorial grammar, the margin machine-room rail with a live figure, the title-page hero on paper, the accumulating-legend peak, the colophon close with a running-text CTA, and the 9-act ≈ 14vh band are taken by de-v2.</li><li>Chaptered editorial as an amplification layer over an existing page is taken.</li><li><strong>Collision on record:</strong> de-v2 and proactive-ecosystem-amplify were built in parallel, neither seeing the other's row, and converged on chaptered editorial, a fixed margin folio carrying a live environment map, a type-only title-page hero, and an accumulating-map signature move. They differ on act shape, close pattern, and interactivity, but they share more than the gate allows between planned builds. The next build must clear BOTH rows on 4 of 6, which in practice rules out the folio-plus-live-map margin and the chaptered-editorial grammar together.</li><li>The pinned scatter-to-assembly diagram peak is taken.</li><li>The accumulating margin environment map (folio + trace) is taken.</li><li>The hold-on-existing-CTA close is taken.</li></ul>
+<hr>
+<h2>Appending a row</h2>
+<p>After shipping, add one line to the table and one bullet to <strong>What is taken</strong> if the build claimed something new. Fill every column. Say what the build shares with existing rows.</p>
+<p>Rows are append-only. A build that has been superseded stays in the table, because the space it occupies is still occupied.</p>
+<hr>
+<h2>Worked example</h2>
+<p>The skill's author kept a registry of twelve builds across eight page grammars. If you want to see what a filled-in table looks like, and which shapes tend to collide, read <code>EXAMPLES.md</code> in the scrollcraft repository. Treat it as illustration only: those rows are somebody else's builds and they do <strong>not</strong> constrain yours.</p>
+</main>
+</body>
+</html>

@@ -16,7 +16,11 @@ const budgets = {
   // by diffing index.css directly, ~1KB of hand-written CSS, the rest is
   // JIT-generated utilities from genuinely new components. Small headroom
   // above current actual usage, not a blank check for future growth.
-  cssRawBytes: 290_000,
+  // Raised from 290_000 on 2026-09-02: the homepage version archive
+  // (client/src/pages/versions, /version-1..3) keeps frozen copies of earlier
+  // homepage compositions, so the utilities those compositions use stay in
+  // the sheet by design. Measured 291.2kB after the archive; ~9kB headroom.
+  cssRawBytes: 300_000,
 };
 
 function fail(message) {

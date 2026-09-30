@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<style>body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#faf9f7;color-scheme:light}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<!-- Review page "DE Work Board", imported 2026-09-02 from a Claude artifact by scripts/build-scrollcraft-lab.mjs; 49 embedded image(s) written to img/. Reference only, linked from /scrollcraft/. -->
+<title>DE Work Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=Oxanium:wght@500;600&display=swap">
+<style>
+:root{--ground:#f7f5f2;--raised:#ffffff;--ink:#1a1228;--soft:#5a5368;--hair:rgba(26,18,40,.13);--accent:#a30e52;--accent-ink:#a30e52;--shade:#eeeae6;--keep:#1f6f4a;--retire:#8a2f1a;
+--display:"Space Grotesk",system-ui,sans-serif;--body:"Inter",system-ui,sans-serif;--mono:"Oxanium","JetBrains Mono",ui-monospace,monospace}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ground:#050312;--raised:#151217;--ink:#f4f1f6;--soft:rgba(255,255,255,.62);--hair:rgba(255,255,255,.12);--accent:#d3126a;--accent-ink:#f04c97;--shade:#0c0a16;--keep:#5cc79a;--retire:#f0a48c}}
+:root[data-theme="dark"]{--ground:#050312;--raised:#151217;--ink:#f4f1f6;--soft:rgba(255,255,255,.62);--hair:rgba(255,255,255,.12);--accent:#d3126a;--accent-ink:#f04c97;--shade:#0c0a16;--keep:#5cc79a;--retire:#f0a48c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:40px 24px 72px}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.1;font-weight:700}
+h2{font-size:24px;font-weight:600;line-height:1.2}
+h3{font-size:16px;font-weight:600}
+p{margin:0;max-width:70ch}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink);font-weight:600}
+.lede{color:var(--soft);font-size:17px;margin-top:12px}
+header.top{display:grid;gap:10px;padding-bottom:22px;border-bottom:1px solid var(--hair)}
+.links{display:grid;gap:6px;margin-top:18px;font-size:14.5px}
+.links a{color:var(--accent-ink);text-decoration:none;border-bottom:1px solid transparent}
+.links a:hover,.links a:focus-visible{border-bottom-color:currentColor;outline:none}
+.toc{display:flex;flex-wrap:wrap;gap:6px 14px;padding:16px 0;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase}
+.toc a{color:var(--soft);text-decoration:none;padding:4px 0}
+.toc a:hover,.toc a:focus-visible{color:var(--accent-ink);outline:none}
+section{padding:36px 0 40px;border-bottom:1px solid var(--hair)}
+.sec-head{display:grid;gap:8px;margin-bottom:22px}
+.sec-head p{color:var(--soft)}
+.pair{display:grid;grid-template-columns:1fr;gap:14px;margin-top:22px}
+@media (min-width:860px){.pair{grid-template-columns:1fr 1fr}}
+figure{margin:0;display:grid;gap:8px;align-content:start}
+figure img{display:block;width:100%;height:auto;border:1px solid var(--hair);background:var(--shade)}
+figcaption{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);font-weight:600}
+.row{padding:18px 0;border-top:1px solid var(--hair)}
+.row:first-of-type{border-top:0;padding-top:0}
+.row h3{font-size:17px}
+.row .scope{color:var(--soft);font-size:14px;margin-top:2px}
+.grid4{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media (min-width:860px){.grid4{grid-template-columns:repeat(4,1fr)}}
+.grid3{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media (min-width:860px){.grid3{grid-template-columns:repeat(3,1fr)}}
+.grid2{display:grid;grid-template-columns:1fr;gap:18px}
+@media (min-width:860px){.grid2{grid-template-columns:1fr 1fr}}
+.dg{display:grid;gap:10px;padding:16px;border:1px solid var(--hair);background:var(--raised)}
+.dg .meta{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:baseline}
+.dg .cls{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-ink);font-weight:600}
+.dg .where{font-size:13.5px;color:var(--soft)}
+.dg .shots{display:grid;grid-template-columns:2.3fr 1fr;gap:10px;align-items:start}
+.dg .shots img{border:1px solid var(--hair)}
+.plate{display:grid;gap:8px}
+.verdict{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.verdict.keep{color:var(--keep)}.verdict.retire{color:var(--retire)}
+.note{font-size:13.5px;color:var(--soft)}
+ul.next{margin:12px 0 0;padding-left:18px;display:grid;gap:8px;font-size:15px}
+ul.next li::marker{color:var(--accent)}
+.foot{margin-top:28px;padding-top:16px;border-top:1px solid var(--hair);color:var(--soft);font-size:13.5px}
+</style>
+<div class="wrap">
+<header class="top">
+  <span class="eyebrow">Digerati Experts · session work · 2026-08-31 to 2026-09-02</span>
+  <h1>What was built, as pictures</h1>
+  <p class="lede">Every capture is a real render: the production build of PR #178 served locally, the live /v2 page, or the diagram system mounted on the homepage. Nothing is a mockup. The deeper pages this board summarises:</p>
+  <div class="links"><a href="https://claude.ai/code/artifact/7965d5ac-5e64-4ea3-918e-1ba5f2b9921f" target="_blank" rel="noopener">Homepage sections, before and after (with the review corrections) ↗</a><a href="https://claude.ai/code/artifact/b0faf45f-6597-4a0b-9faa-f2778c37676c" target="_blank" rel="noopener">Scrollcraft review gallery (Phase 0: everything that existed) ↗</a><a href="https://claude.ai/code/artifact/6aaece1c-7fcd-4cfb-91bc-3822cde66fea" target="_blank" rel="noopener">Digerati Version B (the story page, now at /v2) ↗</a><a href="https://claude.ai/code/artifact/5349344d-92d6-4c87-b970-962ff2ef23b0" target="_blank" rel="noopener">DE Scrollcraft Experience Plan ↗</a><a href="https://claude.ai/code/artifact/3306febf-9389-46ea-9572-b0f7671917ce" target="_blank" rel="noopener">DE Flagship Briefs (four services first, AI last) ↗</a><a href="https://claude.ai/code/artifact/efd03359-cae3-4399-805c-e60e36e7522e" target="_blank" rel="noopener">DE Quiet Pages ↗</a></div>
+</header>
+<nav class="toc" aria-label="Sections"><a href="#home">Homepage sections</a><a href="#phone">On a phone</a><a href="#diagrams">Diagram system</a><a href="#v2">Version B</a><a href="#plates">The six plates</a><a href="#next">Next</a></nav>
+
+<section id="home">
+  <div class="sec-head"><span class="eyebrow">01 · PR #178, draft</span><h2>The nine homepage sections, before and after</h2><p>Left: the section as it ships on main today. Right: this branch after Joe’s review corrections, captured at 1440 px, reduced motion. The H1 and both hero buttons are untouched.</p></div>
+  <div class="row"><h3>Trusted IT Partner for Arizona Businesses</h3><div class="scope">hero trust strip</div><div class="pair"><figure><img src="img/36e47800b45f.webp" alt="Before: Trusted IT Partner for Arizona Businesses" loading="lazy"><figcaption>Before · main</figcaption></figure><figure><img src="img/b87378513634.webp" alt="After: Trusted IT Partner for Arizona Businesses" loading="lazy"><figcaption>After · PR #178</figcaption></figure></div></div><div class="row"><h3>ProActive Ecosystem, bottom half</h3><div class="scope">one environment + capability list</div><div class="pair"><figure><img src="img/8012fc0f4e4e.webp" alt="Before: ProActive Ecosystem, bottom half" loading="lazy"><figcaption>Before · main</figcaption></figure><figure><img src="img/5cb83ba170ba.webp" alt="After: ProActive Ecosystem, bottom half" loading="lazy"><figcaption>After · PR #178</figcaption></figure></div></div><div class="row"><h3>What we protect</h3><div class="scope">layered protection beside the copy; the deck below is unchanged</div><div class="pair"><figure><img src="img/76a22cad624d.webp" alt="Before: What we protect" loading="lazy"><figcaption>Before · main</figcaption></figure><figure><img src="img/b6f41dffaf3d.webp" alt="After: What we protect" loading="lazy"><figcaption>After · PR #178</figcaption></figure></div></div><div class="row"><h3>How protection works</h3><div class="scope">the operating cadence + the four steps</div><div class="pair"><figure><img src="img/c06f87a95ca5.webp" alt="Before: How protection works" loading="lazy"><figcaption>Before · main</figcaption></figure><figure><img src="img/680ce828b648.webp" alt="After: How protection works" loading="lazy"><figcaption>After · PR #178</figcaption></figure></div></div><div class="row"><h3>How DE delivers (was “Client proof”)</h3><div class="scope">outcomes ledger + DE Desk, DE’s own product</div><div class="pair"><figure><img src="img/bdf211aaac35.webp" alt="Before: How DE delivers (was “Client proof”)" loading="lazy"><figcaption>Before · main</figcaption></figure><figure><img src="img/a42377aea1da.webp" alt="After: How DE delivers (was “Client proof”)" loading="lazy"><figcaption>After · PR #178</figcaption></figure></div></div><div class="row"><h3>Human trust &amp; ownership, right side</h3><div class="scope">ownership ledger</div><div class="pair"><figure><img src="img/bdf2f5f04481.webp" alt="Before: Human trust &amp; ownership, right side" loading="lazy"><figcaption>Before · main</figcaption></figure><figure><img src="img/1671b9bdb3b2.webp" alt="After: Human trust &amp; ownership, right side" loading="lazy"><figcaption>After · PR #178</figcaption></figure></div></div><div class="row"><h3>ProActive Ecosystem, pricing progression</h3><div class="scope">coverage depth rings beside the tiers</div><div class="pair"><figure><img src="img/2a6bd545cd84.webp" alt="Before: ProActive Ecosystem, pricing progression" loading="lazy"><figcaption>Before · main</figcaption></figure><figure><img src="img/251fb69c0fb5.webp" alt="After: ProActive Ecosystem, pricing progression" loading="lazy"><figcaption>After · PR #178</figcaption></figure></div></div><div class="row"><h3>Security &amp; compliance, top half</h3><div class="scope">evidence, not claims</div><div class="pair"><figure><img src="img/e85959347a1f.webp" alt="Before: Security &amp; compliance, top half" loading="lazy"><figcaption>Before · main</figcaption></figure><figure><img src="img/ba4f02a34f2d.webp" alt="After: Security &amp; compliance, top half" loading="lazy"><figcaption>After · PR #178</figcaption></figure></div></div><div class="row"><h3>Start with a Cyber Risk Assessment</h3><div class="scope">the inspection beside the form</div><div class="pair"><figure><img src="img/321a06fd258d.webp" alt="Before: Start with a Cyber Risk Assessment" loading="lazy"><figcaption>Before · main</figcaption></figure><figure><img src="img/59eb37959e0f.webp" alt="After: Start with a Cyber Risk Assessment" loading="lazy"><figcaption>After · PR #178</figcaption></figure></div></div>
+</section>
+
+<section id="phone">
+  <div class="sec-head"><span class="eyebrow">02 · 390 px</span><h2>The same sections on a phone</h2><p>Diagrams switch to their narrow layout with stepped-up type; the pairs stack. Captured after the mobile legibility pass.</p></div>
+  <div class="grid4"><figure><img src="img/a855852af414.webp" alt="Hero trust strip at 390 px" loading="lazy"><figcaption>Hero trust strip</figcaption></figure><figure><img src="img/a0daf079f6bf.webp" alt="Services map at 390 px" loading="lazy"><figcaption>Services map</figcaption></figure><figure><img src="img/bc4dcfc001bf.webp" alt="What we protect at 390 px" loading="lazy"><figcaption>What we protect</figcaption></figure><figure><img src="img/1e8b028b6964.webp" alt="Cyber Risk Assessment at 390 px" loading="lazy"><figcaption>Cyber Risk Assessment</figcaption></figure></div>
+</section>
+
+<section id="diagrams">
+  <div class="sec-head"><span class="eyebrow">03 · client/src/diagrams</span><h2>The DE diagram system, as mounted</h2><p>Five stateful diagrams rendered from data, hairlines not glow, magenta only for the active state, disclosure in plain words. Wide and narrow layouts side by side, in the tone each section uses.</p></div>
+  <div class="grid2"><div class="dg"><div class="meta"><h3>One environment</h3><span class="cls">Illustration</span></div><div class="where">Services section (dark). Seven domains, identity as the spine, security operations as the frame.</div><div class="shots"><img src="img/3e7effac7837.webp" alt="One environment, wide layout" loading="lazy"><img src="img/85e36944dd49.webp" alt="One environment, narrow layout" loading="lazy"></div></div><div class="dg"><div class="meta"><h3>Layered protection</h3><span class="cls">Illustration</span></div><div class="where">What we protect (paper). Six layers, each named for the threat class it answers; the deck’s selection lights one.</div><div class="shots"><img src="img/a1befe9177b2.webp" alt="Layered protection, wide layout" loading="lazy"><img src="img/2b85cfbe4b5a.webp" alt="Layered protection, narrow layout" loading="lazy"></div></div><div class="dg"><div class="meta"><h3>The operating cadence</h3><span class="cls">Illustration</span></div><div class="where">How protection works (dark). Four stages with the continuous loop inside stage four.</div><div class="shots"><img src="img/1e3eec715531.webp" alt="The operating cadence, wide layout" loading="lazy"><img src="img/9c96d96188b5.webp" alt="The operating cadence, narrow layout" loading="lazy"></div></div><div class="dg"><div class="meta"><h3>ProActive coverage depth</h3><span class="cls">From DE’s package data</span></div><div class="where">Pricing progression (dark). Rings from the canonical package inclusions.</div><div class="shots"><img src="img/2b310f75a9f1.webp" alt="ProActive coverage depth, wide layout" loading="lazy"><img src="img/dcfee3d15f42.webp" alt="ProActive coverage depth, narrow layout" loading="lazy"></div></div><div class="dg"><div class="meta"><h3>The inspection</h3><span class="cls">Example, not a client report</span></div><div class="where">Cyber Risk Assessment (paper). Five areas, how priorities are flagged, Validate → Remediate → Verify.</div><div class="shots"><img src="img/cb474e61be14.webp" alt="The inspection, wide layout" loading="lazy"><img src="img/a41528e5ccff.webp" alt="The inspection, narrow layout" loading="lazy"></div></div></div>
+</section>
+
+<section id="v2">
+  <div class="sec-head"><span class="eyebrow">04 · live at /v2, noindex</span><h2>Version B, the Scrollcraft story page</h2><p>Eight of the 59 verification frames at 1440 px, in scroll order, plus three at 390. Joe’s review: too long and concept-heavy for the primary homepage; it becomes the candidate for a “Why DE” story or campaign experience, and the rebuilt homepage will be short with conversion in the first viewport.</p></div>
+  <div class="grid4"><figure><img src="img/42f026cac34e.webp" alt="Version B at 0%: Hero: one technology company, every layer working together" loading="lazy"><figcaption>0% · Hero: one technology company, every layer working together</figcaption></figure><figure><img src="img/9aa2d29f4f1a.webp" alt="Version B at 11%: The problem field: the sprawl, then authored silence" loading="lazy"><figcaption>11% · The problem field: the sprawl, then authored silence</figcaption></figure><figure><img src="img/17422d68f548.webp" alt="Version B at 24%: The peak: “Then the environment wakes up” (pinned)" loading="lazy"><figcaption>24% · The peak: “Then the environment wakes up” (pinned)</figcaption></figure><figure><img src="img/80a84b36588f.webp" alt="Version B at 28%: FIG. 1, one environment drawn as one system" loading="lazy"><figcaption>28% · FIG. 1, one environment drawn as one system</figcaption></figure><figure><img src="img/8720a1cdcc70.webp" alt="Version B at 51%: The cadence chapter" loading="lazy"><figcaption>51% · The cadence chapter</figcaption></figure><figure><img src="img/c8e298e33493.webp" alt="Version B at 62%: The range rail (pans sideways)" loading="lazy"><figcaption>62% · The range rail (pans sideways)</figcaption></figure><figure><img src="img/63c5049c5e36.webp" alt="Version B at 79%: Proof and the client dossier band" loading="lazy"><figcaption>79% · Proof and the client dossier band</figcaption></figure><figure><img src="img/0d284dc8cf55.webp" alt="Version B at 100%: Close: the environment as a whole, then the ask" loading="lazy"><figcaption>100% · Close: the environment as a whole, then the ask</figcaption></figure></div>
+  <div class="grid3" style="margin-top:18px"><figure><img src="img/a766fe085067.webp" alt="Hero, 390" loading="lazy"><figcaption>Hero, 390</figcaption></figure><figure><img src="img/c098a05225dc.webp" alt="Mid-story, 390" loading="lazy"><figcaption>Mid-story, 390</figcaption></figure><figure><img src="img/c24faddd65dd.webp" alt="Close, 390" loading="lazy"><figcaption>Close, 390</figcaption></figure></div>
+</section>
+
+<section id="plates">
+  <div class="sec-head"><span class="eyebrow">05 · Graphite Illumination</span><h2>The six generated plates and their verdict</h2><p>Authored by the agent’s own seeded generator (now committed for provenance), not by kie.ai. Cohesive as backgrounds, but one texture in six variations: they do not depict DE’s services, outcomes, Arizona identity, clients, or operating model. Two stay as atmosphere; four retire from any hero role.</p></div>
+  <div class="grid3"><figure class="plate"><img src="img/c5777b0ff3a6.webp" alt="Plate peakground" loading="lazy"><figcaption>peakground</figcaption><span class="verdict keep">Keep</span><span class="note">atmosphere under the peak, ≤ 40%</span></figure><figure class="plate"><img src="img/8ee601e9fdaa.webp" alt="Plate ink" loading="lazy"><figcaption>ink</figcaption><span class="verdict keep">Keep</span><span class="note">warm-paper dossier texture, ≤ 25%</span></figure><figure class="plate"><img src="img/e756fa784cac.webp" alt="Plate interference" loading="lazy"><figcaption>interference</figcaption><span class="verdict retire">Retire</span><span class="note">texture only or unused</span></figure><figure class="plate"><img src="img/ac77318332fc.webp" alt="Plate railflow" loading="lazy"><figcaption>railflow</figcaption><span class="verdict retire">Retire</span><span class="note">texture only or unused</span></figure><figure class="plate"><img src="img/8f7c1186e196.webp" alt="Plate strata" loading="lazy"><figcaption>strata</figcaption><span class="verdict retire">Retire</span><span class="note">texture only or unused</span></figure><figure class="plate"><img src="img/f3fcf83ec498.webp" alt="Plate assembly" loading="lazy"><figcaption>assembly</figcaption><span class="verdict retire">Retire</span><span class="note">texture only or unused</span></figure></div>
+</section>
+
+<section id="next">
+  <div class="sec-head"><span class="eyebrow">06 · what comes next</span><h2>Nothing generates until its row is approved</h2><p>The scene-by-scene asset plan (scrollcraft/ASSET-PLAN.md) defines eight asset families with page, buyer purpose, composition, crops, motion, conversion role, route, and provenance. The first batch is the homepage: eleven stills and one clip, with most material coming from a half-day photo shoot.</p></div>
+  <ul class="next">
+    <li><strong>F-01 The Arizona evening office</strong> (hero, photography).</li>
+    <li><strong>F-02 The environment, fragmented → designed → operated</strong> (the peak, four generated stills + one clip).</li>
+    <li><strong>F-03 Physical evidence of the six controls</strong> (six macro stills).</li>
+    <li><strong>F-04 The cadence, one office over one day</strong> (photography first).</li>
+    <li><strong>F-05 Chandler, Arizona</strong> (photography). <strong>F-06</strong> evidence captures. <strong>F-07</strong> Automation + AI, last. <strong>F-08</strong> industries.</li>
+  </ul>
+  <p class="foot">Open decisions: the four flagged service promises in docs/CLAIMS-REGISTER.md, the asset plan rows, the /v2 repositioning, the merge. The reference video (YouTube QUI6Ug4cHnE) is unreachable from the build environment; its examples go into the plan’s “Reference bar” once supplied.</p>
+</section>
+</div>
+
+</body>
+</html>

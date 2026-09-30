@@ -1,0 +1,118 @@
+/* ============================================================================
+   plain.css · the quiet tier of Version B
+   The same system with the theatrics off: same tokens, same faces, same
+   hairlines. No engine, no plates, no animation. Pages that are plain on
+   purpose and precise anyway.
+   ========================================================================== */
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400 700; font-display: swap; src: url("../assets/fonts/inter-latin.woff2") format("woff2"); }
+@font-face { font-family: "Space Grotesk"; font-style: normal; font-weight: 500 700; font-display: swap; src: url("../assets/fonts/space-grotesk-latin.woff2") format("woff2"); }
+@font-face { font-family: "Oxanium"; font-style: normal; font-weight: 500 700; font-display: swap; src: url("../assets/fonts/oxanium-latin.woff2") format("woff2"); }
+
+:root {
+  --paper: #F7F5F2;
+  --ink: #16121F;
+  --soft: #5A5468;
+  --accent: #AE0E57;
+  --line: color-mix(in oklab, var(--ink) 78%, transparent);
+  --line-soft: color-mix(in oklab, var(--ink) 26%, transparent);
+  --display: "Space Grotesk", system-ui, sans-serif;
+  --text: "Inter", system-ui, sans-serif;
+  --mono: "Oxanium", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--text);
+  font-size: clamp(1rem, 0.96rem + 0.22vw, 1.0625rem);
+  line-height: 1.62;
+}
+.page {
+  max-width: 44rem;
+  margin-inline: auto;
+  padding: 0 clamp(1.25rem, 5vw, 2.5rem) clamp(3rem, 7vw, 5rem);
+}
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 0.22em; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+::selection { background: var(--accent); color: #fff; }
+
+/* masthead: the same flag as the story pages */
+.flag {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding: clamp(1.1rem, 3vw, 1.6rem) 0 0.7rem;
+  margin-bottom: clamp(2.4rem, 6vw, 3.6rem);
+}
+.flag__mark {
+  margin: 0; font-family: var(--display); font-weight: 700;
+  font-size: 1rem; letter-spacing: 0.14em; text-transform: uppercase;
+}
+.flag__mark span { color: var(--accent); }
+.flag__mark a { color: inherit; text-decoration: none; }
+.flag__place { margin: 0; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--soft); }
+.flag__place a { color: inherit; }
+
+h1 {
+  margin: 0 0 0.6em;
+  font-family: var(--display); font-weight: 600;
+  font-size: clamp(1.7rem, 1.4rem + 1.6vw, 2.4rem);
+  line-height: 1.08; letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.dek { margin: 0 0 2.2em; font-size: 1.125rem; line-height: 1.5; color: var(--soft); max-width: 38rem; text-wrap: pretty; }
+h2 {
+  margin: 2.2em 0 0.5em;
+  font-family: var(--display); font-weight: 600;
+  font-size: 1.2rem; letter-spacing: -0.01em;
+}
+p { margin: 0 0 1em; max-width: 62ch; text-wrap: pretty; }
+ul.plain { margin: 0 0 1em; padding-left: 1.1em; }
+ul.plain li { margin-bottom: 0.35em; }
+hr { border: 0; height: 1px; background: var(--line-soft); margin: 2.4em 0; }
+
+/* fact rows for contact-style data */
+.rows { margin: 0; }
+.rows > div {
+  display: grid; grid-template-columns: 9rem 1fr; gap: 1rem;
+  padding: 0.85em 0; border-top: 1px solid var(--line-soft);
+}
+.rows dt { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--soft); padding-top: 0.25em; }
+.rows dd { margin: 0; }
+@media (max-width: 540px) { .rows > div { grid-template-columns: 1fr; gap: 0.15rem; } }
+
+/* native, no-JS accordion for the FAQ */
+details { border-top: 1px solid var(--line-soft); }
+details:last-of-type { border-bottom: 1px solid var(--line-soft); }
+summary {
+  cursor: pointer; list-style: none;
+  padding: 1em 1.6rem 1em 0;
+  font-family: var(--display); font-weight: 600; font-size: 1.05rem;
+  position: relative;
+}
+summary::-webkit-details-marker { display: none; }
+summary::after {
+  content: ""; position: absolute; right: 0.3rem; top: 1.35em;
+  width: 0.5rem; height: 0.5rem;
+  border-right: 2px solid var(--soft); border-bottom: 2px solid var(--soft);
+  transform: rotate(45deg); transition: transform 150ms ease-out;
+}
+details[open] summary::after { transform: rotate(225deg); }
+summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+details p { padding-bottom: 1.1em; }
+
+/* the one action */
+.cta { margin: 2.4em 0 0; padding: 1.4em 0 0; border-top: 1px solid var(--line); font-size: 1.125rem; }
+.cta a { font-weight: 600; text-decoration-thickness: 2px; text-underline-offset: 0.28em; }
+.cta-side { font-size: 0.95rem; color: var(--soft); }
+
+footer {
+  margin-top: clamp(3rem, 8vw, 5rem);
+  border-top: 1px solid var(--line);
+  padding-top: 1.1rem;
+  font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--soft);
+  display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem;
+}
+footer a { color: inherit; }

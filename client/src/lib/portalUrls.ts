@@ -16,6 +16,7 @@ import {
 
 export const PORTAL_ORIGIN = "https://portal.digeratiexperts.com";
 export const PORTAL_LOGIN = `${PORTAL_ORIGIN}/portal/login`;
+export const PORTAL_FORGOT_PASSWORD = `${PORTAL_ORIGIN}/portal/forgot-password`;
 export const PORTAL_HOME = `${PORTAL_ORIGIN}/portal`;
 export const PORTAL_MARKETPLACE = `${PORTAL_ORIGIN}${PORTAL_MARKETPLACE_PATH}`;
 export const PORTAL_TICKETS = `${PORTAL_ORIGIN}/portal/tickets`;

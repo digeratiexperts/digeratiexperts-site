@@ -57,7 +57,18 @@ export async function verifyTurnstile(req: Request, res: Response, next: NextFun
   const turnstileToken = req.body.turnstileToken || req.body['cf-turnstile-response'];
   
   if (!process.env.TURNSTILE_SECRET_KEY) {
-    console.warn('[SECURITY] Turnstile not configured - skipping verification');
+    // Set TURNSTILE_ENFORCE=1 to fail closed when the secret is missing.
+    // Default remains fail-open so a config gap cannot lock out all logins,
+    // but in production it is logged as a security event, not a quiet skip.
+    if (process.env.TURNSTILE_ENFORCE === '1') {
+      console.error('[SECURITY] TURNSTILE_UNCONFIGURED_REJECT - enforcement on, secret missing');
+      return res.status(503).json({ error: 'Verification is temporarily unavailable. Please try again later.' });
+    }
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[SECURITY] TURNSTILE_UNCONFIGURED - bot protection is OFF in production (set TURNSTILE_SECRET_KEY)');
+    } else {
+      console.warn('[SECURITY] Turnstile not configured - skipping verification');
+    }
     return next();
   }
 

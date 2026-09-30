@@ -3,7 +3,7 @@ import { chromium } from "playwright";
 
 /**
  * Smoke-test indexable marketing routes against a running server.
- * Includes rendered homepage/Ask DE regression checks at 390 / 768 / 1440.
+ * Includes rendered homepage/Ask DE/resources regression checks at 390 / 768 / 1440.
  * Usage: BASE_URL=http://127.0.0.1:3300 node scripts/public-route-smoke.mjs
  */
 const BASE = process.env.BASE_URL || "http://127.0.0.1:3300";
@@ -23,6 +23,7 @@ const routes = [
   "/book",
   "/industries/healthcare",
   "/industries/law-firms",
+  "/resources",
   "/resources/case-studies",
   "/resources/case-studies/healthcare-hipaa-readiness",
   "/resources/blog",
@@ -125,10 +126,11 @@ for (const path of routes) {
   }
 }
 
-// Render the real homepage at the required DE visual-review widths and exercise
-// the single-pane Ask DE chooser. This is intentionally part of the canonical
-// smoke gate so a later merge cannot silently restore a source-correct but
-// visually broken homepage/support shell.
+// Render the real homepage at the required DE visual-review widths, exercise
+// the single-pane Ask DE chooser, and verify the recovered pronunciation and
+// resources flipbook surfaces. This is intentionally part of the canonical
+// smoke gate so a later merge cannot silently restore source-correct but
+// visually broken public UI.
 {
   const widths = [390, 768, 1440];
   const screenshotDir = "tmp/public-visual-smoke";
@@ -155,7 +157,13 @@ for (const path of routes) {
           fails.push(`homepage ${width}px → unexpected H1: ${headline}`);
         }
 
-        for (const testId of ["button-hero-schedule", "button-hero-pricing", "button-open-asap-widget"]) {
+        for (const testId of [
+          "button-hero-schedule",
+          "button-hero-pricing",
+          "digerati-pronunciation-card",
+          "button-play-digerati-pronunciation",
+          "button-open-asap-widget",
+        ]) {
           await page.locator(`[data-testid="${testId}"]`).waitFor({ state: "visible", timeout: 10_000 });
         }
 
@@ -190,9 +198,19 @@ for (const path of routes) {
         if (deskOverflow > 2) fails.push(`support desk ${width}px → horizontal overflow ${deskOverflow}px`);
         await page.screenshot({ path: `${screenshotDir}/support-desk-${width}.png`, fullPage: false });
 
-        if (pageErrors.length) fails.push(`homepage ${width}px → page errors: ${pageErrors.join(" | ")}`);
+        await page.goto(`${BASE}/resources#document-flipbook`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+        await page.waitForLoadState("networkidle", { timeout: 15_000 }).catch(() => {});
+        const flipbookTitle = page.locator("#document-flipbook-title");
+        await flipbookTitle.waitFor({ state: "visible", timeout: 10_000 });
+        await page.getByRole("button", { name: "Choose document" }).waitFor({ state: "visible", timeout: 10_000 });
+        await flipbookTitle.scrollIntoViewIfNeeded();
+        const resourcesOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+        if (resourcesOverflow > 2) fails.push(`resources flipbook ${width}px → horizontal overflow ${resourcesOverflow}px`);
+        await page.screenshot({ path: `${screenshotDir}/resources-flipbook-${width}.png`, fullPage: false });
+
+        if (pageErrors.length) fails.push(`public UI ${width}px → page errors: ${pageErrors.join(" | ")}`);
       } catch (err) {
-        fails.push(`homepage/Ask DE ${width}px → ${err.message}`);
+        fails.push(`homepage/Ask DE/resources ${width}px → ${err.message}`);
       } finally {
         await context.close();
       }
@@ -208,5 +226,5 @@ if (fails.length) {
   process.exit(1);
 }
 console.log(
-  `Public route smoke OK (${routes.length} routes + google-reviews + bbp_search 410 + internal-tool noindex + rendered homepage/Ask DE 390/768/1440) against ${BASE}`,
+  `Public route smoke OK (${routes.length} routes + google-reviews + bbp_search 410 + internal-tool noindex + rendered homepage/Ask DE/resources 390/768/1440) against ${BASE}`,
 );

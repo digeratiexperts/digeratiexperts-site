@@ -1,0 +1,47 @@
+[INFO] after abuse input chip="Autosaves on this device" users value="abcdef" mobile="999999999999"
+[INFO] valid profile -> "Profile saved" chip visible: true
+[INFO] family links sample: ["/store/solutions/it-operations","/store/solutions/it-operations","/store/solutions/endpoint-devices","/store/solutions/endpoint-devices","/store/solutions/identity-access","/store/solutions/identity-access","/store/solutions/email-collaboration","/store/solutions/email-collaboration"]
+[INFO] family page add-button count: 0
+[INFO] family page buttons: ["Start My Assessment","Cyber Risk Assessment","Get My Cyber Risk Assessment","Standalone\nStandard price · your business owns implementation and operation","Co-Managed\nPreferred pricing · your team and DE share defined responsibilities","Help me choose\nKeep building and let DE recommend the right operating relationship","Add & review package","Ask DE","Your Solution","Subscribe"]
+[INFO] solution panel buttons/links: ["Skip to main content","Start My Assessment","325-480-9870","Support","Client Portal","Solutions","Industries","Resources","Pricing","About","Store","Contact","Cyber Risk Assessment","ProActive Ecosystem","Co-Managed IT","Standalone Services","Solve a Business Need","Cyber Risk Assessment","IT","Office","Business","Enterprise","Compare All Packages","Managed IT Support","Managed Workplace","Identity & Access","Managed Network & Connectivity","Cloud / SaaS Backup","UCaaS","Endpoint & Email Protection","Threat Detection & Response","Security Operations / SOC","Security Awareness","Data Encryption","Backup & Disaster Recovery","vCIO","Compliance & Risk Reporting","Cyber Insurance Readiness","Healthcare","Law Firms","Accounting","Real Estate","Nonprofits","Professional Services","Case Studies","Digerati Journal","Cyber Facts","Videos & Webinars","Downtime Calculator","Security Checklist"]
+[INFO] Save Progress dialog: MenuSolutionsWays to Work With UsProActive EcosystemCo-Managed ITStandalone ServicesSolve a Business NeedCyber Risk AssessmentProActive EcosystemITOfficeBusinessEnterpriseCompare All PackagesManaged IT & WorkplaceManaged IT SupportManaged WorkplaceIdentity & AccessManaged Network & ConnectivityCloud / SaaS BackupUCaaSCybersecurity & ResilienceEndpoint & Email ProtectionThreat Detection & ResponseS
+[INFO] /solutions/business-needs profile-users persisted value: "25"
+--- pass2 ---
+[INFO] family qty strings: ["25 users","30 computers","15 mobile","2 sites","30 computers","15 mobile","30 computers","15 mobile"]
+[INFO] after Add & review, url=http://127.0.0.1:3400/store/solution
+[INFO] toast: Added to Your Solution
+[INFO] status aside: Solution status | Profile | Ready | 25 users · 30 computers · 15 mobile · 2 sites | Pain / need | Ready | 1 selected | Offer | Ready | standalone | Package | Ready | 1 package | Delivery | Needed | Choose setup + support | NEXT | Contact details come last. DE will confirm scope, fulfillment, and package pricing before commitment. | Finish the steps aboveAsk DE
+[INFO] needs selected: 1
+[INFO] Save progress PUT -> 200 :: {"request":{"id":"4583ccab-5538-4490-a0e1-36f347ffae04","correlationId":"517fe481-7c56-4364-abca-6c3af1a00884","familyId":"it_operations","offerId":"de-it-operations-standalone","deliveryModel":"standalone","deliveryPreference":"standalone","selectedNeeds":[{"familyId":"it_operations","offerId":"de-
+[INFO] Save progress UI: Saved at 10:45 PM
+[INFO] panel main buttons: ["Company-owned","BYOD","Hybrid","Yes","No","Not sure","Standalone\nStandard pricing. You or your existing IT provider own implementation and ongoing operation.","Co-Managed\nPreferred pricing where applicable. Your team and DE share defined responsibilities.","Help me choose\nSave the need now and let DE recommend the operating relationship before final package submission.","Self-install","Remote DE setup","Schedule a technician","Help me choose","No remote support","Remote help as needed","Ongoing shared support","Help me choose","Save progress","Finish the steps above","Ask DE"]
+[INFO] Your Solution sheet: Your Solution | One profile, one set of business needs, one composed solution. | PROFILE | 25 users · 30 computers · 15 mobile · 2 sites | Profile complete | IT Operations & Support | Standalone · standard pricing | Build & review solution | Your profile and solution draft autosave on this device. No payment is required in the public builder. | Close
+[INFO m] after add url=http://127.0.0.1:3400/store/solution
+[INFO m] Your Solution controls: []
+[INFO m] Save progress -> 200
+--- pass3 ---
+[INFO] family header with abuse profile: "Profile: abcdef users · -50 computers · 999999999999 mobile · 0 sites"
+[INFO] package rows with abuse profile: ["Helpdesk intake and triage :: Included","Routine workstation support :: Per approved device","Patch and maintenance coordination :: Per approved device","Escalation reporting :: Included"]
+[INFO] abuse family badmath present: false
+[INFO] 390 dock on /store: vis=true top=718 left=210 right=378 display=flex inViewport=true
+[INFO] 390 dock on /store/solutions/it-operations: vis=true top=772 left=210 right=378 display=flex inViewport=true
+[INFO] 390 sheet: Your Solution | One profile, one set of business needs, one composed solution. | PROFILE | 12 users · 14 computers · 6 mobile · 1 sites | Profile complete | IT Operations & Support | Co-managed · preferred pricing | Build & review solution | Your profile and solution draft autosave on this device. No payment is required in the public builder. | Close
+[INFO] 390 sheet trash buttons: 1
+[INFO] 390 sheet after remove: Your Solution | One profile, one set of business needs, one composed solution. | PROFILE | 12 users · 14 computers · 6 mobile · 1 sites | Profile complete | No business needs selected yet. | Build & review solution | Your profile and solution draft autosave on this device. No payment is required in 
+[INFO] status after fulfillment: Solution status | Profile | Ready | 25 users · 30 computers · 15 mobile · 2 sites | Pain / need | Ready | 1 selected | Offer | Ready | standalone | Package | Ready | 1 package | Delivery | Ready | Selected | NEXT | Contact details come last. DE will confirm scope, fulfillment, and package pricing before commitment. | Continue to contact detailsAsk DE
+[INFO] continue controls: ["Continue to contact details"]
+[INFO] after continue url=http://127.0.0.1:3400/solutions/request?intent=quote
+[INFO] empty-submit validation: []
+[INFO] contact submit -> no api call finalUrl=http://127.0.0.1:3400/solutions/request?intent=quote
+[INFO] after submit body: Skip to main content | 🚀Get Your Free Cybersecurity Assessment – See Where You Stand Today! | Start My Assessment | 325-480-9870 | Support | Client Portal | Solutions | Industries | Resources | Pricing | About | Store | Contact | Cyber Risk Assessment | Back to Your Solution | STEP 4 · CONTACT | Who should DE follow up with? | 
+[INFO] /store/checkout empty draft: Back to pains & needs | YOUR SOLUTION | Build one complete solution | Profile → pain or need → offer → package → delivery → contact. Every layer uses the same saved draft. | STEP 0 · PROFILE | Business profile | These counts size package quantities throughout the Store. Change them here at any time.
+[INFO] empty checkout badmath: false
+--- pass4 ---
+[INFO] contact url=http://127.0.0.1:3400/solutions/request?intent=quote
+[INFO] selection block: SOLUTION SUMMARY | Profile: 25 users · 30 computers · 15 mobile · 2 sites | Offer: Standalone · standard pricing | Installation: remote_assist · Remote support: as_needed | Backup & Business Continuity — Standalone | Standard standalone pricing | Backup policy and monitoring | Included | Recovery-objective design | Included | Restore testing | Included | Continuity and recovery reporting | Included
+[INFO] contact badmath: false
+[INFO] empty submit error: "Company, name, email, and phone are required."
+[INFO] bad-email submit error: "Company, name, email, and phone are required." url=http://127.0.0.1:3400/solutions/request?intent=quote
+[INFO] valid submit -> 200 http://127.0.0.1:3400/api/public/solutions/request :: {"request":{"id":"98785fa0-95b5-4479-bfa9-daf36a07e4ae","correlationId":"9a61ea7e-3354-48a2-8c62-ffa82da05f8c","familyId":"backup_continuity","offerId":"de-continuity-standalone","deliveryModel":"standalone","deliveryPreference":"standalone","selectedNeeds":[{"familyId":"backup_continuity","offerId"
+[INFO] after submit url=http://127.0.0.1:3400/solutions/request?intent=quote
+[INFO] confirmation: Solution submitted | Your solution was saved. DE will confirm package fit, scope, fulfillment, and pricing before you commit. | Reference: 9a61ea7e-3354-48a2-8c62-ffa82da05f8c | Return to the Store

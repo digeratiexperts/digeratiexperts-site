@@ -35,7 +35,7 @@ import {
   Warehouse,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import logoImage from "@assets/DE-Logo-new_1762461524794.webp";
+import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
 import { TenantSelector } from "@/components/portal/TenantSelector";
 import { useSEO } from "@/hooks/useSEO";
 import { navAllowed, readImpersonatingCompany, readPortalUser, type NavKey } from "@/lib/portalRoles";
@@ -73,7 +73,7 @@ const navItems: NavItem[] = [
   { href: "/portal/invoices", label: "Invoices", icon: FileText, key: "billing" },
   { href: "/portal/orders", label: "Orders", icon: ShoppingCart, key: "other" },
   { href: "/portal/vpn", label: "VPN Access", icon: Shield, key: "other" },
-  { href: "/portal/cytracom", label: "ControlOne Phone", icon: Phone, key: "other" },
+  { href: "/portal/cytracom", label: "Cytracom Phone", icon: Phone, key: "other" },
   { href: "/portal/ship-center", label: "Ship Center", icon: Truck, key: "other" },
   { href: "/portal/marketplace", label: "Client Marketplace", icon: ShoppingCart, key: "other" },
   { href: "/portal/procurement", label: "Procurement Store", icon: ShoppingCart, key: "other" },
@@ -134,17 +134,36 @@ export function PortalLayout({ children, title }: PortalLayoutProps) {
           setUser(me.user);
         }
         setSessionReady(true);
-      } catch {
-        if (!cancelled) {
+      } catch (err) {
+        if (cancelled) return;
+        // Only a genuine auth rejection ends the session. A 500 or a network
+        // blip must NOT log the user out mid-work (error-sweep finding,
+        // 2026-08-31) — portalGet throws Error("<status>: <body>").
+        const message = err instanceof Error ? err.message : "";
+        const status = Number.parseInt(message.split(":")[0] ?? "", 10);
+        if (status === 401 || status === 403) {
           redirectToPortalLogin(
             `${window.location.pathname}${window.location.search || ""}`,
           );
+        } else {
+          // Keep whatever session state we have; the page's own data calls
+          // will surface real errors.
+          setSessionReady(true);
         }
       }
     })();
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    const onExpired = (event: Event) => {
+      const returnTo = (event as CustomEvent<{ returnTo?: string }>).detail?.returnTo;
+      redirectToPortalLogin(returnTo);
+    };
+    window.addEventListener("de-portal-session-expired", onExpired);
+    return () => window.removeEventListener("de-portal-session-expired", onExpired);
   }, []);
 
   const visibleNav = useMemo(
@@ -204,7 +223,7 @@ export function PortalLayout({ children, title }: PortalLayoutProps) {
       >
         <div className="flex flex-col h-full">
           <div className="p-6 border-b border-white/10">
-            <img src={logoImage} alt="Digerati Experts" className="h-8 w-auto" />
+            <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-8 w-auto" />
           </div>
 
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">

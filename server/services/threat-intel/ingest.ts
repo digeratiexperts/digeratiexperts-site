@@ -286,7 +286,29 @@ export function startThreatIntelScheduler(): void {
   }, REFRESH_MS).unref();
 }
 
-export function isLocalRequest(req: { socket?: { remoteAddress?: string } }): boolean {
-  const ip = req.socket?.remoteAddress || "";
-  return ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1";
+function headerValue(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] || "";
+  return value || "";
+}
+
+function isLoopback(ip: string): boolean {
+  const host = ip.trim().toLowerCase().replace(/^::ffff:/, "");
+  return host === "127.0.0.1" || host === "::1" || host === "localhost";
+}
+
+export function isLocalRequest(req: {
+  socket?: { remoteAddress?: string };
+  headers?: Record<string, string | string[] | undefined>;
+}): boolean {
+  const peer = req.socket?.remoteAddress || "";
+  if (!isLoopback(peer)) return false;
+  // OpenLiteSpeed connects to Node on localhost, so the peer is always loopback
+  // in production. Forwarding headers are not proof of a local caller: a client
+  // can put 127.0.0.1 first and a proxy that appends keeps that value. The
+  // in-process refresh and the localhost timer call the app port with no
+  // forwarding header. Any proxied request is refused.
+  const forwarded = headerValue(req.headers?.["x-forwarded-for"]).trim();
+  const realIp = headerValue(req.headers?.["x-real-ip"]).trim();
+  if (forwarded || realIp) return false;
+  return true;
 }

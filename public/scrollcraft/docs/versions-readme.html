@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Homepage versions: rule and procedure · Scrollcraft lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=Oxanium:wght@500;600&display=swap">
+<style>
+:root{--bg:#050312;--ink:#ffffff;--soft:rgba(255,255,255,.68);--faint:rgba(255,255,255,.45);--line:rgba(255,255,255,.12);--accent:#F04C97;--raised:#141020}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline;text-underline-offset:4px}
+main{max-width:52rem;margin:0 auto;padding:3.5rem 1.25rem 6rem}
+.eyebrow{font-family:Oxanium,ui-monospace,monospace;font-size:.72rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0 0 .75rem}
+h1{font-family:"Space Grotesk",Inter,sans-serif;font-size:2rem;line-height:1.15;letter-spacing:-.02em;margin:0 0 1rem}
+h2{font-family:"Space Grotesk",Inter,sans-serif;font-size:1.35rem;letter-spacing:-.01em;margin:2.5rem 0 .75rem;padding-top:1.25rem;border-top:1px solid var(--line)}
+h3{font-size:1.08rem;margin:1.75rem 0 .5rem}
+h4,h5,h6{font-size:1rem;margin:1.25rem 0 .4rem}
+p,ul,ol{margin:0 0 1rem}
+li{margin:.3rem 0}
+li>ul,li>ol{margin:.3rem 0 .3rem}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;background:rgba(255,255,255,.08);padding:.1em .35em;border-radius:3px}
+pre{background:var(--raised);border:1px solid var(--line);padding:1rem;overflow-x:auto;font-size:.85rem;line-height:1.5;margin:0 0 1.25rem}
+pre code{background:none;padding:0;font-size:inherit}
+blockquote{margin:0 0 1rem;padding:.25rem 0 .25rem 1rem;border-left:2px solid var(--accent);color:var(--soft)}
+hr{border:0;border-top:1px solid var(--line);margin:2rem 0}
+.table-wrap{overflow-x:auto;margin:0 0 1.25rem;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .7rem;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--soft);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;background:var(--raised)}
+tr:last-child td{border-bottom:0}
+.back{font-family:Oxanium,ui-monospace,monospace;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase}
+.meta{color:var(--faint);font-size:.85rem;margin:0 0 2rem}
+</style>
+</head>
+<body>
+<main>
+<p class="back"><a href="/scrollcraft/">← Scrollcraft lab</a></p>
+<p class="eyebrow">Scrollcraft lab · plan document</p>
+<p class="meta">Rendered from <code>client/src/pages/versions/README.md</code> in the repository. The file is the source of truth; this page is a reading copy.</p>
+<h1>Homepage versions</h1>
+<p>Every homepage the site has had or is considering stays reachable at <code>/version-&lt;n&gt;</code>, listed at <code>/versions</code>, so nothing is lost when the next one lands and any of them can be referenced in future development.</p>
+<h2>The rule</h2>
+<ul><li><strong>A version is frozen.</strong> Never edit a <code>v&lt;n&gt;/</code> folder. If an idea changes, it gets the next number.</li><li><strong>Numbers are sequential and never reused.</strong> <code>registry.ts</code> is the single list; <code>/versions</code> and the routes in <code>client/src/App.tsx</code> read it.</li><li><strong>Reference only.</strong> Version pages are <code>noindex</code>, canonical to <code>/</code>, absent from the sitemap (<code>scripts/generate-sitemap.mjs</code> uses a curated list), and never linked from navigation. Each carries a ribbon naming its number.</li><li><strong>What a snapshot preserves:</strong> the homepage composition (<code>DigeratiHomepage.tsx</code>), every section it imports, and the components listed in the snapshot script's <code>LOCALISE</code> map (currently <code>EcosystemProgression</code>). Shared primitives, hooks, data files, and the design tokens stay live on purpose; they are the site's system, not a version's copy.</li></ul>
+<h2>Versions</h2>
+<div class="table-wrap"><table><thead><tr><th>n</th><th>Route</th><th>What</th><th>Kind</th></tr></thead><tbody><tr><td>1</td><td><code>/version-1</code></td><td>Production homepage as on <code>main</code> (2d7d12a), snapshot 2026-09-02</td><td>react snapshot</td></tr><tr><td>2</td><td><code>/version-2</code></td><td>Version B, the Scrollcraft story page (forwards to the static <code>/v2</code>)</td><td>static</td></tr><tr><td>3</td><td><code>/version-3</code></td><td>Diagram-system sections, PR #178 with the review corrections (c03cad9)</td><td>react snapshot</td></tr><tr><td>4</td><td><code>/version-4</code></td><td>Sections recomposed to flow on scroll (Experience Plan §09)</td><td>planned</td></tr></tbody></table></div>
+<h2>Adding a version</h2>
+<ol><li>Freeze the composition you want to keep, from the working tree or a ref:</li></ol>
+<pre><code>   node scripts/snapshot-homepage-version.mjs 5              # working tree
+   node scripts/snapshot-homepage-version.mjs 5 origin/main  # a git ref</code></pre>
+<p>The script refuses to overwrite an existing <code>v5/</code>.</p>
+<ol><li>Add the entry to <code>registry.ts</code> (number, title, date, status, summary, source).</li><li>Add the route in <code>client/src/App.tsx</code> next to the other <code>/version-*</code> routes, wrapped in <code>VersionFrame</code>.</li><li>Run <code>npx tsc --noEmit</code> and <code>npx vitest run client/src/pages/versions</code>.</li></ol>
+<p>A static build (a Scrollcraft page, an HTML prototype) is a version too: serve it from <code>public/&lt;folder&gt;</code> with <code>X-Robots-Tag: noindex</code> in <code>server/index.ts</code>, redirect <code>/version-&lt;n&gt;</code> to it there, and register it with <code>kind: &quot;static&quot;</code>.</p>
+</main>
+</body>
+</html>

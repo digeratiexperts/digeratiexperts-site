@@ -272,6 +272,19 @@ class ZohoCRMService {
     }
   }
 
+  async searchDeals(criteria: string): Promise<Array<{ id?: string }>> {
+    try {
+      const client = await zohoClient.getClient();
+      const response = await client.get("/crm/v6/Deals/search", {
+        params: { criteria },
+      });
+      return response.data?.data || [];
+    } catch (error: any) {
+      console.error("Error searching deals:", error.response?.data || error.message);
+      return [];
+    }
+  }
+
   async createDeal(data: Partial<ZohoCRMDeal> & { Description?: string }): Promise<any> {
     const client = await zohoClient.getClient();
     const response = await client.post("/crm/v6/Deals", {

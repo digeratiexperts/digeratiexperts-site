@@ -14,6 +14,7 @@ import { ConversionPathBar } from "@/components/ConversionPathBar";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
 import { Button } from "@/components/ui/button";
+import { DocumentFlipbook } from "@/pages/resources/DocumentFlipbook";
 
 const resources = [
   {
@@ -71,6 +72,12 @@ const resources = [
     icon: BookOpen,
   },
   {
+    name: "Document Flipbook",
+    href: "/resources#document-flipbook",
+    description: "Open a PDF locally in your browser and read it as a responsive digital book.",
+    icon: BookOpen,
+  },
+  {
     name: "Campaign offers",
     href: "/go",
     description: "Single-offer pages for search and social — one path, one primary CTA.",
@@ -123,6 +130,9 @@ export default function ResourcesIndex() {
             );
           })}
         </ul>
+
+        <DocumentFlipbook />
+
         <div className="mt-16">
           <ConversionPathBar
             headline="Need a recommendation, not a PDF?"

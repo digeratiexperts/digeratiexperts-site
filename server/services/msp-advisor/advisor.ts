@@ -20,7 +20,7 @@ import {
   isDeInternalCompanyAnswer,
 } from "./profile";
 import { buildSystemPrompt, INTERNAL_REFUSAL, BANNED_CANNED_OPENER } from "./prompt";
-import { sanitizeActions, assertNoInternalLeak, defaultActionsForMode, materializeAction } from "./actions";
+import { sanitizeActions, assertNoInternalLeak, defaultActionsForMode, materializeAction, ensureLoginAction } from "./actions";
 import { buildHeuristicReply, ensureFreshReply, isNearDuplicate } from "./fallback";
 import {
   appendMessage,
@@ -457,6 +457,7 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
       modelOut.analyticsEvents = [...(modelOut.analyticsEvents || []), "support_routed"];
     }
   }
+  actions = ensureLoginAction(actions, userTurn, mode);
   const analyticsEvents = Array.from(
     new Set(
       (modelOut.analyticsEvents || []).filter((e) =>

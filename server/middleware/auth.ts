@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
+import { resolveJwtSecret } from "../config/authSecrets";
 
-const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-key-change-in-production";
 const TOKEN_EXPIRY = "24h";
 
 export interface AuthenticatedRequest extends Request {
@@ -14,12 +14,12 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export function generateToken(userId: string, email: string, role: string = "user"): string {
-  return jwt.sign({ userId, email, role }, JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
+  return jwt.sign({ userId, email, role }, resolveJwtSecret(), { expiresIn: TOKEN_EXPIRY });
 }
 
 export function verifyToken(token: string): any {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, resolveJwtSecret());
   } catch (error) {
     return null;
   }

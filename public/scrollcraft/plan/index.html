@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<style>body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#faf9f7;color-scheme:light}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<!-- Review page "DE Scrollcraft Experience Plan", imported 2026-09-02 from a Claude artifact by scripts/build-scrollcraft-lab.mjs; 0 embedded image(s) written to img/. Reference only, linked from /scrollcraft/. -->
+<title>DE Scrollcraft Experience Plan</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Oxanium:wght@500;600;700&display=swap">
+<style>
+/* ==========================================================================
+   DE Scrollcraft Experience Plan · the gate document
+   Set in DE's locked system: Warm Paper / Midnight Obsidian grounds,
+   Electric Magenta accent, violet as illumination only.
+   ========================================================================== */
+:root{
+  --ground:#F7F5F2;            /* warm paper */
+  --ink:#16121F;
+  --soft:#5A5468;
+  --accent:#AE0E57;            /* paper-tier magenta */
+  --violet:#7C3AED;
+  --violet-wash:rgba(124,58,237,0.07);
+  --line:rgba(22,18,31,0.78);
+  --line-soft:rgba(22,18,31,0.16);
+  --card:#FFFFFF;
+  --card-line:rgba(22,18,31,0.12);
+  --code:#EFEBE6;
+  --display:"Space Grotesk",system-ui,sans-serif;
+  --text:"Inter",system-ui,sans-serif;
+  --mono:"Oxanium",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#050312;          /* midnight obsidian */
+    --ink:#F1EEF6;
+    --soft:#9A93AC;
+    --accent:#D3126A;          /* graphite-tier magenta */
+    --violet:#9F7CFF;
+    --violet-wash:rgba(124,58,237,0.13);
+    --line:rgba(241,238,246,0.75);
+    --line-soft:rgba(241,238,246,0.16);
+    --card:#0A0A14;
+    --card-line:rgba(241,238,246,0.13);
+    --code:#100D1E;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#050312; --ink:#F1EEF6; --soft:#9A93AC; --accent:#D3126A;
+  --violet:#9F7CFF; --violet-wash:rgba(124,58,237,0.13);
+  --line:rgba(241,238,246,0.75); --line-soft:rgba(241,238,246,0.16);
+  --card:#0A0A14; --card-line:rgba(241,238,246,0.13); --code:#100D1E;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--ground);color:var(--ink);
+  font-family:var(--text);font-size:1.0125rem;line-height:1.64;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:60rem;margin-inline:auto;padding:0 clamp(1.25rem,4vw,2.75rem) 6rem}
+a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:.22em}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+::selection{background:var(--accent);color:#fff}
+
+/* masthead */
+header.mast{border-bottom:2px solid var(--line);padding:clamp(1.6rem,4vw,2.6rem) 0 1rem;
+  display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap}
+.mark{margin:0;font-family:var(--display);font-weight:700;font-size:1rem;letter-spacing:.14em;text-transform:uppercase}
+.mark span{color:var(--accent)}
+.mast-meta{margin:0;font-family:var(--mono);font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--soft)}
+
+h1{font-family:var(--display);font-weight:600;font-size:clamp(2rem,1.5rem+2.4vw,3.1rem);
+  line-height:1.04;letter-spacing:-.02em;margin:2.2rem 0 .9rem;text-wrap:balance;max-width:24ch}
+.thesis{font-size:clamp(1.1rem,1rem+.5vw,1.3rem);line-height:1.5;color:var(--soft);max-width:44ch;text-wrap:pretty;margin:0 0 1.6rem}
+.thesis strong{color:var(--ink);font-weight:600}
+
+/* status block */
+.status{border:1px solid var(--card-line);border-left:3px solid var(--accent);background:var(--card);
+  padding:1.1rem 1.3rem;margin:2rem 0 0;font-size:.95rem}
+.status p{margin:.3rem 0}
+.status .k{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);display:inline-block;min-width:9.5rem}
+
+/* sections with folio rail */
+section{margin-top:clamp(3.2rem,7vw,4.6rem);display:grid;grid-template-columns:4.2rem 1fr;gap:0 1.4rem}
+section>.folio{font-family:var(--mono);font-size:.78rem;font-weight:600;letter-spacing:.1em;color:var(--accent);
+  border-top:2px solid var(--line);padding-top:.55rem}
+section>.body{border-top:2px solid var(--line);padding-top:.4rem;min-width:0}
+@media (max-width:680px){section{grid-template-columns:1fr;gap:0}
+  section>.folio{border-top:2px solid var(--line);padding:.55rem 0 0}
+  section>.body{border-top:0;padding-top:.2rem}}
+h2{font-family:var(--display);font-weight:600;font-size:clamp(1.35rem,1.15rem+1vw,1.8rem);
+  letter-spacing:-.015em;line-height:1.12;margin:.2rem 0 .7rem;text-wrap:balance}
+h3{font-family:var(--display);font-weight:600;font-size:1.08rem;margin:2rem 0 .45rem;letter-spacing:-.01em}
+p{margin:0 0 .95em;max-width:68ch;text-wrap:pretty}
+ul,ol{margin:0 0 1em;padding-left:1.2em;max-width:66ch}
+li{margin-bottom:.3em}
+.note{font-size:.9rem;color:var(--soft)}
+hr.soft{border:0;height:1px;background:var(--line-soft);margin:1.8rem 0}
+
+/* level badges — semantic, restrained */
+.lv{display:inline-block;font-family:var(--mono);font-size:.66rem;font-weight:600;letter-spacing:.1em;
+  padding:.18em .55em;border:1px solid currentColor;border-radius:2px;white-space:nowrap}
+.lv-full{color:var(--accent)}
+.lv-sel{color:var(--violet)}
+.lv-norm{color:var(--soft)}
+.lv-util{color:var(--soft);border-style:dashed}
+
+/* tables */
+.tblwrap{overflow-x:auto;margin:1rem 0 1.4rem;border:1px solid var(--card-line);background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;min-width:560px}
+caption{caption-side:top;text-align:left;font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--soft);padding:.75rem .9rem .35rem}
+th{font-family:var(--mono);font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;color:var(--soft);
+  text-align:left;font-weight:600;padding:.5rem .9rem;border-bottom:1px solid var(--line-soft)}
+td{padding:.55rem .9rem;border-bottom:1px solid var(--line-soft);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.route{font-family:var(--mono);font-size:.8rem;white-space:nowrap}
+td:last-child{max-width:34rem}
+tbody tr:hover td{background:var(--violet-wash)}
+
+/* definition rows for briefs */
+.brief{border:1px solid var(--card-line);background:var(--card);margin:1.2rem 0 2rem}
+.brief-head{padding:1rem 1.2rem .8rem;border-bottom:1px solid var(--line-soft)}
+.brief-head h3{margin:0 0 .2rem}
+.brief-head .sub{margin:0;font-size:.92rem;color:var(--soft)}
+.brief dl{margin:0}
+.brief dl>div{display:grid;grid-template-columns:11rem 1fr;gap:1rem;padding:.7rem 1.2rem;border-bottom:1px solid var(--line-soft)}
+.brief dl>div:last-child{border-bottom:0}
+.brief dt{font-family:var(--mono);font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;color:var(--soft);padding-top:.25em}
+.brief dd{margin:0;font-size:.95rem}
+@media (max-width:620px){.brief dl>div{grid-template-columns:1fr;gap:.15rem}}
+
+/* verdict chips in audits */
+.v{font-family:var(--mono);font-size:.66rem;font-weight:600;letter-spacing:.08em;padding:.15em .5em;border-radius:2px;white-space:nowrap}
+.v-keep{color:#1F7A46;border:1px solid #1F7A46}
+.v-re{color:var(--violet);border:1px solid var(--violet)}
+.v-rej{color:var(--accent);border:1px solid var(--accent)}
+
+/* phase list */
+.phases{counter-reset:ph;list-style:none;padding:0;max-width:none}
+.phases>li{counter-increment:ph;display:grid;grid-template-columns:3rem 1fr;gap:1rem;padding:.9rem 0;border-top:1px solid var(--line-soft);margin:0}
+.phases>li::before{content:"P" counter(ph,decimal);font-family:var(--mono);font-weight:600;font-size:.8rem;color:var(--accent);padding-top:.2rem}
+.phases>li:first-child::before{content:"P0"}
+.phases h3{margin:0 0 .2rem;font-size:1rem}
+.phases p{margin:0;font-size:.93rem}
+.gate{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);display:block;margin-top:.35rem}
+
+.rule-list{list-style:none;padding:0;max-width:none}
+.rule-list li{border-top:1px solid var(--line-soft);padding:.6rem 0;margin:0;display:grid;grid-template-columns:1.4rem 1fr;gap:.6rem;max-width:68ch}
+.rule-list li::before{content:"§";font-family:var(--mono);color:var(--accent);font-size:.85rem}
+
+footer{margin-top:5rem;border-top:2px solid var(--line);padding-top:1rem;
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);
+  display:flex;gap:.5rem 1.6rem;flex-wrap:wrap}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header class="mast">
+  <p class="mark">Digerati<span> Experts</span> · Experience program</p>
+  <p class="mast-meta">Plan for approval · 2026-09-01 · nothing ships until Joe signs off</p>
+</header>
+
+<h1>DE Scrollcraft Experience Plan</h1>
+<p class="thesis"><strong>Scrollcraft is a storytelling capability, not a visual theme.</strong> DE looks like DE whether a page scrolls cinematically or sits perfectly still. This document decides where the capability belongs, what each experience must accomplish, what materials it needs, and how those materials get made — before another line of page code is written.</p>
+<p class="thesis"><strong>What DE is.</strong> A Managed Security Service Provider and an IT Managed Services company. Managed security and managed IT are the offering every page sells; the flagships are built around them and they are developed first, to the highest finish. DE also does AI and the rest of its fourteen domains, each within its scope. AI material is wanted, but AI is one contained domain and never the lead: Automation + AI stays as the last flagship, built only after the four service flagships and never given more prominence in the information architecture than managed security and managed IT. Set at Joe's direction, 2026-09-01.</p>
+
+<div class="status" role="note">
+  <p><span class="k">Production today</span> digeratiexperts.com/ serves the original homepage, unchanged.</p>
+  <p><span class="k">Version B</span> live for review at <a href="https://digeratiexperts.com/v2">digeratiexperts.com/v2</a> (noindex preview; quiet pages under /v2/pages/).</p>
+  <p><span class="k">Repo state</span> #164 merged (build in <code>scrollcraft/</code>); #173 homepage takeover reverted by #177 at Joe's decision; main matches production intent.</p>
+  <p><span class="k">Freeze</span> All Scrollcraft implementation is stopped. This plan is the gate; approval reopens work at Phase 0.</p>
+</div>
+
+<!-- ============================================================ 1 -->
+<section id="levels">
+  <p class="folio">01</p>
+  <div class="body">
+    <h2>Four experience levels, with a motion budget each</h2>
+    <p>Every route on the site gets exactly one designation. The level decides how much motion a page is even allowed to request, which stops "impressive everywhere" before it starts.</p>
+    <div class="tblwrap"><table>
+      <caption>Levels and their hard motion budgets</caption>
+      <thead><tr><th>Level</th><th>Purpose</th><th>Motion budget (maximum)</th></tr></thead>
+      <tbody>
+        <tr><td><span class="lv lv-full">A · FULL</span></td><td>Change how the visitor understands the company</td><td>1 signature behavior · 1 major peak · 2–4 supporting devices · deliberate quiet sections · designed reduced-motion parity</td></tr>
+        <tr><td><span class="lv lv-sel">B · SELECTIVE</span></td><td>Sequence or a visual explanation earns its place</td><td>1 meaningful scroll sequence · 1 secondary reveal system</td></tr>
+        <tr><td><span class="lv lv-norm">C · NORMAL</span></td><td>Read, compare, decide</td><td>Entrances, state changes, small hierarchy cues only</td></tr>
+        <tr><td><span class="lv lv-util">D · UTILITY</span></td><td>Get something done quickly</td><td>Functional feedback only. Motion gets out of the way.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">Level A pages additionally require an approved asset brief (§5) and a fingerprint check against the registry before any code. Levels C and D never receive Scrollcraft treatment — the existing DE design system carries them.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section id="routes">
+  <p class="folio">02</p>
+  <div class="body">
+    <h2>Complete route inventory with designations</h2>
+    <p>142 routed pages plus the static preview tree, grouped by family. Marketing-facing routes are listed individually; application machinery is listed as complete families, every member UTILITY.</p>
+
+    <div class="tblwrap"><table>
+      <caption>Level A — flagship narratives (5)</caption>
+      <thead><tr><th>Route</th><th>Level</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td class="route">/</td><td><span class="lv lv-full">FULL</span></td><td>The flagship. Rebuilt from the strongest of: production design, Version B, the DE visual system, and a new material direction. Brief 1, §6.</td></tr>
+        <tr><td class="route">/solutions/proactive-ecosystem</td><td><span class="lv lv-full">FULL</span></td><td>Keeps its conceptual value, gets a new grammar: a living operating cadence, not another map assembly. Brief 2.</td></tr>
+        <tr><td class="route">how-we-protect · route TBD</td><td><span class="lv lv-full">FULL</span></td><td><strong>Open decision:</strong> elevate /solutions/unified-security or create a dedicated route. Brief 3.</td></tr>
+        <tr><td class="route">/assessment</td><td><span class="lv lv-full">FULL</span></td><td>The conversion flagship: unknown → observed → findings → prioritized → roadmap. Brief 4.</td></tr>
+        <tr><td class="route">automation-ai · last · route TBD</td><td><span class="lv lv-full">FULL</span></td><td><strong>Last, and subordinate:</strong> built only after the four service flagships; default /solutions/automation-ai; never more prominence in the IA than managed security and managed IT. Brief 5.</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tblwrap"><table>
+      <caption>Level B — selective moments (10)</caption>
+      <thead><tr><th>Route</th><th>Level</th><th>The one moment</th></tr></thead>
+      <tbody>
+        <tr><td class="route">/solutions</td><td><span class="lv lv-sel">SEL</span></td><td>Orientation, not spectacle: a responsive systems landscape; a solution reachable in seconds.</td></tr>
+        <tr><td class="route">/industries/law-firms</td><td><span class="lv lv-sel">SEL</span></td><td>matter → identity → documents → communications → backup → compliance</td></tr>
+        <tr><td class="route">/industries/healthcare</td><td><span class="lv lv-sel">SEL</span></td><td>patient workflow → devices → identity → systems → protected information</td></tr>
+        <tr><td class="route">/industries/accounting-finance</td><td><span class="lv lv-sel">SEL</span></td><td>season load → data custody → IRS/FTC pressure → continuity</td></tr>
+        <tr><td class="route">/industries/real-estate</td><td><span class="lv lv-sel">SEL</span></td><td>transaction → wire-fraud exposure → identity → closed ranks</td></tr>
+        <tr><td class="route">/industries/animal-hospitals</td><td><span class="lv lv-sel">SEL</span></td><td>practice systems → client data → uptime without maintenance pauses</td></tr>
+        <tr><td class="route">/industries/nonprofits</td><td><span class="lv lv-sel">SEL</span></td><td>donor trust → lean staff → grant compliance</td></tr>
+        <tr><td class="route">/industries</td><td><span class="lv lv-sel">SEL</span></td><td>Index: the six pressures side by side, one reveal system.</td></tr>
+        <tr><td class="route">/about/mission-values</td><td><span class="lv lv-sel">SEL</span></td><td>One editorial movement: independent + technical + local + principal-led. Then typography, photography, proof.</td></tr>
+        <tr><td class="route">/store</td><td><span class="lv lv-sel">SEL</span></td><td>One controlled branded introduction. The moment shopping starts, motion gets out of the way.</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tblwrap"><table>
+      <caption>Level C — editorial / normal marketing (~45)</caption>
+      <thead><tr><th>Family</th><th>Routes</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Solutions detail</td><td class="route">managed-it-support · managed-workplace · backup-disaster-recovery · co-managed-it · standalone-services · email-security · endpoint-management · identity-management · threat-detection · security-operations · security-awareness · data-encryption · compliance-reports · vcio-strategy · unified-security*</td><td>Normal DE design + restrained motion. *unified-security moves to Level A if elevated as How&nbsp;We&nbsp;Protect.</td></tr>
+        <tr><td>ProActive tiers</td><td class="route">proactive-it / office / business / enterprise-ecosystem · business-needs · business-needs/:family · solutions/request</td><td>Compare-and-choose pages; the FULL story lives on the parent.</td></tr>
+        <tr><td>Pricing</td><td class="route">/pricing · /ecosystem-pricing · /proactive-ecosystem-pricing</td><td>Numbers first. No counters that misstate prices mid-animation.</td></tr>
+        <tr><td>Locations</td><td class="route">chandler · phoenix · mesa · gilbert · tempe · scottsdale (-az)</td><td>Local proof, NAP, photography.</td></tr>
+        <tr><td>Resources</td><td class="route">/resources · blog · blog/:slug · case-studies · case-studies/:slug · cyber-facts · security-updates · videos · datasheets · security-checklist · downtime-calculator · ebook/defending-digital-realm</td><td>Journal amber identity stays. Calculator gets functional motion only.</td></tr>
+        <tr><td>About</td><td class="route">team · press · guarantee · insurance · compliance · compliance-certifications · client-bill-of-rights · 21-questions · about/support</td><td>Evidence-led editorial.</td></tr>
+        <tr><td>Trust</td><td class="route">/trust · /trust/trust-center</td><td>Almost documentary. Real artifact → real data → real person, per the evidence hierarchy. Very restrained.</td></tr>
+        <tr><td>Booking · misc</td><td class="route">/book · /services/ucaas · /case-studies</td><td>Conversion adjacency: calm, fast.</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tblwrap"><table>
+      <caption>Level D — utility / transactional (~80; Scrollcraft explicitly forbidden)</caption>
+      <thead><tr><th>Family</th><th>Routes</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Contact &amp; FAQ</td><td class="route">/contact · FAQ surfaces · quiet pages (today at /v2/pages/)</td><td>Beautifully boring. The quiet-tier discipline was the right instinct; its pages fold into site templates when they graduate from preview.</td></tr>
+        <tr><td>Legal</td><td class="route">/legal/privacy-policy · terms-of-use · msa · sla · aup · dpa · sample-sow · /privacy · /terms</td><td>Prose, unadorned.</td></tr>
+        <tr><td>Auth</td><td class="route">/login · /signup · portal/login · signup · forgot-password · reset-password</td><td>No decoration on the door.</td></tr>
+        <tr><td>Client portal</td><td class="route">/portal/* — 38 routes (dashboard, tickets ×4, invoices ×2, orders ×2, billing, services, files, forms, people, company, contracts, kb, learning, chat, agent, settings, status, surveys, questionnaires, approvals, marketplace, procurement, roadmap, qbr, sales-process, ship-center, infrastructure, vpn, cytracom, order-form, admin ×7)</td><td>Working software. Functional feedback only.</td></tr>
+        <tr><td>Support</td><td class="route">/support/submit-ticket · ticket-confirmation · knowledge-base · remote-support · pay-invoice</td><td>DE Desk and ticket flows stay motion-free.</td></tr>
+        <tr><td>Commerce</td><td class="route">/store/checkout · /store/solution · /store/solutions/:family · /quote-wizard · /quote-confirmation · /thank-you-success-page</td><td>Checkout should be almost invisible.</td></tr>
+        <tr><td>Internal tools</td><td class="route">/internal/warehouse/* · /de-ecosystem-matrix-offical · /official-network-planner</td><td>Not public surfaces.</td></tr>
+        <tr><td>Trust utility</td><td class="route">/trust/vulnerability-disclosure · /trust/accessibility</td><td>Plain statements of record.</td></tr>
+        <tr><td>Preview</td><td class="route">/v2 (+ /v2/pages/*)</td><td>Temporary, noindex. Retires when the rebuilt flagship ships.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section id="materials-audit">
+  <p class="folio">03</p>
+  <div class="body">
+    <h2>Existing material audit</h2>
+    <p>Everything usable that exists today, sorted into the five material classes. The honest summary: the strongest classes have the thinnest inventories.</p>
+
+    <div class="tblwrap"><table>
+      <caption>Class A — real DE evidence (highest value)</caption>
+      <thead><tr><th>Asset</th><th>Where</th><th>Condition</th></tr></thead>
+      <tbody>
+        <tr><td>DE Desk support-surface capture</td><td class="route">de-v2/assets/de-desk-support.webp</td><td>In use in Version B proof. Keep; the one real product artifact currently captured.</td></tr>
+        <tr><td>DE Desk, client portal, solution builder — the products themselves</td><td class="route">live software</td><td><strong>Uncaptured.</strong> The richest evidence source on the property; needs a deliberate sanitized capture program.</td></tr>
+        <tr><td>Assessment deliverables, roadmap, QBR structure</td><td class="route">operational documents</td><td>Uncaptured; sanitized excerpts would carry Briefs 2 and 4.</td></tr>
+        <tr><td>Reviews catalog</td><td class="route">reviewsCatalog.ts</td><td>Empty by the repo's own honesty rule. Stays empty until real reviews exist. Never invented.</td></tr>
+        <tr><td>Case studies</td><td class="route">caseStudies.ts</td><td>All pending client permission. Unusable until released.</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tblwrap"><table>
+      <caption>Class B — real people and place</caption>
+      <thead><tr><th>Asset</th><th>Where</th><th>Condition</th></tr></thead>
+      <tbody>
+        <tr><td>Founder portrait</td><td class="route">de-v2/assets/joe-petro.webp</td><td>Good; in use.</td></tr>
+        <tr><td>Arizona dusk</td><td class="route">de-v2/assets/arizona-dusk.webp</td><td>Good atmospheric anchor; in use.</td></tr>
+        <tr><td>Office, working environment, hands-on engineering, equipment, meetings</td><td class="route">—</td><td><strong>Does not exist.</strong> Two photographs cannot carry a site-wide "real people, real place" promise. Photography brief in §5.</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tblwrap"><table>
+      <caption>Class C — bespoke explanatory graphics (biggest opportunity)</caption>
+      <thead><tr><th>Asset</th><th>Where</th><th>Condition</th></tr></thead>
+      <tbody>
+        <tr><td>Version B environment map (nodes / links / flows, coded SVG)</td><td class="route">de-v2/de.js</td><td>Strong one-off. Its visual language is now claimed by two builds — evolve into a governed diagram system, don't repeat as-is.</td></tr>
+        <tr><td>EnvironmentAssembly + EnvironmentFolio</td><td class="route">client/src/scrollstory (PR #166)</td><td>Second strong one-off in the same visual space — the collision the registry records.</td></tr>
+        <tr><td>Blueprint-grid, network-shield, hero-pattern overlays</td><td class="route">client/src/assets/images</td><td>Decorative patterns, not explanatory diagrams. Not a diagram system.</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tblwrap"><table>
+      <caption>Class D — art-directed imagery</caption>
+      <thead><tr><th>Asset</th><th>Where</th><th>Condition</th></tr></thead>
+      <tbody>
+        <tr><td>Graphite Illumination plates ×6 + deterministic generator</td><td class="route">de-v2/assets/gen · de-v2/lab/plates</td><td>A real system with a philosophy — but born mid-build as a fallback when the intended generation path was blocked, not conceived with the story. Verdict in §4: demote to seasoning; the successor set is designed as a campaign in §5.</td></tr>
+        <tr><td>Engagement-path brand art, UI frame exports</td><td class="route">attached_assets/</td><td>Existing brand-approved art; pulled from Version B's proof chapter for good reason. Available for Level C use where literal.</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tblwrap"><table>
+      <caption>Class E — sourced / licensed</caption>
+      <thead><tr><th>Asset</th><th>Where</th><th>Condition</th></tr></thead>
+      <tbody>
+        <tr><td>Cited industry statistics (Verizon DBIR 2026, FBI IC3 2024, A.R.S. §18-552, IBM, Microsoft)</td><td class="route">cyberAwarenessFacts.ts · Version B ch. 2</td><td>Correctly sourced, named inline, industry-context only. Keep the citation rule exactly as is.</td></tr>
+        <tr><td>Licensed photography</td><td class="route">—</td><td>None in use. Acceptable; if sourced later, one photographer's coherence per surface — never six stock voices on one page.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============================================================ 4 -->
+<section id="scrollcraft-audit">
+  <p class="folio">04</p>
+  <div class="body">
+    <h2>Current Scrollcraft work: keep / redesign / reject</h2>
+    <p>Across both existing builds — Version B (<code>scrollcraft/builds/de-v2</code>, live at /v2) and the ProActive amplification (PR #166, live on /solutions/proactive-ecosystem). Concept quality and asset quality judged separately.</p>
+    <div class="tblwrap"><table>
+      <thead><tr><th>Element</th><th>Verdict</th><th>Reasoning</th></tr></thead>
+      <tbody>
+        <tr><td>Story-first pipeline (interview → journey → energy curve → score → verify)</td><td><span class="v v-keep">KEEP</span></td><td>The discipline produced coherent arcs twice. It stays the method.</td></tr>
+        <tr><td>Intentional energy curve + authored silence + one major peak</td><td><span class="v v-keep">KEEP</span></td><td>calm → unease → awe → agency → confidence → warmth → resolve worked. "THE ENVIRONMENT WAKES UP" is strategically excellent and stays the homepage's central idea.</td></tr>
+        <tr><td>Reduced-motion parity, harness verification, contrast gates</td><td><span class="v v-keep">KEEP</span></td><td>Non-negotiable engineering floor.</td></tr>
+        <tr><td>Real-evidence rule; outcome-driven interaction (the answer map's pain-tied readouts)</td><td><span class="v v-keep">KEEP</span></td><td>Interactivity that answers the visitor's actual question.</td></tr>
+        <tr><td>Editorial typography on the locked three faces</td><td><span class="v v-keep">KEEP</span></td><td>DE's type is the brand; Scrollcraft consumes it, never replaces it.</td></tr>
+        <tr><td>Fingerprint registry discipline</td><td><span class="v v-keep">KEEP</span></td><td>It caught the collision. Its constraint is now binding policy (below).</td></tr>
+        <tr><td>Graphite Illumination material language</td><td><span class="v v-re">REDESIGN</span></td><td>Graphite + lines + violet energy everywhere becomes a style exercise, not a world with evidence and meaning. The system survives as one instrument; the eight-concept set in §5 replaces it as the primary art direction.</td></tr>
+        <tr><td>Environment-map visual language</td><td><span class="v v-re">REDESIGN</span></td><td>Two builds independently drew the same map. The idea (coherence made visible) stays; its visual execution is redesigned from scratch for the flagship, and the diagram language becomes a governed system (§5).</td></tr>
+        <tr><td>Margin folio / instrument rail</td><td><span class="v v-re">REDESIGN</span></td><td>Charming once, repetitive twice. Retired as a default device; may return only where a brief argues for it.</td></tr>
+        <tr><td>Mobile as compression of desktop</td><td><span class="v v-re">REDESIGN</span></td><td>Every Level A brief now specifies a mobile interpretation as a designed sequence — fewer, larger moments — not a squeezed desktop.</td></tr>
+        <tr><td>Transitions between Scrollcraft sections and normal site chrome</td><td><span class="v v-re">REDESIGN</span></td><td>Currently unaddressed; the seam is part of the design, specified per brief.</td></tr>
+        <tr><td>Chaptered editorial + margin map as the default grammar</td><td><span class="v v-rej">REJECT</span></td><td>The registry records both builds occupying this skeleton. No future build may use the combination. Each flagship must clear the registry with a distinct fingerprint.</td></tr>
+        <tr><td>Internal-process language in viewer copy</td><td><span class="v v-rej">REJECT</span></td><td>Already stripped from Version B; permanently banned from customer-visible surfaces.</td></tr>
+        <tr><td>Recycled server artifacts as hero material</td><td><span class="v v-rej">REJECT</span></td><td>Screenshots found on the server are not art direction. Evidence is captured deliberately or not used.</td></tr>
+        <tr><td>14-viewport default length</td><td><span class="v v-rej">REJECT</span></td><td>Version B ran 14.15vh against an 8–14 budget. Future flagships design to the budget, not to its ceiling.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============================================================ 5 -->
+<section id="material-plan">
+  <p class="folio">05</p>
+  <div class="body">
+    <h2>Material creation plan</h2>
+    <p>Materials are produced as planned sets against approved briefs — never one prompt, capture, or texture at a time. Three programs, in priority order:</p>
+
+    <h3>1 · The DE diagram system <span class="note">(Class C — the signature)</span></h3>
+    <p>One governed visual language for architecture, workflow, protection-boundary, assessment-finding, coverage, and lifecycle diagrams. Designed once as a static system on DE tokens — node shapes, line weights, label conventions in Oxanium, magenta reserved for the active path, violet for illumination — then given an animation grammar so the same diagram works still on a Level C page and alive inside a Level A experience. This is how Scrollcraft and the normal site genuinely mesh, and it becomes a brand signature no competitor can copy cheaply.</p>
+
+    <h3>2 · The concept art set <span class="note">(Class D — eight pieces, one material family)</span></h3>
+    <p>Conceived together, art-directed against the four flagship stories before any page is built: <strong>Fragmentation · Connection · Boundary · Continuity · Orchestration · Intelligence · Recovery · Human oversight</strong>. Concept, not noun — no laptops for managed IT, no shields for risk, no padlocked clouds for backup. Production path: generated base material where the network allowlist permits (api.kie.ai + kieai.redpandaai.co — currently blocked), composited and finished with code/vector overlays in the DE palette; authored generatively in-house if the allowlist stays closed. Every piece reproducible and documented. The board test from Phase 3 applies: laid out together, the stills must read as a premium DE campaign before anything moves.</p>
+
+    <h3>3 · Photography + evidence capture <span class="note">(Classes B and A)</span></h3>
+    <ul>
+      <li><strong>Photography brief (a half-day shoot, one photographer):</strong> the Chandler office, working environment, hands-on engineering, equipment and deployments where appropriate, meeting moments, founder in context. No AI-generated humans presented as DE staff — ever.</li>
+      <li><strong>Evidence capture program:</strong> sanitized captures of DE Desk, the client portal, the solution builder, an assessment deliverable's structure, a roadmap view. Sanitization checklist per capture; each asset carries provenance in the ledger.</li>
+      <li><strong>Class E sourcing:</strong> only where reality beats creation (Arizona landscape, architecture); single-voice coherence per surface.</li>
+    </ul>
+
+    <h3>The asset-brief gate</h3>
+    <p>No Level A or B page begins coding until its scene-by-scene asset table is approved. The homepage's table, as the template:</p>
+    <div class="tblwrap"><table>
+      <caption>Asset brief — homepage (template example)</caption>
+      <thead><tr><th>Scene</th><th>Visitor needs to understand</th><th>Primary material</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td>Arrival</td><td>DE is different</td><td>typography + atmosphere</td><td>create</td></tr>
+        <tr><td>Fragmentation</td><td>tech is disconnected</td><td>business-system diagram + material field</td><td>create</td></tr>
+        <tr><td>Stakes</td><td>fragmentation has consequences</td><td>sourced facts + evidence</td><td>find / real</td></tr>
+        <tr><td>Peak</td><td>DE makes systems coherent</td><td>bespoke architecture animation</td><td>create</td></tr>
+        <tr><td>Outcomes</td><td>tech serves business outcomes</td><td>interactive environment</td><td>create</td></tr>
+        <tr><td>Client fit</td><td>DE understands their kind of company</td><td>editorial profiles + real details</td><td>create / find</td></tr>
+        <tr><td>Proof</td><td>DE actually builds things</td><td>real DE products</td><td>reuse / capture</td></tr>
+        <tr><td>Human</td><td>real people are accountable</td><td>photography</td><td>create / reuse</td></tr>
+        <tr><td>Close</td><td>assessment is the next logical step</td><td>type + completed system</td><td>create</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============================================================ 6 -->
+<section id="briefs">
+  <p class="folio">06</p>
+  <div class="body">
+    <h2>Four flagship creative briefs</h2>
+    <p>Phase-2 direction for the first four Level A experiences. Each carries a deliberately different fingerprint; none may reuse the chaptered-editorial + margin-map skeleton.</p>
+
+    <div class="brief">
+      <div class="brief-head">
+        <h3>1 · Homepage — The Environment Wakes Up, rebuilt</h3>
+        <p class="sub">Route: / · replaces the current homepage only when it clears every gate</p>
+      </div>
+      <dl>
+        <div><dt>Purpose</dt><dd>Change what the visitor believes DE is: from "an IT vendor" to "the company that makes the whole environment work as one system."</dd></div>
+        <div><dt>Audience</dt><dd>Arizona owner-operators and office managers in law, CPA, medical, real estate, veterinary — pressed for time, allergic to vendor theater.</dd></div>
+        <div><dt>Belief before → after</dt><dd>"IT providers are interchangeable ticket-takers" → "My environment could work as one designed system, and DE is who does that."</dd></div>
+        <div><dt>Energy curve</dt><dd>calm → unease → awe (peak) → agency → confidence → warmth → resolve. Proven in Version B; retained.</dd></div>
+        <div><dt>Signature + peak</dt><dd>The transformation moment — a fragmented business environment becoming coherent — redesigned from scratch on the new diagram system and the Fragmentation/Connection materials. Explicitly not the existing environment map, not a margin folio. Candidate mechanisms explored in Phase 4 storyboards.</dd></div>
+        <div><dt>Quiet moment</dt><dd>The authored silence after the evidence field survives the rebuild.</dd></div>
+        <div><dt>Materials</dt><dd>Asset table in §5. Salvaged from Version B: sourced facts with citations, dossier content, real photography, DE Desk capture, canonical CTA.</dd></div>
+        <div><dt>Mobile</dt><dd>A designed five-moment sequence (arrival, fracture, transformation, proof, close) — not the desktop compressed.</dd></div>
+        <div><dt>Fingerprint</dt><dd>Must clear both registry rows. Chaptered editorial + margin map is unavailable by rule.</dd></div>
+      </dl>
+    </div>
+
+    <div class="brief">
+      <div class="brief-head">
+        <h3>2 · ProActive Ecosystem — a living operating cadence</h3>
+        <p class="sub">Route: /solutions/proactive-ecosystem · replaces the #166 treatment when ready</p>
+      </div>
+      <dl>
+        <div><dt>Purpose</dt><dd>Make "operated, not watched" tangible: technology becoming an operating system over time.</dd></div>
+        <div><dt>Belief before → after</dt><dd>"A plan is a bundle of tools" → "A plan is a cadence that runs my environment: designed before defended, monitored before it breaks, measured to a roadmap."</dd></div>
+        <div><dt>Signature + peak</dt><dd>A living cadence — Observe → Decide → Protect → Improve — cycling as the visitor scrolls, with services surfacing at the moment they become operationally relevant. Time and rhythm as the grammar, not spatial assembly. Peak: one full revolution completing with the environment measurably better than the revolution before.</dd></div>
+        <div><dt>Quiet moment</dt><dd>The published rates, still and exact.</dd></div>
+        <div><dt>Materials</dt><dd>Orchestration + Continuity concept pieces; cadence diagrams from the diagram system; sanitized roadmap/QBR structure as Class A evidence.</dd></div>
+        <div><dt>Mobile</dt><dd>The cadence as a vertical rhythm; one cycle, larger type, no lateral travel.</dd></div>
+        <div><dt>Fingerprint</dt><dd>Distinct from homepage by construction: cyclical/temporal vs transformational/spatial.</dd></div>
+      </dl>
+    </div>
+
+    <div class="brief">
+      <div class="brief-head">
+        <h3>3 · How We Protect — layered, adaptive, continuous</h3>
+        <p class="sub">Route: open decision — elevate /solutions/unified-security or create dedicated</p>
+      </div>
+      <dl>
+        <div><dt>Purpose</dt><dd>Replace the abstract word "cybersecurity" with a visible mechanism: protection as layers around a real business.</dd></div>
+        <div><dt>Belief before → after</dt><dd>"Security is a product you buy" → "Security is layers that adapt and never stop: identity, endpoint, network, email, backup, security operations."</dd></div>
+        <div><dt>Signature + peak</dt><dd>A recognizable business environment progressively enclosed by protective boundaries, each layer visibly answering a named threat from the evidence register. Peak: an attack path attempted against the finished enclosure, failing layer by layer. No SOC dashboard, no neon wall, no fake live telemetry — the governance forbids illustrative telemetry presented as real.</dd></div>
+        <div><dt>Quiet moment</dt><dd>The 45-day Arizona notification statute, typeset plainly.</dd></div>
+        <div><dt>Materials</dt><dd>Boundary + Recovery concept pieces; protection-boundary diagrams; cited industry facts (existing Class E).</dd></div>
+        <div><dt>Mobile</dt><dd>Layers accumulate as full-viewport states; the attack-path moment simplified to three beats.</dd></div>
+        <div><dt>Fingerprint</dt><dd>Enclosure/containment grammar — distinct from both transformation (home) and cadence (ProActive).</dd></div>
+      </dl>
+    </div>
+
+    <div class="brief">
+      <div class="brief-head">
+        <h3>4 · Cyber Risk Assessment — unknown to roadmap</h3>
+        <p class="sub">Route: /assessment · the conversion flagship</p>
+      </div>
+      <dl>
+        <div><dt>Purpose</dt><dd>Make the assessment itself understandable so sales copy doesn't have to carry it. The page is the product demo.</dd></div>
+        <div><dt>Belief before → after</dt><dd>"An assessment is a sales pitch in disguise" → "It's a real inspection with findings I can act on with anyone — and the obvious first step."</dd></div>
+        <div><dt>Signature + peak</dt><dd>A deliberately incomplete environment gets progressively inspected: observed, annotated, classified, prioritized — findings acquiring severity and order as the visitor scrolls. Peak: the prioritized findings resolving into a roadmap. Annotation/inspection grammar; the visitor watches rigor happen.</dd></div>
+        <div><dt>Quiet moment</dt><dd>"No obligation. You hear back within one business day." — the real promises, still.</dd></div>
+        <div><dt>Materials</dt><dd>Intelligence + Fragmentation concept pieces; assessment-finding diagrams; sanitized deliverable structure as Class A evidence.</dd></div>
+        <div><dt>Mobile</dt><dd>Inspection beats as discrete cards acquiring classification; single column, thumb-paced.</dd></div>
+        <div><dt>Fingerprint</dt><dd>Forensic/annotative — the only page where the interface idiom is examination.</dd></div>
+      </dl>
+    </div>
+
+    <p class="note"><strong>Automation + AI, last.</strong> AI material is wanted, and it is built only after the four service flagships: manual work → orchestration → autonomous workflow → human oversight, handoffs collapsing into one path with a human approval gate still lit, framed as one of the fourteen domains a managed security and managed IT company operates. No robots, no AI blobs, and never more prominence in the IA than the security and managed IT pages. Brief 5.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 7 -->
+<section id="rollout">
+  <p class="folio">07</p>
+  <div class="body">
+    <h2>Rollout order</h2>
+    <ol class="phases">
+      <li><h3>Inventory — the review gallery</h3><p>One review-only surface showing everything that exists: both Scrollcraft builds, all materials by class, the registry. No decisions from memory.</p><span class="gate">Gate: Joe has seen everything</span></li>
+      <li><h3>Site experience map</h3><p>Section 02 of this document, ratified route by route. The two open route decisions (How We Protect; Automation + AI, last) get made here.</p><span class="gate">Gate: Joe approves the map · no code</span></li>
+      <li><h3>Creative direction</h3><p>Full Phase-2 briefs for every FULL page (the four above finalized, the fifth written), each with purpose, audience, beliefs, curve, signature, peak, quiet, materials, sources, mobile interpretation.</p><span class="gate">Gate: Joe approves each brief · no code</span></li>
+      <li><h3>Material production</h3><p>Diagram system, the eight-piece concept set, photography shoot, evidence captures — produced as planned sets.</p><span class="gate">Gate: the board test — a premium DE campaign before anything moves</span></li>
+      <li><h3>Motion storyboards</h3><p>Chapter by chapter for the homepage: what starts where, what moves, why, what ends where, how each scene hands off.</p><span class="gate">Gate: storyboard approved · asset table approved</span></li>
+      <li><h3>Build one flagship</h3><p>Homepage only. Fingerprint gate against the registry, harness verification at all widths and reduced motion, smoke expectations updated <em>with</em> the release, staged rollout with instant revert.</p><span class="gate">Gate: Joe's verdict on the live candidate</span></li>
+      <li><h3>Integrate</h3><p>Extract reusable DE primitives — diagram components, stage patterns, transition treatments — not reusable page designs.</p><span class="gate">Gate: primitives documented in the design system</span></li>
+      <li><h3>Selective propagation</h3><p>ProActive → How We Protect → Assessment, one at a time, each with a distinct fingerprint; Automation + AI last. Level B moments follow.</p><span class="gate">Gate: per-page, same rigor as the flagship</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================================================ 8 -->
+<section id="ground-rules">
+  <p class="folio">08</p>
+  <div class="body">
+    <h2>Standing rules the program inherits</h2>
+    <ul class="rule-list">
+      <li>The brand foundation is locked: #050312 · Warm Paper · #D3126A · restrained violet illumination · Space Grotesk · Inter · Oxanium. Scrollcraft consumes the DE system; it never replaces it.</li>
+      <li>Truthfulness: no fabricated certifications, partnerships, customer counts, testimonials, SLAs, or telemetry. Sourced statistics carry source and year, as industry context only. The empty reviews catalog stays empty until reality fills it.</li>
+      <li>Evidence hierarchy governs every surface: real artifact → real data → real person → explanatory diagram → sanitized interface → illustration → photography → atmosphere → icon.</li>
+      <li>The fingerprint registry is binding. Chaptered editorial + margin map is occupied twice and closed. Every new build clears every existing row.</li>
+      <li>MERGED and LIVE are separate states. Every release names both, is verified against production, and ships with its rollback path. Guardrail expectations (the homepage smoke test) are updated with a release, never disabled.</li>
+      <li>Levels C and D never receive Scrollcraft. Contact stays beautifully boring; checkout stays almost invisible.</li>
+      <li>Joe holds merge, deploy, and approval authority at every gate. This plan itself is inert until approved.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <span>Digerati Experts · Experience program</span>
+  <span>Plan v1 · 2026-09-01</span>
+  <span>Prepared for Joe's approval</span>
+</footer>
+</div>
+
+</body>
+</html>

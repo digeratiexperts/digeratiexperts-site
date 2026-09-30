@@ -152,10 +152,10 @@ export default function PortalQBR() {
                   <Badge
                     className={
                       report.status === "completed"
-                        ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                        ? "bg-emerald-50 text-emerald-800 border-emerald-700/30 dark:bg-emerald-500/20 dark:text-emerald-300"
                         : report.status === "scheduled"
-                        ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
-                        : "bg-gray-500/20 text-gray-400 border-gray-500/30"
+                        ? "bg-blue-50 text-blue-800 border-blue-700/30 dark:bg-blue-500/20 dark:text-blue-300"
+                        : "bg-gray-100 text-gray-700 border-gray-400/50 dark:bg-gray-500/20 dark:text-gray-300"
                     }
                   >
                     {report.status === "completed" ? "Completed" : report.status === "scheduled" ? "Scheduled" : "Draft"}
@@ -287,21 +287,21 @@ export default function PortalQBR() {
                         <span className="text-gray-500 dark:text-gray-400">Patch Compliance</span>
                         <span data-testid="text-patch-compliance">{securityMetrics.patchCompliance}%</span>
                       </div>
-                      <Progress value={securityMetrics.patchCompliance} className="h-2" />
+                      <Progress value={securityMetrics.patchCompliance} className="h-2" aria-label="Patch compliance" />
                     </div>
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-gray-500 dark:text-gray-400">Phishing Test Pass Rate</span>
                         <span data-testid="text-phishing-rate">{securityMetrics.phishingTestPassRate}%</span>
                       </div>
-                      <Progress value={securityMetrics.phishingTestPassRate} className="h-2" />
+                      <Progress value={securityMetrics.phishingTestPassRate} className="h-2" aria-label="Phishing test pass rate" />
                     </div>
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-gray-500 dark:text-gray-400">Uptime</span>
                         <span data-testid="text-uptime-percent">{securityMetrics.uptimePercent}%</span>
                       </div>
-                      <Progress value={securityMetrics.uptimePercent} className="h-2" />
+                      <Progress value={securityMetrics.uptimePercent} className="h-2" aria-label="Uptime" />
                     </div>
                   </div>
                 </div>
@@ -413,21 +413,21 @@ export default function PortalQBR() {
                     <span className="text-gray-500 dark:text-gray-400">CPU Usage</span>
                     <span>{infrastructureMetrics.avgCPU}%</span>
                   </div>
-                  <Progress value={infrastructureMetrics.avgCPU} className="h-3" />
+                  <Progress value={infrastructureMetrics.avgCPU} className="h-3" aria-label="CPU usage" />
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-500 dark:text-gray-400">Memory Usage</span>
                     <span>{infrastructureMetrics.avgMemory}%</span>
                   </div>
-                  <Progress value={infrastructureMetrics.avgMemory} className="h-3" />
+                  <Progress value={infrastructureMetrics.avgMemory} className="h-3" aria-label="Memory usage" />
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-500 dark:text-gray-400">Disk Usage</span>
                     <span>{infrastructureMetrics.avgDisk}%</span>
                   </div>
-                  <Progress value={infrastructureMetrics.avgDisk} className="h-3" />
+                  <Progress value={infrastructureMetrics.avgDisk} className="h-3" aria-label="Disk usage" />
                 </div>
               </CardContent>
             </Card>

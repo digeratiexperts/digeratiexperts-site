@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digeratiexperts.com/schemas/de.techconsole.order/v1",
+  "title": "DE order (dropship / provisioning)",
+  "description": "One device order. Written by DE (or the online component), read by New-DEDropshipKit and first boot. No secrets: validators refuse secret-looking keys and any value shaped like a BitLocker recovery password.",
+  "type": "object",
+  "required": [
+    "schema",
+    "orderId",
+    "client",
+    "device"
+  ],
+  "properties": {
+    "schema": {
+      "const": "de.techconsole.order/v1"
+    },
+    "orderId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "client": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bundle": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "addOns": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "solutions": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "endUser": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "displayName": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "upn": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "localUserName": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "jumpcloudUser": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "device": {
+      "type": "object",
+      "properties": {
+        "manufacturer": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "serial": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "assetTag": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hostname": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "role": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "procurement": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "technician": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "created": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

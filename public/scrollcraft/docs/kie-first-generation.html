@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>First kie.ai generation: proposal · Scrollcraft lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=Oxanium:wght@500;600&display=swap">
+<style>
+:root{--bg:#050312;--ink:#ffffff;--soft:rgba(255,255,255,.68);--faint:rgba(255,255,255,.45);--line:rgba(255,255,255,.12);--accent:#F04C97;--raised:#141020}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline;text-underline-offset:4px}
+main{max-width:52rem;margin:0 auto;padding:3.5rem 1.25rem 6rem}
+.eyebrow{font-family:Oxanium,ui-monospace,monospace;font-size:.72rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0 0 .75rem}
+h1{font-family:"Space Grotesk",Inter,sans-serif;font-size:2rem;line-height:1.15;letter-spacing:-.02em;margin:0 0 1rem}
+h2{font-family:"Space Grotesk",Inter,sans-serif;font-size:1.35rem;letter-spacing:-.01em;margin:2.5rem 0 .75rem;padding-top:1.25rem;border-top:1px solid var(--line)}
+h3{font-size:1.08rem;margin:1.75rem 0 .5rem}
+h4,h5,h6{font-size:1rem;margin:1.25rem 0 .4rem}
+p,ul,ol{margin:0 0 1rem}
+li{margin:.3rem 0}
+li>ul,li>ol{margin:.3rem 0 .3rem}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;background:rgba(255,255,255,.08);padding:.1em .35em;border-radius:3px}
+pre{background:var(--raised);border:1px solid var(--line);padding:1rem;overflow-x:auto;font-size:.85rem;line-height:1.5;margin:0 0 1.25rem}
+pre code{background:none;padding:0;font-size:inherit}
+blockquote{margin:0 0 1rem;padding:.25rem 0 .25rem 1rem;border-left:2px solid var(--accent);color:var(--soft)}
+hr{border:0;border-top:1px solid var(--line);margin:2rem 0}
+.table-wrap{overflow-x:auto;margin:0 0 1.25rem;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .7rem;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--soft);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;background:var(--raised)}
+tr:last-child td{border-bottom:0}
+.back{font-family:Oxanium,ui-monospace,monospace;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase}
+.meta{color:var(--faint);font-size:.85rem;margin:0 0 2rem}
+</style>
+</head>
+<body>
+<main>
+<p class="back"><a href="/scrollcraft/">← Scrollcraft lab</a></p>
+<p class="eyebrow">Scrollcraft lab · plan document</p>
+<p class="meta">Rendered from <code>scrollcraft/KIE-FIRST-GENERATION.md</code> in the repository. The file is the source of truth; this page is a reading copy.</p>
+<h1>First kie.ai generation: proposal, not approved</h1>
+<p>Status: <strong>PROPOSED, NOT APPROVED, NOTHING SENT.</strong> Owner: Claude Code. Date: 2026-09-02. Governed by <code>docs/kie/KIE-RULES.md</code>. Joe approves or changes this in a message that names the still and gives the cap; only then is one <code>createTask</code> call made.</p>
+<h2>What would be generated</h2>
+<p>One still. Family <strong>F-02 &quot;The environment: fragmented → designed → operated&quot;</strong>, frame <strong>environment-01 (establishing)</strong>, for the homepage peak scene and the Version 4 story (<code>scrollcraft/ASSET-PLAN.md</code> §3, F-02). This is the frame the whole homepage story turns on, and the one that tests the art direction hardest: real objects, one warm light, a graphite field, room for type.</p>
+<div class="table-wrap"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Model</td><td>First model marked AVAILABLE in Joe's order (GPT Image 2 → Nano Banana 2 → Imagen 4 Ultra/Fast → Flux-2 Pro → Seedream 5 Pro). The read-only probe of 2026-09-02 fills this in (<code>docs/kie/AVAIL-*.md</code>). Seedream 5 Pro is already known NOT-AUTHORIZED for this key.</td></tr><tr><td>Listed price</td><td>GPT Image 2: 9 credits ($0.045). Nano Banana 2: about 8 credits ($0.04). Flux-2 Pro: 5 credits at 1K ($0.025). Imagen 4: not listed in what could be read. At $0.005 per credit. Listed prices are pre-checks; the manifest records the real debit.</td></tr><tr><td>Proposed cap</td><td><strong>10 credits ($0.05)</strong> for GPT Image 2 or Nano Banana 2; 6 credits for Flux-2 Pro. Joe sets the actual cap.</td></tr><tr><td>Aspect</td><td>16:9 at the model's 1K tier (the desktop peak frame). The 4:5 mobile alternate is a separate, later approval.</td></tr><tr><td>Prompt</td><td><code>scrollcraft/assets/f02/environment-01.prompt.txt</code>, reproduced below, sent verbatim.</td></tr><tr><td>Output</td><td><code>scrollcraft/assets/f02/environment-01.png</code> plus a provenance entry in <code>scrollcraft/assets/f02/manifest.json</code> (model, prompt, task id, result URL, sha256, credits before/after/spent, cap, approval text).</td></tr><tr><td>Classification</td><td>ILLUSTRATIVE, status <code>candidate</code>. Labelled &quot;Illustration&quot; wherever it might later appear.</td></tr><tr><td>Where it goes</td><td>Nowhere on the site. The file lands on the PR #183 branch for Joe to see, with a crop sheet at 1440 / 768 / 390. No page mounts it until Joe approves that separately.</td></tr><tr><td>Retry</td><td>None. If kie.ai fails the task, the manifest records it and the run stops.</td></tr></tbody></table></div>
+<p>The exact request, produced by <code>kie.mjs still ... --dry-run</code> (no network), is:</p>
+<pre><code>{
+  &quot;model&quot;: &quot;gpt-image-2-text-to-image&quot;,
+  &quot;input&quot;: {
+    &quot;prompt&quot;: &quot;&lt;the prompt file, verbatim&gt;&quot;,
+    &quot;aspect_ratio&quot;: &quot;16:9&quot;
+  }
+}</code></pre>
+<p>(If a different model is first available, the <code>input</code> follows that model's documented fields; the dry run prints it before Joe approves.)</p>
+<h2>The prompt (verbatim)</h2>
+<pre><code>Premium editorial product photograph, physical technology, technically credible, quiet Arizona evening atmosphere. Real materials with real texture: brushed aluminium, matte plastic, paper, glass. One warm key light from the right, like a low desert sun through a window. Graphite field: a near-black desk surface and background, restrained violet ambient fill, no glow, no neon. No people, no readable text, no logos, no padlocks, no shields, no holograms, no data streams, no dashboards, no screens showing content, no cyberpunk styling.
+
+A small professional-services office's technology laid out as separate physical objects on one wide dark desk plane, seen from a 30-degree tilt: a closed laptop, a phone face down, a small router, a two-bay NAS, a compact printer, an employee badge card, and a paper binder. The objects sit apart from each other with clear gaps and hard shadows, no cables joining them, nothing lit up. Wide composition with the objects grouped in the right two thirds and the left third open and dark for typography. Photoreal, natural lens rendering, 16:9.</code></pre>
+<p>Why this scene represents DE (rule 15): it is the buyer's own office as physical objects, not a hacker or a padlock; the &quot;fragmented&quot; state is the belief DE changes; the same scene, same camera, becomes &quot;designed&quot; (hairline connections drawn in code, not in the image) and &quot;operated&quot; (one soft-lit boundary, the badge lit) in frames 02 and 03, which would be image-to-image from this frame so the set stays consistent (rule 11).</p>
+<h2>The command that would run, once approved</h2>
+<pre><code>node .claude/skills/scrollcraft/scripts/kie.mjs still \
+  @scrollcraft/assets/f02/environment-01.prompt.txt \
+  scrollcraft/assets/f02/environment-01.png \
+  --model gpt-image-2-text-to-image --ar 16:9 \
+  --family F-02 --frame environment-01 --page &quot;homepage / peak: the environment, fragmented&quot; \
+  --approved &quot;Joe, &lt;date and words of the approving message&gt;&quot; --cap &lt;credits Joe gives&gt;</code></pre>
+<p>The script refuses without <code>--approved</code> and <code>--cap</code>, refuses if the listed price is above the cap or the balance cannot cover it, makes one <code>createTask</code>, records the task id before polling, never retries, reads the balance after, and flags any spend above the cap.</p>
+<h2>What is deliberately not in this proposal</h2>
+<ul><li>No video. The F-02 motion plate in the asset plan is dropped under the image-only rule; the &quot;lighting comes up&quot; moment will be built in code (opacity and mask on the resolved frame) instead.</li><li>No F-03 macros, no mobile alternate, no second frame. Each is its own approval with its own cap.</li><li>No page changes and no publishing.</li></ul>
+<h2>After Joe sees the result</h2>
+<ol><li>Keep / reroll / change direction. A reroll is a new approval.</li><li>If kept: frames 02 and 03 by image-to-image from frame 01 (two approvals), then the 4:5 mobile alternate, then F-03's six macros.</li><li>Only then does the Version 4 homepage work resume against real material.</li></ol>
+</main>
+</body>
+</html>

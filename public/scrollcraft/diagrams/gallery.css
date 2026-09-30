@@ -1,0 +1,149 @@
+/* ==========================================================================
+   DE diagram system · diagrams.css
+   Grammar: design/DIAGRAM_SYSTEM.md. Hairlines, not glow. Magenta only for
+   the active/selected state. Tokens fall back to the Layer 0 values so the
+   sheet also works outside the app (gallery, Scrollcraft builds).
+   ========================================================================== */
+
+.dg {
+  --dg-ink: #ffffff;
+  --dg-soft: rgba(255, 255, 255, 0.55);
+  --dg-line: rgba(255, 255, 255, 0.28);
+  --dg-hairline: var(--de-hairline, rgba(255, 255, 255, 0.1));
+  --dg-field: var(--de-bg, #050312);
+  --dg-raised: var(--de-raised, #151217);
+  --dg-accent: #d3126a;
+  --dg-accent-ink: #f04c97;
+  --dg-display: "Space Grotesk", system-ui, sans-serif;
+  --dg-text: "Inter", system-ui, sans-serif;
+  --dg-mono: "Oxanium", "JetBrains Mono", ui-monospace, monospace;
+  --dg-p: 1;
+  --dg-draw-ms: 600ms;
+  --dg-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  margin: 0;
+  display: grid;
+  gap: 0.6rem;
+  color: var(--dg-ink);
+  font-family: var(--dg-text);
+}
+.dg--paper {
+  --dg-ink: #1a1228;
+  --dg-soft: #5a5368;
+  --dg-line: rgba(26, 18, 40, 0.34);
+  --dg-hairline: var(--de-paper-hairline, rgba(26, 18, 16, 0.1));
+  --dg-field: var(--de-paper, #f7f5f2);
+  --dg-raised: var(--de-paper-raised, #ffffff);
+  --dg-accent: #a30e52;
+  --dg-accent-ink: #a30e52;
+}
+
+.dg svg { display: block; width: 100%; height: auto; overflow: visible; }
+.dg text { font-family: var(--dg-text); fill: var(--dg-ink); }
+.dg .dg-code { font-family: var(--dg-mono); font-size: 9.5px; letter-spacing: 0.09em; font-weight: 600; fill: var(--dg-soft); text-transform: uppercase; }
+.dg .dg-label { font-family: var(--dg-display); font-size: 12.5px; font-weight: 700; fill: var(--dg-ink); }
+.dg .dg-sub { font-family: var(--dg-text); font-size: 9.5px; fill: var(--dg-soft); }
+
+/* head + source: Oxanium telemetry label carries the classification */
+.dg-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; border-bottom: 1px solid var(--dg-hairline); padding-bottom: 0.45rem; }
+.dg-title { font-family: var(--dg-display); font-weight: 700; font-size: 0.95rem; letter-spacing: -0.01em; }
+.dg-telemetry { font-family: var(--dg-text); font-size: 0.76rem; color: var(--dg-soft); }
+
+/* narrow layout: a phone renders the 360-wide viewBox near 1:1, so the type
+   steps up one size and the renderers give nodes the extra width */
+.dg--narrow .dg-label { font-size: 14px; }
+.dg--narrow .dg-code { font-size: 10.5px; }
+.dg--narrow .dg-sub { font-size: 10.5px; }
+.dg-source { margin: 0; font-size: 0.78rem; line-height: 1.45; color: var(--dg-soft); max-width: 62ch; }
+
+/* nodes */
+.dg-node rect { fill: var(--dg-raised); stroke: var(--dg-hairline); stroke-width: 1; }
+.dg-node--emph rect { stroke: var(--dg-line); }
+.dg-node--core rect { fill: var(--dg-field); stroke: var(--dg-line); }
+.dg-node--road rect { fill: var(--dg-field); }
+
+/* edges: hairline, direction only when sequence matters */
+.dg-edge { fill: none; stroke: var(--dg-line); stroke-width: 1; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.dg-arrowhead { stroke: var(--dg-line); stroke-width: 1; }
+
+/* boundaries: hairline, optional muted fill of the field, never violet */
+.dg-boundary rect { fill: none; stroke: var(--dg-line); stroke-width: 1; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.dg-layer rect { fill: none; stroke: var(--dg-hairline); stroke-width: 1; stroke-dasharray: 1; stroke-dashoffset: 0; }
+
+/* control gates and markers: small, not scare icons */
+.dg-gate circle { fill: var(--dg-field); stroke: var(--dg-accent); stroke-width: 1.5; }
+.dg-mark circle { fill: none; stroke: var(--dg-line); stroke-width: 1.25; }
+.dg-mark--finding path { fill: none; stroke: var(--dg-ink); stroke-width: 1.5; stroke-dasharray: 1; }
+.dg-mark--priority path { fill: none; stroke: var(--dg-accent); stroke-width: 1.5; stroke-dasharray: 1; }
+.dg-mark--priority .dg-code { fill: var(--dg-accent-ink); }
+
+/* coverage rings: lit rings inherit ink, the selected depth takes magenta */
+.dg-ring circle { fill: none; stroke: var(--dg-line); stroke-width: 1; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.dg-core { fill: var(--dg-accent); }
+.dg-legend circle { fill: var(--dg-line); }
+
+/* ------------------------------------------------ stage visibility rules
+   data-dg-at = the stage an element belongs to. Elements at or below the
+   current stage are shown; the current stage draws with --dg-p; later
+   stages are hidden. Generated for stages 0..6. */
+.dg [data-dg-at] { transition: opacity var(--dg-draw-ms) var(--dg-ease); }
+.dg [data-dg-at] [pathLength], .dg [data-dg-at][pathLength] { transition: stroke-dashoffset var(--dg-draw-ms) var(--dg-ease), opacity var(--dg-draw-ms) var(--dg-ease); }
+
+.dg[data-dg-stage="0"] [data-dg-at="1"], .dg[data-dg-stage="0"] [data-dg-at="2"], .dg[data-dg-stage="0"] [data-dg-at="3"], .dg[data-dg-stage="0"] [data-dg-at="4"], .dg[data-dg-stage="0"] [data-dg-at="5"], .dg[data-dg-stage="0"] [data-dg-at="6"],
+.dg[data-dg-stage="1"] [data-dg-at="2"], .dg[data-dg-stage="1"] [data-dg-at="3"], .dg[data-dg-stage="1"] [data-dg-at="4"], .dg[data-dg-stage="1"] [data-dg-at="5"], .dg[data-dg-stage="1"] [data-dg-at="6"],
+.dg[data-dg-stage="2"] [data-dg-at="3"], .dg[data-dg-stage="2"] [data-dg-at="4"], .dg[data-dg-stage="2"] [data-dg-at="5"], .dg[data-dg-stage="2"] [data-dg-at="6"],
+.dg[data-dg-stage="3"] [data-dg-at="4"], .dg[data-dg-stage="3"] [data-dg-at="5"], .dg[data-dg-stage="3"] [data-dg-at="6"],
+.dg[data-dg-stage="4"] [data-dg-at="5"], .dg[data-dg-stage="4"] [data-dg-at="6"],
+.dg[data-dg-stage="5"] [data-dg-at="6"] { opacity: 0; }
+
+/* the current stage's strokes draw with --dg-p (0 → 1) */
+.dg[data-dg-stage="1"] [data-dg-at="1"][pathLength], .dg[data-dg-stage="1"] [data-dg-at="1"] [pathLength],
+.dg[data-dg-stage="2"] [data-dg-at="2"][pathLength], .dg[data-dg-stage="2"] [data-dg-at="2"] [pathLength],
+.dg[data-dg-stage="3"] [data-dg-at="3"][pathLength], .dg[data-dg-stage="3"] [data-dg-at="3"] [pathLength],
+.dg[data-dg-stage="4"] [data-dg-at="4"][pathLength], .dg[data-dg-stage="4"] [data-dg-at="4"] [pathLength],
+.dg[data-dg-stage="5"] [data-dg-at="5"][pathLength], .dg[data-dg-stage="5"] [data-dg-at="5"] [pathLength],
+.dg[data-dg-stage="6"] [data-dg-at="6"][pathLength], .dg[data-dg-stage="6"] [data-dg-at="6"] [pathLength] {
+  stroke-dashoffset: calc(1 - var(--dg-p));
+}
+
+/* the active layer / ring / stage takes the accent: selected state only */
+.dg[data-dg-stage="1"] .dg-layer[data-dg-at="1"] rect, .dg[data-dg-stage="2"] .dg-layer[data-dg-at="2"] rect, .dg[data-dg-stage="3"] .dg-layer[data-dg-at="3"] rect,
+.dg[data-dg-stage="4"] .dg-layer[data-dg-at="4"] rect, .dg[data-dg-stage="5"] .dg-layer[data-dg-at="5"] rect, .dg[data-dg-stage="6"] .dg-layer[data-dg-at="6"] rect { stroke: var(--dg-accent); }
+.dg[data-dg-stage="1"] .dg-layer[data-dg-at="1"] .dg-code, .dg[data-dg-stage="2"] .dg-layer[data-dg-at="2"] .dg-code, .dg[data-dg-stage="3"] .dg-layer[data-dg-at="3"] .dg-code,
+.dg[data-dg-stage="4"] .dg-layer[data-dg-at="4"] .dg-code, .dg[data-dg-stage="5"] .dg-layer[data-dg-at="5"] .dg-code, .dg[data-dg-stage="6"] .dg-layer[data-dg-at="6"] .dg-code { fill: var(--dg-accent-ink); }
+
+.dg[data-dg-stage="0"] .dg-ring[data-dg-at="0"] circle, .dg[data-dg-stage="1"] .dg-ring[data-dg-at="1"] circle,
+.dg[data-dg-stage="2"] .dg-ring[data-dg-at="2"] circle, .dg[data-dg-stage="3"] .dg-ring[data-dg-at="3"] circle { stroke: var(--dg-accent); stroke-width: 2; }
+.dg[data-dg-stage="0"] .dg-legend[data-dg-at="0"] circle, .dg[data-dg-stage="1"] .dg-legend[data-dg-at="1"] circle,
+.dg[data-dg-stage="2"] .dg-legend[data-dg-at="2"] circle, .dg[data-dg-stage="3"] .dg-legend[data-dg-at="3"] circle { fill: var(--dg-accent); }
+.dg[data-dg-stage="0"] .dg-legend[data-dg-at="0"] .dg-label, .dg[data-dg-stage="1"] .dg-legend[data-dg-at="1"] .dg-label,
+.dg[data-dg-stage="2"] .dg-legend[data-dg-at="2"] .dg-label, .dg[data-dg-stage="3"] .dg-legend[data-dg-at="3"] .dg-label { fill: var(--dg-accent-ink); }
+
+.dg[data-dg-stage="0"] .dg-node[data-dg-at="0"] rect, .dg[data-dg-stage="1"] .dg-node[data-dg-at="1"] rect,
+.dg[data-dg-stage="2"] .dg-node[data-dg-at="2"] rect, .dg[data-dg-stage="3"] .dg-node[data-dg-at="3"] rect { stroke: var(--dg-accent); }
+.dg[data-diagram="environment"][data-dg-stage="0"] .dg-node rect { stroke: var(--dg-hairline); }
+
+/* the environment's identity spine reads as the spine once designed */
+.dg[data-diagram="environment"][data-dg-stage="1"] .dg-node--emph rect,
+.dg[data-diagram="environment"][data-dg-stage="2"] .dg-node--emph rect { stroke: var(--dg-accent); }
+
+/* focus: a page can emphasise one node (hovered capability, selected tier) */
+.dg[data-focus] .dg-node rect { transition: stroke 200ms var(--dg-ease); }
+.dg[data-focus="people"] [data-node="people"] rect, .dg[data-focus="identity"] [data-node="identity"] rect,
+.dg[data-focus="devices"] [data-node="devices"] rect, .dg[data-focus="email"] [data-node="email"] rect,
+.dg[data-focus="systems"] [data-node="systems"] rect, .dg[data-focus="network"] [data-node="network"] rect,
+.dg[data-focus="backup"] [data-node="backup"] rect { stroke: var(--dg-accent); stroke-width: 1.5; }
+.dg[data-focus="operations"] .dg-boundary rect { stroke: var(--dg-accent); }
+.dg[data-focus="operations"] .dg-boundary .dg-code { fill: var(--dg-accent-ink); }
+/* layer focus: all layers drawn (state 1), one emphasised */
+/* a selected layer replaces the stage accent: one magenta layer at a time */
+.dg[data-focus^="layer-"][data-dg-stage] .dg-layer rect { stroke: var(--dg-hairline); stroke-width: 1; }
+.dg[data-focus^="layer-"][data-dg-stage] .dg-layer .dg-code { fill: var(--dg-soft); }
+.dg[data-focus="layer-1"] .dg-layer[data-dg-at="1"] rect, .dg[data-focus="layer-2"] .dg-layer[data-dg-at="2"] rect, .dg[data-focus="layer-3"] .dg-layer[data-dg-at="3"] rect,
+.dg[data-focus="layer-4"] .dg-layer[data-dg-at="4"] rect, .dg[data-focus="layer-5"] .dg-layer[data-dg-at="5"] rect, .dg[data-focus="layer-6"] .dg-layer[data-dg-at="6"] rect { stroke: var(--dg-accent); stroke-width: 1.5; }
+.dg[data-focus="layer-1"] .dg-layer[data-dg-at="1"] .dg-code, .dg[data-focus="layer-2"] .dg-layer[data-dg-at="2"] .dg-code, .dg[data-focus="layer-3"] .dg-layer[data-dg-at="3"] .dg-code,
+.dg[data-focus="layer-4"] .dg-layer[data-dg-at="4"] .dg-code, .dg[data-focus="layer-5"] .dg-layer[data-dg-at="5"] .dg-code, .dg[data-focus="layer-6"] .dg-layer[data-dg-at="6"] .dg-code { fill: var(--dg-accent-ink); }
+.dg[data-focus^="layer-"][data-dg-stage="6"] .dg-layer rect { transition: stroke 200ms var(--dg-ease), stroke-width 200ms var(--dg-ease); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dg [data-dg-at], .dg [data-dg-at] [pathLength], .dg [data-dg-at][pathLength] { transition: none; }
+}

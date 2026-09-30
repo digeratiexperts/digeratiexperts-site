@@ -135,7 +135,7 @@ export default function GenericServicePage({
         <div className="flex flex-wrap items-center gap-3">
           <ProofChip metric="24/7" label="Human-Led SOC" icon={Shield} />
           <ProofChip metric="ARIZONA" label="Local Engineering Team" icon={Users} />
-          <ProofChip metric="6 DOMAINS" label="Managed Protection" icon={Award} />
+          <ProofChip metric="8 BLOCKS" label="Managed Protection" icon={Award} />
           <ProofChip metric="SLA" label="Defined Response Times" icon={Clock} />
         </div>
 
@@ -385,7 +385,7 @@ export default function GenericServicePage({
           <h2 className="mb-4 font-heading text-3xl font-semibold text-white md:text-4xl">
             {narrative?.ctaHeadline || "Schedule your cyber risk assessment"}
           </h2>
-          <p className="mx-auto mb-8 max-w-2xl text-lg text-white/90 md:text-xl">
+          <p className="mx-auto mb-8 max-w-2xl text-lg text-white md:text-xl">
             {narrative?.ctaBody ||
               "We’ll map risk, stack gaps, and the right next step for your Arizona business — without a hard sell."}
           </p>

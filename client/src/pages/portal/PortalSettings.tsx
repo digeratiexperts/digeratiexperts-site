@@ -14,8 +14,15 @@ type ProfileManager = { id: string; email: string; fullName: string };
 export default function PortalSettings() {
   const { toast } = useToast();
   const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("portalUser");
-    return stored ? JSON.parse(stored) : {};
+    // Corrupt/legacy localStorage must never white-screen Settings
+    // (error-sweep finding, 2026-08-31).
+    try {
+      const stored = localStorage.getItem("portalUser");
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      localStorage.removeItem("portalUser");
+      return {};
+    }
   });
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
@@ -288,30 +295,30 @@ export default function PortalSettings() {
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
                 <div>
-                  <p className="font-medium text-sm">Ticket Updates</p>
+                  <label htmlFor="checkbox-ticket-updates" className="font-medium text-sm">Ticket Updates</label>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Notifications when tickets are updated
                   </p>
                 </div>
-                <input type="checkbox" defaultChecked data-testid="checkbox-ticket-updates" />
+                <input id="checkbox-ticket-updates" type="checkbox" defaultChecked className="h-4 w-4 accent-[#D3126A]" data-testid="checkbox-ticket-updates" />
               </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
                 <div>
-                  <p className="font-medium text-sm">Invoice Alerts</p>
+                  <label htmlFor="checkbox-invoice-alerts" className="font-medium text-sm">Invoice Alerts</label>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Notifications for new invoices
                   </p>
                 </div>
-                <input type="checkbox" defaultChecked data-testid="checkbox-invoice-alerts" />
+                <input id="checkbox-invoice-alerts" type="checkbox" defaultChecked className="h-4 w-4 accent-[#D3126A]" data-testid="checkbox-invoice-alerts" />
               </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
                 <div>
-                  <p className="font-medium text-sm">Service Updates</p>
+                  <label htmlFor="checkbox-service-updates" className="font-medium text-sm">Service Updates</label>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Notifications for service announcements
                   </p>
                 </div>
-                <input type="checkbox" defaultChecked data-testid="checkbox-service-updates" />
+                <input id="checkbox-service-updates" type="checkbox" defaultChecked className="h-4 w-4 accent-[#D3126A]" data-testid="checkbox-service-updates" />
               </div>
             </div>
           </CardContent>

@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { PortalLayout } from "./PortalLayout";
 import { ArrowLeft, Printer, Download, Package, CreditCard, MapPin, HelpCircle, CheckCircle, Clock, Mail, Phone } from "lucide-react";
 import { portalGet } from "@/lib/portalApi";
+import { useToast } from "@/hooks/use-toast";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 
 interface LineItem {
@@ -50,6 +51,7 @@ interface OrderDetailResponse {
 }
 
 export default function PortalOrderDetail() {
+  const { toast } = useToast();
   const params = useParams<{ id: string }>();
   const orderId = params.id;
 
@@ -111,6 +113,19 @@ export default function PortalOrderDetail() {
           Authorization: `Bearer ${localStorage.getItem("portalToken")}`,
         },
       });
+      // A 401/404/500 body must never be saved to disk as a "receipt" —
+      // surface it instead (error-sweep finding, 2026-08-31).
+      if (!response.ok) {
+        toast({
+          title: "Receipt unavailable",
+          description:
+            response.status === 401
+              ? "Your session has expired — sign in again and retry."
+              : "We couldn't generate this receipt right now. Please try again or contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");

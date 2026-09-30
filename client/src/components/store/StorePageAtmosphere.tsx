@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import atmosphere from "@assets/de-section-atmosphere-electric.svg";
 import "../../styles/store-jelly.css";
+import "../../styles/store-builder.css";
 
 /**
  * Store field depth — electric lighting only (store accent lock).
@@ -9,7 +10,7 @@ import "../../styles/store-jelly.css";
  * Store-only motion CSS is imported here so Vite can keep it out of the
  * global entry stylesheet and load it with Store/Solution Builder chunks.
  */
-export function StorePageAtmosphere() {
+export function StorePageAtmosphere({ intensity = 0.44 }: { intensity?: number } = {}) {
   const ref = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
@@ -37,7 +38,7 @@ export function StorePageAtmosphere() {
         src={atmosphere}
         alt=""
         className="absolute inset-x-0 top-0 h-[78vh] min-h-[32rem] w-full object-cover object-center"
-        style={{ y, opacity: 0.44 }}
+        style={{ y, opacity: intensity }}
       />
       <div
         className="absolute inset-0"

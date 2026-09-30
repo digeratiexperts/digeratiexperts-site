@@ -11,7 +11,7 @@ import {
 } from "./knowledge";
 import { extractProfileFromText, mergeProfile, createEmptyProfile, knownFactsList, extractContactNameFromText, extractCompanyNameFromText, isInformalCompanyName, isDeInternalCompanyAnswer } from "./profile";
 import { BANNED_CANNED_OPENER } from "./prompt";
-import { sanitizeActions, sanitizePath, assertNoInternalLeak, isAllowedActionType } from "./actions";
+import { sanitizeActions, sanitizePath, assertNoInternalLeak, isAllowedActionType, ensureLoginAction } from "./actions";
 import { handleAdvisorChat } from "./advisor";
 import { _resetSessionsForTests } from "./session";
 import { OFF_TOPIC_FALLBACK } from "./prompt";
@@ -114,6 +114,29 @@ describe("actions", () => {
     assert.ok(actions.every((a) => isAllowedActionType(a.type)));
     assert.ok(actions.some((a) => a.type === "open_portal" && a.href?.includes("/portal/login")));
     assert.ok(!actions.some((a) => (a.href || "").includes("//login")));
+  });
+  it("surfaces the portal login button for login intent even when the model omitted it", () => {
+    const base = sanitizeActions([{ type: "leave_message" }, { type: "request_assessment" }]);
+    const out = ensureLoginAction(base, "I need to login");
+    assert.ok(out[0].type === "open_portal" && out[0].href?.includes("/portal/login"));
+    assert.ok(out.length <= 3);
+    for (const phrase of ["how do I log in?", "where do I sign in", "open the portal please"]) {
+      assert.ok(ensureLoginAction(base, phrase).some((a) => a.type === "open_portal"), phrase);
+    }
+  });
+  it("does not duplicate or force the portal button where it does not belong", () => {
+    const withPortal = sanitizeActions([{ type: "open_portal" }, { type: "leave_message" }]);
+    assert.equal(
+      ensureLoginAction(withPortal, "I need to login").filter((a) => a.type === "open_portal").length,
+      1,
+    );
+    const base = sanitizeActions([{ type: "leave_message" }]);
+    assert.ok(!ensureLoginAction(base, "what does co-managed IT cost?").some((a) => a.type === "open_portal"));
+    assert.ok(
+      !ensureLoginAction(base, "I can't log in, we are being hacked", "security_incident").some(
+        (a) => a.type === "open_portal",
+      ),
+    );
   });
   it("blocks internal leak patterns", () => {
     assert.equal(assertNoInternalLeak("here is OPENAI_API_KEY=sk"), false);

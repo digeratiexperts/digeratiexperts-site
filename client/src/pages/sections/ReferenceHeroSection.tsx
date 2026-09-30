@@ -4,6 +4,7 @@ import { ArrowRight, Check, CheckCircle2, ClipboardCheck, MapPin, ShieldCheck } 
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { DashboardMockup } from "@/components/graphics";
+import { PronunciationCard } from "@/components/PronunciationCard";
 import { useBooking } from "@/contexts/BookingContext";
 import { analytics } from "@/lib/analytics";
 import { CTA } from "@/lib/ctaCopy";
@@ -194,6 +195,10 @@ export function ReferenceHeroSection(): JSX.Element {
             <span>Client-owned access</span>
             <span aria-hidden="true">·</span>
             <span>Fully managed or co-managed</span>
+          </div>
+
+          <div className="mt-7" style={{ maxWidth: 620 }}>
+            <PronunciationCard />
           </div>
         </motion.div>
 

@@ -14,7 +14,12 @@ const BLOCKED_PREFIXES = [
   "/portal/reset-password",
 ];
 
-const EXTRA_ALLOWED = ["/official-network-planner", "/de-ecosystem-matrix-offical"];
+const EXTRA_ALLOWED = [
+  "/official-network-planner",
+  "/de-ecosystem-matrix-offical",
+  // Staff Digital Warehouse checkout/quote flows resume after portal login.
+  "/internal/warehouse",
+];
 
 const ALLOWED_HOSTS = new Set([
   "portal.digeratiexperts.com",

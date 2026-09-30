@@ -6,104 +6,116 @@ import { MARKETPLACE_ELIGIBILITY } from "@shared/checkoutEligibility";
 
 type TestUser = { role?: string; clientId?: string | null };
 
-async function startApp(user: TestUser): Promise<{ server: Server; baseUrl: string }> {
+async function withMarketplaceServer(user: TestUser, run: (baseUrl: string) => Promise<void>) {
   const app = express();
   const auth = (req: express.Request, _res: express.Response, next: express.NextFunction) => {
     (req as express.Request & { user?: TestUser }).user = user;
     next();
   };
   registerPortalMarketplaceRoutes(app, auth);
-  const server = createServer(app);
+  const server: Server = createServer(app);
   await new Promise<void>((resolve) => {
     server.listen(0, "127.0.0.1", resolve);
   });
   const address = server.address();
   if (!address || typeof address === "string") throw new Error("No test port");
-  return { server, baseUrl: `http://127.0.0.1:${address.port}` };
+  const baseUrl = `http://127.0.0.1:${address.port}`;
+  try {
+    await run(baseUrl);
+  } finally {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
 }
 
-function stopServer(server: Server): Promise<void> {
-  return new Promise((resolve, reject) => {
-    server.close((error) => (error ? reject(error) : resolve()));
-  });
-}
-
-describe("portal marketplace fail-safe (client)", () => {
-  let server: Server;
-  let baseUrl = "";
-
-  beforeAll(async () => {
-    ({ server, baseUrl } = await startApp({ role: "user", clientId: "client-1" }));
-  });
-
-  afterAll(async () => {
-    await stopServer(server);
-  });
-
-  it("returns an empty Request Approval catalog without warehouse fields", async () => {
-    const response = await fetch(`${baseUrl}/api/portal/marketplace`);
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect(body.eligibility).toBe(MARKETPLACE_ELIGIBILITY);
-    expect(body.items).toEqual([]);
-    expect(body.status).toBe("unavailable");
-    const raw = JSON.stringify(body).toLowerCase();
-    expect(raw).not.toContain("sku");
-    expect(raw).not.toContain("margin");
-    expect(raw).not.toContain("ninjaone");
-    expect(raw).not.toContain("pay_now");
-    expect(raw).not.toContain("warehouse");
-  });
-});
-
-describe("portal marketplace unmapped account", () => {
-  let server: Server;
-  let baseUrl = "";
-
-  beforeAll(async () => {
-    ({ server, baseUrl } = await startApp({ role: "user", clientId: null }));
+describe("portal marketplace fail-safe", () => {
+  it("returns AUTHORITY_UNAVAILABLE for a mapped tenant without Hub catalog, empty and fail-closed", async () => {
+    await withMarketplaceServer({ clientId: "client-1" }, async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/portal/marketplace`);
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.eligibility).toBe(MARKETPLACE_ELIGIBILITY);
+      expect(body.items).toEqual([]);
+      expect(body.status).toBe("AUTHORITY_UNAVAILABLE");
+      expect(body.trustedClientIds).toEqual(["client-1"]);
+      expect(body.failClosed).toBe(true);
+      expect(body.status).not.toBe("AUTHORIZED_GLOBAL");
+      const raw = JSON.stringify(body).toLowerCase();
+      expect(raw).not.toContain("sku");
+      expect(raw).not.toContain("margin");
+      expect(raw).not.toContain("ninjaone");
+      expect(raw).not.toContain("pay_now");
+    });
   });
 
-  afterAll(async () => {
-    await stopServer(server);
+  it("fail-closes UNMAPPED and does not grant unrestricted marketplace access", async () => {
+    await withMarketplaceServer({ clientId: null }, async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/portal/marketplace`);
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.status).toBe("UNMAPPED");
+      expect(body.trustedClientIds).toEqual([]);
+      expect(body.items).toEqual([]);
+      expect(body.failClosed).toBe(true);
+      expect(body.status).not.toBe("AUTHORIZED_GLOBAL");
+      expect(body.trustedClientIds).not.toBeNull();
+    });
   });
 
-  it("does not point unmapped non-staff accounts at the warehouse", async () => {
-    const response = await fetch(`${baseUrl}/api/portal/marketplace`);
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect(body.status).toBe("unmapped");
-    expect(body.eligibility).toBe(MARKETPLACE_ELIGIBILITY);
-    const raw = JSON.stringify(body).toLowerCase();
-    expect(raw).not.toContain("warehouse");
-    expect(raw).not.toContain("pay_now");
+  it("does not point non-staff accounts at the warehouse", async () => {
+    for (const user of [
+      { role: "user", clientId: "client-1" },
+      { role: "user", clientId: null },
+    ] satisfies TestUser[]) {
+      await withMarketplaceServer(user, async (baseUrl) => {
+        const response = await fetch(`${baseUrl}/api/portal/marketplace`);
+        expect(response.status).toBe(200);
+        const body = await response.json();
+        expect(body.status).toBe(user.clientId ? "AUTHORITY_UNAVAILABLE" : "UNMAPPED");
+        expect(body.eligibility).toBe(MARKETPLACE_ELIGIBILITY);
+        expect(body.warehouseUrl).toBeUndefined();
+        const raw = JSON.stringify(body).toLowerCase();
+        expect(raw).not.toContain("warehouse");
+        expect(raw).not.toContain("pay_now");
+      });
+    }
   });
 });
 
 describe("portal marketplace staff account", () => {
-  let server: Server;
-  let baseUrl = "";
-
-  beforeAll(async () => {
-    ({ server, baseUrl } = await startApp({ role: "admin", clientId: null }));
+  it("identifies live admin as staff and points at the warehouse without exposing catalog data", async () => {
+    await withMarketplaceServer({ role: "admin", clientId: null }, async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/portal/marketplace`);
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.status).toBe("staff");
+      expect(body.warehouseUrl).toBe(WAREHOUSE_PATH);
+      expect(body.eligibility).toBe(MARKETPLACE_ELIGIBILITY);
+      expect(body.items).toEqual([]);
+      // Staff get no tenant scope on this surface: the allow-list stays empty and
+      // the enum is never widened to AUTHORIZED_GLOBAL.
+      expect(body.trustedClientIds).toEqual([]);
+      expect(body.failClosed).toBe(true);
+      expect(body.status).not.toBe("AUTHORIZED_GLOBAL");
+      const raw = JSON.stringify(body).toLowerCase();
+      expect(raw).not.toContain("sku");
+      expect(raw).not.toContain("margin");
+      expect(raw).not.toContain("ninjaone");
+      expect(raw).not.toContain("pay_now");
+    });
   });
 
-  afterAll(async () => {
-    await stopServer(server);
-  });
-
-  it("identifies staff and points at the warehouse without exposing catalog data", async () => {
-    const response = await fetch(`${baseUrl}/api/portal/marketplace`);
-    expect(response.status).toBe(200);
-    const body = await response.json();
-    expect(body.status).toBe("staff");
-    expect(body.warehouseUrl).toBe(WAREHOUSE_PATH);
-    expect(body.eligibility).toBe(MARKETPLACE_ELIGIBILITY);
-    expect(body.items).toEqual([]);
-    const raw = JSON.stringify(body).toLowerCase();
-    expect(raw).not.toContain("sku");
-    expect(raw).not.toContain("margin");
-    expect(raw).not.toContain("ninjaone");
-    expect(raw).not.toContain("pay_now");
+  it("recognises staff even when the admin record carries a tenant mapping", async () => {
+    await withMarketplaceServer({ role: "admin", clientId: "client-1" }, async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/portal/marketplace`);
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.status).toBe("staff");
+      expect(body.warehouseUrl).toBe(WAREHOUSE_PATH);
+      expect(body.items).toEqual([]);
+      expect(body.trustedClientIds).toEqual([]);
+      expect(body.failClosed).toBe(true);
+    });
   });
 });
