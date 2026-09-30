@@ -13,6 +13,7 @@ import { registerSecureZohoStoreCheckout } from "./secureStoreCheckout";
 import { isStagingReview, stagingReviewStatus } from "./stagingReviewGuard";
 import { registerStoreSolutionRoutes } from "./storeSolutionRoutes";
 import { registerPublicSolutionRoutes } from "./publicSolutionRoutes";
+import { registerWidgetTicketRoute } from "./widgetTicketRoute";
 import { registerWarehouseGates } from "./warehouseRoutes";
 import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
@@ -77,6 +78,7 @@ const log = (message: string) => {
 };
 
 import { setSecurityHeaders } from "./middleware/security";
+import { registerVersionPreviewRobots } from "./versionPreviewRobots";
 app.use(setSecurityHeaders);
 
 app.use((req, _res, next) => {
@@ -336,6 +338,7 @@ registerWarehouseGates(app);
 registerSecureZohoStoreCheckout(app, authMiddleware as any, requireRole as any);
 registerStoreSolutionRoutes(app, authMiddleware as any);
 registerPublicSolutionRoutes(app);
+registerWidgetTicketRoute(app);
 registerPortalMarketplaceRoutes(app, authMiddleware as any);
 
 app.use((req, res, next) => {
@@ -472,6 +475,8 @@ app.get("/experience-v1", (_req, res) => {
   res.setHeader("X-Robots-Tag", "noindex");
   res.redirect(302, "/experience");
 });
+
+registerVersionPreviewRobots(app);
 
 // Homepage version archive (client/src/pages/versions/README.md): version 2
 // is the static Version B build above, so its numbered URL forwards there.
