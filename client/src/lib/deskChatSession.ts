@@ -8,6 +8,8 @@
  * are ignored: the Desk simply starts fresh.
  */
 
+import { sanitizeDeskActions, type DeskAction } from "./deskActions";
+
 export type DeskStoredRole = "user" | "assistant" | "agent";
 
 export type DeskStoredMessage = {
@@ -16,6 +18,7 @@ export type DeskStoredMessage = {
   content: string;
   senderName?: string | null;
   createdAt?: string;
+  actions?: DeskAction[];
 };
 
 export type DeskStoredChat = {
@@ -62,7 +65,11 @@ export function readDeskChat(now = Date.now()): DeskStoredChat | null {
       store.removeItem(DESK_CHAT_STORAGE_KEY);
       return null;
     }
-    const messages = Array.isArray(parsed.messages) ? parsed.messages.filter(isMessage) : [];
+    const messages = (Array.isArray(parsed.messages) ? parsed.messages.filter(isMessage) : []).map((m) => {
+      const actions = sanitizeDeskActions((m as { actions?: unknown }).actions);
+      const { actions: _dropped, ...rest } = m as DeskStoredMessage;
+      return actions.length ? { ...rest, actions } : rest;
+    });
     // Nothing worth restoring unless the visitor actually said something.
     if (!messages.some((m) => m.role === "user")) return null;
     return {
@@ -80,12 +87,13 @@ export function writeDeskChat(sessionId: string | null, messages: DeskStoredMess
   const store = storage();
   if (!store) return;
   if (!messages.some((m) => m.role === "user")) return;
-  const kept = messages.slice(-DESK_CHAT_MAX_MESSAGES).map(({ id, role, content, senderName, createdAt }) => ({
+  const kept = messages.slice(-DESK_CHAT_MAX_MESSAGES).map(({ id, role, content, senderName, createdAt, actions }) => ({
     id,
     role,
     content,
     senderName: senderName ?? null,
     createdAt,
+    ...(actions?.length ? { actions } : {}),
   }));
   try {
     store.setItem(DESK_CHAT_STORAGE_KEY, JSON.stringify({ sessionId, messages: kept, savedAt: now }));
