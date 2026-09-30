@@ -380,9 +380,12 @@ $XamlText = @"
       </Border>
       <ContentControl x:Name="PageHost" Grid.Row="1"/>
       <!-- footer: progress + log line -->
-      <Grid Grid.Row="2" Margin="0,12,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="220"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <Grid Grid.Row="2" Margin="0,12,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="260"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <TextBlock x:Name="TxtStatus" Foreground="{StaticResource Muted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-        <ProgressBar x:Name="Progress" Grid.Column="1" Height="6" Margin="12,0" Minimum="0" Maximum="100" Foreground="{StaticResource Magenta}" Background="{StaticResource Raised}" BorderThickness="0" Visibility="Hidden"/>
+        <StackPanel Grid.Column="1" Margin="12,0" Visibility="Collapsed" x:Name="ProgressPanel">
+          <Grid><TextBlock x:Name="TxtProgress" FontSize="12" FontWeight="SemiBold"/><TextBlock x:Name="TxtEta" HorizontalAlignment="Right" FontSize="12" Foreground="{StaticResource Muted}"/></Grid>
+          <ProgressBar x:Name="Progress" Height="10" Margin="0,5,0,0" Minimum="0" Maximum="100" Foreground="{StaticResource Magenta}" Background="{StaticResource Raised}" BorderThickness="0"/>
+        </StackPanel>
         <Button x:Name="BtnCancel" Grid.Column="2" Style="{StaticResource Btn}" Content="Cancel" Margin="0" Visibility="Collapsed" AutomationProperties.Name="Cancel the running job"/>
       </Grid>
     </Grid>
@@ -407,7 +410,7 @@ $Win.Width = [Math]::Min($Win.Width, [Math]::Max(800, $wa.Width - 16)); $Win.Hei
 if ($wa.Width -lt 1100 -or $wa.Height -lt 700) { $Win.WindowState = 'Maximized' }
 $Win.FontFamily = New-Object System.Windows.Media.FontFamily $FontUi
 $UI = @{}
-foreach ($n in @('NavPanel', 'PageHost', 'TxtVersion', 'TxtModeBadge', 'HdrTech', 'HdrClient', 'HdrClientWhy', 'HdrUser', 'HdrUserWhy', 'HdrDevice', 'HdrDeviceSub', 'HdrReady', 'TxtStatus', 'Progress', 'BtnCancel', 'BrandLogo')) { $UI[$n] = $Win.FindName($n) }
+foreach ($n in @('NavPanel', 'PageHost', 'TxtVersion', 'TxtModeBadge', 'HdrTech', 'HdrClient', 'HdrClientWhy', 'HdrUser', 'HdrUserWhy', 'HdrDevice', 'HdrDeviceSub', 'HdrReady', 'TxtStatus', 'ProgressPanel', 'Progress', 'TxtProgress', 'TxtEta', 'BtnCancel', 'BrandLogo')) { $UI[$n] = $Win.FindName($n) }
 $UI.TxtVersion.Text = "v$((Get-DEConsole).ConsoleVersion)"; $bi = Get-DEBuildInfo; $Win.Title = "DE Tech Tool v$((Get-DEConsole).ConsoleVersion) · build $($bi.buildId) · issued to $($bi.issuedTo)"
 $brandLogoPath = Join-Path $ConsoleRoot 'assets\brand\digerati-logo-reverse-2400.png'; if (-not (Test-Path -LiteralPath $brandLogoPath)) { $brandLogoPath = Join-Path $ConsoleRoot 'assets\brand\digerati-logo-reverse-600.png' }
 $brandIconPath = Join-Path $ConsoleRoot 'assets\brand\digerati-mark-tile-64.png'
@@ -499,7 +502,9 @@ function Start-DEJob {
     $plan = $null; if ($S.Profile -and $S.Profile.plan) { $plan = @{ bundle = "$($S.Profile.plan.bundle)"; addOns = @($S.Profile.plan.addOns | Where-Object { $_ }); solutions = @($S.Profile.plan.solutions | Where-Object { $_ }) } }
     $core = Start-DEBackgroundJob -Work $Work -Params $Params -ProfileId $(if ($S.Profile) { $S.Profile.id } else { $null }) -Mode $S.Mode -Plan $plan
     $S.Job = @{ core = $core; handle = $core.handle; label = $Label; started = $core.started; onDone = $OnDone }
-    $UI.Progress.Visibility = 'Visible'; $UI.Progress.IsIndeterminate = $true; $UI.BtnCancel.Visibility = 'Visible'
+    $UI.NavPanel.IsEnabled = $false; $UI.PageHost.IsEnabled = $false
+    $UI.ProgressPanel.Visibility = 'Visible'; $UI.Progress.IsIndeterminate = $true; $UI.Progress.Value = 0
+    $UI.TxtProgress.Text = 'Starting'; $UI.TxtEta.Text = 'ETA calculating'; $UI.BtnCancel.Visibility = 'Visible'
     Set-Status "Running: $Label"
     try { $S.LogPos = (Get-Item -LiteralPath $de.LogFile).Length } catch { $S.LogPos = 0 }
     if (-not $S.Timer) {
@@ -515,11 +520,28 @@ function Update-DEJob {
         $fs = [IO.File]::Open($de.LogFile, 'Open', 'Read', 'ReadWrite'); $null = $fs.Seek($S.LogPos, 'Begin'); $sr = New-Object IO.StreamReader($fs); $new = $sr.ReadToEnd(); $S.LogPos = $fs.Position; $sr.Close()
         $last = @($new -split "`r?`n" | Where-Object { $_ }) | Select-Object -Last 1
         if ($last) { Set-Status "$($S.Job.label): $($last -replace '^\S+ \S+ ', '')" }
+        foreach ($line in @($new -split "`r?`n" | Where-Object { $_ })) {
+            if ($line -match 'DE_PROGRESS (\d+)/(\d+) ') {
+                $complete = [int]$Matches[1]; $total = [int]$Matches[2]
+                if ($total -gt 0) {
+                    $S.Job.progress = $complete; $S.Job.total = $total
+                    $UI.Progress.IsIndeterminate = $false
+                    $UI.Progress.Value = [math]::Min(100, 100 * $complete / $total)
+                }
+            }
+        }
         if ($S.LogBox) { foreach ($l in @($new -split "`r?`n" | Where-Object { $_ })) { $S.LogBox.AppendText((Protect-DEText $l) + "`r`n") }; $S.LogBox.ScrollToEnd() }
     } catch { }
+    $elapsed = [math]::Max(1, [int]((Get-Date) - $S.Job.started).TotalSeconds)
+    $UI.TxtProgress.Text = $(if ($S.Job.total) { "$($S.Job.progress) / $($S.Job.total) steps  ·  ${elapsed}s" } else { "Running  ·  ${elapsed}s" })
+    $UI.TxtEta.Text = if ($S.Job.progress -gt 0 -and $S.Job.total -gt $S.Job.progress) {
+        $remaining = [int][math]::Ceiling(($elapsed / $S.Job.progress) * ($S.Job.total - $S.Job.progress))
+        "~$remaining s left"
+    } elseif ($S.Job.total -and $S.Job.progress -eq $S.Job.total) { 'Finishing' } else { 'ETA calculating' }
     if (-not $S.Job.handle.IsCompleted) { return }
     $job = $S.Job; $S.Job = $null; $S.Timer.Stop()
-    $UI.Progress.Visibility = 'Hidden'; $UI.BtnCancel.Visibility = 'Collapsed'
+    $UI.ProgressPanel.Visibility = 'Collapsed'; $UI.BtnCancel.Visibility = 'Collapsed'
+    $UI.NavPanel.IsEnabled = $true; $UI.PageHost.IsEnabled = $true
     $done = Complete-DEBackgroundJob -Job $job.core
     $result = $done.result; $failure = $done.failure
     if ($failure) {
