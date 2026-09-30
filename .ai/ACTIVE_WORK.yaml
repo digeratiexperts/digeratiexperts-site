@@ -30,23 +30,28 @@
 
 version: 2
 claims:
-  - id: de-desk-white-theme
+  - id: de-desk-delight
     owner: claude
     subsystem: de-desk
-    branch: claude/desk-white-theme
-    base_sha: f06d3a008b32217dad3af87f5996e62f94e8ad9c
+    branch: claude/desk-delight
+    base_sha: 068fd2789e994420a60001501a924edbb23d31b9
     files:
       - client/src/components/ZohoASAPWidget.tsx
       - client/src/components/ZohoASAPWidget.desk-shell.test.ts
       - client/src/components/SiteBottomBar.tsx
       - client/src/lib/deskChatSession.ts
       - client/src/lib/deskChatSession.test.ts
+      - client/src/lib/deskActions.ts
+      - client/src/lib/deskActions.test.ts
+      - client/src/lib/deskRichText.tsx
+      - client/src/lib/deskRichText.test.ts
       - .cursor/rules/de-desk-design.mdc
       - .cursor/skills/de-desk-ui/SKILL.md
       - .cursor/skills/de-desk-ui/tokens-and-structure.md
       - artifacts/visual-qa/desk-white-theme/**
+      - artifacts/visual-qa/desk-delight/**
     status: active
-    started: 2026-09-28
+    started: 2026-09-30
     note: >-
       Joe, 2026-09-28, on a phone screenshot of the graphite Desk: "This is
       wrong still. It's supposed to be white theme." Built on
@@ -61,41 +66,11 @@ claims:
       got mixed together - rebuild it better and full featured." Rebased onto
       PR #229's head f06d3a00 (itself level with main 674a4c5c) and extended:
       header clearance, initial focus, AA dim ink, the conversation kept for
-      the tab with Start over, and a ticket drafted from the chat.
-  - id: de-desk-launcher-graphite
-    owner: claude
-    subsystem: de-desk
-    branch: claude/desk-launcher-graphite
-    base_sha: a8bf3351dcbf4e25b8c65323e8fb6202232c1c2e
-    files:
-      - client/src/components/SiteBottomBar.tsx
-      - client/src/components/ZohoASAPWidget.tsx
-      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
-      - client/src/components/MarketingChrome.tsx
-      - client/src/components/deDeskGraphiteStyle.ts
-      - client/src/components/deDeskReferenceStyle.ts
-      - .cursor/skills/de-desk-ui/tokens-and-structure.md
-    status: active
-    started: 2026-09-27
-    note: >-
-      Scope grew with Joe's follow-up ("make one theme for it ... no wasted
-      clutter"): the Desk theme fixed at source in ZohoASAPWidget.tsx, the two
-      override modules deleted, five listed clutter removals, the Available
-      badge truth fix, the pointer light and list edges sized for graphite, and
-      (Joe-approved 2026-09-29) the no-agent composer placeholder; the de-desk-ui
-      spec corrected to match. The first commit's note follows.
-      Joe, 2026-09-27: "the DE Desk looks like 2 different version merged into
-      one and it looks horrible, if you click an option you'll see." Reproduced:
-      the Ask DE launcher popover in SiteBottomBar.tsx was still the retired
-      paper Desk design (bg-[#fbfbfa], bg-white rows, #151219 ink) while the
-      Desk modal it opens is the graphite shell. The de-desk-design rule's globs
-      cover only ZohoASAPWidget.tsx and PortalChat.tsx, which is why this file
-      was missed when the Desk moved to graphite (C5, 2026-09-12). This brings
-      the launcher onto the same tokens the modal uses: --de-raised ground,
-      hairline borders, white ink, magenta-tinted icons. Implements the
-      Joe-decided Tier 2 direction ("one graphite shell ... no cream-in-purple
-      nested card"), so Maintenance Mode, not a redesign. No logic, copy,
-      routing, testids or analytics changed.
+      the tab with Start over, and a ticket drafted from the chat. Merged as
+      PR #277 (068fd278) and verified by the production deploy job; PR #229
+      closed as superseded and its claim de-desk-launcher-graphite released.
+      Joe, 2026-09-30, same day: "upgrade and change things to optimize it. I
+      want users to really enjoy using it." This claim carries that follow-up.
   - id: store-experience-v2
     owner: claude
     subsystem: public-store-door2

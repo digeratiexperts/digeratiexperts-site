@@ -229,7 +229,7 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/\.de-desk-tools-kicker \{[\s\S]*?font-size: 16px !important;/);
     expect(src).toMatch(/\.de-desk-tools-intro p \{[\s\S]*?font-size: 14\.5px;/);
     expect(src).toMatch(/\.de-desk-bubble \{[\s\S]*?font-size: 15px;/);
-    expect(src).toMatch(/\.de-desk-composer input \{[\s\S]*?font-size: 15\.5px;/);
+    expect(src).toMatch(/\.de-desk-composer textarea \{[\s\S]*?font-size: 15\.5px;/);
     expect(src).toMatch(/\.de-desk-composer-caption \{[\s\S]*?font-size: 13px;/);
     expect(src).toMatch(/\.de-desk-tool-title \{[\s\S]*?font-size: 15\.5px;/);
   });
@@ -343,5 +343,67 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/setMessage\(\(current\) => current \|\| draft\.message\)/);
     // Start over forgets the stored thread and the server session.
     expect(src).toMatch(/clearDeskChat\(\);[\s\S]{0,400}setAdvisorSessionId\(null\)/);
+  });
+
+  it("shows the advisor's next steps under its latest reply, through the client allowlist", () => {
+    expect(src).toMatch(/const nextSteps = sanitizeDeskActions\(data\.actions\);/);
+    expect(src).toMatch(/chatMessage\.id === lastBotMessageId/);
+    expect(src).toMatch(/data-testid="desk-next-steps"/);
+    // A phone step says what it does, even when the advisor labelled it "Contact sales".
+    expect(src).toMatch(/deskActionLabel\(action, PRIMARY_PHONE\.display\)/);
+    // The callback / details / message forms post to the existing advisor action
+    // endpoint with the chat session and the honeypot field.
+    expect(src).toMatch(/fetch\("\/api\/public\/advisor\/action"/);
+    expect(src).toMatch(/website_url: actionFields\.website_url/);
+    expect(src).toMatch(/className="de-desk-hp"/);
+  });
+
+  it("renders replies as elements, never as injected HTML", () => {
+    const rich = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "../lib/deskRichText.tsx"), "utf8");
+    expect(rich).not.toMatch(/dangerouslySetInnerHTML/);
+    expect(src).toMatch(/<DeskRichText text=\{bubbleText\} onNavigate=\{setLocation\} \/>/);
+  });
+
+  it("uses a growing composer that sends on Enter, breaks lines on Shift+Enter, and keeps focus while sending", () => {
+    expect(src).toMatch(/<textarea\s+ref=\{composerRef\}/);
+    expect(src).toMatch(/event\.key === "Enter" && !event\.shiftKey && !event\.nativeEvent\.isComposing/);
+    expect(src).toMatch(/readOnly=\{isChatSending\}/);
+    expect(src).not.toMatch(/disabled=\{isChatSending\}\s+id="desk-chat-input"/);
+  });
+
+  it("offers Try again on a failed send without duplicating the visitor's message", () => {
+    expect(src).toMatch(/retryText: content,\s+retryOfId: userMessage\.id,/);
+    expect(src).toMatch(/current\.filter\(\(m\) => m\.id !== failed\.id && m\.id !== failed\.retryOfId\)/);
+  });
+
+  it("does not yank a reader down; it offers a new-message pill instead", () => {
+    expect(src).toMatch(/if \(!atBottomRef\.current && lastChatRole !== "user"\) return;/);
+    expect(src).toMatch(/data-testid="desk-jump-latest"/);
+  });
+
+  it("has no dark ground or pale ink left anywhere in the Desk stylesheet", () => {
+    // Graphite leftovers hid where the per-token guards could not see: a black
+    // "Back to Ask DE" row (#16121e), a near-black hover on signed-in Client
+    // Tools rows (#1a171c), and pale pink form errors (#fecaca) that were
+    // invisible on white. Judge every literal by what it paints.
+    const css = src.slice(src.indexOf("dangerouslySetInnerHTML"));
+    const lum = (hex: string) => {
+      const h = hex.length === 4 ? hex.slice(1).split("").map((c) => c + c).join("") : hex.slice(1);
+      const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+      const f = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+      return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+    };
+    const magenta = new Set(["#d3126a", "#bd105f", "#a30e52", "#e61e76"]);
+    const offenders: string[] = [];
+    for (const m of css.matchAll(/([a-z-]+):\s*([^;{}]*);/g)) {
+      const [, prop, value] = m;
+      for (const hex of value.match(/#[0-9a-f]{6}\b|#[0-9a-f]{3}\b/gi) ?? []) {
+        if (magenta.has(hex.toLowerCase())) continue;
+        const L = lum(hex);
+        if (prop.startsWith("background") && L < 0.1) offenders.push(`${prop}: ${hex}`);
+        if (prop === "color" && L > 0.4 && !/^#fff(fff)?$/i.test(hex)) offenders.push(`${prop}: ${hex}`);
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });
