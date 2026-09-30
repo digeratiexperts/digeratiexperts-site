@@ -245,8 +245,9 @@ function RPOPickerComponent() {
     <div className="rounded-2xl border border-de-hairline bg-de-raised p-8">
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div>
-          <label className="block text-white/60 text-sm mb-2">Critical Systems</label>
+          <label htmlFor="picker-systems" className="block text-white/70 text-sm mb-2">Critical Systems</label>
           <select
+            id="picker-systems"
             value={criticalSystems}
             onChange={(e) => setCriticalSystems(e.target.value)}
             className="w-full rounded-lg border border-de-hairline bg-de-bg px-4 py-3 text-white focus:border-[#D3126A] focus:outline-none"
@@ -259,8 +260,9 @@ function RPOPickerComponent() {
         </div>
         
         <div>
-          <label className="block text-white/60 text-sm mb-2">Target RTO</label>
+          <label htmlFor="picker-rto" className="block text-white/70 text-sm mb-2">Target RTO</label>
           <select
+            id="picker-rto"
             value={targetRTO}
             onChange={(e) => setTargetRTO(e.target.value)}
             className="w-full rounded-lg border border-de-hairline bg-de-bg px-4 py-3 text-white focus:border-[#D3126A] focus:outline-none"
@@ -274,8 +276,9 @@ function RPOPickerComponent() {
         </div>
         
         <div>
-          <label className="block text-white/60 text-sm mb-2">Target RPO</label>
+          <label htmlFor="picker-rpo" className="block text-white/70 text-sm mb-2">Target RPO</label>
           <select
+            id="picker-rpo"
             value={targetRPO}
             onChange={(e) => setTargetRPO(e.target.value)}
             className="w-full rounded-lg border border-de-hairline bg-de-bg px-4 py-3 text-white focus:border-[#D3126A] focus:outline-none"
@@ -289,13 +292,16 @@ function RPOPickerComponent() {
         </div>
         
         <div>
-          <label className="block text-white/60 text-sm mb-2">Warm Standby</label>
+          <label id="picker-warm-standby-label" className="block text-white/70 text-sm mb-2">Warm Standby</label>
           <button
+            type="button"
+            aria-pressed={warmStandby}
+            aria-labelledby="picker-warm-standby-label"
             onClick={() => setWarmStandby(!warmStandby)}
             className={`w-full px-4 py-3 rounded-lg border transition-colors ${
               warmStandby 
                 ? 'bg-de-accent border-de-hairline text-white' 
-                : 'border-de-hairline bg-de-bg text-white/60'
+                : 'border-de-hairline bg-de-bg text-white/80'
             }`}
             data-testid="picker-standby"
           >
@@ -462,7 +468,7 @@ export default function BackupDisasterRecovery() {
               </div>
 
               <div className="rounded-lg border border-white/5 bg-[#0e0b14] p-4 font-mono text-xs text-white/80 space-y-2">
-                <p className="text-[11px] text-white/40 uppercase tracking-wider pb-1 border-b border-white/5">
+                <p className="text-[11px] text-white/65 uppercase tracking-wider pb-1 border-b border-white/5">
                   EXECUTED RESTORE SEQUENCE
                 </p>
                 <div className="flex items-center justify-between text-xs pt-1">

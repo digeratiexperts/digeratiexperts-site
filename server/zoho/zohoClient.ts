@@ -37,19 +37,33 @@ class ZohoClient {
     return process.env.ZOHO_DESK_REFRESH_TOKEN || process.env.ZOHO_FORM_OAUTH || this.refreshToken;
   }
 
+  private crmRefreshPromise: Promise<string> | null = null;
+
+  // Dedup concurrent refreshes (Zoho rate-limits refresh-token grants) and
+  // send credentials in the POST body so they never land in URL/proxy logs.
   private async refreshAccessToken(): Promise<string> {
+    if (this.crmRefreshPromise) {
+      return this.crmRefreshPromise;
+    }
+    this.crmRefreshPromise = this._doRefreshCrmToken();
+    try {
+      return await this.crmRefreshPromise;
+    } finally {
+      this.crmRefreshPromise = null;
+    }
+  }
+
+  private async _doRefreshCrmToken(): Promise<string> {
     try {
       const response = await axios.post<ZohoTokenResponse>(
         'https://accounts.zoho.com/oauth/v2/token',
-        null,
-        {
-          params: {
-            grant_type: 'refresh_token',
-            client_id: this.clientId,
-            client_secret: this.clientSecret,
-            refresh_token: this.refreshToken,
-          },
-        }
+        new URLSearchParams({
+          grant_type: 'refresh_token',
+          client_id: this.clientId,
+          client_secret: this.clientSecret,
+          refresh_token: this.refreshToken,
+        }).toString(),
+        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
       );
 
       this.accessToken = response.data.access_token;
@@ -84,15 +98,13 @@ class ZohoClient {
     try {
       const response = await axios.post<ZohoTokenResponse>(
         'https://accounts.zoho.com/oauth/v2/token',
-        null,
-        {
-          params: {
-            grant_type: 'refresh_token',
-            client_id: this.clientId,
-            client_secret: this.clientSecret,
-            refresh_token: token,
-          },
-        }
+        new URLSearchParams({
+          grant_type: 'refresh_token',
+          client_id: this.clientId,
+          client_secret: this.clientSecret,
+          refresh_token: token,
+        }).toString(),
+        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
       );
 
       if (!response.data.access_token) {

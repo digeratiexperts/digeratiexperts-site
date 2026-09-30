@@ -74,9 +74,9 @@ const getPlanMatch = (data: {
     return {
       plan: 'Business',
       reasons: [
-        'SOC / MDR monitoring and 24/7 threat response',
-        'SMART HR workflows + Security Awareness Training',
-        'vCIO + Technology Business Reviews + Cyber Insurance Readiness'
+        'Deeper security operations + 24/7 managed threat response',
+        'BCDR + compliance/risk reporting + Security Awareness Training',
+        'Technology + security business reviews + Cyber Insurance Readiness'
       ]
     };
   }
@@ -85,9 +85,9 @@ const getPlanMatch = (data: {
     return {
       plan: 'Business',
       reasons: [
-        'SOC / MDR monitoring for continuous protection',
-        'Advanced identity controls + conditional access',
-        'Cyber insurance readiness and quarterly risk reviews'
+        '24/7 managed threat response with deeper security operations',
+        'Advanced identity controls + BCDR / risk reporting depth',
+        'Cyber insurance readiness and recurring security reviews'
       ]
     };
   }
@@ -97,8 +97,8 @@ const getPlanMatch = (data: {
       plan: 'Office',
       reasons: [
         'Email + Calendar + Team Chat with MFA + SSO',
-        'Endpoint Security (EDR) + Email Protection',
-        'Managed Network + Service Desk + Backup Strategy'
+        'Endpoint Security + Email Protection + 24/7 MDR',
+        'Managed Network + Service Desk + Endpoint Backup'
       ]
     };
   }
@@ -107,8 +107,8 @@ const getPlanMatch = (data: {
     plan: 'Office',
     reasons: [
       'Security-first IT with MFA, SSO, and Password Manager',
-      'Endpoint Security (EDR) + Email Protection',
-      'Service Desk + Managed Network + Backup Strategy'
+      'Endpoint Security + Email Protection + 24/7 MDR',
+      'Service Desk + Managed Network + Endpoint Backup'
     ]
   };
 };

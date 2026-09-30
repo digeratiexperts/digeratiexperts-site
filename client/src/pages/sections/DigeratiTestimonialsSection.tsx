@@ -17,7 +17,6 @@ import {
   type ReviewSourceId,
 } from "@/data/reviewsCatalog";
 import { PRIMARY_PHONE } from "@/data/companyContact";
-import { EvidenceFrame } from "@/components/evidence/EvidenceFrame";
 
 type PublicReviewsResponse = {
   status: "ok" | "empty" | "partial";
@@ -138,7 +137,7 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
 
   return (
     <section
-      id="testimonials"
+      data-section="testimonials"
       className="de-dark-well de-chapter-hairline de-field-grain relative overflow-hidden py-14 md:py-18 lg:py-20"
       data-testid="section-client-proof"
     >
@@ -151,7 +150,7 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
           transition={revealTransition}
         >
           <p className="mb-3 text-base font-medium uppercase tracking-wide text-de-magenta-ink">
-            How DE delivers
+            Client proof
           </p>
           <h2 className="mb-4 text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             <span className="de-hero-accent">Outcomes</span> Arizona businesses hire us for
@@ -264,54 +263,24 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
           whileInView={revealInView}
           viewport={revealViewport}
           transition={revealTransition}
-          className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start lg:gap-8"
+          className="mb-8 rounded-2xl border border-de-hairline bg-de-raised p-7 md:p-8"
           data-testid="proof-outcomes"
         >
-          <div className="rounded-2xl border border-de-hairline bg-de-raised p-7 md:p-8 lg:col-span-7">
-            <div className="mb-5 flex items-start gap-3">
-              <Quote className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#D3126A]" aria-hidden="true" />
-              <p className="font-semibold text-white">What clients hire us to improve</p>
-            </div>
-            <dl className="divide-y divide-[var(--de-hairline)] border-y border-[var(--de-hairline)]">
-              {outcomes.map((o, index) => (
-                <div key={o.title} className="grid grid-cols-[2.5rem_1fr] gap-x-4 py-4 md:py-5">
-                  <dt className="pt-1 font-mono text-xs font-bold tracking-[0.18em] text-[#D3126A]" aria-hidden="true">
-                    {String(index + 1).padStart(2, "0")}
-                  </dt>
-                  <div>
-                    <dt className="text-base font-semibold text-white md:text-lg">{o.title}</dt>
-                    <dd className="mt-1 text-base leading-relaxed text-white/60">{o.detail}</dd>
-                  </div>
-                </div>
-              ))}
-            </dl>
+          <div className="mb-4 flex items-start gap-3">
+            <Quote className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#D3126A]" aria-hidden="true" />
+            <p className="font-semibold text-white">What clients hire us to improve</p>
           </div>
-
-          <div className="lg:col-span-5">
-            <EvidenceFrame
-              classification="SANITIZED_REAL"
-              title="How DE delivers support: DE Desk, built into digeratiexperts.com"
-              subtitle="A capture of DE's own product, not a client's. Visitors open DE Desk from the site's bottom bar to report a possible incident, open a ticket, or reach client tools."
-              status="informational"
-              statusLabel="DE's own product"
-              sourceNote="Captured from the site's own support surface; no client data shown."
-              variant="dark"
-              className="h-full"
-            >
-              <div className="flex justify-center">
-                <img
-                  src="/images/evidence/de-desk-shell.webp"
-                  alt="DE Desk as it opens on digeratiexperts.com: incident reporting and support, with a possible security incident path and the common help topics"
-                  width={880}
-                  height={1520}
-                  loading="lazy"
-                  decoding="async"
-                  className="max-h-[600px] w-auto rounded-lg border border-de-hairline"
-                  data-testid="img-proof-de-desk"
-                />
-              </div>
-            </EvidenceFrame>
-          </div>
+          <ul className="grid gap-4 md:grid-cols-3 md:gap-6">
+            {outcomes.map((o) => (
+              <li
+                key={o.title}
+                className="rounded-xl border border-transparent p-3 transition-colors hover:border-de-hairline hover:bg-white/[0.03]"
+              >
+                <p className="text-base font-medium text-white">{o.title}</p>
+                <p className="text-base leading-relaxed text-white/55">{o.detail}</p>
+              </li>
+            ))}
+          </ul>
         </motion.div>
 
         <div className="flex flex-col justify-between gap-4 rounded-2xl border border-white/10 bg-gradient-to-r from-white/[0.04] to-transparent p-6 sm:flex-row sm:items-center">

@@ -112,7 +112,7 @@ export const ProActiveEcosystemDiagram: React.FC = () => {
             {stages[activeStage].detail}
           </p>
           <div className="flex items-center gap-2 rounded-lg border border-white/5 bg-[#151217] px-3.5 py-2 font-mono text-xs text-white/90">
-            <span className="text-white/40">Concrete Deliverable:</span>
+            <span className="text-white/65">Concrete Deliverable:</span>
             <strong className="text-white">{stages[activeStage].output}</strong>
           </div>
         </motion.div>

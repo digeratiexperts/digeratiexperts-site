@@ -1,0 +1,195 @@
+{
+  "version": 1,
+  "about": "The Job page walks the plan in this order. Each stage lists step-id patterns in the order a technician works them; steps a stage does not name fall into 'other' at the end. Nothing here changes what runs, only the order and the words the technician sees.",
+  "stages": [
+    {
+      "id": "check",
+      "title": "Check the device",
+      "purpose": "Make sure the device is online, not waiting on a restart, and (for dropship) is the unit that was ordered.",
+      "steps": [
+        "^rescue\\.",
+        "^net\\.connectivity$",
+        "^net\\.time$",
+        "^maint\\.pending-reboot$",
+        "^order\\."
+      ]
+    },
+    {
+      "id": "protect",
+      "title": "Protect before changing anything",
+      "purpose": "A way back in if something goes wrong, the BitLocker key safe outside this device, and the user's files synced.",
+      "steps": [
+        "^jumpcloud\\.agent$",
+        "^identity\\.breakglass$",
+        "^identity\\.breakglass\\.verify$",
+        "^identity\\.bitlocker$",
+        "^identity\\.bitlocker-backup$",
+        "^identity\\.onedrive$",
+        "^identity\\.hello$"
+      ]
+    },
+    {
+      "id": "migrate",
+      "title": "Move the user to a local account",
+      "purpose": "Convert the Entra (Microsoft 365) sign-in into a local account JumpCloud can manage, keeping the user's profile and files.",
+      "steps": [
+        "^identity\\.migrate$",
+        "^identity\\.verify-migration$",
+        "^identity\\.hello-reset$"
+      ]
+    },
+    {
+      "id": "leave",
+      "title": "Disconnect from Microsoft",
+      "purpose": "Leave Entra ID and any AD domain, then clear leftover MDM enrollments, so JumpCloud is the only manager.",
+      "steps": [
+        "^identity\\.entra-leave$",
+        "^identity\\.mdm-cleanup$"
+      ]
+    },
+    {
+      "id": "jumpcloud",
+      "title": "Hand the device to JumpCloud",
+      "purpose": "Bind the user, put the device and user in their groups, and confirm JumpCloud policies apply.",
+      "steps": [
+        "^jumpcloud\\.user-mapping$",
+        "^jumpcloud\\.bind-user$",
+        "^jumpcloud\\.usergroup\\.",
+        "^jumpcloud\\.group\\.",
+        "^jumpcloud\\.policies$",
+        "^jumpcloud\\.go-extension$",
+        "^jumpcloud\\.remote-assist$"
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Security stack",
+      "purpose": "One EDR, the MDR agent, safe browsing, and Defender in the right mode.",
+      "steps": [
+        "^security\\.edr-conflicts$",
+        "^security\\.sentinelone$",
+        "^security\\.defender-passive$",
+        "^security\\.guardz$",
+        "^security\\.blackpoint$",
+        "^security\\.pabx$",
+        "^security\\."
+      ]
+    },
+    {
+      "id": "updates",
+      "title": "Updates, firmware and hardware",
+      "purpose": "The right update authority, Windows updates, OEM firmware, BitLocker back on after firmware work, and the hardware readiness report.",
+      "steps": [
+        "^maint\\.update-authority$",
+        "^maint\\.windows-update$",
+        "^maint\\.oem$",
+        "^maint\\.bitlocker-resume$",
+        "^maint\\.hardware$",
+        "^maint\\.warranty$",
+        "^maint\\."
+      ]
+    },
+    {
+      "id": "apps",
+      "title": "Applications",
+      "purpose": "The client's standard apps, installed from trusted sources.",
+      "steps": [
+        "^apps\\."
+      ]
+    },
+    {
+      "id": "configure",
+      "title": "Hardening, browser and branding",
+      "purpose": "The DE Windows baseline, browser policy, hostname and branding.",
+      "steps": [
+        "^baseline\\.",
+        "^browser\\.",
+        "^branding\\."
+      ]
+    },
+    {
+      "id": "finish",
+      "title": "Services, sign-off and handoff",
+      "purpose": "Backup, email security, MFA, remote support, site checks and the portal or people steps the plan needs.",
+      "steps": [
+        "^ops\\.",
+        "^net\\.",
+        "^plan\\."
+      ]
+    },
+    {
+      "id": "deprovision",
+      "title": "Deprovision",
+      "purpose": "Remove DE management safely, keep the client's data, and leave the client with an administrator.",
+      "steps": [
+        "^deprov\\."
+      ]
+    }
+  ],
+  "inputs": {
+    "identity.migrate": [
+      "mapping",
+      "secret:MIGRATION_TEMP_PASSWORD"
+    ],
+    "identity.verify-migration": [
+      "mapping"
+    ],
+    "jumpcloud.user-mapping": [
+      "mapping"
+    ],
+    "jumpcloud.bind-user": [
+      "mapping"
+    ],
+    "identity.breakglass": [
+      "secret:BREAKGLASS_PASSWORD"
+    ],
+    "identity.breakglass.verify": [
+      "confirm:breakglass"
+    ],
+    "identity.bitlocker": [
+      "bitlocker-escrow"
+    ],
+    "identity.bitlocker-backup": [
+      "bitlocker-escrow"
+    ],
+    "identity.onedrive": [
+      "mapping",
+      "confirm:onedrive"
+    ],
+    "identity.entra-leave": [
+      "accept-profiles"
+    ],
+    "jumpcloud.agent": [
+      "secret:JC_CONNECT_KEY"
+    ],
+    "maint.warranty": [
+      "warranty-manual"
+    ]
+  },
+  "why": {
+    "net.connectivity": "Installs and JumpCloud need the internet; nothing else is worth starting offline.",
+    "rescue.handoff": "The boot rescue may have unlocked BitLocker with the recovery password, copied profiles or reverted updates; the next steps depend on what it did.",
+    "net.time": "A clock that is minutes off makes HTTPS downloads, JumpCloud sign-in and the Hub signature fail with confusing errors.",
+    "maint.pending-reboot": "Changing identity on top of a pending restart is how profiles get corrupted.",
+    "jumpcloud.agent": "The agent comes first: its BitLocker policy is what escrows the recovery key in JumpCloud.",
+    "identity.breakglass": "A hidden local administrator that always works, in case the migration or the Microsoft disconnect locks everyone else out.",
+    "identity.breakglass.verify": "An untested break-glass password is not a way back in. Sign in with it once.",
+    "identity.bitlocker": "The disk must be encrypted with a recovery password before identity changes.",
+    "identity.bitlocker-backup": "Leaving Entra can take the only copy of the recovery key with it. A copy must be proven outside Entra first.",
+    "identity.onedrive": "Files that have not synced yet are the ones a migration can lose.",
+    "identity.hello": "The user's PIN stops working after migration; tell them before, not after.",
+    "identity.migrate": "JumpCloud cannot take over a Microsoft 365 sign-in. ADMU converts it to a local account and keeps C:\\Users\\<user>.",
+    "identity.verify-migration": "Proves the new local account owns the old profile before anything irreversible happens.",
+    "identity.hello-reset": "Clears the old PIN container so the user can set a new PIN.",
+    "identity.entra-leave": "JumpCloud should be the only manager. Leaving Entra and any AD domain comes after the migration is verified and the BitLocker key is safe.",
+    "identity.mdm-cleanup": "Leftover enrollments from the old manager can fight JumpCloud policies.",
+    "jumpcloud.user-mapping": "The local account, the JumpCloud user and the profile must all be the same person before binding.",
+    "jumpcloud.bind-user": "Binding makes JumpCloud take over the local account and sync the user's JumpCloud password.",
+    "security.edr-conflicts": "Two EDRs on one device fight each other and slow it down.",
+    "maint.update-authority": "Exactly one system should control Windows updates (JumpCloud by default).",
+    "maint.warranty": "An expired warranty turns a hardware fault into a purchase; the client should hear about it before the failure, not after.",
+    "maint.oem": "Old BIOS and drivers cause the crashes and dock problems users call about. Dell uses Command | Update, Lenovo uses LSUClient (pinned), HP uses HP Image Assistant; BitLocker is suspended for one restart around firmware.",
+    "baseline.cis-audit": "A read-only CIS or Microsoft baseline report shows what the DE baseline does not cover yet. It changes nothing on the device.",
+    "branding.lockscreen": "The client's own lock screen on every PC: the company look before anyone signs in, the same image behind the sign-in box, no Windows Spotlight ads over it, and users cannot swap it for something else."
+  }
+}

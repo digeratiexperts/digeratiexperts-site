@@ -1,0 +1,20 @@
+{
+  "id": "alert-impossible-travel",
+  "module": "security-alert-triage",
+  "title": "Impossible travel plus a hidden inbox rule on a finance mailbox",
+  "inputs": {
+    "[MDR, SIEM, EDR, EMAIL SECURITY, IDENTITY, CLOUD AUDIT, or USER REPORT]": "JumpCloud sign-in risk",
+    "[PASTE]": "Successful sign-in for finance user from a new country 40 minutes after an Arizona sign-in; protocol IMAP",
+    "[HOSTNAME OR SERVICE, OS, OWNER ROLE, CRITICALITY, CLIENT]": "LAP-0140, Windows 11, finance controller, high, Mesa Legal Group",
+    "[ACCOUNT, PRIVILEGE LEVEL, MFA STATE, RECENT SIGN-INS if known]": "controller@client, standard user, MFA enrolled, two sign-ins today",
+    "[PASTE related logs, or NONE]": "inbox rule created 10 minutes after the foreign sign-in moving messages containing 'invoice' to RSS Feeds",
+    "[Office / Business / Enterprise]": "Business"
+  },
+  "mustMention": [
+    "TRUE POSITIVE",
+    "T1078"
+  ],
+  "mustNotMention": [
+    "FALSE POSITIVE"
+  ]
+}

@@ -2,7 +2,6 @@ import { useId, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, Mail } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
-import { Diagram } from "@/diagrams/Diagram";
 import { Input } from "@/components/ui/input";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
@@ -46,8 +45,7 @@ export const DigeratiCTASection = (): JSX.Element => {
     <section className="de-dark-well relative py-8 md:py-14">
       <div className="mx-auto max-w-[var(--de-canvas)] px-3 sm:px-4 lg:px-6">
         <div className="de-paper-island relative px-6 py-10 sm:px-10 sm:py-14 md:px-12 md:py-16">
-          <div className="relative z-10 grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
-          <div className="max-w-3xl lg:col-span-7">
+          <div className="mx-auto max-w-3xl relative z-10">
             <motion.div
               initial={prefersReducedMotion ? false : revealInitial}
               whileInView={revealInView}
@@ -164,13 +162,6 @@ export const DigeratiCTASection = (): JSX.Element => {
                 </a>
               </p>
             </motion.div>
-          </div>
-
-          <aside className="lg:col-span-5" aria-label="What the assessment reviews">
-            <div className="rounded-2xl border border-[var(--de-paper-hairline)] bg-white p-4 md:p-6">
-              <Diagram id="assessment" tone="paper" layout="narrow" />
-            </div>
-          </aside>
           </div>
         </div>
       </div>

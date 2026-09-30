@@ -66,7 +66,7 @@ export default function VersionsIndex(): JSX.Element {
                 <p className="mt-3 text-base leading-relaxed text-white/70">{v.summary}</p>
                 <div className="mt-3">
                   {v.kind === "planned" ? (
-                    <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/40">
+                    <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/65">
                       {v.path} · reserved
                     </span>
                   ) : (
@@ -78,11 +78,11 @@ export default function VersionsIndex(): JSX.Element {
           ))}
         </ol>
 
-        <p className="mt-10 text-sm text-white/45">
+        <p className="mt-10 text-sm text-white/55">
           The live homepage is always <Link href="/" className="text-white underline underline-offset-4">/</Link>. Version
           pages carry a ribbon so a screenshot can never be mistaken for production.
         </p>
-        <p className="mt-4 text-sm text-white/45">
+        <p className="mt-4 text-sm text-white/55">
           Reviews, the diagram gallery and the plans behind these versions are at{" "}
           <a href="/scrollcraft/" className="text-white underline underline-offset-4" data-testid="link-scrollcraft-lab">
             /scrollcraft/

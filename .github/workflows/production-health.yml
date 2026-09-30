@@ -1,0 +1,177 @@
+# Production runtime health probe.
+#
+# On 2026-09-29 production restarted at ~17:33 UTC and came back on
+# fallback_memory: the database dropped out of a running service for roughly
+# three hours. No deploy failed, so the deploy-failure job stays silent for
+# this class of incident. Only /api/health showed it, and only to whoever
+# happened to look.
+#
+# Cost note: every scheduled run bills at least one Actions minute, and the
+# account's Actions budget has "stop usage" enabled — an over-run would block
+# production deploys, so the interval is deliberately conservative. Every 30
+# minutes is ~1,440 billed minutes a month. Halve the interval and you double
+# that; change the cron below if the trade-off should be different.
+name: Production health
+
+on:
+  schedule:
+    # Every 30 minutes. See the cost note above before making this tighter.
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-health
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    name: Probe production runtime health
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Read /api/health
+        id: probe
+        shell: bash
+        run: |
+          set -uo pipefail
+          URL="https://digeratiexperts.com/api/health"
+
+          # Probe twice before calling it an incident. A single failed request is
+          # far more often a transient network blip than a real outage, and an
+          # alert nobody trusts is worse than no alert.
+          probe_once() {
+            curl -fsS --max-time 20 "$URL" 2>/dev/null
+          }
+
+          # jq given an empty body prints nothing and still exits 0, so a `||`
+          # fallback never fires and the field silently becomes "". Default on the
+          # captured value instead, or an unreachable site reports a blank state.
+          field() {
+            local value
+            value="$(printf '%s' "$BODY" | jq -r "$1 // empty" 2>/dev/null || true)"
+            printf '%s' "${value:-$2}"
+          }
+
+          BODY="$(probe_once || true)"
+          DB="$(field '.services.database' 'unreachable')"
+
+          if [ "$DB" != "connected" ]; then
+            echo "First probe reported '$DB'; re-checking in 30s before alerting."
+            sleep 30
+            BODY="$(probe_once || true)"
+            DB="$(field '.services.database' 'unreachable')"
+          fi
+
+          STATUS="$(field '.status' 'unknown')"
+          UPTIME="$(field '.uptime' 'unknown')"
+
+          # Everything below treats the response as untrusted, because a workflow
+          # output is a command channel. A value carrying a newline ends the
+          # key=value line early, and a heredoc whose delimiter appears in the
+          # body terminates early — either lets remote content write its own
+          # workflow commands. Ours is a friendly endpoint today; monitoring code
+          # should not depend on that.
+
+          # Scalars: single line, bounded length.
+          scalar() { printf '%s' "$1" | tr -d '\r\n' | head -c 64; }
+          DB="$(scalar "$DB")"
+          STATUS="$(scalar "$STATUS")"
+          UPTIME="$(scalar "$UPTIME")"
+
+          # Body: capped, then base64 on one line, so there is no delimiter to
+          # break out of and no size that can produce an unreadable issue.
+          BODY_RAW="${BODY:-(no response body)}"
+          BODY_CAPPED="$(printf '%s' "$BODY_RAW" | head -c 2000)"
+          TRUNCATED=false
+          [ "${#BODY_RAW}" -gt 2000 ] && TRUNCATED=true
+
+          echo "database=$DB"     >> "$GITHUB_OUTPUT"
+          echo "status=$STATUS"   >> "$GITHUB_OUTPUT"
+          echo "uptime=$UPTIME"   >> "$GITHUB_OUTPUT"
+          echo "truncated=$TRUNCATED" >> "$GITHUB_OUTPUT"
+          echo "body_b64=$(printf '%s' "$BODY_CAPPED" | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+          echo "database=$DB status=$STATUS uptime=$UPTIME truncated=$TRUNCATED"
+
+      - name: File or clear the health issue
+        uses: actions/github-script@v7
+        env:
+          DB: ${{ steps.probe.outputs.database }}
+          STATUS: ${{ steps.probe.outputs.status }}
+          UPTIME: ${{ steps.probe.outputs.uptime }}
+          BODY_B64: ${{ steps.probe.outputs.body_b64 }}
+          TRUNCATED: ${{ steps.probe.outputs.truncated }}
+        with:
+          script: |
+            const MARKER = 'Production database is not connected';
+            const { DB, STATUS, UPTIME, BODY_B64, TRUNCATED } = process.env;
+
+            // Decoded here rather than passed raw: see the probe step's note on
+            // why the body never travels through a delimiter.
+            let BODY = '(could not decode response body)';
+            try {
+              BODY = Buffer.from(BODY_B64 || '', 'base64').toString('utf8');
+            } catch (error) {
+              core.warning(`Could not decode the captured body: ${error.message}`);
+            }
+            // Fence the body so a response containing ``` cannot break the layout.
+            BODY = BODY.replace(/`/g, "'");
+            if (TRUNCATED === 'true') BODY += '\n… truncated at 2000 bytes.';
+            const healthy = DB === 'connected';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            const { data: open } = await github.rest.issues.listForRepo({
+              ...context.repo, state: 'open', per_page: 100,
+            });
+            const existing = open.find((issue) => !issue.pull_request && issue.title.startsWith(MARKER));
+
+            if (healthy) {
+              // Close on recovery so an open issue always means "broken right now".
+              if (existing) {
+                await github.rest.issues.createComment({
+                  ...context.repo, issue_number: existing.number,
+                  body: `Recovered: \`services.database\` reads \`connected\` again (uptime ${UPTIME}s).\n\nRun: ${runUrl}`,
+                });
+                await github.rest.issues.update({
+                  ...context.repo, issue_number: existing.number, state: 'closed',
+                });
+                core.notice(`Recovered; closed #${existing.number}`);
+              }
+              return;
+            }
+
+            const body = [
+              `\`services.database\` reads **\`${DB}\`**, not \`connected\`. Confirmed by a second probe 30s after the first.`,
+              '',
+              `Top-level status: \`${STATUS}\` · process uptime: \`${UPTIME}\`s`,
+              '',
+              'The site keeps serving pages, so this is invisible from the homepage. What breaks is anything durable — portal auth, store orders, quote submissions, chat persistence — and on `fallback_memory` those writes go to memory and are lost on the next restart.',
+              '',
+              '```json',
+              BODY,
+              '```',
+              '',
+              `Run: ${runUrl}`,
+            ].join('\n');
+
+            if (existing) {
+              await github.rest.issues.createComment({
+                ...context.repo, issue_number: existing.number, body,
+              });
+              core.notice(`Still unhealthy; commented on #${existing.number}`);
+            } else {
+              const created = await github.rest.issues.create({
+                ...context.repo,
+                title: `${MARKER} (${DB})`,
+                body: `${body}\n\nThis issue closes itself once a later probe sees \`connected\`.`,
+              });
+              core.notice(`Opened #${created.data.number}`);
+            }
+
+            core.setFailed(`services.database is "${DB}", expected "connected"`);

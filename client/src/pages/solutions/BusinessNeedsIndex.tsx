@@ -1,31 +1,72 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "wouter";
-import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, Briefcase, FileText, GraduationCap, HardDrive, Headphones, KeyRound, Mail, Network, Phone, RefreshCw, Search, Server, Shield, ShieldAlert } from "lucide-react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation } from "wouter";
+import {
+  Briefcase,
+  FileText,
+  GraduationCap,
+  HardDrive,
+  Headphones,
+  KeyRound,
+  Mail,
+  Network,
+  Phone,
+  RefreshCw,
+  Server,
+  Shield,
+  ShieldAlert,
+  type LucideIcon,
+} from "lucide-react";
 import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { StorePageAtmosphere } from "@/components/store/StorePageAtmosphere";
-import { PublicSolutionCart } from "@/components/store/PublicSolutionCart";
+import { useAnnouncer } from "@/components/AccessibleAnnouncer";
+import { Door2Frame } from "@/components/store/door2/Door2Frame";
 import { SolutionProfileForm } from "@/components/store/SolutionProfileForm";
+import { GridCell, HairGrid, LiveLine, StepLabel, StoreChapter, UndoRow } from "@/components/store/door2/primitives";
+import { ScenarioTile } from "@/components/store/door2/ScenarioTile";
+import { SuggestionLine } from "@/components/store/door2/Guidance";
+import { SolutionBar, SolutionRail, type SolutionChromeProps } from "@/components/store/door2/SolutionChrome";
+import { IconWell } from "@/components/visual/IconWell";
 import { useSEO } from "@/hooks/useSEO";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useMinWidth, useSolutionDraft } from "@/hooks/useSolutionDraft";
 import { curatedSolutionFamilies, type CuratedSolutionFamily } from "@/data/curatedSolutions";
-import { BUSINESS_GOALS, familyPath, type BusinessGoalId } from "@/lib/businessNeeds";
-import { portalMarketplaceLoginUrl } from "@/lib/portalUrls";
+import { composeScenario, solutionScenarios, type SolutionScenario } from "@/data/solutionScenarios";
+import { BUSINESS_GOALS, familyPath, getFamilyById, SOLUTION_WORKSPACE_PATH, STORE_STEPS, type BusinessGoalId } from "@/lib/businessNeeds";
+import { suggestRelationship, type RelationshipSuggestion } from "@/lib/solutionGuidance";
 import {
-  emptyDraft,
+  addDraftNeed,
+  dismissHint,
+  isProfileComplete,
   patchEnvironment,
+  patchSolutionDraft,
   readSolutionDraft,
-  SOLUTION_DRAFT_EVENT,
+  removeDraftNeed,
   toggleDraftNeed,
   writeSolutionDraft,
-  type SolutionDraft,
   type SolutionEnvironment,
 } from "@/lib/solutionDraft";
-import { useToast } from "@/hooks/use-toast";
+import { portalMarketplaceLoginUrl } from "@/lib/portalUrls";
+import { PRIMARY_PHONE } from "@shared/companyContact";
 
-const FAMILY_ICONS: Record<CuratedSolutionFamily["id"], typeof Shield> = {
+/*
+ * /store — Enter (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §5.1).
+ *
+ * One object, Your Solution, assembles as the buyer answers plain questions.
+ * This screen recognises the pressure (ten situations), sizes once (the
+ * profile strip) and lets the buyer pick what hurts (thirteen families in
+ * five goal groups). Every add is in place with a persistent Undo; nothing
+ * toasts, nothing moves focus, and the one magenta action is the rail's or
+ * bar's "Review Your Solution".
+ */
+
+type FamilyId = CuratedSolutionFamily["id"];
+
+const RELATIONSHIP_HINT_ID = "relationship-suggestion";
+const HANDLE_OUR_IT_PATH = "/solutions/proactive-ecosystem";
+const SANCTIONED_CLOSE = "No payment is taken here. DE confirms package fit, scope, fulfillment, and pricing before commitment.";
+
+/** One electric IconWell per family; the old thirteen hues are retired (§8). */
+const FAMILY_ICONS: Record<FamilyId, LucideIcon> = {
   it_operations: Headphones,
   endpoint_devices: Server,
   identity_access: KeyRound,
@@ -41,232 +82,559 @@ const FAMILY_ICONS: Record<CuratedSolutionFamily["id"], typeof Shield> = {
   technology_strategy: ShieldAlert,
 };
 
-const FAMILY_ACCENTS: Record<CuratedSolutionFamily["id"], string> = {
-  it_operations: "text-amber-300",
-  endpoint_devices: "text-violet-300",
-  identity_access: "text-purple-300",
-  email_collaboration: "text-cyan-300",
-  cybersecurity_operations: "text-sky-300",
-  network_connectivity: "text-green-300",
-  backup_continuity: "text-emerald-300",
-  compliance_risk: "text-orange-300",
-  security_awareness: "text-rose-300",
-  business_communications: "text-red-300",
-  hardware_lifecycle: "text-blue-300",
-  documentation_standards: "text-indigo-300",
-  technology_strategy: "text-pink-300",
+/** The three situations where someone may be mid-incident carry the phone in flow (§5.1 region 5). */
+const INCIDENT_SCENARIOS = new Set(["phishing-close-call", "ransomware-recovery", "it-person-left"]);
+
+function familyLabel(id: string): string {
+  return getFamilyById(id)?.label ?? id;
+}
+
+function scenarioHint(scenario: SolutionScenario): RelationshipSuggestion | null {
+  const hint = scenario.relationship;
+  if (hint.suggest === "profile") return null;
+  return { value: hint.suggest, reason: hint.reason };
+}
+
+/** Everything a buyer might type to find a family: its label, description and the public offer copy. */
+const FAMILY_HAYSTACK: Record<FamilyId, string> = Object.fromEntries(
+  curatedSolutionFamilies.map((family) => [
+    family.id,
+    [family.label, family.description, ...family.offers.flatMap((offer) => [offer.name, offer.summary, ...offer.outcomes, ...offer.includes])]
+      .join(" ")
+      .toLowerCase(),
+  ]),
+) as Record<FamilyId, string>;
+
+type ScenarioMoment = {
+  scenarioId: string;
+  added: FamilyId[];
+  suggestion: RelationshipSuggestion | null;
 };
 
-export default function BusinessNeedsIndex() {
-  const prefersReducedMotion = useReducedMotion();
-  const [query, setQuery] = useState("");
-  const [goal, setGoal] = useState<BusinessGoalId | "all">("all");
-  const [draft, setDraft] = useState<SolutionDraft>(emptyDraft);
-  const { toast } = useToast();
+type FamilyUndo = {
+  familyId: FamilyId;
+  source?: string;
+};
 
+function FamilyCell({
+  family,
+  included,
+  undo,
+  onToggle,
+  onUndo,
+}: {
+  family: CuratedSolutionFamily;
+  included: boolean;
+  undo: boolean;
+  onToggle: () => void;
+  onUndo: () => void;
+}) {
+  const Icon = FAMILY_ICONS[family.id];
+  const lead = family.offers[0]?.outcomes[0];
+  // The jelly settle keys on a transient attribute set on the tap, never on the steady aria-pressed state (§9).
+  const [justSelected, setJustSelected] = useState(false);
   useEffect(() => {
-    const refresh = () => setDraft(readSolutionDraft());
-    refresh();
-    window.addEventListener(SOLUTION_DRAFT_EVENT, refresh);
-    window.addEventListener("storage", refresh);
-    return () => {
-      window.removeEventListener(SOLUTION_DRAFT_EVENT, refresh);
-      window.removeEventListener("storage", refresh);
-    };
-  }, []);
+    if (!justSelected) return;
+    const timer = window.setTimeout(() => setJustSelected(false), 340);
+    return () => window.clearTimeout(timer);
+  }, [justSelected]);
+  return (
+    <GridCell
+      as="li"
+      testId={`family-card-${family.id}`}
+      state={included ? "added" : "idle"}
+      label={<IconWell icon={Icon} size="sm" />}
+      title={family.label}
+      href={familyPath(family.id)}
+      detail={family.description}
+      clampDetail
+      className="d2-cell--row"
+    >
+      {lead ? <p className="d2-cell__lead d2-small d2-ink d2-clamp-2 w-full">{lead}</p> : null}
+      <button
+        type="button"
+        className="d2-toggle"
+        aria-pressed={included}
+        onClick={() => {
+          setJustSelected(true);
+          onToggle();
+        }}
+        data-de-just-selected={justSelected ? "true" : undefined}
+        data-testid={`family-toggle-${family.id}`}
+      >
+        {included ? "Added ✓" : "Add need"}
+      </button>
+      {undo ? (
+        <div className="w-full">
+          <UndoRow text={`${family.label} removed`} onUndo={onUndo} testId={`family-undo-${family.id}`} />
+        </div>
+      ) : null}
+    </GridCell>
+  );
+}
 
+export default function BusinessNeedsIndex() {
   useSEO({
-    title: "IT Solutions Store | Digerati Experts",
-    description: "Build a Digerati Experts solution from your business profile and business need.",
+    title: "Solve a Business Need | Digerati Experts",
+    description: "Tell Digerati Experts what you have once, pick what needs attention, and hold a sized solution you can send for a real quote.",
     canonical: "/store",
   });
 
-  const families = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    const goalFamilyIds =
-      goal === "all" ? null : new Set(BUSINESS_GOALS.find((entry) => entry.id === goal)?.familyIds ?? []);
-    return curatedSolutionFamilies.filter((family) => {
-      if (goalFamilyIds && !goalFamilyIds.has(family.id)) return false;
-      if (!needle) return true;
-      return [family.label, family.description, ...family.offers.flatMap((offer) => [offer.name, offer.summary, ...offer.outcomes, ...offer.includes])]
-        .join(" ")
-        .toLowerCase()
-        .includes(needle);
-    });
-  }, [query, goal]);
+  const draft = useSolutionDraft();
+  const { announce } = useAnnouncer();
+  const [, navigate] = useLocation();
+  const reducedMotion = useReducedMotion();
+  const twoColumns = useMinWidth(640);
+  const groupsOpenByWidth = useMinWidth(768);
 
-  const setProfile = <K extends keyof SolutionEnvironment>(key: K, value: SolutionEnvironment[K]) => {
-    const next = writeSolutionDraft(patchEnvironment(readSolutionDraft(), { [key]: value }));
-    setDraft(next);
+  const [query, setQuery] = useState("");
+  const [openGroups, setOpenGroups] = useState<ReadonlySet<BusinessGoalId>>(() => new Set());
+  const [scenarioMoment, setScenarioMoment] = useState<ScenarioMoment | null>(null);
+  const [familyUndo, setFamilyUndo] = useState<FamilyUndo | null>(null);
+  const [pulseKey, setPulseKey] = useState(0);
+  const [expandKey, setExpandKey] = useState(0);
+  const [storageOk, setStorageOk] = useState(true);
+  const timers = useRef<number[]>([]);
+
+  // The page keeps working from memory when storage is blocked; it just says so.
+  useEffect(() => {
+    try {
+      const probe = "de-store-probe";
+      window.localStorage.setItem(probe, "1");
+      window.localStorage.removeItem(probe);
+    } catch {
+      setStorageOk(false);
+    }
+  }, []);
+
+  const clearTimers = useCallback(() => {
+    timers.current.forEach((id) => window.clearTimeout(id));
+    timers.current = [];
+  }, []);
+  useEffect(() => clearTimers, [clearTimers]);
+
+  const familyIds = useMemo(() => draft.needs.map((need) => need.familyId), [draft.needs]);
+  const includedIds = useMemo(() => new Set<string>(familyIds), [familyIds]);
+  const dismissed = draft.dismissedHints.includes(RELATIONSHIP_HINT_ID);
+
+  /* ---------------------------------------------------------------------- */
+  /* Writes — every one in place, announced once, undoable                   */
+  /* ---------------------------------------------------------------------- */
+
+  const clearMoments = useCallback(() => {
+    setScenarioMoment(null);
+    setFamilyUndo(null);
+  }, []);
+
+  /** After any add: pulse the count once and open the strip if the profile is still incomplete. Focus never moves. */
+  const afterAdd = useCallback(() => {
+    setPulseKey((key) => key + 1);
+    if (!isProfileComplete(readSolutionDraft().environment)) setExpandKey((key) => key + 1);
+  }, []);
+
+  const setProfile = useCallback(<K extends keyof SolutionEnvironment>(key: K, value: SolutionEnvironment[K]) => {
+    writeSolutionDraft(patchEnvironment(readSolutionDraft(), { [key]: value }));
+  }, []);
+
+  const startScenario = useCallback(
+    (scenario: SolutionScenario) => {
+      const compose = composeScenario(
+        scenario,
+        readSolutionDraft().needs.map((need) => need.familyId),
+      );
+      if (compose.add.length === 0) return;
+      clearTimers();
+      clearMoments();
+      // The composed cells light in sequence (60ms); reduced motion lights them at once.
+      compose.add.forEach((familyId, index) => {
+        const run = () => addDraftNeed({ familyId, source: scenario.id });
+        if (reducedMotion || index === 0) run();
+        else timers.current.push(window.setTimeout(run, index * 60));
+      });
+      setScenarioMoment({ scenarioId: scenario.id, added: compose.add, suggestion: scenarioHint(scenario) });
+      afterAdd();
+      announce(`Added ${compose.add.map(familyLabel).join(", ")} to Your Solution`);
+    },
+    [afterAdd, announce, clearMoments, clearTimers, reducedMotion],
+  );
+
+  const undoScenario = useCallback(() => {
+    if (!scenarioMoment) return;
+    clearTimers();
+    scenarioMoment.added.forEach((familyId) => removeDraftNeed(familyId));
+    announce(`Removed ${scenarioMoment.added.map(familyLabel).join(", ")} from Your Solution`);
+    setScenarioMoment(null);
+  }, [announce, clearTimers, scenarioMoment]);
+
+  const toggleFamily = useCallback(
+    (family: CuratedSolutionFamily) => {
+      clearTimers();
+      clearMoments();
+      const before = readSolutionDraft().needs.find((need) => need.familyId === family.id);
+      const next = toggleDraftNeed(family.id);
+      const nowIncluded = next.needs.some((need) => need.familyId === family.id);
+      if (nowIncluded) {
+        afterAdd();
+        announce(`${family.label} added to Your Solution`);
+      } else {
+        setFamilyUndo(before?.source ? { familyId: family.id, source: before.source } : { familyId: family.id });
+        announce(`${family.label} removed from Your Solution`);
+      }
+    },
+    [afterAdd, announce, clearMoments, clearTimers],
+  );
+
+  const undoRemove = useCallback(() => {
+    if (!familyUndo) return;
+    addDraftNeed(familyUndo.source ? { familyId: familyUndo.familyId, source: familyUndo.source } : { familyId: familyUndo.familyId });
+    setFamilyUndo(null);
+    afterAdd();
+    announce(`${familyLabel(familyUndo.familyId)} added to Your Solution`);
+  }, [afterAdd, announce, familyUndo]);
+
+  /** A suggestion is never applied without this click. */
+  const applySuggestion = useCallback((value: RelationshipSuggestion["value"]) => {
+    patchSolutionDraft({ deliveryPreference: value, suggestion: { value, accepted: true } });
+  }, []);
+
+  const declineSuggestion = useCallback((value: RelationshipSuggestion["value"]) => {
+    dismissHint(RELATIONSHIP_HINT_ID);
+    patchSolutionDraft({ suggestion: { value, accepted: false } });
+  }, []);
+
+  const scrollToProfile = useCallback(() => {
+    setExpandKey((key) => key + 1);
+    // html carries scroll-padding-top for the fixed nav, so a plain scrollIntoView lands clear of it.
+    document.getElementById("profile")?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+  }, [reducedMotion]);
+
+  /* ---------------------------------------------------------------------- */
+  /* Suggestions — shown with their reason; Use this / Not now              */
+  /* ---------------------------------------------------------------------- */
+
+  const suggestionUsed = (value: RelationshipSuggestion["value"]) =>
+    draft.deliveryPreference === value && draft.suggestion?.accepted === true;
+  const suggestionVisible = (suggestion: RelationshipSuggestion | null): suggestion is RelationshipSuggestion =>
+    suggestion !== null && !dismissed && (draft.deliveryPreference === "" || suggestionUsed(suggestion.value));
+
+  const profileSuggestion = suggestRelationship(draft.environment);
+  const profileSuggestionSlot = suggestionVisible(profileSuggestion) ? (
+    <SuggestionLine
+      suggestion={profileSuggestion}
+      used={suggestionUsed(profileSuggestion.value)}
+      onUse={() => applySuggestion(profileSuggestion.value)}
+      onDecline={() => declineSuggestion(profileSuggestion.value)}
+    />
+  ) : null;
+
+  const scenarioSuggestion = scenarioMoment?.suggestion ?? null;
+  const renderScenarioSuggestion = (testId: string) =>
+    suggestionVisible(scenarioSuggestion) ? (
+      <SuggestionLine
+        suggestion={scenarioSuggestion}
+        source="Suggested for this situation"
+        used={suggestionUsed(scenarioSuggestion.value)}
+        onUse={() => applySuggestion(scenarioSuggestion.value)}
+        onDecline={() => declineSuggestion(scenarioSuggestion.value)}
+        testId={testId}
+      />
+    ) : null;
+
+  /* ---------------------------------------------------------------------- */
+  /* Families — five goal groups, search, disclosures under 768             */
+  /* ---------------------------------------------------------------------- */
+
+  const needle = query.trim().toLowerCase();
+  const searching = needle.length > 0;
+  const groups = useMemo(
+    () =>
+      BUSINESS_GOALS.map((goal) => ({
+        goal,
+        families: goal.familyIds
+          .map((id) => getFamilyById(id))
+          .filter((family): family is CuratedSolutionFamily => family !== null && (!needle || FAMILY_HAYSTACK[family.id].includes(needle))),
+      })),
+    [needle],
+  );
+  const total = groups.reduce((sum, group) => sum + group.families.length, 0);
+  const countText = !searching ? `${total} solutions shown` : total === 1 ? "1 solution matches" : `${total} solutions match`;
+
+  // The count line is plain text; the page's one live region hears it after the buyer pauses typing.
+  useEffect(() => {
+    if (!searching) return undefined;
+    const timer = window.setTimeout(() => announce(total === 0 ? `Nothing matches ${query.trim()}` : countText), 600);
+    return () => window.clearTimeout(timer);
+  }, [announce, countText, query, searching, total]);
+
+  const disclosureIds = useMemo(() => BUSINESS_GOALS.slice(1).map((goal) => goal.id), []);
+  const allShown = !searching && (groupsOpenByWidth || openGroups.size === disclosureIds.length);
+
+  const showAll = () => {
+    setQuery("");
+    setOpenGroups(new Set(disclosureIds));
+  };
+  const toggleAll = () => {
+    if (searching || groupsOpenByWidth) {
+      showAll();
+      return;
+    }
+    setOpenGroups(allShown ? new Set() : new Set(disclosureIds));
+  };
+  const setGroupOpen = (id: BusinessGoalId, open: boolean) => {
+    setOpenGroups((current) => {
+      if (current.has(id) === open) return current;
+      const next = new Set(current);
+      if (open) next.add(id);
+      else next.delete(id);
+      return next;
+    });
   };
 
+  /* ---------------------------------------------------------------------- */
+  /* Chrome                                                                  */
+  /* ---------------------------------------------------------------------- */
+
+  const chrome: SolutionChromeProps = {
+    mode: "review",
+    draft,
+    help: null,
+    primary: {
+      label: "Review Your Solution",
+      href: SOLUTION_WORKSPACE_PATH,
+      disabled: draft.needs.length === 0,
+      reason: "Add at least one need",
+    },
+    suggestion: renderScenarioSuggestion("rail-suggestion"),
+    pulseKey,
+    emptyText: "Nothing added yet. Start from a situation or add a need.",
+    onEditProfile: scrollToProfile,
+    compactVariant: "primary",
+  };
+
+  const momentIndex = scenarioMoment ? solutionScenarios.findIndex((scenario) => scenario.id === scenarioMoment.scenarioId) : -1;
+  const momentScenario = momentIndex >= 0 ? solutionScenarios[momentIndex] : null;
+  // The Undo row spans the grid, so it sits under the row that holds the tapped tile and nothing shifts.
+  const undoAfterIndex =
+    momentIndex < 0 ? -1 : Math.min(solutionScenarios.length - 1, twoColumns ? Math.floor(momentIndex / 2) * 2 + 1 : momentIndex);
+
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0a0a0a]">
-      <StorePageAtmosphere />
-      <div className="relative z-10">
-        <MegaMenu />
-        <main className="de-nav-clear pb-24">
-          <div className="mx-auto max-w-[var(--de-canvas)] px-4 sm:px-6 lg:px-8">
-            <header className="max-w-3xl pb-10 pt-8 md:pt-14">
-              <motion.div initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-de-accent-ink">Business Solution Builder</p>
-                <h1 className="mt-5 text-[clamp(2.25rem,5.4vw,4.25rem)] font-bold leading-[1.08] tracking-[-0.035em] text-white" data-testid="heading-business-needs">
-                  Start with your business. Then solve what <span className="text-de-accent-ink">hurts.</span>
-                </h1>
-                <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/65 md:text-lg">
-                  Set your users, devices, and sites once. Then DE can size every preconfigured solution consistently while you browse—without forcing you into a managed-services contract or exposing a vendor catalog.
-                </p>
-                <p className="mt-8 text-sm text-white/45">
-                  Existing client or DE staff?{" "}
-                  <a
-                    href={portalMarketplaceLoginUrl()}
-                    className="font-medium text-de-accent-ink underline-offset-4 hover:underline"
-                    data-testid="link-client-marketplace"
-                  >
-                    Open Client Marketplace
-                  </a>
-                </p>
-              </motion.div>
-            </header>
-
-            <SolutionProfileForm environment={draft.environment} onChange={setProfile} />
-
-            <ol className="my-12 grid gap-8 border-y border-white/10 py-8 sm:grid-cols-2 lg:grid-cols-4 sm:gap-10 sm:py-10" aria-label="How the Solution Builder works">
-              {[
-                ["01", "Pain or need", "Tell us what is not working, risky, expensive, or holding the business back."],
-                ["02", "Solution", "Choose a standalone or co-managed DE offer—or ask DE to help decide."],
-                ["03", "Package & delivery", "See included line items, sizing, shipping, install options, and support."],
-                ["04", "Contact", "Only name, company, email, and phone when you are ready to continue."],
-              ].map(([number, title, body]) => (
-                <li key={number}>
-                  <p className="font-mono text-[11px] tracking-[0.16em] text-de-accent-ink">{number}</p>
-                  <h2 className="mt-3 text-lg font-semibold text-white">{title}</h2>
-                  <p className="mt-2 max-w-xs text-sm leading-relaxed text-white/50">{body}</p>
-                </li>
-              ))}
-            </ol>
-
-            <section aria-labelledby="curated-solutions-heading">
-              <div className="mb-6 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                <div className="max-w-xl">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-de-accent-ink">Step 1 · Pain or need</p>
-                  <h2 id="curated-solutions-heading" className="mt-2 text-2xl font-semibold tracking-tight text-white md:text-3xl">
-                    {goal === "all"
-                      ? "What needs attention?"
-                      : BUSINESS_GOALS.find((entry) => entry.id === goal)?.label}
-                  </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-white/50">
-                    Start with a plain-English business goal or browse all thirteen solution families.
+    <Door2Frame intensity={0.44} jelly>
+      <MegaMenu />
+          <main className="d2-main de-nav-clear">
+            <header className="d2-chapter d2-chapter--first" data-testid="store-enter">
+              <StepLabel>SOLVE A BUSINESS NEED</StepLabel>
+              <h1 className="d2-display d2-measure" data-testid="heading-business-needs">
+                Start with your business. Then solve what hurts.
+              </h1>
+              <p className="d2-lede d2-ink d2-measure mt-5">
+                Tell us what you have once. Pick what needs attention. DE sizes a solution you can send for a real quote. No payment here.
+              </p>
+              <nav aria-label="Pathways" className="d2-pathways" data-testid="pathways">
+                <div className="d2-pathways__row">
+                  <p className="d2-pathways__item">
+                    <span className="d2-pathways__mark d2-label" aria-hidden="true">A</span>
+                    <Link href={HANDLE_OUR_IT_PATH} data-testid="link-handle-our-it">Handle Our IT</Link>
+                    <span className="d2-pathways__kind d2-small">One accountable team for the technology.</span>
+                  </p>
+                  <p className="d2-pathways__item">
+                    <span className="d2-pathways__mark d2-label" aria-hidden="true">B</span>
+                    <span aria-current="page">Solve a Business Need · You are here</span>
+                    <span className="d2-pathways__kind d2-small">Something specific is in the way. A package with a start and an end.</span>
+                  </p>
+                  <p className="d2-pathways__item">
+                    <span className="d2-pathways__mark d2-label" aria-hidden="true">C</span>
+                    <a href={portalMarketplaceLoginUrl()} data-testid="link-client-marketplace">Client Marketplace</a>
+                    <span className="d2-pathways__kind d2-small">Already a client? Continue in the Client Marketplace.</span>
                   </p>
                 </div>
-                <label className="relative block w-full lg:w-80">
-                  <span className="sr-only">Search solutions</span>
-                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" aria-hidden="true" />
-                  <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search pains or solutions" className="h-11 border-white/10 bg-transparent pl-11 text-white placeholder:text-white/35" />
-                </label>
-              </div>
-              <div className="mb-8 flex flex-wrap gap-2" role="group" aria-label="Start from a business goal">
-                <button
-                  type="button"
-                  className={`h-10 rounded-full px-4 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] ${
-                    goal === "all"
-                      ? "border border-de-accent bg-transparent text-white"
-                      : "border border-white/12 text-white/65 hover:border-white/25 hover:text-white"
-                  }`}
-                  aria-pressed={goal === "all"}
-                  onClick={() => setGoal("all")}
-                >
-                  Browse all solutions
-                </button>
-                {BUSINESS_GOALS.map((entry) => (
-                  <button
-                    key={entry.id}
-                    type="button"
-                    className={`h-10 rounded-full px-4 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] ${
-                      goal === entry.id
-                        ? "border border-de-accent bg-transparent text-white"
-                        : "border border-white/12 text-white/65 hover:border-white/25 hover:text-white"
-                    }`}
-                    aria-pressed={goal === entry.id}
-                    onClick={() => setGoal(entry.id)}
-                    data-testid={`business-goal-${entry.id}`}
-                  >
-                    {entry.label}
-                  </button>
-                ))}
-              </div>
+                <p className="d2-pathways__sentence d2-small">
+                  Want DE to run all of IT?{" "}
+                  <Link href={HANDLE_OUR_IT_PATH} className="d2-link">Handle Our IT</Link> · Already a client?{" "}
+                  <a href={portalMarketplaceLoginUrl()} className="d2-link">Client Marketplace</a>
+                </p>
+              </nav>
+              {!storageOk ? (
+                <LiveLine className="mt-6" testId="storage-line">
+                  Not saving on this device
+                </LiveLine>
+              ) : null}
+            </header>
 
-              {families.length ? (
-                <ul className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3" data-testid="business-needs-families">
-                  {families.map((family) => {
-                    const Icon = FAMILY_ICONS[family.id];
-                    const included = draft.needs.some((need) => need.familyId === family.id);
-                    const leadOutcome = family.offers[0]?.outcomes[0];
-                    return (
-                      <li key={family.id}>
-                        <article
-                          className={`group flex h-full flex-col overflow-hidden rounded-2xl bg-[#F7F5F2] text-[#1A1228] transition-transform duration-300 hover:-translate-y-1 ${
-                            included ? "ring-1 ring-de-accent" : "ring-1 ring-black/10"
-                          }`}
-                          data-testid={`family-card-${family.id}`}
+            <div className="d2-layout">
+              <div className="min-w-0">
+                <StoreChapter id="profile" n="01" eyebrow="Profile" srText={STORE_STEPS[0].sr} testId="store-profile">
+                  <SolutionProfileForm
+                    environment={draft.environment}
+                    onChange={setProfile}
+                    headingLevel={2}
+                    description="Four counts and two facts. Then every package sizes itself. Skip for now if you like; it is needed before you submit."
+                    expandKey={expandKey}
+                    suggestionSlot={profileSuggestionSlot}
+                  />
+                </StoreChapter>
+
+                <StoreChapter
+                  id="situations"
+                  n="02"
+                  eyebrow="Pain or need"
+                  srText={STORE_STEPS[1].sr}
+                  heading="Start from a situation"
+                  lede="Pick the one that sounds like you. It adds the needs that situation calls for, and you can undo."
+                  testId="store-situations"
+                >
+                  <HairGrid cols={2} as="ul" className="mt-8">
+                    {solutionScenarios.map((scenario, index) => (
+                      <Fragment key={scenario.id}>
+                        <ScenarioTile
+                          scenario={scenario}
+                          compose={composeScenario(scenario, familyIds)}
+                          onStart={startScenario}
+                          onReview={() => navigate(SOLUTION_WORKSPACE_PATH)}
+                          footer={
+                            INCIDENT_SCENARIOS.has(scenario.id) ? (
+                              <>
+                                Happening right now?{" "}
+                                <a href={PRIMARY_PHONE.telHref} className="d2-link" aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
+                                  Call {PRIMARY_PHONE.display}
+                                </a>
+                              </>
+                            ) : undefined
+                          }
+                        />
+                        {scenarioMoment && index === undoAfterIndex ? (
+                          <li className="min-w-0 d2-grid__span" data-testid="scenario-moment">
+                            <UndoRow text={`Added ${scenarioMoment.added.map(familyLabel).join(", ")}`} onUndo={undoScenario} testId="scenario-undo" />
+                            <ul className="d2-rows d2-small d2-ink-soft mt-2" data-testid="scenario-why">
+                              {scenarioMoment.added.map((familyId) => (
+                                <li key={familyId}>
+                                  <span className="d2-ink-strong">{familyLabel(familyId)}</span> · {momentScenario?.why[familyId] ?? ""}
+                                </li>
+                              ))}
+                            </ul>
+                            {renderScenarioSuggestion("scenario-suggestion")}
+                          </li>
+                        ) : null}
+                      </Fragment>
+                    ))}
+                  </HairGrid>
+                </StoreChapter>
+
+
+                <StoreChapter
+                  id="families"
+                  n="02"
+                  eyebrow="Pain or need"
+                  srText={STORE_STEPS[1].sr}
+                  heading="Or pick a family"
+                  lede="Thirteen families, grouped by what you are trying to do. Open one for the full package, or add it from here."
+                  testId="business-needs-families"
+                >
+                  <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Business goals">
+                      <button type="button" className="d2-toggle" aria-pressed={allShown} onClick={toggleAll} data-testid="business-goal-all">
+                        All
+                      </button>
+                      {BUSINESS_GOALS.map((goal) => (
+                        <a
+                          key={goal.id}
+                          href={`#goal-${goal.id}`}
+                          className="d2-toggle"
+                          onClick={() => setGroupOpen(goal.id, true)}
+                          data-testid={`business-goal-${goal.id}`}
                         >
-                          <Link href={familyPath(family.id)} className="relative overflow-hidden bg-[#0c0c10] px-5 pb-6 pt-5">
-                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_0%,rgba(29,111,242,0.28),transparent_58%)]" aria-hidden="true" />
-                            <div className="relative">
-                              <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-black/30">
-                                <Icon className={`h-5 w-5 ${FAMILY_ACCENTS[family.id]}`} aria-hidden="true" />
-                              </span>
-                              <h3 className="mt-5 text-xl font-semibold leading-snug tracking-tight text-white">{family.label}</h3>
-                            </div>
-                          </Link>
-                          <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
-                            <p className="text-[15px] leading-relaxed text-[#4A4556]">{family.description}</p>
-                            {leadOutcome ? (
-                              <p className="mt-4 text-sm leading-relaxed text-[#1A1228]">
-                                <span className="text-de-accent">/</span> {leadOutcome}
-                              </p>
-                            ) : null}
-                            <div className="mt-auto flex items-center justify-between gap-3 pt-6">
-                              <Link
-                                href={familyPath(family.id)}
-                                className="inline-flex h-11 items-center text-sm font-semibold text-[#1A1228] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
-                              >
-                                Explore
-                                <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
-                              </Link>
-                              <Button
-                                size="sm"
-                                className="h-11 min-w-[6.5rem] bg-de-accent px-4 text-sm font-semibold text-white hover:bg-de-accent/90"
-                                aria-pressed={included}
-                                onClick={() => {
-                                  const next = toggleDraftNeed(family.id);
-                                  const nowIncluded = next.needs.some((need) => need.familyId === family.id);
-                                  toast({
-                                    title: nowIncluded ? "Pain / need added" : "Pain / need removed",
-                                    description: nowIncluded ? `${family.label} is in Your Solution.` : `${family.label} was removed.`,
-                                  });
-                                }}
-                              >
-                                {included ? "Included" : "Add need"}
-                              </Button>
-                            </div>
-                          </div>
-                        </article>
-                      </li>
+                          {goal.label}
+                        </a>
+                      ))}
+                    </div>
+                    <label className="d2-field d2-search">
+                      <span className="sr-only">Search needs</span>
+                      <input
+                        className="d2-input"
+                        type="text"
+                        inputMode="search"
+                        autoComplete="off"
+                        placeholder="Search needs"
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                        data-testid="families-search"
+                      />
+                    </label>
+                  </div>
+
+                  <LiveLine className="mt-4" testId="families-count">
+                    {searching && total === 0 ? (
+                      <>
+                        Nothing matches “{query.trim()}”.{" "}
+                        <button type="button" className="d2-action d2-action--quiet" onClick={() => setQuery("")}>
+                          Clear search
+                        </button>{" "}
+                        ·{" "}
+                        <button type="button" className="d2-action d2-action--quiet" onClick={showAll}>
+                          Show all
+                        </button>
+                      </>
+                    ) : (
+                      countText
+                    )}
+                  </LiveLine>
+
+                  {groups.map(({ goal, families }, index) => {
+                    if (families.length === 0) return null;
+                    const headingId = `goal-${goal.id}`;
+                    const cells = (
+                      <HairGrid cols={4} as="ul" className="d2-grid--rows mt-4">
+                        {families.map((family) => (
+                          <FamilyCell
+                            key={family.id}
+                            family={family}
+                            included={includedIds.has(family.id)}
+                            undo={familyUndo?.familyId === family.id}
+                            onToggle={() => toggleFamily(family)}
+                            onUndo={undoRemove}
+                          />
+                        ))}
+                      </HairGrid>
+                    );
+                    const disclosed = index > 0 && !groupsOpenByWidth && !searching;
+                    if (disclosed) {
+                      return (
+                        <details
+                          key={goal.id}
+                          className="d2-group"
+                          open={openGroups.has(goal.id)}
+                          onToggle={(event) => setGroupOpen(goal.id, event.currentTarget.open)}
+                          data-testid={`goal-group-${goal.id}`}
+                        >
+                          <summary>
+                            <h3 id={headingId} className="d2-h3">
+                              {goal.label}
+                            </h3>
+                          </summary>
+                          {cells}
+                        </details>
+                      );
+                    }
+                    return (
+                      <section key={goal.id} className="d2-group" aria-labelledby={headingId} data-testid={`goal-group-${goal.id}`}>
+                        <h3 id={headingId} className="d2-h3">
+                          {goal.label}
+                        </h3>
+                        {cells}
+                      </section>
                     );
                   })}
-                </ul>
-              ) : (
-                <div className="rounded-2xl border border-white/10 px-6 py-14 text-center" role="status">
-                  <Search className="mx-auto h-8 w-8 text-white/30" aria-hidden="true" /><h3 className="mt-4 text-xl font-semibold text-white">No matching solution</h3><Button variant="outline" className="mt-5 border-white/20 text-white" onClick={() => setQuery("")}>Clear search</Button>
-                </div>
-              )}
-            </section>
-          </div>
-        </main>
-        <PublicSolutionCart />
-        <DigeratiEnhancedFooterSection />
-      </div>
-    </div>
+                </StoreChapter>
+
+                <p className="d2-chapter d2-small d2-ink-soft d2-measure" data-testid="store-close">
+                  {SANCTIONED_CLOSE}
+                </p>
+              </div>
+
+              <SolutionRail {...chrome} />
+            </div>
+          </main>
+      <SolutionBar {...chrome} />
+      <DigeratiEnhancedFooterSection variant="store" />
+    </Door2Frame>
   );
 }

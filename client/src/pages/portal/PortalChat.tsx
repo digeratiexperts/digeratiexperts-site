@@ -156,12 +156,12 @@ export default function PortalChat() {
     openDeskIdsRef.current = openDeskIds;
   }, [openDeskIds]);
 
-  const loadLiveMessages = useCallback(async (authToken: string, since?: string) => {
+  const loadLiveMessages = useCallback(async (authToken: string | null, since?: string) => {
     const url = since
       ? `/api/portal/chat/messages?since=${encodeURIComponent(since)}`
       : "/api/portal/chat/messages";
     const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${authToken}` },
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
       credentials: "include",
     });
     if (res.status === 403) {
@@ -225,11 +225,10 @@ export default function PortalChat() {
 
   useEffect(() => {
     const authToken = localStorage.getItem("portalToken");
-    if (!authToken) return;
-    setToken(authToken);
+    setToken(authToken || "");
 
     fetch("/api/portal/chat/status", {
-      headers: { Authorization: `Bearer ${authToken}` },
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
       credentials: "include",
     })
       .then((r) => r.json())
@@ -784,12 +783,12 @@ export default function PortalChat() {
                                         {sessionNameLabel(s)}
                                       </span>
                                       {sessionCompanyLabel(s) ? (
-                                        <span className="mt-0.5 block truncate text-sm font-normal text-white/45">
+                                        <span className="mt-0.5 block truncate text-sm font-normal text-white/55">
                                           {sessionCompanyLabel(s)}
                                         </span>
                                       ) : null}
                                     </span>
-                                    <span className="inline-flex shrink-0 items-center gap-1 text-xs text-white/45">
+                                    <span className="inline-flex shrink-0 items-center gap-1 text-xs text-white/55">
                                       <Clock3 className="h-3 w-3" aria-hidden />
                                       {formatClock(s.updatedAt)}
                                     </span>
@@ -812,7 +811,7 @@ export default function PortalChat() {
                                       </span>
                                     )}
                                     {s.pagePath && (
-                                      <span className="truncate rounded-full bg-white/5 px-2 py-0.5 text-white/45">
+                                      <span className="truncate rounded-full bg-white/5 px-2 py-0.5 text-white/55">
                                         {s.pagePath}
                                       </span>
                                     )}
@@ -902,7 +901,7 @@ export default function PortalChat() {
                     <p className="text-sm font-medium text-white/80">
                       Select a website viewer to open their DE Desk thread
                     </p>
-                    <p className="max-w-sm text-xs text-white/45">
+                    <p className="max-w-sm text-xs text-white/55">
                       Keep multiple viewers open as tabs. Long-press or right-click a session for
                       claim, release, copy, or ticket. Enter sends · Shift+Enter for a new line.
                     </p>
@@ -915,7 +914,7 @@ export default function PortalChat() {
                           {activeSession ? sessionNameLabel(activeSession) : "Name not given yet"}
                         </p>
                         {activeSession && sessionCompanyLabel(activeSession) ? (
-                          <p className="truncate text-sm text-white/45">
+                          <p className="truncate text-sm text-white/55">
                             {sessionCompanyLabel(activeSession)}
                           </p>
                         ) : null}
@@ -1146,7 +1145,7 @@ export default function PortalChat() {
             9 AM–6 PM EST. Outside hours, open a ticket anytime from DE Desk or{" "}
             <Link
               href="/portal/tickets/create"
-              className="text-[#D3126A] hover:underline dark:text-[#F04C97]"
+              className="text-[#D3126A] underline underline-offset-2 hover:text-[#A30E52] dark:text-[#F04C97]"
             >
               create a ticket
             </Link>
