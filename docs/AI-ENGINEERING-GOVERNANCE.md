@@ -148,6 +148,38 @@ Ask this before sign-off:
 
 Merely matching a prompt is insufficient.
 
+### 8.1 Look at everything you ship (Joe, 2026-09-27)
+
+The loop above is **not limited to work an agent classifies as "visual."** If a
+change can be rendered, the agent renders it and *looks at it* before reporting
+it done. An agent does not get to decide a change was too small, too structural
+or too back-end to be worth a screenshot; that judgement is what the rule
+exists to remove.
+
+**A green automated gate is not a substitute for looking.** Three defects on
+V4 the same day this was written, all on a build whose harness reported PASS
+across three widths and four scroll speeds:
+
+1. A site-wide sticky promo bar sat across the middle of the hero and cut the
+   headline in half. Every check passed; no check knew what the page was
+   supposed to look like. It also exposed that **every `/version-N` homepage
+   review to date had been conducted against chrome the real homepage never
+   carries.**
+2. The single primary CTA rendered underneath the cookie banner at all three
+   widths. Found by looking; only then was it worth writing the check that now
+   guards it.
+3. The connective geometry resolved into a **clean pentagram** in the middle of
+   a cybersecurity company's homepage. No automated gate will ever catch this
+   class of defect, because nothing is measurably wrong.
+
+The order matters, and it is the opposite of the intuitive one: **look first,
+then write the check.** A check written before seeing the failure guards the
+failure you imagined; a check written after guards the one you actually have.
+Defects 1 and 3 could not have been specified in advance by anyone.
+
+So: render it, look at it, and say what you saw — including when what you saw
+was fine. "Tests pass" is a statement about the tests, not about the page.
+
 ## 9. Design-system law
 
 How much authority each design rule carries is defined in **`design/DESIGN-AUTHORITY.md`** (Tier 0 non-negotiables, Tier 1 brand identity, Tier 2 current design system, Tier 3 historical record) together with the two task modes, Maintenance and Exploration. This section is the engineering side of that model.

@@ -21,6 +21,19 @@ describe("sticky CTA visibility", () => {
     expect(isStickyCtaRouteAllowed("/solutions/request")).toBe(false);
   });
 
+  it("keeps the bar off homepage version previews, exactly as it is off /", () => {
+    // A /version-N page is the homepage shown somewhere else. Letting the bar
+    // onto it means every homepage review is judged against chrome the real
+    // homepage never carries, and against a second CTA competing with the
+    // page's own conversion architecture.
+    expect(isStickyCtaRouteAllowed("/version-1")).toBe(false);
+    expect(isStickyCtaRouteAllowed("/version-3")).toBe(false);
+    expect(isStickyCtaRouteAllowed("/version-4")).toBe(false);
+    expect(isStickyCtaRouteAllowed("/version-4?present=1")).toBe(false);
+    // The index that lists the versions is an ordinary page and keeps the bar.
+    expect(isStickyCtaRouteAllowed("/versions")).toBe(true);
+  });
+
   it("pins checkout and quote even when the page is too short to scroll", () => {
     expect(isStickyCtaPinnedRoute("/internal/warehouse/checkout")).toBe(true);
     expect(isStickyCtaPinnedRoute("/internal/warehouse/quote-request")).toBe(true);

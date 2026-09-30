@@ -21,6 +21,16 @@ describe("legacy /store destage", () => {
     });
   });
 
+  it("treats trailing slashes on public store paths as the same route", () => {
+    expect(classifyLegacyStorePath("/store/")).toEqual({ kind: "public_store" });
+    expect(classifyLegacyStorePath("/store/checkout/")).toEqual({ kind: "public_store" });
+    expect(classifyLegacyStorePath("/store/solution/")).toEqual({ kind: "public_store" });
+    expect(classifyLegacyStorePath("/store/managed/")).toEqual({
+      kind: "public_redirect",
+      to: "/solutions/proactive-ecosystem",
+    });
+  });
+
   it("does not reveal staff-only SKU destinations", () => {
     expect(classifyLegacyStorePath("/store/product/DE-SVC-CM-ENDPOINT-EDR-MO")).toEqual({
       kind: "generic_deny",

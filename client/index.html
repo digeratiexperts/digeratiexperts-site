@@ -23,7 +23,7 @@
     <meta name="keywords" content="MSP, MSSP, managed security, cybersecurity, IT support, Chandler Arizona, Phoenix, compliance, HIPAA, PCI DSS, SOC monitoring, incident response">
     <meta name="author" content="Digerati Experts">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://digeratiexperts.com/">
+    <!-- canonical is set per route by the app (DefaultCanonical / page Helmet) -->
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -46,10 +46,17 @@
     <meta name="twitter:image" content="https://digeratiexperts.com/og-image.png">
     <meta name="twitter:image:alt" content="Digerati Experts">
     
-    <!-- Favicon -->
+    <!-- Favicon — every file here is an export of brand/digerati-mark-tile.svg
+         (see brand/README.md). The SVG is preferred where supported, the .ico
+         carries crisp 16/32/48 for legacy tabs, and the PNGs cover the rest. -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png">
-    <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180x180.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#050312">
     
     <!-- Structured Data for Local Business -->
     <script type="application/ld+json">

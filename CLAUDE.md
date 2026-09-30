@@ -31,6 +31,7 @@ Each vendored skill carries an `UPSTREAM.md` with provenance, local deviations a
 | `/wat-framework` | automation / scraper / data pipeline, "WAT" | Workflows-Agents-Tools operating pattern for automation projects | project's own `workflows/`, `tools/`, `.tmp/` |
 | `/trigger-dev` | automate a process, cron job, poller on Trigger.dev | Beginner workflow-builder rules for Trigger.dev SDK v4 (build in a dedicated Trigger.dev project, not this repo) | that project's `src/trigger/` |
 | `/trigger-ref` | writing Trigger.dev task code | SDK v4 code reference | none |
+| `/msp-ai-kit` | MSP/MSSP prompts, ChatGPT custom instructions, Custom GPT, Claude Project, triage / SLA / SOW / security playbooks | Renders `kit.config.json` + `modules/` into copy-paste packs; optional installer for external MSP kits | `artifacts/msp-ai-kit/out/`, committed example under the skill |
 
 The Trigger.dev MCP server is declared in the root `.mcp.json`; enable it only when working on Trigger.dev automations.
 

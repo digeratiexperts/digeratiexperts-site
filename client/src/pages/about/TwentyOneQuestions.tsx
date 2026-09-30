@@ -51,7 +51,7 @@ export default function TwentyOneQuestions() {
         <p className="mb-3 text-sm text-white/55 md:hidden">
           Swipe sideways to compare companies.
         </p>
-        <div className="-mx-4 overflow-x-auto px-4 sm:-mx-6 sm:px-6">
+        <div className="-mx-4 overflow-x-auto px-4 sm:-mx-6 sm:px-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink" tabIndex={0} role="region" aria-label="21 questions comparison table">
           <table className="w-full min-w-[800px] border-collapse" data-testid="comparison-table">
             <thead>
               <tr>
@@ -111,9 +111,9 @@ export default function TwentyOneQuestions() {
             <Phone className="mr-3 inline-block h-8 w-8 -mt-1" />
             {PRIMARY_PHONE.display}
           </a>
-          <p className="text-lg font-medium leading-relaxed text-white/90">
+          <p className="text-lg font-medium leading-relaxed text-white">
             Call now for your FREE 30-Day Risk-Free Pilot<br />
-            <span className="text-white/75">Serving Phoenix, Scottsdale, Tempe, Chandler, Mesa & Surrounding Areas</span>
+            <span className="text-white">Serving Phoenix, Scottsdale, Tempe, Chandler, Mesa & Surrounding Areas</span>
           </p>
           <div className="mt-8">
             <Button asChild size="lg" className="h-12 bg-white px-8 font-semibold text-[#D3126A] hover:bg-white/95">

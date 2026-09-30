@@ -1,0 +1,19 @@
+{
+  "id": "sow-accounting-60",
+  "module": "proposals-sow",
+  "title": "SOW draft for a 60-seat accounting firm before insurance renewal",
+  "inputs": {
+    "[PROPOSAL, SOW, or PROJECT QUOTE NARRATIVE]": "SOW",
+    "[NAME, INDUSTRY, USERS, SITES, DECISION MAKER AND ROLE]": "Ledger & Vale CPAs, accounting, 60 users, 2 offices, managing partner",
+    "[PASTE pains, triggers, current stack, compliance pressure, timeline, budget signals]": "two days of downtime last tax season; insurer renewal requires MFA and EDR evidence; current provider slow; Microsoft 365; wants it signed before 1 December",
+    "[PACKAGE AND TIER, PROJECT ITEMS, or UNKNOWN]": "Business tier, Core IT and Security Operations",
+    "[DEADLINES, PROCUREMENT RULES, INSURANCE OR COMPLIANCE REQUIREMENTS]": "signature before 1 December; insurer control list"
+  },
+  "mustMention": [
+    "PRICE FROM CANONICAL SOURCE",
+    "out of scope"
+  ],
+  "mustNotMention": [
+    "$"
+  ]
+}

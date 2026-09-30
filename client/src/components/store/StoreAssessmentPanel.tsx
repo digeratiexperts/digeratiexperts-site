@@ -78,7 +78,7 @@ export function StoreAssessmentPanel({
         </div>
         <p className="mt-3 text-xs text-white/55">
           Or call{" "}
-          <a href={PRIMARY_PHONE.telHref} className="text-de-accent-ink hover:underline">
+          <a href={PRIMARY_PHONE.telHref} className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
             {PRIMARY_PHONE.display}
           </a>
         </p>

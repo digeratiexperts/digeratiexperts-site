@@ -72,7 +72,7 @@ export default function CampaignLanding() {
             </div>
             <aside className="md:col-span-5">
               <div className="rounded-2xl border border-de-hairline bg-de-raised p-6 md:p-8">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">Who this is for</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/55">Who this is for</p>
                 <p className="mt-3 text-base leading-relaxed text-white/80">{campaign.audience}</p>
                 <a
                   href={PRIMARY_PHONE.telHref}
@@ -199,7 +199,7 @@ export default function CampaignLanding() {
               <div className="mt-8 grid gap-4 lg:grid-cols-2">
                 {asset && (
                   <article className="rounded-2xl border border-de-hairline bg-de-raised p-6 md:p-8">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/55">
                       {RESOURCE_TYPE_LABEL[asset.type]}
                     </p>
                     <h3 className="mt-2 font-heading text-xl font-semibold text-white">{asset.title}</h3>
@@ -221,7 +221,7 @@ export default function CampaignLanding() {
                 )}
                 {brief && (
                   <article className="rounded-2xl border border-de-hairline bg-de-raised p-6 md:p-8">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/55">
                       Executive brief
                     </p>
                     <h3 className="mt-2 font-heading text-xl font-semibold text-white">{brief.title}</h3>

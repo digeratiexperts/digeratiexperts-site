@@ -19,6 +19,20 @@ import type { StoreOutcomeId } from "./storeMerchandising";
 export const STORE_IMAGE_BASE = "/images/store";
 export const MESHY_IMAGE_BASE = "/images/meshy";
 
+/**
+ * Every PNG under images/meshy and images/store has a same-name .webp sibling
+ * (generated 2026-09-13 with sharp, q80, heroes ≤1600 px, cards ≤960 px):
+ * 38.6 MB of PNG → 1.2 MB. The PNGs stay on disk for the SEO/og image and
+ * as the source of truth; the UI loads the WebP.
+ */
+export const STORE_IMAGE_EXT = ".webp";
+/** Social crawlers still prefer PNG/JPEG for og:image. */
+export const STORE_OG_IMAGE_EXT = ".png";
+
+export function toOgImageUrl(url: string): string {
+  return url.endsWith(STORE_IMAGE_EXT) ? url.slice(0, -STORE_IMAGE_EXT.length) + STORE_OG_IMAGE_EXT : url;
+}
+
 export type ProductVisualSource =
   | "product"
   | "sku_override"
@@ -87,25 +101,25 @@ const MESHY_SITE_IDS = new Set<string>([
 ]);
 
 function meshyHero(dir: string, id: string): string {
-  return `${MESHY_IMAGE_BASE}/${dir}/${id}.png`;
+  return `${MESHY_IMAGE_BASE}/${dir}/${id}${STORE_IMAGE_EXT}`;
 }
 
 function meshyCard(dir: string, id: string): string {
-  return `${MESHY_IMAGE_BASE}/${dir}/${id}-card.png`;
+  return `${MESHY_IMAGE_BASE}/${dir}/${id}-card${STORE_IMAGE_EXT}`;
 }
 
 export function categoryHeroUrl(category: ProductCategory): string {
   if (MESHY_CATEGORY_IDS.has(category)) {
     return meshyHero("categories", category);
   }
-  return `${STORE_IMAGE_BASE}/categories/${category}.png`;
+  return `${STORE_IMAGE_BASE}/categories/${category}${STORE_IMAGE_EXT}`;
 }
 
 export function categoryCardUrl(category: ProductCategory): string {
   if (MESHY_CATEGORY_IDS.has(category)) {
     return meshyCard("categories", category);
   }
-  return `${STORE_IMAGE_BASE}/categories/${category}-card.png`;
+  return `${STORE_IMAGE_BASE}/categories/${category}-card${STORE_IMAGE_EXT}`;
 }
 
 export function outcomeIconUrl(outcomeId: StoreOutcomeId): string {
@@ -113,7 +127,7 @@ export function outcomeIconUrl(outcomeId: StoreOutcomeId): string {
   if (MESHY_OUTCOME_IDS.has(imageId)) {
     return meshyHero("outcomes", imageId);
   }
-  return `${STORE_IMAGE_BASE}/outcomes/${imageId}.png`;
+  return `${STORE_IMAGE_BASE}/outcomes/${imageId}${STORE_IMAGE_EXT}`;
 }
 
 export function outcomeCardUrl(outcomeId: StoreOutcomeId): string {
@@ -121,14 +135,14 @@ export function outcomeCardUrl(outcomeId: StoreOutcomeId): string {
   if (MESHY_OUTCOME_IDS.has(imageId)) {
     return meshyCard("outcomes", imageId);
   }
-  return `${STORE_IMAGE_BASE}/outcomes/${imageId}-card.png`;
+  return `${STORE_IMAGE_BASE}/outcomes/${imageId}-card${STORE_IMAGE_EXT}`;
 }
 
 function siteAccentUrl(id: string): string {
   if (MESHY_SITE_IDS.has(id)) {
     return meshyHero("site", id);
   }
-  return `${STORE_IMAGE_BASE}/site/${id}.png`;
+  return `${STORE_IMAGE_BASE}/site/${id}${STORE_IMAGE_EXT}`;
 }
 
 export const siteAccentImages = {

@@ -2,14 +2,14 @@
 name: de-desk-ui
 description: >-
   Designs and restyles the DE Desk support widget (Ask DE / Get Support /
-  Client Tools) as one graphite application surface that matches the website —
+  Client Tools) as one white precision support panel over the website —
   not a paper theme, not a cream card in a purple shell. Use when editing
   ZohoASAPWidget, DE Desk, Ask DE, ASAP widget, support modal tabs, or Desk UI.
 ---
 
 # DE Desk UI
 
-DE Desk is a **premium DE application surface** integrated into the website. It uses the same graphite/charcoal field, white type, and magenta actions as the rest of digeratiexperts.com.
+DE Desk is a **premium DE application surface** integrated into the website. It is support chrome: a white precision panel (`#fbfbfa`, black/10 hairlines, near-black type) with magenta only for submit and incident, per `design/UI-STYLE-RULES.md` (Joe, 2026-09-28).
 
 Primary file: `client/src/components/ZohoASAPWidget.tsx`
 
@@ -23,14 +23,18 @@ Rejected by Joe (Tier 3 record — a concept that revisits one of these must ans
 ## Before you edit
 
 1. Read this skill, then [tokens-and-structure.md](tokens-and-structure.md).
-2. Restyle from DE tokens (`--de-surface`, `--de-raised`, `--de-hairline`, `#D3126A`) — not from rejected PNGs.
+2. Restyle through the widget's one `--desk-*` token set (white panel values; `#D3126A` for actions) — never the site's dark `--de-surface` / `--de-raised` / `--de-hairline`, and not from rejected PNGs.
 3. Screenshot after changes at 390 / 768 / 1440.
 4. Count Desk dialogs: exactly **one** `.de-desk-shell` / `role="dialog"` labeled “DE Desk help”.
 
 ## Non-negotiables (Tier 0 — every task mode; `design/DESIGN-AUTHORITY.md`)
 
+- **One shell.** White `#fbfbfa` panel, black/10 hairline border, soft shadow. No second modal, hero card, or inset “window.”
+- **One field for every tab.** Near-black ink on the white panel throughout. Do not paint one tab graphite and another white.
+- Magenta `#D3126A` is the only loud color: active tab underline, send, submit, selected issue, user bubbles, Fastest badge, 1px shell cap. Do not fill boxes with violet.
+- **Ask DE** is a conversational UI (conversation first, composer dominant, discovery chips).
+- **Get Support** is a service-desk form: prominent security incident, then focused issue choices, then white fields with a hairline and a magenta submit.
 - **Client Tools** is a front door, not a portal. Unauthenticated: sign-in + two “need help now” shortcuts. Authenticated: compact launcher groups only. No devices, RMM, vendor names, or fake service health.
-- **Get Support** puts a possible security incident first, before the ordinary issue list — incident routing is functional, not styling.
 - **Function labels**, not vendor names (`Start remote support` not `Zoho Assist`). Keep hrefs.
 - Do **not** remove the three tabs, ticket-chip routing, unread/heads-up, drag/resize/expand, or the lock disclaimer without asking DE.
 - Canonical portal login: `https://portal.digeratiexperts.com/portal/login` via `PORTAL_LOGIN`. Never invent `//login`.
@@ -67,13 +71,13 @@ Composer lives on **Ask DE only**. Incoming replies on Get Support / Client Tool
 ```
 DE Desk UI checklist:
 - [ ] Exactly one .de-desk-shell (no double chrome)
-- [ ] Graphite shell + simple header + circular expand/close
+- [ ] White panel + simple header + circular expand/close
 - [ ] Three tabs; active = magenta underline
-- [ ] Ask DE: dark transcript, discovery chips, dominant composer
-- [ ] Get Support: incident rail + issue list + dark form + magenta submit
+- [ ] Ask DE: white transcript, discovery chips, dominant composer
+- [ ] Get Support: incident rail + issue list + light form + magenta submit
 - [ ] Client Tools unauth: sign-in CTA, then support/remote only
 - [ ] Client Tools auth: Support / Secure services / Account launcher — no fake status
-- [ ] Contrast: white type on graphite; magenta only on actions
+- [ ] Contrast: near-black type on white; magenta only on actions
 - [ ] Visible focus, ~44px controls, prefers-reduced-motion
 - [ ] Browser screenshot at 390 / 768 / 1440
 - [ ] Logic untouched unless requested

@@ -40,6 +40,13 @@ export function isStickyCtaRouteAllowed(path: string): boolean {
   const pathname = path.split("?")[0] ?? path;
   return (
     pathname !== "/" &&
+    // A homepage version preview IS the homepage, just not at "/". The bar is
+    // kept off "/" because a homepage carries its own conversion architecture
+    // and a second competing CTA undercuts it — which is just as true of a
+    // preview of one. Without this every /version-N review judged the page
+    // with sticky chrome the real homepage never shows: at 1440 the bar sits
+    // across the middle of the hero, cutting the headline.
+    !pathname.startsWith("/version-") &&
     !pathname.startsWith("/portal") &&
     !pathname.startsWith("/store") &&
     !isDoor2Path(pathname) &&

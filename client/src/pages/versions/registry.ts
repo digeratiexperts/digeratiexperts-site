@@ -3,11 +3,18 @@
  * each reachable at /version-<n> for reference, never for search.
  *
  * A version is a frozen snapshot made with
- * scripts/snapshot-homepage-version.mjs (kind "react"), or a static build
- * served by Express (kind "static"), or a placeholder for work that has not
- * started (kind "planned"). /versions lists them all.
+ * scripts/snapshot-homepage-version.mjs (kind "react"), a live build under
+ * active development in this app (kind "build"), a static build served by
+ * Express (kind "static"), or a placeholder for work that has not started
+ * (kind "planned"). /versions lists them all.
+ *
+ * "react" and "build" are deliberately different kinds. A "react" version is
+ * frozen history and must never be edited; a "build" version is work in
+ * progress and is expected to change. Conflating them would put the frozen
+ * snapshots' guard test on a moving file, and the first inconvenient failure
+ * would get the guard relaxed for everything.
  */
-export type HomepageVersionKind = "react" | "static" | "planned";
+export type HomepageVersionKind = "react" | "build" | "static" | "planned";
 
 export interface HomepageVersion {
   /** Sequential number; the URL is /version-<n>. */
@@ -64,12 +71,13 @@ export const HOMEPAGE_VERSIONS: HomepageVersion[] = [
   {
     n: 4,
     path: "/version-4",
-    title: "Sections recomposed to flow on scroll",
-    date: "",
-    status: "Not started",
+    title: "Clean-sheet redesign, ten chapters",
+    date: "2026-09-27",
+    status: "In build — chapters 01–03 (draft PR #264). Not proposed for /; Joe is the approval gate.",
     summary:
-      "The next homepage: the same substance recomposed so the page reads as one scroll, conversion in the first viewport and at every chapter close, six domains leading, an eight-viewport length budget (Experience Plan §09).",
-    kind: "planned",
+      "A clean-sheet homepage, not a recomposition: ten chapters, one environment that transforms across the first three rather than a new illustration per section, and one primary action. Answers the measured failures of the production page — 23.5 viewports, 20 near-identical sections, 279 links with 19 in the hero. Governed by docs/VERSION-4-HOMEPAGE-SOURCE-OF-TRUTH.md.",
+    kind: "build",
+    source: "claude/homepage-v4",
   },
 ];
 

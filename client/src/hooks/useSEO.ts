@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { registerPageCanonical } from '@/components/DefaultCanonical';
 
 interface SEOProps {
   title: string;
@@ -61,11 +62,8 @@ export function useSEO({ title, description, canonical, ogImage, noIndex }: SEOP
     if (canonicalUrl) {
       updateOrCreateMetaTag('og:url', canonicalUrl, true);
       updateOrCreateMetaTag('twitter:url', canonicalUrl);
-      let link = document.querySelector('link[rel="canonical"]');
-      if (link) {
-        link.setAttribute('href', canonicalUrl);
-      }
     }
+    registerPageCanonical(canonical);
 
     if (noIndex) {
       updateOrCreateMetaTag('robots', 'noindex, nofollow');
@@ -74,6 +72,7 @@ export function useSEO({ title, description, canonical, ogImage, noIndex }: SEOP
     }
 
     return () => {
+      registerPageCanonical(undefined);
       document.title = BASE_TITLE;
     };
   }, [title, description, canonical, ogImage, noIndex]);

@@ -88,7 +88,6 @@
   <url><loc>https://digeratiexperts.com/legal/terms-of-use</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
   <url><loc>https://digeratiexperts.com/contact</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://digeratiexperts.com/store</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://digeratiexperts.com/solutions/request</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
   <!-- Door 2 solution families (13) -->
   <url><loc>https://digeratiexperts.com/store/solutions/it-operations</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://digeratiexperts.com/store/solutions/endpoint-devices</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
