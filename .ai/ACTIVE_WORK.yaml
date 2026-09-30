@@ -471,6 +471,38 @@ claims:
       catalogs are empty). Overlaps only this owner's older
       de-site-v2-scrollcraft claim on client/src/pages/versions/**; the v1
       and v3 snapshots there stay frozen. Zero kie.ai spend.
+  - id: de-homepage-v5-practical
+    owner: claude
+    subsystem: homepage-v5
+    branch: claude/homepage-v5-practical
+    base_sha: 67343aa9cc70ec045c8f285a3bd29297048ead69
+    files:
+      - client/src/pages/versions/v5/**
+      - client/src/App.tsx (the /version-5 route only)
+      - client/src/pages/versions/registry.ts (the v5 entry only)
+      - client/src/pages/versions/README.md (the v5 row only)
+      - server/spaKnownPaths.ts (the /version-5 entry only)
+      - server/spaKnownPaths.test.ts (the version list only)
+      - scripts/qa/homepage-v5-acceptance.mjs
+      - docs/CLAIMS-REGISTER.md (the Version 5 section only)
+      - artifacts/visual-qa/homepage-v5/**
+    status: active
+    started: 2026-09-30
+    note: >-
+      Joe, 2026-09-30, after judging every version so far not practical:
+      "exactly start over, make something better. dont make these mistakes.
+      make a way to know you will be successful and not fail." One
+      conventional homepage on a light ground with the real gold mark: what
+      DE does for Arizona businesses, for whom, the four published ProActive
+      prices, the written SLA response times, the founder's approved
+      photograph, the published FAQ, and how to reach us. Every figure is
+      read from pricing.ts, the SLA page, shared/companyContact.ts and the
+      guarantee page, and scripts/qa/homepage-v5-acceptance.mjs fails the
+      build on any figure that is not, on any broken link, any horizontal
+      scroll, any contrast below AA, any animation, or a first screen that
+      does not say what, where, one action and a phone. Preview only at the
+      noindex /version-5; production / is untouched. No kie.ai spend; no
+      generated imagery.
 # restore-homepage-v1 (branch claude/restore-homepage-v1) RETIRED 2026-09-09:
 # the claim was still listed active while the work was already fully contained
 # in main. Verified at main @ 611acfdb: `git rev-list --count
