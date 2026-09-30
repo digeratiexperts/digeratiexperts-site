@@ -30,6 +30,26 @@
 
 version: 2
 claims:
+  - id: exit-intent-second-opinion
+    owner: claude
+    subsystem: marketing-lead-capture
+    branch: claude/exit-intent-second-opinion
+    base_sha: 74535d76e9dacade78e4f3eedd4da9651745d3b4
+    files:
+      - client/src/components/ExitIntentPopup.tsx
+    status: active
+    started: 2026-09-30
+    note: >-
+      Joe, 2026-09-30, on the exit-intent popup: "we dont like popups but this
+      one is okay ... it can just be better marketing style or sales
+      insinuation", then "yes all this is approved". Maintenance Mode. Trigger
+      unchanged (desktop mouse-leave toward the chrome after the arming delay,
+      once per session). Copy moves to a second-opinion pitch, three facts
+      replace four benefit lines, the black logo bar is dropped for the paper
+      lockup, and an EXAMPLE FORMAT findings thumbnail sits beside the form.
+      Promises only what /api/newsletter does (lead + human follow-up); no
+      timeline, no "yours to keep" (both unconfirmed in docs/CLAIMS-REGISTER.md).
+      Every data-testid and the analytics calls are unchanged.
   - id: store-experience-v2
     owner: claude
     subsystem: public-store-door2
