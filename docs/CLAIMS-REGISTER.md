@@ -43,6 +43,7 @@ from how the site is built (canonical data, product capture) · **Unsupported**
 | Pricing progression (PR #178) | Coverage depth per package | `client/src/lib/proactiveCoverage.ts` canonical inclusions | Structural | Keep the rings bound to that file; never hand-edit inclusions |
 | How DE delivers (PR #178, formerly "Client proof") | DE Desk capture | DE's own product, labelled "Real, details removed"; no client data | Structural | Section renamed 2026-09-02 so a product capture is not presented as client proof. Real client evidence stays the reviews feed (Google, Yelp, Thumbtack), published only from live API or permissioned catalog entries. |
 | Cyber Risk Assessment CTA (PR #178) | "The inspection" figure with priority marks | Labelled "Example, not a client report" in the figure and caption | Structural | None |
+| Page metadata (`useSEO` in `client/src/pages/DigeratiHomepage.tsx`) | Description: "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment …" (was "24/7 operations") | SLA page: "24/7/365 emergency incident response availability" (`client/src/pages/legal/SLA.tsx`); Terms of Use: "Emergency Support: 24/7/365 for critical incidents". "Operations" was not tier-true: the IT (Entry) tier carries no 24/7 detection and response (`client/src/data/pricing.ts`) | Corrected 2026-09-30 | None |
 
 ## Version B preview `/v2` (noindex)
 
