@@ -15,8 +15,8 @@ import {
 } from "@/lib/solutionDraft";
 import { useDockHiddenWhileOpen } from "@/hooks/useDockHiddenWhileOpen";
 
-function deliveryCopy(need: SolutionDraftNeed, preference: string): string {
-  const delivery = need.delivery || preference;
+function deliveryCopy(_need: SolutionDraftNeed, preference: string): string {
+  const delivery = preference;
   if (delivery === "co_managed") return "Co-managed · preferred pricing";
   if (delivery === "standalone") return "Standalone · standard pricing";
   if (delivery === "unsure") return "Offer type not decided yet";

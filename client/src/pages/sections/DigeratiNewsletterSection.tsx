@@ -14,12 +14,11 @@ const chipClass =
 const cityChipClass =
   "inline-flex h-full min-h-12 w-full items-center justify-center rounded-lg border bg-transparent px-4 py-5 text-lg font-medium text-white/80 transition-colors hover:border-[#D3126A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)] sm:min-h-16 md:min-h-20 md:text-xl";
 
-/** What compliance support produces. Grounded in the six-domain model's governance domain. */
-const complianceOutputs = [
-  { code: "01", title: "Control mapping", body: "Framework requirements mapped to the controls you actually run." },
-  { code: "02", title: "Evidence collation", body: "Technical evidence packaged for questionnaires, reviews, and insurers." },
-  { code: "03", title: "Readiness support", body: "HIPAA, PCI DSS, SOC 2, and cyber-insurance readiness, matched to what applies to you." },
-  { code: "04", title: "Reporting", body: "Security and compliance reporting that feeds the roadmap and quarterly reviews." },
+const complianceItems = [
+  "HIPAA-aligned security and compliance support",
+  "SOC 2 readiness and control alignment",
+  "Cyber insurance readiness",
+  "Security and compliance reporting",
 ];
 
 const partnerMarks = ["Microsoft Partner", "Apple Consultants"];
@@ -90,35 +89,34 @@ export const DigeratiNewsletterSection = (): JSX.Element => {
           viewport={revealViewport}
           transition={revealTransition}
         >
-          <div className="mb-10 grid grid-cols-1 gap-8 md:mb-12 lg:grid-cols-12 lg:gap-10" data-testid="compliance-support">
-            <div className="lg:col-span-5">
-              <p className="mb-3 text-base font-semibold uppercase tracking-[0.2em] text-de-magenta-ink">
-                Evidence, not claims
-              </p>
-              <h2 className="font-heading text-2xl font-semibold tracking-[-0.02em] text-white md:text-3xl">
-                Security &amp; Compliance Support
-                <span className="text-[#D3126A]" aria-hidden="true">
-                  :
-                </span>
-              </h2>
-              <p className="mt-3 max-w-xl text-base leading-relaxed text-white/60 md:text-lg">
-                Framework names describe customer requirements Digerati Experts helps organizations address,
-                not certifications DE holds. The work is turning your technical posture into evidence a
-                reviewer, an auditor, or an insurer can use.
-              </p>
-              <p className="mt-4 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
-                {partnerMarks.join(" · ")}
-              </p>
-            </div>
-            <dl className="divide-y divide-[var(--de-hairline)] border-y border-[var(--de-hairline)] lg:col-span-7">
-              {complianceOutputs.map((item) => (
-                <div key={item.code} className="grid grid-cols-[2.5rem_1fr] gap-x-4 py-4 sm:grid-cols-[2.5rem_11rem_1fr] md:py-5">
-                  <dt className="pt-1 font-mono text-xs font-bold tracking-[0.18em] text-[#D3126A]" aria-hidden="true">{item.code}</dt>
-                  <dt className="text-base font-semibold text-white">{item.title}</dt>
-                  <dd className="col-start-2 mt-1 text-base leading-relaxed text-white/65 sm:col-start-3 sm:mt-0">{item.body}</dd>
-                </div>
+          <div className="mb-10 md:mb-12">
+            <h2 className="font-heading text-xl font-semibold tracking-[-0.02em] text-white md:text-2xl">
+              Security &amp; Compliance Support
+              <span className="text-[#D3126A]" aria-hidden="true">
+                :
+              </span>
+            </h2>
+            <p className="mt-2 max-w-3xl text-base leading-relaxed text-white/55">
+              Framework names describe customer requirements Digerati Experts helps organizations address —
+              not certifications DE holds.
+            </p>
+            <ul className="mt-5 flex flex-wrap gap-2.5">
+              {complianceItems.map((item) => (
+                <li key={item}>
+                  <span className={chipClass}>{item}</span>
+                </li>
               ))}
-            </dl>
+            </ul>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {partnerMarks.map((name) => (
+                <span
+                  key={name}
+                  className="inline-flex min-h-11 items-center rounded-lg border border-[var(--de-hairline)] px-3 text-base text-white/65"
+                >
+                  {name}
+                </span>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
@@ -213,7 +211,7 @@ export const DigeratiNewsletterSection = (): JSX.Element => {
               <p className="mt-5 text-base text-white/50">
                 Monthly security notes for Arizona operators.
                 <br />
-                <span className="text-base text-white/45">Unsubscribe anytime. We respect your privacy.</span>
+                <span className="text-base text-white/50">Unsubscribe anytime. We respect your privacy.</span>
               </p>
             </div>
 

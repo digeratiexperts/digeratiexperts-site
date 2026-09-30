@@ -1,0 +1,193 @@
+name: MSP AI Kit
+
+# The kit lives outside the app's Vitest and tsc scope, so it gets its own
+# checks: the Node builder and eval harness on Linux, and the Windows loader
+# (PSScriptAnalyzer, Pester, a real build/install/verify under Windows
+# PowerShell 5.1, a headless Technician Console audit, and a WPF smoke test that
+# builds every console page and renders it at 100 and 200 percent) on Windows.
+
+on:
+  pull_request:
+    paths:
+      - ".claude/skills/msp-ai-kit/**"
+      - ".github/workflows/msp-ai-kit.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".claude/skills/msp-ai-kit/**"
+      - ".github/workflows/msp-ai-kit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: msp-ai-kit-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  KIT: .claude/skills/msp-ai-kit
+
+jobs:
+  kit:
+    name: Builder, evals, facts, installers (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Builder tests
+        run: node --test $KIT/scripts/build.test.mjs
+      - name: Config and module check
+        run: node $KIT/scripts/build.mjs --check
+      - name: Committed example is current
+        run: node $KIT/scripts/build.mjs --verify $KIT/examples/digerati-experts
+      - name: Overlay profile builds
+        run: node $KIT/scripts/build.mjs --config $KIT/profiles/example-client-overlay.json --dry-run --quiet
+      - name: Company facts match shared/companyContact.ts
+        run: node $KIT/scripts/sync-facts.mjs --check
+      - name: Eval cases are well formed and golden outputs score
+        run: node $KIT/scripts/eval.mjs --score-golden
+      - name: Install targets (dry run against a scratch repo)
+        run: |
+          mkdir -p /tmp/scratch-repo && printf '# Scratch\n' > /tmp/scratch-repo/CLAUDE.md
+          node $KIT/scripts/install-targets.mjs --pack $KIT/examples/digerati-experts --repo /tmp/scratch-repo --all
+          node $KIT/scripts/install-targets.mjs --pack $KIT/examples/digerati-experts --repo /tmp/scratch-repo --all | grep -c "NO CHANGE" | xargs test 4 -eq
+          node $KIT/scripts/install-targets.mjs --pack $KIT/examples/digerati-experts --repo /tmp/scratch-repo --all --remove
+      - name: Upstream installer parses and lists
+        run: |
+          bash -n $KIT/scripts/install-upstream.sh
+          bash $KIT/scripts/install-upstream.sh --list
+          bash $KIT/scripts/install-upstream.sh --dry-run --only cmmc
+
+  windows-loader:
+    name: Windows loader and Technician Console (PowerShell 5.1 + WPF)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install PSScriptAnalyzer and Pester
+        shell: pwsh
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+          Install-Module Pester -MinimumVersion 5.5 -MaximumVersion 5.99.99 -Scope CurrentUser -Force   # Pester 6 drops Assert-MockCalled; the suite is written for 5
+      - name: Install Pester for Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+          Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope CurrentUser -Force | Out-Null
+          Install-Module Pester -MinimumVersion 5.5 -MaximumVersion 5.99.99 -Scope CurrentUser -Force -SkipPublisherCheck
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $results = Invoke-ScriptAnalyzer -Path "$env:KIT/windows" -Recurse -Settings "$env:KIT/windows/tests/PSScriptAnalyzerSettings.psd1"
+          $results | Format-Table -AutoSize | Out-String | Write-Host
+          $errors = @($results | Where-Object Severity -eq 'Error')
+          if ($errors.Count) { throw "PSScriptAnalyzer reported $($errors.Count) error(s)" }
+      - name: Parse under Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $errs = $null
+          foreach ($f in Get-ChildItem "$env:KIT/windows" -Recurse -Include *.ps1, *.psm1) {
+            [void][System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errs)
+            if ($errs.Count) { $errs | ForEach-Object { Write-Host "$($f.Name):$($_.Extent.StartLineNumber) $($_.Message)" }; throw "parse errors in $($f.Name)" }
+          }
+          Write-Host "all scripts parse under $($PSVersionTable.PSVersion)"
+      - name: Kit builder tests on Windows (paths, line endings)
+        shell: pwsh
+        run: |
+          node --test "$env:KIT/scripts/build.test.mjs"
+          if ($LASTEXITCODE -ne 0) { throw "builder tests failed on Windows" }
+          node "$env:KIT/scripts/build.mjs" --verify "$env:KIT/examples/digerati-experts"
+          if ($LASTEXITCODE -ne 0) { throw "example pack drifted on a Windows checkout" }
+      - name: Pester tests (Windows PowerShell 5.1)
+        shell: powershell
+        run: |
+          Import-Module Pester -MinimumVersion 5.5 -MaximumVersion 5.99.99
+          $cfg = New-PesterConfiguration
+          $cfg.Run.Path = @("$env:KIT/windows/tests", "$env:KIT/windows/console/tests")
+          $cfg.Run.Exit = $true
+          $cfg.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $cfg
+      - name: Dry run of everything (5.1)
+        shell: powershell
+        run: |
+          & "$env:KIT/windows/Install-MspAiKit.ps1" -Action All -NonInteractive -WhatIf -OutDir "$env:RUNNER_TEMP\packs-dry"
+          if ($LASTEXITCODE -ne 0) { throw "dry run exit $LASTEXITCODE" }
+      - name: Build, install, verify for real (5.1)
+        shell: powershell
+        run: |
+          & "$env:KIT/windows/Install-MspAiKit.ps1" -Action All -NonInteractive -OutDir "$env:RUNNER_TEMP\packs"
+          if ($LASTEXITCODE -ne 0) { throw "All exit $LASTEXITCODE" }
+          if (-not (Test-Path "$env:RUNNER_TEMP\packs\INDEX.md")) { throw "pack not written" }
+          if (-not (Test-Path "$env:USERPROFILE\.claude\skills\msp-ai-kit\SKILL.md")) { throw "skill link not reachable" }
+          & "$env:KIT/windows/Install-MspAiKit.ps1" -Action Clipboard -NonInteractive -OutDir "$env:RUNNER_TEMP\packs"
+          & "$env:KIT/windows/Install-MspAiKit.ps1" -Action Uninstall -NonInteractive
+          if ($LASTEXITCODE -ne 0) { throw "Uninstall exit $LASTEXITCODE" }
+      - name: 32-bit host relaunches in 64-bit and keeps the exit code (RMM agents)
+        shell: cmd
+        run: |
+          %SystemRoot%\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%KIT%\windows\console\DETechConsole.ps1" -Headless -Client no-such-client -DataDir "%RUNNER_TEMP%\de-console-32"
+          if %ERRORLEVEL% NEQ 2 (echo expected exit 2 from a refused run under a 32-bit host & exit /b 1)
+          echo 32-bit host: exit code passed through
+          rem echo leaves ERRORLEVEL at 2, which cmd would hand back as the step's result
+          exit /b 0
+      - name: Technician Console headless audit (5.1, changes nothing)
+        shell: powershell
+        run: |
+          & "$env:KIT/windows/console/DETechConsole.ps1" -Headless -Client alamo -Mode takeover -DataDir "$env:RUNNER_TEMP\de-console"
+          $code = $LASTEXITCODE
+          # A CI runner is not an Alamo laptop, so NOT READY (1) or BLOCKED (2) is the honest answer; a crash is not.
+          if ($code -notin @(0, 1, 2)) { throw "headless console exit $code" }
+          $zip = @(Get-ChildItem "$env:RUNNER_TEMP\de-console\evidence" -Recurse -Filter *.zip)
+          if (-not $zip.Count) { throw 'no evidence bundle written' }
+          Write-Host "headless exit $code; bundle $($zip[0].FullName)"
+          exit 0
+      - name: WPF window smoke (every page, 100 and 200 percent scale, no window shown)
+        shell: powershell
+        run: |
+          & "$env:KIT/windows/tests/Invoke-GuiSmoke.ps1" -OutDir "$env:RUNNER_TEMP\de-smoke"
+          if ($LASTEXITCODE -ne 0) { throw "GUI smoke exit $LASTEXITCODE" }
+      - name: Page renders into the log (small JPEGs, base64, for visual review where artifacts can't be downloaded)
+        if: always()
+        shell: powershell
+        run: |
+          Add-Type -AssemblyName System.Drawing
+          $codec = [Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq 'image/jpeg' }
+          $q = New-Object Drawing.Imaging.EncoderParameters 1; $q.Param[0] = New-Object Drawing.Imaging.EncoderParameter ([Drawing.Imaging.Encoder]::Quality, [long]62)
+          foreach ($f in @(Get-ChildItem "$env:RUNNER_TEMP\de-smoke" -Filter '*-96dpi.png' -ErrorAction SilentlyContinue | Sort-Object Name)) {
+            $img = [Drawing.Image]::FromFile($f.FullName)
+            try {
+              $w = [Math]::Min(1000, $img.Width); $h = [int]($img.Height * $w / $img.Width)
+              $bmp = New-Object Drawing.Bitmap $w, $h; $g = [Drawing.Graphics]::FromImage($bmp); $g.InterpolationMode = 'HighQualityBicubic'; $g.DrawImage($img, 0, 0, $w, $h); $g.Dispose()
+              $ms = New-Object IO.MemoryStream; $bmp.Save($ms, $codec, $q); $bmp.Dispose()
+              $b64 = [Convert]::ToBase64String($ms.ToArray())
+              Write-Host "===RENDER-BEGIN $($f.BaseName) ${w}x${h}==="
+              for ($i = 0; $i -lt $b64.Length; $i += 3000) { Write-Host ('RENDER:' + $b64.Substring($i, [Math]::Min(3000, $b64.Length - $i))) }
+              Write-Host "===RENDER-END $($f.BaseName)==="
+            } finally { $img.Dispose() }
+          }
+      - name: Collect logs into the workspace
+        if: always()
+        shell: powershell
+        run: |
+          $dest = Join-Path $env:GITHUB_WORKSPACE 'ci-artifacts'
+          New-Item -ItemType Directory -Path $dest -Force | Out-Null
+          foreach ($src in @("$env:ProgramData\DE\logs", "$env:LOCALAPPDATA\DE\logs", "$env:RUNNER_TEMP\de-smoke", "$env:RUNNER_TEMP\de-console\logs")) {
+            if (Test-Path $src) { Copy-Item -Path $src -Destination (Join-Path $dest (Split-Path $src -Leaf)) -Recurse -Force -ErrorAction SilentlyContinue }
+          }
+          Get-ChildItem "$env:RUNNER_TEMP\de-console\evidence" -Recurse -Include report-*.html -ErrorAction SilentlyContinue | Copy-Item -Destination $dest -ErrorAction SilentlyContinue
+          if (Test-Path "$env:RUNNER_TEMP\packs\INDEX.md") { Copy-Item "$env:RUNNER_TEMP\packs\INDEX.md" $dest }
+      - name: Upload receipts, logs and smoke renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: msp-ai-kit-windows-logs
+          path: ci-artifacts
+          if-no-files-found: ignore

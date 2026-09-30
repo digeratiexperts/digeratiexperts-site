@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { db } from "../db";
-import { syncConflicts, syncFailures, syncInbox, syncOutbox, publicCatalogSnapshots } from "@shared/schema";
+import { syncConflicts, syncFailures, syncInbox, syncOutbox, publicCatalogSnapshots, syncProjections } from "@shared/schema";
 import { and, asc, eq, lt, sql } from "drizzle-orm";
 import type { DeSyncEnvelope, DeSyncEventType, DeSyncSource } from "./deSyncContract";
 import { createDeSyncEnvelope, type DeSyncPayload } from "./deSyncContract";
@@ -73,6 +73,30 @@ const memoryInbox = new Map<string, SyncInboxRecord>();
 const memoryFailures = new Map<string, SyncFailureRecord>();
 const memoryConflicts = new Map<string, SyncConflictRecord>();
 const memoryCatalog = new Map<string, { snapshot: Record<string, unknown>; publishedAt: Date; sourceVersion: string | null }>();
+
+export interface HubProjectionRecord {
+  entityType: string;
+  entityId: string;
+  canonicalAccountId: string | null;
+  eventType: string;
+  eventId: string;
+  payload: Record<string, unknown>;
+  updatedAt: Date;
+}
+
+const memoryProjections = new Map<string, HubProjectionRecord>();
+
+export function projectionKey(entityType: string, entityId: string): string {
+  return `${entityType}:${entityId}`;
+}
+
+/** An event applies when it is the first copy or its occurredAt is not older than the stored row. */
+export function isNewerProjection(existingUpdatedAt: Date | null, occurredAt: string): boolean {
+  if (!existingUpdatedAt) return true;
+  const incoming = Date.parse(occurredAt);
+  if (!Number.isFinite(incoming)) return false;
+  return incoming >= existingUpdatedAt.getTime();
+}
 
 function useMemory(): boolean {
   return !process.env.DATABASE_URL || !db;
@@ -427,6 +451,55 @@ export async function saveCatalogSnapshot(snapshot: Record<string, unknown>, sou
     });
 }
 
+export async function getHubProjectionRecord(
+  entityType: string,
+  entityId: string,
+): Promise<HubProjectionRecord | null> {
+  const id = projectionKey(entityType, entityId);
+  if (useMemory()) return memoryProjections.get(id) ?? null;
+  const [row] = await db.select().from(syncProjections).where(eq(syncProjections.id, id)).limit(1);
+  if (!row) return null;
+  return {
+    entityType: row.entityType,
+    entityId: row.entityId,
+    canonicalAccountId: row.canonicalAccountId,
+    eventType: row.eventType,
+    eventId: row.eventId,
+    payload: (row.payload ?? {}) as Record<string, unknown>,
+    updatedAt: row.updatedAt,
+  };
+}
+
+export async function saveHubProjection(record: HubProjectionRecord): Promise<void> {
+  const id = projectionKey(record.entityType, record.entityId);
+  if (useMemory()) {
+    memoryProjections.set(id, record);
+    return;
+  }
+  await db
+    .insert(syncProjections)
+    .values({
+      id,
+      entityType: record.entityType,
+      entityId: record.entityId,
+      canonicalAccountId: record.canonicalAccountId,
+      eventType: record.eventType,
+      eventId: record.eventId,
+      payload: record.payload,
+      updatedAt: record.updatedAt,
+    })
+    .onConflictDoUpdate({
+      target: syncProjections.id,
+      set: {
+        canonicalAccountId: record.canonicalAccountId,
+        eventType: record.eventType,
+        eventId: record.eventId,
+        payload: record.payload,
+        updatedAt: record.updatedAt,
+      },
+    });
+}
+
 export async function getCatalogSnapshot(): Promise<{
   snapshot: Record<string, unknown>;
   publishedAt: Date;
@@ -531,6 +604,10 @@ export async function retryFailed(eventId?: string): Promise<number> {
   return updated.length;
 }
 
+export function clearMemoryProjections(): void {
+  memoryProjections.clear();
+}
+
 /** Test helper — reset in-memory stores. */
 export function resetDeSyncMemory(): void {
   memoryOutbox.clear();
@@ -538,4 +615,5 @@ export function resetDeSyncMemory(): void {
   memoryFailures.clear();
   memoryConflicts.clear();
   memoryCatalog.clear();
+  memoryProjections.clear();
 }

@@ -374,6 +374,19 @@ export function registerSecureZohoStoreCheckout(
           })
           .returning();
 
+        void import("./integrations/enqueueStoreOrder")
+          .then(({ enqueueStoreOrderCreated }) => enqueueStoreOrderCreated({
+            id: order.id,
+            orderNumber: order.orderNumber,
+            status: "awaiting_payment",
+            clientId: order.clientId,
+            billingEmail: order.billingEmail,
+            billingName: order.billingName,
+            billingCompany: order.billingCompany,
+            lineItems,
+          }))
+          .catch((error) => console.warn("[store-order] Hub enqueue skipped:", error?.message || error));
+
         const confirmationToken = orderConfirmationToken(order.id);
 
         try {
@@ -480,6 +493,19 @@ export function registerSecureZohoStoreCheckout(
           .insert(storeOrders)
           .values(orderValues)
           .returning();
+
+        void import("./integrations/enqueueStoreOrder")
+          .then(({ enqueueStoreOrderCreated }) => enqueueStoreOrderCreated({
+            id: order.id,
+            orderNumber: order.orderNumber,
+            status: order.status,
+            clientId: order.clientId,
+            billingEmail: order.billingEmail,
+            billingName: order.billingName,
+            billingCompany: order.billingCompany,
+            lineItems: orderValues.lineItems,
+          }))
+          .catch((error) => console.warn("[store-order] Hub enqueue skipped:", error?.message || error));
 
         console.info("[SECURITY] STORE_ORDER_CREATED", {
           orderId: order.id,

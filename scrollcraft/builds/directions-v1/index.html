@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.ico">
+<title>Look, Behave, Move</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+/* ── page tokens (theme-aware) ─────────────────────────────────────────── */
+:root{
+  --paper:#F5F4F0; --surface:#FFFFFF; --ink:#16181A; --soft:#585E64; --faint:#878D93;
+  --rule:#E0DFD9; --rule-hard:#C9C8C0; --pine:#17493A; --ochre:#8A6A1F; --magenta:#D3126A;
+  --grot:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#131518; --surface:#1A1D21; --ink:#EDEEEA; --soft:#9BA1A7; --faint:#727880;
+    --rule:#292D33; --rule-hard:#3A3F46; --pine:#6DBE9B; --ochre:#C9A34E; --magenta:#F2569C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131518; --surface:#1A1D21; --ink:#EDEEEA; --soft:#9BA1A7; --faint:#727880;
+  --rule:#292D33; --rule-hard:#3A3F46; --pine:#6DBE9B; --ochre:#C9A34E; --magenta:#F2569C;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--paper); color:var(--ink); font-family:var(--serif);
+  font-size:16.5px; line-height:1.62; -webkit-font-smoothing:antialiased;
+  padding-inline:clamp(18px,4vw,60px); padding-block:0;
+}
+.wrap{max-width:1220px;margin-inline:auto}
+h1,h2,h3,h4{margin:0;font-family:var(--grot);font-weight:500;text-wrap:balance;letter-spacing:-.02em}
+p{margin:0}
+a{color:inherit}
+.lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--faint)}
+
+/* ── masthead ──────────────────────────────────────────────────────────── */
+.mast{padding-block:clamp(40px,6vh,76px) clamp(30px,5vh,52px)}
+/* brand/README.md: digerati-logo.svg is the light-ground lockup (gold mark,
+   graphite wordmark) and the reverse is for dark. Never recolour either. */
+.mast .mark{display:block;margin-bottom:26px}
+.mast .mark img{height:34px;width:auto;display:block}
+.mast .mark--dark{display:none}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .mast .mark--light{display:none}
+  :root:not([data-theme="light"]) .mast .mark--dark{display:block}
+}
+:root[data-theme="dark"] .mast .mark--light{display:none}
+:root[data-theme="dark"] .mast .mark--dark{display:block}
+.mast h1{font-size:clamp(34px,5.1vw,62px);line-height:1.04;max-width:19ch;margin-top:16px}
+.mast h1 b{font-weight:500;color:var(--pine)}
+.mast .sf{margin-top:22px;max-width:64ch;font-size:clamp(16.5px,1.5vw,18.5px);color:var(--soft)}
+
+/* ── the correction ────────────────────────────────────────────────────── */
+.corr{
+  border-block:1px solid var(--rule);padding-block:clamp(24px,3.5vh,34px);
+  display:grid;grid-template-columns:170px 1fr;gap:clamp(18px,3vw,40px);align-items:start
+}
+@media(max-width:720px){.corr{grid-template-columns:1fr;gap:12px}}
+.corr blockquote{margin:0;font-size:clamp(17px,1.7vw,21px);line-height:1.45;font-family:var(--grot);
+  font-weight:400;letter-spacing:-.015em;max-width:52ch}
+.corr .who{margin-top:12px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--faint)}
+
+/* ── the system ────────────────────────────────────────────────────────── */
+.sys{padding-block:clamp(38px,6vh,64px)}
+.sys h2{font-size:clamp(24px,2.6vw,32px);margin-bottom:8px}
+.sys>p{max-width:62ch;color:var(--soft);margin-bottom:30px}
+.layers{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule)}
+@media(max-width:820px){.layers{grid-template-columns:1fr}}
+.layer{background:var(--paper);padding:22px 20px 24px;display:flex;flex-direction:column;gap:9px}
+.layer .n{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;color:var(--pine)}
+.layer h3{font-size:20px;letter-spacing:-.015em}
+.layer .role{font-family:var(--grot);font-size:13px;color:var(--faint);letter-spacing:.01em}
+.layer p{font-size:14.5px;line-height:1.5;color:var(--soft)}
+
+/* ── direction block ───────────────────────────────────────────────────── */
+.dir{padding-block:clamp(44px,7vh,80px);border-top:1px solid var(--rule)}
+.dir__top{display:grid;grid-template-columns:1fr 1fr;gap:clamp(22px,4vw,56px);align-items:start;margin-bottom:34px}
+@media(max-width:860px){.dir__top{grid-template-columns:1fr;gap:24px}}
+.dir__no{font-family:var(--mono);font-size:11px;letter-spacing:.17em;color:var(--pine);margin-bottom:10px}
+.dir h2{font-size:clamp(28px,3.6vw,46px);line-height:1.03;max-width:14ch}
+.dir__lead{margin-top:16px;font-size:17px;color:var(--soft);max-width:52ch}
+.spec{display:grid;grid-template-columns:112px 1fr;gap:7px 18px;font-size:14.5px}
+@media(max-width:520px){.spec{grid-template-columns:1fr;gap:2px 0}}
+.spec dt{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);padding-top:4px}
+.spec dd{margin:0;color:var(--soft);line-height:1.5}
+.spec dd b{color:var(--ink);font-weight:600;font-family:var(--serif)}
+.pact{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--rule);margin-top:26px}
+@media(max-width:720px){.pact{grid-template-columns:1fr}}
+.pact>div{padding:16px 18px}
+.pact>div+div{border-left:1px solid var(--rule)}
+@media(max-width:720px){.pact>div+div{border-left:0;border-top:1px solid var(--rule)}}
+.pact h4{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:400;margin-bottom:9px}
+.pact--buy h4{color:var(--pine)} .pact--cost h4{color:var(--ochre)}
+.pact ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.pact li{font-size:14px;line-height:1.45;color:var(--soft);padding-left:16px;position:relative}
+.pact li::before{content:"";position:absolute;left:0;top:.65em;width:8px;height:1px;background:var(--rule-hard)}
+
+/* ── frame chrome ──────────────────────────────────────────────────────── */
+.framebar{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.framebar .cap{font-size:13.5px;color:var(--faint);font-family:var(--grot)}
+.frame{
+  /* Specimens keep their own light palette in every host theme: a light design
+     shown on a dark ground would misrepresent itself. */
+  --f-paper:#F5F4F0; --f-white:#FFFFFF; --f-ink:#16181A; --f-soft:#585E64;
+  --f-faint:#8A9096; --f-rule:#DFDED7; --f-hard:#C4C3BA; --f-ochre:#8A6A1F;
+  --f-accent:#17493A;
+  background:var(--f-paper);color:var(--f-ink);
+  border:1px solid var(--rule-hard);overflow:hidden;position:relative
+}
+[data-pal="magenta"] .frame{--f-accent:#D3126A}
+.frame *{box-sizing:border-box}
+
+/* frame A — calm engineered confidence */
+.fa{padding:clamp(24px,3vw,44px) clamp(24px,4vw,64px) clamp(38px,5vw,72px)}
+.fa__bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:clamp(40px,7vw,96px)}
+/* frames are always light, so they always take the light-ground lockup */
+.fa__bar img{height:28px;width:auto;display:block}
+.fa__bar span{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--f-soft)}
+.fa h3{font-family:var(--grot);font-weight:500;letter-spacing:-.033em;line-height:.98;
+  font-size:clamp(34px,6.2vw,84px);max-width:15ch;color:var(--f-ink)}
+.fa h3 em{font-style:normal;color:var(--f-accent)}
+.fa .dek{font-family:var(--serif);font-size:clamp(16px,1.55vw,20px);line-height:1.5;color:var(--f-soft);
+  max-width:44ch;margin-top:clamp(22px,3vw,34px)}
+.fa .act{margin-top:clamp(26px,3.4vw,40px);display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.fa .btn{font-family:var(--grot);font-weight:500;font-size:15px;letter-spacing:-.005em;
+  background:var(--f-accent);color:#fff;padding:14px 24px;text-decoration:none;display:inline-block}
+.fa .sub{font-family:var(--serif);font-size:14.5px;color:var(--f-faint);max-width:34ch;line-height:1.45}
+.fa .rule{height:1px;background:var(--f-accent);margin-top:clamp(38px,5vw,64px);width:88px}
+.fa .why{margin-top:16px;font-family:var(--serif);font-size:15px;color:var(--f-soft);max-width:56ch;line-height:1.5}
+
+/* frame B — precision product company */
+.fb{background:var(--f-white);padding:clamp(22px,3vw,38px) clamp(22px,3.4vw,44px) clamp(28px,4vw,46px)}
+.fb__head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;
+  padding-bottom:14px;border-bottom:1px solid var(--f-ink)}
+.fb__head h3{font-family:var(--grot);font-weight:500;font-size:clamp(19px,2.1vw,27px);letter-spacing:-.022em}
+.fb__head .meta{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--f-faint)}
+.blocks{display:grid;grid-template-columns:repeat(7,1fr);border-left:1px solid var(--f-rule)}
+@media(max-width:900px){.blocks{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:560px){.blocks{grid-template-columns:repeat(2,1fr)}}
+.blk{border-right:1px solid var(--f-rule);border-bottom:1px solid var(--f-rule);padding:13px 12px 16px;
+  display:flex;flex-direction:column;gap:6px;min-height:132px}
+.blk .n{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;color:var(--f-faint)}
+.blk b{font-family:var(--grot);font-weight:500;font-size:14.5px;letter-spacing:-.012em;color:var(--f-ink)}
+.blk span{font-family:var(--serif);font-size:12.5px;line-height:1.4;color:var(--f-soft)}
+.cont{
+  border:1px solid var(--f-accent);border-top:0;padding:13px 14px;display:grid;
+  grid-template-columns:auto auto minmax(0,1fr);gap:4px 18px;align-items:baseline;background:var(--f-white)
+}
+@media(max-width:760px){.cont{grid-template-columns:1fr}}
+.cont .n{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;color:var(--f-accent);white-space:nowrap}
+.cont b{font-family:var(--grot);font-weight:500;font-size:15px;letter-spacing:-.012em;white-space:nowrap}
+.cont span{font-family:var(--serif);font-size:12.5px;line-height:1.4;color:var(--f-soft);min-width:0}
+.cadence{margin-top:26px;padding-top:13px;border-top:1px solid var(--f-ink);
+  display:grid;grid-template-columns:repeat(7,1fr);gap:0}
+@media(max-width:900px){.cadence{grid-template-columns:repeat(4,1fr);gap:14px 0}}
+@media(max-width:560px){.cadence{grid-template-columns:repeat(2,1fr)}}
+.cad{padding-right:14px}
+.cad i{display:block;font-style:normal;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+  color:var(--f-accent);margin-bottom:5px}
+.cad b{display:block;font-family:var(--grot);font-weight:500;font-size:13.5px;margin-bottom:3px;letter-spacing:-.01em}
+.cad span{font-family:var(--serif);font-size:11.5px;line-height:1.35;color:var(--f-soft)}
+
+/* frame C — bright cinematic story */
+.fc{padding:clamp(22px,3vw,38px) clamp(20px,3vw,40px) clamp(26px,3.4vw,42px)}
+.fc__head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.fc__head h3{font-family:var(--grot);font-weight:500;font-size:clamp(18px,2vw,25px);letter-spacing:-.022em}
+.fc__head .meta{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--f-faint)}
+.beats{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-top:1px solid var(--f-hard)}
+@media(max-width:980px){.beats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.beats{grid-template-columns:1fr}}
+.beat{padding:16px 16px 20px;border-right:1px solid var(--f-rule);display:flex;flex-direction:column;gap:11px}
+.beat:last-child{border-right:0}
+@media(max-width:980px){.beat{border-bottom:1px solid var(--f-rule)}}
+.beat .n{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--f-accent)}
+.beat svg{width:100%;height:auto;display:block}
+.beat b{font-family:var(--grot);font-weight:500;font-size:14.5px;line-height:1.2;letter-spacing:-.015em}
+.beat span{font-family:var(--serif);font-size:12.5px;line-height:1.4;color:var(--f-soft)}
+.fc__note{margin-top:20px;padding-top:14px;border-top:1px solid var(--f-rule);
+  font-family:var(--serif);font-size:13.5px;line-height:1.5;color:var(--f-soft);max-width:74ch}
+.fc__note b{color:var(--f-ink);font-weight:600}
+
+/* ── palette switch ────────────────────────────────────────────────────── */
+.pal{
+  position:sticky;top:0;z-index:30;background:var(--paper);border-bottom:1px solid var(--rule);
+  padding-block:11px;display:flex;align-items:center;gap:16px;flex-wrap:wrap
+}
+.pal .q{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint)}
+.pal .sw{display:flex;border:1px solid var(--rule-hard)}
+.pal button{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+  padding:7px 14px;border:0;background:var(--surface);color:var(--soft);cursor:pointer;
+  border-right:1px solid var(--rule-hard);display:flex;align-items:center;gap:8px
+}
+.pal button:last-child{border-right:0}
+.pal button i{width:9px;height:9px;display:block;font-style:normal}
+.pal button[data-on="1"]{background:var(--ink);color:var(--paper)}
+.pal button:focus-visible{outline:2px solid var(--pine);outline-offset:-2px}
+.pal .hint{font-size:13px;color:var(--faint);font-family:var(--serif)}
+
+/* ── governance / decisions ────────────────────────────────────────────── */
+.gov{padding-block:clamp(38px,6vh,64px);border-top:1px solid var(--rule)}
+.gov h2{font-size:clamp(24px,2.8vw,34px);margin-bottom:18px}
+.warn{border-left:2px solid var(--ochre);padding:2px 0 2px 20px;max-width:74ch;color:var(--soft);font-size:15.5px}
+.warn b{color:var(--ink);font-weight:600}
+.decisions{margin-top:30px;display:flex;flex-direction:column}
+.dec{padding-block:18px;border-top:1px solid var(--rule);display:grid;grid-template-columns:26px 1fr;gap:16px}
+.dec .q{font-family:var(--mono);font-size:11px;color:var(--pine);padding-top:3px}
+.dec h4{font-family:var(--grot);font-weight:500;font-size:17.5px;letter-spacing:-.015em;margin-bottom:6px}
+.dec p{font-size:14.5px;color:var(--soft);max-width:70ch;line-height:1.5}
+.dec .rec{margin-top:7px;font-size:14px;color:var(--ink)}
+.dec .rec b{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--pine);font-weight:400}
+
+/* ── marks record ──────────────────────────────────────────────────────── */
+.marks{padding-block:clamp(34px,5vh,56px);border-top:1px solid var(--rule)}
+.marks h2{font-size:clamp(22px,2.4vw,28px);margin-bottom:6px}
+.marks>p{color:var(--soft);font-size:15px;max-width:64ch;margin-bottom:22px}
+.mtab{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:1px;background:var(--rule);
+  border:1px solid var(--rule)}
+.m{background:var(--paper);padding:11px 13px;display:flex;flex-direction:column;gap:3px}
+.m .r{display:flex;align-items:baseline;gap:8px}
+.m b{font-family:var(--grot);font-weight:500;font-size:14px;letter-spacing:-.01em}
+.m i{font-style:normal;font-family:var(--mono);font-size:9px;letter-spacing:.12em;padding:2px 5px;white-space:nowrap}
+.m[data-v="yes"] i{background:var(--pine);color:var(--paper)}
+.m[data-v="maybe"] i{border:1px solid var(--ochre);color:var(--ochre)}
+.m[data-v="no"] i{border:1px solid var(--rule-hard);color:var(--faint)}
+.m[data-v="no"]{opacity:.62}
+.m span{font-family:var(--serif);font-size:12.5px;line-height:1.38;color:var(--soft)}
+
+/* ── close ─────────────────────────────────────────────────────────────── */
+.close{padding-block:clamp(38px,6vh,64px);border-top:1px solid var(--rule)}
+.close h2{font-size:clamp(24px,2.8vw,34px);margin-bottom:14px}
+.close p{max-width:66ch;color:var(--soft)}
+.steps{margin-top:26px;display:flex;flex-direction:column;gap:10px;max-width:74ch}
+/* Scoped to the row only: an unscoped `.steps div` also made the inner text a
+   flex container, and a flex child defaults to min-width:auto, so the copy
+   could not wrap and pushed the page 109px wide at 390. */
+.steps>div{display:flex;gap:16px;font-size:15px;line-height:1.5;color:var(--soft)}
+.steps>div>div{min-width:0}
+.steps>div>span{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--pine);padding-top:4px;min-width:64px;white-space:nowrap}
+@media(max-width:560px){
+  .steps>div{flex-direction:column;gap:3px}
+  .steps>div>span{padding-top:0}
+}
+.steps b{color:var(--ink);font-weight:600}
+footer{padding-block:22px 44px;border-top:1px solid var(--rule);margin-top:34px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="root" data-pal="pine">
+
+<header class="mast">
+  <span class="mark"><img class="mark--light" src="assets/digerati-logo.svg" alt="Digerati Experts" width="436" height="105"><img class="mark--dark" src="assets/digerati-logo-reverse.svg" alt="" aria-hidden="true" width="436" height="105"></span>
+  <p class="lab">Flagship visual reset · phase D · the three directions</p>
+  <h1>Look like an advisory firm. Behave like a product company. <b>Move like a story.</b></h1>
+  <p class="sf">
+    Your three directions, specified far enough to build from, with a live Digerati frame for each —
+    real copy, real service names, the real mark. Nothing here is engineered yet and the flagship
+    rebuild stays frozen until you pick.
+  </p>
+</header>
+
+<section class="corr">
+  <p class="lab">The correction</p>
+  <div>
+    <blockquote>
+      "Don't choose a whole website as 'the DE look.' The strongest answer is a deliberate
+      combination of visual base + motion language + product/technical posture."
+    </blockquote>
+    <p class="who">Joe, on the reference board — adopted</p>
+  </div>
+</section>
+
+<section class="sys">
+  <h2>Three layers, not three options</h2>
+  <p>
+    Read back to you so a wrong reading gets caught now: these are not rival looks competing for
+    the whole site. Each governs a different surface, and the third governs how you travel between
+    them. If you meant three competing whole-site treatments, say so and I will re-cut.
+  </p>
+  <div class="layers">
+    <div class="layer">
+      <div class="n">01 · base</div>
+      <h3>Calm Engineered Confidence</h3>
+      <div class="role">The default register</div>
+      <p>Everything a visitor meets first: the flagship, the story, positioning, the refusals, the close. Sets ground, type and pace for the whole site.</p>
+    </div>
+    <div class="layer">
+      <div class="n">02 · product</div>
+      <h3>Precision Product Company</h3>
+      <div class="role">The technical surfaces</div>
+      <p>ProActive, the three ways in, solution families, the eight blocks, assessments, the marketplace. Where evidence and structure have to be legible.</p>
+    </div>
+    <div class="layer">
+      <div class="n">03 · motion</div>
+      <h3>Bright Cinematic Story</h3>
+      <div class="role">A layer over both</div>
+      <p>How the page moves and what each movement means. Not a separate visual universe, and never a dark immersive one — it rides on the two registers above.</p>
+    </div>
+  </div>
+</section>
+
+<div class="pal" id="pal">
+  <span class="q">Frame accent</span>
+  <div class="sw">
+    <button type="button" id="b-pine" data-v="pine" data-on="1"><i style="background:#17493A"></i>Deep pine</button>
+    <button type="button" id="b-mag" data-v="magenta" data-on="0"><i style="background:#D3126A"></i>DE magenta</button>
+  </div>
+  <span class="hint">Switches all three frames. This is a real open decision — see below.</span>
+</div>
+
+<!-- ══ DIRECTION 1 ═════════════════════════════════════════════════════ -->
+<section class="dir">
+  <div class="dir__top">
+    <div>
+      <div class="dir__no">Direction 01 · the base register</div>
+      <h2>Calm Engineered Confidence</h2>
+      <p class="dir__lead">
+        A high-end advisory practice that happens to have exceptional technical capability. Calm is
+        the premium signal, and calm is also what the buyer arriving from an insurance form or a
+        breach scare actually needs.
+      </p>
+    </div>
+    <dl class="spec">
+      <dt>Drawn from</dt><dd>FGS Global, Aman, Studio MK27, Snøhetta, a little Kümmerlein</dd>
+      <dt>Ground</dt><dd><b>Warm paper.</b> Never a dark field as the default. Depth comes from white space, not from darkness.</dd>
+      <dt>Type</dt><dd>Enormous disciplined grotesque for statements; a serif for body, because serif on paper reads advisory rather than SaaS.</dd>
+      <dt>Containers</dt><dd><b>Almost none.</b> Hairline rules and space do the separating. No card with a border, radius and shadow stamped on every block.</dd>
+      <dt>Colour</dt><dd>One accent, used perhaps three times a page. No gradient, no glow, no second accent.</dd>
+      <dt>Imagery</dt><dd>Code-built or real photography only. Nothing generated, no abstract particle fields.</dd>
+      <dt>Voice</dt><dd>Human language. Declarative sentences that would survive being read aloud to a client.</dd>
+    </dl>
+  </div>
+
+  <div class="framebar">
+    <span class="lab">Frame A</span>
+    <span class="cap">Flagship opening screen · Calm Engineered Confidence</span>
+  </div>
+  <div class="frame fa">
+    <div class="fa__bar">
+      <img src="assets/digerati-logo.svg" alt="Digerati Experts" width="436" height="105">
+      <span>Cyber Risk Assessment</span>
+    </div>
+    <h3>Your environment isn't broken. <em>It's been drifting.</em></h3>
+    <p class="dek">
+      Digerati Experts maps the people, devices, cloud services, vendors and risks behind your
+      business. Then it gives every part an owner, a boundary and a direction.
+    </p>
+    <div class="act">
+      <a class="btn" href="#0" onclick="return false">Start with a Cyber Risk Assessment</a>
+      <p class="sub">Pick a time. No obligation. We recommend a fit only after we have looked.</p>
+    </div>
+    <div class="rule"></div>
+    <p class="why">
+      Which is usually why you're here: an insurance form with hard questions, a message that almost
+      worked, a rule you now have to meet, a vendor nobody owns, or a renewal you're not sure about.
+    </p>
+  </div>
+
+  <div class="pact">
+    <div class="pact--buy">
+      <h4>What it buys</h4>
+      <ul>
+        <li>Nothing in the category looks like this, because the category is uniformly dark</li>
+        <li>Calm is legible instantly, before a word is read</li>
+        <li>Cheapest of the three to execute and the easiest to keep consistent</li>
+        <li>Accessibility and contrast get easier, not harder</li>
+      </ul>
+    </div>
+    <div class="pact--cost">
+      <h4>What it costs</h4>
+      <ul>
+        <li>Restraint is unforgiving: every spacing and type error is visible</li>
+        <li>It departs from <b>design/BRAND.md</b>, which currently mandates a dark ground</li>
+        <li>It needs real copy discipline — filler collapses it immediately</li>
+        <li>No atmosphere to hide behind if a section has nothing to say</li>
+        <li><b>The mark needs a paper-ground lockup.</b> The current one is light-on-dark and disappears here; the frames use a one-colour ink reduction as a stand-in</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══ DIRECTION 2 ═════════════════════════════════════════════════════ -->
+<section class="dir">
+  <div class="dir__top">
+    <div>
+      <div class="dir__no">Direction 02 · the product register</div>
+      <h2>Precision Product Company</h2>
+      <p class="dir__lead">
+        Where the eight blocks, the cadence, the three ways in and the assessment live. Structure
+        made beautiful rather than decorated — the opposite of a fake dashboard dropped onto a
+        marketing page.
+      </p>
+    </div>
+    <dl class="spec">
+      <dt>Drawn from</dt><dd>Teenage Engineering, Tailscale, Stripe, Pentagram</dd>
+      <dt>Ground</dt><dd>White, harder and cooler than the base register, so a technical surface announces itself.</dd>
+      <dt>Grid</dt><dd><b>Visible and hard.</b> Hairlines are structural, not ornamental — the grid is the diagram.</dd>
+      <dt>Type</dt><dd>Mono for every label, number and unit. Grotesque for names. Serif only for the explanatory line.</dd>
+      <dt>Evidence</dt><dd>Real interface, real records, real structure. <b>No invented numbers, telemetry or certifications</b> — that is one of the refusals.</dd>
+      <dt>Colour</dt><dd>The accent marks state and nothing else: what is continuous, what is next, what is at risk.</dd>
+      <dt>Voice</dt><dd>Almost no persuasion. Name the thing, say what it answers, stop.</dd>
+    </dl>
+  </div>
+
+  <div class="framebar">
+    <span class="lab">Frame B</span>
+    <span class="cap">The eight blocks and the cadence · Precision Product Company</span>
+  </div>
+  <div class="frame fb">
+    <div class="fb__head">
+      <h3>Eight blocks. One accountable operating model.</h3>
+      <span class="meta">Seven parts · one continuous</span>
+    </div>
+    <div class="blocks">
+      <div class="blk"><span class="n">01</span><b>Identity</b><span>Who is this, and should they be here?</span></div>
+      <div class="blk"><span class="n">02</span><b>Endpoints</b><span>Is this device known, healthy and patched?</span></div>
+      <div class="blk"><span class="n">03</span><b>Email</b><span>Did this message come from who it says?</span></div>
+      <div class="blk"><span class="n">04</span><b>Browser &amp; web</b><span>Can this page or download hurt us?</span></div>
+      <div class="blk"><span class="n">05</span><b>Network</b><span>What can reach what, and who watches the edge?</span></div>
+      <div class="blk"><span class="n">06 · 24/7</span><b>Detection &amp; response</b><span>Who noticed, and what happened next?</span></div>
+      <div class="blk"><span class="n">07</span><b>People</b><span>Would your team know what to do?</span></div>
+    </div>
+    <div class="cont">
+      <span class="n">08 · continuous</span>
+      <b>Risk &amp; Exposure</b>
+      <span>What could hurt the business, how badly, and what are we doing about it first? Measured under every other block, all the time.</span>
+    </div>
+    <div class="cadence">
+      <div class="cad"><i>01</i><b>Assess</b><span>Inspect what exists, not what the last invoice says.</span></div>
+      <div class="cad"><i>02</i><b>Understand</b><span>Map the dependencies and the exceptions.</span></div>
+      <div class="cad"><i>03</i><b>Design</b><span>Decide the boundaries and who owns each one.</span></div>
+      <div class="cad"><i>04</i><b>Stabilize</b><span>Fix what is drifting before adding anything.</span></div>
+      <div class="cad"><i>05</i><b>Secure</b><span>Close the blocks in order of exposure.</span></div>
+      <div class="cad"><i>06</i><b>Operate</b><span>Monitor, patch, back up, verify, respond.</span></div>
+      <div class="cad"><i>07</i><b>Improve</b><span>Review each quarter against the business, not the tools.</span></div>
+    </div>
+  </div>
+
+  <div class="pact">
+    <div class="pact--buy">
+      <h4>What it buys</h4>
+      <ul>
+        <li>The eight blocks finally read as one model rather than eight tiles</li>
+        <li>Technical credibility without a single glowing threat particle</li>
+        <li>A grammar that extends cleanly to Cloud Edge / SASE, Threadline, Switchboard and the marketplace</li>
+        <li>Works at phone width, because a grid degrades gracefully and a diorama does not</li>
+      </ul>
+    </div>
+    <div class="pact--cost">
+      <h4>What it costs</h4>
+      <ul>
+        <li>Demands real product evidence — screens, records, actual structure</li>
+        <li>Can read cold if it escapes onto the emotional pages; it must stay on technical surfaces</li>
+        <li>Every number on screen has to be true and sourced, or it comes off</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══ DIRECTION 3 ═════════════════════════════════════════════════════ -->
+<section class="dir">
+  <div class="dir__top">
+    <div>
+      <div class="dir__no">Direction 03 · the motion layer</div>
+      <h2>Bright Cinematic Story</h2>
+      <p class="dir__lead">
+        The scroll experience survives the reset. What changes is that every movement now has to
+        mean something: problem → exposure → clarity → plan → protected operating state, over the
+        two registers above rather than inside a dark world of its own.
+      </p>
+    </div>
+    <dl class="spec">
+      <dt>Drawn from</dt><dd>Lando Norris (OFF+BRAND), Scout Motors</dd>
+      <dt>Rides on</dt><dd><b>Directions 01 and 02.</b> It has no palette of its own and never introduces a dark immersive universe.</dd>
+      <dt>Rule</dt><dd>One movement, one meaning. If a transition does not change what the visitor knows, it is deleted.</dd>
+      <dt>Transformation</dt><dd>The same elements change state across the beats. Nothing appears from nowhere and nothing is atmosphere.</dd>
+      <dt>Conversion</dt><dd>From Scout: the assessment stays reachable throughout. The story never buries the decision.</dd>
+      <dt>Forbidden</dt><dd>Glowing points, drifting particles, tiny labels over artwork, copy that merely translates as it scrolls.</dd>
+      <dt>Fallback</dt><dd>Reduced motion, no WebGL and phones get the same five beats as a document, not a blank screen.</dd>
+    </dl>
+  </div>
+
+  <div class="framebar">
+    <span class="lab">Frame C</span>
+    <span class="cap">The five beats · code-built state changes, shown static</span>
+  </div>
+  <div class="frame fc">
+    <div class="fc__head">
+      <h3>One environment, five states.</h3>
+      <span class="meta">Scroll drives the transformation</span>
+    </div>
+    <div class="beats">
+
+      <div class="beat">
+        <span class="n">Beat 01 · problem</span>
+        <svg viewBox="0 0 200 130" role="img" aria-label="Seven scattered points, unconnected">
+          <g fill="var(--f-ink)">
+            <circle cx="28" cy="34" r="4"/><circle cx="74" cy="19" r="4"/><circle cx="120" cy="41" r="4"/>
+            <circle cx="166" cy="26" r="4"/><circle cx="44" cy="82" r="4"/><circle cx="98" cy="101" r="4"/>
+            <circle cx="152" cy="88" r="4"/>
+          </g>
+        </svg>
+        <b>Everything works. Just not as one.</b>
+        <span>Seven parts, each fine on its own, none of them joined.</span>
+      </div>
+
+      <div class="beat">
+        <span class="n">Beat 02 · exposure</span>
+        <svg viewBox="0 0 200 130" role="img" aria-label="The same points, now crossed by tangled links, two of them ringed">
+          <g stroke="var(--f-hard)" stroke-width="1" fill="none">
+            <path d="M28 34 L120 41 M74 19 L98 101 M28 34 L152 88 M166 26 L44 82 M120 41 L152 88 M74 19 L166 26 M44 82 L98 101"/>
+          </g>
+          <g fill="none" stroke="var(--f-ochre)" stroke-width="1.5">
+            <circle cx="44" cy="82" r="10"/><circle cx="166" cy="26" r="10"/>
+          </g>
+          <g fill="var(--f-ink)">
+            <circle cx="28" cy="34" r="4"/><circle cx="74" cy="19" r="4"/><circle cx="120" cy="41" r="4"/>
+            <circle cx="166" cy="26" r="4"/><circle cx="44" cy="82" r="4"/><circle cx="98" cy="101" r="4"/>
+            <circle cx="152" cy="88" r="4"/>
+          </g>
+        </svg>
+        <b>Nobody is steering the whole thing.</b>
+        <span>The dependencies appear, and so do the exceptions nobody owns.</span>
+      </div>
+
+      <div class="beat">
+        <span class="n">Beat 03 · clarity</span>
+        <svg viewBox="0 0 200 130" role="img" aria-label="The points align onto a grid and the links become orthogonal">
+          <g stroke="var(--f-accent)" stroke-width="1.25" fill="none">
+            <path d="M40 46 H160 M60 90 H140 M40 46 V90 M40 90 H60 M100 46 V90 M160 46 V90 M160 90 H140"/>
+          </g>
+          <g fill="var(--f-ink)">
+            <circle cx="40" cy="46" r="4"/><circle cx="80" cy="46" r="4"/><circle cx="120" cy="46" r="4"/>
+            <circle cx="160" cy="46" r="4"/><circle cx="60" cy="90" r="4"/><circle cx="100" cy="90" r="4"/>
+            <circle cx="140" cy="90" r="4"/>
+          </g>
+        </svg>
+        <b>One owner for the whole environment.</b>
+        <span>The same parts, now aligned. The gaps close and the exceptions go out.</span>
+      </div>
+
+      <div class="beat">
+        <span class="n">Beat 04 · plan</span>
+        <svg viewBox="0 0 200 130" role="img" aria-label="The aligned grid with an order marker running beneath it">
+          <g stroke="var(--f-accent)" stroke-width="1.25" fill="none">
+            <path d="M40 46 H160 M60 90 H140 M40 46 V90 M40 90 H60 M100 46 V90 M160 46 V90 M160 90 H140"/>
+          </g>
+          <g fill="var(--f-ink)">
+            <circle cx="40" cy="46" r="4"/><circle cx="80" cy="46" r="4"/><circle cx="120" cy="46" r="4"/>
+            <circle cx="160" cy="46" r="4"/><circle cx="60" cy="90" r="4"/><circle cx="100" cy="90" r="4"/>
+            <circle cx="140" cy="90" r="4"/>
+          </g>
+          <g stroke="var(--f-ink)" stroke-width="1" fill="none">
+            <path d="M34 112 H166"/><path d="M34 108 V116"/><path d="M78 108 V116"/>
+            <path d="M122 108 V116"/><path d="M166 108 V116"/>
+          </g>
+        </svg>
+        <b>Assess. Understand. Design.</b>
+        <span>Order arrives: what gets fixed first, and who owns each boundary.</span>
+      </div>
+
+      <div class="beat">
+        <span class="n">Beat 05 · operating</span>
+        <svg viewBox="0 0 200 130" role="img" aria-label="The ordered grid enclosed by one complete boundary">
+          <rect x="20" y="26" width="160" height="82" fill="none" stroke="var(--f-accent)" stroke-width="1.75"/>
+          <g stroke="var(--f-accent)" stroke-width="1.25" fill="none" opacity=".55">
+            <path d="M40 46 H160 M60 90 H140 M40 46 V90 M40 90 H60 M100 46 V90 M160 46 V90 M160 90 H140"/>
+          </g>
+          <g fill="var(--f-ink)">
+            <circle cx="40" cy="46" r="4"/><circle cx="80" cy="46" r="4"/><circle cx="120" cy="46" r="4"/>
+            <circle cx="160" cy="46" r="4"/><circle cx="60" cy="90" r="4"/><circle cx="100" cy="90" r="4"/>
+            <circle cx="140" cy="90" r="4"/>
+          </g>
+        </svg>
+        <b>One environment. One cadence.</b>
+        <span>One boundary closes around all of it, and it keeps running.</span>
+      </div>
+
+    </div>
+    <p class="fc__note">
+      <b>Why this is not the thing you rejected.</b> The old world was atmosphere: glowing points
+      drifting in a dark room, which looked like something happening and communicated nothing. These
+      are the same seven elements in five states, on paper, and each transition says one thing you
+      could repeat afterwards. Shown static here because that is the honest test — if the beats do
+      not read as stills, motion will not save them.
+    </p>
+  </div>
+
+  <div class="pact">
+    <div class="pact--buy">
+      <h4>What it buys</h4>
+      <ul>
+        <li>The ambition survives, with the failure mode removed</li>
+        <li>A visitor can describe what they saw, which is the whole point of a story</li>
+        <li>Reads as a document when motion is off — no blank screens, ever again</li>
+      </ul>
+    </div>
+    <div class="pact--cost">
+      <h4>What it costs</h4>
+      <ul>
+        <li>The most expensive layer to build and the one that must be scroll-tested at every speed</li>
+        <li>Discipline: the moment a movement stops meaning something it has to be cut</li>
+        <li>It cannot rescue a weak base — build 01 first</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══ GOVERNANCE + DECISIONS ══════════════════════════════════════════ -->
+<section class="gov">
+  <h2>Two things I cannot decide for you</h2>
+
+  <p class="warn">
+    <b>This reset conflicts with the brand document.</b> <b>design/BRAND.md</b> currently mandates a
+    dark environment — graphite well <code>#050312</code>, marketing field <code>#0a0a0a</code> — with
+    brand magenta <code>#D3126A</code> and restrained violet accents. A warm-paper ground with a pine
+    accent is a departure from it, not an interpretation of it. The one thing already sanctioned is
+    paper: the doc names <code>--de-paper #f7f5f2</code> and says explicitly not to flatten every
+    section to one dark slab. So <b>light ground is inside the rules; changing the accent is not.</b>
+    Nothing gets built until you say which way, and the brand doc gets updated in the same change
+    rather than quietly contradicted.
+  </p>
+
+  <div class="decisions">
+    <div class="dec">
+      <span class="q">01</span>
+      <div>
+        <h4>Pine, or DE magenta used with restraint?</h4>
+        <p>
+          You wrote "DE deep pine", which is the accent I used on the reference board — so I want to
+          check whether you were choosing it or echoing it. The magenta is not automatically guilty:
+          what failed was magenta on a dark field, glowing. On paper, used three times a page, it is a
+          different colour entirely. Switch the frames above and look at both before answering.
+        </p>
+        <p class="rec">
+          <b>My read</b> — Magenta on paper, held to almost nothing, keeps the brand intact and still
+          reads as the reset. Pine is the better colour in isolation; magenta is the better decision
+          for a company that already has a mark.
+        </p>
+      </div>
+    </div>
+    <div class="dec">
+      <span class="q">02</span>
+      <div>
+        <h4>Is this the separate development site, or the eventual live site?</h4>
+        <p>
+          You said the scroll-driven concept is for the separate development site. If this system is
+          only ever that, it can move faster and take more risk. If it is the intended future of
+          digeratiexperts.com, then Direction 02 has to cover every product page and the brand doc
+          rewrite becomes a real piece of work rather than a note.
+        </p>
+        <p class="rec"><b>My read</b> — Build it as the development site, but specify it as if it will win, so nothing has to be redone if it does.</p>
+      </div>
+    </div>
+    <div class="dec">
+      <span class="q">✓</span>
+      <div>
+        <h4>Correction: the paper lockup already exists</h4>
+        <p>
+          An earlier draft of this page claimed the Digerati mark had no light-ground version and
+          that one would have to be drawn. That was wrong. <b>brand/digerati-logo.svg</b> is the
+          light-ground lockup — gold mark, graphite wordmark — and <b>brand/README.md</b> records
+          that the gold was deliberately corrected from <code>#F5E48A</code> to <code>#E3B23C</code>
+          precisely because the old value failed contrast on warm paper. Paper <code>#F7F5F2</code>
+          is a locked token and the primary lockup is drawn for it. The frames on this page now use
+          that real asset; the earlier draft recoloured the mark, which <b>brand/README.md</b>
+          forbids outright.
+        </p>
+        <p class="rec"><b>Closed</b> — no work needed, and one less dependency than reported.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ MARKS ═══════════════════════════════════════════════════════════ -->
+<section class="marks">
+  <h2>Your marks, for the record</h2>
+  <p>Ten yes, nine maybe, three no. Kept here so the reasoning stays attached to the directions it produced.</p>
+  <div class="mtab">
+    <div class="m" data-v="yes"><div class="r"><b>Lando Norris</b><i>yes</i></div><span>Cinematic sequencing, big type, motion tied to narrative. Not the F1 styling.</span></div>
+    <div class="m" data-v="yes"><div class="r"><b>Scout Motors</b><i>yes</i></div><span>Story cadence with the reservation always reachable.</span></div>
+    <div class="m" data-v="yes"><div class="r"><b>FGS Global</b><i>yes</i></div><span>Serious advisory register, large declarative language, confidence without tech theater.</span></div>
+    <div class="m" data-v="yes"><div class="r"><b>Kümmerlein</b><i>yes</i></div><span>Complexity to simplicity, human experts, real business propositions.</span></div>
+    <div class="m" data-v="yes"><div class="r"><b>Studio MK27</b><i>yes</i></div><span>Extreme restraint. Antidote to filling every viewport.</span></div>
+    <div class="m" data-v="yes"><div class="r"><b>Snøhetta</b><i>yes</i></div><span>Range without becoming a service matrix.</span></div>
+    <div class="m" data-v="yes"><div class="r"><b>Aman</b><i>yes</i></div><span>Calm as the premium signal. Composure over urgency.</span></div>
+    <div class="m" data-v="yes"><div class="r"><b>Teenage Engineering</b><i>yes</i></div><span>Hard product posture, tiny amount of persuasion copy.</span></div>
+    <div class="m" data-v="yes"><div class="r"><b>Tailscale</b><i>yes</i></div><span>Security without black backgrounds or glowing threat particles.</span></div>
+    <div class="m" data-v="yes"><div class="r"><b>Stripe</b><i>yes</i></div><span>Not the gradients — the information engineering.</span></div>
+    <div class="m" data-v="maybe"><div class="r"><b>Floema</b><i>maybe</i></div><span>Motion reference only.</span></div>
+    <div class="m" data-v="maybe"><div class="r"><b>The Hoxton</b><i>maybe</i></div><span>Warmth and human character. Ingredient, not core language.</span></div>
+    <div class="m" data-v="maybe"><div class="r"><b>GQ × Audemars Piguet</b><i>maybe</i></div><span>Not enough reason to steer DE fashion-editorial.</span></div>
+    <div class="m" data-v="maybe"><div class="r"><b>McKinsey</b><i>maybe</i></div><span>Structure, not aesthetics.</span></div>
+    <div class="m" data-v="maybe"><div class="r"><b>Pentagram</b><i>maybe</i></div><span>Grid discipline, but too portfolio-oriented as a template.</span></div>
+    <div class="m" data-v="maybe"><div class="r"><b>Carles Faus</b><i>maybe</i></div><span>Photography quality would become a dependency.</span></div>
+    <div class="m" data-v="maybe"><div class="r"><b>Cartier</b><i>maybe</i></div><span>The luxury-product metaphor only carries so far.</span></div>
+    <div class="m" data-v="maybe"><div class="r"><b>Arc</b><i>maybe</i></div><span>A transitioning product shouldn't be a central reference.</span></div>
+    <div class="m" data-v="maybe"><div class="r"><b>Rivian</b><i>maybe</i></div><span>Still fundamentally a photography brand.</span></div>
+    <div class="m" data-v="no"><div class="r"><b>Ritz-Carlton</b><i>no</i></div><span>Too conventional. Doesn't move the reset far enough.</span></div>
+    <div class="m" data-v="no"><div class="r"><b>Synack</b><i>no</i></div><span>Returns to platform/features/vendor language — the gravity to resist.</span></div>
+    <div class="m" data-v="no"><div class="r"><b>Trellix</b><i>no</i></div><span>The control worked. Enterprise-security-vendor posture.</span></div>
+  </div>
+</section>
+
+<section class="close">
+  <h2>What I need from you</h2>
+  <p>
+    Confirm the three-layer reading, answer the two decisions above, and the frames become a real
+    build. If any frame is wrong, say which one and what is wrong with it — that is a cheap fix at
+    this stage and an expensive one after engineering starts.
+  </p>
+  <div class="steps">
+    <div><span>You</span><div>Confirm the reading. Pick <b>pine or magenta</b>. Say whether this is the development site or the future live site.</div></div>
+    <div><span>Then</span><div>I write the <b>direction into the repo</b> as the design floor, and update <b>design/BRAND.md</b> in the same change so nothing is silently contradicted.</div></div>
+    <div><span>Then</span><div>Direction 01 gets built as a <b>real flagship opening</b>, static, no motion, verified at every width.</div></div>
+    <div><span>Last</span><div>Direction 03 goes on top — and every change from that point is <b>scroll-tested at four speeds</b>, per your rule.</div></div>
+  </div>
+</section>
+
+<footer>
+  <p class="lab">Digerati Experts · internal · nothing here is published to the live site · flagship rebuild frozen pending this decision</p>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var root = document.getElementById("root");
+  var pine = document.getElementById("b-pine");
+  var mag  = document.getElementById("b-mag");
+
+  function set(v, remember){
+    root.dataset.pal = v;
+    pine.dataset.on = v === "pine" ? "1" : "0";
+    mag.dataset.on  = v === "magenta" ? "1" : "0";
+    pine.setAttribute("aria-pressed", v === "pine");
+    mag.setAttribute("aria-pressed", v === "magenta");
+    if(remember){ try{ localStorage.setItem("de-pal", v); }catch(e){} }
+  }
+
+  try{
+    var saved = localStorage.getItem("de-pal");
+    if(saved === "pine" || saved === "magenta") set(saved, false);
+  }catch(e){ /* private window, blocked storage: the default stands */ }
+
+  pine.addEventListener("click", function(){ set("pine", true); });
+  mag.addEventListener("click",  function(){ set("magenta", true); });
+})();
+</script>
+</body>
+</html>

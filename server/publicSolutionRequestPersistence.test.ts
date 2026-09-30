@@ -186,8 +186,10 @@ describe("public solution request durable persistence", () => {
       sessionId: "session-continue",
       organizationName: "Second save",
     });
-    expect(continued.id).toBe(created.id);
-    expect(continued.organizationName).toBe("Second save");
+    expect(continued.record.id).toBe(created.id);
+    expect(continued.record.organizationName).toBe("Second save");
+    expect(continued.persisted).toBe(true);
+    expect(continued.forked).toBe(false);
   });
 
   it("submit-durable is idempotent/replay-safe across a simulated restart", async () => {
@@ -210,8 +212,23 @@ describe("public solution request durable persistence", () => {
       sessionId: "session-submit",
     });
 
-    const second = await store.submitPublicSolutionRequestDurable(recovered, contact, "replay-key-1");
+    expect(recovered.forked).toBe(false);
+    expect(recovered.record.status).toBe("submitted");
+    const second = await store.submitPublicSolutionRequestDurable(recovered.record, contact, "replay-key-1");
     expect(second.replayed).toBe(true);
     expect(second.record.id).toBe(first.record.id);
+    expect(second.record.reference).toBe(first.record.reference);
+
+    // A save after submit, by contrast, forks: the session gets a new draft
+    // and the submitted record stays exactly what DE received.
+    const saved = await store.upsertPublicSolutionRequestDurable(
+      { id: draft.id, sessionId: "session-submit", organizationName: "Changed my mind" },
+      { forkSubmitted: true },
+    );
+    expect(saved.forked).toBe(true);
+    expect(saved.previousReference).toBe(first.record.reference);
+    expect(saved.record.id).not.toBe(first.record.id);
+    expect(saved.record.status).toBe("draft");
+    expect((await store.getPublicSolutionRequestDurable(first.record.id))?.organizationName).toBe("Acme");
   });
 });

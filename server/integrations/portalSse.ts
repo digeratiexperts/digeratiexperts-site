@@ -1,23 +1,57 @@
 import type { Response } from "express";
 
-type PortalSsePayload = { eventType: string; entityId: string };
+type PortalSsePayload = {
+  eventType: string;
+  entityId: string;
+  canonicalAccountId?: string | null;
+};
 
-const clients = new Set<Response>();
+export type PortalSseViewer = {
+  role: string;
+  clientId: string | null;
+  hubAccountId: string | null;
+};
 
-export function addPortalSseClient(res: Response): void {
-  clients.add(res);
+type PortalSseClient = {
+  res: Response;
+  viewer: PortalSseViewer;
+};
+
+const SHARED_PORTAL_EVENTS = new Set(["catalog.published", "pricing.updated", "bundle.updated"]);
+
+const clients = new Set<PortalSseClient>();
+
+/** Catalog events are shared. Account events stay on the matching tenant or an admin. */
+export function portalEventVisibleTo(viewer: PortalSseViewer, event: PortalSsePayload): boolean {
+  if (viewer.role === "admin") return true;
+  if (SHARED_PORTAL_EVENTS.has(event.eventType)) return true;
+  if (
+    event.canonicalAccountId &&
+    viewer.hubAccountId &&
+    event.canonicalAccountId === viewer.hubAccountId
+  ) {
+    return true;
+  }
+  if (viewer.clientId && event.entityId === viewer.clientId) return true;
+  return false;
+}
+
+export function addPortalSseClient(res: Response, viewer: PortalSseViewer): void {
+  const client = { res, viewer };
+  clients.add(client);
   res.on("close", () => {
-    clients.delete(res);
+    clients.delete(client);
   });
 }
 
 export function publishPortalProjection(payload: PortalSsePayload): void {
-  const line = `data: ${JSON.stringify(payload)}\n\n`;
-  for (const res of Array.from(clients)) {
+  const line = `data: ${JSON.stringify({ eventType: payload.eventType, entityId: payload.entityId })}\n\n`;
+  for (const client of Array.from(clients)) {
+    if (!portalEventVisibleTo(client.viewer, payload)) continue;
     try {
-      res.write(line);
+      client.res.write(line);
     } catch {
-      clients.delete(res);
+      clients.delete(client);
     }
   }
 }

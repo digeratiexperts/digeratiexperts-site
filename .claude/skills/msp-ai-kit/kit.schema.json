@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://digeratiexperts.com/schemas/msp-ai-kit/kit.config.json",
+  "title": "MSP AI Kit control file",
+  "description": "Every value here is rendered into the prompt modules. Keys starting with an underscore are comments. Never store credentials in this file.",
+  "type": "object",
+  "additionalProperties": false,
+  "patternProperties": { "^_": {} },
+  "required": ["profile", "company", "naming", "voice", "team", "stack", "sla", "escalation", "compliance_frameworks", "scripting", "modules", "targets", "budgets"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "extends": { "type": "string", "description": "Path to a base config (relative to this file). This file's values are deep-merged over it; arrays replace, objects merge." },
+    "profile": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "version": { "type": "string", "description": "Semver of this profile's content; the Windows loader compares it for updates." },
+    "output_dir": { "type": "string" },
+    "company": {
+      "type": "object", "additionalProperties": false, "patternProperties": { "^_": {} },
+      "required": ["name", "short", "type", "location", "area_served", "website", "portal", "support_email", "booking_url", "clients", "packaging", "pricing_rule"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 }, "short": { "type": "string", "minLength": 1 }, "type": { "type": "string" },
+        "location": { "type": "string" }, "area_served": { "type": "string" }, "website": { "type": "string", "format": "uri" },
+        "portal": { "type": "string", "format": "uri" }, "support_email": { "type": "string", "format": "email" }, "booking_url": { "type": "string", "format": "uri" },
+        "clients": { "type": "string" }, "packaging": { "type": "string" }, "pricing_rule": { "type": "string" }
+      }
+    },
+    "naming": {
+      "type": "object", "additionalProperties": false, "patternProperties": { "^_": {} },
+      "required": ["full", "short", "never"],
+      "properties": { "full": { "type": "string" }, "short": { "type": "string" }, "never": { "type": "string" } }
+    },
+    "voice": {
+      "type": "object", "additionalProperties": false, "patternProperties": { "^_": {} },
+      "required": ["tone", "avoid"],
+      "properties": { "tone": { "type": "array", "items": { "type": "string" }, "minItems": 1 }, "avoid": { "type": "array", "items": { "type": "string" } } }
+    },
+    "team": {
+      "type": "object", "additionalProperties": false, "patternProperties": { "^_": {} },
+      "required": ["roles", "business_hours", "after_hours"],
+      "properties": { "roles": { "type": "array", "items": { "type": "string" }, "minItems": 1 }, "business_hours": { "type": "string" }, "after_hours": { "type": "string" } }
+    },
+    "stack": {
+      "type": "object", "patternProperties": { "^_": {} },
+      "required": ["psa_ticketing", "identity", "productivity"],
+      "properties": {
+        "psa_ticketing": { "type": "string" }, "crm": { "type": "string" }, "billing": { "type": "string" }, "projects": { "type": "string" },
+        "documentation": { "type": "string" }, "rmm": { "type": "string" }, "identity": { "type": "string" }, "edr": { "type": "string" },
+        "security_platform": { "type": "string" }, "browser_security": { "type": "string" }, "mdr": { "type": "string" }, "siem_xdr": { "type": "string" },
+        "scanners": { "type": "array", "items": { "type": "string" } }, "productivity": { "type": "string" }, "backup": { "type": "string" }, "email_security": { "type": "string" }
+      },
+      "additionalProperties": { "type": ["string", "array"] }
+    },
+    "sla": {
+      "type": "object", "additionalProperties": false, "patternProperties": { "^_": {} },
+      "required": ["confirmed", "priorities"],
+      "properties": {
+        "confirmed": { "type": "boolean" },
+        "priorities": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["id", "name", "definition", "response", "update_cadence", "resolution_target"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^P[0-9]$" }, "name": { "type": "string" }, "definition": { "type": "string" },
+              "response": { "type": "string" }, "update_cadence": { "type": "string" }, "resolution_target": { "type": "string" }, "examples": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "escalation": {
+      "type": "array", "minItems": 1,
+      "items": { "type": "object", "additionalProperties": false, "required": ["level", "when"], "properties": { "level": { "type": "string" }, "when": { "type": "string" } } }
+    },
+    "compliance_frameworks": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "scripting": {
+      "type": "object", "additionalProperties": false, "patternProperties": { "^_": {} },
+      "required": ["powershell_default", "powershell_minimum", "powershell_preferred", "bash", "deployment", "logging", "runtime_only_secrets"],
+      "properties": {
+        "powershell_default": { "type": "string" }, "powershell_minimum": { "type": "string" }, "powershell_preferred": { "type": "string" },
+        "bash": { "type": "string" }, "deployment": { "type": "string" }, "logging": { "type": "string" },
+        "runtime_only_secrets": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      }
+    },
+    "distribution": {
+      "type": "object", "additionalProperties": false, "patternProperties": { "^_": {} },
+      "description": "Used by the Windows loader only.",
+      "properties": {
+        "update_url": { "type": "string", "description": "HTTPS URL of a zip that contains the msp-ai-kit folder; the loader downloads it for -Action Update." },
+        "version_url": { "type": "string", "description": "HTTPS URL of a kit.version text file to compare against." },
+        "receipt_url": { "type": "string", "description": "HTTPS webhook that receives the JSON receipt when -ReceiptUploadUrl is not given." },
+        "node_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$", "description": "Portable Node.js version the loader downloads when winget cannot install per user." },
+        "retention_days": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "modules": { "type": "object", "patternProperties": { "^_": {} }, "additionalProperties": { "type": "boolean" } },
+    "targets": { "type": "object", "patternProperties": { "^_": {} }, "additionalProperties": { "type": "boolean" } },
+    "budgets": { "type": "object", "patternProperties": { "^_": {} }, "additionalProperties": { "type": "integer", "minimum": 200 } }
+  }
+}

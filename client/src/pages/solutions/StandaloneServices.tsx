@@ -84,7 +84,7 @@ export default function StandaloneServices() {
                 <Link href="/solutions/co-managed-it">Compare Co-Managed</Link>
               </Button>
             </div>
-            <p className="mt-4 text-sm text-white/45">No payment is taken in the public builder. DE confirms package fit, scope, fulfillment, and pricing before commitment.</p>
+            <p className="mt-4 text-sm text-white/55">No payment is taken in the public builder. DE confirms package fit, scope, fulfillment, and pricing before commitment.</p>
           </header>
 
           <section className="border-y border-white/10 py-12" aria-labelledby="standalone-means">
@@ -129,7 +129,7 @@ export default function StandaloneServices() {
               <Layers3 className="h-6 w-6 text-de-accent-ink" aria-hidden="true" />
               <h2 id="relationship-compare" className="text-2xl font-semibold">Choose the relationship, not a duplicate catalog</h2>
             </div>
-            <div className="mt-7 overflow-x-auto">
+            <div className="mt-7 overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink" tabIndex={0} role="region" aria-label="Standalone services table">
               <table className="w-full min-w-[760px] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-white/10 text-white/50">
@@ -164,7 +164,7 @@ export default function StandaloneServices() {
                 Open the Solution Builder <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <p className="mt-5 inline-flex items-start gap-2 text-left text-sm text-white/45">
+            <p className="mt-5 inline-flex items-start gap-2 text-left text-sm text-white/55">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-de-accent-ink" aria-hidden="true" />
               If a package genuinely requires an assessment, the builder will say so. DE does not force the same assessment step onto every standalone purchase.
             </p>

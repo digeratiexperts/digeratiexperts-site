@@ -82,7 +82,7 @@ export default function ResourceAssetPage() {
         {meta?.positioning && (
           <p className="max-w-3xl text-base leading-relaxed text-white/55">{meta.positioning}</p>
         )}
-        <p className="text-sm text-white/45">
+        <p className="text-sm text-white/55">
           Draft public resource. No fabricated customer stories. Request a live walkthrough if you need this
           applied to your environment.
         </p>

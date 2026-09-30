@@ -155,7 +155,7 @@ export default function PortalOrders() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Select value={sourceFilter} onValueChange={setSourceFilter}>
-              <SelectTrigger className="w-[160px]" data-testid="select-source-filter">
+              <SelectTrigger className="w-[160px]" aria-label="Filter orders by source" data-testid="select-source-filter">
                 <SelectValue placeholder="Source" />
               </SelectTrigger>
               <SelectContent>
@@ -165,7 +165,7 @@ export default function PortalOrders() {
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]" data-testid="select-status-filter">
+              <SelectTrigger className="w-[180px]" aria-label="Filter orders by status" data-testid="select-status-filter">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>

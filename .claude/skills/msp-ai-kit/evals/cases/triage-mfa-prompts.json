@@ -1,0 +1,18 @@
+{
+  "id": "triage-mfa-prompts",
+  "module": "service-desk-triage",
+  "title": "Repeated Outlook credential prompts after an MFA rollout",
+  "inputs": {
+    "[SUBJECT]": "Outlook keeps asking for password",
+    "[NAME, COMPANY, ROLE]": "Dana Ruiz, Mesa Legal Group, office manager",
+    "[PASTE THE TICKET TEXT]": "Since this morning three of us get a password prompt every few minutes; entering it does nothing. It started after the MFA thing last week.",
+    "[CONTRACT TIER, VIP FLAG, RECENT CHANGES, or UNKNOWN]": "Business tier, no VIP flag, MFA enforced for all users last Thursday"
+  },
+  "mustMention": [
+    "P2",
+    "ESCALATE"
+  ],
+  "mustNotMention": [
+    "P4"
+  ]
+}

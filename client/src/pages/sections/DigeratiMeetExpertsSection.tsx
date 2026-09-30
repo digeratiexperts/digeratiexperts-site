@@ -7,26 +7,20 @@ import { useBooking } from "@/contexts/BookingContext";
 const roles = [
   {
     icon: ShieldCheck,
-    code: "01",
     title: "Security Operations",
-    owns: "Monitoring, detection, and response when threats appear.",
+    detail: "Monitoring, detection, and response ownership when threats appear.",
   },
   {
     icon: Cpu,
-    code: "02",
     title: "Technical Operations",
-    owns: "Day-to-day support, identity, endpoints, and environment stability.",
+    detail: "Day-to-day support, identity, endpoints, and environment stability.",
   },
   {
     icon: Users,
-    code: "03",
     title: "Client Success",
-    owns: "Quarterly reviews, the roadmap, and a named relationship, not a rotating ticket queue.",
+    detail: "QBRs, roadmaps, and a named relationship — not a rotating ticket queue.",
   },
 ];
-
-/** What stays the client's. From the Client Bill of Rights. */
-const clientKeeps = "Your credentials, tenants, and licenses. Access transparency and a clear path if you ever transition.";
 
 export const DigeratiMeetExpertsSection = (): JSX.Element => {
   const prefersReducedMotion = useReducedMotion();
@@ -115,34 +109,31 @@ export const DigeratiMeetExpertsSection = (): JSX.Element => {
               </p>
             </div>
 
-            {/* Ownership ledger: who owns what, and what stays yours */}
-            <dl className="w-full divide-y divide-[var(--de-hairline)] border-y border-[var(--de-hairline)]" data-testid="ownership-ledger">
-              {roles.map((r) => {
+            {/* Tactile Role Cards */}
+            <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
+              {roles.map((r, index) => {
                 const IconComponent = r.icon;
                 return (
-                  <div key={r.title} className="grid grid-cols-[2.5rem_1fr] gap-x-4 py-4 sm:grid-cols-[2.5rem_11rem_1fr] md:py-5">
-                    <dt className="font-mono text-xs font-bold tracking-[0.18em] text-[#D3126A] pt-1" aria-hidden="true">{r.code}</dt>
-                    <dt className="flex items-center gap-2 text-base font-semibold text-white">
-                      <IconComponent className="h-4 w-4 shrink-0 text-white/60" aria-hidden="true" />
-                      {r.title}
-                    </dt>
-                    <dd className="col-start-2 mt-1 text-base leading-relaxed text-white/70 sm:col-start-3 sm:mt-0">{r.owns}</dd>
+                  <div
+                    key={r.title}
+                    className="group relative flex flex-col justify-between rounded-xl border border-white/10 bg-gradient-to-b from-[#18141f] to-[#0e0c13] p-5 shadow-lg transition-all duration-300 hover:border-[#D3126A]/50 hover:-translate-y-1"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-[#D3126A]/10 text-[#D3126A] transition-colors group-hover:bg-[#D3126A] group-hover:text-white">
+                          <IconComponent className="h-5 w-5" />
+                        </div>
+                        <span className="font-mono text-xs font-bold tracking-widest text-white/40 group-hover:text-[#D3126A]">
+                          0{index + 1}
+                        </span>
+                      </div>
+                      <p className="text-base font-bold text-white group-hover:text-white">{r.title}</p>
+                      <p className="mt-2 text-xs leading-relaxed text-white/70">{r.detail}</p>
+                    </div>
                   </div>
                 );
               })}
-              <div className="grid grid-cols-[2.5rem_1fr] gap-x-4 py-4 sm:grid-cols-[2.5rem_11rem_1fr] md:py-5">
-                <dt className="font-mono text-xs font-bold tracking-[0.18em] text-[#D3126A] pt-1" aria-hidden="true">YOU</dt>
-                <dt className="text-base font-semibold text-white">What stays yours</dt>
-                <dd className="col-start-2 mt-1 text-base leading-relaxed text-white/70 sm:col-start-3 sm:mt-0">
-                  {clientKeeps}{" "}
-                  <Link href="/about/client-bill-of-rights">
-                    <span className="font-semibold text-white underline decoration-[#D3126A]/70 underline-offset-4 hover:decoration-[#D3126A]">
-                      Client Bill of Rights
-                    </span>
-                  </Link>
-                </dd>
-              </div>
-            </dl>
+            </div>
 
             <div>
               <button
