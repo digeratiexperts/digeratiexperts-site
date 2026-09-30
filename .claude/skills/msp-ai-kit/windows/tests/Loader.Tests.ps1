@@ -122,6 +122,7 @@ Describe 'One-file installer' {
         New-Item -ItemType Directory -Path $src -Force | Out-Null
         Set-Content -LiteralPath (Join-Path $script:Work 'canon/msp-ai-kit/windows/Start-DETechTool.cmd') -Value '@echo off'
         Set-Content -LiteralPath (Join-Path $src 'VERSION') -Value '9.9.10'
+        Set-Content -LiteralPath (Join-Path $src 'DETechConsole.ps1') -Value '# test console entry point'
         $drop = Join-Path $script:Work 'drop'; New-Item -ItemType Directory -Path $drop -Force | Out-Null
         Compress-Archive -Path (Join-Path $script:Work 'canon/msp-ai-kit') -DestinationPath (Join-Path $drop 'DE-TechTool-v9.9.10.zip')
         Copy-Item -LiteralPath $script:Inst -Destination $drop
