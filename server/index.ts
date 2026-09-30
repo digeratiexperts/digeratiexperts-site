@@ -13,6 +13,7 @@ import { registerSecureZohoStoreCheckout } from "./secureStoreCheckout";
 import { isStagingReview, stagingReviewStatus } from "./stagingReviewGuard";
 import { registerStoreSolutionRoutes } from "./storeSolutionRoutes";
 import { registerPublicSolutionRoutes } from "./publicSolutionRoutes";
+import { registerWidgetTicketRoute } from "./widgetTicketRoute";
 import { registerWarehouseGates } from "./warehouseRoutes";
 import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
@@ -336,6 +337,7 @@ registerWarehouseGates(app);
 registerSecureZohoStoreCheckout(app, authMiddleware as any, requireRole as any);
 registerStoreSolutionRoutes(app, authMiddleware as any);
 registerPublicSolutionRoutes(app);
+registerWidgetTicketRoute(app);
 registerPortalMarketplaceRoutes(app, authMiddleware as any);
 
 app.use((req, res, next) => {
