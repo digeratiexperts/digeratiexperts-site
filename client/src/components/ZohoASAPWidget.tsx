@@ -46,6 +46,7 @@ import { acquireBodyScrollLock } from "@/lib/bodyScrollLock";
 import type { OpenMspAdvisorDetail } from "@/lib/openMspAdvisor";
 import { STORE_ADVISOR_SEED, clearPendingMspAdvisorOpen, takePendingMspAdvisorOpen } from "@/lib/openMspAdvisor";
 import { analytics } from "@/lib/analytics";
+import { clearDeskChat, readDeskChat, ticketDraftFromChat, writeDeskChat } from "@/lib/deskChatSession";
 import { useDraggableWindow } from "@/hooks/useDraggableWindow";
 import { useEscapeKey } from "@/hooks/useFocusTrap";
 import {
@@ -225,11 +226,13 @@ export const ZohoASAPWidget = ({
   });
   const [location] = useLocation();
   const deskPage = inferDeskPageType(location);
-  const [advisorSessionId, setAdvisorSessionId] = useState<string | null>(null);
+  // A conversation already under way in this tab (reload, full page load) picks up where it was.
+  const [restoredChat] = useState(() => readDeskChat());
+  const [advisorSessionId, setAdvisorSessionId] = useState<string | null>(() => restoredChat?.sessionId ?? null);
   const [pendingSeed, setPendingSeed] = useState<string | null>(null);
   const [showInlineLogin, setShowInlineLogin] = useState(false);
 
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => [
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => restoredChat?.messages ?? [
     {
       id: CHAT_WELCOME_ID,
       role: "assistant",
@@ -237,22 +240,28 @@ export const ZohoASAPWidget = ({
       createdAt: new Date().toISOString(),
     },
   ]);
-  const [greetingVisible, setGreetingVisible] = useState("");
-  const [greetingComplete, setGreetingComplete] = useState(false);
+  const [greetingVisible, setGreetingVisible] = useState(
+    () => restoredChat?.messages.find((m) => m.id === CHAT_WELCOME_ID)?.content ?? "",
+  );
+  const [greetingComplete, setGreetingComplete] = useState(() => !!restoredChat);
   const [showStarterChips, setShowStarterChips] = useState(false);
   const [showTypingDots, setShowTypingDots] = useState(false);
   const [reveal, setReveal] = useState<{ id: string; shown: string; done: boolean } | null>(null);
   const greetingCancelRef = useRef({ cancelled: false });
   const revealCancelRef = useRef({ cancelled: false });
-  const greetedOnceRef = useRef(false);
+  const greetedOnceRef = useRef(!!restoredChat);
   const [chatInput, setChatInput] = useState("");
   const [isChatSending, setIsChatSending] = useState(false);
   const [assistantAvailable, setAssistantAvailable] = useState<boolean | null>(null);
   const [agentLive, setAgentLive] = useState(false);
   const [agentName, setAgentName] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const pollSinceRef = useRef<string | null>(null);
-  const knownMsgIdsRef = useRef<Set<string>>(new Set([CHAT_WELCOME_ID]));
+  const pollSinceRef = useRef<string | null>(
+    restoredChat?.messages.reduce<string | null>((latest, m) => (m.createdAt && (!latest || m.createdAt > latest) ? m.createdAt : latest), null) ?? null,
+  );
+  const knownMsgIdsRef = useRef<Set<string>>(
+    new Set([CHAT_WELCOME_ID, ...(restoredChat?.messages.map((m) => m.id) ?? [])]),
+  );
   const activeTabRef = useRef<ActiveTab>(activeTab);
   const agentNameRef = useRef<string | null>(null);
   const headsUpTimerRef = useRef<number | null>(null);
@@ -346,7 +355,17 @@ export const ZohoASAPWidget = ({
       ).filter((el) => el.offsetParent !== null);
     };
     window.requestAnimationFrame(() => {
-      getFocusable()[0]?.focus();
+      // Land somewhere useful instead of on the first header button (which
+      // opened with its focus ring lit). On a desktop Ask DE that is the
+      // composer, so the visitor can type straight away; on a phone the
+      // composer would pop the keyboard over the greeting, so the active tab.
+      const composer = document.getElementById("desk-chat-input");
+      const wide = window.matchMedia("(min-width: 640px) and (pointer: fine)").matches;
+      const target =
+        (wide && composer && !(composer as HTMLInputElement).disabled ? composer : null) ??
+        document.querySelector<HTMLElement>('.de-desk-tab[aria-selected="true"]') ??
+        getFocusable()[0];
+      target?.focus({ preventScroll: true });
     });
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Tab") return;
@@ -376,6 +395,10 @@ export const ZohoASAPWidget = ({
   useEffect(() => () => {
     if (headsUpTimerRef.current) window.clearTimeout(headsUpTimerRef.current);
   }, []);
+
+  useEffect(() => {
+    writeDeskChat(advisorSessionId, chatMessages);
+  }, [advisorSessionId, chatMessages]);
 
   const clearHeadsUpTimer = () => {
     if (headsUpTimerRef.current) {
@@ -862,6 +885,44 @@ export const ZohoASAPWidget = ({
     applyTicketChip(chipId);
   };
 
+  const visitorHasSpoken = chatMessages.some((m) => m.role === "user");
+
+  // Get Support, prefilled with what the visitor already told Ask DE. A draft
+  // they have started on Get Support is never overwritten.
+  const openTicketFromChat = () => {
+    const draft = ticketDraftFromChat(chatMessages);
+    selectTab("ticket");
+    setTicketResult(null);
+    if (draft) {
+      setSubject((current) => current || draft.subject);
+      setMessage((current) => current || draft.message);
+    }
+    window.requestAnimationFrame(() => {
+      const focusId = !email.trim() ? "support-email" : "support-subject";
+      document.getElementById(focusId)?.focus();
+    });
+  };
+
+  const startOverChat = () => {
+    if (isChatSending) return;
+    clearDeskChat();
+    revealCancelRef.current.cancelled = true;
+    setReveal(null);
+    const full = greetingForPage(deskPage);
+    setChatMessages([{ id: CHAT_WELCOME_ID, role: "assistant", content: full, createdAt: new Date().toISOString() }]);
+    setGreetingVisible(full);
+    setGreetingComplete(true);
+    setShowStarterChips(true);
+    setAdvisorSessionId(null);
+    setAgentLive(false);
+    setAgentName(null);
+    setUnreadChatCount(0);
+    knownMsgIdsRef.current = new Set([CHAT_WELCOME_ID]);
+    pollSinceRef.current = null;
+    setChatInput("");
+    window.requestAnimationFrame(() => document.getElementById("desk-chat-input")?.focus());
+  };
+
   const authToolGroups: Array<{ heading: string; items: DeskLauncherItem[] }> = [
     {
       heading: "Support",
@@ -1085,6 +1146,16 @@ export const ZohoASAPWidget = ({
               bottom: dockClear,
               left: "auto",
               top: "auto",
+              // Docked, the window stops below the live bottom of the site
+              // header instead of rising over the nav (it used to cover the
+              // right end of the main menu at 1440x900). A floor keeps it
+              // usable on a very short window.
+              ...(deskDrag.size
+                ? {}
+                : {
+                    height: `min(760px, max(440px, calc(100dvh - var(--de-nav-current-bottom, 0px) - var(--de-spy-h, 0px) - ${dockClear} - 16px)))`,
+                    maxHeight: "none",
+                  }),
             }),
         ...(deskDrag.size
           ? {
@@ -1434,6 +1505,11 @@ export const ZohoASAPWidget = ({
                         )}
                         <p>{ticketResult.message}</p>
                         <div className="de-desk-success-actions">
+                          {portalSession ? (
+                            <a href={PORTAL_TICKETS} className="de-desk-row" data-testid="link-success-view-tickets">
+                              <span className="de-desk-row-t">View my tickets</span>
+                            </a>
+                          ) : null}
                           <button
                             type="button"
                             onClick={() => {
@@ -1844,6 +1920,22 @@ export const ZohoASAPWidget = ({
 
             {activeTab === "chat" ? (
               <>
+                {visitorHasSpoken ? (
+                  <div className="de-desk-chat-actions" data-testid="desk-chat-actions">
+                    <button type="button" onClick={openTicketFromChat} data-testid="button-ticket-from-chat">
+                      <Ticket aria-hidden="true" />
+                      Create a ticket from this chat
+                    </button>
+                    <button
+                      type="button"
+                      onClick={startOverChat}
+                      disabled={isChatSending}
+                      data-testid="button-start-over-chat"
+                    >
+                      Start over
+                    </button>
+                  </div>
+                ) : null}
                 <div className={`de-desk-composer${headsUp || unreadChatCount ? " is-live" : ""}`}>
                   <input
                     type="text"
@@ -1865,6 +1957,7 @@ export const ZohoASAPWidget = ({
                         : "Type the issue…"
                     }
                     disabled={isChatSending}
+                    id="desk-chat-input"
                     data-testid="input-support-chat"
                     aria-label="Ask DE message"
                   />
@@ -1931,7 +2024,7 @@ export const ZohoASAPWidget = ({
               --desk-border-strong: rgba(15,15,18,0.22);
               --desk-ink: #111116;
               --desk-ink-muted: #5e5b66;
-              --desk-ink-dim: #807b88;
+              --desk-ink-dim: #6f6a78;
               --desk-pink: #D3126A;
               --desk-pink-ink: #A30E52;
               --desk-red: #c2263b;
@@ -2942,6 +3035,32 @@ export const ZohoASAPWidget = ({
               color: var(--desk-ink);
               flex-shrink: 0;
             }
+            /* Conversation actions: quiet text buttons above the composer, shown
+               once the visitor has said something. */
+            .de-desk-chat-actions {
+              position: relative;
+              z-index: 1;
+              display: flex; align-items: center; justify-content: space-between; gap: 8px;
+              padding: 6px 12px 0;
+              border-top: 1px solid var(--desk-border);
+              background: var(--desk-surface);
+              flex-shrink: 0;
+            }
+            .de-desk-chat-actions button {
+              display: inline-flex; align-items: center; gap: 6px;
+              min-height: 36px;
+              padding: 0 6px;
+              border: 0; border-radius: 8px;
+              background: transparent;
+              color: var(--desk-ink-muted);
+              font-size: 13.5px; font-weight: 600;
+            }
+            .de-desk-chat-actions button:first-child { color: var(--desk-pink-ink); }
+            .de-desk-chat-actions button svg { width: 15px; height: 15px; }
+            .de-desk-chat-actions button:hover:not(:disabled) { background: rgba(15,15,18,0.05); color: var(--desk-ink); }
+            .de-desk-chat-actions button:first-child:hover { color: var(--desk-pink-ink); }
+            .de-desk-chat-actions button:disabled { opacity: 0.5; }
+            .de-desk-chat-actions + .de-desk-composer { border-top: 0; padding-top: 6px; }
             .de-desk-composer.is-live input {
               border-color: rgba(211,18,106,0.6);
               box-shadow: 0 0 0 3px rgba(211,18,106,0.15);

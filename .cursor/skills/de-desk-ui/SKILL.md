@@ -30,10 +30,10 @@ Rejected (do **not** restore):
 ## Non-negotiables
 
 - **One shell.** White `#fbfbfa` panel, black/10 hairline border, soft shadow. No second modal, hero card, or inset “window.”
-- **One field for every tab.** Light-on-dark throughout. Do not paint Ask DE cream and the other tabs black.
+- **One field for every tab.** Near-black ink on the white panel throughout. Do not paint one tab graphite and another white.
 - Magenta `#D3126A` is the only loud color: active tab underline, send, submit, selected issue, user bubbles, Fastest badge, 1px shell cap. Do not fill boxes with violet.
 - **Ask DE** is a conversational UI (conversation first, composer dominant, discovery chips).
-- **Get Support** is a service-desk form: prominent security incident, then focused issue choices, then dark raised fields and magenta submit.
+- **Get Support** is a service-desk form: prominent security incident, then focused issue choices, then white fields with a hairline and a magenta submit.
 - **Client Tools** is a front door, not a portal. Unauthenticated: sign-in + two “need help now” shortcuts. Authenticated: compact launcher groups only. No devices, RMM, vendor names, or fake service health.
 - **Function labels**, not vendor names (`Start remote support` not `Zoho Assist`). Keep hrefs.
 - Do **not** remove the three tabs, ticket-chip routing, unread/heads-up, drag/resize/expand, or the lock disclaimer without asking DE.
@@ -62,7 +62,7 @@ DE Desk UI checklist:
 - [ ] Exactly one .de-desk-shell (no double chrome)
 - [ ] White panel + simple header + circular expand/close
 - [ ] Three tabs; active = magenta underline
-- [ ] Ask DE: dark transcript, discovery chips, dominant composer
+- [ ] Ask DE: white transcript, discovery chips, dominant composer
 - [ ] Get Support: incident rail + issue list + light form + magenta submit
 - [ ] Client Tools unauth: sign-in CTA, then support/remote only
 - [ ] Client Tools auth: Support / Secure services / Account launcher — no fake status

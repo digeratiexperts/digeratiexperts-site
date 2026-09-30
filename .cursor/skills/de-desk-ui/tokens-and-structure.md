@@ -12,7 +12,7 @@ The Desk is the white precision panel from `design/UI-STYLE-RULES.md` (support c
 | Well | `--desk-well` `#f4f3f1` | Inputs' resting ground, composer well |
 | Box | `--desk-box` `#ffffff` | Grouped lists, assistant bubbles, form fields |
 | Hairline | `--desk-border` `rgba(15,15,18,0.12)` | The panel border and separators — no glow, no magenta ring |
-| Ink | `--desk-ink` `#111116` / `--desk-ink-muted` `#5e5b66` | Titles, body and blurbs on every surface |
+| Ink | `--desk-ink` `#111116` / `--desk-ink-muted` `#5e5b66` / `--desk-ink-dim` `#6f6a78` | Titles, body, blurbs, timestamps and the lock line; every ink clears 4.5:1 on every Desk ground (a test fails otherwise) |
 | Magenta | `#D3126A` | Active tab underline, send, submit, incident rail, user bubbles, 1px panel cap |
 | Magenta text | `--desk-pink-ink` `#A30E52` | Magenta used as text on white (passes 4.5:1) |
 | Violet | `#8B5CF6` | Not used on the Desk |
@@ -23,17 +23,20 @@ White text appears only on magenta. Do **not** paint the Desk graphite, and do *
 ## Shared chrome (top → bottom)
 
 1. **One `.de-desk-shell`** — `role="dialog"` `aria-label="DE Desk help"` `data-testid="desk-modal"`. `data-tab` is `chat` \| `ticket` \| `resources`.
-2. **Header** — compact DE mark + green available pip; title “DE Desk”; subtitle “DE Desk is available” (or “{name} joined · live handoff”). Expand + close. On `sm+` the header moves the window; double-click resets. Drag any edge or the south-east grip to resize.
-3. **Tabs** — Ask DE \| Get Support \| Client Tools. Active = ink label + magenta underline. Unread count badges Ask DE only.
-4. **Body** — the same white field on every tab. No status row. No footer tab list.
-5. **Composer (Ask DE only)** — white input on the well + magenta send. Placeholder: “Type the issue…” while nobody is in the chat (it must not imply someone is waiting); “Message {name}…” once a person has joined.
-6. **Lock line (Ask DE only)** — “Never share passwords, MFA codes, or private keys.”
+2. **Placement** — docked, the window stops below the live bottom of the site header and the homepage section bar (`--de-nav-current-bottom` + `--de-spy-h`); it never covers the nav. On open, focus lands on the composer (desktop Ask DE) or the active tab — not the first header button.
+3. **Header** — compact DE mark + green available pip; title “DE Desk”; subtitle “DE Desk is available” (or “{name} joined · live handoff”). Expand + close. On `sm+` the header moves the window; double-click resets. Drag any edge or the south-east grip to resize.
+4. **Tabs** — Ask DE \| Get Support \| Client Tools. Active = ink label + magenta underline. Unread count badges Ask DE only.
+5. **Body** — the same white field on every tab. No status row. No footer tab list.
+6. **Composer (Ask DE only)** — white input on the well + magenta send. Placeholder: “Type the issue…” while nobody is in the chat (it must not imply someone is waiting); “Message {name}…” once a person has joined.
+7. **Lock line (Ask DE only)** — “Never share passwords, MFA codes, or private keys.”
 
 ## Ask DE
 
 - White transcript. Opening bubble: “DE” avatar only. No sender line (the name is in the header) and no **Available** badge; a name and a live dot appear only when a real person joins (`agentLive`).
 - Greeting and four starter chips: per page, from `DESK_PAGE_COPY` in `client/src/lib/deskAskDeMotion.ts`, with **Possible security incident** always last (routes to Get Support).
 - After send: magenta user bubbles with white text; white assistant bubbles with a hairline.
+- Once the visitor has sent something, a quiet action row sits above the composer: **Create a ticket from this chat** (Get Support, subject and details drafted from the visitor's own messages, never overwriting a draft they started; the ticket already carries the chat session id) and **Start over** (forgets the thread and the server session).
+- The conversation is kept for the browser tab (`client/src/lib/deskChatSession.ts`, sessionStorage, 12 hours) so a reload returns to it.
 
 ## Get Support
 

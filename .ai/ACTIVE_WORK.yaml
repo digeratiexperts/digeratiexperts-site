@@ -34,13 +34,17 @@ claims:
     owner: claude
     subsystem: de-desk
     branch: claude/desk-white-theme
-    base_sha: 405be75
+    base_sha: f06d3a008b32217dad3af87f5996e62f94e8ad9c
     files:
       - client/src/components/ZohoASAPWidget.tsx
       - client/src/components/ZohoASAPWidget.desk-shell.test.ts
       - client/src/components/SiteBottomBar.tsx
+      - client/src/lib/deskChatSession.ts
+      - client/src/lib/deskChatSession.test.ts
       - .cursor/rules/de-desk-design.mdc
       - .cursor/skills/de-desk-ui/SKILL.md
+      - .cursor/skills/de-desk-ui/tokens-and-structure.md
+      - artifacts/visual-qa/desk-white-theme/**
     status: active
     started: 2026-09-28
     note: >-
@@ -52,7 +56,12 @@ claims:
       ink, magenta only for submit and incident). The Ask DE chooser follows.
       Supersedes the graphite direction recorded in de-desk-launcher-graphite
       and the C5 graphite override; the Cursor Desk rule and skill are updated
-      so agents stop steering it back to graphite.
+      so agents stop steering it back to graphite. Joe, 2026-09-30: "we had a
+      dark version (old) and light/white version (current) and some how they
+      got mixed together - rebuild it better and full featured." Rebased onto
+      PR #229's head f06d3a00 (itself level with main 674a4c5c) and extended:
+      header clearance, initial focus, AA dim ink, the conversation kept for
+      the tab with Start over, and a ticket drafted from the chat.
   - id: de-desk-launcher-graphite
     owner: claude
     subsystem: de-desk

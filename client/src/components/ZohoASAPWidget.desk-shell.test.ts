@@ -297,4 +297,51 @@ describe("DE Desk shell positioning", () => {
     expect(bottomBarSrc).not.toMatch(/--de-ask-nudge-bg/);
     expect(bottomBarSrc).not.toMatch(/var\(--de-ink/);
   });
+
+  it("keeps every Desk ink token at 4.5:1 or better on every Desk ground", () => {
+    // --desk-ink-dim was #807b88: 3.97:1 on the panel, under AA for the lock
+    // line and timestamps it colours.
+    const hex = (name: string) => {
+      const value = src.match(new RegExp(`${name}: (#[0-9a-f]{6});`, "i"))?.[1];
+      expect(value, name).toBeTruthy();
+      return [1, 3, 5].map((i) => parseInt(value!.slice(i, i + 2), 16));
+    };
+    const lin = (c: number) => {
+      const v = c / 255;
+      return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+    };
+    const lum = (rgb: number[]) => 0.2126 * lin(rgb[0]) + 0.7152 * lin(rgb[1]) + 0.0722 * lin(rgb[2]);
+    const contrast = (a: number[], b: number[]) => {
+      const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m);
+      return (x + 0.05) / (y + 0.05);
+    };
+    for (const ink of ["--desk-ink", "--desk-ink-muted", "--desk-ink-dim", "--desk-pink-ink"]) {
+      for (const ground of ["--desk-surface", "--desk-well", "--desk-box"]) {
+        expect(contrast(hex(ink), hex(ground)), `${ink} on ${ground}`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
+  it("docks below the live bottom of the site header and the section bar instead of over the nav", () => {
+    expect(src).toContain(
+      "height: `min(760px, max(440px, calc(100dvh - var(--de-nav-current-bottom, 0px) - var(--de-spy-h, 0px) - ${dockClear} - 16px)))`",
+    );
+  });
+
+  it("opens with focus on the composer (desktop) or the active tab, not the first header button", () => {
+    expect(src).not.toMatch(/getFocusable\(\)\[0\]\?\.focus\(\);/);
+    expect(src).toMatch(/id="desk-chat-input"/);
+    expect(src).toMatch(/\.de-desk-tab\[aria-selected="true"\]/);
+  });
+
+  it("offers a ticket from the conversation and a way to start over, only once the visitor has spoken", () => {
+    expect(src).toMatch(/\{visitorHasSpoken \? \(\s*<div className="de-desk-chat-actions"/);
+    expect(src).toMatch(/data-testid="button-ticket-from-chat"/);
+    expect(src).toMatch(/data-testid="button-start-over-chat"/);
+    // The draft never overwrites what the visitor already typed on Get Support.
+    expect(src).toMatch(/setSubject\(\(current\) => current \|\| draft\.subject\)/);
+    expect(src).toMatch(/setMessage\(\(current\) => current \|\| draft\.message\)/);
+    // Start over forgets the stored thread and the server session.
+    expect(src).toMatch(/clearDeskChat\(\);[\s\S]{0,400}setAdvisorSessionId\(null\)/);
+  });
 });
