@@ -1,119 +1,290 @@
 {
   "schemaVersion": 1,
   "product": "DE Tech Tool",
+  "_comment": "Canonical ProActive Ecosystem tiers, provisioning variants, add-ons and the 13 standalone solution families for DE Tech Tool. INTERNAL: vendor names appear for the tool only; client-facing output uses client-safe service names. No prices. proactive.<Tier>.defaults/optional/rules/capabilities feed Get-DETierDefaults; bundleId/profile/plan/addOns feed plan composition (DE.Planning). plan.exclude and includeOnly are regular expressions over console action ids. Sources: client/src/data/pricing.ts, client/src/data/curatedSolutions.ts, client/src/components/pricing/ProActiveCoverageMap.tsx, docs/SECURITY-PROVIDER-GOVERNANCE.md, docs/PUBLIC-SOLUTION-BUILDER.md.",
   "proactive": {
     "IT": {
       "id": "it",
       "label": "ProActive IT",
-      "capabilities": ["it_operations","endpoint_devices","identity_access","email_collaboration","cybersecurity_operations","security_awareness","documentation_standards"],
-      "defaults": {
-        "identity": "jumpcloud",
-        "edr": "sentinelone",
-        "mdr": "guardz",
-        "guardzPackage": "Pro",
-        "humanMdr": false,
-        "browserSecurity": ["pabx"],
-        "baseline": "de-windows-baseline",
-        "emailSecurity": "mimecast",
-        "awareness": "ninjio",
-        "remoteSupport": "jumpcloud-remote-assist",
-        "backup": null,
-        "networkManaged": false
-      },
-      "optional": ["managed-network","endpoint-backup","siem","sase","vulnerability-scanning"],
-      "rules": ["DE Security Foundation is included. Guardz Pro is the primary platform baseline; do not describe this tier as 24/7 human MDR."]
+      "capabilities": ["it_operations", "endpoint_devices", "identity_access", "email_collaboration", "cybersecurity_operations", "security_awareness", "documentation_standards"],
+      "defaults": {"identity": "jumpcloud", "edr": "sentinelone", "mdr": "guardz", "guardzPackage": "Pro", "humanMdr": false, "browserSecurity": ["pabx"], "baseline": "de-windows-baseline", "emailSecurity": "mimecast", "awareness": "ninjio", "remoteSupport": "jumpcloud-remote-assist", "backup": null, "networkManaged": false},
+      "optional": ["managed-network", "endpoint-backup", "siem", "sase", "vulnerability-scanning"],
+      "rules": ["DE Security Foundation is included. Guardz Pro is the primary platform baseline; do not describe this tier as 24/7 human MDR."],
+      "bundleId": "proactive-it",
+      "badge": "Entry",
+      "managed": true,
+      "components": {"securityFoundation": "included", "endpoint": "baseline", "emailSecurity": "baseline", "identity": "baseline", "detection": "platform-baseline", "mdrPackage": "Guardz Pro", "awareness": "included", "endpointBackup": "no", "bcdr": "no", "managedNetwork": "no", "managedWorkplace": "limited", "remoteSupport": "included", "vcio": "no"},
+      "profile": {"tier": "IT", "backup": {"required": false}, "security": {"mdr": {"deploy": ["guardz"], "package": "Pro"}}, "network": {"sase": {"required": false}}},
+      "plan": {"exclude": ["^ops\\.backup$", "^net\\.site$", "^net\\.sase$"]},
+      "addOns": ["endpoint-backup", "managed-network", "sase", "blackpoint-mdr", "advanced-managed-workplace"],
+      "notes": "No 24/7 human MDR claim for this tier (platform baseline detection)."
     },
     "Office": {
       "id": "office",
       "label": "ProActive Office",
-      "capabilities": ["it_operations","endpoint_devices","identity_access","email_collaboration","cybersecurity_operations","network_connectivity","backup_continuity","security_awareness","documentation_standards","technology_strategy"],
-      "defaults": {
-        "identity": "jumpcloud",
-        "edr": "sentinelone",
-        "mdr": "guardz",
-        "guardzPackage": "Ultimate",
-        "humanMdr": true,
-        "browserSecurity": ["pabx"],
-        "baseline": "de-windows-baseline",
-        "emailSecurity": "mimecast",
-        "awareness": "ninjio",
-        "remoteSupport": "jumpcloud-remote-assist",
-        "backup": "msp360",
-        "networkManaged": true
-      },
-      "optional": ["siem","sase","vulnerability-scanning"],
-      "rules": ["DE Security Foundation includes 24/7 managed detection and response at this tier."]
+      "capabilities": ["it_operations", "endpoint_devices", "identity_access", "email_collaboration", "cybersecurity_operations", "network_connectivity", "backup_continuity", "security_awareness", "documentation_standards", "technology_strategy"],
+      "defaults": {"identity": "jumpcloud", "edr": "sentinelone", "mdr": "guardz", "guardzPackage": "Ultimate", "humanMdr": true, "browserSecurity": ["pabx"], "baseline": "de-windows-baseline", "emailSecurity": "mimecast", "awareness": "ninjio", "remoteSupport": "jumpcloud-remote-assist", "backup": "msp360", "networkManaged": true},
+      "optional": ["siem", "sase", "vulnerability-scanning"],
+      "rules": ["DE Security Foundation includes 24/7 managed detection and response at this tier."],
+      "bundleId": "proactive-office",
+      "badge": "Foundation",
+      "managed": true,
+      "components": {"securityFoundation": "included", "endpoint": "stronger", "emailSecurity": "advanced anti-phishing", "identity": "stronger", "detection": "24/7 MDR", "mdrPackage": "Guardz Ultimate", "awareness": "included + phishing simulation", "endpointBackup": "yes", "bcdr": "add-on", "managedNetwork": "yes", "managedWorkplace": "limited", "remoteSupport": "included", "vcio": "1x per year"},
+      "profile": {"tier": "Office", "backup": {"required": true}, "security": {"mdr": {"deploy": ["guardz"], "package": "Ultimate"}}, "network": {"sase": {"required": false}}},
+      "plan": {"exclude": ["^net\\.sase$"]},
+      "addOns": ["sase", "blackpoint-mdr", "advanced-managed-workplace"]
     },
     "Business": {
       "id": "business",
       "label": "ProActive Business",
-      "capabilities": ["it_operations","endpoint_devices","identity_access","email_collaboration","cybersecurity_operations","network_connectivity","backup_continuity","compliance_risk","security_awareness","business_communications","hardware_lifecycle","documentation_standards","technology_strategy"],
-      "defaults": {
-        "identity": "jumpcloud",
-        "edr": "sentinelone",
-        "mdr": "guardz",
-        "guardzPackage": "Ultimate",
-        "humanMdr": true,
-        "browserSecurity": ["pabx"],
-        "baseline": "de-windows-baseline",
-        "emailSecurity": "mimecast",
-        "awareness": "ninjio",
-        "remoteSupport": "jumpcloud-remote-assist",
-        "backup": "msp360",
-        "networkManaged": true,
-        "siem": "wazuh",
-        "recoveryDepth": "bcdr-posture"
-      },
-      "optional": ["sase","vulnerability-scanning","blackpoint-mdr-backup"],
-      "rules": ["Deeper DE security operations, recovery and reporting apply; Blackpoint remains an approved alternate/backup, not the default MDR."]
+      "capabilities": ["it_operations", "endpoint_devices", "identity_access", "email_collaboration", "cybersecurity_operations", "network_connectivity", "backup_continuity", "compliance_risk", "security_awareness", "business_communications", "hardware_lifecycle", "documentation_standards", "technology_strategy"],
+      "defaults": {"identity": "jumpcloud", "edr": "sentinelone", "mdr": "guardz", "guardzPackage": "Ultimate", "humanMdr": true, "browserSecurity": ["pabx"], "baseline": "de-windows-baseline", "emailSecurity": "mimecast", "awareness": "ninjio", "remoteSupport": "jumpcloud-remote-assist", "backup": "msp360", "networkManaged": true, "siem": "wazuh", "recoveryDepth": "bcdr-posture"},
+      "optional": ["sase", "vulnerability-scanning", "blackpoint-mdr-backup"],
+      "rules": ["Deeper DE security operations, recovery and reporting apply; Blackpoint remains an approved alternate/backup, not the default MDR."],
+      "bundleId": "proactive-business",
+      "badge": "Operations",
+      "managed": true,
+      "components": {"securityFoundation": "included", "endpoint": "enhanced EDR", "emailSecurity": "enhanced", "identity": "enhanced", "detection": "24/7 MDR + deeper response", "mdrPackage": "Guardz Ultimate", "awareness": "enhanced", "endpointBackup": "yes", "bcdr": "yes", "cloudStorageBackup": "yes", "managedNetwork": "yes", "managedWorkplace": "enhanced", "remoteSupport": "included", "vcio": "2x per year", "complianceMinimum": "Regulated"},
+      "profile": {"tier": "Business", "backup": {"required": true}, "security": {"mdr": {"deploy": ["guardz"], "package": "Ultimate"}, "siem": "wazuh"}, "network": {"sase": {"required": false}}},
+      "plan": {"exclude": ["^net\\.sase$"]},
+      "addOns": ["sase", "blackpoint-mdr"]
     },
     "Enterprise": {
       "id": "enterprise",
       "label": "ProActive Enterprise",
-      "capabilities": ["it_operations","endpoint_devices","identity_access","email_collaboration","cybersecurity_operations","network_connectivity","backup_continuity","compliance_risk","security_awareness","business_communications","hardware_lifecycle","documentation_standards","technology_strategy"],
-      "defaults": {
-        "identity": "jumpcloud",
-        "edr": "sentinelone",
-        "mdr": "guardz",
-        "guardzPackage": "Elite",
-        "humanMdr": true,
-        "browserSecurity": ["pabx"],
-        "baseline": "de-windows-baseline",
-        "emailSecurity": "mimecast",
-        "awareness": "ninjio",
-        "remoteSupport": "jumpcloud-remote-assist",
-        "backup": "msp360",
-        "networkManaged": true,
-        "siem": "wazuh",
-        "sase": "timus",
-        "vulnerability": "qualys",
-        "privilegedAccess": true,
-        "complianceDepth": "advanced"
-      },
+      "capabilities": ["it_operations", "endpoint_devices", "identity_access", "email_collaboration", "cybersecurity_operations", "network_connectivity", "backup_continuity", "compliance_risk", "security_awareness", "business_communications", "hardware_lifecycle", "documentation_standards", "technology_strategy"],
+      "defaults": {"identity": "jumpcloud", "edr": "sentinelone", "mdr": "guardz", "guardzPackage": "Elite", "humanMdr": true, "browserSecurity": ["pabx"], "baseline": "de-windows-baseline", "emailSecurity": "mimecast", "awareness": "ninjio", "remoteSupport": "jumpcloud-remote-assist", "backup": "msp360", "networkManaged": true, "siem": "wazuh", "sase": "timus", "vulnerability": "qualys", "privilegedAccess": true, "complianceDepth": "advanced"},
       "optional": ["blackpoint-mdr-backup"],
-      "rules": ["Deepest managed-security posture plus DE governance/compliance depth. Regulated/GCC High eligibility remains verification-required."]
+      "rules": ["Deepest managed-security posture plus DE governance/compliance depth. Regulated/GCC High eligibility remains verification-required."],
+      "bundleId": "proactive-enterprise",
+      "badge": "Compliance",
+      "managed": true,
+      "components": {"securityFoundation": "included", "endpoint": "advanced", "emailSecurity": "advanced", "identity": "identity governance", "detection": "advanced / custom", "mdrPackage": "Guardz Elite", "awareness": "role-based", "endpointBackup": "custom", "bcdr": "custom", "cloudStorageBackup": "custom", "managedNetwork": "multi-site", "managedWorkplace": "custom", "remoteSupport": "included", "vcio": "quarterly", "complianceMinimum": "Governance", "evidence": "audit-grade"},
+      "profile": {"tier": "Enterprise", "backup": {"required": true}, "security": {"mdr": {"deploy": ["guardz"], "package": "Elite"}, "siem": "wazuh"}, "network": {"sase": {"required": false}}},
+      "plan": {"exclude": ["^net\\.sase$"]},
+      "addOns": ["sase", "blackpoint-mdr"]
     }
   },
+  "variants": [
+    {
+      "id": "proactive-business-gcch",
+      "label": "ProActive Business (GCC High)",
+      "badge": "Operations",
+      "extends": "proactive-business",
+      "managed": true,
+      "profile": {"gcch": true},
+      "notes": "GCCH does not automatically carry the commercial MDR package: every security agent waits on gate.gcch-verified until a technician records that the provider is authorised for the boundary."
+    },
+    {
+      "id": "proactive-enterprise-gcch",
+      "label": "ProActive Enterprise (GCC High)",
+      "badge": "Compliance",
+      "extends": "proactive-enterprise",
+      "managed": true,
+      "profile": {"gcch": true},
+      "notes": "As Business (GCC High)."
+    },
+    {
+      "id": "co-managed",
+      "label": "Co-Managed IT",
+      "badge": "Co-managed",
+      "managed": true,
+      "components": {"note": "Separate path, not a tier: the client's IT keeps parts of the stack; DE runs only the areas in coManaged.deOwns."},
+      "profile": {"tier": "Co-managed"},
+      "plan": {"exclude": ["^branding\\."], "coManagedAreas": true}
+    }
+  ],
+  "addOns": [
+    {
+      "id": "endpoint-backup",
+      "label": "Endpoint backup",
+      "profile": {"backup": {"required": true}},
+      "plan": {"reinclude": ["^ops\\.backup$"]}
+    },
+    {
+      "id": "managed-network",
+      "label": "Managed Physical Site Network",
+      "plan": {"reinclude": ["^net\\.site$"]}
+    },
+    {
+      "id": "sase",
+      "label": "Cloud Edge / SASE",
+      "profile": {"network": {"sase": {"required": true}}},
+      "plan": {"reinclude": ["^net\\.sase$"]}
+    },
+    {
+      "id": "blackpoint-mdr",
+      "label": "Backup MDR (approved alternate)",
+      "profile": {"security": {"mdr": {"deployAdd": ["blackpoint"]}}},
+      "plan": {}
+    },
+    {
+      "id": "advanced-managed-workplace",
+      "label": "Advanced Managed Workplace",
+      "plan": {}
+    },
+    {
+      "id": "ucaas",
+      "label": "UCaaS",
+      "plan": {},
+      "manualSteps": [
+        {"id": "ucaas-softphone", "title": "Softphone or desk phone provisioned and test call placed"}
+      ]
+    },
+    {
+      "id": "spend-card-controls",
+      "label": "Spend-Card Controls",
+      "plan": {}
+    }
+  ],
+  "coManagedAreas": {
+    "identity": ["^identity\\.", "^jumpcloud\\."],
+    "security": ["^security\\."],
+    "apps": ["^apps\\."],
+    "baseline": ["^baseline\\."],
+    "browser": ["^browser\\."],
+    "updates": ["^maint\\."],
+    "backup": ["^ops\\.backup$"],
+    "network": ["^net\\."],
+    "support": ["^ops\\.remote-support$", "^jumpcloud\\.remote-assist$"],
+    "mfa": ["^ops\\.mfa$", "^ops\\.email-security$"]
+  },
+  "standaloneExclude": ["^branding\\.shortcuts$", "^ops\\.remote-support$", "^jumpcloud\\.remote-assist$"],
   "standaloneSolutions": {
-    "it_operations": {"id":"it_operations","label":"IT Operations & Support","actionModules":["maintenance","operations"]},
-    "endpoint_devices": {"id":"endpoint_devices","label":"Endpoint & Device Management","actionModules":["apps","baseline","branding"]},
-    "identity_access": {"id":"identity_access","label":"Identity & Access","actionModules":["identity","jumpcloud"]},
-    "email_collaboration": {"id":"email_collaboration","label":"Email & Collaboration","actionModules":["apps","operations"]},
-    "cybersecurity_operations": {"id":"cybersecurity_operations","label":"Cybersecurity Operations","actionModules":["security"]},
-    "network_connectivity": {"id":"network_connectivity","label":"Network & Connectivity","actionModules":["network"]},
-    "backup_continuity": {"id":"backup_continuity","label":"Backup & Business Continuity","actionModules":["operations","apps"]},
-    "compliance_risk": {"id":"compliance_risk","label":"Compliance & Risk Readiness","actionModules":["baseline","evidence"]},
-    "security_awareness": {"id":"security_awareness","label":"Security Awareness & Human Risk","actionModules":["operations"]},
-    "business_communications": {"id":"business_communications","label":"Business Communications","actionModules":["apps"]},
-    "hardware_lifecycle": {"id":"hardware_lifecycle","label":"Hardware & Lifecycle","actionModules":["maintenance"]},
-    "documentation_standards": {"id":"documentation_standards","label":"Documentation & Standards","actionModules":["branding","evidence"]},
-    "technology_strategy": {"id":"technology_strategy","label":"Technology Strategy & Advisory","actionModules":["evidence"]}
+    "it_operations": {
+      "id": "it_operations",
+      "label": "IT Operations & Support",
+      "actionModules": ["maintenance", "operations"],
+      "endpoint": true,
+      "includeOnly": ["^maint\\.", "^apps\\.", "^ops\\.remote-support$", "^jumpcloud\\.(agent|remote-assist|policies)"],
+      "keepSupport": true
+    },
+    "endpoint_devices": {
+      "id": "endpoint_devices",
+      "label": "Endpoint & Device Management",
+      "actionModules": ["apps", "baseline", "branding"],
+      "endpoint": true,
+      "includeOnly": ["^jumpcloud\\.(agent|bind-user|user-mapping|group\\.|usergroup\\.|policies)", "^maint\\.", "^baseline\\.", "^apps\\.", "^security\\.edr-conflicts$", "^identity\\.bitlocker", "^branding\\.hostname$"],
+      "prerequisites": [
+        {"id": "device-policy", "title": "Device classification and ownership policy approved by the client"}
+      ]
+    },
+    "identity_access": {
+      "id": "identity_access",
+      "label": "Identity & Access",
+      "actionModules": ["identity", "jumpcloud"],
+      "endpoint": true,
+      "includeOnly": ["^identity\\.", "^jumpcloud\\.", "^ops\\.mfa$"],
+      "manualSteps": [
+        {"id": "privileged-review", "title": "Privileged-access review recorded for this user and device"}
+      ]
+    },
+    "email_collaboration": {
+      "id": "email_collaboration",
+      "label": "Email & Collaboration",
+      "actionModules": ["apps", "operations"],
+      "endpoint": true,
+      "includeOnly": ["^apps\\.(m365|teams|onedrive|dropbox)", "^ops\\.email-security$", "^ops\\.mfa$"],
+      "manualSteps": [
+        {"id": "tenant-baseline", "title": "Tenant email-protection baseline applied (SPF, DKIM, DMARC checked)"}
+      ]
+    },
+    "cybersecurity_operations": {
+      "id": "cybersecurity_operations",
+      "label": "Cybersecurity Operations",
+      "actionModules": ["security"],
+      "endpoint": true,
+      "includeOnly": ["^security\\.", "^baseline\\.", "^browser\\.", "^identity\\.bitlocker"],
+      "prerequisites": [
+        {"id": "assessment", "title": "Cyber risk assessment completed for this client"}
+      ]
+    },
+    "network_connectivity": {
+      "id": "network_connectivity",
+      "label": "Network & Connectivity",
+      "actionModules": ["network"],
+      "endpoint": true,
+      "includeOnly": ["^net\\."],
+      "manualSteps": [
+        {"id": "site-network", "title": "Site gateway, Wi-Fi and VLANs configured in the network console"}
+      ]
+    },
+    "backup_continuity": {
+      "id": "backup_continuity",
+      "label": "Backup & Business Continuity",
+      "actionModules": ["operations", "apps"],
+      "endpoint": true,
+      "includeOnly": ["^ops\\.backup$", "^identity\\.bitlocker", "^maint\\.bitlocker-resume$"],
+      "manualSteps": [
+        {"id": "restore-test", "title": "Restore test completed and recorded"}
+      ]
+    },
+    "compliance_risk": {
+      "id": "compliance_risk",
+      "label": "Compliance & Risk Readiness",
+      "actionModules": ["baseline", "evidence"],
+      "endpoint": true,
+      "includeOnly": ["^baseline\\.", "^security\\.edr-conflicts$", "^identity\\.bitlocker"],
+      "manualSteps": [
+        {"id": "evidence-review", "title": "Evidence bundle reviewed against the client's framework scope (readiness, not certification)"}
+      ]
+    },
+    "security_awareness": {
+      "id": "security_awareness",
+      "label": "Security Awareness & Human Risk",
+      "actionModules": ["operations"],
+      "endpoint": false,
+      "includeOnly": [],
+      "manualSteps": [
+        {"id": "enrolled", "title": "User enrolled in awareness training and phishing simulation"}
+      ]
+    },
+    "business_communications": {
+      "id": "business_communications",
+      "label": "Business Communications",
+      "actionModules": ["apps"],
+      "endpoint": false,
+      "includeOnly": [],
+      "manualSteps": [
+        {"id": "voice", "title": "Phone, softphone or Threadline service provisioned and test call placed"}
+      ]
+    },
+    "hardware_lifecycle": {
+      "id": "hardware_lifecycle",
+      "label": "Hardware & Lifecycle",
+      "actionModules": ["maintenance"],
+      "endpoint": true,
+      "includeOnly": ["^branding\\.hostname$", "^maint\\.", "^apps\\.", "^baseline\\.", "^identity\\.bitlocker", "^order\\."],
+      "manualSteps": [
+        {"id": "asset-recorded", "title": "Asset, warranty and assigned user recorded in documentation"}
+      ]
+    },
+    "documentation_standards": {
+      "id": "documentation_standards",
+      "label": "Documentation & Standards",
+      "actionModules": ["branding", "evidence"],
+      "endpoint": false,
+      "includeOnly": [],
+      "manualSteps": [
+        {"id": "documented", "title": "Device and configuration documented from the evidence bundle"}
+      ]
+    },
+    "technology_strategy": {
+      "id": "technology_strategy",
+      "label": "Technology Strategy & Advisory",
+      "actionModules": ["evidence"],
+      "endpoint": false,
+      "includeOnly": [],
+      "manualSteps": [
+        {"id": "roadmap", "title": "Findings added to the client roadmap"}
+      ]
+    }
   },
   "modes": {
     "dropship": {
       "label": "Dropship / pre-provision",
       "description": "DE prepares a known client device before direct shipment or handoff. The local engine remains usable offline; connected mode can later sync the signed result to the Hub.",
-      "excludedActionIds": ["identity.migrate","identity.verify-migration","identity.entra-leave","identity.mdm-cleanup","identity.hello-reset"]
+      "excludedActionIds": ["identity.migrate", "identity.verify-migration", "identity.entra-leave", "identity.mdm-cleanup", "identity.hello-reset"]
     }
   }
 }

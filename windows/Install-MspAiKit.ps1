@@ -14,7 +14,7 @@
     never read or written; timestamped log plus a JSON receipt.
 
 .PARAMETER Action
-    Menu (default: the DE Technician Console window at its AI Toolkit page when
+    Menu (default: the DE Tech Tool window at its AI Toolkit page when
     interactive on Windows, else the text menu), Gui (force the window),
     Console (force the text menu), Build, Install, Clipboard, Upstream, Verify,
     Uninstall, All (Build + Install + Verify), Update (check and apply a newer
@@ -120,7 +120,11 @@ param(
 # StrictMode 1.0: undefined variables still throw, but a property that real Windows data omits
 # (registry, CIM, dsregcmd, JSON) reads as $null instead of crashing discovery; detectors treat $null as unknown.
 Set-StrictMode -Version 1.0
+# No console to answer (RMM, redirected input): Read-Host would end the process with exit 0, which a caller reads as
+# success. Treat such a run as -NonInteractive so every prompt takes its safe default instead.
+if (-not $NonInteractive) { try { if ([Console]::IsInputRedirected -or -not [Environment]::UserInteractive) { $NonInteractive = [switch]$true } } catch { $NonInteractive = [switch]$true } }
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'   # Windows PowerShell 5.1 downloads run many times slower with the progress bar
 if ($DryRun) { $WhatIfPreference = $true }
 
 $script:ToolName = 'msp-ai-kit loader'
@@ -595,10 +599,10 @@ function Install-UpstreamKits {
 # ------------------------------------------------------------------ version, update, cleanup, receipt upload
 function Get-KitVersionInfo {
     param([Parameter(Mandatory = $true)][string]$Root, $Config)
-    $local = $null; $vf = Join-Path $Root 'kit.version'; if (Test-Path -LiteralPath $vf) { $local = (Get-Content -LiteralPath $vf -Raw).Trim() }
+    $local = $null; $vf = Join-Path $Root 'kit.version'; if (Test-Path -LiteralPath $vf) { $local = (Get-Content -LiteralPath $vf -Raw -Encoding UTF8).Trim() }
     $remote = $null; $url = $null
     if ($Config -and $Config.PSObject.Properties['distribution'] -and $Config.distribution.PSObject.Properties['version_url']) { $url = $Config.distribution.version_url }
-    if ($url -and $url -match '^https://') { try { $remote = (Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 20).Content.Trim() } catch { Write-KitLog -Level WARN -Message "version check failed: $($_.Exception.Message)" } }
+    if ($url -and $url -match '^https://') { try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }; try { $remote = (Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 20).Content.Trim() } catch { Write-KitLog -Level WARN -Message "version check failed: $($_.Exception.Message)" } }
     $newer = $false; if ($local -and $remote) { try { $newer = ([version]$remote -gt [version]$local) } catch { $newer = ($remote -ne $local) } }
     return [pscustomobject]@{ local = $local; remote = $remote; updateAvailable = $newer; versionUrl = $url }
 }
@@ -669,7 +673,7 @@ function Send-Receipt {
         $headers = @{ 'Content-Type' = 'application/json' }
         if ($env:DE_RECEIPT_TOKEN) { $headers['Authorization'] = "Bearer $($env:DE_RECEIPT_TOKEN)" }
         [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-        $null = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -Body (Get-Content -LiteralPath $ReceiptPath -Raw) -TimeoutSec 30
+        $null = Invoke-RestMethod -Uri $url -Method Post -Headers $headers -Body ([IO.File]::ReadAllBytes($ReceiptPath)) -ContentType 'application/json; charset=utf-8' -TimeoutSec 30 -UseBasicParsing
         Write-KitLog -Level PASS -Message "receipt uploaded to $url"
     } catch { Write-KitLog -Level WARN -Message "receipt upload failed: $($_.Exception.Message)" }
 }
@@ -709,7 +713,8 @@ function Write-Receipt {
     $receiptPath = $null
     if ($script:LogDir) {
         $receiptPath = Join-Path $script:LogDir ("msp-ai-kit-receipt-{0}.json" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
-        try { $summary | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $receiptPath -Encoding UTF8 -WhatIf:$false } catch { $receiptPath = $null }
+        # no BOM: the receipt is POSTed byte for byte, and 5.1's -Encoding UTF8 writes one (webhooks reject it)
+        try { [IO.File]::WriteAllText($receiptPath, ($summary | ConvertTo-Json -Depth 5), (New-Object Text.UTF8Encoding $false)) } catch { $receiptPath = $null }
     }
     Write-Host ""
     Write-Host ("{0} {1} summary" -f $script:ToolName, $script:ToolVersion) -ForegroundColor Cyan
@@ -846,8 +851,8 @@ function Main {
         'Console' { Show-Menu -Root $root -ProfileName $profileName -PackDir $packDir -Config $config }
         'Gui' {
             $exe = (Get-Process -Id $PID).Path
-            if ($PSCmdlet.ShouldProcess($script:GuiFile, 'open the DE Technician Console (AI Toolkit page)')) { Start-Process -FilePath $exe -ArgumentList @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', $script:GuiFile, '-Page', 'AiToolkit') | Out-Null }
-            Add-Evidence -Step 'gui' -Before 'loader' -ActionTaken 'opened the DE Technician Console' -Result 'INFO'
+            if ($PSCmdlet.ShouldProcess($script:GuiFile, 'open DE Tech Tool (AI Toolkit page)')) { Start-Process -FilePath $exe -ArgumentList @('-NoProfile', '-Sta', '-ExecutionPolicy', 'Bypass', '-File', ('"{0}"' -f $script:GuiFile), '-Page', 'AiToolkit') | Out-Null }
+            Add-Evidence -Step 'gui' -Before 'loader' -ActionTaken 'opened DE Tech Tool' -Result 'INFO'
         }
         'Update' { $null = Update-Kit -Root $root -Config $cfg }
         'Cleanup' { $null = Invoke-Cleanup -Config $cfg -PackDir $packDir }

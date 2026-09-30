@@ -210,9 +210,22 @@ Describe 'JumpCloud mapping: the Alamo finding' {
         ($m.issues -join ' ') | Should -Match 'does not exist'
         ($m.issues -join ' ') | Should -Match 'signed in'
     }
-    It 'reports READY once the local account owns the preserved profile' {
-        Mock -ModuleName DE.JumpCloud Get-DEIdentityState { @{ localUsers = @(@{ name = 'sthompson'; enabled = $true; sid = 'S-1-5-21-5' }); profiles = @(@{ path = 'C:\Users\sthompson'; sid = 'S-1-5-21-5' }); interactiveUser = 'ALAMO\jrpetro' } }
-        (Test-DEJumpCloudUserMapping -IntendedLocalUser 'sthompson').status | Should -Be 'READY'
+    It 'reads READY only when the local account owns the preserved profile by SID and JumpCloud was checked' {
+        # the preserved folder keeps the source name (UpdateHomePath off); ownership is by SID
+        Mock -ModuleName DE.JumpCloud Get-DEIdentityState { @{ localUsers = @(@{ name = 'sthompson'; enabled = $true; sid = 'S-1-5-21-5' }); profiles = @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-5-21-5' }); interactiveUser = 'ALAMO\jrpetro' } }
+        $noKey = Test-DEJumpCloudUserMapping -IntendedLocalUser 'sthompson' -QueryApi
+        $noKey.status | Should -Be 'WARN'
+        ($noKey.issues -join ' ') | Should -Match 'not checked'
+        Set-DESecret -Name 'JC_API_KEY' -Plain 'jc-key-for-mapping-test'
+        Mock -ModuleName DE.JumpCloud Get-DEJumpCloudUser { @{ _id = 'U1' } }
+        Mock -ModuleName DE.JumpCloud Get-DEJumpCloudSystem { @{ _id = 'S1' } }
+        Mock -ModuleName DE.JumpCloud Get-DEJumpCloudBoundUsers { @(@{ id = 'JRPETRO' }) }
+        $ok = Test-DEJumpCloudUserMapping -IntendedLocalUser 'sthompson' -QueryApi
+        $ok.status | Should -Be 'READY'   # not bound yet and another user bound are notes: bind-user fixes the first, jrpetro is expected
+        ($ok.notes -join ' ') | Should -Match 'not bound'
+        Mock -ModuleName DE.JumpCloud Get-DEIdentityState { @{ localUsers = @(@{ name = 'sthompson'; enabled = $true; sid = 'S-1-5-21-5' }); profiles = @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-12-1-9' }); interactiveUser = 'ALAMO\jrpetro' } }
+        (Test-DEJumpCloudUserMapping -IntendedLocalUser 'sthompson' -QueryApi).status | Should -Not -Be 'READY'
+        Clear-DESecrets
     }
 }
 
@@ -495,6 +508,210 @@ Describe 'DE Tech Tool planning, tiers and client branding' {
         $a.name | Should -Be 'Alamo Industries'
         $a.branding.clientLogo | Should -Be 'asset:clients/alamo/alamo-mark.png'
         (New-DEClientProfileTemplate).branding.clientLogo | Should -Be ''
+        (New-DEClientProfileTemplate).hub.accountId | Should -Be ''
+    }
+}
+
+Describe 'Plans: ProActive tiers, variants and add-ons' {
+    BeforeAll { . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $null = Initialize-TestConsole; $global:DETest = @{ Base = Get-DEClientProfile -Id 'alamo' } }
+    It 'composes and registers every plan in the catalog' {
+        $all = @(Get-DEBundles)
+        $all.Count | Should -Be 7
+        foreach ($b in $all) {
+            $p = New-DEComposedProfile -ClientProfile $global:DETest.Base -Bundle $b['id']
+            $p.plan.bundleName | Should -Be $b['name']
+            @(Initialize-DEWorkflow -ClientProfile $p -Mode 'new').Count | Should -BeGreaterThan 10
+        }
+    }
+    It 'accepts the tier key and the tier id as well as the bundle id' {
+        (Get-DEBundle -Id 'Business')['id'] | Should -Be 'proactive-business'
+        (Get-DEBundle -Id 'it')['id'] | Should -Be 'proactive-it'
+        { Get-DEBundle -Id 'nope' } | Should -Throw
+    }
+    It 'leaves endpoint backup out of ProActive IT until the add-on puts it back' {
+        $ids = @(Initialize-DEWorkflow -ClientProfile (New-DEComposedProfile -ClientProfile $global:DETest.Base -Bundle 'proactive-it') -Mode 'new')
+        $ids | Should -Not -Contain 'ops.backup'
+        $ids | Should -Not -Contain 'net.sase'
+        $ids = @(Initialize-DEWorkflow -ClientProfile (New-DEComposedProfile -ClientProfile $global:DETest.Base -Bundle 'proactive-it' -AddOn 'endpoint-backup', 'sase') -Mode 'new')
+        $ids | Should -Contain 'ops.backup'
+        $ids | Should -Contain 'net.sase'
+    }
+    It 'GCC High holds every security agent behind the provider-verification gate' {
+        $null = Initialize-DEWorkflow -ClientProfile (New-DEComposedProfile -ClientProfile $global:DETest.Base -Bundle 'proactive-business-gcch') -Mode 'new'
+        (Get-DEAction 'security.guardz').Gates | Should -Contain 'gate.gcch-verified'
+        (Get-DEAction 'security.sentinelone').Gates | Should -Contain 'gate.gcch-verified'
+        (Test-DEGate -Id 'gate.gcch-verified').Status | Should -Be 'BLOCKED'
+        Confirm-DEPlanStep -Key 'gcch-verified' -Note 'provider confirmed boundary authorisation'
+        (Test-DEGate -Id 'gate.gcch-verified').Status | Should -Be 'PASS'
+    }
+    It 'Co-Managed IT runs only the areas DE owns' {
+        $p = ConvertTo-DEHashtable $global:DETest.Base; $p['coManaged'] = @{ deOwns = @('security') }
+        $ids = @(Initialize-DEWorkflow -ClientProfile (New-DEComposedProfile -ClientProfile $p -Bundle 'co-managed') -Mode 'co-managed')
+        @($ids | Where-Object { $_ -like 'baseline.*' -or $_ -like 'jumpcloud.*' -or $_ -like 'branding.*' }).Count | Should -Be 0
+        @($ids | Where-Object { $_ -like 'security.*' }).Count | Should -BeGreaterThan 0
+    }
+    It 'the Blackpoint add-on adds a second MDR agent instead of replacing Guardz' {
+        $p = New-DEComposedProfile -ClientProfile $global:DETest.Base -Bundle 'proactive-business' -AddOn 'blackpoint-mdr'
+        @($p.security.mdr.deploy) | Should -Contain 'guardz'
+        @($p.security.mdr.deploy) | Should -Contain 'blackpoint'
+    }
+    It 'composing twice gives the same plan' {
+        $once = New-DEComposedProfile -ClientProfile $global:DETest.Base -Bundle 'proactive-office' -AddOn 'ucaas'
+        $twice = New-DEComposedProfile -ClientProfile $once
+        ($twice.plan | ConvertTo-Json -Depth 6) | Should -Be ($once.plan | ConvertTo-Json -Depth 6)
+    }
+}
+
+Describe 'Plans: standalone solutions' {
+    BeforeAll { . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $null = Initialize-TestConsole; $global:DETest = @{ Base = Get-DEClientProfile -Id 'alamo' } }
+    It 'every standalone solution composes as not DE managed, even for a client whose profile names a bundle' {
+        foreach ($s in @(Get-DESolutions)) {
+            $p = New-DEComposedProfile -ClientProfile $global:DETest.Base -Solution $s['id']
+            $p.plan.bundle | Should -BeNullOrEmpty
+            $p.plan.managed | Should -Be $false
+            $null = Initialize-DEWorkflow -ClientProfile $p -Mode 'new'
+        }
+    }
+    It 'leaves out DE support shortcuts and remote-support agents unless the solution is IT operations' {
+        $ids = @(Initialize-DEWorkflow -ClientProfile (New-DEComposedProfile -ClientProfile $global:DETest.Base -Solution 'identity_access') -Mode 'new')
+        $ids | Should -Not -Contain 'jumpcloud.remote-assist'
+        $ids | Should -Not -Contain 'baseline.smb1-server'
+        $ids = @(Initialize-DEWorkflow -ClientProfile (New-DEComposedProfile -ClientProfile $global:DETest.Base -Solution 'it_operations') -Mode 'new')
+        $ids | Should -Contain 'ops.remote-support'
+    }
+    It 'a manual-only solution changes nothing on the endpoint and waits on its confirm step' {
+        $ids = @(Initialize-DEWorkflow -ClientProfile (New-DEComposedProfile -ClientProfile $global:DETest.Base -Solution 'technology_strategy') -Mode 'new')
+        @($ids | Where-Object { $_ -notlike 'plan.*' }).Count | Should -Be 0
+        $ids | Should -Contain 'plan.technology_strategy-roadmap'
+    }
+    It 'a prerequisite blocks every endpoint change until it is confirmed' {
+        $null = Initialize-DEWorkflow -ClientProfile (New-DEComposedProfile -ClientProfile $global:DETest.Base -Solution 'cybersecurity_operations') -Mode 'new'
+        (Get-DEAction 'security.guardz').Gates | Should -Contain 'gate.prereq.cybersecurity_operations-assessment'
+        (Test-DEGate -Id 'gate.prereq.cybersecurity_operations-assessment').Status | Should -Be 'BLOCKED'
+        Confirm-DEPlanStep -Key 'plan.cybersecurity_operations-assessment'
+        (Test-DEGate -Id 'gate.prereq.cybersecurity_operations-assessment').Status | Should -Be 'PASS'
+    }
+    It 'refuses to record a confirmation note that looks like a secret' {
+        { Confirm-DEPlanStep -Key 'x' -Note 'password: Hunter2-Hunter2!' } | Should -Throw
+    }
+    It 'areas outside the plan read NOT IN PLAN; an open plan step keeps the device from READY' {
+        $null = Initialize-DEWorkflow -ClientProfile (New-DEComposedProfile -ClientProfile $global:DETest.Base -Solution 'technology_strategy') -Mode 'new'
+        Clear-DEEvidence
+        $null = Invoke-DEAudit -Mode 'new'
+        $r = Get-DEReadiness
+        ($r.cards | Where-Object { $_.id -eq 'network' }).state | Should -Be 'NOT IN PLAN'
+        $r.overall | Should -Not -Be 'READY'
+    }
+}
+
+Describe 'Dropship orders and the recommended mode' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $null = Initialize-TestConsole
+        $global:DETest = @{ Dir = Join-Path ([IO.Path]::GetTempPath()) ("de-order-{0}" -f ([guid]::NewGuid())) }
+        New-Item -ItemType Directory -Path $global:DETest.Dir -Force | Out-Null
+        $o = Get-Content -LiteralPath (Join-Path $script:ConsoleRoot 'catalog/orders/example-dropship-order.json') -Raw | ConvertFrom-Json
+        $o.device.serial = 'SER-1234'
+        $global:DETest.Order = Join-Path $global:DETest.Dir 'order.json'
+        $o | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $global:DETest.Order -Encoding UTF8
+    }
+    It 'refuses an order that carries a secret' {
+        $bad = Join-Path $global:DETest.Dir 'bad.json'
+        $o = Get-Content -LiteralPath $global:DETest.Order -Raw | ConvertFrom-Json
+        $o | Add-Member -NotePropertyName 'jcConnectKey' -NotePropertyValue 'abcdef0123456789abcdef0123456789abcdef01'
+        $o | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $bad -Encoding UTF8
+        { Import-DEOrderManifest -Path $bad } | Should -Throw
+    }
+    It 'reads BLOCKED on the wrong unit, PASS on the ordered one, WARN when the order has no serial' {
+        $null = Import-DEOrderManifest -Path $global:DETest.Order
+        (Test-DEOrderMatch -Device @{ serial = 'OTHER'; model = 'Latitude 7450' }).Status | Should -Be 'BLOCKED'
+        (Test-DEOrderMatch -Device @{ serial = 'SER-1234'; model = 'Latitude 5550' }).Status | Should -Be 'BLOCKED'
+        (Test-DEOrderMatch -Device @{ serial = 'SER-1234'; model = 'Dell Latitude 7450' }).Status | Should -Be 'PASS'
+        $null = Import-DEOrderManifest -Path (Join-Path $script:ConsoleRoot 'catalog/orders/example-dropship-order.json')
+        (Test-DEOrderMatch -Device @{ serial = 'ANY'; model = 'Latitude 7450' }).Status | Should -Be 'WARN'
+    }
+    It 'dropship never registers identity migration and gates every change on the order match' {
+        $null = Import-DEOrderManifest -Path $global:DETest.Order
+        $ids = @(Initialize-DEWorkflow -ClientProfile (Get-DEClientProfile -Id 'alamo') -Mode 'dropship')
+        foreach ($never in @('identity.migrate', 'identity.entra-leave', 'identity.mdm-cleanup')) { $ids | Should -Not -Contain $never }
+        $ids | Should -Contain 'order.verify-device'
+        (Get-DEAction 'baseline.smb1-server').Gates | Should -Contain 'gate.order-match'
+    }
+    It 'recommends a mode with reasons and never guesses' {
+        Set-DEStateValue -Path 'order' -Value $null
+        (Get-DERecommendedMode -Snapshot $null -ClientProfile @{ id = 'x' }).mode | Should -Be 'audit'
+        (Get-DERecommendedMode -Snapshot @{ mdm = @{ authority = 'intune' }; identity = @{ joinType = 'entra-joined' } } -ClientProfile @{ id = 'x' }).mode | Should -Be 'takeover'
+        (Get-DERecommendedMode -Snapshot @{ mdm = @{ authority = 'jumpcloud' }; agents = @{ agents = @{ sentinelone = @{ installed = $true }; guardz = @{ installed = $true } } }; identity = @{ joinType = 'local-workgroup' } } -ClientProfile @{ id = 'x' }).mode | Should -Be 'repair'
+        (Get-DERecommendedMode -Snapshot @{ mdm = @{ authority = 'none' }; identity = @{ joinType = 'local-workgroup'; profiles = @('a') } } -ClientProfile @{ id = 'x' }).mode | Should -Be 'new'
+        # the DE stack installed but the Entra user not yet migrated is takeover, not repair
+        $stack = @{ sentinelone = @{ installed = $true }; guardz = @{ installed = $true } }
+        $r = Get-DERecommendedMode -Snapshot @{ mdm = @{ authority = 'jumpcloud' }; agents = @{ agents = $stack }; identity = @{ joinType = 'entra-joined'; interactiveUser = 'AzureAD\SuzetteThompson' } } -ClientProfile @{ id = 'x' }
+        $r.mode | Should -Be 'takeover'
+        $r.reason | Should -Match 'repair mode does not migrate'
+        (Get-DERecommendedMode -Snapshot @{ mdm = @{ authority = 'jumpcloud' }; agents = @{ agents = $stack }; identity = @{ joinType = 'entra-joined'; profiles = @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-12-1-111-222-333-444' }) } } -ClientProfile @{ id = 'x' }).mode | Should -Be 'takeover'
+        # once migrated (the profile belongs to a local SID) the device can stay Entra joined and still reads repair
+        (Get-DERecommendedMode -Snapshot @{ mdm = @{ authority = 'jumpcloud' }; agents = @{ agents = $stack }; identity = @{ joinType = 'entra-joined'; interactiveUser = 'ALAMO-LAP-0231\sthompson'; profiles = @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-5-21-1-2-3-1001' }) } } -ClientProfile @{ id = 'x' }).mode | Should -Be 'repair'
+        (Get-DERecommendedMode -Snapshot @{} -ClientProfile @{ id = 'x'; delivery = @{ mode = 'dropship' } }).mode | Should -Be 'dropship'
+        (Get-DERecommendedMode -Snapshot @{} -ClientProfile @{ id = 'x'; plan = @{ bundle = 'co-managed' } }).mode | Should -Be 'co-managed'
+        $r = Get-DERecommendedMode -Snapshot @{ mdm = @{ authority = 'intune' } } -ClientProfile @{ id = 'x' }
+        $r.reason | Should -Match 'intune'
+        @($r.reasons).Count | Should -BeGreaterThan 0
+    }
+    It 'headless dropship refuses the wrong device before changing anything (exit 2)' {
+        $exe = (Get-Process -Id $PID).Path
+        $wrong = Join-Path $global:DETest.Dir 'wrong.json'
+        $o = Get-Content -LiteralPath $global:DETest.Order -Raw | ConvertFrom-Json; $o.device.serial = 'NOT-THIS-MACHINE-0000'
+        $o | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $wrong -Encoding UTF8
+        $out = & $exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $script:ConsoleRoot 'DETechConsole.ps1') -Headless -Order $wrong -Apply -Mode dropship -DataDir (Join-Path $global:DETest.Dir 'data') 2>&1 | ForEach-Object { "$_" }
+        $LASTEXITCODE | Should -Be 2
+        ($out -join "`n") | Should -Match 'REFUSED: wrong device'
+        ($out -join "`n") | Should -Not -Match '\] (baseline|security|branding)\.[a-z0-9.-]+: PASS \(applied'
+    }
+}
+
+Describe 'Playbooks and the dropship kit' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot 'TestHelpers.ps1'); $null = Initialize-TestConsole
+        $global:DETest = @{ Win = Split-Path -Parent $script:ConsoleRoot; Exe = (Get-Process -Id $PID).Path; Tmp = Join-Path ([IO.Path]::GetTempPath()) ("de-pb-{0}" -f ([guid]::NewGuid())) }
+    }
+    It 'has a committed playbook for every plan and standalone solution, identical to a fresh generation' {
+        & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $global:DETest.Win 'packaging/New-DEPlaybooks.ps1') -OutDir $global:DETest.Tmp | Out-Null
+        $fresh = @(Get-ChildItem -LiteralPath $global:DETest.Tmp -Filter '*.ps1')
+        $fresh.Count | Should -Be (@(Get-DEBundles).Count + @(Get-DESolutions).Count)
+        foreach ($f in $fresh) {
+            $committed = Join-Path (Join-Path $global:DETest.Win 'playbooks') $f.Name
+            Test-Path -LiteralPath $committed | Should -Be $true -Because "run packaging/New-DEPlaybooks.ps1 after editing catalog/bundles.json ($($f.Name) missing)"
+            (Get-Content -LiteralPath $committed -Raw) | Should -Be (Get-Content -LiteralPath $f.FullName -Raw) -Because "$($f.Name) is stale; rerun packaging/New-DEPlaybooks.ps1"
+        }
+        @(Get-ChildItem -LiteralPath (Join-Path $global:DETest.Win 'playbooks') -Filter '*.ps1').Count | Should -Be $fresh.Count
+    }
+    It 'builds a dropship kit with the order, the composed profile and no secrets' {
+        $out = Join-Path $global:DETest.Tmp 'kits'
+        & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $global:DETest.Win 'packaging/New-DEDropshipKit.ps1') -Client alamo -Bundle proactive-it -AddOn endpoint-backup -OrderId 'T-42' -EndUserName 'Test User' -Serial 'SER-9' -Model 'Latitude 7450' -OutDir $out 3>$null | Out-Null
+        $LASTEXITCODE | Should -Be 0
+        $kit = Join-Path $out 'DE-Dropship-T-42'
+        foreach ($f in @('order.json', 'profile.json', 'FirstBoot.cmd', 'Invoke-DEFirstBoot.ps1', 'README.txt', 'DE-TechTool/Start-DETechTool.cmd', 'DE-TechTool/packaging/Sign-DETechConsole.ps1')) { Test-Path -LiteralPath (Join-Path $kit $f) | Should -Be $true }
+        Test-Path -LiteralPath "$kit.zip" | Should -Be $true
+        (Get-Content -LiteralPath "$kit.zip.sha256" -Raw) | Should -Match '^[0-9a-f]{64}  DE-Dropship-T-42\.zip'
+        $prof = Get-Content -LiteralPath (Join-Path $kit 'profile.json') -Raw | ConvertFrom-Json
+        Test-Path -LiteralPath (Join-Path $kit 'DE-TechTool/console/catalog/profiles/alamo.json') | Should -Be $false   # the tool tree is copied unchanged
+        $prof.plan.bundle | Should -Be 'proactive-it'
+        @(Test-DEProfileHasSecrets -Profile (ConvertTo-DEHashtable $prof)).Count | Should -Be 0
+        Test-Path -LiteralPath (Join-Path $kit 'DE-TechTool/tests') | Should -Be $false
+        [IO.File]::ReadAllText((Join-Path $kit 'FirstBoot.cmd')) | Should -Match "`r`n"
+        Test-Path -LiteralPath (Join-Path $kit 'DE-TechTool/packaging/out') | Should -Be $false
+    }
+    It 'a kit built from a packaged release still matches its integrity manifest at first boot' {
+        $rel = Join-Path $global:DETest.Tmp 'release'; New-Item -ItemType Directory -Path $rel -Force | Out-Null
+        foreach ($d in Get-ChildItem -LiteralPath $global:DETest.Win) { if ($d.Name -notin @('tests')) { Copy-Item -LiteralPath $d.FullName -Destination $rel -Recurse -Force } }
+        Remove-Item -LiteralPath (Join-Path $rel 'packaging/out') -Recurse -Force -ErrorAction SilentlyContinue
+        & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $rel 'packaging/Sign-DETechConsole.ps1') -SkipSigning -Root $rel | Out-Null
+        $out = Join-Path $global:DETest.Tmp 'kits2'
+        & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $rel 'packaging/New-DEDropshipKit.ps1') -Client alamo -Bundle proactive-office -OrderId 'T-43' -Serial 'SER-1' -Model 'Latitude 7450' -OutDir $out 3>$null | Out-Null
+        $LASTEXITCODE | Should -Be 0
+        $tool = Join-Path $out 'DE-Dropship-T-43/DE-TechTool'
+        Test-Path -LiteralPath (Join-Path $tool 'integrity.json') | Should -Be $true
+        & $global:DETest.Exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $tool 'packaging/Sign-DETechConsole.ps1') -Verify -Root $tool | Out-Null
+        $LASTEXITCODE | Should -Be 0
     }
 }
 

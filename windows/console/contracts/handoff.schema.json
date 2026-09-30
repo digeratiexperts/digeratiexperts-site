@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digeratiexperts.com/schemas/de.techconsole.handoff/v1",
+  "title": "DE boot rescue handoff",
+  "description": "What the boot rescue did, left on the rescue USB and on the Windows volume (ProgramData\\DE\\TechConsole\\handoff) for the on-device tool, and sent to the Hub when online. The recovery password typed to unlock BitLocker is never part of it. No secrets: validators refuse secret-looking keys and any value shaped like a BitLocker recovery password.",
+  "type": "object",
+  "required": [
+    "schema",
+    "source",
+    "createdAt",
+    "deviceKey",
+    "device",
+    "actions"
+  ],
+  "properties": {
+    "schema": {
+      "const": "de.techconsole.handoff/v1"
+    },
+    "source": {
+      "type": "string",
+      "pattern": "^DERescue/"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "handoffId": {
+      "type": "string"
+    },
+    "deviceKey": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+:[A-Z0-9-]+$"
+    },
+    "technician": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "client": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "device": {
+      "type": "object",
+      "properties": {
+        "serial": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "manufacturer": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hostname": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "osBuild": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "osDisplayVersion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "windows": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "drive": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "bitlocker": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "none",
+            "locked",
+            "unlocked",
+            "decrypted",
+            null
+          ]
+        },
+        "joinType": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "jumpcloudAgent": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "pendingUpdates": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "disks": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mediaType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "health": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sizeGB": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "action",
+          "result"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "inspect",
+              "unlock",
+              "profile-backup",
+              "driver-export",
+              "disk-health",
+              "boot-repair",
+              "revert-pending",
+              "hub-sync"
+            ]
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "PASS",
+              "WARN",
+              "FAIL",
+              "SKIPPED"
+            ]
+          },
+          "at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "manifestSha256": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "files": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "bytes": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "recommendations": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "reviewedBy": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "reviewedAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

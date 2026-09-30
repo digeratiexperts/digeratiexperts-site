@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digeratiexperts.com/schemas/de.techconsole.job/v1",
+  "title": "DE job (online component to device or rescue)",
+  "description": "A unit of work the online component hands to a device: which actions from the signed local catalog may run, for which device, until when. The device runs only catalog action ids, never shipped code. Signature verification arrives with the DE Tech Agent; until then a job is only a plan the technician confirms. No secrets: validators refuse secret-looking keys and any value shaped like a BitLocker recovery password.",
+  "type": "object",
+  "required": [
+    "schema",
+    "jobId",
+    "kind",
+    "deviceKey",
+    "issuedAt",
+    "expiresAt",
+    "actions"
+  ],
+  "properties": {
+    "schema": {
+      "const": "de.techconsole.job/v1"
+    },
+    "jobId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "provision",
+        "takeover",
+        "rescue",
+        "audit",
+        "deprovision",
+        "maintenance"
+      ]
+    },
+    "deviceKey": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+:[A-Z0-9-]+$"
+    },
+    "client": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "orderId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "mode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(\\.[a-z0-9-]+)+$"
+      }
+    },
+    "issuedAt": {
+      "type": "string"
+    },
+    "expiresAt": {
+      "type": "string"
+    },
+    "issuedBy": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "catalogSha256": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "signature": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

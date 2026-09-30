@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    DE Technician Console discovery engines: device, identity (dsregcmd), MDM
+    DE Tech Tool discovery engines: device, identity (dsregcmd), MDM
     authority, BitLocker, OneDrive, Windows Hello, updates, installed apps,
     management and security agents, network, pending reboot.
 
@@ -97,7 +97,9 @@ function ConvertFrom-DEDsregcmd {
     $yes = { param($k) return ("$($kv[$k])" -match '^(YES|TRUE)$') }
     $azureJoined = & $yes 'AzureAdJoined'; $domainJoined = & $yes 'DomainJoined'; $workplace = & $yes 'WorkplaceJoined'; $enterpriseJoined = & $yes 'EnterpriseJoined'
     $joinType = 'unknown'
-    if ($kv.Count -gt 0) {
+    # local-workgroup needs dsregcmd to have actually answered the join questions; stray 'key : value' lines
+    # (an error banner, a localized message) are not enough and leave the join type unknown
+    if ($kv.ContainsKey('AzureAdJoined') -and $kv.ContainsKey('DomainJoined')) {
         if ($azureJoined -and $domainJoined) { $joinType = 'hybrid-entra-joined' }
         elseif ($azureJoined) { $joinType = 'entra-joined' }
         elseif ($domainJoined) { $joinType = 'ad-domain-joined' }
@@ -141,18 +143,24 @@ function Get-DEIdentityState {
     if ($script:IsWindowsHost) {
         try { $localUsers = @(Get-LocalUser -ErrorAction Stop | ForEach-Object { @{ name = $_.Name; enabled = [bool]$_.Enabled; sid = $_.SID.Value; passwordRequired = [bool]$_.PasswordRequired; lastLogon = $(if ($_.LastLogon) { $_.LastLogon.ToString('o') } else { $null }); description = $_.Description } }) } catch { }
         try {
-            foreach ($m in @(Get-LocalGroupMember -Group 'Administrators' -ErrorAction Stop)) {
+            # by SID: the group is 'Administratoren', 'Administrateurs', ... on localized Windows
+            foreach ($m in @(Get-LocalGroupMember -SID 'S-1-5-32-544' -ErrorAction Stop)) {
                 $entry = @{ name = $m.Name; sid = $m.SID.Value; source = "$($m.PrincipalSource)"; objectClass = $m.ObjectClass }
                 if ($m.Name -match '^S-1-\d+' -or -not $m.Name) { $unresolvedAdmins += $entry } else { $admins += $entry }
             }
         } catch {
             # Get-LocalGroupMember fails on some Entra-joined machines with orphaned SIDs; fall back to net localgroup
-            $r = Invoke-DEDiscoveryNative -FilePath 'net.exe' -Arguments @('localgroup', 'Administrators')
-            $names = @($r.Output | Where-Object { $_ -and $_ -notmatch '^(Alias name|Comment|Members|-+|The command completed)' })
+            # (also the path in 32-bit PowerShell, where the LocalAccounts module does not exist)
+            $grp = Get-DEAdministratorsGroupName
+            $r = Invoke-DEDiscoveryNative -FilePath 'net.exe' -Arguments @('localgroup', $grp)
+            # net localgroup prints the members between the dashed rule and the closing line; both are language-neutral positions
+            $lines = @($r.Output); $start = -1; for ($i = 0; $i -lt $lines.Count; $i++) { if ("$($lines[$i])" -match '^-{5,}') { $start = $i + 1; break } }
+            $names = $(if ($start -ge 0 -and $r.ExitCode -eq 0) { @($lines[$start..([Math]::Max($start, $lines.Count - 2))] | Where-Object { "$_".Trim() }) } else { @() })
             foreach ($n in $names) { if ($n -match '^S-1-\d+') { $unresolvedAdmins += @{ name = $n; sid = $n; source = 'unresolved' } } else { $admins += @{ name = $n.Trim(); sid = ''; source = 'net localgroup' } } }
         }
     }
-    $profiles = @(Get-DECim Win32_UserProfile -Filter "Special=False" | ForEach-Object { @{ path = $_.LocalPath; sid = $_.SID; loaded = [bool]$_.Loaded; lastUse = $(if ($_.LastUseTime) { ([datetime]$_.LastUseTime).ToString('o') } else { $null }) } })
+    # the owning account (AzureAD\Name, DOMAIN\name, PC\name) lets the console map the end user even from the technician's session
+    $profiles = @(Get-DECim Win32_UserProfile -Filter "Special=False" | ForEach-Object { $acct = $null; try { $acct = (New-Object System.Security.Principal.SecurityIdentifier($_.SID)).Translate([System.Security.Principal.NTAccount]).Value } catch { }; @{ path = $_.LocalPath; sid = $_.SID; account = $acct; loaded = [bool]$_.Loaded; lastUse = $(if ($_.LastUseTime) { ([datetime]$_.LastUseTime).ToString('o') } else { $null }) } })
     $hello = @{ ngcSet = $ds.ngcSet; pinConfigured = $false; ngcFolderPresent = $false }
     if ($script:IsWindowsHost) {
         $ngc = Join-Path $env:SystemRoot 'ServiceProfiles\LocalService\AppData\Local\Microsoft\Ngc'
@@ -176,8 +184,14 @@ function Find-DEProfileForUser {
     <# Locates the profile folder and SID for a user name (e.g. SuzetteThompson or AzureAD\SuzetteThompson). #>
     param([Parameter(Mandatory = $true)][string]$UserName, [array]$Profiles)
     if (-not $Profiles) { $Profiles = (Get-DEIdentityState).profiles }
+    # an account name with a domain (AzureAD\X, CONTOSO\X) matches the profile that account owns first: a local 'X' can
+    # own C:\Users\X while the Entra user's profile is X.000 or X.<PC>
+    if ($UserName -match '\\') { $byAcct = @($Profiles | Where-Object { $_ -and "$(Get-DEHashPath -Object $_ -Path 'account')" -ieq $UserName }); if ($byAcct.Count) { return $byAcct } }
     $short = ($UserName -split '\\')[-1]
-    return @($Profiles | Where-Object { (Split-Path -Leaf $_.path) -ieq $short -or (Split-Path -Leaf $_.path) -like "$short.*" })
+    # the exact folder name wins; 'name.DOMAIN' style folders count only when there is no exact match (callers treat several as ambiguous)
+    $exact = @($Profiles | Where-Object { $_ -and (Split-Path -Leaf $_.path) -ieq $short })
+    if ($exact.Count) { return $exact }
+    return @($Profiles | Where-Object { $_ -and (Split-Path -Leaf $_.path) -like "$short.*" })
 }
 
 # ------------------------------------------------------------------ MDM authority
@@ -217,7 +231,7 @@ function Get-DEJumpCloudAgentState {
     $conf = $null; $systemKey = $null
     if ($script:IsWindowsHost) {
         $confPath = Join-Path $env:ProgramFiles 'JumpCloud\Plugins\Contrib\jcagent.conf'
-        if (Test-Path -LiteralPath $confPath) { try { $conf = Get-Content -LiteralPath $confPath -Raw | ConvertFrom-Json; $systemKey = $conf.systemKey } catch { } }
+        if (Test-Path -LiteralPath $confPath) { try { $conf = Get-Content -LiteralPath $confPath -Raw -Encoding UTF8 | ConvertFrom-Json; $systemKey = $conf.systemKey } catch { } }
     }
     $version = $null
     if ($script:IsWindowsHost) { $exe = Join-Path $env:ProgramFiles 'JumpCloud\jumpcloud-agent.exe'; if (Test-Path -LiteralPath $exe) { try { $version = (Get-Item -LiteralPath $exe).VersionInfo.ProductVersion } catch { } } }
@@ -241,7 +255,7 @@ function Get-DESecurityAgentState {
         @{ id = 'msp360'; name = 'MSP360 Backup / RMM'; services = @('Online Backup Service', 'CloudBerry Backup', 'MSP360 RMM Agent', 'CBRMMAgent'); processes = @('CBBackupPlan', 'CBRMMAgent'); paths = @("$env:ProgramFiles\Online Backup", "$env:ProgramFiles\MSP360") }
         @{ id = 'timus'; name = 'Timus Connect'; services = @('TimusConnect', 'Timus Connect'); processes = @('TimusConnect'); paths = @("$env:ProgramFiles\Timus") }
         @{ id = 'controlone'; name = 'ControlOne'; services = @('ControlOne', 'Cytracom ControlOne'); processes = @('ControlOne'); paths = @("$env:ProgramFiles\Cytracom") }
-        @{ id = 'wazuh'; name = 'Wazuh Agent'; services = @('WazuhSvc', 'Wazuh'); processes = @('wazuh-agent'); paths = @("$env:ProgramFiles (x86)\ossec-agent") }
+        @{ id = 'wazuh'; name = 'Wazuh Agent'; services = @('WazuhSvc', 'Wazuh'); processes = @('wazuh-agent'); paths = @("${env:ProgramFiles(x86)}\ossec-agent") }
         @{ id = 'qualys'; name = 'Qualys Cloud Agent'; services = @('QualysAgent'); processes = @('QualysAgent'); paths = @() }
     )
     foreach ($d in $defs) {
@@ -263,15 +277,16 @@ function Get-DESecurityAgentState {
 function Get-DEBitLockerState {
     $vols = @()
     if ($script:IsWindowsHost) {
+        $readable = $true; $err = $null
         try {
             foreach ($v in @(Get-BitLockerVolume -ErrorAction Stop)) {
                 $prot = @($v.KeyProtector | ForEach-Object { @{ type = "$($_.KeyProtectorType)"; id = "$($_.KeyProtectorId)" } })  # never the RecoveryPassword value
                 $vols += @{ mount = $v.MountPoint; volumeType = "$($v.VolumeType)"; status = "$($v.VolumeStatus)"; protection = "$($v.ProtectionStatus)"; encryptionPercentage = $v.EncryptionPercentage; method = "$($v.EncryptionMethod)"; protectors = $prot; hasTpm = [bool]($prot | Where-Object { $_ -and $_.type -match 'Tpm' }); hasRecoveryPassword = [bool]($prot | Where-Object { $_ -and $_.type -eq 'RecoveryPassword' }); recoveryProtectorIds = @($prot | Where-Object { $_ -and $_.type -eq 'RecoveryPassword' } | ForEach-Object { $_.id }) }
             }
-        } catch { }
-    }
+        } catch { $readable = $false; $err = $_.Exception.Message }   # not elevated, or 32-bit PowerShell: unknown, not "unencrypted"
+    } else { $readable = $false; $err = 'not Windows' }
     $osVol = $vols | Where-Object { $_ -and $_.volumeType -eq 'OperatingSystem' } | Select-Object -First 1
-    return @{ volumes = $vols; os = $osVol; osEncrypted = [bool]($osVol -and $osVol.status -eq 'FullyEncrypted'); osProtectionOn = [bool]($osVol -and $osVol.protection -eq 'On'); collectedAt = (Get-Date).ToString('o') }
+    return @{ readable = $readable; error = $err; volumes = $vols; os = $osVol; osEncrypted = [bool]($osVol -and $osVol.status -eq 'FullyEncrypted'); osProtectionOn = [bool]($osVol -and $osVol.protection -eq 'On'); collectedAt = (Get-Date).ToString('o') }
 }
 
 # ------------------------------------------------------------------ OneDrive
@@ -280,7 +295,15 @@ function Get-DEOneDriveState {
     $accounts = @(); $running = $false
     if ($script:IsWindowsHost) {
         $running = [bool](Get-Process -Name 'OneDrive' -ErrorAction SilentlyContinue)
-        $base = 'HKCU:\Software\Microsoft\OneDrive\Accounts'
+        # every profile's hive, not only HKCU: as SYSTEM or the technician, HKCU is the wrong account, and the migration
+        # gate needs the (signed-out) source user's OneDrive state. Read only.
+        $roots = @(@{ root = 'HKCU:'; owner = "$env:USERNAME"; sid = $null })
+        $hives = $null
+        if (Get-Command -Name 'Open-DEUserHives' -ErrorAction SilentlyContinue) { try { $hives = Open-DEUserHives; foreach ($t in @($hives.targets | Where-Object { $_.sid -ne 'Default' })) { $roots += @{ root = $t.root; owner = $t.name; sid = $t.sid } } } catch { $hives = $null } }
+        try {
+        $seen = @{}
+        foreach ($rt in $roots) {
+        $base = "$($rt.root)\Software\Microsoft\OneDrive\Accounts"
         if (Test-Path $base) {
             foreach ($k in @(Get-ChildItem $base -ErrorAction SilentlyContinue)) {
                 $p = Get-ItemProperty $k.PSPath -ErrorAction SilentlyContinue
@@ -290,9 +313,12 @@ function Get-DEOneDriveState {
                 if (-not $p.PSObject.Properties['KfmFoldersProtectedNow']) { $kfm = @{ desktop = $null; documents = $null; pictures = $null } }
                 $size = $null; $files = $null
                 if ($folder -and (Test-Path -LiteralPath $folder)) { try { $items = @(Get-ChildItem -LiteralPath $folder -Recurse -File -Force -ErrorAction SilentlyContinue | Select-Object -First 5000); $files = $items.Count; $size = [math]::Round((($items | Measure-Object Length -Sum).Sum) / 1MB, 0) } catch { } }
-                $accounts += @{ key = $k.PSChildName; type = $(if ($k.PSChildName -eq 'Personal') { 'personal' } else { 'business' }); email = $p.UserEmail; tenant = $p.DisplayName; folder = $folder; configured = [bool]$folder; kfm = $kfm; sampleFiles = $files; sampleSizeMB = $size; lastSignIn = $p.LastSignInTime }
+                $dedupe = "$($p.UserEmail)|$folder"; if ($seen.ContainsKey($dedupe)) { continue }; $seen[$dedupe] = $true   # HKCU and HKU\<sid> can be the same hive
+                $accounts += @{ owner = $rt.owner; ownerSid = $rt.sid; key = $k.PSChildName; type = $(if ($k.PSChildName -eq 'Personal') { 'personal' } else { 'business' }); email = $p.UserEmail; tenant = $p.DisplayName; folder = $folder; configured = [bool]$folder; kfm = $kfm; sampleFiles = $files; sampleSizeMB = $size; lastSignIn = $p.LastSignInTime }
             }
         }
+        }
+        } finally { if ($hives) { Close-DEUserHives -Hives $hives } }
     }
     $shellFolders = @{}
     if ($script:IsWindowsHost) { foreach ($n in @('Desktop', 'Personal', 'My Pictures')) { $shellFolders[$n] = Get-DEReg 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders' $n } }
@@ -313,7 +339,7 @@ function Get-DEDropboxState {
         $running = [bool](Get-Process -Name 'Dropbox' -ErrorAction SilentlyContinue)
         $installed = (Test-Path -LiteralPath (Join-Path $env:LOCALAPPDATA 'Dropbox\Client\Dropbox.exe')) -or (Test-Path -LiteralPath (Join-Path $env:ProgramFiles 'Dropbox\Client\Dropbox.exe')) -or (Test-Path -LiteralPath (Join-Path ${env:ProgramFiles(x86)} 'Dropbox\Client\Dropbox.exe'))
         $info = Join-Path $env:LOCALAPPDATA 'Dropbox\info.json'
-        if (Test-Path -LiteralPath $info) { try { $j = Get-Content -LiteralPath $info -Raw | ConvertFrom-Json; foreach ($p in $j.PSObject.Properties) { $folder = $p.Value.path } } catch { } }
+        if (Test-Path -LiteralPath $info) { try { $j = Get-Content -LiteralPath $info -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($p in $j.PSObject.Properties) { $folder = $p.Value.path } } catch { } }
     }
     return @{ installed = $installed; running = $running; folder = $folder }
 }
@@ -342,7 +368,7 @@ function Get-DEInstalledApps {
             if (-not (Test-Path $root)) { continue }
             foreach ($k in @(Get-ChildItem $root -ErrorAction SilentlyContinue)) {
                 $p = Get-ItemProperty $k.PSPath -ErrorAction SilentlyContinue
-                if ($p -and $p.DisplayName -and -not $p.SystemComponent) { $apps += @{ name = $p.DisplayName; version = "$($p.DisplayVersion)"; publisher = "$($p.Publisher)"; source = $(if ($root -like 'HKCU*') { 'user' } elseif ($root -like '*WOW6432Node*') { 'machine-x86' } else { 'machine' }); uninstall = "$($p.UninstallString)"; installDate = "$($p.InstallDate)" } }
+                if ($p -and $p.DisplayName -and -not $p.SystemComponent) { $apps += @{ name = $p.DisplayName; version = "$($p.DisplayVersion)"; publisher = "$($p.Publisher)"; source = $(if ($root -like 'HKCU*') { 'user' } elseif ($root -like '*WOW6432Node*') { 'machine-x86' } else { 'machine' }); uninstall = "$($p.UninstallString)"; quietUninstall = "$($p.QuietUninstallString)"; installDate = "$($p.InstallDate)" } }
             }
         }
         try { $apps += @(Get-AppxPackage -ErrorAction Stop | Where-Object { -not $_.IsFramework } | ForEach-Object { @{ name = $_.Name; version = "$($_.Version)"; publisher = "$($_.Publisher)"; source = 'appx'; uninstall = ''; installDate = '' } }) } catch { }
@@ -358,7 +384,8 @@ function Get-DENetworkState {
         try { $adapters = @(Get-NetIPConfiguration -ErrorAction Stop | Where-Object { $_ -and $_.NetAdapter.Status -eq 'Up' } | ForEach-Object { @{ alias = $_.InterfaceAlias; ipv4 = @($_.IPv4Address | ForEach-Object { $_.IPAddress }); gateway = @($_.IPv4DefaultGateway | ForEach-Object { $_.NextHop }); dns = @($_.DNSServer | ForEach-Object { $_.ServerAddresses } | ForEach-Object { $_ }) } }) } catch { }
         $gateway = ($adapters | ForEach-Object { $_.gateway } | Where-Object { $_ } | Select-Object -First 1)
         $dns = @($adapters | ForEach-Object { $_.dns } | Where-Object { $_ } | Select-Object -Unique)
-        $r = Invoke-DEDiscoveryNative -FilePath 'netsh.exe' -Arguments @('wlan', 'show', 'profiles'); $wifi = @($r.Output | Where-Object { $_ -match 'All User Profile\s*:\s*(.+)$' } | ForEach-Object { $Matches[1].Trim() })
+        # profile names from the WLAN service's own XML files (netsh output is translated on non-English Windows)
+        $wifi = @(Get-ChildItem -Path "$env:ProgramData\Microsoft\Wlansvc\Profiles\Interfaces\*\*.xml" -ErrorAction SilentlyContinue | ForEach-Object { try { ([xml](Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8)).WLANProfile.name } catch { } } | Where-Object { $_ } | Select-Object -Unique)
         try { $vpn = @(Get-VpnConnection -AllUserConnection -ErrorAction Stop | ForEach-Object { @{ name = $_.Name; server = $_.ServerAddress; type = "$($_.TunnelType)" } }) } catch { }
     }
     return @{ adapters = $adapters; gateway = $gateway; dns = $dns; wifiProfiles = $wifi; vpnConnections = $vpn; collectedAt = (Get-Date).ToString('o') }
@@ -405,12 +432,46 @@ function Get-DEBrowserState {
 }
 
 # ------------------------------------------------------------------ full snapshot
+function Get-DESetupState {
+    <# Windows setup flags: OOBE still running, or system setup in progress (HKLM\SYSTEM\Setup). #>
+    $oobe = $null; $sys = $null; $type = $null
+    if ($script:IsWindowsHost) { $oobe = Get-DEReg 'HKLM:\SYSTEM\Setup' 'OOBEInProgress'; $sys = Get-DEReg 'HKLM:\SYSTEM\Setup' 'SystemSetupInProgress'; $type = Get-DEReg 'HKLM:\SYSTEM\Setup' 'SetupType' }
+    return @{ oobeInProgress = ("$oobe" -eq '1'); systemSetupInProgress = ("$sys" -eq '1'); setupType = $type }
+}
+function Get-DEDeviceLifecycle {
+    <#
+    Where the device is in its life, with reasons:
+      oobe        Windows setup (OOBE) is still running, the session is defaultuser0, or nobody has signed in yet on a
+                  device no one manages: machine-wide settings can be applied now, per-user ones wait for the first sign-in.
+      first-login a real user has signed in but the DE stack (JumpCloud + EDR + MDR) is not in place yet.
+      configured  JumpCloud, SentinelOne and Guardz are present: check health and fix drift.
+    #>
+    param($Snapshot)
+    $reasons = @()
+    $setup = Get-DEHashPath -Object $Snapshot -Path 'setup'
+    $interactive = "$(Get-DEHashPath -Object $Snapshot -Path 'identity.interactiveUser')"
+    $join = "$(Get-DEHashPath -Object $Snapshot -Path 'identity.joinType')"
+    $auth = "$(Get-DEHashPath -Object $Snapshot -Path 'mdm.authority')"
+    $users = @(@(Get-DEHashPath -Object $Snapshot -Path 'identity.profiles') | Where-Object { $_ -and "$(Get-DEHashPath -Object $_ -Path 'path')" -notmatch '\\(Administrator|Default|Default User|Public|defaultuser\d*|DE-BreakGlass|jrpetro|systemprofile|LocalService|NetworkService)$' })
+    $agents = Get-DEHashPath -Object $Snapshot -Path 'agents.agents'
+    $has = { param($id) [bool](Get-DEHashPath -Object $agents -Path "$id.installed") }
+    $jc = ($auth -eq 'jumpcloud') -or [bool](Get-DEHashPath -Object $Snapshot -Path 'mdm.jumpcloud.installed') -or (& $has 'jumpcloud')
+    if ((Get-DEHashPath -Object $setup -Path 'oobeInProgress') -or (Get-DEHashPath -Object $setup -Path 'systemSetupInProgress')) { $reasons += 'Windows setup (OOBE) is still running' }
+    if ($interactive -match '\\defaultuser\d*$') { $reasons += "signed in as $interactive (the OOBE account)" }
+    if (-not $reasons.Count -and -not $users.Count -and $join -match '^(local|unknown|$)' -and $auth -notmatch 'intune|dual|other') { $reasons += 'no user has signed in yet (only built-in and DE accounts have profiles)' }
+    if ($reasons.Count) { return [pscustomobject]@{ stage = 'oobe'; title = 'OOBE / before first sign-in'; reasons = $reasons; userCount = $users.Count } }
+    if ($jc -and (& $has 'sentinelone') -and (& $has 'guardz')) { return [pscustomobject]@{ stage = 'configured'; title = 'Configured (DE stack in place)'; reasons = @('JumpCloud, SentinelOne and Guardz are present'); userCount = $users.Count } }
+    $missing = @(); if (-not $jc) { $missing += 'JumpCloud' }; if (-not (& $has 'sentinelone')) { $missing += 'SentinelOne' }; if (-not (& $has 'guardz')) { $missing += 'Guardz' }
+    return [pscustomobject]@{ stage = 'first-login'; title = 'After first sign-in'; reasons = @("$($users.Count) user profile(s); not in place yet: $($missing -join ', ')"); userCount = $users.Count }
+}
+
 function Get-DEDiscoverySnapshot {
     <# Everything above in one object; the workflow, gates and evidence use this. Slow parts (apps, updates) can be skipped. #>
     param([switch]$SkipApps, [switch]$SkipUpdates, [switch]$SkipConnectivity)
     $snap = [ordered]@{
         device = Get-DEDeviceInventory
         pendingReboot = Get-DEPendingReboot
+        setup = Get-DESetupState
         identity = Get-DEIdentityState
         mdm = Get-DEMdmState
         agents = Get-DESecurityAgentState
@@ -427,4 +488,4 @@ function Get-DEDiscoverySnapshot {
     return $snap
 }
 
-Export-ModuleMember -Function Get-DEDeviceInventory, Get-DEPendingReboot, ConvertFrom-DEDsregcmd, Get-DEIdentityState, Find-DEProfileForUser, Get-DEMdmState, Get-DEJumpCloudAgentState, Get-DESecurityAgentState, Get-DEServiceState, Get-DEBitLockerState, Get-DEOneDriveState, Get-DEDropboxState, Get-DEWindowsUpdateState, Get-DEInstalledApps, Find-DEApp, Get-DENetworkState, Test-DEConnectivity, Get-DEBrowserState, Get-DEDiscoverySnapshot
+Export-ModuleMember -Function Get-DESetupState, Get-DEDeviceLifecycle, Get-DEDeviceInventory, Get-DEPendingReboot, ConvertFrom-DEDsregcmd, Get-DEIdentityState, Find-DEProfileForUser, Get-DEMdmState, Get-DEJumpCloudAgentState, Get-DESecurityAgentState, Get-DEServiceState, Get-DEBitLockerState, Get-DEOneDriveState, Get-DEDropboxState, Get-DEWindowsUpdateState, Get-DEInstalledApps, Find-DEApp, Get-DENetworkState, Test-DEConnectivity, Get-DEBrowserState, Get-DEDiscoverySnapshot

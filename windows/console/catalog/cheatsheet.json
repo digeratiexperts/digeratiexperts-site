@@ -1,0 +1,394 @@
+{
+  "about": "The Command line page. {root} is replaced with the folder DE Tech Tool runs from. Every DE command here is tested; Windows commands are the ones DE technicians use on takeovers. Exit codes: 0 done, 1 not finished, 2 blocked or refused.",
+  "groups": [
+    {
+      "id": "start",
+      "title": "Start DE Tech Tool",
+      "items": [
+        {
+          "title": "Open the window (asks for admin)",
+          "command": "& \"{root}\\Start-DETechTool.cmd\"",
+          "note": "Double-clicking the file does the same.",
+          "shell": "Any"
+        },
+        {
+          "title": "Reopen after a restart at the queued step",
+          "command": "& \"{root}\\Start-DETechTool.cmd\" -Resume",
+          "note": "Normally the resume task does this at sign-in.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Open on a page",
+          "command": "& \"{root}\\Start-DETechTool.cmd\" -Page Toolbox",
+          "note": "Pages: Scan, Dashboard, Discovery, Identity, Security, Apps, Browser, Baseline, Branding, Network, Toolbox, Vendors, AiToolkit, Evidence, Settings.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Audit only, no window (changes nothing)",
+          "command": "& \"{root}\\Start-DETechTool.cmd\" -Headless -Client alamo -Mode audit -Technician jrpetro -ResultFile C:\\DE\\result.json",
+          "note": "Writes the evidence bundle and a JSON result.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Plan a takeover without changing anything",
+          "command": "& \"{root}\\console\\DETechConsole.ps1\" -Headless -Client alamo -Mode takeover -WhatIf",
+          "note": "Every step says what it would do.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Apply a takeover (changes the device)",
+          "command": "& \"{root}\\Start-DETechTool.cmd\" -Headless -Client alamo -Mode takeover -Apply -Technician jrpetro",
+          "note": "Gates still stop anything unsafe; runtime secrets come from -PromptSecrets or RMM DE_SECRET_* variables.",
+          "shell": "PowerShell (admin)",
+          "danger": true
+        },
+        {
+          "title": "Dropship first boot",
+          "command": "& \"{root}\\Start-DETechTool.cmd\" -Headless -Order C:\\DE\\order.json -Apply",
+          "note": "Refuses a device other than the ordered serial.",
+          "shell": "PowerShell (admin)",
+          "danger": true
+        }
+      ]
+    },
+    {
+      "id": "rmm",
+      "title": "RMM and deployment",
+      "items": [
+        {
+          "title": "Deploy or update from RMM (sha256-pinned)",
+          "command": "& \"{root}\\packaging\\Deploy-DETechConsole.ps1\" -PackageUrl https://<host>/DE-TechTool.zip -Sha256 <hash> -Client alamo -Mode audit",
+          "note": "Refuses a zip whose hash does not match.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Install the newest zip in Downloads",
+          "command": "& \"{root}\\packaging\\Install-DETechConsole.ps1\"",
+          "note": "Unblocks, swaps the install folder safely, keeps the previous copy.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Check the package is untouched",
+          "command": "& \"{root}\\packaging\\Sign-DETechConsole.ps1\" -Verify",
+          "note": "FAIL lines name every changed file.",
+          "shell": "PowerShell (admin)"
+        }
+      ]
+    },
+    {
+      "id": "license",
+      "title": "Licence",
+      "items": [
+        {
+          "title": "Install a licence from the Hub",
+          "command": "& \"{root}\\Start-DETechTool.cmd\" -Headless -License <licence>",
+          "note": "Or Settings > Licence > Activate this device. A licence works only on the device it was issued for.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Show licence and build",
+          "command": "Import-Module \"{root}\\console\\modules\\DE.Workflow\\DE.Workflow.psm1\"; Import-DEConsoleModules -Root \"{root}\\console\"; $null = Initialize-DEConsole -Root \"{root}\\console\" -Mode Audit; Get-DELicenseStatus; Get-DEBuildInfo",
+          "note": "",
+          "shell": "PowerShell (admin)"
+        }
+      ]
+    },
+    {
+      "id": "toolbox",
+      "title": "Toolbox from the command line",
+      "items": [
+        {
+          "title": "Plan a Toolbox script (changes nothing)",
+          "command": "& \"{root}\\Start-DETechTool.cmd\" -Headless -Toolbox limehawk-rmm-scripts/print-queue-reset",
+          "note": "Every key is listed on the Toolbox page and below.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Run a Toolbox script for real",
+          "command": "& \"{root}\\Start-DETechTool.cmd\" -Headless -Toolbox limehawk-rmm-scripts/print-queue-reset -Apply",
+          "note": "Output goes to the evidence folder as toolbox-*.log.",
+          "shell": "PowerShell (admin)",
+          "danger": true
+        }
+      ]
+    },
+    {
+      "id": "rescue",
+      "title": "Boot rescue (WinPE)",
+      "items": [
+        {
+          "title": "See the media build steps without running them",
+          "command": "& \"{root}\\rescue\\New-DERescueMedia.ps1\" -IsoPath C:\\DE\\DE-Rescue.iso -WhatIf",
+          "note": "Needs the Windows ADK and WinPE add-on.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Build the rescue ISO",
+          "command": "& \"{root}\\rescue\\New-DERescueMedia.ps1\" -IsoPath C:\\DE\\DE-Rescue.iso -HubUrl https://techsales.digerati-experts.com -Technician jrpetro",
+          "note": "",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Write the rescue USB (erases it)",
+          "command": "& \"{root}\\rescue\\New-DERescueMedia.ps1\" -UsbDrive E: -ConfirmFormat",
+          "note": "Use a second NTFS/exFAT USB for profile backups.",
+          "shell": "PowerShell (admin)",
+          "danger": true
+        }
+      ]
+    },
+    {
+      "id": "build",
+      "title": "Builds and kits",
+      "items": [
+        {
+          "title": "Watermarked release for a technician (test build)",
+          "command": "& \"{root}\\packaging\\New-DEReleasePackage.ps1\" -IssuedTo jrpetro -SkipSigning",
+          "note": "Adds the build to packaging\\out\\build-register.csv.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Signed, enforced release",
+          "command": "& \"{root}\\packaging\\New-DEReleasePackage.ps1\" -IssuedTo rmm-channel -HubUrl https://techsales.digerati-experts.com -Enforce -Thumbprint <cert thumbprint>",
+          "note": "Licences required from this build on.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Dropship kit for an order",
+          "command": "& \"{root}\\packaging\\New-DEDropshipKit.ps1\" -OrderFile C:\\DE\\order.json",
+          "note": "No secrets in the kit; first boot refuses any other device.",
+          "shell": "PowerShell (admin)"
+        }
+      ]
+    },
+    {
+      "id": "signing-hub",
+      "title": "Code signing and the Intelligence Hub",
+      "items": [
+        {
+          "title": "Code-signing certificates on this PC",
+          "command": "Get-ChildItem Cert:\\CurrentUser\\My, Cert:\\LocalMachine\\My -CodeSigningCert | Where-Object HasPrivateKey | Select-Object Subject, Thumbprint, NotAfter",
+          "note": "A certificate on a USB token shows up while the token is plugged in. Settings > Code signing shows the same list and how to get one.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Build a signed release",
+          "command": "& \"{root}\\packaging\\New-DEReleasePackage.ps1\" -IssuedTo jrpetro -Thumbprint <thumbprint>",
+          "note": "Signs every script, timestamps the signatures (they stay valid after the certificate expires) and writes integrity.json.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Check a file's signature",
+          "command": "Get-AuthenticodeSignature \"{root}\\console\\DETechConsole.ps1\" | Format-List Status, SignerCertificate, TimeStamperCertificate",
+          "note": "Valid means signed and unchanged; HashMismatch means the file changed after signing.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Check the Hub answers",
+          "command": "Invoke-WebRequest https://techsales.digerati-experts.com/api/healthz -UseBasicParsing | Select-Object StatusCode",
+          "note": "200 means the Hub is up. It does not say which release it runs.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Which release the Hub runs (Hub admin)",
+          "command": "ssh de-vps 'sudo cat /opt/intelligence-hub/current/RELEASE_SHA'",
+          "note": "Compare with the merged commit. The Hub server also needs TECHCONSOLE_TO_HUB_SECRET set to the same value as the Tech Tool's signing secret.",
+          "shell": "Any (SSH)"
+        }
+      ]
+    },
+    {
+      "id": "branding",
+      "title": "Branding",
+      "items": [
+        {
+          "title": "Set the company-branded lock screen (RMM, one step)",
+          "command": "Import-Module \"{root}\\console\\modules\\DE.Workflow\\DE.Workflow.psm1\" -DisableNameChecking; Import-DEConsoleModules -Root \"{root}\\console\"; $null = Initialize-DEConsole -Root \"{root}\\console\" -Mode Apply; Set-DELockScreen -ClientProfile (Get-DEClientProfile -Id alamo) -Confirm:$false",
+          "note": "Users cannot change it, it shows behind the sign-in box, and Windows Spotlight is turned off for every profile. Windows Home ignores lock screen policy. Undo-DELockScreen restores the previous one.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Check the lock screen",
+          "command": "Import-Module \"{root}\\console\\modules\\DE.Workflow\\DE.Workflow.psm1\" -DisableNameChecking; Import-DEConsoleModules -Root \"{root}\\console\"; $null = Initialize-DEConsole -Root \"{root}\\console\" -Mode Audit; Get-DELockScreenState | Format-List ok, detail, edition",
+          "note": "ok only when the image, the policy and Spotlight-off for every profile are all in place.",
+          "shell": "PowerShell (admin)"
+        }
+      ]
+    },
+    {
+      "id": "microsoft",
+      "title": "Microsoft 365 / Entra / Intune (DE Microsoft Admin)",
+      "items": [
+        {
+          "title": "Install the Microsoft modules",
+          "command": "& \"{root}\\microsoft\\DE-Microsoft-Admin\\Install-DEMicrosoftDependencies.ps1\" -CurrentUser",
+          "note": "Graph authentication, Exchange Online, Az.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Connect read-only plus BitLocker key IDs",
+          "command": "Import-Module \"{root}\\microsoft\\DE-Microsoft-Admin\\DE-Microsoft-Admin.psd1\"; Connect-DEMicrosoft -TenantId alamo-industries.com -Scenario Read, BitLocker",
+          "note": "Least-privilege scopes per scenario.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Is the BitLocker key in Entra for this device?",
+          "command": "Test-DEEntraBitLockerEscrow -DeviceId (dsregcmd /status | Select-String \"DeviceId\" | ForEach-Object { ($_ -split \":\")[1].Trim() } | Select-Object -First 1)",
+          "note": "Key IDs only; the key itself is never requested.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Remove a device from Autopilot (plan first)",
+          "command": "Remove-DEAutopilotDevice -Serial <serial> -RemoveIntuneRecord -WhatIf",
+          "note": "Drop -WhatIf to do it; refuses ambiguous serials.",
+          "shell": "PowerShell"
+        }
+      ]
+    },
+    {
+      "id": "migration",
+      "title": "Email migration: Gmail to Microsoft 365 (MIGRATION-STANDARD.md)",
+      "items": [
+        {
+          "title": "Connect for a migration",
+          "command": "Import-Module \"{root}\\microsoft\\DE-Microsoft-Admin\\DE-Microsoft-Admin.psd1\"; Connect-DEMicrosoft -TenantId alamo-industries.com -Scenario Read, Users, Migration; Connect-DEExchange -UserPrincipalName jrpetro@alamo-industries.com",
+          "note": "Graph plus Exchange Online; contacts and calendars for other users need the app-only worker.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Start the project and map a mailbox",
+          "command": "New-DEMigrationProject -ClientName 'Alamo Industries' -TargetDomain alamo-industries.com -ProjectId alamo-mail; Add-DEMigrationUser -ProjectId alamo-mail -SourceAddress helen.x@gmail.com -DestinationAddress helen@alamo-industries.com -Devices HelenU, equip.alamo",
+          "note": "The domain must be verified in the tenant; the destination must be a licensed user mailbox.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Shared mailbox with Full Access and Send As",
+          "command": "Set-DEMigrationSharedMailbox -ProjectId alamo-mail -Address office@alamo-industries.com -DisplayName Office -Members norma@alamo-industries.com, helen@alamo-industries.com, suzette@alamo-industries.com, mike@alamo-industries.com",
+          "note": "Creates it if missing, grants each member, blocks its own sign-in, then proves it.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Gmail IMAP preflight",
+          "command": "Test-DEGmailImapAccess -Credential (Get-Credential helen.x@gmail.com) -ProjectId alamo-mail",
+          "note": "Use the Gmail app password; it is only held in memory. Records folders, counts and size.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Pilot, confirm, then the rest",
+          "command": "New-DEMigrationBatch -ProjectId alamo-mail -Type Pilot -Credential (Get-Credential suzette.x@gmail.com); Get-DEMigrationStatus -ProjectId alamo-mail; Confirm-DEMigrationPilot -ProjectId alamo-mail -Technician jrpetro -Note 'checked in Outlook'",
+          "note": "Production batches are refused until a pilot finished cleanly and was confirmed.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Contacts and calendar from the Google exports",
+          "command": "Import-DEMigrationContacts -ProjectId alamo-mail -SourceAddress helen.x@gmail.com -Path .\\contacts.csv; Import-DEMigrationCalendar -ProjectId alamo-mail -SourceAddress helen.x@gmail.com -Path .\\helen.ics",
+          "note": "Duplicates are skipped; nobody is invited; a rerun adds nothing twice.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Find Gmail left on a client PC (every Windows account)",
+          "command": "Import-Module \"{root}\\microsoft\\DE-Microsoft-Admin\\DE-Microsoft-Admin.psd1\"; Export-DEResult -Result (Get-DEMailClientInventory -AllProfiles) -Path \"$env:PUBLIC\\Documents\\$env:COMPUTERNAME-gmail-scan.json\"",
+          "note": "Run elevated (technician, SYSTEM or RMM): Outlook profiles, Thunderbird and scheduled scripts for every account. Credential Manager is per user, so it is listed as not checked for the others. The Migration page does the same with one button.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Record a client PC's scan on the project (admin PC)",
+          "command": "Import-DEMailClientInventory -ProjectId alamo-mail -Path .\\HELENU-gmail-scan.json",
+          "note": "Refuses anything that is not a mail-client scan. The device then counts for the bounce diagnostic.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "DNS, final delta, verification",
+          "command": "Test-DEMigrationDns -ProjectId alamo-mail -Server 1.1.1.1; Complete-DEMigrationBatch -ProjectId alamo-mail -BatchName <batch>; Test-DEMigrationMailFlow -ProjectId alamo-mail; Test-DEMigrationMfa -ProjectId alamo-mail",
+          "note": "The final delta is refused until MX points to Microsoft 365.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Explain a bounce",
+          "command": "Invoke-DEBounceDiagnostic -ProjectId alamo-mail -Path .\\bounce.eml -MessageTrace",
+          "note": "Forward, retrying client, bounce of a bounce or new message; names the device and the fix.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Sign-off, close and the Hub record",
+          "command": "New-DEMigrationSignoff -ProjectId alamo-mail -ApprovedBy 'Mike Daniels' -Decision Approved; Close-DEMigrationProject -ProjectId alamo-mail; Export-DEMigrationRecord -ProjectId alamo-mail -Path .\\alamo-mail-record.json",
+          "note": "Approved needs every check passed; closing removes the batches and the credentials Exchange stored.",
+          "shell": "PowerShell"
+        }
+      ]
+    },
+    {
+      "id": "windows",
+      "title": "Windows commands for takeovers",
+      "items": [
+        {
+          "title": "Join state (Entra / AD / workplace)",
+          "command": "dsregcmd /status",
+          "note": "AzureAdJoined, DomainJoined, DeviceId, TenantName.",
+          "shell": "Any"
+        },
+        {
+          "title": "Leave Entra ID (after the migration is verified and the BitLocker key is saved)",
+          "command": "dsregcmd /leave",
+          "note": "Then restart; dsregcmd /status must show AzureAdJoined : NO.",
+          "shell": "PowerShell (admin)",
+          "danger": true
+        },
+        {
+          "title": "BitLocker recovery password and its ID",
+          "command": "manage-bde -protectors -get C:",
+          "note": "Match the Numerical Password ID with JumpCloud before leaving Entra.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "BitLocker status",
+          "command": "manage-bde -status C:",
+          "note": "",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Back up the key to Entra",
+          "command": "$v = Get-BitLockerVolume C:; $p = $v.KeyProtector | Where-Object KeyProtectorType -eq RecoveryPassword; BackupToAAD-BitLockerKeyProtector -MountPoint C: -KeyProtectorId $p.KeyProtectorId",
+          "note": "Only while the device is still Entra-joined.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Who is signed in, and profile owners",
+          "command": "whoami /upn; Get-CimInstance Win32_UserProfile | Where-Object { -not $_.Special } | Select-Object LocalPath, SID, Loaded",
+          "note": "S-1-12-1-... SIDs are Entra accounts.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "JumpCloud agent log",
+          "command": "Get-Content \"C:\\Windows\\Temp\\jcagent.log\" -Tail 50",
+          "note": "",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "ADMU migration log",
+          "command": "Get-Content \"C:\\Windows\\Temp\\jcAdmu.log\" -Tail 80",
+          "note": "",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Fix the clock",
+          "command": "w32tm /resync /force",
+          "note": "A wrong clock breaks HTTPS and sign-in.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Repair system files",
+          "command": "DISM /Online /Cleanup-Image /RestoreHealth; sfc /scannow",
+          "note": "Can take a long time.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "What winget sees",
+          "command": "winget list --source winget",
+          "note": "",
+          "shell": "PowerShell"
+        }
+      ]
+    }
+  ]
+}
