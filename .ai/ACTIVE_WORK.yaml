@@ -108,9 +108,13 @@ claims:
       index-DCAqm86m.css, the merge commit's own build; /healthz 200; /store,
       a family page and /book?ref= render as built at 390 and 1440 (electric
       accent, no strip, store footer, axe clean, no runtime errors). Files
-      released. Remaining and not claimed: once PR 229 lands, the Ask DE
-      nudge position (SiteBottomBar.tsx) and the widget's pathname fallback
-      (ZohoASAPWidget.tsx), source of truth §15 row 18.
+      released. Remaining and not claimed by this lane, source of truth §15
+      row 18: the Ask DE nudge position (SiteBottomBar.tsx, its bottom offset
+      omits --de-cookie-h) and the widget's STORE_ADVISOR_SEED fallback
+      (ZohoASAPWidget.tsx, pathname.includes("/store") instead of isDoor2Path,
+      so /solutions/request pages miss it). PR 229 has since landed via PR
+      277 (2026-09-30); both files now sit in the active de-desk-delight
+      claim, so the Desk lane or Joe decides who takes them.
   - id: de-design-concepts-directions
     owner: claude
     subsystem: flagship-visual-reset
