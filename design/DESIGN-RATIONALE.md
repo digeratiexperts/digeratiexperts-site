@@ -1,6 +1,6 @@
 # Design rationale library
 
-Use this folder with the mandatory root `.cursorrules` policy (sections 4–14, 27–28, 31, 40–42).
+Use this folder with the root `.cursorrules` policy (sections 4–14, 27–28, 31, 40–42), read through the tier model in `DESIGN-AUTHORITY.md`. `approved/`, `rejected/` and `references/` are Tier 3: evidence of what exists and what failed, never a boundary on an Exploration Mode concept Joe requests.
 
 Design OS (tokens, brand, UX, imagery): `DESIGN_SYSTEM.md`, `BRAND.md`, `UX_PRINCIPLES.md`, `IMAGERY.md`. Visual System v2 (layers on that foundation, does not replace it): `VISUAL_SYSTEM_V2.md`. Cursor execution layer: `.cursor/rules/ui-ux.mdc`, `brand.mdc`, `frontend.mdc`, `visual-system-v2.mdc`. Audit before implementing: `.cursor/skills/visual-audit/SKILL.md`. Ledger: `docs/SITE-VISUAL-TASKS.md`.
 
@@ -8,7 +8,8 @@ Design OS (tokens, brand, UX, imagery): `DESIGN_SYSTEM.md`, `BRAND.md`, `UX_PRIN
 
 | Path | Purpose |
 |------|---------|
-| `design/UI-STYLE-RULES.md` | Canonical execution layer — one theme / five surfaces, accent doctrine, section archetypes, page-layout doctrine, hard rules (consolidates the corpus; start here for any UI task) |
+| `design/DESIGN-AUTHORITY.md` | **Authority model** — Tier 0 non-negotiables / Tier 1 identity / Tier 2 current system / Tier 3 record; Maintenance vs Exploration Mode. Read first. |
+| `design/UI-STYLE-RULES.md` | Current design reference (Tier 2) — one theme / five surfaces, accent doctrine, section archetypes, page-layout doctrine, hard rules (consolidates the corpus; start here for any UI task) |
 | `design/DESIGN_SYSTEM.md` | Live tokens (color, type, radius, motion) extracted from the codebase |
 | `design/BRAND.md` | Visual identity constraints |
 | `design/UX_PRINCIPLES.md` | Design-first / visual QA / definition of done |
@@ -30,7 +31,7 @@ Design OS (tokens, brand, UX, imagery): `DESIGN_SYSTEM.md`, `BRAND.md`, `UX_PRIN
 
 1. Before major UI work, scan `approved/` for patterns that already fit DE.
 2. Check `rejected/` so you do not reintroduce failed directions.
-3. Prefer elevating existing DE sections in place over inventing new layouts.
+3. In Maintenance Mode prefer elevating existing DE sections in place over inventing new layouts. In Exploration Mode diverge first.
 4. After browser verification, if DE accepts or rejects a direction, drop a short note + screenshot into `approved/` or `rejected/` with why.
 
 ## Homepage shade system (2026-08)

@@ -1,5 +1,7 @@
 # PR #146 — preservation & correction audit
 
+> **HISTORICAL RECORD (Tier 3 — `design/DESIGN-AUTHORITY.md`).** This document records what was decided, placed or guarded at a point in time. It explains *why* things are the way they are. Its "do not", "unchanged", "leave alone" and "keep" lines were the guardrails of that task; they do not prohibit future maintenance or redesign work unless a Tier 0–2 file promotes the decision.
+
 Living checklist for the Claude-led integration pass on issue #118.
 Governing law: `docs/AI-ENGINEERING-GOVERNANCE.md` §18 (DE Product
 Preservation Law) — **KEEP → UPGRADE → ADD → REPLACE**, with two QA baselines

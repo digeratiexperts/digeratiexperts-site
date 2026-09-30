@@ -1,16 +1,21 @@
 ---
-description: Mandatory pointer � follow root .cursorrules (full 42-section DE policy)
+description: Mandatory pointer — follow root .cursorrules through the tier model in design/DESIGN-AUTHORITY.md
 alwaysApply: true
 ---
 
-# Follow `.cursorrules`
+# Follow `.cursorrules` — by tier
 
-The authoritative project policy is the root **`.cursorrules`** file (DIGERATI EXPERTS � CURSOR PROJECT RULES, sections 1�42).
+The authoritative project policy is the root **`.cursorrules`** file (DIGERATI EXPERTS — CURSOR PROJECT RULES, sections 0–42). How much weight each section carries is decided by **`design/DESIGN-AUTHORITY.md`**. Read section 0 of `.cursorrules` first.
 
-- Treat every section as mandatory project policy.
-- Do not dilute, summarize-away, or skip sections when doing UI/product work.
-- For all UI work: inspect existing system ? implement ? launch and visually inspect with browser tooling ? separate UI/UX critique ? fix issues ? only then report completion.
-- Preserve existing DE website content/CTAs/nav/stats unless DE explicitly approves removal.
-- Canonical portal login: `https://portal.digeratiexperts.com/portal/login` � never invent `//login`.
-- Visual System v2 (`design/VISUAL_SYSTEM_V2.md`, `.cursor/rules/visual-system-v2.mdc`) is the layer model on the locked foundation. Do not invent HUD/evidence primitives ad hoc. Ledger: `docs/SITE-VISUAL-TASKS.md`.
+- **Tier 0 (always mandatory, never diluted):** security, secrets, no fabricated business facts, accessibility, responsive operability, no overlapping chrome, performance, canonical data/names, functional preservation of what ships, engineering governance, rendered verification.
+- **Tier 1 (always mandatory, as meaning):** DE brand identity and differentiators.
+- **Tier 2 (current design system):** palette, type stack, field ladder, archetypes, homepage structure, primitives, HUD/imagery/motion recipes. Mandatory in **Maintenance Mode** (the default). A challengeable starting point in **Exploration Mode** (Joe asks to redesign / rethink / reimagine / modernize / explore / propose concepts / make it materially better / make it feel different). Joe-decided Tier 2 items may be challenged only explicitly and ship only with Joe.
+- **Tier 3 (evidence, never authority):** `design/approved|rejected`, asset inventories, old handoffs, ledgers, old task notes.
+
+State the task mode at the top of any UI work.
+
+- For all UI work: inspect existing system → implement → launch and visually inspect with browser tooling → separate UI/UX critique → fix issues → only then report completion.
+- Preserve existing DE website content/CTAs/nav/stats/functionality in Maintenance Mode unless DE explicitly approves removal. In Exploration Mode concepts stay isolated from production paths until Joe picks; integration then follows the Product Preservation Law.
+- Canonical portal login: `https://portal.digeratiexperts.com/portal/login` — never invent `//login`.
+- Visual System v2 (`design/VISUAL_SYSTEM_V2.md`, `.cursor/rules/visual-system-v2.mdc`) is the current layer model. Its truth/classification rules are Tier 0; its aesthetics are Tier 2. In Maintenance Mode do not invent HUD/evidence primitives ad hoc. Ledger: `docs/SITE-VISUAL-TASKS.md`.
 - DE ecosystem: Intelligence Hub is the operational control plane; this repo is a content/application projection. Follow `.cursor/rules/de-ecosystem.mdc`. Scoreboard: Hub Issue #122. Do not invent a second Hub, knowledge DB, mail stack, or middleware.

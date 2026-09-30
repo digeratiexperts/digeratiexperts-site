@@ -32,6 +32,7 @@ import {
   BarChart3,
   AlertTriangle,
   Briefcase,
+  Warehouse,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
@@ -86,6 +87,7 @@ const navItems: NavItem[] = [
 ];
 
 const adminItems = [
+  { href: "/internal/warehouse", label: "Digital Warehouse", icon: Warehouse },
   { href: "/portal/admin/companies", label: "Companies", icon: Building2 },
   { href: "/portal/admin/login-knocks", label: "Login Alerts", icon: Shield },
   { href: "/portal/admin/lifecycle", label: "Onboard / Offboard", icon: Users },
