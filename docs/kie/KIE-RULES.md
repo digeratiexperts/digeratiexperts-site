@@ -57,6 +57,42 @@ enforces the parts a script can enforce; the rest is conduct.
 - **Process:** prepare the workflow, stop before the first paid generation,
   and show Joe exactly what is proposed (`scrollcraft/KIE-FIRST-GENERATION.md`).
 
+## Addendum 2, 2026-09-02 (evening, after PR #186)
+
+- **The money gate is closed.** No paid generation is approved. Before any
+  request is put to Joe again, the asset must be reconciled with the active
+  flagship direction (PR #186, the Why DE passage) and the request must say
+  specifically what the generated asset adds that code, typography, diagrams
+  or the existing Scrollcraft mechanics cannot do better. The first such test
+  withdrew the F-02 request (`scrollcraft/KIE-FIRST-GENERATION.md`).
+- **Excalidraw visuals** are approved conceptually for explainers,
+  documentation, proposals, blog, social and OG material, and are **not** the
+  visual language of the flagship homepage.
+- **Version 4 does not start**; no second homepage grammar opens while the
+  flagship is under review. PR #184 stays a draft scoped to tooling and asset
+  planning, and is not merged because CI is green; its scope is reconciled
+  with PR #185 (the DE 2026 service-model source of truth plus the kie.ai
+  tooling fixes) and PR #186 first.
+- **The `HTTPS_PROXY` limitation** of the Excalidraw script stays parked.
+- **Kept regardless of the homepage outcome:** the Nano Banana 2 workflow,
+  the spend gate, reference chaining, image validation and the free re-fetch.
+
+## Where the rules apply: three code paths, one gate
+
+The skill packs vendored by PR #180 brought two more kie.ai scripts into the
+repository. All three spend the same credits and answer to the same rules:
+
+| Path | What it is | Guard today |
+| --- | --- | --- |
+| `.claude/skills/scrollcraft/scripts/kie.mjs` (`still`, `nb2`, `fetch`) | The spend gate: approval and cap flags, price and balance checks, one call, no retry, image-only download, provenance manifest | full |
+| `.claude/skills/nano-banana-images/scripts/generate_kie.py` | The Nano Banana 2 JSON method as supplied; `--dry-run`, manifest sidecar, credit probe, `get_kie_image.py` recovery | conduct only: run it only inside a message of Joe's that approves and caps the run; in this repository prefer `kie.mjs nb2`, which sends the identical request |
+| `.claude/skills/excalidraw-visuals/scripts/generate-visual.cjs` | Hand-drawn PNGs on `google/nano-banana`, style reference mandatory | conduct only; its download uses Node `https` and ignores the cloud proxy (PR #185), so in a cloud session recover results with `kie.mjs fetch <taskId>` |
+
+Two hosts return finished images and both must be on a cloud environment's
+allowed domains: `tempfile.redpandaai.co` and `tempfile.aiquickdraw.com`.
+Never write a dollar figure as `$0.xx` inside a `SKILL.md`: Claude Code
+substitutes `$0` with the first skill argument (the PR #185 finding).
+
 ## What the script refuses on its own
 
 | Situation | `kie.mjs` behaviour |
@@ -75,3 +111,4 @@ enforces the parts a script can enforce; the rest is conduct.
 | Date (UTC) | Environment | Model | Task | Credits before → after | Outcome |
 | --- | --- | --- | --- | --- | --- |
 | 2026-09-02 04:59 | Digerati KIE Restricted | seedream/5-pro-text-to-image | none | 80 → 80 | Attempted **without Joe's approval** (a rule 1 breach by Claude, acknowledged); refused by kie.ai, API code 401 "not authorized to use this model"; nothing spent. |
+| 2026-09-02 (afternoon) | another Claude session (PR #185, `excalidraw-visuals`) | google/nano-banana | `07e28b2162e4652fbbb953db853c01f4`, `5bd8276aa69a79021e252889613dae2d` | 80 → 68 | Light/dark A-B of the revised style prefix, 12 credits: three generations of which one download was lost to a proxy refusal saved as a ".png" and regenerated. Evidence under `artifacts/kie-ai/excalidraw/`. Recorded here for completeness; that session's approval record is its own. |
