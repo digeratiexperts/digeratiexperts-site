@@ -266,22 +266,39 @@ claims:
       scripts/** (released to Cursor for R5/R6), scrollcraft/**,
       client/src/pages/versions/**. The same YAML parse fix as
       claude/unfinished-threads-survey-y92doz is carried so this file loads.
-  - id: pronunciation-flipbook-recovery
+  - id: pronunciation-and-flipbook-recovery
     issue: 152
-    owner: chatgpt
-    subsystem: homepage-resources
-    branch: chatgpt/pronunciation-flipbook-recovery-20260831
+    pr: 157
+    owner: claude
+    subsystem: homepage-hero, resources
+    branch: claude/pronunciation-dictionary-card-2026-08-31
     base_sha: ecea1d9314f859bd5a17343c277e739f3bedb492
     files:
       - client/src/components/PronunciationCard.tsx
+      - client/src/components/PronunciationCard.palette.test.ts
       - client/src/pages/sections/ReferenceHeroSection.tsx
       - client/src/pages/resources/DocumentFlipbook.tsx
       - client/src/pages/resources/ResourcesIndex.tsx
       - client/public/audio/README.md
       - scripts/vendor-pdfjs.mjs
+      - scripts/public-route-smoke.mjs
       - package.json
     status: active
     started: 2026-08-31
+    note: >-
+      Reassigned by Joe on 2026-08-31. Supersedes the `chatgpt` claim
+      pronunciation-flipbook-recovery (branch
+      chatgpt/pronunciation-flipbook-recovery-20260831, commit f72d647): this
+      branch merges that branch whole, so both halves ship together and neither
+      agent is left holding a conflicting file. The pronunciation card is the
+      reassigned rewrite — same data-testids, so the public-route smoke gate
+      that branch added keeps passing. The flipbook half (DocumentFlipbook,
+      ResourcesIndex, pinned PDF.js vendoring, audio README) is carried across
+      unmodified. The chatgpt branch is now redundant and should be retired
+      rather than merged; merging both would conflict on PronunciationCard.tsx. Reconciled with main
+      068fd278 on 2026-09-30: main already carries the .gitignore vendor rule and
+      the vendor-pdfjs Windows shell fix (PR 218); the recording, the palette
+      rules and the flipbook half are what this branch still adds.
   - id: de-experience-v1
     owner: claude
     subsystem: flagship-creative-reset
