@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import {
+  ArrowUpRight,
+  CalendarDays,
+  Check,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
+  Copy,
   ExternalLink,
   FileText,
   FolderLock,
@@ -16,9 +21,12 @@ import {
   Monitor,
   MessageCircle,
   Phone,
+  PhoneCall,
+  RotateCcw,
   Send,
   Shield,
   ShieldAlert,
+  ShieldCheck,
   ShoppingCart,
   Ticket,
   User,
@@ -47,6 +55,8 @@ import type { OpenMspAdvisorDetail } from "@/lib/openMspAdvisor";
 import { STORE_ADVISOR_SEED, clearPendingMspAdvisorOpen, takePendingMspAdvisorOpen } from "@/lib/openMspAdvisor";
 import { analytics } from "@/lib/analytics";
 import { clearDeskChat, readDeskChat, ticketDraftFromChat, writeDeskChat } from "@/lib/deskChatSession";
+import { deskActionLabel, planDeskAction, sanitizeDeskActions, type DeskAction, type DeskActionType } from "@/lib/deskActions";
+import { DeskRichText } from "@/lib/deskRichText";
 import { useDraggableWindow } from "@/hooks/useDraggableWindow";
 import { useEscapeKey } from "@/hooks/useFocusTrap";
 import {
@@ -87,7 +97,32 @@ type ChatMessage = {
   senderName?: string | null;
   createdAt?: string;
   supportChips?: DeskTicketChipId[];
+  /** Next steps the advisor proposed with this reply. */
+  actions?: DeskAction[];
+  /** On a failed send: the visitor's text, so "Try again" can resend it. */
+  retryText?: string;
+  retryOfId?: string;
 };
+
+const DESK_ACTION_ICONS: Record<DeskActionType, typeof Phone> = {
+  schedule_consultation: CalendarDays,
+  request_assessment: ShieldCheck,
+  contact_sales: Phone,
+  create_lead: User,
+  open_portal: LogIn,
+  existing_client_support: LogIn,
+  request_callback: PhoneCall,
+  navigate: ArrowUpRight,
+  leave_message: Mail,
+};
+
+const DESK_ACTION_FORM_TITLES = {
+  callback: "Request a callback",
+  lead: "Share your details",
+  message: "Leave a message for the desk",
+} as const;
+
+type DeskActionForm = { messageId: string; action: DeskAction; form: keyof typeof DESK_ACTION_FORM_TITLES };
 
 type TicketResult = {
   ticketNumber?: string;
@@ -224,7 +259,7 @@ export const ZohoASAPWidget = ({
     if (!cached?.email && !cached?.fullName) return null;
     return { fullName: cached.fullName, email: cached.email };
   });
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const deskPage = inferDeskPageType(location);
   // A conversation already under way in this tab (reload, full page load) picks up where it was.
   const [restoredChat] = useState(() => readDeskChat());
@@ -251,6 +286,16 @@ export const ZohoASAPWidget = ({
   const revealCancelRef = useRef({ cancelled: false });
   const greetedOnceRef = useRef(!!restoredChat);
   const [chatInput, setChatInput] = useState("");
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const atBottomRef = useRef(true);
+  const [atBottom, setAtBottom] = useState(true);
+  const [missedCount, setMissedCount] = useState(0);
+  const [actionForm, setActionForm] = useState<DeskActionForm | null>(null);
+  const [actionFields, setActionFields] = useState({ name: "", email: "", phone: "", message: "", website_url: "" });
+  const [actionSending, setActionSending] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [refCopied, setRefCopied] = useState(false);
   const [isChatSending, setIsChatSending] = useState(false);
   const [assistantAvailable, setAssistantAvailable] = useState<boolean | null>(null);
   const [agentLive, setAgentLive] = useState(false);
@@ -610,10 +655,48 @@ export const ZohoASAPWidget = ({
     return () => window.removeEventListener("de-open-msp-advisor", onOpen as EventListener);
   }, []);
 
+  const lastChatRole = chatMessages[chatMessages.length - 1]?.role;
   useEffect(() => {
     if (activeTab !== "chat") return;
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [activeTab, chatMessages, greetingVisible, reveal, showTypingDots, showStarterChips]);
+    // Follow the conversation while the visitor is at the bottom, or has just
+    // sent something. Someone scrolled up reading an earlier answer is not
+    // yanked down; they get the "new message" pill instead.
+    if (!atBottomRef.current && lastChatRole !== "user") return;
+    chatEndRef.current?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "nearest" });
+  }, [activeTab, chatMessages, greetingVisible, reveal, showTypingDots, showStarterChips, actionForm, lastChatRole]);
+
+  const chatCountRef = useRef(chatMessages.length);
+  useEffect(() => {
+    const added = chatMessages.length - chatCountRef.current;
+    chatCountRef.current = chatMessages.length;
+    if (added > 0 && !atBottomRef.current && lastChatRole !== "user") setMissedCount((count) => count + added);
+  }, [chatMessages, lastChatRole]);
+
+  const onChatScroll = () => {
+    const el = chatScrollRef.current;
+    if (!el) return;
+    const near = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    atBottomRef.current = near;
+    setAtBottom(near);
+    if (near) setMissedCount(0);
+  };
+
+  const jumpToLatest = () => {
+    atBottomRef.current = true;
+    setAtBottom(true);
+    setMissedCount(0);
+    chatEndRef.current?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "end" });
+  };
+
+  // The composer grows with the message (up to about five lines), and shrinks back after sending.
+  const sizeComposer = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 132)}px`;
+  };
+  useEffect(() => {
+    if (!chatInput) sizeComposer(composerRef.current);
+  }, [chatInput]);
 
   useEffect(() => {
     if (activeTab === "chat" || !isChatSending) return;
@@ -734,6 +817,7 @@ export const ZohoASAPWidget = ({
     }
 
     setShowStarterChips(false);
+    setActionForm(null);
     revealCancelRef.current.cancelled = true;
     setReveal(null);
 
@@ -804,6 +888,7 @@ export const ZohoASAPWidget = ({
 
       const supportChips =
         data.suggestSupportChips && data.mode === "it_support" ? ASK_IT_HELP_CHIPS : undefined;
+      const nextSteps = sanitizeDeskActions(data.actions);
 
       setChatMessages((current) => [
         ...current,
@@ -814,6 +899,7 @@ export const ZohoASAPWidget = ({
           createdAt,
           senderName: data.agentLive ? data.agentName || "DE Desk" : null,
           supportChips,
+          actions: nextSteps.length ? nextSteps : undefined,
         },
       ]);
 
@@ -845,6 +931,8 @@ export const ZohoASAPWidget = ({
           role: "assistant",
           content: `${description} You can create a support ticket here and the team will follow up.`,
           createdAt: new Date().toISOString(),
+          retryText: content,
+          retryOfId: userMessage.id,
         },
       ]);
       if (activeTabRef.current !== "chat") {
@@ -934,8 +1022,121 @@ export const ZohoASAPWidget = ({
     knownMsgIdsRef.current = new Set([CHAT_WELCOME_ID]);
     pollSinceRef.current = null;
     setChatInput("");
+    setActionForm(null);
+    setMissedCount(0);
     window.requestAnimationFrame(() => document.getElementById("desk-chat-input")?.focus());
   };
+
+  // A failed send comes back as a bubble with "Try again": it removes the
+  // failed attempt and sends the same words, so nobody retypes their issue.
+  const retryChat = (failed: ChatMessage) => {
+    if (!failed.retryText || isChatSending) return;
+    const text = failed.retryText;
+    setChatMessages((current) => current.filter((m) => m.id !== failed.id && m.id !== failed.retryOfId));
+    void handleSendChat(text);
+  };
+
+  const trackDeskAction = (action: DeskAction) => {
+    if (action.type === "schedule_consultation") analytics.chatBookingClicked();
+    if (action.type === "open_portal" || action.type === "existing_client_support") analytics.chatSupportRouted();
+  };
+
+  const openDeskActionForm = (messageId: string, action: DeskAction, form: DeskActionForm["form"]) => {
+    trackDeskAction(action);
+    setActionError(null);
+    setActionFields((current) => ({
+      ...current,
+      name: current.name || fullName || portalSession?.fullName || "",
+      email: current.email || email || portalSession?.email || "",
+    }));
+    setActionForm((current) =>
+      current?.messageId === messageId && current.action.type === action.type ? null : { messageId, action, form },
+    );
+    window.requestAnimationFrame(() => {
+      const first = document.querySelector<HTMLInputElement>(".de-desk-action-form input:not([tabindex='-1'])");
+      first?.focus({ preventScroll: true });
+    });
+  };
+
+  const submitDeskAction = async () => {
+    if (!actionForm || actionSending) return;
+    const { form, action } = actionForm;
+    const name = actionFields.name.trim();
+    const mail = actionFields.email.trim();
+    const phone = actionFields.phone.trim();
+    const note = actionFields.message.trim();
+    const problem =
+      !advisorSessionId
+        ? "Send the desk a message first, so it has the conversation."
+        : form !== "message" && !name
+          ? "Add your name."
+          : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)
+            ? "Enter a valid email address."
+            : form === "callback" && phone.replace(/\D/g, "").length < 10
+              ? "Add a phone number we can call."
+              : form === "message" && !note
+                ? "Write your message."
+                : null;
+    if (problem) {
+      setActionError(problem);
+      return;
+    }
+    setActionSending(true);
+    setActionError(null);
+    try {
+      const response = await fetch("/api/public/advisor/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: advisorSessionId,
+          action: action.type,
+          payload: { name: name || undefined, email: mail, phone: phone || undefined, message: note || undefined },
+          website_url: actionFields.website_url,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        throw new Error(
+          response.status === 404
+            ? "This chat expired on our side. Use Get Support, or call us."
+            : data.error || "That didn't go through. Try again, or call us.",
+        );
+      }
+      if (form !== "message") analytics.chatLeadCreated();
+      const first = name.split(/\s+/)[0];
+      const thanks = first ? `Thanks, ${first}.` : "Thanks.";
+      const confirmation =
+        form === "callback"
+          ? `${thanks} Your callback request is with the desk, for ${phone}.`
+          : form === "lead"
+            ? `${thanks} The team has your details and will reach you at ${mail}.`
+            : `Message received. The desk will reply to ${mail}.`;
+      setChatMessages((current) => [
+        ...current,
+        { id: `action-${Date.now()}`, role: "assistant", content: confirmation, createdAt: new Date().toISOString() },
+      ]);
+      if (name) setFullName((current) => current || name);
+      setEmail((current) => current || mail);
+      setActionFields((current) => ({ ...current, message: "" }));
+      setActionForm(null);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "That didn't go through. Try again, or call us.");
+    } finally {
+      setActionSending(false);
+    }
+  };
+
+  const copyTicketRef = async (ref: string) => {
+    try {
+      await navigator.clipboard.writeText(ref);
+      setRefCopied(true);
+      window.setTimeout(() => setRefCopied(false), 1800);
+    } catch {
+      /* clipboard blocked: the reference stays on screen */
+    }
+  };
+
+  const lastBotMessageId = [...chatMessages].reverse().find((m) => m.role !== "user")?.id;
 
   const authToolGroups: Array<{ heading: string; items: DeskLauncherItem[] }> = [
     {
@@ -1346,7 +1547,7 @@ export const ZohoASAPWidget = ({
                   aria-labelledby="desk-tab-chat"
                   data-testid="panel-support-chat"
                 >
-                  <div className="de-desk-scroll" aria-live="polite">
+                  <div className="de-desk-scroll" aria-live="polite" ref={chatScrollRef} onScroll={onChatScroll}>
                     {chatMessages.map((chatMessage) => {
                       const isUser = chatMessage.role === "user";
                       const isAgent = chatMessage.role === "agent";
@@ -1397,10 +1598,16 @@ export const ZohoASAPWidget = ({
                               {showCaret ? (
                                 <span className="sr-only">{chatMessage.content}</span>
                               ) : null}
-                              <p className="whitespace-pre-wrap" aria-hidden={showCaret || undefined}>
-                                {bubbleText}
-                                {showCaret ? <span className="de-desk-caret" aria-hidden="true" /> : null}
-                              </p>
+                              {!isUser && !showCaret && !(isRevealing && !reveal.done) ? (
+                                <div className="de-desk-rich">
+                                  <DeskRichText text={bubbleText} onNavigate={setLocation} />
+                                </div>
+                              ) : (
+                                <p className="whitespace-pre-wrap" aria-hidden={showCaret || undefined}>
+                                  {bubbleText}
+                                  {showCaret ? <span className="de-desk-caret" aria-hidden="true" /> : null}
+                                </p>
+                              )}
                             </div>
                             {chatMessage.createdAt && formatDeskMessageTime(chatMessage.createdAt) ? (
                               <time
@@ -1431,6 +1638,158 @@ export const ZohoASAPWidget = ({
                                   );
                                 })}
                               </div>
+                            ) : null}
+                            {chatMessage.retryText ? (
+                              <button
+                                type="button"
+                                className="de-desk-retry"
+                                onClick={() => retryChat(chatMessage)}
+                                disabled={isChatSending}
+                                data-testid="button-retry-chat"
+                              >
+                                <RotateCcw aria-hidden="true" />
+                                Try again
+                              </button>
+                            ) : null}
+                            {chatMessage.actions?.length &&
+                            chatMessage.id === lastBotMessageId &&
+                            (!isRevealing || reveal.done) ? (
+                              <div className="de-desk-next" role="group" aria-label="Next steps" data-testid="desk-next-steps">
+                                {chatMessage.actions.map((action, actionIndex) => {
+                                  const plan = planDeskAction(action);
+                                  if (!plan) return null;
+                                  const Icon = DESK_ACTION_ICONS[action.type];
+                                  const className = `de-desk-next-btn de-desk-action-fade${actionIndex === 0 ? " is-primary" : ""}`;
+                                  const style = { animationDelay: `${actionIndex * 80}ms` };
+                                  const testId = `desk-next-${action.type}`;
+                                  const inner = (
+                                    <>
+                                      <Icon aria-hidden="true" />
+                                      <span>{deskActionLabel(action, PRIMARY_PHONE.display)}</span>
+                                    </>
+                                  );
+                                  if (plan.kind === "link") {
+                                    return (
+                                      <a
+                                        key={action.type}
+                                        href={plan.href}
+                                        target={plan.external ? "_blank" : undefined}
+                                        rel={plan.external ? "noopener noreferrer" : undefined}
+                                        className={className}
+                                        style={style}
+                                        data-testid={testId}
+                                        onClick={() => trackDeskAction(action)}
+                                      >
+                                        {inner}
+                                      </a>
+                                    );
+                                  }
+                                  if (plan.kind === "route") {
+                                    return (
+                                      <a
+                                        key={action.type}
+                                        href={plan.path}
+                                        className={className}
+                                        style={style}
+                                        data-testid={testId}
+                                        onClick={(event) => {
+                                          if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+                                          event.preventDefault();
+                                          trackDeskAction(action);
+                                          setLocation(plan.path);
+                                        }}
+                                      >
+                                        {inner}
+                                      </a>
+                                    );
+                                  }
+                                  return (
+                                    <button
+                                      key={action.type}
+                                      type="button"
+                                      className={className}
+                                      style={style}
+                                      data-testid={testId}
+                                      aria-expanded={actionForm?.messageId === chatMessage.id && actionForm.action.type === action.type}
+                                      onClick={() => openDeskActionForm(chatMessage.id, action, plan.form)}
+                                    >
+                                      {inner}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ) : null}
+                            {actionForm?.messageId === chatMessage.id ? (
+                              <form
+                                className="de-desk-action-form"
+                                aria-label={DESK_ACTION_FORM_TITLES[actionForm.form]}
+                                data-testid="desk-action-form"
+                                noValidate
+                                onSubmit={(event) => {
+                                  event.preventDefault();
+                                  void submitDeskAction();
+                                }}
+                              >
+                                <p className="de-desk-action-form-title">{DESK_ACTION_FORM_TITLES[actionForm.form]}</p>
+                                {actionForm.form !== "message" ? (
+                                  <input
+                                    className="de-desk-input"
+                                    aria-label="Your name"
+                                    placeholder="Your name"
+                                    autoComplete="name"
+                                    value={actionFields.name}
+                                    onChange={(event) => { setActionError(null); setActionFields((f) => ({ ...f, name: event.target.value })); }}
+                                  />
+                                ) : null}
+                                <input
+                                  className="de-desk-input"
+                                  type="email"
+                                  aria-label="Work email"
+                                  placeholder="Work email"
+                                  autoComplete="email"
+                                  value={actionFields.email}
+                                  onChange={(event) => { setActionError(null); setActionFields((f) => ({ ...f, email: event.target.value })); }}
+                                />
+                                {actionForm.form !== "message" ? (
+                                  <input
+                                    className="de-desk-input"
+                                    type="tel"
+                                    aria-label={actionForm.form === "callback" ? "Phone number" : "Phone number (optional)"}
+                                    placeholder={actionForm.form === "callback" ? "Phone number" : "Phone (optional)"}
+                                    autoComplete="tel"
+                                    value={actionFields.phone}
+                                    onChange={(event) => { setActionError(null); setActionFields((f) => ({ ...f, phone: event.target.value })); }}
+                                  />
+                                ) : (
+                                  <textarea
+                                    className="de-desk-input"
+                                    aria-label="Your message"
+                                    placeholder="Your message"
+                                    rows={3}
+                                    value={actionFields.message}
+                                    onChange={(event) => { setActionError(null); setActionFields((f) => ({ ...f, message: event.target.value })); }}
+                                  />
+                                )}
+                                <input
+                                  className="de-desk-hp"
+                                  tabIndex={-1}
+                                  autoComplete="off"
+                                  aria-hidden="true"
+                                  value={actionFields.website_url}
+                                  onChange={(event) => { setActionError(null); setActionFields((f) => ({ ...f, website_url: event.target.value })); }}
+                                />
+                                {actionError ? (
+                                  <p className="de-desk-action-form-error" role="alert">{actionError}</p>
+                                ) : null}
+                                <div className="de-desk-action-form-row">
+                                  <button type="submit" className="de-desk-action-form-send" disabled={actionSending} data-testid="button-submit-desk-action">
+                                    {actionSending ? "Sending…" : actionForm.form === "callback" ? "Request callback" : "Send"}
+                                  </button>
+                                  <button type="button" className="de-desk-action-form-cancel" onClick={() => setActionForm(null)}>
+                                    Cancel
+                                  </button>
+                                </div>
+                              </form>
                             ) : null}
                           </div>
                         </div>
@@ -1496,6 +1855,12 @@ export const ZohoASAPWidget = ({
                     )}
                     <div ref={chatEndRef} />
                   </div>
+                  {missedCount > 0 && !atBottom ? (
+                    <button type="button" className="de-desk-jump" onClick={jumpToLatest} data-testid="desk-jump-latest">
+                      {missedCount === 1 ? "New message" : `${missedCount} new messages`}
+                      <ChevronDown aria-hidden="true" />
+                    </button>
+                  ) : null}
                 </div>
               )}
 
@@ -1515,7 +1880,18 @@ export const ZohoASAPWidget = ({
                         </div>
                         <h3>Support request received</h3>
                         {ticketResult.ticketNumber && (
-                          <p className="de-desk-ticket-ref">{ticketResult.ticketNumber}</p>
+                          <p className="de-desk-ticket-ref">
+                            {ticketResult.ticketNumber}
+                            <button
+                              type="button"
+                              className="de-desk-copy"
+                              onClick={() => void copyTicketRef(ticketResult.ticketNumber!)}
+                              aria-label={refCopied ? "Ticket reference copied" : "Copy ticket reference"}
+                              data-testid="button-copy-ticket-ref"
+                            >
+                              {refCopied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+                            </button>
+                          </p>
                         )}
                         <p>{ticketResult.message}</p>
                         <div className="de-desk-success-actions">
@@ -1941,7 +2317,7 @@ export const ZohoASAPWidget = ({
                   <div className="de-desk-chat-actions" data-testid="desk-chat-actions">
                     <button type="button" onClick={openTicketFromChat} data-testid="button-ticket-from-chat">
                       <Ticket aria-hidden="true" />
-                      Create a ticket from this chat
+                      Make this a ticket
                     </button>
                     <button
                       type="button"
@@ -1954,12 +2330,17 @@ export const ZohoASAPWidget = ({
                   </div>
                 ) : null}
                 <div className={`de-desk-composer${headsUp || unreadChatCount ? " is-live" : ""}`}>
-                  <input
-                    type="text"
+                  <textarea
+                    ref={composerRef}
+                    rows={1}
                     value={chatInput}
-                    onChange={(event) => setChatInput(event.target.value)}
+                    onChange={(event) => {
+                      setChatInput(event.target.value);
+                      sizeComposer(event.currentTarget);
+                    }}
                     onKeyDown={(event) => {
-                      if (event.key === "Enter" && !event.shiftKey) {
+                      // Enter sends; Shift+Enter is a new line; never send mid-IME composition.
+                      if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
                         event.preventDefault();
                         void handleSendChat();
                       }
@@ -1973,7 +2354,10 @@ export const ZohoASAPWidget = ({
                         ? `Message ${agentName || "the specialist"}…`
                         : "Type the issue…"
                     }
-                    disabled={isChatSending}
+                    // Read-only, not disabled, while a reply is on its way: disabling
+                    // dropped keyboard focus to the page on every send.
+                    readOnly={isChatSending}
+                    aria-busy={isChatSending || undefined}
                     id="desk-chat-input"
                     data-testid="input-support-chat"
                     aria-label="Ask DE message"
@@ -2286,7 +2670,7 @@ export const ZohoASAPWidget = ({
             .de-desk-hero-ring {
               display: inline-flex; align-items: center; justify-content: center;
               width: 36px; height: 36px; border-radius: 999px;
-              background: rgba(34,197,94,0.14); color: #4ade80;
+              background: rgba(21,128,61,0.10); color: #15803d;
             }
             .de-desk-row {
               display: flex; align-items: center; gap: 10px;
@@ -2317,7 +2701,7 @@ export const ZohoASAPWidget = ({
               font-family: "Space Grotesk", sans-serif;
               font-size: 14.5px; font-weight: 650; color: var(--desk-ink);
             }
-            .de-desk-msg-who em { font-style: normal; font-size: 13px; font-weight: 600; color: #4ade80; }
+            .de-desk-msg-who em { font-style: normal; font-size: 13px; font-weight: 600; color: #15803d; }
             .de-desk-scroll::-webkit-scrollbar {
               width: 6px;
             }
@@ -2684,7 +3068,7 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-field-error {
               margin: 6px 0 0;
-              color: #fecaca;
+              color: #B42318;
               font-size: 12px;
               line-height: 1.4;
             }
@@ -2693,7 +3077,7 @@ export const ZohoASAPWidget = ({
               border: 1px solid rgba(240,69,91,0.4);
               border-radius: 10px;
               background: var(--desk-well);
-              color: #fecaca;
+              color: #B42318;
               font-size: 13px;
               line-height: 1.45;
             }
@@ -3008,8 +3392,8 @@ export const ZohoASAPWidget = ({
               background: var(--desk-pink); color: #fff;
               font-size: 9px; font-weight: 700; letter-spacing: 0.04em;
             }
-            .de-desk-heads-up.is-out .de-desk-heads-up-mark { background: #3a3644; }
-            .de-desk-heads-up.is-live .de-desk-heads-up-mark { background: #3b9eff; }
+            .de-desk-heads-up.is-out .de-desk-heads-up-mark { background: var(--desk-ink-muted); }
+            .de-desk-heads-up.is-live .de-desk-heads-up-mark { background: #1f6fd6; }
             .de-desk-heads-up-copy { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
             .de-desk-heads-up-top {
               display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
@@ -3065,6 +3449,7 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-chat-actions button {
               display: inline-flex; align-items: center; gap: 6px;
+              white-space: nowrap;
               min-height: 36px;
               padding: 0 6px;
               border: 0; border-radius: 8px;
@@ -3078,13 +3463,126 @@ export const ZohoASAPWidget = ({
             .de-desk-chat-actions button:first-child:hover { color: var(--desk-pink-ink); }
             .de-desk-chat-actions button:disabled { opacity: 0.5; }
             .de-desk-chat-actions + .de-desk-composer { border-top: 0; padding-top: 6px; }
-            .de-desk-composer.is-live input {
+
+            /* Replies: paragraphs, lists, links — built as elements, never raw HTML. */
+            .de-desk-rich > * + * { margin-top: 8px; }
+            .de-desk-rich p { margin: 0; }
+            .de-desk-rich ul, .de-desk-rich ol { margin: 0; padding-left: 20px; }
+            .de-desk-rich ul { list-style: disc; }
+            .de-desk-rich ol { list-style: decimal; }
+            .de-desk-rich li + li { margin-top: 3px; }
+            .de-desk-rich li::marker { color: var(--desk-ink-muted); }
+            .de-desk-rich strong { font-weight: 700; color: var(--desk-ink); }
+            .de-desk-rich a {
+              color: var(--desk-pink-ink);
+              font-weight: 600;
+              text-decoration: underline;
+              text-decoration-color: rgba(163,14,82,0.35);
+              text-underline-offset: 3px;
+            }
+            .de-desk-rich a:hover { text-decoration-color: currentColor; }
+
+            /* The advisor's next steps under its latest reply. One magenta
+               action (the first); the rest are quiet. */
+            .de-desk-next { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+            .de-desk-next-btn {
+              display: inline-flex; align-items: center; gap: 7px;
+              min-height: 40px;
+              padding: 8px 13px;
+              border: 1px solid var(--desk-border-strong);
+              border-radius: 999px;
+              background: var(--desk-box);
+              color: var(--desk-ink);
+              font-size: 14px; font-weight: 650; line-height: 1.2;
+              text-decoration: none;
+              transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+            }
+            .de-desk-next-btn svg { width: 15px; height: 15px; flex: none; color: var(--desk-pink-ink); }
+            .de-desk-next-btn:hover { border-color: rgba(211,18,106,0.45); background: rgba(211,18,106,0.06); }
+            .de-desk-next-btn:active { transform: translateY(1px); }
+            .de-desk-next-btn.is-primary { background: #D3126A; border-color: #D3126A; color: #fff; }
+            .de-desk-next-btn.is-primary svg { color: currentColor; }
+            .de-desk-next-btn.is-primary:hover { background: #bd105f; border-color: #bd105f; }
+            .de-desk-next-btn[aria-expanded="true"]:not(.is-primary) { border-color: #D3126A; }
+
+            .de-desk-action-form {
+              display: grid; gap: 8px;
+              margin-top: 10px;
+              padding: 12px;
+              border: 1px solid var(--desk-border-strong);
+              border-radius: 12px;
+              background: var(--desk-box);
+            }
+            .de-desk-action-form-title { margin: 0 0 2px; font-size: 14px; font-weight: 700; color: var(--desk-ink); }
+            .de-desk-action-form .de-desk-input { width: 100%; min-height: 42px; padding: 9px 12px; font-size: 15px; }
+            .de-desk-action-form textarea.de-desk-input { resize: vertical; min-height: 84px; }
+            .de-desk-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+            .de-desk-action-form-error { margin: 0; font-size: 13px; color: #B42318; }
+            .de-desk-action-form-row { display: flex; align-items: center; gap: 10px; }
+            .de-desk-action-form-send {
+              min-height: 40px; padding: 0 16px;
+              border: 0; border-radius: 10px;
+              background: #D3126A; color: #fff;
+              font-size: 14px; font-weight: 700;
+            }
+            .de-desk-action-form-send:hover:not(:disabled) { background: #bd105f; }
+            .de-desk-action-form-send:disabled { opacity: 0.6; }
+            .de-desk-action-form-cancel {
+              min-height: 40px; padding: 0 8px;
+              border: 0; background: transparent;
+              color: var(--desk-ink-muted); font-size: 14px; font-weight: 600;
+            }
+
+            .de-desk-retry {
+              display: inline-flex; align-items: center; gap: 6px;
+              margin-top: 8px;
+              min-height: 36px; padding: 0 12px;
+              border: 1px solid var(--desk-border-strong);
+              border-radius: 999px;
+              background: var(--desk-box);
+              color: var(--desk-pink-ink);
+              font-size: 13.5px; font-weight: 700;
+            }
+            .de-desk-retry svg { width: 14px; height: 14px; }
+            .de-desk-retry:disabled { opacity: 0.5; }
+
+            .de-desk-shell[data-tab="chat"] .de-desk-panel { position: relative; }
+            .de-desk-jump {
+              position: absolute; left: 50%; bottom: 10px; z-index: 2;
+              transform: translateX(-50%);
+              display: inline-flex; align-items: center; gap: 6px;
+              min-height: 34px; padding: 0 14px;
+              border: 0; border-radius: 999px;
+              background: #D3126A; color: #fff;
+              font-size: 13px; font-weight: 700;
+              box-shadow: 0 8px 20px -10px rgba(211,18,106,0.7);
+            }
+            .de-desk-jump svg { width: 14px; height: 14px; }
+
+            .de-desk-copy {
+              display: inline-flex; align-items: center; justify-content: center;
+              width: 30px; height: 30px; margin-left: 6px;
+              border: 1px solid var(--desk-border);
+              border-radius: 8px;
+              background: var(--desk-box);
+              color: var(--desk-ink-muted);
+              vertical-align: middle;
+            }
+            .de-desk-copy svg { width: 14px; height: 14px; }
+            .de-desk-copy:hover { color: var(--desk-ink); border-color: var(--desk-border-strong); }
+            .de-desk-composer.is-live textarea {
               border-color: rgba(211,18,106,0.6);
               box-shadow: 0 0 0 3px rgba(211,18,106,0.15);
             }
-            .de-desk-composer input {
+            .de-desk-composer textarea {
               flex: 1;
+              display: block;
               min-height: 44px;
+              max-height: 132px;
+              resize: none;
+              overflow-y: auto;
+              line-height: 1.45;
+              font-family: inherit;
               background: var(--desk-box);
               border: 1px solid var(--desk-border);
               border-radius: 10px;
@@ -3097,12 +3595,13 @@ export const ZohoASAPWidget = ({
               -webkit-text-fill-color: var(--desk-ink);
               caret-color: var(--desk-ink);
             }
-            .de-desk-composer input::placeholder { color: var(--desk-ink-dim); }
-            .de-desk-composer input:focus {
+            .de-desk-composer textarea::placeholder { color: var(--desk-ink-dim); }
+            .de-desk-composer textarea:focus {
               outline: none;
               border-color: #D3126A;
               box-shadow: 0 0 0 3px rgba(211,18,106,0.16);
             }
+            .de-desk-composer { align-items: flex-end; }
             .de-desk-send {
               width: 44px; height: 44px; border-radius: 10px;
               background: #D3126A; border: none;
@@ -3132,7 +3631,7 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-shell[data-tab="resources"] .de-desk-row,
             .de-desk-shell[data-tab="ticket"] .de-desk-row {
-              background: #16121e;
+              background: var(--desk-box);
               color: var(--desk-ink);
             }
             .de-desk-shell[data-tab="resources"] .de-desk-row-t,
@@ -3278,7 +3777,7 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-launch-row:hover {
               border-color: rgba(15,15,18,0.22);
-              background: #1a171c;
+              background: var(--desk-box-hover);
             }
             .de-desk-launch-icon {
               display: inline-flex; flex: none;

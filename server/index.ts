@@ -77,6 +77,7 @@ const log = (message: string) => {
 };
 
 import { setSecurityHeaders } from "./middleware/security";
+import { registerVersionPreviewRobots } from "./versionPreviewRobots";
 app.use(setSecurityHeaders);
 
 app.use((req, _res, next) => {
@@ -472,6 +473,8 @@ app.get("/experience-v1", (_req, res) => {
   res.setHeader("X-Robots-Tag", "noindex");
   res.redirect(302, "/experience");
 });
+
+registerVersionPreviewRobots(app);
 
 // Homepage version archive (client/src/pages/versions/README.md): version 2
 // is the static Version B build above, so its numbered URL forwards there.

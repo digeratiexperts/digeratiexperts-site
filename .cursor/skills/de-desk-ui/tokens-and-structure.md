@@ -35,7 +35,12 @@ White text appears only on magenta. Do **not** paint the Desk graphite, and do *
 - White transcript. Opening bubble: “DE” avatar only. No sender line (the name is in the header) and no **Available** badge; a name and a live dot appear only when a real person joins (`agentLive`).
 - Greeting and four starter chips: per page, from `DESK_PAGE_COPY` in `client/src/lib/deskAskDeMotion.ts`, with **Possible security incident** always last (routes to Get Support).
 - After send: magenta user bubbles with white text; white assistant bubbles with a hairline.
-- Once the visitor has sent something, a quiet action row sits above the composer: **Create a ticket from this chat** (Get Support, subject and details drafted from the visitor's own messages, never overwriting a draft they started; the ticket already carries the chat session id) and **Start over** (forgets the thread and the server session).
+- Once the visitor has sent something, a quiet action row sits above the composer: **Make this a ticket** (Get Support, subject and details drafted from the visitor's own messages, never overwriting a draft they started; the ticket already carries the chat session id) and **Start over** (forgets the thread and the server session).
+- Replies render as elements (`client/src/lib/deskRichText.tsx`, never raw HTML): paragraphs, bullet and numbered lists, **bold**, https links (new tab), site paths (same tab, the Desk stays open) and phone numbers as tap-to-call.
+- Under the latest reply, the advisor's next steps (`client/src/lib/deskActions.ts`, client allowlist, at most three): the first is the one magenta pill, the rest are quiet. A phone step reads "Call {number}", never "Contact sales". Request a callback / Share my details / Leave a message open a small inline form that posts to `/api/public/advisor/action` with the chat session and the honeypot.
+- The composer is a textarea that grows to about five lines: Enter sends, Shift+Enter breaks the line; it stays focused (read-only) while a reply is on its way.
+- A failed send gets **Try again**, which resends the same words without duplicating the message.
+- A reader scrolled up is never yanked down; a magenta "New message" pill jumps to the end.
 - The conversation is kept for the browser tab (`client/src/lib/deskChatSession.ts`, sessionStorage, 12 hours) so a reload returns to it.
 
 ## Get Support
@@ -44,6 +49,7 @@ White text appears only on magenta. Do **not** paint the Desk graphite, and do *
 - Featured **Possible security incident** rail, then a vertical list from `DESK_STANDARD_TICKET_CHIPS`, then Name, Work email, What's happening?, Details, Urgency. Default **Medium**.
 - White inputs with a hairline, ink type, magenta focus ring, magenta **Create ticket**.
 - If the incident chip fired, show “Routed as a possible security incident.”
+- The confirmation shows the ticket reference with a copy button, and "View my tickets" for a signed-in client.
 - Company and category behind **Add company or category**. No file upload in the widget (a test fails on a fake one).
 
 ## Client Tools
