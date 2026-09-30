@@ -24,6 +24,7 @@ import cookieParser from "cookie-parser";
 import compression from "compression";
 import jwt from "jsonwebtoken";
 import { zohoPayments } from "./zohoPayments";
+import { zohoClient } from "./zoho/zohoClient";
 import { evaluatePaymentSucceeded } from "./zohoPaymentWebhook";
 import { getJwtSecretOrNull } from "./config/authSecrets";
 import { setupCrossServiceHandlers } from "./crossServiceHandler";
@@ -106,6 +107,9 @@ app.all("/api/health", async (_req, res) => {
     services: {
       database: dbAvailable ? "connected" : "fallback_memory",
       zohoPayments: zohoPayments.isConfigured() ? "configured" : "not_configured",
+      // Presence ≠ valid refresh token. auth_failed is set after a live Desk
+      // OAuth refresh rejects the configured refresh token (e.g. invalid_code).
+      zohoDesk: zohoClient.getDeskAuthStatus(),
       openai: openaiConfigured ? "configured" : "not_configured",
     },
     // Lets a reviewer confirm outbound mutations are locked down.

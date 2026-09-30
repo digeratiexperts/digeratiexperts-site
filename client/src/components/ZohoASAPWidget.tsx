@@ -1242,7 +1242,9 @@ export const ZohoASAPWidget = ({
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.zohoTicketId) {
+      // Fail closed: never treat as success without a Zoho ticket id, and never
+      // if the server explicitly set success:false (auth/create failures).
+      if (!response.ok || data.success === false || !data.zohoTicketId) {
         throw new Error(data.error || "We couldn't open the ticket right now. Please try again.");
       }
 

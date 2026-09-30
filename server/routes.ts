@@ -5958,9 +5958,9 @@ export async function registerRoutes(app: Express) {
 
       if (!zohoClient.isDeskConfigured()) {
         console.error("[WIDGET TICKET] Zoho Desk is not configured");
-        return res.status(503).json({
-          error: "Support desk is temporarily unavailable. Please try again.",
-        });
+        const { widgetTicketNotConfigured } = await import("./widgetTicketFailure");
+        const failure = widgetTicketNotConfigured();
+        return res.status(failure.status).json(failure.body);
       }
 
       const { firstName, lastName } = splitVisitorName(
@@ -5980,16 +5980,16 @@ export async function registerRoutes(app: Express) {
         });
       } catch (zohoErr: any) {
         console.error("[WIDGET TICKET] Zoho Desk create failed:", zohoErr?.message || zohoErr);
-        return res.status(502).json({
-          error: "We couldn't open the ticket right now. Please try again.",
-        });
+        const { mapWidgetTicketCreateFailure } = await import("./widgetTicketFailure");
+        const failure = mapWidgetTicketCreateFailure(zohoErr);
+        return res.status(failure.status).json(failure.body);
       }
 
       if (!zohoTicket?.id) {
         console.error("[WIDGET TICKET] Zoho Desk returned no ticket id");
-        return res.status(502).json({
-          error: "We couldn't open the ticket right now. Please try again.",
-        });
+        const { mapWidgetTicketCreateFailure } = await import("./widgetTicketFailure");
+        const failure = mapWidgetTicketCreateFailure(new Error("Zoho Desk returned no ticket id"));
+        return res.status(failure.status).json(failure.body);
       }
 
       const zohoTicketId = zohoTicket.id;
