@@ -67,9 +67,9 @@ const matrixData: Section[] = [
     features: [
       { name: "Baseline Threat Protection", tiers: { essentials: true, office: true, business: true, enterprise: true } },
       { name: "Data Safeguards & Identity", tiers: { essentials: true, office: true, business: true, enterprise: true } },
-      { name: "Email Security & MFA", tiers: { essentials: false, office: "Secure gateway", business: "Advanced gateway", enterprise: "Advanced + SSO" } },
-      { name: "Endpoint Detection & Response (EDR)", tiers: { essentials: false, office: "EDR", business: "EDR + rollback", enterprise: "EDR + MDR" } },
-      { name: "Security Awareness & Phishing", tiers: { essentials: false, office: "Baseline", business: "Interactive + sims", enterprise: "Role-based + sims" } },
+      { name: "Email Security & MFA", tiers: { essentials: "Managed baseline", office: "Advanced protection", business: "Enhanced", enterprise: "Advanced + SSO" } },
+      { name: "Endpoint Detection & Response (EDR)", tiers: { essentials: "Managed baseline", office: "EDR + 24/7 MDR", business: "Enhanced EDR + 24/7 MDR", enterprise: "Advanced EDR + MDR" } },
+      { name: "Security Awareness & Phishing", tiers: { essentials: "Included baseline", office: "Training + simulations", business: "Enhanced + simulations", enterprise: "Role-based + simulations" } },
       { name: "SaaS App Security Monitoring", tiers: { essentials: false, office: "Optional", business: true, enterprise: true } },
       { name: "Dark Web Monitoring", tiers: { essentials: false, office: true, business: true, enterprise: true } },
       { name: "Vulnerability Management", tiers: { essentials: false, office: false, business: "Internal", enterprise: "Internal + External" }, isUpgrade: true },

@@ -2,13 +2,15 @@
  * Durable portal auth store — Neon-backed with in-memory cache.
  * Sync get/set API matches the former Map so routes can migrate cleanly.
  */
-import { eq, or, sql } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { db, dbReady, initPromise } from "./db";
 import {
   portalUsers as portalUsersTable,
   portalClients as portalClientsTable,
   portalOrderForms,
+  externalIntegrationMappings,
 } from "@shared/schema";
+import { selectBackfillUpdates } from "./integrations/backfillHubIdentity";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { decryptTotpSecret, encryptTotpSecret, prepareBackupCodesForStorage } from "./portalMfaCrypto";
 
@@ -64,6 +66,18 @@ function indexUser(user: PortalAuthUser) {
   }
 }
 
+function decryptUserTotpSecret(userId: string, stored: string | null | undefined): string | null {
+  try {
+    return decryptTotpSecret(stored);
+  } catch (err: any) {
+    console.warn(
+      `[portalAuthStore] MFA secret decrypt failed for user ${userId}; keeping mfaEnabled`,
+      err?.message || err,
+    );
+    return null;
+  }
+}
+
 function rowToUser(row: typeof portalUsersTable.$inferSelect): PortalAuthUser {
   return {
     id: row.id,
@@ -82,7 +96,7 @@ function rowToUser(row: typeof portalUsersTable.$inferSelect): PortalAuthUser {
     isActive: row.isActive ?? true,
     mfaEnabled: row.mfaEnabled ?? false,
     mfaMethod: row.mfaMethod,
-    mfaTotpSecret: decryptTotpSecret(row.mfaTotpSecret),
+    mfaTotpSecret: decryptUserTotpSecret(row.id, row.mfaTotpSecret),
     mfaBackupCodes: Array.isArray(row.mfaBackupCodes) ? row.mfaBackupCodes : [],
     lastLogin: row.lastLogin,
     createdAt: row.createdAt,
@@ -225,7 +239,7 @@ async function upsertClientDb(client: PortalAuthClient) {
           primaryContact: client.primaryContact || null,
           status: client.status || "active",
           serviceType: client.serviceType || "prospect",
-          hubAccountId: client.hubAccountId || null,
+          ...(client.hubAccountId ? { hubAccountId: client.hubAccountId } : {}),
           updatedAt: new Date(),
         },
       });
@@ -406,6 +420,11 @@ export async function initPortalAuthStore(): Promise<void> {
   if (initialized) return;
   await initPromise;
   await ensureSchema();
+  if (process.env.NODE_ENV !== "production" && !process.env.MFA_ENCRYPTION_KEY?.trim()) {
+    console.warn(
+      "⚠️ MFA_ENCRYPTION_KEY is unset — stored MFA secrets will not survive process restart",
+    );
+  }
 
   if (dbReady && db) {
     try {
@@ -413,6 +432,25 @@ export async function initPortalAuthStore(): Promise<void> {
       for (const c of clients) clientsById.set(c.id, rowToClient(c));
       const users = await db.select().from(portalUsersTable);
       for (const u of users) indexUser(rowToUser(u));
+      const mappings = await db
+        .select({
+          clientId: externalIntegrationMappings.clientId,
+          externalId: externalIntegrationMappings.externalId,
+          hubAccountId: portalClientsTable.hubAccountId,
+        })
+        .from(externalIntegrationMappings)
+        .innerJoin(portalClientsTable, eq(portalClientsTable.id, externalIntegrationMappings.clientId))
+        .where(eq(externalIntegrationMappings.integrationType, "techsales_hub"));
+      for (const update of selectBackfillUpdates(mappings)) {
+        await db
+          .update(portalClientsTable)
+          .set({ hubAccountId: update.hubAccountId, updatedAt: new Date() })
+          .where(and(eq(portalClientsTable.id, update.clientId), isNull(portalClientsTable.hubAccountId)));
+        const cached = clientsById.get(update.clientId);
+        if (cached && !cached.hubAccountId) {
+          clientsById.set(update.clientId, { ...cached, hubAccountId: update.hubAccountId });
+        }
+      }
       console.log(`✅ Portal auth store loaded ${users.length} users, ${clients.length} clients from DB`);
     } catch (err: any) {
       console.warn("[portalAuthStore] load from DB failed:", err?.message);
@@ -530,6 +568,18 @@ export async function createProspectClientForUser(user: PortalAuthUser, companyN
   user.clientId = client.id;
   user.storeRole = "prospect";
   setUser(user);
+  void import("./integrations/linkPortalIdentity")
+    .then(({ queuePortalIdentityLink }) =>
+      queuePortalIdentityLink({
+        portalClientId: client.id,
+        companyName: client.companyName,
+        email: client.contactEmail,
+        name: client.primaryContact || client.companyName,
+      }),
+    )
+    .catch((err: { message?: string }) => {
+      console.warn("[portal-identity] link queue failed:", err?.message || err);
+    });
   return client;
 }
 

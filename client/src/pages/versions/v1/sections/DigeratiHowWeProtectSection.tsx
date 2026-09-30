@@ -43,7 +43,7 @@ const steps: {
   {
     number: 4,
     title: "Continuous",
-    description: "Day-to-day support, security operations where included, and reviews at that tier’s cadence.",
+    description: "Day-to-day support and the DE Security Foundation are included at every tier; detection, response, recovery, and governance deepen with the plan.",
     icon: Activity,
     testId: "step-protection",
     href: "/solutions/proactive-ecosystem",

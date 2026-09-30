@@ -10,6 +10,7 @@ const EXACT = new Set([
   "/version-1",
   "/version-2",
   "/version-3",
+  "/version-4",
   "/solutions",
   "/solutions/managed-it-support",
   "/solutions/managed-workplace",
@@ -23,7 +24,6 @@ const EXACT = new Set([
   "/solutions/proactive-enterprise-ecosystem",
   "/solutions/standalone-services",
   "/solutions/co-managed-it",
-  "/solutions/business-needs",
   "/solutions/request",
   "/solutions/endpoint-management",
   "/solutions/identity-management",
@@ -102,8 +102,8 @@ const EXACT = new Set([
 ]);
 
 const PREFIXES = [
-  "/solutions/business-needs/",
   "/store/solutions/",
+  "/store/solution/submitted/",
   "/resources/case-studies/",
   "/resources/blog/",
   "/portal/",
@@ -115,7 +115,7 @@ const PREFIXES = [
 ];
 
 export function normalizeSpaPath(pathname: string): string {
-  const raw = pathname.split("?")[0] || pathname;
+  const raw = (pathname.split("?")[0] || pathname).toLowerCase();
   if (raw.length <= 1) return raw || "/";
   return raw.replace(/\/+$/, "") || "/";
 }

@@ -7,7 +7,7 @@ import jwt from "jsonwebtoken";
 import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_integrations/object_storage";
 import { zohoClient, zohoDeskService, splitVisitorName, zohoCRMService, zohoBillingService } from "./zoho";
 import { websiteLeadTaxonomy } from "./zoho/leadTaxonomy";
-import { findBackupCodeIndex } from "./portalMfaCrypto";
+import { findBackupCodeIndex, generateBackupCodes } from "./portalMfaCrypto";
 import {
   parseZohoTicketId,
   validatePortalTicketUpload,
@@ -112,6 +112,7 @@ import {
   fetchHubCompanyDocuments,
   fetchHubCompanyOrders,
   fetchHubContractDownload,
+  mayPersistHubAccount,
   persistHubAccountId,
   resolvePortalCompanyName,
   resolvePortalHubAccountId,
@@ -120,7 +121,7 @@ import { registerDeSyncRoutes } from "./integrations/deSyncRoutes";
 import { resolveJwtSecret } from "./config/authSecrets";
 import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter } from "./middleware/rateLimiter";
 import { enqueueOutbox } from "./integrations/deSyncStore";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
 
 // Canonical JWT secret — resolved per call so dotenv/env load order cannot
 // split signing and verification across different secrets (see config/authSecrets).
@@ -327,6 +328,40 @@ export function requireAdmin(req: AuthenticatedRequest, res: Response, next: Nex
   next();
 }
 
+type RecordAccess = "ok" | "missing" | "denied";
+
+function denyRecordAccess(res: Response, access: RecordAccess, missing: string): boolean {
+  if (access === "ok") return false;
+  if (access === "missing") res.status(404).json({ error: missing });
+  else res.status(403).json({ error: "Access denied" });
+  return true;
+}
+
+async function workspaceAccess(req: AuthenticatedRequest, workspaceId: string): Promise<RecordAccess> {
+  const workspace = await storage.getWorkspace(workspaceId);
+  if (!workspace) return "missing";
+  if (req.user?.role === "admin" || workspace.ownerId === req.userId) return "ok";
+  return "denied";
+}
+
+async function projectAccess(req: AuthenticatedRequest, projectId: string): Promise<RecordAccess> {
+  const project = await storage.getProject(projectId);
+  if (!project) return "missing";
+  return workspaceAccess(req, project.workspaceId);
+}
+
+async function boardAccess(req: AuthenticatedRequest, boardId: string): Promise<RecordAccess> {
+  const board = await storage.getBoard(boardId);
+  if (!board) return "missing";
+  return projectAccess(req, board.projectId);
+}
+
+async function taskAccess(req: AuthenticatedRequest, taskId: string): Promise<RecordAccess> {
+  const task = await storage.getTask(taskId);
+  if (!task) return "missing";
+  return projectAccess(req, task.projectId);
+}
+
 function asOrgUser(req: AuthenticatedRequest): OrgUserFields {
   return {
     id: req.user?.id || req.userId || "",
@@ -511,7 +546,7 @@ const logSecurityEvent = (event: string, req: AuthenticatedRequest, data: any) =
 
 export async function registerRoutes(app: Express) {
   // Register object storage routes for file uploads
-  registerObjectStorageRoutes(app);
+  registerObjectStorageRoutes(app, { auth: authMiddleware, admin: requireAdmin });
   registerDeSyncRoutes(app, authMiddleware as any);
 
   // Live MSP threat feed (CISA / FIRST / NVD / MSRC). Never invents CVEs.
@@ -723,6 +758,9 @@ export async function registerRoutes(app: Express) {
       if (!user) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
+      if (!user.password) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
       
       const isValidPassword = await verifyPassword(password, user.password);
       if (!isValidPassword) {
@@ -791,10 +829,8 @@ export async function registerRoutes(app: Express) {
 
   app.get("/api/workspaces/:id", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
     try {
+      if (await denyRecordAccess(res, await workspaceAccess(req, req.params.id), "Workspace not found")) return;
       const workspace = await storage.getWorkspace(req.params.id);
-      if (!workspace) {
-        return res.status(404).json({ error: "Workspace not found" });
-      }
       res.json({ workspace });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -808,6 +844,7 @@ export async function registerRoutes(app: Express) {
       if (!workspaceId) {
         return res.status(400).json({ error: "workspaceId required" });
       }
+      if (await denyRecordAccess(res, await workspaceAccess(req, String(workspaceId)), "Workspace not found")) return;
       const projects = await storage.getProjectsByWorkspaceId(String(workspaceId));
       res.json({ projects });
     } catch (error: any) {
@@ -821,6 +858,7 @@ export async function registerRoutes(app: Express) {
       if (!name || !workspaceId) {
         return res.status(400).json({ error: "Name and workspaceId required" });
       }
+      if (await denyRecordAccess(res, await workspaceAccess(req, workspaceId), "Workspace not found")) return;
 
       const project = await storage.createProject({
         workspaceId,
@@ -845,6 +883,7 @@ export async function registerRoutes(app: Express) {
       if (!projectId) {
         return res.status(400).json({ error: "projectId required" });
       }
+      if (await denyRecordAccess(res, await projectAccess(req, String(projectId)), "Project not found")) return;
       const boards = await storage.getBoardsByProjectId(String(projectId));
       res.json({ boards });
     } catch (error: any) {
@@ -859,6 +898,7 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: "Name and projectId required" });
       }
 
+      if (await denyRecordAccess(res, await projectAccess(req, projectId), "Project not found")) return;
       const board = await storage.createBoard({
         projectId,
         name,
@@ -879,8 +919,10 @@ export async function registerRoutes(app: Express) {
       let tasks: any[] = [];
       
       if (boardId) {
+        if (await denyRecordAccess(res, await boardAccess(req, String(boardId)), "Board not found")) return;
         tasks = await storage.getTasksByBoardId(String(boardId));
       } else if (projectId) {
+        if (await denyRecordAccess(res, await projectAccess(req, String(projectId)), "Project not found")) return;
         tasks = await storage.getTasksByProjectId(String(projectId));
       }
       
@@ -897,6 +939,8 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: "Title and projectId required" });
       }
 
+      if (await denyRecordAccess(res, await projectAccess(req, projectId), "Project not found")) return;
+      if (boardId && await denyRecordAccess(res, await boardAccess(req, boardId), "Board not found")) return;
       const task = await storage.createTask({
         projectId,
         boardId: boardId || null,
@@ -919,6 +963,7 @@ export async function registerRoutes(app: Express) {
   app.patch("/api/tasks/:id", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { title, status, priority, description } = req.body;
+      if (await denyRecordAccess(res, await taskAccess(req, req.params.id), "Task not found")) return;
       const task = await storage.updateTask(req.params.id, {
         title,
         status,
@@ -939,6 +984,7 @@ export async function registerRoutes(app: Express) {
 
   app.delete("/api/tasks/:id", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
     try {
+      if (await denyRecordAccess(res, await taskAccess(req, req.params.id), "Task not found")) return;
       await storage.deleteTask(req.params.id);
       res.json({ success: true });
       logSecurityEvent("TASK_DELETED", req, { taskId: req.params.id });
@@ -954,6 +1000,7 @@ export async function registerRoutes(app: Express) {
       if (!workspaceId) {
         return res.status(400).json({ error: "workspaceId required" });
       }
+      if (await denyRecordAccess(res, await workspaceAccess(req, String(workspaceId)), "Workspace not found")) return;
       const labels = await storage.getLabelsByWorkspaceId(String(workspaceId));
       res.json({ labels });
     } catch (error: any) {
@@ -968,6 +1015,7 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: "Name and workspaceId required" });
       }
 
+      if (await denyRecordAccess(res, await workspaceAccess(req, workspaceId), "Workspace not found")) return;
       const label = await storage.createLabel({
         workspaceId,
         name,
@@ -988,6 +1036,7 @@ export async function registerRoutes(app: Express) {
       if (!taskId) {
         return res.status(400).json({ error: "taskId required" });
       }
+      if (await denyRecordAccess(res, await taskAccess(req, String(taskId)), "Task not found")) return;
       const comments = await storage.getCommentsByTaskId(String(taskId));
       res.json({ comments });
     } catch (error: any) {
@@ -1002,6 +1051,7 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: "Content and taskId required" });
       }
 
+      if (await denyRecordAccess(res, await taskAccess(req, taskId), "Task not found")) return;
       const comment = await storage.createComment({
         taskId,
         userId: req.userId || "",
@@ -1017,6 +1067,9 @@ export async function registerRoutes(app: Express) {
 
   app.delete("/api/comments/:id", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
     try {
+      const existingComment = await storage.getComment(req.params.id);
+      if (!existingComment) return res.status(404).json({ error: "Comment not found" });
+      if (await denyRecordAccess(res, await taskAccess(req, existingComment.taskId), "Task not found")) return;
       await storage.deleteComment(req.params.id);
       res.json({ success: true });
       logSecurityEvent("COMMENT_DELETED", req, { commentId: req.params.id });
@@ -1032,6 +1085,12 @@ export async function registerRoutes(app: Express) {
       if (!ticketId) {
         return res.status(400).json({ error: "ticketId required" });
       }
+      const ticket = await storage.getPortalTicket(String(ticketId));
+      if (!ticket) return res.status(404).json({ error: "Ticket not found" });
+      const sameClient = Boolean(req.user?.clientId) && ticket.clientId === req.user?.clientId;
+      if (req.user?.role !== "admin" && !sameClient) {
+        return res.status(403).json({ error: "Access denied" });
+      }
       const messages = await storage.getChatMessagesByTicketId(String(ticketId));
       res.json({ messages });
     } catch (error: any) {
@@ -1044,6 +1103,12 @@ export async function registerRoutes(app: Express) {
       const { ticketId, content, isRead } = req.body;
       if (!ticketId || !content) {
         return res.status(400).json({ error: "ticketId and content required" });
+      }
+      const ticket = await storage.getPortalTicket(String(ticketId));
+      if (!ticket) return res.status(404).json({ error: "Ticket not found" });
+      const sameClient = Boolean(req.user?.clientId) && ticket.clientId === req.user?.clientId;
+      if (req.user?.role !== "admin" && !sameClient) {
+        return res.status(403).json({ error: "Access denied" });
       }
 
       const message = await storage.createChatMessage({
@@ -1065,11 +1130,7 @@ export async function registerRoutes(app: Express) {
   // ===== PORTAL AI/INTEGRATION ROUTES =====
   app.get("/api/portal/jumpcloud/devices", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const mockDevices = [
-        { id: "device-1", name: "DESKTOP-01", os: "Windows 10", status: "active" },
-        { id: "device-2", name: "LAPTOP-01", os: "MacOS", status: "active" },
-      ];
-      res.json({ success: true, devices: mockDevices });
+      res.json({ success: true, configured: false, devices: [] });
       logSecurityEvent("JUMPCLOUD_DEVICES_FETCHED", req, {});
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -1358,6 +1419,9 @@ export async function registerRoutes(app: Express) {
       const userEmail = (req.user?.email || "").toLowerCase();
       if (!isAdmin && session.email && session.email.toLowerCase() !== userEmail) {
         return res.status(403).json({ error: "Not allowed" });
+      }
+      if (!isAdmin && !session.email) {
+        return res.status(403).json({ error: "Conversation is not linked to an account email yet" });
       }
       const updated = await releaseDeskSession(req.params.sessionId);
       res.json({ success: true, session: updated });
@@ -1687,10 +1751,7 @@ export async function registerRoutes(app: Express) {
 
   app.get("/api/portal/questionnaires/events", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const mockEvents = [
-        { id: "1", type: "deployment", title: "Q4 Security Update", date: new Date(), status: "scheduled" },
-      ];
-      res.json({ success: true, events: mockEvents });
+      res.json({ success: true, configured: false, events: [] });
       logSecurityEvent("QUESTIONNAIRES_FETCHED", req, {});
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -2767,6 +2828,10 @@ export async function registerRoutes(app: Express) {
         logSecurityEvent("PORTAL_LOGIN_FAILED", req, { email });
         return res.status(401).json({ message: "Invalid email or password" });
       }
+      if (!user.password) {
+        logSecurityEvent("PORTAL_LOGIN_FAILED", req, { email });
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
 
       const bcrypt = await import('bcrypt');
       const passwordValid = await bcrypt.compare(password, user.password);
@@ -3035,11 +3100,7 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ message: "Invalid verification code. Please try again." });
       }
 
-      // Generate backup codes
-      const backupCodes: string[] = [];
-      for (let i = 0; i < 8; i++) {
-        backupCodes.push(randomBytes(3).toString('hex').toUpperCase());
-      }
+      const backupCodes = generateBackupCodes(8);
 
       // Enable MFA on user
       user.mfaEnabled = true;
@@ -3106,10 +3167,7 @@ export async function registerRoutes(app: Express) {
       const valid = await bcrypt.compare(password, user.password);
       if (!valid) return res.status(401).json({ message: "Invalid password" });
 
-      const backupCodes: string[] = [];
-      for (let i = 0; i < 8; i++) {
-        backupCodes.push(randomBytes(3).toString('hex').toUpperCase());
-      }
+      const backupCodes = generateBackupCodes(8);
       user.mfaBackupCodes = backupCodes;
       portalUsers.set(user.email, user);
       if (user.username) portalUsers.set(user.username, user);
@@ -3128,6 +3186,9 @@ export async function registerRoutes(app: Express) {
       const user = portalUsers.get(req.user?.email || "");
       if (!user) return res.status(404).json({ message: "User not found" });
       const mgr = managerSummaryForUser(user as OrgUserFields);
+      const client = user.clientId ? portalAuthGetClient(user.clientId) : undefined;
+      const { companyNameForPortal } = await import("./integrations/profileSync");
+      const companyName = await companyNameForPortal(client?.hubAccountId, client?.companyName ?? null);
       return res.json({
         id: user.id,
         email: user.email,
@@ -3142,6 +3203,7 @@ export async function registerRoutes(app: Express) {
         managerUserId: mgr.managerUserId,
         manager: mgr.manager,
         companyDomains: mgr.companyDomains,
+        companyName,
       });
     } catch (error: any) {
       return res.status(500).json({ message: "Failed to load profile" });
@@ -3549,9 +3611,13 @@ export async function registerRoutes(app: Express) {
       let hubSource: "techsales" | "none" | "unconfigured" = "unconfigured";
 
       try {
-        const { companyName } = portalCompanyContext(req);
-        if (companyName) {
-          const hub = await fetchHubCompanyDocuments(companyName);
+        const learningCompany = portalCompanyContext(req);
+        if (learningCompany.companyName || learningCompany.hubAccountId) {
+          const hub = await fetchHubCompanyDocuments(
+            learningCompany.companyName || "",
+            learningCompany.hubAccountId,
+            learningCompany.companyId,
+          );
           if (hub?.library?.length) {
             hubSource = "techsales";
             hubResources = hub.library
@@ -3834,7 +3900,7 @@ export async function registerRoutes(app: Express) {
       const { zohoPayments } = await import("./zohoPayments");
 
       if (!zohoPayments.isConfigured()) {
-        return res.status(503).json({ error: "Online payments are not configured. Please contact billing@digeratiexperts.com." });
+        return res.status(503).json({ error: `Online payments are not configured. Please contact ${COMPANY.billingEmail}.` });
       }
       if (!zohoClient.isConfigured()) {
         return res.status(503).json({ error: "Billing integration not configured" });
@@ -4006,10 +4072,9 @@ export async function registerRoutes(app: Express) {
         const ctx = portalCompanyContext(req);
         companyName = ctx.companyName;
         if (companyName || ctx.hubAccountId) {
-          const hub = await fetchHubCompanyOrders(companyName || "", ctx.hubAccountId);
-          const mappedAccountId = hub?.accountId || hub?.matchedDeals?.find((d) => d.accountId)?.accountId;
-          if (ctx.companyId && mappedAccountId) {
-            await persistHubAccountId(ctx.companyId, mappedAccountId);
+          const hub = await fetchHubCompanyOrders(companyName || "", ctx.hubAccountId, ctx.companyId);
+          if (ctx.companyId && mayPersistHubAccount(hub?.identitySource) && hub?.accountId) {
+            await persistHubAccountId(ctx.companyId, hub.accountId);
           }
           if (hub?.orders) {
             hubSource = "ok";
@@ -4089,8 +4154,10 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Order not found" });
       }
       
-      // Verify the order belongs to the authenticated user/client
-      if (order.userId !== userId && order.clientId !== clientId) {
+      const isAdmin = req.user?.role === "admin";
+      const ownsUser = Boolean(userId) && order.userId === userId;
+      const ownsClient = Boolean(clientId) && order.clientId === clientId;
+      if (!isAdmin && !ownsUser && !ownsClient) {
         return res.status(403).json({ error: "Access denied to this order" });
       }
       
@@ -4142,8 +4209,10 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Order not found" });
       }
       
-      // Verify the order belongs to the authenticated user/client
-      if (order.userId !== userId && order.clientId !== clientId) {
+      const isAdmin = req.user?.role === "admin";
+      const ownsUser = Boolean(userId) && order.userId === userId;
+      const ownsClient = Boolean(clientId) && order.clientId === clientId;
+      if (!isAdmin && !ownsUser && !ownsClient) {
         return res.status(403).json({ error: "Access denied to this order" });
       }
       
@@ -4283,25 +4352,23 @@ export async function registerRoutes(app: Express) {
   // ===== CONTRACTS (TechSales Hub document library + company-specific) =====
 
   function portalCompanyContext(req: AuthenticatedRequest) {
-    const impersonatingCompanyId =
-      (req.user as any)?.impersonatingCompanyId ||
-      (typeof (req.user as any)?.impersonatingCompanyId === "string"
-        ? (req.user as any).impersonatingCompanyId
-        : null);
-    // JWT may carry impersonation from admin switch
+    const isAdmin = req.user?.role === "admin";
+    const impersonatingCompanyId = isAdmin
+      ? (req.user as any)?.impersonatingCompanyId || null
+      : null;
+    // A bearer token must not switch company context unless this session is an admin.
     let jwtImpersonation: string | null = null;
-    try {
-      const authHeader = req.headers.authorization || "";
-      const token = authHeader.split(" ")[1];
-      if (token) {
-        const decoded = jwt.verify(token, jwtSecret()) as any;
-        jwtImpersonation = decoded.impersonatingCompanyId || null;
-        if (decoded.impersonatingCompanyName && !req.user?.clientId) {
-          /* keep */
+    if (isAdmin) {
+      try {
+        const authHeader = req.headers.authorization || "";
+        const token = authHeader.split(" ")[1];
+        if (token) {
+          const decoded = jwt.verify(token, jwtSecret()) as any;
+          jwtImpersonation = decoded.impersonatingCompanyId || null;
         }
+      } catch {
+        /* ignore */
       }
-    } catch {
-      /* ignore */
     }
     const companyId = jwtImpersonation || impersonatingCompanyId || req.user?.clientId || null;
     const companyName = resolvePortalCompanyName({
@@ -4331,10 +4398,9 @@ export async function registerRoutes(app: Express) {
         });
       }
 
-      const hub = await fetchHubCompanyDocuments(companyName || "", hubAccountId);
-      const mappedAccountId = hub?.accountId || hub?.matchedDeals?.find((d) => d.accountId)?.accountId;
-      if (companyId && mappedAccountId) {
-        await persistHubAccountId(companyId, mappedAccountId);
+      const hub = await fetchHubCompanyDocuments(companyName || "", hubAccountId, companyId);
+      if (companyId && mayPersistHubAccount(hub?.identitySource) && hub?.accountId) {
+        await persistHubAccountId(companyId, hub.accountId);
       }
       if (companyId && hub) {
         void import("./services/de-intelligence/techSalesIngestion")
@@ -4390,12 +4456,12 @@ export async function registerRoutes(app: Express) {
       if (Number.isNaN(signatureId)) {
         return res.status(400).json({ message: "Invalid contract id" });
       }
-      const { companyName, hubAccountId } = portalCompanyContext(req);
+      const { companyId, companyName, hubAccountId } = portalCompanyContext(req);
       if (!companyName && !hubAccountId) {
         return res.status(400).json({ message: "No company profile loaded" });
       }
       const kind = typeof req.query.kind === "string" ? req.query.kind : "signed_pdf";
-      const file = await fetchHubContractDownload(signatureId, companyName || "", kind, hubAccountId);
+      const file = await fetchHubContractDownload(signatureId, companyName || "", kind, hubAccountId, companyId);
       if (!file) {
         return res.status(404).json({ message: "Document not available" });
       }
@@ -4410,7 +4476,18 @@ export async function registerRoutes(app: Express) {
 
   app.post("/api/portal/contracts/:id/acknowledge", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { companyId, hubAccountId } = portalCompanyContext(req);
+      const { companyId, companyName, hubAccountId } = portalCompanyContext(req);
+      if (!companyName && !hubAccountId) {
+        return res.status(400).json({ message: "No company profile loaded" });
+      }
+      const hub = await fetchHubCompanyDocuments(companyName || "", hubAccountId, companyId);
+      const documentId = String(req.params.id);
+      const owned = (hub?.contracts || []).some((contract: { id?: unknown; hubSignatureId?: unknown }) => {
+        return String(contract.hubSignatureId ?? "") === documentId || String(contract.id ?? "") === documentId;
+      });
+      if (!owned) {
+        return res.status(404).json({ message: "Document not available" });
+      }
       const envelope = await enqueueOutbox({
         eventType: "document.acknowledged",
         source: "portal",
@@ -5602,18 +5679,50 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: error?.message || "Invalid quote items" });
       }
 
-      const quoteRequest = await insertQuoteRequest({
-        userId: req.userId || null,
-        clientId: req.user?.clientId || null,
-        contactName,
-        contactEmail,
-        contactPhone: contactPhone || null,
-        companyName: companyName || null,
-        message: message || null,
-        requestedItems: canonicalItems,
-      });
+      let quoteRequest;
+      try {
+        quoteRequest = await insertQuoteRequest({
+          userId: req.userId || null,
+          clientId: req.user?.clientId || null,
+          contactName,
+          contactEmail,
+          contactPhone: contactPhone || null,
+          companyName: companyName || null,
+          message: message || null,
+          requestedItems: canonicalItems,
+        });
+      } catch (error: any) {
+        // Fail closed (issue #240): no durable row means no quote number, no
+        // QUOTE_REQUESTED event, no CRM sync and no success message. Mirrors the
+        // DURABLE_DATABASE_REQUIRED contract of /api/store/checkout/zoho so the
+        // client shows the same "your solution is intact" treatment.
+        if (error?.code === "DURABLE_DATABASE_REQUIRED") {
+          console.error("[SECURITY] QUOTE_DATABASE_UNAVAILABLE", {
+            userId: req.userId,
+            clientId: req.user?.clientId,
+            reason: error?.message,
+          });
+          return res.status(503).json({
+            code: "DURABLE_DATABASE_REQUIRED",
+            error:
+              "Quote requests are temporarily unavailable because durable storage is not connected. Your solution and contact details are intact; please try again shortly.",
+          });
+        }
+        throw error;
+      }
 
       console.log(`[QUOTE REQUEST] Created: ${quoteRequest.quoteNumber} for ${contactEmail}`);
+
+      const hubAccountId = req.user?.clientId ? portalClients.get(req.user.clientId)?.hubAccountId : null;
+      const { buildCommercialSnapshot } = await import("./integrations/commercialSnapshot");
+      const commercial = buildCommercialSnapshot({
+        reference: quoteRequest.quoteNumber,
+        status: "requested",
+        portalClientId: req.user?.clientId || null,
+        company: companyName,
+        email: contactEmail,
+        lineItems: canonicalItems,
+      });
 
       void eventBus.emit(EventTypes.QUOTE_REQUESTED, {
         id: quoteRequest.id,
@@ -5625,11 +5734,16 @@ export async function registerRoutes(app: Express) {
         companyName,
         message,
         source: "store_quote",
-        canonicalAccountId: req.user?.clientId ? portalClients.get(req.user.clientId)?.hubAccountId : null,
+        canonicalAccountId: hubAccountId,
+        portalClientId: req.user?.clientId || null,
+        commercial,
       });
 
       void import("./storeQuoteCrm")
-        .then(({ syncStoreQuoteToCrm }) => syncStoreQuoteToCrm(quoteRequest))
+        .then(({ syncStoreQuoteToCrm }) => syncStoreQuoteToCrm({
+          ...quoteRequest,
+          canonicalAccountId: hubAccountId,
+        }))
         .catch((error: any) => {
           console.warn("[store-quote] CRM sync skipped:", error?.message || error);
         });
@@ -5700,23 +5814,23 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Quote request not found" });
       }
 
-      const { isAdmin, ownsQuote } = canAccessQuote(req, quoteRequest);
+      const { ownsQuote } = canAccessQuote(req, quoteRequest);
       if (!ownsQuote) {
         return res.status(403).json({ error: "Access denied" });
       }
 
-      const payload = {
-        ...quoteRequest,
+      // Client-safe projection only (issue #257): the confirmation page needs the
+      // reference, the contact echo and the PDF link. Requested lines with list
+      // prices, assignment, conversion and internal ids never leave the server here.
+      res.json({
+        id: quoteRequest.id,
+        quoteNumber: quoteRequest.quoteNumber,
+        contactEmail: quoteRequest.contactEmail,
+        companyName: quoteRequest.companyName,
+        status: quoteRequest.status,
+        createdAt: quoteRequest.createdAt,
         pdfUrl: `/api/store/quote-requests/${quoteRequest.id}/pdf`,
-      };
-
-      // Never return internal assignment fields to non-admins
-      if (!isAdmin) {
-        const { assignedTo, ...clientSafe } = payload;
-        return res.json(clientSafe);
-      }
-
-      res.json(payload);
+      });
     } catch (error: any) {
       console.error("[GET QUOTE REQUEST ERROR]", error);
       res.status(500).json({ error: error.message || "Failed to get quote request" });
@@ -5777,6 +5891,12 @@ export async function registerRoutes(app: Express) {
       const ticket = await zohoDeskService.getTicketById(req.params.id);
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
+      }
+      if (req.user?.role !== "admin") {
+        const contact = await zohoDeskService.getContactByEmail(req.user?.email || "");
+        if (!contact || !ticket.contactId || ticket.contactId !== contact.id) {
+          return res.status(403).json({ error: "Access denied" });
+        }
       }
       res.json(ticket);
     } catch (error: any) {
@@ -5972,7 +6092,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // Get CRM account by ID
-  app.get("/api/zoho/crm/accounts/:id", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
+  app.get("/api/zoho/crm/accounts/:id", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const account = await zohoCRMService.getAccountById(req.params.id);
       if (!account) {

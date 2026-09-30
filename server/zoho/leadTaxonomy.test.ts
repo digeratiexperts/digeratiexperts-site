@@ -8,7 +8,7 @@ const connectedCrmLeadSources = new Set([
   "Employee Referral",
   "Trade Show",
   "Seminar Partner",
-  "Online Store",
+  "OnlineStore",
   "Partner",
   "External Referral",
   "Web Download",
@@ -45,13 +45,13 @@ describe("website to Zoho Lead taxonomy", () => {
   });
 
   it("uses the connected CRM's canonical initial-outreach status", () => {
-    expect(ZOHO_LEAD_STATUS_PENDING_INITIAL_OUTREACH).toBe(
-      "Pending Initial Outreach: Lead is waiting for the first contact attempt.",
-    );
+    expect(ZOHO_LEAD_STATUS_PENDING_INITIAL_OUTREACH).toBe("Not Contacted");
   });
 
   it("keeps commerce, web intent, and conversational intake distinguishable", () => {
-    expect(websiteLeadTaxonomy("store_quote").leadSource).toBe("Online Store");
+    expect(websiteLeadTaxonomy("store_quote").leadSource).toBe("OnlineStore");
+    expect(websiteLeadTaxonomy("quote_wizard").leadSource).toBe("OnlineStore");
+    expect(websiteLeadTaxonomy("store_quote").leadStatus).toBe("Not Contacted");
     expect(websiteLeadTaxonomy("solution_request").leadSource).toBe("Web Download");
     expect(websiteLeadTaxonomy("advisor_lead").leadSource).toBe("Chat");
   });

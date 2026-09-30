@@ -1,5 +1,4 @@
-export const ZOHO_LEAD_STATUS_PENDING_INITIAL_OUTREACH =
-  "Pending Initial Outreach: Lead is waiting for the first contact attempt." as const;
+export const ZOHO_LEAD_STATUS_PENDING_INITIAL_OUTREACH = "Not Contacted" as const;
 
 export type WebsiteLeadKind =
   | "solution_request"
@@ -12,10 +11,10 @@ export type WebsiteLeadKind =
   | "contact"
   | "newsletter";
 
-const LEAD_SOURCE_BY_KIND: Record<WebsiteLeadKind, "Web Download" | "Online Store" | "Chat"> = {
+const LEAD_SOURCE_BY_KIND: Record<WebsiteLeadKind, "Web Download" | "OnlineStore" | "Chat"> = {
   solution_request: "Web Download",
-  store_quote: "Online Store",
-  quote_wizard: "Online Store",
+  store_quote: "OnlineStore",
+  quote_wizard: "OnlineStore",
   advisor_assessment: "Chat",
   advisor_callback: "Chat",
   advisor_lead: "Chat",

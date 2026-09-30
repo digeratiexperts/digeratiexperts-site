@@ -8,15 +8,8 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 describe("MemStorage / DatabaseStorage credential hygiene (seeded-admin residual)", () => {
   it("does not embed the legacy fixed admin bcrypt hash or plaintext in storage.ts", () => {
     const source = readFileSync(path.resolve(here, "storage.ts"), "utf8");
-    const legacyHash = ["$2b$12$Bf.sDD1gQ6391SrTebkd4", ".9BeiteKKOswHl63vyCN0/51CmDldT7K"].join(
-      "",
-    );
-    const legacyAdmin10 = ["$2b$10$GI4G0Wfv.JGucTnjjcLH6", "ebHF2FRZVCXF6DeWlaEK7OWZRranaeTm"].join(
-      "",
-    );
     const legacyPlain = ["Admin", "123!"].join("");
-    expect(source).not.toContain(legacyHash);
-    expect(source).not.toContain(legacyAdmin10);
+    expect(source).not.toMatch(/\$2[aby]\$\d{2}\$/);
     expect(source).not.toContain(legacyPlain);
     expect(source).toMatch(/resolveDevPortalAdminPasswordHash/);
     expect(source).toMatch(/password: ""/);

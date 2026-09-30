@@ -1,9 +1,9 @@
 import { TIER_ORDER, isTierLit, type CoverageTier } from "@/lib/proactiveCoverage";
 
 const RING_ORDER: { id: CoverageTier; label: string; radius: number; desc: string }[] = [
-  { id: "it", label: "IT", radius: 46, desc: "Operating baseline" },
-  { id: "office", label: "Office", radius: 76, desc: "Adds network + endpoint backup" },
-  { id: "business", label: "Business", radius: 106, desc: "Adds SOC, BCDR, compliance reporting" },
+  { id: "it", label: "IT", radius: 46, desc: "Operating + managed security baseline" },
+  { id: "office", label: "Office", radius: 76, desc: "Adds network, endpoint backup + 24×7 MDR" },
+  { id: "business", label: "Business", radius: 106, desc: "Adds deeper security ops, BCDR + compliance reporting" },
   { id: "enterprise", label: "Enterprise", radius: 136, desc: "Adds governance, audit-grade compliance" },
 ];
 
@@ -20,7 +20,7 @@ export type CoverageHours = "business" | "extended" | "always-on";
 const COVERAGE_HOURS: { id: CoverageHours; label: string; minTier: CoverageTier; desc: string }[] = [
   { id: "business", label: "Business Hours", minTier: "it", desc: "Standard support window" },
   { id: "extended", label: "Extended Hours", minTier: "office", desc: "Early/late coverage, add-on below Business" },
-  { id: "always-on", label: "24×7 Monitoring", minTier: "business", desc: "Security Operations / SOC-as-a-Service" },
+  { id: "always-on", label: "24×7 Monitoring", minTier: "office", desc: "Managed detection and response / security monitoring" },
 ];
 
 const CX = 178;
@@ -75,8 +75,8 @@ export function ProActiveCoverageMap({
             Select a package depth<span className="text-[#D3126A]">:</span>
           </h2>
           <p className="mt-2 max-w-xl text-sm text-white/55">
-            Rings light from the core outward. IT is the operating baseline; Enterprise adds governance on top of
-            Business.
+            Rings light from the core outward. Every tier includes the DE Security Foundation; higher tiers add
+            deeper detection, response, recovery, compliance, and governance.
           </p>
         </div>
         <div className="flex flex-wrap gap-2" role="tablist" aria-label="ProActive package depth">

@@ -1,417 +1,1251 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, Check, ClipboardCheck, Layers, Save, Trash2, Truck, Wrench } from "lucide-react";
 import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
-import { StorePageAtmosphere } from "@/components/store/StorePageAtmosphere";
+import { useSEO } from "@/hooks/useSEO";
+import { useAnnouncer } from "@/components/AccessibleAnnouncer";
+import { useMinWidth, useSolutionDraft } from "@/hooks/useSolutionDraft";
+import { Door2Frame } from "@/components/store/door2/Door2Frame";
 import { SolutionProfileForm } from "@/components/store/SolutionProfileForm";
-import { Button } from "@/components/ui/button";
-import { getFamilyById, requestPath } from "@/lib/businessNeeds";
-import { openMspAdvisor } from "@/lib/openMspAdvisor";
+import { HairGrid, HelpRow, LiveLine, StepLabel, StoreAction, StoreChapter, UndoRow } from "@/components/store/door2/primitives";
+import { ChoiceTiles, type ChoiceOption } from "@/components/store/door2/ChoiceTiles";
+import { PackageSheet } from "@/components/store/door2/PackageSheet";
+import { CoverageBand } from "@/components/store/door2/Coverage";
+import { HintRow, SuggestionLine } from "@/components/store/door2/Guidance";
+import { NeedRow } from "@/components/store/door2/NeedRow";
+import { ScenarioTile } from "@/components/store/door2/ScenarioTile";
+import { JourneyRail } from "@/components/store/door2/JourneyRail";
+import { ProposalSheet } from "@/components/store/door2/ProposalSheet";
 import {
+  SolutionBar,
+  SolutionRail,
+  type SolutionChromeProps,
+  type SolutionPrimary,
+  type SolutionStatusLine,
+} from "@/components/store/door2/SolutionChrome";
+import { composeScenario, solutionScenarios, type SolutionScenario } from "@/data/solutionScenarios";
+import type { CuratedSolutionFamily } from "@/data/curatedSolutions";
+import {
+  BUSINESS_NEEDS_INDEX_PATH,
+  familyPath,
+  getFamilyById,
+  getFamilyBySlug,
+  SOLUTION_REQUEST_PATH,
+  STORE_STEPS,
+  type StoreStepId,
+} from "@/lib/businessNeeds";
+import {
+  addDraftNeed,
+  dismissHint,
+  acceptHint,
   emptyDraft,
   isProfileComplete,
+  parseDraft,
   patchEnvironment,
   patchFulfillment,
+  patchSolutionDraft,
+  profileGaps,
   profileSummary,
   readSolutionDraft,
   recommendedIntent,
   removeDraftNeed,
-  resolvedNeedDelivery,
-  SOLUTION_DRAFT_EVENT,
+  resolvedPackages,
   toRequestNeeds,
+  upsertNeed,
   writeSolutionDraft,
+  draftStorageBlocked,
   type DeliveryPreference,
-  type InstallationPreference,
-  type RemoteSupportPreference,
   type SolutionDraft,
   type SolutionEnvironment,
-  type SolutionFulfillmentPreference,
 } from "@/lib/solutionDraft";
-import { assessmentPolicyLabel, buildSolutionPackage, type InstallMode } from "@/lib/solutionPackage";
-import { useSEO } from "@/hooks/useSEO";
+import {
+  INSTALL_MODE_LABELS,
+  installModeDetail,
+  preferredInstallMode,
+  PRICING_LABELS,
+  RELATIONSHIP_LABELS,
+  remoteSupportOptions,
+  resolveInstallMode,
+  sortInstallModes,
+  SUPPORT_LABELS,
+  type InstallMode,
+  type RemoteSupportMode,
+  type ShipmentMode,
+} from "@/lib/solutionPackage";
+import {
+  coverageForFamilies,
+  nextHints,
+  RELATIONSHIP_SUGGESTION_HINT,
+  solutionAdvisorSeed,
+  suggestRelationship,
+  type SolutionHint,
+} from "@/lib/solutionGuidance";
 
-const DELIVERY_OPTIONS: Array<[DeliveryPreference, string, string]> = [
-  ["standalone", "Standalone", "Standard pricing. You or your existing IT provider own implementation and ongoing operation."],
-  ["co_managed", "Co-Managed", "Preferred pricing where applicable. Your team and DE share defined responsibilities."],
-  ["unsure", "Help me choose", "Save the need now and let DE recommend the operating relationship before final package submission."],
+/*
+ * C · Assemble (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §5.3): the workspace.
+ * The relationship is chosen once with every package visible, the remote-first
+ * setup is already checked, DE's hints are accepted or dismissed, and the
+ * draft is saved honestly. Served at /store/solution (and its older alias).
+ */
+
+const REQUEST_ENDPOINT = "/api/public/solutions/request";
+const HANDLE_OUR_IT_PATH = "/solutions/proactive-ecosystem";
+
+const HEADING = "Your Solution, assembled.";
+const LEDE = "Sized from your profile. Change anything; nothing is final until DE confirms fit, scope, fulfillment and pricing.";
+const PRIMARY_LABEL = "Continue to contact details";
+const SAVE_LABEL = "Save progress";
+const RELATIONSHIP_HEADING = "How do you want to work with DE?";
+const RELATIONSHIP_SUB = "Choose once for the whole solution.";
+const PACKAGES_HEADING = "What's in it";
+const COVERAGE_HEADING = "Where this solution sits";
+const HINTS_HEADING = "DE suggests next";
+const DELIVERY_HEADING = "Delivery & Setup";
+const DELIVERY_RULE = "DE's rule: remote first, shipped second, on-site only when nothing else will do.";
+const ONSITE_LINE = "On-site work is scope-dependent and billed as Truck-Roll, Trip Charge and Tech Labor. DE confirms whether it is needed.";
+const SUPPORT_HEADING = "After it is in, how much do you want DE around?";
+const FIRST_CHOICE_TAG = "DE's first choice";
+const SUGGESTED_TAG = "Suggested";
+const EMPTY_LINE = "Nothing in Your Solution yet.";
+const COMPARE_BADGE = "DE confirms which after you submit";
+const PREVIEW_BADGE = "Preview · choose above";
+const RESUME_WARNING = "Anyone with this link can open your draft. It never includes your contact details.";
+const COPIED_LINE = "Copied. Anyone with this link can open your draft.";
+const SAVED_DEVICE = "Saved on this device";
+const NOT_SAVING = "Not saving on this device";
+const LINK_SENT = (reference: string) => `That solution was already sent as ${reference}. This is a new one.`;
+const LINK_STALE = "That link no longer opens a saved solution. Your solution on this device is open.";
+const SAVED_DE = "Saved to DE";
+const SAVE_UNAVAILABLE = "Saved on this device. Couldn't save to DE just now.";
+const SAVE_UNAVAILABLE_BLOCKED = "Not saving on this device. Couldn't save to DE just now.";
+const CONFLICT_QUESTION = "Use the saved copy from DE, or keep what is on this device?";
+
+const RELATIONSHIP_OPTIONS: ReadonlyArray<ChoiceOption<DeliveryPreference>> = [
+  {
+    value: "standalone",
+    label: "Standalone",
+    detail: "DE's packaged solution, set up remotely by DE unless you choose to do it yourself. You, or your IT provider, run it day to day. Standard price.",
+    testId: "delivery-standalone",
+  },
+  {
+    value: "co_managed",
+    label: "Co-Managed",
+    detail: "DE and your IT team share it. Preferred pricing where sharing lowers the work.",
+    testId: "delivery-co_managed",
+  },
+  {
+    value: "unsure",
+    label: "Help me choose",
+    detail: "Submit as-is and DE recommends. You still see both packages below.",
+    testId: "delivery-unsure",
+  },
 ];
 
-const INSTALL_OPTIONS: Array<[InstallationPreference, string]> = [
-  ["self_install", "Self-install"],
-  ["remote_assist", "Remote DE setup"],
-  ["onsite", "Schedule a technician"],
-  ["unsure", "Help me choose"],
-];
+type ServerRequest = {
+  id?: unknown;
+  selectedNeeds?: unknown;
+  deliveryPreference?: unknown;
+  environment?: unknown;
+  fulfillment?: unknown;
+  updatedAt?: unknown;
+  suggestion?: unknown;
+};
 
-const SUPPORT_OPTIONS: Array<[RemoteSupportPreference, string]> = [
-  ["none", "No remote support"],
-  ["as_needed", "Remote help as needed"],
-  ["ongoing", "Ongoing shared support"],
-  ["unsure", "Help me choose"],
-];
+type UndoEntry = { familyId: CuratedSolutionFamily["id"]; source?: string; label: string };
 
-export default function PublicStoreCheckout() {
-  const [draft, setDraft] = useState<SolutionDraft>(emptyDraft);
-  const [requestId, setRequestId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
-  const [savedAt, setSavedAt] = useState<string>("");
+function isInstallMode(value: string): value is InstallMode {
+  return value === "remote_assist" || value === "self_install" || value === "onsite";
+}
 
-  useSEO({
-    title: "Your Solution | Digerati Experts",
-    description: "Build and save one composed Digerati Experts solution from profile through package delivery.",
-    canonical: "/store/solution",
-    noIndex: true,
+function plural(count: number, word: string): string {
+  return `${count} ${word}${count === 1 ? "" : "s"}`;
+}
+
+/** What a save carries and what a resume compares: needs, relationship, profile, setup. Never ids or timestamps. */
+function contentKey(draft: SolutionDraft): string {
+  return JSON.stringify({
+    needs: [...draft.needs].sort((a, b) => a.familyId.localeCompare(b.familyId)),
+    deliveryPreference: draft.deliveryPreference,
+    environment: draft.environment,
+    fulfillment: draft.fulfillment,
   });
+}
 
-  useEffect(() => {
-    const refresh = () => setDraft(readSolutionDraft());
-    refresh();
-    window.addEventListener(SOLUTION_DRAFT_EVENT, refresh);
-    return () => window.removeEventListener(SOLUTION_DRAFT_EVENT, refresh);
-  }, []);
+/** A saved draft from DE, in the browser's own shape; the parser drops anything it does not know. */
+function draftFromServer(request: ServerRequest): SolutionDraft {
+  const needs = Array.isArray(request.selectedNeeds)
+    ? request.selectedNeeds.map((need) => ({
+        familyId: (need as { familyId?: unknown })?.familyId,
+        source: (need as { source?: unknown })?.source,
+      }))
+    : [];
+  return parseDraft({
+    ...emptyDraft(),
+    needs,
+    deliveryPreference: request.deliveryPreference,
+    environment: request.environment,
+    fulfillment: request.fulfillment,
+    serverDraftId: request.id,
+    updatedAt: request.updatedAt,
+    // DE's copy of the suggestion shown rides along, so a device that opens the link never overwrites it with null.
+    suggestion: request.suggestion,
+  });
+}
 
-  useEffect(() => {
-    let cancelled = false;
-    void fetch("/api/public/solutions/request", { credentials: "include" })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        if (!cancelled && data?.request?.id) setRequestId(data.request.id);
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+/** Nothing to keep: no need and none of the six profile facts (§6.5's "empty"). */
+function isEmptyDraft(draft: SolutionDraft): boolean {
+  return draft.needs.length === 0 && profileGaps(draft.environment).length === 6;
+}
 
-  const rows = useMemo(
-    () =>
-      draft.needs.flatMap((item) => {
-        const family = getFamilyById(item.familyId);
-        const delivery = resolvedNeedDelivery(item, draft.deliveryPreference);
-        return family ? [{ item, family, delivery }] : [];
-      }),
-    [draft.needs, draft.deliveryPreference],
-  );
+function prefersReducedMotion(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
 
-  const packages = useMemo(
-    () =>
-      rows.flatMap(({ family, delivery }) =>
-        delivery === "standalone" || delivery === "co_managed"
-          ? [{ family, delivery, packageView: buildSolutionPackage(family, delivery, draft.environment) }]
-          : [],
-      ),
-    [rows, draft.environment],
-  );
+/** Scrolls a chapter under the fixed nav without moving focus; the chapter's own scroll offset (CSS) clears the nav. */
+function scrollToChapter(id: string): void {
+  document.getElementById(id)?.scrollIntoView({ block: "start", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+}
 
-  const availableInstallModes = useMemo(
-    () => new Set<InstallMode>(packages.flatMap((entry) => entry.packageView.installModes)),
-    [packages],
-  );
+type SaveState = "idle" | "saving" | "durable" | "unavailable";
 
-  const intent = recommendedIntent(draft);
-  const profileReady = isProfileComplete(draft.environment);
-  const offerReady =
-    draft.needs.length > 0 &&
-    (draft.deliveryPreference === "standalone" || draft.deliveryPreference === "co_managed") &&
-    packages.length === draft.needs.length;
-  const fulfillmentReady = !!draft.fulfillment.installation && !!draft.fulfillment.remoteSupport;
-  const readyForContact = profileReady && offerReady && fulfillmentReady;
+/** A device clock this far behind DE's is not read as "older" (§6.5); inside it the buyer is asked. */
+const CLOCK_TOLERANCE_MS = 5 * 60 * 1000;
 
-  const setEnv = <K extends keyof SolutionEnvironment>(key: K, value: SolutionEnvironment[K]) => {
-    setDraft(writeSolutionDraft(patchEnvironment(readSolutionDraft(), { [key]: value })));
-  };
+/** The setup that just stopped being offered, in the short words of the live line (§5.3). */
+const SHORT_MODE_WORDS: Record<InstallMode, string> = {
+  remote_assist: "remote setup",
+  self_install: "shipped or guided self-setup",
+  onsite: "on-site",
+};
 
-  const setFulfillment = <K extends keyof SolutionFulfillmentPreference>(
-    key: K,
-    value: SolutionFulfillmentPreference[K],
-  ) => {
-    setDraft(writeSolutionDraft(patchFulfillment(readSolutionDraft(), { [key]: value })));
-  };
-
-  const applyDelivery = (value: DeliveryPreference) => {
-    const current = readSolutionDraft();
-    const next: SolutionDraft = {
-      ...current,
-      deliveryPreference: value,
-      needs: current.needs.map((need) => ({ ...need, delivery: value })),
-    };
-    setDraft(writeSolutionDraft(next));
-  };
-
-  const saveProgress = async () => {
-    const current = readSolutionDraft();
-    setSaving(true);
-    setSaveError("");
-    try {
-      const response = await fetch("/api/public/solutions/request", {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: requestId,
-          deliveryPreference: current.deliveryPreference || "unsure",
-          selectedNeeds: toRequestNeeds(current),
-          environment: current.environment,
-          fulfillment: current.fulfillment,
-          intent: recommendedIntent(current),
-        }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : "Could not save progress.");
-      if (data?.request?.id) setRequestId(data.request.id);
-      setSavedAt(new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }));
-    } catch (error) {
-      setSaveError(error instanceof Error ? error.message : "Could not save progress.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
+/** The persistence sentence, exact by state. Rendered in the save row and again in the rail. */
+function SaveLine({
+  state,
+  forkedFrom,
+  copied,
+  copyFailed,
+  resumeUrl,
+  onCopy,
+  onRetry,
+  testId,
+}: {
+  state: SaveState;
+  forkedFrom: string | null;
+  copied: boolean;
+  copyFailed: boolean;
+  resumeUrl: string | null;
+  onCopy: () => void;
+  onRetry: () => void;
+  testId?: string;
+}) {
   return (
-    <div className="relative min-h-screen overflow-clip bg-[#0a0a0a]">
-      <StorePageAtmosphere />
-      <div className="relative z-10">
-        <MegaMenu />
-        <main className="de-nav-clear mx-auto max-w-6xl px-4 pb-28 sm:px-6 lg:px-8">
-          <Link href="/store" className="mb-8 inline-flex min-h-11 items-center text-sm text-white/55 hover:text-white">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to pains & needs
-          </Link>
-
-          <header className="mb-9 max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-de-accent-ink">Your Solution</p>
-            <h1 className="mt-4 text-[clamp(2.25rem,5vw,3.75rem)] font-bold leading-[1.08] tracking-[-0.035em] text-white">Build one complete solution</h1>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/65">
-              Profile → pain or need → offer → package → delivery → contact. Every layer uses the same saved draft.
-            </p>
-          </header>
-
-          {/* minmax(0,1fr) at the BASE breakpoint too: an auto track sizes to
-              min-content, and StatusLine's nowrap detail line inflated it to
-              ~482px at 390px viewports, clipping the whole workspace column
-              (error-sweep finding, 2026-08-31). */}
-          <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1fr)_21rem]">
-            <div className="space-y-8">
-              <SolutionProfileForm environment={draft.environment} onChange={setEnv} heading="Business profile" description="These counts size package quantities throughout the Store. Change them here at any time." />
-
-              <section className="rounded-2xl border border-white/10 bg-[#111111] p-5 sm:p-7" aria-labelledby="needs-heading">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-de-accent-ink">Step 1 · Pain or need</p>
-                <div className="mt-2 flex items-end justify-between gap-4">
-                  <div>
-                    <h2 id="needs-heading" className="text-2xl font-semibold text-white">What are we solving?</h2>
-                    <p className="mt-2 text-sm text-white/55">All selected needs become one composed solution request.</p>
-                  </div>
-                  <Link href="/store" className="shrink-0 text-sm font-medium text-de-accent-ink hover:underline">Add need</Link>
-                </div>
-                <div className="mt-5 space-y-3">
-                  {rows.length ? rows.map(({ item, family }) => (
-                    <div key={item.familyId} className="flex items-start justify-between gap-4 rounded-xl border border-white/10 bg-black/20 p-4">
-                      <div>
-                        <h3 className="font-semibold text-white">{family.label}</h3>
-                        <p className="mt-1 text-sm leading-relaxed text-white/55">{family.description}</p>
-                      </div>
-                      <button type="button" onClick={() => removeDraftNeed(item.familyId)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-white/55 hover:bg-white/5 hover:text-white" aria-label={`Remove ${family.label}`}>
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )) : (
-                    <div className="rounded-xl border border-dashed border-white/15 px-5 py-9 text-center">
-                      <ClipboardCheck className="mx-auto h-7 w-7 text-white/30" />
-                      <p className="mt-3 text-white/60">Add at least one pain or business need.</p>
-                    </div>
-                  )}
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-white/10 bg-[#111111] p-5 sm:p-7" aria-labelledby="offer-heading">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-de-accent-ink">Step 2 · Solution offer</p>
-                <h2 id="offer-heading" className="mt-2 text-2xl font-semibold text-white">How do you want to buy it?</h2>
-                <p className="mt-2 text-sm text-white/55">This choice applies to the composed solution so responsibilities and pricing do not conflict between packages.</p>
-                <div className="mt-5 grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Solution offer type">
-                  {DELIVERY_OPTIONS.map(([value, label, description]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      role="radio"
-                      aria-checked={draft.deliveryPreference === value}
-                      className={`min-h-[7.5rem] rounded-xl border p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] ${draft.deliveryPreference === value ? "border-de-accent bg-de-accent/10" : "border-white/10 bg-black/20 hover:border-white/20"}`}
-                      onClick={() => applyDelivery(value)}
-                    >
-                      <span className="block font-semibold text-white">{label}</span>
-                      <span className="mt-2 block text-xs leading-relaxed text-white/50">{description}</span>
-                    </button>
-                  ))}
-                </div>
-                {draft.deliveryPreference === "unsure" ? (
-                  <p className="mt-4 text-sm text-amber-200/80">Help me choose is saved, but a final package cannot be submitted until DE or the buyer selects Standalone or Co-Managed.</p>
-                ) : null}
-              </section>
-
-              <section className="rounded-2xl border border-white/10 bg-[#111111] p-5 sm:p-7" aria-labelledby="package-heading">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-de-accent-ink">Step 3 · Package</p>
-                <h2 id="package-heading" className="mt-2 text-2xl font-semibold text-white">What is included?</h2>
-                <p className="mt-2 text-sm text-white/55">Line-item quantities derive from the business profile instead of being entered again on every package.</p>
-                <div className="mt-6 space-y-5">
-                  {packages.length ? packages.map(({ family, packageView }) => (
-                    <article key={family.id} className="overflow-hidden rounded-xl border border-white/10">
-                      <div className="flex flex-col gap-3 bg-black/20 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          <h3 className="font-semibold text-white">{packageView.offerName}</h3>
-                          <p className="mt-1 text-xs text-white/55">{packageView.relationshipLabel} · {packageView.pricingLabel}</p>
-                        </div>
-                        <span className="text-xs text-de-accent-ink">{assessmentPolicyLabel(packageView.assessmentPolicy)}</span>
-                      </div>
-                      <div>
-                        {packageView.lineItems.map((line, index) => (
-                          <div key={line.label} className={`grid grid-cols-[minmax(0,1fr)_auto] gap-4 px-4 py-3 text-sm ${index ? "border-t border-white/10" : ""}`}>
-                            <span className="text-white/75">{line.label}</span>
-                            <span className="text-right text-white/55">{line.quantity}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="border-t border-white/10 bg-black/10 px-4 py-4 text-xs leading-relaxed text-white/50">
-                        <p><Truck className="mr-2 inline h-3.5 w-3.5 text-de-accent-ink" />{packageView.shipmentCopy}</p>
-                        <p className="mt-2"><Wrench className="mr-2 inline h-3.5 w-3.5 text-de-accent-ink" />{packageView.technicianCopy}</p>
-                      </div>
-                    </article>
-                  )) : (
-                    <div className="rounded-xl border border-dashed border-white/15 px-5 py-9 text-center text-white/55">
-                      Choose Standalone or Co-Managed above to generate package line items and fulfillment rules.
-                    </div>
-                  )}
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-white/10 bg-[#111111] p-5 sm:p-7" aria-labelledby="delivery-heading">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-de-accent-ink">Step 4 · Delivery & setup</p>
-                <h2 id="delivery-heading" className="mt-2 text-2xl font-semibold text-white">How should this be implemented?</h2>
-                <p className="mt-2 text-sm text-white/55">Not every package needs shipping or a technician. Unsupported choices are disabled automatically.</p>
-
-                <fieldset className="mt-6">
-                  <legend className="text-sm font-medium text-white/80">Installation</legend>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    {INSTALL_OPTIONS.map(([value, label]) => {
-                      const concrete = value === "self_install" || value === "remote_assist" || value === "onsite" ? value : null;
-                      const disabled = !!concrete && packages.length > 0 && !availableInstallModes.has(concrete);
-                      return (
-                        <button
-                          key={value}
-                          type="button"
-                          disabled={disabled}
-                          aria-pressed={draft.fulfillment.installation === value}
-                          className={`min-h-11 rounded-lg border px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] disabled:cursor-not-allowed disabled:opacity-30 ${draft.fulfillment.installation === value ? "border-de-accent bg-de-accent/10 text-white" : "border-white/10 bg-black/20 text-white/65 hover:bg-white/5"}`}
-                          onClick={() => setFulfillment("installation", value)}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </fieldset>
-
-                <fieldset className="mt-5">
-                  <legend className="text-sm font-medium text-white/80">Remote support</legend>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    {SUPPORT_OPTIONS.map(([value, label]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        aria-pressed={draft.fulfillment.remoteSupport === value}
-                        className={`min-h-11 rounded-lg border px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] ${draft.fulfillment.remoteSupport === value ? "border-de-accent bg-de-accent/10 text-white" : "border-white/10 bg-black/20 text-white/65 hover:bg-white/5"}`}
-                        onClick={() => setFulfillment("remoteSupport", value)}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </fieldset>
-              </section>
-
-              <section className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-[#111111] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6" aria-label="Save solution progress">
-                <div>
-                  <h2 className="font-semibold text-white">Save your progress</h2>
-                  <p className="mt-1 text-sm text-white/50">The draft autosaves locally. This button also saves it to the current DE browser session.</p>
-                  {savedAt ? <p className="mt-2 text-xs text-emerald-300"><Check className="mr-1 inline h-3.5 w-3.5" />Saved at {savedAt}</p> : null}
-                  {saveError ? <p className="mt-2 text-xs text-red-300">{saveError}</p> : null}
-                </div>
-                <Button type="button" variant="outline" className="h-11 border-white/20 text-white hover:bg-white/10" onClick={saveProgress} disabled={saving}>
-                  <Save className="mr-2 h-4 w-4" />{saving ? "Saving…" : "Save progress"}
-                </Button>
-              </section>
-            </div>
-
-            {/* Sticky at lg, but capped to the viewport slot under the fixed header
-                (top-28 = 7rem, plus 1rem breathing room) and scrollable inside,
-                so the Continue / Ask DE controls at the bottom of the rail are
-                reachable at 900px-tall desktops instead of only at page end. */}
-            <aside className="h-fit rounded-2xl border border-white/10 bg-[#121212] p-6 lg:sticky lg:top-28 lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto lg:overscroll-contain">
-              <Layers className="h-8 w-8 text-de-accent-ink" />
-              <h2 className="mt-4 text-xl font-semibold text-white">Solution status</h2>
-              <div className="mt-5 space-y-3 text-sm">
-                <StatusLine ready={profileReady} label="Profile" detail={profileSummary(draft.environment)} />
-                <StatusLine ready={draft.needs.length > 0} label="Pain / need" detail={`${draft.needs.length} selected`} />
-                <StatusLine ready={offerReady} label="Offer" detail={draft.deliveryPreference === "unsure" ? "Needs DE recommendation" : draft.deliveryPreference || "Not selected"} />
-                <StatusLine ready={packages.length === draft.needs.length && packages.length > 0} label="Package" detail={`${packages.length} package${packages.length === 1 ? "" : "s"}`} />
-                <StatusLine ready={fulfillmentReady} label="Delivery" detail={fulfillmentReady ? "Selected" : "Choose setup + support"} />
-              </div>
-
-              {/* Save state lives in the rail as well as the form column: the rail
-                  is what stays on screen while the visitor works, so this is where
-                  "is my draft safe?" gets answered. Same handler, same state. */}
-              <div className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/15 p-3" data-testid="solution-rail-save" aria-live="polite">
-                <p className="min-w-0 text-xs leading-relaxed text-white/60">
-                  {saveError ? (
-                    <span className="text-red-300">{saveError}</span>
-                  ) : savedAt ? (
-                    <span className="text-emerald-300"><Check className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />Saved to DE at {savedAt}</span>
-                  ) : (
-                    <>Autosaved on this device. Save to DE to keep it across devices.</>
-                  )}
-                </p>
-                <Button type="button" size="sm" variant="outline" className="h-9 shrink-0 border-white/20 text-white hover:bg-white/10" onClick={saveProgress} disabled={saving} aria-label={saving ? "Saving progress" : "Save progress to DE"}>
-                  <Save className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />{saving ? "Saving…" : "Save"}
-                </Button>
-              </div>
-
-              <div className="mt-6 border-t border-white/10 pt-5">
-                <p className="text-xs uppercase tracking-wide text-white/55">Next</p>
-                <p className="mt-2 text-sm leading-relaxed text-white/60">
-                  {draft.deliveryPreference === "unsure"
-                    ? "Ask DE to recommend Standalone or Co-Managed before final package submission."
-                    : intent === "assessment"
-                      ? "This solution contains work that requires an assessment before final scope. Contact details come next; the assessment is routed after submission."
-                      : "Contact details come last. DE will confirm scope, fulfillment, and package pricing before commitment."}
-                </p>
-                {readyForContact ? (
-                  <Button asChild className="mt-5 h-11 w-full bg-[#D3126A] text-white hover:bg-[#b90f5d]">
-                    <Link href={requestPath({ intent })}>Continue to contact details</Link>
-                  </Button>
-                ) : (
-                  <Button className="mt-5 h-11 w-full" disabled>Finish the steps above</Button>
-                )}
-                <Button type="button" variant="outline" className="mt-3 h-11 w-full border-white/20 text-white hover:bg-white/10" onClick={() => openMspAdvisor({ context: "other", seedMessage: "I am building a Digerati Experts solution and want help choosing the offer, package, implementation, or support model." })}>
-                  Ask DE
-                </Button>
-              </div>
-            </aside>
-          </div>
-        </main>
-        <DigeratiEnhancedFooterSection />
-      </div>
+    <div className="d2-small d2-ink min-w-0" data-testid={testId} data-state={state}>
+      {state === "saving" ? (
+        <span>Saving…</span>
+      ) : state === "durable" ? (
+        <>
+          <span className="inline-flex flex-wrap items-center gap-x-2">
+            <span>{copied ? COPIED_LINE : `${SAVED_DE} ·`}</span>
+            <button type="button" className="d2-action d2-action--quiet" onClick={onCopy}>
+              Copy resume link
+            </button>
+          </span>
+          {copyFailed && resumeUrl ? <p className="d2-mono d2-ink-strong mt-1 break-words">{resumeUrl}</p> : null}
+          <p className="d2-ink-soft mt-1">{RESUME_WARNING}</p>
+        </>
+      ) : state === "unavailable" ? (
+        <span className="inline-flex flex-wrap items-center gap-x-2">
+          <span>{draftStorageBlocked() ? SAVE_UNAVAILABLE_BLOCKED : SAVE_UNAVAILABLE}</span>
+          <button type="button" className="d2-action d2-action--quiet" onClick={onRetry}>
+            Try again
+          </button>
+        </span>
+      ) : (
+        <span>{draftStorageBlocked() ? NOT_SAVING : SAVED_DEVICE}</span>
+      )}
+      {forkedFrom ? <p className="d2-ink-soft mt-1">{LINK_SENT(forkedFrom)}</p> : null}
     </div>
   );
 }
 
-function StatusLine({ ready, label, detail }: { ready: boolean; label: string; detail: string }) {
+export default function PublicSolutionWorkspace() {
+  const draft = useSolutionDraft();
+  const { announce } = useAnnouncer();
+  const wide = useMinWidth(1024);
+
+  const [profileExpandKey, setProfileExpandKey] = useState(0);
+  const [undoRows, setUndoRows] = useState<UndoEntry[]>([]);
+  const [pulseKey, setPulseKey] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const [forkedFrom, setForkedFrom] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
+  const [hydrating, setHydrating] = useState(false);
+  const [conflict, setConflict] = useState<SolutionDraft | null>(null);
+  const [seededFromLink, setSeededFromLink] = useState<CuratedSolutionFamily | null>(null);
+
+  // A `?family=` deep link to the contact step seeds an empty draft and lands here, with its Undo.
+  useEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get("seeded") ?? "";
+    if (!slug) return;
+    const family = getFamilyBySlug(slug);
+    if (family && readSolutionDraft().needs.some((need) => need.familyId === family.id)) setSeededFromLink(family);
+  }, []);
+
+  const saveInFlight = useRef(false);
+  const saveQueued = useRef(false);
+  /** The content DE last confirmed holding (a PUT 2xx, or the copy hydration read). Null until known. */
+  const [savedKey, setSavedKey] = useState<string | null>(null);
+  /** Needs on the page at mount or hydrated from DE; only rows added after that rise (§9). */
+  const presentFamilyIds = useRef<Set<string> | null>(null);
+  const lastSupportSuggestion = useRef<RemoteSupportMode | null>(null);
+
+  useSEO({
+    title: "Your Solution | Store | Digerati Experts",
+    description: "Your assembled Digerati Experts solution: needs, relationship, packages and Delivery & Setup, sized from your profile.",
+    canonical: "/store/solution",
+    noIndex: true,
+  });
+
+  /* ---------------------------------------------------------------------- */
+  /* Derived state                                                           */
+  /* ---------------------------------------------------------------------- */
+
+  const environment = draft.environment;
+  const sized = isProfileComplete(environment);
+  const needCount = draft.needs.length;
+  const familyIds = useMemo(() => draft.needs.map((need) => need.familyId), [draft.needs]);
+  if (presentFamilyIds.current === null) presentFamilyIds.current = new Set(familyIds);
+  const packages = useMemo(() => resolvedPackages(draft), [draft]);
+  const relationship = draft.deliveryPreference;
+
+  const installUnion = useMemo(
+    () => sortInstallModes([...new Set(packages.flatMap((entry) => entry.policyView.installModes))]),
+    [packages],
+  );
+  const unionKey = installUnion.join(",");
+
+  /** The shipment a tile speaks for: the first selected package that ships and supports the mode; digital otherwise. */
+  const tileShipment = useCallback(
+    (mode: InstallMode): ShipmentMode =>
+      packages.find((entry) => entry.policyView.shipmentMode !== "none" && entry.policyView.installModes.includes(mode))?.policyView
+        .shipmentMode ?? "none",
+    [packages],
+  );
+
+  const installValue: InstallMode | "" = isInstallMode(draft.fulfillment.installation) ? draft.fulfillment.installation : "";
+  const installOptions = useMemo<ChoiceOption<InstallMode>[]>(
+    () =>
+      installUnion.map((mode, index) => {
+        const detail = mode === "onsite" ? INSTALL_MODE_LABELS.onsite : installModeDetail(mode, tileShipment(mode));
+        return {
+          value: mode,
+          label: detail.label,
+          detail: detail.detail,
+          tag: index === 0 ? FIRST_CHOICE_TAG : undefined,
+          testId: `install-${mode}`,
+        };
+      }),
+    [installUnion, tileShipment],
+  );
+
+  const support = useMemo(() => remoteSupportOptions(relationship), [relationship]);
+  const supportOptions = useMemo<ChoiceOption<RemoteSupportMode>[]>(
+    () =>
+      support.options.map((mode) => ({
+        value: mode,
+        label: SUPPORT_LABELS[mode].label,
+        detail: SUPPORT_LABELS[mode].detail,
+        tag: mode === support.suggested ? SUGGESTED_TAG : undefined,
+        testId: `support-${mode}`,
+      })),
+    [support],
+  );
+
+  const profileReady = sized;
+  const needsReady = needCount > 0;
+  const relationshipReady = relationship !== "";
+  const packageReady = needsReady && relationshipReady;
+  const deliveryReady = installValue !== "" && installUnion.includes(installValue);
+
+  const readiness: Record<StoreStepId, boolean> = {
+    profile: profileReady,
+    need: needsReady,
+    relationship: relationshipReady,
+    package: packageReady,
+    delivery: deliveryReady,
+    contact: false,
+  };
+  const completeSteps = STORE_STEPS.filter((step) => readiness[step.id]).map((step) => step.id);
+  const currentStep: StoreStepId = STORE_STEPS.find((step) => step.id !== "contact" && !readiness[step.id])?.id ?? "delivery";
+
+  const suggestionDismissed = draft.dismissedHints.includes(RELATIONSHIP_SUGGESTION_HINT);
+  const suggestion = !suggestionDismissed && relationship === "" ? suggestRelationship(environment) : null;
+  const hints = useMemo(() => nextHints(draft, draft.dismissedHints), [draft]);
+  const coverage = useMemo(() => coverageForFamilies(familyIds), [familyIds]);
+  const intent = recommendedIntent(draft);
+  const helpSeed = useMemo(() => solutionAdvisorSeed(draft), [draft]);
+
+  const undoVisible = undoRows.filter((entry) => !familyIds.includes(entry.familyId));
+
+  // "Saved to DE" is claimed only for the content DE confirmed; anything changed since reads as saved on this device.
+  const currentKey = contentKey(draft);
+  const saveState: SaveState = saving
+    ? "saving"
+    : saveFailed || draft.serverDurable === false
+      ? "unavailable"
+      : draft.serverDurable === true && draft.serverDraftId && savedKey === currentKey
+        ? "durable"
+        : "idle";
+  const resumeUrl =
+    draft.serverDraftId && typeof window !== "undefined" ? `${window.location.origin}/store/solution?draftId=${draft.serverDraftId}` : null;
+
+  /* ---------------------------------------------------------------------- */
+  /* Writes                                                                  */
+  /* ---------------------------------------------------------------------- */
+
+  const setEnvironmentField = useCallback(<K extends keyof SolutionEnvironment>(key: K, value: SolutionEnvironment[K]) => {
+    const patch: Partial<SolutionEnvironment> = {};
+    patch[key] = value;
+    writeSolutionDraft(patchEnvironment(readSolutionDraft(), patch));
+  }, []);
+
+  const openProfile = useCallback(() => {
+    setProfileExpandKey((key) => key + 1);
+    scrollToChapter("profile");
+  }, []);
+
+  const addFamily = useCallback(
+    (familyId: CuratedSolutionFamily["id"], source?: string) => {
+      const family = getFamilyById(familyId);
+      addDraftNeed(source ? { familyId, source } : { familyId });
+      setPulseKey((key) => key + 1);
+      if (family) announce(`${family.label} added to Your Solution`);
+    },
+    [announce],
+  );
+
+  const removeFamily = useCallback(
+    (familyId: CuratedSolutionFamily["id"]) => {
+      const need = readSolutionDraft().needs.find((entry) => entry.familyId === familyId);
+      const family = getFamilyById(familyId);
+      removeDraftNeed(familyId);
+      // Any row that comes back after a remove (Undo, re-add) is an add again and rises.
+      presentFamilyIds.current?.delete(familyId);
+      if (!family) return;
+      setUndoRows((rows) => [
+        ...rows.filter((entry) => entry.familyId !== familyId),
+        { familyId, source: need?.source, label: family.label },
+      ]);
+      announce(`${family.label} removed from Your Solution`);
+    },
+    [announce],
+  );
+
+  const undoRemove = useCallback(
+    (entry: UndoEntry) => {
+      addDraftNeed(entry.source ? { familyId: entry.familyId, source: entry.source } : { familyId: entry.familyId });
+      setUndoRows((rows) => rows.filter((row) => row.familyId !== entry.familyId));
+      setPulseKey((key) => key + 1);
+      announce(`${entry.label} added back to Your Solution`);
+    },
+    [announce],
+  );
+
+  const startScenario = useCallback(
+    (scenario: SolutionScenario) => {
+      const current = readSolutionDraft();
+      const compose = composeScenario(
+        scenario,
+        current.needs.map((need) => need.familyId),
+      );
+      if (compose.add.length === 0) return;
+      const next = compose.add.reduce((acc, familyId) => upsertNeed(acc, { familyId, source: scenario.id }), current);
+      writeSolutionDraft(next);
+      setPulseKey((key) => key + 1);
+      const labels = compose.add.map((id) => getFamilyById(id)?.label ?? id);
+      announce(`Added ${labels.join(", ")} to Your Solution`);
+    },
+    [announce],
+  );
+
+  const chooseRelationship = useCallback(
+    (value: DeliveryPreference) => {
+      const shown = suggestion;
+      patchSolutionDraft({
+        deliveryPreference: value,
+        ...(shown ? { suggestion: { value: shown.value, accepted: value === shown.value } } : {}),
+      });
+      const count = readSolutionDraft().needs.length;
+      announce(
+        value === "unsure"
+          ? "Both packages shown for each need. DE confirms which after you submit."
+          : `${plural(count, "package")} now shown as ${RELATIONSHIP_LABELS[value]}`,
+      );
+    },
+    [announce, suggestion],
+  );
+
+  const declineSuggestion = useCallback(() => {
+    const current = readSolutionDraft();
+    if (!suggestion) return;
+    writeSolutionDraft({
+      ...current,
+      dismissedHints: current.dismissedHints.includes(RELATIONSHIP_SUGGESTION_HINT)
+        ? current.dismissedHints
+        : [...current.dismissedHints, RELATIONSHIP_SUGGESTION_HINT],
+      suggestion: { value: suggestion.value, accepted: false },
+    });
+  }, [suggestion]);
+
+  const chooseInstallation = useCallback(
+    (value: InstallMode) => {
+      writeSolutionDraft(patchFulfillment(readSolutionDraft(), { installation: value }));
+    },
+    [],
+  );
+
+  const chooseSupport = useCallback((value: RemoteSupportMode) => {
+    writeSolutionDraft(patchFulfillment(readSolutionDraft(), { remoteSupport: value }));
+  }, []);
+
+  const actOnHint = useCallback(
+    (hint: SolutionHint) => {
+      const action = hint.action;
+      if (action.type === "add_family") {
+        addFamily(action.familyId);
+        acceptHint(hint.id);
+      } else if (action.type === "set_relationship") {
+        patchSolutionDraft({ deliveryPreference: action.value });
+        acceptHint(hint.id);
+        announce(`Relationship set to ${RELATIONSHIP_LABELS[action.value]}`);
+      } else if (action.type === "set_setup") {
+        writeSolutionDraft(patchFulfillment(readSolutionDraft(), { installation: action.value }));
+        acceptHint(hint.id);
+        announce(`Delivery & Setup set to ${INSTALL_MODE_LABELS[action.value].label}`);
+      } else if (action.type === "edit_profile") {
+        openProfile();
+      }
+    },
+    [addFamily, announce, openProfile],
+  );
+
+  const dismissOneHint = useCallback((hint: SolutionHint) => {
+    dismissHint(hint.id);
+  }, []);
+
+  /* ---------------------------------------------------------------------- */
+  /* Defaults: remote first, and the support level the relationship suggests */
+  /* ---------------------------------------------------------------------- */
+
+  useEffect(() => {
+    if (packages.length === 0 || installUnion.length === 0) return;
+    const current = draft.fulfillment.installation;
+    const preferred = preferredInstallMode(installUnion);
+    if (!preferred) return;
+    const preferredLabel = installModeDetail(preferred, tileShipment(preferred)).label;
+    if (current === "" || current === "unsure") {
+      writeSolutionDraft(patchFulfillment(readSolutionDraft(), { installation: preferred }));
+      // After the add that made the solution non-empty has been announced.
+      window.setTimeout(() => {
+        announce(`Delivery & Setup pre-set to ${preferredLabel}, DE's first choice. Change it under Delivery & Setup.`);
+      }, 1500);
+      return;
+    }
+    if (!installUnion.includes(current)) {
+      writeSolutionDraft(patchFulfillment(readSolutionDraft(), { installation: preferred }));
+      announce(`Setup reset to ${preferredLabel}: ${SHORT_MODE_WORDS[current]} is not offered for the packages left`);
+    }
+    // unionKey stands in for installUnion's identity; tileShipment follows packages.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [packages.length, unionKey, draft.fulfillment.installation, announce]);
+
+  useEffect(() => {
+    if (packages.length === 0) return;
+    const current = draft.fulfillment.remoteSupport;
+    const suggested = support.suggested;
+    const following = current === "" || current === lastSupportSuggestion.current;
+    if (following && current !== suggested) {
+      lastSupportSuggestion.current = suggested;
+      writeSolutionDraft(patchFulfillment(readSolutionDraft(), { remoteSupport: suggested }));
+      return;
+    }
+    if (current === suggested) lastSupportSuggestion.current = suggested;
+  }, [packages.length, support.suggested, draft.fulfillment.remoteSupport]);
+
+  /* ---------------------------------------------------------------------- */
+  /* Save to DE                                                              */
+  /* ---------------------------------------------------------------------- */
+
+  const saveProgress = useCallback(async (): Promise<void> => {
+    if (saveInFlight.current) {
+      saveQueued.current = true;
+      return;
+    }
+    saveInFlight.current = true;
+    setSaving(true);
+    setSaveFailed(false);
+    announce("Saving…");
+    const current = readSolutionDraft();
+    const key = contentKey(current);
+    try {
+      const response = await fetch(REQUEST_ENDPOINT, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: current.serverDraftId ?? undefined,
+          selectedNeeds: toRequestNeeds(current),
+          // "" is an unmade choice and stays one; only the buyer or Use this writes a relationship.
+          deliveryPreference: current.deliveryPreference,
+          environment: current.environment,
+          fulfillment: current.fulfillment,
+          suggestion: current.suggestion,
+        }),
+      });
+      if (!response.ok) throw new Error(String(response.status));
+      const data = (await response.json()) as {
+        request?: { id?: unknown };
+        durable?: unknown;
+        forked?: unknown;
+        previousReference?: unknown;
+      };
+      const id = typeof data.request?.id === "string" ? data.request.id : current.serverDraftId;
+      const durable = data.durable === true;
+      setSavedKey(key);
+      patchSolutionDraft({ serverDraftId: id, serverDurable: durable });
+      if (data.forked === true && typeof data.previousReference === "string" && data.previousReference) {
+        setForkedFrom(data.previousReference);
+      }
+      announce(durable ? SAVED_DE : SAVE_UNAVAILABLE);
+    } catch {
+      setSaveFailed(true);
+      announce(SAVE_UNAVAILABLE);
+    } finally {
+      saveInFlight.current = false;
+      setSaving(false);
+      if (saveQueued.current) {
+        saveQueued.current = false;
+        void saveProgress();
+      }
+    }
+  }, [announce]);
+
+  // Autosave, debounced, once DE already holds this draft and we know what it holds
+  // (the hydration read below, or the last PUT). Keyed on content, never on ids or timestamps.
+  useEffect(() => {
+    if (!draft.serverDraftId || savedKey === null || savedKey === currentKey) return undefined;
+    const timer = window.setTimeout(() => {
+      void saveProgress();
+    }, 2000);
+    return () => window.clearTimeout(timer);
+  }, [currentKey, draft.serverDraftId, savedKey, saveProgress]);
+
+  const copyResumeLink = useCallback(async () => {
+    if (!resumeUrl) return;
+    try {
+      await navigator.clipboard.writeText(resumeUrl);
+      setCopied(true);
+      setCopyFailed(false);
+      announce(COPIED_LINE);
+    } catch {
+      setCopied(false);
+      setCopyFailed(true);
+      announce("The link could not be copied. It is shown beside the save control.");
+    }
+  }, [announce, resumeUrl]);
+
+  /* ---------------------------------------------------------------------- */
+  /* Hydration from DE (?draftId= resume link, or this browser's own draft)  */
+  /* ---------------------------------------------------------------------- */
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const draftId = (params.get("draftId") ?? "").trim().slice(0, 80);
+    const url = draftId ? `${REQUEST_ENDPOINT}?draftId=${encodeURIComponent(draftId)}` : REQUEST_ENDPOINT;
+    let cancelled = false;
+    if (draftId) {
+      setHydrating(true);
+      announce("Opening your saved solution");
+    }
+    fetch(url, { credentials: "include" })
+      .then((response) => {
+        // A refused read (rate limited, server error) is handled like a failed one below.
+        if (!response.ok) throw new Error(String(response.status));
+        return response.json();
+      })
+      .then((data: { request?: ServerRequest; durable?: unknown; previousReference?: unknown } | null) => {
+        if (cancelled || !data?.request) return;
+        const server = draftFromServer(data.request);
+        const local = readSolutionDraft();
+        if (!server.serverDraftId) return;
+        const durable = data.durable === true;
+        const previous = typeof data.previousReference === "string" ? data.previousReference : "";
+        const adopt = (draft: SolutionDraft) => {
+          const hydrated = { ...draft, serverDurable: durable };
+          // Hydrated rows were never "added" here: mark them present before the write notifies listeners.
+          hydrated.needs.forEach((need) => presentFamilyIds.current?.add(need.familyId));
+          setSavedKey(contentKey(hydrated));
+          writeSolutionDraft(hydrated);
+        };
+        if (draftId) {
+          // Handled once: a reload is a plain workspace load, not a second announcement or another fresh draft.
+          window.history.replaceState(null, "", window.location.pathname);
+          if (server.serverDraftId !== draftId) {
+            // The link no longer opens a draft: that solution was sent (DE answers with a fresh
+            // draft and its reference) or the id is unknown. This device's solution stays; the
+            // draft DE minted is not "saved" until the autosave below has carried this content.
+            if (previous) setForkedFrom(previous);
+            announce(previous ? LINK_SENT(previous) : LINK_STALE);
+            if (!local.serverDraftId) patchSolutionDraft({ serverDraftId: server.serverDraftId, serverDurable: null });
+            setSavedKey("");
+            return;
+          }
+          if (isEmptyDraft(local)) {
+            adopt(server);
+            announce("Your saved solution is open");
+          } else if (contentKey(local) !== contentKey(server)) {
+            // §6.5: a differing local copy that is newer asks. DE's copy replaces it silently only
+            // when clearly newer (beyond a clock tolerance); the silent branch is the destructive one.
+            const gap = Date.parse(server.updatedAt) - Date.parse(local.updatedAt);
+            const serverClearlyNewer = Number.isFinite(gap) && gap > CLOCK_TOLERANCE_MS;
+            if (serverClearlyNewer) {
+              adopt(server);
+              announce("Your saved solution is open");
+            } else {
+              setConflict({ ...server, serverDurable: durable });
+            }
+          } else {
+            setSavedKey(contentKey(server));
+            patchSolutionDraft({ serverDraftId: server.serverDraftId, serverDurable: durable });
+          }
+          return;
+        }
+        if (server.serverDraftId === local.serverDraftId) {
+          // DE's copy of this draft; a change made since (on another page, or before a reload) autosaves from here.
+          setSavedKey(contentKey(server));
+          return;
+        }
+        if (local.serverDraftId) {
+          // DE answered with another draft (the session moved on, or that solution was sent): what DE
+          // holds under this device's id is unknown, so the autosave carries this content and confirms.
+          if (previous) setForkedFrom(previous);
+          setSavedKey("");
+          return;
+        }
+        if (server.needs.length > 0) {
+          // DE holds a session draft this device never saved from (storage cleared or blocked since).
+          // Nothing to keep adopts it; a differing local draft is the buyer's call; the same content adopts the id.
+          if (isEmptyDraft(local)) {
+            adopt(server);
+            announce("Your saved solution is open");
+          } else if (contentKey(local) !== contentKey(server)) {
+            setConflict({ ...server, serverDurable: durable });
+          } else {
+            setSavedKey(contentKey(server));
+            patchSolutionDraft({ serverDraftId: server.serverDraftId, serverDurable: durable });
+          }
+        }
+      })
+      .catch(() => {
+        // The read failed (offline, rate limited): DE's copy is unknown, so a draft DE already
+        // holds autosaves this content and the PUT's answer settles the sentence.
+        if (!cancelled && readSolutionDraft().serverDraftId) setSavedKey("");
+      })
+      .finally(() => {
+        if (!cancelled) setHydrating(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Runs once on mount: the URL and the announcer do not change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const useServerCopy = useCallback(() => {
+    if (!conflict) return;
+    conflict.needs.forEach((need) => presentFamilyIds.current?.add(need.familyId));
+    setSavedKey(contentKey(conflict));
+    writeSolutionDraft(conflict);
+    setConflict(null);
+    announce("DE's copy is open");
+  }, [announce, conflict]);
+
+  const keepLocalCopy = useCallback(() => {
+    if (!conflict) return;
+    // DE holds the other copy; the autosave carries this device's over it.
+    setSavedKey(contentKey(conflict));
+    patchSolutionDraft({ serverDraftId: conflict.serverDraftId, serverDurable: conflict.serverDurable });
+    setConflict(null);
+    announce("Keeping this device's solution");
+  }, [announce, conflict]);
+
+  /* ---------------------------------------------------------------------- */
+  /* Rail and bar                                                            */
+  /* ---------------------------------------------------------------------- */
+
+  const installLabel = deliveryReady && installValue ? installModeDetail(installValue, tileShipment(installValue)).label : "";
+  const status: SolutionStatusLine[] = [
+    {
+      id: "profile",
+      state: profileReady ? "ready" : "gap",
+      text: profileReady ? `Sized for ${profileSummary(environment)}` : `Finish the profile: ${profileGaps(environment).join(", ")}`,
+      href: "#profile",
+    },
+    {
+      id: "need",
+      state: needsReady ? "ready" : "gap",
+      text: needsReady ? plural(needCount, "need") : "Add at least one need",
+      href: "#needs",
+    },
+    {
+      id: "relationship",
+      state: relationshipReady ? "ready" : "gap",
+      text: relationshipReady
+        ? relationship === "unsure"
+          ? "DE will recommend"
+          : RELATIONSHIP_LABELS[relationship]
+        : "Choose above, or let DE recommend",
+      href: "#relationship",
+    },
+    {
+      id: "package",
+      state: packageReady ? "ready" : "pending",
+      text: packageReady
+        ? profileReady
+          ? `${plural(needCount, "package")} sized`
+          : `${plural(needCount, "package")}, not sized yet`
+        : "Waiting on the relationship",
+      href: "#packages",
+    },
+    {
+      id: "delivery",
+      state: deliveryReady ? "ready" : "gap",
+      text: deliveryReady ? installLabel : "Confirm Delivery & Setup",
+      href: "#delivery",
+    },
+    { id: "contact", state: "pending", text: "Next step" },
+  ];
+
+  const canContinue = needsReady && profileReady && relationshipReady;
+  const firstGap = status.find((line) => line.state === "gap")?.text;
+  const primary: SolutionPrimary = {
+    label: PRIMARY_LABEL,
+    href: SOLUTION_REQUEST_PATH,
+    disabled: !canContinue,
+    reason: canContinue ? undefined : firstGap,
+    testId: "continue-to-contact",
+  };
+
+  const requiredFamilies = packages.filter((entry) => entry.policyView.assessmentPolicy === "required").map((entry) => entry.family.label);
+  const nextStepLine =
+    intent === "assessment"
+      ? `After you submit: DE contacts you to schedule the assessment conversation (required for ${requiredFamilies.join(" and ")})`
+      : intent === "consultation"
+        ? "After you submit: DE recommends Standalone or Co-Managed, then quotes"
+        : intent === "quote"
+          ? "After you submit: DE confirms scope and sends pricing to approve"
+          : undefined;
+
+  const saveLine = (testId?: string) => (
+    <SaveLine
+      state={saveState}
+      forkedFrom={forkedFrom}
+      copied={copied}
+      copyFailed={copyFailed}
+      resumeUrl={resumeUrl}
+      onCopy={() => void copyResumeLink()}
+      onRetry={() => void saveProgress()}
+      testId={testId}
+    />
+  );
+
+  const chrome: SolutionChromeProps = {
+    mode: "continue",
+    draft,
+    status,
+    primary,
+    help: { seed: helpSeed },
+    saveState: saveLine(),
+    nextStepLine,
+    pulseKey,
+    onEditProfile: openProfile,
+  };
+
+  const onsiteChosen = installValue === "onsite";
+
+  // One line per package, collapsed to one line when every package resolves the same way.
+  const resolutions = packages.map((entry) => {
+    const resolved = resolveInstallMode(draft.fulfillment.installation, entry.policyView);
+    const detail = installModeDetail(resolved.mode, entry.policyView.shipmentMode);
+    return { entry, resolved, detail };
+  });
+  const identical =
+    resolutions.length > 1 &&
+    resolutions.every((item) => item.detail.label === resolutions[0].detail.label && !item.resolved.reason);
+  const resolutionLines = identical
+    ? [
+        {
+          key: "all",
+          testId: "setup-all",
+          text: `All ${plural(resolutions.length, "package")}: ${resolutions[0].detail.label}`,
+          shipment: resolutions
+            .filter((item) => item.entry.policyView.shipmentMode !== "none")
+            .map((item) => item.entry.policyView.shipmentCopy)
+            .filter((copy, index, all) => all.indexOf(copy) === index)
+            .join(" "),
+        },
+      ]
+    : resolutions.map((item) => ({
+        key: item.entry.need.familyId,
+        testId: `setup-${item.entry.need.familyId}`,
+        text: `${item.entry.family.label}: ${item.detail.label}${item.resolved.reason ? ` · ${item.resolved.reason}` : ""}`,
+        shipment: item.entry.policyView.shipmentMode !== "none" ? item.entry.policyView.shipmentCopy : "",
+      }));
+
+  /* ---------------------------------------------------------------------- */
+  /* Render                                                                  */
+  /* ---------------------------------------------------------------------- */
+
   return (
-    <div className="rounded-xl border border-white/10 bg-black/15 p-3">
-      <div className="flex items-center justify-between gap-3">
-        <span className="font-medium text-white">{label}</span>
-        <span className={`text-xs ${ready ? "text-emerald-300" : "text-white/55"}`}>{ready ? "Ready" : "Needed"}</span>
-      </div>
-      <p className="mt-1 truncate text-xs text-white/55">{detail}</p>
-    </div>
+    <Door2Frame intensity={0.28} jelly>
+        <MegaMenu />
+        <main className="d2-main de-nav-clear pb-24">
+          <div className="d2-layout d2-layout--wide">
+            <div className="min-w-0">
+              <header className="d2-chapter d2-chapter--first" data-testid="workspace-header">
+                <StepLabel>Your Solution</StepLabel>
+                <h1 className="d2-display d2-measure" data-testid="heading-workspace">
+                  {HEADING}
+                </h1>
+                <p className="d2-lede d2-ink d2-measure mt-4">{LEDE}</p>
+                <JourneyRail current={currentStep} complete={completeSteps} />
+                {hydrating ? (
+                  <LiveLine className="mt-6" testId="hydrating-line">
+                    Opening your saved solution…
+                  </LiveLine>
+                ) : null}
+              </header>
+
+              {conflict ? (
+                <div className="d2-chapter d2-no-print" role="group" aria-labelledby="draft-conflict-question" data-testid="draft-conflict">
+                  <p id="draft-conflict-question" className="d2-body d2-ink-strong d2-measure">
+                    {CONFLICT_QUESTION}
+                  </p>
+                  <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+                    <StoreAction variant="secondary" onClick={useServerCopy} testId="draft-use-server">
+                      Use DE's copy
+                    </StoreAction>
+                    <StoreAction variant="quiet" onClick={keepLocalCopy} testId="draft-keep-local">
+                      Keep this device's
+                    </StoreAction>
+                  </div>
+                </div>
+              ) : null}
+
+              {hydrating ? null : (
+                <div className="d2-no-print">
+                  {/* 01 Profile */}
+                  <StoreChapter
+                    id="profile"
+                    n={STORE_STEPS[0].n}
+                    eyebrow={STORE_STEPS[0].label}
+                    srText={STORE_STEPS[0].sr}
+                    heading="Your business profile"
+                    testId="profile-chapter"
+                  >
+                    <div className="mt-6">
+                      <SolutionProfileForm
+                        environment={environment}
+                        onChange={setEnvironmentField}
+                        headingLevel={3}
+                        collapsible
+                        expandKey={profileExpandKey}
+                      />
+                    </div>
+                  </StoreChapter>
+
+                  {/* 02 Pain or need */}
+                  <StoreChapter
+                    id="needs"
+                    n={STORE_STEPS[1].n}
+                    eyebrow={STORE_STEPS[1].label}
+                    srText={STORE_STEPS[1].sr}
+                    heading="Pain or need"
+                    testId="needs-chapter"
+                  >
+                    {seededFromLink ? (
+                      <div className="mt-4">
+                        <UndoRow
+                          text={`Added ${seededFromLink.label} from your link`}
+                          onUndo={() => {
+                            removeFamily(seededFromLink.id);
+                            setSeededFromLink(null);
+                          }}
+                          testId="seeded-undo"
+                        />
+                      </div>
+                    ) : null}
+                    {needsReady ? (
+                      <>
+                        <ul className="d2-rows mt-6" data-testid="need-rows">
+                          {packages.map((entry) => (
+                            <NeedRow
+                              key={entry.need.familyId}
+                              need={entry.need}
+                              family={entry.family}
+                              changeHref={familyPath(entry.family.id)}
+                              onRemove={() => removeFamily(entry.family.id)}
+                              entered={!presentFamilyIds.current?.has(entry.need.familyId)}
+                            />
+                          ))}
+                        </ul>
+                        {undoVisible.map((entry) => (
+                          <UndoRow
+                            key={entry.familyId}
+                            text={`${entry.label} removed from Your Solution`}
+                            onUndo={() => undoRemove(entry)}
+                            testId={`undo-${entry.familyId}`}
+                          />
+                        ))}
+                        <div className="mt-6">
+                          <StoreAction variant="quiet" href={BUSINESS_NEEDS_INDEX_PATH} testId="add-another-need">
+                            Add another need<span aria-hidden="true"> →</span>
+                          </StoreAction>
+                        </div>
+                      </>
+                    ) : (
+                      <div data-testid="needs-empty">
+                        <p className="d2-body d2-ink-strong mt-6">{EMPTY_LINE}</p>
+                        <p className="d2-small d2-ink d2-measure mt-2">
+                          Start from a situation below, or{" "}
+                          <Link href={BUSINESS_NEEDS_INDEX_PATH} className="d2-link" data-testid="browse-all-needs">
+                            browse all needs
+                          </Link>
+                          .
+                        </p>
+                        {undoVisible.map((entry) => (
+                          <UndoRow
+                            key={entry.familyId}
+                            text={`${entry.label} removed from Your Solution`}
+                            onUndo={() => undoRemove(entry)}
+                            testId={`undo-${entry.familyId}`}
+                          />
+                        ))}
+                        <HairGrid cols={2} as="ul" className="mt-8" aria-label="Start from a situation">
+                          {solutionScenarios.map((scenario) => (
+                            <ScenarioTile
+                              key={scenario.id}
+                              scenario={scenario}
+                              compose={composeScenario(scenario, familyIds)}
+                              onStart={startScenario}
+                              onReview={() => undefined}
+                            />
+                          ))}
+                        </HairGrid>
+                      </div>
+                    )}
+                  </StoreChapter>
+
+                  {needsReady ? (
+                    <>
+                      {/* 03 Relationship */}
+                      <StoreChapter
+                        id="relationship"
+                        n={STORE_STEPS[2].n}
+                        eyebrow={STORE_STEPS[2].label}
+                        srText={STORE_STEPS[2].sr}
+                        heading={RELATIONSHIP_HEADING}
+                        lede={RELATIONSHIP_SUB}
+                        testId="relationship-chapter"
+                      >
+                        <div className="mt-6">
+                          <ChoiceTiles<DeliveryPreference>
+                            name="relationship"
+                            legend={RELATIONSHIP_HEADING}
+                            value={relationship}
+                            options={RELATIONSHIP_OPTIONS}
+                            onChange={chooseRelationship}
+                            columns={3}
+                          />
+                        </div>
+                        {suggestion ? (
+                          <div className="mt-4">
+                            <SuggestionLine
+                              suggestion={suggestion}
+                              onUse={() => chooseRelationship(suggestion.value)}
+                              onDecline={declineSuggestion}
+                              testId="relationship-suggestion"
+                            />
+                          </div>
+                        ) : null}
+                      </StoreChapter>
+
+                      {/* 04 Package */}
+                      <StoreChapter
+                        id="packages"
+                        n={STORE_STEPS[3].n}
+                        eyebrow={STORE_STEPS[3].label}
+                        srText={STORE_STEPS[3].sr}
+                        heading={PACKAGES_HEADING}
+                        testId="packages-chapter"
+                      >
+                        <ul className="d2-sheet-list mt-6" data-testid="package-sheets">
+                          {packages.map((entry) => {
+                            const pair = "standalone" in entry.package ? entry.package : null;
+                            const single = pair ? null : entry.package;
+                            return (
+                              <li key={entry.need.familyId} className="min-w-0">
+                                {single ? (
+                                  <PackageSheet
+                                    familyLabel={entry.family.label}
+                                    view={single}
+                                    mode="single"
+                                    sized={sized}
+                                    swapKey={relationship}
+                                    changeHref={familyPath(entry.family.id)}
+                                    onRemove={() => removeFamily(entry.family.id)}
+                                    testId={`package-${entry.need.familyId}`}
+                                  />
+                                ) : relationship === "unsure" && pair ? (
+                                  <PackageSheet
+                                    familyLabel={entry.family.label}
+                                    view={pair}
+                                    mode="compare"
+                                    sized={sized}
+                                    pricingLabel={PRICING_LABELS.unsure}
+                                    badge={COMPARE_BADGE}
+                                    swapKey={relationship}
+                                    changeHref={familyPath(entry.family.id)}
+                                    onRemove={() => removeFamily(entry.family.id)}
+                                    testId={`package-${entry.need.familyId}`}
+                                  />
+                                ) : pair ? (
+                                  <PackageSheet
+                                    familyLabel={entry.family.label}
+                                    view={pair.standalone}
+                                    mode="preview"
+                                    sized={sized}
+                                    badge={PREVIEW_BADGE}
+                                    swapKey={relationship}
+                                    changeHref={familyPath(entry.family.id)}
+                                    onRemove={() => removeFamily(entry.family.id)}
+                                    testId={`package-${entry.need.familyId}`}
+                                  />
+                                ) : null}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </StoreChapter>
+
+                      <StoreChapter id="coverage" heading={COVERAGE_HEADING} testId="coverage-chapter">
+                        {wide ? (
+                          <div className="mt-6">
+                            <CoverageBand coverage={coverage} onAdd={(id) => addFamily(id)} maxAdds={Math.max(0, 3 - hints.length)} />
+                          </div>
+                        ) : (
+                          <details className="d2-disclosure mt-4" data-testid="coverage-disclosure">
+                            <summary className="d2-small">Show the eight security blocks</summary>
+                            <div className="mt-4">
+                              <CoverageBand coverage={coverage} onAdd={(id) => addFamily(id)} maxAdds={Math.max(0, 3 - hints.length)} />
+                            </div>
+                          </details>
+                        )}
+                      </StoreChapter>
+
+                      {hints.length > 0 ? (
+                        <StoreChapter id="hints" heading={HINTS_HEADING} testId="hints-chapter">
+                          <div className="mt-6" data-testid="hint-rows">
+                            {hints.map((hint) => (
+                              <HintRow key={hint.id} hint={hint} onAction={actOnHint} onDismiss={dismissOneHint} />
+                            ))}
+                          </div>
+                        </StoreChapter>
+                      ) : null}
+
+                      {/* 05 Delivery & Setup */}
+                      <StoreChapter
+                        id="delivery"
+                        n={STORE_STEPS[4].n}
+                        eyebrow={STORE_STEPS[4].label}
+                        srText={STORE_STEPS[4].sr}
+                        heading={DELIVERY_HEADING}
+                        lede={DELIVERY_RULE}
+                        testId="delivery-chapter"
+                      >
+                        <div className="mt-6">
+                          <ChoiceTiles<InstallMode>
+                            name="installation"
+                            legend={DELIVERY_HEADING}
+                            value={installValue}
+                            options={installOptions}
+                            onChange={chooseInstallation}
+                            columns={3}
+                          />
+                        </div>
+                        <ul className="d2-rows d2-measure mt-6" data-testid="setup-resolution">
+                          {resolutionLines.map((line) => (
+                            <li key={line.key} data-testid={line.testId}>
+                              <p className="d2-small d2-ink-strong">{line.text}</p>
+                              {line.shipment ? <p className="d2-small d2-ink-soft mt-1">{line.shipment}</p> : null}
+                            </li>
+                          ))}
+                        </ul>
+                        {onsiteChosen ? (
+                          <p className="d2-small d2-ink d2-measure mt-4" data-testid="onsite-line">
+                            {ONSITE_LINE}
+                          </p>
+                        ) : null}
+
+                        <h3 className="d2-h3 d2-measure mt-10">{SUPPORT_HEADING}</h3>
+                        <div className="mt-4">
+                          <ChoiceTiles<RemoteSupportMode>
+                            name="remote-support"
+                            legend={SUPPORT_HEADING}
+                            value={draft.fulfillment.remoteSupport}
+                            options={supportOptions}
+                            onChange={chooseSupport}
+                            columns={4}
+                          />
+                        </div>
+                      </StoreChapter>
+                    </>
+                  ) : null}
+
+                  {/* Save row */}
+                  <StoreChapter id="save" testId="save-row">
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                      <StoreAction variant="secondary" onClick={() => void saveProgress()} ariaBusy={saving} testId="save-progress">
+                        {SAVE_LABEL}
+                      </StoreAction>
+                      <StoreAction variant="quiet" onClick={() => window.print()} testId="print-solution">
+                        Print / save
+                      </StoreAction>
+                    </div>
+                    <div className="mt-4">{saveLine("solution-rail-save")}</div>
+                    <p className="d2-small d2-ink-soft mt-8" data-testid="handle-our-it-link">
+                      Prefer DE to run all of IT?{" "}
+                      <Link href={HANDLE_OUR_IT_PATH} className="d2-link">
+                        See Handle Our IT.
+                      </Link>
+                    </p>
+                    {wide ? null : <HelpRow seed={helpSeed} className="mt-8" />}
+                  </StoreChapter>
+                </div>
+              )}
+
+              <div className="d2-print-only" aria-hidden="true">
+                <ProposalSheet source={{ draft }} title="Solution summary · draft" />
+              </div>
+            </div>
+
+            <SolutionRail {...chrome} />
+          </div>
+        </main>
+        <SolutionBar {...chrome} />
+        <DigeratiEnhancedFooterSection variant="store" />
+    </Door2Frame>
   );
 }
