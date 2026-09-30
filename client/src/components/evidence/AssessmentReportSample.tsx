@@ -22,7 +22,7 @@ export const AssessmentReportSample: React.FC = () => {
             { label: "Network", state: "Baseline review", note: "EXAMPLE" },
           ].map((item) => (
             <div key={item.label} className="rounded-xl border border-de-hairline bg-de-bg p-4">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-white/45">{item.label}</p>
+              <p className="font-mono text-[10px] uppercase tracking-wider text-white/55">{item.label}</p>
               <div className="mt-2 flex flex-wrap items-baseline gap-2">
                 <span className="font-heading text-lg font-semibold text-white">{item.state}</span>
                 <span className="font-mono text-[10px] text-[#F04C97]">{item.note}</span>
@@ -59,7 +59,7 @@ export const AssessmentReportSample: React.FC = () => {
         </div>
 
         <div className="rounded-xl border border-de-hairline bg-de-bg p-4">
-          <p className="mb-3 font-mono text-[11px] uppercase tracking-wider text-white/45">Illustrative roadmap structure</p>
+          <p className="mb-3 font-mono text-[11px] uppercase tracking-wider text-white/55">Illustrative roadmap structure</p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {[
               { phase: "01 / VALIDATE", body: "Confirm evidence, ownership, scope, and business impact." },
@@ -79,7 +79,7 @@ export const AssessmentReportSample: React.FC = () => {
           <p>When an approved sanitized real report is available, it can replace this example using the SANITIZED REAL classification and documented redaction review.</p>
         </div>
 
-        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-white/40">
+        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-white/60">
           <CheckCircle2 className="h-3.5 w-3.5 text-[#F04C97]" aria-hidden="true" />
           Structure first; real evidence only after verification and approval.
         </div>

@@ -16,6 +16,7 @@ import { registerPublicSolutionRoutes } from "./publicSolutionRoutes";
 import { registerWarehouseGates } from "./warehouseRoutes";
 import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
+import { isKnownSpaPath } from "./spaKnownPaths";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import fs from "fs";
@@ -79,21 +80,16 @@ import { setSecurityHeaders } from "./middleware/security";
 app.use(setSecurityHeaders);
 
 app.use((req, _res, next) => {
-  log(`→ ${req.method} ${req.originalUrl}`);
+  // Draft ids and references are possession-keyed; they do not belong in plaintext logs.
+  const shown = req.originalUrl.replace(/([?&](?:draftId|reference|sessionId)=)[^&]*/gi, "$1[redacted]");
+  log(`→ ${req.method} ${shown}`);
   next();
 });
 
 app.all("/api/health", async (_req, res) => {
   const port = process.env.REPLIT_SERVER_PORT || process.env.PORT || "unknown";
-  let dbAvailable = false;
-  try {
-    const { pool } = await import("./db");
-    if (pool) {
-      const client = await pool.connect();
-      client.release();
-      dbAvailable = true;
-    }
-  } catch { dbAvailable = false; }
+  const { databaseAcceptsConnections } = await import("./healthProbe");
+  const dbAvailable = await databaseAcceptsConnections();
   const openaiConfigured = !!(
     process.env.OPENAI_API_KEY ||
     process.env.OPENAI_API ||
@@ -119,8 +115,27 @@ app.all("/api/health", async (_req, res) => {
   res.status(200).json(health);
 });
 
-app.all("/healthz", (_req, res) => res.status(200).send("ok"));
-app.all("/ready", (_req, res) => res.status(200).json({ ready: true }));
+/** Public, secret-free flag so marketing and the portal do not promise card checkout when it is off. */
+app.get("/api/payments/availability", (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ cardCheckout: zohoPayments.isConfigured() });
+});
+
+app.all("/healthz", async (_req, res) => {
+  const { databaseAcceptsConnections, probeStatus } = await import("./healthProbe");
+  const status = probeStatus(await databaseAcceptsConnections());
+  res.status(status).type("text/plain").send(status === 200 ? "ok" : "unavailable");
+});
+
+app.all("/ready", async (_req, res) => {
+  const { databaseAcceptsConnections, probeStatus } = await import("./healthProbe");
+  const status = probeStatus(await databaseAcceptsConnections());
+  if (status === 200) {
+    res.status(200).json({ ready: true });
+    return;
+  }
+  res.status(503).json({ ready: false, database: "unavailable" });
+});
 
 /**
  * Portal routing heal — Cloudflare on digeratexperts.com strips `/portal` when
@@ -239,6 +254,20 @@ app.post(
                 updatedAt: new Date(),
               })
               .where(eq(storeOrders.id, existingOrder.id));
+
+            const paidLines = Array.isArray(existingOrder.lineItems) ? existingOrder.lineItems : [];
+            void import("./integrations/enqueueStoreOrder")
+              .then(({ enqueueStoreOrderCreated }) => enqueueStoreOrderCreated({
+                id: existingOrder.id,
+                orderNumber: existingOrder.orderNumber,
+                status: "paid",
+                clientId: existingOrder.clientId,
+                billingEmail: existingOrder.billingEmail,
+                billingName: existingOrder.billingName,
+                billingCompany: existingOrder.billingCompany,
+                lineItems: paidLines,
+              }))
+              .catch((error) => console.warn("[store-order] Hub enqueue skipped:", error?.message || error));
 
             console.log("[SECURITY] ORDER_STATUS_CHANGED", {
               orderId: existingOrder.id,
@@ -523,7 +552,9 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       }
       
       if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
+        // Known SPA routes → 200; unknown paths still get the shell but HTTP 404.
+        const status = isKnownSpaPath(req.path) ? 200 : 404;
+        res.status(status).sendFile(indexPath);
       } else {
         log(`⚠️ Production build not found at ${distPath}`);
         res.status(404).send(`

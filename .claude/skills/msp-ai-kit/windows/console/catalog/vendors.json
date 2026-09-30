@@ -1,0 +1,119 @@
+{
+  "_readme": "DE vendor and admin launcher catalog for the Technician Console (Vendor Admin Center) and the Browser Configurator (managed bookmarks). No credentials here, ever. Tenant-specific URLs use {placeholders} that are resolved from the client profile's vendorTenants block at run time. role: primary | backup | alternate | reference. sso: how DE signs in (jumpcloud | microsoft | google | zoho | local | unknown).",
+  "version": "1.0.0",
+  "categories": [
+    { "id": "de-internal", "title": "DE Internal", "order": 1 },
+    { "id": "identity-access", "title": "Identity & Access", "order": 2 },
+    { "id": "microsoft", "title": "Microsoft", "order": 3 },
+    { "id": "endpoint-edr", "title": "Endpoint & EDR", "order": 4 },
+    { "id": "security-mdr", "title": "Security / MDR", "order": 5 },
+    { "id": "email-security", "title": "Email Security", "order": 6 },
+    { "id": "browser-security", "title": "Browser Security", "order": 7 },
+    { "id": "network", "title": "Network / Firewall / Wi-Fi", "order": 8 },
+    { "id": "sase", "title": "SASE / Zero Trust", "order": 9 },
+    { "id": "backup-bcdr", "title": "Backup / BCDR", "order": 10 },
+    { "id": "siem-vuln", "title": "SIEM / Vulnerability", "order": 11 },
+    { "id": "assessments", "title": "Assessments", "order": 12 },
+    { "id": "awareness", "title": "Security Awareness", "order": 13 },
+    { "id": "documentation-vcio", "title": "Documentation / vCIO", "order": 14 },
+    { "id": "zoho", "title": "Zoho / Business Operations", "order": 15 },
+    { "id": "google", "title": "Google", "order": 16 },
+    { "id": "procurement", "title": "Distribution / Procurement", "order": 17 },
+    { "id": "support-status", "title": "Support / Status / Documentation", "order": 18 }
+  ],
+  "vendors": [
+    { "id": "de-hub", "name": "DE Intelligence Hub", "category": "de-internal", "role": "primary", "urls": { "admin": "https://techsales.digerati-experts.com" }, "sso": "local", "deService": "operational control plane", "notes": "Tech Hub, onboarding, client/site/device source of truth." },
+    { "id": "de-site", "name": "DE public site", "category": "de-internal", "role": "reference", "urls": { "admin": "https://digeratiexperts.com", "client": "https://portal.digeratiexperts.com/portal/login" }, "sso": "local", "deService": "website and client portal" },
+    { "id": "de-internal-domain", "name": "DE internal domain", "category": "de-internal", "role": "reference", "urls": { "admin": "https://digerati-experts.com" }, "sso": "local", "deService": "internal services" },
+    { "id": "gh-hub", "name": "GitHub - Intelligence Hub", "category": "de-internal", "role": "reference", "urls": { "admin": "https://github.com/digeratiexperts/Intelligence-Hub" }, "sso": "local", "deService": "source" },
+    { "id": "gh-site", "name": "GitHub - Public Site", "category": "de-internal", "role": "reference", "urls": { "admin": "https://github.com/digeratiexperts/digeratiexperts-site" }, "sso": "local", "deService": "source" },
+
+    { "id": "jumpcloud-admin", "name": "JumpCloud Admin", "category": "identity-access", "role": "primary", "urls": { "admin": "https://console.jumpcloud.com/login", "docs": "https://jumpcloud.com/support", "status": "https://status.jumpcloud.com/" }, "region": "US (EU and India use regional consoles)", "sso": "jumpcloud", "deService": "identity, device management, policies, commands, SSO, JumpCloud Go", "notes": "DE endpoint identity authority." },
+    { "id": "jumpcloud-user", "name": "JumpCloud User Portal", "category": "identity-access", "role": "primary", "urls": { "client": "https://console.jumpcloud.com/login" }, "sso": "jumpcloud", "deService": "end-user apps, MFA, profile" },
+    { "id": "entra", "name": "Microsoft Entra", "category": "identity-access", "role": "alternate", "urls": { "admin": "https://entra.microsoft.com/" }, "sso": "microsoft", "deService": "identity, MFA, Conditional Access, apps" },
+    { "id": "intune", "name": "Microsoft Intune", "category": "identity-access", "role": "alternate", "urls": { "admin": "https://intune.microsoft.com/" }, "sso": "microsoft", "deService": "MDM, compliance, Autopilot", "notes": "Only when a client is Intune-primary; never dual-MDM with JumpCloud." },
+
+    { "id": "m365-admin", "name": "Microsoft 365 Admin", "category": "microsoft", "role": "primary", "urls": { "admin": "https://admin.microsoft.com/", "status": "https://admin.microsoft.com/Adminportal/Home#/servicehealth" }, "sso": "microsoft", "deService": "tenant administration" },
+    { "id": "defender", "name": "Microsoft Defender XDR", "category": "microsoft", "role": "alternate", "urls": { "admin": "https://security.microsoft.com/" }, "sso": "microsoft", "deService": "email threats, Defender XDR" },
+    { "id": "purview", "name": "Microsoft Purview", "category": "microsoft", "role": "reference", "urls": { "admin": "https://purview.microsoft.com/" }, "sso": "microsoft", "deService": "compliance, DLP, retention" },
+    { "id": "exchange-admin", "name": "Exchange Admin", "category": "microsoft", "role": "primary", "urls": { "admin": "https://admin.exchange.microsoft.com/" }, "sso": "microsoft", "deService": "Exchange Online" },
+    { "id": "teams-admin", "name": "Teams Admin", "category": "microsoft", "role": "primary", "urls": { "admin": "https://admin.teams.microsoft.com/" }, "sso": "microsoft", "deService": "Teams" },
+    { "id": "azure", "name": "Azure Portal", "category": "microsoft", "role": "reference", "urls": { "admin": "https://portal.azure.com/" }, "sso": "microsoft", "deService": "Azure" },
+    { "id": "power-platform", "name": "Power Platform Admin", "category": "microsoft", "role": "reference", "urls": { "admin": "https://admin.powerplatform.microsoft.com/" }, "sso": "microsoft", "deService": "Power Platform" },
+    { "id": "lighthouse", "name": "Microsoft 365 Lighthouse", "category": "microsoft", "role": "reference", "urls": { "admin": "https://lighthouse.microsoft.com/" }, "sso": "microsoft", "deService": "multi-tenant management" },
+    { "id": "partner-center", "name": "Microsoft Partner Center", "category": "microsoft", "role": "reference", "urls": { "partner": "https://partner.microsoft.com/dashboard" }, "sso": "microsoft", "deService": "partner" },
+    { "id": "sharepoint-admin", "name": "SharePoint Admin", "category": "microsoft", "role": "reference", "urls": { "admin": "https://admin.microsoft.com/sharepoint" }, "sso": "microsoft", "deService": "SharePoint / OneDrive" },
+    { "id": "graph-explorer", "name": "Graph Explorer", "category": "microsoft", "role": "reference", "urls": { "docs": "https://developer.microsoft.com/graph/graph-explorer" }, "sso": "microsoft", "deService": "Graph API" },
+    { "id": "cloud-shell", "name": "Azure Cloud Shell", "category": "microsoft", "role": "reference", "urls": { "admin": "https://shell.azure.com/" }, "sso": "microsoft", "deService": "shell" },
+    { "id": "mfa-setup", "name": "Microsoft MFA setup", "category": "microsoft", "role": "reference", "urls": { "client": "https://aka.ms/mfasetup" }, "sso": "microsoft", "deService": "end-user MFA registration" },
+    { "id": "my-account", "name": "Microsoft My Account", "category": "microsoft", "role": "reference", "urls": { "client": "https://portal.office.com/account/" }, "sso": "microsoft", "deService": "end-user account" },
+
+    { "id": "sentinelone", "name": "SentinelOne", "category": "endpoint-edr", "role": "primary", "urls": { "partner": "https://partners.sentinelone.com/", "docs": "https://community.sentinelone.com/" }, "tenantUrlTemplate": "https://{s1_console}.sentinelone.net", "sso": "unknown", "deService": "EDR / XDR", "notes": "Console URL is tenant-specific; store it per DE account in vendorTenants.s1_console." },
+    { "id": "sentinelone-partner", "name": "SentinelOne Partner Portal", "category": "endpoint-edr", "role": "reference", "urls": { "partner": "https://partners.sentinelone.com/" }, "sso": "unknown", "deService": "partner resources" },
+
+    { "id": "guardz-msp", "name": "Guardz MSP", "category": "security-mdr", "role": "primary", "urls": { "admin": "https://app.us.guardz.com/msp", "client": "https://app.us.guardz.com/", "docs": "https://help.guardz.com/" }, "region": "US", "sso": "unknown", "deService": "primary DE managed-security platform", "notes": "Primary. Blackpoint is the approved backup MDR." },
+    { "id": "guardz-user", "name": "Guardz User Portal", "category": "security-mdr", "role": "primary", "urls": { "client": "https://app.guardz.com/user-portal" }, "sso": "unknown", "deService": "end-user quarantine, training, security actions" },
+    { "id": "blackpoint", "name": "Blackpoint Cyber", "category": "security-mdr", "role": "backup", "urls": { "admin": "https://blackpointcyber.com/", "partner": "https://blackpointcyber.com/partners/" }, "sso": "unknown", "deService": "MDR (backup / approved alternate)" },
+
+    { "id": "mimecast-admin", "name": "Mimecast Admin", "category": "email-security", "role": "primary", "urls": { "admin": "https://login-usb.mimecast.com/u/login/", "partner": "https://login-usb.mimecast.com/partner/Common/Login", "docs": "https://community.mimecast.com/", "status": "https://status.mimecast.com/" }, "region": "US-B", "sso": "unknown", "deService": "email security" },
+    { "id": "mimecast-generic", "name": "Mimecast login", "category": "email-security", "role": "reference", "urls": { "admin": "https://login.mimecast.com/" }, "sso": "unknown", "deService": "login routing" },
+    { "id": "exchange-admin-email", "name": "Exchange Admin (mail flow)", "category": "email-security", "role": "alternate", "urls": { "admin": "https://admin.exchange.microsoft.com/" }, "sso": "microsoft", "deService": "Exchange Online" },
+    { "id": "defender-email", "name": "Microsoft Defender (email)", "category": "email-security", "role": "alternate", "urls": { "admin": "https://security.microsoft.com/" }, "sso": "microsoft", "deService": "email threats" },
+
+    { "id": "prisma-pabx", "name": "Prisma Browser / PABX", "category": "browser-security", "role": "primary", "urls": {}, "tenantUrlTemplate": "{pabx_console}", "sso": "unknown", "deService": "browser security extension and private-browsing policy", "notes": "Management console URL to be added to vendorTenants.pabx_console; the endpoint policy is applied by the Browser Configurator." },
+    { "id": "atakama", "name": "Atakama", "category": "browser-security", "role": "alternate", "urls": { "admin": "https://atakama.com/", "support": "https://support.atakama.com/" }, "sso": "unknown", "deService": "browser-security platform" },
+    { "id": "guardz-browser", "name": "Guardz (SaaS / identity posture)", "category": "browser-security", "role": "primary", "urls": { "admin": "https://app.us.guardz.com/msp" }, "sso": "unknown", "deService": "SaaS, identity, endpoint posture" },
+    { "id": "jumpcloud-browser", "name": "JumpCloud (browser policy)", "category": "browser-security", "role": "primary", "urls": { "admin": "https://console.jumpcloud.com/login" }, "sso": "jumpcloud", "deService": "browser management, extension policy, SSO" },
+
+    { "id": "uplevel", "name": "Uplevel Systems", "category": "network", "role": "primary", "urls": { "admin": "https://newportal.uplevelsystems.com/login", "docs": "https://www.uplevelsystems.com/kb/" }, "sso": "unknown", "deService": "gateway, firewall, switches, Wi-Fi, VLANs, VPN, ZTNA, storage, AD" },
+
+    { "id": "timus", "name": "Timus Networks", "category": "sase", "role": "primary", "urls": { "admin": "https://manage.timusnetworks.com/" }, "sso": "unknown", "deService": "SASE / ZTNA / gateways" },
+    { "id": "controlone", "name": "ControlOne / Cytracom", "category": "sase", "role": "backup", "urls": { "admin": "https://secure.cytracom.net/", "client": "https://www.cytracom.com/login" }, "sso": "unknown", "deService": "SASE / network administration" },
+
+    { "id": "msp360", "name": "MSP360", "category": "backup-bcdr", "role": "primary", "urls": { "admin": "https://console.msp360.com/", "docs": "https://help.msp360.com/" }, "sso": "unknown", "deService": "managed backup / RMM" },
+    { "id": "opti9", "name": "Opti9 (OptiX)", "category": "backup-bcdr", "role": "alternate", "urls": { "status": "https://status.opti9tech.com/" }, "tenantUrlTemplate": "{optix_portal}", "sso": "unknown", "deService": "BCDR / cloud / managed infrastructure", "notes": "Account-specific OptiX portal in vendorTenants.optix_portal." },
+    { "id": "uplevel-storage", "name": "Uplevel (gateway storage / backup)", "category": "backup-bcdr", "role": "alternate", "urls": { "admin": "https://newportal.uplevelsystems.com/login" }, "sso": "unknown", "deService": "gateway storage" },
+    { "id": "m365-backup-scope", "name": "Microsoft 365 (cloud data)", "category": "backup-bcdr", "role": "reference", "urls": { "admin": "https://admin.microsoft.com/" }, "sso": "microsoft", "deService": "cloud environment" },
+
+    { "id": "wazuh-cloud", "name": "Wazuh Cloud Console", "category": "siem-vuln", "role": "primary", "urls": { "admin": "https://console.cloud.wazuh.com/login", "docs": "https://documentation.wazuh.com/" }, "tenantUrlTemplate": "https://{wazuh_cloud_id}.cloud.wazuh.com", "sso": "unknown", "deService": "SIEM / XDR", "notes": "Customer dashboards are per Cloud ID (vendorTenants.wazuh_cloud_id)." },
+    { "id": "qualys", "name": "Qualys", "category": "siem-vuln", "role": "primary", "urls": { "admin": "https://qualysguard.qualys.com/qglogin/index.html" }, "tenantUrlTemplate": "{qualys_platform_url}", "sso": "unknown", "deService": "vulnerability management / compliance", "notes": "Platform-specific: QG2 https://qualysguard.qg2.apps.qualys.com/qglogin/index.html, QG3 https://qualysguard.qg3.apps.qualys.com/qglogin/index.html. Store the assigned platform per DE account." },
+
+    { "id": "telivy", "name": "Telivy", "category": "assessments", "role": "primary", "urls": { "admin": "https://portal.telivy.com/" }, "sso": "unknown", "deService": "cyber-risk assessments", "notes": "Bookmark portal.telivy.com; redirected auth URLs expire." },
+    { "id": "qualys-assess", "name": "Qualys (assessment)", "category": "assessments", "role": "alternate", "urls": {}, "tenantUrlTemplate": "{qualys_platform_url}", "sso": "unknown", "deService": "vulnerability assessment" },
+    { "id": "guardz-assess", "name": "Guardz (posture)", "category": "assessments", "role": "alternate", "urls": { "admin": "https://app.us.guardz.com/msp" }, "sso": "unknown", "deService": "risk / security posture" },
+
+    { "id": "ninjio", "name": "NINJIO", "category": "awareness", "role": "primary", "urls": { "admin": "https://ninjio.com/" }, "sso": "unknown", "deService": "security-awareness platform" },
+    { "id": "guardz-awareness", "name": "Guardz User Portal (training)", "category": "awareness", "role": "alternate", "urls": { "client": "https://app.guardz.com/user-portal" }, "sso": "unknown", "deService": "awareness training" },
+
+    { "id": "hudu", "name": "Hudu", "category": "documentation-vcio", "role": "primary", "urls": {}, "tenantUrlTemplate": "https://{hudu_host}/admin", "sso": "unknown", "deService": "documentation, passwords, assets, processes", "notes": "DE Hudu host in vendorTenants.hudu_host." },
+    { "id": "narmada", "name": "Narmada", "category": "documentation-vcio", "role": "primary", "urls": { "admin": "https://app.narmada.cloud/" }, "sso": "unknown", "deService": "vCIO, QBR, client roadmap" },
+    { "id": "zoho-crm-vcio", "name": "Zoho CRM", "category": "documentation-vcio", "role": "primary", "urls": { "admin": "https://crm.zoho.com/" }, "sso": "zoho", "deService": "CRM" },
+    { "id": "zoho-desk-vcio", "name": "Zoho Desk", "category": "documentation-vcio", "role": "primary", "urls": { "admin": "https://desk.zoho.com/" }, "sso": "zoho", "deService": "tickets" },
+    { "id": "zoho-projects-vcio", "name": "Zoho Projects", "category": "documentation-vcio", "role": "primary", "urls": { "admin": "https://projects.zoho.com/" }, "sso": "zoho", "deService": "projects" },
+
+    { "id": "zoho-one", "name": "Zoho One", "category": "zoho", "role": "primary", "urls": { "admin": "https://one.zoho.com/" }, "sso": "zoho", "deService": "suite" },
+    { "id": "zoho-directory", "name": "Zoho Directory", "category": "zoho", "role": "primary", "urls": { "admin": "https://directory.zoho.com/" }, "sso": "zoho", "deService": "directory" },
+    { "id": "zoho-crm", "name": "Zoho CRM", "category": "zoho", "role": "primary", "urls": { "admin": "https://crm.zoho.com/" }, "sso": "zoho", "deService": "CRM" },
+    { "id": "zoho-desk", "name": "Zoho Desk", "category": "zoho", "role": "primary", "urls": { "admin": "https://desk.zoho.com/" }, "sso": "zoho", "deService": "tickets" },
+    { "id": "zoho-mail-admin", "name": "Zoho Mail Admin", "category": "zoho", "role": "primary", "urls": { "admin": "https://mailadmin.zoho.com/" }, "sso": "zoho", "deService": "mail" },
+    { "id": "zoho-workdrive", "name": "Zoho WorkDrive", "category": "zoho", "role": "primary", "urls": { "admin": "https://workdrive.zoho.com/" }, "sso": "zoho", "deService": "files" },
+    { "id": "zoho-projects", "name": "Zoho Projects", "category": "zoho", "role": "primary", "urls": { "admin": "https://projects.zoho.com/" }, "sso": "zoho", "deService": "projects" },
+
+    { "id": "google-admin", "name": "Google Workspace Admin", "category": "google", "role": "primary", "urls": { "admin": "https://admin.google.com/" }, "sso": "google", "deService": "Workspace" },
+    { "id": "google-security", "name": "Google Workspace Security", "category": "google", "role": "primary", "urls": { "admin": "https://admin.google.com/ac/security" }, "sso": "google", "deService": "Workspace security" },
+    { "id": "google-cloud", "name": "Google Cloud Console", "category": "google", "role": "reference", "urls": { "admin": "https://console.cloud.google.com/" }, "sso": "google", "deService": "GCP" },
+    { "id": "google-credentials", "name": "Google API / OAuth credentials", "category": "google", "role": "reference", "urls": { "admin": "https://console.cloud.google.com/apis/credentials" }, "sso": "google", "deService": "API credentials" },
+
+    { "id": "pax8", "name": "Pax8", "category": "procurement", "role": "primary", "urls": { "partner": "https://app.pax8.com/" }, "sso": "unknown", "deService": "cloud licenses, clients, subscriptions" },
+    { "id": "sherweb", "name": "Sherweb", "category": "procurement", "role": "backup", "urls": { "partner": "https://www.sherweb.com/customer-login" }, "sso": "unknown", "deService": "cloud licensing" },
+    { "id": "ingram", "name": "Ingram Micro Xvantage", "category": "procurement", "role": "primary", "urls": { "partner": "https://www.ingrammicro.com/en-us/login/login" }, "sso": "unknown", "deService": "hardware / software procurement" },
+    { "id": "ingram-deploy", "name": "Ingram Deployment Services", "category": "procurement", "role": "alternate", "urls": { "partner": "https://deploy.ingrammicro.com/" }, "sso": "unknown", "deService": "deployment / field services" },
+
+    { "id": "status-m365", "name": "Microsoft 365 service health", "category": "support-status", "role": "reference", "urls": { "status": "https://admin.microsoft.com/Adminportal/Home#/servicehealth" }, "sso": "microsoft", "deService": "status" },
+    { "id": "status-jumpcloud", "name": "JumpCloud status", "category": "support-status", "role": "reference", "urls": { "status": "https://status.jumpcloud.com/" }, "sso": "local", "deService": "status" },
+    { "id": "status-mimecast", "name": "Mimecast status", "category": "support-status", "role": "reference", "urls": { "status": "https://status.mimecast.com/" }, "sso": "local", "deService": "status" },
+    { "id": "status-opti9", "name": "Opti9 status", "category": "support-status", "role": "reference", "urls": { "status": "https://status.opti9tech.com/" }, "sso": "local", "deService": "status" },
+    { "id": "docs-uplevel", "name": "Uplevel Knowledge Base", "category": "support-status", "role": "reference", "urls": { "docs": "https://www.uplevelsystems.com/kb/" }, "sso": "local", "deService": "docs" },
+    { "id": "docs-atakama", "name": "Atakama Support", "category": "support-status", "role": "reference", "urls": { "support": "https://support.atakama.com/" }, "sso": "local", "deService": "support" }
+  ]
+}

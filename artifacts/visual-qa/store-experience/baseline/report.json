@@ -1,0 +1,371 @@
+[
+  {
+    "vp": "390",
+    "label": "index",
+    "url": "http://127.0.0.1:5000/store",
+    "overflow": 0,
+    "height": 9616,
+    "viewports": 11.4,
+    "mainControls": 52,
+    "h1": [
+      "Start with your business. Then solve what hurts."
+    ],
+    "headings": [
+      "H1: Start with your business. Then solve what hurts.",
+      "H2: Start with your business profile",
+      "H2: Pain or need",
+      "H2: Solution",
+      "H2: Package & delivery",
+      "H2: Contact",
+      "H2: What needs attention?",
+      "H3: IT Operations & Support",
+      "H3: Endpoint & Device Management",
+      "H3: Identity & Access",
+      "H3: Email & Collaboration",
+      "H3: Cybersecurity Operations",
+      "H3: Network & Connectivity",
+      "H3: Backup & Business Continuity",
+      "H3: Compliance & Risk Readiness",
+      "H3: Security Awareness & Human Risk",
+      "H3: Business Communications",
+      "H3: Hardware & Lifecycle",
+      "H3: Documentation & Standards",
+      "H3: Technology Strategy & Advisory"
+    ]
+  },
+  {
+    "vp": "390",
+    "label": "family",
+    "url": "http://127.0.0.1:5000/store/solutions/identity-access",
+    "overflow": 0,
+    "height": 4769,
+    "viewports": 5.7,
+    "mainControls": 6,
+    "h1": [
+      "Identity & Access"
+    ],
+    "headings": [
+      "H1: Identity & Access",
+      "H2: Choose the operating relationship",
+      "H2: DE Co-Managed Identity Operations",
+      "H3: What this helps you achieve",
+      "H3: Pre-configured package",
+      "H3: Prerequisites",
+      "H3: Scoped separately",
+      "H3: Delivery & setup"
+    ]
+  },
+  {
+    "vp": "390",
+    "label": "workspace",
+    "url": "http://127.0.0.1:5000/store/solution",
+    "overflow": 0,
+    "height": 6851,
+    "viewports": 8.1,
+    "mainControls": 24,
+    "h1": [
+      "Build one complete solution"
+    ],
+    "headings": [
+      "H1: Build one complete solution",
+      "H2: Business profile",
+      "H2: What are we solving?",
+      "H3: Identity & Access",
+      "H2: How do you want to buy it?",
+      "H2: What is included?",
+      "H3: DE Co-Managed Identity Operations",
+      "H2: How should this be implemented?",
+      "H2: Save your progress",
+      "H2: Solution status"
+    ]
+  },
+  {
+    "vp": "390",
+    "label": "contact",
+    "url": "http://127.0.0.1:5000/solutions/request?intent=quote",
+    "overflow": 0,
+    "height": 3236,
+    "viewports": 3.8,
+    "mainControls": 2,
+    "h1": [
+      "Who should DE follow up with?"
+    ],
+    "headings": [
+      "H1: Who should DE follow up with?",
+      "H2: DE Co-Managed Identity Operations"
+    ]
+  },
+  {
+    "vp": "390",
+    "label": "confirmation",
+    "url": "http://127.0.0.1:5000/solutions/request?intent=quote",
+    "overflow": 0,
+    "height": 3046,
+    "viewports": 3.6,
+    "mainControls": 2,
+    "h1": [
+      "Who should DE follow up with?"
+    ],
+    "headings": [
+      "H1: Who should DE follow up with?",
+      "H2: DE Co-Managed Identity Operations",
+      "H2: Solution submitted"
+    ]
+  },
+  {
+    "vp": "390",
+    "label": "console/page errors",
+    "errors": [
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+      "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+      "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+    ]
+  },
+  {
+    "vp": "768",
+    "label": "index",
+    "url": "http://127.0.0.1:5000/store",
+    "overflow": 0,
+    "height": 6040,
+    "viewports": 5.9,
+    "mainControls": 52,
+    "h1": [
+      "Start with your business. Then solve what hurts."
+    ],
+    "headings": [
+      "H1: Start with your business. Then solve what hurts.",
+      "H2: Start with your business profile",
+      "H2: Pain or need",
+      "H2: Solution",
+      "H2: Package & delivery",
+      "H2: Contact",
+      "H2: What needs attention?",
+      "H3: IT Operations & Support",
+      "H3: Endpoint & Device Management",
+      "H3: Identity & Access",
+      "H3: Email & Collaboration",
+      "H3: Cybersecurity Operations",
+      "H3: Network & Connectivity",
+      "H3: Backup & Business Continuity",
+      "H3: Compliance & Risk Readiness",
+      "H3: Security Awareness & Human Risk",
+      "H3: Business Communications",
+      "H3: Hardware & Lifecycle",
+      "H3: Documentation & Standards",
+      "H3: Technology Strategy & Advisory"
+    ]
+  },
+  {
+    "vp": "768",
+    "label": "family",
+    "url": "http://127.0.0.1:5000/store/solutions/identity-access",
+    "overflow": 0,
+    "height": 3252,
+    "viewports": 3.2,
+    "mainControls": 6,
+    "h1": [
+      "Identity & Access"
+    ],
+    "headings": [
+      "H1: Identity & Access",
+      "H2: Choose the operating relationship",
+      "H2: DE Co-Managed Identity Operations",
+      "H3: What this helps you achieve",
+      "H3: Pre-configured package",
+      "H3: Prerequisites",
+      "H3: Scoped separately",
+      "H3: Delivery & setup"
+    ]
+  },
+  {
+    "vp": "768",
+    "label": "workspace",
+    "url": "http://127.0.0.1:5000/store/solution",
+    "overflow": 0,
+    "height": 5115,
+    "viewports": 5,
+    "mainControls": 24,
+    "h1": [
+      "Build one complete solution"
+    ],
+    "headings": [
+      "H1: Build one complete solution",
+      "H2: Business profile",
+      "H2: What are we solving?",
+      "H3: Identity & Access",
+      "H2: How do you want to buy it?",
+      "H2: What is included?",
+      "H3: DE Co-Managed Identity Operations",
+      "H2: How should this be implemented?",
+      "H2: Save your progress",
+      "H2: Solution status"
+    ]
+  },
+  {
+    "vp": "768",
+    "label": "contact",
+    "url": "http://127.0.0.1:5000/solutions/request?intent=quote",
+    "overflow": 0,
+    "height": 2356,
+    "viewports": 2.3,
+    "mainControls": 2,
+    "h1": [
+      "Who should DE follow up with?"
+    ],
+    "headings": [
+      "H1: Who should DE follow up with?",
+      "H2: DE Co-Managed Identity Operations"
+    ]
+  },
+  {
+    "vp": "768",
+    "label": "confirmation",
+    "url": "http://127.0.0.1:5000/solutions/request?intent=quote",
+    "overflow": 0,
+    "height": 2331,
+    "viewports": 2.3,
+    "mainControls": 2,
+    "h1": [
+      "Who should DE follow up with?"
+    ],
+    "headings": [
+      "H1: Who should DE follow up with?",
+      "H2: DE Co-Managed Identity Operations",
+      "H2: Solution submitted"
+    ]
+  },
+  {
+    "vp": "768",
+    "label": "console/page errors",
+    "errors": [
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+      "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+      "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+    ]
+  },
+  {
+    "vp": "1440",
+    "label": "index",
+    "url": "http://127.0.0.1:5000/store",
+    "overflow": 0,
+    "height": 4177,
+    "viewports": 4.6,
+    "mainControls": 52,
+    "h1": [
+      "Start with your business. Then solve what hurts."
+    ],
+    "headings": [
+      "H1: Start with your business. Then solve what hurts.",
+      "H2: Start with your business profile",
+      "H2: Pain or need",
+      "H2: Solution",
+      "H2: Package & delivery",
+      "H2: Contact",
+      "H2: What needs attention?",
+      "H3: IT Operations & Support",
+      "H3: Endpoint & Device Management",
+      "H3: Identity & Access",
+      "H3: Email & Collaboration",
+      "H3: Cybersecurity Operations",
+      "H3: Network & Connectivity",
+      "H3: Backup & Business Continuity",
+      "H3: Compliance & Risk Readiness",
+      "H3: Security Awareness & Human Risk",
+      "H3: Business Communications",
+      "H3: Hardware & Lifecycle",
+      "H3: Documentation & Standards",
+      "H3: Technology Strategy & Advisory"
+    ]
+  },
+  {
+    "vp": "1440",
+    "label": "family",
+    "url": "http://127.0.0.1:5000/store/solutions/identity-access",
+    "overflow": 0,
+    "height": 2583,
+    "viewports": 2.9,
+    "mainControls": 6,
+    "h1": [
+      "Identity & Access"
+    ],
+    "headings": [
+      "H1: Identity & Access",
+      "H2: Choose the operating relationship",
+      "H2: DE Co-Managed Identity Operations",
+      "H3: What this helps you achieve",
+      "H3: Pre-configured package",
+      "H3: Prerequisites",
+      "H3: Scoped separately",
+      "H3: Delivery & setup"
+    ]
+  },
+  {
+    "vp": "1440",
+    "label": "workspace",
+    "url": "http://127.0.0.1:5000/store/solution",
+    "overflow": 0,
+    "height": 3676,
+    "viewports": 4.1,
+    "mainControls": 24,
+    "h1": [
+      "Build one complete solution"
+    ],
+    "headings": [
+      "H1: Build one complete solution",
+      "H2: Business profile",
+      "H2: What are we solving?",
+      "H3: Identity & Access",
+      "H2: How do you want to buy it?",
+      "H2: What is included?",
+      "H3: DE Co-Managed Identity Operations",
+      "H2: How should this be implemented?",
+      "H2: Save your progress",
+      "H2: Solution status"
+    ]
+  },
+  {
+    "vp": "1440",
+    "label": "contact",
+    "url": "http://127.0.0.1:5000/solutions/request?intent=quote",
+    "overflow": 0,
+    "height": 1957,
+    "viewports": 2.2,
+    "mainControls": 2,
+    "h1": [
+      "Who should DE follow up with?"
+    ],
+    "headings": [
+      "H1: Who should DE follow up with?",
+      "H2: DE Co-Managed Identity Operations"
+    ]
+  },
+  {
+    "vp": "1440",
+    "label": "confirmation",
+    "url": "http://127.0.0.1:5000/solutions/request?intent=quote",
+    "overflow": 0,
+    "height": 1933,
+    "viewports": 2.1,
+    "mainControls": 2,
+    "h1": [
+      "Who should DE follow up with?"
+    ],
+    "headings": [
+      "H1: Who should DE follow up with?",
+      "H2: DE Co-Managed Identity Operations",
+      "H2: Solution submitted"
+    ]
+  },
+  {
+    "vp": "1440",
+    "label": "console/page errors",
+    "errors": [
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+      "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID",
+      "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+      "Failed to load resource: net::ERR_CERT_AUTHORITY_INVALID"
+    ]
+  }
+]

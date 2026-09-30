@@ -3,7 +3,8 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { DE_LOGO_PRIMARY, DE_LOGO_REVERSE, DE_MARK, DE_MARK_TILE } from '@/lib/brandAssets';
 
-const LEGACY_LOGO = 'DE-Logo-new_1762461524794.webp';
+// Split so this test file itself is not flagged as a legacy-logo offender.
+const LEGACY_LOGO = ['DE-Logo-new_', '1762461524794', '.webp'].join('');
 const SOURCE_ROOT = path.resolve(process.cwd(), 'client/src');
 
 function sourceFiles(dir: string): string[] {

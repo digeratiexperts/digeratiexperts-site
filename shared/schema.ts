@@ -283,6 +283,18 @@ export const publicCatalogSnapshots = pgTable("public_catalog_snapshots", {
   publishedAt: timestamp("published_at").defaultNow().notNull(),
 });
 
+/** Hub-owned entity state projected for the portal. Key is entityType:entityId. */
+export const syncProjections = pgTable("sync_projections", {
+  id: varchar("id").primaryKey(),
+  entityType: text("entity_type").notNull(),
+  entityId: text("entity_id").notNull(),
+  canonicalAccountId: varchar("canonical_account_id"),
+  eventType: text("event_type").notNull(),
+  eventId: varchar("event_id").notNull(),
+  payload: jsonb("payload").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+});
+
 /** Client departments — optional Dept IT Contact per department */
 export const portalDepartments = pgTable("portal_departments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

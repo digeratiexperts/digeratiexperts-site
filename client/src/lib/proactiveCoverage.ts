@@ -22,7 +22,8 @@ export function categoryLayer(categoryId: string): CoverageTier | "always" {
     case "backup":
       return "office";
     case "security-ops":
-      return "business";
+      // Security is foundational in every ProActive tier; higher tiers add depth.
+      return "it";
     case "compliance-strategy":
       return "enterprise";
     default:

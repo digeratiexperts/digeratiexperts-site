@@ -27,7 +27,25 @@ describe("homepage versions registry", () => {
       .filter((d) => d.isDirectory() && /^v\d+$/.test(d.name))
       .map((d) => Number(d.name.slice(1)));
     for (const n of folders) {
-      expect(HOMEPAGE_VERSIONS.some((v) => v.n === n && v.kind === "react"), `v${n} folder is not registered`).toBe(true);
+      // A version folder belongs to a frozen snapshot or to a live build. It
+      // may not be unregistered either way.
+      expect(
+        HOMEPAGE_VERSIONS.some((v) => v.n === n && (v.kind === "react" || v.kind === "build")),
+        `v${n} folder is not registered`,
+      ).toBe(true);
+    }
+  });
+
+  it("gives every live build a folder, and never freezes one", () => {
+    for (const v of HOMEPAGE_VERSIONS.filter((x) => x.kind === "build")) {
+      const dir = path.join(here, `v${v.n}`);
+      expect(existsSync(dir), `${v.path} build folder missing`).toBe(true);
+      // A build under development must not be carrying the frozen-snapshot
+      // marker: that marker is what tells everyone else not to edit the file.
+      const frozen = path.join(dir, "DigeratiHomepage.tsx");
+      if (existsSync(frozen)) {
+        expect(readFileSync(frozen, "utf8").startsWith("// FROZEN")).toBe(false);
+      }
     }
   });
 

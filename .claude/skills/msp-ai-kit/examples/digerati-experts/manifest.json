@@ -1,0 +1,232 @@
+{
+  "builder": "1.2.0",
+  "kitVersion": "1.1.0",
+  "profile": "digerati-experts",
+  "configHash": "6d7eca01db38",
+  "modules": [
+    {
+      "id": "security-alert-triage",
+      "title": "Security alert triage (MSSP)",
+      "area": "security",
+      "priority": 5,
+      "command": "/alert",
+      "hasExample": true
+    },
+    {
+      "id": "incident-comms",
+      "title": "Incident response communications",
+      "area": "security",
+      "priority": 8,
+      "command": "/incident",
+      "hasExample": true
+    },
+    {
+      "id": "service-desk-triage",
+      "title": "Service desk ticket triage",
+      "area": "operations",
+      "priority": 10,
+      "command": "/triage",
+      "hasExample": true
+    },
+    {
+      "id": "sla-escalation",
+      "title": "SLA monitoring and escalation",
+      "area": "operations",
+      "priority": 15,
+      "command": "/sla",
+      "hasExample": true
+    },
+    {
+      "id": "vulnerability-prioritization",
+      "title": "Vulnerability prioritization and remediation",
+      "area": "security",
+      "priority": 20,
+      "command": "/vuln",
+      "hasExample": true
+    },
+    {
+      "id": "scripting-bash-powershell",
+      "title": "Bash and PowerShell scripting for RMM deployment",
+      "area": "engineering",
+      "priority": 25,
+      "command": "/script",
+      "hasExample": true
+    },
+    {
+      "id": "endpoint-provisioning",
+      "title": "Endpoint provisioning and identity migration engine",
+      "area": "engineering",
+      "priority": 28,
+      "command": "/provision",
+      "hasExample": true
+    },
+    {
+      "id": "client-onboarding",
+      "title": "Client onboarding workflow",
+      "area": "operations",
+      "priority": 30,
+      "command": "/onboard",
+      "hasExample": true
+    },
+    {
+      "id": "compliance-mapping",
+      "title": "Compliance mapping and evidence",
+      "area": "security",
+      "priority": 35,
+      "command": "/comply",
+      "hasExample": true
+    },
+    {
+      "id": "kb-articles",
+      "title": "Knowledge base articles",
+      "area": "operations",
+      "priority": 40,
+      "command": "/kb",
+      "hasExample": true
+    },
+    {
+      "id": "client-comms",
+      "title": "Client communication templates",
+      "area": "operations",
+      "priority": 45,
+      "command": "/comms",
+      "hasExample": true
+    },
+    {
+      "id": "proposals-sow",
+      "title": "Proposals and statements of work",
+      "area": "sales",
+      "priority": 50,
+      "command": "/sow",
+      "hasExample": true
+    },
+    {
+      "id": "business-dev-roi",
+      "title": "Business development and ROI analysis",
+      "area": "sales",
+      "priority": 55,
+      "command": "/roi",
+      "hasExample": true
+    },
+    {
+      "id": "qbr-metrics",
+      "title": "QBRs and monthly metrics",
+      "area": "sales",
+      "priority": 60,
+      "command": "/qbr",
+      "hasExample": true
+    }
+  ],
+  "core": [
+    "profile",
+    "guardrails"
+  ],
+  "targets": {
+    "chatgpt-custom-instructions": {
+      "budget": 1500,
+      "blockA": 1226,
+      "blockB": 1481,
+      "dropped": []
+    },
+    "custom-gpt-instructions": {
+      "budget": 8000,
+      "chars": 7889,
+      "dropped": [
+        "security-alert-triage",
+        "incident-comms",
+        "service-desk-triage",
+        "sla-escalation",
+        "vulnerability-prioritization",
+        "scripting-bash-powershell",
+        "endpoint-provisioning",
+        "client-onboarding",
+        "compliance-mapping",
+        "kb-articles",
+        "client-comms",
+        "proposals-sow",
+        "business-dev-roi",
+        "qbr-metrics"
+      ],
+      "removed": [],
+      "levels": {
+        "security-alert-triage": "brief",
+        "incident-comms": "brief",
+        "service-desk-triage": "brief",
+        "sla-escalation": "brief",
+        "vulnerability-prioritization": "brief",
+        "scripting-bash-powershell": "line",
+        "endpoint-provisioning": "line",
+        "client-onboarding": "line",
+        "compliance-mapping": "line",
+        "kb-articles": "line",
+        "client-comms": "line",
+        "proposals-sow": "line",
+        "business-dev-roi": "line",
+        "qbr-metrics": "line"
+      }
+    },
+    "claude-project-instructions": {
+      "budget": 80000,
+      "chars": 66287,
+      "dropped": []
+    },
+    "agent-instructions": {
+      "chars": 21468,
+      "dropped": []
+    },
+    "cursor-rule": {
+      "chars": 21595,
+      "dropped": []
+    },
+    "copilot-instructions": {
+      "chars": 21566,
+      "dropped": []
+    },
+    "prompt-library": {
+      "chars": 71107,
+      "dropped": []
+    },
+    "prompt-files": {
+      "count": 14
+    },
+    "reference-files": {
+      "count": 1
+    },
+    "cheat-sheet": {
+      "chars": 18750
+    },
+    "claude-skill-zip": {
+      "bytes": 104221,
+      "entries": 3
+    }
+  },
+  "slaConfirmed": false,
+  "files": {
+    "INDEX.md": "98449a3c6d376444ebc1a6358d55aeb16582d86d13137b27b0fb2e1038f275e2",
+    "chatgpt-custom-instructions.md": "3efa2abce26ccb2c71f412d30873ee9bf3b0e7c52cc2d206762995f39201bdb0",
+    "custom-gpt-instructions.md": "8a8b0dc974d1b8844b6713d5e3613a8b3a1600bbfd71345584368eab772e2b1c",
+    "claude-project-instructions.md": "5868f7198daa19db1192f0416cbce3bae2a1c37899795596382b5e1e301eda2c",
+    "agent-instructions.md": "52178993fd35485d7b30627cadc6176071f41e671d28cd8af4eb027f40744397",
+    "cursor/msp-ai-kit.mdc": "4c51bd4e5ea410b59d7780eb4d325df7c1433d5cf88b3ffb372c292291ba59fa",
+    "copilot-instructions.md": "4ea8af5dfe32ef0234fdce7ccec3998e5d2169221be06fd07c680b6f87f5c844",
+    "prompt-library.md": "d41ebfbf823d53010c29235c4fcf23e2f72bf4aca3224e08a3920ab3d0703e27",
+    "prompts/security-alert-triage.md": "09c19f0d0ca0346db706f2e7c146796e93a73f3142a98b144c8fe7a2c35e3ab1",
+    "prompts/incident-comms.md": "87083db3892e809233c7fc23f62fdaf728a1bc8989ce8d10f22efec03c67fd4b",
+    "prompts/service-desk-triage.md": "b283993a01e8a45e6b76f3c5907fd5e2be19fb53f84bcccfff63ec0b4e74a4ba",
+    "prompts/sla-escalation.md": "df046365eedbea14ec662e0bb6dd39fe66c1ef3ebdae18df61e1b246dfd84a33",
+    "prompts/vulnerability-prioritization.md": "8aed0ff0d4ef227e4ef9b8ef1a21668ece49cc18c7658cc014e5aa3f73b45016",
+    "prompts/scripting-bash-powershell.md": "f9f41e200e521d599f13ed3780683ff59fb15a3b297ff89d6b4e2d8a55903b04",
+    "prompts/endpoint-provisioning.md": "a5c9f48ca946658e46e84d0d8d40352aa5ff8a00a21740451e82877641315258",
+    "prompts/client-onboarding.md": "1ac26ee1c51951e6321bfa1d21915197227614f587b42a4bb564bb9643e90ce4",
+    "prompts/compliance-mapping.md": "50aaf9ea590d446f50c6b7e5a596c9be43922a65f4c5762b4c2bdfbe992486f8",
+    "prompts/kb-articles.md": "02e42e7e4bb755be4f9874981ceab4348275e693437a1f9cc277c1d025b5ed79",
+    "prompts/client-comms.md": "2cecbe93b2af83aec0134f12d16d3e3485bc432575d9e79af03eb51210f56fa5",
+    "prompts/proposals-sow.md": "95692d2345122aec49a53fc1ed7c459f19050c6aeb1254b8173226dff061b649",
+    "prompts/business-dev-roi.md": "e29bc19a7abd0529afa44641ed30186aed235606e3c14f850cbd925e0c39ea08",
+    "prompts/qbr-metrics.md": "4dfd326dd7b9ad3943983f70234ae6260102480142aaa7f7c9b99b236ca858a3",
+    "references/de-scripting-msp-skill-pack.md": "631562fd2c07730962a57d57053f84975a843797572fc59452bf305ecf0ecdd8",
+    "cheat-sheet.html": "cf658d6eb45c66cc4c0d50c01fb779c88b3fb332d6bd541e90fd0c35e394f08c",
+    "msp-ai-kit-claude-skill.zip": "3cc02bcbeb3bc1c8884f0bdde6540299c0e7f421c330d0ebd0fdd2bbfb3f57c9"
+  },
+  "warnings": []
+}

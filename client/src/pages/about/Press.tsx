@@ -95,22 +95,22 @@ export default function Press() {
           <h2 className="text-2xl font-semibold text-white">Linkable resources</h2>
           <ul className="list-disc space-y-2 pl-5 text-white/80">
             <li>
-              <Link href="/resources/case-studies" className="text-de-accent-ink hover:underline">
+              <Link href="/resources/case-studies" className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
                 Case studies
               </Link>
             </li>
             <li>
-              <Link href="/resources/blog" className="text-de-accent-ink hover:underline">
+              <Link href="/resources/blog" className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
                 Security & IT blog
               </Link>
             </li>
             <li>
-              <Link href="/trust/trust-center" className="text-de-accent-ink hover:underline">
+              <Link href="/trust/trust-center" className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
                 Trust center
               </Link>
             </li>
             <li>
-              <Link href="/book" className="text-de-accent-ink hover:underline">
+              <Link href="/book" className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
                 Free risk assessment
               </Link>
             </li>
@@ -121,7 +121,7 @@ export default function Press() {
           <h2 className="text-2xl font-semibold text-white">Media contact</h2>
           <p className="text-white/75">
             Interview and citation requests:{" "}
-            <a className="text-de-accent-ink hover:underline" href={`mailto:${NAP.email}?subject=Media%20inquiry`}>
+            <a className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink" href={`mailto:${NAP.email}?subject=Media%20inquiry`}>
               {NAP.email}
             </a>{" "}
             · {NAP.phone}

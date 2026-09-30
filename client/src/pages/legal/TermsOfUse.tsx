@@ -102,7 +102,7 @@ export default function TermsOfUse() {
               </h2>
               
               <h3 className="text-2xl font-semibold text-white mb-3 mt-6">4.1 Response Times</h3>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink" tabIndex={0} role="region" aria-label="Service terms table">
                 <table className="min-w-full border border-de-hairline bg-de-raised rounded-lg">
                   <thead className="bg-white/10">
                     <tr>

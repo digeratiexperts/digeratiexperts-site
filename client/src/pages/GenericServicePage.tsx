@@ -385,7 +385,7 @@ export default function GenericServicePage({
           <h2 className="mb-4 font-heading text-3xl font-semibold text-white md:text-4xl">
             {narrative?.ctaHeadline || "Schedule your cyber risk assessment"}
           </h2>
-          <p className="mx-auto mb-8 max-w-2xl text-lg text-white/90 md:text-xl">
+          <p className="mx-auto mb-8 max-w-2xl text-lg text-white md:text-xl">
             {narrative?.ctaBody ||
               "We’ll map risk, stack gaps, and the right next step for your Arizona business — without a hard sell."}
           </p>

@@ -60,7 +60,7 @@ export default function ThankYouSuccess() {
               Thank you for your interest. Click below to book a time that works for you.
               <br />
               Call our office at{" "}
-              <a href={PRIMARY_PHONE.telHref} className="text-de-accent-ink hover:underline">
+              <a href={PRIMARY_PHONE.telHref} className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
                 {PRIMARY_PHONE.display}
               </a>{" "}
               if you have any questions.
@@ -69,15 +69,15 @@ export default function ThankYouSuccess() {
             <div className={`mx-auto mb-6 max-w-sm p-6 text-left ${insetClass}`}>
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-white/80">
-                  <Clock className="h-4 w-4 text-white/45" aria-hidden="true" />
+                  <Clock className="h-4 w-4 text-white/55" aria-hidden="true" />
                   <span className="text-sm">30 Minutes</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/80">
-                  <Video className="h-4 w-4 text-white/45" aria-hidden="true" />
+                  <Video className="h-4 w-4 text-white/55" aria-hidden="true" />
                   <span className="text-sm">Video Conference or Phone Call</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/80">
-                  <MapPin className="h-4 w-4 text-white/45" aria-hidden="true" />
+                  <MapPin className="h-4 w-4 text-white/55" aria-hidden="true" />
                   <span className="text-sm">America/Phoenix (MST)</span>
                 </div>
               </div>
