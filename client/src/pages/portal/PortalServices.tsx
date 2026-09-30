@@ -22,7 +22,7 @@ export default function PortalServices() {
   });
 
   return (
-    <PortalLayout title="My Services">
+    <PortalLayout title="My Services" description="The services and subscriptions DE currently runs for you.">
       <div className="space-y-6">
         {/* Error State */}
         {isError && (
@@ -32,14 +32,6 @@ export default function PortalServices() {
             </p>
           </div>
         )}
-
-        {/* Header */}
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold">My Services</h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            View and manage your active services
-          </p>
-        </div>
 
         {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

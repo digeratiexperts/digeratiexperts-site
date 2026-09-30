@@ -77,15 +77,10 @@ export function AdminLifecycle() {
   const bp = data?.status.blackpoint;
 
   return (
-    <PortalLayout title="Onboard / Offboard">
+    <PortalLayout title="Onboard / Offboard" description="API-connected onboarding and offboarding for the directory (JumpCloud) and MDR (Blackpoint Cyber).">
       <div className="space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">JumpCloud + Blackpoint lifecycle</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              API-connected onboard and offboard for directory (JumpCloud) and MDR (Blackpoint Cyber).
-            </p>
-          </div>
+          <div />
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching}>
               <RefreshCw className={`h-4 w-4 mr-1 ${isFetching ? "animate-spin" : ""}`} />

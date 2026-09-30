@@ -553,10 +553,6 @@ export function PortalAdvancedForms() {
     if (!selectedTemplate) {
       return (
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold">Service Request Forms</h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Select a form template to submit your request. Submissions create a support ticket for the DE team.
-          </p>
 
           <div className="grid gap-4 md:grid-cols-2">
             {formTemplates.map((template) => (
@@ -827,5 +823,9 @@ export function PortalAdvancedForms() {
     );
   };
 
-  return <PortalLayout title="Request Forms">{renderContent()}</PortalLayout>;
+  return (
+    <PortalLayout title="Request Forms" description="Pick a form and submit your request. Each submission creates a ticket for the DE team, routed for approval where needed.">
+      {renderContent()}
+    </PortalLayout>
+  );
 }

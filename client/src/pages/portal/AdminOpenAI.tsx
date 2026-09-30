@@ -104,14 +104,8 @@ export function AdminOpenAI() {
   const anyLoading = statusLoading || toggleMutation.isPending || enableMutation.isPending || disableMutation.isPending;
 
   return (
-    <PortalLayout title="OpenAI Billing Control">
+    <PortalLayout title="OpenAI Billing Control" description="Manage OpenAI API usage and the billing kill switch.">
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">OpenAI Integration</h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">Manage OpenAI API usage and billing</p>
-        </div>
-
         {/* Status Card */}
         <Card className="border-l-4" style={{ borderLeftColor: isEnabled ? "#10b981" : "#ef4444" }}>
           <CardHeader>

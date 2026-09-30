@@ -45,7 +45,7 @@ export default function PortalInvoices() {
   };
 
   return (
-    <PortalLayout title="Invoices">
+    <PortalLayout title="Invoices" description="View, download and pay your invoices.">
       <div className="space-y-6">
         {/* Error State */}
         {isError && (
@@ -64,14 +64,6 @@ export default function PortalInvoices() {
             </p>
           </div>
         )}
-
-        {/* Header */}
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold">Invoices</h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            View and download your invoices
-          </p>
-        </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

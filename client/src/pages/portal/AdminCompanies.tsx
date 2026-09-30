@@ -189,13 +189,10 @@ export function AdminCompanies() {
   };
 
   return (
-    <PortalLayout title="Manage Companies">
+    <PortalLayout title="Manage Companies" description="View and manage every client company in the portal, and open any of them as that company." titleTestId="text-page-title">
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white" data-testid="text-page-title">Manage Companies</h2>
-          <p className="text-slate-600 dark:text-slate-400">View and manage all client companies in the portal</p>
-        </div>
+        <div />
         
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>

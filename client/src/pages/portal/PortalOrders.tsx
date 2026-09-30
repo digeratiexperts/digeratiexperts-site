@@ -135,7 +135,7 @@ export default function PortalOrders() {
   const hubCount = data?.hubOrders?.length || 0;
 
   return (
-    <PortalLayout title="Order History">
+    <PortalLayout title="Order History" description={`Store purchases and TechSales deals and quotes${data?.companyName ? ` for ${data.companyName}` : ""}.`}>
       <div className="space-y-6">
         {isError && (
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-lg">
@@ -146,13 +146,7 @@ export default function PortalOrders() {
         )}
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-bold">Order History</h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              Store purchases and TechSales deals/quotes
-              {data?.companyName ? ` for ${data.companyName}` : ""}
-            </p>
-          </div>
+          <div />
           <div className="flex flex-wrap items-center gap-3">
             <Select value={sourceFilter} onValueChange={setSourceFilter}>
               <SelectTrigger className="w-[160px]" aria-label="Filter orders by source" data-testid="select-source-filter">

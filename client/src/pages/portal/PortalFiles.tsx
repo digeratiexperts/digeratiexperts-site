@@ -52,17 +52,8 @@ export default function PortalFiles() {
   }, {} as Record<string, TenantFile[]>);
 
   return (
-    <PortalLayout title="Files & Downloads">
+    <PortalLayout title="Files & Downloads" description={`Software, agents and documents DE prepared for ${companyName}.`} titleTestId="text-files-title">
       <div className="space-y-6">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white" data-testid="text-files-title">
-            Your Files
-          </h2>
-          <p className="text-slate-600 dark:text-slate-400">
-            Download software, agents, and documents configured specifically for {companyName}
-          </p>
-        </div>
-
         {isError && (
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-lg">
             <p className="text-sm text-red-800 dark:text-red-300">

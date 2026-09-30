@@ -37,7 +37,7 @@ export default function PortalKB() {
   });
 
   return (
-    <PortalLayout title="Knowledge Base">
+    <PortalLayout title="Knowledge Base" description="Answers to common questions and how-to guides for the services DE manages for you.">
       <div className="space-y-6">
         {/* Error State */}
         {isError && (
@@ -47,14 +47,6 @@ export default function PortalKB() {
             </p>
           </div>
         )}
-
-        {/* Header */}
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold">Knowledge Base</h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Find answers to common questions and learn how to use our services
-          </p>
-        </div>
 
         {/* Search */}
         <div className="relative">
