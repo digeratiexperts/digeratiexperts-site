@@ -43,7 +43,7 @@ claims:
       - client/src/pages/phoneNumberNowrap.test.ts
       - client/src/pages/sections/phoneTapTargets.test.ts (the threat-feed arrows test)
       - artifacts/visual-qa/phone-number-and-arrows/**
-    status: active
+    status: verified-live
     started: 2026-10-01
     note: >-
       Follow-up to PR 322 after Joe's "continue". Measured on a production
@@ -56,6 +56,13 @@ claims:
       changes. Overlap: claude-completion-program-lane lists two of these
       files, but its branch stack's PRs (219, 220, 221) are closed and no open
       PR comes from claude/c8-cross-surface.
+      RELEASED 2026-10-01: merged as PR 323 (bc26ac0f) at 15:20Z and verified
+      live at 15:28Z: production release.txt bc26ac0f, deploy run green,
+      /healthz 200, and the served code carries the whitespace-nowrap span
+      beside the phone number in the live homepage, nonprofits and real estate
+      chunks, and z-20 w-11 h-11 rounded-full twice in the live homepage's
+      threat-feed chunk with none of the 40px class left there (only the frozen
+      v1 and v3 chunks keep it).
   - id: de-phone-tap-targets
     owner: claude
     subsystem: homepage
@@ -67,7 +74,7 @@ claims:
       - client/src/pages/sections/DigeratiIndustriesSection.tsx (the two slider arrows' size only)
       - client/src/pages/sections/phoneTapTargets.test.ts
       - artifacts/visual-qa/phone-tap-targets/**
-    status: active
+    status: verified-live
     started: 2026-10-01
     note: >-
       Joe, 2026-10-01: "the phone is the failure", then "continue". The phone
@@ -77,6 +84,13 @@ claims:
       24px and the industry slider arrows at 40px. Classes only: no copy, link,
       route, form behaviour or test id changes; desktop page and footer heights
       unchanged (17,185px and 622px at 1440).
+      RELEASED 2026-10-01: merged as PR 322 (bdb9c3a2) at 15:00Z and verified
+      live at 15:04Z: production release.txt bdb9c3a2, deploy run green,
+      /healthz 200, and production serves entry bundle index-CkUjdLFU.js, the
+      same hash as the build of the merged tree that was measured at 390 (email
+      field 350x44, trust links 44px, slider arrows 44x44, no overlap or
+      overflow) and at 1440 (page 17,185px as before). The served code carries
+      h-11 min-h-11 min-w-0, max-md:min-h-11 and z-20 w-11 h-11 rounded-full.
   - id: de-desk-status-auth-reason
     owner: claude
     subsystem: de-desk
@@ -86,7 +100,7 @@ claims:
       - server/widgetTicketRoute.ts (the status probe's reason and log line only)
       - server/widgetTicketRoute.test.ts (the status reason tests)
       - deploy/vps/env.production.example (the website Desk/CRM variables)
-    status: active
+    status: verified-live
     started: 2026-10-01
     note: >-
       Follow-up to PR 303 and PR 313 after Joe's "continue". Production's Desk
@@ -96,6 +110,12 @@ claims:
       classification, no upstream text) and "unavailable" for network or
       server failures. The env template gains the variables the website's Desk
       client actually reads, which it never listed.
+      RELEASED 2026-10-01: merged as PR 321 (8e514762) at 14:48Z and verified
+      live at 14:52Z: production release.txt 8e514762, deploy run green
+      including its production runtime verification, /healthz 200, and
+      /api/zoho/desk/status answering 200 with connected true and Cache-Control
+      no-store once the Desk token was replaced. The auth_failed path is proven
+      by its tests; it cannot be seen live while the Desk is connected.
   - id: de-desk-reliability-followup
     issue: 291
     owner: codex
