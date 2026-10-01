@@ -2,6 +2,7 @@ import express from "express";
 import { createServer, type Server } from "http";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { PRIMARY_PHONE } from "@shared/companyContact";
+import { ZohoOAuthError } from "./zoho/zohoOAuthErrors";
 
 /**
  * The production failure this guards, seen 2026-09-30 in the DE Desk "Get
@@ -209,6 +210,36 @@ describe("DE Desk widget ticket route", () => {
   });
 
   describe("desk status probe", () => {
+    it("keeps cached failures at 503 and does not let intermediaries cache them", async () => {
+      getDeskClient.mockRejectedValueOnce(new Error("Failed to refresh Zoho Desk access token"));
+      for (let i = 0; i < 2; i++) {
+        const response = await fetch(`${baseUrl}/api/zoho/desk/status`);
+        expect(response.status).toBe(503);
+        expect(response.headers.get("cache-control")).toBe("no-store");
+        expect(await response.json()).toMatchObject({ connected: false, cached: i === 1 });
+      }
+      expect(getDeskClient).toHaveBeenCalledTimes(1);
+    });
+
+    it("shares one in-flight probe across simultaneous requests", async () => {
+      let release!: (value: unknown) => void;
+      const get = vi.fn(() => new Promise(resolve => { release = resolve; }));
+      getDeskClient.mockResolvedValueOnce({ get });
+      const requests = Array.from({ length: 5 }, () => fetch(`${baseUrl}/api/zoho/desk/status`));
+      await vi.waitFor(() => expect(get).toHaveBeenCalledTimes(1));
+      release({ data: { data: [{ id: "org" }] } });
+      const responses = await Promise.all(requests);
+      expect(responses.every(r => r.status === 200)).toBe(true);
+      await Promise.all(responses.map(r => r.json()));
+      expect(getDeskClient).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not claim connectivity for an empty organization response", async () => {
+      getDeskClient.mockResolvedValueOnce({ get: vi.fn(async () => ({ data: { data: [] } })) });
+      const response = await fetch(`${baseUrl}/api/zoho/desk/status`);
+      expect(response.status).toBe(503);
+      expect(await response.json()).toMatchObject({ connected: false });
+    });
     it("is connected when an authenticated Desk read succeeds", async () => {
       getDeskClient.mockResolvedValueOnce({ get: vi.fn(async () => ({ data: { data: [{ id: 641745124 }] } })) });
 
@@ -244,5 +275,41 @@ describe("DE Desk widget ticket route", () => {
       expect(body.reason).toBe("not_configured");
       expect(getDeskClient).not.toHaveBeenCalled();
     });
+  });
+
+  it("preserves #290's typed invalid_code failure on #289's extracted route", async () => {
+    createTicket.mockRejectedValueOnce(new ZohoOAuthError({
+      message: "No access token in Zoho Desk response", product: "desk",
+      code: "invalid_refresh_token", zohoError: "invalid_code",
+    }));
+    const result = await post(validTicket);
+    expect(result.status).toBe(503);
+    expect(result.body).toMatchObject({ success: false, code: "desk_auth_unavailable" });
+    expect(result.body).not.toHaveProperty("zohoTicketId");
+  });
+
+  it.each([
+    { subject: "   " }, { description: {} }, { subject: ["Printer"] },
+    { email: ["visitor@example.com"] }, { priority: "Emergency" },
+    { name: "x".repeat(201) }, { sessionId: {} }, { description: "x".repeat(5001) },
+  ])("rejects malformed public input %j without calling Zoho", async (bad) => {
+    expect((await post({ ...validTicket, ...bad })).status).toBe(400);
+    expect(createTicket).not.toHaveBeenCalled();
+  });
+
+  it("accepts the support form's Critical priority as Desk Urgent", async () => {
+    createTicket.mockResolvedValueOnce({ id: "desk-123" });
+    expect((await post({ ...validTicket, priority: "Critical" })).status).toBe(200);
+    expect(createTicket).toHaveBeenCalledWith(expect.objectContaining({ priority: "Urgent" }));
+  });
+
+  it.each([429, 500, 503])("reports upstream %i as unavailable", async (status) => {
+    createTicket.mockRejectedValueOnce({ response: { status } });
+    expect((await post(validTicket)).status).toBe(503);
+  });
+
+  it("uses the real Desk id as a reference when no ticket number is returned", async () => {
+    createTicket.mockResolvedValueOnce({ id: "desk-123" });
+    expect((await post(validTicket)).body.ticketNumber).toBe("desk-123");
   });
 });
