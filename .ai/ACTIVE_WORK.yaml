@@ -30,6 +30,25 @@
 
 version: 2
 claims:
+  - id: de-homepage-section-mockups
+    owner: claude
+    subsystem: homepage-design-concepts
+    branch: claude/sleepy-archimedes-mccoav
+    base_sha: 8fc5524907dc3fe450c9ba32b7c852a4b5ac4354
+    files:
+      - artifacts/design-concepts/homepage-sections-2026-10/**
+    status: active
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: "can you mock up every section on the live
+      Digeratiexperts.com homepage and make it look how it should look. just
+      give images of your version for each section in order." Exploration Mode
+      scoped to static mockups: one standalone HTML mock and one 1440px PNG
+      per live section in live order, built on the Tier 2 tokens, every string
+      from the transcribed content inventory, the live threat feed captured
+      2026-10-01, the founder photo as the only photograph. No client/ files;
+      production / untouched. Overlap check: PR 298 (issue 296) rewrites the
+      live homepage sections in client/; this lane does not touch them.
   - id: de-deck-reserve-clears-nudge
     owner: claude
     subsystem: homepage-protection-model
