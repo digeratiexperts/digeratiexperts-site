@@ -109,7 +109,7 @@ claims:
     base_sha: 74535d76e9dacade78e4f3eedd4da9651745d3b4
     files:
       - client/src/components/ExitIntentPopup.tsx
-    status: active
+    status: verified-live
     started: 2026-09-30
     note: >-
       Joe, 2026-09-30, on the exit-intent popup: "we dont like popups but this
@@ -122,6 +122,11 @@ claims:
       Promises only what /api/newsletter does (lead + human follow-up); no
       timeline, no "yours to keep" (both unconfirmed in docs/CLAIMS-REGISTER.md).
       Every data-testid and the analytics calls are unchanged.
+      RELEASED 2026-10-01: Joe marked PR 295 ready for review and merged it
+      (a87991c). VERIFIED LIVE 05:14 UTC: https://digeratiexperts.com serves
+      assets/index-vU6_N9GK.js carrying the new headline and none of the old
+      copy; the CI deploy run for a87991c completed. Files released.
+
   - id: store-experience-v2
     owner: claude
     subsystem: public-store-door2
