@@ -1,0 +1,26 @@
+﻿# >>> DE token-discipline (managed; edit in DE\Governance\repo-kit) >>>
+# DE token-discipline: generated output and bulky binaries only.
+# Deliberately NOT ignored: lockfiles (dependency/security work), migrations, schemas,
+# manifests, config, security policy, deployment config, source images (asset inventory).
+node_modules/
+.next/
+.turbo/
+.cache/
+dist/
+build/
+out/
+coverage/
+playwright-report/
+test-results/
+blob-report/
+**/*.log
+**/*.tmp
+**/*.map
+**/Evidence/
+**/screenshots/
+**/*.mp4
+**/*.mov
+**/*.webm
+**/*.7z
+**/*.bundle
+# <<< DE token-discipline (managed) <<<
