@@ -529,6 +529,37 @@ claims:
       catalogs are empty). Overlaps only this owner's older
       de-site-v2-scrollcraft claim on client/src/pages/versions/**; the v1
       and v3 snapshots there stay frozen. Zero kie.ai spend.
+  - id: de-homepage-v6-sections
+    owner: claude
+    subsystem: homepage-v6
+    branch: claude/homepage-v6-sections
+    base_sha: 7f4cff10b00fbe3e55279989c605b16794363460
+    files:
+      - client/src/pages/versions/v6/**
+      - client/src/App.tsx (the /version-6 route only)
+      - client/src/pages/versions/registry.ts (the v6 entry only)
+      - client/src/pages/versions/README.md (the v6 row only)
+      - server/spaKnownPaths.ts (the /version-6 entry only)
+      - server/spaKnownPaths.test.ts (the version list only)
+      - scripts/qa/homepage-v5-acceptance.mjs (the scope, sections, limits and facts arguments; Version 5 defaults unchanged)
+      - docs/CLAIMS-REGISTER.md (the Version 6 section only)
+      - artifacts/visual-qa/homepage-v6/**
+    status: active
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: "can you mock up every section on the live
+      Digeratiexperts.com homepage and make it look how it should look", then
+      "continue". Eighteen section mockups were delivered first; this claim
+      builds them as the noindex /version-6 preview: the live homepage's
+      sections in the live order, on the Version 5 system, every fact read
+      from the file that already carries it (pricing.ts, cyberAwarenessFacts.ts,
+      the command deck's protectionDomains, the SLA page, companyContact.ts,
+      the published FAQ, the live reviews and threat feeds), no generated or
+      stock imagery, one action, no animation. Production / is untouched;
+      replacing it is Joe's decision and a separate claim. Same owner as the
+      de-homepage-v5-practical claim; the shared files (App.tsx, registry,
+      README, spaKnownPaths, the acceptance script) get additive edits only.
+      No kie.ai spend.
 # de-homepage-v5-practical (branch claude/homepage-v5-practical) RETIRED
 # 2026-10-01: merged via PR #292 (squash f202cc23) at 01:58Z. The run's "Deploy
 # and verify production VPS" job succeeded including the production runtime
