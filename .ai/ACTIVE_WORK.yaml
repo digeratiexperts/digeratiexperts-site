@@ -30,6 +30,27 @@
 
 version: 2
 claims:
+  - id: de-phone-tap-targets
+    owner: claude
+    subsystem: homepage
+    branch: claude/phone-tap-targets
+    base_sha: df4ab2ae
+    files:
+      - client/src/pages/sections/DigeratiEnhancedFooterSection.tsx (the newsletter field and FooterLink classes only)
+      - client/src/pages/sections/DigeratiTestimonialsSection.tsx (the four trust links' classes only)
+      - client/src/pages/sections/DigeratiIndustriesSection.tsx (the two slider arrows' size only)
+      - client/src/pages/sections/phoneTapTargets.test.ts
+      - artifacts/visual-qa/phone-tap-targets/**
+    status: active
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: "the phone is the failure", then "continue". The phone
+      audit of main at 390 on a production build found the footer's email field
+      collapsed to 22px (a bare flex-1 in the stacked form overrode h-11), the
+      footer links at 20px with 14px gaps, the trust links under the reviews at
+      24px and the industry slider arrows at 40px. Classes only: no copy, link,
+      route, form behaviour or test id changes; desktop page and footer heights
+      unchanged (17,185px and 622px at 1440).
   - id: de-desk-reliability-followup
     issue: 291
     owner: codex
