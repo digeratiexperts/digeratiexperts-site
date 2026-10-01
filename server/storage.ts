@@ -90,6 +90,7 @@ export interface IStorage {
   createPortalTicketComment(comment: any): Promise<PortalTicketComment>;
 
   getTenantFilesByClientId(clientId: string): Promise<any[]>;
+  findTenantFileByFileUrl(fileUrl: string): Promise<{ id: string; clientId: string; fileUrl: string } | undefined>;
   createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<any>;
   deleteTenantFile(id: string): Promise<boolean>;
 
@@ -687,6 +688,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.tenantFiles.values()).filter(f => f.clientId === clientId);
   }
 
+  async findTenantFileByFileUrl(fileUrl: string): Promise<{ id: string; clientId: string; fileUrl: string } | undefined> {
+    return Array.from(this.tenantFiles.values()).find((f) => f.fileUrl === fileUrl);
+  }
+
   async createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<TenantFile> {
     const newFile: TenantFile = {
       id: generateId(),
@@ -1130,6 +1135,10 @@ export class DatabaseStorage implements IStorage {
 
   async getTenantFilesByClientId(clientId: string): Promise<any[]> {
     return Array.from(this.tenantFilesCache.values()).filter(f => f.clientId === clientId);
+  }
+
+  async findTenantFileByFileUrl(fileUrl: string): Promise<{ id: string; clientId: string; fileUrl: string } | undefined> {
+    return Array.from(this.tenantFilesCache.values()).find((f) => f.fileUrl === fileUrl);
   }
 
   async createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<any> {

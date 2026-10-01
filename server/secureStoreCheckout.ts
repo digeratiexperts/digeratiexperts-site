@@ -8,6 +8,7 @@ import {
   setClientPricing,
   toPriceOverrides,
 } from "./storeClientPricing";
+import { paymentRateLimiter } from "./middleware/rateLimiter";
 
 type StoreRole = "public" | "prospect" | "managed" | "comanaged" | "admin";
 
@@ -265,7 +266,7 @@ export function registerSecureZohoStoreCheckout(
 
   app.post(
     "/api/store/checkout/zoho",
-    [authMiddleware as any, requireRole("comanaged", "admin") as any],
+    [authMiddleware as any, requireRole("comanaged", "admin") as any, paymentRateLimiter as any],
     async (req: CheckoutRequest, res: Response) => {
       try {
         const { billing } = req.body || {};
@@ -444,7 +445,7 @@ export function registerSecureZohoStoreCheckout(
   // Register before legacy routes.ts so this server-authoritative handler wins.
   app.post(
     "/api/store/orders",
-    [authMiddleware as any, requireRole("comanaged", "admin") as any],
+    [authMiddleware as any, requireRole("comanaged", "admin") as any, paymentRateLimiter as any],
     async (req: CheckoutRequest, res: Response) => {
       try {
         const role = (req.user?.storeRole || "public") as StoreRole;

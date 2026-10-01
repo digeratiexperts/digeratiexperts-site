@@ -58,11 +58,20 @@ export const importRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Payment: STRICT - 10 per hour (prevent payment spam/fraud)
-export const paymentRateLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 10,
-  message: "Too many payment attempts, please try again later",
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Payment / checkout / order mutations: STRICT - 10 per hour (prevent spam/fraud).
+// Factory kept testable so regression tests can use a tiny threshold.
+export function createPaymentRateLimiter(overrides?: {
+  windowMs?: number;
+  max?: number;
+  message?: string;
+}) {
+  return rateLimit({
+    windowMs: overrides?.windowMs ?? 60 * 60 * 1000,
+    max: overrides?.max ?? 10,
+    message: overrides?.message ?? "Too many payment attempts, please try again later",
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+}
+
+export const paymentRateLimiter = createPaymentRateLimiter();

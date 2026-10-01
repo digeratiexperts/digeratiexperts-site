@@ -119,7 +119,8 @@ import {
 } from "./integrations/techSalesClient";
 import { registerDeSyncRoutes } from "./integrations/deSyncRoutes";
 import { resolveJwtSecret } from "./config/authSecrets";
-import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter } from "./middleware/rateLimiter";
+import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter, paymentRateLimiter } from "./middleware/rateLimiter";
+import { resolvePortalInvoicePayAmount } from "./invoicePaymentAmount";
 import { enqueueOutbox } from "./integrations/deSyncStore";
 import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
 
@@ -539,8 +540,15 @@ const logSecurityEvent = (event: string, req: AuthenticatedRequest, data: any) =
 // ========== ROUTES ==========
 
 export async function registerRoutes(app: Express) {
-  // Register object storage routes for file uploads
-  registerObjectStorageRoutes(app, { auth: authMiddleware, admin: requireAdmin });
+  // Register object storage routes for file uploads (auth + ownership ACL)
+  registerObjectStorageRoutes(app, {
+    auth: authMiddleware,
+    admin: requireAdmin,
+    resolveTenantOwnerClientId: async (objectPath) => {
+      const file = await storage.findTenantFileByFileUrl(objectPath);
+      return file?.clientId ?? null;
+    },
+  });
   registerDeSyncRoutes(app, authMiddleware as any);
 
   // Live MSP threat feed (CISA / FIRST / NVD / MSRC). Never invents CVEs.
@@ -3882,7 +3890,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // Portal invoice payment via Zoho Payments
-  app.post("/api/portal/payment/zoho", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+  app.post("/api/portal/payment/zoho", [authMiddleware, paymentRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { invoiceId, amount } = req.body || {};
       if (!invoiceId) {
@@ -3916,12 +3924,22 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Invoice not found" });
       }
 
-      const payAmount = typeof amount === "number" && amount > 0
-        ? amount / 100
-        : Number(inv.balance ?? inv.total);
-      if (!payAmount || payAmount <= 0) {
-        return res.status(400).json({ error: "Invoice has no balance due" });
+      const payResolved = resolvePortalInvoicePayAmount(
+        { balance: inv.balance, total: inv.total },
+        amount,
+      );
+      if (!payResolved.ok) {
+        console.warn("[SECURITY] PORTAL_PAYMENT_AMOUNT_REJECTED", {
+          userId: req.userId,
+          invoiceId: inv.invoice_id,
+          invoiceNumber: inv.invoice_number,
+          clientAmount: amount,
+          status: payResolved.status,
+          error: payResolved.error,
+        });
+        return res.status(payResolved.status).json({ error: payResolved.error });
       }
+      const payAmount = payResolved.amountDollars;
 
       const appUrl = process.env.APP_URL || "https://digeratiexperts.com";
       const session = await zohoPayments.createPaymentSession({
