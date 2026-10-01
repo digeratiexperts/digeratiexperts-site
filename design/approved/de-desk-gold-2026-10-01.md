@@ -41,6 +41,20 @@ Joe overruled the brand rules for this surface ("fuck the brand rules",
 
 ## Evidence
 
-`artifacts/visual-qa/desk-gold/` — `desk-{ticket,chat,resources}-{390,768,1440}.png`
-and `chooser-{390,768,1440}.png`, rendered from the Vite dev server on this
-branch (Playwright, reduced motion).
+`artifacts/visual-qa/desk-gold/`, each at 390, 768 and 1440, rendered from
+the Vite dev server on this branch after main (with PR 303) was merged in
+(Playwright, reduced motion, cookie banner dismissed):
+
+- `chooser-*` — the Ask DE chooser on the bottom bar.
+- `desk-ticket-*` — Get Support with the "ticket submission is temporarily
+  unavailable" notice that PR 303 added. The status call was stubbed to
+  `connected: false`, which is what production answers today (issue 314).
+- `desk-ticket-form-*` — the form after an empty submit: field errors, the
+  urgency control, the gold Create ticket button.
+- `desk-chat-*` — Ask DE's greeting and discovery list.
+- `desk-chat-sent-*` — a sent message (gold bubble), a reply and a next step.
+  The reply was a stubbed QA response, not advisor output.
+- `desk-resources-*` — Client Tools, signed out.
+
+No horizontal overflow at any width. The notice's phone link was restyled
+(ink + gold underline) so it reads as a link inside the red error box.

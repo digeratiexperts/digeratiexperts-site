@@ -3120,6 +3120,16 @@ export const ZohoASAPWidget = ({
               font-size: 13px;
               line-height: 1.45;
             }
+            /* The availability notice carries a phone link inside the error
+               box: it reads as a link (ink + underline), not as more red text. */
+            .de-desk-form-error a {
+              color: var(--desk-ink);
+              font-weight: 600;
+              text-decoration: underline;
+              text-decoration-color: rgba(227,178,60,0.6);
+              text-underline-offset: 3px;
+            }
+            .de-desk-form-error a:hover { text-decoration-color: currentColor; }
             .de-desk-form-phone {
               display: inline-flex;
               align-items: center;
