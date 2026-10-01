@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE section 03 — The threats are real</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../system/tokens.css">
+<style>
+  /* Section 03 — Stats as the first of the page's two raised boxes. */
+  .stats-box { padding: 48px 48px 48px; background-image: radial-gradient(720px circle at 0% 0%, rgba(91, 69, 224, 0.12), transparent 62%); }
+  .stats-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; }
+  .stats-head .de-link { flex-shrink: 0; margin-bottom: 5px; }
+  .stats-grid { margin-top: 40px; }
+  .stats-grid > li { display: flex; min-width: 0; }
+  .stats-card { flex: 1; display: flex; flex-direction: column; color: inherit; transition: border-color 200ms ease-out; }
+  .stats-card:hover { border-color: var(--de-hairline-strong); }
+  .stats-card .de-stat { margin-top: 24px; color: #fbfaf8; }
+  .stats-card .de-body { margin-top: 10px; flex: 1; }
+  .stats-card .stats-source { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--de-hairline); }
+  @media (max-width: 1023px) {
+    .stats-box { padding: 40px 32px; }
+  }
+  @media (max-width: 639px) {
+    .stats-box { padding: 32px 20px; }
+    .stats-head { flex-direction: column; align-items: flex-start; gap: 20px; }
+    .stats-head .de-link { margin-bottom: 0; }
+    .stats-grid { margin-top: 28px; }
+  }
+</style>
+</head>
+<body>
+<section class="f-well de-section" aria-labelledby="stats-heading">
+  <div class="de-canvas">
+    <div class="de-box stats-box">
+      <div class="stats-head">
+        <div class="de-head">
+          <p class="de-eyebrow">Why Digerati Experts</p>
+          <h2 class="de-h2" id="stats-heading">The Threats Are <span class="de-accent">Real</span></h2>
+          <p class="de-lede">Don't become a statistic. These numbers show why proactive security matters — and why endpoint, identity, and recovery discipline have to be owned, not assumed.</p>
+        </div>
+        <a class="de-link" href="/resources/cyber-facts">Full sourced facts <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+      </div>
+
+      <ul class="de-grid de-grid--4 stats-grid">
+        <li>
+          <a class="de-card stats-card" href="https://www.verizon.com/business/resources/reports/dbir/" target="_blank" rel="noopener noreferrer">
+            <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
+            <p class="de-stat">48%</p>
+            <p class="de-body">of breaches involve ransomware</p>
+            <p class="de-small stats-source">— Verizon DBIR 2026</p>
+          </a>
+        </li>
+        <li>
+          <a class="de-card stats-card" href="https://www.ibm.com/reports/data-breach" target="_blank" rel="noopener noreferrer">
+            <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+            <p class="de-stat">$11.5M</p>
+            <p class="de-body">average cost of a data breach in the United States</p>
+            <p class="de-small stats-source">— IBM Cost of a Data Breach 2026</p>
+          </a>
+        </li>
+        <li>
+          <a class="de-card stats-card" href="https://www.microsoft.com/en-us/corporate-responsibility/cybersecurity/microsoft-digital-defense-report-2025/" target="_blank" rel="noopener noreferrer">
+            <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span>
+            <p class="de-stat">99%+</p>
+            <p class="de-body">of unauthorized access attempts are blocked by multifactor authentication (MFA)</p>
+            <p class="de-small stats-source">— Microsoft Digital Defense Report 2025</p>
+          </a>
+        </li>
+        <li>
+          <a class="de-card stats-card" href="https://www.ic3.gov/AnnualReport/Reports/2024_IC3Report.pdf" target="_blank" rel="noopener noreferrer">
+            <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span>
+            <p class="de-stat">$392M</p>
+            <p class="de-body">in internet crime losses reported from Arizona in 2024 (IC3 state ranking by loss)</p>
+            <p class="de-small stats-source">— FBI IC3 Annual Report 2024</p>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+</body>
+</html>

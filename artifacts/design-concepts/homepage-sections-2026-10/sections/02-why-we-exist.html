@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE section mockup — 02 Why we exist</title>
+<link rel="stylesheet" href="../system/tokens.css">
+<style>
+  /* 02 · Why we exist — paper band, statement left, claims list right.
+     Everything else comes from tokens.css. */
+  .why { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "statement claims" "ask claims"; column-gap: 80px; row-gap: 0; align-items: stretch; }
+  .why__statement { grid-area: statement; }
+  .why__claims { grid-area: claims; align-self: stretch; }
+  .why__ask { grid-area: ask; align-self: end; }
+  .why .de-h2 { text-wrap: balance; max-width: 15ch; }
+  .why .de-lede { text-wrap: pretty; }
+
+  /* Claims: one white hairline list (tokens' paper cells, stacked vertically). */
+  .claims { grid-template-columns: minmax(0, 1fr); grid-auto-rows: 1fr; }
+  .claims > * { border-left: 0; border-top: 1px solid var(--de-paper-hairline); padding: 28px 32px; }
+  .claims > *:first-child { border-top: 0; }
+  .claim { display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 14px; align-content: center; }
+  .claim .de-dash { grid-row: 1; margin: 0; width: 14px; align-self: center; }
+  .claim__title { grid-column: 2; color: var(--de-ink); }
+  .claim__body { grid-column: 2; margin-top: 6px; text-wrap: pretty; }
+  .claim:hover .claim__title { color: var(--de-magenta-paper-ink); }
+
+  /* Closing ask: one block under the statement, seam above. */
+  .why__ask { margin-top: 36px; padding-top: 32px; border-top: 1px solid var(--de-paper-hairline); }
+  .why__ask .de-body { margin-top: 8px; max-width: 560px; text-wrap: pretty; }
+  .ask__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+
+  @media (max-width: 1023px) {
+    .why { grid-template-columns: minmax(0, 1fr); grid-template-areas: "statement" "claims" "ask"; row-gap: 36px; }
+    .why__claims { align-self: start; }
+    .claims { grid-auto-rows: auto; }
+    .why__ask { margin-top: 0; }
+  }
+  @media (max-width: 639px) {
+    .claims > * { padding: 22px 20px; }
+    .ask__actions .de-btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<section class="f-paper de-section" id="why-we-exist" aria-labelledby="why-we-exist-title">
+  <div class="de-canvas why">
+    <div class="why__statement">
+      <p class="de-eyebrow">Why we exist</p>
+      <h2 class="de-h2" id="why-we-exist-title">We Exist to Protect and Enable Your Business</h2>
+      <p class="de-lede">If you're like most business leaders, you don't want another vendor — you want a security-first partner who proactively reduces risk, improves uptime, and keeps your team moving.</p>
+    </div>
+
+    <ul class="de-cells de-cells--paper claims why__claims" aria-label="How we work">
+      <li>
+        <a class="claim" href="/solutions/proactive-ecosystem">
+          <span class="de-dash" aria-hidden="true"></span>
+          <span class="de-h4 claim__title">Security-First Operations</span>
+          <span class="de-body claim__body">Every system, endpoint, and user is protected - by design, not by reaction.</span>
+        </a>
+      </li>
+      <li>
+        <a class="claim" href="/solutions/co-managed-it">
+          <span class="de-dash" aria-hidden="true"></span>
+          <span class="de-h4 claim__title">Co-Managed or Fully Managed</span>
+          <span class="de-body claim__body">We support your internal IT or serve as your outsourced technology team.</span>
+        </a>
+      </li>
+      <li>
+        <a class="claim" href="/trust">
+          <span class="de-dash" aria-hidden="true"></span>
+          <span class="de-h4 claim__title">Executive-Level Transparency</span>
+          <span class="de-body claim__body">Reports, KPIs, and compliance insights that make sense - and drive decisions.</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="why__ask">
+      <h3 class="de-h3">Ready to Secure Your Business?</h3>
+      <p class="de-body">Get enterprise-grade protection tailored for Arizona businesses. Let's discuss your security needs.</p>
+      <div class="ask__actions">
+        <a class="de-btn de-btn--primary" href="/book">Schedule Consultation <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        <a class="de-btn de-btn--outline-paper" href="tel:+13254809870"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Call 325-480-9870</a>
+      </div>
+    </div>
+  </div>
+</section>
+</body>
+</html>
