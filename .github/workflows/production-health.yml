@@ -92,12 +92,14 @@ jobs:
             value="$(printf '%s' "$DESK_BODY" | jq -r "$1 // empty" 2>/dev/null || true)"
             printf '%s' "${value:-$2}"
           }
-          DESK="$(desk_field '.connected' 'unreachable')"
+          # `// empty` would swallow a JSON false (jq treats false as absent),
+          # so the boolean goes through tostring: "true", "false", or "null".
+          DESK="$(desk_field '.connected | tostring' 'unreachable')"
           if [ "$DESK" != "true" ]; then
             echo "First desk probe reported connected='$DESK'; re-checking in 75s (the endpoint caches for 60s)."
             sleep 75
             DESK_BODY="$(desk_once || true)"
-            DESK="$(desk_field '.connected' 'unreachable')"
+            DESK="$(desk_field '.connected | tostring' 'unreachable')"
           fi
           DESK_REASON="$(desk_field '.reason' 'none')"
           DESK_ERROR="$(desk_field '.errorCode' 'none')"
