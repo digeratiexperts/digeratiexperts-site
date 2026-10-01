@@ -1104,6 +1104,77 @@ html.de-store-jelly [data-de-jelly-choice][data-de-just-selected="true"] {
   border-bottom: 1px solid var(--d2-rule);
 }
 
+/*
+ * The expanded profile sits on a light grey panel so the form reads as one
+ * object against the graphite page (Joe, 2026-09-30). The grey is mixed from
+ * the paper and graphite tokens, never a new literal; inputs, tiles and chips
+ * lift to paper-raised white on it. Every ink below clears 4.5:1 on the grey
+ * (text) or 3:1 (input borders, radio marks, the focus ring): raw electric ink
+ * and the #ec4899 ring do not, so the panel darkens the accent ink toward
+ * graphite and rings focus in the magenta fill instead.
+ */
+.d2-profile-panel {
+  --d2-panel-bg: color-mix(in srgb, var(--de-paper) 92%, var(--de-bg));
+  --d2-rule: rgba(5, 3, 18, 0.16);
+  --d2-ink-strong: var(--de-bg);
+  --d2-ink: rgba(5, 3, 18, 0.78);
+  --d2-ink-soft: rgba(5, 3, 18, 0.64);
+  --d2-accent: rgb(var(--de-accent-rgb));
+  --d2-accent-ink: color-mix(in srgb, rgb(var(--de-accent-rgb)) 75%, var(--de-bg));
+  --d2-error-ink-panel: color-mix(in srgb, hsl(var(--destructive)) 80%, var(--de-bg));
+  padding: 1.25rem 1rem;
+  border-radius: 1rem;
+  background: var(--d2-panel-bg);
+  color: var(--d2-ink-strong);
+}
+@media (min-width: 640px) {
+  .d2-profile-panel {
+    padding: 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .d2-profile-panel {
+    padding: 2rem;
+  }
+}
+.d2-profile-panel .d2-input {
+  border-color: rgba(5, 3, 18, 0.58);
+  background: var(--de-paper-raised);
+  color: var(--de-bg);
+}
+.d2-profile-panel .d2-input::placeholder {
+  color: rgba(5, 3, 18, 0.45);
+}
+.d2-profile-panel .d2-input:hover {
+  border-color: rgba(5, 3, 18, 0.78);
+}
+.d2-profile-panel .d2-input[aria-invalid="true"] {
+  border-color: var(--d2-error-ink-panel);
+}
+.d2-profile-panel .d2-field__error {
+  color: var(--d2-error-ink-panel);
+}
+.d2-profile-panel .d2-tile,
+.d2-profile-panel .d2-chip {
+  background: var(--de-paper-raised);
+}
+.d2-profile-panel .d2-tile__mark {
+  border-color: rgba(5, 3, 18, 0.45);
+}
+.d2-profile-panel .d2-tile:hover {
+  border-color: rgba(5, 3, 18, 0.35);
+}
+.d2-profile-panel .d2-tile:has(input:checked) {
+  border-color: var(--d2-accent);
+}
+.d2-profile-panel .d2-action--quiet {
+  text-decoration-color: rgba(5, 3, 18, 0.3);
+}
+.d2-profile-panel :is(a, button, input, select, textarea, [tabindex]):focus-visible,
+.d2-profile-panel .d2-tile:has(input:focus-visible) {
+  outline-color: var(--de-magenta);
+}
+
 /* Need rows on the workspace. */
 .d2-need {
   display: grid;
@@ -1487,7 +1558,8 @@ html.de-store-jelly .d2-sheet-panel[data-state="open"] {
     display: none !important;
   }
   .d2-page,
-  .d2-chapter--paper {
+  .d2-chapter--paper,
+  .d2-profile-panel {
     background: #fff !important;
     color: #000 !important;
   }
