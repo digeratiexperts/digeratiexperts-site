@@ -230,7 +230,21 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
   
   try {
     const decoded = jwt.verify(token, jwtSecret()) as JWTPayload;
-    const live = portalAuthGetUser(decoded.email) || (decoded.userId ? findUserById(decoded.userId) : null);
+    // Bind the token to the identity it was issued for. Every portal token mint
+    // carries userId and email from the same record, so an email lookup is only
+    // trusted when it resolves to that same userId; otherwise fall back to the
+    // userId. Without this, a validly-signed token whose email claim names a
+    // different account — e.g. one minted by the legacy /api/auth/register path,
+    // which lets the caller pick any email — would resolve to that account and
+    // take on its role. An email-changed user still resolves via the userId
+    // fallback, because the old email no longer indexes their live record.
+    const byEmail = decoded.email ? portalAuthGetUser(decoded.email) : null;
+    const live =
+      byEmail && byEmail.id === decoded.userId
+        ? byEmail
+        : decoded.userId
+          ? findUserById(decoded.userId)
+          : null;
     // Fail closed: a validly-signed JWT for a user with no live record (deleted, never
     // indexed, or a store that has not finished loading) must be denied, not fall back to
     // trusting the token's embedded role/storeRole/clientId claims. See docs/MASTER-GUARDRAILS.md #7-8.

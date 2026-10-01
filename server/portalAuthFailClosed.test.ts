@@ -257,4 +257,31 @@ describe("Portal authorization uses the live user as the source of truth", () =>
     expect(password.req.user.role).toBe("user");
     expect(password.req.user.clientId).toBe("client-new");
   });
+
+  it("denies a token whose email names a live user but whose userId names a different account (#236)", async () => {
+    // The attack: a validly-signed token (e.g. from the legacy /api/auth/register
+    // path) carrying the victim's email but its own userId. The email lookup must
+    // not be trusted unless it resolves to the token's own userId; here it does
+    // not, and the userId resolves to nothing, so the request fails closed.
+    const result = await authenticate(activeLiveUser, {
+      userId: "attacker-legacy-row",
+      email: "real@example.com",
+      role: "admin",
+      storeRole: "admin",
+    });
+
+    expect(result.next).not.toHaveBeenCalled();
+    expect(result.status()).toBe(401);
+    expect(result.req.user).toBeUndefined();
+  });
+
+  it("denies a token that carries an email but no userId", async () => {
+    const result = await authenticate(activeLiveUser, {
+      email: "real@example.com",
+      role: "admin",
+    });
+
+    expect(result.next).not.toHaveBeenCalled();
+    expect(result.status()).toBe(401);
+  });
 });
