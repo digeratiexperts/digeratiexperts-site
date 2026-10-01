@@ -169,8 +169,12 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
           className="de-ask-nudge fixed z-[10035] max-w-[240px] rounded-[14px_14px_4px_14px] px-3 py-2.5 text-left text-[13px] font-medium leading-snug shadow-[0_12px_40px_rgba(0,0,0,0.5)]"
           style={{
             // Fixed outside document flow so the nudge cannot cause CLS.
+            // Same lift as the unified bar (--de-cookie-h). The nudge only arms
+            // after consent today, so this keeps the two in step if it ever
+            // shows while the cookie banner is up.
             right: "max(1rem, env(safe-area-inset-right))",
-            bottom: "calc(var(--de-unified-bar-h, 3.5rem) + var(--de-store-cart-h, 0px) + 0.75rem + env(safe-area-inset-bottom, 0px))",
+            bottom:
+              "calc(var(--de-unified-bar-h, 3.5rem) + var(--de-store-cart-h, 0px) + var(--de-cookie-h, 0px) + 0.75rem + env(safe-area-inset-bottom, 0px))",
           }}
           data-testid="ask-de-nudge"
         >

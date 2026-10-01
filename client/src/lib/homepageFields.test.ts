@@ -31,38 +31,75 @@ describe("homepage chapter fields", () => {
     expect(litBlock).not.toMatch(/background-color:\s*#(5B45E0|8B5CF6|7c3aed)/i);
   });
 
-  it("recedes insights after the pricing surface so the pair is not two slabs", () => {
-    expect(insights).toMatch(/className="de-dark-well/);
+  const section = (name: string) =>
+    readFileSync(path.resolve(__dirname, `../pages/sections/${name}.tsx`), "utf8");
+
+  it("composes every homepage chapter from the shared HomeChapter grammar, never a rounded island", () => {
+    // 2026-09-30: Joe called the page "four different websites". One
+    // primitive supplies the field, the seam, the container and the header
+    // for every chapter; no section paints its own island or style box.
+    const chapters = [
+      "DigeratiAlertBanner",
+      "DigeratiStatsSection",
+      "DigeratiWhatWeTackleSection",
+      "DigeratiServicesSection",
+      "DigeratiHowWeProtectSection",
+      "DigeratiTestimonialsSection",
+      "HomepageProofSection",
+      "DigeratiTrustPhotoSection",
+      "DigeratiMeetExpertsSection",
+      "DigeratiIndustriesSection",
+      "DigeratiPricingSection",
+      "DigeratiThreatsInsightsSection",
+      "DigeratiAIAssistanceSection",
+      "DigeratiLeadFormSection",
+      "DigeratiFAQSection",
+      "DigeratiNewsletterSection",
+      "DigeratiCTASection",
+      "DigeratiContactSection",
+    ];
+    for (const name of chapters) {
+      const src = section(name);
+      expect(src, name).toContain('from "@/components/home/HomeChapter"');
+      expect(src, name).toContain("<HomeChapter tone=");
+      expect(src, name).not.toContain("de-paper-island");
+      expect(src, name).not.toContain("de-style-box");
+    }
+  });
+
+  it("steps the field between insights and the pricing well so the pair is not two slabs", () => {
+    expect(section("DigeratiPricingSection")).toContain('<HomeChapter tone="well"');
+    expect(insights).toContain('<HomeChapter tone="surface"');
     expect(homepage).toContain("DigeratiThreatsInsightsSection");
     expect(homepage).toContain("DigeratiPricingSection");
   });
 
-  it("FAQ matches the paper island recipe with white magenta-rail rows", () => {
-    const faq = readFileSync(
-      path.resolve(__dirname, "../pages/sections/DigeratiFAQSection.tsx"),
-      "utf8",
-    );
-    expect(faq).toContain("de-dark-well");
-    expect(faq).toContain("de-paper-island");
+  it("chapters take their natural height; snap targets keep only the chrome offset", () => {
+    const block = css.slice(css.indexOf(".scroll-snap-chapter {"), css.indexOf(".scroll-snap-chapter {") + 200);
+    expect(block).toContain("scroll-margin-top");
+    expect(block).not.toContain("min-height");
+  });
+
+  it("FAQ is a paper chapter with white magenta-rail rows", () => {
+    const faq = section("DigeratiFAQSection");
+    expect(faq).toContain('<HomeChapter tone="paper"');
     expect(faq).toContain("de-paper-faq-item");
-    expect(faq).toContain('text-[#1A1228]');
     expect(faq).not.toContain("de-hud-card");
     expect(css).toContain(".de-paper-faq-item {");
     expect(css).toContain("inset 3px 0 0 #d3126a");
     expect(css).toContain("background-color: var(--de-paper-raised)");
   });
 
-  it("homepage threat tiles are white on the dark well, not graphite fills", () => {
+  it("homepage threat tiles stay white on the dark field; the empty state and promise cards use the shared dark card", () => {
     expect(insights).toContain("de-paper-on-well");
     expect(insights).toContain("bg-white");
     expect(insights).toContain('text-[#1A1228]');
+    expect(insights).toContain("cardDark");
     expect(insights).not.toContain("from-[#18141f]");
     expect(css).toContain(".de-paper-on-well {");
-    const ai = readFileSync(
-      path.resolve(__dirname, "../pages/sections/DigeratiAIAssistanceSection.tsx"),
-      "utf8",
-    );
-    expect(ai).toContain("de-paper-on-well");
+    const ai = section("DigeratiAIAssistanceSection");
+    expect(ai).toContain("cardDark");
+    expect(ai).not.toContain("de-paper-on-well");
     expect(ai).toContain("Coverage with Context");
   });
 });

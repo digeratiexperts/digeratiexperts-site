@@ -3,6 +3,19 @@ import { useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { FAQJsonLd } from "@/components/JsonLd";
+import {
+  HomeChapter,
+  HomeChapterHeader,
+  HomeContainer,
+  buttonPrimary,
+  buttonSecondary,
+  cardDark,
+  cardPaper,
+  Eyebrow,
+  ledeClass,
+  titleClass,
+  textLinkClass,
+} from "@/components/home/HomeChapter";
 
 interface FAQ {
   question: string;
@@ -37,30 +50,28 @@ export const DigeratiFAQSection = (): JSX.Element => {
   };
 
   return (
-    <section className="de-dark-well relative py-8 md:py-14">
+    <HomeChapter tone="paper">
       <FAQJsonLd faqs={faqs} />
-      <div className="mx-auto max-w-[var(--de-canvas)] px-3 sm:px-4 lg:px-6">
-        <div className="de-paper-island relative px-6 py-10 sm:px-10 sm:py-14 md:px-12 md:py-16">
-          <div className="relative z-10 mx-auto max-w-4xl">
-            <motion.div
-              initial={prefersReducedMotion ? false : revealInitial}
-              whileInView={revealInView}
-              viewport={revealViewport}
-              transition={revealTransition}
-              className="mb-10 text-center md:mb-12"
-            >
-              <p className="mb-3 text-base font-semibold uppercase tracking-[0.2em] text-[#D3126A]">
-                Common questions
-              </p>
-              <h2 className="mb-4 font-heading text-3xl font-semibold leading-tight tracking-[-0.02em] text-[#1A1228] md:text-4xl lg:text-5xl">
-                Frequently Asked Questions
-              </h2>
-              <p className="mx-auto max-w-2xl text-lg leading-relaxed text-black/60 md:text-xl">
-                Straight answers on how we work, what we recommend, and why.
-              </p>
-            </motion.div>
+      <HomeContainer>
+        <div className="grid items-start gap-8 lg:grid-cols-12 lg:gap-14">
+          <motion.div
+            className="lg:col-span-4"
+            initial={prefersReducedMotion ? false : revealInitial}
+            whileInView={revealInView}
+            viewport={revealViewport}
+            transition={revealTransition}
+          >
+            <Eyebrow tone="paper" className="mb-4">
+              Common questions
+            </Eyebrow>
+            <h2 className={`${titleClass} max-w-[16ch]`}>Frequently Asked Questions</h2>
+            <p className={`${ledeClass("paper")} mt-5 max-w-md`}>
+              Straight answers on how we work, what we recommend, and why.
+            </p>
+          </motion.div>
 
-            <div className="space-y-3 md:space-y-4">
+          <div className="lg:col-span-8">
+            <div className="space-y-3">
               {faqs.map((faq, index) => {
                 const isOpen = openIndex === index;
 
@@ -74,10 +85,10 @@ export const DigeratiFAQSection = (): JSX.Element => {
                     data-testid={`faq-${index}`}
                   >
                     <div
-                      className={`de-paper-faq-item rounded-2xl ${isOpen ? "is-open" : ""}`}
+                      className={`de-paper-faq-item rounded-xl ${isOpen ? "is-open" : ""}`}
                     >
                       <button
-                        className="group flex w-full min-h-11 items-center justify-between gap-4 px-5 py-5 text-left focus-visible:outline-none md:px-7 md:py-6"
+                        className="group flex w-full min-h-11 items-center justify-between gap-4 px-5 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-inset md:px-6 md:py-5"
                         onClick={() => toggleAccordion(index)}
                         aria-expanded={isOpen}
                         aria-controls={`faq-answer-${index}`}
@@ -106,7 +117,7 @@ export const DigeratiFAQSection = (): JSX.Element => {
                             transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.25, ease: "easeOut" }}
                             className="overflow-hidden"
                           >
-                            <div className="px-5 pb-6 pt-0 md:px-7 md:pb-7">
+                            <div className="px-5 pb-5 pt-0 md:px-6 md:pb-6">
                               <div className="border-t border-[var(--de-paper-hairline)] pt-4">
                                 <p
                                   className="text-base leading-relaxed text-black/60 md:text-lg"
@@ -127,7 +138,7 @@ export const DigeratiFAQSection = (): JSX.Element => {
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </HomeContainer>
+    </HomeChapter>
   );
 };
