@@ -121,7 +121,8 @@ for (const viewport of viewports) {
   row.h1Count = await page.locator("h1").count();
   row.chrome.index = await chromeState(page);
   // The electric channel must compute electric (a :root-scoped token once froze it to magenta).
-  row.accentInk = await page.evaluate(() => getComputedStyle(document.querySelector(".d2-step__n")).color);
+  // Probed on the pathway link, present at every width; step numbers are white stations since 2026-10-01.
+  row.accentInk = await page.evaluate(() => getComputedStyle(document.querySelector("[data-testid='pathways'] .d2-link")).color);
   // Profile (01) before the situations and families (02): the strip may be a closed row, so compare chapters.
   row.profileBeforeFamilies = await page.evaluate(() => {
     const profile = document.querySelector("[data-testid='store-profile']");

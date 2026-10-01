@@ -24,6 +24,19 @@ import {
 // returns behind the contact chapter, fainter still, so the page ends where
 // it began. 50KB WebP.
 import contactBgImage from "@assets/de-hero-arizona-dusk-1600.webp";
+import {
+  HomeChapter,
+  HomeChapterHeader,
+  HomeContainer,
+  buttonPrimary,
+  buttonSecondary,
+  cardDark,
+  cardPaper,
+  Eyebrow,
+  ledeClass,
+  titleClass,
+  textLinkClass,
+} from "@/components/home/HomeChapter";
 
 const contactFormSchema = z.object({
   name: z.string()
@@ -136,10 +149,7 @@ export const DigeratiContactSection = ({
   };
 
   return (
-    <section
-      className="de-dark-well de-chapter-hairline de-field-grain relative overflow-hidden py-16 lg:py-24"
-      data-testid="homepage-contact-chapter"
-    >
+    <HomeChapter tone="well" className="overflow-hidden" data-testid="homepage-contact-chapter">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <img
           src={contactBgImage}
@@ -168,8 +178,8 @@ export const DigeratiContactSection = ({
         />
       </div>
 
-      <div className="container relative z-10 mx-auto px-3 sm:px-4 lg:px-6">
-        <div className="grid items-start gap-10 lg:grid-cols-12 lg:gap-12">
+      <HomeContainer className="relative z-10">
+        <div className="grid items-start gap-10 lg:grid-cols-12 lg:gap-14">
           <motion.div
             className="lg:col-span-6"
             initial={prefersReducedMotion ? false : revealInitial}
@@ -177,42 +187,32 @@ export const DigeratiContactSection = ({
             viewport={revealViewport}
             transition={revealTransition}
           >
-            <p className="mb-3 text-base font-semibold uppercase tracking-[0.2em] text-[#F04C97]">
+            <Eyebrow tone="well" className="mb-4">
               Contact
-            </p>
+            </Eyebrow>
             {headingAs === "h1" ? (
-              <h1 className="mb-4 font-heading text-3xl font-semibold tracking-[-0.02em] text-white md:text-4xl">
+              <h1 className={`${titleClass} max-w-[20ch]`}>
                 Ready to Secure Your Business<span className="text-de-accent-ink" aria-hidden="true">?</span>
               </h1>
             ) : (
-              <h2 className="mb-4 font-heading text-3xl font-semibold tracking-[-0.02em] text-white md:text-4xl">
-                Ready to Secure Your Business?
-              </h2>
+              <h2 className={`${titleClass} max-w-[20ch]`}>Ready to Secure Your Business?</h2>
             )}
-            <p className="mb-8 max-w-xl text-base leading-relaxed text-white/65 md:text-lg">
+            <p className={`${ledeClass("well")} mb-8 mt-5 max-w-xl`}>
               Located in the heart of Chandler, we&apos;re your local cybersecurity experts.
               Whether you need immediate help or want to explore our services, we&apos;re here for you.
             </p>
 
             <div className="mb-10 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-              <a
-                href="/book"
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#D3126A] px-6 py-2.5 text-base font-semibold text-white transition-colors duration-200 hover:bg-[#e01874] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
-                data-testid="contact-cta-assessment"
-              >
+              <a href="/book" className={buttonPrimary("well")} data-testid="contact-cta-assessment">
                 {CTA.primary}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </a>
-              <a
-                href={PRIMARY_PHONE.telHref}
-                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/20 px-6 py-2.5 text-base font-semibold text-white transition-colors hover:border-white/40 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
-                data-testid="contact-cta-call"
-              >
+              <a href={PRIMARY_PHONE.telHref} className={buttonSecondary("well")} data-testid="contact-cta-call">
                 Call {PRIMARY_PHONE.display}
               </a>
             </div>
 
-            <div className="grid border-t border-de-hairline md:grid-cols-2">
+            <div className="grid border-t border-[var(--de-hairline)] md:grid-cols-2">
               {directoryItems.map((item) => (
                 <a
                   key={item.testId}
@@ -278,7 +278,7 @@ export const DigeratiContactSection = ({
             viewport={revealViewport}
             transition={revealTransition}
           >
-            <div className="de-paper-lift-lg rounded-2xl p-6 md:p-8">
+            <div className={`${cardPaper} p-6 md:p-8`}>
               <h3 className="font-heading text-xl font-semibold tracking-[-0.02em] text-[#1A1228]">
                 Get in Touch
               </h3>
@@ -426,7 +426,7 @@ export const DigeratiContactSection = ({
                   />
 
                   <Button
-                    className="h-11 w-full text-base font-semibold bg-[#1A1228] text-white transition-colors hover:bg-[#D3126A] focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2"
+                    className="h-12 w-full rounded-lg bg-[#D3126A] text-base font-semibold text-white shadow-none transition-colors hover:bg-[#e01874] hover:shadow-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2"
                     data-testid="button-send-message"
                     type="submit"
                     disabled={isSubmitting}
@@ -445,7 +445,7 @@ export const DigeratiContactSection = ({
             </div>
           </motion.div>
         </div>
-      </div>
-    </section>
+      </HomeContainer>
+    </HomeChapter>
   );
 };
