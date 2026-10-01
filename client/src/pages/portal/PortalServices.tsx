@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Link } from "wouter";
+import { Calendar, Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PortalLayout } from "./PortalLayout";
-import { Package, Users, DollarSign, Calendar } from "lucide-react";
 import { portalGet } from "@/lib/portalApi";
+import { Callout, EmptyState, GenericStatus, Panel } from "@/components/portal/ui";
 
 interface Service {
   id: string;
@@ -22,95 +24,74 @@ export default function PortalServices() {
   });
 
   return (
-    <PortalLayout title="My Services" description="The services and subscriptions DE currently runs for you.">
-      <div className="space-y-6">
-        {/* Error State */}
+    <PortalLayout title="My Services" description="The services and subscriptions DE currently runs for you." width="wide">
+      <div className="space-y-4">
         {isError && (
-          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-lg">
-            <p className="text-sm text-red-800 dark:text-red-300">
-              Failed to load services: {error instanceof Error ? error.message : "Unknown error"}
-            </p>
-          </div>
+          <Callout tone="bad" title="Services couldn't be loaded">
+            {error instanceof Error ? error.message : "Unknown error"}
+          </Callout>
         )}
 
-        {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {isLoading ? (
-            <>
-              {[...Array(3)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-64 bg-gray-200 dark:bg-slate-800 rounded-lg animate-pulse"
-                />
-              ))}
-            </>
-          ) : services.length > 0 ? (
-            services.map((service) => (
-              <Card key={service.id} data-testid={`service-card-${service.id}`}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="flex items-center gap-2">
-                        <Package className="h-5 w-5 text-[#D3126A]" />
-                        {service.serviceName}
-                      </CardTitle>
-                      <CardDescription>{service.description}</CardDescription>
-                    </div>
-                    <Badge
-                      className={
-                        service.status === "active"
-                          ? "bg-green-100 text-green-800 dark:bg-green-900/30"
-                          : "bg-gray-100 text-gray-800 dark:bg-gray-900/30"
-                      }
-                    >
-                      {service.status}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+        {isLoading ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-live="polite">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-48 rounded-xl" />
+            ))}
+          </div>
+        ) : services.length > 0 ? (
+          <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Your services">
+            {services.map((service) => (
+              <li key={service.id} className="min-w-0" data-testid={`service-card-${service.id}`}>
+                <Panel
+                  as="article"
+                  id={`service-${service.id}`}
+                  title={service.serviceName}
+                  description={service.description}
+                  actions={<GenericStatus status={service.status} />}
+                  className="h-full"
+                >
+                  <dl className="grid grid-cols-2 gap-4">
                     {service.monthlyPrice && (
                       <div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
-                          <DollarSign className="h-4 w-4" />
-                          <span>Monthly Price</span>
-                        </div>
-                        <p className="font-semibold text-lg" data-testid={`price-${service.id}`}>
+                        <dt className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">Monthly price</dt>
+                        <dd className="pt-num mt-1 text-lg font-semibold" data-testid={`price-${service.id}`}>
                           ${parseFloat(service.monthlyPrice).toFixed(2)}
-                        </p>
+                        </dd>
                       </div>
                     )}
-                    {service.userCount && (
+                    {service.userCount ? (
                       <div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
-                          <Users className="h-4 w-4" />
-                          <span>Users</span>
-                        </div>
-                        <p className="font-semibold text-lg" data-testid={`users-${service.id}`}>
+                        <dt className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">Users</dt>
+                        <dd className="pt-num mt-1 text-lg font-semibold" data-testid={`users-${service.id}`}>
                           {service.userCount}
-                        </p>
+                        </dd>
                       </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 pt-2 border-t dark:border-slate-700">
-                    <Calendar className="h-3 w-3" />
+                    ) : null}
+                  </dl>
+                  <p className="mt-4 flex items-center gap-1.5 border-t border-border pt-3 text-xs text-muted-foreground">
+                    <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                     <span>
-                      Started {new Date(service.startDate).toLocaleDateString()}
+                      Started <span className="pt-num">{new Date(service.startDate).toLocaleDateString()}</span>
                     </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <div className="col-span-full py-12 text-center">
-              <Package className="h-12 w-12 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
-              <p className="text-gray-500 dark:text-gray-400">No active services on file</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-md mx-auto">
-                When your Zoho Billing subscriptions are linked, they will appear here. Contact your DE account team if something is missing.
-              </p>
-            </div>
-          )}
-        </div>
+                  </p>
+                </Panel>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <Panel id="services-empty" flush>
+            <EmptyState
+              icon={Package}
+              title="No active services on file"
+              description="When your Zoho Billing subscriptions are linked, they will appear here. Contact your DE account team if something is missing."
+              action={
+                <Button asChild variant="outline" size="sm" className="border-border bg-card hover:bg-accent">
+                  <Link href="/portal/tickets/create">Contact your account team</Link>
+                </Button>
+              }
+            />
+          </Panel>
+        )}
       </div>
     </PortalLayout>
   );

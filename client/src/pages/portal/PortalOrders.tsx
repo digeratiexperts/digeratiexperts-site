@@ -1,13 +1,12 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Link } from "wouter";
+import { ExternalLink, Eye, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PortalLayout } from "./PortalLayout";
-import { ShoppingCart, Eye, Package, Clock, CheckCircle, ExternalLink, Store, Briefcase } from "lucide-react";
-import { Link } from "wouter";
 import { portalGet } from "@/lib/portalApi";
+import { Callout, DataTable, EmptyState, Panel, StatTile, Token, type DataColumn, type TokenTone } from "@/components/portal/ui";
 
 interface UnifiedOrder {
   id: string;
@@ -56,6 +55,30 @@ function isHubSource(source: string): boolean {
   return source.startsWith("hub_");
 }
 
+const PENDING_STATUSES = ["pending", "awaiting_payment", "quote_requested", "awaiting_signature"];
+
+/** Order vocabulary spans store and TechSales; tone carries the same meaning the old colours did. */
+function orderStatusTone(status: string): TokenTone {
+  switch (status) {
+    case "completed":
+    case "paid":
+      return "ok";
+    case "processing":
+    case "provisioning":
+    case "awaiting_signature":
+      return "info";
+    case "pending":
+    case "awaiting_payment":
+    case "quote_requested":
+      return "warn";
+    case "cancelled":
+    case "refunded":
+      return "bad";
+    default:
+      return "neutral";
+  }
+}
+
 export default function PortalOrders() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
@@ -80,42 +103,6 @@ export default function PortalOrders() {
     return list;
   }, [data?.orders, sourceFilter]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
-      case "paid":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
-      case "processing":
-      case "provisioning":
-      case "awaiting_signature":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300";
-      case "pending":
-      case "awaiting_payment":
-      case "quote_requested":
-        return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300";
-      case "cancelled":
-      case "refunded":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300";
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <CheckCircle className="h-4 w-4" />;
-      case "paid":
-      case "processing":
-      case "provisioning":
-      case "awaiting_signature":
-        return <Package className="h-4 w-4" />;
-      default:
-        return <Clock className="h-4 w-4" />;
-    }
-  };
-
   const formatStatus = (status: string) =>
     status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 
@@ -133,225 +120,214 @@ export default function PortalOrders() {
 
   const storeCount = (data?.storeOrders?.length || 0) + (data?.storeQuotes?.length || 0);
   const hubCount = data?.hubOrders?.length || 0;
+  const pendingCount = orders.filter((o) => PENDING_STATUSES.includes(o.status)).length;
+  const filtersActive = statusFilter !== "all" || sourceFilter !== "all";
+  const orderHref = (order: UnifiedOrder) => order.detailPath || `/portal/orders/${order.id}`;
+
+  const columns: DataColumn<UnifiedOrder>[] = [
+    {
+      key: "number",
+      header: "Order #",
+      primary: true,
+      className: "whitespace-nowrap",
+      cell: (order) => (
+        <div className="min-w-0">
+          <p className="pt-num font-medium">{order.orderNumber}</p>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground md:hidden">
+            {order.title || order.billingName || "—"}
+            {order.hubStatus ? ` · Hub: ${order.hubStatus}` : ""}
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: "source",
+      header: "Source",
+      primary: true,
+      className: "w-40",
+      cell: (order) => <Token label={sourceLabel(order.source)} tone="neutral" className="normal-case tracking-normal" />,
+    },
+    {
+      key: "title",
+      header: "Title",
+      cell: (order) => (
+        <div className="max-w-[220px] min-w-0">
+          <p className="truncate font-medium">{order.title || order.billingName || "—"}</p>
+          {order.hubStatus && <p className="truncate text-xs text-muted-foreground">Hub: {order.hubStatus}</p>}
+        </div>
+      ),
+    },
+    {
+      key: "date",
+      header: "Date",
+      hideBelowMd: true,
+      className: "w-32 whitespace-nowrap",
+      cell: (order) => <span className="pt-num text-muted-foreground">{new Date(order.createdAt).toLocaleDateString()}</span>,
+    },
+    {
+      key: "amount",
+      header: "Amount",
+      primary: true,
+      align: "right",
+      className: "w-40 whitespace-nowrap",
+      cell: (order) => <span className="pt-num font-medium">{formatMoney(order)}</span>,
+    },
+    {
+      key: "status",
+      header: "Status",
+      primary: true,
+      className: "w-40",
+      cell: (order) => <Token label={formatStatus(order.status)} tone={orderStatusTone(order.status)} dot />,
+    },
+    {
+      key: "actions",
+      header: <span className="sr-only">Actions</span>,
+      align: "right",
+      className: "w-36 whitespace-nowrap",
+      cell: (order) => {
+        const hub = isHubSource(order.source) || order.source === "store_quote";
+        return (
+          <Button asChild variant="outline" size="sm" className="border-border bg-card hover:bg-accent">
+            <Link href={orderHref(order)} data-testid={`button-view-order-${order.id}`}>
+              {hub ? <ExternalLink aria-hidden="true" /> : <Eye aria-hidden="true" />}
+              {hub ? "Open" : "View details"}
+            </Link>
+          </Button>
+        );
+      },
+    },
+  ];
+
+  const filters = (
+    <>
+      <Select value={sourceFilter} onValueChange={setSourceFilter}>
+        <SelectTrigger className="h-9 w-[160px] border-border bg-card" aria-label="Filter orders by source" data-testid="select-source-filter">
+          <SelectValue placeholder="Source" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All sources</SelectItem>
+          <SelectItem value="store">Store</SelectItem>
+          <SelectItem value="hub">TechSales</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <SelectTrigger className="h-9 w-[180px] border-border bg-card" aria-label="Filter orders by status" data-testid="select-status-filter">
+          <SelectValue placeholder="Filter by status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All statuses</SelectItem>
+          <SelectItem value="pending">Pending</SelectItem>
+          <SelectItem value="paid">Paid</SelectItem>
+          <SelectItem value="awaiting_signature">Awaiting signature</SelectItem>
+          <SelectItem value="processing">Processing</SelectItem>
+          <SelectItem value="completed">Completed</SelectItem>
+          <SelectItem value="cancelled">Cancelled</SelectItem>
+        </SelectContent>
+      </Select>
+    </>
+  );
 
   return (
-    <PortalLayout title="Order History" description={`Store purchases and TechSales deals and quotes${data?.companyName ? ` for ${data.companyName}` : ""}.`}>
-      <div className="space-y-6">
+    <PortalLayout
+      title="Order History"
+      description={`Store purchases and TechSales deals and quotes${data?.companyName ? ` for ${data.companyName}` : ""}.`}
+      width="wide"
+    >
+      <div className="space-y-4">
         {isError && (
-          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-lg">
-            <p className="text-sm text-red-800 dark:text-red-300">
-              Failed to load orders: {error instanceof Error ? error.message : "Unknown error"}
-            </p>
-          </div>
+          <Callout tone="bad" title="Orders couldn't be loaded">
+            {error instanceof Error ? error.message : "Unknown error"}
+          </Callout>
         )}
-
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div />
-          <div className="flex flex-wrap items-center gap-3">
-            <Select value={sourceFilter} onValueChange={setSourceFilter}>
-              <SelectTrigger className="w-[160px]" aria-label="Filter orders by source" data-testid="select-source-filter">
-                <SelectValue placeholder="Source" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All sources</SelectItem>
-                <SelectItem value="store">Store</SelectItem>
-                <SelectItem value="hub">TechSales</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]" aria-label="Filter orders by status" data-testid="select-status-filter">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="awaiting_signature">Awaiting signature</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
 
         {data?.sources?.hub === "unavailable" && (
-          <div className="p-3 rounded-lg border border-amber-200 bg-amber-50 text-sm text-amber-900 dark:bg-amber-950/30 dark:border-amber-900/40 dark:text-amber-100">
-            TechSales orders could not be loaded for this company (bridge unavailable or company name
-            mismatch). Store orders still appear below.
-          </div>
+          <Callout tone="warn" title="TechSales orders could not be loaded for this company">
+            Bridge unavailable or company name mismatch. Store orders still appear below.
+          </Callout>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Total
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold" data-testid="stat-total-orders">
-                {orders.length}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                <Store className="h-3.5 w-3.5" /> Store
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold" data-testid="stat-store-orders">
-                {storeCount}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                <Briefcase className="h-3.5 w-3.5" /> TechSales
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold" data-testid="stat-hub-orders">
-                {hubCount}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Pending
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-amber-600" data-testid="stat-pending-orders">
-                {
-                  orders.filter((o) =>
-                    ["pending", "awaiting_payment", "quote_requested", "awaiting_signature"].includes(
-                      o.status,
-                    ),
-                  ).length
-                }
-              </p>
-            </CardContent>
-          </Card>
+        <div role="group" aria-label="Filter orders" className="flex flex-wrap items-center gap-2 sm:justify-end">
+          {filters}
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Orders</CardTitle>
-            <CardDescription>
-              {orders.length} item{orders.length !== 1 ? "s" : ""}
-              {data?.sources?.hub === "ok" ? " · TechSales connected" : ""}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                {[...Array(3)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-20 bg-gray-200 dark:bg-slate-800 rounded animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : orders.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b dark:border-slate-700">
-                      <th className="text-left font-semibold py-3 px-3">Order #</th>
-                      <th className="text-left font-semibold py-3 px-3">Source</th>
-                      <th className="text-left font-semibold py-3 px-3">Title</th>
-                      <th className="text-left font-semibold py-3 px-3">Date</th>
-                      <th className="text-left font-semibold py-3 px-3">Amount</th>
-                      <th className="text-left font-semibold py-3 px-3">Status</th>
-                      <th className="text-left font-semibold py-3 px-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orders.map((order) => {
-                      const href = order.detailPath || `/portal/orders/${order.id}`;
-                      const hub = isHubSource(order.source) || order.source === "store_quote";
-                      return (
-                        <tr
-                          key={order.id}
-                          className="border-b dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors"
-                          data-testid={`order-row-${order.id}`}
-                        >
-                          <td className="py-4 px-3 font-medium whitespace-nowrap">
-                            {order.orderNumber}
-                          </td>
-                          <td className="py-4 px-3">
-                            <Badge variant="outline" className="font-normal">
-                              {sourceLabel(order.source)}
-                            </Badge>
-                          </td>
-                          <td className="py-4 px-3 max-w-[220px]">
-                            <p className="truncate font-medium">{order.title || order.billingName || "—"}</p>
-                            {order.hubStatus && (
-                              <p className="text-sm text-muted-foreground truncate">
-                                Hub: {order.hubStatus}
-                              </p>
-                            )}
-                          </td>
-                          <td className="py-4 px-3 whitespace-nowrap">
-                            {new Date(order.createdAt).toLocaleDateString()}
-                          </td>
-                          <td className="py-4 px-3 font-medium whitespace-nowrap">
-                            {formatMoney(order)}
-                          </td>
-                          <td className="py-4 px-3">
-                            <Badge
-                              className={`flex items-center gap-1 w-fit ${getStatusColor(order.status)}`}
-                            >
-                              {getStatusIcon(order.status)}
-                              {formatStatus(order.status)}
-                            </Badge>
-                          </td>
-                          <td className="py-4 px-3">
-                            <Link href={href}>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex items-center gap-2"
-                                data-testid={`button-view-order-${order.id}`}
-                              >
-                                {hub ? (
-                                  <ExternalLink className="h-4 w-4" />
-                                ) : (
-                                  <Eye className="h-4 w-4" />
-                                )}
-                                {hub ? "Open" : "View Details"}
-                              </Button>
-                            </Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="py-12 text-center">
-                <ShoppingCart className="h-12 w-12 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
-                <p className="text-gray-500 dark:text-gray-400 mb-2">No orders found</p>
-                <p className="text-sm text-gray-400 dark:text-gray-500">
-                  {statusFilter !== "all" || sourceFilter !== "all" ? "Try a different filter or " : ""}
-                  <Link href="/portal/marketplace" className="text-[#D3126A] hover:underline">
-                    browse the client marketplace
-                  </Link>
-                  {" · "}
-                  <Link href="/portal/contracts" className="text-[#D3126A] hover:underline">
-                    contracts
-                  </Link>
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Order figures">
+          <StatTile label="Total" value={orders.length} hint="in this view" loading={isLoading} testId="stat-total-orders" />
+          <StatTile label="Store" value={storeCount} hint="orders and quotes" loading={isLoading} testId="stat-store-orders" />
+          <StatTile
+            label="TechSales"
+            value={hubCount}
+            hint={data?.sources?.hub === "ok" ? "connected" : data?.sources?.hub === "unavailable" ? "unavailable" : "deals and quotes"}
+            tone={data?.sources?.hub === "unavailable" ? "warn" : "neutral"}
+            loading={isLoading}
+            testId="stat-hub-orders"
+          />
+          <StatTile
+            label="Pending"
+            value={pendingCount}
+            hint={!isLoading && pendingCount > 0 ? "awaiting payment or signature" : "nothing pending"}
+            tone={pendingCount > 0 ? "warn" : "neutral"}
+            loading={isLoading}
+            testId="stat-pending-orders"
+          />
+        </section>
+
+        <Panel
+          id="orders-list"
+          title="Orders"
+          description={
+            isLoading
+              ? "Loading…"
+              : `${orders.length} item${orders.length !== 1 ? "s" : ""}${data?.sources?.hub === "ok" ? " · TechSales connected" : ""}`
+          }
+          flush
+        >
+          <DataTable<UnifiedOrder>
+            columns={columns}
+            rows={orders}
+            rowKey={(order) => order.id}
+            rowHref={orderHref}
+            rowTestId={(order) => `order-row-${order.id}`}
+            loading={isLoading}
+            caption="Orders"
+            empty={
+              <EmptyState
+                icon={ShoppingCart}
+                title="No orders found"
+                description={
+                  <>
+                    {filtersActive ? "Try a different filter or " : ""}
+                    <Link href="/portal/marketplace" className="pt-link hover:underline">
+                      browse the client marketplace
+                    </Link>
+                    {" · "}
+                    <Link href="/portal/contracts" className="pt-link hover:underline">
+                      contracts
+                    </Link>
+                  </>
+                }
+                action={
+                  filtersActive ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-border bg-card hover:bg-accent"
+                      onClick={() => {
+                        setStatusFilter("all");
+                        setSourceFilter("all");
+                      }}
+                    >
+                      Clear filters
+                    </Button>
+                  ) : (
+                    <Button asChild variant="brand" size="sm">
+                      <Link href="/portal/marketplace">Browse the marketplace</Link>
+                    </Button>
+                  )
+                }
+              />
+            }
+          />
+        </Panel>
       </div>
     </PortalLayout>
   );
