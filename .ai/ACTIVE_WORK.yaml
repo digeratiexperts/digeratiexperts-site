@@ -46,7 +46,7 @@ claims:
       - server/zoho/zohoClient.desk.test.ts
       - server/zoho/zohoDesk.ts
       - server/routes.ts
-    status: active
+    status: verified-live
     started: 2026-09-30
     note: >-
       Joe authorized takeover of PR 290. Another lane merged it at 3b90e35c;
@@ -54,6 +54,17 @@ claims:
       Mode; widget changes are ticket-only, preserving the shared auth lane.
       Claude Code remains integrator. Draft review only: rendered checks at
       390/768/1440 are blocked by browser tooling; no merge/deploy authorized.
+      RELEASED 2026-10-01: merged as 2b93cf85 (PR 303, on Joe's "lets merge
+      things safely") after the rendered QA this claim left open: a browser
+      script drove Get Support on a production build of the merged tree at 390,
+      768 and 1440, 33/33 checks. VERIFIED LIVE 11:09Z: the deploy job and its
+      runtime check passed; production serves 2b93cf85; /api/zoho/desk/status
+      answers 503 with Cache-Control no-store and no upstream error code; an
+      invalid ticket is rejected with 400 before Zoho; the availability notice
+      is in the served bundle. NOT restored: production's Desk refresh token is
+      invalid (invalid_code before this merge; issue 314 opened by the health
+      probe), so tickets still cannot be created until the token is replaced.
+      Files released.
   - id: de-ask-nudge-cookie-offset
     owner: claude
     subsystem: de-desk
@@ -63,7 +74,7 @@ claims:
       - client/src/components/SiteBottomBar.tsx (Ask DE nudge bottom offset only)
       - client/src/components/SiteBottomBar.nudge.test.ts
       - artifacts/visual-qa/ask-de-nudge-cookie/**
-    status: active
+    status: verified-live
     started: 2026-10-01
     note: >-
       Source of truth §15 row 18, item 1, left unclaimed when de-desk-delight
@@ -75,6 +86,11 @@ claims:
       SiteBottomBar.tsx (frozen PRs 219/220, no active work on this hunk).
       Item 2 (STORE_ADVISOR_SEED in ZohoASAPWidget.tsx) is NOT taken here: that
       file is under Codex's de-desk-reliability-followup claim, draft PR 303.
+      RELEASED 2026-10-01: merged as 511bcf7d (PR 307, on Joe's "lets merge
+      things safely") after reconciling with main 92a9f86c. VERIFIED LIVE
+      10:59Z: the deploy job and its runtime check passed; production serves
+      511bcf7d with /healthz 200 and the nudge's cookie lift in the served
+      bundle. Row 18 item 2 (STORE_ADVISOR_SEED) stays open. Files released.
   - id: homepage-coherence
     issue: 296
     owner: claude
@@ -93,7 +109,7 @@ claims:
       - design/approved/homepage-coherence-2026-09-30.md
       - design/UI-STYLE-RULES.md (§6 homepage chapter grammar)
       - artifacts/visual-qa/homepage-coherence/**
-    status: active
+    status: verified-live
     started: 2026-09-30
     note: >-
       Joe, 2026-09-30: the live homepage "looks like a mess", the paper
@@ -111,6 +127,15 @@ claims:
       whole; the Protect chapter keeps Joe's dark phone field through the
       chapter grammar (max-md well, paper from md up) and the phone test is
       re-pointed at that mechanism.
+      RELEASED 2026-10-01: merged as 92a9f86c (PR 298, on Joe's "lets merge
+      things safely") after one phone fix on the branch (79e32ea2: the
+      assessment form's grid took the submit button's unwrappable width and ran
+      past the screen at 360 and 390). VERIFIED LIVE 10:53Z: the deploy job and
+      its runtime check passed; production served 92a9f86c with /healthz 200 and
+      the chapter grammar and the form fix in the served bundle. Phone audit of
+      the merged build at 390 against the previous live page: no page errors, no
+      overflow, texts under 12px 24 to 20, tap targets under 44px 49 to 42,
+      nested boxes 80 to 50. Files released; issue 296 closed.
   - id: portal-redesign-control-room
     owner: claude
     subsystem: client-portal-shell
@@ -168,7 +193,7 @@ claims:
       - client/src/components/visual/ProtectionCommandDeck.phone.test.ts (the reserve assertion)
       - artifacts/visual-qa/protection-deck-phone/390-end-before-reserve.png
       - artifacts/visual-qa/protection-deck-phone/390-end-after-reserve.png
-    status: active
+    status: verified-live
     started: 2026-10-01
     note: >-
       Follow-up to de-protection-deck-phone (PR 306, live 05:09Z). Measured at
@@ -177,6 +202,10 @@ claims:
       line at 748, so the nudge covered the last two lines of the identity
       boundary. The reserve becomes 96px above the dock and its gap, plus the
       safe-area inset, which ends the last line at 682. Nothing else changes.
+      RELEASED 2026-10-01: merged as 8fc55249 (PR 309) at 05:25Z; VERIFIED LIVE
+      05:28Z with the reserve string in the served ProtectionCommandDeck chunk.
+      Re-measured on the PR 298 build at 390x844: last line 682, nudge 685,
+      nothing covered. Files released.
   - id: de-protection-deck-phone
     owner: claude
     subsystem: homepage-protection-model
@@ -186,7 +215,7 @@ claims:
       - client/src/components/visual/ProtectionCommandDeck.tsx (phone layout only; desktop frame untouched)
       - client/src/components/visual/ProtectionCommandDeck.phone.test.ts
       - client/src/pages/sections/DigeratiHowWeProtectSection.tsx (wrapper and heading classes only; copy unchanged)
-    status: active
+    status: verified-live
     started: 2026-10-01
     note: >-
       Joe, 2026-10-01: "the phone is the failure." Replaces the deck's phone
@@ -202,6 +231,11 @@ claims:
       HomeChapter; this lane changes only the island wrapper and three
       heading class strings in that file, and the deck component, which 298
       does not touch.
+      RELEASED 2026-10-01: merged as 0f32ae77 (PR 306) at 05:03Z and live since
+      05:09Z. Measured on production builds at 390: seven labels on one 358px
+      line, every tab 44px tall, no overflow. Its flat 96px reserve left the Ask
+      DE nudge on the last two lines; follow-up PR 309 (de-deck-reserve-clears-
+      nudge) fixed that. Files released.
   - id: exit-intent-second-opinion
     owner: claude
     subsystem: marketing-lead-capture
@@ -724,7 +758,7 @@ claims:
       - scripts/qa/homepage-v5-acceptance.mjs (the scope, sections, limits and facts arguments; Version 5 defaults unchanged)
       - docs/CLAIMS-REGISTER.md (the Version 6 section only)
       - artifacts/visual-qa/homepage-v6/**
-    status: active
+    status: verified-live
     started: 2026-10-01
     note: >-
       Joe, 2026-10-01: "can you mock up every section on the live
@@ -740,6 +774,11 @@ claims:
       de-homepage-v5-practical claim; the shared files (App.tsx, registry,
       README, spaKnownPaths, the acceptance script) get additive edits only.
       No kie.ai spend.
+      RELEASED 2026-10-01: merged as e326ac37 (PR 304) at 05:23Z on Joe's
+      "whatever it is do it"; VERIFIED LIVE 05:28Z: /version-6 answers 200 with
+      X-Robots-Tag noindex, nofollow; acceptance 77/77 for Version 6 and Version
+      5, re-run 77/77 each on the PR 298 build. Production / is untouched by
+      this claim. Files released.
 # de-homepage-v5-practical (branch claude/homepage-v5-practical) RETIRED
 # 2026-10-01: merged via PR #292 (squash f202cc23) at 01:58Z. The run's "Deploy
 # and verify production VPS" job succeeded including the production runtime
