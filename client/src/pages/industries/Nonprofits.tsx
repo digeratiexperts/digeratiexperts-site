@@ -167,7 +167,7 @@ export default function Nonprofits() {
           </div>
           <div className="text-center">
             <p className="mb-2 text-lg font-semibold text-white">Someone to call</p>
-            <p className="text-sm text-white/70">Arizona team for donor-data and grant-system issues — {PRIMARY_PHONE.display}.</p>
+            <p className="text-sm text-white/70">Arizona team for donor-data and grant-system issues — <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>.</p>
           </div>
         </div>
 

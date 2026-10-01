@@ -333,7 +333,7 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
           </div>
           <p className="text-sm text-white/55">
             Serving professional services, healthcare, construction, nonprofit, and regulated
-            organizations across Greater Phoenix · {PRIMARY_PHONE.display}
+            organizations across Greater Phoenix · <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>
           </p>
         </div>
       </HomeContainer>
