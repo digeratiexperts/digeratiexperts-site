@@ -240,6 +240,92 @@ export const protectionDomains: ProtectionDomain[] = [
   },
 ];
 
+/** The first word of each short name: Identity, Endpoint, Email, Browser, Network, Detection, Human, Risk. */
+const tabLabel = (domain: ProtectionDomain): string => domain.shortName.split(" ")[0];
+
+/**
+ * Phone layout (below md). Joe, 2026-10-01: one domain at a time, a single row of
+ * eight short labels that all fit, Risk & exposure marked as continuous rather
+ * than a ninth peer, one sentence in sentence case, then the domain name, its
+ * paragraph, the three assessment questions and the boundary as a plain list.
+ * No frame chrome, no boxed label, no card inside a card, no diagram widget.
+ * 96px stay empty above the dock, so the Ask DE launcher and its nudge never
+ * cover the type.
+ */
+const ProtectionDeckPhone: React.FC<{
+  domains: ProtectionDomain[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+}> = ({ domains, selectedId, onSelect }) => {
+  const active = domains.find((domain) => domain.id === selectedId) ?? domains[0];
+  return (
+    <div
+      className="md:hidden"
+      // 96px of empty field above the dock and its gap, so the Ask DE launcher and its nudge never sit on the type.
+      style={{ paddingBottom: "calc(96px + var(--de-unified-bar-h, 3.5rem) + 0.75rem)" }}
+      data-testid="protection-deck-phone"
+    >
+      <ul className="flex items-stretch justify-between gap-[3px]" aria-label="The eight blocks">
+        {domains.map((domain) => {
+          const isSelected = domain.id === selectedId;
+          const base = "block min-h-11 w-full whitespace-nowrap border-0 border-b-2 bg-transparent px-px pb-[7px] pt-2 text-center text-[10.5px] leading-[1.1] tracking-[-0.015em]";
+          const tone = isSelected ? "border-[#D3126A] font-semibold text-white" : "border-white/15 text-white/60";
+          const continuous = domain.continuous ? "border-dotted border-white/50" : "";
+          return (
+            <li
+              key={domain.id}
+              className={domain.continuous ? "relative ml-[5px] before:absolute before:-left-1 before:bottom-2 before:top-2 before:w-px before:bg-white/20" : undefined}
+            >
+              <button
+                type="button"
+                onClick={() => onSelect(domain.id)}
+                aria-pressed={isSelected}
+                aria-label={domain.continuous ? `${domain.name}, continuous` : domain.name}
+                className={`${base} ${tone} ${continuous}`}
+                data-testid={`domain-tab-phone-${domain.id}`}
+              >
+                {tabLabel(domain)}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-4 text-[15px] leading-[1.5] text-white/70" data-testid="domain-continuous-note-phone">
+        Seven blocks each answer a threat class, and risk and exposure runs under all of them.
+      </p>
+
+      <h3 className="mt-7 font-heading text-[26px] font-semibold leading-[1.15] tracking-[-0.02em] text-white">{active.name}</h3>
+      <p className="mt-3 text-base leading-relaxed text-white/85">{active.purpose}</p>
+      <ul className="mt-5 grid gap-2.5" aria-label="Questions an assessment answers">
+        {active.commonQuestions.map((question) => (
+          <li
+            key={question}
+            className="relative pl-[18px] text-base leading-relaxed text-white before:absolute before:left-0 before:top-[0.6em] before:h-[7px] before:w-[7px] before:rounded-full before:bg-[#D3126A]"
+          >
+            {question}
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-6 border-t border-white/15 pt-[18px]">
+        <h4 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-white/60">{active.architecture.boundaryName}</h4>
+        <ul className="mt-2.5 grid gap-2">
+          {active.architecture.nodes.map((node) => (
+            <li key={node.title}>
+              <b className="block font-semibold text-white">{node.title}</b>
+              <span className="text-[15px] text-white/70">{node.subtitle}.</span>
+            </li>
+          ))}
+          <li>
+            <b className="block font-semibold text-white">{active.architecture.gate.label}</b>
+            <span className="text-[15px] text-white/70">{active.architecture.gate.policy}.</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
 export const ProtectionCommandDeck: React.FC<{ onDomainChange?: (id: string) => void }> = ({ onDomainChange }) => {
   const [selectedId, setSelectedId] = useState("identity");
   const selectDomain = (id: string) => {
@@ -250,6 +336,9 @@ export const ProtectionCommandDeck: React.FC<{ onDomainChange?: (id: string) => 
   const DomainIcon = activeDomain.icon;
 
   return (
+    <>
+      <ProtectionDeckPhone domains={protectionDomains} selectedId={selectedId} onSelect={selectDomain} />
+      <div className="hidden md:block">
     <EvidenceFrame
       classification="ILLUSTRATIVE"
       title="Eight-block protection model"
@@ -385,5 +474,7 @@ export const ProtectionCommandDeck: React.FC<{ onDomainChange?: (id: string) => 
         </motion.div>
       </AnimatePresence>
     </EvidenceFrame>
+      </div>
+    </>
   );
 };

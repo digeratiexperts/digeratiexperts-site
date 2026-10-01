@@ -287,42 +287,13 @@ claims:
       and public/scrollcraft/; no client/, server/ or shared/ files;
       production is never replaced without Joe's explicit approval. The
       2026-09-01 Scrollcraft freeze stands for every other route.
-  - id: de-eight-block-correction
-    owner: claude
-    subsystem: homepage-protection-model
-    branch: claude/eight-block-recut
-    base_sha: aa7ebaaab32fbf04a9207d5cdbaf1188248ba407
-    files:
-      - client/src/components/visual/ProtectionCommandDeck.tsx
-      - client/src/pages/sections/DigeratiHowWeProtectSection.tsx (heading and body copy only)
-      - client/src/diagrams/diagrams.ts
-      - client/src/diagrams/diagrams.css
-      - client/src/diagrams/diagrams.test.ts
-      - client/src/components/evidence/evidencePrimitives.test.ts
-      - client/src/pages/GenericServicePage.tsx (one ProofChip)
-      - client/src/pages/solutions/ProActiveEcosystemPage.tsx (one ProofChip)
-      - client/src/pages/solutions/SolutionsIndex.tsx (one ProofChip)
-      - design/PROOF_SYSTEM.md
-      - docs/CLAIMS-REGISTER.md
-    status: active
-    started: 2026-09-02
-    note: >-
-      Joe-routed, small, content-only: the live homepage presented the stale
-      six-domain protection model. The current architecture is eight
-      cybersecurity blocks (docs/DE-SERVICE-MODEL-2026.md on PR #185), Risk &
-      Exposure retained as the continuous visibility layer. Updates the
-      protection deck, the layered-protection and one-environment diagrams,
-      and every copy string that named six. Not a homepage redesign; the 14
-      internal domains stay unenumerated. RE-CUT 2026-09-06 against the
-      restored Version 1 homepage (PR #192): the restored layout is kept
-      exactly as Joe asked for it, so the diagram beside the copy and the
-      hero trust-strip rewrite from the first attempt are dropped; only the
-      stale six-domain claim is corrected. The restored hero and newsletter
-      make no domain-count claim and are untouched. The frozen version
-      snapshots under client/src/pages/versions/ stay as historical record.
-    supersedes: >-
-      PR #189 (branch claude/eight-block-correction, based on
-      pre-restore main; closed in favour of this re-cut)
+# de-eight-block-correction (branch claude/eight-block-recut) RETIRED 2026-10-01:
+# the eight-block re-cut shipped via PR #199 and the claim stayed listed active
+# for a month. Verified at main @ 7f4cff10: `git rev-list --count
+# origin/main..origin/claude/eight-block-recut` is 0, so the branch holds no
+# commit main lacks and the claim was only a lock on ProtectionCommandDeck.tsx
+# and the protect section. Retired by the same owner while taking those files
+# for de-deck-phone-layout below.
   - id: de-site-v2-scrollcraft
     owner: claude
     subsystem: site-v2-experiment
@@ -490,6 +461,31 @@ claims:
       does not say what, where, one action and a phone. Preview only at the
       noindex /version-5; production / is untouched. No kie.ai spend; no
       generated imagery.
+  - id: de-deck-phone-layout
+    owner: claude
+    subsystem: homepage-protect-section
+    branch: claude/deck-phone-layout
+    base_sha: 7f4cff10b00fbe3e55279989c605b16794363460
+    files:
+      - client/src/components/visual/ProtectionCommandDeck.tsx (the phone layout below md; desktop unchanged)
+      - client/src/pages/sections/DigeratiHowWeProtectSection.tsx (phone-only classes on the island and its heading)
+      - artifacts/visual-qa/deck-phone/**
+    status: active
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: "replace the phone layout of ProtectionCommandDeck so it
+      matches the mock, keep the domain copy and the assessment questions, and
+      keep Ask DE off the text. Desktop can stay quieter than it is now, but
+      the phone is the failure." Maintenance Mode on the live homepage, Tier 2
+      system (dark field, one magenta accent). Below md the deck renders one
+      domain at a time: a single row of eight short labels that fit, Risk &
+      exposure marked continuous, one sentence, the domain name, its paragraph,
+      the three questions and the boundary as a plain list, with 96px left
+      empty at the bottom. The section's paper island becomes the dark field
+      below md. Desktop keeps the existing frame. Overlaps: #298 (another
+      session's homepage rework) also edits DigeratiHowWeProtectSection.tsx;
+      this change adds classes only. The same owner's de-site-v2-scrollcraft
+      claim lists the deck file; its branch is main now. No kie.ai spend.
 # restore-homepage-v1 (branch claude/restore-homepage-v1) RETIRED 2026-09-09:
 # the claim was still listed active while the work was already fully contained
 # in main. Verified at main @ 611acfdb: `git rev-list --count

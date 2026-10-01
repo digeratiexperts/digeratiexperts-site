@@ -55,7 +55,7 @@ export const DigeratiHowWeProtectSection = (): JSX.Element => {
     <>
       <section className="de-dark-well relative py-8 md:py-14">
         <div className="mx-auto max-w-[var(--de-canvas)] px-3 sm:px-4 lg:px-6">
-          <div className="de-paper-island relative px-6 py-10 sm:px-10 sm:py-14 md:px-12 md:py-16">
+          <div className="de-paper-island relative px-6 py-10 sm:px-10 sm:py-14 md:px-12 md:py-16 max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:px-4 max-md:py-6 max-md:shadow-none max-md:before:hidden">
             <div className="relative z-10">
               <motion.div
                 className="mb-8 max-w-2xl md:mb-12"
@@ -64,13 +64,13 @@ export const DigeratiHowWeProtectSection = (): JSX.Element => {
                 viewport={revealViewport}
                 transition={revealTransition}
               >
-                <p className="mb-3 text-base font-semibold uppercase tracking-[0.2em] text-[#A30E52]">
+                <p className="mb-3 text-base font-semibold uppercase tracking-[0.2em] text-[#A30E52] max-md:text-de-magenta-ink">
                   What we protect
                 </p>
-                <h2 className="mb-4 font-heading text-3xl font-semibold tracking-[-0.02em] text-[#1A1228] md:text-4xl">
+                <h2 className="mb-4 font-heading text-3xl font-semibold tracking-[-0.02em] text-[#1A1228] md:text-4xl max-md:text-white">
                   Eight blocks. One accountable operating model.
                 </h2>
-                <p className="text-lg leading-relaxed text-[#3A3448]">
+                <p className="text-lg leading-relaxed text-[#3A3448] max-md:text-white/70">
                   Protection is layered around the business, and each block answers a specific class
                   of threat. Risk and exposure runs continuously beneath the other seven. Select a
                   block below to see how we operate it.
