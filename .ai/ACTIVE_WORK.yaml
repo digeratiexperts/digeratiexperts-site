@@ -82,7 +82,7 @@ claims:
       - client/src/lib/deskOpenSeed.ts
       - client/src/lib/deskOpenSeed.test.ts
       - artifacts/visual-qa/desk-store-seed/**
-    status: active
+    status: verified-live
     started: 2026-10-01
     note: >-
       Source of truth §15 row 18, item 2, unblocked when PR 303 merged and
@@ -94,6 +94,13 @@ claims:
       Shares ZohoASAPWidget.tsx with the active de-desk-gold claim (PR 319),
       which is scoped to the stylesheet and the chip icon class, no logic;
       this hunk is the open handler and auto-merges with PR 319's branch.
+      RELEASED 2026-10-01: merged as 445fbf77 (PR 325). VERIFIED LIVE 23:14Z:
+      CI run 36939339444 passed, including "Deploy and verify production VPS"
+      and its runtime verification step; /healthz 200; the served Desk chunk
+      ZohoASAPWidget-BZGTGgOG.js carries deskOpenSeed (explicit seed, then
+      context "store" or isDoor2Path) and no longer has pathname.includes
+      ("/store"). Source of truth §15 row 18 is closed. Files released.
+
   - id: de-phone-number-and-arrows
     owner: claude
     subsystem: homepage
