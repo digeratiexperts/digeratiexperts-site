@@ -34,3 +34,14 @@
 cd artifacts/design-concepts/homepage-sections-2026-10
 node system/render.mjs --all --widths 1440,390
 ```
+
+## Strings left out of the mocks (no source)
+
+| Live string | Where | Why |
+|---|---|---|
+| "Results in 24-48 hours" | Lead form footer | No source in `docs/CLAIMS-REGISTER.md` |
+| "Microsoft Partner", "Apple Consultants" | Newsletter chips | No source in `docs/CLAIMS-REGISTER.md` |
+| "24/7 Security Operations Center Always Active" | Contact | Replaced by the SLA wording "24/7/365 emergency incident response" |
+| "Arizona SOC Operations" badge, "Always-On Telemetry" caption | Detection & response image panel | No source; Tier 0 bars invented telemetry |
+
+If Joe picks this direction, the integration PR records these in `docs/CLAIMS-REGISTER.md`.
