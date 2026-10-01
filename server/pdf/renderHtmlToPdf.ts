@@ -3,7 +3,11 @@
  *
  * Primary: WeasyPrint (same pattern as Hub signature-doc-renderer).
  * Fallback: Playwright Chromium page.pdf() when WeasyPrint/native libs
- * are unavailable (common on Windows workstations).
+ * are unavailable (common on Windows workstations; VPS until WeasyPrint is installed).
+ *
+ * Ops: either `pip install weasyprint` (+ system pango/cairo) with optional
+ * PYTHON_BIN, or ensure `playwright` is installed and Chromium is available
+ * (`npx playwright install chromium` or PDF_CHROMIUM_PATH).
  */
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
@@ -16,6 +20,13 @@ const execFileAsync = promisify(execFile);
 
 const RENDER_TIMEOUT_MS = 60_000;
 const MIN_PDF_BYTES = 1_500;
+
+export class PdfRendererUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PdfRendererUnavailableError";
+  }
+}
 
 const PY_RUNNER = `import sys, os
 from weasyprint import HTML, default_url_fetcher
@@ -66,7 +77,11 @@ async function renderWithWeasyPrint(html: string, dir: string): Promise<Buffer> 
 
 async function renderWithPlaywright(html: string): Promise<Buffer> {
   const { chromium } = await import("playwright");
-  const browser = await chromium.launch({ headless: true });
+  const executablePath = process.env.PDF_CHROMIUM_PATH?.trim() || undefined;
+  const browser = await chromium.launch({
+    headless: true,
+    ...(executablePath ? { executablePath } : {}),
+  });
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load", timeout: RENDER_TIMEOUT_MS });
@@ -96,7 +111,9 @@ export async function renderHtmlToPdf(html: string): Promise<Buffer> {
       } catch (playErr) {
         const weasyMsg = weasyErr instanceof Error ? weasyErr.message : String(weasyErr);
         const playMsg = playErr instanceof Error ? playErr.message : String(playErr);
-        throw new Error(`PDF render failed (WeasyPrint: ${weasyMsg}; Playwright: ${playMsg})`);
+        throw new PdfRendererUnavailableError(
+          `PDF render failed (WeasyPrint: ${weasyMsg}; Playwright: ${playMsg})`,
+        );
       }
     }
   } finally {

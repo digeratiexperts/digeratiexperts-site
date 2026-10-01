@@ -1,6 +1,6 @@
 # Shared DE PDF brand tokens
 
-Client-facing PDF packets should use the same brand bits on both repos:
+Client-facing PDF packets should use the same brand bits:
 
 | Token | Value | Role |
 | --- | --- | --- |
@@ -14,7 +14,7 @@ Client-facing PDF packets should use the same brand bits on both repos:
 ## Sources of truth (keep in sync by hand)
 
 - Website: `server/pdf/dePdfBrand.ts`
-- Hub: `artifacts/api-server/src/lib/de-pdf-brand.ts`
+- Hub (when mirrored): `artifacts/api-server/src/lib/de-pdf-brand.ts`
 
 RIC Master Plan keeps its approved indigo print palette in
 `ric-plan-pdf-renderer.ts` and does not import these tokens.
@@ -23,4 +23,13 @@ RIC Master Plan keeps its approved indigo print palette in
 
 - Hub: WeasyPrint via `renderHtmlToPdf` in `signature-doc-renderer.ts`
 - Website Store packets: WeasyPrint first, Playwright Chromium `page.pdf()`
-  fallback when native WeasyPrint libs are unavailable (e.g. Windows without GTK)
+  fallback when native WeasyPrint libs are unavailable
+
+### Production activation (website VPS)
+
+Either:
+
+1. Install WeasyPrint for the site Python (`pip install weasyprint` + pango/cairo), set `PYTHON_BIN` if needed, **or**
+2. Ensure Chromium is present: `npx playwright install chromium` (or set `PDF_CHROMIUM_PATH`). `playwright` is a production dependency so `npm ci` keeps it.
+
+Until one renderer works, `POST /api/public/solutions/packet-pdf` returns **503** (fail soft). Browser **Print** remains available as secondary.

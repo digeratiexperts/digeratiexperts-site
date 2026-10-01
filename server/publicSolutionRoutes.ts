@@ -351,6 +351,12 @@ export function registerPublicSolutionRoutes(app: Express): void {
       return res.send(pdf);
     } catch (error: unknown) {
       console.error("[solution-packet-pdf]", error instanceof Error ? error.message : error);
+      const { PdfRendererUnavailableError } = await import("./pdf/renderHtmlToPdf");
+      if (error instanceof PdfRendererUnavailableError) {
+        return res.status(503).json({
+          error: "PDF renderer is not available on this server yet. Print remains available.",
+        });
+      }
       return res.status(500).json({ error: "Failed to generate solution PDF" });
     }
   });
