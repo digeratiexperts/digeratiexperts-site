@@ -7,7 +7,7 @@ import { useAnnouncer } from "@/components/AccessibleAnnouncer";
 import { useMinWidth, useSolutionDraft } from "@/hooks/useSolutionDraft";
 import { Door2Frame } from "@/components/store/door2/Door2Frame";
 import { SolutionProfileForm } from "@/components/store/SolutionProfileForm";
-import { HairGrid, HelpRow, LiveLine, StepLabel, StoreAction, StoreChapter, UndoRow } from "@/components/store/door2/primitives";
+import { HairGrid, HelpRow, LiveLine, StepLabel, StoreAction, StoreChapter, UndoRow, type StepState } from "@/components/store/door2/primitives";
 import { ChoiceTiles, type ChoiceOption } from "@/components/store/door2/ChoiceTiles";
 import { PackageSheet } from "@/components/store/door2/PackageSheet";
 import { CoverageBand } from "@/components/store/door2/Coverage";
@@ -379,6 +379,8 @@ export default function PublicSolutionWorkspace() {
   };
   const completeSteps = STORE_STEPS.filter((step) => readiness[step.id]).map((step) => step.id);
   const currentStep: StoreStepId = STORE_STEPS.find((step) => step.id !== "contact" && !readiness[step.id])?.id ?? "delivery";
+  // Each numbered chapter is ready, the one to do now, or still ahead: the JourneyRail's own readiness.
+  const stepStateOf = (id: StoreStepId): StepState => (readiness[id] ? "complete" : id === currentStep ? "current" : "pending");
 
   const suggestionDismissed = draft.dismissedHints.includes(RELATIONSHIP_SUGGESTION_HINT);
   const suggestion = !suggestionDismissed && relationship === "" ? suggestRelationship(environment) : null;
@@ -950,6 +952,7 @@ export default function PublicSolutionWorkspace() {
                   <StoreChapter
                     id="profile"
                     n={STORE_STEPS[0].n}
+                    stepState={stepStateOf("profile")}
                     eyebrow={STORE_STEPS[0].label}
                     srText={STORE_STEPS[0].sr}
                     heading="Your business profile"
@@ -970,6 +973,7 @@ export default function PublicSolutionWorkspace() {
                   <StoreChapter
                     id="needs"
                     n={STORE_STEPS[1].n}
+                    stepState={stepStateOf("need")}
                     eyebrow={STORE_STEPS[1].label}
                     srText={STORE_STEPS[1].sr}
                     heading="Pain or need"
@@ -1054,6 +1058,7 @@ export default function PublicSolutionWorkspace() {
                       <StoreChapter
                         id="relationship"
                         n={STORE_STEPS[2].n}
+                        stepState={stepStateOf("relationship")}
                         eyebrow={STORE_STEPS[2].label}
                         srText={STORE_STEPS[2].sr}
                         heading={RELATIONSHIP_HEADING}
@@ -1086,6 +1091,7 @@ export default function PublicSolutionWorkspace() {
                       <StoreChapter
                         id="packages"
                         n={STORE_STEPS[3].n}
+                        stepState={stepStateOf("package")}
                         eyebrow={STORE_STEPS[3].label}
                         srText={STORE_STEPS[3].sr}
                         heading={PACKAGES_HEADING}
@@ -1169,6 +1175,7 @@ export default function PublicSolutionWorkspace() {
                       <StoreChapter
                         id="delivery"
                         n={STORE_STEPS[4].n}
+                        stepState={stepStateOf("delivery")}
                         eyebrow={STORE_STEPS[4].label}
                         srText={STORE_STEPS[4].sr}
                         heading={DELIVERY_HEADING}
