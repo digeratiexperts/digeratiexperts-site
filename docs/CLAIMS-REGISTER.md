@@ -91,7 +91,7 @@ V4 is proposed for `/`, per `docs/VERSION-4-HOMEPAGE-SOURCE-OF-TRUTH.md` §10.
 | Page metadata (on promotion) | Title "Managed Security Service Provider"; description "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment …" | SLA page: "24/7/365 emergency incident response availability" (`client/src/pages/legal/SLA.tsx`); Terms of Use: "Emergency Support: 24/7/365 for critical incidents". Production's line says "24/7 operations", which the pricing data does not support as a blanket claim: the IT (Entry) tier carries no 24/7 detection and response (`client/src/data/pricing.ts`), so this page names the SLA commitment instead | Corrected 2026-09-30 | Not visible on `/version-4`, where `VersionFrame` sets the preview's own noindex title and description. The live homepage's own line (`client/src/pages/DigeratiHomepage.tsx`) is a separate one-line fix |
 | Absent by design | Reviews, case studies, client logos, counters, telemetry, certifications | `reviewsCatalog` and `publishedCaseStudies` are empty; nothing is faked | — | Add real reviews only through the catalog / live API per `design/PROOF_SYSTEM.md` |
 
-## Version 5 preview `/version-5` (noindex)
+## Version 5 preview `/version-5` (noindex; PR #292, merged 2026-10-01, verified live)
 
 Every figure on this page is read at build time from a file the rest of the site already trusts, and `scripts/qa/homepage-v5-acceptance.mjs` fails the build if the rendered page shows any figure that does not appear verbatim in one of them.
 
