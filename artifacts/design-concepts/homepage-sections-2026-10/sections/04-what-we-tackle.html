@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>DE section mockup — 04 What we tackle</title>
+<link rel="stylesheet" href="../system/tokens.css">
+<style>
+  /* 04 · What we tackle — full-bleed paper band (no island). One head row
+     with the secondary link on the right; the six problems as one white
+     hairline grid (three across, two rows, numbers reading across); the
+     closing ask as one row inside the band. No arrows, no dots: the Oxanium
+     sequence number is the only mark. Everything else comes from tokens.css. */
+  .tackle__head { display: flex; justify-content: space-between; align-items: end; gap: 40px; }
+  .tackle__head .de-h2 { text-wrap: balance; }
+  .tackle__head .de-lede { text-wrap: pretty; }
+  .tackle__more { flex-shrink: 0; min-height: 44px; margin-bottom: -10px; } /* 44px target; text sits on the lede's last line */
+
+  /* Problems: the tokens' paper cells, 3 × 2. Whole cell is the link. */
+  .problems { margin-top: 36px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .problems > :nth-child(n) { padding: 0; }
+  .problems > :nth-child(3n + 1) { border-left: 0; }
+  .problems > :nth-child(n + 4) { border-top: 1px solid var(--de-paper-hairline); }
+  .problem { display: grid; grid-template-rows: auto auto 1fr; height: 100%; padding: 24px 28px 28px; }
+  .problem .de-seq { line-height: 1; }
+  .problem__title { margin-top: 14px; color: var(--de-ink); transition: color 200ms ease-out; }
+  .problem__body { margin-top: 6px; text-wrap: pretty; }
+  .problem:hover .problem__title { color: var(--de-magenta-paper-ink); }
+  .problem:focus-visible { outline: 2px solid #ec4899; outline-offset: -2px; }
+
+  /* Closing ask: sentence left, the one button right. */
+  .tackle__ask { display: flex; justify-content: space-between; align-items: center; gap: 32px; margin-top: 36px; }
+  .tackle__ask .de-body { max-width: 640px; color: var(--de-ink-body); text-wrap: pretty; }
+  .tackle__ask .de-btn { flex-shrink: 0; }
+
+  @media (max-width: 1023px) {
+    .problems { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .problems > :nth-child(n) { border-left: 1px solid var(--de-paper-hairline); border-top: 0; }
+    .problems > :nth-child(2n + 1) { border-left: 0; }
+    .problems > :nth-child(n + 3) { border-top: 1px solid var(--de-paper-hairline); }
+  }
+  @media (max-width: 639px) {
+    .tackle__head { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .tackle__more { margin-bottom: 0; }
+    .problems { margin-top: 28px; grid-template-columns: minmax(0, 1fr); }
+    .problems > :nth-child(n) { border-left: 0; border-top: 1px solid var(--de-paper-hairline); }
+    .problems > :first-child { border-top: 0; }
+    .problem { padding: 20px; }
+    .tackle__ask { flex-direction: column; align-items: stretch; gap: 20px; margin-top: 28px; }
+    .tackle__ask .de-btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<section class="f-paper de-section" id="challenges" aria-labelledby="what-we-tackle-title">
+  <div class="de-canvas">
+    <div class="tackle__head">
+      <div class="de-head">
+        <p class="de-eyebrow">Problems we solve</p>
+        <h2 class="de-h2" id="what-we-tackle-title">What We Tackle</h2>
+        <p class="de-lede">Compact view of the problems we own with you. Sourced industry statistics live on Cyber Facts; capability detail lives on Solutions.</p>
+      </div>
+      <a class="de-link tackle__more" href="/resources/cyber-facts">Full threat context <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+    </div>
+
+    <ol class="de-cells de-cells--paper problems" aria-label="Problems we solve">
+      <li>
+        <a class="problem" href="/solutions/threat-detection">
+          <span class="de-seq" aria-hidden="true">01</span>
+          <h3 class="de-h3 problem__title">Ransomware &amp; Malware</h3>
+          <p class="de-body problem__body">Advanced threat detection and rapid response to eliminate malicious attacks before damage occurs</p>
+        </a>
+      </li>
+      <li>
+        <a class="problem" href="/solutions/backup-disaster-recovery">
+          <span class="de-seq" aria-hidden="true">02</span>
+          <h3 class="de-h3 problem__title">Data Loss Prevention</h3>
+          <p class="de-body problem__body">Comprehensive backup strategies with tested disaster recovery ensuring business continuity</p>
+        </a>
+      </li>
+      <li>
+        <a class="problem" href="/resources/cyber-facts">
+          <span class="de-seq" aria-hidden="true">03</span>
+          <h3 class="de-h3 problem__title">Compliance Gaps</h3>
+          <p class="de-body problem__body">Navigate HIPAA, PCI DSS, and SOC 2 requirements with continuous monitoring and reporting</p>
+        </a>
+      </li>
+      <li>
+        <a class="problem" href="/solutions/security-operations">
+          <span class="de-seq" aria-hidden="true">04</span>
+          <h3 class="de-h3 problem__title">Phishing &amp; Social Engineering</h3>
+          <p class="de-body problem__body">Multi-layered email security combined with ongoing employee security awareness training</p>
+        </a>
+      </li>
+      <li>
+        <a class="problem" href="/solutions/threat-detection">
+          <span class="de-seq" aria-hidden="true">05</span>
+          <h3 class="de-h3 problem__title">Zero-Day Vulnerabilities</h3>
+          <p class="de-body problem__body">Proactive patch management and security assessments to close gaps before exploitation</p>
+        </a>
+      </li>
+      <li>
+        <a class="problem" href="/solutions/unified-security">
+          <span class="de-seq" aria-hidden="true">06</span>
+          <h3 class="de-h3 problem__title">Insider Threats</h3>
+          <p class="de-body problem__body">User behavior analytics and access controls to prevent internal security breaches</p>
+        </a>
+      </li>
+    </ol>
+
+    <div class="tackle__ask">
+      <p class="de-body">Don't see your specific challenge? We handle custom threat profiles across Arizona.</p>
+      <a class="de-btn de-btn--primary" href="/book" target="_blank" rel="noopener noreferrer">Discuss Your Security Needs <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+    </div>
+  </div>
+</section>
+</body>
+</html>

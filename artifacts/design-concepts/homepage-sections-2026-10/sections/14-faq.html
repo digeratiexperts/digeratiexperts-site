@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE section mockup — 14 FAQ, compliance, newsletter, service area</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../system/tokens.css">
+<style>
+  /* 14 · FAQ (paper band, hairline seam against the lead-form band above) then
+     one surface band in three parts: compliance row, newsletter card, service
+     area card. Both bands split on the same centre line (two equal columns,
+     20px gap) so the chapter reads as one grid top to bottom. */
+
+  /* ---- FAQ band ---- */
+  .faq-band { border-top: 1px solid var(--de-paper-hairline); }
+  .faq { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; align-items: start; }
+  .faq .de-head { max-width: 520px; }
+  .faq .de-h2 { text-wrap: balance; }
+  .faq .de-lede { text-wrap: pretty; }
+
+  /* Accordion: hairline rows, no rail, no shadow, no card. Native details/summary
+     so the first answer is open without a script. */
+  .faq-list { border-bottom: 1px solid var(--de-paper-hairline); }
+  .faq-item { border-top: 1px solid var(--de-paper-hairline); }
+  .faq-item summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px 0; cursor: pointer; font-family: var(--font-heading); font-weight: 600; font-size: 19px; line-height: 1.3; letter-spacing: -0.01em; color: var(--de-ink); }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary:focus-visible { outline: 2px solid #ec4899; outline-offset: 4px; border-radius: 4px; }
+  .faq-chev { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; border: 1px solid var(--de-paper-hairline); color: var(--de-ink-muted); background: var(--de-paper-raised); }
+  .faq-chev svg { width: 18px; height: 18px; }
+  .faq-item[open] .faq-chev { transform: rotate(180deg); border-color: var(--de-magenta); color: var(--de-magenta-paper-ink); }
+  .faq-answer { padding: 0 68px 28px 0; }
+  .faq-answer p { font-size: 16px; line-height: 1.65; color: var(--de-ink-body); text-wrap: pretty; }
+
+  /* ---- Surface band ---- */
+  .comp { align-items: start; }
+  .comp .de-h3 { font-size: 22px; }
+  .comp .de-body { margin-top: 10px; max-width: 560px; text-wrap: pretty; }
+  .comp-chips { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 4px; }
+  .comp-chips .de-chip { background: transparent; border-color: var(--de-hairline-strong); color: var(--de-muted); }
+
+  .cards { margin-top: 40px; }
+  .cards .de-card { display: flex; flex-direction: column; min-width: 0; }
+  .card-kicker { display: flex; align-items: center; gap: 14px; }
+  .card-kicker span:last-child { font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--de-muted-quiet); }
+  .cards .de-h3 { margin-top: 22px; font-size: 24px; }
+  .cards .de-body { margin-top: 8px; }
+
+  /* Newsletter form: paper input beside the one filled button. */
+  .nl-form { display: flex; gap: 12px; margin-top: 22px; }
+  .nl-form .de-input { flex: 1; min-width: 0; border-color: transparent; }
+  .nl-form .de-input:focus { outline: none; box-shadow: 0 0 0 3px rgba(211, 18, 106, 0.35); }
+  .nl-topics { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+  .nl-topics .de-chip svg { color: var(--de-magenta-ink); }
+  .card-foot { margin-top: auto; padding-top: 20px; }
+  .card-foot .de-small { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--de-hairline); }
+  .nl-foot .de-small { margin-top: 0; }
+
+  /* Service area: the six cities as one inline chip list; Chandler (HQ) carries the
+     magenta border, the address under the list says why. */
+  .city-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .city-list .de-chip { min-height: 44px; padding: 0 16px; font-size: 15px; }
+  .city-list .de-chip--hq { border-color: var(--de-magenta); }
+  .sa-foot .de-small { display: flex; align-items: center; gap: 10px; }
+  .sa-foot svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--de-magenta-ink); }
+  .sa-foot a { min-height: 44px; display: inline-flex; align-items: center; }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+  @media (max-width: 1023px) {
+    .faq { grid-template-columns: minmax(0, 1fr); row-gap: 32px; }
+  }
+  @media (max-width: 639px) {
+    .faq-item summary { font-size: 17px; gap: 16px; padding: 16px 0; }
+    .faq-answer { padding-right: 0; padding-bottom: 22px; }
+    .comp-chips { padding-top: 0; }
+    .cards { margin-top: 32px; }
+    .cards .de-h3 { font-size: 22px; }
+    .nl-form { flex-direction: column; }
+    .nl-form .de-btn { width: 100%; }
+    .sa-foot .de-small { align-items: flex-start; }
+    .sa-foot svg { margin-top: 14px; }
+  }
+</style>
+</head>
+<body>
+<section class="f-paper de-section faq-band" id="faq" aria-labelledby="faq-title">
+  <div class="de-canvas faq">
+    <div class="de-head">
+      <p class="de-eyebrow">Common questions</p>
+      <h2 class="de-h2" id="faq-title">Frequently Asked Questions</h2>
+      <p class="de-lede">Straight answers on how we work, what we recommend, and why.</p>
+    </div>
+    <div class="faq-list">
+      <details class="faq-item" open>
+        <summary>What is your best service?<span class="faq-chev" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
+        <div class="faq-answer"><p>There isn’t a universally “best” package. ProActive is four operating models — IT, Office, Business, and Enterprise — matched to users, devices, locations, infrastructure, security, compliance, and whether you need fully or co-managed coverage. If Office would need heavy modification, Business is the correct fit for that environment, not a higher rank.</p></div>
+      </details>
+      <details class="faq-item">
+        <summary>How do I choose the right plan for my business?<span class="faq-chev" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
+        <div class="faq-answer"><p>User count is a signal, never the sole criterion. We start with a Cyber Risk Assessment of your environment, then match IT, Office, Business, or Enterprise. We do not start with a package and pile on add-ons.</p></div>
+      </details>
+      <details class="faq-item">
+        <summary>Can I customize the solutions?<span class="faq-chev" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
+        <div class="faq-answer"><p>Yes! We understand every business is unique. Our packages can be customized with additional services, and we offer both co-managed and fully managed options to fit your existing IT structure.</p></div>
+      </details>
+      <details class="faq-item">
+        <summary>Is my data secure?<span class="faq-chev" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
+        <div class="faq-answer"><p>Yes. We use enterprise-grade controls, 24/7 monitoring, and documented security protocols. We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews — with clear ownership of credentials, policies, and evidence.</p></div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="f-surface de-section" id="newsletter" aria-labelledby="compliance-title">
+  <div class="de-canvas">
+    <div class="de-grid de-grid--2 comp">
+      <div>
+        <h2 class="de-h3" id="compliance-title">Security &amp; Compliance Support<span class="de-colon" aria-hidden="true">:</span></h2>
+        <p class="de-body">Framework names describe customer requirements Digerati Experts helps organizations address — not certifications DE holds.</p>
+      </div>
+      <ul class="comp-chips" aria-label="Compliance support">
+        <li class="de-chip">HIPAA-aligned security and compliance support</li>
+        <li class="de-chip">SOC 2 readiness and control alignment</li>
+        <li class="de-chip">Cyber insurance readiness</li>
+        <li class="de-chip">Security and compliance reporting</li>
+      </ul>
+    </div>
+
+    <div class="de-grid de-grid--2 cards">
+      <article class="de-card" aria-labelledby="newsletter-title">
+        <p class="card-kicker"><span class="de-iconwell" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span><span>Monthly · Arizona operators</span></p>
+        <h3 class="de-h3" id="newsletter-title">Stay Updated<span class="de-colon" aria-hidden="true">:</span></h3>
+        <p class="de-body">Get the latest cybersecurity insights and IT tips delivered to your inbox.</p>
+        <form class="nl-form" action="/api/newsletter" method="post" novalidate>
+          <label class="sr-only" for="nl-email">Email address</label>
+          <input class="de-input" id="nl-email" name="email" type="email" placeholder="Enter your email" autocomplete="email" required>
+          <button class="de-btn de-btn--primary" type="submit">Subscribe <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></button>
+        </form>
+        <ul class="nl-topics" aria-label="What you get">
+          <li class="de-chip"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Security Alerts</li>
+          <li class="de-chip"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Best Practices</li>
+          <li class="de-chip"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>Industry Trends</li>
+          <li class="de-chip"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Expert Insights</li>
+        </ul>
+        <div class="card-foot nl-foot">
+          <p class="de-small">Monthly security notes for Arizona operators.<br>Unsubscribe anytime. We respect your privacy.</p>
+        </div>
+      </article>
+
+      <article class="de-card" aria-labelledby="service-area-title">
+        <p class="card-kicker"><span class="de-iconwell" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span><span>Arizona · Greater Phoenix</span></p>
+        <h3 class="de-h3" id="service-area-title">Serving Greater Phoenix<span class="de-colon" aria-hidden="true">:</span></h3>
+        <ul class="city-list" aria-label="Cities served">
+          <li><a class="de-chip de-chip--hq" href="/locations/chandler-az">Chandler</a></li>
+          <li><a class="de-chip" href="/locations/phoenix-az">Phoenix</a></li>
+          <li><a class="de-chip" href="/locations/gilbert-az">Gilbert</a></li>
+          <li><a class="de-chip" href="/locations/tempe-az">Tempe</a></li>
+          <li><a class="de-chip" href="/locations/mesa-az">Mesa</a></li>
+          <li><a class="de-chip" href="/locations/scottsdale-az">Scottsdale</a></li>
+        </ul>
+        <div class="card-foot sa-foot">
+          <p class="de-small"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg><a class="de-link--quiet" href="https://maps.google.com/?cid=1710856351091471339">3165 S Alma School Rd Suite 29, Chandler, AZ 85248</a></p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+<!-- No stats, sequence IDs or Oxanium metadata in this section (HUD chrome stays off
+     FAQ and forms), so the Oxanium face is declared but never used. Resolve it anyway
+     so system/render.mjs can verify the font file loads. No visual effect. -->
+<script>document.fonts.load('600 16px Oxanium');</script>
+</body>
+</html>

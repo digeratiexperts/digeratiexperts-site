@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE section 11 — Four operating models (pricing)</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../system/tokens.css">
+<style>
+  /* Section 11 — Pricing: the second of the page's two raised boxes (the first is Stats). */
+  .pricing-box { padding: 48px 48px 48px; background-image: radial-gradient(720px circle at 100% 0%, rgba(91, 69, 224, 0.10), transparent 62%); }
+  .pricing-h2 .pricing-h2__line { display: block; }
+  .pricing-box .de-lede, .pricing-fit, .pricing-fitnote, .pricing-close .de-body, .pricing-close .de-small { text-wrap: pretty; }
+
+  /* Tier cards: equal height, seq 01–04, Oxanium prices, one hairline, no dots. */
+  .pricing-grid { margin-top: 40px; align-items: stretch; }
+  .pricing-card { display: flex; flex-direction: column; min-width: 0; }
+  .pricing-card__meta { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 24px; }
+  .pricing-tag--flag { color: var(--de-magenta-ink); border-color: rgba(211, 18, 106, 0.5); }
+  .pricing-card .de-h3 { margin-top: 12px; color: #fbfaf8; }
+  .pricing-price { display: flex; align-items: baseline; gap: 5px; margin-top: 12px; }
+  .pricing-amount { font-size: 34px; font-weight: 700; line-height: 1; color: #fbfaf8; letter-spacing: -0.02em; }
+  .pricing-per { font-size: 15px; color: var(--de-muted-soft); }
+  .pricing-min { margin-top: 6px; font-size: 15px; line-height: 1.5; color: var(--de-muted-soft); }
+  .pricing-min .de-num { color: var(--de-muted); }
+  .pricing-fit { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--de-hairline); flex: 1; font-size: 15px; line-height: 1.55; }
+  .pricing-list { margin-top: 18px; display: grid; gap: 8px; font-size: 15px; line-height: 1.5; color: var(--de-muted); }
+  .pricing-list li { display: flex; align-items: baseline; }
+  .pricing-list .de-dash { flex-shrink: 0; position: relative; top: -4px; }
+  .pricing-card .de-link { margin-top: 20px; align-self: flex-start; }
+
+  .pricing-fitnote { margin-top: 28px; max-width: 900px; }
+
+  /* Closing row inside the box: copy left, actions right. */
+  .pricing-close { margin-top: 36px; padding-top: 36px; border-top: 1px solid var(--de-hairline); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 64px; align-items: start; }
+  .pricing-close__copy { max-width: 720px; }
+  .pricing-close .de-h3 { color: #fbfaf8; }
+  .pricing-close .de-body { margin-top: 10px; }
+  .pricing-close .de-small { margin-top: 14px; max-width: 720px; }
+  .pricing-close__actions { display: flex; flex-wrap: wrap; gap: 12px; justify-self: end; margin-top: -12px; }
+
+  @media (max-width: 1023px) {
+    .pricing-box { padding: 40px 32px; }
+    .pricing-h2 .pricing-h2__line { display: inline; }
+    .pricing-close { grid-template-columns: 1fr; }
+    .pricing-close__actions { justify-self: start; margin-top: 0; }
+  }
+  @media (max-width: 639px) {
+    .pricing-box { padding: 32px 20px; }
+    .pricing-grid { margin-top: 28px; }
+    .pricing-close { margin-top: 28px; padding-top: 28px; }
+    .pricing-close__actions { width: 100%; }
+    .pricing-close__actions .de-btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<section class="f-well de-section" id="pricing" aria-labelledby="pricing-heading">
+  <div class="de-canvas">
+    <div class="de-box pricing-box">
+      <div class="de-head">
+        <p class="de-eyebrow">ProActive Ecosystem</p>
+        <h2 class="de-h2 pricing-h2" id="pricing-heading"><span class="pricing-h2__line">Four operating models.</span> <span class="pricing-h2__line">One matched to your environment.</span></h2>
+        <p class="de-lede">We do not start with a package and pile on add-ons. If Office would need heavy modification, Business is the correct fit for that environment — not universally “better.” User count is a signal, never the sole criterion.</p>
+      </div>
+
+      <ol class="de-grid de-grid--4 pricing-grid">
+        <li class="de-card pricing-card">
+          <div class="pricing-card__meta"><span class="de-seq">01</span></div>
+          <h3 class="de-h3">IT</h3>
+          <p class="pricing-price"><span class="de-num pricing-amount">$125</span><span class="pricing-per">/user/mo</span></p>
+          <p class="pricing-min"><span class="de-num">$1,600</span> monthly minimum</p>
+          <p class="de-body pricing-fit">Smaller, less complex environments that need essential protection and a documented baseline.</p>
+          <ul class="pricing-list">
+            <li><span class="de-dash"></span>Managed IT &amp; help desk</li>
+            <li><span class="de-dash"></span>Baseline identity &amp; endpoint</li>
+            <li><span class="de-dash"></span>Entry cybersecurity</li>
+          </ul>
+          <a class="de-link" href="/solutions/proactive-it-ecosystem">ProActive IT <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        </li>
+
+        <li class="de-card pricing-card">
+          <div class="pricing-card__meta"><span class="de-seq">02</span></div>
+          <h3 class="de-h3">Office</h3>
+          <p class="pricing-price"><span class="de-num pricing-amount">$165</span><span class="pricing-per">/user/mo</span></p>
+          <p class="pricing-min"><span class="de-num">$2,400</span> monthly minimum</p>
+          <p class="de-body pricing-fit">Broader managed workplace — more users, devices, and a professionally operated network.</p>
+          <ul class="pricing-list">
+            <li><span class="de-dash"></span>Everything in IT</li>
+            <li><span class="de-dash"></span>Managed network</li>
+            <li><span class="de-dash"></span>Endpoint backup</li>
+          </ul>
+          <a class="de-link" href="/solutions/proactive-office-ecosystem">ProActive Office <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        </li>
+
+        <li class="de-card de-card--active pricing-card">
+          <div class="pricing-card__meta"><span class="de-seq">03</span><span class="de-tag pricing-tag--flag">Flagship Cyber</span></div>
+          <h3 class="de-h3">Business</h3>
+          <p class="pricing-price"><span class="de-num pricing-amount">$245</span><span class="pricing-per">/user/mo</span></p>
+          <p class="pricing-min"><span class="de-num">$5,400</span> monthly minimum</p>
+          <p class="de-body pricing-fit">Deeper infrastructure, cyber operations, recovery, governance, and strategy.</p>
+          <ul class="pricing-list">
+            <li><span class="de-dash"></span>Identity · endpoint · email</li>
+            <li><span class="de-dash"></span>SOC / MDR</li>
+            <li><span class="de-dash"></span>BCDR · strategy reviews</li>
+          </ul>
+          <a class="de-link" href="/solutions/proactive-business-ecosystem">ProActive Business <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        </li>
+
+        <li class="de-card pricing-card">
+          <div class="pricing-card__meta"><span class="de-seq">04</span></div>
+          <h3 class="de-h3">Enterprise</h3>
+          <p class="pricing-price"><span class="de-num pricing-amount">$345</span><span class="pricing-per">/user/mo</span></p>
+          <p class="pricing-min"><span class="de-num">$9,000</span> monthly minimum</p>
+          <p class="de-body pricing-fit">Multi-site, regulated, or security-sensitive environments that need the greatest operating depth.</p>
+          <ul class="pricing-list">
+            <li><span class="de-dash"></span>Advanced governance</li>
+            <li><span class="de-dash"></span>Audit-ready reporting</li>
+            <li><span class="de-dash"></span>Quarterly strategy</li>
+          </ul>
+          <a class="de-link" href="/solutions/proactive-enterprise-ecosystem">ProActive Enterprise <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        </li>
+      </ol>
+
+      <p class="de-body pricing-fitnote">Not sure which package fits? We assess your environment — users, devices, locations, infrastructure, security, compliance, recovery, and whether you need fully managed or co-managed operations — then match the model.</p>
+
+      <div class="pricing-close">
+        <div class="pricing-close__copy">
+          <h3 class="de-h3">Not just IT support — one operating model</h3>
+          <p class="de-body">ProActive Business consolidates capabilities organizations often buy separately: managed IT, workplace, identity, endpoint security, email security, network security, backup &amp; recovery, security operations, and technology + cyber strategy — one accountable partner.</p>
+          <p class="de-small">Final pricing depends on users, endpoints, locations, infrastructure, backup requirements, and security/compliance scope. Estimates are not quotes — your Cyber Risk Assessment confirms final scope.</p>
+        </div>
+        <div class="pricing-close__actions">
+          <a class="de-btn de-btn--primary" href="/proactive-ecosystem-pricing">Compare Everything <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+          <a class="de-btn de-btn--outline" href="/proactive-ecosystem-pricing#pricing-tools">Pricing tools</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</body>
+</html>

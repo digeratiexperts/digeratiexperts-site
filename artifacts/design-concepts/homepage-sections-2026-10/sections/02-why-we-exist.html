@@ -4,40 +4,42 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DE section mockup — 02 Why we exist</title>
+<link rel="icon" href="data:,">
 <link rel="stylesheet" href="../system/tokens.css">
 <style>
-  /* 02 · Why we exist — paper band, statement left, claims list right.
-     Everything else comes from tokens.css. */
-  .why { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "statement claims" "ask claims"; column-gap: 80px; row-gap: 0; align-items: stretch; }
+  /* 02 · Why we exist — full-bleed paper band (no island). Statement and the
+     closing ask on the left; the three claims as one white hairline list on
+     the right, stretched to the same height so the chapter reads as one
+     rectangle. Everything else comes from tokens.css. */
+  .why { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); grid-template-areas: "statement claims" "ask claims"; column-gap: 80px; align-items: stretch; }
   .why__statement { grid-area: statement; }
-  .why__claims { grid-area: claims; align-self: stretch; }
-  .why__ask { grid-area: ask; align-self: end; }
-  .why .de-h2 { text-wrap: balance; max-width: 15ch; }
+  .why__claims { grid-area: claims; }
+  .why__ask { grid-area: ask; align-self: end; margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--de-paper-hairline); }
+  .why .de-h2 { max-width: 640px; text-wrap: balance; }
   .why .de-lede { text-wrap: pretty; }
+  .why__ask .de-body { margin-top: 6px; max-width: 600px; text-wrap: balance; }
+  .ask__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
 
-  /* Claims: one white hairline list (tokens' paper cells, stacked vertically). */
-  .claims { grid-template-columns: minmax(0, 1fr); grid-auto-rows: 1fr; }
-  .claims > * { border-left: 0; border-top: 1px solid var(--de-paper-hairline); padding: 28px 32px; }
+  /* Claims: the tokens' paper cells, stacked vertically, equal rows. The
+     whole cell is the link; the magenta dash is the only mark. */
+  .claims { grid-template-columns: minmax(0, 1fr); grid-auto-rows: minmax(0, 1fr); }
+  .claims > * { display: grid; padding: 0; border-left: 0; border-top: 1px solid var(--de-paper-hairline); }
   .claims > *:first-child { border-top: 0; }
-  .claim { display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 14px; align-content: center; }
-  .claim .de-dash { grid-row: 1; margin: 0; width: 14px; align-self: center; }
-  .claim__title { grid-column: 2; color: var(--de-ink); }
-  .claim__body { grid-column: 2; margin-top: 6px; text-wrap: pretty; }
+  .claim { display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 12px; align-content: center; padding: 24px 28px; }
+  .claim .de-dash { grid-row: 1; align-self: start; margin: 11px 0 0; }
+  .claim__title { grid-column: 2; color: var(--de-ink); transition: color 200ms ease-out; }
+  .claim__body { grid-column: 2; margin-top: 6px; text-wrap: balance; }
+  .nb { white-space: nowrap; } /* keeps the live copy's spaced hyphens off a line edge */
   .claim:hover .claim__title { color: var(--de-magenta-paper-ink); }
-
-  /* Closing ask: one block under the statement, seam above. */
-  .why__ask { margin-top: 36px; padding-top: 32px; border-top: 1px solid var(--de-paper-hairline); }
-  .why__ask .de-body { margin-top: 8px; max-width: 560px; text-wrap: pretty; }
-  .ask__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+  .claim:focus-visible { outline: 2px solid #ec4899; outline-offset: -2px; }
 
   @media (max-width: 1023px) {
-    .why { grid-template-columns: minmax(0, 1fr); grid-template-areas: "statement" "claims" "ask"; row-gap: 36px; }
-    .why__claims { align-self: start; }
+    .why { grid-template-columns: minmax(0, 1fr); grid-template-areas: "statement" "claims" "ask"; row-gap: 32px; }
     .claims { grid-auto-rows: auto; }
     .why__ask { margin-top: 0; }
   }
   @media (max-width: 639px) {
-    .claims > * { padding: 22px 20px; }
+    .claim { padding: 20px; }
     .ask__actions .de-btn { width: 100%; }
   }
 </style>
@@ -51,26 +53,26 @@
       <p class="de-lede">If you're like most business leaders, you don't want another vendor — you want a security-first partner who proactively reduces risk, improves uptime, and keeps your team moving.</p>
     </div>
 
-    <ul class="de-cells de-cells--paper claims why__claims" aria-label="How we work">
+    <ul class="de-cells de-cells--paper claims why__claims">
       <li>
         <a class="claim" href="/solutions/proactive-ecosystem">
           <span class="de-dash" aria-hidden="true"></span>
-          <span class="de-h4 claim__title">Security-First Operations</span>
-          <span class="de-body claim__body">Every system, endpoint, and user is protected - by design, not by reaction.</span>
+          <h3 class="de-h4 claim__title">Security-First Operations</h3>
+          <p class="de-body claim__body">Every system, endpoint, and user is <span class="nb">protected - by</span> design, not by reaction.</p>
         </a>
       </li>
       <li>
         <a class="claim" href="/solutions/co-managed-it">
           <span class="de-dash" aria-hidden="true"></span>
-          <span class="de-h4 claim__title">Co-Managed or Fully Managed</span>
-          <span class="de-body claim__body">We support your internal IT or serve as your outsourced technology team.</span>
+          <h3 class="de-h4 claim__title">Co-Managed or Fully Managed</h3>
+          <p class="de-body claim__body">We support your internal IT or serve as your outsourced technology team.</p>
         </a>
       </li>
       <li>
         <a class="claim" href="/trust">
           <span class="de-dash" aria-hidden="true"></span>
-          <span class="de-h4 claim__title">Executive-Level Transparency</span>
-          <span class="de-body claim__body">Reports, KPIs, and compliance insights that make sense - and drive decisions.</span>
+          <h3 class="de-h4 claim__title">Executive-Level Transparency</h3>
+          <p class="de-body claim__body">Reports, KPIs, and compliance insights that make <span class="nb">sense - and</span> drive decisions.</p>
         </a>
       </li>
     </ul>
@@ -85,5 +87,8 @@
     </div>
   </div>
 </section>
+<!-- No numerals in this section, so the Oxanium face is declared but never used.
+     Resolve it anyway so system/render.mjs can verify the font file loads. No visual effect. -->
+<script>document.fonts.load('600 16px Oxanium');</script>
 </body>
 </html>

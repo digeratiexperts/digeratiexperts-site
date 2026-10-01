@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE section mockup — 13 Lead form</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../system/tokens.css">
+<style>
+  /* 13 · Lead form — full-bleed paper band (no island, no card-in-island).
+     Two columns: the statement and the three reassurances on the left; the
+     white form card on the right with "Prefer to call?" under it as the
+     alternative path. Everything else comes from tokens.css. */
+  .lead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 640px); column-gap: 80px; align-items: start; }
+  .lead .de-h2 { max-width: 620px; text-wrap: balance; }
+  .lead .de-lede { max-width: 600px; text-wrap: pretty; }
+
+  /* Reassurances: a hairline list, magenta dash as the only mark (the live
+     strip's dashes, without the white box). */
+  .lead__assure { margin-top: 32px; border-top: 1px solid var(--de-paper-hairline); }
+  .lead__assure li { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--de-paper-hairline); font-family: var(--font-heading); font-weight: 600; font-size: 17px; line-height: 1.3; letter-spacing: -0.01em; color: var(--de-ink); }
+  .lead__assure .de-dash { margin-right: 14px; }
+
+  /* Form card: tokens' paper card, 32px padding at desktop. Fields are paper
+     wells on the white card so the input boundary is visible without a heavy
+     outline (tokens' 10% hairline alone does not read on white). */
+  .lead__card { padding: 32px; }
+  .lead__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .lead__card .de-input { background: var(--de-paper); border-color: rgba(26, 18, 16, 0.22); }
+  .lead__card .de-input:focus { background: #fff; border-color: var(--de-magenta); outline: none; box-shadow: 0 0 0 3px rgba(211, 18, 106, 0.18); }
+  .lead__submit { width: 100%; margin-top: 24px; }
+  .lead__footers { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--de-paper-hairline); }
+  .lead__footers li { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; line-height: 1.4; color: var(--de-ink-muted); }
+  .lead__footers svg { width: 16px; height: 16px; color: var(--de-magenta-paper-ink); flex-shrink: 0; }
+  .lead__call { margin-top: 20px; color: var(--de-ink-muted); }
+  .lead__call .de-link { font-weight: 600; min-height: 44px; margin: -10px 0; } /* 44px tap target, no visual change */
+
+  @media (max-width: 1023px) {
+    .lead { grid-template-columns: minmax(0, 1fr); row-gap: 36px; }
+  }
+  @media (max-width: 639px) {
+    .lead__card { padding: 24px; }
+    .lead__fields { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .lead__submit { height: auto; min-height: 48px; padding: 13px 16px; white-space: normal; text-align: center; line-height: 1.25; }
+    .lead__footers { flex-direction: column; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<section class="f-paper de-section" id="assessment-form" aria-labelledby="assessment-form-title">
+  <div class="de-canvas lead">
+    <div class="lead__statement">
+      <p class="de-eyebrow">Cyber Risk Assessment</p>
+      <h2 class="de-h2" id="assessment-form-title">Get Your Free Security Assessment</h2>
+      <p class="de-lede">Discover vulnerabilities before attackers do. Our experts will analyze your security posture and provide actionable recommendations.</p>
+      <ul class="lead__assure">
+        <li><span class="de-dash" aria-hidden="true"></span>Independent findings</li>
+        <li><span class="de-dash" aria-hidden="true"></span>No switch required</li>
+        <li><span class="de-dash" aria-hidden="true"></span>Arizona-based experts</li>
+      </ul>
+    </div>
+
+    <div class="lead__form">
+      <form class="de-card--paper lead__card" action="/api/assessment" method="post" novalidate>
+        <input type="hidden" name="source" value="lead_form">
+        <div class="lead__fields">
+          <div>
+            <label class="de-label" for="lead-name">Full Name *</label>
+            <input class="de-input" id="lead-name" name="fullName" type="text" placeholder="John Smith" autocomplete="name" required minlength="2" maxlength="50">
+          </div>
+          <div>
+            <label class="de-label" for="lead-email">Work Email *</label>
+            <input class="de-input" id="lead-email" name="email" type="email" placeholder="john@company.com" autocomplete="email" required>
+          </div>
+          <div>
+            <label class="de-label" for="lead-phone">Phone (Optional)</label>
+            <input class="de-input" id="lead-phone" name="phone" type="tel" placeholder="(555) 123-4567" autocomplete="tel">
+          </div>
+          <div>
+            <label class="de-label" for="lead-company">Company (Optional)</label>
+            <input class="de-input" id="lead-company" name="company" type="text" placeholder="Acme Corp" autocomplete="organization">
+          </div>
+        </div>
+        <button class="de-btn de-btn--primary lead__submit" type="submit">Get My Cyber Risk Assessment <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
+        <ul class="lead__footers">
+          <li><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Complimentary security assessment</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>No obligation, no credit card</li>
+        </ul>
+      </form>
+      <p class="lead__call de-body">Prefer to call? <a class="de-link" href="tel:+13254809870">325-480-9870</a></p>
+    </div>
+  </div>
+</section>
+<!-- No stats, sequence IDs or metadata in this section, so the Oxanium face is
+     declared but never used. Resolve it anyway so system/render.mjs can verify
+     the font file loads. No visual effect. -->
+<script>document.fonts.load('600 16px Oxanium');</script>
+</body>
+</html>
