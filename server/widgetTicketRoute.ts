@@ -3,7 +3,12 @@ import rateLimit from "express-rate-limit";
 import { logSecurityEvent } from "./middleware/security";
 import { getUser as portalAuthGetUser } from "./portalAuthStore";
 import { storage } from "./storage";
+import {
+  mapWidgetTicketCreateFailure,
+  widgetTicketNotConfigured,
+} from "./widgetTicketFailure";
 import { splitVisitorName, zohoClient, zohoDeskService } from "./zoho";
+import { isZohoOAuthError } from "./zoho/zohoOAuthErrors";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 
 /**
@@ -55,6 +60,14 @@ const AUTH_ERROR_CODES = new Set([
  * Reads only the shape of the error. Nothing here touches a token.
  */
 export function classifyDeskFailure(error: unknown): DeskFailure {
+  if (isZohoOAuthError(error) && error.product === "desk") {
+    return {
+      kind: "unavailable",
+      errorCode: error.zohoError || error.code,
+      message: error.message,
+    };
+  }
+
   const err = (error ?? {}) as {
     message?: unknown;
     response?: { status?: unknown; data?: { errorCode?: unknown; message?: unknown } };
@@ -64,7 +77,7 @@ export function classifyDeskFailure(error: unknown): DeskFailure {
   const errorCode =
     typeof err.response?.data?.errorCode === "string" ? err.response.data.errorCode : undefined;
 
-  const refreshFailed = /refresh zoho desk access token/i.test(message);
+  const refreshFailed = /refresh zoho desk access token|no access token in zoho desk/i.test(message);
   const authStatus = status === 401 || status === 403;
   const authCode = !!errorCode && (AUTH_ERROR_CODES.has(errorCode) || /oauth|scope|token/i.test(errorCode));
   const unreachable = status === undefined && !errorCode && /ECONN|ETIMEDOUT|ENOTFOUND|socket hang up|network/i.test(message);
@@ -186,7 +199,12 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
 
       if (!zohoClient.isDeskConfigured()) {
         console.error("[WIDGET TICKET] Zoho Desk is not configured");
-        return res.status(503).json({ error: DESK_UNAVAILABLE_MESSAGE, retryable: true });
+        const failure = widgetTicketNotConfigured();
+        return res.status(failure.status).json({
+          ...failure.body,
+          error: DESK_UNAVAILABLE_MESSAGE,
+          retryable: true,
+        });
       }
 
       const { firstName, lastName } = splitVisitorName(
@@ -206,22 +224,38 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
         });
       } catch (zohoErr) {
         const failure = classifyDeskFailure(zohoErr);
+        const mapped = mapWidgetTicketCreateFailure(zohoErr);
         // Enough to act on from the log, and nothing that could be a credential.
         console.error("[WIDGET TICKET] Zoho Desk create failed:", {
           kind: failure.kind,
           status: failure.status,
           errorCode: failure.errorCode,
           message: failure.message,
+          code: mapped.body.code,
         });
         if (failure.kind === "unavailable") {
-          return res.status(503).json({ error: DESK_UNAVAILABLE_MESSAGE, retryable: true });
+          return res.status(503).json({
+            ...mapped.body,
+            code: "desk_auth_unavailable",
+            error: DESK_UNAVAILABLE_MESSAGE,
+            retryable: true,
+          });
         }
-        return res.status(502).json({ error: TICKET_REJECTED_MESSAGE, retryable: true });
+        return res.status(mapped.status).json({
+          ...mapped.body,
+          error: TICKET_REJECTED_MESSAGE,
+          retryable: true,
+        });
       }
 
       if (!zohoTicket?.id) {
         console.error("[WIDGET TICKET] Zoho Desk returned no ticket id");
-        return res.status(502).json({ error: TICKET_REJECTED_MESSAGE, retryable: true });
+        return res.status(502).json({
+          success: false as const,
+          code: "desk_create_failed" as const,
+          error: TICKET_REJECTED_MESSAGE,
+          retryable: true,
+        });
       }
 
       const zohoTicketId = zohoTicket.id;

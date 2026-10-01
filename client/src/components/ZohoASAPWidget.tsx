@@ -220,13 +220,13 @@ type DeskPortalSession = {
 
 async function peekDeskPortalSession(): Promise<DeskPortalSession | null> {
   try {
-    const token = typeof window !== "undefined" ? window.localStorage.getItem("portalToken") : null;
-    // Anonymous visitors have no portal token — skip the probe entirely so
-    // every Desk launch doesn't log a guaranteed-401 to the console
-    // (error-sweep, 2026-08-31). Signed-in sessions carry the Bearer token.
-    if (!token) return null;
-    const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
-    const response = await fetch("/api/portal/me", { credentials: "include", headers });
+    // The shared HttpOnly portalAuth cookie is the canonical browser session.
+    // Do not require an origin-scoped localStorage token: a user may have
+    // authenticated on portal.digeratiexperts.com first.
+    const response = await fetch("/api/portal/me", {
+      credentials: "include",
+      cache: "no-store",
+    });
     if (!response.ok) return null;
     const data = (await response.json()) as { user?: DeskPortalSession };
     const user = data.user;
@@ -479,18 +479,32 @@ export const ZohoASAPWidget = ({
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
-    void peekDeskPortalSession().then((session) => {
-      if (cancelled) return;
-      setPortalSession(session);
-      if (session?.email) {
-        setEmail((current) => current || session.email || "");
+    const syncPortalSession = () => {
+      void peekDeskPortalSession().then((session) => {
+        if (cancelled) return;
+        setPortalSession(session);
+        if (session?.email) {
+          setEmail((current) => current || session.email || "");
+        }
+        if (session?.fullName) {
+          setFullName((current) => current || session.fullName || "");
+        }
+      });
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === "portalUser" || event.key === "portalToken") {
+        syncPortalSession();
       }
-      if (session?.fullName) {
-        setFullName((current) => current || session.fullName || "");
-      }
-    });
+    };
+    syncPortalSession();
+    window.addEventListener("focus", syncPortalSession);
+    window.addEventListener("de-portal-auth-changed", syncPortalSession as EventListener);
+    window.addEventListener("storage", onStorage);
     return () => {
       cancelled = true;
+      window.removeEventListener("focus", syncPortalSession);
+      window.removeEventListener("de-portal-auth-changed", syncPortalSession as EventListener);
+      window.removeEventListener("storage", onStorage);
     };
   }, [isOpen]);
 
@@ -1242,7 +1256,9 @@ export const ZohoASAPWidget = ({
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.zohoTicketId) {
+      // Fail closed: never treat as success without a Zoho ticket id, and never
+      // if the server explicitly set success:false (auth/create failures).
+      if (!response.ok || data.success === false || !data.zohoTicketId) {
         throw new Error(data.error || "We couldn't open the ticket right now. Please try again.");
       }
 
@@ -2244,7 +2260,10 @@ export const ZohoASAPWidget = ({
                             className="de-desk-login-slot"
                             onPointerMove={trackDeskSupportFieldSpotlight}
                           >
-                            <DeskLoginCard onSignedIn={handleDeskSignIn} />
+                            <DeskLoginCard
+                              onSignedIn={handleDeskSignIn}
+                              onBack={() => setShowInlineLogin(false)}
+                            />
                           </div>
                         ) : (
                           <button

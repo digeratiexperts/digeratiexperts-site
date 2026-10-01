@@ -1,5 +1,7 @@
 # Visual Asset Inventory — Digerati Experts site
 
+> **HISTORICAL RECORD (Tier 3 — `design/DESIGN-AUTHORITY.md`).** This document records what was decided, placed or guarded at a point in time. It explains *why* things are the way they are. Its "do not", "unchanged", "leave alone" and "keep" lines were the guardrails of that task; they do not prohibit future maintenance or redesign work unless a Tier 0–2 file promotes the decision.
+
 **Date:** 2026-08-08  
 **Repo:** `C:\Users\Joe\Projects\Replit-Site`  
 **Related:** `docs/VISUAL-ASSET-AUDIT.md` (Envato Phase 1), `docs/MESHY-BATCH-01.md`, `docs/MESHY-ASSET-BACKLOG.md`

@@ -182,20 +182,23 @@ was fine. "Tests pass" is a statement about the tests, not about the page.
 
 ## 9. Design-system law
 
-Agents must compose from the canonical DE visual system before inventing new patterns.
+How much authority each design rule carries is defined in **`design/DESIGN-AUTHORITY.md`** (Tier 0 non-negotiables, Tier 1 brand identity, Tier 2 current design system, Tier 3 historical record) together with the two task modes, Maintenance and Exploration. This section is the engineering side of that model.
 
-Locked foundation and rules live in:
+**Maintenance Mode (default):** agents compose from the current DE visual system before inventing new patterns. The current system lives in:
 
 - `design/BRAND.md`
 - `design/DESIGN_SYSTEM.md`
 - `design/UX_PRINCIPLES.md`
 - `design/VISUAL_SYSTEM_V2.md`
+- `design/UI-STYLE-RULES.md`
 - `.cursor/rules/ui-ux.mdc`
 - `.cursor/rules/visual-system-v2.mdc`
 
 Before creating a new visual primitive, search for an existing one. If the desired UI cannot be expressed cleanly with existing primitives, propose the new reusable primitive explicitly rather than silently creating a one-off dialect.
 
-Do not let separate agents invent competing versions of the same control, card, modal, dock, icon treatment, spacing language, or interaction pattern.
+**Exploration Mode (Joe asks to redesign, rethink, reimagine, modernize, explore, propose concepts, make it materially better or make it feel different):** the current system is a starting point and a benchmark, not a boundary. Agents may propose new primitives, layout systems, art direction, typography, motion and structure, provided each concept states what it keeps and changes and why, respects Tier 0 and Tier 1, produces materially distinct alternatives before converging, and stays isolated from production paths (`artifacts/design-concepts/<task>/`, `scrollcraft/builds/<name>/`, or an isolated branch) until Joe picks a direction.
+
+**In every mode:** do not let separate agents invent competing versions of the same control, card, modal, dock, icon treatment, spacing language, or interaction pattern *inside one shipped system*. Exploration produces alternatives on purpose; integration must converge on one.
 
 ## 10. UI controls must be designed for their physical context
 
@@ -290,11 +293,13 @@ No agent may create a permanent exception by precedent.
 
 ## 18. DE Product Preservation Law
 
+**Scope.** This law governs what ships: Maintenance Mode work and the *integration* of any chosen redesign into the production product. It does not govern ideation. An Exploration Mode concept (see `design/DESIGN-AUTHORITY.md`) may replace anything in Tier 2 on its isolated branch; when Joe picks a concept, this law decides how that concept is integrated — what is kept, upgraded, added and replaced — and Tier 0 functional preservation (routes, forms, integrations, SEO, business logic, customer workflows) remains mandatory throughout.
+
 Existing production DE identity, content, imagery, functionality, information architecture, business rules, integrations, customer workflows, and branded elements are canonical product assets.
 
 Visual references, competitor sites, generated mockups, Figma/Fable concepts, screenshots, and AI design proposals establish **design intent and quality targets, not replacement authority**.
 
-Unless Joe explicitly approves a material replacement, agents must improve the existing DE implementation through **preservation, refinement, composition, and addition**.
+Unless Joe explicitly approves a material replacement, agents must improve the existing DE implementation through **preservation, refinement, composition, and addition**. A redesign Joe requested is the documented reason at the concept level. Joe's pick of a concept approves the direction; the integration PR still lists every REPLACE and every removal of existing content, CTAs, navigation, stats or functionality, and each needs Joe's explicit approval.
 
 The default decision hierarchy is:
 
@@ -327,3 +332,77 @@ The governing question is:
 > Does this feel like a materially upgraded Digerati Experts product, or like a different product wearing the DE name?
 
 If the answer is the latter, preserve more and replace less.
+
+"DE identity" in this question means Tier 1 identity (`design/DESIGN-AUTHORITY.md`): premium, cybersecurity-first, precise, trustworthy, principal-led, with its differentiators intact. A product that keeps that identity but implements it with a different palette, type stack or layout system because Joe asked for a redesign is a materially upgraded Digerati Experts product, not a different product wearing the DE name.
+
+## 19. Implementation evidence is not architectural authority
+
+**Shipping code is implementation evidence, not automatically canonical business
+architecture.**
+
+Code proves what was built. It does not prove what is currently true about DE's
+service model, taxonomies, pricing structure, security architecture, commercial
+rules or customer pathways. A component can render an obsolete model faithfully
+and pass every test while doing it, because tests assert that the code does what
+the code says.
+
+An agent that reads a shipping component and concludes "this is the canonical
+architecture" has confirmed a fact about the codebase and mistaken it for a fact
+about the business.
+
+### The rule
+
+When establishing **business architecture** — what the service model is, what
+the taxonomies contain, how customers engage, what a tier includes — the
+authority order is:
+
+1. Joe, or a document Joe has ratified.
+2. Governing documents in this repository that cite their basis.
+3. Operational and commercial truth in Intelligence Hub.
+4. Shipping code — **as a signal to verify, never as the answer.**
+
+Where code disagrees with (1) or (2), the code is a **defect to be reported**,
+not a source to be copied. Reporting it is mandatory; fixing it belongs to
+whoever owns those paths.
+
+### How this sits with §18
+
+§18 (DE Product Preservation Law) and this section answer different questions and
+do not conflict.
+
+- **§18 governs what you may CHANGE.** Existing production assets are canonical
+  product assets. Bias to KEEP → UPGRADE → ADD → REPLACE. Do not replace DE work
+  because a mockup looked nicer.
+- **§19 governs what you may CITE.** Existing production code is not evidence of
+  current business architecture. Do not propagate a model into new work because
+  an existing component happens to render it.
+
+The practical combination: when shipping code carries an obsolete business
+model, **you neither silently copy it (§19) nor unilaterally rewrite it (§18)**.
+You report it and route the correction to the owner.
+
+### The incident that produced this rule (2026-09-02)
+
+`client/src/components/visual/ProtectionCommandDeck.tsx` defines six protection
+domains. An agent building a flagship experience read that component, found it
+shipping and rendered on the production homepage via
+`DigeratiHowWeProtectSection` → `DigeratiHomepage`, and recorded the six as
+resolved "from shipping code, not guessed" in a governing document.
+
+The current cybersecurity architecture is **eight blocks**. Two of the six were
+not cybersecurity blocks at all (Data & Recovery and Governance & Compliance
+Support are capability lanes 05 and 09), and four current blocks were absent.
+Joe caught it in review.
+
+Two failures worth naming, because both are re-runnable by any agent:
+
+1. **The wrong authority.** "Verified against the repository" felt rigorous and
+   was not. The question "what is DE's security architecture" was answered by
+   grep instead of by Joe.
+2. **Confident language hardened the error.** The phrase "resolved from shipping
+   code, not guessed" would have been read by the next agent as settled, and the
+   obsolete model would have propagated into every page built afterward.
+
+State an architectural fact as **resolved** only when its authority is (1) or
+(2) above. Otherwise state it as **observed, pending confirmation**, and say
+where the observation came from.

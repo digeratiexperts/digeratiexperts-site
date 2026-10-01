@@ -108,10 +108,30 @@ describe("DE Desk widget ticket route", () => {
     const { status, body } = await post(validTicket);
 
     expect(status).toBe(503);
+    expect(body.success).toBe(false);
+    expect(body.code).toBe("desk_auth_unavailable");
     expect(body.error).toMatch(/temporarily unavailable/i);
     expect(body.error).toContain(PRIMARY_PHONE.display);
     expect(body.retryable).toBe(true);
-    expect(body.success).toBeUndefined();
+    expect(body.zohoTicketId).toBeUndefined();
+  });
+
+  it("typed ZohoOAuthError(invalid_code) is unavailable with success:false — never a fake ticket", async () => {
+    const { ZohoOAuthError } = await import("./zoho/zohoOAuthErrors");
+    createTicket.mockRejectedValueOnce(
+      new ZohoOAuthError({
+        message: "Failed to refresh Zoho Desk access token",
+        code: "invalid_refresh_token",
+        product: "desk",
+        zohoError: "invalid_code",
+      }),
+    );
+
+    const { status, body } = await post(validTicket);
+
+    expect(status).toBe(503);
+    expect(body.success).toBe(false);
+    expect(body.code).toBe("desk_auth_unavailable");
     expect(body.zohoTicketId).toBeUndefined();
   });
 
@@ -124,6 +144,8 @@ describe("DE Desk widget ticket route", () => {
     const { status, body } = await post(validTicket);
 
     expect(status).toBe(503);
+    expect(body.success).toBe(false);
+    expect(body.code).toBe("desk_auth_unavailable");
     expect(body.error).toMatch(/temporarily unavailable/i);
   });
 
@@ -136,6 +158,8 @@ describe("DE Desk widget ticket route", () => {
     const { status, body } = await post(validTicket);
 
     expect(status).toBe(502);
+    expect(body.success).toBe(false);
+    expect(body.code).toBe("desk_create_failed");
     expect(body.error).toMatch(/couldn't open the ticket/i);
     expect(body.retryable).toBe(true);
     expect(body.zohoTicketId).toBeUndefined();
@@ -147,7 +171,8 @@ describe("DE Desk widget ticket route", () => {
     const { status, body } = await post(validTicket);
 
     expect(status).toBe(502);
-    expect(body.success).toBeUndefined();
+    expect(body.success).toBe(false);
+    expect(body.code).toBe("desk_create_failed");
     expect(body.zohoTicketId).toBeUndefined();
   });
 
@@ -157,6 +182,8 @@ describe("DE Desk widget ticket route", () => {
     const { status, body } = await post(validTicket);
 
     expect(status).toBe(503);
+    expect(body.success).toBe(false);
+    expect(body.code).toBe("desk_not_configured");
     expect(body.error).toMatch(/temporarily unavailable/i);
     expect(createTicket).not.toHaveBeenCalled();
   });
