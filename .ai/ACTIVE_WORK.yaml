@@ -30,6 +30,31 @@
 
 version: 2
 claims:
+  - id: de-protection-deck-phone
+    owner: claude
+    subsystem: homepage-protection-model
+    branch: claude/protection-deck-phone
+    base_sha: 7f4cff10
+    files:
+      - client/src/components/visual/ProtectionCommandDeck.tsx (phone layout only; desktop frame untouched)
+      - client/src/components/visual/ProtectionCommandDeck.phone.test.ts
+      - client/src/pages/sections/DigeratiHowWeProtectSection.tsx (wrapper and heading classes only; copy unchanged)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: "the phone is the failure." Replaces the deck's phone
+      layout with the 390px mock he reviewed: one dark field, one row of
+      seven short labels with Risk & exposure as the dashed rail beneath
+      them (continuous, not a ninth peer), one sentence, then the selected
+      block as plain reading (name, purpose, the three assessment questions,
+      the boundary as a list). No frame chrome, no card in a card, no
+      diagram widget, the last 96px empty so Ask DE never sits on the type.
+      Desktop keeps the EvidenceFrame layout. The domain copy and questions
+      are the eight-block data from de-eight-block-correction, unchanged.
+      Overlap recorded: PR 298 rewrites DigeratiHowWeProtectSection.tsx onto
+      HomeChapter; this lane changes only the island wrapper and three
+      heading class strings in that file, and the deck component, which 298
+      does not touch.
   - id: store-experience-v2
     owner: claude
     subsystem: public-store-door2
