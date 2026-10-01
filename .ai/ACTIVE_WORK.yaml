@@ -30,6 +30,30 @@
 
 version: 2
 claims:
+  - id: de-desk-reliability-followup
+    issue: 291
+    owner: codex
+    subsystem: de-desk-ticket-flow
+    branch: codex/de-desk-repair
+    base_sha: 7f4cff10b00fbe3e55279989c605b16794363460
+    files:
+      - client/src/components/ZohoASAPWidget.tsx
+      - client/src/lib/deskTicketResponse*
+      - shared/deskTicket.ts
+      - server/widgetTicketRoute*
+      - server/widgetTicketFailure*
+      - server/zoho/zohoClient.ts
+      - server/zoho/zohoClient.desk.test.ts
+      - server/zoho/zohoDesk.ts
+      - server/routes.ts
+    status: active
+    started: 2026-09-30
+    note: >-
+      Joe authorized takeover of PR 290. Another lane merged it at 3b90e35c;
+      this isolated follow-up preserves that merge and current main. Maintenance
+      Mode; widget changes are ticket-only, preserving the shared auth lane.
+      Claude Code remains integrator. Draft review only: rendered checks at
+      390/768/1440 are blocked by browser tooling; no merge/deploy authorized.
   - id: store-experience-v2
     owner: claude
     subsystem: public-store-door2
