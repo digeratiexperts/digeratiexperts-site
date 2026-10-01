@@ -74,7 +74,8 @@ class ZohoDeskService {
         return departments[0].id;
       }
     } catch (err: any) {
-      console.warn('Could not fetch departments:', err.message);
+      // Preserve auth/transport errors so the public route can classify them.
+      throw err;
     }
     
     throw new Error('No Zoho Desk department found');
@@ -172,7 +173,7 @@ class ZohoDeskService {
 
       return response.data;
     } catch (error: any) {
-      console.error('Error creating ticket:', error.response?.data || error.message);
+      console.error('Error creating ticket:', { status: error.response?.status });
       throw error;
     }
   }

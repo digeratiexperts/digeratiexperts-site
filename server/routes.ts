@@ -5,7 +5,7 @@ import rateLimit from "express-rate-limit";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_integrations/object_storage";
-import { zohoClient, zohoDeskService, splitVisitorName, zohoCRMService, zohoBillingService } from "./zoho";
+import { zohoClient, zohoDeskService, zohoCRMService, zohoBillingService } from "./zoho";
 import { websiteLeadTaxonomy } from "./zoho/leadTaxonomy";
 import { findBackupCodeIndex, generateBackupCodes } from "./portalMfaCrypto";
 import {
@@ -460,12 +460,6 @@ const leadQuoteRateLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 3,
   message: "Too many quote requests. Please try again later.",
-});
-
-const widgetTicketRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: "Too many support requests. Please try again later.",
 });
 
 const advisorChatRateLimiter = rateLimit({
@@ -5932,120 +5926,6 @@ export async function registerRoutes(app: Express) {
     } catch (error: any) {
       console.error("[ZOHO TICKET ERROR]", error.response?.data || error.message);
       res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Public DE Desk ticket — Zoho Desk is the system of record; portal is a secondary copy.
-  app.post("/api/portal/zoho/ticket", [widgetTicketRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { email, subject, description, priority, sessionId: advisorSessionId, name } = req.body;
-
-      if (!email || !subject || !description) {
-        return res.status(400).json({ error: "Email, subject, and description are required" });
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({ error: "Invalid email address" });
-      }
-
-      if (subject.length > 200 || description.length > 5000) {
-        return res.status(400).json({ error: "Subject or description too long" });
-      }
-
-      const priorityValue = priority || "Medium";
-      const priorityLower = String(priorityValue).toLowerCase();
-
-      if (!zohoClient.isDeskConfigured()) {
-        console.error("[WIDGET TICKET] Zoho Desk is not configured");
-        const { widgetTicketNotConfigured } = await import("./widgetTicketFailure");
-        const failure = widgetTicketNotConfigured();
-        return res.status(failure.status).json(failure.body);
-      }
-
-      const { firstName, lastName } = splitVisitorName(
-        typeof name === "string" ? name : undefined,
-        String(email),
-      );
-
-      let zohoTicket;
-      try {
-        zohoTicket = await zohoDeskService.createTicket({
-          subject,
-          description,
-          email,
-          firstName,
-          lastName,
-          priority: priorityValue,
-        });
-      } catch (zohoErr: any) {
-        console.error("[WIDGET TICKET] Zoho Desk create failed:", zohoErr?.message || zohoErr);
-        const { mapWidgetTicketCreateFailure } = await import("./widgetTicketFailure");
-        const failure = mapWidgetTicketCreateFailure(zohoErr);
-        return res.status(failure.status).json(failure.body);
-      }
-
-      if (!zohoTicket?.id) {
-        console.error("[WIDGET TICKET] Zoho Desk returned no ticket id");
-        const { mapWidgetTicketCreateFailure } = await import("./widgetTicketFailure");
-        const failure = mapWidgetTicketCreateFailure(new Error("Zoho Desk returned no ticket id"));
-        return res.status(failure.status).json(failure.body);
-      }
-
-      const zohoTicketId = zohoTicket.id;
-      const ticketNumber =
-        zohoTicket.ticketNumber ||
-        `TKT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
-      console.log(`✅ Widget ticket created in Zoho Desk: ${zohoTicketId}`);
-
-      // Secondary: local portal ticket when the email maps to a portal account (FK-safe).
-      try {
-        if (typeof advisorSessionId === "string" && advisorSessionId.trim()) {
-          try {
-            const { upsertDeskSession } = await import("./services/msp-advisor");
-            await upsertDeskSession({
-              sessionId: advisorSessionId.trim(),
-              email: String(email).toLowerCase(),
-            });
-          } catch {}
-        }
-
-        const portalUser = portalUsers.get(email);
-        if (portalUser?.clientId && portalUser?.id) {
-          let descriptionWithChat = description;
-          if (typeof advisorSessionId === "string" && advisorSessionId.trim()) {
-            descriptionWithChat = `${description}\n\n---\nDE Desk session: ${advisorSessionId.trim()}`;
-          }
-          const localTicket = await storage.createPortalTicket({
-            clientId: portalUser.clientId,
-            createdBy: portalUser.id,
-            ticketNumber,
-            subject,
-            description: descriptionWithChat,
-            status: "open",
-            priority: priorityLower === "high" || priorityLower === "urgent" ? "high" : priorityLower === "low" ? "low" : "medium",
-            category: "de-desk",
-          });
-
-          try {
-            await storage.updatePortalTicket(localTicket.id, { assignedTo: `zoho:${zohoTicketId}` });
-          } catch {}
-          console.log(`✅ Widget ticket mirrored to portal: ${ticketNumber}`);
-        }
-      } catch (localErr: any) {
-        console.warn("Could not mirror widget ticket to portal:", localErr?.message || localErr);
-      }
-
-      res.json({
-        success: true,
-        ticketNumber,
-        zohoTicketId,
-        message: "Your support request has been received.",
-      });
-      logSecurityEvent("WIDGET_TICKET_CREATED", req, { email, ticketNumber, zohoTicketId });
-    } catch (error: any) {
-      console.error("[WIDGET TICKET ERROR]", error);
-      res.status(500).json({ error: "Failed to create ticket. Please try again." });
     }
   });
 

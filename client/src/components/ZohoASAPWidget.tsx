@@ -36,6 +36,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { PRIMARY_PHONE } from "@shared/companyContact";
+import { readDeskTicketResponse } from "@/lib/deskTicketResponse";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -323,12 +324,27 @@ export const ZohoASAPWidget = ({
   const [selectedTicketChip, setSelectedTicketChip] = useState<DeskTicketChipId | null>(null);
   const ticketDetailsRef = useRef<HTMLDivElement>(null);
   const [isTicketSending, setIsTicketSending] = useState(false);
+  const ticketSendingRef = useRef(false);
   const [ticketResult, setTicketResult] = useState<TicketResult | null>(null);
   const [showTicketMore, setShowTicketMore] = useState(false);
   const [ticketFieldErrors, setTicketFieldErrors] = useState<
     Partial<Record<"email" | "subject" | "message", string>>
   >({});
   const [ticketSubmitError, setTicketSubmitError] = useState<string | null>(null);
+  const [deskUnavailable, setDeskUnavailable] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || activeTab !== "ticket") return;
+    const controller = new AbortController();
+    // Only probe when someone opens Get Support, never on every page load.
+    void fetch("/api/zoho/desk/status", { signal: controller.signal, cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json().catch(() => null);
+        if (!controller.signal.aborted) setDeskUnavailable(data?.connected === false);
+      })
+      .catch(() => { /* Ticket submission remains authoritative if the probe is unreachable. */ });
+    return () => controller.abort();
+  }, [isOpen, activeTab]);
 
   const [canDrag, setCanDrag] = useState(false);
   const [isDeskFullscreen, setIsDeskFullscreen] = useState(false);
@@ -949,6 +965,7 @@ export const ZohoASAPWidget = ({
   }, [pendingSeed, isOpen, activeTab]);
 
   const applyTicketChip = (chipId: DeskTicketChipId) => {
+    if (ticketSendingRef.current) return;
     const chip = DESK_TICKET_CHIPS.find((item) => item.id === chipId);
     if (!chip) return;
     const next = applyDeskTicketChip(chip, { message });
@@ -969,6 +986,7 @@ export const ZohoASAPWidget = ({
   };
 
   const openSupportWithChip = (chipId: DeskTicketChipId) => {
+    if (ticketSendingRef.current) return;
     selectTab("ticket");
     applyTicketChip(chipId);
   };
@@ -1186,6 +1204,7 @@ export const ZohoASAPWidget = ({
   ];
 
   const handleSubmitTicket = async () => {
+    if (ticketSendingRef.current) return;
     const nextErrors: Partial<Record<"email" | "subject" | "message", string>> = {};
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.trim()) {
@@ -1213,6 +1232,7 @@ export const ZohoASAPWidget = ({
       return;
     }
 
+    ticketSendingRef.current = true;
     setIsTicketSending(true);
     setTicketResult(null);
     setTicketSubmitError(null);
@@ -1225,8 +1245,7 @@ export const ZohoASAPWidget = ({
       category ? `Category: ${category}` : null,
     ]
       .filter(Boolean)
-      .join("\n")
-      .slice(0, 5000);
+      .join("\n");
 
     try {
       const response = await fetch("/api/portal/zoho/ticket", {
@@ -1241,12 +1260,8 @@ export const ZohoASAPWidget = ({
           sessionId: advisorSessionId || undefined,
         }),
       });
-      const data = await response.json().catch(() => ({}));
-      // Fail closed: never treat as success without a Zoho ticket id, and never
-      // if the server explicitly set success:false (auth/create failures).
-      if (!response.ok || data.success === false || !data.zohoTicketId) {
-        throw new Error(data.error || "We couldn't open the ticket right now. Please try again.");
-      }
+      const data = await readDeskTicketResponse(response);
+      setDeskUnavailable(false);
 
       setTicketResult({
         ticketNumber: data.ticketNumber,
@@ -1278,6 +1293,7 @@ export const ZohoASAPWidget = ({
         variant: "destructive",
       });
     } finally {
+      ticketSendingRef.current = false;
       setIsTicketSending(false);
     }
   };
@@ -1916,12 +1932,20 @@ export const ZohoASAPWidget = ({
                           <p>Tell us what happened. We&apos;ll route your request straight to the Arizona desk.</p>
                         </div>
 
+                        {deskUnavailable ? (
+                          <div className="de-desk-form-error" role="status" data-testid="support-availability">
+                            Ticket submission is temporarily unavailable. You can keep drafting below or{" "}
+                            <a href={PRIMARY_PHONE.telHref}>call {PRIMARY_PHONE.display}</a> for help.
+                          </div>
+                        ) : null}
+
                         <button
                           type="button"
                           className={`de-desk-incident${
                             selectedTicketChip === "security-incident" ? " is-on" : ""
                           }`}
                           data-testid="ticket-issue-security-incident"
+                          disabled={isTicketSending}
                           onClick={() => applyTicketChip("security-incident")}
                         >
                           <span className="de-desk-incident-icon">
@@ -1942,6 +1966,7 @@ export const ZohoASAPWidget = ({
                               type="button"
                               className={`de-desk-issue-row${selectedTicketChip === chip.id ? " is-on" : ""}`}
                               data-testid={`ticket-issue-${chip.id}`}
+                              disabled={isTicketSending}
                               onClick={() => applyTicketChip(chip.id)}
                             >
                               <span className="de-desk-issue-icon">{getDeskChipIcon(chip.id)}</span>
@@ -1970,6 +1995,8 @@ export const ZohoASAPWidget = ({
                             <User aria-hidden="true" />
                             <Input
                               id="support-name"
+                              maxLength={200}
+                              disabled={isTicketSending}
                               autoComplete="name"
                               placeholder="Your name"
                               value={fullName}
@@ -1985,6 +2012,8 @@ export const ZohoASAPWidget = ({
                             <Mail aria-hidden="true" />
                             <Input
                               id="support-email"
+                              maxLength={254}
+                              disabled={isTicketSending}
                               type="email"
                               autoComplete="email"
                               placeholder="you@company.com"
@@ -2010,6 +2039,7 @@ export const ZohoASAPWidget = ({
                           <label htmlFor="support-subject">What&apos;s happening?</label>
                           <Input
                             id="support-subject"
+                            disabled={isTicketSending}
                             maxLength={200}
                             placeholder="Short summary"
                             value={subject}
@@ -2033,6 +2063,7 @@ export const ZohoASAPWidget = ({
                           <label htmlFor="support-message">Details</label>
                           <Textarea
                             id="support-message"
+                            disabled={isTicketSending}
                             maxLength={2000}
                             placeholder="What broke, who is affected, and what you already tried."
                             value={message}
@@ -2065,6 +2096,7 @@ export const ZohoASAPWidget = ({
                                 className={priority === level ? "is-on" : undefined}
                                 aria-pressed={priority === level}
                                 data-testid={`select-support-priority-${level.toLowerCase()}`}
+                                disabled={isTicketSending}
                                 onClick={() => setPriority(level)}
                               >
                                 {level}
@@ -2103,6 +2135,8 @@ export const ZohoASAPWidget = ({
                               <label htmlFor="support-company">Company</label>
                               <Input
                                 id="support-company"
+                                maxLength={200}
+                                disabled={isTicketSending}
                                 autoComplete="organization"
                                 placeholder="Company name"
                                 value={company}
@@ -2115,6 +2149,7 @@ export const ZohoASAPWidget = ({
                               <label htmlFor="support-category">Category</label>
                               <select
                                 id="support-category"
+                                disabled={isTicketSending}
                                 value={category}
                                 onChange={(event) => setCategory(event.target.value)}
                                 className="de-desk-input de-desk-select is-bare"
