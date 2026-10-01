@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PortalLayout } from "./PortalLayout";
-import { User, Lock, Bell, Users } from "lucide-react";
 import MfaSetup from "@/components/portal/MfaSetup";
 import { portalFetch, portalGet } from "@/lib/portalApi";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "wouter";
+import { Field, Panel } from "@/components/portal/ui";
 
 type ProfileManager = { id: string; email: string; fullName: string };
+
+const NOTIFICATIONS: { id: string; label: string; hint: string }[] = [
+  { id: "checkbox-ticket-updates", label: "Ticket updates", hint: "Notifications when tickets are updated" },
+  { id: "checkbox-invoice-alerts", label: "Invoice alerts", hint: "Notifications for new invoices" },
+  { id: "checkbox-service-updates", label: "Service updates", hint: "Notifications for service announcements" },
+];
 
 export default function PortalSettings() {
   const { toast } = useToast();
@@ -127,204 +132,129 @@ export default function PortalSettings() {
   };
 
   return (
-    <PortalLayout title="Settings">
-      <div className="space-y-6 max-w-2xl">
-        {/* Profile Settings */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <User className="h-5 w-5 text-[#D3126A]" />
-              <div>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>Update your personal details</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSaveProfile} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Full Name</label>
-                <Input
-                  value={formData.fullName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, fullName: e.target.value })
-                  }
-                  placeholder="Your name"
-                  data-testid="input-fullname"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Email Address</label>
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  placeholder="your@email.com"
-                  data-testid="input-email"
-                />
-              </div>
-              <Button
-                type="submit"
-                className="bg-[#D3126A] hover:bg-[#D3126A]/90"
-                data-testid="button-save-profile"
-                disabled={savingProfile}
-              >
-                {savingProfile ? "Saving…" : "Save Changes"}
+    <PortalLayout title="Settings" description="Your profile, sign-in security and notification preferences." width="default">
+      <div className="max-w-2xl space-y-4">
+        <Panel id="settings-profile" title="Profile information" description="Update your personal details">
+          <form onSubmit={handleSaveProfile} className="space-y-5">
+            <Field label="Full name" htmlFor="settings-fullname">
+              <Input
+                id="settings-fullname"
+                autoComplete="name"
+                value={formData.fullName}
+                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                placeholder="Your name"
+                className="border-border bg-background"
+                data-testid="input-fullname"
+              />
+            </Field>
+            <Field label="Email address" htmlFor="settings-email">
+              <Input
+                id="settings-email"
+                type="email"
+                autoComplete="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="your@email.com"
+                className="border-border bg-background"
+                data-testid="input-email"
+              />
+            </Field>
+            <div className="border-t border-border pt-4">
+              <Button type="submit" variant="brand" data-testid="button-save-profile" disabled={savingProfile}>
+                {savingProfile ? "Saving…" : "Save changes"}
               </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-[#D3126A]" />
-              <div>
-                <CardTitle>Your manager (profile)</CardTitle>
-                <CardDescription>
-                  Used for Access Request approvals. Manager email on forms must match this person and your
-                  company domain
-                  {companyDomains.length ? ` (${companyDomains.join(", ")})` : ""}.
-                </CardDescription>
-              </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            {manager ? (
-              <>
-                <p className="font-medium">{manager.fullName}</p>
-                <p className="text-muted-foreground font-mono text-xs">{manager.email}</p>
-              </>
-            ) : (
-              <p className="text-muted-foreground">
-                No manager assigned on your profile yet. Ask your Company IT Contact to set one under People
-                & Org.
-              </p>
-            )}
-            <Link href="/portal/people" className="text-[#D3126A] text-sm font-medium hover:underline inline-block mt-1">
-              Open People & Org
+          </form>
+        </Panel>
+
+        <Panel
+          id="settings-manager"
+          title="Your manager"
+          description={`Used for Access Request approvals. Manager email on forms must match this person and your company domain${companyDomains.length ? ` (${companyDomains.join(", ")})` : ""}.`}
+          actions={
+            <Link href="/portal/people" className="text-sm font-medium pt-link hover:underline">
+              Open People &amp; Org →
             </Link>
-          </CardContent>
-        </Card>
+          }
+        >
+          {manager ? (
+            <dl className="text-sm">
+              <dt className="sr-only">Manager</dt>
+              <dd className="font-medium">{manager.fullName}</dd>
+              <dd className="mt-0.5 font-mono text-xs text-muted-foreground">{manager.email}</dd>
+            </dl>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No manager assigned on your profile yet. Ask your Company IT Contact to set one under People &amp; Org.
+            </p>
+          )}
+        </Panel>
 
-        {/* Password Settings */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Lock className="h-5 w-5 text-[#D3126A]" />
-              <div>
-                <CardTitle>Change Password</CardTitle>
-                <CardDescription>
-                  Update your password to keep your account secure
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleChangePassword} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Current Password</label>
+        <Panel id="settings-password" title="Change password" description="Update your password to keep your account secure">
+          <form onSubmit={handleChangePassword} className="space-y-5">
+            <Field label="Current password" htmlFor="settings-current-password">
+              <Input
+                id="settings-current-password"
+                type="password"
+                autoComplete="current-password"
+                value={passwordData.current}
+                onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
+                placeholder="••••••••"
+                className="border-border bg-background"
+                data-testid="input-current-password"
+              />
+            </Field>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="New password" htmlFor="settings-new-password">
                 <Input
+                  id="settings-new-password"
                   type="password"
-                  value={passwordData.current}
-                  onChange={(e) =>
-                    setPasswordData({
-                      ...passwordData,
-                      current: e.target.value,
-                    })
-                  }
-                  placeholder="••••••••"
-                  data-testid="input-current-password"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">New Password</label>
-                <Input
-                  type="password"
+                  autoComplete="new-password"
                   value={passwordData.new}
-                  onChange={(e) =>
-                    setPasswordData({ ...passwordData, new: e.target.value })
-                  }
+                  onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
                   placeholder="••••••••"
+                  className="border-border bg-background"
                   data-testid="input-new-password"
                 />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Confirm New Password
-                </label>
+              </Field>
+              <Field label="Confirm new password" htmlFor="settings-confirm-password">
                 <Input
+                  id="settings-confirm-password"
                   type="password"
+                  autoComplete="new-password"
                   value={passwordData.confirm}
-                  onChange={(e) =>
-                    setPasswordData({
-                      ...passwordData,
-                      confirm: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
                   placeholder="••••••••"
+                  className="border-border bg-background"
                   data-testid="input-confirm-password"
                 />
-              </div>
-              <Button
-                type="submit"
-                className="bg-[#D3126A] hover:bg-[#D3126A]/90"
-                data-testid="button-change-password"
-                disabled={savingPassword}
-              >
-                {savingPassword ? "Updating…" : "Update Password"}
+              </Field>
+            </div>
+            <div className="border-t border-border pt-4">
+              <Button type="submit" variant="brand" data-testid="button-change-password" disabled={savingPassword}>
+                {savingPassword ? "Updating…" : "Update password"}
               </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Notification Settings */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Bell className="h-5 w-5 text-[#D3126A]" />
-              <div>
-                <CardTitle>Notifications</CardTitle>
-                <CardDescription>Manage your notification preferences</CardDescription>
-              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                <div>
-                  <label htmlFor="checkbox-ticket-updates" className="font-medium text-sm">Ticket Updates</label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Notifications when tickets are updated
-                  </p>
-                </div>
-                <input id="checkbox-ticket-updates" type="checkbox" defaultChecked className="h-4 w-4 accent-[#D3126A]" data-testid="checkbox-ticket-updates" />
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                <div>
-                  <label htmlFor="checkbox-invoice-alerts" className="font-medium text-sm">Invoice Alerts</label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Notifications for new invoices
-                  </p>
-                </div>
-                <input id="checkbox-invoice-alerts" type="checkbox" defaultChecked className="h-4 w-4 accent-[#D3126A]" data-testid="checkbox-invoice-alerts" />
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
-                <div>
-                  <label htmlFor="checkbox-service-updates" className="font-medium text-sm">Service Updates</label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Notifications for service announcements
-                  </p>
-                </div>
-                <input id="checkbox-service-updates" type="checkbox" defaultChecked className="h-4 w-4 accent-[#D3126A]" data-testid="checkbox-service-updates" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          </form>
+        </Panel>
 
-        {/* Two-Factor Authentication */}
+        <Panel id="settings-notifications" title="Notifications" description="Manage your notification preferences" flush>
+          <ul className="divide-y divide-border">
+            {NOTIFICATIONS.map((n) => (
+              <li key={n.id}>
+                <label htmlFor={n.id} className="flex min-h-[44px] cursor-pointer items-center justify-between gap-4 px-4 py-3 md:px-5">
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium">{n.label}</span>
+                    <span className="block text-xs text-muted-foreground">{n.hint}</span>
+                  </span>
+                  <input id={n.id} type="checkbox" defaultChecked className="h-4 w-4 shrink-0 accent-primary" data-testid={n.id} />
+                </label>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+
+        {/* Two-factor authentication: renders its own surface and dialogs. */}
         <MfaSetup />
       </div>
     </PortalLayout>
