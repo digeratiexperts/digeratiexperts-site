@@ -20,6 +20,12 @@ export interface ProtectionDomain {
   id: string;
   name: string;
   shortName: string;
+  /**
+   * The one-word label for the phone row. Seven of these have to sit on one
+   * 358px line together (390px viewport, 16px gutters), so each stays short;
+   * the continuous block renders as the rail beneath them, not in the row.
+   */
+  phoneLabel: string;
   icon: LucideIcon;
   /** The threat class this block answers; feeds the layered-protection diagram. */
   answers: string;
@@ -57,6 +63,7 @@ export const protectionDomains: ProtectionDomain[] = [
     id: "identity",
     name: "Identity & Access",
     shortName: "Identity & access",
+    phoneLabel: "Identity",
     icon: Lock,
     answers: "credential theft",
     purpose: "Control who can access business systems, how access is verified, and how accounts are changed or removed over time.",
@@ -80,6 +87,7 @@ export const protectionDomains: ProtectionDomain[] = [
     id: "endpoint",
     name: "Endpoint",
     shortName: "Endpoint",
+    phoneLabel: "Endpoint",
     icon: Shield,
     answers: "malware",
     purpose: "Keep managed devices visible, maintained, and protected with controls matched to device ownership, user role, and business risk.",
@@ -103,6 +111,7 @@ export const protectionDomains: ProtectionDomain[] = [
     id: "email",
     name: "Email & Collaboration",
     shortName: "Email & collaboration",
+    phoneLabel: "Email",
     icon: Mail,
     answers: "phishing",
     purpose: "Reduce email-driven risk while keeping authentication, filtering, user behavior, and account settings understandable and supportable.",
@@ -126,6 +135,7 @@ export const protectionDomains: ProtectionDomain[] = [
     id: "browser",
     name: "Browser & Web",
     shortName: "Browser & web",
+    phoneLabel: "Browser",
     icon: Globe,
     answers: "web-borne compromise",
     purpose: "Reduce web-borne risk on managed devices: filtering, browser policy, and safe access to the SaaS the business actually runs on.",
@@ -149,6 +159,7 @@ export const protectionDomains: ProtectionDomain[] = [
     id: "network",
     name: "Network",
     shortName: "Network",
+    phoneLabel: "Network",
     icon: Wifi,
     answers: "lateral movement",
     purpose: "Document and manage the business network so internet edge, switching, Wi-Fi, segmentation, and remote access match the operating model.",
@@ -172,6 +183,7 @@ export const protectionDomains: ProtectionDomain[] = [
     id: "detection",
     name: "Detection & Response",
     shortName: "Detection & response",
+    phoneLabel: "Detection",
     icon: Activity,
     answers: "persistence",
     purpose: "Watch the environment continuously and act on what matters: detection, triage, containment, and escalation through a documented path.",
@@ -195,6 +207,7 @@ export const protectionDomains: ProtectionDomain[] = [
     id: "human",
     name: "Human Risk",
     shortName: "Human risk",
+    phoneLabel: "Human",
     icon: Users,
     answers: "social engineering",
     purpose: "Make people a managed control: awareness, simulation, and a reporting path that fit the organization rather than a checkbox.",
@@ -218,6 +231,7 @@ export const protectionDomains: ProtectionDomain[] = [
     id: "exposure",
     name: "Risk & Exposure",
     shortName: "Risk & exposure",
+    phoneLabel: "Risk & exposure",
     icon: Search,
     answers: "unknown exposure",
     continuous: true,
@@ -248,8 +262,104 @@ export const ProtectionCommandDeck: React.FC<{ onDomainChange?: (id: string) => 
   };
   const activeDomain = protectionDomains.find((domain) => domain.id === selectedId) ?? protectionDomains[0];
   const DomainIcon = activeDomain.icon;
+  const peerDomains = protectionDomains.filter((domain) => !domain.continuous);
+  const continuousDomain = protectionDomains.find((domain) => domain.continuous);
 
   return (
+    <>
+      {/*
+        Phone (below md): the mock Joe approved on 2026-10-01. One dark field,
+        one row of seven labels with the continuous block as the rail beneath
+        them, one sentence, then the selected block as plain reading: name,
+        purpose, the three assessment questions, and the boundary as a list.
+        No frame chrome, no card inside a card, no diagram widget. The last
+        96px stay empty so the Ask DE launcher and its nudge never sit on type.
+      */}
+      <div className="md:hidden" data-testid="protection-deck-phone">
+        <div role="tablist" aria-label="Protection blocks" className="flex items-end justify-between gap-1">
+          {peerDomains.map((domain) => {
+            const isSelected = domain.id === selectedId;
+            return (
+              <button
+                key={domain.id}
+                type="button"
+                role="tab"
+                aria-selected={isSelected}
+                onClick={() => selectDomain(domain.id)}
+                className={`min-h-11 shrink-0 border-b-2 pb-2 pt-5 text-[11.5px] leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050312] ${
+                  isSelected ? "border-[#D3126A] font-semibold text-white" : "border-transparent font-medium text-white/55"
+                }`}
+                data-testid={`domain-tab-phone-${domain.id}`}
+              >
+                {domain.phoneLabel}
+              </button>
+            );
+          })}
+        </div>
+        {continuousDomain ? (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={continuousDomain.id === selectedId}
+            onClick={() => selectDomain(continuousDomain.id)}
+            className={`relative flex min-h-11 w-full items-center justify-between border-t border-white/10 pt-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050312] ${
+              continuousDomain.id === selectedId ? "text-white" : "text-white/70"
+            }`}
+            data-testid={`domain-tab-phone-${continuousDomain.id}`}
+            data-continuous="true"
+          >
+            <span
+              className={`pointer-events-none absolute inset-x-0 -top-px border-t border-dashed ${
+                continuousDomain.id === selectedId ? "border-[#D3126A]" : "border-[#F04C97]/55"
+              }`}
+              aria-hidden="true"
+            />
+            <span className={`text-[11.5px] ${continuousDomain.id === selectedId ? "font-semibold" : "font-medium"}`}>{continuousDomain.phoneLabel}</span>
+            <span className="text-[10.5px] uppercase tracking-[0.08em] text-[#F04C97]">Continuous · under all seven</span>
+          </button>
+        ) : null}
+        <p className="mt-3 text-[13px] leading-relaxed text-white/55" data-testid="domain-continuous-note-phone">
+          Seven blocks each answer a threat class, and risk and exposure runs under all of them.
+        </p>
+
+        <article className="mt-8 border-t border-white/10 pb-24 pt-6" aria-live="polite" data-testid="protection-deck-phone-domain">
+          <h3 className="font-heading text-[22px] font-semibold leading-tight tracking-[-0.015em] text-white">
+            {activeDomain.name}
+            <span className="mt-1 block font-sans text-xs font-medium tracking-[0.02em] text-[#F04C97]">Answers {activeDomain.answers}</span>
+          </h3>
+          <p className="mt-3 text-[15px] leading-[1.55] text-white/70">{activeDomain.purpose}</p>
+
+          <ul className="mt-5" aria-label="What an assessment asks">
+            {activeDomain.commonQuestions.map((question) => (
+              <li
+                key={question}
+                className="relative border-t border-white/10 py-3 pl-[22px] text-[15px] leading-[1.45] text-white/90 last:border-b"
+              >
+                <span className="absolute left-0 top-[21px] h-0.5 w-2.5 bg-[#D3126A]" aria-hidden="true" />
+                {question}
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-6">
+            <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-white/55">{activeDomain.architecture.boundaryName}</h4>
+            <dl className="mt-2.5 space-y-2.5">
+              {activeDomain.architecture.nodes.map((node) => (
+                <div key={node.title}>
+                  <dt className="text-sm font-semibold text-white/90">{node.title}</dt>
+                  <dd className="mt-0.5 text-[13.5px] leading-[1.45] text-white/55">{node.subtitle}.</dd>
+                </div>
+              ))}
+              <div>
+                <dt className="text-sm font-semibold text-white/90">{activeDomain.architecture.gate.label}</dt>
+                <dd className="mt-0.5 text-[13.5px] leading-[1.45] text-white/55">{activeDomain.architecture.gate.policy}.</dd>
+              </div>
+            </dl>
+          </div>
+        </article>
+      </div>
+
+      <div className="hidden md:block">
     <EvidenceFrame
       classification="ILLUSTRATIVE"
       title="Eight-block protection model"
@@ -385,5 +495,7 @@ export const ProtectionCommandDeck: React.FC<{ onDomainChange?: (id: string) => 
         </motion.div>
       </AnimatePresence>
     </EvidenceFrame>
+      </div>
+    </>
   );
 };
