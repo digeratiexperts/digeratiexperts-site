@@ -87,4 +87,24 @@ describe("Door 2 tokens match the V4 vocabulary", () => {
     const form = readFileSync(path.join(root, "client/src/components/store/SolutionProfileForm.tsx"), "utf8");
     expect(form).toContain('data-state="expanded"\n      className="d2-profile-panel"');
   });
+
+  it("draws numbered steps as stations: a check when ready, a white station and 'You are here' when current", () => {
+    // Joe, 2026-10-01: concept B "Stations" — thick lines and clear done / current / ahead states.
+    expect(block(".d2-journey__bar")).toContain("height: 6px");
+    expect(block(".d2-journey__node")).toContain("width: 2.5rem");
+    expect(css).toMatch(/\.d2-journey__step\[data-state="current"\] \.d2-journey__node \{[^}]*background: #fff;[^}]*animation: d2-beacon/);
+    expect(block(".d2-step__n")).toContain("border-radius: 9999px");
+    expect(css).toMatch(/\.d2-chapter--station\[data-step-state="current"\]:not\(\.d2-chapter--paper\) \{[^}]*border-left: 6px solid var\(--d2-accent\)/);
+    expect(css).toMatch(/\.d2-layout \.d2-chapter--station::before \{[^}]*width: 6px;/);
+    const rail = readFileSync(path.join(root, "client/src/components/store/door2/JourneyRail.tsx"), "utf8");
+    expect(rail).toContain('state === "complete" ? <Check className="d2-journey__check"');
+    expect(rail).toContain("aria-label={STORE_JOURNEY_SENTENCE}");
+    const primitives = readFileSync(path.join(root, "client/src/components/store/door2/primitives.tsx"), "utf8");
+    expect(primitives).toContain("You are here");
+    expect(primitives).toContain('current: " · you are here"');
+    const workspace = readFileSync(path.join(root, "client/src/pages/store/PublicStoreCheckout.tsx"), "utf8");
+    for (const id of ["profile", "need", "relationship", "package", "delivery"]) {
+      expect(workspace).toContain(`stepState={stepStateOf("${id}")}`);
+    }
+  });
 });
