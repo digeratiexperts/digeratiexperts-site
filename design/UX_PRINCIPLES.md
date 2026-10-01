@@ -1,6 +1,6 @@
 # UX principles
 
-Visual System v2 layers (evidence, HUD, diagrams) sit on this file — they do not replace it. See `VISUAL_SYSTEM_V2.md`.
+Visual System v2 layers (evidence, HUD, diagrams) sit on this file — they do not replace it. See `VISUAL_SYSTEM_V2.md`. Authority tiers: `DESIGN-AUTHORITY.md` — the accessibility, state, responsiveness, overlap and visual-QA rules here are Tier 0 and apply in every task mode; "Content preservation" is a Maintenance Mode / integration rule.
 
 Act as a senior product designer, UX designer, visual designer, and frontend engineer.
 
@@ -50,9 +50,9 @@ Maintain sufficient contrast, visible focus states, keyboard accessibility, sema
 
 Never simply shrink desktop layouts. Consider whether components should stack, reorder, resize, simplify, change alignment, change navigation behavior, alter imagery, or change interaction patterns for smaller screens.
 
-## Content preservation
+## Content preservation (Maintenance Mode and production integration)
 
-Preserve existing DE content, CTAs, nav, and stats unless DE explicitly approves removal. Prefer elevate → consolidate → relocate → reuse.
+Preserve existing DE content, CTAs, nav, and stats unless DE explicitly approves removal. Prefer elevate → consolidate → relocate → reuse. In Exploration Mode (`DESIGN-AUTHORITY.md`) a concept may restructure how content is presented, but the content, routes, forms and functionality still survive when the chosen concept is integrated.
 
 Canonical portal login: `https://portal.digeratiexperts.com/portal/login` — never invent `//login`.
 

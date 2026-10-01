@@ -30,121 +30,14 @@
 
 version: 2
 claims:
-  - id: de-desk-delight
-    owner: claude
-    subsystem: de-desk
-    branch: claude/desk-delight
-    base_sha: 068fd2789e994420a60001501a924edbb23d31b9
-    files:
-      - client/src/components/ZohoASAPWidget.tsx
-      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
-      - client/src/components/SiteBottomBar.tsx
-      - client/src/lib/deskChatSession.ts
-      - client/src/lib/deskChatSession.test.ts
-      - client/src/lib/deskActions.ts
-      - client/src/lib/deskActions.test.ts
-      - client/src/lib/deskRichText.tsx
-      - client/src/lib/deskRichText.test.ts
-      - .cursor/rules/de-desk-design.mdc
-      - .cursor/skills/de-desk-ui/SKILL.md
-      - .cursor/skills/de-desk-ui/tokens-and-structure.md
-      - artifacts/visual-qa/desk-white-theme/**
-      - artifacts/visual-qa/desk-delight/**
-    status: active
-    started: 2026-09-30
-    note: >-
-      Joe, 2026-09-28, on a phone screenshot of the graphite Desk: "This is
-      wrong still. It's supposed to be white theme." Built on
-      claude/desk-launcher-graphite (PR #229), whose one-token-set structure is
-      kept; only the values change, to the approved support-chrome rule in
-      design/UI-STYLE-RULES.md (#fbfbfa panel, black/10 hairlines, near-black
-      ink, magenta only for submit and incident). The Ask DE chooser follows.
-      Supersedes the graphite direction recorded in de-desk-launcher-graphite
-      and the C5 graphite override; the Cursor Desk rule and skill are updated
-      so agents stop steering it back to graphite. Joe, 2026-09-30: "we had a
-      dark version (old) and light/white version (current) and some how they
-      got mixed together - rebuild it better and full featured." Rebased onto
-      PR #229's head f06d3a00 (itself level with main 674a4c5c) and extended:
-      header clearance, initial focus, AA dim ink, the conversation kept for
-      the tab with Start over, and a ticket drafted from the chat. Merged as
-      PR #277 (068fd278) and verified by the production deploy job; PR #229
-      closed as superseded and its claim de-desk-launcher-graphite released.
-      Joe, 2026-09-30, same day: "upgrade and change things to optimize it. I
-      want users to really enjoy using it." This claim carries that follow-up.
   - id: store-experience-v2
     owner: claude
     subsystem: public-store-door2
     branch: claude/nifty-newton-uk9g7t
     pr: 267
     base_sha: dd6a1f8825ebb444d85e7601aa856859facc9cdd
-    files:
-      - client/src/pages/solutions/BusinessNeedsIndex.tsx
-      - client/src/pages/solutions/BusinessNeedsFamily.tsx
-      - client/src/pages/solutions/SolutionRequest.tsx
-      - client/src/pages/solutions/door2Leakage.test.ts
-      - client/src/pages/store/PublicStoreCheckout.tsx
-      - client/src/pages/store/Checkout.tsx
-      - client/src/pages/store/QuoteRequest.tsx
-      - client/src/pages/store/QuoteConfirmation.tsx
-      - client/src/components/store/PublicSolutionCart.tsx
-      - client/src/components/store/SolutionProfileForm.tsx
-      - client/src/components/store/StorePageAtmosphere.tsx
-      - client/src/components/store/SolutionMobileBar.tsx
-      - client/src/components/store/door2/**
-      - client/src/lib/solutionDraft.ts
-      - client/src/lib/solutionPackage.ts
-      - client/src/lib/businessNeeds.ts
-      - client/src/lib/isDoor2Path.ts
-      - client/src/lib/warehousePaths.ts
-      - client/src/lib/warehouseContactHandoff.ts
-      - client/src/data/curatedSolutions.ts
-      - client/src/styles/store-jelly.css
-      - client/src/App.tsx (Door 2 routes and ACCENT_BY_PREFIX only)
-      - server/publicSolutionRoutes.ts
-      - server/publicSolutionRequestStore.ts
-      - server/publicSolutionRequestPersistence.ts
-      - server/publicSolutionRequestCrm.ts
-      - server/storeQuoteStore.ts
-      - server/routes.ts (the /api/store/quote-requests handlers only)
-      - server/index.ts (the request-log redaction line only)
-      - server/spaKnownPaths.ts
-      - server/storeLegacyRedirects.ts
-      - server/warehouseRoutes.ts (the /solutions/business-needs 301 and the de_store_preview staff preview only)
-      - server/warehouseRoutes.test.ts
-      - client/src/lib/solutionGuidance.ts
-      - client/src/lib/openMspAdvisor.ts (STORE_ADVISOR_SEED text only)
-      - client/src/lib/storeChromeGestures.ts (isStorePath only)
-      - client/src/hooks/useStoreChromeGestures.ts (the warehouse route gate only; approved §16.1)
-      - client/src/hooks/useStoreChromeGestures.test.ts
-      - client/src/hooks/useSolutionDraft.ts
-      - client/src/index.css (the .de-site-canvas padding-bottom line only)
-      - shared/publicContact.ts
-      - shared/solutionReference.ts
-      - shared/solutionReference.test.ts
-      - client/src/lib/publicSolutionCart.ts (removed)
-      - client/src/data/solutionScenarios.ts
-      - client/src/pages/store/SolutionSubmitted.tsx
-      - client/src/styles/store-builder.css
-      - client/src/components/MegaMenu.tsx (announcement strip suppression on Door 2 and /book, and the utility-height measurement it depends on)
-      - client/src/components/store/CartButton.tsx (the warehouse trigger's name only)
-      - client/src/pages/sections/DigeratiEnhancedFooterSection.tsx (the variant="store" prop only)
-      - client/src/lib/deskAskDeMotion.ts (the store page classification and its copy only)
-      - client/src/lib/deskAskDeMotion.test.ts
-      - client/src/components/VirtualMspAdvisor.tsx (removed, unimported)
-      - client/src/components/store/ShoppingCart.tsx (the staff drawer title only)
-      - client/src/pages/BookingPage.tsx (the /book copy and the ?ref= reader only; §16.6 PR 0)
-      - .cursor/rules/blog-store-color-lock.mdc (the public Store / warehouse split)
-      - docs/STORE-ARCHITECTURE-DESIGN.md (the packet item 8 resolution line only)
-      - scripts/door2-browser-smoke.mjs
-      - scripts/generate-sitemap.mjs (the /solutions/request row only)
-      - docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md
-      - docs/PUBLIC-SOLUTION-BUILDER.md
-      - docs/STORE-SOLUTION-ENGINE.md
-      - docs/STORE-WAREHOUSE.md
-      - docs/STORE-DOOR-2.md
-      - design/STORE_DOOR2_GRAMMAR.md
-      - artifacts/visual-qa/store-experience/**
-    status: active
+    files: []
+    status: verified-live
     started: 2026-09-27
     note: >-
       Joe, 2026-09-27: think out how the Store experience and flow can be
@@ -169,6 +62,18 @@ claims:
       defects (lead event without contact fields; non-durable submit reported
       as saved). Not claimed: server/storeQuoteCrm.ts (issue 206, Codex),
       client/src/pages/versions/**, scrollcraft/**.
+      RELEASED 2026-09-29: merged as 3d232ed3 (PR 267) and VERIFIED LIVE
+      the same day: production serves index-u076-cx8.js and
+      index-DCAqm86m.css, the merge commit's own build; /healthz 200; /store,
+      a family page and /book?ref= render as built at 390 and 1440 (electric
+      accent, no strip, store footer, axe clean, no runtime errors). Files
+      released. Remaining and not claimed by this lane, source of truth §15
+      row 18: the Ask DE nudge position (SiteBottomBar.tsx, its bottom offset
+      omits --de-cookie-h) and the widget's STORE_ADVISOR_SEED fallback
+      (ZohoASAPWidget.tsx, pathname.includes("/store") instead of isDoor2Path,
+      so /solutions/request pages miss it). PR 229 has since landed via PR
+      277 (2026-09-30); both files now sit in the active de-desk-delight
+      claim, so the Desk lane or Joe decides who takes them.
   - id: de-design-concepts-directions
     owner: claude
     subsystem: flagship-visual-reset
@@ -320,22 +225,39 @@ claims:
       scripts/** (released to Cursor for R5/R6), scrollcraft/**,
       client/src/pages/versions/**. The same YAML parse fix as
       claude/unfinished-threads-survey-y92doz is carried so this file loads.
-  - id: pronunciation-flipbook-recovery
+  - id: pronunciation-and-flipbook-recovery
     issue: 152
-    owner: chatgpt
-    subsystem: homepage-resources
-    branch: chatgpt/pronunciation-flipbook-recovery-20260831
+    pr: 157
+    owner: claude
+    subsystem: homepage-hero, resources
+    branch: claude/pronunciation-dictionary-card-2026-08-31
     base_sha: ecea1d9314f859bd5a17343c277e739f3bedb492
     files:
       - client/src/components/PronunciationCard.tsx
+      - client/src/components/PronunciationCard.palette.test.ts
       - client/src/pages/sections/ReferenceHeroSection.tsx
       - client/src/pages/resources/DocumentFlipbook.tsx
       - client/src/pages/resources/ResourcesIndex.tsx
       - client/public/audio/README.md
       - scripts/vendor-pdfjs.mjs
+      - scripts/public-route-smoke.mjs
       - package.json
     status: active
     started: 2026-08-31
+    note: >-
+      Reassigned by Joe on 2026-08-31. Supersedes the `chatgpt` claim
+      pronunciation-flipbook-recovery (branch
+      chatgpt/pronunciation-flipbook-recovery-20260831, commit f72d647): this
+      branch merges that branch whole, so both halves ship together and neither
+      agent is left holding a conflicting file. The pronunciation card is the
+      reassigned rewrite — same data-testids, so the public-route smoke gate
+      that branch added keeps passing. The flipbook half (DocumentFlipbook,
+      ResourcesIndex, pinned PDF.js vendoring, audio README) is carried across
+      unmodified. The chatgpt branch is now redundant and should be retired
+      rather than merged; merging both would conflict on PronunciationCard.tsx. Reconciled with main
+      068fd278 on 2026-09-30: main already carries the .gitignore vendor rule and
+      the vendor-pdfjs Windows shell fix (PR 218); the recording, the palette
+      rules and the flipbook half are what this branch still adds.
   - id: de-experience-v1
     owner: claude
     subsystem: flagship-creative-reset
@@ -446,7 +368,15 @@ claims:
       that main for the kie.ai workflow lane (PR #183): key alias, model
       registry, spend guards, provenance manifest, docs/kie/KIE-RULES.md.
       kie.ai spend: NONE without Joe's approval and cap in the same message;
-      image models only; the first proposal is scrollcraft/KIE-FIRST-GENERATION.md.
+      image models only. 2026-09-02 evening (Joe): the money gate is closed,
+      the F-02 request is withdrawn after reconciling with PR #186
+      (scrollcraft/KIE-FIRST-GENERATION.md v3), Version 4 does not start,
+      and PR #184 stays a draft scoped to tooling and asset planning.
+      OPEN, for Joe to route: the live homepage still presents the
+      six-domain model (ProtectionCommandDeck, the "one environment" and
+      "layered protection" diagrams); the current architecture is eight
+      blocks per docs/DE-SERVICE-MODEL-2026.md (PR #185). That correction
+      is content inside this claim and has not been started.
       FREEZE (2026-09-01, Joe): Scrollcraft implementation on ANY route is
       gated by the approved DE Scrollcraft Experience Plan at
       scrollcraft/EXPERIENCE-PLAN.md. No page code, no material production,
@@ -485,6 +415,38 @@ claims:
       (scripts/kie-assets.mjs); the kie.ai scripts here accept both
       KIE_AI_API_KEY and KIE_API_KEY and write candidates under
       artifacts/kie-ai/. No key is committed; installing makes no network call.
+  - id: de-homepage-v4
+    owner: claude
+    subsystem: homepage-v4
+    branch: claude/homepage-v4
+    base_sha: dd6a1f8825ebb444d85e7601aa856859facc9cdd
+    files:
+      - client/src/pages/versions/v4/**
+      - client/src/App.tsx (the /version-4 route only)
+      - client/src/pages/versions/registry.ts (the v4 entry and the "build" kind)
+      - client/src/lib/stickyCtaVisibility.ts (the /version-* exclusion)
+      - docs/VERSION-4-HOMEPAGE-SOURCE-OF-TRUTH.md
+      - docs/CLAIMS-REGISTER.md (the Version 4 section only)
+      - artifacts/visual-qa/homepage-v4/**
+      - artifacts/visual-qa/real-product/**
+    status: active
+    started: 2026-09-27
+    note: >-
+      Homepage Version 4, the clean-sheet rebuild Joe directed on 2026-09-27
+      after every previous attempt, governed by
+      docs/VERSION-4-HOMEPAGE-SOURCE-OF-TRUTH.md. Lives at the noindex
+      /version-4 preview only; production / is untouched by every commit on
+      this lane, and Joe's authorization on PR #264 covers publishing the
+      preview, never replacing /. PR #264 merged the source of truth,
+      governance 8.1 and the first cut; PR #266 carries the rebuild. Joe's
+      verdict on the first cut ("generic trash") set the standard for the
+      rest: every chapter takes a different form and leads with a real
+      thing — the published guarantee, a working sizer that writes the
+      store's own draft, the founder, DE Desk, verbatim pledges — and
+      nothing is invented (reviews and case studies are absent because the
+      catalogs are empty). Overlaps only this owner's older
+      de-site-v2-scrollcraft claim on client/src/pages/versions/**; the v1
+      and v3 snapshots there stay frozen. Zero kie.ai spend.
 # restore-homepage-v1 (branch claude/restore-homepage-v1) RETIRED 2026-09-09:
 # the claim was still listed active while the work was already fully contained
 # in main. Verified at main @ 611acfdb: `git rev-list --count
@@ -507,3 +469,14 @@ claims:
 # homepage-ask-de-reference-redesign (branch claude/homepage-ask-de-visual-19b3aa)
 # was RETIRED earlier the same day, integrated via PR #147 (main @ 9c5e7f9).
 # PR #146 closed unmerged; that branch was never a release lane.
+# de-desk-delight (branch claude/desk-delight, earlier de-desk-white-theme)
+# RETIRED 2026-09-30: merged via PR #277 (068fd278, white Desk) and PR #281
+# (6f657dd3, next steps, readable replies, callback in chat, dark leftovers).
+# Both "Deploy and verify production VPS" jobs succeeded, including the
+# production runtime verification step. PR #229 closed as superseded.
+# Still open and now UNCLAIMED (handed to this claim by store-experience-v2,
+# source of truth §15 row 18, commit f8f8fd1b): (1) the Ask DE nudge bottom
+# offset in client/src/components/SiteBottomBar.tsx omits --de-cookie-h; (2)
+# ZohoASAPWidget.tsx seeds STORE_ADVISOR_SEED on pathname.includes("/store")
+# instead of isDoor2Path, so /solutions/request pages miss it. Whoever takes
+# them claims the two files first.

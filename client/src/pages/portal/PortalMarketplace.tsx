@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { AlertTriangle, ClipboardCheck, Link2Off, RefreshCw, ShieldCheck, ShoppingCart } from "lucide-react";
+import { AlertTriangle, ClipboardCheck, Link2Off, RefreshCw, ShieldCheck, ShoppingCart, Warehouse } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PortalLayout } from "./PortalLayout";
@@ -13,6 +13,7 @@ import {
   parseTenantScopeState,
   type TenantScopeState,
 } from "@/lib/marketplaceTenantState";
+import { warehousePath } from "@/lib/warehousePaths";
 import { cn } from "@/lib/utils";
 
 /**
@@ -33,9 +34,15 @@ type MarketplaceResponse = {
   eligibility?: typeof MARKETPLACE_ELIGIBILITY;
   tenantState?: string;
   items?: unknown[];
-  /** Contract enum (Cursor 26b8c609) — or the pre-contract lowercase status. */
+  /**
+   * Contract enum (Cursor 26b8c609) — or the pre-contract lowercase status.
+   * `"staff"` is outside the tenant enum: the server sends it for a live DE
+   * admin, who is not a client and gets no Request Approval flow here.
+   */
   status?: string;
   reason?: string;
+  /** Only with `status: "staff"` — where the staff catalog actually lives. */
+  warehouseUrl?: string;
 };
 
 function toItems(raw: unknown[] | undefined): MarketplaceItem[] {
@@ -92,6 +99,10 @@ export default function PortalMarketplace() {
     queryFn: () => portalGet<MarketplaceResponse>("/api/portal/marketplace"),
   });
 
+  // DE staff are decided server-side from the live portal record (never the JWT
+  // claim). They are not clients: no Request Approval flow and no catalog on this
+  // surface — they are pointed at the Digital Warehouse instead.
+  const isStaff = !isError && data?.status === "staff";
   // A failed request is indistinguishable from an unreachable authority: fail closed.
   const state: TenantScopeState = isError ? "AUTHORITY_UNAVAILABLE" : parseTenantScopeState(data);
   const presentation = TENANT_SCOPE_PRESENTATION[state];
@@ -99,16 +110,64 @@ export default function PortalMarketplace() {
   const items = canRenderCatalog(state) ? toItems(data?.items) : [];
   const StateIcon = tone.Icon;
 
+  const heading = (
+    <div className="space-y-1">
+      <h2 className="text-2xl font-bold">Client Marketplace</h2>
+      <p className="text-gray-600 dark:text-gray-400">
+        Standardized items for your organization. Purchases here go through DE approval
+        before anything is ordered.
+      </p>
+    </div>
+  );
+
+  if (isStaff) {
+    return (
+      <PortalLayout title="Client Marketplace">
+        <div className="space-y-6">
+          {heading}
+          <Card
+            data-testid="marketplace-staff"
+            data-eligibility={data?.eligibility || MARKETPLACE_ELIGIBILITY}
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Warehouse className="h-5 w-5 shrink-0 text-[#D3126A]" aria-hidden="true" />
+                DE Staff — Digital Warehouse
+              </CardTitle>
+              <CardDescription>
+                You are signed in as DE staff. This page is the client view — no approval
+                request is needed for your account.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                The full catalog with vendors, costs, and Pay Now lives in the staff-only
+                Digital Warehouse.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild className="bg-[#D3126A] text-white hover:bg-[#D3126A]/90">
+                  <Link href={data?.warehouseUrl || warehousePath()} data-testid="marketplace-primary-action">
+                    <Warehouse className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Open Digital Warehouse
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/portal/procurement" data-testid="marketplace-secondary-action">
+                    Open procurement
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </PortalLayout>
+    );
+  }
+
   return (
     <PortalLayout title="Client Marketplace">
       <div className="space-y-6">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold">Client Marketplace</h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Standardized items for your organization. Purchases here go through DE approval
-            before anything is ordered.
-          </p>
-        </div>
+        {heading}
 
         {/* State panel. The enum stays in data attributes for QA; clients read the
             presentation copy only. */}

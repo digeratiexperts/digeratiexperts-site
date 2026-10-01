@@ -109,10 +109,30 @@ describe("DE Desk widget ticket route", () => {
     const { status, body } = await post(validTicket);
 
     expect(status).toBe(503);
+    expect(body.success).toBe(false);
+    expect(body.code).toBe("desk_auth_unavailable");
     expect(body.error).toMatch(/temporarily unavailable/i);
     expect(body.error).toContain(PRIMARY_PHONE.display);
     expect(body.retryable).toBe(true);
+    expect(body.zohoTicketId).toBeUndefined();
+  });
+
+  it("typed ZohoOAuthError(invalid_code) is unavailable with success:false — never a fake ticket", async () => {
+    const { ZohoOAuthError } = await import("./zoho/zohoOAuthErrors");
+    createTicket.mockRejectedValueOnce(
+      new ZohoOAuthError({
+        message: "Failed to refresh Zoho Desk access token",
+        code: "invalid_refresh_token",
+        product: "desk",
+        zohoError: "invalid_code",
+      }),
+    );
+
+    const { status, body } = await post(validTicket);
+
+    expect(status).toBe(503);
     expect(body.success).toBe(false);
+    expect(body.code).toBe("desk_auth_unavailable");
     expect(body.zohoTicketId).toBeUndefined();
   });
 
@@ -125,6 +145,8 @@ describe("DE Desk widget ticket route", () => {
     const { status, body } = await post(validTicket);
 
     expect(status).toBe(503);
+    expect(body.success).toBe(false);
+    expect(body.code).toBe("desk_auth_unavailable");
     expect(body.error).toMatch(/temporarily unavailable/i);
   });
 
@@ -137,6 +159,8 @@ describe("DE Desk widget ticket route", () => {
     const { status, body } = await post(validTicket);
 
     expect(status).toBe(502);
+    expect(body.success).toBe(false);
+    expect(body.code).toBe("desk_create_failed");
     expect(body.error).toMatch(/couldn't open the ticket/i);
     expect(body.retryable).toBe(true);
     expect(body.zohoTicketId).toBeUndefined();
@@ -149,6 +173,7 @@ describe("DE Desk widget ticket route", () => {
 
     expect(status).toBe(502);
     expect(body.success).toBe(false);
+    expect(body.code).toBe("desk_create_failed");
     expect(body.zohoTicketId).toBeUndefined();
   });
 
@@ -158,6 +183,8 @@ describe("DE Desk widget ticket route", () => {
     const { status, body } = await post(validTicket);
 
     expect(status).toBe(503);
+    expect(body.success).toBe(false);
+    expect(body.code).toBe("desk_not_configured");
     expect(body.error).toMatch(/temporarily unavailable/i);
     expect(createTicket).not.toHaveBeenCalled();
   });
@@ -263,11 +290,17 @@ describe("DE Desk widget ticket route", () => {
 
   it.each([
     { subject: "   " }, { description: {} }, { subject: ["Printer"] },
-    { email: ["visitor@example.com"] }, { priority: "Critical" },
+    { email: ["visitor@example.com"] }, { priority: "Emergency" },
     { name: "x".repeat(201) }, { sessionId: {} }, { description: "x".repeat(5001) },
   ])("rejects malformed public input %j without calling Zoho", async (bad) => {
     expect((await post({ ...validTicket, ...bad })).status).toBe(400);
     expect(createTicket).not.toHaveBeenCalled();
+  });
+
+  it("accepts the support form's Critical priority as Desk Urgent", async () => {
+    createTicket.mockResolvedValueOnce({ id: "desk-123" });
+    expect((await post({ ...validTicket, priority: "Critical" })).status).toBe(200);
+    expect(createTicket).toHaveBeenCalledWith(expect.objectContaining({ priority: "Urgent" }));
   });
 
   it.each([429, 500, 503])("reports upstream %i as unavailable", async (status) => {

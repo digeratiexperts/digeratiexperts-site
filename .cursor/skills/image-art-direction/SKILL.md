@@ -5,11 +5,12 @@ description: Create and evaluate cohesive image concepts and visual art directio
 # IMAGE ART DIRECTION
 Images are part of the brand identity.
 Never treat website imagery as isolated assets.
+Authority: `design/DESIGN-AUTHORITY.md`. Concept-not-noun, the AVOID list and the evaluation questions hold in every mode. The art direction and consistency list below are the Tier 2 current direction — mandatory in Maintenance Mode, a challengeable starting point in Exploration Mode.
 ## PRIMARY OBJECTIVE
 Create a coherent visual family across the entire site.
-All imagery should feel as though it came from the same art director, renderer, and brand system.
+All imagery should feel as though it came from the same art director and brand system. Same director does not mean same renderer for everything: a family may hold photography, diagrams, plates and stills when the art direction states how they relate.
 ## ART DIRECTION
-Default visual direction:
+Current visual direction (Tier 2):
 PREMIUM ENTERPRISE TECHNOLOGY
 Characteristics:
 - dark environments
@@ -51,7 +52,7 @@ BETTER:
 "Cyber risk assessment"
 → sophisticated infrastructure being scanned and analyzed, with subtle areas of anomaly/risk highlighted.
 ## CONSISTENCY
-Across all images maintain:
+Within one rendering language of the family (for example one sculpture set) maintain:
 - camera perspective
 - lighting direction
 - materials
@@ -61,7 +62,9 @@ Across all images maintain:
 - visual density
 - scale
 - negative space
-Only the conceptual subject should significantly change.
+Only the conceptual subject should significantly change within that set.
+Across the site, cohesion comes from the stated art direction, not from identical parameters. Sameness is a failure mode too.
+In Exploration Mode a concept may define a different art direction and a different mix of rendering languages; it still obeys concept-not-noun and the AVOID list.
 ## COMPOSITION
 Images must work within the actual website component.
 Consider:

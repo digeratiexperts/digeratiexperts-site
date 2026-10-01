@@ -1,6 +1,10 @@
 # Brand
 
-Layer 0 of Visual System v2. Companion layers: `VISUAL_SYSTEM_V2.md` (does not replace this file).
+Layer 0 of Visual System v2. Companion layers: `VISUAL_SYSTEM_V2.md` (does not replace this file). Authority tiers: `DESIGN-AUTHORITY.md`.
+
+This file holds two tiers. **Identity** (this section, "Imagery" concept-not-noun, and "Design principle") is **Tier 1** and holds in every task mode. **Visual language, Color, Materials, Lighting, Typography, Cards** are the **Tier 2 current art direction** — mandatory in Maintenance Mode, a challengeable starting point in Exploration Mode. A concept that changes the art direction must still communicate the identity below.
+
+## Identity (Tier 1)
 
 The website represents a premium enterprise managed IT and cybersecurity company.
 
@@ -27,7 +31,7 @@ The website should NOT feel:
 - stock-photo driven
 - visually noisy
 
-## Visual language
+## Visual language (Tier 2 — current art direction)
 
 PREMIUM ENTERPRISE TECHNOLOGY
 +
@@ -69,11 +73,11 @@ Modern, highly legible, confident, restrained, professional. Space Grotesk / Int
 
 Cards should feel like part of a coherent interface. Prefer consistent spacing, subtle borders (`white/10`), controlled contrast, clear hierarchy, strong internal composition. Avoid excessive floating cards, random radii, and inconsistent padding.
 
-## Imagery
+## Imagery (concept-not-noun is Tier 1; the rendering language is Tier 2)
 
 Do not automatically represent concepts literally. Avoid shield / padlock / laptop / robot / hoodie / server rack / glowing binary. Communicate the underlying concept. See `IMAGERY.md`.
 
-## Design principle
+## Design principle (Tier 1)
 
 Every visual element should have a reason to exist.
 

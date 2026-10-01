@@ -4,9 +4,9 @@ import { logSecurityEvent } from "./middleware/security";
 import { getUser as portalAuthGetUser } from "./portalAuthStore";
 import { storage } from "./storage";
 import { splitVisitorName, zohoClient, zohoDeskService } from "./zoho";
+import { isZohoOAuthError } from "./zoho/zohoOAuthErrors";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { deskTicketSchema } from "@shared/deskTicket";
-import { isZohoOAuthError } from "./zoho/zohoOAuthErrors";
 
 /**
  * The public DE Desk "Get Support" ticket, and a status probe for the desk it
@@ -58,6 +58,15 @@ const AUTH_ERROR_CODES = new Set([
  * Reads only the shape of the error. Nothing here touches a token.
  */
 export function classifyDeskFailure(error: unknown): DeskFailure {
+  if (isZohoOAuthError(error) && error.product === "desk") {
+    return {
+      kind: "unavailable",
+      authFailure: true,
+      errorCode: error.code,
+      message: "Zoho Desk authentication failed",
+    };
+  }
+
   const err = (error ?? {}) as {
     message?: unknown;
     response?: { status?: unknown; data?: { errorCode?: unknown; message?: unknown } };
