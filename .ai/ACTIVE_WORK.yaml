@@ -390,6 +390,42 @@ claims:
 # symlinks), KIE_AI_API_KEY provided by the environment, nb2 dry-run matches the
 # vendored request, api.kie.ai and kieai.redpandaai.co reachable. Follow-ups
 # outside this claim: de-agent-skills plugin repo (branch plugin/de-agent-skills-package).
+  - id: de-why-passage-flagship
+    owner: claude
+    subsystem: site-experience-flagship
+    branch: claude/de-why-passage-flagship
+    base_sha: 80ce2f4
+    files:
+      - scrollcraft/builds/why-passage/**
+      - scrollcraft/FINGERPRINTS.md
+      - docs/DE-WHY-PASSAGE-BRIEF.md
+    status: active
+    started: 2026-09-02
+    note: >-
+      FREEZE LIFTED FOR ONE PAGE (Joe, 2026-09-02, in session
+      session_018frX8U8DhiseiSPCowzPec). Joe approved building a single
+      flagship after being given the scope, time and credit estimates, and
+      approved a dedicated branch for it. The 2026-09-01 freeze in the
+      de-site-v2-scrollcraft claim otherwise STANDS for every other route and
+      every other agent: this authorization covers this one build only.
+      Scope: a "Why DE" story route, per EXPERIENCE-PLAN.md 09 rule 5, which
+      argues /v2's length and concept density suit a Why DE story rather than
+      the primary homepage. Chosen over the homepage because it carries no
+      public-route smoke-gate risk and no eight-viewport length cap.
+      Build lives in scrollcraft/builds/why-passage as an isolated,
+      independently runnable build. It does NOT touch client/, server/,
+      shared/, any route, or scrollcraft/builds/de-v2. No overlap with the
+      de-site-v2-scrollcraft claim's files.
+      Grammar: passage (a single plotted course), NOT chaptered editorial.
+      Nav: bearing gauge, NOT a margin folio with a live map. Signature move:
+      the heading correction (the page opens off-axis and rolls level when the
+      operating principle lands). Close: the four-route fork. Verified against
+      both FINGERPRINTS.md rows on all six dimensions before coding.
+      Content authority: docs/DE-SERVICE-MODEL-2026.md (PR #185). No invented
+      claims; every figure traces to that document or client/src/data/pricing.ts.
+      kie.ai spend: NONE without Joe naming a cap in the same message. Balance
+      at branch creation: 68 credits. The build is code, type and motion by
+      design, so it needs no generated imagery to be complete.
   - id: de-homepage-v4
     owner: claude
     subsystem: homepage-v4
