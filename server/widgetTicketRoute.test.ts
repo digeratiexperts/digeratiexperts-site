@@ -251,7 +251,7 @@ describe("DE Desk widget ticket route", () => {
       expect(body.connected).toBe(true);
     });
 
-    it("surfaces a refresh failure as unavailable — the gap /api/zoho/status could never show", async () => {
+    it("names a refresh failure as auth_failed — the gap /api/zoho/status could never show", async () => {
       getDeskClient.mockRejectedValueOnce(new Error("Failed to refresh Zoho Desk access token"));
 
       const response = await fetch(`${baseUrl}/api/zoho/desk/status`);
@@ -260,9 +260,21 @@ describe("DE Desk widget ticket route", () => {
       expect(response.status).toBe(503);
       expect(body.configured).toBe(true);
       expect(body.connected).toBe(false);
-      expect(body.reason).toBe("unavailable");
+      // A refused credential needs a new token, not a retry; say which.
+      expect(body.reason).toBe("auth_failed");
       // Diagnostic, not a credential.
       expect(JSON.stringify(body)).not.toMatch(/token|secret/i);
+    });
+
+    it("keeps a network failure as unavailable, distinct from a refused credential", async () => {
+      getDeskClient.mockRejectedValueOnce(new Error("connect ECONNRESET 1.2.3.4:443"));
+
+      const response = await fetch(`${baseUrl}/api/zoho/desk/status`);
+      const body = (await response.json()) as Record<string, unknown>;
+
+      expect(response.status).toBe(503);
+      expect(body.connected).toBe(false);
+      expect(body.reason).toBe("unavailable");
     });
 
     it("reports not configured without calling Zoho", async () => {
