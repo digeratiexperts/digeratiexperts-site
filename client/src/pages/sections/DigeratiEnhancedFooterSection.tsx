@@ -122,8 +122,8 @@ export const DigeratiEnhancedFooterSection = ({
   ];
 
   return (
-    <footer className="de-dark-well de-chapter-hairline relative">
-      <div className="container relative z-10 mx-auto max-w-[1440px] px-3 pt-12 sm:px-4 lg:px-6 lg:pt-16">
+    <footer className="de-dark-well relative border-t border-[var(--de-hairline)]">
+      <div className="relative z-10 mx-auto w-full max-w-[var(--de-canvas)] px-5 pt-12 sm:px-8 lg:px-10 lg:pt-16 xl:px-12">
         <div className="grid grid-cols-1 items-start gap-10 md:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           <div className="min-w-0 md:col-span-2 lg:col-span-4">
             <img
@@ -248,7 +248,7 @@ export const DigeratiEnhancedFooterSection = ({
           </nav>
         </div>
 
-        <div className="mt-10 border-t border-de-hairline py-6">
+        <div className="mt-10 border-t border-[var(--de-hairline)] py-6">
           <p className="text-base text-white/50">
             <span>© {currentYear} {COMPANY.legalName}</span>
             <span aria-hidden="true"> · </span>
