@@ -1,0 +1,161 @@
+/*
+ * Client portal theme layer (Tier 2, portal scope only).
+ *
+ * Everything under `.de-portal` reads the shadcn tokens below instead of the
+ * marketing values in index.css, so every existing portal page (Card, Input,
+ * Select, Dialog, Table …) picks up the graphite system without a rewrite.
+ *
+ * Default is the dark graphite field from design/BRAND.md. `data-theme="light"`
+ * swaps the content field to warm paper; the sidebar stays graphite in both so
+ * the brand rail is constant. Values are HSL triplets because shadcn wraps them
+ * in hsl(var(--x)); the `--pt-*` state colours are RGB triplets for rgb(var()/a).
+ */
+
+.de-portal {
+  /* field */
+  --background: 248 71% 4%;          /* #050312 graphite well */
+  --foreground: 270 20% 96%;         /* #f5f3f7 */
+
+  --card: 276 12% 8%;                /* #151217 raised */
+  --card-foreground: 270 20% 96%;
+  --popover: 267 16% 11%;            /* #1b1720 */
+  --popover-foreground: 270 20% 96%;
+
+  --muted: 267 16% 11%;
+  --muted-foreground: 270 6% 68%;    /* ~7:1 on raised */
+
+  --border: 270 12% 17%;             /* visible hairline on graphite */
+  --input: 270 12% 20%;
+  --ring: 333 84% 45%;               /* magenta */
+
+  --primary: 333 84% 45%;            /* #D3126A action colour */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 270 16% 14%;
+  --secondary-foreground: 270 20% 96%;
+  --accent: 270 12% 16%;
+  --accent-foreground: 270 20% 96%;
+  --destructive: 350 80% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --radius: 0.625rem;
+
+  /* shell */
+  --sidebar-background: 240 20% 5%;  /* #0a0a0f */
+  --sidebar-foreground: 270 14% 78%;
+  --sidebar-primary: 333 84% 45%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 270 12% 12%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 270 12% 14%;
+  --sidebar-ring: 333 84% 45%;
+
+  /* state (rgb triplets) */
+  --pt-ok: 52 211 153;
+  --pt-warn: 251 191 36;
+  --pt-bad: 251 113 133;
+  --pt-info: 125 211 252;
+  --pt-brand: 240 76 151;            /* magenta ink on dark */
+
+  --pt-topbar: 248 71% 4% / 0.82;
+
+  color-scheme: dark;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  min-height: 100dvh;
+}
+
+.de-portal[data-theme="light"] {
+  --background: 36 24% 96%;          /* #f7f5f2 paper */
+  --foreground: 12 24% 8%;           /* #1a1210 */
+  --card: 0 0% 100%;
+  --card-foreground: 12 24% 8%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 12 24% 8%;
+  --muted: 36 21% 92%;
+  --muted-foreground: 20 7% 33%;
+  --border: 33 12% 85%;
+  --input: 33 12% 80%;
+  --ring: 333 84% 35%;
+  --primary: 333 84% 35%;            /* #A30E52 magenta paper ink */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 36 21% 92%;
+  --secondary-foreground: 12 24% 8%;
+  --accent: 33 18% 90%;
+  --accent-foreground: 12 24% 8%;
+  --destructive: 0 84% 45%;
+  --destructive-foreground: 0 0% 100%;
+
+  --pt-ok: 4 120 87;
+  --pt-warn: 180 83 9;
+  --pt-bad: 190 18 60;
+  --pt-info: 14 116 144;
+  --pt-brand: 163 14 82;
+
+  --pt-topbar: 36 24% 96% / 0.85;
+  color-scheme: light;
+}
+
+/* The marketing scale lifts text-sm to 16px for long-form pages. A working
+   portal needs the standard scale back: 14px UI text, 12px captions. */
+.de-portal .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.de-portal .text-xs { font-size: 0.75rem; line-height: 1rem; }
+
+/* Global focus ring is violet for marketing; the portal uses its ring token. */
+.de-portal *:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Numbers align in tables and tiles. */
+.de-portal .pt-num {
+  font-family: "Oxanium", "JetBrains Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Cards in the marketing system are transparent with a lift-on-hover; a
+   working surface should sit still. */
+.de-portal .pt-still:hover { transform: none; box-shadow: none; }
+
+/* Scrollbars that match the field. */
+.de-portal ::-webkit-scrollbar { width: 10px; height: 10px; }
+.de-portal ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 8px; border: 2px solid hsl(var(--background)); }
+.de-portal ::-webkit-scrollbar-track { background: transparent; }
+
+/* Tone utilities: one class sets --pt-tone, the others read it. Keeping these
+   here (a lazy portal chunk) instead of as Tailwind arbitrary values keeps the
+   entry stylesheet inside the CI budget. */
+.pt-tone-ok    { --pt-tone: var(--pt-ok); }
+.pt-tone-warn  { --pt-tone: var(--pt-warn); }
+.pt-tone-bad   { --pt-tone: var(--pt-bad); }
+.pt-tone-info  { --pt-tone: var(--pt-info); }
+.pt-tone-brand { --pt-tone: var(--pt-brand); }
+.pt-ink     { color: rgb(var(--pt-tone)); }
+.pt-token   { border-color: rgb(var(--pt-tone) / 0.4); color: rgb(var(--pt-tone)); background: rgb(var(--pt-tone) / 0.08); }
+.pt-callout { border-color: rgb(var(--pt-tone) / 0.35); background: rgb(var(--pt-tone) / 0.07); }
+.pt-callout > svg { color: rgb(var(--pt-tone)); }
+.pt-ring    { border-color: rgb(var(--pt-tone) / 0.5); color: rgb(var(--pt-tone)); }
+.pt-link    { color: rgb(var(--pt-brand)); }
+.pt-dot-ok  { background: rgb(var(--pt-ok)); }
+.pt-hover-brand:hover { border-color: rgb(var(--pt-brand) / 0.5); }
+.pt-avatar-de { border-color: rgb(var(--pt-brand) / 0.45); background: rgb(var(--pt-brand) / 0.12); color: rgb(var(--pt-brand)); }
+.pt-note-internal { background: rgb(var(--pt-warn) / 0.05); }
+.pt-warn-strip { border-color: rgb(var(--pt-warn) / 0.35); background: rgb(var(--pt-warn) / 0.08); }
+.pt-active-nav[data-active="true"] { background: rgb(var(--pt-brand) / 0.16); color: #fff; box-shadow: inset 3px 0 0 hsl(var(--sidebar-primary)); }
+.pt-login-glow { background: radial-gradient(60% 50% at 50% 0%, rgb(var(--pt-brand) / 0.14), transparent 70%); }
+.pt-login-line { background: linear-gradient(90deg, transparent, rgb(var(--pt-brand) / 0.6), transparent); }
+
+/* Verdict band: the one loud band per page (design/UI-STYLE-RULES.md §3). */
+.pt-verdict[data-tone="ok"]   { --pt-tone: var(--pt-ok); }
+.pt-verdict[data-tone="warn"] { --pt-tone: var(--pt-warn); }
+.pt-verdict[data-tone="bad"]  { --pt-tone: var(--pt-bad); }
+.pt-verdict[data-tone="info"] { --pt-tone: var(--pt-info); }
+.pt-verdict {
+  border: 1px solid rgb(var(--pt-tone) / 0.35);
+  background:
+    linear-gradient(90deg, rgb(var(--pt-tone) / 0.10), rgb(var(--pt-tone) / 0.03) 60%, transparent),
+    hsl(var(--card));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .de-portal * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

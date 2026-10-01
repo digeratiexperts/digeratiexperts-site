@@ -110,19 +110,13 @@ export default function PortalMarketplace() {
   const items = canRenderCatalog(state) ? toItems(data?.items) : [];
   const StateIcon = tone.Icon;
 
-  const heading = (
-    <div className="space-y-1">
-      <h2 className="text-2xl font-bold">Client Marketplace</h2>
-      <p className="text-gray-600 dark:text-gray-400">
-        Standardized items for your organization. Purchases here go through DE approval
-        before anything is ordered.
-      </p>
-    </div>
-  );
+  const heading = null;
+  const marketplaceDescription =
+    "Standardized items for your organization. Purchases here go through DE approval before anything is ordered.";
 
   if (isStaff) {
     return (
-      <PortalLayout title="Client Marketplace">
+      <PortalLayout title="Client Marketplace" description={marketplaceDescription}>
         <div className="space-y-6">
           {heading}
           <Card
@@ -165,7 +159,7 @@ export default function PortalMarketplace() {
   }
 
   return (
-    <PortalLayout title="Client Marketplace">
+    <PortalLayout title="Client Marketplace" description={marketplaceDescription}>
       <div className="space-y-6">
         {heading}
 
