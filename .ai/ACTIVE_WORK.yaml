@@ -63,6 +63,25 @@ claims:
       draft PR 319 (Desk + Ask DE chooser) edits SiteBottomBar.tsx in the
       chooser markup; this lane edits only the bar's visibility lines and
       props, disjoint hunks.
+  - id: de-desk-status-auth-reason
+    owner: claude
+    subsystem: de-desk
+    branch: claude/desk-status-auth-reason
+    base_sha: df4ab2ae
+    files:
+      - server/widgetTicketRoute.ts (the status probe's reason and log line only)
+      - server/widgetTicketRoute.test.ts (the status reason tests)
+      - deploy/vps/env.production.example (the website Desk/CRM variables)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Follow-up to PR 303 and PR 313 after Joe's "continue". Production's Desk
+      refresh token is invalid; PR 303 stopped publishing Zoho's error code, so
+      the health probe's issue (314) could no longer say why. The status probe
+      now reports reason "auth_failed" when Zoho refuses the credential (our own
+      classification, no upstream text) and "unavailable" for network or
+      server failures. The env template gains the variables the website's Desk
+      client actually reads, which it never listed.
   - id: de-desk-reliability-followup
     issue: 291
     owner: codex
