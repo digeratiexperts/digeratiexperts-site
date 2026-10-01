@@ -715,6 +715,26 @@ html[data-dock-hidden="true"] .de-bottom-bar {
 }
 
 /*
+ * Island from md up only. The protection deck's phone layout (Joe's 390px
+ * mock, 2026-10-01) reads directly on the dark field; the paper island and
+ * its framed desktop layout return at md. A plain modifier rather than a
+ * Tailwind variant: .de-paper-island lives outside @layer, so md: cannot be
+ * generated for it.
+ */
+@media (max-width: 767.98px) {
+  .de-paper-island--md-up {
+    background-color: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+  .de-paper-island--md-up::before {
+    display: none;
+  }
+}
+
+/*
  * Cyber HUD Chrome — Technical precision micro-styling.
  * Gives cards, terminal widgets, and live metrics tactical credibility.
  */

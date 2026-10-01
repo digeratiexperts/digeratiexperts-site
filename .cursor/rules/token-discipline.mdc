@@ -1,0 +1,15 @@
+---
+description: DE token discipline — session scope, reading, two-failure stop, model routing, handoff
+globs:
+alwaysApply: true
+---
+
+DE operating standard. Full text: "Token discipline" section of `AGENTS.md`. Repo-specific rules and Completion Program lanes/stop gates take precedence.
+
+- One slice = one fresh session, started from the latest DE handoff block, not old chat history.
+- Before significant coding, declare: objective, likely files, acceptance criteria, verification commands, boundaries.
+- Search before reading. Open only files the slice needs; read ranges of large files. No whole-repo reads without reason. Don't reopen unchanged files.
+- Two-failure stop: after two materially failed attempts at the same issue, stop and write a checkpoint (behavior, attempts + why failed, evidence, suspected root cause, next investigation). No speculative patch loops.
+- Economy models for mechanical work (inventory, repetitive edits, refactors, docs, lint, simple tests). Premium only for architecture, security, identity/auth, billing/payment, migrations, hard debugging, cross-repo contracts, high-risk final review.
+- Targeted tests while iterating; full suite once before checkpoint. Trim tool output.
+- End with the DE handoff block; record limit hits, model used, manual rescues under USAGE SIGNALS.
