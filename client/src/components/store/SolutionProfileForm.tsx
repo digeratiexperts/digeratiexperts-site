@@ -247,6 +247,7 @@ export function SolutionProfileForm({
     <div
       data-testid={testId}
       data-state="expanded"
+      className="d2-profile-panel"
       aria-labelledby={headingId}
       role="group"
       onFocus={() => setFocusWithin(true)}
@@ -305,7 +306,7 @@ export function SolutionProfileForm({
         </CountField>
       </div>
 
-      <div className="mt-6 grid gap-5 lg:grid-cols-2">
+      <div className="mt-6 grid gap-5">
         <ChoiceTiles
           name="profile-ownership"
           legend="Who owns the devices?"
