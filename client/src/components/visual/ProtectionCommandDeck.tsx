@@ -273,7 +273,8 @@ export const ProtectionCommandDeck: React.FC<{ onDomainChange?: (id: string) => 
         them, one sentence, then the selected block as plain reading: name,
         purpose, the three assessment questions, and the boundary as a list.
         No frame chrome, no card inside a card, no diagram widget. The last
-        96px stay empty so the Ask DE launcher and its nudge never sit on type.
+        96px above the dock and its gap stay empty: the Ask DE nudge stacks
+        above the dock, so a flat 96px left it on the last two lines.
       */}
       <div className="md:hidden" data-testid="protection-deck-phone">
         <div role="tablist" aria-label="Protection blocks" className="flex items-end justify-between gap-1">
@@ -322,7 +323,12 @@ export const ProtectionCommandDeck: React.FC<{ onDomainChange?: (id: string) => 
           Seven blocks each answer a threat class, and risk and exposure runs under all of them.
         </p>
 
-        <article className="mt-8 border-t border-white/10 pb-24 pt-6" aria-live="polite" data-testid="protection-deck-phone-domain">
+        <article
+          className="mt-8 border-t border-white/10 pt-6"
+          style={{ paddingBottom: "calc(96px + var(--de-unified-bar-h, 3.5rem) + 0.75rem + env(safe-area-inset-bottom, 0px))" }}
+          aria-live="polite"
+          data-testid="protection-deck-phone-domain"
+        >
           <h3 className="font-heading text-[22px] font-semibold leading-tight tracking-[-0.015em] text-white">
             {activeDomain.name}
             <span className="mt-1 block font-sans text-xs font-medium tracking-[0.02em] text-[#F04C97]">Answers {activeDomain.answers}</span>
