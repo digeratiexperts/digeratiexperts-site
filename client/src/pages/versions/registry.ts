@@ -90,6 +90,17 @@ export const HOMEPAGE_VERSIONS: HomepageVersion[] = [
     kind: "build",
     source: "claude/homepage-v5-practical",
   },
+  {
+    n: 6,
+    path: "/version-6",
+    title: "Every live section, redrawn",
+    date: "2026-10-01",
+    status: "In build (draft PR). Preview only; Joe decides whether it replaces /.",
+    summary:
+      "The live homepage, section by section, on the Version 5 system: the same eighteen sections in the same order (hero, why we exist, the sourced figures, what we tackle, three paths, the eight blocks and four steps, client proof, the written response times, the founder, industries, pricing, security updates and detection, the assessment form, questions, the one dark band, contact, footer), each rebuilt from the data file or page that already carries the fact. No generated or stock imagery, one action everywhere, no animation. Built after Joe's 2026-10-01 ask to mock up every live section and his word to continue; the eighteen mockups came first, this is the page.",
+    kind: "build",
+    source: "claude/homepage-v6-sections",
+  },
 ];
 
 export function versionByNumber(n: number): HomepageVersion | undefined {

@@ -12,6 +12,10 @@
  *     PORT=4173 node dist/index.js &
  *   node scripts/qa/homepage-v5-acceptance.mjs --url http://localhost:4173/version-5 --out artifacts/visual-qa/homepage-v5
  *
+ * Another version on the same system runs with its own scope and limits (see
+ * client/src/pages/versions/v6/ACCEPTANCE.md): --scope v6 --sections "A,B,C"
+ * --max-words 2000 --max-viewports 42,26,16 --facts extra/source.ts,another.tsx
+ *
  * Production mode matters: the dev server's /@fs/ module paths fail the image,
  * transfer and console checks for reasons unrelated to the page (ACCEPTANCE.md).
  *
@@ -28,7 +32,8 @@ const args = Object.fromEntries(
   process.argv.slice(2).map((a, i, all) => (a.startsWith("--") ? [a.slice(2), all[i + 1] ?? "true"] : [])).filter((p) => p.length),
 );
 const URL_ = args.url ?? "http://localhost:4173/version-5";
-const OUT = path.resolve(args.out ?? "artifacts/visual-qa/homepage-v5");
+const S = /^[a-z][a-z0-9-]*$/.test(args.scope ?? "") ? args.scope : "v5"; // the page's class prefix: .v5, data-v5-cta
+const OUT = path.resolve(args.out ?? `artifacts/visual-qa/homepage-${S}`);
 const ROOT = path.resolve(args.root ?? process.cwd());
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -44,6 +49,7 @@ const FACT_SOURCES = [
   "client/src/pages/legal/SLA.tsx",
   "shared/companyContact.ts",
   "client/src/pages/about/Guarantee.tsx",
+  ...(args.facts ? args.facts.split(",").map((f) => f.trim()).filter(Boolean) : []),
 ];
 const FIGURE_PATTERNS = [
   /\$\d[\d,]*(?:\.\d+)?/g,
@@ -69,10 +75,15 @@ for (const f of FACT_SOURCES) {
 }
 allowedFigures.add(`${new Date().getFullYear()}`); // copyright year is not a claim
 
-const EXPECTED_SECTIONS = ["What we do", "Who we work with", "How it works", "Pricing", "Response times", "Questions", "Contact"];
+const EXPECTED_SECTIONS = args.sections
+  ? args.sections.split(",").map((x) => x.trim()).filter(Boolean)
+  : ["What we do", "Who we work with", "How it works", "Pricing", "Response times", "Questions", "Contact"];
 const IMAGE_ALLOW = /^\/(images\/founder\/|assets\/)/;
-const MAX_WORDS = 1200;
-const MAX_VIEWPORTS = { phone: 14, tablet: 11, desktop: 9 };
+const MAX_WORDS = Number(args["max-words"] ?? 1200);
+const MAX_VIEWPORTS = (() => {
+  const [phone, tablet, desktop] = String(args["max-viewports"] ?? "14,11,9").split(",").map(Number);
+  return { phone, tablet, desktop };
+})();
 const MAX_BYTES = 1_500_000;
 
 const results = [];
@@ -133,7 +144,10 @@ try {
         } catch {}
       });
       await page.goto(URL_, { waitUntil: "networkidle" });
-      await page.waitForSelector(".v5 h1", { timeout: 15000 });
+      await page.evaluate((scope) => {
+        window.__scope = scope;
+      }, S);
+      await page.waitForSelector(`.${S} h1`, { timeout: 15000 });
       // The site-wide cookie banner is answered once by a real visitor; the frames show the page after that.
       await page.locator('button:has-text("Reject All")').first().click({ timeout: 2000 }).catch(() => {});
       await page.waitForTimeout(400);
@@ -148,10 +162,10 @@ try {
             const cs = getComputedStyle(el);
             return r.width > 0 && r.height > 0 && r.top < H && r.bottom > 0 && cs.visibility !== "hidden" && cs.display !== "none";
           };
-          const h1 = document.querySelector(".v5 h1");
-          const ctas = [...document.querySelectorAll('.v5 [data-v5-cta="primary"]')];
-          const tels = [...document.querySelectorAll('.v5 a[href^="tel:"]')].filter(vis);
-          const textAbove = [...document.querySelectorAll(".v5 *")]
+          const h1 = document.querySelector("." + window.__scope + " h1");
+          const ctas = [...document.querySelectorAll(`.${window.__scope} [data-${window.__scope}-cta="primary"]`)];
+          const tels = [...document.querySelectorAll(`.${window.__scope} a[href^="tel:"]`)].filter(vis);
+          const textAbove = [...document.querySelectorAll("." + window.__scope + " *")]
             .filter((el) => vis(el) && [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()))
             .map((el) => el.textContent)
             .join(" ");
@@ -175,7 +189,7 @@ try {
         check("fold: a phone number you can tap", tag, fold.telVisible);
 
         // ---- Real, not invented: every figure traces to a source file.
-        const pageText = await page.evaluate(() => document.querySelector(".v5")?.innerText ?? "");
+        const pageText = await page.evaluate(() => document.querySelector("." + window.__scope)?.innerText ?? "");
         const found = figuresIn(pageText);
         const unsourced = [...found].filter((f) => !allowedFigures.has(f));
         check("truth: every figure appears verbatim in a source file", tag, unsourced.length === 0, unsourced.length ? `unsourced: ${unsourced.join(", ")}` : `${found.size} figures, all sourced`);
@@ -183,26 +197,26 @@ try {
         // ---- Practical: short, conventional, in order.
         const words = pageText.split(/\s+/).filter(Boolean).length;
         check(`practical: ≤ ${MAX_WORDS} words`, tag, words <= MAX_WORDS, `${words} words`);
-        const labels = await page.$$eval(".v5 main section .v5-eyebrow", (els) => els.map((e) => e.textContent.trim()));
+        const labels = await page.$$eval(`.${S} main section .${S}-eyebrow`, (els) => els.map((e) => e.textContent.trim()));
         let idx = 0;
         for (const h of labels) if (idx < EXPECTED_SECTIONS.length && h.toLowerCase().includes(EXPECTED_SECTIONS[idx].toLowerCase())) idx++;
         check("practical: sections in the conventional order", tag, idx === EXPECTED_SECTIONS.length, labels.join(" › "));
         const heightVp = await page.evaluate(() => document.documentElement.scrollHeight / window.innerHeight);
         check(`practical: page ≤ ${MAX_VIEWPORTS[vp.name]} viewports tall`, tag, heightVp <= MAX_VIEWPORTS[vp.name], `${heightVp.toFixed(1)} viewports`);
-        const media = await page.evaluate(() => document.querySelectorAll(".v5 video, .v5 iframe").length);
+        const media = await page.evaluate(() => document.querySelectorAll(`.${window.__scope} video, .${window.__scope} iframe`).length);
         check("practical: no video or iframe", tag, media === 0, `${media}`);
 
         // ---- Nice: it holds together on this screen.
         const overflow = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, iw: window.innerWidth }));
         check("layout: no horizontal scroll", tag, overflow.sw <= overflow.iw, `scrollWidth ${overflow.sw} / innerWidth ${overflow.iw}`);
-        const small = await page.$$eval(".v5 p, .v5 li, .v5 td, .v5 dd, .v5 summary, .v5 figcaption", (els) =>
+        const small = await page.$$eval(`.${S} p, .${S} li, .${S} td, .${S} dd, .${S} summary, .${S} figcaption`, (els) =>
           els
             .filter((e) => e.getClientRects().length && e.textContent.trim())
             .map((e) => ({ px: parseFloat(getComputedStyle(e).fontSize), t: e.textContent.trim().slice(0, 40) }))
             .filter((x) => x.px < 15),
         );
         check("type: body copy at least 15px", tag, small.length === 0, small.map((s) => `${s.px}px "${s.t}"`).slice(0, 5).join("; "));
-        const targets = await page.$$eval(".v5 .v5-btn, .v5 .v5-nav a, .v5 .v5-menu summary, .v5 .v5-menu-panel a, .v5 .v5-chips a, .v5 .v5-faq summary, .v5 .v5-phone", (els) =>
+        const targets = await page.$$eval(`.${S} .${S}-btn, .${S} .${S}-nav a, .${S} .${S}-menu summary, .${S} .${S}-menu-panel a, .${S} .${S}-chips a, .${S} .${S}-faq summary, .${S} .${S}-phone`, (els) =>
           els
             .filter((e) => e.getClientRects().length && getComputedStyle(e).visibility !== "hidden")
             .map((e) => ({ h: e.getBoundingClientRect().height, t: e.textContent.trim().slice(0, 30) }))
@@ -238,7 +252,7 @@ try {
             return acc;
           };
           const rows = [];
-          for (const el of document.querySelectorAll(".v5 *")) {
+          for (const el of document.querySelectorAll("." + window.__scope + " *")) {
             if (el.closest('[data-testid="homepage-version-ribbon"]')) continue;
             if (!el.getClientRects().length) continue;
             if (![...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
@@ -257,7 +271,7 @@ try {
         check("contrast: all text meets WCAG AA on its real background", tag, lowContrast.length === 0, lowContrast.map((r) => `${r.ratio.toFixed(2)}:1 "${r.text}"`).slice(0, 6).join("; "));
 
         // ---- Real links, real images.
-        const hrefs = await page.$$eval(".v5 a[href]", (as) => as.map((a) => a.getAttribute("href")));
+        const hrefs = await page.$$eval(`.${S} a[href]`, (as) => as.map((a) => a.getAttribute("href")));
         const internal = [...new Set(hrefs.filter((h) => h.startsWith("/") && !h.startsWith("//")))];
         const broken = [];
         for (const h of internal) {
@@ -267,7 +281,7 @@ try {
         check("links: every internal link answers 200", tag, broken.length === 0, broken.length ? broken.join("; ") : `${internal.length} links`);
         const external = hrefs.filter((h) => /^https?:/.test(h)).filter((h) => !h.startsWith("https://"));
         check("links: external links are https", tag, external.length === 0, external.join(", "));
-        const imgs = await page.$$eval(".v5 img", (els) =>
+        const imgs = await page.$$eval(`.${S} img`, (els) =>
           els.map((i) => {
             const raw = i.currentSrc || i.src;
             return {
@@ -295,7 +309,7 @@ try {
       const animating = await page.evaluate(() =>
         document.getAnimations().map((a) => {
           const el = a.effect?.target;
-          const inPage = Boolean(el?.closest?.(".v5"));
+          const inPage = Boolean(el?.closest?.("." + window.__scope));
           return `${inPage ? "page" : "site chrome"}: <${el?.tagName?.toLowerCase() ?? "?"}${el?.className ? " ." + String(el.className).split(" ").slice(0, 2).join(".") : ""}> ${a.animationName ?? a.constructor.name}`;
         }),
       );
