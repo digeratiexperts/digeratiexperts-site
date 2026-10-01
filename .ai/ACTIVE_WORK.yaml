@@ -30,6 +30,27 @@
 
 version: 2
 claims:
+  - id: de-known-pages-answer-200
+    owner: claude
+    subsystem: server-routing
+    branch: claude/known-pages-answer-200
+    base_sha: e5945de3
+    files:
+      - server/spaKnownPaths.ts
+      - server/spaKnownPaths.test.ts
+      - server/campaignAliasRedirects.ts
+      - server/campaignAliasRedirects.test.ts
+      - server/index.ts (the campaign alias redirect registration only)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Found by a link sweep after Joe's "so everything is complete and we cant
+      think of things to do now?": 27 of the 113 sitemap URLs (every /go
+      campaign landing, every executive brief and resource asset page) plus
+      /industries/professional-services (linked from every page's footer) and
+      /support/system-status rendered while answering HTTP 404 in production,
+      and /ads/<slug> and /lp/<slug> answered 404 before a browser redirect
+      that dropped the query string. Exact paths, so unknown slugs stay 404.
   - id: de-org-department-tenant-boundary
     owner: claude
     subsystem: portal-org
