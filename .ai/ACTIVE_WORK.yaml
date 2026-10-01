@@ -30,6 +30,25 @@
 
 version: 2
 claims:
+  - id: de-deck-reserve-clears-nudge
+    owner: claude
+    subsystem: homepage-protection-model
+    branch: claude/deck-reserve-clears-nudge
+    base_sha: dda3f57a
+    files:
+      - client/src/components/visual/ProtectionCommandDeck.tsx (the phone article's bottom reserve only)
+      - client/src/components/visual/ProtectionCommandDeck.phone.test.ts (the reserve assertion)
+      - artifacts/visual-qa/protection-deck-phone/390-end-before-reserve.png
+      - artifacts/visual-qa/protection-deck-phone/390-end-after-reserve.png
+    status: active
+    started: 2026-10-01
+    note: >-
+      Follow-up to de-protection-deck-phone (PR 306, live 05:09Z). Measured at
+      390x844 with the block's end at the viewport bottom: the Ask DE nudge
+      stacks above the dock from y=685 and the flat 96px reserve ended the last
+      line at 748, so the nudge covered the last two lines of the identity
+      boundary. The reserve becomes 96px above the dock and its gap, plus the
+      safe-area inset, which ends the last line at 682. Nothing else changes.
   - id: de-protection-deck-phone
     owner: claude
     subsystem: homepage-protection-model
