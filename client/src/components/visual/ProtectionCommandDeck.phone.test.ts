@@ -94,13 +94,12 @@ describe("ProtectionCommandDeck phone layout", () => {
     expect(hexes.sort()).toEqual(["#050312", "#D3126A", "#F04C97"]);
   });
 
-  it("puts the section on the dark field below md and on the paper island from md up", () => {
-    // .de-paper-island sits outside @layer, so no md: variant exists for it;
-    // the island stays and a plain modifier turns it off below md.
-    expect(sectionSource).toContain('className="de-paper-island de-paper-island--md-up ');
-    const css = readFileSync(resolve(__dirname, "../../index.css"), "utf8");
-    expect(css).toMatch(/@media \(max-width: 767\.98px\) \{\s*\.de-paper-island--md-up \{[^}]*background-color: transparent/);
-    expect(css).toContain(".de-paper-island--md-up::before {\n    display: none;");
+  it("puts the section on the dark field below md and on the paper chapter from md up", () => {
+    // The homepage chapter grammar (PR 298) replaced the paper island with a
+    // full-bleed paper chapter; below md the chapter drops to the well so the
+    // phone deck sits on one dark field, as the mock has it.
+    expect(sectionSource).toContain('<HomeChapter tone="paper" className="max-md:border-[var(--de-hairline)] max-md:bg-[var(--de-bg)] max-md:text-white">');
     expect(sectionSource).toContain("text-white sm:text-3xl md:text-4xl md:text-[#1A1228]");
+    expect(sectionSource).toContain("text-white/70 md:text-lg md:leading-relaxed md:text-[#3A3448]");
   });
 });

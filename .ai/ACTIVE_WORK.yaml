@@ -30,6 +30,42 @@
 
 version: 2
 claims:
+  - id: homepage-coherence
+    issue: 296
+    owner: claude
+    subsystem: homepage
+    branch: claude/sleepy-bardeen-81jlur
+    base_sha: 74535d7
+    files:
+      - client/src/components/home/HomeChapter.tsx
+      - client/src/pages/sections/** (the 19 production homepage sections)
+      - client/src/pages/DigeratiHomepage.tsx
+      - client/src/components/HomepageSectionNav.tsx
+      - client/src/components/PronunciationCard.tsx
+      - client/src/components/EcosystemProgression.tsx
+      - client/src/index.css (.scroll-snap-chapter only)
+      - client/src/lib/homepageFields.test.ts
+      - design/approved/homepage-coherence-2026-09-30.md
+      - design/UI-STYLE-RULES.md (§6 homepage chapter grammar)
+      - artifacts/visual-qa/homepage-coherence/**
+    status: active
+    started: 2026-09-30
+    note: >-
+      Joe, 2026-09-30: the live homepage "looks like a mess", the paper
+      sections too, and the sections "look like they are from 4 different
+      websites"; the on-page menu should take a different colour with
+      controlled motion; a reference mockup sets the quality target.
+      Maintenance Mode under the Product Preservation Law: every section,
+      route, CTA, form, JSON-LD block and test id is kept; the visual grammar
+      is unified onto one shared chapter primitive (HomeChapter), full-bleed
+      well/surface/paper fields, natural chapter height, one heading kit and
+      one card recipe. Not touched: client/src/pages/versions/**, the
+      /version-4 and /version-5 lanes (PRs 276, 292), scrollcraft/**, Store,
+      Portal, Journal, DE Desk, server/**, shared/**. Reconciled with main
+      f9ae13d on 2026-10-01: de-protection-deck-phone (PR 306) is carried
+      whole; the Protect chapter keeps Joe's dark phone field through the
+      chapter grammar (max-md well, paper from md up) and the phone test is
+      re-pointed at that mechanism.
   - id: de-deck-reserve-clears-nudge
     owner: claude
     subsystem: homepage-protection-model

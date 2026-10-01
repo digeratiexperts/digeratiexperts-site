@@ -3,6 +3,7 @@ import { ArrowRight, ShieldCheck, FileText, Scale, Star, type LucideIcon } from 
 import { IconWell } from "@/components/visual/IconWell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { HomeChapter, HomeChapterHeader, HomeContainer, cardDark } from "@/components/home/HomeChapter";
 
 /**
  * Trust surfaces — Bill of Rights, reviews, Trust Center, case studies.
@@ -73,7 +74,7 @@ function ProofCta({
   const classes = cn(
     "inline-flex min-h-11 items-center justify-center gap-2 text-base font-medium transition-colors",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]/70",
-    "focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)]",
+    "focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]",
     quiet
       ? "text-white/50 hover:text-white"
       : "text-de-magenta-ink hover:text-[#f0187a]",
@@ -104,28 +105,19 @@ function ProofCta({
 
 export function HomepageProofSection() {
   return (
-    <section id="proof" className="de-dark-well de-chapter-hairline de-field-grain py-14 lg:py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <p className="mb-3 text-base font-semibold uppercase tracking-[0.2em] text-de-magenta-ink">
-            Trust & transparency
-          </p>
-          <h2 className="font-heading text-3xl font-semibold tracking-[-0.03em] text-white md:text-4xl lg:text-5xl">
-            Built for accountability you can verify
-            <span className="text-[#D3126A]" aria-hidden="true">
-              :
-            </span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/55 md:text-lg">
-            Ownership clarity, documented operations, and public surfaces you can open before you
-            engage — not marketing claims you have to take on faith.
-          </p>
-        </div>
+    <HomeChapter tone="well" id="proof">
+      <HomeContainer>
+        <HomeChapterHeader
+          tone="well"
+          eyebrow="Trust & transparency"
+          title="Built for accountability you can verify"
+          lede="Ownership clarity, documented operations, and public surfaces you can open before you engage — not marketing claims you have to take on faith."
+        />
 
-        <Tabs defaultValue={surfaces[0].id} className="mt-10 md:mt-12">
+        <Tabs defaultValue={surfaces[0].id}>
           <TabsList
             aria-label="Trust and transparency surfaces"
-            className="grid h-auto w-full max-w-full grid-cols-2 items-stretch gap-2.5 bg-transparent p-0 lg:flex lg:flex-wrap lg:justify-center lg:gap-3"
+            className="grid h-auto w-full max-w-full grid-cols-2 items-stretch gap-2.5 bg-transparent p-0 lg:flex lg:flex-wrap lg:justify-start"
           >
             {surfaces.map((surface) => {
               const Icon = surface.icon;
@@ -134,23 +126,17 @@ export function HomepageProofSection() {
                   key={surface.id}
                   value={surface.id}
                   className={cn(
-                    "group h-full min-h-11 w-full justify-start rounded-xl border bg-transparent px-3.5 py-2.5 text-left text-base font-medium text-white shadow-none lg:w-auto",
+                    "group h-full min-h-11 w-full justify-start rounded-lg border bg-transparent px-3.5 py-2.5 text-left text-base font-medium text-white/80 shadow-none lg:w-auto",
                     "whitespace-normal hover:bg-white/[0.03] hover:text-white",
-                    "focus-visible:ring-2 focus-visible:ring-[#D3126A]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)]",
+                    "focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]",
                     "data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:text-white",
                     "border-[var(--de-hairline)] data-[state=active]:border-[#D3126A] data-[state=active]:shadow-[inset_0_0_0_1px_#D3126A]",
                   )}
                 >
-                  <span
-                    className={cn(
-                      "mr-2.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border",
-                      "border-white/20 bg-transparent text-white",
-                      "group-data-[state=active]:border-[#D3126A] group-data-[state=active]:bg-[#D3126A] group-data-[state=active]:text-white",
-                    )}
+                  <Icon
+                    className="mr-2 h-4 w-4 shrink-0 text-white/70 group-data-[state=active]:text-[#D3126A]"
                     aria-hidden="true"
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                  </span>
+                  />
                   {surface.title}
                 </TabsTrigger>
               );
@@ -161,17 +147,21 @@ export function HomepageProofSection() {
             <TabsContent
               key={surface.id}
               value={surface.id}
-              className="mt-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)] md:mt-10"
+              className="mt-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
             >
-              <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
-                <IconWell icon={surface.icon} size="md" surface="dark" className="mb-5" />
-                <h3 className="font-heading text-xl font-semibold text-white md:text-2xl">
-                  {surface.title}
-                </h3>
-                <p className="mt-3 text-base leading-relaxed text-white/55 md:text-lg">
-                  {surface.body}
-                </p>
-                <ProofCta surface={surface} className="mt-6 self-center" />
+              <div className={`${cardDark} flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between`}>
+                <div className="flex items-start gap-4">
+                  <IconWell icon={surface.icon} size="sm" surface="dark" />
+                  <div>
+                    <h3 className="font-heading text-lg font-semibold text-white md:text-xl">
+                      {surface.title}
+                    </h3>
+                    <p className="mt-1 max-w-2xl text-base leading-relaxed text-white/65">
+                      {surface.body}
+                    </p>
+                  </div>
+                </div>
+                <ProofCta surface={surface} className="shrink-0" />
               </div>
             </TabsContent>
           ))}
@@ -179,13 +169,13 @@ export function HomepageProofSection() {
 
         <nav
           aria-label="Open a trust surface"
-          className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 border-t border-[var(--de-hairline)] pt-8 md:mt-12"
+          className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-1 border-t border-[var(--de-hairline)] pt-6"
         >
           {surfaces.map((surface) => (
             <ProofCta key={surface.id} surface={surface} testId={surface.testId} quiet />
           ))}
         </nav>
-      </div>
-    </section>
+      </HomeContainer>
+    </HomeChapter>
   );
 }
