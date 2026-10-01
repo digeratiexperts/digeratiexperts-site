@@ -5669,6 +5669,71 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Branded order PDF (Direction B). Same access rule as GET /api/store/orders/:id:
+  // the post-checkout confirmation token (?ct=) OR JWT ownership/admin.
+  app.get("/api/store/orders/:id/pdf", paymentRateLimiter, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { db } = await import("./db");
+      const { storeOrders } = await import("@shared/schema");
+      const { eq, or } = await import("drizzle-orm");
+
+      const [order] = await db.select().from(storeOrders).where(
+        or(
+          eq(storeOrders.id, id),
+          eq(storeOrders.stripeSessionId, id),
+          eq(storeOrders.zohoPaymentSessionId, id),
+        ),
+      ).limit(1);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      // Authorize: confirmation token, or Bearer ownership/admin.
+      const { isValidOrderConfirmationToken } = await import("./orderConfirmationToken");
+      let authorized = isValidOrderConfirmationToken(order.id, req.query.ct);
+      if (!authorized) {
+        const authHeader = req.headers.authorization;
+        const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+        if (!token) return res.status(401).json({ error: "Authentication required" });
+        try {
+          const decoded = jwt.verify(token, jwtSecret()) as JWTPayload;
+          const isAdmin = decoded.role === "admin";
+          const ownsOrder =
+            (decoded.userId && order.userId === decoded.userId) ||
+            (decoded.clientId && order.clientId === decoded.clientId);
+          authorized = isAdmin || !!ownsOrder;
+        } catch {
+          return res.status(401).json({ error: "Invalid token" });
+        }
+      }
+      if (!authorized) return res.status(403).json({ error: "Access denied" });
+
+      const { buildOrderPdfHtml } = await import("./pdf/storeOrderPdf");
+      const { renderHtmlToPdf, PdfRendererUnavailableError } = await import("./pdf/renderHtmlToPdf");
+      const html = buildOrderPdfHtml(order as any);
+      try {
+        const pdf = await renderHtmlToPdf(html);
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="DE-order-${(order.orderNumber || order.id).toString().replace(/[^A-Za-z0-9_-]/g, "")}.pdf"`,
+        );
+        res.setHeader("Cache-Control", "private, no-store");
+        return res.send(pdf);
+      } catch (err: any) {
+        if (err instanceof PdfRendererUnavailableError) {
+          console.error("[ORDER PDF] renderer unavailable:", err.message);
+          return res.status(503).json({ error: "PDF generation is temporarily unavailable." });
+        }
+        throw err;
+      }
+    } catch (error: any) {
+      console.error("[ORDER PDF ERROR]", error);
+      res.status(500).json({ error: error?.message || "Failed to generate order PDF" });
+    }
+  });
+
   // ========== STORE QUOTE REQUESTS ==========
 
   // Create quote request - allows all authenticated users (any role can request a quote)

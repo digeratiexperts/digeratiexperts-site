@@ -23,6 +23,7 @@ import {
   MessageSquare,
   Loader2,
   AlertCircle,
+  Download,
 } from "lucide-react";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 
@@ -328,6 +329,24 @@ const OrderConfirmation = () => {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
+            {params.orderId && !isQuoteRequest && (
+              <a
+                href={`/api/store/orders/${encodeURIComponent(params.orderId)}/pdf${
+                  params.confirmationToken ? `?ct=${encodeURIComponent(params.confirmationToken)}` : ""
+                }`}
+                target="_blank"
+                rel="noopener"
+              >
+                <Button
+                  className="bg-de-accent hover:bg-de-accent text-white"
+                  data-testid="button-download-pdf"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF
+                </Button>
+              </a>
+            )}
+
             <Link href="/internal/warehouse">
               <Button
                 variant="outline"
