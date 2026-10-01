@@ -72,6 +72,15 @@ const ProductDetail = () => {
 
   const product = useMemo(() => storeProducts.find((p) => p.sku === sku), [sku]);
 
+  // Start (and keep) the quantity at the product's minimum, so the displayed
+  // price and the quantity that lands in the cart agree. Without this, a
+  // product with minimumQuantity > 1 shows "1" and an understated preview
+  // price while addToCart silently bumps to the real minimum.
+  useEffect(() => {
+    const min = product?.minimumQuantity ?? 1;
+    setQuantity((prev) => (prev < min ? min : prev));
+  }, [product?.sku, product?.minimumQuantity]);
+
   const relatedProducts = useMemo(() => {
     if (!product) return [];
     return getRelatedProducts(product, {

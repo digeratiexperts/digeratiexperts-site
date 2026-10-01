@@ -23,11 +23,10 @@ import path from "path";
 import fs from "fs";
 import cookieParser from "cookie-parser";
 import compression from "compression";
-import jwt from "jsonwebtoken";
+import { resolveWarehouseStaff } from "./warehouseAccess";
 import { zohoPayments } from "./zohoPayments";
 import { zohoClient } from "./zoho/zohoClient";
 import { evaluatePaymentSucceeded } from "./zohoPaymentWebhook";
-import { getJwtSecretOrNull } from "./config/authSecrets";
 import { setupCrossServiceHandlers } from "./crossServiceHandler";
 import { eventBus, EventTypes } from "./eventBus";
 
@@ -401,27 +400,18 @@ app.use((req, res, next) => {
   // In local/dev, allow tooling without portal cookie so DE can iterate.
   if (app.get("env") !== "production") return next();
 
-  const token =
-    typeof req.cookies?.portalAuth === "string" ? req.cookies.portalAuth : "";
-  const secret = getJwtSecretOrNull();
-  if (!token || !secret) {
-    const returnTo = encodeURIComponent(req.path);
-    return res.redirect(
-      302,
-      `https://portal.digeratiexperts.com/portal/login?returnTo=${returnTo}`,
-    );
-  }
-
-  try {
-    jwt.verify(token, secret);
+  // Authorization from the LIVE portal record, not a bare signed token:
+  // require an active admin (DE staff), rejecting prospects and disabled or
+  // revoked accounts that still hold an unexpired 24h token. Checks the
+  // Authorization header or the portalAuth cookie, consistent with the gates.
+  if (resolveWarehouseStaff(req)) {
     return next();
-  } catch {
-    const returnTo = encodeURIComponent(req.path);
-    return res.redirect(
-      302,
-      `https://portal.digeratiexperts.com/portal/login?returnTo=${returnTo}`,
-    );
   }
+  const returnTo = encodeURIComponent(req.path);
+  return res.redirect(
+    302,
+    `https://portal.digeratiexperts.com/portal/login?returnTo=${returnTo}`,
+  );
 });
 
 const publicDir = path.resolve(process.cwd(), "public");
