@@ -54,8 +54,9 @@ claims:
       local build lacks, so the 390 audit before PR 322 never saw them).
       Classes and one wrapper span only: no copy, link, route or test id
       changes. Overlap: claude-completion-program-lane lists two of these
-      files, but its branch stack's PRs (219, 220, 221) are closed and no open
-      PR comes from claude/c8-cross-surface.
+      files, but its branch claude/c8-cross-surface is not on GitHub, the one
+      PR from its stack (219, from the c1 branch) closed without merge, and no
+      open PR comes from any branch of that stack.
       RELEASED 2026-10-01: merged as PR 323 (bc26ac0f) at 15:20Z and verified
       live at 15:28Z: production release.txt bc26ac0f, deploy run green,
       /healthz 200, and the served code carries the whitespace-nowrap span
