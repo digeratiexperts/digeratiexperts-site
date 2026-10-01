@@ -126,7 +126,7 @@ export const DigeratiCTASection = (): JSX.Element => {
                   />
                 </div>
                 {fieldError ? (
-                  <p id={errorId} role="alert" className="mt-2 text-sm font-medium text-[#ff7ab3]">
+                  <p id={errorId} role="alert" className="mt-2 text-sm font-medium text-de-magenta-ink">
                     {fieldError}
                   </p>
                 ) : null}

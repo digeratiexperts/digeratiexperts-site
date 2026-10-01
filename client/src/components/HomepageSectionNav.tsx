@@ -152,7 +152,7 @@ export function HomepageOnPageNav() {
       </div>
       {/* Read progress — the one hairline that moves, and only with the scroll. */}
       <motion.div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 origin-left bg-gradient-to-r from-[#7b6cff] to-[#D3126A]"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 origin-left bg-[#D3126A]"
         style={{ scaleX: scrollYProgress }}
         aria-hidden="true"
       />

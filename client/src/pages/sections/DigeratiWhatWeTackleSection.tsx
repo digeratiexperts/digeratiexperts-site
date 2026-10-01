@@ -90,7 +90,7 @@ export const DigeratiWhatWeTackleSection = (): JSX.Element => {
                     <Link
                       href={challenge.href}
                       data-testid={`tackle-card-${index}`}
-                      className="group flex h-full flex-col py-6 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--de-paper)]"
+                      className="group flex h-full flex-col py-6 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-paper)]"
                     >
                       <div className="mb-3 flex items-center justify-between">
                         <span className={indexClass("paper")}>{String(index + 1).padStart(2, "0")}</span>

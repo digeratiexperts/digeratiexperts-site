@@ -63,7 +63,7 @@ export const DigeratiMeetExpertsSection = (): JSX.Element => {
             whileInView={revealInView}
             viewport={revealViewport}
             transition={revealTransition}
-            className="relative overflow-hidden rounded-xl border border-[var(--de-hairline)] bg-[var(--de-raised)] lg:col-span-4"
+            className="relative overflow-hidden rounded-xl border border-de-hairline bg-de-raised lg:col-span-4"
           >
             <div className="absolute left-4 top-4 z-20 flex items-center gap-2 rounded-full border border-white/15 bg-black/60 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md">
               <MapPin className="h-3 w-3 text-de-magenta-ink" aria-hidden="true" />
@@ -79,7 +79,7 @@ export const DigeratiMeetExpertsSection = (): JSX.Element => {
               height={1024}
               data-testid="img-founder-joe"
             />
-            <div className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/90 via-black/45 to-transparent p-5 pt-14">
+            <div className="absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-5 pt-14">
               <p className="text-lg font-semibold text-white">Joseph Petro</p>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-de-magenta-ink">
                 Founder &amp; Chief Technology Strategist

@@ -161,8 +161,8 @@ export const DigeratiIndustriesSection = (): JSX.Element => {
           </button>
 
           {/* Gradient fade edges */}
-          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[var(--de-surface)] to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[var(--de-surface)] to-transparent z-10 pointer-events-none" />
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-de-surface to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-de-surface to-transparent z-10 pointer-events-none" />
 
           {/* Scrollable container */}
           <div 

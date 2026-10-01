@@ -6,6 +6,7 @@ import type { LucideIcon } from "lucide-react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { ProtectionCommandDeck } from "@/components/visual/ProtectionCommandDeck";
 import {
+  Eyebrow,
   HomeChapter,
   HomeChapterHeader,
   HomeContainer,
@@ -59,20 +60,29 @@ export const DigeratiHowWeProtectSection = (): JSX.Element => {
 
   return (
     <>
-      <HomeChapter tone="paper">
-        <HomeContainer>
+      {/* Paper chapter from md up. Below md the deck renders Joe's 390px
+          mock (2026-10-01): one dark field, so the chapter drops to the well
+          and the heading inks switch with it. */}
+      <HomeChapter tone="paper" className="max-md:border-[var(--de-hairline)] max-md:bg-[var(--de-bg)] max-md:text-white">
+        <HomeContainer className="max-md:px-4">
           <motion.div
+            className="mb-8 max-w-2xl md:mb-12"
             initial={prefersReducedMotion ? false : revealInitial}
             whileInView={revealInView}
             viewport={revealViewport}
             transition={revealTransition}
           >
-            <HomeChapterHeader
-              tone="paper"
-              eyebrow="What we protect"
-              title="Eight blocks. One accountable operating model."
-              lede="Protection is layered around the business, and each block answers a specific class of threat. Risk and exposure runs continuously beneath the other seven. Select a block below to see how we operate it."
-            />
+            <Eyebrow tone="paper" className="mb-4 max-md:text-de-magenta-ink">
+              What we protect
+            </Eyebrow>
+            <h2 className="font-heading text-[26px] font-semibold leading-[1.15] tracking-[-0.02em] text-white sm:text-3xl md:text-4xl md:text-[#1A1228]">
+              Eight blocks. One accountable operating model.
+            </h2>
+            <p className="mt-4 text-[15px] leading-[1.55] text-white/70 md:text-lg md:leading-relaxed md:text-[#3A3448]">
+              Protection is layered around the business, and each block answers a specific class
+              of threat. Risk and exposure runs continuously beneath the other seven. Select a
+              block below to see how we operate it.
+            </p>
           </motion.div>
 
           {/* Interactive eight-block protection command deck */}
@@ -101,7 +111,7 @@ export const DigeratiHowWeProtectSection = (): JSX.Element => {
                   <Link
                     href={step.href}
                     data-testid={step.testId}
-                    className="group flex h-full flex-col rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--de-surface)]"
+                    className="group flex h-full flex-col rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)]"
                   >
                     <div className="flex items-center gap-3">
                       <IconWell icon={IconComponent} size="sm" surface="dark" />

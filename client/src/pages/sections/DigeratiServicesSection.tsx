@@ -23,6 +23,7 @@ import {
   HomeChapter,
   HomeChapterHeader,
   HomeContainer,
+  cardDark,
   cardDarkInteractive,
   ledeClass,
   textLinkClass,
@@ -236,7 +237,7 @@ export const DigeratiServicesSection = (): JSX.Element => {
           <Tabs defaultValue={tabValue(capabilityPreview[0].title)} className="mt-7">
             <div className="relative">
               <div
-                className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-[var(--de-bg)] to-transparent md:hidden"
+                className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-de-bg to-transparent md:hidden"
                 aria-hidden="true"
               />
               <TabsList
@@ -264,7 +265,7 @@ export const DigeratiServicesSection = (): JSX.Element => {
                 value={tabValue(item.title)}
                 className="mt-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
               >
-                <div className="flex flex-col gap-4 rounded-xl border border-[var(--de-hairline)] bg-[var(--de-raised)] p-6 sm:flex-row sm:items-center sm:justify-between">
+                <div className={`${cardDark} flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between`}>
                   <div className="flex items-start gap-4">
                     <IconWell icon={item.icon} size="sm" surface="dark" />
                     <div>

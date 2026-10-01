@@ -65,7 +65,7 @@ export const DigeratiAlertBanner = (): JSX.Element => {
               <Link
                 href={feature.href}
                 data-testid={feature.testId}
-                className="group block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-4 focus-visible:ring-offset-[var(--de-bg)]"
+                className="group block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
               >
                 <span className="font-mono text-sm font-semibold tracking-[0.16em] text-de-magenta-ink">
                   {String(index + 1).padStart(2, "0")}

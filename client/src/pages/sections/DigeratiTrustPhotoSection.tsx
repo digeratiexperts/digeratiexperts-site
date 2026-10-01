@@ -92,7 +92,7 @@ export const DigeratiTrustPhotoSection = (): JSX.Element => {
                 className="absolute inset-0"
                 testId="img-trust-assessment-desk"
               />
-              <div className="relative mt-auto bg-gradient-to-t from-black/80 via-black/40 to-transparent p-5 pt-16">
+              <div className="relative mt-auto bg-gradient-to-t from-black/90 via-black/40 to-transparent p-5 pt-16">
                 <p className="text-base font-semibold text-white">
                   Principal-led assessments sized to how your business runs
                 </p>

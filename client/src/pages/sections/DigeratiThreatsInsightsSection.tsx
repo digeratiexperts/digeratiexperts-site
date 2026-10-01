@@ -149,7 +149,7 @@ export const DigeratiThreatsInsightsSection = (): JSX.Element => {
               <>
                 Current items prioritized by active exploitation, exploit probability, and SMB relevance.
                 Full stream, dates, and sources live on{" "}
-                <Link href="/resources/security-updates" className="font-semibold text-white underline decoration-white/25 underline-offset-4 hover:decoration-white/60">
+                <Link href="/resources/security-updates" className="font-semibold text-white underline decoration-white/25 underline-offset-4 hover:decoration-white/50">
                   Security Updates
                 </Link>
                 .
@@ -224,8 +224,8 @@ export const DigeratiThreatsInsightsSection = (): JSX.Element => {
               >
                 <ChevronRight className="w-5 h-5 text-white" />
               </button>
-              <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-[var(--de-surface)] to-transparent z-10 pointer-events-none" />
-              <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-[var(--de-surface)] to-transparent z-10 pointer-events-none" />
+              <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-de-surface to-transparent z-10 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-de-surface to-transparent z-10 pointer-events-none" />
               <div
                 ref={scrollContainerRef}
                 className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 px-2 snap-x snap-mandatory"

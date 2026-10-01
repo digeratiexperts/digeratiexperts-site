@@ -1,5 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
 import { isStagingReview } from '../stagingReviewGuard';
+import {
+  ZohoOAuthError,
+  classifyZohoTokenFailure,
+} from './zohoOAuthErrors';
 
 interface ZohoTokenResponse {
   access_token: string;
@@ -9,12 +13,19 @@ interface ZohoTokenResponse {
   scope?: string;
 }
 
+export type DeskAuthStatus =
+  | 'not_configured'
+  | 'credentials_present'
+  | 'ok'
+  | 'auth_failed';
+
 class ZohoClient {
   private accessToken: string | null = null;
   private tokenExpiry: number = 0;
   private deskAccessToken: string | null = null;
   private deskTokenExpiry: number = 0;
   private apiDomain: string = 'https://www.zohoapis.com';
+  private deskAuthStatus: DeskAuthStatus = 'not_configured';
   
   private readonly clientId: string;
   private readonly clientSecret: string;
@@ -27,14 +38,25 @@ class ZohoClient {
     if (!this.clientId || !this.clientSecret || !this.refreshToken) {
       console.warn('⚠️ Zoho API credentials not fully configured');
     }
-    const deskToken = this.getDeskRefreshToken();
-    if (deskToken && deskToken !== this.refreshToken) {
-      console.log(`✅ Zoho Desk OAuth token configured (prefix: ${deskToken.substring(0, 10)}...)`);
+    if (this.clientId && this.clientSecret && this.getDeskRefreshToken()) {
+      this.deskAuthStatus = 'credentials_present';
+      console.log('✅ Zoho Desk OAuth credentials present (refresh validity not probed at boot)');
     }
   }
 
   private getDeskRefreshToken(): string {
     return process.env.ZOHO_DESK_REFRESH_TOKEN || process.env.ZOHO_FORM_OAUTH || this.refreshToken;
+  }
+
+  /** Last known Desk OAuth state — presence only until a refresh is attempted. */
+  getDeskAuthStatus(): DeskAuthStatus {
+    if (isStagingReview()) return 'not_configured';
+    if (!(this.clientId && this.clientSecret && this.getDeskRefreshToken())) {
+      return 'not_configured';
+    }
+    return this.deskAuthStatus === 'not_configured'
+      ? 'credentials_present'
+      : this.deskAuthStatus;
   }
 
   private crmRefreshPromise: Promise<string> | null = null;
@@ -66,6 +88,19 @@ class ZohoClient {
         { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
       );
 
+      if (!response.data.access_token) {
+        const code = classifyZohoTokenFailure(response.data);
+        throw new ZohoOAuthError({
+          message: 'No access token in Zoho CRM response',
+          code,
+          product: 'crm',
+          zohoError:
+            response.data && typeof response.data === 'object' && 'error' in response.data
+              ? String((response.data as { error?: unknown }).error || '')
+              : undefined,
+        });
+      }
+
       this.accessToken = response.data.access_token;
       this.tokenExpiry = Date.now() + (response.data.expires_in * 1000) - 60000;
       this.apiDomain = response.data.api_domain || this.apiDomain;
@@ -73,8 +108,18 @@ class ZohoClient {
       console.log('✅ Zoho CRM access token refreshed');
       return this.accessToken;
     } catch (error: any) {
-      console.error('❌ Failed to refresh Zoho CRM token:', error.response?.data || error.message);
-      throw new Error('Failed to refresh Zoho access token');
+      if (error instanceof ZohoOAuthError) throw error;
+      const payload = error.response?.data;
+      console.error('❌ Failed to refresh Zoho CRM token:', payload || error.message);
+      throw new ZohoOAuthError({
+        message: 'Failed to refresh Zoho access token',
+        code: classifyZohoTokenFailure(payload),
+        product: 'crm',
+        zohoError:
+          payload && typeof payload === 'object' && 'error' in payload
+            ? String(payload.error || '')
+            : undefined,
+      });
     }
   }
 
@@ -108,17 +153,53 @@ class ZohoClient {
       );
 
       if (!response.data.access_token) {
-        console.error('❌ Zoho Desk token response missing access_token:', JSON.stringify(response.data));
-        throw new Error('No access token in Zoho Desk response');
+        const code = classifyZohoTokenFailure(response.data);
+        this.deskAuthStatus = 'auth_failed';
+        // Log error name only — never the refresh token or full client secret.
+        console.error(
+          '❌ Zoho Desk token response missing access_token:',
+          response.data && typeof response.data === 'object' && 'error' in response.data
+            ? String((response.data as { error?: unknown }).error)
+            : 'incomplete_response',
+        );
+        throw new ZohoOAuthError({
+          message: 'No access token in Zoho Desk response',
+          code,
+          product: 'desk',
+          zohoError:
+            response.data && typeof response.data === 'object' && 'error' in response.data
+              ? String((response.data as { error?: unknown }).error || '')
+              : undefined,
+        });
       }
       this.deskAccessToken = response.data.access_token;
       this.deskTokenExpiry = Date.now() + (response.data.expires_in * 1000) - 60000;
+      this.deskAuthStatus = 'ok';
       
       console.log(`✅ Zoho Desk access token refreshed (scopes: ${response.data.scope || 'unknown'})`);
       return this.deskAccessToken;
     } catch (error: any) {
-      console.error('❌ Failed to refresh Zoho Desk token:', error.response?.data || error.message);
-      throw new Error('Failed to refresh Zoho Desk access token');
+      if (error instanceof ZohoOAuthError) {
+        this.deskAuthStatus = 'auth_failed';
+        throw error;
+      }
+      const payload = error.response?.data;
+      this.deskAuthStatus = 'auth_failed';
+      console.error(
+        '❌ Failed to refresh Zoho Desk token:',
+        payload && typeof payload === 'object' && 'error' in payload
+          ? String(payload.error)
+          : error.message,
+      );
+      throw new ZohoOAuthError({
+        message: 'Failed to refresh Zoho Desk access token',
+        code: classifyZohoTokenFailure(payload),
+        product: 'desk',
+        zohoError:
+          payload && typeof payload === 'object' && 'error' in payload
+            ? String(payload.error || '')
+            : undefined,
+      });
     }
   }
 

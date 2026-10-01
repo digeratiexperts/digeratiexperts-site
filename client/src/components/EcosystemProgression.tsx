@@ -66,7 +66,7 @@ export function EcosystemProgression({
               <Link
                 href={tier.learnMoreUrl}
                 data-testid={detailed ? `pricing-summary-${tier.id}` : `ecosystem-model-${tier.id}`}
-                className={`de-interactive-card group relative flex h-full flex-col rounded-xl border bg-[var(--de-raised)] p-5 md:p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)] ${
+                className={`de-interactive-card group relative flex h-full flex-col rounded-xl border bg-de-raised p-5 md:p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)] ${
                   isFlagship ? "border-[#D3126A]/60" : "border-[var(--de-hairline)]"
                 }`}
               >

@@ -51,7 +51,7 @@ export const DigeratiAIAssistanceSection = (): JSX.Element => {
             viewport={revealViewport}
             transition={revealTransition}
           >
-            <div className="relative flex aspect-[4/3] w-full flex-col overflow-hidden rounded-xl border border-[var(--de-hairline)] bg-[var(--de-raised)]">
+            <div className="relative flex aspect-[4/3] w-full flex-col overflow-hidden rounded-xl border border-de-hairline bg-de-raised">
               <div className="absolute left-4 top-4 z-20 flex items-center gap-2 rounded-full border border-white/15 bg-black/60 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md">
                 <span>Arizona operations</span>
               </div>
@@ -63,7 +63,7 @@ export const DigeratiAIAssistanceSection = (): JSX.Element => {
                 height={640}
                 className="absolute inset-0"
               />
-              <div className="relative mt-auto w-full bg-gradient-to-t from-black/85 via-black/45 to-transparent p-5 pt-16">
+              <div className="relative mt-auto w-full bg-gradient-to-t from-black/90 via-black/40 to-transparent p-5 pt-16">
                 <p className="text-base font-semibold text-white">Local Operations · Human Judgment</p>
                 <p className="mt-0.5 text-sm text-white/75">Arizona-based · Principal-led</p>
               </div>

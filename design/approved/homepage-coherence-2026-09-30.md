@@ -64,6 +64,15 @@ test ids preserved)
   Principal-led"; the red "24/7 Security Response Team" badge above the
   threat feed is replaced by the "Threat intelligence" eyebrow.
 
+- **Reconciled with main, 2026-10-01** — PR 306 (Joe's 390px protection-deck
+  mock) landed meanwhile. Its phone layout wants one dark field below `md`,
+  so the Protect chapter is paper from `md` up and drops to the well below
+  it; the island class it used is gone with the island mechanism. The
+  self-hosted fonts (PR 301) added ~1.5 kB to the entry stylesheet, so the
+  chapter recipes were re-pointed at existing token classes (`bg-de-raised`,
+  `border-de-hairline`, `from-de-surface`) and a few one-off values folded
+  into neighbours; the sheet sits at 298.8 / 300 kB.
+
 ## Evidence
 
 `artifacts/visual-qa/homepage-coherence/` — full-page renders at 1440, 768

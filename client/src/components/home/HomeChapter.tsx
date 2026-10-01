@@ -134,7 +134,7 @@ export function Eyebrow({
 }
 
 export const titleClass =
-  "font-heading text-3xl font-semibold leading-[1.1] tracking-[-0.025em] md:text-4xl";
+  "font-heading text-3xl font-semibold leading-[1.1] tracking-[-0.02em] md:text-4xl";
 
 export function ledeClass(tone: ChapterTone) {
   return cn(
@@ -225,7 +225,7 @@ export function HomeChapterHeader({
 
 /** Raised graphite card on any dark field. */
 export const cardDark =
-  "rounded-xl border border-[var(--de-hairline)] bg-[var(--de-raised)]";
+  "rounded-xl border border-de-hairline bg-de-raised";
 
 /** Interactive variant: lifts on hover, magenta hairline, no scale. */
 export const cardDarkInteractive = cn(
@@ -256,7 +256,7 @@ export function buttonSecondary(tone: ChapterTone) {
     buttonBase,
     tone === "paper"
       ? "border border-[var(--de-paper-hairline)] bg-white text-[#1A1228] hover:border-[#D3126A] hover:text-de-magenta-paper-ink focus-visible:ring-offset-[var(--de-paper)]"
-      : "border border-white/20 bg-transparent text-white hover:border-white/45 hover:bg-white/5 focus-visible:ring-offset-[var(--de-bg)]",
+      : "border border-white/20 bg-transparent text-white hover:border-white/40 hover:bg-white/5 focus-visible:ring-offset-[var(--de-bg)]",
   );
 }
 

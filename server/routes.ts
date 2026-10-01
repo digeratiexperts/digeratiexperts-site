@@ -1,6 +1,6 @@
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { storage } from "./storage";
-import { randomBytes, randomInt, createHash } from "crypto";
+import { randomBytes, randomInt, createHash, timingSafeEqual } from "crypto";
 import rateLimit from "express-rate-limit";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -119,7 +119,7 @@ import {
 } from "./integrations/techSalesClient";
 import { registerDeSyncRoutes } from "./integrations/deSyncRoutes";
 import { resolveJwtSecret } from "./config/authSecrets";
-import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter } from "./middleware/rateLimiter";
+import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter, paymentRateLimiter } from "./middleware/rateLimiter";
 import { enqueueOutbox } from "./integrations/deSyncStore";
 import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
 
@@ -166,6 +166,14 @@ function clearPortalAuthCookies(res: Response) {
 
 // Utility function for generating IDs
 const randomId = () => randomBytes(16).toString('hex');
+
+/** Constant-time string comparison (length-safe) for short secrets like MFA codes. */
+function timingSafeStrEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a, "utf8");
+  const bb = Buffer.from(b, "utf8");
+  if (ab.length !== bb.length) return false;
+  return timingSafeEqual(ab, bb);
+}
 
 // HTML-escape user-supplied strings interpolated into server-rendered HTML
 // (e.g. the order receipt). CSP allows inline scripts, so escaping is the guard.
@@ -2928,7 +2936,7 @@ export async function registerRoutes(app: Express) {
       let verified = false;
 
       if (challenge.method === 'email') {
-        verified = challenge.emailCode === code.trim();
+        verified = timingSafeStrEqual(String(challenge.emailCode ?? ""), code.trim());
       } else if (challenge.method === 'totp' && user.mfaTotpSecret) {
         const otplib = await import('otplib');
         const auth = (otplib as any).authenticator || (otplib as any).default?.authenticator || otplib;
@@ -3882,7 +3890,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // Portal invoice payment via Zoho Payments
-  app.post("/api/portal/payment/zoho", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+  app.post("/api/portal/payment/zoho", [paymentRateLimiter, authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { invoiceId, amount } = req.body || {};
       if (!invoiceId) {
@@ -3916,12 +3924,22 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Invoice not found" });
       }
 
-      const payAmount = typeof amount === "number" && amount > 0
-        ? amount / 100
-        : Number(inv.balance ?? inv.total);
-      if (!payAmount || payAmount <= 0) {
-        return res.status(400).json({ error: "Invoice has no balance due" });
+      // Server-authoritative amount: the balance due is the source of truth;
+      // a client-supplied `amount` may only match it, never underpay.
+      const { resolveInvoicePayAmount } = await import("./portalInvoicePayment");
+      const amountResult = resolveInvoicePayAmount(inv.balance ?? inv.total, amount, COMPANY.billingEmail);
+      if (!amountResult.ok) {
+        if (amountResult.reason === "amount_mismatch") {
+          console.warn("[SECURITY] INVOICE_AMOUNT_MISMATCH", {
+            invoiceId: inv.invoice_id,
+            balanceDue: Number(inv.balance ?? inv.total),
+            requestedCents: amount,
+            portalUserId: req.userId,
+          });
+        }
+        return res.status(amountResult.status).json({ error: amountResult.error });
       }
+      const payAmount = amountResult.payAmount;
 
       const appUrl = process.env.APP_URL || "https://digeratiexperts.com";
       const session = await zohoPayments.createPaymentSession({

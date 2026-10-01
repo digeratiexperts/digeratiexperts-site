@@ -118,7 +118,7 @@ export function ReferenceHeroSection(): JSX.Element {
       </div>
 
       <div
-        className={`${containerClass} relative grid items-start gap-10 pb-12 pt-[calc(var(--de-nav-offset)+2.25rem)] lg:grid-cols-[minmax(0,1fr)_minmax(400px,520px)] lg:gap-14 lg:pb-16 lg:pt-[calc(var(--de-nav-offset)+2.75rem)] xl:grid-cols-[minmax(0,1fr)_minmax(440px,560px)] xl:gap-16`}
+        className={`${containerClass} relative grid items-start gap-10 pb-12 pt-[calc(var(--de-nav-offset)+3rem)] lg:grid-cols-[minmax(0,1fr)_minmax(400px,520px)] lg:gap-14 lg:pb-16 lg:pt-[calc(var(--de-nav-offset)+3.5rem)] xl:grid-cols-[minmax(0,1fr)_minmax(440px,560px)] xl:gap-16`}
       >
         <motion.div
           initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
@@ -185,7 +185,7 @@ export function ReferenceHeroSection(): JSX.Element {
             </li>
           </ul>
 
-          <p className="mt-2 flex flex-wrap gap-x-2.5 gap-y-1 text-sm text-white/55">
+          <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-white/55">
             {positioning.map((item, index) => (
               <span key={item} className="inline-flex items-center gap-2.5">
                 {index > 0 && (
