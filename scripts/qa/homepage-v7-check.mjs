@@ -95,12 +95,13 @@ for (const [name, width, height] of [["phone", 390, 844], ["tablet", 768, 1024],
   const wheel = async (dy, step = 100) => { const n = Math.ceil(Math.abs(dy) / step); for (let i = 0; i < n; i++) { await page.mouse.wheel(0, Math.sign(dy) * step); await page.waitForTimeout(60); } await page.waitForTimeout(600); };
   let s = await state();
   check("bar: opening screen shows Ask DE, not tucked", s.askDE && s.auto === "shown", JSON.stringify(s));
-  await wheel(1300); s = await state();
-  check("bar: past the hero the chapter dock opens", s.expanded, JSON.stringify(s));
-  await wheel(-60, 30); await wheel(120, 40); s = await state();
-  check("bar: a 120px read does not tuck", s.auto === "shown" && s.expanded, JSON.stringify(s));
+  await wheel(600); s = await state();
+  check("bar: once the hero scrolls, the chapter dock opens", s.expanded && s.auto === "shown", JSON.stringify(s));
   await wheel(1200); s = await state();
   check("bar: reading down tucks to the Ask DE button", s.auto === "tucked" && !s.expanded && s.askDE, JSON.stringify(s));
+  await wheel(-60, 30); await wheel(120, 40); s = await state();
+  check("bar: after a flick up, a 120px read does not tuck it again", s.auto === "shown" && s.expanded, JSON.stringify(s));
+  await wheel(400); s = await state();
   await page.screenshot({ path: path.join(out, "bar-tucked.png") });
   await wheel(-20, 10); s = await state();
   check("bar: a 20px wobble up stays tucked", s.auto === "tucked", JSON.stringify(s));

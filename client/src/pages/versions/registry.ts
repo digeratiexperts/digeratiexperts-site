@@ -101,6 +101,17 @@ export const HOMEPAGE_VERSIONS: HomepageVersion[] = [
     kind: "build",
     source: "claude/homepage-v6-sections",
   },
+  {
+    n: 7,
+    path: "/version-7",
+    title: "Every live section, as reviewed",
+    date: "2026-10-01",
+    status: "In build (draft PR #315). Preview only; Joe decides whether it replaces /.",
+    summary:
+      "The live homepage, section by section, built from Joe's reviewed section mockups on the current DE system: one head recipe, one card, paper chapters as full-bleed bands, real artifacts only, and every subtle live interaction kept (the industries photo hover, the pronunciation bars, the interactive assessment preview, the FAQ rail, the eight-block deck with Joe's approved phone layout). One assessment form and one newsletter, per Joe's round-2 decisions. The unified bottom bar runs with autohide: it tucks into the Ask DE button while you read and returns the moment you reach for it.",
+    kind: "build",
+    source: "claude/sleepy-archimedes-mccoav",
+  },
 ];
 
 export function versionByNumber(n: number): HomepageVersion | undefined {
