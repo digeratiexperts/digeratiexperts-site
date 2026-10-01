@@ -30,6 +30,27 @@
 
 version: 2
 claims:
+  - id: de-org-department-tenant-boundary
+    owner: claude
+    subsystem: portal-org
+    branch: claude/org-department-tenant-boundary
+    base_sha: 576aa76d
+    files:
+      - server/portalDepartmentRoutes.ts
+      - server/portalDepartmentRoutes.test.ts
+      - server/routes.ts (the two department routes and their imports only)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Issue 254 (P0), verified still present on main 576aa76d after Joe's
+      "so everything is complete and we cant think of things to do now?": the
+      department update route followed the clientId in the request body, so a
+      Company IT Contact could rename another company's department, and both
+      routes attached a user from another company as a department's IT contact.
+      The two routes move into their own module, unchanged in path, guards and
+      order; the company now comes from the signed-in user unless the caller is
+      a DE admin, and the IT contact must be in the same company. The People
+      page's only call (create with a name) is unaffected.
   - id: de-phone-number-and-arrows
     owner: claude
     subsystem: homepage
