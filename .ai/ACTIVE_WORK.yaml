@@ -30,6 +30,28 @@
 
 version: 2
 claims:
+  - id: de-desk-store-seed-door2
+    owner: claude
+    subsystem: de-desk
+    branch: claude/desk-store-seed-door2
+    base_sha: 576aa76d
+    files:
+      - client/src/components/ZohoASAPWidget.tsx (the open-seed expression and one import only; no stylesheet)
+      - client/src/lib/deskOpenSeed.ts
+      - client/src/lib/deskOpenSeed.test.ts
+      - artifacts/visual-qa/desk-store-seed/**
+    status: active
+    started: 2026-10-01
+    note: >-
+      Source of truth §15 row 18, item 2, unblocked when PR 303 merged and
+      de-desk-reliability-followup released the widget. The Desk seeded
+      STORE_ADVISOR_SEED on pathname.includes("/store"), so /solutions/request
+      and /solutions/business-needs (Door 2) opened without it and unrelated
+      paths containing "/store" got it. Now isDoor2Path decides, through a
+      tested helper. Joe, 2026-10-01: "merge 307 and all else is approved too".
+      Shares ZohoASAPWidget.tsx with the active de-desk-gold claim (PR 319),
+      which is scoped to the stylesheet and the chip icon class, no logic;
+      this hunk is the open handler and auto-merges with PR 319's branch.
   - id: de-phone-number-and-arrows
     owner: claude
     subsystem: homepage
