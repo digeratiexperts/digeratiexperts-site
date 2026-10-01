@@ -1,9 +1,20 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Badge } from "@/components/ui/badge";
 import { PortalLayout } from "./PortalLayout";
-import { CheckCircle2, AlertCircle, TrendingUp } from "lucide-react";
+import { CheckCircle2, CalendarClock } from "lucide-react";
+import { Callout, EmptyState, Panel, StatTile, Token, type TokenTone } from "@/components/portal/ui";
+
+const impactTone = (impact: string): TokenTone => {
+  switch (impact.toLowerCase()) {
+    case "high":
+    case "critical":
+      return "bad";
+    case "moderate":
+      return "warn";
+    default:
+      return "info";
+  }
+};
 
 export default function PortalStatus() {
   const services = [
@@ -100,178 +111,120 @@ export default function PortalStatus() {
   ];
 
   return (
-    <PortalLayout title="System Status">
+    <PortalLayout
+      title="System Status"
+      description="Availability of the services DE manages for you. Figures on this page are a sample until a live status feed is connected for your tenant."
+      eyebrow={<Token label="Sample" tone="warn" />}
+      actions={
+        <Button asChild variant="outline" className="border-border bg-card hover:bg-accent">
+          {/* The page had no focusable content, so its scrollable main was unreachable by
+              keyboard (a11y sweep). Reporting an issue is the natural action here. */}
+          <Link href="/portal/tickets/new" data-testid="status-report-issue">Report an issue</Link>
+        </Button>
+      }
+    >
       <div className="space-y-6">
-        <div
-          className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-100"
-          data-testid="status-sample-banner"
-        >
-          <strong>Sample preview.</strong> Uptime figures and incident history below are illustrative until a live status feed is connected for your tenant.
-        </div>
+        <Callout tone="warn" title="Sample preview." testId="status-sample-banner">
+          Uptime figures and incident history below are illustrative until a live status feed is connected for your tenant.
+        </Callout>
 
-        {/* Overall Status */}
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-900/30 rounded-lg p-6">
+        {/* Overall Status (sample) */}
+        <Panel id="overall-status">
           <div className="flex flex-wrap items-center gap-3">
-            <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" aria-hidden="true" />
+            <CheckCircle2 className="pt-ink pt-tone-ok h-8 w-8 shrink-0" aria-hidden="true" />
             <div className="min-w-0 flex-1">
-              <h2 className="text-2xl font-bold text-green-900 dark:text-green-100">
-                All Systems Operational
-              </h2>
-              <p className="text-sm text-green-800 dark:text-green-300">
-                Last updated: {new Date().toLocaleTimeString()}
+              <p className="font-heading text-xl font-semibold leading-tight">All Systems Operational</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Sample view · not a live feed. Rendered {new Date().toLocaleTimeString()}.
               </p>
             </div>
-            {/* The page had no focusable content, so its scrollable main was unreachable by
-                keyboard (a11y sweep). Reporting an issue is the natural action here. */}
-            <Button asChild variant="outline" size="sm">
-              <Link href="/portal/tickets/new" data-testid="status-report-issue">Report an issue</Link>
-            </Button>
+            <Token label="Sample" tone="warn" />
           </div>
-        </div>
+        </Panel>
 
-        {/* Performance Metrics */}
-        <div>
-          <h2 className="text-xl font-bold mb-4">Performance Metrics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Performance Metrics (sample) */}
+        <section aria-labelledby="status-metrics-title" className="space-y-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 id="status-metrics-title" className="font-heading text-[15px] font-semibold">Performance Metrics</h2>
+            <span className="text-xs text-muted-foreground">Illustrative sample figures</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {metrics.map((metric) => (
-              <Card key={metric.label}>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    {metric.label}
-                  </p>
-                  <div className="flex items-baseline gap-2 mb-2">
-                    <span className="text-2xl font-bold">{metric.value}</span>
-                    <span className="text-xs text-gray-500 dark:text-gray-500">
-                      (Target: {metric.target})
-                    </span>
-                  </div>
-                  <Badge
-                    className={
-                      metric.status === "exceeding"
-                        ? "bg-green-100 text-green-800 dark:bg-green-900/30"
-                        : "bg-blue-100 text-blue-800 dark:bg-blue-900/30"
-                    }
-                  >
-                    {metric.status === "exceeding" ? "✓ Exceeding Target" : "✓ On Track"}
-                  </Badge>
-                </CardContent>
-              </Card>
+              <StatTile
+                key={metric.label}
+                label={metric.label}
+                value={metric.value}
+                hint={`Target ${metric.target} · ${metric.status === "exceeding" ? "exceeding target" : "on track"} (sample)`}
+                tone={metric.status === "exceeding" ? "ok" : "info"}
+              />
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Services Status */}
-        <div>
-          <h2 className="text-xl font-bold mb-4">Service Status</h2>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-3">
-                {services.map((service) => (
-                  <div
-                    key={service.name}
-                    className="flex items-center justify-between p-4 border rounded-lg dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50"
-                    data-testid={`service-status-${service.name.toLowerCase().replace(/\s+/g, '-')}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium">{service.name}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Uptime: {service.uptime}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 mb-1 block">
-                        Operational
-                      </Badge>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Last incident: {service.lastIncident}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Services Status (sample) */}
+        <Panel id="service-status" title="Service Status" description="Illustrative sample · not a live feed" flush>
+          <ul className="divide-y divide-border">
+            {services.map((service) => (
+              <li
+                key={service.name}
+                className="flex items-center justify-between gap-3 px-4 py-3.5 md:px-5"
+                data-testid={`service-status-${service.name.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{service.name}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Uptime <span className="pt-num">{service.uptime}</span> · Last incident {service.lastIncident}
+                  </p>
+                </div>
+                <Token label="Operational" tone="ok" dot />
+              </li>
+            ))}
+          </ul>
+        </Panel>
 
-        {/* Recent Incidents */}
-        <div>
-          <h2 className="text-xl font-bold mb-4">Recent Incidents</h2>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                {incidents.map((incident) => (
-                  <div
-                    key={incident.id}
-                    className="p-4 border rounded-lg dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50"
-                    data-testid={`incident-${incident.id}`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                          <span className="font-semibold">{incident.service}</span>
-                        </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {incident.date} • Duration: {incident.duration}
-                        </p>
-                      </div>
-                      <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30">
-                        {incident.impact} Impact
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      {incident.resolution}
+        {/* Recent Incidents (sample) */}
+        <Panel id="recent-incidents" title="Recent Incidents" description="Illustrative sample · not a live feed" flush>
+          <ul className="divide-y divide-border">
+            {incidents.map((incident) => (
+              <li key={incident.id} className="px-4 py-3.5 md:px-5" data-testid={`incident-${incident.id}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{incident.service}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      <span className="pt-num">{incident.date}</span> · Duration {incident.duration}
                     </p>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  <Token label={`${incident.impact} impact`} tone={impactTone(incident.impact)} />
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">{incident.resolution}</p>
+              </li>
+            ))}
+          </ul>
+        </Panel>
 
-        {/* Maintenance Schedule */}
-        <div>
-          <h2 className="text-xl font-bold mb-4">Scheduled Maintenance</h2>
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-gray-600 dark:text-gray-400 text-center py-8">
-                No scheduled maintenance in the next 30 days
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Maintenance Schedule (sample) */}
+        <Panel id="scheduled-maintenance" title="Scheduled Maintenance" description="Illustrative sample · not a live feed" flush>
+          <EmptyState icon={CalendarClock} title="No scheduled maintenance in the next 30 days" compact />
+        </Panel>
 
         {/* SLA Info */}
-        <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/30">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Our Commitment to You
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <Panel id="sla-commitment" title="Our Commitment to You">
+          <div className="space-y-4">
             <p className="text-sm">
               We guarantee 99.95% uptime for all critical services. Our team monitors systems 24/7 to ensure your business never stops.
             </p>
-            <div className="grid grid-cols-2 gap-4">
+            <dl className="grid gap-4 sm:grid-cols-2">
               <div>
-                <p className="font-semibold text-sm">Response Time SLA</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Critical: 1 hour | High: 4 hours | Medium: 24 hours
-                </p>
+                <dt className="text-sm font-medium">Response Time SLA</dt>
+                <dd className="mt-0.5 text-xs text-muted-foreground">Critical: 1 hour | High: 4 hours | Medium: 24 hours</dd>
               </div>
               <div>
-                <p className="font-semibold text-sm">Uptime SLA</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  99.95% availability guaranteed
-                </p>
+                <dt className="text-sm font-medium">Uptime SLA</dt>
+                <dd className="mt-0.5 text-xs text-muted-foreground">99.95% availability guaranteed</dd>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </dl>
+          </div>
+        </Panel>
       </div>
     </PortalLayout>
   );

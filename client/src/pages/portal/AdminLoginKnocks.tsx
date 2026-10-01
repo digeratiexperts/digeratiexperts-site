@@ -70,15 +70,10 @@ export function AdminLoginKnocks() {
   const alertHot = (summary?.failed || 0) >= 10 || (summary?.bots || 0) >= 15;
 
   return (
-    <PortalLayout title="Login Door Alerts">
+    <PortalLayout title="Login Door Alerts" description="Who hits the portal login: page loads, failures, successes and bot-like signals.">
       <div className="space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">Login door knocks</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              SaaS-style feed of who hits the portal login — page loads, failures, successes, and bot-ish signals.
-            </p>
-          </div>
+          <div />
           <div className="flex flex-wrap items-center gap-2">
             {[24, 72, 168].map((h) => (
               <Button

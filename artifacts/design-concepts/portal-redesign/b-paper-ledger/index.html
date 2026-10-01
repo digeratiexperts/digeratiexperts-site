@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Concept B: Paper Ledger</title>
+<link rel="stylesheet" href="../_shared/base.css">
+<style>
+:root{--paper:#f7f5f2;--card:#ffffff;--hair:rgba(26,18,16,.12);--ink:#1a1210;--ink-2:#5a524e;--ink-3:#8a817c;--graphite:#050312;--magenta:#A30E52;--magenta-b:#D3126A;--ok:#047857;--warn:#b45309;--bad:#be123c;--info:#0e7490}
+body{background:var(--paper);color:var(--ink)}
+.band{background:var(--graphite);color:#fff}
+.band .in{max-width:1180px;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:20px;height:56px}
+.brand{display:flex;align-items:center;gap:10px;font-family:"Space Grotesk";font-weight:600}
+.mark{width:22px;height:22px;border-radius:5px;background:linear-gradient(180deg,#e7b20d,#b8860b)}
+.menu{display:flex;gap:4px;margin-left:8px}
+.menu a{padding:8px 12px;border-radius:6px;font-size:14px;color:rgba(255,255,255,.75)}
+.menu a.on{color:#fff;background:rgba(255,255,255,.1)}
+.menu a:hover{color:#fff}
+.search{margin-left:auto;display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.6);font-size:13px;min-width:230px}
+.search kbd{margin-left:auto;font:11px Inter;padding:1px 5px;border:1px solid rgba(255,255,255,.25);border-radius:4px}
+.who{display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,.8)}
+.av{width:28px;height:28px;border-radius:50%;background:#2a2333;display:grid;place-items:center;font-size:11px;font-weight:600}
+.sub{background:var(--card);border-bottom:1px solid var(--hair)}
+.sub .in{max-width:1180px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow:auto}
+.sub a{padding:12px 12px;font-size:14px;color:var(--ink-2);border-bottom:2px solid transparent;white-space:nowrap}
+.sub a.on{color:var(--ink);border-color:var(--magenta-b);font-weight:500}
+.page{max-width:1180px;margin:0 auto;padding:32px 24px 64px}
+.doc-head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;padding-bottom:20px;border-bottom:1px solid var(--hair);margin-bottom:28px}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+h1{font-size:34px;font-weight:600;margin-top:6px}
+.lede{color:var(--ink-2);font-size:16px;max-width:60ch;margin-top:8px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:8px;border:1px solid var(--hair);background:var(--card);color:var(--ink);font-weight:500;font-size:14px}
+.btn.primary{background:var(--graphite);border-color:var(--graphite);color:#fff}
+.two{display:grid;grid-template-columns:1fr 300px;gap:40px}
+section{margin-bottom:36px}
+h2{font-size:20px;font-weight:600;margin-bottom:12px}
+h2 small{font-family:Inter;font-weight:400;font-size:13px;color:var(--ink-3);margin-left:8px}
+.ledger{width:100%;border-collapse:collapse;font-size:14px;background:var(--card);border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.ledger th{text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);padding:10px 14px;border-bottom:1px solid var(--hair);font-weight:600}
+.ledger td{padding:12px 14px;border-bottom:1px solid var(--hair);vertical-align:top}
+.ledger tr:last-child td{border-bottom:0}
+.ledger .id{color:var(--ink-3);font-size:12px}
+.tok{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:4px;font-weight:600}
+.tok.wait{background:#fdf2f8;color:var(--magenta)}
+.tok.prog{background:#ecfeff;color:var(--info)}
+.tok.done{background:#ecfdf5;color:var(--ok)}
+.tok.high{background:#fff7ed;color:var(--warn)}
+.side .box{background:var(--card);border:1px solid var(--hair);border-radius:10px;padding:16px;margin-bottom:16px}
+.side h3{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px;font-family:Inter;font-weight:600}
+.kv{display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-bottom:1px dashed var(--hair)}
+.kv:last-child{border:0}
+.kv b{font-weight:500}
+.status{display:flex;gap:10px;align-items:flex-start;padding:14px 16px;border-radius:10px;background:#ecfdf5;border:1px solid rgba(4,120,87,.25);margin-bottom:28px;font-size:14px}
+.status .d{width:10px;height:10px;border-radius:50%;background:var(--ok);margin-top:6px;flex:none}
+.status b{display:block;font-weight:600}
+.status span{color:var(--ink-2)}
+.figs{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--hair);border-radius:10px;background:var(--card);overflow:hidden;margin-bottom:8px}
+.fig{padding:16px;border-right:1px solid var(--hair)}
+.fig:last-child{border-right:0}
+.fig .l{font-size:12px;color:var(--ink-3)}
+.fig .v{font-size:26px;font-weight:600;margin:4px 0 2px}
+.fig .n{font-size:12px;color:var(--ink-2)}
+.tl li{list-style:none;display:grid;grid-template-columns:64px 1fr;gap:10px;padding:8px 0;font-size:13px;border-bottom:1px dashed var(--hair)}
+.tl li:last-child{border:0}
+.tl time{color:var(--ink-3);font-size:12px}
+.tl b{font-weight:500}
+.foot{color:var(--ink-3);font-size:12px;border-top:1px solid var(--hair);padding-top:16px}
+@media (max-width:1024px){.two{grid-template-columns:1fr}.figs{grid-template-columns:repeat(2,1fr)}.fig:nth-child(2){border-right:0}.fig:nth-child(-n+2){border-bottom:1px solid var(--hair)}}
+@media (max-width:767px){.menu{display:none}.search{min-width:0;flex:1}.who span{display:none}.page{padding:24px 16px 48px}.doc-head{grid-template-columns:1fr}h1{font-size:28px}.ledger th:nth-child(3),.ledger td:nth-child(3){display:none}}
+</style>
+</head>
+<body>
+<span class="example" aria-label="Example data">Example data</span>
+<header class="band"><div class="in">
+  <div class="brand"><div class="mark" aria-hidden="true"></div>Digerati Experts</div>
+  <nav class="menu" aria-label="Primary"><a class="on" href="#">Overview</a><a href="#">Support</a><a href="#">Account</a><a href="#">Programs</a><a href="#">Tools</a></nav>
+  <div class="search" role="button" tabindex="0">Search…<kbd>⌘K</kbd></div>
+  <div class="who"><div class="av">JT</div><span>Jordan Taylor · Acme Manufacturing</span></div>
+</div></header>
+<div class="sub"><div class="in"><a class="on" href="#">Dashboard</a><a href="#">Tickets</a><a href="#">Requests</a><a href="#">Approvals</a><a href="#">DE Desk</a><a href="#">Knowledge base</a></div></div>
+<main class="page">
+  <div class="doc-head">
+    <div><div class="eyebrow">Account overview · 30 September 2026</div><h1>Acme Manufacturing</h1><p class="lede">A single record of what Digerati Experts is doing for you, what is open, and what is due. Read it top to bottom in under a minute.</p></div>
+    <div style="display:flex;gap:8px"><a class="btn" href="#">Request access</a><a class="btn primary" href="#">New ticket</a></div>
+  </div>
+  <div class="status"><span class="d" aria-hidden="true"></span><div><b>Environment normal. Two items are waiting on you.</b><span>Backups, patching and monitoring reported normal at 14:02. One approval and one ticket reply are outstanding.</span></div></div>
+  <div class="two">
+    <div>
+      <section>
+        <h2>Open with DE <small>4 items</small></h2>
+        <table class="ledger">
+          <thead><tr><th>Item</th><th>State</th><th>Priority</th><th>Updated</th></tr></thead>
+          <tbody>
+            <tr><td><b>VPN drops every 20 minutes from home</b><div class="id">TKT-1042 · Network</div></td><td><span class="tok wait">Waiting on you</span></td><td><span class="tok high">High</span></td><td>12 min ago</td></tr>
+            <tr><td><b>Access request: M. Ortiz → Finance share</b><div class="id">APR-233 · raised by Sam Lee</div></td><td><span class="tok wait">Approve?</span></td><td>—</td><td>1 day</td></tr>
+            <tr><td><b>New laptop for the Tucson office</b><div class="id">TKT-1039 · Hardware</div></td><td><span class="tok prog">In progress</span></td><td>Medium</td><td>3 h</td></tr>
+            <tr><td><b>Shared mailbox rename</b><div class="id">TKT-1031 · Email</div></td><td><span class="tok done">Resolved</span></td><td>Low</td><td>Yesterday</td></tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>This month in numbers</h2>
+        <div class="figs">
+          <div class="fig"><div class="l">Tickets closed</div><div class="v num">11</div><div class="n">median first response 41 min</div></div>
+          <div class="fig"><div class="l">Devices covered</div><div class="v num">46 / 48</div><div class="n">2 laptops not seen in 7 days</div></div>
+          <div class="fig"><div class="l">Patch compliance</div><div class="v num">98%</div><div class="n">window completed Monday</div></div>
+          <div class="fig"><div class="l">Next invoice</div><div class="v num">$4,120</div><div class="n">due 15 Oct · auto-pay on</div></div>
+        </div>
+      </section>
+      <section>
+        <h2>Recent activity</h2>
+        <ul class="tl" style="padding:0;margin:0">
+          <li><time>12 min</time><div><b>DE engineer replied</b> on TKT-1042 and asked for a log file.</div></li>
+          <li><time>2 h</time><div><b>Invoice INV-0817</b> issued, $4,120, due 15 Oct.</div></li>
+          <li><time>Yesterday</time><div><b>TKT-1031 resolved</b> by Priya N.</div></li>
+          <li><time>Mon</time><div><b>Patch window completed</b>, 44 devices, 0 failures.</div></li>
+        </ul>
+      </section>
+      <p class="foot">Figures are drawn from Zoho Desk, Zoho Billing and DE monitoring at the time shown. Sample programs (roadmap, business reviews) are marked as samples until they go live.</p>
+    </div>
+    <aside class="side">
+      <div class="box"><h3>Your coverage</h3><div class="kv"><span>Plan</span><b>ProActive Business</b></div><div class="kv"><span>Primary engineer</span><b>Priya N.</b></div><div class="kv"><span>Support hours</span><b>24 × 7</b></div><div class="kv"><span>Next review</span><b>14 Oct</b></div></div>
+      <div class="box"><h3>Do something</h3><div class="kv"><a href="#">Report an outage →</a></div><div class="kv"><a href="#">Onboard a person →</a></div><div class="kv"><a href="#">Pay an invoice →</a></div><div class="kv"><a href="#">Browse the knowledge base →</a></div></div>
+      <div class="box"><h3>Reach DE</h3><div class="kv"><span>Phone</span><b>325-480-9870</b></div><div class="kv"><span>Desk</span><b>Open chat →</b></div></div>
+    </aside>
+  </div>
+</main>
+</body>
+</html>

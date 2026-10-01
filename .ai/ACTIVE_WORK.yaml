@@ -87,6 +87,53 @@ claims:
       whole; the Protect chapter keeps Joe's dark phone field through the
       chapter grammar (max-md well, paper from md up) and the phone test is
       re-pointed at that mechanism.
+  - id: portal-redesign-control-room
+    owner: claude
+    subsystem: client-portal-shell
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: 74535d76e9dacade78e4f3eedd4da9651745d3b4
+    files:
+      - client/src/styles/portal.css
+      - client/src/components/portal/shell/**
+      - client/src/components/portal/ui/**
+      - client/src/components/portal/TenantSelector.tsx
+      - client/src/hooks/usePortalHubEvents.ts
+      - client/src/lib/deskTimestamp.ts
+      - client/src/lib/deskTimestamp.test.ts
+      - client/src/pages/portal/PortalLayout.tsx
+      - client/src/pages/portal/PortalDashboard.tsx
+      - client/src/pages/portal/PortalTickets.tsx
+      - client/src/pages/portal/PortalTicketDetail.tsx
+      - client/src/pages/portal/PortalCreateTicket.tsx
+      - client/src/pages/portal/PortalLogin.tsx
+      - client/src/pages/portal/*.tsx (PortalLayout props only on the remaining pages)
+      - tailwind.config.ts (sidebar colour entries only)
+      - artifacts/design-concepts/portal-redesign/**
+      - artifacts/visual-qa/portal-redesign/**
+    status: active
+    started: 2026-09-30
+    note: >-
+      Joe, 2026-09-30: "redesign this properly ... fully featured and fully
+      working and looks amazing like a top notch SaaS program". Exploration
+      Mode per design/DESIGN-AUTHORITY.md: three concepts (Control Room, Paper
+      Ledger, Rail and Pane) rendered under artifacts/design-concepts/
+      portal-redesign with briefs; Control Room built provisionally pending
+      Joe's pick. Shell: grouped collapsible sidebar on the shadcn Sidebar
+      primitive, breadcrumbs, command palette, live-updates popover fed by
+      the real SSE stream, user menu with a dark/light theme, one session
+      check per page load. Kit: scoped portal tokens (dark graphite default,
+      paper light), PageHeader, Panel, StatTile, status tokens, EmptyState,
+      Callout, DataTable, Field. Dashboard, Tickets, Ticket detail, Create
+      ticket and Login rebuilt; every other portal page keeps its code and
+      inherits the shell and tokens (duplicate headings folded into the
+      layout). Every route, API call, role gate, impersonation path and
+      data-testid preserved. Overlaps: PR 280 (cursor/portal-store-warehouse)
+      changes two timestamp hunks in PortalTickets/PortalTicketDetail; the
+      same lib/deskTimestamp.ts and test are carried here so the merge is a
+      no-op on intent. The claude-completion-program-lane claim below lists
+      several portal pages as local-only patches; they were never on main and
+      are not available in this environment, so nothing of theirs was
+      overwritten, but that lane must re-apply onto this shell.
   - id: de-deck-reserve-clears-nudge
     owner: claude
     subsystem: homepage-protection-model
@@ -138,7 +185,7 @@ claims:
     base_sha: 74535d76e9dacade78e4f3eedd4da9651745d3b4
     files:
       - client/src/components/ExitIntentPopup.tsx
-    status: active
+    status: verified-live
     started: 2026-09-30
     note: >-
       Joe, 2026-09-30, on the exit-intent popup: "we dont like popups but this
@@ -151,6 +198,11 @@ claims:
       Promises only what /api/newsletter does (lead + human follow-up); no
       timeline, no "yours to keep" (both unconfirmed in docs/CLAIMS-REGISTER.md).
       Every data-testid and the analytics calls are unchanged.
+      RELEASED 2026-10-01: Joe marked PR 295 ready for review and merged it
+      (a87991c). VERIFIED LIVE 05:14 UTC: https://digeratiexperts.com serves
+      assets/index-vU6_N9GK.js carrying the new headline and none of the old
+      copy; the CI deploy run for a87991c completed. Files released.
+
   - id: store-experience-v2
     owner: claude
     subsystem: public-store-door2

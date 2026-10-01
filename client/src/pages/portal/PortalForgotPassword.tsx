@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/
 import { AlertCircle, Mail, CheckCircle2 } from "lucide-react";
 import { Link } from "wouter";
 import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
+import "@/styles/portal.css";
 import TurnstileWidget from "@/components/TurnstileWidget";
 
 export default function PortalForgotPassword() {
@@ -42,16 +43,18 @@ export default function PortalForgotPassword() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
+    <main className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
+      <div aria-hidden="true" className="pt-login-glow pointer-events-none absolute inset-0" />
+      <div aria-hidden="true" className="pt-login-line pointer-events-none absolute inset-x-0 top-0 h-px" />
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
           <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
         </div>
 
-        <Card className="bg-white/10 border-white/20 backdrop-blur">
+        <Card className="pt-still relative border-border bg-card shadow-none">
           <CardHeader className="space-y-2">
-            <h1 className="text-2xl font-semibold leading-none tracking-tight text-white">Reset Password</h1>
-            <CardDescription className="text-gray-300">
+            <h1 className="font-heading text-2xl font-semibold leading-none tracking-tight">Reset Password</h1>
+            <CardDescription className="text-muted-foreground">
               Enter your email and we'll send you a reset link
             </CardDescription>
           </CardHeader>
@@ -59,14 +62,14 @@ export default function PortalForgotPassword() {
           <CardContent>
             {success ? (
               <div className="space-y-4">
-                <div className="flex items-start gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400">
+                <div role="status" className="pt-callout pt-tone-ok pt-ink flex items-start gap-3 rounded-lg border p-4">
                   <CheckCircle2 className="h-5 w-5 flex-shrink-0 mt-0.5" />
                   <p className="text-sm">
                     If an account exists for <strong>{email}</strong>, a password reset link has been sent. Check your inbox and spam folder.
                   </p>
                 </div>
                 <Link href="/portal/login">
-                  <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10" data-testid="link-back-to-login">
+                  <Button variant="outline" className="w-full border-border bg-background hover:bg-accent" data-testid="link-back-to-login">
                     Back to Login
                   </Button>
                 </Link>
@@ -74,22 +77,22 @@ export default function PortalForgotPassword() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
-                  <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                  <div role="alert" className="pt-callout pt-tone-bad pt-ink flex items-center gap-2 rounded-lg border p-3 text-sm">
                     <AlertCircle className="h-4 w-4 flex-shrink-0" />
                     {error}
                   </div>
                 )}
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-white">Email Address</label>
+                  <label className="text-sm font-medium">Email Address</label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="email"
                       placeholder="you@company.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-9 bg-white/10 border-white/20 text-white placeholder:text-gray-500"
+                      className="border-input bg-background pl-9"
                       required
                       data-testid="input-email"
                     />
@@ -101,13 +104,14 @@ export default function PortalForgotPassword() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#D3126A] hover:bg-[#e01874]"
+                  variant="brand"
+                  className="w-full"
                   data-testid="button-send-reset"
                 >
                   {loading ? "Sending..." : "Send Reset Link"}
                 </Button>
 
-                <p className="text-center text-sm text-gray-400">
+                <p className="text-center text-sm text-muted-foreground">
                   Remember your password?{" "}
                   <Link href="/portal/login" className="text-de-magenta-ink hover:underline" data-testid="link-back-login">
                     Sign in

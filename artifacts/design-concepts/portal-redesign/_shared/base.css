@@ -1,0 +1,11 @@
+/* Shared honesty layer for the three portal concepts. Every figure on these
+   pages is EXAMPLE data (design/VISUAL_EVIDENCE.md); nothing is a live number. */
+*,*::before,*::after{box-sizing:border-box}
+html{font-size:16px}
+body{margin:0;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5}
+h1,h2,h3,h4{font-family:"Space Grotesk",Inter,system-ui,sans-serif;letter-spacing:-0.01em;margin:0}
+.num{font-family:Oxanium,"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+a{color:inherit;text-decoration:none}
+button{font:inherit;cursor:pointer}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.example{position:fixed;right:12px;bottom:12px;z-index:99;font:600 11px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:6px 8px;border-radius:4px;background:#fde68a;color:#3b2a00;border:1px solid #b45309}

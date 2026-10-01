@@ -159,18 +159,8 @@ export function PortalContracts() {
   };
 
   return (
-    <PortalLayout title="Contracts">
+    <PortalLayout title={companyName ? `${companyName} contracts` : "Contracts"} description="Company-specific agreements from TechSales (Zoho Sign and agreement packages), plus the DE document library used on the sales portal.">
       <div className="max-w-5xl mx-auto space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold">
-            {companyName ? `${companyName} — contracts & documents` : "Contracts & documents"}
-          </h2>
-          <p className="text-sm text-slate-600 mt-1">
-            Company-specific agreements from TechSales (Zoho Sign / agreement packages), plus the DE
-            document library reference used on the sales portal.
-          </p>
-        </div>
-
         {bridgeMessage && (
           <Alert>
             <Info className="h-4 w-4" />
