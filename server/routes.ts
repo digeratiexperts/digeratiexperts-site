@@ -5769,9 +5769,10 @@ export async function registerRoutes(app: Express) {
         return res.status(403).json({ error: "Access denied" });
       }
 
-      const pdf = buildQuotePdf(quoteRequest);
+      const pdf = await buildQuotePdf(quoteRequest);
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="${quoteRequest.quoteNumber}.pdf"`);
+      res.setHeader("Cache-Control", "no-store");
       return res.send(pdf);
     } catch (error: any) {
       console.error("[GET QUOTE PDF ERROR]", error);
