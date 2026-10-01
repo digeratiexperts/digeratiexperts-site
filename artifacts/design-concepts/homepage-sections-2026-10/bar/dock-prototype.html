@@ -55,6 +55,11 @@
   .dock__ask-text span { font-size: 13px; color: rgba(255,255,255,0.78); }
   .dock a:focus-visible, .dock button:focus-visible { outline: 2px solid #ec4899; outline-offset: 2px; }
 
+  /* Live C-37, kept: the Ask DE ring breathes exactly three times, then stops (none under reduced motion). */
+  .dock__ask-mark { position: relative; }
+  .dock__ask-mark::before { content: ""; position: absolute; inset: -6px; border-radius: 999px; border: 1px solid rgba(240,76,151,0.55); opacity: 0; animation: de-ask-breathe 2.8s ease-out 3; pointer-events: none; }
+  @keyframes de-ask-breathe { 0% { transform: scale(0.86); opacity: 0.9; } 100% { transform: scale(1.18); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .dock__ask-mark::before { animation: none; } }
   /* ---------- Autohide: "tucked" ---------- */
   /* Tucked = the chapter dock, phone, CTA and back-to-top leave; Ask DE stays reachable as one
      40px round button at the same corner. Nothing that is needed disappears. */

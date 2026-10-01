@@ -21,8 +21,14 @@
      - Each cell's link is its h3 (accessible name = the title only); a
        stretched ::after keeps the whole cell clickable. The persistent
        affordance is a quiet underline on the title (magenta on hover/focus).
-     - "Discuss Your Security Needs" keeps target=_blank to /book (live) and
-       now announces "(opens in a new tab)" to assistive tech.
+     - Live interaction restored (INTERACTION-INVENTORY T-03/T-04/T-05):
+       on hover/focus the title inks to paper-magenta #A30E52 and the live
+       arrow (top-right, opposite the index) goes from #5A5368 at 40% to
+       #D3126A with a 2px nudge, 200ms
+       (DigeratiWhatWeTackleSection.tsx:95-104).
+     - "Discuss Your Security Needs" opens /book in the SAME tab. Live sets
+       target=_blank (T-06, DigeratiWhatWeTackleSection.tsx:118-127), a
+       recorded defect; not copied.
      For Joe to decide (content, unchanged in this mock):
      - Item 03 "Compliance Gaps" points to /resources/cyber-facts, the same
        destination as "Full threat context". A compliance destination (e.g.
@@ -43,11 +49,16 @@
   .problems > :nth-child(n + 4) { border-top: 1px solid var(--de-paper-hairline); }
   .problem { position: relative; display: grid; grid-template-rows: auto auto 1fr; padding: 24px; }
   .problems > :nth-child(3n + 1) { padding-left: 0; }
+  .problem__top { display: flex; align-items: center; justify-content: space-between; }
   .problem .de-seq { line-height: 1; }
+  /* T-04: arrow fades in and nudges (live: text-[#5A5368]/40 → #D3126A, translate-x-0.5, transition-all 200ms). */
+  .problem__arrow { width: 16px; height: 16px; color: rgba(90, 83, 104, 0.4);
+    transition: color 200ms cubic-bezier(0.4, 0, 0.2, 1), transform 200ms cubic-bezier(0.4, 0, 0.2, 1); }
+  .problem:hover .problem__arrow, .problem:has(.problem__link:focus-visible) .problem__arrow { color: var(--de-magenta); transform: translateX(2px); }
   .problem__title { margin-top: 14px; }
   .problem__link { color: var(--de-ink); text-decoration: underline; text-decoration-thickness: 1px;
     text-decoration-color: rgba(26, 18, 16, 0.28); text-underline-offset: 5px;
-    transition: color 200ms ease-out, text-decoration-color 200ms ease-out; }
+    transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 150ms cubic-bezier(0.4, 0, 0.2, 1); }
   .problem__link::after { content: ''; position: absolute; inset: 0; }
   .problem:hover .problem__link, .problem__link:focus-visible { color: var(--de-magenta-paper-ink); text-decoration-color: currentColor; }
   .problem__link:focus-visible { outline: none; }
@@ -58,7 +69,13 @@
   .tackle__ask { display: flex; justify-content: space-between; align-items: center; gap: 32px; margin-top: 32px; }
   .tackle__ask .de-lede { margin-top: 0; color: var(--de-ink); text-wrap: pretty; }
   .tackle__ask .de-btn { flex-shrink: 0; }
-  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+  /* G-07: the press is transitioned with the colours (live transition-[…,transform] 200ms ease-out); RM keeps it still. */
+  .tackle__ask .de-btn { transition: background-color 200ms ease-out, border-color 200ms ease-out, color 200ms ease-out, transform 200ms ease-out; }
+  @media (prefers-reduced-motion: reduce) {
+    .problem:hover .problem__arrow, .problem:has(.problem__link:focus-visible) .problem__arrow { transform: none; }
+    .tackle__ask .de-btn:active { transform: none; }
+  }
 
   @media (max-width: 1023px) {
     .problems { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -94,32 +111,32 @@
 
     <ol class="de-cells de-cells--paper problems">
       <li class="problem">
-        <span class="de-seq" aria-hidden="true">01</span>
+        <div class="problem__top"><span class="de-seq" aria-hidden="true">01</span><svg class="problem__arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
         <h3 class="de-h4 problem__title"><a class="problem__link" href="/solutions/threat-detection">Ransomware &amp; Malware</a></h3>
         <p class="de-body problem__body">Advanced threat detection and rapid response to eliminate malicious attacks before damage occurs</p>
       </li>
       <li class="problem">
-        <span class="de-seq" aria-hidden="true">02</span>
+        <div class="problem__top"><span class="de-seq" aria-hidden="true">02</span><svg class="problem__arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
         <h3 class="de-h4 problem__title"><a class="problem__link" href="/solutions/backup-disaster-recovery">Data Loss Prevention</a></h3>
         <p class="de-body problem__body">Comprehensive backup strategies with tested disaster recovery ensuring business continuity</p>
       </li>
       <li class="problem">
-        <span class="de-seq" aria-hidden="true">03</span>
+        <div class="problem__top"><span class="de-seq" aria-hidden="true">03</span><svg class="problem__arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
         <h3 class="de-h4 problem__title"><a class="problem__link" href="/resources/cyber-facts">Compliance Gaps</a></h3>
         <p class="de-body problem__body">Navigate HIPAA, PCI DSS, and SOC 2 requirements with continuous monitoring and reporting</p>
       </li>
       <li class="problem">
-        <span class="de-seq" aria-hidden="true">04</span>
+        <div class="problem__top"><span class="de-seq" aria-hidden="true">04</span><svg class="problem__arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
         <h3 class="de-h4 problem__title"><a class="problem__link" href="/solutions/security-operations">Phishing &amp; Social Engineering</a></h3>
         <p class="de-body problem__body">Multi-layered email security combined with ongoing employee security awareness training</p>
       </li>
       <li class="problem">
-        <span class="de-seq" aria-hidden="true">05</span>
+        <div class="problem__top"><span class="de-seq" aria-hidden="true">05</span><svg class="problem__arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
         <h3 class="de-h4 problem__title"><a class="problem__link" href="/solutions/threat-detection">Zero-Day Vulnerabilities</a></h3>
         <p class="de-body problem__body">Proactive patch management and security assessments to close gaps before exploitation</p>
       </li>
       <li class="problem">
-        <span class="de-seq" aria-hidden="true">06</span>
+        <div class="problem__top"><span class="de-seq" aria-hidden="true">06</span><svg class="problem__arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
         <h3 class="de-h4 problem__title"><a class="problem__link" href="/solutions/unified-security">Insider Threats</a></h3>
         <p class="de-body problem__body">User behavior analytics and access controls to prevent internal security breaches</p>
       </li>
@@ -127,7 +144,7 @@
 
     <div class="tackle__ask">
       <p class="de-lede">Don't see your specific challenge? We handle custom threat profiles across Arizona.</p>
-      <a class="de-btn de-btn--primary" href="/book" target="_blank" rel="noopener noreferrer">Discuss Your Security Needs<span class="sr-only"> (opens in a new tab)</span> <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+      <a class="de-btn de-btn--primary" href="/book">Discuss Your Security Needs <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
     </div>
   </div>
 </section>

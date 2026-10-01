@@ -37,14 +37,24 @@
   .de-nav__cta .sm { display: none; }
   .de-nav__menu { display: none; align-items: center; justify-content: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: var(--radius-sm); border: 1px solid var(--de-hairline-strong); background: transparent; color: #fff; cursor: pointer; }
   .de-nav__menu svg { width: 22px; height: 22px; }
-  .de-spy { justify-content: space-around; border-bottom: 0; }
+  .de-spy { justify-content: space-between; gap: 16px; border-bottom: 0; }
+  .de-spy__links { display: flex; flex: 1; align-items: center; justify-content: space-around; }
+  /* Spy counter (live HomepageSectionNav.tsx:144-151): mono 11px semibold,
+     tracking 0.2em, white/45 with a dimmer white/25 slash; lg+ only. */
+  .de-spy__count { flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.2em; color: rgba(255,255,255,0.45); white-space: nowrap; }
+  .de-spy__count i { font-style: normal; color: rgba(255,255,255,0.25); }
+  /* Read-progress hairline (live HomepageSectionNav.tsx:153-158): h-0.5,
+     #D3126A, origin-left, scaleX = page scroll progress. Starts at 0. */
+  .read-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: #D3126A; transform-origin: left center; transform: scaleX(0); pointer-events: none; }
   .de-spy a { position: relative; display: inline-flex; align-items: center; height: 44px; color: rgba(255,255,255,0.72); }
   .de-spy a.is-active { color: #fff; }
   .de-spy a.is-active::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--de-magenta); }
 
   /* Field */
   .hero { position: relative; isolation: isolate; overflow: hidden; background: linear-gradient(110deg, #050312 0%, #060617 52%, #090924 100%); }
-  .hero__plate { position: absolute; inset: 0 0 0 38%; z-index: -3; background: url("/attached_assets/de-hero-arizona-dusk-1600.webp") center 85% / cover no-repeat; opacity: 0.5;
+  /* Overscan h 112% / top -6% for the scroll parallax (live
+     ReferenceHeroSection.tsx:99-102); JS moves it translateY 0 → 9%. */
+  .hero__plate { position: absolute; top: -6%; left: 38%; right: 0; height: 112%; z-index: -3; will-change: transform; background: url("/attached_assets/de-hero-arizona-dusk-1600.webp") center 85% / cover no-repeat; opacity: 0.5;
     -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 40%), linear-gradient(to bottom, #000 72%, transparent 100%); -webkit-mask-composite: source-in;
             mask-image: linear-gradient(to right, transparent 0%, #000 40%), linear-gradient(to bottom, #000 72%, transparent 100%); mask-composite: intersect; }
   .hero__grid { position: absolute; inset: 0 0 0 42%; z-index: -2; opacity: 0.15;
@@ -78,7 +88,14 @@
   .say { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 12px; }
   .say__word { font-family: var(--font-heading); font-weight: 600; font-size: 15px; letter-spacing: 0.08em; color: var(--de-muted); }
   .say__word i { font-style: normal; font-weight: 400; color: rgba(255,255,255,0.4); margin: 0 1px; }
-  .say__word u { text-decoration: none; border-bottom: 2px solid var(--de-magenta); padding-bottom: 1px; }
+  /* Stressed syllable: accent ink + 3px accent underline, paddingBottom 2
+     (live PronunciationCard.tsx:211-216) */
+  .say__word u { text-decoration: none; color: var(--de-magenta-ink); border-bottom: 3px solid var(--de-magenta); padding-bottom: 2px; }
+  /* Gold wordmark bars = the level meter (live PronunciationCard.tsx:40-115).
+     Gold appears here only (P-10). Bars scaleX from the left through
+     [1, 0.62, 0.45, 0.62], offset per bar, one step per 150ms, ease-in-out. */
+  .say__mark { flex: none; display: block; width: 19px; height: 24px; overflow: visible; }
+  .say__mark rect { transform-box: fill-box; transform-origin: left center; transition: transform 150ms ease-in-out; }
   .say__phon { font-family: var(--font-body); font-size: 15px; color: var(--de-muted-quiet); }
   .say__phon b { font-weight: 600; color: var(--de-magenta-ink); letter-spacing: 0.04em; }
   .say__btn { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--de-hairline-strong); background: transparent; color: var(--de-fg); font-size: 15px; font-weight: 600; cursor: pointer; }
@@ -104,8 +121,17 @@
   .win__lead { margin-top: 6px; font-size: 15px; line-height: 1.55; color: var(--de-muted-soft); text-wrap: balance; }
 
   .areas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 16px; border: 1px solid var(--de-hairline); border-radius: var(--radius-md); overflow: hidden; }
-  .areas li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; font-size: 15px; font-weight: 500; color: var(--de-muted); }
-  .areas .de-iconwell { width: 36px; height: 36px; color: #a99cff; background: var(--de-bg); }
+  .areas li { display: flex; }
+  /* Review-area tiles are live controls (DashboardMockup.tsx:90-128):
+     hover / focus / click makes a tile active → magenta border, white/.06
+     fill, icon well border + icon magenta; its posture bar highlights and
+     the readout follows. Leave / blur reverts to Overall. */
+  .area { display: flex; flex: 1; align-items: center; gap: 12px; min-height: 44px; padding: 12px 14px; font: inherit; font-size: 15px; font-weight: 500; text-align: left; color: var(--de-muted); background: transparent; border: 0; cursor: pointer; transition: background-color 150ms, box-shadow 150ms, color 150ms; }
+  .area:hover { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25); }
+  .area:focus-visible { outline: none; box-shadow: inset 0 0 0 2px rgba(211,18,106,0.7); }
+  .area[aria-pressed="true"] { color: #fff; background: rgba(255,255,255,0.06); box-shadow: inset 0 0 0 1px #D3126A; }
+  .areas .de-iconwell { width: 36px; height: 36px; color: #a99cff; background: var(--de-bg); transition: border-color 150ms, color 150ms; }
+  .area[aria-pressed="true"] .de-iconwell { border-color: #D3126A; color: #D3126A; }
   .areas .de-iconwell svg { width: 18px; height: 18px; }
   .areas li:nth-child(even) { border-left: 1px solid var(--de-hairline); }
   .areas li:nth-child(n+3) { border-top: 1px solid var(--de-hairline); }
@@ -118,10 +144,16 @@
   .bars li { display: grid; grid-template-columns: 92px minmax(0, 1fr) 30px; align-items: center; gap: 12px; font-size: 14px; color: var(--de-muted-soft); }
   .bars li .de-num { font-size: 14px; text-align: right; color: var(--de-muted); }
   .bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.07); overflow: hidden; }
-  .bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #5f4ae8, #8b7bff); }
-  .bars li.is-overall { padding-top: 10px; border-top: 1px dashed var(--de-hairline); color: #fff; font-weight: 600; }
-  .bars li.is-overall .bar i { background: var(--de-magenta); }
-  .bars li.is-overall .de-num { color: #fff; }
+  .bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #5f4ae8, #8b7bff); opacity: 0.55; transition: opacity 150ms; }
+  /* Backups is emerald, Overall is #D3126A with ring-1 white/15 (DashboardMockup.tsx:20-26, 165) */
+  .bars li[data-bar="Backups"] .bar i { background: #34d399; }
+  .bars li.is-overall { padding-top: 10px; border-top: 1px dashed var(--de-hairline); font-weight: 600; }
+  .bars li.is-overall .bar i { background: var(--de-magenta); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15); }
+  /* Active bar: opacity 1, others 0.55; active label brightens (DashboardMockup.tsx:149-192) */
+  .bars li { transition: color 150ms; }
+  .bars li.is-active { color: #fff; }
+  .bars li.is-active .bar i { opacity: 1; }
+  .bars li.is-active .de-num { color: #fff; }
 
   .win__sec--out { padding: 14px 24px 16px; }
   .outcomes { display: flex; flex-wrap: wrap; gap: 8px 20px; }
@@ -152,7 +184,7 @@
     .hero .de-h1 { font-size: clamp(2.45rem, 7vw, 4.25rem); }
     .hero .de-h1 span { white-space: normal; }
     .win { max-width: 680px; }
-    .hero__plate { inset: 0; } .hero__grid { inset: 0; }
+    .hero__plate { left: 0; } .hero__grid { inset: 0; }
   }
   @media (max-width: 1023px) {
     .de-nav__items, .de-spy { display: none; }

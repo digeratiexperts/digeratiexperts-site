@@ -175,3 +175,34 @@ ul, ol { padding: 0; list-style: none; }
 .de-spy .is-active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -13px; height: 2px; background: var(--de-magenta); }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; animation: none !important; } }
+
+/* ---------- Live interaction grammar, restored (INTERACTION-INVENTORY.md G-04..G-16) ----------
+   Joe, 2026-10-01: "a lot of subtle work can be lost so be careful". */
+/* G-11: the short magenta rule before every eyebrow. */
+.de-eyebrow { display: flex; align-items: center; gap: 12px; }
+.de-head--center .de-eyebrow, .de-eyebrow--center { justify-content: center; }
+.de-eyebrow::before { content: ""; width: 24px; height: 1px; background: currentColor; flex-shrink: 0; }
+/* G-04/G-05: linked cards lift 3px, no scale; border to magenta 72%; press-down on :active; fine pointers only. */
+a.de-card, a.de-card--paper, .de-lift { transition: border-color 0.2s ease-out, transform 0.18s ease-out, background-color 0.2s ease-out; }
+@media (hover: hover) and (pointer: fine) {
+  a.de-card:hover, a.de-card--paper:hover, .de-lift:hover { border-color: rgba(211, 18, 106, 0.72); transform: translateY(-3px); }
+}
+a.de-card:active, a.de-card--paper:active, .de-lift:active { transform: translateY(0); }
+a.de-card:focus-visible, a.de-card--paper:focus-visible, .de-lift:focus-visible { outline: 2px solid #ec4899; outline-offset: 2px; }
+/* G-16: the icon tile's border turns magenta with its card. */
+.de-iconwell { transition: border-color 0.2s ease-out; }
+a:hover .de-iconwell, a:focus-visible .de-iconwell, .de-lift:hover .de-iconwell, li:hover > a .de-iconwell { border-color: var(--de-magenta); }
+/* G-10: link hover ink and the 2px arrow nudge. */
+.de-link { transition: color 0.2s ease-out; }
+.de-link svg { transition: transform 0.2s ease-out; }
+.de-link:hover { color: #f0187a; }
+.f-paper .de-link:hover, .de-island .de-link:hover { color: var(--de-magenta); }
+.de-link:hover svg, a:hover > .de-link svg { transform: translateX(2px); }
+.de-btn svg { transition: transform 0.2s ease-out; }
+.de-btn:hover svg:last-child { transform: translateX(2px); }
+/* Selected recipe (V-05, X-16, N-05, F-15): magenta border doubled by a 1px inset, no layout shift. */
+.is-selected, .de-chip.is-selected { border-color: var(--de-magenta) !important; box-shadow: inset 0 0 0 1px var(--de-magenta); }
+/* G-02: shared reveal (system/reveal.js adds .de-reveal / .is-in). Starts at 0.55, never invisible. */
+.de-reveal { opacity: 0.55; transform: translateY(12px); transition: opacity 0.3s cubic-bezier(0.22, 1, 0.36, 1), transform 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+.de-reveal.is-in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .de-reveal { opacity: 1; transform: none; } .de-link:hover svg, .de-btn:hover svg:last-child { transform: none; } a.de-card:hover, .de-lift:hover { transform: none; } }
