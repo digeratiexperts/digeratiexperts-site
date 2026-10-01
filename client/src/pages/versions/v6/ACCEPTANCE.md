@@ -1,31 +1,30 @@
 # Version 6 acceptance
 
-Version 6 is every section of the live homepage, redrawn on the Version 5 system.
-It is accepted by the same script as Version 5, `scripts/qa/homepage-v5-acceptance.mjs`,
-with the limits that belong to a page of eighteen sections instead of ten. The checks
-and the mistakes they guard against are the ones listed in `../v5/ACCEPTANCE.md`; the
-differences are below.
+Version 6 is the live homepage, cleaned in the **current DE theme** (graphite
+`#050312`, paper `#F7F5F2`, magenta `#D3126A`). It is not Version 5's paper
+system. ChatGPT's other-theme board is Version 7 and is not in this page.
+
+Version 5 stays frozen at `/version-5`. Production `/` is untouched.
+
+It is checked by `scripts/qa/homepage-v5-acceptance.mjs` with `--scope v6`.
 
 ## What changes for Version 6
 
 - **Scope.** The page is scoped under `.v6` and its primary action carries
-  `data-v6-cta="primary"`, so the script runs with `--scope v6`.
+  `data-v6-cta="primary"`.
+- **CTA.** Canonical `Get My Cyber Risk Assessment` from `client/src/lib/ctaCopy.ts`.
 - **Section order.** Read from the eyebrow labels, in the live homepage's order:
   Why we exist · Why it matters · Problems we solve · How to work with us · What we protect ·
   Client proof · Why Arizona businesses work with us · The people behind your technology ·
   Who we work with · Pricing · Security updates · Cyber Risk Assessment · Questions · Contact.
-- **Length.** At most 2,000 words and 16 desktop viewports (26 tablet, 42 phone). The live
-  homepage is 23 desktop viewports; Version 5 is 7. The length follows from the section
-  count Joe asked for; trimming sections is his call, not the script's.
-- **Figures.** Besides the pricing, SLA, contact and guarantee sources, a figure may come
-  from `client/src/data/cyberAwarenessFacts.ts` (the four sourced statistics), the live
-  contact section (office hours) and the live threats section (the 45-day window).
-- **Live feeds.** Reviews and security updates render only what `/api/public/reviews` and
-  `/api/public/threats` return; when a feed is empty the page says so. The local run has no
-  Google key and no feed cache, so the frames show the empty states.
-- **Forms.** The assessment, contact and newsletter forms post to the same endpoints the
-  live homepage uses (`/api/assessment`, `/api/contact`, `/api/newsletter`). The script does
-  not submit them.
+- **Length.** At most 2,000 words and 16 desktop viewports (26 tablet, 42 phone).
+- **Figures.** Prices, SLA, contact, guarantee sources, plus
+  `client/src/data/cyberAwarenessFacts.ts`, office hours, and the 45-day threat window.
+  Do not use ChatGPT mock figures (73%, $4.88M, B+ scores, $20,000 pen-test offer).
+- **Live feeds.** Reviews and security updates render only what the public APIs return.
+- **Forms.** `/api/assessment`, `/api/contact`, `/api/newsletter`.
+- **Hero.** Live-better DashboardMockup and compact pronunciation stay; founder photo
+  remains in the people section only.
 
 ## How to run it
 
@@ -39,5 +38,3 @@ node scripts/qa/homepage-v5-acceptance.mjs --url http://localhost:4173/version-6
   --sections "Why we exist,Why it matters,Problems we solve,How to work with us,What we protect,Client proof,Why Arizona,The people,Who we work with,Pricing,Security updates,Cyber Risk Assessment,Questions,Contact" \
   --facts client/src/data/cyberAwarenessFacts.ts,client/src/pages/sections/DigeratiContactSection.tsx,client/src/pages/sections/DigeratiThreatsInsightsSection.tsx
 ```
-
-Exit code 1 on any failure. Frames and `REPORT.md` land in `--out`.
