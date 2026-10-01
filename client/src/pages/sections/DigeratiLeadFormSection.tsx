@@ -99,7 +99,7 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
   return (
     <HomeChapter tone="paper" id="assessment-form">
       <HomeContainer>
-        <div className="grid items-start gap-10 lg:grid-cols-12 lg:gap-14">
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12 lg:gap-14">
           <motion.div
             className="lg:col-span-5"
             initial={prefersReducedMotion ? false : revealInitial}
@@ -243,7 +243,7 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
                     size="lg"
                     data-testid="button-lead-submit"
                     disabled={isSubmitting}
-                    className="h-12 w-full justify-center gap-2 border-0 !bg-[#D3126A] text-base font-semibold text-white shadow-none transition-colors hover:!bg-[#e01874] hover:shadow-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
+                    className="h-auto min-h-12 w-full justify-center gap-2 whitespace-normal border-0 px-4 py-3 text-center !bg-[#D3126A] sm:px-8 text-base font-semibold text-white shadow-none transition-colors hover:!bg-[#e01874] hover:shadow-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
                   >
                     {isSubmitting ? (
                       <>
