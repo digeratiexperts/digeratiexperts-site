@@ -79,6 +79,17 @@ export const HOMEPAGE_VERSIONS: HomepageVersion[] = [
     kind: "build",
     source: "claude/homepage-v4",
   },
+  {
+    n: 5,
+    path: "/version-5",
+    title: "The practical homepage",
+    date: "2026-09-30",
+    status: "In build (draft PR). Preview only; Joe decides whether it replaces /.",
+    summary:
+      "One conventional page, done carefully: what Digerati Experts does for Arizona businesses, for whom, the four published ProActive prices, the written response times, the founder, the questions people ask before they call, and how to reach us. Every fact on the page is read from the same files the rest of the site uses; nothing is invented and nothing scroll-jacks. Built after Joe's 2026-09-30 direction to start over and make something practical, with an acceptance script (scripts/qa/homepage-v5-acceptance.mjs) as the definition of done.",
+    kind: "build",
+    source: "claude/homepage-v5-practical",
+  },
 ];
 
 export function versionByNumber(n: number): HomepageVersion | undefined {
