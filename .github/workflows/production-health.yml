@@ -6,6 +6,13 @@
 # this class of incident. Only /api/health showed it, and only to whoever
 # happened to look.
 #
+# On 2026-09-30 the DE Desk "Get Support" tab had been failing for months: the
+# Zoho Desk refresh token was dead (invalid_code) while every health signal
+# read green, because nothing exercised the Desk credential. #289 added
+# GET /api/zoho/desk/status, which performs one authenticated Desk read with
+# the server's own token; this probe reads it so a dead token opens an issue
+# the same way a dropped database does.
+#
 # Cost note: every scheduled run bills at least one Actions minute, and the
 # account's Actions budget has "stop usage" enabled — an over-run would block
 # production deploys, so the interval is deliberately conservative. Every 30
@@ -71,6 +78,32 @@ jobs:
           STATUS="$(field '.status' 'unknown')"
           UPTIME="$(field '.uptime' 'unknown')"
 
+          # Second probe: the support desk. The endpoint answers 503 with a
+          # JSON body when the desk is unreachable, so curl -f would discard
+          # the diagnosis; read the body regardless of status. Same two-probe
+          # rule; the endpoint caches for 60s, so wait longer than that.
+          DESK_URL="https://digeratiexperts.com/api/zoho/desk/status"
+          desk_once() {
+            curl -sS --max-time 20 "$DESK_URL" 2>/dev/null
+          }
+          DESK_BODY="$(desk_once || true)"
+          desk_field() {
+            local value
+            value="$(printf '%s' "$DESK_BODY" | jq -r "$1 // empty" 2>/dev/null || true)"
+            printf '%s' "${value:-$2}"
+          }
+          # `// empty` would swallow a JSON false (jq treats false as absent),
+          # so the boolean goes through tostring: "true", "false", or "null".
+          DESK="$(desk_field '.connected | tostring' 'unreachable')"
+          if [ "$DESK" != "true" ]; then
+            echo "First desk probe reported connected='$DESK'; re-checking in 75s (the endpoint caches for 60s)."
+            sleep 75
+            DESK_BODY="$(desk_once || true)"
+            DESK="$(desk_field '.connected | tostring' 'unreachable')"
+          fi
+          DESK_REASON="$(desk_field '.reason' 'none')"
+          DESK_ERROR="$(desk_field '.errorCode' 'none')"
+
           # Everything below treats the response as untrusted, because a workflow
           # output is a command channel. A value carrying a newline ends the
           # key=value line early, and a heredoc whose delimiter appears in the
@@ -83,6 +116,9 @@ jobs:
           DB="$(scalar "$DB")"
           STATUS="$(scalar "$STATUS")"
           UPTIME="$(scalar "$UPTIME")"
+          DESK="$(scalar "$DESK")"
+          DESK_REASON="$(scalar "$DESK_REASON")"
+          DESK_ERROR="$(scalar "$DESK_ERROR")"
 
           # Body: capped, then base64 on one line, so there is no delimiter to
           # break out of and no size that can produce an unreadable issue.
@@ -96,8 +132,11 @@ jobs:
           echo "uptime=$UPTIME"   >> "$GITHUB_OUTPUT"
           echo "truncated=$TRUNCATED" >> "$GITHUB_OUTPUT"
           echo "body_b64=$(printf '%s' "$BODY_CAPPED" | base64 -w0)" >> "$GITHUB_OUTPUT"
+          echo "desk=$DESK"               >> "$GITHUB_OUTPUT"
+          echo "desk_reason=$DESK_REASON" >> "$GITHUB_OUTPUT"
+          echo "desk_error=$DESK_ERROR"   >> "$GITHUB_OUTPUT"
 
-          echo "database=$DB status=$STATUS uptime=$UPTIME truncated=$TRUNCATED"
+          echo "database=$DB status=$STATUS uptime=$UPTIME truncated=$TRUNCATED desk=$DESK reason=$DESK_REASON error=$DESK_ERROR"
 
       - name: File or clear the health issue
         uses: actions/github-script@v7
@@ -107,10 +146,14 @@ jobs:
           UPTIME: ${{ steps.probe.outputs.uptime }}
           BODY_B64: ${{ steps.probe.outputs.body_b64 }}
           TRUNCATED: ${{ steps.probe.outputs.truncated }}
+          DESK: ${{ steps.probe.outputs.desk }}
+          DESK_REASON: ${{ steps.probe.outputs.desk_reason }}
+          DESK_ERROR: ${{ steps.probe.outputs.desk_error }}
         with:
           script: |
             const MARKER = 'Production database is not connected';
-            const { DB, STATUS, UPTIME, BODY_B64, TRUNCATED } = process.env;
+            const DESK_MARKER = 'Production support desk is unreachable';
+            const { DB, STATUS, UPTIME, BODY_B64, TRUNCATED, DESK, DESK_REASON, DESK_ERROR } = process.env;
 
             // Decoded here rather than passed raw: see the probe step's note on
             // why the body never travels through a delimiter.
@@ -131,6 +174,45 @@ jobs:
             });
             const existing = open.find((issue) => !issue.pull_request && issue.title.startsWith(MARKER));
 
+            const deskHealthy = DESK === 'true';
+            const deskExisting = open.find((issue) => !issue.pull_request && issue.title.startsWith(DESK_MARKER));
+
+            // --- the support desk -------------------------------------------
+            if (deskHealthy) {
+              if (deskExisting) {
+                await github.rest.issues.createComment({
+                  ...context.repo, issue_number: deskExisting.number,
+                  body: `Recovered: \`GET /api/zoho/desk/status\` reads \`connected: true\` again.\n\nRun: ${runUrl}`,
+                });
+                await github.rest.issues.update({
+                  ...context.repo, issue_number: deskExisting.number, state: 'closed',
+                });
+                core.notice(`Desk recovered; closed #${deskExisting.number}`);
+              }
+            } else {
+              const deskBody = [
+                `\`GET /api/zoho/desk/status\` reads **\`connected: ${DESK}\`** (reason \`${DESK_REASON}\`, Zoho errorCode \`${DESK_ERROR}\`). Confirmed by a second probe 75s after the first.`,
+                '',
+                'The site keeps serving pages. What breaks is the DE Desk **Get Support** tab: every ticket submission answers 503 "temporarily unavailable" until the desk credential works again. The usual cause is the Zoho Desk refresh token in `/home/digeratiexperts.com/shared/.env` (expired, revoked, or without Desk scopes: `invalid_code`). Rotating it is an operator action, never a code change.',
+                '',
+                `Run: ${runUrl}`,
+              ].join('\n');
+              if (deskExisting) {
+                await github.rest.issues.createComment({
+                  ...context.repo, issue_number: deskExisting.number, body: deskBody,
+                });
+                core.notice(`Desk still unreachable; commented on #${deskExisting.number}`);
+              } else {
+                const created = await github.rest.issues.create({
+                  ...context.repo,
+                  title: `${DESK_MARKER} (${DESK_REASON})`,
+                  body: `${deskBody}\n\nThis issue closes itself once a later probe sees \`connected: true\`.`,
+                });
+                core.notice(`Opened #${created.data.number}`);
+              }
+            }
+
+            // --- the database ----------------------------------------------
             if (healthy) {
               // Close on recovery so an open issue always means "broken right now".
               if (existing) {
@@ -143,35 +225,37 @@ jobs:
                 });
                 core.notice(`Recovered; closed #${existing.number}`);
               }
-              return;
-            }
-
-            const body = [
-              `\`services.database\` reads **\`${DB}\`**, not \`connected\`. Confirmed by a second probe 30s after the first.`,
-              '',
-              `Top-level status: \`${STATUS}\` · process uptime: \`${UPTIME}\`s`,
-              '',
-              'The site keeps serving pages, so this is invisible from the homepage. What breaks is anything durable — portal auth, store orders, quote submissions, chat persistence — and on `fallback_memory` those writes go to memory and are lost on the next restart.',
-              '',
-              '```json',
-              BODY,
-              '```',
-              '',
-              `Run: ${runUrl}`,
-            ].join('\n');
-
-            if (existing) {
-              await github.rest.issues.createComment({
-                ...context.repo, issue_number: existing.number, body,
-              });
-              core.notice(`Still unhealthy; commented on #${existing.number}`);
             } else {
-              const created = await github.rest.issues.create({
-                ...context.repo,
-                title: `${MARKER} (${DB})`,
-                body: `${body}\n\nThis issue closes itself once a later probe sees \`connected\`.`,
-              });
-              core.notice(`Opened #${created.data.number}`);
+              const body = [
+                `\`services.database\` reads **\`${DB}\`**, not \`connected\`. Confirmed by a second probe 30s after the first.`,
+                '',
+                `Top-level status: \`${STATUS}\` · process uptime: \`${UPTIME}\`s`,
+                '',
+                'The site keeps serving pages, so this is invisible from the homepage. What breaks is anything durable — portal auth, store orders, quote submissions, chat persistence — and on `fallback_memory` those writes go to memory and are lost on the next restart.',
+                '',
+                '```json',
+                BODY,
+                '```',
+                '',
+                `Run: ${runUrl}`,
+              ].join('\n');
+
+              if (existing) {
+                await github.rest.issues.createComment({
+                  ...context.repo, issue_number: existing.number, body,
+                });
+                core.notice(`Still unhealthy; commented on #${existing.number}`);
+              } else {
+                const created = await github.rest.issues.create({
+                  ...context.repo,
+                  title: `${MARKER} (${DB})`,
+                  body: `${body}\n\nThis issue closes itself once a later probe sees \`connected\`.`,
+                });
+                core.notice(`Opened #${created.data.number}`);
+              }
             }
 
-            core.setFailed(`services.database is "${DB}", expected "connected"`);
+            const failures = [];
+            if (!healthy) failures.push(`services.database is "${DB}", expected "connected"`);
+            if (!deskHealthy) failures.push(`desk connected is "${DESK}" (${DESK_REASON}/${DESK_ERROR}), expected "true"`);
+            if (failures.length) core.setFailed(failures.join('; '));
