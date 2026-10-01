@@ -7,47 +7,55 @@
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="../system/tokens.css">
 <style>
-  /* Section 11 — Pricing: the second of the page's two raised boxes (the first is Stats). */
-  .pricing-box { padding: 48px 48px 48px; background-image: radial-gradient(720px circle at 100% 0%, rgba(91, 69, 224, 0.10), transparent 62%); }
+  /* Section 11 — Pricing: the second of the page's two raised boxes (the first is Stats).
+     Same 48px inset as Stats so the two raised boxes share one left edge. No violet echo:
+     grain plus the hairline border carry the raised box; the violet corner belongs to Stats. */
+  .pricing-box { padding: 48px; }
   .pricing-h2 .pricing-h2__line { display: block; }
   .pricing-box .de-lede, .pricing-fit, .pricing-fitnote, .pricing-close .de-body, .pricing-close .de-small { text-wrap: pretty; }
 
   /* Tier cards: equal height, seq 01–04, Oxanium prices, one hairline, no dots. */
   .pricing-grid { margin-top: 40px; align-items: stretch; }
   .pricing-card { display: flex; flex-direction: column; min-width: 0; }
+  /* Flagship: a quiet marker, not a "selected" state — stronger hairline + 2px magenta top rule, no ring. */
+  .pricing-card--flagship { border-color: var(--de-hairline-strong); box-shadow: inset 0 2px 0 var(--de-magenta); }
   .pricing-card__meta { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 24px; }
-  .pricing-tag--flag { color: var(--de-magenta-ink); border-color: rgba(211, 18, 106, 0.5); }
-  .pricing-card .de-h3 { margin-top: 12px; color: #fbfaf8; }
+  /* Product badge, deliberately not the .de-tag evidence-label recipe: magenta ink, no border. */
+  .pricing-flag { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--de-magenta-ink); }
+  .pricing-card .de-h3 { margin-top: 12px; font-size: 22px; color: #fbfaf8; }
   .pricing-price { display: flex; align-items: baseline; gap: 5px; margin-top: 12px; }
   .pricing-amount { font-size: 34px; font-weight: 700; line-height: 1; color: #fbfaf8; letter-spacing: -0.02em; }
   .pricing-per { font-size: 15px; color: var(--de-muted-soft); }
   .pricing-min { margin-top: 6px; font-size: 15px; line-height: 1.5; color: var(--de-muted-soft); }
-  .pricing-min .de-num { color: var(--de-muted); }
+  .pricing-min .de-num { color: var(--de-muted-soft); font-weight: 500; }
   .pricing-fit { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--de-hairline); flex: 1; font-size: 15px; line-height: 1.55; }
   .pricing-list { margin-top: 18px; display: grid; gap: 8px; font-size: 15px; line-height: 1.5; color: var(--de-muted); }
   .pricing-list li { display: flex; align-items: baseline; }
   .pricing-list .de-dash { flex-shrink: 0; position: relative; top: -4px; }
-  .pricing-card .de-link { margin-top: 20px; align-self: flex-start; }
+  /* Tier link: 44px hit area (Tier 0), so the visual gap above can drop to ~10px. */
+  .pricing-card .de-link { margin-top: 10px; margin-bottom: -10px; min-height: 44px; align-items: center; align-self: flex-start; }
 
-  .pricing-fitnote { margin-top: 28px; max-width: 900px; }
-
-  /* Closing row inside the box: copy left, actions right. */
-  .pricing-close { margin-top: 36px; padding-top: 36px; border-top: 1px solid var(--de-hairline); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 64px; align-items: start; }
+  /* One closing composition under one hairline: the fit note as its lede, then copy left, actions right. */
+  .pricing-close { margin-top: 40px; padding-top: 36px; border-top: 1px solid var(--de-hairline); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 64px; align-items: end; }
+  .pricing-fitnote { grid-column: 1 / -1; max-width: 900px; color: var(--de-fg); }
   .pricing-close__copy { max-width: 720px; }
   .pricing-close .de-h3 { color: #fbfaf8; }
   .pricing-close .de-body { margin-top: 10px; }
-  .pricing-close .de-small { margin-top: 14px; max-width: 720px; }
-  .pricing-close__actions { display: flex; flex-wrap: wrap; gap: 12px; justify-self: end; margin-top: -12px; }
+  .pricing-close .pricing-fitnote { margin-top: 0; }
+  .pricing-close .de-small { margin-top: 14px; max-width: 720px; font-size: 15px; color: var(--de-muted-soft); }
+  .pricing-close__actions { display: flex; flex-wrap: wrap; gap: 12px; justify-self: end; }
 
   @media (max-width: 1023px) {
     .pricing-box { padding: 40px 32px; }
     .pricing-h2 .pricing-h2__line { display: inline; }
     .pricing-close { grid-template-columns: 1fr; }
-    .pricing-close__actions { justify-self: start; margin-top: 0; }
+    .pricing-close__actions { justify-self: start; }
   }
   @media (max-width: 639px) {
-    .pricing-box { padding: 32px 20px; }
-    .pricing-grid { margin-top: 28px; }
+    /* Phone: drop the box chrome (as live de-paper-island--md-up) so cards sit on the well at the 16px gutter. */
+    .pricing-box { background: none; border: 0; padding: 0; border-radius: 0; }
+    .pricing-box::after { content: none; }
+    .pricing-grid { margin-top: 28px; gap: 12px; }
     .pricing-close { margin-top: 28px; padding-top: 28px; }
     .pricing-close__actions { width: 100%; }
     .pricing-close__actions .de-btn { width: 100%; }
@@ -93,8 +101,8 @@
           <a class="de-link" href="/solutions/proactive-office-ecosystem">ProActive Office <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
         </li>
 
-        <li class="de-card de-card--active pricing-card">
-          <div class="pricing-card__meta"><span class="de-seq">03</span><span class="de-tag pricing-tag--flag">Flagship Cyber</span></div>
+        <li class="de-card pricing-card pricing-card--flagship">
+          <div class="pricing-card__meta"><span class="de-seq">03</span><span class="pricing-flag">Flagship Cyber</span></div>
           <h3 class="de-h3">Business</h3>
           <p class="pricing-price"><span class="de-num pricing-amount">$245</span><span class="pricing-per">/user/mo</span></p>
           <p class="pricing-min"><span class="de-num">$5,400</span> monthly minimum</p>
@@ -122,9 +130,8 @@
         </li>
       </ol>
 
-      <p class="de-body pricing-fitnote">Not sure which package fits? We assess your environment — users, devices, locations, infrastructure, security, compliance, recovery, and whether you need fully managed or co-managed operations — then match the model.</p>
-
       <div class="pricing-close">
+        <p class="de-body pricing-fitnote">Not sure which package fits? We assess your environment — users, devices, locations, infrastructure, security, compliance, recovery, and whether you need fully managed or co-managed operations — then match the model.</p>
         <div class="pricing-close__copy">
           <h3 class="de-h3">Not just IT support — one operating model</h3>
           <p class="de-body">ProActive Business consolidates capabilities organizations often buy separately: managed IT, workplace, identity, endpoint security, email security, network security, backup &amp; recovery, security operations, and technology + cyber strategy — one accountable partner.</p>

@@ -58,12 +58,16 @@ for (const file of files) {
     await page.waitForTimeout(250);
     const info = await page.evaluate(() => ({
       height: document.documentElement.scrollHeight,
+      content: Math.floor(document.body.getBoundingClientRect().height),
       overflow: document.documentElement.scrollWidth > window.innerWidth,
       fonts: { grotesk: document.fonts.check('600 20px "Space Grotesk"'), inter: document.fonts.check('400 16px Inter'), oxanium: document.fonts.check('600 16px Oxanium') },
       title: document.title,
     }));
     const out = path.join(outDir, `${base}-${width}.png`);
-    await page.screenshot({ path: out, fullPage: true });
+    // Sections shorter than the 900px viewport are clipped to their own height
+    // so the PNG does not end in a band of empty page background.
+    if (info.content > 0 && info.content < 900) await page.screenshot({ path: out, clip: { x: 0, y: 0, width, height: info.content } });
+    else await page.screenshot({ path: out, fullPage: true });
     const ok = !info.overflow && errors.length === 0 && info.fonts.grotesk && info.fonts.inter && info.fonts.oxanium;
     if (!ok) failures++;
     console.log(JSON.stringify({ file, width, out: path.relative(conceptDir, out), height: info.height, overflow: info.overflow, fonts: info.fonts, errors, ok }));

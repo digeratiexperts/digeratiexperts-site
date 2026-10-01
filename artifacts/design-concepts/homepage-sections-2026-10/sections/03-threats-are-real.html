@@ -8,7 +8,17 @@
 <link rel="stylesheet" href="../system/tokens.css">
 <style>
   /* 03 · The threats are real — the first of the page's two raised boxes.
-     Copy and destinations: CONTENT-INVENTORY.md §3. Everything else from tokens.css. */
+     Copy and destinations: CONTENT-INVENTORY.md §3. Everything else from tokens.css.
+
+     Changed from live (integrator notes):
+     - Four gradient cards inside the box became one hairline rail (.de-cells): one container level, not two.
+     - Magenta dots removed; the link moved into the head row.
+     - Box glow: one violet echo at the top-left corner (0.12, the cap). Live's second, faint magenta
+       echo (rgba(211,18,106,0.05) at 95% 90%) is dropped on purpose; do not put it back.
+     - Each fact is still a whole-cell external link; it now shows an always-visible external glyph,
+       "PDF" on the IC3 report, and screen-reader text "(opens in a new tab)". Source strings unchanged. */
+
+  .de-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
   /* Box: raised field, one faint violet echo in the top-left corner (alpha 0.12, the cap). */
   .stats-box {
@@ -16,41 +26,47 @@
     background-image: radial-gradient(900px circle at 0% 0%, rgba(91, 69, 224, 0.12), rgba(91, 69, 224, 0) 68%);
   }
 
-  /* Head row: head left, the section's one secondary link on the right, on the lede's baseline. */
-  .stats-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; }
+  /* Head row: head left, the section's one secondary link on the right, on the lede's last baseline. */
+  .stats-head { display: flex; justify-content: space-between; align-items: last baseline; gap: 32px; }
   .stats-head .de-h2 { text-wrap: balance; }
   .stats-head .de-lede { text-wrap: pretty; }
-  .stats-head .de-link { flex-shrink: 0; margin-bottom: 6px; }
+  .stats-head .de-link { flex-shrink: 0; min-height: 44px; }
 
-  /* Four equal cards. */
-  .stats-grid { margin-top: 40px; }
-  .stats-grid > li { display: flex; min-width: 0; }
-  .stats-card { flex: 1; display: flex; flex-direction: column; color: inherit; transition: border-color 200ms ease-out; }
-  .stats-card:hover { border-color: var(--de-hairline-strong); }
-  .stats-card:focus-visible { outline: 2px solid #ec4899; outline-offset: 2px; }
-  .stats-card .de-stat { margin-top: 24px; color: #fbfaf8; }
-  .stats-card__statement { margin-top: 10px; text-wrap: pretty; }
-  /* Source line sits on a hairline at the foot of every card. The footer reserves two
-     lines so the hairline and the source baseline land at the same y in all four cards,
-     whether the source wraps or not. */
-  .stats-source { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--de-hairline); }
-  @media (min-width: 640px) {
-    .stats-card__statement { margin-bottom: 24px; }   /* never lets the tallest statement crowd the hairline */
-    .stats-source { min-height: calc(14px + 1px + 42px); }
-  }
+  /* One sourced data strip: four cells, 1px seams, no per-cell fill or radius.
+     Subgrid rows keep number, statement and source hairline on shared lines across the rail. */
+  .stats-cells { margin-top: 40px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .stats-cells > li { padding: 0; display: grid; grid-row: span 4; grid-template-rows: subgrid; min-width: 0; }
+  .stats-cell { grid-row: 1 / -1; display: grid; grid-template-rows: subgrid; align-content: start; padding: 24px; color: inherit; }
+  .stats-cell:focus-visible { outline: 2px solid var(--de-magenta-ink); outline-offset: -4px; border-radius: var(--radius-sm); }
+  .stats-cell .de-iconwell { align-self: start; }
+  .stats-cell .de-stat { margin-top: 24px; color: #fbfaf8; }
+  .stats-cell__statement { margin-top: 12px; font-size: 17px; line-height: 1.5; color: var(--de-muted); text-wrap: pretty; }
+  /* Source on a hairline at the foot of every cell: the citation you can open. */
+  .stats-source { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--de-hairline); align-self: start;
+    font-size: 15px; line-height: 1.5; color: var(--de-muted-soft); }
+  .stats-source__text { text-underline-offset: 4px; text-decoration-color: rgba(255,255,255,0.35); }
+  .stats-cell:hover .stats-source__text, .stats-cell:focus-visible .stats-source__text { text-decoration-line: underline; }
+  .stats-source__tail { white-space: nowrap; }
+  .stats-source__ext { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; vertical-align: -2px; color: var(--de-muted-quiet); }
+  .stats-source__ext svg { width: 15px; height: 15px; }
+  .stats-source__pdf { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; color: var(--de-muted-soft); }
 
   @media (max-width: 1023px) {
-    .stats-box { padding: 40px 32px; }
+    .stats-box { padding: 32px 24px; }
+    .stats-cells { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .stats-cells > li:nth-child(3) { border-left: 0; }
+    .stats-cells > li:nth-child(n+3) { border-top: 1px solid var(--de-hairline); }
   }
   @media (max-width: 639px) {
-    .stats-box { padding: 32px 20px; }
-    .stats-head { flex-direction: column; align-items: flex-start; gap: 20px; }
-    .stats-head .de-link { margin-bottom: 0; }
-    .stats-grid { margin-top: 28px; gap: 12px; }
-    /* Phone: icon and number share one row so four stacked cards stay short. */
-    .stats-card { display: grid; grid-template-columns: 44px minmax(0, 1fr); column-gap: 16px; align-items: center; padding: 20px; }
-    .stats-card .de-stat { margin-top: 0; font-size: 34px; }
-    .stats-card__statement { grid-column: 1 / -1; margin-top: 12px; }
+    .stats-box { padding: 32px 24px; }
+    .stats-head { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .stats-cells { margin-top: 28px; grid-template-columns: 1fr; }
+    .stats-cells > li { display: block; grid-row: auto; border-left: 0; }
+    .stats-cells > li + li { border-top: 1px solid var(--de-hairline); }
+    /* Phone: icon and number share one row so four stacked cells stay short. */
+    .stats-cell { display: grid; grid-template-rows: none; grid-template-columns: 44px minmax(0, 1fr); column-gap: 16px; align-items: center; }
+    .stats-cell .de-stat { margin-top: 0; font-size: 34px; }
+    .stats-cell__statement { grid-column: 1 / -1; }
     .stats-source { grid-column: 1 / -1; margin-top: 16px; padding-top: 12px; }
   }
 </style>
@@ -68,37 +84,37 @@
         <a class="de-link" href="/resources/cyber-facts">Full sourced facts <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
       </div>
 
-      <ul class="de-grid de-grid--4 stats-grid" aria-label="Sourced facts">
+      <ul class="de-cells stats-cells" aria-label="Sourced facts">
         <li>
-          <a class="de-card stats-card" href="https://www.verizon.com/business/resources/reports/dbir/" target="_blank" rel="noopener noreferrer">
+          <a class="stats-cell" href="https://www.verizon.com/business/resources/reports/dbir/" target="_blank" rel="noopener noreferrer">
             <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
             <p class="de-stat">48%</p>
-            <p class="de-body stats-card__statement">of breaches involve ransomware</p>
-            <p class="de-small stats-source">— Verizon DBIR 2026</p>
+            <p class="stats-cell__statement">of breaches involve ransomware</p>
+            <p class="stats-source"><span class="stats-source__text">— Verizon DBIR </span><span class="stats-source__tail"><span class="stats-source__text">2026</span><span class="stats-source__ext"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span></span><span class="de-sr">(opens in a new tab)</span></p>
           </a>
         </li>
         <li>
-          <a class="de-card stats-card" href="https://www.ibm.com/reports/data-breach" target="_blank" rel="noopener noreferrer">
+          <a class="stats-cell" href="https://www.ibm.com/reports/data-breach" target="_blank" rel="noopener noreferrer">
             <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
             <p class="de-stat">$11.5M</p>
-            <p class="de-body stats-card__statement">average cost of a data breach in the United States</p>
-            <p class="de-small stats-source">— IBM Cost of a Data Breach 2026</p>
+            <p class="stats-cell__statement">average cost of a data breach in the United States</p>
+            <p class="stats-source"><span class="stats-source__text">— IBM Cost of a Data Breach </span><span class="stats-source__tail"><span class="stats-source__text">2026</span><span class="stats-source__ext"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span></span><span class="de-sr">(opens in a new tab)</span></p>
           </a>
         </li>
         <li>
-          <a class="de-card stats-card" href="https://www.microsoft.com/en-us/corporate-responsibility/cybersecurity/microsoft-digital-defense-report-2025/" target="_blank" rel="noopener noreferrer">
+          <a class="stats-cell" href="https://www.microsoft.com/en-us/corporate-responsibility/cybersecurity/microsoft-digital-defense-report-2025/" target="_blank" rel="noopener noreferrer">
             <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span>
             <p class="de-stat">99%+</p>
-            <p class="de-body stats-card__statement">of unauthorized access attempts are blocked by multifactor authentication (MFA)</p>
-            <p class="de-small stats-source">— Microsoft Digital Defense Report 2025</p>
+            <p class="stats-cell__statement">of unauthorized access attempts are blocked by multifactor authentication (MFA)</p>
+            <p class="stats-source"><span class="stats-source__text">— Microsoft Digital Defense Report </span><span class="stats-source__tail"><span class="stats-source__text">2025</span><span class="stats-source__ext"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span></span><span class="de-sr">(opens in a new tab)</span></p>
           </a>
         </li>
         <li>
-          <a class="de-card stats-card" href="https://www.ic3.gov/AnnualReport/Reports/2024_IC3Report.pdf" target="_blank" rel="noopener noreferrer">
+          <a class="stats-cell" href="https://www.ic3.gov/AnnualReport/Reports/2024_IC3Report.pdf" target="_blank" rel="noopener noreferrer">
             <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span>
             <p class="de-stat">$392M</p>
-            <p class="de-body stats-card__statement">in internet crime losses reported from Arizona in 2024 (IC3 state ranking by loss)</p>
-            <p class="de-small stats-source">— FBI IC3 Annual Report 2024</p>
+            <p class="stats-cell__statement">in internet crime losses reported from Arizona in 2024 (IC3 state ranking by loss)</p>
+            <p class="stats-source"><span class="stats-source__text">— FBI IC3 Annual Report </span><span class="stats-source__tail"><span class="stats-source__text">2024</span><span class="stats-source__ext"><span class="stats-source__pdf">PDF</span><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span></span><span class="de-sr">(opens in a new tab)</span></p>
           </a>
         </li>
       </ul>

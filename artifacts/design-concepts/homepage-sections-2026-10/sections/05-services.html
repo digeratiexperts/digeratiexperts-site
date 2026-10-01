@@ -6,58 +6,71 @@
 <title>DE section 05 — Cybersecurity-first managed IT</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="../system/tokens.css">
+<!-- The section sets no Oxanium text after the badge left .de-tag; load the system face anyway so the page matches the integrated site's font set. -->
+<script>document.fonts && document.fonts.load('600 16px Oxanium');</script>
 <style>
   /* Section 05 — Services on the surface field: one head, three paths, one stack rail, one link. */
   body { background: var(--de-surface); }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
-  /* Head rows: statement left, the section's secondary link right, bottom-aligned. */
+  /* Every standalone link is a ≥44px target; spacing above is trimmed to keep the rhythm. */
+  .svc-path .de-link, .svc-aside .de-link, .svc-close .de-link, .svc-cell .svc-cell__link { min-height: 44px; display: inline-flex; align-items: center; }
+
+  /* Head row: statement left, the section's secondary link right, bottom-aligned. */
   .svc-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; }
-  .svc-aside { flex-shrink: 0; margin-bottom: 5px; font-size: 16px; color: var(--de-muted-soft); }
-  .svc-aside .de-link--quiet { color: #fff; }
-  .svc-head .de-link { flex-shrink: 0; margin-bottom: 5px; }
-  .svc-head .de-lede { text-wrap: balance; }
+  .svc-head .de-head { flex: 1 1 640px; }
+  .svc-head .de-lede { max-width: 720px; }
+  .svc-aside { flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; column-gap: 10px; font-size: 16px; color: var(--de-muted-soft); }
+  .svc-aside .de-link { white-space: nowrap; }
 
-  /* Three path cards. Same anatomy in every card; the featured one carries the tag. */
+  /* Three path cards. Same anatomy in every card; the featured one carries the badge. */
   .svc-paths { margin-top: 40px; }
   .svc-paths > li { display: flex; min-width: 0; }
   .svc-path { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .svc-path.de-card--active { box-shadow: none; }
   .svc-path__top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 44px; }
-  .svc-path__kicker { font-size: 14px; font-weight: 600; letter-spacing: 0.02em; color: var(--de-magenta-ink); white-space: nowrap; }
-  .svc-path__tag { margin-left: auto; color: var(--de-magenta-ink); border-color: rgba(211, 18, 106, 0.5); white-space: nowrap; }
+  .svc-path__kicker { font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--de-muted); white-space: nowrap; }
+  .svc-path__badge { margin-left: auto; display: inline-flex; align-items: center; height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--de-hairline); font-size: 14px; font-weight: 600; color: var(--de-muted); white-space: nowrap; }
   .svc-path .de-h3 { margin-top: 22px; color: #fbfaf8; }
   .svc-path .de-body { margin-top: 10px; flex: 1; }
-  .svc-path .de-link { margin-top: 24px; align-self: flex-start; }
+  .svc-path .de-link { margin-top: 14px; align-self: flex-start; }
 
-  /* The stack: sub-head row, then every component at once as hairline cells (3 × 2). */
+  /* The stack: plain label row, then every component at once as a hairline list (3 × 2), then the closing link. */
   .svc-stack { margin-top: 56px; }
   .svc-stack__title { font-family: var(--font-heading); font-weight: 600; font-size: 28px; line-height: 1.15; letter-spacing: -0.02em; color: #fbfaf8; }
   .svc-stack__lede { margin-top: 8px; max-width: 640px; }
-  .svc-rail { margin-top: 24px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .svc-rail > li { display: flex; gap: 16px; align-items: flex-start; padding: 24px; min-width: 0; }
+  .svc-stack__lede .de-link--quiet { display: inline-flex; align-items: center; min-height: 44px; margin: -10px 0; }
+  .svc-rail { margin-top: 24px; grid-template-columns: repeat(3, minmax(0, 1fr)); border-left: 0; border-right: 0; border-radius: 0; }
+  .svc-rail > li { display: flex; gap: 14px; align-items: flex-start; padding: 24px; min-width: 0; }
   .svc-rail > li:nth-child(n) { border-left: 1px solid var(--de-hairline); border-top: 0; }
-  .svc-rail > li:nth-child(3n+1) { border-left: 0; }
+  .svc-rail > li:nth-child(3n+1) { border-left: 0; padding-left: 0; }
   .svc-rail > li:nth-child(n+4) { border-top: 1px solid var(--de-hairline); }
+  .svc-glyph { flex-shrink: 0; display: inline-flex; color: var(--de-magenta-ink); padding-top: 3px; }
+  .svc-glyph svg { width: 20px; height: 20px; }
   .svc-cell { min-width: 0; }
   .svc-cell .de-h4 { color: #fbfaf8; }
   .svc-cell .de-body { font-size: 15px; margin-top: 4px; }
-  .svc-cell .de-link--quiet { display: inline-block; margin-top: 12px; font-size: 15px; line-height: 1.5; color: var(--de-muted-soft); }
-  .svc-cell .de-link--quiet:hover { color: #fff; text-decoration-color: rgba(255,255,255,0.6); }
+  .svc-cell .svc-cell__link { margin-top: 2px; gap: 6px; font-size: 15px; font-weight: 600; color: var(--de-muted); text-decoration: none; }
+  .svc-cell .svc-cell__link svg { width: 15px; height: 15px; }
+  .svc-cell .svc-cell__link:hover, .svc-cell .svc-cell__link:focus-visible { color: #fff; text-decoration: underline; text-decoration-color: rgba(255,255,255,0.6); text-underline-offset: 4px; }
+  .svc-cell .svc-cell__link:focus-visible { outline: 2px solid #ec4899; outline-offset: 2px; }
+  .svc-close { margin-top: 20px; }
 
   @media (max-width: 1023px) {
     .svc-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .svc-rail > li:nth-child(n) { border-left: 1px solid var(--de-hairline); border-top: 0; }
-    .svc-rail > li:nth-child(2n+1) { border-left: 0; }
+    .svc-rail > li:nth-child(n) { border-left: 1px solid var(--de-hairline); border-top: 0; padding-left: 24px; }
+    .svc-rail > li:nth-child(2n+1) { border-left: 0; padding-left: 0; }
     .svc-rail > li:nth-child(n+3) { border-top: 1px solid var(--de-hairline); }
   }
   @media (max-width: 639px) {
-    .svc-head { flex-direction: column; align-items: flex-start; gap: 20px; }
-    .svc-aside, .svc-head .de-link { margin-bottom: 0; }
+    .svc-head { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .svc-head .de-head { flex: none; }
     .svc-paths { margin-top: 28px; }
+    .svc-path__badge { margin-left: 0; }
     .svc-stack { margin-top: 48px; }
     .svc-stack__title { font-size: 24px; }
     .svc-rail { grid-template-columns: 1fr; }
-    .svc-rail > li { padding: 20px; }
-    .svc-rail > li:nth-child(n) { border-left: 0; border-top: 1px solid var(--de-hairline); }
+    .svc-rail > li:nth-child(n) { border-left: 0; border-top: 1px solid var(--de-hairline); padding-left: 0; padding-right: 0; }
     .svc-rail > li:first-child { border-top: 0; }
   }
 </style>
@@ -72,7 +85,7 @@
         <h2 class="de-h2" id="services-heading">Cybersecurity-First <span class="de-accent">Managed IT</span></h2>
         <p class="de-lede">Three clear paths. Capability depth stays available here and under Protect — nothing removed.</p>
       </div>
-      <p class="svc-aside">Need one specific service? <a class="de-link--quiet" href="/solutions/standalone-services">View Standalone Services</a></p>
+      <p class="svc-aside"><span>Need one specific service?</span> <a class="de-link" href="/solutions/standalone-services">View Standalone Services <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></p>
     </div>
 
     <ul class="de-grid de-grid--3 svc-paths">
@@ -81,7 +94,7 @@
           <div class="svc-path__top">
             <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span>
             <p class="svc-path__kicker">ProActive Ecosystem</p>
-            <span class="de-tag svc-path__tag">Full Operations</span>
+            <span class="svc-path__badge">Full Operations</span>
           </div>
           <h3 class="de-h3">Fully Managed IT &amp; Cybersecurity</h3>
           <p class="de-body">One accountable team for support, identity, endpoints, email, backup, and security operations — delivered through our ProActive Ecosystem.</p>
@@ -111,64 +124,60 @@
     </ul>
 
     <div class="svc-stack" role="region" aria-labelledby="services-stack-heading">
-      <div class="svc-head">
-        <div class="de-head">
-          <h3 class="svc-stack__title" id="services-stack-heading">ProActive Ecosystem<span class="de-colon" aria-hidden="true">:</span></h3>
-          <p class="de-body svc-stack__lede">Preview of the stack we manage — also detailed under Protect.</p>
-        </div>
-        <a class="de-link" href="/solutions/proactive-ecosystem">How the ProActive Ecosystem works <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
-      </div>
+      <h3 class="svc-stack__title" id="services-stack-heading">ProActive Ecosystem<span class="de-colon" aria-hidden="true">:</span></h3>
+      <p class="de-body svc-stack__lede">Preview of the stack we manage — also detailed under <a class="de-link--quiet" href="/#protection">Protect</a>.</p>
 
       <ul class="de-cells svc-rail" aria-label="Security capabilities">
         <li>
-          <span class="de-iconwell de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg></span>
+          <span class="svc-glyph"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg></span>
           <div class="svc-cell">
             <h4 class="de-h4">SOC / MDR Monitoring</h4>
             <p class="de-body">24/7 detection and response.</p>
-            <a class="de-link--quiet" href="/solutions/security-operations">SOC / MDR Monitoring details</a>
+            <a class="svc-cell__link" href="/solutions/security-operations"><span class="sr-only">SOC / MDR Monitoring </span>Details <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
           </div>
         </li>
         <li>
-          <span class="de-iconwell de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <span class="svc-glyph"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></span>
           <div class="svc-cell">
             <h4 class="de-h4">Endpoint Security (EDR)</h4>
             <p class="de-body">Protect devices across the environment.</p>
-            <a class="de-link--quiet" href="/solutions/threat-detection">Endpoint Security (EDR) details</a>
+            <a class="svc-cell__link" href="/solutions/threat-detection"><span class="sr-only">Endpoint Security (EDR) </span>Details <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
           </div>
         </li>
         <li>
-          <span class="de-iconwell de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg></span>
+          <span class="svc-glyph"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg></span>
           <div class="svc-cell">
             <h4 class="de-h4">SMART Identity (MFA + SSO)</h4>
             <p class="de-body">Stronger access without user chaos.</p>
-            <a class="de-link--quiet" href="/solutions/unified-security">SMART Identity (MFA + SSO) details</a>
+            <a class="svc-cell__link" href="/solutions/unified-security"><span class="sr-only">SMART Identity (MFA + SSO) </span>Details <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
           </div>
         </li>
         <li>
-          <span class="de-iconwell de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg></span>
+          <span class="svc-glyph"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg></span>
           <div class="svc-cell">
             <h4 class="de-h4">Privileged Access Controls</h4>
             <p class="de-body">Admin controls and audit visibility.</p>
-            <a class="de-link--quiet" href="/solutions/unified-security">Privileged Access Controls details</a>
+            <a class="svc-cell__link" href="/solutions/unified-security"><span class="sr-only">Privileged Access Controls </span>Details <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
           </div>
         </li>
         <li>
-          <span class="de-iconwell de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg></span>
+          <span class="svc-glyph"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg></span>
           <div class="svc-cell">
             <h4 class="de-h4">Backup &amp; Disaster Recovery</h4>
             <p class="de-body">Recovery planning and restore discipline.</p>
-            <a class="de-link--quiet" href="/solutions/backup-disaster-recovery">Backup &amp; Disaster Recovery details</a>
+            <a class="svc-cell__link" href="/solutions/backup-disaster-recovery"><span class="sr-only">Backup &amp; Disaster Recovery </span>Details <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
           </div>
         </li>
         <li>
-          <span class="de-iconwell de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></span>
+          <span class="svc-glyph"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 13V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h8"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/><path d="m16 19 2 2 4-4"/></svg></span>
           <div class="svc-cell">
             <h4 class="de-h4">Email Protection</h4>
             <p class="de-body">Anti-phishing and mailbox defenses.</p>
-            <a class="de-link--quiet" href="/solutions/security-operations">Email Protection details</a>
+            <a class="svc-cell__link" href="/solutions/security-operations"><span class="sr-only">Email Protection </span>Details <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
           </div>
         </li>
       </ul>
+      <p class="svc-close"><a class="de-link" href="/solutions/proactive-ecosystem">How the ProActive Ecosystem works <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></p>
     </div>
 
   </div>

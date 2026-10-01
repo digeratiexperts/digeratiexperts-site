@@ -10,80 +10,91 @@
   /* Section 12 — Insights chapter on the well: live threat feed, then "Monitoring that ends with a person". */
 
   /* Block 1 — feed */
-  .feed { padding-bottom: 56px; }
   .feed-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; }
-  .feed-head .de-tag { flex-shrink: 0; margin-bottom: 6px; }
-  .feed-grid { margin-top: 40px; grid-auto-rows: 1fr; }
+  .feed-actions { display: flex; align-items: center; gap: 24px; flex-shrink: 0; }
+  .feed-actions .de-link { min-height: 44px; }
+  .de-lede .de-link--quiet { padding-block: 11px; }
+  .feed-caption { margin-top: 40px; display: flex; align-items: center; }
+  .feed-grid { margin-top: 16px; }
   .feed-grid > li { display: flex; min-width: 0; }
   .feed-card { flex: 1; display: flex; flex-direction: column; min-width: 0; }
   .feed-card__row { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  .feed-card .de-tag { font-size: 12px; }
   .feed-tag--critical { border-color: rgba(164, 38, 30, 0.32); background: rgba(164, 38, 30, 0.06); color: #A4261E; }
   .feed-date { font-family: var(--font-mono); font-size: 13px; font-weight: 600; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; color: var(--de-ink-muted); white-space: nowrap; }
-  .feed-card .de-h3 { margin-top: 18px; color: var(--de-ink); }
-  .feed-card__excerpt { margin-top: 10px; font-size: 15px; line-height: 1.6; color: var(--de-ink-muted); flex: 1; }
-  .feed-card__foot { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--de-paper-hairline); display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  .feed-card .de-h3 { margin-top: 16px; font-size: 18px; line-height: 1.35; color: var(--de-ink); }
+  .feed-card__excerpt { margin-top: 8px; font-size: 15px; line-height: 1.6; color: var(--de-ink-muted); flex: 1; }
+  .feed-card__foot { margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--de-paper-hairline); display: flex; justify-content: space-between; align-items: center; gap: 16px; }
   .feed-card__src { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--de-ink-muted); white-space: nowrap; }
-  .feed-card__foot .de-link { color: var(--de-magenta-paper-ink); font-size: 14px; flex-shrink: 0; }
-  .feed-close { margin-top: 36px; display: flex; justify-content: space-between; align-items: center; gap: 32px; }
-  .feed-sources { max-width: 600px; }
-  .feed-actions { display: flex; gap: 12px; flex-wrap: wrap; flex-shrink: 0; }
+  .feed-card__foot .de-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--de-magenta-paper-ink); font-size: 14px; flex-shrink: 0; }
+  .feed-sources { margin-top: 24px; max-width: 720px; }
 
   /* Block 2 — monitoring */
-  .monitor { border-top: 1px solid var(--de-hairline); padding-top: 56px; }
-  .monitor-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 48px; align-items: stretch; }
+  .monitor { border-top: 1px solid var(--de-hairline); }
+  .monitor-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); grid-template-areas: "copy fig" "cta ."; column-gap: 48px; align-items: stretch; }
+  .monitor-copy { grid-area: copy; }
   .monitor-copy .de-h2 { max-width: 720px; }
-  .monitor-checks { margin-top: 28px; display: grid; gap: 12px; }
+  .monitor-checks { margin-top: 24px; display: grid; gap: 12px; }
   .monitor-checks li { display: flex; gap: 12px; align-items: flex-start; font-size: 16px; line-height: 1.6; color: var(--de-muted); }
-  .monitor-checks svg { width: 20px; height: 20px; flex-shrink: 0; margin-top: 3px; color: var(--de-emerald); }
+  .monitor-checks svg { width: 20px; height: 20px; flex-shrink: 0; margin-top: 3px; color: var(--de-magenta-ink); }
   .monitor-cells { margin-top: 32px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .monitor-cells .de-h4 { margin-top: 16px; }
   .monitor-cells .de-body { margin-top: 8px; font-size: 15px; }
-  .monitor-cta { margin-top: 32px; }
-  .monitor-figure { display: flex; flex-direction: column; margin: 0; }
-  .monitor-figure__head { display: flex; justify-content: space-between; align-items: center; }
+  .monitor-cta { grid-area: cta; margin-top: 32px; }
+  .monitor-figure { grid-area: fig; display: flex; flex-direction: column; margin: 0; }
+  .monitor-figure__cap { margin-top: auto; padding-top: 24px; border-top: 1px solid var(--de-hairline); display: grid; gap: 4px; }
+  .monitor-figure__cap .dg-label { font-size: 12px; }
+  .monitor-figure__cap .de-small { color: var(--de-muted-soft); }
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
-  /* Diagram — hairlines and Oxanium labels only */
-  .dg { flex: 1; display: flex; flex-direction: column; justify-content: center; margin-top: 16px; padding: 8px 0; }
-  .dg-node { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 128px; padding: 24px 28px; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 12px; background: rgba(255, 255, 255, 0.02); }
-  .dg-node + .dg-node { margin-top: 72px; }
-  .dg-node:not(:last-child)::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: 72px; background: rgba(255, 255, 255, 0.22); }
-  .dg-node:not(:last-child)::before { content: ""; position: absolute; left: 50%; top: calc(100% + 72px - 10px); width: 9px; height: 9px; border-right: 1px solid rgba(255, 255, 255, 0.22); border-bottom: 1px solid rgba(255, 255, 255, 0.22); transform: translateX(-50%) rotate(45deg); }
-  .dg-node--hot::after { background: var(--de-magenta-ink); }
-  .dg-node--hot::before { border-color: var(--de-magenta-ink); }
-  .dg-node__text { display: flex; flex-direction: column; gap: 10px; }
-  .dg-label { font-family: var(--font-mono); font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255, 255, 255, 0.88); }
-  .dg-glyph { width: 160px; height: 72px; flex-shrink: 0; }
-  .dg-line { fill: none; stroke: rgba(255, 255, 255, 0.22); stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-  .dg-line--signal { stroke: rgba(255, 255, 255, 0.45); }
-  .dg-line--hot { stroke: var(--de-magenta-ink); }
+  /* Diagram — hairlines and Oxanium labels only; no boxed nodes */
+  .dg { margin: 24px 0 32px; padding: 0; list-style: none; }
+  .dg-step { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 16px; }
+  .dg-step + .dg-step { margin-top: 40px; }
+  .dg-step:not(:last-child)::after { content: ""; position: absolute; left: 12px; top: 28px; bottom: -32px; width: 1px; background: var(--de-hairline); }
+  .dg-step--hot:not(:last-child)::after { background: var(--de-magenta-ink); }
+  .dg-step .de-seq { line-height: 20px; }
+  .dg-label { display: block; font-family: var(--font-mono); font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255, 255, 255, 0.88); line-height: 20px; }
+  .dg-step .de-small { margin-top: 8px; color: var(--de-muted-soft); font-size: 15px; }
 
   @media (max-width: 1023px) {
-    .monitor-grid { grid-template-columns: 1fr; gap: 32px; }
+    .monitor-grid { grid-template-columns: 1fr; grid-template-areas: "copy" "fig" "cta"; }
+    .monitor-figure { margin-top: 32px; }
+    .feed-head { flex-direction: column; align-items: flex-start; gap: 24px; }
   }
   @media (max-width: 639px) {
-    .feed-head { flex-direction: column; align-items: flex-start; gap: 20px; }
-    .feed-head .de-tag { margin-bottom: 0; }
-    .feed-grid { margin-top: 28px; grid-auto-rows: auto; }
-    .feed-card__row { align-items: flex-start; flex-wrap: wrap; gap: 10px; }
-    .feed-card__foot { flex-direction: column; align-items: flex-start; gap: 10px; }
-    .feed-card__src { white-space: normal; }
-    .feed-close { flex-direction: column; align-items: flex-start; gap: 24px; }
-    .feed-actions { width: 100%; }
+    .feed-actions { flex-direction: column; align-items: stretch; gap: 8px; width: 100%; }
     .feed-actions .de-btn { width: 100%; }
+    .feed-caption { margin-top: 32px; }
+    .feed-card__row { align-items: flex-start; flex-wrap: wrap; gap: 8px; }
+    .feed-card__foot { flex-direction: column; align-items: flex-start; gap: 0; }
+    .feed-card__src { white-space: normal; padding-top: 8px; }
     .monitor-cells { grid-template-columns: 1fr; }
     .monitor-cells > * { border-left: 0; border-top: 1px solid var(--de-hairline); }
     .monitor-cells > *:first-child { border-top: 0; }
     .monitor-cta .de-btn { width: 100%; }
-    .dg-node { gap: 16px; padding: 20px; min-height: 112px; }
-    .dg-node + .dg-node { margin-top: 56px; }
-    .dg-node:not(:last-child)::after { height: 56px; }
-    .dg-node:not(:last-child)::before { top: calc(100% + 56px - 10px); }
-    .dg-glyph { width: 120px; height: 54px; }
   }
 </style>
 </head>
 <body>
+<!--
+  Section 12 change notes / integration hand-off (critique round 2)
+  - Feed: the honest loading ("Loading current threats…") and empty ("No current items meet the homepage threshold.") shells
+    from CONTENT-INVENTORY §13 must survive integration unchanged; this capture simply has four qualifying items.
+    Keep the feed order exactly as the API returns it (Sept 9, 30, 24, 11).
+  - Category badge + kicker merged on purpose: the data `category` ("Active Exploitation") repeats inside the `kicker`
+    ("CRITICAL · ACTIVE EXPLOITATION"), so the card shows the kicker once as the severity tag next to the date.
+  - Naming flag for Joe (Tier 0: never "Digerati" alone): "Digerati prioritizes items…" is the verbatim `attribution`
+    string from useThreatFeed / the server, and "Read the Digerati Journal" is the live CTA / product name. Both kept
+    verbatim here; "Digerati Experts prioritizes…" needs an upstream change to the attribution string. Not rewritten silently.
+  - "Get My Cyber Risk Assessment": href="/book" is the no-JS fallback only; production must keep
+    openBooking("ai_assistance_section") (the booking modal) with that source ID.
+  - Image panel: the generated office still is replaced by the ILLUSTRATIVE diagram (brief). Its caption keeps
+    "Local Operations · Human Judgment" / "Arizona-Based · Principal-Led". "Arizona SOC Operations" (badge) and
+    "Always-On Telemetry" are left out: no source in docs/CLAIMS-REGISTER.md (recorded in BRIEF Truth notes + register).
+  - Chapter actions: one filled button ("Get My Cyber Risk Assessment"); "View All Security Updates" is the outline
+    button and "Read the Digerati Journal" a text link, both in the feed head row. Destinations unchanged.
+-->
 
 <section class="f-well de-section feed" aria-labelledby="insights-heading">
   <div class="de-canvas">
@@ -93,10 +104,14 @@
         <h2 class="de-h2" id="insights-heading">Recent Threats &amp; Insights<span class="de-colon" aria-hidden="true">:</span></h2>
         <p class="de-lede">Current items prioritized by active exploitation, exploit probability, and SMB relevance. Full stream, dates, and sources live on <a class="de-link--quiet" href="/resources/security-updates">Security Updates</a>.</p>
       </div>
-      <span class="de-tag de-tag--live">Live feed · Captured 2026-10-01</span>
+      <div class="feed-actions">
+        <a class="de-btn de-btn--outline" href="/resources/security-updates">View All Security Updates <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        <a class="de-link" href="/resources/blog">Read the Digerati Journal <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+      </div>
     </div>
 
-    <ul class="de-grid de-grid--2 feed-grid">
+    <p class="feed-caption" id="feed-caption"><span class="de-tag de-tag--live">Live feed · Captured 2026-10-01</span></p>
+    <ul class="de-grid de-grid--2 feed-grid" aria-describedby="feed-caption">
       <li>
         <article class="de-card--paper feed-card">
           <div class="feed-card__row">
@@ -107,7 +122,7 @@
           <p class="feed-card__excerpt">Cisco Secure Firewall Management Center (FMC) Software and Cisco Security Cloud Control (SCC) Firewall Management contain an authentication Bypass using an alternate path or channel vulnerability that could allow an unauthenticated, remote attacker to bypass authentication and e…</p>
           <div class="feed-card__foot">
             <span class="feed-card__src">CISA KEV · Cisco · CVE-2026-20079</span>
-            <a class="de-link" href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext=CVE-2026-20079" target="_blank" rel="noopener noreferrer">Read source <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></a>
+            <a class="de-link" href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext=CVE-2026-20079" target="_blank" rel="noopener noreferrer">Read source<span class="sr-only"> for CVE-2026-20079 on CISA KEV (opens in new tab)</span> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></a>
           </div>
         </article>
       </li>
@@ -121,7 +136,7 @@
           <p class="feed-card__excerpt">Cisco Catalyst SD-WAN Manager contains a hex encoding vulnerability that could allow an unauthenticated, remote attacker to access an affected system with privileges of the admin user due to improper handling of URI encoding in an HTTP request. CISA has confirmed exploitation in…</p>
           <div class="feed-card__foot">
             <span class="feed-card__src">CISA KEV · Cisco · CVE-2026-76504</span>
-            <a class="de-link" href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext=CVE-2026-76504" target="_blank" rel="noopener noreferrer">Read source <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></a>
+            <a class="de-link" href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext=CVE-2026-76504" target="_blank" rel="noopener noreferrer">Read source<span class="sr-only"> for CVE-2026-76504 on CISA KEV (opens in new tab)</span> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></a>
           </div>
         </article>
       </li>
@@ -135,7 +150,7 @@
           <p class="feed-card__excerpt">Adobe Commerce and Magento contains an incorrect authorization vulnerability that could allow an attacker to leverage this vulnerability to gain elevated access to sensitive resources without any user interaction.  CISA has confirmed exploitation in the wild.</p>
           <div class="feed-card__foot">
             <span class="feed-card__src">CISA KEV · Adobe · CVE-2026-71362</span>
-            <a class="de-link" href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext=CVE-2026-71362" target="_blank" rel="noopener noreferrer">Read source <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></a>
+            <a class="de-link" href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext=CVE-2026-71362" target="_blank" rel="noopener noreferrer">Read source<span class="sr-only"> for CVE-2026-71362 on CISA KEV (opens in new tab)</span> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></a>
           </div>
         </article>
       </li>
@@ -149,19 +164,13 @@
           <p class="feed-card__excerpt">GitLab Community Edition and Enterprise Edition contains a path traversal vulnerability that allows an unauthenticated user to read arbitrary files due to an improper path confinement and missing authentication enforcement in the repository commits API. CISA has confirmed exploi…</p>
           <div class="feed-card__foot">
             <span class="feed-card__src">CISA KEV · GitLab · CVE-2026-85706</span>
-            <a class="de-link" href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext=CVE-2026-85706" target="_blank" rel="noopener noreferrer">Read source <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></a>
+            <a class="de-link" href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog?search_api_fulltext=CVE-2026-85706" target="_blank" rel="noopener noreferrer">Read source<span class="sr-only"> for CVE-2026-85706 on CISA KEV (opens in new tab)</span> <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></a>
           </div>
         </article>
       </li>
     </ul>
 
-    <div class="feed-close">
-      <p class="de-small feed-sources">Sources: CISA, NIST NVD, FIRST, and Microsoft MSRC. Digerati prioritizes items based on active exploitation, exploit probability, and relevance to SMB environments.</p>
-      <div class="feed-actions">
-        <a class="de-btn de-btn--primary" href="/resources/security-updates">View All Security Updates <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
-        <a class="de-btn de-btn--outline" href="/resources/blog">Read the Digerati Journal <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
-      </div>
-    </div>
+    <p class="de-small feed-sources">Sources: CISA, NIST NVD, FIRST, and Microsoft MSRC. Digerati prioritizes items based on active exploitation, exploit probability, and relevance to SMB environments.</p>
   </div>
 </section>
 
@@ -192,29 +201,30 @@
         </li>
       </ul>
 
-      <p class="monitor-cta"><a class="de-btn de-btn--primary" href="/book" data-booking-source="ai_assistance_section">Get My Cyber Risk Assessment <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></p>
     </div>
 
-    <figure class="de-card monitor-figure">
-      <div class="monitor-figure__head">
-        <span class="de-tag">Illustrative</span>
-      </div>
+    <figure class="de-card de-card--inset monitor-figure">
+      <span class="de-tag" style="align-self:flex-start">Illustrative</span>
       <ol class="dg" aria-label="Signal, then human triage, then a named owner">
-        <li class="dg-node">
-          <div class="dg-node__text"><span class="de-seq">01</span><span class="dg-label">Signal</span></div>
-          <svg class="dg-glyph" viewBox="0 0 160 72" aria-hidden="true"><path class="dg-line dg-line--signal" d="M8 9v6M8 12h120M8 25v6M8 28h144M8 41v6M8 44h96M8 57v6M8 60h136"/></svg>
+        <li class="dg-step">
+          <span class="de-seq">01</span>
+          <div><span class="dg-label">Signal</span><p class="de-small">Signals surface immediately</p></div>
         </li>
-        <li class="dg-node dg-node--hot">
-          <div class="dg-node__text"><span class="de-seq">02</span><span class="dg-label">Human triage</span></div>
-          <svg class="dg-glyph" viewBox="0 0 160 72" aria-hidden="true"><path class="dg-line dg-line--signal" d="M8 12h80M8 28h80M8 44h80M8 60h80"/><path class="dg-line" d="M88 2v68M84 2h8M84 70h8"/><path class="dg-line dg-line--hot" d="M88 44h68"/></svg>
+        <li class="dg-step dg-step--hot">
+          <span class="de-seq">02</span>
+          <div><span class="dg-label">Human triage</span><p class="de-small">Our team investigates, prioritizes</p></div>
         </li>
-        <li class="dg-node">
-          <div class="dg-node__text"><span class="de-seq">03</span><span class="dg-label">Named owner</span></div>
-          <svg class="dg-glyph" viewBox="0 0 160 72" aria-hidden="true"><path class="dg-line dg-line--hot" d="M8 36h90"/><circle class="dg-line" cx="124" cy="36" r="26"/><circle class="dg-line dg-line--signal" cx="124" cy="28" r="6"/><path class="dg-line dg-line--signal" d="M110 51a14 14 0 0 1 28 0"/></svg>
+        <li class="dg-step">
+          <span class="de-seq">03</span>
+          <div><span class="dg-label">Named owner</span><p class="de-small">A person who owns the outcome · documented next steps</p></div>
         </li>
       </ol>
-      <figcaption class="sr-only">Illustrative diagram: signals surface, analysts triage them, and a named person owns the outcome.</figcaption>
+      <figcaption class="monitor-figure__cap">
+        <span class="dg-label">Local Operations · Human Judgment</span>
+        <span class="de-small">Arizona-Based · Principal-Led</span>
+      </figcaption>
     </figure>
+    <p class="monitor-cta"><a class="de-btn de-btn--primary" href="/book" data-booking-source="ai_assistance_section">Get My Cyber Risk Assessment <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></p>
   </div>
 </section>
 

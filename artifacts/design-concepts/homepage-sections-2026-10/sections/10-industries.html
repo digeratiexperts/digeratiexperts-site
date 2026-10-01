@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE section 10 — Industries we serve</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../system/tokens.css">
+<style>
+  /* Section 10 — Industries on the surface field: one left head with the ask in the head row,
+     five equal hairline cells on a raised index panel, no photographs, no sequence numbers
+     (the five sectors are peers, not steps). */
+  body { background: var(--de-surface); }
+
+  .ind-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; }
+  .ind-head .de-btn { flex-shrink: 0; margin-bottom: 4px; }
+  .ind-ask { display: none; }
+
+  /* Raised one step from the field so the five cells read as one deliberate index. */
+  .ind-rail { margin-top: 40px; grid-template-columns: repeat(5, minmax(0, 1fr)); background: var(--de-raised); }
+  .ind-rail > li { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: auto auto 1fr auto; min-width: 0; transition: box-shadow .15s ease; }
+  .ind-top { grid-column: 1 / -1; display: flex; align-items: center; }
+  .ind-rail .de-iconwell { background: rgba(255,255,255,0.03); }
+  .ind-copy { grid-column: 1 / -1; min-width: 0; }
+  .ind-rail .de-h3 { margin-top: 28px; }
+  .ind-rail .de-body { margin-top: 18px; }
+  .ind-rail .de-link { grid-column: 1 / -1; grid-row: 4; margin-top: 28px; padding-top: 16px; min-height: 44px; border-top: 1px solid var(--de-hairline); }
+  .ind-rail .de-link svg { margin-left: auto; }
+  /* Whole cell is the hit target; hover and keyboard focus are shown on the cell's hairline. */
+  .ind-rail .de-link::after { content: ""; position: absolute; inset: 0; }
+  .ind-rail > li:hover { box-shadow: inset 0 0 0 1px var(--de-hairline-strong); }
+  .ind-rail .de-link:focus-visible { outline: none; }
+  .ind-rail > li:has(.de-link:focus-visible) { outline: 2px solid #ec4899; outline-offset: -2px; }
+
+  @media (max-width: 1023px) {
+    .ind-head { flex-direction: column; align-items: flex-start; gap: 24px; }
+    .ind-head .de-btn { margin-bottom: 0; }
+    .ind-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ind-rail > li:nth-child(n) { border-left: 1px solid var(--de-hairline); }
+    .ind-rail > li:nth-child(2n+1) { border-left: 0; }
+    .ind-rail > li:nth-child(n+3) { border-top: 1px solid var(--de-hairline); }
+    .ind-rail > li:last-child { grid-column: 1 / -1; }
+  }
+  @media (max-width: 639px) {
+    /* Phone reading order: head, industries, then the ask. */
+    .ind-head .de-btn { display: none; }
+    .ind-ask { display: flex; width: 100%; white-space: normal; margin-top: 28px; }
+    .ind-rail { margin-top: 28px; grid-template-columns: 1fr; }
+    /* Phone: icon beside the copy, so five sectors read as a compact list. */
+    .ind-rail > li { grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 16px; }
+    .ind-rail > li:nth-child(n) { border-left: 0; border-top: 1px solid var(--de-hairline); }
+    .ind-rail > li:first-child { border-top: 0; }
+    .ind-top { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
+    .ind-copy { grid-column: 2; grid-row: 1; }
+    .ind-rail .de-h3 { margin-top: 0; font-size: 18px; }
+    .ind-rail .de-body { margin-top: 8px; }
+    .ind-rail .de-link { grid-column: 2; grid-row: 2; margin-top: 4px; padding-top: 0; border-top: 0; }
+    .ind-rail .de-link svg { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<section class="f-surface de-section de-grain" id="industries" aria-labelledby="industries-heading">
+  <div class="de-canvas">
+
+    <div class="ind-head">
+      <div class="de-head">
+        <p class="de-eyebrow">Specialized Solutions</p>
+        <h2 class="de-h2" id="industries-heading">Industries We Serve<span class="de-colon" aria-hidden="true">:</span></h2>
+        <p class="de-lede">Specialized cybersecurity solutions for Arizona's essential sectors</p>
+      </div>
+      <a class="de-btn de-btn--primary" href="/book">Get Industry-Specific Protection <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+    </div>
+
+    <ul class="de-cells ind-rail" aria-label="Industries">
+      <li>
+        <div class="ind-top"><span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg></span></div>
+        <div class="ind-copy">
+          <h3 class="de-h3">Law Firms</h3>
+          <p class="de-body">Protect client privilege and meet ABA compliance requirements</p>
+        </div>
+        <a class="de-link" href="/industries/law-firms">View Law Firms <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+      </li>
+      <li>
+        <div class="ind-top"><span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg></span></div>
+        <div class="ind-copy">
+          <h3 class="de-h3">CPA Firms</h3>
+          <p class="de-body">Secure tax data and ensure IRS/FTC compliance</p>
+        </div>
+        <a class="de-link" href="/industries/accounting-finance">View CPA Firms <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+      </li>
+      <li>
+        <div class="ind-top"><span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 2v2"/><path d="M5 2v2"/><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/></svg></span></div>
+        <div class="ind-copy">
+          <h3 class="de-h3">Medical Practices</h3>
+          <p class="de-body">HIPAA compliance and patient data protection</p>
+        </div>
+        <a class="de-link" href="/industries/healthcare">View Medical Practices <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+      </li>
+      <li>
+        <div class="ind-top"><span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span></div>
+        <div class="ind-copy">
+          <h3 class="de-h3">Real Estate Firms</h3>
+          <p class="de-body">Wire fraud prevention and transaction security</p>
+        </div>
+        <a class="de-link" href="/industries/real-estate">View Real Estate Firms <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+      </li>
+      <li>
+        <div class="ind-top"><span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></span></div>
+        <div class="ind-copy">
+          <h3 class="de-h3">Animal Hospitals</h3>
+          <p class="de-body">Veterinary practice and client data protection</p>
+        </div>
+        <a class="de-link" href="/industries/animal-hospitals">View Animal Hospitals <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+      </li>
+    </ul>
+
+    <a class="de-btn de-btn--primary ind-ask" href="/book">Get Industry-Specific Protection <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+
+  </div>
+</section>
+</body>
+</html>

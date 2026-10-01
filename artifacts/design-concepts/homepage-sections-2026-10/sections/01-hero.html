@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE section mockup — 01 Hero</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../system/tokens.css">
+<style>
+  /* 01 · Hero, hypothesis A — the approved two-column fold, executed with
+     discipline. Chrome (utility, nav, spy row) → copy left, assessment window
+     right → attached paper trust strip. One violet radial, a faint masked city
+     plate on the right, a grid at ≤ 0.3 opacity. The bottom-right 180×90 of
+     the hero stays clear for the Ask DE launcher.
+
+     Change list for integration (intentional departures, flagged for Joe):
+     - Pronunciation headword reads "DIG·ER·AH·TEE" (brief: wordmark-style), not
+       the live "DIG·ER·A·TI"; the gold wordmark bars are dropped.
+     - The brief's 40px "Hear it" chip is raised to 44px to meet the Tier 0
+       target rule; utility links and the inline call link also reach 44px.
+     - Hero eyebrow uses the system .de-eyebrow magenta ink (live is violet).
+     - Nav CTA is quieted to an outline magenta in the hero view so the violet
+       hero primary is the single dominant action in the fold. */
+
+  /* Chrome */
+  .chrome { position: relative; z-index: 3; background: rgba(0,0,0,0.92); border-bottom: 1px solid var(--de-hairline); }
+  .de-util { height: 44px; }
+  .de-util a { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; }
+  .de-util svg { width: 15px; height: 15px; color: var(--de-magenta-ink); }
+  .de-util .sm { display: none; }
+  .de-nav__logo { height: 38px; }
+  .de-nav__items a { display: inline-flex; align-items: center; gap: 5px; min-height: 44px; }
+  .de-nav__items svg { width: 14px; height: 14px; opacity: 0.7; }
+  /* Quiet chrome CTA: outline magenta, so the hero primary leads the fold */
+  .de-nav__cta { height: 44px; padding: 0 20px; font-size: 15px; background: transparent; border-color: var(--de-magenta); color: #fff; }
+  .de-nav__cta:hover { background: rgba(211,18,106,0.12); }
+  .de-nav__cta .sm { display: none; }
+  .de-nav__menu { display: none; align-items: center; justify-content: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: var(--radius-sm); border: 1px solid var(--de-hairline-strong); background: transparent; color: #fff; cursor: pointer; }
+  .de-nav__menu svg { width: 22px; height: 22px; }
+  .de-spy { justify-content: space-around; border-bottom: 0; }
+  .de-spy a { position: relative; display: inline-flex; align-items: center; height: 44px; color: rgba(255,255,255,0.72); }
+  .de-spy a.is-active { color: #fff; }
+  .de-spy a.is-active::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--de-magenta); }
+
+  /* Field */
+  .hero { position: relative; isolation: isolate; overflow: hidden; background: linear-gradient(110deg, #050312 0%, #060617 52%, #090924 100%); }
+  .hero__plate { position: absolute; inset: 0 0 0 38%; z-index: -3; background: url("/attached_assets/de-hero-arizona-dusk-1600.webp") center 85% / cover no-repeat; opacity: 0.5;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 40%), linear-gradient(to bottom, #000 72%, transparent 100%); -webkit-mask-composite: source-in;
+            mask-image: linear-gradient(to right, transparent 0%, #000 40%), linear-gradient(to bottom, #000 72%, transparent 100%); mask-composite: intersect; }
+  .hero__grid { position: absolute; inset: 0 0 0 42%; z-index: -2; opacity: 0.15;
+    background-image: linear-gradient(rgba(123,108,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(123,108,255,0.6) 1px, transparent 1px); background-size: 52px 52px;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 40%, #000 80%, transparent); mask-image: linear-gradient(to right, transparent, #000 40%, #000 80%, transparent); }
+  .hero__glow { position: absolute; z-index: -1; width: 880px; height: 720px; right: -80px; top: 40px; background: radial-gradient(closest-side, rgba(87,68,255,0.24), transparent); pointer-events: none; }
+
+  /* One section padding (64px); only the window carries the extra launcher
+     clearance so its bottom edge sits 90px above the hero's bottom. */
+  .hero__body { display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(420px, 0.98fr); column-gap: 48px; align-items: center; padding: 64px var(--de-gutter); }
+
+  /* Copy column */
+  .hero .de-h1 { font-size: clamp(2.6rem, 4.6vw, 4.5rem); }
+  .hero .de-h1 span { display: block; white-space: nowrap; }
+  /* Token gradient, sized to the words (inline-block) so it reaches magenta */
+  .hero .de-h1 .de-accent { display: inline-block; padding-bottom: 0.08em; }
+  .hero__sub { margin-top: 24px; max-width: 560px; font-size: 18px; line-height: 1.6; color: var(--de-muted-soft); text-wrap: pretty; }
+  .hero__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+  .hero__checks { display: flex; flex-wrap: wrap; align-items: center; gap: 0 22px; margin-top: 12px; }
+  .hero__checks .de-check { font-size: 15px; color: var(--de-muted-soft); }
+  .hero__checks a { display: inline-flex; align-items: center; min-height: 44px; padding-block: 10px; font-size: 15px; }
+
+  .hero__meta { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--de-hairline); max-width: 600px; }
+  /* Hairline separators: a seam can never lead a wrapped line as a stray dot */
+  .hero__position { display: flex; flex-wrap: wrap; gap: 6px 0; font-size: 15px; color: var(--de-muted-quiet); }
+  .hero__position li { padding: 0 14px; line-height: 1.4; }
+  .hero__position li:first-child { padding-left: 0; }
+  .hero__position li + li { border-left: 1px solid rgba(255,255,255,0.22); }
+
+  /* Pronunciation: one quiet row, not a dictionary card */
+  .say { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 12px; }
+  .say__word { font-family: var(--font-heading); font-weight: 600; font-size: 15px; letter-spacing: 0.08em; color: var(--de-muted); }
+  .say__word i { font-style: normal; font-weight: 400; color: rgba(255,255,255,0.4); margin: 0 1px; }
+  .say__word u { text-decoration: none; border-bottom: 2px solid var(--de-magenta); padding-bottom: 1px; }
+  .say__phon { font-family: var(--font-mono); font-size: 15px; color: var(--de-muted-quiet); }
+  .say__phon b { font-weight: 600; color: var(--de-magenta-ink); letter-spacing: 0.04em; }
+  .say__btn { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--de-hairline-strong); background: transparent; color: var(--de-fg); font-size: 15px; font-weight: 600; cursor: pointer; }
+  .say__btn svg { width: 13px; height: 13px; fill: currentColor; color: var(--de-magenta-ink); }
+
+  /* Assessment window: a document, not an app collage */
+  .win { position: relative; margin: 0 0 26px; overflow: visible !important; border: 1px solid var(--de-hairline-strong); border-radius: var(--radius-lg); background: linear-gradient(180deg, #14111c 0%, #0c0a12 100%); box-shadow: 0 40px 80px -40px rgba(0,0,0,0.9), 0 0 0 1px rgba(91,69,224,0.08); }
+  /* HUD corner ticks: evidence module only */
+  .win::before, .win::after { content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none; border: solid rgba(169,156,255,0.5); }
+  .win::before { top: -8px; left: -8px; border-width: 1px 0 0 1px; }
+  .win::after { bottom: -8px; right: -8px; border-width: 0 1px 1px 0; }
+  .win__bar { border-radius: var(--radius-lg) var(--radius-lg) 0 0; display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 18px; border-bottom: 1px solid var(--de-hairline); background: rgba(255,255,255,0.02); }
+  .win__dots { display: flex; gap: 6px; }
+  .win__dots span { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,0.16); }
+  .win__title { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; color: var(--de-muted-soft); }
+  .win__title svg { width: 14px; height: 14px; color: var(--de-magenta-ink); }
+  .win__bar .de-tag { margin-left: auto; }
+  .win__sec { padding: 20px 24px; }
+  .win__sec + .win__sec { border-top: 1px solid var(--de-hairline); }
+  .win__label { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+  .win__label .de-meta { font-size: 11px; }
+  .win__h { font-family: var(--font-heading); font-weight: 600; font-size: 19px; line-height: 1.3; letter-spacing: -0.01em; color: #fff; }
+  .win__lead { margin-top: 6px; font-size: 15px; line-height: 1.55; color: var(--de-muted-soft); text-wrap: balance; }
+
+  .areas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 16px; border: 1px solid var(--de-hairline); border-radius: var(--radius-md); overflow: hidden; }
+  .areas li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; font-size: 15px; font-weight: 500; color: var(--de-muted); }
+  .areas .de-iconwell { width: 36px; height: 36px; color: #a99cff; background: var(--de-bg); }
+  .areas .de-iconwell svg { width: 18px; height: 18px; }
+  .areas li:nth-child(even) { border-left: 1px solid var(--de-hairline); }
+  .areas li:nth-child(n+3) { border-top: 1px solid var(--de-hairline); }
+
+  .win__score { display: flex; align-items: center; gap: 10px; }
+  .score { display: flex; align-items: baseline; gap: 6px; }
+  .score .de-num { font-size: 28px; line-height: 1; color: #fff; }
+  .score span:last-child { font-family: var(--font-mono); font-size: 14px; color: var(--de-muted-quiet); }
+  .bars { margin-top: 14px; display: grid; gap: 8px; }
+  .bars li { display: grid; grid-template-columns: 92px minmax(0, 1fr) 30px; align-items: center; gap: 12px; font-size: 14px; color: var(--de-muted-soft); }
+  .bars li .de-num { font-size: 14px; text-align: right; color: var(--de-muted); }
+  .bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.07); overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #5f4ae8, #8b7bff); }
+  .bars li.is-overall { padding-top: 10px; border-top: 1px dashed var(--de-hairline); color: #fff; font-weight: 600; }
+  .bars li.is-overall .bar i { background: var(--de-magenta); }
+  .bars li.is-overall .de-num { color: #fff; }
+
+  .win__sec--out { padding: 14px 24px 16px; }
+  .outcomes { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+  .outcomes li { display: flex; align-items: center; gap: 7px; font-size: 15px; color: var(--de-muted); white-space: nowrap; }
+  .outcomes svg { width: 15px; height: 15px; color: var(--de-emerald); flex-shrink: 0; }
+
+  /* Trust strip — paper, attached to the hero (.de-section--tight) */
+  .trust__row { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 20px; }
+  .trust h2 { font-family: var(--font-heading); font-weight: 600; font-size: 22px; line-height: 1.2; letter-spacing: -0.015em; color: var(--de-ink); text-wrap: balance; }
+  .trust .de-cells { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .trust .de-cells > li { display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 14px; align-content: start; padding: 24px; }
+  /* Bare Lucide glyph: no well inside the cell inside the strip */
+  .trust__icon { grid-row: span 2; display: block; width: 20px; height: 20px; margin-top: 2px; color: var(--de-magenta-paper-ink); }
+  .trust h3 { font-family: var(--font-heading); font-weight: 600; font-size: 16px; line-height: 1.3; color: var(--de-ink); }
+  .trust p { margin-top: 4px; font-size: 15px; line-height: 1.5; color: var(--de-ink-muted); text-wrap: pretty; }
+
+  .win__tag-sm { display: none; }
+  .vh { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+  /* Collapse */
+  @media (max-width: 1279px) {
+    .de-nav { gap: 24px; } .de-nav__items { gap: 20px; font-size: 16px; }
+  }
+  /* Below 1180 the H1 cannot hold three lines beside the window: stack. */
+  @media (max-width: 1179px) {
+    .hero__body { grid-template-columns: minmax(0, 1fr); row-gap: 48px; }
+    .hero .de-h1 { font-size: clamp(2.45rem, 7vw, 4.25rem); }
+    .hero .de-h1 span { white-space: normal; }
+    .win { max-width: 680px; }
+    .hero__plate { inset: 0; } .hero__grid { inset: 0; }
+  }
+  @media (max-width: 1023px) {
+    .de-nav__items, .de-spy { display: none; }
+    .de-nav { gap: 12px; }
+    .de-nav__menu { display: inline-flex; }
+    .trust .de-cells { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .trust .de-cells > li:nth-child(3) { border-left: 0; }
+    .trust .de-cells > li:nth-child(n+3) { border-top: 1px solid var(--de-paper-hairline); }
+  }
+  @media (max-width: 639px) {
+    .de-util { gap: 18px; justify-content: space-between; }
+    .de-util .xl { display: none; } .de-util .sm { display: inline; }
+    .de-nav { height: 64px; gap: 8px; }
+    .de-nav__logo { height: 30px; }
+    .de-nav__cta { padding: 0 14px; font-size: 14px; }
+    .de-nav__cta .xl { display: none; } .de-nav__cta .sm { display: inline; }
+    .hero .de-eyebrow .sep { display: none; }
+    .hero .de-eyebrow .l2 { display: block; margin-top: 4px; }
+    .hero__position { flex-direction: column; gap: 4px; }
+    .hero__position li { padding: 0; }
+    .hero__position li + li { border-left: 0; }
+    .hero__body { padding-top: 40px; padding-bottom: 64px; }
+    .hero .de-h1 { font-size: 2.45rem; }
+    .hero__sub { font-size: 17px; }
+    .hero__actions .de-btn { width: 100%; }
+    .win::before, .win::after { display: none; }
+    .win__sec { padding: 20px 18px; }
+    .win__bar .de-tag { display: none; }
+    .win__tag-sm { display: inline-flex; margin-bottom: 12px; }
+    .areas { grid-template-columns: minmax(0, 1fr); }
+    .areas li:nth-child(even) { border-left: 0; }
+    .areas li:nth-child(n+2) { border-top: 1px solid var(--de-hairline); }
+    .bars li { grid-template-columns: 84px minmax(0, 1fr) 30px; }
+    .outcomes { flex-direction: column; }
+    .trust .de-cells { grid-template-columns: minmax(0, 1fr); }
+    .trust .de-cells > li { border-left: 0; }
+    .trust .de-cells > li:nth-child(n+2) { border-top: 1px solid var(--de-paper-hairline); }
+  }
+</style>
+</head>
+<body>
+<header class="chrome">
+  <div class="de-canvas">
+    <div class="de-util">
+      <a href="tel:+13254809870"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span class="xl">325-480-9870</span><span class="sm">Call</span></a>
+      <a href="https://assist.zoho.com/" target="_blank" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>Support</a>
+      <a href="https://portal.digeratiexperts.com/portal/login"><span class="xl">Client Portal</span><span class="sm">Portal</span></a>
+    </div>
+  </div>
+  <div class="de-canvas">
+    <nav class="de-nav" aria-label="Main">
+      <a href="/" aria-label="Digerati Experts home"><img class="de-nav__logo" src="/brand/digerati-logo-reverse.svg" alt="" width="159" height="38"></a>
+      <ul class="de-nav__items">
+        <li><a href="/solutions">Solutions <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></a></li>
+        <li><a href="/industries">Industries <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></a></li>
+        <li><a href="/resources">Resources <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></a></li>
+        <li><a href="/proactive-ecosystem-pricing">Pricing</a></li>
+        <li><a href="/about/mission-values">About <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></a></li>
+        <li><a href="/store">Store</a></li>
+        <li><a href="/contact">Contact</a></li>
+      </ul>
+      <a class="de-btn de-btn--primary de-nav__cta" href="/book" data-booking="megamenu"><span class="xl">Cyber Risk Assessment</span><span class="sm">Risk Assessment</span></a>
+      <button class="de-nav__menu" type="button" aria-label="Open menu" aria-expanded="false"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg></button>
+    </nav>
+  </div>
+  <div class="de-canvas">
+    <nav class="de-spy" aria-label="On this page">
+      <a class="is-active" href="#home" aria-current="true">Home</a>
+      <a href="#stats">Why DE</a>
+      <a href="#services">How It Works</a>
+      <a href="#industries">Industries</a>
+      <a href="#pricing">Packages</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="hero" id="home" aria-labelledby="hero-title">
+  <div class="hero__plate" aria-hidden="true"></div>
+  <div class="hero__grid" aria-hidden="true"></div>
+  <div class="hero__glow" aria-hidden="true"></div>
+
+  <div class="de-canvas hero__body">
+    <div class="hero__copy">
+      <p class="de-eyebrow">Arizona MSP<span class="sep"> · </span><span class="l2">Cybersecurity &amp; Managed IT</span></p>
+      <h1 class="de-h1" id="hero-title"><span>Cybersecurity-First</span> <span>IT That Powers</span> <span class="de-accent">Your Business</span></h1>
+      <p class="hero__sub">Managed IT, security, and compliance — built for Arizona businesses that can't afford downtime.</p>
+
+      <div class="hero__actions">
+        <a class="de-btn de-btn--hero" href="/book" data-booking="hero-reference">Get My Cyber Risk Assessment <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        <a class="de-btn de-btn--outline" href="/proactive-ecosystem-pricing">See Plans &amp; Pricing</a>
+      </div>
+
+      <ul class="hero__checks">
+        <li class="de-check"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>No obligation</li>
+        <li class="de-check"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Response within one business day</li>
+        <li><a class="de-link--quiet" href="tel:+13254809870">Call 325-480-9870</a></li>
+      </ul>
+
+      <div class="hero__meta">
+        <ul class="hero__position" aria-label="How we work">
+          <li>Assessment-led</li><li>Client-owned access</li><li>Fully managed or co-managed</li>
+        </ul>
+        <div class="say" role="group" aria-label="How to say Digerati (Digerati Experts)">
+          <span class="say__word" lang="en">DIG<i>·</i>ER<i>·</i><u>AH</u><i>·</i>TEE</span>
+          <span class="say__phon">\ ˌdi-jə-ˈrä-tē \&nbsp;&nbsp;<b>dij-uh-RAH-tee</b></span>
+          <button class="say__btn" type="button" aria-label="Hear it: dij-uh-RAH-tee"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>Hear it</button>
+        </div>
+      </div>
+    </div>
+
+    <figure class="win" role="img" aria-label="Illustrative preview of a Digerati Experts Cyber Risk Assessment">
+      <div class="win__bar">
+        <span class="win__dots" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="win__title"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Cyber Risk Assessment · overview</span>
+        <span class="de-tag">Illustrative preview</span>
+      </div>
+
+      <div class="win__sec">
+        <span class="de-tag win__tag-sm">Illustrative preview</span>
+        <p class="win__h">What the assessment reviews</p>
+        <p class="win__lead">Review of identity, endpoints, email, backups, and foundational security controls.</p>
+        <ul class="areas">
+          <li><span class="de-iconwell" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>Identity &amp; access</li>
+          <li><span class="de-iconwell" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></svg></span>Endpoints &amp; devices</li>
+          <li><span class="de-iconwell" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>Email security</li>
+          <li><span class="de-iconwell" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m9 15 2 2 4-4"/></svg></span>Backups &amp; recovery</li>
+        </ul>
+      </div>
+
+      <div class="win__sec">
+        <div class="win__label">
+          <div>
+            <p class="de-meta">Posture across key areas</p>
+            <p class="win__lead" style="margin-top:4px">Overall posture</p>
+          </div>
+          <div class="win__score"><p class="score"><span class="de-num">69</span><span>/ 100</span></p><span class="de-tag">Illustrative</span></div>
+        </div>
+        <ul class="bars" aria-label="Sample posture values, illustrative">
+          <li>Identity<span class="bar"><i style="width:68%"></i></span><span class="de-num">68</span></li>
+          <li>Endpoints<span class="bar"><i style="width:77%"></i></span><span class="de-num">77</span></li>
+          <li>Email<span class="bar"><i style="width:61%"></i></span><span class="de-num">61</span></li>
+          <li>Backups<span class="bar"><i style="width:84%"></i></span><span class="de-num">84</span></li>
+          <li>Controls<span class="bar"><i style="width:56%"></i></span><span class="de-num">56</span></li>
+          <li class="is-overall">Overall<span class="bar"><i style="width:69%"></i></span><span class="de-num">69</span></li>
+        </ul>
+      </div>
+
+      <div class="win__sec win__sec--out">
+        <ul class="outcomes" aria-label="What you receive">
+          <li><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>Prioritized findings</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>Business-impact context</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>Right-sized recommendations</li>
+        </ul>
+      </div>
+    </figure>
+  </div>
+</section>
+
+<section class="f-paper de-section--tight trust" aria-labelledby="trust-title">
+  <div class="de-canvas trust__row">
+    <h2 id="trust-title">Trusted IT Partner for Arizona Businesses</h2>
+    <ul class="de-cells de-cells--paper">
+      <li><svg class="trust__icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg><h3>Cybersecurity First</h3><p>We secure your business from the inside out.</p></li>
+      <li><svg class="trust__icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg><h3>Proactive IT</h3><p>Prevent issues before they impact your business.</p></li>
+      <li><svg class="trust__icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg><h3>Compliance Ready</h3><p>Stay compliant with industry standards and regulations.</p></li>
+      <li><svg class="trust__icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg><h3>Local &amp; Responsive</h3><p>Arizona-based team, always here when you need us.</p></li>
+    </ul>
+  </div>
+</section>
+</main>
+</body>
+</html>

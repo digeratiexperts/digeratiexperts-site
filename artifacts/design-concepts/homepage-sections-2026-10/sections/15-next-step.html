@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE section mockup — 15 Next step</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../system/tokens.css">
+<style>
+  /* 15 · Next step — full-bleed paper band (no island), the page's only
+     centered closing composition, max 760px, one centered axis throughout.
+     Order: head → one context paragraph → four standards as one hairline row
+     → centered label, email + button on one line → one centered footer row. */
+  .next { max-width: 760px; margin: 0 auto; text-align: center; }
+  .next .de-h2 { font-size: clamp(1.9rem, 2.9vw, 2.625rem); text-wrap: balance; }
+  .next .de-lede { margin: 14px auto 0; max-width: 600px; text-wrap: balance; }
+  .next__context { margin: 10px auto 0; max-width: 640px; font-size: 15px; line-height: 1.55; color: var(--de-ink-muted); text-wrap: balance; }
+  .next__context span { color: var(--de-ink-body); }
+
+  /* Four standards: a list of attributes (not navigation). Four equal cells,
+     magenta dash marker above each label, hairline seams. */
+  .next__standards { margin-top: 24px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--de-paper-hairline); border-bottom: 1px solid var(--de-paper-hairline); }
+  .next__standards li { padding: 12px 16px 14px; font-size: 15px; font-weight: 500; line-height: 1.35; color: var(--de-ink); text-align: center; text-wrap: balance; }
+  .next__standards li + li { border-left: 1px solid var(--de-paper-hairline); }
+  .next__standards .de-dash { display: block; width: 14px; height: 2px; margin: 0 auto 8px; }
+  .next__standards .nw { white-space: nowrap; }
+
+  /* Email + button on one line; visible label centered above the row. */
+  .next__form { margin-top: 24px; }
+  .next__form .de-label { margin-bottom: 8px; }
+  .next__row { display: flex; gap: 12px; text-align: left; }
+  .next__field { position: relative; flex: 1; min-width: 0; }
+  .next__field svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--de-ink-muted); pointer-events: none; }
+  /* Border #8a8494 ≈ 3.1:1 on paper and on the white fill (WCAG 1.4.11).
+     Focus uses the shared .de-input:focus-visible outline from tokens.css. */
+  .next__field .de-input { height: 52px; padding-left: 46px; font-size: 16px; border-color: #8a8494; }
+  .next__field .de-input:focus-visible { border-color: var(--de-magenta); }
+  .next__row .de-btn { height: 52px; flex-shrink: 0; }
+  .next__error { margin-top: 8px; font-size: 14px; font-weight: 600; color: var(--de-magenta-paper-ink); }
+  .next__error[hidden] { display: none; }
+
+  /* Footer: one small centered row. */
+  .next__foot { margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 0 14px; flex-wrap: wrap; font-size: 15px; color: var(--de-ink-muted); }
+  .next__foot a { display: inline-flex; align-items: center; min-height: 44px; }
+  .next__foot .de-link { font-weight: 600; }
+  .next__sep { color: var(--de-paper-hairline-strong, #b9b3bf); }
+  .next__call a { color: var(--de-ink); font-weight: 600; }
+
+  @media (max-width: 900px) {
+    .next__standards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .next__standards li { padding: 12px 12px 14px; }
+    .next__standards li + li { border-left: 0; }
+    .next__standards li:nth-child(even) { border-left: 1px solid var(--de-paper-hairline); }
+    .next__standards li:nth-child(n+3) { border-top: 1px solid var(--de-paper-hairline); }
+  }
+  @media (max-width: 639px) {
+    .next__row { flex-direction: column; }
+    .next__row .de-btn { width: 100%; height: auto; min-height: 52px; padding: 13px 16px; white-space: normal; }
+    .next__foot { flex-direction: column; gap: 0; }
+    .next__sep { display: none; }
+  }
+</style>
+<script>
+  /* This section sets no Oxanium (phone number is body face, finding 7), but
+     the shared render gate checks all three system faces; load it explicitly. */
+  document.fonts && document.fonts.load('600 16px Oxanium');
+</script>
+</head>
+<body>
+<section class="f-paper de-section" id="cta" aria-labelledby="cta-title">
+  <div class="de-canvas">
+    <div class="next">
+      <p class="de-eyebrow">Cyber Risk Assessment</p>
+      <h2 class="de-h2" id="cta-title">Start with a Cyber Risk Assessment</h2>
+      <p class="de-lede">Discover identity, endpoint, email, backup, and operating gaps before you buy a package.</p>
+      <p class="next__context">Assessment-led recommendations. Final scope confirmed after we see the environment. <span>Serving Arizona professional services, healthcare, and growing SMBs.</span></p>
+
+      <ul class="next__standards" aria-label="Standards we work to">
+        <li><span class="de-dash" aria-hidden="true"></span>Audit readiness support</li>
+        <li><span class="de-dash" aria-hidden="true"></span><span class="nw">Microsoft-aligned</span> stack</li>
+        <li><span class="de-dash" aria-hidden="true"></span><span class="nw">HIPAA-minded</span> controls</li>
+        <li><span class="de-dash" aria-hidden="true"></span>Documented standards</li>
+      </ul>
+
+      <!-- Integration note (live DigeratiCTASection.tsx): client-side validate → openBooking('homepage-cta'); email not posted.
+           Inline errors, verbatim: "Enter your work email." (empty) / "Enter a valid work email." (invalid).
+           On error: unhide #cta-email-error with the matching string and set aria-invalid="true" on #cta-email
+           (aria-describedby points at the error slot); clear both when the value becomes valid. -->
+      <form class="next__form" data-booking-source="homepage-cta" novalidate>
+        <label class="de-label" for="cta-email">Work email</label>
+        <div class="next__row">
+          <div class="next__field">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            <input class="de-input" id="cta-email" name="email" type="email" placeholder="name@company.com" autocomplete="email" required aria-describedby="cta-email-error">
+          </div>
+          <button class="de-btn de-btn--primary" type="submit">Get My Cyber Risk Assessment <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
+        </div>
+        <p id="cta-email-error" class="next__error" role="alert" hidden>Enter a valid work email.</p>
+      </form>
+
+      <div class="next__foot">
+        <a class="de-link" href="#contact">Or send a message below</a>
+        <span class="next__sep" aria-hidden="true">·</span>
+        <p class="next__call">Prefer to call? <a href="tel:+13254809870" aria-label="Call 325-480-9870">325-480-9870</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+</body>
+</html>

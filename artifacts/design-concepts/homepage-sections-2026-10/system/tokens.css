@@ -123,7 +123,7 @@ ul, ol { padding: 0; list-style: none; }
 .de-btn--hero { background: linear-gradient(90deg, #5f4ae8, #7d5cf4); color: #fff; box-shadow: 0 14px 36px -18px rgba(111,92,255,0.9); }
 .de-btn--outline { background: transparent; color: #fff; border-color: rgba(255,255,255,0.2); }
 .de-btn--outline:hover { border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.05); }
-.de-btn--outline-paper { background: var(--de-paper-raised); color: var(--de-ink); border-color: var(--de-paper-hairline); }
+.de-btn--outline-paper { background: var(--de-paper-raised); color: var(--de-ink); border-color: #8a8296; } /* ≈3.2:1 on paper: the control boundary meets 3:1 */
 .de-btn--outline-paper:hover { border-color: var(--de-magenta); color: var(--de-magenta-paper-ink); }
 .de-btn--dark { background: var(--de-ink); color: #fff; }
 .de-btn:focus-visible, .de-link:focus-visible, .de-chip:focus-visible, .de-input:focus-visible { outline: 2px solid #ec4899; outline-offset: 2px; }
@@ -152,6 +152,8 @@ ul, ol { padding: 0; list-style: none; }
 .de-input { width: 100%; height: 48px; padding: 0 14px; border-radius: var(--radius-sm); border: 1px solid var(--de-paper-hairline); background: #fff; color: var(--de-ink); font: inherit; font-size: 15px; }
 .de-input::placeholder { color: #8a8494; }
 .de-label { display: block; font-size: 14px; font-weight: 600; color: var(--de-ink); margin-bottom: 6px; }
+/* Visually hidden, still announced (labels, landmark names). */
+.de-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .de-check { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; color: var(--de-muted); }
 .de-check svg { width: 15px; height: 15px; color: var(--de-emerald); }
 .f-paper .de-check, .de-island .de-check { color: var(--de-ink-muted); }
