@@ -38,6 +38,8 @@ claims:
     files:
       - client/src/components/visual/ProtectionCommandDeck.tsx (the phone article's bottom reserve only)
       - client/src/components/visual/ProtectionCommandDeck.phone.test.ts (the reserve assertion)
+      - artifacts/visual-qa/protection-deck-phone/390-end-before-reserve.png
+      - artifacts/visual-qa/protection-deck-phone/390-end-after-reserve.png
     status: active
     started: 2026-10-01
     note: >-
