@@ -206,7 +206,7 @@ export const DigeratiThreatsInsightsSection = (): JSX.Element => {
             <div className="lg:hidden relative mb-8">
               <button
                 onClick={() => scroll("left")}
-                className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/80 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all ${
+                className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/80 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all ${
                   canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"
                 }`}
                 aria-label="Scroll left"
@@ -216,7 +216,7 @@ export const DigeratiThreatsInsightsSection = (): JSX.Element => {
               </button>
               <button
                 onClick={() => scroll("right")}
-                className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/80 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all ${
+                className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/80 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all ${
                   canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"
                 }`}
                 aria-label="Scroll right"

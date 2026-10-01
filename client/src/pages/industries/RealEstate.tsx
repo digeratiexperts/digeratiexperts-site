@@ -169,7 +169,7 @@ export default function RealEstate() {
           </div>
           <div className="text-center">
             <p className="mb-2 text-lg font-semibold text-white">Someone to call</p>
-            <p className="text-sm text-white/70">Arizona team when a closing looks off — {PRIMARY_PHONE.display}.</p>
+            <p className="text-sm text-white/70">Arizona team when a closing looks off — <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>.</p>
           </div>
         </div>
 
