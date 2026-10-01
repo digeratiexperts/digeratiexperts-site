@@ -37,6 +37,7 @@
   .next__row .de-btn { flex-shrink: 0; }
   .next__error { margin-top: 8px; font-size: 14px; font-weight: 600; color: var(--de-magenta-paper-ink); }
   .next__error[hidden] { display: none; }
+  .next__action { margin-top: 28px; display: flex; justify-content: center; }
 
   /* Footer: one small centered row. */
   .next__foot { margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 0 14px; flex-wrap: wrap; font-size: 15px; color: var(--de-ink-muted); }
@@ -54,6 +55,7 @@
   }
   @media (max-width: 639px) {
     .next__row { flex-direction: column; }
+    .next__action .de-btn { width: 100%; white-space: normal; height: auto; min-height: 48px; padding: 12px 16px; }
     .next__row .de-btn { width: 100%; height: auto; min-height: 48px; padding: 12px 16px; white-space: normal; }
     .next__foot { flex-direction: column; gap: 0; }
     .next__sep { display: none; }
@@ -81,21 +83,12 @@
         <li>Documented standards</li>
       </ul>
 
-      <!-- Integration note (live DigeratiCTASection.tsx): client-side validate → openBooking('homepage-cta'); email not posted.
-           Inline errors, verbatim: "Enter your work email." (empty) / "Enter a valid work email." (invalid).
-           On error: unhide #cta-email-error with the matching string and set aria-invalid="true" on #cta-email
-           (aria-describedby points at the error slot); clear both when the value becomes valid. -->
-      <form class="next__form" data-booking-source="homepage-cta" novalidate>
-        <label class="de-label" for="cta-email">Work email</label>
-        <div class="next__row">
-          <div class="next__field">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-            <input class="de-input" id="cta-email" name="email" type="email" placeholder="name@company.com" autocomplete="email" required aria-describedby="cta-email-error">
-          </div>
-          <button class="de-btn de-btn--primary" type="submit">Get My Cyber Risk Assessment <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
-        </div>
-        <p id="cta-email-error" class="next__error" role="alert" hidden>Enter a valid work email.</p>
-      </form>
+      <!-- Joe, 2026-10-01 (decision 1): one assessment form on the page, the lead form above.
+           The live email field here never submitted; it only opened the booking modal. It
+           becomes the button it really was: openBooking("homepage-cta"), same label. -->
+      <div class="next__action">
+        <button class="de-btn de-btn--primary" type="button" data-booking-source="homepage-cta">Get My Cyber Risk Assessment <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
+      </div>
 
       <div class="next__foot">
         <a class="de-link" href="#contact">Or send a message below</a>

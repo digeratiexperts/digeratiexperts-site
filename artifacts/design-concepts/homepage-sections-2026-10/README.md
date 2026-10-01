@@ -45,3 +45,11 @@ node system/render.mjs --all --widths 1440,390
 | "Arizona SOC Operations" badge, "Always-On Telemetry" caption | Detection & response image panel | No source; Tier 0 bars invented telemetry |
 
 If Joe picks this direction, the integration PR records these in `docs/CLAIMS-REGISTER.md`.
+
+## Joe's decisions, 2026-10-01
+
+- **Decision 1, duplicate asks: agreed.** One assessment form on the page (13, lead form). The next-step band (15) keeps its copy and becomes one button (`openBooking("homepage-cta")`, which is what its email field really did). One newsletter form: the footer's; the FAQ chapter's "Stay Updated" card is removed and the service area becomes a full-width row.
+- **Decision 2, pronunciation row: agreed.** Kept as one row in the hero.
+- **Industries photo cards: keep.** "i also dont want to lose UI design like the industries with the hover color picture. a lot of subtle work can be lost so be careful." Section 10 restores the five photographs with the live treatment (grayscale at rest, colour on hover and keyboard focus, magenta border, arrow nudge, phone snap rail with scroll buttons). This overrides the earlier "no photographs" direction for this section; the claims-register note that calls them stock photographs is recorded, and Joe's decision stands. `renders/10-industries-1440-hover.png` shows the hover state.
+- **Bottom bar: upgrade with autohide that is not annoying.** `bar/` holds the prototype, the behaviour checks (15/15 pass) and the integration spec.
+- **Subtle work:** `INTERACTION-INVENTORY.md` lists every hover, focus, transition, reveal and image treatment on the live page, so integration keeps them.

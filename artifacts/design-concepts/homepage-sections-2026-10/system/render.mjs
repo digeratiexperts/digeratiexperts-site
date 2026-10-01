@@ -24,6 +24,9 @@ const widths = String(opt('--widths', '1440')).split(',').map(Number);
 const scale = Number(opt('--scale', '1'));
 const outDir = path.resolve(conceptDir, opt('--out', 'renders'));
 const all = args.includes('--all');
+// --state <name> --add-class <selector>=<class>: apply a demo state (e.g. hover) before capture; output gets -<name> suffix.
+const stateName = opt('--state', '');
+const addClass = opt('--add-class', '');
 let files = args.filter(a => a.endsWith('.html'));
 if (all) files = fs.readdirSync(path.join(conceptDir, 'sections')).filter(f => f.endsWith('.html') && !f.startsWith('_')).sort().map(f => path.join('sections', f));
 if (!files.length) { console.error('no section html given'); process.exit(2); }
@@ -63,7 +66,8 @@ for (const file of files) {
       fonts: { grotesk: document.fonts.check('600 20px "Space Grotesk"'), inter: document.fonts.check('400 16px Inter'), oxanium: document.fonts.check('600 16px Oxanium') },
       title: document.title,
     }));
-    const out = path.join(outDir, `${base}-${width}.png`);
+    if (addClass) { const [sel, cls] = addClass.split('='); await page.evaluate(([sel, cls]) => document.querySelectorAll(sel).forEach(e => e.classList.add(cls)), [sel, cls]); await page.waitForTimeout(700); }
+    const out = path.join(outDir, `${base}-${width}${stateName ? '-' + stateName : ''}.png`);
     // Sections shorter than the 900px viewport are clipped to their own height
     // so the PNG does not end in a band of empty page background.
     if (info.content > 0 && info.content < 900) await page.screenshot({ path: out, clip: { x: 0, y: 0, width, height: info.content } });

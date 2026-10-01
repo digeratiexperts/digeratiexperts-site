@@ -83,6 +83,10 @@
     .nl-row .de-input { flex: none; width: 100%; min-height: 48px; }
     .nl-row .de-btn { width: 100%; }
   }
+  /* One card left: service area as a full-width row, title left, cities right. */
+  .cards--one { margin-top: 40px; }
+  .cards--one .sa-card { display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+  .cards--one .sa-card .city-list { margin-top: 0; }
 </style>
 </head>
 <body>
@@ -155,7 +159,7 @@
 }
 </script>
 
-<section class="f-surface de-section" id="newsletter" aria-labelledby="compliance-title">
+<section class="f-surface de-section" id="compliance" aria-labelledby="compliance-title">
   <div class="de-canvas">
     <div class="de-grid de-grid--2 comp">
       <div>
@@ -170,40 +174,10 @@
       </ul>
     </div>
 
-    <div class="de-grid de-grid--2 cards">
-      <article class="de-card" aria-labelledby="newsletter-title">
-        <p class="card-kicker"><span class="de-iconwell" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span><span class="de-meta">Monthly · Arizona operators</span></p>
-        <h3 class="de-h3" id="newsletter-title">Stay Updated</h3>
-        <p class="de-body">Get the latest cybersecurity insights and IT tips delivered to your inbox.</p>
-        <!-- Submission contract (DigeratiNewsletterSection.tsx): JS fetch, POST /api/newsletter
-             with a JSON body { email }. Not a form post; no action attribute on purpose.
-             Live state + toast strings, verbatim, for the handoff:
-             - button while sending: "Subscribing..."
-             - success state (replaces the form; shield in a ring): "You're Subscribed!" /
-               "Check your inbox for a confirmation email. Welcome to our security community!" /
-               ghost link "Subscribe another email"
-             - toast success: "Successfully Subscribed!" / "You'll receive our security updates and expert insights."
-             - toast error: "Error" / "Failed to subscribe. Please try again." -->
-        <form class="nl-form" novalidate>
-          <label class="de-label" for="nl-email">Email address</label>
-          <div class="nl-row">
-            <input class="de-input" id="nl-email" name="email" type="email" placeholder="Enter your email" autocomplete="email" required>
-            <button class="de-btn de-btn--primary" type="submit">Subscribe</button>
-          </div>
-        </form>
-        <div class="nl-success" hidden>
-          <p class="de-h3">You're Subscribed!</p>
-          <p class="de-body">Check your inbox for a confirmation email. Welcome to our security community!</p>
-          <button class="de-link" type="button">Subscribe another email</button>
-        </div>
-        <ul class="plain-list nl-topics" aria-label="What you get">
-          <li><span class="de-dash" aria-hidden="true"></span>Security Alerts</li>
-          <li><span class="de-dash" aria-hidden="true"></span>Best Practices</li>
-          <li><span class="de-dash" aria-hidden="true"></span>Industry Trends</li>
-          <li><span class="de-dash" aria-hidden="true"></span>Expert Insights</li>
-        </ul>
-        <p class="de-small nl-foot">Monthly security notes for Arizona operators.<br>Unsubscribe anytime. We respect your privacy.</p>
-      </article>
+    <div class="cards cards--one">
+      <!-- Joe, 2026-10-01 (decision 1): one newsletter form on the page, the footer's.
+           The "Stay Updated" card that sat here is removed; its POST /api/newsletter
+           contract lives on in the footer form. -->
 
       <article class="de-card sa-card" aria-labelledby="service-area-title">
         <h3 class="de-h3" id="service-area-title">Serving Greater Phoenix</h3>

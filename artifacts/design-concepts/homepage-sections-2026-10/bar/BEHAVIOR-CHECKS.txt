@@ -1,0 +1,15 @@
+PASS  top of page: compact (Ask DE only), not tucked  (dock)
+PASS  after leaving the hero: expanded chapter dock  (y=1300)
+PASS  short read down (120px, under the 160px threshold) does not tuck  (y=1360)
+PASS  reading down >=160px: tucked to the Ask DE button  (y=2560 active=Why DE)
+PASS  20px trackpad wobble up: stays tucked
+PASS  deliberate flick up (>=32px): back, active chapter + progress  (active=Why DE)
+PASS  reading down again: tucked
+PASS  pointer rests near the bottom edge: back
+PASS  pointer over the bar while scrolling: held, never tucks
+PASS  chapter click: jump scroll does not tuck the bar you just used  (active=Packages)
+PASS  end of page: shown  (active=Contact)
+PASS  reduced motion: opacity only  (opacity)
+PASS  phone reading down: tucked to the Ask DE button  (y=3200)
+PASS  phone flick up: Ask DE + back-to-top back
+PASS  phone typing in a field: bar steps aside, --de-unified-bar-h 0px  (0px)

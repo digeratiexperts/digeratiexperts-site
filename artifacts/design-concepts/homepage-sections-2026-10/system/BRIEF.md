@@ -68,6 +68,7 @@ Keep: eyebrow, H2 (no gradient — not on Joe's list; use plain ink), lede, the 
 Keep: eyebrow, H2 (gradient on "your technology"), lede + "Meet the team", the founder photo, name, role, "Chandler, Arizona HQ", "Principal-Led Managed Security Operations" + paragraph, the three operations items, "Talk to an Expert". Change: well; photo as a 4:5 portrait card ≈ 400px wide with name/role in a caption bar; right: heading, paragraph, the three operations as a numbered hairline list (not three cards); one button.
 
 ### 10 · Industries (`10-industries.html`) — `live/09-industries.webp`
+**Superseded by Joe, 2026-10-01:** keep the photo cards with the grayscale-to-colour hover. See README "Joe's decisions".
 Keep: H2, subline, the five industries with their one-liners and "View …" links, "Get Industry-Specific Protection". Change: surface field; head left with the button in the head row; five equal hairline cells (IconWell light-on-dark, name, line, link); **no photos**.
 
 ### 11 · Pricing (`11-pricing.html`) — `live/10-pricing.webp`
