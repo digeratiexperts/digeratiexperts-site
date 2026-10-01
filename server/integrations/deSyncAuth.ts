@@ -171,6 +171,15 @@ export function verifySignedRequest(
     return { ok: false, status: 401, error: "Invalid integration signature" };
   }
 
+  // Legacy static-token fallback (no HMAC, no replay window, no body binding).
+  // Set DE_SYNC_REQUIRE_SIGNED=1 to refuse it and require the signed path once
+  // the Hub sends signatures — this closes the "token leaked in a log forges
+  // events" gap. Default-off preserves the live integration until the Hub is
+  // cut over, at which point flipping the flag is the whole remediation.
+  if (process.env.DE_SYNC_REQUIRE_SIGNED === "1") {
+    return { ok: false, status: 401, error: "Signed integration request required" };
+  }
+
   const eventId = rawEventId || randomUUID();
   const provided =
     String(req.get("x-de-sync-token") || "").trim() ||
