@@ -111,6 +111,26 @@ Every figure on this page is read at build time from a file the rest of the site
 | Reviews | Real reviews only, from `GET /api/public/reviews` (live Google feed or the permissioned catalog); the section is absent when the feed is empty | `docs/GOOGLE-REVIEWS.md`; no quote, name or rating is written into the page | Published | None |
 | Page metadata (`useSEO`) | "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment." | Same SLA basis as the `/` metadata row and PR #288 | Published | None |
 
+## Version 6 preview `/version-6` (noindex)
+
+Every section of the live homepage, redrawn on the Version 5 system. The same acceptance script checks it (`scripts/qa/homepage-v5-acceptance.mjs --scope v6`, limits in `client/src/pages/versions/v6/ACCEPTANCE.md`): every figure on the rendered page must appear verbatim in one of the source files below.
+
+| Where | Claim | Basis | Status | Action |
+| --- | --- | --- | --- | --- |
+| Hero facts, pricing | $125 per user a month, $1,600 monthly minimum; the four tiers, minimums, ideal-buyer lines, first three inclusions; the scope note | `client/src/data/pricing.ts`, rendered from the import | Published | Bound to the file; never hand-edited |
+| Hero facts, response times table, contact hours | Critical 15 minutes, High 1 hour, Medium 4 hours, Low next business day; 24/7/365 emergency incident response; service credits | `client/src/pages/legal/SLA.tsx` | Published | Change the SLA page first |
+| Why it matters | 48% of breaches involve ransomware; $11.5M average US breach cost; 99%+ of unauthorized access attempts blocked by MFA; $392M Arizona internet-crime losses in 2024 | `client/src/data/cyberAwarenessFacts.ts` (`getHomepageCyberFacts`), each linked to its report | Published, sourced | Bound to the file |
+| Why we exist, what we tackle, three paths, capabilities, four steps, outcomes, pillars, roles, industries, detection points, CTA items, compliance chips | The live homepage's own copy for those sections, de-dashed | The live section components under `client/src/pages/sections/` | Published on `/` | Keep in step with the live sections, or retire the live ones |
+| What we protect | The eight blocks and their two scope lines each; Risk & Exposure as the continuous layer | `client/src/components/visual/ProtectionCommandDeck.tsx` (`protectionDomains`), rendered from the import | Published, Joe-decided model | Bound to the file |
+| Hero figure, the people | Joseph Petro, founder and Chief Technology Strategist; the Chandler paragraph | The approved photograph live on `/` and `/about/team`; the live team section's copy | Published | Keep verbatim or change both |
+| Client proof | 30-day guarantee, 100% money back; Client Bill of Rights; Trust Center; case studies | `/about/guarantee`, `/about/client-bill-of-rights`, `/trust/trust-center`, `/resources/case-studies` | Published | Link targets must answer 200 |
+| Client proof, reviews | Real reviews only, from `GET /api/public/reviews`; otherwise the empty state says so | `docs/GOOGLE-REVIEWS.md` | Published | No quote, name or rating is written in the page |
+| Security updates | Items from `GET /api/public/threats?scope=homepage`; otherwise the empty state; the 45-day window; the attribution line | `shared/threatFeed.ts` (`THREAT_ATTRIBUTION`), the live threats section | Published | Bound to the feed |
+| Contact, footer | Phone, email, office address, service area, social links; office hours | `shared/companyContact.ts`; hours as published in `client/src/pages/sections/DigeratiContactSection.tsx` | Published | Change the source first |
+| Forms | Assessment, contact and newsletter requests | `POST /api/assessment`, `/api/contact`, `/api/newsletter`, the same endpoints and fields the live homepage uses | Published | No new endpoint |
+| Questions | Four questions and answers | `client/src/pages/sections/DigeratiFAQSection.tsx`, minus the dashes | Published | Keep in step |
+| Removed on purpose | "Results in 24-48 hours"; Microsoft Partner and Apple Consultants badges; the generated office and desk stills; the industry stock photographs; the illustrative assessment dashboard | No source for the first two; `design/IMAGERY.md` for the rest | Not on the page | Add back only with a source |
+
 ## Elsewhere on the site (outside this PR, listed so they are not forgotten)
 
 | Where | Claim | Status | Action |

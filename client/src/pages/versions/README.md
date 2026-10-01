@@ -29,6 +29,7 @@ one lands and any of them can be referenced in future development.
 | 3 | `/version-3` | Diagram-system sections, PR #178 with the review corrections (c03cad9) | react snapshot |
 | 4 | `/version-4` | Clean-sheet redesign, ten chapters (PR #266, merged 2026-09-30) | build |
 | 5 | `/version-5` | The practical homepage: one conventional page, every fact from the site's own data files, acceptance script as the definition of done | build |
+| 6 | `/version-6` | Every section of the live homepage, redrawn on the Version 5 system; same acceptance script with Version 6 limits | build |
 
 ## Adding a version
 
