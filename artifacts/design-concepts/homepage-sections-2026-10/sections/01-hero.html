@@ -111,7 +111,7 @@
   .areas li:nth-child(n+3) { border-top: 1px solid var(--de-hairline); }
 
   .win__score { display: flex; align-items: center; gap: 10px; }
-  .score { display: flex; align-items: baseline; gap: 6px; }
+  .score { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; }
   .score .de-num { font-size: 28px; line-height: 1; color: #fff; }
   .score span:last-child { font-family: var(--font-mono); font-size: 14px; color: var(--de-muted-quiet); }
   .bars { margin-top: 14px; display: grid; gap: 8px; }
@@ -185,6 +185,7 @@
     .areas li:nth-child(even) { border-left: 0; }
     .areas li:nth-child(n+2) { border-top: 1px solid var(--de-hairline); }
     .bars li { grid-template-columns: 84px minmax(0, 1fr) 30px; }
+    .win__label { flex-wrap: wrap; align-items: flex-start; row-gap: 10px; }
     .outcomes { flex-direction: column; }
     .trust .de-cells { grid-template-columns: minmax(0, 1fr); }
     .trust .de-cells > li { border-left: 0; }
