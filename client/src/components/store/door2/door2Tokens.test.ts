@@ -73,4 +73,18 @@ describe("Door 2 tokens match the V4 vocabulary", () => {
     expect(css).toContain("html.de-store-jelly .d2-tile[data-de-just-selected");
     expect(css).not.toMatch(/data-de-jelly="feature"/);
   });
+
+  it("sits the expanded profile on a light grey panel mixed from the paper and graphite tokens", () => {
+    // Joe, 2026-09-30: the form must separate from the black page. Inks are re-pointed so text clears 4.5:1 on the grey.
+    const panel = block(".d2-profile-panel");
+    expect(panel).toContain("--d2-panel-bg: color-mix(in srgb, var(--de-paper) 92%, var(--de-bg))");
+    expect(panel).toContain("background: var(--d2-panel-bg)");
+    expect(panel).toContain("--d2-ink-strong: var(--de-bg)");
+    expect(panel).toContain("--d2-accent-ink: color-mix(in srgb, rgb(var(--de-accent-rgb)) 75%, var(--de-bg))");
+    expect(block(".d2-profile-panel .d2-input")).toContain("background: var(--de-paper-raised)");
+    expect(css).toMatch(/\.d2-profile-panel \.d2-tile:has\(input:focus-visible\) \{\n  outline-color: var\(--de-magenta\);/);
+    expect(css).toMatch(/@media print \{[\s\S]*\.d2-profile-panel \{\n    background: #fff !important;/);
+    const form = readFileSync(path.join(root, "client/src/components/store/SolutionProfileForm.tsx"), "utf8");
+    expect(form).toContain('data-state="expanded"\n      className="d2-profile-panel"');
+  });
 });

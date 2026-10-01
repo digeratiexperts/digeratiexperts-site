@@ -76,8 +76,16 @@ describe("ProtectionCommandDeck phone layout", () => {
     expect(block).toContain("Seven blocks each answer a threat class, and risk and exposure runs under all of them.");
   });
 
-  it("keeps the bottom 96px of the block empty for the Ask DE launcher and nudge", () => {
-    expect(phoneBlock()).toMatch(/<article className="[^"]*\bpb-24\b/);
+  it("keeps 96px empty above the dock and its gap, so the Ask DE launcher and nudge never sit on the type at rest", () => {
+    // Measured at 390x844 with the block's end at the viewport bottom: the dock
+    // tops out at y=778 and the "Stuck on something" nudge stacks above it from
+    // y=685. A flat 96px reserve (pb-24) ended the last line at 748, under the
+    // nudge. 96px above the dock and its 0.75rem gap ends it at 682, clear of
+    // both; the safe-area inset keeps that true under an iPhone home indicator.
+    expect(phoneBlock()).toContain(
+      'paddingBottom: "calc(96px + var(--de-unified-bar-h, 3.5rem) + 0.75rem + env(safe-area-inset-bottom, 0px))"',
+    );
+    expect(phoneBlock()).not.toMatch(/<article className="[^"]*\bpb-24\b/);
   });
 
   it("holds one accent only: magenta, no purple fills", () => {
