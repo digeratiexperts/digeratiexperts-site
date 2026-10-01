@@ -58,10 +58,10 @@ The way the identity is implemented **today**. Maintenance Mode must use it. Exp
 | Decision | Where |
 |---|---|
 | Blog/Journal amber and Store electric + 14 category-pill hues stay as they are | `.cursor/rules/blog-store-color-lock.mdc` (2026-08) |
-| DE Desk: one white precision panel for all three tabs (`#fbfbfa`, black/10 hairline, near-black ink, magenta only for actions and the incident rail), live | `.cursor/skills/de-desk-ui/SKILL.md`, `.cursor/rules/de-desk-design.mdc`, `design/UI-STYLE-RULES.md` support chrome (Joe, 2026-09-28; PR #277 approved 2026-09-30, superseding the graphite direction of 2026-09-14) |
+| DE Desk and the Ask DE chooser: one black + grey + gold panel for all three tabs (`#0b0b0d` panel, charcoal rows, white/10 hairline, white ink; the mark's Signal Gold `#E3B23C` is the only accent, for the 1px cap, the active tab, actions and the incident rail; no magenta, no glow) | `.cursor/skills/de-desk-ui/SKILL.md`, `.cursor/rules/de-desk-design.mdc`, `design/UI-STYLE-RULES.md` support chrome (Joe, 2026-10-01, option 1 of eight Desk mockups; supersedes the white precision panel of 2026-09-28 / PR #277) |
 | No vendor names on the public homepage hero | `design/UI-STYLE-RULES.md` §7 (2026-08-30) |
 | Sculpture / Meshy stills retired from public marketing ("high quality or not at all") | `design/IMAGERY.md`, `design/approved/*-2026-08.md` |
-| Gold is the wordmark mark only, never a CTA or fill (current value per `brand/README.md`; `design/DESIGN_SYSTEM.md` still carries the older `#e7b20d`) | `brand/README.md`, `design/DESIGN_SYSTEM.md`, `.cursor/rules/brand.mdc` |
+| Gold is the wordmark mark only, never a CTA or fill, with one exception: on the DE Desk and the Ask DE chooser it is the one accent (Joe, 2026-10-01) (current value per `brand/README.md`; `design/DESIGN_SYSTEM.md` still carries the older `#e7b20d`) | `brand/README.md`, `design/DESIGN_SYSTEM.md`, `.cursor/rules/brand.mdc` |
 | Homepage keeps the eight-block security model with Risk & Exposure as the continuous eighth block | Joe, Completion Program board 2026-09-12 (outside the repo); blocks listed in `design/PROOF_SYSTEM.md` |
 | Homepage section-jump dock kept (MegaMenu spy + `SiteBottomBar`) | `design/DESIGN_SYSTEM.md` ("DE restored the dock 2026-08-27") |
 
@@ -161,5 +161,6 @@ Historical documents remain in place. Do not delete them, do not rewrite them to
 
 ## 5. Change log
 
+- 2026-10-01 — DE Desk row: Joe picked option 1 ("Black + Grey + Yellow") of eight Desk mockups and overruled the gold-is-logo-only rule for this surface. Built with the mark's Signal Gold `#E3B23C` and without the mockup's glowing halo (a 1px gold cap and a white/10 hairline instead); the Ask DE chooser follows. Replaces the white precision panel of 2026-09-28 (PR #277). The gold row gains the Desk exception; the Desk rule, the Desk skill, the UI-STYLE-RULES support-chrome lines, `visual-system-v2.mdc` and `brand/README.md` were brought to the same state in the same PR. Record: `design/approved/de-desk-gold-2026-10-01.md`.
 - 2026-09-30 — DE Desk row: the white precision panel (PR #277, Joe's approval of 2026-09-30) replaces the graphite release target of 2026-09-14; the Desk rule, the Desk skill and the UI-STYLE-RULES support-chrome line were brought to the same state during Claude's review of this file's PR. No other row changed.
 - 2026-09-16 — Created. Replaces the flat "everything is mandatory" reading of the design corpus with tiers and modes. No Tier 0 rule was weakened; Tier 2 rules were re-labeled from law to default; Tier 3 files received a header only.

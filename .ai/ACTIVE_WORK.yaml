@@ -30,6 +30,30 @@
 
 version: 2
 claims:
+  - id: de-desk-gold
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 5e88552
+    files:
+      - client/src/components/ZohoASAPWidget.tsx (the Desk stylesheet and the chip icon class only; no logic)
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
+      - client/src/components/SiteBottomBar.tsx (the Ask DE chooser classes only)
+      - design/DESIGN-AUTHORITY.md (Desk and gold rows), design/UI-STYLE-RULES.md (support chrome), brand/README.md (gold line)
+      - .cursor/skills/de-desk-ui/**, .cursor/rules/de-desk-design.mdc, .cursor/rules/visual-system-v2.mdc
+      - design/approved/de-desk-gold-2026-10-01.md, artifacts/visual-qa/desk-gold/**
+    status: active
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: of eight Desk UI mockups picked option 1, "Black +
+      Grey + Yellow", and overruled the brand rules for this surface ("build
+      it"). Built with the mark's Signal Gold #E3B23C and without the
+      mockup's glowing halo: a 1px gold cap and a white/10 hairline instead.
+      No magenta on the Desk or the chooser; the Desk logic is untouched.
+      Overlaps PR 303 (codex/de-desk-repair) on ZohoASAPWidget.tsx: that PR
+      changes ticket logic, this one only the stylesheet, so the merge is
+      mechanical. Maintenance Mode under the Product Preservation Law: every
+      tab, route, CTA, test id and behaviour kept.
   - id: de-ask-nudge-cookie-offset
     owner: claude
     subsystem: de-desk
