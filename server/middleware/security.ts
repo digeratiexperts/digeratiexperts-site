@@ -452,7 +452,9 @@ export function getSecureCookieOptions() {
     secure: process.env.NODE_ENV === "production", // HTTPS only in production
     sameSite: "strict" as const, // CSRF protection
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    signed: true,
+    // No `signed: true` — cookieParser() is initialized without a secret, so
+    // res.cookie(..., { signed: true }) would throw at runtime. Re-enable only
+    // alongside a cookie-parser secret.
   };
 }
 

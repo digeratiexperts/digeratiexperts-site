@@ -30,6 +30,31 @@
 
 version: 2
 claims:
+  - id: de-protection-deck-phone
+    owner: claude
+    subsystem: homepage-protection-model
+    branch: claude/protection-deck-phone
+    base_sha: 7f4cff10
+    files:
+      - client/src/components/visual/ProtectionCommandDeck.tsx (phone layout only; desktop frame untouched)
+      - client/src/components/visual/ProtectionCommandDeck.phone.test.ts
+      - client/src/pages/sections/DigeratiHowWeProtectSection.tsx (wrapper and heading classes only; copy unchanged)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: "the phone is the failure." Replaces the deck's phone
+      layout with the 390px mock he reviewed: one dark field, one row of
+      seven short labels with Risk & exposure as the dashed rail beneath
+      them (continuous, not a ninth peer), one sentence, then the selected
+      block as plain reading (name, purpose, the three assessment questions,
+      the boundary as a list). No frame chrome, no card in a card, no
+      diagram widget, the last 96px empty so Ask DE never sits on the type.
+      Desktop keeps the EvidenceFrame layout. The domain copy and questions
+      are the eight-block data from de-eight-block-correction, unchanged.
+      Overlap recorded: PR 298 rewrites DigeratiHowWeProtectSection.tsx onto
+      HomeChapter; this lane changes only the island wrapper and three
+      heading class strings in that file, and the deck component, which 298
+      does not touch.
   - id: store-experience-v2
     owner: claude
     subsystem: public-store-door2
@@ -409,38 +434,49 @@ claims:
       and no new scroll treatment on any route until the plan's phase gates
       pass (Phase 2 briefs approved, Phase 3 materials board-tested, Phase 4
       storyboards approved). Any agent, any session. Planning documents only.
-  - id: claude-code-skill-installs
-    issue: 179
+# claude-code-skill-installs (issue 179, branch claude/nano-banana-2-setup-itot5a)
+# RETIRED 2026-09-02: merged via PR #180 (main @ 2bfd111). CI run 33616441400
+# green including "Deploy and verify production VPS"; VERIFIED LIVE. Verified on
+# main: nano-banana-images + frontend-design present once (agents mirror is
+# symlinks), KIE_AI_API_KEY provided by the environment, nb2 dry-run matches the
+# vendored request, api.kie.ai and kieai.redpandaai.co reachable. Follow-ups
+# outside this claim: de-agent-skills plugin repo (branch plugin/de-agent-skills-package).
+  - id: de-why-passage-flagship
     owner: claude
-    subsystem: agent-tooling
-    branch: claude/nano-banana-2-setup-itot5a
-    base_sha: 2d7d12adda68ea9565a927fc7d214bccdedf6d96
+    subsystem: site-experience-flagship
+    branch: claude/de-why-passage-flagship
+    base_sha: 80ce2f4
     files:
-      - .claude/skills/nano-banana-images/**
-      - .claude/skills/frontend-design/**
-      - .claude/skills/video-to-website/**
-      - .claude/skills/excalidraw-visuals/**
-      - .claude/skills/excalidraw-diagram/**
-      - .claude/skills/skill-builder/**
-      - .claude/skills/web-design-rules/**
-      - .claude/skills/wat-framework/**
-      - .claude/skills/trigger-dev/**
-      - .claude/skills/trigger-ref/**
-      - .mcp.json
-      - .agents/skills/**
-      - .claude/install-user-skills.sh
-      - .env.example
-      - .gitignore
-      - AGENTS.md
-      - CLAUDE.md
+      - scrollcraft/builds/why-passage/**
+      - scrollcraft/FINGERPRINTS.md
+      - docs/DE-WHY-PASSAGE-BRIEF.md
     status: active
     started: 2026-09-02
     note: >-
-      Vendors ten Claude Code project skills requested by Joe. No production
-      client/ or server/ paths. Disjoint from issue #167 / PR #168
-      (scripts/kie-assets.mjs); the kie.ai scripts here accept both
-      KIE_AI_API_KEY and KIE_API_KEY and write candidates under
-      artifacts/kie-ai/. No key is committed; installing makes no network call.
+      FREEZE LIFTED FOR ONE PAGE (Joe, 2026-09-02, in session
+      session_018frX8U8DhiseiSPCowzPec). Joe approved building a single
+      flagship after being given the scope, time and credit estimates, and
+      approved a dedicated branch for it. The 2026-09-01 freeze in the
+      de-site-v2-scrollcraft claim otherwise STANDS for every other route and
+      every other agent: this authorization covers this one build only.
+      Scope: a "Why DE" story route, per EXPERIENCE-PLAN.md 09 rule 5, which
+      argues /v2's length and concept density suit a Why DE story rather than
+      the primary homepage. Chosen over the homepage because it carries no
+      public-route smoke-gate risk and no eight-viewport length cap.
+      Build lives in scrollcraft/builds/why-passage as an isolated,
+      independently runnable build. It does NOT touch client/, server/,
+      shared/, any route, or scrollcraft/builds/de-v2. No overlap with the
+      de-site-v2-scrollcraft claim's files.
+      Grammar: passage (a single plotted course), NOT chaptered editorial.
+      Nav: bearing gauge, NOT a margin folio with a live map. Signature move:
+      the heading correction (the page opens off-axis and rolls level when the
+      operating principle lands). Close: the four-route fork. Verified against
+      both FINGERPRINTS.md rows on all six dimensions before coding.
+      Content authority: docs/DE-SERVICE-MODEL-2026.md (PR #185). No invented
+      claims; every figure traces to that document or client/src/data/pricing.ts.
+      kie.ai spend: NONE without Joe naming a cap in the same message. Balance
+      at branch creation: 68 credits. The build is code, type and motion by
+      design, so it needs no generated imagery to be complete.
   - id: de-homepage-v4
     owner: claude
     subsystem: homepage-v4
@@ -473,6 +509,38 @@ claims:
       catalogs are empty). Overlaps only this owner's older
       de-site-v2-scrollcraft claim on client/src/pages/versions/**; the v1
       and v3 snapshots there stay frozen. Zero kie.ai spend.
+  - id: de-homepage-v5-practical
+    owner: claude
+    subsystem: homepage-v5
+    branch: claude/homepage-v5-practical
+    base_sha: 67343aa9cc70ec045c8f285a3bd29297048ead69
+    files:
+      - client/src/pages/versions/v5/**
+      - client/src/App.tsx (the /version-5 route only)
+      - client/src/pages/versions/registry.ts (the v5 entry only)
+      - client/src/pages/versions/README.md (the v5 row only)
+      - server/spaKnownPaths.ts (the /version-5 entry and the ten data-driven /solutions/* pages)
+      - server/spaKnownPaths.test.ts (the version list and the data-driven solution pages test)
+      - scripts/qa/homepage-v5-acceptance.mjs
+      - docs/CLAIMS-REGISTER.md (the Version 5 section only)
+      - artifacts/visual-qa/homepage-v5/**
+    status: active
+    started: 2026-09-30
+    note: >-
+      Joe, 2026-09-30, after judging every version so far not practical:
+      "exactly start over, make something better. dont make these mistakes.
+      make a way to know you will be successful and not fail." One
+      conventional homepage on a light ground with the real gold mark: what
+      DE does for Arizona businesses, for whom, the four published ProActive
+      prices, the written SLA response times, the founder's approved
+      photograph, the published FAQ, and how to reach us. Every figure is
+      read from pricing.ts, the SLA page, shared/companyContact.ts and the
+      guarantee page, and scripts/qa/homepage-v5-acceptance.mjs fails the
+      build on any figure that is not, on any broken link, any horizontal
+      scroll, any contrast below AA, any animation, or a first screen that
+      does not say what, where, one action and a phone. Preview only at the
+      noindex /version-5; production / is untouched. No kie.ai spend; no
+      generated imagery.
 # restore-homepage-v1 (branch claude/restore-homepage-v1) RETIRED 2026-09-09:
 # the claim was still listed active while the work was already fully contained
 # in main. Verified at main @ 611acfdb: `git rev-list --count
