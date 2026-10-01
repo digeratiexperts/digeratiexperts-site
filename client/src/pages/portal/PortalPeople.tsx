@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
+import { Link } from "wouter";
+import { Building2, Lock, Users } from "lucide-react";
 import { PortalLayout } from "./PortalLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { canManageOrg, readPortalUser } from "@/lib/portalRoles";
-import { Link } from "wouter";
+import { Callout, DataTable, EmptyState, Field, Panel, Token, type DataColumn } from "@/components/portal/ui";
 
 type Person = {
   id: string;
@@ -30,6 +30,11 @@ type Department = {
   itContactUserId?: string | null;
 };
 
+/** Column label repeated inside the mobile card, where there is no table header. */
+function CellLabel({ children }: { children: string }) {
+  return <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground md:hidden">{children}</span>;
+}
+
 export function PortalPeople() {
   const user = readPortalUser();
   const allowed = canManageOrg(user);
@@ -38,11 +43,13 @@ export function PortalPeople() {
   const [error, setError] = useState<string | null>(null);
   const [deptName, setDeptName] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const token = () => localStorage.getItem("portalToken") || "";
 
   const load = async () => {
     setError(null);
+    setLoading(true);
     try {
       const res = await fetch("/api/portal/org/people", {
         headers: { Authorization: `Bearer ${token()}` },
@@ -53,6 +60,8 @@ export function PortalPeople() {
       setDepartments(data.departments || []);
     } catch (e: any) {
       setError(e.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -103,170 +112,228 @@ export function PortalPeople() {
 
   if (!allowed) {
     return (
-      <PortalLayout title="People & Org">
-        <Card>
-          <CardContent className="py-10 text-center space-y-3">
-            <p className="text-slate-600">
-              Only your Company IT Contact (or a Digerati admin) can manage managers, departments, and
-              IT Contacts.
-            </p>
-            <Link
-              href="/portal/tickets"
-              className="inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm"
-            >
-              Go to Support Tickets
-            </Link>
-          </CardContent>
-        </Card>
+      <PortalLayout title="People & Org" width="narrow">
+        <Panel id="people-restricted" flush>
+          <EmptyState
+            icon={Lock}
+            title="Restricted to your Company IT Contact"
+            description="Only your Company IT Contact (or a Digerati admin) can manage managers, departments, and IT Contacts."
+            action={
+              <Button asChild variant="outline" className="border-border bg-card hover:bg-accent">
+                <Link href="/portal/tickets">Go to Support Tickets</Link>
+              </Button>
+            }
+          />
+        </Panel>
       </PortalLayout>
     );
   }
 
-  return (
-    <PortalLayout title="People & Org">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <p className="text-sm text-slate-600">
-          Assign each person a manager (boss), optional department, and designate the Company IT Contact
-          who owns day-to-day communication with Digerati. Department IT Contacts are optional.
-        </p>
+  const departmentColumns: DataColumn<Department>[] = [
+    { key: "name", header: "Department", primary: true, cell: (d) => <span className="font-medium">{d.name}</span> },
+    {
+      key: "itContact",
+      header: "IT Contact",
+      primary: true,
+      cell: (d) => {
+        const contact = people.find((p) => p.id === d.itContactUserId)?.fullName;
+        return contact ? <span>{contact}</span> : <span className="text-muted-foreground">Not set</span>;
+      },
+    },
+  ];
 
+  const peopleColumns: DataColumn<Person>[] = [
+    {
+      key: "person",
+      header: "Person",
+      primary: true,
+      cell: (p) => (
+        <div className="min-w-0">
+          <p className="flex flex-wrap items-center gap-2 font-medium">
+            <span className="truncate">{p.fullName}</span>
+            {p.isCompanyItContact && <Token label="Company IT Contact" tone="brand" className="px-1.5 py-0 text-[9px]" />}
+          </p>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">{p.email}</p>
+        </div>
+      ),
+    },
+    {
+      key: "orgRole",
+      header: "Org role",
+      primary: true,
+      className: "w-44",
+      cell: (p) => (
+        <div className="min-w-[10rem]">
+          <CellLabel>Org role</CellLabel>
+          <Select value={p.orgRole || "staff"} onValueChange={(orgRole) => savePerson(p, { orgRole })} disabled={savingId === p.id}>
+            <SelectTrigger aria-label={`Role for ${p.fullName}`} className="h-9 border-border bg-background">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="staff">Staff</SelectItem>
+              <SelectItem value="manager">Manager</SelectItem>
+              <SelectItem value="dept_it_contact">Dept IT Contact</SelectItem>
+              <SelectItem value="company_it_contact">Company IT Contact</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      ),
+    },
+    {
+      key: "manager",
+      header: "Manager (boss)",
+      primary: true,
+      className: "w-48",
+      cell: (p) => (
+        <div className="min-w-[10rem]">
+          <CellLabel>Manager (boss)</CellLabel>
+          <Select
+            value={p.managerUserId || "none"}
+            onValueChange={(v) => savePerson(p, { managerUserId: v === "none" ? null : v })}
+            disabled={savingId === p.id}
+          >
+            <SelectTrigger aria-label={`Manager for ${p.fullName}`} className="h-9 border-border bg-background">
+              <SelectValue placeholder="Select manager" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No manager</SelectItem>
+              {people
+                .filter((other) => other.id !== p.id)
+                .map((other) => (
+                  <SelectItem key={other.id} value={other.id}>
+                    {other.fullName}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ),
+    },
+    {
+      key: "department",
+      header: "Department",
+      primary: true,
+      className: "w-44",
+      cell: (p) => (
+        <div className="min-w-[10rem]">
+          <CellLabel>Department</CellLabel>
+          <Select
+            value={p.departmentId || "none"}
+            onValueChange={(v) => savePerson(p, { departmentId: v === "none" ? null : v })}
+            disabled={savingId === p.id}
+          >
+            <SelectTrigger aria-label={`Department for ${p.fullName}`} className="h-9 border-border bg-background">
+              <SelectValue placeholder="Department" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              {departments.map((d) => (
+                <SelectItem key={d.id} value={d.id}>
+                  {d.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ),
+    },
+    {
+      key: "itContact",
+      header: <span className="sr-only">Company IT Contact</span>,
+      primary: true,
+      align: "right",
+      className: "w-56",
+      cell: (p) => (
+        <Button
+          type="button"
+          size="sm"
+          variant={p.isCompanyItContact ? "brand" : "outline"}
+          className={p.isCompanyItContact ? "" : "border-border bg-card hover:bg-accent"}
+          aria-pressed={!!p.isCompanyItContact}
+          disabled={savingId === p.id}
+          onClick={() =>
+            savePerson(p, {
+              isCompanyItContact: !p.isCompanyItContact,
+              orgRole: !p.isCompanyItContact
+                ? "company_it_contact"
+                : p.orgRole === "company_it_contact"
+                  ? "staff"
+                  : p.orgRole,
+            })
+          }
+        >
+          {p.isCompanyItContact ? "Company IT Contact" : "Make Company IT Contact"}
+        </Button>
+      ),
+    },
+  ];
+
+  return (
+    <PortalLayout
+      title="People & Org"
+      description="Assign each person a manager (boss), optional department, and designate the Company IT Contact who owns day-to-day communication with Digerati. Department IT Contacts are optional."
+      width="wide"
+    >
+      <div className="space-y-4">
         {error && (
-          <div className="rounded-md border border-red-200 bg-red-50 text-red-800 px-4 py-3 text-sm">
+          <Callout tone="bad" title="Something went wrong">
             {error}
-          </div>
+          </Callout>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Departments</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ul className="text-sm space-y-2">
-              {departments.length === 0 && (
-                <li className="text-slate-500">No departments yet — optional for smaller companies.</li>
-              )}
-              {departments.map((d) => (
-                <li key={d.id} className="flex justify-between border rounded px-3 py-2">
-                  <span className="font-medium">{d.name}</span>
-                  <span className="text-slate-500">
-                    IT Contact:{" "}
-                    {people.find((p) => p.id === d.itContactUserId)?.fullName || "Not set"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <div className="flex flex-col sm:flex-row gap-2">
+        <Panel
+          id="departments"
+          title="Departments"
+          description={loading ? "Loading…" : `${departments.length} department${departments.length === 1 ? "" : "s"}`}
+          flush
+        >
+          <DataTable<Department>
+            columns={departmentColumns}
+            rows={departments}
+            rowKey={(d) => d.id}
+            loading={loading && departments.length === 0}
+            loadingRows={2}
+            caption="Departments"
+            empty={<EmptyState compact icon={Building2} title="No departments yet" description="Optional for smaller companies. Add one below if it helps route approvals." />}
+          />
+          <form
+            className="flex flex-col gap-3 border-t border-border bg-background/40 px-4 py-4 sm:flex-row sm:items-end md:px-5"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void addDepartment();
+            }}
+          >
+            <Field label="New department name" htmlFor="new-department-name" className="flex-1">
               <Input
+                id="new-department-name"
                 value={deptName}
                 onChange={(e) => setDeptName(e.target.value)}
-                placeholder="New department name"
+                placeholder="e.g. Finance"
                 aria-label="New department name"
+                className="border-border bg-card"
               />
-              <Button onClick={addDepartment}>Add department</Button>
-            </div>
-          </CardContent>
-        </Card>
+            </Field>
+            <Button type="submit" variant="brand">
+              Add department
+            </Button>
+          </form>
+        </Panel>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>People</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {people.map((person) => (
-              <div key={person.id} className="border rounded-lg p-4 space-y-3">
-                <div>
-                  <p className="font-semibold">{person.fullName}</p>
-                  <p className="text-sm text-slate-500">{person.email}</p>
-                </div>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  <div>
-                    <Label>Org role</Label>
-                    <Select
-                      value={person.orgRole || "staff"}
-                      onValueChange={(orgRole) => savePerson(person, { orgRole })}
-                      disabled={savingId === person.id}
-                    >
-                      <SelectTrigger aria-label={`Role for ${person.fullName}`}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="staff">Staff</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
-                        <SelectItem value="dept_it_contact">Dept IT Contact</SelectItem>
-                        <SelectItem value="company_it_contact">Company IT Contact</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Manager (boss)</Label>
-                    <Select
-                      value={person.managerUserId || "none"}
-                      onValueChange={(v) =>
-                        savePerson(person, { managerUserId: v === "none" ? null : v })
-                      }
-                      disabled={savingId === person.id}
-                    >
-                      <SelectTrigger aria-label={`Manager for ${person.fullName}`}>
-                        <SelectValue placeholder="Select manager" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No manager</SelectItem>
-                        {people
-                          .filter((p) => p.id !== person.id)
-                          .map((p) => (
-                            <SelectItem key={p.id} value={p.id}>
-                              {p.fullName}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Department</Label>
-                    <Select
-                      value={person.departmentId || "none"}
-                      onValueChange={(v) =>
-                        savePerson(person, { departmentId: v === "none" ? null : v })
-                      }
-                      disabled={savingId === person.id}
-                    >
-                      <SelectTrigger aria-label={`Department for ${person.fullName}`}>
-                        <SelectValue placeholder="Department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {departments.map((d) => (
-                          <SelectItem key={d.id} value={d.id}>
-                            {d.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-end">
-                    <Button
-                      variant={person.isCompanyItContact ? "default" : "outline"}
-                      className="w-full"
-                      disabled={savingId === person.id}
-                      onClick={() =>
-                        savePerson(person, {
-                          isCompanyItContact: !person.isCompanyItContact,
-                          orgRole: !person.isCompanyItContact
-                            ? "company_it_contact"
-                            : person.orgRole === "company_it_contact"
-                              ? "staff"
-                              : person.orgRole,
-                        })
-                      }
-                    >
-                      {person.isCompanyItContact ? "Company IT Contact" : "Make Company IT Contact"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        <Panel
+          id="people"
+          title="People"
+          description={loading ? "Loading…" : `${people.length} ${people.length === 1 ? "person" : "people"}`}
+          flush
+        >
+          <DataTable<Person>
+            columns={peopleColumns}
+            rows={people}
+            rowKey={(p) => p.id}
+            loading={loading && people.length === 0}
+            caption="People in your organization"
+            empty={<EmptyState compact icon={Users} title="No people yet" description="Portal users at your company appear here once their accounts are created." />}
+          />
+        </Panel>
       </div>
     </PortalLayout>
   );

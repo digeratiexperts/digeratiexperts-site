@@ -574,7 +574,7 @@ export default function PortalChat() {
   const liveCount = deskSessions.filter((s) => s.agentActive).length;
 
   return (
-    <PortalLayout title="Chats / DE Desk">
+    <PortalLayout title="Chats / DE Desk" hideHeader width="wide">
       <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4">
         {/* Ops header */}
         <div className="overflow-hidden rounded-2xl border border-[#D3126A]/35 bg-gradient-to-br from-[#151217] via-[#0a0a0a] to-[#050312] p-4 text-white shadow-[0_0_0_1px_rgba(211,18,106,0.2),0_20px_50px_rgba(40,10,70,0.35)] sm:p-5">
