@@ -64,6 +64,93 @@ claims:
       call, gate, href, form field and data-testid preserved; mock pages
       (VPN, Cytracom, Ship Center) say "sample data". PortalChat untouched
       (Joe-decided white panel). Maintenance Mode on the approved system.
+  - id: de-phone-number-and-arrows
+    owner: claude
+    subsystem: homepage
+    branch: claude/phone-number-and-arrows
+    base_sha: bdb9c3a2
+    files:
+      - client/src/pages/sections/DigeratiTestimonialsSection.tsx (the phone number's wrapper only)
+      - client/src/pages/sections/DigeratiThreatsInsightsSection.tsx (the two carousel arrows' size only)
+      - client/src/pages/industries/Nonprofits.tsx (the phone number's wrapper only)
+      - client/src/pages/industries/RealEstate.tsx (the phone number's wrapper only)
+      - client/src/pages/phoneNumberNowrap.test.ts
+      - client/src/pages/sections/phoneTapTargets.test.ts (the threat-feed arrows test)
+      - artifacts/visual-qa/phone-number-and-arrows/**
+    status: verified-live
+    started: 2026-10-01
+    note: >-
+      Follow-up to PR 322 after Joe's "continue". Measured on a production
+      build: the phone number in running text broke at a hyphen ("325-" at a
+      line end) on the homepage at 375, 390 and 414 and on the nonprofits
+      page at 360 and 375; the homepage threat-feed carousel's arrows are 40px
+      on phones (they render only when the feed has recent items, which a
+      local build lacks, so the 390 audit before PR 322 never saw them).
+      Classes and one wrapper span only: no copy, link, route or test id
+      changes. Overlap: claude-completion-program-lane lists two of these
+      files, but its branch claude/c8-cross-surface is not on GitHub, the one
+      PR from its stack (219, from the c1 branch) closed without merge, and no
+      open PR comes from any branch of that stack.
+      RELEASED 2026-10-01: merged as PR 323 (bc26ac0f) at 15:20Z and verified
+      live at 15:28Z: production release.txt bc26ac0f, deploy run green,
+      /healthz 200, and the served code carries the whitespace-nowrap span
+      beside the phone number in the live homepage, nonprofits and real estate
+      chunks, and z-20 w-11 h-11 rounded-full twice in the live homepage's
+      threat-feed chunk with none of the 40px class left there (only the frozen
+      v1 and v3 chunks keep it).
+  - id: de-phone-tap-targets
+    owner: claude
+    subsystem: homepage
+    branch: claude/phone-tap-targets
+    base_sha: df4ab2ae
+    files:
+      - client/src/pages/sections/DigeratiEnhancedFooterSection.tsx (the newsletter field and FooterLink classes only)
+      - client/src/pages/sections/DigeratiTestimonialsSection.tsx (the four trust links' classes only)
+      - client/src/pages/sections/DigeratiIndustriesSection.tsx (the two slider arrows' size only)
+      - client/src/pages/sections/phoneTapTargets.test.ts
+      - artifacts/visual-qa/phone-tap-targets/**
+    status: verified-live
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: "the phone is the failure", then "continue". The phone
+      audit of main at 390 on a production build found the footer's email field
+      collapsed to 22px (a bare flex-1 in the stacked form overrode h-11), the
+      footer links at 20px with 14px gaps, the trust links under the reviews at
+      24px and the industry slider arrows at 40px. Classes only: no copy, link,
+      route, form behaviour or test id changes; desktop page and footer heights
+      unchanged (17,185px and 622px at 1440).
+      RELEASED 2026-10-01: merged as PR 322 (bdb9c3a2) at 15:00Z and verified
+      live at 15:04Z: production release.txt bdb9c3a2, deploy run green,
+      /healthz 200, and production serves entry bundle index-CkUjdLFU.js, the
+      same hash as the build of the merged tree that was measured at 390 (email
+      field 350x44, trust links 44px, slider arrows 44x44, no overlap or
+      overflow) and at 1440 (page 17,185px as before). The served code carries
+      h-11 min-h-11 min-w-0, max-md:min-h-11 and z-20 w-11 h-11 rounded-full.
+  - id: de-desk-status-auth-reason
+    owner: claude
+    subsystem: de-desk
+    branch: claude/desk-status-auth-reason
+    base_sha: df4ab2ae
+    files:
+      - server/widgetTicketRoute.ts (the status probe's reason and log line only)
+      - server/widgetTicketRoute.test.ts (the status reason tests)
+      - deploy/vps/env.production.example (the website Desk/CRM variables)
+    status: verified-live
+    started: 2026-10-01
+    note: >-
+      Follow-up to PR 303 and PR 313 after Joe's "continue". Production's Desk
+      refresh token is invalid; PR 303 stopped publishing Zoho's error code, so
+      the health probe's issue (314) could no longer say why. The status probe
+      now reports reason "auth_failed" when Zoho refuses the credential (our own
+      classification, no upstream text) and "unavailable" for network or
+      server failures. The env template gains the variables the website's Desk
+      client actually reads, which it never listed.
+      RELEASED 2026-10-01: merged as PR 321 (8e514762) at 14:48Z and verified
+      live at 14:52Z: production release.txt 8e514762, deploy run green
+      including its production runtime verification, /healthz 200, and
+      /api/zoho/desk/status answering 200 with connected true and Cache-Control
+      no-store once the Desk token was replaced. The auth_failed path is proven
+      by its tests; it cannot be seen live while the Desk is connected.
   - id: de-desk-reliability-followup
     issue: 291
     owner: codex
@@ -376,18 +463,10 @@ claims:
     owner: claude
     subsystem: public-store-door2
     branch: claude/nifty-newton-uk9g7t
+    pr: 311
     base_sha: 8fc5524907dc3fe450c9ba32b7c852a4b5ac4354
-    files:
-      - client/src/components/store/door2/JourneyRail.tsx
-      - client/src/components/store/door2/primitives.tsx
-      - client/src/components/store/door2/door2Tokens.test.ts
-      - client/src/pages/store/PublicStoreCheckout.tsx
-      - client/src/pages/solutions/SolutionRequest.tsx
-      - client/src/styles/store-builder.css
-      - scripts/door2-browser-smoke.mjs
-      - docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md
-      - artifacts/visual-qa/store-stations/**
-    status: active
+    files: []
+    status: verified-live
     started: 2026-10-01
     note: >-
       Joe, 2026-09-30: the Store is "too matched … hard to see whats what and
@@ -400,6 +479,14 @@ claims:
       open PR touches these files (PR 308 Store PDF, 307 nudge, 303 Desk, 298
       home are disjoint); the stale local-only claude-completion-program-lane
       claim lists the Door 2 pages and has no open PR or remote branch.
+      RELEASED 2026-10-01: merged as 7d5fa674 (PR 311, Joe's "merge 311")
+      and VERIFIED LIVE the same morning: the deploy job and its runtime
+      check passed (10:49 UTC), production serves index-Dzh3JPyb.js; /store,
+      /store/solution (profile and needs done) and /solutions/request at 390
+      and 1440 render the stations (rail ✓ ✓ 03 on a 6px line, relationship
+      lit as the current card with "You are here", contact step 06 current),
+      the electric probe computes rgb(111, 179, 255), axe clean, no overflow,
+      no runtime errors. Files released.
   - id: de-design-concepts-directions
     owner: claude
     subsystem: flagship-visual-reset

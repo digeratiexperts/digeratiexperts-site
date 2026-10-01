@@ -121,7 +121,12 @@ export interface DeskStatus {
   configured: boolean;
   connected: boolean;
   /** Present only when not connected. */
-  reason?: DeskFailureKind | "not_configured";
+  /**
+   * "auth_failed" when Zoho refused the Desk credential (revoked or expired
+   * refresh token, wrong client, missing scope): the fix is a new token, not
+   * a retry. Our own classification only; no upstream text leaves the server.
+   */
+  reason?: DeskFailureKind | "not_configured" | "auth_failed";
   errorCode?: string;
   status?: number;
   checkedAt: string;
@@ -150,12 +155,13 @@ async function probeDesk(): Promise<DeskStatus> {
     const failure = classifyDeskFailure(error);
     console.error("[DESK STATUS] Zoho Desk unreachable:", {
       kind: failure.kind,
+      authFailure: failure.authFailure,
       status: failure.status,
     });
     return {
       configured: true,
       connected: false,
-      reason: failure.kind,
+      reason: failure.authFailure ? "auth_failed" : failure.kind,
       checkedAt,
     };
   }
