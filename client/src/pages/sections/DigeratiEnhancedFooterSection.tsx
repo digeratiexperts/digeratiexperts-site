@@ -13,7 +13,7 @@ const FooterLink = ({ href, children, testId }: { href: string; children: React.
     <a
       href={href}
       {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-      className="text-base text-white/55 underline decoration-transparent underline-offset-4 transition-colors hover:text-white hover:decoration-[#D3126A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
+      className="-my-1 inline-block py-1 text-base text-white/55 underline decoration-transparent underline-offset-4 transition-colors hover:text-white hover:decoration-[#D3126A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
       data-testid={testId}
     >
       {children}
@@ -191,7 +191,7 @@ export const DigeratiEnhancedFooterSection = ({
                     placeholder="Enter your email"
                     required
                     disabled={isSubmitting}
-                    className="h-11 min-w-0 flex-1 rounded-lg border border-de-hairline bg-de-raised px-4 text-base text-white placeholder:text-white/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
+                    className="h-11 min-h-11 min-w-0 rounded-lg border border-de-hairline bg-de-raised px-4 sm:flex-1 text-base text-white placeholder:text-white/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
                     data-testid="footer-newsletter-input"
                   />
                   <button
