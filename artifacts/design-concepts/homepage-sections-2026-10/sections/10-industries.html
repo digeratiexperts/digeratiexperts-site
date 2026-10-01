@@ -10,7 +10,7 @@
 <script>document.fonts.load('600 16px Oxanium');</script>
 <style>
   /* Section 10 — Industries on the surface field: one left head with the ask in the head row,
-     five equal hairline cells on a raised index panel, no photographs, no sequence numbers
+     five equal hairline cells sitting on the field (no fill: Stats and Pricing are the only raised boxes), no photographs, no sequence numbers
      (the five sectors are peers, not steps). */
   body { background: var(--de-surface); }
 
@@ -18,16 +18,16 @@
   .ind-head .de-btn { flex-shrink: 0; margin-bottom: 4px; }
   .ind-ask { display: none; }
 
-  /* Raised one step from the field so the five cells read as one deliberate index. */
-  .ind-rail { margin-top: 40px; grid-template-columns: repeat(5, minmax(0, 1fr)); background: var(--de-raised); }
+  /* Dark-to-dark seam with 09's well: hairline, as 07 does. */
+  #industries { border-top: 1px solid var(--de-hairline); }
+  /* No fill: the cells sit on the surface with only the .de-cells hairline (as 05 .svc-rail). */
+  .ind-rail { margin-top: 40px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .ind-rail > li { position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: auto auto 1fr auto; min-width: 0; transition: box-shadow .15s ease; }
   .ind-top { grid-column: 1 / -1; display: flex; align-items: center; }
-  .ind-rail .de-iconwell { background: rgba(255,255,255,0.03); }
   .ind-copy { grid-column: 1 / -1; min-width: 0; }
-  .ind-rail .de-h3 { margin-top: 28px; }
-  .ind-rail .de-body { margin-top: 18px; }
-  .ind-rail .de-link { grid-column: 1 / -1; grid-row: 4; margin-top: 28px; padding-top: 16px; min-height: 44px; border-top: 1px solid var(--de-hairline); }
-  .ind-rail .de-link svg { margin-left: auto; }
+  .ind-rail .de-h3 { margin-top: 20px; }
+  .ind-rail .de-body { margin-top: 8px; }
+  .ind-rail .de-link { grid-column: 1 / -1; grid-row: 4; margin-top: 20px; padding-top: 16px; min-height: 44px; border-top: 1px solid var(--de-hairline); }
   /* Whole cell is the hit target; hover and keyboard focus are shown on the cell's hairline. */
   .ind-rail .de-link::after { content: ""; position: absolute; inset: 0; }
   .ind-rail > li:hover { box-shadow: inset 0 0 0 1px var(--de-hairline-strong); }
@@ -57,7 +57,6 @@
     .ind-rail .de-h3 { margin-top: 0; font-size: 18px; }
     .ind-rail .de-body { margin-top: 8px; }
     .ind-rail .de-link { grid-column: 2; grid-row: 2; margin-top: 4px; padding-top: 0; border-top: 0; }
-    .ind-rail .de-link svg { margin-left: 0; }
   }
 </style>
 </head>

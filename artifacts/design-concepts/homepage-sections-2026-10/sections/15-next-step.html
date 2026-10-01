@@ -12,17 +12,16 @@
      Order: head → one context paragraph → four standards as one hairline row
      → centered label, email + button on one line → one centered footer row. */
   .next { max-width: 760px; margin: 0 auto; text-align: center; }
-  .next .de-h2 { font-size: clamp(1.9rem, 2.9vw, 2.625rem); text-wrap: balance; }
+  .next .de-h2 { text-wrap: balance; }
   .next .de-lede { margin: 14px auto 0; max-width: 600px; text-wrap: balance; }
   .next__context { margin: 10px auto 0; max-width: 640px; font-size: 15px; line-height: 1.55; color: var(--de-ink-muted); text-wrap: balance; }
   .next__context span { color: var(--de-ink-body); }
 
   /* Four standards: a list of attributes (not navigation). Four equal cells,
-     magenta dash marker above each label, hairline seams. */
+     hairline seams; no decorative marker. */
   .next__standards { margin-top: 24px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--de-paper-hairline); border-bottom: 1px solid var(--de-paper-hairline); }
   .next__standards li { padding: 12px 16px 14px; font-size: 15px; font-weight: 500; line-height: 1.35; color: var(--de-ink); text-align: center; text-wrap: balance; }
   .next__standards li + li { border-left: 1px solid var(--de-paper-hairline); }
-  .next__standards .de-dash { display: block; width: 14px; height: 2px; margin: 0 auto 8px; }
   .next__standards .nw { white-space: nowrap; }
 
   /* Email + button on one line; visible label centered above the row. */
@@ -33,9 +32,9 @@
   .next__field svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--de-ink-muted); pointer-events: none; }
   /* Border #8a8494 ≈ 3.1:1 on paper and on the white fill (WCAG 1.4.11).
      Focus uses the shared .de-input:focus-visible outline from tokens.css. */
-  .next__field .de-input { height: 52px; padding-left: 46px; font-size: 16px; border-color: #8a8494; }
+  .next__field .de-input { padding-left: 46px; font-size: 16px; border-color: #8a8494; }
   .next__field .de-input:focus-visible { border-color: var(--de-magenta); }
-  .next__row .de-btn { height: 52px; flex-shrink: 0; }
+  .next__row .de-btn { flex-shrink: 0; }
   .next__error { margin-top: 8px; font-size: 14px; font-weight: 600; color: var(--de-magenta-paper-ink); }
   .next__error[hidden] { display: none; }
 
@@ -55,7 +54,7 @@
   }
   @media (max-width: 639px) {
     .next__row { flex-direction: column; }
-    .next__row .de-btn { width: 100%; height: auto; min-height: 52px; padding: 13px 16px; white-space: normal; }
+    .next__row .de-btn { width: 100%; height: auto; min-height: 48px; padding: 12px 16px; white-space: normal; }
     .next__foot { flex-direction: column; gap: 0; }
     .next__sep { display: none; }
   }
@@ -76,10 +75,10 @@
       <p class="next__context">Assessment-led recommendations. Final scope confirmed after we see the environment. <span>Serving Arizona professional services, healthcare, and growing SMBs.</span></p>
 
       <ul class="next__standards" aria-label="Standards we work to">
-        <li><span class="de-dash" aria-hidden="true"></span>Audit readiness support</li>
-        <li><span class="de-dash" aria-hidden="true"></span><span class="nw">Microsoft-aligned</span> stack</li>
-        <li><span class="de-dash" aria-hidden="true"></span><span class="nw">HIPAA-minded</span> controls</li>
-        <li><span class="de-dash" aria-hidden="true"></span>Documented standards</li>
+        <li>Audit readiness support</li>
+        <li><span class="nw">Microsoft-aligned</span> stack</li>
+        <li><span class="nw">HIPAA-minded</span> controls</li>
+        <li>Documented standards</li>
       </ul>
 
       <!-- Integration note (live DigeratiCTASection.tsx): client-side validate → openBooking('homepage-cta'); email not posted.

@@ -9,36 +9,37 @@
 <style>
   /* 07 · Client proof + Built for accountability — one chapter on the well.
      Copy and destinations: CONTENT-INVENTORY.md §7 and §8. Everything else from tokens.css.
-     Order: head → outcomes (open list) → verify head + four-surface rail (the focal block)
-     → reviews/case-studies pair (carries the actions) → one serving line. */
+     Order (brief §07): head → outcomes (open list) → reviews/case-studies pair
+     → "Built for accountability you can verify:" label + four-surface rail → one serving line. */
 
   .proof { border-top: 1px solid var(--de-hairline); }
-  .proof .de-h2 { text-wrap: balance; }
+  .proof .de-h2, .proof .de-h2--sub { text-wrap: balance; }
   .proof .de-h4 { text-wrap: balance; }
   .proof .de-lede, .proof .de-body { text-wrap: pretty; }
   .proof .de-btn svg, .proof .de-link svg { flex-shrink: 0; }
 
-  /* Small caps labels: the eyebrow recipe (Inter) in muted ink — no Oxanium on proof. */
-  .proof-label, .proof-sources { font-family: var(--font-body); font-size: 13px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--de-muted); }
+  /* Source line under the reviews title: small caps in muted ink. */
+  .proof-sources { font-family: var(--font-body); font-size: 13px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--de-muted); }
 
   /* (1) Outcomes — an open list: top hairline + vertical seams, no box. */
   .proof-outcomes { margin-top: 48px; }
-  .proof-cells { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--de-hairline); }
+  .proof-cells { list-style: none; margin: 20px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--de-hairline); }
   .proof-cells > li { padding: 24px; border-left: 1px solid var(--de-hairline); }
   .proof-cells > li:first-child { border-left: 0; padding-left: 0; }
   .proof-cells .de-h4 { margin-top: 10px; }
   .proof-cells .de-body { margin-top: 8px; }
 
-  /* (2) Built for accountability you can verify — standard head + the four-cell rail. */
-  .proof-verify { margin-top: 56px; padding-top: 48px; border-top: 1px solid var(--de-hairline); }
-  .proof-rail { margin-top: 32px; grid-template-columns: repeat(4, minmax(0, 1fr)); border-color: var(--de-hairline-strong); }
+  /* (3) Built for accountability you can verify — a rail label (28px sub-head) + the four-cell rail. */
+  .proof-verify { margin-top: 48px; padding-top: 0; border-top: 0; }
+  .proof-verify .de-body { margin-top: 12px; max-width: 640px; }
+  .proof-rail { margin-top: 28px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .proof-rail > li { display: flex; flex-direction: column; }
   .proof-rail .de-h4 { margin-top: 18px; }
   .proof-rail .de-body { margin-top: 8px; }
   .proof-rail .de-link { margin-top: auto; padding-top: 12px; min-height: 56px; align-self: flex-start; }
 
-  /* (3) Reviews (honest empty state, compact) beside case studies — same inset surface. */
-  .proof-pair { margin-top: 20px; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 20px; }
+  /* (2) Reviews (honest empty state, compact) beside case studies — same inset surface. */
+  .proof-pair { margin-top: 40px; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 20px; }
   .proof-panel { display: flex; flex-direction: column; }
   .proof-panel .de-h3 { margin: 0; }
   .proof-sources { margin-top: 6px; }
@@ -74,7 +75,8 @@
     .proof-rail .de-body { margin-top: 12px; }
     .proof-rail .de-link { min-height: 44px; padding-top: 4px; }
     .proof-rail > li + li { border-top: 1px solid var(--de-hairline); }
-    .proof-verify { margin-top: 48px; padding-top: 40px; }
+    .proof-verify { margin-top: 40px; }
+    .proof-pair { margin-top: 32px; }
     .proof-panel__actions .de-btn { width: 100%; }
     .proof-foot { flex-direction: column; align-items: flex-start; gap: 4px; }
     .proof-foot__phone { display: inline-flex; align-items: center; min-height: 44px; }
@@ -92,7 +94,9 @@
   - Removed §8's quiet nav row that repeated all four trust CTAs; every destination is still in the rail.
   - Added (non-factual): sequence numbers 01/02/03 on the outcomes (aria-hidden), aria-label "More trust pages",
     an external-link arrow on "Read us on Google" (live uses a right arrow).
-  - Order: the reviews/case-studies pair now follows the rail, so the rail introduces the surfaces and the pair carries the actions.
+  - Order follows brief §07: outcomes → reviews/case-studies pair → accountability rail → serving line. One chapter: the
+    accountability heading is a 28px sub-head labelling the rail (no second eyebrow, no divider).
+  - No field grain on the well, matching the other well sections (03, 09).
   - Case-studies actions: "View case studies" is the panel's single outline button; the second
     "Get My Cyber Risk Assessment" is demoted to a text link (brief §07).
   - "Read us on Google" is a text link instead of the live white button, so the chapter holds at most one outline button.
@@ -110,7 +114,7 @@
   - Rail link "See reviews" → /#google-reviews lands on the empty state; candidate to retarget to the Google Maps
     listing (https://maps.google.com/?cid=1710856351091471339) once the content owner approves.
 -->
-<section class="f-well de-section de-grain proof" id="testimonials" aria-labelledby="proof-heading">
+<section class="f-well de-section proof" id="testimonials" aria-labelledby="proof-heading">
   <div class="de-canvas">
 
     <header class="de-head">
@@ -121,7 +125,7 @@
 
     <!-- (1) What clients hire us to improve -->
     <div class="proof-outcomes">
-      <h3 class="proof-label">What clients hire us to improve</h3>
+      <h3 class="de-h4">What clients hire us to improve</h3>
       <ul class="proof-cells">
         <li>
           <span class="de-seq" aria-hidden="true">01</span>
@@ -141,12 +145,33 @@
       </ul>
     </div>
 
-    <!-- (2) Built for accountability you can verify -->
+    <!-- (2) Honest reviews panel (compact) + case studies: the pair carries the actions -->
+    <div class="proof-pair">
+      <article class="de-card de-card--inset proof-panel" id="google-reviews" aria-labelledby="reviews-title">
+        <h3 class="de-h3" id="reviews-title">Client reviews</h3>
+        <p class="proof-sources">Google · Yelp · Thumbtack</p>
+        <p class="de-body">We publish only real client reviews — never placeholders. Highlights from Google, Yelp, and Thumbtack appear here as a single feed when live API or approved catalog entries are available.</p>
+        <div class="proof-panel__actions">
+          <a class="de-link" href="https://maps.google.com/?cid=1710856351091471339" target="_blank" rel="noopener noreferrer">Read us on Google <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a>
+        </div>
+      </article>
+
+      <article class="de-card de-card--inset proof-panel" aria-labelledby="cases-title">
+        <h3 class="de-h3" id="cases-title">Case studies</h3>
+        <p class="de-body">See how we approach real Arizona engagements — challenge, approach, and outcome.</p>
+        <div class="proof-panel__actions">
+          <a class="de-btn de-btn--outline" href="/resources/case-studies">View case studies <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+          <!-- live: openBooking("proof_section"); /book is the static fallback -->
+          <a class="de-link" href="/book" data-booking-source="proof_section">Get My Cyber Risk Assessment <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        </div>
+      </article>
+    </div>
+
+    <!-- (3) Built for accountability you can verify -->
     <section class="proof-verify" id="proof" aria-labelledby="verify-heading">
-      <header class="de-head">
-        <p class="de-eyebrow">Trust &amp; transparency</p>
-        <h2 class="de-h2" id="verify-heading">Built for accountability you can verify<span class="de-colon" aria-hidden="true">:</span></h2>
-        <p class="de-lede">Ownership clarity, documented operations, and public surfaces you can open before you engage — not marketing claims you have to take on faith.</p>
+      <header>
+        <h2 class="de-h2--sub" id="verify-heading">Built for accountability you can verify<span class="de-colon" aria-hidden="true">:</span></h2>
+        <p class="de-body">Ownership clarity, documented operations, and public surfaces you can open before you engage — not marketing claims you have to take on faith.</p>
       </header>
 
         <ul class="de-cells proof-rail" aria-label="Trust and transparency surfaces">
@@ -175,28 +200,6 @@
             <a class="de-link" href="/resources/case-studies">View case studies <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
           </li>
         </ul>
-
-      <!-- (3) Honest reviews panel (compact) + case studies: the pair carries the actions -->
-      <div class="proof-pair">
-        <article class="de-card de-card--inset proof-panel" id="google-reviews" aria-labelledby="reviews-title">
-          <h3 class="de-h3" id="reviews-title">Client reviews</h3>
-          <p class="proof-sources">Google · Yelp · Thumbtack</p>
-          <p class="de-body">We publish only real client reviews — never placeholders. Highlights from Google, Yelp, and Thumbtack appear here as a single feed when live API or approved catalog entries are available.</p>
-          <div class="proof-panel__actions">
-            <a class="de-link" href="https://maps.google.com/?cid=1710856351091471339" target="_blank" rel="noopener noreferrer">Read us on Google <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a>
-          </div>
-        </article>
-
-        <article class="de-card de-card--inset proof-panel" aria-labelledby="cases-title">
-          <h3 class="de-h3" id="cases-title">Case studies</h3>
-          <p class="de-body">See how we approach real Arizona engagements — challenge, approach, and outcome.</p>
-          <div class="proof-panel__actions">
-            <a class="de-btn de-btn--outline" href="/resources/case-studies">View case studies <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
-            <!-- live: openBooking("proof_section"); /book is the static fallback -->
-            <a class="de-link" href="/book" data-booking-source="proof_section">Get My Cyber Risk Assessment <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
-          </div>
-        </article>
-      </div>
 
       <!-- (4) One quiet serving line -->
       <div class="proof-foot">

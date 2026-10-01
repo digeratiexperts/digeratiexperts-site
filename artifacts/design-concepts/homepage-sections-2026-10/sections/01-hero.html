@@ -79,7 +79,7 @@
   .say__word { font-family: var(--font-heading); font-weight: 600; font-size: 15px; letter-spacing: 0.08em; color: var(--de-muted); }
   .say__word i { font-style: normal; font-weight: 400; color: rgba(255,255,255,0.4); margin: 0 1px; }
   .say__word u { text-decoration: none; border-bottom: 2px solid var(--de-magenta); padding-bottom: 1px; }
-  .say__phon { font-family: var(--font-mono); font-size: 15px; color: var(--de-muted-quiet); }
+  .say__phon { font-family: var(--font-body); font-size: 15px; color: var(--de-muted-quiet); }
   .say__phon b { font-weight: 600; color: var(--de-magenta-ink); letter-spacing: 0.04em; }
   .say__btn { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--de-hairline-strong); background: transparent; color: var(--de-fg); font-size: 15px; font-weight: 600; cursor: pointer; }
   .say__btn svg { width: 13px; height: 13px; fill: currentColor; color: var(--de-magenta-ink); }
@@ -130,11 +130,12 @@
 
   /* Trust strip — paper, attached to the hero (.de-section--tight) */
   .trust__row { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 20px; }
-  .trust h2 { font-family: var(--font-heading); font-weight: 600; font-size: 22px; line-height: 1.2; letter-spacing: -0.015em; color: var(--de-ink); text-wrap: balance; }
+  .trust h2 { color: var(--de-ink); text-wrap: balance; }
   .trust .de-cells { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .trust .de-cells > li { display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 14px; align-content: start; padding: 24px; }
+  .trust .de-cells > li { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 16px; align-content: start; padding: 24px; }
   /* Bare Lucide glyph: no well inside the cell inside the strip */
-  .trust__icon { grid-row: span 2; display: block; width: 20px; height: 20px; margin-top: 2px; color: var(--de-magenta-paper-ink); }
+  .trust .de-iconwell { grid-row: span 2; }
+  .trust { padding-bottom: 40px; border-bottom: 1px solid var(--de-paper-hairline); }
   .trust h3 { font-family: var(--font-heading); font-weight: 600; font-size: 16px; line-height: 1.3; color: var(--de-ink); }
   .trust p { margin-top: 4px; font-size: 15px; line-height: 1.5; color: var(--de-ink-muted); text-wrap: pretty; }
 
@@ -290,7 +291,7 @@
             <p class="de-meta">Posture across key areas</p>
             <p class="win__lead" style="margin-top:4px">Overall posture</p>
           </div>
-          <div class="win__score"><p class="score"><span class="de-num">69</span><span>/ 100</span></p><span class="de-tag">Illustrative</span></div>
+          <div class="win__score"><p class="score"><span class="de-num">69</span><span>/ 100</span></p></div>
         </div>
         <ul class="bars" aria-label="Sample posture values, illustrative">
           <li>Identity<span class="bar"><i style="width:68%"></i></span><span class="de-num">68</span></li>
@@ -315,12 +316,12 @@
 
 <section class="f-paper de-section--tight trust" aria-labelledby="trust-title">
   <div class="de-canvas trust__row">
-    <h2 id="trust-title">Trusted IT Partner for Arizona Businesses</h2>
+    <h2 id="trust-title" class="de-h3">Trusted IT Partner for Arizona Businesses</h2>
     <ul class="de-cells de-cells--paper">
-      <li><svg class="trust__icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg><h3>Cybersecurity First</h3><p>We secure your business from the inside out.</p></li>
-      <li><svg class="trust__icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg><h3>Proactive IT</h3><p>Prevent issues before they impact your business.</p></li>
-      <li><svg class="trust__icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg><h3>Compliance Ready</h3><p>Stay compliant with industry standards and regulations.</p></li>
-      <li><svg class="trust__icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg><h3>Local &amp; Responsive</h3><p>Arizona-based team, always here when you need us.</p></li>
+      <li><span class="de-iconwell de-iconwell--light de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></span><h3>Cybersecurity First</h3><p>We secure your business from the inside out.</p></li>
+      <li><span class="de-iconwell de-iconwell--light de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span><h3>Proactive IT</h3><p>Prevent issues before they impact your business.</p></li>
+      <li><span class="de-iconwell de-iconwell--light de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></span><h3>Compliance Ready</h3><p>Stay compliant with industry standards and regulations.</p></li>
+      <li><span class="de-iconwell de-iconwell--light de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span><h3>Local &amp; Responsive</h3><p>Arizona-based team, always here when you need us.</p></li>
     </ul>
   </div>
 </section>

@@ -10,6 +10,7 @@
   /* Section 11 — Pricing: the second of the page's two raised boxes (the first is Stats).
      Same 48px inset as Stats so the two raised boxes share one left edge. No violet echo:
      grain plus the hairline border carry the raised box; the violet corner belongs to Stats. */
+  #pricing { border-top: 1px solid var(--de-hairline); }
   .pricing-box { padding: 48px; }
   .pricing-h2 .pricing-h2__line { display: block; }
   .pricing-box .de-lede, .pricing-fit, .pricing-fitnote, .pricing-close .de-body, .pricing-close .de-small { text-wrap: pretty; }
@@ -22,7 +23,7 @@
   .pricing-card__meta { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 24px; }
   /* Product badge, deliberately not the .de-tag evidence-label recipe: magenta ink, no border. */
   .pricing-flag { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--de-magenta-ink); }
-  .pricing-card .de-h3 { margin-top: 12px; font-size: 22px; color: #fbfaf8; }
+  .pricing-card .de-h3 { margin-top: 12px; color: #fbfaf8; }
   .pricing-price { display: flex; align-items: baseline; gap: 5px; margin-top: 12px; }
   .pricing-amount { font-size: 34px; font-weight: 700; line-height: 1; color: #fbfaf8; letter-spacing: -0.02em; }
   .pricing-per { font-size: 15px; color: var(--de-muted-soft); }
@@ -37,12 +38,12 @@
 
   /* One closing composition under one hairline: the fit note as its lede, then copy left, actions right. */
   .pricing-close { margin-top: 40px; padding-top: 36px; border-top: 1px solid var(--de-hairline); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 64px; align-items: end; }
-  .pricing-fitnote { grid-column: 1 / -1; max-width: 900px; color: var(--de-fg); }
+  .pricing-fitnote { grid-column: 1 / -1; max-width: 900px; color: var(--de-muted); }
   .pricing-close__copy { max-width: 720px; }
   .pricing-close .de-h3 { color: #fbfaf8; }
   .pricing-close .de-body { margin-top: 10px; }
   .pricing-close .pricing-fitnote { margin-top: 0; }
-  .pricing-close .de-small { margin-top: 14px; max-width: 720px; font-size: 15px; color: var(--de-muted-soft); }
+  .pricing-close .de-small { margin-top: 14px; max-width: 720px; }
   .pricing-close__actions { display: flex; flex-wrap: wrap; gap: 12px; justify-self: end; }
 
   @media (max-width: 1023px) {

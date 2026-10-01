@@ -14,7 +14,7 @@
   /* ---- FAQ band: head column 5/12 (sticky beside the list), list 7/12 ---- */
   .faq-band { border-top: 1px solid var(--de-paper-hairline); }
   .faq { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: 48px; align-items: start; }
-  .faq .de-head { max-width: 460px; position: sticky; top: 96px; }
+  .faq .de-head { max-width: 460px; }
   .faq .de-h2 { text-wrap: balance; }
   .faq .de-lede { text-wrap: pretty; }
 
@@ -25,7 +25,7 @@
   .faq-item summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 0; cursor: pointer; }
   .faq-item summary::-webkit-details-marker { display: none; }
   .faq-item summary:focus-visible { outline: 2px solid #ec4899; outline-offset: 4px; border-radius: 4px; }
-  .faq-q { margin: 0; font-family: var(--font-heading); font-weight: 600; font-size: 19px; line-height: 1.3; letter-spacing: -0.01em; color: var(--de-ink); }
+  .faq-q { margin: 0; color: var(--de-ink); }
   .faq-chev { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex-shrink: 0; margin-right: -12px; color: var(--de-ink-muted); transition: transform 160ms ease; }
   .faq-chev svg { width: 20px; height: 20px; }
   .faq-item[open] .faq-chev { transform: rotate(180deg); color: var(--de-ink); }
@@ -34,18 +34,18 @@
 
   /* ---- Surface band ---- */
   .comp { align-items: start; }
-  .comp-title { font-family: var(--font-heading); font-weight: 600; font-size: 28px; line-height: 1.2; letter-spacing: -0.015em; }
-  .comp .de-lede { margin-top: 12px; max-width: 560px; font-size: 17px; text-wrap: pretty; }
+  .comp .de-lede { max-width: 560px; text-wrap: pretty; }
+  /* Compliance chips row and city chips: system .de-chip, one wrapping row each. */
+  .chip-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .comp-chips { align-content: start; padding-top: 6px; }
   /* Static lists: plain text with a magenta dash, no box, no icon. */
   .plain-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
   .plain-list li { display: flex; align-items: flex-start; font-size: 15px; line-height: 1.45; color: var(--de-muted); }
   .plain-list .de-dash { flex-shrink: 0; margin-top: 0.72em; }
-  .comp-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; row-gap: 14px; padding-top: 10px; }
 
-  .cards { margin-top: 48px; align-items: start; }
+  .cards { margin-top: 48px; align-items: stretch; }
   .cards .de-card { min-width: 0; }
   .card-kicker { display: flex; align-items: center; gap: 14px; }
-  .card-kicker span:last-child { font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--de-muted-quiet); }
   .cards .de-h3 { margin-top: 22px; }
   .cards .card-kicker + .de-h3 { margin-top: 22px; }
   .sa-card .de-h3 { margin-top: 0; }
@@ -61,16 +61,11 @@
   .nl-topics { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; margin-top: 22px; }
   .nl-foot { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--de-hairline); }
 
-  /* Service area: the six cities as one wrapping inline list of link chips; Chandler
-     carries the magenta border (as live). Only these chips are bordered, and they
-     carry an arrow + hover, so they read as links. */
-  .city-list { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 0; padding: 0; list-style: none; }
-  .city-list a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 14px 0 16px; border-radius: 10px; border: 1px solid var(--de-hairline-strong); background: transparent; color: var(--de-fg); font-size: 15px; font-weight: 500; transition: border-color 140ms ease, background-color 140ms ease; }
-  .city-list a svg { width: 15px; height: 15px; color: var(--de-muted-quiet); transition: transform 140ms ease, color 140ms ease; }
-  .city-list a:hover, .city-list a:focus-visible { border-color: var(--de-magenta); background: rgba(211, 18, 106, 0.08); }
-  .city-list a:hover svg, .city-list a:focus-visible svg { color: var(--de-magenta-ink); transform: translateX(2px); }
-  .city-list a:focus-visible { outline: 2px solid #ec4899; outline-offset: 2px; }
-  .city-list .city--hq { border-color: var(--de-magenta); }
+  /* Service area: the six cities as one wrapping row of system chips; the arrow marks them as links. */
+  .city-list { margin-top: 20px; }
+  .city-list .de-chip { transition: border-color 140ms ease; }
+  .city-list .de-chip svg { color: var(--de-muted-quiet); }
+  .city-list .de-chip:hover { border-color: var(--de-hairline-strong); }
 
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
@@ -82,9 +77,7 @@
     .faq-item summary { gap: 16px; padding: 14px 0; }
     .faq-q { font-size: 17px; }
     .faq-answer { padding-right: 0; padding-bottom: 22px; }
-    .comp-title { font-size: 24px; }
-    .comp-list, .nl-topics { grid-template-columns: minmax(0, 1fr); }
-    .comp-list { padding-top: 0; }
+    .nl-topics { grid-template-columns: minmax(0, 1fr); }
     .cards { margin-top: 32px; }
     .nl-row { flex-direction: column; }
     .nl-row .de-input { flex: none; width: 100%; min-height: 48px; }
@@ -102,19 +95,19 @@
     </div>
     <div class="faq-list">
       <details class="faq-item" open>
-        <summary><h3 class="faq-q">What is your best service?</h3><span class="faq-chev" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
+        <summary><h3 class="de-h3 faq-q">What is your best service?</h3><span class="faq-chev" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
         <div class="faq-answer"><p>There isn’t a universally “best” package. ProActive is four operating models — IT, Office, Business, and Enterprise — matched to users, devices, locations, infrastructure, security, compliance, and whether you need fully or co-managed coverage. If Office would need heavy modification, Business is the correct fit for that environment, not a higher rank.</p></div>
       </details>
       <details class="faq-item">
-        <summary><h3 class="faq-q">How do I choose the right plan for my business?</h3><span class="faq-chev" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
+        <summary><h3 class="de-h3 faq-q">How do I choose the right plan for my business?</h3><span class="faq-chev" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
         <div class="faq-answer"><p>User count is a signal, never the sole criterion. We start with a Cyber Risk Assessment of your environment, then match IT, Office, Business, or Enterprise. We do not start with a package and pile on add-ons.</p></div>
       </details>
       <details class="faq-item">
-        <summary><h3 class="faq-q">Can I customize the solutions?</h3><span class="faq-chev" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
+        <summary><h3 class="de-h3 faq-q">Can I customize the solutions?</h3><span class="faq-chev" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
         <div class="faq-answer"><p>Yes! We understand every business is unique. Our packages can be customized with additional services, and we offer both co-managed and fully managed options to fit your existing IT structure.</p></div>
       </details>
       <details class="faq-item">
-        <summary><h3 class="faq-q">Is my data secure?</h3><span class="faq-chev" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
+        <summary><h3 class="de-h3 faq-q">Is my data secure?</h3><span class="faq-chev" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></summary>
         <div class="faq-answer"><p>Yes. We use enterprise-grade controls, 24/7 monitoring, and documented security protocols. We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews — with clear ownership of credentials, policies, and evidence.</p></div>
       </details>
     </div>
@@ -166,20 +159,20 @@
   <div class="de-canvas">
     <div class="de-grid de-grid--2 comp">
       <div>
-        <h2 class="comp-title" id="compliance-title">Security &amp; Compliance Support<span class="de-colon" aria-hidden="true">:</span></h2>
+        <h2 class="de-h2--sub" id="compliance-title">Security &amp; Compliance Support<span class="de-colon" aria-hidden="true">:</span></h2>
         <p class="de-lede">Framework names describe customer requirements Digerati Experts helps organizations address — not certifications DE holds.</p>
       </div>
-      <ul class="plain-list comp-list" aria-label="Compliance support">
-        <li><span class="de-dash" aria-hidden="true"></span>HIPAA-aligned security and compliance support</li>
-        <li><span class="de-dash" aria-hidden="true"></span>SOC 2 readiness and control alignment</li>
-        <li><span class="de-dash" aria-hidden="true"></span>Cyber insurance readiness</li>
-        <li><span class="de-dash" aria-hidden="true"></span>Security and compliance reporting</li>
+      <ul class="chip-row comp-chips" aria-label="Compliance support">
+        <li class="de-chip">HIPAA-aligned security and compliance support</li>
+        <li class="de-chip">SOC 2 readiness and control alignment</li>
+        <li class="de-chip">Cyber insurance readiness</li>
+        <li class="de-chip">Security and compliance reporting</li>
       </ul>
     </div>
 
     <div class="de-grid de-grid--2 cards">
       <article class="de-card" aria-labelledby="newsletter-title">
-        <p class="card-kicker"><span class="de-iconwell" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span><span>Monthly · Arizona operators</span></p>
+        <p class="card-kicker"><span class="de-iconwell" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span><span class="de-meta">Monthly · Arizona operators</span></p>
         <h3 class="de-h3" id="newsletter-title">Stay Updated</h3>
         <p class="de-body">Get the latest cybersecurity insights and IT tips delivered to your inbox.</p>
         <!-- Submission contract (DigeratiNewsletterSection.tsx): JS fetch, POST /api/newsletter
@@ -214,13 +207,13 @@
 
       <article class="de-card sa-card" aria-labelledby="service-area-title">
         <h3 class="de-h3" id="service-area-title">Serving Greater Phoenix</h3>
-        <ul class="city-list" aria-label="Cities served">
-          <li><a class="city--hq" href="/locations/chandler-az">Chandler<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></li>
-          <li><a href="/locations/phoenix-az">Phoenix<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></li>
-          <li><a href="/locations/gilbert-az">Gilbert<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></li>
-          <li><a href="/locations/tempe-az">Tempe<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></li>
-          <li><a href="/locations/mesa-az">Mesa<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></li>
-          <li><a href="/locations/scottsdale-az">Scottsdale<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></li>
+        <ul class="chip-row city-list" aria-label="Cities served">
+          <li><a class="de-chip" href="/locations/chandler-az">Chandler<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></li>
+          <li><a class="de-chip" href="/locations/phoenix-az">Phoenix<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></li>
+          <li><a class="de-chip" href="/locations/gilbert-az">Gilbert<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></li>
+          <li><a class="de-chip" href="/locations/tempe-az">Tempe<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></li>
+          <li><a class="de-chip" href="/locations/mesa-az">Mesa<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></li>
+          <li><a class="de-chip" href="/locations/scottsdale-az">Scottsdale<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></li>
         </ul>
       </article>
     </div>

@@ -15,7 +15,7 @@
   .lbl-phone, .only-phone { display: none; }
 
   /* The evidence panel (the only dark object on the paper band). */
-  .model { position: relative; isolation: isolate; margin-top: 40px; background: var(--de-surface); color: var(--de-fg); border: 1px solid rgba(26, 18, 40, 0.14); border-radius: var(--radius-lg); box-shadow: 0 28px 56px -24px rgba(26, 18, 40, 0.45); clip-path: inset(0 -120px -120px -120px); overflow: hidden; }
+  .model { position: relative; isolation: isolate; margin-top: 40px; background: var(--de-surface); color: var(--de-fg); border: 1px solid rgba(26, 18, 40, 0.14); border-radius: var(--radius-lg); overflow: hidden; }
   .model::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background-image: var(--de-field-grain); background-size: 180px 180px; }
   /* The panel is a dark context inside a paper band: undo the paper-context type colours. */
   .model .de-meta, .model .de-small { color: var(--de-muted-quiet); }
@@ -91,12 +91,12 @@
   /* How protection works — surface, head row, four hairline cells under one top hairline. */
   .how__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; }
   .how__head .de-head { max-width: 980px; }
-  .how__title { font-family: var(--font-heading); font-weight: 600; font-size: clamp(1.6rem, 2.3vw, 2rem); line-height: 1.15; letter-spacing: -0.02em; color: #fbfaf8; }
+  .how__title { text-wrap: balance; }
   .how__title .arrow { color: var(--de-muted-quiet); font-weight: 500; }
   .how__head .de-link { flex-shrink: 0; min-height: 44px; margin-bottom: -8px; }
   .steps { margin-top: 36px; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 0; border-top: 1px solid var(--de-hairline); border-radius: 0; }
   .steps > li { padding: 0; display: flex; }
-  .step { flex: 1; display: flex; flex-direction: column; padding: 28px 28px 32px; color: inherit; transition: background-color 200ms ease-out; }
+  .step { flex: 1; display: flex; flex-direction: column; padding: 24px; color: inherit; transition: background-color 200ms ease-out; }
   .steps > li:first-child .step { padding-left: 0; }
   .step:hover { background: rgba(255, 255, 255, 0.025); }
   .step .de-iconwell { margin-top: 18px; }
@@ -222,7 +222,7 @@
               </ul>
             </div>
             <div>
-              <p class="de-meta">Identity boundary · illustrative</p>
+              <p class="de-meta">Identity boundary</p>
               <div class="boundary" aria-label="Identity boundary">
                 <span class="boundary__corner boundary__corner--tl" aria-hidden="true"></span>
                 <span class="boundary__corner boundary__corner--br" aria-hidden="true"></span>
@@ -279,12 +279,12 @@
   </div>
 </section>
 
-<section class="f-surface de-section how" id="how-protection-works" aria-labelledby="how-heading">
+<section class="f-surface de-section de-grain how" id="how-protection-works" aria-labelledby="how-heading">
   <div class="de-canvas">
     <div class="how__head">
       <div class="de-head">
         <p class="de-eyebrow">How protection works</p>
-        <h3 class="how__title" id="how-heading">Assessment <span class="arrow" aria-hidden="true">→</span><span class="sr-only"> to </span> Roadmap <span class="arrow" aria-hidden="true">→</span><span class="sr-only"> to </span> Implementation <span class="arrow" aria-hidden="true">→</span><span class="sr-only"> to </span> Continuous</h3>
+        <h3 class="de-h2 how__title" id="how-heading">Assessment <span class="arrow" aria-hidden="true">→</span><span class="sr-only"> to </span> Roadmap <span class="arrow" aria-hidden="true">→</span><span class="sr-only"> to </span> Implementation <span class="arrow" aria-hidden="true">→</span><span class="sr-only"> to </span> Continuous</h3>
       </div>
       <a class="de-link" href="/solutions/proactive-ecosystem">Full methodology <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
     </div>

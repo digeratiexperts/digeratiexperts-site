@@ -10,9 +10,10 @@
   /* 16 · Contact + footer. Contact = page-black well with a hairline top
      (follows the paper Next-step band); footer = chrome black with a hairline
      top. No city plate, no radial drift, no grain: the page ends quiet.
-     Vertical air cut against live: tight section padding (48px), 8px
-     directory rows, footer = link columns over one newsletter row and one
-     legal bar. */
+     Vertical air cut against live: contact keeps the system 64px section
+     padding (eyebrow aligns with every other section); the cut is taken in
+     the footer: 8px directory rows, link columns of four rows or fewer, one
+     newsletter row and one legal bar. */
   .contact { border-top: 1px solid var(--de-hairline); }
   .contact__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 600px); column-gap: 80px; align-items: start; }
   .contact .de-h2 { text-wrap: balance; }
@@ -58,22 +59,24 @@
 
   /* Footer: chrome. Brand + four link columns, one newsletter row, one legal bar. */
   .foot { border-top: 1px solid var(--de-hairline); padding: 40px 0 0; }
-  .foot__grid { display: grid; grid-template-columns: minmax(0, 4fr) repeat(4, minmax(0, 2fr)); column-gap: 32px; }
+  .foot__grid { display: grid; grid-template-columns: minmax(0, 3fr) repeat(3, minmax(0, 2fr)) minmax(0, 4fr); column-gap: 32px; }
+  /* Trust & Legal: one column head, two short lists side by side, so no
+     column runs past four rows. */
+  .foot__split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
   .foot__logo { height: 44px; width: auto; }
   .foot__name { margin-top: 18px; font-family: var(--font-heading); font-weight: 600; font-size: 17px; color: #fff; }
   .foot__line { margin-top: 2px; font-size: 15px; line-height: 1.5; color: var(--de-muted-soft); }
-  .foot__cta { margin-top: 4px; min-height: 44px; }
-  .foot__head { font-family: var(--font-body); font-size: 13px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #fff; margin: 0 0 2px; line-height: 1.4; }
+  .foot__head { margin: 0 0 2px; line-height: 1.4; }
   .foot__col a { display: inline-flex; align-items: center; min-height: 44px; line-height: 1.4; font-size: 15px; color: var(--de-muted-soft); }
   .foot__col a:hover { color: #fff; }
 
   .foot__news { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 460px); column-gap: 32px; align-items: center; margin-top: 28px; padding: 20px 0; border-top: 1px solid var(--de-hairline); }
   .foot__news p { margin-top: 4px; font-size: 15px; color: var(--de-muted-soft); }
   .foot__form { display: flex; gap: 8px; }
-  .foot__form .de-input { flex: 1; min-width: 0; height: 44px; background: #0f0d14; border-color: var(--de-hairline-strong); color: #fff; }
-  .foot__form .de-input::placeholder { color: rgba(255,255,255,0.55); }
-  .foot__form .de-btn { height: 44px; padding: 0 18px; background: #fff; color: var(--de-ink); font-size: 15px; }
-  .foot__form .de-btn svg { width: 16px; height: 16px; }
+  /* Same field as the 14 newsletter row (system .de-input, 48px, white);
+     outline button so the footer adds no third filled style. */
+  .foot__form .de-input { flex: 1; min-width: 0; }
+  .foot__form .de-btn { padding: 0 22px; }
 
   .foot__legal { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; padding: 4px 0 12px; border-top: 1px solid var(--de-hairline); }
   .foot__legal p { display: flex; flex-wrap: wrap; align-items: center; font-size: 14px; color: var(--de-muted-quiet); }
@@ -86,7 +89,7 @@
   .social svg { width: 18px; height: 18px; }
 
   @media (max-width: 1199px) {
-    .foot__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 32px; }
+    .foot__grid { grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 2fr); row-gap: 32px; }
     .foot__brand { grid-column: 1 / -1; }
   }
   @media (max-width: 1023px) {
@@ -106,13 +109,15 @@
     .hours { grid-template-columns: minmax(0, 1fr); }
     .hours dd { margin-bottom: 6px; }
     .foot__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; }
+    .foot__col--trust { grid-column: 1 / -1; }
+    .foot__split { column-gap: 20px; }
     .foot__legal .sep { display: none; }
     .foot__legal p { column-gap: 20px; }
   }
 </style>
 </head>
 <body>
-<section class="f-well de-section de-section--tight contact" id="contact" aria-labelledby="contact-title">
+<section class="f-well de-section contact" id="contact" aria-labelledby="contact-title">
   <div class="de-canvas contact__grid">
     <div class="contact__copy">
       <p class="de-eyebrow">Contact</p>
@@ -215,13 +220,13 @@
       <div class="foot__brand">
         <img class="foot__logo" src="/brand/digerati-logo-reverse.svg" alt="Digerati Experts Logo">
         <p class="foot__name">Digerati Experts</p>
-        <p class="foot__line">Arizona MSP · Cybersecurity &amp; Managed IT<br>Chandler, Arizona</p>
-        <!-- Live: magenta BookingLink, openBooking source "footer". Keep the booking-modal behaviour. -->
-        <p><a class="de-link foot__cta" href="/book" data-booking-source="footer">Get My Cyber Risk Assessment <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></p>
+        <p class="foot__line">Arizona MSP<br>Cybersecurity &amp; Managed IT<br>Chandler, Arizona</p>
+        <!-- Live footer BookingLink "Get My Cyber Risk Assessment" (openBooking source "footer") dropped here:
+             the same destination sits in the contact actions ~650px above. Restore at integration if Joe wants both. -->
       </div>
 
       <nav class="foot__col" aria-labelledby="fc-client">
-        <h2 class="foot__head" id="fc-client">Client</h2>
+        <h2 class="de-meta foot__head" id="fc-client">Client</h2>
         <ul>
           <li><a href="https://portal.digeratiexperts.com/portal/login" target="_blank" rel="noopener noreferrer">Client Portal</a></li>
           <li><a href="/support/submit-ticket">Submit Ticket</a></li>
@@ -230,7 +235,7 @@
         </ul>
       </nav>
       <nav class="foot__col" aria-labelledby="fc-services">
-        <h2 class="foot__head" id="fc-services">Services</h2>
+        <h2 class="de-meta foot__head" id="fc-services">Services</h2>
         <ul>
           <li><a href="/solutions/managed-it-support">Managed IT</a></li>
           <li><a href="/solutions/security-operations">Cybersecurity</a></li>
@@ -239,7 +244,7 @@
         </ul>
       </nav>
       <nav class="foot__col" aria-labelledby="fc-resources">
-        <h2 class="foot__head" id="fc-resources">Resources</h2>
+        <h2 class="de-meta foot__head" id="fc-resources">Resources</h2>
         <ul>
           <li><a href="/resources/blog">Digerati Journal</a></li>
           <li><a href="/resources/cyber-facts">Cyber Facts</a></li>
@@ -247,17 +252,21 @@
           <li><a href="/contact">Contact</a></li>
         </ul>
       </nav>
-      <nav class="foot__col" aria-labelledby="fc-trust">
-        <h2 class="foot__head" id="fc-trust">Trust &amp; Legal</h2>
-        <ul>
-          <li><a href="/trust/trust-center">Trust Center</a></li>
-          <li><a href="/trust/trust-center">Status</a></li>
-          <li><a href="/trust/vulnerability-disclosure">Vulnerability Disclosure</a></li>
-          <li><a href="/legal/privacy-policy">Privacy</a></li>
-          <li><a href="/legal/terms-of-use">Terms</a></li>
-          <li><a href="/legal/msa">MSA</a></li>
-          <li><a href="/legal/sla">SLA</a></li>
-        </ul>
+      <nav class="foot__col foot__col--trust" aria-labelledby="fc-trust">
+        <h2 class="de-meta foot__head" id="fc-trust">Trust &amp; Legal</h2>
+        <div class="foot__split">
+          <ul>
+            <li><a href="/trust/trust-center">Trust Center</a></li>
+            <li><a href="/trust/trust-center">Status</a></li>
+            <li><a href="/trust/vulnerability-disclosure">Vulnerability Disclosure</a></li>
+          </ul>
+          <ul>
+            <li><a href="/legal/privacy-policy">Privacy</a></li>
+            <li><a href="/legal/terms-of-use">Terms</a></li>
+            <li><a href="/legal/msa">MSA</a></li>
+            <li><a href="/legal/sla">SLA</a></li>
+          </ul>
+        </div>
       </nav>
     </div>
 
@@ -267,13 +276,13 @@
          error: "Error" / "Failed to subscribe. Please try again." Posts POST /api/newsletter. -->
     <div class="foot__news">
       <div>
-        <h2 class="foot__head" id="fn-head">Stay Updated</h2>
+        <h2 class="de-meta foot__head" id="fn-head">Stay Updated</h2>
         <p>Get the latest cybersecurity insights and IT tips delivered to your inbox.</p>
       </div>
       <form class="foot__form" action="/api/newsletter" method="post" novalidate aria-labelledby="fn-head">
         <label class="de-sr" for="f-news">Enter your email</label>
         <input class="de-input" id="f-news" name="email" type="email" placeholder="Enter your email" autocomplete="email">
-        <button class="de-btn" type="submit"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>Subscribe</button>
+        <button class="de-btn de-btn--outline" type="submit"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>Subscribe</button>
       </form>
     </div>
 

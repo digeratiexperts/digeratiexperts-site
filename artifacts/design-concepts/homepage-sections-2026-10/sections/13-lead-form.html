@@ -18,19 +18,16 @@
   .lead__form { grid-area: form; }
   .lead__assure { grid-area: assure; }
   .lead .de-h2 { max-width: 620px; text-wrap: balance; }
-  .lead .de-lede { max-width: 600px; text-wrap: pretty; }
 
   /* Reassurances: one compact body-weight list, magenta dash as the only mark
      (no row hairlines, so they do not read as clickable rows). */
   .lead__assure { margin-top: 28px; display: grid; gap: 10px; }
   .lead__assure li { display: flex; align-items: center; font-size: 16px; line-height: 1.5; color: var(--de-ink-body); }
-  .lead__assure .de-dash { height: 2px; margin-right: 12px; flex-shrink: 0; }
+  .lead__assure .de-dash { margin-right: 12px; flex-shrink: 0; }
 
   /* Form card: tokens' paper card at its own 24px padding. Inputs carry a
-     ≥3:1 edge (#8f8a96 ≈ 3.2:1 on white) so the boundary does not depend on fill. */
+     ≥3:1 edge from the token (#8a8494) so the boundary does not depend on fill. */
   .lead__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 20px; }
-  .lead__card .de-input { background: #fff; border-color: #8f8a96; }
-  .lead__card .de-input::placeholder { color: #77717f; }
   .lead__card .de-input:focus { border-color: var(--de-magenta); } /* token focus-visible outline still applies */
   .lead__submit { width: 100%; margin-top: 28px; }
   .lead__footers { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--de-paper-hairline); }

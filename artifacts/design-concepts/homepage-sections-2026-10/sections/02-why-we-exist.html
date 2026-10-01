@@ -11,6 +11,7 @@
      closing ask share one 640px column on the left; the three claims are one
      white hairline list on the right, top-aligned to the H2 and at their
      natural height. Everything else comes from tokens.css. */
+  #why-we-exist { border-top: 1px solid var(--de-paper-hairline); } /* seam under the trust strip (01): two paper bands, not one */
   .why { display: grid; grid-template-columns: minmax(0, 640px) minmax(0, 600px); grid-template-areas: "statement claims" "ask claims"; justify-content: space-between; column-gap: clamp(48px, 6vw, 96px); align-items: start; }
   .why__statement { grid-area: statement; max-width: 640px; }
   .why .de-eyebrow { line-height: 20px; }
