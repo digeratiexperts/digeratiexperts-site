@@ -37,6 +37,14 @@ claims:
     base_sha: 8fc5524907dc3fe450c9ba32b7c852a4b5ac4354
     files:
       - artifacts/design-concepts/homepage-sections-2026-10/**
+      - client/src/pages/versions/v7/**
+      - client/src/pages/versions/registry.ts (the v7 entry)
+      - client/src/pages/versions/README.md (the v7 row)
+      - client/src/App.tsx (the /version-7 route and its own-bottom-bar exclusion)
+      - server/spaKnownPaths.ts, server/spaKnownPaths.test.ts (/version-7)
+      - client/src/hooks/useDockAutohide.ts (new)
+      - client/src/components/SiteBottomBar.tsx (opt-in autohide prop and its visibility lines only)
+      - client/src/components/HomepageSectionNav.tsx (opt-in chapter progress in HomepageDockMenu only)
     status: active
     started: 2026-10-01
     note: >-
@@ -49,6 +57,12 @@ claims:
       2026-10-01, the founder photo as the only photograph. No client/ files;
       production / untouched. Overlap check: PR 298 (issue 296) rewrites the
       live homepage sections in client/; this lane does not touch them.
+      Round 3 (Joe: "continue"): the reviewed mocks become the noindex
+      /version-7 preview. Autohide is opt-in (SiteBottomBar autohide prop,
+      default off), so production chrome is unchanged. Overlap recorded:
+      draft PR 319 (Desk + Ask DE chooser) edits SiteBottomBar.tsx in the
+      chooser markup; this lane edits only the bar's visibility lines and
+      props, disjoint hunks.
   - id: de-desk-reliability-followup
     issue: 291
     owner: codex

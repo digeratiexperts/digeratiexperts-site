@@ -20,7 +20,7 @@ describe("spaKnownPaths", () => {
   it("knows every homepage version preview, so none of them answers 404", () => {
     // /version-4 was routed in App.tsx but missing here, so the preview rendered
     // while answering HTTP 404 to monitors, crawlers and link checkers.
-    for (const n of [1, 2, 3, 4, 5, 6]) {
+    for (const n of [1, 2, 3, 4, 5, 6, 7]) {
       expect(isKnownSpaPath(`/version-${n}`)).toBe(true);
     }
     expect(isKnownSpaPath("/versions")).toBe(true);

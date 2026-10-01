@@ -221,7 +221,44 @@ export function useHomepageDockVisibility() {
  * Protected? stays a fixed lead-in; chapter links flex across leftover
  * width so the row fills instead of clustering left of the actions.
  */
-export function HomepageDockMenu() {
+/**
+ * Read progress through the active dock chapter, 0..1: from its top to the next
+ * dock chapter's top (or the page end). Only runs when `enabled`.
+ */
+function useDockChapterProgress(enabled: boolean, activeId: string | undefined, orderedIds: string[]) {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    if (!enabled || !activeId) return;
+    let raf = 0;
+    const measure = () => {
+      raf = 0;
+      const el = document.getElementById(activeId);
+      if (!el) return;
+      const next = orderedIds[orderedIds.indexOf(activeId) + 1];
+      const nextEl = next ? document.getElementById(next) : null;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      const end = nextEl
+        ? nextEl.getBoundingClientRect().top + window.scrollY
+        : document.documentElement.scrollHeight - window.innerHeight;
+      const at = window.scrollY + window.innerHeight * 0.35;
+      setProgress(Math.max(0, Math.min(1, (at - top) / Math.max(1, end - top))));
+    };
+    const onScroll = () => {
+      if (!raf) raf = window.requestAnimationFrame(measure);
+    };
+    measure();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      if (raf) window.cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [enabled, activeId, orderedIds.join(",")]);
+  return progress;
+}
+
+export function HomepageDockMenu({ progress: showProgress = false }: { progress?: boolean } = {}) {
   const ctx = useOptionalFullPageScroll();
   const sections = ctx?.sections ?? [];
   const currentSection = ctx?.currentSection ?? 0;
@@ -234,6 +271,7 @@ export function HomepageDockMenu() {
     .filter(({ section }) => TOP_CHAPTERS.has(section.id));
   const conceptualActiveIndex = nearestNavIndex(topItems, currentSection);
   const conceptualActiveId = sections[conceptualActiveIndex]?.id;
+  const progress = useDockChapterProgress(showProgress, conceptualActiveId, items.map(({ section }) => section.id));
 
   if (!ctx || items.length === 0) return null;
 
@@ -274,6 +312,18 @@ export function HomepageDockMenu() {
                   />
                 )}
                 {section.label}
+                {showProgress && isActive && (
+                  <span
+                    className="pointer-events-none absolute inset-x-3 bottom-[5px] h-0.5 overflow-hidden rounded-full bg-white/30"
+                    aria-hidden="true"
+                    data-testid="nav-dock-progress"
+                  >
+                    <span
+                      className="absolute inset-0 origin-left rounded-full bg-white transition-transform duration-100 ease-linear motion-reduce:transition-none"
+                      style={{ transform: `scaleX(${progress.toFixed(3)})` }}
+                    />
+                  </span>
+                )}
               </a>
             </div>
           );
