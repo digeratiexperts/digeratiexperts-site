@@ -176,6 +176,7 @@ claims:
       - client/src/pages/store/PublicStoreCheckout.tsx
       - client/src/pages/solutions/SolutionRequest.tsx
       - client/src/styles/store-builder.css
+      - scripts/door2-browser-smoke.mjs
       - docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md
       - artifacts/visual-qa/store-stations/**
     status: active
