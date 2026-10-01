@@ -30,6 +30,32 @@
 
 version: 2
 claims:
+  - id: de-phone-number-and-arrows
+    owner: claude
+    subsystem: homepage
+    branch: claude/phone-number-and-arrows
+    base_sha: bdb9c3a2
+    files:
+      - client/src/pages/sections/DigeratiTestimonialsSection.tsx (the phone number's wrapper only)
+      - client/src/pages/sections/DigeratiThreatsInsightsSection.tsx (the two carousel arrows' size only)
+      - client/src/pages/industries/Nonprofits.tsx (the phone number's wrapper only)
+      - client/src/pages/industries/RealEstate.tsx (the phone number's wrapper only)
+      - client/src/pages/phoneNumberNowrap.test.ts
+      - client/src/pages/sections/phoneTapTargets.test.ts (the threat-feed arrows test)
+      - artifacts/visual-qa/phone-number-and-arrows/**
+    status: active
+    started: 2026-10-01
+    note: >-
+      Follow-up to PR 322 after Joe's "continue". Measured on a production
+      build: the phone number in running text broke at a hyphen ("325-" at a
+      line end) on the homepage at 375, 390 and 414 and on the nonprofits
+      page at 360 and 375; the homepage threat-feed carousel's arrows are 40px
+      on phones (they render only when the feed has recent items, which a
+      local build lacks, so the 390 audit before PR 322 never saw them).
+      Classes and one wrapper span only: no copy, link, route or test id
+      changes. Overlap: claude-completion-program-lane lists two of these
+      files, but its branch stack's PRs (219, 220, 221) are closed and no open
+      PR comes from claude/c8-cross-surface.
   - id: de-phone-tap-targets
     owner: claude
     subsystem: homepage

@@ -39,4 +39,12 @@ describe("homepage phone tap targets", () => {
     expect(industries.match(/z-20 w-11 h-11 rounded-full/g)?.length).toBe(2);
     expect(industries).not.toMatch(/z-20 w-10 h-10 rounded-full/);
   });
+
+  it("makes the threat-feed carousel arrows 44px", () => {
+    // Only rendered when the feed has recent items, so a local build without
+    // the feed never shows them; production's homepage feed does.
+    const threats = read("DigeratiThreatsInsightsSection.tsx");
+    expect(threats.match(/z-20 w-11 h-11 rounded-full/g)?.length).toBe(2);
+    expect(threats).not.toMatch(/z-20 w-10 h-10 rounded-full/);
+  });
 });
