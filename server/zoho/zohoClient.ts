@@ -19,7 +19,7 @@ export type DeskAuthStatus =
   | 'ok'
   | 'auth_failed';
 
-class ZohoClient {
+export class ZohoClient {
   private accessToken: string | null = null;
   private tokenExpiry: number = 0;
   private deskAccessToken: string | null = null;
@@ -54,7 +54,8 @@ class ZohoClient {
     if (!(this.clientId && this.clientSecret && this.getDeskRefreshToken())) {
       return 'not_configured';
     }
-    return this.deskAuthStatus === 'not_configured'
+    return this.deskAuthStatus === 'not_configured' ||
+      (this.deskAuthStatus === 'ok' && Date.now() >= this.deskTokenExpiry)
       ? 'credentials_present'
       : this.deskAuthStatus;
   }
@@ -85,10 +86,11 @@ class ZohoClient {
           client_secret: this.clientSecret,
           refresh_token: this.refreshToken,
         }).toString(),
-        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 10000 }
       );
 
-      if (!response.data.access_token) {
+      if (typeof response.data?.access_token !== 'string' || !response.data.access_token.trim() ||
+          !Number.isFinite(response.data.expires_in) || response.data.expires_in <= 0) {
         const code = classifyZohoTokenFailure(response.data);
         throw new ZohoOAuthError({
           message: 'No access token in Zoho CRM response',
@@ -110,7 +112,7 @@ class ZohoClient {
     } catch (error: any) {
       if (error instanceof ZohoOAuthError) throw error;
       const payload = error.response?.data;
-      console.error('❌ Failed to refresh Zoho CRM token:', payload || error.message);
+      console.error('❌ Failed to refresh Zoho CRM token:', classifyZohoTokenFailure(payload));
       throw new ZohoOAuthError({
         message: 'Failed to refresh Zoho access token',
         code: classifyZohoTokenFailure(payload),
@@ -124,15 +126,25 @@ class ZohoClient {
   }
 
   private deskRefreshPromise: Promise<string> | null = null;
+  private deskRefreshFailure: { error: ZohoOAuthError; retryAt: number } | null = null;
 
   private async refreshDeskAccessToken(): Promise<string> {
     if (this.deskRefreshPromise) {
       return this.deskRefreshPromise;
     }
+    // A revoked credential must not create an OAuth storm across visitors.
+    if (this.deskRefreshFailure && Date.now() < this.deskRefreshFailure.retryAt) {
+      throw this.deskRefreshFailure.error;
+    }
     
     this.deskRefreshPromise = this._doRefreshDeskToken();
     try {
       return await this.deskRefreshPromise;
+    } catch (error) {
+      if (error instanceof ZohoOAuthError) {
+        this.deskRefreshFailure = { error, retryAt: Date.now() + 15000 };
+      }
+      throw error;
     } finally {
       this.deskRefreshPromise = null;
     }
@@ -149,18 +161,17 @@ class ZohoClient {
           client_secret: this.clientSecret,
           refresh_token: token,
         }).toString(),
-        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 10000 }
       );
 
-      if (!response.data.access_token) {
+      if (typeof response.data?.access_token !== 'string' || !response.data.access_token.trim() ||
+          !Number.isFinite(response.data.expires_in) || response.data.expires_in <= 0) {
         const code = classifyZohoTokenFailure(response.data);
         this.deskAuthStatus = 'auth_failed';
         // Log error name only — never the refresh token or full client secret.
         console.error(
           '❌ Zoho Desk token response missing access_token:',
-          response.data && typeof response.data === 'object' && 'error' in response.data
-            ? String((response.data as { error?: unknown }).error)
-            : 'incomplete_response',
+          code,
         );
         throw new ZohoOAuthError({
           message: 'No access token in Zoho Desk response',
@@ -175,8 +186,9 @@ class ZohoClient {
       this.deskAccessToken = response.data.access_token;
       this.deskTokenExpiry = Date.now() + (response.data.expires_in * 1000) - 60000;
       this.deskAuthStatus = 'ok';
+      this.deskRefreshFailure = null;
       
-      console.log(`✅ Zoho Desk access token refreshed (scopes: ${response.data.scope || 'unknown'})`);
+      console.log('✅ Zoho Desk access token refreshed');
       return this.deskAccessToken;
     } catch (error: any) {
       if (error instanceof ZohoOAuthError) {
@@ -187,9 +199,7 @@ class ZohoClient {
       this.deskAuthStatus = 'auth_failed';
       console.error(
         '❌ Failed to refresh Zoho Desk token:',
-        payload && typeof payload === 'object' && 'error' in payload
-          ? String(payload.error)
-          : error.message,
+        classifyZohoTokenFailure(payload),
       );
       throw new ZohoOAuthError({
         message: 'Failed to refresh Zoho Desk access token',
@@ -234,6 +244,7 @@ class ZohoClient {
     
     return axios.create({
       baseURL: 'https://desk.zoho.com/api/v1',
+      timeout: 15000,
       headers: {
         'Authorization': `Zoho-oauthtoken ${token}`,
         'Content-Type': 'application/json',
@@ -247,6 +258,7 @@ class ZohoClient {
 
     return axios.create({
       baseURL: "https://desk.zoho.com/api/v1",
+      timeout: 15000,
       headers: {
         Authorization: `Zoho-oauthtoken ${token}`,
       },

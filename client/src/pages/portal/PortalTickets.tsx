@@ -1,14 +1,14 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation, Link } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useLocation } from "wouter";
+import { Plus, Search, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PortalLayout } from "./PortalLayout";
-import { Plus, Search, MessageSquare, Clock } from "lucide-react";
-import { queryClient } from "@/lib/queryClient";
 import { portalGet } from "@/lib/portalApi";
+import { formatDeskTimestamp } from "@/lib/deskTimestamp";
+import { cn } from "@/lib/utils";
+import { Callout, DataTable, EmptyState, Panel, Priority, TicketStatus, Token, type DataColumn } from "@/components/portal/ui";
 
 interface Ticket {
   id: string;
@@ -27,10 +27,22 @@ interface TicketsResponse {
   tickets: Ticket[];
 }
 
+const FILTERS: { value: string; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "open", label: "Open" },
+  { value: "in_progress", label: "In progress" },
+  { value: "pending_client", label: "Waiting on you" },
+  { value: "resolved", label: "Resolved" },
+  { value: "closed", label: "Closed" },
+];
+
 export default function PortalTickets() {
   const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<string>("all");
+  const [filter, setFilter] = useState<string>(() => {
+    const status = new URLSearchParams(window.location.search).get("status");
+    return status && FILTERS.some((f) => f.value === status) ? status : "all";
+  });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -43,166 +55,138 @@ export default function PortalTickets() {
     queryKey: ["/api/portal/tickets"],
     queryFn: () => portalGet<TicketsResponse>("/api/portal/tickets"),
   });
-  
+
   const tickets = data?.tickets || [];
 
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: tickets.length };
+    for (const t of tickets) c[t.status] = (c[t.status] ?? 0) + 1;
+    return c;
+  }, [tickets]);
+
   const filteredTickets = tickets.filter((ticket) => {
-    const matchesSearch =
-      ticket.subject.toLowerCase().includes(search.toLowerCase()) ||
-      ticket.ticketNumber.toLowerCase().includes(search.toLowerCase());
+    const q = search.trim().toLowerCase();
+    const matchesSearch = !q || ticket.subject.toLowerCase().includes(q) || ticket.ticketNumber.toLowerCase().includes(q);
     const matchesFilter = filter === "all" || ticket.status === filter;
     return matchesSearch && matchesFilter;
   });
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "critical":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30";
-      case "high":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-900/30";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30";
-    }
-  };
+  const columns: DataColumn<Ticket>[] = [
+    {
+      key: "ticket",
+      header: "Ticket",
+      primary: true,
+      cell: (t) => (
+        <div className="min-w-0">
+          <p className="truncate font-medium">{t.subject}</p>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+            <span className="pt-num">{t.ticketNumber}</span>
+            {t.companyName && !t.isInternal && <span>· {t.companyName}</span>}
+            {t.isInternal && <Token label="Internal" tone="brand" className="px-1.5 py-0 text-[9px]" />}
+          </p>
+        </div>
+      ),
+    },
+    { key: "status", header: "Status", primary: true, className: "w-40", cell: (t) => <TicketStatus status={t.status} /> },
+    { key: "priority", header: "Priority", primary: true, className: "w-28", cell: (t) => <Priority priority={t.priority} /> },
+    { key: "category", header: "Category", hideBelowMd: true, className: "w-40", cell: (t) => <span className="capitalize text-muted-foreground">{t.category || "—"}</span> },
+    { key: "created", header: "Opened", className: "w-52 whitespace-nowrap", align: "right", cell: (t) => <span className="pt-num text-muted-foreground">{formatDeskTimestamp(t.createdAt)}</span> },
+  ];
 
   return (
-    <PortalLayout title="Support Tickets">
-      <div className="space-y-6">
-        {/* Error State */}
+    <PortalLayout
+      title="Support Tickets"
+      description="Track every request you've raised with DE, reply to engineers, and open new ones."
+      actions={
+        <Button asChild variant="brand">
+          <Link href="/portal/tickets/create" data-testid="button-create-ticket">
+            <Plus aria-hidden="true" />
+            New ticket
+          </Link>
+        </Button>
+      }
+      width="wide"
+    >
+      <div className="space-y-4">
         {isError && (
-          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-lg">
-            <p className="text-sm text-red-800 dark:text-red-300">
-              Failed to load tickets: {error instanceof Error ? error.message : "Unknown error"}
-            </p>
-          </div>
+          <Callout tone="bad" title="Tickets couldn't be loaded">
+            {error instanceof Error ? error.message : "Unknown error"}
+          </Callout>
         )}
 
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-bold">Support Tickets</h2>
-            <p className="text-gray-600 dark:text-gray-400">
-              Manage your support requests and track resolutions
-            </p>
-          </div>
-          <Link href="/portal/tickets/create">
-            <Button
-              className="bg-[#D3126A] hover:bg-[#D3126A]/90 text-white"
-              data-testid="button-create-ticket"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New Ticket
-            </Button>
-          </Link>
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="relative lg:w-80 lg:shrink-0">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
-              placeholder="Search by subject or ticket number..."
+              type="search"
+              placeholder="Search by subject or ticket number"
+              aria-label="Search tickets"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
+              className="h-9 border-border bg-card pl-9"
               data-testid="input-search"
             />
           </div>
-          <div className="flex gap-2">
-            {["all", "open", "in_progress", "pending_client", "resolved", "closed"].map(
-              (status) => (
-                <Button
-                  key={status}
-                  variant={filter === status ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setFilter(status)}
-                  className={filter === status ? "bg-[#D3126A] hover:bg-[#D3126A]/90" : ""}
-                  data-testid={`button-filter-${status}`}
+          <div role="group" aria-label="Filter by status" className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0 lg:pb-0">
+            {FILTERS.map((f) => {
+              const active = filter === f.value;
+              const count = counts[f.value] ?? 0;
+              return (
+                <button
+                  key={f.value}
+                  type="button"
+                  onClick={() => setFilter(f.value)}
+                  aria-pressed={active}
+                  className={cn(
+                    "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+                  )}
+                  data-testid={`button-filter-${f.value}`}
                 >
-                  {status === "all" ? "All" : status.replace(/_/g, " ")}
-                </Button>
-              )
-            )}
+                  {f.label}
+                  {!isLoading && f.value !== "all" && count > 0 && (
+                    <span className={cn("pt-num rounded-full px-1.5 text-[10px]", active ? "bg-white/20" : "bg-muted")}>{count}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Tickets List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Tickets</CardTitle>
-            <CardDescription>
-              {filteredTickets.length} ticket{filteredTickets.length !== 1 ? "s" : ""}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                {[...Array(3)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-16 bg-gray-200 dark:bg-slate-800 rounded animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : filteredTickets.length > 0 ? (
-              <div className="space-y-3">
-                {filteredTickets.map((ticket) => (
-                  <Link key={ticket.id} href={`/portal/tickets/${ticket.id}`}>
-                    <a
-                      className="flex items-center justify-between p-4 border rounded-lg dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer block"
-                      data-testid={`ticket-row-${ticket.id}`}
-                    >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium text-gray-900 dark:text-white truncate">
-                          {ticket.subject}
-                        </p>
-                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-slate-800 px-2 py-1 rounded">
-                          {ticket.ticketNumber}
-                        </span>
-                        {ticket.isInternal && (
-                          <span className="text-xs text-[#D3126A] bg-[#D3126A]/10 px-2 py-1 rounded">
-                            Internal
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                        <Clock className="h-3 w-3" />
-                        <span>
-                          {new Date(ticket.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      <Badge className={getPriorityColor(ticket.priority)}>
-                        {ticket.priority}
-                      </Badge>
-                      <Badge
-                        className={
-                          ticket.status === "closed"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30"
-                            : ticket.status === "resolved"
-                            ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30"
-                            : "bg-orange-100 text-orange-800 dark:bg-orange-900/30"
-                        }
-                      >
-                        {ticket.status}
-                      </Badge>
-                    </div>
-                    </a>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="py-12 text-center">
-                <MessageSquare className="h-12 w-12 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
-                <p className="text-gray-500 dark:text-gray-400">No tickets found</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <Panel
+          id="tickets-list"
+          title={filter === "all" ? "All tickets" : FILTERS.find((f) => f.value === filter)?.label}
+          description={isLoading ? "Loading…" : `${filteredTickets.length} ticket${filteredTickets.length === 1 ? "" : "s"}`}
+          flush
+        >
+          <DataTable<Ticket>
+            columns={columns}
+            rows={filteredTickets}
+            rowKey={(t) => t.id}
+            rowHref={(t) => `/portal/tickets/${t.id}`}
+            rowTestId={(t) => `ticket-row-${t.id}`}
+            loading={isLoading}
+            caption="Support tickets"
+            empty={
+              <EmptyState
+                icon={Ticket}
+                title={tickets.length === 0 ? "No tickets yet" : "No tickets match"}
+                description={tickets.length === 0 ? "Open a ticket and a DE engineer picks it up. Urgent? Call us first." : "Try another status or clear the search."}
+                action={
+                  tickets.length === 0 ? (
+                    <Button asChild variant="brand" size="sm">
+                      <Link href="/portal/tickets/create">Open a ticket</Link>
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" onClick={() => { setFilter("all"); setSearch(""); }}>
+                      Clear filters
+                    </Button>
+                  )
+                }
+              />
+            }
+          />
+        </Panel>
       </div>
     </PortalLayout>
   );

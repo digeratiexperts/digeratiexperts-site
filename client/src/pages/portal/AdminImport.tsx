@@ -43,15 +43,8 @@ export function AdminImport() {
   const [showContactNote, setShowContactNote] = useState(false);
 
   return (
-    <PortalLayout title="Data Import">
+    <PortalLayout title="Data Import" description="External system imports are not available as a self-serve action in this admin UI.">
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Import Data from External Systems</h2>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          External system imports are not available as a self-serve action in this admin UI.
-        </p>
-      </div>
-
       <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-lg">
         <div className="flex gap-3">
           <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />

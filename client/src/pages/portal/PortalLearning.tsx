@@ -124,7 +124,7 @@ export default function PortalLearning() {
   };
 
   return (
-    <PortalLayout title="Learning Center">
+    <PortalLayout title="Learning Center" hideHeader>
       <div className="space-y-6">
         {/* Immersive role banner */}
         <section className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950 text-white">

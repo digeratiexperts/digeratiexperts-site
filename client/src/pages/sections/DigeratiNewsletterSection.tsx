@@ -7,12 +7,25 @@ import { motion, useReducedMotion } from "framer-motion";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { IconWell } from "@/components/visual/IconWell";
 import { GREATER_PHOENIX_CITIES } from "@/data/greaterPhoenixCities";
+import {
+  HomeChapter,
+  HomeChapterHeader,
+  HomeContainer,
+  buttonPrimary,
+  buttonSecondary,
+  cardDark,
+  cardPaper,
+  Eyebrow,
+  ledeClass,
+  titleClass,
+  textLinkClass,
+} from "@/components/home/HomeChapter";
 
 const chipClass =
-  "inline-flex min-h-11 items-center rounded-lg border border-[var(--de-hairline)] bg-transparent px-3.5 text-base text-white/80 transition-colors hover:border-[#D3126A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)]";
+  "inline-flex min-h-11 items-center rounded-lg border border-[var(--de-hairline)] bg-transparent px-3.5 text-base text-white/80 transition-colors hover:border-[#D3126A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]";
 
 const cityChipClass =
-  "inline-flex h-full min-h-12 w-full items-center justify-center rounded-lg border bg-transparent px-4 py-5 text-lg font-medium text-white/80 transition-colors hover:border-[#D3126A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)] sm:min-h-16 md:min-h-20 md:text-xl";
+  "inline-flex min-h-11 w-full items-center justify-center rounded-lg border bg-transparent px-4 py-2.5 text-base font-medium text-white/80 transition-colors hover:border-[#D3126A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]";
 
 const complianceItems = [
   "HIPAA-aligned security and compliance support",
@@ -78,49 +91,32 @@ export const DigeratiNewsletterSection = (): JSX.Element => {
   };
 
   return (
-    <section
-      id="newsletter"
-      className="de-dark-chapter de-chapter-hairline de-field-grain relative overflow-hidden py-14 md:py-20 lg:py-24"
-    >
-      <div className="container relative z-10 mx-auto px-3 sm:px-4 lg:px-6">
+    <HomeChapter tone="well" id="newsletter">
+      <HomeContainer>
         <motion.div
           initial={prefersReducedMotion ? false : revealInitial}
           whileInView={revealInView}
           viewport={revealViewport}
           transition={revealTransition}
         >
-          <div className="mb-10 md:mb-12">
-            <h2 className="font-heading text-xl font-semibold tracking-[-0.02em] text-white md:text-2xl">
-              Security &amp; Compliance Support
-              <span className="text-[#D3126A]" aria-hidden="true">
-                :
-              </span>
-            </h2>
-            <p className="mt-2 max-w-3xl text-base leading-relaxed text-white/55">
-              Framework names describe customer requirements Digerati Experts helps organizations address —
-              not certifications DE holds.
-            </p>
-            <ul className="mt-5 flex flex-wrap gap-2.5">
-              {complianceItems.map((item) => (
-                <li key={item}>
-                  <span className={chipClass}>{item}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {partnerMarks.map((name) => (
-                <span
-                  key={name}
-                  className="inline-flex min-h-11 items-center rounded-lg border border-[var(--de-hairline)] px-3 text-base text-white/65"
-                >
-                  {name}
-                </span>
-              ))}
-            </div>
+          <HomeChapterHeader
+            tone="well"
+            eyebrow="Security & compliance support"
+            title="Framework-aligned, documented, audit-ready"
+            lede="Framework names describe customer requirements Digerati Experts helps organizations address — not certifications DE holds."
+          />
+
+          <div className="mb-10 flex flex-wrap gap-2.5">
+            {complianceItems.map((item) => (
+              <span key={item} className={chipClass}>{item}</span>
+            ))}
+            {partnerMarks.map((name) => (
+              <span key={name} className={`${chipClass} text-white/65`}>{name}</span>
+            ))}
           </div>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
-            <div className="rounded-2xl border border-[var(--de-hairline)] bg-[var(--de-surface)] p-6 md:p-8">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:items-start">
+            <div className={`${cardDark} p-6 md:p-7`}>
               <div className="mb-5 flex items-center gap-3">
                 <IconWell icon={Mail} size="sm" surface="dark" />
                 <span className="text-base font-medium uppercase tracking-[0.16em] text-white/60">
@@ -180,7 +176,7 @@ export const DigeratiNewsletterSection = (): JSX.Element => {
                       type="submit"
                       size="lg"
                       data-testid="button-newsletter-submit"
-                      className="h-12 px-6 bg-[#D3126A] text-base font-semibold text-white shadow-none hover:bg-[#e01874] hover:shadow-none hover:translate-y-0 focus-visible:ring-[#D3126A]/70"
+                      className="h-12 px-6 bg-[#D3126A] text-base font-semibold text-white shadow-none hover:bg-[#e01874] hover:shadow-none hover:translate-y-0 focus-visible:ring-[#ec4899]"
                       disabled={isSubmitting}
                     >
                       {isSubmitting ? (
@@ -215,14 +211,17 @@ export const DigeratiNewsletterSection = (): JSX.Element => {
               </p>
             </div>
 
-            <div className="flex h-full flex-col rounded-2xl border border-[var(--de-hairline)] bg-[var(--de-surface)] p-6 md:p-8">
+            <div className={`${cardDark} flex flex-col p-6 md:p-7`}>
               <h2 className="font-heading text-xl font-semibold tracking-[-0.02em] text-white md:text-2xl">
                 Serving Greater Phoenix
                 <span className="text-[#D3126A]" aria-hidden="true">
                   :
                 </span>
               </h2>
-              <div className="mt-6 grid flex-1 grid-cols-2 content-stretch gap-3 sm:grid-cols-3">
+              <p className="mt-2 text-base leading-relaxed text-white/65">
+                On-site and remote support across the Valley. Pick your city for local detail.
+              </p>
+              <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
                 {locations.map((location) => (
                   <a
                     key={location.name}
@@ -242,7 +241,7 @@ export const DigeratiNewsletterSection = (): JSX.Element => {
             </div>
           </div>
         </motion.div>
-      </div>
-    </section>
+      </HomeContainer>
+    </HomeChapter>
   );
 };

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/
 import { AlertCircle, Lock, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
+import "@/styles/portal.css";
 
 export default function PortalResetPassword() {
   const [location] = useLocation();
@@ -51,19 +52,22 @@ export default function PortalResetPassword() {
 
   if (!token) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
+      <main className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
+      <div aria-hidden="true" className="pt-login-glow pointer-events-none absolute inset-0" />
+      <div aria-hidden="true" className="pt-login-line pointer-events-none absolute inset-x-0 top-0 h-px" />
         <div className="w-full max-w-md">
           <div className="flex justify-center mb-8">
             <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
           </div>
-          <Card className="bg-white/10 border-white/20 backdrop-blur">
+          <Card className="pt-still relative border-border bg-card shadow-none">
             <CardContent className="pt-6 space-y-4">
-              <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+              <div role="alert" className="pt-callout pt-tone-bad pt-ink flex items-center gap-2 rounded-lg border p-3 text-sm">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 Invalid or missing reset token. Please request a new password reset link.
               </div>
               <Link href="/portal/forgot-password">
-                <Button className="w-full bg-[#D3126A] hover:bg-[#e01874]" data-testid="button-request-new-link">
+                <Button variant="brand"
+                  className="w-full" data-testid="button-request-new-link">
                   Request New Link
                 </Button>
               </Link>
@@ -75,16 +79,18 @@ export default function PortalResetPassword() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
+    <main className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
+      <div aria-hidden="true" className="pt-login-glow pointer-events-none absolute inset-0" />
+      <div aria-hidden="true" className="pt-login-line pointer-events-none absolute inset-x-0 top-0 h-px" />
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
           <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
         </div>
 
-        <Card className="bg-white/10 border-white/20 backdrop-blur">
+        <Card className="pt-still relative border-border bg-card shadow-none">
           <CardHeader className="space-y-2">
-            <h1 className="text-2xl font-semibold leading-none tracking-tight text-white">Choose New Password</h1>
-            <CardDescription className="text-gray-300">
+            <h1 className="font-heading text-2xl font-semibold leading-none tracking-tight">Choose New Password</h1>
+            <CardDescription className="text-muted-foreground">
               At least 8 characters with 1 uppercase letter and 1 number
             </CardDescription>
           </CardHeader>
@@ -92,12 +98,13 @@ export default function PortalResetPassword() {
           <CardContent>
             {success ? (
               <div className="space-y-4">
-                <div className="flex items-start gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400">
+                <div role="status" className="pt-callout pt-tone-ok pt-ink flex items-start gap-3 rounded-lg border p-4">
                   <CheckCircle2 className="h-5 w-5 flex-shrink-0 mt-0.5" />
                   <p className="text-sm">Password updated successfully. You can now sign in with your new password.</p>
                 </div>
                 <Link href="/portal/login">
-                  <Button className="w-full bg-[#D3126A] hover:bg-[#e01874]" data-testid="button-go-login">
+                  <Button variant="brand"
+                  className="w-full" data-testid="button-go-login">
                     Go to Login
                   </Button>
                 </Link>
@@ -105,29 +112,29 @@ export default function PortalResetPassword() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
-                  <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                  <div role="alert" className="pt-callout pt-tone-bad pt-ink flex items-center gap-2 rounded-lg border p-3 text-sm">
                     <AlertCircle className="h-4 w-4 flex-shrink-0" />
                     {error}
                   </div>
                 )}
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-white">New Password</label>
+                  <label className="text-sm font-medium">New Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       type={showPw ? "text" : "password"}
                       placeholder="Min 8 chars, 1 uppercase, 1 number"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-9 pr-10 bg-white/10 border-white/20 text-white placeholder:text-gray-500"
+                      className="border-input bg-background pl-9 pr-10"
                       required
                       data-testid="input-password"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPw(!showPw)}
-                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-200"
+                      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
                       data-testid="button-toggle-password"
                     >
                       {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -136,15 +143,15 @@ export default function PortalResetPassword() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-white">Confirm Password</label>
+                  <label className="text-sm font-medium">Confirm Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       type={showPw ? "text" : "password"}
                       placeholder="Re-enter your new password"
                       value={confirm}
                       onChange={(e) => setConfirm(e.target.value)}
-                      className="pl-9 bg-white/10 border-white/20 text-white placeholder:text-gray-500"
+                      className="border-input bg-background pl-9"
                       required
                       data-testid="input-confirm-password"
                     />
@@ -154,13 +161,14 @@ export default function PortalResetPassword() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#D3126A] hover:bg-[#e01874]"
+                  variant="brand"
+                  className="w-full"
                   data-testid="button-reset-password"
                 >
                   {loading ? "Resetting..." : "Reset Password"}
                 </Button>
 
-                <p className="text-center text-sm text-gray-400">
+                <p className="text-center text-sm text-muted-foreground">
                   Remembered it?{" "}
                   <Link href="/portal/login" className="text-de-magenta-ink hover:underline" data-testid="link-login">
                     Sign in

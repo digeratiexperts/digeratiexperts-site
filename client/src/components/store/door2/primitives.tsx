@@ -14,28 +14,54 @@ import { useAnnouncer } from "@/components/AccessibleAnnouncer";
 
 export type StoreTone = "graphite" | "paper";
 
-/** "02 ── Pain or need" with the screen-reader form "Step 2 · Pain or need" beside it. */
+/** Where a numbered step stands in the buyer's journey (the same readiness the JourneyRail shows). */
+export type StepState = "complete" | "current" | "pending";
+
+const STEP_STATE_SR: Record<StepState, string> = {
+  complete: " · ready",
+  current: " · you are here",
+  pending: "",
+};
+
+/**
+ * A numbered step is a station: "03 Relationship" in a round badge, a ✓ once it is ready, and
+ * "You are here" on the current step (Joe, 2026-10-01, concept B). An unnumbered eyebrow keeps
+ * the hairline rule. The screen-reader form is "Step 3 · Relationship · you are here".
+ */
 export function StepLabel({
   n,
   srText,
+  state,
   children,
   className = "",
 }: {
   n?: string;
   srText?: string;
+  state?: StepState;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <p className={`d2-step d2-label ${className}`}>
+    <p className={`d2-step d2-label ${className}`} data-step-state={n ? state : undefined}>
       {n ? (
         <span className="d2-step__n" aria-hidden="true">
-          {n}
+          {state === "complete" ? <Check className="d2-step__check" aria-hidden="true" /> : n}
+        </span>
+      ) : (
+        <span className="d2-step__rule" aria-hidden="true" />
+      )}
+      <span aria-hidden={srText ? "true" : undefined}>{children}</span>
+      {n && state === "current" ? (
+        <span className="d2-step__here" aria-hidden={srText ? "true" : undefined}>
+          You are here
         </span>
       ) : null}
-      <span className="d2-step__rule" aria-hidden="true" />
-      <span aria-hidden={srText ? "true" : undefined}>{children}</span>
-      {srText ? <span className="sr-only">{srText}</span> : null}
+      {srText ? (
+        <span className="sr-only">
+          {srText}
+          {state ? STEP_STATE_SR[state] : ""}
+        </span>
+      ) : null}
     </p>
   );
 }
@@ -50,6 +76,7 @@ export function StoreChapter({
   lede,
   tone = "graphite",
   first = false,
+  stepState,
   children,
   className = "",
   testId,
@@ -63,21 +90,25 @@ export function StoreChapter({
   lede?: ReactNode;
   tone?: StoreTone;
   first?: boolean;
+  /** Done, current or upcoming: the current step's chapter lights up as a card. */
+  stepState?: StepState;
   children?: ReactNode;
   className?: string;
   testId?: string;
   headingClassName?: string;
 }) {
   const headingId = `${id}-heading`;
+  const station = Boolean(eyebrow && n);
   return (
     <section
       id={id}
       aria-labelledby={heading ? headingId : undefined}
       data-testid={testId}
-      className={`d2-chapter${first ? " d2-chapter--first" : ""}${tone === "paper" ? " d2-chapter--paper" : ""} ${className}`}
+      data-step-state={station ? stepState : undefined}
+      className={`d2-chapter${first ? " d2-chapter--first" : ""}${tone === "paper" ? " d2-chapter--paper" : ""}${station ? " d2-chapter--station" : ""} ${className}`}
     >
       {eyebrow ? (
-        <StepLabel n={n} srText={srText}>
+        <StepLabel n={n} srText={srText} state={station ? stepState : undefined}>
           {eyebrow}
         </StepLabel>
       ) : null}

@@ -214,15 +214,10 @@ export function AdminAgents() {
   };
 
   return (
-    <PortalLayout title="Manage Agents">
+    <PortalLayout title="Manage Agents" description="Upload and manage the desktop agents offered in the portal.">
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Manage Desktop Agents</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Upload and manage agents available in your portal
-          </p>
-        </div>
+        <div />
         <Button
           onClick={() => setShowUploadForm(!showUploadForm)}
           className="bg-[#D3126A] text-white hover:bg-[#e01874] hover:text-white"
