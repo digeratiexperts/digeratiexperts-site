@@ -30,6 +30,27 @@
 
 version: 2
 claims:
+  - id: de-ask-nudge-cookie-offset
+    owner: claude
+    subsystem: de-desk
+    branch: claude/desk-nudge-cookie-offset
+    base_sha: f9ae13da
+    files:
+      - client/src/components/SiteBottomBar.tsx (Ask DE nudge bottom offset only)
+      - client/src/components/SiteBottomBar.nudge.test.ts
+      - artifacts/visual-qa/ask-de-nudge-cookie/**
+    status: active
+    started: 2026-10-01
+    note: >-
+      Source of truth §15 row 18, item 1, left unclaimed when de-desk-delight
+      retired: the Ask DE nudge's bottom offset omitted --de-cookie-h, which
+      the unified bar it sits on adds. Latent today (the nudge only arms after
+      consent, and the banner never returns), but with the banner's height
+      published the nudge covered the bar by that height. Adds --de-cookie-h to
+      the same calc. One style line; the frozen claude-completion-program-lane claim also lists
+      SiteBottomBar.tsx (frozen PRs 219/220, no active work on this hunk).
+      Item 2 (STORE_ADVISOR_SEED in ZohoASAPWidget.tsx) is NOT taken here: that
+      file is under Codex's de-desk-reliability-followup claim, draft PR 303.
   - id: homepage-coherence
     issue: 296
     owner: claude
