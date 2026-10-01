@@ -30,6 +30,40 @@
 
 version: 2
 claims:
+  - id: portal-kit-long-tail
+    owner: claude
+    subsystem: client-portal-pages
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: 5e885527053e476a55bd4438b5e7ff1ebb856f7a
+    files:
+      - client/src/components/portal/ui/Panel.tsx
+      - client/src/pages/portal/PortalRoadmap.tsx
+      - client/src/pages/portal/PortalQBR.tsx
+      - client/src/pages/portal/PortalSatisfactionSurvey.tsx
+      - client/src/pages/portal/PortalQuestionnaireCalendar.tsx
+      - client/src/pages/portal/PortalLearning.tsx
+      - client/src/pages/portal/PortalMarketplace.tsx
+      - client/src/pages/portal/PortalContracts.tsx
+      - client/src/pages/portal/PortalVPN.tsx
+      - client/src/pages/portal/PortalCytracom.tsx
+      - client/src/pages/portal/PortalShipCenter.tsx
+      - client/src/pages/portal/PortalProcurementStore.tsx
+      - client/src/pages/portal/PortalPayment.tsx
+      - client/src/pages/portal/PortalOrderDetail.tsx
+      - client/src/pages/portal/PortalAgent.tsx
+      - client/src/pages/portal/OrderForm.tsx
+      - client/src/pages/portal/Admin*.tsx
+      - client/src/pages/portal/SalesProcess.tsx
+      - artifacts/visual-qa/portal-redesign/after-tail/**
+    status: active
+    started: 2026-10-01
+    note: >-
+      Follow-up to portal-redesign-control-room (PR 294, merged 5e885527,
+      concept A approved by Joe 2026-10-01). Joe: "continue". The 23 pages
+      that only inherited the shell are recomposed onto the kit; every API
+      call, gate, href, form field and data-testid preserved; mock pages
+      (VPN, Cytracom, Ship Center) say "sample data". PortalChat untouched
+      (Joe-decided white panel). Maintenance Mode on the approved system.
   - id: de-ask-nudge-cookie-offset
     owner: claude
     subsystem: de-desk
@@ -110,8 +144,15 @@ claims:
       - tailwind.config.ts (sidebar colour entries only)
       - artifacts/design-concepts/portal-redesign/**
       - artifacts/visual-qa/portal-redesign/**
-    status: active
+    status: verified-live
     started: 2026-09-30
+    released: 2026-10-01
+    pr: 294
+    merge_sha: 5e885527053e476a55bd4438b5e7ff1ebb856f7a
+    verification: >-
+      Production serves assets/index-dZ3Zr7Zu.js with the portal stylesheet
+      portal-Cj31BhLd.css (.de-portal tokens, light theme, verdict band) and
+      PortalLogin-yOYeTVVn.js carrying the new login; /healthz 200.
     note: >-
       Joe, 2026-09-30: "redesign this properly ... fully featured and fully
       working and looks amazing like a top notch SaaS program". Exploration
