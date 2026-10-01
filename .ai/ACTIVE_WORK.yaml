@@ -144,13 +144,8 @@ claims:
     branch: claude/nifty-newton-uk9g7t
     pr: 297
     base_sha: 74535d76e9dacade78e4f3eedd4da9651745d3b4
-    files:
-      - client/src/components/store/SolutionProfileForm.tsx
-      - client/src/styles/store-builder.css
-      - client/src/components/store/door2/door2Tokens.test.ts
-      - docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md
-      - artifacts/visual-qa/store-profile-panel/**
-    status: active
+    files: []
+    status: verified-live
     started: 2026-09-30
     note: >-
       Joe, 2026-09-30, on the expanded "Size it to your business" form: "This
@@ -164,6 +159,39 @@ claims:
       claude-completion-program-lane claim (2026-09-12) lists
       SolutionProfileForm.tsx; it has no open PR and no remote branch, so this
       lane proceeds and records the overlap here.
+      RELEASED 2026-10-01: merged as 81a0c7e1 (PR 297, Joe's "whatever it is
+      do it") and VERIFIED LIVE the same morning: the deploy job and its
+      runtime check passed; production /store and /store/solution at 390 and
+      1440 render .d2-profile-panel at color(srgb 0.8927 0.8849 0.8787) with
+      white inputs, axe clean, no overflow, no runtime errors. Files released.
+  - id: store-stations
+    owner: claude
+    subsystem: public-store-door2
+    branch: claude/nifty-newton-uk9g7t
+    base_sha: 8fc5524907dc3fe450c9ba32b7c852a4b5ac4354
+    files:
+      - client/src/components/store/door2/JourneyRail.tsx
+      - client/src/components/store/door2/primitives.tsx
+      - client/src/components/store/door2/door2Tokens.test.ts
+      - client/src/pages/store/PublicStoreCheckout.tsx
+      - client/src/pages/solutions/SolutionRequest.tsx
+      - client/src/styles/store-builder.css
+      - scripts/door2-browser-smoke.mjs
+      - docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md
+      - artifacts/visual-qa/store-stations/**
+    status: active
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-09-30: the Store is "too matched … hard to see whats what and
+      move forward in steps"; "make these lines thicker and more fun". Two
+      concepts rendered over the real workspace (Track, Stations); Joe,
+      2026-10-01: "go with B, build it". Numbered steps become stations (✓
+      when ready, a white station and "You are here" when current), the
+      JourneyRail becomes six stations on a 6px line, and the current
+      workspace chapter lights up as a card. Concurrency audit 2026-10-01: no
+      open PR touches these files (PR 308 Store PDF, 307 nudge, 303 Desk, 298
+      home are disjoint); the stale local-only claude-completion-program-lane
+      claim lists the Door 2 pages and has no open PR or remote branch.
   - id: de-design-concepts-directions
     owner: claude
     subsystem: flagship-visual-reset
