@@ -204,18 +204,10 @@ claims:
     owner: claude
     subsystem: public-store-door2
     branch: claude/nifty-newton-uk9g7t
+    pr: 311
     base_sha: 8fc5524907dc3fe450c9ba32b7c852a4b5ac4354
-    files:
-      - client/src/components/store/door2/JourneyRail.tsx
-      - client/src/components/store/door2/primitives.tsx
-      - client/src/components/store/door2/door2Tokens.test.ts
-      - client/src/pages/store/PublicStoreCheckout.tsx
-      - client/src/pages/solutions/SolutionRequest.tsx
-      - client/src/styles/store-builder.css
-      - scripts/door2-browser-smoke.mjs
-      - docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md
-      - artifacts/visual-qa/store-stations/**
-    status: active
+    files: []
+    status: verified-live
     started: 2026-10-01
     note: >-
       Joe, 2026-09-30: the Store is "too matched … hard to see whats what and
@@ -228,6 +220,14 @@ claims:
       open PR touches these files (PR 308 Store PDF, 307 nudge, 303 Desk, 298
       home are disjoint); the stale local-only claude-completion-program-lane
       claim lists the Door 2 pages and has no open PR or remote branch.
+      RELEASED 2026-10-01: merged as 7d5fa674 (PR 311, Joe's "merge 311")
+      and VERIFIED LIVE the same morning: the deploy job and its runtime
+      check passed (10:49 UTC), production serves index-Dzh3JPyb.js; /store,
+      /store/solution (profile and needs done) and /solutions/request at 390
+      and 1440 render the stations (rail ✓ ✓ 03 on a 6px line, relationship
+      lit as the current card with "You are here", contact step 06 current),
+      the electric probe computes rgb(111, 179, 255), axe clean, no overflow,
+      no runtime errors. Files released.
   - id: de-design-concepts-directions
     owner: claude
     subsystem: flagship-visual-reset
