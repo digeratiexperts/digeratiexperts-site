@@ -315,6 +315,12 @@ A copy of DE Tech Tool that leaves DE is worth little on its own:
   licence is signed by the Hub (RS256), bound to one device (`<maker>:<SERIAL>`), and short-lived: 12
   hours for a technician, the order window for a dropship device. Activate from **Settings > Licence**, or
   headless with `-License <token>`.
+- **Revocation.** DE revokes a licence on the Hub. The tool downloads the Hub's revocation list at launch
+  (when the Hub URL is set in Settings) and after activation, into its data folder; offline, the last
+  saved list stays. A release build made with `-HubUrl` also ships the list current at build time
+  (`console\trust\revoked.json`). A licence in either list is refused.
+- **Build pin.** A licence approved with the build pin (`bid`) works only in the build it was issued
+  for; in any other copy it reads `wrong-build`. A licence without a pin works in any build.
 - **Policy.** The policy is `warn` until the Hub issues licences: runs are marked UNLICENSED but not
   refused. A release build made with `-Enforce` sets the policy to `required`.
 - **Watermarked builds.** `packaging\New-DEReleasePackage.ps1 -IssuedTo <name>` gives each copy its own

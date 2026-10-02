@@ -8,8 +8,9 @@
       1. copies the kit (msp-ai-kit\) to a staging folder, leaving out build output and VCS files;
       2. writes console\BUILD.json: build ID, time, source commit and who the copy is issued to; the tool shows it
          in the title and puts it in every evidence bundle and Hub record;
-      3. writes console\trust\license-keys.json from the Hub's public keys (JWKS: -PublicKeysFile or -HubUrl) and the
-         licence policy (-Enforce = 'required');
+      3. writes console\trust\license-keys.json from the Hub's public keys (JWKS: -PublicKeysFile or -HubUrl), with
+         -HubUrl also console\trust\revoked.json from the Hub's revocation list, and the licence policy
+         (-Enforce = 'required');
       4. stages the pinned community tools (community\) so offline and OOBE runs work;
       5. writes integrity.json and signs (Sign-DETechConsole.ps1; -Thumbprint, or -SkipSigning for test builds);
       6. zips it as DE-TechTool-v<version>-<buildId>.zip with a .sha256, and appends the build to
@@ -39,6 +40,7 @@ $here = $(if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvo
 $windows = Split-Path -Parent $here; $kit = Split-Path -Parent $windows
 if (-not $OutDir) { $OutDir = Join-Path $here 'out' }
 if (-not $SkipSigning -and -not $Thumbprint) { throw 'Pass -Thumbprint of the DE code-signing certificate, or -SkipSigning for a test build.' }
+if ($HubUrl -and $HubUrl -notmatch '^https://') { throw 'The Hub URL must be https://' }
 if ($Enforce -and -not ($PublicKeysFile -or $HubUrl)) { throw '-Enforce needs the Hub public keys (-PublicKeysFile or -HubUrl); otherwise no licence could ever verify.' }
 $version = (Get-Content -LiteralPath (Join-Path $windows 'console\VERSION') -Raw -Encoding UTF8).Trim()
 $buildId = 'DE-{0}-{1}-{2}' -f $version, (Get-Date).ToUniversalTime().ToString('yyyyMMddHHmm'), ([guid]::NewGuid().ToString('N').Substring(0, 6))
@@ -67,6 +69,15 @@ if ($jwks) {
     if (-not $keys.Count) { throw 'the JWKS holds no RSA keys' }
     $doc = [ordered]@{ about = "Public keys that verify DE Tech Tool licences (RS256), from the Hub JWKS at build $buildId."; keys = @($keys | ForEach-Object { [ordered]@{ kid = "$($_.kid)"; n = "$($_.n)"; e = "$($_.e)" } }) }
     [IO.File]::WriteAllText((Join-Path $sc 'trust\license-keys.json'), ($doc | ConvertTo-Json -Depth 5), $utf8)
+}
+# the Hub's revocation list ships as trust\revoked.json (covered by integrity.json); the tool also downloads it at run time
+if ($HubUrl) {
+    if (-not (Get-Command -Name ConvertFrom-DELicenseRevocationList -ErrorAction SilentlyContinue)) { Import-Module (Join-Path $windows 'console\modules\DE.License\DE.License.psm1') -DisableNameChecking }
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    $rvBody = Invoke-WebRequest -Uri ($HubUrl.TrimEnd('/') + '/api/techtool/license/revocations') -UseBasicParsing -TimeoutSec 30
+    try { $rv = ConvertFrom-DELicenseRevocationList -Json "$($rvBody.Content)" } catch { throw "the Hub's revocation list was refused: $($_.Exception.Message)" }
+    $doc = [ordered]@{ about = "Licence IDs revoked on the Intelligence Hub, from the Hub at build $buildId. The tool also downloads the current list at run time into its data folder; this file is never changed after the build."; updatedAt = $rv.updatedAt; jti = @($rv.jti) }
+    [IO.File]::WriteAllText((Join-Path $sc 'trust\revoked.json'), ($doc | ConvertTo-Json -Depth 4), $utf8)
 }
 if ($Enforce) {
     $polPath = Join-Path $sc 'trust\license-policy.json'; $pol = Get-Content -LiteralPath $polPath -Raw -Encoding UTF8 | ConvertFrom-Json; $pol.enforce = 'required'
