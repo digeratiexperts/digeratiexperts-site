@@ -30,6 +30,33 @@
 
 version: 2
 claims:
+  - id: de-techtool-license-followups
+    owner: claude
+    subsystem: msp-ai-kit
+    branch: claude/msp-ai-skills-prompts-htqi09
+    base_sha: d5f3479aeca56f593517b3f1800b845fffb5eb6a
+    files:
+      - .claude/skills/msp-ai-kit/windows/console/modules/DE.License/DE.License.psm1
+      - .claude/skills/msp-ai-kit/windows/console/tests/License.Tests.ps1
+      - .claude/skills/msp-ai-kit/windows/console/DETechConsole.ps1 (the licence card, the launch scan job and the headless licence lines only)
+      - .claude/skills/msp-ai-kit/windows/packaging/New-DEReleasePackage.ps1
+      - .claude/skills/msp-ai-kit/windows/console/catalog/cheatsheet.json (the Licence section only)
+      - .claude/skills/msp-ai-kit/windows/console/VERSION
+      - .claude/skills/msp-ai-kit/windows/PROTECTING-THE-TOOL.md
+      - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md (the Licences section only)
+      - .claude/skills/msp-ai-kit/windows/DE-TECH-TOOL-ARCHITECTURE.md (the version line only)
+    status: active
+    started: 2026-10-02
+    note: >-
+      Joe, 2026-10-02: "ALL APPROVED, CONTINUE" (decision 4A): the DE Tech
+      Tool side of the Hub licence service merged in Intelligence-Hub PR 310.
+      The tool downloads the Hub's revocation list
+      (GET /api/techtool/license/revocations) into its protected data folder,
+      never into trust/ (covered by integrity.json), and refuses a licence
+      revoked in either list; a release build refreshes the shipped
+      trust/revoked.json; a licence pinned to another build (bid) is refused
+      as wrong-build. Overlap check: no open PR and no remote branch touches
+      .claude/skills/msp-ai-kit on d5f3479a.
   - id: de-desk-expand-hint
     owner: claude
     subsystem: de-desk
