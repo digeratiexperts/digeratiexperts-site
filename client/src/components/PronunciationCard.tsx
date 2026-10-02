@@ -116,12 +116,22 @@ function WordmarkMeter({ speaking }: { speaking: boolean }): JSX.Element {
 
 interface PronunciationCardProps {
   className?: string;
+  /**
+   * "full" is the dictionary entry with hints under every syllable chip.
+   * "compact" is the hero card: one headword row, the sense, and the syllable
+   * chips inline — the same controls and test ids at a third of the height.
+   */
+  variant?: "full" | "compact";
 }
 
-export function PronunciationCard({ className = "" }: PronunciationCardProps): JSX.Element {
+export function PronunciationCard({
+  className = "",
+  variant = "full",
+}: PronunciationCardProps): JSX.Element {
   const [speaking, setSpeaking] = useState(false);
   const [status, setStatus] = useState("Ready to play pronunciation.");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const compact = variant === "compact";
 
   const hasSpeech = typeof window !== "undefined" && "speechSynthesis" in window;
   const canPlay = Boolean(AUDIO_SRC) || hasSpeech;
@@ -187,6 +197,145 @@ export function PronunciationCard({ className = "" }: PronunciationCardProps): J
     void el.play().catch(fallback);
   };
 
+  const headword = (
+    <h2
+      className="font-heading font-semibold text-white"
+      style={{
+        margin: 0,
+        fontSize: compact ? "clamp(1.25rem, 4vw, 1.5rem)" : "clamp(1.5rem, 5.2vw, 2rem)",
+        letterSpacing: "-0.02em",
+      }}
+    >
+      DIG<span className="font-normal" style={DOT}>·</span>ER
+      <span className="font-normal" style={DOT}>·</span>
+      <span
+        className="text-de-accent-ink"
+        style={{ borderBottom: "3px solid rgb(var(--de-accent-rgb))", paddingBottom: 2 }}
+      >
+        A
+      </span>
+      <span className="font-normal" style={DOT}>·</span>TI
+    </h2>
+  );
+
+  const phonetics = (
+    <>
+      <span className="font-mono text-sm text-de-muted-soft">
+        <span style={DOT}>\</span> ˌdi-jə-ˈrä-tē{" "}
+        <span style={DOT}>\</span>
+      </span>
+      <span
+        className="font-mono text-sm font-semibold text-de-accent-ink"
+        style={{ letterSpacing: "0.04em" }}
+      >
+        {SPOKEN_PRONUNCIATION}
+      </span>
+    </>
+  );
+
+  const playButton = (
+    <button
+      type="button"
+      onClick={playFullWord}
+      disabled={!canPlay}
+      className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold text-white transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 disabled:cursor-not-allowed disabled:opacity-50 ${
+        compact ? "min-h-11 px-3.5 py-2" : "px-4 py-2.5"
+      }`}
+      style={{ background: "rgb(var(--de-accent-rgb))" }}
+      aria-label={`Play pronunciation: ${SPOKEN_PRONUNCIATION}`}
+      data-testid="button-play-digerati-pronunciation"
+    >
+      <Play className="h-4 w-4 fill-current" aria-hidden="true" />
+      Hear it
+    </button>
+  );
+
+  const syllableChips = (
+    <div className="flex flex-wrap gap-2" role="group" aria-label="Tap a syllable to hear it">
+      {SYLLABLES.map((syl) => (
+        <button
+          key={syl.label}
+          type="button"
+          onClick={() => speak(syl.say, `syllable ${syl.label}`)}
+          disabled={!hasSpeech}
+          className={`rounded-lg border text-left font-mono font-semibold transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 disabled:cursor-not-allowed disabled:opacity-50 ${
+            compact ? "min-h-11 px-3 py-2 text-sm" : "px-3.5 py-2 text-base"
+          } ${syl.stressed ? "text-de-accent-ink" : "text-white"}`}
+          style={{
+            borderColor: syl.stressed
+              ? "rgb(var(--de-accent-rgb) / 0.5)"
+              : "var(--de-hairline)",
+            letterSpacing: "0.04em",
+          }}
+          aria-label={`Hear the syllable ${syl.label}${syl.stressed ? ", the stressed syllable" : ""}`}
+          title={compact ? syl.hint : undefined}
+          data-testid={`button-syllable-${syl.say}`}
+        >
+          {syl.label}
+          {!compact && (
+            <span className="mt-1 block font-sans font-normal tracking-normal text-de-muted-soft" style={{ fontSize: "0.68rem" }}>
+              {syl.hint}
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+
+  const unsupported = !canPlay && (
+    <p
+      className="mt-2 text-xs text-de-muted-soft"
+      data-testid="pronunciation-audio-unsupported"
+    >
+      Audio is not supported in this browser — use the sounded-out spelling above.
+    </p>
+  );
+
+  if (compact) {
+    return (
+      <aside
+        className={`overflow-hidden rounded-xl border border-de-hairline bg-de-raised ${className}`}
+        aria-label="How to pronounce Digerati"
+        data-testid="digerati-pronunciation-card"
+      >
+        <div className="flex">
+          <div
+            className="flex-none"
+            style={{ width: 3, background: "rgb(var(--de-accent-rgb))" }}
+            aria-hidden="true"
+          />
+          <div className="min-w-0 flex-1 px-4 py-4 sm:px-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-3">
+                  <WordmarkMeter speaking={speaking} />
+                  {headword}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">{phonetics}</div>
+              </div>
+              {playButton}
+            </div>
+
+            <p className="mt-3 text-sm leading-relaxed" style={{ color: "var(--de-muted)" }}>
+              <span className="italic" style={{ color: "rgba(255,255,255,0.7)" }}>plural noun</span> &middot; a blend of{" "}
+              <span className="italic" style={{ color: "rgba(255,255,255,0.8)" }}>digital</span> and{" "}
+              <span className="italic" style={{ color: "rgba(255,255,255,0.8)" }}>literati</span>, in use since the early 1990s.
+              People with deep expertise in computers and digital technology — the ones who actually
+              know how the machinery works.
+            </p>
+
+            <div className="mt-3">{syllableChips}</div>
+            {unsupported}
+          </div>
+        </div>
+
+        <p className="sr-only" role="status" aria-live="polite">
+          {status}
+        </p>
+      </aside>
+    );
+  }
+
   return (
     <aside
       className={`overflow-hidden rounded-2xl border border-de-hairline bg-de-raised ${className}`}
@@ -205,46 +354,12 @@ export function PronunciationCard({ className = "" }: PronunciationCardProps): J
         <div className="min-w-0 flex-1 px-5 py-5 sm:px-6">
           <div className="flex items-center gap-4">
             <WordmarkMeter speaking={speaking} />
-            <h2
-              className="font-heading font-semibold text-white"
-              style={{ margin: 0, fontSize: "clamp(1.5rem, 5.2vw, 2rem)", letterSpacing: "-0.02em" }}
-            >
-              DIG<span className="font-normal" style={DOT}>·</span>ER
-              <span className="font-normal" style={DOT}>·</span>
-              <span
-                className="text-de-accent-ink"
-                style={{ borderBottom: "3px solid rgb(var(--de-accent-rgb))", paddingBottom: 2 }}
-              >
-                A
-              </span>
-              <span className="font-normal" style={DOT}>·</span>TI
-            </h2>
+            {headword}
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3">
-            <span className="font-mono text-sm text-de-muted-soft">
-              <span style={DOT}>\</span> ˌdi-jə-ˈrä-tē{" "}
-              <span style={DOT}>\</span>
-            </span>
-            <span
-              className="font-mono text-sm font-semibold text-de-accent-ink"
-              style={{ letterSpacing: "0.04em" }}
-            >
-              {SPOKEN_PRONUNCIATION}
-            </span>
-
-            <button
-              type="button"
-              onClick={playFullWord}
-              disabled={!canPlay}
-              className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 disabled:cursor-not-allowed disabled:opacity-50"
-              style={{ background: "rgb(var(--de-accent-rgb))" }}
-              aria-label={`Play pronunciation: ${SPOKEN_PRONUNCIATION}`}
-              data-testid="button-play-digerati-pronunciation"
-            >
-              <Play className="h-4 w-4 fill-current" aria-hidden="true" />
-              Hear it
-            </button>
+            {phonetics}
+            {playButton}
           </div>
 
           <p className="mt-5 border-t border-de-hairline pt-4 text-sm text-de-muted-soft">
@@ -269,32 +384,7 @@ export function PronunciationCard({ className = "" }: PronunciationCardProps): J
               Tap a syllable to hear it
             </h3>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              {SYLLABLES.map((syl) => (
-                <button
-                  key={syl.label}
-                  type="button"
-                  onClick={() => speak(syl.say, `syllable ${syl.label}`)}
-                  disabled={!hasSpeech}
-                  className={`rounded-lg border px-3.5 py-2 text-left font-mono text-base font-semibold transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 disabled:cursor-not-allowed disabled:opacity-50 ${
-                    syl.stressed ? "text-de-accent-ink" : "text-white"
-                  }`}
-                  style={{
-                    borderColor: syl.stressed
-                      ? "rgb(var(--de-accent-rgb) / 0.5)"
-                      : "var(--de-hairline)",
-                    letterSpacing: "0.04em",
-                  }}
-                  aria-label={`Hear the syllable ${syl.label}${syl.stressed ? ", the stressed syllable" : ""}`}
-                  data-testid={`button-syllable-${syl.say}`}
-                >
-                  {syl.label}
-                  <span className="mt-1 block font-sans font-normal tracking-normal text-de-muted-soft" style={{ fontSize: "0.68rem" }}>
-                    {syl.hint}
-                  </span>
-                </button>
-              ))}
-            </div>
+            <div className="mt-3">{syllableChips}</div>
 
             <p className="mt-4 text-xs leading-relaxed text-de-muted-soft">
               Commonly heard: <b className="font-medium" style={LOUD}>dye-ger-AH-tee</b>,{" "}
@@ -303,14 +393,7 @@ export function PronunciationCard({ className = "" }: PronunciationCardProps): J
               the weight lands on the third syllable.
             </p>
 
-            {!canPlay && (
-              <p
-                className="mt-2 text-xs text-de-muted-soft"
-                data-testid="pronunciation-audio-unsupported"
-              >
-                Audio is not supported in this browser — use the sounded-out spelling above.
-              </p>
-            )}
+            {unsupported}
           </div>
         </div>
       </div>

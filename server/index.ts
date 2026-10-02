@@ -18,6 +18,7 @@ import { registerWarehouseGates } from "./warehouseRoutes";
 import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
+import { registerCampaignAliasRedirects } from "./campaignAliasRedirects";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import fs from "fs";
@@ -460,6 +461,9 @@ app.use(
     },
   }),
 );
+
+// Ad and legacy campaign aliases forward to /go/<slug> with their query string.
+registerCampaignAliasRedirects(app);
 
 // Experience v1 (Joe, 2026-09-03: "published to another page until I approve
 // it", then "show me it with the site"): the speakable address forwards to the

@@ -13,7 +13,7 @@ const FooterLink = ({ href, children, testId }: { href: string; children: React.
     <a
       href={href}
       {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-      className="text-base text-white/55 underline decoration-transparent underline-offset-4 transition-colors hover:text-white hover:decoration-[#D3126A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
+      className="-my-1 inline-block py-1 text-base text-white/55 underline decoration-transparent underline-offset-4 transition-colors hover:text-white hover:decoration-[#D3126A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-bg)]"
       data-testid={testId}
     >
       {children}
@@ -122,8 +122,8 @@ export const DigeratiEnhancedFooterSection = ({
   ];
 
   return (
-    <footer className="de-dark-well de-chapter-hairline relative">
-      <div className="container relative z-10 mx-auto max-w-[1440px] px-3 pt-12 sm:px-4 lg:px-6 lg:pt-16">
+    <footer className="de-dark-well relative border-t border-[var(--de-hairline)]">
+      <div className="relative z-10 mx-auto w-full max-w-[var(--de-canvas)] px-5 pt-12 sm:px-8 lg:px-10 lg:pt-16 xl:px-12">
         <div className="grid grid-cols-1 items-start gap-10 md:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           <div className="min-w-0 md:col-span-2 lg:col-span-4">
             <img
@@ -191,7 +191,7 @@ export const DigeratiEnhancedFooterSection = ({
                     placeholder="Enter your email"
                     required
                     disabled={isSubmitting}
-                    className="h-11 min-w-0 flex-1 rounded-lg border border-de-hairline bg-de-raised px-4 text-base text-white placeholder:text-white/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
+                    className="h-11 min-h-11 min-w-0 rounded-lg border border-de-hairline bg-de-raised px-4 sm:flex-1 text-base text-white placeholder:text-white/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
                     data-testid="footer-newsletter-input"
                   />
                   <button
@@ -248,7 +248,7 @@ export const DigeratiEnhancedFooterSection = ({
           </nav>
         </div>
 
-        <div className="mt-10 border-t border-de-hairline py-6">
+        <div className="mt-10 border-t border-[var(--de-hairline)] py-6">
           <p className="text-base text-white/50">
             <span>© {currentYear} {COMPANY.legalName}</span>
             <span aria-hidden="true"> · </span>

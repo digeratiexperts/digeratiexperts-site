@@ -1,7 +1,8 @@
 import { Briefcase, Calculator, Stethoscope, Home, Heart, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Button } from "@/components/ui/button";
 import { useRef, useState, useEffect } from "react";
+import { IconWell } from "@/components/visual/IconWell";
+import { HomeChapter, HomeChapterHeader, HomeContainer, buttonPrimary } from "@/components/home/HomeChapter";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 
 import lawBooksImg from "@assets/Rectangle-152058_1767027918697.webp";
@@ -12,7 +13,6 @@ import animalHospitalImg from "@assets/Rectangle-152058-4_1767027918698.webp";
 
 export const DigeratiIndustriesSection = (): JSX.Element => {
   const prefersReducedMotion = useReducedMotion();
-  const sectionRef = useRef<HTMLElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -117,32 +117,21 @@ export const DigeratiIndustriesSection = (): JSX.Element => {
   };
 
   return (
-    <section 
-      ref={sectionRef}
-      className="de-dark-well de-field-grain relative overflow-hidden py-6 md:py-8"
-      style={{ position: 'relative' }}
-    >
-      <div className="de-style-box relative z-10 mx-3 px-4 py-8 sm:mx-4 sm:px-8 md:py-14 lg:mx-6 lg:px-10 lg:py-16">
-        <motion.div 
-          className="text-center mb-8 md:mb-12 lg:mb-16"
+    <HomeChapter tone="surface" className="overflow-hidden">
+      <HomeContainer>
+        <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={revealViewport}
           variants={titleVariants}
         >
-          <div className="mb-4 inline-flex items-center gap-2 rounded-xl border border-de-hairline bg-de-raised px-3 py-1.5 md:mb-6 md:px-4 md:py-2">
-            <Briefcase className="h-3.5 w-3.5 text-[#D3126A] md:h-4 md:w-4" />
-            <span className="text-base font-medium text-white/80">Specialized Solutions</span>
-          </div>
-          <h2 className="mb-3 text-2xl font-bold leading-tight text-white sm:text-3xl md:mb-4 md:text-4xl lg:text-5xl">
-            Industries We Serve
-            <span className="text-[#D3126A]" aria-hidden="true">
-              :
-            </span>
-          </h2>
-          <p className="text-base md:text-lg lg:text-xl text-white/60 leading-relaxed max-w-3xl mx-auto px-4">
-            Specialized cybersecurity solutions for Arizona's essential sectors
-          </p>
+          <HomeChapterHeader
+            tone="surface"
+            eyebrow="Specialized solutions"
+            title="Industries We Serve"
+            lede="Specialized cybersecurity solutions for Arizona's essential sectors."
+            link={{ label: "See all industries", href: "/industries", plain: true }}
+          />
         </motion.div>
 
         {/* Mobile: Horizontal scroll with navigation arrows */}
@@ -150,7 +139,7 @@ export const DigeratiIndustriesSection = (): JSX.Element => {
           {/* Left scroll button */}
           <button
             onClick={() => scroll('left')}
-            className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/80 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all ${
+            className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/80 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all ${
               canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
             aria-label="Scroll left"
@@ -162,7 +151,7 @@ export const DigeratiIndustriesSection = (): JSX.Element => {
           {/* Right scroll button */}
           <button
             onClick={() => scroll('right')}
-            className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/80 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all ${
+            className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/80 backdrop-blur-sm border border-white/20 flex items-center justify-center transition-all ${
               canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
             aria-label="Scroll right"
@@ -172,8 +161,8 @@ export const DigeratiIndustriesSection = (): JSX.Element => {
           </button>
 
           {/* Gradient fade edges */}
-          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-de-raised to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-de-raised to-transparent z-10 pointer-events-none" />
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-de-surface to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-de-surface to-transparent z-10 pointer-events-none" />
 
           {/* Scrollable container */}
           <div 
@@ -185,10 +174,10 @@ export const DigeratiIndustriesSection = (): JSX.Element => {
               <a 
                 key={industry.testId}
                 href={`/industries/${industry.slug}`}
-                className="group relative block w-[280px] flex-shrink-0 snap-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-raised)]"
+                className="group relative block w-[280px] flex-shrink-0 snap-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)]"
                 data-testid={industry.testId}
               >
-                <div className="relative h-[320px] overflow-hidden rounded-2xl border border-de-hairline transition-colors duration-200 hover:border-[#D3126A] group-focus-visible:border-[#D3126A]">
+                <div className="relative h-[300px] overflow-hidden rounded-xl border border-[var(--de-hairline)] transition-colors duration-200 hover:border-[#D3126A] group-focus-visible:border-[#D3126A]">
                   <div
                     className="absolute inset-0 bg-cover bg-center grayscale transition-[filter] duration-300 group-hover:grayscale-0 group-focus-visible:grayscale-0"
                     style={{ backgroundImage: `url(${industry.image})` }}
@@ -199,17 +188,15 @@ export const DigeratiIndustriesSection = (): JSX.Element => {
                   
                   {/* Content */}
                   <div className="absolute inset-0 p-5 flex flex-col justify-end">
-                    <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-[#0a0a0a]/80">
-                      <industry.icon className="h-5 w-5 text-[#D3126A]" />
-                    </div>
+                    <IconWell icon={industry.icon} size="sm" surface="dark" className="mb-3" />
                     
-                    <h3 className="text-xl font-bold text-white mb-2">
+                    <h3 className="text-lg font-semibold text-white mb-1.5">
                       {industry.name}
                     </h3>
-                    <p className="text-gray-200 text-base leading-relaxed">
+                    <p className="text-white/80 text-sm leading-relaxed">
                       {industry.description}
                     </p>
-                    <p className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-white/80">
+                    <p className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-de-magenta-ink">
                       View {industry.name}
                       <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                     </p>
@@ -232,7 +219,7 @@ export const DigeratiIndustriesSection = (): JSX.Element => {
 
         {/* Desktop: Grid layout */}
         <motion.div 
-          className="hidden lg:grid grid-cols-5 gap-6"
+          className="hidden lg:grid grid-cols-5 gap-5"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -242,11 +229,11 @@ export const DigeratiIndustriesSection = (): JSX.Element => {
             <motion.a 
               key={industry.testId}
               href={`/industries/${industry.slug}`}
-              className="group relative block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-raised)]"
+              className="group relative block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-surface)]"
               data-testid={industry.testId}
               variants={cardVariants}
             >
-              <div className="relative h-72 overflow-hidden rounded-2xl border border-de-hairline transition-colors duration-200 hover:border-[#D3126A] group-focus-visible:border-[#D3126A]">
+              <div className="relative h-72 overflow-hidden rounded-xl border border-[var(--de-hairline)] transition-colors duration-200 hover:border-[#D3126A] group-focus-visible:border-[#D3126A]">
                 <div
                   className="absolute inset-0 bg-cover bg-center grayscale transition-[filter] duration-300 group-hover:grayscale-0 group-focus-visible:grayscale-0"
                   style={{ backgroundImage: `url(${industry.image})` }}
@@ -257,17 +244,15 @@ export const DigeratiIndustriesSection = (): JSX.Element => {
                 
                 {/* Content */}
                 <div className="absolute inset-0 p-5 flex flex-col justify-end">
-                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-white/15 bg-[#0a0a0a]/80">
-                    <industry.icon className="h-6 w-6 text-[#D3126A]" />
-                  </div>
+                  <IconWell icon={industry.icon} size="sm" surface="dark" className="mb-3" />
                   
-                  <h3 className="text-xl font-bold text-white mb-2">
+                  <h3 className="text-lg font-semibold text-white mb-1.5">
                     {industry.name}
                   </h3>
-                  <p className="text-base leading-relaxed text-gray-200">
+                  <p className="text-sm leading-relaxed text-white/80">
                     {industry.description}
                   </p>
-                  <p className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-white/80">
+                  <p className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-de-magenta-ink">
                     View {industry.name}
                     <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
                   </p>
@@ -277,25 +262,19 @@ export const DigeratiIndustriesSection = (): JSX.Element => {
           ))}
         </motion.div>
 
-        <motion.div 
-          className="text-center mt-8 md:mt-12"
+        <motion.div
+          className="mt-8"
           initial={prefersReducedMotion ? false : revealInitial}
           whileInView={revealInView}
           viewport={revealViewport}
           transition={revealTransition}
         >
-          <Button asChild 
-              size="lg"
-              className="h-12 border-0 bg-[#D3126A] px-6 text-base font-bold text-white shadow-none transition-colors hover:bg-[#e01874] md:h-14 md:px-8 md:text-lg"
-              data-testid="button-industries-cta"
-            >
-                  <a href="/book">
-                    Get Industry-Specific Protection
-              <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5" />
-                  </a>
-                </Button>
+          <a href="/book" className={buttonPrimary("surface")} data-testid="button-industries-cta">
+            Get Industry-Specific Protection
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </a>
         </motion.div>
-      </div>
-    </section>
+      </HomeContainer>
+    </HomeChapter>
   );
 };

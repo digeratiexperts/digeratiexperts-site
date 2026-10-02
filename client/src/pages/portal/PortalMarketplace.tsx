@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { AlertTriangle, ClipboardCheck, Link2Off, RefreshCw, ShieldCheck, ShoppingCart, Warehouse } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PortalLayout } from "./PortalLayout";
 import { portalGet } from "@/lib/portalApi";
@@ -15,6 +14,7 @@ import {
 } from "@/lib/marketplaceTenantState";
 import { warehousePath } from "@/lib/warehousePaths";
 import { cn } from "@/lib/utils";
+import { Panel, Token, type TokenTone } from "@/components/portal/ui";
 
 /**
  * Catalog rows are typed defensively: the contract for items is not settled, so
@@ -70,27 +70,12 @@ function priceText(item: MarketplaceItem): string {
   return "Priced on approval";
 }
 
-const TONE_STYLES: Record<TenantScopeState, { badge: string; panel: string; Icon: typeof ShieldCheck }> = {
-  SCOPED: {
-    badge: "border-emerald-700/30 bg-emerald-50 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300",
-    panel: "border-emerald-700/20",
-    Icon: ShieldCheck,
-  },
-  AUTHORIZED_GLOBAL: {
-    badge: "border-blue-700/30 bg-blue-50 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300",
-    panel: "border-blue-700/20",
-    Icon: ShieldCheck,
-  },
-  UNMAPPED: {
-    badge: "border-amber-700/30 bg-amber-50 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200",
-    panel: "border-amber-700/30 bg-amber-50/40 dark:bg-amber-500/5",
-    Icon: Link2Off,
-  },
-  AUTHORITY_UNAVAILABLE: {
-    badge: "border-slate-400/50 bg-slate-100 text-slate-800 dark:bg-slate-500/20 dark:text-slate-200",
-    panel: "border-slate-400/40 bg-slate-50 dark:bg-slate-500/5",
-    Icon: AlertTriangle,
-  },
+/** State colour carries the tenant scope; the presentation copy carries the words. */
+const TONE_STYLES: Record<TenantScopeState, { tone: TokenTone; Icon: typeof ShieldCheck }> = {
+  SCOPED: { tone: "ok", Icon: ShieldCheck },
+  AUTHORIZED_GLOBAL: { tone: "info", Icon: ShieldCheck },
+  UNMAPPED: { tone: "warn", Icon: Link2Off },
+  AUTHORITY_UNAVAILABLE: { tone: "neutral", Icon: AlertTriangle },
 };
 
 export default function PortalMarketplace() {
@@ -110,148 +95,140 @@ export default function PortalMarketplace() {
   const items = canRenderCatalog(state) ? toItems(data?.items) : [];
   const StateIcon = tone.Icon;
 
-  const heading = (
-    <div className="space-y-1">
-      <h2 className="text-2xl font-bold">Client Marketplace</h2>
-      <p className="text-gray-600 dark:text-gray-400">
-        Standardized items for your organization. Purchases here go through DE approval
-        before anything is ordered.
-      </p>
-    </div>
-  );
+  const marketplaceDescription =
+    "Standardized items for your organization. Purchases here go through DE approval before anything is ordered.";
 
   if (isStaff) {
     return (
-      <PortalLayout title="Client Marketplace">
-        <div className="space-y-6">
-          {heading}
-          <Card
+      <PortalLayout title="Client Marketplace" description={marketplaceDescription}>
+        <div className="space-y-4">
+          <div
             data-testid="marketplace-staff"
             data-eligibility={data?.eligibility || MARKETPLACE_ELIGIBILITY}
           >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Warehouse className="h-5 w-5 shrink-0 text-[#D3126A]" aria-hidden="true" />
-                DE Staff — Digital Warehouse
-              </CardTitle>
-              <CardDescription>
-                You are signed in as DE staff. This page is the client view — no approval
-                request is needed for your account.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                The full catalog with vendors, costs, and Pay Now lives in the staff-only
-                Digital Warehouse.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <Button asChild className="bg-[#D3126A] text-white hover:bg-[#D3126A]/90">
-                  <Link href={data?.warehouseUrl || warehousePath()} data-testid="marketplace-primary-action">
-                    <Warehouse className="mr-2 h-4 w-4" aria-hidden="true" />
-                    Open Digital Warehouse
-                  </Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href="/portal/procurement" data-testid="marketplace-secondary-action">
-                    Open procurement
-                  </Link>
-                </Button>
+            <Panel
+              id="marketplace-staff-panel"
+              title={
+                <span className="flex items-center gap-2">
+                  <Warehouse className="pt-link h-4 w-4 shrink-0" aria-hidden="true" />
+                  DE Staff — Digital Warehouse
+                </span>
+              }
+              description="You are signed in as DE staff. This page is the client view — no approval request is needed for your account."
+            >
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  The full catalog with vendors, costs, and Pay Now lives in the staff-only
+                  Digital Warehouse.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Button asChild variant="brand">
+                    <Link href={data?.warehouseUrl || warehousePath()} data-testid="marketplace-primary-action">
+                      <Warehouse aria-hidden="true" />
+                      Open Digital Warehouse
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="border-border bg-card hover:bg-accent">
+                    <Link href="/portal/procurement" data-testid="marketplace-secondary-action">
+                      Open procurement
+                    </Link>
+                  </Button>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            </Panel>
+          </div>
         </div>
       </PortalLayout>
     );
   }
 
   return (
-    <PortalLayout title="Client Marketplace">
-      <div className="space-y-6">
-        {heading}
-
+    <PortalLayout title="Client Marketplace" description={marketplaceDescription}>
+      <div className="space-y-4">
         {/* State panel. The enum stays in data attributes for QA; clients read the
             presentation copy only. */}
-        <Card
-          className={cn(tone.panel)}
+        <div
           data-testid="marketplace-state"
           data-tenant-state={state}
           data-eligibility={data?.eligibility || MARKETPLACE_ELIGIBILITY}
           aria-busy={isLoading || undefined}
         >
-          <CardHeader>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <CardTitle className="flex items-center gap-2">
-                <StateIcon className="h-5 w-5 shrink-0 text-[#D3126A]" aria-hidden="true" />
+          <Panel
+            id="marketplace-state-panel"
+            title={
+              <span className="flex items-center gap-2">
+                <StateIcon className="pt-link h-4 w-4 shrink-0" aria-hidden="true" />
                 {isLoading ? "Checking your organization's catalog…" : presentation.title}
-              </CardTitle>
-              {!isLoading && (
-                <span
-                  className={cn("inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold", tone.badge)}
-                  data-testid="marketplace-state-badge"
-                >
-                  {presentation.badge}
+              </span>
+            }
+            description={isLoading ? "One moment." : presentation.body}
+            actions={
+              !isLoading ? (
+                <span data-testid="marketplace-state-badge">
+                  <Token label={presentation.badge} tone={tone.tone} dot />
                 </span>
+              ) : undefined
+            }
+          >
+            <div className="space-y-4">
+              {state === "UNMAPPED" && !isLoading && (
+                <p className="pt-ink pt-tone-warn text-sm font-medium" data-testid="marketplace-restricted-note">
+                  No items are shown for an unlinked account, by design. This is not an error on your side.
+                </p>
               )}
-            </div>
-            <CardDescription>
-              {isLoading ? "One moment." : presentation.body}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {state === "UNMAPPED" && !isLoading && (
-              <p className="text-sm font-medium text-amber-900 dark:text-amber-200" data-testid="marketplace-restricted-note">
-                No items are shown for an unlinked account, by design. This is not an error on your side.
-              </p>
-            )}
-            <div className="flex flex-wrap gap-3">
-              <Button asChild className="bg-[#D3126A] text-white hover:bg-[#D3126A]/90">
-                <Link href={presentation.primary.href} data-testid="marketplace-primary-action">
-                  <ClipboardCheck className="mr-2 h-4 w-4" aria-hidden="true" />
-                  {presentation.primary.label}
-                </Link>
-              </Button>
-              {presentation.secondary && (
-                <Button asChild variant="outline">
-                  <Link href={presentation.secondary.href} data-testid="marketplace-secondary-action">
-                    {presentation.secondary.label}
+              <div className="flex flex-wrap gap-3">
+                <Button asChild variant="brand">
+                  <Link href={presentation.primary.href} data-testid="marketplace-primary-action">
+                    <ClipboardCheck aria-hidden="true" />
+                    {presentation.primary.label}
                   </Link>
                 </Button>
-              )}
-              {state === "AUTHORITY_UNAVAILABLE" && !isLoading && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => refetch()}
-                  disabled={isFetching}
-                  data-testid="marketplace-retry"
-                >
-                  <RefreshCw className={cn("mr-2 h-4 w-4", isFetching && "animate-spin")} aria-hidden="true" />
-                  {isFetching ? "Retrying…" : "Try again"}
-                </Button>
-              )}
+                {presentation.secondary && (
+                  <Button asChild variant="outline" className="border-border bg-card hover:bg-accent">
+                    <Link href={presentation.secondary.href} data-testid="marketplace-secondary-action">
+                      {presentation.secondary.label}
+                    </Link>
+                  </Button>
+                )}
+                {state === "AUTHORITY_UNAVAILABLE" && !isLoading && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => refetch()}
+                    disabled={isFetching}
+                    data-testid="marketplace-retry"
+                  >
+                    <RefreshCw className={cn(isFetching && "animate-spin")} aria-hidden="true" />
+                    {isFetching ? "Retrying…" : "Try again"}
+                  </Button>
+                )}
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </Panel>
+        </div>
 
         {/* Catalog: only for the two authorized states, and only rows that fully parse. */}
         {canRenderCatalog(state) && !isLoading && (
-          <Card data-testid="marketplace-catalog" data-item-count={items.length}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5 text-[#D3126A]" aria-hidden="true" />
-                Catalog
-              </CardTitle>
-              <CardDescription>
-                {items.length === 0
+          <div data-testid="marketplace-catalog" data-item-count={items.length}>
+            <Panel
+              id="marketplace-catalog-panel"
+              title={
+                <span className="flex items-center gap-2">
+                  <ShoppingCart className="pt-link h-4 w-4 shrink-0" aria-hidden="true" />
+                  Catalog
+                </span>
+              }
+              description={
+                items.length === 0
                   ? "No items have been published to this catalog yet. Request approval and DE will confirm what fits."
-                  : `${items.length} item${items.length === 1 ? "" : "s"} available to request.`}
-              </CardDescription>
-            </CardHeader>
-            {items.length > 0 && (
-              <CardContent>
+                  : `${items.length} item${items.length === 1 ? "" : "s"} available to request.`
+              }
+              flush
+            >
+              {items.length > 0 ? (
                 <ul className="divide-y divide-border" data-testid="marketplace-items">
                   {items.map((item) => (
-                    <li key={item.id} className="flex flex-wrap items-start justify-between gap-3 py-3" data-testid={`marketplace-item-${item.id}`}>
+                    <li key={item.id} className="flex flex-wrap items-start justify-between gap-3 px-4 py-3 md:px-5" data-testid={`marketplace-item-${item.id}`}>
                       <div className="min-w-0">
                         <p className="font-medium text-foreground">{item.name}</p>
                         {item.category && (
@@ -262,17 +239,17 @@ export default function PortalMarketplace() {
                         )}
                       </div>
                       <div className="flex shrink-0 items-center gap-3">
-                        <span className="text-sm font-medium text-foreground">{priceText(item)}</span>
-                        <Button asChild size="sm" variant="outline">
+                        <span className="pt-num text-sm font-medium text-foreground">{priceText(item)}</span>
+                        <Button asChild size="sm" variant="outline" className="border-border bg-card hover:bg-accent">
                           <Link href={`/portal/forms?item=${encodeURIComponent(item.id)}`}>Request</Link>
                         </Button>
                       </div>
                     </li>
                   ))}
                 </ul>
-              </CardContent>
-            )}
-          </Card>
+              ) : null}
+            </Panel>
+          </div>
         )}
       </div>
     </PortalLayout>

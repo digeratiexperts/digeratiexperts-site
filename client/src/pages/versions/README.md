@@ -30,6 +30,7 @@ one lands and any of them can be referenced in future development.
 | 4 | `/version-4` | Clean-sheet redesign, ten chapters (PR #266, merged 2026-09-30) | build |
 | 5 | `/version-5` | The practical homepage: one conventional page, every fact from the site's own data files, acceptance script as the definition of done (PR #292, merged 2026-10-01) | build |
 | 6 | `/version-6` | Every section of the live homepage, redrawn on the Version 5 system; same acceptance script with Version 6 limits | build |
+| 7 | `/version-7` | Every live section built from Joe's reviewed mockups (PR #315), live interactions kept, bottom bar with autohide | build |
 
 ## Adding a version
 

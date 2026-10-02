@@ -160,8 +160,7 @@
   --d2-ink-soft: rgba(5, 3, 18, 0.6);
   --d2-accent-ink: rgb(var(--de-accent-rgb));
 }
-/* On paper the electric ink fails 4.5:1 at label size, so numbers, quantities and links take the paper ink. */
-.d2-chapter--paper .d2-step__n,
+/* On paper the electric ink fails 4.5:1 at label size, so quantities and links take the paper ink (step stations: below). */
 .d2-chapter--paper .d2-qty,
 .d2-chapter--paper .d2-accent-ink,
 .d2-chapter--paper .d2-link {
@@ -183,22 +182,128 @@
   color: var(--d2-accent-ink);
 }
 
-/* Step label: "02 ── Pain or need" — V4's ChapterLabel form exactly. */
+/*
+ * Step label. An unnumbered eyebrow keeps V4's "── Label" hairline. A numbered step is a station
+ * (Joe, 2026-10-01, concept B "Stations"): the number in a round badge, a check once it is ready,
+ * a white station and "You are here" on the current step. On a chapter at 1024+ the stations sit
+ * in the left gutter and join into one thick line down the page.
+ */
 .d2-step {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.75rem 0.9rem;
   margin-bottom: 1.25rem;
   color: var(--d2-ink-soft);
-}
-.d2-step__n {
-  color: var(--d2-accent-ink);
 }
 .d2-step__rule {
   display: inline-block;
   height: 1px;
   width: 2rem;
   background: var(--d2-rule);
+}
+.d2-step__n {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-radius: 9999px;
+  background: var(--de-raised);
+  color: #fff;
+  font-family: "Oxanium", "Space Grotesk", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.d2-step__check {
+  width: 1.15rem;
+  height: 1.15rem;
+  stroke-width: 3;
+}
+.d2-step[data-step-state="complete"] .d2-step__n {
+  border-color: var(--d2-accent);
+  background: var(--d2-accent);
+}
+.d2-step[data-step-state="current"] .d2-step__n {
+  border-color: #fff;
+  background: #fff;
+  color: var(--de-bg);
+  box-shadow: 0 0 0 6px rgb(var(--de-accent-rgb) / 0.35);
+}
+.d2-step__here {
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  background: var(--d2-accent);
+  color: #fff;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+}
+/* On paper a station is a graphite disc; the current one is electric (white on electric clears 4.5:1). */
+.d2-chapter--paper .d2-step__n {
+  border-color: var(--de-bg);
+  background: var(--de-bg);
+  color: #fff;
+}
+.d2-chapter--paper .d2-step[data-step-state="current"] .d2-step__n {
+  border-color: var(--d2-accent);
+  background: var(--d2-accent);
+  color: #fff;
+}
+/* A ready step folds back a little; its controls keep full contrast. */
+.d2-chapter--station[data-step-state="complete"] > h2 {
+  color: var(--d2-ink);
+}
+/* The current step lights up as its own card with an electric edge. */
+.d2-chapter--station[data-step-state="current"]:not(.d2-chapter--paper) {
+  margin: 1rem 0;
+  padding: 2rem 1.25rem;
+  border: 1px solid rgb(var(--de-accent-rgb) / 0.45);
+  border-left: 6px solid var(--d2-accent);
+  border-radius: 1.5rem;
+  background: linear-gradient(135deg, rgb(var(--de-accent-rgb) / 0.12), var(--de-raised) 45%);
+  box-shadow: 0 0 40px rgb(var(--de-accent-rgb) / 0.18);
+}
+@media (min-width: 768px) {
+  .d2-chapter--station[data-step-state="current"]:not(.d2-chapter--paper) {
+    padding: 2.25rem 1.5rem 2.25rem 2rem;
+  }
+}
+@media (min-width: 1024px) {
+  .d2-layout .d2-chapter--station {
+    position: relative;
+    padding-left: 4.75rem;
+  }
+  .d2-layout .d2-chapter--station .d2-step__n {
+    position: absolute;
+    left: 0;
+  }
+  .d2-layout .d2-chapter--station::before {
+    content: "";
+    position: absolute;
+    left: calc(1.375rem - 3px);
+    top: calc(3.5rem + 2.75rem + 0.6rem);
+    bottom: -2.75rem;
+    width: 6px;
+    border-radius: 9999px;
+    background: linear-gradient(rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0));
+  }
+  .d2-layout .d2-chapter--station[data-step-state="complete"]::before {
+    background: var(--d2-accent);
+  }
+  .d2-layout .d2-chapter--station[data-step-state="current"]:not(.d2-chapter--paper) {
+    padding-left: 5rem;
+  }
+  .d2-layout .d2-chapter--station[data-step-state="current"]:not(.d2-chapter--paper) .d2-step__n {
+    left: 0.85rem;
+  }
+  .d2-layout .d2-chapter--station[data-step-state="current"]:not(.d2-chapter--paper)::before {
+    left: calc(0.85rem + 1.375rem - 3px);
+    top: calc(2.25rem + 2.75rem + 0.6rem);
+    bottom: 1rem;
+    background: linear-gradient(var(--d2-accent), rgba(255, 255, 255, 0.14));
+  }
 }
 
 /* Chapters are anchors for the rail's status lines. The root's scroll-padding (index.css) already clears the fixed nav for scrollIntoView and fragment jumps; this is only the breathing room below it. */
@@ -1193,49 +1298,111 @@ html.de-store-jelly [data-de-jelly-choice][data-de-just-selected="true"] {
 }
 
 /* ---------------------------------------------------------------------- */
-/* Journey rail — six segments filling electric                             */
+/* Journey rail — six stations on one thick line (concept B, 2026-10-01)    */
 /* ---------------------------------------------------------------------- */
 
 .d2-journey {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0.35rem;
-  margin: 1.5rem 0 0;
+  gap: 0;
+  margin: 2rem 0 0;
   padding: 0;
   list-style: none;
 }
 .d2-journey__step {
+  position: relative;
+  display: flex;
   min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
+/* The line runs from this station's centre to the next one's. */
 .d2-journey__bar {
-  display: block;
-  height: 3px;
+  position: absolute;
+  top: calc(1.25rem - 3px);
+  left: 50%;
+  width: 100%;
+  height: 6px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.14);
   transition: background-color 200ms var(--d2-ease);
 }
-.d2-journey__step[data-state="complete"] .d2-journey__bar,
-.d2-journey__step[data-state="current"] .d2-journey__bar {
+.d2-journey__step:last-child .d2-journey__bar {
+  display: none;
+}
+.d2-journey__step[data-state="complete"] .d2-journey__bar {
   background: var(--d2-accent);
 }
 .d2-journey__step[data-state="current"] .d2-journey__bar {
-  box-shadow: 0 0 0 1px rgb(var(--de-accent-rgb) / 0.35);
+  background: linear-gradient(90deg, var(--d2-accent), rgba(255, 255, 255, 0.14));
+}
+.d2-journey__node {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-radius: 9999px;
+  background: var(--de-raised);
+  color: #fff;
+  font-family: "Oxanium", "Space Grotesk", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    background-color 200ms var(--d2-ease),
+    border-color 200ms var(--d2-ease);
+}
+.d2-journey__check {
+  width: 1.1rem;
+  height: 1.1rem;
+  stroke-width: 3;
+}
+.d2-journey__step[data-state="complete"] .d2-journey__node {
+  border-color: var(--d2-accent);
+  background: var(--d2-accent);
+}
+/* You are here: a white station with an electric halo that breathes (still under reduced motion). */
+.d2-journey__step[data-state="current"] .d2-journey__node {
+  border-color: #fff;
+  background: #fff;
+  color: var(--de-bg);
+  box-shadow:
+    0 0 0 6px rgb(var(--de-accent-rgb) / 0.35),
+    0 0 26px rgb(var(--de-accent-rgb) / 0.7);
+  animation: d2-beacon 2.2s ease-in-out infinite;
+}
+@keyframes d2-beacon {
+  50% {
+    box-shadow:
+      0 0 0 10px rgb(var(--de-accent-rgb) / 0.18),
+      0 0 34px rgb(var(--de-accent-rgb) / 0.85);
+  }
 }
 .d2-journey__label {
   display: block;
-  margin-top: 0.45rem;
+  margin-top: 0.55rem;
+  line-height: 1.35;
   color: var(--d2-ink-soft);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .d2-journey__step[data-state="current"] .d2-journey__label {
-  color: var(--d2-accent-ink);
+  color: var(--d2-ink-strong);
+  font-weight: 700;
 }
 @media (max-width: 639px) {
+  .d2-journey__node {
+    width: 2.125rem;
+    height: 2.125rem;
+    font-size: 12px;
+  }
+  .d2-journey__bar {
+    top: calc(1.0625rem - 3px);
+  }
   .d2-journey__label {
     font-size: 8.5px;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
   }
 }
 

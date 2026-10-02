@@ -30,8 +30,8 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/Date\.now\(\) \+ 400/);
   });
 
-  it("keeps the white precision panel with a magenta cap instead of purple-wash or cream fields", () => {
-    expect(src).toMatch(/inset 0 1px 0 #D3126A/);
+  it("keeps the black panel with a gold cap instead of a glow, a purple wash or cream fields", () => {
+    expect(src).toMatch(/inset 0 1px 0 #E3B23C/);
     expect(src).toMatch(/\.de-desk-shell::before \{\s*content:\s*none;/);
     expect(src).toMatch(/background-color: var\(--desk-box\) !important;/);
     expect(src).toMatch(/background-clip: padding-box, border-box;/);
@@ -61,7 +61,7 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/DE Desk is available/);
     expect(src).not.toMatch(/AZ SOC Live/);
     expect(src).toMatch(/\.de-desk-tab\.is-active::after/);
-    expect(src).not.toMatch(/\.de-desk-tab\.is-active \{\s*background: #D3126A;/);
+    expect(src).not.toMatch(/\.de-desk-tab\.is-active \{\s*background: #E3B23C;/);
     expect(src).toMatch(/previous\?\.focus/);
     expect(src).toMatch(/useEscapeKey/);
     // With nobody in the chat, the composer claims no one is waiting, and the
@@ -78,13 +78,16 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/\.de-desk-tools-list \{[\s\S]*?border: 1px solid var\(--desk-border-strong\);/);
   });
 
-  it("keeps exactly one theme: no second token declaration, no external override", () => {
+  it("keeps exactly one theme: no second token declaration, no external override, one accent", () => {
     // The Desk used to carry two themes at once - a paper set re-declared inside
     // .de-desk-tools-list, dragged back to graphite by an !important file in
     // another module. Both are gone; a Desk colour is wrong in one place only.
     expect(src).not.toMatch(/\.de-desk-tools-list \{[^}]*--desk-ink:/);
     expect(src).not.toMatch(/--desk-shell-/);
-    expect(src).not.toMatch(/#d3126a/); // one casing for the brand magenta
+    // Joe, 2026-10-01: gold is the Desk's one accent. No magenta anywhere in
+    // the widget, as a literal, an alpha, a token or a Tailwind class.
+    expect(src).not.toMatch(/#d3126a|rgba\(211,\s*18,\s*106|--desk-pink|de-magenta/i);
+    expect(src).not.toMatch(/#e3b23c/); // one casing for the Desk gold
   });
 
   it("keeps Get Support free of marketing perks and extra Tools phone chrome", () => {
@@ -109,64 +112,73 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/support-submit-error/);
   });
 
-  it("gives Get Support fields a hairline outline on white and magenta focus", () => {
+  it("gives Get Support fields a white hairline outline on charcoal and gold focus", () => {
     expect(src).toMatch(/trackDeskSupportFieldSpotlight/);
     expect(src).toMatch(/onPointerMove=\{trackDeskSupportFieldSpotlight\}/);
-    expect(src).toMatch(/linear-gradient\(rgba\(15,15,18,0\.22\), rgba\(15,15,18,0\.22\)\)/);
+    expect(src).toMatch(/linear-gradient\(rgba\(255,255,255,0\.16\), rgba\(255,255,255,0\.16\)\)/);
     expect(src).toMatch(/radial-gradient\([\s\S]*--desk-spot-x/);
-    expect(src).toMatch(/linear-gradient\(#D3126A, #D3126A\)/);
-    expect(src).toMatch(/0 0 0 1px rgba\(15,15,18,0\.06\)/);
+    expect(src).toMatch(/linear-gradient\(#E3B23C, #E3B23C\)/);
+    expect(src).toMatch(/0 0 0 1px rgba\(255,255,255,0\.06\)/);
   });
 
   it("paints Get Support issue choices on the one Desk token set", () => {
     expect(src).toMatch(/trackDeskSupportRowGlow/);
     expect(src).toMatch(/\.de-desk-issue-list \{[\s\S]*?background: var\(--desk-box\);/);
-    expect(src).toMatch(/\.de-desk-incident \{[\s\S]*?background: var\(--desk-box\);/);
+    // The incident rail is a gold wash over the same row ground, not a ground of its own.
+    expect(src).toMatch(/\.de-desk-incident \{[\s\S]*?background: color-mix\(in srgb, #E3B23C 9%, var\(--desk-box\)\);/);
+    const incidentRule = src.match(/\.de-desk-incident \{[^}]*\}/)?.[0] ?? "";
+    expect(incidentRule).not.toMatch(/inset 3px 0 0/);
     // The whole Desk resolves through one token set; these literals belonged to
     // the retired override files and must not come back as raw values.
     expect(src).not.toMatch(/#17141f/);
     expect(src).not.toMatch(/#f7f5f2/);
   });
 
-  it("is the white precision panel from design/UI-STYLE-RULES.md, not graphite", () => {
-    // Joe, 2026-09-28: the DE Desk is a white theme. The support-chrome rule
-    // (approved 2026-08-30) is a #fbfbfa panel, black/10 hairlines, near-black
-    // ink, and magenta only for submit and incident. One token set carries it.
+  it("is the black + grey + gold panel Joe picked on 2026-10-01, not the white panel", () => {
+    // Joe, 2026-10-01: of eight Desk mockups, "Black + Grey + Yellow", built
+    // with the mark's Signal Gold (brand/README.md) and without the glowing
+    // halo. A near-black panel, charcoal rows, white/10 hairlines, white ink,
+    // gold only for the cap, the active tab, actions and the incident rail.
     const tokens = src.match(/\.de-desk-shell \{[\s\S]*?--desk-green:[^;]+;/)?.[0] ?? "";
-    expect(tokens).toMatch(/--desk-surface: #fbfbfa;/);
-    expect(tokens).toMatch(/--desk-box: #ffffff;/);
-    expect(tokens).toMatch(/--desk-border: rgba\(15,15,18,0\.12\);/);
-    expect(tokens).toMatch(/--desk-ink: #111116;/);
-    expect(tokens).toMatch(/--desk-pink-ink: #A30E52;/);
-    // No ground or hairline may borrow the site's dark palette or graphite literals.
+    expect(tokens).toMatch(/--desk-surface: #0b0b0d;/);
+    expect(tokens).toMatch(/--desk-box: #19191c;/);
+    expect(tokens).toMatch(/--desk-border: rgba\(255,255,255,0\.10\);/);
+    expect(tokens).toMatch(/--desk-ink: #f5f5f4;/);
+    expect(tokens).toMatch(/--desk-gold: #E3B23C;/);
+    expect(tokens).toMatch(/--desk-on-gold: #0b0b0d;/);
+    // The Desk still resolves through its own tokens, not the site's dark set.
     expect(src).not.toMatch(/var\(--de-(raised|surface|bg|hairline)\b/);
-    expect(src).not.toMatch(/#151217|#0a0a0a|#050312|#1b1720/);
-    // White text survives only on magenta (buttons, badges, the user's bubble).
-    // Judged per CSS rule: a rule that sets white text must also paint magenta.
+    // No white or paper ground survives from the previous direction.
+    expect(src).not.toMatch(/#fbfbfa|#ffffff|#f4f3f1|#fcfaf7/i);
+    // Near-black text survives only on gold (buttons, badges, the user's bubble).
+    // Judged per CSS rule: a rule that sets --desk-on-gold must also paint gold.
     const rules = [...src.matchAll(/([^{}]+)\{([^{}]*)\}/g)];
-    const whiteOnWhite = rules
-      .filter(([, , body]) => /(^|[\s;])color: #fff\b/.test(body))
-      .filter(([, selector, body]) => !/#D3126A|--desk-pink/.test(body) && !/\.de-desk-send svg/.test(selector))
+    const darkOnDark = rules
+      .filter(([, , body]) => /(^|[\s;])color: var\(--desk-on-gold\)/.test(body))
+      .filter(([, selector, body]) => !/#E3B23C|--desk-gold/.test(body) && !/\.de-desk-send svg/.test(selector))
       .map(([, selector]) => selector.trim());
-    expect(whiteOnWhite).toEqual([]);
-    // No second, dark ink declaration inside a block (the old security card did this).
+    expect(darkOnDark).toEqual([]);
     expect(src).not.toMatch(/--desk-ink: #fff/);
-    expect(src).toMatch(/color-scheme: light;/);
-    expect(src).not.toMatch(/color-scheme: dark;/);
-    // The panel itself carries a black/10 hairline, not a magenta ring
-    // (magenta rings stay only on the selected incident / issue state).
+    expect(src).toMatch(/color-scheme: dark;/);
+    expect(src).not.toMatch(/color-scheme: light;/);
+    // The panel carries a white/10 hairline and the 1px gold cap only: no gold
+    // ring and no glow (the mockup's halo was dropped on purpose).
     const shellRule = src.match(/\.de-desk-shell \{[\s\S]*?box-shadow:[^}]+\}/)?.[0] ?? "";
     expect(shellRule).toMatch(/border: 1px solid var\(--desk-border\);/);
-    expect(shellRule).not.toMatch(/rgba\(211,18,106/);
+    expect(shellRule).not.toMatch(/rgba\(227,178,60/);
+    expect(shellRule).not.toMatch(/0 0 \d+px (#E3B23C|rgba\(227)/);
   });
 
-  it("paints the Ask DE chooser as the white support chrome too", () => {
-    expect(bottomBarSrc).toMatch(/bg-\[#fbfbfa\] p-5 text-left text-\[#111116\]/);
-    expect(bottomBarSrc).not.toMatch(/bg-\[#151217\]/);
+  it("paints the Ask DE chooser as the same black + gold support chrome", () => {
+    expect(bottomBarSrc).toMatch(/bg-\[#0b0b0d\] p-5 text-left text-\[#f5f5f4\]/);
+    expect(bottomBarSrc).not.toMatch(/bg-\[#fbfbfa\]|bg-\[#151217\]/);
+    expect(bottomBarSrc).toMatch(/text-\[#E3B23C\]/);
+    const chooser = bottomBarSrc.slice(bottomBarSrc.indexOf('key="ask-de-panel"'), bottomBarSrc.indexOf("</AnimatePresence>"));
+    expect(chooser).not.toMatch(/211,18,106|de-magenta|#A30E52/);
   });
 
   it("keeps the pointer light under Get Support row text dim enough to read through", () => {
-    // The hover light is drawn over white rows carrying near-black ink. Judge it
+    // The hover light is drawn over charcoal rows carrying white ink. Judge it
     // by what it does to the text: stack every layer at its strongest stop over
     // the row's ground and check the ink and the muted blurb still clear 4.5:1.
     const rule = (selector: string) => {
@@ -195,9 +207,11 @@ describe("DE Desk shell positioning", () => {
         (g, m) => over(g, [Number(m[1]), Number(m[2]), Number(m[3])], Number(m[4])),
         ground,
       );
+    // The incident row's resting ground is the row ground with 9% gold mixed in.
+    const gold = [0xe3, 0xb2, 0x3c];
     const rows = [
       { ground: token("--desk-box"), layers: [".de-desk-issue-row::before", ".de-desk-issue-row::after"] },
-      { ground: token("--desk-box"), layers: [".de-desk-incident::before"] },
+      { ground: over(token("--desk-box"), gold, 0.09), layers: [".de-desk-incident::before"] },
     ];
     for (const row of rows) {
       const lit = row.layers.reduce((g, layer) => light(g, rule(layer)), row.ground);
@@ -208,10 +222,10 @@ describe("DE Desk shell positioning", () => {
   });
 
   it("never uses a background token as a foreground colour", () => {
-    // --desk-surface / --desk-well / --desk-box are grounds, all white or near-white.
-    // Setting one as `color` paints white text on a white row — which is what
-    // happened when paper #f7f5f2 was tokenised by value rather than by role:
-    // the same literal was a ground in some rules and text in others.
+    // --desk-surface / --desk-well / --desk-box are grounds, all near-black or
+    // charcoal. Setting one as `color` paints dark text on a dark row — which is
+    // what happened when paper #f7f5f2 was tokenised by value rather than by
+    // role: the same literal was a ground in some rules and text in others.
     const groundTokens = ["--desk-surface", "--desk-well", "--desk-box"];
     for (const token of groundTokens) {
       // (?<![-\\w]) keeps background-color: from counting as a foreground colour
@@ -285,7 +299,7 @@ describe("DE Desk shell positioning", () => {
 
   it("R4: typing-dot colour stays on Desk tokens (skin-independent)", () => {
     expect(src).toMatch(/background: var\(--desk-ink-muted/);
-    expect(src).toMatch(/--desk-pink:/);
+    expect(src).toMatch(/--desk-gold:/);
   });
 
   it("R1 + B2: nudge uses a real button and paper site tokens (not Desk raised/ink)", () => {
@@ -299,8 +313,9 @@ describe("DE Desk shell positioning", () => {
   });
 
   it("keeps every Desk ink token at 4.5:1 or better on every Desk ground", () => {
-    // --desk-ink-dim was #807b88: 3.97:1 on the panel, under AA for the lock
-    // line and timestamps it colours.
+    // Every colour used as text (white inks, the text gold, the error red and
+    // the live green) clears AA on every ground it can sit on, and the
+    // near-black ink on a gold or green fill clears it too.
     const hex = (name: string) => {
       const value = src.match(new RegExp(`${name}: (#[0-9a-f]{6});`, "i"))?.[1];
       expect(value, name).toBeTruthy();
@@ -315,10 +330,13 @@ describe("DE Desk shell positioning", () => {
       const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m);
       return (x + 0.05) / (y + 0.05);
     };
-    for (const ink of ["--desk-ink", "--desk-ink-muted", "--desk-ink-dim", "--desk-pink-ink"]) {
-      for (const ground of ["--desk-surface", "--desk-well", "--desk-box"]) {
+    for (const ink of ["--desk-ink", "--desk-ink-muted", "--desk-ink-dim", "--desk-gold-ink", "--desk-red", "--desk-green"]) {
+      for (const ground of ["--desk-surface", "--desk-well", "--desk-box", "--desk-box-hover"]) {
         expect(contrast(hex(ink), hex(ground)), `${ink} on ${ground}`).toBeGreaterThanOrEqual(4.5);
       }
+    }
+    for (const fill of ["--desk-gold", "--desk-green", "--desk-ink-muted"]) {
+      expect(contrast(hex("--desk-on-gold"), hex(fill)), `--desk-on-gold on ${fill}`).toBeGreaterThanOrEqual(4.5);
     }
   });
 
@@ -381,11 +399,12 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/data-testid="desk-jump-latest"/);
   });
 
-  it("has no dark ground or pale ink left anywhere in the Desk stylesheet", () => {
-    // Graphite leftovers hid where the per-token guards could not see: a black
-    // "Back to Ask DE" row (#16121e), a near-black hover on signed-in Client
-    // Tools rows (#1a171c), and pale pink form errors (#fecaca) that were
-    // invisible on white. Judge every literal by what it paints.
+  it("has no light ground or dark ink left anywhere in the Desk stylesheet", () => {
+    // Leftovers from the white panel would hide where the per-token guards
+    // cannot see: a white row painted by literal, or near-black text set by
+    // literal on a charcoal ground. Judge every literal by what it paints.
+    // Gold fills (the button gradient's bright stop) and the ink-on-gold
+    // literal are the only exceptions.
     const css = src.slice(src.indexOf("dangerouslySetInnerHTML"));
     const lum = (hex: string) => {
       const h = hex.length === 4 ? hex.slice(1).split("").map((c) => c + c).join("") : hex.slice(1);
@@ -393,15 +412,15 @@ describe("DE Desk shell positioning", () => {
       const f = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
       return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
     };
-    const magenta = new Set(["#d3126a", "#bd105f", "#a30e52", "#e61e76"]);
+    const gold = new Set(["#e3b23c", "#edc25a", "#c99a2e", "#edbe4c"]);
     const offenders: string[] = [];
     for (const m of css.matchAll(/([a-z-]+):\s*([^;{}]*);/g)) {
       const [, prop, value] = m;
       for (const hex of value.match(/#[0-9a-f]{6}\b|#[0-9a-f]{3}\b/gi) ?? []) {
-        if (magenta.has(hex.toLowerCase())) continue;
+        if (gold.has(hex.toLowerCase())) continue;
         const L = lum(hex);
-        if (prop.startsWith("background") && L < 0.1) offenders.push(`${prop}: ${hex}`);
-        if (prop === "color" && L > 0.4 && !/^#fff(fff)?$/i.test(hex)) offenders.push(`${prop}: ${hex}`);
+        if (prop.startsWith("background") && L > 0.5) offenders.push(`${prop}: ${hex}`);
+        if (prop === "color" && L < 0.1) offenders.push(`${prop}: ${hex}`);
       }
     }
     expect(offenders).toEqual([]);

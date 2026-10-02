@@ -1,26 +1,22 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  FileText, Plus, Search, Send, Eye, Clock, CheckCircle, XCircle, 
-  AlertTriangle, Upload, Loader, Building2, User, Calendar, 
-  FileSignature, MoreVertical, Filter
+import {
+  FileText, Plus, Search, Send, Eye, XCircle, Loader, Building2, FileSignature, Filter
 } from "lucide-react";
-import { portalGet, portalPost, portalFetch } from "@/lib/portalApi";
+import { portalGet, portalPost } from "@/lib/portalApi";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { PortalLayout } from "./PortalLayout";
 import { SignatureCapture } from "@/components/portal/SignatureCapture";
 import { PDFViewer } from "@/components/portal/PDFViewer";
+import { DataTable, EmptyState, Field, Panel, Token, type DataColumn, type TokenTone } from "@/components/portal/ui";
 
 interface ContractTemplate {
   id: string;
@@ -55,15 +51,22 @@ interface Client {
   contactEmail: string;
 }
 
-const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-  draft: { label: 'Draft', color: 'bg-slate-500', icon: FileText },
-  pending: { label: 'Pending Signature', color: 'bg-amber-500', icon: Clock },
-  signed: { label: 'Signed', color: 'bg-blue-500', icon: CheckCircle },
-  countersigned: { label: 'Completed', color: 'bg-emerald-500', icon: CheckCircle },
-  expired: { label: 'Expired', color: 'bg-red-500', icon: AlertTriangle },
-  declined: { label: 'Declined', color: 'bg-red-500', icon: XCircle },
-  cancelled: { label: 'Cancelled', color: 'bg-slate-500', icon: XCircle }
+const statusConfig: Record<string, { label: string; tone: TokenTone }> = {
+  draft: { label: 'Draft', tone: 'neutral' },
+  pending: { label: 'Pending Signature', tone: 'warn' },
+  signed: { label: 'Signed', tone: 'info' },
+  countersigned: { label: 'Completed', tone: 'ok' },
+  expired: { label: 'Expired', tone: 'bad' },
+  declined: { label: 'Declined', tone: 'bad' },
+  cancelled: { label: 'Cancelled', tone: 'neutral' }
 };
+
+function ContractStatus({ status }: { status: string | undefined }) {
+  const cfg = statusConfig[status || 'draft'] ?? statusConfig.draft;
+  return <Token label={cfg.label} tone={cfg.tone} dot />;
+}
+
+const dialogField = "border-border bg-background";
 
 export function AdminContracts() {
   const { toast } = useToast();
@@ -75,10 +78,10 @@ export function AdminContracts() {
   const [showContractDetail, setShowContractDetail] = useState(false);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [showCountersignDialog, setShowCountersignDialog] = useState(false);
-  const [countersignData, setCountersignData] = useState<{ signature: string | null; name: string; title: string }>({ 
-    signature: null, 
-    name: '', 
-    title: 'Administrator' 
+  const [countersignData, setCountersignData] = useState<{ signature: string | null; name: string; title: string }>({
+    signature: null,
+    name: '',
+    title: 'Administrator'
   });
 
   const [newContract, setNewContract] = useState({
@@ -161,7 +164,7 @@ export function AdminContracts() {
   });
 
   const countersignMutation = useMutation({
-    mutationFn: ({ contractId, data }: { contractId: string; data: any }) => 
+    mutationFn: ({ contractId, data }: { contractId: string; data: any }) =>
       portalPost(`/api/admin/contracts/${contractId}/countersign`, data),
     onSuccess: () => {
       toast({ title: "Contract countersigned", description: "Contract is now fully executed." });
@@ -205,66 +208,179 @@ export function AdminContracts() {
     });
   };
 
-  return (
-    <PortalLayout title="Contracts">
-    {/* Dark surface so existing white/slate-400 contract UI stays readable inside light portal main */}
-    <div
-      className="-m-4 md:-m-6 min-h-full bg-slate-950 p-4 md:p-6 space-y-6"
-      data-testid="admin-contracts-page"
-    >
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Contract Management</h1>
-          <p className="text-slate-400">Create, send, and manage client contracts and agreements</p>
+  const contractColumns: DataColumn<Contract>[] = [
+    {
+      key: "contract",
+      header: "Contract",
+      primary: true,
+      cell: (contract) => (
+        <div className="min-w-0">
+          <p className="truncate font-medium">{contract.title}</p>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <Building2 className="h-3 w-3" aria-hidden="true" />
+              {getClientName(contract.clientId)}
+            </span>
+            <span className="pt-num">#{contract.contractNumber}</span>
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            className="border-[#D3126A]/50 text-de-magenta-ink hover:bg-[#D3126A]/10"
+      ),
+    },
+    { key: "status", header: "Status", primary: true, className: "w-44", cell: (contract) => <ContractStatus status={contract.status} /> },
+    {
+      key: "created",
+      header: "Created",
+      className: "w-36 whitespace-nowrap",
+      hideBelowMd: true,
+      cell: (contract) => <span className="pt-num text-muted-foreground">{format(new Date(contract.createdAt), 'MMM d, yyyy')}</span>,
+    },
+    {
+      key: "actions",
+      header: <span className="sr-only">Actions</span>,
+      primary: true,
+      align: "right",
+      className: "w-40",
+      cell: (contract) => (
+        <div className="flex justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={`View ${contract.title}`}
+            onClick={() => {
+              setSelectedContract(contract);
+              setShowContractDetail(true);
+            }}
+            data-testid={`button-view-contract-${contract.id}`}
+          >
+            <Eye className="h-4 w-4" aria-hidden="true" />
+          </Button>
+          {contract.status === 'draft' && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="pt-ink pt-tone-brand"
+              aria-label={`Send ${contract.title} for signature`}
+              onClick={() => sendContractMutation.mutate(contract.id)}
+              disabled={sendContractMutation.isPending}
+              data-testid={`button-send-contract-${contract.id}`}
+            >
+              <Send className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          )}
+          {contract.status === 'signed' && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="pt-ink pt-tone-ok"
+              aria-label={`Countersign ${contract.title}`}
+              onClick={() => {
+                setSelectedContract(contract);
+                setShowCountersignDialog(true);
+              }}
+              data-testid={`button-countersign-${contract.id}`}
+            >
+              <FileSignature className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          )}
+          {['draft', 'pending'].includes(contract.status) && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="pt-ink pt-tone-bad"
+              aria-label={`Cancel ${contract.title}`}
+              onClick={() => cancelContractMutation.mutate(contract.id)}
+              disabled={cancelContractMutation.isPending}
+              data-testid={`button-cancel-contract-${contract.id}`}
+            >
+              <XCircle className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ];
+
+  const templateColumns: DataColumn<ContractTemplate>[] = [
+    {
+      key: "template",
+      header: "Template",
+      primary: true,
+      cell: (template) => (
+        <div className="min-w-0">
+          <p className="truncate font-medium">{template.name}</p>
+          {template.description && <p className="mt-0.5 truncate text-xs text-muted-foreground">{template.description}</p>}
+        </div>
+      ),
+    },
+    { key: "category", header: "Category", primary: true, className: "w-28", cell: (template) => <span className="uppercase text-muted-foreground">{template.category}</span> },
+    { key: "version", header: "Version", className: "w-24", cell: (template) => <Token label={`v${template.version}`} tone="brand" /> },
+    { key: "expiration", header: "Days to sign", className: "w-32 whitespace-nowrap", hideBelowMd: true, cell: (template) => <span className="pt-num text-muted-foreground">{template.expirationDays} days</span> },
+    {
+      key: "countersign",
+      header: "Countersign",
+      primary: true,
+      className: "w-44",
+      cell: (template) => template.requiresCountersign ? <Token label="Requires Countersign" tone="warn" /> : <span className="text-muted-foreground">—</span>,
+    },
+  ];
+
+  return (
+    <PortalLayout
+      title="Contract Management"
+      description="Create, send, and manage client contracts and agreements"
+      width="wide"
+      actions={
+        <>
+          <Button
+            variant="outline"
+            className="border-border bg-card hover:bg-accent"
             onClick={() => setShowTemplateDialog(true)}
             data-testid="button-create-template"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus aria-hidden="true" />
             New Template
           </Button>
-          <Button 
-            className="bg-[#D3126A] hover:bg-[#e01874]"
+          <Button
+            variant="brand"
             onClick={() => setShowCreateDialog(true)}
             data-testid="button-create-contract"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus aria-hidden="true" />
             Create Contract
           </Button>
-        </div>
-      </div>
-
+        </>
+      }
+    >
+    <div className="space-y-4" data-testid="admin-contracts-page">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-slate-800">
-          <TabsTrigger value="contracts" className="data-[state=active]:bg-[#D3126A]">
-            <FileSignature className="w-4 h-4 mr-2" />
+        <TabsList>
+          <TabsTrigger value="contracts">
+            <FileSignature className="mr-2 h-4 w-4" aria-hidden="true" />
             Contracts
           </TabsTrigger>
-          <TabsTrigger value="templates" className="data-[state=active]:bg-[#D3126A]">
-            <FileText className="w-4 h-4 mr-2" />
+          <TabsTrigger value="templates">
+            <FileText className="mr-2 h-4 w-4" aria-hidden="true" />
             Templates
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="contracts" className="mt-6 space-y-4">
-          <div className="flex items-center gap-4">
+        <TabsContent value="contracts" className="mt-4 space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <Input
+                type="search"
                 placeholder="Search contracts..."
+                aria-label="Search contracts"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-slate-900 border-slate-700"
+                className="h-9 border-border bg-card pl-9"
                 data-testid="input-search-contracts"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px] bg-slate-900 border-slate-700" data-testid="select-status-filter">
-                <Filter className="w-4 h-4 mr-2" />
+              <SelectTrigger className="h-9 border-border bg-card sm:w-[180px]" aria-label="Filter by status" data-testid="select-status-filter">
+                <Filter className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -279,179 +395,75 @@ export function AdminContracts() {
             </Select>
           </div>
 
-          {contractsLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader className="w-8 h-8 animate-spin text-[#D3126A]" />
-            </div>
-          ) : filteredContracts.length === 0 ? (
-            <Card className="bg-slate-900/50 border-slate-700">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <FileText className="w-12 h-12 text-slate-600 mb-4" />
-                <p className="text-slate-400">No contracts found</p>
-                <Button 
-                  className="mt-4 bg-[#D3126A] hover:bg-[#e01874]"
-                  onClick={() => setShowCreateDialog(true)}
-                >
-                  Create your first contract
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {filteredContracts.map((contract) => {
-                const status = statusConfig[contract.status];
-                const StatusIcon = status.icon;
-                return (
-                  <Card key={contract.id} className="bg-slate-900/50 border-slate-700 hover:border-[#D3126A]/50 transition-colors">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={`p-3 rounded-lg ${status.color}/20`}>
-                            <StatusIcon className={`w-5 h-5 ${status.color.replace('bg-', 'text-')}`} />
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-white">{contract.title}</h3>
-                            <div className="flex items-center gap-3 mt-1 text-sm text-slate-400">
-                              <span className="flex items-center gap-1">
-                                <Building2 className="w-3 h-3" />
-                                {getClientName(contract.clientId)}
-                              </span>
-                              <span>#{contract.contractNumber}</span>
-                              <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                {format(new Date(contract.createdAt), 'MMM d, yyyy')}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Badge className={`${status.color} text-white`}>
-                            {status.label}
-                          </Badge>
-                          <div className="flex gap-1">
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => {
-                                setSelectedContract(contract);
-                                setShowContractDetail(true);
-                              }}
-                              data-testid={`button-view-contract-${contract.id}`}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            {contract.status === 'draft' && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                className="text-de-magenta-ink hover:text-de-magenta-ink"
-                                onClick={() => sendContractMutation.mutate(contract.id)}
-                                disabled={sendContractMutation.isPending}
-                                data-testid={`button-send-contract-${contract.id}`}
-                              >
-                                <Send className="w-4 h-4" />
-                              </Button>
-                            )}
-                            {contract.status === 'signed' && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                className="text-emerald-400 hover:text-emerald-300"
-                                onClick={() => {
-                                  setSelectedContract(contract);
-                                  setShowCountersignDialog(true);
-                                }}
-                                data-testid={`button-countersign-${contract.id}`}
-                              >
-                                <FileSignature className="w-4 h-4" />
-                              </Button>
-                            )}
-                            {['draft', 'pending'].includes(contract.status) && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                className="text-red-400 hover:text-red-300"
-                                onClick={() => cancelContractMutation.mutate(contract.id)}
-                                disabled={cancelContractMutation.isPending}
-                                data-testid={`button-cancel-contract-${contract.id}`}
-                              >
-                                <XCircle className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
+          <Panel
+            id="contracts-list"
+            title="Contracts"
+            description={contractsLoading ? "Loading…" : `${filteredContracts.length} contract${filteredContracts.length === 1 ? "" : "s"}`}
+            flush
+          >
+            <DataTable<Contract>
+              columns={contractColumns}
+              rows={filteredContracts}
+              rowKey={(c) => c.id}
+              loading={contractsLoading}
+              caption="Client contracts"
+              empty={
+                <EmptyState
+                  icon={FileText}
+                  title="No contracts found"
+                  description={contracts.length === 0 ? "Create a contract and send it to a client for signature." : "Try another status or clear the search."}
+                  action={
+                    <Button variant="brand" size="sm" onClick={() => setShowCreateDialog(true)}>
+                      Create your first contract
+                    </Button>
+                  }
+                />
+              }
+            />
+          </Panel>
         </TabsContent>
 
-        <TabsContent value="templates" className="mt-6 space-y-4">
-          {templatesLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader className="w-8 h-8 animate-spin text-[#D3126A]" />
-            </div>
-          ) : templates.length === 0 ? (
-            <Card className="bg-slate-900/50 border-slate-700">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <FileText className="w-12 h-12 text-slate-600 mb-4" />
-                <p className="text-slate-400">No templates found</p>
-                <Button 
-                  className="mt-4 bg-[#D3126A] hover:bg-[#e01874]"
-                  onClick={() => setShowTemplateDialog(true)}
-                >
-                  Create your first template
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {templates.map((template) => (
-                <Card key={template.id} className="bg-slate-900/50 border-slate-700">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg text-white">{template.name}</CardTitle>
-                        <CardDescription className="mt-1">{template.description}</CardDescription>
-                      </div>
-                      <Badge variant="outline" className="border-[#D3126A]/50 text-de-magenta-ink">
-                        v{template.version}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm text-slate-400">
-                      <span className="capitalize">{template.category.toUpperCase()}</span>
-                      <span>{template.expirationDays} days to sign</span>
-                    </div>
-                    {template.requiresCountersign && (
-                      <Badge className="mt-2 bg-amber-500/20 text-amber-400 border-amber-500/30">
-                        Requires Countersign
-                      </Badge>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+        <TabsContent value="templates" className="mt-4 space-y-4">
+          <Panel
+            id="templates-list"
+            title="Templates"
+            description={templatesLoading ? "Loading…" : `${templates.length} template${templates.length === 1 ? "" : "s"}`}
+            flush
+          >
+            <DataTable<ContractTemplate>
+              columns={templateColumns}
+              rows={templates}
+              rowKey={(t) => t.id}
+              loading={templatesLoading}
+              caption="Contract templates"
+              empty={
+                <EmptyState
+                  icon={FileText}
+                  title="No templates found"
+                  description="Define a reusable template to speed up contract creation."
+                  action={
+                    <Button variant="brand" size="sm" onClick={() => setShowTemplateDialog(true)}>
+                      Create your first template
+                    </Button>
+                  }
+                />
+              }
+            />
+          </Panel>
         </TabsContent>
       </Tabs>
 
       {/* Create Contract Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="bg-slate-900 border-slate-700 max-w-lg">
+        <DialogContent className="max-w-lg border-border bg-card">
           <DialogHeader>
-            <DialogTitle className="text-white">Create New Contract</DialogTitle>
+            <DialogTitle>Create New Contract</DialogTitle>
             <DialogDescription>Assign a contract to a client for signature</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Client</Label>
+            <Field label="Client" labelId="new-contract-client-label">
               <Select value={newContract.clientId} onValueChange={(v) => setNewContract({ ...newContract, clientId: v })}>
-                <SelectTrigger className="bg-slate-800 border-slate-700" data-testid="select-client">
+                <SelectTrigger className={dialogField} aria-labelledby="new-contract-client-label" data-testid="select-client">
                   <SelectValue placeholder="Select a client" />
                 </SelectTrigger>
                 <SelectContent>
@@ -462,11 +474,10 @@ export function AdminContracts() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Template (Optional)</Label>
+            </Field>
+            <Field label="Template (Optional)" labelId="new-contract-template-label">
               <Select value={newContract.templateId} onValueChange={(v) => setNewContract({ ...newContract, templateId: v })}>
-                <SelectTrigger className="bg-slate-800 border-slate-700" data-testid="select-template">
+                <SelectTrigger className={dialogField} aria-labelledby="new-contract-template-label" data-testid="select-template">
                   <SelectValue placeholder="Select a template" />
                 </SelectTrigger>
                 <SelectContent>
@@ -478,39 +489,39 @@ export function AdminContracts() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Contract Title</Label>
+            </Field>
+            <Field label="Contract Title" htmlFor="new-contract-title">
               <Input
+                id="new-contract-title"
                 placeholder="e.g., Master Service Agreement"
                 value={newContract.title}
                 onChange={(e) => setNewContract({ ...newContract, title: e.target.value })}
-                className="bg-slate-800 border-slate-700"
+                className={dialogField}
                 data-testid="input-contract-title"
               />
-            </div>
-            <div className="space-y-2">
-              <Label>Description (Optional)</Label>
+            </Field>
+            <Field label="Description (Optional)" htmlFor="new-contract-description">
               <Textarea
+                id="new-contract-description"
                 placeholder="Brief description of the contract..."
                 value={newContract.description}
                 onChange={(e) => setNewContract({ ...newContract, description: e.target.value })}
-                className="bg-slate-800 border-slate-700"
+                className={dialogField}
                 data-testid="input-contract-description"
               />
-            </div>
+            </Field>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+            <Button variant="outline" className="border-border bg-card hover:bg-accent" onClick={() => setShowCreateDialog(false)}>
               Cancel
             </Button>
-            <Button 
-              className="bg-[#D3126A] hover:bg-[#e01874]"
+            <Button
+              variant="brand"
               onClick={() => createContractMutation.mutate(newContract)}
               disabled={!newContract.clientId || !newContract.title || createContractMutation.isPending}
               data-testid="button-submit-contract"
             >
-              {createContractMutation.isPending ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
+              {createContractMutation.isPending ? <Loader className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
               Create Contract
             </Button>
           </DialogFooter>
@@ -519,36 +530,35 @@ export function AdminContracts() {
 
       {/* Create Template Dialog */}
       <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
-        <DialogContent className="bg-slate-900 border-slate-700 max-w-lg">
+        <DialogContent className="max-w-lg border-border bg-card">
           <DialogHeader>
-            <DialogTitle className="text-white">Create Contract Template</DialogTitle>
+            <DialogTitle>Create Contract Template</DialogTitle>
             <DialogDescription>Define a reusable contract template</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Template Name</Label>
+            <Field label="Template Name" htmlFor="new-template-name">
               <Input
+                id="new-template-name"
                 placeholder="e.g., Master Service Agreement"
                 value={newTemplate.name}
                 onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
-                className="bg-slate-800 border-slate-700"
+                className={dialogField}
                 data-testid="input-template-name"
               />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
+            </Field>
+            <Field label="Description" htmlFor="new-template-description">
               <Textarea
+                id="new-template-description"
                 placeholder="Brief description..."
                 value={newTemplate.description}
                 onChange={(e) => setNewTemplate({ ...newTemplate, description: e.target.value })}
-                className="bg-slate-800 border-slate-700"
+                className={dialogField}
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Category</Label>
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Category" labelId="new-template-category-label">
                 <Select value={newTemplate.category} onValueChange={(v) => setNewTemplate({ ...newTemplate, category: v })}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700">
+                  <SelectTrigger className={dialogField} aria-labelledby="new-template-category-label">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -560,16 +570,16 @@ export function AdminContracts() {
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Days to Sign</Label>
+              </Field>
+              <Field label="Days to Sign" htmlFor="new-template-expiration">
                 <Input
+                  id="new-template-expiration"
                   type="number"
                   value={newTemplate.expirationDays}
                   onChange={(e) => setNewTemplate({ ...newTemplate, expirationDays: parseInt(e.target.value) || 30 })}
-                  className="bg-slate-800 border-slate-700"
+                  className={dialogField}
                 />
-              </div>
+              </Field>
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -577,22 +587,22 @@ export function AdminContracts() {
                 id="requiresCountersign"
                 checked={newTemplate.requiresCountersign}
                 onChange={(e) => setNewTemplate({ ...newTemplate, requiresCountersign: e.target.checked })}
-                className="rounded border-slate-600"
+                className="h-4 w-4 rounded border-border"
               />
-              <Label htmlFor="requiresCountersign">Requires admin countersign after client signs</Label>
+              <label htmlFor="requiresCountersign" className="text-sm font-medium">Requires admin countersign after client signs</label>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowTemplateDialog(false)}>
+            <Button variant="outline" className="border-border bg-card hover:bg-accent" onClick={() => setShowTemplateDialog(false)}>
               Cancel
             </Button>
-            <Button 
-              className="bg-[#D3126A] hover:bg-[#e01874]"
+            <Button
+              variant="brand"
               onClick={() => createTemplateMutation.mutate(newTemplate)}
               disabled={!newTemplate.name || createTemplateMutation.isPending}
               data-testid="button-submit-template"
             >
-              {createTemplateMutation.isPending ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
+              {createTemplateMutation.isPending ? <Loader className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
               Create Template
             </Button>
           </DialogFooter>
@@ -601,38 +611,38 @@ export function AdminContracts() {
 
       {/* Countersign Dialog */}
       <Dialog open={showCountersignDialog} onOpenChange={setShowCountersignDialog}>
-        <DialogContent className="bg-slate-900 border-slate-700 max-w-2xl">
+        <DialogContent className="max-w-2xl border-border bg-card">
           <DialogHeader>
-            <DialogTitle className="text-white">Countersign Contract</DialogTitle>
+            <DialogTitle>Countersign Contract</DialogTitle>
             <DialogDescription>
               Add your signature to complete the contract for "{selectedContract?.title}"
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Your Name</Label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Your Name" htmlFor="countersign-name">
                 <Input
+                  id="countersign-name"
                   placeholder="Full legal name"
                   value={countersignData.name}
                   onChange={(e) => setCountersignData({ ...countersignData, name: e.target.value })}
-                  className="bg-slate-800 border-slate-700"
+                  className={dialogField}
                   data-testid="input-countersign-name"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>Title</Label>
+              </Field>
+              <Field label="Title" htmlFor="countersign-title">
                 <Input
+                  id="countersign-title"
                   placeholder="e.g., CEO, Account Manager"
                   value={countersignData.title}
                   onChange={(e) => setCountersignData({ ...countersignData, title: e.target.value })}
-                  className="bg-slate-800 border-slate-700"
+                  className={dialogField}
                   data-testid="input-countersign-title"
                 />
-              </div>
+              </Field>
             </div>
-            <div className="space-y-2">
-              <Label>Your Signature</Label>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Your Signature</p>
               <SignatureCapture
                 signerName={countersignData.name}
                 onSignatureChange={(sig) => setCountersignData({ ...countersignData, signature: sig })}
@@ -640,16 +650,16 @@ export function AdminContracts() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCountersignDialog(false)}>
+            <Button variant="outline" className="border-border bg-card hover:bg-accent" onClick={() => setShowCountersignDialog(false)}>
               Cancel
             </Button>
-            <Button 
-              className="bg-emerald-600 hover:bg-emerald-700"
+            <Button
+              variant="brand"
               onClick={handleCountersign}
               disabled={!countersignData.signature || !countersignData.name || countersignMutation.isPending}
               data-testid="button-submit-countersign"
             >
-              {countersignMutation.isPending ? <Loader className="w-4 h-4 animate-spin mr-2" /> : <FileSignature className="w-4 h-4 mr-2" />}
+              {countersignMutation.isPending ? <Loader className="h-4 w-4 animate-spin" aria-hidden="true" /> : <FileSignature className="h-4 w-4" aria-hidden="true" />}
               Countersign Contract
             </Button>
           </DialogFooter>
@@ -658,38 +668,36 @@ export function AdminContracts() {
 
       {/* Contract Detail Dialog */}
       <Dialog open={showContractDetail} onOpenChange={setShowContractDetail}>
-        <DialogContent className="bg-slate-900 border-slate-700 max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border-border bg-card">
           <DialogHeader>
-            <DialogTitle className="text-white">{selectedContract?.title}</DialogTitle>
+            <DialogTitle>{selectedContract?.title}</DialogTitle>
             <DialogDescription>
               Contract #{selectedContract?.contractNumber} - {getClientName(selectedContract?.clientId || '')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <PDFViewer 
+            <PDFViewer
               title={selectedContract?.title}
               className="h-[500px]"
             />
-            <div className="grid grid-cols-3 gap-4 text-sm">
+            <dl className="grid gap-4 text-sm sm:grid-cols-3">
               <div>
-                <span className="text-slate-400">Status:</span>
-                <Badge className={`ml-2 ${statusConfig[selectedContract?.status || 'draft'].color}`}>
-                  {statusConfig[selectedContract?.status || 'draft'].label}
-                </Badge>
+                <dt className="text-muted-foreground">Status</dt>
+                <dd className="mt-1"><ContractStatus status={selectedContract?.status} /></dd>
               </div>
               <div>
-                <span className="text-slate-400">Created:</span>
-                <span className="ml-2 text-white">
+                <dt className="text-muted-foreground">Created</dt>
+                <dd className="pt-num mt-1 font-medium">
                   {selectedContract?.createdAt ? format(new Date(selectedContract.createdAt), 'PPP') : '-'}
-                </span>
+                </dd>
               </div>
               <div>
-                <span className="text-slate-400">Expires:</span>
-                <span className="ml-2 text-white">
+                <dt className="text-muted-foreground">Expires</dt>
+                <dd className="pt-num mt-1 font-medium">
                   {selectedContract?.expiresAt ? format(new Date(selectedContract.expiresAt), 'PPP') : 'Not sent'}
-                </span>
+                </dd>
               </div>
-            </div>
+            </dl>
           </div>
         </DialogContent>
       </Dialog>

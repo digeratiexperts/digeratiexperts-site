@@ -5,7 +5,7 @@ import rateLimit from "express-rate-limit";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_integrations/object_storage";
-import { zohoClient, zohoDeskService, splitVisitorName, zohoCRMService, zohoBillingService } from "./zoho";
+import { zohoClient, zohoDeskService, zohoCRMService, zohoBillingService } from "./zoho";
 import { websiteLeadTaxonomy } from "./zoho/leadTaxonomy";
 import { findBackupCodeIndex, generateBackupCodes } from "./portalMfaCrypto";
 import {
@@ -73,13 +73,12 @@ import {
   orgPublicUser,
   listClientUsers,
   listDepartments,
-  createDepartment,
-  updateDepartment,
   findUserById,
   validateManagerApproverEmail,
   managerSummaryForUser,
   type OrgUserFields,
 } from "./portalOrg";
+import { registerPortalDepartmentRoutes } from "./portalDepartmentRoutes";
 import {
   initPortalApprovals,
   createApprovalRequest,
@@ -1511,44 +1510,8 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  app.post("/api/portal/org/departments", [authMiddleware, requireOrgManage, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const clientId = req.user!.clientId;
-      if (!clientId && req.user!.role !== "admin") {
-        return res.status(400).json({ error: "No client associated" });
-      }
-      const targetClient = req.body.clientId || clientId;
-      if (!targetClient) return res.status(400).json({ error: "clientId required" });
-      if (req.user!.role !== "admin" && targetClient !== clientId) {
-        return res.status(403).json({ error: "Forbidden" });
-      }
-      const name = String(req.body.name || "").trim();
-      if (!name) return res.status(400).json({ error: "Department name required" });
-      const dept = await createDepartment(targetClient, name, req.body.itContactUserId || null);
-      res.status(201).json({ success: true, department: dept });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.patch("/api/portal/org/departments/:id", [authMiddleware, requireOrgManage, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const clientId = req.user!.clientId;
-      if (!clientId && req.user!.role !== "admin") {
-        return res.status(400).json({ error: "No client associated" });
-      }
-      const targetClient = req.body.clientId || clientId;
-      if (!targetClient) return res.status(400).json({ error: "clientId required" });
-      const dept = await updateDepartment(req.params.id, targetClient, {
-        name: req.body.name,
-        itContactUserId: req.body.itContactUserId,
-      });
-      if (!dept) return res.status(404).json({ error: "Department not found" });
-      res.json({ success: true, department: dept });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
+  // Department create/update: the company comes from the signed-in user, not the body (#254).
+  registerPortalDepartmentRoutes(app, { guards: [authMiddleware, requireOrgManage, validateInput] });
 
   // ----- Approvals -----
   app.get("/api/portal/approvals", [authMiddleware, requireApprovalsAccess], async (req: AuthenticatedRequest, res: Response) => {

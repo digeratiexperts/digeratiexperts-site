@@ -3,13 +3,10 @@ import rateLimit from "express-rate-limit";
 import { logSecurityEvent } from "./middleware/security";
 import { getUser as portalAuthGetUser } from "./portalAuthStore";
 import { storage } from "./storage";
-import {
-  mapWidgetTicketCreateFailure,
-  widgetTicketNotConfigured,
-} from "./widgetTicketFailure";
 import { splitVisitorName, zohoClient, zohoDeskService } from "./zoho";
 import { isZohoOAuthError } from "./zoho/zohoOAuthErrors";
 import { PRIMARY_PHONE } from "@shared/companyContact";
+import { deskTicketSchema } from "@shared/deskTicket";
 
 /**
  * The public DE Desk "Get Support" ticket, and a status probe for the desk it
@@ -41,6 +38,7 @@ export interface DeskFailure {
   /** Zoho's own errorCode, e.g. INVALID_OAUTH. Never a token. */
   errorCode?: string;
   message: string;
+  authFailure: boolean;
 }
 
 const AUTH_ERROR_CODES = new Set([
@@ -63,8 +61,9 @@ export function classifyDeskFailure(error: unknown): DeskFailure {
   if (isZohoOAuthError(error) && error.product === "desk") {
     return {
       kind: "unavailable",
-      errorCode: error.zohoError || error.code,
-      message: error.message,
+      authFailure: true,
+      errorCode: error.code,
+      message: "Zoho Desk authentication failed",
     };
   }
 
@@ -77,16 +76,19 @@ export function classifyDeskFailure(error: unknown): DeskFailure {
   const errorCode =
     typeof err.response?.data?.errorCode === "string" ? err.response.data.errorCode : undefined;
 
-  const refreshFailed = /refresh zoho desk access token|no access token in zoho desk/i.test(message);
+  const refreshFailed = (isZohoOAuthError(error) && error.product === "desk") ||
+    /refresh zoho desk access token|No access token in Zoho Desk/i.test(message);
   const authStatus = status === 401 || status === 403;
   const authCode = !!errorCode && (AUTH_ERROR_CODES.has(errorCode) || /oauth|scope|token/i.test(errorCode));
-  const unreachable = status === undefined && !errorCode && /ECONN|ETIMEDOUT|ENOTFOUND|socket hang up|network/i.test(message);
+  const unreachable = status === undefined && !errorCode && /ECONN|ETIMEDOUT|ENOTFOUND|socket hang up|network|timeout/i.test(message);
 
   return {
-    kind: refreshFailed || authStatus || authCode || unreachable ? "unavailable" : "rejected",
+    kind: refreshFailed || authStatus || authCode || unreachable || status === 429 || (status !== undefined && status >= 500) ? "unavailable" : "rejected",
+    authFailure: refreshFailed || authStatus || authCode,
     status,
     errorCode,
-    message,
+    // Never pass arbitrary upstream text into logs or a public probe response.
+    message: "Zoho Desk request failed",
   };
 }
 
@@ -109,18 +111,22 @@ function validateInput(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 // The status probe reaches Zoho over the network. Cache it so a dashboard or
 // a monitor polling it cannot turn into a Zoho rate-limit problem of its own.
 const DESK_STATUS_TTL_MS = 60 * 1000;
 let deskStatusCache: { at: number; body: DeskStatus } | null = null;
+let deskStatusInFlight: Promise<DeskStatus> | null = null;
 
 export interface DeskStatus {
   configured: boolean;
   connected: boolean;
   /** Present only when not connected. */
-  reason?: DeskFailureKind | "not_configured";
+  /**
+   * "auth_failed" when Zoho refused the Desk credential (revoked or expired
+   * refresh token, wrong client, missing scope): the fix is a new token, not
+   * a retry. Our own classification only; no upstream text leaves the server.
+   */
+  reason?: DeskFailureKind | "not_configured" | "auth_failed";
   errorCode?: string;
   status?: number;
   checkedAt: string;
@@ -128,6 +134,7 @@ export interface DeskStatus {
 
 export function resetDeskStatusCacheForTests(): void {
   deskStatusCache = null;
+  deskStatusInFlight = null;
 }
 
 async function probeDesk(): Promise<DeskStatus> {
@@ -139,22 +146,22 @@ async function probeDesk(): Promise<DeskStatus> {
     // The cheapest authenticated read Desk offers. If the refresh token, its
     // scopes or the network are wrong, this is where it shows.
     const client = await zohoClient.getDeskClient();
-    await client.get("/organizations");
+    const response = await client.get("/organizations");
+    if (!Array.isArray(response.data?.data) || !response.data.data.some((org: { id?: unknown }) => org?.id)) {
+      return { configured: true, connected: false, reason: "unavailable", checkedAt };
+    }
     return { configured: true, connected: true, checkedAt };
   } catch (error) {
     const failure = classifyDeskFailure(error);
     console.error("[DESK STATUS] Zoho Desk unreachable:", {
       kind: failure.kind,
+      authFailure: failure.authFailure,
       status: failure.status,
-      errorCode: failure.errorCode,
-      message: failure.message,
     });
     return {
       configured: true,
       connected: false,
-      reason: failure.kind,
-      errorCode: failure.errorCode,
-      status: failure.status,
+      reason: failure.authFailure ? "auth_failed" : failure.kind,
       checkedAt,
     };
   }
@@ -171,40 +178,36 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
   const statusLimiter = options.statusRateLimiter ?? deskStatusRateLimiter;
 
   app.get(DESK_STATUS_PATH, statusLimiter, async (_req: Request, res: Response) => {
+    res.set("Cache-Control", "no-store");
     const now = Date.now();
     if (deskStatusCache && now - deskStatusCache.at < DESK_STATUS_TTL_MS) {
-      return res.json({ ...deskStatusCache.body, cached: true });
+      return res.status(deskStatusCache.body.connected ? 200 : 503).json({ ...deskStatusCache.body, cached: true });
     }
-    const body = await probeDesk();
-    deskStatusCache = { at: now, body };
+    // Coalesce a cold/expired probe so concurrent visitors do not fan out to Zoho.
+    if (!deskStatusInFlight) {
+      deskStatusInFlight = probeDesk().then((body) => {
+        deskStatusCache = { at: Date.now(), body };
+        return body;
+      }).finally(() => { deskStatusInFlight = null; });
+    }
+    const body = await deskStatusInFlight;
     res.status(body.connected ? 200 : 503).json({ ...body, cached: false });
   });
 
   app.post(WIDGET_TICKET_PATH, ticketLimiter, validateInput, async (req: Request, res: Response) => {
     try {
-      const { email, subject, description, priority, sessionId: advisorSessionId, name } = req.body ?? {};
-
-      if (!email || !subject || !description) {
-        return res.status(400).json({ error: "Email, subject, and description are required" });
+      const parsed = deskTicketSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ success: false, error: "Enter a valid email, a subject (up to 200 characters), details (up to 5000 characters), and a valid urgency." });
       }
-      if (!EMAIL_RE.test(String(email))) {
-        return res.status(400).json({ error: "Invalid email address" });
-      }
-      if (String(subject).length > 200 || String(description).length > 5000) {
-        return res.status(400).json({ error: "Subject or description too long" });
-      }
+      const { email, subject, description, priority, sessionId: advisorSessionId, name } = parsed.data;
 
       const priorityValue = priority || "Medium";
       const priorityLower = String(priorityValue).toLowerCase();
 
       if (!zohoClient.isDeskConfigured()) {
         console.error("[WIDGET TICKET] Zoho Desk is not configured");
-        const failure = widgetTicketNotConfigured();
-        return res.status(failure.status).json({
-          ...failure.body,
-          error: DESK_UNAVAILABLE_MESSAGE,
-          retryable: true,
-        });
+        return res.status(503).json({ success: false, code: "desk_not_configured", error: DESK_UNAVAILABLE_MESSAGE, retryable: true });
       }
 
       const { firstName, lastName } = splitVisitorName(
@@ -224,44 +227,25 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
         });
       } catch (zohoErr) {
         const failure = classifyDeskFailure(zohoErr);
-        const mapped = mapWidgetTicketCreateFailure(zohoErr);
         // Enough to act on from the log, and nothing that could be a credential.
         console.error("[WIDGET TICKET] Zoho Desk create failed:", {
           kind: failure.kind,
           status: failure.status,
-          errorCode: failure.errorCode,
-          message: failure.message,
-          code: mapped.body.code,
         });
         if (failure.kind === "unavailable") {
-          return res.status(503).json({
-            ...mapped.body,
-            code: "desk_auth_unavailable",
-            error: DESK_UNAVAILABLE_MESSAGE,
-            retryable: true,
-          });
+          return res.status(503).json({ success: false, code: failure.authFailure ? "desk_auth_unavailable" : "desk_unavailable", error: DESK_UNAVAILABLE_MESSAGE, retryable: true });
         }
-        return res.status(mapped.status).json({
-          ...mapped.body,
-          error: TICKET_REJECTED_MESSAGE,
-          retryable: true,
-        });
+        return res.status(502).json({ success: false, code: "desk_create_failed", error: TICKET_REJECTED_MESSAGE, retryable: true });
       }
 
-      if (!zohoTicket?.id) {
+      if (typeof zohoTicket?.id !== "string" || !zohoTicket.id.trim()) {
         console.error("[WIDGET TICKET] Zoho Desk returned no ticket id");
-        return res.status(502).json({
-          success: false as const,
-          code: "desk_create_failed" as const,
-          error: TICKET_REJECTED_MESSAGE,
-          retryable: true,
-        });
+        return res.status(502).json({ success: false, code: "desk_create_failed", error: TICKET_REJECTED_MESSAGE, retryable: true });
       }
 
       const zohoTicketId = zohoTicket.id;
       const ticketNumber =
-        zohoTicket.ticketNumber ||
-        `TKT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+        (typeof zohoTicket.ticketNumber === "string" && zohoTicket.ticketNumber.trim()) || zohoTicketId;
       console.log(`✅ Widget ticket created in Zoho Desk: ${zohoTicketId}`);
 
       // Secondary: mirror to the portal when the email maps to a portal account.

@@ -1,122 +1,113 @@
-import { PortalLayout } from "./PortalLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Package, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Package, Truck } from "lucide-react";
+import { PortalLayout } from "./PortalLayout";
+import { Callout, DataTable, EmptyState, Panel, StatTile, Token, type DataColumn, type TokenTone } from "@/components/portal/ui";
+
+interface Shipment {
+  id: string;
+  status: string;
+  date: string;
+  items: number;
+  tracking: string;
+}
+
+function shipmentTone(status: string): TokenTone {
+  switch (status) {
+    case "Delivered":
+      return "ok";
+    case "In Transit":
+      return "info";
+    case "Processing":
+      return "warn";
+    default:
+      return "neutral";
+  }
+}
 
 export default function PortalShipCenter() {
-  const shipmentHistory = [
+  const shipmentHistory: Shipment[] = [
     { id: "SHIP-001", status: "Delivered", date: "Nov 20, 2024", items: 3, tracking: "1Z999AA10123456784" },
     { id: "SHIP-002", status: "In Transit", date: "Nov 18, 2024", items: 5, tracking: "1Z999AA10123456785" },
     { id: "SHIP-003", status: "Processing", date: "Nov 15, 2024", items: 2, tracking: "1Z999AA10123456786" },
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Delivered":
-        return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300";
-      case "In Transit":
-        return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300";
-      case "Processing":
-        return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300";
-      default:
-        return "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300";
-    }
-  };
+  const columns: DataColumn<Shipment>[] = [
+    {
+      key: "id",
+      header: "Shipment",
+      primary: true,
+      cell: (s) => (
+        <span className="flex items-center gap-3">
+          <Truck className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span className="min-w-0">
+            <span className="pt-num block font-medium">{s.id}</span>
+            <span className="pt-num block text-xs text-muted-foreground">{s.tracking}</span>
+          </span>
+        </span>
+      ),
+    },
+    { key: "date", header: "Date", primary: true, hideBelowMd: true, className: "w-36 whitespace-nowrap", cell: (s) => <span className="pt-num text-muted-foreground">{s.date}</span> },
+    { key: "items", header: "Items", align: "right", className: "w-20", cell: (s) => <span className="pt-num">{s.items}</span> },
+    { key: "status", header: "Status", primary: true, className: "w-36", cell: (s) => <Token label={s.status} tone={shipmentTone(s.status)} dot /> },
+    {
+      key: "actions",
+      header: <span className="sr-only">Actions</span>,
+      primary: true,
+      align: "right",
+      className: "w-28",
+      cell: (s) => (
+        <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" data-testid={`button-track-${s.id}`}>
+          Track
+        </Button>
+      ),
+    },
+  ];
 
   return (
-    <PortalLayout title="Ship Center">
-      <div className="space-y-6">
-        {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card data-testid="card-active-shipments">
-            <CardHeader>
-              <CardTitle className="text-lg">Active Shipments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-[#D3126A]">2</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Currently in transit</p>
-            </CardContent>
-          </Card>
+    <PortalLayout title="Ship Center" description="Track shipments, schedule a new one and reach logistics support.">
+      <div className="space-y-4">
+        <Callout tone="info" title="Sample data">
+          The shipments and figures shown here are examples. Live shipment tracking appears once your logistics account is linked.
+        </Callout>
 
-          <Card data-testid="card-total-shipments">
-            <CardHeader>
-              <CardTitle className="text-lg">Total Shipments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-[#030228] dark:text-white">47</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">All time</p>
-            </CardContent>
-          </Card>
+        <section className="grid grid-cols-2 gap-3" aria-label="Shipment figures">
+          <div data-testid="card-active-shipments">
+            <StatTile label="Active shipments" value={2} hint="Currently in transit" tone="info" />
+          </div>
+          <div data-testid="card-total-shipments">
+            <StatTile label="Total shipments" value={47} hint="All time" />
+          </div>
+        </section>
+
+        <div data-testid="card-shipment-history">
+          <Panel id="shipment-history" title="Shipment history" description="Track your recent shipments and orders" flush>
+            <DataTable<Shipment>
+              columns={columns}
+              rows={shipmentHistory}
+              rowKey={(s) => s.id}
+              rowTestId={(s) => `row-shipment-${s.id}`}
+              caption="Shipment history"
+              empty={<EmptyState compact icon={Truck} title="No shipments yet" description="Shipments appear here once they are scheduled." />}
+            />
+          </Panel>
         </div>
 
-        {/* Shipment History */}
-        <Card data-testid="card-shipment-history">
-          <CardHeader>
-            <CardTitle>Shipment History</CardTitle>
-            <CardDescription>Track your recent shipments and orders</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {shipmentHistory.map((shipment) => (
-                <div
-                  key={shipment.id}
-                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700"
-                  data-testid={`row-shipment-${shipment.id}`}
-                >
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="p-2 bg-[#D3126A]/10 rounded-lg">
-                      <Truck className="h-5 w-5 text-[#D3126A]" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{shipment.id}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {shipment.date} • {shipment.items} items
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge className={`${getStatusColor(shipment.status)}`}>{shipment.status}</Badge>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      data-testid={`button-track-${shipment.id}`}
-                    >
-                      Track
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card data-testid="card-create-shipment">
-            <CardHeader>
-              <CardTitle className="text-lg">Create New Shipment</CardTitle>
-              <CardDescription>Schedule a new shipment for your business</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full bg-[#D3126A] hover:bg-[#D3126A]/90 text-white" data-testid="button-create-shipment">
-                <Package className="h-4 w-4 mr-2" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div data-testid="card-create-shipment">
+            <Panel id="create-shipment" title="Create new shipment" description="Schedule a new shipment for your business" className="h-full">
+              <Button variant="brand" className="w-full" data-testid="button-create-shipment">
+                <Package aria-hidden="true" />
                 New Shipment
               </Button>
-            </CardContent>
-          </Card>
-
-          <Card data-testid="card-contact-logistics">
-            <CardHeader>
-              <CardTitle className="text-lg">Logistics Support</CardTitle>
-              <CardDescription>Need help with your shipment?</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" className="w-full" data-testid="button-contact-logistics">
+            </Panel>
+          </div>
+          <div data-testid="card-contact-logistics">
+            <Panel id="logistics-support" title="Logistics support" description="Need help with your shipment?" className="h-full">
+              <Button variant="outline" className="w-full border-border bg-card hover:bg-accent" data-testid="button-contact-logistics">
                 Contact Support
               </Button>
-            </CardContent>
-          </Card>
+            </Panel>
+          </div>
         </div>
       </div>
     </PortalLayout>

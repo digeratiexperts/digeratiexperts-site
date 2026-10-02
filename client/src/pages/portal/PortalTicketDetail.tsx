@@ -1,20 +1,22 @@
-import { useState, useRef } from "react";
-import { useLocation, useParams } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useRef, useState } from "react";
+import { useParams } from "wouter";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Loader2, MessageCircle, Paperclip, Send, ShieldCheck, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PortalLayout } from "./PortalLayout";
-import { ArrowLeft, Send, MessageCircle, Clock, AlertCircle, Loader2, Upload, X } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { portalGet, portalPost } from "@/lib/portalApi";
+import { formatDeskTimestamp } from "@/lib/deskTimestamp";
 import {
   PORTAL_TICKET_ACCEPT,
   PORTAL_TICKET_MAX_FILES,
   uploadPortalTicketAttachment,
   validatePortalTicketFile,
 } from "@/lib/portalTicketAttach";
+import { Callout, EmptyState, Panel, Priority, TicketStatus, Token } from "@/components/portal/ui";
+import { cn } from "@/lib/utils";
 
 interface Comment {
   id: string;
@@ -41,8 +43,12 @@ interface Ticket {
   comments: Comment[];
 }
 
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? "?") + (parts[1]?.[0] ?? "")).toUpperCase();
+}
+
 export default function PortalTicketDetail() {
-  const [, navigate] = useLocation();
   const params = useParams<{ id: string }>();
   const ticketId = params.id;
   const [commentText, setCommentText] = useState("");
@@ -52,7 +58,7 @@ export default function PortalTicketDetail() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: ticketData, isLoading, error } = useQuery<{ ticket: Ticket }>({
-    queryKey: ['/api/portal/tickets', ticketId],
+    queryKey: ["/api/portal/tickets", ticketId],
     queryFn: () => portalGet<{ ticket: Ticket }>(`/api/portal/tickets/${ticketId}`),
     enabled: !!ticketId,
   });
@@ -60,12 +66,10 @@ export default function PortalTicketDetail() {
   const ticket = ticketData?.ticket;
 
   const addCommentMutation = useMutation({
-    mutationFn: async (content: string) => {
-      return portalPost<{ success: boolean }>(`/api/portal/tickets/${ticketId}/comments`, { content });
-    },
+    mutationFn: async (content: string) => portalPost<{ success: boolean }>(`/api/portal/tickets/${ticketId}/comments`, { content }),
     onSuccess: () => {
       setCommentText("");
-      queryClient.invalidateQueries({ queryKey: ['/api/portal/tickets', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/portal/tickets", ticketId] });
     },
   });
 
@@ -117,9 +121,11 @@ export default function PortalTicketDetail() {
 
   if (isLoading) {
     return (
-      <PortalLayout title="Ticket Details">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-[#D3126A]" />
+      <PortalLayout title="Ticket" backHref="/portal/tickets" backLabel="Back to tickets" hideHeader>
+        <div className="space-y-4" aria-busy="true" aria-live="polite">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-2/3" />
+          <Skeleton className="h-40" />
         </div>
       </PortalLayout>
     );
@@ -127,295 +133,184 @@ export default function PortalTicketDetail() {
 
   if (error || !ticket) {
     return (
-      <PortalLayout title="Ticket Details">
-        <div className="space-y-6 max-w-4xl">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/portal/tickets")}
-            className="gap-2"
-            data-testid="button-back"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Tickets
-          </Button>
-          <Card className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/30">
-            <CardContent className="p-6 text-center">
-              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-red-800 dark:text-red-300 mb-2">
-                Ticket Not Found
-              </h2>
-              <p className="text-red-600 dark:text-red-400">
-                The ticket you're looking for doesn't exist or you don't have permission to view it.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+      <PortalLayout title="Ticket not found" backHref="/portal/tickets" backLabel="Back to tickets" width="narrow">
+        <Callout tone="bad" title="This ticket isn't available">
+          It may not exist, or your account doesn't have permission to view it.
+        </Callout>
       </PortalLayout>
     );
   }
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "critical":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30";
-      case "high":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-900/30";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30";
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "open":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30";
-      case "in_progress":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30";
-      case "pending_client":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30";
-      case "resolved":
-        return "bg-green-100 text-green-800 dark:bg-green-900/30";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30";
-    }
-  };
+  const context = ticket.isInternal ? "Internal" : ticket.companyName || "";
 
   return (
-    <PortalLayout title="Ticket Details">
-      <div className="space-y-6 max-w-4xl">
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/portal/tickets")}
-          className="gap-2"
-          data-testid="button-back"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Tickets
-        </Button>
-
-        {/* Ticket Header */}
+    <PortalLayout
+      title={ticket.subject}
+      eyebrow={
+        <span className="pt-num">
+          {ticket.ticketNumber}
+          {context ? ` · ${context}` : ""}
+          {ticket.category ? ` · ${ticket.category}` : ""}
+        </span>
+      }
+      backHref="/portal/tickets"
+      backLabel="Back to tickets"
+      actions={
+        <>
+          <Priority priority={ticket.priority} />
+          <TicketStatus status={ticket.status} />
+        </>
+      }
+      width="wide"
+    >
+      <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
         <div className="space-y-4">
-          <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold">{ticket.subject}</h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                {ticket.ticketNumber}
-                {ticket.isInternal
-                  ? " · Internal"
-                  : ticket.companyName
-                    ? ` · ${ticket.companyName}`
-                    : ""}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Badge className={getStatusColor(ticket.status)}>
-                {ticket.status.replace(/_/g, " ")}
-              </Badge>
-              <Badge className={getPriorityColor(ticket.priority)}>
-                {ticket.priority}
-              </Badge>
-            </div>
-          </div>
+          <Panel id="ticket-description" title="What you reported">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed">{ticket.description}</p>
+          </Panel>
 
-          {/* Ticket Info Grid */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Category</p>
-                  <p className="font-semibold">{ticket.category}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Assigned To</p>
-                  <p className="font-semibold">{ticket.assignedTo || "Unassigned"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Created</p>
-                  <p className="font-semibold text-sm">
-                    {new Date(ticket.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Last Updated</p>
-                  <p className="font-semibold text-sm">
-                    {new Date(ticket.updatedAt).toLocaleDateString()}
-                  </p>
-                </div>
+          <Panel
+            id="conversation"
+            title={
+              <span className="inline-flex items-center gap-2">
+                <MessageCircle className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                Conversation
+              </span>
+            }
+            description={`${ticket.comments.length} message${ticket.comments.length === 1 ? "" : "s"}`}
+            flush
+          >
+            {ticket.comments.length === 0 ? (
+              <EmptyState compact icon={MessageCircle} title="No replies yet" description="A DE engineer replies here. You'll also get an email." />
+            ) : (
+              <ol className="divide-y divide-border">
+                {ticket.comments.map((comment) => {
+                  const fromDe = /support|agent|admin|engineer|de/i.test(comment.role);
+                  return (
+                    <li key={comment.id} className={cn("flex gap-3 px-4 py-4 md:px-5", comment.isInternal && "pt-note-internal")} data-testid={`comment-${comment.id}`}>
+                      <span
+                        className={cn(
+                          "grid h-8 w-8 shrink-0 place-items-center rounded-full border text-[11px] font-semibold",
+                          fromDe ? "pt-avatar-de" : "border-border bg-secondary",
+                        )}
+                        aria-hidden="true"
+                      >
+                        {initials(comment.author)}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
+                          <span className="font-semibold">{comment.author}</span>
+                          <span className="text-xs text-muted-foreground">{fromDe ? "Digerati Experts" : comment.role}</span>
+                          {comment.isInternal && <Token label="Internal note" tone="warn" className="px-1.5 py-0 text-[9px]" />}
+                          <time className="pt-num ml-auto text-xs text-muted-foreground" dateTime={comment.timestamp}>
+                            {formatDeskTimestamp(comment.timestamp)}
+                          </time>
+                        </div>
+                        <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{comment.content}</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+
+            <form onSubmit={handleAddComment} className="space-y-3 border-t border-border bg-background/40 px-4 py-4 md:px-5">
+              <div>
+                <label htmlFor="ticket-reply" className="mb-1.5 block text-sm font-medium">
+                  Reply
+                </label>
+                <Textarea
+                  id="ticket-reply"
+                  placeholder="Type your reply. Attach screenshots or logs below."
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  className="min-h-24 border-border bg-card"
+                  data-testid="textarea-comment"
+                />
               </div>
-            </CardContent>
-          </Card>
+              <div className="space-y-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept={PORTAL_TICKET_ACCEPT}
+                  className="sr-only"
+                  aria-label="Attach files to this ticket"
+                  data-testid="input-ticket-detail-files"
+                  onChange={(event) => {
+                    if (event.target.files) queueDetailFiles(event.target.files);
+                    event.target.value = "";
+                  }}
+                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button type="button" variant="outline" size="sm" className="gap-2 border-border bg-card hover:bg-accent" onClick={() => fileInputRef.current?.click()} data-testid="button-choose-detail-files">
+                    <Paperclip className="h-4 w-4" aria-hidden="true" />
+                    Choose files
+                  </Button>
+                  <span className="text-xs text-muted-foreground">PNG, JPG, PDF, TXT or LOG, 10 MB each</span>
+                </div>
+                {pendingFiles.length > 0 && (
+                  <ul className="space-y-1.5">
+                    {pendingFiles.map((file) => (
+                      <li key={`${file.name}-${file.size}`} className="flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm">
+                        <span className="min-w-0 truncate">{file.name}</span>
+                        <button type="button" className="shrink-0 rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={`Remove ${file.name}`} onClick={() => setPendingFiles((prev) => prev.filter((item) => item !== file))}>
+                          <X className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {attachError && (
+                  <p className="text-sm pt-ink pt-tone-bad" role="alert">
+                    {attachError}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button type="submit" variant="brand" disabled={!commentText || addCommentMutation.isPending} data-testid="button-send-comment">
+                  {addCommentMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
+                  {addCommentMutation.isPending ? "Sending…" : "Send reply"}
+                </Button>
+                <Button type="button" variant="outline" className="border-border bg-card hover:bg-accent" disabled={pendingFiles.length === 0 || attaching} onClick={() => void handleAttachFiles()} data-testid="button-upload-attachments">
+                  {attaching ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Upload className="h-4 w-4" aria-hidden="true" />}
+                  {attaching ? "Uploading…" : "Upload attachments"}
+                </Button>
+              </div>
+              {addCommentMutation.isError && (
+                <Callout tone="bad" title="Your reply wasn't sent">
+                  {addCommentMutation.error instanceof Error ? addCommentMutation.error.message : "Please try again."}
+                </Callout>
+              )}
+            </form>
+          </Panel>
         </div>
 
-        {/* Description */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Description</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-              {ticket.description}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Comments Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
-              Conversation
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Comments Thread */}
-            <div className="space-y-4">
-              {ticket.comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  className={`p-4 rounded-lg border ${
-                    comment.isInternal
-                      ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-900/30"
-                      : "bg-gray-50 dark:bg-slate-800/50 border-gray-200 dark:border-slate-700"
-                  }`}
-                  data-testid={`comment-${comment.id}`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">{comment.author}</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {comment.role}
-                      </span>
-                      {comment.isInternal && (
-                        <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 px-2 py-1 rounded">
-                          Internal Note
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {new Date(comment.timestamp).toLocaleString()}
-                    </span>
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-300">{comment.content}</p>
+        <aside className="space-y-4">
+          <Panel id="ticket-details" title="Details">
+            <dl className="space-y-3 text-sm">
+              {[
+                ["Status", <TicketStatus key="s" status={ticket.status} />],
+                ["Priority", <Priority key="p" priority={ticket.priority} />],
+                ["Category", <span key="c" className="capitalize">{ticket.category || "—"}</span>],
+                ["Engineer", ticket.assignedTo && !ticket.assignedTo.startsWith("zoho:") ? ticket.assignedTo : "Not yet assigned"],
+                ["Opened", <span key="o" className="pt-num">{formatDeskTimestamp(ticket.createdAt)}</span>],
+                ["Last update", <span key="u" className="pt-num">{formatDeskTimestamp(ticket.updatedAt)}</span>],
+              ].map(([label, value]) => (
+                <div key={String(label)} className="flex items-start justify-between gap-3">
+                  <dt className="text-muted-foreground">{label}</dt>
+                  <dd className="text-right font-medium">{value}</dd>
                 </div>
               ))}
-            </div>
-
-            {/* Add Comment Form */}
-            <div className="border-t dark:border-slate-700 pt-4">
-              <form onSubmit={handleAddComment} className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Add a comment</label>
-                  <Textarea
-                    placeholder="Type your response here..."
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    className="min-h-24"
-                    data-testid="textarea-comment"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Attach files</label>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept={PORTAL_TICKET_ACCEPT}
-                    className="sr-only"
-                    data-testid="input-ticket-detail-files"
-                    onChange={(event) => {
-                      if (event.target.files) queueDetailFiles(event.target.files);
-                      event.target.value = "";
-                    }}
-                  />
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-2 border-[#D3126A]/40 bg-white text-[#1A1228] hover:bg-de-paper dark:border-[#D3126A]/40 dark:bg-transparent dark:text-white"
-                      onClick={() => fileInputRef.current?.click()}
-                      data-testid="button-choose-detail-files"
-                    >
-                      <Upload className="h-4 w-4" />
-                      Choose files
-                    </Button>
-                    <span className="text-xs text-gray-500">
-                      PNG, JPG, PDF, TXT, or LOG — 10MB each
-                    </span>
-                  </div>
-                  {pendingFiles.length > 0 && (
-                    <ul className="space-y-2">
-                      {pendingFiles.map((file) => (
-                        <li
-                          key={`${file.name}-${file.size}`}
-                          className="flex items-center justify-between gap-2 rounded-md border border-[var(--de-paper-hairline)] bg-white px-3 py-2 text-sm dark:border-de-hairline dark:bg-slate-900/60"
-                        >
-                          <span className="min-w-0 truncate">{file.name}</span>
-                          <button
-                            type="button"
-                            className="shrink-0 rounded p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10"
-                            aria-label={`Remove ${file.name}`}
-                            onClick={() =>
-                              setPendingFiles((prev) => prev.filter((item) => item !== file))
-                            }
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {attachError && (
-                    <p className="text-sm text-red-600 dark:text-red-400">{attachError}</p>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="submit"
-                    disabled={!commentText || addCommentMutation.isPending}
-                    className="bg-[#D3126A] hover:bg-[#D3126A]/90 text-white"
-                    data-testid="button-send-comment"
-                  >
-                    {addCommentMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4 mr-2" />
-                    )}
-                    {addCommentMutation.isPending ? "Sending..." : "Send Comment"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={pendingFiles.length === 0 || attaching}
-                    onClick={() => void handleAttachFiles()}
-                    data-testid="button-upload-attachments"
-                  >
-                    {attaching ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Upload className="h-4 w-4 mr-2" />
-                    )}
-                    {attaching ? "Uploading..." : "Upload attachments"}
-                  </Button>
-                </div>
-              </form>
-            </div>
-
-            {/* Info Box */}
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/30 rounded-lg">
-              <div className="flex gap-3">
-                <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-blue-800 dark:text-blue-300">
-                  Internal notes from our support team are shown above. Only you and our support engineers can see this ticket.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </dl>
+          </Panel>
+          <Callout tone="info">
+            <span className="inline-flex items-start gap-2">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>Only you and DE support engineers can see this ticket. Internal notes are marked.</span>
+            </span>
+          </Callout>
+        </aside>
       </div>
     </PortalLayout>
   );

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Concept A: Control Room</title>
+<link rel="stylesheet" href="../_shared/base.css">
+<style>
+:root{
+  --bg:#050312;--field:#0a0a0f;--raised:#151217;--raised-2:#1b1720;--hair:rgba(255,255,255,.1);--hair-2:rgba(255,255,255,.16);
+  --ink:#f5f3f7;--ink-2:rgba(245,243,247,.72);--ink-3:rgba(245,243,247,.5);
+  --magenta:#D3126A;--magenta-ink:#F04C97;--ok:#34d399;--warn:#fbbf24;--bad:#fb7185;--info:#7dd3fc;
+}
+body{background:var(--bg);color:var(--ink)}
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100dvh}
+.rail{background:var(--field);border-right:1px solid var(--hair);display:flex;flex-direction:column;position:sticky;top:0;height:100dvh}
+.brand{display:flex;align-items:center;gap:10px;padding:18px 16px 14px}
+.mark{width:26px;height:26px;border-radius:6px;background:linear-gradient(180deg,#e7b20d,#b8860b)}
+.brand b{font-family:"Space Grotesk";font-size:15px;letter-spacing:.02em}
+.brand small{display:block;font-size:11px;color:var(--ink-3);letter-spacing:.12em;text-transform:uppercase}
+.tenant{margin:0 12px 10px;padding:8px 10px;border:1px solid var(--hair);border-radius:8px;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);background:var(--raised)}
+.tenant .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+nav{flex:1;overflow:auto;padding:4px 8px 8px}
+.grp{padding:12px 8px 4px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.it{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7px;font-size:14px;color:var(--ink-2);margin:1px 0}
+.it i{width:16px;height:16px;border:1.5px solid currentColor;border-radius:4px;opacity:.7}
+.it:hover{background:rgba(255,255,255,.06);color:var(--ink)}
+.it.on{background:rgba(211,18,106,.16);color:#fff;box-shadow:inset 3px 0 0 var(--magenta)}
+.it .n{margin-left:auto;font-size:11px;padding:1px 6px;border-radius:99px;background:rgba(255,255,255,.08);color:var(--ink-2)}
+.it .n.hot{background:rgba(211,18,106,.25);color:var(--magenta-ink)}
+.it .tag{margin-left:auto;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--warn);border:1px solid rgba(251,191,36,.35);padding:0 5px;border-radius:4px}
+.me{border-top:1px solid var(--hair);padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:13px}
+.av{width:30px;height:30px;border-radius:50%;background:var(--raised-2);border:1px solid var(--hair-2);display:grid;place-items:center;font-weight:600;font-size:12px}
+.me small{display:block;color:var(--ink-3);font-size:11px}
+.main{min-width:0}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:10px 24px;background:rgba(5,3,18,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--hair)}
+.crumb{font-size:13px;color:var(--ink-3)}
+.crumb b{color:var(--ink);font-weight:500}
+.cmd{margin-left:auto;display:flex;align-items:center;gap:8px;min-width:260px;padding:7px 10px;border:1px solid var(--hair);border-radius:8px;background:var(--raised);color:var(--ink-3);font-size:13px}
+.cmd kbd{margin-left:auto;font:11px Inter;padding:1px 5px;border:1px solid var(--hair-2);border-radius:4px;color:var(--ink-2)}
+.icon-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--hair);background:var(--raised);color:var(--ink-2);display:grid;place-items:center;position:relative}
+.icon-btn .pip{position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--magenta)}
+.page{padding:24px;max-width:1280px}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+h1{font-size:28px;font-weight:600}
+.sub{color:var(--ink-2);font-size:14px;margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:8px;border:1px solid var(--hair-2);background:var(--raised);color:var(--ink);font-size:14px;font-weight:500}
+.btn.primary{background:var(--magenta);border-color:var(--magenta);color:#fff}
+.verdict{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:16px 18px;border:1px solid rgba(52,211,153,.35);background:rgba(52,211,153,.06);border-radius:12px;margin-bottom:20px}
+.verdict .ring{width:40px;height:40px;border-radius:50%;border:3px solid var(--ok);display:grid;place-items:center;color:var(--ok);font-weight:700}
+.verdict h2{font-size:16px;font-weight:600}
+.verdict p{margin:2px 0 0;color:var(--ink-2);font-size:13px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.tile{padding:16px;border:1px solid var(--hair);border-radius:12px;background:var(--raised)}
+.tile .l{font-size:12px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+.tile .v{font-size:30px;line-height:1.1;margin:8px 0 4px;font-weight:600}
+.tile .d{font-size:12px;color:var(--ink-2)}
+.tile .d.ok{color:var(--ok)}.tile .d.warn{color:var(--warn)}
+.grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.panel{border:1px solid var(--hair);border-radius:12px;background:var(--raised);overflow:hidden}
+.panel header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--hair)}
+.panel header h3{font-size:14px;font-weight:600}
+.panel header a{font-size:13px;color:var(--magenta-ink)}
+.row{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--hair);font-size:14px}
+.row:last-child{border-bottom:0}
+.row .t{font-weight:500}
+.row .m{font-size:12px;color:var(--ink-3);margin-top:2px}
+.tok{font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px;border:1px solid}
+.tok.open{color:var(--warn);border-color:rgba(251,191,36,.4)}
+.tok.prog{color:var(--info);border-color:rgba(125,211,252,.4)}
+.tok.wait{color:var(--magenta-ink);border-color:rgba(240,76,151,.4)}
+.tok.done{color:var(--ok);border-color:rgba(52,211,153,.4)}
+.tl{padding:6px 16px 12px}
+.tl li{list-style:none;display:grid;grid-template-columns:70px 1fr;gap:12px;padding:8px 0;font-size:13px;border-bottom:1px dashed var(--hair)}
+.tl li:last-child{border-bottom:0}
+.tl time{color:var(--ink-3);font-size:12px}
+.tl b{font-weight:500}
+.tl span{color:var(--ink-2)}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 16px}
+.act{padding:12px;border:1px solid var(--hair);border-radius:10px;background:var(--field);font-size:13px}
+.act b{display:block;font-weight:500;margin-bottom:2px}
+.act span{color:var(--ink-3);font-size:12px}
+@media (max-width:1024px){.tiles{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.cmd{min-width:0;flex:1}}
+@media (max-width:767px){.app{grid-template-columns:1fr}.rail{position:fixed;left:-260px;width:248px;z-index:10}.top{padding:10px 16px}.page{padding:16px}.tiles{grid-template-columns:1fr 1fr}.acts{grid-template-columns:1fr}.verdict{grid-template-columns:auto 1fr}.verdict .btn{grid-column:1/-1}.row{grid-template-columns:1fr auto}.row .tok:nth-child(2){display:none}.burger{display:grid}}
+.burger{display:none}
+</style>
+</head>
+<body>
+<span class="example" aria-label="Example data">Example data</span>
+<div class="app">
+  <aside class="rail" aria-label="Portal navigation">
+    <div class="brand"><div class="mark" aria-hidden="true"></div><div><b>Digerati Experts</b><small>Client portal</small></div></div>
+    <div class="tenant"><span class="dot" aria-hidden="true"></span> Acme Manufacturing <span style="margin-left:auto;opacity:.5">⌄</span></div>
+    <nav>
+      <div class="grp">Support</div>
+      <a class="it on" href="#"><i></i>Dashboard</a>
+      <a class="it" href="#"><i></i>Tickets <span class="n hot">3</span></a>
+      <a class="it" href="#"><i></i>Requests</a>
+      <a class="it" href="#"><i></i>Approvals <span class="n">1</span></a>
+      <a class="it" href="#"><i></i>DE Desk</a>
+      <div class="grp">Account</div>
+      <a class="it" href="#"><i></i>Company &amp; people</a>
+      <a class="it" href="#"><i></i>Billing &amp; invoices</a>
+      <a class="it" href="#"><i></i>Services &amp; orders</a>
+      <a class="it" href="#"><i></i>Contracts &amp; files</a>
+      <div class="grp">Programs</div>
+      <a class="it" href="#"><i></i>Business reviews <span class="tag">sample</span></a>
+      <a class="it" href="#"><i></i>IT roadmap <span class="tag">sample</span></a>
+      <a class="it" href="#"><i></i>Learning</a>
+      <div class="grp">Tools</div>
+      <a class="it" href="#"><i></i>Knowledge base</a>
+      <a class="it" href="#"><i></i>Marketplace</a>
+      <a class="it" href="#"><i></i>Settings</a>
+    </nav>
+    <div class="me"><div class="av">JT</div><div>Jordan Taylor<small>Company IT contact</small></div></div>
+  </aside>
+  <div class="main">
+    <header class="top">
+      <button class="icon-btn burger" aria-label="Open navigation">≡</button>
+      <div class="crumb">Acme Manufacturing / <b>Dashboard</b></div>
+      <div class="cmd" role="button" tabindex="0">Search or jump to… <kbd>⌘K</kbd></div>
+      <button class="icon-btn" aria-label="Notifications, 2 unread"><span class="pip"></span>◔</button>
+    </header>
+    <main class="page">
+      <div class="head">
+        <div><div class="eyebrow">Tuesday, 30 Sep 2026</div><h1>Good afternoon, Jordan</h1><p class="sub">Your environment is being watched. Here is what needs you.</p></div>
+        <div style="display:flex;gap:8px"><a class="btn" href="#">Request access</a><a class="btn primary" href="#">+ New ticket</a></div>
+      </div>
+      <section class="verdict" aria-label="Status verdict">
+        <div class="ring">✓</div>
+        <div><h2>Nothing is on fire. Two items are waiting on you.</h2><p>1 approval to decide, 1 ticket waiting for your reply. Backups, patching and monitoring report normal (last checked 14 min ago).</p></div>
+        <a class="btn" href="#">Review queue</a>
+      </section>
+      <section class="tiles" aria-label="Key figures">
+        <div class="tile"><div class="l">Open tickets</div><div class="v num">3</div><div class="d">1 waiting on you</div></div>
+        <div class="tile"><div class="l">Median first response</div><div class="v num">41<span style="font-size:14px;color:var(--ink-3)"> min</span></div><div class="d ok">within the 1-hour target</div></div>
+        <div class="tile"><div class="l">Next invoice</div><div class="v num">$4,120</div><div class="d">due 15 Oct · auto-pay on</div></div>
+        <div class="tile"><div class="l">Devices covered</div><div class="v num">46<span style="font-size:14px;color:var(--ink-3)">/48</span></div><div class="d warn">2 laptops not seen in 7 days</div></div>
+      </section>
+      <div class="grid">
+        <section class="panel" aria-labelledby="q">
+          <header><h3 id="q">Needs your attention</h3><a href="#">All tickets →</a></header>
+          <div class="row"><div><div class="t">VPN drops every 20 minutes from home</div><div class="m">TKT-1042 · Network · updated 12 min ago</div></div><span class="tok wait">Waiting on you</span><span class="tok open">High</span></div>
+          <div class="row"><div><div class="t">Access request: M. Ortiz → Finance share</div><div class="m">APR-233 · raised by Sam Lee · 1 day</div></div><span class="tok wait">Approve?</span><span class="tok prog">Approval</span></div>
+          <div class="row"><div><div class="t">New laptop for the Tucson office</div><div class="m">TKT-1039 · Hardware · quote attached</div></div><span class="tok prog">In progress</span><span class="tok open">Medium</span></div>
+          <div class="row"><div><div class="t">Shared mailbox rename</div><div class="m">TKT-1031 · Email · resolved yesterday</div></div><span class="tok done">Resolved</span><span class="tok open">Low</span></div>
+        </section>
+        <section class="panel" aria-labelledby="a">
+          <header><h3 id="a">Recent activity</h3><a href="#">Full log →</a></header>
+          <ul class="tl">
+            <li><time>12 min</time><div><b>DE engineer replied</b> <span>on TKT-1042 and asked for a log file.</span></div></li>
+            <li><time>2 h</time><div><b>Invoice INV-0817</b> <span>issued, $4,120, due 15 Oct.</span></div></li>
+            <li><time>Yesterday</time><div><b>TKT-1031 resolved</b> <span>by Priya N. Rate the fix →</span></div></li>
+            <li><time>Mon</time><div><b>Patch window completed</b> <span>44 devices, 0 failures.</span></div></li>
+          </ul>
+          <header><h3>Do something</h3></header>
+          <div class="acts">
+            <a class="act" href="#"><b>Report an outage</b><span>Phone first, then a ticket</span></a>
+            <a class="act" href="#"><b>Onboard a person</b><span>Accounts, device, access</span></a>
+            <a class="act" href="#"><b>Pay an invoice</b><span>Zoho Payments</span></a>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>
