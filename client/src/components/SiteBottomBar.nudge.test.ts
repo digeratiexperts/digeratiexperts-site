@@ -26,3 +26,17 @@ describe("Ask DE nudge position", () => {
     expect(indexCss).toMatch(/\.de-unified-bar \{[^}]*bottom:\s*calc\(var\(--de-chrome-inset\) \+ var\(--de-cookie-h\)\)/);
   });
 });
+
+describe("Ask DE nudge on phones", () => {
+  it("holds the nudge until the reader leaves the first screen", () => {
+    expect(bottomBarSrc).toMatch(/const NUDGE_PHONE_QUERY = "\(max-width: 767px\)"/);
+    expect(bottomBarSrc).toMatch(/phone\.matches && window\.scrollY < window\.innerHeight/);
+  });
+
+  it("steps a shown nudge away on scroll or typing, without dismissing it for good", () => {
+    const block = bottomBarSrc.match(/if \(!showNudge \|\| !window\.matchMedia\(NUDGE_PHONE_QUERY\)\.matches\) return;[\s\S]*?\}, \[showNudge\]\);/)?.[0] ?? "";
+    expect(block).toMatch(/NUDGE_PHONE_SCROLL_AWAY/);
+    expect(block).toMatch(/focusin/);
+    expect(block).not.toMatch(/markDeskNudgeDismissed/);
+  });
+});
