@@ -121,6 +121,7 @@ import { resolveJwtSecret } from "./config/authSecrets";
 import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter, paymentRateLimiter } from "./middleware/rateLimiter";
 import { enqueueOutbox } from "./integrations/deSyncStore";
 import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
+import { appendSituationToDescription, parseAnonymousSituation } from "@shared/anonymousSituation";
 
 // Canonical JWT secret — resolved per call so dotenv/env load order cannot
 // split signing and verification across different secrets (see config/authSecrets).
@@ -5217,6 +5218,7 @@ export async function registerRoutes(app: Express) {
   app.post("/api/assessment", [leadQuoteRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { fullName, email, phone, company, source } = req.body;
+      const situation = parseAnonymousSituation(req.body?.situation);
 
       if (!fullName || !email) {
         return res.status(400).json({ error: "Name and email are required" });
@@ -5232,13 +5234,18 @@ export async function registerRoutes(app: Express) {
       logger.info("[ASSESSMENT] Form submitted", { fullName, email, company, source, timestamp: new Date().toISOString() });
       logSecurityEvent("ASSESSMENT_SUBMITTED", req, { email, source: source || "hero_form" });
 
+      const assessmentNote = appendSituationToDescription(
+        `Assessment request from ${source || "hero_form"}`,
+        situation,
+      );
+
       eventBus.emit(EventTypes.LEAD_CREATED, {
         id: leadId,
         name: fullName,
         email,
         company: company || "",
         source: source || "hero_assessment",
-        message: `Assessment request from ${source || "hero_form"}`,
+        message: assessmentNote,
       }, "assessment-form");
 
       let zohoLeadId = null;
@@ -5256,7 +5263,10 @@ export async function registerRoutes(app: Express) {
           Company: company || 'Not Specified',
           Lead_Source: taxonomy.leadSource,
           Lead_Status: taxonomy.leadStatus,
-          Description: `Free assessment request submitted from ${source || "homepage hero"}`,
+          Description: appendSituationToDescription(
+            `Free assessment request submitted from ${source || "homepage hero"}`,
+            situation,
+          ),
         });
         zohoLeadId = (zohoLead as any)?.details?.id || zohoLead?.id;
         console.log("[ZOHO] Assessment lead created:", zohoLeadId);
@@ -5280,6 +5290,7 @@ export async function registerRoutes(app: Express) {
   app.post("/api/contact", [leadQuoteRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { name, email, phone, company, service, message } = req.body;
+      const situation = parseAnonymousSituation(req.body?.situation);
       
       // Basic validation
       if (!name || !email || !phone) {
@@ -5311,6 +5322,11 @@ export async function registerRoutes(app: Express) {
       logger.info("[CONTACT] Form submitted", { name, email, company, service, timestamp: new Date().toISOString() });
       logSecurityEvent("CONTACT_FORM_SUBMITTED", req, { email, company, service });
 
+      const contactDescription = appendSituationToDescription(
+        [service ? `Service: ${service}` : "", message || ""].filter(Boolean).join("\n") || "Contact form",
+        situation,
+      );
+
       // Emit contact event for cross-service handling (email notifications)
       eventBus.emit(EventTypes.CONTACT_FORM_SUBMITTED, {
         id: contactData.id,
@@ -5318,7 +5334,7 @@ export async function registerRoutes(app: Express) {
         email,
         company,
         phone,
-        message,
+        message: contactDescription,
         source: "contact_form",
       }, "contact-form");
 
@@ -5337,7 +5353,7 @@ export async function registerRoutes(app: Express) {
           Phone: phone,
           Company: company || 'Not Specified',
           Lead_Source: taxonomy.leadSource,
-          Description: message || '',
+          Description: contactDescription,
           Lead_Status: taxonomy.leadStatus,
         });
         zohoLeadId = (zohoLead as any)?.details?.id || (zohoLead as any)?.id;
