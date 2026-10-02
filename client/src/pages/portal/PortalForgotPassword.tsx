@@ -43,7 +43,7 @@ export default function PortalForgotPassword() {
   };
 
   return (
-    <main className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
+    <main id="main-content" tabIndex={-1} className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
       <div aria-hidden="true" className="pt-login-glow pointer-events-none absolute inset-0" />
       <div aria-hidden="true" className="pt-login-line pointer-events-none absolute inset-x-0 top-0 h-px" />
       <div className="w-full max-w-md">
@@ -113,7 +113,7 @@ export default function PortalForgotPassword() {
 
                 <p className="text-center text-sm text-muted-foreground">
                   Remember your password?{" "}
-                  <Link href="/portal/login" className="text-de-magenta-ink hover:underline" data-testid="link-back-login">
+                  <Link href="/portal/login" className="text-de-magenta-ink underline underline-offset-2 hover:no-underline" data-testid="link-back-login">
                     Sign in
                   </Link>
                 </p>

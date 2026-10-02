@@ -58,6 +58,11 @@ claims:
       - client/src/pages/portal/PortalForgotPassword.tsx
       - client/src/pages/portal/PortalResetPassword.tsx
       - client/src/pages/portal/PortalChat.tsx (h1 and Tickets link only)
+      - client/src/pages/portal/PortalLogin.tsx (skip target, link underline)
+      - client/src/pages/portal/PortalAdvancedForms.tsx (list markup)
+      - client/src/pages/portal/PortalRoadmap.tsx (list markup)
+      - client/src/pages/portal/AdminLoginKnocks.tsx (scroll region)
+      - client/src/components/CookieConsentBanner.tsx (role and label only)
       - artifacts/visual-qa/portal-followups/**
     status: active
     started: 2026-10-02

@@ -152,6 +152,7 @@ export function PortalLayout({
     <div className={cn("de-portal", theme === "dark" && "dark")} data-theme={theme}>
       <SidebarProvider defaultOpen={typeof window === "undefined" ? true : window.innerWidth >= 1024}>
         <Sidebar collapsible="icon" className="border-sidebar-border">
+          <nav aria-label="Client portal" className="flex h-full min-h-0 flex-col">
           <SidebarHeader className="px-3 pb-2 pt-3">
             <Link href="/portal/dashboard" className="flex items-center gap-2 rounded-md px-1 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring" aria-label="Digerati Experts client portal home">
               <img src={DE_MARK} alt="" className="h-7 w-7 shrink-0 group-data-[collapsible=icon]:block hidden" />
@@ -219,6 +220,7 @@ export function PortalLayout({
               </button>
             </div>
           </SidebarFooter>
+          </nav>
           <SidebarRail />
         </Sidebar>
 
@@ -268,7 +270,7 @@ export function PortalLayout({
             </div>
           )}
 
-          <main id="portal-main" className={cn("mx-auto w-full flex-1 px-4 py-5 md:px-6 md:py-6", widthClass[width])}>
+          <main id="main-content" tabIndex={-1} className={cn("mx-auto w-full flex-1 px-4 py-5 md:px-6 md:py-6", widthClass[width])}>
             {!hideHeader && (
               <PageHeader
                 title={title}

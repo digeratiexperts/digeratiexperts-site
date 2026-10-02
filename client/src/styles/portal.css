@@ -60,7 +60,7 @@ body.de-portal-scope {
   --pt-warn: 251 191 36;
   --pt-bad: 251 113 133;
   --pt-info: 125 211 252;
-  --pt-brand: 240 76 151;            /* magenta ink on dark */
+  --pt-brand: 244 94 163;            /* magenta ink on dark; 4.5:1 on tinted accent */
 
   --pt-topbar: 248 71% 4% / 0.82;
 
@@ -93,13 +93,24 @@ body.de-portal-scope[data-portal-theme="light"] {
   --destructive-foreground: 0 0% 100%;
 
   --pt-ok: 4 120 87;
-  --pt-warn: 180 83 9;
+  --pt-warn: 146 64 14;              /* #92400e: 4.5:1 on tinted paper */
   --pt-bad: 190 18 60;
-  --pt-info: 14 116 144;
+  --pt-info: 21 94 117;              /* #155e75 */
   --pt-brand: 163 14 82;
 
   --pt-topbar: 36 24% 96% / 0.85;
   color-scheme: light;
+}
+
+/* The sidebar stays graphite in both themes, so its state colours stay the
+   dark-field values even when the content field is paper. */
+.de-portal[data-theme="light"] [data-sidebar="sidebar"],
+body.de-portal-scope[data-portal-theme="light"] [data-sidebar="sidebar"] {
+  --pt-ok: 52 211 153;
+  --pt-warn: 251 191 36;
+  --pt-bad: 251 113 133;
+  --pt-info: 125 211 252;
+  --pt-brand: 244 94 163;
 }
 
 /* The marketing scale lifts text-sm to 16px for long-form pages. A working
