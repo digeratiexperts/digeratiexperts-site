@@ -76,7 +76,7 @@ export function PortalLayout({
 }: PortalLayoutProps) {
   const [location] = useLocation();
   const { ready, user } = usePortalSession();
-  const [theme, setTheme] = usePortalTheme();
+  const [theme, themePreference, setThemePreference] = usePortalTheme();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const impersonatingCompany = readImpersonatingCompany();
   usePortalHubEvents();
@@ -246,7 +246,7 @@ export function PortalLayout({
                 </Button>
               )}
               <PortalActivityPopover />
-              <PortalUserMenu user={user} theme={theme} onTheme={setTheme} onSignOut={handleLogout} />
+              <PortalUserMenu user={user} themePreference={themePreference} onTheme={setThemePreference} onSignOut={handleLogout} />
             </div>
           </header>
 

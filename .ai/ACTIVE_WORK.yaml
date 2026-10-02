@@ -30,6 +30,25 @@
 
 version: 2
 claims:
+  - id: portal-followups-2026-10-02
+    owner: claude
+    subsystem: client-portal-shell
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: 5de266e8ed762d6328fef126ba7b017bcd8d8a21
+    files:
+      - client/src/components/portal/shell/portalTheme.ts
+      - client/src/components/portal/shell/portalTheme.test.ts
+      - client/src/components/portal/shell/PortalUserMenu.tsx
+      - client/src/pages/portal/PortalLayout.tsx
+      - artifacts/visual-qa/portal-theme/**
+    status: active
+    started: 2026-10-02
+    note: >-
+      Joe's answers of 2026-10-02 on the portal follow-ups. 4 "a and c": dark
+      stays the default and "Match device" joins the user menu (browsers never
+      report "no preference", so a device-following default would show light
+      to most clients). 7: salvage of the stale claude-completion-program-lane
+      into gaps on today's portal follows on this branch once audited.
   - id: portal-kit-long-tail
     owner: claude
     subsystem: client-portal-pages
@@ -55,8 +74,15 @@ claims:
       - client/src/pages/portal/Admin*.tsx
       - client/src/pages/portal/SalesProcess.tsx
       - artifacts/visual-qa/portal-redesign/after-tail/**
-    status: active
+    status: verified-live
     started: 2026-10-01
+    released: 2026-10-02
+    pr: 316
+    merge_sha: 5de266e8ed762d6328fef126ba7b017bcd8d8a21
+    verification: >-
+      Merged on Joe's explicit authorization (2026-10-02, "1. a"). Production
+      serves index-Cn6RDjCg.js; its PortalVPN-Ccc2nry2.js chunk carries the new
+      sample-data notice; /healthz 200.
     note: >-
       Follow-up to portal-redesign-control-room (PR 294, merged 5e885527,
       concept A approved by Joe 2026-10-01). Joe: "continue". The 23 pages
