@@ -3,6 +3,7 @@ import { ArrowRight, MapPin, Scale, UserCheck } from "lucide-react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { DE_LOGO_PRIMARY } from "@/lib/brandAssets";
 import { CTA } from "@/lib/ctaCopy";
+import { TipTag } from "./TipTag";
 import "./08-why-arizona.css";
 
 /**
@@ -98,7 +99,7 @@ export function V7WhyArizona(): JSX.Element {
               <img className="doc__logo" src={DE_LOGO_PRIMARY} alt="Digerati Experts" />
             </div>
             <div className="doc__title">
-              <span className="v7-tag v7-tag--paper">Example format</span>
+              <TipTag className="v7-tag--paper" tip="Shows how an assessment report is laid out, not a real client's findings.">Example format</TipTag>
               <p className="doc__name">Cyber Risk Assessment — findings</p>
             </div>
             {reportRows.map((row) => (

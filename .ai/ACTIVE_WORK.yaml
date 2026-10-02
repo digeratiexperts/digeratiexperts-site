@@ -258,6 +258,15 @@ claims:
       one-step-lighter cards, Inter headings, magenta-violet accents
       (magenta stays the CTA fill). Tier 2 defaults changed on Joe's
       direction; Tier 0/1 untouched. / is unchanged.
+      Round 5 (Joe: "we need this level of work" (uiverse.io elements), then
+      "all of it" after reviewing the DE Element Kit artifact): pointer
+      spotlight on cards (useSpotlight.ts), raised/sheen/pressed buttons,
+      drawn link underlines, floating-label fields with drawn valid checks and
+      an invalid nudge, sending → sent submit (SubmitFace.tsx), FAQ plus/minus
+      with real-height opening, city chip states, classification-tag tooltips
+      (TipTag.tsx, truthful tip text), copy buttons for email and phone
+      (CopyButton.tsx), hero posture bars fill once. Kit's switch, checkbox and
+      segmented control have no matching control on the page, so none added.
   - id: de-desk-gold
     owner: claude
     subsystem: de-desk

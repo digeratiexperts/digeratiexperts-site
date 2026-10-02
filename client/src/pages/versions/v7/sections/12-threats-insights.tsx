@@ -5,6 +5,7 @@ import { useThreatFeed } from "@/hooks/useThreatFeed";
 import { useBooking } from "@/contexts/BookingContext";
 import { CTA } from "@/lib/ctaCopy";
 import { formatThreatDate, THREAT_ATTRIBUTION, type ThreatItem } from "@shared/threatFeed";
+import { TipTag } from "./TipTag";
 import "./12-threats-insights.css";
 
 /**
@@ -238,9 +239,9 @@ export function V7ThreatsInsights(): JSX.Element {
           </motion.div>
 
           <motion.figure className="v7-card v7-card--inset monitor-figure" {...reveal(0.04)}>
-            <span className="v7-tag" style={{ alignSelf: "flex-start" }}>
+            <TipTag style={{ alignSelf: "flex-start" }} tip="Illustrates how monitoring hands off to a person. Not live telemetry.">
               Illustrative
-            </span>
+            </TipTag>
             <ol className="dg" aria-label="Signal, then human triage, then a named owner">
               <li className="dg-step">
                 <span className="v7-seq">01</span>

@@ -21,6 +21,8 @@ import { V7NextStep } from "./sections/15-next-step";
 import { V7ContactFooter } from "./sections/16-contact-footer";
 // Light "dashboard" treatment (Joe, 2026-10-02): last, so it wins over the section sheets.
 import "./v7-dashboard.css";
+import { useRef } from "react";
+import { useSpotlight } from "./useSpotlight";
 
 /**
  * Digerati Experts homepage, Version 7: the live homepage, section by section,
@@ -60,9 +62,11 @@ const sections: { id: string; label: string; theme: "dark" | "light"; showInNav?
 ];
 
 export default function HomepageV7(): JSX.Element {
+  const rootRef = useRef<HTMLDivElement>(null);
+  useSpotlight(rootRef);
   return (
     <FullPageScrollProvider sections={sections} enableOnMobile={false}>
-      <div className="v7 min-h-screen bg-[#050312]">
+      <div className="v7 min-h-screen bg-[#050312]" ref={rootRef}>
         <MegaMenu />
         <SiteBottomBar autohide />
         <main id="home-main" className="contents">
