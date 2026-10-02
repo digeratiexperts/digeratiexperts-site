@@ -1,11 +1,27 @@
-import { PortalLayout } from "./PortalLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ExternalLink, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ExternalLink, ShoppingCart, Building2 } from "lucide-react";
+import { PortalLayout } from "./PortalLayout";
+import { Callout, DataTable, EmptyState, Panel, Token, type DataColumn } from "@/components/portal/ui";
+
+interface Distributor {
+  name: string;
+  url: string;
+  description: string;
+  categories: string[];
+  logo: string;
+  featured: boolean;
+}
+
+interface InternalProduct {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  category: string;
+}
 
 export default function PortalProcurementStore() {
-  const distributors = [
+  const distributors: Distributor[] = [
     {
       name: "Griffin IT",
       url: "https://shop.griffin-it.com/",
@@ -40,7 +56,7 @@ export default function PortalProcurementStore() {
     },
   ];
 
-  const internalProducts = [
+  const internalProducts: InternalProduct[] = [
     {
       id: "INT-001",
       name: "Premium Support Package",
@@ -71,105 +87,121 @@ export default function PortalProcurementStore() {
     },
   ];
 
-  return (
-    <PortalLayout title="Procurement Store">
-      <div className="space-y-8">
-        {/* Internal Products Section */}
-        <section data-testid="section-internal-products">
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Digerati Experts Products & Services</h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">Our exclusive managed services and solutions</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {internalProducts.map((product) => (
-              <Card
-                key={product.id}
-                className="hover:border-[#D3126A]/50 transition-colors cursor-pointer"
-                data-testid={`card-product-${product.id}`}
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{product.name}</CardTitle>
-                      <Badge variant="secondary" className="mt-2">
-                        {product.category}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{product.description}</p>
-                  <div className="flex items-center justify-between">
-                    <p className="text-lg font-bold text-[#D3126A]">{product.price}</p>
-                    <Button size="sm" className="bg-[#D3126A] hover:bg-[#D3126A]/90" data-testid={`button-add-${product.id}`}>
-                      <ShoppingCart className="h-4 w-4 mr-1" />
-                      Add
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        {/* Partner Distributors Section */}
-        <section data-testid="section-partner-distributors">
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Partner Distributors</h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">Access products and services from our trusted partners</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {distributors.map((distributor) => (
-              <Card
-                key={distributor.name}
-                className="hover:border-[#D3126A]/50 transition-colors"
-                data-testid={`card-distributor-${distributor.name.toLowerCase()}`}
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="text-3xl">{distributor.logo}</div>
-                    {distributor.featured && (
-                      <Badge className="bg-[#FFCC00] text-[#030228]">Featured</Badge>
-                    )}
-                  </div>
-                  <CardTitle>{distributor.name}</CardTitle>
-                  <CardDescription>{distributor.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-2">Categories</p>
-                      <div className="flex flex-wrap gap-2">
-                        {distributor.categories.map((category) => (
-                          <Badge key={category} variant="outline" className="text-xs">
-                            {category}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <Button
-                      className="w-full bg-[#D3126A] hover:bg-[#D3126A]/90 text-white"
-                      onClick={() => window.open(distributor.url, "_blank")}
-                      data-testid={`button-visit-${distributor.name.toLowerCase().replace(/\s+/g, '-')}`}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Visit Store
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        {/* Info Box */}
-        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/30 rounded-lg">
-          <p className="text-sm text-blue-800 dark:text-blue-300">
-            <strong>Procurement Support:</strong> Need help finding the right product or service? Contact our procurement team at procurement@digeratiexperts.com or use the support chat.
-          </p>
+  const productColumns: DataColumn<InternalProduct>[] = [
+    {
+      key: "name",
+      header: "Product",
+      primary: true,
+      cell: (p) => (
+        <div className="min-w-0">
+          <p className="font-medium">{p.name}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{p.description}</p>
         </div>
+      ),
+    },
+    { key: "category", header: "Category", primary: true, className: "w-32", cell: (p) => <Token label={p.category} tone="neutral" /> },
+    { key: "price", header: "Price", primary: true, align: "right", className: "w-32 whitespace-nowrap", cell: (p) => <span className="pt-num font-medium">{p.price}</span> },
+    {
+      key: "actions",
+      header: <span className="sr-only">Actions</span>,
+      primary: true,
+      align: "right",
+      className: "w-24",
+      cell: (p) => (
+        <Button variant="brand" size="sm" data-testid={`button-add-${p.id}`}>
+          <ShoppingCart aria-hidden="true" />
+          Add
+        </Button>
+      ),
+    },
+  ];
+
+  const distributorColumns: DataColumn<Distributor>[] = [
+    {
+      key: "name",
+      header: "Distributor",
+      primary: true,
+      cell: (d) => (
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="text-xl leading-none" aria-hidden="true">
+            {d.logo}
+          </span>
+          <div className="min-w-0">
+            <p className="flex flex-wrap items-center gap-2 font-medium">
+              {d.name}
+              {d.featured && <Token label="Featured" tone="brand" />}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{d.description}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "categories",
+      header: "Categories",
+      hideBelowMd: true,
+      cell: (d) => (
+        <span className="flex flex-wrap gap-1.5">
+          {d.categories.map((category) => (
+            <Token key={category} label={category} tone="neutral" className="normal-case tracking-normal" />
+          ))}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      header: <span className="sr-only">Actions</span>,
+      primary: true,
+      align: "right",
+      className: "w-36",
+      cell: (d) => (
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-border bg-card hover:bg-accent"
+          onClick={() => window.open(d.url, "_blank")}
+          data-testid={`button-visit-${d.name.toLowerCase().replace(/\s+/g, "-")}`}
+        >
+          <ExternalLink aria-hidden="true" />
+          Visit Store
+        </Button>
+      ),
+    },
+  ];
+
+  return (
+    <PortalLayout title="Procurement Store" description="Digerati Experts services and the partner distributors we buy through." width="wide">
+      <div className="space-y-4">
+        <section data-testid="section-internal-products">
+          <Panel id="internal-products" title="Digerati Experts products & services" description="Our exclusive managed services and solutions" flush>
+            <DataTable<InternalProduct>
+              columns={productColumns}
+              rows={internalProducts}
+              rowKey={(p) => p.id}
+              rowTestId={(p) => `card-product-${p.id}`}
+              caption="Digerati Experts products and services"
+              empty={<EmptyState compact icon={ShoppingCart} title="No products listed" description="DE services appear here when they are published." />}
+            />
+          </Panel>
+        </section>
+
+        <section data-testid="section-partner-distributors">
+          <Panel id="partner-distributors" title="Partner distributors" description="Access products and services from our trusted partners" flush>
+            <DataTable<Distributor>
+              columns={distributorColumns}
+              rows={distributors}
+              rowKey={(d) => d.name}
+              rowTestId={(d) => `card-distributor-${d.name.toLowerCase()}`}
+              caption="Partner distributors"
+              empty={<EmptyState compact icon={ExternalLink} title="No distributors listed" description="Partner stores appear here when they are added." />}
+            />
+          </Panel>
+        </section>
+
+        <Callout tone="info" title="Procurement support">
+          Need help finding the right product or service? Contact our procurement team at{" "}
+          <strong className="text-foreground">procurement@digeratiexperts.com</strong> or use the support chat.
+        </Callout>
       </div>
     </PortalLayout>
   );

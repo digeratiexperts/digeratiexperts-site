@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { AlertCircle, Check, Clock, Download, MessageSquare, Settings, ShieldCheck, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PortalLayout } from "./PortalLayout";
-import { Download, Monitor, Clock, MessageSquare, Zap, Settings, AlertCircle } from "lucide-react";
+import { Callout, Panel, Token } from "@/components/portal/ui";
 
 interface Agent {
   name: string;
@@ -85,6 +85,29 @@ const digeratiFeatures = [
   },
 ];
 
+const INSTALL_STEPS = [
+  "Click the download button above - a secure token will be generated",
+  'Run "DigeratiExpertsAgent-Setup.exe" with admin privileges',
+  "The installer will automatically use your secure authentication token",
+  "Complete the installation wizard (typical duration: 2-3 minutes)",
+  "Look for the purple Digerati Experts icon in your notification area (system tray)",
+];
+
+const SECURITY_FEATURES = [
+  "JWT token authentication (24-hour expiration)",
+  "HTTPS encrypted communication",
+  "End-to-end encrypted WebSocket chat",
+  "Rate limiting to prevent abuse",
+  "Secure credential storage in Windows Credential Manager",
+];
+
+const PREFERENCES = [
+  "Enable desktop notifications for ticket updates",
+  "Set auto-start on Windows startup (stays in system tray)",
+  "Customize notification sounds and privacy settings",
+  "View system status and support queue without opening portal",
+];
+
 export default function PortalAgent() {
   const systemRequirements = [
     { label: "OS", value: "Windows 10/11" },
@@ -92,8 +115,6 @@ export default function PortalAgent() {
     { label: "Disk Space", value: "50 MB" },
     { label: "Internet", value: "Required for live chat" },
   ];
-
-  const features = digeratiFeatures;
 
   const handleDownload = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -103,290 +124,168 @@ export default function PortalAgent() {
     );
   };
 
-  const handleAlternativeDownload = () => {
-    alert(
-      "This agent package is not available for self-service download. Contact your Digerati Experts account team.",
-    );
-  };
-
   return (
-    <PortalLayout title="Desktop Agent">
-      <div className="space-y-6">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-r from-[#D3126A]/10 to-blue-500/10 border border-[#D3126A]/20 rounded-lg p-8">
-          <div className="flex items-center gap-4">
-            <Monitor className="h-12 w-12 text-[#D3126A]" />
-            <div>
-              <h2 className="text-2xl font-bold mb-1">Digerati Experts Desktop Agent</h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Submit tickets and chat with support directly from your desktop notification area
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Download Section */}
-        <Card className="border-2 border-[#D3126A]/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Download className="h-5 w-5 text-[#D3126A]" />
-              Download Desktop Agent
-            </CardTitle>
-            <CardDescription>Windows 10/11 Compatible</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <Button
-                onClick={handleDownload}
-                className="w-full bg-[#D3126A] hover:bg-[#D3126A]/90 text-white h-12 text-base"
-                data-testid="button-download-agent"
-              >
-                <Download className="h-5 w-5 mr-2" />
+    <PortalLayout
+      title="Desktop Agent"
+      eyebrow="Digerati Experts Desktop Agent"
+      description="Submit tickets and chat with support directly from your desktop notification area."
+    >
+      <div className="space-y-4">
+        <Panel id="agent-download" title="Download Desktop Agent" description="Windows 10/11 compatible">
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <Button variant="brand" size="lg" onClick={handleDownload} className="w-full" data-testid="button-download-agent">
+                <Download aria-hidden="true" />
                 Download Installer (v1.0.0) - Windows
               </Button>
-              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                Safe & verified. No malware. HTTPS encrypted download.
-              </p>
+              <p className="text-center text-xs text-muted-foreground">Safe & verified. No malware. HTTPS encrypted download.</p>
             </div>
 
-            {/* Installation Instructions */}
-            <div className="space-y-3 pt-4 border-t dark:border-slate-700">
-              <h4 className="font-semibold text-sm">Installation Instructions:</h4>
-              <ol className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                <li className="flex gap-2">
-                  <span className="font-bold text-[#D3126A]">1.</span>
-                  <span>Click the download button above - a secure token will be generated</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-bold text-[#D3126A]">2.</span>
-                  <span>Run "DigeratiExpertsAgent-Setup.exe" with admin privileges</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-bold text-[#D3126A]">3.</span>
-                  <span>The installer will automatically use your secure authentication token</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-bold text-[#D3126A]">4.</span>
-                  <span>Complete the installation wizard (typical duration: 2-3 minutes)</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="font-bold text-[#D3126A]">5.</span>
-                  <span>Look for the purple Digerati Experts icon in your notification area (system tray)</span>
-                </li>
+            <div className="space-y-3 border-t border-border pt-4">
+              <h3 className="text-sm font-semibold">Installation instructions</h3>
+              <ol className="space-y-2 text-sm text-muted-foreground">
+                {INSTALL_STEPS.map((step, i) => (
+                  <li key={step} className="flex gap-3">
+                    <span className="pt-num pt-ink pt-tone-brand w-5 shrink-0 font-semibold" aria-hidden="true">
+                      {i + 1}.
+                    </span>
+                    <span>{step}</span>
+                  </li>
+                ))}
               </ol>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </Panel>
 
-        {/* Digerati Agent Features */}
-        <div>
-          <h3 className="text-lg font-bold mb-4">Digerati Expert Agent Features</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Panel id="agent-features" title="Digerati Expert Agent features">
+          <ul className="grid gap-3 sm:grid-cols-2">
             {digeratiFeatures.map((feature) => {
               const Icon = feature.icon;
               return (
-                <Card key={feature.title}>
-                  <CardContent className="pt-6">
-                    <div className="flex gap-3">
-                      <Icon className="h-6 w-6 text-[#D3126A] flex-shrink-0 mt-1" />
-                      <div>
-                        <h4 className="font-semibold mb-1">{feature.title}</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {feature.description}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <li key={feature.title} className="flex gap-3 rounded-lg border border-border bg-background p-3">
+                  <Icon className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{feature.title}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{feature.description}</p>
+                  </div>
+                </li>
               );
             })}
-          </div>
-        </div>
+          </ul>
+        </Panel>
 
-        {/* System Requirements */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">System Requirements</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {systemRequirements.map((req) => (
-                <div key={req.label}>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{req.label}</p>
-                  <p className="font-semibold">{req.value}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Security Notice */}
-        <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900/30">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2 text-green-900 dark:text-green-100">
-              <Settings className="h-5 w-5" />
-              Secure Installation
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="text-sm text-green-900 dark:text-green-300">
-              <h4 className="font-semibold mb-2">🔐 Security Features:</h4>
-              <ul className="space-y-2">
-                <li className="flex gap-2">
-                  <span>✓</span>
-                  <span>JWT token authentication (24-hour expiration)</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>✓</span>
-                  <span>HTTPS encrypted communication</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>✓</span>
-                  <span>End-to-end encrypted WebSocket chat</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>✓</span>
-                  <span>Rate limiting to prevent abuse</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>✓</span>
-                  <span>Secure credential storage in Windows Credential Manager</span>
-                </li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Settings & Configuration */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              After Installation
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <h4 className="font-semibold text-sm mb-2">Configure Your Preferences:</h4>
-              <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                <li className="flex gap-2">
-                  <span>•</span>
-                  <span>Enable desktop notifications for ticket updates</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>•</span>
-                  <span>Set auto-start on Windows startup (stays in system tray)</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>•</span>
-                  <span>Customize notification sounds and privacy settings</span>
-                </li>
-                <li className="flex gap-2">
-                  <span>•</span>
-                  <span>View system status and support queue without opening portal</span>
-                </li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Third-Party Agents */}
-        <div>
-          <h3 className="text-lg font-bold mb-4">Additional Agents Available</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Download and install these recommended agents for device management, endpoint detection, and security monitoring.
-          </p>
-          <div className="space-y-3">
-            {agents.slice(1).map((agent) => (
-              <Card key={agent.name}>
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex-1">
-                      <h4 className="font-semibold">{agent.name}</h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        {agent.description}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        v{agent.version}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        Features
-                      </p>
-                      <ul className="text-xs space-y-1">
-                        {agent.features.map((feature) => (
-                          <li key={feature} className="text-gray-700 dark:text-gray-300">
-                            • {feature}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        Supported OS
-                      </p>
-                      <ul className="text-xs space-y-1">
-                        {agent.supportedOS.map((os) => (
-                          <li key={os} className="text-gray-700 dark:text-gray-300">
-                            • {os}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="w-full"
-                    data-testid={`button-download-agent-${agent.name}`}
-                  >
-                    <a href={agent.downloadUrl} target="_blank" rel="noopener noreferrer">
-                      <Download className="h-4 w-4 mr-2" />
-                      Download v{agent.version}
-                    </a>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Help */}
-        <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/30">
-          <CardContent className="pt-6">
-            <div className="space-y-3">
-              <h4 className="font-semibold text-sm">Need Help?</h4>
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                Having trouble installing or using the desktop agent?
-              </p>
-              <div className="flex gap-2 flex-wrap">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-[#D3126A]/30 hover:bg-[#D3126A]/10"
-                  data-testid="button-view-guide"
-                >
-                  View Installation Guide
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-[#D3126A]/30 hover:bg-[#D3126A]/10"
-                  data-testid="button-contact-support"
-                >
-                  Contact Support
-                </Button>
+        <Panel id="system-requirements" title="System requirements">
+          <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {systemRequirements.map((req) => (
+              <div key={req.label} className="rounded-lg border border-border bg-background p-3">
+                <dt className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">{req.label}</dt>
+                <dd className="mt-1 text-sm font-semibold">{req.value}</dd>
               </div>
+            ))}
+          </dl>
+        </Panel>
+
+        <Callout tone="ok" title="Secure installation">
+          <p className="font-medium text-foreground">Security features:</p>
+          <ul className="mt-1.5 space-y-1.5">
+            {SECURITY_FEATURES.map((item) => (
+              <li key={item} className="flex gap-2">
+                <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </Callout>
+
+        <Panel
+          id="after-install"
+          title={
+            <span className="inline-flex items-center gap-2">
+              <Settings className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              After installation
+            </span>
+          }
+          description="Configure your preferences"
+        >
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            {PREFERENCES.map((item) => (
+              <li key={item} className="flex gap-2">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+
+        <Panel
+          id="additional-agents"
+          title="Additional agents available"
+          description="Download and install these recommended agents for device management, endpoint detection, and security monitoring."
+          flush
+        >
+          <ul className="divide-y divide-border">
+            {agents.slice(1).map((agent) => (
+              <li key={agent.name} className="space-y-4 px-4 py-4 md:px-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{agent.name}</p>
+                    <p className="mt-0.5 text-sm text-muted-foreground">{agent.description}</p>
+                  </div>
+                  <Token label={`v${agent.version}`} tone="neutral" className="pt-num normal-case tracking-normal" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">Features</p>
+                    <ul className="mt-1 space-y-1 text-xs">
+                      {agent.features.map((feature) => (
+                        <li key={feature} className="flex gap-1.5">
+                          <span aria-hidden="true">•</span>
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">Supported OS</p>
+                    <ul className="mt-1 space-y-1 text-xs">
+                      {agent.supportedOS.map((os) => (
+                        <li key={os} className="flex gap-1.5">
+                          <span aria-hidden="true">•</span>
+                          <span>{os}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <Button asChild variant="outline" className="w-full border-border bg-card hover:bg-accent" data-testid={`button-download-agent-${agent.name}`}>
+                  <a href={agent.downloadUrl} target="_blank" rel="noopener noreferrer">
+                    <Download aria-hidden="true" />
+                    Download v{agent.version}
+                  </a>
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+
+        <Callout
+          tone="info"
+          title="Need help?"
+          action={
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" data-testid="button-view-guide">
+                View Installation Guide
+              </Button>
+              <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" data-testid="button-contact-support">
+                Contact Support
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+          }
+        >
+          Having trouble installing or using the desktop agent?
+        </Callout>
       </div>
     </PortalLayout>
   );

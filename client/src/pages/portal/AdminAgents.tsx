@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Upload, Trash2, Edit, CheckCircle } from "lucide-react";
+import { Upload, Trash2, Edit, Package } from "lucide-react";
 import { PortalLayout } from "./PortalLayout";
+import { cn } from "@/lib/utils";
+import { EmptyState, Field, Panel, Token, type TokenTone } from "@/components/portal/ui";
 
 interface Agent {
   id: string;
@@ -90,6 +90,13 @@ const sampleAgents: Agent[] = [
     active: true,
   },
 ];
+
+const TYPE_TONE: Record<Agent["type"], TokenTone> = {
+  jumpcloud: "info",
+  coro: "brand",
+  blackpoint: "bad",
+  custom: "neutral",
+};
 
 export function AdminAgents() {
   const [agents, setAgents] = useState<Agent[]>(sampleAgents);
@@ -200,243 +207,204 @@ export function AdminAgents() {
     setShowUploadForm(true);
   };
 
-  const getAgentBadgeColor = (type: Agent["type"]) => {
-    switch (type) {
-      case "jumpcloud":
-        return "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200";
-      case "coro":
-        return "bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200";
-      case "blackpoint":
-        return "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200";
-      default:
-        return "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200";
-    }
-  };
-
   return (
-    <PortalLayout title="Manage Agents" description="Upload and manage the desktop agents offered in the portal.">
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div />
+    <PortalLayout
+      title="Manage Agents"
+      description="Upload and manage the desktop agents offered in the portal."
+      actions={
         <Button
+          variant="brand"
           onClick={() => setShowUploadForm(!showUploadForm)}
-          className="bg-[#D3126A] text-white hover:bg-[#e01874] hover:text-white"
+          aria-expanded={showUploadForm}
           data-testid="button-upload-agent"
         >
-          <Upload className="h-4 w-4 mr-2" />
+          <Upload aria-hidden="true" />
           Upload Agent
         </Button>
-      </div>
+      }
+    >
+      <div className="space-y-4">
+        {/* Upload Form */}
+        {showUploadForm && (
+          <Panel id="agent-form" title={editingId ? "Edit Agent" : "Add New Agent"}>
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Agent Name" htmlFor="agent-name" required>
+                  <Input
+                    id="agent-name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    placeholder="e.g., JumpCloud Agent"
+                    className="border-border bg-background"
+                    data-testid="input-agent-name"
+                  />
+                </Field>
+                <Field label="Type" htmlFor="agent-type">
+                  <select
+                    id="agent-type"
+                    className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    value={formData.type}
+                    onChange={(e) =>
+                      setFormData({ ...formData, type: e.target.value })
+                    }
+                    data-testid="select-agent-type"
+                  >
+                    <option value="custom">Custom</option>
+                    <option value="jumpcloud">JumpCloud</option>
+                    <option value="coro">Coro.net</option>
+                    <option value="blackpoint">BlackPoint</option>
+                  </select>
+                </Field>
+              </div>
 
-      {/* Upload Form */}
-      {showUploadForm && (
-        <Card className="border-[#D3126A]/50">
-          <CardHeader>
-            <CardTitle>{editingId ? "Edit Agent" : "Add New Agent"}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Agent Name *
-                </label>
+              <Field label="Version" htmlFor="agent-version" required>
                 <Input
-                  value={formData.name}
+                  id="agent-version"
+                  value={formData.version}
                   onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
+                    setFormData({ ...formData, version: e.target.value })
                   }
-                  placeholder="e.g., JumpCloud Agent"
-                  data-testid="input-agent-name"
+                  placeholder="e.g., 1.0.0"
+                  className="border-border bg-background"
+                  data-testid="input-agent-version"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Type</label>
-                <select
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
-                  value={formData.type}
+              </Field>
+
+              <Field label="Download URL" htmlFor="agent-url" required>
+                <Input
+                  id="agent-url"
+                  value={formData.downloadUrl}
                   onChange={(e) =>
-                    setFormData({ ...formData, type: e.target.value })
+                    setFormData({ ...formData, downloadUrl: e.target.value })
                   }
-                  data-testid="select-agent-type"
+                  placeholder="https://..."
+                  className="border-border bg-background"
+                  data-testid="input-agent-url"
+                />
+              </Field>
+
+              <Field label="Features (one per line)" htmlFor="agent-features">
+                <Textarea
+                  id="agent-features"
+                  value={formData.features}
+                  onChange={(e) =>
+                    setFormData({ ...formData, features: e.target.value })
+                  }
+                  placeholder="System monitoring&#10;Auto-updates&#10;..."
+                  className="min-h-20 border-border bg-background"
+                  data-testid="textarea-agent-features"
+                />
+              </Field>
+
+              <Field label="Supported OS (comma-separated)" htmlFor="agent-os">
+                <Input
+                  id="agent-os"
+                  value={formData.supportedOS}
+                  onChange={(e) =>
+                    setFormData({ ...formData, supportedOS: e.target.value })
+                  }
+                  placeholder="Windows 10, Windows 11, macOS"
+                  className="border-border bg-background"
+                  data-testid="input-agent-os"
+                />
+              </Field>
+
+              <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+                <Button variant="brand" onClick={handleUploadAgent} data-testid="button-save-agent">
+                  {editingId ? "Update Agent" : "Save Agent"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-border bg-card hover:bg-accent"
+                  onClick={resetForm}
+                  data-testid="button-cancel-upload"
                 >
-                  <option value="custom">Custom</option>
-                  <option value="jumpcloud">JumpCloud</option>
-                  <option value="coro">Coro.net</option>
-                  <option value="blackpoint">BlackPoint</option>
-                </select>
+                  Cancel
+                </Button>
               </div>
             </div>
+          </Panel>
+        )}
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Version *</label>
-              <Input
-                value={formData.version}
-                onChange={(e) =>
-                  setFormData({ ...formData, version: e.target.value })
-                }
-                placeholder="e.g., 1.0.0"
-                data-testid="input-agent-version"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Download URL *
-              </label>
-              <Input
-                value={formData.downloadUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, downloadUrl: e.target.value })
-                }
-                placeholder="https://..."
-                data-testid="input-agent-url"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Features (one per line)
-              </label>
-              <Textarea
-                value={formData.features}
-                onChange={(e) =>
-                  setFormData({ ...formData, features: e.target.value })
-                }
-                placeholder="System monitoring&#10;Auto-updates&#10;..."
-                className="min-h-20"
-                data-testid="textarea-agent-features"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Supported OS (comma-separated)
-              </label>
-              <Input
-                value={formData.supportedOS}
-                onChange={(e) =>
-                  setFormData({ ...formData, supportedOS: e.target.value })
-                }
-                placeholder="Windows 10, Windows 11, macOS"
-                data-testid="input-agent-os"
-              />
-            </div>
-
-            <div className="flex gap-2 pt-4 border-t">
-              <Button
-                onClick={handleUploadAgent}
-                className="flex-1 bg-[#D3126A] text-white hover:bg-[#e01874] hover:text-white"
-                data-testid="button-save-agent"
-              >
-                {editingId ? "Update Agent" : "Save Agent"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={resetForm}
-                className="flex-1 hover:!bg-slate-100 hover:!text-slate-900 dark:hover:!bg-slate-800 dark:hover:!text-white hover:!border-slate-300"
-                data-testid="button-cancel-upload"
-              >
-                Cancel
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Agents List */}
-      <div className="space-y-3">
-        {agents.map((agent) => (
-          <Card
-            key={agent.id}
-            className={agent.active ? "" : "opacity-60"}
-            data-testid={`card-agent-${agent.id}`}
-          >
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold">{agent.name}</h3>
-                    <Badge className={getAgentBadgeColor(agent.type)}>
-                      {agent.type.toUpperCase()}
-                    </Badge>
-                    {agent.active && (
-                      <Badge className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Active
-                      </Badge>
-                    )}
+        {/* Agents List */}
+        <Panel id="agents-list" title="Agents" description={`${agents.length} agent${agents.length === 1 ? "" : "s"}`} flush>
+          {agents.length === 0 ? (
+            <EmptyState compact icon={Package} title="No agents yet" description="Upload an agent to offer it in the portal." />
+          ) : (
+            <ul className="divide-y divide-border">
+              {agents.map((agent) => (
+                <li
+                  key={agent.id}
+                  className={cn("px-4 py-4 md:px-5", !agent.active && "opacity-60")}
+                  data-testid={`card-agent-${agent.id}`}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-semibold">{agent.name}</h3>
+                    <Token label={agent.type} tone={TYPE_TONE[agent.type]} />
+                    {agent.active && <Token label="Active" tone="ok" dot />}
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    v{agent.version} • Uploaded by {agent.uploadedBy} on{" "}
-                    {agent.uploadedDate}
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    v{agent.version} · Uploaded by {agent.uploadedBy} on{" "}
+                    <span className="pt-num">{agent.uploadedDate}</span>
                   </p>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4 my-3 pb-3 border-b dark:border-gray-700">
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    Features
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {agent.features.slice(0, 3).map((feature, idx) => (
-                      <Badge key={idx} variant="outline" className="text-xs">
-                        {feature}
-                      </Badge>
-                    ))}
-                    {agent.features.length > 3 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{agent.features.length - 3} more
-                      </Badge>
-                    )}
+                  <dl className="my-3 grid gap-4 border-b border-border pb-3 sm:grid-cols-2">
+                    <div>
+                      <dt className="mb-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Features</dt>
+                      <dd className="flex flex-wrap gap-1">
+                        {agent.features.slice(0, 3).map((feature, idx) => (
+                          <Token key={idx} label={feature} tone="neutral" className="normal-case tracking-normal" />
+                        ))}
+                        {agent.features.length > 3 && (
+                          <Token label={`+${agent.features.length - 3} more`} tone="neutral" className="normal-case tracking-normal" />
+                        )}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="mb-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Supported OS</dt>
+                      <dd className="text-sm">{agent.supportedOS.join(", ")}</dd>
+                    </div>
+                  </dl>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-border bg-card hover:bg-accent"
+                      onClick={() => handleToggleAgent(agent.id)}
+                      data-testid={`button-toggle-agent-${agent.id}`}
+                    >
+                      {agent.active ? "Disable" : "Enable"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-border bg-card hover:bg-accent"
+                      onClick={() => handleEditAgent(agent)}
+                      data-testid={`button-edit-agent-${agent.id}`}
+                    >
+                      <Edit className="h-3.5 w-3.5" aria-hidden="true" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-border bg-card pt-ink pt-tone-bad hover:bg-accent"
+                      onClick={() => handleDeleteAgent(agent.id)}
+                      data-testid={`button-delete-agent-${agent.id}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      Delete
+                    </Button>
                   </div>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    Supported OS
-                  </p>
-                  <p className="text-sm">
-                    {agent.supportedOS.join(", ")}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="hover:!bg-slate-100 hover:!text-slate-900 dark:hover:!bg-slate-800 dark:hover:!text-white hover:!border-slate-300"
-                  onClick={() => handleToggleAgent(agent.id)}
-                  data-testid={`button-toggle-agent-${agent.id}`}
-                >
-                  {agent.active ? "Disable" : "Enable"}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="hover:!bg-slate-100 hover:!text-slate-900 dark:hover:!bg-slate-800 dark:hover:!text-white hover:!border-slate-300"
-                  onClick={() => handleEditAgent(agent)}
-                  data-testid={`button-edit-agent-${agent.id}`}
-                >
-                  <Edit className="h-3 w-3 mr-1" />
-                  Edit
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-red-600 hover:!bg-red-50 hover:!text-red-700 hover:!border-red-300 dark:hover:!bg-red-950/40"
-                  onClick={() => handleDeleteAgent(agent.id)}
-                  data-testid={`button-delete-agent-${agent.id}`}
-                >
-                  <Trash2 className="h-3 w-3 mr-1" />
-                  Delete
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
       </div>
-    </div>
     </PortalLayout>
   );
 }

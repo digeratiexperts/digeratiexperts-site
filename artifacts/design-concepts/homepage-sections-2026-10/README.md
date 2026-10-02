@@ -53,3 +53,16 @@ If Joe picks this direction, the integration PR records these in `docs/CLAIMS-RE
 - **Industries photo cards: keep.** "i also dont want to lose UI design like the industries with the hover color picture. a lot of subtle work can be lost so be careful." Section 10 restores the five photographs with the live treatment (grayscale at rest, colour on hover and keyboard focus, magenta border, arrow nudge, phone snap rail with scroll buttons). This overrides the earlier "no photographs" direction for this section; the claims-register note that calls them stock photographs is recorded, and Joe's decision stands. `renders/10-industries-1440-hover.png` shows the hover state.
 - **Bottom bar: upgrade with autohide that is not annoying.** `bar/` holds the prototype, the behaviour checks (15/15 pass) and the integration spec.
 - **Subtle work:** `INTERACTION-INVENTORY.md` lists every hover, focus, transition, reveal and image treatment on the live page, so integration keeps them.
+
+## Joe's decisions, 2026-10-02 (multiple-choice review)
+
+| Question | Answer |
+|---|---|
+| Merge the `/version-7` preview | Merge now |
+| Replace `/` with Version 7 | Not yet |
+| Bottom-bar autohide | Preview only |
+| Phone eight-block label sizes | Keep the approved sizes |
+| Ask DE nudge over the phone hero | Leave to the Desk lane; keep an eye on it later |
+| Unsourced proof-section review lines | Build a funnel that brings Google, Yelp and Thumbtack reviews into the site's data |
+| "24/7 Security Response Team" label | SLA wording; V7 already reads "Security Updates" |
+| "Digerati" alone | Asked for a recommendation |
