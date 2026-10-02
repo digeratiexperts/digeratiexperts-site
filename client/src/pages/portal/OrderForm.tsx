@@ -1,16 +1,12 @@
 import { useState, useMemo } from "react";
 import { PortalLayout } from "./PortalLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Server, Shield, ClipboardCheck, Check, ChevronRight, FileText, Send, Calculator,
-  Building2, User, Calendar, DollarSign, Info
+  Building2, User, Calendar, DollarSign, Loader2
 } from "lucide-react";
 import { coreDocuments } from "@/data/serviceCatalog";
 import { pricing } from "@/data/pricing";
@@ -25,6 +21,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { portalPost } from "@/lib/portalApi";
 import { useLocation } from "wouter";
+import { cn } from "@/lib/utils";
+import { Callout, Field, Panel, Token } from "@/components/portal/ui";
 
 interface SelectedService {
   serviceId: string;
@@ -75,10 +73,8 @@ function formatLineAmount(service: PortalOrderCatalogItem): string {
   return `$${catalogUnitPrice(service).toLocaleString()}`;
 }
 
-const fieldClass =
-  "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-[#D3126A]/40";
-const labelClass = "text-slate-700";
-const cardClass = "bg-white border-slate-200 shadow-sm";
+const fieldClass = "border-border bg-background";
+const subPanelClass = "rounded-lg border border-border bg-background p-4";
 
 export function OrderForm() {
   const { toast } = useToast();
@@ -272,68 +268,69 @@ export function OrderForm() {
   const stepIndex = steps.findIndex((s) => s.id === step);
 
   const SummaryPanel = ({ showDocs = true, continueLabel }: { showDocs?: boolean; continueLabel?: string }) => (
-    <Card className={`${cardClass} sticky top-6`}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-slate-900 text-base">
-          <Calculator className="w-4 h-4 text-[#D3126A]" />
-          Order Summary
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <Panel
+      id="order-summary"
+      className="sticky top-6"
+      title={
+        <span className="inline-flex items-center gap-2">
+          <Calculator className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          Order summary
+        </span>
+      }
+    >
+      <div className="space-y-4">
         {selectedServices.length === 0 ? (
-          <p className="text-slate-500 text-sm text-center py-3">Select services to see pricing</p>
+          <p className="py-3 text-center text-sm text-muted-foreground">Select services to see pricing</p>
         ) : (
           <>
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <ul className="max-h-48 space-y-2 overflow-y-auto pr-1">
               {selectedServices.map((selected) => {
                 const service = getServiceFromCatalog(selected.serviceId);
                 if (!service) return null;
 
                 return (
-                  <div key={selected.serviceId} className="flex justify-between gap-3 text-sm">
-                    <span className="text-slate-600 min-w-0 truncate">
+                  <li key={selected.serviceId} className="flex justify-between gap-3 text-sm">
+                    <span className="min-w-0 truncate text-muted-foreground">
                       {service.shortName}
                       {selected.quantity > 1 && ` ×${selected.quantity}`}
                     </span>
-                    <span className="text-slate-900 font-medium whitespace-nowrap">
+                    <span className="pt-num whitespace-nowrap font-medium">
                       {formatLineAmount(service)}
                     </span>
-                  </div>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
 
-            <Separator className="bg-slate-200" />
+            <div className="border-t border-border" />
 
             {orderPricing.monthlyTotal > 0 && (
-              <div className="flex justify-between items-baseline">
-                <span className="text-slate-500 text-sm">Monthly Total</span>
-                <span className="text-lg font-semibold text-slate-900">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm text-muted-foreground">Monthly Total</span>
+                <span className="pt-num text-lg font-semibold">
                   ${orderPricing.monthlyTotal.toLocaleString()}
-                  <span className="text-sm font-normal text-slate-500">/mo</span>
+                  <span className="text-sm font-normal text-muted-foreground">/mo</span>
                 </span>
               </div>
             )}
 
             {orderPricing.oneTimeTotal > 0 && (
-              <div className="flex justify-between items-baseline">
-                <span className="text-slate-500 text-sm">One-Time</span>
-                <span className="text-lg font-semibold text-slate-900">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm text-muted-foreground">One-Time</span>
+                <span className="pt-num text-lg font-semibold">
                   ${orderPricing.oneTimeTotal.toLocaleString()}
                 </span>
               </div>
             )}
 
             {orderPricing.hasCustom && (
-              <div className="rounded-md bg-de-paper border border-[var(--de-paper-hairline)] px-3 py-2 text-sm text-[#1A1228]">
-                Includes custom-quoted services — final pricing after review.
-              </div>
+              <Callout tone="info">Includes custom-quoted services — final pricing after review.</Callout>
             )}
 
             {orderPricing.monthlyTotal > 0 && (
               <div className="flex justify-between text-xs">
-                <span className="text-slate-600">Annual Value</span>
-                <span className="text-slate-500">${orderPricing.annualTotal.toLocaleString()}/yr</span>
+                <span className="text-muted-foreground">Annual Value</span>
+                <span className="pt-num text-muted-foreground">${orderPricing.annualTotal.toLocaleString()}/yr</span>
               </div>
             )}
           </>
@@ -341,99 +338,104 @@ export function OrderForm() {
 
         {showDocs && (
           <>
-            <Separator className="bg-slate-200" />
+            <div className="border-t border-border" />
             <div>
-              <h4 className="text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#D3126A]" />
+              <h3 className="mb-2 flex items-center gap-2 text-sm font-medium">
+                <FileText className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 Required Documents ({requiredDocuments.length})
-              </h4>
-              <div className="space-y-1 max-h-36 overflow-y-auto">
+              </h3>
+              <ul className="max-h-36 space-y-1 overflow-y-auto">
                 {requiredDocuments.map((doc) => (
-                  <div key={doc.key} className="flex items-center gap-2 text-xs text-slate-500">
-                    <Check className="w-3 h-3 text-[#D3126A] shrink-0" />
+                  <li key={doc.key} className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Check className="pt-ink pt-tone-brand h-3 w-3 shrink-0" aria-hidden="true" />
                     <span className="truncate">{doc.name}</span>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </>
         )}
 
         {continueLabel && (
           <Button
-            className="w-full bg-[#D3126A] hover:bg-[#e01874] text-white"
+            variant="brand"
+            className="w-full"
             disabled={selectedServices.length === 0}
             onClick={() => setStep("details")}
             data-testid="continue-to-details"
           >
             {continueLabel}
-            <ChevronRight className="w-4 h-4 ml-2" />
+            <ChevronRight aria-hidden="true" />
           </Button>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </Panel>
   );
 
   return (
-    <PortalLayout title="Service Order Form">
-      <div className="max-w-6xl mx-auto space-y-5">
+    <PortalLayout
+      title="Service Order Form"
+      description="Pick your services, tell us about your company, then review and submit. We prepare the agreement documents for e-signature."
+      width="wide"
+    >
+      <div className="space-y-4">
         {/* Step indicator */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+        <ol className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 sm:gap-3" aria-label="Order steps">
           {steps.map((s, i) => {
             const active = step === s.id;
             const done = i < stepIndex;
             return (
-              <div key={s.id} className="flex items-center gap-2 sm:gap-3">
-                {i > 0 && <ChevronRight className="w-4 h-4 text-slate-300 hidden sm:block" />}
-                <div
-                  className={`flex items-center gap-2 ${
-                    active ? "text-[#D3126A]" : done ? "text-slate-700" : "text-slate-600"
-                  }`}
-                >
-                  <div
-                    className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold ${
+              <li key={s.id} className="flex items-center gap-2 sm:gap-3" aria-current={active ? "step" : undefined}>
+                {i > 0 && <ChevronRight className="hidden h-4 w-4 text-muted-foreground sm:block" aria-hidden="true" />}
+                <div className={cn("flex items-center gap-2", active ? "text-foreground" : done ? "text-foreground" : "text-muted-foreground")}>
+                  <span
+                    className={cn(
+                      "pt-num flex h-7 w-7 items-center justify-center rounded-full border text-sm font-semibold",
                       active
-                        ? "bg-[#D3126A] text-white"
+                        ? "border-primary bg-primary text-primary-foreground"
                         : done
-                          ? "bg-de-paper text-[#D3126A]"
-                          : "bg-slate-100 text-slate-500"
-                    }`}
+                          ? "pt-token pt-tone-ok"
+                          : "border-border bg-secondary text-muted-foreground",
+                    )}
+                    aria-hidden="true"
                   >
-                    {done ? <Check className="w-3.5 h-3.5" /> : i + 1}
-                  </div>
-                  <span className="font-medium text-sm">{s.label}</span>
+                    {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
+                  </span>
+                  <span className={cn("text-sm", active ? "font-semibold" : "font-medium")}>
+                    {s.label}
+                    {done && <span className="sr-only"> (completed)</span>}
+                  </span>
                 </div>
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ol>
 
         {step === "services" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            <div className="lg:col-span-2 space-y-5">
-              <Card className={cardClass}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-slate-900 text-lg">
-                    <Server className="w-5 h-5 text-[#D3126A]" />
-                    Select Your Services
-                  </CardTitle>
-                  <CardDescription className="text-slate-500">
-                    Choose CSRA, one ProActive ecosystem package, or both. Security, Core IT, and BCDR
-                    are included inside the selected package — they cannot be stacked as separate checkouts.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div className="space-y-4 lg:col-span-2">
+              <Panel
+                id="select-services"
+                title={
+                  <span className="inline-flex items-center gap-2">
+                    <Server className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    Select your services
+                  </span>
+                }
+                description="Choose CSRA, one ProActive ecosystem package, or both. Security, Core IT, and BCDR are included inside the selected package — they cannot be stacked as separate checkouts."
+              >
+                <div className="space-y-6">
                   {(["assessment", "ecosystem"] as const).map((group) => {
                     const items = PORTAL_ORDER_SELECTABLE.filter((item) =>
                       group === "assessment" ? item.id === "csra-assessment" : item.id !== "csra-assessment",
                     );
                     return (
                       <div key={group} className="space-y-2">
-                        <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                        <h3 className="flex items-center gap-2 text-sm font-semibold">
                           {group === "assessment" ? (
-                            <ClipboardCheck className="w-4 h-4 text-[#D3126A]" />
+                            <ClipboardCheck className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                           ) : (
-                            <Shield className="w-4 h-4 text-[#D3126A]" />
+                            <Shield className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                           )}
                           {group === "assessment" ? "Assessment" : "ProActive ecosystem (pick one)"}
                         </h3>
@@ -446,11 +448,13 @@ export function OrderForm() {
                                 key={service.id}
                                 role="button"
                                 tabIndex={0}
-                                className={`relative px-3 py-2.5 rounded-lg border transition-all cursor-pointer ${
+                                aria-pressed={isSelected}
+                                className={cn(
+                                  "relative cursor-pointer rounded-lg border px-3 py-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                   isSelected
-                                    ? "border-[#D3126A] bg-de-paper ring-1 ring-[#D3126A]/20"
-                                    : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80"
-                                }`}
+                                    ? "border-primary bg-accent ring-1 ring-ring"
+                                    : "border-border bg-background pt-hover-brand hover:bg-accent/60",
+                                )}
                                 onClick={() => toggleService(service)}
                                 onKeyDown={(event) => {
                                   if (event.key === "Enter" || event.key === " ") {
@@ -461,53 +465,47 @@ export function OrderForm() {
                                 data-testid={`service-card-${service.id}`}
                               >
                                 <div className="flex items-start justify-between gap-3">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                                      <h4 className="font-semibold text-slate-900 text-sm leading-snug">
+                                  <div className="min-w-0 flex-1">
+                                    <div className="mb-0.5 flex flex-wrap items-center gap-2">
+                                      <h4 className="text-sm font-semibold leading-snug">
                                         {service.name}
                                       </h4>
                                       {service.tier && (
-                                        <Badge
-                                          variant="outline"
-                                          className="text-xs h-5 border-slate-300 text-slate-600 bg-slate-50"
-                                        >
-                                          {service.tier.charAt(0).toUpperCase() + service.tier.slice(1)}
-                                        </Badge>
+                                        <Token label={service.tier.charAt(0).toUpperCase() + service.tier.slice(1)} tone="neutral" className="normal-case tracking-normal" />
                                       )}
                                     </div>
-                                    <p className="text-slate-500 text-xs mb-1.5 line-clamp-2">
+                                    <p className="mb-1.5 line-clamp-2 text-xs text-muted-foreground">
                                       {service.description}
                                     </p>
                                     <div className="flex flex-wrap gap-1">
                                       {service.features.slice(0, 3).map((feature) => (
                                         <span
                                           key={feature}
-                                          className="text-sm bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded"
+                                          className="rounded bg-secondary px-1.5 py-0.5 text-xs text-muted-foreground"
                                         >
                                           {feature}
                                         </span>
                                       ))}
                                     </div>
                                   </div>
-                                  <div className="text-right shrink-0 min-w-[6.5rem]">
+                                  <div className="min-w-[6.5rem] shrink-0 text-right">
                                     <div
-                                      className={`font-semibold leading-tight ${
-                                        service.checkoutMode === "quote_after_review"
-                                          ? "text-sm text-[#1A1228]"
-                                          : "text-lg text-slate-900"
-                                      }`}
+                                      className={cn(
+                                        "pt-num font-semibold leading-tight",
+                                        service.checkoutMode === "quote_after_review" ? "text-sm" : "text-lg",
+                                      )}
                                     >
                                       {price.primary}
                                     </div>
                                     {price.secondary && (
-                                      <div className="text-sm text-slate-600">{price.secondary}</div>
+                                      <div className="text-xs text-muted-foreground">{price.secondary}</div>
                                     )}
                                   </div>
                                 </div>
                                 {isSelected && (
-                                  <div className="mt-2.5 pt-2.5 border-t border-[var(--de-paper-hairline)] flex items-center gap-1.5">
-                                    <Check className="w-4 h-4 text-[#D3126A]" />
-                                    <span className="text-[#D3126A] font-medium text-sm">Selected</span>
+                                  <div className="pt-ink pt-tone-brand mt-2.5 flex items-center gap-1.5 border-t border-border pt-2.5">
+                                    <Check className="h-4 w-4" aria-hidden="true" />
+                                    <span className="text-sm font-medium">Selected</span>
                                   </div>
                                 )}
                               </div>
@@ -518,36 +516,33 @@ export function OrderForm() {
                     );
                   })}
                   {orderPricing.error && (
-                    <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-                      {orderPricing.error}
-                    </p>
+                    <Callout tone="bad">{orderPricing.error}</Callout>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </Panel>
             </div>
 
-            <div className="space-y-5">
+            <div className="space-y-4">
               <SummaryPanel showDocs continueLabel="Continue to Details" />
             </div>
           </div>
         )}
 
         {step === "details" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            <div className="lg:col-span-2 space-y-5">
-              <Card className={cardClass}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-slate-900 text-lg">
-                    <Building2 className="w-5 h-5 text-[#D3126A]" />
-                    Company Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="legalName" className={labelClass}>
-                        Legal Company Name *
-                      </Label>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div className="space-y-4 lg:col-span-2">
+              <Panel
+                id="company-info"
+                title={
+                  <span className="inline-flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    Company information
+                  </span>
+                }
+              >
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Field label="Legal Company Name" htmlFor="legalName" required>
                       <Input
                         id="legalName"
                         value={clientInfo.legalName}
@@ -555,11 +550,8 @@ export function OrderForm() {
                         className={fieldClass}
                         data-testid="input-legal-name"
                       />
-                    </div>
-                    <div>
-                      <Label htmlFor="dbaName" className={labelClass}>
-                        DBA / Trade Name
-                      </Label>
+                    </Field>
+                    <Field label="DBA / Trade Name" htmlFor="dbaName">
                       <Input
                         id="dbaName"
                         value={clientInfo.dbaName}
@@ -567,13 +559,10 @@ export function OrderForm() {
                         className={fieldClass}
                         data-testid="input-dba-name"
                       />
-                    </div>
+                    </Field>
                   </div>
 
-                  <div>
-                    <Label htmlFor="address" className={labelClass}>
-                      Street Address *
-                    </Label>
+                  <Field label="Street Address" htmlFor="address" required>
                     <Input
                       id="address"
                       value={clientInfo.address}
@@ -581,13 +570,10 @@ export function OrderForm() {
                       className={fieldClass}
                       data-testid="input-address"
                     />
-                  </div>
+                  </Field>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="col-span-2 md:col-span-1">
-                      <Label htmlFor="city" className={labelClass}>
-                        City *
-                      </Label>
+                  <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                    <Field label="City" htmlFor="city" required className="col-span-2 md:col-span-1">
                       <Input
                         id="city"
                         value={clientInfo.city}
@@ -595,16 +581,13 @@ export function OrderForm() {
                         className={fieldClass}
                         data-testid="input-city"
                       />
-                    </div>
-                    <div>
-                      <Label htmlFor="state" className={labelClass}>
-                        State *
-                      </Label>
+                    </Field>
+                    <Field label="State" labelId="state-label" required>
                       <Select
                         value={clientInfo.state}
                         onValueChange={(v) => setClientInfo((prev) => ({ ...prev, state: v }))}
                       >
-                        <SelectTrigger className={fieldClass} data-testid="select-state">
+                        <SelectTrigger aria-labelledby="state-label" className={fieldClass} data-testid="select-state">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -615,11 +598,8 @@ export function OrderForm() {
                           <SelectItem value="TX">Texas</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="zipCode" className={labelClass}>
-                        ZIP Code *
-                      </Label>
+                    </Field>
+                    <Field label="ZIP Code" htmlFor="zipCode" required>
                       <Input
                         id="zipCode"
                         value={clientInfo.zipCode}
@@ -627,14 +607,11 @@ export function OrderForm() {
                         className={fieldClass}
                         data-testid="input-zip"
                       />
-                    </div>
+                    </Field>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="phone" className={labelClass}>
-                        Phone *
-                      </Label>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Field label="Phone" htmlFor="phone" required>
                       <Input
                         id="phone"
                         value={clientInfo.phone}
@@ -642,11 +619,8 @@ export function OrderForm() {
                         className={fieldClass}
                         data-testid="input-phone"
                       />
-                    </div>
-                    <div>
-                      <Label htmlFor="website" className={labelClass}>
-                        Website
-                      </Label>
+                    </Field>
+                    <Field label="Website" htmlFor="website">
                       <Input
                         id="website"
                         value={clientInfo.website}
@@ -655,27 +629,24 @@ export function OrderForm() {
                         placeholder="https://"
                         data-testid="input-website"
                       />
-                    </div>
+                    </Field>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </Panel>
 
-              <Card className={cardClass}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-slate-900 text-lg">
-                    <User className="w-5 h-5 text-[#D3126A]" />
-                    Authorized Signatory
-                  </CardTitle>
-                  <CardDescription className="text-slate-500">
-                    The person authorized to sign contracts on behalf of the company
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="signatoryName" className={labelClass}>
-                        Full Name *
-                      </Label>
+              <Panel
+                id="signatory"
+                title={
+                  <span className="inline-flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    Authorized signatory
+                  </span>
+                }
+                description="The person authorized to sign contracts on behalf of the company"
+              >
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Field label="Full Name" htmlFor="signatoryName" required>
                       <Input
                         id="signatoryName"
                         value={clientInfo.signatoryName}
@@ -685,11 +656,8 @@ export function OrderForm() {
                         className={fieldClass}
                         data-testid="input-signatory-name"
                       />
-                    </div>
-                    <div>
-                      <Label htmlFor="signatoryTitle" className={labelClass}>
-                        Title *
-                      </Label>
+                    </Field>
+                    <Field label="Title" htmlFor="signatoryTitle" required>
                       <Input
                         id="signatoryTitle"
                         value={clientInfo.signatoryTitle}
@@ -700,14 +668,11 @@ export function OrderForm() {
                         placeholder="e.g., CEO, Owner, President"
                         data-testid="input-signatory-title"
                       />
-                    </div>
+                    </Field>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="signatoryEmail" className={labelClass}>
-                        Email *
-                      </Label>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Field label="Email" htmlFor="signatoryEmail" required>
                       <Input
                         id="signatoryEmail"
                         type="email"
@@ -718,11 +683,8 @@ export function OrderForm() {
                         className={fieldClass}
                         data-testid="input-signatory-email"
                       />
-                    </div>
-                    <div>
-                      <Label htmlFor="signatoryPhone" className={labelClass}>
-                        Phone
-                      </Label>
+                    </Field>
+                    <Field label="Phone" htmlFor="signatoryPhone">
                       <Input
                         id="signatoryPhone"
                         value={clientInfo.signatoryPhone}
@@ -732,24 +694,23 @@ export function OrderForm() {
                         className={fieldClass}
                         data-testid="input-signatory-phone"
                       />
-                    </div>
+                    </Field>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </Panel>
 
-              <Card className={cardClass}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-slate-900 text-lg">
-                    <Calendar className="w-5 h-5 text-[#D3126A]" />
-                    Service Configuration
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="numberOfSites" className={labelClass}>
-                        Number of Sites
-                      </Label>
+              <Panel
+                id="service-config"
+                title={
+                  <span className="inline-flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    Service configuration
+                  </span>
+                }
+              >
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <Field label="Number of Sites" htmlFor="numberOfSites">
                       <Input
                         id="numberOfSites"
                         type="number"
@@ -771,11 +732,8 @@ export function OrderForm() {
                         className={fieldClass}
                         data-testid="input-sites"
                       />
-                    </div>
-                    <div>
-                      <Label htmlFor="numberOfUsers" className={labelClass}>
-                        Number of Users
-                      </Label>
+                    </Field>
+                    <Field label="Number of Users" htmlFor="numberOfUsers">
                       <Input
                         id="numberOfUsers"
                         type="number"
@@ -797,16 +755,13 @@ export function OrderForm() {
                         className={fieldClass}
                         data-testid="input-users"
                       />
-                    </div>
-                    <div>
-                      <Label htmlFor="contractTerm" className={labelClass}>
-                        Contract Term
-                      </Label>
+                    </Field>
+                    <Field label="Contract Term" labelId="contractTerm-label">
                       <Select
                         value={clientInfo.contractTerm}
                         onValueChange={(v) => setClientInfo((prev) => ({ ...prev, contractTerm: v }))}
                       >
-                        <SelectTrigger className={fieldClass} data-testid="select-term">
+                        <SelectTrigger aria-labelledby="contractTerm-label" className={fieldClass} data-testid="select-term">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -815,13 +770,10 @@ export function OrderForm() {
                           <SelectItem value="36">36 Months</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
+                    </Field>
                   </div>
 
-                  <div>
-                    <Label htmlFor="preferredStartDate" className={labelClass}>
-                      Preferred Start Date
-                    </Label>
+                  <Field label="Preferred Start Date" htmlFor="preferredStartDate">
                     <Input
                       id="preferredStartDate"
                       type="date"
@@ -832,12 +784,9 @@ export function OrderForm() {
                       className={fieldClass}
                       data-testid="input-start-date"
                     />
-                  </div>
+                  </Field>
 
-                  <div>
-                    <Label htmlFor="notes" className={labelClass}>
-                      Additional Notes
-                    </Label>
+                  <Field label="Additional Notes" htmlFor="notes">
                     <Textarea
                       id="notes"
                       value={clientInfo.notes}
@@ -847,271 +796,264 @@ export function OrderForm() {
                       placeholder="Any special requirements or notes..."
                       data-testid="input-notes"
                     />
-                  </div>
-                </CardContent>
-              </Card>
+                  </Field>
+                </div>
+              </Panel>
 
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Button
                   variant="outline"
-                  className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                  className="border-border bg-card hover:bg-accent"
                   onClick={() => setStep("services")}
                   data-testid="back-to-services"
                 >
                   Back to Services
                 </Button>
                 <Button
-                  className="flex-1 bg-[#D3126A] hover:bg-[#e01874] text-white"
+                  variant="brand"
+                  className="flex-1"
                   onClick={() => setStep("review")}
                   data-testid="continue-to-review"
                 >
                   Review & Submit
-                  <ChevronRight className="w-4 h-4 ml-2" />
+                  <ChevronRight aria-hidden="true" />
                 </Button>
               </div>
             </div>
 
             <div>
-              <Card className={`${cardClass} sticky top-6`}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-slate-900 text-base">
-                    <DollarSign className="w-4 h-4 text-[#D3126A]" />
-                    Pricing Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
+              <Panel
+                id="pricing-summary"
+                className="sticky top-6"
+                title={
+                  <span className="inline-flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    Pricing summary
+                  </span>
+                }
+              >
+                <div className="space-y-4">
+                  <ul className="space-y-2">
                     {selectedServices.map((selected) => {
                       const service = getServiceFromCatalog(selected.serviceId);
                       if (!service) return null;
 
                       return (
-                        <div key={selected.serviceId} className="flex justify-between gap-3 text-sm">
-                          <span className="text-slate-600 truncate">{service.shortName}</span>
-                          <span className="text-slate-900 font-medium whitespace-nowrap">
+                        <li key={selected.serviceId} className="flex justify-between gap-3 text-sm">
+                          <span className="truncate text-muted-foreground">{service.shortName}</span>
+                          <span className="pt-num whitespace-nowrap font-medium">
                             {formatLineAmount(service)}
                           </span>
-                        </div>
+                        </li>
                       );
                     })}
-                  </div>
+                  </ul>
 
-                  <Separator className="bg-slate-200" />
+                  <div className="border-t border-border" />
 
                   <div className="space-y-2">
                     {orderPricing.monthlyTotal > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-slate-500 text-sm">Monthly</span>
-                        <span className="text-lg font-semibold text-slate-900">
+                        <span className="text-sm text-muted-foreground">Monthly</span>
+                        <span className="pt-num text-lg font-semibold">
                           ${orderPricing.monthlyTotal.toLocaleString()}
                         </span>
                       </div>
                     )}
                     {orderPricing.oneTimeTotal > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-slate-500 text-sm">One-Time</span>
-                        <span className="text-slate-900 font-medium">
+                        <span className="text-sm text-muted-foreground">One-Time</span>
+                        <span className="pt-num font-medium">
                           ${orderPricing.oneTimeTotal.toLocaleString()}
                         </span>
                       </div>
                     )}
                     {orderPricing.hasCustom && (
-                      <p className="text-xs text-[#1A1228] bg-de-paper border border-[var(--de-paper-hairline)] rounded-md px-2 py-1.5">
-                        Custom quote items included — priced after review.
-                      </p>
+                      <Callout tone="info">Custom quote items included — priced after review.</Callout>
                     )}
                     {orderPricing.monthlyTotal === 0 &&
                       orderPricing.oneTimeTotal === 0 &&
                       orderPricing.hasCustom && (
                         <div className="flex justify-between">
-                          <span className="text-slate-500 text-sm">Pricing</span>
-                          <span className="text-[#1A1228] font-semibold">Custom quote</span>
+                          <span className="text-sm text-muted-foreground">Pricing</span>
+                          <span className="font-semibold">Custom quote</span>
                         </div>
                       )}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </Panel>
             </div>
           </div>
         )}
 
         {step === "review" && (
-          <div className="space-y-5">
-            <Card className={cardClass}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-slate-900 text-lg">Order Review</CardTitle>
-                <CardDescription className="text-slate-500">
-                  Please review your order before submitting
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4">
-                    <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2 text-sm">
-                      <Building2 className="w-4 h-4 text-[#D3126A]" />
+          <div className="space-y-4">
+            <Panel id="order-review" title="Order review" description="Please review your order before submitting">
+              <div className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className={subPanelClass}>
+                    <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                      <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                       Company
-                    </h4>
+                    </h3>
                     <div className="space-y-1 text-sm">
-                      <p className="text-slate-900 font-medium">
+                      <p className="font-medium">
                         {clientInfo.legalName || "Not provided"}
                       </p>
                       {clientInfo.dbaName && (
-                        <p className="text-slate-500">DBA: {clientInfo.dbaName}</p>
+                        <p className="text-muted-foreground">DBA: {clientInfo.dbaName}</p>
                       )}
-                      <p className="text-slate-500">{clientInfo.address}</p>
-                      <p className="text-slate-500">
+                      <p className="text-muted-foreground">{clientInfo.address}</p>
+                      <p className="text-muted-foreground">
                         {clientInfo.city}, {clientInfo.state} {clientInfo.zipCode}
                       </p>
-                      <p className="text-slate-500">{clientInfo.phone}</p>
+                      <p className="text-muted-foreground">{clientInfo.phone}</p>
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4">
-                    <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2 text-sm">
-                      <User className="w-4 h-4 text-[#D3126A]" />
+                  <div className={subPanelClass}>
+                    <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                      <User className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                       Authorized Signatory
-                    </h4>
+                    </h3>
                     <div className="space-y-1 text-sm">
-                      <p className="text-slate-900 font-medium">
+                      <p className="font-medium">
                         {clientInfo.signatoryName || "Not provided"}
                       </p>
-                      <p className="text-slate-500">{clientInfo.signatoryTitle}</p>
-                      <p className="text-slate-500">{clientInfo.signatoryEmail}</p>
+                      <p className="text-muted-foreground">{clientInfo.signatoryTitle}</p>
+                      <p className="text-muted-foreground">{clientInfo.signatoryEmail}</p>
                     </div>
                   </div>
                 </div>
 
-                <Separator className="bg-slate-200" />
+                <div className="border-t border-border" />
 
                 <div>
-                  <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2 text-sm">
-                    <Server className="w-4 h-4 text-[#D3126A]" />
+                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <Server className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     Selected Services
-                  </h4>
-                  <div className="space-y-2">
+                  </h3>
+                  <ul className="space-y-2">
                     {selectedServices.map((selected) => {
                       const service = getServiceFromCatalog(selected.serviceId);
                       if (!service) return null;
 
                       return (
-                        <div
+                        <li
                           key={selected.serviceId}
-                          className="flex justify-between gap-4 p-3 bg-slate-50 border border-slate-200 rounded-lg"
+                          className="flex justify-between gap-4 rounded-lg border border-border bg-background p-3"
                         >
                           <div className="min-w-0">
-                            <p className="text-slate-900 font-medium text-sm">{service.name}</p>
-                            <p className="text-slate-500 text-xs">
+                            <p className="text-sm font-medium">{service.name}</p>
+                            <p className="pt-num text-xs text-muted-foreground">
                               {service.checkoutMode === "quote_after_review"
                                 ? `${service.hubSku} · priced after review`
                                 : `${service.hubSku} · catalog price`}
                             </p>
                           </div>
                           <p
-                            className={`font-semibold whitespace-nowrap ${
-                              service.checkoutMode === "quote_after_review"
-                                ? "text-[#1A1228] text-sm"
-                                : "text-[#D3126A] text-lg"
-                            }`}
+                            className={cn(
+                              "pt-num whitespace-nowrap font-semibold",
+                              service.checkoutMode === "quote_after_review" ? "text-sm" : "pt-ink pt-tone-brand text-lg",
+                            )}
                           >
                             {formatLineAmount(service)}
                           </p>
-                        </div>
+                        </li>
                       );
                     })}
-                  </div>
+                  </ul>
                 </div>
 
-                <Separator className="bg-slate-200" />
+                <div className="border-t border-border" />
 
                 <div>
-                  <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2 text-sm">
-                    <FileText className="w-4 h-4 text-[#D3126A]" />
+                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                    <FileText className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     Documents to be Signed
-                  </h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  </h3>
+                  <ul className="grid grid-cols-2 gap-2 md:grid-cols-3">
                     {requiredDocuments.map((doc) => (
-                      <div
+                      <li
                         key={doc.key}
-                        className="flex items-center gap-2 text-sm text-slate-700 p-2 bg-slate-50 border border-slate-200 rounded"
+                        className="flex items-center gap-2 rounded border border-border bg-background p-2 text-sm"
                       >
-                        <FileText className="w-4 h-4 text-[#D3126A] shrink-0" />
+                        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                         <span className="truncate">{doc.name}</span>
-                      </div>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
 
-                <Separator className="bg-slate-200" />
+                <div className="border-t border-border" />
 
-                <div className="bg-de-paper border border-[var(--de-paper-hairline)] rounded-lg p-4">
-                  <div className="flex flex-wrap justify-between items-center gap-4">
+                <div className={subPanelClass}>
+                  <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                      <p className="text-slate-500 text-sm">
+                      <p className="text-sm text-muted-foreground">
                         {orderPricing.payableCheckout ? "Catalog total" : "Pricing"}
                       </p>
                       {orderPricing.payableCheckout ? (
-                        <p className="text-3xl font-bold text-slate-900">
+                        <p className="pt-num text-3xl font-semibold">
                           ${orderPricing.oneTimeTotal.toLocaleString()}
-                          <span className="text-base font-normal text-slate-500"> one-time</span>
+                          <span className="text-base font-normal text-muted-foreground"> one-time</span>
                         </p>
                       ) : (
-                        <p className="text-2xl font-bold text-[#1A1228]">Priced after review</p>
+                        <p className="text-2xl font-semibold">Priced after review</p>
                       )}
                       {orderPricing.hasCustom && (
-                        <p className="text-[#1A1228] text-sm mt-1">
+                        <p className="mt-1 text-sm text-muted-foreground">
                           Package lines are quoted after review. They are not a payable checkout total.
                         </p>
                       )}
                     </div>
                     <div className="text-right">
-                      <p className="text-slate-500 text-sm">Contract Term</p>
-                      <p className="text-slate-900 font-medium">{clientInfo.contractTerm} Months</p>
+                      <p className="text-sm text-muted-foreground">Contract Term</p>
+                      <p className="pt-num font-medium">{clientInfo.contractTerm} Months</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                  <Info className="w-5 h-5 text-[#D3126A] flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-slate-500">
-                    Upon submission, our team will prepare your service agreement documents. You will
-                    receive an email at{" "}
-                    <span className="text-slate-800 font-medium">
-                      {clientInfo.signatoryEmail || "your email"}
-                    </span>{" "}
-                    with a link to review and digitally sign the documents.
-                  </p>
-                </div>
+                <Callout tone="info">
+                  Upon submission, our team will prepare your service agreement documents. You will
+                  receive an email at{" "}
+                  <span className="font-medium text-foreground">
+                    {clientInfo.signatoryEmail || "your email"}
+                  </span>{" "}
+                  with a link to review and digitally sign the documents.
+                </Callout>
 
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
                   <Button
                     variant="outline"
-                    className="border-slate-200 text-slate-700 hover:bg-slate-50"
+                    className="border-border bg-card hover:bg-accent"
                     onClick={() => setStep("details")}
                     data-testid="back-to-details"
                   >
                     Back
                   </Button>
                   <Button
-                    className="flex-1 bg-[#D3126A] hover:bg-[#e01874] text-white"
+                    variant="brand"
+                    className="flex-1"
                     onClick={handleSubmit}
                     disabled={isSubmitting || Boolean(orderPricing.error) || selectedServices.length === 0}
                     data-testid="submit-order"
                   >
                     {isSubmitting ? (
                       <>
-                        <div className="w-4 h-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <Loader2 className="animate-spin" aria-hidden="true" />
                         Submitting...
                       </>
                     ) : (
                       <>
-                        <Send className="w-4 h-4 mr-2" />
+                        <Send aria-hidden="true" />
                         Submit Order
                       </>
                     )}
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </Panel>
           </div>
         )}
       </div>

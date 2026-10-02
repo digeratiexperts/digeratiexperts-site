@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PortalLayout } from "./PortalLayout";
-import { Calendar, CheckCircle, AlertCircle, Clock, FileText, CheckSquare } from "lucide-react";
+import { Calendar, CheckCircle, AlertCircle, Clock, FileText, CheckSquare, X } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Callout, EmptyState, Panel, Token, type TokenTone } from "@/components/portal/ui";
 
 interface CalendarEvent {
   id: string;
@@ -17,43 +17,29 @@ interface CalendarEvent {
   dueDate?: Date;
 }
 
-const eventTypeConfig = {
-  deployment: {
-    label: "Deployment",
-    color: "bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-200",
-    icon: "🚀",
-  },
-  project: {
-    label: "Project",
-    color: "bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-200",
-    icon: "📋",
-  },
-  tbr: {
-    label: "Technology Business Review",
-    color: "bg-orange-100 dark:bg-orange-900/30 text-orange-900 dark:text-orange-200",
-    icon: "📊",
-  },
-  "cyber-assessment": {
-    label: "Cyber Assessment",
-    color: "bg-red-100 dark:bg-red-900/30 text-red-900 dark:text-red-200",
-    icon: "🔐",
-  },
-  "site-assessment": {
-    label: "Site Assessment",
-    color: "bg-green-100 dark:bg-green-900/30 text-green-900 dark:text-green-200",
-    icon: "🏢",
-  },
-  "risk-assessment": {
-    label: "Cyber Risk Assessment",
-    color: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-900 dark:text-yellow-200",
-    icon: "⚠️",
-  },
-  questionnaire: {
-    label: "Questionnaire",
-    color: "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-900 dark:text-indigo-200",
-    icon: "📝",
-  },
+/** Colour carries the event family; the label and icon always travel with it. */
+const eventTypeConfig: Record<CalendarEvent["type"], { label: string; tone: TokenTone; toneClass: string; icon: string }> = {
+  deployment: { label: "Deployment", tone: "info", toneClass: "pt-tone-info", icon: "🚀" },
+  project: { label: "Project", tone: "neutral", toneClass: "", icon: "📋" },
+  tbr: { label: "Technology Business Review", tone: "brand", toneClass: "pt-tone-brand", icon: "📊" },
+  "cyber-assessment": { label: "Cyber Assessment", tone: "bad", toneClass: "pt-tone-bad", icon: "🔐" },
+  "site-assessment": { label: "Site Assessment", tone: "ok", toneClass: "pt-tone-ok", icon: "🏢" },
+  "risk-assessment": { label: "Cyber Risk Assessment", tone: "warn", toneClass: "pt-tone-warn", icon: "⚠️" },
+  questionnaire: { label: "Questionnaire", tone: "brand", toneClass: "pt-tone-brand", icon: "📝" },
 };
+
+const STATUS: Record<CalendarEvent["status"], { label: string; tone: TokenTone; Icon: typeof Clock }> = {
+  scheduled: { label: "Scheduled", tone: "neutral", Icon: Clock },
+  "in-progress": { label: "In progress", tone: "info", Icon: AlertCircle },
+  completed: { label: "Completed", tone: "ok", Icon: CheckCircle },
+};
+
+const FILTERS: { value: "all" | CalendarEvent["status"]; label: string }[] = [
+  { value: "all", label: "All Events" },
+  { value: "scheduled", label: "Scheduled" },
+  { value: "in-progress", label: "In Progress" },
+  { value: "completed", label: "Completed" },
+];
 
 const mockEvents: CalendarEvent[] = [
   {
@@ -121,6 +107,11 @@ const mockEvents: CalendarEvent[] = [
   },
 ];
 
+function StatusToken({ status }: { status: CalendarEvent["status"] }) {
+  const s = STATUS[status];
+  return <Token label={s.label} tone={s.tone} dot />;
+}
+
 export function PortalQuestionnaireCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date(2025, 10));
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -137,318 +128,261 @@ export function PortalQuestionnaireCalendar() {
     return filteredEvents.filter((event) => isSameDay(event.date, date));
   };
 
-  const statusIcon = {
-    scheduled: <Clock className="w-4 h-4" />,
-    "in-progress": <AlertCircle className="w-4 h-4" />,
-    completed: <CheckCircle className="w-4 h-4" />,
-  };
-
   return (
-    <PortalLayout title="DE Questionnaires & Calendar">
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <div className="flex items-center gap-3">
-            <Calendar className="w-8 h-8 text-purple-600 dark:text-purple-400" />
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">DE Questionnaires & Calendar</h2>
-              <p className="text-gray-600 dark:text-gray-300 mt-1">
-                Important dates, assessments, and questionnaires
-              </p>
-            </div>
-          </div>
-        </div>
+    <PortalLayout title="DE Questionnaires & Calendar" description="Important dates, assessments, and questionnaires">
+      <div className="space-y-4">
+        <Callout tone="warn" title="Sample preview." testId="questionnaire-sample-banner">
+          Events below are illustrative until your live assessment calendar is connected.
+        </Callout>
 
-        <div
-          className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-100"
-          data-testid="questionnaire-sample-banner"
-        >
-          <strong>Sample preview.</strong> Events below are illustrative until your live assessment calendar is connected.
-        </div>
-
-        {/* Tabs */}
         <Tabs defaultValue="calendar" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 sm:inline-grid sm:w-auto">
             <TabsTrigger value="calendar">Calendar View</TabsTrigger>
             <TabsTrigger value="timeline">Timeline</TabsTrigger>
           </TabsList>
 
-          {/* Calendar Tab */}
-          <TabsContent value="calendar" className="space-y-6">
-            {/* Filter */}
-            <div className="flex gap-2">
-              <Button
-                variant={filterStatus === "all" ? "default" : "outline"}
-                onClick={() => setFilterStatus("all")}
-                data-testid="button-filter-all"
-              >
-                All Events
-              </Button>
-              <Button
-                variant={filterStatus === "scheduled" ? "default" : "outline"}
-                onClick={() => setFilterStatus("scheduled")}
-                data-testid="button-filter-scheduled"
-              >
-                Scheduled
-              </Button>
-              <Button
-                variant={filterStatus === "in-progress" ? "default" : "outline"}
-                onClick={() => setFilterStatus("in-progress")}
-                data-testid="button-filter-in-progress"
-              >
-                In Progress
-              </Button>
-              <Button
-                variant={filterStatus === "completed" ? "default" : "outline"}
-                onClick={() => setFilterStatus("completed")}
-                data-testid="button-filter-completed"
-              >
-                Completed
-              </Button>
+          <TabsContent value="calendar" className="mt-4 space-y-4">
+            <div role="group" aria-label="Filter by status" className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0 lg:pb-0">
+              {FILTERS.map((f) => {
+                const active = filterStatus === f.value;
+                return (
+                  <button
+                    key={f.value}
+                    type="button"
+                    onClick={() => setFilterStatus(f.value)}
+                    aria-pressed={active}
+                    className={cn(
+                      "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+                    )}
+                    data-testid={`button-filter-${f.value}`}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Calendar Grid */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>{format(currentDate, "MMMM yyyy")}</CardTitle>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
-                      data-testid="button-prev-month"
-                    >
-                      ←
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setCurrentDate(new Date())}
-                      data-testid="button-today"
-                    >
-                      Today
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
-                      data-testid="button-next-month"
-                    >
-                      →
-                    </Button>
+            <Panel
+              id="calendar-grid"
+              title={format(currentDate, "MMMM yyyy")}
+              actions={
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-border bg-card hover:bg-accent"
+                    aria-label="Previous month"
+                    onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
+                    data-testid="button-prev-month"
+                  >
+                    ←
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-border bg-card hover:bg-accent"
+                    onClick={() => setCurrentDate(new Date())}
+                    data-testid="button-today"
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-border bg-card hover:bg-accent"
+                    aria-label="Next month"
+                    onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
+                    data-testid="button-next-month"
+                  >
+                    →
+                  </Button>
+                </>
+              }
+            >
+              <div className="grid grid-cols-7 gap-1.5 md:gap-2">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                  <div key={day} className="p-1 text-center text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground md:p-2">
+                    {day}
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-7 gap-2">
-                  {/* Day headers */}
-                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                    <div key={day} className="text-center font-semibold text-sm text-gray-600 dark:text-gray-400 p-2">
-                      {day}
-                    </div>
-                  ))}
+                ))}
 
-                  {/* Calendar days */}
-                  {days.map((day, idx) => {
-                    const dayEvents = getEventsForDate(day);
-                    const isCurrentMonth = isSameMonth(day, currentDate);
-
-                    return (
-                      <div
-                        key={idx}
-                        className={`min-h-24 p-2 border rounded-lg ${
-                          isCurrentMonth
-                            ? "bg-white dark:bg-slate-900 border-gray-200 dark:border-gray-700"
-                            : "bg-gray-50 dark:bg-slate-800 border-gray-100 dark:border-gray-700 opacity-50"
-                        }`}
-                        data-testid={`calendar-day-${format(day, "yyyy-MM-dd")}`}
-                      >
-                        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                          {format(day, "d")}
-                        </div>
-                        <div className="space-y-1">
-                          {dayEvents.slice(0, 2).map((event) => {
-                            const config = eventTypeConfig[event.type];
-                            return (
-                              <div
-                                key={event.id}
-                                className={`text-xs p-1 rounded cursor-pointer ${config.color} hover:opacity-80 transition-opacity`}
-                                onClick={() => setSelectedEvent(event)}
-                                data-testid={`event-${event.id}`}
-                              >
-                                <div className="truncate font-medium">{config.icon} {event.title}</div>
-                              </div>
-                            );
-                          })}
-                          {dayEvents.length > 2 && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 px-1">
-                              +{dayEvents.length - 2} more
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Legend */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Event Types</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {Object.entries(eventTypeConfig).map(([key, config]) => (
-                    <div key={key} className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded ${config.color}`}></div>
-                      <span className="text-sm">{config.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Timeline Tab */}
-          <TabsContent value="timeline" className="space-y-4">
-            <div className="space-y-3">
-              {filteredEvents
-                .sort((a, b) => a.date.getTime() - b.date.getTime())
-                .map((event) => {
-                  const config = eventTypeConfig[event.type];
-                  const statusConfig = statusIcon[event.status as keyof typeof statusIcon];
+                {days.map((day, idx) => {
+                  const dayEvents = getEventsForDate(day);
+                  const isCurrentMonth = isSameMonth(day, currentDate);
 
                   return (
-                    <Card
-                      key={event.id}
-                      className="cursor-pointer hover:shadow-lg transition-shadow"
-                      onClick={() => setSelectedEvent(event)}
-                      data-testid={`timeline-event-${event.id}`}
+                    <div
+                      key={idx}
+                      className={cn(
+                        "min-h-20 rounded-lg border p-1.5 md:min-h-24 md:p-2",
+                        isCurrentMonth ? "border-border bg-background" : "border-border bg-muted opacity-60",
+                      )}
+                      data-testid={`calendar-day-${format(day, "yyyy-MM-dd")}`}
                     >
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-start gap-3 flex-1">
-                            <div className="text-2xl">{config.icon}</div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-gray-900 dark:text-white">{event.title}</h3>
-                                <Badge
-                                  variant={
-                                    event.status === "completed"
-                                      ? "default"
-                                      : event.status === "in-progress"
-                                        ? "secondary"
-                                        : "outline"
-                                  }
-                                  className="flex items-center gap-1"
-                                >
-                                  {statusConfig}
-                                  {event.status === "in-progress" ? "In Progress" : event.status === "completed" ? "Completed" : "Scheduled"}
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{event.description}</p>
-                              <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                <span>📅 {format(event.date, "MMM dd, yyyy")}</span>
-                                {event.dueDate && (
-                                  <span>⏰ Due: {format(event.dueDate, "MMM dd, yyyy")}</span>
-                                )}
-                              </div>
-                            </div>
+                      <div className="pt-num mb-1 text-sm font-semibold">
+                        {format(day, "d")}
+                      </div>
+                      <div className="space-y-1">
+                        {dayEvents.slice(0, 2).map((event) => {
+                          const config = eventTypeConfig[event.type];
+                          return (
+                            <button
+                              key={event.id}
+                              type="button"
+                              className={cn(
+                                "block w-full rounded border px-1 py-0.5 text-left text-xs transition-colors hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                config.tone === "neutral" ? "border-border bg-secondary text-foreground" : cn("pt-token", config.toneClass),
+                              )}
+                              onClick={() => setSelectedEvent(event)}
+                              data-testid={`event-${event.id}`}
+                            >
+                              <span className="block truncate font-medium">{config.icon} {event.title}</span>
+                            </button>
+                          );
+                        })}
+                        {dayEvents.length > 2 && (
+                          <div className="px-1 text-xs text-muted-foreground">
+                            +{dayEvents.length - 2} more
                           </div>
-                          <Badge className={config.color}>{config.label}</Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        )}
+                      </div>
+                    </div>
                   );
                 })}
+              </div>
+            </Panel>
 
-              {filteredEvents.length === 0 && (
-                <Card>
-                  <CardContent className="p-8 text-center text-gray-600 dark:text-gray-400">
-                    No events found for the selected filter.
-                  </CardContent>
-                </Card>
+            <Panel id="event-types" title="Event types">
+              <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                {(Object.keys(eventTypeConfig) as CalendarEvent["type"][]).map((key) => {
+                  const config = eventTypeConfig[key];
+                  return (
+                    <li key={key} className="flex items-center gap-2 text-sm">
+                      <span
+                        className={cn(
+                          "h-3 w-3 shrink-0 rounded-sm border",
+                          config.tone === "neutral" ? "border-border bg-secondary" : cn("pt-token", config.toneClass),
+                        )}
+                        aria-hidden="true"
+                      />
+                      <span>{config.icon} {config.label}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </Panel>
+          </TabsContent>
+
+          <TabsContent value="timeline" className="mt-4">
+            <Panel id="timeline" title="Timeline" description={`${filteredEvents.length} event${filteredEvents.length === 1 ? "" : "s"}`} flush>
+              {filteredEvents.length === 0 ? (
+                <EmptyState
+                  icon={Calendar}
+                  title="No events found for the selected filter."
+                  description="Try another status."
+                  action={
+                    <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" onClick={() => setFilterStatus("all")}>
+                      Show all events
+                    </Button>
+                  }
+                />
+              ) : (
+                <ul className="divide-y divide-border">
+                  {filteredEvents
+                    .sort((a, b) => a.date.getTime() - b.date.getTime())
+                    .map((event) => {
+                      const config = eventTypeConfig[event.type];
+                      return (
+                        <li key={event.id} data-testid={`timeline-event-${event.id}`}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedEvent(event)}
+                            className="flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:outline-none md:px-5"
+                          >
+                            <div className="flex min-w-0 flex-1 items-start gap-3">
+                              <div className="text-2xl leading-none" aria-hidden="true">{config.icon}</div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <h3 className="font-medium">{event.title}</h3>
+                                  <StatusToken status={event.status} />
+                                </div>
+                                <p className="mt-1 text-sm text-muted-foreground">{event.description}</p>
+                                <div className="pt-num mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                  <span>📅 {format(event.date, "MMM dd, yyyy")}</span>
+                                  {event.dueDate && (
+                                    <span>⏰ Due: {format(event.dueDate, "MMM dd, yyyy")}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <Token label={config.label} tone={config.tone} className="hidden shrink-0 sm:inline-flex" />
+                          </button>
+                        </li>
+                      );
+                    })}
+                </ul>
               )}
-            </div>
+            </Panel>
           </TabsContent>
         </Tabs>
 
-        {/* Event Details Panel */}
         {selectedEvent && (
-          <Card className="border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <span>{eventTypeConfig[selectedEvent.type].icon}</span>
-                    {selectedEvent.title}
-                  </CardTitle>
-                  <CardDescription className="mt-2">
-                    {eventTypeConfig[selectedEvent.type].label}
-                  </CardDescription>
-                </div>
-                <Button
-                  variant="ghost"
-                  onClick={() => setSelectedEvent(null)}
-                  data-testid="button-close-details"
-                >
-                  ✕
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Description</h4>
-                <p className="text-gray-600 dark:text-gray-400">{selectedEvent.description}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Date</h4>
-                  <p className="text-gray-600 dark:text-gray-400">{format(selectedEvent.date, "MMMM dd, yyyy")}</p>
+          <Panel
+            id="event-details"
+            title={<span>{eventTypeConfig[selectedEvent.type].icon} {selectedEvent.title}</span>}
+            description={eventTypeConfig[selectedEvent.type].label}
+            actions={
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground"
+                aria-label="Close details"
+                onClick={() => setSelectedEvent(null)}
+                data-testid="button-close-details"
+              >
+                <X aria-hidden="true" />
+              </Button>
+            }
+          >
+            <div className="space-y-4">
+              <dl className="grid gap-4 text-sm sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <dt className="text-muted-foreground">Description</dt>
+                  <dd className="mt-0.5 font-medium">{selectedEvent.description}</dd>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Status</h4>
-                  <Badge
-                    variant={
-                      selectedEvent.status === "completed"
-                        ? "default"
-                        : selectedEvent.status === "in-progress"
-                          ? "secondary"
-                          : "outline"
-                    }
-                  >
-                    {selectedEvent.status === "in-progress"
-                      ? "In Progress"
-                      : selectedEvent.status === "completed"
-                        ? "Completed"
-                        : "Scheduled"}
-                  </Badge>
+                  <dt className="text-muted-foreground">Date</dt>
+                  <dd className="pt-num mt-0.5 font-medium">{format(selectedEvent.date, "MMMM dd, yyyy")}</dd>
                 </div>
-              </div>
+                <div>
+                  <dt className="text-muted-foreground">Status</dt>
+                  <dd className="mt-1"><StatusToken status={selectedEvent.status} /></dd>
+                </div>
+              </dl>
 
               {selectedEvent.type === "questionnaire" && (
-                <Button className="w-full bg-[#D3126A] hover:bg-[#e01874]" data-testid="button-fill-questionnaire">
-                  <FileText className="w-4 h-4 mr-2" />
+                <Button variant="brand" className="w-full" data-testid="button-fill-questionnaire">
+                  <FileText aria-hidden="true" />
                   Fill Out Questionnaire
                 </Button>
               )}
 
               {selectedEvent.status === "scheduled" && selectedEvent.type !== "questionnaire" && (
-                <Button className="w-full bg-blue-600 hover:bg-blue-700" data-testid="button-prepare-event">
-                  <CheckSquare className="w-4 h-4 mr-2" />
+                <Button variant="outline" className="w-full border-border bg-card hover:bg-accent" data-testid="button-prepare-event">
+                  <CheckSquare aria-hidden="true" />
                   Mark as In Progress
                 </Button>
               )}
 
               {selectedEvent.status === "in-progress" && (
-                <Button className="w-full bg-green-600 hover:bg-green-700" data-testid="button-complete-event">
-                  <CheckCircle className="w-4 h-4 mr-2" />
+                <Button variant="outline" className="w-full border-border bg-card hover:bg-accent" data-testid="button-complete-event">
+                  <CheckCircle aria-hidden="true" />
                   Mark as Completed
                 </Button>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </Panel>
         )}
       </div>
     </PortalLayout>
