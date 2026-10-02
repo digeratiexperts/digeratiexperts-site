@@ -30,6 +30,30 @@
 
 version: 2
 claims:
+  - id: de-desk-agent-admin-only
+    owner: claude
+    subsystem: portal-desk
+    branch: claude/desk-agent-admin-only
+    base_sha: d5f3479a
+    files:
+      - server/portalDeskAgentRoutes.ts
+      - server/portalDeskAgentRoutes.test.ts
+      - server/routes.ts (the three desk-chat write routes and their imports only)
+      - client/src/pages/portal/PortalChat.tsx (gate the agent controls on admin)
+    status: active
+    started: 2026-10-02
+    note: >-
+      Issue 249 (P1 security), confirmed on main: the DE Desk reply, claim and
+      release routes ran on authMiddleware alone, gated only by
+      session.email === req.user.email, so any signed-in portal user whose
+      email matched a Desk session could reply to the public website chat
+      widget as a DE agent and claim or release the session (stopping the AI,
+      showing "a specialist joined"). The agent display name also came from a
+      caller-supplied senderName. The three write routes move into their own
+      module, admin-only, with the agent name taken from the signed-in admin,
+      never the body. The two read routes stay as-is (a client may see their
+      own linked thread). The portal chat UI hides the agent controls for
+      non-admins so an IT contact never sees a button that only 403s.
   - id: de-homepage-section-mockups
     owner: claude
     subsystem: homepage-design-concepts
