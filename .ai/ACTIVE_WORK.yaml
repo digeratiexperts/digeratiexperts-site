@@ -30,6 +30,25 @@
 
 version: 2
 claims:
+  - id: portal-people-pick-company
+    owner: claude
+    subsystem: client-portal-pages
+    branch: claude/portal-people-pick-company
+    base_sha: 5de266e8ed762d6328fef126ba7b017bcd8d8a21
+    files:
+      - client/src/pages/portal/PortalPeople.tsx
+      - client/src/components/portal/TenantSelector.tsx
+      - artifacts/visual-qa/portal-people-pick-company/**
+    status: active
+    started: 2026-10-02
+    note: >-
+      Joe, 2026-10-02, "6. a": replace People & Org's error for a DE admin who
+      is not viewing as a company with a pick-a-company prompt, as a small
+      separate PR. Fixing it exposed two pre-existing client bugs on the same
+      path: the company switcher stored the literal "undefined" as the token
+      and company (apiRequest resolves to a Response, never parsed), and People
+      & Org never named the viewed company, so even a working switch answered
+      400. Client-only; the server already lets admins name the company.
 # claude-completion-program-lane (branch claude/c8-cross-surface) RETIRED
 # 2026-10-02 on Joe's "see what you can use and redesign into gaps". Audit of
 # the only pushed branch, claude/c1-visual-a11y-repairs-20260912, against main
