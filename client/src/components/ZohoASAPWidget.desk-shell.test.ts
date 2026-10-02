@@ -346,6 +346,78 @@ describe("DE Desk shell positioning", () => {
     );
   });
 
+  it("hints at full screen a few times, then stops for good once it has been used", () => {
+    // Joe, 2026-10-02: animate the expand button so people know they can go
+    // full screen. Finite, quiet when it is not wanted, and honest to motion
+    // preferences.
+    expect(src).toMatch(/className=\{`de-desk-close de-desk-expand\$\{expandHint \? " is-hinting" : ""\}`\}/);
+    expect(src).toMatch(/data-testid="desk-expand-hint"/);
+    // A visible label, hidden from assistive tech (the button already has its name).
+    expect(src).toMatch(/<span className="de-desk-expand-hint" aria-hidden="true"/);
+    // Plays only docked, on a screen wide enough to expand, with nobody live in the chat,
+    // after the text box hint has settled and never while someone is typing.
+    expect(src).toMatch(/if \(!isOpen \|\| !canDrag \|\| isDeskFullscreen \|\| agentLive \|\| expandHintPlayedRef\.current\) return;/);
+    expect(src).toMatch(/if \(!composerHintSettled \|\| composerHint \|\| chatInput\.trim\(\)\) return;/);
+    // Capped per browser, and retired once the visitor has used full screen.
+    expect(src).toMatch(/const DESK_HINT_MAX = 3;/);
+    expect(src).toMatch(/const stored = readDeskHint\(DESK_EXPAND_HINT_KEY\);\s*if \(stored\.used \|\| stored\.shown >= DESK_HINT_MAX\) return;/);
+    expect(src).toMatch(/if \(next\) writeDeskHint\(DESK_EXPAND_HINT_KEY, \{ used: true, shown: DESK_HINT_MAX \}\);/);
+    // Storage can throw (private windows, blocked site data): both accessors are guarded.
+    expect(src).toMatch(/function readDeskHint\(key: string\)[\s\S]*?try \{[\s\S]*?\} catch \{/);
+    expect(src).toMatch(/function writeDeskHint\(key: string[\s\S]*?try \{[\s\S]*?\} catch \{/);
+    // Every hint animation is finite: no infinite loop on the button.
+    const hintCss = src.slice(src.indexOf(".de-desk-expand {"), src.indexOf("@keyframes de-desk-expand-label"));
+    expect(hintCss).not.toMatch(/infinite/);
+    expect(hintCss).toMatch(/animation: de-desk-expand-ring 1\.6s ease-out 0\.1s 3;/);
+    expect(hintCss).toMatch(/animation: de-desk-expand-nudge 1\.6s [^;]+ 3;/);
+    // Reduced motion: no pulse, no nudge, the label simply shows.
+    expect(src).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.de-desk-expand\.is-hinting::after,\s*\.de-desk-expand\.is-hinting svg \{ animation: none; \}/);
+  });
+
+  it("hints at the Ask DE text box first, stops when someone types, and retires after their first message", () => {
+    // Joe, 2026-10-02: "same with the chat text box field".
+    expect(src).toMatch(/className=\{`de-desk-composer\$\{headsUp \|\| unreadChatCount \? " is-live" : ""\}\$\{composerHint \? " is-hinting" : ""\}`\}/);
+    // Only on Ask DE, after the greeting, before the visitor has spoken, with nobody live,
+    // and never on top of the full-screen hint.
+    expect(src).toMatch(/if \(stored\.used \|\| stored\.shown >= DESK_HINT_MAX \|\| visitorHasSpoken \|\| agentLive \|\| activeTab !== "chat"\) \{\s*setComposerHintSettled\(true\);/);
+    expect(src).toMatch(/if \(!greetingComplete \|\| expandHint\) return;/);
+    // Typing, leaving the tab or closing the Desk ends it at once.
+    expect(src).toMatch(/if \(composerHint && \(chatInput\.trim\(\) \|\| !isOpen \|\| activeTab !== "chat"\)\) \{/);
+    // Retired for good once the visitor has sent something.
+    expect(src).toMatch(/if \(visitorHasSpoken\) writeDeskHint\(DESK_COMPOSER_HINT_KEY, \{ used: true, shown: DESK_HINT_MAX \}\);/);
+    // Finite motion, and none under reduced motion.
+    const hintCss = src.slice(src.indexOf(".de-desk-composer.is-hinting textarea {"), src.indexOf("@keyframes de-desk-composer-ring"));
+    expect(hintCss).not.toMatch(/infinite/);
+    expect(hintCss).toMatch(/de-desk-composer-ring 1\.6s ease-out 0\.1s 3,\s*de-desk-composer-sweep 1\.6s ease-in-out 3;/);
+    expect(src).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.de-desk-composer\.is-hinting textarea \{ animation: none; background-image: none; \}/);
+  });
+
+  it("keeps the polish pass of 2026-10-02 (empty send, wrapping choices, full prompt, errors, full screen)", () => {
+    // The empty send button is a quiet well, not half-transparent gold.
+    expect(src).not.toMatch(/\.de-desk-send:disabled \{ opacity/);
+    expect(src).toMatch(/\.de-desk-send:disabled \{\s*background: var\(--desk-well\);/);
+    // Suggested questions and issue labels wrap instead of ending in an ellipsis.
+    for (const cls of ["de-desk-discover-label", "de-desk-chip-label", "de-desk-issue-label"]) {
+      const rule = src.match(new RegExp(`\\.${cls} \\{[^}]*\\}`))?.[0] ?? "";
+      expect(rule, cls).toMatch(/white-space: normal;/);
+      expect(rule, cls).not.toMatch(/text-overflow: ellipsis/);
+    }
+    // The Details box is tall enough for its whole prompt.
+    expect(src).toMatch(/\.de-desk-shell \.de-desk-ta \{[\s\S]*?min-height: 148px;/);
+    // A failed reply reads as an error, not as a normal answer.
+    expect(src).toMatch(/\$\{chatMessage\.retryText \? " is-error" : ""\}/);
+    expect(src).toMatch(/\.de-desk-bubble\.is-error \{/);
+    // The ticket number is labelled and gold, not greyed out by the hero paragraph rule.
+    expect(src).toMatch(/<span className="de-desk-ticket-ref-label">Ticket<\/span>/);
+    expect(src).toMatch(/\.de-desk-hero \.de-desk-ticket-ref \{[\s\S]*?color: var\(--desk-gold-ink\);/);
+    // Secondary actions on the confirmation look like buttons.
+    expect(src).toMatch(/className="de-desk-row de-desk-row-action"/);
+    // Full screen keeps a readable centred column.
+    expect(src).toMatch(/data-fullscreen=\{isDeskFullscreen \? "true" : undefined\}/);
+    expect(src).toMatch(/\.de-desk-shell\[data-fullscreen="true"\] \.de-desk-scroll,/);
+    expect(src).toMatch(/calc\(\(100% - 760px\) \/ 2\)/);
+  });
+
   it("opens with focus on the composer (desktop) or the active tab, not the first header button", () => {
     expect(src).not.toMatch(/getFocusable\(\)\[0\]\?\.focus\(\);/);
     expect(src).toMatch(/id="desk-chat-input"/);
