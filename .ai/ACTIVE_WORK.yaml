@@ -67,6 +67,31 @@ claims:
       report "no preference", so a device-following default would show light
       to most clients). 7: salvage of the stale claude-completion-program-lane
       into gaps on today's portal follows on this branch once audited.
+  - id: de-static-cache-policy
+    owner: claude
+    subsystem: server-static
+    branch: claude/static-cache-policy
+    base_sha: d5f3479a
+    files:
+      - server/staticCacheControl.ts
+      - server/staticCacheControl.test.ts
+      - server/index.ts (the dist/public express.static options only)
+    status: verified-live
+    started: 2026-10-02
+    note: >-
+      Found during the "is it really done" audit: production served release.txt
+      (the deploy marker) with a one-year browser cache, as it did
+      site.webmanifest, .well-known/security.txt and the resource PDFs, and
+      marked the self-hosted fonts and pdf.js vendor files immutable under names
+      that never change. Only Vite's hashed output (flat in assets/) is cached
+      forever now; everything else revalidates daily, images at 30 days, and
+      release.txt / HTML are no-store.
+      RELEASED 2026-10-02: merged as daddd51953bed567f108cf6b255e0b26390d3d6a
+      (PR 338). VERIFIED LIVE: production serves daddd519 (deploy run
+      completed/success); release.txt answers no-cache, no-store,
+      must-revalidate (a stable name, off the one-year cache); the hashed
+      bundle /assets/index-Cc3_YY6t.js answers public, max-age=31536000,
+      immutable; /healthz 200. Files released.
   - id: de-homepage-section-mockups
     owner: claude
     subsystem: homepage-design-concepts
