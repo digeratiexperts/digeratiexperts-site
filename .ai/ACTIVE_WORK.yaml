@@ -64,6 +64,77 @@ claims:
       call, gate, href, form field and data-testid preserved; mock pages
       (VPN, Cytracom, Ship Center) say "sample data". PortalChat untouched
       (Joe-decided white panel). Maintenance Mode on the approved system.
+  - id: de-known-pages-answer-200
+    owner: claude
+    subsystem: server-routing
+    branch: claude/known-pages-answer-200
+    base_sha: e5945de3
+    files:
+      - server/spaKnownPaths.ts
+      - server/spaKnownPaths.test.ts
+      - server/campaignAliasRedirects.ts
+      - server/campaignAliasRedirects.test.ts
+      - server/index.ts (the campaign alias redirect registration only)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Found by a link sweep after Joe's "so everything is complete and we cant
+      think of things to do now?": 27 of the 113 sitemap URLs (every /go
+      campaign landing, every executive brief and resource asset page) plus
+      /industries/professional-services (linked from every page's footer) and
+      /support/system-status rendered while answering HTTP 404 in production,
+      and /ads/<slug> and /lp/<slug> answered 404 before a browser redirect
+      that dropped the query string. Exact paths, so unknown slugs stay 404.
+  - id: de-org-department-tenant-boundary
+    owner: claude
+    subsystem: portal-org
+    branch: claude/org-department-tenant-boundary
+    base_sha: 576aa76d
+    files:
+      - server/portalDepartmentRoutes.ts
+      - server/portalDepartmentRoutes.test.ts
+      - server/routes.ts (the two department routes and their imports only)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Issue 254 (P0), verified still present on main 576aa76d after Joe's
+      "so everything is complete and we cant think of things to do now?": the
+      department update route followed the clientId in the request body, so a
+      Company IT Contact could rename another company's department, and both
+      routes attached a user from another company as a department's IT contact.
+      The two routes move into their own module, unchanged in path, guards and
+      order; the company now comes from the signed-in user unless the caller is
+      a DE admin, and the IT contact must be in the same company. The People
+      page's only call (create with a name) is unaffected.
+  - id: de-desk-store-seed-door2
+    owner: claude
+    subsystem: de-desk
+    branch: claude/desk-store-seed-door2
+    base_sha: 576aa76d
+    files:
+      - client/src/components/ZohoASAPWidget.tsx (the open-seed expression and one import only; no stylesheet)
+      - client/src/lib/deskOpenSeed.ts
+      - client/src/lib/deskOpenSeed.test.ts
+      - artifacts/visual-qa/desk-store-seed/**
+    status: verified-live
+    started: 2026-10-01
+    note: >-
+      Source of truth §15 row 18, item 2, unblocked when PR 303 merged and
+      de-desk-reliability-followup released the widget. The Desk seeded
+      STORE_ADVISOR_SEED on pathname.includes("/store"), so /solutions/request
+      and /solutions/business-needs (Door 2) opened without it and unrelated
+      paths containing "/store" got it. Now isDoor2Path decides, through a
+      tested helper. Joe, 2026-10-01: "merge 307 and all else is approved too".
+      Shares ZohoASAPWidget.tsx with the active de-desk-gold claim (PR 319),
+      which is scoped to the stylesheet and the chip icon class, no logic;
+      this hunk is the open handler and auto-merges with PR 319's branch.
+      RELEASED 2026-10-01: merged as 445fbf77 (PR 325). VERIFIED LIVE 23:14Z:
+      CI run 36939339444 passed, including "Deploy and verify production VPS"
+      and its runtime verification step; /healthz 200; the served Desk chunk
+      ZohoASAPWidget-BZGTGgOG.js carries deskOpenSeed (explicit seed, then
+      context "store" or isDoor2Path) and no longer has pathname.includes
+      ("/store"). Source of truth §15 row 18 is closed. Files released.
+
   - id: de-phone-number-and-arrows
     owner: claude
     subsystem: homepage
