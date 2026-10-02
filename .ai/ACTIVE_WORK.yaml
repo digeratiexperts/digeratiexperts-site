@@ -30,6 +30,27 @@
 
 version: 2
 claims:
+  - id: de-resend-verification-abuse
+    owner: claude
+    subsystem: portal-auth
+    branch: claude/resend-verification-abuse
+    base_sha: d5f3479a
+    files:
+      - server/portalVerificationThrottle.ts
+      - server/portalVerificationThrottle.test.ts
+      - server/routes.ts (the resend-verification route only)
+    status: active
+    started: 2026-10-02
+    note: >-
+      Issue 252 (P1 abuse), confirmed on main: POST /api/portal/resend-verification
+      ran on validateInput alone, with no rate limit or Turnstile, and re-minted
+      and emailed a verification link on every call, so it could flood a victim's
+      inbox. It also returned a distinct 400 "Email is already verified", leaking
+      which emails have accounts. The route now mounts formSubmissionRateLimiter
+      and verifyTurnstile like forgot-password, returns one generic 200 for a
+      missing, verified or unverified account (no existence oracle), and a
+      per-email 60s cooldown (hasFreshVerificationToken) skips re-minting so a
+      caller rotating IPs past the rate limit still cannot flood one inbox.
   - id: de-homepage-section-mockups
     owner: claude
     subsystem: homepage-design-concepts

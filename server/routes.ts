@@ -79,6 +79,7 @@ import {
   type OrgUserFields,
 } from "./portalOrg";
 import { registerPortalDepartmentRoutes } from "./portalDepartmentRoutes";
+import { hasFreshVerificationToken } from "./portalVerificationThrottle";
 import {
   initPortalApprovals,
   createApprovalRequest,
@@ -2352,7 +2353,14 @@ export async function registerRoutes(app: Express) {
   });
 
   // Resend Verification Email Endpoint
-  app.post("/api/portal/resend-verification", [validateInput], async (req: AuthenticatedRequest, res: Response) => {
+  app.post("/api/portal/resend-verification", [formSubmissionRateLimiter, verifyTurnstile, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+    // The same answer for every case below, so this endpoint never reveals
+    // whether an account exists or is already verified (issue #252).
+    const genericOk = () =>
+      res.json({
+        success: true,
+        message: "If an account exists with this email, a new verification link has been sent.",
+      });
     try {
       const { email } = req.body;
 
@@ -2360,19 +2368,16 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ message: "Email is required" });
       }
 
-      // Find user by email
+      // A missing account, or one already verified, gets the same answer and no email.
       const user = portalUsers.get(email);
-      if (!user) {
-        // Don't reveal whether user exists for security
-        return res.json({ 
-          success: true, 
-          message: "If an account exists with this email, a new verification link has been sent." 
-        });
+      if (!user || user.emailVerified) {
+        return genericOk();
       }
 
-      // Check if already verified
-      if (user.emailVerified) {
-        return res.status(400).json({ message: "Email is already verified" });
+      // Per-email cooldown: if a link was just sent, do not mint and send another,
+      // so the inbox cannot be flooded by a caller rotating IPs past the rate limit.
+      if (hasFreshVerificationToken(emailVerificationTokens.values(), email, Date.now())) {
+        return genericOk();
       }
 
       // Delete any existing tokens for this user
@@ -2405,10 +2410,7 @@ export async function registerRoutes(app: Express) {
 
       logSecurityEvent("VERIFICATION_EMAIL_RESENT", req, { email });
 
-      return res.json({
-        success: true,
-        message: "If an account exists with this email, a new verification link has been sent.",
-      });
+      return genericOk();
     } catch (error: any) {
       console.error("[ERROR] Resend verification failed:", error);
       res.status(500).json({ message: "Failed to resend verification email" });
