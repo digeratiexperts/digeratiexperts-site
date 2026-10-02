@@ -113,7 +113,7 @@ Every figure on this page is read at build time from a file the rest of the site
 
 ## Version 6 preview `/version-6` (noindex)
 
-Every section of the live homepage, cleaned in the current DE theme (graphite / paper / magenta). Not the Version 5 paper system. ChatGPT's other-theme board is Version 7. The same acceptance script checks it (`scripts/qa/homepage-v5-acceptance.mjs --scope v6`, limits in `client/src/pages/versions/v6/ACCEPTANCE.md`): every figure on the rendered page must appear verbatim in one of the source files below.
+Every section of the live homepage, cleaned in the current DE theme (graphite / paper / magenta). Not the Version 5 paper system. Version 7 is a separate reviewed-mockups build; ChatGPT's other-theme board stays held for a later version. The same acceptance script checks it (`scripts/qa/homepage-v5-acceptance.mjs --scope v6`, limits in `client/src/pages/versions/v6/ACCEPTANCE.md`): every figure on the rendered page must appear verbatim in one of the source files below.
 
 | Where | Claim | Basis | Status | Action |
 | --- | --- | --- | --- | --- |

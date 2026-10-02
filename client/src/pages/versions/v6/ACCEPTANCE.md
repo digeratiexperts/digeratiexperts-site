@@ -2,7 +2,8 @@
 
 Version 6 is the live homepage, cleaned in the **current DE theme** (graphite
 `#050312`, paper `#F7F5F2`, magenta `#D3126A`). It is not Version 5's paper
-system. ChatGPT's other-theme board is Version 7 and is not in this page.
+system. Version 7 is a separate reviewed-mockups build; ChatGPT's other-theme
+board is not in this page.
 
 Version 5 stays frozen at `/version-5`. Production `/` is untouched.
 

@@ -141,17 +141,16 @@
 .v6-caps b { display: block; }
 .v6-caps span { color: var(--v6-ink-2); font-size: 0.95rem; }
 
-/* Eight blocks */
-.v6-blocks { display: grid; gap: 12px; }
-.v6-block { border: 1px solid var(--v6-line); border-radius: 14px; padding: 18px 18px 16px; background: var(--v6-raised); display: grid; gap: 4px; align-content: start; }
-.v6-paper .v6-block { background: #fff; border-color: var(--v6-paper-line); }
-.v6-block b { font-family: "Space Grotesk", "Inter", system-ui, sans-serif; font-size: 1.05rem; }
-.v6-block span { color: var(--v6-ink-2); font-size: 0.95rem; }
-.v6-paper .v6-block span { color: var(--v6-paper-muted); }
-.v6-block-note { border-style: dashed; background: transparent; color: var(--v6-ink-2); font-size: 0.95rem; align-content: center; }
-.v6-block-wide { grid-column: 1 / -1; background: var(--v6-bg); }
-.v6-paper .v6-block-wide { background: #efece6; }
-.v6-block-wide b { font-size: 1.15rem; }
+/* Live eight-block deck (shared ProtectionCommandDeck) */
+.v6-deck {
+  border: 1px solid var(--v6-paper-line);
+  border-radius: 20px;
+  padding: 20px 18px 24px;
+  background: var(--v6-bg);
+  color: var(--v6-ink);
+  overflow: hidden;
+}
+.v6-deck a { color: inherit; }
 
 /* Steps */
 .v6-steps { display: grid; gap: 22px; counter-reset: step; }
@@ -197,7 +196,9 @@
 /* Pricing */
 .v6-pricing-shell { background: var(--v6-raised); border: 1px solid var(--v6-line); border-radius: 24px; padding: 28px 22px; }
 .v6-tiers { display: grid; gap: 12px; }
-.v6-tier { border: 1px solid var(--v6-line); border-radius: 16px; padding: 22px; background: var(--v6-bg); display: grid; gap: 10px; align-content: start; }
+.v6-tier { border: 1px solid var(--v6-line); border-radius: 16px; padding: 22px; background: var(--v6-bg); display: grid; gap: 10px; align-content: start; position: relative; }
+.v6-tier-flagship { border-color: var(--v6-accent); box-shadow: 0 0 0 1px rgba(211, 18, 106, 0.35); }
+.v6-tier-flag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--v6-accent); margin: 0; }
 .v6-tier-badge { font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--v6-accent); }
 .v6-price { font-family: "Oxanium", "Space Grotesk", sans-serif; font-size: 2.25rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
 .v6-tier-desc { color: var(--v6-ink-2); font-size: 0.95rem; padding-bottom: 10px; border-bottom: 1px solid var(--v6-line); }

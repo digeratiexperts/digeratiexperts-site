@@ -9,7 +9,7 @@ import { PronunciationCard } from "@/components/PronunciationCard";
 import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
 import { pricingTiers, formatPrice, PRICING_SCOPE_NOTE } from "@/data/pricing";
 import { getHomepageCyberFacts } from "@/data/cyberAwarenessFacts";
-import { protectionDomains } from "@/components/visual/ProtectionCommandDeck";
+import { ProtectionCommandDeck } from "@/components/visual/ProtectionCommandDeck";
 import { useThreatFeed } from "@/hooks/useThreatFeed";
 import { THREAT_ATTRIBUTION } from "@shared/threatFeed";
 import "./v6.css";
@@ -410,8 +410,6 @@ export default function HomepageV6(): JSX.Element {
   const reviews = useReviews();
   const threats = useThreatFeed("homepage");
   const facts = getHomepageCyberFacts();
-  const blocks = protectionDomains.filter((d) => !d.continuous);
-  const continuous = protectionDomains.find((d) => d.continuous);
   const year = new Date().getFullYear();
   const region = COMPANY.addressRegion === "AZ" ? "Arizona" : COMPANY.addressRegion;
 
@@ -611,21 +609,12 @@ export default function HomepageV6(): JSX.Element {
               <h2 id="v6-protect">Eight blocks. One accountable operating model.</h2>
               <p className="v6-lede">Seven blocks answer a threat class each. Risk and exposure runs continuously beneath all seven as the visibility and intelligence layer.</p>
             </div>
-            <ul className="v6-blocks">
-              {blocks.map((d) => (
-                <li key={d.id} className="v6-block">
-                  <b>{d.name}</b>
-                  <span>{d.architecture.nodes.map((n) => n.title).join(". ")}.</span>
-                </li>
-              ))}
-              <li className="v6-block v6-block-note">Exact scope, controls and cadence depend on the operating model matched to your environment.</li>
-              {continuous && (
-                <li className="v6-block v6-block-wide">
-                  <b>{continuous.name}</b>
-                  <span>{continuous.purpose}</span>
-                </li>
-              )}
-            </ul>
+            <div className="v6-deck" data-testid="v6-protection-deck">
+              <ProtectionCommandDeck />
+            </div>
+            <p className="v6-muted" style={{ marginTop: 16 }}>
+              Exact scope, controls and cadence depend on the operating model matched to your environment. This model is illustrative.
+            </p>
             <hr className="v6-divider" />
             <div className="v6-head" style={{ marginBottom: 28 }}>
               <p className="v6-eyebrow">How protection works</p>
@@ -834,7 +823,8 @@ export default function HomepageV6(): JSX.Element {
             <div className="v6-pricing-shell">
             <ul className="v6-tiers">
               {pricingTiers.map((t) => (
-                <li key={t.id} className="v6-tier">
+                <li key={t.id} className={`v6-tier${t.id === "business" ? " v6-tier-flagship" : ""}`}>
+                  {t.id === "business" ? <p className="v6-tier-flag">Flagship cyber</p> : null}
                   <p className="v6-tier-badge">{t.label}</p>
                   <p className="v6-price v6-num">{formatPrice(t.user)}</p>
                   <p className="v6-muted v6-num">
