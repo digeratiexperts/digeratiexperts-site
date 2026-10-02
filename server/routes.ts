@@ -79,6 +79,7 @@ import {
   type OrgUserFields,
 } from "./portalOrg";
 import { registerPortalDepartmentRoutes } from "./portalDepartmentRoutes";
+import { canAccessPortalTicket } from "./portalTicketAccess";
 import {
   initPortalApprovals,
   createApprovalRequest,
@@ -2025,9 +2026,7 @@ export async function registerRoutes(app: Express) {
           return res.status(404).json({ error: "Ticket not found" });
         }
 
-        const isAdmin = req.user?.role === "admin";
-        const userClientId = req.user?.clientId;
-        if (!isAdmin && ticket.clientId !== userClientId) {
+        if (!canAccessPortalTicket(req.user, ticket)) {
           return res.status(403).json({ error: "Access denied" });
         }
 
@@ -2091,8 +2090,7 @@ export async function registerRoutes(app: Express) {
       }
 
       const isAdmin = req.user?.role === "admin";
-      const userClientId = req.user?.clientId;
-      if (!isAdmin && ticket.clientId !== userClientId) {
+      if (!canAccessPortalTicket(req.user, ticket)) {
         return res.status(403).json({ error: "Access denied" });
       }
       
@@ -2138,9 +2136,7 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Ticket not found" });
       }
 
-      const isAdmin = req.user?.role === "admin";
-      const userClientId = req.user?.clientId;
-      if (!isAdmin && ticket.clientId !== userClientId) {
+      if (!canAccessPortalTicket(req.user, ticket)) {
         return res.status(403).json({ error: "Access denied" });
       }
 

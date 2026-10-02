@@ -30,6 +30,26 @@
 
 version: 2
 claims:
+  - id: de-ticket-access-owner-scope
+    owner: claude
+    subsystem: portal-tickets
+    branch: claude/ticket-access-owner-scope
+    base_sha: d5f3479a
+    files:
+      - server/portalTicketAccess.ts
+      - server/portalTicketAccess.test.ts
+      - server/routes.ts (the ticket detail/comments/attachments access checks only)
+    status: active
+    started: 2026-10-02
+    note: >-
+      Issue 256 (P1 security), confirmed on main: the portal ticket detail,
+      comment and attachment routes authorized on same-company only
+      (ticket.clientId === req.user.clientId), so any ordinary staffer could
+      read or act on a coworker's ticket by knowing its id. A shared
+      canAccessPortalTicket resolver now requires the caller to be the ticket's
+      creator, or a Company IT Contact of that company, or a DE admin. Whether
+      a department IT contact should see their department's tickets is a
+      product decision left open; the safe default does not grant it.
   - id: de-homepage-section-mockups
     owner: claude
     subsystem: homepage-design-concepts
