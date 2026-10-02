@@ -4,7 +4,7 @@
  */
 
 import { isDoor2Path } from "@/lib/isDoor2Path";
-import { readAnonymousSituation, situationPublicLine } from "@/lib/anonymousSituation";
+import { readAnonymousSituation } from "@/lib/anonymousSituation";
 
 export type DeskMotionPage =
   | "home"
@@ -137,9 +137,8 @@ export function inferDeskPageType(pathname: string): DeskMotionPage {
 function deskSituationClause(): string {
   const situation = readAnonymousSituation();
   if (!situation) return "";
-  const line = situationPublicLine(situation);
-  if (!line) return "";
-  return `This device already has a Store situation (${line}). I don't have a name or email from that — ask me about that environment or a different path.`;
+  // Keep this short: Ask DE typewrites the greeting before starter chips appear.
+  return "This device already has a Store situation. I don't have a name or email from that — ask about that environment or a different path.";
 }
 
 export function startersForPage(page: DeskMotionPage): DeskMotionChip[] {

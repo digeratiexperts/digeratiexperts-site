@@ -136,10 +136,10 @@ describe("deskAskDeMotion", () => {
     const motion = await import("./deskAskDeMotion");
     const greet = motion.greetingForPage("home");
     expect(greet.startsWith(motion.DESK_PAGE_COPY.home.greet)).toBe(true);
-    expect(greet).toMatch(/25 users/);
-    expect(greet).toMatch(/Identity & Access/);
+    expect(greet).toMatch(/Store situation/);
     expect(greet).not.toContain("jo@acme.test");
     expect(greet).not.toContain("Jo Example");
+    expect(greet).not.toMatch(/25 users|Identity & Access/);
     expect(motion.startersForPage("home")[0].label).toMatch(/Store/);
     expect(motion.startersForPage("store")[0].label).toMatch(/finish the solution/i);
     expect(motion.startersForPage("home")).toHaveLength(5);
