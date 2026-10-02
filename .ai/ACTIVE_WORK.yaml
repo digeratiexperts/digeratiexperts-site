@@ -36,7 +36,8 @@ claims:
     branch: claude/awesome-bardeen-4pbl2m
     base_sha: d5f3479
     files:
-      - client/src/components/ZohoASAPWidget.tsx (the expand button, its hint state and its stylesheet rules only)
+      - client/src/components/ZohoASAPWidget.tsx (the hints' state, the expand button, the composer wrapper class, and the Desk stylesheet)
+      - artifacts/visual-qa/desk-composer-hint/**, artifacts/visual-qa/desk-polish/**
       - client/src/components/ZohoASAPWidget.desk-shell.test.ts
       - .cursor/skills/de-desk-ui/tokens-and-structure.md (the header line)
       - artifacts/visual-qa/desk-expand-hint/**
@@ -49,7 +50,12 @@ claims:
       five seconds after the docked Desk opens; at most once per page load and
       three times per browser, retired once full screen is used, off while a
       person is live, off on phones; reduced motion keeps the label without
-      movement. No logic beyond the hint's own state.
+      movement. No logic beyond the hint's own state. Joe, same day: "same
+      with the chat text box field": the Ask DE text box gets the same kind
+      of finite hint, played first, with the full-screen hint waiting for it.
+      Then: "look over the entire DE Desk popup and make sure it's fully
+      optimized and has all the missing touches and looks perfect": a full
+      Desk polish pass on the same claim (stylesheet and presentation only).
   - id: de-homepage-section-mockups
     owner: claude
     subsystem: homepage-design-concepts

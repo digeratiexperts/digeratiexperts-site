@@ -155,23 +155,27 @@ function trackDeskSupportFieldSpotlight(event: ReactPointerEvent<HTMLElement>) {
 }
 
 /**
- * The full-screen hint (Joe, 2026-10-02: "animate this so people know to make
- * it full screen"). The expand button nudges and a small gold label says what
- * it does, shortly after the Desk opens. It plays at most once per page load
- * and at most DESK_EXPAND_HINT_MAX times per browser, and never again once the
- * visitor has used full screen. Storage is a per-viewer convenience: if it is
- * blocked the hint still plays, once per page load.
+ * Two first-visit hints (Joe, 2026-10-02). The Ask DE text box hint ("same
+ * with the chat text box field") plays first; the full-screen hint ("animate
+ * this so people know to make it full screen") waits for it to settle, so the
+ * two never animate together. Each plays at most once per page load and at
+ * most DESK_HINT_MAX times per browser, and retires for good once the visitor
+ * has done the thing it points at. Storage is a per-viewer convenience: if it
+ * is blocked the hints still play, once per page load.
  */
+const DESK_HINT_MAX = 3;
 const DESK_EXPAND_HINT_KEY = "de-desk-expand-hint";
-const DESK_EXPAND_HINT_MAX = 3;
 const DESK_EXPAND_HINT_DELAY_MS = 1200;
 const DESK_EXPAND_HINT_DURATION_MS = 5200;
-type DeskExpandHintState = { used: boolean; shown: number };
+const DESK_COMPOSER_HINT_KEY = "de-desk-composer-hint";
+const DESK_COMPOSER_HINT_DELAY_MS = 500;
+const DESK_COMPOSER_HINT_DURATION_MS = 5000;
+type DeskHintState = { used: boolean; shown: number };
 
-function readDeskExpandHint(): DeskExpandHintState {
+function readDeskHint(key: string): DeskHintState {
   try {
-    const raw = window.localStorage.getItem(DESK_EXPAND_HINT_KEY);
-    const parsed = raw ? (JSON.parse(raw) as Partial<DeskExpandHintState> | null) : null;
+    const raw = window.localStorage.getItem(key);
+    const parsed = raw ? (JSON.parse(raw) as Partial<DeskHintState> | null) : null;
     const shown = Number(parsed?.shown);
     return { used: parsed?.used === true, shown: Number.isFinite(shown) && shown > 0 ? shown : 0 };
   } catch {
@@ -179,9 +183,9 @@ function readDeskExpandHint(): DeskExpandHintState {
   }
 }
 
-function writeDeskExpandHint(state: DeskExpandHintState) {
+function writeDeskHint(key: string, state: DeskHintState) {
   try {
-    window.localStorage.setItem(DESK_EXPAND_HINT_KEY, JSON.stringify(state));
+    window.localStorage.setItem(key, JSON.stringify(state));
   } catch {
     /* blocked storage: the once-per-page-load guard still holds */
   }
@@ -384,6 +388,10 @@ export const ZohoASAPWidget = ({
   const [isDeskFullscreen, setIsDeskFullscreen] = useState(false);
   const [expandHint, setExpandHint] = useState(false);
   const expandHintPlayedRef = useRef(false);
+  const [composerHint, setComposerHint] = useState(false);
+  const composerHintPlayedRef = useRef(false);
+  // The full-screen hint waits until the text box hint has played or been ruled out.
+  const [composerHintSettled, setComposerHintSettled] = useState(false);
   const ignoreDismissUntilRef = useRef(0);
 
   const deskDrag = useDraggableWindow({
@@ -433,17 +441,19 @@ export const ZohoASAPWidget = ({
 
   // Full-screen hint: shortly after the docked Desk opens on a screen wide
   // enough to expand, unless a person is live in the chat (no distraction then).
+  // It waits for the text box hint, and never starts while someone is typing.
   useEffect(() => {
     if (!isOpen || !canDrag || isDeskFullscreen || agentLive || expandHintPlayedRef.current) return;
-    const stored = readDeskExpandHint();
-    if (stored.used || stored.shown >= DESK_EXPAND_HINT_MAX) return;
+    if (!composerHintSettled || composerHint || chatInput.trim()) return;
+    const stored = readDeskHint(DESK_EXPAND_HINT_KEY);
+    if (stored.used || stored.shown >= DESK_HINT_MAX) return;
     const start = window.setTimeout(() => {
       expandHintPlayedRef.current = true;
-      writeDeskExpandHint({ used: false, shown: stored.shown + 1 });
+      writeDeskHint(DESK_EXPAND_HINT_KEY, { used: false, shown: stored.shown + 1 });
       setExpandHint(true);
     }, DESK_EXPAND_HINT_DELAY_MS);
     return () => window.clearTimeout(start);
-  }, [isOpen, canDrag, isDeskFullscreen, agentLive]);
+  }, [isOpen, canDrag, isDeskFullscreen, agentLive, composerHintSettled, composerHint, chatInput]);
   useEffect(() => {
     if (!expandHint) return;
     const stop = window.setTimeout(() => setExpandHint(false), DESK_EXPAND_HINT_DURATION_MS);
@@ -1060,6 +1070,43 @@ export const ZohoASAPWidget = ({
 
   const visitorHasSpoken = chatMessages.some((m) => m.role === "user");
 
+  // Ask DE text box hint: once the greeting has finished, on the Ask DE tab,
+  // for a visitor who has not said anything yet and with nobody live.
+  useEffect(() => {
+    if (!isOpen || composerHintPlayedRef.current) return;
+    const stored = readDeskHint(DESK_COMPOSER_HINT_KEY);
+    if (stored.used || stored.shown >= DESK_HINT_MAX || visitorHasSpoken || agentLive || activeTab !== "chat") {
+      setComposerHintSettled(true);
+      return;
+    }
+    if (!greetingComplete || expandHint) return;
+    const start = window.setTimeout(() => {
+      composerHintPlayedRef.current = true;
+      writeDeskHint(DESK_COMPOSER_HINT_KEY, { used: false, shown: stored.shown + 1 });
+      setComposerHint(true);
+    }, DESK_COMPOSER_HINT_DELAY_MS);
+    return () => window.clearTimeout(start);
+  }, [isOpen, activeTab, greetingComplete, visitorHasSpoken, agentLive, expandHint]);
+  useEffect(() => {
+    if (!composerHint) return;
+    const stop = window.setTimeout(() => {
+      setComposerHint(false);
+      setComposerHintSettled(true);
+    }, DESK_COMPOSER_HINT_DURATION_MS);
+    return () => window.clearTimeout(stop);
+  }, [composerHint]);
+  // Typing, leaving the tab or closing the Desk ends the hint at once.
+  useEffect(() => {
+    if (composerHint && (chatInput.trim() || !isOpen || activeTab !== "chat")) {
+      setComposerHint(false);
+      setComposerHintSettled(true);
+    }
+  }, [composerHint, chatInput, isOpen, activeTab]);
+  // Once the visitor has sent something, the text box hint has done its job for good.
+  useEffect(() => {
+    if (visitorHasSpoken) writeDeskHint(DESK_COMPOSER_HINT_KEY, { used: true, shown: DESK_HINT_MAX });
+  }, [visitorHasSpoken]);
+
   // Get Support, prefilled with what the visitor already told Ask DE. A draft
   // they have started on Get Support is never overwritten.
   const openTicketFromChat = () => {
@@ -1508,7 +1555,7 @@ export const ZohoASAPWidget = ({
                   onClick={() => {
                     const next = !isDeskFullscreen;
                     // Once someone has used full screen, the hint has done its job.
-                    if (next) writeDeskExpandHint({ used: true, shown: DESK_EXPAND_HINT_MAX });
+                    if (next) writeDeskHint(DESK_EXPAND_HINT_KEY, { used: true, shown: DESK_HINT_MAX });
                     setExpandHint(false);
                     setIsDeskFullscreen(next);
                   }}
@@ -2430,7 +2477,10 @@ export const ZohoASAPWidget = ({
                     </button>
                   </div>
                 ) : null}
-                <div className={`de-desk-composer${headsUp || unreadChatCount ? " is-live" : ""}`}>
+                <div
+                  className={`de-desk-composer${headsUp || unreadChatCount ? " is-live" : ""}${composerHint ? " is-hinting" : ""}`}
+                  data-testid="desk-composer"
+                >
                   <textarea
                     ref={composerRef}
                     rows={1}
@@ -3772,6 +3822,35 @@ export const ZohoASAPWidget = ({
               box-shadow: 0 0 0 3px rgba(227,178,60,0.16);
             }
             .de-desk-composer { align-items: flex-end; }
+            /* Text box hint: three gold pulses, a soft gold light sweeping
+               across the field, and a gold placeholder. Finite on purpose. */
+            .de-desk-composer.is-hinting textarea {
+              border-color: var(--desk-gold);
+              background-image: linear-gradient(
+                100deg,
+                transparent 35%,
+                rgba(227,178,60,0.16) 50%,
+                transparent 65%
+              );
+              background-size: 300% 100%;
+              background-repeat: no-repeat;
+              animation:
+                de-desk-composer-ring 1.6s ease-out 0.1s 3,
+                de-desk-composer-sweep 1.6s ease-in-out 3;
+            }
+            .de-desk-composer.is-hinting textarea::placeholder { color: var(--desk-gold-ink); }
+            @keyframes de-desk-composer-ring {
+              0% { box-shadow: 0 0 0 0 rgba(227,178,60,0.5); }
+              75%, 100% { box-shadow: 0 0 0 8px rgba(227,178,60,0); }
+            }
+            @keyframes de-desk-composer-sweep {
+              0% { background-position: 100% 0; }
+              100% { background-position: 0% 0; }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              /* No motion: the gold edge and the gold placeholder still say it. */
+              .de-desk-composer.is-hinting textarea { animation: none; background-image: none; }
+            }
             .de-desk-send {
               width: 44px; height: 44px; border-radius: 10px;
               background: #E3B23C; border: none;
