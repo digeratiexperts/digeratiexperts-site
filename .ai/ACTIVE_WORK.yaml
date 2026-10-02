@@ -182,8 +182,11 @@ claims:
       - client/src/App.tsx (the /version-7 route and its own-bottom-bar exclusion)
       - server/spaKnownPaths.ts, server/spaKnownPaths.test.ts (/version-7)
       - client/src/hooks/useDockAutohide.ts (new)
-      - client/src/components/SiteBottomBar.tsx (opt-in autohide prop and its visibility lines only)
+      - client/src/components/SiteBottomBar.tsx (opt-in autohide prop and its visibility lines; the Ask DE nudge's phone timing only)
+      - client/src/components/SiteBottomBar.nudge.test.ts (phone timing cases)
       - client/src/components/HomepageSectionNav.tsx (opt-in chapter progress in HomepageDockMenu only)
+      - shared/threatFeed.ts (THREAT_ATTRIBUTION string only)
+      - server/routes.ts (the public-threats error-path attribution string only)
     status: active
     started: 2026-10-01
     note: >-
@@ -209,6 +212,38 @@ claims:
       already "Security Updates" in V7 (the live label survives only in frozen
       v1/v3); proof-section review claims wait on a review-source funnel Joe
       asked for ("connect a funnel for those sources to RSS into our data").
+      RELEASED 2026-10-02: merged as PR 315 (d5f3479a) at 13:23Z and verified
+      live: production release.txt d5f3479a, /version-7 answers 200 with
+      X-Robots-Tag noindex, nofollow, / unchanged (200), and
+      scripts/qa/homepage-v7-check.mjs passes 31/31 against production at
+      390/768/1440 including the bar autohide on the live page; the live
+      threat feed renders real CISA KEV items with full dates. Files
+      released. Open follow-ups, not claimed: the Ask DE nudge over the phone
+      hero (Desk lane); the review-source funnel (Yelp keys, Thumbtack and
+      Google copy from Joe, then a Business Profile API poller); the
+      shared THREAT_ATTRIBUTION string still reads "Digerati" alone on /.
+      Joe, 2026-10-02: naming fix approved ("YES"). THREAT_ATTRIBUTION and the
+      public-threats error fallback now read "Digerati Experts prioritizes",
+      so /, /resources/security-updates and the previews all carry the full
+      name; V7's local rename helper is removed as redundant. Rides PR 332.
+      Overlap: claim de-org-department-tenant-boundary edits server/routes.ts
+      (department routes only); this is one string in the threats route,
+      disjoint. Status returns to verified-live after the release check.
+      Review funnel: Joe chose "set it up on your own or postpone"; the Yelp
+      key, business ID and review copy can only come from Joe's accounts, so
+      it is postponed.
+      Joe, 2026-10-02: "OPTIMIZE MOBILE BEST YOU CAN" on the Ask DE nudge
+      covering the phone hero. The Desk lane (de-desk-gold) has merged and is
+      being released (PR 331), and the nudge timing is otherwise unclaimed
+      (de-ask-nudge-cookie-offset is verified-live), so it rides PR 332:
+      below 768px the nudge waits until the reader leaves the first screen,
+      then steps away after 160px of further scroll or when a field takes
+      focus (shown once per session, never marked dismissed). Desktop is
+      unchanged. V7's pronunciation row keeps a 72px right gutter on phones
+      so "Hear it" clears the Ask DE launcher. Not touched: the live hero and
+      PronunciationCard (claimed by pronunciation-and-flipbook-recovery and
+      de-site-v2-scrollcraft); at 430px the launcher still sits over the live
+      card's "Hear it" until one of those lanes or a release frees the files.
   - id: de-desk-gold
     owner: claude
     subsystem: de-desk
