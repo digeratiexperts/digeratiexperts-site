@@ -244,8 +244,10 @@ claims:
       PronunciationCard (claimed by pronunciation-and-flipbook-recovery and
       de-site-v2-scrollcraft); at 430px the launcher still sits over the live
       card's "Hear it" until one of those lanes or a release frees the files.
-      MERGED 2026-10-02: PR 332 as c702a4fc (Joe: "Merge #332 first");
-      production verification pending.
+      MERGED 2026-10-02: PR 332 as c702a4fc (Joe: "Merge #332 first").
+      VERIFIED LIVE: production release.txt c702a4fc; /api/public/threats
+      attribution reads "Digerati Experts prioritizes"; the served bundle
+      carries the Ask DE nudge with the 767px phone hold.
       Round 4 (Joe, 2026-10-02, three dashboard references): "convert the
       white sections to this style, well i still want white but the white on
       cream looks stupid", "text looks so much better ... and the accent
