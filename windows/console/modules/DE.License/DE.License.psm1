@@ -157,26 +157,69 @@ function Test-DELicenseToken {
     }
     return [pscustomobject]@{ valid = $true; state = 'valid'; reason = "licensed to $($claims.sub) until $($exp.ToString('u'))"; claims = $claims; expires = $exp }
 }
+# ------------------------------------------------------------------ the stored licence
+# The token lives in its own file in the data folder (state\license.jws, SYSTEM/Administrators only by the folder's ACL),
+# never in the state file, logs, evidence, bundles, the Hub record or a profile. State keeps only metadata about it.
+function Get-DELicenseTokenFile {
+    <# Where the stored licence token is kept, or $null before Initialize-DEConsole. #>
+    $d = (Get-DEConsole).Dirs
+    if (-not $d -or -not $d['State']) { return $null }
+    return (Join-Path $d['State'] 'license.jws')
+}
+function Write-DELicenseFile {
+    <# Write-then-replace (UTF-8 without BOM), so a power cut never leaves half a file. The file inherits the data folder's ACL. #>
+    param([Parameter(Mandatory = $true)][string]$Path, [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Text)
+    $tmp = "$Path.tmp"
+    [IO.File]::WriteAllText($tmp, $Text, (New-Object Text.UTF8Encoding $false))
+    if (Test-Path -LiteralPath $Path) { [IO.File]::Replace($tmp, $Path, [NullString]::Value) } else { [IO.File]::Move($tmp, $Path) }
+}
+function Read-DELicenseToken {
+    <# The stored licence token, or $null when there is none or the file cannot be read. Never throws; the caller re-verifies it. #>
+    $f = Get-DELicenseTokenFile
+    if (-not $f -or -not (Test-Path -LiteralPath $f)) { return $null }
+    try { $t = ([IO.File]::ReadAllText($f)).Trim(); if ($t) { return $t } } catch { try { Write-DELog -Level WARN -Message "the stored licence could not be read ($($_.Exception.Message)); treated as no licence" } catch { } }
+    return $null
+}
+function Remove-DELicenseLegacyToken {
+    <# Builds before 1.10.0 kept the token in state, where the state scrub saved it as [REDACTED]. Drop that key (no licence, no crash). #>
+    $l = Get-DEState -Path 'license'
+    if ($l -is [System.Collections.IDictionary] -and $l.Contains('token')) { $l.Remove('token'); Save-DEState }
+}
 function Set-DELicense {
-    <# Stores a licence after checking it (the data folder is SYSTEM/Administrators only). A licence that does not verify is never stored. #>
+    <# Stores a licence after checking it: the token in state\license.jws, metadata in state. A licence that does not verify is never stored. #>
     param([Parameter(Mandatory = $true)][string]$Token)
     $t = Test-DELicenseToken -Token $Token
     if (-not $t.valid) { throw "licence not accepted: $($t.reason)" }
-    Set-DEStateValue -Path 'license.token' -Value $Token.Trim()
+    $f = Get-DELicenseTokenFile
+    if (-not $f) { throw 'licence not stored: the data folder is not set up (Initialize-DEConsole)' }
+    Write-DELicenseFile -Path $f -Text $Token.Trim()
+    Remove-DELicenseLegacyToken
+    $c = $t.claims
+    Set-DEStateValue -Path 'license.current' -Value ([ordered]@{ jti = "$($c.jti)"; sub = "$($c.sub)"; dev = @($c.dev | Where-Object { $_ } | ForEach-Object { "$_" }); exp = $t.expires.ToString('o'); features = @($c.features | Where-Object { $_ } | ForEach-Object { "$_" }); clients = @($c.clients | Where-Object { $_ } | ForEach-Object { "$_" }); state = 'valid'; storedAt = (Get-Date).ToUniversalTime().ToString('o') })
     Set-DEStateValue -Path 'license.lastSeen' -Value (Get-Date).ToUniversalTime().ToString('o')
     $script:Warned = @{}
-    Write-DELog -Level INFO -Message "licence accepted: $($t.reason) (id $($t.claims.jti))"
+    Write-DELog -Level INFO -Message "licence accepted: $($t.reason) (id $($c.jti))"
     return (Get-DELicenseStatus)
 }
-function Clear-DELicense { Set-DEStateValue -Path 'license.token' -Value $null; $script:Warned = @{} }
+function Clear-DELicense {
+    <# Removes the stored licence: the token file and its metadata. #>
+    $f = Get-DELicenseTokenFile
+    if ($f) { foreach ($x in @($f, "$f.tmp")) { if (Test-Path -LiteralPath $x) { [IO.File]::Delete($x) } } }
+    Remove-DELicenseLegacyToken
+    if (Get-DEState -Path 'license.current') { Set-DEStateValue -Path 'license.current' -Value $null }
+    $script:Warned = @{}
+}
 function Get-DELicenseStatus {
-    <# The stored licence, checked now. Moves the clock-rollback mark forward when valid. #>
+    <# The stored licence (state\license.jws), re-verified now. Moves the clock-rollback mark forward when valid. #>
     $pol = Get-DELicensePolicy
-    $tok = Get-DEState -Path 'license.token'
+    Remove-DELicenseLegacyToken
+    $tok = Read-DELicenseToken
     $b = Get-DEBuildInfo
     if (-not $tok) { return [pscustomobject]@{ state = 'missing'; valid = $false; reason = 'no licence on this device'; technician = $null; clients = @(); features = @(); expires = $null; id = $null; enforce = $pol.enforce; build = $b.buildId } }
     $t = Test-DELicenseToken -Token $tok
     if ($t.valid) { $now = (Get-Date).ToUniversalTime(); $last = Get-DEState -Path 'license.lastSeen'; if (-not $last -or $now -gt ([datetime]$last).ToUniversalTime()) { Set-DEStateValue -Path 'license.lastSeen' -Value $now.ToString('o') } }
+    $meta = Get-DEState -Path 'license.current'
+    if ($meta -is [System.Collections.IDictionary] -and "$($meta['state'])" -ne $t.state) { $meta['state'] = $t.state; Save-DEState }
     $c = $t.claims
     return [pscustomobject]@{ state = $t.state; valid = $t.valid; reason = $t.reason; technician = $(if ($c) { "$($c.sub)" } else { $null }); clients = @($(if ($c) { $c.clients })); features = @($(if ($c) { $c.features })); expires = $(if ($t.valid) { $t.expires.ToString('o') } else { $null }); id = $(if ($c) { "$($c.jti)" } else { $null }); enforce = $pol.enforce; build = $b.buildId }
 }
@@ -265,9 +308,7 @@ function Update-DELicenseRevocations {
             return (& $res $true $false @($saved.jti).Count $saved.updatedAt 'the Hub answered with an older list; the saved list stays')
         }
         $doc = [ordered]@{ about = 'Licence IDs revoked on the Intelligence Hub, downloaded by DE Tech Tool (Update-DELicenseRevocations). Checked together with trust\revoked.json.'; source = $base; fetchedAt = (Get-Date).ToUniversalTime().ToString('o'); updatedAt = $list.updatedAt; jti = @($list.jti) }
-        $tmp = "$target.tmp"
-        [IO.File]::WriteAllText($tmp, ($doc | ConvertTo-Json -Depth 4), (New-Object Text.UTF8Encoding $false))
-        if (Test-Path -LiteralPath $target) { [IO.File]::Replace($tmp, $target, [NullString]::Value) } else { [IO.File]::Move($tmp, $target) }
+        Write-DELicenseFile -Path $target -Text ($doc | ConvertTo-Json -Depth 4)
         Write-DELog -Level INFO -Message ("revocation list downloaded from {0}: {1} revoked licence id(s), updated {2}" -f $base, @($list.jti).Count, $(if ($list.updatedAt) { $list.updatedAt } else { 'never' }))
         return (& $res $true $true @($list.jti).Count $list.updatedAt '')
     } catch {
@@ -277,4 +318,4 @@ function Update-DELicenseRevocations {
     }
 }
 
-Export-ModuleMember -Function Get-DELicensePolicy, Set-DELicensePolicyOverride, Get-DELicenseTrustedKeys, Add-DELicenseTrustedKey, ConvertFrom-DEBase64Url, ConvertTo-DEBase64Url, Get-DEThisDeviceKey, Test-DELicenseToken, Set-DELicense, Clear-DELicense, Get-DELicenseStatus, Test-DELicenseFor, Get-DEBuildInfo, Invoke-DELicenseHub, Start-DELicenseActivation, Complete-DELicenseActivation, ConvertFrom-DELicenseRevocationList, Get-DELicenseRevocationFile, Get-DELicenseRevocations, Invoke-DELicenseHubGet, Get-DELicenseHubUrl, Update-DELicenseRevocations
+Export-ModuleMember -Function Get-DELicensePolicy, Set-DELicensePolicyOverride, Get-DELicenseTrustedKeys, Add-DELicenseTrustedKey, ConvertFrom-DEBase64Url, ConvertTo-DEBase64Url, Get-DEThisDeviceKey, Test-DELicenseToken, Set-DELicense, Clear-DELicense, Get-DELicenseStatus, Test-DELicenseFor, Get-DEBuildInfo, Invoke-DELicenseHub, Start-DELicenseActivation, Complete-DELicenseActivation, ConvertFrom-DELicenseRevocationList, Get-DELicenseRevocationFile, Get-DELicenseRevocations, Get-DELicenseTokenFile, Invoke-DELicenseHubGet, Get-DELicenseHubUrl, Update-DELicenseRevocations
