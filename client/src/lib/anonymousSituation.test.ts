@@ -99,6 +99,7 @@ describe("situationFromDraft", () => {
     )!;
     const assessment = situationDoorCopy(situation, "assessment");
     expect(assessment.headline).toMatch(/assessment/i);
+    expect(assessment.detail).toMatch(/another way in/i);
     expect(assessment.continueHref).toBe("/store/solution");
     expect(assessment.privacy).toMatch(/No name, email, or phone/);
     expect(situationDoorCopy(situation, "contact").headline).toMatch(/another way in/i);

@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import {
   situationDoorCopy,
+  situationPublicLine,
   type AnonymousSituation,
   type SituationDoor,
 } from "@/lib/anonymousSituation";
@@ -22,6 +23,7 @@ export function SituationContinuityStrip({
   className?: string;
 }) {
   const copy = situationDoorCopy(situation, door);
+  const line = situationPublicLine(situation);
   const paper = tone === "paper";
   return (
     <aside
@@ -29,14 +31,17 @@ export function SituationContinuityStrip({
         "rounded-xl border px-4 py-3 sm:px-5 sm:py-4",
         paper
           ? "border-[var(--de-paper-hairline)] bg-[var(--de-paper)] text-[#1A1228]"
-          : "border-de-hairline bg-de-raised text-white",
+          : "rounded-2xl border-de-hairline bg-de-raised text-white",
         className,
       )}
       data-testid={`situation-continuity-${door}`}
       aria-label="Remembered environment"
     >
       <p className={cn("text-base font-semibold", paper ? "text-[#1A1228]" : "text-white")}>{copy.headline}</p>
-      <p className={cn("mt-1 text-sm leading-relaxed", paper ? "text-[#3A3448]" : "text-white/70")}>{copy.detail}</p>
+      {line ? (
+        <p className={cn("mt-1 text-sm leading-relaxed", paper ? "text-[#3A3448]" : "text-white/70")}>{line}</p>
+      ) : null}
+      <p className={cn("mt-1 text-sm leading-relaxed", paper ? "text-[#5A5368]" : "text-white/55")}>{copy.detail}</p>
       <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
         <Link
           href={copy.continueHref}

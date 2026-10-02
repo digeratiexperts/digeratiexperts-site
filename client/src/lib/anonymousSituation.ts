@@ -65,15 +65,12 @@ export function continueHrefForSituation(situation: AnonymousSituation): string 
 }
 
 export function situationDoorCopy(situation: AnonymousSituation, door: SituationDoor): SituationDoorCopy {
-  const line = situationPublicLine(situation);
   const continueHref = continueHrefForSituation(situation);
   const continueLabel = situation.needs.length > 0 ? "Continue your solution" : "Finish your Store profile";
   if (door === "assessment") {
     return {
       headline: "We'll size this assessment against the environment you already started.",
-      detail: line
-        ? `${line}. This form is another way in — you do not need to retype users, computers, or sites.`
-        : "This form is another way in. Continue the solution you started, or send this assessment against that same environment.",
+      detail: "This form is another way in — you do not need to retype users, computers, or sites.",
       continueLabel,
       continueHref,
       privacy: PRIVACY,
@@ -82,9 +79,7 @@ export function situationDoorCopy(situation: AnonymousSituation, door: Situation
   if (door === "contact") {
     return {
       headline: "This is another way in — we already have your Store environment.",
-      detail: line
-        ? `${line}. Tell us what you want from this conversation, or continue the solution you started.`
-        : "Tell us what you want from this conversation, or continue the solution you started.",
+      detail: "Tell us what you want from this conversation, or continue the solution you started.",
       continueLabel,
       continueHref,
       privacy: PRIVACY,
@@ -92,9 +87,7 @@ export function situationDoorCopy(situation: AnonymousSituation, door: Situation
   }
   return {
     headline: "We'll talk from the environment you already started in the Store.",
-    detail: line
-      ? `${line}. Mention it on the call, or send the package from the Store first.`
-      : "Mention the Store solution on the call, or send the package first.",
+    detail: "Mention it on the call, or send the package from the Store first.",
     continueLabel,
     continueHref,
     privacy: PRIVACY,
