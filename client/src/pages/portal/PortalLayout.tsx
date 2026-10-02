@@ -164,6 +164,12 @@ export function PortalLayout({
                 <span className="truncate">{companyName}</span>
               </div>
             )}
+            {user?.role === "admin" && (
+              // Below 1024px the topbar switcher is hidden; admins switch company here.
+              <div className="mt-2 lg:hidden group-data-[collapsible=icon]:hidden" data-testid="sidebar-tenant-selector">
+                <TenantSelector currentTenant={impersonatingCompany ? { id: impersonatingCompany.id ?? "", companyName: impersonatingCompany.companyName ?? "" } : null} />
+              </div>
+            )}
           </SidebarHeader>
 
           <SidebarContent>

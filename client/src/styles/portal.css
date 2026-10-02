@@ -111,6 +111,16 @@ body.de-portal-scope[data-portal-theme="light"] [data-sidebar="sidebar"] {
   --pt-bad: 251 113 133;
   --pt-info: 125 211 252;
   --pt-brand: 244 94 163;
+  /* Surfaces placed inside the rail (e.g. the admin company switcher) match it. */
+  --background: 248 71% 4%;
+  --foreground: 270 20% 96%;
+  --card: 276 12% 8%;
+  --card-foreground: 270 20% 96%;
+  --muted-foreground: 270 6% 68%;
+  --border: 270 12% 17%;
+  --input: 270 12% 20%;
+  --accent: 270 12% 16%;
+  --accent-foreground: 270 20% 96%;
 }
 
 /* The marketing scale lifts text-sm to 16px for long-form pages. A working
