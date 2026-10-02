@@ -70,6 +70,17 @@ Authenticated (real `/api/portal/me` session only):
 
 Do **not** invent service status, devices, software libraries, or vendor product names. Do **not** put Cyber Risk Assessment, More tools, composer, or a repeated footer on this tab.
 
+## Polish rules (Joe, 2026-10-02: "make sure it's fully optimized and has all the missing touches")
+
+- The empty send button is a quiet well with a dim icon, never half-transparent gold.
+- Suggested questions and issue labels wrap to a second line; they never end in an ellipsis.
+- The Get Support Details box is tall enough to show its whole prompt at every width.
+- A failed Ask DE reply carries a faint red edge and tint, so it reads as an error before "Try again".
+- The ticket confirmation shows a labelled gold ticket number; "Back to Ask DE" and "View my tickets" are outlined secondary buttons.
+- Signed-in Client Tools opens with the welcome as a heading, and every Desk list uses gold icons.
+- Full screen keeps the header across the window and puts tabs, content and composer in a centred 760px column.
+- On phones the privacy line under the composer stays on one line.
+
 ## a11y
 
 - Visible `:focus-visible` (gold ring).

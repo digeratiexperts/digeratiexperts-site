@@ -392,6 +392,32 @@ describe("DE Desk shell positioning", () => {
     expect(src).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.de-desk-composer\.is-hinting textarea \{ animation: none; background-image: none; \}/);
   });
 
+  it("keeps the polish pass of 2026-10-02 (empty send, wrapping choices, full prompt, errors, full screen)", () => {
+    // The empty send button is a quiet well, not half-transparent gold.
+    expect(src).not.toMatch(/\.de-desk-send:disabled \{ opacity/);
+    expect(src).toMatch(/\.de-desk-send:disabled \{\s*background: var\(--desk-well\);/);
+    // Suggested questions and issue labels wrap instead of ending in an ellipsis.
+    for (const cls of ["de-desk-discover-label", "de-desk-chip-label", "de-desk-issue-label"]) {
+      const rule = src.match(new RegExp(`\\.${cls} \\{[^}]*\\}`))?.[0] ?? "";
+      expect(rule, cls).toMatch(/white-space: normal;/);
+      expect(rule, cls).not.toMatch(/text-overflow: ellipsis/);
+    }
+    // The Details box is tall enough for its whole prompt.
+    expect(src).toMatch(/\.de-desk-shell \.de-desk-ta \{[\s\S]*?min-height: 148px;/);
+    // A failed reply reads as an error, not as a normal answer.
+    expect(src).toMatch(/\$\{chatMessage\.retryText \? " is-error" : ""\}/);
+    expect(src).toMatch(/\.de-desk-bubble\.is-error \{/);
+    // The ticket number is labelled and gold, not greyed out by the hero paragraph rule.
+    expect(src).toMatch(/<span className="de-desk-ticket-ref-label">Ticket<\/span>/);
+    expect(src).toMatch(/\.de-desk-hero \.de-desk-ticket-ref \{[\s\S]*?color: var\(--desk-gold-ink\);/);
+    // Secondary actions on the confirmation look like buttons.
+    expect(src).toMatch(/className="de-desk-row de-desk-row-action"/);
+    // Full screen keeps a readable centred column.
+    expect(src).toMatch(/data-fullscreen=\{isDeskFullscreen \? "true" : undefined\}/);
+    expect(src).toMatch(/\.de-desk-shell\[data-fullscreen="true"\] \.de-desk-scroll,/);
+    expect(src).toMatch(/calc\(\(100% - 760px\) \/ 2\)/);
+  });
+
   it("opens with focus on the composer (desktop) or the active tab, not the first header button", () => {
     expect(src).not.toMatch(/getFocusable\(\)\[0\]\?\.focus\(\);/);
     expect(src).toMatch(/id="desk-chat-input"/);

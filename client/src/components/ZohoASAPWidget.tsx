@@ -1513,6 +1513,7 @@ export const ZohoASAPWidget = ({
             aria-label="DE Desk help"
             data-testid="desk-modal"
             data-tab={activeTab}
+            data-fullscreen={isDeskFullscreen ? "true" : undefined}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => event.stopPropagation()}
           >
@@ -1721,7 +1722,7 @@ export const ZohoASAPWidget = ({
                             <div
                               className={`de-desk-bubble ${
                                 isUser ? "is-user" : isAgent ? "is-agent" : "is-bot"
-                              }`}
+                              }${chatMessage.retryText ? " is-error" : ""}`}
                             >
                               {/* R3: sr-only only while the visible <p> is aria-hidden (during caret reveal). */}
                               {showCaret ? (
@@ -2010,6 +2011,7 @@ export const ZohoASAPWidget = ({
                         <h3>Support request received</h3>
                         {ticketResult.ticketNumber && (
                           <p className="de-desk-ticket-ref">
+                            <span className="de-desk-ticket-ref-label">Ticket</span>
                             {ticketResult.ticketNumber}
                             <button
                               type="button"
@@ -2025,7 +2027,7 @@ export const ZohoASAPWidget = ({
                         <p>{ticketResult.message}</p>
                         <div className="de-desk-success-actions">
                           {portalSession ? (
-                            <a href={PORTAL_TICKETS} className="de-desk-row" data-testid="link-success-view-tickets">
+                            <a href={PORTAL_TICKETS} className="de-desk-row de-desk-row-action" data-testid="link-success-view-tickets">
                               <span className="de-desk-row-t">View my tickets</span>
                             </a>
                           ) : null}
@@ -2035,7 +2037,7 @@ export const ZohoASAPWidget = ({
                               setTicketResult(null);
                               selectTab("chat");
                             }}
-                            className="de-desk-row"
+                            className="de-desk-row de-desk-row-action"
                           >
                             <span className="de-desk-row-t">Back to Ask DE</span>
                           </button>
@@ -2335,10 +2337,10 @@ export const ZohoASAPWidget = ({
                         {/* No <h3>Client Tools</h3> here: the active tab already
                             says it, one line above. */}
                         <div className="de-desk-tools-intro">
-                          <p>
+                          <h3 className="de-desk-tools-welcome">
                             Welcome back
                             {portalSession.fullName ? `, ${portalSession.fullName.split(" ")[0]}` : ""}.
-                          </p>
+                          </h3>
                         </div>
                         {authToolGroups.map((group) => (
                           <div key={group.heading} className="de-desk-launch-group">
@@ -2890,6 +2892,15 @@ export const ZohoASAPWidget = ({
               border: 1px solid var(--desk-border);
               color: var(--desk-ink); text-align: left; width: 100%;
             }
+            .de-desk-row-action {
+              justify-content: center;
+              font-weight: 650;
+              background: transparent;
+              border-color: var(--desk-border-strong);
+              text-decoration: none;
+              transition: background 0.15s ease, border-color 0.15s ease;
+            }
+            .de-desk-row-action:hover { background: var(--desk-box-hover); border-color: rgba(255,255,255,0.28); }
             .de-desk-msg { display: flex; gap: 10px; align-items: flex-start; }
             .de-desk-msg + .de-desk-msg { margin-top: 12px; }
             .de-desk-msg.is-user { justify-content: flex-end; }
@@ -3135,7 +3146,8 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-issue-label {
               flex: 1; min-width: 0;
-              overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+              /* Wrap to a second line rather than cut a question off with an ellipsis. */
+              overflow-wrap: anywhere; white-space: normal;
               color: var(--desk-ink);
             }
             .de-desk-issue-arrow {
@@ -3326,7 +3338,8 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-ta-wrap { position: relative; }
             .de-desk-shell .de-desk-ta {
-              min-height: 90px; height: auto; padding-left: 14px; resize: vertical;
+              /* Tall enough for the whole four-line prompt at every width. */
+              min-height: 148px; height: auto; padding-left: 14px; resize: vertical;
               line-height: 1.5;
             }
             .de-desk-counter {
@@ -3424,6 +3437,10 @@ export const ZohoASAPWidget = ({
               border-bottom-left-radius: 5px;
               max-width: 640px; /* keeps chat readable in the full-screen desk */
             }
+            .de-desk-bubble.is-error {
+              border-color: rgba(248,113,113,0.45);
+              background: color-mix(in srgb, #f87171 7%, var(--desk-box));
+            }
             .de-desk-msg-time {
               display: block;
               margin-top: 5px;
@@ -3510,7 +3527,8 @@ export const ZohoASAPWidget = ({
             .de-desk-discover-icon svg { width: 15px; height: 15px; stroke-width: 1.9; }
             .de-desk-discover-label {
               flex: 1; min-width: 0;
-              overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+              /* Wrap to a second line rather than cut a question off with an ellipsis. */
+              overflow-wrap: anywhere; white-space: normal;
             }
             .de-desk-discover-arrow {
               width: 15px; height: 15px; flex: none;
@@ -3558,7 +3576,8 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-chip-label {
               flex: 1; min-width: 0;
-              overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+              /* Wrap to a second line rather than cut a question off with an ellipsis. */
+              overflow-wrap: anywhere; white-space: normal;
             }
             .de-desk-chip-arrow {
               width: 14px; height: 14px; flex: none;
@@ -3580,10 +3599,18 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-success { flex-direction: column; align-items: flex-start; }
             .de-desk-success p { max-width: none; }
-            .de-desk-ticket-ref {
+            /* .de-desk-hero p would otherwise grey it out. */
+            .de-desk-hero .de-desk-ticket-ref {
+              display: inline-flex; align-items: center; gap: 8px;
+              margin-top: 4px;
               font-family: ui-monospace, monospace;
-              font-size: 13px; font-weight: 600; color: var(--desk-gold);
-              margin-top: 8px;
+              font-size: 16px; font-weight: 700; letter-spacing: 0.02em;
+              color: var(--desk-gold-ink);
+            }
+            .de-desk-ticket-ref-label {
+              font-family: "Space Grotesk", sans-serif;
+              font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+              color: var(--desk-ink-muted);
             }
             .de-desk-success-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 14px; }
             .de-desk-heads-up {
@@ -3859,7 +3886,12 @@ export const ZohoASAPWidget = ({
               box-shadow: 0 8px 18px -10px rgba(227,178,60,0.8);
             }
             .de-desk-send:hover:not(:disabled) { background: #c99a2e; }
-            .de-desk-send:disabled { opacity: 0.5; box-shadow: none; }
+            .de-desk-send:disabled {
+              background: var(--desk-well);
+              box-shadow: inset 0 0 0 1px var(--desk-border);
+              cursor: default;
+            }
+            .de-desk-send:disabled svg { color: var(--desk-ink-dim); }
             .de-desk-send svg { width: 16px; height: 16px; color: var(--desk-on-gold); }
             .de-desk-composer-caption {
               position: relative;
@@ -3910,6 +3942,7 @@ export const ZohoASAPWidget = ({
               font-size: 14.5px;
               line-height: 1.45;
             }
+            .de-desk-tools-intro h3.de-desk-tools-welcome { margin-bottom: 2px; }
             .de-desk-tools-kicker {
               margin: 10px 0 6px !important;
               color: var(--desk-ink) !important;
@@ -4117,7 +4150,7 @@ export const ZohoASAPWidget = ({
               border: 1px solid rgba(255,255,255,0.10);
               border-radius: 11px;
               background: var(--desk-well);
-              color: var(--tool-color);
+              color: var(--desk-gold);
             }
             .de-desk-tool-group.is-featured .de-desk-tool-icon {
               border-color: color-mix(in srgb, #E3B23C 38%, transparent);
@@ -4351,8 +4384,23 @@ export const ZohoASAPWidget = ({
               outline-offset: -4px;
               border-radius: 10px;
             }
+            /* Full screen: the header spans the window, the content sits in a
+               readable centred column instead of stretching edge to edge. */
+            .de-desk-shell[data-fullscreen="true"] .de-desk-tabs {
+              margin-left: max(14px, calc((100% - 760px) / 2));
+              margin-right: max(14px, calc((100% - 760px) / 2));
+            }
+            .de-desk-shell[data-fullscreen="true"] .de-desk-scroll,
+            .de-desk-shell[data-fullscreen="true"] .de-desk-tools-panel .de-desk-scroll,
+            .de-desk-shell[data-fullscreen="true"] .de-desk-composer,
+            .de-desk-shell[data-fullscreen="true"] .de-desk-chat-actions,
+            .de-desk-shell[data-fullscreen="true"] .de-desk-composer-caption {
+              padding-left: max(16px, calc((100% - 760px) / 2));
+              padding-right: max(16px, calc((100% - 760px) / 2));
+            }
             @media (max-width: 420px) {
               .de-desk-grid2 { grid-template-columns: 1fr; }
+              .de-desk-composer-caption { font-size: 12px; }
               .de-desk-hero-art { display: none; }
               .de-desk-tab { font-size: 13.5px; gap: 4px; padding: 8px 2px 10px; }
               .de-desk-tab svg { width: 13px; height: 13px; }
