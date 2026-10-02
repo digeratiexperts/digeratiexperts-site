@@ -30,6 +30,29 @@
 
 version: 2
 claims:
+  - id: de-physical-hardware-quote-only
+    owner: claude
+    subsystem: store-checkout
+    branch: claude/physical-hardware-quote-only
+    base_sha: d5f3479a
+    files:
+      - server/secureStoreCheckout.ts (the physical-fulfillment classifier and 409 block)
+      - server/storeCommerceSafety.test.ts (the physical-fulfillment test)
+      - client/src/lib/warehouseContactHandoff.ts (the physical_fulfillment reason)
+      - client/src/pages/store/Checkout.tsx (the PHYSICAL_FULFILLMENT_REQUIRED handler)
+    status: active
+    started: 2026-10-02
+    note: >-
+      Issue 247 (P0 store), per Joe 2026-10-02 (make physical hardware
+      quote-only, independent of 280): nine hardware_physical SKUs were
+      isCheckoutEnabled, and secureStoreCheckout charged them through a
+      one-time hosted Payment Session with tax "0" and no shipping address.
+      A new physicalFulfillmentSkus classifier and a 409
+      PHYSICAL_FULFILLMENT_REQUIRED block (mirroring the recurring-subscription
+      block) hold hardware_physical out of online payment; the client switches
+      to Request Quote. isCheckoutEnabled is deliberately left on so hardware
+      still appears in quotes. No tax table or rate is assumed; that decision
+      (280) stays Joe's. Does not change digital or recurring checkout.
   - id: de-homepage-section-mockups
     owner: claude
     subsystem: homepage-design-concepts
