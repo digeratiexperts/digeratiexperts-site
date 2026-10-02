@@ -1,14 +1,25 @@
 import { useState, useEffect, useCallback, useId, useRef } from "react";
 import { analytics } from "@/lib/analytics";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { X, ArrowRight, Mail, CheckCircle2, Phone } from "lucide-react";
+import {
+  X,
+  ArrowRight,
+  Mail,
+  CheckCircle2,
+  Phone,
+  Scale,
+  FileText,
+  ArrowLeftRight,
+  type LucideIcon,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { CTA } from "@/lib/ctaCopy";
-import { DE_LOGO_PRIMARY } from "@/lib/brandAssets";
+import { DE_LOGO_REVERSE } from "@/lib/brandAssets";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { isDoor2Path } from "@/lib/isDoor2Path";
 import { isWarehousePath } from "@/lib/warehousePaths";
+import { IconWell } from "@/components/visual/IconWell";
 
 const PUBLIC_EMAIL_DOMAINS = [
   "gmail.com",
@@ -23,20 +34,32 @@ const PUBLIC_EMAIL_DOMAINS = [
  * Three facts, each one true of the assessment as sold today. Anything with a
  * number or a delivery promise needs a source in docs/CLAIMS-REGISTER.md first.
  */
-const FACTS = [
-  { lead: "Independent.", rest: "Your current provider shouldn’t be the one grading its own work." },
-  { lead: "Plain English.", rest: "Findings ranked by risk, written for the person who writes the checks." },
-  { lead: "No switch required.", rest: "Use it with the IT you have, or with us. Your call." },
+const FACTS: readonly { lead: string; rest: string; icon: LucideIcon }[] = [
+  {
+    lead: "Independent",
+    rest: "Your provider shouldn’t grade its own work.",
+    icon: Scale,
+  },
+  {
+    lead: "Plain English",
+    rest: "Findings ranked by risk for the person who writes the checks.",
+    icon: FileText,
+  },
+  {
+    lead: "No switch required",
+    rest: "Use it with the IT you have, or with us.",
+    icon: ArrowLeftRight,
+  },
 ] as const;
 
 /**
- * Illustrative shape of a findings page. Labelled EXAMPLE FORMAT per
- * design/VISUAL_EVIDENCE.md; no real client, score or measured state.
+ * Compact EXAMPLE FORMAT strip (design/VISUAL_EVIDENCE.md) — not a real report.
+ * Kept short so the dialog fits the viewport with the Teams-level card layout.
  */
-const EXAMPLE_ROWS = [
-  { area: "Identity", state: "Priority", tone: "warn" },
-  { area: "Backups", state: "Review", tone: "info" },
-  { area: "Endpoint", state: "Baseline", tone: "ok" },
+const EXAMPLE_CHIPS = [
+  { area: "Identity", state: "Priority" },
+  { area: "Backups", state: "Review" },
+  { area: "Endpoint", state: "Baseline" },
 ] as const;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -54,44 +77,6 @@ function validateBusinessEmail(value: string): string | null {
     return "Use your company email — personal inboxes aren’t accepted.";
   }
   return null;
-}
-
-const toneClass: Record<(typeof EXAMPLE_ROWS)[number]["tone"], string> = {
-  warn: "border-amber-600/40 bg-amber-50 text-amber-800",
-  info: "border-sky-600/40 bg-sky-50 text-sky-800",
-  ok: "border-emerald-600/40 bg-emerald-50 text-emerald-800",
-};
-
-function ExampleFindings() {
-  return (
-    <figure
-      className="rounded-xl border border-[var(--de-paper-hairline)] bg-white p-3.5 shadow-[0_10px_30px_rgba(26,18,16,0.08)]"
-      aria-label="Example format of an assessment findings page. Not a real report."
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-[#5A5368]">Findings</span>
-        <span className="rounded border border-amber-600/30 bg-amber-50 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-amber-800">
-          Example format
-        </span>
-      </div>
-      <ul className="mt-3 space-y-2" aria-hidden="true">
-        {EXAMPLE_ROWS.map((row) => (
-          <li key={row.area} className="flex items-center justify-between gap-3 rounded-lg border border-[var(--de-paper-hairline)] px-2.5 py-2">
-            <span className="text-[13px] font-semibold text-[#1A1228]">{row.area}</span>
-            <span className={`rounded border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-[0.08em] ${toneClass[row.tone]}`}>{row.state}</span>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-3 space-y-1.5" aria-hidden="true">
-        <div className="h-1.5 w-11/12 rounded bg-[#1A1228]/10" />
-        <div className="h-1.5 w-3/4 rounded bg-[#1A1228]/10" />
-        <div className="h-1.5 w-5/6 rounded bg-[#1A1228]/10" />
-      </div>
-      <figcaption className="mt-3 text-[11px] font-medium leading-snug text-[#5A5368]">
-        What a findings page looks like: each area, its state, and the next action. Example, not a client report.
-      </figcaption>
-    </figure>
-  );
 }
 
 export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
@@ -287,10 +272,10 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
             data-testid="overlay-exit-intent"
           />
 
-          <div className="pointer-events-none fixed inset-0 z-[10051] flex items-center justify-center p-4">
+          <div className="pointer-events-none fixed inset-0 z-[10051] flex items-center justify-center p-4 py-6 sm:p-6">
             <motion.div
               {...motionProps}
-              className="pointer-events-auto w-full max-w-[42rem]"
+              className="pointer-events-auto w-full max-w-[40rem]"
               data-testid="popup-exit-intent"
             >
               <div
@@ -299,23 +284,21 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
                 aria-modal="true"
                 aria-labelledby={titleId}
                 aria-describedby={descId}
-                className="relative max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-2xl border border-[var(--de-paper-hairline)] bg-[var(--de-paper)] shadow-[0_28px_80px_rgba(0,0,0,0.55)]"
+                className="relative max-h-[calc(100dvh-3rem)] overflow-y-auto overscroll-contain rounded-2xl border border-de-hairline bg-[#151217] shadow-[0_28px_80px_rgba(0,0,0,0.55)] sm:max-h-[calc(100dvh-4rem)]"
               >
-                <div className="sticky top-0 z-[1] h-1 bg-[#D3126A]" aria-hidden="true" />
-
-                <div className="flex items-center justify-between gap-3 px-5 pt-4 md:px-7">
+                <div className="sticky top-0 z-[1] flex items-center justify-between gap-3 border-b border-de-hairline bg-[#0a0a0a] px-5 py-3 md:px-7">
                   <img
-                    src={DE_LOGO_PRIMARY}
+                    src={DE_LOGO_REVERSE}
                     alt="Digerati Experts"
-                    className="h-6 w-auto md:h-7"
-                    width={140}
-                    height={28}
+                    className="h-7 w-auto md:h-8"
+                    width={160}
+                    height={32}
                   />
                   <button
                     ref={closeRef}
                     type="button"
                     onClick={handleClose}
-                    className="-mr-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[#5A5368] transition-colors hover:bg-black/5 hover:text-[#1A1228] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-paper)]"
+                    className="-mr-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-white/55 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0a]"
                     aria-label="Close"
                     data-testid="button-close-exit-popup"
                   >
@@ -323,128 +306,153 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
                   </button>
                 </div>
 
-                <div className="px-5 pb-6 pt-4 md:px-7 md:pb-7">
+                <div className="px-5 pb-7 pt-6 md:px-8 md:pb-8 md:pt-7">
                   {!isSuccess ? (
-                    <div className="grid gap-6 sm:grid-cols-[1fr_16rem] sm:gap-7">
-                      <div className="min-w-0">
-                        <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#A30E52]">
-                          Before you go
+                    <div className="mx-auto max-w-[34rem]">
+                      <div className="text-center">
+                        <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#D3126A]">
+                          Cyber Risk Assessment
                         </p>
                         <h2
                           id={titleId}
-                          className="mt-2 font-heading text-[1.6rem] font-semibold leading-[1.15] tracking-[-0.02em] text-[#1A1228] md:text-[1.9rem]"
+                          className="mt-3 font-heading text-[1.55rem] font-semibold leading-[1.15] tracking-[-0.02em] text-white md:text-[1.85rem]"
                         >
                           Who checks the people who run your IT?
                         </h2>
                         <p
                           id={descId}
-                          className="mt-3 text-[15px] font-medium leading-relaxed text-[#2A2438] md:text-[16px]"
+                          className="mx-auto mt-3 max-w-[28rem] text-[15px] font-medium leading-relaxed text-white/70 md:text-[16px]"
                         >
-                          Get a second opinion. An independent Cyber Risk Assessment from Arizona
-                          engineers, ranked by what could actually hurt you. Nothing changes unless
-                          you decide it should.
+                          An independent second opinion from Arizona engineers — ranked by what
+                          could actually hurt you. Nothing changes unless you decide it should.
                         </p>
+                      </div>
 
-                        <ul className="mt-4 space-y-2">
-                          {FACTS.map((fact) => (
-                            <li key={fact.lead} className="flex items-baseline gap-2.5 text-[14px] leading-snug text-[#2A2438]">
-                              <span className="mt-[0.55em] h-px w-2.5 shrink-0 bg-[#D3126A]" aria-hidden="true" />
-                              <span>
-                                <strong className="font-semibold text-[#1A1228]">{fact.lead}</strong> {fact.rest}
+                      <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+                        {FACTS.map((fact) => (
+                          <li
+                            key={fact.lead}
+                            className="flex flex-col items-center rounded-xl border border-de-hairline bg-[#0a0a0a] px-4 py-6 text-center sm:min-h-[10.5rem] sm:justify-center"
+                          >
+                            <IconWell icon={fact.icon} size="md" surface="dark" />
+                            <p className="mt-3.5 text-[15px] font-semibold leading-snug text-white">
+                              {fact.lead}
+                            </p>
+                            <p className="mt-1.5 text-[13px] font-medium leading-snug text-white/55">
+                              {fact.rest}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <aside
+                        className="mt-5 rounded-xl border border-de-hairline bg-[#0a0a0a] px-3.5 py-3"
+                        aria-label="Example format of assessment findings. Not a real report."
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-white/45">
+                            Findings shape
+                          </span>
+                          <span className="rounded border border-amber-400/30 bg-amber-400/10 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.12em] text-amber-200">
+                            Example format
+                          </span>
+                        </div>
+                        <ul className="mt-2.5 flex flex-wrap gap-2" aria-hidden="true">
+                          {EXAMPLE_CHIPS.map((chip) => (
+                            <li
+                              key={chip.area}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-de-hairline px-2.5 py-1.5 text-[12px]"
+                            >
+                              <span className="font-semibold text-white/85">{chip.area}</span>
+                              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-white/45">
+                                {chip.state}
                               </span>
                             </li>
                           ))}
                         </ul>
+                      </aside>
 
-                        <form onSubmit={handleSubmit} className="mt-5 space-y-3" noValidate>
-                          <div>
-                            <label
-                              htmlFor="exit-intent-email"
-                              className="mb-1.5 block text-sm font-semibold text-[#1A1228]"
-                            >
-                              Work email
-                            </label>
-                            <div className="relative">
-                              <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5A5368]" />
-                              <Input
-                                ref={emailRef}
-                                id="exit-intent-email"
-                                type="email"
-                                autoComplete="email"
-                                inputMode="email"
-                                placeholder="name@company.com"
-                                value={email}
-                                aria-invalid={fieldError ? true : undefined}
-                                aria-describedby={fieldError ? errorId : undefined}
-                                onChange={(e) => {
-                                  setEmail(e.target.value);
-                                  if (fieldError) setFieldError(null);
-                                  if (submitError) setSubmitError(null);
-                                }}
-                                className="h-12 border-[var(--de-paper-hairline)] bg-white pl-11 text-[16px] text-[#1A1228] placeholder:text-[#8A8496] hover:border-black/25 focus-visible:border-[#D3126A] focus-visible:ring-[#D3126A]/40"
-                                data-testid="input-exit-popup-email"
-                              />
-                            </div>
-                            {fieldError ? (
-                              <p id={errorId} role="alert" className="mt-2 text-sm font-medium text-rose-700">
-                                {fieldError}
-                              </p>
-                            ) : null}
-                            {submitError ? (
-                              <p role="alert" className="mt-2 text-sm font-medium text-rose-700">
-                                {submitError}
-                              </p>
-                            ) : null}
+                      <form onSubmit={handleSubmit} className="mx-auto mt-7 max-w-[22rem] space-y-3" noValidate>
+                        <div>
+                          <label
+                            htmlFor="exit-intent-email"
+                            className="mb-1.5 block text-sm font-semibold text-white/90"
+                          >
+                            Work email
+                          </label>
+                          <div className="relative">
+                            <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                            <Input
+                              ref={emailRef}
+                              id="exit-intent-email"
+                              type="email"
+                              autoComplete="email"
+                              inputMode="email"
+                              placeholder="name@company.com"
+                              value={email}
+                              aria-invalid={fieldError ? true : undefined}
+                              aria-describedby={fieldError ? errorId : undefined}
+                              onChange={(e) => {
+                                setEmail(e.target.value);
+                                if (fieldError) setFieldError(null);
+                                if (submitError) setSubmitError(null);
+                              }}
+                              className="h-12 border-de-hairline bg-[#0a0a0a] pl-11 text-[16px] text-white placeholder:text-white/35 hover:border-white/25 focus-visible:border-[#D3126A] focus-visible:ring-[#D3126A]/40"
+                              data-testid="input-exit-popup-email"
+                            />
                           </div>
+                          {fieldError ? (
+                            <p id={errorId} role="alert" className="mt-2 text-sm font-medium text-rose-300">
+                              {fieldError}
+                            </p>
+                          ) : null}
+                          {submitError ? (
+                            <p role="alert" className="mt-2 text-sm font-medium text-rose-300">
+                              {submitError}
+                            </p>
+                          ) : null}
+                        </div>
 
-                          <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#D3126A] text-[15px] font-semibold text-white md:text-[16px] transition-colors hover:bg-[#f0187a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-paper)] disabled:opacity-60"
-                            data-testid="button-get-checklist"
-                          >
-                            {isSubmitting ? (
-                              "Sending…"
-                            ) : (
-                              <>
-                                {CTA.primary}
-                                <ArrowRight className="h-4 w-4" />
-                              </>
-                            )}
-                          </button>
-                          <p className="text-[12px] font-medium leading-relaxed text-[#5A5368]">
-                            A DE engineer follows up to scope it. No spam. Follow-up on the assessment only.
-                          </p>
-                        </form>
-                      </div>
-
-                      <div className="sm:pt-8">
-                        <ExampleFindings />
-                        <p className="mt-4 text-[14px] font-medium text-[#2A2438]">
-                          Rather talk it through?{" "}
-                          <a
-                            href={PRIMARY_PHONE.telHref}
-                            className="whitespace-nowrap font-semibold text-[#1A1228] underline-offset-2 hover:text-[#A30E52] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
-                          >
-                            <Phone className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />
-                            {PRIMARY_PHONE.display}
-                          </a>
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className="inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#D3126A] text-[15px] font-semibold text-white transition-colors hover:bg-[#f0187a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#151217] disabled:opacity-60 md:text-[16px]"
+                          data-testid="button-get-checklist"
+                        >
+                          {isSubmitting ? (
+                            "Sending…"
+                          ) : (
+                            <>
+                              {CTA.primary}
+                              <ArrowRight className="h-4 w-4" />
+                            </>
+                          )}
+                        </button>
+                        <p className="text-center text-[12px] font-medium leading-relaxed text-white/45">
+                          A DE engineer follows up to scope it. No spam.
                         </p>
-                      </div>
+                      </form>
+
+                      <p className="mt-6 text-center text-[14px] font-medium text-white/55">
+                        <a
+                          href={PRIMARY_PHONE.telHref}
+                          className="inline-flex items-center gap-1.5 font-semibold text-white/60 underline-offset-2 transition-colors hover:text-[#D3126A] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
+                        >
+                          <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+                          Prefer to call? {PRIMARY_PHONE.display}
+                        </a>
+                      </p>
                     </div>
                   ) : (
-                    <div className="py-6">
-                      <div className="flex items-start gap-3">
-                        <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-emerald-600" aria-hidden="true" />
-                        <div>
-                          <h2 className="font-heading text-xl font-semibold tracking-[-0.02em] text-[#1A1228]">
-                            Got it. A DE engineer will be in touch.
-                          </h2>
-                          <p className="mt-2 text-[16px] font-medium leading-relaxed text-[#2A2438]">
-                            We’ll reach out from a digeratiexperts.com address to scope your assessment. No spam, just that follow-up.
-                          </p>
-                        </div>
-                      </div>
+                    <div className="py-8 text-center">
+                      <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-400" aria-hidden="true" />
+                      <h2 className="mt-4 font-heading text-xl font-semibold tracking-[-0.02em] text-white">
+                        Got it. A DE engineer will be in touch.
+                      </h2>
+                      <p className="mx-auto mt-2 max-w-[26rem] text-[16px] font-medium leading-relaxed text-white/70">
+                        We’ll reach out from a digeratiexperts.com address to scope your assessment.
+                        No spam, just that follow-up.
+                      </p>
                     </div>
                   )}
                 </div>

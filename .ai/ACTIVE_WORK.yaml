@@ -30,6 +30,24 @@
 
 version: 2
 claims:
+  - id: exit-intent-teams-level
+    owner: cursor
+    subsystem: marketing-lead-capture
+    branch: cursor/exit-intent-teams-level-20261002
+    base_sha: c702a4fc7a510c6e4a4683d5ca58bc3bbbf5e666
+    files:
+      - client/src/components/ExitIntentPopup.tsx
+    status: active
+    started: 2026-10-02
+    note: >-
+      Joe approved continuing the Teams-level design bar for the exit-intent
+      popup (quality + card pattern, keep email CTA). Maintenance Mode
+      elevation: dark DE field, one question, three IconWell fact cards,
+      compact EXAMPLE FORMAT findings strip, magenta primary CTA, phone as
+      secondary link. Viewport max-height + internal scroll preserved.
+      Trigger, analytics, data-testids, and /api/newsletter contract unchanged.
+      Isolated worktree; prior Claude claim exit-intent-second-opinion is
+      verified-live and released. Draft until Joe reviews.
   - id: portal-people-pick-company
     owner: claude
     subsystem: client-portal-pages
