@@ -174,7 +174,7 @@ function formatDeskMessageTime(iso?: string): string {
 }
 
 function getDeskChipIcon(id: DeskTicketChipId) {
-  const iconClass = "w-4 h-4 text-[#D3126A] shrink-0";
+  const iconClass = "w-4 h-4 text-[#E3B23C] shrink-0";
   switch (id) {
     case "something-not-working":
       return <Wrench className={iconClass} aria-hidden="true" />;
@@ -2446,48 +2446,50 @@ export const ZohoASAPWidget = ({
                         .de-desk-shell {
               /* One theme. Every Desk colour resolves here and nowhere else:
                  there is no second naming scheme and no external override. */
-              /* White precision panel (design/UI-STYLE-RULES.md, support chrome):
-                 #fbfbfa panel, black/10 hairlines, near-black ink, magenta only
-                 for submit and incident. */
-              --desk-surface: #fbfbfa;
-              --desk-well: #f4f3f1;
-              --desk-box: #ffffff;
-              --desk-box-hover: #f4f3f1;
-              --desk-scrim: rgba(15,15,18,0.28);
-              --desk-border: rgba(15,15,18,0.12);
-              --desk-border-strong: rgba(15,15,18,0.22);
-              --desk-ink: #111116;
-              --desk-ink-muted: #5e5b66;
-              --desk-ink-dim: #6f6a78;
-              --desk-pink: #D3126A;
-              --desk-pink-ink: #A30E52;
-              --desk-red: #c2263b;
-              --desk-green: #15803d;
+              /* Black + grey + gold (Joe, 2026-10-01, design/UI-STYLE-RULES.md
+                 support chrome): a near-black panel, charcoal rows and wells,
+                 white/10 hairlines, white ink, and the mark's Signal Gold
+                 (brand/README.md) as the one accent. No magenta on the Desk. */
+              --desk-surface: #0b0b0d;
+              --desk-well: #232327;
+              --desk-box: #19191c;
+              --desk-box-hover: #1f1f23;
+              --desk-scrim: rgba(5,3,18,0.6);
+              --desk-border: rgba(255,255,255,0.10);
+              --desk-border-strong: rgba(255,255,255,0.16);
+              --desk-ink: #f5f5f4;
+              --desk-ink-muted: #b4b4ba;
+              --desk-ink-dim: #9a9aa2;
+              --desk-gold: #E3B23C;
+              --desk-gold-ink: #EDBE4C;
+              --desk-on-gold: #0b0b0d;
+              --desk-red: #f87171;
+              --desk-green: #4ade80;
               /* Unlayered rule must stay position:fixed. A relative value here
                  beat Tailwind fixed and laid the dialog out after the page. */
               position: fixed;
               z-index: 10040;
-              color-scheme: light;
+              color-scheme: dark;
               background: var(--desk-surface);
               border: 1px solid var(--desk-border);
               border-radius: 18px;
-              /* Black/10 hairline and a soft lift; the 1px magenta top cap is the
-                 only brand accent on the chrome (no magenta ring). */
+              /* White/10 hairline and a deep lift off the dark site; the 1px gold
+                 top cap is the only brand accent on the chrome (no glow, no ring). */
               box-shadow:
-                inset 0 1px 0 #D3126A,
-                0 26px 72px rgba(9,9,16,0.24),
-                0 6px 22px rgba(9,9,16,0.10);
+                inset 0 1px 0 #E3B23C,
+                0 30px 80px rgba(0,0,0,0.62),
+                0 8px 24px rgba(0,0,0,0.42);
               color: var(--desk-ink);
             }
             .de-desk-shell::before {
               content: none;
             }
             .de-desk-shell :is(button, a, input, textarea, select):focus-visible {
-              outline: 2px solid var(--desk-pink);
+              outline: 2px solid var(--desk-gold);
               outline-offset: 2px;
             }
             .de-desk-shell ::selection {
-              background: color-mix(in srgb, #D3126A 38%, transparent);
+              background: color-mix(in srgb, #E3B23C 38%, transparent);
               color: var(--desk-ink);
               -webkit-text-fill-color: var(--desk-ink);
             }
@@ -2512,7 +2514,7 @@ export const ZohoASAPWidget = ({
               width: 32px; height: 32px;
               border-radius: 9px;
               background: var(--desk-box);
-              border: 1px solid rgba(211,18,106,0.42);
+              border: 1px solid rgba(227,178,60,0.6);
               color: var(--desk-ink);
               display: flex; align-items: center; justify-content: center;
               flex: none;
@@ -2544,7 +2546,7 @@ export const ZohoASAPWidget = ({
               width: 2px; height: 1em;
               margin-left: 1px;
               vertical-align: text-bottom;
-              background: var(--desk-pink);
+              background: var(--desk-gold);
               animation: de-desk-caret-blink 0.9s step-end infinite;
             }
             @keyframes de-desk-caret-blink {
@@ -2585,7 +2587,7 @@ export const ZohoASAPWidget = ({
               animation: de-desk-chip-in 280ms ease forwards;
             }
             .de-desk-discover-row.is-incident {
-              box-shadow: inset 3px 0 0 var(--desk-pink);
+              box-shadow: inset 3px 0 0 var(--desk-gold);
             }
             @media (prefers-reduced-motion: reduce) {
               .de-desk-avatar-idle,
@@ -2613,7 +2615,7 @@ export const ZohoASAPWidget = ({
               display: flex; align-items: center; justify-content: center;
               flex: none;
             }
-            .de-desk-close:hover { color: var(--desk-ink); border-color: rgba(15,15,18,0.28); }
+            .de-desk-close:hover { color: var(--desk-ink); border-color: rgba(255,255,255,0.28); }
             .de-desk-tabs {
               position: relative;
               z-index: 1;
@@ -2655,14 +2657,14 @@ export const ZohoASAPWidget = ({
               position: absolute;
               left: 10px; right: 10px; bottom: 0;
               height: 2px;
-              background: #D3126A;
+              background: #E3B23C;
               border-radius: 2px 2px 0 0;
             }
             .de-desk-tab.is-active svg { opacity: 1; }
             .de-desk-tab-badge {
               min-width: 16px; height: 16px; padding: 0 4px;
               border-radius: 999px;
-              background: #D3126A; color: #fff;
+              background: #E3B23C; color: var(--desk-on-gold);
               font-size: 9px; font-weight: 700; line-height: 16px;
               letter-spacing: 0; text-align: center;
             }
@@ -2703,7 +2705,7 @@ export const ZohoASAPWidget = ({
             .de-desk-hero-ring {
               display: inline-flex; align-items: center; justify-content: center;
               width: 36px; height: 36px; border-radius: 999px;
-              background: rgba(21,128,61,0.10); color: #15803d;
+              background: rgba(74,222,128,0.14); color: var(--desk-green);
             }
             .de-desk-row {
               display: flex; align-items: center; gap: 10px;
@@ -2734,7 +2736,7 @@ export const ZohoASAPWidget = ({
               font-family: "Space Grotesk", sans-serif;
               font-size: 14.5px; font-weight: 650; color: var(--desk-ink);
             }
-            .de-desk-msg-who em { font-style: normal; font-size: 13px; font-weight: 600; color: #15803d; }
+            .de-desk-msg-who em { font-style: normal; font-size: 13px; font-weight: 600; color: var(--desk-green); }
             .de-desk-scroll::-webkit-scrollbar {
               width: 6px;
             }
@@ -2742,11 +2744,11 @@ export const ZohoASAPWidget = ({
               background: transparent;
             }
             .de-desk-scroll::-webkit-scrollbar-thumb {
-              background: rgba(15,15,18,0.18);
+              background: rgba(255,255,255,0.18);
               border-radius: 999px;
             }
             .de-desk-scroll::-webkit-scrollbar-thumb:hover {
-              background: #D3126A;
+              background: #E3B23C;
             }
             .de-desk-incident {
               --desk-row-x: 28px;
@@ -2759,11 +2761,13 @@ export const ZohoASAPWidget = ({
               min-height: 54px;
               margin: 2px 0 16px;
               padding: 12px 14px;
-              border: 1px solid rgba(20,16,30,0.12);
+              /* The one gold-edged object on the tab: a gold hairline and a
+                 faint gold wash over the row ground, no side bar. */
+              border: 1px solid rgba(227,178,60,0.5);
               border-radius: 13px;
-              background: var(--desk-box);
+              background: color-mix(in srgb, #E3B23C 9%, var(--desk-box));
               color: var(--desk-ink);
-              box-shadow: inset 3px 0 0 #D3126A;
+              box-shadow: none;
               transition:
                 background 0.3s cubic-bezier(0.22, 1, 0.36, 1),
                 box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1),
@@ -2776,12 +2780,12 @@ export const ZohoASAPWidget = ({
               inset: 0;
               pointer-events: none;
               opacity: 0;
-              /* A faint magenta light on the white incident row: it lifts the
-                 row under the pointer without lowering the ink's contrast. */
+              /* A faint gold light on the incident row: it lifts the row under
+                 the pointer without lowering the ink's contrast. */
               background: radial-gradient(
                 160px circle at var(--desk-row-x) var(--desk-row-y),
-                rgba(211,18,106,0.10) 0%,
-                rgba(211,18,106,0.04) 38%,
+                rgba(227,178,60,0.10) 0%,
+                rgba(227,178,60,0.04) 38%,
                 transparent 70%
               );
               transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
@@ -2789,30 +2793,28 @@ export const ZohoASAPWidget = ({
             .de-desk-incident > * { position: relative; z-index: 1; }
             @media (hover: hover) and (pointer: fine) {
               .de-desk-incident:hover {
-                background: var(--desk-box-hover);
-                border-color: rgba(20,16,30,0.10);
+                background: color-mix(in srgb, #E3B23C 14%, var(--desk-box));
+                border-color: rgba(227,178,60,0.72);
                 transform: translateY(-1px);
-                box-shadow:
-                  inset 3px 0 0 #D3126A,
-                  0 14px 28px -18px rgba(20,16,30,0.28);
+                box-shadow: 0 14px 28px -18px rgba(0,0,0,0.65);
               }
               .de-desk-incident:hover::before { opacity: 1; }
             }
             .de-desk-incident.is-on {
-              border-color: rgba(211,18,106,0.55);
-              background: var(--desk-box-hover);
-              box-shadow: inset 3px 0 0 #D3126A, 0 0 0 1px rgba(211,18,106,0.28);
+              border-color: #E3B23C;
+              background: color-mix(in srgb, #E3B23C 16%, var(--desk-box));
+              box-shadow: 0 0 0 1px rgba(227,178,60,0.4);
             }
             .de-desk-incident-icon {
               display: inline-flex; flex: none;
               width: 39px; height: 39px;
               align-items: center; justify-content: center;
               border-radius: 11px;
-              border: 1px solid color-mix(in srgb, #D3126A 38%, transparent);
-              background: color-mix(in srgb, #D3126A 12%, var(--desk-box));
-              color: #D3126A;
+              border: 1px solid color-mix(in srgb, #E3B23C 38%, transparent);
+              background: color-mix(in srgb, #E3B23C 12%, var(--desk-box));
+              color: #E3B23C;
             }
-            .de-desk-incident:hover .de-desk-incident-icon { background: color-mix(in srgb, #D3126A 20%, var(--desk-box)); }
+            .de-desk-incident:hover .de-desk-incident-icon { background: color-mix(in srgb, #E3B23C 20%, var(--desk-box)); }
             .de-desk-incident-icon svg { width: 17px; height: 17px; stroke-width: 1.9; }
             .de-desk-incident-copy { display: flex; flex-direction: column; min-width: 0; flex: 1; }
             .de-desk-incident-copy strong {
@@ -2829,7 +2831,7 @@ export const ZohoASAPWidget = ({
               width: 15px; height: 15px; flex: none;
               color: var(--desk-ink-dim);
             }
-            .de-desk-incident:hover .de-desk-incident-arrow { color: #D3126A; }
+            .de-desk-incident:hover .de-desk-incident-arrow { color: #E3B23C; }
             .de-desk-form {
               display: flex;
               flex-direction: column;
@@ -2850,7 +2852,7 @@ export const ZohoASAPWidget = ({
               border: 1px solid var(--desk-border-strong);
               border-radius: 15px;
               background: var(--desk-box);
-              box-shadow: 0 12px 28px -24px rgba(20,16,30,0.34);
+              box-shadow: 0 12px 28px -24px rgba(0,0,0,0.7);
             }
             .de-desk-issue-row {
               --desk-row-x: 28px;
@@ -2866,7 +2868,7 @@ export const ZohoASAPWidget = ({
               min-height: 48px;
               padding: 12px 14px;
               border: 0;
-              border-bottom: 1px solid rgba(20,16,30,0.08);
+              border-bottom: 1px solid rgba(255,255,255,0.08);
               border-radius: 0;
               background: transparent;
               color: var(--desk-ink);
@@ -2884,12 +2886,12 @@ export const ZohoASAPWidget = ({
               pointer-events: none;
               z-index: 0;
               opacity: 0;
-              /* A neutral light on white rows: dark alpha, so the label under
-                 the pointer keeps its contrast. */
+              /* A neutral light on charcoal rows: white alpha, faint enough that
+                 the label under the pointer keeps its contrast. */
               background: radial-gradient(
                 170px circle at var(--desk-row-x) var(--desk-row-y),
-                rgba(15,15,18,0.06) 0%,
-                rgba(15,15,18,0.03) 36%,
+                rgba(255,255,255,0.06) 0%,
+                rgba(255,255,255,0.03) 36%,
                 transparent 68%
               );
               transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
@@ -2903,7 +2905,7 @@ export const ZohoASAPWidget = ({
               background: linear-gradient(
                 108deg,
                 transparent 28%,
-                rgba(15,15,18,0.05) 48%,
+                rgba(255,255,255,0.05) 48%,
                 transparent 68%
               );
               transform: translateX(-42%);
@@ -2919,7 +2921,7 @@ export const ZohoASAPWidget = ({
             @media (hover: hover) and (pointer: fine) {
               .de-desk-issue-row:hover {
                 z-index: 2;
-                background: rgba(15,15,18,0.04);
+                background: rgba(255,255,255,0.04);
                 transform: translateY(-1px);
                 box-shadow: 0 12px 26px -16px rgba(0,0,0,0.5);
               }
@@ -2930,31 +2932,31 @@ export const ZohoASAPWidget = ({
               }
             }
             .de-desk-issue-row.is-on {
-              /* A light magenta mix into the row ground, with the magenta rail
-                 as the selected cue; ink stays the one --desk-ink. */
-              background: color-mix(in srgb, #D3126A 6%, var(--desk-box));
-              box-shadow: inset 3px 0 0 #D3126A;
+              /* A light gold mix into the row ground, with the gold rail as the
+                 selected cue; ink stays the one --desk-ink. */
+              background: color-mix(in srgb, #E3B23C 6%, var(--desk-box));
+              box-shadow: inset 3px 0 0 #E3B23C;
               color: var(--desk-ink);
             }
             .de-desk-issue-row.is-on:hover {
-              background: color-mix(in srgb, #D3126A 10%, var(--desk-box));
-              box-shadow: inset 3px 0 0 #D3126A;
+              background: color-mix(in srgb, #E3B23C 10%, var(--desk-box));
+              box-shadow: inset 3px 0 0 #E3B23C;
             }
             .de-desk-issue-icon {
               display: inline-flex; flex: none;
               width: 36px; height: 36px;
               align-items: center; justify-content: center;
               border-radius: 10px;
-              border: 1px solid rgba(20,16,30,0.10);
-              background: var(--desk-surface);
-              color: #D3126A;
+              border: 1px solid rgba(255,255,255,0.08);
+              background: var(--desk-well);
+              color: #E3B23C;
               transition:
                 background 0.3s cubic-bezier(0.22, 1, 0.36, 1),
                 border-color 0.3s ease;
             }
             .de-desk-issue-row:hover .de-desk-issue-icon {
-              background: color-mix(in srgb, #D3126A 20%, var(--desk-box));
-              border-color: rgba(211,18,106,0.5);
+              background: color-mix(in srgb, #E3B23C 20%, var(--desk-box));
+              border-color: rgba(227,178,60,0.5);
             }
             .de-desk-issue-label {
               flex: 1; min-width: 0;
@@ -2967,10 +2969,10 @@ export const ZohoASAPWidget = ({
               transition: color 0.3s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
             }
             .de-desk-issue-row:hover .de-desk-issue-arrow {
-              color: #D3126A;
+              color: #E3B23C;
               transform: translateX(2px);
             }
-            .de-desk-issue-row.is-on .de-desk-issue-arrow { color: #D3126A; }
+            .de-desk-issue-row.is-on .de-desk-issue-arrow { color: #E3B23C; }
             .de-desk-issues {
               display: flex; flex-wrap: wrap; gap: 6px;
             }
@@ -2985,21 +2987,21 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-issue:hover { border-color: var(--desk-border-strong); color: var(--desk-ink); }
             .de-desk-issue.is-on {
-              border-color: #D3126A;
+              border-color: #E3B23C;
               color: var(--desk-ink);
-              box-shadow: inset 0 0 0 1px rgba(211,18,106,0.28);
+              box-shadow: inset 0 0 0 1px rgba(227,178,60,0.28);
             }
-            .de-desk-issue.is-incident.is-on { background: rgba(211,18,106,0.12); }
+            .de-desk-issue.is-incident.is-on { background: rgba(227,178,60,0.12); }
             .de-desk-urgency-label {
-              display: block; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(15,15,18,0.92); margin-bottom: 6px;
+              display: block; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.92); margin-bottom: 6px;
             }
             .de-desk-urgency {
               display: grid; grid-template-columns: repeat(4, 1fr);
               gap: 4px;
-              background: rgba(15,15,18,0.04);
+              background: rgba(255,255,255,0.04);
               padding: 4px;
               border-radius: 11px;
-              border: 1px solid rgba(15,15,18,0.12);
+              border: 1px solid rgba(255,255,255,0.12);
             }
             .de-desk-urgency button {
               min-height: 44px; border: none;
@@ -3009,18 +3011,18 @@ export const ZohoASAPWidget = ({
               transition: background 0.15s ease, color 0.15s ease;
             }
             .de-desk-urgency button:hover {
-              background: rgba(15,15,18,0.06);
+              background: rgba(255,255,255,0.06);
               color: var(--desk-ink);
             }
             .de-desk-urgency button.is-on {
-              background: #D3126A; color: #fff; font-weight: 700;
-              box-shadow: 0 3px 10px rgba(211,18,106,0.35);
+              background: #E3B23C; color: var(--desk-on-gold); font-weight: 700;
+              box-shadow: 0 3px 10px rgba(227,178,60,0.35);
             }
             .de-desk-more-toggle {
               align-self: flex-start;
               background: none; border: 0; padding: 8px 0;
               min-height: 40px;
-              color: #D3126A; font-size: 13px; font-weight: 600;
+              color: #E3B23C; font-size: 13px; font-weight: 600;
             }
             .de-desk-more { display: flex; flex-direction: column; gap: 12px; }
             .de-desk-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -3044,7 +3046,7 @@ export const ZohoASAPWidget = ({
               background-color: var(--desk-box) !important;
               background-image:
                 linear-gradient(var(--desk-box), var(--desk-box)),
-                linear-gradient(rgba(15,15,18,0.22), rgba(15,15,18,0.22)) !important;
+                linear-gradient(rgba(255,255,255,0.16), rgba(255,255,255,0.16)) !important;
               background-origin: border-box;
               background-clip: padding-box, border-box;
               color: var(--desk-ink) !important;
@@ -3053,7 +3055,7 @@ export const ZohoASAPWidget = ({
               font-size: 14px;
               box-shadow:
                 inset 0 2px 4px rgba(0,0,0,0.4),
-                0 0 0 1px rgba(15,15,18,0.06) !important;
+                0 0 0 1px rgba(255,255,255,0.06) !important;
               transition: box-shadow 0.2s ease-out;
             }
             @media (hover: hover) and (pointer: fine) {
@@ -3062,29 +3064,29 @@ export const ZohoASAPWidget = ({
                   linear-gradient(var(--desk-box), var(--desk-box)),
                   radial-gradient(
                     170px circle at var(--desk-spot-x) var(--desk-spot-y),
-                    rgba(211,18,106,0.55) 0%,
-                    rgba(15,15,18,0.30) 26%,
-                    rgba(15,15,18,0.22) 100%
+                    rgba(227,178,60,0.6) 0%,
+                    rgba(255,255,255,0.22) 26%,
+                    rgba(255,255,255,0.16) 100%
                   ) !important;
                 box-shadow:
                   inset 0 2px 4px rgba(0,0,0,0.4),
-                  0 0 0 1px rgba(15,15,18,0.10),
-                  0 0 18px rgba(15,15,18,0.06) !important;
+                  0 0 0 1px rgba(255,255,255,0.10),
+                  0 0 18px rgba(255,255,255,0.06) !important;
               }
             }
             .de-desk-shell .de-desk-input:focus,
             .de-desk-shell .de-desk-input:focus-visible {
               background-image:
                 linear-gradient(var(--desk-box), var(--desk-box)),
-                linear-gradient(#D3126A, #D3126A) !important;
-              box-shadow: 0 0 0 3px rgba(211,18,106,0.25), inset 0 2px 4px rgba(0,0,0,0.4) !important;
-              outline: 2px solid #D3126A !important;
+                linear-gradient(#E3B23C, #E3B23C) !important;
+              box-shadow: 0 0 0 3px rgba(227,178,60,0.25), inset 0 2px 4px rgba(0,0,0,0.4) !important;
+              outline: 2px solid #E3B23C !important;
               outline-offset: 2px;
             }
             .de-desk-shell .de-desk-input[aria-invalid="true"] {
               background-image:
                 linear-gradient(var(--desk-box), var(--desk-box)),
-                linear-gradient(#f0455b, #f0455b) !important;
+                linear-gradient(#f87171, #f87171) !important;
             }
             @media (prefers-reduced-motion: reduce) {
               .de-desk-shell .de-desk-input {
@@ -3093,27 +3095,37 @@ export const ZohoASAPWidget = ({
               .de-desk-shell .de-desk-input:hover:not(:focus):not([aria-invalid="true"]) {
                 background-image:
                   linear-gradient(var(--desk-box), var(--desk-box)),
-                  linear-gradient(rgba(15,15,18,0.22), rgba(15,15,18,0.22)) !important;
+                  linear-gradient(rgba(255,255,255,0.16), rgba(255,255,255,0.16)) !important;
                 box-shadow:
                   inset 0 2px 4px rgba(0,0,0,0.4),
-                  0 0 0 1px rgba(15,15,18,0.06) !important;
+                  0 0 0 1px rgba(255,255,255,0.06) !important;
               }
             }
             .de-desk-field-error {
               margin: 6px 0 0;
-              color: #B42318;
+              color: var(--desk-red);
               font-size: 12px;
               line-height: 1.4;
             }
             .de-desk-form-error {
               padding: 10px 12px;
-              border: 1px solid rgba(240,69,91,0.4);
+              border: 1px solid rgba(248,113,113,0.45);
               border-radius: 10px;
               background: var(--desk-well);
-              color: #B42318;
+              color: var(--desk-red);
               font-size: 13px;
               line-height: 1.45;
             }
+            /* The availability notice carries a phone link inside the error
+               box: it reads as a link (ink + underline), not as more red text. */
+            .de-desk-form-error a {
+              color: var(--desk-ink);
+              font-weight: 600;
+              text-decoration: underline;
+              text-decoration-color: rgba(227,178,60,0.6);
+              text-underline-offset: 3px;
+            }
+            .de-desk-form-error a:hover { text-decoration-color: currentColor; }
             .de-desk-form-phone {
               display: inline-flex;
               align-items: center;
@@ -3127,8 +3139,8 @@ export const ZohoASAPWidget = ({
               font-weight: 600;
               text-decoration: none;
             }
-            .de-desk-form-phone svg { width: 15px; height: 15px; color: #D3126A; }
-            .de-desk-form-phone:hover { color: #D3126A; }
+            .de-desk-form-phone svg { width: 15px; height: 15px; color: #E3B23C; }
+            .de-desk-form-phone:hover { color: #E3B23C; }
             .de-desk-shell .de-desk-input.is-bare { padding-left: 14px; }
             .de-desk-shell .de-desk-input::placeholder { color: var(--desk-ink-dim); }
             .de-desk-shell .de-desk-select { appearance: none; padding-right: 28px; }
@@ -3150,11 +3162,11 @@ export const ZohoASAPWidget = ({
               display: flex; align-items: flex-start; gap: 9px;
               width: 100%; text-align: left;
               margin-top: 2px; padding: 12px;
-              border: 1px dashed rgba(15,15,18,0.25);
-              border-radius: 11px; background: rgba(15,15,18,0.03);
+              border: 1px dashed rgba(255,255,255,0.25);
+              border-radius: 11px; background: rgba(255,255,255,0.03);
               transition: all 0.15s ease;
             }
-            .de-desk-attach:hover { border-color: var(--desk-pink); background: rgba(211,18,106,0.08); }
+            .de-desk-attach:hover { border-color: var(--desk-gold); background: rgba(227,178,60,0.08); }
             .de-desk-attach svg { width: 14px; height: 14px; color: var(--desk-ink-muted); flex: none; margin-top: 2px; }
             .de-desk-attach-t { display: block; font-size: 14px; font-weight: 600; color: var(--desk-ink); }
             .de-desk-attach-h { display: block; font-size: 12.5px; color: var(--desk-ink-muted); margin-top: 1px; }
@@ -3166,18 +3178,18 @@ export const ZohoASAPWidget = ({
             .de-desk-btn-grad {
               width: 100%; margin-top: 8px;
               min-height: 48px;
-              background: linear-gradient(135deg, #D3126A 0%, #E61E76 100%);
-              border: none; color: #fff;
+              background: linear-gradient(135deg, #E3B23C 0%, #EDC25A 100%);
+              border: none; color: var(--desk-on-gold);
               font-weight: 700; font-size: 15px; padding: 12px;
               border-radius: 12px;
               display: flex; align-items: center; justify-content: center; gap: 8px;
-              box-shadow: 0 8px 24px -6px rgba(211,18,106,0.5);
+              box-shadow: 0 8px 24px -6px rgba(227,178,60,0.5);
               transition: all 0.18s ease;
             }
             .de-desk-btn-grad:hover {
-              background: linear-gradient(135deg, #bd105f 0%, #D3126A 100%);
+              background: linear-gradient(135deg, #c99a2e 0%, #E3B23C 100%);
               transform: translateY(-1px);
-              box-shadow: 0 10px 28px -6px rgba(211,18,106,0.6);
+              box-shadow: 0 10px 28px -6px rgba(227,178,60,0.6);
             }
             .de-desk-ticket-upper {
               display: flex;
@@ -3210,12 +3222,12 @@ export const ZohoASAPWidget = ({
               align-items: center;
               gap: 6px;
               padding: 5px 10px;
-              background: rgba(211,18,106,0.12);
-              border: 1px solid rgba(211,18,106,0.3);
+              background: rgba(227,178,60,0.12);
+              border: 1px solid rgba(227,178,60,0.3);
               border-radius: 8px;
               font-size: 12px;
               font-weight: 600;
-              color: #ff6ab0;
+              color: var(--desk-gold-ink);
               margin-bottom: 4px;
             }
             .de-desk-bubble {
@@ -3228,7 +3240,7 @@ export const ZohoASAPWidget = ({
               word-break: break-word;
             }
             .de-desk-bubble.is-user {
-              background: #D3126A; color: #fff;
+              background: #E3B23C; color: var(--desk-on-gold);
               border-bottom-right-radius: 5px;
             }
             .de-desk-bubble.is-bot, .de-desk-bubble.is-agent {
@@ -3303,13 +3315,13 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-discover-row:last-child { border-bottom: 0; }
             .de-desk-discover-row:hover {
-              background: rgba(15,15,18,0.04);
+              background: rgba(255,255,255,0.04);
             }
             .de-desk-discover-row.is-incident {
-              box-shadow: inset 3px 0 0 #D3126A;
+              box-shadow: inset 3px 0 0 #E3B23C;
             }
             .de-desk-discover-row.is-incident:hover {
-              background: rgba(211,18,106,0.10);
+              background: rgba(227,178,60,0.10);
             }
             .de-desk-discover-icon {
               display: inline-flex; flex: none;
@@ -3318,7 +3330,7 @@ export const ZohoASAPWidget = ({
               border-radius: 9px;
               border: 1px solid var(--desk-border);
               background: var(--desk-well);
-              color: #D3126A;
+              color: #E3B23C;
             }
             .de-desk-discover-icon svg { width: 15px; height: 15px; stroke-width: 1.9; }
             .de-desk-discover-label {
@@ -3329,7 +3341,7 @@ export const ZohoASAPWidget = ({
               width: 15px; height: 15px; flex: none;
               color: var(--desk-ink-dim);
             }
-            .de-desk-discover-row:hover .de-desk-discover-arrow { color: #D3126A; }
+            .de-desk-discover-row:hover .de-desk-discover-arrow { color: #E3B23C; }
             .de-desk-chips {
               display: flex; flex-direction: column;
               gap: 0;
@@ -3358,7 +3370,7 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-chip:last-child { border-bottom: 0; }
             .de-desk-chip:hover {
-              background: rgba(211,18,106,0.10);
+              background: rgba(227,178,60,0.10);
               color: var(--desk-ink);
             }
             .de-desk-chip-icon {
@@ -3377,17 +3389,17 @@ export const ZohoASAPWidget = ({
               width: 14px; height: 14px; flex: none;
               color: var(--desk-ink-dim);
             }
-            .de-desk-chip:hover .de-desk-chip-arrow { color: #D3126A; }
+            .de-desk-chip:hover .de-desk-chip-arrow { color: #E3B23C; }
             .de-desk-bubble-meta {
               display: flex; align-items: center; gap: 8px;
               margin-bottom: 6px;
               font-size: 10px; font-weight: 600;
               letter-spacing: 0.14em; text-transform: uppercase;
-              color: var(--desk-pink);
+              color: var(--desk-gold);
             }
             .de-desk-bubble-meta span {
               width: 16px; height: 16px; border-radius: 4px;
-              background: var(--desk-pink); color: #fff;
+              background: var(--desk-gold); color: var(--desk-on-gold);
               display: inline-flex; align-items: center; justify-content: center;
               font-size: 8px; letter-spacing: 0;
             }
@@ -3395,7 +3407,7 @@ export const ZohoASAPWidget = ({
             .de-desk-success p { max-width: none; }
             .de-desk-ticket-ref {
               font-family: ui-monospace, monospace;
-              font-size: 13px; font-weight: 600; color: var(--desk-pink);
+              font-size: 13px; font-weight: 600; color: var(--desk-gold);
               margin-top: 8px;
             }
             .de-desk-success-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 14px; }
@@ -3407,12 +3419,12 @@ export const ZohoASAPWidget = ({
               padding: 8px 8px 8px 8px;
               border-radius: 14px;
               background: var(--desk-box);
-              border: 1px solid rgba(211,18,106,0.42);
+              border: 1px solid rgba(227,178,60,0.42);
               box-shadow: 0 16px 36px rgba(0,0,0,0.45);
               animation: de-desk-heads-in 0.28s ease-out;
             }
-            .de-desk-heads-up.is-out { border-color: rgba(15,15,18,0.16); }
-            .de-desk-heads-up.is-live { border-color: #3b9eff; }
+            .de-desk-heads-up.is-out { border-color: rgba(255,255,255,0.16); }
+            .de-desk-heads-up.is-live { border-color: var(--desk-green); }
             .de-desk-heads-up-main {
               flex: 1; min-width: 0;
               display: flex; align-items: flex-start; gap: 10px;
@@ -3422,11 +3434,11 @@ export const ZohoASAPWidget = ({
             .de-desk-heads-up-mark {
               width: 28px; height: 28px; border-radius: 9px; flex: none;
               display: inline-flex; align-items: center; justify-content: center;
-              background: var(--desk-pink); color: #fff;
+              background: var(--desk-gold); color: var(--desk-on-gold);
               font-size: 9px; font-weight: 700; letter-spacing: 0.04em;
             }
             .de-desk-heads-up.is-out .de-desk-heads-up-mark { background: var(--desk-ink-muted); }
-            .de-desk-heads-up.is-live .de-desk-heads-up-mark { background: #1f6fd6; }
+            .de-desk-heads-up.is-live .de-desk-heads-up-mark { background: var(--desk-green); }
             .de-desk-heads-up-copy { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
             .de-desk-heads-up-top {
               display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
@@ -3442,14 +3454,14 @@ export const ZohoASAPWidget = ({
               display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
             }
             .de-desk-heads-up-hint {
-              font-size: 10.5px; font-weight: 600; color: var(--desk-pink); margin-top: 2px;
+              font-size: 10.5px; font-weight: 600; color: var(--desk-gold); margin-top: 2px;
             }
             .de-desk-heads-up-x {
               width: 28px; height: 28px; border-radius: 8px; flex: none; align-self: flex-start;
               border: none; background: transparent; color: var(--desk-ink-dim);
               display: flex; align-items: center; justify-content: center;
             }
-            .de-desk-heads-up-x:hover { color: var(--desk-ink); background: rgba(15,15,18,0.06); }
+            .de-desk-heads-up-x:hover { color: var(--desk-ink); background: rgba(255,255,255,0.06); }
             @keyframes de-desk-heads-in {
               from { opacity: 0; transform: translateY(10px); }
               to { opacity: 1; transform: translateY(0); }
@@ -3490,10 +3502,10 @@ export const ZohoASAPWidget = ({
               color: var(--desk-ink-muted);
               font-size: 13.5px; font-weight: 600;
             }
-            .de-desk-chat-actions button:first-child { color: var(--desk-pink-ink); }
+            .de-desk-chat-actions button:first-child { color: var(--desk-gold-ink); }
             .de-desk-chat-actions button svg { width: 15px; height: 15px; }
-            .de-desk-chat-actions button:hover:not(:disabled) { background: rgba(15,15,18,0.05); color: var(--desk-ink); }
-            .de-desk-chat-actions button:first-child:hover { color: var(--desk-pink-ink); }
+            .de-desk-chat-actions button:hover:not(:disabled) { background: rgba(255,255,255,0.05); color: var(--desk-ink); }
+            .de-desk-chat-actions button:first-child:hover { color: var(--desk-gold-ink); }
             .de-desk-chat-actions button:disabled { opacity: 0.5; }
             .de-desk-chat-actions + .de-desk-composer { border-top: 0; padding-top: 6px; }
 
@@ -3507,15 +3519,15 @@ export const ZohoASAPWidget = ({
             .de-desk-rich li::marker { color: var(--desk-ink-muted); }
             .de-desk-rich strong { font-weight: 700; color: var(--desk-ink); }
             .de-desk-rich a {
-              color: var(--desk-pink-ink);
+              color: var(--desk-gold-ink);
               font-weight: 600;
               text-decoration: underline;
-              text-decoration-color: rgba(163,14,82,0.35);
+              text-decoration-color: rgba(227,178,60,0.4);
               text-underline-offset: 3px;
             }
             .de-desk-rich a:hover { text-decoration-color: currentColor; }
 
-            /* The advisor's next steps under its latest reply. One magenta
+            /* The advisor's next steps under its latest reply. One gold
                action (the first); the rest are quiet. */
             .de-desk-next { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
             .de-desk-next-btn {
@@ -3530,13 +3542,13 @@ export const ZohoASAPWidget = ({
               text-decoration: none;
               transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
             }
-            .de-desk-next-btn svg { width: 15px; height: 15px; flex: none; color: var(--desk-pink-ink); }
-            .de-desk-next-btn:hover { border-color: rgba(211,18,106,0.45); background: rgba(211,18,106,0.06); }
+            .de-desk-next-btn svg { width: 15px; height: 15px; flex: none; color: var(--desk-gold-ink); }
+            .de-desk-next-btn:hover { border-color: rgba(227,178,60,0.45); background: rgba(227,178,60,0.06); }
             .de-desk-next-btn:active { transform: translateY(1px); }
-            .de-desk-next-btn.is-primary { background: #D3126A; border-color: #D3126A; color: #fff; }
+            .de-desk-next-btn.is-primary { background: #E3B23C; border-color: #E3B23C; color: var(--desk-on-gold); }
             .de-desk-next-btn.is-primary svg { color: currentColor; }
-            .de-desk-next-btn.is-primary:hover { background: #bd105f; border-color: #bd105f; }
-            .de-desk-next-btn[aria-expanded="true"]:not(.is-primary) { border-color: #D3126A; }
+            .de-desk-next-btn.is-primary:hover { background: #c99a2e; border-color: #c99a2e; }
+            .de-desk-next-btn[aria-expanded="true"]:not(.is-primary) { border-color: #E3B23C; }
 
             .de-desk-action-form {
               display: grid; gap: 8px;
@@ -3550,15 +3562,15 @@ export const ZohoASAPWidget = ({
             .de-desk-action-form .de-desk-input { width: 100%; min-height: 42px; padding: 9px 12px; font-size: 15px; }
             .de-desk-action-form textarea.de-desk-input { resize: vertical; min-height: 84px; }
             .de-desk-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
-            .de-desk-action-form-error { margin: 0; font-size: 13px; color: #B42318; }
+            .de-desk-action-form-error { margin: 0; font-size: 13px; color: var(--desk-red); }
             .de-desk-action-form-row { display: flex; align-items: center; gap: 10px; }
             .de-desk-action-form-send {
               min-height: 40px; padding: 0 16px;
               border: 0; border-radius: 10px;
-              background: #D3126A; color: #fff;
+              background: #E3B23C; color: var(--desk-on-gold);
               font-size: 14px; font-weight: 700;
             }
-            .de-desk-action-form-send:hover:not(:disabled) { background: #bd105f; }
+            .de-desk-action-form-send:hover:not(:disabled) { background: #c99a2e; }
             .de-desk-action-form-send:disabled { opacity: 0.6; }
             .de-desk-action-form-cancel {
               min-height: 40px; padding: 0 8px;
@@ -3573,7 +3585,7 @@ export const ZohoASAPWidget = ({
               border: 1px solid var(--desk-border-strong);
               border-radius: 999px;
               background: var(--desk-box);
-              color: var(--desk-pink-ink);
+              color: var(--desk-gold-ink);
               font-size: 13.5px; font-weight: 700;
             }
             .de-desk-retry svg { width: 14px; height: 14px; }
@@ -3586,9 +3598,9 @@ export const ZohoASAPWidget = ({
               display: inline-flex; align-items: center; gap: 6px;
               min-height: 34px; padding: 0 14px;
               border: 0; border-radius: 999px;
-              background: #D3126A; color: #fff;
+              background: #E3B23C; color: var(--desk-on-gold);
               font-size: 13px; font-weight: 700;
-              box-shadow: 0 8px 20px -10px rgba(211,18,106,0.7);
+              box-shadow: 0 8px 20px -10px rgba(227,178,60,0.7);
             }
             .de-desk-jump svg { width: 14px; height: 14px; }
 
@@ -3604,8 +3616,8 @@ export const ZohoASAPWidget = ({
             .de-desk-copy svg { width: 14px; height: 14px; }
             .de-desk-copy:hover { color: var(--desk-ink); border-color: var(--desk-border-strong); }
             .de-desk-composer.is-live textarea {
-              border-color: rgba(211,18,106,0.6);
-              box-shadow: 0 0 0 3px rgba(211,18,106,0.15);
+              border-color: rgba(74,222,128,0.6);
+              box-shadow: 0 0 0 3px rgba(74,222,128,0.15);
             }
             .de-desk-composer textarea {
               flex: 1;
@@ -3631,20 +3643,20 @@ export const ZohoASAPWidget = ({
             .de-desk-composer textarea::placeholder { color: var(--desk-ink-dim); }
             .de-desk-composer textarea:focus {
               outline: none;
-              border-color: #D3126A;
-              box-shadow: 0 0 0 3px rgba(211,18,106,0.16);
+              border-color: #E3B23C;
+              box-shadow: 0 0 0 3px rgba(227,178,60,0.16);
             }
             .de-desk-composer { align-items: flex-end; }
             .de-desk-send {
               width: 44px; height: 44px; border-radius: 10px;
-              background: #D3126A; border: none;
+              background: #E3B23C; border: none;
               display: flex; align-items: center; justify-content: center;
               flex: none;
-              box-shadow: 0 8px 18px -10px rgba(211,18,106,0.8);
+              box-shadow: 0 8px 18px -10px rgba(227,178,60,0.8);
             }
-            .de-desk-send:hover:not(:disabled) { background: #bd105f; }
+            .de-desk-send:hover:not(:disabled) { background: #c99a2e; }
             .de-desk-send:disabled { opacity: 0.5; box-shadow: none; }
-            .de-desk-send svg { width: 16px; height: 16px; color: #fff; }
+            .de-desk-send svg { width: 16px; height: 16px; color: var(--desk-on-gold); }
             .de-desk-composer-caption {
               position: relative;
               z-index: 1;
@@ -3710,18 +3722,18 @@ export const ZohoASAPWidget = ({
               margin: 16px 0 8px;
               padding: 11px 16px;
               border: 0; border-radius: 10px;
-              background: #D3126A; color: #fff;
+              background: #E3B23C; color: var(--desk-on-gold);
               font-family: inherit;
               font-size: 14.5px; font-weight: 700;
               text-decoration: none;
               cursor: pointer;
-              box-shadow: 0 8px 18px -10px rgba(211,18,106,0.8);
+              box-shadow: 0 8px 18px -10px rgba(227,178,60,0.8);
             }
-            .de-desk-signin:hover { background: #bd105f; }
+            .de-desk-signin:hover { background: #c99a2e; }
             .de-desk-signin svg { width: 16px; height: 16px; }
             .de-desk-signin:focus-visible,
             .de-desk-launch-row:focus-visible {
-              outline: 2px solid #D3126A;
+              outline: 2px solid #E3B23C;
               outline-offset: 2px;
             }
             .de-desk-signin-alt {
@@ -3754,7 +3766,7 @@ export const ZohoASAPWidget = ({
               font-size: 13px; line-height: 1.45;
             }
             .de-desk-login-hint svg {
-              width: 15px; height: 15px; flex-shrink: 0; margin-top: 2px; color: #D3126A;
+              width: 15px; height: 15px; flex-shrink: 0; margin-top: 2px; color: #E3B23C;
             }
             .de-desk-login-links {
               display: flex; justify-content: space-between; gap: 10px;
@@ -3762,7 +3774,7 @@ export const ZohoASAPWidget = ({
             .de-desk-login-links a {
               display: inline-flex; align-items: center;
               min-height: 40px;
-              color: #D3126A;
+              color: #E3B23C;
               font-size: 13px; font-weight: 600;
               text-decoration: none;
             }
@@ -3809,7 +3821,7 @@ export const ZohoASAPWidget = ({
               text-decoration: none;
             }
             .de-desk-launch-row:hover {
-              border-color: rgba(15,15,18,0.22);
+              border-color: rgba(255,255,255,0.22);
               background: var(--desk-box-hover);
             }
             .de-desk-launch-icon {
@@ -3817,8 +3829,8 @@ export const ZohoASAPWidget = ({
               width: 28px; height: 28px;
               align-items: center; justify-content: center;
               border-radius: 8px;
-              border: 1px solid rgba(15,15,18,0.10);
-              color: #D3126A;
+              border: 1px solid rgba(255,255,255,0.10);
+              color: #E3B23C;
             }
             .de-desk-launch-icon svg { width: 14px; height: 14px; }
             .de-desk-launch-title {
@@ -3836,7 +3848,7 @@ export const ZohoASAPWidget = ({
               border-radius: 15px;
               background: var(--desk-box);
               /* Same edge as the Get Support list. */
-              box-shadow: 0 12px 28px -24px rgba(20,16,30,0.34);
+              box-shadow: 0 12px 28px -24px rgba(0,0,0,0.7);
             }
             .de-desk-tool-group {
               position: relative;
@@ -3848,13 +3860,13 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-tool-group.is-featured {
               /* The base group is transparent, so the featured variant is a
-                 light magenta wash over the white panel, with no ground of its
-                 own; the ::before rail stays the primary cue. */
+                 light gold wash over the panel, with no ground of its own; the
+                 ::before rail stays the primary cue. */
               background:
                 linear-gradient(
                   90deg,
-                  rgba(211,18,106,0.06),
-                  rgba(211,18,106,0.02) 62%,
+                  rgba(227,178,60,0.06),
+                  rgba(227,178,60,0.02) 62%,
                   transparent
                 );
             }
@@ -3866,7 +3878,7 @@ export const ZohoASAPWidget = ({
               bottom: 11px;
               width: 3px;
               border-radius: 0 999px 999px 0;
-              background: var(--desk-pink);
+              background: var(--desk-gold);
             }
             .de-desk-tool-link {
               --tool-color: var(--desk-ink);
@@ -3883,12 +3895,12 @@ export const ZohoASAPWidget = ({
                 background-color 150ms ease,
                 color 150ms ease;
             }
-            .de-desk-tool-group.is-featured .de-desk-tool-link { --tool-color: var(--desk-pink); }
-            .de-desk-tool-link:hover { background: rgba(20,16,30,0.025); }
+            .de-desk-tool-group.is-featured .de-desk-tool-link { --tool-color: var(--desk-gold); }
+            .de-desk-tool-link:hover { background: rgba(255,255,255,0.025); }
             .de-desk-tool-link:focus-visible,
             .de-desk-tool-guide:focus-visible,
             .de-desk-security-action:focus-visible {
-              outline: 2px solid var(--desk-pink);
+              outline: 2px solid var(--desk-gold);
               outline-offset: -2px;
             }
             .de-desk-tool-icon {
@@ -3898,15 +3910,15 @@ export const ZohoASAPWidget = ({
               height: 39px;
               align-items: center;
               justify-content: center;
-              border: 1px solid rgba(20,16,30,0.10);
+              border: 1px solid rgba(255,255,255,0.10);
               border-radius: 11px;
-              background: var(--desk-surface);
+              background: var(--desk-well);
               color: var(--tool-color);
             }
             .de-desk-tool-group.is-featured .de-desk-tool-icon {
-              border-color: color-mix(in srgb, #D3126A 38%, transparent);
+              border-color: color-mix(in srgb, #E3B23C 38%, transparent);
               /* Same ground the unfeatured icon well uses, tinted. */
-              background: color-mix(in srgb, #D3126A 8%, var(--desk-surface));
+              background: color-mix(in srgb, #E3B23C 10%, var(--desk-well));
             }
             .de-desk-tool-icon svg { width: 17px; height: 17px; stroke-width: 1.9; }
             .de-desk-tool-copy {
@@ -3940,10 +3952,10 @@ export const ZohoASAPWidget = ({
               align-items: center;
               min-height: 19px;
               padding: 2px 7px;
-              border: 1px solid rgba(211,18,106,0.32);
+              border: 1px solid rgba(227,178,60,0.32);
               border-radius: 6px;
               background: transparent;
-              color: #D3126A;
+              color: #E3B23C;
               font-size: 9.5px;
               font-weight: 700;
               line-height: 1;
@@ -3970,7 +3982,7 @@ export const ZohoASAPWidget = ({
               gap: 2px;
               margin: -5px 14px 10px 66px;
               padding: 3px 2px;
-              color: var(--desk-pink);
+              color: var(--desk-gold);
               font-size: 11.75px;
               font-weight: 650;
               line-height: 1.3;
@@ -3991,7 +4003,7 @@ export const ZohoASAPWidget = ({
               border: 1px solid var(--desk-border);
               border-radius: 13px;
               background: var(--desk-box);
-              box-shadow: inset 3px 0 0 #D3126A;
+              box-shadow: inset 3px 0 0 #E3B23C;
             }
             .de-desk-security-icon {
               display: inline-flex;
@@ -4001,9 +4013,9 @@ export const ZohoASAPWidget = ({
               align-items: center;
               justify-content: center;
               border-radius: 9px;
-              border: 1px solid rgba(211,18,106,0.32);
-              background: rgba(211,18,106,0.12);
-              color: var(--desk-pink);
+              border: 1px solid rgba(227,178,60,0.32);
+              background: rgba(227,178,60,0.12);
+              color: var(--desk-gold);
             }
             .de-desk-security-icon svg { width: 15px; height: 15px; stroke-width: 2; }
             .de-desk-security-copy {
@@ -4030,21 +4042,21 @@ export const ZohoASAPWidget = ({
               padding: 10px 12px;
               border: 0;
               border-radius: 9px;
-              background: var(--desk-pink);
-              color: #fff;
+              background: var(--desk-gold);
+              color: var(--desk-on-gold);
               font-size: 11.5px;
               font-weight: 700;
               line-height: 1;
-              box-shadow: 0 5px 14px -8px rgba(211,18,106,0.72);
+              box-shadow: 0 5px 14px -8px rgba(227,178,60,0.72);
               transition:
                 background-color 150ms ease,
                 transform 150ms ease,
                 box-shadow 150ms ease;
             }
             .de-desk-security-action:hover {
-              background: #bd105f;
+              background: #c99a2e;
               transform: translateY(-1px);
-              box-shadow: 0 8px 18px -9px rgba(211,18,106,0.76);
+              box-shadow: 0 8px 18px -9px rgba(227,178,60,0.76);
             }
             @media (max-width: 639px) {
               .de-desk-tools-intro { margin-bottom: 12px; }
@@ -4126,12 +4138,12 @@ export const ZohoASAPWidget = ({
             .de-desk-resize.is-active span,
             .de-desk-resize:focus-visible span {
               background:
-                linear-gradient(135deg, transparent 46%, #D3126A 46%, #D3126A 54%, transparent 54%),
-                linear-gradient(135deg, transparent 66%, #D3126A 66%, #D3126A 74%, transparent 74%),
-                linear-gradient(135deg, transparent 86%, #D3126A 86%, #D3126A 94%, transparent 94%);
+                linear-gradient(135deg, transparent 46%, #E3B23C 46%, #E3B23C 54%, transparent 54%),
+                linear-gradient(135deg, transparent 66%, #E3B23C 66%, #E3B23C 74%, transparent 74%),
+                linear-gradient(135deg, transparent 86%, #E3B23C 86%, #E3B23C 94%, transparent 94%);
             }
             .de-desk-resize:focus-visible {
-              outline: 2px solid #D3126A;
+              outline: 2px solid #E3B23C;
               outline-offset: -4px;
               border-radius: 10px;
             }

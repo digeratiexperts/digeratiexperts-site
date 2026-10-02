@@ -1,14 +1,12 @@
-import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, CheckCircle, Power, RefreshCw, Zap } from "lucide-react";
 import { PortalLayout } from "./PortalLayout";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { portalGet } from "@/lib/portalApi";
+import { cn } from "@/lib/utils";
+import { Callout, Panel, Token } from "@/components/portal/ui";
 
 interface OpenAIStatus {
   status: {
@@ -19,9 +17,14 @@ interface OpenAIStatus {
   message: string;
 }
 
+const AFFECTED_FEATURES = [
+  { name: "Hybrid AI/Human Chat", detail: "AI-powered chat responses when enabled" },
+  { name: "Ticket Classification", detail: "Automatic support ticket categorization" },
+  { name: "Smart Recommendations", detail: "AI-suggested products and services" },
+];
+
 export function AdminOpenAI() {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
 
   // Fetch OpenAI status
   const { data: statusData, isLoading: statusLoading, refetch } = useQuery<OpenAIStatus>({
@@ -104,195 +107,146 @@ export function AdminOpenAI() {
   const anyLoading = statusLoading || toggleMutation.isPending || enableMutation.isPending || disableMutation.isPending;
 
   return (
-    <PortalLayout title="OpenAI Billing Control" description="Manage OpenAI API usage and the billing kill switch.">
-      <div className="space-y-6">
-        {/* Status Card */}
-        <Card className="border-l-4" style={{ borderLeftColor: isEnabled ? "#10b981" : "#ef4444" }}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${isEnabled ? "bg-green-100 dark:bg-green-900" : "bg-red-100 dark:bg-red-900"}`}>
-                  {isEnabled ? (
-                    <CheckCircle className={`w-6 h-6 ${isEnabled ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`} />
-                  ) : (
-                    <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
-                  )}
-                </div>
-                <div>
-                  <CardTitle className="text-xl">Integration Status</CardTitle>
-                  <CardDescription>Current state of OpenAI integration</CardDescription>
-                </div>
-              </div>
-              <Badge variant={isEnabled ? "default" : "destructive"} className="text-lg px-4 py-2">
-                {isEnabled ? "ENABLED" : "DISABLED"}
-              </Badge>
-            </div>
-          </CardHeader>
-        </Card>
+    <PortalLayout
+      title="OpenAI Billing Control"
+      description="Manage OpenAI API usage and the billing kill switch."
+      width="narrow"
+      actions={
+        statusLoading ? (
+          <Token label="Checking" tone="neutral" />
+        ) : (
+          <Token label={isEnabled ? "Enabled" : "Disabled"} tone={isEnabled ? "ok" : "bad"} dot />
+        )
+      }
+    >
+      <div className="space-y-4">
+        <Callout
+          tone={statusLoading ? "info" : isEnabled ? "ok" : "bad"}
+          title={statusLoading ? "Checking integration status…" : isEnabled ? "OpenAI integration is enabled" : "OpenAI integration is disabled"}
+        >
+          Current state of OpenAI integration.
+        </Callout>
 
-        {/* Configuration Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Configuration</CardTitle>
-            <CardDescription>Current API settings</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <Panel id="openai-config" title="Configuration" description="Current API settings">
+          <dl className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">API Status</label>
-              <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 font-mono text-sm">
-                {status?.apiKey || "Not configured"}
-              </div>
+              <dt className="text-sm font-medium">API Status</dt>
+              <dd className="mt-1 rounded-md border border-border bg-background p-3 font-mono text-sm">{status?.apiKey || "Not configured"}</dd>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Base URL</label>
-              <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 font-mono text-sm">
-                {status?.baseUrl || "Not configured"}
-              </div>
+              <dt className="text-sm font-medium">Base URL</dt>
+              <dd className="mt-1 break-all rounded-md border border-border bg-background p-3 font-mono text-sm">{status?.baseUrl || "Not configured"}</dd>
             </div>
-            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <p className="text-sm text-blue-900 dark:text-blue-200">
-                ℹ️ Disabling OpenAI prevents new API calls from being made, saving on billing. Existing integrations will gracefully handle disabled state.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+          </dl>
+          <Callout tone="info" className="mt-4">
+            Disabling OpenAI prevents new API calls from being made, saving on billing. Existing integrations will gracefully handle disabled state.
+          </Callout>
+        </Panel>
 
-        {/* Control Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Control</CardTitle>
-            <CardDescription>Toggle OpenAI integration on/off</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
+        <Panel id="openai-control" title="Control" description="Toggle OpenAI integration on/off">
+          <div className="space-y-3">
+            <Button
+              onClick={() => toggleMutation.mutate()}
+              disabled={anyLoading}
+              variant="outline"
+              className="h-11 w-full gap-2 border-border bg-card hover:bg-accent"
+              data-testid="button-toggle-openai"
+            >
+              {toggleMutation.isPending ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  Toggling...
+                </>
+              ) : (
+                <>
+                  <Power className="h-4 w-4" aria-hidden="true" />
+                  Toggle {isEnabled ? "OFF" : "ON"}
+                </>
+              )}
+            </Button>
+
+            <div className="grid grid-cols-2 gap-3">
               <Button
-                onClick={() => toggleMutation.mutate()}
-                disabled={anyLoading}
-                variant="outline"
-                className="w-full h-12 gap-2"
-                data-testid="button-toggle-openai"
+                onClick={() => enableMutation.mutate()}
+                disabled={anyLoading || isEnabled}
+                variant="brand"
+                className="gap-2"
+                data-testid="button-enable-openai"
               >
-                {toggleMutation.isPending ? (
+                {enableMutation.isPending ? (
                   <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Toggling...
+                    <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    Enabling...
                   </>
                 ) : (
                   <>
-                    <Power className="w-4 h-4" />
-                    Toggle {isEnabled ? "OFF" : "ON"}
+                    <CheckCircle className="h-4 w-4" aria-hidden="true" />
+                    Enable
                   </>
                 )}
               </Button>
 
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  onClick={() => enableMutation.mutate()}
-                  disabled={anyLoading || isEnabled}
-                  className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-                  data-testid="button-enable-openai"
-                >
-                  {enableMutation.isPending ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Enabling...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      Enable
-                    </>
-                  )}
-                </Button>
-
-                <Button
-                  onClick={() => disableMutation.mutate()}
-                  disabled={anyLoading || !isEnabled}
-                  variant="destructive"
-                  className="gap-2"
-                  data-testid="button-disable-openai"
-                >
-                  {disableMutation.isPending ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Disabling...
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle className="w-4 h-4" />
-                      Disable
-                    </>
-                  )}
-                </Button>
-              </div>
-
               <Button
-                onClick={() => refetch()}
-                disabled={anyLoading}
-                variant="ghost"
-                className="w-full"
-                data-testid="button-refresh-openai-status"
+                onClick={() => disableMutation.mutate()}
+                disabled={anyLoading || !isEnabled}
+                variant="destructive"
+                className="gap-2"
+                data-testid="button-disable-openai"
               >
-                <RefreshCw className={`w-4 h-4 ${statusLoading ? "animate-spin" : ""}`} />
-                {statusLoading ? "Refreshing..." : "Refresh Status"}
+                {disableMutation.isPending ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    Disabling...
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="h-4 w-4" aria-hidden="true" />
+                    Disable
+                  </>
+                )}
               </Button>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Features Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Affected Features</CardTitle>
-            <CardDescription>These features depend on OpenAI integration</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <Zap className="w-5 h-5 text-yellow-500" />
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Hybrid AI/Human Chat</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">AI-powered chat responses when enabled</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <Zap className="w-5 h-5 text-yellow-500" />
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Ticket Classification</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Automatic support ticket categorization</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <Zap className="w-5 h-5 text-yellow-500" />
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Smart Recommendations</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">AI-suggested products and services</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            <Button
+              onClick={() => refetch()}
+              disabled={anyLoading}
+              variant="ghost"
+              className="w-full"
+              data-testid="button-refresh-openai-status"
+            >
+              <RefreshCw className={cn("h-4 w-4", statusLoading && "animate-spin")} aria-hidden="true" />
+              {statusLoading ? "Refreshing..." : "Refresh Status"}
+            </Button>
+          </div>
+        </Panel>
 
-        {/* Billing Info Card */}
-        <Card className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200 dark:border-purple-800">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              💰 Billing Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-gray-700 dark:text-gray-300">
+        <Panel id="openai-features" title="Affected Features" description="These features depend on OpenAI integration" flush>
+          <ul className="divide-y divide-border">
+            {AFFECTED_FEATURES.map((f) => (
+              <li key={f.name} className="flex items-center gap-3 px-4 py-3 md:px-5">
+                <Zap className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{f.name}</p>
+                  <p className="text-xs text-muted-foreground">{f.detail}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+
+        <Panel id="openai-billing" title="Billing Information">
+          <div className="space-y-3 text-sm">
+            <p>
               <strong>When Enabled:</strong> OpenAI API calls are made and billed to your Replit credits. Monitor usage and disable during off-peak hours if needed.
             </p>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
+            <p>
               <strong>When Disabled:</strong> No OpenAI API calls are made. Features gracefully degrade without incurring charges. Fallback behaviors are in place.
             </p>
-            <Separator className="my-3" />
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              ⓘ For detailed billing analytics and usage monitoring, check your Replit account dashboard.
+            <p className="border-t border-border pt-3 text-xs text-muted-foreground">
+              For detailed billing analytics and usage monitoring, check your Replit account dashboard.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </Panel>
       </div>
     </PortalLayout>
   );

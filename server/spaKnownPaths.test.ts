@@ -2,6 +2,9 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { isKnownSpaPath, normalizeSpaPath } from "./spaKnownPaths";
+import { CAMPAIGN_SLUGS } from "@/data/campaigns";
+import { EXECUTIVE_BRIEFS } from "@/data/executiveBriefs";
+import resourceRegistry from "@/data/resourceRegistry.v2.json";
 
 describe("spaKnownPaths", () => {
   it("normalizes trailing slashes", () => {
@@ -20,7 +23,7 @@ describe("spaKnownPaths", () => {
   it("knows every homepage version preview, so none of them answers 404", () => {
     // /version-4 was routed in App.tsx but missing here, so the preview rendered
     // while answering HTTP 404 to monitors, crawlers and link checkers.
-    for (const n of [1, 2, 3, 4, 5, 6]) {
+    for (const n of [1, 2, 3, 4, 5, 6, 7]) {
       expect(isKnownSpaPath(`/version-${n}`)).toBe(true);
     }
     expect(isKnownSpaPath("/versions")).toBe(true);
@@ -36,6 +39,48 @@ describe("spaKnownPaths", () => {
     expect(keys.length).toBeGreaterThan(10);
     for (const key of keys) {
       expect(isKnownSpaPath(`/solutions/${key}`), `/solutions/${key}`).toBe(true);
+    }
+  });
+
+  it("knows every data-driven industry and support page", () => {
+    // /industries/professional-services (linked from every page's footer) and
+    // /support/system-status answered 404 until 2026-10-01.
+    const src = readFileSync(path.resolve(import.meta.dirname, "../client/src/pages/routes/servicePages.tsx"), "utf8");
+    for (const [name, prefix] of [["industryPageData", "/industries"], ["supportPageData", "/support"]] as const) {
+      const start = src.indexOf(`export const ${name}`);
+      const next = src.indexOf("export const", start + 1);
+      const keys = [...src.slice(start, next === -1 ? undefined : next).matchAll(/^\s{2}'([A-Za-z-]+)': \{/gm)].map((m) => m[1]);
+      expect(keys.length, name).toBeGreaterThan(0);
+      for (const key of keys) {
+        expect(isKnownSpaPath(`${prefix}/${key}`), `${prefix}/${key}`).toBe(true);
+      }
+    }
+  });
+
+  it("answers 200 for every page in the sitemap", () => {
+    // 27 of the 113 sitemap URLs (every /go campaign, every brief and resource
+    // page) rendered while answering HTTP 404 until 2026-10-01.
+    const xml = readFileSync(path.resolve(import.meta.dirname, "../public/sitemap.xml"), "utf8");
+    const paths = [...xml.matchAll(/<loc>https:\/\/digeratiexperts\.com([^<]*)<\/loc>/g)].map((m) => m[1] || "/");
+    expect(paths.length).toBeGreaterThan(100);
+    expect(paths.filter((p) => !isKnownSpaPath(p))).toEqual([]);
+  });
+
+  it("knows every campaign, executive brief and resource page the client renders", () => {
+    const rendered = [
+      "/go",
+      ...CAMPAIGN_SLUGS.map((slug) => `/go/${slug}`),
+      "/resources/briefs",
+      ...EXECUTIVE_BRIEFS.map((brief) => `/resources/briefs/${brief.slug}`),
+      ...resourceRegistry.resources.map((resource) => resource.route),
+    ];
+    expect(rendered.length).toBeGreaterThan(25);
+    expect(rendered.filter((p) => !isKnownSpaPath(p))).toEqual([]);
+  });
+
+  it("still answers 404 for a campaign, brief or resource slug that does not exist", () => {
+    for (const p of ["/go/not-a-campaign", "/resources/briefs/not-a-brief", "/resources/datasheets/not-a-datasheet", "/lp/anything", "/ads/anything"]) {
+      expect(isKnownSpaPath(p), p).toBe(false);
     }
   });
 

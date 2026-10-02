@@ -39,8 +39,8 @@ export function Panel({
       className={cn("overflow-hidden rounded-xl border border-border bg-card text-card-foreground", className)}
     >
       {(title || actions) && (
-        <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3 md:px-5">
-          <div className="min-w-0">
+        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-border px-4 py-3 md:px-5">
+          <div className="min-w-0 flex-1 basis-48">
             {title && (
               <h2 id={headingId} className="font-heading text-[15px] font-semibold leading-snug">
                 {title}

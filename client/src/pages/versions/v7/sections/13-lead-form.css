@@ -1,0 +1,29 @@
+.v7 .v7s-13 .lead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 640px); grid-template-rows: auto 1fr; grid-template-areas: "head form" "assure form"; column-gap: 80px; align-items: start; }
+.v7 .v7s-13 .lead__statement { grid-area: head; }
+.v7 .v7s-13 .lead__form { grid-area: form; }
+.v7 .v7s-13 .lead__assure { grid-area: assure; }
+.v7 .v7s-13 .lead .v7-h2 { max-width: 620px; text-wrap: balance; }
+.v7 .v7s-13 .lead__assure { margin-top: 28px; display: grid; gap: 10px; }
+.v7 .v7s-13 .lead__assure li { display: flex; align-items: center; font-size: 16px; line-height: 1.5; color: var(--v7-ink-body); }
+.v7 .v7s-13 .lead__assure .v7-dash { margin-right: 12px; flex-shrink: 0; }
+.v7 .v7s-13 .lead__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 20px; }
+.v7 .v7s-13 .lead__card .v7-input:focus { border-color: var(--v7-magenta); }
+.v7 .v7s-13 .lead__submit { width: 100%; margin-top: 28px; }
+.v7 .v7s-13 .lead__footers { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--v7-paper-hairline); }
+.v7 .v7s-13 .lead__footers li { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; line-height: 1.4; color: var(--v7-ink-muted); }
+.v7 .v7s-13 .lead__footers svg { width: 16px; height: 16px; color: var(--v7-magenta-paper-ink); flex-shrink: 0; }
+.v7 .v7s-13 .lead__call { margin-top: 20px; color: var(--v7-ink-muted); }
+.v7 .v7s-13 .lead__call .v7-link { font-weight: 600; min-height: 44px; margin: -10px 0; }
+@media (max-width: 1023px) {
+  .v7 .v7s-13 .lead { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "form" "assure"; }
+  .v7 .v7s-13 .lead__form { margin-top: 32px; }
+  .v7 .v7s-13 .lead__assure { margin-top: 28px; }
+}
+@media (max-width: 639px) {
+  .v7 .v7s-13 .lead__fields { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .v7 .v7s-13 .lead__submit { height: auto; min-height: 48px; padding: 13px 16px; white-space: normal; text-align: center; line-height: 1.25; }
+  .v7 .v7s-13 .lead__footers { flex-direction: column; gap: 10px; }
+}
+/* Port: zod field messages (the live FormMessage), on paper ink. */
+.v7 .v7s-13 .v7-field-error { margin-top: 6px; font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--v7-magenta-paper-ink); }
+.v7 .v7s-13 .lead__submit:disabled { opacity: 0.7; cursor: progress; }

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE section mockup — 02 Why we exist</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../system/tokens.css">
+<style>
+  /* 02 · Why we exist — full-bleed paper band (no island). Statement and the
+     closing ask share one 640px column on the left; the three claims are one
+     white hairline list on the right, top-aligned to the H2 and at their
+     natural height. Everything else comes from tokens.css. */
+  #why-we-exist { border-top: 1px solid var(--de-paper-hairline); } /* seam under the trust strip (01): two paper bands, not one */
+  .why { display: grid; grid-template-columns: minmax(0, 640px) minmax(0, 600px); grid-template-areas: "statement claims" "ask claims"; justify-content: space-between; column-gap: clamp(48px, 6vw, 96px); align-items: start; }
+  .why__statement { grid-area: statement; max-width: 640px; }
+  .why .de-eyebrow { line-height: 20px; }
+  .why__claims { grid-area: claims; margin-top: 42px; } /* eyebrow 20 + 14 gap + H2 half-leading: list top meets the H2 cap line */
+  .why__ask { grid-area: ask; max-width: 640px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--de-paper-hairline); }
+  .why .de-h2 { max-width: 640px; text-wrap: balance; }
+  .why .de-lede { text-wrap: pretty; }
+  .why__ask .de-body { margin-top: 6px; text-wrap: pretty; }
+  .ask__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+
+  /* Claims: the tokens' paper cells stacked vertically. The title is the
+     link (accessible name = title only); its ::after covers the row so the
+     whole row stays the target. A persistent underline + trailing chevron
+     mark each row as a link (no hover-only cue). The magenta dash is the
+     only decorative mark. All line boxes are whole pixels so the 2px dash
+     lands on the pixel grid in every row. */
+  .claims { grid-template-columns: minmax(0, 1fr); }
+  .claims > * { padding: 0; border-left: 0; border-top: 1px solid var(--de-paper-hairline); }
+  .claims > *:first-child { border-top: 0; }
+  .claim { position: relative; display: grid; grid-template-columns: 12px minmax(0, 1fr) 20px; column-gap: 16px; padding: 24px 24px 24px 28px; }
+  .claim .de-dash { grid-column: 1; grid-row: 1; align-self: start; width: 12px; height: 2px; margin: 10px 0 0; background: var(--de-magenta); vertical-align: top; }
+  .claim__title { grid-column: 2; grid-row: 1; line-height: 22px; }
+  .claim__title a { color: var(--de-ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; text-decoration-color: rgba(26, 18, 16, 0.28); transition: color 200ms ease-out, text-decoration-color 200ms ease-out; }
+  .claim__title a::after { content: ""; position: absolute; inset: 0; }
+  .claim__body { grid-column: 2; grid-row: 2; margin-top: 6px; line-height: 26px; text-wrap: pretty; }
+  .claim__chev { grid-column: 3; grid-row: 1 / span 2; align-self: center; width: 20px; height: 20px; color: var(--de-ink-muted); transition: color 200ms ease-out, transform 200ms ease-out; }
+  .nb { white-space: nowrap; } /* keeps the live copy's spaced hyphens off a line edge */
+  .claim:hover .claim__title a, .claim__title a:focus-visible { color: var(--de-magenta-paper-ink); text-decoration-color: var(--de-magenta-paper-ink); }
+  .claim:hover .claim__chev, .claim:focus-within .claim__chev { color: var(--de-magenta-paper-ink); }
+  .claim__title a:focus-visible { outline: none; }
+  .claim__title a:focus-visible::after { outline: 2px solid #ec4899; outline-offset: -2px; }
+
+  @media (max-width: 1023px) {
+    .why { grid-template-columns: minmax(0, 1fr); grid-template-areas: "statement" "claims" "ask"; row-gap: 32px; }
+    .why__claims { margin-top: 0; }
+    .why__ask { margin-top: 0; border-top: 0; padding-top: 0; }
+  }
+  @media (max-width: 639px) {
+    .claim { padding: 20px 16px 20px 20px; column-gap: 12px; }
+    .nb { white-space: normal; }
+    .ask__actions .de-btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<section class="f-paper de-section" id="why-we-exist" aria-labelledby="why-we-exist-title">
+  <div class="de-canvas why">
+    <div class="why__statement">
+      <p class="de-eyebrow">Why we exist</p>
+      <h2 class="de-h2" id="why-we-exist-title">We Exist to Protect and Enable Your Business</h2>
+      <p class="de-lede">If you're like most business leaders, you don't want another vendor — you want a security-first partner who proactively reduces risk, improves uptime, and keeps your team moving.</p>
+    </div>
+
+    <ul class="de-cells de-cells--paper claims why__claims">
+      <li class="claim">
+        <span class="de-dash" aria-hidden="true"></span>
+        <h3 class="de-h4 claim__title"><a href="/solutions/proactive-ecosystem">Security-First Operations</a></h3>
+        <p class="de-body claim__body">Every system, endpoint, and user is <span class="nb">protected - by</span> design, not by reaction.</p>
+        <svg class="claim__chev" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      </li>
+      <li class="claim">
+        <span class="de-dash" aria-hidden="true"></span>
+        <h3 class="de-h4 claim__title"><a href="/solutions/co-managed-it">Co-Managed or Fully Managed</a></h3>
+        <p class="de-body claim__body">We support your internal IT or serve as your outsourced technology team.</p>
+        <svg class="claim__chev" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      </li>
+      <li class="claim">
+        <span class="de-dash" aria-hidden="true"></span>
+        <h3 class="de-h4 claim__title"><a href="/trust">Executive-Level Transparency</a></h3>
+        <p class="de-body claim__body">Reports, KPIs, and compliance insights that make <span class="nb">sense - and</span> drive decisions.</p>
+        <svg class="claim__chev" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      </li>
+    </ul>
+
+    <div class="why__ask">
+      <h3 class="de-h3">Ready to Secure Your Business?</h3>
+      <p class="de-body">Get enterprise-grade protection tailored for Arizona businesses. Let's discuss your security needs.</p>
+      <div class="ask__actions">
+        <a class="de-btn de-btn--primary" href="/book">Schedule Consultation <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        <a class="de-btn de-btn--outline-paper" href="tel:+13254809870"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Call 325-480-9870</a>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- No numerals in this section, so the Oxanium face is declared but never used.
+     Resolve it anyway so system/render.mjs can verify the font file loads. No visual effect. -->
+<script>document.fonts.load('600 16px Oxanium');</script>
+</body>
+</html>

@@ -1,16 +1,11 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Link } from "wouter";
+import { Headphones, Mic, Phone, PhoneCall, PhoneOff, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { PortalLayout } from "./PortalLayout";
-import { Phone, Download, CheckCircle, Settings, Headphones, Volume2, Mic, PhoneCall, PhoneOff, Users, Clock } from "lucide-react";
 import { PRIMARY_PHONE } from "@/data/companyContact";
-
-/** Light Quick Actions: navy type on white, magenta fill so hover white type has contrast. */
-const quickActionClass =
-  "border-[#D3126A]/40 bg-white text-[#1A1228] hover:bg-[#D3126A] hover:border-[#D3126A] hover:text-white dark:bg-transparent dark:text-white dark:hover:bg-[#D3126A] dark:hover:text-white";
+import { Callout, DataTable, EmptyState, Field, Panel, StatTile, Token, type DataColumn } from "@/components/portal/ui";
 
 interface CallHistory {
   id: string;
@@ -28,6 +23,19 @@ const recentCalls: CallHistory[] = [
   { id: "4", type: "outbound", number: "+1 (623) 555-3456", contact: "Mike Wilson", duration: "3:45", time: "Yesterday" },
 ];
 
+const SOFTPHONES = [
+  { label: "Windows", hint: "Desktop App", icon: Headphones, testId: "button-download-windows" },
+  { label: "macOS", hint: "Desktop App", icon: Headphones, testId: "button-download-mac" },
+  { label: "iOS", hint: "App Store", icon: Phone, testId: "button-download-ios" },
+  { label: "Android", hint: "Play Store", icon: Phone, testId: "button-download-android" },
+];
+
+const CALL_TYPE: Record<CallHistory["type"], { label: string; tone: "ok" | "info" | "bad" }> = {
+  inbound: { label: "Inbound", tone: "ok" },
+  outbound: { label: "Outbound", tone: "info" },
+  missed: { label: "Missed", tone: "bad" },
+};
+
 export default function PortalCytracom() {
   const [extension, setExtension] = useState("1001");
   const [voicemailPin, setVoicemailPin] = useState("");
@@ -36,232 +44,127 @@ export default function PortalCytracom() {
     alert("Settings saved successfully!");
   };
 
+  const columns: DataColumn<CallHistory>[] = [
+    {
+      key: "contact",
+      header: "Contact",
+      primary: true,
+      cell: (call) => {
+        const Icon = call.type === "missed" ? PhoneOff : PhoneCall;
+        return (
+          <span className="flex items-center gap-3">
+            <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <span className="min-w-0">
+              <span className="block truncate font-medium">{call.contact}</span>
+              <span className="pt-num block text-xs text-muted-foreground">{call.number}</span>
+            </span>
+          </span>
+        );
+      },
+    },
+    { key: "type", header: "Type", primary: true, className: "w-32", cell: (call) => <Token label={CALL_TYPE[call.type].label} tone={CALL_TYPE[call.type].tone} dot /> },
+    { key: "duration", header: "Duration", hideBelowMd: true, align: "right", className: "w-28", cell: (call) => <span className="pt-num text-muted-foreground">{call.type === "missed" ? "Missed" : call.duration}</span> },
+    { key: "time", header: "When", primary: true, align: "right", className: "w-32 whitespace-nowrap", cell: (call) => <span className="text-muted-foreground">{call.time}</span> },
+  ];
+
   return (
-    <PortalLayout title="Cytracom Phone">
-      <div className="space-y-6">
-        {/* Status Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                  <Phone className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Phone Status</p>
-                  <p className="text-xl font-bold text-green-600">Online</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+    <PortalLayout title="Cytracom Phone" description="Your softphone downloads, extension settings and recent call activity.">
+      <div className="space-y-4">
+        <Callout tone="info" title="Sample data">
+          The status, call counts and call history shown here are examples. Live phone figures appear once your Cytracom account is linked.
+        </Callout>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  <Users className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Extension</p>
-                  <p className="text-xl font-bold">x{extension}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Phone figures">
+          <StatTile label="Phone status" value="Online" tone="ok" hint="sample" />
+          <StatTile label="Extension" value={<span>x{extension}</span>} hint="your direct extension" />
+          <StatTile label="Today's calls" value={12} hint="sample" />
+          <StatTile label="Voicemails" value={3} suffix="new" hint="sample" />
+        </section>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                  <PhoneCall className="h-6 w-6 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Today's Calls</p>
-                  <p className="text-xl font-bold">12</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <Panel id="softphone" title="Download Cytracom softphone" description="Install the Cytracom app for desktop and mobile calling">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {SOFTPHONES.map((s) => {
+              const Icon = s.icon;
+              return (
+                <Button key={s.testId} variant="outline" className="h-auto flex-col gap-1.5 border-border bg-card py-4 hover:bg-accent" data-testid={s.testId}>
+                  <Icon className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+                  <span className="text-sm font-medium">{s.label}</span>
+                  <span className="text-xs text-muted-foreground">{s.hint}</span>
+                </Button>
+              );
+            })}
+          </div>
+        </Panel>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                  <Volume2 className="h-6 w-6 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Voicemails</p>
-                  <p className="text-xl font-bold">3 new</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Download Softphone */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Download Cytracom Softphone</CardTitle>
-            <CardDescription>Install the Cytracom app for desktop and mobile calling</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Button variant="outline" className="h-auto py-4 flex flex-col items-center gap-2" data-testid="button-download-windows">
-                <Headphones className="h-8 w-8" />
-                <span>Windows</span>
-                <span className="text-xs text-gray-500">Desktop App</span>
-              </Button>
-              <Button variant="outline" className="h-auto py-4 flex flex-col items-center gap-2" data-testid="button-download-mac">
-                <Headphones className="h-8 w-8" />
-                <span>macOS</span>
-                <span className="text-xs text-gray-500">Desktop App</span>
-              </Button>
-              <Button variant="outline" className="h-auto py-4 flex flex-col items-center gap-2" data-testid="button-download-ios">
-                <Phone className="h-8 w-8" />
-                <span>iOS</span>
-                <span className="text-xs text-gray-500">App Store</span>
-              </Button>
-              <Button variant="outline" className="h-auto py-4 flex flex-col items-center gap-2" data-testid="button-download-android">
-                <Phone className="h-8 w-8" />
-                <span>Android</span>
-                <span className="text-xs text-gray-500">Play Store</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Phone Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Phone Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="extension">Extension Number</Label>
-                <Input 
-                  id="extension" 
-                  value={extension} 
-                  onChange={(e) => setExtension(e.target.value)}
-                  data-testid="input-extension"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="voicemail-pin">Voicemail PIN</Label>
-                <Input 
-                  id="voicemail-pin" 
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Panel id="phone-settings" title="Phone settings" description="Extension and voicemail">
+            <div className="space-y-4">
+              <Field label="Extension Number" htmlFor="extension">
+                <Input id="extension" value={extension} onChange={(e) => setExtension(e.target.value)} className="border-border bg-background" data-testid="input-extension" />
+              </Field>
+              <Field label="Voicemail PIN" htmlFor="voicemail-pin">
+                <Input
+                  id="voicemail-pin"
                   type="password"
-                  value={voicemailPin} 
+                  value={voicemailPin}
                   onChange={(e) => setVoicemailPin(e.target.value)}
                   placeholder="Enter new PIN"
+                  className="border-border bg-background"
                   data-testid="input-voicemail-pin"
                 />
-              </div>
-              <div className="flex items-center gap-4 pt-2">
+              </Field>
+              <dl className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <Mic className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">Microphone: Default</span>
+                  <Mic className="h-4 w-4" aria-hidden="true" />
+                  <dt>Microphone:</dt>
+                  <dd className="text-foreground">Default</dd>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Volume2 className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">Speaker: Default</span>
+                  <Volume2 className="h-4 w-4" aria-hidden="true" />
+                  <dt>Speaker:</dt>
+                  <dd className="text-foreground">Default</dd>
                 </div>
-              </div>
-              <Button onClick={handleSaveSettings} className="w-full bg-[#D3126A] hover:bg-[#e01874]" data-testid="button-save-settings">
+              </dl>
+              <Button variant="brand" onClick={handleSaveSettings} className="w-full" data-testid="button-save-settings">
                 Save Settings
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </Panel>
 
-          {/* Recent Calls */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Recent Calls
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {recentCalls.map((call) => (
-                  <div 
-                    key={call.id}
-                    className="flex items-center justify-between p-3 border dark:border-slate-700 rounded-lg"
-                    data-testid={`call-${call.id}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-full ${
-                        call.type === 'inbound' ? 'bg-green-100 dark:bg-green-900/30' :
-                        call.type === 'outbound' ? 'bg-blue-100 dark:bg-blue-900/30' :
-                        'bg-red-100 dark:bg-red-900/30'
-                      }`}>
-                        {call.type === 'missed' ? (
-                          <PhoneOff className="h-4 w-4 text-red-600" />
-                        ) : (
-                          <PhoneCall className={`h-4 w-4 ${call.type === 'inbound' ? 'text-green-600' : 'text-blue-600'}`} />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{call.contact}</p>
-                        <p className="text-xs text-gray-500">{call.number}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant="outline" className={
-                        call.type === 'missed' ? 'border-red-200 text-red-600' : ''
-                      }>
-                        {call.type === 'missed' ? 'Missed' : call.duration}
-                      </Badge>
-                      <p className="text-xs text-gray-500 mt-1">{call.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <Panel id="recent-calls" title="Recent calls" description={`${recentCalls.length} calls`} flush>
+            <DataTable<CallHistory>
+              columns={columns}
+              rows={recentCalls}
+              rowKey={(call) => call.id}
+              rowTestId={(call) => `call-${call.id}`}
+              caption="Recent calls"
+              empty={<EmptyState compact icon={PhoneCall} title="No calls yet" description="Your call history appears here." />}
+            />
+          </Panel>
         </div>
 
-        {/* Quick Actions */}
-        <Card className="border-[#D3126A]/20 bg-gradient-to-r from-[#D3126A]/10 to-blue-500/10 text-[#1A1228] dark:text-white">
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button variant="outline" className={quickActionClass} data-testid="button-check-voicemail">
-                <Volume2 className="h-4 w-4 mr-2" />
-                Check Voicemail
-              </Button>
-              <Button variant="outline" className={quickActionClass} data-testid="button-update-greeting">
-                <Mic className="h-4 w-4 mr-2" />
-                Update Greeting
-              </Button>
-              <Button variant="outline" className={quickActionClass} data-testid="button-call-forwarding">
-                <Phone className="h-4 w-4 mr-2" />
-                Call Forwarding
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Panel id="quick-actions" title="Quick actions">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Button variant="outline" className="border-border bg-card hover:bg-accent" data-testid="button-check-voicemail">
+              <Volume2 aria-hidden="true" />
+              Check Voicemail
+            </Button>
+            <Button variant="outline" className="border-border bg-card hover:bg-accent" data-testid="button-update-greeting">
+              <Mic aria-hidden="true" />
+              Update Greeting
+            </Button>
+            <Button variant="outline" className="border-border bg-card hover:bg-accent" data-testid="button-call-forwarding">
+              <Phone aria-hidden="true" />
+              Call Forwarding
+            </Button>
+          </div>
+        </Panel>
 
-        {/* Help */}
-        <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/30">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-4">
-              <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-              <div>
-                <p className="font-medium text-blue-900 dark:text-blue-100">Cytracom Phone Support</p>
-                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                  For phone system issues, check our <a href="/portal/kb" className="underline">Knowledge Base</a> or 
-                  contact support at <strong>support@digeratiexperts.com</strong>. For urgent issues, call <strong>{PRIMARY_PHONE.display}</strong>.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Callout tone="info" title="Cytracom phone support">
+          For phone system issues, check our <Link href="/portal/kb">Knowledge Base</Link> or contact support at{" "}
+          <strong className="text-foreground">support@digeratiexperts.com</strong>. For urgent issues, call{" "}
+          <strong className="text-foreground">{PRIMARY_PHONE.display}</strong>.
+        </Callout>
       </div>
     </PortalLayout>
   );

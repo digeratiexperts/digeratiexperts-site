@@ -1,26 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import {
-  BookOpen,
-  CheckCircle2,
-  Circle,
-  Compass,
-  ExternalLink,
-  GraduationCap,
-  Library,
-  Sparkles,
-  Clock,
-  ArrowRight,
-  Shield,
-  Target,
-} from "lucide-react";
+import { BookOpen, CheckCircle2, Circle, ExternalLink, ArrowRight, Sparkles } from "lucide-react";
 import { PortalLayout } from "./PortalLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { portalGet } from "@/lib/portalApi";
 import { readPortalUser } from "@/lib/portalRoles";
+import { cn } from "@/lib/utils";
+import { Callout, EmptyState, Panel, StatTile, Token } from "@/components/portal/ui";
 
 type Lesson = {
   id: string;
@@ -82,6 +70,12 @@ function saveProgress(map: Record<string, boolean>) {
   localStorage.setItem(PROGRESS_KEY, JSON.stringify(map));
 }
 
+const chipClass = (active: boolean) =>
+  cn(
+    "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+    active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+  );
+
 export default function PortalLearning() {
   const user = readPortalUser();
   const [progress, setProgress] = useState<Record<string, boolean>>({});
@@ -124,213 +118,149 @@ export default function PortalLearning() {
   };
 
   return (
-    <PortalLayout title="Learning Center" hideHeader>
-      <div className="space-y-6">
-        {/* Immersive role banner */}
-        <section className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950 text-white">
-          <div
-            className="absolute inset-0 opacity-80"
-            style={{
-              background:
-                "radial-gradient(ellipse 80% 60% at 10% 20%, rgba(80,52,255,0.45), transparent 55%), radial-gradient(ellipse 60% 50% at 90% 80%, rgba(14,165,233,0.28), transparent 50%), linear-gradient(160deg, #0b1220 0%, #111827 55%, #0f172a 100%)",
-            }}
-          />
-          <div
-            className="absolute inset-0 opacity-[0.07]"
-            style={{
-              backgroundImage:
-                "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
-              backgroundSize: "28px 28px",
-            }}
-          />
-          <div className="relative p-6 md:p-8 space-y-5">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge className="bg-white/10 hover:bg-white/15 text-white border-white/20">
-                <GraduationCap className="h-3.5 w-3.5 mr-1" />
-                Learning Center
-              </Badge>
-              <Badge variant="outline" className="border-sky-400/40 text-sky-100">
-                {data?.roleLabel || "Your path"}
-              </Badge>
-              {data?.catalogVersion && (
-                <Badge variant="outline" className="border-white/20 text-white/70 font-normal">
-                  TechSales · {data.catalogVersion}
-                </Badge>
-              )}
-            </div>
-            <div className="max-w-3xl space-y-2">
-              <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">
-                {isLoading ? "Loading your path…" : data?.path.title || "Your learning path"}
-              </h2>
-              <p className="text-sky-100/90 text-sm md:text-base">
-                {data?.path.tagline || "Role-specific training drawn from DE’s TechSales service map."}
-              </p>
-              <p className="text-white/75 text-sm leading-relaxed max-w-2xl">
-                {data?.path.mission ||
-                  "Lessons adapt to your portal role — staff, manager, department IT, or company IT."}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-4 items-center">
-              <ProgressRing pct={pct} />
-              <div className="text-sm space-y-1">
-                <p className="text-white/90 font-medium">
-                  {doneCount} of {lessons.length} lessons marked complete
-                </p>
-                <p className="text-white/60 flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5" />
-                  ~{data?.recommendedMinutes || 0} min on this path
-                  {user?.fullName ? ` · ${user.fullName}` : ""}
-                </p>
-              </div>
-            </div>
+    <PortalLayout
+      title="Learning Center"
+      eyebrow={data?.roleLabel || "Your path"}
+      description={data?.path.tagline || "Role-specific training drawn from DE’s TechSales service map."}
+      width="wide"
+    >
+      <div className="space-y-4">
+        <Panel
+          id="learning-path"
+          title={isLoading ? "Loading your path…" : data?.path.title || "Your learning path"}
+          description={data?.path.mission || "Lessons adapt to your portal role — staff, manager, department IT, or company IT."}
+          actions={data?.catalogVersion ? <Token label={`TechSales · ${data.catalogVersion}`} /> : undefined}
+        >
+          <div className="space-y-4">
+            <section className="grid grid-cols-2 gap-3 lg:grid-cols-3" aria-label="Path progress">
+              <StatTile
+                label="Lessons complete"
+                value={doneCount}
+                suffix={`/${lessons.length}`}
+                hint="marked on this device"
+                tone={doneCount > 0 ? "ok" : "neutral"}
+                loading={isLoading}
+              />
+              <StatTile label="Path progress" value={pct} suffix="%" hint={user?.fullName ? user.fullName : "your path"} loading={isLoading} />
+              <StatTile label="Time on path" value={data?.recommendedMinutes || 0} suffix="min" hint="recommended" tone="info" loading={isLoading} className="col-span-2 lg:col-span-1" />
+            </section>
+            <Progress value={pct} className="h-2" aria-label="Path progress" />
           </div>
-        </section>
+        </Panel>
 
         {isError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <Callout tone="bad" title="Learning path couldn't be loaded">
             {error instanceof Error ? error.message : "Failed to load learning path"}
-          </div>
+          </Callout>
         )}
 
-        {/* Pillar chips */}
-        <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant={pillarFilter === "all" ? "default" : "outline"}
-            onClick={() => setPillarFilter("all")}
-          >
+        <div role="group" aria-label="Filter by pillar" className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0 lg:pb-0">
+          <button type="button" aria-pressed={pillarFilter === "all"} className={chipClass(pillarFilter === "all")} onClick={() => setPillarFilter("all")}>
             All lessons
-          </Button>
-          {data?.pillars.map((p) => (
-            <Button
-              key={p.key}
-              size="sm"
-              variant={pillarFilter === p.key ? "default" : "outline"}
-              onClick={() => setPillarFilter(p.key)}
-              title={p.blurb}
-            >
-              {p.label}
-              <span className="ml-1.5 text-xs opacity-70">{p.lessonCount}</span>
-            </Button>
-          ))}
+          </button>
+          {data?.pillars.map((p) => {
+            const activeChip = pillarFilter === p.key;
+            return (
+              <button
+                key={p.key}
+                type="button"
+                aria-pressed={activeChip}
+                className={chipClass(activeChip)}
+                onClick={() => setPillarFilter(p.key)}
+                title={p.blurb}
+              >
+                {p.label}
+                <span className={cn("pt-num rounded-full px-1.5 text-[10px]", activeChip ? "bg-white/20" : "bg-muted")}>{p.lessonCount}</span>
+              </button>
+            );
+          })}
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-5">
-          {/* Journey rail */}
-          <div className="lg:col-span-4 space-y-3">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Compass className="h-4 w-4 text-[#D3126A]" />
-                  Your mission path
-                </CardTitle>
-                <CardDescription>Tap a stop to study it. Progress saves on this device.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-1 max-h-[560px] overflow-auto pr-1">
-                {isLoading && <p className="text-sm text-muted-foreground py-4">Loading lessons…</p>}
+        <div className="grid gap-4 lg:grid-cols-12">
+          <div className="space-y-4 lg:col-span-4">
+            <Panel id="mission-path" title="Your mission path" description="Tap a stop to study it. Progress saves on this device." flush>
+              {isLoading && <p className="px-4 py-4 text-sm text-muted-foreground">Loading lessons…</p>}
+              {!isLoading && visible.length === 0 && (
+                <EmptyState compact icon={BookOpen} title="No lessons in this pillar" description="Pick another pillar or show all lessons." />
+              )}
+              <ul className="max-h-[560px] divide-y divide-border overflow-auto">
                 {visible.map((lesson, idx) => {
                   const done = !!progress[lesson.id];
                   const selected = active?.id === lesson.id;
                   return (
-                    <button
-                      key={lesson.id}
-                      type="button"
-                      onClick={() => setActiveId(lesson.id)}
-                      className={`w-full text-left rounded-lg px-3 py-2.5 transition border ${
-                        selected
-                          ? "border-[#D3126A]/50 bg-[#D3126A]/5"
-                          : "border-transparent hover:bg-muted/60"
-                      }`}
-                    >
-                      <div className="flex gap-3 items-start">
-                        <div className="mt-0.5 shrink-0">
+                    <li key={lesson.id}>
+                      <button
+                        type="button"
+                        onClick={() => setActiveId(lesson.id)}
+                        aria-current={selected ? "true" : undefined}
+                        className={cn(
+                          "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:outline-none",
+                          selected && "bg-accent/60",
+                        )}
+                      >
+                        <span className="mt-0.5 shrink-0">
                           {done ? (
-                            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                            <CheckCircle2 className="pt-ink pt-tone-ok h-4 w-4" aria-label="Completed" />
                           ) : (
-                            <Circle className="h-4 w-4 text-muted-foreground" />
+                            <Circle className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                           )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-mono text-muted-foreground">
-                              {String(idx + 1).padStart(2, "0")}
-                            </span>
-                            {lesson.badge && (
-                              <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                                {lesson.badge}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm font-medium leading-snug mt-0.5">{lesson.title}</p>
-                          <p className="text-sm text-muted-foreground mt-0.5">{lesson.minutes} min</p>
-                        </div>
-                      </div>
-                    </button>
+                        </span>
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-2">
+                            <span className="pt-num text-xs text-muted-foreground">{String(idx + 1).padStart(2, "0")}</span>
+                            {lesson.badge && <Token label={lesson.badge} tone="brand" className="px-1.5 py-0 text-[9px]" />}
+                          </span>
+                          <span className="mt-0.5 block text-sm font-medium leading-snug">{lesson.title}</span>
+                          <span className="pt-num mt-0.5 block text-xs text-muted-foreground">{lesson.minutes} min</span>
+                        </span>
+                      </button>
+                    </li>
                   );
                 })}
-              </CardContent>
-            </Card>
+              </ul>
+            </Panel>
 
             {data?.allPaths && data.allPaths.length > 0 && (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Target className="h-4 w-4" />
-                    All role paths
-                  </CardTitle>
-                  <CardDescription>DE admin view — what each client role sees</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
+              <Panel id="all-paths" title="All role paths" description="DE admin view — what each client role sees" flush>
+                <ul className="divide-y divide-border">
                   {data.allPaths.map((p) => (
-                    <div key={p.id} className="text-sm border-b border-border/50 pb-2 last:border-0 last:pb-0">
+                    <li key={p.id} className="px-4 py-3 text-sm">
                       <p className="font-medium">{p.title}</p>
                       <p className="text-xs text-muted-foreground">
                         {p.tagline} · {p.lessonCount} lessons
                       </p>
-                    </div>
+                    </li>
                   ))}
-                </CardContent>
-              </Card>
+                </ul>
+              </Panel>
             )}
           </div>
 
-          {/* Active lesson */}
-          <div className="lg:col-span-5 space-y-4">
+          <div className="space-y-4 lg:col-span-5">
             {active ? (
-              <Card className="overflow-hidden">
-                <div className="h-1.5 bg-gradient-to-r from-[#D3126A] via-sky-500 to-emerald-400" />
-                <CardHeader>
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="space-y-1">
-                      <CardTitle className="text-xl leading-snug">{active.title}</CardTitle>
-                      <CardDescription className="text-sm">{active.summary}</CardDescription>
-                    </div>
-                    <Badge variant="outline">{active.minutes} min</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  <div className="rounded-lg border border-amber-200/70 bg-amber-50/80 dark:bg-amber-950/20 dark:border-amber-900/40 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-200 flex items-center gap-1.5">
-                      <Shield className="h-3.5 w-3.5" />
-                      Why it matters
-                    </p>
-                    <p className="text-sm mt-1.5 text-amber-950/90 dark:text-amber-100/90 leading-relaxed">
-                      {active.whyItMatters}
-                    </p>
-                  </div>
+              <Panel
+                id="active-lesson"
+                title={active.title}
+                description={active.summary}
+                actions={<Token label={`${active.minutes} min`} />}
+              >
+                <div className="space-y-5">
+                  <Callout tone="warn" title="Why it matters">
+                    {active.whyItMatters}
+                  </Callout>
 
                   <div>
-                    <p className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-                      <Sparkles className="h-4 w-4 text-[#D3126A]" />
+                    <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
+                      <Sparkles className="pt-link h-4 w-4" aria-hidden="true" />
                       Walkthrough
                     </p>
                     <ol className="space-y-2.5">
                       {active.steps.map((step, i) => (
                         <li key={i} className="flex gap-3 text-sm">
-                          <span className="shrink-0 h-6 w-6 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-semibold flex items-center justify-center">
+                          <span className="pt-num grid h-6 w-6 shrink-0 place-items-center rounded-full border border-border bg-muted text-xs font-semibold">
                             {i + 1}
                           </span>
-                          <span className="text-muted-foreground leading-relaxed pt-0.5">{step}</span>
+                          <span className="pt-0.5 leading-relaxed text-muted-foreground">{step}</span>
                         </li>
                       ))}
                     </ol>
@@ -339,29 +269,31 @@ export default function PortalLearning() {
                   <div className="flex flex-wrap gap-2">
                     {active.actions.map((a) =>
                       a.external ? (
-                        <a key={a.label} href={a.href} target="_blank" rel="noopener noreferrer">
-                          <Button variant="outline" size="sm">
-                            <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                        <Button key={a.label} asChild variant="outline" size="sm" className="border-border bg-card hover:bg-accent">
+                          <a href={a.href} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink aria-hidden="true" />
                             {a.label}
-                          </Button>
-                        </a>
+                          </a>
+                        </Button>
                       ) : (
-                        <Link key={a.label} href={a.href}>
-                          <Button variant="outline" size="sm">
+                        <Button key={a.label} asChild variant="outline" size="sm" className="border-border bg-card hover:bg-accent">
+                          <Link href={a.href}>
                             {a.label}
-                            <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-                          </Button>
-                        </Link>
+                            <ArrowRight aria-hidden="true" />
+                          </Link>
+                        </Button>
                       ),
                     )}
                     <Button
                       size="sm"
-                      variant={progress[active.id] ? "secondary" : "default"}
+                      variant={progress[active.id] ? "outline" : "brand"}
+                      className={progress[active.id] ? "border-border bg-card hover:bg-accent" : undefined}
+                      aria-pressed={!!progress[active.id]}
                       onClick={() => toggleDone(active.id)}
                     >
                       {progress[active.id] ? (
                         <>
-                          <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                          <CheckCircle2 className="pt-ink pt-tone-ok" aria-hidden="true" />
                           Completed
                         </>
                       ) : (
@@ -369,102 +301,60 @@ export default function PortalLearning() {
                       )}
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </Panel>
             ) : (
-              <Card>
-                <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                  Select a lesson from your path.
-                </CardContent>
-              </Card>
+              <Panel id="active-lesson" flush>
+                <EmptyState icon={BookOpen} title="Select a lesson from your path." description={isLoading ? "Loading lessons…" : "Your lessons appear in the mission path on the left."} />
+              </Panel>
             )}
           </div>
 
-          {/* Hub resources */}
-          <div className="lg:col-span-3 space-y-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Library className="h-4 w-4" />
-                  TechSales library
-                </CardTitle>
-                <CardDescription>
-                  {data?.hub.source === "techsales"
-                    ? "Pulled from your company document bridge"
-                    : "Catalog references from the Hub curriculum map"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {(data?.hub.resources || []).length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    No educational docs linked yet. Company IT can open Contracts once TechSales sync is live.
-                  </p>
-                )}
+          <div className="space-y-4 lg:col-span-3">
+            <Panel
+              id="hub-library"
+              title="TechSales library"
+              description={
+                data?.hub.source === "techsales"
+                  ? "Pulled from your company document bridge"
+                  : "Catalog references from the Hub curriculum map"
+              }
+              flush
+            >
+              {(data?.hub.resources || []).length === 0 && (
+                <p className="px-4 py-3 text-sm text-muted-foreground">
+                  No educational docs linked yet. Company IT can open Contracts once TechSales sync is live.
+                </p>
+              )}
+              <ul className="divide-y divide-border">
                 {(data?.hub.resources || []).slice(0, 8).map((doc) => (
-                  <div key={doc.slug} className="border-b border-border/50 pb-2 last:border-0 last:pb-0">
+                  <li key={doc.slug} className="px-4 py-2.5">
                     <p className="text-sm font-medium leading-snug">{doc.title}</p>
                     {doc.category && (
-                      <p className="text-sm text-muted-foreground mt-0.5 capitalize">
+                      <p className="mt-0.5 text-xs capitalize text-muted-foreground">
                         {String(doc.category).replace(/_/g, " ")}
                       </p>
                     )}
-                  </div>
+                  </li>
                 ))}
-                <Link href="/portal/contracts">
-                  <Button variant="outline" size="sm" className="w-full mt-1">
-                    <BookOpen className="h-3.5 w-3.5 mr-1.5" />
+              </ul>
+              <div className="border-t border-border p-3">
+                <Button asChild variant="outline" size="sm" className="w-full border-border bg-card hover:bg-accent">
+                  <Link href="/portal/contracts">
+                    <BookOpen aria-hidden="true" />
                     Open contracts & docs
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+                  </Link>
+                </Button>
+              </div>
+            </Panel>
 
-            <Card className="bg-slate-50 dark:bg-slate-900/40">
-              <CardContent className="pt-5 space-y-2">
-                <p className="text-sm font-semibold">Role tip</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {roleTip(data?.audience)}
-                </p>
-              </CardContent>
-            </Card>
+            <Callout tone="info" title="Role tip">
+              {roleTip(data?.audience)}
+            </Callout>
           </div>
         </div>
       </div>
     </PortalLayout>
-  );
-}
-
-function ProgressRing({ pct }: { pct: number }) {
-  const r = 28;
-  const c = 2 * Math.PI * r;
-  const offset = c - (pct / 100) * c;
-  return (
-    <div className="relative h-16 w-16 shrink-0">
-      <svg className="h-16 w-16 -rotate-90" viewBox="0 0 72 72">
-        <circle cx="36" cy="36" r={r} stroke="rgba(255,255,255,0.15)" strokeWidth="6" fill="none" />
-        <circle
-          cx="36"
-          cy="36"
-          r={r}
-          stroke="url(#learnGrad)"
-          strokeWidth="6"
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={offset}
-          className="transition-all duration-700"
-        />
-        <defs>
-          <linearGradient id="learnGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#818cf8" />
-            <stop offset="100%" stopColor="#34d399" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold tabular-nums">
-        {pct}%
-      </span>
-    </div>
   );
 }
 

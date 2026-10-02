@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { PortalLayout } from "./PortalLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
-  Map, Calendar, DollarSign, TrendingUp, CheckCircle2, Clock, AlertTriangle,
-  ArrowRight, Target, Shield, Server, Wifi, MonitorSmartphone, ChevronDown, ChevronUp,
-  FileText, BarChart3, Layers
+  Calendar, TrendingUp, ArrowRight, Shield, Server, MonitorSmartphone, ChevronDown, ChevronUp, FileText, Map,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Callout, EmptyState, Panel, Priority, StatTile, Token, type TokenTone } from "@/components/portal/ui";
 
 interface RoadmapItem {
   id: string;
@@ -24,24 +22,17 @@ interface RoadmapItem {
 }
 
 const categoryConfig = {
-  security: { label: "Security", icon: Shield, color: "text-red-700 dark:text-red-400", bg: "bg-red-100 dark:bg-red-500/20" },
-  infrastructure: { label: "Infrastructure", icon: Server, color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-100 dark:bg-blue-500/20" },
-  productivity: { label: "Productivity", icon: MonitorSmartphone, color: "text-green-700 dark:text-green-400", bg: "bg-green-100 dark:bg-green-500/20" },
-  compliance: { label: "Compliance", icon: FileText, color: "text-amber-800 dark:text-amber-400", bg: "bg-amber-100 dark:bg-amber-500/20" },
+  security: { label: "Security", icon: Shield },
+  infrastructure: { label: "Infrastructure", icon: Server },
+  productivity: { label: "Productivity", icon: MonitorSmartphone },
+  compliance: { label: "Compliance", icon: FileText },
 };
 
-const priorityConfig = {
-  critical: { label: "Critical", color: "bg-red-700 text-white" },
-  high: { label: "High", color: "bg-orange-100 text-orange-900 border border-orange-700/30" },
-  medium: { label: "Medium", color: "bg-yellow-500 text-black" },
-  low: { label: "Low", color: "bg-blue-700 text-white" },
-};
-
-const statusConfig = {
-  completed: { label: "Completed", color: "bg-emerald-50 text-emerald-800 border-emerald-700/30 dark:bg-emerald-500/20 dark:text-emerald-300" },
-  "in-progress": { label: "In Progress", color: "bg-blue-50 text-blue-800 border-blue-700/30 dark:bg-blue-500/20 dark:text-blue-300" },
-  planned: { label: "Planned", color: "bg-purple-50 text-purple-800 border-purple-700/30 dark:bg-purple-500/20 dark:text-purple-300" },
-  proposed: { label: "Proposed", color: "bg-gray-100 text-gray-700 border-gray-400/50 dark:bg-gray-500/20 dark:text-gray-300" },
+const statusConfig: Record<RoadmapItem["status"], { label: string; tone: TokenTone }> = {
+  completed: { label: "Completed", tone: "ok" },
+  "in-progress": { label: "In progress", tone: "info" },
+  planned: { label: "Planned", tone: "neutral" },
+  proposed: { label: "Proposed", tone: "neutral" },
 };
 
 const sampleRoadmapItems: RoadmapItem[] = [
@@ -152,6 +143,9 @@ const budgetSummary = {
   plannedPercent: 43,
 };
 
+const selectClass =
+  "h-9 rounded-md border border-border bg-card px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
 export default function PortalRoadmap() {
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -168,132 +162,72 @@ export default function PortalRoadmap() {
   const plannedCount = sampleRoadmapItems.filter((i) => i.status === "planned").length;
 
   return (
-    <PortalLayout title="Strategic IT Roadmap">
-      <div className="space-y-6">
-        <div
-          className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200"
-          data-testid="roadmap-sample-banner"
+    <PortalLayout
+      title="Strategic IT Roadmap"
+      description="Your 3-year technology investment plan, aligned with business goals and security requirements."
+      actions={
+        <Button
+          variant="outline"
+          className="border-border bg-card hover:bg-accent"
+          data-testid="button-schedule-vcio"
+          onClick={() => window.location.href = "/book"}
         >
-          <strong>Sample preview.</strong> This roadmap is illustrative until your account team publishes your live vCIO plan.
-        </div>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <p className="text-gray-500 dark:text-gray-400">
-              Your 3-year technology investment plan, aligned with business goals and security requirements.
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            className="flex items-center gap-2"
-            data-testid="button-schedule-vcio"
-            onClick={() => window.location.href = "/book"}
-          >
-            <Calendar className="h-4 w-4" />
-            Schedule vCIO Review
-          </Button>
-        </div>
+          <Calendar aria-hidden="true" />
+          Schedule vCIO Review
+        </Button>
+      }
+    >
+      <div className="space-y-4">
+        <Callout tone="warn" title="Sample preview." testId="roadmap-sample-banner">
+          This roadmap is illustrative until your account team publishes your live vCIO plan.
+        </Callout>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Completed</p>
-                  <p className="text-2xl font-bold" data-testid="stat-roadmap-completed">{completedCount}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">In Progress</p>
-                  <p className="text-2xl font-bold" data-testid="stat-roadmap-progress">{inProgressCount}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                  <Target className="h-5 w-5 text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Planned</p>
-                  <p className="text-2xl font-bold" data-testid="stat-roadmap-planned">{plannedCount}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                  <DollarSign className="h-5 w-5 text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Annual Budget</p>
-                  <p className="text-2xl font-bold" data-testid="stat-roadmap-budget">{budgetSummary.totalBudget}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Roadmap figures">
+          <StatTile label="Completed" value={completedCount} hint="initiatives delivered" tone="ok" testId="stat-roadmap-completed" />
+          <StatTile label="In progress" value={inProgressCount} hint="underway now" tone="info" testId="stat-roadmap-progress" />
+          <StatTile label="Planned" value={plannedCount} hint="scheduled next" testId="stat-roadmap-planned" />
+          <StatTile label="Annual budget" value={budgetSummary.totalBudget} hint="sample figure" testId="stat-roadmap-budget" />
+        </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Budget Allocation
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Spent: <span data-testid="text-budget-spent">{budgetSummary.spent}</span></span>
-                <span className="text-gray-500 dark:text-gray-400">Planned: <span data-testid="text-budget-planned">{budgetSummary.planned}</span></span>
-                <span className="text-gray-500 dark:text-gray-400">Remaining: <span data-testid="text-budget-remaining">{budgetSummary.remaining}</span></span>
+        <Panel id="budget-allocation" title="Budget allocation" description="Sample allocation across the current plan year">
+          <div className="space-y-3">
+            <dl className="grid grid-cols-3 gap-3 text-sm">
+              <div>
+                <dt className="text-xs text-muted-foreground">Spent</dt>
+                <dd className="pt-num font-medium" data-testid="text-budget-spent">{budgetSummary.spent}</dd>
               </div>
-              <div className="relative h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div
-                  className="absolute left-0 top-0 h-full bg-emerald-500 rounded-l-full"
-                  style={{ width: `${budgetSummary.spentPercent}%` }}
-                />
-                <div
-                  className="absolute top-0 h-full bg-blue-500"
-                  style={{ left: `${budgetSummary.spentPercent}%`, width: `${budgetSummary.plannedPercent}%` }}
-                />
+              <div>
+                <dt className="text-xs text-muted-foreground">Planned</dt>
+                <dd className="pt-num font-medium" data-testid="text-budget-planned">{budgetSummary.planned}</dd>
               </div>
-              <div className="flex items-center gap-6 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-emerald-500" />
-                  <span className="text-gray-500 dark:text-gray-400">Spent</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-blue-500" />
-                  <span className="text-gray-500 dark:text-gray-400">Planned</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-gray-200 dark:bg-gray-700" />
-                  <span className="text-gray-500 dark:text-gray-400">Available</span>
-                </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Remaining</dt>
+                <dd className="pt-num font-medium" data-testid="text-budget-remaining">{budgetSummary.remaining}</dd>
               </div>
+            </dl>
+            <div
+              className="relative h-3 overflow-hidden rounded-full bg-secondary"
+              role="img"
+              aria-label={`Budget: ${budgetSummary.spentPercent}% spent, ${budgetSummary.plannedPercent}% planned, remainder available`}
+            >
+              <div className="absolute left-0 top-0 h-full bg-primary" style={{ width: `${budgetSummary.spentPercent}%` }} />
+              <div
+                className="absolute top-0 h-full bg-muted-foreground/50"
+                style={{ left: `${budgetSummary.spentPercent}%`, width: `${budgetSummary.plannedPercent}%` }}
+              />
             </div>
-          </CardContent>
-        </Card>
+            <ul className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-muted-foreground" aria-hidden="true">
+              <li className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-primary" />Spent</li>
+              <li className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm bg-muted-foreground/50" />Planned</li>
+              <li className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-sm border border-border bg-secondary" />Available</li>
+            </ul>
+          </div>
+        </Panel>
 
         <div className="flex flex-wrap gap-3">
           <select
             aria-label="Filter roadmap by category"
-            className="px-3 py-2 rounded-lg border bg-white dark:bg-slate-800 dark:border-slate-700 text-sm"
+            className={selectClass}
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
             data-testid="select-roadmap-category"
@@ -306,7 +240,7 @@ export default function PortalRoadmap() {
           </select>
           <select
             aria-label="Filter roadmap by status"
-            className="px-3 py-2 rounded-lg border bg-white dark:bg-slate-800 dark:border-slate-700 text-sm"
+            className={selectClass}
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             data-testid="select-roadmap-status"
@@ -319,97 +253,113 @@ export default function PortalRoadmap() {
           </select>
         </div>
 
-        <div className="space-y-4">
-          {filteredItems.map((item) => {
-            const cat = categoryConfig[item.category];
-            const pri = priorityConfig[item.priority];
-            const stat = statusConfig[item.status];
-            const CatIcon = cat.icon;
-            const isExpanded = expandedItem === item.id;
+        <Panel
+          id="roadmap-items"
+          title="Initiatives"
+          description={`${filteredItems.length} of ${sampleRoadmapItems.length} shown`}
+          flush
+        >
+          {filteredItems.length === 0 ? (
+            <EmptyState
+              icon={Map}
+              title="No initiatives match"
+              description="Try another category or status."
+              action={
+                <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" onClick={() => { setFilterCategory("all"); setFilterStatus("all"); }}>
+                  Clear filters
+                </Button>
+              }
+            />
+          ) : (
+            <ul className="divide-y divide-border">
+              {filteredItems.map((item) => {
+                const cat = categoryConfig[item.category];
+                const stat = statusConfig[item.status];
+                const CatIcon = cat.icon;
+                const isExpanded = expandedItem === item.id;
 
-            return (
-              <Card
-                key={item.id}
-                role="button"
-                tabIndex={0}
-                aria-expanded={isExpanded}
-                className="cursor-pointer hover:border-[#D3126A]/50 transition-colors"
-                onClick={() => setExpandedItem(isExpanded ? null : item.id)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpandedItem(isExpanded ? null : item.id); } }}
-                data-testid={`roadmap-item-${item.id}`}
-              >
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-4">
-                    <div className={`w-10 h-10 rounded-lg ${cat.bg} flex items-center justify-center flex-shrink-0`}>
-                      <CatIcon className={`h-5 w-5 ${cat.color}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="font-semibold text-lg" data-testid={`text-roadmap-title-${item.id}`}>{item.title}</h3>
-                          <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            <Badge className={`${stat.color} border text-xs`}>{stat.label}</Badge>
-                            <Badge className={`${pri.color} text-xs`}>{pri.label}</Badge>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">{item.quarter}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-sm font-medium text-gray-600 dark:text-gray-300" data-testid={`text-roadmap-cost-${item.id}`}>{item.estimatedCost}</span>
-                          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                        </div>
+                return (
+                  <li
+                    key={item.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isExpanded}
+                    className={cn(
+                      "cursor-pointer px-4 py-4 transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:outline-none md:px-5",
+                      isExpanded && "bg-accent/40",
+                    )}
+                    onClick={() => setExpandedItem(isExpanded ? null : item.id)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpandedItem(isExpanded ? null : item.id); } }}
+                    data-testid={`roadmap-item-${item.id}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border bg-muted text-muted-foreground" title={cat.label}>
+                        <CatIcon className="h-4 w-4" aria-hidden="true" />
+                        <span className="sr-only">{cat.label}</span>
                       </div>
-
-                      {item.status === "in-progress" && (
-                        <div className="mt-3">
-                          <div className="flex items-center justify-between text-xs mb-1">
-                            <span className="text-gray-500 dark:text-gray-400">Progress</span>
-                            <span className="text-gray-500 dark:text-gray-400">{item.completionPercent}%</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <h3 className="font-heading text-[15px] font-semibold leading-snug" data-testid={`text-roadmap-title-${item.id}`}>{item.title}</h3>
+                            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                              <Token label={stat.label} tone={stat.tone} dot />
+                              <Priority priority={item.priority} />
+                              <span className="pt-num text-xs text-muted-foreground">{item.quarter}</span>
+                            </div>
                           </div>
-                          <Progress value={item.completionPercent} className="h-2" aria-label={`${item.title} progress`} />
-                        </div>
-                      )}
-
-                      {isExpanded && (
-                        <div className="mt-4 pt-4 border-t dark:border-slate-700 space-y-3">
-                          <p className="text-gray-600 dark:text-gray-300 text-sm">{item.description}</p>
-                          <div className="flex items-center gap-2 text-sm">
-                            <TrendingUp className="h-4 w-4 text-emerald-400" />
-                            <span className="text-gray-500 dark:text-gray-400">Business Impact:</span>
-                            <span className="text-emerald-400 font-medium" data-testid={`text-roadmap-impact-${item.id}`}>{item.impact}</span>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <span className="pt-num text-sm font-medium" data-testid={`text-roadmap-cost-${item.id}`}>{item.estimatedCost}</span>
+                            {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" aria-hidden="true" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />}
                           </div>
                         </div>
-                      )}
+
+                        {item.status === "in-progress" && (
+                          <div className="mt-3">
+                            <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+                              <span>Progress</span>
+                              <span className="pt-num">{item.completionPercent}%</span>
+                            </div>
+                            <Progress value={item.completionPercent} className="h-2" aria-label={`${item.title} progress`} />
+                          </div>
+                        )}
+
+                        {isExpanded && (
+                          <div className="mt-4 space-y-3 border-t border-border pt-4">
+                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                            <div className="flex flex-wrap items-center gap-2 text-sm">
+                              <TrendingUp className="pt-ink pt-tone-ok h-4 w-4" aria-hidden="true" />
+                              <span className="text-muted-foreground">Business impact:</span>
+                              <span className="pt-ink pt-tone-ok font-medium" data-testid={`text-roadmap-impact-${item.id}`}>{item.impact}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Panel>
 
-        <Card className="bg-gradient-to-r from-[#D3126A]/10 to-transparent border-[#D3126A]/30">
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="w-16 h-16 rounded-2xl bg-[#D3126A]/20 flex items-center justify-center flex-shrink-0">
-                <Map className="h-8 w-8 text-[#D3126A]" />
-              </div>
-              <div className="flex-1 text-center md:text-left">
-                <h3 className="text-xl font-bold mb-1">Need to adjust your roadmap?</h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  Schedule a vCIO strategy session to review priorities, update your budget, or plan new initiatives.
-                </p>
-              </div>
-              <Button
-                className="bg-[#D3126A] hover:bg-[#D3126A]/90"
-                onClick={() => window.location.href = "/book"}
-                data-testid="button-schedule-strategy"
-              >
-                Book Strategy Session
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <Panel
+          id="roadmap-adjust"
+          title="Need to adjust your roadmap?"
+          actions={
+            <Button
+              variant="brand"
+              onClick={() => window.location.href = "/book"}
+              data-testid="button-schedule-strategy"
+            >
+              Book Strategy Session
+              <ArrowRight aria-hidden="true" />
+            </Button>
+          }
+        >
+          <p className="text-sm text-muted-foreground">
+            Schedule a vCIO strategy session to review priorities, update your budget, or plan new initiatives.
+          </p>
+        </Panel>
       </div>
     </PortalLayout>
   );
