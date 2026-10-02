@@ -164,6 +164,7 @@ const HomepageV3 = lazy(() => import("@/pages/versions/v3/DigeratiHomepage").the
 const HomepageV4 = lazy(() => import("@/pages/versions/v4/HomepageV4"));
 const HomepageV5 = lazy(() => import("@/pages/versions/v5/HomepageV5"));
 const HomepageV6 = lazy(() => import("@/pages/versions/v6/HomepageV6"));
+const HomepageV7 = lazy(() => import("@/pages/versions/v7/HomepageV7"));
 
 const WarehouseGate = lazy(() => import("@/pages/store/WarehouseGate"));
 const PublicStoreCheckout = lazy(() => import("@/pages/store/PublicStoreCheckout"));
@@ -234,6 +235,13 @@ function Router() {
         <Suspense fallback={<PageLoadingSkeleton />}>
           <VersionFrame n={6}>
             <HomepageV6 />
+          </VersionFrame>
+        </Suspense>
+      )} />
+      <Route path="/version-7" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <VersionFrame n={7}>
+            <HomepageV7 />
           </VersionFrame>
         </Suspense>
       )} />
@@ -993,6 +1001,8 @@ function AppContent() {
   useStoreChromeGestures(location);
   const isPortal = location.startsWith("/portal");
   const isHome = location === "/";
+  // /version-7 mounts its own bottom bar (inside its scroll provider, with autohide on).
+  const ownsBottomBar = isHome || location === "/version-7";
   const hideDoor2HelpDock = isDoor2Path(location) && location.split("?")[0] !== "/store";
   const hideWarehouseChrome = isWarehousePath(location);
   const accent = isPortal ? undefined : accentFor(location);
@@ -1016,7 +1026,7 @@ function AppContent() {
         <Router />
       </div>
       <MarketingChrome />
-      {!isHome && !hideDoor2HelpDock && !hideWarehouseChrome && <SiteBottomBar />}
+      {!ownsBottomBar && !hideDoor2HelpDock && !hideWarehouseChrome && <SiteBottomBar />}
       <StickyCTABar />
       <ExitIntentPopup delay={5000} />
       <CookieConsentBanner />

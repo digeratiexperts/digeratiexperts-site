@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DE bottom bar — autohide prototype</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../system/tokens.css">
+<script>document.fonts.load('600 16px Oxanium');</script>
+<style>
+  /* The page: the sixteen section renders stacked, so the bar can be tried on the real length. */
+  body { background: var(--de-bg); }
+  .page section { display: block; scroll-margin-top: 0; }
+  .page img { display: block; width: 100%; height: auto; }
+  .demo-field { max-width: 560px; margin: 0 auto; padding: 48px 16px; display: none; }
+
+  /* ---------- The bar (live SiteBottomBar look: charcoal glass capsule, magenta active pill) ---------- */
+  :root { --dock-h: 52px; --dock-inset: 12px; --de-unified-bar-h: 0px; }
+  .dock { position: fixed; left: var(--dock-inset); right: var(--dock-inset); bottom: calc(var(--dock-inset) + env(safe-area-inset-bottom, 0px)); z-index: 50; display: flex; justify-content: flex-end; pointer-events: none; }
+  .dock__capsule { pointer-events: auto; position: relative; display: flex; align-items: center; gap: 8px; height: var(--dock-h); padding: 6px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 18px 48px -18px rgba(0,0,0,0.8); width: auto; max-width: 100%;
+    transition: transform 240ms cubic-bezier(.2,.8,.2,1), opacity 240ms cubic-bezier(.2,.8,.2,1); }
+  .dock__glass { position: absolute; inset: 0; border-radius: inherit; background: rgba(10,10,10,0.95); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); z-index: 0; }
+  .dock__capsule > *:not(.dock__glass) { position: relative; z-index: 1; }
+
+  .dock__menu { display: none; align-items: center; gap: 4px; min-width: 0; flex: 1; }
+  .dock.is-expanded .dock__capsule { width: 100%; }
+  .dock.is-expanded .dock__menu { display: flex; }
+  .dock__lead { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px 0 10px; border-right: 1px solid rgba(255,255,255,0.2); font-family: var(--font-body); font-weight: 600; color: #fff; white-space: nowrap; }
+  .dock__lead svg { color: var(--de-magenta-ink); }
+  .dock__chapters { display: flex; flex: 1; justify-content: space-around; min-width: 0; }
+  .dock__chapter { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px; border-radius: 999px; font-weight: 600; color: rgba(255,255,255,0.82); white-space: nowrap; transition: background-color 200ms ease-out, color 200ms ease-out; overflow: hidden; }
+  .dock__chapter:hover { color: #fff; background: rgba(255,255,255,0.08); }
+  .dock__chapter.is-active { background: var(--de-magenta); color: #fff; }
+  .dock__chapter.is-active::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.85); }
+  /* New: read progress through the active chapter, a 2px hairline inside the pill. */
+  .dock__chapter .dock__progress { position: absolute; left: 12px; right: 12px; bottom: 5px; height: 2px; border-radius: 2px; background: rgba(255,255,255,0.28); transform-origin: left; transform: scaleX(0); opacity: 0; }
+  .dock__chapter.is-active .dock__progress { opacity: 1; }
+  .dock__chapter.is-active .dock__progress i { position: absolute; inset: 0; background: #fff; border-radius: inherit; transform-origin: left; transform: scaleX(var(--p, 0)); transition: transform 120ms linear; }
+  .dock__chapter.is-active .dock__progress { transform: scaleX(1); }
+  .dock__sep { width: 1px; height: 24px; background: rgba(255,255,255,0.2); margin: 0 4px; flex-shrink: 0; }
+  .dock__phone { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px; border-radius: 999px; color: rgba(255,255,255,0.9); white-space: nowrap; }
+  .dock__phone svg { color: var(--de-magenta-ink); }
+  .dock__phone:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .dock__cta { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; border-radius: 999px; background: var(--de-magenta); color: #fff; font-weight: 600; white-space: nowrap; }
+  .dock__cta:hover { background: var(--de-magenta-hover); }
+  .dock__top { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 999px; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); border: 0; cursor: pointer; flex-shrink: 0; transition: opacity 200ms ease-out, width 240ms cubic-bezier(.2,.8,.2,1); }
+  .dock__top:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .dock:not(.is-far) .dock__top { width: 0; opacity: 0; pointer-events: none; overflow: hidden; }
+  .dock__ask { display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px 0 4px; border-radius: 999px; background: transparent; border: 0; color: #fff; cursor: pointer; flex-shrink: 0; }
+  .dock__ask:hover { background: rgba(255,255,255,0.06); }
+  .dock__ask-mark { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 999px; background: #fff; color: #111116; }
+  .dock__ask-mark svg { width: 18px; height: 18px; }
+  .dock__ask-text { text-align: left; line-height: 1.1; }
+  .dock__ask-text b { display: block; font-family: var(--font-heading); font-size: 16px; }
+  .dock__ask-text span { font-size: 13px; color: rgba(255,255,255,0.78); }
+  .dock a:focus-visible, .dock button:focus-visible { outline: 2px solid #ec4899; outline-offset: 2px; }
+
+  /* Live C-37, kept: the Ask DE ring breathes exactly three times, then stops (none under reduced motion). */
+  .dock__ask-mark { position: relative; }
+  .dock__ask-mark::before { content: ""; position: absolute; inset: -6px; border-radius: 999px; border: 1px solid rgba(240,76,151,0.55); opacity: 0; animation: de-ask-breathe 2.8s ease-out 3; pointer-events: none; }
+  @keyframes de-ask-breathe { 0% { transform: scale(0.86); opacity: 0.9; } 100% { transform: scale(1.18); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .dock__ask-mark::before { animation: none; } }
+  /* ---------- Autohide: "tucked" ---------- */
+  /* Tucked = the chapter dock, phone, CTA and back-to-top leave; Ask DE stays reachable as one
+     40px round button at the same corner. Nothing that is needed disappears. */
+  .dock.is-tucked .dock__menu, .dock.is-tucked .dock__top { display: none; }
+  .dock.is-tucked .dock__capsule { width: auto; }
+  .dock.is-tucked .dock__ask { padding: 0; }
+  .dock.is-tucked .dock__ask-text { display: none; }
+  .dock.is-tucked .dock__capsule { transform: translateY(0); opacity: 0.92; }
+  .dock.is-entering .dock__capsule { animation: dock-in 240ms cubic-bezier(.2,.8,.2,1); }
+  @keyframes dock-in { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+  /* Phone typing: the whole bar steps aside while a text field has focus (on-screen keyboard). */
+  .dock.is-typing .dock__capsule { transform: translateY(calc(100% + 24px)); opacity: 0; pointer-events: none; }
+
+  @media (max-width: 1023px) {
+    /* Live: no chapter menu below 1024px; phone shows Ask DE + back-to-top only. */
+    .dock.is-expanded .dock__menu { display: none; }
+    .dock.is-expanded .dock__capsule { width: auto; }
+    .demo-field { display: block; }
+  }
+  @media (max-width: 639px) { .dock__ask-text span { display: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .dock__capsule { transition: opacity 120ms linear; }
+    .dock.is-entering .dock__capsule { animation: none; }
+    .dock.is-typing .dock__capsule { transform: none; }
+  }
+
+  /* Demo HUD (prototype only). */
+  .hud { position: fixed; top: 12px; right: 12px; z-index: 60; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; background: rgba(0,0,0,0.7); border: 1px solid var(--de-hairline); border-radius: 8px; padding: 6px 10px; }
+  .hud[hidden] { display: none; }
+</style>
+</head>
+<body>
+<main class="page">
+  <section id="hero"><picture><source media="(max-width: 639px)" srcset="../renders/01-hero-390.png"><img src="../renders/01-hero-1440.png" alt="Hero"></picture><picture><source media="(max-width: 639px)" srcset="../renders/02-why-we-exist-390.png"><img src="../renders/02-why-we-exist-1440.png" alt="Why we exist"></picture></section>
+  <section id="stats"><picture><source media="(max-width: 639px)" srcset="../renders/03-threats-are-real-390.png"><img src="../renders/03-threats-are-real-1440.png" alt="03-threats-are-real"></picture></section>
+  <section id="challenges"><picture><source media="(max-width: 639px)" srcset="../renders/04-what-we-tackle-390.png"><img src="../renders/04-what-we-tackle-1440.png" alt="04-what-we-tackle"></picture></section>
+  <section id="services"><picture><source media="(max-width: 639px)" srcset="../renders/05-services-390.png"><img src="../renders/05-services-1440.png" alt="05-services"></picture></section>
+  <section id="protection"><picture><source media="(max-width: 639px)" srcset="../renders/06-eight-blocks-390.png"><img src="../renders/06-eight-blocks-1440.png" alt="06-eight-blocks"></picture></section>
+  <section id="testimonials"><picture><source media="(max-width: 639px)" srcset="../renders/07-client-proof-390.png"><img src="../renders/07-client-proof-1440.png" alt="07-client-proof"></picture></section>
+  <section id="trust"><picture><source media="(max-width: 639px)" srcset="../renders/08-why-arizona-390.png"><img src="../renders/08-why-arizona-1440.png" alt="08-why-arizona"></picture></section>
+  <section id="team"><picture><source media="(max-width: 639px)" srcset="../renders/09-team-390.png"><img src="../renders/09-team-1440.png" alt="09-team"></picture></section>
+  <section id="industries"><picture><source media="(max-width: 639px)" srcset="../renders/10-industries-390.png"><img src="../renders/10-industries-1440.png" alt="10-industries"></picture></section>
+  <section id="pricing"><picture><source media="(max-width: 639px)" srcset="../renders/11-pricing-390.png"><img src="../renders/11-pricing-1440.png" alt="11-pricing"></picture></section>
+  <section id="insights"><picture><source media="(max-width: 639px)" srcset="../renders/12-threats-insights-390.png"><img src="../renders/12-threats-insights-1440.png" alt="12-threats-insights"></picture></section>
+  <section id="assessment-form"><picture><source media="(max-width: 639px)" srcset="../renders/13-lead-form-390.png"><img src="../renders/13-lead-form-1440.png" alt="13-lead-form"></picture></section>
+  <section id="faq"><picture><source media="(max-width: 639px)" srcset="../renders/14-faq-390.png"><img src="../renders/14-faq-1440.png" alt="14-faq"></picture></section>
+  <section id="cta"><picture><source media="(max-width: 639px)" srcset="../renders/15-next-step-390.png"><img src="../renders/15-next-step-1440.png" alt="15-next-step"></picture></section>
+  <div class="demo-field"><label class="de-label" for="demo-email" style="color:#fff">Work email (phone demo: focus to see the bar step aside)</label><input class="de-input" id="demo-email" type="email" placeholder="name@company.com"></div>
+  <section id="contact"><picture><source media="(max-width: 639px)" srcset="../renders/16-contact-footer-390.png"><img src="../renders/16-contact-footer-1440.png" alt="Contact and footer"></picture><footer style="height:1px"></footer></section>
+</main>
+
+<div class="dock" id="dock" data-testid="site-bottom-bar">
+  <div class="dock__capsule">
+    <span class="dock__glass" aria-hidden="true"></span>
+    <nav class="dock__menu" aria-label="On this page">
+      <span class="dock__lead"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg> Protected?</span>
+      <div class="dock__chapters">
+        <a class="dock__chapter" href="#hero" data-ch="hero">Home<span class="dock__progress"><i></i></span></a>
+        <a class="dock__chapter" href="#stats" data-ch="stats">Why DE<span class="dock__progress"><i></i></span></a>
+        <a class="dock__chapter" href="#services" data-ch="services">How It Works<span class="dock__progress"><i></i></span></a>
+        <a class="dock__chapter" href="#industries" data-ch="industries">Industries<span class="dock__progress"><i></i></span></a>
+        <a class="dock__chapter" href="#pricing" data-ch="pricing">Packages<span class="dock__progress"><i></i></span></a>
+        <a class="dock__chapter" href="#contact" data-ch="contact">Contact<span class="dock__progress"><i></i></span></a>
+      </div>
+      <span class="dock__sep" aria-hidden="true"></span>
+      <a class="dock__phone" href="tel:+13254809870"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> 325-480-9870</a>
+      <a class="dock__cta" href="/book">Risk Assessment <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+    </nav>
+    <button class="dock__top" type="button" aria-label="Back to top" data-testid="button-scroll-to-top"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg></button>
+    <button class="dock__ask" type="button" aria-label="Ask DE. We're here to help." data-testid="button-open-asap-widget">
+      <span class="dock__ask-mark"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M13 8H7"/><path d="M17 12H7"/></svg></span>
+      <span class="dock__ask-text"><b>Ask DE</b><span>We're here to help.</span></span>
+    </button>
+  </div>
+</div>
+<div class="hud" id="hud" hidden></div>
+<script>
+/*
+ * Bottom bar autohide — "gets out of the way while you read, never while you need it".
+ *
+ * Expanded at rest after the hero (live: scrollY > 72, desktop, before the footer).
+ * TUCK when the reader is clearly reading down:
+ *   - accumulated downward scroll since the last direction change >= 160px (hysteresis: no jitter),
+ *   - and scrollY > one viewport (never in the opening screen),
+ *   - and nothing is holding it (below).
+ * SHOW again when the reader signals they might want it:
+ *   - accumulated upward scroll >= 32px (one deliberate flick up, not trackpad wobble),
+ *   - the pointer rests in the bottom 96px for 120ms (fine pointers only: "reach for it"),
+ *   - keyboard focus enters the bar (Tab),
+ *   - the reader reaches the contact chapter / end of page.
+ * HOLD (never tuck):
+ *   - pointer over the bar, focus inside it, the Ask DE chooser open,
+ *   - for 900ms after a chapter or back-to-top click (the jump scroll it causes is not "reading"),
+ *   - the first 1.2s after load.
+ * Tucked never means gone: Ask DE stays as a 40px round button in the same corner.
+ * Phone: no chapter menu (live); back-to-top tucks with the same rules; while a text field has
+ * focus the whole bar steps below the keyboard and returns on blur.
+ * Motion: transform + opacity, 240ms; reduced motion = 120ms opacity only. Scroll is passive and
+ * rAF-throttled. --de-unified-bar-h is republished on every state change so other floating
+ * chrome (the Ask DE nudge, the cookie banner, the Store cart) keeps clearing it.
+ */
+(() => {
+  const dock = document.getElementById('dock');
+  const hud = document.getElementById('hud');
+  const desktop = matchMedia('(min-width: 1024px)');
+  const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
+  const chapters = [...dock.querySelectorAll('.dock__chapter')];
+  const ids = chapters.map(a => a.dataset.ch);
+  const T = { tuck: 160, show: 32, reach: 96, reachDelay: 120, jumpHold: 900, bootHold: 1200 };
+  let lastY = scrollY, acc = 0, dir = 0, tucked = false, holdUntil = performance.now() + T.bootHold;
+  let pointerIn = false, focusIn = false, chooserOpen = false, reachTimer = 0;
+  if (new URLSearchParams(location.search).has('hud')) hud.hidden = false;
+
+  const setVar = () => {
+    const h = dock.querySelector('.dock__capsule').getBoundingClientRect().height;
+    document.documentElement.style.setProperty('--de-unified-bar-h', dock.classList.contains('is-typing') ? '0px' : h + 'px');
+  };
+  const held = () => pointerIn || focusIn || chooserOpen || performance.now() < holdUntil;
+  const nearEnd = () => scrollY + innerHeight >= document.documentElement.scrollHeight - innerHeight * 0.6;
+  const setTucked = (v) => {
+    if (v === tucked) return;
+    tucked = v;
+    dock.classList.toggle('is-tucked', v);
+    if (!v) { dock.classList.remove('is-entering'); void dock.offsetWidth; dock.classList.add('is-entering'); }
+    setVar();
+  };
+
+  const spy = () => {
+    const mid = scrollY + innerHeight * 0.35;
+    let active = ids[0];
+    const order = [...document.querySelectorAll('.page > section')];
+    for (const s of order) if (s.offsetTop <= mid && ids.includes(s.id)) active = s.id;
+    // progress through the active chapter = from its top to the next dock chapter's top
+    const a = document.getElementById(active);
+    const nextId = ids[ids.indexOf(active) + 1];
+    const end = nextId ? document.getElementById(nextId).offsetTop : document.documentElement.scrollHeight - innerHeight;
+    const p = Math.max(0, Math.min(1, (scrollY + innerHeight * 0.35 - a.offsetTop) / Math.max(1, end - a.offsetTop)));
+    chapters.forEach(c => { const on = c.dataset.ch === active; c.classList.toggle('is-active', on); if (on) c.style.setProperty('--p', p.toFixed(3)); c.toggleAttribute('aria-current', on); });
+  };
+
+  const onFrame = () => {
+    const y = scrollY, dy = y - lastY; lastY = y;
+    dock.classList.toggle('is-expanded', y > 72 && !nearFooter());
+    dock.classList.toggle('is-far', y > 500);
+    if (dy !== 0) {
+      const d = Math.sign(dy);
+      if (d !== dir) { dir = d; acc = 0; }
+      acc += Math.abs(dy);
+      // Distance only counts once the reader is past the opening screen.
+      if (y < innerHeight) acc = 0;
+      if (nearEnd() || y < innerHeight) setTucked(false);
+      else if (dir > 0 && acc >= T.tuck && !held()) setTucked(true);
+      else if (dir < 0 && acc >= T.show) setTucked(false);
+    }
+    spy();
+    hud.textContent = (tucked ? 'tucked' : (dock.classList.contains('is-expanded') ? 'expanded' : 'compact')) + (held() ? ' · held' : '');
+  };
+  const nearFooter = () => false; // live collapses near the footer; the prototype keeps the bar to show the end-of-page reveal
+  let ticking = false;
+  addEventListener('scroll', () => { if (ticking) return; ticking = true; requestAnimationFrame(() => { onFrame(); ticking = false; }); }, { passive: true });
+
+  const cap = dock.querySelector('.dock__capsule');
+  cap.addEventListener('pointerenter', () => { pointerIn = true; setTucked(false); });
+  cap.addEventListener('pointerleave', () => { pointerIn = false; });
+  dock.addEventListener('focusin', () => { focusIn = true; setTucked(false); });
+  dock.addEventListener('focusout', (e) => { if (!dock.contains(e.relatedTarget)) focusIn = false; });
+  // Reach-for-it: pointer resting near the bottom edge brings the bar back (desktop, fine pointer).
+  addEventListener('pointermove', (e) => {
+    if (!finePointer.matches || !tucked) return;
+    clearTimeout(reachTimer);
+    if (innerHeight - e.clientY <= T.reach) reachTimer = setTimeout(() => setTucked(false), T.reachDelay);
+  }, { passive: true });
+  // A chapter jump or back-to-top is navigation, not reading: hold the bar through it.
+  chapters.forEach(a => a.addEventListener('click', (e) => { e.preventDefault(); holdUntil = performance.now() + T.jumpHold; document.getElementById(a.dataset.ch).scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }));
+  dock.querySelector('.dock__top').addEventListener('click', () => { holdUntil = performance.now() + T.jumpHold; scrollTo({ top: 0, behavior: 'smooth' }); });
+  dock.querySelector('.dock__ask').addEventListener('click', () => { chooserOpen = !chooserOpen; setTucked(false); });
+  // Phone typing: step aside for the keyboard.
+  addEventListener('focusin', (e) => { if (!desktop.matches && e.target.matches('input, textarea, select') && !dock.contains(e.target)) { dock.classList.add('is-typing'); setVar(); } });
+  addEventListener('focusout', (e) => { if (e.target.matches('input, textarea, select')) { dock.classList.remove('is-typing'); setVar(); } });
+
+  window.__dock = { setHold: (ms) => { holdUntil = performance.now() + ms; }, state: () => ({ tucked, expanded: dock.classList.contains('is-expanded') }) };
+  onFrame(); setVar();
+})();
+</script>
+</body>
+</html>
