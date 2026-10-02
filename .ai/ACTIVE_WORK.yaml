@@ -41,7 +41,7 @@ claims:
       - client/src/components/ZohoASAPWidget.desk-shell.test.ts
       - .cursor/skills/de-desk-ui/tokens-and-structure.md (the header line)
       - artifacts/visual-qa/desk-expand-hint/**
-    status: active
+    status: verified-live
     started: 2026-10-02
     note: >-
       Joe, 2026-10-02, on the Desk's expand button: "animate this so people
@@ -56,6 +56,16 @@ claims:
       Then: "look over the entire DE Desk popup and make sure it's fully
       optimized and has all the missing touches and looks perfect": a full
       Desk polish pass on the same claim (stylesheet and presentation only).
+      RELEASED 2026-10-02: merged as 2db33c7 (PR 331, on Joe's "continue"
+      after the PR was reported waiting on his merge). The CI run for 2db33c7
+      passed, including "Deploy and verify production VPS" (14:59Z). VERIFIED
+      LIVE 14:59:32Z: production serves ZohoASAPWidget-Cr8yHhV2.js with both
+      hints, the error bubble, the ticket label and the full-screen column; a
+      browser on digeratiexperts.com at 390, 768 and 1440 saw the text box
+      hint play, the full-screen hint follow it without overlap (none at 390,
+      by design), the Details box at 148px, the full-screen flag set, and no
+      horizontal overflow (artifacts/visual-qa/desk-polish/live/). Nothing was
+      sent to production. Files released.
   - id: de-static-cache-policy
     owner: claude
     subsystem: server-static
