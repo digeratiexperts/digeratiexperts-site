@@ -131,7 +131,7 @@ Describe 'Licences: device-bound, short-lived, Hub-signed' {
         (Get-DEThrown { Set-DELicense -Token (New-TestLicense -Claims @{ bid = 'DE-1.10.0-202610021200-a1b2c3' }) }) | Should -Match 'not accepted: this licence is for DE Tech Tool build'
         # a licence stored before the copy changed (an upgrade, or a pinned licence moved to another build) reports wrong-build
         try {
-            Set-DEStateValue -Path 'license.token' -Value (New-TestLicense -Claims @{ bid = 'DE-1.10.0-202610021200-a1b2c3' })
+            [IO.File]::WriteAllText((Get-DELicenseTokenFile), (New-TestLicense -Claims @{ bid = 'DE-1.10.0-202610021200-a1b2c3' }))
             $s = Get-DELicenseStatus; $s.state | Should -Be 'wrong-build'; $s.valid | Should -Be $false; $s.reason | Should -Match 'build'
             (Test-DELicenseFor -Feature apply).licensed | Should -Be $false
             (New-DEHubPayload -Record @{ client = 'alamo'; serial = 'PF3ABC12'; manufacturer = 'LENOVO'; exceptions = @() }).session.licenseState | Should -Be 'wrong-build'
@@ -149,6 +149,77 @@ Describe 'Licences: device-bound, short-lived, Hub-signed' {
         $s = Set-DELicense -Token (New-TestLicense)
         $s.valid | Should -Be $true; $s.technician | Should -Be 'jrpetro'; @($s.clients) | Should -Contain 'alamo'
         Clear-DELicense
+    }
+    It 'the stored licence survives a state save and reload, and a new session on the same data folder' {
+        Mock -ModuleName DE.License Get-DEThisDeviceKey { 'lenovo:PF3ABC12' }
+        try {
+            $tok = New-TestLicense
+            $null = Set-DELicense -Token $tok
+            $f = Get-DELicenseTokenFile
+            $f | Should -BeLike "$((Get-DEConsole).Dirs.State)*"
+            ([IO.File]::ReadAllText($f)) | Should -Be $tok
+            Test-Path -LiteralPath "$f.tmp" | Should -Be $false
+            Save-DEState; $null = Import-DEState
+            $s = Get-DELicenseStatus; $s.valid | Should -Be $true; $s.technician | Should -Be 'jrpetro'
+            # a new process: the module state is gone, only the data folder remains
+            $null = Initialize-DEConsole -Root (Get-DEConsole).Root -Mode Audit -DataDir (Get-DEConsole).Dirs.Base
+            (Get-DELicenseStatus).valid | Should -Be $true
+            $m = Get-DEState -Path 'license.current'
+            $m['sub'] | Should -Be 'jrpetro'; $m['state'] | Should -Be 'valid'; "$($m['jti'])" | Should -Not -BeNullOrEmpty; @($m['features']) | Should -Contain 'apply'
+            @($m.Keys) | Should -Not -Contain 'token'
+        } finally { Clear-DELicense }
+    }
+    It 'the licence token never reaches the state file, the evidence, a bundle, the Hub record or the log' {
+        Mock -ModuleName DE.License Get-DEThisDeviceKey { 'lenovo:PF3ABC12' }
+        try {
+            $tok = New-TestLicense; $sig = $tok.Split('.')[2]
+            $null = Set-DELicense -Token $tok
+            Set-DELicensePolicyOverride ([pscustomobject]@{ enforce = 'warn'; maxTechnicianHours = 12; maxOrderDays = 45; clockSkewMinutes = 5; issuer = 'de-hub'; audience = 'de-techtool' })
+            $null = Test-DELicenseFor -Feature rescue   # writes an evidence row about the licence
+            Add-DEEvidence -Step 'license.probe' -Module 'license' -Before 'x' -ActionTaken "status $((Get-DELicenseStatus).reason)" -Result 'INFO' | Out-Null
+            $b = Export-DEEvidenceBundle -Snapshot @{ device = @{ hostname = 'H'; serial = 'PF3ABC12'; manufacturer = 'LENOVO' } } -ClientProfile (Get-DEClientProfile -Id 'alamo')
+            $payload = New-DEHubPayload -Record @{ client = 'alamo'; serial = 'PF3ABC12'; manufacturer = 'LENOVO'; exceptions = @() }
+            $places = @{
+                state    = (Get-Content -LiteralPath (Get-DEStatePath) -Raw)
+                evidence = (@(Get-DEEvidence) | ConvertTo-Json -Depth 8)
+                bundle   = ((Get-ChildItem -LiteralPath $b.folder -Recurse -File | ForEach-Object { [IO.File]::ReadAllText($_.FullName) }) -join "`n")
+                hub      = ($payload | ConvertTo-Json -Depth 8)
+                log      = (Get-Content -LiteralPath (Get-DEConsole).LogFile -Raw)
+            }
+            foreach ($k in $places.Keys) { $places[$k] | Should -Not -Match ([regex]::Escape($sig)) -Because "the $k must not hold the licence" }
+            $places.hub | Should -Match ([regex]::Escape((Get-DELicenseStatus).id))   # the licence id is fine, the token is not
+        } finally { Set-DELicensePolicyOverride $null; Clear-DELicense }
+    }
+    It 'Clear-DELicense deletes the token file and the metadata' {
+        Mock -ModuleName DE.License Get-DEThisDeviceKey { 'lenovo:PF3ABC12' }
+        $null = Set-DELicense -Token (New-TestLicense)
+        Test-Path -LiteralPath (Get-DELicenseTokenFile) | Should -Be $true
+        Clear-DELicense
+        Test-Path -LiteralPath (Get-DELicenseTokenFile) | Should -Be $false
+        Get-DEState -Path 'license.current' | Should -BeNullOrEmpty
+        (Get-DELicenseStatus).state | Should -Be 'missing'
+    }
+    It 'a tampered or unreadable token file is refused, never trusted' {
+        Mock -ModuleName DE.License Get-DEThisDeviceKey { 'lenovo:PF3ABC12' }
+        try {
+            [IO.File]::WriteAllText((Get-DELicenseTokenFile), (New-TestLicense -Tamper))
+            $s = Get-DELicenseStatus; $s.valid | Should -Be $false; $s.state | Should -Be 'invalid'; $s.reason | Should -Match 'signature'
+            (Test-DELicenseFor -Feature apply).licensed | Should -Be $false
+            [IO.File]::WriteAllText((Get-DELicenseTokenFile), 'not a licence')
+            (Get-DELicenseStatus).valid | Should -Be $false
+            [IO.File]::WriteAllText((Get-DELicenseTokenFile), '')
+            (Get-DELicenseStatus).state | Should -Be 'missing'
+        } finally { Clear-DELicense }
+    }
+    It 'a state file from an older build ([REDACTED] token) reads as no licence and is cleaned up' {
+        Mock -ModuleName DE.License Get-DEThisDeviceKey { 'lenovo:PF3ABC12' }
+        Clear-DELicense
+        Set-DEStateValue -Path 'license.token' -Value '[REDACTED]'; $null = Import-DEState
+        (Get-DEState -Path 'license.token') | Should -Be '[REDACTED]'
+        $s = Get-DELicenseStatus; $s.state | Should -Be 'missing'; $s.valid | Should -Be $false
+        @((Get-DEState -Path 'license').Keys) | Should -Not -Contain 'token'
+        (Get-Content -LiteralPath (Get-DEStatePath) -Raw) | Should -Not -Match '"token"'
+        try { (Set-DELicense -Token (New-TestLicense)).valid | Should -Be $true } finally { Clear-DELicense }
     }
     It "policy 'warn' lets an unlicensed change run and records it; 'required' refuses changes, Toolbox scripts and other clients" {
         Mock -ModuleName DE.License Get-DEThisDeviceKey { 'lenovo:PF3ABC12' }

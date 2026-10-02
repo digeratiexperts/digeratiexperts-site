@@ -30,7 +30,8 @@ So the protection does not depend on hiding the code. Instead:
 
 ## Layers
 
-1. **A licence from the Hub** (`DE.License`, `contracts/license.schema.json`).
+1. **A licence from the Hub** (`DE.License`; the API contract is `docs/techtool-license-openapi.yaml` in
+   the Intelligence-Hub repository).
    - The token is a JWT-style `header.payload.signature` signed with RS256.
    - Its claims are:
      - `sub`: the technician
@@ -45,6 +46,12 @@ So the protection does not depend on hiding the code. Instead:
      - **Activate on this device:** it shows a code, the technician approves it in the Hub, and the Hub
        returns a licence for this device.
      - **Paste:** the technician pastes a licence copied from the Hub.
+   - The tool stores only a licence that verifies. The token goes in its own file,
+     `state/license.jws`, in the data folder that only SYSTEM and Administrators can write. It is
+     written by write-then-replace and checked again every time it is read. It never goes into the
+     state file, logs, evidence, bundles, the Hub record or a client profile. The state file keeps only
+     what the licence says (`jti`, `sub`, `dev`, `exp`, features, clients and its current state).
+     Removing the licence deletes the file.
    - A revoked licence ID is refused when it is in either list:
      - `console/trust/revoked.json`, shipped with the build and covered by `integrity.json`. A release
        build made with `-HubUrl` fills it from the Hub. It never changes at run time.
