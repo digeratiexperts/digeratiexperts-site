@@ -30,6 +30,48 @@
 
 version: 2
 claims:
+# claude-completion-program-lane (branch claude/c8-cross-surface) RETIRED
+# 2026-10-02 on Joe's "see what you can use and redesign into gaps". Audit of
+# the only pushed branch, claude/c1-visual-a11y-repairs-20260912, against main
+# 5de266e8: its content reached main through PR #216 (12cbb8d, 2026-09-18) as
+# snapshot 4091dcf plus 9029aa6, dde2589, 2756f2f and c87deba; the lane tip and
+# c87deba diff empty. Superseded since: store rail (Stations), portal a11y fixes
+# (rebuilt in PRs 294/316). Obsolete: DE Desk graphite shell (Joe chose the
+# white panel 2026-09-28). Still useful and carried on claude/client-portal-
+# access-ukxrnn (portal-followups-2026-10-02): MfaSetup onto the kit, the two
+# auth states without an h1, the remaining <a><button> nests, the PortalChat h1.
+# c3..c8 were never pushed. Files released.
+  - id: portal-followups-2026-10-02
+    owner: claude
+    subsystem: client-portal-shell
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: 5de266e8ed762d6328fef126ba7b017bcd8d8a21
+    files:
+      - client/src/components/portal/shell/portalTheme.ts
+      - client/src/components/portal/shell/portalTheme.test.ts
+      - client/src/components/portal/shell/PortalUserMenu.tsx
+      - client/src/pages/portal/PortalLayout.tsx
+      - artifacts/visual-qa/portal-theme/**
+      - client/src/components/portal/MfaSetup.tsx
+      - client/src/components/ui/sidebar.tsx
+      - client/src/pages/portal/PortalSignup.tsx
+      - client/src/pages/portal/PortalForgotPassword.tsx
+      - client/src/pages/portal/PortalResetPassword.tsx
+      - client/src/pages/portal/PortalChat.tsx (h1 and Tickets link only)
+      - client/src/pages/portal/PortalLogin.tsx (skip target, link underline)
+      - client/src/pages/portal/PortalAdvancedForms.tsx (list markup)
+      - client/src/pages/portal/PortalRoadmap.tsx (list markup)
+      - client/src/pages/portal/AdminLoginKnocks.tsx (scroll region)
+      - client/src/components/CookieConsentBanner.tsx (role and label only)
+      - artifacts/visual-qa/portal-followups/**
+    status: active
+    started: 2026-10-02
+    note: >-
+      Joe's answers of 2026-10-02 on the portal follow-ups. 4 "a and c": dark
+      stays the default and "Match device" joins the user menu (browsers never
+      report "no preference", so a device-following default would show light
+      to most clients). 7: salvage of the stale claude-completion-program-lane
+      into gaps on today's portal follows on this branch once audited.
   - id: de-techtool-license-followups
     owner: claude
     subsystem: msp-ai-kit
@@ -207,8 +249,15 @@ claims:
       - client/src/pages/portal/Admin*.tsx
       - client/src/pages/portal/SalesProcess.tsx
       - artifacts/visual-qa/portal-redesign/after-tail/**
-    status: active
+    status: verified-live
     started: 2026-10-01
+    released: 2026-10-02
+    pr: 316
+    merge_sha: 5de266e8ed762d6328fef126ba7b017bcd8d8a21
+    verification: >-
+      Merged on Joe's explicit authorization (2026-10-02, "1. a"). Production
+      serves index-Cn6RDjCg.js; its PortalVPN-Ccc2nry2.js chunk carries the new
+      sample-data notice; /healthz 200.
     note: >-
       Follow-up to portal-redesign-control-room (PR 294, merged 5e885527,
       concept A approved by Joe 2026-10-01). Joe: "continue". The 23 pages
