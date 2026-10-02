@@ -28,7 +28,7 @@ export const HOMEPAGE_THREAT_LIMIT = 4;
 export const ARCHIVE_THREAT_LIMIT = 40;
 
 export const THREAT_ATTRIBUTION =
-  "Sources: CISA, NIST NVD, FIRST, and Microsoft MSRC. Digerati prioritizes items based on active exploitation, exploit probability, and relevance to SMB environments.";
+  "Sources: CISA, NIST NVD, FIRST, and Microsoft MSRC. Digerati Experts prioritizes items based on active exploitation, exploit probability, and relevance to SMB environments.";
 
 export interface ThreatItem {
   id: string;
