@@ -56,6 +56,25 @@ claims:
       Then: "look over the entire DE Desk popup and make sure it's fully
       optimized and has all the missing touches and looks perfect": a full
       Desk polish pass on the same claim (stylesheet and presentation only).
+  - id: de-static-cache-policy
+    owner: claude
+    subsystem: server-static
+    branch: claude/static-cache-policy
+    base_sha: d5f3479a
+    files:
+      - server/staticCacheControl.ts
+      - server/staticCacheControl.test.ts
+      - server/index.ts (the dist/public express.static options only)
+    status: active
+    started: 2026-10-02
+    note: >-
+      Found during the "is it really done" audit: production served release.txt
+      (the deploy marker) with a one-year browser cache, as it did
+      site.webmanifest, .well-known/security.txt and the resource PDFs, and
+      marked the self-hosted fonts and pdf.js vendor files immutable under names
+      that never change. Only Vite's hashed output (flat in assets/) is cached
+      forever now; everything else revalidates daily, images at 30 days, and
+      release.txt / HTML are no-store.
   - id: de-homepage-section-mockups
     owner: claude
     subsystem: homepage-design-concepts
