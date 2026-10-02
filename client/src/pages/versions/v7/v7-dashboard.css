@@ -15,9 +15,19 @@
      secondary grey
    - accent: magenta → violet pairing (the AI Content reference's purple, kept on brand) on pills and icons only;
      magenta stays the CTA colour
+   Joe, multiple choice: dark sections too, "Yes, neutral grey" — the dark
+   bands and cards drop the navy/purple cast for neutral charcoal (the
+   Untitled UI reference: ground, one step lighter card, lighter controls).
    Loaded after every section stylesheet (HomepageV7 imports it last). */
 
 .v7 {
+  --v7-bg: #111113;
+  --v7-surface: #161618;
+  --v7-raised: #1e1e21;
+  --v7-hairline: rgba(255, 255, 255, 0.08);
+  --v7-hairline-strong: rgba(255, 255, 255, 0.14);
+  --v7-dark-card: #1e1e21;
+  --v7-dark-inner: #29292d;
   --v7-font-heading: "Inter", system-ui, sans-serif;
   --v7-paper: #ffffff;
   --v7-paper-raised: #f4f4f5;
@@ -189,3 +199,22 @@
   .v7 .v7s-04 .problems > .problem:nth-child(n):hover { transform: none; }
 }
 .v7 .v7s-02 .claim .v7-dash, .v7 .v7s-08 .v7-dash, .v7 .v7s-13 .v7-dash { background: var(--v7-accent-grad); }
+
+/* ---------- Dark bands: neutral charcoal, grey cards ---------- */
+.v7 { background: var(--v7-bg); }
+.v7 .v7-box::after, .v7 .v7-grain::after { display: none; }
+.v7 .v7-box { background: var(--v7-dark-card); }
+.v7 .v7-card { background: var(--v7-dark-card); border-color: var(--v7-hairline); border-radius: 18px; }
+.v7 .v7-card--inset { background: var(--v7-dark-inner); }
+.v7 .v7-iconwell { background: var(--v7-dark-inner); border-color: var(--v7-hairline); }
+.v7 .v7-chip { background: var(--v7-dark-card); border-color: var(--v7-hairline-strong); }
+.v7 .v7-btn--outline { background: var(--v7-dark-inner); border-color: var(--v7-hairline-strong); }
+.v7 .v7-btn--outline:hover { background: #333338; border-color: rgba(255, 255, 255, 0.24); }
+.v7 .v7s-01 .hero { background: linear-gradient(110deg, #111113 0%, #141416 52%, #18181b 100%); }
+.v7 .v7s-01 .win { background: linear-gradient(180deg, #212124 0%, #1a1a1d 100%); }
+/* Cards inside a panel sit one step lighter, as in the reference. */
+.v7 .v7-box .v7-card { background: var(--v7-dark-inner); }
+/* Dark accent: the light bands' magenta-violet, lifted for charcoal (fuchsia, 7.6:1 on #111113).
+   Magenta stays the CTA fill. */
+.v7 { --v7-magenta-ink: #e879f9; }
+.v7 .v7-link:hover { color: #f0abfc; }

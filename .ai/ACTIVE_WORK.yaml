@@ -244,6 +244,18 @@ claims:
       PronunciationCard (claimed by pronunciation-and-flipbook-recovery and
       de-site-v2-scrollcraft); at 430px the launcher still sits over the live
       card's "Hear it" until one of those lanes or a release frees the files.
+      MERGED 2026-10-02: PR 332 as c702a4fc (Joe: "Merge #332 first");
+      production verification pending.
+      Round 4 (Joe, 2026-10-02, three dashboard references): "convert the
+      white sections to this style, well i still want white but the white on
+      cream looks stupid", "text looks so much better ... and the accent
+      colors", "this is what i mean by grey cards"; dark sections "Yes,
+      neutral grey". /version-7 only, via one overlay stylesheet
+      (client/src/pages/versions/v7/v7-dashboard.css, loaded last): white
+      paper bands with neutral grey cards, charcoal dark bands with
+      one-step-lighter cards, Inter headings, magenta-violet accents
+      (magenta stays the CTA fill). Tier 2 defaults changed on Joe's
+      direction; Tier 0/1 untouched. / is unchanged.
   - id: de-desk-gold
     owner: claude
     subsystem: de-desk
