@@ -72,6 +72,32 @@ claims:
       report "no preference", so a device-following default would show light
       to most clients). 7: salvage of the stale claude-completion-program-lane
       into gaps on today's portal follows on this branch once audited.
+  - id: de-desk-expand-hint
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: d5f3479
+    files:
+      - client/src/components/ZohoASAPWidget.tsx (the hints' state, the expand button, the composer wrapper class, and the Desk stylesheet)
+      - artifacts/visual-qa/desk-composer-hint/**, artifacts/visual-qa/desk-polish/**
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
+      - .cursor/skills/de-desk-ui/tokens-and-structure.md (the header line)
+      - artifacts/visual-qa/desk-expand-hint/**
+    status: active
+    started: 2026-10-02
+    note: >-
+      Joe, 2026-10-02, on the Desk's expand button: "animate this so people
+      know to make it full screen". A finite hint on the gold Desk: three gold
+      pulses with the arrows pushing outward and a "Full screen" label, about
+      five seconds after the docked Desk opens; at most once per page load and
+      three times per browser, retired once full screen is used, off while a
+      person is live, off on phones; reduced motion keeps the label without
+      movement. No logic beyond the hint's own state. Joe, same day: "same
+      with the chat text box field": the Ask DE text box gets the same kind
+      of finite hint, played first, with the full-screen hint waiting for it.
+      Then: "look over the entire DE Desk popup and make sure it's fully
+      optimized and has all the missing touches and looks perfect": a full
+      Desk polish pass on the same claim (stylesheet and presentation only).
   - id: de-static-cache-policy
     owner: claude
     subsystem: server-static
@@ -149,7 +175,7 @@ claims:
       - design/DESIGN-AUTHORITY.md (Desk and gold rows), design/UI-STYLE-RULES.md (support chrome), brand/README.md (gold line)
       - .cursor/skills/de-desk-ui/**, .cursor/rules/de-desk-design.mdc, .cursor/rules/visual-system-v2.mdc
       - design/approved/de-desk-gold-2026-10-01.md, artifacts/visual-qa/desk-gold/**
-    status: active
+    status: verified-live
     started: 2026-10-01
     note: >-
       Joe, 2026-10-01: of eight Desk UI mockups picked option 1, "Black +
@@ -163,6 +189,14 @@ claims:
       merged without a conflict. Main merged in again on 2026-10-02 (5de266e),
       bringing PR 325's open-seed change to the widget. Maintenance Mode under the Product Preservation Law: every
       tab, route, CTA, test id and behaviour kept.
+      RELEASED 2026-10-02: merged as 4b25793 (PR 319, on Joe's explicit
+      approval of the merge). The CI run for 4b25793 passed, including "Deploy
+      and verify production VPS" (13:20Z). VERIFIED LIVE 13:20:52Z: production
+      serves ZohoASAPWidget-BkU7jfpE.js with --desk-surface #0b0b0d and
+      --desk-gold, and no #fbfbfa or magenta cap; a browser on
+      digeratiexperts.com at 390, 768 and 1440 shows the chooser and the Desk
+      on the black panel with the gold cap, no page errors and no horizontal
+      overflow (artifacts/visual-qa/desk-gold/live/). Files released.
   - id: portal-kit-long-tail
     owner: claude
     subsystem: client-portal-pages
