@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DE section 06 — Eight blocks</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../system/tokens.css">
+<style>
+  /* 06 · Eight blocks.
+     ≥768px: paper band with ONE dark evidence panel (left rail of seven,
+     reading pane, dashed Risk & exposure rail), live selected-state language:
+     solid magenta selection (ProtectionCommandDeck.tsx:390-393) and the
+     up/down cross-fade (ProtectionCommandDeck.tsx:414-421).
+     <768px: Joe's approved 390px layout exactly as live
+     (ProtectionCommandDeck.tsx:270-366, DigeratiHowWeProtectSection.tsx:63-86).
+     Then "How protection works" as a numbered hairline row on surface. */
+  .protect .de-h2 { max-width: 640px; text-wrap: pretty; }
+  .protect .de-lede { text-wrap: pretty; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+  /* ---------- Desktop / tablet (≥768px): the evidence panel ---------- */
+  .model { position: relative; isolation: isolate; margin-top: 40px; background: var(--de-surface); color: var(--de-fg); border: 1px solid rgba(26, 18, 40, 0.14); border-radius: var(--radius-lg); overflow: hidden; }
+  .model::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background-image: var(--de-field-grain); background-size: 180px 180px; }
+  .model .de-meta, .model .de-small { color: var(--de-muted-quiet); }
+  .model__bar { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; padding: 20px 24px; border-bottom: 1px solid var(--de-hairline); }
+  .model__title { font-family: var(--font-heading); font-weight: 600; font-size: 17px; letter-spacing: -0.01em; color: #fbfaf8; }
+  .model__sub { margin-top: 6px; max-width: 880px; font-size: 15px; line-height: 1.55; color: var(--de-muted-soft); text-wrap: pretty; }
+  .model__bar .de-tag { flex-shrink: 0; margin-top: 1px; }
+  .model__body { display: grid; grid-template-columns: 324px minmax(0, 1fr); grid-template-areas: "rail pane" "cont cont"; }
+
+  /* Rail of seven. Selected = the live chip: solid magenta fill, white ink. */
+  .rail { grid-area: rail; display: grid; align-content: start; border-right: 1px solid var(--de-hairline); }
+  .tab { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 14px; align-items: center; width: 100%; min-height: 72px; padding: 12px 20px 12px 22px; border: 0; border-bottom: 1px solid var(--de-hairline); background: transparent; color: var(--de-muted); font: inherit; text-align: left; cursor: pointer; transition: background-color 200ms ease-out, color 200ms ease-out; }
+  .tab:hover { background: rgba(255, 255, 255, 0.04); color: #fff; }
+  .tab .de-iconwell { background: transparent; border-color: transparent; color: var(--de-muted-quiet); transition: color 200ms ease-out, background-color 200ms ease-out; }
+  .tab:hover .de-iconwell { color: var(--de-magenta-ink); }
+  .tab__name { display: block; font-family: var(--font-heading); font-weight: 600; font-size: 16px; line-height: 1.25; }
+  .tab__answers { display: block; margin-top: 3px; font-size: 15px; line-height: 1.4; color: var(--de-muted-quiet); }
+  .tab[aria-selected="true"], .tab[aria-selected="true"]:hover { background: var(--de-magenta); color: #fff; }
+  .tab[aria-selected="true"] .de-iconwell { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.22); color: #fff; }
+  .tab[aria-selected="true"] .tab__answers { color: #fff; }
+  .tab:focus-visible { outline: 2px solid #ec4899; outline-offset: -4px; }
+  .tab[aria-selected="true"]:focus-visible { outline-color: #fff; }
+
+  /* Reading pane. The inner wrapper is what cross-fades. */
+  .pane { grid-area: pane; padding: 24px; min-width: 0; }
+  .pane:focus-visible { outline: 2px solid #ec4899; outline-offset: -2px; }
+  .pane__head { display: flex; align-items: center; gap: 16px; }
+  .pane__head .de-h3 { color: #fbfaf8; }
+  .pane__answers { display: block; margin-top: 4px; font-size: 13px; font-weight: 500; letter-spacing: 0.02em; color: var(--de-magenta-ink); }
+  .pane__purpose { margin-top: 18px; max-width: 720px; font-size: 16px; line-height: 1.6; color: var(--de-muted); text-wrap: pretty; }
+  .pane__row { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 8fr); column-gap: 40px; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--de-hairline); }
+  .pane .de-meta { display: block; }
+  .qlist { margin-top: 12px; }
+  .qlist > li { display: grid; grid-template-columns: 14px minmax(0, 1fr); column-gap: 12px; align-items: baseline; padding: 11px 0; border-top: 1px solid var(--de-hairline); font-size: 15px; line-height: 1.5; color: var(--de-muted); }
+  .qlist > li:first-child { border-top: 0; padding-top: 4px; }
+  .qlist .de-dash { margin: 0; width: 14px; height: 2px; position: relative; top: -4px; }
+
+  .boundary { margin-top: 12px; position: relative; border: 1px dashed rgba(211, 18, 106, 0.45); border-radius: var(--radius-md); padding: 16px; }
+  .boundary__nodes { display: grid; grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1fr); align-items: stretch; }
+  .node { display: flex; flex-direction: column; background: var(--de-bg); border: 1px solid var(--de-hairline); border-radius: var(--radius-md); padding: 12px 14px; }
+  .node__title { display: block; font-family: var(--font-heading); font-weight: 600; font-size: 15px; line-height: 1.3; color: #fbfaf8; }
+  .node__sub { display: block; margin-top: 2px; padding-bottom: 14px; font-size: 15px; line-height: 1.45; color: var(--de-muted-soft); }
+  .node__meta { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--de-hairline); }
+  .node__meta .de-meta { font-size: 11px; letter-spacing: 0.1em; }
+  .node__meta .de-meta:last-child { color: var(--de-muted-soft); text-align: right; }
+  .link-h { align-self: center; height: 1px; width: 100%; background: var(--de-hairline-strong); }
+  .gate { display: grid; grid-template-columns: 8px auto minmax(0, 1fr); column-gap: 12px; align-items: baseline; margin-top: 16px; }
+  .gate__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--de-magenta); align-self: start; margin-top: 7px; }
+  .gate__label { font-family: var(--font-heading); font-weight: 600; font-size: 15px; color: #fbfaf8; white-space: nowrap; }
+  .gate__policy { font-size: 15px; line-height: 1.5; color: var(--de-muted-soft); }
+
+  .groups { margin-top: 24px; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 0; border-top: 1px solid var(--de-hairline); border-radius: 0; overflow: visible; }
+  .groups > * { padding: 20px 20px 4px; }
+  .groups > *:first-child { padding-left: 0; }
+  .groups .de-meta { letter-spacing: 0.1em; white-space: nowrap; }
+  .groups ul { margin-top: 10px; }
+  .groups li { display: grid; grid-template-columns: 10px minmax(0, 1fr); column-gap: 10px; align-items: start; padding: 4px 0; font-size: 15px; line-height: 22px; color: var(--de-muted); }
+  .groups .de-dash { margin: 10px 0 0; width: 10px; height: 2px; }
+
+  /* Risk & exposure: the eighth block as the dashed continuous rail. */
+  .continuous { grid-area: cont; position: relative; display: grid; grid-template-columns: 324px minmax(0, 1fr); background: rgba(255, 255, 255, 0.02); }
+  .continuous::before { content: ""; position: absolute; left: 0; right: 0; top: 0; border-top: 1px dashed rgba(240, 76, 151, 0.55); pointer-events: none; }
+  .continuous:has(.tab[aria-selected="true"])::before { border-top-color: var(--de-magenta); }
+  .continuous .tab { border-bottom: 0; border-right: 1px dashed var(--de-hairline-strong); padding: 14px 20px 14px 22px; }
+  .continuous .tab .de-iconwell { color: var(--de-magenta-ink); }
+  .continuous__name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+  .continuous .de-tag { height: 20px; padding: 0 7px; font-size: 10px; color: var(--de-magenta-ink); border-color: rgba(240, 76, 151, 0.4); }
+  .continuous .tab[aria-selected="true"] .de-tag { color: #fff; border-color: rgba(255, 255, 255, 0.5); }
+  .continuous__text { display: flex; align-items: center; padding: 16px 24px; font-size: 15px; line-height: 1.55; color: var(--de-muted-soft); text-wrap: pretty; }
+  .model__foot { padding: 14px 24px; border-top: 1px solid var(--de-hairline); }
+
+  /* ---------- Phone (<768px): Joe's approved 390px layout ---------- */
+  .phone { display: none; }
+  .phone__tabs { position: relative; }
+  .phone__row { display: flex; align-items: flex-end; justify-content: space-between; gap: 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .phone__row::-webkit-scrollbar { display: none; }
+  .phone__row.fade-r { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+  .phone__row.fade-l { -webkit-mask-image: linear-gradient(90deg, transparent, #000 28px); mask-image: linear-gradient(90deg, transparent, #000 28px); }
+  .phone__row.fade-l.fade-r { -webkit-mask-image: linear-gradient(90deg, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
+  .ptab { flex-shrink: 0; min-height: 44px; padding: 20px 0 8px; border: 0; border-bottom: 2px solid transparent; background: transparent; font-family: var(--font-body); font-size: 11.5px; line-height: 1; letter-spacing: -0.005em; font-weight: 500; color: rgba(255, 255, 255, 0.55); cursor: pointer; white-space: nowrap; transition: color 150ms ease-out, border-color 150ms ease-out; }
+  .ptab[aria-selected="true"] { border-bottom-color: var(--de-magenta); font-weight: 600; color: #fff; }
+  .ptab:focus-visible { outline: 2px solid var(--de-magenta); outline-offset: -2px; border-radius: 2px; }
+  .prail:focus-visible { outline: 2px solid var(--de-magenta); outline-offset: 2px; }
+  .prail { position: relative; display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; padding: 8px 0 0; border: 0; border-top: 1px solid rgba(255, 255, 255, 0.1); background: transparent; font-family: var(--font-body); text-align: left; color: rgba(255, 255, 255, 0.7); cursor: pointer; }
+  .prail::before { content: ""; position: absolute; left: 0; right: 0; top: -1px; border-top: 1px dashed rgba(240, 76, 151, 0.55); pointer-events: none; }
+  .prail[aria-selected="true"] { color: #fff; }
+  .prail[aria-selected="true"]::before { border-top-color: var(--de-magenta); }
+  .prail__name { font-size: 11.5px; font-weight: 500; }
+  .prail[aria-selected="true"] .prail__name { font-weight: 600; }
+  .prail__tag { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--de-magenta-ink); }
+  .phone__note { margin-top: 12px; font-size: 13px; line-height: 1.625; color: rgba(255, 255, 255, 0.55); }
+  .pblock { margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: calc(96px + var(--de-unified-bar-h, 3.5rem) + 0.75rem + env(safe-area-inset-bottom, 0px)); }
+  .pblock__name { font-family: var(--font-heading); font-size: 22px; font-weight: 600; line-height: 1.25; letter-spacing: -0.015em; color: #fff; }
+  .pblock__answers { display: block; margin-top: 4px; font-family: var(--font-body); font-size: 12px; font-weight: 500; letter-spacing: 0.02em; color: var(--de-magenta-ink); }
+  .pblock__purpose { margin-top: 12px; font-size: 15px; line-height: 1.55; color: rgba(255, 255, 255, 0.7); }
+  .pblock__qs { margin-top: 20px; }
+  .pblock__qs li { position: relative; padding: 12px 0 12px 22px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 15px; line-height: 1.45; color: rgba(255, 255, 255, 0.9); }
+  .pblock__qs li:last-child { border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+  .pblock__qs li::before { content: ""; position: absolute; left: 0; top: 21px; width: 10px; height: 2px; background: var(--de-magenta); }
+  .pblock__bnd { margin-top: 24px; }
+  .pblock__bnd h4 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255, 255, 255, 0.55); }
+  .pblock__bnd dl { margin-top: 10px; display: grid; row-gap: 10px; }
+  .pblock__bnd dt { font-size: 14px; font-weight: 600; color: rgba(255, 255, 255, 0.9); }
+  .pblock__bnd dd { margin: 2px 0 0; font-size: 13.5px; line-height: 1.45; color: rgba(255, 255, 255, 0.55); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tab, .tab .de-iconwell, .ptab { transition: none; }
+  }
+
+  /* How protection works — surface, head row, four hairline cells under one top hairline. */
+  .how__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; }
+  .how__head .de-head { max-width: 980px; }
+  .how__title { text-wrap: balance; }
+  .how__title .arrow { color: var(--de-muted-quiet); font-weight: 500; }
+  .how__head .de-link { flex-shrink: 0; min-height: 44px; margin-bottom: -8px; }
+  .steps { margin-top: 36px; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 0; border-top: 1px solid var(--de-hairline); border-radius: 0; }
+  .steps > li { padding: 0; display: flex; }
+  .step { flex: 1; display: flex; flex-direction: column; padding: 24px; color: inherit; transition: background-color 200ms ease-out; }
+  .steps > li:first-child .step { padding-left: 0; }
+  .step:hover { background: rgba(255, 255, 255, 0.025); }
+  .step .de-iconwell { margin-top: 18px; }
+  .step .de-h4 { margin-top: 20px; color: #fbfaf8; }
+  .step:hover .de-h4 { color: var(--de-magenta-ink); }
+  .step .de-body { margin-top: 8px; font-size: 15px; text-wrap: pretty; }
+
+  @media (max-width: 1023px) {
+    .model__body { grid-template-columns: minmax(0, 1fr); grid-template-areas: "rail" "cont" "pane"; }
+    .rail { border-right: 0; }
+    .continuous { grid-template-columns: minmax(0, 1fr); border-bottom: 1px solid var(--de-hairline); }
+    .continuous .tab { border-right: 0; padding-bottom: 4px; }
+    .continuous__text { padding: 8px 24px 16px 78px; }
+    .pane__row { grid-template-columns: minmax(0, 1fr); row-gap: 26px; }
+    .groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .groups > *:nth-child(n + 3) { border-top: 1px solid var(--de-hairline); }
+    .groups > *:nth-child(odd) { border-left: 0; padding-left: 0; }
+    .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .steps > li:nth-child(n + 3) { border-top: 1px solid var(--de-hairline); }
+    .steps > li:nth-child(odd) { border-left: 0; }
+    .steps > li:nth-child(odd) .step { padding-left: 0; }
+  }
+  /* Below md the chapter flips paper -> one dark field (R-01) and the deck
+     becomes the phone layout (R-03..R-07). */
+  @media (max-width: 767px) {
+    .protect.f-paper { background: var(--de-bg); color: #fff; border-top: 1px solid var(--de-hairline); padding-bottom: 0; }
+    .protect .de-canvas { padding: 0 16px; }
+    .protect .de-head { margin-bottom: 32px; }
+    .protect .de-eyebrow { color: var(--de-magenta-ink); margin-bottom: 16px; }
+    .protect .de-h2 { font-size: 26px; line-height: 1.15; letter-spacing: -0.02em; color: #fff; }
+    .protect .de-lede { font-size: 15px; line-height: 1.55; color: rgba(255, 255, 255, 0.7); }
+    .model { display: none; }
+    .phone { display: block; }
+  }
+  @media (max-width: 639px) {
+    .how__head { flex-direction: column; align-items: flex-start; gap: 18px; }
+    .how__head .de-link { margin-bottom: 0; }
+    .steps { margin-top: 28px; grid-template-columns: minmax(0, 1fr); }
+    .steps > li { border-left: 0; border-top: 1px solid var(--de-hairline); }
+    .steps > li:first-child { border-top: 0; }
+    .step, .steps > li .step, .steps > li:first-child .step { padding: 22px 0 26px; }
+  }
+</style>
+</head>
+<body>
+
+<section class="f-paper de-section protect" id="protection" aria-labelledby="protect-heading">
+  <div class="de-canvas">
+    <div class="de-head">
+      <p class="de-eyebrow">What we protect</p>
+      <h2 class="de-h2" id="protect-heading">Eight blocks. One accountable operating model.</h2>
+      <p class="de-lede">Protection is layered around the business, and each block answers a specific class of threat. Risk and exposure runs continuously beneath the other seven. Select a block below to see how we operate it.</p>
+    </div>
+
+    <div id="protection-stack">
+      <!-- ≥768px: one dark evidence panel. -->
+      <div class="model" role="group" aria-label="Eight-block protection model">
+        <div class="model__bar">
+          <div>
+            <p class="model__title">Eight-block protection model</p>
+            <p class="model__sub">Explore how DE thinks about identity, endpoints, email, browser and web, network, detection and response, and human risk, with risk and exposure running continuously beneath them, without implying every client receives the same controls or tooling.</p>
+          </div>
+          <span class="de-tag">Illustrative · Interactive model</span>
+        </div>
+        <div class="model__body">
+          <div class="rail" id="d-tablist" role="tablist" aria-label="Protection blocks" aria-orientation="vertical" aria-owns="d-tab-exposure"></div>
+          <div class="pane" id="d-panel" role="tabpanel" tabindex="0"><div class="pane__inner" id="d-pane"></div></div>
+          <div class="continuous" id="d-cont">
+            <p class="continuous__text">Seven blocks answer a threat class each. Risk &amp; exposure runs continuously beneath all seven as the visibility and intelligence layer.</p>
+          </div>
+        </div>
+        <p class="de-small model__foot">Source: Illustrative architecture. Exact scope, controls, monitoring, deliverables, vendors, and cadence depend on the selected operating model and client environment.</p>
+      </div>
+
+      <!-- <768px: Joe's approved 390px layout. No frame chrome, no card in a card, no diagram widget. -->
+      <div class="phone" data-testid="protection-deck-phone">
+        <div class="phone__tabs" id="p-tablist" role="tablist" aria-label="Protection blocks">
+          <div class="phone__row" id="p-row"></div>
+        </div>
+        <p class="phone__note">Seven blocks each answer a threat class, and risk and exposure runs under all of them.</p>
+        <article class="pblock" id="p-panel" role="tabpanel" aria-live="polite"></article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="f-surface de-section de-grain how" id="how-protection-works" aria-labelledby="how-heading">
+  <div class="de-canvas">
+    <div class="how__head">
+      <div class="de-head">
+        <p class="de-eyebrow">How protection works</p>
+        <h3 class="de-h2 how__title" id="how-heading">Assessment <span class="arrow" aria-hidden="true">→</span><span class="sr-only"> to </span> Roadmap <span class="arrow" aria-hidden="true">→</span><span class="sr-only"> to </span> Implementation <span class="arrow" aria-hidden="true">→</span><span class="sr-only"> to </span> Continuous</h3>
+      </div>
+      <a class="de-link" href="/solutions/proactive-ecosystem">Full methodology <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+    </div>
+
+    <ol class="de-cells steps">
+      <li>
+        <a class="step" href="/book">
+          <span class="de-seq">01</span>
+          <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
+          <span class="de-h4">Assessment</span>
+          <span class="de-body">Review identity, endpoints, email, backups, network, and operating reality.</span>
+        </a>
+      </li>
+      <li>
+        <a class="step" href="/solutions/proactive-ecosystem">
+          <span class="de-seq">02</span>
+          <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span>
+          <span class="de-h4">Roadmap</span>
+          <span class="de-body">Match the operating model to the environment — fit, not a ranking ladder.</span>
+        </a>
+      </li>
+      <li>
+        <a class="step" href="/solutions/proactive-ecosystem">
+          <span class="de-seq">03</span>
+          <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span>
+          <span class="de-h4">Implementation</span>
+          <span class="de-body">Documented credentials you own. Controls sized to the model we matched.</span>
+        </a>
+      </li>
+      <li>
+        <a class="step" href="/solutions/proactive-ecosystem">
+          <span class="de-seq">04</span>
+          <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg></span>
+          <span class="de-h4">Continuous</span>
+          <span class="de-body">Day-to-day support and the DE Security Foundation are included at every tier; detection, response, recovery, and governance deepen with the plan.</span>
+        </a>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<script>
+/* All eight blocks, verbatim from client/src/components/visual/ProtectionCommandDeck.tsx:61-255. */
+const ICON = {
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+  mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  wifi: '<path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/>',
+  activity: '<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+};
+const svg = (k) => `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
+
+const BLOCKS = [
+  { id: "identity", name: "Identity & Access", shortName: "Identity & access", phoneLabel: "Identity", icon: "lock", answers: "credential theft",
+    purpose: "Control who can access business systems, how access is verified, and how accounts are changed or removed over time.",
+    questions: ["Is MFA appropriate and enforced where required?", "Are privileged accounts separated and reviewed?", "Does offboarding remove access consistently?"],
+    boundaryName: "Identity boundary",
+    nodes: [{ title: "Users & administrators", subtitle: "Accounts, roles, authentication", detail: "Access inventory" }, { title: "Access policy", subtitle: "Authentication and device/context rules", detail: "Policy layer" }],
+    gate: { label: "Access decision", policy: "Apply the approved authentication and access rules for the environment" },
+    scope: ["User accounts", "Admin access", "SSO applications", "Joiner/mover/leaver workflow"],
+    management: ["Access-policy review", "MFA configuration", "Onboarding/offboarding support"],
+    signals: ["Risky sign-ins", "Unexpected access changes", "Privilege changes"],
+    outputs: ["Account review", "Access findings", "Remediation roadmap"] },
+  { id: "endpoint", name: "Endpoint", shortName: "Endpoint", phoneLabel: "Endpoint", icon: "shield", answers: "malware",
+    purpose: "Keep managed devices visible, maintained, and protected with controls matched to device ownership, user role, and business risk.",
+    questions: ["Which devices are actually in scope?", "Are security and patch states visible?", "What happens when a device needs containment or rebuild?"],
+    boundaryName: "Managed device boundary",
+    nodes: [{ title: "Workstations & servers", subtitle: "Company-managed devices in scope", detail: "Device inventory" }, { title: "Security controls", subtitle: "Endpoint, patch, configuration, and policy tooling", detail: "Control layer" }],
+    gate: { label: "Device decision", policy: "Use the deployed controls and authorized procedure appropriate to the event" },
+    scope: ["Laptops/desktops", "Servers where contracted", "Device configuration", "Patch posture"],
+    management: ["Agent deployment", "Patch/configuration management", "Device lifecycle support"],
+    signals: ["Security alerts", "Patch drift", "Device-health exceptions"],
+    outputs: ["Device inventory", "Posture findings", "Remediation actions"] },
+  { id: "email", name: "Email & Collaboration", shortName: "Email & collaboration", phoneLabel: "Email", icon: "mail", answers: "phishing",
+    purpose: "Reduce email-driven risk while keeping authentication, filtering, user behavior, and account settings understandable and supportable.",
+    questions: ["Are domain-authentication records configured correctly?", "Are risky mailbox rules or forwarding visible?", "How are users trained and supported after suspicious messages?"],
+    boundaryName: "Messaging boundary",
+    nodes: [{ title: "Mail & collaboration", subtitle: "Tenant, domains, users, and shared resources", detail: "Service scope" }, { title: "Protection layer", subtitle: "Authentication, filtering, policy, and awareness controls", detail: "Control layer" }],
+    gate: { label: "Message decision", policy: "Apply the mail-security controls and investigation path available in the environment" },
+    scope: ["Mailboxes", "Domain authentication", "Shared resources", "User awareness"],
+    management: ["Configuration review", "Filter/policy tuning", "Awareness support where included"],
+    signals: ["Suspicious messages", "Forwarding changes", "Account-related alerts"],
+    outputs: ["Mail posture findings", "Configuration actions", "User/security follow-up"] },
+  { id: "browser", name: "Browser & Web", shortName: "Browser & web", phoneLabel: "Browser", icon: "globe", answers: "web-borne compromise",
+    purpose: "Reduce web-borne risk on managed devices: filtering, browser policy, and safe access to the SaaS the business actually runs on.",
+    questions: ["Is web or DNS filtering enforced on managed devices?", "Which browser settings and extensions are controlled?", "How is business SaaS access separated from personal browsing?"],
+    boundaryName: "Web boundary",
+    nodes: [{ title: "Browsers & SaaS access", subtitle: "Managed browsers, business web applications, and sessions", detail: "Access scope" }, { title: "Filtering & policy layer", subtitle: "Web/DNS filtering, browser policy, and extension control", detail: "Control layer" }],
+    gate: { label: "Web decision", policy: "Apply the filtering and browser policy appropriate to the role and the device" },
+    scope: ["Managed browsers", "Web/DNS filtering", "Extension policy", "Business SaaS access"],
+    management: ["Policy baseline", "Filter tuning", "Exception handling"],
+    signals: ["Blocked destinations", "Policy drift", "Risky extensions"],
+    outputs: ["Web posture findings", "Policy actions", "Exception record"] },
+  { id: "network", name: "Network", shortName: "Network", phoneLabel: "Network", icon: "wifi", answers: "lateral movement",
+    purpose: "Document and manage the business network so internet edge, switching, Wi-Fi, segmentation, and remote access match the operating model.",
+    questions: ["Who owns and administers the network equipment?", "Are guest/IoT/business networks separated appropriately?", "Is the configuration documented and recoverable?"],
+    boundaryName: "Network boundary",
+    nodes: [{ title: "Internet edge", subtitle: "Firewall/router and provider handoff", detail: "Edge layer" }, { title: "LAN & wireless", subtitle: "Switching, Wi-Fi, segmentation, and devices", detail: "Internal layer" }],
+    gate: { label: "Traffic decision", policy: "Apply documented network policy and segmentation appropriate to the client environment" },
+    scope: ["Firewall/router", "Switching", "Business/guest Wi-Fi", "Remote-access configuration"],
+    management: ["Configuration management", "Firmware/change planning", "Network documentation"],
+    signals: ["Availability alerts", "Configuration exceptions", "Unexpected network behavior"],
+    outputs: ["Topology/documentation", "Risk findings", "Change roadmap"] },
+  { id: "detection", name: "Detection & Response", shortName: "Detection & response", phoneLabel: "Detection", icon: "activity", answers: "persistence",
+    purpose: "Watch the environment continuously and act on what matters: detection, triage, containment, and escalation through a documented path.",
+    questions: ["Who is watching, and around the clock?", "What is the containment authority and the escalation path?", "Are detections tuned to this environment or generic?"],
+    boundaryName: "Monitoring boundary",
+    nodes: [{ title: "Telemetry sources", subtitle: "Endpoint, identity, email, and network signals in scope", detail: "Signal scope" }, { title: "Detection & response layer", subtitle: "Analysts, playbooks, containment, and escalation", detail: "Response layer" }],
+    gate: { label: "Response decision", policy: "Follow the documented playbook and containment authority for the event" },
+    scope: ["Endpoint & identity telemetry", "Alert triage", "Containment actions", "Escalation path"],
+    management: ["Detection tuning", "Playbook maintenance", "Incident communication"],
+    signals: ["Confirmed detections", "Containment events", "Escalations"],
+    outputs: ["Incident summaries", "Response evidence", "Tuning changes"] },
+  { id: "human", name: "Human Risk", shortName: "Human risk", phoneLabel: "Human", icon: "users", answers: "social engineering",
+    purpose: "Make people a managed control: awareness, simulation, and a reporting path that fit the organization rather than a checkbox.",
+    questions: ["Do users know how to report a suspicious message?", "Is training matched to role and risk?", "Are results used to adjust controls, not to assign blame?"],
+    boundaryName: "People boundary",
+    nodes: [{ title: "Users & roles", subtitle: "Who handles what, and what they are exposed to", detail: "Role scope" }, { title: "Awareness & simulation layer", subtitle: "Training cadence, simulations, and the reporting path", detail: "Control layer" }],
+    gate: { label: "Awareness decision", policy: "Apply the training cadence and simulation scope agreed for the organization" },
+    scope: ["Awareness training", "Phishing simulation where included", "Reporting path", "Role-based guidance"],
+    management: ["Campaign cadence", "Content selection", "Results review"],
+    signals: ["Simulation results", "Reported messages", "Repeat-risk users"],
+    outputs: ["Awareness summary", "Training evidence", "Follow-up actions"] },
+  { id: "exposure", name: "Risk & Exposure", shortName: "Risk & exposure", phoneLabel: "Risk & exposure", icon: "search", answers: "unknown exposure", continuous: true,
+    purpose: "The continuous visibility and intelligence layer beneath the other seven: what is exposed, what is unpatched, what changed, and what that means for the business.",
+    questions: ["What is exposed to the internet right now?", "Which findings are open, and who owns them?", "How is risk reported in business terms?"],
+    boundaryName: "Visibility layer",
+    nodes: [{ title: "Exposure & vulnerability data", subtitle: "External exposure, vulnerability posture, and configuration drift", detail: "Evidence scope" }, { title: "Risk register & priorities", subtitle: "Findings, owners, and priorities in business terms", detail: "Intelligence layer" }],
+    gate: { label: "Risk decision", policy: "Prioritize by exposure and business impact, then route the finding to the block that owns it" },
+    scope: ["External exposure", "Vulnerability posture", "Configuration drift", "Risk register"],
+    management: ["Scan review", "Prioritization", "Roadmap upkeep"],
+    signals: ["New exposures", "Aging findings", "Material changes"],
+    outputs: ["Risk summary", "Exposure findings", "Prioritized roadmap"] },
+];
+
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const ORDER = BLOCKS.map((b) => b.id); // seven peers, then the continuous block
+const byId = (id) => BLOCKS.find((b) => b.id === id);
+let selectedId = "identity";
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+/* ---- Desktop rail ---- */
+const dRail = document.getElementById("d-tablist");
+const dCont = document.getElementById("d-cont");
+function dTab(b) {
+  const continuous = b.continuous;
+  return `<button class="tab" id="d-tab-${b.id}" type="button" role="tab" aria-selected="false" aria-controls="d-panel" tabindex="-1" data-id="${b.id}"${continuous ? ' data-continuous="true"' : ""}>
+    <span class="de-iconwell de-iconwell--sm">${svg(b.icon)}</span>
+    <span>${continuous
+      ? `<span class="continuous__name"><span class="tab__name">${esc(b.shortName)}</span><span class="de-tag">Continuous</span></span>`
+      : `<span class="tab__name">${esc(b.shortName)}</span>`}<span class="tab__answers">Answers ${esc(b.answers)}</span></span>
+  </button>`;
+}
+dRail.innerHTML = BLOCKS.filter((b) => !b.continuous).map(dTab).join("");
+dCont.insertAdjacentHTML("afterbegin", dTab(byId("exposure")));
+
+const list = (items) => `<ul>${items.map((i) => `<li><span class="de-dash" aria-hidden="true"></span><span>${esc(i)}</span></li>`).join("")}</ul>`;
+function paneHTML(b) {
+  return `<header class="pane__head">
+      <span class="de-iconwell">${svg(b.icon)}</span>
+      <div><h3 class="de-h3">${esc(b.name)}</h3><span class="pane__answers">Answers ${esc(b.answers)}</span></div>
+    </header>
+    <p class="pane__purpose">${esc(b.purpose)}</p>
+    <div class="pane__row">
+      <div>
+        <p class="de-meta">Questions the assessment should answer</p>
+        <ul class="qlist" aria-label="What an assessment asks">${b.questions.map((q) => `<li><span class="de-dash" aria-hidden="true"></span><span>${esc(q)}</span></li>`).join("")}</ul>
+      </div>
+      <div>
+        <p class="de-meta">${esc(b.boundaryName)}</p>
+        <div class="boundary" role="group" aria-label="${esc(b.boundaryName)}">
+          <div class="boundary__nodes">
+            ${b.nodes.map((n) => `<div class="node"><span class="node__title">${esc(n.title)}</span><span class="node__sub">${esc(n.subtitle)}</span><span class="node__meta"><span class="de-meta">Detail</span><span class="de-meta">${esc(n.detail)}</span></span></div>`).join('<div class="link-h" aria-hidden="true"></div>')}
+          </div>
+          <div class="gate"><span class="gate__dot" aria-hidden="true"></span><span class="gate__label">${esc(b.gate.label)}</span><span class="gate__policy">${esc(b.gate.policy)}</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="de-cells groups">
+      <div><p class="de-meta">Representative scope</p>${list(b.scope)}</div>
+      <div><p class="de-meta">Management may include</p>${list(b.management)}</div>
+      <div><p class="de-meta">Signal examples</p>${list(b.signals)}</div>
+      <div><p class="de-meta">Representative outputs</p>${list(b.outputs)}</div>
+    </div>`;
+}
+
+/* ---- Phone row + rail (ProtectionCommandDeck.tsx:280-321) ---- */
+const pRow = document.getElementById("p-row");
+const pTablist = document.getElementById("p-tablist");
+pRow.innerHTML = BLOCKS.filter((b) => !b.continuous).map((b) =>
+  `<button class="ptab" id="p-tab-${b.id}" type="button" role="tab" aria-selected="false" aria-controls="p-panel" tabindex="-1" data-id="${b.id}">${esc(b.phoneLabel)}</button>`).join("");
+{
+  const x = byId("exposure");
+  pTablist.insertAdjacentHTML("beforeend", `<button class="prail" id="p-tab-${x.id}" type="button" role="tab" aria-selected="false" aria-controls="p-panel" tabindex="-1" data-id="${x.id}" data-continuous="true"><span class="prail__name">${esc(x.phoneLabel)}</span><span class="prail__tag">Continuous · under all seven</span></button>`);
+}
+function phoneHTML(b) {
+  return `<h3 class="pblock__name">${esc(b.name)}<span class="pblock__answers">Answers ${esc(b.answers)}</span></h3>
+    <p class="pblock__purpose">${esc(b.purpose)}</p>
+    <ul class="pblock__qs" aria-label="What an assessment asks">${b.questions.map((q) => `<li>${esc(q)}</li>`).join("")}</ul>
+    <div class="pblock__bnd">
+      <h4>${esc(b.boundaryName)}</h4>
+      <dl>
+        ${b.nodes.map((n) => `<div><dt>${esc(n.title)}</dt><dd>${esc(n.subtitle)}.</dd></div>`).join("")}
+        <div><dt>${esc(b.gate.label)}</dt><dd>${esc(b.gate.policy)}.</dd></div>
+      </dl>
+    </div>`;
+}
+
+/* Edge fade only while the row actually scrolls. */
+function updateFade() {
+  const max = pRow.scrollWidth - pRow.clientWidth;
+  pRow.classList.toggle("fade-l", max > 1 && pRow.scrollLeft > 1);
+  pRow.classList.toggle("fade-r", max > 1 && pRow.scrollLeft < max - 1);
+}
+pRow.addEventListener("scroll", updateFade, { passive: true });
+window.addEventListener("resize", updateFade);
+if (document.fonts) document.fonts.ready.then(updateFade);
+if (window.ResizeObserver) new ResizeObserver(updateFade).observe(pRow);
+
+/* ---- Shared state: one selectedId for both layouts (R-03) ---- */
+const dPanel = document.getElementById("d-panel");
+const dPane = document.getElementById("d-pane");
+const pPanel = document.getElementById("p-panel");
+let swapToken = 0;
+
+function syncTabs() {
+  document.querySelectorAll('[role="tab"][data-id]').forEach((t) => {
+    const on = t.dataset.id === selectedId;
+    t.setAttribute("aria-selected", String(on));
+    t.tabIndex = on ? 0 : -1;
+  });
+  dPanel.setAttribute("aria-labelledby", `d-tab-${selectedId}`);
+  pPanel.setAttribute("aria-labelledby", `p-tab-${selectedId}`);
+}
+
+/* Desktop cross-fade, the live AnimatePresence mode="wait": exit {opacity 0, y -8},
+   then enter {opacity 0, y 8} -> {1, 0}, 0.2s each. Instant under reduced motion. */
+async function swapPane(b) {
+  const token = ++swapToken;
+  const visible = dPane.offsetParent !== null;
+  if (reduceMotion.matches || !visible || !dPane.animate) { dPane.innerHTML = paneHTML(b); return; }
+  dPane.getAnimations().forEach((a) => a.cancel());
+  const ease = "cubic-bezier(0.25, 0.1, 0.25, 1)";
+  const exit = dPane.animate([{ opacity: 1, transform: "translateY(0)" }, { opacity: 0, transform: "translateY(-8px)" }], { duration: 200, easing: ease, fill: "forwards" });
+  try { await exit.finished; } catch { return; }
+  if (token !== swapToken) return;
+  dPane.innerHTML = paneHTML(b);
+  const enter = dPane.animate([{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "translateY(0)" }], { duration: 200, easing: ease, fill: "forwards" });
+  exit.cancel();
+  enter.finished.then(() => { if (token === swapToken) enter.cancel(); }).catch(() => {});
+}
+
+function select(id, { focus = false, animate = true } = {}) {
+  if (!byId(id)) return;
+  const changed = id !== selectedId;
+  selectedId = id;
+  syncTabs();
+  const b = byId(id);
+  pPanel.innerHTML = phoneHTML(b); // phone swaps instantly, as live (R-06)
+  if (changed && animate) swapPane(b); else dPane.innerHTML = paneHTML(b);
+  if (focus) {
+    const scope = pRow.offsetParent !== null ? "p" : "d";
+    const el = document.getElementById(`${scope}-tab-${id}`);
+    el.focus();
+    if (scope === "p" && !b.continuous) el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: reduceMotion.matches ? "auto" : "smooth" });
+  }
+}
+
+/* Click / Enter / Space (native button activation) and arrow keys (fixes R-08:
+   the live phone row had Tab only). Activation follows focus. */
+document.querySelectorAll('[role="tab"][data-id]').forEach((t) => {
+  t.addEventListener("click", () => select(t.dataset.id));
+  t.addEventListener("keydown", (e) => {
+    const i = ORDER.indexOf(t.dataset.id);
+    let next = null;
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") next = ORDER[(i + 1) % ORDER.length];
+    else if (e.key === "ArrowUp" || e.key === "ArrowLeft") next = ORDER[(i - 1 + ORDER.length) % ORDER.length];
+    else if (e.key === "Home") next = ORDER[0];
+    else if (e.key === "End") next = ORDER[ORDER.length - 1];
+    if (next) { e.preventDefault(); select(next, { focus: true }); }
+  });
+});
+
+select("identity", { animate: false });
+updateFade();
+</script>
+</body>
+</html>

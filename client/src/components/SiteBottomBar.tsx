@@ -20,6 +20,7 @@ import { isDoor2Path } from "@/lib/isDoor2Path";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { AskDeGlyph } from "@/components/icons/AskDeGlyph";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { useDockAutohide } from "@/hooks/useDockAutohide";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   hasDeskNudgeBeenShown,
@@ -377,7 +378,12 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
  * Width is tweened as CSS width (not Framer `layout` / scale) so backdrop-filter
  * on the static glass layer does not smear text while the capsule grows.
  */
-export function SiteBottomBar() {
+/**
+ * `autohide` (opt-in, used by /version-7): the chapter dock and back-to-top tuck
+ * into the Ask DE button while the visitor reads down, and return on any sign of
+ * intent. See useDockAutohide for the rules. Default off: production unchanged.
+ */
+export function SiteBottomBar({ autohide = false }: { autohide?: boolean } = {}) {
   const [location] = useLocation();
   const prefersReducedMotion = useReducedMotion();
   const { showMenu } = useHomepageDockVisibility();
@@ -418,10 +424,12 @@ export function SiteBottomBar() {
     return () => window.removeEventListener("de-desk-open-change", onDesk as EventListener);
   }, []);
 
-  const showScrollTop = farDown;
   const showAskDE = !deskOpen;
   const compactAskDE = isDoor2Path(location);
-  const expanded = showMenu;
+  const barMountedGuess = !isPortal && (showAskDE || showMenu || farDown);
+  const { tucked, typing } = useDockAutohide(autohide, trackRef, barMountedGuess);
+  const showScrollTop = farDown && !tucked;
+  const expanded = showMenu && !tucked;
   const showBar = !isPortal && (showAskDE || expanded || showScrollTop);
 
   useLayoutEffect(() => {
@@ -483,7 +491,8 @@ export function SiteBottomBar() {
     }
 
     const publish = () => {
-      const height = `${Math.round(el.offsetHeight)}px`;
+      // Typing (autohide, phone): the bar steps aside, so floating chrome stops clearing it.
+      const height = typing ? "0px" : `${Math.round(el.offsetHeight)}px`;
       root.style.setProperty("--de-unified-bar-h", height);
       root.style.setProperty("--de-section-dock-h", expanded ? height : "0px");
     };
@@ -495,7 +504,7 @@ export function SiteBottomBar() {
       root.style.setProperty("--de-unified-bar-h", "0px");
       root.style.setProperty("--de-section-dock-h", "0px");
     };
-  }, [showBar, expanded, showAskDE, showScrollTop]);
+  }, [showBar, expanded, showAskDE, showScrollTop, typing]);
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -513,6 +522,20 @@ export function SiteBottomBar() {
       ref={trackRef}
       className="de-unified-bar pointer-events-none flex items-end justify-end"
       data-testid="site-bottom-bar"
+      data-autohide={autohide ? (typing ? "typing" : tucked ? "tucked" : "shown") : undefined}
+      style={
+        typing
+          ? {
+              transform: "translateY(calc(100% + 24px))",
+              opacity: 0,
+              transition: prefersReducedMotion ? "opacity 120ms linear" : "transform 240ms cubic-bezier(.2,.8,.2,1), opacity 240ms cubic-bezier(.2,.8,.2,1)",
+            }
+          : autohide
+            ? { transition: prefersReducedMotion ? "opacity 120ms linear" : "transform 240ms cubic-bezier(.2,.8,.2,1), opacity 240ms cubic-bezier(.2,.8,.2,1)" }
+            : undefined
+      }
+      aria-hidden={typing || undefined}
+      {...(typing ? { inert: "" } : {})}
     >
       <motion.div
         ref={barRef}
@@ -562,7 +585,7 @@ export function SiteBottomBar() {
           {...(!expanded ? { inert: "" } : {})}
         >
           <div className="w-full min-w-0 overflow-hidden">
-            <HomepageDockMenu />
+            <HomepageDockMenu progress={autohide} />
           </div>
         </div>
 

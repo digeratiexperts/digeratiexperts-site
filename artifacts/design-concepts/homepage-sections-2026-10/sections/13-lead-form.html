@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE section mockup — 13 Lead form</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../system/tokens.css">
+<style>
+  /* 13 · Lead form — full-bleed paper band (no island, no card-in-island).
+     Two columns: the statement and the three reassurances on the left; the
+     white form card on the right with "Prefer to call?" under it as the
+     alternative path. Everything else comes from tokens.css.
+     Head alignment: left-aligned on purpose. The §13 section block asks for
+     "two columns", which wins over the global centered-head allowance. */
+  .lead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 640px); grid-template-rows: auto 1fr; grid-template-areas: "head form" "assure form"; column-gap: 80px; align-items: start; }
+  .lead__statement { grid-area: head; }
+  .lead__form { grid-area: form; }
+  .lead__assure { grid-area: assure; }
+  .lead .de-h2 { max-width: 620px; text-wrap: balance; }
+
+  /* Reassurances: one compact body-weight list, magenta dash as the only mark
+     (no row hairlines, so they do not read as clickable rows). */
+  .lead__assure { margin-top: 28px; display: grid; gap: 10px; }
+  .lead__assure li { display: flex; align-items: center; font-size: 16px; line-height: 1.5; color: var(--de-ink-body); }
+  .lead__assure .de-dash { margin-right: 12px; flex-shrink: 0; }
+
+  /* Form card: tokens' paper card at its own 24px padding. Inputs carry a
+     ≥3:1 edge from the token (#8a8494) so the boundary does not depend on fill. */
+  .lead__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 20px; }
+  .lead__card .de-input:focus { border-color: var(--de-magenta); } /* token focus-visible outline still applies */
+  .lead__submit { width: 100%; margin-top: 28px; }
+  .lead__footers { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--de-paper-hairline); }
+  .lead__footers li { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; line-height: 1.4; color: var(--de-ink-muted); }
+  .lead__footers svg { width: 16px; height: 16px; color: var(--de-magenta-paper-ink); flex-shrink: 0; }
+  .lead__call { margin-top: 20px; color: var(--de-ink-muted); }
+  .lead__call .de-link { font-weight: 600; min-height: 44px; margin: -10px 0; } /* 44px tap target, no visual change */
+
+  /* ≤1023: the form follows the lede directly; reassurances move under it. */
+  @media (max-width: 1023px) {
+    .lead { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "form" "assure"; }
+    .lead__form { margin-top: 32px; }
+    .lead__assure { margin-top: 28px; }
+  }
+  @media (max-width: 639px) {
+    .lead__fields { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .lead__submit { height: auto; min-height: 48px; padding: 13px 16px; white-space: normal; text-align: center; line-height: 1.25; }
+    .lead__footers { flex-direction: column; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<section class="f-paper de-section" id="assessment-form" aria-labelledby="assessment-form-title">
+  <div class="de-canvas lead">
+    <div class="lead__statement">
+      <p class="de-eyebrow">Cyber Risk Assessment</p>
+      <h2 class="de-h2" id="assessment-form-title">Get Your Free Security Assessment</h2>
+      <p class="de-lede">Discover vulnerabilities before attackers do. Our experts will analyze your security posture and provide actionable recommendations.</p>
+    </div>
+
+    <div class="lead__form">
+      <!-- Submission contract (as in DigeratiLeadFormSection.tsx): handled in JS,
+           not a native post. fetch POST /api/assessment with JSON
+           { fullName, email, phone, company, source: "lead_form" }.
+           Success toast: "Assessment Request Submitted!" /
+             "We'll contact you within 24 hours to schedule your Cyber Risk Assessment."
+           Error toast: "Error" / "Something went wrong. Please try again later."
+           Submitting label: "Submitting..."
+           Validation (verbatim): "Name must be at least 2 characters" ·
+             "Name must be less than 50 characters" · "Please enter a valid email address". -->
+      <form class="de-card--paper lead__card" novalidate>
+        <input type="hidden" name="source" value="lead_form">
+        <div class="lead__fields">
+          <div>
+            <label class="de-label" for="lead-name">Full Name <span aria-hidden="true">*</span></label>
+            <input class="de-input" id="lead-name" name="fullName" type="text" placeholder="John Smith" autocomplete="name" required minlength="2" maxlength="50">
+          </div>
+          <div>
+            <label class="de-label" for="lead-email">Work Email <span aria-hidden="true">*</span></label>
+            <input class="de-input" id="lead-email" name="email" type="email" placeholder="john@company.com" autocomplete="email" required>
+          </div>
+          <div>
+            <label class="de-label" for="lead-phone">Phone (Optional)</label>
+            <input class="de-input" id="lead-phone" name="phone" type="tel" placeholder="(555) 123-4567" autocomplete="tel">
+          </div>
+          <div>
+            <label class="de-label" for="lead-company">Company (Optional)</label>
+            <input class="de-input" id="lead-company" name="company" type="text" placeholder="Acme Corp" autocomplete="organization">
+          </div>
+        </div>
+        <button class="de-btn de-btn--primary lead__submit" type="submit">Get My Cyber Risk Assessment <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>
+        <!-- "Results in 24-48 hours" (live footer) is omitted on purpose:
+             docs/CLAIMS-REGISTER.md records no source for it (BRIEF truth notes). -->
+        <ul class="lead__footers">
+          <li><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Complimentary security assessment</li>
+          <li><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>No obligation, no credit card</li>
+        </ul>
+      </form>
+      <p class="lead__call de-body">Prefer to call? <a class="de-link" href="tel:+13254809870">325-480-9870</a></p>
+    </div>
+
+    <ul class="lead__assure">
+      <li><span class="de-dash" aria-hidden="true"></span>Independent findings</li>
+      <li><span class="de-dash" aria-hidden="true"></span>No switch required</li>
+      <li><span class="de-dash" aria-hidden="true"></span>Arizona-based experts</li>
+    </ul>
+  </div>
+</section>
+<!-- No stats, sequence IDs or metadata in this section, so the Oxanium face is
+     declared but never used. Resolve it anyway so system/render.mjs can verify
+     the font file loads. No visual effect. -->
+<script>document.fonts.load('600 16px Oxanium');</script>
+</body>
+</html>

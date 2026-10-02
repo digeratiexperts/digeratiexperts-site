@@ -30,6 +30,46 @@
 
 version: 2
 claims:
+  - id: de-homepage-section-mockups
+    owner: claude
+    subsystem: homepage-design-concepts
+    branch: claude/sleepy-archimedes-mccoav
+    base_sha: 8fc5524907dc3fe450c9ba32b7c852a4b5ac4354
+    files:
+      - artifacts/design-concepts/homepage-sections-2026-10/**
+      - client/src/pages/versions/v7/**
+      - client/src/pages/versions/registry.ts (the v7 entry)
+      - client/src/pages/versions/README.md (the v7 row)
+      - client/src/App.tsx (the /version-7 route and its own-bottom-bar exclusion)
+      - server/spaKnownPaths.ts, server/spaKnownPaths.test.ts (/version-7)
+      - client/src/hooks/useDockAutohide.ts (new)
+      - client/src/components/SiteBottomBar.tsx (opt-in autohide prop and its visibility lines only)
+      - client/src/components/HomepageSectionNav.tsx (opt-in chapter progress in HomepageDockMenu only)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: "can you mock up every section on the live
+      Digeratiexperts.com homepage and make it look how it should look. just
+      give images of your version for each section in order." Exploration Mode
+      scoped to static mockups: one standalone HTML mock and one 1440px PNG
+      per live section in live order, built on the Tier 2 tokens, every string
+      from the transcribed content inventory, the live threat feed captured
+      2026-10-01, the founder photo as the only photograph. No client/ files;
+      production / untouched. Overlap check: PR 298 (issue 296) rewrites the
+      live homepage sections in client/; this lane does not touch them.
+      Round 3 (Joe: "continue"): the reviewed mocks become the noindex
+      /version-7 preview. Autohide is opt-in (SiteBottomBar autohide prop,
+      default off), so production chrome is unchanged. Overlap recorded:
+      draft PR 319 (Desk + Ask DE chooser) edits SiteBottomBar.tsx in the
+      chooser markup; this lane edits only the bar's visibility lines and
+      props, disjoint hunks.
+      Joe, 2026-10-02 (multiple-choice review): merge the /version-7 preview
+      now; do not replace / yet; autohide stays preview-only; keep the
+      approved phone label sizes; the Ask DE nudge overlap on the phone hero
+      stays with the Desk lane ("keep an eye on it later"); the 24/7 label is
+      already "Security Updates" in V7 (the live label survives only in frozen
+      v1/v3); proof-section review claims wait on a review-source funnel Joe
+      asked for ("connect a funnel for those sources to RSS into our data").
   - id: de-desk-gold
     owner: claude
     subsystem: de-desk

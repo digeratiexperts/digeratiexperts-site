@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE section mockup — template</title>
+<link rel="stylesheet" href="../system/tokens.css">
+<style>
+  /* Section-specific styles only. Reuse tokens.css classes first. */
+  .demo-cards .de-card { display: flex; flex-direction: column; min-height: 240px; }
+  .demo-cards .de-stat { margin-top: 20px; }
+  .demo-cards .de-body { margin-top: 10px; flex: 1; }
+  .demo-cards .de-small { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--de-hairline); }
+</style>
+</head>
+<body>
+<section class="f-well de-section">
+  <div class="de-canvas">
+    <div class="de-box de-grain" style="padding: 56px 40px 48px;">
+      <div class="de-head">
+        <p class="de-eyebrow">Why Digerati Experts</p>
+        <h2 class="de-h2">The threats are <span class="de-accent">real</span></h2>
+        <p class="de-lede">Template copy only. Real sections read every fact from CONTENT-INVENTORY.md.</p>
+      </div>
+      <div class="de-grid de-grid--4 demo-cards" style="margin-top: 36px;">
+        <article class="de-card">
+          <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <p class="de-stat">48%</p>
+          <p class="de-body">of breaches involve ransomware</p>
+          <p class="de-small">— Verizon DBIR 2026</p>
+        </article>
+        <article class="de-card"><span class="de-iconwell"></span><p class="de-stat">$11.5M</p><p class="de-body">average cost of a data breach in the United States</p><p class="de-small">— IBM Cost of a Data Breach 2026</p></article>
+        <article class="de-card"><span class="de-iconwell"></span><p class="de-stat">99%+</p><p class="de-body">of unauthorized access attempts are blocked by MFA</p><p class="de-small">— Microsoft Digital Defense Report 2025</p></article>
+        <article class="de-card"><span class="de-iconwell"></span><p class="de-stat">$392M</p><p class="de-body">in internet crime losses reported from Arizona in 2024</p><p class="de-small">— FBI IC3 Annual Report 2024</p></article>
+      </div>
+      <p style="margin-top: 24px;"><a class="de-link" href="#">Full sourced facts <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></p>
+      <div style="margin-top: 28px; display:flex; gap: 12px; flex-wrap: wrap;">
+        <a class="de-btn de-btn--primary" href="#">Primary action</a>
+        <a class="de-btn de-btn--hero" href="#">Hero action</a>
+        <a class="de-btn de-btn--outline" href="#">Outline</a>
+        <span class="de-chip">Chip</span><span class="de-chip de-chip--active">Active chip</span><span class="de-tag">Illustrative</span>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="f-paper de-section">
+  <div class="de-canvas">
+    <div class="de-island" style="padding: 56px 48px;">
+      <p class="de-eyebrow">Paper island</p>
+      <h2 class="de-h2">Paper heading with a <span class="de-colon">:</span></h2>
+      <p class="de-lede">Lede on paper.</p>
+      <div class="de-cells de-cells--paper de-grid--4" style="margin-top: 28px;">
+        <div><span class="de-iconwell de-iconwell--light"></span><h3 class="de-h4" style="margin-top:14px">Cell title</h3><p class="de-body" style="margin-top:6px">Cell body line.</p></div>
+        <div><h3 class="de-h4">Cell</h3></div><div><h3 class="de-h4">Cell</h3></div><div><h3 class="de-h4">Cell</h3></div>
+      </div>
+      <div style="margin-top: 28px; display:flex; gap: 12px;"><a class="de-btn de-btn--primary" href="#">Primary</a><a class="de-btn de-btn--outline-paper" href="#">Outline paper</a><a class="de-link" href="#">Paper link</a></div>
+    </div>
+  </div>
+</section>
+</body>
+</html>
