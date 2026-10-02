@@ -45,7 +45,7 @@ claims:
       - client/src/hooks/useDockAutohide.ts (new)
       - client/src/components/SiteBottomBar.tsx (opt-in autohide prop and its visibility lines only)
       - client/src/components/HomepageSectionNav.tsx (opt-in chapter progress in HomepageDockMenu only)
-    status: active
+    status: verified-live
     started: 2026-10-01
     note: >-
       Joe, 2026-10-01: "can you mock up every section on the live
@@ -70,6 +70,16 @@ claims:
       already "Security Updates" in V7 (the live label survives only in frozen
       v1/v3); proof-section review claims wait on a review-source funnel Joe
       asked for ("connect a funnel for those sources to RSS into our data").
+      RELEASED 2026-10-02: merged as PR 315 (d5f3479a) at 13:23Z and verified
+      live: production release.txt d5f3479a, /version-7 answers 200 with
+      X-Robots-Tag noindex, nofollow, / unchanged (200), and
+      scripts/qa/homepage-v7-check.mjs passes 31/31 against production at
+      390/768/1440 including the bar autohide on the live page; the live
+      threat feed renders real CISA KEV items with full dates. Files
+      released. Open follow-ups, not claimed: the Ask DE nudge over the phone
+      hero (Desk lane); the review-source funnel (Yelp keys, Thumbtack and
+      Google copy from Joe, then a Business Profile API poller); the
+      shared THREAT_ATTRIBUTION string still reads "Digerati" alone on /.
   - id: de-desk-gold
     owner: claude
     subsystem: de-desk
