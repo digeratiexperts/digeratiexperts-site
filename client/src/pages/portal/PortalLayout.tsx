@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { LogOut, Search } from "lucide-react";
 import "@/styles/portal.css";
@@ -77,6 +77,17 @@ export function PortalLayout({
   const [location] = useLocation();
   const { ready, user } = usePortalSession();
   const [theme, themePreference, setThemePreference] = usePortalTheme();
+  // Portalled overlays (dialogs, menus, popovers) render into <body>; give
+  // <body> the portal token scope while a portal page is mounted.
+  useEffect(() => {
+    const body = document.body;
+    body.classList.add("de-portal-scope");
+    body.dataset.portalTheme = theme;
+    return () => {
+      body.classList.remove("de-portal-scope");
+      delete body.dataset.portalTheme;
+    };
+  }, [theme]);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const impersonatingCompany = readImpersonatingCompany();
   usePortalHubEvents();

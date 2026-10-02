@@ -60,17 +60,19 @@ export default function PortalResetPassword() {
             <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
           </div>
           <Card className="pt-still relative border-border bg-card shadow-none">
-            <CardContent className="pt-6 space-y-4">
+            <CardHeader className="space-y-2">
+              <h1 className="font-heading text-2xl font-semibold leading-none tracking-tight">Reset link not valid</h1>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div role="alert" className="pt-callout pt-tone-bad pt-ink flex items-center gap-2 rounded-lg border p-3 text-sm">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 Invalid or missing reset token. Please request a new password reset link.
               </div>
-              <Link href="/portal/forgot-password">
-                <Button variant="brand"
-                  className="w-full" data-testid="button-request-new-link">
+              <Button asChild variant="brand" className="w-full">
+                <Link href="/portal/forgot-password" data-testid="button-request-new-link">
                   Request New Link
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -102,12 +104,11 @@ export default function PortalResetPassword() {
                   <CheckCircle2 className="h-5 w-5 flex-shrink-0 mt-0.5" />
                   <p className="text-sm">Password updated successfully. You can now sign in with your new password.</p>
                 </div>
-                <Link href="/portal/login">
-                  <Button variant="brand"
-                  className="w-full" data-testid="button-go-login">
+                <Button asChild variant="brand" className="w-full">
+                  <Link href="/portal/login" data-testid="button-go-login">
                     Go to Login
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">

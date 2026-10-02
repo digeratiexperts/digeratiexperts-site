@@ -68,11 +68,11 @@ export default function PortalForgotPassword() {
                     If an account exists for <strong>{email}</strong>, a password reset link has been sent. Check your inbox and spam folder.
                   </p>
                 </div>
-                <Link href="/portal/login">
-                  <Button variant="outline" className="w-full border-border bg-background hover:bg-accent" data-testid="link-back-to-login">
+                <Button asChild variant="outline" className="w-full border-border bg-background hover:bg-accent">
+                  <Link href="/portal/login" data-testid="link-back-to-login">
                     Back to Login
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">

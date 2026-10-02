@@ -90,11 +90,11 @@ export default function PortalSignup() {
           <Card className="pt-still relative border-border bg-card shadow-none">
             <CardContent className="pt-12 pb-12 text-center">
               <CheckCircle className="pt-ink pt-tone-ok mx-auto mb-4 h-12 w-12" />
-              <h2 className="font-heading mb-2 text-xl font-semibold">Account Created Successfully!</h2>
+              <h1 className="font-heading mb-2 text-xl font-semibold">Account Created Successfully!</h1>
               <p className="mb-4 text-sm text-muted-foreground">
                 Your portal account has been created. Redirecting to login...
               </p>
-              <div className="animate-spin h-5 w-5 border-2 border-gray-300 border-t-white rounded-full mx-auto" />
+              <div role="status" aria-label="Redirecting to sign in" className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-border border-t-foreground" />
             </CardContent>
           </Card>
         </div>
