@@ -303,7 +303,7 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
 
         <div className="mt-8 flex flex-col gap-3 border-t border-[var(--de-hairline)] pt-6 text-base sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <Link href="/about/client-bill-of-rights">
+            <Link href="/about/client-bill-of-rights" className="inline-flex items-center max-md:min-h-11">
               <span className="text-de-magenta-ink hover:text-[#f0187a]" data-testid="link-proof-bill-of-rights">
                 Client Bill of Rights
               </span>
@@ -311,7 +311,7 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
             <span className="text-white/25" aria-hidden="true">
               ·
             </span>
-            <Link href="/about/guarantee">
+            <Link href="/about/guarantee" className="inline-flex items-center max-md:min-h-11">
               <span className="text-de-magenta-ink hover:text-[#f0187a]" data-testid="link-proof-guarantee">
                 Our Guarantee
               </span>
@@ -319,7 +319,7 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
             <span className="text-white/25" aria-hidden="true">
               ·
             </span>
-            <Link href="/trust/trust-center">
+            <Link href="/trust/trust-center" className="inline-flex items-center max-md:min-h-11">
               <span className="text-de-magenta-ink hover:text-[#f0187a]" data-testid="link-proof-trust">
                 Trust Center
               </span>
@@ -327,13 +327,13 @@ export const DigeratiTestimonialsSection = (): JSX.Element => {
             <span className="text-white/25" aria-hidden="true">
               ·
             </span>
-            <Link href="/industries/healthcare">
+            <Link href="/industries/healthcare" className="inline-flex items-center max-md:min-h-11">
               <span className="text-de-magenta-ink hover:text-[#f0187a]">Browse industries</span>
             </Link>
           </div>
           <p className="text-sm text-white/55">
             Serving professional services, healthcare, construction, nonprofit, and regulated
-            organizations across Greater Phoenix · {PRIMARY_PHONE.display}
+            organizations across Greater Phoenix · <span className="whitespace-nowrap">{PRIMARY_PHONE.display}</span>
           </p>
         </div>
       </HomeContainer>
