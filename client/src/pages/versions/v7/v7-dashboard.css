@@ -1,0 +1,191 @@
+/* Version 7 · light "dashboard" treatment.
+   Joe, 2026-10-02, with three dark dashboard references (Cryptovue, AI Content):
+   "convert the white sections to this style, well i still want white but the
+   white on cream looks stupid" + "text looks so much better in both of these
+   and the accent colors".
+
+   Tier 2 changes, preview only (DESIGN-AUTHORITY: palette and type stack are
+   defaults, not identity):
+   Joe, with an Untitled UI pricing reference: "this is what i mean by grey cards".
+   - paper ground: warm cream #f7f5f2 → white
+   - flat hairline grids → neutral grey cards one step off the ground (zinc,
+     no tint), 1px border, white controls and inner wells on top, tinted
+     number pills, ghost arrow buttons
+   - type: one calm sans (Inter) for headings, medium-weight titles, softer
+     secondary grey
+   - accent: magenta → violet pairing (the AI Content reference's purple, kept on brand) on pills and icons only;
+     magenta stays the CTA colour
+   Loaded after every section stylesheet (HomepageV7 imports it last). */
+
+.v7 {
+  --v7-font-heading: "Inter", system-ui, sans-serif;
+  --v7-paper: #ffffff;
+  --v7-paper-raised: #f4f4f5;
+  --v7-dash-card-bg: #f4f4f5;
+  --v7-dash-inner: #ffffff;
+  --v7-paper-hairline: #e4e4e7;
+  --v7-ink: #18181b;
+  --v7-ink-body: #3f3f46;
+  --v7-ink-muted: #5c5c66;
+  --v7-violet-ink: #6d3fd9;
+  --v7-accent-paper-ink: #8a1cae;
+  --v7-accent-grad: linear-gradient(135deg, #d3126a 0%, #8b3dff 100%);
+  --v7-accent-tint: rgba(139, 61, 255, 0.09);
+  --v7-dash-card-border: #e4e4e7;
+  --v7-dash-card-shadow: none;
+  --v7-dash-card-shadow-hover: 0 12px 28px -18px rgba(24, 24, 27, 0.28);
+    }
+
+/* ---------- Type: calmer, the references' hierarchy ---------- */
+.v7 .v7-h1 { font-weight: 650; letter-spacing: -0.035em; }
+.v7 .v7-h2 { font-weight: 600; letter-spacing: -0.03em; line-height: 1.12; }
+.v7 .v7-h2--sub { font-weight: 600; letter-spacing: -0.025em; }
+.v7 .v7-h3, .v7 .v7-h4 { font-weight: 600; letter-spacing: -0.015em; }
+.v7 .v7-lede { color: rgba(255, 255, 255, 0.64); }
+.v7 .v7-body { color: rgba(255, 255, 255, 0.62); }
+.v7 .f-paper .v7-lede, .v7 .v7-island .v7-lede { color: var(--v7-ink-muted); }
+.v7 .f-paper .v7-body, .v7 .v7-island .v7-body, .v7 .f-paper .v7-small { color: var(--v7-ink-muted); }
+.v7 .f-paper .v7-eyebrow, .v7 .v7-island .v7-eyebrow, .v7 .v7-eyebrow--paper { color: var(--v7-accent-paper-ink); }
+.v7 .f-paper .v7-seq, .v7 .v7-island .v7-seq { color: var(--v7-accent-paper-ink); }
+.v7 .f-paper .v7-link, .v7 .v7-island .v7-link { color: var(--v7-accent-paper-ink); }
+.v7 .f-paper .v7-link:hover, .v7 .v7-island .v7-link:hover { color: var(--v7-violet-ink); }
+.v7 .f-paper .v7-dash { background: var(--v7-accent-grad); }
+
+/* ---------- Paper bands: no grain, cool ground ---------- */
+.v7 .f-paper { background: var(--v7-paper); }
+.v7 .v7-island::before { display: none; }
+
+/* ---------- The light card ---------- */
+.v7 .v7-card--paper,
+.v7 .f-paper .v7-dash-card {
+  background: var(--v7-dash-card-bg);
+  border: 1px solid var(--v7-dash-card-border);
+  border-radius: 18px;
+  box-shadow: var(--v7-dash-card-shadow);
+}
+.v7 .v7-cells--paper { background: var(--v7-dash-card-bg); border-color: var(--v7-dash-card-border); border-radius: 18px; box-shadow: var(--v7-dash-card-shadow); }
+.v7 .f-paper .v7-input { border-color: rgba(20, 16, 40, 0.16); border-radius: 10px; background: #fff; }
+.v7 .f-paper .v7-input:hover { border-color: rgba(20, 16, 40, 0.28); }
+.v7 .f-paper .v7-input:focus, .v7 .f-paper .v7-input:focus-visible { border-color: #8b3dff; box-shadow: 0 0 0 4px rgba(139, 61, 255, 0.12); }
+.v7 .v7-btn--outline-paper { border-color: rgba(20, 16, 40, 0.16); background: #fff; box-shadow: 0 1px 2px rgba(18, 12, 40, 0.05); }
+.v7 .v7-btn--outline-paper:hover { border-color: rgba(139, 61, 255, 0.5); color: var(--v7-violet-ink); }
+.v7 .v7-iconwell--light { background: var(--v7-accent-tint); border-color: transparent; color: var(--v7-accent-paper-ink); }
+
+/* Number pill (01, 02 …): the references' tinted delta badge. */
+.v7 .f-paper .v7-dash-pill {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 9px; border-radius: 999px;
+  background: var(--v7-accent-tint); color: var(--v7-accent-paper-ink); line-height: 1;
+}
+/* Ghost icon button (the references' ⋮ / filter buttons). */
+.v7 .f-paper .v7-dash-ghost {
+  display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 10px;
+  border: 1px solid var(--v7-dash-card-border); background: #fff; color: var(--v7-ink-muted);
+  box-shadow: 0 1px 2px rgba(18, 12, 40, 0.05);
+  transition: border-color 200ms ease-out, color 200ms ease-out, transform 200ms ease-out;
+}
+
+/* ---------- 02 · Why we exist: claims become a card stack ---------- */
+.v7 .v7s-02 #why-we-exist { border-top: 0; }
+.v7 .v7s-02 .claims { display: grid; gap: 12px; background: transparent; border: 0; box-shadow: none; overflow: visible; }
+.v7 .v7s-02 .claims > *:nth-child(n) {
+  border: 1px solid var(--v7-dash-card-border); border-radius: 16px;
+  background: var(--v7-dash-card-bg); box-shadow: var(--v7-dash-card-shadow);
+  transition: box-shadow 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out;
+}
+.v7 .v7s-02 .claims > *:nth-child(n):hover { border-color: #d4d4d8; box-shadow: var(--v7-dash-card-shadow-hover); transform: translateY(-1px); }
+.v7 .v7s-02 .claim__title a { text-decoration: none; font-weight: 600; }
+.v7 .v7s-02 .claim:hover .claim__title a, .v7 .v7s-02 .claim__title a:focus-visible { color: var(--v7-accent-paper-ink); }
+.v7 .v7s-02 .claim .v7-dash { height: 3px; border-radius: 2px; }
+.v7 .v7s-02 .claim__chev { color: var(--v7-ink-muted); }
+.v7 .v7s-02 .claim:hover .claim__chev, .v7 .v7s-02 .claim:focus-within .claim__chev { color: var(--v7-accent-paper-ink); transform: translateX(2px); }
+.v7 .v7s-02 .why__ask { border-top-color: var(--v7-dash-card-border); }
+
+/* ---------- 04 · What we tackle: six cards ---------- */
+.v7 .v7s-04 .problems { gap: 16px; border: 0; background: transparent; overflow: visible; }
+.v7 .v7s-04 .problems > .problem:nth-child(n) {
+  padding: 22px 22px 24px; border: 1px solid var(--v7-dash-card-border); border-radius: 18px;
+  background: var(--v7-dash-card-bg); box-shadow: var(--v7-dash-card-shadow);
+  transition: box-shadow 220ms ease-out, border-color 220ms ease-out, transform 220ms ease-out;
+}
+.v7 .v7s-04 .problems > .problem:nth-child(n):hover,
+.v7 .v7s-04 .problems > .problem:nth-child(n):has(.problem__link:focus-visible) {
+  border-color: #d4d4d8; box-shadow: var(--v7-dash-card-shadow-hover); transform: translateY(-2px);
+}
+.v7 .v7s-04 .problem .v7-seq {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 9px; border-radius: 999px;
+  background: var(--v7-accent-tint); color: var(--v7-accent-paper-ink); letter-spacing: 0.08em;
+}
+.v7 .v7s-04 .problem__arrow {
+  box-sizing: content-box; width: 14px; height: 14px; padding: 8px; border-radius: 10px;
+  border: 1px solid var(--v7-dash-card-border); background: #fff; color: var(--v7-ink-muted);
+  box-shadow: 0 1px 2px rgba(18, 12, 40, 0.05);
+}
+.v7 .v7s-04 .problem:hover .problem__arrow, .v7 .v7s-04 .problem:has(.problem__link:focus-visible) .problem__arrow {
+  color: #fff; background: var(--v7-accent-grad); border-color: transparent;
+}
+.v7 .v7s-04 .problem__title { margin-top: 18px; }
+.v7 .v7s-04 .problem__link { text-decoration: none; font-weight: 600; font-size: 17px; letter-spacing: -0.01em; }
+.v7 .v7s-04 .problem:hover .problem__link, .v7 .v7s-04 .problem__link:focus-visible { color: var(--v7-accent-paper-ink); }
+.v7 .v7s-04 .problem__link:focus-visible::after { border-radius: 18px; }
+.v7 .v7s-04 .tackle__ask {
+  padding: 20px 20px 20px 24px; border: 1px solid var(--v7-dash-card-border); border-radius: 18px;
+  background: var(--v7-dash-card-bg); box-shadow: var(--v7-dash-card-shadow);
+}
+
+/* ---------- 06 · Eight blocks: the intro band only ---------- */
+.v7 .v7s-06 .f-paper .v7-box, .v7 .v7s-06 .f-paper [class*="model"] { box-shadow: 0 30px 60px -30px rgba(18, 12, 40, 0.45); }
+
+/* ---------- 08 · Why Arizona: pillars as cards, the document as a panel ---------- */
+.v7 .v7s-08 .why__pillars { display: grid; gap: 12px; border-top: 0; }
+.v7 .v7s-08 .why__pillars li {
+  padding: 18px 20px; border: 1px solid var(--v7-dash-card-border); border-radius: 16px;
+  background: var(--v7-dash-card-bg); box-shadow: var(--v7-dash-card-shadow);
+}
+.v7 .v7s-08 .doc { border-color: var(--v7-dash-card-border); border-radius: 20px; background: var(--v7-dash-card-bg); box-shadow: 0 1px 2px rgba(18, 12, 40, 0.04), 0 30px 60px -28px rgba(18, 12, 40, 0.25); }
+.v7 .v7s-08 .doc__bar { background: transparent; }
+.v7 .v7s-08 .doc__row { margin: 0 14px; padding: 16px 12px; }
+.v7 .v7s-08 .doc__row + .doc__row { border-top: 0; }
+.v7 .v7s-08 .doc__row:nth-child(n+3) { margin-top: 10px; border: 1px solid var(--v7-dash-card-border); border-radius: 12px; background: var(--v7-dash-inner); }
+.v7 .v7s-08 .doc__row:last-child { margin-bottom: 14px; }
+.v7 .v7s-08 .doc__bar-ph { background: linear-gradient(90deg, rgba(139, 61, 255, 0.22), rgba(211, 18, 106, 0.12)); }
+
+/* ---------- 13 · Lead form ---------- */
+.v7 .v7s-13 .lead__card { padding: 28px; }
+.v7 .v7s-13 .lead__footers { border-top-color: var(--v7-dash-card-border); }
+.v7 .v7s-13 .lead__footers svg { color: var(--v7-accent-paper-ink); }
+
+/* ---------- 14 · FAQ: each question a card ---------- */
+.v7 .v7s-14 .faq-band { border-top: 0; }
+.v7 .v7s-14 .faq-list { display: grid; gap: 10px; border-bottom: 0; }
+.v7 .v7s-14 .faq-item {
+  border: 1px solid var(--v7-dash-card-border); border-radius: 16px; background: var(--v7-dash-card-bg); overflow: hidden;
+  box-shadow: var(--v7-dash-card-shadow);
+}
+@media (hover: hover) and (pointer: fine) {
+  .v7 .v7s-14 .faq-item:hover { border-color: #d4d4d8; box-shadow: var(--v7-dash-card-shadow-hover); }
+}
+.v7 .v7s-14 .faq-item[open] {
+  border-color: rgba(139, 61, 255, 0.3);
+  box-shadow: inset 3px 0 0 #a21caf, var(--v7-dash-card-shadow-hover);
+  background: var(--v7-dash-card-bg);
+}
+.v7 .v7s-14 .faq-item summary { padding: 14px 14px 14px 22px; }
+.v7 .v7s-14 .faq-q { font-weight: 600; }
+.v7 .v7s-14 .faq-chev { width: 34px; height: 34px; border-radius: 10px; background: var(--v7-accent-tint); color: var(--v7-accent-paper-ink); }
+.v7 .v7s-14 .faq-item summary:hover .faq-chev, .v7 .v7s-14 .faq-item[open] .faq-chev { background: var(--v7-accent-grad); color: #fff; }
+.v7 .v7s-14 .faq-answer { padding: 0 56px 22px 22px; }
+.v7 .v7s-14 .faq-answer p { color: var(--v7-ink-muted); }
+
+/* ---------- 15 · Next step: standards as mini cards ---------- */
+.v7 .v7s-15 .next__standards { gap: 10px; border: 0; }
+.v7 .v7s-15 .next__standards li:nth-child(n) {
+  padding: 14px 14px 16px; border: 1px solid var(--v7-dash-card-border); border-radius: 14px;
+  background: var(--v7-dash-card-bg); box-shadow: var(--v7-dash-card-shadow);
+}
+.v7 .v7s-15 .next__field .v7-input { border-color: rgba(20, 16, 40, 0.16); box-shadow: 0 1px 2px rgba(18, 12, 40, 0.05); }
+
+@media (prefers-reduced-motion: reduce) {
+  .v7 .v7s-02 .claims > *:nth-child(n):hover,
+  .v7 .v7s-04 .problems > .problem:nth-child(n):hover { transform: none; }
+}
+.v7 .v7s-02 .claim .v7-dash, .v7 .v7s-08 .v7-dash, .v7 .v7s-13 .v7-dash { background: var(--v7-accent-grad); }

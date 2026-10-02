@@ -19,6 +19,8 @@ import { V7LeadForm } from "./sections/13-lead-form";
 import { V7Faq } from "./sections/14-faq";
 import { V7NextStep } from "./sections/15-next-step";
 import { V7ContactFooter } from "./sections/16-contact-footer";
+// Light "dashboard" treatment (Joe, 2026-10-02): last, so it wins over the section sheets.
+import "./v7-dashboard.css";
 
 /**
  * Digerati Experts homepage, Version 7: the live homepage, section by section,
