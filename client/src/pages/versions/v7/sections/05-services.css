@@ -1,0 +1,53 @@
+.v7 .v7s-05 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.v7 .v7s-05 .svc-path .v7-link, .v7 .v7s-05 .svc-aside .v7-link, .v7 .v7s-05 .svc-stack__head .v7-link, .v7 .v7s-05 .svc-cell .v7-link { min-height: 44px; display: inline-flex; align-items: center; }
+.v7 .v7s-05 .svc-head { display: flex; justify-content: space-between; align-items: last baseline; gap: 32px; }
+.v7 .v7s-05 .svc-head .v7-head { flex: 1 1 640px; }
+.v7 .v7s-05 .svc-aside { flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; column-gap: 10px; font-size: 16px; color: var(--v7-muted-soft); }
+.v7 .v7s-05 .svc-aside .v7-link { white-space: nowrap; }
+.v7 .v7s-05 .svc-paths { margin-top: 40px; }
+.v7 .v7s-05 .svc-paths > li { display: flex; min-width: 0; }
+.v7 .v7s-05 .svc-path { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.v7 .v7s-05 .svc-path--featured { border-color: var(--v7-hairline-strong); }
+.v7 .v7s-05 .svc-path__top { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; min-height: 44px; }
+@media (max-width: 1279px) {
+  .v7 .v7s-05 .svc-path__top { flex-wrap: wrap; }
+}
+.v7 .v7s-05 .svc-path__kicker { font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--v7-muted); white-space: nowrap; }
+.v7 .v7s-05 .svc-path__top .v7-tag { margin-left: auto; white-space: nowrap; }
+.v7 .v7s-05 .svc-path .v7-h3 { margin-top: 22px; color: #fbfaf8; }
+.v7 .v7s-05 .svc-path .v7-body { margin-top: 10px; flex: 1; }
+.v7 .v7s-05 .svc-path .v7-link { margin-top: 14px; align-self: flex-start; }
+.v7 .v7s-05 .svc-stack { margin-top: 56px; }
+.v7 .v7s-05 .svc-stack__head { display: flex; justify-content: space-between; align-items: end; gap: 32px; }
+.v7 .v7s-05 .svc-stack__head > div { flex: 1 1 640px; min-width: 0; }
+.v7 .v7s-05 .svc-stack__head > .v7-link { flex-shrink: 0; white-space: nowrap; }
+.v7 .v7s-05 .svc-stack__title { color: #fbfaf8; }
+.v7 .v7s-05 .svc-stack__lede { margin-top: 8px; max-width: 640px; }
+.v7 .v7s-05 .svc-stack__lede .v7-link--quiet { display: inline-flex; align-items: center; min-height: 44px; margin: -10px 0; }
+.v7 .v7s-05 .svc-rail { margin-top: 24px; grid-template-columns: repeat(3, minmax(0, 1fr)); border-left: 0; border-right: 0; border-radius: 0; }
+.v7 .v7s-05 .svc-rail > li { display: flex; gap: 16px; align-items: flex-start; padding: 24px; min-width: 0; }
+.v7 .v7s-05 .svc-rail > li:nth-child(n) { border-left: 1px solid var(--v7-hairline); border-top: 0; }
+.v7 .v7s-05 .svc-rail > li:nth-child(3n+1) { border-left: 0; padding-left: 0; }
+.v7 .v7s-05 .svc-rail > li:nth-child(n+4) { border-top: 1px solid var(--v7-hairline); }
+.v7 .v7s-05 .svc-cell { min-width: 0; }
+.v7 .v7s-05 .svc-cell .v7-h4 { color: #fbfaf8; }
+.v7 .v7s-05 .svc-cell .v7-body { font-size: 15px; margin-top: 4px; }
+.v7 .v7s-05 .svc-cell .v7-link { margin-top: 2px; font-size: 15px; }
+@media (max-width: 1023px) {
+  .v7 .v7s-05 .svc-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .v7 .v7s-05 .svc-rail > li:nth-child(n) { border-left: 1px solid var(--v7-hairline); border-top: 0; padding-left: 24px; }
+  .v7 .v7s-05 .svc-rail > li:nth-child(2n+1) { border-left: 0; padding-left: 0; }
+  .v7 .v7s-05 .svc-rail > li:nth-child(n+3) { border-top: 1px solid var(--v7-hairline); }
+}
+@media (max-width: 639px) {
+  .v7 .v7s-05 .svc-head { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .v7 .v7s-05 .svc-head .v7-head { flex: none; }
+  .v7 .v7s-05 .svc-paths { margin-top: 28px; }
+  .v7 .v7s-05 .svc-path__top .v7-tag { margin-left: 0; }
+  .v7 .v7s-05 .svc-stack { margin-top: 48px; }
+  .v7 .v7s-05 .svc-stack__head { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .v7 .v7s-05 .svc-stack__head > div { flex: none; }
+  .v7 .v7s-05 .svc-rail { grid-template-columns: 1fr; }
+  .v7 .v7s-05 .svc-rail > li:nth-child(n) { border-left: 0; border-top: 1px solid var(--v7-hairline); padding-left: 0; padding-right: 0; }
+  .v7 .v7s-05 .svc-rail > li:first-child { border-top: 0; }
+}

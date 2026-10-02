@@ -67,6 +67,72 @@ claims:
       report "no preference", so a device-following default would show light
       to most clients). 7: salvage of the stale claude-completion-program-lane
       into gaps on today's portal follows on this branch once audited.
+  - id: de-homepage-section-mockups
+    owner: claude
+    subsystem: homepage-design-concepts
+    branch: claude/sleepy-archimedes-mccoav
+    base_sha: 8fc5524907dc3fe450c9ba32b7c852a4b5ac4354
+    files:
+      - artifacts/design-concepts/homepage-sections-2026-10/**
+      - client/src/pages/versions/v7/**
+      - client/src/pages/versions/registry.ts (the v7 entry)
+      - client/src/pages/versions/README.md (the v7 row)
+      - client/src/App.tsx (the /version-7 route and its own-bottom-bar exclusion)
+      - server/spaKnownPaths.ts, server/spaKnownPaths.test.ts (/version-7)
+      - client/src/hooks/useDockAutohide.ts (new)
+      - client/src/components/SiteBottomBar.tsx (opt-in autohide prop and its visibility lines only)
+      - client/src/components/HomepageSectionNav.tsx (opt-in chapter progress in HomepageDockMenu only)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: "can you mock up every section on the live
+      Digeratiexperts.com homepage and make it look how it should look. just
+      give images of your version for each section in order." Exploration Mode
+      scoped to static mockups: one standalone HTML mock and one 1440px PNG
+      per live section in live order, built on the Tier 2 tokens, every string
+      from the transcribed content inventory, the live threat feed captured
+      2026-10-01, the founder photo as the only photograph. No client/ files;
+      production / untouched. Overlap check: PR 298 (issue 296) rewrites the
+      live homepage sections in client/; this lane does not touch them.
+      Round 3 (Joe: "continue"): the reviewed mocks become the noindex
+      /version-7 preview. Autohide is opt-in (SiteBottomBar autohide prop,
+      default off), so production chrome is unchanged. Overlap recorded:
+      draft PR 319 (Desk + Ask DE chooser) edits SiteBottomBar.tsx in the
+      chooser markup; this lane edits only the bar's visibility lines and
+      props, disjoint hunks.
+      Joe, 2026-10-02 (multiple-choice review): merge the /version-7 preview
+      now; do not replace / yet; autohide stays preview-only; keep the
+      approved phone label sizes; the Ask DE nudge overlap on the phone hero
+      stays with the Desk lane ("keep an eye on it later"); the 24/7 label is
+      already "Security Updates" in V7 (the live label survives only in frozen
+      v1/v3); proof-section review claims wait on a review-source funnel Joe
+      asked for ("connect a funnel for those sources to RSS into our data").
+  - id: de-desk-gold
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 5de266e
+    files:
+      - client/src/components/ZohoASAPWidget.tsx (the Desk stylesheet and the chip icon class only; no logic)
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
+      - client/src/components/SiteBottomBar.tsx (the Ask DE chooser classes only)
+      - design/DESIGN-AUTHORITY.md (Desk and gold rows), design/UI-STYLE-RULES.md (support chrome), brand/README.md (gold line)
+      - .cursor/skills/de-desk-ui/**, .cursor/rules/de-desk-design.mdc, .cursor/rules/visual-system-v2.mdc
+      - design/approved/de-desk-gold-2026-10-01.md, artifacts/visual-qa/desk-gold/**
+    status: active
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: of eight Desk UI mockups picked option 1, "Black +
+      Grey + Yellow", and overruled the brand rules for this surface ("build
+      it"). Built with the mark's Signal Gold #E3B23C and without the
+      mockup's glowing halo: a 1px gold cap and a white/10 hairline instead.
+      No magenta on the Desk or the chooser; the Desk logic is untouched.
+      Overlapped PR 303 (codex/de-desk-repair) on ZohoASAPWidget.tsx; that PR
+      merged (2b93cf85) and main was merged into this branch on 2026-10-01.
+      PR 303 changed ticket logic, this one only the stylesheet, so the widget
+      merged without a conflict. Main merged in again on 2026-10-02 (5de266e),
+      bringing PR 325's open-seed change to the widget. Maintenance Mode under the Product Preservation Law: every
+      tab, route, CTA, test id and behaviour kept.
   - id: portal-kit-long-tail
     owner: claude
     subsystem: client-portal-pages

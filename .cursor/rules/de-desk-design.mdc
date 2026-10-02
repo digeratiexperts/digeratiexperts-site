@@ -1,26 +1,26 @@
 ---
-description: DE Desk widget visual + copy playbook (white precision panel, Client Tools launcher)
+description: DE Desk widget visual + copy playbook (black + grey + gold panel, Client Tools launcher)
 globs: client/src/components/ZohoASAPWidget.tsx,client/src/components/SiteBottomBar.tsx,client/src/pages/portal/PortalChat.tsx
 alwaysApply: false
 ---
 
 # DE Desk design
 
-Primary file: `client/src/components/ZohoASAPWidget.tsx`. Full playbook: `.cursor/skills/de-desk-ui/SKILL.md`. Authority: `design/DESIGN-AUTHORITY.md` — the **Logic** and **Copy** sections below are Tier 0 (every mode); the **Shell** and **Tab content** presentation is the Joe-decided Tier 2 direction (white precision panel, Joe 2026-09-28, live via PR #277 since 2026-09-30): mandatory in Maintenance Mode, challengeable only explicitly in Exploration Mode, shipped only by Joe.
+Primary file: `client/src/components/ZohoASAPWidget.tsx`. Full playbook: `.cursor/skills/de-desk-ui/SKILL.md`. Authority: `design/DESIGN-AUTHORITY.md` — the **Logic** and **Copy** sections below are Tier 0 (every mode); the **Shell** and **Tab content** presentation is the Joe-decided Tier 2 direction (black + grey + gold panel, Joe 2026-10-01, superseding the white panel of 2026-09-28 / PR #277): mandatory in Maintenance Mode, challengeable only explicitly in Exploration Mode, shipped only by Joe.
 
 ## Shell (all tabs) — JOE-DECIDED current direction
 
-- **One white precision panel** (Joe, 2026-09-28; `design/UI-STYLE-RULES.md` support chrome): `#fbfbfa` panel, black/10 hairline, near-black ink, all through the one `--desk-*` token set in the widget. No purple glow, no magenta ring on the panel, no second theme or `!important` override.
-- Magenta `#D3126A` for avatar emphasis, active underline, send, CTAs, incident rail. Violet is lighting only.
-- Active tab: near-black label + magenta underline.
+- **One black + grey + gold panel** (Joe, 2026-10-01; `design/UI-STYLE-RULES.md` support chrome): `#0b0b0d` panel, charcoal rows and icon wells, white/10 hairline, white ink, all through the one `--desk-*` token set in the widget. A 1px gold cap on the panel; no glow, no gold ring, no second theme or `!important` override.
+- The mark's Signal Gold `#E3B23C` (`--desk-gold`) for the avatar ring, active underline, send, CTAs, selected states and the incident rail, with near-black `--desk-on-gold` text on gold fills. No magenta anywhere on the Desk. Violet is lighting only and is not used here.
+- Active tab: white label + gold underline.
 - Composer, status strip, and repeated footer stay off Client Tools.
 
 ## Tab content
 
 | Tab | Job |
 |-----|-----|
-| **Ask DE** | Conversational UI on the white panel. Composer dominant. Discovery chips. |
-| **Get Support** | Incident rail + focused issue list + light form + magenta submit. |
+| **Ask DE** | Conversational UI on the black panel. Composer dominant. Discovery chips. |
+| **Get Support** | Gold-edged incident rail + focused issue list + charcoal form + gold submit. |
 | **Client Tools** | Unauth: sign-in front door. Auth: Support / Secure services / Account launcher. Never a fake RMM or portal. |
 
 Do not put Cyber Risk Assessment, billing, or a 2×2 grid on Client Tools.
