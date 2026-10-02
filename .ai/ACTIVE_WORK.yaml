@@ -30,6 +30,26 @@
 
 version: 2
 claims:
+  - id: de-desk-expand-hint
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: d5f3479
+    files:
+      - client/src/components/ZohoASAPWidget.tsx (the expand button, its hint state and its stylesheet rules only)
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
+      - .cursor/skills/de-desk-ui/tokens-and-structure.md (the header line)
+      - artifacts/visual-qa/desk-expand-hint/**
+    status: active
+    started: 2026-10-02
+    note: >-
+      Joe, 2026-10-02, on the Desk's expand button: "animate this so people
+      know to make it full screen". A finite hint on the gold Desk: three gold
+      pulses with the arrows pushing outward and a "Full screen" label, about
+      five seconds after the docked Desk opens; at most once per page load and
+      three times per browser, retired once full screen is used, off while a
+      person is live, off on phones; reduced motion keeps the label without
+      movement. No logic beyond the hint's own state.
   - id: de-homepage-section-mockups
     owner: claude
     subsystem: homepage-design-concepts

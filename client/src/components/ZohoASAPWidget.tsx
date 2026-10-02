@@ -154,6 +154,39 @@ function trackDeskSupportFieldSpotlight(event: ReactPointerEvent<HTMLElement>) {
   field.style.setProperty("--desk-spot-y", `${Math.round(event.clientY - rect.top)}px`);
 }
 
+/**
+ * The full-screen hint (Joe, 2026-10-02: "animate this so people know to make
+ * it full screen"). The expand button nudges and a small gold label says what
+ * it does, shortly after the Desk opens. It plays at most once per page load
+ * and at most DESK_EXPAND_HINT_MAX times per browser, and never again once the
+ * visitor has used full screen. Storage is a per-viewer convenience: if it is
+ * blocked the hint still plays, once per page load.
+ */
+const DESK_EXPAND_HINT_KEY = "de-desk-expand-hint";
+const DESK_EXPAND_HINT_MAX = 3;
+const DESK_EXPAND_HINT_DELAY_MS = 1200;
+const DESK_EXPAND_HINT_DURATION_MS = 5200;
+type DeskExpandHintState = { used: boolean; shown: number };
+
+function readDeskExpandHint(): DeskExpandHintState {
+  try {
+    const raw = window.localStorage.getItem(DESK_EXPAND_HINT_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Partial<DeskExpandHintState> | null) : null;
+    const shown = Number(parsed?.shown);
+    return { used: parsed?.used === true, shown: Number.isFinite(shown) && shown > 0 ? shown : 0 };
+  } catch {
+    return { used: false, shown: 0 };
+  }
+}
+
+function writeDeskExpandHint(state: DeskExpandHintState) {
+  try {
+    window.localStorage.setItem(DESK_EXPAND_HINT_KEY, JSON.stringify(state));
+  } catch {
+    /* blocked storage: the once-per-page-load guard still holds */
+  }
+}
+
 /** Slow light under the pointer on Get Support issue rows. */
 function trackDeskSupportRowGlow(event: ReactPointerEvent<HTMLElement>) {
   if (event.pointerType !== "mouse") return;
@@ -349,6 +382,8 @@ export const ZohoASAPWidget = ({
 
   const [canDrag, setCanDrag] = useState(false);
   const [isDeskFullscreen, setIsDeskFullscreen] = useState(false);
+  const [expandHint, setExpandHint] = useState(false);
+  const expandHintPlayedRef = useRef(false);
   const ignoreDismissUntilRef = useRef(0);
 
   const deskDrag = useDraggableWindow({
@@ -395,6 +430,28 @@ export const ZohoASAPWidget = ({
   useEffect(() => {
     if (!canDrag) setIsDeskFullscreen(false);
   }, [canDrag]);
+
+  // Full-screen hint: shortly after the docked Desk opens on a screen wide
+  // enough to expand, unless a person is live in the chat (no distraction then).
+  useEffect(() => {
+    if (!isOpen || !canDrag || isDeskFullscreen || agentLive || expandHintPlayedRef.current) return;
+    const stored = readDeskExpandHint();
+    if (stored.used || stored.shown >= DESK_EXPAND_HINT_MAX) return;
+    const start = window.setTimeout(() => {
+      expandHintPlayedRef.current = true;
+      writeDeskExpandHint({ used: false, shown: stored.shown + 1 });
+      setExpandHint(true);
+    }, DESK_EXPAND_HINT_DELAY_MS);
+    return () => window.clearTimeout(start);
+  }, [isOpen, canDrag, isDeskFullscreen, agentLive]);
+  useEffect(() => {
+    if (!expandHint) return;
+    const stop = window.setTimeout(() => setExpandHint(false), DESK_EXPAND_HINT_DURATION_MS);
+    return () => window.clearTimeout(stop);
+  }, [expandHint]);
+  useEffect(() => {
+    if (!isOpen || isDeskFullscreen || !canDrag) setExpandHint(false);
+  }, [isOpen, isDeskFullscreen, canDrag]);
   useEffect(() => {
     if (!isDeskFullscreen) return;
     // Ref-counted lock instead of capture/restore: when the MegaMenu mobile
@@ -1443,18 +1500,29 @@ export const ZohoASAPWidget = ({
               {canDrag ? (
                 <button
                   type="button"
-                  className="de-desk-close"
+                  className={`de-desk-close de-desk-expand${expandHint ? " is-hinting" : ""}`}
                   data-testid="button-expand-desk"
                   aria-label={isDeskFullscreen ? "Exit full screen" : "Expand DE Desk to full screen"}
                   title={isDeskFullscreen ? "Exit full screen" : "Full screen"}
                   onPointerDown={(event) => event.stopPropagation()}
-                  onClick={() => setIsDeskFullscreen((current) => !current)}
+                  onClick={() => {
+                    const next = !isDeskFullscreen;
+                    // Once someone has used full screen, the hint has done its job.
+                    if (next) writeDeskExpandHint({ used: true, shown: DESK_EXPAND_HINT_MAX });
+                    setExpandHint(false);
+                    setIsDeskFullscreen(next);
+                  }}
                 >
                   {isDeskFullscreen ? (
                     <Minimize2 size={13} aria-hidden="true" />
                   ) : (
                     <Maximize2 size={13} aria-hidden="true" />
                   )}
+                  {expandHint ? (
+                    <span className="de-desk-expand-hint" aria-hidden="true" data-testid="desk-expand-hint">
+                      Full screen
+                    </span>
+                  ) : null}
                 </button>
               ) : null}
               <button
@@ -2616,6 +2684,63 @@ export const ZohoASAPWidget = ({
               flex: none;
             }
             .de-desk-close:hover { color: var(--desk-ink); border-color: rgba(255,255,255,0.28); }
+            /* Full-screen hint: three gold pulses with the arrows pushing
+               outward, and a label saying what the button does. Finite on
+               purpose: it plays, then the button goes quiet. */
+            .de-desk-expand { position: relative; }
+            .de-desk-expand.is-hinting {
+              color: var(--desk-gold-ink);
+              border-color: rgba(227,178,60,0.6);
+            }
+            .de-desk-expand.is-hinting::after {
+              content: "";
+              position: absolute;
+              inset: -1px;
+              border-radius: inherit;
+              pointer-events: none;
+              animation: de-desk-expand-ring 1.6s ease-out 0.1s 3;
+            }
+            .de-desk-expand.is-hinting svg {
+              animation: de-desk-expand-nudge 1.6s cubic-bezier(0.22, 1, 0.36, 1) 3;
+            }
+            .de-desk-expand-hint {
+              position: absolute;
+              right: calc(100% + 8px);
+              top: 50%;
+              transform: translateY(-50%);
+              padding: 5px 10px;
+              border-radius: 999px;
+              background: var(--desk-gold);
+              color: var(--desk-on-gold);
+              font-size: 12px;
+              font-weight: 700;
+              line-height: 1;
+              letter-spacing: 0.01em;
+              white-space: nowrap;
+              pointer-events: none;
+              box-shadow: 0 6px 16px -8px rgba(0,0,0,0.7);
+              animation: de-desk-expand-label 5.2s ease both;
+            }
+            @keyframes de-desk-expand-ring {
+              0% { box-shadow: 0 0 0 0 rgba(227,178,60,0.55); }
+              75%, 100% { box-shadow: 0 0 0 10px rgba(227,178,60,0); }
+            }
+            @keyframes de-desk-expand-nudge {
+              0%, 55%, 100% { transform: scale(1); }
+              25% { transform: scale(1.32); }
+            }
+            @keyframes de-desk-expand-label {
+              0% { opacity: 0; transform: translate(6px, -50%); }
+              8%, 88% { opacity: 1; transform: translate(0, -50%); }
+              100% { opacity: 0; transform: translate(6px, -50%); }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              /* No motion: the gold edge and the label still say it, for the
+                 same few seconds. */
+              .de-desk-expand.is-hinting::after,
+              .de-desk-expand.is-hinting svg { animation: none; }
+              .de-desk-expand-hint { animation: none; opacity: 1; transform: translateY(-50%); }
+            }
             .de-desk-tabs {
               position: relative;
               z-index: 1;

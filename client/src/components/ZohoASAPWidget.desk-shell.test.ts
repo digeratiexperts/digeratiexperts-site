@@ -346,6 +346,32 @@ describe("DE Desk shell positioning", () => {
     );
   });
 
+  it("hints at full screen a few times, then stops for good once it has been used", () => {
+    // Joe, 2026-10-02: animate the expand button so people know they can go
+    // full screen. Finite, quiet when it is not wanted, and honest to motion
+    // preferences.
+    expect(src).toMatch(/className=\{`de-desk-close de-desk-expand\$\{expandHint \? " is-hinting" : ""\}`\}/);
+    expect(src).toMatch(/data-testid="desk-expand-hint"/);
+    // A visible label, hidden from assistive tech (the button already has its name).
+    expect(src).toMatch(/<span className="de-desk-expand-hint" aria-hidden="true"/);
+    // Plays only docked, on a screen wide enough to expand, with nobody live in the chat.
+    expect(src).toMatch(/if \(!isOpen \|\| !canDrag \|\| isDeskFullscreen \|\| agentLive \|\| expandHintPlayedRef\.current\) return;/);
+    // Capped per browser, and retired once the visitor has used full screen.
+    expect(src).toMatch(/const DESK_EXPAND_HINT_MAX = 3;/);
+    expect(src).toMatch(/if \(stored\.used \|\| stored\.shown >= DESK_EXPAND_HINT_MAX\) return;/);
+    expect(src).toMatch(/if \(next\) writeDeskExpandHint\(\{ used: true, shown: DESK_EXPAND_HINT_MAX \}\);/);
+    // Storage can throw (private windows, blocked site data): both accessors are guarded.
+    expect(src).toMatch(/function readDeskExpandHint\(\)[\s\S]*?try \{[\s\S]*?\} catch \{/);
+    expect(src).toMatch(/function writeDeskExpandHint\([\s\S]*?try \{[\s\S]*?\} catch \{/);
+    // Every hint animation is finite: no infinite loop on the button.
+    const hintCss = src.slice(src.indexOf(".de-desk-expand {"), src.indexOf("@keyframes de-desk-expand-label"));
+    expect(hintCss).not.toMatch(/infinite/);
+    expect(hintCss).toMatch(/animation: de-desk-expand-ring 1\.6s ease-out 0\.1s 3;/);
+    expect(hintCss).toMatch(/animation: de-desk-expand-nudge 1\.6s [^;]+ 3;/);
+    // Reduced motion: no pulse, no nudge, the label simply shows.
+    expect(src).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.de-desk-expand\.is-hinting::after,\s*\.de-desk-expand\.is-hinting svg \{ animation: none; \}/);
+  });
+
   it("opens with focus on the composer (desktop) or the active tab, not the first header button", () => {
     expect(src).not.toMatch(/getFocusable\(\)\[0\]\?\.focus\(\);/);
     expect(src).toMatch(/id="desk-chat-input"/);
