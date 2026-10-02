@@ -18,6 +18,7 @@ import { registerWarehouseGates } from "./warehouseRoutes";
 import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
+import { cacheControlFor } from "./staticCacheControl";
 import { registerCampaignAliasRedirects } from "./campaignAliasRedirects";
 import { createServer as createViteServer } from "vite";
 import path from "path";
@@ -533,19 +534,12 @@ function listEndpoints(): Array<{ method: string; path: string }> {
     const indexPath = path.join(distPath, "index.html");
     
     app.use(express.static(distPath, {
-      maxAge: '1y',
+      // Every file gets an explicit header below; only Vite's hashed output is cached forever.
+      cacheControl: false,
       etag: true,
       lastModified: true,
       setHeaders: (res, filePath) => {
-        if (filePath.match(/\.(js|css|woff2?|ttf|eot)$/)) {
-          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-        }
-        else if (filePath.match(/\.(png|jpg|jpeg|gif|svg|webp|ico)$/)) {
-          res.setHeader('Cache-Control', 'public, max-age=2592000');
-        }
-        else if (filePath.endsWith('.html')) {
-          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        }
+        res.setHeader('Cache-Control', cacheControlFor(path.relative(distPath, filePath)));
       }
     }));
     
