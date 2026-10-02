@@ -82,7 +82,7 @@ claims:
       - design/DESIGN-AUTHORITY.md (Desk and gold rows), design/UI-STYLE-RULES.md (support chrome), brand/README.md (gold line)
       - .cursor/skills/de-desk-ui/**, .cursor/rules/de-desk-design.mdc, .cursor/rules/visual-system-v2.mdc
       - design/approved/de-desk-gold-2026-10-01.md, artifacts/visual-qa/desk-gold/**
-    status: active
+    status: verified-live
     started: 2026-10-01
     note: >-
       Joe, 2026-10-01: of eight Desk UI mockups picked option 1, "Black +
@@ -96,6 +96,14 @@ claims:
       merged without a conflict. Main merged in again on 2026-10-02 (5de266e),
       bringing PR 325's open-seed change to the widget. Maintenance Mode under the Product Preservation Law: every
       tab, route, CTA, test id and behaviour kept.
+      RELEASED 2026-10-02: merged as 4b25793 (PR 319, on Joe's explicit
+      approval of the merge). The CI run for 4b25793 passed, including "Deploy
+      and verify production VPS" (13:20Z). VERIFIED LIVE 13:20:52Z: production
+      serves ZohoASAPWidget-BkU7jfpE.js with --desk-surface #0b0b0d and
+      --desk-gold, and no #fbfbfa or magenta cap; a browser on
+      digeratiexperts.com at 390, 768 and 1440 shows the chooser and the Desk
+      on the black panel with the gold cap, no page errors and no horizontal
+      overflow (artifacts/visual-qa/desk-gold/live/). Files released.
   - id: portal-kit-long-tail
     owner: claude
     subsystem: client-portal-pages
