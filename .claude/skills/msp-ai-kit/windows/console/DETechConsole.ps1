@@ -120,6 +120,8 @@ if ($Headless) { & {
         if (-not $Technician) { $Technician = 'jrpetro'; Write-Host 'TECHNICIAN: not given; recorded as jrpetro (pass -Technician <name> from RMM)' }
     }
     $integrity = Write-DEIntegrityEvidence
+    # the Hub's revocation list, once per run and best effort: offline or refused, the last saved list stays (DE.License)
+    $licHub = Get-DELicenseHubUrl; if ($licHub) { $null = Update-DELicenseRevocations -HubUrl $licHub }
     if ($License) { try { $ls = Set-DELicense -Token $License; Write-Host "LICENCE: $($ls.reason)" } catch { Exit-DEHeadless -Code 2 -Overall 'REFUSED' -Message "REFUSED: $($_.Exception.Message)" } }
     $lic = Get-DELicenseStatus
     Write-Host ("LICENCE: {0} (policy {1}; build {2})" -f $(if ($lic.valid) { "$($lic.technician) until $($lic.expires)" } else { "none: $($lic.reason)" }), $lic.enforce, $lic.build)
@@ -428,7 +430,7 @@ try {
 } catch { Write-DELog -Level WARN -Message "brand asset load failed: $($_.Exception.Message)" }
 
 # ============================================================== session state
-$S = @{ Profile = $null; Snapshot = $null; Mode = $Settings.mode; Job = $null; Timer = $null; LogPos = 0; CurrentPage = $Page; LastBundle = $null; LastJobError = $null; LogBox = $null }
+$S = @{ Profile = $null; Snapshot = $null; Mode = $Settings.mode; Job = $null; Timer = $null; LogPos = 0; CurrentPage = $Page; LastBundle = $null; LastJobError = $null; LogBox = $null; RevocationsChecked = $false }
 function Get-Brush { param([string]$Key) return $Win.Resources[$Key] }
 function Get-StateBrush { param([string]$State) switch -Regex ($State) { '^(PASS|NO CHANGE|READY)$' { Get-Brush 'Pass' } '^(WARN|DRIFT|IN PROGRESS|NOT RUN)$' { Get-Brush 'Warn' } '^(EXCEPTION|PLANNED|SKIPPED|NOT IN PLAN|READY WITH EXCEPTIONS)$' { Get-Brush 'Lavender' } default { Get-Brush 'Magenta' } } }
 function Set-Status { param([string]$Text) $UI.TxtStatus.Text = (Protect-DEText $Text) }
@@ -669,7 +671,10 @@ $DoneStates = @('PASS', 'NO CHANGE', 'EXCEPTION', 'SKIPPED', 'READY')
 
 function Start-DEScan {
     <# Full discovery, client and mode detection, then a read-only check of every category. Changes nothing. #>
-    Start-DEJob -Label 'Scanning the device (changes nothing)' -Work {
+    # the first scan of this run also refreshes the Hub's revocation list (best effort, in the job, so the window never waits)
+    $rvHub = $null; if (-not $S.RevocationsChecked -and -not $S.Job) { $S.RevocationsChecked = $true; $rvHub = Get-DELicenseHubUrl }
+    Start-DEJob -Label 'Scanning the device (changes nothing)' -Params @{ revocationsHub = $rvHub } -Work {
+        if ($JobParams.revocationsHub) { $null = Update-DELicenseRevocations -HubUrl $JobParams.revocationsHub }
         $snap = Get-DEDiscoverySnapshot -SkipUpdates
         Set-DEStateValue -Path 'lastSnapshotAt' -Value (Get-Date).ToString('o')
         $snap
@@ -1459,6 +1464,8 @@ function Build-LicenseCard {
     $st = Get-DELicenseStatus; $bi = Get-DEBuildInfo
     $lines = @("Build $($bi.buildId), issued to $($bi.issuedTo)$(if ($bi.builtAt) { ", built $($bi.builtAt)" })", "Policy: $($st.enforce)$(if ($st.enforce -eq 'warn') { ' (runs work but are marked UNLICENSED)' } else { ' (changes need a licence)' })")
     if ($st.valid) { $lines += "Licensed to $($st.technician) until $($st.expires) · clients: $(@($st.clients) -join ', ') · features: $(@($st.features) -join ', ')" } else { $lines += "Not licensed: $($st.reason)" }
+    $rv = $(try { Get-DELicenseRevocations } catch { $null })
+    if ($rv) { $lines += "Revoked licences: $(@($rv.jti).Count)$(if ($rv.fetchedAt) { " (Hub list downloaded $($rv.fetchedAt))" } else { ' (Hub list not downloaded yet; it is fetched at launch when the Hub URL is set)' })" }
     $hubBox = New-El TextBox @{ Width = 360; Text = "$(Get-DEState -Path 'settings.hub.endpoint')"; Name = 'Hub URL for activation' }
     $tokBox = New-El PasswordBox @{ Width = 360; Name = 'Paste a licence' }
     $activate = New-Button 'Activate this device' {
