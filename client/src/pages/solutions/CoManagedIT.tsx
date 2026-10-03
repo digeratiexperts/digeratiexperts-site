@@ -1,18 +1,17 @@
-import { Link } from "wouter";
+import { Handshake, Layers3, Network, PackageCheck, ShieldCheck, Wrench } from "lucide-react";
+import { PageTemplate } from "@/components/PageTemplate";
 import {
-  ArrowRight,
-  CheckCircle2,
-  Handshake,
-  Layers3,
-  Network,
-  PackageCheck,
-  ShieldCheck,
-  Users,
-  Wrench,
-} from "lucide-react";
-import { MegaMenu } from "@/components/MegaMenu";
-import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
-import { Button } from "@/components/ui/button";
+  Chapter,
+  Container,
+  ChapterHeader,
+  CheckList,
+  ClosingCta,
+  FeatureGrid,
+  HeroActions,
+  HeroFacts,
+  cardDark,
+} from "@/components/site/chapters";
+import { SolutionsRelationshipTable } from "@/components/site/SolutionsRelationshipTable";
 import { useSEO } from "@/hooks/useSEO";
 
 const principles = [
@@ -62,143 +61,138 @@ export default function CoManagedIT() {
   });
 
   return (
-    <div className="min-h-screen bg-de-bg text-white">
-      <MegaMenu />
-      <main id="main-content" tabIndex={-1} className="de-nav-clear pb-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <header className="mx-auto max-w-4xl py-12 text-center md:py-20">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-de-accent-ink">Co-Managed Solutions</p>
-            <h1 className="mt-5 text-4xl font-bold leading-tight tracking-[-0.035em] md:text-6xl">
-              Keep your IT team. <span className="text-de-accent-ink">Add DE where it helps.</span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-3xl text-lg leading-relaxed text-white/70 md:text-xl">
-              Co-Managed is a shared operating relationship for selected solutions. Your team stays in the picture; DE adds package design, implementation capacity, specialist support, monitoring, or escalation where the agreed responsibility model calls for it.
-            </p>
-            <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button asChild variant="brand" size="lg" className="h-12">
-                <Link href="/store">
-                  Build a co-managed solution <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="h-12 border-white/15 text-white hover:bg-white/5">
-                <Link href="/solutions/standalone-services">Compare Standalone</Link>
-              </Button>
-            </div>
-            <p className="mt-4 text-sm text-white/55">Preferred pricing is a commercial position, not a promise of a fixed percentage discount on every product or service.</p>
-          </header>
+    <PageTemplate
+      layout="chapters"
+      eyebrow="Co-Managed Solutions"
+      title="Keep your IT team. Add DE where it helps."
+      subtitle="Co-Managed is a shared operating relationship for selected solutions. Your team stays in the picture; DE adds package design, implementation capacity, specialist support, monitoring, or escalation where the agreed responsibility model calls for it."
+      breadcrumbs={[{ label: "Solutions", href: "/solutions" }, { label: "Co-Managed IT" }]}
+      actions={
+        <div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <HeroActions
+              primary={{ label: "Build a co-managed solution", href: "/store" }}
+              secondary={{ label: "Compare Standalone", href: "/solutions/standalone-services" }}
+            />
+          </div>
+          <p className="mt-5 max-w-xl text-sm leading-relaxed text-white/60">
+            Preferred pricing is a commercial position, not a promise of a fixed percentage discount on every product or service.
+          </p>
+        </div>
+      }
+      heroAside={
+        <HeroFacts
+          title="Co-Managed at a glance"
+          rows={comparisons.slice(1).map(([dimension, , coManaged]) => ({ label: dimension, value: coManaged }))}
+          footnote="Co-Managed changes the responsibility and pricing relationship, not the package catalog."
+        />
+      }
+    >
+      <Chapter tone="well" seam={false} aria-labelledby="co-managed-means">
+        <Container>
+          <ChapterHeader
+            tone="well"
+            eyebrow="One definition everywhere"
+            title="What Co-Managed means at DE"
+            titleId="co-managed-means"
+          />
+          <FeatureGrid
+            tone="well"
+            columns={4}
+            items={principles.map((p) => ({ icon: p.icon, title: p.title, text: p.body }))}
+          />
+        </Container>
+      </Chapter>
 
-          <section className="border-y border-white/10 py-12" aria-labelledby="co-managed-means">
-            <div className="mb-8 max-w-2xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-de-accent-ink">One definition everywhere</p>
-              <h2 id="co-managed-means" className="mt-2 text-3xl font-semibold tracking-tight">What Co-Managed means at DE</h2>
+      <Chapter tone="paper" aria-labelledby="responsibility-model">
+        <Container>
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+            <div className="lg:col-span-4">
+              <ChapterHeader
+                tone="paper"
+                layout="stack"
+                eyebrow="Responsibility"
+                title="The responsibility matrix is part of the solution"
+                titleId="responsibility-model"
+                lede="Co-Managed should remove ambiguity, not add it. The package and scope identify which activities belong to DE, which stay with your team, and which require both sides."
+                className="mb-0"
+              />
             </div>
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {principles.map(({ icon: Icon, title, body }) => (
-                <article key={title} className="rounded-2xl border border-white/10 bg-de-raised p-6">
-                  <Icon className="h-6 w-6 text-de-accent-ink" aria-hidden="true" />
-                  <h3 className="mt-5 text-lg font-semibold">{title}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-white/60">{body}</p>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="py-14" aria-labelledby="responsibility-model">
-            <div className="grid gap-10 lg:grid-cols-[21rem_minmax(0,1fr)]">
-              <div>
-                <Users className="h-7 w-7 text-de-accent-ink" aria-hidden="true" />
-                <h2 id="responsibility-model" className="mt-4 text-3xl font-semibold tracking-tight">The responsibility matrix is part of the solution</h2>
-                <p className="mt-4 text-sm leading-relaxed text-white/55">
-                  Co-Managed should remove ambiguity, not add it. The package and scope identify which activities belong to DE, which stay with your team, and which require both sides.
-                </p>
-              </div>
-              <div className="overflow-hidden rounded-2xl border border-white/10 bg-de-raised">
-                {responsibilityExamples.map(([capability, owner, explanation], index) => (
-                  <div key={capability} className={`grid gap-2 px-5 py-4 md:grid-cols-[12rem_7rem_minmax(0,1fr)] md:items-start ${index ? "border-t border-white/10" : ""}`}>
-                    <span className="font-medium text-white/80">{capability}</span>
-                    <span className="text-sm font-semibold text-de-accent-ink">{owner}</span>
-                    <span className="text-sm leading-relaxed text-white/50">{explanation}</span>
+            <div className="lg:col-span-8">
+              <dl className="border-t border-[var(--de-paper-hairline)]">
+                {responsibilityExamples.map(([capability, owner, explanation]) => (
+                  <div
+                    key={capability}
+                    className="grid gap-1.5 border-b border-[var(--de-paper-hairline)] py-5 md:grid-cols-[11rem_6rem_minmax(0,1fr)] md:gap-6"
+                  >
+                    <dt className="font-heading text-base font-semibold text-[#1A1228]">{capability}</dt>
+                    <dd className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-de-magenta-paper-ink md:pt-1">
+                      {owner}
+                    </dd>
+                    <dd className="text-base leading-relaxed text-[#3A3448]">{explanation}</dd>
                   </div>
                 ))}
-              </div>
+              </dl>
             </div>
-          </section>
+          </div>
+        </Container>
+      </Chapter>
 
-          <section className="rounded-2xl border border-white/10 bg-de-raised p-6 md:p-8" aria-labelledby="same-engine">
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
-              <div>
-                <Layers3 className="h-6 w-6 text-de-accent-ink" aria-hidden="true" />
-                <h2 id="same-engine" className="mt-4 text-2xl font-semibold">No separate “kits” store or parallel package system</h2>
-                <p className="mt-3 max-w-2xl leading-relaxed text-white/60">
-                  Hardware, identity, backup, network, security, communications, and other needs all flow through the same Business Solution Builder. Your business profile sizes the package once; Co-Managed changes the responsibility and pricing relationship rather than creating a competing catalog.
-                </p>
-                <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-                  {[
-                    "One business profile across every package",
-                    "Customer-readable included line items",
-                    "Shipping and provisioning behavior per package",
-                    "Self-install, remote, and on-site choices where supported",
-                    "Remote-support preference captured before contact",
-                    "Only company, name, email, and phone at the end",
-                  ].map((item) => (
-                    <li key={item} className="flex gap-2 text-sm text-white/65">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-de-accent-ink" aria-hidden="true" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <aside className="rounded-xl border border-de-accent/25 bg-de-accent/5 p-5">
-                <Network className="h-6 w-6 text-de-accent-ink" aria-hidden="true" />
-                <h3 className="mt-4 font-semibold">Good Co-Managed fit</h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/55">
-                  You have an internal technology owner, IT staff, or an existing provider you intend to keep—and you want DE to own or strengthen specific agreed capabilities with clear handoffs.
-                </p>
-              </aside>
+      <Chapter tone="surface" aria-labelledby="same-engine">
+        <Container>
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+            <div className="lg:col-span-7">
+              <ChapterHeader
+                tone="surface"
+                layout="stack"
+                eyebrow="Same engine"
+                title="No separate “kits” store or parallel package system"
+                titleId="same-engine"
+                lede="Hardware, identity, backup, network, security, communications, and other needs all flow through the same Business Solution Builder. Your business profile sizes the package once; Co-Managed changes the responsibility and pricing relationship rather than creating a competing catalog."
+              />
+              <CheckList
+                tone="surface"
+                items={[
+                  "One business profile across every package",
+                  "Customer-readable included line items",
+                  "Shipping and provisioning behavior per package",
+                  "Self-install, remote, and on-site choices where supported",
+                  "Remote-support preference captured before contact",
+                  "Only company, name, email, and phone at the end",
+                ]}
+              />
             </div>
-          </section>
+            <aside className={`${cardDark} self-start p-6 md:p-7 lg:col-span-5`}>
+              <Network className="h-6 w-6 text-de-accent-ink" aria-hidden="true" />
+              <h3 className="mt-4 font-heading text-lg font-semibold text-white">Good Co-Managed fit</h3>
+              <p className="mt-2 text-base leading-relaxed text-white/70">
+                You have an internal technology owner, IT staff, or an existing provider you intend to keep—and you want DE to own or strengthen specific agreed capabilities with clear handoffs.
+              </p>
+            </aside>
+          </div>
+        </Container>
+      </Chapter>
 
-          <section className="py-14" aria-labelledby="relationship-choice">
-            <h2 id="relationship-choice" className="text-3xl font-semibold tracking-tight">Three relationships. One clear boundary between them.</h2>
-            <div className="mt-7 overflow-x-auto rounded-2xl border border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink" tabIndex={0} role="region" aria-label="Co-managed IT responsibility table">
-              <table className="w-full min-w-[760px] border-collapse bg-de-raised text-left text-sm">
-                <thead>
-                  <tr className="border-b border-white/10 text-white/50">
-                    <th className="px-4 py-3 font-medium">Dimension</th>
-                    <th className="px-4 py-3 font-medium text-white">Standalone</th>
-                    <th className="px-4 py-3 font-medium text-white">Co-Managed</th>
-                    <th className="px-4 py-3 font-medium text-white">ProActive Managed IT</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparisons.map(([dimension, standalone, coManaged, proactive]) => (
-                    <tr key={dimension} className="border-b border-white/8 align-top last:border-0">
-                      <th className="px-4 py-4 font-medium text-white/70">{dimension}</th>
-                      <td className="px-4 py-4 leading-relaxed text-white/55">{standalone}</td>
-                      <td className="px-4 py-4 leading-relaxed text-white/55">{coManaged}</td>
-                      <td className="px-4 py-4 leading-relaxed text-white/55">{proactive}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+      <Chapter tone="paper" aria-labelledby="relationship-choice">
+        <Container>
+          <ChapterHeader
+            tone="paper"
+            eyebrow="Compare"
+            title="Three relationships. One clear boundary between them."
+            titleId="relationship-choice"
+            layout="stack"
+          />
+          <SolutionsRelationshipTable rows={comparisons} label="Co-managed IT responsibility table" />
+        </Container>
+      </Chapter>
 
-          <section className="mx-auto max-w-3xl py-10 text-center">
-            <Handshake className="mx-auto h-7 w-7 text-de-accent-ink" aria-hidden="true" />
-            <h2 className="mt-4 text-3xl font-semibold">Build the need first. Define the shared model second.</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-white/60">
-              Start with users, devices, and sites, select the business pain, and let the Store generate the package. Then choose Co-Managed so the same solution is scoped around shared responsibilities and the appropriate commercial position.
-            </p>
-            <Button asChild variant="brand" size="lg" className="mt-7 h-12">
-              <Link href="/store">
-                Open the Solution Builder <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </section>
-        </div>
-      </main>
-      <DigeratiEnhancedFooterSection />
-    </div>
+      <ClosingCta
+        tone="well"
+        eyebrow="Next step"
+        title="Build the need first. Define the shared model second."
+        lede="Start with users, devices, and sites, select the business pain, and let the Store generate the package. Then choose Co-Managed so the same solution is scoped around shared responsibilities and the appropriate commercial position."
+        primary={{ label: "Open the Solution Builder", href: "/store" }}
+      />
+    </PageTemplate>
   );
 }

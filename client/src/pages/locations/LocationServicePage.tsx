@@ -235,7 +235,7 @@ export function LocationServicePage(props: LocationPageProps) {
     <div className="min-h-screen bg-de-bg">
       <MegaMenu />
 
-      <main id="page-main">
+      <main id="main-content" tabIndex={-1}>
         <PageHero
           eyebrow={props.localArea}
           title={

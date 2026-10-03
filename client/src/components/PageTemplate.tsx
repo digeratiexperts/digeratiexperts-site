@@ -71,7 +71,7 @@ export const PageTemplate = ({
 
       {/* One <main> landmark per templated page: hero + content, chrome outside
           (a11y sweep 2026-09-12 — 41 pages had no main landmark). */}
-      <main id="page-main">
+      <main id="main-content" tabIndex={-1}>
         <PageHero
           eyebrow={eyebrow}
           title={<StatementTitle text={title} />}
