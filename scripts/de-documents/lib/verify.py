@@ -3,8 +3,11 @@ Usage: verify.py <file.pdf> [...]
 Reports: pages, size, title/lang/DisplayDocTitle, tagging and structure
 element counts, font embedding and type, link targets, extractable words.
 Exit code 1 if a hard requirement fails (untagged, unembedded or Type 3 font,
-missing title or language, no extractable text)."""
+missing title or language, untagged content, no extractable text) or, when the
+VERAPDF environment variable points at the veraPDF CLI, if PDF/UA-1 fails."""
 import collections
+import json
+import os
 import subprocess
 import sys
 
@@ -61,8 +64,25 @@ def fonts(path):
     return rows
 
 
+def verapdf(paths):
+    """Run veraPDF's PDF/UA-1 profile when VERAPDF points at the CLI.
+    Returns {file name: (compliant, failed rules)} or None when unavailable."""
+    cli = os.environ.get("VERAPDF")
+    if not cli:
+        return None
+    out = subprocess.run([cli, "--flavour", "ua1", "--format", "json", *paths], capture_output=True, text=True).stdout
+    res = {}
+    for job in json.loads(out)["report"]["jobs"]:
+        vr = job["validationResult"]
+        vr = vr[0] if isinstance(vr, list) else vr
+        rules = [f'{r["clause"]}-{r["testNumber"]}' for r in vr["details"].get("ruleSummaries", [])]
+        res[os.path.basename(job["itemDetails"]["name"])] = (vr["compliant"], rules)
+    return res
+
+
 def main(paths):
     bad = False
+    ua = verapdf(paths)
     for p in paths:
         pdf = pikepdf.open(p)
         info = pdf.docinfo
@@ -100,12 +120,17 @@ def main(paths):
             problems.append(f"{loose} painting operators neither tagged nor artifact")
         if words < 50:
             problems.append("little or no extractable text")
+        if ua is not None:
+            ok, rules = ua.get(os.path.basename(p), (False, ["not validated"]))
+            if not ok:
+                problems.append("veraPDF PDF/UA-1 failed: " + ", ".join(rules))
         bad |= bool(problems)
         print(f"== {p}")
         print(f"   pages {len(pdf.pages)} · {size/1024:.0f} KB · title '{info.get('/Title')}' · lang {lang} · tagged {tagged} · outline entries {outline}")
         print(f"   structure: " + ", ".join(f"{k}:{v}" for k, v in sorted(sc.items())))
         print(f"   untagged content: {loose} · fonts: {len(fr)} ({', '.join(sorted({t for _, t, _, _ in fr}))}) · words {words}")
         print(f"   links: {sorted(set(links))}")
+        print(f"   veraPDF PDF/UA-1: {'not run (set VERAPDF)' if ua is None else ('pass' if ua.get(os.path.basename(p), (False,))[0] else 'FAIL')}")
         print(f"   {'FAIL: ' + '; '.join(problems) if problems else 'PASS'}")
     return 1 if bad else 0
 

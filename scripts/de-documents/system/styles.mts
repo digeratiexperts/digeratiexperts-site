@@ -58,7 +58,7 @@ export function stylesheet(head: RunningHead): string {
     ([fam, file, w, st]) =>
       `@font-face{font-family:"${fam}";src:url("${f(file + ".ttf")}") format("truetype");font-weight:${w};font-style:${st}}`,
   ).join("\n");
-  const marginLabel = `font-family:"Plex Mono";font-size:6.6pt;letter-spacing:.06em;color:${T.muted}`;
+  const marginLabel = `font-family:"Plex Mono";font-size:7pt;letter-spacing:.06em;color:${T.muted}`;
   const stamp = head.stamp
     ? `@top-center{content:${cssString(head.stamp)};font-family:"Inter";font-weight:700;font-size:7pt;letter-spacing:.08em;color:${T.magText};text-transform:uppercase}`
     : "";
@@ -106,7 +106,7 @@ p,li{orphans:3;widows:3}
 .break{break-before:page}
 
 /* ---------- shared atoms ---------- */
-.lbl{font-family:"Plex Mono";font-size:6.9pt;letter-spacing:.08em;text-transform:uppercase;color:${T.muted};font-weight:400}
+.lbl{font-family:"Plex Mono";font-size:7pt;letter-spacing:.08em;text-transform:uppercase;color:${T.muted};font-weight:400}
 .eyebrow{font-size:7.2pt;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:${T.magText}}
 .muted{color:${T.muted}}
 .d{color:${T.ink2}}
@@ -117,7 +117,7 @@ p,li{orphans:3;widows:3}
 .masthead{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1.2pt solid ${T.ink};padding-bottom:9pt}
 .masthead .logo{height:22pt}
 .spec{display:flex;border:.6pt solid ${T.rule};border-bottom:0}
-.spec div{padding:3pt 8pt;border-left:.6pt solid ${T.rule};font-family:"Plex Mono";font-size:6.4pt;letter-spacing:.05em;color:${T.muted}}
+.spec div{padding:3pt 8pt;border-left:.6pt solid ${T.rule};font-family:"Plex Mono";font-size:7pt;letter-spacing:.05em;color:${T.muted}}
 .spec div:first-child{border-left:0}
 .spec b{display:block;color:${T.ink};font-weight:500;font-size:7.3pt;letter-spacing:.02em}
 
@@ -152,7 +152,7 @@ h3{font-family:"Space Grotesk";font-weight:600;font-size:10pt;margin:10pt 0 4pt}
 table{width:100%;border-collapse:collapse;font-size:8.5pt;line-height:1.42}
 caption{caption-side:bottom;text-align:left;font-size:7.4pt;color:${T.muted};padding-top:5pt}
 th{text-align:left;vertical-align:top}
-thead th{font-family:"Plex Mono";font-weight:500;font-size:6.7pt;letter-spacing:.06em;text-transform:uppercase;color:${T.muted};padding:0 8pt 5pt 0;border-bottom:1pt solid ${T.ink}}
+thead th{font-family:"Plex Mono";font-weight:500;font-size:7pt;letter-spacing:.06em;text-transform:uppercase;color:${T.muted};padding:0 8pt 5pt 0;border-bottom:1pt solid ${T.ink}}
 tbody th{font-weight:600;padding:4.5pt 8pt 4.5pt 0;border-bottom:.5pt solid ${T.rule}}
 td{padding:4.5pt 8pt 4.5pt 0;border-bottom:.5pt solid ${T.rule};vertical-align:top}
 tr.cur td,tr.cur th{background:${T.tint}}
@@ -165,7 +165,7 @@ figure{margin-top:2pt}
 figcaption{font-size:7.4pt;color:${T.muted};margin-top:6pt;max-width:470pt}
 .flow{display:grid;margin-top:2pt}
 .flow li{padding-right:10pt}
-.flow .n{font-family:"Plex Mono";font-size:6.8pt;color:${T.muted};display:flex;align-items:center;gap:6pt}
+.flow .n{font-family:"Plex Mono";font-size:7pt;color:${T.muted};display:flex;align-items:center;gap:6pt}
 .flow .n::after{content:"";flex:1;height:.8pt;background:${T.ink}}
 .flow li:last-child .n::after{background:transparent}
 .flow b{display:block;font-family:"Space Grotesk";font-weight:600;font-size:9.4pt;margin-top:5pt;line-height:1.25}
@@ -173,21 +173,21 @@ figcaption{font-size:7.4pt;color:${T.muted};margin-top:6pt;max-width:470pt}
 .callout{border-left:2.4pt solid ${T.ink};padding:7pt 0 7pt 12pt;margin-top:10pt}
 .callout .lbl{display:block;margin-bottom:2pt}
 .callout.example{border-left-color:${T.mag};background:${T.tint};padding-right:10pt}
-.tag{display:inline-block;font-family:"Plex Mono";font-size:6.4pt;letter-spacing:.08em;border:.7pt solid ${T.magText};color:${T.magText};padding:0 3pt;margin-right:4pt;vertical-align:1pt}
+.tag{display:inline-block;font-family:"Plex Mono";font-size:7pt;letter-spacing:.08em;border:.7pt solid ${T.magText};color:${T.magText};padding:0 3pt;margin-right:4pt;vertical-align:1pt}
 
 /* checklist rows */
 .checks{margin-top:4pt}
 .check{display:grid;grid-template-columns:24pt 1fr 150pt;column-gap:10pt;padding:7pt 0 6pt;border-bottom:.6pt solid ${T.rule}}
 .check .id{font-family:"Plex Mono";font-size:7.4pt;color:${T.magText};padding-top:1.5pt}
 .check .q{font-weight:500}
-.check .area{display:block;font-family:"Plex Mono";font-size:6.6pt;letter-spacing:.06em;text-transform:uppercase;color:${T.muted};margin-bottom:1pt}
-.check .notes{grid-column:2 / 4;margin-top:7pt;height:15pt;border-bottom:.6pt dotted ${T.muted};font-size:6.6pt;color:${T.muted};font-family:"Plex Mono";letter-spacing:.05em}
+.check .area{display:block;font-family:"Plex Mono";font-size:7pt;letter-spacing:.06em;text-transform:uppercase;color:${T.muted};margin-bottom:1pt}
+.check .notes{grid-column:2 / 4;margin-top:4pt;height:26pt;display:flex;align-items:flex-end;padding-bottom:2pt;border-bottom:.7pt dotted ${T.ink2};font-size:7pt;color:${T.muted};font-family:"Plex Mono";letter-spacing:.05em}
 .boxes{display:flex;gap:9pt;justify-content:flex-end;padding-top:1pt}
 .boxes span{display:flex;align-items:center;gap:3.5pt;font-size:7.6pt;color:${T.ink2}}
 .boxes i{display:inline-block;width:9pt;height:9pt;border:1pt solid ${T.ink};border-radius:1.5pt}
 .group-head{display:flex;justify-content:space-between;align-items:baseline;margin-top:14pt;padding-bottom:4pt;border-bottom:1pt solid ${T.ink}}
 .group-head h3{margin:0}
-.notes-box{border:.8pt solid ${T.rule};margin-top:8pt;padding:7pt 9pt;height:var(--h,90pt);background:repeating-linear-gradient(to bottom,transparent 0,transparent 17pt,${T.hair} 17pt,${T.hair} 17.6pt)}
+.notes-box{border:.8pt solid ${T.rule};margin-top:8pt;padding:7pt 9pt;height:var(--h,90pt);background:repeating-linear-gradient(to bottom,transparent 0,transparent 22pt,${T.rule} 22pt,${T.rule} 22.6pt)}
 .notes-box .lbl{background:#fff;padding-right:4pt}
 
 /* ---------- editorial register ---------- */

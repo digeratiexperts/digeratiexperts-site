@@ -94,9 +94,9 @@ ${b.rows.map((r, i) => `<tr${b.cur === i ? ' class="cur"' : ""}>${r.map((c, j) =
 
 const LADDER_ADDS: Record<ProActiveTierKey, string> = {
   it: "Service desk, DE Security Foundation, security monitoring baseline, awareness",
-  office: "+ managed network, endpoint backup, 24/7 managed detection and response",
-  business: "+ backup and DR posture, compliance and risk reporting, semi-annual reviews",
-  enterprise: "+ privileged access elements, advanced reporting, quarterly executive reviews",
+  office: "Managed network, endpoint backup, 24/7 managed detection and response, annual review",
+  business: "Backup and DR posture, compliance and risk reporting, semi-annual reviews",
+  enterprise: "Privileged access elements, advanced reporting, quarterly executive reviews",
 };
 function wrap(t: string, n: number) {
   const out: string[] = [];
@@ -116,18 +116,18 @@ export function ladder(current?: ProActiveTierKey, caption?: string) {
     const p = pricing[k], x = x0 + i * (colW + gap), h = hs[i], y = base - h, cur = k === current;
     g += `<rect x="${x}" y="${y}" width="${colW}" height="${h}" fill="${cur ? T.ink : T.tint}" stroke="${T.ink}" stroke-width="${cur ? 0 : 0.8}"/>`;
     g += `<text x="${x + 8}" y="${y + 15}" font-family="Space Grotesk" font-weight="600" font-size="10.5" fill="${cur ? "#fff" : T.ink}">${esc(p.name)}</text>`;
-    g += `<text x="${x + 8}" y="${y + 27}" font-family="Plex Mono" font-size="6.8" fill="${cur ? "#e4e2e8" : T.ink2}">$${p.user}/user · $${p.monthlyMinimum.toLocaleString("en-US")} min</text>`;
-    g += `<text x="${x}" y="${base + 12}" font-family="Plex Mono" font-size="6.4" fill="${T.muted}">LEVEL ${i + 1}${cur ? " · THIS DOCUMENT" : ""}</text>`;
+    g += `<text x="${x + 8}" y="${y + 27}" font-family="Plex Mono" font-size="7" fill="${cur ? "#e4e2e8" : T.ink2}">$${p.user}/user · $${p.monthlyMinimum.toLocaleString("en-US")} min</text>`;
+    g += `<text x="${x}" y="${base + 12}" font-family="Plex Mono" font-size="7" fill="${T.muted}">LEVEL ${i + 1}${cur ? " · THIS DOCUMENT" : ""}</text>`;
     const lines = wrap(LADDER_ADDS[k], 31);
     lines.forEach((ln, j) => {
-      g += `<text x="${x}" y="${y - 6 - (lines.length - 1 - j) * 8.4}" font-family="Inter" font-size="6.8" fill="${T.ink2}">${esc(ln)}</text>`;
+      g += `<text x="${x}" y="${y - 6 - (lines.length - 1 - j) * 8.4}" font-family="Inter" font-size="7" fill="${T.ink2}">${esc(ln)}</text>`;
     });
   });
   const alt = `Stepped diagram of the four ProActive levels. ${keys
-    .map((k) => `${pricing[k].label}: $${pricing[k].user} per user per month, $${pricing[k].monthlyMinimum.toLocaleString("en-US")} monthly minimum; ${LADDER_ADDS[k].replace(/^\+ /, "adds ")}`)
+    .map((k) => `${pricing[k].label}: $${pricing[k].user} per user per month, $${pricing[k].monthlyMinimum.toLocaleString("en-US")} monthly minimum; lists ${LADDER_ADDS[k].charAt(0).toLowerCase()}${LADDER_ADDS[k].slice(1)}`)
     .join(". ")}.${current ? ` This document covers ${pricing[current].label}.` : ""}`;
   return `<figure class="ladder-fig" role="img" aria-label="${esc(alt)}"><svg viewBox="0 0 ${W} ${base + 18}" width="100%" aria-hidden="true">${g}</svg>
-<figcaption>${esc(caption ?? "Published starting rates per user per month, with monthly minimums. Levels describe operating depth, not a ranking.")}</figcaption></figure>`;
+<figcaption>${esc(caption ?? "Labels name items from each level's published inclusions. Rates are per user per month, with monthly minimums. Levels describe operating depth, not a ranking.")}</figcaption></figure>`;
 }
 
 function flow(b: Extract<Block, { t: "flow" }>) {

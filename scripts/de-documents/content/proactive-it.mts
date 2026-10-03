@@ -74,7 +74,7 @@ export const proactiveIt: Doc = {
           { cap: "Managed security baseline", st: "in", detail: "Endpoint, identity, email and security monitoring baseline." },
           { cap: "Security awareness", st: "in", detail: "Awareness and phishing resilience for users." },
           { cap: "Documented environment", st: "in", detail: "Users, devices and access recorded as the operating baseline." },
-          { cap: "Endpoint backup", st: "out", detail: "No default backup program at this level. Endpoint backup begins in ProActive Office." },
+          { cap: "Endpoint backup", st: "out", detail: "No default backup program at this level. Backup can be added by scope; endpoint backup is included in ProActive Office." },
           { cap: "24/7 managed detection and response", st: "add", detail: "Included from ProActive Office; added to ProActive IT only by separate scope." },
           { cap: "Compliance reporting", st: "out", detail: "Audit-grade documentation sits in higher levels or standalone engagements." },
         ],

@@ -34,7 +34,10 @@ scripts/de-documents/
   content/*.mts             one file per document (or group); index.mts lists all
   content/shared.mts        edition, links, scope notes, move-up triggers, diagrams
   lib/finalize.py           marks untagged content as artifacts; sets metadata
-  lib/verify.py             the gate (see Verification)
+  lib/verify.py             the gate (see Verification); runs veraPDF PDF/UA-1 when VERAPDF is set
+  lib/links.py              every link: target, text under it, destination page
+  lib/crops.py              readability crops around real text
+  qa-readability.mts        pdf.js renders at 390 / 768 / 1440, fit and 2× zoom
   lib/dests.py, sheets.py   contents page numbers; contact-sheet renders
   fonts/                    static TTF instances + OFL licences (fonts/README.md)
   CONTENT-CHANGES.md        content-change register for the 13 PDFs
@@ -95,16 +98,28 @@ Visual QA:
 
 Evidence: `artifacts/visual-qa/resource-pdfs-redesign-2026-10/`.
 
-## Accessibility: what is and is not established
+## Accessibility: checks performed vs. validated compliance
 
-- **Tagging:** the structure comes from Chromium's tagged-PDF output: headings, lists, tables with header cells, links, and Figures with alt text. `finalize.py` wraps everything Chromium left outside the structure tree in `/Artifact` marked content: running headers and footers, page backgrounds, decorative numerals and rail labels that repeat their headings, and diagram internals that the Figure's alt text describes.
-- **Not validated as PDF/UA.** No PDF/UA checker (veraPDF, PAC) was available in this environment, so **no PDF/UA or WCAG conformance is claimed**. Run veraPDF with the PDF/UA-1 profile before claiming either.
-- **Figures:** Chromium tags a `<figure>` only when it contains visible text, so every diagram carries a caption.
-- **Reading order:** follows the HTML. Two-column blocks read left column, then right.
-- **Checkboxes:** drawn boxes for pen or annotation tools, not form fields. Fillable fields were left out because they could not be tested across Acrobat, Preview, Edge and mobile viewers here.
-- **Contrast:** every text colour pair is at least 5.8:1 (lowest: magenta text on the light tint, 5.88:1). Status never relies on colour: words plus filled, half or open glyphs.
-- **Phones:** fixed Letter pages need pinch-zoom on phones; the text is vector and stays sharp at any zoom.
-- **Print:** grayscale was checked by rendering, not by a physical print.
+**Automated validation (machine-checkable rules only):**
+- All 13 PDFs **pass veraPDF 1.30.2, PDF/UA-1 profile** (ISO 14289-1). The originals failed 7 rules each, with 128–174 failed checks per file.
+- `finalize.py` makes them pass: link text alternatives, `LBody` inside list items, artifact marking, and the PDF/UA identifier.
+- `verify.py` runs veraPDF when `VERAPDF` points at its CLI and fails the build on any PDF/UA-1 failure.
+- `finalize.py` writes the PDF/UA identifier on every build, so **publish only with `VERAPDF` set**. That way the identifier is backed by a passing check; the published 13 were built that way.
+
+**What that does not establish:**
+- PDF/UA also has checkpoints a machine cannot judge: whether alt text is meaningful, reading order makes sense, headings are logical, and tables read correctly. These were reviewed by the author in this session, not by an independent accessibility tester, and not with PAC or a screen reader (NVDA, JAWS, VoiceOver).
+- **So: veraPDF PDF/UA-1 machine checks pass; full PDF/UA conformance and WCAG 2.2 AA are not claimed.**
+
+**Other checks performed:**
+- Every text colour pair is at least 5.8:1 (lowest: magenta text on the light tint, 5.88:1).
+- Status never relies on colour: words plus filled, half or open glyphs.
+- Smallest text is 7 pt; body text is 9.2 pt.
+- Every link annotation's target and the text under it were checked (`lib/links.py`); the contents links land on the pages printed.
+
+**Known limits:**
+- Checkboxes are drawn boxes for pen or annotation tools, not form fields. Fillable fields were not tested across Acrobat, Preview, Edge and mobile viewers.
+- Fixed Letter pages need pinch-zoom on phones: body text is about 5.6 CSS px fitted to a 390 px screen and 11.2 px at 2×. The text is vector, so it stays sharp.
+- Grayscale was checked by render, not by a physical print.
 
 ## Site-wide use
 

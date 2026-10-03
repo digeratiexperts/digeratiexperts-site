@@ -18,14 +18,14 @@ export const money = (n: number) => `$${n.toLocaleString("en-US")}`;
 export const tierPrice = (k: ProActiveTierKey) =>
   `From ${money(pricing[k].user)} per user per month, with a ${money(pricing[k].monthlyMinimum)} monthly minimum.`;
 
-/** Move-up triggers between levels, aligned to pricing.ts inclusions. */
+/** Move-up triggers, in the May 2026 ProActive IT datasheet's own words. One
+ *  correction: "security awareness" is dropped from the Business trigger because
+ *  pricing.ts explicitly includes it in ProActive IT. Nothing here is inferred from
+ *  an item's absence in a lower level's inclusion list. */
 export const MOVE_UP = {
-  office:
-    "Onboarding, productivity platforms, a managed network, endpoint backup and 24/7 managed detection and response become important.",
-  business:
-    "The organization needs backup and disaster recovery posture, compliance and risk reporting, and semi-annual planning reviews.",
-  enterprise:
-    "Multiple sites, regulated data, advanced compliance reporting, privileged access controls or quarterly executive reviews are required.",
+  office: "Employee onboarding, productivity platforms, endpoint backup and managed workplace operations become important.",
+  business: "The organization needs backup and BCDR, risk reporting and stronger operational planning.",
+  enterprise: "Multiple sites, advanced security posture, compliance or quarterly strategy cadence are required.",
 };
 
 /** Cyber Risk Assessment → recommendation → onboarding → operations (claims register, "How it works"). */
@@ -52,7 +52,7 @@ export const RECOVERY_TIMELINE = (() => {
   for (const [x, a, b] of [[xB, "Last good backup", "restore point"], [xI, "Disruption", "ransomware, deletion, outage"], [xR, "Operating again", "systems restored"]] as const) {
     g += `<circle cx="${x}" cy="${y}" r="3.4" fill="${x === xI ? T.mag : T.ink}"/>`;
     g += txt(x, y + 15, a, { anchor: "middle", w: 600, fill: T.ink, size: 7.6 });
-    g += txt(x, y + 25, b, { anchor: "middle", size: 6.8 });
+    g += txt(x, y + 25, b, { anchor: "middle", size: 7 });
   }
   return `<svg viewBox="0 0 ${W} ${y + 32}" width="100%" aria-hidden="true">${g}</svg>`;
 })();
@@ -70,7 +70,7 @@ export const COMANAGED_LANES = (() => {
     items.forEach((it, i) => {
       const x = x0 + i * (cw + 6);
       g += `<rect x="${x}" y="${y + 9}" width="${cw}" height="34" fill="${dark ? "#1b1826" : "#fff"}" stroke="${dark ? "#4a4658" : T.rule}" stroke-width=".7"/>`;
-      it.split("|").forEach((ln, j) => (g += txt(x + 6, y + 22 + j * 9, ln, { size: 6.9, fill: dark ? "#fff" : T.ink })));
+      it.split("|").forEach((ln, j) => (g += txt(x + 6, y + 22 + j * 9, ln, { size: 7, fill: dark ? "#fff" : T.ink })));
     });
     return g;
   };
@@ -87,7 +87,7 @@ export const COMANAGED_ALT =
 export const QBR_CADENCE = (() => {
   const W = 512, x0 = 120, x1 = W - 10;
   const row = (y: number, label: string, sub: string, n: number) => {
-    let g = txt(0, y + 4, label, { f: "Space Grotesk", w: 600, size: 9.5, fill: T.ink }) + txt(0, y + 14, sub, { size: 6.8 });
+    let g = txt(0, y + 4, label, { f: "Space Grotesk", w: 600, size: 9.5, fill: T.ink }) + txt(0, y + 14, sub, { size: 7 });
     g += `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="${T.rule}" stroke-width="1"/>`;
     for (let i = 0; i < n; i++) {
       const x = x0 + ((x1 - x0) * (i + 0.5)) / n;
@@ -95,7 +95,7 @@ export const QBR_CADENCE = (() => {
     }
     return g;
   };
-  let g = txt(x0, 8, "ONE YEAR", { f: "Plex Mono", size: 6.4, fill: T.muted }) + txt(x1, 8, "→", { f: "Plex Mono", size: 6.4, fill: T.muted, anchor: "end" });
+  let g = txt(x0, 8, "ONE YEAR", { f: "Plex Mono", size: 7, fill: T.muted }) + txt(x1, 8, "→", { f: "Plex Mono", size: 7, fill: T.muted, anchor: "end" });
   g += row(28, "ProActive Office", "Annual technology + cyber review", 1);
   g += row(56, "ProActive Business", "Semi-annual reviews", 2);
   g += row(84, "ProActive Enterprise", "Quarterly executive reviews", 4);
