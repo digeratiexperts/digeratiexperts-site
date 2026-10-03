@@ -33,6 +33,8 @@ one lands and any of them can be referenced in future development.
 | 7 | `/version-7` | Every live section built from Joe's reviewed mockups (PR #315), live interactions kept, bottom bar with autohide | build |
 | 8 | `/version-8` | Version 7 with Joe's 2026-10-03 preferences (live trust strip, Why Arizona cards, light icon tiles); main candidate | build |
 
+`/version-0` (not in the registry, which numbers from 1): the current live homepage (`DigeratiHomepage`) rendered as a noindex reference, without structured data. Joe, 2026-10-03: keep it when a fusion version replaces `/`.
+
 ## Adding a version
 
 1. Freeze the composition you want to keep, from the working tree or a ref:

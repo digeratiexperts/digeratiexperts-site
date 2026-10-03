@@ -40,7 +40,8 @@ claims:
       - client/src/pages/versions/registry.ts (the v8 entry)
       - client/src/pages/versions/README.md (the v8 row)
       - client/src/App.tsx (the /version-8 route and its own-bottom-bar exclusion)
-      - server/spaKnownPaths.ts (/version-8)
+      - server/spaKnownPaths.ts (/version-0, /version-8)
+      - client/src/pages/DigeratiHomepage.tsx (optional structuredData prop only, default on)
     status: active
     started: 2026-10-03
     note: >-
@@ -54,6 +55,12 @@ claims:
       #f4f4f5 for white; light-band icon tiles fixed from the dark tile to the
       tinted accent. Noindex preview only; / unchanged. Joe's later notes
       (rest of V7, then the live homepage) land here as he gives them.
+      Joe, later 2026-10-03: "anything i didnt include was fine on both
+      versions or the new one" (V8 notes complete); V8 is the fusion of the
+      best of V7 and the current homepage, and the current homepage is kept
+      as "version 0": /version-0 renders DigeratiHomepage noindex inside
+      VersionFrame without the homepage JSON-LD (not in the registry, which
+      numbers from 1). / is unchanged.
   - id: de-object-storage-per-object-acl
     owner: claude
     subsystem: object-storage

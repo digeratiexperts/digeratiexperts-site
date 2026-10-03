@@ -239,6 +239,14 @@ function Router() {
           </VersionFrame>
         </Suspense>
       )} />
+      {/* Joe, 2026-10-03: the current homepage, kept as a noindex reference before any swap. */}
+      <Route path="/version-0" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <VersionFrame n={0}>
+            <DigeratiHomepage structuredData={false} />
+          </VersionFrame>
+        </Suspense>
+      )} />
       <Route path="/version-7" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <VersionFrame n={7}>
@@ -1009,8 +1017,8 @@ function AppContent() {
   useStoreChromeGestures(location);
   const isPortal = location.startsWith("/portal");
   const isHome = location === "/";
-  // /version-7 and /version-8 mount their own bottom bar (inside their scroll provider, with autohide on).
-  const ownsBottomBar = isHome || location === "/version-7" || location === "/version-8";
+  // /version-0 (the homepage copy), /version-7 and /version-8 mount their own bottom bar.
+  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7" || location === "/version-8";
   const hideDoor2HelpDock = isDoor2Path(location) && location.split("?")[0] !== "/store";
   const hideWarehouseChrome = isWarehousePath(location);
   const accent = isPortal ? undefined : accentFor(location);
