@@ -88,9 +88,9 @@ describe("Your Solution drawer source", () => {
   });
 
   it("preserves checkout, quote, shopping, and assessment actions", () => {
-    expect(cartSrc).toMatch(/Continue to Checkout/);
-    expect(cartSrc).toMatch(/Request Formal Quote/);
-    expect(cartSrc).toMatch(/Continue shopping/);
+    expect(cartSrc).toMatch(/Continue to staff checkout/);
+    expect(cartSrc).toMatch(/Staff quote \(no charge\)/);
+    expect(cartSrc).toMatch(/Continue catalog/);
     expect(cartSrc).toMatch(/button-schedule-from-cart/);
     expect(cartSrc).toMatch(/button-checkout/);
     expect(cartSrc).toMatch(/button-save-quote/);
