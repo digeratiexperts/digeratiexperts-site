@@ -329,8 +329,18 @@ export const portalUsers = pgTable("portal_users", {
   mfaTotpSecret: text("mfa_totp_secret"),
   mfaBackupCodes: jsonb("mfa_backup_codes").$type<string[]>().default([]),
   lastLogin: timestamp("last_login"),
+  /** Tokens issued before this instant are no longer valid (password reset, "sign out everywhere") (#242). */
+  sessionsValidAfter: timestamp("sessions_valid_after"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+/** Individually revoked portal tokens (logout). Keyed by SHA-256 of the token; rows expire with the token (#242). */
+export const portalRevokedSessions = pgTable("portal_revoked_sessions", {
+  tokenHash: varchar("token_hash").primaryKey(),
+  userId: varchar("user_id"),
+  revokedAt: timestamp("revoked_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
 });
 
 export const portalApprovalRequests = pgTable("portal_approval_requests", {
