@@ -39,6 +39,8 @@ claims:
       - server/routes.ts (authMiddleware's live-user resolution only)
       - server/warehouseAccess.ts (resolveWarehouseStaff's live-user resolution only)
       - server/portalAuthFailClosed.test.ts (two added cases)
+      - server/legacyAuthRetired.ts, server/legacyAuthRetired.test.ts (legacy /api/auth/register and /api/auth/login answer 410)
+      - server/routes.ts (legacy register/login handlers and their now-unused helpers removed)
     status: active
     started: 2026-10-01
     note: >-
@@ -53,9 +55,10 @@ claims:
       admin's email authenticated as that admin. The email lookup is now
       trusted only when it resolves to the token's own userId, in both
       authMiddleware and resolveWarehouseStaff. Two regression tests fail
-      against the old code. Follow-ups (own PRs): delete the dead legacy
-      /api/auth/* routes; gate the PATCH /api/portal/profile email change on a
-      confirmation to the new address.
+      against the old code. Per the issue's preferred fix, the legacy
+      /api/auth/register and /api/auth/login token minters are retired (410
+      Gone, end-to-end test). Follow-up (own PR): gate the PATCH
+      /api/portal/profile email change on a confirmation to the new address.
   - id: de-desk-hardening
     owner: claude
     subsystem: de-desk
