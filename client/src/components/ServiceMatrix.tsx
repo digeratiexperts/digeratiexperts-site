@@ -191,7 +191,7 @@ export function ServiceMatrix({
                 data-testid={`button-learn-more-${plan.name.toLowerCase()}`}
               >
                 <Link href={plan.learnMoreUrl}>
-                  Learn More
+                  See {plan.name} details
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>

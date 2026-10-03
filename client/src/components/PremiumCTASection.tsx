@@ -14,9 +14,9 @@ interface PremiumCTASectionProps {
 }
 
 export function PremiumCTASection({
-  headline = "Ready to Learn More?",
-  subheadline = "Contact us today to discuss how we can help protect and enable your business.",
-  primaryButtonText = "Schedule Consultation",
+  headline = "Get clarity on your cyber risk",
+  subheadline = "Book a Cyber Risk Assessment with Digerati Experts — we start from your exposure, not a generic product pitch.",
+  primaryButtonText = "Get My Cyber Risk Assessment",
   primaryButtonHref = "/book",
   showPhoneButton = true,
   phoneNumber = PRIMARY_PHONE.display,
