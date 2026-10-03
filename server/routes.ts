@@ -119,6 +119,7 @@ import {
 } from "./integrations/techSalesClient";
 import { registerDeSyncRoutes } from "./integrations/deSyncRoutes";
 import { resolveJwtSecret } from "./config/authSecrets";
+import { registerRetiredLegacyAuthRoutes } from "./legacyAuthRetired";
 import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter, paymentRateLimiter } from "./middleware/rateLimiter";
 import { enqueueOutbox } from "./integrations/deSyncStore";
 import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
@@ -232,7 +233,21 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
   
   try {
     const decoded = jwt.verify(token, jwtSecret()) as JWTPayload;
-    const live = portalAuthGetUser(decoded.email) || (decoded.userId ? findUserById(decoded.userId) : null);
+    // Bind the token to the identity it was issued for. Every portal token mint
+    // carries userId and email from the same record, so an email lookup is only
+    // trusted when it resolves to that same userId; otherwise fall back to the
+    // userId. Without this, a validly-signed token whose email claim names a
+    // different account — e.g. one minted by the legacy /api/auth/register path,
+    // which lets the caller pick any email — would resolve to that account and
+    // take on its role. An email-changed user still resolves via the userId
+    // fallback, because the old email no longer indexes their live record.
+    const byEmail = decoded.email ? portalAuthGetUser(decoded.email) : null;
+    const live =
+      byEmail && byEmail.id === decoded.userId
+        ? byEmail
+        : decoded.userId
+          ? findUserById(decoded.userId)
+          : null;
     // Fail closed: a validly-signed JWT for a user with no live record (deleted, never
     // indexed, or a store that has not finished loading) must be denied, not fall back to
     // trusting the token's embedded role/storeRole/clientId claims. See docs/MASTER-GUARDRAILS.md #7-8.
@@ -441,21 +456,6 @@ function publicPortalUser(user: any, storeRole: StoreRole) {
     storeRole,
     ...orgPublicUser(org),
   };
-}
-
-// Generate JWT token
-function generateToken(userId: string, email: string, role: string = "user"): string {
-  return jwt.sign({ userId, email, role }, jwtSecret(), { expiresIn: '24h' });
-}
-
-// Hash password securely
-async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, SALT_ROUNDS);
-}
-
-// Verify password
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash);
 }
 
 // Rate limiters
@@ -699,89 +699,9 @@ export async function registerRoutes(app: Express) {
   
   // ===== AUTHENTICATION ROUTES =====
   
-  // Register new user with hashed password
-  app.post("/api/auth/register", formSubmissionRateLimiter, async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { username, email, password, fullName } = req.body;
-      
-      if (!username || !email || !password) {
-        return res.status(400).json({ error: "Username, email, and password are required" });
-      }
-      
-      if (password.length < 8) {
-        return res.status(400).json({ error: "Password must be at least 8 characters" });
-      }
-      
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(409).json({ error: "Email already registered" });
-      }
-      
-      const existingUsername = await storage.getUserByUsername(username);
-      if (existingUsername) {
-        return res.status(409).json({ error: "Username already taken" });
-      }
-
-      // Hash password before storing
-      const hashedPassword = await hashPassword(password);
-      
-      const user = await storage.createUser({
-        username,
-        email,
-        password: hashedPassword,
-        fullName: fullName || null,
-      });
-
-      // Generate JWT token
-      const token = generateToken(user.id, user.email || "", "user");
-      
-      // Don't return password in response
-      const { password: _, ...safeUser } = user;
-      
-      res.json({ success: true, user: safeUser, token });
-      logSecurityEvent("USER_REGISTERED", req, { userId: user.id });
-    } catch (error: any) {
-      console.error("Registration error:", error);
-      res.status(500).json({ error: "Registration failed" });
-    }
-  });
-
-  // Login with password verification
-  app.post("/api/auth/login", loginRateLimiter, async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { email, password } = req.body;
-      
-      if (!email || !password) {
-        return res.status(400).json({ error: "Email and password are required" });
-      }
-      
-      const user = await storage.getUserByEmail(email);
-      if (!user) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-      if (!user.password) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-      
-      const isValidPassword = await verifyPassword(password, user.password);
-      if (!isValidPassword) {
-        logSecurityEvent("LOGIN_FAILED", req, { email });
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-      
-      const token = generateToken(user.id, user.email || "", "user");
-      
-      // Don't return password in response
-      const { password: _, ...safeUser } = user;
-      
-      res.json({ success: true, user: safeUser, token });
-      logSecurityEvent("USER_LOGIN", req, { userId: user.id });
-    } catch (error: any) {
-      console.error("Login error:", error);
-      res.status(500).json({ error: "Login failed" });
-    }
-  });
+  // Legacy generic register/login are retired (#236): they minted tokens for a
+  // second identity model with a caller-chosen email. Both now answer 410 Gone.
+  registerRetiredLegacyAuthRoutes(app);
 
   // Get current user
   app.get("/api/auth/me", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {

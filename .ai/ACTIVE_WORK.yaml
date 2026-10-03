@@ -30,6 +30,35 @@
 
 version: 2
 claims:
+  - id: de-auth-token-identity-binding
+    owner: claude
+    subsystem: portal-auth
+    branch: claude/auth-token-identity-binding
+    base_sha: 634390fd
+    files:
+      - server/routes.ts (authMiddleware's live-user resolution only)
+      - server/warehouseAccess.ts (resolveWarehouseStaff's live-user resolution only)
+      - server/portalAuthFailClosed.test.ts (two added cases)
+      - server/legacyAuthRetired.ts, server/legacyAuthRetired.test.ts (legacy /api/auth/register and /api/auth/login answer 410)
+      - server/routes.ts (legacy register/login handlers and their now-unused helpers removed)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Issue 236 (P0), confirmed on a local production build after Joe's "so
+      everything is complete and we cant think of things to do now?":
+      authMiddleware resolved the live user by the token's email before its
+      userId and never checked the two agreed, so a validly-signed token whose
+      email names another account (e.g. one minted by the unauthenticated
+      legacy /api/auth/register, which lets the caller choose any email)
+      resolved to that account and assumed its role, admin included, with no
+      password or MFA. Reproduced: a legacy-register token carrying a portal
+      admin's email authenticated as that admin. The email lookup is now
+      trusted only when it resolves to the token's own userId, in both
+      authMiddleware and resolveWarehouseStaff. Two regression tests fail
+      against the old code. Per the issue's preferred fix, the legacy
+      /api/auth/register and /api/auth/login token minters are retired (410
+      Gone, end-to-end test). Follow-up (own PR): gate the PATCH
+      /api/portal/profile email change on a confirmation to the new address.
   - id: de-desk-hardening
     owner: claude
     subsystem: de-desk
