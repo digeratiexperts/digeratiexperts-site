@@ -258,6 +258,7 @@ elevated:
 
 - Add `-WhatIf` to list every step without running it.
 - Add `-DriverPath` when a model needs extra storage or network drivers.
+- Add `-HubAccountId 1576` only when the media is for one client. Otherwise the rescue asks for the client's Hub account number when you send the handoff.
 
 **What the rescue menu does:**
 
@@ -268,7 +269,7 @@ elevated:
 | Export drivers | Exports the drivers with DISM. |
 | Disk health | Shows health, wear and temperature for each disk. |
 | Repair boot files / Revert stuck updates | Runs `bcdboot` or `DISM /RevertPendingActions`. Only runs after you type YES. |
-| Save handoff | Writes a `de.techconsole.handoff/v1` record to the USB and to the Windows volume. It can also send it to the Hub as a signed event; the signing secret is typed and not saved. |
+| Save handoff | Writes a `de.techconsole.handoff/v1` record to the USB and to the Windows volume. It can also send it to the Hub as a signed event for one client: it asks for the client's Hub account number (digits; the Hub files every device under an account and refuses an event without one), then the signing secret, which is typed and not saved. If the Hub refuses, its reason is recorded in the handoff. With no account number nothing is sent; the handoff is still saved for DE Tech Tool to review on the next boot. |
 
 When Windows starts again, DE Tech Tool lists **Review what the boot rescue did** as the first check. It
 shows what the rescue did and its recommendations, for example rotating a recovery password that was
