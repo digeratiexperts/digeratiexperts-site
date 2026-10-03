@@ -55,6 +55,94 @@ claims:
       Close; gold-only states vanishing in forced colours. The hint rules move
       to a tested module, and a Desk browser smoke runs in CI. axe-core finds
       no violations in any Desk state at 390 or 1440.
+  - id: portal-people-pick-company
+    owner: claude
+    subsystem: client-portal-pages
+    branch: claude/portal-people-pick-company
+    base_sha: 5de266e8ed762d6328fef126ba7b017bcd8d8a21
+    files:
+      - client/src/pages/portal/PortalPeople.tsx
+      - client/src/components/portal/TenantSelector.tsx
+      - artifacts/visual-qa/portal-people-pick-company/**
+    status: active
+    started: 2026-10-02
+    note: >-
+      Joe, 2026-10-02, "6. a": replace People & Org's error for a DE admin who
+      is not viewing as a company with a pick-a-company prompt, as a small
+      separate PR. Fixing it exposed two pre-existing client bugs on the same
+      path: the company switcher stored the literal "undefined" as the token
+      and company (apiRequest resolves to a Response, never parsed), and People
+      & Org never named the viewed company, so even a working switch answered
+      400. Client-only; the server already lets admins name the company.
+# claude-completion-program-lane (branch claude/c8-cross-surface) RETIRED
+# 2026-10-02 on Joe's "see what you can use and redesign into gaps". Audit of
+# the only pushed branch, claude/c1-visual-a11y-repairs-20260912, against main
+# 5de266e8: its content reached main through PR #216 (12cbb8d, 2026-09-18) as
+# snapshot 4091dcf plus 9029aa6, dde2589, 2756f2f and c87deba; the lane tip and
+# c87deba diff empty. Superseded since: store rail (Stations), portal a11y fixes
+# (rebuilt in PRs 294/316). Obsolete: DE Desk graphite shell (Joe chose the
+# white panel 2026-09-28). Still useful and carried on claude/client-portal-
+# access-ukxrnn (portal-followups-2026-10-02): MfaSetup onto the kit, the two
+# auth states without an h1, the remaining <a><button> nests, the PortalChat h1.
+# c3..c8 were never pushed. Files released.
+  - id: portal-followups-2026-10-02
+    owner: claude
+    subsystem: client-portal-shell
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: 5de266e8ed762d6328fef126ba7b017bcd8d8a21
+    files:
+      - client/src/components/portal/shell/portalTheme.ts
+      - client/src/components/portal/shell/portalTheme.test.ts
+      - client/src/components/portal/shell/PortalUserMenu.tsx
+      - client/src/pages/portal/PortalLayout.tsx
+      - artifacts/visual-qa/portal-theme/**
+      - client/src/components/portal/MfaSetup.tsx
+      - client/src/components/ui/sidebar.tsx
+      - client/src/pages/portal/PortalSignup.tsx
+      - client/src/pages/portal/PortalForgotPassword.tsx
+      - client/src/pages/portal/PortalResetPassword.tsx
+      - client/src/pages/portal/PortalChat.tsx (h1 and Tickets link only)
+      - client/src/pages/portal/PortalLogin.tsx (skip target, link underline)
+      - client/src/pages/portal/PortalAdvancedForms.tsx (list markup)
+      - client/src/pages/portal/PortalRoadmap.tsx (list markup)
+      - client/src/pages/portal/AdminLoginKnocks.tsx (scroll region)
+      - client/src/components/CookieConsentBanner.tsx (role and label only)
+      - artifacts/visual-qa/portal-followups/**
+    status: active
+    started: 2026-10-02
+    note: >-
+      Joe's answers of 2026-10-02 on the portal follow-ups. 4 "a and c": dark
+      stays the default and "Match device" joins the user menu (browsers never
+      report "no preference", so a device-following default would show light
+      to most clients). 7: salvage of the stale claude-completion-program-lane
+      into gaps on today's portal follows on this branch once audited.
+  - id: de-techtool-license-followups
+    owner: claude
+    subsystem: msp-ai-kit
+    branch: claude/msp-ai-skills-prompts-htqi09
+    base_sha: d5f3479aeca56f593517b3f1800b845fffb5eb6a
+    files:
+      - .claude/skills/msp-ai-kit/windows/console/modules/DE.License/DE.License.psm1
+      - .claude/skills/msp-ai-kit/windows/console/tests/License.Tests.ps1
+      - .claude/skills/msp-ai-kit/windows/console/DETechConsole.ps1 (the licence card, the launch scan job and the headless licence lines only)
+      - .claude/skills/msp-ai-kit/windows/packaging/New-DEReleasePackage.ps1
+      - .claude/skills/msp-ai-kit/windows/console/catalog/cheatsheet.json (the Licence section only)
+      - .claude/skills/msp-ai-kit/windows/console/VERSION
+      - .claude/skills/msp-ai-kit/windows/PROTECTING-THE-TOOL.md
+      - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md (the Licences section only)
+      - .claude/skills/msp-ai-kit/windows/DE-TECH-TOOL-ARCHITECTURE.md (the version line only)
+    status: active
+    started: 2026-10-02
+    note: >-
+      Joe, 2026-10-02: "ALL APPROVED, CONTINUE" (decision 4A): the DE Tech
+      Tool side of the Hub licence service merged in Intelligence-Hub PR 310.
+      The tool downloads the Hub's revocation list
+      (GET /api/techtool/license/revocations) into its protected data folder,
+      never into trust/ (covered by integrity.json), and refuses a licence
+      revoked in either list; a release build refreshes the shipped
+      trust/revoked.json; a licence pinned to another build (bid) is refused
+      as wrong-build. Overlap check: no open PR and no remote branch touches
+      .claude/skills/msp-ai-kit on d5f3479a.
   - id: de-desk-expand-hint
     owner: claude
     subsystem: de-desk
@@ -129,8 +217,11 @@ claims:
       - client/src/App.tsx (the /version-7 route and its own-bottom-bar exclusion)
       - server/spaKnownPaths.ts, server/spaKnownPaths.test.ts (/version-7)
       - client/src/hooks/useDockAutohide.ts (new)
-      - client/src/components/SiteBottomBar.tsx (opt-in autohide prop and its visibility lines only)
+      - client/src/components/SiteBottomBar.tsx (opt-in autohide prop and its visibility lines; the Ask DE nudge's phone timing only)
+      - client/src/components/SiteBottomBar.nudge.test.ts (phone timing cases)
       - client/src/components/HomepageSectionNav.tsx (opt-in chapter progress in HomepageDockMenu only)
+      - shared/threatFeed.ts (THREAT_ATTRIBUTION string only)
+      - server/routes.ts (the public-threats error-path attribution string only)
     status: active
     started: 2026-10-01
     note: >-
@@ -156,6 +247,38 @@ claims:
       already "Security Updates" in V7 (the live label survives only in frozen
       v1/v3); proof-section review claims wait on a review-source funnel Joe
       asked for ("connect a funnel for those sources to RSS into our data").
+      RELEASED 2026-10-02: merged as PR 315 (d5f3479a) at 13:23Z and verified
+      live: production release.txt d5f3479a, /version-7 answers 200 with
+      X-Robots-Tag noindex, nofollow, / unchanged (200), and
+      scripts/qa/homepage-v7-check.mjs passes 31/31 against production at
+      390/768/1440 including the bar autohide on the live page; the live
+      threat feed renders real CISA KEV items with full dates. Files
+      released. Open follow-ups, not claimed: the Ask DE nudge over the phone
+      hero (Desk lane); the review-source funnel (Yelp keys, Thumbtack and
+      Google copy from Joe, then a Business Profile API poller); the
+      shared THREAT_ATTRIBUTION string still reads "Digerati" alone on /.
+      Joe, 2026-10-02: naming fix approved ("YES"). THREAT_ATTRIBUTION and the
+      public-threats error fallback now read "Digerati Experts prioritizes",
+      so /, /resources/security-updates and the previews all carry the full
+      name; V7's local rename helper is removed as redundant. Rides PR 332.
+      Overlap: claim de-org-department-tenant-boundary edits server/routes.ts
+      (department routes only); this is one string in the threats route,
+      disjoint. Status returns to verified-live after the release check.
+      Review funnel: Joe chose "set it up on your own or postpone"; the Yelp
+      key, business ID and review copy can only come from Joe's accounts, so
+      it is postponed.
+      Joe, 2026-10-02: "OPTIMIZE MOBILE BEST YOU CAN" on the Ask DE nudge
+      covering the phone hero. The Desk lane (de-desk-gold) has merged and is
+      being released (PR 331), and the nudge timing is otherwise unclaimed
+      (de-ask-nudge-cookie-offset is verified-live), so it rides PR 332:
+      below 768px the nudge waits until the reader leaves the first screen,
+      then steps away after 160px of further scroll or when a field takes
+      focus (shown once per session, never marked dismissed). Desktop is
+      unchanged. V7's pronunciation row keeps a 72px right gutter on phones
+      so "Hear it" clears the Ask DE launcher. Not touched: the live hero and
+      PronunciationCard (claimed by pronunciation-and-flipbook-recovery and
+      de-site-v2-scrollcraft); at 430px the launcher still sits over the live
+      card's "Hear it" until one of those lanes or a release frees the files.
   - id: de-desk-gold
     owner: claude
     subsystem: de-desk
@@ -215,8 +338,15 @@ claims:
       - client/src/pages/portal/Admin*.tsx
       - client/src/pages/portal/SalesProcess.tsx
       - artifacts/visual-qa/portal-redesign/after-tail/**
-    status: active
+    status: verified-live
     started: 2026-10-01
+    released: 2026-10-02
+    pr: 316
+    merge_sha: 5de266e8ed762d6328fef126ba7b017bcd8d8a21
+    verification: >-
+      Merged on Joe's explicit authorization (2026-10-02, "1. a"). Production
+      serves index-Cn6RDjCg.js; its PortalVPN-Ccc2nry2.js chunk carries the new
+      sample-data notice; /healthz 200.
     note: >-
       Follow-up to portal-redesign-control-room (PR 294, merged 5e885527,
       concept A approved by Joe 2026-10-01). Joe: "continue". The 23 pages

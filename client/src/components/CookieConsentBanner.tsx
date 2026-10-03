@@ -259,6 +259,8 @@ export function CookieConsentBanner() {
             }`}
             data-testid="cookie-consent-banner"
             data-surface={light ? "light" : "dark"}
+            role="region"
+            aria-label="Cookie consent"
             aria-hidden={deskOpen || undefined}
           >
             <div

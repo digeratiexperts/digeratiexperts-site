@@ -34,6 +34,10 @@ import {
 /** Original used 0.28s easeOut layout + 300ms grid. Keep that pacing without transform. */
 const EXPAND_S = 0.4;
 const EXPAND_EASE = "easeOut" as const;
+/** Phones: where the Ask DE nudge waits for the reader to leave the first screen. */
+const NUDGE_PHONE_QUERY = "(max-width: 767px)";
+/** Phones: scroll distance after which a shown nudge steps away. */
+const NUDGE_PHONE_SCROLL_AWAY = 160;
 
 type QuickMenuItem = {
   title: string;
@@ -66,9 +70,18 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
     syncAskMotion();
 
     let timer = 0;
+    // Phones: the nudge sits over the lower right of the first screen, which on
+    // every homepage is the hero's CTAs and pronunciation row. Hold it until
+    // the reader is past the first viewport, so it never covers the opener.
+    const phone = window.matchMedia(NUDGE_PHONE_QUERY);
+    const inOpener = () => phone.matches && window.scrollY < window.innerHeight;
     const fireNudge = () => {
       if (isDeskNudgeDismissed() || hasDeskNudgeBeenShown()) return;
       if (document.documentElement.hasAttribute("data-de-desk-open")) return;
+      if (inOpener()) {
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return;
+      }
       markDeskNudgeShown();
       setShowNudge(true);
     };
@@ -77,9 +90,19 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
       if (showMenu || showNudge) return;
       if (isDeskNudgeDismissed() || hasDeskNudgeBeenShown()) return;
       if (!ignoreBanner && isCookieBannerBlocking()) return;
+      if (inOpener()) {
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return;
+      }
       const delay = prefersReducedMotion() ? 0 : 6000;
       timer = window.setTimeout(fireNudge, delay);
     };
+    function onScroll() {
+      if (inOpener()) return;
+      window.removeEventListener("scroll", onScroll);
+      // Only registered once the cookie banner was already cleared.
+      arm(true);
+    }
 
     arm();
     const onConsent = () => {
@@ -89,9 +112,32 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
     window.addEventListener("de-cookie-consent", onConsent);
     return () => {
       window.clearTimeout(timer);
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("de-cookie-consent", onConsent);
     };
   }, [showMenu, showNudge]);
+
+  // Phones: once shown, the nudge steps away when the reader keeps scrolling
+  // or starts typing, instead of covering what they are reading. It counts as
+  // shown (once per session) but not dismissed, so the launcher keeps its cue.
+  useEffect(() => {
+    if (!showNudge || !window.matchMedia(NUDGE_PHONE_QUERY).matches) return;
+    const startY = window.scrollY;
+    const hide = () => setShowNudge(false);
+    const onScroll = () => {
+      if (Math.abs(window.scrollY - startY) > NUDGE_PHONE_SCROLL_AWAY) hide();
+    };
+    const onFocusIn = (event: FocusEvent) => {
+      const el = event.target;
+      if (el instanceof HTMLElement && el.matches("input, textarea, select, [contenteditable=true]")) hide();
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    document.addEventListener("focusin", onFocusIn);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("focusin", onFocusIn);
+    };
+  }, [showNudge]);
 
   useEffect(() => {
     if (!showMenu) return;
