@@ -57,6 +57,9 @@ claims:
       slices"). Rebuilds /quote-wizard as a one-question-per-screen paper
       room with the same match function, payload and confirmation; adds two
       front doors; stores three non-scoring context answers on the lead.
+      Joe, 2026-10-03, on PR 425: "yes to thin chrome and plan before email,
+      merge it" (approves the MegaMenu + footer replacement on /quote-wizard
+      only, and showing the plan before the email).
   - id: paynow-stripe-tax
     owner: claude
     subsystem: store-warehouse
