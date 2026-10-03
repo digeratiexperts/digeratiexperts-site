@@ -1066,7 +1066,7 @@ export default function BlogPost() {
                 </div>
                 <Link
                   href="/resources/blog"
-                  className="hidden sm:inline-flex items-center text-de-accent-ink hover:text-de-accent-ink text-sm font-medium"
+                  className="hidden min-h-11 items-center text-sm font-medium text-de-accent-ink hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] sm:inline-flex"
                 >
                   All articles
                   <ArrowRight className="ml-1 h-4 w-4" />
