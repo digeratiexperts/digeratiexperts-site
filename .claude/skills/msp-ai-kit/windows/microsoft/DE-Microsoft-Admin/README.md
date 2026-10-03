@@ -1,4 +1,4 @@
-# DE Microsoft Admin (v0.4.1)
+# DE Microsoft Admin (v0.5.0)
 
 A standalone PowerShell module that Digerati Experts uses to administer Microsoft 365, Entra ID, Exchange
 Online, Intune, Windows Autopilot and Azure.
@@ -8,6 +8,13 @@ Online, Intune, Windows Autopilot and Azure.
 - The Intelligence Hub can run it through signed jobs.
 
 It works on Windows PowerShell 5.1 and PowerShell 7.
+
+**0.5.0:**
+- `Invoke-DEHubJobLoop` is the worker side of the Intelligence Hub's job queue. It claims the Hub's approved jobs for
+  the connected tenant, runs each through `Invoke-DEMicrosoftJob` (which verifies it first), and posts each result
+  back. See [The Hub job loop](#the-hub-job-loop).
+- `ConvertTo-DEHubSafeResult` is the copy of a result that may go to the Hub. Nothing secret-shaped goes:
+  `New-DEUser`'s temporary password stays on the worker, and `Get-DEIntuneCompliancePolicy` sends safe fields only.
 
 **0.4.1:**
 - `Get-DEMailClientInventory -AllProfiles` scans every Windows account on a PC. Another account's Credential
@@ -67,7 +74,7 @@ $r = New-DEUser -DisplayName 'New Hire' -UserPrincipalName new.hire@alamo-indust
 | Autopilot | `Get-DEAutopilotDevice`, `Get-DEAutopilotProfile` (Graph beta), `Set-DEAutopilotGroupTag`, `Remove-DEAutopilotDevice` |
 | Results | `New-DEResult`, `Export-DEResult` (UTF-8 without a BOM), `Set-DEMsAuditPath` |
 | Email migration | `New-DEMigrationProject`, `Get-DEMigrationProject`, `Get-DEMigrationSourceType`, `Add-DEMigrationUser`, `Test-DEGmailImapAccess`, `Set-DEMigrationSharedMailbox`, `Test-DEMigrationSharedMailbox`, `New-DEMigrationBatch`, `Get-DEMigrationStatus`, `Confirm-DEMigrationPilot`, `Complete-DEMigrationBatch`, `Import-DEMigrationContacts`, `Import-DEMigrationCalendar`, `Get-DEMailClientInventory`, `Import-DEMailClientInventory`, `Get-DEMigrationNextStep`, `Test-DEMigrationDns`, `Test-DEMigrationMailFlow`, `Test-DEMigrationMfa`, `Invoke-DEBounceDiagnostic`, `Resolve-DEMigrationBounce`, `Set-DEMigrationCheck`, `New-DEMigrationSignoff`, `Close-DEMigrationProject`, `Export-DEMigrationRecord`, `Set-DEMigrationDirectory` |
-| Hub jobs | `New-DEMicrosoftJob`, `Invoke-DEMicrosoftJob`, `Get-DEJobSignature`, `ConvertTo-DEJobCanonical` |
+| Hub jobs | `Invoke-DEHubJobLoop` (claim, verify, run, post), `ConvertTo-DEHubSafeResult`, `New-DEMicrosoftJob`, `Invoke-DEMicrosoftJob`, `Get-DEJobSignature`, `ConvertTo-DEJobCanonical` |
 
 Scenarios for `Connect-DEMicrosoft -Scenario`: `Read` (always included), `Users`, `Groups`, `Policy`
 (Conditional Access changes), `Intune`, `Autopilot`, `BitLocker`, `Migration` (contacts, calendars, domain
@@ -155,3 +162,162 @@ That means a Node signer on the Hub and this module sign the same bytes.
 - The operation is on the allowlist.
 - Every parameter belongs to that operation.
 - Changes run only in `apply` mode with an `approvedBy`. A `plan` job runs a change as `-DryRun`.
+
+## The Hub job loop
+
+The Intelligence Hub queues, approves and signs jobs (Hub: **Tech Center > Microsoft 365 admin jobs**; its
+contract is `docs/MSADMIN-JOBS.md` in the Intelligence-Hub repo). `Invoke-DEHubJobLoop` is the worker that runs
+them. Each run does this:
+
+1. It posts any result from an earlier run that could not be posted (see below).
+2. It claims the oldest approved job for the connected tenant
+   (`POST /api/msadmin/worker/v1/jobs/claim`). The Hub hands a job out once.
+3. `Invoke-DEMicrosoftJob` verifies the job before anything runs: the signature, the validity window, the replay
+   ledger, the tenant, the allowlist, the parameters, and for a change `apply` mode with `approvedBy`. A job that
+   fails any check is not run; it is reported to the Hub as `Refused`.
+4. It makes the result safe for the Hub, saves it, posts it (`POST /api/msadmin/worker/v1/jobs/<jobId>/result`)
+   and deletes the saved copy once the Hub has it.
+5. It repeats until no job is waiting, or until `-MaxJobs` (default 50) or `-MaxMinutes` (default 30) is reached.
+   `-Once` runs at most one job.
+
+It returns one summary: `ok`, `stoppedBecause`, `message`, the counts, and each job with its local result.
+
+| `stoppedBecause` | `ok` | Meaning |
+|---|---|---|
+| `queue_empty`, `max_jobs`, `time_budget` | yes | Finished normally. |
+| `whatif` | yes | `-WhatIf`: nothing was claimed or posted (see below). |
+| `network` | no | The Hub did not answer, or answered 5xx, after the retries. Nothing more is claimed this run. |
+| `hub_refused` | no | The Hub answered 4xx. The message gives the Hub's reason and what to check. |
+| `job_signature` | no | A job's signature did not verify. It was reported as `Refused`, and the run stopped so the rest of the queue is not refused too: `MSADMIN_JOB_SIGNING_SECRET` probably differs between the Hub and the worker. |
+| `busy` | no | Another loop is running on this machine. |
+
+### What never reaches the Hub
+
+- **Secrets in results.** Before posting, `ConvertTo-DEHubSafeResult` applies the Hub's own rules, so the Hub never
+  has to refuse a result.
+  - It removes any field whose name looks like a secret: password, secret, token, API key, MFA, seed, recovery key,
+    `pin`, `tap`, app password, pre-shared key. A `true`/`false`, a number or `null` under such a name is a setting
+    or a flag and stays (`mfaRegistered`, `passwordless`, `passwordMinimumLength`).
+  - It replaces a BitLocker recovery password, a JWT or a PEM private key inside any text with `[removed]`.
+  - The result's message lists what was kept back.
+- **New-DEUser's temporary password.** It stays in the local result only. A technician running the loop at a prompt
+  reads it the same way as after `New-DEUser`:
+
+  ```powershell
+  $r = Invoke-DEHubJobLoop -HubUrl https://hub.example.com -Vault DE
+  $j = $r.jobs | Where-Object operation -eq 'New-DEUser'
+  [pscredential]::new('x', $j.localResult.data.temporaryPassword).GetNetworkCredential().Password   # show once, never save
+  ```
+
+  An unattended run discards it. Issue a Temporary Access Pass, or reset the password in the portal.
+- **Intune password settings.** A `Get-DEIntuneCompliancePolicy` result sends each policy's id, name, platform,
+  version, dates and its plain settings. Its `password*` and `passcode*` settings are sent as names only, in
+  `deviceLockRules`, never their values.
+- **The two Hub secrets.** They are held as SecureStrings for the run. They are never written to disk, the audit
+  log, the output or a result.
+- **Oversized data.** A result over the Hub's 2 MB limit is sent without its data, and its message says so.
+
+### Network failures and results that could not be posted
+
+- No answer, a timeout, 5xx, 408 and 429 are retried with backoff: `-RetryBaseSeconds` (default 2) doubling, up to
+  `-MaxRetries` (default 4) retries. Every attempt has a new request id. If the Hub still cannot be reached, the
+  run stops.
+- A 4xx is not retried. The run stops with the Hub's reason. For a 401, check that `MSADMIN_WORKER_SECRET` matches
+  and that the clock is within 5 minutes. For a 404 on the claim, check the Hub URL.
+- Each result is saved to `-StatePath\pending\<jobId>.json` before the first post, so a lost answer or a crash
+  never loses it. The saved copy is the safe one, with no secrets in it. The next run posts it first, byte for
+  byte, before it claims anything new.
+  - The job does not run again: the replay ledger (`job-ledger.txt`) refuses it.
+  - The Hub records a re-post of the same result as `duplicate`.
+- A saved result the Hub refuses with a 4xx is moved to `-StatePath\rejected\`, with the Hub's answer next to it.
+  It is not retried.
+- A claim whose answer was lost leaves that job `running` on the Hub with no result. Recreate it on the Hub.
+- The default `-StatePath` is `%ProgramData%\DE\MicrosoftAdmin\hub-worker`, next to the audit log and the replay
+  ledger. Results hold tenant data such as names and devices. Limit that folder to the worker's account and
+  administrators.
+
+### Set up the Hub (DE)
+
+These are production steps on the Hub. Only DE carries them out.
+
+1. Generate two different random values of at least 32 characters, on a trusted machine. Never commit them.
+
+   ```bash
+   openssl rand -base64 48 | tr -d '\n'   # once for MSADMIN_JOB_SIGNING_SECRET, once for MSADMIN_WORKER_SECRET
+   ```
+
+2. Add both values to `/etc/intelligence-hub/portal.env`, one per line, then restart the Hub service:
+
+   ```bash
+   MSADMIN_JOB_SIGNING_SECRET=<value 1>
+   MSADMIN_WORKER_SECRET=<value 2>
+   ```
+
+3. Apply the database migration. It adds one table and nothing else:
+
+   ```bash
+   psql "$DATABASE_URL" -f lib/db/migrations/2026-10-02-msadmin-jobs.sql
+   ```
+
+4. Check the status page. Signed in, `GET /api/msadmin-jobs/status` should say both secrets are configured; it
+   never shows their values.
+
+### Set up the worker
+
+- **The machine.** A Windows machine or service account with this module, Microsoft.Graph.Authentication
+  (`Install-DEMicrosoftDependencies.ps1`) and Microsoft.PowerShell.SecretManagement.
+- **The Entra app registration.** An app in the client tenant with a certificate, and the application permissions
+  the allowlisted operations need. The certificate goes in the worker account's store, or in LocalMachine with
+  private-key access for that account. A client secret is never accepted.
+- **The secrets.** Store the same two values in a SecretManagement vault that the worker account can open without a
+  prompt, under the names `MSADMIN_JOB_SIGNING_SECRET` and `MSADMIN_WORKER_SECRET`. Examples: SecretStore
+  configured with `-Authentication None -Interaction None` for that account (its store sits in that account's
+  profile, with no password prompt), or Azure Key Vault.
+
+  ```powershell
+  Set-Secret -Vault DE -Name MSADMIN_JOB_SIGNING_SECRET -Secret (Read-Host -AsSecureString 'job signing secret')
+  Set-Secret -Vault DE -Name MSADMIN_WORKER_SECRET -Secret (Read-Host -AsSecureString 'worker secret')
+  ```
+
+  `-JobSecret` and `-WorkerSecret` (SecureStrings) win over `-Vault`. With neither, the loop reads environment
+  variables of the same names, for that run only.
+
+### Run it
+
+At a prompt:
+
+```powershell
+Import-Module .\DE-Microsoft-Admin.psd1
+Connect-DEMicrosoft -TenantId <tenant guid> -ClientId <app id> -CertificateThumbprint <thumbprint>
+Invoke-DEHubJobLoop -HubUrl https://hub.example.com -Vault DE -WhatIf   # checks the setup; contacts nothing
+Invoke-DEHubJobLoop -HubUrl https://hub.example.com -Vault DE -Once     # one job
+Invoke-DEHubJobLoop -HubUrl https://hub.example.com -Vault DE           # until the queue is empty
+```
+
+- `-HubUrl` must be `https://` and the Hub's address only, with no path. Plain HTTP is refused before anything is
+  sent.
+- `-WhatIf` contacts nothing. Claiming a job hands it out (approved becomes running), so a what-if run only checks
+  the URL, the tenant and the secrets, and says what it would do. To rehearse a change, queue it on the Hub in
+  `plan` mode: the worker runs it with `-DryRun`.
+- `-WorkerId` defaults to the computer name. The Hub records it on each job.
+
+As a scheduled task, every 5 minutes, one instance at a time:
+
+```powershell
+# C:\ProgramData\DE\MicrosoftAdmin\Run-DEHubJobs.ps1  (no secrets in this file)
+Import-Module 'C:\Program Files\DE\DE-Microsoft-Admin\DE-Microsoft-Admin.psd1'
+$null = Connect-DEMicrosoft -TenantId <tenant guid> -ClientId <app id> -CertificateThumbprint <thumbprint>
+$r = Invoke-DEHubJobLoop -HubUrl https://hub.example.com -Vault DE -MaxMinutes 10
+$r | Select-Object ok, stoppedBecause, message, claimed, posted, pendingLeft | Format-List
+if (-not $r.ok) { exit 1 }
+```
+
+```powershell
+$action   = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "C:\ProgramData\DE\MicrosoftAdmin\Run-DEHubJobs.ps1"'
+$trigger  = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 5)
+$settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 15)
+Register-ScheduledTask -TaskName 'DE Microsoft Admin Hub jobs' -Action $action -Trigger $trigger -Settings $settings -User '<worker account>' -Password (Read-Host 'worker account password') -RunLevel Limited
+```
+
+A worker serves one tenant: the one it is connected to. For several clients, run one task per tenant, each with
+its own app registration.

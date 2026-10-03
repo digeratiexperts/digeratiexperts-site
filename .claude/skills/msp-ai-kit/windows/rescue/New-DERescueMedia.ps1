@@ -9,7 +9,8 @@
     storage / DISM / BitLocker (SecureStartup) components with en-us language packs, optional drivers, copy the DE
     rescue and shared contracts to X:\DE, start the menu from startnet.cmd, save, then write the ISO and/or USB.
     Writing a USB FORMATS it; that needs -UsbDrive and -ConfirmFormat together. rescue.config.json carries only the
-    technician default and the Hub URL; secrets are typed at the rescue prompt.
+    technician default, the Hub URL and, for media made for one client, that client's Hub account number
+    (-HubAccountId); secrets are typed at the rescue prompt.
 
 .EXAMPLE
     .\New-DERescueMedia.ps1 -IsoPath C:\DE\DE-Rescue.iso -WhatIf
@@ -26,6 +27,7 @@ param(
     [string]$AdkRoot = (Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\Assessment and Deployment Kit'),
     [string]$HubUrl,
     [string]$Technician,
+    [ValidatePattern('^[1-9][0-9]{0,17}$')][string]$HubAccountId,   # optional: media made for one client; otherwise the rescue asks
     [string[]]$RootCertificate = @(),   # .cer files (e.g. the Hub's root CA): WinPE's root store is minimal
     [switch]$SecureBoot2023             # boot files signed with the Windows UEFI CA 2023 (MakeWinPEMedia /bootex, ADK 26100.2454+)
 )
@@ -57,7 +59,7 @@ try {
         elseif ($s.ContainsKey('cmdlet')) { $p = $s.params; & $s.cmdlet @p | Out-Null; if ($s.id -eq 'mount') { $mounted = $true }; if ($s.id -eq 'unmount') { $mounted = $false } }
         elseif ($s.ContainsKey('copy')) {
             foreach ($c in $s.copy) { $parent = Split-Path -Parent $c.to; New-Item -ItemType Directory -Path $parent -Force | Out-Null; Copy-Item -LiteralPath $c.from -Destination $c.to -Recurse -Force }
-            if ($s.id -eq 'copy-rescue') { $cfg = [ordered]@{ technician = $Technician; hubUrl = $HubUrl; builtAt = (Get-Date).ToString('o') }; [IO.File]::WriteAllText((Join-Path $mount 'DE\rescue\rescue.config.json'), ($cfg | ConvertTo-Json), (New-Object Text.UTF8Encoding $false)) }
+            if ($s.id -eq 'copy-rescue') { $cfg = [ordered]@{ technician = $Technician; hubUrl = $HubUrl; builtAt = (Get-Date).ToString('o') }; if ($HubAccountId) { $cfg.hubAccountId = $HubAccountId }; [IO.File]::WriteAllText((Join-Path $mount 'DE\rescue\rescue.config.json'), ($cfg | ConvertTo-Json), (New-Object Text.UTF8Encoding $false)) }
         }
         elseif ($s.ContainsKey('write')) { [IO.File]::WriteAllText($s.write.path, $s.write.text, [Text.Encoding]::ASCII) }
     }
