@@ -24,6 +24,7 @@ import jwt from "jsonwebtoken";
 import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_integrations/object_storage";
 import { zohoClient, zohoDeskService, zohoCRMService, zohoBillingService } from "./zoho";
 import { websiteLeadTaxonomy } from "./zoho/leadTaxonomy";
+import { describeQuoteContext, quoteLeadDescription, sanitizeQuoteContext } from "@shared/quoteContext";
 import { findBackupCodeIndex, generateBackupCodes } from "./portalMfaCrypto";
 import {
   parseZohoTicketId,
@@ -4670,6 +4671,9 @@ export async function registerRoutes(app: Express) {
   app.post("/api/lead-quote", [leadQuoteRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { seats, enterpriseToggle, connectivity, devices, recommendedPlan, firstName, lastName, company, email, consent, source, pageUrl, timestamp } = req.body;
+      // Optional quiz answers that never change the match; only known ids survive (issue 419).
+      const context = sanitizeQuoteContext(req.body.context);
+      const contextLine = describeQuoteContext(context);
       
       // Corporate email validation
       const domain = email.split('@')[1]?.toLowerCase();
@@ -4693,6 +4697,7 @@ export async function registerRoutes(app: Express) {
         connectivity,
         devices,
         recommendedPlan,
+        context,
         firstName,
         lastName,
         company,
@@ -4717,7 +4722,7 @@ export async function registerRoutes(app: Express) {
         email,
         company,
         source: source || "quote_wizard",
-        message: `Recommended Plan: ${recommendedPlan}, Seats: ${seats}`,
+        message: `Recommended Plan: ${recommendedPlan}, Seats: ${seats}${contextLine ? `. ${contextLine}` : ""}`,
       }, "lead-quote");
 
       // Push lead to Zoho CRM
@@ -4731,7 +4736,7 @@ export async function registerRoutes(app: Express) {
           Company: company || 'Not Specified',
           Lead_Source: taxonomy.leadSource,
           Lead_Status: taxonomy.leadStatus,
-          Description: `Quote Wizard: Recommended Plan: ${recommendedPlan}, Seats: ${seats}, Connectivity: ${connectivity}, Devices: ${devices}`,
+          Description: quoteLeadDescription({ recommendedPlan, seats, connectivity, devices, context }),
         });
         zohoLeadId = (zohoLead as any)?.details?.id || zohoLead?.id;
         console.log("[ZOHO] Quote wizard lead created:", zohoLeadId);
