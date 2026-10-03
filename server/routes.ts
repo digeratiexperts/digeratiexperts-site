@@ -39,6 +39,8 @@ import {
   getUser as portalAuthGetUser,
   hasUser as portalAuthHasUser,
   setUser as portalAuthSetUser,
+  commitUser as portalAuthCommitUser,
+  commitClient as portalAuthCommitClient,
   removeUserKeys as portalAuthRemoveUserKeys,
   listUniqueUsers as portalAuthListUsers,
   getClient as portalAuthGetClient,
@@ -690,7 +692,20 @@ export async function registerRoutes(app: Express) {
       portalAuthSetUser(user);
       return portalUsers;
     },
+    /** Awaited durable write (#245): throws PortalPersistenceError if the DB did not confirm. */
+    commit: (user: any) => portalAuthCommitUser(user),
     values: () => portalAuthListUsers(),
+  };
+  /** 503 for a durable write the database did not confirm; false for any other error. */
+  const sendPersistenceFailure = (res: Response, error: unknown): boolean => {
+    if (!(error instanceof PortalPersistenceError)) return false;
+    logger.error("Durable write failed", error);
+    res.status(503).json({
+      code: error.code,
+      message: "We could not save that change just now. Nothing was changed; please try again in a moment.",
+      error: "We could not save that change just now. Nothing was changed; please try again in a moment.",
+    });
+    return true;
   };
   const portalClients = {
     get: (id: string) => portalAuthGetClient(id),
@@ -698,6 +713,7 @@ export async function registerRoutes(app: Express) {
       portalAuthSetClient(client);
       return portalClients;
     },
+    commit: (client: any) => portalAuthCommitClient(client),
     values: () => portalAuthListClients(),
   };
   
@@ -1335,7 +1351,7 @@ export async function registerRoutes(app: Express) {
           return res.status(400).json({ error: "User cannot be their own manager" });
         }
       }
-      const updated = updateUserOrgFields(target.id, {
+      const updated = await updateUserOrgFields(target.id, {
         orgRole,
         departmentId: departmentId === undefined ? undefined : departmentId || null,
         managerUserId: managerUserId === undefined ? undefined : managerUserId || null,
@@ -1344,6 +1360,7 @@ export async function registerRoutes(app: Express) {
       });
       res.json({ success: true, user: orgPublicUser(updated as OrgUserFields) });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
@@ -2088,7 +2105,6 @@ export async function registerRoutes(app: Express) {
         createdAt: new Date(),
       };
 
-      portalUsers.set(email, newUser);
       await createProspectClientForUser(newUser, companyName);
       // Reload after client link
       const saved = portalUsers.get(email) || newUser;
@@ -2138,6 +2154,7 @@ export async function registerRoutes(app: Express) {
         },
       });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       console.error("[ERROR] Portal registration failed:", error);
       res.status(500).json({ message: "Registration failed" });
     }
@@ -2173,10 +2190,7 @@ export async function registerRoutes(app: Express) {
 
       // Mark user as verified
       user.emailVerified = true;
-      portalUsers.set(tokenData.email, user);
-      if (user.username) {
-        portalUsers.set(user.username, user);
-      }
+      await portalUsers.commit(user);
 
       // Clear the token
       emailVerificationTokens.delete(token);
@@ -2310,12 +2324,13 @@ export async function registerRoutes(app: Express) {
 
       const bcrypt = await import('bcrypt');
       user.password = await bcrypt.hash(password, 12);
-      portalUsers.set(tokenData.email, user);
+      await portalUsers.commit(user);
       passwordResetTokens.delete(token);
 
       logSecurityEvent("PASSWORD_RESET_COMPLETED", req, { email: tokenData.email });
       return res.json({ success: true, message: "Password updated successfully. You can now log in." });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       logger.error("Reset password failed", error);
       return res.status(500).json({ message: "Password reset failed" });
     }
@@ -2423,11 +2438,10 @@ export async function registerRoutes(app: Express) {
         emailVerified: true,
         isActive: true,
       };
-      portalUsers.set(email, user);
       if (!isMaster) {
         await createProspectClientForUser(user);
       } else {
-        portalUsers.set(username, user);
+        await portalUsers.commit(user);
       }
       logSecurityEvent("PORTAL_USER_PROVISIONED_ZOHO", req, {
         email,
@@ -2436,8 +2450,7 @@ export async function registerRoutes(app: Express) {
     } else if (isMasterPortalEmail(email) && user.role !== "admin") {
       user.role = "admin";
       user.storeRole = "admin";
-      portalUsers.set(email, user);
-      if (user.username) portalUsers.set(user.username, user);
+      await portalUsers.commit(user);
     }
 
     return user;
@@ -2754,8 +2767,7 @@ export async function registerRoutes(app: Express) {
           verified = true;
           backupCodes.splice(idx, 1);
           (user as any).mfaBackupCodes = backupCodes;
-          portalUsers.set(user.email, user);
-          if (user.username) portalUsers.set(user.username, user);
+          await portalUsers.commit(user);
         }
       }
 
@@ -2770,6 +2782,7 @@ export async function registerRoutes(app: Express) {
 
       return completeLogin(user, req, res);
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       console.error("[ERROR] MFA verify failed:", error);
       return res.status(500).json({ message: "Verification failed" });
     }
@@ -2915,8 +2928,7 @@ export async function registerRoutes(app: Express) {
       if (method === 'totp') {
         user.mfaTotpSecret = setup.secret;
       }
-      portalUsers.set(user.email, user);
-      if (user.username) portalUsers.set(user.username, user);
+      await portalUsers.commit(user);
 
       mfaPendingSetups.delete(setupToken);
       logSecurityEvent("MFA_ENABLED", req, { email: user.email, method });
@@ -2927,6 +2939,7 @@ export async function registerRoutes(app: Express) {
         backupCodes,
       });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       logger.error("MFA confirm failed", error);
       return res.status(500).json({ message: "MFA confirmation failed" });
     }
@@ -2949,12 +2962,12 @@ export async function registerRoutes(app: Express) {
       user.mfaMethod = null;
       user.mfaTotpSecret = null;
       user.mfaBackupCodes = [];
-      portalUsers.set(user.email, user);
-      if (user.username) portalUsers.set(user.username, user);
+      await portalUsers.commit(user);
 
       logSecurityEvent("MFA_DISABLED", req, { email: user.email });
       return res.json({ success: true, message: "MFA has been disabled" });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       logger.error("MFA disable failed", error);
       return res.status(500).json({ message: "Failed to disable MFA" });
     }
@@ -2975,12 +2988,12 @@ export async function registerRoutes(app: Express) {
 
       const backupCodes = generateBackupCodes(8);
       user.mfaBackupCodes = backupCodes;
-      portalUsers.set(user.email, user);
-      if (user.username) portalUsers.set(user.username, user);
+      await portalUsers.commit(user);
 
       logSecurityEvent("MFA_BACKUP_CODES_REGENERATED", req, { email: user.email });
       return res.json({ success: true, backupCodes });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       logger.error("Backup code regeneration failed", error);
       return res.status(500).json({ message: "Failed to regenerate backup codes" });
     }
@@ -3022,6 +3035,7 @@ export async function registerRoutes(app: Express) {
       if (!user) return res.status(404).json({ message: "User not found" });
 
       const { fullName, email } = req.body;
+      let pendingRemovedEmail: string | null = null;
       if (fullName && typeof fullName === "string") {
         user.fullName = fullName.trim();
       }
@@ -3033,11 +3047,11 @@ export async function registerRoutes(app: Express) {
         const previousEmail = user.email;
         user.email = nextEmail;
         user.emailVerified = false;
-        // Drop the old email from the index so it can no longer authenticate.
-        portalAuthRemoveUserKeys(user.id, [previousEmail]);
+        pendingRemovedEmail = previousEmail;
       }
-      portalUsers.set(user.email, user);
-      if (user.username) portalUsers.set(user.username, user);
+      await portalUsers.commit(user);
+      // Drop the old email from the index only after the new one is durable, so it can no longer authenticate.
+      if (pendingRemovedEmail) portalAuthRemoveUserKeys(user.id, [pendingRemovedEmail]);
 
       logSecurityEvent("PORTAL_PROFILE_UPDATED", req, { userId: user.id });
       return res.json({
@@ -3054,6 +3068,7 @@ export async function registerRoutes(app: Express) {
         },
       });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       logger.error("Profile update failed", error);
       return res.status(500).json({ message: "Failed to update profile" });
     }
@@ -3079,12 +3094,12 @@ export async function registerRoutes(app: Express) {
       if (!valid) return res.status(401).json({ message: "Current password is incorrect" });
 
       user.password = await bcryptMod.hash(newPassword, 12);
-      portalUsers.set(user.email, user);
-      if (user.username) portalUsers.set(user.username, user);
+      await portalUsers.commit(user);
 
       logSecurityEvent("PORTAL_PASSWORD_CHANGED", req, { userId: user.id });
       return res.json({ success: true, message: "Password updated successfully" });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       logger.error("Change password failed", error);
       return res.status(500).json({ message: "Failed to change password" });
     }
@@ -4455,11 +4470,12 @@ export async function registerRoutes(app: Express) {
         createdAt: new Date(),
       };
       
-      portalClients.set(newCompany.id, newCompany);
+      await portalClients.commit(newCompany);
       
       res.json({ success: true, company: newCompany });
       logSecurityEvent("COMPANY_CREATED", req, { companyId: newCompany.id, companyName });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
@@ -4484,11 +4500,12 @@ export async function registerRoutes(app: Express) {
         status: status || company.status,
       };
       
-      portalClients.set(req.params.id, updatedCompany);
+      await portalClients.commit(updatedCompany);
       
       res.json({ success: true, company: updatedCompany });
       logSecurityEvent("COMPANY_UPDATED", req, { companyId: req.params.id });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
