@@ -96,8 +96,15 @@ claims:
       - client/src/pages/portal/PortalPeople.tsx
       - client/src/components/portal/TenantSelector.tsx
       - artifacts/visual-qa/portal-people-pick-company/**
-    status: active
+    status: verified-live
     started: 2026-10-02
+    released: 2026-10-02
+    pr: 330
+    merge_sha: 2859b15c4ad9a5131ca6c8ce086afe4ba1cf3f0d
+    verification: >-
+      Merged on Joe's "merge" (2026-10-02). Production release.txt reads
+      2859b15c; PortalPeople-DMDwOVcy.js carries "Pick a company to view its
+      people", the switcher actions and the clientId scoping; /healthz 200.
     note: >-
       Joe, 2026-10-02, "6. a": replace People & Org's error for a DE admin who
       is not viewing as a company with a pick-a-company prompt, as a small
@@ -140,8 +147,16 @@ claims:
       - client/src/pages/portal/AdminLoginKnocks.tsx (scroll region)
       - client/src/components/CookieConsentBanner.tsx (role and label only)
       - artifacts/visual-qa/portal-followups/**
-    status: active
+    status: verified-live
     started: 2026-10-02
+    released: 2026-10-02
+    pr: 333
+    merge_sha: 0556880b817a3990395baba979a66e0c090b574a
+    verification: >-
+      Merged on Joe's "merge" (2026-10-02). Main CI and the production deploy
+      passed; release.txt read 0556880b; portal-By2NtNGL.css carries the
+      de-portal-scope dialog fix and PortalLayout-vWUJudun.js carries "Match
+      device" and the "Client portal" nav landmark; /healthz 200.
     note: >-
       Joe's answers of 2026-10-02 on the portal follow-ups. 4 "a and c": dark
       stays the default and "Match device" joins the user menu (browsers never
