@@ -5,6 +5,7 @@
  * Gold appears only inside the logo mark.
  */
 .v6 {
+  position: relative;
   --v6-bg: #050312;
   --v6-surface: #0a0a0a;
   --v6-raised: #151217;
@@ -27,6 +28,9 @@
   -webkit-font-smoothing: antialiased;
 }
 .v6 *, .v6 *::before, .v6 *::after { box-sizing: border-box; }
+.v6-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.v6-skip { position: absolute; top: -100%; left: 50%; transform: translateX(-50%); padding: 0.75rem 1.25rem; background: var(--v6-accent); color: #fff; font-weight: 600; font-size: 0.95rem; border-radius: 0 0 10px 10px; z-index: 50; text-decoration: none; transition: top 0.2s ease; }
+.v6-skip:focus { top: 0; outline: 2px solid var(--v6-focus); outline-offset: 2px; }
 .v6 :where(h1, h2, h3, h4, p, ul, ol, figure, table, dl, dd, hr) { margin: 0; }
 .v6 :where(ul, ol) { padding: 0; list-style: none; }
 .v6 img { display: block; max-width: 100%; height: auto; }
@@ -310,4 +314,8 @@ select.v6-input { appearance: auto; }
 }
 @media (min-width: 1280px) {
   .v6-hero-grid { gap: 64px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .v6-skip { transition: none; }
+  .v6-header { backdrop-filter: none; }
 }

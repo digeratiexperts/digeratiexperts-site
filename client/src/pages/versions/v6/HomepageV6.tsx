@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, MouseEvent } from "react";
 import { Link } from "wouter";
+import { focusMainContent } from "@/components/SkipToContent";
 import { useSEO } from "@/hooks/useSEO";
 import { DE_LOGO_REVERSE } from "@/lib/brandAssets";
 import { CTA } from "@/lib/ctaCopy";
@@ -409,12 +410,20 @@ export default function HomepageV6(): JSX.Element {
 
   const reviews = useReviews();
   const threats = useThreatFeed("homepage");
+  const threatAttribution = threats.payload.attribution || THREAT_ATTRIBUTION;
   const facts = getHomepageCyberFacts();
   const year = new Date().getFullYear();
   const region = COMPANY.addressRegion === "AZ" ? "Arizona" : COMPANY.addressRegion;
 
+  const onSkipToMain = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (focusMainContent()) event.preventDefault();
+  };
+
   return (
     <div className="v6" data-testid="homepage-v6">
+      <a href="#v6-main" className="v6-skip" onClick={onSkipToMain} data-testid="v6-skip-to-main">
+        Skip to main content
+      </a>
       <header className="v6-header">
         <div className="v6-wrap v6-header-inner">
           <Link href="/" className="v6-logo" aria-label="Digerati Experts home">
@@ -531,6 +540,7 @@ export default function HomepageV6(): JSX.Element {
                   <small>
                     <a href={f.sourceUrl} rel="noopener noreferrer" target="_blank">
                       {f.source}, {f.year}
+                      <span className="v6-sr-only"> (opens in new tab)</span>
                     </a>
                   </small>
                 </li>
@@ -862,26 +872,31 @@ export default function HomepageV6(): JSX.Element {
                 <h2 id="v6-updates">Recent threats and insights</h2>
                 <p className="v6-lede">Items prioritized by active exploitation, exploit probability and SMB relevance, within the last 45 days.</p>
               </div>
-              {threats.payload.items.length > 0 ? (
-                <ul className="v6-feed" aria-label="Current security updates">
-                  {threats.payload.items.slice(0, 3).map((item) => (
-                    <li key={item.id}>
-                      <a href={item.sourceUrl} rel="noopener noreferrer" target="_blank">
-                        {item.title}
-                      </a>
-                      <span className="v6-muted">
-                        {item.kicker} · {item.sourceName} · {formatDate(item.publishedAt)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="v6-box">
-                  <b>{threats.loading ? "Checking the feed." : "Nothing meets the homepage threshold right now."}</b>
-                  <p className="v6-muted">The full stream, with dates and sources, is on Security Updates.</p>
-                </div>
-              )}
-              <p className="v6-muted" style={{ marginTop: 12 }}>{THREAT_ATTRIBUTION}</p>
+              <div aria-live="polite" aria-busy={threats.loading || undefined}>
+                {threats.payload.items.length > 0 ? (
+                  <ul className="v6-feed" aria-label="Current security updates">
+                    {threats.payload.items.slice(0, 3).map((item) => (
+                      <li key={item.id}>
+                        <a href={item.sourceUrl} rel="noopener noreferrer" target="_blank">
+                          {item.title}
+                          <span className="v6-sr-only"> (opens in new tab)</span>
+                        </a>
+                        <span className="v6-muted">
+                          {item.kicker} · {item.sourceName} · {formatDate(item.publishedAt)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="v6-box" role="status">
+                    <b>{threats.loading ? "Checking the feed." : "Nothing meets the homepage threshold right now."}</b>
+                    <p className="v6-muted">The full stream, with dates and sources, is on Security Updates.</p>
+                  </div>
+                )}
+              </div>
+              <p className="v6-muted" style={{ marginTop: 12 }}>
+                {threatAttribution}
+              </p>
               <div className="v6-actions" style={{ marginTop: 20 }}>
                 <Link href="/resources/security-updates" className="v6-btn v6-btn-secondary">
                   View all security updates
