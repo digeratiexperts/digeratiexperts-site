@@ -49,7 +49,6 @@ claims:
       - client/src/pages/portal/PortalVPN.tsx
       - client/src/pages/portal/PortalCytracom.tsx
       - client/src/pages/portal/PortalShipCenter.tsx
-      - client/src/components/ExitIntentPopup.tsx (FINDINGS_ARE_THE_CLIENTS switch)
       - scripts/qa/portal-prod-check.mjs
       - deploy/vps/env.production.example (portal data-source section)
     status: active
@@ -58,7 +57,12 @@ claims:
       Joe, 2026-10-03: "write all of them then i will tell you what to do from
       there" (open answers 2a/2b/2c VPN, phone and shipping sources; 3 test
       login; 5 popup). Every option is built and off by default: sample stays
-      until PORTAL_*_PROVIDER is set; the popup switch is false.
+      until PORTAL_*_PROVIDER is set. The popup answer landed on main via
+      #369 ("Yours to keep") before this branch merged, so this branch keeps
+      main's popup and drops its own switch. #369 also records VPN = Timus
+      (no adapter possible until Timus sends API docs), phone = Cytracom UCaaS
+      and shipping = staff-entered: the cytracom and manual adapters here
+      match; the other adapters stay off unless Joe picks them.
   - id: de-auth-token-identity-binding
     owner: claude
     subsystem: portal-auth

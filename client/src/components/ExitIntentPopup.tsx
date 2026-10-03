@@ -23,21 +23,10 @@ const PUBLIC_EMAIL_DOMAINS = [
  * Three facts, each one true of the assessment as sold today. Anything with a
  * number or a delivery promise needs a source in docs/CLAIMS-REGISTER.md first.
  */
-/**
- * Joe's call (docs/CLAIMS-REGISTER.md, "you keep the findings"): flip to true
- * only once he confirms clients keep their assessment findings whatever they
- * decide. Until then the third fact stays "No switch required."
- */
-export const FINDINGS_ARE_THE_CLIENTS = false;
-
-const THIRD_FACT = FINDINGS_ARE_THE_CLIENTS
-  ? { lead: "Yours to keep.", rest: "The findings are yours whichever way you go, even if the answer is that you don’t need us." }
-  : { lead: "No switch required.", rest: "Use it with the IT you have, or with us. Your call." };
-
-export const FACTS = [
+const FACTS = [
   { lead: "Independent.", rest: "Your current provider shouldn’t be the one grading its own work." },
   { lead: "Plain English.", rest: "Findings ranked by risk, written for the person who writes the checks." },
-  THIRD_FACT,
+  { lead: "Yours to keep.", rest: "The findings belong to you. Digerati Experts writes them so you can put them to work." },
 ] as const;
 
 /**
