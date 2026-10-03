@@ -1672,14 +1672,14 @@ claims:
     owner: claude
     subsystem: client-portal-shell
     branch: claude/nifty-newton-uk9g7t
-    pr: 408
+    pr: 412
     base_sha: cef31956cd747e3eac02a2e38ceb41c69a125054
     files:
-      - client/src/styles/portal.css (light theme block and the .pt-canvas glow only)
+      - client/src/styles/portal.css (light theme block, light state inks and the .pt-canvas glow only)
       - client/src/pages/portal/PortalLayout.tsx (pt-canvas class on SidebarInset only)
       - client/src/styles/portalLightTheme.test.ts (new)
       - artifacts/visual-qa/portal-light-ambient/**
-    status: verified-live
+    status: active
     started: 2026-10-03
     released: 2026-10-03
     merge_sha: 9b6f364be944e3a8379f61d3ded12a3e5718d402
@@ -1695,7 +1695,13 @@ claims:
       new CSS: axe clean, no overflow, no runtime errors. Limit: no signed-in
       light-mode screenshot on production (QA login is a CI secret); the same
       bundle was rendered signed in locally. VERIFIED LIVE (bundle). Evidence:
-      artifacts/visual-qa/portal-light-ambient/live/. Files released.
+      artifacts/visual-qa/portal-light-ambient/live/. FOLLOW-UP (PR 412,
+      pending Joe's merge): a 39-page regression run (dark and light, 390
+      and 1440, before vs after) found dark mode pixel-identical apart from a
+      clock, but light ok ink at 4.42:1 on its tint over orchid on
+      /portal/sales-process and /portal/questionnaires. Light --pt-ok and
+      --pt-bad are darkened (#046a4d, #b6113a) and portalLightTheme.test.ts
+      now checks every tone on its 7-10% tint over field, well and card.
     note: >-
       Joe, 2026-10-03: portal light mode is liked but "the light grey I would
       replace with an ambent color". Options rendered (A amber, B Ambient, C
