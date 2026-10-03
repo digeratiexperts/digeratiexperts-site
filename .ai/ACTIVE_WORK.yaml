@@ -66,7 +66,7 @@ claims:
       - server/portalAuthFailClosed.test.ts (two added cases)
       - server/legacyAuthRetired.ts, server/legacyAuthRetired.test.ts (legacy /api/auth/register and /api/auth/login answer 410)
       - server/routes.ts (legacy register/login handlers and their now-unused helpers removed)
-    status: active
+    status: merged
     started: 2026-10-01
     note: >-
       Issue 236 (P0), confirmed on a local production build after Joe's "so
@@ -84,6 +84,7 @@ claims:
       /api/auth/register and /api/auth/login token minters are retired (410
       Gone, end-to-end test). Follow-up (own PR): gate the PATCH
       /api/portal/profile email change on a confirmation to the new address.
+      RELEASED 2026-10-03: merged as PR 329 (merge commit ae69ba0a, 2026-10-03T02:40Z). MERGED, not yet recorded as VERIFIED LIVE; production verification is pending. Files released.
   - id: de-desk-hardening
     owner: claude
     subsystem: de-desk
@@ -484,7 +485,7 @@ claims:
       - server/campaignAliasRedirects.ts
       - server/campaignAliasRedirects.test.ts
       - server/index.ts (the campaign alias redirect registration only)
-    status: active
+    status: merged
     started: 2026-10-01
     note: >-
       Found by a link sweep after Joe's "so everything is complete and we cant
@@ -494,6 +495,7 @@ claims:
       /support/system-status rendered while answering HTTP 404 in production,
       and /ads/<slug> and /lp/<slug> answered 404 before a browser redirect
       that dropped the query string. Exact paths, so unknown slugs stay 404.
+      RELEASED 2026-10-03: merged as PR 328 (squash e7203266). MERGED, not yet recorded as VERIFIED LIVE; production verification is pending. Files released.
   - id: de-org-department-tenant-boundary
     owner: claude
     subsystem: portal-org
@@ -503,7 +505,7 @@ claims:
       - server/portalDepartmentRoutes.ts
       - server/portalDepartmentRoutes.test.ts
       - server/routes.ts (the two department routes and their imports only)
-    status: active
+    status: merged
     started: 2026-10-01
     note: >-
       Issue 254 (P0), verified still present on main 576aa76d after Joe's
@@ -515,6 +517,7 @@ claims:
       order; the company now comes from the signed-in user unless the caller is
       a DE admin, and the IT contact must be in the same company. The People
       page's only call (create with a name) is unaffected.
+      RELEASED 2026-10-03: merged as PR 326 (squash e5945de3). MERGED, not yet recorded as VERIFIED LIVE; production verification is pending. Files released.
   - id: de-desk-store-seed-door2
     owner: claude
     subsystem: de-desk
