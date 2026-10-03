@@ -135,10 +135,29 @@ Every section of the live homepage, redrawn on the Version 5 system. The same ac
 
 | Where | Claim | Status | Action |
 | --- | --- | --- | --- |
-| `client/src/pages/routes/locationPages.tsx` (Chandler) | "we deliver 15-minute response times" | Unsupported as a blanket claim; the SLA's 15 minutes applies to Critical only | Reword to "15-minute critical response per our SLA" or remove |
-| `locationPages.tsx` (Chandler, Mesa) | "Same-day onsite support available", "Fast response times" | Unsupported | Joe: confirm or remove |
+| `client/src/pages/routes/locationPages.tsx` (Chandler) | "we deliver 15-minute response times" | Fixed 2026-10-03 | Now "a published SLA with a 15-minute response for critical incidents" |
+| `locationPages.tsx` (Chandler, Mesa) | "Same-day onsite support available", "Fast response times" | Fixed 2026-10-03 | Now "Onsite visits from our Chandler office, as your plan sets" (onsite support is a published plan line in `servicePages.tsx`) and the SLA's critical tier |
 | Solution pages (`BackupDisasterRecovery`, `ManagedWorkplace`, `OfficePage`) | "quote within 24 hours" | Unsupported | Joe: confirm or align to one business day |
 | `ManagedWorkplace.tsx` FAQ | "fully productive within 1 business day" (onboarding) | Unsupported | Joe: confirm or soften |
+
+## Site-wide truth pass (2026-10-03)
+
+Joe, 2026-10-03: make the claims flagged by PR #370 "authentic branded and true rather than remove them or flag them forever". Each row says what the page claims now and what makes it true.
+
+| Family | Where | Now | Basis |
+| --- | --- | --- | --- |
+| Response time | Mission & Values, Team, location pages (all cities via `LocationServicePage`), Chandler data, Managed Store, Remote Support, service and narrative routes, threat detection ("Minutes-to-respond"), Submit Ticket (its tiers read "Immediate", "Tracked to resolution", "Within 2 hours"; now the SLA's four tiers verbatim) | "15-minute response for critical incidents, per our published SLA"; "emergency incident response 24/7/365"; Managed Store's "Guaranteed SLA" now "Published SLA, with service credits" | `client/src/pages/legal/SLA.tsx` (Critical 15 minutes; 24/7/365 emergency availability; service credits). "During business hours" removed: the SLA does not say it |
+| Response time, Managed Store | "$50K+ Avg. Savings per client annually" | Replaced by "30 days, money-back guarantee" | No source for the savings figure; the guarantee is `/about/guarantee` |
+| Phoenix presence | `phoenix-az` location data; Mesa; Chandler "Primary Office" | Phoenix and Mesa are served "from our Chandler office"; "Phoenix's largest businesses", "Large healthcare networks… Government contractors", "Mesa service office", "Mesa-based technical team" removed; industries are the ones with a published `/industries/*` page | `shared/companyContact.ts` (one office, Chandler; Phoenix metro service area) |
+| Phoenix wording | `/about/21-questions` question 18 | "Phoenix-based" now "Chandler-based" | `shared/companyContact.ts` |
+| Phoenix superlative | `/about/guarantee` | "only IT firm in the Phoenix area" replaced with an invitation to compare | No survey supports "only" |
+| Certifications and partners | Team, Compliance & Certifications, Privacy Policy 4.3, homepage newsletter chips, city-page hero note | Rendered only from `client/src/data/credentials.ts`, each entry linked to the issuer's own record with a checked date; empty until records are confirmed, with a plain statement and an offer to send verification links. `credentials.test.ts` fails if a page types a credential name | No public record found for CISSP, CISM, CEH, OSCP, GIAC, MCSE, VCP, AWS, Azure, ITIL, HDI, Microsoft Partner, Apple Consultants Network or Google Partner (2026-10-03 search; primary directories blocked from the build environment) |
+| Google Partner badge | `/thank-you` | Replaced by "Read us on Google" (DE's Google Business Profile, `COMPANY.mapsUrl`) and the 30-day guarantee | No Google Partners or Partner Advantage listing found |
+| Ebook case studies | `/resources/ebook` chapters 1 and 3 | Labelled "Example scenario · not a client" (`data-classification="EXAMPLE"`), invented figures (147 devices, 23 systems, $1.2M) removed, each tied to a sourced registry fact (DBIR SMB ransomware share, DBIR vulnerability and human-element shares, IC3 BEC losses). "After conducting hundreds of risk assessments" replaced by the DBIR finding | `design/VISUAL_EVIDENCE.md` EXAMPLE class; `client/src/data/cyberAwarenessFacts.ts` |
+| Ebook cover | `client/src/assets/images/ebook-defending-digital-realm-cover.webp` (page, mega menu, blog, og:image) | Code-drawn cover with the real title, subtitle, six chapters and byline; source `design/source/ebook-cover/cover.html` | Replaces a generated image whose author line read "Youthor Name / Auter Reable Here" |
+| Cyber facts chips and notes | `/resources/cyber-facts` (page, search title "Credibility Layer" and its description "Use these facts across the site…") | "Every figure names its report and year", "Each card links to the publisher", "State losses and the 45-day notice law"; developer notes ("Tip: Put this under your hero…", "Auto-randomizes on load", "Most persuasive • 2 cards is the sweet spot", "Use 1–3 per page", "Best practice…") replaced with visitor-facing copy | "Peer-Reviewed" and "CISA & FBI IC3 Audited" were not true of the sources |
+
+Still for Joe (no change made): the published office address and phone number do not match public business records (BBB, Arizona Corporation Commission mirrors, Yelp list other Chandler and Phoenix addresses and another number); certifications and partner programs to add to `credentials.ts` with their verification links; Trust Center practice claims ("annual penetration testing", "third-party security audits", "Tier III/IV facilities"); the Privacy Policy's other security-practice bullets.
 
 ## How to add a claim
 

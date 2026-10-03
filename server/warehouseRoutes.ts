@@ -8,6 +8,8 @@ import {
   sendGenericNotFound,
 } from "./warehouseAccess";
 import { classifyLegacyStorePath, toWarehousePath } from "./storeLegacyRedirects";
+import { listWarehouseStock, recordWarehouseMovement } from "./warehouseStockStore";
+import type { StockMovementKind } from "./warehouseStock";
 
 function withQuery(req: Request, dest: string): string {
   const q = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
@@ -49,6 +51,34 @@ export function registerWarehouseGates(app: Express): void {
     }
     res.json({ ok: true });
   });
+
+  app.get("/api/internal/warehouse/stock", (req, res) => {
+    requireWarehouseStaffApi(req, res, () => {
+      void listWarehouseStock()
+        .then((book) => res.json(book))
+        .catch(() => res.status(500).json({ error: "Stock could not be read." }));
+    });
+  });
+
+  for (const kind of ["receive", "pick", "ship"] as const satisfies readonly StockMovementKind[]) {
+    app.post(`/api/internal/warehouse/stock/${kind}`, (req, res) => {
+      requireWarehouseStaffApi(req, res, () => {
+        const body = req.body && typeof req.body === "object" ? (req.body as Record<string, unknown>) : {};
+        void recordWarehouseMovement({
+          sku: typeof body.sku === "string" ? body.sku : "",
+          kind,
+          quantity: Number(body.quantity),
+          carrier: typeof body.carrier === "string" ? body.carrier : undefined,
+          trackingNumber: typeof body.trackingNumber === "string" ? body.trackingNumber : undefined,
+        })
+          .then((book) => res.json(book))
+          .catch((error: unknown) => {
+            const message = error instanceof Error ? error.message : "Stock movement refused.";
+            res.status(400).json({ error: message });
+          });
+      });
+    });
+  }
 
   app.use((req, res, next) => {
     if (!isWarehouseCatalogApiPath(req.path)) return next();

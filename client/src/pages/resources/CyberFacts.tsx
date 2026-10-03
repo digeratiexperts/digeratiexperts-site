@@ -240,8 +240,8 @@ const CyberFacts = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useSEO({
-    title: 'Cybersecurity Facts - Credibility Layer | Digerati Experts',
-    description: 'Real cybersecurity statistics with sources. Use these facts across the site to support why proactive cybersecurity matters.',
+    title: 'Cybersecurity Facts with Sources | Digerati Experts',
+    description: 'Sourced cybersecurity statistics on ransomware, identity, email fraud, recovery cost and Arizona losses. Each figure names its report and year and links to the publisher.',
     canonical: '/resources/cyber-facts',
   });
 
@@ -291,9 +291,9 @@ const CyberFacts = () => {
         <FactStrip
           label="How these facts are sourced"
           facts={[
-            { icon: Shield, title: "SOURCED", text: "Peer-Reviewed Industry Data" },
-            { icon: Lock, title: "GOVERNMENT", text: "CISA & FBI IC3 Audited" },
-            { icon: MapPin, title: "ARIZONA", text: "State Breach Law Ready" },
+            { icon: Shield, title: "SOURCED", text: "Every figure names its report and year" },
+            { icon: ExternalLink, title: "LINKED", text: "Each card links to the publisher" },
+            { icon: MapPin, title: "ARIZONA", text: "State losses and the 45-day notice law" },
           ]}
         />
 
@@ -305,7 +305,7 @@ const CyberFacts = () => {
                   Today's Cyber Fact
                 </h2>
                 <p className="mt-2 text-sm font-semibold uppercase tracking-wider text-white/60">
-                  Auto-randomizes on load
+                  A different sourced fact each visit
                 </p>
               </div>
               <Button
@@ -326,7 +326,7 @@ const CyberFacts = () => {
             </AnimatePresence>
 
             <p className="mt-6 max-w-3xl border-l-2 border-[var(--de-hairline)] pl-4 text-sm leading-relaxed text-white/65">
-              <strong className="text-white/85">Tip:</strong> Put this under your hero or above pricing to add immediate proof without adding clutter.
+              <strong className="text-white/85">Sharing it?</strong> Copy takes the figure and its source line together, so the number never travels without its report.
             </p>
           </Container>
         </Chapter>
@@ -335,10 +335,10 @@ const CyberFacts = () => {
           <Container>
             <ChapterHeader
               tone="surface"
-              eyebrow="Quick proof"
-              title="Quick Proof"
+              eyebrow="Two to remember"
+              title="Prevention and Recovery"
               layout="stack"
-              lede="Most persuasive • 2 cards is the sweet spot"
+              lede="One fact about stopping an attack, one about what recovery costs."
             />
             <div className="grid gap-6 md:grid-cols-2">
               <FactCard fact={allFacts.find(f => f.id === "microsoft-mfa-blocks-2025")!} onCopy={handleCopy} copiedId={copiedId} />
@@ -354,7 +354,7 @@ const CyberFacts = () => {
               eyebrow="Reference"
               title="Fact Library"
               layout="stack"
-              lede={`Copy anywhere • Use 1–3 per page • ${filteredFacts.length} facts`}
+              lede={`${filteredFacts.length} sourced facts · filter by topic · copy any fact with its source`}
             />
 
             <div
@@ -396,7 +396,7 @@ const CyberFacts = () => {
             </div>
 
             <p className="mt-8 max-w-3xl border-l-2 border-[var(--de-paper-hairline)] pl-4 text-sm leading-relaxed text-[#3A3448]">
-              <strong className="text-[#1A1228]">Best practice:</strong> Keep "Source:" links clickable. It builds trust and reduces skepticism.
+              <strong className="text-[#1A1228]">Using these figures?</strong> Keep the source link beside the number. Most of these reports are republished every year, so check the year on each card.
             </p>
           </Container>
         </Chapter>

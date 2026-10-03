@@ -16,6 +16,7 @@ import {
   portalTickets,
   portalTicketComments,
   portalTenantFiles,
+  storeOrders as storeOrdersTable,
   type User,
   type InsertUser,
   type Workspace,
@@ -36,7 +37,7 @@ import {
   type PortalTicket,
   type PortalTicketComment,
 } from "@shared/schema";
-import { eq, and, desc, asc, sql, isNull } from "drizzle-orm";
+import { eq, and, or, desc, asc, sql, isNull } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -98,6 +99,8 @@ export interface IStorage {
 
   getStoreOrders(): Promise<any[]>;
   getStoreOrder(id: string): Promise<any | undefined>;
+  /** Orders the account may see: placed by `userId` or belonging to `clientId`. Scoped in the query. */
+  getStoreOrdersForAccount(account: { userId?: string | null; clientId?: string | null }): Promise<any[]>;
   createStoreOrder(order: any): Promise<any>;
 }
 
@@ -728,6 +731,14 @@ export class MemStorage implements IStorage {
     return this.storeOrdersMap.get(id);
   }
 
+  async getStoreOrdersForAccount(account: { userId?: string | null; clientId?: string | null }): Promise<any[]> {
+    return Array.from(this.storeOrdersMap.values()).filter(
+      (o) =>
+        (Boolean(account.userId) && o.userId === account.userId) ||
+        (Boolean(account.clientId) && o.clientId === account.clientId),
+    );
+  }
+
   async createStoreOrder(order: any): Promise<any> {
     const newOrder: MemStoreOrder = {
       id: order.id || crypto.randomUUID(),
@@ -1144,7 +1155,6 @@ export class DatabaseStorage implements IStorage {
   // returned, and leaves it when it is soft-deleted, so the fallback can
   // never resurrect a deleted file or answer for a row the DB never held.
   private tenantFilesCache: Map<string, { id: string; clientId: string; fileUrl: string }> = new Map();
-  private storeOrdersMap: Map<string, MemStoreOrder> = new Map();
 
   // Tenant file metadata is durable in portal_tenant_files (#259). Reads are
   // tenant-scoped in SQL. Delete is a soft delete: the row keeps the object
@@ -1243,40 +1253,60 @@ export class DatabaseStorage implements IStorage {
     return updated.length > 0;
   }
 
+  // Store orders are read from store_orders, the table secure checkout writes to (#233).
+  // Errors propagate: the portal reports the source as unavailable rather than "ok" and empty.
   async getStoreOrders(): Promise<any[]> {
-    return Array.from(this.storeOrdersMap.values());
+    const db = await this.getDb();
+    return await db.select().from(storeOrdersTable).orderBy(desc(storeOrdersTable.createdAt));
   }
 
   async getStoreOrder(id: string): Promise<any | undefined> {
-    return this.storeOrdersMap.get(id);
+    const db = await this.getDb();
+    const [row] = await db.select().from(storeOrdersTable).where(eq(storeOrdersTable.id, id)).limit(1);
+    return row;
+  }
+
+  async getStoreOrdersForAccount(account: { userId?: string | null; clientId?: string | null }): Promise<any[]> {
+    const clauses = [] as any[];
+    if (account.userId) clauses.push(eq(storeOrdersTable.userId, account.userId));
+    if (account.clientId) clauses.push(eq(storeOrdersTable.clientId, account.clientId));
+    if (clauses.length === 0) return [];
+    const db = await this.getDb();
+    return await db
+      .select()
+      .from(storeOrdersTable)
+      .where(or(...clauses))
+      .orderBy(desc(storeOrdersTable.createdAt));
   }
 
   async createStoreOrder(order: any): Promise<any> {
-    const newOrder: MemStoreOrder = {
-      id: order.id || crypto.randomUUID(),
-      orderNumber: order.orderNumber || `ORD-${Date.now()}`,
-      userId: order.userId || null,
-      clientId: order.clientId || null,
-      status: order.status || "pending",
-      paymentMethod: order.paymentMethod || null,
-      lineItems: order.lineItems || [],
-      subtotal: order.subtotal || "0",
-      tax: order.tax || "0",
-      total: order.total || "0",
-      stripeSessionId: order.stripeSessionId || null,
-      stripePaymentIntentId: order.stripePaymentIntentId || null,
-      zohoPaymentId: order.zohoPaymentId || null,
-      billingEmail: order.billingEmail || null,
-      billingName: order.billingName || null,
-      billingCompany: order.billingCompany || null,
-      billingAddress: order.billingAddress || null,
-      notes: order.notes || null,
-      paidAt: order.paidAt || null,
-      createdAt: order.createdAt || new Date(),
-      updatedAt: new Date(),
-    };
-    this.storeOrdersMap.set(newOrder.id, newOrder);
-    return newOrder;
+    const db = await this.getDb();
+    const [created] = await db
+      .insert(storeOrdersTable)
+      .values({
+        id: order.id || crypto.randomUUID(),
+        orderNumber: order.orderNumber || `ORD-${Date.now()}`,
+        userId: order.userId || null,
+        clientId: order.clientId || null,
+        status: order.status || "pending",
+        paymentMethod: order.paymentMethod || null,
+        lineItems: order.lineItems || [],
+        subtotal: order.subtotal || "0",
+        tax: order.tax || "0",
+        total: order.total || "0",
+        stripeSessionId: order.stripeSessionId || null,
+        stripePaymentIntentId: order.stripePaymentIntentId || null,
+        zohoPaymentId: order.zohoPaymentId || null,
+        billingEmail: order.billingEmail || null,
+        billingName: order.billingName || null,
+        billingCompany: order.billingCompany || null,
+        billingAddress: order.billingAddress || null,
+        notes: order.notes || null,
+        paidAt: order.paidAt || null,
+      } as any)
+      .returning();
+    if (!created) throw new Error("Store order was not persisted");
+    return created;
   }
 }
 

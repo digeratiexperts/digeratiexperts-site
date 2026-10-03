@@ -78,9 +78,9 @@ export default function Guarantee() {
                   also release you from any contract or project you hired us to deliver without penalties.
                 </p>
                 <p className="mt-5 leading-relaxed text-[#3A3448]">
-                  We're the <span className={strong}>only</span> IT firm in the Phoenix area that offers this bold
-                  guarantee because we're confident you'll be <span className={strong}>thrilled</span> with the level
-                  of support and service you receive. We also believe this guarantee keeps us{" "}
+                  We put our <span className={strong}>own fees</span> on the line in writing because we're confident
+                  you'll be <span className={strong}>thrilled</span> with the level of support and service you
+                  receive. Ask any IT firm you're comparing whether they will do the same. We also believe this guarantee keeps us{" "}
                   <span className={strong}>sharp</span> and focused on ensuring everything is done right, on time and
                   to your complete satisfaction. Why risk hiring anyone else?
                 </p>
