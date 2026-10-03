@@ -1,0 +1,27 @@
+{
+  "checked": "2026-10-03T20:20Z",
+  "merge_sha": "9b6f364be944e3a8379f61d3ded12a3e5718d402",
+  "release_txt": {
+    "digeratiexperts.com": "9b6f364be944e3a8379f61d3ded12a3e5718d402",
+    "portal.digeratiexperts.com": "9b6f364be944e3a8379f61d3ded12a3e5718d402"
+  },
+  "healthz": 200,
+  "deploy_job": "Deploy and verify production VPS: success",
+  "bundle": {
+    "entry": "/assets/index-BDIuU1zN.js (same name as the local build of the merged tree)",
+    "entry_references": { "portal-Xybf7wEt.css": true, "PortalLayout-CRAL-_zI.js": true },
+    "portal_css": {
+      "290 42% 96% (orchid field)": 2,
+      "pt-canvas": 2,
+      "rgb(211 18 106 (magenta glow)": 1,
+      "rgb(91 69 224 (violet glow)": 1,
+      "36 24% 96% (old warm grey)": 0
+    },
+    "PortalLayout_chunk_pt_canvas": 1
+  },
+  "renders_signed_out": [
+    { "page": "/portal/login", "widths": [390, 1440], "status": 200, "portal_css": "portal-Xybf7wEt.css", "axe_serious_critical": 0, "overflow": false, "runtime_errors": 0 },
+    { "page": "/portal/signup", "widths": [390, 1440], "status": 200, "portal_css": "portal-Xybf7wEt.css", "axe_serious_critical": 0, "overflow": false, "runtime_errors": 0 }
+  ],
+  "limit": "The light field and glow apply only inside the signed-in portal. No signed-in light-mode screenshot was taken on production (the QA login is a CI secret and its workflow renders the dark default); the same bundle was rendered signed in locally (../after-*.png)."
+}
