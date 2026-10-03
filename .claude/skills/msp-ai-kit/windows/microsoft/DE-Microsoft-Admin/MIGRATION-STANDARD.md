@@ -129,3 +129,8 @@ The sign-off rules:
 - the verification checklist
 - the sign-off and final disposition
 - the event trail
+
+The migration does not run through the Hub's job queue. None of its functions is on `Invoke-DEMicrosoftJob`'s
+allowlist, so `Invoke-DEHubJobLoop` never runs one: a technician runs the migration, and its record reaches the Hub
+as a signed `email_migration.recorded` event (IT Operations). The Hub only offers a migration record's `tenantId`
+as a hint when DE queues Microsoft 365 admin jobs for that client.
