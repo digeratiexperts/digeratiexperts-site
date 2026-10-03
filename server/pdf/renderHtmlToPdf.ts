@@ -37,7 +37,12 @@ def _no_remote(url):
     return default_url_fetcher(url)
 
 src, out = sys.argv[1], sys.argv[2]
-HTML(filename=src, url_fetcher=_no_remote).write_pdf(out)
+doc = HTML(filename=src, url_fetcher=_no_remote)
+try:
+    # Tagged PDF (structure for screen readers); WeasyPrint 63+.
+    doc.write_pdf(out, pdf_tags=True)
+except TypeError:
+    doc.write_pdf(out)
 size = os.path.getsize(out) if os.path.exists(out) else 0
 if size < ${MIN_PDF_BYTES}:
     sys.stderr.write("pdf too small (%d bytes)\\n" % size)
@@ -85,10 +90,14 @@ async function renderWithPlaywright(html: string): Promise<Buffer> {
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load", timeout: RENDER_TIMEOUT_MS });
+    // The document's @page rules set size and margins (running header and
+    // footer); tagged + outline give screen readers structure and bookmarks.
     const buf = await page.pdf({
       format: "Letter",
       printBackground: true,
-      margin: { top: "0", right: "0", bottom: "0", left: "0" },
+      preferCSSPageSize: true,
+      tagged: true,
+      outline: true,
     });
     if (buf.byteLength < MIN_PDF_BYTES) {
       throw new Error(`Playwright PDF too small (${buf.byteLength} bytes)`);

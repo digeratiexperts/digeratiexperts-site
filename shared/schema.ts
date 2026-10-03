@@ -307,6 +307,24 @@ export const portalDepartments = pgTable("portal_departments", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+/**
+ * Records DE staff enter by hand for a client company when a portal page's
+ * data source is "manual" (server/portalIntegrations.ts): WireGuard / OpenVPN
+ * devices (kind "vpn_device") and staff-entered tracking numbers ("shipment").
+ * `data` holds the kind's fields; the server validates its shape.
+ */
+export const portalManualRecords = pgTable("portal_manual_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id")
+    .notNull()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull(),
+  data: jsonb("data").notNull(),
+  createdBy: varchar("created_by"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Portal users table (durable auth — Neon)
 export const portalUsers = pgTable("portal_users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

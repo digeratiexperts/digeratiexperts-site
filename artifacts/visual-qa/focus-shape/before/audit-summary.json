@@ -1,0 +1,117 @@
+{
+ "pages": [
+  "/",
+  "/store",
+  "/contact"
+ ],
+ "widths": [
+  1440,
+  390
+ ],
+ "tabStops": 417,
+ "radiusChangedOnFocus": 319,
+ "outlineColours": {
+  "2px rgb(236, 72, 153)": 157,
+  "2px rgba(0, 0, 0, 0)": 255,
+  "0px rgb(255, 255, 255)": 1,
+  "2px rgb(124, 59, 237)": 4
+ },
+ "examples": [
+  {
+   "vp": 1440,
+   "page": "/",
+   "label": "skip-to-content",
+   "restRadius": "0px",
+   "focusRadius": "4px",
+   "outline": "2px rgb(236, 72, 153)"
+  },
+  {
+   "vp": 1440,
+   "page": "/",
+   "label": "utility-phone",
+   "restRadius": "0px",
+   "focusRadius": "4px",
+   "outline": "2px rgb(236, 72, 153)"
+  },
+  {
+   "vp": 1440,
+   "page": "/",
+   "label": "utility-zoho-assist",
+   "restRadius": "0px",
+   "focusRadius": "4px",
+   "outline": "2px rgb(236, 72, 153)"
+  },
+  {
+   "vp": 1440,
+   "page": "/",
+   "label": "utility-portal",
+   "restRadius": "0px",
+   "focusRadius": "4px",
+   "outline": "2px rgb(236, 72, 153)"
+  },
+  {
+   "vp": 1440,
+   "page": "/",
+   "label": "Get My Cyber Risk Assessment",
+   "restRadius": "8px",
+   "focusRadius": "4px",
+   "outline": "2px rgba(0, 0, 0, 0)"
+  },
+  {
+   "vp": 1440,
+   "page": "/",
+   "label": "nav-dot-hero",
+   "restRadius": "9999px",
+   "focusRadius": "4px",
+   "outline": "2px rgba(0, 0, 0, 0)"
+  },
+  {
+   "vp": 1440,
+   "page": "/",
+   "label": "nav-dot-stats",
+   "restRadius": "9999px",
+   "focusRadius": "4px",
+   "outline": "2px rgba(0, 0, 0, 0)"
+  },
+  {
+   "vp": 1440,
+   "page": "/",
+   "label": "nav-dot-services",
+   "restRadius": "9999px",
+   "focusRadius": "4px",
+   "outline": "2px rgba(0, 0, 0, 0)"
+  },
+  {
+   "vp": 1440,
+   "page": "/",
+   "label": "nav-dot-industries",
+   "restRadius": "9999px",
+   "focusRadius": "4px",
+   "outline": "2px rgba(0, 0, 0, 0)"
+  },
+  {
+   "vp": 1440,
+   "page": "/",
+   "label": "nav-dot-pricing",
+   "restRadius": "9999px",
+   "focusRadius": "4px",
+   "outline": "2px rgba(0, 0, 0, 0)"
+  },
+  {
+   "vp": 1440,
+   "page": "/",
+   "label": "nav-dot-contact",
+   "restRadius": "9999px",
+   "focusRadius": "4px",
+   "outline": "2px rgba(0, 0, 0, 0)"
+  },
+  {
+   "vp": 1440,
+   "page": "/",
+   "label": "button-hero-schedule",
+   "restRadius": "8px",
+   "focusRadius": "4px",
+   "outline": "2px rgba(0, 0, 0, 0)"
+  }
+ ]
+}

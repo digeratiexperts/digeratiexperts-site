@@ -28,9 +28,10 @@ Letterforms are unchanged — the wordmark is the existing one, outlined.
 | White | `#FFFFFF` | wordmark and mark on dark grounds |
 
 Graphite and paper are the locked foundation tokens from `design/BRAND.md`.
-The gold belongs to the logo, and to one interface surface: the DE Desk and
-its Ask DE chooser, where Joe made it the only accent (2026-10-01; the Desk's
-`--desk-gold` token carries this value). Everywhere else it is not a UI accent
+The gold belongs to the logo, and to one interface surface: the DE Desk, its
+Ask DE chooser and the Ask DE launcher that opens them, where Joe made it the
+only accent (2026-10-01, launcher 2026-10-03; the Desk's `--desk-gold` token
+carries this value). Everywhere else it is not a UI accent
 and does not replace brand magenta `#D3126A`.
 
 Measured contrast for the gold: **10.4:1** on graphite, **1.80:1** on paper,
