@@ -19,13 +19,13 @@ import {
   ShoppingBag,
   FileText,
   Clock,
-  Phone,
   MessageSquare,
   Loader2,
   AlertCircle,
   Download,
 } from "lucide-react";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { AccountTeamCard } from "@/components/AccountTeamCard";
+import type { AccountTeam } from "@shared/accountManagers";
 
 interface OrderLineItem {
   productId: string;
@@ -51,6 +51,7 @@ interface Order {
   billingCompany: string | null;
   createdAt: string;
   paidAt: string | null;
+  accountTeam?: AccountTeam;
 }
 
 const OrderConfirmation = () => {
@@ -375,16 +376,12 @@ const OrderConfirmation = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="mt-12 text-center"
           >
+            <div className="mx-auto mb-8 max-w-2xl rounded-xl border border-white/10 bg-white/5 p-6 text-left">
+              <h3 className="mb-4 text-lg font-semibold text-white">Your account team</h3>
+              <AccountTeamCard team={order?.accountTeam} tone="store" />
+            </div>
             <p className="text-white/60 mb-4">Need help with your order?</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href={PRIMARY_PHONE.telHref}
-                className="inline-flex items-center gap-2 text-de-accent-ink hover:text-de-accent-ink transition-colors"
-                data-testid="link-phone-support"
-              >
-                <Phone className="w-4 h-4" />
-                {PRIMARY_PHONE.display}
-              </a>
               <Link href="/support/submit-ticket">
                 <span className="inline-flex items-center gap-2 text-de-accent-ink hover:text-de-accent-ink transition-colors cursor-pointer" data-testid="link-submit-ticket">
                   <MessageSquare className="w-4 h-4" />

@@ -10,7 +10,6 @@ import {
   CheckCircle,
   Clock,
   Mail,
-  Phone,
   Calendar,
   FileText,
   ArrowRight,
@@ -18,7 +17,7 @@ import {
   Loader2,
   Download,
 } from "lucide-react";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { AccountTeamCard } from "@/components/AccountTeamCard";
 import { portalLoginWithReturn } from "@/lib/portalUrls";
 import { warehousePath } from "@/lib/warehousePaths";
 
@@ -298,25 +297,8 @@ const QuoteConfirmation = () => {
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8" data-testid="section-contact-info">
-              <h3 className="text-lg font-semibold text-white mb-4">Need Immediate Assistance?</h3>
-              <div className="flex flex-col md:flex-row gap-4">
-                <a
-                  href={PRIMARY_PHONE.telHref}
-                  className="flex items-center gap-3 text-white/70 hover:text-de-accent-ink transition-colors"
-                  data-testid="link-phone"
-                >
-                  <Phone className="w-5 h-5" />
-                  <span>{PRIMARY_PHONE.display}</span>
-                </a>
-                <a
-                  href="mailto:sales@digerati-experts.com"
-                  className="flex items-center gap-3 text-white/70 hover:text-de-accent-ink transition-colors"
-                  data-testid="link-email"
-                >
-                  <Mail className="w-5 h-5" />
-                  <span>sales@digerati-experts.com</span>
-                </a>
-              </div>
+              <h3 className="text-lg font-semibold text-white mb-4">Your account team</h3>
+              <AccountTeamCard team={quoteRequest?.accountTeam} tone="store" />
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

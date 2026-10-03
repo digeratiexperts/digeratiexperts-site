@@ -12,6 +12,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
 import { PortalLayout } from "./PortalLayout";
+import { ACCOUNT_MANAGERS, DEFAULT_ACCOUNT_MANAGER_ID, resolveAccountManager } from "@shared/accountManagers";
 import { DataTable, EmptyState, Field, GenericStatus, Panel, StatTile, Token, type DataColumn } from "@/components/portal/ui";
 
 interface Company {
@@ -19,6 +20,10 @@ interface Company {
   companyName: string;
   contactEmail: string;
   status: string;
+  /** prospect | managed | comanaged */
+  serviceType?: string;
+  /** shared/accountManagers.ts profile id (server resolves unassigned to the default). */
+  accountManager?: string;
   userCount: number;
   createdAt: string;
 }
@@ -31,6 +36,7 @@ interface CompanyDetail {
     contactPhone?: string;
     industry?: string;
     primaryContact?: string;
+    accountManager?: string | null;
     status: string;
   };
   users: Array<{
@@ -105,6 +111,7 @@ export function AdminCompanies() {
     contactPhone: "",
     industry: "",
     primaryContact: "",
+    accountManager: DEFAULT_ACCOUNT_MANAGER_ID,
   });
 
   const { data: companiesData, isLoading } = useQuery<{ companies: Company[] }>({
@@ -164,11 +171,24 @@ export function AdminCompanies() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/portal/admin/companies"] });
       setShowAddDialog(false);
-      setNewCompany({ companyName: "", contactEmail: "", contactPhone: "", industry: "", primaryContact: "" });
+      setNewCompany({ companyName: "", contactEmail: "", contactPhone: "", industry: "", primaryContact: "", accountManager: DEFAULT_ACCOUNT_MANAGER_ID });
       toast({ title: "Success", description: "Company created successfully" });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message || "Failed to create company", variant: "destructive" });
+    },
+  });
+
+  const assignManagerMutation = useMutation({
+    mutationFn: async ({ companyId, accountManager }: { companyId: string; accountManager: string }) => {
+      return await apiRequest(`/api/portal/admin/companies/${companyId}`, "PUT", { accountManager });
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/portal/admin/companies"] });
+      toast({ title: "Account manager assigned", description: resolveAccountManager(vars.accountManager).name });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to assign account manager", variant: "destructive" });
     },
   });
 
@@ -222,6 +242,30 @@ export function AdminCompanies() {
       ),
     },
     { key: "status", header: "Status", primary: true, className: "w-32", cell: (company) => <GenericStatus status={company.status} /> },
+    {
+      key: "accountManager",
+      header: "Account manager",
+      primary: true,
+      className: "w-56",
+      cell: (company) => (
+        <div className="min-w-0">
+          <label className="sr-only" htmlFor={`am-${company.id}`}>Account manager for {company.companyName}</label>
+          <select
+            id={`am-${company.id}`}
+            value={company.accountManager || DEFAULT_ACCOUNT_MANAGER_ID}
+            onChange={(e) => assignManagerMutation.mutate({ companyId: company.id, accountManager: e.target.value })}
+            disabled={assignManagerMutation.isPending}
+            className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            data-testid={`select-account-manager-${company.id}`}
+          >
+            {ACCOUNT_MANAGERS.map((m) => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs capitalize text-muted-foreground">{company.serviceType || "prospect"}</p>
+        </div>
+      ),
+    },
     {
       key: "users",
       header: "Users",
@@ -337,6 +381,19 @@ export function AdminCompanies() {
                   data-testid="input-primary-contact"
                 />
               </Field>
+              <Field label="Account Manager" htmlFor="accountManager">
+                <select
+                  id="accountManager"
+                  value={newCompany.accountManager}
+                  onChange={(e) => setNewCompany({ ...newCompany, accountManager: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  data-testid="select-new-account-manager"
+                >
+                  {ACCOUNT_MANAGERS.map((m) => (
+                    <option key={m.id} value={m.id}>{m.name} — {m.title}</option>
+                  ))}
+                </select>
+              </Field>
               <Button
                 variant="brand"
                 onClick={handleCreateCompany}
@@ -446,6 +503,7 @@ export function AdminCompanies() {
                       ["Phone", companyDetail.company.contactPhone || "—"],
                       ["Industry", companyDetail.company.industry || "—"],
                       ["Primary Contact", companyDetail.company.primaryContact || "—"],
+                      ["Account Manager", resolveAccountManager(companyDetail.company.accountManager).name],
                     ].map(([label, value]) => (
                       <div key={label}>
                         <dt className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">{label}</dt>
