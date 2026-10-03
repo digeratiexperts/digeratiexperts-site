@@ -30,6 +30,30 @@
 
 version: 2
 claims:
+  - id: de-homepage-v8
+    owner: claude
+    subsystem: homepage-design-concepts
+    branch: claude/sleepy-archimedes-mccoav
+    base_sha: e2d4ffa4
+    files:
+      - client/src/pages/versions/v8/** (new; a copy of v7 renamed v8)
+      - client/src/pages/versions/registry.ts (the v8 entry)
+      - client/src/pages/versions/README.md (the v8 row)
+      - client/src/App.tsx (the /version-8 route and its own-bottom-bar exclusion)
+      - server/spaKnownPaths.ts (/version-8)
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: "one main version based on version 7 but with my
+      preferences included", keeping the other two (the live homepage at /
+      and Version 7 at /version-7) exactly as they are; "start"; he approves
+      before merge. V8 is a renamed copy of V7 (.v8 scope, so the two
+      previews never share styles) with his notes applied: hero kept
+      ("perfect"); the trust strip takes the live homepage's layout on the
+      white band; the Why Arizona cards (and the example report) drop
+      #f4f4f5 for white; light-band icon tiles fixed from the dark tile to the
+      tinted accent. Noindex preview only; / unchanged. Joe's later notes
+      (rest of V7, then the live homepage) land here as he gives them.
   - id: de-auth-token-identity-binding
     owner: claude
     subsystem: portal-auth
