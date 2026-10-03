@@ -64,7 +64,7 @@ export default function CoManagedIT() {
   return (
     <div className="min-h-screen bg-de-bg text-white">
       <MegaMenu />
-      <main className="de-nav-clear pb-24">
+      <main id="main-content" tabIndex={-1} className="de-nav-clear pb-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <header className="mx-auto max-w-4xl py-12 text-center md:py-20">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-de-accent-ink">Co-Managed Solutions</p>

@@ -30,27 +30,35 @@
 
 version: 2
 claims:
-  - id: de-resend-verification-abuse
+  - id: de-auth-token-identity-binding
     owner: claude
     subsystem: portal-auth
-    branch: claude/resend-verification-abuse
-    base_sha: d5f3479a
+    branch: claude/auth-token-identity-binding
+    base_sha: 634390fd
     files:
-      - server/portalVerificationThrottle.ts
-      - server/portalVerificationThrottle.test.ts
-      - server/routes.ts (the resend-verification route only)
+      - server/routes.ts (authMiddleware's live-user resolution only)
+      - server/warehouseAccess.ts (resolveWarehouseStaff's live-user resolution only)
+      - server/portalAuthFailClosed.test.ts (two added cases)
+      - server/legacyAuthRetired.ts, server/legacyAuthRetired.test.ts (legacy /api/auth/register and /api/auth/login answer 410)
+      - server/routes.ts (legacy register/login handlers and their now-unused helpers removed)
     status: active
-    started: 2026-10-02
+    started: 2026-10-01
     note: >-
-      Issue 252 (P1 abuse), confirmed on main: POST /api/portal/resend-verification
-      ran on validateInput alone, with no rate limit or Turnstile, and re-minted
-      and emailed a verification link on every call, so it could flood a victim's
-      inbox. It also returned a distinct 400 "Email is already verified", leaking
-      which emails have accounts. The route now mounts formSubmissionRateLimiter
-      and verifyTurnstile like forgot-password, returns one generic 200 for a
-      missing, verified or unverified account (no existence oracle), and a
-      per-email 60s cooldown (hasFreshVerificationToken) skips re-minting so a
-      caller rotating IPs past the rate limit still cannot flood one inbox.
+      Issue 236 (P0), confirmed on a local production build after Joe's "so
+      everything is complete and we cant think of things to do now?":
+      authMiddleware resolved the live user by the token's email before its
+      userId and never checked the two agreed, so a validly-signed token whose
+      email names another account (e.g. one minted by the unauthenticated
+      legacy /api/auth/register, which lets the caller choose any email)
+      resolved to that account and assumed its role, admin included, with no
+      password or MFA. Reproduced: a legacy-register token carrying a portal
+      admin's email authenticated as that admin. The email lookup is now
+      trusted only when it resolves to the token's own userId, in both
+      authMiddleware and resolveWarehouseStaff. Two regression tests fail
+      against the old code. Per the issue's preferred fix, the legacy
+      /api/auth/register and /api/auth/login token minters are retired (410
+      Gone, end-to-end test). Follow-up (own PR): gate the PATCH
+      /api/portal/profile email change on a confirmation to the new address.
   - id: de-desk-hardening
     owner: claude
     subsystem: de-desk
@@ -246,7 +254,7 @@ claims:
       - client/src/components/HomepageSectionNav.tsx (opt-in chapter progress in HomepageDockMenu only)
       - shared/threatFeed.ts (THREAT_ATTRIBUTION string only)
       - server/routes.ts (the public-threats error-path attribution string only)
-    status: active
+    status: verified-live
     started: 2026-10-01
     note: >-
       Joe, 2026-10-01: "can you mock up every section on the live
@@ -303,6 +311,44 @@ claims:
       PronunciationCard (claimed by pronunciation-and-flipbook-recovery and
       de-site-v2-scrollcraft); at 430px the launcher still sits over the live
       card's "Hear it" until one of those lanes or a release frees the files.
+      MERGED 2026-10-02: PR 332 as c702a4fc (Joe: "Merge #332 first").
+      VERIFIED LIVE: production release.txt c702a4fc; /api/public/threats
+      attribution reads "Digerati Experts prioritizes"; the served bundle
+      carries the Ask DE nudge with the 767px phone hold.
+      Round 4 (Joe, 2026-10-02, three dashboard references): "convert the
+      white sections to this style, well i still want white but the white on
+      cream looks stupid", "text looks so much better ... and the accent
+      colors", "this is what i mean by grey cards"; dark sections "Yes,
+      neutral grey". /version-7 only, via one overlay stylesheet
+      (client/src/pages/versions/v7/v7-dashboard.css, loaded last): white
+      paper bands with neutral grey cards, charcoal dark bands with
+      one-step-lighter cards, Inter headings, magenta-violet accents
+      (magenta stays the CTA fill). Tier 2 defaults changed on Joe's
+      direction; Tier 0/1 untouched. / is unchanged.
+      Round 5 (Joe: "we need this level of work" (uiverse.io elements), then
+      "all of it" after reviewing the DE Element Kit artifact): pointer
+      spotlight on cards (useSpotlight.ts), raised/sheen/pressed buttons,
+      drawn link underlines, floating-label fields with drawn valid checks and
+      an invalid nudge, sending → sent submit (SubmitFace.tsx), FAQ plus/minus
+      with real-height opening, city chip states, classification-tag tooltips
+      (TipTag.tsx, truthful tip text), copy buttons for email and phone
+      (CopyButton.tsx), hero posture bars fill once. Kit's switch, checkbox and
+      segmented control have no matching control on the page, so none added.
+      RELEASED 2026-10-03: rounds 4 and 5 merged as PR 344 (6ce035d6) on
+      Joe's "everything is approved" / "all approved", after merging main for
+      PR 342's production-audit fix. VERIFIED LIVE: production release.txt
+      6ce035d6; /version-7 answers 200 with X-Robots-Tag noindex, nofollow;
+      / answers 200 and is unchanged; scripts/qa/homepage-v7-check.mjs passes
+      31/31 against production; the live page shows the grey-card restyle.
+      Backups (branches, do not commit to them):
+      backup/2026-10-03-before-v7-restyle (c702a4fc),
+      backup/2026-10-03-v7-restyle-approved, backup/2026-10-03-v7-restyle-merged
+      (6ce035d6); revert guide in
+      artifacts/design-concepts/homepage-sections-2026-10/README.md. Files
+      released. Open, not claimed: the review-source funnel (postponed by
+      Joe); the 430px launcher over the live PronunciationCard "Hear it"
+      (pronunciation lane); / replacement by V7 waits on Joe.
+
   - id: de-desk-gold
     owner: claude
     subsystem: de-desk

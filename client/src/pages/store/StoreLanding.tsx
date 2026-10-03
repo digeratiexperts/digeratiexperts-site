@@ -190,7 +190,7 @@ const StoreLanding = () => {
       <StorePageAtmosphere />
       <MegaMenu />
 
-      <main className="relative z-10 pb-20 de-nav-clear">
+      <main id="main-content" tabIndex={-1} className="relative z-10 pb-20 de-nav-clear">
         <div className="mx-auto max-w-[var(--de-canvas)] px-3 sm:px-4 lg:px-6">
           <StoreClientBar />
 

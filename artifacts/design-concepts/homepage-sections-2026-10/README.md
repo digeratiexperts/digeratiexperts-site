@@ -66,3 +66,29 @@ If Joe picks this direction, the integration PR records these in `docs/CLAIMS-RE
 | Unsourced proof-section review lines | Build a funnel that brings Google, Yelp and Thumbtack reviews into the site's data |
 | "24/7 Security Response Team" label | SLA wording; V7 already reads "Security Updates" |
 | "Digerati" alone | Asked for a recommendation |
+
+## Element kit and backups, 2026-10-03
+
+Joe approved the grey-card restyle and the element kit ("everything is approved
+just backup what we have so we dont lose it and can revert back if need be").
+
+- `element-kit/de-element-kit.html`: the interactive kit Joe reviewed (also
+  published as a private claude.ai artifact). Open it in any browser.
+- Backup branches on GitHub, each a full copy of the site frozen at one point
+  (branches, because this environment may push only its own work branch; the
+  GitHub API can create branches but not tags). Do not commit to them.
+
+  | Branch | Points at | What it is |
+  | --- | --- | --- |
+  | `backup/2026-10-03-before-v7-restyle` | `c702a4fc` | The site as it was live before PR 344: /version-7 with the cream/navy look. |
+  | `backup/2026-10-03-v7-restyle-approved` | the PR 344 head as approved | The approved restyle + element kit, exactly as Joe approved it. |
+
+How to go back (the lead integrator or any agent, on Joe's word):
+
+1. Undo only the restyle, keep everything merged since: open a PR that runs
+   `git revert -m 1 <PR 344 merge commit>` on a fresh branch from `main`.
+   The restyle lives in `client/src/pages/versions/v7/` only, so `/` is
+   never affected either way.
+2. See or rebuild the old look without touching `main`: check out the
+   `backup/2026-10-03-before-v7-restyle` branch (treat it as read-only) and build it.
+3. Never force-push `main` to a backup branch; reverts go through a PR like any change.

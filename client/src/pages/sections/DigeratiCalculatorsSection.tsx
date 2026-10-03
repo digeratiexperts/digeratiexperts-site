@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight, ChevronDown, DollarSign, TrendingDown, Building2, Calculator } from "lucide-react";
 import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { useBooking } from "@/contexts/BookingContext";
 import { pricing } from "@/data/pricing";
+import { CTA } from "@/lib/ctaCopy";
 
 interface CalculatorProps {
   employees: number;
@@ -27,6 +29,7 @@ interface CalculatorProps {
 
 export const DigeratiCalculatorsSection = (props: CalculatorProps): JSX.Element => {
   const prefersReducedMotion = useReducedMotion();
+  const { openBooking } = useBooking();
   const {
     employees, setEmployees,
     hourlyWage, setHourlyWage,
@@ -356,16 +359,16 @@ export const DigeratiCalculatorsSection = (props: CalculatorProps): JSX.Element 
                         </div>
 
                         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-                          <Button asChild 
-                              size="lg"
-                              className="h-12 px-6 bg-de-magenta text-white hover:bg-[#e01874] font-semibold rounded-xl transition-colors" 
-                              data-testid="button-schedule-consultation"
-                            >
-                  <a href="/book">
-                    Schedule Consultation
-                              <ChevronRight className="ml-2 h-4 w-4" />
-                  </a>
-                </Button>
+                          <Button
+                            type="button"
+                            size="lg"
+                            className="h-12 px-6 bg-de-magenta text-white hover:bg-[#e01874] font-semibold rounded-xl transition-colors"
+                            data-testid="button-cyber-risk-assessment-calculator"
+                            onClick={() => openBooking("calculator-results")}
+                          >
+                            {CTA.primary}
+                            <ChevronRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                          </Button>
                         </div>
                       </div>
                     </CardContent>

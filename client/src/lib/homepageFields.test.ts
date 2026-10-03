@@ -102,4 +102,15 @@ describe("homepage chapter fields", () => {
     expect(ai).not.toContain("de-paper-on-well");
     expect(ai).toContain("Coverage with Context");
   });
+
+  it("uses the canonical assessment CTA on Why we exist and calculator result actions", () => {
+    const alert = section("DigeratiAlertBanner");
+    const calculators = section("DigeratiCalculatorsSection");
+    for (const src of [alert, calculators]) {
+      expect(src).toContain('from "@/lib/ctaCopy"');
+      expect(src).toContain("{CTA.primary}");
+      expect(src).toContain("openBooking(");
+      expect(src).not.toContain("Schedule Consultation");
+    }
+  });
 });

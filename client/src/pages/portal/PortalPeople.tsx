@@ -127,7 +127,7 @@ export function PortalPeople() {
           <EmptyState
             icon={Lock}
             title="Restricted to your Company IT Contact"
-            description="Only your Company IT Contact (or a Digerati admin) can manage managers, departments, and IT Contacts."
+            description="Only your Company IT Contact (or a DE admin) can manage managers, departments, and IT Contacts."
             action={
               <Button asChild variant="outline" className="border-border bg-card hover:bg-accent">
                 <Link href="/portal/tickets">Go to Support Tickets</Link>
@@ -309,7 +309,7 @@ export function PortalPeople() {
   return (
     <PortalLayout
       title="People & Org"
-      description="Assign each person a manager (boss), optional department, and designate the Company IT Contact who owns day-to-day communication with Digerati. Department IT Contacts are optional."
+      description="Assign each person a manager (boss), optional department, and designate the Company IT Contact who owns day-to-day communication with DE. Department IT Contacts are optional."
       width="wide"
     >
       <div className="space-y-4">
