@@ -3797,10 +3797,16 @@ export async function registerRoutes(app: Express) {
       const statusFilter = typeof status === "string" && status !== "all" ? status : null;
 
       // --- Store orders ---
-      const allOrders = await storage.getStoreOrders();
-      let userOrders = allOrders.filter(
-        (order) => order.userId === userId || (clientId && order.clientId === clientId),
-      );
+      // The account scope is applied in the query. A failed read is reported as an
+      // unavailable source, never as "ok" with zero orders (#233).
+      let storeSource: "ok" | "unavailable" = "ok";
+      let userOrders: any[] = [];
+      try {
+        userOrders = await storage.getStoreOrdersForAccount({ userId, clientId });
+      } catch (e: any) {
+        storeSource = "unavailable";
+        console.error("[orders] store orders unavailable:", e?.message || e);
+      }
       if (statusFilter) {
         userOrders = userOrders.filter((order) => order.status === statusFilter);
       }
@@ -3948,7 +3954,7 @@ export async function registerRoutes(app: Express) {
         storeQuotes,
         companyName,
         matchedDeals,
-        sources: { store: "ok", hub: hubSource, storeQuotes: storeQuotes.length ? "ok" : "empty" },
+        sources: { store: storeSource, hub: hubSource, storeQuotes: storeQuotes.length ? "ok" : "empty" },
       });
     } catch (error: any) {
       console.error("[ERROR] Failed to fetch orders:", error);
