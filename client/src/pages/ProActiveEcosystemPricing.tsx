@@ -294,7 +294,13 @@ export default function ProActiveEcosystemPricing() {
       <div className="relative z-10">
         <MegaMenu />
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 de-nav-clear pb-20">
+        {/* id matches SkipToContent's no-JS hash fallback (#main-content);
+            tabindex lets keyboard focus land on the landmark after skip. */}
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 de-nav-clear pb-20"
+        >
           {/* Hero */}
           <motion.header
             className="text-center max-w-3xl mx-auto mb-14"
