@@ -575,6 +575,23 @@ claims:
       844x390 and 720x450, keyboard trap and focus return, hint sequence,
       polish invariants; network stubbed, nothing sent to production).
       Screenshots: artifacts/visual-qa/desk-hardening/live/. Files released.
+  - id: homepage-v6-current-theme
+    issue: 318
+    owner: cursor
+    subsystem: homepage-versions
+    branch: cursor/homepage-v6-current-theme-20261001
+    base_sha: 8c160909e010a5dab9e1de236f54c4f78c2c8018
+    files:
+      - client/src/pages/versions/v6/HomepageV6.tsx
+      - client/src/pages/versions/v6/v6.css
+      - client/src/pages/versions/v6/ACCEPTANCE.md
+      - client/src/pages/versions/registry.ts
+    status: active
+    started: 2026-10-01
+    note: >-
+      Rebased onto main 8c160909 (2026-10-02). Preview-only at /version-6;
+      production / untouched. Uses live ProtectionCommandDeck and flagship
+      Business tier cue.
   - id: portal-people-pick-company
     owner: claude
     subsystem: client-portal-pages
@@ -989,7 +1006,7 @@ claims:
     status: verified-live
     started: 2026-10-01
     note: >-
-      Source of truth §15 row 18, item 2, unblocked when PR 303 merged and
+      Source of truth ┬º15 row 18, item 2, unblocked when PR 303 merged and
       de-desk-reliability-followup released the widget. The Desk seeded
       STORE_ADVISOR_SEED on pathname.includes("/store"), so /solutions/request
       and /solutions/business-needs (Door 2) opened without it and unrelated
@@ -1003,7 +1020,7 @@ claims:
       and its runtime verification step; /healthz 200; the served Desk chunk
       ZohoASAPWidget-BZGTGgOG.js carries deskOpenSeed (explicit seed, then
       context "store" or isDoor2Path) and no longer has pathname.includes
-      ("/store"). Source of truth §15 row 18 is closed. Files released.
+      ("/store"). Source of truth ┬º15 row 18 is closed. Files released.
 
   - id: de-phone-number-and-arrows
     owner: claude
@@ -1139,7 +1156,7 @@ claims:
     status: verified-live
     started: 2026-10-01
     note: >-
-      Source of truth §15 row 18, item 1, left unclaimed when de-desk-delight
+      Source of truth ┬º15 row 18, item 1, left unclaimed when de-desk-delight
       retired: the Ask DE nudge's bottom offset omitted --de-cookie-h, which
       the unified bar it sits on adds. Latent today (the nudge only arms after
       consent, and the banner never returns), but with the banner's height
@@ -1169,7 +1186,7 @@ claims:
       - client/src/index.css (.scroll-snap-chapter only)
       - client/src/lib/homepageFields.test.ts
       - design/approved/homepage-coherence-2026-09-30.md
-      - design/UI-STYLE-RULES.md (§6 homepage chapter grammar)
+      - design/UI-STYLE-RULES.md (┬º6 homepage chapter grammar)
       - artifacts/visual-qa/homepage-coherence/**
     status: verified-live
     started: 2026-09-30
@@ -1350,11 +1367,11 @@ claims:
       support and shipping come before Truck-Roll, Trip Charge and Tech Labor.
       Baseline A evidence, a code map, a judged design and the source of truth
       precede the rebuild. Joe, 2026-09-28: every open decision in the source of
-      truth §16 approved ("All approved, continue"); the PR 3 chrome and the
+      truth ┬º16 approved ("All approved, continue"); the PR 3 chrome and the
       PR 0 /book copy build inside PR 267 with the files above. Stood off, held
       by draft PR 229 (DE Desk launcher and modal): client/src/components/
       SiteBottomBar.tsx and client/src/components/ZohoASAPWidget.tsx. Overlaps
-      recorded in PR 267 and the source of truth §15: the four Door 2 pages with
+      recorded in PR 267 and the source of truth ┬º15: the four Door 2 pages with
       the completion-program lane (frozen PRs 219/220); the colour lock with
       draft PR 217 (disjoint hunks); docs/STORE-WAREHOUSE.md with PR 149. Also closes the warehouse quote-flow defects in
       issues 239, 240, 257 (re-scoped: the GET exists; its payload is now a
@@ -1367,7 +1384,7 @@ claims:
       index-DCAqm86m.css, the merge commit's own build; /healthz 200; /store,
       a family page and /book?ref= render as built at 390 and 1440 (electric
       accent, no strip, store footer, axe clean, no runtime errors). Files
-      released. Remaining and not claimed by this lane, source of truth §15
+      released. Remaining and not claimed by this lane, source of truth ┬º15
       row 18: the Ask DE nudge position (SiteBottomBar.tsx, its bottom offset
       omits --de-cookie-h) and the widget's STORE_ADVISOR_SEED fallback
       (ZohoASAPWidget.tsx, pathname.includes("/store") instead of isDoor2Path,
@@ -1410,10 +1427,10 @@ claims:
     status: verified-live
     started: 2026-10-01
     note: >-
-      Joe, 2026-09-30: the Store is "too matched … hard to see whats what and
+      Joe, 2026-09-30: the Store is "too matched ΓÇª hard to see whats what and
       move forward in steps"; "make these lines thicker and more fun". Two
       concepts rendered over the real workspace (Track, Stations); Joe,
-      2026-10-01: "go with B, build it". Numbered steps become stations (✓
+      2026-10-01: "go with B, build it". Numbered steps become stations (Γ£ô
       when ready, a white station and "You are here" when current), the
       JourneyRail becomes six stations on a 6px line, and the current
       workspace chapter lights up as a card. Concurrency audit 2026-10-01: no
@@ -1424,7 +1441,7 @@ claims:
       and VERIFIED LIVE the same morning: the deploy job and its runtime
       check passed (10:49 UTC), production serves index-Dzh3JPyb.js; /store,
       /store/solution (profile and needs done) and /solutions/request at 390
-      and 1440 render the stations (rail ✓ ✓ 03 on a 6px line, relationship
+      and 1440 render the stations (rail Γ£ô Γ£ô 03 on a 6px line, relationship
       lit as the current card with "You are here", contact step 06 current),
       the electric probe computes rgb(111, 179, 255), axe clean, no overflow,
       no runtime errors. Files released.
@@ -1478,7 +1495,7 @@ claims:
       chatgpt/pronunciation-flipbook-recovery-20260831, commit f72d647): this
       branch merges that branch whole, so both halves ship together and neither
       agent is left holding a conflicting file. The pronunciation card is the
-      reassigned rewrite — same data-testids, so the public-route smoke gate
+      reassigned rewrite ΓÇö same data-testids, so the public-route smoke gate
       that branch added keeps passing. The flipbook half (DocumentFlipbook,
       ResourcesIndex, pinned PDF.js vendoring, audio README) is carried across
       unmodified. The chatgpt branch is now redundant and should be retired
@@ -1589,7 +1606,7 @@ claims:
       rebuilt on the diagram system (client/src/diagrams) with the H1 and
       hero CTA locators the smoke gate asserts left untouched. Joe's
       2026-09-02 review: keep #178 draft, no merge, no kie.ai spend;
-      corrections applied (see scrollcraft/EXPERIENCE-PLAN.md §09,
+      corrections applied (see scrollcraft/EXPERIENCE-PLAN.md ┬º09,
       docs/CLAIMS-REGISTER.md, scrollcraft/ASSET-PLAN.md). The version
       archive shipped to production separately via PR #181 (merged
       1ad9bb4); #178 merged 1ec1457 and is live. The branch restarted from
@@ -1680,8 +1697,8 @@ claims:
       governance 8.1 and the first cut; PR #266 carries the rebuild. Joe's
       verdict on the first cut ("generic trash") set the standard for the
       rest: every chapter takes a different form and leads with a real
-      thing — the published guarantee, a working sizer that writes the
-      store's own draft, the founder, DE Desk, verbatim pledges — and
+      thing ΓÇö the published guarantee, a working sizer that writes the
+      store's own draft, the founder, DE Desk, verbatim pledges ΓÇö and
       nothing is invented (reviews and case studies are absent because the
       catalogs are empty). Overlaps only this owner's older
       de-site-v2-scrollcraft claim on client/src/pages/versions/**; the v1
@@ -1737,12 +1754,12 @@ claims:
 # restore-homepage-v1 (branch claude/restore-homepage-v1) RETIRED 2026-09-09:
 # the claim was still listed active while the work was already fully contained
 # in main. Verified at main @ 611acfdb: `git rev-list --count
-# origin/main..origin/claude/restore-homepage-v1` is 0 — no unique commits
+# origin/main..origin/claude/restore-homepage-v1` is 0 ΓÇö no unique commits
 # remain on that branch. The claim was therefore holding a concurrency lock on
 # eight homepage section files with nothing behind it, which would make any
 # other agent stand off those files for no reason. PR #199 (eight-block re-cut)
 # is already built on the restored files, which corroborates that the
-# restoration landed. See docs/OPEN-WORK-AUDIT-20260909.md §3.
+# restoration landed. See docs/OPEN-WORK-AUDIT-20260909.md ┬º3.
 # de-desk-inline-login-card (issue 153, branch claude/dynamic-login-card-chat-ve39il)
 # RETIRED 2026-09-01: merged via PR #160 (main @ 3fc5709). Deploy job
 # "Deploy and verify production VPS" on run 33469181603 succeeded, including
@@ -1750,7 +1767,7 @@ claims:
 # passkey rebuild; the in-chat login slice is done.
 # fable-visual-batch (issue 118, branch claude/fable-visual-batch) RETIRED
 # 2026-08-31: merged via PR #148 (main @ 8a20592). Confirmed
-# `git diff origin/main origin/claude/fable-visual-batch` is empty — no
+# `git diff origin/main origin/claude/fable-visual-batch` is empty ΓÇö no
 # unique commits remain on that branch. Production-verified live at
 # https://digeratiexperts.com/ (redesigned hero + Ask DE chooser rendering).
 # homepage-ask-de-reference-redesign (branch claude/homepage-ask-de-visual-19b3aa)
@@ -1762,7 +1779,7 @@ claims:
 # Both "Deploy and verify production VPS" jobs succeeded, including the
 # production runtime verification step. PR #229 closed as superseded.
 # Still open and now UNCLAIMED (handed to this claim by store-experience-v2,
-# source of truth §15 row 18, commit f8f8fd1b): (1) the Ask DE nudge bottom
+# source of truth ┬º15 row 18, commit f8f8fd1b): (1) the Ask DE nudge bottom
 # offset in client/src/components/SiteBottomBar.tsx omits --de-cookie-h; (2)
 # ZohoASAPWidget.tsx seeds STORE_ADVISOR_SEED on pathname.includes("/store")
 # instead of isDoor2Path, so /solutions/request pages miss it. Whoever takes
@@ -1813,22 +1830,43 @@ claims:
     owner: claude
     subsystem: client-portal-shell
     branch: claude/nifty-newton-uk9g7t
-    pr: 408
+    pr: 412
     base_sha: cef31956cd747e3eac02a2e38ceb41c69a125054
     files:
-      - client/src/styles/portal.css (light theme block and the .pt-canvas glow only)
+      - client/src/styles/portal.css (light theme block, light state inks and the .pt-canvas glow only)
       - client/src/pages/portal/PortalLayout.tsx (pt-canvas class on SidebarInset only)
       - client/src/styles/portalLightTheme.test.ts (new)
       - artifacts/visual-qa/portal-light-ambient/**
     status: active
     started: 2026-10-03
+    released: 2026-10-03
+    merge_sha: 9b6f364be944e3a8379f61d3ded12a3e5718d402
+    verification: >-
+      Merged on Joe's "merge 408" (2026-10-03) after reconciling with main
+      4478a802 (PR 407, disjoint) and green CI on 2c76e02a. The main CI and
+      the deploy job (with its runtime check) passed; release.txt reads
+      9b6f364b on digeratiexperts.com and portal.digeratiexperts.com. The live
+      entry index-BDIuU1zN.js matches the local build of the merged tree and
+      references portal-Xybf7wEt.css (orchid 290 42% 96%, magenta and violet
+      glows, no old 36 24% 96% grey) and PortalLayout-CRAL-_zI.js (pt-canvas).
+      Signed out, /portal/login and /portal/signup at 390 and 1440 load the
+      new CSS: axe clean, no overflow, no runtime errors. Limit: no signed-in
+      light-mode screenshot on production (QA login is a CI secret); the same
+      bundle was rendered signed in locally. VERIFIED LIVE (bundle). Evidence:
+      artifacts/visual-qa/portal-light-ambient/live/. FOLLOW-UP (PR 412,
+      pending Joe's merge): a 39-page regression run (dark and light, 390
+      and 1440, before vs after) found dark mode pixel-identical apart from a
+      clock, but light ok ink at 4.42:1 on its tint over orchid on
+      /portal/sales-process and /portal/questionnaires. Light --pt-ok and
+      --pt-bad are darkened (#046a4d, #b6113a) and portalLightTheme.test.ts
+      now checks every tone on its 7-10% tint over field, well and card.
     note: >-
       Joe, 2026-10-03: portal light mode is liked but "the light grey I would
       replace with an ambent color". Options rendered (A amber, B Ambient, C
       keep grey); Joe: "B, cards but show me first". The light field and
       wells go orchid with a magenta and a violet glow over the content area;
-      cards stay white, the rail stays graphite, dark mode untouched. HELD for
-      Joe's approval of the built screens before merge. Concurrency audit
+      cards stay white, the rail stays graphite, dark mode untouched. Joe approved
+      the built screens ("merge 408"). Concurrency audit
       2026-10-03: no open PR touches these files (407, 406, 405 are
       disjoint; 407 and 405 add ledger claims at the top, this one is at the
       end); the claims that list PortalLayout.tsx (portal-data-sources,
