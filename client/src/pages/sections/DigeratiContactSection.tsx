@@ -94,8 +94,11 @@ const fieldClass =
 
 export const DigeratiContactSection = ({
   headingAs = "h2",
+  quiet = false,
 }: {
   headingAs?: "h1" | "h2";
+  /** Standalone /contact page: trust/contact doctrine is zero decoration, so drop the photo plate and drift gradient. */
+  quiet?: boolean;
 } = {}): JSX.Element => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -150,6 +153,7 @@ export const DigeratiContactSection = ({
 
   return (
     <HomeChapter tone="well" className="overflow-hidden" data-testid="homepage-contact-chapter">
+      {!quiet && (
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <img
           src={contactBgImage}
@@ -177,6 +181,7 @@ export const DigeratiContactSection = ({
           }}
         />
       </div>
+      )}
 
       <HomeContainer className="relative z-10">
         <div className="grid items-start gap-10 lg:grid-cols-12 lg:gap-14">
