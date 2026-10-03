@@ -1,14 +1,21 @@
 import { PageTemplate } from "@/components/PageTemplate";
-import { IconWell } from "@/components/visual/IconWell";
-import { Button } from "@/components/ui/button";
-import { Shield, Lock, CheckCircle, Phone, Activity, PawPrint, AlertTriangle, Database, Users, ArrowRight } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import {
+  Chapter,
+  Container,
+  ChapterHeader,
+  CheckList,
+  ClosingCta,
+  FactStrip,
+  FeatureGrid,
+  HeroActions,
+  HeroFacts,
+  Prose,
+  cardDark,
+} from "@/components/site/chapters";
+import { Shield, Lock, Activity, Database, Users } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
-
-const cardClass = "rounded-2xl border border-de-hairline bg-de-raised";
-const insetClass = "rounded-xl border border-de-hairline bg-de-bg";
 
 export default function AnimalHospitals() {
   useSEO({
@@ -17,13 +24,12 @@ export default function AnimalHospitals() {
       "Managed IT and cybersecurity for Arizona animal hospitals — protect PIMS, imaging, and client records without building an internal IT team.",
     canonical: "/industries/animal-hospitals",
   });
-  const prefersReducedMotion = useReducedMotion() ?? false;
 
   const focusAreas = [
-    { label: "Practice systems", value: "PIMS, imaging, and billing", icon: Activity },
-    { label: "Client records", value: "Access control and backup", icon: Shield },
-    { label: "Payments", value: "PCI-aware processing", icon: Lock },
-    { label: "Continuity", value: "Restore-tested recovery paths", icon: Database },
+    { title: "Practice systems", text: "PIMS, imaging, and billing", icon: Activity },
+    { title: "Client records", text: "Access control and backup", icon: Shield },
+    { title: "Payments", text: "PCI-aware processing", icon: Lock },
+    { title: "Continuity", text: "Restore-tested recovery paths", icon: Database },
   ];
 
   const challenges = [
@@ -59,154 +65,102 @@ export default function AnimalHospitals() {
 
   return (
     <PageTemplate
+      layout="chapters"
+      eyebrow="Animal hospitals · Arizona veterinary practices"
       title="IT Solutions for Veterinary Practices"
       subtitle="Secure, reliable IT solutions designed specifically for animal hospitals and veterinary clinics across Arizona."
-      icon={<PawPrint className="h-10 w-10 text-de-accent-ink" />}
       breadcrumbs={[{ label: "Industries", href: "/industries" }, { label: "Animal Hospitals" }]}
       actions={
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild variant="brand" size="lg" className="h-12 px-6 font-semibold" data-testid="button-hero-vet">
-            <a href="/book">
-              {CTA.primary}
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </a>
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            size="lg"
-            className="h-12 border-white/20 px-6 font-semibold text-white hover:bg-white/10"
-          >
-            <a href={PRIMARY_PHONE.telHref}>Call {PRIMARY_PHONE.display}</a>
-          </Button>
+          <HeroActions
+            primary={{ label: CTA.primary, href: "/book", testId: "button-hero-vet" }}
+            secondary={{ label: `Call ${PRIMARY_PHONE.display}`, href: PRIMARY_PHONE.telHref }}
+          />
         </div>
       }
+      heroAside={
+        <HeroFacts
+          title="Practice focus"
+          rows={[
+            { label: "Systems", value: "PIMS, imaging, and billing" },
+            { label: "Records", value: "Client and patient data, backed up" },
+            { label: "Payments", value: "PCI-aware processing" },
+            { label: "Sites", value: "Single clinics to multi-location" },
+          ]}
+        />
+      }
     >
-      <div className="space-y-16">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {focusAreas.map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <motion.div
-                key={item.label}
-                initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1, duration: 0.5 }}
-                className={`de-interactive-card p-6 ${cardClass}`}
-              >
-                <Icon className="mb-3 h-5 w-5 text-de-accent-ink" aria-hidden="true" />
-                <p className="text-lg font-semibold text-white">{item.value}</p>
-                <p className="mt-1 text-sm text-white/55">{item.label}</p>
-              </motion.div>
-            );
-          })}
-        </div>
+      <div data-testid="section-focus-areas">
+        <FactStrip facts={focusAreas} label="What we protect in a veterinary practice" />
+      </div>
 
-        <motion.div
-          className={`p-8 ${cardClass}`}
-          initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="flex gap-4">
-            <IconWell icon={AlertTriangle} size="md" surface="dark" />
-            <div>
-              <h3 className="mb-2 text-xl font-bold text-white">Veterinary Practices Are Prime Targets</h3>
-              <p className="leading-relaxed text-white/75">
-                Animal hospitals store valuable client payment data, pet insurance information, and personal contact details.
-                Cybercriminals increasingly target veterinary practices knowing they often lack enterprise-grade security.
-                A single ransomware attack can halt operations, disrupt patient care, and damage your reputation.
-              </p>
+      <Chapter tone="well" seam={false} data-testid="section-targets">
+        <Container>
+          <div className="grid gap-8 lg:grid-cols-12 lg:gap-14">
+            <div className="lg:col-span-5">
+              <ChapterHeader
+                tone="well"
+                layout="stack"
+                eyebrow="The exposure"
+                title="Veterinary Practices Are Prime Targets"
+                className="mb-0"
+              />
+            </div>
+            <div className="lg:col-span-7">
+              <Prose tone="well">
+                <p className="text-lg leading-relaxed text-white/80">
+                  Animal hospitals store valuable client payment data, pet insurance information, and personal contact details.
+                  Cybercriminals increasingly target veterinary practices knowing they often lack enterprise-grade security.
+                  A single ransomware attack can halt operations, disrupt patient care, and damage your reputation.
+                </p>
+              </Prose>
             </div>
           </div>
-        </motion.div>
+        </Container>
+      </Chapter>
 
-        <div>
-          <motion.h2
-            className="mb-8 text-center text-2xl font-bold text-white md:text-3xl"
-            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            Challenges We Solve for Veterinary Practices
-          </motion.h2>
-          <div className="grid gap-6 md:grid-cols-3">
-            {challenges.map((challenge, idx) => {
-              const Icon = challenge.icon;
-              return (
-                <motion.div
-                  key={challenge.title}
-                  initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1, duration: 0.5 }}
-                  className={`de-interactive-card h-full p-6 ${cardClass}`}
-                >
-                  <Icon className="mb-4 h-6 w-6 text-de-accent-ink" aria-hidden="true" />
-                  <h3 className="text-xl font-semibold text-white">{challenge.title}</h3>
-                  <p className="mt-3 text-white/65">{challenge.description}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
+      <Chapter tone="paper" data-testid="section-challenges">
+        <Container>
+          <ChapterHeader
+            tone="paper"
+            eyebrow="What we solve"
+            title="Challenges We Solve for Veterinary Practices"
+            lede="Records, cards, and clinics: the three places veterinary IT most often falls short."
+          />
+          <FeatureGrid
+            tone="paper"
+            items={challenges.map((c) => ({ icon: c.icon, title: c.title, text: c.description }))}
+          />
+        </Container>
+      </Chapter>
 
-        <motion.div
-          className={`p-8 ${cardClass}`}
-          initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          <h2 className="mb-6 flex items-center gap-3 text-2xl font-bold text-white">
-            <IconWell icon={Shield} size="sm" surface="dark" />
-            Complete Security for Your Practice
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {securityFeatures.map((feature) => (
-              <div key={feature} className={`flex items-center gap-3 p-3 ${insetClass}`}>
-                <CheckCircle className="h-5 w-5 shrink-0 text-de-accent-ink" aria-hidden="true" />
-                <span className="text-white/80">{feature}</span>
-              </div>
-            ))}
+      <Chapter tone="surface" data-testid="section-security">
+        <Container>
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+            <div className="lg:col-span-4">
+              <ChapterHeader
+                tone="surface"
+                layout="stack"
+                eyebrow="Controls"
+                title="Complete Security for Your Practice"
+                lede="The building blocks behind the program, from practice software to the front-desk laptop."
+                className="mb-0"
+              />
+            </div>
+            <div className={`${cardDark} p-6 md:p-8 lg:col-span-8 lg:self-start`}>
+              <CheckList tone="surface" items={securityFeatures} />
+            </div>
           </div>
-        </motion.div>
+        </Container>
+      </Chapter>
 
-        <motion.div
-          initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className={`p-8 text-center md:p-12 ${cardClass}`}
-        >
-          <h2 className="mb-4 text-2xl font-bold text-white md:text-3xl">
-            Built for Arizona animal hospitals
-          </h2>
-          <p className="mx-auto mb-8 max-w-3xl text-lg text-white/70">
-            From small clinics to multi-location animal hospitals, we understand the unique IT needs of veterinary practices.
-            Our team provides responsive support so you can focus on what matters most – caring for your patients.
-          </p>
-          <div className="flex flex-col justify-center gap-4 sm:flex-row">
-            <Button asChild variant="brand" size="lg" className="h-12 px-8 font-semibold" data-testid="button-schedule-call">
-              <a href="/book">{CTA.primary}</a>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="h-12 border-white/20 px-8 font-semibold text-white hover:bg-white/10"
-              data-testid="button-call-now"
-            >
-              <a href={PRIMARY_PHONE.telHref}>
-                <Phone className="mr-1 h-5 w-5" />
-                Call {PRIMARY_PHONE.display}
-              </a>
-            </Button>
-          </div>
-        </motion.div>
+      <div data-testid="section-final-cta">
+        <ClosingCta
+          tone="paper"
+          title="Built for Arizona animal hospitals"
+          lede="From small clinics to multi-location animal hospitals, we understand the unique IT needs of veterinary practices. Our team provides responsive support so you can focus on what matters most – caring for your patients."
+          primary={{ label: CTA.primary, href: "/book", testId: "button-schedule-call" }}
+        />
       </div>
     </PageTemplate>
   );

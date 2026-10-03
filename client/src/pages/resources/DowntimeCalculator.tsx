@@ -1,14 +1,14 @@
 import { estimateMonthly, pricing, type PricingTierKey } from "@/data/pricing";
-import { ConversionPathBar } from "@/components/ConversionPathBar";
+import { PageTemplate } from "@/components/PageTemplate";
+import { Chapter, ClosingCta, Container, cardPaper } from "@/components/site/chapters";
+import { CTA } from "@/lib/ctaCopy";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ArrowRight, Plus, Minus, Calculator, DollarSign, Clock, TrendingUp, Shield } from "lucide-react";
-import { MegaMenu } from "@/components/MegaMenu";
-import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
+import { ArrowRight, Plus, Minus, DollarSign, Clock } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 
 const industryMultipliers: Record<string, { name: string; multiplier: number }> = {
@@ -85,347 +85,262 @@ export default function DowntimeCalculator() {
   };
 
   const getRiskBadge = (level: string) => {
+    const base = "inline-block px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wide border text-white";
     switch (level) {
       case 'critical':
-        return <span className="inline-block px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wide bg-red-500/15 border-2 border-red-500/40 text-white">Critical Risk - Immediate Action Required</span>;
+        return <span className={`${base} border-red-400/60 bg-red-500/20`}>Critical Risk - Immediate Action Required</span>;
       case 'high':
-        return <span className="inline-block px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wide bg-[#D3126A]/15 border-2 border-[#D3126A]/40 text-white">High Risk - Protection Recommended</span>;
+        return <span className={`${base} border-[#D3126A]/60 bg-[#D3126A]/20`}>High Risk - Protection Recommended</span>;
       case 'moderate':
-        return <span className="inline-block px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wide bg-[#D3126A]/15 border-2 border-[#D3126A]/40 text-white">Moderate Risk - Consider Protection</span>;
+        return <span className={`${base} border-[#D3126A]/60 bg-[#D3126A]/20`}>Moderate Risk - Consider Protection</span>;
       default:
-        return <span className="inline-block px-4 py-2 rounded-md text-xs font-bold uppercase tracking-wide bg-emerald-500/15 border-2 border-emerald-500/40 text-white">Low Risk - Maintain Vigilance</span>;
+        return <span className={`${base} border-emerald-400/60 bg-emerald-500/20`}>Low Risk - Maintain Vigilance</span>;
     }
   };
 
+  const labelClass = "mb-2 block text-xs font-semibold uppercase tracking-wide text-[#1A1228]";
+  const fieldClass =
+    "h-14 border border-[var(--de-paper-hairline)] bg-white text-[#1A1228] placeholder:text-[#6B6478] hover:border-[#A30E52] focus-visible:border-[#A30E52] focus-visible:ring-2 focus-visible:ring-[#ec4899] transition-colors";
+  const smallFieldClass = fieldClass.replace("h-14", "h-12");
+  const selectContentClass = "bg-white text-[#1A1228] border-[var(--de-paper-hairline)]";
+  const selectItemClass = "text-[#1A1228] focus:bg-[#D3126A]/10 focus:text-[#1A1228]";
+  const money = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const tabClass = (on: boolean) =>
+    `flex min-h-14 flex-1 items-center justify-center gap-2 border-b-2 px-4 py-4 text-sm font-bold uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ec4899] ${
+      on
+        ? 'border-b-[#A30E52] bg-[#D3126A]/[0.06] text-de-magenta-paper-ink'
+        : 'border-b-transparent text-[#4A445A] hover:bg-black/[0.03] hover:text-[#1A1228]'
+    }`;
+  const resultPanel = "relative overflow-hidden rounded-xl border border-[#D3126A]/25 bg-[#151217] p-6 md:p-8";
+  const resultLabel = "mb-2 text-xs font-bold uppercase tracking-wider text-white/65";
+  const resultNum = "font-mono font-extrabold text-[#f0187a]";
+
   return (
-    <div className="min-h-screen bg-[#050312]">
-      <MegaMenu />
+    <PageTemplate
+      title="IT Cost Calculators"
+      eyebrow="Business Impact Calculator"
+      subtitle="Understand the true cost of IT downtime and get accurate service estimates for your business."
+      breadcrumbs={[{ label: "Resources", href: "/resources" }, { label: "Downtime Calculator" }]}
+      layout="chapters"
+    >
+      <Chapter tone="paper" seam={false}>
+        <Container>
+          <div className="mx-auto max-w-4xl">
+            <div className={`${cardPaper} overflow-hidden`}>
+              <div className="flex border-b border-[var(--de-paper-hairline)]">
+                <button
+                  type="button"
+                  aria-pressed={activeTab === 'downtime'}
+                  onClick={() => setActiveTab('downtime')}
+                  className={tabClass(activeTab === 'downtime')}
+                  data-testid="tab-downtime-cost"
+                >
+                  <Clock className="h-4 w-4" aria-hidden="true" />
+                  Downtime Cost
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={activeTab === 'service'}
+                  onClick={() => setActiveTab('service')}
+                  className={tabClass(activeTab === 'service')}
+                  data-testid="tab-service-cost"
+                >
+                  <DollarSign className="h-4 w-4" aria-hidden="true" />
+                  Service Cost
+                </button>
+              </div>
 
-      <main id="page-main">
-      {/* Hero Section */}
-      <section className="de-nav-clear pb-16 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#D3126A]/10 rounded-full blur-[120px]" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#D3126A]/5 rounded-full blur-[120px]" />
-        </div>
-        
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#D3126A]/10 border border-[#D3126A]/30 mb-6">
-              <Calculator className="w-4 h-4 text-[#D3126A]" />
-              <span className="text-sm text-de-magenta-ink font-medium">Business Impact Calculator</span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              IT Cost <span className="text-[#D3126A]">Calculators</span>
-            </h1>
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-              Understand the true cost of IT downtime and get accurate service estimates for your business.
-            </p>
-          </div>
+              <div className="p-6 md:p-10">
+                {activeTab === 'downtime' && (
+                  <div className="animate-in fade-in duration-300 motion-reduce:animate-none">
+                    <h2 className="mb-3 font-heading text-2xl font-semibold text-[#1A1228] md:text-3xl">
+                      What's Downtime Really Costing You?
+                    </h2>
+                    <p className="mb-8 max-w-[60ch] text-base leading-relaxed text-[#3A3448]">
+                      Calculate the true cost of IT downtime for your business with industry-specific multipliers and RTO/RPO factors.
+                    </p>
 
-          {/* Calculator Container */}
-          <div className="bg-[#050312] rounded-xl border-2 border-[#D3126A]/15 shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden">
-            {/* Tabs */}
-            <div className="flex border-b-2 border-[#D3126A]/15">
-              <button
-                type="button"
-                aria-pressed={activeTab === 'downtime'}
-                onClick={() => setActiveTab('downtime')}
-                className={`flex-1 px-6 py-5 text-sm font-bold uppercase tracking-wider transition-all duration-300 border-b-3 ${
-                  activeTab === 'downtime'
-                    ? 'text-de-magenta-ink bg-[#D3126A]/10 border-b-[#D3126A] shadow-[0_0_10px_rgba(211,18,106,0.3)]'
-                    : 'text-gray-400 hover:text-white hover:bg-[#D3126A]/5 border-b-transparent'
-                }`}
-                data-testid="tab-downtime-cost"
-              >
-                <Clock className="w-4 h-4 inline-block mr-2 -mt-0.5" />
-                Downtime Cost
-              </button>
-              <button
-                type="button"
-                aria-pressed={activeTab === 'service'}
-                onClick={() => setActiveTab('service')}
-                className={`flex-1 px-6 py-5 text-sm font-bold uppercase tracking-wider transition-all duration-300 border-b-3 ${
-                  activeTab === 'service'
-                    ? 'text-de-magenta-ink bg-[#D3126A]/10 border-b-[#D3126A] shadow-[0_0_10px_rgba(211,18,106,0.3)]'
-                    : 'text-gray-400 hover:text-white hover:bg-[#D3126A]/5 border-b-transparent'
-                }`}
-                data-testid="tab-service-cost"
-              >
-                <DollarSign className="w-4 h-4 inline-block mr-2 -mt-0.5" />
-                Service Cost
-              </button>
-            </div>
-
-            {/* Calculator Content */}
-            <div className="p-8 md:p-12">
-              {/* Downtime Calculator */}
-              {activeTab === 'downtime' && (
-                <div className="animate-in fade-in duration-300">
-                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                    What's Downtime Really Costing You?
-                  </h2>
-                  <p className="text-gray-400 mb-8">
-                    Calculate the true cost of IT downtime for your business with industry-specific multipliers and RTO/RPO factors.
-                  </p>
-
-                  {/* Industry Select */}
-                  <div className="mb-6">
-                    <Label id="calc-industry-label" className="text-xs font-semibold uppercase tracking-wide text-white mb-2 block">Industry</Label>
-                    <Select value={industry} onValueChange={setIndustry}>
-                      <SelectTrigger aria-labelledby="calc-industry-label" className="h-14 bg-[#151217] border-2 border-[#D3126A]/15 text-white hover:border-[#D3126A] focus:border-[#D3126A] focus:ring-2 focus:ring-[#D3126A]/30 transition-all" data-testid="select-calc-industry">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#151217] border-[#D3126A]/30">
-                        {Object.entries(industryMultipliers).map(([key, { name, multiplier }]) => (
-                          <SelectItem 
-                            key={key} 
-                            value={key} 
-                            className="text-white hover:bg-[#D3126A]/20 focus:bg-[#D3126A]/20 focus:text-white"
-                            data-testid={`option-calc-${key}`}
-                          >
-                            {name} ({multiplier}×)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Two Column Inputs */}
-                  <div className="grid md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                      <Label className="text-xs font-semibold uppercase tracking-wide text-white mb-2 block">Employees Affected</Label>
-                      <Input
-                        type="number"
-                        value={employees}
-                        onChange={(e) => setEmployees(e.target.value)}
-                        className="h-14 bg-[#151217] border-2 border-[#D3126A]/15 text-white placeholder:text-white/70 hover:border-[#D3126A] focus:border-[#D3126A] focus:ring-2 focus:ring-[#D3126A]/30 transition-all"
-                        placeholder="25"
-                        data-testid="input-employees"
-                      />
+                    <div className="mb-6">
+                      <Label id="calc-industry-label" className={labelClass}>Industry</Label>
+                      <Select value={industry} onValueChange={setIndustry}>
+                        <SelectTrigger aria-labelledby="calc-industry-label" className={fieldClass} data-testid="select-calc-industry">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className={selectContentClass}>
+                          {Object.entries(industryMultipliers).map(([key, { name, multiplier }]) => (
+                            <SelectItem key={key} value={key} className={selectItemClass} data-testid={`option-calc-${key}`}>
+                              {name} ({multiplier}×)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div>
-                      <Label className="text-xs font-semibold uppercase tracking-wide text-white mb-2 block">Avg Hourly Wage ($)</Label>
-                      <Input
-                        type="number"
-                        value={hourlyWage}
-                        onChange={(e) => setHourlyWage(e.target.value)}
-                        className="h-14 bg-[#151217] border-2 border-[#D3126A]/15 text-white placeholder:text-white/70 hover:border-[#D3126A] focus:border-[#D3126A] focus:ring-2 focus:ring-[#D3126A]/30 transition-all"
-                        placeholder="35"
-                        data-testid="input-hourly-wage"
-                      />
-                    </div>
-                  </div>
 
-                  {/* Downtime Hours */}
-                  <div className="mb-6">
-                    <Label className="text-xs font-semibold uppercase tracking-wide text-white mb-2 block">Expected Downtime (Hours)</Label>
-                    <Input
-                      type="number"
-                      value={downtimeHours}
-                      onChange={(e) => setDowntimeHours(e.target.value)}
-                      className="h-14 bg-[#151217] border-2 border-[#D3126A]/15 text-white placeholder:text-white/70 hover:border-[#D3126A] focus:border-[#D3126A] focus:ring-2 focus:ring-[#D3126A]/30 transition-all"
-                      placeholder="4"
-                      data-testid="input-downtime-hours"
-                    />
-                  </div>
-
-                  {/* Advanced Options */}
-                  <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-                    <CollapsibleTrigger className="w-full flex items-center justify-between px-5 py-4 bg-[#151217] border-2 border-[#D3126A]/15 rounded-lg text-xs font-semibold uppercase tracking-wide text-white hover:border-[#D3126A] hover:bg-[#D3126A]/5 transition-all mb-6" data-testid="toggle-advanced-options">
-                      <span>Advanced Options (RTO/RPO & Annual Impact)</span>
-                      {advancedOpen ? <Minus className="w-5 h-5 text-[#D3126A]" /> : <Plus className="w-5 h-5 text-[#D3126A]" />}
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="mb-6">
-                      <div className="p-6 bg-[#151217] border-2 border-[#D3126A]/15 rounded-lg space-y-4">
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <div>
-                            <Label className="text-xs font-semibold uppercase tracking-wide text-white mb-2 block">RTO - Recovery Time Objective (Hours)</Label>
-                            <Input
-                              type="number"
-                              value={rtoHours}
-                              onChange={(e) => setRtoHours(e.target.value)}
-                              className="h-12 bg-[#050312] border-2 border-[#D3126A]/15 text-white placeholder:text-white/70 hover:border-[#D3126A] focus:border-[#D3126A] transition-all"
-                              placeholder="4"
-                              data-testid="input-rto"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs font-semibold uppercase tracking-wide text-white mb-2 block">RPO - Recovery Point Objective (Hours)</Label>
-                            <Input
-                              type="number"
-                              value={rpoHours}
-                              onChange={(e) => setRpoHours(e.target.value)}
-                              className="h-12 bg-[#050312] border-2 border-[#D3126A]/15 text-white placeholder:text-white/70 hover:border-[#D3126A] focus:border-[#D3126A] transition-all"
-                              placeholder="1"
-                              data-testid="input-rpo"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-xs font-semibold uppercase tracking-wide text-white mb-2 block">Expected Incidents Per Year</Label>
-                          <Input
-                            type="number"
-                            value={incidentsPerYear}
-                            onChange={(e) => setIncidentsPerYear(e.target.value)}
-                            className="h-12 bg-[#050312] border-2 border-[#D3126A]/15 text-white placeholder:text-white/70 hover:border-[#D3126A] focus:border-[#D3126A] transition-all"
-                            placeholder="4"
-                            data-testid="input-incidents"
-                          />
-                        </div>
+                    <div className="mb-6 grid gap-6 md:grid-cols-2">
+                      <div>
+                        <Label htmlFor="calc-employees" className={labelClass}>Employees Affected</Label>
+                        <Input id="calc-employees" type="number" inputMode="decimal" value={employees} onChange={(e) => setEmployees(e.target.value)} className={fieldClass} placeholder="25" data-testid="input-employees" />
                       </div>
-                    </CollapsibleContent>
-                  </Collapsible>
+                      <div>
+                        <Label htmlFor="calc-wage" className={labelClass}>Avg Hourly Wage ($)</Label>
+                        <Input id="calc-wage" type="number" inputMode="decimal" value={hourlyWage} onChange={(e) => setHourlyWage(e.target.value)} className={fieldClass} placeholder="35" data-testid="input-hourly-wage" />
+                      </div>
+                    </div>
 
-                  {/* Calculate Button */}
-                  <Button
-                    onClick={calculateDowntime}
-                    className="h-14 w-full bg-[#D3126A] text-sm font-bold uppercase tracking-wider text-white transition-colors hover:bg-[#b80f5c]"
-                    data-testid="button-calculate-downtime"
-                  >
-                    Calculate Cost <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
+                    <div className="mb-6">
+                      <Label htmlFor="calc-hours" className={labelClass}>Expected Downtime (Hours)</Label>
+                      <Input id="calc-hours" type="number" inputMode="decimal" value={downtimeHours} onChange={(e) => setDowntimeHours(e.target.value)} className={fieldClass} placeholder="4" data-testid="input-downtime-hours" />
+                    </div>
 
-                  {/* Results */}
-                  {showDowntimeResults && (
-                    <div className="mt-8 p-8 bg-[#151217] rounded-xl border-2 border-[#D3126A]/15 relative overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
-                      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#D3126A] to-transparent" />
-                      
-                      <div className="grid md:grid-cols-2 gap-8 mb-6">
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Per-Incident Cost</p>
-                          <p className="text-4xl font-extrabold text-[#D3126A] drop-shadow-[0_0_20px_rgba(211,18,106),0.3)]" data-testid="result-per-incident">
-                            ${downtimeResult.perIncident.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+                      <CollapsibleTrigger className="mb-6 flex min-h-14 w-full items-center justify-between rounded-lg border border-[var(--de-paper-hairline)] bg-[var(--de-paper)] px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-[#1A1228] transition-colors hover:border-[#A30E52] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]" data-testid="toggle-advanced-options">
+                        <span>Advanced Options (RTO/RPO & Annual Impact)</span>
+                        {advancedOpen ? <Minus className="h-5 w-5 text-[#A30E52]" aria-hidden="true" /> : <Plus className="h-5 w-5 text-[#A30E52]" aria-hidden="true" />}
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mb-6">
+                        <div className="space-y-4 rounded-lg border border-[var(--de-paper-hairline)] bg-[var(--de-paper)] p-5 md:p-6">
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div>
+                              <Label htmlFor="calc-rto" className={labelClass}>RTO - Recovery Time Objective (Hours)</Label>
+                              <Input id="calc-rto" type="number" inputMode="decimal" value={rtoHours} onChange={(e) => setRtoHours(e.target.value)} className={smallFieldClass} placeholder="4" data-testid="input-rto" />
+                            </div>
+                            <div>
+                              <Label htmlFor="calc-rpo" className={labelClass}>RPO - Recovery Point Objective (Hours)</Label>
+                              <Input id="calc-rpo" type="number" inputMode="decimal" value={rpoHours} onChange={(e) => setRpoHours(e.target.value)} className={smallFieldClass} placeholder="1" data-testid="input-rpo" />
+                            </div>
+                          </div>
+                          <div>
+                            <Label htmlFor="calc-incidents" className={labelClass}>Expected Incidents Per Year</Label>
+                            <Input id="calc-incidents" type="number" inputMode="decimal" value={incidentsPerYear} onChange={(e) => setIncidentsPerYear(e.target.value)} className={smallFieldClass} placeholder="4" data-testid="input-incidents" />
+                          </div>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+
+                    <Button
+                      onClick={calculateDowntime}
+                      className="h-14 w-full bg-[#D3126A] text-sm font-bold uppercase tracking-wider text-white transition-colors hover:bg-[#b80f5c]"
+                      data-testid="button-calculate-downtime"
+                    >
+                      Calculate Cost <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
+                    </Button>
+
+                    <div aria-live="polite">
+                      {showDowntimeResults && (
+                        <div className={`mt-8 ${resultPanel} animate-in slide-in-from-bottom-4 duration-500 motion-reduce:animate-none`}>
+                          <div className="absolute inset-x-0 top-0 h-0.5 bg-[#D3126A]" aria-hidden="true" />
+                          <div className="mb-6 grid gap-8 md:grid-cols-2">
+                            <div>
+                              <p className={resultLabel}>Per-Incident Cost</p>
+                              <p className={`${resultNum} text-3xl md:text-4xl`} data-testid="result-per-incident">
+                                ${money(downtimeResult.perIncident)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className={resultLabel}>Annual Downtime Cost</p>
+                              <p className={`${resultNum} text-4xl md:text-5xl`} data-testid="result-annual">
+                                ${money(downtimeResult.annual)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mb-4">{getRiskBadge(downtimeResult.riskLevel)}</div>
+                          <p className="text-sm leading-relaxed text-white/70">
+                            Based on <strong className="text-white">{employees}</strong> employees at <strong className="text-white">${hourlyWage}/hr</strong> with <strong className="text-white">{downtimeHours} hours</strong> downtime per incident. Industry multiplier: <strong className="text-white">{industryMultipliers[industry]?.multiplier}×</strong>
                           </p>
                         </div>
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Annual Downtime Cost</p>
-                          <p className="text-5xl font-extrabold text-[#D3126A] drop-shadow-[0_0_20px_rgba(211,18,106),0.3)]" data-testid="result-annual">
-                            ${downtimeResult.annual.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'service' && (
+                  <div className="animate-in fade-in duration-300 motion-reduce:animate-none">
+                    <h2 className="mb-3 font-heading text-2xl font-semibold text-[#1A1228] md:text-3xl">
+                      Estimate Your Service Investment
+                    </h2>
+                    <p className="mb-8 max-w-[60ch] text-base leading-relaxed text-[#3A3448]">
+                      Estimate from published per-user rates and monthly minimums. Final pricing is confirmed after assessment.
+                    </p>
+
+                    <div className="mb-6">
+                      <Label id="calc-package-label" className={labelClass}>Service Package</Label>
+                      <Select value={servicePackage} onValueChange={(value) => setServicePackage(value as PricingTierKey)}>
+                        <SelectTrigger aria-labelledby="calc-package-label" className={fieldClass} data-testid="select-service-package">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className={selectContentClass}>
+                          {Object.entries(servicePackages).map(([key, { name }]) => (
+                            <SelectItem key={key} value={key} className={selectItemClass} data-testid={`option-package-${key}`}>
+                              {name} (${pricing[key as PricingTierKey].user}/user/month · {pricing[key as PricingTierKey].monthlyMin.toLocaleString()}/mo minimum)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="mb-6">
+                      <Label htmlFor="calc-service-employees" className={labelClass}>Number of Employees</Label>
+                      <Input id="calc-service-employees" type="number" inputMode="decimal" value={serviceEmployees} onChange={(e) => setServiceEmployees(e.target.value)} className={fieldClass} placeholder="10" data-testid="input-service-employees" />
+                    </div>
+
+                    <p className="mb-6 max-w-[60ch] text-sm leading-relaxed text-[#4A445A]">
+                      Backup, network, and compliance add-ons are scoped after assessment — not published as a per-user add-on rate here.
+                    </p>
+
+                    <Button
+                      onClick={calculateService}
+                      className="h-14 w-full bg-[#D3126A] text-sm font-bold uppercase tracking-wider text-white transition-colors hover:bg-[#b80f5c]"
+                      data-testid="button-calculate-service"
+                    >
+                      Calculate Cost <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
+                    </Button>
+
+                    <div aria-live="polite">
+                      {showServiceResults && (
+                        <div className={`mt-8 ${resultPanel} animate-in slide-in-from-bottom-4 duration-500 motion-reduce:animate-none`}>
+                          <div className="absolute inset-x-0 top-0 h-0.5 bg-[#D3126A]" aria-hidden="true" />
+                          <div className="space-y-6">
+                            <div>
+                              <p className={resultLabel}>Monthly Investment</p>
+                              <p className={`${resultNum} text-4xl md:text-5xl`} data-testid="result-monthly">
+                                ${money(serviceResult.monthly)}
+                              </p>
+                            </div>
+                            <div className="grid gap-6 border-t border-white/10 pt-6 md:grid-cols-2">
+                              <div>
+                                <p className={resultLabel}>Quarterly (3 × monthly)</p>
+                                <p className="font-mono text-2xl font-bold text-emerald-300" data-testid="result-quarterly">
+                                  ${money(serviceResult.quarterly)}
+                                </p>
+                              </div>
+                              <div>
+                                <p className={resultLabel}>Annual (12 × monthly)</p>
+                                <p className="font-mono text-2xl font-bold text-emerald-300" data-testid="result-annual-service">
+                                  ${money(serviceResult.annual)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <p className="mt-6 text-sm leading-relaxed text-white/70">
+                            <strong className="text-white">{servicePackages[servicePackage]?.name}</strong> for <strong className="text-white">{serviceEmployees}</strong> users, including the published monthly minimum.
                           </p>
                         </div>
-                      </div>
-
-                      <div className="mb-4">
-                        {getRiskBadge(downtimeResult.riskLevel)}
-                      </div>
-
-                      <p className="text-sm text-gray-400 italic">
-                        Based on <strong className="text-[#D3126A]">{employees}</strong> employees at <strong className="text-[#D3126A]">${hourlyWage}/hr</strong> with <strong className="text-[#D3126A]">{downtimeHours} hours</strong> downtime per incident. Industry multiplier: <strong className="text-[#D3126A]">{industryMultipliers[industry]?.multiplier}×</strong>
-                      </p>
+                      )}
                     </div>
-                  )}
-                </div>
-              )}
-
-              {/* Service Cost Calculator */}
-              {activeTab === 'service' && (
-                <div className="animate-in fade-in duration-300">
-                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                    Estimate Your Service Investment
-                  </h2>
-                  <p className="text-gray-400 mb-8">
-                    Estimate from published per-user rates and monthly minimums. Final pricing is confirmed after assessment.
-                  </p>
-
-                  {/* Service Package */}
-                  <div className="mb-6">
-                    <Label className="text-xs font-semibold uppercase tracking-wide text-white mb-2 block">Service Package</Label>
-                    <Select value={servicePackage} onValueChange={(value) => setServicePackage(value as PricingTierKey)}>
-                      <SelectTrigger className="h-14 bg-[#151217] border-2 border-[#D3126A]/15 text-white hover:border-[#D3126A] focus:border-[#D3126A] focus:ring-2 focus:ring-[#D3126A]/30 transition-all" data-testid="select-service-package">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#151217] border-[#D3126A]/30">
-                        {Object.entries(servicePackages).map(([key, { name }]) => (
-                          <SelectItem 
-                            key={key} 
-                            value={key} 
-                            className="text-white hover:bg-[#D3126A]/20 focus:bg-[#D3126A]/20 focus:text-white"
-                            data-testid={`option-package-${key}`}
-                          >
-                            {name} (${pricing[key as PricingTierKey].user}/user/month · {pricing[key as PricingTierKey].monthlyMin.toLocaleString()}/mo minimum)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
-
-                  {/* Employees */}
-                  <div className="mb-6">
-                    <Label className="text-xs font-semibold uppercase tracking-wide text-white mb-2 block">Number of Employees</Label>
-                    <Input
-                      type="number"
-                      value={serviceEmployees}
-                      onChange={(e) => setServiceEmployees(e.target.value)}
-                      className="h-14 bg-[#151217] border-2 border-[#D3126A]/15 text-white placeholder:text-white/70 hover:border-[#D3126A] focus:border-[#D3126A] focus:ring-2 focus:ring-[#D3126A]/30 transition-all"
-                      placeholder="10"
-                      data-testid="input-service-employees"
-                    />
-                  </div>
-
-                  <p className="mb-6 text-sm text-white/55">
-                    Backup, network, and compliance add-ons are scoped after assessment — not published as a per-user add-on rate here.
-                  </p>
-
-                  {/* Calculate Button */}
-                  <Button
-                    onClick={calculateService}
-                    className="h-14 w-full bg-[#D3126A] text-sm font-bold uppercase tracking-wider text-white transition-colors hover:bg-[#b80f5c]"
-                    data-testid="button-calculate-service"
-                  >
-                    Calculate Cost <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-
-                  {/* Results */}
-                  {showServiceResults && (
-                    <div className="mt-8 p-8 bg-[#151217] rounded-xl border-2 border-[#D3126A]/15 relative overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
-                      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#D3126A] to-transparent" />
-                      
-                      <div className="space-y-6">
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Monthly Investment</p>
-                          <p className="text-5xl font-extrabold text-[#D3126A] drop-shadow-[0_0_20px_rgba(211,18,106),0.3)]" data-testid="result-monthly">
-                            ${serviceResult.monthly.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </p>
-                        </div>
-                        
-                        <div className="grid md:grid-cols-2 gap-6 pt-6 border-t border-[#D3126A]/15">
-                          <div>
-                            <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Quarterly (3 × monthly)</p>
-                            <p className="text-2xl font-bold text-emerald-400" data-testid="result-quarterly">
-                              ${serviceResult.quarterly.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Annual (12 × monthly)</p>
-                            <p className="text-2xl font-bold text-emerald-400" data-testid="result-annual-service">
-                              ${serviceResult.annual.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <p className="text-sm text-gray-400 italic mt-6">
-                        <strong className="text-[#D3126A]">{servicePackages[servicePackage]?.name}</strong> for <strong className="text-[#D3126A]">{serviceEmployees}</strong> users, including the published monthly minimum.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
+        </Container>
+      </Chapter>
 
-          <div className="mt-12">
-            <ConversionPathBar
-              headline="Ready to confirm the real number?"
-              body="This calculator is an estimate. A Cyber Risk Assessment confirms users, sites, backup, and the monthly floor that actually applies."
-            />
-          </div>
-        </div>
-      </section>
-      </main>
-
-      <DigeratiEnhancedFooterSection />
-    </div>
+      <ClosingCta
+        tone="surface"
+        title="Ready to confirm the real number?"
+        lede="This calculator is an estimate. A Cyber Risk Assessment confirms users, sites, backup, and the monthly floor that actually applies."
+        primary={{ label: CTA.primary, href: "/book", testId: "button-conversion-assessment" }}
+      />
+    </PageTemplate>
   );
 }
