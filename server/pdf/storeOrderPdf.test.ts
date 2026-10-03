@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildOrderPdfHtml, orderPdfFileBase, usd } from "./storeOrderPdf";
 import { brandFontFaceCss } from "./dePdfBrand";
+import { accountTeamFor } from "@shared/accountManagers";
 
 const order = {
   orderNumber: "ORD-9K2F-2208",
@@ -77,6 +78,21 @@ describe("buildOrderPdfHtml", () => {
     const unknown = buildOrderPdfHtml({ ...order, lineItems: [{ name: "Legacy", pricingType: "weird" }] });
     expect(unknown).toContain("Legacy");
     expect(unknown).not.toContain('class="chip');
+  });
+});
+
+describe("account team", () => {
+  it("shows the assigned account manager and the sales department", () => {
+    const html = buildOrderPdfHtml(order, { accountTeam: accountTeamFor("joe-petro") });
+    expect(html).toContain("Your account manager");
+    expect(html).toContain("Joseph Petro");
+    expect(html).toContain("Founder &amp; Account Manager");
+    expect(html).toContain("Sales department");
+    expect(html).toContain("sales@digerati-experts.com");
+  });
+
+  it("falls back to the default team when none is passed", () => {
+    expect(buildOrderPdfHtml(order)).toContain("Joseph Petro");
   });
 });
 

@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PortalLayout, portalFirstName } from "./PortalLayout";
 import { portalGet } from "@/lib/portalApi";
+import { AccountTeamCard } from "@/components/AccountTeamCard";
+import { usePortalAccountTeam } from "@/hooks/usePortalAccountTeam";
 import { readPortalUser } from "@/lib/portalRoles";
 import { formatDeskTimestamp } from "@/lib/deskTimestamp";
 import { Callout, EmptyState, Panel, Priority, StatTile, TicketStatus, GenericStatus } from "@/components/portal/ui";
@@ -120,6 +122,7 @@ export default function PortalDashboard() {
     refetchInterval: 60_000,
   });
 
+  const accountTeam = usePortalAccountTeam();
   const verdict = buildVerdict(stats, isError);
   const VerdictIcon = verdict.tone === "ok" ? CheckCircle2 : verdict.tone === "warn" ? AlertTriangle : Info;
 
@@ -320,6 +323,10 @@ export default function PortalDashboard() {
                   );
                 })}
               </ul>
+            </Panel>
+
+            <Panel id="account-team" title="Your account team">
+              <AccountTeamCard team={accountTeam} stacked />
             </Panel>
           </div>
         </div>
