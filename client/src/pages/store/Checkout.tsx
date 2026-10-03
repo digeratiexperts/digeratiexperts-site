@@ -134,6 +134,19 @@ const Checkout = () => {
             setPaymentMethod("quote_request");
             return;
           }
+          if (errorData.code === "TAX_RATE_UNAVAILABLE") {
+            // Pay Now fails closed until a verified Arizona TPT table is loaded
+            // (server/services/salesTax.ts). Step aside to a quote instead of a
+            // dead-end error: DE confirms tax on the quote.
+            writeContactHandoff({ ...data, reason: "tax_unavailable" });
+            toast({
+              title: "Pay Now is paused while sales tax is set up",
+              description:
+                "Your solution is intact. We switched checkout to Request Quote, and DE will confirm any sales tax on your quote before you pay.",
+            });
+            setPaymentMethod("quote_request");
+            return;
+          }
           if (errorData.code === "DURABLE_DATABASE_REQUIRED") {
             writeContactHandoff({ ...data, reason: "durable_db" });
             toast({

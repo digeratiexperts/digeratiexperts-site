@@ -78,3 +78,17 @@ describe("warehouse contact handoff (issues #235 / #258)", () => {
     expect(() => clearContactHandoff()).not.toThrow();
   });
 });
+
+describe("tax unavailable handoff", () => {
+  beforeEach(() => {
+    vi.stubGlobal("window", { sessionStorage: memoryStorage() });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("carries the buyer to Request Quote when Pay Now cannot calculate sales tax", () => {
+    writeContactHandoff({ name: "J", email: "J@Example.com", reason: "tax_unavailable" }, 5);
+    expect(readContactHandoff(6)).toMatchObject({ name: "J", email: "j@example.com", reason: "tax_unavailable" });
+  });
+});

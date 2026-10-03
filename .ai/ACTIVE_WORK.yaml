@@ -30,6 +30,40 @@
 
 version: 2
 claims:
+  - id: paynow-tax-step-aside
+    owner: claude
+    subsystem: store-warehouse
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 459e366
+    files:
+      - client/src/pages/store/Checkout.tsx (the TAX_RATE_UNAVAILABLE branch of the Pay Now error handling only)
+      - client/src/lib/warehouseContactHandoff.ts (one new handoff reason), client/src/lib/warehouseContactHandoff.test.ts
+      - client/src/pages/store/Checkout.tax.test.ts (new)
+      - artifacts/visual-qa/paynow-tax-step-aside/**
+    status: verified-live
+    started: 2026-10-03
+    note: >-
+      PR 280 made staff Digital Warehouse Pay Now fail closed on sales tax: with
+      no verified AZ TPT table on the server, checkout answers 503
+      TAX_RATE_UNAVAILABLE, and the page showed a red "Checkout Failed" with the
+      technical message, leaving the client on Pay Now. Joe asked to see the two
+      fixes (step aside to a quote, or charge untaxed as before PR 280) and then
+      delegated the choice ("pick the most optimized answers yourself"). Claude
+      chose the step-aside: Pay Now switches to Request Quote with the contact
+      handoff, like the existing hardware and recurring-billing cases. Nobody is
+      charged without tax; the server's fail-closed rule is unchanged. Public
+      Store (Door 2) is unaffected: it never calls the Pay Now endpoint.
+      RELEASED 2026-10-03: merged as 97b3d86 (PR 407, under Joe's delegation).
+      The CI run for 97b3d86 passed every job, including the production deploy
+      (finished 19:15Z). The staff Checkout chunk on production
+      (Checkout-B1SAVqOH.js, last-modified 19:15:20Z) carries the new message
+      and the tax_unavailable handoff. A Playwright check at 1440 against
+      production, with every API reply stubbed in the browser, showed Pay Now
+      switching to Request Quote with the new toast. Separation re-checked live:
+      the public Store checkout chunk never references the Pay Now route, and
+      /internal/warehouse and its session answer 404 to anonymous visitors.
+      Evidence: artifacts/visual-qa/paynow-tax-step-aside/. VERIFIED LIVE.
+      Files released.
   - id: portal-bridge-signed-calls
     owner: claude
     subsystem: hub-integration-auth
