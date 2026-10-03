@@ -118,6 +118,26 @@ describe("Store commerce safety", () => {
     }
   });
 
+  it("blocks laptop, phone and access point carts, and mixed carts cannot bypass the block", () => {
+    const laptop = { productId: "prod-060", sku: "DE-HW-ENDPOINT-LT-BASE-OT", quantity: 2 };
+    const phone = { productId: "prod-061", sku: "DE-HW-UC-PHONE-STD-OT", quantity: 5 };
+    const accessPoint = { productId: "prod-057", sku: "DE-HW-NET-AP-BIZ-OT", quantity: 1 };
+    const digital = { productId: "prod-070", sku: "DE-DIG-ASMT-QUICK-OT", quantity: 1 };
+
+    for (const line of [laptop, phone, accessPoint]) {
+      expect(physicalFulfillmentSkus(canonicalizeCheckoutLineItems([line], "admin"))).toEqual([line.sku]);
+    }
+
+    // A digital item alongside hardware does not dilute the block: every
+    // physical SKU in the cart is reported, the digital one is not.
+    const mixed = canonicalizeCheckoutLineItems([digital, laptop, accessPoint], "admin");
+    expect(physicalFulfillmentSkus(mixed)).toEqual([laptop.sku, accessPoint.sku]);
+
+    // Co-managed buyers reach the same checkout and get the same block.
+    const coManaged = canonicalizeCheckoutLineItems([digital, phone], "comanaged");
+    expect(physicalFulfillmentSkus(coManaged)).toEqual([phone.sku]);
+  });
+
   it("never exposes demo client pricing in production", () => {
     process.env.NODE_ENV = "production";
 
