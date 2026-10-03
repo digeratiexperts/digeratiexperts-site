@@ -54,6 +54,35 @@ claims:
       #f4f4f5 for white; light-band icon tiles fixed from the dark tile to the
       tinted accent. Noindex preview only; / unchanged. Joe's later notes
       (rest of V7, then the live homepage) land here as he gives them.
+  - id: de-object-storage-per-object-acl
+    owner: claude
+    subsystem: object-storage
+    branch: claude/object-storage-acl
+    base_sha: 8fc5524
+    files:
+      - server/replit_integrations/object_storage/objectAccess.ts
+      - server/replit_integrations/object_storage/objectAccess.test.ts
+      - server/replit_integrations/object_storage/objectStorageAcl.routes.test.ts
+      - server/replit_integrations/object_storage/routes.ts
+      - server/replit_integrations/object_storage/index.ts
+      - server/routes.ts (registerObjectStorageRoutes call only)
+      - server/storage.ts (findTenantFileByFileUrl on IStorage + both impls)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Per-object read ACL for private object storage, the follow-up from the
+      closed PR 300 reconciliation (its invoice/rate-limiter pieces already
+      landed in PR 299). GET /objects/:path moves off blanket admin-only to a
+      default-deny per-object decision: DE admin, the object's GCS ACL
+      owner/grantee, or a member of the tenant (client) that owns the object's
+      path in portal_tenant_files may read; everyone else, including other
+      authenticated tenants, gets 403. Admin keeps full access, so this is a
+      strict, safe widening that enables non-admin tenant reads. Pure decision
+      function (authorizeObjectRead) plus a route integration test. The
+      tenant-owner evidence read (findTenantFileByFileUrl) is DB-backed
+      (portal_tenant_files) with a cache fallback so it survives restarts;
+      full reliability of the tenant-file flow still depends on durable writes
+      (tenant-file durability, issues 233/259). Reconciled onto main d5f3479.
   - id: ask-de-launcher-gold
     owner: claude
     subsystem: de-desk
