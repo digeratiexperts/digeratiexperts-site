@@ -3323,7 +3323,7 @@ export async function registerRoutes(app: Express) {
           }),
         }, "portal-order-form");
         await notificationService.sendNewLeadNotification({
-          name: user.fullName || user.username,
+          name: user.fullName || user.username || user.email,
           email: user.email,
           company,
           message: `Portal order form ${saved.id}`,
