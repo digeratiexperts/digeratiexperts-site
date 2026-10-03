@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import jwt from "jsonwebtoken";
 
 vi.mock("./portalAuthStore", async () => {
@@ -86,6 +86,13 @@ const activeLiveUser: LiveUser = {
   isActive: true,
   fullName: "Real User",
 };
+
+// server/routes.ts is a very large module; its first import can take several
+// seconds on a loaded runner. Load it once up front with a generous timeout so
+// that cost is not charged to the first test's 5s budget.
+beforeAll(async () => {
+  await import("./routes");
+}, 60_000);
 
 beforeEach(() => {
   vi.clearAllMocks();
