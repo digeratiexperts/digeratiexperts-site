@@ -74,7 +74,7 @@ DE staff enter tracking numbers on a real shipment. ShipStation, EasyPost, and S
 Set `PORTAL_QA_EMAIL` and `PORTAL_QA_PASSWORD` in the portal process environment (host environment settings). The account is for QA. It is not a client company. The values stay out of git.
 
 ### Exit popup
-The client keeps the assessment findings either way, including when they do not engage DE. The next edit of `client/src/components/ExitIntentPopup.tsx` should say that on the third fact. Do not add a delivery date or a score. Recorded in `docs/CLAIMS-REGISTER.md`.
+The findings belong to the client. `ExitIntentPopup.tsx` says “Yours to keep”: Digerati Experts writes them so the client can put them to work. No delivery date and no score. Recorded in `docs/CLAIMS-REGISTER.md`.
 
 ---
 
