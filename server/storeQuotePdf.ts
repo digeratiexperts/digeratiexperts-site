@@ -1,16 +1,25 @@
 import { billingLabel, isRecurringPricingType } from "@shared/storeCommerce";
-import { PRIMARY_PHONE } from "@shared/companyContact";
 import type { CanonicalQuoteLine, QuoteTotals } from "./storeQuoteCommerce";
 import { quoteTotals } from "./storeQuoteCommerce";
 import {
+  closeBlock,
   coverBlock,
   DE_PDF,
-  dePdfBaseStyles,
+  DE_STORE_DOC_ID,
+  documentHtml,
   esc,
   phoenixDate,
+  section,
+  specStrip,
   usd,
 } from "./pdf/dePdfBrand";
 import { renderHtmlToPdf } from "./pdf/renderHtmlToPdf";
+
+/**
+ * Pre-existing contact address on the quote (also in QuoteConfirmation.tsx).
+ * Not in shared/companyContact.ts; DE to confirm the canonical sales address (#339).
+ */
+const QUOTE_CONTACT_EMAIL = "sales@digerati-experts.com";
 
 export type QuotePdfInput = {
   quoteNumber: string;
@@ -22,7 +31,7 @@ export type QuotePdfInput = {
   message?: string | null;
 };
 
-/** Branded preliminary quote HTML (same visual family as the solution packet). */
+/** Preliminary quote on the DE document system (transaction family). */
 export function buildQuotePdfHtml(quote: QuotePdfInput): string {
   const totals: QuoteTotals = quoteTotals(quote.requestedItems);
   const submitted = phoenixDate(quote.createdAt);
@@ -42,7 +51,7 @@ export function buildQuotePdfHtml(quote: QuotePdfInput): string {
       return `<tr>
         <td>
           <div class="item-name">${esc(item.name)}</div>
-          <div class="item-sub ref">${esc(item.sku)}</div>
+          <div class="ref">${esc(item.sku)}</div>
           <span class="chip${recurring ? " recurring" : ""}">${esc(cadence)}</span>
           ${discount}${contract}
         </td>
@@ -55,55 +64,49 @@ export function buildQuotePdfHtml(quote: QuotePdfInput): string {
 
   const notes = (quote.message || "").trim().slice(0, 800);
 
-  return `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"/>
-<title>${esc(quote.quoteNumber)} · ${esc(DE_PDF.brandName)}</title>
-<style>
-${dePdfBaseStyles()}
-</style>
-</head><body>
-  ${coverBlock({
+  const kpis = `<table class="kpis" role="presentation"><tr>
+      <td><span class="lbl">Due today</span><div class="v money">${esc(usd(totals.dueToday))}</div><div class="u">One-time / setup</div></td>
+      <td><span class="lbl">Monthly</span><div class="v money">${esc(usd(totals.monthly))}</div><div class="u">Recurring, billed monthly</div></td>
+      <td><span class="lbl">Annual</span><div class="v money">${esc(usd(totals.annual))}</div><div class="u">Billed yearly (not a 12-month projection)</div></td>
+    </tr></table>`;
+
+  const items = rows
+    ? `<table class="items">
+      <thead><tr><th scope="col">Item</th><th scope="col" class="num">Qty</th><th scope="col" class="num">Unit price</th><th scope="col" class="num">Amount</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`
+    : `<p class="empty">No catalog lines on this request.</p>`;
+
+  const body = `${coverBlock({
+    docId: DE_STORE_DOC_ID.quote,
     eyebrow: "Preliminary solution quote",
     title: quote.quoteNumber,
     subtitleParts: [company || quote.contactName, submitted],
+    stamp: "Preliminary \u00B7 not a signed offer",
   })}
-  <div class="meta-strip">
-    Prepared for <strong>${esc(quote.contactName)}</strong>
-    ${company ? ` \u2022 Company <strong>${esc(company)}</strong>` : ""}
-    \u2022 ${esc(quote.contactEmail)}
-    \u2022 ${esc(DE_PDF.website)}
-  </div>
-  <div class="wrap">
-    <h2>Investment summary</h2>
-    <table class="invest"><tr>
-      <td><div class="k">Due today</div><div class="v">${esc(usd(totals.dueToday))}</div><div class="note">One-time / setup</div></td>
-      <td><div class="k">Monthly</div><div class="v">${esc(usd(totals.monthly))}</div><div class="note">Recurring catalog estimate</div></td>
-      <td><div class="k">Annual</div><div class="v">${esc(usd(totals.annual))}</div><div class="note">Catalog projection</div></td>
-    </tr></table>
+  ${specStrip([
+    ["Quote number", quote.quoteNumber],
+    ["Submitted", submitted],
+    ["Prepared for", quote.contactName],
+    ["Company", company],
+    ["Email", quote.contactEmail],
+  ])}
+  <main class="wrap">
+    ${section(1, "Investment summary", kpis)}
+    ${section(2, "Requested line items", items)}
+    ${notes ? section(3, "Notes from request", `<div class="callout">${esc(notes).replace(/\n/g, "<br/>")}</div>`) : ""}
+    ${closeBlock({
+      heading: "A consultant confirms terms",
+      text: "This PDF restates catalog pricing for the requested solution. It is not a signed commercial offer. A consultant will confirm terms.",
+      email: QUOTE_CONTACT_EMAIL,
+    })}
+  </main>`;
 
-    <h2>Requested line items</h2>
-    ${
-      rows
-        ? `<table class="items">
-      <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`
-        : `<p class="empty">No catalog lines on this request.</p>`
-    }
-
-    ${
-      notes
-        ? `<h2>Notes from request</h2><p>${esc(notes).replace(/\n/g, "<br/>")}</p>`
-        : ""
-    }
-
-    <div class="closing">
-      This PDF restates catalog pricing for the requested solution. It is not a signed
-      commercial offer. A consultant will confirm terms.
-      Questions: <span class="nowrap">sales@digerati-experts.com</span> · <span class="nowrap">${esc(PRIMARY_PHONE.display)}</span>
-    </div>
-  </div>
-</body></html>`;
+  return documentHtml({
+    title: `${quote.quoteNumber} · ${DE_PDF.brandName}`,
+    head: { left: `Preliminary quote · ${quote.quoteNumber}`, right: DE_STORE_DOC_ID.quote },
+    body,
+  });
 }
 
 /**

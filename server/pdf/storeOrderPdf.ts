@@ -8,8 +8,19 @@
  * here recomputes prices.
  */
 import { billingLabel, isRecurringPricingType, type CommercePricingType } from "@shared/storeCommerce";
-import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
-import { coverBlock, DE_PDF, dePdfBaseStyles, esc, phoenixDate, usd } from "./dePdfBrand";
+import { COMPANY } from "@shared/companyContact";
+import {
+  closeBlock,
+  coverBlock,
+  DE_PDF,
+  DE_STORE_DOC_ID,
+  documentHtml,
+  esc,
+  phoenixDate,
+  section,
+  specStrip,
+  usd,
+} from "./dePdfBrand";
 import { renderHtmlToPdf } from "./renderHtmlToPdf";
 
 export interface OrderPdfLineItem {
@@ -105,6 +116,7 @@ export function buildOrderPdfHtml(order: OrderPdfInput, opts: OrderPdfOptions = 
     : [];
   const statusKey = (order.status || "pending").toLowerCase();
   const paid = PAID_STATES.has(statusKey);
+  const closed = statusKey === "cancelled" || statusKey === "refunded";
   const statusText = titleCase(statusKey);
   const orderNumber = order.orderNumber?.trim() || "Order";
   const customer = order.billingCompany?.trim() || order.billingName?.trim() || "";
@@ -114,6 +126,7 @@ export function buildOrderPdfHtml(order: OrderPdfInput, opts: OrderPdfOptions = 
 
   const eyebrow = variant === "receipt" ? "Order receipt" : paid ? "Order confirmed" : "Order received";
   const docLabel = variant === "receipt" ? "Receipt" : "Order";
+  const docId = variant === "receipt" ? DE_STORE_DOC_ID.receipt : DE_STORE_DOC_ID.order;
 
   const rows = lines
     .map((item) => {
@@ -122,7 +135,7 @@ export function buildOrderPdfHtml(order: OrderPdfInput, opts: OrderPdfOptions = 
       return `<tr>
         <td>
           <div class="item-name">${esc(item.name || "Item")}</div>
-          <div class="item-sub ref">${esc(item.sku || "—")}</div>
+          <div class="ref">${esc(item.sku || "—")}</div>
           ${c ? `<span class="chip${c.recurring ? " recurring" : ""}">${esc(c.label)}</span>` : ""}
         </td>
         <td class="num">${qty}</td>
@@ -141,63 +154,58 @@ export function buildOrderPdfHtml(order: OrderPdfInput, opts: OrderPdfOptions = 
 
   const nextStep = paid
     ? "Your order is locked in and provisioning has begun. Remote setup comes first; any on-site work is scheduled with you."
-    : statusKey === "cancelled" || statusKey === "refunded"
+    : closed
       ? `This order is ${esc(statusText.toLowerCase())}. Contact us with any questions about it.`
       : "We have your order. A Digerati Experts consultant confirms payment and provisioning next.";
 
-  return `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"/>
-<title>${esc(docLabel)} ${esc(orderNumber)} · ${esc(DE_PDF.brandName)}</title>
-<style>${dePdfBaseStyles()}</style>
-</head><body>
-  ${coverBlock({
+  const items = rows
+    ? `<table class="items">
+      <thead><tr><th scope="col">Item</th><th scope="col" class="num">Qty</th><th scope="col" class="num">Unit price</th><th scope="col" class="num">Amount</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`
+    : `<p class="empty">No line items are recorded on this order.</p>`;
+
+  const totals = `<table class="totals">
+      <tr><td>Subtotal</td><td class="num money">${usd(order.subtotal)}</td></tr>
+      <tr><td>Tax</td><td class="num money">${usd(order.tax)}</td></tr>
+      <tr class="total"><td><span class="lbl">Total</span></td><td class="num money">${usd(order.total)}</td></tr>
+    </table>`;
+
+  const panels = `<table class="two" role="presentation"><tr>
+      <td><div class="panel"><span class="lbl">Billed to</span>${billing.length ? billing.join("<br/>") : "—"}</div></td>
+      <td><div class="panel"><span class="lbl">What happens next</span>${nextStep}</div></td>
+    </tr></table>`;
+
+  const body = `${coverBlock({
+    docId,
     eyebrow,
     title: orderNumber,
     subtitleParts: [customer, phoenixDate(order.createdAt ?? undefined)],
+    stamp: statusText,
   })}
-  <div class="meta-strip">
-    Status <strong>${esc(statusText)}</strong>
-    • Payment <strong>${esc(payment)}</strong>
-    ${order.paidAt ? ` • Paid <strong>${esc(phoenixDate(order.paidAt))}</strong>` : ""}
-    • ${esc(DE_PDF.website)}
-  </div>
-  <div class="wrap">
-    <h2>Line items</h2>
-    ${
-      rows
-        ? `<table class="items">
-      <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`
-        : `<p class="empty">No line items are recorded on this order.</p>`
-    }
-    <table class="doc-totals">
-      <tr><td>Subtotal</td><td class="num money">${usd(order.subtotal)}</td></tr>
-      <tr><td>Tax</td><td class="num money">${usd(order.tax)}</td></tr>
-      <tr class="doc-total"><td colspan="2"><span class="k">Total</span><span class="v money">${usd(order.total)}</span></td></tr>
-    </table>
+  ${specStrip([
+    [variant === "receipt" ? "Receipt for order" : "Order number", orderNumber],
+    ["Order date", phoenixDate(order.createdAt ?? undefined)],
+    ["Status", statusText],
+    ["Payment", payment],
+    ["Paid", order.paidAt ? phoenixDate(order.paidAt) : ""],
+  ])}
+  <main class="wrap">
+    ${section(1, "Line items", items + totals)}
+    ${panels}
+    ${closeBlock({
+      heading: paid ? "Track it in your portal" : closed ? "Questions about this order" : "We confirm the next step",
+      text: "Track provisioning, invoices and support in your portal. Questions go to the support desk below.",
+      email: COMPANY.supportEmail,
+      portal: true,
+    })}
+  </main>`;
 
-    <table class="two-col"><tr>
-      <td>
-        <div class="panel">
-          <div class="k">Billed to</div>
-          ${billing.length ? billing.join("<br/>") : "—"}
-        </div>
-      </td>
-      <td>
-        <div class="panel">
-          <div class="k">What happens next</div>
-          ${nextStep}
-        </div>
-      </td>
-    </tr></table>
-
-    <div class="closing">
-      Track provisioning, invoices and support in your portal at portal.digeratiexperts.com.
-      Questions: <span class="nowrap">${esc(COMPANY.supportEmail)}</span> · <span class="nowrap">${esc(PRIMARY_PHONE.display)}</span>
-    </div>
-  </div>
-</body></html>`;
+  return documentHtml({
+    title: `${docLabel} ${orderNumber} · ${DE_PDF.brandName}`,
+    head: { left: `${docLabel} · ${orderNumber}`, right: docId },
+    body,
+  });
 }
 
 export async function renderOrderPdf(order: OrderPdfInput, opts: OrderPdfOptions = {}): Promise<Buffer> {
