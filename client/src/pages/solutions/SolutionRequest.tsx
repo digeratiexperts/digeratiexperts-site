@@ -383,7 +383,7 @@ export default function SolutionRequest() {
   return (
     <Door2Frame intensity={0}>
         <MegaMenu />
-        <main className="d2-main de-nav-clear pb-24">
+        <main id="main-content" tabIndex={-1} className="d2-main de-nav-clear pb-24">
           <StoreChapter tone="paper" first id="contact" n={CONTACT_STEP.n} eyebrow={CONTACT_STEP.label} srText={CONTACT_STEP.sr} stepState="current" className="rounded-2xl px-5 sm:px-8">
             <h1 className="d2-h2 d2-measure" data-testid="heading-solution-request">
               {H1}
