@@ -1,35 +1,68 @@
 import { PageTemplate } from "@/components/PageTemplate";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { 
-  Phone, 
-  MapPin, 
-  Building2, 
-  Archive, 
-  AlertTriangle, 
-  DollarSign, 
-  Scale,
+import {
+  Phone,
+  MapPin,
+  Building2,
+  Archive,
   Hash,
   GitBranch,
   Shield,
   Video,
   FileText,
   BarChart3,
-  CheckCircle,
-  X,
-  ArrowRight,
-  Headphones
+  type LucideIcon,
 } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
 import { useSEO } from "@/hooks/useSEO";
 import { ServiceJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
-import { PRIMARY_PHONE } from "@/data/companyContact";
 import { CTA } from "@/lib/ctaCopy";
 import { IconWell } from "@/components/visual/IconWell";
+import {
+  Chapter,
+  Container,
+  ChapterHeader,
+  CheckList,
+  ClosingCta,
+  HeroActions,
+  HeroFacts,
+  bodyClass,
+  cardDark,
+  cardPaper,
+  inkClass,
+  type ChapterTone,
+} from "@/components/site/chapters";
+
+const testSlug = (t: string) => t.toLowerCase().replace(/\s+/g, "-");
+
+/** Icon cards with per-card test ids (FeatureGrid has no id hook). */
+function IconCards({
+  items,
+  tone,
+  testPrefix,
+  columns,
+}: {
+  items: { icon: LucideIcon; title: string; description: string }[];
+  tone: ChapterTone;
+  testPrefix: string;
+  columns: 3 | 4;
+}) {
+  return (
+    <ul className={`grid gap-4 sm:grid-cols-2 md:gap-5 ${columns === 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
+      {items.map((item) => (
+        <li
+          key={item.title}
+          className={`${tone === "paper" ? cardPaper : cardDark} flex flex-col p-6`}
+          data-testid={`${testPrefix}-${testSlug(item.title)}`}
+        >
+          <IconWell icon={item.icon} surface={tone === "paper" ? "light" : "dark"} className="mb-5" />
+          <h3 className={`font-heading text-lg font-semibold leading-snug ${inkClass(tone)}`}>{item.title}</h3>
+          <p className={`mt-2 text-[0.95rem] leading-relaxed ${bodyClass(tone)}`}>{item.description}</p>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export default function UCaaS() {
-  const prefersReducedMotion = useReducedMotion() ?? false;
-
   useSEO({
     title: "UCaaS Voice & Meetings | Managed Phone Systems",
     description: "We design, secure, and run your phone system and meeting stack so it actually supports the business. E911 compliance, call routing, retention policies, and 24/7 support.",
@@ -38,22 +71,22 @@ export default function UCaaS() {
 
   const brokenItems = [
     {
-      icon: <GitBranch className="h-6 w-6 text-de-accent-ink" />,
+      icon: GitBranch,
       title: "Routing",
       description: "Calls go to the wrong person or get dropped. Ring groups and auto-attendants aren't set up correctly, frustrating customers."
     },
     {
-      icon: <MapPin className="h-6 w-6 text-de-accent-ink" />,
+      icon: MapPin,
       title: "E911",
       description: "Your address records are outdated or wrong. In an emergency, first responders could be sent to the wrong location."
     },
     {
-      icon: <Building2 className="h-6 w-6 text-de-accent-ink" />,
+      icon: Building2,
       title: "Too many vendors",
       description: "Phone from one vendor, meetings from another, fax from a third. Nobody owns the stack, so problems fall through the cracks."
     },
     {
-      icon: <Archive className="h-6 w-6 text-de-accent-ink" />,
+      icon: Archive,
       title: "No retention",
       description: "Call recordings and voicemails vanish after 30 days. When you need them for compliance or disputes, they're gone."
     }
@@ -76,32 +109,32 @@ export default function UCaaS() {
 
   const serviceCards = [
     {
-      icon: <Hash className="h-6 w-6 text-white" />,
+      icon: Hash,
       title: "Number procurement",
       description: "We port existing numbers and provision new DIDs with proper documentation. Never lose a business number again."
     },
     {
-      icon: <GitBranch className="h-6 w-6 text-white" />,
+      icon: GitBranch,
       title: "Call flow / IVR",
       description: "Custom auto-attendants, ring groups, hunt groups, and after-hours routing designed around how your team actually works."
     },
     {
-      icon: <Shield className="h-6 w-6 text-white" />,
+      icon: Shield,
       title: "E911 compliance",
       description: "Location records updated for every user, every site. Dispatchable addresses verified quarterly. Full audit trail."
     },
     {
-      icon: <Video className="h-6 w-6 text-white" />,
+      icon: Video,
       title: "Meetings governance",
       description: "Zoom/Teams/Meet policies enforced across your org. Waiting rooms, passwords, recording rules—all configured to spec."
     },
     {
-      icon: <FileText className="h-6 w-6 text-white" />,
+      icon: FileText,
       title: "Retention policy",
       description: "Call recordings, voicemails, and meeting recordings retained for your compliance window. Automated purge when allowed."
     },
     {
-      icon: <BarChart3 className="h-6 w-6 text-white" />,
+      icon: BarChart3,
       title: "Quality reporting",
       description: "Monthly reports on call quality, uptime, usage patterns, and cost. Actionable insights, not just data dumps."
     }
@@ -165,22 +198,28 @@ export default function UCaaS() {
 
   return (
     <PageTemplate
+      layout="chapters"
+      eyebrow="Solutions · Voice & meetings"
       title="UCaaS: Voice & Meetings"
       subtitle="We design, secure, and run your phone system and meeting stack so it actually supports the business"
-      icon={<Phone className="h-10 w-10 text-de-accent-ink" />}
       breadcrumbs={[
         { label: "Solutions", href: "/solutions" },
         { label: "UCaaS" }
       ]}
       actions={
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild variant="brand" size="lg" className="h-12 px-6 font-semibold">
-            <a href="/book">
-              {CTA.primary}
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </a>
-          </Button>
+          <HeroActions
+            primary={{ label: CTA.primary, href: "/book" }}
+            secondary={{ label: "See service & cost", href: "#pricing" }}
+          />
         </div>
+      }
+      heroAside={
+        <HeroFacts
+          title="Service & cost"
+          rows={pricingTiers.map((t) => ({ label: t.type === "one-time" ? "One-time" : t.name.replace("Managed UCaaS", "Managed"), value: `${t.price}` + (t.type === "one-time" ? ` · ${t.name}` : "") }))}
+          footnote="Start with implementation, add ongoing management, or take the full stack."
+        />
       }
     >
       <ServiceJsonLd
@@ -193,258 +232,106 @@ export default function UCaaS() {
         { name: "Solutions", url: "/solutions" },
         { name: "UCaaS", url: "/services/ucaas" }
       ]} />
-      <div className="space-y-20">
-        {/* What's Broken Section */}
-        <motion.section
-          initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-            <div className="mb-8 flex items-center gap-3">
-            <IconWell icon={AlertTriangle} size="sm" surface="dark" />
-            <h2 className="text-3xl font-bold text-white">What's broken right now</h2>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {brokenItems.map((item, index) => (
-              <motion.div
-                key={item.title}
-                initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-              >
-                <Card 
-                  className="h-full border-de-hairline bg-de-raised"
-                  data-testid={`card-broken-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  <CardHeader>
-                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-de-hairline bg-de-bg">
-                      {item.icon}
-                    </div>
-                    <CardTitle className="text-xl text-white">{item.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-400">{item.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
 
-        {/* The Hidden Bill Section */}
-        <motion.section
-          initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="relative overflow-hidden rounded-2xl border border-de-hairline bg-de-raised p-8 md:p-12"
-        >
-          <div className="relative">
-            <div className="mb-8 flex items-center gap-3">
-              <IconWell icon={DollarSign} size="sm" surface="dark" />
-              <h2 className="text-3xl font-bold text-white">The hidden bill</h2>
+      <Chapter tone="well">
+        <Container>
+          <ChapterHeader tone="well" eyebrow="The problem" title="What's broken right now" />
+          <IconCards tone="well" columns={4} testPrefix="card-broken" items={brokenItems} />
+        </Container>
+      </Chapter>
+
+      <Chapter tone="paper">
+        <Container>
+          <ChapterHeader tone="paper" eyebrow="The cost" title="The hidden bill" />
+          <div className="grid gap-10 md:grid-cols-2 lg:gap-14">
+            <div>
+              <h3 className="mb-5 font-heading text-xl font-semibold text-[#1A1228]">Business impact</h3>
+              <CheckList tone="paper" columns={1} items={hiddenBillItems.business} />
             </div>
-            
-            <div className="grid md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-de-accent-ink" />
-                  Business impact
-                </h3>
-                <ul className="space-y-3">
-                  {hiddenBillItems.business.map((item, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <X className="mt-0.5 h-5 w-5 shrink-0 text-white/55" />
-                      <span className="text-gray-300">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-                  <Scale className="h-5 w-5 text-de-accent-ink" />
-                  Liability & compliance
-                </h3>
-                <ul className="space-y-3">
-                  {hiddenBillItems.liability.map((item, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-de-accent-ink" />
-                      <span className="text-gray-300">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <div>
+              <h3 className="mb-5 font-heading text-xl font-semibold text-[#1A1228]">Liability & compliance</h3>
+              <CheckList tone="paper" columns={1} items={hiddenBillItems.liability} />
             </div>
           </div>
-        </motion.section>
+        </Container>
+      </Chapter>
 
-        {/* What We Actually Do Section */}
-        <motion.section
-          initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-            <div className="mb-8 flex items-center gap-3">
-            <IconWell icon={Headphones} size="sm" surface="dark" />
-            <h2 className="text-3xl font-bold text-white">What we actually do</h2>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {serviceCards.map((card, index) => (
-              <motion.div
-                key={card.title}
-                initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-              >
-                <Card 
-                  className="group h-full border-de-hairline bg-de-raised"
-                  data-testid={`card-service-${card.title.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  <CardHeader className="relative">
-                  <div className="relative mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-de-hairline bg-de-bg">
-                      {card.icon}
-                    </div>
-                    <CardTitle className="text-xl font-semibold text-white group-hover:text-de-accent-ink transition-colors">
-                      {card.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="relative">
-                    <p className="text-gray-400 leading-relaxed">{card.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
+      <Chapter tone="surface">
+        <Container>
+          <ChapterHeader tone="surface" eyebrow="The work" title="What we actually do" />
+          <IconCards tone="surface" columns={3} testPrefix="card-service" items={serviceCards} />
+        </Container>
+      </Chapter>
 
-        {/* Service & Cost Section */}
-        <motion.section
-          initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Service & Cost</h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              Choose the level of support that fits your business. Start with implementation, 
-              add ongoing management, or get the full stack.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-6">
-            {pricingTiers.map((tier, index) => (
-              <motion.div
+      <Chapter tone="well" id="pricing" className="scroll-mt-28">
+        <Container>
+          <ChapterHeader
+            tone="well"
+            eyebrow="Pricing"
+            title="Service & Cost"
+            lede="Choose the level of support that fits your business. Start with implementation, add ongoing management, or get the full stack."
+          />
+          <ul className="grid gap-4 md:grid-cols-3 md:gap-5">
+            {pricingTiers.map((tier) => (
+              <li
                 key={tier.name}
-                initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                className="relative"
+                className={`${cardDark} flex flex-col p-6 md:p-7`}
+                data-testid={`card-pricing-${testSlug(tier.name)}`}
               >
-                <Card 
-                  className="h-full border-de-hairline bg-de-raised"
-                  data-testid={`card-pricing-${tier.name.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  <CardHeader>
-                    <div className="text-sm text-de-accent-ink uppercase tracking-wider mb-1">
-                      {tier.type === 'one-time' ? 'One-Time' : 'Monthly'}
-                    </div>
-                    <CardTitle className="text-2xl text-white">{tier.name}</CardTitle>
-                    <div className="text-3xl font-bold text-white mt-2">{tier.price}</div>
-                    <p className="text-gray-400 text-sm mt-2">{tier.description}</p>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-3">
-                      {tier.features.map((feature, featureIndex) => (
-                        <li key={featureIndex} className="flex items-start gap-3">
-                          <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-de-accent-ink" />
-                          <span className="text-gray-300">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
+                <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-de-magenta-ink">
+                  {tier.type === "one-time" ? "One-Time" : "Monthly"}
+                </p>
+                <h3 className="mt-2 font-heading text-2xl font-semibold text-white">{tier.name}</h3>
+                <p className="mt-2 font-heading text-3xl font-semibold text-white">{tier.price}</p>
+                <p className="mt-2 text-sm text-white/70">{tier.description}</p>
+                <div className="mt-6 border-t border-[var(--de-hairline)] pt-6">
+                  <CheckList tone="well" columns={1} items={tier.features} />
+                </div>
+              </li>
             ))}
-          </div>
-        </motion.section>
+          </ul>
+        </Container>
+      </Chapter>
 
-        {/* Comparison Table Section */}
-        <motion.section
-          initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">DIY vs Digerati Experts UCaaS</h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              See what you're really getting when you partner with us instead of going it alone.
-            </p>
-          </div>
-          
-          <div className="overflow-hidden rounded-2xl border border-de-hairline bg-de-raised">
-            <div className="grid grid-cols-3 border-b border-de-hairline bg-de-bg">
-              <div className="p-4 font-semibold text-gray-400">Feature</div>
-              <div className="p-4 font-semibold text-gray-400 text-center border-l border-white/10">DIY</div>
-              <div className="p-4 font-semibold text-de-accent-ink text-center border-l border-white/10 bg-de-raised">
+      <Chapter tone="paper">
+        <Container>
+          <ChapterHeader
+            tone="paper"
+            eyebrow="Compare"
+            title="DIY vs Digerati Experts UCaaS"
+            lede="See what you're really getting when you partner with us instead of going it alone."
+          />
+          <div className="overflow-hidden rounded-xl border border-[var(--de-paper-hairline)] bg-white text-sm md:text-base">
+            <div className="grid grid-cols-3 border-b border-[var(--de-paper-hairline)] bg-[#F3EEE8] font-semibold">
+              <div className="p-3 text-[#3A3448] md:p-4">Feature</div>
+              <div className="border-l border-[var(--de-paper-hairline)] p-3 text-center text-[#3A3448] md:p-4">DIY</div>
+              <div className="border-l border-[var(--de-paper-hairline)] p-3 text-center text-de-magenta-paper-ink md:p-4">
                 Digerati Experts UCaaS
               </div>
             </div>
             {comparisonItems.map((item, index) => (
-              <div 
-                key={item.feature} 
-                className={`grid grid-cols-3 ${index % 2 === 0 ? "bg-de-bg/40" : ""}`}
+              <div
+                key={item.feature}
+                className="grid grid-cols-3 border-b border-[var(--de-paper-hairline)] last:border-b-0"
                 data-testid={`row-comparison-${index}`}
               >
-                <div className="p-4 text-white font-medium">{item.feature}</div>
-                <div className="p-4 text-gray-400 text-center border-l border-white/10">{item.diy}</div>
-                <div className="border-l border-de-hairline bg-de-bg p-4 text-center font-medium text-de-accent-ink">
+                <div className="p-3 font-medium text-[#1A1228] md:p-4">{item.feature}</div>
+                <div className="border-l border-[var(--de-paper-hairline)] p-3 text-center text-[#3A3448] md:p-4">{item.diy}</div>
+                <div className="border-l border-[var(--de-paper-hairline)] p-3 text-center font-medium text-[#1A1228] md:p-4">
                   {item.digerati}
                 </div>
               </div>
             ))}
           </div>
-        </motion.section>
+        </Container>
+      </Chapter>
 
-        {/* CTA Section */}
-        <motion.section
-          initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="rounded-2xl border border-de-hairline bg-de-raised p-8 text-center md:p-12"
-        >
-          <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl">
-            Ready to fix your phone system?
-          </h2>
-          <p className="mx-auto mb-8 max-w-2xl text-lg text-white/70 md:text-xl">
-            Book a 15-minute call to discuss your current setup and see if we're a fit.
-          </p>
-          <div className="flex flex-col justify-center gap-4 sm:flex-row">
-            <Button asChild variant="brand" size="lg" className="h-12 px-8 font-semibold" data-testid="button-schedule-call">
-              <a href="/book">
-                {CTA.primary}
-                <ArrowRight className="ml-1 h-5 w-5" />
-              </a>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="h-12 border-white/20 px-8 font-semibold text-white hover:bg-white/10" data-testid="button-call-now">
-              <a href={PRIMARY_PHONE.telHref}>
-                <Phone className="mr-1 h-5 w-5" />
-                Call {PRIMARY_PHONE.display}
-              </a>
-            </Button>
-          </div>
-        </motion.section>
-      </div>
+      <ClosingCta
+        title="Ready to fix your phone system?"
+        lede="Book a 15-minute call to discuss your current setup and see if we're a fit."
+        primary={{ label: CTA.primary, href: "/book", testId: "button-schedule-call" }}
+        phoneTestId="button-call-now"
+      />
     </PageTemplate>
   );
 }
