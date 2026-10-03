@@ -8,6 +8,7 @@ import {
   sendGenericNotFound,
 } from "./warehouseAccess";
 import { classifyLegacyStorePath, toWarehousePath } from "./storeLegacyRedirects";
+import { fetchStaffCatalog, fetchPax8ConnectorHealth } from "./integrations/techSalesClient";
 import { listWarehouseStock, recordWarehouseMovement } from "./warehouseStockStore";
 import type { StockMovementKind } from "./warehouseStock";
 
@@ -50,6 +51,60 @@ export function registerWarehouseGates(app: Express): void {
       return;
     }
     res.json({ ok: true });
+  });
+
+  /** Staff-safe Hub catalog projection (ECO-014). Generic 404 unless warehouse staff. */
+  app.get("/api/internal/warehouse/catalog", async (req: Request, res: Response) => {
+    applyPrivateCacheHeaders(res);
+    if (!resolveWarehouseStaff(req)) {
+      sendGenericNotFound(req, res);
+      return;
+    }
+    const live = await fetchStaffCatalog();
+    if (live && typeof live === "object") {
+      const status =
+        typeof (live as { status?: unknown }).status === "string"
+          ? String((live as { status: string }).status)
+          : "CONNECTED";
+      res.json({
+        status,
+        source: "hub",
+        publishedAt: (live as { publishedAt?: string }).publishedAt ?? new Date().toISOString(),
+        message: (live as { message?: string }).message,
+        tiers: (live as { tiers?: unknown[] }).tiers ?? [],
+        skus: (live as { skus?: unknown[] }).skus ?? [],
+      });
+      return;
+    }
+    res.json({
+      status: "LOCAL_WORKSHOP",
+      source: "local_workshop_fallback",
+      publishedAt: null,
+      message:
+        "Hub staff-catalog is not available. Use the workshop SKU catalog in this warehouse until the Hub feed is configured and reachable.",
+      tiers: [],
+      skus: [],
+    });
+  });
+
+  /** Hub connector health for the warehouse Vendors page. */
+  app.get("/api/internal/warehouse/connectors", async (req: Request, res: Response) => {
+    applyPrivateCacheHeaders(res);
+    if (!resolveWarehouseStaff(req)) {
+      sendGenericNotFound(req, res);
+      return;
+    }
+    const pax8 = await fetchPax8ConnectorHealth();
+    res.json({
+      connectors: [
+        pax8 ?? {
+          connector: "pax8",
+          status: "UNKNOWN",
+          message: "Hub Pax8 health endpoint unreachable or unconfigured.",
+          checkedAt: new Date().toISOString(),
+        },
+      ],
+    });
   });
 
   app.get("/api/internal/warehouse/stock", (req, res) => {

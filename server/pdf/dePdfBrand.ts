@@ -151,6 +151,10 @@ tr,.keep,.pkg-head,.rec,.team,.panel{break-inside:avoid;page-break-inside:avoid}
 .money,td.num{font-variant-numeric:tabular-nums}
 .lbl{font-family:${DE_FONT.label};font-size:7pt;letter-spacing:.08em;text-transform:uppercase;color:${T.muted};font-weight:400}
 .link{border-bottom:.7pt solid ${T.mag}}
+/* Proportional (Inter) caps labels keep tracking at .03em. Chromium 151 breaks
+   wider-tracked runs into separate text runs, and copy/paste and screen
+   readers then read "SOLUTI ON PACK ET". Monospace labels (Plex Mono) are
+   unaffected. */
 
 /* ---------- brief band (page 1, full bleed) ---------- */
 .band{background:${T.ink};color:#fff;padding:30pt 50pt 22pt}
@@ -160,10 +164,10 @@ tr,.keep,.pkg-head,.rec,.team,.panel{break-inside:avoid;page-break-inside:avoid}
 .band .logo{height:22pt;width:auto;display:block}
 .band .brand-fallback{font-family:${DE_FONT.display};font-weight:600;font-size:13pt;letter-spacing:.04em}
 .band .k{font-family:${DE_FONT.label};font-size:7pt;letter-spacing:.08em;text-transform:uppercase;color:#cfccd8}
-.band .eyebrow{font-size:7.2pt;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:#cfccd8;margin-top:22pt}
+.band .eyebrow{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:#cfccd8;margin-top:22pt}
 .band h1{font-family:${DE_FONT.display};font-weight:600;font-size:28pt;line-height:1.05;letter-spacing:-.02em;color:#fff;margin-top:5pt}
 .band .q{font-size:10.4pt;color:#e6e4ea;margin-top:7pt}
-.band .stamp{display:inline-block;margin-top:12pt;border:1pt solid #fff;padding:2pt 7pt;font-size:7.2pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.band .stamp{display:inline-block;margin-top:12pt;border:1pt solid #fff;padding:2pt 7pt;font-size:7.2pt;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
 .band-rule{height:3pt;background:${T.mag}}
 
 /* spec strip: document identification under the band */
@@ -229,7 +233,7 @@ table.two > tbody > tr > td:last-child{padding-left:12pt}
 /* solution packages */
 .pkg{margin-top:10pt;break-inside:auto}
 .pkg-head{border-left:2.4pt solid ${T.ink};padding:2pt 0 2pt 11pt;margin-bottom:4pt}
-.pkg-family{font-size:7.2pt;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:${T.magText}}
+.pkg-family{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:${T.magText}}
 .pkg-title{font-family:${DE_FONT.display};font-weight:600;font-size:11pt;margin-top:2pt}
 .pkg-meta{font-family:${DE_FONT.label};font-size:7pt;letter-spacing:.04em;color:${T.muted};margin-top:3pt}
 .pkg-meta span + span::before{content:"  \\00B7  ";color:${T.muted}}
@@ -255,7 +259,7 @@ table.team td.dept{padding:8pt 12pt;width:36%;border-left:.7pt solid ${T.rule}}
 .team .ct a{margin-right:12pt}
 table.rec td.bar{width:4pt;background:${T.mag};padding:0}
 table.rec td.in{padding:10pt 15pt 11pt}
-.rec .eyebrow{font-size:7.2pt;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:${T.magText}}
+.rec .eyebrow{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:${T.magText}}
 .rec h2{display:block;font-size:14pt;margin:3pt 0 4pt}
 .rec p{color:${T.ink2}}
 .rec .ct{margin-top:8pt;font-weight:600;font-size:8.8pt}

@@ -3,7 +3,6 @@ import { useSearch, Link } from "wouter";
 import { parseOrderConfirmationParams } from "./orderConfirmationParams";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "../sections/DigeratiEnhancedFooterSection";
 import { Button } from "@/components/ui/button";
 import { useSEO } from "@/hooks/useSEO";
@@ -108,7 +107,6 @@ const OrderConfirmation = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a]">
-        <MegaMenu />
         <main className="de-nav-clear pb-20">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center min-h-[50vh]">
             <Loader2 className="w-12 h-12 text-de-accent-ink animate-spin mb-4" />
@@ -123,7 +121,6 @@ const OrderConfirmation = () => {
   if (error || (!order && !isLoading)) {
     return (
       <div className="min-h-screen bg-[#0a0a0a]">
-        <MegaMenu />
         <main className="de-nav-clear pb-20">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
@@ -134,7 +131,7 @@ const OrderConfirmation = () => {
             <Link href="/internal/warehouse">
               <Button className="bg-de-accent hover:bg-de-accent text-white" data-testid="button-back-to-store">
                 <ShoppingBag className="w-4 h-4 mr-2" />
-                Continue Shopping
+                Back to warehouse
               </Button>
             </Link>
           </div>
@@ -150,7 +147,6 @@ const OrderConfirmation = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
-      <MegaMenu />
 
       <main className="de-nav-clear pb-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -355,7 +351,7 @@ const OrderConfirmation = () => {
                 data-testid="button-continue-shopping"
               >
                 <ShoppingBag className="w-4 h-4 mr-2" />
-                Continue Shopping
+                Back to warehouse
               </Button>
             </Link>
 

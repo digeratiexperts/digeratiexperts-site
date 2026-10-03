@@ -119,6 +119,39 @@ describe("warehouse HTTP gates", () => {
     expect(await api.json()).toEqual({ leaked: true });
   });
 
+  it("keeps Hub catalog and connector staff APIs generic-404 when anonymous", async () => {
+    const catalog = await fetch(`${baseUrl}/api/internal/warehouse/catalog`);
+    expect(catalog.status).toBe(404);
+    expect(await catalog.json()).toEqual({ error: "Not found" });
+
+    const connectors = await fetch(`${baseUrl}/api/internal/warehouse/connectors`);
+    expect(connectors.status).toBe(404);
+    expect(await connectors.json()).toEqual({ error: "Not found" });
+  });
+
+  it("serves staff catalog fallback and connector list for a live admin", async () => {
+    getUser.mockReturnValue({
+      id: "a1",
+      email: "admin@digeratiexperts.com",
+      role: "admin",
+      isActive: true,
+    });
+    const token = sign({ userId: "a1", email: "admin@digeratiexperts.com" });
+    const headers = { cookie: `portalAuth=${token}` };
+
+    const catalog = await fetch(`${baseUrl}/api/internal/warehouse/catalog`, { headers });
+    expect(catalog.status).toBe(200);
+    const catalogBody = await catalog.json();
+    expect(catalogBody.status).toMatch(/CONNECTED|LOCAL_WORKSHOP|STALE|FAILED/);
+    expect(Array.isArray(catalogBody.tiers)).toBe(true);
+
+    const connectors = await fetch(`${baseUrl}/api/internal/warehouse/connectors`, { headers });
+    expect(connectors.status).toBe(200);
+    const connectorBody = await connectors.json();
+    expect(Array.isArray(connectorBody.connectors)).toBe(true);
+    expect(connectorBody.connectors[0]?.connector).toBe("pax8");
+  });
+
   describe("the staff preview of the public Store (source of truth §16.10)", () => {
     const admin = () => {
       getUser.mockReturnValue({ id: "a1", email: "admin@digeratiexperts.com", role: "admin", isActive: true });

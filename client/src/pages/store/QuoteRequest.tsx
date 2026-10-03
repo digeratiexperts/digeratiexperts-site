@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "../sections/DigeratiEnhancedFooterSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,8 +43,8 @@ const QuoteRequest = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useSEO({
-    title: "Request a Quote | Digerati Experts Store",
-    description: "Request a custom quote for IT services and solutions from Digerati Experts.",
+    title: "Staff quote | Digital Warehouse",
+    description: "Staff Digital Warehouse quote path — no public Store checkout.",
     canonical: "/internal/warehouse/quote-request",
     noIndex: true,
   });
@@ -143,7 +142,6 @@ const QuoteRequest = () => {
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-[#0a0a0a]">
-        <MegaMenu />
         <main className="de-nav-clear pb-[calc(5rem+var(--de-cookie-h)+var(--de-sticky-cta-h)+var(--de-unified-bar-h))]">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <motion.div
@@ -161,7 +159,7 @@ const QuoteRequest = () => {
               </p>
               <Link href="/internal/warehouse">
                 <Button className="bg-de-accent hover:bg-de-accent text-white" data-testid="button-browse-store">
-                  Browse Store
+                  Browse warehouse
                 </Button>
               </Link>
             </motion.div>
@@ -174,7 +172,6 @@ const QuoteRequest = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
-      <MegaMenu />
 
       <main className="de-nav-clear pb-[calc(5rem+var(--de-cookie-h)+var(--de-sticky-cta-h)+var(--de-unified-bar-h))]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -182,11 +179,11 @@ const QuoteRequest = () => {
             <ol className="flex items-center gap-2 text-sm text-white/50">
               <li>
                 <Link href="/internal/warehouse" className="hover:text-white transition-colors" data-testid="breadcrumb-store">
-                  Store
+                  Warehouse
                 </Link>
               </li>
               <li>/</li>
-              <li className="text-white" data-testid="breadcrumb-quote-request">Request Quote</li>
+              <li className="text-white" data-testid="breadcrumb-quote-request">Staff quote</li>
             </ol>
           </nav>
 

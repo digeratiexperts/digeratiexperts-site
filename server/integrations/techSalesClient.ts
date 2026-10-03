@@ -445,6 +445,61 @@ export async function fetchPublicCatalog(): Promise<Record<string, unknown> | nu
   }
 }
 
+/** Staff-safe Hub catalog (tiers + SKUs with internal cost). Never for Door 2. */
+export async function fetchStaffCatalog(): Promise<Record<string, unknown> | null> {
+  const origin = hubOrigin();
+  const secret = websiteToken();
+  if (!origin || !secret) return null;
+  const path = "/api/integrations/v1/staff-catalog";
+  const headers = buildSignedHeaders({
+    method: "GET",
+    path,
+    eventId: "00000000-0000-4000-8000-000000000001",
+    source: "website",
+    body: "{}",
+    secret,
+  });
+  try {
+    const res = await fetch(`${origin}${path}`, { method: "GET", headers: { ...headers, Accept: "application/json" } });
+    if (!res.ok) return null;
+    return (await res.json()) as Record<string, unknown>;
+  } catch (error) {
+    logger.warn("staff catalog fetch failed", { message: error instanceof Error ? error.message : String(error) });
+    return null;
+  }
+}
+
+export type HubConnectorHealth = {
+  connector: string;
+  status: "CONNECTED" | "AUTH_REQUIRED" | "FAILED" | "UNKNOWN" | "STALE";
+  message?: string;
+  checkedAt?: string;
+};
+
+/** Pax8 connector health from Hub. AUTH_REQUIRED until DE supplies credentials. */
+export async function fetchPax8ConnectorHealth(): Promise<HubConnectorHealth | null> {
+  const origin = hubOrigin();
+  const secret = websiteToken();
+  if (!origin || !secret) return null;
+  const path = "/api/integrations/v1/connectors/pax8/health";
+  const headers = buildSignedHeaders({
+    method: "GET",
+    path,
+    eventId: "00000000-0000-4000-8000-000000000002",
+    source: "website",
+    body: "{}",
+    secret,
+  });
+  try {
+    const res = await fetch(`${origin}${path}`, { method: "GET", headers: { ...headers, Accept: "application/json" } });
+    if (!res.ok) return null;
+    return (await res.json()) as HubConnectorHealth;
+  } catch (error) {
+    logger.warn("pax8 health fetch failed", { message: error instanceof Error ? error.message : String(error) });
+    return null;
+  }
+}
+
 export async function pingHub(): Promise<{ ok: boolean; latencyMs: number; status?: number }> {
   const origin = hubOrigin();
   if (!origin) return { ok: false, latencyMs: 0 };
