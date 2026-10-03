@@ -8,21 +8,29 @@ import { describe, expect, it } from "vitest";
  */
 const read = (name: string) => readFileSync(resolve(__dirname, name), "utf8");
 
-/** Preposition + Digerati not followed by Experts, Journal, admin, or Expert (product). */
+/** Bare company label: Digerati not followed by Experts / Journal / Expert (product). */
 const BARE_COMPANY_DIGERATI =
-  /\b(with|from|to|for|ask|before|about)\s+Digerati\b(?!\s+(Experts|Journal|admin|Expert))/gi;
+  /\bDigerati\b(?!\s+(Experts|Journal|Expert))/g;
 
 const GUARDED_PORTAL_SOURCES = [
   "PortalInfrastructure.tsx",
   "PortalApprovals.tsx",
+  "PortalPeople.tsx",
 ] as const;
 
 describe("portal company naming", () => {
   for (const file of GUARDED_PORTAL_SOURCES) {
     it(`does not use bare Digerati as the company label in ${file}`, () => {
       const source = read(file);
-      const hits = [...source.matchAll(BARE_COMPANY_DIGERATI)].map((m) => m[0]);
-      expect(hits, `Use DE or Digerati Experts instead of: ${hits.join(", ")}`).toEqual([]);
+      const hits = [...source.matchAll(BARE_COMPANY_DIGERATI)].map((m) => {
+        const start = Math.max(0, (m.index ?? 0) - 24);
+        const end = Math.min(source.length, (m.index ?? 0) + m[0].length + 24);
+        return source.slice(start, end).replace(/\s+/g, " ").trim();
+      });
+      expect(
+        hits,
+        `Use DE or Digerati Experts instead of bare Digerati near: ${hits.join(" | ")}`,
+      ).toEqual([]);
     });
   }
 });
