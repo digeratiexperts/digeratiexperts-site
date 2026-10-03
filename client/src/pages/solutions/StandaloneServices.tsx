@@ -1,17 +1,15 @@
-import { Link } from "wouter";
+import { CheckCircle2, PackageCheck, ShieldCheck, SlidersHorizontal, Wrench } from "lucide-react";
+import { PageTemplate } from "@/components/PageTemplate";
 import {
-  ArrowRight,
-  CheckCircle2,
-  Layers3,
-  PackageCheck,
-  ShieldCheck,
-  SlidersHorizontal,
-  Truck,
-  Wrench,
-} from "lucide-react";
-import { MegaMenu } from "@/components/MegaMenu";
-import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
-import { Button } from "@/components/ui/button";
+  Chapter,
+  Container,
+  ChapterHeader,
+  ClosingCta,
+  FeatureGrid,
+  HeroActions,
+  HeroFacts,
+} from "@/components/site/chapters";
+import { SolutionsRelationshipTable } from "@/components/site/SolutionsRelationshipTable";
 import { useSEO } from "@/hooks/useSEO";
 
 const standalonePrinciples = [
@@ -62,116 +60,101 @@ export default function StandaloneServices() {
   });
 
   return (
-    <div className="min-h-screen bg-de-bg text-white">
-      <MegaMenu />
-      <main className="de-nav-clear pb-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <header className="mx-auto max-w-4xl py-12 text-center md:py-20">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-de-accent-ink">Standalone Solutions</p>
-            <h1 className="mt-5 text-4xl font-bold leading-tight tracking-[-0.035em] md:text-6xl" data-testid="heading-standalone-hero">
-              Buy the solution. <span className="text-de-accent-ink">Keep control of your IT.</span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-3xl text-lg leading-relaxed text-white/70 md:text-xl">
-              Standalone means you can buy a DE-designed package for a specific business need without turning your whole environment over to a new managed-services provider.
-            </p>
-            <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button asChild variant="brand" size="lg" className="h-12">
-                <Link href="/store">
-                  Build a standalone solution <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="h-12 border-white/15 text-white hover:bg-white/5">
-                <Link href="/solutions/co-managed-it">Compare Co-Managed</Link>
-              </Button>
-            </div>
-            <p className="mt-4 text-sm text-white/55">No payment is taken in the public builder. DE confirms package fit, scope, fulfillment, and pricing before commitment.</p>
-          </header>
+    <PageTemplate
+      layout="chapters"
+      eyebrow="Standalone Solutions"
+      title="Buy the solution. Keep control of your IT."
+      subtitle="Standalone means you can buy a DE-designed package for a specific business need without turning your whole environment over to a new managed-services provider."
+      breadcrumbs={[{ label: "Solutions", href: "/solutions" }, { label: "Standalone Services" }]}
+      actions={
+        <div data-testid="heading-standalone-hero">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <HeroActions
+              primary={{ label: "Build a standalone solution", href: "/store" }}
+              secondary={{ label: "Compare Co-Managed", href: "/solutions/co-managed-it" }}
+            />
+          </div>
+          <p className="mt-5 max-w-xl text-sm leading-relaxed text-white/60">
+            No payment is taken in the public builder. DE confirms package fit, scope, fulfillment, and pricing before commitment.
+          </p>
+        </div>
+      }
+      heroAside={
+        <HeroFacts
+          title="Standalone at a glance"
+          rows={comparisons.map(([dimension, standalone]) => ({ label: dimension, value: standalone }))}
+          footnote="One definition everywhere: the same Business Solution Builder as the rest of Door 2."
+        />
+      }
+    >
+      <Chapter tone="well" seam={false} aria-labelledby="standalone-means">
+        <Container>
+          <ChapterHeader
+            tone="well"
+            eyebrow="One definition everywhere"
+            title="What Standalone means at DE"
+            titleId="standalone-means"
+          />
+          <FeatureGrid
+            tone="well"
+            columns={4}
+            items={standalonePrinciples.map((p) => ({ icon: p.icon, title: p.title, text: p.body }))}
+          />
+        </Container>
+      </Chapter>
 
-          <section className="border-y border-white/10 py-12" aria-labelledby="standalone-means">
-            <div className="mb-8 max-w-2xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-de-accent-ink">One definition everywhere</p>
-              <h2 id="standalone-means" className="mt-2 text-3xl font-semibold tracking-tight">What Standalone means at DE</h2>
-            </div>
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {standalonePrinciples.map(({ icon: Icon, title, body }) => (
-                <article key={title} className="rounded-2xl border border-white/10 bg-de-raised p-6">
-                  <Icon className="h-6 w-6 text-de-accent-ink" aria-hidden="true" />
-                  <h3 className="mt-5 text-lg font-semibold">{title}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-white/60">{body}</p>
-                </article>
-              ))}
-            </div>
-          </section>
+      <Chapter tone="paper" aria-labelledby="standalone-flow">
+        <Container>
+          <ChapterHeader
+            tone="paper"
+            eyebrow="Same Store engine"
+            title="One buying flow, not another mini-store"
+            titleId="standalone-flow"
+            lede="This page explains the relationship. The actual package, quantities, fulfillment, and submission all come from the same Business Solution Builder used across Door 2."
+          />
+          <ol className="relative grid gap-8 md:grid-cols-2 lg:grid-cols-5 lg:gap-6">
+            <span aria-hidden="true" className="absolute left-0 right-0 top-5 hidden h-px bg-[var(--de-paper-hairline)] lg:block" />
+            {flow.map(([number, title, body]) => (
+              <li key={number} className="relative">
+                <span className="relative z-10 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--de-paper-hairline)] bg-white font-mono text-sm font-semibold text-de-magenta-paper-ink">
+                  {String(Number(number) + 1).padStart(2, "0")}
+                </span>
+                <h3 className="mt-5 font-heading text-lg font-semibold leading-snug text-[#1A1228]">{title}</h3>
+                <p className="mt-2 text-[0.95rem] leading-relaxed text-[#3A3448]">{body}</p>
+              </li>
+            ))}
+          </ol>
+        </Container>
+      </Chapter>
 
-          <section className="py-14" aria-labelledby="standalone-flow">
-            <div className="grid gap-10 lg:grid-cols-[20rem_minmax(0,1fr)]">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-de-accent-ink">Same Store engine</p>
-                <h2 id="standalone-flow" className="mt-2 text-3xl font-semibold tracking-tight">One buying flow, not another mini-store</h2>
-                <p className="mt-4 text-sm leading-relaxed text-white/55">
-                  This page explains the relationship. The actual package, quantities, fulfillment, and submission all come from the same Business Solution Builder used across Door 2.
-                </p>
-              </div>
-              <ol className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-                {flow.map(([number, title, body]) => (
-                  <li key={number} className="rounded-xl border border-white/10 bg-de-raised p-5">
-                    <p className="font-mono text-xs text-de-accent-ink">{number}</p>
-                    <h3 className="mt-3 font-semibold">{title}</h3>
-                    <p className="mt-2 text-xs leading-relaxed text-white/50">{body}</p>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </section>
+      <Chapter tone="surface" aria-labelledby="relationship-compare">
+        <Container>
+          <ChapterHeader
+            tone="surface"
+            eyebrow="Compare"
+            title="Choose the relationship, not a duplicate catalog"
+            titleId="relationship-compare"
+            layout="stack"
+          />
+          <SolutionsRelationshipTable tone="surface" rows={comparisons} label="Standalone services table" />
+        </Container>
+      </Chapter>
 
-          <section className="rounded-2xl border border-white/10 bg-de-raised p-6 md:p-8" aria-labelledby="relationship-compare">
-            <div className="flex items-center gap-3">
-              <Layers3 className="h-6 w-6 text-de-accent-ink" aria-hidden="true" />
-              <h2 id="relationship-compare" className="text-2xl font-semibold">Choose the relationship, not a duplicate catalog</h2>
-            </div>
-            <div className="mt-7 overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink" tabIndex={0} role="region" aria-label="Standalone services table">
-              <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-                <thead>
-                  <tr className="border-b border-white/10 text-white/50">
-                    <th className="px-3 py-3 font-medium">Dimension</th>
-                    <th className="px-3 py-3 font-medium text-white">Standalone</th>
-                    <th className="px-3 py-3 font-medium text-white">Co-Managed</th>
-                    <th className="px-3 py-3 font-medium text-white">ProActive Managed IT</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparisons.map(([dimension, standalone, coManaged, proactive]) => (
-                    <tr key={dimension} className="border-b border-white/8 align-top last:border-0">
-                      <th className="px-3 py-4 font-medium text-white/70">{dimension}</th>
-                      <td className="px-3 py-4 leading-relaxed text-white/60">{standalone}</td>
-                      <td className="px-3 py-4 leading-relaxed text-white/60">{coManaged}</td>
-                      <td className="px-3 py-4 leading-relaxed text-white/60">{proactive}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section className="mx-auto max-w-3xl py-16 text-center">
-            <Truck className="mx-auto h-7 w-7 text-de-accent-ink" aria-hidden="true" />
-            <h2 className="mt-4 text-3xl font-semibold">Start with your profile, then pick the need</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-white/60">
-              The Store will show what is included, how quantities are sized, whether anything ships, and whether self-install, remote setup, or a technician makes sense for that package.
-            </p>
-            <Button asChild variant="brand" size="lg" className="mt-7 h-12">
-              <Link href="/store">
-                Open the Solution Builder <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <p className="mt-5 inline-flex items-start gap-2 text-left text-sm text-white/55">
+      <ClosingCta
+        tone="well"
+        eyebrow="Next step"
+        title="Start with your profile, then pick the need"
+        lede={
+          <>
+            The Store will show what is included, how quantities are sized, whether anything ships, and whether self-install, remote setup, or a technician makes sense for that package.
+            <span className="mt-4 flex items-start gap-2 text-sm text-white/65">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-de-accent-ink" aria-hidden="true" />
               If a package genuinely requires an assessment, the builder will say so. DE does not force the same assessment step onto every standalone purchase.
-            </p>
-          </section>
-        </div>
-      </main>
-      <DigeratiEnhancedFooterSection />
-    </div>
+            </span>
+          </>
+        }
+        primary={{ label: "Open the Solution Builder", href: "/store" }}
+      />
+    </PageTemplate>
   );
 }
