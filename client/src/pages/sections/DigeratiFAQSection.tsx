@@ -36,12 +36,12 @@ export const DigeratiFAQSection = (): JSX.Element => {
       answer: "User count is a signal, never the sole criterion. We start with a Cyber Risk Assessment of your environment, then match IT, Office, Business, or Enterprise. We do not start with a package and pile on add-ons."
     },
     {
-      question: "Can I customize the solutions?",
-      answer: "Yes! We understand every business is unique. Our packages can be customized with additional services, and we offer both co-managed and fully managed options to fit your existing IT structure."
+      question: "Can a plan be rebuilt with add-ons?",
+      answer: "If a plan would need heavy modification, the next operating model is the fit. We do not start with a package and pile on add-ons. Co-managed and fully managed are both available."
     },
     {
-      question: "Is my data secure?",
-      answer: "Yes. We use enterprise-grade controls, 24/7 monitoring, and documented security protocols. We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews — with clear ownership of credentials, policies, and evidence."
+      question: "How do you handle compliance reviews?",
+      answer: "We help Arizona businesses prepare for HIPAA, PCI DSS, SOC 2, and cyber-insurance reviews — with clear ownership of credentials, policies, and evidence."
     }
   ];
 

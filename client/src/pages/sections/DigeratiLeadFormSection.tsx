@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Loader2, Shield, Clock, CheckCircle } from "lucide-react";
+import { ArrowRight, Loader2, Shield, CheckCircle } from "lucide-react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -91,9 +91,9 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
   };
 
   const benefits = [
-    { icon: Shield, text: "Complimentary security assessment" },
-    { icon: Clock, text: "Results in 24-48 hours" },
-    { icon: CheckCircle, text: "No obligation, no credit card" },
+    { icon: Shield, text: "First conversation costs nothing" },
+    { icon: CheckCircle, text: "Nothing is billed until you say yes" },
+    { icon: CheckCircle, text: "No obligation" },
   ];
 
   return (
@@ -110,9 +110,9 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
             <Eyebrow tone="paper" className="mb-4">
               Cyber Risk Assessment
             </Eyebrow>
-            <h2 className={`${titleClass} max-w-[20ch]`}>Get Your Free Security Assessment</h2>
+            <h2 className={`${titleClass} max-w-[20ch]`}>{CTA.primary}</h2>
             <p className={`${ledeClass("paper")} mt-5 max-w-xl`}>
-              Discover vulnerabilities before attackers do. Our experts will analyze your security posture and provide actionable recommendations.
+              The first conversation costs nothing. A documented Cyber Risk Assessment is scoped with you before anything is billed.
             </p>
 
             <ul className="mt-8 divide-y divide-[var(--de-paper-hairline)] border-y border-[var(--de-paper-hairline)]">

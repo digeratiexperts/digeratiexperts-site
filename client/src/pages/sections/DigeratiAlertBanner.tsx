@@ -1,14 +1,11 @@
-import { ArrowRight, Phone } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Link } from "wouter";
-import { PRIMARY_PHONE } from "@/data/companyContact";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import {
   HomeChapter,
   HomeChapterHeader,
   HomeContainer,
-  buttonPrimary,
-  buttonSecondary,
 } from "@/components/home/HomeChapter";
 
 const features = [
@@ -32,7 +29,7 @@ const features = [
   },
 ];
 
-/** "Why we exist" — the manifesto chapter that follows the hero's trust strip. */
+/** Three ways the work is run. The closer used to sell a consultation and "enterprise-grade" protection; the booking page is the assessment surface. */
 export const DigeratiAlertBanner = (): JSX.Element => {
   const prefersReducedMotion = useReducedMotion();
 
@@ -47,9 +44,9 @@ export const DigeratiAlertBanner = (): JSX.Element => {
         >
           <HomeChapterHeader
             tone="well"
-            eyebrow="Why we exist"
-            title="We Exist to Protect and Enable Your Business"
-            lede="If you're like most business leaders, you don't want another vendor — you want a security-first partner who proactively reduces risk, improves uptime, and keeps your team moving."
+            eyebrow="How the work is run"
+            title="The assessment opens one of these doors"
+            lede="Fully managed, co-managed, or a look at how the work is already run. The environment decides which one fits."
           />
         </motion.div>
 
@@ -85,32 +82,6 @@ export const DigeratiAlertBanner = (): JSX.Element => {
           ))}
         </motion.ul>
 
-        <motion.div
-          className="mt-10 flex flex-col gap-5 border-t border-[var(--de-hairline)] pt-8 lg:flex-row lg:items-center lg:justify-between"
-          initial={prefersReducedMotion ? false : revealInitial}
-          whileInView={revealInView}
-          viewport={revealViewport}
-          transition={revealTransition}
-        >
-          <div className="max-w-2xl">
-            <h3 className="font-heading text-xl font-semibold tracking-[-0.02em] text-white md:text-2xl">
-              Ready to Secure Your Business?
-            </h3>
-            <p className="mt-1.5 text-base leading-relaxed text-white/65">
-              Get enterprise-grade protection tailored for Arizona businesses. Let&apos;s discuss your security needs.
-            </p>
-          </div>
-          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-            <a href="/book" className={buttonPrimary("well")} data-testid="button-schedule-consultation-banner">
-              Schedule Consultation
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </a>
-            <a href={PRIMARY_PHONE.telHref} className={buttonSecondary("well")} data-testid="button-call-banner">
-              <Phone className="h-4 w-4" aria-hidden="true" />
-              Call {PRIMARY_PHONE.display}
-            </a>
-          </div>
-        </motion.div>
       </HomeContainer>
     </HomeChapter>
   );
