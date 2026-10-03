@@ -11,6 +11,8 @@ interface PremiumCTASectionProps {
   primaryButtonHref?: string;
   showPhoneButton?: boolean;
   phoneNumber?: string;
+  /** Canonical tel: URI — use display formatting in phoneNumber, not in href. */
+  phoneTelHref?: string;
 }
 
 export function PremiumCTASection({
@@ -20,6 +22,7 @@ export function PremiumCTASection({
   primaryButtonHref = "/book",
   showPhoneButton = true,
   phoneNumber = PRIMARY_PHONE.display,
+  phoneTelHref = PRIMARY_PHONE.telHref,
 }: PremiumCTASectionProps) {
   const prefersReducedMotion = useReducedMotion();
   const { openBooking } = useBooking();
@@ -105,7 +108,7 @@ export function PremiumCTASection({
                   openBooking("cta_section");
                 }}
               >
-                <ArrowRight className="mr-2 h-5 w-5" />
+                <ArrowRight className="mr-2 h-5 w-5" aria-hidden />
                 {primaryButtonText}
               </Button>
 
@@ -117,8 +120,8 @@ export function PremiumCTASection({
                   className="h-14 px-8 bg-transparent border-2 border-white/40 text-white hover:bg-white/10 hover:border-white/60 font-semibold text-base rounded-full"
                   data-testid="button-premium-cta-phone"
                 >
-                  <a href={`tel:${phoneNumber}`}>
-                    <Phone className="mr-2 h-5 w-5" />
+                  <a href={phoneTelHref}>
+                    <Phone className="mr-2 h-5 w-5" aria-hidden />
                     Call {phoneNumber}
                   </a>
                 </Button>
