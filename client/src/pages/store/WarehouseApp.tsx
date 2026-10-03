@@ -6,6 +6,7 @@ import { ShoppingCart } from "@/components/store/ShoppingCart";
 import { SolutionMobileBar } from "@/components/store/SolutionMobileBar";
 import { PageLoadingSkeleton } from "@/components/LoadingSkeleton";
 import { WAREHOUSE_BASE } from "@/lib/warehousePaths";
+import { WarehouseStockPanel } from "@/pages/store/WarehouseStockPanel";
 
 const StoreLanding = lazy(() => import("@/pages/store/StoreLanding"));
 const ManagedStore = lazy(() => import("@/pages/store/ManagedStore"));
@@ -28,6 +29,7 @@ export default function WarehouseApp() {
       </Helmet>
       <ShoppingCart />
       <SolutionMobileBar />
+      <WarehouseStockPanel />
       <Switch>
         <Route path={WAREHOUSE_BASE}>
           <Screen>
