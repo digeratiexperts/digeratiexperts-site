@@ -43,7 +43,7 @@ claims:
       - client/src/lib/billingAddress.ts (new), client/src/pages/store/Checkout.tax.test.ts
       - deploy/vps/env.production.example (STRIPE_TAX_* lines), docs/STORE-WAREHOUSE.md (Pay Now sales tax section)
       - artifacts/visual-qa/paynow-stripe-tax/**
-    status: active
+    status: verified-live
     started: 2026-10-03
     note: >-
       Joe, 2026-10-03: "merge it and build the stripe tax step", after
@@ -53,6 +53,16 @@ claims:
       steps aside to a quote. Fails closed on any Stripe error, an item
       without a confirmed tax code, or an Arizona client while Stripe has no
       Arizona registration. Public Store (Door 2) never reaches it.
+      RELEASED 2026-10-03: merged as cdfe6e8 (PR 411, on Joe's "merge 411 AND
+      BRING IT TO PRODUCTION"). The CI run for cdfe6e8 passed every job,
+      including the production deploy (finished 21:10Z); the staff Checkout
+      chunk on production carried the billing address fields from 21:10:53Z.
+      Playwright at 390 and 1440 against production code (API replies stubbed
+      in the browser) confirmed the address fields, the empty-address check,
+      the address payload and the step-aside to a quote. Still switched off: no
+      STRIPE_TAX_SECRET_KEY on the server yet. Separation re-checked live.
+      Evidence: artifacts/visual-qa/paynow-stripe-tax/live/. VERIFIED LIVE.
+      Files released.
   - id: de-msadmin-worker-loop
     owner: claude
     subsystem: msp-ai-kit
