@@ -47,8 +47,8 @@ export function WarehouseStockPanel() {
   }
 
   return (
-    <section className="mx-auto mb-8 max-w-5xl rounded-2xl border border-white/10 bg-black px-4 py-5 text-white" aria-label="Warehouse stock">
-      <h2 className="font-semibold">On-hand stock</h2>
+    <section className="mb-10 rounded-2xl border border-de-hairline bg-de-raised px-4 py-5 text-white" aria-label="Warehouse stock">
+      <h3 className="font-semibold">On-hand stock</h3>
       <p className="mt-1 text-sm text-white/70">Staff only. Receive, pick, then ship with a carrier and tracking number.</p>
       <ul className="mt-4 space-y-1 text-sm">
         {lines.length === 0 ? <li className="text-white/60">No stock recorded yet.</li> : null}
