@@ -305,6 +305,29 @@ claims:
       PronunciationCard (claimed by pronunciation-and-flipbook-recovery and
       de-site-v2-scrollcraft); at 430px the launcher still sits over the live
       card's "Hear it" until one of those lanes or a release frees the files.
+      MERGED 2026-10-02: PR 332 as c702a4fc (Joe: "Merge #332 first").
+      VERIFIED LIVE: production release.txt c702a4fc; /api/public/threats
+      attribution reads "Digerati Experts prioritizes"; the served bundle
+      carries the Ask DE nudge with the 767px phone hold.
+      Round 4 (Joe, 2026-10-02, three dashboard references): "convert the
+      white sections to this style, well i still want white but the white on
+      cream looks stupid", "text looks so much better ... and the accent
+      colors", "this is what i mean by grey cards"; dark sections "Yes,
+      neutral grey". /version-7 only, via one overlay stylesheet
+      (client/src/pages/versions/v7/v7-dashboard.css, loaded last): white
+      paper bands with neutral grey cards, charcoal dark bands with
+      one-step-lighter cards, Inter headings, magenta-violet accents
+      (magenta stays the CTA fill). Tier 2 defaults changed on Joe's
+      direction; Tier 0/1 untouched. / is unchanged.
+      Round 5 (Joe: "we need this level of work" (uiverse.io elements), then
+      "all of it" after reviewing the DE Element Kit artifact): pointer
+      spotlight on cards (useSpotlight.ts), raised/sheen/pressed buttons,
+      drawn link underlines, floating-label fields with drawn valid checks and
+      an invalid nudge, sending → sent submit (SubmitFace.tsx), FAQ plus/minus
+      with real-height opening, city chip states, classification-tag tooltips
+      (TipTag.tsx, truthful tip text), copy buttons for email and phone
+      (CopyButton.tsx), hero posture bars fill once. Kit's switch, checkbox and
+      segmented control have no matching control on the page, so none added.
   - id: de-desk-gold
     owner: claude
     subsystem: de-desk
