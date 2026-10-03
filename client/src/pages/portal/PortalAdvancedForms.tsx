@@ -544,14 +544,13 @@ export function PortalAdvancedForms() {
 
     if (!selectedTemplate) {
       return (
-        <div className="grid gap-4 md:grid-cols-2" role="list" aria-label="Request forms">
+        <ul className="grid gap-4 md:grid-cols-2" aria-label="Request forms">
           {formTemplates.map((template) => (
+            <li key={template.id} className="flex">
             <button
-              key={template.id}
               type="button"
-              role="listitem"
               onClick={() => selectTemplate(template)}
-              className="group flex min-h-[44px] flex-col rounded-xl border border-border bg-card p-4 text-left text-card-foreground transition-colors pt-hover-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:p-5"
+              className="group flex min-h-[44px] w-full flex-col rounded-xl border border-border bg-card p-4 text-left text-card-foreground transition-colors pt-hover-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:p-5"
               data-testid={`form-template-${template.id}`}
             >
               <span className="flex items-start justify-between gap-3">
@@ -563,8 +562,9 @@ export function PortalAdvancedForms() {
                 <Token label={`${template.fields.length} fields`} tone="neutral" />
               </span>
             </button>
+            </li>
           ))}
-        </div>
+        </ul>
       );
     }
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Building2, Lock, Users } from "lucide-react";
 import { PortalLayout } from "./PortalLayout";
+import { TenantSelector } from "@/components/portal/TenantSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { canManageOrg, readPortalUser } from "@/lib/portalRoles";
+import { canManageOrg, readImpersonatingCompany, readPortalUser } from "@/lib/portalRoles";
 import { Callout, DataTable, EmptyState, Field, Panel, Token, type DataColumn } from "@/components/portal/ui";
 
 type Person = {
@@ -38,6 +39,15 @@ function CellLabel({ children }: { children: string }) {
 export function PortalPeople() {
   const user = readPortalUser();
   const allowed = canManageOrg(user);
+  // People & Org belongs to one client company. A DE admin who is not viewing
+  // as a company has none, and the server answers 400 "clientId required";
+  // ask them to pick one instead of showing that as an error.
+  const viewingCompanyId = user?.role === "admin" ? readImpersonatingCompany()?.id || null : null;
+  const needsCompany = user?.role === "admin" && !user?.clientId && !viewingCompanyId;
+  // An admin viewing as a company names it; the server lets admins choose
+  // (GET ?clientId=, departments POST body clientId). Everyone else is pinned
+  // to their own company server-side and sends nothing.
+  const companyQuery = viewingCompanyId ? `?clientId=${encodeURIComponent(viewingCompanyId)}` : "";
   const [people, setPeople] = useState<Person[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +61,7 @@ export function PortalPeople() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch("/api/portal/org/people", {
+      const res = await fetch(`/api/portal/org/people${companyQuery}`, {
         headers: { Authorization: `Bearer ${token()}` },
       });
       const data = await res.json();
@@ -66,8 +76,8 @@ export function PortalPeople() {
   };
 
   useEffect(() => {
-    if (allowed) void load();
-  }, [allowed]);
+    if (allowed && !needsCompany) void load();
+  }, [allowed, needsCompany]);
 
   const savePerson = async (person: Person, patch: Partial<Person>) => {
     setSavingId(person.id);
@@ -99,7 +109,7 @@ export function PortalPeople() {
           Authorization: `Bearer ${token()}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name: deptName.trim() }),
+        body: JSON.stringify(viewingCompanyId ? { name: deptName.trim(), clientId: viewingCompanyId } : { name: deptName.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not create department");
@@ -122,6 +132,34 @@ export function PortalPeople() {
               <Button asChild variant="outline" className="border-border bg-card hover:bg-accent">
                 <Link href="/portal/tickets">Go to Support Tickets</Link>
               </Button>
+            }
+          />
+        </Panel>
+      </PortalLayout>
+    );
+  }
+
+  if (needsCompany) {
+    return (
+      <PortalLayout
+        title="People & Org"
+        description="Managers, departments and IT Contacts for one client company."
+        width="narrow"
+      >
+        <Panel id="people-pick-company" flush>
+          <EmptyState
+            icon={Building2}
+            title="Pick a company to view its people"
+            description="You are in the DE admin view, which has no client company of its own. Switch to a client here, or open Manage Companies and use View Portal."
+            action={
+              <div className="flex flex-col items-center gap-2 sm:flex-row" data-testid="people-pick-company-actions">
+                <TenantSelector currentTenant={null} />
+                <Button asChild variant="outline" className="border-border bg-card hover:bg-accent">
+                  <Link href="/portal/admin/companies" data-testid="link-people-manage-companies">
+                    Manage Companies
+                  </Link>
+                </Button>
+              </div>
             }
           />
         </Panel>

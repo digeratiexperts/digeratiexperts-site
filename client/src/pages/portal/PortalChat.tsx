@@ -590,7 +590,7 @@ export default function PortalChat() {
                 <Headphones className="h-3.5 w-3.5" aria-hidden />
                 Operations desk
               </div>
-              <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Chats &amp; DE Desk</h2>
+              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Chats &amp; DE Desk</h1>
               <p className="mt-1 max-w-2xl text-sm text-white/65">
                 Website DE Desk replies land in the visitor widget. Portal live chat is a separate
                 IT-contact channel. Tickets stay under{" "}
@@ -676,15 +676,16 @@ export default function PortalChat() {
                   </p>
                 </div>
               </div>
-              <Link href="/portal/tickets">
-                <Button
-                  size="sm"
-                  className="gap-2 border border-white/10 bg-white/[0.06] text-white hover:bg-white/10"
-                >
+              <Button
+                asChild
+                size="sm"
+                className="gap-2 border border-white/10 bg-white/[0.06] text-white hover:bg-white/10"
+              >
+                <Link href="/portal/tickets">
                   <Ticket className="h-4 w-4" aria-hidden />
                   Tickets
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
 
             {openDeskIds.length > 0 && (
