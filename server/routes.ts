@@ -80,6 +80,11 @@ import {
   type OrgUserFields,
 } from "./portalOrg";
 import { registerPortalDepartmentRoutes } from "./portalDepartmentRoutes";
+import { registerPortalIntegrationStatusRoute } from "./portalIntegrations";
+import { registerManualRecordAdminRoutes } from "./portalManualRecords";
+import { registerPortalVpnRoutes } from "./integrations/vpn/routes";
+import { registerPortalPhoneRoutes } from "./integrations/phone/routes";
+import { registerPortalShippingRoutes } from "./integrations/shipping/routes";
 import { registerPortalDeskAgentRoutes } from "./portalDeskAgentRoutes";
 import { canAccessPortalTicket } from "./portalTicketAccess";
 import { hasFreshVerificationToken } from "./portalVerificationThrottle";
@@ -1349,6 +1354,13 @@ export async function registerRoutes(app: Express) {
 
   // Department create/update: the company comes from the signed-in user, not the body (#254).
   registerPortalDepartmentRoutes(app, { guards: [authMiddleware, requireOrgManage, validateInput] });
+
+  // VPN, phone and shipping data sources: PORTAL_*_PROVIDER (server/portalIntegrations.ts).
+  registerPortalIntegrationStatusRoute(app, { guards: [authMiddleware] });
+  registerPortalVpnRoutes(app, { guards: [authMiddleware] });
+  registerPortalPhoneRoutes(app, { guards: [authMiddleware] });
+  registerPortalShippingRoutes(app, { guards: [authMiddleware] });
+  registerManualRecordAdminRoutes(app, { guards: [authMiddleware, requireAdmin, validateInput] });
 
   // ----- Approvals -----
   app.get("/api/portal/approvals", [authMiddleware, requireApprovalsAccess], async (req: AuthenticatedRequest, res: Response) => {
