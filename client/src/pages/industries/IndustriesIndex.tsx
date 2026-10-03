@@ -1,9 +1,10 @@
 import { Link } from "wouter";
-import { ArrowRight, Building2, Calculator, Heart, Home, PawPrint, Scale, Stethoscope, Users } from "lucide-react";
+import { ArrowRight, Building2, Calculator, Heart, Home, PawPrint, Scale, Stethoscope } from "lucide-react";
 import { PageTemplate } from "@/components/PageTemplate";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
-import { Button } from "@/components/ui/button";
+import { Chapter, Container, ChapterHeader, ClosingCta, HeroActions } from "@/components/site/chapters";
+import { IconWell } from "@/components/visual/IconWell";
 
 const industries = [
   {
@@ -60,55 +61,52 @@ export default function IndustriesIndex() {
 
   return (
     <PageTemplate
+      layout="chapters"
+      eyebrow="Industries · Arizona"
       title="Industries We Serve"
       subtitle="Security-first IT shaped around how your practice, firm, or organization actually works."
       breadcrumbs={[{ label: "Industries" }]}
-      actions={
-        <Button asChild variant="brand" size="lg">
-          <Link href="/book">{CTA.primary}</Link>
-        </Button>
-      }
+      actions={<HeroActions primary={{ label: CTA.primary, href: "/book" }} />}
     >
-      <div className="pb-4">
-        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {industries.map((industry) => {
-            const Icon = industry.icon;
-            return (
-              <li key={industry.href}>
-                <Link
-                  href={industry.href}
-                  className="de-interactive-card group flex h-full flex-col rounded-2xl border border-de-hairline bg-de-raised p-6 focus-visible:outline-none"
-                >
-                  <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-de-hairline bg-de-bg text-de-accent-ink">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <h2 className="font-heading text-xl font-semibold text-white group-hover:text-white">
-                    {industry.name}
-                  </h2>
-                  <p className="mt-2 flex-1 text-base leading-relaxed text-de-muted-soft">
-                    {industry.description}
-                  </p>
-                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-de-accent-ink">
-                    View industry
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      <Chapter tone="paper" seam={false} data-testid="section-industries">
+        <Container>
+          <ChapterHeader
+            tone="paper"
+            eyebrow="Choose your field"
+            title="Seven industries, one operating model"
+            lede="Each page covers the risks, controls, and evidence that matter for that kind of organization."
+          />
+          <ul className="grid gap-x-14 border-t border-[var(--de-paper-hairline)] md:grid-cols-2">
+            {industries.map((industry) => {
+              const Icon = industry.icon;
+              return (
+                <li key={industry.href} className="border-b border-[var(--de-paper-hairline)]">
+                  <Link
+                    href={industry.href}
+                    className="group -mx-3 flex items-start gap-5 rounded-lg px-3 py-6 transition-colors hover:bg-[#D3126A]/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] md:py-7"
+                  >
+                    <IconWell icon={Icon} surface="light" className="shrink-0" />
+                    <span className="min-w-0 flex-1">
+                      <h2 className="font-heading text-xl font-semibold leading-snug text-[#1A1228]">{industry.name}</h2>
+                      <span className="mt-1.5 block text-base leading-relaxed text-[#3A3448]">{industry.description}</span>
+                      <span className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-de-magenta-paper-ink">
+                        View industry
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </Container>
+      </Chapter>
 
-        <div className="mt-12 rounded-2xl border border-de-hairline bg-de-bg p-8 text-center">
-          <Users className="mx-auto mb-3 h-6 w-6 text-de-magenta-ink" aria-hidden="true" />
-          <p className="font-heading text-2xl font-semibold text-white">Not sure where you fit?</p>
-          <p className="mx-auto mt-2 max-w-xl text-de-muted-soft">
-            Start with a cyber risk assessment. We match the operating model to your environment before you buy.
-          </p>
-          <Button asChild variant="brand" className="mt-6">
-            <Link href="/book">{CTA.primary}</Link>
-          </Button>
-        </div>
-      </div>
+      <ClosingCta
+        title="Not sure where you fit?"
+        lede="Start with a cyber risk assessment. We match the operating model to your environment before you buy."
+        primary={{ label: CTA.primary, href: "/book" }}
+      />
     </PageTemplate>
   );
 }
