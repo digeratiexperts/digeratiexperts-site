@@ -14,6 +14,7 @@ import {
   type ChapterTone,
 } from "@/components/site/chapters";
 import { IconWell } from "@/components/visual/IconWell";
+import { VerifiedCredentials } from "@/components/site/VerifiedCredentials";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
 
@@ -145,14 +146,6 @@ const complianceFrameworks = [
   }
 ];
 
-const teamCredentials = [
-  { name: "Microsoft Partner", icon: Award },
-  { name: "CompTIA Security+", icon: FileCheck },
-  { name: "Certified Ethical Hacker", icon: FileCheck },
-  { name: "CISSP", icon: Award },
-  { name: "AWS Certified", icon: Building2 },
-  { name: "Azure Certified", icon: Building2 }
-];
 
 const whyCompliance = [
   { icon: Lock, title: "Avoid Fines", desc: "HIPAA fines up to $1.9M per violation", id: "avoid-fines" },
@@ -330,20 +323,9 @@ export default function ComplianceCertifications() {
             tone="well"
             eyebrow="Credentials"
             title={<span data-testid="heading-certifications">Team credentials</span>}
-            lede="Industry credentials held across the practice — not a substitute for a customer’s own audit."
+            lede="Each credential links to the issuer's own record. None of them replaces a customer’s own audit."
           />
-          <ul className="flex flex-wrap gap-3" data-testid="list-certifications">
-            {teamCredentials.map((cert, i) => (
-              <li
-                key={i}
-                className="flex items-center gap-3 rounded-lg border border-[var(--de-hairline)] bg-de-raised px-5 py-3"
-                data-testid={`badge-certification-${i}`}
-              >
-                <cert.icon className="h-5 w-5 text-de-magenta-ink" aria-hidden="true" />
-                <span className="font-medium text-white/85">{cert.name}</span>
-              </li>
-            ))}
-          </ul>
+          <VerifiedCredentials testId="list-certifications" />
         </Container>
       </Chapter>
 

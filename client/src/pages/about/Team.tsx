@@ -4,11 +4,11 @@ import {
   Container,
   ChapterHeader,
   ClosingCta,
-  CheckList,
   FactStrip,
   HeroActions,
 } from "@/components/site/chapters";
 import { IconWell } from "@/components/visual/IconWell";
+import { VerifiedCredentials } from "@/components/site/VerifiedCredentials";
 import {
   Shield,
   Briefcase,
@@ -23,80 +23,40 @@ import { photography } from "@/lib/visualAssets";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 
+// What each discipline does. Credentials are not typed here: they come from
+// client/src/data/credentials.ts with the issuer's verification link.
 const team = [
   {
-    name: "Leadership Team",
+    name: "Leadership & architecture",
     description:
-      "Industry veterans with decades of combined experience in IT and cybersecurity",
-    certifications: [
-      "CISSP",
-      "CISM",
-      "Microsoft Certified",
-      "CompTIA Security+",
-    ],
+      "The founder leads every Cyber Risk Assessment and the architecture that follows, and stays involved in the milestones that matter.",
     icon: Trophy,
   },
   {
-    name: "Security Engineers",
+    name: "Security operations",
     description:
-      "Specialized cybersecurity experts protecting your business 24/7",
-    certifications: ["CEH", "GIAC", "OSCP", "Security+"],
+      "Detection and response for the DE Security Foundation, with emergency incident response available 24/7/365 under our published SLA.",
     icon: Shield,
   },
   {
-    name: "System Engineers",
-    description: "Infrastructure experts ensuring your systems run smoothly",
-    certifications: [
-      "MCSE",
-      "VMware VCP",
-      "AWS Certified",
-      "Azure Administrator",
-    ],
+    name: "Systems & infrastructure",
+    description:
+      "Microsoft 365, Google Workspace and Zoho workspaces, endpoints, networks and backup, run to the standard your plan sets.",
     icon: Briefcase,
   },
   {
-    name: "Support Team",
+    name: "Service desk",
     description:
-      "Friendly, responsive technicians ready to help when you need it",
-    certifications: ["A+", "Network+", "ITIL", "HDI Support"],
+      "Owns each ticket to resolution, with response targets by priority set in the SLA: 15 minutes for a critical incident.",
     icon: Users,
-  },
-];
-
-const certCategories = [
-  {
-    title: "Security Certifications",
-    items: [
-      "CISSP - Certified Information Systems Security Professional",
-      "CISM - Certified Information Security Manager",
-      "CEH - Certified Ethical Hacker",
-      "OSCP - Offensive Security Certified Professional",
-    ],
-  },
-  {
-    title: "Technical Certifications",
-    items: [
-      "Microsoft Certified Solutions Expert",
-      "VMware Certified Professional",
-      "AWS Certified Solutions Architect",
-      "CompTIA A+, Network+, Security+",
-    ],
-  },
-  {
-    title: "Partner Status",
-    items: [
-      "Microsoft Partner Network",
-      "Apple Consultants Network",
-      "Better Business Bureau A+ Rating",
-    ],
   },
 ];
 
 export default function Team() {
   useSEO({
-    title: "Our Team - Certified IT & Security Experts",
+    title: "Our Team - IT & Security Experts in Chandler, AZ",
     description:
-      "Meet the Digerati Experts team. Certified cybersecurity professionals, system engineers, and IT support specialists serving Arizona businesses.",
+      "Meet the people behind Digerati Experts: cybersecurity, systems and service-desk work led by founder Joseph Petro, serving Arizona businesses from Chandler.",
     canonical: "/about/team",
   });
 
@@ -105,7 +65,7 @@ export default function Team() {
       layout="chapters"
       eyebrow="About · Team"
       title="Meet The Experts"
-      subtitle="Our certified team of IT and security professionals serving Chandler and the Phoenix metro area"
+      subtitle="The IT and security people behind Digerati Experts, serving Chandler and the Phoenix metro area"
       breadcrumbs={[{ label: "About" }, { label: "Team" }]}
       actions={
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -166,8 +126,8 @@ export default function Team() {
           },
           {
             icon: Clock,
-            title: "15-minute first response",
-            text: "Published first-response target during covered hours.",
+            title: "15-minute critical response",
+            text: "Our published SLA response for an active breach or system down.",
           },
           {
             icon: MapPin,
@@ -182,8 +142,8 @@ export default function Team() {
           <ChapterHeader
             tone="paper"
             eyebrow="Who does the work"
-            title="Four teams, one accountable owner"
-            lede="Our team brings together decades of experience in IT management, cybersecurity, and business technology. We're passionate about protecting Arizona businesses and helping them succeed with technology."
+            title="Four disciplines, one accountable owner"
+            lede="Every discipline answers to the founder, so the person who scoped your environment is the person accountable for it."
           />
           <ul className="border-t border-[var(--de-paper-hairline)]">
             {team.map((group) => (
@@ -201,16 +161,6 @@ export default function Team() {
                   <p className="max-w-[60ch] text-base leading-relaxed text-[#3A3448]">
                     {group.description}
                   </p>
-                  <ul className="mt-4 flex flex-wrap gap-2">
-                    {group.certifications.map((cert) => (
-                      <li
-                        key={cert}
-                        className="rounded-md border border-[var(--de-paper-hairline)] bg-white px-3 py-1.5 text-sm text-[#1A1228]"
-                      >
-                        {cert}
-                      </li>
-                    ))}
-                  </ul>
                 </div>
               </li>
             ))}
@@ -223,21 +173,10 @@ export default function Team() {
           <ChapterHeader
             tone="well"
             eyebrow="Credentials"
-            title="Our Certifications & Partnerships"
+            title="Credentials you can check"
+            lede="Certifications, partner programs and ratings, each linked to the issuer's own record."
           />
-          <div className="grid gap-10 md:grid-cols-3 md:gap-8">
-            {certCategories.map((category) => (
-              <div
-                key={category.title}
-                className="border-t border-[var(--de-hairline)] pt-6"
-              >
-                <h3 className="mb-5 font-heading text-lg font-semibold text-white">
-                  {category.title}
-                </h3>
-                <CheckList tone="well" columns={1} items={category.items} />
-              </div>
-            ))}
-          </div>
+          <VerifiedCredentials />
         </Container>
       </Chapter>
 

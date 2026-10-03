@@ -103,7 +103,7 @@ export default function TwentyOneQuestions() {
                     <td className="border border-[var(--de-paper-hairline)] bg-[#FBEAF2]/60 p-4 text-center">
                       {index === 17 ? (
                         <span className="block text-xs font-bold leading-tight text-de-magenta-paper-ink" data-testid="special-note">
-                          Phoenix-based<br />& US Only!
+                          Chandler-based<br />& US Only!
                         </span>
                       ) : (
                         <Check className="mx-auto h-6 w-6 text-de-magenta-paper-ink" strokeWidth={3} data-testid={`check-${index}`} />

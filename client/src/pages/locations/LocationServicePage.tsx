@@ -33,6 +33,7 @@ import { getCyberFact, formatFactSource } from "@/data/cyberAwarenessFacts";
 import { CTA } from "@/lib/ctaCopy";
 import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
 import { GREATER_PHOENIX_CITIES, cityPageSlug } from "@/data/greaterPhoenixCities";
+import { credentialsOfKind } from "@/data/credentials";
 import { IconWell } from "@/components/visual/IconWell";
 import {
   Chapter,
@@ -215,7 +216,7 @@ export function LocationServicePage(props: LocationPageProps) {
 
   const stats = [
     { icon: Shield, value: "Security-first", label: "Operating model" },
-    { icon: Zap, value: "<15min", label: "Response Time" },
+    { icon: Zap, value: "15 min", label: "Critical response (SLA)" },
     { icon: Clock, value: "24/7", label: "Monitoring" },
   ];
 
@@ -228,7 +229,8 @@ export function LocationServicePage(props: LocationPageProps) {
 
 
   const regulatedBadges = ["HIPAA-aligned support", "SOC 2 readiness", "Cyber insurance readiness", "Framework mapping"];
-  const partnerBadges = ["Microsoft Partner", "Apple Consultants"];
+  // Partner programs only from the verified list (client/src/data/credentials.ts).
+  const partnerBadges = credentialsOfKind(["partner"]).map((c) => c.name);
   const azFact = getCyberFact("az-ic3-losses-2024");
 
   return (
@@ -255,7 +257,7 @@ export function LocationServicePage(props: LocationPageProps) {
               </a>
             </div>
           }
-          note={`Built for regulated environments: ${regulatedBadges.join(" · ")}. ${partnerBadges.join(" · ")}.`}
+          note={`Built for regulated environments: ${regulatedBadges.join(" · ")}.${partnerBadges.length ? ` ${partnerBadges.join(" · ")}.` : ""}`}
           asideOnMobile
           aside={
             <div id="city-assessment" className="w-full min-w-0 [contain:inline-size]">

@@ -28,6 +28,34 @@ import ebookCover from "@/assets/images/ebook-defending-digital-realm-cover.webp
 import { ConversionPathBar } from "@/components/ConversionPathBar";
 import { Chapter as SiteChapter, ClosingCta, Container, FactStrip, PageHero } from "@/components/site/chapters";
 import { CTA } from "@/lib/ctaCopy";
+import { getCyberFact, formatFactSource } from "@/data/cyberAwarenessFacts";
+
+// Industry figures quoted in the chapters come from the sourced facts registry,
+// never typed into the copy (docs/CLAIMS-REGISTER.md, "How to add a claim").
+const VULN_FACT = getCyberFact("dbir-vuln-exploit-2026");
+const HUMAN_FACT = getCyberFact("dbir-human-element-2026");
+const SMB_RANSOM_FACT = getCyberFact("dbir-smb-ransomware-victims-2026");
+const BEC_FACT = getCyberFact("ic3-bec-losses-2024");
+
+/**
+ * The chapters' stories are EXAMPLE scenarios (design/VISUAL_EVIDENCE.md):
+ * composites of common findings, not a Digerati Experts client, and labelled
+ * so on the page.
+ */
+function ExampleScenario({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <figure
+      data-classification="EXAMPLE"
+      className="my-8 rounded-xl border-2 border-[#D3126A] bg-gradient-to-br from-[#D3126A]/10 to-[#D3126A]/5 p-6"
+    >
+      <p className="mb-2 font-mono text-xs font-semibold uppercase tracking-wider text-white/70">
+        Example scenario · not a client
+      </p>
+      <h4 className="mb-4 text-xl font-bold text-de-accent-ink">{title}</h4>
+      <div className="space-y-4 text-white/75">{children}</div>
+    </figure>
+  );
+}
 
 interface Chapter {
   id: number;
@@ -52,9 +80,9 @@ const chapters: Chapter[] = [
       "In today's interconnected world, cybersecurity risk assessment isn't just a technical exercise—it's a business imperative. As digital threats continue to evolve in sophistication and frequency, organizations of all sizes must understand their vulnerabilities and take proactive steps to protect their assets, data, and reputation.",
       "What Is Cybersecurity Risk Assessment?",
       "A cybersecurity risk assessment is a systematic process of identifying, analyzing, and evaluating risks to your organization's information systems and data. It helps you understand what assets you have, what threats they face, what vulnerabilities exist, and what the potential impact of a security incident could be.",
-      "Case Study: The Wake-Up Call.",
-      "A mid-sized manufacturing company in Arizona believed they were too small to be a target. Their IT infrastructure had grown organically over 15 years, with minimal security oversight. When they finally conducted their first risk assessment, they discovered: 147 devices connected to their network—40 more than they knew existed; 23 systems running outdated, unpatched software; no multi-factor authentication on their email or financial systems; and backup systems that hadn't been tested in over two years.",
-      "Three months after the assessment, they successfully defended against a ransomware attack that had encrypted files at a competitor. The difference? They had addressed their critical vulnerabilities.",
+      "Example scenario, not a client: The Wake-Up Call.",
+      "Picture a growing Arizona manufacturer that believes it is too small to be a target. Its network has grown for years without anyone owning security. A first risk assessment typically turns up the same things: more devices on the network than anyone has listed; systems missing security updates; no multi-factor authentication on email or the finance system; and backups nobody has tested.",
+      `Size is no shield: ${SMB_RANSOM_FACT.metric} ${SMB_RANSOM_FACT.statement}, according to ${formatFactSource(SMB_RANSOM_FACT)}. Each finding has a known fix, and the assessment puts them in order.`,
       "Key Lesson: The organizations that survive cyber attacks aren't necessarily the ones with the biggest budgets—they're the ones that understand their risks and address them systematically.",
     ].join(" "),
     content: (
@@ -70,23 +98,24 @@ const chapters: Chapter[] = [
           A cybersecurity risk assessment is a systematic process of identifying, analyzing, and evaluating risks to your organization's information systems and data. It helps you understand what assets you have, what threats they face, what vulnerabilities exist, and what the potential impact of a security incident could be.
         </p>
 
-        <div className="bg-gradient-to-br from-[#D3126A]/10 to-[#D3126A]/5 border-2 border-[#D3126A] rounded-xl p-6 my-8">
-          <h4 className="text-xl font-bold text-de-accent-ink mb-4">Case Study: The Wake-Up Call</h4>
-          <div className="text-white/75 space-y-4">
-            <p>
-              A mid-sized manufacturing company in Arizona believed they were "too small to be a target." Their IT infrastructure had grown organically over 15 years, with minimal security oversight. When they finally conducted their first risk assessment, they discovered:
-            </p>
-            <ul className="list-disc ml-6 space-y-2">
-              <li><strong className="text-de-accent-ink">147 devices</strong> connected to their network—40 more than they knew existed</li>
-              <li><strong className="text-de-accent-ink">23 systems</strong> running outdated, unpatched software</li>
-              <li><strong className="text-de-accent-ink">No multi-factor authentication</strong> on their email or financial systems</li>
-              <li><strong className="text-de-accent-ink">Backup systems</strong> that hadn't been tested in over two years</li>
-            </ul>
-            <p>
-              Three months after the assessment, they successfully defended against a ransomware attack that had encrypted files at a competitor. The difference? They had addressed their critical vulnerabilities.
-            </p>
-          </div>
-        </div>
+        <ExampleScenario title="The Wake-Up Call">
+          <p>
+            Picture a growing Arizona manufacturer that believes it is "too small to be a target." Its network has grown for years without anyone owning security. A first risk assessment typically turns up the same things:
+          </p>
+          <ul className="list-disc ml-6 space-y-2">
+            <li><strong className="text-de-accent-ink">More devices</strong> on the network than anyone has listed</li>
+            <li><strong className="text-de-accent-ink">Systems missing security updates</strong></li>
+            <li><strong className="text-de-accent-ink">No multi-factor authentication</strong> on email or the finance system</li>
+            <li><strong className="text-de-accent-ink">Backups</strong> nobody has tested</li>
+          </ul>
+          <p>
+            Size is no shield: {SMB_RANSOM_FACT.metric} {SMB_RANSOM_FACT.statement} (
+            <a href={SMB_RANSOM_FACT.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+              {formatFactSource(SMB_RANSOM_FACT)}
+            </a>
+            ). Each finding has a known fix, and the assessment puts them in order.
+          </p>
+        </ExampleScenario>
 
         <div className="bg-de-bg border-l-4 border-[#D3126A] p-5 my-6 rounded-r-lg">
           <p className="text-de-accent-ink font-semibold">
@@ -162,24 +191,28 @@ const chapters: Chapter[] = [
   {
     id: 3,
     title: "Common Vulnerabilities",
-    subtitle: "What We Find in Most Assessments",
+    subtitle: "The Weaknesses Breach Data Keeps Pointing To",
     narrationText: [
-      "Chapter 3. Common Vulnerabilities. What We Find in Most Assessments.",
-      "After conducting hundreds of risk assessments for Arizona businesses, certain patterns emerge. Understanding these common vulnerabilities can help you identify areas that likely need attention in your own organization.",
+      "Chapter 3. Common Vulnerabilities. The Weaknesses Breach Data Keeps Pointing To.",
+      `Breach data keeps pointing at the same weaknesses. ${VULN_FACT.metric} ${VULN_FACT.statement}, and ${HUMAN_FACT.metric} ${HUMAN_FACT.statement}, according to ${formatFactSource(VULN_FACT)}. These are the areas a risk assessment checks first.`,
       "Weak Authentication: Single-factor authentication remains the norm for many business applications, leaving them vulnerable to credential theft and brute force attacks.",
       "Unpatched Systems: Many organizations struggle to maintain current patches, leaving known vulnerabilities exposed for weeks or months.",
       "Inadequate Backups: Backups exist but are rarely tested. When disaster strikes, organizations discover their backups are incomplete or corrupted.",
       "Poor Network Segmentation: Flat networks allow attackers to move laterally, turning a single compromised device into a complete network breach.",
       "Shadow IT: Employees use unauthorized cloud services and applications, creating data leakage risks and compliance violations.",
       "Insufficient Logging: Many organizations can't answer basic questions about their security events because they lack adequate logging and monitoring.",
-      "Case Study: The Email Compromise.",
-      "A real estate title company lost 1.2 million dollars when attackers compromised their email system and redirected a closing wire transfer. The post-incident assessment revealed: no multi-factor authentication on email accounts; no email filtering for suspicious attachments or links; no procedures for verifying wire transfer instructions; and no employee training on business email compromise tactics.",
-      "Each of these vulnerabilities could have been identified and addressed through a proper risk assessment—at a fraction of the cost of the eventual loss.",
+      "Example scenario, not a client: The Email Compromise.",
+      "Picture a title company where an attacker signs in to one employee's mailbox, watches a closing, and sends the buyer new wire instructions. The money is gone before anyone calls. Afterwards the gaps are plain: no multi-factor authentication on email; no filtering for suspicious links and attachments; no rule to confirm wire changes by phone; and no training on business email compromise.",
+      `It is one of the costliest crimes in the FBI's data: ${BEC_FACT.metric} ${BEC_FACT.statement} in ${BEC_FACT.year}, according to the ${formatFactSource(BEC_FACT)}. Every gap in the list is something a risk assessment finds before an attacker does.`,
     ].join(" "),
     content: (
       <>
         <p className="text-white/75 mb-6 leading-relaxed">
-          After conducting hundreds of risk assessments for Arizona businesses, certain patterns emerge. Understanding these common vulnerabilities can help you identify areas that likely need attention in your own organization.
+          Breach data keeps pointing at the same weaknesses. {VULN_FACT.metric} {VULN_FACT.statement}, and {HUMAN_FACT.metric} {HUMAN_FACT.statement} (
+          <a href={VULN_FACT.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+            {formatFactSource(VULN_FACT)}
+          </a>
+          ). These are the areas a risk assessment checks first.
         </p>
 
         <div className="grid md:grid-cols-2 gap-4 my-8">
@@ -198,23 +231,24 @@ const chapters: Chapter[] = [
           ))}
         </div>
 
-        <div className="bg-gradient-to-br from-[#D3126A]/10 to-[#D3126A]/5 border-2 border-[#D3126A] rounded-xl p-6 my-8">
-          <h4 className="text-xl font-bold text-de-accent-ink mb-4">Case Study: The Email Compromise</h4>
-          <div className="text-white/75 space-y-4">
-            <p>
-              A real estate title company lost $1.2 million when attackers compromised their email system and redirected a closing wire transfer. The post-incident assessment revealed:
-            </p>
-            <ul className="list-disc ml-6 space-y-2">
-              <li>No multi-factor authentication on email accounts</li>
-              <li>No email filtering for suspicious attachments or links</li>
-              <li>No procedures for verifying wire transfer instructions</li>
-              <li>No employee training on business email compromise tactics</li>
-            </ul>
-            <p>
-              Each of these vulnerabilities could have been identified and addressed through a proper risk assessment—at a fraction of the cost of the eventual loss.
-            </p>
-          </div>
-        </div>
+        <ExampleScenario title="The Email Compromise">
+          <p>
+            Picture a title company where an attacker signs in to one employee's mailbox, watches a closing, and sends the buyer new wire instructions. The money is gone before anyone calls. Afterwards the gaps are plain:
+          </p>
+          <ul className="list-disc ml-6 space-y-2">
+            <li>No multi-factor authentication on email</li>
+            <li>No filtering for suspicious links and attachments</li>
+            <li>No rule to confirm wire changes by phone</li>
+            <li>No training on business email compromise</li>
+          </ul>
+          <p>
+            It is one of the costliest crimes in the FBI's data: {BEC_FACT.metric} {BEC_FACT.statement} in {BEC_FACT.year} (
+            <a href={BEC_FACT.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+              {formatFactSource(BEC_FACT)}
+            </a>
+            ). Every gap in the list is something a risk assessment finds before an attacker does.
+          </p>
+        </ExampleScenario>
       </>
     )
   },
