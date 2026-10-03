@@ -60,8 +60,17 @@ claims:
       - design/source/ebook-cover/**
       - docs/CLAIMS-REGISTER.md
       - artifacts/visual-qa/site-truth-pass/**
-    status: active
+    status: verified-live
     started: 2026-10-03
+    released: 2026-10-03
+    pr: 396
+    merge_sha: 333522bfaa2aa02699f1634bd96ab18b3aec3834
+    verification: >-
+      Merged on Joe's "merge 396" (2026-10-03). Main CI and the production
+      deploy passed; release.txt read 333522bf (equal to main). Fifteen public
+      routes at 390 and 1440 on production show none of the old claims; the
+      new ebook cover asset is served; the Team page renders the verified
+      credentials panel. Evidence: artifacts/visual-qa/site-truth-pass/live/.
     note: >-
       Joe, 2026-10-03: make the claims PR 370 flagged authentic, branded and
       true rather than remove or flag them. Response times bound to the SLA's
