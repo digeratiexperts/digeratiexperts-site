@@ -598,7 +598,7 @@ export default function Ebook() {
               tone="paper"
               eyebrow="Next step"
               title="Ready to assess your environment?"
-              lede="Use this framework with a Digerati Cyber Risk Assessment — not a generic checklist."
+              lede="Use this framework with a Digerati Experts Cyber Risk Assessment — not a generic checklist."
               primary={{ label: CTA.primary, href: "/book", testId: "button-conversion-assessment" }}
             />
           </>
