@@ -331,4 +331,33 @@ export function registerPublicSolutionRoutes(app: Express): void {
           : "Recorded with DE. DE will confirm package fit, scope, fulfillment, and pricing before you commit.",
     });
   });
+
+  /**
+   * Branded "Your Solution" PDF. Client sends a fully-resolved presentation
+   * payload (labels only — no prices). Rate-limited like other public writes.
+   */
+  app.post("/api/public/solutions/packet-pdf", apiGeneralRateLimiter, async (req, res) => {
+    try {
+      const { parseSolutionPacketBody, renderSolutionPacketPdf } = await import("./pdf/solutionPacketPdf");
+      const parsed = parseSolutionPacketBody(req.body);
+      if ("error" in parsed) {
+        return res.status(400).json({ error: parsed.error });
+      }
+      const pdf = await renderSolutionPacketPdf(parsed);
+      const safeRef = (parsed.reference || "draft").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 24) || "draft";
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="DE-Your-Solution-${safeRef}.pdf"`);
+      res.setHeader("Cache-Control", "no-store");
+      return res.send(pdf);
+    } catch (error: unknown) {
+      console.error("[solution-packet-pdf]", error instanceof Error ? error.message : error);
+      const { PdfRendererUnavailableError } = await import("./pdf/renderHtmlToPdf");
+      if (error instanceof PdfRendererUnavailableError) {
+        return res.status(503).json({
+          error: "PDF renderer is not available on this server yet. Print remains available.",
+        });
+      }
+      return res.status(500).json({ error: "Failed to generate solution PDF" });
+    }
+  });
 }

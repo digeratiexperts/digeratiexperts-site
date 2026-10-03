@@ -420,7 +420,7 @@ export default function BusinessNeedsIndex() {
   return (
     <Door2Frame intensity={0.44} jelly>
       <MegaMenu />
-          <main className="d2-main de-nav-clear">
+          <main id="main-content" tabIndex={-1} className="d2-main de-nav-clear">
             <header className="d2-chapter d2-chapter--first" data-testid="store-enter">
               <StepLabel>SOLVE A BUSINESS NEED</StepLabel>
               <h1 className="d2-display d2-measure" data-testid="heading-business-needs">

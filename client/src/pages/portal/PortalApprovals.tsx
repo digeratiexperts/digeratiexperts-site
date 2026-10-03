@@ -110,7 +110,7 @@ export function PortalApprovals() {
   return (
     <PortalLayout
       title="Approvals"
-      description="Access and spend-style requests route to your manager, optional skip-level (high priority or $1,000+), then your Department or Company IT Contact before Digerati fulfills the work."
+      description="Access and spend-style requests route to your manager, optional skip-level (high priority or $1,000+), then your Department or Company IT Contact before DE fulfills the work."
       width="wide"
     >
       <div className="space-y-4">
@@ -167,7 +167,7 @@ export function PortalApprovals() {
                   )}
                   <p className="whitespace-pre-wrap text-sm">{selected.description}</p>
                   {selected.fulfillmentTicketId && (
-                    <Callout tone="ok">Fulfillment ticket created for Digerati after final approval.</Callout>
+                    <Callout tone="ok">Fulfillment ticket created for DE after final approval.</Callout>
                   )}
                 </div>
               </Panel>

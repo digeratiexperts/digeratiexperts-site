@@ -310,7 +310,7 @@ export default function BlogPost() {
     return (
       <div className="min-h-screen bg-[#0a0a0a]">
         <MegaMenu />
-        <main className="de-nav-clear pb-20">
+        <main id="main-content" tabIndex={-1} className="de-nav-clear pb-20">
           <div className="container mx-auto px-4 max-w-4xl text-center">
             <h1 className="text-4xl font-bold text-white mb-4">
               Article Not Found
@@ -558,7 +558,7 @@ export default function BlogPost() {
         </div>
       </section>
 
-      <main className="pb-24">
+      <main id="main-content" tabIndex={-1} className="pb-24">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="lg:grid lg:grid-cols-12 lg:gap-12">
             {/* TOC sidebar */}
