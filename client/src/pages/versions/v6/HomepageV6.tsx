@@ -1,37 +1,32 @@
 import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, MouseEvent } from "react";
 import { Link } from "wouter";
+import { focusMainContent } from "@/components/SkipToContent";
 import { useSEO } from "@/hooks/useSEO";
-import { DE_LOGO_PRIMARY } from "@/lib/brandAssets";
+import { DE_LOGO_REVERSE } from "@/lib/brandAssets";
+import { CTA } from "@/lib/ctaCopy";
+import { DashboardMockup } from "@/components/graphics/DashboardMockup";
+import { PronunciationCard } from "@/components/PronunciationCard";
 import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
-import { pricingTiers, pricing, formatPrice, PRICING_SCOPE_NOTE } from "@/data/pricing";
+import { pricingTiers, formatPrice, PRICING_SCOPE_NOTE } from "@/data/pricing";
 import { getHomepageCyberFacts } from "@/data/cyberAwarenessFacts";
-import { protectionDomains } from "@/components/visual/ProtectionCommandDeck";
+import { ProtectionCommandDeck } from "@/components/visual/ProtectionCommandDeck";
 import { useThreatFeed } from "@/hooks/useThreatFeed";
 import { THREAT_ATTRIBUTION } from "@shared/threatFeed";
 import "./v6.css";
 
 /**
- * Digerati Experts homepage, Version 6: every section of the live homepage,
- * redrawn on the Version 5 system.
+ * Digerati Experts homepage, Version 6: live homepage cleaned in the current
+ * DE theme (graphite / paper / magenta). Version 5 stays at /version-5 on its
+ * own paper system. ChatGPT's other-theme board is held for Version 7.
  *
- * Joe, 2026-10-01: "can you mock up every section on the live
- * Digeratiexperts.com homepage and make it look how it should look", then
- * "continue". The eighteen mockups came first; this is the page they describe.
- *
- * Same order as the live page, section for section. Every fact is read from the
- * file that already carries it: prices from client/src/data/pricing.ts, the
- * four statistics from client/src/data/cyberAwarenessFacts.ts (each linked to
- * its report), the eight blocks from the live command deck's data, response
- * times from the SLA page, contact details from shared/companyContact.ts, the
- * FAQ verbatim, reviews and security updates from the live feeds only. No
- * generated or stock imagery: the founder's approved photograph and the brand
- * mark are the only images. One action everywhere. No animation.
- * ACCEPTANCE.md beside this file says how the page is checked.
+ * Same live section order. Facts stay sourced. Live-better pieces kept:
+ * DashboardMockup hero, Get My Cyber Risk Assessment, eight-block data,
+ * compact pronunciation, real prices and SLA. No ChatGPT invented figures.
  */
 
 const BOOK = "/book";
-const ACTION = "Book a Cyber Risk Assessment";
+const ACTION = CTA.primary;
 const FOUNDER_JPG = "/images/founder/joe-petro-studio-blazer-white.jpg";
 const FOUNDER_WEBP = "/images/founder/joe-petro-studio-blazer-white.webp";
 
@@ -66,7 +61,7 @@ const TACKLE = [
 const PATHS = [
   { kicker: "ProActive Ecosystem", title: "Fully managed IT and cybersecurity", body: "One accountable team for support, identity, endpoints, email, backup and security operations.", href: "/solutions/proactive-ecosystem", link: "Explore managed services" },
   { kicker: "Keep your team", title: "Co-managed IT", body: "Add DE security operations, monitoring and specialized coverage to your internal IT without replacing it.", href: "/solutions/co-managed-it", link: "See co-managed" },
-  { kicker: "Start here", title: "Cyber Risk Assessment", body: "A practical review of identity, endpoints, email, backups and security posture. Then choose what to own together.", href: BOOK, link: "Book a Cyber Risk Assessment" },
+  { kicker: "Start here", title: "Cyber Risk Assessment", body: "A practical review of identity, endpoints, email, backups and security posture. Then choose what to own together.", href: BOOK, link: CTA.primary },
 ];
 
 /** The live services section's six capabilities, with their pages. */
@@ -102,6 +97,13 @@ const PROOF = [
 ];
 
 /** The live trust section's three pillars (DigeratiTrustPhotoSection). */
+const TRUST_STRIP = [
+  { title: "Cybersecurity First", body: "We secure your business from the inside out." },
+  { title: "Proactive IT", body: "Prevent issues before they impact your business." },
+  { title: "Compliance Ready", body: "Stay aligned with the standards and regulations you actually need." },
+  { title: "Local and responsive", body: "Arizona-based team, here when you need us." },
+];
+
 const PILLARS = [
   { title: "Arizona-based", body: "Local principal support for businesses that need a real person, not a ticket queue." },
   { title: "Principal-led", body: "Recommendations come from the people who will stand behind the work." },
@@ -288,7 +290,7 @@ function AssessmentForm() {
         </div>
       </div>
       <button type="submit" className="v6-btn v6-btn-primary" disabled={state === "sending"}>
-        Send the request
+        {ACTION}
       </button>
       <Status state={state} sent="Thank you. We will be in touch within one business day to schedule your assessment." />
       {state !== "sent" && <p className="v6-muted">We respond within one business day.</p>}
@@ -309,8 +311,8 @@ function ContactForm() {
   return (
     <form className="v6-formcard" onSubmit={onSubmit} aria-labelledby="v6-contact-form-h">
       <div>
-        <h3 id="v6-contact-form-h">Send a message</h3>
-        <p className="v6-muted" style={{ marginTop: 4 }}>Tell us about the environment. We follow up on a Cyber Risk Assessment, no pressure.</p>
+        <h3 id="v6-contact-form-h">Get in Touch</h3>
+        <p className="v6-muted" style={{ marginTop: 4 }}>Tell us about the environment. We follow up on a Cyber Risk Assessment — no hard sell.</p>
       </div>
       <div className="v6-form">
         <div className="v6-field">
@@ -394,13 +396,12 @@ export default function HomepageV6(): JSX.Element {
       "Arizona MSP/MSSP. Cybersecurity-first managed IT, written response times, published prices, and a Cyber Risk Assessment that matches the operating model to your environment.",
   });
 
-  // The site's shell is dark; this page is light to its edges, including the
-  // overscroll area on a phone.
+  // Match the live site well so overscroll does not flash white.
   useEffect(() => {
     const root = document.documentElement;
     const prev = { root: root.style.backgroundColor, body: document.body.style.backgroundColor };
-    root.style.backgroundColor = "#ffffff";
-    document.body.style.backgroundColor = "#ffffff";
+    root.style.backgroundColor = "#050312";
+    document.body.style.backgroundColor = "#050312";
     return () => {
       root.style.backgroundColor = prev.root;
       document.body.style.backgroundColor = prev.body;
@@ -409,18 +410,24 @@ export default function HomepageV6(): JSX.Element {
 
   const reviews = useReviews();
   const threats = useThreatFeed("homepage");
+  const threatAttribution = threats.payload.attribution || THREAT_ATTRIBUTION;
   const facts = getHomepageCyberFacts();
-  const blocks = protectionDomains.filter((d) => !d.continuous);
-  const continuous = protectionDomains.find((d) => d.continuous);
   const year = new Date().getFullYear();
   const region = COMPANY.addressRegion === "AZ" ? "Arizona" : COMPANY.addressRegion;
 
+  const onSkipToMain = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (focusMainContent()) event.preventDefault();
+  };
+
   return (
     <div className="v6" data-testid="homepage-v6">
+      <a href="#v6-main" className="v6-skip" onClick={onSkipToMain} data-testid="v6-skip-to-main">
+        Skip to main content
+      </a>
       <header className="v6-header">
         <div className="v6-wrap v6-header-inner">
           <Link href="/" className="v6-logo" aria-label="Digerati Experts home">
-            <img src={DE_LOGO_PRIMARY} alt="Digerati Experts" width="180" height="34" />
+            <img src={DE_LOGO_REVERSE} alt="Digerati Experts" width="180" height="34" />
           </Link>
           <nav className="v6-nav" aria-label="Main">
             <ul>
@@ -457,53 +464,53 @@ export default function HomepageV6(): JSX.Element {
         <section className="v6-hero" aria-labelledby="v6-h1">
           <div className="v6-wrap v6-hero-grid">
             <div className="v6-hero-copy">
-              <p className="v6-eyebrow">
-                {COMPANY.addressLocality}, {region} · Greater Phoenix
-              </p>
-              <h1 id="v6-h1">Managed IT and cybersecurity for Arizona businesses.</h1>
+              <p className="v6-eyebrow">Arizona MSP · Cybersecurity and Managed IT</p>
+              <h1 id="v6-h1">
+                Cybersecurity-First IT That Powers{" "}
+                <span className="v6-accent-word">Your Business</span>
+              </h1>
               <p className="v6-lede">
-                One accountable team for support, identity, endpoints, email, backup and security operations. We assess first, then
-                match the operating model to your environment.
+                Managed IT, security, and compliance — built for Arizona businesses that can&apos;t afford downtime.
               </p>
               <div className="v6-actions">
                 <PrimaryAction />
-                <a className="v6-btn v6-btn-secondary" href={PRIMARY_PHONE.telHref}>
-                  Call {PRIMARY_PHONE.display}
-                </a>
+                <Link href={CTA.secondaryHref} className="v6-btn v6-btn-secondary">
+                  {CTA.secondary}
+                </Link>
               </div>
+              <ul className="v6-hero-checks">
+                <li>No obligation</li>
+                <li>Response within one business day</li>
+                <li>
+                  <a href={PRIMARY_PHONE.telHref}>Call {PRIMARY_PHONE.display}</a>
+                </li>
+              </ul>
+              <PronunciationCard variant="compact" />
             </div>
-            <figure className="v6-hero-figure">
-              <picture>
-                <source srcSet={FOUNDER_WEBP} type="image/webp" />
-                <img src={FOUNDER_JPG} alt="Joseph Petro, founder of Digerati Experts" width="768" height="1024" loading="eager" decoding="async" />
-              </picture>
-              <figcaption>Joseph Petro, founder. {COMPANY.addressLocality}, {region}.</figcaption>
-            </figure>
+            <div className="v6-hero-aside">
+              <figure className="v6-hero-mock">
+                <DashboardMockup />
+              </figure>
+            </div>
           </div>
           <div className="v6-wrap">
-            <ul className="v6-facts" aria-label="Three facts">
-              <li className="v6-fact">
-                <strong className="v6-num">{formatPrice(pricing.it.user)} per user a month</strong>
-                <span className="v6-num">Starting price. {formatPrice(pricing.it.monthlyMinimum)} monthly minimum.</span>
-              </li>
-              <li className="v6-fact">
-                <strong>15 minutes</strong>
-                <span>Written response time for a critical issue.</span>
-              </li>
-              <li className="v6-fact">
-                <strong>24/7/365</strong>
-                <span>Emergency incident response availability.</span>
-              </li>
+            <ul className="v6-trust" aria-label="Trusted IT partner for Arizona businesses">
+              {TRUST_STRIP.map((t) => (
+                <li key={t.title}>
+                  <b>{t.title}</b>
+                  <span>{t.body}</span>
+                </li>
+              ))}
             </ul>
           </div>
         </section>
 
         {/* 2. Why we exist */}
-        <section className="v6-section v6-alt" aria-labelledby="v6-why">
+        <section className="v6-section v6-paper" aria-labelledby="v6-why">
           <div className="v6-wrap">
             <div className="v6-head">
               <p className="v6-eyebrow">Why we exist</p>
-              <h2 id="v6-why">A security-first partner, not another vendor.</h2>
+              <h2 id="v6-why">We exist to protect and enable your business.</h2>
               <p className="v6-lede">Most business leaders do not want one more vendor. They want a partner who reduces risk and keeps the team moving.</p>
             </div>
             <div className="v6-strip">
@@ -533,6 +540,7 @@ export default function HomepageV6(): JSX.Element {
                   <small>
                     <a href={f.sourceUrl} rel="noopener noreferrer" target="_blank">
                       {f.source}, {f.year}
+                      <span className="v6-sr-only"> (opens in new tab)</span>
                     </a>
                   </small>
                 </li>
@@ -545,7 +553,7 @@ export default function HomepageV6(): JSX.Element {
         </section>
 
         {/* 4. What we tackle */}
-        <section className="v6-section v6-alt" aria-labelledby="v6-tackle">
+        <section className="v6-section v6-paper" aria-labelledby="v6-tackle">
           <div className="v6-wrap">
             <div className="v6-head">
               <p className="v6-eyebrow">Problems we solve</p>
@@ -604,28 +612,19 @@ export default function HomepageV6(): JSX.Element {
         </section>
 
         {/* 6. The eight blocks and the four steps */}
-        <section className="v6-section v6-alt" aria-labelledby="v6-protect">
+        <section className="v6-section v6-paper" aria-labelledby="v6-protect">
           <div className="v6-wrap">
             <div className="v6-head">
               <p className="v6-eyebrow">What we protect</p>
               <h2 id="v6-protect">Eight blocks. One accountable operating model.</h2>
               <p className="v6-lede">Seven blocks answer a threat class each. Risk and exposure runs continuously beneath all seven as the visibility and intelligence layer.</p>
             </div>
-            <ul className="v6-blocks">
-              {blocks.map((d) => (
-                <li key={d.id} className="v6-block">
-                  <b>{d.name}</b>
-                  <span>{d.architecture.nodes.map((n) => n.title).join(". ")}.</span>
-                </li>
-              ))}
-              <li className="v6-block v6-block-note">Exact scope, controls and cadence depend on the operating model matched to your environment.</li>
-              {continuous && (
-                <li className="v6-block v6-block-wide">
-                  <b>{continuous.name}</b>
-                  <span>{continuous.purpose}</span>
-                </li>
-              )}
-            </ul>
+            <div className="v6-deck" data-testid="v6-protection-deck">
+              <ProtectionCommandDeck />
+            </div>
+            <p className="v6-muted" style={{ marginTop: 16 }}>
+              Exact scope, controls and cadence depend on the operating model matched to your environment. This model is illustrative.
+            </p>
             <hr className="v6-divider" />
             <div className="v6-head" style={{ marginBottom: 28 }}>
               <p className="v6-eyebrow">How protection works</p>
@@ -699,7 +698,7 @@ export default function HomepageV6(): JSX.Element {
         </section>
 
         {/* 8. Fits how you operate, with the written response times */}
-        <section className="v6-section v6-alt" aria-labelledby="v6-fit">
+        <section className="v6-section v6-paper" aria-labelledby="v6-fit">
           <div className="v6-wrap v6-two">
             <div>
               <div className="v6-head" style={{ marginBottom: 28 }}>
@@ -797,7 +796,7 @@ export default function HomepageV6(): JSX.Element {
         </section>
 
         {/* 10. Industries */}
-        <section className="v6-section v6-alt" aria-labelledby="v6-industries">
+        <section className="v6-section" aria-labelledby="v6-industries">
           <div className="v6-wrap">
             <div className="v6-head">
               <p className="v6-eyebrow">Who we work with</p>
@@ -831,9 +830,11 @@ export default function HomepageV6(): JSX.Element {
               <h2 id="v6-pricing">Four operating models. One matched to your environment.</h2>
               <p className="v6-lede">We do not start with a package and pile on add-ons. User count is a signal, never the sole criterion.</p>
             </div>
+            <div className="v6-pricing-shell">
             <ul className="v6-tiers">
               {pricingTiers.map((t) => (
-                <li key={t.id} className="v6-tier">
+                <li key={t.id} className={`v6-tier${t.id === "business" ? " v6-tier-flagship" : ""}`}>
+                  {t.id === "business" ? <p className="v6-tier-flag">Flagship cyber</p> : null}
                   <p className="v6-tier-badge">{t.label}</p>
                   <p className="v6-price v6-num">{formatPrice(t.user)}</p>
                   <p className="v6-muted v6-num">
@@ -858,11 +859,12 @@ export default function HomepageV6(): JSX.Element {
                 Compare everything
               </Link>
             </div>
+            </div>
           </div>
         </section>
 
         {/* 12. Security updates and detection */}
-        <section className="v6-section v6-alt" aria-labelledby="v6-updates">
+        <section className="v6-section" aria-labelledby="v6-updates">
           <div className="v6-wrap v6-two">
             <div>
               <div className="v6-head" style={{ marginBottom: 24 }}>
@@ -870,26 +872,31 @@ export default function HomepageV6(): JSX.Element {
                 <h2 id="v6-updates">Recent threats and insights</h2>
                 <p className="v6-lede">Items prioritized by active exploitation, exploit probability and SMB relevance, within the last 45 days.</p>
               </div>
-              {threats.payload.items.length > 0 ? (
-                <ul className="v6-feed" aria-label="Current security updates">
-                  {threats.payload.items.slice(0, 3).map((item) => (
-                    <li key={item.id}>
-                      <a href={item.sourceUrl} rel="noopener noreferrer" target="_blank">
-                        {item.title}
-                      </a>
-                      <span className="v6-muted">
-                        {item.kicker} · {item.sourceName} · {formatDate(item.publishedAt)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="v6-box">
-                  <b>{threats.loading ? "Checking the feed." : "Nothing meets the homepage threshold right now."}</b>
-                  <p className="v6-muted">The full stream, with dates and sources, is on Security Updates.</p>
-                </div>
-              )}
-              <p className="v6-muted" style={{ marginTop: 12 }}>{THREAT_ATTRIBUTION}</p>
+              <div aria-live="polite" aria-busy={threats.loading || undefined}>
+                {threats.payload.items.length > 0 ? (
+                  <ul className="v6-feed" aria-label="Current security updates">
+                    {threats.payload.items.slice(0, 3).map((item) => (
+                      <li key={item.id}>
+                        <a href={item.sourceUrl} rel="noopener noreferrer" target="_blank">
+                          {item.title}
+                          <span className="v6-sr-only"> (opens in new tab)</span>
+                        </a>
+                        <span className="v6-muted">
+                          {item.kicker} · {item.sourceName} · {formatDate(item.publishedAt)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="v6-box" role="status">
+                    <b>{threats.loading ? "Checking the feed." : "Nothing meets the homepage threshold right now."}</b>
+                    <p className="v6-muted">The full stream, with dates and sources, is on Security Updates.</p>
+                  </div>
+                )}
+              </div>
+              <p className="v6-muted" style={{ marginTop: 12 }}>
+                {threatAttribution}
+              </p>
               <div className="v6-actions" style={{ marginTop: 20 }}>
                 <Link href="/resources/security-updates" className="v6-btn v6-btn-secondary">
                   View all security updates
@@ -928,12 +935,12 @@ export default function HomepageV6(): JSX.Element {
         </section>
 
         {/* 13. The assessment form */}
-        <section className="v6-section" aria-labelledby="v6-book">
+        <section className="v6-section v6-paper" aria-labelledby="v6-book">
           <div className="v6-wrap v6-two">
             <div>
               <div className="v6-head" style={{ marginBottom: 28 }}>
                 <p className="v6-eyebrow">Cyber Risk Assessment</p>
-                <h2 id="v6-book">Book your Cyber Risk Assessment.</h2>
+                <h2 id="v6-book">Get your Cyber Risk Assessment.</h2>
                 <p className="v6-lede">
                   Find identity, endpoint, email, backup and operating gaps before you buy a package. Independent findings, written in plain
                   language.
@@ -957,7 +964,7 @@ export default function HomepageV6(): JSX.Element {
         </section>
 
         {/* 14. Questions, compliance, the monthly note, the cities */}
-        <section className="v6-section v6-alt" aria-labelledby="v6-faq">
+        <section className="v6-section v6-paper" aria-labelledby="v6-faq">
           <div className="v6-wrap">
             <div className="v6-head">
               <p className="v6-eyebrow">Questions</p>
@@ -995,7 +1002,7 @@ export default function HomepageV6(): JSX.Element {
         </section>
 
         {/* 15. The one dark band */}
-        <section className="v6-section v6-dark" aria-labelledby="v6-cta">
+        <section className="v6-section v6-paper" aria-labelledby="v6-cta">
           <div className="v6-wrap">
             <div className="v6-head" style={{ maxWidth: 820 }}>
               <p className="v6-eyebrow">Cyber Risk Assessment</p>
@@ -1025,7 +1032,7 @@ export default function HomepageV6(): JSX.Element {
             <div>
               <div className="v6-head" style={{ marginBottom: 28 }}>
                 <p className="v6-eyebrow">Contact</p>
-                <h2 id="v6-contact">Talk to a person in {COMPANY.addressLocality}.</h2>
+                <h2 id="v6-contact">Ready to secure your business?</h2>
                 <p className="v6-lede">Ask about an assessment, a quote or an existing environment. A person answers.</p>
               </div>
               <dl>
@@ -1085,7 +1092,7 @@ export default function HomepageV6(): JSX.Element {
           <div className="v6-footer-grid">
             <div>
               <Link href="/" className="v6-logo" aria-label="Digerati Experts home">
-                <img src={DE_LOGO_PRIMARY} alt="Digerati Experts" width="158" height="30" />
+                <img src={DE_LOGO_REVERSE} alt="Digerati Experts" width="158" height="30" />
               </Link>
               <p style={{ marginTop: 14, maxWidth: "34ch" }}>
                 Cybersecurity-first managed IT for Arizona businesses. {COMPANY.addressLocality}, {region}.

@@ -97,9 +97,11 @@ body.de-portal-scope[data-portal-theme="light"] {
   --destructive: 0 84% 45%;
   --destructive-foreground: 0 0% 100%;
 
-  --pt-ok: 4 120 87;
-  --pt-warn: 146 64 14;              /* #92400e: 4.5:1 on tinted paper */
-  --pt-bad: 190 18 60;
+  /* Inks clear 4.5:1 on their own 7-10% tint over the orchid field, wells and cards
+     (portalLightTheme.test.ts checks every pair). */
+  --pt-ok: 4 106 77;                 /* #046a4d */
+  --pt-warn: 146 64 14;              /* #92400e */
+  --pt-bad: 182 17 58;               /* #b6113a */
   --pt-info: 21 94 117;              /* #155e75 */
   --pt-brand: 163 14 82;
 
