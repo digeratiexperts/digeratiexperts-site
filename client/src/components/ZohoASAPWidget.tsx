@@ -62,6 +62,19 @@ import { DeskRichText } from "@/lib/deskRichText";
 import { useDraggableWindow } from "@/hooks/useDraggableWindow";
 import { useEscapeKey } from "@/hooks/useFocusTrap";
 import {
+  DESK_COMPOSER_HINT_DELAY_MS,
+  DESK_COMPOSER_HINT_DURATION_MS,
+  DESK_COMPOSER_HINT_KEY,
+  DESK_EXPAND_HINT_DELAY_MS,
+  DESK_EXPAND_HINT_DURATION_MS,
+  DESK_EXPAND_HINT_KEY,
+  DESK_HINT_RETIRED,
+  composerHintDecision,
+  expandHintShouldStart,
+  readDeskHint,
+  writeDeskHint,
+} from "@/lib/deskHints";
+import {
   DESK_INCIDENT_CHIP,
   DESK_STANDARD_TICKET_CHIPS,
   DESK_TICKET_CATEGORIES,
@@ -152,43 +165,6 @@ function trackDeskSupportFieldSpotlight(event: ReactPointerEvent<HTMLElement>) {
   const rect = field.getBoundingClientRect();
   field.style.setProperty("--desk-spot-x", `${Math.round(event.clientX - rect.left)}px`);
   field.style.setProperty("--desk-spot-y", `${Math.round(event.clientY - rect.top)}px`);
-}
-
-/**
- * Two first-visit hints (Joe, 2026-10-02). The Ask DE text box hint ("same
- * with the chat text box field") plays first; the full-screen hint ("animate
- * this so people know to make it full screen") waits for it to settle, so the
- * two never animate together. Each plays at most once per page load and at
- * most DESK_HINT_MAX times per browser, and retires for good once the visitor
- * has done the thing it points at. Storage is a per-viewer convenience: if it
- * is blocked the hints still play, once per page load.
- */
-const DESK_HINT_MAX = 3;
-const DESK_EXPAND_HINT_KEY = "de-desk-expand-hint";
-const DESK_EXPAND_HINT_DELAY_MS = 1200;
-const DESK_EXPAND_HINT_DURATION_MS = 5200;
-const DESK_COMPOSER_HINT_KEY = "de-desk-composer-hint";
-const DESK_COMPOSER_HINT_DELAY_MS = 500;
-const DESK_COMPOSER_HINT_DURATION_MS = 5000;
-type DeskHintState = { used: boolean; shown: number };
-
-function readDeskHint(key: string): DeskHintState {
-  try {
-    const raw = window.localStorage.getItem(key);
-    const parsed = raw ? (JSON.parse(raw) as Partial<DeskHintState> | null) : null;
-    const shown = Number(parsed?.shown);
-    return { used: parsed?.used === true, shown: Number.isFinite(shown) && shown > 0 ? shown : 0 };
-  } catch {
-    return { used: false, shown: 0 };
-  }
-}
-
-function writeDeskHint(key: string, state: DeskHintState) {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(state));
-  } catch {
-    /* blocked storage: the once-per-page-load guard still holds */
-  }
 }
 
 /** Slow light under the pointer on Get Support issue rows. */
@@ -443,16 +419,25 @@ export const ZohoASAPWidget = ({
   // enough to expand, unless a person is live in the chat (no distraction then).
   // It waits for the text box hint, and never starts while someone is typing.
   useEffect(() => {
-    if (!isOpen || !canDrag || isDeskFullscreen || agentLive || expandHintPlayedRef.current) return;
-    if (!composerHintSettled || composerHint || chatInput.trim()) return;
     const stored = readDeskHint(DESK_EXPAND_HINT_KEY);
-    if (stored.used || stored.shown >= DESK_HINT_MAX) return;
-    const start = window.setTimeout(() => {
+    const start = expandHintShouldStart({
+      isOpen,
+      canExpand: canDrag,
+      isFullscreen: isDeskFullscreen,
+      agentLive,
+      playedThisLoad: expandHintPlayedRef.current,
+      composerHintSettled,
+      composerHintShowing: composerHint,
+      composerHasText: !!chatInput.trim(),
+      stored,
+    });
+    if (!start) return;
+    const timer = window.setTimeout(() => {
       expandHintPlayedRef.current = true;
       writeDeskHint(DESK_EXPAND_HINT_KEY, { used: false, shown: stored.shown + 1 });
       setExpandHint(true);
     }, DESK_EXPAND_HINT_DELAY_MS);
-    return () => window.clearTimeout(start);
+    return () => window.clearTimeout(timer);
   }, [isOpen, canDrag, isDeskFullscreen, agentLive, composerHintSettled, composerHint, chatInput]);
   useEffect(() => {
     if (!expandHint) return;
@@ -481,7 +466,9 @@ export const ZohoASAPWidget = ({
         container.querySelectorAll<HTMLElement>(
           'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
         ),
-      ).filter((el) => el.offsetParent !== null);
+        // Only what Tab can reach: the pointer-only resize handles (tabindex -1)
+        // must not be the trap's first or last stop, or focus slips out.
+      ).filter((el) => el.offsetParent !== null && el.tabIndex >= 0);
     };
     window.requestAnimationFrame(() => {
       // Land somewhere useful instead of on the first header button (which
@@ -517,7 +504,24 @@ export const ZohoASAPWidget = ({
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
-      previous?.focus?.();
+      if (previous?.isConnected) {
+        previous?.focus?.({ preventScroll: true });
+        return;
+      }
+      // The element that opened the Desk is gone (a chooser choice unmounts as
+      // the Desk opens), and the Ask DE launcher only re-mounts once the bottom
+      // bar hears the Desk closed. Wait briefly for it so focus does not drop
+      // to the page body, and never take focus from something the visitor has
+      // already moved to.
+      let tries = 0;
+      const returnToLauncher = () => {
+        const active = document.activeElement;
+        if (active && active !== document.body) return;
+        const launcher = document.querySelector<HTMLElement>('[data-testid="button-open-asap-widget"]');
+        if (launcher) launcher.focus({ preventScroll: true });
+        else if (++tries < 10) window.setTimeout(returnToLauncher, 30);
+      };
+      window.setTimeout(returnToLauncher, 0);
     };
   }, [isOpen, deskDrag.panelRef]);
 
@@ -1073,19 +1077,25 @@ export const ZohoASAPWidget = ({
   // Ask DE text box hint: once the greeting has finished, on the Ask DE tab,
   // for a visitor who has not said anything yet and with nobody live.
   useEffect(() => {
-    if (!isOpen || composerHintPlayedRef.current) return;
     const stored = readDeskHint(DESK_COMPOSER_HINT_KEY);
-    if (stored.used || stored.shown >= DESK_HINT_MAX || visitorHasSpoken || agentLive || activeTab !== "chat") {
-      setComposerHintSettled(true);
-      return;
-    }
-    if (!greetingComplete || expandHint) return;
-    const start = window.setTimeout(() => {
+    const decision = composerHintDecision({
+      isOpen,
+      playedThisLoad: composerHintPlayedRef.current,
+      stored,
+      visitorHasSpoken,
+      agentLive,
+      onAskDe: activeTab === "chat",
+      greetingComplete,
+      expandHintShowing: expandHint,
+    });
+    if (decision === "settle") setComposerHintSettled(true);
+    if (decision !== "play") return;
+    const timer = window.setTimeout(() => {
       composerHintPlayedRef.current = true;
       writeDeskHint(DESK_COMPOSER_HINT_KEY, { used: false, shown: stored.shown + 1 });
       setComposerHint(true);
     }, DESK_COMPOSER_HINT_DELAY_MS);
-    return () => window.clearTimeout(start);
+    return () => window.clearTimeout(timer);
   }, [isOpen, activeTab, greetingComplete, visitorHasSpoken, agentLive, expandHint]);
   useEffect(() => {
     if (!composerHint) return;
@@ -1104,7 +1114,7 @@ export const ZohoASAPWidget = ({
   }, [composerHint, chatInput, isOpen, activeTab]);
   // Once the visitor has sent something, the text box hint has done its job for good.
   useEffect(() => {
-    if (visitorHasSpoken) writeDeskHint(DESK_COMPOSER_HINT_KEY, { used: true, shown: DESK_HINT_MAX });
+    if (visitorHasSpoken) writeDeskHint(DESK_COMPOSER_HINT_KEY, DESK_HINT_RETIRED);
   }, [visitorHasSpoken]);
 
   // Get Support, prefilled with what the visitor already told Ask DE. A draft
@@ -1482,11 +1492,14 @@ export const ZohoASAPWidget = ({
               // Docked, the window stops below the live bottom of the site
               // header instead of rising over the nav (it used to cover the
               // right end of the main menu at 1440x900). A floor keeps it
-              // usable on a very short window.
+              // usable on a short window, and a ceiling of the viewport itself
+              // keeps the header and close button on screen when the window is
+              // shorter than the floor (a phone held sideways, 200% zoom); on
+              // those the Desk may sit over the nav rather than off the top.
               ...(deskDrag.size
                 ? {}
                 : {
-                    height: `min(760px, max(440px, calc(100dvh - var(--de-nav-current-bottom, 0px) - var(--de-spy-h, 0px) - ${dockClear} - 16px)))`,
+                    height: `min(760px, calc(100dvh - ${dockClear} - 12px), max(440px, calc(100dvh - var(--de-nav-current-bottom, 0px) - var(--de-spy-h, 0px) - ${dockClear} - 16px)))`,
                     maxHeight: "none",
                   }),
             }),
@@ -1556,7 +1569,7 @@ export const ZohoASAPWidget = ({
                   onClick={() => {
                     const next = !isDeskFullscreen;
                     // Once someone has used full screen, the hint has done its job.
-                    if (next) writeDeskHint(DESK_EXPAND_HINT_KEY, { used: true, shown: DESK_HINT_MAX });
+                    if (next) writeDeskHint(DESK_EXPAND_HINT_KEY, DESK_HINT_RETIRED);
                     setExpandHint(false);
                     setIsDeskFullscreen(next);
                   }}
@@ -2542,7 +2555,11 @@ export const ZohoASAPWidget = ({
                     type="button"
                     className={`de-desk-resize-edge de-desk-resize-${edge}`}
                     data-testid={`desk-resize-${edge}`}
-                    aria-label={`Resize DE Desk from the ${edge} edge`}
+                    // Pointer-only: resizing has no keyboard path here, so the
+                    // handles stay out of the tab order and the accessibility
+                    // tree. Expand in the header is the keyboard way to resize.
+                    tabIndex={-1}
+                    aria-hidden="true"
                     onPointerDown={deskDrag.onResizePointerDown(edge)}
                   />
                 ))}
@@ -2550,7 +2567,9 @@ export const ZohoASAPWidget = ({
                   type="button"
                   className={`de-desk-resize de-desk-resize-se${deskDrag.resizing ? " is-active" : ""}`}
                   data-testid="desk-resize-handle"
-                  aria-label="Resize DE Desk. Drag any edge or this corner, or use Expand in the header."
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  title="Drag any edge or this corner to resize"
                   onPointerDown={deskDrag.onResizePointerDown("se")}
                 >
                   <span aria-hidden="true" />
@@ -4383,6 +4402,29 @@ export const ZohoASAPWidget = ({
               outline: 2px solid #E3B23C;
               outline-offset: -4px;
               border-radius: 10px;
+            }
+            /* Forced colours (Windows contrast themes): fills are replaced by the
+               system's, so every state drawn only with gold would vanish. Give
+               each one a border or outline the system can colour instead. */
+            @media (forced-colors: active) {
+              .de-desk-tab.is-active { border-bottom: 3px solid Highlight; }
+              .de-desk-tab.is-active::after { display: none; }
+              .de-desk-issue-row.is-on,
+              .de-desk-incident.is-on,
+              .de-desk-urgency button.is-on { outline: 2px solid Highlight; outline-offset: -2px; }
+              .de-desk-incident { border: 2px solid CanvasText; }
+              .de-desk-bubble.is-user,
+              .de-desk-btn-grad,
+              .de-desk-send,
+              .de-desk-signin,
+              .de-desk-next-btn.is-primary,
+              .de-desk-action-form-send,
+              .de-desk-jump,
+              .de-desk-security-action,
+              .de-desk-expand-hint { border: 1px solid CanvasText; }
+              .de-desk-send:disabled { border-color: GrayText; }
+              .de-desk-send:disabled svg { color: GrayText; }
+              .de-desk-shell :is(button, a, input, textarea, select):focus-visible { outline-color: Highlight; }
             }
             /* Full screen: the header spans the window, the content sits in a
                readable centred column instead of stretching edge to edge. */
