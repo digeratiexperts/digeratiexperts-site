@@ -253,7 +253,7 @@ export function ShoppingCart() {
                 </p>
                 <Button
                   asChild
-                  className="bg-de-accent text-white hover:bg-[#6548ff]"
+                  className="bg-de-accent text-white hover:bg-[#1d6ff2]"
                   onClick={closeCart}
                   data-testid="button-browse-products"
                 >
@@ -607,11 +607,11 @@ export function ShoppingCart() {
 
                   <div className="space-y-2.5">
                     <Button
-                      className="h-12 w-full bg-de-accent text-white hover:bg-[#6548ff]"
+                      className="h-12 w-full bg-de-accent text-white hover:bg-[#1d6ff2]"
                       onClick={goCheckout}
                       data-testid="button-checkout"
                     >
-                      Continue to Checkout
+                      Continue to staff checkout
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                     <Button
@@ -621,7 +621,7 @@ export function ShoppingCart() {
                       data-testid="button-save-quote"
                     >
                       <FileText className="mr-2 h-4 w-4" />
-                      Request Formal Quote
+                      Staff quote (no charge)
                     </Button>
                     <div className="grid grid-cols-2 gap-2">
                       <Button
@@ -630,7 +630,7 @@ export function ShoppingCart() {
                         onClick={closeCart}
                         data-testid="button-continue-shopping"
                       >
-                        Continue shopping
+                        Continue catalog
                       </Button>
                       <Button
                         asChild

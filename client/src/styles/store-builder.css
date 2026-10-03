@@ -1745,6 +1745,180 @@ html.de-store-jelly .d2-sheet-panel[data-state="open"] {
 }
 
 /* ---------------------------------------------------------------------- */
+/* Guidance and separation (Joe, 2026-10-03)                                */
+/* ---------------------------------------------------------------------- */
+/*
+ * "More dynamic animations that lead the user to do a task, and colour
+ * accents or background cards to separate tasks and categories." Extends the
+ * Stations precedent (§8, 2026-10-01): electric only, token colour only, and
+ * every motion collapses under prefers-reduced-motion.
+ */
+
+/* Situations: each one is its own card. */
+.d2-grid--cards {
+  gap: 1rem;
+}
+.d2-grid--cards > .d2-cell {
+  padding: 1.25rem 1.25rem 1.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-top: 3px solid rgba(255, 255, 255, 0.14);
+  border-radius: 1rem;
+  background: linear-gradient(160deg, rgb(var(--de-accent-rgb) / 0.07), var(--de-raised) 55%);
+  transition:
+    transform 200ms var(--d2-ease),
+    border-color 200ms var(--d2-ease),
+    box-shadow 200ms var(--d2-ease);
+}
+.d2-grid--cards > .d2-cell:hover,
+.d2-grid--cards > .d2-cell:focus-within {
+  transform: translateY(-3px);
+  border-color: rgb(var(--de-accent-rgb) / 0.45);
+  box-shadow: 0 14px 34px -18px rgb(var(--de-accent-rgb) / 0.55);
+}
+.d2-grid--cards > .d2-cell--added {
+  border-top-color: var(--d2-accent);
+  background: linear-gradient(160deg, rgb(var(--de-accent-rgb) / 0.16), var(--de-raised) 60%);
+}
+
+/* Goal groups: one card per category, the label marked with an electric bar. */
+.d2-group--card {
+  margin-top: 1.25rem;
+  padding: 0.9rem 1.1rem 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, rgb(var(--de-accent-rgb) / 0.06), rgba(255, 255, 255, 0.015) 70%);
+}
+.d2-group--card > h3,
+.d2-group--card > summary > h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.d2-group--card > h3::before,
+.d2-group--card > summary > h3::before {
+  content: "";
+  width: 4px;
+  height: 1.1em;
+  border-radius: 9999px;
+  background: var(--d2-accent);
+  box-shadow: 0 0 12px rgb(var(--de-accent-rgb) / 0.6);
+}
+.d2-group--card .d2-grid > .d2-cell {
+  border-radius: 0.75rem;
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+  transition:
+    background-color 180ms var(--d2-ease),
+    border-color 180ms var(--d2-ease);
+}
+.d2-group--card .d2-grid > .d2-cell:hover,
+.d2-group--card .d2-grid > .d2-cell:focus-within {
+  background-color: rgb(var(--de-accent-rgb) / 0.08);
+}
+
+/* "Start here": the first task before anything is added. */
+.d2-cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(var(--de-accent-rgb) / 0.55);
+  background: rgb(var(--de-accent-rgb) / 0.14);
+  color: var(--d2-accent-ink);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.d2-cue__chevron {
+  animation: d2-bob 1.6s var(--d2-ease) infinite;
+}
+@keyframes d2-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+/* The next-step action: an arrow that leans toward it, and a ring after each add. */
+.d2-action__arrow {
+  animation: d2-nudge 2.4s var(--d2-ease) infinite;
+}
+.d2-action:hover .d2-action__arrow {
+  animation: none;
+  transform: translateX(4px);
+}
+@keyframes d2-nudge {
+  0%,
+  60%,
+  100% {
+    transform: translateX(0);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+  85% {
+    transform: translateX(1px);
+  }
+}
+.d2-action--primary[data-d2-attn="true"] {
+  animation: d2-attn 1.3s var(--d2-ease) 3;
+}
+@keyframes d2-attn {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--de-magenta) 70%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 14px color-mix(in srgb, var(--de-magenta) 0%, transparent);
+  }
+}
+
+/* The family page's forward step sits on its own electric-edged card. */
+.d2-next {
+  margin-top: 1.5rem;
+  padding: 1.25rem 1.25rem 1.5rem;
+  border: 1px solid rgb(var(--de-accent-rgb) / 0.35);
+  border-left: 4px solid var(--d2-accent);
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, rgb(var(--de-accent-rgb) / 0.12), var(--de-raised) 50%);
+}
+.d2-next__label {
+  margin-bottom: 0.75rem;
+  color: var(--d2-accent-ink);
+}
+
+/* Scroll reveal: cards rise in once as they arrive. Hidden only while the hook runs. */
+html.d2-reveal-ready [data-d2-reveal]:not([data-d2-reveal="in"]) {
+  opacity: 0;
+  transform: translateY(14px);
+}
+html.d2-reveal-ready [data-d2-reveal] {
+  transition:
+    opacity 480ms var(--d2-ease) var(--d2-delay, 0ms),
+    transform 480ms var(--d2-ease) var(--d2-delay, 0ms),
+    border-color 200ms var(--d2-ease),
+    box-shadow 200ms var(--d2-ease);
+}
+html.d2-reveal-ready .d2-grid--cards > [data-d2-reveal="in"]:hover {
+  transform: translateY(-3px);
+}
+
+@media print {
+  .d2-cue,
+  .d2-action__arrow {
+    display: none !important;
+  }
+  html.d2-reveal-ready [data-d2-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
 /* Reduced motion — one switch, every transition and animation to zero      */
 /* ---------------------------------------------------------------------- */
 
@@ -1761,5 +1935,19 @@ html.de-store-jelly .d2-sheet-panel[data-state="open"] {
   .d2-hairline-draw {
     animation: none;
     transform: none;
+  }
+  .d2-cue__chevron,
+  .d2-action__arrow,
+  .d2-action--primary[data-d2-attn="true"] {
+    animation: none !important;
+  }
+  .d2-grid--cards > .d2-cell:hover,
+  .d2-grid--cards > .d2-cell:focus-within,
+  html.d2-reveal-ready .d2-grid--cards > [data-d2-reveal="in"]:hover {
+    transform: none;
+  }
+  html.d2-reveal-ready [data-d2-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

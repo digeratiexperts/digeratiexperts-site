@@ -1,0 +1,8 @@
+{
+  "checked": "2026-10-03T21:30Z",
+  "site": "https://digeratiexperts.com",
+  "release": "49a6247 (PR 414), CI run 37154776479: every job passed, including the production deploy",
+  "deskChunk": "/assets/ZohoASAPWidget-UXRnjllj.js carried de-desk-composer-suggest from 21:26:19Z",
+  "browserCheck": "report.json: Playwright at 390 and 1440 on the live homepage. First example at 3.2s (390) and 4.0s (1440) after the Desk opened, in gold inside the text box hint; all five examples in order; the textarea's own placeholder transparent while an example shows; 'Type the issue…' back after the pass; focus restarts a pass; typing ends it; none under reduced motion; no page errors.",
+  "deskSmoke": "scripts/desk-browser-smoke.mjs against production: 88/88"
+}

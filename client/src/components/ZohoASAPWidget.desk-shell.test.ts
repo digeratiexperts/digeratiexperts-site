@@ -358,7 +358,7 @@ describe("DE Desk shell positioning", () => {
     // as behaviour in client/src/lib/deskHints.test.ts. Here: the Desk feeds them
     // the right facts and acts on the answer.
     expect(src).toMatch(/from "@\/lib\/deskHints"/);
-    expect(src).toMatch(/const start = expandHintShouldStart\(\{\s*isOpen,\s*canExpand: canDrag,\s*isFullscreen: isDeskFullscreen,\s*agentLive,\s*playedThisLoad: expandHintPlayedRef\.current,\s*composerHintSettled,\s*composerHintShowing: composerHint,\s*composerHasText: !!chatInput\.trim\(\),\s*stored,\s*\}\);\s*if \(!start\) return;/);
+    expect(src).toMatch(/const start = expandHintShouldStart\(\{\s*isOpen,\s*canExpand: canDrag,\s*isFullscreen: isDeskFullscreen,\s*agentLive,\s*playedThisLoad: expandHintPlayedRef\.current,\s*composerHintSettled,\s*\/\/[^\n]*\n\s*composerHintShowing: composerHint \|\| suggestIndex !== null,\s*composerHasText: !!chatInput\.trim\(\),\s*stored,\s*\}\);\s*if \(!start\) return;/);
     // Retired once the visitor has used full screen.
     expect(src).toMatch(/if \(next\) writeDeskHint\(DESK_EXPAND_HINT_KEY, DESK_HINT_RETIRED\);/);
     // Every hint animation is finite: no infinite loop on the button.
@@ -372,7 +372,7 @@ describe("DE Desk shell positioning", () => {
 
   it("hints at the Ask DE text box first, stops when someone types, and retires after their first message", () => {
     // Joe, 2026-10-02: "same with the chat text box field".
-    expect(src).toMatch(/className=\{`de-desk-composer\$\{headsUp \|\| unreadChatCount \? " is-live" : ""\}\$\{composerHint \? " is-hinting" : ""\}`\}/);
+    expect(src).toMatch(/className=\{`de-desk-composer\$\{headsUp \|\| unreadChatCount \? " is-live" : ""\}\$\{composerHint \? " is-hinting" : ""\}\$\{suggestionOnShow \? " is-suggesting" : ""\}`\}/);
     // The rule is tested as behaviour in deskHints.test.ts; the Desk feeds it the
     // right facts, settles when told to, and only starts on "play".
     expect(src).toMatch(/const decision = composerHintDecision\(\{\s*isOpen,\s*playedThisLoad: composerHintPlayedRef\.current,\s*stored,\s*visitorHasSpoken,\s*agentLive,\s*onAskDe: activeTab === "chat",\s*greetingComplete,\s*expandHintShowing: expandHint,\s*\}\);\s*if \(decision === "settle"\) setComposerHintSettled\(true\);\s*if \(decision !== "play"\) return;/);

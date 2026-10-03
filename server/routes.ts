@@ -153,7 +153,20 @@ import { registerRetiredLegacyAuthRoutes } from "./legacyAuthRetired";
 import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter, paymentRateLimiter } from "./middleware/rateLimiter";
 import { enqueueOutbox } from "./integrations/deSyncStore";
 import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
+import {
+  ACCOUNT_MANAGERS,
+  DEFAULT_ACCOUNT_MANAGER_ID,
+  SALES_DEPARTMENT,
+  accountTeamFor,
+  isAccountManagerId,
+  resolveAccountManager,
+} from "@shared/accountManagers";
 import { appendSituationToDescription, parseAnonymousSituation } from "@shared/anonymousSituation";
+
+/** Assigned account manager + sales department for a prospect/client (default when unassigned). */
+function accountTeamForClient(clientId: string | null | undefined) {
+  return accountTeamFor(clientId ? portalAuthGetClient(clientId)?.accountManager : null);
+}
 
 // Canonical JWT secret — resolved per call so dotenv/env load order cannot
 // split signing and verification across different secrets (see config/authSecrets).
@@ -1351,6 +1364,7 @@ export async function registerRoutes(app: Express) {
           manager: mgr.manager,
           companyDomains: mgr.companyDomains,
         },
+        accountTeam: accountTeamForClient(live.clientId),
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -4187,7 +4201,7 @@ export async function registerRoutes(app: Express) {
 
       const { buildOrderPdfHtml, orderPdfFileBase } = await import("./pdf/storeOrderPdf");
       const { renderHtmlToPdf, PdfRendererUnavailableError } = await import("./pdf/renderHtmlToPdf");
-      const html = buildOrderPdfHtml(order, { variant: "receipt" });
+      const html = buildOrderPdfHtml(order, { variant: "receipt", accountTeam: accountTeamForClient(order.clientId) });
       const fileBase = orderPdfFileBase(order, "receipt");
 
       logSecurityEvent("RECEIPT_GENERATED", req, {
@@ -4413,6 +4427,8 @@ export async function registerRoutes(app: Express) {
         contactEmail: client.contactEmail,
         status: client.status || "active",
         type: client.type || "client", // "msp" for Digerati, "client" for customers
+        serviceType: client.serviceType || "prospect",
+        accountManager: resolveAccountManager(client.accountManager).id,
         userCount: Array.from(portalUsers.values()).filter(u => u.clientId === client.id).length,
         createdAt: client.createdAt,
       }));
@@ -4423,6 +4439,11 @@ export async function registerRoutes(app: Express) {
     }
   });
   
+  // Account manager profiles (shared/accountManagers.ts) for the assignment picker
+  app.get("/api/portal/admin/account-managers", [authMiddleware, requireAdmin], (_req: AuthenticatedRequest, res: Response) => {
+    res.json({ accountManagers: ACCOUNT_MANAGERS, defaultId: DEFAULT_ACCOUNT_MANAGER_ID, sales: SALES_DEPARTMENT });
+  });
+
   // Admin tenant selector - quick list for dropdown
   app.get("/api/portal/admin/tenants", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -4479,10 +4500,13 @@ export async function registerRoutes(app: Express) {
   // Create new company (admin only)
   app.post("/api/portal/admin/companies", [authMiddleware, requireAdmin, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { companyName, contactEmail, contactPhone, industry, primaryContact } = req.body;
+      const { companyName, contactEmail, contactPhone, industry, primaryContact, accountManager } = req.body;
       
       if (!companyName || !contactEmail) {
         return res.status(400).json({ error: "Company name and contact email are required" });
+      }
+      if (accountManager && !isAccountManagerId(accountManager)) {
+        return res.status(400).json({ error: "Unknown account manager" });
       }
       
       const newCompany = {
@@ -4492,6 +4516,7 @@ export async function registerRoutes(app: Express) {
         contactPhone: contactPhone || null,
         industry: industry || null,
         primaryContact: primaryContact || null,
+        accountManager: accountManager || DEFAULT_ACCOUNT_MANAGER_ID,
         status: "active",
         type: "client", // New companies are always clients, not MSP
         createdAt: new Date(),
@@ -4515,7 +4540,10 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Company not found" });
       }
       
-      const { companyName, contactEmail, contactPhone, industry, primaryContact, status } = req.body;
+      const { companyName, contactEmail, contactPhone, industry, primaryContact, status, accountManager } = req.body;
+      if (accountManager && !isAccountManagerId(accountManager)) {
+        return res.status(400).json({ error: "Unknown account manager" });
+      }
       
       const updatedCompany = {
         ...company,
@@ -4525,6 +4553,7 @@ export async function registerRoutes(app: Express) {
         industry: industry !== undefined ? industry : company.industry,
         primaryContact: primaryContact !== undefined ? primaryContact : company.primaryContact,
         status: status || company.status,
+        accountManager: accountManager !== undefined ? accountManager || null : company.accountManager,
       };
       
       await portalClients.commit(updatedCompany);
@@ -5370,6 +5399,7 @@ export async function registerRoutes(app: Express) {
           billingCompany: order.billingCompany,
           paidAt: order.paidAt,
           createdAt: order.createdAt,
+          accountTeam: accountTeamForClient(order.clientId),
         });
       }
 
@@ -5393,7 +5423,7 @@ export async function registerRoutes(app: Express) {
         return res.status(403).json({ error: "Access denied" });
       }
 
-      res.json(order);
+      res.json({ ...order, accountTeam: accountTeamForClient(order.clientId) });
     } catch (error: any) {
       console.error("[GET ORDER ERROR]", error);
       res.status(500).json({ error: error.message || "Failed to get order" });
@@ -5450,6 +5480,7 @@ export async function registerRoutes(app: Express) {
         const pdf = await renderOrderPdf(order, {
           variant: "confirmation",
           redactBillingAddress: viaConfirmationToken,
+          accountTeam: accountTeamForClient(order.clientId),
         });
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader(
@@ -5610,7 +5641,7 @@ export async function registerRoutes(app: Express) {
 
       res.setHeader("Cache-Control", "no-store");
       try {
-        const pdf = await buildQuotePdf(quoteRequest);
+        const pdf = await buildQuotePdf({ ...quoteRequest, accountTeam: accountTeamForClient(quoteRequest.clientId) });
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", `attachment; filename="${quoteRequest.quoteNumber}.pdf"`);
         return res.send(pdf);
@@ -5624,7 +5655,7 @@ export async function registerRoutes(app: Express) {
         console.error("[QUOTE PDF] renderer unavailable, serving HTML:", err.message);
         res.setHeader("Content-Type", "text/html; charset=utf-8");
         res.setHeader("Content-Disposition", `attachment; filename="${quoteRequest.quoteNumber}.html"`);
-        return res.send(buildQuotePdfHtml(quoteRequest));
+        return res.send(buildQuotePdfHtml({ ...quoteRequest, accountTeam: accountTeamForClient(quoteRequest.clientId) }));
       }
     } catch (error: any) {
       console.error("[GET QUOTE PDF ERROR]", error);
@@ -5658,6 +5689,7 @@ export async function registerRoutes(app: Express) {
         status: quoteRequest.status,
         createdAt: quoteRequest.createdAt,
         pdfUrl: `/api/store/quote-requests/${quoteRequest.id}/pdf`,
+        accountTeam: accountTeamForClient(quoteRequest.clientId),
       });
     } catch (error: any) {
       console.error("[GET QUOTE REQUEST ERROR]", error);

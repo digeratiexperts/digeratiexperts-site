@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, Link } from "wouter";
 import { motion } from "framer-motion";
-import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "../sections/DigeratiEnhancedFooterSection";
 import { Button } from "@/components/ui/button";
 import { useSEO } from "@/hooks/useSEO";
@@ -101,15 +100,14 @@ const ProductDetail = () => {
   if (!product) {
     return (
       <div className="min-h-screen bg-[#0a0a0a]">
-        <MegaMenu />
         <main className="de-nav-clear pb-20">
           <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
             <h1 className="mb-4 text-3xl font-bold text-white">Product Not Found</h1>
             <p className="mb-8 text-white/60">The product you're looking for doesn't exist.</p>
             <Link href="/internal/warehouse">
-              <Button className="bg-de-accent text-white hover:bg-[#6548ff]">
+              <Button className="bg-de-accent text-white hover:bg-[#1d6ff2]">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Store
+                Back to warehouse
               </Button>
             </Link>
           </div>
@@ -195,7 +193,6 @@ const ProductDetail = () => {
           { name: product.name, url: `/internal/warehouse/product/${product.sku}` },
         ]}
       />
-      <MegaMenu />
 
       <main className="relative z-10 de-nav-clear pb-28 lg:pb-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -399,7 +396,7 @@ const ProductDetail = () => {
                     and receive a custom quote.
                   </p>
                   <Button asChild
-                      className="w-full bg-de-accent py-6 text-lg text-white hover:bg-[#6548ff]"
+                      className="w-full bg-de-accent py-6 text-lg text-white hover:bg-[#1d6ff2]"
                       data-testid="button-schedule-consultant"
                     >
                   <a href="/book" target="_blank" rel="noopener noreferrer">
@@ -458,7 +455,7 @@ const ProductDetail = () => {
                   {product.isClientOnly && !isLoggedIn ? (
                     <div className="space-y-3">
                       <Button
-                        className="w-full bg-de-accent py-6 text-lg text-white hover:bg-[#6548ff]"
+                        className="w-full bg-de-accent py-6 text-lg text-white hover:bg-[#1d6ff2]"
                         onClick={loginRedirect}
                         data-testid="button-login-to-purchase"
                       >
@@ -473,7 +470,7 @@ const ProductDetail = () => {
                   ) : configurable ? (
                     <div className="space-y-3">
                       <Button
-                        className="w-full bg-de-accent py-6 text-lg text-white hover:bg-[#6548ff]"
+                        className="w-full bg-de-accent py-6 text-lg text-white hover:bg-[#1d6ff2]"
                         onClick={() => setConfigureOpen(true)}
                         data-testid="button-configure"
                       >
@@ -493,7 +490,7 @@ const ProductDetail = () => {
                   ) : (
                     <>
                       <Button
-                        className="w-full bg-de-accent py-6 text-lg text-white hover:bg-[#6548ff]"
+                        className="w-full bg-de-accent py-6 text-lg text-white hover:bg-[#1d6ff2]"
                         onClick={handleAddToCart}
                         data-testid="button-add-to-cart"
                       >
@@ -678,14 +675,14 @@ const ProductDetail = () => {
             </div>
             {configurable ? (
               <Button
-                className="bg-de-accent text-white hover:bg-[#6548ff]"
+                className="bg-de-accent text-white hover:bg-[#1d6ff2]"
                 onClick={() => setConfigureOpen(true)}
               >
                 Configure
               </Button>
             ) : (
               <Button
-                className="bg-de-accent text-white hover:bg-[#6548ff]"
+                className="bg-de-accent text-white hover:bg-[#1d6ff2]"
                 onClick={handleAddToCart}
               >
                 Add to Solution

@@ -15,6 +15,7 @@ import {
   Shield,
   ShieldAlert,
   type LucideIcon,
+  ChevronDown,
 } from "lucide-react";
 import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
@@ -28,6 +29,7 @@ import { SolutionBar, SolutionRail, type SolutionChromeProps } from "@/component
 import { IconWell } from "@/components/visual/IconWell";
 import { useSEO } from "@/hooks/useSEO";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useStoreReveal } from "@/hooks/useStoreGuidance";
 import { useMinWidth, useSolutionDraft } from "@/hooks/useSolutionDraft";
 import { curatedSolutionFamilies, type CuratedSolutionFamily } from "@/data/curatedSolutions";
 import { composeScenario, solutionScenarios, type SolutionScenario } from "@/data/solutionScenarios";
@@ -184,6 +186,7 @@ export default function BusinessNeedsIndex() {
   const { announce } = useAnnouncer();
   const [, navigate] = useLocation();
   const reducedMotion = useReducedMotion();
+  useStoreReveal();
   const twoColumns = useMinWidth(640);
   const groupsOpenByWidth = useMinWidth(768);
 
@@ -482,7 +485,13 @@ export default function BusinessNeedsIndex() {
                   lede="Pick the one that sounds like you. It adds the needs that situation calls for, and you can undo."
                   testId="store-situations"
                 >
-                  <HairGrid cols={2} as="ul" className="mt-8">
+                  {draft.needs.length === 0 ? (
+                    <p className="d2-cue mt-6" data-testid="store-start-here">
+                      Start here
+                      <ChevronDown className="d2-cue__chevron h-4 w-4" aria-hidden="true" />
+                    </p>
+                  ) : null}
+                  <HairGrid cols={2} as="ul" className="mt-6 d2-grid--cards">
                     {solutionScenarios.map((scenario, index) => (
                       <Fragment key={scenario.id}>
                         <ScenarioTile
@@ -490,6 +499,7 @@ export default function BusinessNeedsIndex() {
                           compose={composeScenario(scenario, familyIds)}
                           onStart={startScenario}
                           onReview={() => navigate(SOLUTION_WORKSPACE_PATH)}
+                          revealIndex={index}
                           footer={
                             INCIDENT_SCENARIOS.has(scenario.id) ? (
                               <>
@@ -600,7 +610,8 @@ export default function BusinessNeedsIndex() {
                       return (
                         <details
                           key={goal.id}
-                          className="d2-group"
+                          className="d2-group d2-group--card"
+                          data-d2-reveal=""
                           open={openGroups.has(goal.id)}
                           onToggle={(event) => setGroupOpen(goal.id, event.currentTarget.open)}
                           data-testid={`goal-group-${goal.id}`}
@@ -615,7 +626,7 @@ export default function BusinessNeedsIndex() {
                       );
                     }
                     return (
-                      <section key={goal.id} className="d2-group" aria-labelledby={headingId} data-testid={`goal-group-${goal.id}`}>
+                      <section key={goal.id} className="d2-group d2-group--card" aria-labelledby={headingId} data-testid={`goal-group-${goal.id}`} data-d2-reveal="">
                         <h3 id={headingId} className="d2-h3">
                           {goal.label}
                         </h3>

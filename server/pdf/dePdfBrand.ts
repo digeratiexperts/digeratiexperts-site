@@ -13,6 +13,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
 import { DE_DOC_FONT_FACES, DE_DOC_FONTS_DIR, DE_DOC_TOKENS } from "@shared/deDocumentTokens";
+import type { AccountTeam } from "@shared/accountManagers";
 import { DE_LOGO_WHITE_DATA_URI } from "./deLogoWhiteDataUri";
 
 export const T = DE_DOC_TOKENS;
@@ -145,11 +146,15 @@ a{color:inherit;text-decoration:none}
 b,strong{font-weight:600}
 h1,h2,h3{break-after:avoid;page-break-after:avoid}
 p{orphans:3;widows:3}
-tr,.keep,.pkg-head,.rec,.panel{break-inside:avoid;page-break-inside:avoid}
+tr,.keep,.pkg-head,.rec,.team,.panel{break-inside:avoid;page-break-inside:avoid}
 .nowrap{white-space:nowrap}
 .money,td.num{font-variant-numeric:tabular-nums}
 .lbl{font-family:${DE_FONT.label};font-size:7pt;letter-spacing:.08em;text-transform:uppercase;color:${T.muted};font-weight:400}
 .link{border-bottom:.7pt solid ${T.mag}}
+/* Proportional (Inter) caps labels keep tracking at .03em. Chromium 151 breaks
+   wider-tracked runs into separate text runs, and copy/paste and screen
+   readers then read "SOLUTI ON PACK ET". Monospace labels (Plex Mono) are
+   unaffected. */
 
 /* ---------- brief band (page 1, full bleed) ---------- */
 .band{background:${T.ink};color:#fff;padding:30pt 50pt 22pt}
@@ -159,10 +164,10 @@ tr,.keep,.pkg-head,.rec,.panel{break-inside:avoid;page-break-inside:avoid}
 .band .logo{height:22pt;width:auto;display:block}
 .band .brand-fallback{font-family:${DE_FONT.display};font-weight:600;font-size:13pt;letter-spacing:.04em}
 .band .k{font-family:${DE_FONT.label};font-size:7pt;letter-spacing:.08em;text-transform:uppercase;color:#cfccd8}
-.band .eyebrow{font-size:7.2pt;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:#cfccd8;margin-top:22pt}
+.band .eyebrow{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:#cfccd8;margin-top:22pt}
 .band h1{font-family:${DE_FONT.display};font-weight:600;font-size:28pt;line-height:1.05;letter-spacing:-.02em;color:#fff;margin-top:5pt}
 .band .q{font-size:10.4pt;color:#e6e4ea;margin-top:7pt}
-.band .stamp{display:inline-block;margin-top:12pt;border:1pt solid #fff;padding:2pt 7pt;font-size:7.2pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.band .stamp{display:inline-block;margin-top:12pt;border:1pt solid #fff;padding:2pt 7pt;font-size:7.2pt;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
 .band-rule{height:3pt;background:${T.mag}}
 
 /* spec strip: document identification under the band */
@@ -228,7 +233,7 @@ table.two > tbody > tr > td:last-child{padding-left:12pt}
 /* solution packages */
 .pkg{margin-top:10pt;break-inside:auto}
 .pkg-head{border-left:2.4pt solid ${T.ink};padding:2pt 0 2pt 11pt;margin-bottom:4pt}
-.pkg-family{font-size:7.2pt;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:${T.magText}}
+.pkg-family{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:${T.magText}}
 .pkg-title{font-family:${DE_FONT.display};font-weight:600;font-size:11pt;margin-top:2pt}
 .pkg-meta{font-family:${DE_FONT.label};font-size:7pt;letter-spacing:.04em;color:${T.muted};margin-top:3pt}
 .pkg-meta span + span::before{content:"  \\00B7  ";color:${T.muted}}
@@ -241,9 +246,20 @@ table.lines td.qty{text-align:right;white-space:nowrap;color:${T.ink2};padding-r
 
 /* ---------- brief close ---------- */
 table.rec{width:100%;border-collapse:collapse;margin-top:18pt;background:${T.paper}}
+table.team{width:100%;border-collapse:collapse;margin-top:10pt;border:.7pt solid ${T.rule}}
+table.team td{vertical-align:top}
+table.team td.who{padding:8pt 12pt}
+table.team td.dept{padding:8pt 12pt;width:36%;border-left:.7pt solid ${T.rule}}
+.team .eyebrow{font-size:7.2pt;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:${T.magText};margin-bottom:4pt}
+.team td.ph{width:34pt;padding:0 9pt 0 0;vertical-align:middle}
+.team td.ph img{width:34pt;height:34pt;border-radius:50%;display:block}
+.team .nm{font-weight:600;font-size:9.6pt}
+.team .tt{color:${T.ink2};font-size:8.2pt;font-weight:400}
+.team .ct{font-size:8.4pt;margin-top:3pt}
+.team .ct a{margin-right:12pt}
 table.rec td.bar{width:4pt;background:${T.mag};padding:0}
 table.rec td.in{padding:10pt 15pt 11pt}
-.rec .eyebrow{font-size:7.2pt;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:${T.magText}}
+.rec .eyebrow{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:${T.magText}}
 .rec h2{display:block;font-size:14pt;margin:3pt 0 4pt}
 .rec p{color:${T.ink2}}
 .rec .ct{margin-top:8pt;font-weight:600;font-size:8.8pt}
@@ -304,6 +320,47 @@ export function closeBlock(opts: { heading: string; text: string; email?: string
       ${opts.portal ? `<a class="link" href="https://${DE_PDF.portal}">${DE_PDF.portal}</a>` : `<a class="link" href="https://${DE_PDF.website}">${DE_PDF.website}</a>`}
     </div>
   </td></tr></table>`;
+}
+
+const photoCache = new Map<string, string | null>();
+/** Account manager headshot as a data URI (renderers never fetch over the network). */
+export function accountPhotoDataUri(sitePath: string): string | null {
+  if (photoCache.has(sitePath)) return photoCache.get(sitePath)!;
+  let uri: string | null = null;
+  for (const root of ["client/public", "dist/public"]) {
+    try {
+      const buf = fs.readFileSync(repoPath(root, sitePath.replace(/^\/+/, "")));
+      uri = `data:image/jpeg;base64,${buf.toString("base64")}`;
+      break;
+    } catch {
+      // try the next root
+    }
+  }
+  photoCache.set(sitePath, uri);
+  return uri;
+}
+
+/** "Your account team": assigned account manager (photo, title, contact) plus the sales department. */
+export function accountTeamBlock(team: AccountTeam): string {
+  const m = team.manager;
+  const photo = accountPhotoDataUri(m.photo.jpg);
+  return `<table class="team" role="presentation"><tr>
+    <td class="who">
+      <div class="eyebrow">Your account manager</div>
+      <table role="presentation"><tr>
+        ${photo ? `<td class="ph"><img src="${photo}" alt="${esc(m.photo.alt)}"/></td>` : ""}
+        <td>
+          <div class="nm">${esc(m.name)} <span class="tt">\u00B7 ${esc(m.title)}</span></div>
+          <div class="ct"><a class="link" href="mailto:${esc(m.email)}">${esc(m.email)}</a><a class="link" href="${esc(m.phoneHref)}">${esc(m.phoneDisplay)}</a></div>
+        </td>
+      </tr></table>
+    </td>
+    <td class="dept">
+      <div class="eyebrow">${esc(team.sales.name)}</div>
+      <div class="ct"><a class="link" href="mailto:${esc(team.sales.email)}">${esc(team.sales.email)}</a></div>
+      <div class="ct"><a class="link" href="${esc(team.sales.phoneHref)}">${esc(team.sales.phoneDisplay)}</a></div>
+    </td>
+  </tr></table>`;
 }
 
 /** Document shell: one H1 (in the band), language, title, styles. */

@@ -370,6 +370,11 @@ app.use((req, res, next) => {
   if (req.path === "/about/mission") {
     return res.redirect(301, "/about/mission-values");
   }
+  // Version 8 became the homepage (Joe, 2026-10-03); its preview URL folds into /.
+  if (req.path === "/version-8" || req.path === "/version-8/") {
+    const q = req.originalUrl.indexOf("?");
+    return res.redirect(301, q === -1 ? "/" : "/" + req.originalUrl.slice(q));
+  }
   next();
 });
 

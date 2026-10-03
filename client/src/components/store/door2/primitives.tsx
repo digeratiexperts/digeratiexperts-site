@@ -1,6 +1,6 @@
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { Link } from "wouter";
-import { Check, Copy, MessageCircle, Phone } from "lucide-react";
+import { ArrowRight, Check, Copy, MessageCircle, Phone } from "lucide-react";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { openMspAdvisor } from "@/lib/openMspAdvisor";
 import { useAnnouncer } from "@/components/AccessibleAnnouncer";
@@ -221,6 +221,8 @@ export function StoreAction({
   className = "",
   ariaLabel,
   ariaBusy,
+  lead = false,
+  attention = false,
 }: {
   variant?: ActionVariant;
   href?: string;
@@ -236,20 +238,34 @@ export function StoreAction({
   className?: string;
   ariaLabel?: string;
   ariaBusy?: boolean;
+  /** The next-step action: a trailing arrow that nudges toward it (Joe, 2026-10-03). */
+  lead?: boolean;
+  /** Play the attention ring (a need was just added). */
+  attention?: boolean;
 }) {
   const reasonId = useId();
   const classes = `d2-action d2-action--${variant}${block ? " d2-action--block" : ""}${size ? ` d2-action--${size}` : ""} ${className}`;
+  const attn = attention && !disabled ? "true" : undefined;
+  const content =
+    lead && !disabled ? (
+      <>
+        {children}
+        <ArrowRight className="d2-action__arrow h-4 w-4" aria-hidden="true" />
+      </>
+    ) : (
+      children
+    );
   if (href && !disabled) {
     if (external) {
       return (
-        <a href={href} className={classes} data-testid={testId} aria-label={ariaLabel} onClick={onClick}>
-          {children}
+        <a href={href} className={classes} data-testid={testId} aria-label={ariaLabel} onClick={onClick} data-d2-attn={attn}>
+          {content}
         </a>
       );
     }
     return (
-      <Link href={href} className={classes} data-testid={testId} aria-label={ariaLabel} onClick={onClick}>
-        {children}
+      <Link href={href} className={classes} data-testid={testId} aria-label={ariaLabel} onClick={onClick} data-d2-attn={attn}>
+        {content}
       </Link>
     );
   }
@@ -264,8 +280,9 @@ export function StoreAction({
         aria-label={ariaLabel}
         aria-busy={ariaBusy}
         data-testid={testId}
+        data-d2-attn={attn}
       >
-        {children}
+        {content}
       </button>
       {disabled && reason ? (
         <span id={reasonId} className="d2-small d2-ink-soft mt-2 block">

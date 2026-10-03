@@ -26,6 +26,11 @@ describe("store quote PDF", () => {
     expect(html).toContain("#D3126A");
     expect(html).toContain("78.00");
     expect(html).toContain("Need endpoint coverage for two clinics.");
+    // Default account team: manager with embedded headshot, plus the sales department.
+    expect(html).toContain("Your account manager");
+    expect(html).toContain("Joseph Petro");
+    expect(html).toContain("data:image/jpeg;base64,");
+    expect(html).toContain("sales@digerati-experts.com");
   });
 
   it(

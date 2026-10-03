@@ -6,9 +6,11 @@ import { ShoppingCart } from "@/components/store/ShoppingCart";
 import { SolutionMobileBar } from "@/components/store/SolutionMobileBar";
 import { PageLoadingSkeleton } from "@/components/LoadingSkeleton";
 import { WAREHOUSE_BASE } from "@/lib/warehousePaths";
-import { WarehouseStockPanel } from "@/pages/store/WarehouseStockPanel";
+import { WarehouseShell } from "./WarehouseShell";
 
-const StoreLanding = lazy(() => import("@/pages/store/StoreLanding"));
+const WarehouseHome = lazy(() => import("./WarehouseHome"));
+const WarehouseHubCatalog = lazy(() => import("./WarehouseHubCatalog"));
+const WarehouseVendors = lazy(() => import("./WarehouseVendors"));
 const ManagedStore = lazy(() => import("@/pages/store/ManagedStore"));
 const CoManagedStore = lazy(() => import("@/pages/store/CoManagedStore"));
 const ProductDetail = lazy(() => import("@/pages/store/ProductDetail"));
@@ -29,49 +31,60 @@ export default function WarehouseApp() {
       </Helmet>
       <ShoppingCart />
       <SolutionMobileBar />
-      <WarehouseStockPanel />
-      <Switch>
-        <Route path={WAREHOUSE_BASE}>
-          <Screen>
-            <StoreLanding />
-          </Screen>
-        </Route>
-        <Route path={`${WAREHOUSE_BASE}/managed`}>
-          <Screen>
-            <ManagedStore />
-          </Screen>
-        </Route>
-        <Route path={`${WAREHOUSE_BASE}/co-managed`}>
-          <Screen>
-            <CoManagedStore />
-          </Screen>
-        </Route>
-        <Route path={`${WAREHOUSE_BASE}/product/:sku`}>
-          <Screen>
-            <ProductDetail />
-          </Screen>
-        </Route>
-        <Route path={`${WAREHOUSE_BASE}/checkout`}>
-          <Screen>
-            <Checkout />
-          </Screen>
-        </Route>
-        <Route path={`${WAREHOUSE_BASE}/order-confirmation`}>
-          <Screen>
-            <OrderConfirmation />
-          </Screen>
-        </Route>
-        <Route path={`${WAREHOUSE_BASE}/quote-request`}>
-          <Screen>
-            <QuoteRequestPage />
-          </Screen>
-        </Route>
-        <Route path={`${WAREHOUSE_BASE}/quote-confirmation/:id`}>
-          <Screen>
-            <QuoteConfirmationPage />
-          </Screen>
-        </Route>
-      </Switch>
+      <WarehouseShell>
+        <Switch>
+          <Route path={WAREHOUSE_BASE}>
+            <Screen>
+              <WarehouseHome />
+            </Screen>
+          </Route>
+          <Route path={`${WAREHOUSE_BASE}/hub-catalog`}>
+            <Screen>
+              <WarehouseHubCatalog />
+            </Screen>
+          </Route>
+          <Route path={`${WAREHOUSE_BASE}/vendors`}>
+            <Screen>
+              <WarehouseVendors />
+            </Screen>
+          </Route>
+          <Route path={`${WAREHOUSE_BASE}/managed`}>
+            <Screen>
+              <ManagedStore />
+            </Screen>
+          </Route>
+          <Route path={`${WAREHOUSE_BASE}/co-managed`}>
+            <Screen>
+              <CoManagedStore />
+            </Screen>
+          </Route>
+          <Route path={`${WAREHOUSE_BASE}/product/:sku`}>
+            <Screen>
+              <ProductDetail />
+            </Screen>
+          </Route>
+          <Route path={`${WAREHOUSE_BASE}/checkout`}>
+            <Screen>
+              <Checkout />
+            </Screen>
+          </Route>
+          <Route path={`${WAREHOUSE_BASE}/order-confirmation`}>
+            <Screen>
+              <OrderConfirmation />
+            </Screen>
+          </Route>
+          <Route path={`${WAREHOUSE_BASE}/quote-request`}>
+            <Screen>
+              <QuoteRequestPage />
+            </Screen>
+          </Route>
+          <Route path={`${WAREHOUSE_BASE}/quote-confirmation/:id`}>
+            <Screen>
+              <QuoteConfirmationPage />
+            </Screen>
+          </Route>
+        </Switch>
+      </WarehouseShell>
     </CartProvider>
   );
 }
