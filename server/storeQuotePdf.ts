@@ -1,4 +1,4 @@
-import { billingLabel, money } from "@shared/storeCommerce";
+import { billingLabel, isRecurringPricingType } from "@shared/storeCommerce";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import type { CanonicalQuoteLine, QuoteTotals } from "./storeQuoteCommerce";
 import { quoteTotals } from "./storeQuoteCommerce";
@@ -8,6 +8,7 @@ import {
   dePdfBaseStyles,
   esc,
   phoenixDate,
+  usd,
 } from "./pdf/dePdfBrand";
 import { renderHtmlToPdf } from "./pdf/renderHtmlToPdf";
 
@@ -21,30 +22,34 @@ export type QuotePdfInput = {
   message?: string | null;
 };
 
-function moneyLabel(value: number): string {
-  return `$${money(value).toFixed(2)}`;
-}
-
 /** Branded preliminary quote HTML (same visual family as the solution packet). */
 export function buildQuotePdfHtml(quote: QuotePdfInput): string {
   const totals: QuoteTotals = quoteTotals(quote.requestedItems);
   const submitted = phoenixDate(quote.createdAt);
   const company = quote.companyName?.trim() || "";
 
-  const lines = quote.requestedItems
+  const rows = quote.requestedItems
     .map((item) => {
       const cadence = billingLabel(item.pricingType);
+      const recurring = isRecurringPricingType(item.pricingType);
       const discount =
-        item.unitPrice < item.listPrice ? ` (list ${moneyLabel(item.listPrice)})` : "";
-      const note = item.contractOnly ? `<div class="svc-desc">Contract review required before provisioning.</div>` : "";
-      return `<div class="line">
-        <span class="line-label">
-          <strong>${esc(item.quantity)} × ${esc(item.name)}</strong>
-          <div class="svc-desc">${esc(item.sku)} · ${esc(cadence)} · ${esc(moneyLabel(item.unitPrice))} each${esc(discount)}</div>
-          ${note}
-        </span>
-        <span class="line-qty">${esc(moneyLabel(item.total))}</span>
-      </div>`;
+        item.unitPrice < item.listPrice
+          ? `<div class="item-sub">Your price \u2014 list ${esc(usd(item.listPrice))}</div>`
+          : "";
+      const contract = item.contractOnly
+        ? `<div class="item-sub">Contract review required before provisioning.</div>`
+        : "";
+      return `<tr>
+        <td>
+          <div class="item-name">${esc(item.name)}</div>
+          <div class="item-sub ref">${esc(item.sku)}</div>
+          <span class="chip${recurring ? " recurring" : ""}">${esc(cadence)}</span>
+          ${discount}${contract}
+        </td>
+        <td class="num">${esc(item.quantity)}</td>
+        <td class="num money">${esc(usd(item.unitPrice))}</td>
+        <td class="num money amount">${esc(usd(item.total))}</td>
+      </tr>`;
     })
     .join("");
 
@@ -55,8 +60,6 @@ export function buildQuotePdfHtml(quote: QuotePdfInput): string {
 <title>${esc(quote.quoteNumber)} · ${esc(DE_PDF.brandName)}</title>
 <style>
 ${dePdfBaseStyles()}
-  .svc-desc { color: #47425e; font-size: 9px; margin: 2px 0 0; font-weight: 400; }
-  .line { border-top: 1px solid ${DE_PDF.line}; }
 </style>
 </head><body>
   ${coverBlock({
@@ -73,15 +76,20 @@ ${dePdfBaseStyles()}
   <div class="wrap">
     <h2>Investment summary</h2>
     <table class="invest"><tr>
-      <td><div class="k">Due today</div><div class="v">${esc(moneyLabel(totals.dueToday))}</div><div class="note">One-time / setup</div></td>
-      <td><div class="k">Monthly</div><div class="v">${esc(moneyLabel(totals.monthly))}</div><div class="note">Recurring catalog estimate</div></td>
-      <td><div class="k">Annual</div><div class="v">${esc(moneyLabel(totals.annual))}</div><div class="note">Catalog projection</div></td>
+      <td><div class="k">Due today</div><div class="v">${esc(usd(totals.dueToday))}</div><div class="note">One-time / setup</div></td>
+      <td><div class="k">Monthly</div><div class="v">${esc(usd(totals.monthly))}</div><div class="note">Recurring catalog estimate</div></td>
+      <td><div class="k">Annual</div><div class="v">${esc(usd(totals.annual))}</div><div class="note">Catalog projection</div></td>
     </tr></table>
 
     <h2>Requested line items</h2>
-    <div class="pkg">
-      ${lines || `<p class="empty" style="padding:12px 14px">No catalog lines on this request.</p>`}
-    </div>
+    ${
+      rows
+        ? `<table class="items">
+      <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`
+        : `<p class="empty">No catalog lines on this request.</p>`
+    }
 
     ${
       notes
@@ -92,7 +100,7 @@ ${dePdfBaseStyles()}
     <div class="closing">
       This PDF restates catalog pricing for the requested solution. It is not a signed
       commercial offer. A consultant will confirm terms.
-      Questions: sales@digerati-experts.com · ${esc(PRIMARY_PHONE.display)}
+      Questions: <span class="nowrap">sales@digerati-experts.com</span> · <span class="nowrap">${esc(PRIMARY_PHONE.display)}</span>
     </div>
   </div>
 </body></html>`;
