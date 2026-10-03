@@ -41,6 +41,40 @@ export const PORTAL_COMMANDS: readonly DeSyncEventType[] = [
   "service.change_requested",
 ];
 
+// Account-identifying keys, compared after lowercasing and dropping
+// space/underscore/hyphen, so accountId, account_id, canonical_account_id,
+// hub-account-id and zohoAccountId all match.
+const BROWSER_ACCOUNT_KEYS = new Set([
+  "accountid",
+  "canonicalaccountid",
+  "hubaccountid",
+  "zohoaccountid",
+]);
+
+function accountKeyToken(key: string): string {
+  return key.trim().toLowerCase().replace(/[\s_-]+/g, "");
+}
+
+/**
+ * Build the queued payload for a browser-submitted portal command. The account
+ * comes only from the session (the envelope's canonicalAccountId), so any
+ * account id the browser put in the payload is dropped, and the portal client
+ * and actor are overwritten with the session's.
+ */
+export function sessionScopedPortalPayload(
+  rawPayload: Record<string, unknown>,
+  session: { portalClientId: string | null; actorUserId: string | null },
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(rawPayload)) {
+    if (BROWSER_ACCOUNT_KEYS.has(accountKeyToken(key))) continue;
+    payload[key] = value;
+  }
+  payload.portalClientId = session.portalClientId;
+  payload.actorUserId = session.actorUserId;
+  return payload;
+}
+
 function healthStatus(opts: { configured: boolean; reachable: boolean; oldestPendingMs: number | null }): "healthy" | "degraded" | "failed" | "not_configured" {
   if (!opts.configured) return "not_configured";
   if (!opts.reachable) return "failed";
@@ -185,13 +219,10 @@ export function registerDeSyncRoutes(app: Express, authMiddleware: AuthMiddlewar
       const rawPayload =
         req.body?.payload && typeof req.body.payload === "object" ? req.body.payload : {};
       let canonicalAccountId = client?.hubAccountId || null;
-      let payload: Record<string, unknown> = {
-        ...rawPayload,
+      let payload = sessionScopedPortalPayload(rawPayload, {
         portalClientId: req.user?.clientId || null,
         actorUserId: req.userId || null,
-      };
-      delete payload.canonicalAccountId;
-      delete payload.hubAccountId;
+      });
       if (eventType === "account.profile_update_requested") {
         const command = buildPortalProfileCommand({
           hubAccountId: client?.hubAccountId,
