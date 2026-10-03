@@ -17,6 +17,8 @@
       * Destructive operations are ConfirmImpact High, verify their own effect, and refuse ambiguous targets.
       * Invoke-DEMicrosoftJob runs a Hub job only when it is signed, unexpired, not replayed, for the connected
         tenant, an allowlisted operation with allowlisted parameters, and (to change anything) approved.
+      * Invoke-DEHubJobLoop claims the Hub's jobs, runs them through Invoke-DEMicrosoftJob and posts results with
+        nothing secret in them; a result it could not post waits on disk for the next run.
 #>
 Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
@@ -54,7 +56,7 @@ function New-DEResult {
     <# One result shape for every operation: Succeeded | DryRun | Failed | Refused | Partial. #>
     param([Parameter(Mandatory = $true)][string]$Operation, [ValidateSet('Succeeded', 'DryRun', 'Failed', 'Refused', 'Partial')][string]$Status = 'Succeeded', [object]$Data, [string]$Message = '', [string]$Target = '', [string]$JobId)
     Write-DEMsAudit -Operation $Operation -Status $Status -Target $Target -Message $Message -JobId $JobId
-    return [pscustomobject][ordered]@{ product = 'DE Microsoft Admin'; version = '0.4.1'; operation = $Operation; status = $Status; target = $Target; tenant = $script:Ctx.TenantId; at = (Get-Date).ToUniversalTime().ToString('o'); message = $Message; data = $Data }
+    return [pscustomobject][ordered]@{ product = 'DE Microsoft Admin'; version = '0.5.0'; operation = $Operation; status = $Status; target = $Target; tenant = $script:Ctx.TenantId; at = (Get-Date).ToUniversalTime().ToString('o'); message = $Message; data = $Data }
 }
 function Export-DEResult {
     <# Writes a result as UTF-8 JSON without a BOM (Node, Python and the Hub reject one). #>
@@ -739,10 +741,13 @@ function Invoke-DEMicrosoftJob {
 # email migration (Gmail IMAP -> Microsoft 365); MIGRATION-STANDARD.md is its contract
 . (Join-Path $PSScriptRoot 'DE-Migration.ps1')
 
+# the Intelligence Hub job loop (claim, verify, run, post); Intelligence-Hub docs/MSADMIN-JOBS.md is its contract
+. (Join-Path $PSScriptRoot 'DE-HubWorker.ps1')
+
 Export-ModuleMember -Function Set-DEMsAuditPath, Get-DEMsAuditPath, New-DEResult, Export-DEResult, Get-DEMsScopeSet, Connect-DEMicrosoft, Get-DEMsContext, ConvertTo-DEODataLiteral, Invoke-DEGraphRequest,
     Get-DETenantSummary, Get-DEUser, New-DEUser, Set-DEUserAccountState, Get-DEGroup, New-DEGroup, Add-DEGroupMember, Get-DELicenseInventory, Get-DEConditionalAccessPolicy, Set-DEConditionalAccessPolicyState, Get-DEMfaRegistration,
     Get-DEEntraDevice, Test-DEEntraBitLockerEscrow, Connect-DEExchange, Get-DEMailbox, New-DESharedMailbox, Set-DEMailboxPermission, Set-DEMailboxAlias, Set-DEMailboxForwarding, Get-DETransportRule,
     Connect-DEAzure, Get-DEAzureSubscription, Get-DEAzureInventory, New-DEAzureResourceGroup, New-DEAzureResourceLock,
     Get-DEIntuneDevice, Get-DEIntuneCompliancePolicy, Get-DEIntuneConfigurationProfile, Sync-DEIntuneDevice, Invoke-DEIntuneDeviceAction, Get-DEAutopilotDevice, Get-DEAutopilotProfile, Set-DEAutopilotGroupTag, Remove-DEAutopilotDevice,
-    ConvertTo-DEJobCanonical, Get-DEJobSignature, New-DEMicrosoftJob, Invoke-DEMicrosoftJob,
+    ConvertTo-DEJobCanonical, Get-DEJobSignature, New-DEMicrosoftJob, Invoke-DEMicrosoftJob, Invoke-DEHubJobLoop, ConvertTo-DEHubSafeResult,
     Get-DEMigrationProject, Get-DEMigrationSourceType, New-DEMigrationProject, Add-DEMigrationUser, Test-DEGmailImapAccess, Set-DEMigrationSharedMailbox, Test-DEMigrationSharedMailbox, New-DEMigrationBatch, Get-DEMigrationStatus, Confirm-DEMigrationPilot, Complete-DEMigrationBatch, Import-DEMigrationContacts, Import-DEMigrationCalendar, Test-DEMigrationDns, Test-DEMigrationMailFlow, Test-DEMigrationMfa, Get-DEMailClientInventory, Import-DEMailClientInventory, Get-DEMigrationNextStep, Invoke-DEBounceDiagnostic, Resolve-DEMigrationBounce, Set-DEMigrationCheck, New-DEMigrationSignoff, Close-DEMigrationProject, Export-DEMigrationRecord, Set-DEMigrationDirectory

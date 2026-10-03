@@ -8,15 +8,15 @@
     on the next boot of this device and that can be sent to the Intelligence Hub. Recovery passwords and the Hub
     signing secret are typed when needed, used in memory, and never written anywhere.
 #>
-param([string]$Technician, [string]$HubUrl, [switch]$NoClear)
+param([string]$Technician, [string]$HubUrl, [string]$HubAccountId, [switch]$NoClear)
 Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 $here = $(if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path })
 Import-Module (Join-Path $here 'DE.Rescue.psm1') -Force -DisableNameChecking
 
-# Defaults baked in by New-DERescueMedia (technician, Hub URL). Never secrets.
+# Defaults baked in by New-DERescueMedia (technician, Hub URL, optionally one client's Hub account number). Never secrets.
 $cfgPath = Join-Path $here 'rescue.config.json'
-if (Test-Path -LiteralPath $cfgPath) { $cfg = Get-Content -LiteralPath $cfgPath -Raw -Encoding UTF8 | ConvertFrom-Json; if (-not $Technician -and $cfg.PSObject.Properties['technician']) { $Technician = $cfg.technician }; if (-not $HubUrl -and $cfg.PSObject.Properties['hubUrl']) { $HubUrl = $cfg.hubUrl } }
+if (Test-Path -LiteralPath $cfgPath) { $cfg = Get-Content -LiteralPath $cfgPath -Raw -Encoding UTF8 | ConvertFrom-Json; if (-not $Technician -and $cfg.PSObject.Properties['technician']) { $Technician = $cfg.technician }; if (-not $HubUrl -and $cfg.PSObject.Properties['hubUrl']) { $HubUrl = $cfg.hubUrl }; if (-not $HubAccountId -and $cfg.PSObject.Properties['hubAccountId']) { $HubAccountId = "$($cfg.hubAccountId)" } }
 
 function Read-Choice { param([string]$Prompt, [string]$Default) $a = Read-Host "$Prompt$(if ($Default) { " [$Default]" })"; if (-not $a) { return $Default }; return $a.Trim() }
 function Show-Title { param([string]$Text) if (-not $NoClear) { Clear-Host }; Write-Host "DE Boot Rescue $(Get-DERescueVersion)   $Text" -ForegroundColor Cyan; Write-Host ('-' * 72) }
@@ -140,10 +140,21 @@ while ($true) {
                 if ($HubUrl -and (Read-Choice "Send to the Hub ($HubUrl)? (y/n)" 'n') -eq 'y') {
                     $sec = $null
                     try {
-                        $sec = Read-Host 'Hub signing secret (not shown, not saved)' -AsSecureString
-                        $ev = New-DEHubEvent -EventType 'device.rescue_handoff' -EntityId $handoff.deviceKey -Payload $handoff
-                        $null = Send-DEHubEvent -BaseUrl $HubUrl -Event $ev -Secret $sec
-                        $null = Add-DEHandoffAction -Handoff $handoff -Action 'hub-sync' -Result 'PASS' -Detail "sent as event $($ev.eventId)"
+                        # The Hub files every device under a client account and refuses an event without one.
+                        $acct = "$HubAccountId".Trim()
+                        while (-not (Test-DEHubAccountId $acct)) {
+                            $acct = (Read-Host "Client's Hub account number (digits; Enter to skip sending)").Trim()
+                            if (-not $acct) { break }
+                            if (-not (Test-DEHubAccountId $acct)) { Write-Host 'That is not a Hub account number (digits only, not a name).' -ForegroundColor Yellow }
+                        }
+                        if (-not $acct) {
+                            $null = Add-DEHandoffAction -Handoff $handoff -Action 'hub-sync' -Result 'WARN' -Detail 'not sent: no Hub account number given; the handoff is still saved for DE Tech Tool to review on the next boot'
+                        } else {
+                            $sec = Read-Host 'Hub signing secret (not shown, not saved)' -AsSecureString
+                            $sr = Send-DERescueHandoffToHub -Handoff $handoff -HubUrl $HubUrl -AccountId $acct -Secret $sec
+                            $null = Add-DEHandoffAction -Handoff $handoff -Action 'hub-sync' -Result $(if ($sr.sent) { 'PASS' } else { 'FAIL' }) -Detail $sr.detail
+                            Write-Host $sr.detail -ForegroundColor $(if ($sr.sent) { 'Green' } else { 'Yellow' })
+                        }
                     } catch { $null = Add-DEHandoffAction -Handoff $handoff -Action 'hub-sync' -Result 'FAIL' -Detail $_.Exception.Message } finally { if ($sec) { $sec.Dispose() } }
                 }
                 $paths = Save-DERescueHandoff -Handoff $handoff -DestinationRoot "$($dest.drive)\" -WindowsDrive $toWin
