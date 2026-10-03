@@ -557,8 +557,15 @@ const logSecurityEvent = (event: string, req: AuthenticatedRequest, data: any) =
 // ========== ROUTES ==========
 
 export async function registerRoutes(app: Express) {
-  // Register object storage routes for file uploads
-  registerObjectStorageRoutes(app, { auth: authMiddleware, admin: requireAdmin });
+  // Register object storage routes for file uploads (auth + per-object ownership ACL)
+  registerObjectStorageRoutes(app, {
+    auth: authMiddleware,
+    admin: requireAdmin,
+    resolveTenantOwnerClientId: async (objectPath) => {
+      const file = await storage.findTenantFileByFileUrl(objectPath);
+      return file?.clientId ?? null;
+    },
+  });
   registerDeSyncRoutes(app, authMiddleware as any);
 
   // Live MSP threat feed (CISA / FIRST / NVD / MSRC). Never invents CVEs.
