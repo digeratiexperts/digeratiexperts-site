@@ -61,9 +61,16 @@ export function resolveWarehouseStaff(req: Request): { id: string; email: string
 
   try {
     const decoded = jwt.verify(token, secret) as JwtClaims;
+    // Same identity binding as authMiddleware: trust an email lookup only when
+    // it resolves to the token's own userId, so a token carrying someone else's
+    // email cannot claim warehouse-staff (admin) access.
+    const byEmail = decoded.email ? portalAuthGetUser(decoded.email) : null;
     const live =
-      (decoded.email ? portalAuthGetUser(decoded.email) : undefined) ||
-      (decoded.userId ? findUserById(decoded.userId) : null);
+      byEmail && byEmail.id === decoded.userId
+        ? byEmail
+        : decoded.userId
+          ? findUserById(decoded.userId)
+          : null;
     if (!live || isDisabled(live)) return null;
     if ((live.role || "user") !== "admin") return null;
     return { id: live.id, email: live.email };

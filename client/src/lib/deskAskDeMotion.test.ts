@@ -110,4 +110,39 @@ describe("deskAskDeMotion", () => {
     banner.present = true;
     expect(isCookieBannerBlocking()).toBe(true);
   });
+
+  it("adapts greeting and first starter when this device already has a Store situation, without identity", async () => {
+    vi.resetModules();
+    const store: Record<string, string> = {
+      "de-solution-draft-v2": JSON.stringify({
+        version: 2,
+        needs: [{ familyId: "identity_access" }],
+        environment: { userCount: "25", siteCount: "2", internalIt: "no" },
+        email: "jo@acme.test",
+        fullName: "Jo Example",
+      }),
+    };
+    vi.stubGlobal("window", {
+      localStorage: {
+        getItem: (k: string) => store[k] ?? null,
+        setItem: (k: string, v: string) => {
+          store[k] = v;
+        },
+        removeItem: (k: string) => {
+          delete store[k];
+        },
+      },
+    });
+    const motion = await import("./deskAskDeMotion");
+    const greet = motion.greetingForPage("home");
+    expect(greet.startsWith(motion.DESK_PAGE_COPY.home.greet)).toBe(true);
+    expect(greet).toMatch(/Store situation/);
+    expect(greet).not.toContain("jo@acme.test");
+    expect(greet).not.toContain("Jo Example");
+    expect(greet).not.toMatch(/25 users|Identity & Access/);
+    expect(motion.startersForPage("home")[0].label).toMatch(/Store/);
+    expect(motion.startersForPage("store")[0].label).toMatch(/finish the solution/i);
+    expect(motion.startersForPage("home")).toHaveLength(5);
+    expect(motion.startersForPage("home")[4]).toEqual(motion.DESK_INCIDENT_STARTER);
+  });
 });

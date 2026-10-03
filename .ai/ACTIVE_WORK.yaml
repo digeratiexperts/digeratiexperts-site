@@ -30,29 +30,35 @@
 
 version: 2
 claims:
-  - id: de-physical-hardware-quote-only
+  - id: de-auth-token-identity-binding
     owner: claude
-    subsystem: store-checkout
-    branch: claude/physical-hardware-quote-only
-    base_sha: d5f3479a
+    subsystem: portal-auth
+    branch: claude/auth-token-identity-binding
+    base_sha: 634390fd
     files:
-      - server/secureStoreCheckout.ts (the physical-fulfillment classifier and 409 block)
-      - server/storeCommerceSafety.test.ts (the physical-fulfillment test)
-      - client/src/lib/warehouseContactHandoff.ts (the physical_fulfillment reason)
-      - client/src/pages/store/Checkout.tsx (the PHYSICAL_FULFILLMENT_REQUIRED handler)
+      - server/routes.ts (authMiddleware's live-user resolution only)
+      - server/warehouseAccess.ts (resolveWarehouseStaff's live-user resolution only)
+      - server/portalAuthFailClosed.test.ts (two added cases)
+      - server/legacyAuthRetired.ts, server/legacyAuthRetired.test.ts (legacy /api/auth/register and /api/auth/login answer 410)
+      - server/routes.ts (legacy register/login handlers and their now-unused helpers removed)
     status: active
-    started: 2026-10-02
+    started: 2026-10-01
     note: >-
-      Issue 247 (P0 store), per Joe 2026-10-02 (make physical hardware
-      quote-only, independent of 280): nine hardware_physical SKUs were
-      isCheckoutEnabled, and secureStoreCheckout charged them through a
-      one-time hosted Payment Session with tax "0" and no shipping address.
-      A new physicalFulfillmentSkus classifier and a 409
-      PHYSICAL_FULFILLMENT_REQUIRED block (mirroring the recurring-subscription
-      block) hold hardware_physical out of online payment; the client switches
-      to Request Quote. isCheckoutEnabled is deliberately left on so hardware
-      still appears in quotes. No tax table or rate is assumed; that decision
-      (280) stays Joe's. Does not change digital or recurring checkout.
+      Issue 236 (P0), confirmed on a local production build after Joe's "so
+      everything is complete and we cant think of things to do now?":
+      authMiddleware resolved the live user by the token's email before its
+      userId and never checked the two agreed, so a validly-signed token whose
+      email names another account (e.g. one minted by the unauthenticated
+      legacy /api/auth/register, which lets the caller choose any email)
+      resolved to that account and assumed its role, admin included, with no
+      password or MFA. Reproduced: a legacy-register token carrying a portal
+      admin's email authenticated as that admin. The email lookup is now
+      trusted only when it resolves to the token's own userId, in both
+      authMiddleware and resolveWarehouseStaff. Two regression tests fail
+      against the old code. Per the issue's preferred fix, the legacy
+      /api/auth/register and /api/auth/login token minters are retired (410
+      Gone, end-to-end test). Follow-up (own PR): gate the PATCH
+      /api/portal/profile email change on a confirmation to the new address.
   - id: de-desk-hardening
     owner: claude
     subsystem: de-desk
@@ -248,7 +254,7 @@ claims:
       - client/src/components/HomepageSectionNav.tsx (opt-in chapter progress in HomepageDockMenu only)
       - shared/threatFeed.ts (THREAT_ATTRIBUTION string only)
       - server/routes.ts (the public-threats error-path attribution string only)
-    status: active
+    status: verified-live
     started: 2026-10-01
     note: >-
       Joe, 2026-10-01: "can you mock up every section on the live
@@ -328,6 +334,21 @@ claims:
       (TipTag.tsx, truthful tip text), copy buttons for email and phone
       (CopyButton.tsx), hero posture bars fill once. Kit's switch, checkbox and
       segmented control have no matching control on the page, so none added.
+      RELEASED 2026-10-03: rounds 4 and 5 merged as PR 344 (6ce035d6) on
+      Joe's "everything is approved" / "all approved", after merging main for
+      PR 342's production-audit fix. VERIFIED LIVE: production release.txt
+      6ce035d6; /version-7 answers 200 with X-Robots-Tag noindex, nofollow;
+      / answers 200 and is unchanged; scripts/qa/homepage-v7-check.mjs passes
+      31/31 against production; the live page shows the grey-card restyle.
+      Backups (branches, do not commit to them):
+      backup/2026-10-03-before-v7-restyle (c702a4fc),
+      backup/2026-10-03-v7-restyle-approved, backup/2026-10-03-v7-restyle-merged
+      (6ce035d6); revert guide in
+      artifacts/design-concepts/homepage-sections-2026-10/README.md. Files
+      released. Open, not claimed: the review-source funnel (postponed by
+      Joe); the 430px launcher over the live PronunciationCard "Hear it"
+      (pronunciation lane); / replacement by V7 waits on Joe.
+
   - id: de-desk-gold
     owner: claude
     subsystem: de-desk
