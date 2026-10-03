@@ -12,6 +12,14 @@ import { fetchStaffCatalog, fetchPax8ConnectorHealth } from "./integrations/tech
 import { listWarehouseStock, recordWarehouseMovement } from "./warehouseStockStore";
 import type { StockMovementKind } from "./warehouseStock";
 
+const HUB_FEED_STATUSES = ["CONNECTED", "STALE", "FAILED", "UNKNOWN"] as const;
+const HUB_CONNECTOR_STATUSES = ["CONNECTED", "AUTH_REQUIRED", "FAILED", "UNKNOWN", "STALE"] as const;
+
+/** Pass through a Hub-reported status only when it is one we render; never default to healthy. */
+export function normalizeHubStatus<T extends string>(value: unknown, allowed: readonly T[]): T | "UNKNOWN" {
+  return typeof value === "string" && (allowed as readonly string[]).includes(value) ? (value as T) : "UNKNOWN";
+}
+
 function withQuery(req: Request, dest: string): string {
   const q = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
   return `${dest}${q}`;
@@ -62,10 +70,8 @@ export function registerWarehouseGates(app: Express): void {
     }
     const live = await fetchStaffCatalog();
     if (live && typeof live === "object") {
-      const status =
-        typeof (live as { status?: unknown }).status === "string"
-          ? String((live as { status: string }).status)
-          : "CONNECTED";
+      // Only Hub can say the feed is CONNECTED; a missing or unrecognised status is UNKNOWN.
+      const status = normalizeHubStatus((live as { status?: unknown }).status, HUB_FEED_STATUSES);
       res.json({
         status,
         source: "hub",
@@ -97,12 +103,14 @@ export function registerWarehouseGates(app: Express): void {
     const pax8 = await fetchPax8ConnectorHealth();
     res.json({
       connectors: [
-        pax8 ?? {
-          connector: "pax8",
-          status: "UNKNOWN",
-          message: "Hub Pax8 health endpoint unreachable or unconfigured.",
-          checkedAt: new Date().toISOString(),
-        },
+        pax8 && typeof pax8 === "object"
+          ? { ...pax8, connector: "pax8", status: normalizeHubStatus(pax8.status, HUB_CONNECTOR_STATUSES) }
+          : {
+              connector: "pax8",
+              status: "UNKNOWN",
+              message: "Hub Pax8 health endpoint unreachable or unconfigured.",
+              checkedAt: new Date().toISOString(),
+            },
       ],
     });
   });

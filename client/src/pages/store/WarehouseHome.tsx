@@ -13,6 +13,7 @@ import { storeProducts, getCheckoutEnabledProducts, getContractOnlyProducts } fr
 import { listVendorsForProducts } from "@/data/storeMerchandising";
 import { warehousePath } from "@/lib/warehousePaths";
 import { StorePageAtmosphere } from "@/components/store/StorePageAtmosphere";
+import { WarehouseStockPanel } from "@/pages/store/WarehouseStockPanel";
 
 const CARDS = [
   {
@@ -119,6 +120,8 @@ export default function WarehouseHome() {
           Contract-only lines in workshop: {contractCount}. Coverage scoring on cart panels remains an{" "}
           <strong className="font-medium text-white/70">experimental heuristic</strong>.
         </p>
+
+        <WarehouseStockPanel />
 
         <section aria-label="Warehouse workspaces" className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {CARDS.map((card) => {

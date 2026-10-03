@@ -17,6 +17,7 @@ import { snapshotSubmitLines } from "@/lib/solutionSnapshotView";
 import { readGuidedSession } from "@/lib/storeGuidedSession";
 import { writeContactHandoff } from "@/lib/warehouseContactHandoff";
 import { warehousePath } from "@/lib/warehousePaths";
+import { ADDRESS_ERRORS, missingBillingAddress } from "@/lib/billingAddress";
 
 import {
   ArrowLeft,
@@ -33,7 +34,13 @@ const billingSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   company: z.string().optional(),
   phone: z.string().optional(),
+  // Billing address: required for Pay Now only (sales tax is calculated from it).
+  line1: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  postalCode: z.string().optional(),
 });
+
 
 type BillingFormData = z.infer<typeof billingSchema>;
 
@@ -56,6 +63,7 @@ const Checkout = () => {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<BillingFormData>({
     resolver: zodResolver(billingSchema),
@@ -66,8 +74,18 @@ const Checkout = () => {
         (typeof window !== "undefined" ? window.localStorage.getItem("userEmail") || "" : ""),
       company: "",
       phone: "",
+      line1: "",
+      city: "",
+      state: "",
+      postalCode: "",
     },
   });
+
+  const flagMissingAddress = (data: BillingFormData): boolean => {
+    const missing = missingBillingAddress(data);
+    for (const field of missing) setError(field, { message: ADDRESS_ERRORS[field] }, { shouldFocus: field === missing[0] });
+    return missing.length > 0;
+  };
 
   useEffect(() => {
     if (items.length === 0) {
@@ -81,6 +99,8 @@ const Checkout = () => {
       const lineItems = snapshotSubmitLines(snapshot);
 
       if (paymentMethod === "zoho") {
+        if (flagMissingAddress(data)) return;
+        const { line1, city, state, postalCode, ...contact } = data;
         const response = await fetch("/api/store/checkout/zoho", {
           method: "POST",
           headers: {
@@ -89,7 +109,15 @@ const Checkout = () => {
           credentials: "include",
           body: JSON.stringify({
             lineItems,
-            billing: data,
+            billing: {
+              ...contact,
+              address: {
+                line1: line1?.trim(),
+                city: city?.trim(),
+                state: state?.trim().toUpperCase(),
+                postalCode: postalCode?.trim(),
+              },
+            },
           }),
         });
 
@@ -134,10 +162,19 @@ const Checkout = () => {
             setPaymentMethod("quote_request");
             return;
           }
+          if (errorData.code === "BILLING_ADDRESS_REQUIRED") {
+            flagMissingAddress(data);
+            toast({
+              title: "Add a billing address to pay now",
+              description: "Sales tax is calculated from the billing address. Your solution is intact.",
+            });
+            return;
+          }
           if (errorData.code === "TAX_RATE_UNAVAILABLE") {
-            // Pay Now fails closed until a verified Arizona TPT table is loaded
-            // (server/services/salesTax.ts). Step aside to a quote instead of a
-            // dead-end error: DE confirms tax on the quote.
+            // Pay Now fails closed when sales tax cannot be calculated: no Stripe
+            // Tax key or verified table, an item without a confirmed tax code, or
+            // Stripe not answering (server/services/salesTax.ts). Step aside to a
+            // quote instead of a dead-end error: DE confirms tax on the quote.
             writeContactHandoff({ ...data, reason: "tax_unavailable" });
             toast({
               title: "Pay Now is paused while sales tax is set up",
@@ -308,6 +345,100 @@ const Checkout = () => {
                         />
                       </div>
                     </div>
+
+                    {paymentMethod === "zoho" && (
+                      <fieldset className="space-y-4 border-t border-white/10 pt-4" data-testid="section-billing-address">
+                        <legend className="sr-only">Billing address</legend>
+                        <p className="text-sm text-white/60" data-testid="text-billing-address-why">
+                          Billing address. Pay Now calculates sales tax from it.
+                        </p>
+                        <div>
+                          <Label htmlFor="line1" className="text-white/80">
+                            Street Address *
+                          </Label>
+                          <Input
+                            id="line1"
+                            {...register("line1")}
+                            autoComplete="billing address-line1"
+                            aria-required={true}
+                            aria-invalid={!!errors.line1}
+                            placeholder="Street and suite"
+                            className="mt-1 bg-white/5 border-white/20 text-white placeholder:text-white/55 focus:border-de-hairline"
+                            data-testid="input-address-line1"
+                          />
+                          {errors.line1 && (
+                            <p className="text-red-400 text-sm mt-1" data-testid="error-address-line1">
+                              {errors.line1.message}
+                            </p>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-6 gap-4">
+                          <div className="col-span-6 md:col-span-3">
+                            <Label htmlFor="city" className="text-white/80">
+                              City *
+                            </Label>
+                            <Input
+                              id="city"
+                              {...register("city")}
+                              autoComplete="billing address-level2"
+                              aria-required={true}
+                              aria-invalid={!!errors.city}
+                              placeholder="City"
+                              className="mt-1 bg-white/5 border-white/20 text-white placeholder:text-white/55 focus:border-de-hairline"
+                              data-testid="input-address-city"
+                            />
+                            {errors.city && (
+                              <p className="text-red-400 text-sm mt-1" data-testid="error-address-city">
+                                {errors.city.message}
+                              </p>
+                            )}
+                          </div>
+                          <div className="col-span-2 md:col-span-1">
+                            <Label htmlFor="state" className="text-white/80">
+                              State *
+                            </Label>
+                            <Input
+                              id="state"
+                              {...register("state")}
+                              autoComplete="billing address-level1"
+                              aria-required={true}
+                              aria-invalid={!!errors.state}
+                              maxLength={2}
+                              placeholder="ST"
+                              className="mt-1 bg-white/5 border-white/20 text-white uppercase placeholder:text-white/55 focus:border-de-hairline"
+                              data-testid="input-address-state"
+                            />
+                          </div>
+                          <div className="col-span-4 md:col-span-2">
+                            <Label htmlFor="postalCode" className="text-white/80">
+                              ZIP *
+                            </Label>
+                            <Input
+                              id="postalCode"
+                              {...register("postalCode")}
+                              autoComplete="billing postal-code"
+                              inputMode="numeric"
+                              aria-required={true}
+                              aria-invalid={!!errors.postalCode}
+                              maxLength={10}
+                              placeholder="ZIP"
+                              className="mt-1 bg-white/5 border-white/20 text-white placeholder:text-white/55 focus:border-de-hairline"
+                              data-testid="input-address-postal"
+                            />
+                          </div>
+                        </div>
+                        {errors.state && (
+                          <p className="text-red-400 text-sm" data-testid="error-address-state">
+                            {errors.state.message}
+                          </p>
+                        )}
+                        {errors.postalCode && (
+                          <p className="text-red-400 text-sm" data-testid="error-address-postal">
+                            {errors.postalCode.message}
+                          </p>
+                        )}
+                      </fieldset>
+                    )}
                   </form>
                 </div>
 

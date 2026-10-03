@@ -69,3 +69,24 @@ See `shared/checkoutEligibility.ts`.
 - Warehouse staff: `pay_now` (not a public default)
 
 Do not invent Hub tenant catalogs or prices. Do not put distributor secrets in this repo.
+
+## Pay Now sales tax
+
+Decided 2026-10-03 (Joe delegated the choice; PR 407 and its follow-up).
+
+- **Stripe Tax calculates; Zoho Payments charges.** Pay Now calls Stripe's Calculations API ($0.05 a call, no monthly fee) and never its Transactions API ($0.50 a call). Code: `server/services/salesTax.ts`.
+- **Tax codes per Store category** live in `shared/storeTaxCodes.ts`. People-delivered services use `txcd_20030000` (General - Services).
+  - Digital assessments, templates and training, and hardware handling, have no confirmed code yet. They stay quote-only for Pay Now.
+  - A confirmed code can be added without a deploy through `STRIPE_TAX_CODES`.
+- **Billing address.** Staff checkout asks for one when Pay Now is selected; Stripe needs it for the rate.
+- **Fail closed.** Pay Now steps aside to Request Quote (`TAX_RATE_UNAVAILABLE`) when:
+  - `STRIPE_TAX_SECRET_KEY` is unset and no verified table is set;
+  - Stripe errors, times out after 8s, or returns totals that don't add up;
+  - a line has no code;
+  - an Arizona client comes back `not_collecting`, which means the Stripe account has no Arizona registration yet.
+- **The order record** keeps the billing address and a one-line note with the Stripe calculation id and taxability reasons.
+- **Setup, once.** Done by Joe or whoever has the Stripe login:
+  1. Create a restricted key limited to Tax.
+  2. Set it as `STRIPE_TAX_SECRET_KEY` on the production server.
+  3. In Stripe Tax settings, set DE's Phoenix origin address and add the Arizona registration.
+- **The public Store never reaches any of this.** `server/services/salesTax.test.ts` guards it.

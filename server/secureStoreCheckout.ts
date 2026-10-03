@@ -9,6 +9,7 @@ import {
   toPriceOverrides,
 } from "./storeClientPricing";
 import { paymentRateLimiter } from "./middleware/rateLimiter";
+import type { TaxableLine } from "./services/salesTax";
 
 type StoreRole = "public" | "prospect" | "managed" | "comanaged" | "admin";
 
@@ -82,6 +83,27 @@ export function recurringCheckoutSkus(items: CanonicalCheckoutLineItem[]): strin
       return !!product && isRecurringSubscriptionProduct(product);
     })
     .map((item) => item.sku);
+}
+
+/** Line totals with each product's category, for the sales tax calculation. */
+export function taxableLines(items: CanonicalCheckoutLineItem[]): TaxableLine[] {
+  return items.map((item) => {
+    const product = storeProducts.find((candidate) => candidate.id === item.productId);
+    if (!product) throw new Error(`Unknown product ${item.productId}`);
+    return { sku: item.sku, category: product.category, quantity: item.quantity, total: item.total };
+  });
+}
+
+/** The billing address as typed, trimmed; isTaxAddress decides whether it is complete. */
+export function billingAddressValue(value: unknown): Record<string, string> | null {
+  if (!value || typeof value !== "object") return null;
+  const a = value as Record<string, unknown>;
+  return {
+    line1: stringValue(a.line1, 200),
+    city: stringValue(a.city, 100),
+    state: stringValue(a.state, 2).toUpperCase(),
+    postalCode: stringValue(a.postalCode, 10),
+  };
 }
 
 export function isPhysicalFulfillmentProduct(product: StoreProduct): boolean {
@@ -297,6 +319,14 @@ export function registerSecureZohoStoreCheckout(
         if (!billingName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billingEmail)) {
           return res.status(400).json({ error: "Valid billing name and email are required" });
         }
+        const billingAddress = billingAddressValue(billing?.address);
+        const { isTaxAddress, quotePayNowSalesTax, stripeTaxKey } = await import("./services/salesTax");
+        if (stripeTaxKey() && !isTaxAddress(billingAddress)) {
+          return res.status(400).json({
+            code: "BILLING_ADDRESS_REQUIRED",
+            error: "A complete US billing address is required to calculate sales tax.",
+          });
+        }
 
         const role = (req.user?.storeRole || "public") as StoreRole;
         const pricingRows = await resolveClientPricingRows(req.user?.clientId);
@@ -394,10 +424,17 @@ export function registerSecureZohoStoreCheckout(
         const { storeOrders } = await import("@shared/schema");
         const { eq } = await import("drizzle-orm");
 
-        const { quoteSalesTax } = await import("./services/salesTax");
-        const taxDecision = quoteSalesTax(trustedTotal);
+        const taxDecision = await quotePayNowSalesTax({
+          lines: taxableLines(lineItems),
+          subtotal: trustedTotal,
+          address: isTaxAddress(billingAddress) ? billingAddress : null,
+        });
         if (!taxDecision.ok) {
-          return res.status(503).json({ code: taxDecision.code, error: taxDecision.error });
+          return res.status(503).json({
+            code: taxDecision.code,
+            error: taxDecision.error,
+            ...(taxDecision.skus ? { skus: taxDecision.skus } : {}),
+          });
         }
 
         const [order] = await db
@@ -415,6 +452,8 @@ export function registerSecureZohoStoreCheckout(
             billingEmail,
             billingName,
             billingCompany: billingCompany || null,
+            billingAddress: isTaxAddress(billingAddress) ? billingAddress : null,
+            notes: taxDecision.note ?? null,
           })
           .returning();
 
@@ -447,7 +486,7 @@ export function registerSecureZohoStoreCheckout(
               })),
               ...(Number(taxDecision.tax) > 0
                 ? [{
-                    name: "Arizona TPT",
+                    name: "Sales tax",
                     description: taxDecision.source,
                     amount: Number(taxDecision.tax),
                     quantity: 1,
