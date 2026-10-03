@@ -57,6 +57,27 @@
 
 ---
 
+## Portal tools waiting on vendors (decided 2026-10-02)
+
+These answers stand in for the portal questions that were still open. The pages stay in the nav. Build the real connection when the vendor sends API access and the facts below. Until then the screens are samples: do not treat their devices, call lists, or tracking numbers as live.
+
+### VPN Access (`/portal/vpn`) — Timus
+Timus is the secure-access platform. Ask Timus for partner API docs, the auth method, a tenant id, a sandbox, and which fields a client may see (profile status, device name, last connected). JumpCloud stays the identity side. Tailscale, WireGuard, OpenVPN, Perimeter 81, and Twingate are not this page.
+
+### Cytracom Phone (`/portal/cytracom`) — Cytracom voice API
+Use Cytracom’s UCaaS API for this page. Ask them for the base URL, auth method, a sandbox tenant, the extension list, and whether call history and voicemail are in the API. When they send a key, store it as an environment variable taken from their docs. Do not commit the value. ControlOne is the migration item above, not this page.
+
+### Ship Center (`/portal/ship-center`) — staff-entered tracking
+DE staff enter tracking numbers on a real shipment. ShipStation, EasyPost, and Shippo are not selected. Live rates, labels, and carrier tracking wait on USPS, FedEx, and UPS API keys and account numbers (`SHIPPING_SETUP.md`). Ask those carriers for that access before any live call.
+
+### Test login
+Set `PORTAL_QA_EMAIL` and `PORTAL_QA_PASSWORD` in the portal process environment (host environment settings). The account is for QA. It is not a client company. The values stay out of git.
+
+### Exit popup
+The findings belong to the client. `ExitIntentPopup.tsx` says “Yours to keep”: Digerati Experts writes them so the client can put them to work. No delivery date and no score. Recorded in `docs/CLAIMS-REGISTER.md`.
+
+---
+
 ## 🚀 Next Steps
 
 1. **Complete Timus adoption gates**
@@ -85,6 +106,8 @@ ZOHO_CLIENT_SECRET=<set in environment — do not commit>
 JUMPCLOUD_API_KEY=<set in environment — do not commit>
 CORO_CLIENT_ID=<set in environment — do not commit>
 CORO_CLIENT_SECRET=<set in environment — do not commit>
+PORTAL_QA_EMAIL=<set in environment — do not commit>
+PORTAL_QA_PASSWORD=<set in environment — do not commit>
 ```
 
 > ⚠️ Real values were previously committed to this public repo and remain in git

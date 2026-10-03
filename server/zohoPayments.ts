@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { isStagingReview } from "./stagingReviewGuard";
+import { createPaymentReadiness, type PaymentReadiness } from "./paymentReadiness";
 
 const ZOHO_PAYMENTS_BASE_URL = "https://payments.zoho.com/api/v1";
 const ZOHO_ACCOUNTS_TOKEN_URL = "https://accounts.zoho.com/oauth/v2/token";
@@ -52,6 +53,14 @@ export class ZohoPaymentsService {
   private accessToken: string | null = null;
   private accessTokenExpiresAt = 0;
   private refreshPromise: Promise<string> | null = null;
+  /**
+   * Cached live readiness (#263). `isConfigured()` only proves env vars exist;
+   * this proves the OAuth client + refresh token still mint a token.
+   */
+  readonly readiness: PaymentReadiness = createPaymentReadiness({
+    isConfigured: () => this.isConfigured(),
+    probe: () => this.probeCheckoutReadiness(),
+  });
 
   constructor() {
     this.accountId = process.env.ZOHO_PAYMENTS_ACCOUNT_ID || "";
@@ -116,6 +125,7 @@ export class ZohoPaymentsService {
         status: response.status,
         error: data.error || "missing_access_token",
       });
+      this.readiness.markFailed(`oauth_refresh_${response.status}`);
       throw new Error(`Zoho Payments OAuth refresh failed: ${response.status}`);
     }
 
@@ -123,6 +133,19 @@ export class ZohoPaymentsService {
     const expiresInSeconds = Number(data.expires_in || 3600);
     this.accessTokenExpiresAt = Date.now() + Math.max(60, expiresInSeconds - 60) * 1000;
     return this.accessToken;
+  }
+
+  /**
+   * Readiness probe without creating a charge: force a fresh OAuth refresh so
+   * an expired/revoked refresh token or a bad client ID/secret is detected.
+   * Does not prove the account ID is accepted; a checkout failure for that
+   * reason surfaces at session creation.
+   */
+  async probeCheckoutReadiness(): Promise<boolean> {
+    if (!this.isConfigured()) return false;
+    this.accessTokenExpiresAt = 0;
+    const token = await this.getAccessToken();
+    return Boolean(token);
   }
 
   private async getAccessToken(): Promise<string> {
