@@ -159,13 +159,25 @@ claims:
       - server/warehouseRoutes.test.ts
       - server/integrations/techSalesClient.ts
       - docs/STORE-WAREHOUSE.md
-    status: active
+    status: merged
     started: 2026-10-03
     note: >-
       Phase 1 staff ops console for /internal/warehouse (replace old client
       StoreLanding). Phase 2 staff Hub catalog proxy. Phase 3 Pax8 health
       surface via Hub. Admin lock unchanged. Companion Hub work on
       Intelligence-Hub staff-catalog + pax8-connector.
+      RELEASED 2026-10-03: merged as PR 371 (merge commit 60db03e,
+      18:22Z) and deployed with main 823e4d0 (18:40Z). Follow-up PR 409
+      (merge commit 1c9140a, 21:00Z, deployed 21:05Z): catalog and Pax8
+      status fall back to UNKNOWN instead of a default CONNECTED, and the
+      on-hand stock panel renders on ops home only. Production evidence:
+      anonymous /internal/warehouse and /api/internal/warehouse/{session,
+      catalog,connectors,stock} answer a generic 404 with no Location; Joe's
+      signed-in admin screenshot showed ops home with Hub catalog
+      LOCAL_WORKSHOP and Pax8 UNKNOWN. MERGED, not yet VERIFIED LIVE: the
+      admin views after PR 409 (stock panel placement, Hub feed, Vendors) are
+      unchecked. Companion Hub PR 325 is still an unmerged draft, so
+      LOCAL_WORKSHOP / UNKNOWN are expected until it merges. Files released.
   - id: site-design-pass-2026-10-03
     owner: claude
     subsystem: marketing-pages
