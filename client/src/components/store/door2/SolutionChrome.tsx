@@ -8,6 +8,7 @@ import { useMinWidth } from "@/hooks/useSolutionDraft";
 import { getFamilyById, SOLUTION_WORKSPACE_PATH, STORE_STEPS, type CuratedSolutionFamily, type StoreStepId } from "@/lib/businessNeeds";
 import { addDraftNeed, isProfileComplete, readSolutionDraft, removeDraftNeed, type SolutionDraft } from "@/lib/solutionDraft";
 import { HelpRow, StoreAction, UndoRow } from "./primitives";
+import { useAttention } from "@/hooks/useStoreGuidance";
 import { ProfileLine } from "@/components/store/SolutionProfileForm";
 
 /*
@@ -143,11 +144,13 @@ function NeedsList({ draft }: { draft: SolutionDraft }) {
   );
 }
 
-function Primary({ primary, onNavigate }: { primary: SolutionPrimary; onNavigate?: () => void }) {
+function Primary({ primary, onNavigate, attention }: { primary: SolutionPrimary; onNavigate?: () => void; attention?: boolean }) {
   return (
     <StoreAction
       variant="primary"
       block
+      lead
+      attention={attention}
       href={primary.href}
       onClick={() => {
         primary.onClick?.();
@@ -201,6 +204,7 @@ function ChromeBody({
 /** ≥ 1024: the sticky panel beside the content. The only raised container on the index and family pages. */
 export function SolutionRail(props: SolutionChromeProps) {
   const wide = useMinWidth(1024);
+  const attention = useAttention(props.pulseKey);
   if (!wide) return null;
   return (
     <aside className="d2-rail" aria-label="Your Solution" data-testid="solution-rail">
@@ -212,7 +216,7 @@ export function SolutionRail(props: SolutionChromeProps) {
       </div>
       <ChromeBody props={props} />
       <div className="mt-5">
-        <Primary primary={props.primary} />
+        <Primary primary={props.primary} attention={attention} />
       </div>
       {props.help ? <HelpRow seed={props.help.seed} askLabel={props.help.askLabel} className="mt-4" /> : null}
     </aside>
@@ -224,6 +228,7 @@ export function SolutionBar(props: SolutionChromeProps) {
   const wide = useMinWidth(1024);
   const [open, setOpen] = useState(false);
   const [pulse, setPulse] = useState(false);
+  const attention = useAttention(props.pulseKey);
   const barRef = useRef<HTMLDivElement>(null);
   const empty = props.draft.needs.length === 0;
   const mounted = !wide && !(props.mode === "review" && empty && !props.mountWhenEmpty);
@@ -302,6 +307,8 @@ export function SolutionBar(props: SolutionChromeProps) {
             onClick={props.primary.onClick}
             ariaLabel={props.primary.label}
             testId="solution-bar-primary"
+            lead={(props.compactVariant ?? "primary") === "primary"}
+            attention={attention && (props.compactVariant ?? "primary") === "primary"}
           >
             {props.compactLabel ?? (props.mode === "continue" ? "Continue" : "Review")}
           </StoreAction>

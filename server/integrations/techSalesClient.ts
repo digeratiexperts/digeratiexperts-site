@@ -6,7 +6,7 @@ import { retainHubAccountMapping } from "./backfillHubIdentity";
 import { logger } from "../logger";
 import { getClient, setClient } from "../portalAuthStore";
 import { assertMutationAllowed } from "../stagingReviewGuard";
-import { buildSignedHeaders, resolveScopedSecret } from "./deSyncAuth";
+import { buildSignedHeaders, newEventId, resolveScopedSecret } from "./deSyncAuth";
 import type { DeSyncEnvelope, DeSyncEventType } from "./deSyncContract";
 
 export type HubCompanyDocumentsResponse = {
@@ -104,7 +104,7 @@ async function signedGet<T>(pathWithQuery: string, direction: "website_to_hub" |
   const parsed = new URL(url);
   const headers = buildSignedHeaders({
     method: "GET",
-    path: parsed.pathname,
+    path: `${parsed.pathname}${parsed.search}`,
     eventId: "00000000-0000-4000-8000-000000000000",
     source: direction === "portal_to_hub" ? "portal" : "website",
     body: "{}",
@@ -209,6 +209,25 @@ export async function persistHubAccountId(clientId: string, accountId: string | 
   }
 }
 
+/**
+ * Signed headers for a portal-bridge GET. The signature covers the path AND
+ * the query string, because the Hub reads the tenant (accountId / companyName)
+ * from the query: a captured request cannot be replayed for another company,
+ * and the raw sync token never leaves this server. Requires the Hub release
+ * that accepts query-covering signatures (Intelligence-Hub de-sync-auth).
+ */
+export function portalBridgeHeaders(url: string, secret: string): Record<string, string> {
+  const parsed = new URL(url);
+  return buildSignedHeaders({
+    method: "GET",
+    path: `${parsed.pathname}${parsed.search}`,
+    eventId: newEventId(),
+    source: "portal",
+    body: "{}",
+    secret,
+  });
+}
+
 function documentsQuery(
   companyName: string | null,
   accountId: string | null,
@@ -238,11 +257,7 @@ export async function fetchHubCompanyDocuments(
   try {
     const res = await fetch(url, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "x-de-sync-token": token,
-        Accept: "application/json",
-      },
+      headers: { ...portalBridgeHeaders(url, token), Accept: "application/json" },
     });
     const data = (await res.json().catch(() => ({}))) as HubCompanyDocumentsResponse;
     if (!res.ok) {
@@ -273,11 +288,7 @@ export async function fetchHubCompanyOrders(
   try {
     const res = await fetch(url, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "x-de-sync-token": token,
-        Accept: "application/json",
-      },
+      headers: { ...portalBridgeHeaders(url, token), Accept: "application/json" },
     });
     const data = (await res.json().catch(() => ({}))) as HubCompanyOrdersResponse;
     if (!res.ok) {
@@ -310,10 +321,7 @@ export async function fetchHubContractDownload(
   try {
     const res = await fetch(url, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "x-de-sync-token": token,
-      },
+      headers: portalBridgeHeaders(url, token),
     });
     if (!res.ok) {
       logger.error("TechSales document download failed", { status: res.status, signatureId });

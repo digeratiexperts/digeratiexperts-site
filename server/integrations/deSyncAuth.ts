@@ -114,10 +114,9 @@ export function buildSignedHeaders(input: {
     "X-DE-Timestamp": timestamp,
     "X-DE-Source": input.source,
     "X-DE-Signature": signature,
-    // Keep compatibility headers during the migration window. Receivers prefer
-    // HMAC when present; these can be removed after legacy auth is retired.
-    Authorization: `Bearer ${input.secret}`,
-    "x-de-sync-token": input.secret,
+    // No raw-secret copy (Authorization / x-de-sync-token): the Hub verifies
+    // the HMAC whenever it is present, and the raw secret beside it let anyone
+    // who saw one request skip the HMAC entirely.
   };
 }
 

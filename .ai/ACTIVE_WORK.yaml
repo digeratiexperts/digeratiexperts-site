@@ -54,6 +54,22 @@ claims:
       unposted result on disk for the next run. Overlap check: no open PR;
       open ACTIVE issues 270 and 272 (DE Tech Tool) touch DE.Security and
       Loader.Tests.ps1, not DE-Microsoft-Admin.
+  - id: portal-bridge-signed-calls
+    owner: claude
+    subsystem: hub-integration-auth
+    branch: claude/portal-bridge-signed-calls
+    base_sha: 823e4d0
+    files:
+      - server/integrations/deSyncAuth.ts
+      - server/integrations/techSalesClient.ts (portal-bridge calls + signedGet only)
+      - server/integrations/portalBridgeSigning.test.ts
+    status: active
+    started: 2026-10-03
+    note: >-
+      Sign portal-bridge GETs to the Hub over pathname + search and stop sending
+      the raw sync token (Authorization / x-de-sync-token). Needs Hub PR 329
+      (live 2026-10-03). Overlaps staff-warehouse-ops-console on
+      techSalesClient.ts only in name: that branch is fully merged into main.
   - id: staff-warehouse-ops-console
     owner: cursor
     subsystem: digital-warehouse
