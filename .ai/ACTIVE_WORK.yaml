@@ -30,6 +30,60 @@
 
 version: 2
 claims:
+  - id: de-object-storage-per-object-acl
+    owner: claude
+    subsystem: object-storage
+    branch: claude/object-storage-acl
+    base_sha: 8fc5524
+    files:
+      - server/replit_integrations/object_storage/objectAccess.ts
+      - server/replit_integrations/object_storage/objectAccess.test.ts
+      - server/replit_integrations/object_storage/objectStorageAcl.routes.test.ts
+      - server/replit_integrations/object_storage/routes.ts
+      - server/replit_integrations/object_storage/index.ts
+      - server/routes.ts (registerObjectStorageRoutes call only)
+      - server/storage.ts (findTenantFileByFileUrl on IStorage + both impls)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Per-object read ACL for private object storage, the follow-up from the
+      closed PR 300 reconciliation (its invoice/rate-limiter pieces already
+      landed in PR 299). GET /objects/:path moves off blanket admin-only to a
+      default-deny per-object decision: DE admin, the object's GCS ACL
+      owner/grantee, or a member of the tenant (client) that owns the object's
+      path in portal_tenant_files may read; everyone else, including other
+      authenticated tenants, gets 403. Admin keeps full access, so this is a
+      strict, safe widening that enables non-admin tenant reads. Pure decision
+      function (authorizeObjectRead) plus a route integration test. The
+      tenant-owner evidence read (findTenantFileByFileUrl) is DB-backed
+      (portal_tenant_files) with a cache fallback so it survives restarts;
+      full reliability of the tenant-file flow still depends on durable writes
+      (tenant-file durability, issues 233/259). Reconciled onto main d5f3479.
+  - id: ask-de-launcher-gold
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 9e3c285
+    files:
+      - client/src/components/SiteBottomBar.tsx (the Ask DE launcher button and badge, the chooser header badge, the "Get Help" choice label, the first-visit pulse colour)
+      - client/src/index.css (phones only: --de-chrome-inset 0.75rem to 1.25rem inside the existing max-width 639px block)
+      - client/src/components/SiteBottomBar.launcher.test.ts (new)
+      - scripts/desk-browser-smoke.mjs (launcher checks)
+      - design/DESIGN-AUTHORITY.md, design/UI-STYLE-RULES.md, brand/README.md, .cursor/rules/de-desk-design.mdc, .cursor/skills/de-desk-ui/tokens-and-structure.md, docs/SITE-VISUAL-TASKS.md (launcher lines)
+      - design/approved/ask-de-launcher-gold-2026-10-03.md (new)
+      - artifacts/visual-qa/ask-de-launcher/**
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03, after the launcher mockup: "B on desktop, C on mobile,
+      with the same speech mark and gold tone throughout". Where "Ask DE" is
+      written beside it, the launcher is a Signal Gold ring on charcoal with a
+      white mark that stays white on hover; where it stands alone (phones, the
+      compact Store launcher) it is a solid gold disc with a dark mark. One
+      white focus ring that keeps the round shape. The chooser header uses the
+      same badge. "Get Help" becomes "Ask a Question". On phones the bottom
+      chrome moves to 20px from the edge, on the page's own margin. Merge
+      authority: Joe.
   - id: de-auth-token-identity-binding
     owner: claude
     subsystem: portal-auth
@@ -41,7 +95,7 @@ claims:
       - server/portalAuthFailClosed.test.ts (two added cases)
       - server/legacyAuthRetired.ts, server/legacyAuthRetired.test.ts (legacy /api/auth/register and /api/auth/login answer 410)
       - server/routes.ts (legacy register/login handlers and their now-unused helpers removed)
-    status: active
+    status: merged
     started: 2026-10-01
     note: >-
       Issue 236 (P0), confirmed on a local production build after Joe's "so
@@ -59,6 +113,7 @@ claims:
       /api/auth/register and /api/auth/login token minters are retired (410
       Gone, end-to-end test). Follow-up (own PR): gate the PATCH
       /api/portal/profile email change on a confirmation to the new address.
+      RELEASED 2026-10-03: merged as PR 329 (merge commit ae69ba0a, 2026-10-03T02:40Z). MERGED, not yet recorded as VERIFIED LIVE; production verification is pending. Files released.
   - id: de-desk-hardening
     owner: claude
     subsystem: de-desk
@@ -72,7 +127,7 @@ claims:
       - scripts/desk-browser-smoke.mjs, package.json (smoke:desk; tailwindcss-animate moved to devDependencies), package-lock.json (dev markers only), .github/workflows/ci.yml (one line after smoke:door2)
       - .cursor/skills/de-desk-ui/tokens-and-structure.md (a11y)
       - artifacts/visual-qa/desk-hardening/**
-    status: active
+    status: verified-live
     started: 2026-10-03
     note: >-
       Joe, 2026-10-03, on "nothing to act on": "nothing to improve, nothing to
@@ -87,6 +142,15 @@ claims:
       the production dependency audit (a new braces advisory with no patch,
       reaching prod only via the build-time plugin tailwindcss-animate); Joe
       chose to fold the fix into this PR: the plugin moves to devDependencies.
+      RELEASED 2026-10-03: merged as 8c16090 (PR 342, on Joe's "all
+      approved"). The CI run for 8c16090 passed every job: the production
+      dependency audit (now clean), smoke:desk 79/79 against the production
+      build, and "Deploy and verify production VPS" (01:30Z). VERIFIED LIVE
+      01:30:40Z: production serves ZohoASAPWidget-DRPXOS2H.js; smoke:desk run
+      against https://digeratiexperts.com passed 79/79 (fit at 390, 768, 1440,
+      844x390 and 720x450, keyboard trap and focus return, hint sequence,
+      polish invariants; network stubbed, nothing sent to production).
+      Screenshots: artifacts/visual-qa/desk-hardening/live/. Files released.
   - id: portal-people-pick-company
     owner: claude
     subsystem: client-portal-pages
@@ -450,7 +514,7 @@ claims:
       - server/campaignAliasRedirects.ts
       - server/campaignAliasRedirects.test.ts
       - server/index.ts (the campaign alias redirect registration only)
-    status: active
+    status: merged
     started: 2026-10-01
     note: >-
       Found by a link sweep after Joe's "so everything is complete and we cant
@@ -460,6 +524,7 @@ claims:
       /support/system-status rendered while answering HTTP 404 in production,
       and /ads/<slug> and /lp/<slug> answered 404 before a browser redirect
       that dropped the query string. Exact paths, so unknown slugs stay 404.
+      RELEASED 2026-10-03: merged as PR 328 (squash e7203266). MERGED, not yet recorded as VERIFIED LIVE; production verification is pending. Files released.
   - id: de-org-department-tenant-boundary
     owner: claude
     subsystem: portal-org
@@ -469,7 +534,7 @@ claims:
       - server/portalDepartmentRoutes.ts
       - server/portalDepartmentRoutes.test.ts
       - server/routes.ts (the two department routes and their imports only)
-    status: active
+    status: merged
     started: 2026-10-01
     note: >-
       Issue 254 (P0), verified still present on main 576aa76d after Joe's
@@ -481,6 +546,7 @@ claims:
       order; the company now comes from the signed-in user unless the caller is
       a DE admin, and the IT contact must be in the same company. The People
       page's only call (create with a name) is unaffected.
+      RELEASED 2026-10-03: merged as PR 326 (squash e5945de3). MERGED, not yet recorded as VERIFIED LIVE; production verification is pending. Files released.
   - id: de-desk-store-seed-door2
     owner: claude
     subsystem: de-desk

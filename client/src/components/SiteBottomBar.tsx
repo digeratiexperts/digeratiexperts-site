@@ -48,10 +48,30 @@ type QuickMenuItem = {
 };
 
 /**
- * One Ask DE entry point. The launcher opens a single white chooser inspired by
- * the approved reference: visitors choose what they need first, then the
- * existing Desk opens directly on that function. This avoids presenting three
- * competing tabs as the first decision.
+ * The Ask DE badge: one treatment for the launcher and the chooser header, so
+ * the two always match (Joe, 2026-10-03: "B on desktop, C on mobile, with the
+ * same speech mark and gold tone throughout").
+ * - Labelled ("Ask DE" written beside it, `sm` and up): a Signal Gold ring on
+ *   charcoal with a white mark. The words explain the action, so the icon stays
+ *   quiet. The mark stays white on hover; only the ring and a faint gold fill
+ *   respond.
+ * - Alone (phones, where the label is hidden below `sm`, and the compact
+ *   launcher): a solid gold disc with a dark mark, which reads best at that size.
+ */
+const ASK_DE_BADGE_ALONE =
+  "border-2 border-transparent bg-[#E3B23C] text-[#0b0b0d] group-hover:bg-[#EDBE4C]";
+const ASK_DE_BADGE_LABELLED =
+  "border-2 border-transparent bg-[#E3B23C] text-[#0b0b0d] group-hover:bg-[#EDBE4C] sm:border-[#E3B23C] sm:bg-[#0b0b0d] sm:text-[#f5f5f4] sm:group-hover:border-[#EDBE4C] sm:group-hover:bg-[rgba(227,178,60,0.10)]";
+
+function askDeBadgeClasses(compact: boolean): string {
+  return compact ? ASK_DE_BADGE_ALONE : ASK_DE_BADGE_LABELLED;
+}
+
+/**
+ * One Ask DE entry point. The launcher opens a single black and gold chooser:
+ * visitors choose what they need first, then the existing Desk opens directly
+ * on that function. This avoids presenting three competing tabs as the first
+ * decision.
  */
 function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
   const [showMenu, setShowMenu] = useState(false);
@@ -183,8 +203,9 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
       onSelect: () => openDesk({ tab: "ticket" }),
     },
     {
-      title: "Get Help",
-      description: "Ask DE a question and get guidance",
+      // "Get Help" read too close to "Get Support" (Joe, 2026-10-03).
+      title: "Ask a Question",
+      description: "Get answers and guidance",
       icon: BookOpen,
       testId: "ask-de-choice-help",
       onSelect: () => openDesk({ tab: "chat" }),
@@ -296,8 +317,11 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
                 <p className="text-[24px] font-semibold leading-tight tracking-[-0.035em] text-[#f5f5f4]">Ask DE</p>
                 <p className="mt-1 text-[15px] leading-6 text-[#b4b4ba]">How can we help you today?</p>
               </div>
-              <div className="mt-3 flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#19191c]">
-                <AskDeGlyph className="h-10 w-10 text-[#f5f5f4]" />
+              <div
+                className={`mt-3 flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${askDeBadgeClasses(compact)}`}
+                data-testid="ask-de-chooser-badge"
+              >
+                <AskDeGlyph className="h-10 w-10" />
               </div>
             </div>
 
@@ -354,13 +378,19 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
           setShowNudge(false);
           setShowMenu((open) => !open);
         }}
-        className="group flex h-10 shrink-0 items-center gap-2 rounded-full px-1 pr-1.5 text-white transition-colors duration-200 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+        // One white focus ring that keeps the round shape: focus-visible:rounded-full
+        // beats the global `*:focus-visible { border-radius: 4px }` in index.css.
+        // Without a label the button is a 40px circle (no extra right padding).
+        className={`group flex h-10 shrink-0 items-center gap-2 rounded-full px-1${compact ? "" : " sm:pr-1.5"} text-white transition-colors duration-200 hover:bg-white/[0.06] focus-visible:rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f5f5f4] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
         data-testid="button-open-asap-widget"
         aria-label={compact ? "Open Ask DE support options" : "Open Ask DE"}
         aria-expanded={showMenu}
         aria-haspopup="dialog"
       >
-        <span className={`de-ask-fab relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white text-[#111116] shadow-[0_4px_14px_rgba(0,0,0,0.18)] transition-transform duration-150 group-hover:scale-[1.04]${askMotionAllowed ? " de-ask-fab--breathe" : ""}`}>
+        <span
+          className={`de-ask-fab relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${askDeBadgeClasses(compact)} shadow-[0_4px_14px_rgba(0,0,0,0.18)] transition-[transform,background-color,border-color] duration-150 group-hover:scale-[1.04]${askMotionAllowed ? " de-ask-fab--breathe" : ""}`}
+          data-testid="ask-de-launcher-badge"
+        >
           <AskDeGlyph className="h-[26px] w-[26px]" />
         </span>
         {!compact && (
@@ -399,7 +429,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
               position: absolute;
               inset: -6px;
               border-radius: 50%;
-              border: 2px solid color-mix(in srgb, var(--de-magenta-ink, #D3126A) 55%, transparent);
+              border: 2px solid rgba(227, 178, 60, 0.55);
               animation: de-ask-breathe 2.8s ease-out 3;
               animation-iteration-count: 3;
               pointer-events: none;

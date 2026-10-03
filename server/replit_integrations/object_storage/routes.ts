@@ -1,19 +1,38 @@
-import type { Express, RequestHandler } from "express";
+import type { Express, Request, RequestHandler, Response } from "express";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { ObjectPermission } from "./objectAcl";
+import { authorizeObjectRead } from "./objectAccess";
+
+export type ObjectStorageGuards = {
+  auth: RequestHandler;
+  admin: RequestHandler;
+  /**
+   * Resolve the portal tenant (client) that owns this object path via
+   * portal_tenant_files / equivalent registry. Return null when unknown.
+   */
+  resolveTenantOwnerClientId?: (objectPath: string) => Promise<string | null>;
+};
+
+type AuthedRequest = Request & {
+  userId?: string;
+  user?: { id?: string; role?: string; clientId?: string | null };
+};
 
 /**
  * Register object storage routes for file uploads.
  *
- * This provides example routes for the presigned URL upload flow:
+ * This provides the presigned URL upload flow:
  * 1. POST /api/uploads/request-url - Get a presigned URL for uploading
  * 2. The client then uploads directly to the presigned URL
  *
- * Uploads are admin-only. Reads require a portal session so an anonymous
- * request cannot fetch a stored object by guessing its path.
+ * Uploads are admin-only. Reads require authentication AND authorization
+ * (admin, object ACL owner, or tenant file ownership). Default deny, so an
+ * authenticated non-admin (e.g. a self-registered prospect) cannot fetch
+ * another tenant's stored file by guessing its path.
  */
 export function registerObjectStorageRoutes(
   app: Express,
-  guards: { auth: RequestHandler; admin: RequestHandler },
+  guards: ObjectStorageGuards,
 ): void {
   const objectStorageService = new ObjectStorageService();
 
@@ -64,15 +83,59 @@ export function registerObjectStorageRoutes(
   });
 
   /**
-   * Serve uploaded objects. Uploads are admin-only and no portal-user flow
-   * reads these objects, so serving is restricted to admins too — an
-   * authenticated non-admin (e.g. a self-registered prospect) must not be able
-   * to fetch another tenant's stored file by path. Broaden to a per-object ACL
-   * check (canAccessObjectEntity) only when a non-admin read flow is added.
+   * Serve uploaded objects to an authorized portal session.
+   *
+   * Authorization is per-object and default-deny: a DE admin, the object's
+   * ACL owner/grantee, or a member of the tenant that owns the object's path
+   * may read it. Anyone else — including other authenticated tenants — gets
+   * 403, so a stored file cannot be fetched by guessing its path.
+   *
+   * GET /objects/:objectPath(*)
    */
-  app.get("/objects/:objectPath(*)", guards.auth, guards.admin, async (req, res) => {
+  app.get("/objects/:objectPath(*)", guards.auth, async (req: AuthedRequest, res: Response) => {
     try {
-      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      const objectPath = req.path;
+      const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
+
+      const userId = req.userId || req.user?.id;
+      const aclAllowsUser = userId
+        ? await objectStorageService.canAccessObjectEntity({
+            userId,
+            objectFile,
+            requestedPermission: ObjectPermission.READ,
+          })
+        : false;
+
+      let tenantOwnerClientId: string | null = null;
+      if (guards.resolveTenantOwnerClientId) {
+        try {
+          tenantOwnerClientId = await guards.resolveTenantOwnerClientId(objectPath);
+        } catch (lookupError) {
+          console.error("Error resolving object tenant owner:", lookupError);
+          tenantOwnerClientId = null;
+        }
+      }
+
+      const decision = authorizeObjectRead(
+        {
+          userId,
+          role: req.user?.role,
+          clientId: req.user?.clientId,
+        },
+        { aclAllowsUser, tenantOwnerClientId },
+      );
+
+      if (!decision.allow) {
+        console.warn("[SECURITY] OBJECT_READ_DENIED", {
+          userId,
+          role: req.user?.role,
+          clientId: req.user?.clientId,
+          objectPath,
+          reason: decision.reason,
+        });
+        return res.status(403).json({ error: "Access denied" });
+      }
+
       await objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
       console.error("Error serving object:", error);
@@ -83,4 +146,3 @@ export function registerObjectStorageRoutes(
     }
   });
 }
-
