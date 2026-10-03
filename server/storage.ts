@@ -1183,20 +1183,30 @@ export class DatabaseStorage implements IStorage {
     // reachable in dev); an empty DB answer is final.
     try {
       const db = await this.getDb();
-      const rows: { id: string; clientId: string; fileUrl: string }[] = await db
+      const live = and(eq(portalTenantFiles.fileUrl, fileUrl), isNull(portalTenantFiles.deletedAt));
+      // Distinct OWNERS, not rows: a LIMIT on rows can return A1/A2 and miss
+      // B1, authorizing an ambiguous path. Two distinct owners are enough to
+      // know the path is ambiguous.
+      const owners: { clientId: string }[] = await db
+        .selectDistinct({ clientId: portalTenantFiles.clientId })
+        .from(portalTenantFiles)
+        .where(live)
+        .limit(2);
+      if (owners.length === 0) return undefined;
+      if (owners.length > 1) {
+        console.warn("[SECURITY] TENANT_FILE_URL_AMBIGUOUS", { fileUrl });
+        return undefined;
+      }
+      const [row] = await db
         .select({
           id: portalTenantFiles.id,
           clientId: portalTenantFiles.clientId,
           fileUrl: portalTenantFiles.fileUrl,
         })
         .from(portalTenantFiles)
-        .where(and(eq(portalTenantFiles.fileUrl, fileUrl), isNull(portalTenantFiles.deletedAt)))
-        .limit(2);
-      if (rows.length > 1 && rows.some((r) => r.clientId !== rows[0].clientId)) {
-        console.warn("[SECURITY] TENANT_FILE_URL_AMBIGUOUS", { fileUrl });
-        return undefined;
-      }
-      return rows[0];
+        .where(and(live, eq(portalTenantFiles.clientId, owners[0].clientId)))
+        .limit(1);
+      return row;
     } catch (error) {
       console.error("findTenantFileByFileUrl: DB lookup failed, falling back to cache", error);
     }

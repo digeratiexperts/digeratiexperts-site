@@ -54,9 +54,26 @@ export async function fakeDriver(sql: string, params: unknown[]) {
   }
   if (sql.startsWith("select")) {
     if (faults.reads) throw new Error("connection terminated");
-    const [, cols, where] = sql.match(/^select (.*) from "portal_tenant_files" where (.*?)( order by .*)?$/)!;
-    const rows = tables.portal_tenant_files.filter((r) => whereMatches(r, where, params));
-    return { rows: rows.map((r) => project(r, cols)) };
+    // Honors DISTINCT and LIMIT so a query that limits rows instead of owners
+    // cannot pass here and fail against Postgres.
+    const m = sql.match(/^select( distinct)? (.*?) from "portal_tenant_files" where (.*?)( order by .*?)?( limit (\$\d+|\d+))?$/);
+    if (!m) throw new Error(`Unhandled fake SELECT: ${sql}`);
+    const [, distinct, cols, where, , , limitTok] = m;
+    let out = tables.portal_tenant_files.filter((r) => whereMatches(r, where, params)).map((r) => project(r, cols));
+    if (distinct) {
+      const seen = new Set<string>();
+      out = out.filter((r) => {
+        const key = JSON.stringify(r);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+    if (limitTok) {
+      const n = Number(limitTok.startsWith("$") ? params[Number(limitTok.slice(1)) - 1] : limitTok);
+      out = out.slice(0, n);
+    }
+    return { rows: out };
   }
   if (sql.startsWith("update")) {
     if (faults.writes) throw new Error("connection terminated");
