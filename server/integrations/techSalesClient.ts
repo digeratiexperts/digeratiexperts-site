@@ -342,8 +342,29 @@ export async function fetchHubContractDownload(
   }
 }
 
+const PORTAL_COMMANDS_PATH = "/api/integrations/v1/portal/commands";
+
 export function websitePathForEvent(eventType: DeSyncEventType): string {
-  return WEBSITE_PATHS[eventType] || "/api/integrations/v1/portal/commands";
+  return WEBSITE_PATHS[eventType] || PORTAL_COMMANDS_PATH;
+}
+
+/**
+ * Hub path for an outbound envelope, chosen by (source, eventType).
+ *
+ * The Hub's website intake routes only accept `X-DE-Source: website` signed
+ * with the website secret, and its portal route has no handler for website
+ * intake events (it would acknowledge them as a no-op). So a portal-sourced
+ * envelope whose type is website-only is refused here, loudly, instead of
+ * being posted somewhere that rejects or silently drops it.
+ */
+export function hubPathForEnvelope(source: DeSyncEnvelope["source"], eventType: DeSyncEventType): string {
+  if (source === "portal") {
+    if (WEBSITE_PATHS[eventType]) {
+      throw new Error(`Portal-sourced ${eventType} has no Hub portal route`);
+    }
+    return PORTAL_COMMANDS_PATH;
+  }
+  return websitePathForEvent(eventType);
 }
 
 export function readHubDeliveryResult(body: unknown): {
@@ -381,7 +402,7 @@ export async function deliverEnvelopeToHub(
     throw new Error("Hub destination not configured");
   }
 
-  const path = websitePathForEvent(envelope.eventType);
+  const path = hubPathForEnvelope(envelope.source, envelope.eventType);
   const body = JSON.stringify(envelope);
   const headers = buildSignedHeaders({
     method: "POST",
