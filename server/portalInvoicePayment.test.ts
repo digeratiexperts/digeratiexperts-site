@@ -45,4 +45,22 @@ describe("resolveInvoicePayAmount", () => {
     expect(resolveInvoicePayAmount(5000, 0, EMAIL)).toEqual({ ok: true, payAmount: 5000 });
     expect(resolveInvoicePayAmount(5000, -100, EMAIL)).toEqual({ ok: true, payAmount: 5000 });
   });
+
+  it("refuses paid, void, draft and closed invoices even if a balance is present (#255)", () => {
+    for (const status of ["paid", "void", "Draft", "closed", "written off"]) {
+      expect(resolveInvoicePayAmount("100", undefined, EMAIL, status)).toMatchObject({
+        ok: false,
+        status: 400,
+        reason: "invoice_not_payable",
+      });
+    }
+  });
+
+  it("still accepts open states and a missing status, and a tampered amount stays rejected", () => {
+    for (const status of ["sent", "overdue", "unpaid", "partially_paid", undefined]) {
+      expect(resolveInvoicePayAmount("100", undefined, EMAIL, status)).toEqual({ ok: true, payAmount: 100 });
+    }
+    expect(resolveInvoicePayAmount("10000", 1, EMAIL, "sent")).toMatchObject({ ok: false, reason: "amount_mismatch" });
+    expect(resolveInvoicePayAmount("100", 999999, EMAIL, "sent")).toMatchObject({ ok: false, reason: "amount_mismatch" });
+  });
 });

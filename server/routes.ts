@@ -3751,7 +3751,7 @@ export async function registerRoutes(app: Express) {
       // Server-authoritative amount: the balance due is the source of truth;
       // a client-supplied `amount` may only match it, never underpay.
       const { resolveInvoicePayAmount } = await import("./portalInvoicePayment");
-      const amountResult = resolveInvoicePayAmount(inv.balance ?? inv.total, amount, COMPANY.billingEmail);
+      const amountResult = resolveInvoicePayAmount(inv.balance ?? inv.total, amount, COMPANY.billingEmail, inv.status);
       if (!amountResult.ok) {
         if (amountResult.reason === "amount_mismatch") {
           console.warn("[SECURITY] INVOICE_AMOUNT_MISMATCH", {
