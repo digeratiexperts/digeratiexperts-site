@@ -1,6 +1,26 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it, vi } from "vitest";
-import { registerObjectStorageRoutes } from "./replit_integrations/object_storage/routes";
+import express from "express";
+import { createServer, type Server } from "node:http";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { MemStorage } from "./storage";
+
+const getObjectEntityFile = vi.fn();
+const canAccessObjectEntity = vi.fn();
+const downloadObject = vi.fn();
+
+vi.mock("./replit_integrations/object_storage/objectStorage", () => {
+  class ObjectNotFoundError extends Error {}
+  return {
+    ObjectNotFoundError,
+    ObjectStorageService: class {
+      getObjectEntityFile = getObjectEntityFile;
+      canAccessObjectEntity = canAccessObjectEntity;
+      downloadObject = downloadObject;
+      getObjectEntityUploadURL = vi.fn(async () => "https://storage.example/uploads/new");
+      normalizeObjectEntityPath = vi.fn(() => "/objects/uploads/new");
+    },
+  };
+});
 
 /**
  * Regression guards for #250 (raw Zoho proxy routes) and #237 (object storage).
@@ -71,26 +91,121 @@ describe("raw Zoho routes are admin-gated unless explicitly allowlisted (#250)",
   });
 });
 
-describe("object storage routes are guarded (#237)", () => {
-  it("upload is auth + admin, and object reads are auth + admin", () => {
-    const routes = new Map<string, unknown[]>();
-    const app: any = {
-      get: (path: string, ...h: unknown[]) => routes.set(`GET ${path}`, h),
-      post: (path: string, ...h: unknown[]) => routes.set(`POST ${path}`, h),
+describe("object storage routes enforce the current tenant-file ACL (#237)", () => {
+  const OBJ = "/objects/uploads/a-secret.pdf";
+  let server: Server;
+  let base = "";
+  let storage: MemStorage;
+  let caller: { id: string; role: string; clientId: string | null } | null;
+
+  beforeAll(async () => {
+    const { registerObjectStorageRoutes } = await import("./replit_integrations/object_storage/routes");
+    storage = new MemStorage();
+    const app = express();
+    app.use(express.json());
+    // Same wiring shape as registerRoutes in routes.ts: auth first, then admin, resolver backed by findTenantFileByFileUrl.
+    const auth: express.RequestHandler = (req, res, next) => {
+      if (!caller) return res.status(401).json({ error: "Not authenticated" });
+      (req as any).userId = caller.id;
+      (req as any).user = caller;
+      next();
     };
-    const auth = vi.fn();
-    const admin = vi.fn();
-    registerObjectStorageRoutes(app, { auth, admin });
-    expect([...routes.keys()].sort()).toEqual(["GET /objects/:objectPath(*)", "POST /api/uploads/request-url"]);
-    for (const handlers of routes.values()) {
-      expect(handlers[0]).toBe(auth);
-      expect(handlers[1]).toBe(admin);
-    }
+    const admin: express.RequestHandler = (req, res, next) =>
+      (req as any).user?.role === "admin" ? next() : res.status(403).json({ error: "Admin access required" });
+    registerObjectStorageRoutes(app, {
+      auth,
+      admin,
+      resolveTenantOwnerClientId: async (objectPath) => (await storage.findTenantFileByFileUrl(objectPath))?.clientId ?? null,
+    });
+    server = createServer(app);
+    await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+    base = `http://127.0.0.1:${(server.address() as any).port}`;
   });
 
-  it("the server mounts object storage with the portal guards, never bare", () => {
+  afterAll(async () => {
+    await new Promise<void>((r) => server.close(() => r()));
+  });
+
+  let fileId: string;
+  beforeEach(async () => {
+    getObjectEntityFile.mockReset().mockResolvedValue({ name: "uploads/a-secret.pdf" });
+    canAccessObjectEntity.mockReset().mockResolvedValue(false);
+    downloadObject.mockReset().mockImplementation(async (_f: unknown, res: any) => res.status(200).send("BYTES"));
+    for (const f of await storage.getTenantFilesByClientId("client-a")) await storage.deleteTenantFile(f.id);
+    const f = await storage.createTenantFile({
+      clientId: "client-a", fileName: "a.pdf", fileType: "document", category: "documentation",
+      description: "", fileUrl: OBJ, uploadedBy: "admin-1",
+    });
+    fileId = f.id;
+    caller = { id: "user-a", role: "user", clientId: "client-a" };
+  });
+
+  it("refuses an unauthenticated read and never touches storage", async () => {
+    caller = null;
+    const r = await fetch(base + OBJ);
+    expect(r.status).toBe(401);
+    expect(downloadObject).not.toHaveBeenCalled();
+  });
+
+  it("serves the owning tenant's registered file", async () => {
+    const r = await fetch(base + OBJ);
+    expect(r.status).toBe(200);
+    expect(await r.text()).toBe("BYTES");
+  });
+
+  it("refuses another tenant's object (registered to client-a, caller is client-b)", async () => {
+    caller = { id: "user-b", role: "user", clientId: "client-b" };
+    const r = await fetch(base + OBJ);
+    expect(r.status).toBe(403);
+    expect(downloadObject).not.toHaveBeenCalled();
+  });
+
+  it("refuses a caller with no tenant at all (self-registered prospect)", async () => {
+    caller = { id: "user-p", role: "user", clientId: null };
+    expect((await fetch(base + OBJ)).status).toBe(403);
+  });
+
+  it("refuses an object path that is in no tenant registry (default deny)", async () => {
+    expect((await fetch(`${base}/objects/uploads/unregistered.pdf`)).status).toBe(403);
+    expect(downloadObject).not.toHaveBeenCalled();
+  });
+
+  it("refuses the former owner once the tenant file record is deleted", async () => {
+    expect(await storage.deleteTenantFile(fileId)).toBe(true);
+    expect(await storage.findTenantFileByFileUrl(OBJ)).toBeUndefined();
+    const r = await fetch(base + OBJ);
+    expect(r.status).toBe(403);
+    expect(downloadObject).not.toHaveBeenCalled();
+  });
+
+  it("still lets an admin read, and a failed tenant lookup denies rather than allows", async () => {
+    caller = { id: "admin-1", role: "admin", clientId: null };
+    expect((await fetch(base + OBJ)).status).toBe(200);
+    caller = { id: "user-a", role: "user", clientId: "client-a" };
+    vi.spyOn(storage, "findTenantFileByFileUrl").mockRejectedValueOnce(new Error("db down"));
+    expect((await fetch(base + OBJ)).status).toBe(403);
+  });
+
+  it("upload URL minting is admin-only: anonymous 401, tenant user 403, admin 200", async () => {
+    const post = () => fetch(`${base}/api/uploads/request-url`, {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: "x.pdf" }),
+    });
+    caller = null;
+    expect((await post()).status).toBe(401);
+    caller = { id: "user-a", role: "user", clientId: "client-a" };
+    expect((await post()).status).toBe(403);
+    caller = { id: "admin-1", role: "admin", clientId: null };
+    expect((await post()).status).toBe(200);
+  });
+
+  it("the server wires the real tenant-file lookup into the object routes and never mounts them bare", () => {
     const src = readFileSync(new URL("./routes.ts", import.meta.url), "utf8");
-    expect(src).toContain("registerObjectStorageRoutes(app, { auth: authMiddleware, admin: requireAdmin })");
+    const start = src.indexOf("registerObjectStorageRoutes(app, {");
+    expect(start).toBeGreaterThan(-1);
+    const call = src.slice(start, src.indexOf("});", start));
+    expect(call).toContain("auth: authMiddleware");
+    expect(call).toContain("admin: requireAdmin");
+    expect(call).toContain("storage.findTenantFileByFileUrl(objectPath)");
     expect(src).not.toMatch(/registerObjectStorageRoutes\(app\)/);
   });
 });
