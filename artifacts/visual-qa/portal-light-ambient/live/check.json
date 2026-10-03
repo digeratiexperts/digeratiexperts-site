@@ -9,7 +9,10 @@
   "deploy_job": "Deploy and verify production VPS: success",
   "bundle": {
     "entry": "/assets/index-BDIuU1zN.js (same name as the local build of the merged tree)",
-    "entry_references": { "portal-Xybf7wEt.css": true, "PortalLayout-CRAL-_zI.js": true },
+    "entry_references": {
+      "portal-Xybf7wEt.css": true,
+      "PortalLayout-CRAL-_zI.js": true
+    },
     "portal_css": {
       "290 42% 96% (orchid field)": 2,
       "pt-canvas": 2,
@@ -20,8 +23,48 @@
     "PortalLayout_chunk_pt_canvas": 1
   },
   "renders_signed_out": [
-    { "page": "/portal/login", "widths": [390, 1440], "status": 200, "portal_css": "portal-Xybf7wEt.css", "axe_serious_critical": 0, "overflow": false, "runtime_errors": 0 },
-    { "page": "/portal/signup", "widths": [390, 1440], "status": 200, "portal_css": "portal-Xybf7wEt.css", "axe_serious_critical": 0, "overflow": false, "runtime_errors": 0 }
+    {
+      "page": "/portal/login",
+      "widths": [
+        390,
+        1440
+      ],
+      "status": 200,
+      "portal_css": "portal-Xybf7wEt.css",
+      "axe_serious_critical": 0,
+      "overflow": false,
+      "runtime_errors": 0
+    },
+    {
+      "page": "/portal/signup",
+      "widths": [
+        390,
+        1440
+      ],
+      "status": 200,
+      "portal_css": "portal-Xybf7wEt.css",
+      "axe_serious_critical": 0,
+      "overflow": false,
+      "runtime_errors": 0
+    }
   ],
-  "limit": "The light field and glow apply only inside the signed-in portal. No signed-in light-mode screenshot was taken on production (the QA login is a CI secret and its workflow renders the dark default); the same bundle was rendered signed in locally (../after-*.png)."
+  "limit": "The light field and glow apply only inside the signed-in portal. No signed-in light-mode screenshot was taken on production (the QA login is a CI secret and its workflow renders the dark default); the same bundle was rendered signed in locally (../after-*.png).",
+  "follow_up_pr_412": {
+    "checked": "2026-10-03T23:40Z",
+    "merge_sha": "5929d77d6e26ef5d3fd384605af2c14094e9238d",
+    "release_txt_both_hosts": "5929d77d6e26ef5d3fd384605af2c14094e9238d",
+    "healthz": 200,
+    "deploy_job": "Deploy and verify production VPS: success",
+    "entry": "/assets/index-B14dCa_B.js (same name as the local build of the merged tree)",
+    "portal_css": "portal-D0pHb8rv.css (same name as the local build)",
+    "portal_css_has": {
+      "4 106 77 (new ok ink)": 1,
+      "182 17 58 (new bad ink)": 1,
+      "4 120 87 (old ok ink)": 0,
+      "190 18 60 (old bad ink)": 0,
+      "290 42% 96% (orchid field)": 2,
+      "pt-canvas": 2
+    },
+    "regression_run_local": "39 portal pages x dark/light x 390/1440, before vs after: dark pixel-identical apart from the /portal/status clock; light axe findings equal the pre-408 baseline (one pre-existing search-dialog aria finding)"
+  }
 }
