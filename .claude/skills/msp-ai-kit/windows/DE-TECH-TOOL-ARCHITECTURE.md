@@ -10,7 +10,7 @@ DE Tech Tool has three parts. Each one works on its own, and all three were desi
 
 | Component | Runs where | Works alone | Code |
 |---|---|---|---|
-| **Online** (Intelligence Hub) | techsales.digerati-experts.com | Device registry, orders/jobs, evidence and rescue intake, warranty history, fleet views | Intelligence-Hub repo, `POST /api/integrations/v1/techconsole/events` (draft PR; merging is a production deploy and needs DE approval) |
+| **Online** (Intelligence Hub) | techsales.digerati-experts.com | Device registry, orders/jobs, evidence and rescue intake, warranty history, fleet views | Intelligence-Hub repo, `POST /api/integrations/v1/techconsole/events` (merged; Intelligence-Hub `master` auto-deploys, and DE still sets the secrets and applies the migrations: [GO-LIVE.md](GO-LIVE.md)) |
 | **On-device** (DE Tech Tool) | The Windows device: OOBE, after first sign-in, configured | Discover, audit, plan, apply, verify, roll back and keep evidence, with no server | `console/` (WPF plus headless) |
 | **Boot rescue** | WinPE from USB or ISO, when Windows will not boot or must not be booted | Unlock BitLocker with a typed recovery password, copy profiles, export drivers, check disk health, repair boot, revert stuck updates | `rescue/` (`New-DERescueMedia.ps1`, `Start-DERescue.ps1`, `DE.Rescue.psm1`) |
 
@@ -19,17 +19,24 @@ the same files, and `DE.Contracts` validates them on the device and in WinPE.
 
 | Contract | Written by | Read by |
 |---|---|---|
-| `de.techconsole.device/v1` | on-device (`New-DEHubPayload`), rescue | Hub |
+| `de.techconsole.device/v1` | on-device (`New-DEHubPayload`) | Hub |
 | `de.techconsole.order/v1` | DE / Hub | dropship kit, first boot |
 | `de.techconsole.handoff/v1` | rescue | on-device (the `rescue.handoff` step), Hub |
 | `de.techconsole.warranty/v1` | on-device (`DE.Warranty`) | Hub |
 | `de.techconsole.job/v1` | Hub | on-device (planned: the signed DE Tech Agent) |
+| `de.email-migration.record/v1` | DE Microsoft Admin (`Export-DEMigrationRecord`), sent by the on-device Email migration page | Hub (IT Operations) |
+
+Microsoft 365 admin jobs use their own signed contract, `de.msadmin.job/v1`, between the Hub and the DE Microsoft
+Admin worker (`Invoke-DEHubJobLoop`); see `microsoft/DE-Microsoft-Admin/README.md`.
 
 - **Device key.** Every component names a device `<maker>:<SERIAL>` (`ConvertTo-DEDeviceKey`), so the
   three agree without talking to each other. An OEM placeholder serial is refused, and the technician
   types the serial from the sticker.
 - **No secrets in any contract.** Validators refuse secret-looking keys and any value shaped like a
-  BitLocker recovery password.
+  BitLocker recovery password. The device record leaves secret-named keys out before it is validated
+  (`Remove-DEContractSecretKeys`), so a stray key does not stop every send; a migration record or a
+  rescue handoff with one is refused. A refused send records the Hub's own reason
+  (`Get-DEHubErrorReason`), never the secret or the signed body.
 - **Transport to the Hub.** The Hub's de-sync envelope (version 1, source `techconsole`), signed with
   HMAC-SHA256 over `METHOD\npath\ntimestamp\neventId\nsha256(body)`. The body is written byte for byte
   as JavaScript's `JSON.stringify` writes it, because that is what the Hub hashes. The signing secret is
@@ -110,6 +117,7 @@ Release packages are code-signed and sha256-pinned. The server advertises versio
    1.9.0: the company-branded lock screen as its own enforced step (image, users cannot change it, shown at sign-in, Windows Spotlight off for every profile, exact undo, Windows Home reported), and Settings cards for the Intelligence Hub connection (the four parts sending needs, a Hub check, the release check) and code signing (this copy's signature, the certificates on the PC, how to get one, the signed rebuild).
    1.10.0: the licence follow-ups for the Hub licence service (Intelligence-Hub PR #310): the tool downloads the Hub's revocation list into its protected data folder (at launch when the Hub URL is set, and after activation; offline, the last saved list stays) and refuses a licence revoked in it or in the shipped `trust/revoked.json`, which a release build made with `-HubUrl` refreshes; a licence pinned to a build (`bid`) works only in that build (state `wrong-build`).
    1.10.1: the boot rescue sends its handoff to the Hub only with the client's Hub account number (asked at the rescue prompt, or `-HubAccountId` on media made for one client); before this the Hub refused every rescue send as "account not mapped". A refused send records the Hub's own reason. DE Microsoft Admin 0.5.0 adds the Hub job loop (`Invoke-DEHubJobLoop`).
+   1.10.2: the device and email migration sends record the Hub's own reason when it refuses (for example "Hub refused: account not mapped"), shared with the boot rescue (`DE.Contracts` `Get-DEHubErrorReason`), and the Evidence page shows it. Secret-named keys in a device record (an `apiToken` in an exception note, say) are left out of what goes to the Hub instead of being sent as `[REDACTED]`, which the Hub refused, failing every send; local state and logs still keep them as `[REDACTED]`. `GO-LIVE.md` lists every production step in order.
 6. Build the outbound-only DE Tech Agent with mTLS, signed jobs and evidence sync.
 7. Integrate remote assist as a provider rather than building a remote-desktop protocol first.
 8. Add connected fleet/device views to Intelligence Hub Tech Hub.

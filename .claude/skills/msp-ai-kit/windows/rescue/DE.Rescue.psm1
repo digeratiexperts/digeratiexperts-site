@@ -442,15 +442,8 @@ function Send-DERescueHandoffToHub {
         $null = Send-DEHubEvent -BaseUrl $HubUrl -Event $ev -Secret $Secret
         return [pscustomobject]@{ sent = $true; eventId = $ev.eventId; detail = "sent as event $($ev.eventId) for Hub account $("$AccountId".Trim())" }
     } catch {
-        $why = $_.Exception.Message
-        $hub = $null
-        if ($_.ErrorDetails -and $_.ErrorDetails.Message) {
-            $hub = "$($_.ErrorDetails.Message)"
-            try { $j = $hub | ConvertFrom-Json; $hub = (@($j.error, $j.message) | Where-Object { $_ }) -join ': ' } catch { $null = $_ }   # not JSON: keep the Hub's text as it came
-        }
-        $detail = $(if ($hub) { "Hub refused: $hub ($why)" } else { $why })
-        if ($detail.Length -gt 400) { $detail = $detail.Substring(0, 400) }
-        return [pscustomobject]@{ sent = $false; eventId = $(if ($ev) { $ev.eventId } else { $null }); detail = $detail }
+        # the Hub's own reason (DE.Contracts, shared with the tool's device and migration sends), never the secret
+        return [pscustomobject]@{ sent = $false; eventId = $(if ($ev) { $ev.eventId } else { $null }); detail = (Get-DEHubErrorReason -ErrorRecord $_) }
     }
 }
 
