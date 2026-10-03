@@ -1,5 +1,6 @@
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { storage } from "./storage";
+import { buildCompanyMetrics } from "./adminCompanyMetrics";
 import { randomBytes, randomInt, createHash, timingSafeEqual } from "crypto";
 import rateLimit from "express-rate-limit";
 import bcrypt from "bcrypt";
@@ -4658,65 +4659,13 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Company not found" });
       }
       
-      // Calculate metrics from portal data - get tickets from storage
+      // Only real portal data; service and billing figures are null/not_connected (#234).
       const allStoredTickets = await storage.getPortalTickets();
       const allTickets = allStoredTickets.filter((t: any) => t.clientId === companyId);
-      const openTickets = allTickets.filter((t: any) => t.status === "open").length;
-      const resolvedTickets = allTickets.filter((t: any) => t.status === "resolved").length;
-      const inProgressTickets = allTickets.filter((t: any) => t.status === "in_progress").length;
-      
       const users = Array.from(portalUsers.values()).filter(u => u.clientId === companyId);
       const tenantFiles = await storage.getTenantFilesByClientId(companyId);
-      
-      // Mock service and invoice data
-      const metrics = {
-        company: {
-          id: company.id,
-          name: company.companyName,
-          status: company.status,
-          createdAt: company.createdAt,
-        },
-        tickets: {
-          total: allTickets.length,
-          open: openTickets,
-          inProgress: inProgressTickets,
-          resolved: resolvedTickets,
-          avgResolutionTime: "4.2 hours",
-        },
-        users: {
-          total: users.length,
-          activeUsers: users.filter(u => u.isActive).length,
-          admins: users.filter(u => u.role === "admin").length,
-        },
-        files: {
-          total: tenantFiles.length,
-          agents: tenantFiles.filter(f => f.category === "agents").length,
-          documents: tenantFiles.filter(f => f.category === "documents").length,
-        },
-        services: {
-          activeServices: 3,
-          monthlyValue: "$1,250.00",
-          tier: "Business",
-        },
-        billing: {
-          pendingInvoices: 1,
-          totalOwed: "$450.00",
-          lastPayment: "2024-12-15",
-        },
-        activity: {
-          lastLogin: new Date().toISOString(),
-          ticketsThisMonth: allTickets.filter((t: any) => {
-            const ticketDate = new Date(t.createdAt);
-            const now = new Date();
-            return ticketDate.getMonth() === now.getMonth() && ticketDate.getFullYear() === now.getFullYear();
-          }).length,
-          filesUploadedThisMonth: tenantFiles.filter(f => {
-            const fileDate = new Date(f.createdAt);
-            const now = new Date();
-            return fileDate.getMonth() === now.getMonth() && fileDate.getFullYear() === now.getFullYear();
-          }).length,
-        },
-      };
+
+      const metrics = buildCompanyMetrics({ company, tickets: allTickets, users, files: tenantFiles });
       
       res.json(metrics);
     } catch (error: any) {
