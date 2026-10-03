@@ -42,12 +42,20 @@ claims:
       - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/README.md
       - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/MIGRATION-STANDARD.md (the closing note only)
       - .claude/skills/msp-ai-kit/windows/tests/HubWorker.Tests.ps1 (new)
-      - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md (the Intelligence Hub jobs subsection and one line of the tests list only)
+      - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md (the Intelligence Hub jobs subsection, one line of the tests list, and the boot rescue Hub-send lines only)
+      - .claude/skills/msp-ai-kit/windows/rescue/DE.Rescue.psm1 (Test-DEHubAccountId and Send-DERescueHandoffToHub, plus the export line)
+      - .claude/skills/msp-ai-kit/windows/rescue/Start-DERescue.ps1 (the -HubAccountId parameter, its config default and the Hub send)
+      - .claude/skills/msp-ai-kit/windows/rescue/New-DERescueMedia.ps1 (-HubAccountId into rescue.config.json)
+      - .claude/skills/msp-ai-kit/windows/console/tests/Components.Tests.ps1 (one new Boot rescue test)
+      - .claude/skills/msp-ai-kit/windows/console/VERSION, .claude/skills/msp-ai-kit/windows/DE-TECH-TOOL-ARCHITECTURE.md (1.10.1 line only)
     status: active
     started: 2026-10-03
     note: >-
       Joe, 2026-10-03: "continue the tech tool work", decision 3A (build the
-      worker loop). DE Microsoft Admin 0.5.0 adds Invoke-DEHubJobLoop, the
+      worker loop). Also Joe, 2026-10-03: "also fix the boot rescue bug": the
+      end-to-end rehearsal found the rescue's Hub send never passed the client's
+      Hub account number, so the Hub refused it every time (422 account not
+      mapped); fixed in DE Tech Tool 1.10.1. DE Microsoft Admin 0.5.0 adds Invoke-DEHubJobLoop, the
       worker side of the Hub's job queue merged in Intelligence-Hub PR 313
       (master 7ac27b00): claim, verify with Invoke-DEMicrosoftJob, run, post
       a result with nothing secret in it (ConvertTo-DEHubSafeResult), keep an
