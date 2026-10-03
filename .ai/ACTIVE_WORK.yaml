@@ -93,7 +93,7 @@ claims:
       - client/src/components/SiteBottomBar.tsx (one comment)
       - design/UI-STYLE-RULES.md (the all-states line), .cursor/skills/de-desk-ui/tokens-and-structure.md (a11y line)
       - artifacts/visual-qa/focus-shape/**
-    status: active
+    status: verified-live
     started: 2026-10-03
     note: >-
       Joe, 2026-10-03, on the launcher's "rectangular focus outline": the same
@@ -108,6 +108,14 @@ claims:
       an inline box-shadow (its glow) replaced the Button's focus ring. The
       glow becomes a shadow class, so the ring and the glow compose. Joe
       approved starting this ("All approved"); merge authority: Joe.
+      RELEASED 2026-10-03: merged as fca0009 (PR 386, on Joe's "Go-ahead merge
+      it all"). The CI run for fca0009 passed every job, including the
+      production deploy (finished 16:48Z); production showed the hero button's
+      focus ring from 16:51Z. The keyboard audit against
+      https://digeratiexperts.com (/, /store, /contact at 1440 and 390, 417
+      stops) found 0 stops changing shape on focus and no violet outline;
+      smoke:desk passed 88/88 against production. Evidence:
+      artifacts/visual-qa/focus-shape/live/. VERIFIED LIVE. Files released.
   - id: de-object-storage-per-object-acl
     owner: claude
     subsystem: object-storage
