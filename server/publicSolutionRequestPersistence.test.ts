@@ -20,6 +20,8 @@ type FakeRow = {
 };
 
 let table: FakeRow[] = [];
+let tablePresent = true;
+const ddlSeen: string[] = [];
 
 function matchesUnexpired(row: FakeRow): boolean {
   if (row.status === "submitted") return true;
@@ -28,8 +30,13 @@ function matchesUnexpired(row: FakeRow): boolean {
 
 async function fakeQuery(sql: string, params: unknown[] = []) {
   const text = sql.trim();
-  if (text.startsWith("CREATE TABLE") || text.startsWith("CREATE INDEX")) {
-    return { rows: [] };
+  if (/^(CREATE|ALTER|DROP)\s/i.test(text)) {
+    // #253: schema is owned by migrations; the app must never issue DDL.
+    ddlSeen.push(text);
+    throw new Error("permission denied: runtime DDL is not allowed");
+  }
+  if (text.startsWith("SELECT to_regclass")) {
+    return { rows: [{ present: tablePresent ? "public_solution_requests" : null }] };
   }
   if (text.startsWith("INSERT INTO public_solution_requests")) {
     const [id, sessionId, status, payloadJson, createdAt, updatedAt, expiresAt] = params as [
@@ -101,6 +108,8 @@ vi.mock("./db", () => {
 describe("public solution request durable persistence", () => {
   beforeEach(() => {
     table = [];
+    tablePresent = true;
+    ddlSeen.length = 0;
     process.env.DATABASE_URL = "postgres://fake-test-only";
     vi.resetModules();
   });
@@ -230,5 +239,31 @@ describe("public solution request durable persistence", () => {
     expect(saved.record.id).not.toBe(first.record.id);
     expect(saved.record.status).toBe("draft");
     expect((await store.getPublicSolutionRequestDurable(first.record.id))?.organizationName).toBe("Acme");
+  });
+  it("never issues DDL at runtime and persists into the migrated table (#253)", async () => {
+    const store = await import("./publicSolutionRequestStore");
+    const { persistPublicSolutionRequest } = await import("./publicSolutionRequestPersistence");
+    const record = store.upsertPublicSolutionRequest({ sessionId: "session-ddl", selectedNeeds: [] });
+    expect(await persistPublicSolutionRequest(record)).toBe(true);
+    expect(ddlSeen).toEqual([]);
+    expect(table.some((row) => row.id === record.id)).toBe(true);
+  });
+
+  it("reports durable persistence unavailable when the migration has not run, without creating the table (#253)", async () => {
+    tablePresent = false;
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const store = await import("./publicSolutionRequestStore");
+    const persistence = await import("./publicSolutionRequestPersistence");
+    const record = store.upsertPublicSolutionRequest({ sessionId: "session-missing", selectedNeeds: [] });
+    expect(await persistence.durablePersistenceAvailable()).toBe(false);
+    expect(await persistence.persistPublicSolutionRequest(record)).toBe(false);
+    expect(ddlSeen).toEqual([]);
+    expect(table).toEqual([]);
+    expect(errors.mock.calls.some((c) => String(c[0]).includes("db:migrate"))).toBe(true);
+
+    // Once the migration lands, the next call verifies again and succeeds.
+    tablePresent = true;
+    expect(await persistence.persistPublicSolutionRequest(record)).toBe(true);
+    errors.mockRestore();
   });
 });
