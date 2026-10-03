@@ -46,4 +46,15 @@ describe("public SPA isolation from the Digital Warehouse", () => {
     expect(app).not.toMatch(/from ["']\.\/StoreLanding["']/);
     expect(app).not.toMatch(/import\(["']\.\/StoreLanding["']\)/);
   });
+
+  it("relabels merchandising and checkout as staff, not a public storefront", () => {
+    const catalog = readFileSync(path.join(root, "client/src/pages/store/CoManagedStore.tsx"), "utf8");
+    const checkout = readFileSync(path.join(root, "client/src/pages/store/Checkout.tsx"), "utf8");
+    const shell = readFileSync(path.join(root, "client/src/pages/store/WarehouseShell.tsx"), "utf8");
+    expect(catalog).toContain("Staff SKU workshop");
+    expect(catalog).not.toContain("Guided IT Storefront");
+    expect(checkout).toContain("Staff Pay Now (card)");
+    expect(checkout).not.toContain("Complete your purchase");
+    expect(shell).toContain("warehouse-chrome-health");
+  });
 });

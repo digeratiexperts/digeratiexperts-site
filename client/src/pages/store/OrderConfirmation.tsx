@@ -129,7 +129,7 @@ const OrderConfirmation = () => {
             <Link href="/internal/warehouse">
               <Button className="bg-de-accent hover:bg-de-accent text-white" data-testid="button-back-to-store">
                 <ShoppingBag className="w-4 h-4 mr-2" />
-                Continue Shopping
+                Back to warehouse
               </Button>
             </Link>
           </div>
@@ -331,7 +331,7 @@ const OrderConfirmation = () => {
                 data-testid="button-continue-shopping"
               >
                 <ShoppingBag className="w-4 h-4 mr-2" />
-                Continue Shopping
+                Back to warehouse
               </Button>
             </Link>
 

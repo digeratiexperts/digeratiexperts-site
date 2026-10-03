@@ -229,9 +229,9 @@ const CoManagedStore = () => {
 
   useSEO({
     noIndex: true,
-    title: "IT Store Catalog | Digerati Experts",
+    title: "SKU catalog (staff) | Digital Warehouse",
     description:
-      "Guided IT storefront: shop by outcome, browse curated rails, and purchase co-managed products — endpoint, security, UCaaS, hardware, and professional services.",
+      "Staff Digital Warehouse SKU workshop — category pills, vendor marks, quote vs Pay Now. Not the public Store.",
     canonical: "/internal/warehouse/co-managed",
   });
 
@@ -563,7 +563,7 @@ const CoManagedStore = () => {
 
       <main className="relative z-10 pb-20">
         <div className="mx-auto max-w-[var(--de-canvas)] px-3 sm:px-4 lg:px-6">
-          <StoreClientBar />
+          <StoreClientBar staff />
 
           <div className="mb-8 flex items-center gap-2 text-base text-white/50">
             <Link href="/internal/warehouse" className="transition-colors hover:text-white">
@@ -582,24 +582,25 @@ const CoManagedStore = () => {
           >
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-de-accent/25 bg-de-accent/10 px-4 py-2">
               <Users className="h-4 w-4 text-de-accent-ink" />
-              <span className="text-sm text-de-accent-ink">Guided IT Storefront</span>
+              <span className="text-sm text-de-accent-ink">Staff SKU workshop</span>
             </div>
             <h1 className="mb-4 text-[clamp(2rem,6vw,3.25rem)] font-bold leading-[1.12] tracking-[-0.03em] text-white">
-              Tell us what you&apos;re trying to{" "}
-              <span className="text-de-accent-ink">accomplish.</span>
+              Workshop catalog — quote or{" "}
+              <span className="text-de-accent-ink">Pay Now</span>
             </h1>
             <p className="text-lg leading-relaxed text-white/70 md:text-xl">
-              Shop by outcome, build a recommended stack with Ask DE, then buy from the live
-              catalog when you know what you need.
+              Internal merchandising rails with category pills and vendor marks. Local SKUs are a
+              temporary workshop feed until the Hub catalog is verified. Cost columns belong here,
+              never on Door 2.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Button
-                className="h-12 w-full bg-de-accent px-6 text-base text-white hover:bg-[#6548ff] sm:w-auto"
+                className="h-12 w-full bg-de-accent px-6 text-base text-white hover:bg-[#1d6ff2] sm:w-auto"
                 onClick={() => setGuidedOpen(true)}
                 data-testid="button-build-solution"
               >
                 <Sparkles className="mr-2 h-5 w-5" />
-                Build my solution
+                Build a staff solution
               </Button>
               <Button
                 variant="outline"
@@ -621,7 +622,7 @@ const CoManagedStore = () => {
                 }}
                 data-testid="button-browse-everything"
               >
-                Browse the full catalog
+                Open full workshop catalog
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -736,7 +737,7 @@ const CoManagedStore = () => {
                     variant={selectedCategory === "all" ? "default" : "outline"}
                     className={
                       selectedCategory === "all"
-                        ? "bg-de-accent text-white hover:bg-[#6548ff]"
+                        ? "bg-de-accent text-white hover:bg-[#1d6ff2]"
                         : "border-white/15 bg-transparent text-white/80 hover:bg-white/5"
                     }
                     onClick={() => setSelectedCategory("all")}
@@ -754,7 +755,7 @@ const CoManagedStore = () => {
                         variant={selectedCategory === category ? "default" : "outline"}
                         className={
                           selectedCategory === category
-                            ? "bg-de-accent text-white hover:bg-[#6548ff]"
+                            ? "bg-de-accent text-white hover:bg-[#1d6ff2]"
                             : "border-white/15 bg-transparent text-white/80 hover:bg-white/5"
                         }
                         onClick={() => setSelectedCategory(category)}
@@ -819,7 +820,7 @@ const CoManagedStore = () => {
                       Showing 0 of {visibleBase.length} products
                     </p>
                     <Button
-                      className="mt-4 bg-de-accent text-white hover:bg-[#6548ff]"
+                      className="mt-4 bg-de-accent text-white hover:bg-[#1d6ff2]"
                       onClick={clearAllFilters}
                       data-testid="button-empty-clear-filters"
                     >
@@ -919,7 +920,7 @@ const CoManagedStore = () => {
               <Link href="/internal/warehouse/managed">
                 <Button
                   size="lg"
-                  className="h-12 bg-de-accent px-6 text-white hover:bg-[#6548ff]"
+                  className="h-12 bg-de-accent px-6 text-white hover:bg-[#1d6ff2]"
                   data-testid="button-view-managed"
                 >
                   View Managed IT Packages

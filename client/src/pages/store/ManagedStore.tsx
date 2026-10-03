@@ -26,8 +26,9 @@ const ManagedStore = () => {
 
   useSEO({
     noIndex: true,
-    title: 'Managed IT Packages | Digerati Experts Store',
-    description: 'Complete managed IT packages and ProActive Ecosystem plans for businesses. Full-service IT support, security, compliance, and strategy—all in one predictable subscription.',
+    title: "Managed packages (staff) | Digital Warehouse",
+    description:
+      "Staff Digital Warehouse — ProActive and contract packages for quoting. Not the public Store.",
     canonical: '/internal/warehouse/managed',
   });
 
@@ -59,13 +60,13 @@ const ManagedStore = () => {
         variants={itemVariants}
         className={`relative overflow-hidden rounded-xl border transition-all duration-300 hover:-translate-y-1 cursor-pointer ${
           featured 
-            ? 'bg-violet-500/10 border-violet-500/40 shadow-[0_0_30px_rgba(139,92,246,0.15)]' 
-            : 'bg-white/[0.03] border-white/10 hover:border-violet-500/30'
+            ? 'bg-de-accent/10 border-de-accent/40' 
+            : 'bg-white/[0.03] border-white/10 hover:border-de-accent/30'
         }`}
         data-testid={`product-${product.id}`}
       >
       {featured && (
-        <div className="absolute top-2 right-2 z-10 px-2.5 py-0.5 bg-violet-600 text-white text-[10px] font-bold rounded-full flex items-center gap-1">
+        <div className="absolute top-2 right-2 z-10 px-2.5 py-0.5 bg-[#1d6ff2] text-white text-[10px] font-bold rounded-full flex items-center gap-1">
           <Star className="w-3 h-3" />
           Popular
         </div>
@@ -160,17 +161,17 @@ const ManagedStore = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-de-raised border border-de-hairline mb-6">
               <Building className="w-4 h-4 text-de-accent-ink" />
-              <span className="text-sm text-de-accent-ink">Managed IT Services</span>
+              <span className="text-sm text-de-accent-ink">Staff quoting · contract packages</span>
             </div>
             <h1 className="mb-6 text-[clamp(2rem,6vw,3.25rem)] font-bold leading-[1.12] tracking-[-0.03em] text-white">
-              Full-Service{" "}
+              Managed packages for{" "}
               <span className="text-de-accent-ink">
-                Managed IT
+                staff quotes
               </span>
             </h1>
             <p className="text-xl text-white/70 max-w-3xl mx-auto leading-relaxed">
-              Complete managed IT packages designed for businesses that want predictable costs and comprehensive support. 
-              Everything you need in one subscription—no surprise bills, no nickel-and-diming.
+              ProActive and other contract lines. These are not charged on Door 2. Use consultation
+              and quote — Pay Now stays limited to eligible workshop SKUs.
             </p>
           </motion.div>
 
@@ -183,10 +184,10 @@ const ManagedStore = () => {
           >
             <Lock className="w-5 h-5 text-de-accent-ink mt-0.5 flex-shrink-0" />
             <div>
-              <h3 className="text-white font-semibold mb-1">Contract-Based Services</h3>
+              <h3 className="text-white font-semibold mb-1">Contract — quote, do not Pay Now</h3>
               <p className="text-white/60 text-sm">
-                These managed IT packages require a consultation and service agreement. 
-                Schedule a call to discuss your needs and receive a customized quote tailored to your organization.
+                These packages need a service agreement. Build the staff quote; do not treat them as
+                a public checkout SKU.
               </p>
             </div>
           </motion.div>

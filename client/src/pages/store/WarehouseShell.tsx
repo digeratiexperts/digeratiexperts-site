@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Warehouse } from "lucide-react";
 import { MegaMenu } from "@/components/MegaMenu";
 import { WAREHOUSE_BASE, warehousePath } from "@/lib/warehousePaths";
+import { useWarehouseHubHealth } from "@/hooks/useWarehouseHubHealth";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -27,6 +28,7 @@ function navActive(pathname: string, href: string, match: "exact" | "prefix"): b
  */
 export function WarehouseShell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
+  const { catalogStatus, pax8Status } = useWarehouseHubHealth();
 
   return (
     <div className="relative min-h-screen bg-[#0a0a0a]" data-testid="warehouse-shell" data-accent="electric">
@@ -43,6 +45,17 @@ export function WarehouseShell({ children }: { children: ReactNode }) {
               </p>
               <p className="truncate text-lg font-semibold tracking-tight text-white sm:text-xl">
                 DE Digital Warehouse
+              </p>
+              <p
+                className="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px] text-white/50"
+                data-testid="warehouse-chrome-health"
+              >
+                <span>
+                  Hub catalog <span className="text-de-accent-ink">{catalogStatus}</span>
+                </span>
+                <span>
+                  Pax8 <span className="text-de-accent-ink">{pax8Status}</span>
+                </span>
               </p>
             </div>
           </div>

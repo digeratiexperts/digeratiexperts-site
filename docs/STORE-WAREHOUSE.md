@@ -24,7 +24,8 @@ The **DE Digital Warehouse** is a **staff ops console** at `/internal/warehouse`
 
 - Shell: `WarehouseShell` + MegaMenu; section nav (Ops home · SKU catalog · Managed packages · Hub feed · Vendors · Quotes · Checkout).
 - Landing: `WarehouseHome` — ops cards and workshop counts. The old guided buyer `StoreLanding` is **not** mounted in the warehouse.
-- Electric accent + category pills + vendor marks stay (Joe-decided warehouse color lock). Public Store does not get those pills.
+- Shell chrome shows Hub catalog + Pax8 health (CONNECTED / STALE / FAILED / AUTH_REQUIRED / LOCAL_WORKSHOP / UNKNOWN). Never invent healthy.
+- SKU catalog, cart, and checkout copy is internal (workshop / Pay Now / staff quote). Electric accent + category pills + vendor marks stay (Joe-decided warehouse color lock). Public Store does not get those pills.
 
 ## How staff open it
 

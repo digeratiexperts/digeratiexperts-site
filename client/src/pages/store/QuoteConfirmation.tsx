@@ -113,7 +113,7 @@ const QuoteConfirmation = () => {
               ) : (
                 <Link href={warehousePath()}>
                   <Button className="bg-de-accent hover:bg-de-accent text-white" data-testid="button-back-to-store">
-                    Back to Store
+                    Back to warehouse
                   </Button>
                 </Link>
               )}

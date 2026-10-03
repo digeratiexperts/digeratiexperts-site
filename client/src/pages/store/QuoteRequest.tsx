@@ -43,8 +43,8 @@ const QuoteRequest = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useSEO({
-    title: "Request a Quote | Digerati Experts Store",
-    description: "Request a custom quote for IT services and solutions from Digerati Experts.",
+    title: "Staff quote | Digital Warehouse",
+    description: "Staff Digital Warehouse quote path — no public Store checkout.",
     canonical: "/internal/warehouse/quote-request",
     noIndex: true,
   });
@@ -159,7 +159,7 @@ const QuoteRequest = () => {
               </p>
               <Link href="/internal/warehouse">
                 <Button className="bg-de-accent hover:bg-de-accent text-white" data-testid="button-browse-store">
-                  Browse Store
+                  Browse warehouse
                 </Button>
               </Link>
             </motion.div>
@@ -179,11 +179,11 @@ const QuoteRequest = () => {
             <ol className="flex items-center gap-2 text-sm text-white/50">
               <li>
                 <Link href="/internal/warehouse" className="hover:text-white transition-colors" data-testid="breadcrumb-store">
-                  Store
+                  Warehouse
                 </Link>
               </li>
               <li>/</li>
-              <li className="text-white" data-testid="breadcrumb-quote-request">Request Quote</li>
+              <li className="text-white" data-testid="breadcrumb-quote-request">Staff quote</li>
             </ol>
           </nav>
 

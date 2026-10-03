@@ -14,7 +14,6 @@ import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { SolutionOrderSummary } from "@/components/store/SolutionOrderSummary";
 import { snapshotSubmitLines } from "@/lib/solutionSnapshotView";
-import { portalLoginWithReturn } from "@/lib/portalUrls";
 import { readGuidedSession } from "@/lib/storeGuidedSession";
 import { writeContactHandoff } from "@/lib/warehouseContactHandoff";
 import { warehousePath } from "@/lib/warehousePaths";
@@ -48,8 +47,8 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useSEO({
-    title: "Checkout | Digerati Experts Store",
-    description: "Complete your purchase of IT services and solutions from Digerati Experts.",
+    title: "Staff Pay Now | Digital Warehouse",
+    description: "Staff Digital Warehouse checkout — Pay Now or quote. Not a public Store default.",
     canonical: "/internal/warehouse/checkout",
     noIndex: true,
   });
@@ -196,11 +195,11 @@ const Checkout = () => {
             <ol className="flex items-center gap-2 text-sm text-white/50">
               <li>
                 <Link href="/internal/warehouse" className="hover:text-white transition-colors" data-testid="breadcrumb-store">
-                  Store
+                  Warehouse
                 </Link>
               </li>
               <li>/</li>
-              <li className="text-white" data-testid="breadcrumb-checkout">Checkout</li>
+              <li className="text-white" data-testid="breadcrumb-checkout">Staff checkout</li>
             </ol>
           </nav>
 
@@ -208,16 +207,16 @@ const Checkout = () => {
             <Link href="/internal/warehouse">
               <Button variant="ghost" className="text-white/60 hover:text-white" data-testid="button-back-to-store">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Store
+                Back to warehouse
               </Button>
             </Link>
           </div>
 
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-2" data-testid="text-checkout-title">
-              Checkout
+              Staff checkout
             </h1>
             <p className="text-white/60" data-testid="text-checkout-subtitle">
-              Complete your order for IT services and solutions
+              Pay Now is staff-only (`pay_now`). Quotes stay the path for hardware, recurring, or unsigned lines.
             </p>
 
                 <div className="bg-white/5 border border-white/10 rounded-xl p-6" data-testid="section-billing-info">
@@ -322,10 +321,10 @@ const Checkout = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <CreditCard className="w-5 h-5 text-de-accent-ink" />
-                          <span className="font-medium text-white">Credit / Debit Card</span>
+                          <span className="font-medium text-white">Staff Pay Now (card)</span>
                         </div>
                         <p className="text-sm text-white/60 mt-1">
-                          Secure payment processing. All major cards accepted.
+                          Charge eligible workshop lines. Not a public Store default.
                         </p>
                       </div>
                       {paymentMethod === "zoho" && (
@@ -345,10 +344,10 @@ const Checkout = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <MessageSquare className="w-5 h-5 text-emerald-400" />
-                          <span className="font-medium text-white">Request Quote</span>
+                          <span className="font-medium text-white">Staff quote (no charge)</span>
                         </div>
                         <p className="text-sm text-white/60 mt-1">
-                          Get a custom quote from our team. We'll contact you within 1 business day.
+                          Hardware, recurring billing, or unsigned work — quote instead of charging.
                         </p>
                       </div>
                       {paymentMethod === "quote_request" && (
@@ -357,19 +356,7 @@ const Checkout = () => {
                     </label>
                   </RadioGroup>
                   <p className="mt-4 text-sm text-white/55">
-                    Already a co-managed client?{" "}
-                    <a
-                      href={portalLoginWithReturn(
-                        typeof window !== "undefined"
-                          ? `${window.location.origin}${warehousePath("/checkout")}`
-                          : warehousePath("/checkout"),
-                      )}
-                      className="text-de-accent-ink underline-offset-4 hover:underline"
-                      data-testid="checkout-portal-login"
-                    >
-                      Open Client Portal login
-                    </a>
-                    . Prospects should use Request Quote — card checkout still requires an existing store role.
+                    Cost and vendor identity stay on this staff path. Door 2 never receives this checkout.
                   </p>
                 </div>
               </div>
