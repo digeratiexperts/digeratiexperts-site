@@ -10,39 +10,16 @@
 // Families compose the registers in their own order (see ../families/*).
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { DE_DOC_FONT_FACES, DE_DOC_TOKENS } from "../../../shared/deDocumentTokens";
 import { FONTS_DIR } from "./paths.mts";
 
 const f = (file: string) => pathToFileURL(path.join(FONTS_DIR, file)).href;
 
-// Static instances only: Chromium embeds variable fonts as Type 3.
-const FACES: [string, string, number, string][] = [
-  ["Inter", "inter-400", 400, "normal"],
-  ["Inter", "inter-500", 500, "normal"],
-  ["Inter", "inter-600", 600, "normal"],
-  ["Inter", "inter-700", 700, "normal"],
-  ["Inter", "inter-italic-400", 400, "italic"],
-  ["Space Grotesk", "space-grotesk-500", 500, "normal"],
-  ["Space Grotesk", "space-grotesk-600", 600, "normal"],
-  ["Newsreader Display", "newsreader-400-o72", 400, "normal"],
-  ["Newsreader", "newsreader-400-o16", 400, "normal"],
-  ["Newsreader", "newsreader-500-o24", 500, "normal"],
-  ["Newsreader", "newsreader-italic-400-o16", 400, "italic"],
-  ["Plex Mono", "plex-mono-400", 400, "normal"],
-  ["Plex Mono", "plex-mono-500", 500, "normal"],
-];
+// Tokens and static font instances are shared with the Store documents
+// (server/pdf/dePdfBrand.ts). Static only: Chromium embeds variable fonts as Type 3.
+const FACES = DE_DOC_FONT_FACES;
 
-export const TOKENS = {
-  ink: "#050312",
-  ink2: "#2f2c38",
-  muted: "#5b5866",
-  rule: "#cfccd6",
-  hair: "#e4e2e8",
-  tint: "#f4f3f6",
-  paper: "#F7F5F2",
-  paperRule: "#ddd7ce",
-  mag: "#D3126A", // brand magenta: rules, bars, marks only (5.2:1 on white)
-  magText: "#B80F5C", // magenta for text (6.4:1 on white, 5.9:1 on paper)
-};
+export const TOKENS = DE_DOC_TOKENS;
 
 const cssString = (s: string) => `"${s.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 

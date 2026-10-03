@@ -74,11 +74,46 @@ export function getSolution(id: string): StoredSolution | undefined {
   return record ? hydrate(record) : undefined;
 }
 
+/**
+ * Thrown when a caller names a solution id it does not own (#244). A raw row id
+ * is not a bearer capability: the caller must be the record's portal user, or
+ * be on the browser session that holds it.
+ */
+export class SolutionOwnershipError extends Error {
+  readonly code = "SOLUTION_OWNERSHIP_MISMATCH";
+  constructor() {
+    super("This solution belongs to another session.");
+    this.name = "SolutionOwnershipError";
+  }
+}
+
+/**
+ * Who may read or write a stored solution by its id.
+ * - A user-owned record: that user, or an anonymous caller on the same browser
+ *   session (the device the user built it on, before or after sign-in). A
+ *   different signed-in user is refused even on a matching session.
+ * - A guest record: only the session that holds it (a user signing in on that
+ *   session may pick it up, which is what claim does).
+ */
+export function solutionOwnedBy(
+  record: Pick<StoredSolution, "sessionId" | "userId">,
+  caller: { sessionId?: string | null; userId?: string | null },
+): boolean {
+  const userId = typeof caller.userId === "string" ? caller.userId.trim() : "";
+  const sessionId = typeof caller.sessionId === "string" ? caller.sessionId.trim() : "";
+  const sameSession = Boolean(sessionId) && Boolean(record.sessionId) && sessionId === record.sessionId;
+  if (record.userId) {
+    if (userId) return userId === record.userId;
+    return sameSession;
+  }
+  return sameSession;
+}
+
 export function findSolution(opts: { id?: string; sessionId?: string; userId?: string | null }): StoredSolution | undefined {
   expireGuests();
   if (opts.id) {
     const exact = solutions.get(opts.id);
-    if (exact) return hydrate(exact);
+    if (exact && solutionOwnedBy(exact, opts)) return hydrate(exact);
   }
   if (opts.userId) {
     const owned = [...solutions.values()].find((record) => record.userId === opts.userId && record.status !== "archived");
@@ -86,7 +121,8 @@ export function findSolution(opts: { id?: string; sessionId?: string; userId?: s
   }
   if (opts.sessionId) {
     const guest = [...solutions.values()].find(
-      (record) => record.sessionId === opts.sessionId && record.status !== "archived",
+      (record) =>
+        record.sessionId === opts.sessionId && record.status !== "archived" && solutionOwnedBy(record, opts),
     );
     if (guest) return hydrate(guest);
   }
@@ -101,6 +137,11 @@ export function upsertSolution(input: {
   items: SolutionLineInput[];
   savedForLater?: SolutionLineInput[];
 }): StoredSolution {
+  if (input.id) {
+    const named = solutions.get(input.id);
+    // Never rebind someone else's record to this caller; refuse instead (#244).
+    if (named && !solutionOwnedBy(named, input)) throw new SolutionOwnershipError();
+  }
   const existing = findSolution({ id: input.id, sessionId: input.sessionId, userId: input.userId });
   const now = new Date().toISOString();
   const base = existing ?? createSolution(input.sessionId, input.userId ?? null);
@@ -127,8 +168,13 @@ function mergeLines(primary: SolutionLineInput[], secondary: SolutionLineInput[]
 }
 
 /** Attach a guest solution to a portal user. Union quantities; never drop either side. */
+/** A session's solution may be claimed only if it is a guest record or already this user's. */
+function claimableBy(record: StoredSolution | undefined, userId: string): StoredSolution | undefined {
+  return record && (!record.userId || record.userId === userId) ? record : undefined;
+}
+
 export function claimSolution(sessionId: string, userId: string): StoredSolution {
-  const guest = findSolution({ sessionId });
+  const guest = claimableBy(findSolution({ sessionId }), userId);
   const owned = findSolution({ userId });
   if (guest && owned && guest.id !== owned.id) {
     const merged = upsertSolution({
@@ -337,7 +383,7 @@ export async function findSolutionDurable(opts: {
   if (memory) return memory;
   if (opts.id) {
     const byId = await loadFromDb({ id: opts.id });
-    if (byId) return byId;
+    if (byId && solutionOwnedBy(byId, opts)) return byId;
   }
   if (opts.userId) {
     const byUser = await loadFromDb({ userId: opts.userId });
@@ -345,7 +391,7 @@ export async function findSolutionDurable(opts: {
   }
   if (opts.sessionId) {
     const bySession = await loadFromDb({ sessionId: opts.sessionId });
-    if (bySession) return bySession;
+    if (bySession && solutionOwnedBy(bySession, opts)) return bySession;
   }
   return undefined;
 }
@@ -365,7 +411,7 @@ export async function upsertSolutionDurable(input: {
 }
 
 export async function claimSolutionDurable(sessionId: string, userId: string): Promise<StoredSolution> {
-  const guest = (await findSolutionDurable({ sessionId })) ?? findSolution({ sessionId });
+  const guest = claimableBy((await findSolutionDurable({ sessionId })) ?? findSolution({ sessionId }), userId);
   const owned = (await findSolutionDurable({ userId })) ?? findSolution({ userId });
   const result = claimSolution(sessionId, userId);
   await persistSolutionRecord(result);

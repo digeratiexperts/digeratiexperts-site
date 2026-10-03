@@ -1,19 +1,26 @@
 import { useState, useMemo } from "react";
-import { motion, useReducedMotion } from "framer-motion";
-import { MegaMenu } from "@/components/MegaMenu";
-import { DigeratiEnhancedFooterSection } from "./sections/DigeratiEnhancedFooterSection";
-import { Button } from "@/components/ui/button";
+import { PageTemplate } from "@/components/PageTemplate";
 import { Input } from "@/components/ui/input";
 import {
-  Users, Building2, Shield, Server, Layers, Bookmark, Briefcase,
-  FileCheck, ArrowRight, Check, Calculator, Database, Info, ChevronDown,
+  Chapter,
+  Container,
+  ChapterHeader,
+  ClosingCta,
+  HeroActions,
+  HeroFacts,
+  buttonSecondary,
+  cardDark,
+  cardPaper,
+} from "@/components/site/chapters";
+import {
+  Users, Building2, Shield, Server, Bookmark, Briefcase,
+  FileCheck, ArrowRight, Check, Database, Info, ChevronDown,
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { Link } from "wouter";
-import { pricing, estimateMonthly, PRICING_SCOPE_NOTE, NO_BLACK_BOX_TAGLINE, type PricingTierKey } from "@/data/pricing";
+import { pricing, pricingTiers, estimateMonthly, PRICING_SCOPE_NOTE, NO_BLACK_BOX_TAGLINE, type PricingTierKey } from "@/data/pricing";
 import { PricingToolsSection } from "./sections/PricingToolsSection";
 import { CTA } from "@/lib/ctaCopy";
-import { ConversionPathBar } from "@/components/ConversionPathBar";
 import {
   ProActiveCoverageMap,
   type ComplianceLevel,
@@ -234,22 +241,25 @@ const PREVIEW_BULLETS = 5;
 const MatrixCell = ({ value }: { value: CellValue }) => {
   if (value === true) {
     return (
-      <div className="w-5 h-5 rounded-full bg-de-bg border border-de-hairline flex items-center justify-center mx-auto">
-        <Check className="w-3 h-3 text-de-accent-ink" />
+      <div
+        className="mx-auto flex h-6 w-6 items-center justify-center rounded-full border border-[var(--de-paper-hairline)] bg-white"
+        role="img"
+        aria-label="Included"
+      >
+        <Check className="h-3.5 w-3.5 text-de-magenta-paper-ink" aria-hidden="true" />
       </div>
     );
   }
   if (value === false) {
-    return <div className="w-2 h-0.5 bg-white/20 rounded mx-auto" />;
+    return <div className="mx-auto h-0.5 w-2.5 rounded bg-black/30" role="img" aria-label="Not included" />;
   }
   if (value === "addon") {
-    return <span className="text-xs text-amber-400 font-medium">Add-On</span>;
+    return <span className="text-sm font-semibold text-[#8A4B00]">Add-On</span>;
   }
-  return <span className="text-xs text-white/80 font-medium">{value}</span>;
+  return <span className="text-sm font-medium text-[#1A1228]">{value}</span>;
 };
 
 export default function ProActiveEcosystemPricing() {
-  const prefersReducedMotion = useReducedMotion();
   const [userCount, setUserCount] = useState<number | "">(10);
   const [siteCount, setSiteCount] = useState<number | "">(1);
   const [selectedTier, setSelectedTier] = useState<CoverageTier>("business");
@@ -284,278 +294,254 @@ export default function ProActiveEcosystemPricing() {
     [effectiveUsers, effectiveSites],
   );
 
-  const fadeIn = prefersReducedMotion
-    ? undefined
-    : { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
-
   return (
-    <div className="relative min-h-screen overflow-hidden bg-de-bg">
-      <div className="fixed inset-0 bg-de-surface" aria-hidden="true" />
-      <div className="relative z-10">
-        <MegaMenu />
+    <PageTemplate
+      layout="chapters"
+      eyebrow="Pricing"
+      title="ProActive Ecosystem Pricing"
+      subtitle="Estimate your ProActive Ecosystem starting point. Final pricing is confirmed after assessment."
+      showBackButton={false}
+      actions={
+        <div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <HeroActions
+              primary={{ label: CTA.primary, href: "/book" }}
+              secondary={{ label: "Compare coverage", href: "#matrix-heading" }}
+            />
+          </div>
+          <p className="mt-5 max-w-xl text-sm leading-relaxed text-white/60">
+            Pricing depends on users, endpoints, sites, network requirements, backup scope, infrastructure needs,
+            compliance requirements, and selected add-ons.
+          </p>
+        </div>
+      }
+      heroAside={
+        <HeroFacts
+          title="Published starting rates"
+          rows={pricingTiers.map((t) => ({
+            label: t.name,
+            value: `$${t.user}/user/mo · $${t.monthlyMinimum.toLocaleString()}/mo min`,
+          }))}
+          footnote="Fit-based, not universally better: depth increases by operating model. Estimates only."
+        />
+      }
+    >
+      <Chapter tone="well" seam={false}>
+        <Container>
+          <ProActiveCoverageMap
+            selected={selectedTier}
+            onSelect={setSelectedTier}
+            compliance={compliance}
+            onComplianceChange={setCompliance}
+            coverageHours={coverageHours}
+            onCoverageHoursChange={setCoverageHours}
+          />
+        </Container>
+      </Chapter>
 
-        {/* id matches SkipToContent's no-JS hash fallback (#main-content);
-            tabindex lets keyboard focus land on the landmark after skip. */}
-        <main
-          id="main-content"
-          tabIndex={-1}
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 de-nav-clear pb-20"
-        >
-          {/* Hero */}
-          <motion.header
-            className="text-center max-w-3xl mx-auto mb-14"
-            initial={prefersReducedMotion ? undefined : "hidden"}
-            animate={prefersReducedMotion ? undefined : "visible"}
-            variants={fadeIn}
-          >
-            <h1 className="mb-4 text-4xl font-bold text-white md:text-5xl">
-              ProActive Ecosystem Pricing<span className="text-de-accent-ink" aria-hidden="true">:</span>
-            </h1>
-            <p className="text-lg text-white/70 mb-3">
-              Estimate your ProActive Ecosystem starting point. Final pricing is confirmed after assessment.
-            </p>
-            <p className="text-sm text-white/50">
-              Pricing depends on users, endpoints, sites, network requirements, backup scope, infrastructure needs,
-              compliance requirements, and selected add-ons.
-            </p>
-          </motion.header>
+      <Chapter tone="surface" aria-labelledby="estimator-heading">
+        <Container>
+          <ChapterHeader
+            tone="surface"
+            eyebrow="Estimator"
+            title="Estimate Your Starting Point"
+            titleId="estimator-heading"
+            lede="Estimates only — exact pricing confirmed after assessment."
+          />
+          <div className="mb-10 grid max-w-xl gap-6 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-2 flex items-center gap-2 text-sm text-white/75">
+                <Users className="h-4 w-4" aria-hidden="true" /> Number of users
+              </span>
+              <Input
+                type="number"
+                min={1}
+                value={userCount}
+                onChange={(e) => setUserCount(e.target.value === "" ? "" : Math.max(1, Number(e.target.value)))}
+                className="h-11 border-de-hairline bg-de-bg text-white"
+                data-testid="input-user-count"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-2 flex items-center gap-2 text-sm text-white/75">
+                <Building2 className="h-4 w-4" aria-hidden="true" /> Number of sites
+              </span>
+              <Input
+                type="number"
+                min={1}
+                value={siteCount}
+                onChange={(e) => setSiteCount(e.target.value === "" ? "" : Math.max(1, Number(e.target.value)))}
+                className="h-11 border-de-hairline bg-de-bg text-white"
+                data-testid="input-site-count"
+              />
+            </label>
+          </div>
 
-          <section className="mb-14">
-            <ProActiveCoverageMap
-    selected={selectedTier}
-    onSelect={setSelectedTier}
-    compliance={compliance}
-    onComplianceChange={setCompliance}
-    coverageHours={coverageHours}
-    onCoverageHoursChange={setCoverageHours}
-  />
-          </section>
-
-          {/* Estimator */}
-          <section className="mb-14" aria-labelledby="estimator-heading">
-            <div className="de-style-box p-6 md:p-8">
-              <h2 id="estimator-heading" className="flex items-center gap-3 text-xl font-semibold text-white mb-2">
-                <Calculator className="w-5 h-5 text-de-magenta-ink" />
-                Estimate Your Starting Point
-              </h2>
-              <p className="text-sm text-white/50 mb-6">Estimates only — exact pricing confirmed after assessment.</p>
-              <div className="grid sm:grid-cols-2 gap-6 max-w-xl">
-                <label className="block">
-                  <span className="flex items-center gap-2 text-sm text-white/70 mb-2">
-                    <Users className="w-4 h-4" /> Number of users
-                  </span>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={userCount}
-                    onChange={(e) => setUserCount(e.target.value === "" ? "" : Math.max(1, Number(e.target.value)))}
-                    className="border-de-hairline bg-de-bg text-white"
-                    data-testid="input-user-count"
-                  />
-                </label>
-                <label className="block">
-                  <span className="flex items-center gap-2 text-sm text-white/70 mb-2">
-                    <Building2 className="w-4 h-4" /> Number of sites
-                  </span>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={siteCount}
-                    onChange={(e) => setSiteCount(e.target.value === "" ? "" : Math.max(1, Number(e.target.value)))}
-                    className="border-de-hairline bg-de-bg text-white"
-                    data-testid="input-site-count"
-                  />
-                </label>
-              </div>
-            </div>
-          </section>
-
-          {/* Plan cards */}
-          <section className="mb-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4" aria-label="ProActive Ecosystem packages">
+          <section className="grid gap-4 md:grid-cols-2 md:gap-5 xl:grid-cols-4" aria-label="ProActive Ecosystem packages">
             {estimates.map((plan) => {
               const expanded = !!expandedCards[plan.id];
               const selected = selectedTier === plan.id;
               return (
-              <motion.article
-                key={plan.id}
-                className={cn(
-                  "de-interactive-card relative flex flex-col rounded-2xl border bg-de-raised p-6",
-                  selected ? "border-[#D3126A]" : "border-de-hairline",
-                )}
-                initial={prefersReducedMotion ? undefined : "hidden"}
-                whileInView={prefersReducedMotion ? undefined : "visible"}
-                viewport={{ once: true }}
-                variants={fadeIn}
-                data-testid={`plan-card-${plan.id}`}
-              >
-                <button
-                  type="button"
-                  className="mb-4 inline-flex self-start rounded-full border border-de-hairline bg-de-bg px-3 py-1 text-xs font-semibold text-white"
-                  onClick={() => setSelectedTier(plan.id as CoverageTier)}
-                >
-                  {plan.shortName}
-                </button>
-                <h3 className="mb-1 text-lg font-bold text-white">{plan.name}</h3>
-                <p className="mb-4 text-sm text-white/50">{plan.tagline}</p>
-                <div className="mb-4">
-                  <p className="font-semibold text-de-magenta-ink">{plan.priceLabel}</p>
-                  {plan.siteMin ? (
-                    <p className="mt-1 text-xs text-white/50">${plan.siteMin.toLocaleString()}/site/mo minimum</p>
-                  ) : null}
-                  {plan.minUsers ? (
-                    <p className="mt-1 text-xs text-white/50">Minimum {plan.minUsers} users</p>
-                  ) : null}
-                  {plan.monthlyEstimate != null && (
-                    <p className="mt-2 text-2xl font-bold text-white" data-testid={`estimate-${plan.id}`}>
-                      ~${plan.monthlyEstimate.toLocaleString()}<span className="text-sm font-normal text-white/50">/mo</span>
-                    </p>
+                <article
+                  key={plan.id}
+                  className={cn(
+                    cardDark,
+                    "de-interactive-card relative flex flex-col p-6",
+                    selected && "!border-[#D3126A]",
                   )}
-                  {plan.priceNote && <p className="mt-2 text-xs text-white/50">{plan.priceNote}</p>}
-                </div>
-                <ul className="mb-4 flex-1 space-y-2">
-                  {plan.bullets.map((bullet, index) => (
-                    <li
-                      key={bullet}
-                      className={cn(
-                        "flex items-start gap-2 text-sm text-white/70",
-                        !expanded && index >= PREVIEW_BULLETS && "hidden",
-                      )}
-                    >
-                      <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-de-accent-ink" />
-                      <span>{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-                {plan.bullets.length > PREVIEW_BULLETS && (
+                  data-testid={`plan-card-${plan.id}`}
+                >
                   <button
                     type="button"
-                    className="mb-4 inline-flex items-center gap-1 text-sm text-[#F04C97] hover:text-white"
-                    onClick={() =>
-                      setExpandedCards((current) => ({ ...current, [plan.id]: !current[plan.id] }))
-                    }
-                    data-testid={`plan-expand-${plan.id}`}
+                    className="mb-4 inline-flex min-h-11 items-center self-start rounded-full border border-de-hairline bg-de-bg px-5 text-sm font-semibold text-white hover:border-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
+                    aria-pressed={selected}
+                    onClick={() => setSelectedTier(plan.id as CoverageTier)}
                   >
-                    {expanded ? "Show less" : `Show all ${plan.bullets.length} outcomes`}
-                    <ChevronDown className={cn("h-4 w-4", expanded && "rotate-180")} />
+                    {plan.shortName}
                   </button>
-                )}
-                <Link href={plan.learnMoreUrl}>
-                  <Button
-                    variant="outline"
-                    className="w-full border-de-hairline bg-de-bg text-white hover:border-[#D3126A] hover:bg-de-raised hover:text-white"
-                  >
+                  <h3 className="mb-1 font-heading text-lg font-semibold text-white">{plan.name}</h3>
+                  <p className="mb-4 text-sm text-white/65">{plan.tagline}</p>
+                  <div className="mb-4 border-b border-[var(--de-hairline)] pb-4">
+                    <p className="font-semibold text-de-magenta-ink">{plan.priceLabel}</p>
+                    {plan.siteMin ? (
+                      <p className="mt-1 text-xs text-white/60">${plan.siteMin.toLocaleString()}/site/mo minimum</p>
+                    ) : null}
+                    {plan.minUsers ? <p className="mt-1 text-xs text-white/60">Minimum {plan.minUsers} users</p> : null}
+                    {plan.monthlyEstimate != null && (
+                      <p className="mt-3 font-mono text-3xl font-bold text-white" data-testid={`estimate-${plan.id}`}>
+                        ~${plan.monthlyEstimate.toLocaleString()}
+                        <span className="font-sans text-sm font-normal text-white/60">/mo</span>
+                      </p>
+                    )}
+                    {plan.priceNote && <p className="mt-2 text-xs leading-relaxed text-white/60">{plan.priceNote}</p>}
+                  </div>
+                  <ul className="mb-4 flex-1 space-y-2.5">
+                    {plan.bullets.map((bullet, index) => (
+                      <li
+                        key={bullet}
+                        className={cn(
+                          "flex items-start gap-2 text-sm text-white/75",
+                          !expanded && index >= PREVIEW_BULLETS && "hidden",
+                        )}
+                      >
+                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-de-accent-ink" aria-hidden="true" />
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {plan.bullets.length > PREVIEW_BULLETS && (
+                    <button
+                      type="button"
+                      className="mb-4 inline-flex min-h-11 items-center gap-1 self-start rounded-sm text-sm font-semibold text-[#F04C97] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
+                      aria-expanded={expanded}
+                      onClick={() => setExpandedCards((current) => ({ ...current, [plan.id]: !current[plan.id] }))}
+                      data-testid={`plan-expand-${plan.id}`}
+                    >
+                      {expanded ? "Show less" : `Show all ${plan.bullets.length} outcomes`}
+                      <ChevronDown className={cn("h-4 w-4", expanded && "rotate-180")} aria-hidden="true" />
+                    </button>
+                  )}
+                  <Link href={plan.learnMoreUrl} className={cn(buttonSecondary("surface"), "w-full")}>
                     Explore {plan.shortName}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-              </motion.article>
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                </article>
               );
             })}
           </section>
 
-          <p className="text-center text-sm text-white/55 mb-16 max-w-2xl mx-auto">
+          <p className="mt-8 max-w-2xl text-sm leading-relaxed text-white/65">
             All numbers shown are estimated starting points, not exact totals. Final pricing is confirmed after a brief
             assessment of your environment, security needs, and selected add-ons.
           </p>
+        </Container>
+      </Chapter>
 
-          {/* Coverage Explorer — same matrix facts, progressive reveal */}
-          <section className="mb-16" aria-labelledby="matrix-heading">
-            <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h2 id="matrix-heading" className="mb-2 text-3xl font-bold text-white">
-                  Coverage Explorer
-                </h2>
-                <p className="text-white/60">
-                  What's included, enhanced, or available as an add-on across each ProActive Ecosystem package.
-                </p>
-              </div>
-              <label className="inline-flex h-11 items-center gap-2 text-sm text-white/70">
-                <input
-                  type="checkbox"
-                  checked={showDifferencesOnly}
-                  onChange={(event) => setShowDifferencesOnly(event.target.checked)}
-                  className="h-4 w-4 accent-[#D3126A]"
-                  data-testid="coverage-show-differences"
-                />
-                Show differences only
-              </label>
-            </div>
+      {/* Coverage Explorer — same matrix facts, progressive reveal */}
+      <Chapter tone="paper" aria-labelledby="matrix-heading">
+        <Container>
+          <ChapterHeader
+            tone="paper"
+            eyebrow="Coverage"
+            title="Coverage Explorer"
+            titleId="matrix-heading"
+            lede="What's included, enhanced, or available as an add-on across each ProActive Ecosystem package."
+            className="mb-6 md:mb-6"
+          />
+          <label className="mb-8 inline-flex min-h-11 items-center gap-3 text-base text-[#1A1228]">
+            <input
+              type="checkbox"
+              checked={showDifferencesOnly}
+              onChange={(event) => setShowDifferencesOnly(event.target.checked)}
+              className="h-5 w-5 accent-[#A30E52]"
+              data-testid="coverage-show-differences"
+            />
+            Show differences only
+          </label>
 
-            <div className="space-y-8">
-              {matrixCategories.map((category) => {
-                const layer = categoryLayer(category.id);
-                const dimmed = layer !== "always" && !isTierLit(selectedTier, layer);
-                const services = showDifferencesOnly
-                  ? category.services.filter(
-                      (service) =>
-                        !coverageRowIsUniform([
-                          service.it,
-                          service.office,
-                          service.business,
-                          service.enterprise,
-                        ]),
-                    )
-                  : category.services;
-                if (services.length === 0) return null;
-                return (
+          <div className="space-y-8">
+            {matrixCategories.map((category) => {
+              const layer = categoryLayer(category.id);
+              const dimmed = layer !== "always" && !isTierLit(selectedTier, layer);
+              const services = showDifferencesOnly
+                ? category.services.filter(
+                    (service) =>
+                      !coverageRowIsUniform([service.it, service.office, service.business, service.enterprise]),
+                  )
+                : category.services;
+              if (services.length === 0) return null;
+              return (
                 <div
                   key={category.id}
-                  className={cn(
-                    "overflow-hidden rounded-2xl border bg-de-raised",
-                    // Dimming used to fade the whole card to 55% opacity, which pushed every
-                    // row below 4.5:1. Out-of-tier categories now keep readable text and
-                    // signal state through the border, icon and an explicit chip instead
-                    // (a11y sweep 2026-09-12).
-                    dimmed ? "border-white/5" : "border-de-hairline",
-                  )}
+                  className={cn(cardPaper, "overflow-hidden", dimmed && "border-dashed")}
                   data-tier-state={dimmed ? "outside-tier" : "in-tier"}
                 >
-                  <div className="flex flex-wrap items-center gap-3 border-b border-white/10 px-5 py-4">
-                    <span className={dimmed ? "text-white/60" : "text-de-magenta-ink"}>{category.icon}</span>
-                    <h3 className="font-semibold text-white">{category.title}</h3>
+                  <div className="flex flex-wrap items-center gap-3 border-b border-[var(--de-paper-hairline)] px-5 py-4">
+                    <span className={dimmed ? "text-black/55" : "text-de-magenta-paper-ink"}>{category.icon}</span>
+                    <h3 className="font-heading text-lg font-semibold text-[#1A1228]">{category.title}</h3>
                     {dimmed && (
-                      <span className="rounded-full border border-white/20 px-3 py-1 text-xs font-medium text-white/80">
+                      <span className="rounded-full border border-black/25 px-3 py-1 text-xs font-medium text-[#3A3448]">
                         Not in {plans.find((plan) => plan.id === selectedTier)?.shortName ?? selectedTier}
                       </span>
                     )}
                     {category.ribbon && (
-                      <span className="ml-auto rounded-full border border-amber-400/30 px-3 py-1 text-xs text-amber-400/90">
+                      <span className="ml-auto rounded-full border border-[#8A4B00]/40 px-3 py-1 text-xs font-medium text-[#8A4B00]">
                         {category.ribbon}
                       </span>
                     )}
                   </div>
                   <div
-                    className="max-h-[70vh] overflow-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink"
+                    className="max-h-[70vh] overflow-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
                     tabIndex={0}
                     role="region"
                     aria-label={`${category.title} coverage table`}
                   >
-                    <table className="w-full text-left">
-                      <thead className="sticky top-0 z-10 bg-de-raised">
-                        <tr className="text-xs uppercase tracking-wide text-white/55">
-                          <th className="min-w-[220px] px-5 py-3 font-medium">Service</th>
+                    <table className="w-full min-w-[720px] table-fixed text-left">
+                      <thead className="sticky top-0 z-10 bg-white">
+                        <tr className="text-xs uppercase tracking-wide text-black/60">
+                          <th className="w-[34%] px-5 py-3 font-semibold">Service</th>
                           {(["it", "office", "business", "enterprise"] as CoverageTier[]).map((tier) => (
                             <th
                               key={tier}
                               className={cn(
-                                "px-3 py-3 text-center font-medium capitalize",
-                                selectedTier === tier && "text-[#F04C97]",
+                                "px-3 py-3 text-center font-semibold capitalize",
+                                selectedTier === tier && "text-de-magenta-paper-ink",
                               )}
                             >
-                              {tier}
+                              {tier === "it" ? "IT" : tier}
                             </th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {services.map((service) => (
-                          <tr key={service.name} className="border-t border-white/5">
-                            <td className="px-5 py-3 text-sm text-white/80">
+                          <tr key={service.name} className="border-t border-[var(--de-paper-hairline)]">
+                            <td className="px-5 py-3.5 text-sm text-[#1A1228]">
                               <span className="inline-flex items-center gap-1.5">
                                 {service.name}
                                 {service.tooltip && (
                                   <span title={service.tooltip}>
-                                    <Info className="h-3.5 w-3.5 text-white/55" aria-label={service.tooltip} />
+                                    <Info className="h-3.5 w-3.5 text-black/55" aria-label={service.tooltip} />
                                   </span>
                                 )}
                               </span>
@@ -563,10 +549,7 @@ export default function ProActiveEcosystemPricing() {
                             {(["it", "office", "business", "enterprise"] as CoverageTier[]).map((tier) => (
                               <td
                                 key={tier}
-                                className={cn(
-                                  "px-3 py-3 text-center",
-                                  selectedTier === tier && "bg-[#D3126A]/10",
-                                )}
+                                className={cn("px-3 py-3.5 text-center", selectedTier === tier && "bg-[#D3126A]/[0.07]")}
                               >
                                 <MatrixCell value={service[tier]} />
                               </td>
@@ -577,36 +560,41 @@ export default function ProActiveEcosystemPricing() {
                     </table>
                   </div>
                 </div>
-                );
-              })}
-            </div>
+              );
+            })}
+          </div>
 
-            <p className="text-center text-xs text-white/55 mt-6 max-w-3xl mx-auto">
-              Digerati Experts provides audit readiness, evidence support, framework mapping, and risk reporting. We do
-              not provide legal compliance signoff or certification.
-            </p>
-          </section>
+          <p className="mt-8 max-w-3xl text-sm leading-relaxed text-[#3A3448]">
+            Digerati Experts provides audit readiness, evidence support, framework mapping, and risk reporting. We do
+            not provide legal compliance signoff or certification.
+          </p>
+        </Container>
+      </Chapter>
 
-          {/* Relocated from homepage — keep tools, deepen pricing page */}
-          <section className="mb-16" aria-label="Pricing calculators">
-            <div className="mb-6 text-center">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#F04C97]">Pricing tools</p>
-              <h2 className="mt-2 text-3xl font-bold text-white">Calculate investment &amp; downtime risk</h2>
-              <p className="mx-auto mt-2 max-w-2xl text-sm text-white/55">{PRICING_SCOPE_NOTE}</p>
-              <p className="mx-auto mt-2 max-w-2xl text-sm text-white/55">{NO_BLACK_BOX_TAGLINE}</p>
-            </div>
-            <PricingToolsSection />
-          </section>
-
-          {/* CTA */}
-          <ConversionPathBar
-            headline="Ready to confirm your pricing?"
-            body="Schedule a brief assessment so we can scope users, devices, sites, backup, network, and compliance needs — then confirm your exact ProActive Ecosystem investment."
+      {/* Relocated from homepage — keep tools, deepen pricing page */}
+      <Chapter tone="well" aria-label="Pricing calculators">
+        <Container>
+          <ChapterHeader
+            tone="well"
+            eyebrow="Pricing tools"
+            title="Calculate investment & downtime risk"
+            lede={
+              <>
+                {PRICING_SCOPE_NOTE}
+                <span className="mt-3 block">{NO_BLACK_BOX_TAGLINE}</span>
+              </>
+            }
           />
-        </main>
+          <PricingToolsSection />
+        </Container>
+      </Chapter>
 
-        <DigeratiEnhancedFooterSection />
-      </div>
-    </div>
+      <ClosingCta
+        tone="surface"
+        title="Ready to confirm your pricing?"
+        lede="Schedule a brief assessment so we can scope users, devices, sites, backup, network, and compliance needs — then confirm your exact ProActive Ecosystem investment."
+        primary={{ label: CTA.primary, href: "/book", testId: "button-conversion-assessment" }}
+      />
+    </PageTemplate>
   );
 }

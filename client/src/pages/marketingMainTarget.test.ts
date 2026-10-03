@@ -17,14 +17,23 @@ const GUARDED_PAGES = [
   ["solutions", "StandaloneServices.tsx"],
 ] as const;
 
+const ownsMainTarget = (source: string) =>
+  new RegExp(`<main[^>]*\\bid=["']${MAIN_CONTENT_FALLBACK_ID}["']`).test(source);
+/** Pages recomposed on PageTemplate get their <main> (and its id) from the template. */
+const rendersPageTemplate = (source: string) =>
+  /from "@\/components\/PageTemplate"/.test(source) && /<PageTemplate\b/.test(source) && !/<main\b/.test(source);
+
 describe("marketing main content target", () => {
+  it(`PageTemplate exposes id="${MAIN_CONTENT_FALLBACK_ID}" on a focusable main`, () => {
+    const source = read("..", "components", "PageTemplate.tsx");
+    expect(source).toMatch(new RegExp(`<main[^>]*\\bid=["']${MAIN_CONTENT_FALLBACK_ID}["'][^>]*tabIndex=\\{-1\\}`));
+  });
+
   for (const parts of GUARDED_PAGES) {
     const label = parts.join("/");
     it(`${label} exposes id="${MAIN_CONTENT_FALLBACK_ID}" on main`, () => {
       const source = read(...parts);
-      expect(source).toMatch(
-        new RegExp(`<main[^>]*\\bid=["']${MAIN_CONTENT_FALLBACK_ID}["']`),
-      );
+      expect(ownsMainTarget(source) || rendersPageTemplate(source)).toBe(true);
     });
   }
 });

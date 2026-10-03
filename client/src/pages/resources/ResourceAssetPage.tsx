@@ -1,12 +1,21 @@
-import { Link, useParams } from "wouter";
-import { Download, ArrowRight } from "lucide-react";
+import { useParams } from "wouter";
+import { Download } from "lucide-react";
 import { PageTemplate } from "@/components/PageTemplate";
-import { ConversionPathBar } from "@/components/ConversionPathBar";
-import { Button } from "@/components/ui/button";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
 import { RESOURCE_TYPE_LABEL, resourceBySlug, resourceLandingMeta } from "@/data/resourceRegistry";
-import NotFound from "@/pages/not-found";
+// The plain 404: the default export re-dispatches marketing paths back here (infinite loop on an unknown slug).
+import { NotFoundPage as NotFound } from "@/pages/not-found";
+import {
+  Chapter,
+  CheckList,
+  ClosingCta,
+  Container,
+  Eyebrow,
+  HeroFacts,
+  buttonPrimary,
+  buttonSecondary,
+} from "@/components/site/chapters";
 
 export default function ResourceAssetPage() {
   const params = useParams<{ slug?: string }>();
@@ -15,7 +24,12 @@ export default function ResourceAssetPage() {
   if (!resource) {
     return <NotFound />;
   }
+  // Hooks live in the view so an unknown slug's early return never changes
+  // the hook order between renders (client-side navigation between slugs).
+  return <ResourceAssetView resource={resource} />;
+}
 
+function ResourceAssetView({ resource }: { resource: NonNullable<ReturnType<typeof resourceBySlug>> }) {
   const meta = resourceLandingMeta[resource.slug];
 
   useSEO({
@@ -29,76 +43,94 @@ export default function ResourceAssetPage() {
   return (
     <PageTemplate
       title={resource.title}
+      eyebrow={typeLabel}
       subtitle={meta?.tagline}
       breadcrumbs={[
         { label: "Resources", href: "/resources" },
         { label: "Datasheets & documentation", href: "/resources/datasheets" },
         { label: resource.title },
       ]}
+      layout="chapters"
+      heroAside={
+        <HeroFacts
+          title="At a glance"
+          rows={[
+            { label: "Type", value: typeLabel },
+            { label: "Format", value: "PDF download" },
+            { label: "Status", value: "Draft public resource" },
+          ]}
+        />
+      }
       actions={
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild variant="brand" size="lg" className="h-12 px-6 font-semibold">
-            <a href={resource.file} target="_blank" rel="noopener noreferrer" data-testid="asset-download">
-              <Download className="mr-2 h-4 w-4" />
-              {resource.cta}
-            </a>
-          </Button>
-          <Button asChild variant="outline" size="lg" className="h-12 border-white/20 px-6 text-white hover:bg-white/10">
-            <Link href="/book">{CTA.primary}</Link>
-          </Button>
+          <a
+            href={resource.file}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonPrimary("well")}
+            data-testid="asset-download"
+          >
+            <Download className="h-4 w-4" aria-hidden="true" />
+            {resource.cta}
+            <span className="sr-only"> (opens in a new tab)</span>
+          </a>
+          <a href="/book" className={buttonSecondary("well")}>
+            {CTA.primary}
+          </a>
         </div>
       }
     >
-      <div className="space-y-14">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-de-accent-ink">{typeLabel}</p>
-        {meta && (
-          <div className="grid gap-12 lg:grid-cols-2">
-            <div>
-              <h2 className="font-heading text-2xl font-semibold text-white">
-                Who it is for
-                <span className="text-de-accent-ink" aria-hidden="true">
-                  :
-                </span>
-              </h2>
-              <p className="mt-3 text-base leading-relaxed text-white/70">{meta.forWho}</p>
+      <Chapter tone="paper" seam={false}>
+        <Container>
+          {meta && (
+            <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+              <div className="lg:col-span-5">
+                <Eyebrow tone="paper" className="mb-4">
+                  Audience
+                </Eyebrow>
+                <h2 className="font-heading text-2xl font-semibold text-[#1A1228] md:text-3xl">
+                  Who it is for
+                  <span className="text-de-magenta-paper-ink" aria-hidden="true">
+                    :
+                  </span>
+                </h2>
+                <p className="mt-4 max-w-[60ch] text-lg leading-[1.7] text-[#3A3448]">{meta.forWho}</p>
+              </div>
+              <div className="lg:col-span-7">
+                <Eyebrow tone="paper" className="mb-4">
+                  Contents
+                </Eyebrow>
+                <h2 className="font-heading text-2xl font-semibold text-[#1A1228] md:text-3xl">
+                  What is inside
+                  <span className="text-de-magenta-paper-ink" aria-hidden="true">
+                    :
+                  </span>
+                </h2>
+                <div className="mt-5">
+                  <CheckList items={meta.inside} tone="paper" columns={1} />
+                </div>
+              </div>
             </div>
-            <div>
-              <h2 className="font-heading text-2xl font-semibold text-white">
-                What is inside
-                <span className="text-de-accent-ink" aria-hidden="true">
-                  :
-                </span>
-              </h2>
-              <ul className="mt-3 space-y-3">
-                {meta.inside.map((item) => (
-                  <li key={item} className="border-l border-[#D3126A] pl-4 text-base leading-relaxed text-white/70">
-                    {item}
-                  </li>
-                ))}
-              </ul>
+          )}
+          {meta?.positioning && (
+            <div className="mt-12 border-t border-[var(--de-paper-hairline)] pt-6">
+              <p className="max-w-3xl text-base leading-relaxed text-[#3A3448]">{meta.positioning}</p>
             </div>
-          </div>
-        )}
-        {meta?.positioning && (
-          <p className="max-w-3xl text-base leading-relaxed text-white/55">{meta.positioning}</p>
-        )}
-        <p className="text-sm text-white/55">
-          Draft public resource. No fabricated customer stories. Request a live walkthrough if you need this
-          applied to your environment.
-        </p>
-        <ConversionPathBar
-          headline="Need this applied to your environment?"
-          body="A Cyber Risk Assessment turns the datasheet into a recommendation with ownership named."
-          extraAction={
-            <Button asChild variant="outline" className="h-12 border-white/70 bg-transparent text-white hover:bg-white/10">
-              <a href={resource.file} target="_blank" rel="noopener noreferrer">
-                Download PDF
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </a>
-            </Button>
-          }
-        />
-      </div>
+          )}
+          <p className="mt-6 text-sm text-[#4A445A]">
+            Draft public resource. No fabricated customer stories. Request a live walkthrough if you need this
+            applied to your environment.
+          </p>
+        </Container>
+      </Chapter>
+
+      <ClosingCta
+        tone="surface"
+        title="Need this applied to your environment?"
+        lede="A Cyber Risk Assessment turns the datasheet into a recommendation with ownership named."
+        primary={{ label: CTA.primary, href: "/book", testId: "button-conversion-assessment" }}
+        secondary={{ label: "Download PDF", href: resource.file }}
+      />
     </PageTemplate>
   );
 }

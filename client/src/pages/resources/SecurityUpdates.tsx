@@ -1,7 +1,7 @@
 import { PageTemplate } from "@/components/PageTemplate";
-import { ConversionPathBar } from "@/components/ConversionPathBar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Chapter, ChapterHeader, ClosingCta, Container, cardPaper } from "@/components/site/chapters";
+import { CTA } from "@/lib/ctaCopy";
 import { Calendar, Search, AlertCircle, Shield, Lock, Bug, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useMemo, useState } from "react";
@@ -37,10 +37,13 @@ const getCategoryIcon = (category: string) => {
 };
 
 function badgeClass(item: Pick<ThreatItem, "severity"> | { severity?: string }): string {
-  if (item.severity === "critical") return "bg-red-500/20 text-red-400 border-red-500/30";
-  if (item.severity === "high") return "border-[#D3126A] bg-transparent text-white";
-  return "border-de-hairline bg-transparent text-white/70";
+  if (item.severity === "critical") return "border-red-300 bg-red-50 text-red-800";
+  if (item.severity === "high") return "border-[#A30E52] bg-transparent text-[#A30E52]";
+  return "border-[var(--de-paper-hairline)] bg-transparent text-[#3A3448]";
 }
+
+const sourceLinkClass =
+  "inline-flex min-h-11 shrink-0 items-center gap-1 rounded-sm text-sm font-medium text-de-magenta-paper-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]";
 
 export default function SecurityUpdates() {
   const { payload, loading } = useThreatFeed("all");
@@ -73,32 +76,43 @@ export default function SecurityUpdates() {
   return (
     <PageTemplate
       title="Security Updates"
+      eyebrow="Threat intelligence"
       subtitle="A scored stream of actively exploited vulnerabilities, CISA advisories, and Microsoft security updates — not a generic CVE ticker."
-      icon={<Shield className="h-10 w-10 text-de-accent-ink" />}
       breadcrumbs={[{ label: "Resources", href: "/resources" }, { label: "Security Updates" }]}
+      layout="chapters"
     >
-      <div className="space-y-12">
+      <Chapter tone="paper" seam={false}>
+        <Container>
+          <div className="mb-10 flex items-start gap-4 border-b border-[var(--de-paper-hairline)] pb-8">
+            <AlertCircle className="mt-1 h-6 w-6 shrink-0 text-de-magenta-paper-ink" aria-hidden="true" />
+            <div>
+              <h2 className="font-heading text-xl font-semibold text-[#1A1228]">Authoritative sources, scored for SMBs</h2>
+              <p className="mt-2 max-w-3xl text-base leading-relaxed text-[#3A3448]">{THREAT_ATTRIBUTION}</p>
+            </div>
+          </div>
 
-          <div className="flex flex-col md:flex-row gap-4 mb-8">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+          <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start">
+            <div className="relative lg:w-80 lg:shrink-0">
+              <Search className="pointer-events-none absolute left-3 top-3 h-5 w-5 text-[#6B6478]" aria-hidden="true" />
               <Input
+                aria-label="Search security updates"
                 placeholder="Search title, CVE, or excerpt…"
-                className="pl-10 bg-de-raised border-de-hairline text-white placeholder:text-gray-400"
+                className="h-11 border-[var(--de-paper-hairline)] bg-white pl-10 text-[#1A1228] placeholder:text-[#6B6478]"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 data-testid="input-search-security"
               />
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by category">
               {categories.map((category) => (
                 <button
                   key={category}
                   type="button"
-                  className={`min-h-11 rounded-xl border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  aria-pressed={activeCategory === category}
+                  className={`min-h-11 rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-paper)] ${
                     activeCategory === category
-                      ? "border-[#D3126A] bg-transparent text-white"
-                      : "border-de-hairline bg-transparent text-white/55 hover:border-white/20 hover:text-white"
+                      ? "border-[#A30E52] bg-[#A30E52] text-white"
+                      : "border-[var(--de-paper-hairline)] bg-white text-[#3A3448] hover:border-[#A30E52]/50 hover:text-[#1A1228]"
                   }`}
                   onClick={() => setActiveCategory(category)}
                   data-testid={`button-category-${category.toLowerCase().replace(/\s+/g, "-")}`}
@@ -109,133 +123,119 @@ export default function SecurityUpdates() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-de-hairline bg-de-raised p-6 mb-12">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-lg border border-de-hairline bg-[var(--de-bg)]">
-                <AlertCircle className="h-6 w-6 text-de-magenta-ink" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-white mb-2">Authoritative sources, scored for SMBs</h2>
-                <p className="text-white/60 leading-relaxed">{THREAT_ATTRIBUTION}</p>
-              </div>
-            </div>
-          </div>
-
           {loading ? (
-            <p className="text-center text-white/55 py-12">Loading the live threat stream…</p>
+            <p className="py-12 text-center text-[#3A3448]" role="status">Loading the live threat stream…</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <ul className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
               {filteredUpdates.map((update) => (
-                <Card
-                  key={update.id}
-                  className="h-full border-de-hairline bg-de-raised overflow-hidden"
-                  data-testid={`security-update-${update.id}`}
-                >
-                  <div className="h-1 bg-[#D3126A]" />
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between mb-3 gap-2">
-                      <Badge className={`${badgeClass(update)} border`}>
-                        <span className="flex items-center gap-1">
-                          {getCategoryIcon(update.category)}
-                          {update.category}
+                <li key={update.id} className="flex">
+                  <article
+                    className={`${cardPaper} flex w-full flex-col overflow-hidden`}
+                    data-testid={`security-update-${update.id}`}
+                  >
+                    <div className="h-1 bg-[#D3126A]" aria-hidden="true" />
+                    <div className="flex flex-1 flex-col p-6">
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <Badge className={`${badgeClass(update)} border`}>
+                          <span className="flex items-center gap-1">
+                            {getCategoryIcon(update.category)}
+                            {update.category}
+                          </span>
+                        </Badge>
+                        <span className="flex items-center gap-1 whitespace-nowrap text-xs text-[#3A3448]">
+                          <Calendar className="h-3 w-3" aria-hidden="true" />
+                          {formatThreatDate(update.publishedAt, "short")}
                         </span>
-                      </Badge>
-                      <span className="text-xs text-white/70 flex items-center gap-1 whitespace-nowrap">
-                        <Calendar className="h-3 w-3" />
-                        {formatThreatDate(update.publishedAt, "short")}
-                      </span>
+                      </div>
+                      <p className="mb-2 text-sm font-semibold uppercase tracking-[0.14em] text-de-magenta-paper-ink">
+                        {update.kicker}
+                      </p>
+                      <h3 className="line-clamp-2 font-heading text-lg font-semibold leading-snug text-[#1A1228]">
+                        {update.title}
+                      </h3>
+                      <p className="mt-3 line-clamp-3 flex-1 text-[0.95rem] leading-relaxed text-[#3A3448]">
+                        {update.excerpt}
+                      </p>
+                      <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--de-paper-hairline)] pt-2">
+                        <span className="truncate text-xs text-[#3A3448]">
+                          {update.sourceName}
+                          {update.cve ? ` · ${update.cve}` : ""}
+                        </span>
+                        <a href={update.sourceUrl} target="_blank" rel="noopener noreferrer" className={sourceLinkClass}>
+                          Source
+                          <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                          <span className="sr-only">(opens in a new tab)</span>
+                        </a>
+                      </div>
                     </div>
-                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.14em] text-de-magenta-ink">
-                      {update.kicker}
-                    </p>
-                    <CardTitle className="text-lg text-white line-clamp-2">{update.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-gray-400 mb-4 line-clamp-3">
-                      {update.excerpt}
-                    </CardDescription>
-                    <div className="flex items-center justify-between pt-4 border-t border-white/10 gap-3">
-                      <span className="text-xs text-white/70 truncate">
-                        {update.sourceName}
-                        {update.cve ? ` · ${update.cve}` : ""}
-                      </span>
-                      <a
-                        href={update.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-de-magenta-ink hover:text-de-magenta-ink/90 font-medium text-sm flex items-center gap-1 shrink-0"
-                      >
-                        Source
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </article>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
 
           {!loading && filteredUpdates.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-400 text-lg">No security updates match your search criteria.</p>
+            <div className="py-12 text-center">
+              <p className="text-lg text-[#3A3448]">No security updates match your search criteria.</p>
             </div>
           )}
+        </Container>
+      </Chapter>
 
-          {complianceArchive.length > 0 && (
-            <section className="mt-16">
-              <h2 className="text-2xl font-bold text-white mb-3">Compliance archive</h2>
-              <p className="text-white/55 mb-6 max-w-3xl">
-                Historical HHS OCR enforcement notes kept for industry context. These are dated
-                source records, not live threat intelligence.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {complianceArchive.map((update) => (
-                  <Card
-                    key={update.id}
-                    className="h-full border-de-hairline bg-de-raised overflow-hidden"
-                    data-testid={`compliance-archive-${update.id}`}
+      {complianceArchive.length > 0 && (
+        <Chapter tone="surface">
+          <Container>
+            <ChapterHeader
+              tone="surface"
+              eyebrow="Archive"
+              title="Compliance archive"
+              layout="stack"
+              lede="Historical HHS OCR enforcement notes kept for industry context. These are dated source records, not live threat intelligence."
+            />
+            <ul className="grid grid-cols-1 gap-x-10 border-t border-[var(--de-hairline)] md:grid-cols-2 lg:grid-cols-3">
+              {complianceArchive.map((update) => (
+                <li
+                  key={update.id}
+                  className="border-b border-[var(--de-hairline)] py-6"
+                  data-testid={`compliance-archive-${update.id}`}
+                >
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <Badge className="border border-de-hairline bg-transparent text-white/75">
+                      <span className="flex items-center gap-1">
+                        <Lock className="h-4 w-4" aria-hidden="true" />
+                        Compliance Update
+                      </span>
+                    </Badge>
+                    <span className="flex items-center gap-1 text-xs text-white/70">
+                      <Calendar className="h-3 w-3" aria-hidden="true" />
+                      {formatUpdateDisplayDate(update.date)}
+                    </span>
+                  </div>
+                  <h3 className="font-heading text-lg font-semibold leading-snug text-white">{update.title}</h3>
+                  <p className="mb-2 mt-2 line-clamp-3 text-[0.95rem] leading-relaxed text-white/70">{update.excerpt}</p>
+                  <a
+                    href={update.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-11 items-center gap-1 rounded-sm text-sm font-medium text-de-magenta-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
                   >
-                    <div className="h-1 bg-white/20" />
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between mb-3">
-                        <Badge className="border-de-hairline bg-transparent text-white/70 border">
-                          <span className="flex items-center gap-1">
-                            <Lock className="h-4 w-4" />
-                            Compliance Update
-                          </span>
-                        </Badge>
-                        <span className="text-xs text-white/70 flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {formatUpdateDisplayDate(update.date)}
-                        </span>
-                      </div>
-                      <CardTitle className="text-lg text-white line-clamp-2">{update.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-400 mb-4 line-clamp-3">
-                        {update.excerpt}
-                      </CardDescription>
-                      <a
-                        href={update.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-de-magenta-ink hover:text-de-magenta-ink/90 font-medium text-sm inline-flex items-center gap-1"
-                      >
-                        {update.sourceName}
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </section>
-          )}
+                    {update.sourceName}
+                    <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                    <span className="sr-only">(opens in a new tab)</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </Chapter>
+      )}
 
-          <ConversionPathBar
-            headline="Need help prioritizing a patch?"
-            body="We can map these items against your stack and tell you what actually needs attention this week."
-          />
-      </div>
+      <ClosingCta
+        tone={complianceArchive.length > 0 ? "paper" : "surface"}
+        title="Need help prioritizing a patch?"
+        lede="We can map these items against your stack and tell you what actually needs attention this week."
+        primary={{ label: CTA.primary, href: "/book", testId: "button-conversion-assessment" }}
+      />
     </PageTemplate>
   );
 }
