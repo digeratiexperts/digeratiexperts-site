@@ -3,11 +3,15 @@
  * Client sends a fully-resolved presentation payload — no catalog math here.
  */
 import {
+  closeBlock,
   coverBlock,
   DE_PDF,
-  dePdfBaseStyles,
+  DE_STORE_DOC_ID,
+  documentHtml,
   esc,
   phoenixDate,
+  section,
+  specStrip,
 } from "./dePdfBrand";
 import { renderHtmlToPdf } from "./renderHtmlToPdf";
 
@@ -52,12 +56,7 @@ export function buildSolutionPacketHtml(input: SolutionPacketInput): string {
       const lines = (pkg.lineItems || [])
         .filter((l) => l && l.label)
         .slice(0, 40)
-        .map(
-          (l) => `<div class="line">
-            <span class="line-label">${esc(l.label)}</span>
-            <span class="line-qty">${esc(l.quantity || "")}</span>
-          </div>`,
-        )
+        .map((l) => `<tr><td>${esc(l.label)}</td><td class="qty">${esc(l.quantity || "")}</td></tr>`)
         .join("");
       return `<article class="pkg">
         <div class="pkg-head">
@@ -69,45 +68,44 @@ export function buildSolutionPacketHtml(input: SolutionPacketInput): string {
             <span>Delivery &amp; Setup: ${esc(pkg.setupLabel)}</span>
           </div>
         </div>
-        ${lines || `<p class="empty" style="padding:10px 14px">No line items listed.</p>`}
+        ${lines ? `<table class="lines">${lines}</table>` : `<p class="empty">No line items listed.</p>`}
       </article>`;
     })
     .join("");
 
-  return `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"/>
-<title>${esc(title)} · ${esc(DE_PDF.brandName)}</title>
-<style>${dePdfBaseStyles()}</style>
-</head><body>
-  ${coverBlock({
+  const facts = `<table class="facts" role="presentation"><tr>
+      <td><span class="lbl">Profile</span><div class="v">${esc(input.profile || "—")}</div></td>
+      <td><span class="lbl">Relationship</span><div class="v">${esc(input.relationship || "—")}</div></td>
+      <td><span class="lbl">Remote support after setup</span><div class="v">${esc(input.support || "—")}</div></td>
+    </tr></table>`;
+
+  const body = `${coverBlock({
+    docId: DE_STORE_DOC_ID.solution,
     eyebrow,
     title,
-    subtitleParts: [status, input.reference ? `Ref ${input.reference}` : "", dateLabel],
+    subtitleParts: [input.reference ? `Ref ${input.reference}` : "", dateLabel],
+    stamp: status,
   })}
-  <div class="meta-strip">
-    ${esc(DE_PDF.brandName)} solution summary
-    ${input.reference ? ` \u2022 Reference <strong>${esc(input.reference)}</strong>` : ""}
-    \u2022 Status <strong>${esc(status)}</strong>
-    \u2022 ${esc(DE_PDF.website)}
-  </div>
-  <div class="wrap">
-    <h2>Solution summary</h2>
-    <table class="facts"><tr>
-      <td><div class="k">Profile</div><div class="v">${esc(input.profile || "—")}</div></td>
-      <td><div class="k">Relationship</div><div class="v">${esc(input.relationship || "—")}</div></td>
-      <td><div class="k">Remote support after setup</div><div class="v">${esc(input.support || "—")}</div></td>
-    </tr></table>
+  ${specStrip([
+    ["Reference", input.reference || ""],
+    ["Date", dateLabel],
+    ["Status", status],
+    ["Source", DE_PDF.website],
+  ])}
+  <main class="wrap">
+    ${section(1, "Solution summary", facts)}
+    ${section(2, "Packages", packageBlocks || `<p class="empty">No package is in this solution yet.</p>`)}
+    ${closeBlock({
+      heading: "A consultant reviews your solution",
+      text: `This packet restates the solution you assembled on ${DE_PDF.website}. It is not a signed commercial offer. A Digerati Experts consultant confirms scope, pricing, and next steps after review.`,
+    })}
+  </main>`;
 
-    <h2>Packages</h2>
-    ${packageBlocks || `<p class="empty">No package is in this solution yet.</p>`}
-
-    <div class="closing">
-      This packet restates the solution you assembled on ${esc(DE_PDF.website)}.
-      It is not a signed commercial offer. A Digerati Experts consultant confirms
-      scope, pricing, and next steps after review.
-    </div>
-  </div>
-</body></html>`;
+  return documentHtml({
+    title: `${title} · ${DE_PDF.brandName}`,
+    head: { left: `Solution packet · ${input.reference || title}`, right: DE_STORE_DOC_ID.solution },
+    body,
+  });
 }
 
 export async function renderSolutionPacketPdf(input: SolutionPacketInput): Promise<Buffer> {

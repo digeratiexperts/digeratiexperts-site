@@ -1,21 +1,20 @@
 import { PageTemplate } from "@/components/PageTemplate";
-import { Button } from "@/components/ui/button";
 import { useSEO } from "@/hooks/useSEO";
-import { Link } from "wouter";
+import { XCircle } from "lucide-react";
 import {
-  CheckCircle,
-  XCircle,
-  Users,
-  Target,
-  Layers,
-  PlusCircle,
-  CalendarClock,
-  BadgeDollarSign,
-  ArrowRight,
-} from "lucide-react";
-import { IconWell } from "@/components/visual/IconWell";
-import { StatementHeading } from "@/components/visual/StatementHeading";
+  Chapter,
+  Container,
+  ChapterHeader,
+  CheckList,
+  ClosingCta,
+  FeatureGrid,
+  HeroActions,
+  HeroFacts,
+  IndexedList,
+  bodyClass,
+} from "@/components/site/chapters";
 import { CTA } from "@/lib/ctaCopy";
+import { pricing, formatPrice, formatUserPrice, type ProActiveTierKey } from "@/data/pricing";
 
 export interface TierPageConfig {
   id: string;
@@ -37,18 +36,11 @@ export interface TierPageConfig {
   ctaPrimary: { label: string; href: string };
 }
 
-const SectionHeading = ({
-  icon: Icon,
-  children,
-}: {
-  icon: typeof CheckCircle;
-  children: string;
-}) => (
-  <div className="mb-5 flex items-center gap-3">
-    <IconWell icon={Icon} size="sm" surface="dark" />
-    <StatementHeading as="h2" className="text-2xl">
-      {children}
-    </StatementHeading>
+/** Two-column chapter lead: heading left, body right. */
+const SplitRow = ({ lead, children }: { lead: React.ReactNode; children: React.ReactNode }) => (
+  <div className="grid gap-8 lg:grid-cols-12 lg:gap-14">
+    <div className="lg:col-span-4">{lead}</div>
+    <div className="lg:col-span-8">{children}</div>
   </div>
 );
 
@@ -59,109 +51,143 @@ export function TierDetailTemplate({ config }: { config: TierPageConfig }) {
     canonical: config.canonicalPath,
   });
 
+  const tier = (config.id in pricing ? pricing[config.id as ProActiveTierKey] : undefined) ?? undefined;
+
   return (
     <PageTemplate
+      layout="chapters"
+      eyebrow={config.heroBadge}
       title={config.fullName}
       subtitle={config.tagline}
       breadcrumbs={[
         { label: "Solutions", href: "/solutions" },
         { label: config.fullName },
       ]}
+      actions={
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <HeroActions
+            primary={{ label: CTA.primary, href: "/book" }}
+            secondary={{ label: CTA.secondary, href: "/proactive-ecosystem-pricing" }}
+          />
+        </div>
+      }
+      heroAside={
+        tier ? (
+          <HeroFacts
+            title="At a glance"
+            rows={[
+              { label: "Starts at", value: formatUserPrice(tier.id) },
+              { label: "Monthly minimum", value: `${formatPrice(tier.monthlyMinimum)}/mo` },
+              { label: "Best fit", value: tier.idealBuyer },
+            ]}
+            footnote="A fit-based operating model, not a ranking. Final pricing is confirmed after an assessment."
+          />
+        ) : undefined
+      }
     >
-      <div className="max-w-5xl mx-auto space-y-14">
-        <section>
-          <span className="mb-4 inline-block rounded-full border border-de-hairline bg-de-bg px-3 py-1 text-sm font-semibold text-de-accent-ink">
-            {config.heroBadge}
-          </span>
-          <p className="text-lg text-white/85 leading-relaxed">{config.positioning}</p>
-        </section>
+      <Chapter tone="well" seam={false}>
+        <Container>
+          <SplitRow
+            lead={
+              <ChapterHeader
+                tone="well"
+                layout="stack"
+                eyebrow="Overview"
+                title={`Where ${config.shortName} fits`}
+                className="mb-0"
+              />
+            }
+          >
+            <p className="max-w-[62ch] text-lg leading-relaxed text-white/85">{config.positioning}</p>
+          </SplitRow>
 
-        <section>
-          <SectionHeading icon={Users}>Who It's For</SectionHeading>
-          <ul className="space-y-3">
-            {config.whoFor.map((item) => (
-              <li key={item} className="flex items-start gap-3 text-white/85 leading-relaxed">
-                <CheckCircle className="w-5 h-5 text-de-magenta-ink mt-0.5 flex-shrink-0" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section>
-          <SectionHeading icon={Target}>What You Get</SectionHeading>
-          <ul className="space-y-3">
-            {config.outcomes.map((item) => (
-              <li key={item} className="flex items-start gap-3 text-white/85 leading-relaxed">
-                <CheckCircle className="w-5 h-5 text-de-accent-ink mt-0.5 flex-shrink-0" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section>
-          <SectionHeading icon={Layers}>What's Included</SectionHeading>
-          <div className="grid sm:grid-cols-2 gap-x-8 gap-y-3">
-            {config.included.map((item) => (
-              <div key={item} className="flex items-start gap-3 text-white/85 leading-relaxed">
-                <CheckCircle className="w-5 h-5 text-de-accent-ink mt-0.5 flex-shrink-0" />
-                <span>{item}</span>
-              </div>
-            ))}
+          <div className="mt-14 border-t border-[var(--de-hairline)] pt-14">
+            <SplitRow
+              lead={
+                <ChapterHeader tone="well" layout="stack" eyebrow="Fit" title="Who It's For" className="mb-0" />
+              }
+            >
+              <CheckList tone="well" columns={1} items={config.whoFor} />
+            </SplitRow>
           </div>
-        </section>
+        </Container>
+      </Chapter>
 
-        {config.notIncluded && config.notIncluded.length > 0 && (
-          <section>
-            <SectionHeading icon={XCircle}>Not Included at This Level</SectionHeading>
-            <ul className="space-y-3">
-              {config.notIncluded.map((item) => (
-                <li key={item} className="flex items-start gap-3 text-white/70 leading-relaxed">
-                  <XCircle className="w-5 h-5 text-white/55 mt-0.5 flex-shrink-0" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+      <Chapter tone="paper">
+        <Container>
+          <ChapterHeader tone="paper" eyebrow="Outcomes" title="What You Get" layout="stack" />
+          <IndexedList tone="paper" columns={2} items={config.outcomes.map((t) => ({ title: t }))} />
+        </Container>
+      </Chapter>
 
-        <section>
-          <SectionHeading icon={PlusCircle}>Add-Ons & Upgrades</SectionHeading>
-          <div className="grid md:grid-cols-3 gap-5">
-            {config.addOnsOrUpgrades.map((addOn) => (
-              <div
-                key={addOn.label}
-                className="de-interactive-card rounded-xl border border-de-hairline bg-de-raised p-5"
+      <Chapter tone="surface">
+        <Container>
+          <ChapterHeader tone="surface" eyebrow="Scope" title="What's Included" layout="stack" />
+          <CheckList tone="surface" items={config.included} />
+
+          {config.notIncluded && config.notIncluded.length > 0 && (
+            <div className="mt-14 border-t border-[var(--de-hairline)] pt-14">
+              <SplitRow
+                lead={
+                  <ChapterHeader
+                    tone="surface"
+                    layout="stack"
+                    eyebrow="Boundaries"
+                    title="Not Included at This Level"
+                    className="mb-0"
+                  />
+                }
               >
-                <h3 className="font-semibold text-white mb-2">{addOn.label}</h3>
-                <p className="text-sm text-white/75 leading-relaxed">{addOn.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+                <ul className="space-y-4">
+                  {config.notIncluded.map((item) => (
+                    <li key={item} className={`flex items-start gap-3 text-base leading-relaxed ${bodyClass("surface")}`}>
+                      <XCircle className="mt-1 h-4 w-4 shrink-0 text-white/55" aria-hidden="true" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </SplitRow>
+            </div>
+          )}
+        </Container>
+      </Chapter>
 
-        <section className="rounded-xl border border-de-hairline bg-de-raised p-6">
-          <SectionHeading icon={CalendarClock}>Reporting & Review Cadence</SectionHeading>
-          <p className="text-white/85 leading-relaxed">{config.reviewCadence}</p>
-        </section>
+      <Chapter tone="well">
+        <Container>
+          <ChapterHeader tone="well" eyebrow="Options" title="Add-Ons & Upgrades" layout="stack" />
+          <FeatureGrid
+            tone="well"
+            items={config.addOnsOrUpgrades.map((a) => ({ title: a.label, text: a.desc }))}
+          />
+        </Container>
+      </Chapter>
 
-        <section className="rounded-xl border border-de-hairline bg-de-raised p-6">
-          <SectionHeading icon={BadgeDollarSign}>Pricing</SectionHeading>
-          <p className="text-white/85 leading-relaxed mb-6">{config.pricingNote}</p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button asChild size="lg" variant="brand" className="w-full sm:w-auto">
-              <Link href="/book">
-                {CTA.primary}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="w-full border-de-hairline bg-de-bg text-white hover:text-white sm:w-auto">
-              <Link href="/proactive-ecosystem-pricing">{CTA.secondary}</Link>
-            </Button>
-          </div>
-        </section>
-      </div>
+      <Chapter tone="paper">
+        <Container>
+          <SplitRow
+            lead={
+              <ChapterHeader
+                tone="paper"
+                layout="stack"
+                eyebrow="Cadence"
+                title="Reporting & Review Cadence"
+                className="mb-0"
+              />
+            }
+          >
+            <p className="max-w-[62ch] text-lg leading-relaxed text-[#3A3448]">{config.reviewCadence}</p>
+          </SplitRow>
+        </Container>
+      </Chapter>
+
+      <ClosingCta
+        tone="surface"
+        eyebrow="Pricing"
+        title="Pricing"
+        lede={config.pricingNote}
+        primary={{ label: CTA.primary, href: "/book" }}
+        secondary={{ label: CTA.secondary, href: "/proactive-ecosystem-pricing" }}
+      />
     </PageTemplate>
   );
 }

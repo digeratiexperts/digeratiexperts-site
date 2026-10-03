@@ -257,10 +257,10 @@ const ManagedStore = () => {
             
             <div className="grid md:grid-cols-4 gap-6">
               {[
-                { icon: Clock, value: "<15 min", label: "Response Time", description: "Guaranteed SLA" },
-                { icon: Shield, value: "99.9%", label: "Uptime SLA", description: "Enterprise reliability" },
-                { icon: Phone, value: "24/7", label: "Support", description: "Real humans, always" },
-                { icon: Award, value: "$50K+", label: "Avg. Savings", description: "Per client annually" }
+                { icon: Clock, value: "15 min", label: "Critical response", description: "Published SLA, with service credits" },
+                { icon: Shield, value: "99.9%", label: "Monitoring uptime", description: "SOC monitoring, per our SLA" },
+                { icon: Phone, value: "24/7", label: "Emergency response", description: "For critical incidents, 365 days" },
+                { icon: Award, value: "30 days", label: "Money-back guarantee", description: "No questions asked" }
               ].map((stat, index) => (
                 <div key={index} className="text-center p-4">
                   <div className="w-12 h-12 rounded-full bg-de-raised flex items-center justify-center mx-auto mb-3">

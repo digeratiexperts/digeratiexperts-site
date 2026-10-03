@@ -11,11 +11,19 @@ export type InvoicePayAmountResult =
   | { ok: true; payAmount: number }
   | { ok: false; status: number; error: string; reason?: string };
 
+/** Invoice states that must never start a payment session, whatever the balance field says. */
+const UNPAYABLE_STATUSES = new Set(["paid", "void", "voided", "draft", "closed", "cancelled", "canceled", "written_off"]);
+
 export function resolveInvoicePayAmount(
   balanceRaw: unknown,
   amountCents: unknown,
   billingEmail: string,
+  invoiceStatus?: unknown,
 ): InvoicePayAmountResult {
+  const status = typeof invoiceStatus === "string" ? invoiceStatus.trim().toLowerCase().replace(/\s+/g, "_") : "";
+  if (status && UNPAYABLE_STATUSES.has(status)) {
+    return { ok: false, status: 400, error: "This invoice cannot be paid online.", reason: "invoice_not_payable" };
+  }
   const balanceDue = Number(balanceRaw);
   if (!Number.isFinite(balanceDue) || balanceDue <= 0) {
     return { ok: false, status: 400, error: "Invoice has no balance due" };

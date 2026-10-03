@@ -47,7 +47,12 @@ const homepageSections: { id: string; label: string; theme: 'dark' | 'light'; sh
   { id: 'contact', label: 'Contact', theme: 'dark' },
 ];
 
-export const DigeratiHomepage = (): JSX.Element => {
+/**
+ * `structuredData` is off only where this page is shown as a reference copy
+ * (/version-0, Joe 2026-10-03): structured data belongs to the canonical
+ * homepage alone.
+ */
+export const DigeratiHomepage = ({ structuredData = true }: { structuredData?: boolean } = {}): JSX.Element => {
   useSEO({
     title: 'Managed Security Service Provider',
     description: "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
@@ -58,8 +63,12 @@ export const DigeratiHomepage = (): JSX.Element => {
     <FullPageScrollProvider sections={homepageSections} enableOnMobile={false}>
       {/* Existing homepage story/content remains intact; this pass changes the hero presentation only. */}
       <div className="de-dark-well min-h-screen bg-[#050312]">
-        <OrganizationJsonLd />
-        <WebSiteJsonLd />
+        {structuredData ? (
+          <>
+            <OrganizationJsonLd />
+            <WebSiteJsonLd />
+          </>
+        ) : null}
         {/* Navigation — chat lives in App MarketingChrome sitewide */}
         <MegaMenu />
         <SiteBottomBar />

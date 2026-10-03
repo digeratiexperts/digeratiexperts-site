@@ -10,10 +10,9 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { PageTemplate } from "@/components/PageTemplate";
-import { ConversionPathBar } from "@/components/ConversionPathBar";
+import { Chapter, ChapterHeader, ClosingCta, Container, HeroActions } from "@/components/site/chapters";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
-import { Button } from "@/components/ui/button";
 import { DocumentFlipbook } from "@/pages/resources/DocumentFlipbook";
 
 const resources = [
@@ -85,6 +84,52 @@ const resources = [
   },
 ];
 
+const groups: { title: string; lede: string; hrefs: string[] }[] = [
+  {
+    title: "Read and learn",
+    lede: "Field notes, sourced facts and sessions you can verify.",
+    hrefs: [
+      "/resources/blog",
+      "/resources/case-studies",
+      "/resources/cyber-facts",
+      "/resources/security-updates",
+      "/resources/videos",
+    ],
+  },
+  {
+    title: "Tools",
+    lede: "Work something out for your own business before you talk to anyone.",
+    hrefs: ["/resources/downtime-calculator", "/resources/security-checklist", "/resources#document-flipbook"],
+  },
+  {
+    title: "Buyer documents",
+    lede: "Downloadable overviews and single-offer pages.",
+    hrefs: ["/resources/datasheets", "/resources/briefs", "/go"],
+  },
+];
+
+function ResourceRow({ resource }: { resource: (typeof resources)[number] }) {
+  const Icon = resource.icon;
+  return (
+    <Link
+      href={resource.href}
+      className="de-interactive-card group flex min-h-11 items-start gap-4 border-b border-[var(--de-hairline)] py-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ec4899]"
+    >
+      <span className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-de-hairline bg-de-raised text-de-accent-ink">
+        <Icon className="h-5 w-5" aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-heading text-lg font-semibold leading-snug text-white">{resource.name}</span>
+        <span className="mt-1 block text-base leading-relaxed text-white/70">{resource.description}</span>
+        <span className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-de-accent-ink">
+          Open resource
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+        </span>
+      </span>
+    </Link>
+  );
+}
+
 export default function ResourcesIndex() {
   useSEO({
     title: "Resources",
@@ -96,50 +141,55 @@ export default function ResourcesIndex() {
   return (
     <PageTemplate
       title="Resources"
+      eyebrow="Journal, tools and documents"
       subtitle="Practical guidance, tools, and updates — without the generic MSP brochure language."
       breadcrumbs={[{ label: "Resources" }]}
-      actions={
-        <Button asChild variant="brand" size="lg">
-          <Link href="/book">{CTA.primary}</Link>
-        </Button>
-      }
+      layout="chapters"
+      actions={<HeroActions primary={{ label: CTA.primary, href: "/book" }} />}
     >
-      <div className="pb-4">
-        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {resources.map((resource) => {
-            const Icon = resource.icon;
-            return (
-              <li key={resource.href}>
-                <Link
-                  href={resource.href}
-                  className="de-interactive-card group flex h-full flex-col rounded-2xl border border-de-hairline bg-de-raised p-6 focus-visible:outline-none"
-                >
-                  <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-de-hairline bg-de-bg text-de-accent-ink">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <h2 className="font-heading text-xl font-semibold text-white">{resource.name}</h2>
-                  <p className="mt-2 flex-1 text-base leading-relaxed text-de-muted-soft">
-                    {resource.description}
-                  </p>
-                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-de-accent-ink">
-                    Open resource
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-
-        <DocumentFlipbook />
-
-        <div className="mt-16">
-          <ConversionPathBar
-            headline="Need a recommendation, not a PDF?"
-            body="A Cyber Risk Assessment maps which resource — and which operating model — actually fits your Arizona business."
+      <Chapter tone="well" seam={false}>
+        <Container>
+          <ChapterHeader
+            tone="well"
+            eyebrow="The library"
+            title="Find what you need"
+            lede="Eleven places to read, calculate, check and download — grouped by what you are trying to do."
           />
-        </div>
-      </div>
+          <div className="border-t border-[var(--de-hairline)]">
+            {groups.map((g) => (
+              <div
+                key={g.title}
+                className="grid gap-x-10 border-b border-[var(--de-hairline)] py-8 lg:grid-cols-12 lg:py-10"
+              >
+                <div className="lg:col-span-4">
+                  <h2 className="font-heading text-xl font-semibold text-white md:text-2xl">{g.title}</h2>
+                  <p className="mt-2 max-w-xs text-base leading-relaxed text-white/65">{g.lede}</p>
+                </div>
+                <div className="grid gap-x-10 border-t border-[var(--de-hairline)] sm:grid-cols-2 lg:col-span-8 lg:border-t-0">
+                  {g.hrefs.map((href) => {
+                    const r = resources.find((x) => x.href === href)!;
+                    return <ResourceRow key={href} resource={r} />;
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Container>
+      </Chapter>
+
+      <Chapter tone="surface">
+        <Container>
+          <DocumentFlipbook />
+        </Container>
+      </Chapter>
+
+      <ClosingCta
+        tone="paper"
+        eyebrow="Need a recommendation?"
+        title="Need a recommendation, not a PDF?"
+        lede="A Cyber Risk Assessment maps which resource — and which operating model — actually fits your Arizona business."
+        primary={{ label: CTA.primary, href: "/book", testId: "button-conversion-assessment" }}
+      />
     </PageTemplate>
   );
 }

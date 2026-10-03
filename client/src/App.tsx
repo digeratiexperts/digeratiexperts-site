@@ -134,6 +134,7 @@ const AdminImportPage = lazy(() => import("@/pages/portal/AdminImport").then(m =
 const AdminAgentsPage = lazy(() => import("@/pages/portal/AdminAgents").then(m => ({ default: m.AdminAgents })));
 const AdminOpenAIPage = lazy(() => import("@/pages/portal/AdminOpenAI").then(m => ({ default: m.AdminOpenAI })));
 const AdminCompaniesPage = lazy(() => import("@/pages/portal/AdminCompanies").then(m => ({ default: m.AdminCompanies })));
+const AdminDataSourcesPage = lazy(() => import("@/pages/portal/PortalAdminDataSources").then(m => ({ default: m.PortalAdminDataSources })));
 const AdminLoginKnocksPage = lazy(() => import("@/pages/portal/AdminLoginKnocks").then(m => ({ default: m.AdminLoginKnocks })));
 const AdminLifecyclePage = lazy(() => import("@/pages/portal/AdminLifecycle").then(m => ({ default: m.AdminLifecycle })));
 const AdminContractsPage = lazy(() => import("@/pages/portal/AdminContracts").then(m => ({ default: m.AdminContracts })));
@@ -165,6 +166,7 @@ const HomepageV4 = lazy(() => import("@/pages/versions/v4/HomepageV4"));
 const HomepageV5 = lazy(() => import("@/pages/versions/v5/HomepageV5"));
 const HomepageV6 = lazy(() => import("@/pages/versions/v6/HomepageV6"));
 const HomepageV7 = lazy(() => import("@/pages/versions/v7/HomepageV7"));
+const HomepageV8 = lazy(() => import("@/pages/versions/v8/HomepageV8"));
 
 const WarehouseGate = lazy(() => import("@/pages/store/WarehouseGate"));
 const PublicStoreCheckout = lazy(() => import("@/pages/store/PublicStoreCheckout"));
@@ -238,10 +240,25 @@ function Router() {
           </VersionFrame>
         </Suspense>
       )} />
+      {/* Joe, 2026-10-03: the current homepage, kept as a noindex reference before any swap. */}
+      <Route path="/version-0" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <VersionFrame n={0}>
+            <DigeratiHomepage structuredData={false} />
+          </VersionFrame>
+        </Suspense>
+      )} />
       <Route path="/version-7" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <VersionFrame n={7}>
             <HomepageV7 />
+          </VersionFrame>
+        </Suspense>
+      )} />
+      <Route path="/version-8" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <VersionFrame n={8}>
+            <HomepageV8 />
           </VersionFrame>
         </Suspense>
       )} />
@@ -855,6 +872,11 @@ function Router() {
           <AdminCompaniesPage />
         </Suspense>
       )} />
+      <Route path="/portal/admin/data-sources" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <AdminDataSourcesPage />
+        </Suspense>
+      )} />
       <Route path="/portal/admin/login-knocks" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <AdminLoginKnocksPage />
@@ -1001,8 +1023,8 @@ function AppContent() {
   useStoreChromeGestures(location);
   const isPortal = location.startsWith("/portal");
   const isHome = location === "/";
-  // /version-7 mounts its own bottom bar (inside its scroll provider, with autohide on).
-  const ownsBottomBar = isHome || location === "/version-7";
+  // /version-0 (the homepage copy), /version-7 and /version-8 mount their own bottom bar.
+  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7" || location === "/version-8";
   const hideDoor2HelpDock = isDoor2Path(location) && location.split("?")[0] !== "/store";
   const hideWarehouseChrome = isWarehousePath(location);
   const accent = isPortal ? undefined : accentFor(location);

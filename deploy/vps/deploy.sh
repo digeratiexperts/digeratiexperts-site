@@ -140,6 +140,25 @@ cd "$NEW_RELEASE"
 log "Installing dependencies (npm ci)"
 npm ci --no-audit --no-fund
 
+# Branded PDFs (quotes, orders, receipts, solution packets) render through
+# WeasyPrint or Playwright Chromium (server/pdf/renderHtmlToPdf.ts). Fetch the
+# Chromium build matching the installed playwright version into this user's
+# cache, where the service (same user) finds it at runtime. Never fatal: routes
+# fall back to branded HTML / 503 when no renderer is available.
+if [ "${SKIP_PDF_BROWSER:-0}" != "1" ]; then
+  log "Ensuring PDF renderer browser (playwright chromium)"
+  if npx --no-install playwright install chromium >/dev/null 2>&1; then
+    if node -e 'require("playwright").chromium.launch({headless:true}).then(b=>b.close()).catch(e=>{console.error(e.message.split("\n")[0]);process.exit(1)})' 2>/tmp/de-pdf-smoke.$$; then
+      log "PDF renderer: chromium launches"
+    else
+      log "WARN: chromium installed but failed to launch (missing system libraries? run 'sudo npx playwright install-deps chromium' once): $(head -c 300 /tmp/de-pdf-smoke.$$)"
+    fi
+    rm -f /tmp/de-pdf-smoke.$$
+  else
+    log "WARN: playwright chromium install failed; PDFs need WeasyPrint or PDF_CHROMIUM_PATH"
+  fi
+fi
+
 log "Building production bundle"
 npm run build
 

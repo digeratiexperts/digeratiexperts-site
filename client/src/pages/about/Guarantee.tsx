@@ -1,9 +1,8 @@
-import { Link } from "wouter";
-import { Phone, CheckCircle2 } from "lucide-react";
 import { PageTemplate } from "@/components/PageTemplate";
-import { Button } from "@/components/ui/button";
+import { Chapter, Container, ClosingCta, CheckList, Eyebrow, FactStrip, HeroActions } from "@/components/site/chapters";
 import { useSEO } from "@/hooks/useSEO";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { CTA } from "@/lib/ctaCopy";
 
 export default function Guarantee() {
   useSEO({
@@ -13,89 +12,104 @@ export default function Guarantee() {
     canonical: "/about/guarantee",
   });
 
+  const em = "font-semibold text-de-magenta-paper-ink";
+  const strong = "font-semibold text-[#1A1228]";
+
   return (
     <PageTemplate
+      layout="chapters"
+      eyebrow="About · Guarantee"
       title="100% Money-Back Guarantee"
       subtitle="No-Risk. No-Small-Print. No Questions Asked."
       breadcrumbs={[{ label: "About" }, { label: "Guarantee" }]}
-    >
-      <div className="mx-auto max-w-4xl space-y-12">
-        <div className="flex flex-col items-center gap-10 lg:flex-row lg:items-start">
-          <div className="order-2 flex-1 lg:order-1">
-            <p className="mb-6 text-lg leading-relaxed text-white/80">
-              Because we are ardently committed to deliver <span className="font-semibold text-de-accent-ink">excellence</span> in
-              IT services and cybersecurity, keeping our commitments and <span className="font-semibold text-de-accent-ink">exceeding</span> our
-              clients' expectations, we stand behind our work with a 100%, no-small-print, no weasel clause guarantee:
-            </p>
-
-            <div className="mb-8 rounded-xl border border-de-hairline bg-de-raised p-6">
-              <p className="mb-6 leading-relaxed text-white/80">
-                Partner with Digerati Experts as your IT and cybersecurity provider. If you are not
-                over-the-top thrilled with our support, customer service, or problem-resolution by the
-                end of the first 30 days, you can cancel your agreement and we'll refund 100% of your
-                services fees, no questions asked. We'll also release you from any contract or project
-                you hired us to deliver without penalties.
-              </p>
-              <p className="leading-relaxed text-white/80">
-                We're the <span className="font-semibold text-white">only</span> IT firm in the Phoenix area that offers this bold guarantee
-                because we're confident you'll be <span className="font-semibold text-white">thrilled</span> with the level of support and
-                service you receive. We also believe this guarantee keeps us <span className="font-semibold text-white">sharp</span> and
-                focused on ensuring everything is done right, on time and to your complete satisfaction.
-                Why risk hiring anyone else?
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {[
-                "30-day risk-free trial period",
-                "100% refund of service fees if not satisfied",
-                "Release from contracts without penalties",
-                "No questions asked, no fine print",
-              ].map((item) => (
-                <div key={item} className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-de-accent-ink" />
-                  <span className="text-white/80">{item}</span>
-                </div>
-              ))}
-            </div>
+      actions={
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <HeroActions
+            primary={{ label: CTA.primary, href: "/book" }}
+            secondary={{ label: "Client Bill of Rights", href: "/about/client-bill-of-rights" }}
+          />
+        </div>
+      }
+      heroAside={
+        <div
+          className="flex flex-col items-center justify-center rounded-xl border border-[var(--de-hairline)] bg-de-raised px-8 py-10 text-center"
+          data-testid="guarantee-badge"
+        >
+          <div className="font-heading text-7xl font-semibold leading-none tracking-[-0.03em] text-white">100%</div>
+          <div className="mt-4 font-mono text-sm font-semibold uppercase tracking-[0.18em] text-de-magenta-ink">
+            Money back guarantee
           </div>
+          <p className="mt-4 text-sm text-white/65">First 30 days, no questions asked.</p>
+        </div>
+      }
+    >
+      <FactStrip
+        label="The guarantee at a glance"
+        facts={[
+          { title: "30 days", text: "Risk-free trial period" },
+          { title: "100% refund", text: "Of service fees if not satisfied" },
+          { title: "No penalties", text: "Release from contracts" },
+        ]}
+      />
 
-          <div className="order-1 shrink-0 lg:order-2">
-            <div className="relative h-56 w-56 md:h-64 md:w-64" data-testid="guarantee-badge">
-              <div className="absolute inset-2 flex items-center justify-center rounded-full border border-de-hairline bg-de-raised">
-                <div className="flex h-[85%] w-[85%] flex-col items-center justify-center rounded-full bg-white p-4 text-center">
-                  <div className="text-5xl font-bold leading-none text-[#030228] md:text-6xl">100%</div>
-                  <div className="mt-2 rounded-full bg-[#D3126A] px-4 py-1.5 text-sm font-bold uppercase tracking-wide text-white md:text-base">
-                    Money Back
-                  </div>
-                  <div className="mt-2 text-sm font-bold uppercase tracking-wide text-[#030228] md:text-base">
-                    Guarantee
-                  </div>
-                </div>
+      <Chapter tone="paper" seam={false}>
+        <Container>
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+            <div className="lg:col-span-4">
+              <Eyebrow tone="paper" className="mb-4">
+                In writing
+              </Eyebrow>
+              <h2 className="font-heading text-3xl font-semibold leading-tight tracking-[-0.02em] text-[#1A1228]">
+                The guarantee, in full
+              </h2>
+            </div>
+            <div className="lg:col-span-8">
+              <p className="max-w-[68ch] text-lg leading-relaxed text-[#3A3448]">
+                Because we are ardently committed to deliver <span className={em}>excellence</span> in IT services and
+                cybersecurity, keeping our commitments and <span className={em}>exceeding</span> our clients'
+                expectations, we stand behind our work with a 100%, no-small-print, no weasel clause guarantee:
+              </p>
+
+              <div className="mt-8 max-w-[68ch] rounded-xl border border-[var(--de-paper-hairline)] border-l-4 border-l-[#D3126A] bg-white p-6 md:p-8">
+                <p className="leading-relaxed text-[#1A1228]">
+                  Partner with Digerati Experts as your IT and cybersecurity provider. If you are not over-the-top
+                  thrilled with our support, customer service, or problem-resolution by the end of the first 30 days,
+                  you can cancel your agreement and we'll refund 100% of your services fees, no questions asked. We'll
+                  also release you from any contract or project you hired us to deliver without penalties.
+                </p>
+                <p className="mt-5 leading-relaxed text-[#3A3448]">
+                  We put our <span className={strong}>own fees</span> on the line in writing because we're confident
+                  you'll be <span className={strong}>thrilled</span> with the level of support and service you
+                  receive. Ask any IT firm you're comparing whether they will do the same. We also believe this guarantee keeps us{" "}
+                  <span className={strong}>sharp</span> and focused on ensuring everything is done right, on time and
+                  to your complete satisfaction. Why risk hiring anyone else?
+                </p>
+              </div>
+
+              <div className="mt-10">
+                <CheckList
+                  tone="paper"
+                  items={[
+                    "30-day risk-free trial period",
+                    "100% refund of service fees if not satisfied",
+                    "Release from contracts without penalties",
+                    "No questions asked, no fine print",
+                  ]}
+                />
               </div>
             </div>
           </div>
-        </div>
+        </Container>
+      </Chapter>
 
-        <div className="rounded-2xl border border-[#D3126A]/40 bg-[#D3126A] px-8 py-10 text-center">
-          <p className="mb-4 text-xl text-white">Call us today to see what Elite IT & Cybersecurity is all about</p>
-          <a
-            href={PRIMARY_PHONE.telHref}
-            className="inline-flex items-center gap-3 text-2xl font-bold text-white md:text-3xl"
-            data-testid="link-phone"
-          >
-            <Phone className="h-6 w-6" />
-            {PRIMARY_PHONE.display}
-          </a>
-          <div className="mt-8">
-            <Button asChild size="lg" className="h-12 bg-white px-8 font-semibold text-[#D3126A] hover:bg-white/95">
-              <Link href="/about/client-bill-of-rights" data-testid="link-bill-of-rights">
-                Client Bill of Rights
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
+      <ClosingCta
+        tone="well"
+        eyebrow="Talk to us"
+        title="Call us today to see what Elite IT & Cybersecurity is all about"
+        showPhone={false}
+        primary={{ label: PRIMARY_PHONE.display, href: PRIMARY_PHONE.telHref, testId: "link-phone" }}
+        secondary={{ label: "Client Bill of Rights", href: "/about/client-bill-of-rights", testId: "link-bill-of-rights" }}
+      />
     </PageTemplate>
   );
 }

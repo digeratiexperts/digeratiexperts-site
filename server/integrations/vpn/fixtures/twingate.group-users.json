@@ -1,0 +1,42 @@
+{
+  "_source": "Shape of the PortalVpnGroupDevices query (twingate.ts). Field names from the Twingate Admin API schema, https://www.twingate.com/docs/api (Group.users, User.devices, Device.osName / deviceType / activeState / lastSuccessfulLoginAt). Device values copied from the device_edge example in Twingate's CLI tests, https://github.com/Twingate-Labs/Twingate-CLI/blob/main/tests/conftest.py (CLI linked from https://www.twingate.com/docs/introduction-to-the-python-cli). Group/user ids and cursors are placeholders; tests derive ARCHIVED / BLOCKED variants from this device.",
+  "data": {
+    "group": {
+      "id": "R3JvdXA6MTIz",
+      "name": "Acme",
+      "users": {
+        "pageInfo": {
+          "hasNextPage": false,
+          "endCursor": "YXJyYXljb25uZWN0aW9uOjA="
+        },
+        "edges": [
+          {
+            "node": {
+              "id": "VXNlcjox",
+              "email": "alice@example.com",
+              "firstName": "Alice",
+              "lastName": "Smith",
+              "devices": {
+                "pageInfo": {
+                  "hasNextPage": false
+                },
+                "edges": [
+                  {
+                    "node": {
+                      "id": "dev-1",
+                      "name": "MacBook Pro",
+                      "osName": "macOS",
+                      "deviceType": "LAPTOP",
+                      "activeState": "ACTIVE",
+                      "lastSuccessfulLoginAt": "2024-01-01T00:00:00Z"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
