@@ -1665,7 +1665,13 @@ export async function registerRoutes(app: Express) {
         entityType: "approval",
         entityId: req.params.id,
         canonicalAccountId: client?.hubAccountId || null,
-        payload: { action: "approve", note: req.body?.note || null, finalized: !!result.finalized },
+        payload: {
+          action: "approve",
+          note: req.body?.note || null,
+          finalized: !!result.finalized,
+          portalClientId: req.user?.clientId || null,
+          actorUserId: req.userId || null,
+        },
       });
       res.json({ success: true, ...result, fulfillmentTicketId });
     } catch (error: any) {
@@ -1690,7 +1696,12 @@ export async function registerRoutes(app: Express) {
         entityType: "approval",
         entityId: req.params.id,
         canonicalAccountId: client?.hubAccountId || null,
-        payload: { action: "reject", note: req.body?.note || null },
+        payload: {
+          action: "reject",
+          note: req.body?.note || null,
+          portalClientId: req.user?.clientId || null,
+          actorUserId: req.userId || null,
+        },
       });
       res.json({ success: true, ...result });
     } catch (error: any) {
@@ -1971,9 +1982,14 @@ export async function registerRoutes(app: Express) {
             console.warn("Could not look up Zoho Desk contact:", contactErr);
           }
 
+          const hubAccountId = resolvedClientId
+            ? portalClients.get(resolvedClientId)?.hubAccountId
+            : null;
           const zohoTicket = await zohoDeskService.createTicket({
             subject,
-            description,
+            description: hubAccountId
+              ? `${description}\n\ncanonicalAccountId: ${hubAccountId}`
+              : description,
             contactId,
             email: contactId ? undefined : userEmail,
             priority: priorityMap[priority] || "Medium",
@@ -3278,13 +3294,41 @@ export async function registerRoutes(app: Express) {
       logger.info("Portal order form submitted", { orderFormId: saved.id, email: user.email, company });
 
       try {
-        await eventBus.emit(EventTypes.LEAD_CREATED, {
-          source: "portal-order-form",
+        const { buildCommercialSnapshot } = await import("./integrations/commercialSnapshot");
+        const { getStoreProductBySku } = await import("../client/src/data/storeCatalog");
+        const client = user.clientId ? portalClients.get(user.clientId) : undefined;
+        await eventBus.emit(EventTypes.QUOTE_REQUESTED, {
+          id: saved.id,
+          source: "portal_order_form",
           email: user.email,
           name: user.fullName || user.username,
           company,
-          orderFormId: saved.id,
+          portalClientId: user.clientId || null,
+          canonicalAccountId: client?.hubAccountId || null,
+          commercial: buildCommercialSnapshot({
+            reference: saved.id,
+            status: "submitted",
+            portalClientId: user.clientId || null,
+            company,
+            email: user.email,
+            lineItems: validated.lines.map((line) => ({
+              productId: line.hubSku || line.id,
+              sku: line.hubSku || line.sku,
+              name: line.name,
+              quantity: line.quantity,
+              unitPrice: line.unitPrice,
+              pricingType: getStoreProductBySku(line.sku)?.pricingType || "one_time",
+              total: line.lineTotal,
+            })),
+          }),
         }, "portal-order-form");
+        await notificationService.sendNewLeadNotification({
+          name: user.fullName || user.username,
+          email: user.email,
+          company,
+          message: `Portal order form ${saved.id}`,
+          source: "portal_order_form",
+        });
       } catch {
         /* non-fatal */
       }

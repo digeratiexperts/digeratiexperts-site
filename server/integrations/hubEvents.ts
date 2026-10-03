@@ -120,6 +120,12 @@ export async function handleHubEvents(req: Request, res: Response): Promise<void
     return;
   }
 
+  const signed = (req as Request & { deSync?: { eventId?: string; eventIdBound?: boolean } }).deSync;
+  if (signed?.eventIdBound && signed.eventId !== envelope.eventId) {
+    res.status(401).json({ error: "Event id does not match the signed request" });
+    return;
+  }
+
   try {
     const inbox = await beginInbox(envelope);
     if (inbox.alreadyApplied) {

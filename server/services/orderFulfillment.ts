@@ -15,7 +15,6 @@ import { storeOrders, type StoreOrder } from "@shared/schema";
 import { notificationService } from "./notificationService";
 import { zohoClient } from "../zoho/zohoClient";
 import { zohoDeskService } from "../zoho/zohoDesk";
-import { eventBus, EventTypes } from "../eventBus";
 
 const ACTIVE_FULFILLMENT_STATUSES = new Set(["provisioning", "processing"]);
 const TERMINAL_FULFILLMENT_STATUSES = new Set(["completed", "cancelled", "refunded"]);
@@ -30,9 +29,12 @@ let reconciliationTimer: NodeJS.Timeout | null = null;
 type LineItem = {
   name?: string;
   sku?: string;
+  productId?: string;
   unitPrice?: number | string;
   price?: number | string;
   quantity?: number | string;
+  pricingType?: string;
+  total?: number | string;
 };
 
 function logSecurity(event: string, data: Record<string, unknown>) {
@@ -261,18 +263,33 @@ export async function fulfillPaidOrder(orderId: string | number): Promise<boolea
     const deskTicketId = await createFulfillmentDeskTicket(order, items);
 
     try {
-      await eventBus.emit(EventTypes.LEAD_CREATED, {
+      const { enqueueStoreOrderCreated } = await import("../integrations/enqueueStoreOrder");
+      await enqueueStoreOrderCreated({
         id: String(order.id),
-        name: order.billingName || undefined,
-        email: order.billingEmail || undefined,
-        company: order.billingCompany || undefined,
-        phone: undefined,
-        message: `Store purchase paid: ${order.orderNumber} ($${Number(order.total || 0).toFixed(2)})`,
-        source: "store_purchase",
+        orderNumber: order.orderNumber,
+        status: "paid",
+        clientId: order.clientId,
+        billingEmail: order.billingEmail,
+        billingName: order.billingName,
+        billingCompany: order.billingCompany,
+        lineItems: items.map((item) => {
+          const quantity = Number(item.quantity ?? 1) || 1;
+          const unitPrice = Number(item.unitPrice ?? item.price ?? 0) || 0;
+          const total = Number(item.total ?? quantity * unitPrice) || 0;
+          return {
+            productId: item.productId || item.sku || item.name || "item",
+            sku: item.sku || "",
+            name: item.name || item.sku || "Item",
+            quantity,
+            unitPrice,
+            pricingType: item.pricingType || "one_time",
+            total,
+          };
+        }),
       });
     } catch (syncErr: any) {
       console.warn(
-        "[ORDER FULFILLMENT] TechSales purchase sync emit failed:",
+        "[ORDER FULFILLMENT] TechSales purchase sync failed:",
         syncErr?.message || syncErr,
       );
     }
