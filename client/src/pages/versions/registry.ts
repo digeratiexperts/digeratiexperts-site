@@ -79,6 +79,39 @@ export const HOMEPAGE_VERSIONS: HomepageVersion[] = [
     kind: "build",
     source: "claude/homepage-v4",
   },
+  {
+    n: 5,
+    path: "/version-5",
+    title: "The practical homepage",
+    date: "2026-09-30",
+    status: "Merged (PR #292, 2026-10-01) and live as the noindex /version-5 preview. Not proposed for /; Joe decides whether it replaces /.",
+    summary:
+      "One conventional page, done carefully: what Digerati Experts does for Arizona businesses, for whom, the four published ProActive prices, the written response times, the founder, the questions people ask before they call, and how to reach us. Every fact on the page is read from the same files the rest of the site uses; nothing is invented and nothing scroll-jacks. Built after Joe's 2026-09-30 direction to start over and make something practical, with an acceptance script (scripts/qa/homepage-v5-acceptance.mjs) as the definition of done.",
+    kind: "build",
+    source: "claude/homepage-v5-practical",
+  },
+  {
+    n: 6,
+    path: "/version-6",
+    title: "Every live section, redrawn",
+    date: "2026-10-01",
+    status: "In build (draft PR). Preview only; Joe decides whether it replaces /.",
+    summary:
+      "The live homepage, section by section, on the Version 5 system: the same eighteen sections in the same order (hero, why we exist, the sourced figures, what we tackle, three paths, the eight blocks and four steps, client proof, the written response times, the founder, industries, pricing, security updates and detection, the assessment form, questions, the one dark band, contact, footer), each rebuilt from the data file or page that already carries the fact. No generated or stock imagery, one action everywhere, no animation. Built after Joe's 2026-10-01 ask to mock up every live section and his word to continue; the eighteen mockups came first, this is the page.",
+    kind: "build",
+    source: "claude/homepage-v6-sections",
+  },
+  {
+    n: 7,
+    path: "/version-7",
+    title: "Every live section, as reviewed",
+    date: "2026-10-01",
+    status: "In build (draft PR #315). Preview only; Joe decides whether it replaces /.",
+    summary:
+      "The live homepage, section by section, built from Joe's reviewed section mockups on the current DE system: one head recipe, one card, paper chapters as full-bleed bands, real artifacts only, and every subtle live interaction kept (the industries photo hover, the pronunciation bars, the interactive assessment preview, the FAQ rail, the eight-block deck with Joe's approved phone layout). One assessment form and one newsletter, per Joe's round-2 decisions. The unified bottom bar runs with autohide: it tucks into the Ask DE button while you read and returns the moment you reach for it.",
+    kind: "build",
+    source: "claude/sleepy-archimedes-mccoav",
+  },
 ];
 
 export function versionByNumber(n: number): HomepageVersion | undefined {

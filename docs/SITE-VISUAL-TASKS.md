@@ -2,6 +2,8 @@
 
 Shared ledger for Digerati Experts site visual completion. Canonical rules: `design/VISUAL_SYSTEM_V2.md`. Governance PR: VIS-001.
 
+> **Ledger, not design law (`design/DESIGN-AUTHORITY.md`).** Ownership and status rows coordinate work and are binding for concurrency. The "do not restyle / do not touch" notes inside rows are per-task scope from the time they were written (Tier 3); they do not bind an Exploration Mode concept Joe requests later.
+
 **Rule: No agent starts something marked IN PROGRESS by another owner.** One task = one owner = one branch.
 
 **VIS-001 through VIS-005 should happen before agents start spraying new design treatments across 138 pages.** Vocabulary first. Do not add HUD ticks independently.
@@ -47,7 +49,7 @@ Docs-only rows (VIS-001): rendered visual QA is N/A. Still require a concurrency
 | VIS-012 | Photography plan / assets | Human / content | TBD | VIS-001, `PHOTOGRAPHY.md` | Real people; no generated faces | BACKLOG | human review | — | — |
 | VIS-013 | Proof system implementation | Claude / Cursor | TBD | VIS-002 | ProofChip usage + proof chapter; no fabricated trust. Audit `2722dd5` chips (`RTO/RPO` SLA language) before treating as approved proof. | BACKLOG | required | — | — |
 | VIS-014 | Threat-story template | Claude | TBD | VIS-001, `EDITORIAL_ASSETS.md` | Journal amber stays. LIVE feed dates stay honest | BACKLOG | required | — | — |
-| VIS-015 | Editorial / publication templates | Antigravity / design | TBD | VIS-001, `EDITORIAL_ASSETS.md` | Datasheets, report covers | BACKLOG | required | — | — |
+| VIS-015 | Editorial / publication templates: DE document system (spec / editorial / brief registers; datasheet, checklist, report families) and the 13 public resource PDFs | Claude Code (issue #366) | branch `claude/elegant-dijkstra-k4z8gc` | Joe direction 2026-10-03 (technical precision backbone; editorial + briefing as registers) | `scripts/de-documents/**`; `client/public/assets/resources/**/*.pdf` (same URLs); evidence `artifacts/visual-qa/resource-pdfs-redesign-2026-10/` | APPROVED (Joe 2026-10-03), awaiting merge | every page inspected; site 390 / 768 / 1440 + pdf.js; veraPDF PDF/UA-1 13/13 | PR #367 | Not merged, not live. Store PDF adoption overlaps PR #339; not started. |
 | VIS-016 | Final site propagation + QA | All, coordinated | Partial work on `main` @ `2722dd5` + `e21dc6e` | VIS-001–VIS-015 as applicable | Coordinated rollout — not a drive-by HUD pass on 138 pages. **Partial unreviewed mounts already on:** `SolutionsIndex.tsx`, `ProActiveEcosystemPage.tsx`, `BackupDisasterRecovery.tsx`, `GenericServicePage.tsx`, `CyberFacts.tsx`, `TrustCenter.tsx`, `DigeratiHowWeProtectSection.tsx`. Stop further spray until VIS-001 merges and visual review runs. | VISUAL REVIEW | pending | landed on `main` | — |
 
 Owner labels (Claude / Codex / Cursor / Antigravity) are **preferred pairing**, not a race. DE may restore Claude as VIS-001 owner historically; this row records who actually wrote the governance.
@@ -72,7 +74,7 @@ The `87e2858` / `2722dd5` / `e21dc6e` ledgers on `main` marked VIS-001–VIS-009
 
 | Work | Branch / surface | Rule |
 |------|------------------|------|
-| DE Desk Ask DE / Get Support restyle | `cursor/de-desk-ask-support-style-c9ac` · `client/src/components/ZohoASAPWidget.tsx` | **Do not touch.** Another agent owns it. Visual System v2 does not restyle Desk in VIS-001–VIS-016 unless DE adds a ledger row. |
+| DE Desk black + grey + gold restyle (Joe's pick, 2026-10-01) | `claude/awesome-bardeen-4pbl2m` · `client/src/components/ZohoASAPWidget.tsx` (stylesheet), `SiteBottomBar.tsx` (the Ask DE chooser) | **Do not touch** until merged. Visual System v2 does not restyle Desk in VIS-001–VIS-016 unless DE adds a ledger row. |
 | Blog / Journal colors | `/resources`, `/case-studies` | Locked amber |
 | Store colors | `/store` | Locked electric + 14 pills |
 | Draft PRs #57, #59, #72 | See quarantine below | Do not merge as-is |

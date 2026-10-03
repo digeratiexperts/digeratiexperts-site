@@ -180,7 +180,7 @@ export default function BusinessNeedsFamily() {
   return (
     <Door2Frame intensity={0.28} jelly>
         <MegaMenu />
-        <main className="d2-main de-nav-clear pb-24">
+        <main id="main-content" tabIndex={-1} className="d2-main de-nav-clear pb-24">
           <div className="d2-layout">
             <div className="min-w-0">
               <header className="d2-chapter d2-chapter--first" data-testid="family-header">

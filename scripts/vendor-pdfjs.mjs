@@ -15,13 +15,22 @@ const temp = await mkdtemp(path.join(tmpdir(), "de-pdfjs-"));
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 const tarCommand = process.platform === "win32" ? "tar.exe" : "tar";
 
-function run(command, args) {
-  const result = spawnSync(command, args, {
-    cwd: root,
+// Node 20.12+/22+/24 refuse to spawnSync a .cmd shim without a shell (the
+// CVE-2024-27980 fix), so `npm.cmd` throws EINVAL on Windows and takes the
+// prebuild hook — and therefore `npm run build` — down with it. Route through
+// the shell on win32, quoting anything that could carry a space.
+const needsShell = process.platform === "win32";
+
+function run(command, args, options = {}) {
+  // Only the .cmd shim needs the shell; tar is a real executable, so it spawns
+  // directly and stays clear of shell quoting (and of Node's DEP0190 warning).
+  const useShell = needsShell && command.endsWith(".cmd");
+  const spawnArgs = useShell ? args.map((arg) => (/[\s"]/.test(arg) ? `"${arg}"` : arg)) : args;
+  const result = spawnSync(command, spawnArgs, {
+    cwd: options.cwd ?? root,
     encoding: "utf8",
     windowsHide: true,
-    // .cmd shims need a shell on Windows; Node 20+ spawnSync EINVAL otherwise.
-    shell: process.platform === "win32",
+    shell: useShell,
   });
   if (result.error) throw result.error;
   if (result.status !== 0) {
@@ -45,16 +54,15 @@ try {
     throw new Error(`PDF.js package integrity mismatch. Expected ${EXPECTED_INTEGRITY}, received ${packed?.integrity ?? "none"}.`);
   }
 
-  const archive = path.join(temp, packed.filename);
-  run(tarCommand, [
-    "-xzf",
-    archive,
-    "-C",
-    temp,
-    "package/build/pdf.js",
-    "package/build/pdf.worker.js",
-    "package/LICENSE",
-  ]);
+  // Extract from inside the temp directory with a relative archive name. An
+  // absolute Windows path here would carry a drive-letter colon, which GNU tar
+  // (the tar on PATH under Git Bash / MSYS) reads as a remote `host:path` spec
+  // and fails on. A bare filename is unambiguous to both GNU tar and bsdtar.
+  run(
+    tarCommand,
+    ["-xzf", packed.filename, "package/build/pdf.js", "package/build/pdf.worker.js", "package/LICENSE"],
+    { cwd: temp },
+  );
 
   const sourceRoot = path.join(temp, "package");
   const pdfJs = path.join(sourceRoot, "build", "pdf.js");

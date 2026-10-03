@@ -8,6 +8,8 @@ import { IconWell } from "@/components/visual/IconWell";
 import { StatementHeading } from "@/components/visual/StatementHeading";
 import { CANONICAL_CSRA_ONE_TIME } from "@shared/canonicalCsra";
 import { normalizeSolutionReference } from "@shared/solutionReference";
+import { SituationContinuityStrip } from "@/components/SituationContinuityStrip";
+import { useAnonymousSituation } from "@/lib/anonymousSituation";
 
 /* Campaign framing (client/src/data/campaigns.ts): the booking is a no-obligation
  * working session; the documented Cyber Security Risk Assessment is a scoped
@@ -17,6 +19,7 @@ const CSRA_PRICE = `$${CANONICAL_CSRA_ONE_TIME.toLocaleString("en-US")}`;
 export default function BookingPage() {
   // A buyer arriving from the Store's confirmation carries their reference (`/book?ref=DE-XXXXXX`).
   const reference = normalizeSolutionReference(new URLSearchParams(useSearch()).get("ref") ?? "");
+  const situation = useAnonymousSituation();
   useSEO({
     title: "Get My Cyber Risk Assessment",
     description:
@@ -36,6 +39,9 @@ export default function BookingPage() {
               Reference <span className="font-mono font-semibold tracking-wide text-white">{reference}</span>. Mention it when
               you book.
             </p>
+          ) : null}
+          {situation ? (
+            <SituationContinuityStrip situation={situation} door="booking" tone="well" className="mb-4" />
           ) : null}
           <ZohoBookingWidget instanceId="page" className="overflow-hidden rounded-2xl border border-de-hairline" />
         </div>

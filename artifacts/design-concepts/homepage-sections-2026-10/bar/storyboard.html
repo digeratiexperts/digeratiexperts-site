@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE bottom bar — autohide storyboard</title><link rel="icon" href="data:,"><link rel="stylesheet" href="../system/tokens.css">
+<script>document.fonts.load('600 16px Oxanium');</script>
+<style>
+  body { background: var(--de-bg); }
+  .sb { padding: 56px 0 64px; }
+  .rows { margin-top: 36px; display: grid; gap: 18px; }
+  .row { display: grid; grid-template-columns: 300px 1fr; gap: 28px; align-items: center; }
+  .crop { height: 132px; overflow: hidden; border-radius: 14px; border: 1px solid var(--de-hairline); background: #000; }
+  .crop img { width: 100%; height: auto; transform: translateY(calc(-100% + 132px)); }
+  .crop--tall { height: auto; }
+  .step { display: flex; gap: 14px; }
+  .step .de-seq { padding-top: 3px; }
+  .step h3 { font-family: var(--font-heading); font-size: 17px; font-weight: 600; }
+  .step p { margin-top: 4px; font-size: 15px; line-height: 1.5; color: var(--de-muted-soft); }
+  .phones { margin-top: 40px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .phone .crop { height: 300px; }
+  .phone .crop img { transform: translateY(calc(-100% + 300px)); }
+  .phone h3 { margin-top: 14px; font-family: var(--font-heading); font-size: 16px; font-weight: 600; }
+  .phone p { margin-top: 4px; font-size: 15px; color: var(--de-muted-soft); }
+  .phone .crop--mid img { transform: translateY(calc(-50% + 150px)); }
+</style></head><body>
+<section class="f-well sb"><div class="de-canvas">
+  <p class="de-eyebrow">Bottom bar · autohide</p>
+  <h2 class="de-h2">Out of the way while you read. Back the moment you reach for it.</h2>
+  <p class="de-lede">Same bar, same links, same look as live. It now tucks into the Ask DE button when you are reading down, and comes back on any sign you want it. It never hides while you are using it.</p>
+  <div class="rows">
+    <div class="row"><div class="step"><span class="de-seq">01</span><div><h3>Opening screen</h3><p>Ask DE only, as live. Nothing competes with the hero.</p></div></div><div class="crop"><img src="frames/d1-top.png" alt=""></div></div>
+    <div class="row"><div class="step"><span class="de-seq">02</span><div><h3>Past the hero</h3><p>The chapter dock opens. The active chapter carries a thin read-progress line.</p></div></div><div class="crop"><img src="frames/d2-expanded.png" alt=""></div></div>
+    <div class="row"><div class="step"><span class="de-seq">03</span><div><h3>Reading down</h3><p>After 160px of steady reading it tucks into the Ask DE button. Small wobbles never trigger it.</p></div></div><div class="crop"><img src="frames/d3-tucked.png" alt=""></div></div>
+    <div class="row"><div class="step"><span class="de-seq">04</span><div><h3>Flick up</h3><p>One deliberate scroll up (32px) brings it straight back, on the right chapter.</p></div></div><div class="crop"><img src="frames/d4-revealed.png" alt=""></div></div>
+    <div class="row"><div class="step"><span class="de-seq">05</span><div><h3>Reach for it</h3><p>Rest the pointer near the bottom edge and it returns. Hovering, Tab focus and chapter jumps hold it open.</p></div></div><div class="crop"><img src="frames/d5-reach.png" alt=""></div></div>
+    <div class="row"><div class="step"><span class="de-seq">06</span><div><h3>End of page</h3><p>Always shown at the contact chapter, where people look for the phone and the ask.</p></div></div><div class="crop"><img src="frames/d6-end.png" alt=""></div></div>
+  </div>
+  <div class="phones">
+    <div class="phone"><div class="crop"><img src="frames/p1-tucked.png" alt=""></div><h3>Phone · reading</h3><p>Back-to-top tucks; Ask DE stays as the round button.</p></div>
+    <div class="phone"><div class="crop"><img src="frames/p2-revealed.png" alt=""></div><h3>Phone · flick up</h3><p>Ask DE and back-to-top return.</p></div>
+    <div class="phone"><div class="crop crop--mid"><img src="frames/p3-typing.png" alt=""></div><h3>Phone · typing</h3><p>The bar steps below the keyboard while a field has focus, and returns on blur.</p></div>
+  </div>
+</div></section>
+</body></html>

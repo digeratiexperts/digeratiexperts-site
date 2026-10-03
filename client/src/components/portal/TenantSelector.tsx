@@ -42,7 +42,9 @@ export function TenantSelector({ currentTenant, onTenantChange }: TenantSelector
 
   const impersonateMutation = useMutation({
     mutationFn: async (companyId: string) => {
-      return await apiRequest("/api/portal/admin/impersonate", "POST", { companyId });
+      // apiRequest resolves to the Response; the token and company are in its body.
+      const response = await apiRequest("/api/portal/admin/impersonate", "POST", { companyId });
+      return response.json();
     },
     onSuccess: (data: any) => {
       localStorage.setItem("portalToken", data.token);
@@ -131,7 +133,7 @@ export function TenantSelector({ currentTenant, onTenantChange }: TenantSelector
       <DropdownMenuTrigger asChild>
         <Button 
           variant="outline" 
-          className="gap-2 min-w-[200px] justify-between bg-white/5 border-white/20 text-white hover:!bg-white/15 hover:!text-white hover:!border-white/30"
+          className="h-9 min-w-[200px] justify-between gap-2 border-border bg-card text-foreground hover:!border-border hover:!bg-accent hover:!text-foreground"
           disabled={isLoading || isPending}
           data-testid="dropdown-tenant-selector"
         >
@@ -160,7 +162,7 @@ export function TenantSelector({ currentTenant, onTenantChange }: TenantSelector
           <DropdownMenuItem
             key={tenant.id}
             onClick={() => handleSelectTenant(tenant)}
-            className={`cursor-pointer ${!currentTenant ? "bg-de-paper dark:bg-[#D3126A]/10" : ""}`}
+            className={`cursor-pointer ${!currentTenant ? "bg-accent" : ""}`}
             data-testid={`tenant-${tenant.id}`}
           >
             <Shield className="h-4 w-4 mr-2 text-[#D3126A]" />
@@ -173,7 +175,7 @@ export function TenantSelector({ currentTenant, onTenantChange }: TenantSelector
         
         <DropdownMenuSeparator />
         
-        <DropdownMenuLabel className="flex items-center gap-2 text-slate-600">
+        <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
           <Building2 className="h-4 w-4" />
           Client Companies ({clientTenants.length})
         </DropdownMenuLabel>
@@ -181,10 +183,10 @@ export function TenantSelector({ currentTenant, onTenantChange }: TenantSelector
           <DropdownMenuItem
             key={tenant.id}
             onClick={() => handleSelectTenant(tenant)}
-            className={`cursor-pointer ${currentTenant?.id === tenant.id ? "bg-de-paper dark:bg-[#D3126A]/10" : ""}`}
+            className={`cursor-pointer ${currentTenant?.id === tenant.id ? "bg-accent" : ""}`}
             data-testid={`tenant-${tenant.id}`}
           >
-            <Building2 className="h-4 w-4 mr-2 text-slate-500" />
+            <Building2 className="h-4 w-4 mr-2 text-muted-foreground" />
             <span className="truncate">{tenant.companyName}</span>
             {currentTenant?.id === tenant.id && (
               <span className="ml-auto text-xs text-[#D3126A]">(Current)</span>
@@ -193,7 +195,7 @@ export function TenantSelector({ currentTenant, onTenantChange }: TenantSelector
         ))}
         
         {clientTenants.length === 0 && (
-          <div className="px-2 py-4 text-center text-sm text-slate-500">
+          <div className="px-2 py-4 text-center text-sm text-muted-foreground">
             No client companies yet
           </div>
         )}

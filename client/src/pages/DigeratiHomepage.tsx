@@ -43,21 +43,21 @@ const homepageSections: { id: string; label: string; theme: 'dark' | 'light'; sh
   { id: 'pricing', label: 'Packages', theme: 'dark' },
   { id: 'insights', label: 'Insights', theme: 'dark', showInNav: false },
   { id: 'faq', label: 'FAQ', theme: 'light', showInNav: false },
-  { id: 'cta', label: 'Next step', theme: 'light', showInNav: false },
+  { id: 'cta', label: 'Next step', theme: 'dark', showInNav: false },
   { id: 'contact', label: 'Contact', theme: 'dark' },
 ];
 
 export const DigeratiHomepage = (): JSX.Element => {
   useSEO({
     title: 'Managed Security Service Provider',
-    description: "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 operations, and a Cyber Risk Assessment that matches the operating model to your environment.",
+    description: "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
     canonical: '/',
   });
 
   return (
     <FullPageScrollProvider sections={homepageSections} enableOnMobile={false}>
       {/* Existing homepage story/content remains intact; this pass changes the hero presentation only. */}
-      <div className="de-dark-well min-h-screen bg-[#050312] pb-8">
+      <div className="de-dark-well min-h-screen bg-[#050312]">
         <OrganizationJsonLd />
         <WebSiteJsonLd />
         {/* Navigation — chat lives in App MarketingChrome sitewide */}

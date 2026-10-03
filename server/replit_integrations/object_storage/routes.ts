@@ -64,10 +64,13 @@ export function registerObjectStorageRoutes(
   });
 
   /**
-   * Serve uploaded objects to an authenticated portal session.
-   * GET /objects/:objectPath(*)
+   * Serve uploaded objects. Uploads are admin-only and no portal-user flow
+   * reads these objects, so serving is restricted to admins too — an
+   * authenticated non-admin (e.g. a self-registered prospect) must not be able
+   * to fetch another tenant's stored file by path. Broaden to a per-object ACL
+   * check (canAccessObjectEntity) only when a non-admin read flow is added.
    */
-  app.get("/objects/:objectPath(*)", guards.auth, async (req, res) => {
+  app.get("/objects/:objectPath(*)", guards.auth, guards.admin, async (req, res) => {
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
       await objectStorageService.downloadObject(objectFile, res);

@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { CreditCard, Download, HelpCircle, Mail, MapPin, Package, Phone, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PortalLayout } from "./PortalLayout";
-import { ArrowLeft, Printer, Download, Package, CreditCard, MapPin, HelpCircle, CheckCircle, Clock, Mail, Phone } from "lucide-react";
 import { portalGet } from "@/lib/portalApi";
 import { useToast } from "@/hooks/use-toast";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { formatDeskTimestamp } from "@/lib/deskTimestamp";
+import { Callout, DataTable, EmptyState, Panel, Token, type DataColumn, type TokenTone } from "@/components/portal/ui";
 
 interface LineItem {
   sku: string;
@@ -50,6 +50,29 @@ interface OrderDetailResponse {
   order: OrderDetail;
 }
 
+/** Order vocabulary; tone carries the same meaning the old colours did. */
+function orderStatusTone(status: string): TokenTone {
+  switch (status) {
+    case "completed":
+      return "ok";
+    case "paid":
+      return "ok";
+    case "processing":
+    case "provisioning":
+      return "info";
+    case "pending":
+    case "awaiting_payment":
+      return "warn";
+    case "cancelled":
+    case "refunded":
+      return "bad";
+    default:
+      return "neutral";
+  }
+}
+
+type IndexedLine = LineItem & { index: number };
+
 export default function PortalOrderDetail() {
   const { toast } = useToast();
   const params = useParams<{ id: string }>();
@@ -62,26 +85,6 @@ export default function PortalOrderDetail() {
   });
 
   const order = data?.order;
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
-      case "paid":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
-      case "processing":
-      case "provisioning":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300";
-      case "pending":
-      case "awaiting_payment":
-        return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300";
-      case "cancelled":
-      case "refunded":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300";
-    }
-  };
 
   const formatStatus = (status: string) => {
     return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
@@ -142,10 +145,11 @@ export default function PortalOrderDetail() {
 
   if (isLoading) {
     return (
-      <PortalLayout title="Order Details">
-        <div className="space-y-6">
-          <div className="h-8 w-48 bg-gray-200 dark:bg-slate-800 rounded animate-pulse" />
-          <div className="h-64 bg-gray-200 dark:bg-slate-800 rounded animate-pulse" />
+      <PortalLayout title="Order Details" backHref="/portal/orders" backLabel="Back to Orders" hideHeader>
+        <div className="space-y-4" aria-busy="true" aria-live="polite">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-64" />
         </div>
       </PortalLayout>
     );
@@ -153,269 +157,200 @@ export default function PortalOrderDetail() {
 
   if (isError || !order) {
     return (
-      <PortalLayout title="Order Details">
-        <div className="space-y-6">
-          <Link href="/portal/orders">
-            <Button variant="ghost" className="flex items-center gap-2" data-testid="button-back">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Orders
-            </Button>
-          </Link>
-          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-lg">
-            <p className="text-sm text-red-800 dark:text-red-300">
-              {error instanceof Error ? error.message : "Order not found"}
-            </p>
-          </div>
-        </div>
+      <PortalLayout title="Order Details" backHref="/portal/orders" backLabel="Back to Orders" width="narrow">
+        <Callout tone="bad" title="This order isn't available">
+          {error instanceof Error ? error.message : "Order not found"}
+        </Callout>
       </PortalLayout>
     );
   }
 
+  const lineItems: IndexedLine[] = (order.lineItems || []).map((item, index) => ({ ...item, index }));
+
+  const lineColumns: DataColumn<IndexedLine>[] = [
+    {
+      key: "item",
+      header: "Item",
+      primary: true,
+      cell: (item) => (
+        <div className="min-w-0">
+          <p className="font-medium">{item.name}</p>
+          <p className="pt-num mt-0.5 text-xs text-muted-foreground">SKU: {item.sku}</p>
+        </div>
+      ),
+    },
+    { key: "qty", header: "Qty", align: "right", className: "w-20", cell: (item) => <span className="pt-num">{item.quantity}</span> },
+    { key: "price", header: "Price", align: "right", hideBelowMd: true, className: "w-32 whitespace-nowrap", cell: (item) => <span className="pt-num text-muted-foreground">${parseFloat(item.unitPrice).toFixed(2)}</span> },
+    { key: "total", header: "Total", primary: true, align: "right", className: "w-32 whitespace-nowrap", cell: (item) => <span className="pt-num font-medium">${parseFloat(item.total).toFixed(2)}</span> },
+  ];
+
   return (
-    <PortalLayout title="Order Details">
-      <div className="space-y-6 print:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 print:hidden">
-          <Link href="/portal/orders">
-            <Button variant="ghost" className="flex items-center gap-2" data-testid="button-back">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Orders
-            </Button>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={handlePrint}
-              className="flex items-center gap-2"
-              data-testid="button-print"
-            >
-              <Printer className="h-4 w-4" />
-              Print Receipt
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleDownloadReceipt}
-              className="flex items-center gap-2"
-              data-testid="button-download"
-            >
-              <Download className="h-4 w-4" />
-              Download
-            </Button>
-          </div>
+    <PortalLayout
+      title={`Order ${order.orderNumber}`}
+      eyebrow="Order details"
+      description={<span className="pt-num">Placed {formatDeskTimestamp(order.createdAt)}</span>}
+      backHref="/portal/orders"
+      backLabel="Back to Orders"
+      actions={
+        <div className="flex flex-wrap items-center gap-2 print:hidden">
+          <Token label={formatStatus(order.status)} tone={orderStatusTone(order.status)} dot />
+          <Button variant="outline" className="border-border bg-card hover:bg-accent" onClick={handlePrint} data-testid="button-print">
+            <Printer aria-hidden="true" />
+            Print Receipt
+          </Button>
+          <Button variant="outline" className="border-border bg-card hover:bg-accent" onClick={handleDownloadReceipt} data-testid="button-download">
+            <Download aria-hidden="true" />
+            Download
+          </Button>
+        </div>
+      }
+      width="wide"
+    >
+      <div className="grid gap-4 print:p-6 lg:grid-cols-[1fr_300px]">
+        <div className="space-y-4">
+          <Panel
+            id="order-items"
+            title={
+              <span className="inline-flex items-center gap-2">
+                <Package className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                Items
+              </span>
+            }
+            description={`${lineItems.length} line item${lineItems.length === 1 ? "" : "s"}`}
+            flush
+          >
+            <DataTable<IndexedLine>
+              columns={lineColumns}
+              rows={lineItems}
+              rowKey={(item) => String(item.index)}
+              rowTestId={(item) => `line-item-${item.index}`}
+              caption={`Items in order ${order.orderNumber}`}
+              empty={<EmptyState compact icon={Package} title="No line items" description="This order has no itemised lines." />}
+            />
+            <dl className="space-y-2 border-t border-border px-4 py-4 text-sm md:px-5">
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Subtotal</dt>
+                <dd className="pt-num">${parseFloat(order.subtotal).toFixed(2)}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Tax</dt>
+                <dd className="pt-num">${parseFloat(order.tax || "0").toFixed(2)}</dd>
+              </div>
+              <div className="flex justify-between gap-3 border-t border-border pt-2 text-base font-semibold">
+                <dt>Total</dt>
+                <dd className="pt-num" data-testid="text-order-total">
+                  ${parseFloat(order.total).toFixed(2)}
+                </dd>
+              </div>
+            </dl>
+          </Panel>
+
+          {order.notes && (
+            <Panel id="order-notes" title="Order notes">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{order.notes}</p>
+            </Panel>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Package className="h-5 w-5" />
-                      Order {order.orderNumber}
-                    </CardTitle>
-                    <CardDescription>
-                      Placed on {new Date(order.createdAt).toLocaleDateString()} at{" "}
-                      {new Date(order.createdAt).toLocaleTimeString()}
-                    </CardDescription>
-                  </div>
-                  <Badge className={`flex items-center gap-1 ${getStatusColor(order.status)}`}>
-                    {order.status === "completed" ? (
-                      <CheckCircle className="h-3 w-3" />
-                    ) : (
-                      <Clock className="h-3 w-3" />
-                    )}
-                    {formatStatus(order.status)}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b dark:border-slate-700">
-                          <th className="text-left font-semibold py-3">Item</th>
-                          <th className="text-center font-semibold py-3">Qty</th>
-                          <th className="text-right font-semibold py-3">Price</th>
-                          <th className="text-right font-semibold py-3">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(order.lineItems || []).map((item, index) => (
-                          <tr
-                            key={index}
-                            className="border-b dark:border-slate-700"
-                            data-testid={`line-item-${index}`}
-                          >
-                            <td className="py-4">
-                              <div>
-                                <p className="font-medium">{item.name}</p>
-                                <p className="text-xs text-gray-500">SKU: {item.sku}</p>
-                              </div>
-                            </td>
-                            <td className="py-4 text-center">{item.quantity}</td>
-                            <td className="py-4 text-right">
-                              ${parseFloat(item.unitPrice).toFixed(2)}
-                            </td>
-                            <td className="py-4 text-right font-medium">
-                              ${parseFloat(item.total).toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
-                      <span>${parseFloat(order.subtotal).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Tax</span>
-                      <span>${parseFloat(order.tax || "0").toFixed(2)}</span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Total</span>
-                      <span data-testid="text-order-total">
-                        ${parseFloat(order.total).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {order.notes && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Order Notes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{order.notes}</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  Payment Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
+        <aside className="space-y-4">
+          <Panel
+            id="payment-info"
+            title={
+              <span className="inline-flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                Payment information
+              </span>
+            }
+          >
+            <dl className="space-y-3 text-sm">
+              <div>
+                <dt className="text-muted-foreground">Payment method</dt>
+                <dd className="font-medium" data-testid="text-payment-method">
+                  {formatPaymentMethod(order.paymentMethod)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Payment status</dt>
+                <dd className="mt-1">
+                  {order.paidAt ? <Token label="Paid" tone="ok" dot /> : <Token label={formatStatus(order.status)} tone={orderStatusTone(order.status)} dot />}
+                </dd>
+              </div>
+              {order.paidAt && (
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">Payment Method</p>
-                  <p className="font-medium" data-testid="text-payment-method">
-                    {formatPaymentMethod(order.paymentMethod)}
-                  </p>
+                  <dt className="text-muted-foreground">Paid on</dt>
+                  <dd className="pt-num font-medium">{new Date(order.paidAt).toLocaleDateString()}</dd>
                 </div>
+              )}
+              {order.zohoPaymentId && (
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400">Payment Status</p>
-                  <Badge className={getStatusColor(order.status)}>
-                    {order.paidAt ? "Paid" : formatStatus(order.status)}
-                  </Badge>
+                  <dt className="text-muted-foreground">Transaction ID</dt>
+                  <dd className="pt-num truncate text-xs">{order.zohoPaymentId}</dd>
                 </div>
-                {order.paidAt && (
-                  <div>
-                    <p className="text-gray-500 dark:text-gray-400">Paid On</p>
-                    <p className="font-medium">
-                      {new Date(order.paidAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
-                {order.zohoPaymentId && (
-                  <div>
-                    <p className="text-gray-500 dark:text-gray-400">Transaction ID</p>
-                    <p className="font-mono text-xs truncate">
-                      {order.zohoPaymentId}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              )}
+            </dl>
+          </Panel>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  Billing Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <p className="font-medium" data-testid="text-billing-name">
-                  {order.billingName || "N/A"}
-                </p>
-                {order.billingCompany && (
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {order.billingCompany}
-                  </p>
-                )}
-                {order.billingEmail && (
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {order.billingEmail}
-                  </p>
-                )}
-                {order.billingAddress && (
-                  <div className="text-gray-600 dark:text-gray-400">
-                    {order.billingAddress.street && <p>{order.billingAddress.street}</p>}
-                    {(order.billingAddress.city || order.billingAddress.state || order.billingAddress.zipCode) && (
-                      <p>
-                        {order.billingAddress.city}
-                        {order.billingAddress.city && order.billingAddress.state && ", "}
-                        {order.billingAddress.state} {order.billingAddress.zipCode}
-                      </p>
-                    )}
-                    {order.billingAddress.country && <p>{order.billingAddress.country}</p>}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="print:hidden">
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <HelpCircle className="h-4 w-4" />
-                  Need Help?
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm">
-                <p className="text-gray-600 dark:text-gray-400">
-                  Have questions about this order? Contact our support team.
-                </p>
-                <div className="space-y-2">
-                  <a
-                    href="mailto:support@digeratiexperts.com"
-                    className="flex items-center gap-2 text-[#D3126A] hover:underline"
-                    data-testid="link-support-email"
-                  >
-                    <Mail className="h-4 w-4" />
-                    support@digeratiexperts.com
-                  </a>
-                  <a
-                    href={PRIMARY_PHONE.telHref}
-                    className="flex items-center gap-2 text-[#D3126A] hover:underline"
-                    data-testid="link-support-phone"
-                  >
-                    <Phone className="h-4 w-4" />
-                    {PRIMARY_PHONE.display}
-                  </a>
+          <Panel
+            id="billing-info"
+            title={
+              <span className="inline-flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                Billing information
+              </span>
+            }
+          >
+            <address className="space-y-1 text-sm not-italic">
+              <p className="font-medium" data-testid="text-billing-name">
+                {order.billingName || "N/A"}
+              </p>
+              {order.billingCompany && <p className="text-muted-foreground">{order.billingCompany}</p>}
+              {order.billingEmail && <p className="text-muted-foreground">{order.billingEmail}</p>}
+              {order.billingAddress && (
+                <div className="text-muted-foreground">
+                  {order.billingAddress.street && <p>{order.billingAddress.street}</p>}
+                  {(order.billingAddress.city || order.billingAddress.state || order.billingAddress.zipCode) && (
+                    <p>
+                      {order.billingAddress.city}
+                      {order.billingAddress.city && order.billingAddress.state && ", "}
+                      {order.billingAddress.state} {order.billingAddress.zipCode}
+                    </p>
+                  )}
+                  {order.billingAddress.country && <p>{order.billingAddress.country}</p>}
                 </div>
-                <Link href="/portal/tickets/create">
-                  <Button variant="outline" className="w-full mt-2" data-testid="button-create-ticket">
-                    Create Support Ticket
-                  </Button>
+              )}
+            </address>
+          </Panel>
+
+          <Panel
+            id="order-help"
+            className="print:hidden"
+            title={
+              <span className="inline-flex items-center gap-2">
+                <HelpCircle className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                Need help?
+              </span>
+            }
+          >
+            <div className="space-y-4 text-sm">
+              <p className="text-muted-foreground">Have questions about this order? Contact our support team.</p>
+              <div className="space-y-2">
+                <a href="mailto:support@digeratiexperts.com" className="pt-link flex items-center gap-2 hover:underline" data-testid="link-support-email">
+                  <Mail className="h-4 w-4" aria-hidden="true" />
+                  support@digeratiexperts.com
+                </a>
+                <a href={PRIMARY_PHONE.telHref} className="pt-link flex items-center gap-2 hover:underline" data-testid="link-support-phone">
+                  <Phone className="h-4 w-4" aria-hidden="true" />
+                  {PRIMARY_PHONE.display}
+                </a>
+              </div>
+              <Button asChild variant="outline" className="w-full border-border bg-card hover:bg-accent">
+                <Link href="/portal/tickets/create" data-testid="button-create-ticket">
+                  Create Support Ticket
                 </Link>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+              </Button>
+            </div>
+          </Panel>
+        </aside>
       </div>
     </PortalLayout>
   );

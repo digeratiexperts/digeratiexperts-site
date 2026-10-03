@@ -10,10 +10,13 @@ description: Reference rules for building a standalone HTML page or mockup with 
 > Read it as follows in this repository:
 >
 > - **Scope.** Applies to standalone pages and mockups (for example
->   `scrollcraft/builds/<name>/` or a scratch prototype), never to the
->   Vite/React app under `client/`, where `AGENTS.md`, `.cursorrules` section
->   9A and `design/UI-STYLE-RULES.md` win (locked palette and Space Grotesk /
->   Inter / Oxanium type stack; no Tailwind CDN in production).
+>   `scrollcraft/builds/<name>/` or a scratch prototype) in any mode. For the
+>   Vite/React app under `client/`, the task mode in `design/DESIGN-AUTHORITY.md`
+>   decides: in Maintenance Mode the current DE system wins (`AGENTS.md`,
+>   `.cursorrules` section 9A, `design/UI-STYLE-RULES.md` — current palette and
+>   Space Grotesk / Inter / Oxanium type stack); in Exploration Mode the craft
+>   rules below may drive `client/` concepts under Tier 0/1 only. Never Tailwind
+>   CDN in production regardless of mode.
 > - **Local server and screenshots.** The author's `serve.mjs`, `screenshot.mjs`
 >   and Puppeteer paths below are replaced by two working helpers in this skill:
 >   `node .claude/skills/web-design-rules/scripts/serve.mjs --root <dir> --port 3000`

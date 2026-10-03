@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Why Digerati Experts · You lead the business. We lead the technology.</title>
+<meta name="description" content="Managed security and managed IT run as one designed system. DE assesses the environment before it promises anything, and publishes what it will refuse.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23050312'/><circle cx='16' cy='16' r='6' fill='none' stroke='%23D3126A' stroke-width='2'/></svg>">
+<link rel="stylesheet" href="scrollcraft.css">
+<style>
+@font-face{font-family:"Space Grotesk";src:url("assets/fonts/space-grotesk-latin.woff2") format("woff2");font-weight:400 700;font-display:swap}
+@font-face{font-family:"Inter";src:url("assets/fonts/inter-latin.woff2") format("woff2");font-weight:400 600;font-display:swap}
+@font-face{font-family:"Oxanium";src:url("assets/fonts/oxanium-latin.woff2") format("woff2");font-weight:400 600;font-display:swap}
+
+:root{
+  /* DE brand floor — design/BRAND.md. Locked, not chosen here. */
+  --sc-canvas:#050312;
+  --sc-surface:#151217;
+  --sc-ink:#f2eff5;
+  --sc-ink-soft:#9c94a8;
+  --sc-accent:#D3126A;
+  --sc-accent-ink:#050312;
+  --sc-font-display:"Space Grotesk",system-ui,sans-serif;
+  --sc-font-text:"Inter",system-ui,sans-serif;
+
+  --de-field:#0a0a0a;
+  --de-paper:#f7f5f2;
+  --de-paper-ink:#141018;
+  --de-violet:#5B45E0;
+  --util:"Oxanium","Space Grotesk",system-ui,sans-serif;
+  --hair:rgba(255,255,255,.10);
+  --hair-2:rgba(255,255,255,.045);
+}
+
+/* ── the passage instrument: course line + bearing gauge ────────────────── */
+.pg-course{position:fixed;left:clamp(14px,3vw,42px);top:0;bottom:0;width:1px;z-index:40;pointer-events:none;
+  background:linear-gradient(180deg,transparent,var(--hair) 7%,var(--hair) 93%,transparent)}
+.pg-course i{position:absolute;left:-2px;top:0;width:5px;height:var(--run,0%);border-radius:3px;
+  background:linear-gradient(180deg,var(--de-violet),var(--sc-accent));box-shadow:0 0 16px rgba(211,18,106,.42)}
+@media(max-width:820px){.pg-course{display:none}}
+
+.pg-gauge{position:fixed;right:clamp(14px,3vw,34px);bottom:22px;z-index:41;display:flex;align-items:center;gap:10px;
+  font-family:var(--util);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--sc-ink-soft);
+  background:rgba(5,3,18,.8);backdrop-filter:blur(8px);border:1px solid var(--hair);padding:7px 12px}
+.pg-gauge b{color:var(--sc-ink);font-weight:600;font-variant-numeric:tabular-nums}
+@media(max-width:560px){.pg-gauge{display:none}}
+
+/* ── the signature move: the world sits off true until it corrects ─────────
+   The tilt is applied PER STAGE, not to the document. Rotating the whole page
+   puts the transform origin thousands of pixels from distant acts, which swings
+   them sideways by 100px+ and throws content off a narrow viewport entirely.
+   Each stage is roughly viewport-sized, so its excursion is under 10px and the
+   angle reads identically everywhere. scale() covers the corners the rotation
+   would otherwise open onto the canvas. */
+html,body{overflow-x:clip}
+[data-sc-stage]{transform:rotate(var(--pg-tilt,-1.2deg)) scale(1.04);
+  transform-origin:50% 50%;transition:transform 900ms cubic-bezier(.19,.72,.28,1)}
+@media(prefers-reduced-motion:reduce){
+  [data-sc-stage]{transform:scale(1.04)!important;transition:none}}
+
+/* ── page furniture ─────────────────────────────────────────────────────── */
+.pg-bar{position:fixed;top:0;left:0;right:0;z-index:42;display:flex;align-items:center;justify-content:space-between;
+  padding:14px clamp(16px,4vw,40px) 14px clamp(30px,7vw,74px);mix-blend-mode:normal}
+.pg-bar .mk{font-family:var(--sc-font-display);font-weight:700;font-size:13px;letter-spacing:.02em;color:var(--sc-ink)}
+.pg-bar .mk span{color:var(--sc-accent)}
+.pg-cta{font-family:var(--util);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  border:1px solid var(--hair);padding:8px 15px;color:var(--sc-ink);text-decoration:none;background:rgba(5,3,18,.55);
+  backdrop-filter:blur(6px);transition:border-color .18s ease,background .18s ease}
+.pg-cta:hover,.pg-cta:focus-visible{border-color:var(--sc-accent);background:rgba(211,18,106,.12)}
+
+.pg-wrap{width:min(1060px,100%);margin-inline:auto;padding-inline:clamp(20px,6vw,64px)}
+.pg-eyebrow{font-family:var(--util);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--sc-ink-soft);
+  display:flex;align-items:center;gap:9px;margin-bottom:22px}
+.pg-eyebrow::before{content:"";width:22px;height:1px;background:var(--sc-accent);flex:none}
+.pg-lede{max-width:60ch;color:var(--sc-ink-soft);font-size:clamp(15px,1.5vw,17.5px);line-height:1.65}
+
+/* act 1 · drift — a hold act gets no height from the engine, so the opening
+   screen has to stand its own content up. The h1 is visible at rest by design. */
+.pg-openstage{min-height:100svh;display:flex;align-items:center;padding-block:96px 40px;background:var(--sc-canvas)}
+.pg-standstage{padding-block:clamp(56px,9vh,96px);background:var(--sc-canvas)}
+.pg-drift h1{font-family:var(--sc-font-display);font-weight:500;letter-spacing:-.035em;line-height:1.02;
+  font-size:clamp(38px,7.6vw,92px);margin:0}
+.pg-drift h1 em{font-style:normal;display:block;color:var(--sc-ink-soft)}
+.pg-drift .sub{margin-top:30px;max-width:44ch;color:var(--sc-ink-soft);font-size:clamp(15px,1.6vw,18px)}
+
+.pg-costage,.pg-termstage{background:var(--sc-canvas);display:flex;align-items:center}
+
+/* act 2 · the cost */
+.pg-cost p{font-family:var(--sc-font-display);font-weight:400;letter-spacing:-.02em;
+  font-size:clamp(21px,3.3vw,40px);line-height:1.22;max-width:19ch;margin:0 0 .5em}
+.pg-cost p.dim{color:var(--sc-ink-soft)}
+
+/* act 3 · the correction — the one paper chapter.
+   The paper goes on the STAGE, not the inner wrap: on the wrap it renders as a
+   white slab floating in the dark field during the drift transition. */
+#turn [data-sc-stage]{background:var(--de-paper);display:flex;align-items:center}
+.pg-turn{color:var(--de-paper-ink)}
+.pg-turn .pg-eyebrow{color:rgba(20,16,24,.42)}
+.pg-turn blockquote{margin:0;font-family:var(--sc-font-display);font-weight:500;letter-spacing:-.028em;
+  font-size:clamp(24px,4.4vw,54px);line-height:1.1;max-width:17ch}
+.pg-turn .who{margin-top:20px;font-family:var(--util);font-size:10.5px;letter-spacing:.17em;text-transform:uppercase;
+  color:rgba(20,16,24,.4)}
+.pg-turn .said{margin-top:34px;max-width:56ch;color:rgba(20,16,24,.66);font-size:clamp(15px,1.5vw,17px);line-height:1.62}
+.pg-level{margin-top:26px;font-family:var(--util);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--sc-accent)}
+
+/* act 4 · the passage */
+.pg-wp{display:grid;grid-template-columns:54px 1fr;gap:clamp(12px,3vw,30px);padding:20px 0;
+  border-bottom:1px solid var(--hair);align-items:start}
+.pg-wp:first-child{border-top:1px solid var(--hair)}
+.pg-wp .n{font-family:var(--util);font-size:11.5px;color:var(--sc-ink-soft);font-variant-numeric:tabular-nums;padding-top:3px}
+.pg-wp h3{font-family:var(--sc-font-display);font-weight:500;font-size:clamp(16px,1.8vw,19px);margin:0 0 5px}
+.pg-wp p{margin:0;color:var(--sc-ink-soft);font-size:clamp(14px,1.4vw,15.5px);max-width:56ch}
+.pg-wp .why{display:block;margin-top:7px;color:var(--sc-accent);font-size:14px}
+.pg-wp.lit .n{color:var(--sc-accent)}
+
+/* act 5 · lateral coverage — the pinned stage is viewport-tall, so its content
+   is centred rather than left stranded at the top over a void. */
+.pg-panstage{display:flex;flex-direction:column;justify-content:center;gap:clamp(14px,2.4vh,22px);
+  background:var(--de-field);padding-block:clamp(28px,5vh,54px)}
+.pg-rail{display:flex;gap:1px;background:var(--hair-2);border-block:1px solid var(--hair);padding-block:1px}
+.pg-dom{background:var(--de-field);padding:22px 20px 24px;min-width:min(78vw,282px);flex:0 0 auto}
+.pg-dom .n{font-family:var(--util);font-size:10px;letter-spacing:.15em;color:var(--sc-ink-soft)}
+.pg-dom h3{font-family:var(--sc-font-display);font-weight:500;font-size:17px;margin:8px 0 7px;letter-spacing:-.01em}
+.pg-dom p{margin:0;font-size:14px;color:var(--sc-ink-soft);line-height:1.55}
+/* Block 08, Risk & Exposure, is part of the eight-block architecture but does
+   not do the same job as the other seven: it is the continuous visibility and
+   intelligence layer that runs underneath them. It is drawn as a band spanning
+   the full width of the rail, so it reads as "across all of the above" rather
+   than as an eighth peer. Violet is lighting only, per design/BRAND.md. */
+.pg-layer{display:flex;align-items:center;gap:clamp(14px,2.4vw,28px);
+  padding:16px 20px;border:1px solid rgba(91,69,224,.42);
+  background:linear-gradient(90deg,rgba(91,69,224,.14),rgba(91,69,224,.05) 60%,transparent);
+  min-width:100%}
+.pg-layer .n{font-family:var(--util);font-size:10px;letter-spacing:.15em;color:#b3a6ff;flex:none}
+.pg-layer h3{font-family:var(--sc-font-display);font-weight:500;font-size:17px;margin:0;
+  letter-spacing:-.01em;flex:none}
+.pg-layer p{margin:0;font-size:14px;color:var(--sc-ink-soft);line-height:1.5}
+.pg-layer .runs{font-family:var(--util);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:#b3a6ff;flex:none}
+@media(max-width:720px){.pg-layer{flex-wrap:wrap;gap:8px}.pg-layer .runs{width:100%}}
+
+/* act 6 · assess first, then the three pathways.
+   Assessment is a universal ENTRY route and a real front door, but not a fourth
+   peer delivery relationship, so it spans above the pathway row and flows down. */
+/* act 6 · the pathway cards */
+#pg-fork{margin-top:30px}
+.pg-fork__row{display:grid;grid-template-columns:repeat(auto-fit,minmax(224px,1fr));gap:9px}
+.pg-entry{width:100%;display:flex;align-items:flex-start;gap:clamp(14px,2.6vw,26px);text-align:left;
+  color:inherit;font:inherit;cursor:pointer;padding:20px clamp(16px,2.4vw,26px) 22px;
+  background:linear-gradient(90deg,rgba(211,18,106,.13),rgba(211,18,106,.04) 55%,transparent);
+  border:1px solid rgba(211,18,106,.45);transition:border-color .18s ease,background .18s ease}
+.pg-entry:hover{border-color:var(--sc-accent)}
+.pg-entry[aria-pressed="true"]{border-color:var(--sc-accent);background:linear-gradient(90deg,rgba(211,18,106,.2),rgba(211,18,106,.06) 55%,transparent)}
+.pg-entry:focus-visible{outline:2px solid var(--de-violet);outline-offset:2px}
+.pg-entry__k{font-family:var(--util);font-size:10px;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--sc-accent);flex:none;padding-top:4px;min-width:74px}
+.pg-entry__body h3{font-family:var(--sc-font-display);font-weight:500;font-size:clamp(17px,2.1vw,21px);
+  margin:0 0 6px;letter-spacing:-.015em}
+.pg-entry__body p{margin:0;font-size:14.5px;color:var(--sc-ink-soft);line-height:1.55;max-width:62ch}
+.pg-entry__cue{margin-left:auto;color:var(--sc-accent);font-size:19px;line-height:1;flex:none;padding-top:2px}
+.pg-flow{display:flex;align-items:center;gap:12px;padding:11px 0}
+.pg-flow span{height:1px;background:var(--hair);flex:1}
+.pg-flow em{font-style:normal;font-family:var(--util);font-size:9.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--sc-ink-soft);flex:none}
+@media(max-width:620px){.pg-entry{flex-wrap:wrap;gap:9px}.pg-entry__cue{display:none}}
+.pg-route{background:var(--sc-surface);border:1px solid var(--hair);padding:19px 18px 21px;text-align:left;
+  color:inherit;font:inherit;cursor:pointer;transition:border-color .18s ease,transform .18s ease,background .18s ease}
+.pg-route:hover{border-color:rgba(211,18,106,.5);transform:translateY(-2px)}
+.pg-route[aria-pressed="true"]{border-color:var(--sc-accent);background:#1b1119}
+.pg-route:focus-visible{outline:2px solid var(--de-violet);outline-offset:2px}
+.pg-route .k{font-family:var(--util);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--sc-ink-soft)}
+.pg-route h3{font-family:var(--sc-font-display);font-weight:500;font-size:16.5px;margin:8px 0 5px}
+.pg-route .s{font-size:13.5px;color:var(--sc-ink-soft);line-height:1.5}
+.pg-route .f{margin-top:12px;font-family:var(--util);font-size:12.5px;color:var(--sc-ink);font-variant-numeric:tabular-nums}
+.pg-route .f span{color:var(--sc-ink-soft)}
+.pg-detail{margin-top:9px;border:1px solid var(--hair);background:var(--de-field);padding:clamp(18px,3vw,28px)}
+.pg-detail .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:24px}
+.pg-detail h4{font-family:var(--util);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--sc-ink-soft);
+  margin:0 0 10px;font-weight:600}
+.pg-detail p,.pg-detail li{font-size:14.5px;color:var(--sc-ink-soft);line-height:1.6}
+.pg-detail .first{color:var(--sc-ink)}
+.pg-detail ul{margin:0;padding-left:16px}
+.pg-detail li{margin-bottom:5px}
+.pg-assess{margin-top:18px;padding-top:16px;border-top:1px solid var(--hair)}
+.pg-assess h4{font-family:var(--util);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--sc-accent);margin:0 0 8px;font-weight:600}
+.pg-assess p{margin:0;font-size:14.5px;color:var(--sc-ink-soft);line-height:1.6;max-width:78ch}
+.pg-assess b{color:var(--sc-ink);font-weight:500}
+
+/* act 7 · terms */
+.pg-term{padding:17px 0;border-bottom:1px solid var(--hair);display:grid;
+  grid-template-columns:minmax(130px,200px) 1fr;gap:clamp(12px,3vw,28px);align-items:baseline}
+.pg-term:first-child{border-top:1px solid var(--hair)}
+.pg-term dt{font-family:var(--sc-font-display);font-weight:500;font-size:15.5px;color:var(--sc-ink)}
+.pg-term dd{margin:0;color:var(--sc-ink-soft);font-size:14.5px;line-height:1.6;max-width:58ch}
+.pg-close{text-align:center;padding-block:clamp(46px,8vh,86px)}
+.pg-close .mark{font-family:var(--sc-font-display);font-weight:700;letter-spacing:.055em;
+  font-size:clamp(19px,3.4vw,36px);line-height:1.5}
+.pg-close .mark i{font-style:normal;color:var(--sc-accent)}
+.pg-close .sig{margin-top:18px;font-family:var(--util);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--sc-ink-soft)}
+.pg-note{margin-top:26px;font-size:13px;color:var(--sc-ink-soft);max-width:64ch;line-height:1.62}
+/* The closing column travels under the pin by exactly its overflow: top-aligned
+   at p=0, bottom-aligned at p=1, so the close is the last frame at every
+   viewport height. --pg-over is measured by the page script and is 0 when the
+   column fits, in which case nothing moves and the column stays centred. */
+.pg-termstage .pg-wrap{transform:translate3d(0,calc((0.5 - var(--sc-p,0)) * var(--pg-over,0px)),0);will-change:transform}
+@media(max-width:640px){
+  .pg-wp{grid-template-columns:40px 1fr}
+  .pg-term{grid-template-columns:1fr;gap:6px}
+}
+</style>
+</head>
+<body>
+
+<span data-sc-progress></span>
+
+<div class="pg-course" aria-hidden="true"><i id="pg-run"></i></div>
+<div class="pg-gauge" aria-hidden="true">
+  <span>Heading</span><b id="pg-deg">348°</b><span id="pg-stage">Adrift</span>
+</div>
+
+<header class="pg-bar">
+  <div class="mk">DIGERATI <span>EXPERTS</span></div>
+  <a class="pg-cta" href="#fork">Plot your course</a>
+</header>
+
+<div id="pg-world">
+<main id="top">
+
+  <!-- 1 · RECOGNITION — hold. The world is off true and nobody has said so. -->
+  <section data-sc-act="hold" data-sc-span="1" data-sc-drift="#050312">
+    <div data-sc-stage class="pg-openstage">
+      <div class="pg-wrap pg-drift">
+        <p class="pg-eyebrow">Why Digerati Experts</p>
+        <h1>Everything works.<em>Nothing connects.</em></h1>
+        <p class="sub">Twelve tools. Four vendors. Three people who remember how one
+          of them was set up. None of it is broken, and that is exactly why nobody
+          can fix it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · TENSION — pin, kinetic. The cost, named without a threat. -->
+  <section data-sc-act="pin" data-sc-span="1.3" data-sc-drift="#08040f">
+    <div data-sc-stage class="pg-costage">
+      <div class="pg-wrap pg-cost">
+        <p data-sc-cue="0.02 0.40">You are not paying for outages.</p>
+        <p class="dim" data-sc-cue="0.24 0.66">You are paying for the hour before
+          anyone knows whose problem it is.</p>
+        <p data-sc-cue="0.52">Every provider you called quoted on headcount and
+          offered to start Monday.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · THE TURN — pin. PEAK. The world rolls level under the reader. -->
+  <section id="turn" data-sc-act="pin" data-sc-span="2.8" data-sc-drift="#f7f5f2">
+    <div data-sc-stage>
+      <div class="pg-wrap pg-turn">
+        <p class="pg-eyebrow" data-sc-cue="0.02 0.95">The operating principle</p>
+        <blockquote data-sc-cue="0.06 0.95" data-sc-kinetic="lines">We do not promise
+          outcomes before we understand the environment.</blockquote>
+        <p class="who" data-sc-cue="0.20 0.95">DE 2026 Client Platform</p>
+        <p class="said" data-sc-cue="0.34 0.95">You lead the business. We lead the
+          technology. You own the destination, the priorities and the risk you are
+          willing to carry. DE owns the route: we assess what is actually there,
+          establish the baseline, sequence the work, and keep recommending the next
+          correction. Nobody hands their company over. Somebody finally reads the chart.</p>
+        <p class="pg-level" data-sc-cue="0.52 0.95">Course corrected — you are level</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · SUBSTANCE — hold, staggered reveal. The order is the product. -->
+  <section data-sc-act="hold" data-sc-span="1.6" data-sc-drift="#050312">
+    <div data-sc-stage class="pg-standstage">
+      <div class="pg-wrap">
+        <p class="pg-eyebrow">The passage</p>
+        <h2 class="sc-display" style="font-family:var(--sc-font-display);font-weight:500;
+          font-size:clamp(24px,4vw,44px);letter-spacing:-.028em;margin:0 0 18px;max-width:16ch">
+          Control before complexity.</h2>
+        <p class="pg-lede" style="margin-bottom:34px">Six stages, in this order, every
+          time. Later phases depend on earlier prerequisites, and an exception is only
+          ever granted in writing.</p>
+
+        <div data-sc-sequence>
+          <div class="pg-wp" data-sc-waypoint><div class="n">01</div><div>
+            <h3>Legal and authority</h3><p>MSA, Order Form and SOW. The authorized decision
+            maker, the contacts, the access authority.
+            <span class="why">Clarifies who can approve what, and what DE actually owns.</span></p></div></div>
+          <div class="pg-wp" data-sc-waypoint><div class="n">02</div><div>
+            <h3>Assessment and discovery</h3><p>Cyber risk, site, network, endpoint, SaaS and
+            compliance discovery, scoped to the engagement.
+            <span class="why">Finds risk, waste, unsupported conditions and hidden dependencies.</span></p></div></div>
+          <div class="pg-wp" data-sc-waypoint><div class="n">03</div><div>
+            <h3>Environment intake</h3><p>Admin access review. Users, devices, systems,
+            vendors, data, baseline documentation.
+            <span class="why">Creates visibility and operational context.</span></p></div></div>
+          <div class="pg-wp" data-sc-waypoint><div class="n">04</div><div>
+            <h3>Stabilization</h3><p>Immediate risks, access gaps, unsupported conditions
+            and backup concerns are addressed or planned.
+            <span class="why">Stops unknown problems becoming managed-service assumptions.</span></p></div></div>
+          <div class="pg-wp" data-sc-waypoint><div class="n">05</div><div>
+            <h3>Security foundation</h3><p>Identity, endpoint, email and collaboration, and
+            site-level controls reach approved minimum standards.
+            <span class="why">Establishes the security baseline.</span></p></div></div>
+          <div class="pg-wp" data-sc-waypoint><div class="n">06</div><div>
+            <h3>Activate and expand</h3><p>Covered services move into normal operations.
+            Infrastructure, workplace, then governance follow.
+            <span class="why">Reactive cleanup becomes intentional management.</span></p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · BREADTH — pan. Sideways travel reads as coverage. -->
+  <section data-sc-act="pan" data-sc-span="1.8" data-sc-drift="#0a0a0a">
+    <div data-sc-stage class="pg-panstage">
+      <div class="pg-wrap" style="padding-bottom:26px">
+        <p class="pg-eyebrow">What gets held</p>
+        <h2 style="font-family:var(--sc-font-display);font-weight:500;font-size:clamp(22px,3.6vw,38px);
+          letter-spacing:-.025em;margin:0;max-width:22ch">Eight blocks. One of them never stops.</h2>
+      </div>
+      <div data-sc-pan style="display:flex;flex-direction:column;gap:1px">
+        <div class="pg-rail">
+          <div class="pg-dom"><div class="n">01</div><h3>Identity and Access</h3>
+            <p>The control plane. SSO, MFA and passwordless, privileged access, conditional controls, joiner, mover, leaver.</p></div>
+          <div class="pg-dom"><div class="n">02</div><h3>Endpoint</h3>
+            <p>EDR and anti-ransomware, hardening, patching, encryption, application control, posture management.</p></div>
+          <div class="pg-dom"><div class="n">03</div><h3>Email and Collaboration</h3>
+            <p>Anti-phishing, malware and impersonation protection, spam controls, encryption, collaboration security.</p></div>
+          <div class="pg-dom"><div class="n">04</div><h3>Browser and Web</h3>
+            <p>Malicious-site blocking, web access controls, browser risk reduction, secure browsing policy, data-loss controls.</p></div>
+          <div class="pg-dom"><div class="n">05</div><h3>Network</h3>
+            <p>Firewall with IDS and IPS, segmentation, secure remote access, SASE and zero-trust patterns, site-to-site security.</p></div>
+          <div class="pg-dom"><div class="n">06</div><h3>Detection and Response</h3>
+            <p>Threat detection, MDR and SOC where included, alert triage, incident coordination, escalation and response.</p></div>
+          <div class="pg-dom"><div class="n">07</div><h3>Human Risk</h3>
+            <p>Security awareness, phishing simulation, targeted training, security communications.</p></div>
+        </div>
+        <div class="pg-layer">
+          <div class="n">08</div>
+          <h3>Risk and Exposure</h3>
+          <p>Cyber risk assessment, exposure and dark-web visibility where included, vulnerability visibility,
+            remediation planning, risk tracking.</p>
+          <div class="runs">Runs continuously beneath all seven</div>
+        </div>
+      </div>
+      <div class="pg-wrap">
+        <p class="pg-note">Storage is not backup. Backup is not recovery until it can be
+          restored. Cybersecurity reduces risk; it does not create an absolute guarantee.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · RANGE — hold, pointer-interactive. The page stops moving and answers. -->
+  <section id="fork" data-sc-act="hold" data-sc-span="1.4" data-sc-drift="#050312">
+    <div data-sc-stage class="pg-standstage">
+      <div class="pg-wrap">
+        <p class="pg-eyebrow">Plot your course</p>
+        <h2 style="font-family:var(--sc-font-display);font-weight:500;font-size:clamp(24px,4vw,44px);
+          letter-spacing:-.028em;margin:0 0 18px;max-width:20ch">Assess first. Then choose the relationship.</h2>
+        <p class="pg-lede">Everyone should be assessed before anything is promised. What changes
+          is the scope, the price and the commercial treatment of that assessment, depending on
+          where you are headed. Published rates are starting points; sites, compliance, workloads
+          and recovery objectives can move an engagement to a different design.</p>
+
+        <div id="pg-fork">
+          <!-- Assessment is a universal ENTRY route: a real front door, and the
+               preferred starting point for everyone. It is deliberately not a
+               fourth peer card in the pathway row, because it is not a fourth
+               delivery relationship. It sits above them and flows down. -->
+          <button class="pg-entry" aria-pressed="false" data-r="assessment">
+            <div class="pg-entry__k">Start here</div>
+            <div class="pg-entry__body">
+              <h3>Cyber Risk Assessment</h3>
+              <p>Understand the environment before choosing anything. The findings are yours
+                either way. What changes is the scope and the commercial terms, depending on the
+                relationship you are considering.</p>
+            </div>
+            <div class="pg-entry__cue" aria-hidden="true">↓</div>
+          </button>
+
+          <div class="pg-flow" aria-hidden="true"><span></span><em>then choose the relationship</em><span></span></div>
+
+          <div class="pg-fork__row">
+            <button class="pg-route" aria-pressed="true" data-r="handle">
+              <div class="k">Pathway 01</div><h3>Handle Our IT</h3>
+              <div class="s">DE runs technology and security operations. ProActive Ecosystem, or Co-Managed beside your internal team.</div>
+              <div class="f">from $125<span>/user · $1,600 floor</span></div></button>
+            <button class="pg-route" aria-pressed="false" data-r="need">
+              <div class="k">Pathway 02</div><h3>Solve a Business Need</h3>
+              <div class="s">A defined outcome rather than a managed-services relationship. Standalone Solutions.</div>
+              <div class="f">by role<span> · no silent inheritance</span></div></button>
+            <button class="pg-route" aria-pressed="false" data-r="marketplace">
+              <div class="k">Pathway 03</div><h3>Client Marketplace</h3>
+              <div class="s">Existing DE clients buying approved additions, renewals and equipment against their entitlement.</div>
+              <div class="f">existing clients<span> · tied to entitlement</span></div></button>
+          </div>
+        </div>
+
+        <div class="pg-detail" id="pg-detail" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · COMMITMENT — pin. The refusals, then the close holds.
+       Every cue here is a single value: enter, then hold to the end of the
+       page. The column is taller than a phone's viewport, so it travels under
+       the pin by exactly its overflow (--pg-over, measured below) and the
+       close is the last frame at every viewport height. -->
+  <section data-sc-act="pin" data-sc-span="1.6" data-sc-drift="#08040f">
+    <div data-sc-stage class="pg-termstage">
+      <div class="pg-wrap">
+        <p class="pg-eyebrow" data-sc-cue="0.02">Before you choose us</p>
+        <h2 data-sc-cue="0.04" style="font-family:var(--sc-font-display);font-weight:500;
+          font-size:clamp(22px,3.6vw,38px);letter-spacing:-.025em;margin:0 0 26px;max-width:23ch">
+          The parts most providers leave out of the brochure.</h2>
+        <dl style="margin:0" data-sc-cue="0.10">
+          <div class="pg-term"><dt>We may pause your work</dt>
+            <dd>When required access, approvals, standards or prerequisites are incomplete,
+            DE can pause, defer, limit or reschedule. Sequencing is not negotiable, because
+            it is what makes everything after it true.</dd></div>
+          <div class="pg-term"><dt>We may say no</dt>
+            <dd>You can accept risk. You cannot require DE to violate its standards, or hold
+            DE responsible for an outcome while preventing the controls that achieve it.</dd></div>
+          <div class="pg-term"><dt>A user is not unlimited devices</dt>
+            <dd>Coverage is defined by the Order Form. Extra endpoints, shared systems,
+            specialty devices and servers may need separate approval and pricing.</dd></div>
+          <div class="pg-term"><dt>Standalone stays standalone</dt>
+            <dd>A single role does not silently inherit full MSP, SOC, backup, network,
+            compliance or helpdesk coverage. You get the role you bought and its
+            documented dependencies.</dd></div>
+          <div class="pg-term"><dt>We are not your HR or finance department</dt>
+            <dd>DE runs the technology around people and money. Employment, payroll,
+            benefits, tax and legal decisions stay with you and your qualified providers.</dd></div>
+        </dl>
+        <p class="pg-note" data-sc-cue="0.30">Every one of these is published because a
+          boundary you can read is worth more than a promise you cannot verify. Unsupported
+          conditions, exceptions and material risks are documented rather than hidden.</p>
+
+        <div class="pg-close" data-sc-cue="0.44">
+          <div class="mark">PROTECT. <i>EMPOWER.</i> SUCCEED.</div>
+          <div class="sig">Your technology. Working as one ecosystem.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script src="scrollcraft.js"></script>
+<script>
+ScrollCraft.mount(document.body);
+</script>
+<script>
+(function(){
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var root  = document.documentElement;
+  var turn  = document.getElementById("turn");
+
+  /* ── SIGNATURE MOVE · the heading correction ─────────────────────────────
+     The document sits 1.2 degrees off true from the first frame. It holds
+     through two full acts, long enough to stop reading as decoration, then
+     rolls level exactly as the operating principle lands. Driven off the
+     page's own observer, not the engine. */
+  if (reduce) {
+    root.style.setProperty("--pg-tilt","0deg");
+  } else {
+    new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) root.style.setProperty("--pg-tilt","0deg");
+      });
+    }, {rootMargin:"-28% 0px -52% 0px"}).observe(turn);
+  }
+
+  /* ── the instrument: course line + bearing ──────────────────────────── */
+  var run = document.getElementById("pg-run"),
+      deg = document.getElementById("pg-deg"),
+      stg = document.getElementById("pg-stage"),
+      names = ["Adrift","Authority","Discovery","Intake","Stabilizing","Baseline","Underway"],
+      queued = false;
+
+  function tick(){
+    queued = false;
+    var h = document.documentElement.scrollHeight - innerHeight;
+    var p = h > 0 ? Math.min(1, Math.max(0, scrollY / h)) : 0;
+    run.style.setProperty("--run",(p*100).toFixed(2)+"%");
+    var d = Math.round(348 + p*12);
+    deg.textContent = (d >= 360 ? 360 : d) + "°";
+    stg.textContent = names[Math.min(names.length-1, Math.floor(p*names.length))];
+  }
+  addEventListener("scroll", function(){
+    if(!queued){ queued = true; requestAnimationFrame(tick); }
+  }, {passive:true});
+  tick();
+
+  /* ── waypoints light in sequence as the course runs through them ─────── */
+  var wpo = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting) e.target.classList.add("lit"); });
+  }, {rootMargin:"0px 0px -20% 0px"});
+  document.querySelectorAll(".pg-wp").forEach(function(w){ wpo.observe(w); });
+
+  /* ── the fork ─────────────────────────────────────────────────────────── */
+  var R = {
+    assessment:{
+      first:"Discovery across cyber risk, network, endpoint, SaaS and compliance, producing findings you keep whether or not you ever sign anything else. This is the preferred starting point for every relationship; what changes is the scope and the commercial treatment.",
+      yes:["What is actually running, and who can reach it","Risk, waste, unsupported conditions and hidden dependencies","Findings classified and prioritized, not merely listed","A remediation roadmap you can hand to anyone"],
+      no:["Any obligation to continue with DE","The remediation work itself, which is scoped separately","A compliance certification or audit result"],
+      fit:"Assessment is an entry route, not a fourth service model. It is how a route becomes real: assess, understand the environment, then choose the relationship that fits what was actually found."},
+    handle:{
+      first:"A scoped consultation, then the assessment that decides which design the environment actually needs, rather than the one the headcount suggests. Co-Managed instead starts with a boundary conversation: which role is DE\u2019s, which stays yours, and where the escalation line sits.",
+      yes:["Service desk, proactive monitoring, patching and maintenance","Identity, endpoint and device lifecycle management","Layered security across the eight cybersecurity blocks","Backup and continuity appropriate to the tier","Advisory cadence: annual, semi-annual or quarterly by tier","Co-Managed: one clearly defined role, with documented scope and escalation boundaries"],
+      no:["Hardware, specialty subscriptions and pass-through licensing","Migrations, buildouts, cabling and remediation projects","Anything not named in the executed Order Form","Co-Managed: responsibility for systems outside the agreed role"],
+      assess:"<b>ProActive Ecosystem:</b> a comprehensive baseline assessment is required, and is included, reduced or credited as part of onboarding. You also receive preferred ecosystem pricing.<br><b>Co-Managed:</b> assessment is required for DE\u2019s scope, plus any systems, dependencies, risks or conditions DE determines could materially affect our directives, responsibilities, security obligations or service delivery.",
+      fit:"Four ProActive tiers. IT $125/user, $1,600 floor. Office $165, $2,400. Business $245, $5,400. Enterprise $345, $9,000. Regulated GCC High paths start at $425 and $575. Co-Managed is scoped to the role DE owns."},
+    need:{
+      first:"A defined-outcome scoping session. DE designs the approved solution around the need rather than selling a relationship around it.",
+      yes:["Managed network and secure access","Managed workplace: Microsoft, Google or Zoho","Cloud backup and BCDR","Threat detection and security operations","Advisory, compliance, vCIO or vCISO","Cloud, licensing and voice"],
+      no:["Full managed-services coverage of any kind","Support for systems outside the selected role","Inherited SOC, backup, network or compliance scope"],
+      assess:"<b>Standalone Solutions:</b> assessment is the preferred, default starting point and is strongly recommended, available as a paid entry point. A full assessment is not always a mandatory prerequisite to purchase, unless the solution technically requires discovery to deliver. Standalone pricing remains higher than the equivalent capability inside ProActive.",
+      fit:"For organizations that need one outcome solved properly, without a full managed-services relationship."},
+    marketplace:{
+      first:"Sign in. What you can buy is already shaped by your environment and your entitlement, so nothing offered is incompatible with what DE already operates for you.",
+      yes:["Approved additions to an existing ecosystem","Renewals and license changes","Equipment and hardware tied to your standards","Expansion of services you already hold"],
+      no:["Access without an existing DE relationship","Purchases that conflict with your documented standards","The internal vendor and SKU catalog, which stays in DE\u2019s delivery system"],
+      assess:"<b>Existing clients:</b> the environment is already assessed and under management. New scope follows the same rule as everything else: DE assesses what it has not seen before agreeing to be responsible for it.",
+      fit:"For existing clients. DE keeps the vendor, compatibility and dependency mechanics internal so you are not shopping the plumbing."}
+  };
+  var det = document.getElementById("pg-detail");
+  function paint(k){
+    var r = R[k];
+    det.innerHTML = '<div class="g">'+
+      '<div><h4>The honest first step</h4><p class="first">'+r.first+'</p></div>'+
+      '<div><h4>What this covers</h4><ul>'+r.yes.map(function(x){return "<li>"+x+"</li>";}).join("")+'</ul></div>'+
+      '<div><h4>What it does not</h4><ul>'+r.no.map(function(x){return "<li>"+x+"</li>";}).join("")+'</ul></div>'+
+      '</div>'+
+      (r.assess ? '<div class="pg-assess"><h4>Assessment terms on this pathway</h4><p>'+r.assess+'</p></div>' : '')+
+      '<p class="pg-note" style="margin-top:18px">'+r.fit+'</p>';
+  }
+  document.getElementById("pg-fork").addEventListener("click", function(e){
+    var b = e.target.closest(".pg-route, .pg-entry"); if(!b) return;
+    document.querySelectorAll(".pg-route, .pg-entry").forEach(function(x){
+      x.setAttribute("aria-pressed", String(x === b));
+    });
+    paint(b.dataset.r);
+  });
+  paint("handle");
+
+  /* ── the close: the column travels under the pin by its overflow ──────
+     Measured, not guessed: the refusals column is taller than a phone's
+     viewport, and a pinned stage clips. --pg-over feeds the transform on
+     .pg-termstage .pg-wrap; the engine's --sc-p drives it. */
+  var term = document.querySelector(".pg-termstage"),
+      termWrap = term && term.querySelector(".pg-wrap"),
+      termAct = term && term.closest("[data-sc-act]");
+  function measureTerm(){
+    if (!termWrap || !termAct) return;
+    var over = Math.max(0, termWrap.offsetHeight - term.clientHeight);
+    termAct.style.setProperty("--pg-over", over + "px");
+  }
+  measureTerm();
+  addEventListener("resize", measureTerm, {passive:true});
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureTerm);
+})();
+</script>
+</body>
+</html>

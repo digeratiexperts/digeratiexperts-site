@@ -1,0 +1,35 @@
+.v7 #why-we-exist { border-top: 1px solid var(--v7-paper-hairline); }
+.v7 .v7s-02 .why { display: grid; grid-template-columns: minmax(0, 640px) minmax(0, 600px); grid-template-areas: "statement claims" "ask claims"; justify-content: space-between; column-gap: clamp(48px, 6vw, 96px); align-items: start; }
+.v7 .v7s-02 .why__statement { grid-area: statement; max-width: 640px; }
+.v7 .v7s-02 .why .v7-eyebrow { line-height: 20px; }
+.v7 .v7s-02 .why__claims { grid-area: claims; margin-top: 42px; }
+.v7 .v7s-02 .why__ask { grid-area: ask; max-width: 640px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--v7-paper-hairline); }
+.v7 .v7s-02 .why .v7-h2 { max-width: 640px; text-wrap: balance; }
+.v7 .v7s-02 .why .v7-lede { text-wrap: pretty; }
+.v7 .v7s-02 .why__ask .v7-body { margin-top: 6px; text-wrap: pretty; }
+.v7 .v7s-02 .ask__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.v7 .v7s-02 .claims { grid-template-columns: minmax(0, 1fr); }
+.v7 .v7s-02 .claims > * { padding: 0; border-left: 0; border-top: 1px solid var(--v7-paper-hairline); }
+.v7 .v7s-02 .claims > *:first-child { border-top: 0; }
+.v7 .v7s-02 .claim { position: relative; display: grid; grid-template-columns: 12px minmax(0, 1fr) 20px; column-gap: 16px; padding: 24px 24px 24px 28px; }
+.v7 .v7s-02 .claim .v7-dash { grid-column: 1; grid-row: 1; align-self: start; width: 12px; height: 2px; margin: 10px 0 0; background: var(--v7-magenta); vertical-align: top; }
+.v7 .v7s-02 .claim__title { grid-column: 2; grid-row: 1; line-height: 22px; }
+.v7 .v7s-02 .claim__title a { color: var(--v7-ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; text-decoration-color: rgba(26, 18, 16, 0.28); transition: color 200ms ease-out, text-decoration-color 200ms ease-out; }
+.v7 .v7s-02 .claim__title a::after { content: ""; position: absolute; inset: 0; }
+.v7 .v7s-02 .claim__body { grid-column: 2; grid-row: 2; margin-top: 6px; line-height: 26px; text-wrap: pretty; }
+.v7 .v7s-02 .claim__chev { grid-column: 3; grid-row: 1 / span 2; align-self: center; width: 20px; height: 20px; color: var(--v7-ink-muted); transition: color 200ms ease-out, transform 200ms ease-out; }
+.v7 .v7s-02 .nb { white-space: nowrap; }
+.v7 .v7s-02 .claim:hover .claim__title a, .v7 .v7s-02 .claim__title a:focus-visible { color: var(--v7-magenta-paper-ink); text-decoration-color: var(--v7-magenta-paper-ink); }
+.v7 .v7s-02 .claim:hover .claim__chev, .v7 .v7s-02 .claim:focus-within .claim__chev { color: var(--v7-magenta-paper-ink); }
+.v7 .v7s-02 .claim__title a:focus-visible { outline: none; }
+.v7 .v7s-02 .claim__title a:focus-visible::after { outline: 2px solid #ec4899; outline-offset: -2px; }
+@media (max-width: 1023px) {
+  .v7 .v7s-02 .why { grid-template-columns: minmax(0, 1fr); grid-template-areas: "statement" "claims" "ask"; row-gap: 32px; }
+  .v7 .v7s-02 .why__claims { margin-top: 0; }
+  .v7 .v7s-02 .why__ask { margin-top: 0; border-top: 0; padding-top: 0; }
+}
+@media (max-width: 639px) {
+  .v7 .v7s-02 .claim { padding: 20px 16px 20px 20px; column-gap: 12px; }
+  .v7 .v7s-02 .nb { white-space: normal; }
+  .v7 .v7s-02 .ask__actions .v7-btn { width: 100%; }
+}

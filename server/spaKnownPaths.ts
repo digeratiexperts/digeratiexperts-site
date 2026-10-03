@@ -10,6 +10,10 @@ const EXACT = new Set([
   "/version-1",
   "/version-2",
   "/version-3",
+  "/version-4",
+  "/version-5",
+  "/version-6",
+  "/version-7",
   "/solutions",
   "/solutions/managed-it-support",
   "/solutions/managed-workplace",
@@ -27,6 +31,19 @@ const EXACT = new Set([
   "/solutions/endpoint-management",
   "/solutions/identity-management",
   "/solutions/email-security",
+  // Data-driven solution pages (client/src/pages/routes/servicePages.tsx keys
+  // routed by App.tsx). They rendered while answering HTTP 404 to crawlers and
+  // link checkers until 2026-09-30; the test below keeps the two lists in step.
+  "/solutions/cloud-backup",
+  "/solutions/security-awareness",
+  "/solutions/threat-detection",
+  "/solutions/security-operations",
+  "/solutions/vcio-strategy",
+  "/solutions/data-encryption",
+  "/solutions/compliance-reports",
+  "/solutions/unified-security",
+  "/solutions/professional-services",
+  "/solutions/system-status",
   "/store",
   "/store/checkout",
   "/store/solution",
@@ -64,6 +81,10 @@ const EXACT = new Set([
   "/support/knowledge-base",
   "/support/remote-support",
   "/support/pay-invoice",
+  // Data-driven support and industry pages (supportPageData / industryPageData in
+  // client/src/pages/routes/servicePages.tsx, routed by App.tsx).
+  "/support/system-status",
+  "/industries/professional-services",
   "/privacy",
   "/terms",
   "/legal/privacy-policy",
@@ -98,6 +119,38 @@ const EXACT = new Set([
   "/assessment",
   "/contact",
   "/case-studies",
+  // Marketing pages that client/src/pages/MarketingRouteFallback.tsx renders:
+  // campaign landings, executive briefs and resource asset pages. Until
+  // 2026-10-01 they rendered while answering HTTP 404 (27 of the 113 sitemap
+  // URLs). Exact paths, not prefixes, so an unknown slug still answers 404; the
+  // tests keep this list in step with the sitemap and the client data.
+  "/go",
+  "/go/cyber-risk-assessment",
+  "/go/managed-it",
+  "/go/ransomware-readiness",
+  "/go/co-managed-it",
+  "/go/healthcare-it",
+  "/go/cyber-insurance",
+  "/go/email-security",
+  "/go/proactive-business",
+  "/resources/briefs",
+  "/resources/briefs/cyber-risk-operating-brief",
+  "/resources/briefs/ransomware-readiness-brief",
+  "/resources/briefs/cyber-insurance-brief",
+  "/resources/briefs/proactive-operating-brief",
+  "/resources/datasheets/proactive-ecosystem-overview",
+  "/resources/datasheets/managed-workplace-overview",
+  "/resources/datasheets/proactive-it-ecosystem-datasheet",
+  "/resources/datasheets/proactive-office-ecosystem-datasheet",
+  "/resources/datasheets/proactive-business-ecosystem-datasheet",
+  "/resources/datasheets/proactive-enterprise-ecosystem-datasheet",
+  "/resources/datasheets/co-managed-it-datasheet",
+  "/resources/datasheets/ucaas-voice-meetings-datasheet",
+  "/resources/reports/cyber-risk-assessment-sample",
+  "/resources/reports/compliance-risk-reports-overview",
+  "/resources/reports/sample-quarterly-business-review",
+  "/resources/checklists/security-readiness-checklist",
+  "/resources/checklists/backup-bcdr-checklist",
 ]);
 
 const PREFIXES = [

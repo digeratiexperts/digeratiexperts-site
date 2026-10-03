@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Concept C: Rail and Pane</title>
+<link rel="stylesheet" href="../_shared/base.css">
+<style>
+:root{--bg:#0a0a0f;--rail:#050312;--pane:#100e16;--raised:#181521;--hair:rgba(255,255,255,.1);--ink:#f5f3f7;--ink-2:rgba(245,243,247,.7);--ink-3:rgba(245,243,247,.48);--magenta:#D3126A;--magenta-ink:#F04C97;--ok:#34d399;--warn:#fbbf24;--info:#7dd3fc}
+body{background:var(--bg);color:var(--ink)}
+.app{display:grid;grid-template-columns:64px 280px 1fr;height:100dvh}
+.rail{background:var(--rail);border-right:1px solid var(--hair);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:6px}
+.rail .mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(180deg,#e7b20d,#b8860b);margin-bottom:10px}
+.rail a{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;color:var(--ink-3);font-size:11px;text-align:center;line-height:1.1;position:relative}
+.rail a i{display:block;width:18px;height:18px;border:1.5px solid currentColor;border-radius:5px;margin-bottom:3px}
+.rail a.on{background:rgba(211,18,106,.18);color:#fff;box-shadow:inset 0 0 0 1px rgba(240,76,151,.35)}
+.rail a .n{position:absolute;top:4px;right:4px;background:var(--magenta);color:#fff;font-size:10px;border-radius:99px;padding:0 5px}
+.rail .sp{flex:1}
+.rail .av{width:32px;height:32px;border-radius:50%;background:var(--raised);border:1px solid var(--hair);display:grid;place-items:center;font-size:11px;font-weight:600}
+.pane{background:var(--pane);border-right:1px solid var(--hair);display:flex;flex-direction:column;min-height:0}
+.pane header{padding:14px 14px 10px;border-bottom:1px solid var(--hair)}
+.pane h2{font-size:15px;font-weight:600}
+.pane .ten{font-size:12px;color:var(--ink-3);margin-top:2px}
+.filters{display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid var(--hair);overflow:auto}
+.chip{font-size:12px;padding:4px 9px;border-radius:99px;border:1px solid var(--hair);color:var(--ink-2);white-space:nowrap}
+.chip.on{background:rgba(255,255,255,.1);color:#fff}
+.list{overflow:auto;flex:1}
+.item{display:block;padding:12px 14px;border-bottom:1px solid var(--hair)}
+.item.on{background:rgba(211,18,106,.12);box-shadow:inset 3px 0 0 var(--magenta)}
+.item .t{font-size:14px;font-weight:500;display:flex;justify-content:space-between;gap:8px}
+.item .t time{font-size:11px;color:var(--ink-3);font-weight:400;white-space:nowrap}
+.item .m{font-size:12px;color:var(--ink-3);margin-top:3px;display:flex;gap:8px;align-items:center}
+.tok{font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:4px;border:1px solid}
+.tok.wait{color:var(--magenta-ink);border-color:rgba(240,76,151,.4)}
+.tok.prog{color:var(--info);border-color:rgba(125,211,252,.4)}
+.tok.done{color:var(--ok);border-color:rgba(52,211,153,.4)}
+.tok.high{color:var(--warn);border-color:rgba(251,191,36,.4)}
+.detail{display:flex;flex-direction:column;min-height:0}
+.detail .top{display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--hair)}
+.cmd{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--hair);border-radius:8px;background:var(--raised);color:var(--ink-3);font-size:13px;min-width:240px}
+.cmd kbd{margin-left:auto;font:11px Inter;padding:1px 5px;border:1px solid var(--hair);border-radius:4px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid var(--hair);background:var(--raised);color:var(--ink);font-size:13px;font-weight:500}
+.btn.primary{background:var(--magenta);border-color:var(--magenta);color:#fff;margin-left:auto}
+.body{overflow:auto;padding:24px;max-width:960px}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+h1{font-size:24px;font-weight:600;margin:6px 0 4px}
+.meta{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);margin-bottom:20px}
+.meta b{color:var(--ink);font-weight:500}
+.msg{display:grid;grid-template-columns:32px 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--hair)}
+.msg .av{width:32px;height:32px;border-radius:50%;background:var(--raised);border:1px solid var(--hair);display:grid;place-items:center;font-size:11px;font-weight:600}
+.msg .av.de{background:rgba(211,18,106,.2);border-color:rgba(240,76,151,.4);color:var(--magenta-ink)}
+.msg .h{display:flex;gap:10px;align-items:baseline;font-size:13px}
+.msg .h b{font-weight:600}
+.msg .h time{color:var(--ink-3);font-size:12px}
+.msg p{margin:4px 0 0;color:var(--ink-2);font-size:14px}
+.reply{margin-top:12px;border:1px solid var(--hair);border-radius:10px;background:var(--raised);padding:12px}
+.reply textarea{width:100%;min-height:72px;background:transparent;border:0;color:var(--ink);font:inherit;resize:vertical;outline:none}
+.reply .bar{display:flex;gap:8px;align-items:center;margin-top:8px;font-size:12px;color:var(--ink-3)}
+.side{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 20px}
+.kv{padding:10px 12px;border:1px solid var(--hair);border-radius:8px;background:var(--raised);font-size:12px;color:var(--ink-3)}
+.kv b{display:block;color:var(--ink);font-size:14px;font-weight:500;margin-top:2px}
+@media (max-width:1024px){.app{grid-template-columns:64px 1fr}.detail{display:none}.pane{border-right:0}}
+@media (max-width:767px){.app{grid-template-columns:1fr;grid-template-rows:1fr 56px}.rail{flex-direction:row;border-right:0;border-top:1px solid var(--hair);order:2;padding:0 6px;justify-content:space-around}.rail .mark,.rail .sp,.rail .av{display:none}.rail a{width:auto;padding:0 8px}.pane{order:1}}
+</style>
+</head>
+<body>
+<span class="example" aria-label="Example data">Example data</span>
+<div class="app">
+  <nav class="rail" aria-label="Sections">
+    <div class="mark" aria-hidden="true"></div>
+    <a class="on" href="#"><span><i></i>Support</span><span class="n">3</span></a>
+    <a href="#"><span><i></i>Account</span></a>
+    <a href="#"><span><i></i>Programs</span></a>
+    <a href="#"><span><i></i>Tools</span></a>
+    <div class="sp"></div>
+    <a href="#" aria-label="Settings"><span><i></i>Settings</span></a>
+    <div class="av" aria-label="Jordan Taylor">JT</div>
+  </nav>
+  <section class="pane" aria-label="Support inbox">
+    <header><h2>Support</h2><div class="ten">Acme Manufacturing · 3 open, 1 waiting on you</div></header>
+    <div class="filters"><span class="chip on">Needs you</span><span class="chip">Open</span><span class="chip">Approvals</span><span class="chip">Requests</span><span class="chip">Resolved</span></div>
+    <div class="list">
+      <a class="item on" href="#"><div class="t">VPN drops every 20 minutes from home <time>12 min</time></div><div class="m">TKT-1042 <span class="tok wait">Waiting on you</span> <span class="tok high">High</span></div></a>
+      <a class="item" href="#"><div class="t">Access request: M. Ortiz → Finance share <time>1 d</time></div><div class="m">APR-233 <span class="tok wait">Approve?</span></div></a>
+      <a class="item" href="#"><div class="t">New laptop for the Tucson office <time>3 h</time></div><div class="m">TKT-1039 <span class="tok prog">In progress</span></div></a>
+      <a class="item" href="#"><div class="t">Shared mailbox rename <time>Yest.</time></div><div class="m">TKT-1031 <span class="tok done">Resolved</span></div></a>
+      <a class="item" href="#"><div class="t">Printer queue stuck, 2nd floor <time>Mon</time></div><div class="m">TKT-1028 <span class="tok done">Resolved</span></div></a>
+    </div>
+  </section>
+  <section class="detail" aria-label="Ticket detail">
+    <div class="top"><div class="cmd" role="button" tabindex="0">Search or jump to… <kbd>⌘K</kbd></div><a class="btn primary" href="#">+ New ticket</a></div>
+    <div class="body">
+      <div class="eyebrow">TKT-1042 · Network · opened 29 Sep</div>
+      <h1>VPN drops every 20 minutes from home</h1>
+      <div class="meta"><span>Status <b>Waiting on you</b></span><span>Priority <b>High</b></span><span>Engineer <b>Priya N.</b></span><span>First response <b>38 min</b></span></div>
+      <div class="side"><div class="kv">Affected<b>1 person</b></div><div class="kv">Device<b>ACME-LT-0117</b></div><div class="kv">Target<b>Resolve within 8 h</b></div></div>
+      <div class="msg"><div class="av">JT</div><div><div class="h"><b>Jordan Taylor</b><time>29 Sep, 09:12</time></div><p>Since Monday my VPN disconnects about every 20 minutes when I work from home. Office is fine.</p></div></div>
+      <div class="msg"><div class="av de">DE</div><div><div class="h"><b>Priya N.</b> · Digerati Experts<time>29 Sep, 09:50</time></div><p>Thanks Jordan. That interval matches a DHCP lease renewal. Could you attach the VPN client log from today? Settings → Diagnostics → Export.</p></div></div>
+      <div class="msg"><div class="av de">DE</div><div><div class="h"><b>Priya N.</b><time>12 min ago</time></div><p>Following up: once I have the log I can push a profile fix remotely, no visit needed.</p></div></div>
+      <div class="reply"><textarea aria-label="Reply" placeholder="Reply to Priya… (drop the log file here)"></textarea><div class="bar"><span>Attach</span><span>·</span><span>PNG, PDF, LOG up to 10 MB</span><a class="btn primary" href="#">Send</a></div></div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

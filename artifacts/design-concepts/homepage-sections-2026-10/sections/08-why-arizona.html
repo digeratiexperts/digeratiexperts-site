@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE section mockup — 08 Why Arizona</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../system/tokens.css">
+<style>
+  /* 08 · Why Arizona businesses work with us — full-bleed paper band (no
+     island). Statement + three pillars + one button on the left; on the right
+     the generated desk still is replaced by a real-format artifact: the
+     outline of an assessment report, tagged EXAMPLE FORMAT. Row descriptions
+     are verbatim repo copy (AssessmentReportSample.tsx, Healthcare.tsx); no
+     numbers, no client, no scores. The live photo caption is kept as the
+     figure's caption. */
+  .why { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 560px); column-gap: 88px; align-items: start; }
+  .why__copy { display: flex; flex-direction: column; }
+  .why .de-eyebrow { text-wrap: balance; }
+  .why .de-h2 { max-width: 640px; text-wrap: balance; }
+  .why .de-lede { text-wrap: pretty; }
+
+  /* Pillars: hairline list, light IconWell, three claims. */
+  .why__pillars { margin-top: 36px; border-top: 1px solid var(--de-paper-hairline); }
+  .why__pillars li { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 18px; align-items: start; padding: 20px 0; border-bottom: 1px solid var(--de-paper-hairline); }
+  .why__pillars .de-h4 { color: var(--de-ink); margin-top: 1px; }
+  .why__pillars .de-body { margin-top: 4px; text-wrap: pretty; }
+  .why__cta-row { padding-top: 36px; }
+
+  /* The artifact: a white document sheet on paper, .de-card--paper geometry
+     (16px radius, one hairline, 24px padding, no shadow). Sized by content. */
+  .docfig { margin: 0; }
+  .doc { background: var(--de-paper-raised); border: 1px solid var(--de-paper-hairline); border-radius: var(--radius-lg); overflow: hidden; }
+  .doc__bar { display: flex; align-items: center; padding: 18px 24px; border-bottom: 1px solid var(--de-paper-hairline); }
+  .doc__logo { height: 24px; width: auto; }
+  .doc__title { padding: 24px; border-bottom: 1px solid var(--de-paper-hairline); }
+  .doc__title .de-tag { margin-bottom: 12px; }
+  .doc__name { font-family: var(--font-heading); font-weight: 600; font-size: 20px; line-height: 1.25; letter-spacing: -0.015em; color: var(--de-ink); }
+  .doc__row { padding: 20px 24px; border-bottom: 1px solid var(--de-paper-hairline); }
+  .doc__row:last-child { border-bottom: 0; }
+  .doc__label { display: flex; align-items: center; font-family: var(--font-heading); font-weight: 600; font-size: 15px; line-height: 1.3; color: var(--de-ink); }
+  .doc__label .de-dash { width: 12px; height: 2px; margin-right: 12px; flex-shrink: 0; }
+  .doc__row .de-small { margin-top: 6px; padding-left: 22px; text-wrap: pretty; }
+  .doc__bar-ph { display: block; height: 8px; border-radius: 4px; background: rgba(26,18,40,0.08); margin: 10px 0 0 22px; width: 72%; }
+  .doc__row:nth-child(4) .doc__bar-ph { width: 58%; }
+  .doc__row:nth-child(5) .doc__bar-ph { width: 64%; }
+  .docfig figcaption { margin-top: 14px; padding: 0 4px; }
+  .docfig figcaption .de-small { color: var(--de-ink-muted); text-wrap: balance; }
+  .docfig figcaption .de-small + .de-small { margin-top: 2px; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; }
+
+  @media (max-width: 1023px) {
+    /* Phone/tablet: the sample sits between lede and pillars so the CTA closes the section. */
+    .why { display: flex; flex-direction: column; }
+    .why__copy { display: contents; }
+    .why .de-eyebrow, .why .de-h2, .why .de-lede { order: 0; }
+    .docfig { order: 1; margin-top: 32px; width: 100%; max-width: 560px; }
+    .why__pillars { order: 2; width: 100%; }
+    .why__cta-row { order: 3; }
+  }
+  @media (max-width: 639px) {
+    .doc__bar { padding: 14px 20px; }
+    .doc__logo { height: 22px; }
+    .doc__title { padding: 20px; }
+    .doc__name { font-size: 18px; }
+    .doc__row { padding: 14px 20px; }
+    .doc__row .de-small { display: none; }
+    .why__pillars .de-body { text-wrap: wrap; }
+    .why__cta-row { width: 100%; }
+    .why__cta { width: 100%; height: auto; min-height: 48px; padding: 13px 16px; white-space: normal; text-align: center; line-height: 1.25; }
+  }
+</style>
+</head>
+<body>
+<section class="f-paper de-section" id="trust" aria-labelledby="trust-title">
+  <div class="de-canvas why">
+    <div class="why__copy">
+      <p class="de-eyebrow">Why Arizona businesses work with us</p>
+      <h2 class="de-h2" id="trust-title">Protection that fits how you actually operate.</h2>
+      <p class="de-lede">From medical practices to law firms to family-owned offices, we protect the businesses Arizona runs on—the ones that cannot afford downtime, a breach, or lost client data.</p>
+
+      <ul class="why__pillars">
+        <li>
+          <span class="de-iconwell de-iconwell--light de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span>
+          <div><h3 class="de-h4">Arizona-based</h3><p class="de-body">Local principal support for businesses that need a real person, not a ticket queue.</p></div>
+        </li>
+        <li>
+          <span class="de-iconwell de-iconwell--light de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg></span>
+          <div><h3 class="de-h4">Principal-led</h3><p class="de-body">Recommendations come from the people who will stand behind the work.</p></div>
+        </li>
+        <li>
+          <span class="de-iconwell de-iconwell--light de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg></span>
+          <div><h3 class="de-h4">Sized to your business</h3><p class="de-body">Controls and tooling matched to your risk—not an enterprise stack you will not use.</p></div>
+        </li>
+      </ul>
+
+      <div class="why__cta-row"><a class="de-btn de-btn--primary why__cta" href="/book">Get My Cyber Risk Assessment <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a></div>
+    </div>
+
+    <figure class="docfig" aria-label="Example format: outline of a Cyber Risk Assessment findings report">
+      <div class="doc">
+        <div class="doc__bar"><img class="doc__logo" src="/brand/digerati-logo.svg" alt="Digerati Experts"></div>
+        <div class="doc__title">
+          <span class="de-tag de-tag--paper">Example format</span>
+          <p class="doc__name">Cyber Risk Assessment — findings</p>
+        </div>
+        <div class="doc__row">
+          <p class="doc__label"><span class="de-dash" aria-hidden="true"></span>Prioritized findings</p>
+          <p class="de-small">A prioritized risk summary — urgent vs later — not a product dump</p>
+          <span class="doc__bar-ph" aria-hidden="true"></span>
+        </div>
+        <div class="doc__row">
+          <p class="doc__label"><span class="de-dash" aria-hidden="true"></span>Business-impact context</p>
+          <p class="de-small">Confirm evidence, ownership, scope, and business impact.</p>
+          <span class="doc__bar-ph" aria-hidden="true"></span>
+        </div>
+        <div class="doc__row">
+          <p class="doc__label"><span class="de-dash" aria-hidden="true"></span>Right-sized recommendations</p>
+          <p class="de-small">Prioritize approved control and process changes by risk and dependency.</p>
+          <span class="doc__bar-ph" aria-hidden="true"></span>
+        </div>
+      </div>
+      <figcaption>
+        <p class="de-small">Principal-led assessments sized to how your business runs</p>
+        <p class="de-small">Arizona MSP · Cybersecurity &amp; Managed IT</p>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+<script>document.fonts.load('600 16px Oxanium');</script>
+</body>
+</html>

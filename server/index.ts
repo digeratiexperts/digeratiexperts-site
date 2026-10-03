@@ -13,19 +13,22 @@ import { registerSecureZohoStoreCheckout } from "./secureStoreCheckout";
 import { isStagingReview, stagingReviewStatus } from "./stagingReviewGuard";
 import { registerStoreSolutionRoutes } from "./storeSolutionRoutes";
 import { registerPublicSolutionRoutes } from "./publicSolutionRoutes";
+import { registerWidgetTicketRoute } from "./widgetTicketRoute";
 import { registerWarehouseGates } from "./warehouseRoutes";
 import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
+import { cacheControlFor } from "./staticCacheControl";
+import { registerCampaignAliasRedirects } from "./campaignAliasRedirects";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import fs from "fs";
 import cookieParser from "cookie-parser";
 import compression from "compression";
-import jwt from "jsonwebtoken";
+import { resolveWarehouseStaff } from "./warehouseAccess";
 import { zohoPayments } from "./zohoPayments";
+import { zohoClient } from "./zoho/zohoClient";
 import { evaluatePaymentSucceeded } from "./zohoPaymentWebhook";
-import { getJwtSecretOrNull } from "./config/authSecrets";
 import { setupCrossServiceHandlers } from "./crossServiceHandler";
 import { eventBus, EventTypes } from "./eventBus";
 
@@ -77,6 +80,7 @@ const log = (message: string) => {
 };
 
 import { setSecurityHeaders } from "./middleware/security";
+import { registerVersionPreviewRobots } from "./versionPreviewRobots";
 app.use(setSecurityHeaders);
 
 app.use((req, _res, next) => {
@@ -105,6 +109,18 @@ app.all("/api/health", async (_req, res) => {
     services: {
       database: dbAvailable ? "connected" : "fallback_memory",
       zohoPayments: zohoPayments.isConfigured() ? "configured" : "not_configured",
+      // Configured is not live: last readiness probe result + freshness (#263).
+      // Error detail stays in server logs, never here.
+      zohoPaymentsCheckout: (() => {
+        const snap = zohoPayments.readiness.snapshot();
+        return {
+          state: snap.source === "unknown" ? "unknown" : snap.ready ? "ready" : "not_ready",
+          checkedAt: snap.checkedAt ? new Date(snap.checkedAt).toISOString() : null,
+        };
+      })(),
+      // Presence ≠ valid refresh token. auth_failed is set after a live Desk
+      // OAuth refresh rejects the configured refresh token (e.g. invalid_code).
+      zohoDesk: zohoClient.getDeskAuthStatus(),
       openai: openaiConfigured ? "configured" : "not_configured",
     },
     // Lets a reviewer confirm outbound mutations are locked down.
@@ -115,10 +131,15 @@ app.all("/api/health", async (_req, res) => {
   res.status(200).json(health);
 });
 
-/** Public, secret-free flag so marketing and the portal do not promise card checkout when it is off. */
-app.get("/api/payments/availability", (_req, res) => {
+/**
+ * Public, secret-free flag so marketing and the portal do not promise card
+ * checkout when it is off. Follows a cached live readiness probe (#263), not
+ * mere configuration: unknown/stale/failed => false.
+ */
+app.get("/api/payments/availability", async (_req, res) => {
   res.set("Cache-Control", "no-store");
-  res.json({ cardCheckout: zohoPayments.isConfigured() });
+  const cardCheckout = await zohoPayments.readiness.isReady().catch(() => false);
+  res.json({ cardCheckout });
 });
 
 app.all("/healthz", async (_req, res) => {
@@ -336,6 +357,7 @@ registerWarehouseGates(app);
 registerSecureZohoStoreCheckout(app, authMiddleware as any, requireRole as any);
 registerStoreSolutionRoutes(app, authMiddleware as any);
 registerPublicSolutionRoutes(app);
+registerWidgetTicketRoute(app);
 registerPortalMarketplaceRoutes(app, authMiddleware as any);
 
 app.use((req, res, next) => {
@@ -394,27 +416,18 @@ app.use((req, res, next) => {
   // In local/dev, allow tooling without portal cookie so DE can iterate.
   if (app.get("env") !== "production") return next();
 
-  const token =
-    typeof req.cookies?.portalAuth === "string" ? req.cookies.portalAuth : "";
-  const secret = getJwtSecretOrNull();
-  if (!token || !secret) {
-    const returnTo = encodeURIComponent(req.path);
-    return res.redirect(
-      302,
-      `https://portal.digeratiexperts.com/portal/login?returnTo=${returnTo}`,
-    );
-  }
-
-  try {
-    jwt.verify(token, secret);
+  // Authorization from the LIVE portal record, not a bare signed token:
+  // require an active admin (DE staff), rejecting prospects and disabled or
+  // revoked accounts that still hold an unexpired 24h token. Checks the
+  // Authorization header or the portalAuth cookie, consistent with the gates.
+  if (resolveWarehouseStaff(req)) {
     return next();
-  } catch {
-    const returnTo = encodeURIComponent(req.path);
-    return res.redirect(
-      302,
-      `https://portal.digeratiexperts.com/portal/login?returnTo=${returnTo}`,
-    );
   }
+  const returnTo = encodeURIComponent(req.path);
+  return res.redirect(
+    302,
+    `https://portal.digeratiexperts.com/portal/login?returnTo=${returnTo}`,
+  );
 });
 
 const publicDir = path.resolve(process.cwd(), "public");
@@ -464,6 +477,9 @@ app.use(
   }),
 );
 
+// Ad and legacy campaign aliases forward to /go/<slug> with their query string.
+registerCampaignAliasRedirects(app);
+
 // Experience v1 (Joe, 2026-09-03: "published to another page until I approve
 // it", then "show me it with the site"): the speakable address forwards to the
 // React route that wraps the story in the site's own menu and footer; the
@@ -472,6 +488,8 @@ app.get("/experience-v1", (_req, res) => {
   res.setHeader("X-Robots-Tag", "noindex");
   res.redirect(302, "/experience");
 });
+
+registerVersionPreviewRobots(app);
 
 // Homepage version archive (client/src/pages/versions/README.md): version 2
 // is the static Version B build above, so its numbered URL forwards there.
@@ -530,19 +548,12 @@ function listEndpoints(): Array<{ method: string; path: string }> {
     const indexPath = path.join(distPath, "index.html");
     
     app.use(express.static(distPath, {
-      maxAge: '1y',
+      // Every file gets an explicit header below; only Vite's hashed output is cached forever.
+      cacheControl: false,
       etag: true,
       lastModified: true,
       setHeaders: (res, filePath) => {
-        if (filePath.match(/\.(js|css|woff2?|ttf|eot)$/)) {
-          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-        }
-        else if (filePath.match(/\.(png|jpg|jpeg|gif|svg|webp|ico)$/)) {
-          res.setHeader('Cache-Control', 'public, max-age=2592000');
-        }
-        else if (filePath.endsWith('.html')) {
-          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        }
+        res.setHeader('Cache-Control', cacheControlFor(path.relative(distPath, filePath)));
       }
     }));
     

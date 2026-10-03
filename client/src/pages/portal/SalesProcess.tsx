@@ -1,7 +1,11 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Search, ChevronDown, ChevronRight, X, Zap, Target, Users, Shield, CheckCircle, Clock, FileText, Video, Building2, Calendar, BarChart3, ShieldCheck, MessageSquare, Phone, DollarSign, Briefcase, AlertTriangle, UserCheck, Key } from 'lucide-react';
+import { useState, useMemo, type ReactNode } from 'react';
+import { Search, ChevronDown, ChevronRight, X, Target, Users, Shield, Clock, Video, Building2, Calendar, BarChart3, ShieldCheck, MessageSquare, Phone, DollarSign, Briefcase, AlertTriangle, Key } from 'lucide-react';
 import { PortalLayout } from './PortalLayout';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
+import { Panel, StatTile, Token } from '@/components/portal/ui';
 
 // Prospect & Client Q&A Data
 const qaCategories = [
@@ -616,6 +620,59 @@ const cyberCards: CardData[] = [
   }
 ];
 
+/** Pill toggle used for section switches and track tabs. State is carried by aria-pressed and text, not colour alone. */
+function Chip({
+  active,
+  onClick,
+  children,
+  testId,
+  className,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+  testId?: string;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground",
+        className,
+      )}
+      data-testid={testId}
+    >
+      {children}
+    </button>
+  );
+}
+
+function SectionToggle({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <Button type="button" variant="ghost" size="icon" aria-label={label} onClick={onClick}>
+      <ChevronDown className="h-4 w-4" aria-hidden="true" />
+    </Button>
+  );
+}
+
+function StageProgress({ label, step, total, value }: { label: string; step: number; total: number; value: number }) {
+  return (
+    <div className="border-b border-border px-4 py-3 md:px-5">
+      <div className="mb-2 flex items-baseline justify-between gap-4">
+        <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
+        <p className="pt-num text-xs text-muted-foreground">
+          Step {step} / {total}
+        </p>
+      </div>
+      <Progress value={value} className="h-2" aria-label={`${label}: step ${step} of ${total}`} />
+    </div>
+  );
+}
+
 export default function SalesProcess() {
   const [activeTab, setActiveTab] = useState<'ecosystem' | 'cyber'>('ecosystem');
   const [searchQuery, setSearchQuery] = useState('');
@@ -646,53 +703,37 @@ export default function SalesProcess() {
   // Internal sales playbook — clients must use TechSales, not the Client Portal
   if (!isAdmin) {
     return (
-      <PortalLayout title="Sales Process">
-        <div className="max-w-xl space-y-4 p-2">
-          <h2 className="text-xl font-semibold">Moved to TechSales</h2>
-          <p className="text-gray-600 dark:text-gray-400">
+      <PortalLayout title="Sales Process" width="narrow">
+        <Panel id="sales-moved" title="Moved to TechSales">
+          <p className="text-sm text-muted-foreground">
             The Decision-Ready sales process lives in the Intelligence Hub for internal users.
             Client Portal accounts do not include sales tooling.
           </p>
-          <div className="flex flex-wrap gap-3">
-            <Button asChild className="bg-[#D3126A] hover:bg-[#D3126A]/90 text-white">
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button asChild variant="brand">
               <a href="https://techsales.digerati-experts.com/" target="_blank" rel="noreferrer">
                 Open TechSales
               </a>
             </Button>
-            <Button variant="outline" asChild>
+            <Button variant="outline" className="border-border bg-card hover:bg-accent" asChild>
               <a href="/portal/dashboard">Back to Portal</a>
             </Button>
           </div>
-        </div>
+        </Panel>
       </PortalLayout>
     );
   }
 
   const toggleQACategory = (id: string) => {
-    setExpandedQACategories(prev => 
+    setExpandedQACategories(prev =>
       prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
     );
   };
 
   const toggleQAItem = (id: string) => {
-    setExpandedQAItems(prev => 
+    setExpandedQAItems(prev =>
       prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
     );
-  };
-
-  const getColorClasses = (color: string) => {
-    const colorMap: Record<string, { border: string; bg: string; text: string; hoverBg: string }> = {
-      cyan: { border: 'border-cyan-500/40', bg: 'bg-cyan-500/10', text: 'text-cyan-400', hoverBg: 'hover:bg-cyan-500/15' },
-      orange: { border: 'border-orange-500/40', bg: 'bg-orange-500/10', text: 'text-orange-400', hoverBg: 'hover:bg-orange-500/15' },
-      violet: { border: 'border-[#D3126A]/40', bg: 'bg-[#D3126A]/10', text: 'text-de-magenta-ink', hoverBg: 'hover:bg-[#D3126A]/15' },
-      emerald: { border: 'border-emerald-500/40', bg: 'bg-emerald-500/10', text: 'text-emerald-400', hoverBg: 'hover:bg-emerald-500/15' },
-      blue: { border: 'border-blue-500/40', bg: 'bg-blue-500/10', text: 'text-blue-400', hoverBg: 'hover:bg-blue-500/15' },
-      amber: { border: 'border-amber-500/40', bg: 'bg-amber-500/10', text: 'text-amber-400', hoverBg: 'hover:bg-amber-500/15' },
-      teal: { border: 'border-teal-500/40', bg: 'bg-teal-500/10', text: 'text-teal-400', hoverBg: 'hover:bg-teal-500/15' },
-      rose: { border: 'border-rose-500/40', bg: 'bg-rose-500/10', text: 'text-rose-400', hoverBg: 'hover:bg-rose-500/15' },
-      indigo: { border: 'border-indigo-500/40', bg: 'bg-indigo-500/10', text: 'text-indigo-400', hoverBg: 'hover:bg-indigo-500/15' }
-    };
-    return colorMap[color] || colorMap.cyan;
   };
 
   const trackCards = activeTab === 'ecosystem' ? ecosystemCards : cyberCards;
@@ -760,649 +801,408 @@ export default function SalesProcess() {
   };
 
   const getMeetingIcon = (meetingType: string) => {
-    if (meetingType.includes('Virtual')) return <Video className="w-4 h-4" />;
-    if (meetingType.includes('In-office')) return <Building2 className="w-4 h-4" />;
-    if (meetingType.includes('Either')) return <Users className="w-4 h-4" />;
-    return <Clock className="w-4 h-4" />;
+    if (meetingType.includes('Virtual')) return <Video className="h-4 w-4 text-muted-foreground" aria-hidden="true" />;
+    if (meetingType.includes('In-office')) return <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />;
+    if (meetingType.includes('Either')) return <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />;
+    return <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />;
   };
 
+  const renderStageCard = (card: CardData, active: boolean) => (
+    <article
+      key={card.id}
+      onClick={() => openDrawer(card)}
+      className={cn(
+        "w-[320px] max-w-[380px] shrink-0 cursor-pointer rounded-xl border bg-background p-4 transition-colors",
+        active ? "border-primary" : "border-border pt-hover-brand",
+      )}
+      style={{ scrollSnapAlign: 'start' }}
+      aria-current={active ? "step" : undefined}
+      data-testid={`card-${card.id}`}
+    >
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <h3 className="text-sm font-semibold leading-tight">{card.title}</h3>
+        <Token label={card.badge} tone={card.scope === 'lead' ? 'warn' : 'brand'} />
+      </div>
+
+      <ul className="mb-3 list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">
+        {card.items.map((item, i) => (
+          <li key={i}>{item}</li>
+        ))}
+      </ul>
+
+      <dl className="grid gap-2">
+        {card.meta.map((m, i) => (
+          <div key={i} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-xs">
+            <dt className="font-semibold">{m.label}</dt>
+            <dd className="flex items-center gap-1.5 text-right text-muted-foreground">
+              {m.label === 'Meeting Type' && getMeetingIcon(m.value)}
+              <span className="max-w-[170px] truncate">{m.value}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="mt-4 w-full border-border bg-card hover:bg-accent"
+        data-testid={`button-details-${card.id}`}
+      >
+        View Details
+      </Button>
+    </article>
+  );
+
   return (
-    <PortalLayout title="Sales Process">
-    <div className="-m-4 md:-m-6 min-h-full bg-[#151515] text-white" data-testid="sales-process-page">
-      <div className="max-w-[1320px] mx-auto p-4 md:p-6">
-        <div className="rounded-[26px] border border-white/10 overflow-hidden"
-          style={{
-            background: `
-              radial-gradient(1200px 600px at 10% 0%, rgba(255,184,0,.10), transparent 55%),
-              radial-gradient(1000px 520px at 90% 20%, rgba(90,167,255,.08), transparent 55%),
-              linear-gradient(180deg, #1b1b1b, #151515)
-            `,
-            boxShadow: '0 30px 90px rgba(0,0,0,.55)'
-          }}>
-          
-          {/* Header */}
-          <header className="px-5 py-7 border-b border-white/10 bg-gradient-to-b from-white/[0.03] to-transparent">
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-amber-500/35 bg-amber-500/10 text-amber-400 text-xs font-black tracking-[0.18em] uppercase mb-4">
-              <Zap className="w-4 h-4" />
-              DE SALES SYSTEM
-            </div>
-            
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-2" 
-                style={{ letterSpacing: '-0.03em' }}>
-              Decision-Ready Process
-            </h1>
-            
-            <p className="text-white/80 text-base max-w-[900px] font-medium leading-relaxed">
-              Two tracks. Clear stages. Meetings, paperwork, and meeting type on every step.
-            </p>
+    <PortalLayout
+      title="Decision-Ready Process"
+      eyebrow="DE Sales System"
+      description="Two tracks. Clear stages. Meetings, paperwork, and meeting type on every step."
+      width="wide"
+    >
+    <div className="space-y-4" data-testid="sales-process-page">
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Process at a glance">
+        {[
+          { value: '7', label: 'Sales Stages' },
+          { value: '3', label: 'Lead Sources' },
+          { value: '2', label: 'Tracks' },
+          { value: '2', label: 'Reviews/Year' }
+        ].map((stat) => (
+          <StatTile key={stat.label} label={stat.label} value={stat.value} />
+        ))}
+      </section>
 
-            {/* Stats */}
-            <div className="flex gap-3.5 flex-wrap mt-5">
-              {[
-                { value: '7', label: 'Sales Stages' },
-                { value: '3', label: 'Lead Sources' },
-                { value: '2', label: 'Tracks' },
-                { value: '2', label: 'Reviews/Year' }
-              ].map((stat, i) => (
-                <div key={i} className="flex gap-3 items-baseline px-3.5 py-3 rounded-2xl border border-white/10 bg-black/25 backdrop-blur-sm">
-                  <span className="text-2xl font-black text-amber-400">{stat.value}</span>
-                  <span className="text-xs text-white/60 uppercase tracking-widest font-extrabold">{stat.label}</span>
-                </div>
-              ))}
-            </div>
+      {/* Search + Controls */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="relative lg:w-80 lg:shrink-0">
+          <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <Input
+            type="search"
+            placeholder="Search stages, meetings, paperwork..."
+            aria-label="Search stages, meetings, paperwork"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-9 border-border bg-card pl-9"
+            data-testid="input-search"
+          />
+        </div>
 
-            {/* Search + Controls */}
-            <div className="mt-4 flex flex-wrap gap-3 items-center">
-              <div className="relative flex-1 min-w-[280px] max-w-[560px]">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/55" />
-                <input
-                  type="text"
-                  placeholder="Search stages, meetings, paperwork..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 rounded-full border border-white/10 bg-black/35 text-white placeholder:text-white/55 outline-none transition-all focus:border-amber-500/55 focus:ring-2 focus:ring-amber-500/20"
-                  data-testid="input-search"
-                />
-              </div>
+        <div role="group" aria-label="Show sections" className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0 lg:pb-0">
+          <Chip active={showQA} onClick={() => setShowQA(!showQA)} testId="toggle-qa">
+            <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
+            Prospect/Client Q&A
+            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", showQA && "rotate-180")} aria-hidden="true" />
+          </Chip>
+          <Chip active={showLeadGen} onClick={() => setShowLeadGen(!showLeadGen)} testId="toggle-lead-gen">
+            Lead Gen
+          </Chip>
+          <Chip active={showTrack} onClick={() => setShowTrack(!showTrack)} testId="toggle-track">
+            Track
+          </Chip>
+          <Chip active={showReviews} onClick={() => setShowReviews(!showReviews)} testId="toggle-reviews">
+            TBR / SBR
+          </Chip>
+        </div>
+      </div>
 
-              {/* Prospect/Client Q&A Button */}
-              <button
-                onClick={() => setShowQA(!showQA)}
-                className={`inline-flex items-center gap-2.5 px-4 py-3 rounded-full border font-black text-sm transition-all ${
-                  showQA 
-                    ? 'border-cyan-500/70 bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 text-white shadow-lg shadow-cyan-500/15' 
-                    : 'border-white/10 bg-black/30 text-white/80 hover:border-cyan-500/35'
-                }`}
-                data-testid="toggle-qa"
-              >
-                <MessageSquare className={`w-4 h-4 ${showQA ? 'text-cyan-400' : ''}`} />
-                Prospect/Client Q&A
-                <ChevronDown className={`w-4 h-4 transition-transform ${showQA ? 'rotate-180' : ''}`} />
-              </button>
+      {/* Tabs */}
+      <div role="group" aria-label="Sales track" className="flex flex-wrap gap-1.5">
+        {[
+          { key: 'ecosystem' as const, label: 'ProActive Ecosystem' },
+          { key: 'cyber' as const, label: 'Cybersecurity Track' }
+        ].map(tab => (
+          <Chip key={tab.key} active={activeTab === tab.key} onClick={() => handleTabChange(tab.key)} testId={`tab-${tab.key}`}>
+            {tab.label}
+          </Chip>
+        ))}
+      </div>
 
-              {/* View Toggles */}
-              <div className="flex gap-2.5 flex-wrap">
-                <button
-                  onClick={() => setShowLeadGen(!showLeadGen)}
-                  className={`inline-flex items-center gap-2.5 px-3.5 py-3 rounded-full border font-black text-sm transition-all ${
-                    showLeadGen 
-                      ? 'border-orange-500/70 bg-gradient-to-br from-orange-500/20 to-orange-500/5 text-white shadow-lg shadow-orange-500/15' 
-                      : 'border-white/10 bg-black/30 text-white/80 hover:border-orange-500/35'
-                  }`}
-                  data-testid="toggle-lead-gen"
-                >
-                  <span className={`w-2.5 h-2.5 rounded-full border ${showLeadGen ? 'bg-orange-400 border-orange-500/75 shadow-orange-500/40 shadow-sm' : 'bg-white/25 border-white/20'}`} />
-                  Lead Gen
-                </button>
-                <button
-                  onClick={() => setShowTrack(!showTrack)}
-                  className={`inline-flex items-center gap-2.5 px-3.5 py-3 rounded-full border font-black text-sm transition-all ${
-                    showTrack 
-                      ? 'border-[#D3126A]/70 bg-gradient-to-br from-[#D3126A]/20 to-[#D3126A]/5 text-white shadow-lg shadow-[#D3126A]/15' 
-                      : 'border-white/10 bg-black/30 text-white/80 hover:border-[#D3126A]/35'
-                  }`}
-                  data-testid="toggle-track"
-                >
-                  <span className={`w-2.5 h-2.5 rounded-full border ${showTrack ? 'bg-[#D3126A] border-[#D3126A]/75 shadow-[#D3126A]/40 shadow-sm' : 'bg-white/25 border-white/20'}`} />
-                  Track
-                </button>
-                <button
-                  onClick={() => setShowReviews(!showReviews)}
-                  className={`inline-flex items-center gap-2.5 px-3.5 py-3 rounded-full border font-black text-sm transition-all ${
-                    showReviews 
-                      ? 'border-emerald-500/70 bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 text-white shadow-lg shadow-emerald-500/15' 
-                      : 'border-white/10 bg-black/30 text-white/80 hover:border-emerald-500/35'
-                  }`}
-                  data-testid="toggle-reviews"
-                >
-                  <span className={`w-2.5 h-2.5 rounded-full border ${showReviews ? 'bg-emerald-400 border-emerald-500/75 shadow-emerald-500/40 shadow-sm' : 'bg-white/25 border-white/20'}`} />
-                  TBR / SBR
-                </button>
-              </div>
-            </div>
+      {/* Prospect/Client Q&A Panel */}
+      {showQA && (
+        <div data-testid="section-qa">
+          <Panel
+            id="sales-qa"
+            title="Prospect & Client Q&A"
+            description="Phone-ready reference. Use these verbatim answers during prospect calls and client conversations. Click categories to expand."
+            actions={
+              <Button type="button" variant="ghost" size="icon" aria-label="Close Q&A" onClick={() => setShowQA(false)}>
+                <X className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            }
+            flush
+          >
+            <ul className="divide-y divide-border">
+              {qaCategories.map(category => {
+                const Icon = category.icon;
+                const isExpanded = expandedQACategories.includes(category.id);
 
-            {/* Tabs */}
-            <div className="flex gap-3 flex-wrap mt-4">
-              {[
-                { key: 'ecosystem' as const, label: 'ProActive Ecosystem' },
-                { key: 'cyber' as const, label: 'Cybersecurity Track' }
-              ].map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => handleTabChange(tab.key)}
-                  className={`px-5 py-3.5 rounded-full border font-black text-sm transition-all ${
-                    activeTab === tab.key
-                      ? 'border-amber-500/70 bg-gradient-to-br from-amber-500/20 to-amber-500/5 text-white shadow-lg shadow-amber-500/15'
-                      : 'border-white/10 bg-black/30 text-white/80 hover:border-amber-500/35 hover:-translate-y-0.5'
-                  }`}
-                  data-testid={`tab-${tab.key}`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </header>
-
-          {/* Prospect/Client Q&A Dropdown Panel */}
-          {showQA && (
-            <section 
-              className="px-5 py-5 border-b border-cyan-500/20" 
-              style={{ background: 'linear-gradient(180deg, rgba(6,182,212,0.06) 0%, rgba(0,0,0,0.15) 100%)' }}
-              data-testid="section-qa"
-            >
-              <div className="flex items-center justify-between gap-4 mb-4">
-                <div>
-                  <div className="text-xs text-cyan-400 uppercase tracking-[0.16em] font-black mb-1">Phone-Ready Reference</div>
-                  <div className="text-lg font-black text-white">Prospect & Client Q&A</div>
-                </div>
-                <button 
-                  onClick={() => setShowQA(false)}
-                  className="w-10 h-10 rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 grid place-items-center transition-transform hover:bg-cyan-500/20"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <p className="text-cyan-200/60 text-sm font-medium mb-5 max-w-3xl">
-                Use these verbatim answers during prospect calls and client conversations. Click categories to expand.
-              </p>
-
-              {/* Q&A Categories */}
-              <div className="grid gap-3">
-                {qaCategories.map(category => {
-                  const colors = getColorClasses(category.color);
-                  const Icon = category.icon;
-                  const isExpanded = expandedQACategories.includes(category.id);
-                  
-                  return (
-                    <div 
-                      key={category.id}
-                      className={`rounded-2xl border ${colors.border} overflow-hidden transition-all`}
-                      style={{ background: 'rgba(0,0,0,0.25)' }}
+                return (
+                  <li key={category.id}>
+                    <button
+                      type="button"
+                      onClick={() => toggleQACategory(category.id)}
+                      aria-expanded={isExpanded}
+                      className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:outline-none md:px-5"
+                      data-testid={`qa-category-${category.id}`}
                     >
-                      <button
-                        onClick={() => toggleQACategory(category.id)}
-                        className={`w-full flex items-center justify-between gap-3 px-4 py-3.5 ${colors.hoverBg} transition-all`}
-                        data-testid={`qa-category-${category.id}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-xl ${colors.bg} ${colors.border} border grid place-items-center`}>
-                            <Icon className={`w-4 h-4 ${colors.text}`} />
-                          </div>
-                          <span className="font-black text-white">{category.title}</span>
-                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${colors.bg} ${colors.text}`}>
-                            {category.items.length}
-                          </span>
-                        </div>
-                        <ChevronRight className={`w-5 h-5 text-white/60 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                      </button>
+                      <span className="flex min-w-0 items-center gap-3">
+                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                        <span className="truncate text-sm font-semibold">{category.title}</span>
+                        <Token label={String(category.items.length)} tone="neutral" className="pt-num" />
+                      </span>
+                      <ChevronRight className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", isExpanded && "rotate-90")} aria-hidden="true" />
+                    </button>
 
-                      {isExpanded && (
-                        <div className="px-4 pb-4 space-y-2">
-                          {category.items.map((item, idx) => {
-                            const itemId = `${category.id}-${idx}`;
-                            const isItemExpanded = expandedQAItems.includes(itemId);
-                            
-                            return (
-                              <div 
-                                key={idx}
-                                className={`rounded-xl border ${colors.border} overflow-hidden`}
-                                style={{ background: 'rgba(0,0,0,0.3)' }}
+                    {isExpanded && (
+                      <ul className="space-y-2 bg-background/40 px-4 pb-4 md:px-5">
+                        {category.items.map((item, idx) => {
+                          const itemId = `${category.id}-${idx}`;
+                          const isItemExpanded = expandedQAItems.includes(itemId);
+
+                          return (
+                            <li key={idx} className="overflow-hidden rounded-lg border border-border bg-card">
+                              <button
+                                type="button"
+                                onClick={() => toggleQAItem(itemId)}
+                                aria-expanded={isItemExpanded}
+                                className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:outline-none"
+                                data-testid={`qa-item-${itemId}`}
                               >
-                                <button
-                                  onClick={() => toggleQAItem(itemId)}
-                                  className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left ${colors.hoverBg} transition-all`}
-                                  data-testid={`qa-item-${itemId}`}
-                                >
-                                  <span className={`font-bold text-sm ${colors.text}`}>Q: {item.q}</span>
-                                  <ChevronDown className={`w-4 h-4 flex-shrink-0 text-white/40 transition-transform ${isItemExpanded ? 'rotate-180' : ''}`} />
-                                </button>
-                                
-                                {isItemExpanded && (
-                                  <div className="px-4 pb-4">
-                                    <div className="p-3.5 rounded-lg bg-white/5 border border-white/10">
-                                      <p className="text-white/85 text-sm font-medium leading-relaxed">
-                                        <span className="text-white/50 font-bold">A:</span> {item.a}
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
+                                <span className="text-sm font-medium">Q: {item.q}</span>
+                                <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", isItemExpanded && "rotate-180")} aria-hidden="true" />
+                              </button>
+
+                              {isItemExpanded && (
+                                <div className="border-t border-border px-3 py-3">
+                                  <p className="text-sm leading-relaxed">
+                                    <span className="font-semibold text-muted-foreground">A:</span> {item.a}
+                                  </p>
+                                </div>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </Panel>
+        </div>
+      )}
+
+      {/* Lead Generation Section */}
+      {showLeadGen && (
+        <div data-testid="section-lead-gen">
+          <Panel
+            id="sales-lead-gen"
+            title="3 Sources of Leads"
+            description="Lead Generation"
+            actions={<SectionToggle label="Hide Lead Gen" onClick={() => setShowLeadGen(!showLeadGen)} />}
+            flush
+          >
+            <StageProgress
+              label="Lead Gen Progress"
+              step={leadGenCards.findIndex(c => c.id === activeLeadCard) + 1}
+              total={leadGenCards.length}
+              value={leadProgress}
+            />
+
+            <div className="flex gap-4 overflow-x-auto p-4 md:p-5" style={{ scrollSnapType: 'x mandatory' }}>
+              {filteredLeadCards.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No lead sources match your search.</p>
+              ) : (
+                filteredLeadCards.map(card => renderStageCard(card, activeLeadCard === card.id))
+              )}
+            </div>
+          </Panel>
+        </div>
+      )}
+
+      {/* Sales Track Section */}
+      {showTrack && (
+        <div data-testid="section-track">
+          <Panel
+            id="sales-track"
+            title={activeTab === 'ecosystem' ? 'ProActive Ecosystem' : 'Cybersecurity Track'}
+            description="Sales Process Track"
+            actions={<SectionToggle label="Hide Track" onClick={() => setShowTrack(!showTrack)} />}
+            flush
+          >
+            <StageProgress
+              label="Track Progress"
+              step={trackCards.findIndex(c => c.id === activeTrackCard) + 1}
+              total={trackCards.length}
+              value={trackProgress}
+            />
+
+            <div className="border-b border-border px-4 py-3 md:px-5">
+              <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                {activeTab === 'ecosystem' ? 'Sales Process' : 'Cybersecurity Track'}
+              </p>
+              <p className="mt-1 text-sm font-medium">
+                {activeTab === 'ecosystem'
+                  ? 'Qualification → Discovery → Technical Assessment → Prescribe/Close → Follow-Up'
+                  : 'Co-Managed Cyber (cyber-only OR roll into ProActive Ecosystem)'
+                }
+              </p>
+            </div>
+
+            <div className="flex gap-4 overflow-x-auto p-4 md:p-5" style={{ scrollSnapType: 'x mandatory' }}>
+              {filteredTrackCards.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No stages match your search.</p>
+              ) : (
+                filteredTrackCards.map(card => renderStageCard(card, activeTrackCard === card.id))
+              )}
+            </div>
+          </Panel>
+        </div>
+      )}
+
+      {/* TBR / SBR Reviews Section */}
+      {showReviews && (
+        <div data-testid="section-reviews">
+          <Panel
+            id="sales-reviews"
+            title="TBR & SBR — 1–2 Reviews Per Year"
+            description="Business Reviews. Scheduled strategic reviews to ensure ongoing alignment between technology investments, security posture, and business objectives."
+            actions={<SectionToggle label="Hide Reviews" onClick={() => setShowReviews(!showReviews)} />}
+          >
+            {filteredReviewCards.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No reviews match your search.</p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {filteredReviewCards.map(card => {
+                  const active = activeReviewCard === card.id;
+                  const ReviewIcon = card.type === 'tbr' ? BarChart3 : ShieldCheck;
+                  return (
+                    <article
+                      key={card.id}
+                      onClick={() => openReviewDrawer(card)}
+                      className={cn(
+                        "cursor-pointer rounded-xl border bg-background p-4 transition-colors",
+                        active ? "border-primary" : "border-border pt-hover-brand",
                       )}
-                    </div>
+                      aria-current={active ? "true" : undefined}
+                      data-testid={`card-${card.id}`}
+                    >
+                      <div className="mb-3 flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <ReviewIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                          <h3 className="text-sm font-semibold leading-tight">{card.title}</h3>
+                        </div>
+                        <Token label={card.badge} tone={card.type === 'tbr' ? 'info' : 'ok'} />
+                      </div>
+
+                      <ul className="mb-3 list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">
+                        {card.items.map((item, i) => (
+                          <li key={i}>{item}</li>
+                        ))}
+                      </ul>
+
+                      <dl className="grid gap-2">
+                        {card.meta.map((m, i) => (
+                          <div key={i} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-xs">
+                            <dt className="font-semibold">{m.label}</dt>
+                            <dd className="flex items-center gap-1.5 text-right text-muted-foreground">
+                              {m.label === 'Meeting Type' && getMeetingIcon(m.value)}
+                              <span className="max-w-[180px] truncate">{m.value}</span>
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-4 w-full border-border bg-card hover:bg-accent"
+                        data-testid={`button-details-${card.id}`}
+                      >
+                        View Details
+                      </Button>
+                    </article>
                   );
                 })}
               </div>
-            </section>
-          )}
-
-          {/* Lead Generation Section - ORANGE THEME */}
-          {showLeadGen && (
-            <section 
-              className="px-5 py-5 border-b border-orange-500/20" 
-              style={{ background: 'linear-gradient(180deg, rgba(249,115,22,0.08) 0%, rgba(0,0,0,0.15) 100%)' }}
-              data-testid="section-lead-gen"
-            >
-              <div className="flex items-center justify-between gap-4 mb-4 cursor-pointer" onClick={() => setShowLeadGen(!showLeadGen)}>
-                <div>
-                  <div className="text-xs text-orange-400 uppercase tracking-[0.16em] font-black mb-1">Lead Generation</div>
-                  <div className="text-lg font-black text-white">3 Sources of Leads</div>
-                </div>
-                <button className="w-10 h-10 rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400 grid place-items-center transition-transform hover:bg-orange-500/20">
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Lead Gen Progress */}
-              <div className="p-4 rounded-2xl border border-orange-500/25 bg-gradient-to-r from-orange-500/10 to-orange-600/5 mb-4">
-                <div className="flex justify-between items-baseline gap-4 mb-2.5">
-                  <div className="text-xs text-orange-300/80 font-extrabold uppercase tracking-widest">Lead Gen Progress</div>
-                  <div className="text-xs text-orange-300/80 font-extrabold">
-                    Step {leadGenCards.findIndex(c => c.id === activeLeadCard) + 1} / {leadGenCards.length}
-                  </div>
-                </div>
-                <div className="h-2.5 rounded-full bg-black/40 overflow-hidden">
-                  <div 
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ 
-                      width: `${leadProgress}%`,
-                      background: 'linear-gradient(90deg, #f97316, #fb923c, #fdba74)'
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Lead Gen Timeline */}
-              <div className="relative flex gap-5 overflow-x-auto pb-5 pt-5 px-1 scroll-smooth" style={{ scrollSnapType: 'x mandatory' }}>
-                <div className="absolute left-2.5 right-2.5 top-2.5 h-[3px] rounded-full bg-gradient-to-r from-orange-500/50 via-orange-400/40 to-orange-300/30 pointer-events-none" />
-                
-                {filteredLeadCards.map(card => (
-                  <article
-                    key={card.id}
-                    onClick={() => openDrawer(card)}
-                    className={`flex-shrink-0 w-[340px] max-w-[380px] rounded-[22px] border p-5 cursor-pointer transition-all duration-300 ${
-                      activeLeadCard === card.id
-                        ? 'border-orange-500 bg-gradient-to-br from-orange-500/20 to-orange-600/10 shadow-2xl shadow-orange-500/25 -translate-y-1'
-                        : 'border-orange-500/25 bg-gradient-to-b from-orange-500/8 to-black/20 hover:border-orange-400 hover:-translate-y-1 hover:shadow-2xl hover:shadow-orange-500/20'
-                    }`}
-                    style={{ scrollSnapAlign: 'start', boxShadow: '0 18px 55px rgba(0,0,0,.45)' }}
-                    data-testid={`card-${card.id}`}
-                  >
-                    <div className="flex justify-between items-start gap-3 mb-3">
-                      <h3 className="font-black text-base text-white leading-tight">{card.title}</h3>
-                      <span className="flex-shrink-0 px-3 py-2 rounded-full border border-orange-400/60 bg-orange-500/20 text-orange-300 font-black text-xs tracking-wide">
-                        {card.badge}
-                      </span>
-                    </div>
-                    
-                    <ul className="list-disc pl-5 text-white/80 text-sm font-semibold leading-relaxed mb-3">
-                      {card.items.map((item, i) => (
-                        <li key={i} className="mb-2 marker:text-orange-400">{item}</li>
-                      ))}
-                    </ul>
-
-                    <div className="grid gap-2.5 mt-3">
-                      {card.meta.map((m, i) => (
-                        <div key={i} className="flex justify-between items-center gap-3 px-3.5 py-3 rounded-xl border border-orange-500/20 bg-black/40 text-sm font-bold text-white/80">
-                          <span className="text-orange-400 font-black">{m.label}</span>
-                          <span className="flex items-center gap-2">
-                            {m.label === 'Meeting Type' && getMeetingIcon(m.value)}
-                            {m.value}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <button 
-                      className="mt-4 w-full py-3.5 rounded-xl border border-orange-500/40 bg-orange-500/10 text-orange-300 font-black transition-all hover:-translate-y-0.5 hover:border-orange-400 hover:bg-orange-500/20"
-                      data-testid={`button-details-${card.id}`}
-                    >
-                      View Details
-                    </button>
-                  </article>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Sales Track Section - PURPLE THEME */}
-          {showTrack && (
-            <section 
-              className="px-5 py-5 border-b border-[#D3126A]/20" 
-              style={{ background: 'linear-gradient(180deg, rgba(139,92,246,0.08) 0%, rgba(0,0,0,0.15) 100%)' }}
-              data-testid="section-track"
-            >
-              <div className="flex items-center justify-between gap-4 mb-4 cursor-pointer" onClick={() => setShowTrack(!showTrack)}>
-                <div>
-                  <div className="text-xs text-de-magenta-ink uppercase tracking-[0.16em] font-black mb-1">Sales Process Track</div>
-                  <div className="text-lg font-black text-white">
-                    {activeTab === 'ecosystem' ? 'ProActive Ecosystem' : 'Cybersecurity Track'}
-                  </div>
-                </div>
-                <button className="w-10 h-10 rounded-xl border border-[#D3126A]/30 bg-[#D3126A]/10 text-de-magenta-ink grid place-items-center transition-transform hover:bg-[#D3126A]/20">
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Track Progress */}
-              <div className="p-4 rounded-2xl border border-[#D3126A]/25 bg-gradient-to-r from-[#D3126A]/10 to-transparent mb-4">
-                <div className="flex justify-between items-baseline gap-4 mb-2.5">
-                  <div className="text-xs text-de-magenta-ink/80 font-extrabold uppercase tracking-widest">Track Progress</div>
-                  <div className="text-xs text-de-magenta-ink/80 font-extrabold">
-                    Step {trackCards.findIndex(c => c.id === activeTrackCard) + 1} / {trackCards.length}
-                  </div>
-                </div>
-                <div className="h-2.5 rounded-full bg-black/40 overflow-hidden">
-                  <div 
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{ 
-                      width: `${trackProgress}%`,
-                      background: 'linear-gradient(90deg, #8b5cf6, #a78bfa, #c4b5fd)'
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Row Header */}
-              <div className="mb-4 px-1.5">
-                <div className="text-xs text-de-magenta-ink uppercase tracking-[0.15em] font-extrabold mb-2">
-                  {activeTab === 'ecosystem' ? 'Sales Process' : 'Cybersecurity Track'}
-                </div>
-                <div className="text-xl font-extrabold text-white leading-snug">
-                  {activeTab === 'ecosystem' 
-                    ? 'Qualification → Discovery → Technical Assessment → Prescribe/Close → Follow-Up'
-                    : 'Co-Managed Cyber (cyber-only OR roll into ProActive Ecosystem)'
-                  }
-                </div>
-              </div>
-
-              {/* Track Timeline */}
-              <div className="relative flex gap-5 overflow-x-auto pb-5 pt-8 px-1 scroll-smooth" style={{ scrollSnapType: 'x mandatory' }}>
-                <div className="absolute left-4 right-4 top-5 h-[3px] rounded-full bg-gradient-to-r from-[#D3126A]/50 via-[#D3126A]/40 to-[#D3126A]/30 pointer-events-none" />
-                
-                {filteredTrackCards.map(card => (
-                  <article
-                    key={card.id}
-                    onClick={() => openDrawer(card)}
-                    className={`flex-shrink-0 w-[360px] max-w-[390px] rounded-[20px] border p-5 cursor-pointer transition-all duration-300 backdrop-blur-[18px] overflow-hidden ${
-                      activeTrackCard === card.id
-                        ? 'border-[#D3126A] bg-gradient-to-br from-[#D3126A]/20 to-transparent shadow-2xl shadow-[#D3126A]/25 -translate-y-1 scale-[1.01]'
-                        : 'border-[#D3126A]/25 bg-gradient-to-br from-[#D3126A]/8 to-black/20 hover:border-[#D3126A] hover:-translate-y-1.5 hover:scale-[1.01] hover:shadow-2xl hover:shadow-[#D3126A]/20'
-                    }`}
-                    style={{ scrollSnapAlign: 'start', boxShadow: '0 20px 60px rgba(0,0,0,.40)' }}
-                    data-testid={`card-${card.id}`}
-                  >
-                    <div className="flex justify-between items-start gap-3 mb-3.5">
-                      <h3 className="font-black text-base text-white leading-tight">{card.title}</h3>
-                      <span className="flex-shrink-0 px-3.5 py-2 rounded-full border border-[#D3126A]/60 bg-[#D3126A]/20 text-de-magenta-ink font-black text-xs tracking-wide">
-                        {card.badge}
-                      </span>
-                    </div>
-                    
-                    <ul className="list-disc pl-5 text-white/80 text-sm font-medium leading-relaxed mb-3.5">
-                      {card.items.map((item, i) => (
-                        <li key={i} className="mb-2 marker:text-de-magenta-ink">{item}</li>
-                      ))}
-                    </ul>
-
-                    <div className="grid gap-3 mt-3.5">
-                      {card.meta.map((m, i) => (
-                        <div key={i} className="flex justify-between items-center gap-3 px-3.5 py-3 rounded-xl border border-[#D3126A]/20 bg-black/40 text-sm font-semibold text-white/80">
-                          <span className="text-de-magenta-ink font-extrabold">{m.label}</span>
-                          <span className="flex items-center gap-2 text-right">
-                            {m.label === 'Meeting Type' && getMeetingIcon(m.value)}
-                            <span className="max-w-[160px] truncate">{m.value}</span>
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <button 
-                      className="mt-4 w-full py-3.5 rounded-xl border border-[#D3126A]/40 bg-[#D3126A]/10 text-de-magenta-ink font-extrabold transition-all hover:-translate-y-0.5 hover:border-[#D3126A] hover:bg-[#D3126A]/20"
-                      data-testid={`button-details-${card.id}`}
-                    >
-                      View Details
-                    </button>
-                  </article>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* TBR / SBR Reviews Section - EMERALD/TEAL THEME */}
-          {showReviews && (
-            <section 
-              className="px-5 py-5" 
-              style={{ background: 'linear-gradient(180deg, rgba(16,185,129,0.08) 0%, rgba(0,0,0,0.15) 100%)' }}
-              data-testid="section-reviews"
-            >
-              <div className="flex items-center justify-between gap-4 mb-4 cursor-pointer" onClick={() => setShowReviews(!showReviews)}>
-                <div>
-                  <div className="text-xs text-emerald-400 uppercase tracking-[0.16em] font-black mb-1">Business Reviews</div>
-                  <div className="text-lg font-black text-white">TBR & SBR — 1–2 Reviews Per Year</div>
-                </div>
-                <button className="w-10 h-10 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 grid place-items-center transition-transform hover:bg-emerald-500/20">
-                  <ChevronDown className="w-5 h-5" />
-                </button>
-              </div>
-
-              <p className="text-emerald-200/70 text-sm font-medium mb-5 max-w-3xl">
-                Scheduled strategic reviews to ensure ongoing alignment between technology investments, security posture, and business objectives.
-              </p>
-
-              {/* Reviews Timeline */}
-              <div className="grid md:grid-cols-2 gap-5">
-                {filteredReviewCards.map(card => (
-                  <article
-                    key={card.id}
-                    onClick={() => openReviewDrawer(card)}
-                    className={`rounded-[20px] border p-5 cursor-pointer transition-all duration-300 backdrop-blur-[18px] overflow-hidden ${
-                      activeReviewCard === card.id
-                        ? 'border-emerald-500 bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 shadow-2xl shadow-emerald-500/25 -translate-y-1'
-                        : 'border-white/15 bg-gradient-to-br from-white/[0.10] to-white/[0.03] hover:border-emerald-500/45 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/15'
-                    }`}
-                    style={{ boxShadow: '0 18px 55px rgba(0,0,0,.40)' }}
-                    data-testid={`card-${card.id}`}
-                  >
-                    <div className="flex justify-between items-start gap-3 mb-3.5">
-                      <div className="flex items-center gap-3">
-                        {card.type === 'tbr' ? (
-                          <div className="w-10 h-10 rounded-xl border border-blue-500/40 bg-blue-500/15 grid place-items-center">
-                            <BarChart3 className="w-5 h-5 text-blue-400" />
-                          </div>
-                        ) : (
-                          <div className="w-10 h-10 rounded-xl border border-emerald-500/40 bg-emerald-500/15 grid place-items-center">
-                            <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                          </div>
-                        )}
-                        <h3 className="font-black text-base text-white leading-tight">{card.title}</h3>
-                      </div>
-                      <span className={`flex-shrink-0 px-3.5 py-2 rounded-full border font-black text-xs tracking-wide ${
-                        card.type === 'tbr' 
-                          ? 'border-blue-500/45 bg-blue-500/15 text-blue-400'
-                          : 'border-emerald-500/45 bg-emerald-500/15 text-emerald-400'
-                      }`}>
-                        {card.badge}
-                      </span>
-                    </div>
-                    
-                    <ul className="list-disc pl-5 text-white/80 text-sm font-medium leading-relaxed mb-3.5">
-                      {card.items.map((item, i) => (
-                        <li key={i} className={`mb-2 ${card.type === 'tbr' ? 'marker:text-blue-400' : 'marker:text-emerald-400'}`}>{item}</li>
-                      ))}
-                    </ul>
-
-                    <div className="grid gap-2.5 mt-3.5">
-                      {card.meta.map((m, i) => (
-                        <div key={i} className="flex justify-between items-center gap-3 px-3.5 py-2.5 rounded-xl border border-white/12 bg-black/25 text-sm font-semibold text-white/80">
-                          <span className={`font-extrabold ${card.type === 'tbr' ? 'text-blue-400' : 'text-emerald-400'}`}>{m.label}</span>
-                          <span className="flex items-center gap-2 text-right">
-                            {m.label === 'Meeting Type' && getMeetingIcon(m.value)}
-                            <span className="max-w-[180px] truncate">{m.value}</span>
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <button 
-                      className={`mt-4 w-full py-3.5 rounded-xl border border-white/15 bg-black/30 text-white font-extrabold transition-all hover:-translate-y-0.5 ${
-                        card.type === 'tbr' 
-                          ? 'hover:border-blue-500 hover:bg-blue-500/10'
-                          : 'hover:border-emerald-500 hover:bg-emerald-500/10'
-                      }`}
-                      data-testid={`button-details-${card.id}`}
-                    >
-                      View Details
-                    </button>
-                  </article>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Detail Drawer - Color based on scope */}
-          {drawerCard && (
-            <div className={`mx-5 mb-6 rounded-[20px] border p-5 backdrop-blur-[18px] ${
-              drawerCard.scope === 'lead' 
-                ? 'border-orange-500/45' 
-                : 'border-[#D3126A]/45'
-            }`}
-                 style={{ 
-                   background: drawerCard.scope === 'lead'
-                     ? 'linear-gradient(180deg, rgba(249,115,22,.14), rgba(0,0,0,.22))'
-                     : 'linear-gradient(180deg, rgba(139,92,246,.14), rgba(0,0,0,.22))',
-                   boxShadow: '0 26px 90px rgba(0,0,0,.65)'
-                 }}
-                 data-testid="drawer-detail"
-            >
-              <div className="flex justify-between items-center gap-4 mb-4">
-                <span className={`inline-flex items-center gap-2 px-3 py-2 rounded-full border font-black text-xs uppercase tracking-wider ${
-                  drawerCard.scope === 'lead'
-                    ? 'border-orange-500/55 bg-orange-500/15 text-orange-300'
-                    : 'border-[#D3126A]/55 bg-[#D3126A]/15 text-de-magenta-ink'
-                }`}>
-                  {drawerCard.phase}
-                </span>
-                <button 
-                  onClick={() => setDrawerCard(null)}
-                  className="w-10 h-10 rounded-xl border border-white/20 bg-black/30 text-white text-xl font-black grid place-items-center hover:border-white/40"
-                  data-testid="button-close-drawer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <h3 className="text-2xl font-black text-white mb-3">{drawerCard.title}</h3>
-              
-              <div className="text-white/80 font-semibold leading-relaxed text-[15px]">
-                {drawerCard.meta.find(m => m.label === 'Meeting Type') && (
-                  <p className="mb-3 flex items-center gap-2">
-                    <Calendar className={`w-4 h-4 ${drawerCard.scope === 'lead' ? 'text-orange-400' : 'text-de-magenta-ink'}`} />
-                    <b className={drawerCard.scope === 'lead' ? 'text-orange-400' : 'text-de-magenta-ink'}>Meeting Type:</b> {drawerCard.meta.find(m => m.label === 'Meeting Type')?.value}
-                  </p>
-                )}
-                
-                {drawerCard.details.title && (
-                  <p className="mb-2"><b className={drawerCard.scope === 'lead' ? 'text-orange-400' : 'text-de-magenta-ink'}>{drawerCard.details.title}:</b></p>
-                )}
-                
-                <ul className="list-disc pl-6 space-y-2">
-                  {drawerCard.details.content.map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-
-          {/* Review Detail Drawer */}
-          {drawerReviewCard && (
-            <div className={`mx-5 mb-6 rounded-[20px] border p-5 backdrop-blur-[18px] ${
-              drawerReviewCard.type === 'tbr' 
-                ? 'border-blue-500/45'
-                : 'border-emerald-500/45'
-            }`}
-                 style={{ 
-                   background: drawerReviewCard.type === 'tbr'
-                     ? 'linear-gradient(180deg, rgba(59,130,246,.14), rgba(0,0,0,.22))'
-                     : 'linear-gradient(180deg, rgba(16,185,129,.14), rgba(0,0,0,.22))',
-                   boxShadow: '0 26px 90px rgba(0,0,0,.65)'
-                 }}
-                 data-testid="drawer-review-detail"
-            >
-              <div className="flex justify-between items-center gap-4 mb-4">
-                <div className="flex items-center gap-3">
-                  {drawerReviewCard.type === 'tbr' ? (
-                    <div className="w-10 h-10 rounded-xl border border-blue-500/40 bg-blue-500/15 grid place-items-center">
-                      <BarChart3 className="w-5 h-5 text-blue-400" />
-                    </div>
-                  ) : (
-                    <div className="w-10 h-10 rounded-xl border border-emerald-500/40 bg-emerald-500/15 grid place-items-center">
-                      <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                    </div>
-                  )}
-                  <span className={`inline-flex items-center gap-2 px-3 py-2 rounded-full border font-black text-xs uppercase tracking-wider ${
-                    drawerReviewCard.type === 'tbr'
-                      ? 'border-blue-500/55 bg-blue-500/15 text-white'
-                      : 'border-emerald-500/55 bg-emerald-500/15 text-white'
-                  }`}>
-                    {drawerReviewCard.badge} — {drawerReviewCard.frequency}
-                  </span>
-                </div>
-                <button 
-                  onClick={() => setDrawerReviewCard(null)}
-                  className="w-10 h-10 rounded-xl border border-white/20 bg-black/30 text-white text-xl font-black grid place-items-center hover:border-white/40"
-                  data-testid="button-close-review-drawer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <h3 className="text-2xl font-black text-white mb-3">{drawerReviewCard.title}</h3>
-              
-              <div className="text-white/80 font-semibold leading-relaxed text-[15px]">
-                {drawerReviewCard.details.title && (
-                  <p className="mb-3">
-                    <b className={drawerReviewCard.type === 'tbr' ? 'text-blue-400' : 'text-emerald-400'}>
-                      {drawerReviewCard.details.title}:
-                    </b>
-                  </p>
-                )}
-                
-                <ul className="list-disc pl-6 space-y-2">
-                  {drawerReviewCard.details.content.map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-
+            )}
+          </Panel>
         </div>
-      </div>
+      )}
+
+      {/* Detail Drawer */}
+      {drawerCard && (
+        <div data-testid="drawer-detail">
+          <Panel
+            id="sales-drawer"
+            title={drawerCard.title}
+            description={<Token label={drawerCard.phase} tone={drawerCard.scope === 'lead' ? 'warn' : 'brand'} />}
+            actions={
+              <Button type="button" variant="ghost" size="icon" aria-label="Close details" onClick={() => setDrawerCard(null)} data-testid="button-close-drawer">
+                <X className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            }
+          >
+            <div className="text-sm leading-relaxed">
+              {drawerCard.meta.find(m => m.label === 'Meeting Type') && (
+                <p className="mb-3 flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <b>Meeting Type:</b> {drawerCard.meta.find(m => m.label === 'Meeting Type')?.value}
+                </p>
+              )}
+
+              {drawerCard.details.title && (
+                <p className="mb-2"><b>{drawerCard.details.title}:</b></p>
+              )}
+
+              <ul className="list-disc space-y-2 pl-6">
+                {drawerCard.details.content.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </Panel>
+        </div>
+      )}
+
+      {/* Review Detail Drawer */}
+      {drawerReviewCard && (
+        <div data-testid="drawer-review-detail">
+          <Panel
+            id="sales-review-drawer"
+            title={
+              <span className="inline-flex items-center gap-2">
+                {drawerReviewCard.type === 'tbr' ? (
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                ) : (
+                  <ShieldCheck className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                )}
+                {drawerReviewCard.title}
+              </span>
+            }
+            description={<Token label={`${drawerReviewCard.badge} — ${drawerReviewCard.frequency}`} tone={drawerReviewCard.type === 'tbr' ? 'info' : 'ok'} />}
+            actions={
+              <Button type="button" variant="ghost" size="icon" aria-label="Close review details" onClick={() => setDrawerReviewCard(null)} data-testid="button-close-review-drawer">
+                <X className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            }
+          >
+            <div className="text-sm leading-relaxed">
+              {drawerReviewCard.details.title && (
+                <p className="mb-3"><b>{drawerReviewCard.details.title}:</b></p>
+              )}
+
+              <ul className="list-disc space-y-2 pl-6">
+                {drawerReviewCard.details.content.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </Panel>
+        </div>
+      )}
     </div>
     </PortalLayout>
   );

@@ -8,6 +8,7 @@ import {
   setClientPricing,
   toPriceOverrides,
 } from "./storeClientPricing";
+import { paymentRateLimiter } from "./middleware/rateLimiter";
 
 type StoreRole = "public" | "prospect" | "managed" | "comanaged" | "admin";
 
@@ -15,6 +16,14 @@ const RECURRING_STORE_CATEGORIES = new Set<StoreProduct["category"]>([
   "comanaged_subscriptions",
   "networking_managed",
   "ucaas_subscriptions",
+]);
+
+// Physical goods that ship: they cannot be charged online until a shipping
+// destination and tax/fulfillment are captured (issue #247). They move through
+// Request Quote instead. The catalog flag isCheckoutEnabled is deliberately
+// left on, so these items still appear in quotes (shared/storeCommerce.ts).
+const PHYSICAL_FULFILLMENT_CATEGORIES = new Set<StoreProduct["category"]>([
+  "hardware_physical",
 ]);
 
 type CheckoutRequest = Request & {
@@ -71,6 +80,19 @@ export function recurringCheckoutSkus(items: CanonicalCheckoutLineItem[]): strin
     .filter((item) => {
       const product = storeProducts.find((candidate) => candidate.id === item.productId);
       return !!product && isRecurringSubscriptionProduct(product);
+    })
+    .map((item) => item.sku);
+}
+
+export function isPhysicalFulfillmentProduct(product: StoreProduct): boolean {
+  return PHYSICAL_FULFILLMENT_CATEGORIES.has(product.category);
+}
+
+export function physicalFulfillmentSkus(items: CanonicalCheckoutLineItem[]): string[] {
+  return items
+    .filter((item) => {
+      const product = storeProducts.find((candidate) => candidate.id === item.productId);
+      return !!product && isPhysicalFulfillmentProduct(product);
     })
     .map((item) => item.sku);
 }
@@ -265,7 +287,7 @@ export function registerSecureZohoStoreCheckout(
 
   app.post(
     "/api/store/checkout/zoho",
-    [authMiddleware as any, requireRole("comanaged", "admin") as any],
+    [paymentRateLimiter as any, authMiddleware as any, requireRole("comanaged", "admin") as any],
     async (req: CheckoutRequest, res: Response) => {
       try {
         const { billing } = req.body || {};
@@ -304,6 +326,22 @@ export function registerSecureZohoStoreCheckout(
             skus: recurringSkus,
             error:
               "Recurring services require subscription billing setup before online payment. Request a quote for these items.",
+          });
+        }
+
+        const physicalSkus = physicalFulfillmentSkus(lineItems);
+        if (physicalSkus.length > 0) {
+          console.warn("[SECURITY] PHYSICAL_FULFILLMENT_BLOCKED", {
+            userId: req.userId,
+            clientId: req.user?.clientId,
+            skus: physicalSkus,
+          });
+          return res.status(409).json({
+            code: "PHYSICAL_FULFILLMENT_REQUIRED",
+            quoteRequired: true,
+            skus: physicalSkus,
+            error:
+              "Physical hardware needs a shipping address and tax before payment. Request a quote for these items.",
           });
         }
 
@@ -460,7 +498,7 @@ export function registerSecureZohoStoreCheckout(
   // Register before legacy routes.ts so this server-authoritative handler wins.
   app.post(
     "/api/store/orders",
-    [authMiddleware as any, requireRole("comanaged", "admin") as any],
+    [paymentRateLimiter as any, authMiddleware as any, requireRole("comanaged", "admin") as any],
     async (req: CheckoutRequest, res: Response) => {
       try {
         const role = (req.user?.storeRole || "public") as StoreRole;

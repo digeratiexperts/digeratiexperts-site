@@ -147,7 +147,7 @@ export function ServiceMatrix({
         return (
           <motion.div
             key={plan.name}
-            className="relative overflow-hidden rounded-2xl border border-de-hairline bg-de-raised p-6 group hover:-translate-y-1 transition-all duration-300"
+            className={`relative overflow-hidden rounded-2xl border border-de-hairline bg-de-raised p-6 group transition-all duration-300${prefersReducedMotion ? "" : " hover:-translate-y-1"}`}
             variants={cardVariants}
             data-testid={`plan-${plan.name.toLowerCase()}`}
           >
@@ -191,7 +191,7 @@ export function ServiceMatrix({
                 data-testid={`button-learn-more-${plan.name.toLowerCase()}`}
               >
                 <Link href={plan.learnMoreUrl}>
-                  Learn More
+                  See {plan.name} details
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>

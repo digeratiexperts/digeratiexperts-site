@@ -30,80 +30,819 @@
 
 version: 2
 claims:
+  - id: de-auth-token-identity-binding
+    owner: claude
+    subsystem: portal-auth
+    branch: claude/auth-token-identity-binding
+    base_sha: 634390fd
+    files:
+      - server/routes.ts (authMiddleware's live-user resolution only)
+      - server/warehouseAccess.ts (resolveWarehouseStaff's live-user resolution only)
+      - server/portalAuthFailClosed.test.ts (two added cases)
+      - server/legacyAuthRetired.ts, server/legacyAuthRetired.test.ts (legacy /api/auth/register and /api/auth/login answer 410)
+      - server/routes.ts (legacy register/login handlers and their now-unused helpers removed)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Issue 236 (P0), confirmed on a local production build after Joe's "so
+      everything is complete and we cant think of things to do now?":
+      authMiddleware resolved the live user by the token's email before its
+      userId and never checked the two agreed, so a validly-signed token whose
+      email names another account (e.g. one minted by the unauthenticated
+      legacy /api/auth/register, which lets the caller choose any email)
+      resolved to that account and assumed its role, admin included, with no
+      password or MFA. Reproduced: a legacy-register token carrying a portal
+      admin's email authenticated as that admin. The email lookup is now
+      trusted only when it resolves to the token's own userId, in both
+      authMiddleware and resolveWarehouseStaff. Two regression tests fail
+      against the old code. Per the issue's preferred fix, the legacy
+      /api/auth/register and /api/auth/login token minters are retired (410
+      Gone, end-to-end test). Follow-up (own PR): gate the PATCH
+      /api/portal/profile email change on a confirmation to the new address.
+  - id: de-desk-hardening
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 2db33c7
+    files:
+      - client/src/components/ZohoASAPWidget.tsx (docked height ceiling, focus trap and return, resize handles out of the tab order, forced-colours block, hint effects through the new module)
+      - client/src/components/SiteBottomBar.tsx (the chooser's Close button moved last in the DOM)
+      - client/src/lib/deskHints.ts, client/src/lib/deskHints.test.ts
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
+      - scripts/desk-browser-smoke.mjs, package.json (smoke:desk; tailwindcss-animate moved to devDependencies), package-lock.json (dev markers only), .github/workflows/ci.yml (one line after smoke:door2)
+      - .cursor/skills/de-desk-ui/tokens-and-structure.md (a11y)
+      - artifacts/visual-qa/desk-hardening/**
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03, on "nothing to act on": "nothing to improve, nothing to
+      test? I doubt any of those are true". A Desk hardening pass found and
+      fixed: the Desk rising off the top of short screens (a phone held
+      sideways, 200% zoom); eight pointer-only resize handles in the tab
+      order and, after removing them, the trap letting focus slip out; focus
+      dropping to the page body on close; the chooser opening with focus on
+      Close; gold-only states vanishing in forced colours. The hint rules move
+      to a tested module, and a Desk browser smoke runs in CI. axe-core finds
+      no violations in any Desk state at 390 or 1440. CI then failed every PR on
+      the production dependency audit (a new braces advisory with no patch,
+      reaching prod only via the build-time plugin tailwindcss-animate); Joe
+      chose to fold the fix into this PR: the plugin moves to devDependencies.
+  - id: portal-people-pick-company
+    owner: claude
+    subsystem: client-portal-pages
+    branch: claude/portal-people-pick-company
+    base_sha: 5de266e8ed762d6328fef126ba7b017bcd8d8a21
+    files:
+      - client/src/pages/portal/PortalPeople.tsx
+      - client/src/components/portal/TenantSelector.tsx
+      - artifacts/visual-qa/portal-people-pick-company/**
+    status: verified-live
+    started: 2026-10-02
+    released: 2026-10-02
+    pr: 330
+    merge_sha: 2859b15c4ad9a5131ca6c8ce086afe4ba1cf3f0d
+    verification: >-
+      Merged on Joe's "merge" (2026-10-02). Production release.txt reads
+      2859b15c; PortalPeople-DMDwOVcy.js carries "Pick a company to view its
+      people", the switcher actions and the clientId scoping; /healthz 200.
+    note: >-
+      Joe, 2026-10-02, "6. a": replace People & Org's error for a DE admin who
+      is not viewing as a company with a pick-a-company prompt, as a small
+      separate PR. Fixing it exposed two pre-existing client bugs on the same
+      path: the company switcher stored the literal "undefined" as the token
+      and company (apiRequest resolves to a Response, never parsed), and People
+      & Org never named the viewed company, so even a working switch answered
+      400. Client-only; the server already lets admins name the company.
+# claude-completion-program-lane (branch claude/c8-cross-surface) RETIRED
+# 2026-10-02 on Joe's "see what you can use and redesign into gaps". Audit of
+# the only pushed branch, claude/c1-visual-a11y-repairs-20260912, against main
+# 5de266e8: its content reached main through PR #216 (12cbb8d, 2026-09-18) as
+# snapshot 4091dcf plus 9029aa6, dde2589, 2756f2f and c87deba; the lane tip and
+# c87deba diff empty. Superseded since: store rail (Stations), portal a11y fixes
+# (rebuilt in PRs 294/316). Obsolete: DE Desk graphite shell (Joe chose the
+# white panel 2026-09-28). Still useful and carried on claude/client-portal-
+# access-ukxrnn (portal-followups-2026-10-02): MfaSetup onto the kit, the two
+# auth states without an h1, the remaining <a><button> nests, the PortalChat h1.
+# c3..c8 were never pushed. Files released.
+  - id: portal-followups-2026-10-02
+    owner: claude
+    subsystem: client-portal-shell
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: 5de266e8ed762d6328fef126ba7b017bcd8d8a21
+    files:
+      - client/src/components/portal/shell/portalTheme.ts
+      - client/src/components/portal/shell/portalTheme.test.ts
+      - client/src/components/portal/shell/PortalUserMenu.tsx
+      - client/src/pages/portal/PortalLayout.tsx
+      - artifacts/visual-qa/portal-theme/**
+      - client/src/components/portal/MfaSetup.tsx
+      - client/src/components/ui/sidebar.tsx
+      - client/src/pages/portal/PortalSignup.tsx
+      - client/src/pages/portal/PortalForgotPassword.tsx
+      - client/src/pages/portal/PortalResetPassword.tsx
+      - client/src/pages/portal/PortalChat.tsx (h1 and Tickets link only)
+      - client/src/pages/portal/PortalLogin.tsx (skip target, link underline)
+      - client/src/pages/portal/PortalAdvancedForms.tsx (list markup)
+      - client/src/pages/portal/PortalRoadmap.tsx (list markup)
+      - client/src/pages/portal/AdminLoginKnocks.tsx (scroll region)
+      - client/src/components/CookieConsentBanner.tsx (role and label only)
+      - artifacts/visual-qa/portal-followups/**
+    status: verified-live
+    started: 2026-10-02
+    released: 2026-10-02
+    pr: 333
+    merge_sha: 0556880b817a3990395baba979a66e0c090b574a
+    verification: >-
+      Merged on Joe's "merge" (2026-10-02). Main CI and the production deploy
+      passed; release.txt read 0556880b; portal-By2NtNGL.css carries the
+      de-portal-scope dialog fix and PortalLayout-vWUJudun.js carries "Match
+      device" and the "Client portal" nav landmark; /healthz 200.
+    note: >-
+      Joe's answers of 2026-10-02 on the portal follow-ups. 4 "a and c": dark
+      stays the default and "Match device" joins the user menu (browsers never
+      report "no preference", so a device-following default would show light
+      to most clients). 7: salvage of the stale claude-completion-program-lane
+      into gaps on today's portal follows on this branch once audited.
+  - id: de-techtool-license-followups
+    owner: claude
+    subsystem: msp-ai-kit
+    branch: claude/msp-ai-skills-prompts-htqi09
+    base_sha: d5f3479aeca56f593517b3f1800b845fffb5eb6a
+    files:
+      - .claude/skills/msp-ai-kit/windows/console/modules/DE.License/DE.License.psm1
+      - .claude/skills/msp-ai-kit/windows/console/tests/License.Tests.ps1
+      - .claude/skills/msp-ai-kit/windows/console/DETechConsole.ps1 (the licence card, the launch scan job and the headless licence lines only)
+      - .claude/skills/msp-ai-kit/windows/packaging/New-DEReleasePackage.ps1
+      - .claude/skills/msp-ai-kit/windows/console/catalog/cheatsheet.json (the Licence section only)
+      - .claude/skills/msp-ai-kit/windows/console/VERSION
+      - .claude/skills/msp-ai-kit/windows/PROTECTING-THE-TOOL.md
+      - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md (the Licences section only)
+      - .claude/skills/msp-ai-kit/windows/DE-TECH-TOOL-ARCHITECTURE.md (the version line only)
+    status: active
+    started: 2026-10-02
+    note: >-
+      Joe, 2026-10-02: "ALL APPROVED, CONTINUE" (decision 4A): the DE Tech
+      Tool side of the Hub licence service merged in Intelligence-Hub PR 310.
+      The tool downloads the Hub's revocation list
+      (GET /api/techtool/license/revocations) into its protected data folder,
+      never into trust/ (covered by integrity.json), and refuses a licence
+      revoked in either list; a release build refreshes the shipped
+      trust/revoked.json; a licence pinned to another build (bid) is refused
+      as wrong-build. Overlap check: no open PR and no remote branch touches
+      .claude/skills/msp-ai-kit on d5f3479a.
+  - id: de-desk-expand-hint
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: d5f3479
+    files:
+      - client/src/components/ZohoASAPWidget.tsx (the hints' state, the expand button, the composer wrapper class, and the Desk stylesheet)
+      - artifacts/visual-qa/desk-composer-hint/**, artifacts/visual-qa/desk-polish/**
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
+      - .cursor/skills/de-desk-ui/tokens-and-structure.md (the header line)
+      - artifacts/visual-qa/desk-expand-hint/**
+    status: verified-live
+    started: 2026-10-02
+    note: >-
+      Joe, 2026-10-02, on the Desk's expand button: "animate this so people
+      know to make it full screen". A finite hint on the gold Desk: three gold
+      pulses with the arrows pushing outward and a "Full screen" label, about
+      five seconds after the docked Desk opens; at most once per page load and
+      three times per browser, retired once full screen is used, off while a
+      person is live, off on phones; reduced motion keeps the label without
+      movement. No logic beyond the hint's own state. Joe, same day: "same
+      with the chat text box field": the Ask DE text box gets the same kind
+      of finite hint, played first, with the full-screen hint waiting for it.
+      Then: "look over the entire DE Desk popup and make sure it's fully
+      optimized and has all the missing touches and looks perfect": a full
+      Desk polish pass on the same claim (stylesheet and presentation only).
+      RELEASED 2026-10-02: merged as 2db33c7 (PR 331, on Joe's "continue"
+      after the PR was reported waiting on his merge). The CI run for 2db33c7
+      passed, including "Deploy and verify production VPS" (14:59Z). VERIFIED
+      LIVE 14:59:32Z: production serves ZohoASAPWidget-Cr8yHhV2.js with both
+      hints, the error bubble, the ticket label and the full-screen column; a
+      browser on digeratiexperts.com at 390, 768 and 1440 saw the text box
+      hint play, the full-screen hint follow it without overlap (none at 390,
+      by design), the Details box at 148px, the full-screen flag set, and no
+      horizontal overflow (artifacts/visual-qa/desk-polish/live/). Nothing was
+      sent to production. Files released.
+  - id: de-static-cache-policy
+    owner: claude
+    subsystem: server-static
+    branch: claude/static-cache-policy
+    base_sha: d5f3479a
+    files:
+      - server/staticCacheControl.ts
+      - server/staticCacheControl.test.ts
+      - server/index.ts (the dist/public express.static options only)
+    status: verified-live
+    started: 2026-10-02
+    note: >-
+      Found during the "is it really done" audit: production served release.txt
+      (the deploy marker) with a one-year browser cache, as it did
+      site.webmanifest, .well-known/security.txt and the resource PDFs, and
+      marked the self-hosted fonts and pdf.js vendor files immutable under names
+      that never change. Only Vite's hashed output (flat in assets/) is cached
+      forever now; everything else revalidates daily, images at 30 days, and
+      release.txt / HTML are no-store.
+      RELEASED 2026-10-02: merged as daddd51953bed567f108cf6b255e0b26390d3d6a
+      (PR 338). VERIFIED LIVE: production serves daddd519 (deploy run
+      completed/success); release.txt answers no-cache, no-store,
+      must-revalidate (a stable name, off the one-year cache); the hashed
+      bundle /assets/index-Cc3_YY6t.js answers public, max-age=31536000,
+      immutable; /healthz 200. Files released.
+  - id: de-homepage-section-mockups
+    owner: claude
+    subsystem: homepage-design-concepts
+    branch: claude/sleepy-archimedes-mccoav
+    base_sha: 8fc5524907dc3fe450c9ba32b7c852a4b5ac4354
+    files:
+      - artifacts/design-concepts/homepage-sections-2026-10/**
+      - client/src/pages/versions/v7/**
+      - client/src/pages/versions/registry.ts (the v7 entry)
+      - client/src/pages/versions/README.md (the v7 row)
+      - client/src/App.tsx (the /version-7 route and its own-bottom-bar exclusion)
+      - server/spaKnownPaths.ts, server/spaKnownPaths.test.ts (/version-7)
+      - client/src/hooks/useDockAutohide.ts (new)
+      - client/src/components/SiteBottomBar.tsx (opt-in autohide prop and its visibility lines; the Ask DE nudge's phone timing only)
+      - client/src/components/SiteBottomBar.nudge.test.ts (phone timing cases)
+      - client/src/components/HomepageSectionNav.tsx (opt-in chapter progress in HomepageDockMenu only)
+      - shared/threatFeed.ts (THREAT_ATTRIBUTION string only)
+      - server/routes.ts (the public-threats error-path attribution string only)
+    status: verified-live
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: "can you mock up every section on the live
+      Digeratiexperts.com homepage and make it look how it should look. just
+      give images of your version for each section in order." Exploration Mode
+      scoped to static mockups: one standalone HTML mock and one 1440px PNG
+      per live section in live order, built on the Tier 2 tokens, every string
+      from the transcribed content inventory, the live threat feed captured
+      2026-10-01, the founder photo as the only photograph. No client/ files;
+      production / untouched. Overlap check: PR 298 (issue 296) rewrites the
+      live homepage sections in client/; this lane does not touch them.
+      Round 3 (Joe: "continue"): the reviewed mocks become the noindex
+      /version-7 preview. Autohide is opt-in (SiteBottomBar autohide prop,
+      default off), so production chrome is unchanged. Overlap recorded:
+      draft PR 319 (Desk + Ask DE chooser) edits SiteBottomBar.tsx in the
+      chooser markup; this lane edits only the bar's visibility lines and
+      props, disjoint hunks.
+      Joe, 2026-10-02 (multiple-choice review): merge the /version-7 preview
+      now; do not replace / yet; autohide stays preview-only; keep the
+      approved phone label sizes; the Ask DE nudge overlap on the phone hero
+      stays with the Desk lane ("keep an eye on it later"); the 24/7 label is
+      already "Security Updates" in V7 (the live label survives only in frozen
+      v1/v3); proof-section review claims wait on a review-source funnel Joe
+      asked for ("connect a funnel for those sources to RSS into our data").
+      RELEASED 2026-10-02: merged as PR 315 (d5f3479a) at 13:23Z and verified
+      live: production release.txt d5f3479a, /version-7 answers 200 with
+      X-Robots-Tag noindex, nofollow, / unchanged (200), and
+      scripts/qa/homepage-v7-check.mjs passes 31/31 against production at
+      390/768/1440 including the bar autohide on the live page; the live
+      threat feed renders real CISA KEV items with full dates. Files
+      released. Open follow-ups, not claimed: the Ask DE nudge over the phone
+      hero (Desk lane); the review-source funnel (Yelp keys, Thumbtack and
+      Google copy from Joe, then a Business Profile API poller); the
+      shared THREAT_ATTRIBUTION string still reads "Digerati" alone on /.
+      Joe, 2026-10-02: naming fix approved ("YES"). THREAT_ATTRIBUTION and the
+      public-threats error fallback now read "Digerati Experts prioritizes",
+      so /, /resources/security-updates and the previews all carry the full
+      name; V7's local rename helper is removed as redundant. Rides PR 332.
+      Overlap: claim de-org-department-tenant-boundary edits server/routes.ts
+      (department routes only); this is one string in the threats route,
+      disjoint. Status returns to verified-live after the release check.
+      Review funnel: Joe chose "set it up on your own or postpone"; the Yelp
+      key, business ID and review copy can only come from Joe's accounts, so
+      it is postponed.
+      Joe, 2026-10-02: "OPTIMIZE MOBILE BEST YOU CAN" on the Ask DE nudge
+      covering the phone hero. The Desk lane (de-desk-gold) has merged and is
+      being released (PR 331), and the nudge timing is otherwise unclaimed
+      (de-ask-nudge-cookie-offset is verified-live), so it rides PR 332:
+      below 768px the nudge waits until the reader leaves the first screen,
+      then steps away after 160px of further scroll or when a field takes
+      focus (shown once per session, never marked dismissed). Desktop is
+      unchanged. V7's pronunciation row keeps a 72px right gutter on phones
+      so "Hear it" clears the Ask DE launcher. Not touched: the live hero and
+      PronunciationCard (claimed by pronunciation-and-flipbook-recovery and
+      de-site-v2-scrollcraft); at 430px the launcher still sits over the live
+      card's "Hear it" until one of those lanes or a release frees the files.
+      MERGED 2026-10-02: PR 332 as c702a4fc (Joe: "Merge #332 first").
+      VERIFIED LIVE: production release.txt c702a4fc; /api/public/threats
+      attribution reads "Digerati Experts prioritizes"; the served bundle
+      carries the Ask DE nudge with the 767px phone hold.
+      Round 4 (Joe, 2026-10-02, three dashboard references): "convert the
+      white sections to this style, well i still want white but the white on
+      cream looks stupid", "text looks so much better ... and the accent
+      colors", "this is what i mean by grey cards"; dark sections "Yes,
+      neutral grey". /version-7 only, via one overlay stylesheet
+      (client/src/pages/versions/v7/v7-dashboard.css, loaded last): white
+      paper bands with neutral grey cards, charcoal dark bands with
+      one-step-lighter cards, Inter headings, magenta-violet accents
+      (magenta stays the CTA fill). Tier 2 defaults changed on Joe's
+      direction; Tier 0/1 untouched. / is unchanged.
+      Round 5 (Joe: "we need this level of work" (uiverse.io elements), then
+      "all of it" after reviewing the DE Element Kit artifact): pointer
+      spotlight on cards (useSpotlight.ts), raised/sheen/pressed buttons,
+      drawn link underlines, floating-label fields with drawn valid checks and
+      an invalid nudge, sending → sent submit (SubmitFace.tsx), FAQ plus/minus
+      with real-height opening, city chip states, classification-tag tooltips
+      (TipTag.tsx, truthful tip text), copy buttons for email and phone
+      (CopyButton.tsx), hero posture bars fill once. Kit's switch, checkbox and
+      segmented control have no matching control on the page, so none added.
+      RELEASED 2026-10-03: rounds 4 and 5 merged as PR 344 (6ce035d6) on
+      Joe's "everything is approved" / "all approved", after merging main for
+      PR 342's production-audit fix. VERIFIED LIVE: production release.txt
+      6ce035d6; /version-7 answers 200 with X-Robots-Tag noindex, nofollow;
+      / answers 200 and is unchanged; scripts/qa/homepage-v7-check.mjs passes
+      31/31 against production; the live page shows the grey-card restyle.
+      Backups (branches, do not commit to them):
+      backup/2026-10-03-before-v7-restyle (c702a4fc),
+      backup/2026-10-03-v7-restyle-approved, backup/2026-10-03-v7-restyle-merged
+      (6ce035d6); revert guide in
+      artifacts/design-concepts/homepage-sections-2026-10/README.md. Files
+      released. Open, not claimed: the review-source funnel (postponed by
+      Joe); the 430px launcher over the live PronunciationCard "Hear it"
+      (pronunciation lane); / replacement by V7 waits on Joe.
+
+  - id: de-desk-gold
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 5de266e
+    files:
+      - client/src/components/ZohoASAPWidget.tsx (the Desk stylesheet and the chip icon class only; no logic)
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
+      - client/src/components/SiteBottomBar.tsx (the Ask DE chooser classes only)
+      - design/DESIGN-AUTHORITY.md (Desk and gold rows), design/UI-STYLE-RULES.md (support chrome), brand/README.md (gold line)
+      - .cursor/skills/de-desk-ui/**, .cursor/rules/de-desk-design.mdc, .cursor/rules/visual-system-v2.mdc
+      - design/approved/de-desk-gold-2026-10-01.md, artifacts/visual-qa/desk-gold/**
+    status: verified-live
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: of eight Desk UI mockups picked option 1, "Black +
+      Grey + Yellow", and overruled the brand rules for this surface ("build
+      it"). Built with the mark's Signal Gold #E3B23C and without the
+      mockup's glowing halo: a 1px gold cap and a white/10 hairline instead.
+      No magenta on the Desk or the chooser; the Desk logic is untouched.
+      Overlapped PR 303 (codex/de-desk-repair) on ZohoASAPWidget.tsx; that PR
+      merged (2b93cf85) and main was merged into this branch on 2026-10-01.
+      PR 303 changed ticket logic, this one only the stylesheet, so the widget
+      merged without a conflict. Main merged in again on 2026-10-02 (5de266e),
+      bringing PR 325's open-seed change to the widget. Maintenance Mode under the Product Preservation Law: every
+      tab, route, CTA, test id and behaviour kept.
+      RELEASED 2026-10-02: merged as 4b25793 (PR 319, on Joe's explicit
+      approval of the merge). The CI run for 4b25793 passed, including "Deploy
+      and verify production VPS" (13:20Z). VERIFIED LIVE 13:20:52Z: production
+      serves ZohoASAPWidget-BkU7jfpE.js with --desk-surface #0b0b0d and
+      --desk-gold, and no #fbfbfa or magenta cap; a browser on
+      digeratiexperts.com at 390, 768 and 1440 shows the chooser and the Desk
+      on the black panel with the gold cap, no page errors and no horizontal
+      overflow (artifacts/visual-qa/desk-gold/live/). Files released.
+  - id: portal-kit-long-tail
+    owner: claude
+    subsystem: client-portal-pages
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: 5e885527053e476a55bd4438b5e7ff1ebb856f7a
+    files:
+      - client/src/components/portal/ui/Panel.tsx
+      - client/src/pages/portal/PortalRoadmap.tsx
+      - client/src/pages/portal/PortalQBR.tsx
+      - client/src/pages/portal/PortalSatisfactionSurvey.tsx
+      - client/src/pages/portal/PortalQuestionnaireCalendar.tsx
+      - client/src/pages/portal/PortalLearning.tsx
+      - client/src/pages/portal/PortalMarketplace.tsx
+      - client/src/pages/portal/PortalContracts.tsx
+      - client/src/pages/portal/PortalVPN.tsx
+      - client/src/pages/portal/PortalCytracom.tsx
+      - client/src/pages/portal/PortalShipCenter.tsx
+      - client/src/pages/portal/PortalProcurementStore.tsx
+      - client/src/pages/portal/PortalPayment.tsx
+      - client/src/pages/portal/PortalOrderDetail.tsx
+      - client/src/pages/portal/PortalAgent.tsx
+      - client/src/pages/portal/OrderForm.tsx
+      - client/src/pages/portal/Admin*.tsx
+      - client/src/pages/portal/SalesProcess.tsx
+      - artifacts/visual-qa/portal-redesign/after-tail/**
+    status: verified-live
+    started: 2026-10-01
+    released: 2026-10-02
+    pr: 316
+    merge_sha: 5de266e8ed762d6328fef126ba7b017bcd8d8a21
+    verification: >-
+      Merged on Joe's explicit authorization (2026-10-02, "1. a"). Production
+      serves index-Cn6RDjCg.js; its PortalVPN-Ccc2nry2.js chunk carries the new
+      sample-data notice; /healthz 200.
+    note: >-
+      Follow-up to portal-redesign-control-room (PR 294, merged 5e885527,
+      concept A approved by Joe 2026-10-01). Joe: "continue". The 23 pages
+      that only inherited the shell are recomposed onto the kit; every API
+      call, gate, href, form field and data-testid preserved; mock pages
+      (VPN, Cytracom, Ship Center) say "sample data". PortalChat untouched
+      (Joe-decided white panel). Maintenance Mode on the approved system.
+  - id: de-known-pages-answer-200
+    owner: claude
+    subsystem: server-routing
+    branch: claude/known-pages-answer-200
+    base_sha: e5945de3
+    files:
+      - server/spaKnownPaths.ts
+      - server/spaKnownPaths.test.ts
+      - server/campaignAliasRedirects.ts
+      - server/campaignAliasRedirects.test.ts
+      - server/index.ts (the campaign alias redirect registration only)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Found by a link sweep after Joe's "so everything is complete and we cant
+      think of things to do now?": 27 of the 113 sitemap URLs (every /go
+      campaign landing, every executive brief and resource asset page) plus
+      /industries/professional-services (linked from every page's footer) and
+      /support/system-status rendered while answering HTTP 404 in production,
+      and /ads/<slug> and /lp/<slug> answered 404 before a browser redirect
+      that dropped the query string. Exact paths, so unknown slugs stay 404.
+  - id: de-org-department-tenant-boundary
+    owner: claude
+    subsystem: portal-org
+    branch: claude/org-department-tenant-boundary
+    base_sha: 576aa76d
+    files:
+      - server/portalDepartmentRoutes.ts
+      - server/portalDepartmentRoutes.test.ts
+      - server/routes.ts (the two department routes and their imports only)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Issue 254 (P0), verified still present on main 576aa76d after Joe's
+      "so everything is complete and we cant think of things to do now?": the
+      department update route followed the clientId in the request body, so a
+      Company IT Contact could rename another company's department, and both
+      routes attached a user from another company as a department's IT contact.
+      The two routes move into their own module, unchanged in path, guards and
+      order; the company now comes from the signed-in user unless the caller is
+      a DE admin, and the IT contact must be in the same company. The People
+      page's only call (create with a name) is unaffected.
+  - id: de-desk-store-seed-door2
+    owner: claude
+    subsystem: de-desk
+    branch: claude/desk-store-seed-door2
+    base_sha: 576aa76d
+    files:
+      - client/src/components/ZohoASAPWidget.tsx (the open-seed expression and one import only; no stylesheet)
+      - client/src/lib/deskOpenSeed.ts
+      - client/src/lib/deskOpenSeed.test.ts
+      - artifacts/visual-qa/desk-store-seed/**
+    status: verified-live
+    started: 2026-10-01
+    note: >-
+      Source of truth §15 row 18, item 2, unblocked when PR 303 merged and
+      de-desk-reliability-followup released the widget. The Desk seeded
+      STORE_ADVISOR_SEED on pathname.includes("/store"), so /solutions/request
+      and /solutions/business-needs (Door 2) opened without it and unrelated
+      paths containing "/store" got it. Now isDoor2Path decides, through a
+      tested helper. Joe, 2026-10-01: "merge 307 and all else is approved too".
+      Shares ZohoASAPWidget.tsx with the active de-desk-gold claim (PR 319),
+      which is scoped to the stylesheet and the chip icon class, no logic;
+      this hunk is the open handler and auto-merges with PR 319's branch.
+      RELEASED 2026-10-01: merged as 445fbf77 (PR 325). VERIFIED LIVE 23:14Z:
+      CI run 36939339444 passed, including "Deploy and verify production VPS"
+      and its runtime verification step; /healthz 200; the served Desk chunk
+      ZohoASAPWidget-BZGTGgOG.js carries deskOpenSeed (explicit seed, then
+      context "store" or isDoor2Path) and no longer has pathname.includes
+      ("/store"). Source of truth §15 row 18 is closed. Files released.
+
+  - id: de-phone-number-and-arrows
+    owner: claude
+    subsystem: homepage
+    branch: claude/phone-number-and-arrows
+    base_sha: bdb9c3a2
+    files:
+      - client/src/pages/sections/DigeratiTestimonialsSection.tsx (the phone number's wrapper only)
+      - client/src/pages/sections/DigeratiThreatsInsightsSection.tsx (the two carousel arrows' size only)
+      - client/src/pages/industries/Nonprofits.tsx (the phone number's wrapper only)
+      - client/src/pages/industries/RealEstate.tsx (the phone number's wrapper only)
+      - client/src/pages/phoneNumberNowrap.test.ts
+      - client/src/pages/sections/phoneTapTargets.test.ts (the threat-feed arrows test)
+      - artifacts/visual-qa/phone-number-and-arrows/**
+    status: verified-live
+    started: 2026-10-01
+    note: >-
+      Follow-up to PR 322 after Joe's "continue". Measured on a production
+      build: the phone number in running text broke at a hyphen ("325-" at a
+      line end) on the homepage at 375, 390 and 414 and on the nonprofits
+      page at 360 and 375; the homepage threat-feed carousel's arrows are 40px
+      on phones (they render only when the feed has recent items, which a
+      local build lacks, so the 390 audit before PR 322 never saw them).
+      Classes and one wrapper span only: no copy, link, route or test id
+      changes. Overlap: claude-completion-program-lane lists two of these
+      files, but its branch claude/c8-cross-surface is not on GitHub, the one
+      PR from its stack (219, from the c1 branch) closed without merge, and no
+      open PR comes from any branch of that stack.
+      RELEASED 2026-10-01: merged as PR 323 (bc26ac0f) at 15:20Z and verified
+      live at 15:28Z: production release.txt bc26ac0f, deploy run green,
+      /healthz 200, and the served code carries the whitespace-nowrap span
+      beside the phone number in the live homepage, nonprofits and real estate
+      chunks, and z-20 w-11 h-11 rounded-full twice in the live homepage's
+      threat-feed chunk with none of the 40px class left there (only the frozen
+      v1 and v3 chunks keep it).
+  - id: de-phone-tap-targets
+    owner: claude
+    subsystem: homepage
+    branch: claude/phone-tap-targets
+    base_sha: df4ab2ae
+    files:
+      - client/src/pages/sections/DigeratiEnhancedFooterSection.tsx (the newsletter field and FooterLink classes only)
+      - client/src/pages/sections/DigeratiTestimonialsSection.tsx (the four trust links' classes only)
+      - client/src/pages/sections/DigeratiIndustriesSection.tsx (the two slider arrows' size only)
+      - client/src/pages/sections/phoneTapTargets.test.ts
+      - artifacts/visual-qa/phone-tap-targets/**
+    status: verified-live
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: "the phone is the failure", then "continue". The phone
+      audit of main at 390 on a production build found the footer's email field
+      collapsed to 22px (a bare flex-1 in the stacked form overrode h-11), the
+      footer links at 20px with 14px gaps, the trust links under the reviews at
+      24px and the industry slider arrows at 40px. Classes only: no copy, link,
+      route, form behaviour or test id changes; desktop page and footer heights
+      unchanged (17,185px and 622px at 1440).
+      RELEASED 2026-10-01: merged as PR 322 (bdb9c3a2) at 15:00Z and verified
+      live at 15:04Z: production release.txt bdb9c3a2, deploy run green,
+      /healthz 200, and production serves entry bundle index-CkUjdLFU.js, the
+      same hash as the build of the merged tree that was measured at 390 (email
+      field 350x44, trust links 44px, slider arrows 44x44, no overlap or
+      overflow) and at 1440 (page 17,185px as before). The served code carries
+      h-11 min-h-11 min-w-0, max-md:min-h-11 and z-20 w-11 h-11 rounded-full.
+  - id: de-desk-status-auth-reason
+    owner: claude
+    subsystem: de-desk
+    branch: claude/desk-status-auth-reason
+    base_sha: df4ab2ae
+    files:
+      - server/widgetTicketRoute.ts (the status probe's reason and log line only)
+      - server/widgetTicketRoute.test.ts (the status reason tests)
+      - deploy/vps/env.production.example (the website Desk/CRM variables)
+    status: verified-live
+    started: 2026-10-01
+    note: >-
+      Follow-up to PR 303 and PR 313 after Joe's "continue". Production's Desk
+      refresh token is invalid; PR 303 stopped publishing Zoho's error code, so
+      the health probe's issue (314) could no longer say why. The status probe
+      now reports reason "auth_failed" when Zoho refuses the credential (our own
+      classification, no upstream text) and "unavailable" for network or
+      server failures. The env template gains the variables the website's Desk
+      client actually reads, which it never listed.
+      RELEASED 2026-10-01: merged as PR 321 (8e514762) at 14:48Z and verified
+      live at 14:52Z: production release.txt 8e514762, deploy run green
+      including its production runtime verification, /healthz 200, and
+      /api/zoho/desk/status answering 200 with connected true and Cache-Control
+      no-store once the Desk token was replaced. The auth_failed path is proven
+      by its tests; it cannot be seen live while the Desk is connected.
+  - id: de-desk-reliability-followup
+    issue: 291
+    owner: codex
+    subsystem: de-desk-ticket-flow
+    branch: codex/de-desk-repair
+    base_sha: 7f4cff10b00fbe3e55279989c605b16794363460
+    files:
+      - client/src/components/ZohoASAPWidget.tsx
+      - client/src/lib/deskTicketResponse*
+      - shared/deskTicket.ts
+      - server/widgetTicketRoute*
+      - server/widgetTicketFailure*
+      - server/zoho/zohoClient.ts
+      - server/zoho/zohoClient.desk.test.ts
+      - server/zoho/zohoDesk.ts
+      - server/routes.ts
+    status: verified-live
+    started: 2026-09-30
+    note: >-
+      Joe authorized takeover of PR 290. Another lane merged it at 3b90e35c;
+      this isolated follow-up preserves that merge and current main. Maintenance
+      Mode; widget changes are ticket-only, preserving the shared auth lane.
+      Claude Code remains integrator. Draft review only: rendered checks at
+      390/768/1440 are blocked by browser tooling; no merge/deploy authorized.
+      RELEASED 2026-10-01: merged as 2b93cf85 (PR 303, on Joe's "lets merge
+      things safely") after the rendered QA this claim left open: a browser
+      script drove Get Support on a production build of the merged tree at 390,
+      768 and 1440, 33/33 checks. VERIFIED LIVE 11:09Z: the deploy job and its
+      runtime check passed; production serves 2b93cf85; /api/zoho/desk/status
+      answers 503 with Cache-Control no-store and no upstream error code; an
+      invalid ticket is rejected with 400 before Zoho; the availability notice
+      is in the served bundle. NOT restored: production's Desk refresh token is
+      invalid (invalid_code before this merge; issue 314 opened by the health
+      probe), so tickets still cannot be created until the token is replaced.
+      Files released.
+  - id: de-ask-nudge-cookie-offset
+    owner: claude
+    subsystem: de-desk
+    branch: claude/desk-nudge-cookie-offset
+    base_sha: f9ae13da
+    files:
+      - client/src/components/SiteBottomBar.tsx (Ask DE nudge bottom offset only)
+      - client/src/components/SiteBottomBar.nudge.test.ts
+      - artifacts/visual-qa/ask-de-nudge-cookie/**
+    status: verified-live
+    started: 2026-10-01
+    note: >-
+      Source of truth §15 row 18, item 1, left unclaimed when de-desk-delight
+      retired: the Ask DE nudge's bottom offset omitted --de-cookie-h, which
+      the unified bar it sits on adds. Latent today (the nudge only arms after
+      consent, and the banner never returns), but with the banner's height
+      published the nudge covered the bar by that height. Adds --de-cookie-h to
+      the same calc. One style line; the frozen claude-completion-program-lane claim also lists
+      SiteBottomBar.tsx (frozen PRs 219/220, no active work on this hunk).
+      Item 2 (STORE_ADVISOR_SEED in ZohoASAPWidget.tsx) is NOT taken here: that
+      file is under Codex's de-desk-reliability-followup claim, draft PR 303.
+      RELEASED 2026-10-01: merged as 511bcf7d (PR 307, on Joe's "lets merge
+      things safely") after reconciling with main 92a9f86c. VERIFIED LIVE
+      10:59Z: the deploy job and its runtime check passed; production serves
+      511bcf7d with /healthz 200 and the nudge's cookie lift in the served
+      bundle. Row 18 item 2 (STORE_ADVISOR_SEED) stays open. Files released.
+  - id: homepage-coherence
+    issue: 296
+    owner: claude
+    subsystem: homepage
+    branch: claude/sleepy-bardeen-81jlur
+    base_sha: 74535d7
+    files:
+      - client/src/components/home/HomeChapter.tsx
+      - client/src/pages/sections/** (the 19 production homepage sections)
+      - client/src/pages/DigeratiHomepage.tsx
+      - client/src/components/HomepageSectionNav.tsx
+      - client/src/components/PronunciationCard.tsx
+      - client/src/components/EcosystemProgression.tsx
+      - client/src/index.css (.scroll-snap-chapter only)
+      - client/src/lib/homepageFields.test.ts
+      - design/approved/homepage-coherence-2026-09-30.md
+      - design/UI-STYLE-RULES.md (§6 homepage chapter grammar)
+      - artifacts/visual-qa/homepage-coherence/**
+    status: verified-live
+    started: 2026-09-30
+    note: >-
+      Joe, 2026-09-30: the live homepage "looks like a mess", the paper
+      sections too, and the sections "look like they are from 4 different
+      websites"; the on-page menu should take a different colour with
+      controlled motion; a reference mockup sets the quality target.
+      Maintenance Mode under the Product Preservation Law: every section,
+      route, CTA, form, JSON-LD block and test id is kept; the visual grammar
+      is unified onto one shared chapter primitive (HomeChapter), full-bleed
+      well/surface/paper fields, natural chapter height, one heading kit and
+      one card recipe. Not touched: client/src/pages/versions/**, the
+      /version-4 and /version-5 lanes (PRs 276, 292), scrollcraft/**, Store,
+      Portal, Journal, DE Desk, server/**, shared/**. Reconciled with main
+      f9ae13d on 2026-10-01: de-protection-deck-phone (PR 306) is carried
+      whole; the Protect chapter keeps Joe's dark phone field through the
+      chapter grammar (max-md well, paper from md up) and the phone test is
+      re-pointed at that mechanism.
+      RELEASED 2026-10-01: merged as 92a9f86c (PR 298, on Joe's "lets merge
+      things safely") after one phone fix on the branch (79e32ea2: the
+      assessment form's grid took the submit button's unwrappable width and ran
+      past the screen at 360 and 390). VERIFIED LIVE 10:53Z: the deploy job and
+      its runtime check passed; production served 92a9f86c with /healthz 200 and
+      the chapter grammar and the form fix in the served bundle. Phone audit of
+      the merged build at 390 against the previous live page: no page errors, no
+      overflow, texts under 12px 24 to 20, tap targets under 44px 49 to 42,
+      nested boxes 80 to 50. Files released; issue 296 closed.
+  - id: portal-redesign-control-room
+    owner: claude
+    subsystem: client-portal-shell
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: 74535d76e9dacade78e4f3eedd4da9651745d3b4
+    files:
+      - client/src/styles/portal.css
+      - client/src/components/portal/shell/**
+      - client/src/components/portal/ui/**
+      - client/src/components/portal/TenantSelector.tsx
+      - client/src/hooks/usePortalHubEvents.ts
+      - client/src/lib/deskTimestamp.ts
+      - client/src/lib/deskTimestamp.test.ts
+      - client/src/pages/portal/PortalLayout.tsx
+      - client/src/pages/portal/PortalDashboard.tsx
+      - client/src/pages/portal/PortalTickets.tsx
+      - client/src/pages/portal/PortalTicketDetail.tsx
+      - client/src/pages/portal/PortalCreateTicket.tsx
+      - client/src/pages/portal/PortalLogin.tsx
+      - client/src/pages/portal/*.tsx (PortalLayout props only on the remaining pages)
+      - tailwind.config.ts (sidebar colour entries only)
+      - artifacts/design-concepts/portal-redesign/**
+      - artifacts/visual-qa/portal-redesign/**
+    status: verified-live
+    started: 2026-09-30
+    released: 2026-10-01
+    pr: 294
+    merge_sha: 5e885527053e476a55bd4438b5e7ff1ebb856f7a
+    verification: >-
+      Production serves assets/index-dZ3Zr7Zu.js with the portal stylesheet
+      portal-Cj31BhLd.css (.de-portal tokens, light theme, verdict band) and
+      PortalLogin-yOYeTVVn.js carrying the new login; /healthz 200.
+    note: >-
+      Joe, 2026-09-30: "redesign this properly ... fully featured and fully
+      working and looks amazing like a top notch SaaS program". Exploration
+      Mode per design/DESIGN-AUTHORITY.md: three concepts (Control Room, Paper
+      Ledger, Rail and Pane) rendered under artifacts/design-concepts/
+      portal-redesign with briefs; Control Room built provisionally pending
+      Joe's pick. Shell: grouped collapsible sidebar on the shadcn Sidebar
+      primitive, breadcrumbs, command palette, live-updates popover fed by
+      the real SSE stream, user menu with a dark/light theme, one session
+      check per page load. Kit: scoped portal tokens (dark graphite default,
+      paper light), PageHeader, Panel, StatTile, status tokens, EmptyState,
+      Callout, DataTable, Field. Dashboard, Tickets, Ticket detail, Create
+      ticket and Login rebuilt; every other portal page keeps its code and
+      inherits the shell and tokens (duplicate headings folded into the
+      layout). Every route, API call, role gate, impersonation path and
+      data-testid preserved. Overlaps: PR 280 (cursor/portal-store-warehouse)
+      changes two timestamp hunks in PortalTickets/PortalTicketDetail; the
+      same lib/deskTimestamp.ts and test are carried here so the merge is a
+      no-op on intent. The claude-completion-program-lane claim below lists
+      several portal pages as local-only patches; they were never on main and
+      are not available in this environment, so nothing of theirs was
+      overwritten, but that lane must re-apply onto this shell.
+  - id: de-deck-reserve-clears-nudge
+    owner: claude
+    subsystem: homepage-protection-model
+    branch: claude/deck-reserve-clears-nudge
+    base_sha: dda3f57a
+    files:
+      - client/src/components/visual/ProtectionCommandDeck.tsx (the phone article's bottom reserve only)
+      - client/src/components/visual/ProtectionCommandDeck.phone.test.ts (the reserve assertion)
+      - artifacts/visual-qa/protection-deck-phone/390-end-before-reserve.png
+      - artifacts/visual-qa/protection-deck-phone/390-end-after-reserve.png
+    status: verified-live
+    started: 2026-10-01
+    note: >-
+      Follow-up to de-protection-deck-phone (PR 306, live 05:09Z). Measured at
+      390x844 with the block's end at the viewport bottom: the Ask DE nudge
+      stacks above the dock from y=685 and the flat 96px reserve ended the last
+      line at 748, so the nudge covered the last two lines of the identity
+      boundary. The reserve becomes 96px above the dock and its gap, plus the
+      safe-area inset, which ends the last line at 682. Nothing else changes.
+      RELEASED 2026-10-01: merged as 8fc55249 (PR 309) at 05:25Z; VERIFIED LIVE
+      05:28Z with the reserve string in the served ProtectionCommandDeck chunk.
+      Re-measured on the PR 298 build at 390x844: last line 682, nudge 685,
+      nothing covered. Files released.
+  - id: de-protection-deck-phone
+    owner: claude
+    subsystem: homepage-protection-model
+    branch: claude/protection-deck-phone
+    base_sha: 7f4cff10
+    files:
+      - client/src/components/visual/ProtectionCommandDeck.tsx (phone layout only; desktop frame untouched)
+      - client/src/components/visual/ProtectionCommandDeck.phone.test.ts
+      - client/src/pages/sections/DigeratiHowWeProtectSection.tsx (wrapper and heading classes only; copy unchanged)
+    status: verified-live
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: "the phone is the failure." Replaces the deck's phone
+      layout with the 390px mock he reviewed: one dark field, one row of
+      seven short labels with Risk & exposure as the dashed rail beneath
+      them (continuous, not a ninth peer), one sentence, then the selected
+      block as plain reading (name, purpose, the three assessment questions,
+      the boundary as a list). No frame chrome, no card in a card, no
+      diagram widget, the last 96px empty so Ask DE never sits on the type.
+      Desktop keeps the EvidenceFrame layout. The domain copy and questions
+      are the eight-block data from de-eight-block-correction, unchanged.
+      Overlap recorded: PR 298 rewrites DigeratiHowWeProtectSection.tsx onto
+      HomeChapter; this lane changes only the island wrapper and three
+      heading class strings in that file, and the deck component, which 298
+      does not touch.
+      RELEASED 2026-10-01: merged as 0f32ae77 (PR 306) at 05:03Z and live since
+      05:09Z. Measured on production builds at 390: seven labels on one 358px
+      line, every tab 44px tall, no overflow. Its flat 96px reserve left the Ask
+      DE nudge on the last two lines; follow-up PR 309 (de-deck-reserve-clears-
+      nudge) fixed that. Files released.
+  - id: exit-intent-second-opinion
+    owner: claude
+    subsystem: marketing-lead-capture
+    branch: claude/exit-intent-second-opinion
+    base_sha: 74535d76e9dacade78e4f3eedd4da9651745d3b4
+    files:
+      - client/src/components/ExitIntentPopup.tsx
+    status: verified-live
+    started: 2026-09-30
+    note: >-
+      Joe, 2026-09-30, on the exit-intent popup: "we dont like popups but this
+      one is okay ... it can just be better marketing style or sales
+      insinuation", then "yes all this is approved". Maintenance Mode. Trigger
+      unchanged (desktop mouse-leave toward the chrome after the arming delay,
+      once per session). Copy moves to a second-opinion pitch, three facts
+      replace four benefit lines, the black logo bar is dropped for the paper
+      lockup, and an EXAMPLE FORMAT findings thumbnail sits beside the form.
+      Promises only what /api/newsletter does (lead + human follow-up); no
+      timeline, no "yours to keep" (both unconfirmed in docs/CLAIMS-REGISTER.md).
+      Every data-testid and the analytics calls are unchanged.
+      RELEASED 2026-10-01: Joe marked PR 295 ready for review and merged it
+      (a87991c). VERIFIED LIVE 05:14 UTC: https://digeratiexperts.com serves
+      assets/index-vU6_N9GK.js carrying the new headline and none of the old
+      copy; the CI deploy run for a87991c completed. Files released.
+
   - id: store-experience-v2
     owner: claude
     subsystem: public-store-door2
     branch: claude/nifty-newton-uk9g7t
     pr: 267
     base_sha: dd6a1f8825ebb444d85e7601aa856859facc9cdd
-    files:
-      - client/src/pages/solutions/BusinessNeedsIndex.tsx
-      - client/src/pages/solutions/BusinessNeedsFamily.tsx
-      - client/src/pages/solutions/SolutionRequest.tsx
-      - client/src/pages/solutions/door2Leakage.test.ts
-      - client/src/pages/store/PublicStoreCheckout.tsx
-      - client/src/pages/store/Checkout.tsx
-      - client/src/pages/store/QuoteRequest.tsx
-      - client/src/pages/store/QuoteConfirmation.tsx
-      - client/src/components/store/PublicSolutionCart.tsx
-      - client/src/components/store/SolutionProfileForm.tsx
-      - client/src/components/store/StorePageAtmosphere.tsx
-      - client/src/components/store/SolutionMobileBar.tsx
-      - client/src/components/store/door2/**
-      - client/src/lib/solutionDraft.ts
-      - client/src/lib/solutionPackage.ts
-      - client/src/lib/businessNeeds.ts
-      - client/src/lib/isDoor2Path.ts
-      - client/src/lib/warehousePaths.ts
-      - client/src/lib/warehouseContactHandoff.ts
-      - client/src/data/curatedSolutions.ts
-      - client/src/styles/store-jelly.css
-      - client/src/App.tsx (Door 2 routes and ACCENT_BY_PREFIX only)
-      - server/publicSolutionRoutes.ts
-      - server/publicSolutionRequestStore.ts
-      - server/publicSolutionRequestPersistence.ts
-      - server/publicSolutionRequestCrm.ts
-      - server/storeQuoteStore.ts
-      - server/routes.ts (the /api/store/quote-requests handlers only)
-      - server/index.ts (the request-log redaction line only)
-      - server/spaKnownPaths.ts
-      - server/storeLegacyRedirects.ts
-      - server/warehouseRoutes.ts (the /solutions/business-needs 301 and the de_store_preview staff preview only)
-      - server/warehouseRoutes.test.ts
-      - client/src/lib/solutionGuidance.ts
-      - client/src/lib/openMspAdvisor.ts (STORE_ADVISOR_SEED text only)
-      - client/src/lib/storeChromeGestures.ts (isStorePath only)
-      - client/src/hooks/useStoreChromeGestures.ts (the warehouse route gate only; approved §16.1)
-      - client/src/hooks/useStoreChromeGestures.test.ts
-      - client/src/hooks/useSolutionDraft.ts
-      - client/src/index.css (the .de-site-canvas padding-bottom line only)
-      - shared/publicContact.ts
-      - shared/solutionReference.ts
-      - shared/solutionReference.test.ts
-      - client/src/lib/publicSolutionCart.ts (removed)
-      - client/src/data/solutionScenarios.ts
-      - client/src/pages/store/SolutionSubmitted.tsx
-      - client/src/styles/store-builder.css
-      - client/src/components/MegaMenu.tsx (announcement strip suppression on Door 2 and /book, and the utility-height measurement it depends on)
-      - client/src/components/store/CartButton.tsx (the warehouse trigger's name only)
-      - client/src/pages/sections/DigeratiEnhancedFooterSection.tsx (the variant="store" prop only)
-      - client/src/lib/deskAskDeMotion.ts (the store page classification and its copy only)
-      - client/src/lib/deskAskDeMotion.test.ts
-      - client/src/components/VirtualMspAdvisor.tsx (removed, unimported)
-      - client/src/components/store/ShoppingCart.tsx (the staff drawer title only)
-      - client/src/pages/BookingPage.tsx (the /book copy and the ?ref= reader only; §16.6 PR 0)
-      - .cursor/rules/blog-store-color-lock.mdc (the public Store / warehouse split)
-      - docs/STORE-ARCHITECTURE-DESIGN.md (the packet item 8 resolution line only)
-      - scripts/door2-browser-smoke.mjs
-      - scripts/generate-sitemap.mjs (the /solutions/request row only)
-      - docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md
-      - docs/PUBLIC-SOLUTION-BUILDER.md
-      - docs/STORE-SOLUTION-ENGINE.md
-      - docs/STORE-WAREHOUSE.md
-      - docs/STORE-DOOR-2.md
-      - design/STORE_DOOR2_GRAMMAR.md
-      - artifacts/visual-qa/store-experience/**
-    status: active
+    files: []
+    status: verified-live
     started: 2026-09-27
     note: >-
       Joe, 2026-09-27: think out how the Store experience and flow can be
@@ -128,6 +867,72 @@ claims:
       defects (lead event without contact fields; non-durable submit reported
       as saved). Not claimed: server/storeQuoteCrm.ts (issue 206, Codex),
       client/src/pages/versions/**, scrollcraft/**.
+      RELEASED 2026-09-29: merged as 3d232ed3 (PR 267) and VERIFIED LIVE
+      the same day: production serves index-u076-cx8.js and
+      index-DCAqm86m.css, the merge commit's own build; /healthz 200; /store,
+      a family page and /book?ref= render as built at 390 and 1440 (electric
+      accent, no strip, store footer, axe clean, no runtime errors). Files
+      released. Remaining and not claimed by this lane, source of truth §15
+      row 18: the Ask DE nudge position (SiteBottomBar.tsx, its bottom offset
+      omits --de-cookie-h) and the widget's STORE_ADVISOR_SEED fallback
+      (ZohoASAPWidget.tsx, pathname.includes("/store") instead of isDoor2Path,
+      so /solutions/request pages miss it). PR 229 has since landed via PR
+      277 (2026-09-30); both files now sit in the active de-desk-delight
+      claim, so the Desk lane or Joe decides who takes them.
+  - id: store-profile-panel
+    owner: claude
+    subsystem: public-store-door2
+    branch: claude/nifty-newton-uk9g7t
+    pr: 297
+    base_sha: 74535d76e9dacade78e4f3eedd4da9651745d3b4
+    files: []
+    status: verified-live
+    started: 2026-09-30
+    note: >-
+      Joe, 2026-09-30, on the expanded "Size it to your business" form: "This
+      needs to have a light grey background to separate it from the black
+      background of the whole page". The expanded ProfileStrip gets a light
+      grey panel (.d2-profile-panel, mixed from --de-paper and --de-bg) on
+      /store, the family page and the workspace, with inks re-pointed to clear
+      contrast on it; the two radio groups stack at every width. Concurrency
+      audit 2026-09-30: no open PR touches these files except the shared
+      ledger (appends only). The stale local-only
+      claude-completion-program-lane claim (2026-09-12) lists
+      SolutionProfileForm.tsx; it has no open PR and no remote branch, so this
+      lane proceeds and records the overlap here.
+      RELEASED 2026-10-01: merged as 81a0c7e1 (PR 297, Joe's "whatever it is
+      do it") and VERIFIED LIVE the same morning: the deploy job and its
+      runtime check passed; production /store and /store/solution at 390 and
+      1440 render .d2-profile-panel at color(srgb 0.8927 0.8849 0.8787) with
+      white inputs, axe clean, no overflow, no runtime errors. Files released.
+  - id: store-stations
+    owner: claude
+    subsystem: public-store-door2
+    branch: claude/nifty-newton-uk9g7t
+    pr: 311
+    base_sha: 8fc5524907dc3fe450c9ba32b7c852a4b5ac4354
+    files: []
+    status: verified-live
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-09-30: the Store is "too matched … hard to see whats what and
+      move forward in steps"; "make these lines thicker and more fun". Two
+      concepts rendered over the real workspace (Track, Stations); Joe,
+      2026-10-01: "go with B, build it". Numbered steps become stations (✓
+      when ready, a white station and "You are here" when current), the
+      JourneyRail becomes six stations on a 6px line, and the current
+      workspace chapter lights up as a card. Concurrency audit 2026-10-01: no
+      open PR touches these files (PR 308 Store PDF, 307 nudge, 303 Desk, 298
+      home are disjoint); the stale local-only claude-completion-program-lane
+      claim lists the Door 2 pages and has no open PR or remote branch.
+      RELEASED 2026-10-01: merged as 7d5fa674 (PR 311, Joe's "merge 311")
+      and VERIFIED LIVE the same morning: the deploy job and its runtime
+      check passed (10:49 UTC), production serves index-Dzh3JPyb.js; /store,
+      /store/solution (profile and needs done) and /solutions/request at 390
+      and 1440 render the stations (rail ✓ ✓ 03 on a 6px line, relationship
+      lit as the current card with "You are here", contact step 06 current),
+      the electric probe computes rgb(111, 179, 255), axe clean, no overflow,
+      no runtime errors. Files released.
   - id: de-design-concepts-directions
     owner: claude
     subsystem: flagship-visual-reset
@@ -153,148 +958,39 @@ claims:
       page accent, and whether this is the development site or the future live
       site. Uses brand/digerati-logo.svg, the real light-ground lockup, and
       never recolours the mark.
-  - id: claude-completion-program-lane
-    owner: claude
-    subsystem: website-visual-ui
-    branch: claude/c8-cross-surface
-    branch_stack: "c1-visual-a11y-repairs-20260912 -> c3-store-status-rail -> c4-portal-auth-headings -> c5-ask-de-graphite-shell -> c6-brand-favicon-wiring -> c8-cross-surface"
-    base_sha: fe4a5216
-    files:
-      - brand/README.md
-      - client/index.html
-      - client/public/favicon-16x16.png
-      - client/public/favicon-256x256.png
-      - client/public/favicon-32x32.png
-      - client/public/favicon.ico
-      - client/public/favicon.svg
-      - client/public/site.webmanifest
-      - client/src/components/BlogAudioPlayer.tsx
-      - client/src/components/ConversionPathBar.tsx
-      - client/src/components/CookieConsentBanner.portalPath.test.ts
-      - client/src/components/CookieConsentBanner.tsx
-      - client/src/components/MarketingChrome.tsx
-      - client/src/components/PageTemplate.tsx
-      - client/src/components/SiteBottomBar.tsx
-      - client/src/components/deDeskGraphiteStyle.ts
-      - client/src/components/evidence/AssessmentReportSample.tsx
-      - client/src/components/evidence/EvidenceFrame.tsx
-      - client/src/components/evidence/HUDFrame.tsx
-      - client/src/components/evidence/IncidentFlow.tsx
-      - client/src/components/graphics/DashboardMockup.tsx
-      - client/src/components/portal/MfaSetup.tsx
-      - client/src/components/pricing/ProActiveCoverageMap.tsx
-      - client/src/components/store/GuidedBuyingWizard.tsx
-      - client/src/components/store/SolutionProfileForm.tsx
-      - client/src/components/store/StoreAssessmentPanel.tsx
-      - client/src/components/store/StoreBundlesSection.tsx
-      - client/src/components/store/StoreProductCard.tsx
-      - client/src/components/ui/premium-slider.tsx
-      - client/src/components/ui/slider.tsx
-      - client/src/components/visual/ProActiveEcosystemDiagram.tsx
-      - client/src/data/storeProducts.price.test.ts
-      - client/src/data/storeProducts.ts
-      - client/src/index.css
-      - client/src/pages/DigeratiHomepage.tsx
-      - client/src/pages/EcosystemMatrixOfficial.tsx
-      - client/src/pages/GenericServicePage.tsx
-      - client/src/pages/ProActiveEcosystemPricing.tsx
-      - client/src/pages/ThankYouSuccess.tsx
-      - client/src/pages/about/ClientBillOfRights.tsx
-      - client/src/pages/about/ComplianceCertifications.tsx
-      - client/src/pages/about/Guarantee.tsx
-      - client/src/pages/about/Press.tsx
-      - client/src/pages/about/TwentyOneQuestions.tsx
-      - client/src/pages/campaigns/CampaignIndex.tsx
-      - client/src/pages/campaigns/CampaignLanding.tsx
-      - client/src/pages/legal/TermsOfUse.tsx
-      - client/src/pages/locations/LocationServicePage.tsx
-      - client/src/pages/portal/AdminCompanies.tsx
-      - client/src/pages/portal/OrderForm.tsx
-      - client/src/pages/portal/PortalChat.tsx
-      - client/src/pages/portal/PortalCompany.tsx
-      - client/src/pages/portal/PortalCreateTicket.tsx
-      - client/src/pages/portal/PortalDashboard.tsx
-      - client/src/pages/portal/PortalForgotPassword.tsx
-      - client/src/pages/portal/PortalInvoices.tsx
-      - client/src/pages/portal/PortalLogin.tsx
-      - client/src/pages/portal/PortalMarketplace.tsx
-      - client/src/pages/portal/PortalOrders.tsx
-      - client/src/pages/portal/PortalPeople.tsx
-      - client/src/pages/portal/PortalQBR.tsx
-      - client/src/pages/portal/PortalQuestionnaireCalendar.tsx
-      - client/src/pages/portal/PortalResetPassword.tsx
-      - client/src/pages/portal/PortalRoadmap.tsx
-      - client/src/pages/portal/PortalServices.tsx
-      - client/src/pages/portal/PortalSettings.tsx
-      - client/src/pages/portal/PortalSignup.tsx
-      - client/src/pages/portal/SalesProcess.tsx
-      - client/src/pages/resources/Datasheets.tsx
-      - client/src/pages/resources/DocumentFlipbook.tsx
-      - client/src/pages/resources/DowntimeCalculator.tsx
-      - client/src/pages/resources/Ebook.tsx
-      - client/src/pages/resources/ResourceAssetPage.tsx
-      - client/src/pages/sections/DigeratiCalculatorsSection.tsx
-      - client/src/pages/sections/DigeratiNewsletterSection.tsx
-      - client/src/pages/sections/DigeratiServicesSection.tabValue.test.ts
-      - client/src/pages/sections/DigeratiServicesSection.tsx
-      - client/src/pages/sections/DigeratiTestimonialsSection.tsx
-      - client/src/pages/sections/DigeratiThreatsInsightsSection.tsx
-      - client/src/pages/sections/DigeratiThreeDoorsChallenger.tsx
-      - client/src/pages/services/UCaaS.tsx
-      - client/src/pages/solutions/BackupDisasterRecovery.tsx
-      - client/src/pages/solutions/BusinessNeedsFamily.tsx
-      - client/src/pages/solutions/BusinessNeedsIndex.tsx
-      - client/src/pages/solutions/CoManagedIT.tsx
-      - client/src/pages/solutions/ManagedWorkplace.tsx
-      - client/src/pages/solutions/SolutionRequest.tsx
-      - client/src/pages/solutions/StandaloneServices.tsx
-      - client/src/pages/store/Checkout.tsx
-      - client/src/pages/store/ManagedStore.tsx
-      - client/src/pages/store/PublicStoreCheckout.tsx
-      - client/src/pages/store/StoreLanding.tsx
-      - client/src/pages/support/KnowledgeBase.tsx
-      - client/src/pages/support/PayInvoice.tsx
-      - client/src/pages/support/SubmitTicket.tsx
-      - client/src/pages/trust/TrustCenter.tsx
-      - client/src/pages/versions/VersionsIndex.tsx
-    status: active
-    started: 2026-09-12
-    note: >-
-      DE Completion Program, Claude visual/UI lane, 2026-09-12: seventeen
-      commits (C1 a11y repairs; C3 Store status rail + save state; C4
-      portal auth h1 + marketplace copy/links/contrast; C5 DE Desk graphite
-      shell override; C6 favicon/manifest wiring from the vector brand
-      package; C8 fail-closed client price rendering + main landmark +
-      EvidenceFrame heading level; C8 97-route a11y sweep closure — prose
-      :where() specificity, control names, focusable table regions,
-      contrast; C8 <main> landmark on every marketing page; versions-index label;
-      warning-free CSS build; C4 authenticated portal a11y sweep —
-      light-theme contrast, control names, nested anchors; consent banner
-      suppressed inside the authenticated portal). All local-only;
-      delivered as ordered git-am patches 0001-0021 in DE/Evidence/2026-09-12-claude-c1/patches,
-      verified to apply cleanly onto origin/main fe4a5216 with tsc clean,
-      94 files / 418 tests and a green production build. Not claimed:
-      client/src/pages/DigeratiHomepageChallenger.tsx and *Challenger.tsx
-      sections (PR #211/#213 lane), server/**, shared/**, migrations/**,
-      scripts/** (released to Cursor for R5/R6), scrollcraft/**,
-      client/src/pages/versions/**. The same YAML parse fix as
-      claude/unfinished-threads-survey-y92doz is carried so this file loads.
-  - id: pronunciation-flipbook-recovery
+  - id: pronunciation-and-flipbook-recovery
     issue: 152
-    owner: chatgpt
-    subsystem: homepage-resources
-    branch: chatgpt/pronunciation-flipbook-recovery-20260831
+    pr: 157
+    owner: claude
+    subsystem: homepage-hero, resources
+    branch: claude/pronunciation-dictionary-card-2026-08-31
     base_sha: ecea1d9314f859bd5a17343c277e739f3bedb492
     files:
       - client/src/components/PronunciationCard.tsx
+      - client/src/components/PronunciationCard.palette.test.ts
       - client/src/pages/sections/ReferenceHeroSection.tsx
       - client/src/pages/resources/DocumentFlipbook.tsx
       - client/src/pages/resources/ResourcesIndex.tsx
       - client/public/audio/README.md
       - scripts/vendor-pdfjs.mjs
+      - scripts/public-route-smoke.mjs
       - package.json
     status: active
     started: 2026-08-31
+    note: >-
+      Reassigned by Joe on 2026-08-31. Supersedes the `chatgpt` claim
+      pronunciation-flipbook-recovery (branch
+      chatgpt/pronunciation-flipbook-recovery-20260831, commit f72d647): this
+      branch merges that branch whole, so both halves ship together and neither
+      agent is left holding a conflicting file. The pronunciation card is the
+      reassigned rewrite — same data-testids, so the public-route smoke gate
+      that branch added keeps passing. The flipbook half (DocumentFlipbook,
+      ResourcesIndex, pinned PDF.js vendoring, audio README) is carried across
+      unmodified. The chatgpt branch is now redundant and should be retired
+      rather than merged; merging both would conflict on PronunciationCard.tsx. Reconciled with main
+      068fd278 on 2026-09-30: main already carries the .gitignore vendor rule and
+      the vendor-pdfjs Windows shell fix (PR 218); the recording, the palette
+      rules and the flipbook half are what this branch still adds.
   - id: de-experience-v1
     owner: claude
     subsystem: flagship-creative-reset
@@ -405,45 +1101,144 @@ claims:
       that main for the kie.ai workflow lane (PR #183): key alias, model
       registry, spend guards, provenance manifest, docs/kie/KIE-RULES.md.
       kie.ai spend: NONE without Joe's approval and cap in the same message;
-      image models only; the first proposal is scrollcraft/KIE-FIRST-GENERATION.md.
+      image models only. 2026-09-02 evening (Joe): the money gate is closed,
+      the F-02 request is withdrawn after reconciling with PR #186
+      (scrollcraft/KIE-FIRST-GENERATION.md v3), Version 4 does not start,
+      and PR #184 stays a draft scoped to tooling and asset planning.
+      OPEN, for Joe to route: the live homepage still presents the
+      six-domain model (ProtectionCommandDeck, the "one environment" and
+      "layered protection" diagrams); the current architecture is eight
+      blocks per docs/DE-SERVICE-MODEL-2026.md (PR #185). That correction
+      is content inside this claim and has not been started.
       FREEZE (2026-09-01, Joe): Scrollcraft implementation on ANY route is
       gated by the approved DE Scrollcraft Experience Plan at
       scrollcraft/EXPERIENCE-PLAN.md. No page code, no material production,
       and no new scroll treatment on any route until the plan's phase gates
       pass (Phase 2 briefs approved, Phase 3 materials board-tested, Phase 4
       storyboards approved). Any agent, any session. Planning documents only.
-  - id: claude-code-skill-installs
-    issue: 179
+# claude-code-skill-installs (issue 179, branch claude/nano-banana-2-setup-itot5a)
+# RETIRED 2026-09-02: merged via PR #180 (main @ 2bfd111). CI run 33616441400
+# green including "Deploy and verify production VPS"; VERIFIED LIVE. Verified on
+# main: nano-banana-images + frontend-design present once (agents mirror is
+# symlinks), KIE_AI_API_KEY provided by the environment, nb2 dry-run matches the
+# vendored request, api.kie.ai and kieai.redpandaai.co reachable. Follow-ups
+# outside this claim: de-agent-skills plugin repo (branch plugin/de-agent-skills-package).
+  - id: de-why-passage-flagship
     owner: claude
-    subsystem: agent-tooling
-    branch: claude/nano-banana-2-setup-itot5a
-    base_sha: 2d7d12adda68ea9565a927fc7d214bccdedf6d96
+    subsystem: site-experience-flagship
+    branch: claude/de-why-passage-flagship
+    base_sha: 80ce2f4
     files:
-      - .claude/skills/nano-banana-images/**
-      - .claude/skills/frontend-design/**
-      - .claude/skills/video-to-website/**
-      - .claude/skills/excalidraw-visuals/**
-      - .claude/skills/excalidraw-diagram/**
-      - .claude/skills/skill-builder/**
-      - .claude/skills/web-design-rules/**
-      - .claude/skills/wat-framework/**
-      - .claude/skills/trigger-dev/**
-      - .claude/skills/trigger-ref/**
-      - .mcp.json
-      - .agents/skills/**
-      - .claude/install-user-skills.sh
-      - .env.example
-      - .gitignore
-      - AGENTS.md
-      - CLAUDE.md
+      - scrollcraft/builds/why-passage/**
+      - scrollcraft/FINGERPRINTS.md
+      - docs/DE-WHY-PASSAGE-BRIEF.md
     status: active
     started: 2026-09-02
     note: >-
-      Vendors ten Claude Code project skills requested by Joe. No production
-      client/ or server/ paths. Disjoint from issue #167 / PR #168
-      (scripts/kie-assets.mjs); the kie.ai scripts here accept both
-      KIE_AI_API_KEY and KIE_API_KEY and write candidates under
-      artifacts/kie-ai/. No key is committed; installing makes no network call.
+      FREEZE LIFTED FOR ONE PAGE (Joe, 2026-09-02, in session
+      session_018frX8U8DhiseiSPCowzPec). Joe approved building a single
+      flagship after being given the scope, time and credit estimates, and
+      approved a dedicated branch for it. The 2026-09-01 freeze in the
+      de-site-v2-scrollcraft claim otherwise STANDS for every other route and
+      every other agent: this authorization covers this one build only.
+      Scope: a "Why DE" story route, per EXPERIENCE-PLAN.md 09 rule 5, which
+      argues /v2's length and concept density suit a Why DE story rather than
+      the primary homepage. Chosen over the homepage because it carries no
+      public-route smoke-gate risk and no eight-viewport length cap.
+      Build lives in scrollcraft/builds/why-passage as an isolated,
+      independently runnable build. It does NOT touch client/, server/,
+      shared/, any route, or scrollcraft/builds/de-v2. No overlap with the
+      de-site-v2-scrollcraft claim's files.
+      Grammar: passage (a single plotted course), NOT chaptered editorial.
+      Nav: bearing gauge, NOT a margin folio with a live map. Signature move:
+      the heading correction (the page opens off-axis and rolls level when the
+      operating principle lands). Close: the four-route fork. Verified against
+      both FINGERPRINTS.md rows on all six dimensions before coding.
+      Content authority: docs/DE-SERVICE-MODEL-2026.md (PR #185). No invented
+      claims; every figure traces to that document or client/src/data/pricing.ts.
+      kie.ai spend: NONE without Joe naming a cap in the same message. Balance
+      at branch creation: 68 credits. The build is code, type and motion by
+      design, so it needs no generated imagery to be complete.
+  - id: de-homepage-v4
+    owner: claude
+    subsystem: homepage-v4
+    branch: claude/homepage-v4
+    base_sha: dd6a1f8825ebb444d85e7601aa856859facc9cdd
+    files:
+      - client/src/pages/versions/v4/**
+      - client/src/App.tsx (the /version-4 route only)
+      - client/src/pages/versions/registry.ts (the v4 entry and the "build" kind)
+      - client/src/lib/stickyCtaVisibility.ts (the /version-* exclusion)
+      - docs/VERSION-4-HOMEPAGE-SOURCE-OF-TRUTH.md
+      - docs/CLAIMS-REGISTER.md (the Version 4 section only)
+      - artifacts/visual-qa/homepage-v4/**
+      - artifacts/visual-qa/real-product/**
+    status: active
+    started: 2026-09-27
+    note: >-
+      Homepage Version 4, the clean-sheet rebuild Joe directed on 2026-09-27
+      after every previous attempt, governed by
+      docs/VERSION-4-HOMEPAGE-SOURCE-OF-TRUTH.md. Lives at the noindex
+      /version-4 preview only; production / is untouched by every commit on
+      this lane, and Joe's authorization on PR #264 covers publishing the
+      preview, never replacing /. PR #264 merged the source of truth,
+      governance 8.1 and the first cut; PR #266 carries the rebuild. Joe's
+      verdict on the first cut ("generic trash") set the standard for the
+      rest: every chapter takes a different form and leads with a real
+      thing — the published guarantee, a working sizer that writes the
+      store's own draft, the founder, DE Desk, verbatim pledges — and
+      nothing is invented (reviews and case studies are absent because the
+      catalogs are empty). Overlaps only this owner's older
+      de-site-v2-scrollcraft claim on client/src/pages/versions/**; the v1
+      and v3 snapshots there stay frozen. Zero kie.ai spend.
+  - id: de-homepage-v6-sections
+    owner: claude
+    subsystem: homepage-v6
+    branch: claude/homepage-v6-sections
+    base_sha: 7f4cff10b00fbe3e55279989c605b16794363460
+    files:
+      - client/src/pages/versions/v6/**
+      - client/src/App.tsx (the /version-6 route only)
+      - client/src/pages/versions/registry.ts (the v6 entry only)
+      - client/src/pages/versions/README.md (the v6 row only)
+      - server/spaKnownPaths.ts (the /version-6 entry only)
+      - server/spaKnownPaths.test.ts (the version list only)
+      - scripts/qa/homepage-v5-acceptance.mjs (the scope, sections, limits and facts arguments; Version 5 defaults unchanged)
+      - docs/CLAIMS-REGISTER.md (the Version 6 section only)
+      - artifacts/visual-qa/homepage-v6/**
+    status: verified-live
+    started: 2026-10-01
+    note: >-
+      Joe, 2026-10-01: "can you mock up every section on the live
+      Digeratiexperts.com homepage and make it look how it should look", then
+      "continue". Eighteen section mockups were delivered first; this claim
+      builds them as the noindex /version-6 preview: the live homepage's
+      sections in the live order, on the Version 5 system, every fact read
+      from the file that already carries it (pricing.ts, cyberAwarenessFacts.ts,
+      the command deck's protectionDomains, the SLA page, companyContact.ts,
+      the published FAQ, the live reviews and threat feeds), no generated or
+      stock imagery, one action, no animation. Production / is untouched;
+      replacing it is Joe's decision and a separate claim. Same owner as the
+      de-homepage-v5-practical claim; the shared files (App.tsx, registry,
+      README, spaKnownPaths, the acceptance script) get additive edits only.
+      No kie.ai spend.
+      RELEASED 2026-10-01: merged as e326ac37 (PR 304) at 05:23Z on Joe's
+      "whatever it is do it"; VERIFIED LIVE 05:28Z: /version-6 answers 200 with
+      X-Robots-Tag noindex, nofollow; acceptance 77/77 for Version 6 and Version
+      5, re-run 77/77 each on the PR 298 build. Production / is untouched by
+      this claim. Files released.
+# de-homepage-v5-practical (branch claude/homepage-v5-practical) RETIRED
+# 2026-10-01: merged via PR #292 (squash f202cc23) at 01:58Z. The run's "Deploy
+# and verify production VPS" job succeeded including the production runtime
+# verification step; the next merge (#301, 7f4cff10) deployed two minutes later
+# and production has served 7f4cff10 since 02:02Z (/healthz 200). Verified live
+# at 02:03Z: /version-5 answers 200 with X-Robots-Tag "noindex, nofollow"; the
+# ten data-driven /solutions/* pages answer 200 (404 before this merge); the
+# entry stylesheet hash matches a local production build of 7f4cff10
+# (index-m92yJQ-F.css) and scripts/qa/homepage-v5-acceptance.mjs passes 77/77
+# against that build at 390, 768 and 1440 with and without reduced motion.
+# Production / is untouched; replacing it with Version 5 is a separate
+# decision and a separate claim. Files released. Zero kie.ai spend.
 # restore-homepage-v1 (branch claude/restore-homepage-v1) RETIRED 2026-09-09:
 # the claim was still listed active while the work was already fully contained
 # in main. Verified at main @ 611acfdb: `git rev-list --count
@@ -466,3 +1261,14 @@ claims:
 # homepage-ask-de-reference-redesign (branch claude/homepage-ask-de-visual-19b3aa)
 # was RETIRED earlier the same day, integrated via PR #147 (main @ 9c5e7f9).
 # PR #146 closed unmerged; that branch was never a release lane.
+# de-desk-delight (branch claude/desk-delight, earlier de-desk-white-theme)
+# RETIRED 2026-09-30: merged via PR #277 (068fd278, white Desk) and PR #281
+# (6f657dd3, next steps, readable replies, callback in chat, dark leftovers).
+# Both "Deploy and verify production VPS" jobs succeeded, including the
+# production runtime verification step. PR #229 closed as superseded.
+# Still open and now UNCLAIMED (handed to this claim by store-experience-v2,
+# source of truth §15 row 18, commit f8f8fd1b): (1) the Ask DE nudge bottom
+# offset in client/src/components/SiteBottomBar.tsx omits --de-cookie-h; (2)
+# ZohoASAPWidget.tsx seeds STORE_ADVISOR_SEED on pathname.includes("/store")
+# instead of isDoor2Path, so /solutions/request pages miss it. Whoever takes
+# them claims the two files first.

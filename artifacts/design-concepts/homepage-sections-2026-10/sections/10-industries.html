@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE section 10 — Industries we serve</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../system/tokens.css">
+<script>document.fonts.load('600 16px Oxanium');</script>
+<style>
+  /* Section 10 — Industries. Joe, 2026-10-01: keep the photo cards that turn from
+     grayscale to colour on hover ("a lot of subtle work can be lost so be careful").
+     Kept exactly from live DigeratiIndustriesSection.tsx: the five photographs and their
+     mapping, grayscale at rest, colour on hover AND keyboard focus (filter, 300ms), the
+     hairline border turning magenta (200ms), the bottom-up black gradient, IconWell + name
+     + always-visible description + "View …" link, the arrow nudge (translateX 2px, 200ms),
+     the phone snap-scroll rail with its two scroll buttons and edge fades.
+     Changed: left head with the ask in the head row (one head recipe), one 16px radius,
+     body copy at the 15px floor, a slow 1.03 image drift on hover instead of nothing,
+     the phone dots dropped (they never tracked position on live). */
+  body { background: var(--de-surface); }
+  #industries { border-top: 1px solid var(--de-hairline); }
+  .ind-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 32px; }
+  .ind-head .de-btn { flex-shrink: 0; margin-bottom: 4px; }
+  .ind-ask { display: none; }
+
+  .ind-wrap { position: relative; margin-top: 40px; }
+  .ind-rail { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; }
+  .ind-card__link { position: relative; display: block; height: 300px; overflow: hidden; border-radius: var(--radius-lg); border: 1px solid var(--de-hairline); isolation: isolate; transition: border-color 200ms ease-out; }
+  .ind-card__img { position: absolute; inset: 0; background-size: cover; background-position: center; filter: grayscale(1); transform: scale(1); transition: filter 300ms ease-out, transform 600ms cubic-bezier(.2,.8,.2,1); z-index: -2; }
+  .ind-card__shade { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 48%, rgba(0,0,0,0.05) 100%); z-index: -1; }
+  .ind-card__body { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; }
+  .ind-card__body .de-iconwell { margin-bottom: 14px; background: rgba(10,10,10,0.72); }
+  .ind-card__name { font-family: var(--font-heading); font-weight: 600; font-size: 19px; line-height: 1.25; letter-spacing: -0.01em; color: #fff; }
+  .ind-card__desc { margin-top: 6px; font-size: 15px; line-height: 1.5; color: rgba(255,255,255,0.84); }
+  .ind-card__more { margin-top: 14px; display: inline-flex; align-items: center; gap: 6px; min-height: 24px; font-size: 15px; font-weight: 600; color: var(--de-magenta-ink); }
+  .ind-card__arrow { display: inline-flex; transition: transform 200ms ease-out; }
+  .ind-card__arrow svg { width: 15px; height: 15px; }
+  .ind-card__link:hover, .ind-card__link:focus-visible, .ind-card__link.is-hover { border-color: var(--de-magenta); }
+  .ind-card__link:hover .ind-card__img, .ind-card__link:focus-visible .ind-card__img, .ind-card__link.is-hover .ind-card__img { filter: grayscale(0); transform: scale(1.03); }
+  .ind-card__link:hover .ind-card__arrow, .ind-card__link:focus-visible .ind-card__arrow, .ind-card__link.is-hover .ind-card__arrow { transform: translateX(2px); }
+  .ind-card__link:focus-visible { outline: 2px solid #ec4899; outline-offset: 2px; }
+  .ind-scroll, .ind-fade { display: none; }
+
+  @media (max-width: 1279px) { .ind-card__link { height: 320px; } }
+  @media (max-width: 1023px) {
+    .ind-head { flex-direction: column; align-items: flex-start; gap: 24px; }
+    .ind-head .de-btn { display: none; }
+    .ind-ask { display: inline-flex; margin-top: 28px; }
+    /* Tablet and phone keep live's snap-scroll rail. */
+    .ind-rail { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 0 2px 4px; }
+    .ind-rail::-webkit-scrollbar { display: none; }
+    .ind-card { flex: 0 0 280px; scroll-snap-align: center; }
+    .ind-fade { display: block; position: absolute; top: 0; bottom: 4px; width: 32px; pointer-events: none; z-index: 1; }
+    .ind-fade--l { left: 0; background: linear-gradient(to right, var(--de-surface), transparent); opacity: 0; }
+    .ind-fade--r { right: 0; background: linear-gradient(to left, var(--de-surface), transparent); }
+    .ind-scroll { display: inline-flex; position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 44px; height: 44px; border-radius: 999px; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer; transition: opacity 200ms ease-out; }
+    .ind-scroll--l { left: 4px; opacity: 0; pointer-events: none; }
+    .ind-scroll--r { right: 4px; }
+    .ind-scroll:focus-visible { outline: 2px solid #ec4899; outline-offset: 2px; }
+  }
+  @media (max-width: 639px) { .ind-ask { display: flex; width: 100%; white-space: normal; } .ind-wrap { margin-top: 28px; } }
+  @media (prefers-reduced-motion: reduce) { .ind-card__img { transition: filter 1ms; transform: none !important; } .ind-card__arrow { transition: none; } }
+</style>
+</head>
+<body>
+<section class="f-surface de-section de-grain" id="industries" aria-labelledby="industries-heading">
+  <div class="de-canvas">
+    <div class="ind-head">
+      <div class="de-head">
+        <p class="de-eyebrow">Specialized Solutions</p>
+        <h2 class="de-h2" id="industries-heading">Industries We Serve<span class="de-colon" aria-hidden="true">:</span></h2>
+        <p class="de-lede">Specialized cybersecurity solutions for Arizona's essential sectors</p>
+      </div>
+      <a class="de-btn de-btn--primary" href="/book" data-testid="button-industries-cta">Get Industry-Specific Protection <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+    </div>
+    <div class="ind-wrap">
+      <button class="ind-scroll ind-scroll--l" type="button" aria-label="Scroll left" data-testid="industries-scroll-left"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <button class="ind-scroll ind-scroll--r" type="button" aria-label="Scroll right" data-testid="industries-scroll-right"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+      <span class="ind-fade ind-fade--l" aria-hidden="true"></span><span class="ind-fade ind-fade--r" aria-hidden="true"></span>
+      <ul class="ind-rail" aria-label="Industries">
+      <li class="ind-card">
+        <a class="ind-card__link" href="/industries/law-firms" data-testid="industry-law">
+          <span class="ind-card__img" style="background-image:url('/attached_assets/Rectangle-152058-1_1767027918697.webp')" aria-hidden="true"></span>
+          <span class="ind-card__shade" aria-hidden="true"></span>
+          <span class="ind-card__body">
+            <span class="de-iconwell de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg></span>
+            <span class="ind-card__name">Law Firms</span>
+            <span class="ind-card__desc">Protect client privilege and meet ABA compliance requirements</span>
+            <span class="ind-card__more">View Law Firms <span class="ind-card__arrow"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
+          </span>
+        </a>
+      </li>
+      <li class="ind-card">
+        <a class="ind-card__link" href="/industries/accounting-finance" data-testid="industry-cpa">
+          <span class="ind-card__img" style="background-image:url('/attached_assets/Rectangle-152058_1767027918697.webp')" aria-hidden="true"></span>
+          <span class="ind-card__shade" aria-hidden="true"></span>
+          <span class="ind-card__body">
+            <span class="de-iconwell de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg></span>
+            <span class="ind-card__name">CPA Firms</span>
+            <span class="ind-card__desc">Secure tax data and ensure IRS/FTC compliance</span>
+            <span class="ind-card__more">View CPA Firms <span class="ind-card__arrow"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
+          </span>
+        </a>
+      </li>
+      <li class="ind-card">
+        <a class="ind-card__link" href="/industries/healthcare" data-testid="industry-medical">
+          <span class="ind-card__img" style="background-image:url('/attached_assets/Rectangle-152058-2_1767027918698.webp')" aria-hidden="true"></span>
+          <span class="ind-card__shade" aria-hidden="true"></span>
+          <span class="ind-card__body">
+            <span class="de-iconwell de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 2v2"/><path d="M5 2v2"/><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/></svg></span>
+            <span class="ind-card__name">Medical Practices</span>
+            <span class="ind-card__desc">HIPAA compliance and patient data protection</span>
+            <span class="ind-card__more">View Medical Practices <span class="ind-card__arrow"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
+          </span>
+        </a>
+      </li>
+      <li class="ind-card">
+        <a class="ind-card__link" href="/industries/real-estate" data-testid="industry-realestate">
+          <span class="ind-card__img" style="background-image:url('/attached_assets/Rectangle-152058-3_1767027918698.webp')" aria-hidden="true"></span>
+          <span class="ind-card__shade" aria-hidden="true"></span>
+          <span class="ind-card__body">
+            <span class="de-iconwell de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+            <span class="ind-card__name">Real Estate Firms</span>
+            <span class="ind-card__desc">Wire fraud prevention and transaction security</span>
+            <span class="ind-card__more">View Real Estate Firms <span class="ind-card__arrow"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
+          </span>
+        </a>
+      </li>
+      <li class="ind-card">
+        <a class="ind-card__link" href="/industries/animal-hospitals" data-testid="industry-animal">
+          <span class="ind-card__img" style="background-image:url('/attached_assets/Rectangle-152058-4_1767027918698.webp')" aria-hidden="true"></span>
+          <span class="ind-card__shade" aria-hidden="true"></span>
+          <span class="ind-card__body">
+            <span class="de-iconwell de-iconwell--sm"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></span>
+            <span class="ind-card__name">Animal Hospitals</span>
+            <span class="ind-card__desc">Veterinary practice and client data protection</span>
+            <span class="ind-card__more">View Animal Hospitals <span class="ind-card__arrow"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></span>
+          </span>
+        </a>
+      </li>
+      </ul>
+    </div>
+    <a class="de-btn de-btn--primary ind-ask" href="/book">Get Industry-Specific Protection <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+  </div>
+</section>
+<script>
+  // Live behaviour, kept: the rail's scroll buttons appear only when there is somewhere to go.
+  const rail = document.querySelector('.ind-rail');
+  const l = document.querySelector('.ind-scroll--l'), r = document.querySelector('.ind-scroll--r');
+  const fl = document.querySelector('.ind-fade--l'), fr = document.querySelector('.ind-fade--r');
+  const sync = () => {
+    const canL = rail.scrollLeft > 0, canR = rail.scrollLeft < rail.scrollWidth - rail.clientWidth - 10;
+    l.style.opacity = fl.style.opacity = canL ? 1 : 0; l.style.pointerEvents = canL ? 'auto' : 'none';
+    r.style.opacity = fr.style.opacity = canR ? 1 : 0; r.style.pointerEvents = canR ? 'auto' : 'none';
+  };
+  rail.addEventListener('scroll', sync, { passive: true }); sync();
+  l.addEventListener('click', () => rail.scrollBy({ left: -300, behavior: 'smooth' }));
+  r.addEventListener('click', () => rail.scrollBy({ left: 300, behavior: 'smooth' }));
+</script>
+</body>
+</html>

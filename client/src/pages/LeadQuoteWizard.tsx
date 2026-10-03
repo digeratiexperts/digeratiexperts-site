@@ -227,7 +227,7 @@ export default function LeadQuoteWizard() {
   return (
     <div className="min-h-screen bg-de-bg">
       <MegaMenu />
-      <main className="de-nav-clear px-4 py-16 md:py-20">
+      <main id="main-content" tabIndex={-1} className="de-nav-clear px-4 py-16 md:py-20">
       <div className="de-paper-lift-lg mx-auto w-full max-w-2xl rounded-2xl p-6 text-[#1A1228] md:p-8">
       {/* Progress indicator */}
       <div className="flex items-center justify-between mb-8">

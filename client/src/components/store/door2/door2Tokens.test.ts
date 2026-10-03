@@ -8,7 +8,13 @@ import { describe, expect, it } from "vitest";
  * the values are pinned here from V4Primitives.tsx (T and ChapterLabel).
  */
 const root = path.resolve(import.meta.dirname, "../../../../..");
-const css = readFileSync(path.join(root, "client/src/styles/store-builder.css"), "utf8");
+
+/** Source files may use CRLF on Windows; pin tests to LF so regexes stay stable. */
+function readLf(filePath: string): string {
+  return readFileSync(filePath, "utf8").replace(/\r\n/g, "\n");
+}
+
+const css = readLf(path.join(root, "client/src/styles/store-builder.css"));
 
 const V4 = {
   displaySize: "clamp(2.4rem, 6vw, 3.6rem)",
@@ -72,5 +78,39 @@ describe("Door 2 tokens match the V4 vocabulary", () => {
     expect(css).toContain("html[data-de-store-bar] .de-site-canvas");
     expect(css).toContain("html.de-store-jelly .d2-tile[data-de-just-selected");
     expect(css).not.toMatch(/data-de-jelly="feature"/);
+  });
+
+  it("sits the expanded profile on a light grey panel mixed from the paper and graphite tokens", () => {
+    // Joe, 2026-09-30: the form must separate from the black page. Inks are re-pointed so text clears 4.5:1 on the grey.
+    const panel = block(".d2-profile-panel");
+    expect(panel).toContain("--d2-panel-bg: color-mix(in srgb, var(--de-paper) 92%, var(--de-bg))");
+    expect(panel).toContain("background: var(--d2-panel-bg)");
+    expect(panel).toContain("--d2-ink-strong: var(--de-bg)");
+    expect(panel).toContain("--d2-accent-ink: color-mix(in srgb, rgb(var(--de-accent-rgb)) 75%, var(--de-bg))");
+    expect(block(".d2-profile-panel .d2-input")).toContain("background: var(--de-paper-raised)");
+    expect(css).toMatch(/\.d2-profile-panel \.d2-tile:has\(input:focus-visible\) \{\n  outline-color: var\(--de-magenta\);/);
+    expect(css).toMatch(/@media print \{[\s\S]*\.d2-profile-panel \{\n    background: #fff !important;/);
+    const form = readLf(path.join(root, "client/src/components/store/SolutionProfileForm.tsx"));
+    expect(form).toContain('data-state="expanded"\n      className="d2-profile-panel"');
+  });
+
+  it("draws numbered steps as stations: a check when ready, a white station and 'You are here' when current", () => {
+    // Joe, 2026-10-01: concept B "Stations" — thick lines and clear done / current / ahead states.
+    expect(block(".d2-journey__bar")).toContain("height: 6px");
+    expect(block(".d2-journey__node")).toContain("width: 2.5rem");
+    expect(css).toMatch(/\.d2-journey__step\[data-state="current"\] \.d2-journey__node \{[^}]*background: #fff;[^}]*animation: d2-beacon/);
+    expect(block(".d2-step__n")).toContain("border-radius: 9999px");
+    expect(css).toMatch(/\.d2-chapter--station\[data-step-state="current"\]:not\(\.d2-chapter--paper\) \{[^}]*border-left: 6px solid var\(--d2-accent\)/);
+    expect(css).toMatch(/\.d2-layout \.d2-chapter--station::before \{[^}]*width: 6px;/);
+    const rail = readFileSync(path.join(root, "client/src/components/store/door2/JourneyRail.tsx"), "utf8");
+    expect(rail).toContain('state === "complete" ? <Check className="d2-journey__check"');
+    expect(rail).toContain("aria-label={STORE_JOURNEY_SENTENCE}");
+    const primitives = readFileSync(path.join(root, "client/src/components/store/door2/primitives.tsx"), "utf8");
+    expect(primitives).toContain("You are here");
+    expect(primitives).toContain('current: " · you are here"');
+    const workspace = readFileSync(path.join(root, "client/src/pages/store/PublicStoreCheckout.tsx"), "utf8");
+    for (const id of ["profile", "need", "relationship", "package", "delivery"]) {
+      expect(workspace).toContain(`stepState={stepStateOf("${id}")}`);
+    }
   });
 });

@@ -1,17 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { AlertCircle, CheckCircle, Info } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { PortalLayout } from "./PortalLayout";
 import { queryClient } from "@/lib/queryClient";
 import { portalGet } from "@/lib/portalApi";
 import { Link } from "wouter";
+import { Callout, Field, Panel, Token } from "@/components/portal/ui";
 
 type MeResponse = {
   success?: boolean;
@@ -528,304 +526,266 @@ export function PortalAdvancedForms() {
     }
   };
 
+  const selectTemplate = (template: FormTemplate) => {
+    setSelectedTemplate(template);
+    setFormData({});
+    setFieldErrors({});
+    setSubmitError("");
+  };
+
   const renderContent = () => {
     if (submitted) {
       return (
-        <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-          <CardContent className="pt-6 text-center">
-            <CheckCircle className="mx-auto mb-2 text-green-600" size={40} aria-hidden />
-            <p className="text-green-700 dark:text-green-300 font-medium" role="status">
-              Request submitted successfully
-            </p>
-            <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-              {ticketNumber
-                ? `Reference ${ticketNumber} was created.`
-                : "Your request was created."}
-            </p>
-            <p className="text-xs text-green-600/80 dark:text-green-400/80 mt-2">
-              Redirecting…
-            </p>
-          </CardContent>
-        </Card>
+        <Callout tone="ok" title="Request submitted successfully" role="status">
+          {ticketNumber ? `Reference ${ticketNumber} was created.` : "Your request was created."} Redirecting…
+        </Callout>
       );
     }
 
     if (!selectedTemplate) {
       return (
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold">Service Request Forms</h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Select a form template to submit your request. Submissions create a support ticket for the DE team.
-          </p>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {formTemplates.map((template) => (
-              <Card
-                key={template.id}
-                className="cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => {
-                  setSelectedTemplate(template);
-                  setFormData({});
-                  setFieldErrors({});
-                  setSubmitError("");
-                }}
-                onKeyDown={(ev) => {
-                  if (ev.key === "Enter" || ev.key === " ") {
-                    ev.preventDefault();
-                    setSelectedTemplate(template);
-                    setFormData({});
-                    setFieldErrors({});
-                    setSubmitError("");
-                  }
-                }}
-                role="button"
-                tabIndex={0}
-                data-testid={`form-template-${template.id}`}
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg">{template.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    {template.description}
-                  </p>
-                  <Badge variant="outline">{template.fields.length} fields</Badge>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        <ul className="grid gap-4 md:grid-cols-2" aria-label="Request forms">
+          {formTemplates.map((template) => (
+            <li key={template.id} className="flex">
+            <button
+              type="button"
+              onClick={() => selectTemplate(template)}
+              className="group flex min-h-[44px] w-full flex-col rounded-xl border border-border bg-card p-4 text-left text-card-foreground transition-colors pt-hover-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:p-5"
+              data-testid={`form-template-${template.id}`}
+            >
+              <span className="flex items-start justify-between gap-3">
+                <span className="font-heading text-[15px] font-semibold leading-snug">{template.name}</span>
+                <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden="true" />
+              </span>
+              <span className="mt-1.5 flex-1 text-sm text-muted-foreground">{template.description}</span>
+              <span className="mt-4">
+                <Token label={`${template.fields.length} fields`} tone="neutral" />
+              </span>
+            </button>
+            </li>
+          ))}
+        </ul>
       );
     }
 
     return (
-      <div className="space-y-4 max-w-2xl">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <h2 className="text-2xl font-bold">{selectedTemplate.name}</h2>
-          <Button
-            variant="outline"
-            onClick={resetForm}
-            data-testid="button-back-to-forms"
-          >
-            Back to Forms
-          </Button>
-        </div>
-
+      <div className="space-y-4">
         {selectedTemplate.id === "FT-001" && (
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/30 rounded-lg">
-            <div className="flex gap-3">
-              <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" aria-hidden />
-              <div className="text-sm text-blue-800 dark:text-blue-300 space-y-2">
-                <p>
-                  Submitting starts an approval workflow (your manager → optional skip-level → IT Contact) before
-                  Digerati provisions access. For break/fix issues, open a regular support ticket instead.
-                </p>
-                <p>
-                  <strong>Manager / approver email</strong> is optional but recommended for admin/privileged
-                  requests. DE may route for client approval before provisioning. The address must be on your
-                  company domain
-                  {companyDomains.length ? ` (${companyDomains.join(", ")})` : ""} and must match the manager
-                  listed on your profile
-                  {manager?.email ? ` — currently ${manager.fullName} (${manager.email})` : ""}.
-                  {!hasManagerOnProfile && (
-                    <>
-                      {" "}
-                      No manager is assigned yet — ask your Company IT Contact to set one under{" "}
-                      <Link href="/portal/people" className="underline font-medium">
-                        People & Org
-                      </Link>
-                      .
-                    </>
-                  )}
-                </p>
-              </div>
+          <Callout tone="info" title="This request goes through an approval workflow">
+            <div className="space-y-2">
+              <p>
+                Submitting starts an approval workflow (your manager → optional skip-level → IT Contact) before
+                Digerati provisions access. For break/fix issues, open a regular support ticket instead.
+              </p>
+              <p>
+                <strong className="text-foreground">Manager / approver email</strong> is optional but recommended for admin/privileged
+                requests. DE may route for client approval before provisioning. The address must be on your
+                company domain
+                {companyDomains.length ? ` (${companyDomains.join(", ")})` : ""} and must match the manager
+                listed on your profile
+                {manager?.email ? ` — currently ${manager.fullName} (${manager.email})` : ""}.
+                {!hasManagerOnProfile && (
+                  <>
+                    {" "}
+                    No manager is assigned yet — ask your Company IT Contact to set one under{" "}
+                    <Link href="/portal/people" className="pt-link font-medium hover:underline">
+                      People & Org
+                    </Link>
+                    .
+                  </>
+                )}
+              </p>
             </div>
-          </div>
+          </Callout>
         )}
 
         {selectedTemplate.id === "FT-001" && privileged && (
-          <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 rounded-lg">
-            <div className="flex gap-3">
-              <AlertCircle className="h-5 w-5 text-amber-700 dark:text-amber-300 flex-shrink-0 mt-0.5" aria-hidden />
-              <p className="text-sm text-amber-900 dark:text-amber-100">
-                Admin / privileged access: confirm <strong>Manager / approver email</strong> matches your
-                profile manager on the company domain so DE can route client approval before provisioning.
-              </p>
-            </div>
-          </div>
+          <Callout tone="warn" title="Admin / privileged access">
+            Confirm <strong className="text-foreground">Manager / approver email</strong> matches your
+            profile manager on the company domain so DE can route client approval before provisioning.
+          </Callout>
         )}
 
         {submitError && (
-          <div
-            className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-lg"
-            role="alert"
-          >
-            <div className="flex gap-3">
-              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" aria-hidden />
-              <p className="text-sm text-red-800 dark:text-red-300" data-testid="error-message">
-                {submitError}
-              </p>
-            </div>
-          </div>
+          <Callout tone="bad" title="Something needs attention" testId="error-message">
+            {submitError}
+          </Callout>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">{selectedTemplate.name}</CardTitle>
-            <CardDescription>{selectedTemplate.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-              {visibleFields.map((field) => {
-                const error = fieldErrors[field.id];
-                const inputId = `form-field-${field.id}`;
-                const helpId = `${inputId}-help`;
-                const errorId = `${inputId}-error`;
-                const describedBy = [field.helperText ? helpId : null, error ? errorId : null]
-                  .filter(Boolean)
-                  .join(" ") || undefined;
+        <Panel id="request-form" title={selectedTemplate.name} description={selectedTemplate.description}>
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            {visibleFields.map((field) => {
+              const error = fieldErrors[field.id];
+              const inputId = `form-field-${field.id}`;
+              const helpId = `${inputId}-help`;
+              const errorId = `${inputId}-error`;
+              const describedBy = [field.helperText ? helpId : null, error ? errorId : null]
+                .filter(Boolean)
+                .join(" ") || undefined;
+              const controlClass = "border-border bg-background";
 
+              if (field.type === "checkbox") {
                 return (
-                  <div key={field.id} className="space-y-2">
-                    {field.type !== "checkbox" && (
-                      <Label htmlFor={inputId} className="block">
+                  <div key={field.id} className="space-y-1.5">
+                    <label htmlFor={inputId} className="flex min-h-[44px] cursor-pointer items-start gap-2.5 text-sm">
+                      <input
+                        id={inputId}
+                        type="checkbox"
+                        checked={Boolean(formData[field.id])}
+                        onChange={(e) => handleFieldChange(field.id, e.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded border-border accent-primary"
+                        required={field.required}
+                        aria-invalid={!!error}
+                        aria-describedby={describedBy}
+                        data-testid={`checkbox-form-${field.id}`}
+                      />
+                      <span>
                         {field.label}
                         {field.required && (
-                          <span className="text-red-600 ml-1" aria-hidden>
+                          <span className="pt-link ml-0.5" aria-hidden>
                             *
                           </span>
                         )}
-                      </Label>
-                    )}
-
-                    {field.helperText && field.type !== "checkbox" && (
-                      <p id={helpId} className="text-xs text-gray-500 dark:text-gray-400">
+                      </span>
+                    </label>
+                    {field.helperText && (
+                      <p id={helpId} className="text-xs text-muted-foreground">
                         {field.helperText}
                       </p>
                     )}
-
-                    {field.type === "text" && (
-                      <Input
-                        id={inputId}
-                        type="text"
-                        placeholder={field.placeholder}
-                        value={String(formData[field.id] ?? "")}
-                        onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                        required={field.required}
-                        aria-invalid={!!error}
-                        aria-describedby={describedBy}
-                        data-testid={`input-form-${field.id}`}
-                      />
-                    )}
-
-                    {field.type === "email" && (
-                      <Input
-                        id={inputId}
-                        type="email"
-                        placeholder={field.placeholder}
-                        value={String(formData[field.id] ?? "")}
-                        onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                        required={field.required}
-                        aria-invalid={!!error}
-                        aria-describedby={describedBy}
-                        data-testid={`input-form-${field.id}`}
-                      />
-                    )}
-
-                    {field.type === "date" && (
-                      <Input
-                        id={inputId}
-                        type="date"
-                        value={String(formData[field.id] ?? "")}
-                        onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                        required={field.required}
-                        aria-invalid={!!error}
-                        aria-describedby={describedBy}
-                        data-testid={`input-form-${field.id}`}
-                      />
-                    )}
-
-                    {field.type === "select" && (
-                      <select
-                        id={inputId}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                        value={String(formData[field.id] ?? "")}
-                        onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                        required={field.required}
-                        aria-invalid={!!error}
-                        aria-describedby={describedBy}
-                        data-testid={`select-form-${field.id}`}
-                      >
-                        <option value="">Select an option…</option>
-                        {field.options?.map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-
-                    {field.type === "textarea" && (
-                      <Textarea
-                        id={inputId}
-                        placeholder={field.placeholder}
-                        value={String(formData[field.id] ?? "")}
-                        onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                        className="min-h-24"
-                        required={field.required}
-                        aria-invalid={!!error}
-                        aria-describedby={describedBy}
-                        data-testid={`textarea-form-${field.id}`}
-                      />
-                    )}
-
-                    {field.type === "checkbox" && (
-                      <label htmlFor={inputId} className="flex items-start gap-2 cursor-pointer">
-                        <input
-                          id={inputId}
-                          type="checkbox"
-                          checked={Boolean(formData[field.id])}
-                          onChange={(e) => handleFieldChange(field.id, e.target.checked)}
-                          className="w-4 h-4 mt-0.5 rounded border-gray-300"
-                          required={field.required}
-                          aria-invalid={!!error}
-                          aria-describedby={describedBy}
-                          data-testid={`checkbox-form-${field.id}`}
-                        />
-                        <span className="text-sm">
-                          {field.label}
-                          {field.required && (
-                            <span className="text-red-600 ml-1" aria-hidden>
-                              *
-                            </span>
-                          )}
-                        </span>
-                      </label>
-                    )}
-
                     {error && (
-                      <p id={errorId} className="text-sm text-red-600 dark:text-red-400" role="alert">
+                      <p id={errorId} className="pt-ink pt-tone-bad text-xs" role="alert">
                         {error}
                       </p>
                     )}
                   </div>
                 );
-              })}
+              }
 
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                data-testid="button-submit-advanced-form"
-              >
+              return (
+                <Field
+                  key={field.id}
+                  label={field.label}
+                  htmlFor={inputId}
+                  required={field.required}
+                  hint={field.helperText ? <span id={helpId}>{field.helperText}</span> : undefined}
+                  error={error ? <span id={errorId}>{error}</span> : undefined}
+                >
+                  {field.type === "text" && (
+                    <Input
+                      id={inputId}
+                      type="text"
+                      placeholder={field.placeholder}
+                      value={String(formData[field.id] ?? "")}
+                      onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                      required={field.required}
+                      aria-invalid={!!error}
+                      aria-describedby={describedBy}
+                      className={controlClass}
+                      data-testid={`input-form-${field.id}`}
+                    />
+                  )}
+
+                  {field.type === "email" && (
+                    <Input
+                      id={inputId}
+                      type="email"
+                      placeholder={field.placeholder}
+                      value={String(formData[field.id] ?? "")}
+                      onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                      required={field.required}
+                      aria-invalid={!!error}
+                      aria-describedby={describedBy}
+                      className={controlClass}
+                      data-testid={`input-form-${field.id}`}
+                    />
+                  )}
+
+                  {field.type === "date" && (
+                    <Input
+                      id={inputId}
+                      type="date"
+                      value={String(formData[field.id] ?? "")}
+                      onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                      required={field.required}
+                      aria-invalid={!!error}
+                      aria-describedby={describedBy}
+                      className={controlClass}
+                      data-testid={`input-form-${field.id}`}
+                    />
+                  )}
+
+                  {field.type === "select" && (
+                    <select
+                      id={inputId}
+                      className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={String(formData[field.id] ?? "")}
+                      onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                      required={field.required}
+                      aria-invalid={!!error}
+                      aria-describedby={describedBy}
+                      data-testid={`select-form-${field.id}`}
+                    >
+                      <option value="">Select an option…</option>
+                      {field.options?.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {field.type === "textarea" && (
+                    <Textarea
+                      id={inputId}
+                      placeholder={field.placeholder}
+                      value={String(formData[field.id] ?? "")}
+                      onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                      className={`min-h-24 ${controlClass}`}
+                      required={field.required}
+                      aria-invalid={!!error}
+                      aria-describedby={describedBy}
+                      data-testid={`textarea-form-${field.id}`}
+                    />
+                  )}
+                </Field>
+              );
+            })}
+
+            <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+              <Button type="submit" variant="brand" disabled={submitting} data-testid="button-submit-advanced-form">
                 {submitting ? "Submitting…" : "Submit Request"}
               </Button>
-            </form>
-          </CardContent>
-        </Card>
+              <Button
+                type="button"
+                variant="outline"
+                className="border-border bg-card hover:bg-accent"
+                onClick={resetForm}
+                data-testid="button-back-to-forms"
+              >
+                Back to Forms
+              </Button>
+            </div>
+          </form>
+        </Panel>
       </div>
     );
   };
 
-  return <PortalLayout title="Request Forms">{renderContent()}</PortalLayout>;
+  const inForm = !!selectedTemplate && !submitted;
+
+  return (
+    <PortalLayout
+      title="Request Forms"
+      description={
+        selectedTemplate && !submitted
+          ? `${selectedTemplate.name} · fields marked * are required.`
+          : "Pick a form and submit your request. Each submission creates a ticket for the DE team, routed for approval where needed."
+      }
+      eyebrow={inForm ? "Request Forms" : undefined}
+      width={inForm ? "narrow" : "default"}
+    >
+      {renderContent()}
+    </PortalLayout>
+  );
 }

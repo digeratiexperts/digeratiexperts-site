@@ -1,16 +1,31 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useState } from "react";
+import { SituationContinuityStrip } from "@/components/SituationContinuityStrip";
+import { situationSubmitPayload, useAnonymousSituation } from "@/lib/anonymousSituation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Loader2, Check, Shield, Clock, CheckCircle } from "lucide-react";
+import { ArrowRight, Loader2, Shield, Clock, CheckCircle } from "lucide-react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import {
+  HomeChapter,
+  HomeChapterHeader,
+  HomeContainer,
+  buttonPrimary,
+  buttonSecondary,
+  cardDark,
+  cardPaper,
+  Eyebrow,
+  ledeClass,
+  titleClass,
+  textLinkClass,
+} from "@/components/home/HomeChapter";
 
 const formSchema = z.object({
   fullName: z.string()
@@ -28,6 +43,7 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const prefersReducedMotion = useReducedMotion();
+  const situation = useAnonymousSituation();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -52,6 +68,7 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
           phone: data.phone || "",
           company: data.company || "",
           source: "lead_form",
+          ...situationSubmitPayload(),
         }),
       });
       const result = await response.json();
@@ -84,56 +101,69 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
   ];
 
   return (
-    <section 
-      id="assessment-form"
-      className="de-dark-well relative py-8 md:py-14"
-    >
-      <div className="mx-auto max-w-[var(--de-canvas)] px-3 sm:px-4 lg:px-6">
-        <div className="de-paper-island relative px-6 py-10 sm:px-10 sm:py-14 md:px-12 md:py-16">
-          <div className="max-w-4xl mx-auto relative z-10">
-            <motion.div 
-              className="text-center mb-10"
-              initial={prefersReducedMotion ? false : revealInitial}
-              whileInView={revealInView}
-              viewport={revealViewport}
-              transition={revealTransition}
-            >
-              <p className="mb-3 text-base font-semibold uppercase tracking-[0.2em] text-[#D3126A]">
-                Cyber Risk Assessment
-              </p>
-              <h2 className="mb-4 font-heading text-3xl font-semibold leading-tight tracking-[-0.02em] text-[#1A1228] md:text-4xl lg:text-5xl">
-                Get Your Free Security Assessment
-              </h2>
-              <p className="mx-auto max-w-2xl text-lg leading-relaxed text-black/60 md:text-xl">
-                Discover vulnerabilities before attackers do. Our experts will analyze your security posture and provide actionable recommendations.
-              </p>
-            </motion.div>
+    <HomeChapter tone="paper" id="assessment-form">
+      <HomeContainer>
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12 lg:gap-14">
+          <motion.div
+            className="lg:col-span-5"
+            initial={prefersReducedMotion ? false : revealInitial}
+            whileInView={revealInView}
+            viewport={revealViewport}
+            transition={revealTransition}
+          >
+            <Eyebrow tone="paper" className="mb-4">
+              Cyber Risk Assessment
+            </Eyebrow>
+            <h2 className={`${titleClass} max-w-[20ch]`}>Get Your Free Security Assessment</h2>
+            <p className={`${ledeClass("paper")} mt-5 max-w-xl`}>
+              {situation
+                ? "We'll size this Cyber Risk Assessment against the environment you already started in the Store. You do not need to retype users, computers, or sites."
+                : "Discover vulnerabilities before attackers do. Our experts will analyze your security posture and provide actionable recommendations."}
+            </p>
 
-            <motion.div
-              className="de-paper-lift-lg rounded-2xl p-8 md:p-10"
-              initial={prefersReducedMotion ? false : revealInitial}
-              whileInView={revealInView}
-              viewport={revealViewport}
-              transition={revealTransition}
-            >
-              <div className="mb-6 grid grid-cols-1 gap-x-6 gap-y-2.5 rounded-xl border border-[var(--de-paper-hairline)] bg-white px-4 py-3.5 sm:grid-cols-3">
-                <div className="flex items-baseline gap-2.5 text-[15px] font-semibold leading-snug text-[#1A1228]">
-                  <span className="mt-[0.55em] h-px w-2.5 shrink-0 bg-[#D3126A]" aria-hidden="true" />
-                  <span>Independent findings</span>
-                </div>
-                <div className="flex items-baseline gap-2.5 text-[15px] font-semibold leading-snug text-[#1A1228]">
-                  <span className="mt-[0.55em] h-px w-2.5 shrink-0 bg-[#D3126A]" aria-hidden="true" />
-                  <span>No switch required</span>
-                </div>
-                <div className="flex items-baseline gap-2.5 text-[15px] font-semibold leading-snug text-[#1A1228]">
-                  <span className="mt-[0.55em] h-px w-2.5 shrink-0 bg-[#D3126A]" aria-hidden="true" />
-                  <span>Arizona-based experts</span>
-                </div>
-              </div>
+            <ul className="mt-8 divide-y divide-[var(--de-paper-hairline)] border-y border-[var(--de-paper-hairline)]">
+              {benefits.map((benefit) => (
+                <li key={benefit.text} className="flex items-center gap-3 py-3 text-base text-[#1A1228]">
+                  <benefit.icon className="h-4 w-4 shrink-0 text-[#D3126A]" aria-hidden="true" />
+                  <span>{benefit.text}</span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="mt-6 text-base text-[#5A5368]">
+              Prefer to call?{" "}
+              <a
+                href={PRIMARY_PHONE.telHref}
+                data-testid="link-lead-phone"
+                className="font-semibold text-de-magenta-paper-ink transition-colors hover:text-[#D3126A]"
+              >
+                {PRIMARY_PHONE.display}
+              </a>
+            </p>
+          </motion.div>
+
+          <motion.div
+            className={`${cardPaper} p-6 md:p-8 lg:col-span-7`}
+            initial={prefersReducedMotion ? false : revealInitial}
+            whileInView={revealInView}
+            viewport={revealViewport}
+            transition={revealTransition}
+          >
+              {situation ? (
+                <SituationContinuityStrip situation={situation} door="assessment" tone="paper" className="mb-6" />
+              ) : null}
+              <ul className="mb-6 flex flex-wrap gap-x-6 gap-y-2 border-b border-[var(--de-paper-hairline)] pb-5">
+                {["Independent findings", "No switch required", "Arizona-based experts"].map((item) => (
+                  <li key={item} className="flex items-baseline gap-2.5 text-[15px] font-semibold leading-snug text-[#1A1228]">
+                    <span className="mt-[0.55em] h-px w-2.5 shrink-0 bg-[#D3126A]" aria-hidden="true" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
 
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <FormField
                       control={form.control}
                       name="fullName"
@@ -222,7 +252,7 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
                     size="lg"
                     data-testid="button-lead-submit"
                     disabled={isSubmitting}
-                    className="h-14 w-full justify-center gap-2 border-0 !bg-[#D3126A] text-lg font-semibold text-white shadow-none transition-colors hover:!bg-[#e01874] hover:shadow-none focus-visible:ring-2 focus-visible:ring-[#D3126A]/70"
+                    className="h-auto min-h-12 w-full justify-center gap-2 whitespace-normal border-0 px-4 py-3 text-center !bg-[#D3126A] sm:px-8 text-base font-semibold text-white shadow-none transition-colors hover:!bg-[#e01874] hover:shadow-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
                   >
                     {isSubmitting ? (
                       <>
@@ -236,38 +266,11 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
                       </>
                     )}
                   </Button>
-
-                  <div className="flex flex-wrap items-center justify-center gap-6 pt-4">
-                    {benefits.map((benefit) => (
-                      <div key={benefit.text} className="flex items-center gap-2">
-                        <benefit.icon className="w-4 h-4 text-[#D3126A]" />
-                        <span className="text-base text-black/60">{benefit.text}</span>
-                      </div>
-                    ))}
-                  </div>
                 </form>
               </Form>
-            </motion.div>
-
-            <motion.p 
-              className="mt-6 text-center text-base text-black/70"
-              initial={prefersReducedMotion ? false : { opacity: 0.55 }}
-              whileInView={{ opacity: 1 }}
-              viewport={revealViewport}
-              transition={revealTransition}
-            >
-              Prefer to call?{" "}
-              <a 
-                href={PRIMARY_PHONE.telHref}
-                data-testid="link-lead-phone"
-                className="text-[#D3126A] hover:text-[#f0187a] font-medium transition-colors"
-              >
-                {PRIMARY_PHONE.display}
-              </a>
-            </motion.p>
-          </div>
+          </motion.div>
         </div>
-      </div>
-    </section>
+      </HomeContainer>
+    </HomeChapter>
   );
 };

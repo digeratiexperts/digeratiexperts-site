@@ -7,6 +7,7 @@ import { useLocation } from "wouter";
 import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
 import TurnstileWidget from "@/components/TurnstileWidget";
 import { useSEO } from "@/hooks/useSEO";
+import "@/styles/portal.css";
 import { portalReturnLabel } from "@/lib/portalUrls";
 import { marketplaceReturnTo } from "@shared/portalReturnTo";
 
@@ -236,18 +237,21 @@ export default function PortalLogin() {
   const showZoho = zohoConfigured !== false;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#030228] to-[#0f0d2e] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="flex justify-center mb-8">
+    <main id="main-content" tabIndex={-1} className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 pt-login-glow" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-px pt-login-line" />
+      <div className="relative w-full max-w-md">
+        <div className="mb-8 flex flex-col items-center gap-3">
           <img src={DE_LOGO_REVERSE} alt="Digerati Experts" className="h-10 w-auto" />
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Client portal</p>
         </div>
 
-        <Card className="bg-white/10 border-white/20 backdrop-blur">
+        <Card className="pt-still border-border bg-card shadow-none">
           {step === "credentials" ? (
             <>
               <CardHeader className="space-y-2">
-                <h1 className="text-2xl font-semibold leading-none tracking-tight text-white">Client Portal</h1>
-                <CardDescription className="text-gray-300">
+                <h1 className="font-heading text-2xl font-semibold leading-none tracking-tight">Sign in</h1>
+                <CardDescription className="text-muted-foreground">
                   {returnToForZoho === "/portal/marketplace"
                     ? "Sign in to continue to the Client Marketplace."
                     : `Sign in to continue to ${returnLabel}.`}
@@ -260,7 +264,8 @@ export default function PortalLogin() {
                     <Button
                       type="button"
                       asChild
-                      className="w-full bg-white text-[#0f0d2e] hover:bg-white/90 font-semibold"
+                      variant="outline"
+                      className="w-full border-border bg-background font-semibold hover:bg-accent"
                       data-testid="button-zoho-login"
                     >
                       <a href={zohoStartHref}>
@@ -269,14 +274,14 @@ export default function PortalLogin() {
                       </a>
                     </Button>
                     {zohoConfigured === null && (
-                      <p className="text-xs text-gray-500 text-center">Checking Zoho sign-in…</p>
+                      <p className="text-center text-xs text-muted-foreground">Checking Zoho sign-in…</p>
                     )}
                     <div className="relative py-1">
                       <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-white/10" />
+                        <div className="w-full border-t border-border" />
                       </div>
                       <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-transparent px-2 text-gray-400">or use email</span>
+                        <span className="bg-card px-2 text-muted-foreground">or use email</span>
                       </div>
                     </div>
                   </div>
@@ -284,39 +289,43 @@ export default function PortalLogin() {
 
                 <form onSubmit={handleLogin} className="space-y-4">
                   {error && (
-                    <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                    <div role="alert" className="flex items-center gap-2 pt-callout pt-tone-bad pt-ink rounded-lg border p-3 text-sm">
                       <AlertCircle className="h-4 w-4 flex-shrink-0" />
                       {error}
                     </div>
                   )}
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-white">Email</label>
+                    <label htmlFor="login-email" className="text-sm font-medium">Email</label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                       <Input
+                        id="login-email"
                         type="email"
                         placeholder="your@company.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-gray-500"
+                        className="border-input bg-background pl-10"
                         required
+                        autoComplete="email"
                         data-testid="input-email"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-white">Password</label>
+                    <label htmlFor="login-password" className="text-sm font-medium">Password</label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                       <Input
+                        id="login-password"
                         type="password"
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-gray-500"
+                        className="border-input bg-background pl-10"
                         required
+                        autoComplete="current-password"
                         data-testid="input-password"
                       />
                     </div>
@@ -333,7 +342,8 @@ export default function PortalLogin() {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-[#D3126A] hover:bg-[#D3126A]/90 text-white font-semibold"
+                    variant="brand"
+                    className="w-full font-semibold"
                     data-testid="button-login"
                   >
                     {loading ? "Signing in..." : "Sign In"}
@@ -341,14 +351,14 @@ export default function PortalLogin() {
                   </Button>
                 </form>
 
-                <div className="mt-6 pt-6 border-t border-white/10">
-                  <p className="text-xs text-gray-400 text-center mb-3">
+                <div className="mt-6 border-t border-border pt-6">
+                  <p className="mb-3 text-center text-xs text-muted-foreground">
                     Don't have an account?{" "}
-                    <a href="/portal/signup" className="text-de-magenta-ink hover:underline" data-testid="link-signup">
+                    <a href="/portal/signup" className="text-de-magenta-ink underline underline-offset-2 hover:no-underline" data-testid="link-signup">
                       Sign Up
                     </a>
                   </p>
-                  <p className="text-xs text-gray-400 text-center">
+                  <p className="text-center text-xs text-muted-foreground">
                     Need help? Contact support@digeratiexperts.com
                   </p>
                 </div>
@@ -359,9 +369,9 @@ export default function PortalLogin() {
               <CardHeader className="space-y-2">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="h-6 w-6 text-de-magenta-ink" />
-                  <h1 className="text-2xl font-semibold leading-none tracking-tight text-white">Verify Your Identity</h1>
+                  <h1 className="font-heading text-2xl font-semibold leading-none tracking-tight">Verify your identity</h1>
                 </div>
-                <CardDescription className="text-gray-300">
+                <CardDescription className="text-muted-foreground">
                   {mfaMessage}
                 </CardDescription>
               </CardHeader>
@@ -369,17 +379,18 @@ export default function PortalLogin() {
               <CardContent>
                 <form onSubmit={handleMfaVerify} className="space-y-4">
                   {error && (
-                    <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                    <div role="alert" className="flex items-center gap-2 pt-callout pt-tone-bad pt-ink rounded-lg border p-3 text-sm">
                       <AlertCircle className="h-4 w-4 flex-shrink-0" />
                       {error}
                     </div>
                   )}
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-white">
+                    <label htmlFor="login-mfa" className="text-sm font-medium">
                       {mfaMethod === "totp" ? "Authenticator Code" : "Email Verification Code"}
                     </label>
                     <Input
+                      id="login-mfa"
                       type="text"
                       inputMode="numeric"
                       pattern="[0-9A-Za-z]*"
@@ -387,18 +398,19 @@ export default function PortalLogin() {
                       placeholder={mfaMethod === "totp" ? "Enter 6-digit code" : "Enter code from email"}
                       value={mfaCode}
                       onChange={(e) => setMfaCode(e.target.value)}
-                      className="bg-white/10 border-white/20 text-white placeholder:text-gray-500 text-center text-lg tracking-widest"
+                      className="pt-num border-input bg-background text-center text-lg tracking-widest"
                       autoFocus
                       required
                       data-testid="input-mfa-code"
                     />
-                    <p className="text-xs text-gray-500">You can also enter a backup code</p>
+                    <p className="text-xs text-muted-foreground">You can also enter a backup code</p>
                   </div>
 
                   <Button
                     type="submit"
                     disabled={loading || mfaCode.length < 6}
-                    className="w-full bg-[#D3126A] hover:bg-[#D3126A]/90 text-white font-semibold"
+                    variant="brand"
+                    className="w-full font-semibold"
                     data-testid="button-verify-mfa"
                   >
                     {loading ? "Verifying..." : "Verify & Sign In"}
@@ -409,7 +421,7 @@ export default function PortalLogin() {
                     type="button"
                     variant="ghost"
                     onClick={() => { setStep("credentials"); setError(""); setMfaCode(""); }}
-                    className="w-full text-gray-400 hover:text-white"
+                    className="w-full text-muted-foreground hover:text-foreground"
                     data-testid="button-back-to-login"
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" />

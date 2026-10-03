@@ -1,11 +1,11 @@
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { storage } from "./storage";
-import { randomBytes, randomInt, createHash } from "crypto";
+import { randomBytes, randomInt, createHash, timingSafeEqual } from "crypto";
 import rateLimit from "express-rate-limit";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_integrations/object_storage";
-import { zohoClient, zohoDeskService, splitVisitorName, zohoCRMService, zohoBillingService } from "./zoho";
+import { zohoClient, zohoDeskService, zohoCRMService, zohoBillingService } from "./zoho";
 import { websiteLeadTaxonomy } from "./zoho/leadTaxonomy";
 import { findBackupCodeIndex, generateBackupCodes } from "./portalMfaCrypto";
 import {
@@ -15,6 +15,7 @@ import {
 } from "./portalTicketUploads";
 import { PORTAL_TICKET_MAX_FILE_BYTES } from "@shared/portalTicketFileRules";
 import { validatePortalOrderSelection } from "@shared/portalOrderCatalog";
+import { THREAT_ATTRIBUTION } from "@shared/threatFeed";
 import {
   clearZohoPkceCookie,
   createZohoStartPayload,
@@ -73,13 +74,15 @@ import {
   orgPublicUser,
   listClientUsers,
   listDepartments,
-  createDepartment,
-  updateDepartment,
   findUserById,
   validateManagerApproverEmail,
   managerSummaryForUser,
   type OrgUserFields,
 } from "./portalOrg";
+import { registerPortalDepartmentRoutes } from "./portalDepartmentRoutes";
+import { registerPortalDeskAgentRoutes } from "./portalDeskAgentRoutes";
+import { canAccessPortalTicket } from "./portalTicketAccess";
+import { hasFreshVerificationToken } from "./portalVerificationThrottle";
 import {
   initPortalApprovals,
   createApprovalRequest,
@@ -119,9 +122,11 @@ import {
 } from "./integrations/techSalesClient";
 import { registerDeSyncRoutes } from "./integrations/deSyncRoutes";
 import { resolveJwtSecret } from "./config/authSecrets";
-import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter } from "./middleware/rateLimiter";
+import { registerRetiredLegacyAuthRoutes } from "./legacyAuthRetired";
+import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter, paymentRateLimiter } from "./middleware/rateLimiter";
 import { enqueueOutbox } from "./integrations/deSyncStore";
 import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
+import { appendSituationToDescription, parseAnonymousSituation } from "@shared/anonymousSituation";
 
 // Canonical JWT secret — resolved per call so dotenv/env load order cannot
 // split signing and verification across different secrets (see config/authSecrets).
@@ -166,6 +171,14 @@ function clearPortalAuthCookies(res: Response) {
 
 // Utility function for generating IDs
 const randomId = () => randomBytes(16).toString('hex');
+
+/** Constant-time string comparison (length-safe) for short secrets like MFA codes. */
+function timingSafeStrEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a, "utf8");
+  const bb = Buffer.from(b, "utf8");
+  if (ab.length !== bb.length) return false;
+  return timingSafeEqual(ab, bb);
+}
 
 // HTML-escape user-supplied strings interpolated into server-rendered HTML
 // (e.g. the order receipt). CSP allows inline scripts, so escaping is the guard.
@@ -223,7 +236,21 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
   
   try {
     const decoded = jwt.verify(token, jwtSecret()) as JWTPayload;
-    const live = portalAuthGetUser(decoded.email) || (decoded.userId ? findUserById(decoded.userId) : null);
+    // Bind the token to the identity it was issued for. Every portal token mint
+    // carries userId and email from the same record, so an email lookup is only
+    // trusted when it resolves to that same userId; otherwise fall back to the
+    // userId. Without this, a validly-signed token whose email claim names a
+    // different account — e.g. one minted by the legacy /api/auth/register path,
+    // which lets the caller pick any email — would resolve to that account and
+    // take on its role. An email-changed user still resolves via the userId
+    // fallback, because the old email no longer indexes their live record.
+    const byEmail = decoded.email ? portalAuthGetUser(decoded.email) : null;
+    const live =
+      byEmail && byEmail.id === decoded.userId
+        ? byEmail
+        : decoded.userId
+          ? findUserById(decoded.userId)
+          : null;
     // Fail closed: a validly-signed JWT for a user with no live record (deleted, never
     // indexed, or a store that has not finished loading) must be denied, not fall back to
     // trusting the token's embedded role/storeRole/clientId claims. See docs/MASTER-GUARDRAILS.md #7-8.
@@ -434,21 +461,6 @@ function publicPortalUser(user: any, storeRole: StoreRole) {
   };
 }
 
-// Generate JWT token
-function generateToken(userId: string, email: string, role: string = "user"): string {
-  return jwt.sign({ userId, email, role }, jwtSecret(), { expiresIn: '24h' });
-}
-
-// Hash password securely
-async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, SALT_ROUNDS);
-}
-
-// Verify password
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash);
-}
-
 // Rate limiters
 const chatRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -460,12 +472,6 @@ const leadQuoteRateLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 3,
   message: "Too many quote requests. Please try again later.",
-});
-
-const widgetTicketRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: "Too many support requests. Please try again later.",
 });
 
 const advisorChatRateLimiter = rateLimit({
@@ -568,8 +574,7 @@ export async function registerRoutes(app: Express) {
         generatedAt: null,
         items: [],
         sources: {},
-        attribution:
-          "Sources: CISA, NIST NVD, FIRST, and Microsoft MSRC. Digerati prioritizes items based on active exploitation, exploit probability, and relevance to SMB environments.",
+        attribution: THREAT_ATTRIBUTION,
         message: "Unable to load the threat feed",
       });
     }
@@ -697,89 +702,9 @@ export async function registerRoutes(app: Express) {
   
   // ===== AUTHENTICATION ROUTES =====
   
-  // Register new user with hashed password
-  app.post("/api/auth/register", formSubmissionRateLimiter, async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { username, email, password, fullName } = req.body;
-      
-      if (!username || !email || !password) {
-        return res.status(400).json({ error: "Username, email, and password are required" });
-      }
-      
-      if (password.length < 8) {
-        return res.status(400).json({ error: "Password must be at least 8 characters" });
-      }
-      
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(409).json({ error: "Email already registered" });
-      }
-      
-      const existingUsername = await storage.getUserByUsername(username);
-      if (existingUsername) {
-        return res.status(409).json({ error: "Username already taken" });
-      }
-
-      // Hash password before storing
-      const hashedPassword = await hashPassword(password);
-      
-      const user = await storage.createUser({
-        username,
-        email,
-        password: hashedPassword,
-        fullName: fullName || null,
-      });
-
-      // Generate JWT token
-      const token = generateToken(user.id, user.email || "", "user");
-      
-      // Don't return password in response
-      const { password: _, ...safeUser } = user;
-      
-      res.json({ success: true, user: safeUser, token });
-      logSecurityEvent("USER_REGISTERED", req, { userId: user.id });
-    } catch (error: any) {
-      console.error("Registration error:", error);
-      res.status(500).json({ error: "Registration failed" });
-    }
-  });
-
-  // Login with password verification
-  app.post("/api/auth/login", loginRateLimiter, async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { email, password } = req.body;
-      
-      if (!email || !password) {
-        return res.status(400).json({ error: "Email and password are required" });
-      }
-      
-      const user = await storage.getUserByEmail(email);
-      if (!user) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-      if (!user.password) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-      
-      const isValidPassword = await verifyPassword(password, user.password);
-      if (!isValidPassword) {
-        logSecurityEvent("LOGIN_FAILED", req, { email });
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-      
-      const token = generateToken(user.id, user.email || "", "user");
-      
-      // Don't return password in response
-      const { password: _, ...safeUser } = user;
-      
-      res.json({ success: true, user: safeUser, token });
-      logSecurityEvent("USER_LOGIN", req, { userId: user.id });
-    } catch (error: any) {
-      console.error("Login error:", error);
-      res.status(500).json({ error: "Login failed" });
-    }
-  });
+  // Legacy generic register/login are retired (#236): they minted tokens for a
+  // second identity model with a caller-chosen email. Both now answer 410 Gone.
+  registerRetiredLegacyAuthRoutes(app);
 
   // Get current user
   app.get("/api/auth/me", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
@@ -1342,92 +1267,12 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Portal agent reply → appears in the public website DE Desk widget
-  app.post("/api/portal/desk-chats/:sessionId/reply", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const {
-        getDeskSessionMessages,
-        appendDeskMessage,
-        claimDeskSession,
-      } = await import("./services/msp-advisor");
-      const sessionId = req.params.sessionId;
-      const content = String(req.body?.content || "").trim();
-      if (!content) return res.status(400).json({ error: "content is required" });
-      if (content.length > 8000) return res.status(400).json({ error: "Message too long" });
-
-      const { session } = await getDeskSessionMessages(sessionId);
-      if (!session) return res.status(404).json({ error: "Conversation not found" });
-
-      const isAdmin = req.user?.role === "admin";
-      const userEmail = (req.user?.email || "").toLowerCase();
-      if (!isAdmin && session.email && session.email.toLowerCase() !== userEmail) {
-        return res.status(403).json({ error: "Not allowed to reply to this conversation" });
-      }
-      if (!isAdmin && !session.email) {
-        return res.status(403).json({ error: "Conversation is not linked to an account email yet" });
-      }
-
-      const agentName =
-        String(req.body?.senderName || req.user?.fullName || req.user?.email || "DE Agent")
-          .trim()
-          .slice(0, 120) || "DE Agent";
-
-      await claimDeskSession(sessionId, agentName);
-      const message = await appendDeskMessage({
-        sessionId,
-        role: "agent",
-        content,
-        senderName: agentName,
-      });
-
-      res.json({ success: true, message, agentLive: true, agentName });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message || "Failed to send reply" });
-    }
-  });
-
-  app.post("/api/portal/desk-chats/:sessionId/claim", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { getDeskSessionMessages, claimDeskSession } = await import("./services/msp-advisor");
-      const { session } = await getDeskSessionMessages(req.params.sessionId);
-      if (!session) return res.status(404).json({ error: "Conversation not found" });
-      const isAdmin = req.user?.role === "admin";
-      const userEmail = (req.user?.email || "").toLowerCase();
-      if (!isAdmin && session.email && session.email.toLowerCase() !== userEmail) {
-        return res.status(403).json({ error: "Not allowed" });
-      }
-      if (!isAdmin && !session.email) {
-        return res.status(403).json({ error: "Conversation is not linked to an account email yet" });
-      }
-      const agentName =
-        String(req.body?.senderName || req.user?.fullName || req.user?.email || "DE Agent")
-          .trim()
-          .slice(0, 120) || "DE Agent";
-      const updated = await claimDeskSession(req.params.sessionId, agentName);
-      res.json({ success: true, session: updated });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message || "Failed to claim conversation" });
-    }
-  });
-
-  app.post("/api/portal/desk-chats/:sessionId/release", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { getDeskSessionMessages, releaseDeskSession } = await import("./services/msp-advisor");
-      const { session } = await getDeskSessionMessages(req.params.sessionId);
-      if (!session) return res.status(404).json({ error: "Conversation not found" });
-      const isAdmin = req.user?.role === "admin";
-      const userEmail = (req.user?.email || "").toLowerCase();
-      if (!isAdmin && session.email && session.email.toLowerCase() !== userEmail) {
-        return res.status(403).json({ error: "Not allowed" });
-      }
-      if (!isAdmin && !session.email) {
-        return res.status(403).json({ error: "Conversation is not linked to an account email yet" });
-      }
-      const updated = await releaseDeskSession(req.params.sessionId);
-      res.json({ success: true, session: updated });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message || "Failed to release conversation" });
-    }
+  // DE Desk live-handoff actions (reply/claim/release) are DE-staff only and
+  // live in their own module so the authorization is testable (#249). The read
+  // routes above stay here: a client may see their own linked Desk thread.
+  registerPortalDeskAgentRoutes(app, {
+    actionGuards: [authMiddleware, requireAdmin],
+    replyGuards: [authMiddleware, requireAdmin, validateInput],
   });
 
   // ----- Portal org / multi-role -----
@@ -1502,44 +1347,8 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  app.post("/api/portal/org/departments", [authMiddleware, requireOrgManage, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const clientId = req.user!.clientId;
-      if (!clientId && req.user!.role !== "admin") {
-        return res.status(400).json({ error: "No client associated" });
-      }
-      const targetClient = req.body.clientId || clientId;
-      if (!targetClient) return res.status(400).json({ error: "clientId required" });
-      if (req.user!.role !== "admin" && targetClient !== clientId) {
-        return res.status(403).json({ error: "Forbidden" });
-      }
-      const name = String(req.body.name || "").trim();
-      if (!name) return res.status(400).json({ error: "Department name required" });
-      const dept = await createDepartment(targetClient, name, req.body.itContactUserId || null);
-      res.status(201).json({ success: true, department: dept });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.patch("/api/portal/org/departments/:id", [authMiddleware, requireOrgManage, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const clientId = req.user!.clientId;
-      if (!clientId && req.user!.role !== "admin") {
-        return res.status(400).json({ error: "No client associated" });
-      }
-      const targetClient = req.body.clientId || clientId;
-      if (!targetClient) return res.status(400).json({ error: "clientId required" });
-      const dept = await updateDepartment(req.params.id, targetClient, {
-        name: req.body.name,
-        itContactUserId: req.body.itContactUserId,
-      });
-      if (!dept) return res.status(404).json({ error: "Department not found" });
-      res.json({ success: true, department: dept });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
+  // Department create/update: the company comes from the signed-in user, not the body (#254).
+  registerPortalDepartmentRoutes(app, { guards: [authMiddleware, requireOrgManage, validateInput] });
 
   // ----- Approvals -----
   app.get("/api/portal/approvals", [authMiddleware, requireApprovalsAccess], async (req: AuthenticatedRequest, res: Response) => {
@@ -2060,9 +1869,7 @@ export async function registerRoutes(app: Express) {
           return res.status(404).json({ error: "Ticket not found" });
         }
 
-        const isAdmin = req.user?.role === "admin";
-        const userClientId = req.user?.clientId;
-        if (!isAdmin && ticket.clientId !== userClientId) {
+        if (!canAccessPortalTicket(req.user, ticket)) {
           return res.status(403).json({ error: "Access denied" });
         }
 
@@ -2126,8 +1933,7 @@ export async function registerRoutes(app: Express) {
       }
 
       const isAdmin = req.user?.role === "admin";
-      const userClientId = req.user?.clientId;
-      if (!isAdmin && ticket.clientId !== userClientId) {
+      if (!canAccessPortalTicket(req.user, ticket)) {
         return res.status(403).json({ error: "Access denied" });
       }
       
@@ -2173,9 +1979,7 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Ticket not found" });
       }
 
-      const isAdmin = req.user?.role === "admin";
-      const userClientId = req.user?.clientId;
-      if (!isAdmin && ticket.clientId !== userClientId) {
+      if (!canAccessPortalTicket(req.user, ticket)) {
         return res.status(403).json({ error: "Access denied" });
       }
 
@@ -2387,7 +2191,14 @@ export async function registerRoutes(app: Express) {
   });
 
   // Resend Verification Email Endpoint
-  app.post("/api/portal/resend-verification", [validateInput], async (req: AuthenticatedRequest, res: Response) => {
+  app.post("/api/portal/resend-verification", [formSubmissionRateLimiter, verifyTurnstile, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+    // The same answer for every case below, so this endpoint never reveals
+    // whether an account exists or is already verified (issue #252).
+    const genericOk = () =>
+      res.json({
+        success: true,
+        message: "If an account exists with this email, a new verification link has been sent.",
+      });
     try {
       const { email } = req.body;
 
@@ -2395,19 +2206,16 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ message: "Email is required" });
       }
 
-      // Find user by email
+      // A missing account, or one already verified, gets the same answer and no email.
       const user = portalUsers.get(email);
-      if (!user) {
-        // Don't reveal whether user exists for security
-        return res.json({ 
-          success: true, 
-          message: "If an account exists with this email, a new verification link has been sent." 
-        });
+      if (!user || user.emailVerified) {
+        return genericOk();
       }
 
-      // Check if already verified
-      if (user.emailVerified) {
-        return res.status(400).json({ message: "Email is already verified" });
+      // Per-email cooldown: if a link was just sent, do not mint and send another,
+      // so the inbox cannot be flooded by a caller rotating IPs past the rate limit.
+      if (hasFreshVerificationToken(emailVerificationTokens.values(), email, Date.now())) {
+        return genericOk();
       }
 
       // Delete any existing tokens for this user
@@ -2440,10 +2248,7 @@ export async function registerRoutes(app: Express) {
 
       logSecurityEvent("VERIFICATION_EMAIL_RESENT", req, { email });
 
-      return res.json({
-        success: true,
-        message: "If an account exists with this email, a new verification link has been sent.",
-      });
+      return genericOk();
     } catch (error: any) {
       console.error("[ERROR] Resend verification failed:", error);
       res.status(500).json({ message: "Failed to resend verification email" });
@@ -2934,7 +2739,7 @@ export async function registerRoutes(app: Express) {
       let verified = false;
 
       if (challenge.method === 'email') {
-        verified = challenge.emailCode === code.trim();
+        verified = timingSafeStrEqual(String(challenge.emailCode ?? ""), code.trim());
       } else if (challenge.method === 'totp' && user.mfaTotpSecret) {
         const otplib = await import('otplib');
         const auth = (otplib as any).authenticator || (otplib as any).default?.authenticator || otplib;
@@ -3888,7 +3693,7 @@ export async function registerRoutes(app: Express) {
   });
 
   // Portal invoice payment via Zoho Payments
-  app.post("/api/portal/payment/zoho", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+  app.post("/api/portal/payment/zoho", [paymentRateLimiter, authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { invoiceId, amount } = req.body || {};
       if (!invoiceId) {
@@ -3922,12 +3727,22 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Invoice not found" });
       }
 
-      const payAmount = typeof amount === "number" && amount > 0
-        ? amount / 100
-        : Number(inv.balance ?? inv.total);
-      if (!payAmount || payAmount <= 0) {
-        return res.status(400).json({ error: "Invoice has no balance due" });
+      // Server-authoritative amount: the balance due is the source of truth;
+      // a client-supplied `amount` may only match it, never underpay.
+      const { resolveInvoicePayAmount } = await import("./portalInvoicePayment");
+      const amountResult = resolveInvoicePayAmount(inv.balance ?? inv.total, amount, COMPANY.billingEmail);
+      if (!amountResult.ok) {
+        if (amountResult.reason === "amount_mismatch") {
+          console.warn("[SECURITY] INVOICE_AMOUNT_MISMATCH", {
+            invoiceId: inv.invoice_id,
+            balanceDue: Number(inv.balance ?? inv.total),
+            requestedCents: amount,
+            portalUserId: req.userId,
+          });
+        }
+        return res.status(amountResult.status).json({ error: amountResult.error });
       }
+      const payAmount = amountResult.payAmount;
 
       const appUrl = process.env.APP_URL || "https://digeratiexperts.com";
       const session = await zohoPayments.createPaymentSession({
@@ -5242,6 +5057,7 @@ export async function registerRoutes(app: Express) {
   app.post("/api/assessment", [leadQuoteRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { fullName, email, phone, company, source } = req.body;
+      const situation = parseAnonymousSituation(req.body?.situation);
 
       if (!fullName || !email) {
         return res.status(400).json({ error: "Name and email are required" });
@@ -5257,13 +5073,18 @@ export async function registerRoutes(app: Express) {
       logger.info("[ASSESSMENT] Form submitted", { fullName, email, company, source, timestamp: new Date().toISOString() });
       logSecurityEvent("ASSESSMENT_SUBMITTED", req, { email, source: source || "hero_form" });
 
+      const assessmentNote = appendSituationToDescription(
+        `Assessment request from ${source || "hero_form"}`,
+        situation,
+      );
+
       eventBus.emit(EventTypes.LEAD_CREATED, {
         id: leadId,
         name: fullName,
         email,
         company: company || "",
         source: source || "hero_assessment",
-        message: `Assessment request from ${source || "hero_form"}`,
+        message: assessmentNote,
       }, "assessment-form");
 
       let zohoLeadId = null;
@@ -5281,7 +5102,10 @@ export async function registerRoutes(app: Express) {
           Company: company || 'Not Specified',
           Lead_Source: taxonomy.leadSource,
           Lead_Status: taxonomy.leadStatus,
-          Description: `Free assessment request submitted from ${source || "homepage hero"}`,
+          Description: appendSituationToDescription(
+            `Free assessment request submitted from ${source || "homepage hero"}`,
+            situation,
+          ),
         });
         zohoLeadId = (zohoLead as any)?.details?.id || zohoLead?.id;
         console.log("[ZOHO] Assessment lead created:", zohoLeadId);
@@ -5305,6 +5129,7 @@ export async function registerRoutes(app: Express) {
   app.post("/api/contact", [leadQuoteRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { name, email, phone, company, service, message } = req.body;
+      const situation = parseAnonymousSituation(req.body?.situation);
       
       // Basic validation
       if (!name || !email || !phone) {
@@ -5336,6 +5161,11 @@ export async function registerRoutes(app: Express) {
       logger.info("[CONTACT] Form submitted", { name, email, company, service, timestamp: new Date().toISOString() });
       logSecurityEvent("CONTACT_FORM_SUBMITTED", req, { email, company, service });
 
+      const contactDescription = appendSituationToDescription(
+        [service ? `Service: ${service}` : "", message || ""].filter(Boolean).join("\n") || "Contact form",
+        situation,
+      );
+
       // Emit contact event for cross-service handling (email notifications)
       eventBus.emit(EventTypes.CONTACT_FORM_SUBMITTED, {
         id: contactData.id,
@@ -5343,7 +5173,7 @@ export async function registerRoutes(app: Express) {
         email,
         company,
         phone,
-        message,
+        message: contactDescription,
         source: "contact_form",
       }, "contact-form");
 
@@ -5362,7 +5192,7 @@ export async function registerRoutes(app: Express) {
           Phone: phone,
           Company: company || 'Not Specified',
           Lead_Source: taxonomy.leadSource,
-          Description: message || '',
+          Description: contactDescription,
           Lead_Status: taxonomy.leadStatus,
         });
         zohoLeadId = (zohoLead as any)?.details?.id || (zohoLead as any)?.id;
@@ -5794,10 +5624,24 @@ export async function registerRoutes(app: Express) {
         return res.status(403).json({ error: "Access denied" });
       }
 
-      const pdf = buildQuotePdf(quoteRequest);
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `attachment; filename="${quoteRequest.quoteNumber}.pdf"`);
-      return res.send(pdf);
+      res.setHeader("Cache-Control", "no-store");
+      try {
+        const pdf = await buildQuotePdf(quoteRequest);
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename="${quoteRequest.quoteNumber}.pdf"`);
+        return res.send(pdf);
+      } catch (err) {
+        // The quote download worked before the HTML renderer existed. Until
+        // WeasyPrint or Chromium is installed on the server, serve the same
+        // branded document as print-ready HTML instead of failing the button.
+        const { PdfRendererUnavailableError } = await import("./pdf/renderHtmlToPdf");
+        if (!(err instanceof PdfRendererUnavailableError)) throw err;
+        const { buildQuotePdfHtml } = await import("./storeQuotePdf");
+        console.error("[QUOTE PDF] renderer unavailable, serving HTML:", err.message);
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        res.setHeader("Content-Disposition", `attachment; filename="${quoteRequest.quoteNumber}.html"`);
+        return res.send(buildQuotePdfHtml(quoteRequest));
+      }
     } catch (error: any) {
       console.error("[GET QUOTE PDF ERROR]", error);
       return res.status(500).json({ error: "Failed to generate quote PDF" });
@@ -5932,120 +5776,6 @@ export async function registerRoutes(app: Express) {
     } catch (error: any) {
       console.error("[ZOHO TICKET ERROR]", error.response?.data || error.message);
       res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Public DE Desk ticket — Zoho Desk is the system of record; portal is a secondary copy.
-  app.post("/api/portal/zoho/ticket", [widgetTicketRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { email, subject, description, priority, sessionId: advisorSessionId, name } = req.body;
-
-      if (!email || !subject || !description) {
-        return res.status(400).json({ error: "Email, subject, and description are required" });
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({ error: "Invalid email address" });
-      }
-
-      if (subject.length > 200 || description.length > 5000) {
-        return res.status(400).json({ error: "Subject or description too long" });
-      }
-
-      const priorityValue = priority || "Medium";
-      const priorityLower = String(priorityValue).toLowerCase();
-
-      if (!zohoClient.isDeskConfigured()) {
-        console.error("[WIDGET TICKET] Zoho Desk is not configured");
-        return res.status(503).json({
-          error: "Support desk is temporarily unavailable. Please try again.",
-        });
-      }
-
-      const { firstName, lastName } = splitVisitorName(
-        typeof name === "string" ? name : undefined,
-        String(email),
-      );
-
-      let zohoTicket;
-      try {
-        zohoTicket = await zohoDeskService.createTicket({
-          subject,
-          description,
-          email,
-          firstName,
-          lastName,
-          priority: priorityValue,
-        });
-      } catch (zohoErr: any) {
-        console.error("[WIDGET TICKET] Zoho Desk create failed:", zohoErr?.message || zohoErr);
-        return res.status(502).json({
-          error: "We couldn't open the ticket right now. Please try again.",
-        });
-      }
-
-      if (!zohoTicket?.id) {
-        console.error("[WIDGET TICKET] Zoho Desk returned no ticket id");
-        return res.status(502).json({
-          error: "We couldn't open the ticket right now. Please try again.",
-        });
-      }
-
-      const zohoTicketId = zohoTicket.id;
-      const ticketNumber =
-        zohoTicket.ticketNumber ||
-        `TKT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
-      console.log(`✅ Widget ticket created in Zoho Desk: ${zohoTicketId}`);
-
-      // Secondary: local portal ticket when the email maps to a portal account (FK-safe).
-      try {
-        if (typeof advisorSessionId === "string" && advisorSessionId.trim()) {
-          try {
-            const { upsertDeskSession } = await import("./services/msp-advisor");
-            await upsertDeskSession({
-              sessionId: advisorSessionId.trim(),
-              email: String(email).toLowerCase(),
-            });
-          } catch {}
-        }
-
-        const portalUser = portalUsers.get(email);
-        if (portalUser?.clientId && portalUser?.id) {
-          let descriptionWithChat = description;
-          if (typeof advisorSessionId === "string" && advisorSessionId.trim()) {
-            descriptionWithChat = `${description}\n\n---\nDE Desk session: ${advisorSessionId.trim()}`;
-          }
-          const localTicket = await storage.createPortalTicket({
-            clientId: portalUser.clientId,
-            createdBy: portalUser.id,
-            ticketNumber,
-            subject,
-            description: descriptionWithChat,
-            status: "open",
-            priority: priorityLower === "high" || priorityLower === "urgent" ? "high" : priorityLower === "low" ? "low" : "medium",
-            category: "de-desk",
-          });
-
-          try {
-            await storage.updatePortalTicket(localTicket.id, { assignedTo: `zoho:${zohoTicketId}` });
-          } catch {}
-          console.log(`✅ Widget ticket mirrored to portal: ${ticketNumber}`);
-        }
-      } catch (localErr: any) {
-        console.warn("Could not mirror widget ticket to portal:", localErr?.message || localErr);
-      }
-
-      res.json({
-        success: true,
-        ticketNumber,
-        zohoTicketId,
-        message: "Your support request has been received.",
-      });
-      logSecurityEvent("WIDGET_TICKET_CREATED", req, { email, ticketNumber, zohoTicketId });
-    } catch (error: any) {
-      console.error("[WIDGET TICKET ERROR]", error);
-      res.status(500).json({ error: "Failed to create ticket. Please try again." });
     }
   });
 

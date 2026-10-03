@@ -27,7 +27,10 @@ one lands and any of them can be referenced in future development.
 | 1 | `/version-1` | Production homepage as on `main` (2d7d12a), snapshot 2026-09-02 | react snapshot |
 | 2 | `/version-2` | Version B, the Scrollcraft story page (forwards to the static `/v2`) | static |
 | 3 | `/version-3` | Diagram-system sections, PR #178 with the review corrections (c03cad9) | react snapshot |
-| 4 | `/version-4` | Sections recomposed to flow on scroll (Experience Plan §09) | planned |
+| 4 | `/version-4` | Clean-sheet redesign, ten chapters (PR #266, merged 2026-09-30) | build |
+| 5 | `/version-5` | The practical homepage: one conventional page, every fact from the site's own data files, acceptance script as the definition of done (PR #292, merged 2026-10-01) | build |
+| 6 | `/version-6` | Every section of the live homepage, redrawn on the Version 5 system; same acceptance script with Version 6 limits | build |
+| 7 | `/version-7` | Every live section built from Joe's reviewed mockups (PR #315), live interactions kept, bottom bar with autohide | build |
 
 ## Adding a version
 

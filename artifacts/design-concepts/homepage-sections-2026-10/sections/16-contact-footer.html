@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DE section mockup — 16 Contact and footer</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../system/tokens.css">
+<style>
+  /* 16 · Contact + footer. Contact = page-black well with a hairline top
+     (follows the paper Next-step band); footer = chrome black with a hairline
+     top. The page's bookend is restored behind Contact (live Z-01/Z-02,
+     client/src/pages/sections/DigeratiContactSection.tsx:23-26, 153-178):
+     the hero's Phoenix city-lights plate at opacity 0.14, object-position
+     center 70%, masked to rise from the bottom, static; plus the violet drift
+     echo with its lights in the corners opposite the hero's. No grain.
+     Vertical air cut against live: contact keeps the system 64px section
+     padding (eyebrow aligns with every other section); the cut is taken in
+     the footer: 8px directory rows, link columns of four rows or fewer, one
+     newsletter row and one legal bar. */
+  .contact { position: relative; isolation: isolate; overflow: hidden; border-top: 1px solid var(--de-hairline); }
+  .contact > .de-canvas { position: relative; z-index: 1; }
+  /* Z-01: bookend plate (static, lazy, decorative). */
+  .contact__plate { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; max-width: none;
+    object-fit: cover; object-position: center 70%; opacity: 0.14; pointer-events: none;
+    -webkit-mask-image: linear-gradient(to top, black 0%, rgba(0, 0, 0, 0.5) 55%, transparent 100%);
+            mask-image: linear-gradient(to top, black 0%, rgba(0, 0, 0, 0.5) 55%, transparent 100%); }
+  /* Z-02: violet drift echo, mirrored from the hero (violet top-left, magenta bottom-right). */
+  .contact__drift { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(circle at 15% 20%, rgba(87, 68, 255, 0.10), transparent 34%),
+                radial-gradient(circle at 88% 80%, rgba(211, 18, 106, 0.06), transparent 30%); }
+  .contact__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 600px); column-gap: 80px; align-items: start; }
+  .contact .de-h2 { text-wrap: balance; }
+  .contact .de-lede { max-width: 560px; text-wrap: pretty; }
+  .contact__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 28px; margin-top: 24px; }
+  .contact__actions .de-link { min-height: 44px; font-size: 16px; }
+
+  /* Directory: one hairline list, icon well + label column + value column. */
+  .dir { margin-top: 28px; border-top: 1px solid var(--de-hairline); }
+  .dir > li { display: grid; grid-template-columns: 44px 128px minmax(0, 1fr); column-gap: 16px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--de-hairline); }
+  .dir > li.dir__top { align-items: start; }
+  .dir .de-meta { color: var(--de-muted-soft); }
+  .dir__top .de-meta { padding-top: 14px; }
+  .dir__value { font-size: 16px; line-height: 1.5; color: var(--de-fg); }
+  a.dir__value { min-height: 44px; display: inline-flex; align-items: center; justify-self: start; }
+  a.dir__value:hover { color: var(--de-magenta-ink); }
+  .hours__wrap { padding-top: 10px; }
+  .hours { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 24px; row-gap: 2px; margin: 0; font-size: 16px; line-height: 1.6; }
+  .hours dt { color: var(--de-muted-soft); }
+  .hours dd { margin: 0; color: var(--de-fg); }
+  .hours__soc { display: flex; align-items: center; gap: 8px; margin: 6px 0 4px; font-weight: 600; color: var(--de-magenta-ink); font-size: 15px; text-wrap: balance; }
+  .hours__soc svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  /* Form card: white, one radius, one hairline, the system's 24px padding. */
+  .contact__card { padding: 24px; }
+  .contact__card .de-h3 { font-size: 22px; }
+  .contact__card .de-body { margin-top: 6px; color: var(--de-ink-muted); }
+  .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; margin-top: 18px; }
+  .fields .is-full { grid-column: 1 / -1; }
+  /* White fields, 1px boundary ≈ 3.2:1 on white (WCAG 1.4.11). */
+  .contact__card .de-input { background: #fff; border-color: rgba(26, 18, 16, 0.42); color: var(--de-ink); }
+  .contact__card .de-input::placeholder { color: var(--de-ink-muted); opacity: 1; }
+  .contact__card .de-input:focus { border-color: var(--de-magenta); outline: none; box-shadow: 0 0 0 3px rgba(211, 18, 106, 0.18); }
+  .select { position: relative; }
+  .select select { appearance: none; -webkit-appearance: none; padding-right: 40px; color: var(--de-ink); }
+  /* Unchosen = muted like a placeholder; a real choice renders in ink. */
+  .select select:has(option[value=""]:checked) { color: var(--de-ink-muted); }
+  .select option { color: var(--de-ink); }
+  .select svg { position: absolute; right: 14px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); color: var(--de-ink-muted); pointer-events: none; }
+  textarea.de-input { height: auto; min-height: 100px; resize: none; padding: 12px 14px; line-height: 1.5; }
+  .contact__submit { width: 100%; margin-top: 20px; }
+  .contact__submit:hover { background: var(--de-magenta); }
+
+  /* Footer: chrome. Brand + four link columns, one newsletter row, one legal bar. */
+  .foot { border-top: 1px solid var(--de-hairline); padding: 40px 0 0; }
+  .foot__grid { display: grid; grid-template-columns: minmax(0, 3fr) repeat(3, minmax(0, 2fr)) minmax(0, 4fr); column-gap: 32px; }
+  /* Trust & Legal: one column head, two short lists side by side, so no
+     column runs past four rows. */
+  .foot__split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
+  .foot__logo { height: 44px; width: auto; }
+  .foot__name { margin-top: 18px; font-family: var(--font-heading); font-weight: 600; font-size: 17px; color: #fff; }
+  .foot__line { margin-top: 2px; font-size: 15px; line-height: 1.5; color: var(--de-muted-soft); }
+  .foot__head { margin: 0 0 2px; line-height: 1.4; }
+  .foot__col a { display: inline-flex; align-items: center; min-height: 44px; line-height: 1.4; font-size: 15px; color: var(--de-muted-soft); }
+  /* Z-08 (DigeratiEnhancedFooterSection.tsx:10-22): underline sits transparent at offset 4px and
+     fades to magenta with the white ink on hover (Tailwind transition-colors: 150ms). */
+  .foot__col a { text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 1px; text-underline-offset: 4px;
+    transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 150ms cubic-bezier(0.4, 0, 0.2, 1); }
+  .foot__col a:hover { color: #fff; text-decoration-color: var(--de-magenta); }
+  .foot__col a:focus-visible { outline: 2px solid var(--de-magenta); outline-offset: 2px; }
+
+  .foot__news { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 460px); column-gap: 32px; align-items: center; margin-top: 28px; padding: 20px 0; border-top: 1px solid var(--de-hairline); }
+  .foot__news p { margin-top: 4px; font-size: 15px; color: var(--de-muted-soft); }
+  .foot__form { display: flex; gap: 8px; }
+  /* Same field as the 14 newsletter row (system .de-input, 48px, white);
+     outline button so the footer adds no third filled style. */
+  .foot__form .de-input { flex: 1; min-width: 0; }
+  .foot__form .de-btn { padding: 0 22px; }
+
+  .foot__legal { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; padding: 4px 0 12px; border-top: 1px solid var(--de-hairline); }
+  .foot__legal p { display: flex; flex-wrap: wrap; align-items: center; font-size: 14px; color: var(--de-muted-quiet); }
+  .foot__legal p a { color: var(--de-muted-soft); display: inline-flex; align-items: center; min-height: 44px; }
+  .foot__legal p a:hover { color: #fff; }
+  .foot__legal .sep { margin: 0 10px; color: rgba(255,255,255,0.3); }
+  .social { display: flex; gap: 6px; }
+  .social a { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: var(--radius-sm); color: var(--de-muted-soft); }
+  .social a:hover { color: #fff; background: rgba(255,255,255,0.06); }
+  .social svg { width: 18px; height: 18px; }
+
+  @media (max-width: 1199px) {
+    .foot__grid { grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 2fr); row-gap: 32px; }
+    .foot__brand { grid-column: 1 / -1; }
+  }
+  @media (max-width: 1023px) {
+    .contact__grid { grid-template-columns: minmax(0, 1fr); row-gap: 40px; }
+    .foot__news { grid-template-columns: minmax(0, 1fr); row-gap: 14px; }
+  }
+  @media (max-width: 639px) {
+    .fields { grid-template-columns: minmax(0, 1fr); }
+    .contact__actions .de-btn { width: 100%; }
+    .dir > li { grid-template-columns: 44px minmax(0, 1fr); row-gap: 0; }
+    .dir .de-meta { grid-column: 2; padding-top: 4px; }
+    .dir > li > .de-iconwell { grid-row: 1 / span 2; align-self: start; }
+    .dir__value, .hours__wrap { grid-column: 2; }
+    a.dir__value { min-height: 44px; }
+    .dir__top .de-meta { padding-top: 4px; }
+    .hours__wrap { padding-top: 4px; }
+    .hours { grid-template-columns: minmax(0, 1fr); }
+    .hours dd { margin-bottom: 6px; }
+    .foot__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; }
+    .foot__col--trust { grid-column: 1 / -1; }
+    .foot__split { column-gap: 20px; }
+    .foot__legal .sep { display: none; }
+    .foot__legal p { column-gap: 20px; }
+  }
+</style>
+</head>
+<body>
+<section class="f-well de-section contact" id="contact" aria-labelledby="contact-title">
+  <img class="contact__plate" src="/attached_assets/de-hero-arizona-dusk-1600.webp" alt="" width="1600" height="1067" loading="lazy" decoding="async" aria-hidden="true">
+  <div class="contact__drift" aria-hidden="true"></div>
+  <div class="de-canvas contact__grid">
+    <div class="contact__copy">
+      <p class="de-eyebrow">Contact</p>
+      <h2 class="de-h2" id="contact-title">Ready to Secure Your Business?</h2>
+      <p class="de-lede">Located in the heart of Chandler, we're your local cybersecurity experts. Whether you need immediate help or want to explore our services, we're here for you.</p>
+      <!-- Live: magenta button "Get My Cyber Risk Assessment" → /book (plain link, no openBooking source).
+           Demoted to a text link here so the form's "Send Message" is the chapter's one filled action. -->
+      <div class="contact__actions">
+        <a class="de-link" href="/book">Get My Cyber Risk Assessment <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+        <a class="de-btn de-btn--outline" href="tel:+13254809870">Call 325-480-9870</a>
+      </div>
+
+      <ul class="dir">
+        <li>
+          <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>
+          <span class="de-meta">Email</span>
+          <a class="dir__value" href="mailto:info@digeratiexperts.com">info@digeratiexperts.com</a>
+        </li>
+        <li>
+          <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+          <span class="de-meta">Phone</span>
+          <a class="dir__value" href="tel:+13254809870">325-480-9870</a>
+        </li>
+        <li>
+          <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg></span>
+          <span class="de-meta">Office</span>
+          <a class="dir__value" href="https://maps.google.com/?cid=1710856351091471339" target="_blank" rel="noopener noreferrer">3165 S Alma School Rd Suite 29, Chandler, AZ 85248</a>
+        </li>
+        <li class="dir__top">
+          <span class="de-iconwell"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+          <span class="de-meta">Office Hours</span>
+          <div class="hours__wrap">
+            <dl class="hours">
+              <dt>Monday - Friday</dt><dd>7:00 AM - 6:00 PM MST</dd>
+              <dt>Saturday &amp; Sunday</dt><dd>Emergency Support Only</dd>
+            </dl>
+            <!-- Replaces live "24/7 Security Operations Center Always Active" (no register source);
+                 SLA-backed wording from client/src/pages/legal/SLA.tsx. -->
+            <p class="hours__soc"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg><span>24/7/365 emergency incident&nbsp;response</span></p>
+          </div>
+        </li>
+      </ul>
+      <!-- Live "Follow us:" row (LinkedIn · Facebook · Twitter) is shown once, in the footer legal bar,
+           with all four COMPANY_SOCIAL networks. Destinations unchanged. -->
+    </div>
+
+    <!-- Live form-state strings (DigeratiContactSection.tsx), keep verbatim at integration:
+         submit busy label: "Sending..."
+         success toast: "Message Sent Successfully!" / "We'll get back to you within 24 hours."
+         error toast: "Error" / "Failed to send message. Please try again or call us directly."
+         phone validation: "Please enter a valid phone number"
+         message: 10–500 characters. Posts POST /api/contact. -->
+    <form class="de-card--paper contact__card" action="/api/contact" method="post" novalidate aria-labelledby="contact-form-title">
+      <h3 class="de-h3" id="contact-form-title">Get in Touch</h3>
+      <p class="de-body">Tell us about the environment. We'll follow up on a Cyber Risk Assessment — no hard sell.</p>
+      <div class="fields">
+        <div class="is-full">
+          <label class="de-label" for="c-name">Your Name *</label>
+          <input class="de-input" id="c-name" name="name" type="text" placeholder="John Smith" autocomplete="name" required>
+        </div>
+        <div>
+          <label class="de-label" for="c-email">Business Email *</label>
+          <input class="de-input" id="c-email" name="email" type="email" placeholder="john@company.com" autocomplete="email" required>
+        </div>
+        <div>
+          <label class="de-label" for="c-phone">Phone Number *</label>
+          <input class="de-input" id="c-phone" name="phone" type="tel" placeholder="(480) 000-0000" autocomplete="tel" required pattern="\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})" title="Please enter a valid phone number">
+        </div>
+        <div>
+          <label class="de-label" for="c-company">Company Name</label>
+          <input class="de-input" id="c-company" name="company" type="text" placeholder="Your Company Inc." autocomplete="organization">
+        </div>
+        <div>
+          <label class="de-label" for="c-service">Service Interested In</label>
+          <div class="select">
+            <select class="de-input" id="c-service" name="service">
+              <option value="" selected>Select a service</option>
+              <option>Managed Security Services</option>
+              <option>Managed IT Services</option>
+              <option>Compliance &amp; Governance</option>
+              <option>Incident Response</option>
+              <option>Security Assessment</option>
+            </select>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+        </div>
+        <div class="is-full">
+          <label class="de-label" for="c-message">Message</label>
+          <textarea class="de-input" id="c-message" name="message" rows="4" placeholder="Tell us about your security needs..." minlength="10" maxlength="500"></textarea>
+        </div>
+      </div>
+      <button class="de-btn de-btn--dark contact__submit" type="submit">Send Message</button>
+    </form>
+  </div>
+</section>
+
+<footer class="f-chrome foot">
+  <div class="de-canvas">
+    <div class="foot__grid">
+      <div class="foot__brand">
+        <img class="foot__logo" src="/brand/digerati-logo-reverse.svg" alt="Digerati Experts Logo">
+        <p class="foot__name">Digerati Experts</p>
+        <p class="foot__line">Arizona MSP<br>Cybersecurity &amp; Managed IT<br>Chandler, Arizona</p>
+        <!-- Live footer BookingLink "Get My Cyber Risk Assessment" (openBooking source "footer") dropped here:
+             the same destination sits in the contact actions ~650px above. Restore at integration if Joe wants both. -->
+      </div>
+
+      <nav class="foot__col" aria-labelledby="fc-client">
+        <h2 class="de-meta foot__head" id="fc-client">Client</h2>
+        <ul>
+          <li><a href="https://portal.digeratiexperts.com/portal/login" target="_blank" rel="noopener noreferrer">Client Portal</a></li>
+          <li><a href="/support/submit-ticket">Submit Ticket</a></li>
+          <li><a href="https://assist.zoho.com/" target="_blank" rel="noopener noreferrer">Remote Support</a></li>
+          <li><a href="/support/pay-invoice">Pay Invoice</a></li>
+        </ul>
+      </nav>
+      <nav class="foot__col" aria-labelledby="fc-services">
+        <h2 class="de-meta foot__head" id="fc-services">Services</h2>
+        <ul>
+          <li><a href="/solutions/managed-it-support">Managed IT</a></li>
+          <li><a href="/solutions/security-operations">Cybersecurity</a></li>
+          <li><a href="/solutions/compliance-reports">Compliance &amp; Risk</a></li>
+          <li><a href="/solutions/backup-disaster-recovery">Backup &amp; DR</a></li>
+        </ul>
+      </nav>
+      <nav class="foot__col" aria-labelledby="fc-resources">
+        <h2 class="de-meta foot__head" id="fc-resources">Resources</h2>
+        <ul>
+          <li><a href="/resources/blog">Digerati Journal</a></li>
+          <li><a href="/resources/cyber-facts">Cyber Facts</a></li>
+          <li><a href="/support/knowledge-base">Knowledge Base</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </nav>
+      <nav class="foot__col foot__col--trust" aria-labelledby="fc-trust">
+        <h2 class="de-meta foot__head" id="fc-trust">Trust &amp; Legal</h2>
+        <div class="foot__split">
+          <ul>
+            <li><a href="/trust/trust-center">Trust Center</a></li>
+            <li><a href="/trust/trust-center">Status</a></li>
+            <li><a href="/trust/vulnerability-disclosure">Vulnerability Disclosure</a></li>
+          </ul>
+          <ul>
+            <li><a href="/legal/privacy-policy">Privacy</a></li>
+            <li><a href="/legal/terms-of-use">Terms</a></li>
+            <li><a href="/legal/msa">MSA</a></li>
+            <li><a href="/legal/sla">SLA</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Newsletter (live, DigeratiEnhancedFooterSection.tsx), keep verbatim at integration:
+         inline success: "Thank you for subscribing!"
+         toasts: "Successfully Subscribed!" / "You'll receive our security updates and expert insights."
+         error: "Error" / "Failed to subscribe. Please try again." Posts POST /api/newsletter. -->
+    <div class="foot__news">
+      <div>
+        <h2 class="de-meta foot__head" id="fn-head">Stay Updated</h2>
+        <p>Get the latest cybersecurity insights and IT tips delivered to your inbox.</p>
+      </div>
+      <form class="foot__form" action="/api/newsletter" method="post" novalidate aria-labelledby="fn-head">
+        <label class="de-sr" for="f-news">Enter your email</label>
+        <input class="de-input" id="f-news" name="email" type="email" placeholder="Enter your email" autocomplete="email">
+        <button class="de-btn de-btn--outline" type="submit"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>Subscribe</button>
+      </form>
+    </div>
+
+    <div class="foot__legal">
+      <p><span>© 2026 Digerati Experts</span><span class="sep" aria-hidden="true">·</span><a href="/locations/chandler-az">Chandler, Arizona</a><span class="sep" aria-hidden="true">·</span><a href="/trust/accessibility">Accessibility</a><span class="sep" aria-hidden="true">·</span><a href="/trust/trust-center">Security</a></p>
+      <div class="social">
+        <a href="https://www.linkedin.com/company/digerati-experts" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg></a>
+        <a href="https://twitter.com/digerati_experts" aria-label="Twitter" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg></a>
+        <a href="https://www.facebook.com/digeratiexperts" aria-label="Facebook" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+        <a href="https://www.instagram.com/digerati.experts" aria-label="Instagram" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg></a>
+      </div>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
