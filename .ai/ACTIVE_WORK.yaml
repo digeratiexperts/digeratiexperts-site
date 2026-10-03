@@ -30,6 +30,30 @@
 
 version: 2
 claims:
+  - id: de-msadmin-worker-loop
+    owner: claude
+    subsystem: msp-ai-kit
+    branch: claude/msp-ai-skills-prompts-htqi09
+    base_sha: 823e4d076073037e6f1cd028be8596e08638ef18
+    files:
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/DE-HubWorker.ps1 (new)
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/DE-Microsoft-Admin.psm1 (the header, the result version, the dot-source and the export line only)
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/DE-Microsoft-Admin.psd1
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/README.md
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/MIGRATION-STANDARD.md (the closing note only)
+      - .claude/skills/msp-ai-kit/windows/tests/HubWorker.Tests.ps1 (new)
+      - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md (the Intelligence Hub jobs subsection and one line of the tests list only)
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: "continue the tech tool work", decision 3A (build the
+      worker loop). DE Microsoft Admin 0.5.0 adds Invoke-DEHubJobLoop, the
+      worker side of the Hub's job queue merged in Intelligence-Hub PR 313
+      (master 7ac27b00): claim, verify with Invoke-DEMicrosoftJob, run, post
+      a result with nothing secret in it (ConvertTo-DEHubSafeResult), keep an
+      unposted result on disk for the next run. Overlap check: no open PR;
+      open ACTIVE issues 270 and 272 (DE Tech Tool) touch DE.Security and
+      Loader.Tests.ps1, not DE-Microsoft-Admin.
   - id: staff-warehouse-ops-console
     owner: cursor
     subsystem: digital-warehouse
@@ -480,7 +504,7 @@ claims:
       - .claude/skills/msp-ai-kit/windows/PROTECTING-THE-TOOL.md
       - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md (the Licences section only)
       - .claude/skills/msp-ai-kit/windows/DE-TECH-TOOL-ARCHITECTURE.md (the version line only)
-    status: active
+    status: verified-live
     started: 2026-10-02
     note: >-
       Joe, 2026-10-02: "ALL APPROVED, CONTINUE" (decision 4A): the DE Tech
@@ -491,7 +515,12 @@ claims:
       revoked in either list; a release build refreshes the shipped
       trust/revoked.json; a licence pinned to another build (bid) is refused
       as wrong-build. Overlap check: no open PR and no remote branch touches
-      .claude/skills/msp-ai-kit on d5f3479a.
+      .claude/skills/msp-ai-kit on d5f3479a. RELEASED 2026-10-02: merged as
+      5162d737 (PR 341). A Tool-only change under
+      .claude/skills/msp-ai-kit/windows/ that ships through
+      New-DEReleasePackage.ps1, not a server deploy; the site main deploy
+      after it passed; the Windows PowerShell 5.1 + WPF CI job passed on the
+      PR head. Files released.
   - id: de-desk-expand-hint
     owner: claude
     subsystem: de-desk
