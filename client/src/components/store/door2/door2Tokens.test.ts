@@ -8,7 +8,13 @@ import { describe, expect, it } from "vitest";
  * the values are pinned here from V4Primitives.tsx (T and ChapterLabel).
  */
 const root = path.resolve(import.meta.dirname, "../../../../..");
-const css = readFileSync(path.join(root, "client/src/styles/store-builder.css"), "utf8");
+
+/** Source files may use CRLF on Windows; pin tests to LF so regexes stay stable. */
+function readLf(filePath: string): string {
+  return readFileSync(filePath, "utf8").replace(/\r\n/g, "\n");
+}
+
+const css = readLf(path.join(root, "client/src/styles/store-builder.css"));
 
 const V4 = {
   displaySize: "clamp(2.4rem, 6vw, 3.6rem)",
@@ -84,7 +90,7 @@ describe("Door 2 tokens match the V4 vocabulary", () => {
     expect(block(".d2-profile-panel .d2-input")).toContain("background: var(--de-paper-raised)");
     expect(css).toMatch(/\.d2-profile-panel \.d2-tile:has\(input:focus-visible\) \{\n  outline-color: var\(--de-magenta\);/);
     expect(css).toMatch(/@media print \{[\s\S]*\.d2-profile-panel \{\n    background: #fff !important;/);
-    const form = readFileSync(path.join(root, "client/src/components/store/SolutionProfileForm.tsx"), "utf8");
+    const form = readLf(path.join(root, "client/src/components/store/SolutionProfileForm.tsx"));
     expect(form).toContain('data-state="expanded"\n      className="d2-profile-panel"');
   });
 

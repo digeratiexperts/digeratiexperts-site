@@ -15,6 +15,7 @@ import {
 } from "./portalTicketUploads";
 import { PORTAL_TICKET_MAX_FILE_BYTES } from "@shared/portalTicketFileRules";
 import { validatePortalOrderSelection } from "@shared/portalOrderCatalog";
+import { THREAT_ATTRIBUTION } from "@shared/threatFeed";
 import {
   clearZohoPkceCookie,
   createZohoStartPayload,
@@ -570,8 +571,7 @@ export async function registerRoutes(app: Express) {
         generatedAt: null,
         items: [],
         sources: {},
-        attribution:
-          "Sources: CISA, NIST NVD, FIRST, and Microsoft MSRC. Digerati Experts prioritizes items based on active exploitation, exploit probability, and relevance to SMB environments.",
+        attribution: THREAT_ATTRIBUTION,
         message: "Unable to load the threat feed",
       });
     }
