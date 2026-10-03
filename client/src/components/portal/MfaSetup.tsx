@@ -1,20 +1,23 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { ShieldCheck, ShieldOff, Smartphone, Mail, Copy, Key, AlertTriangle, CheckCircle2, Loader } from "lucide-react";
+import { ShieldOff, Smartphone, Mail, Copy, Key, Loader } from "lucide-react";
 import { portalGet, portalPost } from "@/lib/portalApi";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Callout, Field, Panel, Token } from "@/components/portal/ui";
 
 interface MfaStatus {
   mfaEnabled: boolean;
   mfaMethod: "totp" | "email" | null;
   backupCodesRemaining: number;
 }
+
+const PANEL_TITLE = "Two-factor authentication";
+const PANEL_DESCRIPTION = "Add an extra layer of security to your account";
+const SECONDARY = "min-h-11 border-border bg-card hover:bg-accent";
 
 export default function MfaSetup() {
   const { toast } = useToast();
@@ -98,185 +101,174 @@ export default function MfaSetup() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader className="h-6 w-6 animate-spin text-de-magenta-ink" />
-        </CardContent>
-      </Card>
+      <Panel id="settings-mfa" title={PANEL_TITLE} description={PANEL_DESCRIPTION}>
+        <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground" role="status" aria-live="polite">
+          <Loader className="pt-link h-5 w-5 animate-spin" aria-hidden="true" />
+          Loading two-factor status…
+        </div>
+      </Panel>
     );
   }
 
+  const statusToken = status?.mfaEnabled ? (
+    <Token
+      tone="ok"
+      dot
+      label={
+        status.mfaMethod === "totp" ? "On · Authenticator app" : status.mfaMethod === "email" ? "On · Email" : "On"
+      }
+    />
+  ) : (
+    <Token tone="neutral" label="Off" />
+  );
+
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="h-5 w-5 text-de-magenta-ink" />
-              <div>
-                <CardTitle className="text-lg">Two-Factor Authentication</CardTitle>
-                <CardDescription>
-                  Add an extra layer of security to your account
-                </CardDescription>
-              </div>
+      <Panel id="settings-mfa" title={PANEL_TITLE} description={PANEL_DESCRIPTION} actions={statusToken}>
+        {status?.mfaEnabled ? (
+          <div className="space-y-4">
+            <Callout tone="ok" title="MFA is active">
+              Method: {status.mfaMethod === "totp" ? "Authenticator App" : "Email Verification"}
+              {status.backupCodesRemaining > 0 && (
+                <>
+                  {" · "}
+                  <span className="pt-num">{status.backupCodesRemaining}</span> backup codes remaining
+                </>
+              )}
+            </Callout>
+
+            <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setRegenDialog(true)}
+                className={SECONDARY}
+                data-testid="button-regen-backup"
+              >
+                <Key className="h-4 w-4" aria-hidden="true" />
+                New Backup Codes
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setDisableDialog(true)}
+                className={SECONDARY}
+                data-testid="button-disable-mfa"
+              >
+                <ShieldOff className="pt-ink pt-tone-bad h-4 w-4" aria-hidden="true" />
+                Disable MFA
+              </Button>
             </div>
-            {status?.mfaEnabled ? (
-              <Badge className="border-emerald-700/30 bg-emerald-50 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300">Enabled</Badge>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {setupStep === null ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => { setSetupStep("totp"); setupMutation.mutate("totp"); }}
+                  className="min-h-11 rounded-lg border border-border bg-card p-4 text-left text-card-foreground transition-colors pt-hover-brand hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  data-testid="button-setup-totp"
+                >
+                  <Smartphone className="pt-link mb-2 h-6 w-6" aria-hidden="true" />
+                  <p className="text-sm font-medium text-foreground">Authenticator App</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Use Google Authenticator, Authy, or Microsoft Authenticator</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSetupStep("email"); setupMutation.mutate("email"); }}
+                  className="min-h-11 rounded-lg border border-border bg-card p-4 text-left text-card-foreground transition-colors pt-hover-brand hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  data-testid="button-setup-email"
+                >
+                  <Mail className="pt-link mb-2 h-6 w-6" aria-hidden="true" />
+                  <p className="text-sm font-medium text-foreground">Email Verification</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Receive a code via email each time you log in</p>
+                </button>
+              </div>
+            ) : setupStep === "confirm" && setupData ? (
+              <div className="space-y-4">
+                {setupData.method === "totp" && setupData.qrCode && (
+                  <div className="space-y-3 text-center">
+                    <p className="text-sm text-foreground">Scan this QR code with your authenticator app:</p>
+                    <img src={setupData.qrCode} alt="TOTP QR Code" className="mx-auto h-48 w-48 rounded-lg" data-testid="img-totp-qr" />
+                    <p className="text-xs text-muted-foreground">
+                      Or enter manually:{" "}
+                      <code className="pt-link break-all rounded border border-border bg-background px-2 py-1 font-mono">{setupData.secret}</code>
+                    </p>
+                  </div>
+                )}
+                {setupData.method === "email" && (
+                  <Callout tone="info">A verification code has been sent to your email.</Callout>
+                )}
+                <Field label="Enter Verification Code" htmlFor="mfa-setup-code">
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    placeholder="Enter 6-digit code"
+                    value={verifyCode}
+                    onChange={(e) => setVerifyCode(e.target.value)}
+                    className="pt-num min-h-11 border-border bg-background text-center text-lg tracking-widest"
+                    id="mfa-setup-code"
+                    autoFocus
+                    data-testid="input-setup-code"
+                  />
+                </Field>
+                <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+                  <Button
+                    variant="brand"
+                    onClick={() => confirmMutation.mutate()}
+                    disabled={verifyCode.length < 6 || confirmMutation.isPending}
+                    className="min-h-11 flex-1"
+                    data-testid="button-confirm-setup"
+                  >
+                    {confirmMutation.isPending ? "Verifying..." : "Enable MFA"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => { setSetupStep(null); setSetupData(null); setVerifyCode(""); }}
+                    className={SECONDARY}
+                    data-testid="button-cancel-setup"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
             ) : (
-              <Badge variant="outline" className="text-muted-foreground">Disabled</Badge>
+              <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground" role="status" aria-live="polite">
+                <Loader className="pt-link h-5 w-5 animate-spin" aria-hidden="true" />
+                <span>Setting up...</span>
+              </div>
             )}
           </div>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          {status?.mfaEnabled ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 rounded-lg border border-emerald-700/20 bg-emerald-50 dark:bg-emerald-500/10">
-                <CheckCircle2 className="h-5 w-5 text-emerald-700 dark:text-emerald-400 flex-shrink-0" aria-hidden="true" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">MFA is active</p>
-                  <p className="text-xs text-muted-foreground">
-                    Method: {status.mfaMethod === "totp" ? "Authenticator App" : "Email Verification"}
-                    {status.backupCodesRemaining > 0 && ` · ${status.backupCodesRemaining} backup codes remaining`}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setRegenDialog(true)}
-                  data-testid="button-regen-backup"
-                >
-                  <Key className="mr-2 h-4 w-4" />
-                  New Backup Codes
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDisableDialog(true)}
-                  className="border-red-700/30 text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
-                  data-testid="button-disable-mfa"
-                >
-                  <ShieldOff className="mr-2 h-4 w-4" />
-                  Disable MFA
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {setupStep === null ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    onClick={() => { setSetupStep("totp"); setupMutation.mutate("totp"); }}
-                    className="p-4 rounded-lg border border-border bg-card text-left transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
-                    data-testid="button-setup-totp"
-                  >
-                    <Smartphone className="h-6 w-6 text-de-magenta-ink mb-2" />
-                    <p className="text-sm font-medium text-foreground">Authenticator App</p>
-                    <p className="text-xs text-muted-foreground mt-1">Use Google Authenticator, Authy, or Microsoft Authenticator</p>
-                  </button>
-                  <button
-                    onClick={() => { setSetupStep("email"); setupMutation.mutate("email"); }}
-                    className="p-4 rounded-lg border border-border bg-card text-left transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
-                    data-testid="button-setup-email"
-                  >
-                    <Mail className="h-6 w-6 text-de-magenta-ink mb-2" />
-                    <p className="text-sm font-medium text-foreground">Email Verification</p>
-                    <p className="text-xs text-muted-foreground mt-1">Receive a code via email each time you log in</p>
-                  </button>
-                </div>
-              ) : setupStep === "confirm" && setupData ? (
-                <div className="space-y-4">
-                  {setupData.method === "totp" && setupData.qrCode && (
-                    <div className="text-center space-y-3">
-                      <p className="text-sm text-foreground">Scan this QR code with your authenticator app:</p>
-                      <img src={setupData.qrCode} alt="TOTP QR Code" className="mx-auto w-48 h-48 rounded-lg" data-testid="img-totp-qr" />
-                      <p className="text-xs text-muted-foreground">
-                        Or enter manually: <code className="rounded bg-muted px-2 py-1 text-[#A30E52] dark:text-de-magenta-ink">{setupData.secret}</code>
-                      </p>
-                    </div>
-                  )}
-                  {setupData.method === "email" && (
-                    <div className="flex items-center gap-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-800 dark:text-blue-300 text-sm">
-                      <Mail className="h-4 w-4 flex-shrink-0" />
-                      A verification code has been sent to your email.
-                    </div>
-                  )}
-                  <div className="space-y-2">
-                    <label htmlFor="mfa-setup-code" className="text-sm font-medium text-foreground">Enter Verification Code</label>
-                    <Input
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={6}
-                      placeholder="Enter 6-digit code"
-                      value={verifyCode}
-                      onChange={(e) => setVerifyCode(e.target.value)}
-                      className="text-center text-lg tracking-widest"
-                      id="mfa-setup-code"
-                      autoFocus
-                      data-testid="input-setup-code"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => confirmMutation.mutate()}
-                      disabled={verifyCode.length < 6 || confirmMutation.isPending}
-                      className="flex-1 bg-[#D3126A] hover:bg-[#e01874]"
-                      data-testid="button-confirm-setup"
-                    >
-                      {confirmMutation.isPending ? "Verifying..." : "Enable MFA"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => { setSetupStep(null); setSetupData(null); setVerifyCode(""); }}
-                      data-testid="button-cancel-setup"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center py-4">
-                  <Loader className="h-6 w-6 animate-spin text-de-magenta-ink" />
-                  <span className="ml-2 text-muted-foreground text-sm">Setting up...</span>
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        )}
+      </Panel>
 
       {/* Backup Codes Modal */}
       <Dialog open={!!backupCodes} onOpenChange={() => setBackupCodes(null)}>
-        <DialogContent className="bg-[#0f0d2e] border-white/20 text-white max-w-md">
+        <DialogContent className="max-w-md border-border bg-card text-card-foreground">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Key className="h-5 w-5 text-de-magenta-ink" />
+              <Key className="pt-link h-5 w-5" aria-hidden="true" />
               Backup Codes
             </DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-muted-foreground">
               Save these codes in a secure place. Each code can only be used once.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-2 p-4 bg-white/5 rounded-lg font-mono">
+          <div className="pt-num grid grid-cols-2 gap-2 rounded-lg border border-border bg-background p-4 font-mono">
             {backupCodes?.map((code, i) => (
-              <div key={i} className="text-center py-1.5 bg-white/10 rounded text-sm text-de-magenta-ink" data-testid={`text-backup-code-${i}`}>
+              <div key={i} className="rounded border border-border bg-card py-1.5 text-center text-sm text-foreground" data-testid={`text-backup-code-${i}`}>
                 {code}
               </div>
             ))}
           </div>
-          <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-            <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0" />
-            <p className="text-xs text-amber-300">These codes won't be shown again. Save them now.</p>
-          </div>
-          <DialogFooter>
-            <Button onClick={copyBackupCodes} variant="outline" className="border-white/20 text-white hover:bg-white/10" data-testid="button-copy-codes">
-              <Copy className="mr-2 h-4 w-4" />
+          <Callout tone="warn" role="alert" title="These codes won't be shown again. Save them now." />
+          <DialogFooter className="gap-2">
+            <Button onClick={copyBackupCodes} variant="outline" className={SECONDARY} data-testid="button-copy-codes">
+              <Copy className="h-4 w-4" aria-hidden="true" />
               Copy All
             </Button>
-            <Button onClick={() => setBackupCodes(null)} className="bg-[#D3126A] hover:bg-[#e01874]" data-testid="button-close-codes">
+            <Button onClick={() => setBackupCodes(null)} variant="brand" className="min-h-11" data-testid="button-close-codes">
               I've Saved Them
             </Button>
           </DialogFooter>
@@ -285,29 +277,37 @@ export default function MfaSetup() {
 
       {/* Disable MFA Dialog */}
       <Dialog open={disableDialog} onOpenChange={setDisableDialog}>
-        <DialogContent className="bg-[#0f0d2e] border-white/20 text-white max-w-sm">
+        <DialogContent className="max-w-sm border-border bg-card text-card-foreground">
           <DialogHeader>
-            <DialogTitle className="text-red-400">Disable Two-Factor Auth</DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldOff className="pt-ink pt-tone-bad h-5 w-5" aria-hidden="true" />
+              Disable Two-Factor Auth
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
               Enter your password to confirm disabling MFA.
             </DialogDescription>
           </DialogHeader>
-          <Input
-            type="password"
-            placeholder="Enter your password"
-            value={disablePassword}
-            onChange={(e) => setDisablePassword(e.target.value)}
-            className="bg-white/10 border-white/20 text-white"
-            data-testid="input-disable-password"
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDisableDialog(false)} className="border-white/20 text-white hover:bg-white/10">
+          <Field label="Password" htmlFor="mfa-disable-password">
+            <Input
+              id="mfa-disable-password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              value={disablePassword}
+              onChange={(e) => setDisablePassword(e.target.value)}
+              className="min-h-11 border-border bg-background"
+              data-testid="input-disable-password"
+            />
+          </Field>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDisableDialog(false)} className={SECONDARY}>
               Cancel
             </Button>
             <Button
+              variant="destructive"
               onClick={() => disableMutation.mutate()}
               disabled={!disablePassword || disableMutation.isPending}
-              className="bg-red-600 hover:bg-red-700"
+              className="min-h-11"
               data-testid="button-confirm-disable"
             >
               {disableMutation.isPending ? "Disabling..." : "Disable MFA"}
@@ -318,29 +318,34 @@ export default function MfaSetup() {
 
       {/* Regenerate Backup Codes Dialog */}
       <Dialog open={regenDialog} onOpenChange={setRegenDialog}>
-        <DialogContent className="bg-[#0f0d2e] border-white/20 text-white max-w-sm">
+        <DialogContent className="max-w-sm border-border bg-card text-card-foreground">
           <DialogHeader>
             <DialogTitle>Regenerate Backup Codes</DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-muted-foreground">
               This will invalidate all existing backup codes. Enter your password to confirm.
             </DialogDescription>
           </DialogHeader>
-          <Input
-            type="password"
-            placeholder="Enter your password"
-            value={regenPassword}
-            onChange={(e) => setRegenPassword(e.target.value)}
-            className="bg-white/10 border-white/20 text-white"
-            data-testid="input-regen-password"
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRegenDialog(false)} className="border-white/20 text-white hover:bg-white/10">
+          <Field label="Password" htmlFor="mfa-regen-password">
+            <Input
+              id="mfa-regen-password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              value={regenPassword}
+              onChange={(e) => setRegenPassword(e.target.value)}
+              className="min-h-11 border-border bg-background"
+              data-testid="input-regen-password"
+            />
+          </Field>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setRegenDialog(false)} className={SECONDARY}>
               Cancel
             </Button>
             <Button
+              variant="brand"
               onClick={() => regenMutation.mutate()}
               disabled={!regenPassword || regenMutation.isPending}
-              className="bg-[#D3126A] hover:bg-[#e01874]"
+              className="min-h-11"
               data-testid="button-confirm-regen"
             >
               {regenMutation.isPending ? "Generating..." : "Generate New Codes"}

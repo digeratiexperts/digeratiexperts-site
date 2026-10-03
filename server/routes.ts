@@ -571,7 +571,7 @@ export async function registerRoutes(app: Express) {
         items: [],
         sources: {},
         attribution:
-          "Sources: CISA, NIST NVD, FIRST, and Microsoft MSRC. Digerati prioritizes items based on active exploitation, exploit probability, and relevance to SMB environments.",
+          "Sources: CISA, NIST NVD, FIRST, and Microsoft MSRC. Digerati Experts prioritizes items based on active exploitation, exploit probability, and relevance to SMB environments.",
         message: "Unable to load the threat feed",
       });
     }

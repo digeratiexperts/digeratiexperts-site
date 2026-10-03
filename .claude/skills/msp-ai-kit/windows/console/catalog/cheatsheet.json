@@ -90,6 +90,12 @@
           "command": "Import-Module \"{root}\\console\\modules\\DE.Workflow\\DE.Workflow.psm1\"; Import-DEConsoleModules -Root \"{root}\\console\"; $null = Initialize-DEConsole -Root \"{root}\\console\" -Mode Audit; Get-DELicenseStatus; Get-DEBuildInfo",
           "note": "",
           "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Download the Hub's revocation list now",
+          "command": "Import-Module \"{root}\\console\\modules\\DE.Workflow\\DE.Workflow.psm1\"; Import-DEConsoleModules -Root \"{root}\\console\"; $null = Initialize-DEConsole -Root \"{root}\\console\" -Mode Audit; Update-DELicenseRevocations -HubUrl https://techsales.digerati-experts.com",
+          "note": "The tool also does this once per run when the Hub URL is set, and after activation. Offline, the last saved list stays.",
+          "shell": "PowerShell (admin)"
         }
       ]
     },
