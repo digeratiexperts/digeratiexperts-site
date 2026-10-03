@@ -378,8 +378,8 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
           setShowNudge(false);
           setShowMenu((open) => !open);
         }}
-        // One white focus ring that keeps the round shape: focus-visible:rounded-full
-        // beats the global `*:focus-visible { border-radius: 4px }` in index.css.
+        // One white focus ring that keeps the round shape. focus-visible:rounded-full
+        // pins the radius so no global focus rule can square it off again.
         // Without a label the button is a 40px circle (no extra right padding).
         className={`group flex h-10 shrink-0 items-center gap-2 rounded-full px-1${compact ? "" : " sm:pr-1.5"} text-white transition-colors duration-200 hover:bg-white/[0.06] focus-visible:rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f5f5f4] focus-visible:ring-offset-2 focus-visible:ring-offset-black`}
         data-testid="button-open-asap-widget"

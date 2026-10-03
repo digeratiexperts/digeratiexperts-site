@@ -1,0 +1,18 @@
+{
+ "pages": [
+  "/",
+  "/store",
+  "/contact"
+ ],
+ "widths": [
+  1440,
+  390
+ ],
+ "tabStops": 417,
+ "radiusChangedOnFocus": 0,
+ "outlineColours": {
+  "2px rgb(236, 72, 153)": 161,
+  "2px rgba(0, 0, 0, 0)": 256
+ },
+ "examples": []
+}
