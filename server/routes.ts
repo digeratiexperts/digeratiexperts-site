@@ -82,6 +82,7 @@ import {
 import { registerPortalDepartmentRoutes } from "./portalDepartmentRoutes";
 import { registerPortalIntegrationStatusRoute } from "./portalIntegrations";
 import { registerManualRecordAdminRoutes } from "./portalManualRecords";
+import { registerPortalDataSourceRoutes } from "./portalDataSources";
 import { registerPortalVpnRoutes } from "./integrations/vpn/routes";
 import { registerPortalPhoneRoutes } from "./integrations/phone/routes";
 import { registerPortalShippingRoutes } from "./integrations/shipping/routes";
@@ -1361,6 +1362,7 @@ export async function registerRoutes(app: Express) {
   registerPortalPhoneRoutes(app, { guards: [authMiddleware] });
   registerPortalShippingRoutes(app, { guards: [authMiddleware] });
   registerManualRecordAdminRoutes(app, { guards: [authMiddleware, requireAdmin, validateInput] });
+  registerPortalDataSourceRoutes(app, { guards: [authMiddleware, requireAdmin, validateInput] });
 
   // ----- Approvals -----
   app.get("/api/portal/approvals", [authMiddleware, requireApprovalsAccess], async (req: AuthenticatedRequest, res: Response) => {

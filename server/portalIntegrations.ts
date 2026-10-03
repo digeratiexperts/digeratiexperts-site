@@ -7,7 +7,7 @@ import type { Express, Request, RequestHandler, Response } from "express";
  * real data ("2. d"), sources still to be chosen, and "write all of them" so
  * the choice becomes configuration. Each page reads one environment variable:
  *
- *   PORTAL_VPN_PROVIDER       sample | hidden | tailscale | twingate | perimeter81 | manual
+ *   PORTAL_VPN_PROVIDER       sample | hidden | tailscale | twingate | perimeter81 | timus | manual
  *   PORTAL_PHONE_PROVIDER     sample | hidden | cytracom
  *   PORTAL_SHIPPING_PROVIDER  sample | hidden | shipstation | easypost | shippo | manual
  *
@@ -24,7 +24,7 @@ export type IntegrationArea = "vpn" | "phone" | "shipping";
 export type IntegrationMode = "sample" | "hidden" | "live";
 
 export const INTEGRATION_PROVIDERS: Record<IntegrationArea, readonly string[]> = {
-  vpn: ["tailscale", "twingate", "perimeter81", "manual"],
+  vpn: ["tailscale", "twingate", "perimeter81", "timus", "manual"],
   phone: ["cytracom"],
   shipping: ["shipstation", "easypost", "shippo", "manual"],
 };

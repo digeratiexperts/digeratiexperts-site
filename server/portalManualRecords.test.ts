@@ -105,3 +105,130 @@ describe("manual records admin routes", () => {
     expect((await call("POST", "/api/portal/admin/manual-records", { clientId: "acme", kind: "vpn_device", data: "x" })).status).toBe(400);
   });
 });
+
+describe("manual records bulk import", () => {
+  let server: Server;
+  let base = "";
+
+  beforeAll(async () => {
+    const { registerManualRecordAdminRoutes } = await import("./portalManualRecords");
+    const app = express();
+    app.use(express.json());
+    const asAdmin: express.RequestHandler = (req, _res, next) => {
+      (req as any).user = { id: "u-admin", role: "admin" };
+      next();
+    };
+    registerManualRecordAdminRoutes(app, { guards: [asAdmin] });
+    server = createServer(app);
+    await new Promise<void>((r) => server.listen(0, "127.0.0.1", () => r()));
+    const addr = server.address();
+    base = `http://127.0.0.1:${typeof addr === "object" && addr ? addr.port : 0}`;
+  });
+
+  afterAll(() => new Promise<void>((r) => server.close(() => r())));
+
+  beforeEach(async () => {
+    (await import("./portalManualRecords"))._resetManualRecordsMemory();
+  });
+
+  const post = (body: unknown) =>
+    fetch(`${base}/api/portal/admin/manual-records/import`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+  it("imports every row for the named company and kind", async () => {
+    const res = await post({
+      clientId: "acme",
+      kind: "shipment",
+      rows: [
+        { trackingNumber: "1Z1", carrier: "UPS" },
+        { trackingNumber: "9400", carrier: "USPS" },
+      ],
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.imported).toBe(2);
+    expect(body.records.every((r: any) => r.clientId === "acme" && r.kind === "shipment" && r.createdBy === "u-admin")).toBe(true);
+    const m = await import("./portalManualRecords");
+    expect((await m.listManualRecords("acme", "shipment")).map((r) => r.data.trackingNumber).sort()).toEqual(["1Z1", "9400"]);
+    expect(await m.listManualRecords("acme", "vpn_device")).toEqual([]);
+    expect(await m.listManualRecords("globex", "shipment")).toEqual([]);
+  });
+
+  it("rejects the whole batch and names the invalid rows", async () => {
+    const res = await post({
+      clientId: "acme",
+      kind: "vpn_device",
+      rows: [{ name: "Laptop" }, "not an object", { name: "Desk" }, {}, { notes: "x".repeat(9000) }],
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe("Nothing was imported. Invalid rows: 2, 4, 5");
+    expect(body.rows).toEqual([
+      { row: 2, error: "data must be an object" },
+      { row: 4, error: "row is empty" },
+      { row: 5, error: "data is too large" },
+    ]);
+    const m = await import("./portalManualRecords");
+    expect(await m.listManualRecords("acme", "vpn_device")).toEqual([]);
+  });
+
+  it("refuses a missing company, an unknown kind, no rows and more than 500 rows", async () => {
+    expect((await post({ kind: "shipment", rows: [{ a: "1" }] })).status).toBe(400);
+    expect((await post({ clientId: "acme", kind: "invoice", rows: [{ a: "1" }] })).status).toBe(400);
+    expect((await post({ clientId: "acme", kind: "shipment", rows: [] })).status).toBe(400);
+    expect((await post({ clientId: "acme", kind: "shipment", rows: { a: "1" } })).status).toBe(400);
+    const tooMany = await post({ clientId: "acme", kind: "shipment", rows: Array.from({ length: 501 }, (_, i) => ({ trackingNumber: `T${i}` })) });
+    expect(tooMany.status).toBe(400);
+    expect((await tooMany.json()).error).toMatch(/at most 500/);
+    const m = await import("./portalManualRecords");
+    expect(await m.listManualRecords("acme", "shipment")).toEqual([]);
+  });
+
+  it("accepts exactly 500 rows", async () => {
+    const res = await post({ clientId: "acme", kind: "shipment", rows: Array.from({ length: 500 }, (_, i) => ({ trackingNumber: `T${i}` })) });
+    expect(res.status).toBe(201);
+    expect((await res.json()).imported).toBe(500);
+  });
+});
+
+describe("manual records bulk import, database mode", () => {
+  it("inserts all rows in one statement inside a transaction and passes a failure up", async () => {
+    const inserted: unknown[][] = [];
+    let fail = false;
+    const tx = {
+      insert: () => ({
+        values: (vals: any[]) => ({
+          returning: async () => {
+            if (fail) throw new Error("insert or update on table violates foreign key constraint");
+            inserted.push(vals);
+            return vals.map((v, i) => ({ id: `id${i}`, ...v, createdAt: new Date(), updatedAt: new Date() }));
+          },
+        }),
+      }),
+    };
+    const fakeDb = {
+      execute: vi.fn(async () => undefined),
+      transaction: vi.fn(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx)),
+    };
+    vi.resetModules();
+    vi.doMock("./db", () => ({ db: fakeDb, dbReady: true }));
+    const m = await import("./portalManualRecords");
+    const recs = await m.createManualRecords({ clientId: "acme", kind: "shipment", rows: [{ trackingNumber: "A" }, { trackingNumber: "B" }], createdBy: "u1" });
+    expect(fakeDb.transaction).toHaveBeenCalledTimes(1);
+    expect(inserted).toHaveLength(1);
+    expect(inserted[0]).toEqual([
+      { clientId: "acme", kind: "shipment", data: { trackingNumber: "A" }, createdBy: "u1" },
+      { clientId: "acme", kind: "shipment", data: { trackingNumber: "B" }, createdBy: "u1" },
+    ]);
+    expect(recs.map((r) => r.data.trackingNumber)).toEqual(["A", "B"]);
+
+    fail = true;
+    await expect(m.createManualRecords({ clientId: "nope", kind: "shipment", rows: [{ trackingNumber: "C" }] })).rejects.toThrow();
+    expect(inserted).toHaveLength(1);
+    vi.doUnmock("./db");
+    vi.resetModules();
+  });
+});

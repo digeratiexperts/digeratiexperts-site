@@ -51,6 +51,33 @@ export type NormalizedShipment = {
   /** Total item quantity, when the provider reports it. */
   items: number | null;
   notes: string | null;
+  /**
+   * manual provider only: what the carrier's own tracking API last said
+   * (carriers/, see README.md "Carrier tracking"). null when the row was not
+   * looked up (carrier not configured, kill switch, over the per-page cap,
+   * lookup failed); absent on vendor providers. When present, `status` above
+   * already reflects the carrier's answer (see carriers/index.ts mergeStatus).
+   */
+  carrierStatus?: CarrierStatus | null;
+};
+
+/** Carriers whose tracking APIs the manual provider can ask. */
+export type CarrierId = "ups" | "fedex" | "usps";
+
+export type CarrierStatus = {
+  source: CarrierId;
+  /** ISO datetime (UTC) this server asked the carrier. */
+  checkedAt: string;
+  /** The carrier's latest scan / event description, as the carrier wrote it. */
+  latestEvent: string | null;
+  /**
+   * ISO 8601 date-time of that event. With an offset when the carrier gives
+   * one (UPS, FedEx); USPS gives the scan's local wall-clock time, which is
+   * returned without an offset (see README.md).
+   */
+  latestEventAt: string | null;
+  /** "City, ST" of that event (city / state only, no street or ZIP). */
+  latestLocation: string | null;
 };
 
 export type ShippingData = {

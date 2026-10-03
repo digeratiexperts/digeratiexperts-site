@@ -1,7 +1,7 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, Link2Off, Package, Pencil, Plus, Trash2, Truck } from "lucide-react";
+import { ExternalLink, FileUp, Link2Off, Package, Pencil, Plus, Trash2, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,7 @@ import { Callout, DataTable, EmptyState, Field, Panel, StatTile, Token, type Dat
 import { IntegrationHiddenNotice, IntegrationNeedsCompanyNotice } from "@/components/portal/IntegrationNotices";
 import { usePortalIntegrations, type IntegrationStatus } from "@/lib/portalIntegrations";
 import { portalFetch, portalGet } from "@/lib/portalApi";
+import { convertRecords, CsvError, readCsvRecords, toIsoDate, type HeaderAliases, type RowError } from "@/lib/csv";
 
 const PAGE_TITLE = "Ship Center";
 const PAGE_DESCRIPTION = "Track shipments, schedule a new one and reach logistics support.";
@@ -148,7 +149,35 @@ type LiveShipment = {
   deliveredAt: string | null;
   items: number | null;
   notes: string | null;
+  /** Carrier lookup for staff-entered rows (server/integrations/shipping/carriers); null when not looked up. */
+  carrierStatus?: CarrierStatus | null;
 };
+
+type CarrierStatus = {
+  source: "ups" | "fedex" | "usps";
+  checkedAt: string;
+  latestEvent: string | null;
+  latestEventAt: string | null;
+  latestLocation: string | null;
+};
+
+const CARRIER_LABEL: Record<CarrierStatus["source"], string> = { ups: "UPS", fedex: "FedEx", usps: "USPS" };
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/**
+ * A carrier scan time as the carrier wrote it, in the scan's own local time:
+ * no conversion to the viewer's zone (USPS sends local time with no offset).
+ */
+function formatCarrierTime(iso: string | null): string | null {
+  const m = iso ? /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(iso) : null;
+  if (!m) return null;
+  const month = MONTHS[Number(m[2]) - 1];
+  if (!month) return null;
+  const day = `${month} ${Number(m[3])}`;
+  if (m[4] === undefined) return day;
+  const h = Number(m[4]);
+  return `${day}, ${h % 12 || 12}:${m[5]} ${h < 12 ? "AM" : "PM"}`;
+}
 
 type ShippingData = {
   provider: "shipstation" | "easypost" | "shippo" | "manual";
@@ -304,6 +333,8 @@ function LiveShipments({ data, loading, manageClientId }: { data: ShippingData |
   const provider = data?.provider ?? "manual";
   const canManage = !!manageClientId && provider === "manual";
   const [editing, setEditing] = useState<LiveShipment | "new" | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importNotice, setImportNotice] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const showItems = shipments.some((s) => s.items !== null);
@@ -361,8 +392,24 @@ function LiveShipments({ data, loading, manageClientId }: { data: ShippingData |
     key: "status",
     header: "Status",
     primary: true,
-    className: "w-36",
-    cell: (s) => <Token label={STATUS_TOKEN[s.status]?.label ?? "Unknown"} tone={STATUS_TOKEN[s.status]?.tone ?? "neutral"} dot />,
+    className: "w-48",
+    cell: (s) => {
+      const token = <Token label={STATUS_TOKEN[s.status]?.label ?? "Unknown"} tone={STATUS_TOKEN[s.status]?.tone ?? "neutral"} dot />;
+      const c = s.carrierStatus;
+      if (!c || (!c.latestEvent && !c.latestLocation)) return token;
+      const when = formatCarrierTime(c.latestEventAt);
+      return (
+        <span className="block" data-testid={`text-carrier-status-${s.id}`}>
+          {token}
+          {c.latestEvent && <span className="mt-1 block text-xs">{c.latestEvent}</span>}
+          <span className="block text-xs text-muted-foreground">
+            {[c.latestLocation, when].filter(Boolean).join(" · ")}
+            {(c.latestLocation || when) && " · "}
+            {CARRIER_LABEL[c.source]}
+          </span>
+        </span>
+      );
+    },
   });
   columns.push({
     key: "actions",
@@ -430,6 +477,24 @@ function LiveShipments({ data, loading, manageClientId }: { data: ShippingData |
         />
       )}
 
+      {canManage && importing && manageClientId && (
+        <ManualShipmentImport
+          clientId={manageClientId}
+          onDone={async (count) => {
+            setImporting(false);
+            setImportNotice(`Imported ${count} shipment${count === 1 ? "" : "s"}.`);
+            await queryClient.invalidateQueries({ queryKey: SHIPPING_QUERY_KEY });
+          }}
+          onCancel={() => setImporting(false)}
+        />
+      )}
+
+      {importNotice && (
+        <Callout tone="ok" title="Import complete" testId="callout-shipment-import-done" role="status">
+          {importNotice}
+        </Callout>
+      )}
+
       {actionError && (
         <Callout tone="bad" title="Not saved">
           {actionError}
@@ -443,11 +508,34 @@ function LiveShipments({ data, loading, manageClientId }: { data: ShippingData |
           description={data ? `Your company's shipments, from ${PROVIDER_NAME[provider]}` : "Your company's shipments"}
           flush
           actions={
-            canManage && editing === null ? (
-              <Button variant="brand" size="sm" onClick={() => setEditing("new")} data-testid="button-add-shipment">
-                <Plus aria-hidden="true" />
-                Add shipment
-              </Button>
+            canManage && editing === null && !importing ? (
+              <span className="flex flex-wrap justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-border bg-card hover:bg-accent"
+                  onClick={() => {
+                    setImportNotice(null);
+                    setImporting(true);
+                  }}
+                  data-testid="button-import-shipments"
+                >
+                  <FileUp aria-hidden="true" />
+                  Import CSV
+                </Button>
+                <Button
+                  variant="brand"
+                  size="sm"
+                  onClick={() => {
+                    setImportNotice(null);
+                    setEditing("new");
+                  }}
+                  data-testid="button-add-shipment"
+                >
+                  <Plus aria-hidden="true" />
+                  Add shipment
+                </Button>
+              </span>
             ) : undefined
           }
         >
@@ -615,6 +703,200 @@ function ManualShipmentForm({ clientId, shipment, onDone, onCancel }: { clientId
           </Button>
           <Button type="submit" variant="brand" disabled={saving} data-testid="button-save-shipment">
             {saving ? "Saving..." : shipment ? "Save changes" : "Add shipment"}
+          </Button>
+        </div>
+      </form>
+    </Panel>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// "manual" provider: DE admin CSV import (POST /api/portal/admin/manual-records/import).
+// A carrier or shipping-tool export, or a pasted spreadsheet range.
+// ---------------------------------------------------------------------------
+
+const MAX_IMPORT_ROWS = 500;
+/** The import route accepts 1 MB bodies (server/index.ts); stay under it. */
+const MAX_IMPORT_BYTES = 900_000;
+
+const SHIPMENT_IMPORT_HEADERS: HeaderAliases<keyof ShipmentForm> = {
+  reference: ["ref", "po", "po number", "order", "order number", "order id", "ticket"],
+  carrier: ["carrier name", "shipping carrier"],
+  trackingNumber: ["tracking", "tracking #", "tracking no", "tracking id", "tracking code"],
+  trackingUrl: ["tracking url", "tracking link", "link", "url"],
+  status: ["state", "shipment status", "delivery status"],
+  shippedAt: ["shipped", "ship date", "shipped date", "shipped on", "date shipped"],
+  deliveredAt: ["delivered", "delivery date", "delivered date", "delivered on", "date delivered"],
+  items: ["quantity", "qty", "item count", "pieces"],
+  notes: ["note", "contents", "description", "comment", "comments"],
+};
+const SHIPMENT_IMPORT_HINT =
+  "First row is the column names. Accepted (any case): tracking number or tracking, reference or order (one of the two required), carrier, tracking link, status (processing, label created, in transit, delivered, exception, cancelled), shipped and delivered (dates), items or quantity, notes. Other columns are ignored. Up to 500 rows.";
+
+function tooLong(label: string, v: string, max: number): string | null {
+  return v.length > max ? `${label} is longer than ${max} characters` : null;
+}
+
+function importStatus(v: string): ShipmentStatus | null {
+  const k = v.toLowerCase().trim().replace(/[\s-]+/g, "_");
+  if (k === "") return "unknown";
+  if (k === "canceled") return "cancelled";
+  if (k === "intransit") return "in_transit";
+  if (k === "labelcreated") return "label_created";
+  return (STATUS_OPTIONS as string[]).includes(k) ? (k as ShipmentStatus) : null;
+}
+
+function convertShipmentRow(r: Partial<Record<keyof ShipmentForm, string>>): { data: Record<string, string | number | null> } | { error: string } {
+  const reference = r.reference ?? "";
+  const trackingNumber = r.trackingNumber ?? "";
+  if (!reference && !trackingNumber) return { error: "tracking number and reference are both empty" };
+  const trackingUrl = r.trackingUrl ?? "";
+  if (trackingUrl && !/^https?:\/\/\S+$/i.test(trackingUrl)) return { error: "tracking link must start with https://" };
+  const status = importStatus(r.status ?? "");
+  if (status === null) return { error: `status "${r.status}" is not one of: ${STATUS_OPTIONS.map((s) => STATUS_TOKEN[s].label.toLowerCase()).join(", ")}` };
+  const shippedAt = toIsoDate(r.shippedAt ?? "");
+  if (shippedAt === null) return { error: `shipped "${r.shippedAt}" is not a date` };
+  const deliveredAt = toIsoDate(r.deliveredAt ?? "");
+  if (deliveredAt === null) return { error: `delivered "${r.deliveredAt}" is not a date` };
+  const itemsIn = r.items ?? "";
+  if (itemsIn && !/^\d{1,6}$/.test(itemsIn)) return { error: `items "${itemsIn}" is not a whole number` };
+  const carrier = r.carrier ?? "";
+  const notes = r.notes ?? "";
+  const long =
+    tooLong("reference", reference, 80) || tooLong("carrier", carrier, 40) || tooLong("tracking number", trackingNumber, 60) || tooLong("tracking link", trackingUrl, 500) || tooLong("notes", notes, 500);
+  if (long) return { error: long };
+  return {
+    data: { reference, carrier, trackingNumber, trackingUrl, status, shippedAt, deliveredAt, items: itemsIn ? Number(itemsIn) : null, notes },
+  };
+}
+
+type ImportPreview = { rows: Record<string, string | number | null>[]; errors: RowError[]; ignored: string[] } | { parseError: string };
+
+function previewShipmentImport(text: string): ImportPreview | null {
+  if (!text.trim()) return null;
+  try {
+    const csv = readCsvRecords(text, SHIPMENT_IMPORT_HEADERS);
+    if (csv.records.length > MAX_IMPORT_ROWS) return { parseError: `The file has ${csv.records.length} rows; import at most ${MAX_IMPORT_ROWS} at a time.` };
+    if (!csv.fields.includes("trackingNumber") && !csv.fields.includes("reference")) {
+      return { parseError: "No tracking number or reference column. Add a column named tracking number or reference." };
+    }
+    const { rows, errors } = convertRecords(csv.records, convertShipmentRow);
+    return { rows, errors, ignored: csv.unknownHeaders };
+  } catch (err) {
+    return { parseError: err instanceof CsvError ? err.message : "The CSV could not be read." };
+  }
+}
+
+function ManualShipmentImport({ clientId, onDone, onCancel }: { clientId: string; onDone: (count: number) => void; onCancel: () => void }) {
+  const [text, setText] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const preview = useMemo(() => previewShipmentImport(text), [text]);
+  const ready = !!preview && !("parseError" in preview) && preview.errors.length === 0 && preview.rows.length > 0;
+
+  const onFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setSaveError(null);
+    if (!file) return;
+    try {
+      setText(await file.text());
+    } catch {
+      setSaveError("The file could not be read.");
+    }
+  };
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!ready || !preview || "parseError" in preview) return;
+    const body = JSON.stringify({ clientId, kind: "shipment", rows: preview.rows });
+    if (new Blob([body]).size > MAX_IMPORT_BYTES) {
+      setSaveError("This file is too large to import in one go. Split it into smaller files.");
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const r = await portalFetch(`${MANUAL_RECORDS_URL}/import`, { method: "POST", body });
+      if (r.ok) {
+        const out = (await r.json().catch(() => ({}))) as { imported?: number };
+        setSaving(false);
+        onDone(out.imported ?? preview.rows.length);
+        return;
+      }
+      const out = (await r.json().catch(() => ({}))) as { error?: string };
+      setSaveError(r.status === 413 ? "This file is too large to import in one go. Split it into smaller files." : out.error || "Nothing was imported. Try again.");
+    } catch {
+      setSaveError("Nothing was imported. Check your connection and try again.");
+    }
+    setSaving(false);
+  };
+
+  const total = preview && !("parseError" in preview) ? preview.rows.length + preview.errors.length : 0;
+
+  return (
+    <Panel id="shipment-import" title="Import shipments from CSV" description="Staff-entered tracking. Adds every row as a new shipment for this company, or none if a row has a problem.">
+      <form onSubmit={submit} className="space-y-4" noValidate>
+        <Field label="CSV file" htmlFor="shipment-import-file" hint="A .csv export from a carrier account or a spreadsheet.">
+          <Input id="shipment-import-file" type="file" accept=".csv,.tsv,.txt,text/csv,text/plain" onChange={onFile} className="border-border bg-background" data-testid="input-shipment-import-file" />
+        </Field>
+        <Field label="Or paste CSV" htmlFor="shipment-import-text" hint={SHIPMENT_IMPORT_HINT}>
+          <Textarea
+            id="shipment-import-text"
+            value={text}
+            onChange={(e) => {
+              setSaveError(null);
+              setText(e.target.value);
+            }}
+            rows={6}
+            spellCheck={false}
+            placeholder={"tracking number,carrier,status,shipped,notes\n1Z999AA10123456784,UPS,in transit,2026-10-01,2 laptops"}
+            className="border-border bg-background font-mono text-xs"
+            data-testid="input-shipment-import-text"
+          />
+        </Field>
+        {preview && "parseError" in preview && (
+          <Callout tone="bad" title="The CSV can't be imported" testId="callout-shipment-import-error">
+            {preview.parseError}
+          </Callout>
+        )}
+        {preview && !("parseError" in preview) && (
+          <div className="space-y-3">
+            <p className="text-sm" data-testid="text-shipment-import-summary" role="status">
+              <span className="pt-num font-medium">{total}</span> row{total === 1 ? "" : "s"} found
+              {preview.errors.length > 0 ? (
+                <>
+                  , <span className="pt-num font-medium">{preview.errors.length}</span> with a problem
+                </>
+              ) : (
+                ", all ready to import"
+              )}
+              .{preview.ignored.length > 0 && <span className="text-muted-foreground"> Ignored columns: {preview.ignored.join(", ")}.</span>}
+            </p>
+            {preview.errors.length > 0 && (
+              <Callout tone="bad" title="Fix these rows, then paste or choose the file again" testId="callout-shipment-import-row-errors">
+                <ul className="list-disc space-y-0.5 pl-5">
+                  {preview.errors.slice(0, 5).map((er) => (
+                    <li key={er.row}>
+                      Row <span className="pt-num">{er.row}</span>: {er.error}
+                    </li>
+                  ))}
+                </ul>
+                {preview.errors.length > 5 && <p className="mt-1">and {preview.errors.length - 5} more.</p>}
+              </Callout>
+            )}
+          </div>
+        )}
+        {saveError && (
+          <Callout tone="bad" title="Not imported" testId="callout-shipment-import-save-error">
+            {saveError}
+          </Callout>
+        )}
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button type="button" variant="outline" className="border-border bg-card hover:bg-accent" onClick={onCancel} disabled={saving} data-testid="button-cancel-shipment-import">
+            Cancel
+          </Button>
+          <Button type="submit" variant="brand" disabled={!ready || saving} data-testid="button-submit-shipment-import">
+            {saving ? "Importing..." : ready && preview && !("parseError" in preview) ? `Import ${preview.rows.length} shipment${preview.rows.length === 1 ? "" : "s"}` : "Import"}
           </Button>
         </div>
       </form>

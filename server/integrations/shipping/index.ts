@@ -1,6 +1,6 @@
 import { listManualRecords } from "../../portalManualRecords";
 import { loadEasyPost } from "./easypost";
-import { buildManualData } from "./manual";
+import { buildManualDataWithCarriers } from "./manual";
 import { loadShipStation } from "./shipstation";
 import { loadShippo } from "./shippo";
 import { ShippingConfigError, type Env, type ShippingLoadResult } from "./types";
@@ -15,7 +15,12 @@ import { ShippingConfigError, type Env, type ShippingLoadResult } from "./types"
  *   shippo       "account:<ShippoAccountID>" | "metadata:<PREFIX->"
  * A company with no entry gets { notMapped: true }. "manual" needs no map:
  * its records are already stored per company.
+ *
+ * "manual" can also ask UPS / FedEx / USPS for live status (carriers/), only
+ * for carriers whose keys are set; carrierTrackingConfig(env) reports which.
  */
+
+export { carrierTrackingConfig, carrierTrackingEnabled, CARRIER_ENV_VARS, CARRIER_TRACKING_SWITCH_ENV } from "./carriers/index";
 
 export const SHIPPING_CLIENT_MAP_ENV = "PORTAL_SHIPPING_CLIENT_MAP";
 
@@ -53,7 +58,9 @@ export async function loadShippingData(opts: {
 }): Promise<ShippingLoadResult> {
   const { provider, clientId, env, fetchImpl } = opts;
   if (provider === "manual") {
-    return { data: buildManualData(await listManualRecords(clientId, "shipment")) };
+    // Carrier lookups run only for carriers whose PORTAL_CARRIER_<X>_* keys are set (carriers/index.ts).
+    const records = await listManualRecords(clientId, "shipment");
+    return { data: await buildManualDataWithCarriers(records, { env, fetchImpl }) };
   }
   const scope = shippingScopeFor(clientId, env);
   if (!scope) return { notMapped: true };

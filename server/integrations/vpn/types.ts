@@ -3,7 +3,7 @@
  * (GET /api/portal/vpn). Vendor field names stay inside each adapter.
  */
 
-export type VpnProviderId = "tailscale" | "twingate" | "perimeter81" | "manual";
+export type VpnProviderId = "tailscale" | "twingate" | "perimeter81" | "timus" | "manual";
 
 /**
  * A device's state as far as the provider reports it.

@@ -114,6 +114,147 @@ company's prefix; a label without it is shown to nobody.
   no FedEx or USPS page publishing a deep-link pattern was found. Staff may paste the carrier's
   tracking URL (http/https only) and the page shows "Track" for it.
 
+## Carrier tracking (manual provider only)
+
+When `PORTAL_SHIPPING_PROVIDER=manual` and staff entered a carrier and tracking number, the
+server can ask UPS, FedEx or USPS for the current status (`carriers/`). Only carriers whose
+keys are set are ever called. With no carrier keys the page behaves exactly as before
+(staff-entered status, `carrierStatus: null` on every row). Vendor providers
+(shipstation / easypost / shippo) are untouched.
+
+| Env var | Meaning |
+|---|---|
+| `PORTAL_CARRIER_UPS_CLIENT_ID`, `PORTAL_CARRIER_UPS_CLIENT_SECRET` | UPS app Client ID / Client Secret (developer.ups.com app with the Tracking API product) |
+| `PORTAL_CARRIER_FEDEX_CLIENT_ID`, `PORTAL_CARRIER_FEDEX_CLIENT_SECRET` | FedEx project API Key / Secret Key (developer.fedex.com project with Track API) |
+| `PORTAL_CARRIER_USPS_CLIENT_ID`, `PORTAL_CARRIER_USPS_CLIENT_SECRET` | USPS app Consumer Key / Consumer Secret (developers.usps.com app with Tracking) |
+| `PORTAL_CARRIER_UPS_ENV`, `PORTAL_CARRIER_FEDEX_ENV`, `PORTAL_CARRIER_USPS_ENV` | `sandbox` uses the carrier's documented test host; anything else (default) is production |
+| `PORTAL_CARRIER_TRACKING` | `off` (or `false` / `0` / `no` / `disabled`) stops every carrier lookup |
+
+A carrier counts as configured only when both its id and secret are set.
+`carrierTrackingConfig(env)` (exported from `index.ts`) answers
+`{ ups: { configured }, fedex: { configured }, usps: { configured } }`, booleans only.
+
+How a page load works (`carriers/index.ts`):
+
+- Carrier name: the staff-entered `carrier` is matched case-insensitively. UPS: `UPS`,
+  `UPS Ground`, `United Parcel Service`... FedEx: `FedEx`, `Fed Ex`, `FedEx Ground`,
+  `Federal Express`... USPS: `USPS`, `U.S.P.S.`, `USPS Priority Mail`, `U.S. Postal Service`,
+  `United States Postal Service`. Anything else is not looked up.
+- Tracking number: spaces are removed. UPS numbers must be 7-34 characters (the length the
+  UPS Tracking spec states for `inquiryNumber`). FedEx and USPS publish no format in the docs
+  that could be read, so only a letters-and-digits check applies (it keeps the number safe
+  in a URL path).
+- The newest 25 eligible rows are looked up, 4 at a time; older rows keep the staff status.
+  The page waits at most 8 s; slower lookups finish in the background and fill the cache.
+- Each answer, and each failure, is cached for 15 minutes per carrier + tracking number.
+  OAuth tokens are cached until 60 s before the carrier's `expires_in`; a 401 on a tracking
+  call refreshes the token once.
+- Status: the carrier's status replaces the staff status, except that a carrier code we
+  cannot map leaves the staff status, and a staff `delivered` / `cancelled` changes only
+  when the carrier says delivered. When the carrier says delivered and staff left
+  `deliveredAt` empty, it is set from the latest event's date.
+- Any carrier failure (timeout, HTTP error, not found, bad JSON) keeps the staff status for
+  that row, sets `carrierStatus: null`, and logs `[portal shipping] carrier lookup failed for
+  shipment <id> (<carrier>): CarrierError: <carrier> <step> answered HTTP <n>`. Never a body,
+  token or secret, and never a 502 for the page.
+
+Each looked-up row gets:
+
+```ts
+carrierStatus: {
+  source: "ups" | "fedex" | "usps";
+  checkedAt: string;            // ISO UTC, when this server asked
+  latestEvent: string | null;   // carrier's latest event text
+  latestEventAt: string | null; // ISO 8601; UPS / FedEx with offset, USPS local wall time without offset
+  latestLocation: string | null;// "City, ST" only
+} | null
+```
+
+### UPS (built)
+
+- Source: UPS's official OpenAPI specs at https://github.com/UPS-API/api-documentation
+  (`Tracking.yaml`, `OAuthClientCredentials.yaml`, `UPSTrackAlert.yaml`), the files
+  developer.ups.com renders. developer.ups.com itself was blocked by the egress proxy.
+- Token: `POST {host}/security/v1/oauth/token`, HTTP Basic (client id : secret), form
+  `grant_type=client_credentials`; `expires_in` is a string of seconds.
+  https://developer.ups.com/api/reference/oauth/client-credentials
+- Track: `GET {host}/api/track/v1/details/{inquiryNumber}?locale=en_US`, bearer token, required
+  headers `transId` (unique per request; a 32-hex random id) and `transactionSrc`
+  (`digerati-portal`). https://developer.ups.com/api/reference/tracking
+- Hosts: production `https://onlinetools.ups.com`, sandbox `https://wwwcie.ups.com` (CIE).
+- Status: `package[0].currentStatus.type`. `Tracking.yaml` gives only the example `X`; the value
+  list is in `UPSTrackAlert.yaml` (`activityStatus.type`): `D` Delivery, `I` On the Way,
+  `M` Manifest, `MV` Manifest Void, `U` Updated Delivery Date or Time, `X` Package Exception.
+  Mapped: `D` = delivered only with a `deliveryDate`/`deliveryTime` of type `DEL`, otherwise
+  in transit; `I`, `U` = in transit; `M` = label created; `MV` = cancelled; `X` = exception.
+- Latest event: `activity[0]` (the spec says most recent first): `status.description`,
+  `date` + `time` + `gmtOffset`, `location.address.city` / `stateProvince`.
+- Limits: UPS keeps tracking data for 120 days (spec note), so older numbers fail and keep the
+  staff status. No rate limit is stated in the spec.
+
+### FedEx (built, confirm before switching on)
+
+- Source: developer.fedex.com was blocked by the egress proxy, and FedEx publishes no
+  official SDK or OpenAPI file on GitHub or npm. Everything below comes from search-engine
+  excerpts of the official pages:
+  https://developer.fedex.com/api/en-us/catalog/authorization/docs.html and
+  https://developer.fedex.com/api/en-us/catalog/track/docs.html
+- Token: `POST {host}/oauth/token`, `application/x-www-form-urlencoded`,
+  `grant_type=client_credentials`, `client_id` (API Key), `client_secret` (Secret Key);
+  `expires_in` seconds (standard one hour). FedEx's best-practice page says to cache the token
+  until a 401, which the adapter does.
+- Track: `POST {host}/track/v1/trackingnumbers`, bearer token, body
+  `{ includeDetailedScans: true, trackingInfo: [{ trackingNumberInfo: { trackingNumber } }] }`.
+- Hosts: production `https://apis.fedex.com`, sandbox `https://apis-sandbox.fedex.com`.
+- Status: `output.completeTrackResults[0].trackResults[0].latestStatusDetail.code` (then
+  `derivedCode`): `DL` delivered; `OD`, `IT`, `PU` in transit; `OC` label created; `SE`
+  exception; `CA` cancelled; any other code keeps the staff status. **Gap:** this code list
+  was not read on the FedEx page itself (it is the list quoted in excerpts and in FedEx
+  sandbox mocks). Check it against the Track API docs' status code table before setting the
+  FedEx keys, and replace `carriers/fixtures/fedex-track-trackingnumbers.json` with the docs'
+  example response.
+- Latest event: the newest `scanEvents[]` entry by `date` (`eventDescription`,
+  `scanLocation.city` / `stateOrProvinceCode`), else `latestStatusDetail`.
+
+### USPS (built)
+
+- The legacy USPS Web Tools XML APIs were retired on January 25, 2026
+  (https://www.usps.com/business/web-tools-apis/); this uses the current USPS APIs
+  (`apis.usps.com`, OAuth 2.0).
+- Source: USPS's official examples repository https://github.com/USPS/api-examples
+  (README "OAuth Token" and "Tracking", Postman collection), which mirrors
+  developers.usps.com. developers.usps.com and apis.usps.com were blocked by the egress proxy.
+- Token: `POST {host}/oauth2/v3/token`, JSON `{ client_id, client_secret, grant_type:
+  "client_credentials" }`; `expires_in` is a string. The README says a valid customer
+  registration ID (CRID) and mailer ID (MID) are needed to get a token: DE's USPS business
+  account must have them.
+- Track: `GET {host}/tracking/v3/tracking/{trackingNumber}?expand=DETAIL`, bearer token.
+  (Tracking 3.2, `/tracking/v3r2/tracking`, also exists; its README example shows a GET with
+  a JSON array body, which is ambiguous, so 3.0 is used.)
+- Hosts: production `https://apis.usps.com`, sandbox `https://apis-tem.usps.com`.
+- Status: `statusCategory`. Only values shown in reachable official docs are mapped:
+  `Accepted` (README example) and `In Transit` = in transit, `Delivered` = delivered (USPS
+  Track & Confirm guide). **Gap:** the full category list is on developers.usps.com; other
+  values (for example alerts) keep the staff status until mapped.
+- Latest event: the newest `trackingEvents[]` entry (`eventType`, `eventTimestamp`,
+  `eventCity` / `eventState`). USPS's example pairs `eventTimestamp`
+  `"2023-08-02T07:31:00Z"` with "7:31 am ... in RICHMOND, VA", so the trailing `Z` is local
+  time, not UTC: it is dropped and the time is passed on as local wall time.
+
+### What Joe must obtain for carrier tracking
+
+- UPS: a developer.ups.com app with the Tracking API product; its Client ID and Client Secret.
+- FedEx: a developer.fedex.com project with the Track API; its API Key and Secret Key.
+  Confirm the status code table (above) first.
+- USPS: a developers.usps.com app with the Tracking API; Consumer Key and Secret, on a USPS
+  business account with a CRID and MID.
+- Optional: test each with `PORTAL_CARRIER_<X>_ENV=sandbox` first (test-host keys can differ
+  from production keys).
+
+`SHIPPING_SETUP.md` in the repo root is stale: it describes Web Tools keys, an admin carrier
+form and `/api/portal/shipping/rates`, `/label`, `/track`, `/admin/shipping/carriers`
+endpoints that do not exist in this codebase. Use this README instead.
+
 ## Doc access and fixtures
 
 The build machine's egress proxy blocked `shipstation.com`, `docs.shipstation.com`,
@@ -137,5 +278,11 @@ on, run one real request against a test store / child / managed account to confi
 
 - `adapters.test.ts`: mapping from `fixtures/*.json`, scope parsing, auth headers, prefix
   safety, vendor errors without body text.
+- `carriers/carriers.test.ts`: carrier mapping from `carriers/fixtures/*.json` (UPS: the spec's
+  field examples; USPS: a byte copy of the README example; FedEx: documented field names, our
+  values), carrier-name matching, request shapes and hosts, token caching and 401 refresh,
+  15-minute result cache, per-page cap and concurrency, page budget, failure keeps the staff
+  status, unconfigured carriers never called, kill switch.
 - `routes.test.ts`: over HTTP, sample / hidden / needsCompany / notMapped / live / vendor
-  failure / config failure / manual, and that each company only receives its own scope.
+  failure / config failure / manual (with a failing carrier: still HTTP 200, staff status),
+  and that each company only receives its own scope.

@@ -10,6 +10,7 @@ The portal's VPN Access page (`client/src/pages/portal/PortalVPN.tsx`) reads
 | `tailscale` | the company's Tailscale devices (built) |
 | `twingate` | devices of the company's Twingate group users (built; verify with a live key first, see gaps) |
 | `perimeter81` | **not built**: always HTTP 502 "not available" plus a server log line |
+| `timus` | **DE's chosen vendor, not built yet** (no published API docs): always HTTP 502 "not available" plus a server log line |
 | `manual` | WireGuard / OpenVPN devices DE staff enter in the portal (built) |
 
 Endpoint contract (live mode): `{ success, status }` plus one of
@@ -115,6 +116,69 @@ PORTAL_VPN_CLIENT_MAP='{"<acme clientId>":"R3JvdXA6MTIz"}'                      
   from the build sandbox; recheck the reference before building, and only from a
   documented devices endpoint.
 
+## timus (DE's chosen VPN / ZTNA vendor) — waiting on API docs
+
+Decision: `VENDOR_SETUP_STATUS.md`, "Portal tools waiting on vendors" (VPN Access = Timus).
+
+**State.** `PORTAL_VPN_PROVIDER=timus` is an accepted value, so the page, nav and switch
+are ready, but `timus.ts` makes no vendor call: it throws `VpnProviderUnavailableError`,
+the route logs `[portal-vpn] timus failed for client <id>: VpnProviderUnavailableError:
+Timus API not documented yet` and answers the generic 502 ("VPN data isn't available
+right now."). A DE admin with no company in view still gets `{ needsCompany: true }`.
+Leave the variable unset (sample) or `hidden` in production until the adapter is built.
+
+**What Timus publishes (researched 2026-10-03).** All `timusnetworks.com` hosts are
+blocked from the build sandbox, so this comes from search-indexed text of Timus's own
+pages; recheck before building.
+- Timus Manager has an **API Access** screen (Settings > Configurations > API Access)
+  that issues a **Client ID + Client Secret** per "Application Type", each with an
+  expiration date. The documented use is the Active Directory **Directory Connector**
+  (syncs users and groups every 15 minutes):
+  https://support.timusnetworks.com/hc/en-us/articles/42998633001235-API-Access ,
+  https://support.timusnetworks.com/hc/en-us/articles/31713918653459-Active-Directory-Integration
+- Inbound integrations Timus documents (Timus calls *other* vendors' APIs; nothing a
+  portal can read from Timus): Entra ID, Google Workspace, Okta, Defender, SentinelOne,
+  Bitdefender, Heimdal, ConnectWise PSA (company / agreement mapping and usage sync for
+  billing): https://support.timusnetworks.com/hc/en-us/sections/31713578746643-Integrations ,
+  https://support.timusnetworks.com/hc/en-us/articles/35581986036371-Third-Party-Integrations ,
+  https://marketplace.connectwise.com/timus-networks
+- Partner community thread asking Timus for API access to users and teams, device
+  details, site statistics and firewall rules (marked "Answered"; answer text not
+  readable from the sandbox):
+  https://support.timusnetworks.com/hc/en-us/community/posts/40152281306387-API-enhancements
+- SIEM / syslog export: a community thread reports native syslog/SIEM integration on
+  Timus's roadmap (estimate Q3 2026):
+  https://support.timusnetworks.com/hc/en-us/community/posts/34732863404179-SIEM-Integration
+- MSP partner portal (per-client management and billing):
+  https://kb.timusnetworks.com/knowledge-base/dashboards/partner-portal ,
+  https://timusnetworks.com/partners/msp-partner-solutions
+
+**Not found:** a public API reference, base URL, endpoint list, OpenAPI/Swagger file,
+Postman collection, official SDK, Terraform provider, SCIM endpoint or webhooks. Timus's
+npm scope `@timus-networks/*` holds Vue/Nuxt UI components only. Whether the API Access
+credentials can read devices, users or connection state per customer is undocumented.
+
+**Gaps that block the adapter** (ask list: `docs/vendor-requests/TIMUS-API-REQUEST.md`):
+API reference URL; auth (API Access client credentials? token URL? partner-level vs
+per-tenant credentials); how a customer is identified (tenant / company / site id), which
+becomes the `PORTAL_VPN_CLIENT_MAP` value; endpoints for devices, users, last connected
+and connector / gateway status; pagination; rate limits; a sandbox tenant.
+
+**Env (reserved, unused until the adapter is built; `timus.ts` does not read them):**
+
+| Variable | Meaning once built |
+|---|---|
+| `PORTAL_VPN_TIMUS_API_KEY` | Timus API credential (if Timus uses Client ID + Secret, this may become two variables; decided from their docs) |
+| `PORTAL_VPN_TIMUS_BASE_URL` | API base URL Timus gives DE |
+| `PORTAL_VPN_CLIENT_MAP` | `{"<portal clientId>":"<Timus customer / tenant id>"}` |
+
+**When docs arrive** only `timus.ts` changes (plus its tests and a fixture copied from
+the docs' example response): read the env above, call the documented devices endpoint
+for the mapped tenant only (`opts.scope()`, the client-map lookup `index.ts` already
+passes; null means answer `{ notMapped: true }`), and map to `VpnDevice`.
+Client download link and profile wording go in `CLIENT_LINKS` / `PROFILE_TEXT` in
+`PortalVPN.tsx` (already present for Timus Connect).
+
 ## manual
 
 - **Records:** `kind: "vpn_device"` via the DE-admin API `/api/portal/admin/manual-records`
@@ -133,10 +197,14 @@ PORTAL_VPN_CLIENT_MAP='{"<acme clientId>":"R3JvdXA6MTIz"}'                      
   the client map.
 - twingate: the network subdomain, an Admin API token, a group per client company,
   the client map (group ids come from the Admin API, e.g. a `groups` query).
-- manual: nothing; enter devices as a DE admin viewing as the company.
+- timus: the answers in `docs/vendor-requests/TIMUS-API-REQUEST.md` (API docs, credentials,
+  tenant ids); then an adapter is built before switching on.
+- manual: nothing; enter devices as a DE admin viewing as the company, one at a time or
+  with **Import CSV** (headers: name, os, protocol, status, last seen, user, notes; up to
+  500 rows, all or nothing).
 
 ## Tests
 
 `adapters.test.ts` (fixtures in `fixtures/`, each citing its source) and `routes.test.ts`
 (sample, hidden, needsCompany, notMapped, live per provider, vendor failure, bad map,
-cross-company isolation).
+cross-company isolation, timus 502 without leaking reserved env values).

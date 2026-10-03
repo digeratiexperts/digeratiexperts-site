@@ -72,6 +72,8 @@ describe("GET /api/portal/shipping", () => {
     vendorFails = false;
     (await import("../../portalManualRecords"))._resetManualRecordsMemory();
     (await import("./easypost"))._resetEasyPostKeyCache();
+    (await import("./carriers/index"))._resetCarrierCache();
+    (await import("./carriers/common"))._resetCarrierTokens();
   });
 
   const get = async (user: unknown) => {
@@ -194,5 +196,30 @@ describe("GET /api/portal/shipping", () => {
     expect(globex.body.data.shipments.map((s: any) => s.trackingNumber)).toEqual(["1ZGLOBEX"]);
     expect(globex.body.manage).toEqual({ clientId: "globex" });
     expect(vendorCalls).toHaveLength(0);
+    expect(acme.body.data.shipments[0].carrierStatus).toBeNull();
+  });
+
+  it("manual provider keeps the staff status (no 502) when a configured carrier fails", async () => {
+    env.PORTAL_SHIPPING_PROVIDER = "manual";
+    env.PORTAL_CARRIER_UPS_CLIENT_ID = "ups-id";
+    env.PORTAL_CARRIER_UPS_CLIENT_SECRET = "ups-secret-value";
+    vendorFails = true;
+    const m = await import("../../portalManualRecords");
+    await m.createManualRecord({ clientId: "acme", kind: "shipment", data: { carrier: "UPS", trackingNumber: "1Z023E2X0214323462", status: "in_transit" } });
+    await m.createManualRecord({ clientId: "acme", kind: "shipment", data: { carrier: "FedEx", trackingNumber: "123456789012", status: "processing" } });
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const r = await get(ACME_USER);
+    const logged = spy.mock.calls.map((c) => String(c[0])).join("\n");
+    spy.mockRestore();
+    expect(r.status).toBe(200);
+    expect(r.body.data.shipments.map((s: any) => [s.status, s.carrierStatus])).toEqual(
+      expect.arrayContaining([["in_transit", null], ["processing", null]]),
+    );
+    // UPS (configured) was tried; FedEx (no keys) never was.
+    expect(vendorCalls.some((c) => c.url.startsWith("https://onlinetools.ups.com/"))).toBe(true);
+    expect(vendorCalls.some((c) => c.url.includes("fedex.com"))).toBe(false);
+    expect(logged).toContain("ups token answered HTTP 500");
+    expect(logged).not.toContain("ups-secret-value");
+    expect(JSON.stringify(r.body)).not.toContain("upstream says");
   });
 });

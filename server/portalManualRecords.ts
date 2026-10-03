@@ -126,6 +126,66 @@ export async function createManualRecord(input: {
   return rec;
 }
 
+export const MAX_IMPORT_ROWS = 500;
+
+/**
+ * Inserts every row for one company and kind, or none. Callers validate the
+ * rows first (validateImportRows). Postgres: one multi-row INSERT inside a
+ * transaction (both drivers in server/db.ts, node-postgres and Neon's
+ * WebSocket Pool, support db.transaction), so a failure part-way, such as the
+ * company row not existing, leaves nothing behind. Memory mode inserts
+ * synchronously after validation, so it is all-or-nothing as well.
+ */
+export async function createManualRecords(input: {
+  clientId: string;
+  kind: ManualRecordKind;
+  rows: Record<string, unknown>[];
+  createdBy?: string | null;
+}): Promise<ManualRecord[]> {
+  if (input.rows.length === 0) return [];
+  const createdBy = input.createdBy ?? null;
+  if (dbReady && db) {
+    await ensureSchema();
+    const values = input.rows.map((data) => ({ clientId: input.clientId, kind: input.kind, data, createdBy }));
+    const inserted = await db.transaction(async (tx: any) => tx.insert(portalManualRecords).values(values).returning());
+    return (inserted as any[]).map(toRecord);
+  }
+  const now = new Date().toISOString();
+  const recs: ManualRecord[] = input.rows.map((data, i) => ({
+    id: `mr_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}${i.toString(36)}`,
+    clientId: input.clientId,
+    kind: input.kind,
+    data,
+    createdBy,
+    createdAt: now,
+    updatedAt: now,
+  }));
+  for (const rec of recs) memory.set(rec.id, rec);
+  return recs;
+}
+
+export type ImportRowError = { row: number; error: string };
+
+/**
+ * Checks an import batch: an array of 1..MAX_IMPORT_ROWS rows, each passing
+ * validateRecordData and holding at least one value. Row numbers are 1-based
+ * positions in `rows`. Returns the batch-level error or the per-row errors.
+ */
+export function validateImportRows(rows: unknown): { error: string } | { rowErrors: ImportRowError[] } | null {
+  if (!Array.isArray(rows)) return { error: "rows must be an array" };
+  if (rows.length === 0) return { error: "rows is empty" };
+  if (rows.length > MAX_IMPORT_ROWS) return { error: `at most ${MAX_IMPORT_ROWS} rows per import` };
+  const rowErrors: ImportRowError[] = [];
+  rows.forEach((row, i) => {
+    const bad = validateRecordData(row);
+    if (bad) rowErrors.push({ row: i + 1, error: bad });
+    else if (!Object.values(row as Record<string, unknown>).some((v) => v !== null && v !== undefined && String(v).trim() !== "")) {
+      rowErrors.push({ row: i + 1, error: "row is empty" });
+    }
+  });
+  return rowErrors.length ? { rowErrors } : null;
+}
+
 /** Updates only a record of that company and kind; null when there is none. */
 export async function updateManualRecord(
   id: string,
@@ -176,6 +236,7 @@ export function _resetManualRecordsMemory() {
 // ---------- admin routes ----------
 
 export const MANUAL_RECORDS_PATH = "/api/portal/admin/manual-records";
+export const MANUAL_RECORDS_IMPORT_PATH = `${MANUAL_RECORDS_PATH}/import`;
 
 type AdminRequest = Request & { user?: { id?: string; role?: string | null } };
 
@@ -206,6 +267,33 @@ export function registerManualRecordAdminRoutes(app: Express, opts: { guards: Re
     if (bad) return res.status(400).json({ error: bad });
     const record = await createManualRecord({ ...t, data: req.body.data, createdBy: req.user?.id ?? null });
     res.status(201).json({ success: true, record });
+  });
+
+  // Bulk import (CSV pasted on the VPN / Ship Center page, parsed in the
+  // browser): body { clientId, kind, rows: object[] }, at most 500 rows.
+  // All or nothing: one invalid row rejects the batch with its row number.
+  // Note: the app-wide express.json() keeps its default 100 kB body limit, so
+  // a larger batch is refused with 413 before it reaches this handler.
+  app.post(MANUAL_RECORDS_IMPORT_PATH, ...opts.guards, async (req: AdminRequest, res: Response) => {
+    const t = readTarget(req);
+    if ("error" in t) return res.status(400).json({ error: t.error });
+    const checked = validateImportRows(req.body?.rows);
+    if (checked && "error" in checked) return res.status(400).json({ error: checked.error });
+    if (checked) {
+      const rows = checked.rowErrors.map((e) => e.row);
+      return res.status(400).json({
+        error: `Nothing was imported. Invalid row${rows.length === 1 ? "" : "s"}: ${rows.slice(0, 20).join(", ")}${rows.length > 20 ? ` and ${rows.length - 20} more` : ""}`,
+        rows: checked.rowErrors.slice(0, 50),
+      });
+    }
+    try {
+      const records = await createManualRecords({ ...t, rows: req.body.rows, createdBy: req.user?.id ?? null });
+      res.status(201).json({ success: true, imported: records.length, records });
+    } catch (err) {
+      const reason = err instanceof Error ? `${err.name}: ${err.message}` : "unknown error";
+      console.warn(`[manual-records] import failed for client ${t.clientId} (${t.kind}): ${reason}`);
+      res.status(500).json({ error: "Nothing was imported. Try again." });
+    }
   });
 
   app.patch(`${MANUAL_RECORDS_PATH}/:id`, ...opts.guards, async (req: Request, res: Response) => {

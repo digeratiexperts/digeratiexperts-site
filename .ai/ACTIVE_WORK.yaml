@@ -52,6 +52,8 @@ claims:
       - scripts/qa/portal-prod-check.mjs
       - deploy/vps/env.production.example (portal data-source section)
       - server/portalDataSources.ts
+      - server/portalDataSources.test.ts
+      - artifacts/visual-qa/portal-data-sources-prep/**
       - client/src/pages/portal/PortalAdminDataSources.tsx
       - client/src/App.tsx (one admin route line)
       - client/src/lib/csv.ts
@@ -60,6 +62,8 @@ claims:
       - .github/workflows/portal-prod-check.yml
       - client/src/pages/portal/PortalSignup.tsx (Turnstile token only)
       - VENDOR_SETUP_STATUS.md (Test login paragraph only)
+      - server/index.ts (manual-records import body limit line only)
+      - client/src/lib/csv.test.ts
     status: active
     started: 2026-10-03
     note: >-

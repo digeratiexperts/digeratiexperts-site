@@ -175,6 +175,44 @@ describe("GET /api/portal/vpn", () => {
     warn.mockRestore();
   });
 
+  it("timus: answers the generic 502 for every caller with a company, never leaks, makes no vendor call", async () => {
+    env = {
+      PORTAL_VPN_PROVIDER: "timus",
+      PORTAL_VPN_CLIENT_MAP: '{"acme":"timus-tenant-acme"}',
+      // Reserved names: set here to prove they are neither read out nor used.
+      PORTAL_VPN_TIMUS_API_KEY: "timus-secret-key",
+      PORTAL_VPN_TIMUS_BASE_URL: "https://timus.example.invalid",
+    };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    for (const caller of ["acmeUser", "initechUser", "adminAsAcme"] as const) {
+      const r = await get(caller);
+      expect(r.status).toBe(502);
+      expect(r.body).toEqual({ success: false, status: { mode: "live", provider: "timus" }, error: "VPN data isn't available right now." });
+      const text = JSON.stringify(r.body);
+      expect(text).not.toContain("timus-secret-key");
+      expect(text).not.toContain("timus-tenant-acme");
+      expect(text).not.toContain("example.invalid");
+      expect(text).not.toContain("not documented");
+    }
+    expect(String(warn.mock.calls[0][0])).toBe(
+      "[portal-vpn] timus failed for client acme: VpnProviderUnavailableError: Timus API not documented yet",
+    );
+    expect(fetchImpl).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("timus: an admin with no company in view is asked to pick one first", async () => {
+    env = { PORTAL_VPN_PROVIDER: "timus" };
+    const r = await get("admin");
+    expect(r.status).toBe(200);
+    expect(r.body).toEqual({ success: true, status: { mode: "live", provider: "timus" }, needsCompany: true });
+  });
+
+  it("timus is an accepted value: case-insensitive, not sample", async () => {
+    const { readIntegrationStatus } = await import("../../portalIntegrations");
+    expect(readIntegrationStatus("vpn", { PORTAL_VPN_PROVIDER: " Timus " })).toEqual({ mode: "live", provider: "timus" });
+  });
+
   it("manual: a company reads only its own records; an admin viewing as it can manage them", async () => {
     const m = await import("../../portalManualRecords");
     await m.createManualRecord({ clientId: "acme", kind: "vpn_device", data: { name: "Acme laptop", status: "active", protocol: "wireguard" } });

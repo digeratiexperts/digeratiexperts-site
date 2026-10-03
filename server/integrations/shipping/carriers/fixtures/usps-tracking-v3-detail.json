@@ -1,0 +1,73 @@
+{
+  "_source": "https://github.com/USPS/api-examples#tracking ('Tracking - Single Request - Detail', GET https://apis.usps.com/tracking/v3/tracking/{Tracking Number}?expand=DETAIL), official USPS repository mirroring developers.usps.com",
+  "_note": "'documentedExample' is a byte-for-byte copy of the README's example response (the placeholder tracking number included). 'delivered' reuses its shape with values changed by us; 'Delivered' is a statusCategory value shown in USPS's Track & Confirm user guide. developers.usps.com was blocked by the build machine's egress proxy.",
+  "documentedExample": {
+    "destinationCity": "CEDAR RAPIDS",
+    "destinationState": "IA",
+    "destinationZIP": "52404",
+    "emailEnabled": "true",
+    "kahalaIndicator": "false",
+    "mailClass": "Priority Mail<SUP>&reg;</SUP>",
+    "mailType": "DM",
+    "originCity": "RICHMOND",
+    "originState": "VA",
+    "originZIP": "23227",
+    "proofOfDeliveryEnabled": "false",
+    "restoreEnabled": "false",
+    "RRAMEnabled": "false",
+    "RREEnabled": "false",
+    "services": "USPS Tracking<SUP>&#174;</SUP>",
+    "serviceTypeCode": "14",
+    "status": "USPS in possession of item",
+    "statusCategory": "Accepted",
+    "statusSummary": "USPS is now in possession of your item as of 7:31 am on August 2, 2023 in RICHMOND, VA 23227.",
+    "trackingEvents": [
+      {
+        "eventType": "USPS in possession of item",
+        "eventTimestamp": "2023-08-02T07:31:00Z",
+        "eventCountry": null,
+        "eventCity": "RICHMOND",
+        "eventState": "VA",
+        "eventZIP": "23227",
+        "firm": null,
+        "name": null,
+        "authorizedAgent": "false",
+        "eventCode": "03",
+        "additionalProp": null
+      }
+    ],
+    "trackingNumber": "XXXXXXXXXXXXXXXXXXXX"
+  },
+  "delivered": {
+    "status": "Delivered, In/At Mailbox",
+    "statusCategory": "Delivered",
+    "trackingEvents": [
+      {
+        "eventType": "USPS in possession of item",
+        "eventTimestamp": "2023-08-02T07:31:00Z",
+        "eventCity": "RICHMOND",
+        "eventState": "VA",
+        "eventZIP": "23227"
+      },
+      {
+        "eventType": "Delivered, In/At Mailbox",
+        "eventTimestamp": "2023-08-04T13:05:00Z",
+        "eventCity": "CEDAR RAPIDS",
+        "eventState": "IA",
+        "eventZIP": "52404"
+      }
+    ],
+    "trackingNumber": "9400100000000000000000"
+  },
+  "tokenResponse": {
+    "_source": "https://github.com/USPS/api-examples#oauth-token ('Example OAuth Client Credentials Token request' response; expires_in is a string)",
+    "access_token": "usps-access-token-1",
+    "token_type": "Bearer",
+    "issued_at": "1111111111111",
+    "expires_in": "28799",
+    "status": "approved",
+    "scope": "addresses service-delivery-standards  locations prices tracking labels",
+    "issuer": "https://keyc.usps.com/realms/USPS",
+    "client_id": "XXXXXXXXXXXXXXXXXXXXXXXXXX"
+  }
+}

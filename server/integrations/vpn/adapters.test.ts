@@ -238,3 +238,20 @@ describe("client map", () => {
     expect(() => readVpnClientMap({ PORTAL_VPN_CLIENT_MAP: "[]" })).toThrow(/object/);
   });
 });
+
+describe("timus adapter (not built: no documented API)", () => {
+  it("throws the provider-unavailable error with the logged reason and makes no call", async () => {
+    const { loadVpnData } = await import("./index");
+    const { VpnProviderUnavailableError } = await import("./errors");
+    const fetchImpl = vi.fn();
+    const p = loadVpnData({
+      provider: "timus",
+      clientId: "acme",
+      env: { PORTAL_VPN_CLIENT_MAP: "{not json", PORTAL_VPN_TIMUS_API_KEY: "k" },
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    await expect(p).rejects.toBeInstanceOf(VpnProviderUnavailableError);
+    await expect(p).rejects.toThrow("Timus API not documented yet");
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});

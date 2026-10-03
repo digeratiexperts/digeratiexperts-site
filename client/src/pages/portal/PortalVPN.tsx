@@ -1,7 +1,7 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, ExternalLink, Key, Link2Off, Monitor, Pencil, Plus, RefreshCw, Smartphone, Trash2 } from "lucide-react";
+import { Download, ExternalLink, FileUp, Key, Link2Off, Monitor, Pencil, Plus, RefreshCw, Smartphone, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import { IntegrationHiddenNotice, IntegrationNeedsCompanyNotice } from "@/compon
 import { usePortalIntegrations, type IntegrationStatus } from "@/lib/portalIntegrations";
 import { portalFetch, portalGet } from "@/lib/portalApi";
 import { formatDeskTimestamp } from "@/lib/deskTimestamp";
+import { convertRecords, CsvError, readCsvRecords, toIsoDate, type HeaderAliases, type RowError } from "@/lib/csv";
 
 // ---------------------------------------------------------------------------
 // Sample mode (PORTAL_VPN_PROVIDER unset): today's page, unchanged.
@@ -181,7 +182,7 @@ type VpnDevice = {
 };
 
 type VpnData = {
-  provider: "tailscale" | "twingate" | "perimeter81" | "manual";
+  provider: "tailscale" | "twingate" | "perimeter81" | "timus" | "manual";
   providerName: string;
   service: { status: "reachable" | "staff_managed"; checkedAt: string };
   reportsLiveStatus: boolean;
@@ -222,6 +223,12 @@ const CLIENT_LINKS: Record<string, ClientLink[]> = {
     { label: "macOS", hint: "Twingate", href: "https://www.twingate.com/download", icon: Monitor, testId: "button-download-mac" },
     { label: "iOS / Android", hint: "Twingate", href: "https://www.twingate.com/download", icon: Smartphone, testId: "button-download-mobile" },
   ],
+  // Timus's adapter is not built yet (server/integrations/vpn/timus.ts); ready for when it is.
+  timus: [
+    { label: "Windows", hint: "Timus Connect", href: "https://www.timusnetworks.com/timus-connect-agent/", icon: Monitor, testId: "button-download-windows" },
+    { label: "macOS", hint: "Timus Connect", href: "https://www.timusnetworks.com/timus-connect-agent/", icon: Monitor, testId: "button-download-mac" },
+    { label: "iOS / Android", hint: "Timus Connect", href: "https://www.timusnetworks.com/timus-connect-agent/", icon: Smartphone, testId: "button-download-mobile" },
+  ],
   manual: [
     { label: "WireGuard", hint: "Windows, macOS, iOS, Android", href: "https://www.wireguard.com/install/", icon: Monitor, testId: "button-download-wireguard" },
     { label: "OpenVPN Connect", hint: "Windows, macOS, iOS, Android", href: "https://openvpn.net/client/", icon: Monitor, testId: "button-download-openvpn" },
@@ -231,6 +238,7 @@ const CLIENT_LINKS: Record<string, ClientLink[]> = {
 const PROFILE_TEXT: Record<string, string> = {
   tailscale: "Install Tailscale and sign in the way DE set up for your company. DE approves each device for your company; there is no configuration file to download.",
   twingate: "Install Twingate and sign in with your company account. DE manages which resources your account can reach; there is no configuration file to download.",
+  timus: "Install Timus Connect and sign in with your company account. DE manages which resources your account can reach; there is no configuration file to download.",
   manual: "DE issues each WireGuard or OpenVPN profile directly to you. Profiles and keys are never stored in the portal.",
 };
 
@@ -320,6 +328,8 @@ function LiveVPNContent({ data, loading, manageClientId }: { data: VpnData | nul
   const provider = data?.provider ?? "manual";
   const canManage = !!manageClientId && provider === "manual";
   const [editing, setEditing] = useState<VpnDevice | "new" | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importNotice, setImportNotice] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -467,6 +477,24 @@ function LiveVPNContent({ data, loading, manageClientId }: { data: VpnData | nul
         />
       )}
 
+      {canManage && importing && manageClientId && (
+        <ManualDeviceImport
+          clientId={manageClientId}
+          onDone={async (count) => {
+            setImporting(false);
+            setImportNotice(`Imported ${count} device${count === 1 ? "" : "s"}.`);
+            await queryClient.invalidateQueries({ queryKey: VPN_QUERY_KEY });
+          }}
+          onCancel={() => setImporting(false)}
+        />
+      )}
+
+      {importNotice && (
+        <Callout tone="ok" title="Import complete" testId="callout-vpn-import-done" role="status">
+          {importNotice}
+        </Callout>
+      )}
+
       {actionError && (
         <Callout tone="bad" title="Not saved">
           {actionError}
@@ -479,11 +507,34 @@ function LiveVPNContent({ data, loading, manageClientId }: { data: VpnData | nul
         description="Your company's devices on the DE VPN"
         flush
         actions={
-          canManage && editing === null ? (
-            <Button variant="brand" size="sm" onClick={() => setEditing("new")} data-testid="button-add-vpn-device">
-              <Plus aria-hidden="true" />
-              Add device
-            </Button>
+          canManage && editing === null && !importing ? (
+            <span className="flex flex-wrap justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-border bg-card hover:bg-accent"
+                onClick={() => {
+                  setImportNotice(null);
+                  setImporting(true);
+                }}
+                data-testid="button-import-vpn-devices"
+              >
+                <FileUp aria-hidden="true" />
+                Import CSV
+              </Button>
+              <Button
+                variant="brand"
+                size="sm"
+                onClick={() => {
+                  setImportNotice(null);
+                  setEditing("new");
+                }}
+                data-testid="button-add-vpn-device"
+              >
+                <Plus aria-hidden="true" />
+                Add device
+              </Button>
+            </span>
           ) : undefined
         }
       >
@@ -625,6 +676,177 @@ function ManualDeviceForm({ clientId, device, onDone, onCancel }: { clientId: st
           </Button>
           <Button type="submit" variant="brand" disabled={saving} data-testid="button-save-vpn-device">
             {saving ? "Saving..." : device ? "Save changes" : "Add device"}
+          </Button>
+        </div>
+      </form>
+    </Panel>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// "manual" provider: DE admin CSV import (POST /api/portal/admin/manual-records/import).
+// A device export (e.g. from Timus Manager) or a pasted spreadsheet range.
+// ---------------------------------------------------------------------------
+
+const MAX_IMPORT_ROWS = 500;
+/** The import route accepts 1 MB bodies (server/index.ts); stay under it. */
+const MAX_IMPORT_BYTES = 900_000;
+
+const VPN_IMPORT_HEADERS: HeaderAliases<keyof DeviceForm> = {
+  name: ["device", "device name", "hostname", "host name", "computer", "computer name"],
+  os: ["operating system", "platform", "device type", "os version"],
+  protocol: ["vpn protocol"],
+  status: ["state", "profile status"],
+  lastSeen: ["last seen", "last connected", "last connection", "last login", "last sign in", "last active"],
+  user: ["username", "user name", "email", "user email", "assigned user", "owner"],
+  notes: ["note", "comment", "comments", "description"],
+};
+const VPN_IMPORT_HINT =
+  "First row is the column names. Accepted (any case): name or device or hostname (required), os, protocol (WireGuard / OpenVPN), status (active / blocked), last seen or last connected (a date), user or email, notes. Other columns are ignored. Up to 500 rows.";
+
+function tooLong(label: string, v: string, max: number): string | null {
+  return v.length > max ? `${label} is longer than ${max} characters` : null;
+}
+
+function convertDeviceRow(r: Partial<Record<keyof DeviceForm, string>>): { data: Record<string, string> } | { error: string } {
+  const name = r.name ?? "";
+  if (!name) return { error: "name is empty" };
+  const protocolIn = (r.protocol ?? "").toLowerCase().replace(/[^a-z]/g, "");
+  const protocol = protocolIn === "" ? "" : protocolIn === "wireguard" || protocolIn === "wg" ? "wireguard" : protocolIn === "openvpn" || protocolIn === "ovpn" ? "openvpn" : null;
+  if (protocol === null) return { error: `protocol "${r.protocol}" is not WireGuard or OpenVPN` };
+  const statusIn = (r.status ?? "").toLowerCase().trim();
+  const status = statusIn === "" ? "" : ["active", "enabled"].includes(statusIn) ? "active" : ["blocked", "disabled", "revoked"].includes(statusIn) ? "blocked" : null;
+  if (status === null) return { error: `status "${r.status}" is not active or blocked` };
+  const lastSeen = toIsoDate(r.lastSeen ?? "");
+  if (lastSeen === null) return { error: `last seen "${r.lastSeen}" is not a date` };
+  const data = { name, os: r.os ?? "", protocol, status, lastSeen, user: r.user ?? "", notes: r.notes ?? "" };
+  const long = tooLong("name", data.name, 120) || tooLong("os", data.os, 60) || tooLong("user", data.user, 120) || tooLong("notes", data.notes, 500);
+  return long ? { error: long } : { data };
+}
+
+type ImportPreview = { rows: Record<string, string>[]; errors: RowError[]; ignored: string[] } | { parseError: string };
+
+function previewDeviceImport(text: string): ImportPreview | null {
+  if (!text.trim()) return null;
+  try {
+    const csv = readCsvRecords(text, VPN_IMPORT_HEADERS);
+    if (csv.records.length > MAX_IMPORT_ROWS) return { parseError: `The file has ${csv.records.length} rows; import at most ${MAX_IMPORT_ROWS} at a time.` };
+    if (!csv.fields.includes("name")) return { parseError: "No name column. Add a column named name, device or hostname." };
+    const { rows, errors } = convertRecords(csv.records, convertDeviceRow);
+    return { rows, errors, ignored: csv.unknownHeaders };
+  } catch (err) {
+    return { parseError: err instanceof CsvError ? err.message : "The CSV could not be read." };
+  }
+}
+
+function ManualDeviceImport({ clientId, onDone, onCancel }: { clientId: string; onDone: (count: number) => void; onCancel: () => void }) {
+  const [text, setText] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const preview = useMemo(() => previewDeviceImport(text), [text]);
+  const ready = !!preview && !("parseError" in preview) && preview.errors.length === 0 && preview.rows.length > 0;
+
+  const onFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setSaveError(null);
+    if (!file) return;
+    try {
+      setText(await file.text());
+    } catch {
+      setSaveError("The file could not be read.");
+    }
+  };
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!ready || !preview || "parseError" in preview) return;
+    const body = JSON.stringify({ clientId, kind: "vpn_device", rows: preview.rows });
+    if (new Blob([body]).size > MAX_IMPORT_BYTES) {
+      setSaveError("This file is too large to import in one go. Split it into smaller files.");
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const r = await portalFetch(`${MANUAL_RECORDS_URL}/import`, { method: "POST", body });
+      if (r.ok) {
+        const out = (await r.json().catch(() => ({}))) as { imported?: number };
+        setSaving(false);
+        onDone(out.imported ?? preview.rows.length);
+        return;
+      }
+      const out = (await r.json().catch(() => ({}))) as { error?: string };
+      setSaveError(r.status === 413 ? "This file is too large to import in one go. Split it into smaller files." : out.error || "Nothing was imported. Try again.");
+    } catch {
+      setSaveError("Nothing was imported. Check your connection and try again.");
+    }
+    setSaving(false);
+  };
+
+  return (
+    <Panel id="vpn-import" title="Import devices from CSV" description="Staff-entered. Adds every row as a new device for this company, or none if a row has a problem.">
+      <form onSubmit={submit} className="space-y-4" noValidate>
+        <Field label="CSV file" htmlFor="vpn-import-file" hint="A .csv export, e.g. from Timus Manager or a spreadsheet.">
+          <Input id="vpn-import-file" type="file" accept=".csv,.tsv,.txt,text/csv,text/plain" onChange={onFile} className="border-border bg-background" data-testid="input-vpn-import-file" />
+        </Field>
+        <Field label="Or paste CSV" htmlFor="vpn-import-text" hint={VPN_IMPORT_HINT}>
+          <Textarea
+            id="vpn-import-text"
+            value={text}
+            onChange={(e) => {
+              setSaveError(null);
+              setText(e.target.value);
+            }}
+            rows={6}
+            spellCheck={false}
+            placeholder={"name,os,protocol,status,last seen,user\nFront desk laptop,Windows 11,WireGuard,active,2026-10-01,ana@example.com"}
+            className="border-border bg-background font-mono text-xs"
+            data-testid="input-vpn-import-text"
+          />
+        </Field>
+        {preview && "parseError" in preview && (
+          <Callout tone="bad" title="The CSV can't be imported" testId="callout-vpn-import-error">
+            {preview.parseError}
+          </Callout>
+        )}
+        {preview && !("parseError" in preview) && (
+          <div className="space-y-3">
+            <p className="text-sm" data-testid="text-vpn-import-summary" role="status">
+              <span className="pt-num font-medium">{preview.rows.length + preview.errors.length}</span> row{preview.rows.length + preview.errors.length === 1 ? "" : "s"} found
+              {preview.errors.length > 0 ? (
+                <>
+                  , <span className="pt-num font-medium">{preview.errors.length}</span> with a problem
+                </>
+              ) : (
+                ", all ready to import"
+              )}
+              .{preview.ignored.length > 0 && <span className="text-muted-foreground"> Ignored columns: {preview.ignored.join(", ")}.</span>}
+            </p>
+            {preview.errors.length > 0 && (
+              <Callout tone="bad" title="Fix these rows, then paste or choose the file again" testId="callout-vpn-import-row-errors">
+                <ul className="list-disc space-y-0.5 pl-5">
+                  {preview.errors.slice(0, 5).map((er) => (
+                    <li key={er.row}>
+                      Row <span className="pt-num">{er.row}</span>: {er.error}
+                    </li>
+                  ))}
+                </ul>
+                {preview.errors.length > 5 && <p className="mt-1">and {preview.errors.length - 5} more.</p>}
+              </Callout>
+            )}
+          </div>
+        )}
+        {saveError && (
+          <Callout tone="bad" title="Not imported" testId="callout-vpn-import-save-error">
+            {saveError}
+          </Callout>
+        )}
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button type="button" variant="outline" className="border-border bg-card hover:bg-accent" onClick={onCancel} disabled={saving} data-testid="button-cancel-vpn-import">
+            Cancel
+          </Button>
+          <Button type="submit" variant="brand" disabled={!ready || saving} data-testid="button-submit-vpn-import">
+            {saving ? "Importing..." : ready && preview && !("parseError" in preview) ? `Import ${preview.rows.length} device${preview.rows.length === 1 ? "" : "s"}` : "Import"}
           </Button>
         </div>
       </form>

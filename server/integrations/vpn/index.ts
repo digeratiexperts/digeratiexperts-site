@@ -2,6 +2,7 @@ import { VpnConfigError, type Env } from "./errors";
 import { loadManualVpnData } from "./manual";
 import { loadPerimeter81VpnData } from "./perimeter81";
 import { loadTailscaleVpnData } from "./tailscale";
+import { loadTimusVpnData } from "./timus";
 import { loadTwingateVpnData } from "./twingate";
 import type { VpnData, VpnLoadResult } from "./types";
 
@@ -17,8 +18,10 @@ import type { VpnData, VpnLoadResult } from "./types";
  *
  * A company with no entry gets { notMapped: true }: never another company's
  * devices and never the unfiltered list. "manual" reads the company's own
- * staff-entered records and needs no map. "perimeter81" has no documented
- * devices API and always answers "not available".
+ * staff-entered records and needs no map. "perimeter81" and "timus" have no
+ * documented devices API and always answer "not available" (no map read, no
+ * vendor call). Timus gets the map lookup as a callback, so building its
+ * adapter later changes timus.ts only.
  */
 
 export const VPN_CLIENT_MAP_ENV = "PORTAL_VPN_CLIENT_MAP";
@@ -76,6 +79,9 @@ export async function loadVpnData(opts: {
   const { provider, clientId, env, fetchImpl } = opts;
   if (provider === "manual") return { data: await loadManualVpnData(clientId) };
   if (provider === "perimeter81") return loadPerimeter81VpnData();
+  if (provider === "timus") {
+    return loadTimusVpnData({ clientId, env, fetchImpl, scope: () => vpnScopeFor(clientId, env) });
+  }
 
   const scope = vpnScopeFor(clientId, env);
   if (!scope) return { notMapped: true };

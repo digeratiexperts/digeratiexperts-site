@@ -1,4 +1,5 @@
 import type { ManualRecord } from "../../portalManualRecords";
+import { applyCarrierTracking, type CarrierTrackingOptions } from "./carriers/index";
 import { countShipments, isShipmentStatus, newestFirst, safeHttpUrl, str, type NormalizedShipment, type ShippingData } from "./types";
 
 /**
@@ -12,6 +13,10 @@ import { countShipments, isShipmentStatus, newestFirst, safeHttpUrl, str, type N
  * No carrier "Track" link is built from the tracking number: no carrier
  * publishes a deep-link pattern we could cite (see README.md), so a link
  * appears only when staff paste the carrier's tracking URL.
+ *
+ * Carrier tracking (carriers/): when a carrier's keys are set, rows whose
+ * `carrier` names UPS, FedEx or USPS are checked against that carrier's
+ * tracking API and get `carrierStatus`; see buildManualDataWithCarriers.
  */
 
 export const MANUAL_SHIPMENT_FIELDS = [
@@ -40,11 +45,25 @@ export function mapManualShipment(rec: ManualRecord): NormalizedShipment {
     deliveredAt: str(d.deliveredAt),
     items: Number.isFinite(items) && items >= 0 ? Math.floor(items) : null,
     notes: str(d.notes),
+    carrierStatus: null,
   };
 }
 
 export function buildManualData(records: ManualRecord[]): ShippingData {
-  const shipments = records.map(mapManualShipment).sort(newestFirst);
+  return manualData(records.map(mapManualShipment).sort(newestFirst));
+}
+
+/**
+ * buildManualData plus carrier lookups for configured carriers (newest rows
+ * first, capped per page). Any carrier fault leaves that row's staff-entered
+ * status in place; this never throws for a carrier.
+ */
+export async function buildManualDataWithCarriers(records: ManualRecord[], opts: CarrierTrackingOptions): Promise<ShippingData> {
+  const staff = records.map(mapManualShipment).sort(newestFirst);
+  return manualData(await applyCarrierTracking(staff, opts));
+}
+
+function manualData(shipments: NormalizedShipment[]): ShippingData {
   return {
     provider: "manual",
     shipments,
