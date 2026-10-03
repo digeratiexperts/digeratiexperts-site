@@ -225,7 +225,7 @@ claims:
       - client/src/components/HomepageSectionNav.tsx (opt-in chapter progress in HomepageDockMenu only)
       - shared/threatFeed.ts (THREAT_ATTRIBUTION string only)
       - server/routes.ts (the public-threats error-path attribution string only)
-    status: active
+    status: verified-live
     started: 2026-10-01
     note: >-
       Joe, 2026-10-01: "can you mock up every section on the live
@@ -305,6 +305,21 @@ claims:
       (TipTag.tsx, truthful tip text), copy buttons for email and phone
       (CopyButton.tsx), hero posture bars fill once. Kit's switch, checkbox and
       segmented control have no matching control on the page, so none added.
+      RELEASED 2026-10-03: rounds 4 and 5 merged as PR 344 (6ce035d6) on
+      Joe's "everything is approved" / "all approved", after merging main for
+      PR 342's production-audit fix. VERIFIED LIVE: production release.txt
+      6ce035d6; /version-7 answers 200 with X-Robots-Tag noindex, nofollow;
+      / answers 200 and is unchanged; scripts/qa/homepage-v7-check.mjs passes
+      31/31 against production; the live page shows the grey-card restyle.
+      Backups (branches, do not commit to them):
+      backup/2026-10-03-before-v7-restyle (c702a4fc),
+      backup/2026-10-03-v7-restyle-approved, backup/2026-10-03-v7-restyle-merged
+      (6ce035d6); revert guide in
+      artifacts/design-concepts/homepage-sections-2026-10/README.md. Files
+      released. Open, not claimed: the review-source funnel (postponed by
+      Joe); the 430px launcher over the live PronunciationCard "Hear it"
+      (pronunciation lane); / replacement by V7 waits on Joe.
+
   - id: de-desk-gold
     owner: claude
     subsystem: de-desk
