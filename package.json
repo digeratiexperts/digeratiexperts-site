@@ -8,6 +8,8 @@
     "predev": "npm run vendor:pdfjs",
     "vendor:pdfjs": "node scripts/vendor-pdfjs.mjs",
     "sitemap": "node scripts/generate-sitemap.mjs",
+    "documents:build": "tsx scripts/de-documents/build.mts",
+    "documents:publish": "tsx scripts/de-documents/build.mts --publish",
     "prebuild": "npm run vendor:pdfjs",
     "build": "node scripts/generate-sitemap.mjs && vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "cross-env NODE_ENV=production node dist/index.js",

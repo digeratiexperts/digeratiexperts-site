@@ -1,6 +1,8 @@
 # DE document system — resource PDF concepts (VIS-015)
 
-**Mode:** Exploration (Joe's brief, 2026-10-03). **Claim:** issue #366. **Status: CONCEPT-READY** — not PR-ready for integration, not merged, not live. Nothing under `client/public/` has changed.
+**Mode:** Exploration (Joe's brief, 2026-10-03). **Claim:** issue #366.
+
+**Update 2026-10-03: Joe chose.** Technical precision (B) is the backbone. Editorial (A) and executive briefing (C) become registers that each family combines for its purpose. The system lives in `scripts/de-documents/` and produces all 13 PDFs. Joe approved the audit fixes. This folder is kept as the concept record.
 
 This folder holds phase 1: the audit of the 13 public resource PDFs and three rendered concepts of the same datasheet (ProActive IT), built from one shared content file so the comparison is fair. Joe picks a direction; only then is the system extended to one checklist and one report, and then to all 13.
 
