@@ -61,6 +61,13 @@ describe("runtime DDL ratchet (#253)", () => {
     }
   });
 
+  it("portal_manual_records schema is created only by a migration", () => {
+    expect(withDdl).not.toContain("server/portalManualRecords.ts");
+    const migration = readFileSync(path.join(ROOT, "migrations/0003_portal_manual_records.sql"), "utf8");
+    expect(migration).toMatch(/CREATE TABLE IF NOT EXISTS portal_manual_records/);
+    expect(migration).toContain("portal_manual_records_client_kind_idx");
+  });
+
   it("no new application module issues runtime DDL", () => {
     const unexpected = withDdl.filter((file) => !KNOWN_RUNTIME_DDL.has(file));
     expect(unexpected).toEqual([]);
