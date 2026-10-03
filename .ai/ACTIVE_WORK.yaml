@@ -30,6 +30,28 @@
 
 version: 2
 claims:
+  - id: paynow-tax-step-aside
+    owner: claude
+    subsystem: store-warehouse
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 459e366
+    files:
+      - client/src/pages/store/Checkout.tsx (the TAX_RATE_UNAVAILABLE branch of the Pay Now error handling only)
+      - client/src/lib/warehouseContactHandoff.ts (one new handoff reason), client/src/lib/warehouseContactHandoff.test.ts
+      - client/src/pages/store/Checkout.tax.test.ts (new)
+    status: active
+    started: 2026-10-03
+    note: >-
+      PR 280 made staff Digital Warehouse Pay Now fail closed on sales tax: with
+      no verified AZ TPT table on the server, checkout answers 503
+      TAX_RATE_UNAVAILABLE, and the page showed a red "Checkout Failed" with the
+      technical message, leaving the client on Pay Now. Joe asked to see the two
+      fixes (step aside to a quote, or charge untaxed as before PR 280) and then
+      delegated the choice ("pick the most optimized answers yourself"). Claude
+      chose the step-aside: Pay Now switches to Request Quote with the contact
+      handoff, like the existing hardware and recurring-billing cases. Nobody is
+      charged without tax; the server's fail-closed rule is unchanged. Public
+      Store (Door 2) is unaffected: it never calls the Pay Now endpoint.
   - id: portal-bridge-signed-calls
     owner: claude
     subsystem: hub-integration-auth
