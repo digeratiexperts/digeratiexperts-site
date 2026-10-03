@@ -372,6 +372,23 @@ export const portalApprovalSteps = pgTable("portal_approval_steps", {
 });
 
 /** Service order form submissions from /portal/order-form */
+/**
+ * One-way hashed, single-use email-verification and password-reset tokens (#251).
+ * The raw token only ever exists in the emailed link; the database holds its
+ * SHA-256, so a restart or deploy does not invalidate an outstanding link.
+ */
+export const portalAuthTokens = pgTable("portal_auth_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  purpose: text("purpose").notNull(), // email_verification | password_reset
+  tokenHash: text("token_hash").notNull().unique(),
+  userId: varchar("user_id").notNull().references(() => portalUsers.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  consumedAt: timestamp("consumed_at"),
+  revokedAt: timestamp("revoked_at"),
+});
+
 export const portalOrderForms = pgTable("portal_order_forms", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => portalUsers.id, { onDelete: "set null" }),

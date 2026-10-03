@@ -1,5 +1,13 @@
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { storage } from "./storage";
+import {
+  issueAuthToken,
+  consumeAuthToken,
+  releaseAuthToken,
+  hasFreshAuthToken,
+  EMAIL_VERIFICATION_TTL_MS,
+  PASSWORD_RESET_TTL_MS,
+} from "./portalAuthTokens";
 import { randomBytes, randomInt, createHash, timingSafeEqual } from "crypto";
 import rateLimit from "express-rate-limit";
 import bcrypt from "bcrypt";
@@ -85,7 +93,7 @@ import {
 import { registerPortalDepartmentRoutes } from "./portalDepartmentRoutes";
 import { registerPortalDeskAgentRoutes } from "./portalDeskAgentRoutes";
 import { canAccessPortalTicket } from "./portalTicketAccess";
-import { hasFreshVerificationToken } from "./portalVerificationThrottle";
+import { RESEND_COOLDOWN_MS } from "./portalVerificationThrottle";
 import {
   initPortalApprovals,
   createApprovalRequest,
@@ -2031,21 +2039,7 @@ export async function registerRoutes(app: Express) {
   // Note: portalUsers / portalClients are durable via portalAuthStore (initialized above)
   // sessionStore is module-level for authMiddleware access
   
-  // Email verification tokens storage
-  const emailVerificationTokens = new Map<string, { 
-    email: string; 
-    userId: string; 
-    createdAt: number;
-    expiresAt: number;
-  }>();
-
-  // Password reset tokens storage
-  const passwordResetTokens = new Map<string, {
-    email: string;
-    userId: string;
-    createdAt: number;
-    expiresAt: number;
-  }>();
+  // Email verification and password-reset tokens are durable and hashed (server/portalAuthTokens.ts, #251).
 
   // MFA pending challenges — stores temporary MFA session tokens during login
   const mfaChallenges = new Map<string, {
@@ -2109,26 +2103,30 @@ export async function registerRoutes(app: Express) {
       // Reload after client link
       const saved = portalUsers.get(email) || newUser;
 
-      // Generate email verification token
-      const verificationToken = randomId();
-      const now = Date.now();
-      const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-      
-      emailVerificationTokens.set(verificationToken, {
-        email: saved.email,
-        userId: saved.id,
-        createdAt: now,
-        expiresAt: now + TWENTY_FOUR_HOURS,
-      });
+      // Generate email verification token (durable, hashed). The account is already
+      // committed; if the token cannot be stored the user can request a new link.
+      let verificationToken: string | null = null;
+      try {
+        verificationToken = await issueAuthToken({
+          purpose: "email_verification",
+          userId: saved.id,
+          email: saved.email,
+          ttlMs: EMAIL_VERIFICATION_TTL_MS,
+        });
+      } catch (tokenError) {
+        logger.warn("Could not store verification token at registration", { error: String((tokenError as Error)?.message || tokenError) });
+      }
 
       // Send email verification
       const baseUrl = process.env.APP_URL || "https://digeratiexperts.com";
-      const verificationLink = `${baseUrl}/api/portal/verify-email?token=${verificationToken}`;
-      notificationService.sendEmailVerification({
-        email: saved.email,
-        name: saved.fullName,
-        verificationLink,
-      }).catch(err => logger.warn("Failed to send verification email", err));
+      if (verificationToken) {
+        const verificationLink = `${baseUrl}/api/portal/verify-email?token=${verificationToken}`;
+        notificationService.sendEmailVerification({
+          email: saved.email,
+          name: saved.fullName,
+          verificationLink,
+        }).catch(err => logger.warn("Failed to send verification email", err));
+      }
 
       logSecurityEvent("PORTAL_USER_REGISTERED", req, {
         userId: saved.id,
@@ -2169,31 +2167,29 @@ export async function registerRoutes(app: Express) {
         return res.redirect('/portal/login?error=invalid_token&message=Invalid verification link');
       }
 
-      // Check if token exists
-      const tokenData = emailVerificationTokens.get(token);
-      if (!tokenData) {
-        return res.redirect('/portal/login?error=invalid_token&message=Verification link is invalid or has already been used');
+      // Single-use, atomic: a second click (or a replay) finds the token consumed.
+      const consumed = await consumeAuthToken("email_verification", token);
+      if (!consumed.ok) {
+        return consumed.reason === "expired"
+          ? res.redirect('/portal/login?error=expired_token&message=Verification link has expired. Please request a new one.')
+          : res.redirect('/portal/login?error=invalid_token&message=Verification link is invalid or has already been used');
       }
-
-      // Check if token has expired
-      if (Date.now() > tokenData.expiresAt) {
-        emailVerificationTokens.delete(token);
-        return res.redirect('/portal/login?error=expired_token&message=Verification link has expired. Please request a new one.');
-      }
+      const tokenData = { email: consumed.email };
 
       // Find and update user
       const user = portalUsers.get(tokenData.email);
       if (!user) {
-        emailVerificationTokens.delete(token);
         return res.redirect('/portal/login?error=user_not_found&message=User not found');
       }
 
-      // Mark user as verified
+      // Mark user as verified. If the durable write fails the link is released so the user can retry it.
       user.emailVerified = true;
-      await portalUsers.commit(user);
-
-      // Clear the token
-      emailVerificationTokens.delete(token);
+      try {
+        await portalUsers.commit(user);
+      } catch (commitError) {
+        await releaseAuthToken(consumed.id).catch(() => undefined);
+        throw commitError;
+      }
 
       logSecurityEvent("EMAIL_VERIFIED", req, { userId: user.id, email: tokenData.email });
 
@@ -2229,27 +2225,16 @@ export async function registerRoutes(app: Express) {
 
       // Per-email cooldown: if a link was just sent, do not mint and send another,
       // so the inbox cannot be flooded by a caller rotating IPs past the rate limit.
-      if (hasFreshVerificationToken(emailVerificationTokens.values(), email, Date.now())) {
+      if (await hasFreshAuthToken("email_verification", user.email, RESEND_COOLDOWN_MS)) {
         return genericOk();
       }
 
-      // Delete any existing tokens for this user
-      Array.from(emailVerificationTokens.entries()).forEach(([token, data]) => {
-        if (data.email === email) {
-          emailVerificationTokens.delete(token);
-        }
-      });
-
-      // Generate new verification token
-      const verificationToken = randomId();
-      const now = Date.now();
-      const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-      
-      emailVerificationTokens.set(verificationToken, {
-        email: user.email,
+      // Issuing revokes any older unused verification token for this user.
+      const verificationToken = await issueAuthToken({
+        purpose: "email_verification",
         userId: user.id,
-        createdAt: now,
-        expiresAt: now + TWENTY_FOUR_HOURS,
+        email: user.email,
+        ttlMs: EMAIL_VERIFICATION_TTL_MS,
       });
 
       // Send verification email
@@ -2265,6 +2250,7 @@ export async function registerRoutes(app: Express) {
 
       return genericOk();
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       console.error("[ERROR] Resend verification failed:", error);
       res.status(500).json({ message: "Failed to resend verification email" });
     }
@@ -2281,15 +2267,13 @@ export async function registerRoutes(app: Express) {
       const user = portalUsers.get(email);
       if (!user) return res.json(SAFE_RESPONSE);
 
-      // Invalidate any existing reset tokens for this user
-      Array.from(passwordResetTokens.entries()).forEach(([tok, data]) => {
-        if (data.email === email) passwordResetTokens.delete(tok);
+      // Issuing revokes any older unused reset token for this user.
+      const resetToken = await issueAuthToken({
+        purpose: "password_reset",
+        userId: user.id,
+        email: user.email,
+        ttlMs: PASSWORD_RESET_TTL_MS,
       });
-
-      const resetToken = randomId();
-      const ONE_HOUR = 60 * 60 * 1000;
-      const now = Date.now();
-      passwordResetTokens.set(resetToken, { email, userId: user.id, createdAt: now, expiresAt: now + ONE_HOUR });
 
       const baseUrl = process.env.APP_URL || "https://digeratiexperts.com";
       const resetLink = `${baseUrl}/portal/reset-password?token=${resetToken}`;
@@ -2299,6 +2283,7 @@ export async function registerRoutes(app: Express) {
       logSecurityEvent("PASSWORD_RESET_REQUESTED", req, { email });
       return res.json(SAFE_RESPONSE);
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       logger.error("Forgot password failed", error);
       return res.status(500).json({ message: "Request failed" });
     }
@@ -2310,22 +2295,29 @@ export async function registerRoutes(app: Express) {
       const { token, password } = req.body;
       if (!token || !password) return res.status(400).json({ message: "Token and new password are required" });
 
-      const tokenData = passwordResetTokens.get(token);
-      if (!tokenData || Date.now() > tokenData.expiresAt) {
-        return res.status(400).json({ message: "Reset link is invalid or has expired. Please request a new one." });
-      }
-
+      // Policy first, so a weak password does not burn the link.
       if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
         return res.status(400).json({ message: "Password must be at least 8 characters with 1 uppercase letter and 1 number" });
       }
+
+      // Single-use, atomic consume; released again if the new password cannot be saved.
+      const consumed = await consumeAuthToken("password_reset", token);
+      if (!consumed.ok) {
+        return res.status(400).json({ message: "Reset link is invalid or has expired. Please request a new one." });
+      }
+      const tokenData = { email: consumed.email };
 
       const user = portalUsers.get(tokenData.email);
       if (!user) return res.status(400).json({ message: "Account not found" });
 
       const bcrypt = await import('bcrypt');
       user.password = await bcrypt.hash(password, 12);
-      await portalUsers.commit(user);
-      passwordResetTokens.delete(token);
+      try {
+        await portalUsers.commit(user);
+      } catch (commitError) {
+        await releaseAuthToken(consumed.id).catch(() => undefined);
+        throw commitError;
+      }
 
       logSecurityEvent("PASSWORD_RESET_COMPLETED", req, { email: tokenData.email });
       return res.json({ success: true, message: "Password updated successfully. You can now log in." });
