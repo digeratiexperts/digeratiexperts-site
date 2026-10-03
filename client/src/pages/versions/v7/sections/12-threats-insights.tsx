@@ -58,12 +58,6 @@ const LayersIcon = () => (
   </svg>
 );
 
-/** Tier 0: the company is never "Digerati" alone. The live attribution string still reads
- *  "Digerati prioritizes…"; render it as "Digerati Experts prioritizes…" as the mock does. */
-function companyNamed(text: string): string {
-  return text.replace(/\bDigerati(?! Experts)\b/g, "Digerati Experts");
-}
-
 function sourceLine(item: ThreatItem): string {
   return `${item.sourceName}${item.vendor ? ` · ${item.vendor}` : ""}${item.cve ? ` · ${item.cve}` : ""}`;
 }
@@ -180,7 +174,7 @@ export function V7ThreatsInsights(): JSX.Element {
             </>
           )}
 
-          <p className="v7-small feed-sources">{companyNamed(payload.attribution || THREAT_ATTRIBUTION)}</p>
+          <p className="v7-small feed-sources">{payload.attribution || THREAT_ATTRIBUTION}</p>
         </div>
       </section>
 

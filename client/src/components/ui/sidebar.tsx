@@ -322,12 +322,15 @@ const SidebarRail = React.forwardRef<
 })
 SidebarRail.displayName = "SidebarRail"
 
+// A plain wrapper, not <main>: the page inside it owns the main landmark
+// (PortalLayout renders <main id="main-content">), so the topbar stays outside
+// it and the page never nests two main landmarks.
 const SidebarInset = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"main">
+  React.ComponentProps<"div">
 >(({ className, ...props }, ref) => {
   return (
-    <main
+    <div
       ref={ref}
       className={cn(
         "relative flex w-full flex-1 flex-col bg-background",

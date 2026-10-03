@@ -1,0 +1,1179 @@
+{
+  "width": 1440,
+  "themes": [
+    "dark",
+    "light"
+  ],
+  "perPage": [
+    {
+      "route": "/portal/dashboard",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/tickets",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/tickets/create",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/forms",
+      "theme": "dark",
+      "count": 59
+    },
+    {
+      "route": "/portal/infrastructure",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/chat",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/approvals",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/kb",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/company",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/people",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/contracts",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/files",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/billing",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/invoices",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/services",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/orders",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/order-form",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/questionnaires",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/surveys",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/learning",
+      "theme": "dark",
+      "count": 57
+    },
+    {
+      "route": "/portal/roadmap",
+      "theme": "dark",
+      "count": 65
+    },
+    {
+      "route": "/portal/qbr",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/marketplace",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/procurement",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/vpn",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/cytracom",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/ship-center",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/agent",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/status",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/settings",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/sales-process",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/admin/companies",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/admin/contracts",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/admin/agents",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/admin/import",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/admin/lifecycle",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/admin/login-knocks",
+      "theme": "dark",
+      "count": 57
+    },
+    {
+      "route": "/portal/admin/openai",
+      "theme": "dark",
+      "count": 56
+    },
+    {
+      "route": "/portal/login",
+      "theme": "dark",
+      "count": 4
+    },
+    {
+      "route": "/portal/signup",
+      "theme": "dark",
+      "count": 4
+    },
+    {
+      "route": "/portal/forgot-password",
+      "theme": "dark",
+      "count": 4
+    },
+    {
+      "route": "/portal/reset-password",
+      "theme": "dark",
+      "count": 3
+    },
+    {
+      "route": "/portal/reset-password?token=x",
+      "theme": "dark",
+      "count": 5
+    },
+    {
+      "route": "/portal/dashboard",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/tickets",
+      "theme": "light",
+      "count": 61
+    },
+    {
+      "route": "/portal/tickets/create",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/forms",
+      "theme": "light",
+      "count": 62
+    },
+    {
+      "route": "/portal/infrastructure",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/chat",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/approvals",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/kb",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/company",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/people",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/contracts",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/files",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/billing",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/invoices",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/services",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/orders",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/order-form",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/questionnaires",
+      "theme": "light",
+      "count": 60
+    },
+    {
+      "route": "/portal/surveys",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/learning",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/roadmap",
+      "theme": "light",
+      "count": 72
+    },
+    {
+      "route": "/portal/qbr",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/marketplace",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/procurement",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/vpn",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/cytracom",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/ship-center",
+      "theme": "light",
+      "count": 60
+    },
+    {
+      "route": "/portal/agent",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/status",
+      "theme": "light",
+      "count": 62
+    },
+    {
+      "route": "/portal/settings",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/sales-process",
+      "theme": "light",
+      "count": 63
+    },
+    {
+      "route": "/portal/admin/companies",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/admin/contracts",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/admin/agents",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/admin/import",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/admin/lifecycle",
+      "theme": "light",
+      "count": 59
+    },
+    {
+      "route": "/portal/admin/login-knocks",
+      "theme": "light",
+      "count": 60
+    },
+    {
+      "route": "/portal/admin/openai",
+      "theme": "light",
+      "count": 59
+    }
+  ],
+  "rules": [
+    {
+      "id": "region",
+      "impact": "moderate",
+      "help": "All page content should be contained by landmarks",
+      "nodes": 4190,
+      "pages": [
+        "/portal/dashboard [dark]",
+        "/portal/tickets [dark]",
+        "/portal/tickets/create [dark]",
+        "/portal/forms [dark]",
+        "/portal/infrastructure [dark]",
+        "/portal/chat [dark]",
+        "/portal/approvals [dark]",
+        "/portal/kb [dark]",
+        "/portal/company [dark]",
+        "/portal/people [dark]",
+        "/portal/contracts [dark]",
+        "/portal/files [dark]",
+        "/portal/billing [dark]",
+        "/portal/invoices [dark]",
+        "/portal/services [dark]",
+        "/portal/orders [dark]",
+        "/portal/order-form [dark]",
+        "/portal/questionnaires [dark]",
+        "/portal/surveys [dark]",
+        "/portal/learning [dark]",
+        "/portal/roadmap [dark]",
+        "/portal/qbr [dark]",
+        "/portal/marketplace [dark]",
+        "/portal/procurement [dark]",
+        "/portal/vpn [dark]",
+        "/portal/cytracom [dark]",
+        "/portal/ship-center [dark]",
+        "/portal/agent [dark]",
+        "/portal/status [dark]",
+        "/portal/settings [dark]",
+        "/portal/sales-process [dark]",
+        "/portal/admin/companies [dark]",
+        "/portal/admin/contracts [dark]",
+        "/portal/admin/agents [dark]",
+        "/portal/admin/import [dark]",
+        "/portal/admin/lifecycle [dark]",
+        "/portal/admin/login-knocks [dark]",
+        "/portal/admin/openai [dark]",
+        "/portal/login [dark]",
+        "/portal/signup [dark]",
+        "/portal/forgot-password [dark]",
+        "/portal/reset-password [dark]",
+        "/portal/reset-password?token=x [dark]",
+        "/portal/dashboard [light]",
+        "/portal/tickets [light]",
+        "/portal/tickets/create [light]",
+        "/portal/forms [light]",
+        "/portal/infrastructure [light]",
+        "/portal/chat [light]",
+        "/portal/approvals [light]",
+        "/portal/kb [light]",
+        "/portal/company [light]",
+        "/portal/people [light]",
+        "/portal/contracts [light]",
+        "/portal/files [light]",
+        "/portal/billing [light]",
+        "/portal/invoices [light]",
+        "/portal/services [light]",
+        "/portal/orders [light]",
+        "/portal/order-form [light]",
+        "/portal/questionnaires [light]",
+        "/portal/surveys [light]",
+        "/portal/learning [light]",
+        "/portal/roadmap [light]",
+        "/portal/qbr [light]",
+        "/portal/marketplace [light]",
+        "/portal/procurement [light]",
+        "/portal/vpn [light]",
+        "/portal/cytracom [light]",
+        "/portal/ship-center [light]",
+        "/portal/agent [light]",
+        "/portal/status [light]",
+        "/portal/settings [light]",
+        "/portal/sales-process [light]",
+        "/portal/admin/companies [light]",
+        "/portal/admin/contracts [light]",
+        "/portal/admin/agents [light]",
+        "/portal/admin/import [light]",
+        "/portal/admin/lifecycle [light]",
+        "/portal/admin/login-knocks [light]",
+        "/portal/admin/openai [light]"
+      ],
+      "samples": [
+        {
+          "route": "/portal/dashboard",
+          "theme": "dark",
+          "target": ".skip-link",
+          "html": "<a href=\"#main-content\" class=\"skip-link\" data-testid=\"skip-to-content\">Skip to main content</a>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "route": "/portal/dashboard",
+          "theme": "dark",
+          "target": ".pb-2",
+          "html": "<div data-sidebar=\"header\" class=\"flex flex-col gap-2 p-2 px-3 pb-2 pt-3\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "route": "/portal/dashboard",
+          "theme": "dark",
+          "target": ".py-1.flex-col[data-sidebar=\"group\"]:nth-child(1) > .px-2.transition-\\[margin\\,opacity\\].group-data-\\[collapsible\\=icon\\]\\:-mt-8",
+          "html": "<div data-sidebar=\"group-label\" class=\"flex h-8 shrink-0 it...\">",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "route": "/portal/dashboard",
+          "theme": "dark",
+          "target": "a[data-active=\"true\"] > span",
+          "html": "<span>Dashboard</span>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "route": "/portal/dashboard",
+          "theme": "dark",
+          "target": ".peer\\/menu-button[href$=\"tickets\"][data-active=\"false\"] > span",
+          "html": "<span>Support Tickets</span>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "route": "/portal/dashboard",
+          "theme": "dark",
+          "target": ".peer\\/menu-button[href$=\"forms\"][data-active=\"false\"] > span",
+          "html": "<span>Request Forms</span>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "route": "/portal/dashboard",
+          "theme": "dark",
+          "target": ".peer\\/menu-button[href$=\"infrastructure\"][data-active=\"false\"] > span",
+          "html": "<span>Infrastructure Issues</span>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        },
+        {
+          "route": "/portal/dashboard",
+          "theme": "dark",
+          "target": "a[href$=\"chat\"] > span",
+          "html": "<span>Chats / DE Desk</span>",
+          "summary": "Fix any of the following:\n  Some page content is not contained by landmarks"
+        }
+      ]
+    },
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "help": "Elements must meet minimum color contrast ratio thresholds",
+      "nodes": 130,
+      "pages": [
+        "/portal/learning [dark]",
+        "/portal/dashboard [light]",
+        "/portal/tickets [light]",
+        "/portal/tickets/create [light]",
+        "/portal/forms [light]",
+        "/portal/infrastructure [light]",
+        "/portal/chat [light]",
+        "/portal/approvals [light]",
+        "/portal/kb [light]",
+        "/portal/company [light]",
+        "/portal/people [light]",
+        "/portal/contracts [light]",
+        "/portal/files [light]",
+        "/portal/billing [light]",
+        "/portal/invoices [light]",
+        "/portal/services [light]",
+        "/portal/orders [light]",
+        "/portal/order-form [light]",
+        "/portal/questionnaires [light]",
+        "/portal/surveys [light]",
+        "/portal/learning [light]",
+        "/portal/roadmap [light]",
+        "/portal/qbr [light]",
+        "/portal/marketplace [light]",
+        "/portal/procurement [light]",
+        "/portal/vpn [light]",
+        "/portal/cytracom [light]",
+        "/portal/ship-center [light]",
+        "/portal/agent [light]",
+        "/portal/status [light]",
+        "/portal/settings [light]",
+        "/portal/sales-process [light]",
+        "/portal/admin/companies [light]",
+        "/portal/admin/contracts [light]",
+        "/portal/admin/agents [light]",
+        "/portal/admin/import [light]",
+        "/portal/admin/lifecycle [light]",
+        "/portal/admin/login-knocks [light]",
+        "/portal/admin/openai [light]"
+      ],
+      "samples": [
+        {
+          "route": "/portal/learning",
+          "theme": "dark",
+          "target": ".bg-accent\\/60 > .min-w-0 > .gap-2.items-center.flex > .pt-tone-brand.pt-token.py-0",
+          "html": "<span class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tracking-[0.06em] pt-token pt-tone-brand px-1.5 py-0",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.44 (foreground color: #f04c97, background color: #32212e, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/dashboard",
+          "theme": "light",
+          "target": "a[href$=\"questionnaires\"] > .tracking-\\[0\\.06em\\].pt-token.pt-tone-warn",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/dashboard",
+          "theme": "light",
+          "target": "a[href$=\"roadmap\"] > .tracking-\\[0\\.06em\\].pt-token.pt-tone-warn",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/dashboard",
+          "theme": "light",
+          "target": "a[href$=\"qbr\"] > .tracking-\\[0\\.06em\\].pt-token.pt-tone-warn",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/tickets",
+          "theme": "light",
+          "target": "a[href$=\"questionnaires\"] > .py-0.text-\\[9px\\].ml-auto",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/tickets",
+          "theme": "light",
+          "target": "a[href$=\"roadmap\"] > .py-0.text-\\[9px\\].ml-auto",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/tickets",
+          "theme": "light",
+          "target": "a[href$=\"qbr\"] > .py-0.text-\\[9px\\].ml-auto",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/tickets",
+          "theme": "light",
+          "target": ".w-40:nth-child(2) > .py-0\\.5.pt-tone-warn.px-2",
+          "html": "<span class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] pt-token p",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.49 (foreground color: #b45309, background color: #f9f1eb, font size: 8.3pt (11px), font weight: normal). Expected contrast rati"
+        },
+        {
+          "route": "/portal/tickets",
+          "theme": "light",
+          "target": ".w-28 > .py-0\\.5.pt-tone-warn.px-2",
+          "html": "<span class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] pt-token p",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.49 (foreground color: #b45309, background color: #f9f1eb, font size: 8.3pt (11px), font weight: normal). Expected contrast rati"
+        },
+        {
+          "route": "/portal/tickets/create",
+          "theme": "light",
+          "target": "a[href$=\"questionnaires\"] > .tracking-\\[0\\.06em\\].pt-token.py-0",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/tickets/create",
+          "theme": "light",
+          "target": "a[href$=\"roadmap\"] > .tracking-\\[0\\.06em\\].pt-token.py-0",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/tickets/create",
+          "theme": "light",
+          "target": "a[href$=\"qbr\"] > .tracking-\\[0\\.06em\\].pt-token.py-0",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/forms",
+          "theme": "light",
+          "target": "a[href$=\"questionnaires\"] > .pt-token.pt-tone-warn.py-0",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/forms",
+          "theme": "light",
+          "target": "a[href$=\"roadmap\"] > .pt-token.pt-tone-warn.py-0",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/forms",
+          "theme": "light",
+          "target": "a[href$=\"qbr\"] > .pt-token.pt-tone-warn.py-0",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/questionnaires",
+          "theme": "light",
+          "target": "a[data-active=\"true\"] > .tracking-\\[0\\.06em\\].py-0.text-\\[9px\\]",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.47 (foreground color: #b45309, background color: #2e1018, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/questionnaires",
+          "theme": "light",
+          "target": "a[href$=\"roadmap\"] > .tracking-\\[0\\.06em\\].py-0.text-\\[9px\\]",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/questionnaires",
+          "theme": "light",
+          "target": "a[href$=\"qbr\"] > .tracking-\\[0\\.06em\\].py-0.text-\\[9px\\]",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/questionnaires",
+          "theme": "light",
+          "target": "button[data-testid=\"event-1\"] > .block.truncate.font-medium",
+          "html": "<span class=\"block truncate font-medium\">🚀 Q4 Security Update Deployment</span>",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.43 (foreground color: #0e7490, background color: #e4ebea, font size: 9.0pt (12px), font weight: normal). Expected contrast rati"
+        },
+        {
+          "route": "/portal/surveys",
+          "theme": "light",
+          "target": "a[href$=\"questionnaires\"] > .pt-token.py-0.text-\\[9px\\]",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/surveys",
+          "theme": "light",
+          "target": "a[href$=\"roadmap\"] > .pt-token.py-0.text-\\[9px\\]",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/surveys",
+          "theme": "light",
+          "target": "a[href$=\"qbr\"] > .pt-token.py-0.text-\\[9px\\]",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/learning",
+          "theme": "light",
+          "target": "a[href$=\"questionnaires\"] > .pt-tone-warn.ml-auto.group-data-\\[collapsible\\=icon\\]\\:hidden",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/learning",
+          "theme": "light",
+          "target": "a[href$=\"roadmap\"] > .pt-tone-warn.ml-auto.group-data-\\[collapsible\\=icon\\]\\:hidden",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/learning",
+          "theme": "light",
+          "target": "a[href$=\"qbr\"] > .pt-tone-warn.ml-auto.group-data-\\[collapsible\\=icon\\]\\:hidden",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/roadmap",
+          "theme": "light",
+          "target": "a[data-active=\"true\"] > .py-0.text-\\[9px\\].ml-auto",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.47 (foreground color: #b45309, background color: #2e1018, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/roadmap",
+          "theme": "light",
+          "target": "li[data-testid=\"roadmap-item-3\"] > .gap-3.items-start.flex > .flex-1.min-w-0 > .justify-between.gap-3.items-start > .min-w-0 > .mt-1\\.5.flex-wrap.gap-2 > .pt-tone-warn.py-0\\.5.px-2",
+          "html": "<span class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] pt-token p",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.49 (foreground color: #b45309, background color: #f9f1eb, font size: 8.3pt (11px), font weight: normal). Expected contrast rati"
+        },
+        {
+          "route": "/portal/roadmap",
+          "theme": "light",
+          "target": "li[data-testid=\"roadmap-item-4\"] > .gap-3.items-start.flex > .flex-1.min-w-0 > .justify-between.gap-3.items-start > .min-w-0 > .mt-1\\.5.flex-wrap.gap-2 > .pt-tone-warn.py-0\\.5.px-2",
+          "html": "<span class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] pt-token p",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.49 (foreground color: #b45309, background color: #f9f1eb, font size: 8.3pt (11px), font weight: normal). Expected contrast rati"
+        },
+        {
+          "route": "/portal/roadmap",
+          "theme": "light",
+          "target": "li[data-testid=\"roadmap-item-5\"] > .gap-3.items-start.flex > .flex-1.min-w-0 > .justify-between.gap-3.items-start > .min-w-0 > .mt-1\\.5.flex-wrap.gap-2 > .pt-tone-warn.py-0\\.5.px-2",
+          "html": "<span class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] pt-token p",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.49 (foreground color: #b45309, background color: #f9f1eb, font size: 8.3pt (11px), font weight: normal). Expected contrast rati"
+        },
+        {
+          "route": "/portal/roadmap",
+          "theme": "light",
+          "target": "li[data-testid=\"roadmap-item-8\"] > .gap-3.items-start.flex > .flex-1.min-w-0 > .justify-between.gap-3.items-start > .min-w-0 > .mt-1\\.5.flex-wrap.gap-2 > .pt-tone-warn.py-0\\.5.px-2",
+          "html": "<span class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] pt-token p",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.49 (foreground color: #b45309, background color: #f9f1eb, font size: 8.3pt (11px), font weight: normal). Expected contrast rati"
+        },
+        {
+          "route": "/portal/qbr",
+          "theme": "light",
+          "target": "a[href$=\"questionnaires\"] > .py-0.text-\\[9px\\].pt-tone-warn",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/qbr",
+          "theme": "light",
+          "target": "a[href$=\"roadmap\"] > .py-0.text-\\[9px\\].pt-tone-warn",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/qbr",
+          "theme": "light",
+          "target": "a[data-active=\"true\"] > .py-0.text-\\[9px\\].pt-tone-warn",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.47 (foreground color: #b45309, background color: #2e1018, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/procurement",
+          "theme": "light",
+          "target": "a[href$=\"questionnaires\"] > .pt-tone-warn.py-0.text-\\[9px\\]",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/procurement",
+          "theme": "light",
+          "target": "a[href$=\"roadmap\"] > .pt-tone-warn.py-0.text-\\[9px\\]",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/procurement",
+          "theme": "light",
+          "target": "a[href$=\"qbr\"] > .pt-tone-warn.py-0.text-\\[9px\\]",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/ship-center",
+          "theme": "light",
+          "target": "a[href$=\"qbr\"] > .py-0.text-\\[9px\\].pt-tone-warn",
+          "html": "<span title=\"Sample content until this program is live\" class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold uppercase tr",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.73 (foreground color: #b45309, background color: #18100f, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio"
+        },
+        {
+          "route": "/portal/ship-center",
+          "theme": "light",
+          "target": ".w-36:nth-child(4) > .py-0\\.5.px-2.pt-tone-warn",
+          "html": "<span class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] pt-token p",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.49 (foreground color: #b45309, background color: #f9f1eb, font size: 8.3pt (11px), font weight: normal). Expected contrast rati"
+        },
+        {
+          "route": "/portal/status",
+          "theme": "light",
+          "target": ".mb-1 > .py-0\\.5.pt-tone-warn.px-2",
+          "html": "<span class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] pt-token p",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.15 (foreground color: #b45309, background color: #f2e8df, font size: 8.3pt (11px), font weight: normal). Expected contrast rati"
+        },
+        {
+          "route": "/portal/status",
+          "theme": "light",
+          "target": ".flex-wrap.gap-3 > .py-0\\.5.pt-tone-warn.px-2",
+          "html": "<span class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] pt-token p",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.49 (foreground color: #b45309, background color: #f9f1eb, font size: 8.3pt (11px), font weight: normal). Expected contrast rati"
+        },
+        {
+          "route": "/portal/status",
+          "theme": "light",
+          "target": ".items-start.gap-3.justify-between > .py-0\\.5.pt-tone-warn.px-2",
+          "html": "<span class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] pt-token p",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.49 (foreground color: #b45309, background color: #f9f1eb, font size: 8.3pt (11px), font weight: normal). Expected contrast rati"
+        },
+        {
+          "route": "/portal/sales-process",
+          "theme": "light",
+          "target": "article[data-testid=\"card-lead-1\"] > .items-start.mb-3.gap-3 > .pt-tone-warn.py-0\\.5.px-2",
+          "html": "<span class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] pt-token p",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.15 (foreground color: #b45309, background color: #f2e8df, font size: 8.3pt (11px), font weight: normal). Expected contrast rati"
+        },
+        {
+          "route": "/portal/sales-process",
+          "theme": "light",
+          "target": "article[data-testid=\"card-lead-2\"] > .items-start.mb-3.gap-3 > .pt-tone-warn.py-0\\.5.px-2",
+          "html": "<span class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] pt-token p",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.15 (foreground color: #b45309, background color: #f2e8df, font size: 8.3pt (11px), font weight: normal). Expected contrast rati"
+        },
+        {
+          "route": "/portal/sales-process",
+          "theme": "light",
+          "target": "article[data-testid=\"card-lead-3\"] > .items-start.mb-3.gap-3 > .pt-tone-warn.py-0\\.5.px-2",
+          "html": "<span class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] pt-token p",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.15 (foreground color: #b45309, background color: #f2e8df, font size: 8.3pt (11px), font weight: normal). Expected contrast rati"
+        },
+        {
+          "route": "/portal/sales-process",
+          "theme": "light",
+          "target": ".pt-tone-info",
+          "html": "<span class=\"inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] pt-token p",
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.43 (foreground color: #0e7490, background color: #e4ebea, font size: 8.3pt (11px), font weight: normal). Expected contrast rati"
+        }
+      ]
+    },
+    {
+      "id": "skip-link",
+      "impact": "moderate",
+      "help": "The skip-link target should exist and be focusable",
+      "nodes": 81,
+      "pages": [
+        "/portal/dashboard [dark]",
+        "/portal/tickets [dark]",
+        "/portal/tickets/create [dark]",
+        "/portal/forms [dark]",
+        "/portal/infrastructure [dark]",
+        "/portal/chat [dark]",
+        "/portal/approvals [dark]",
+        "/portal/kb [dark]",
+        "/portal/company [dark]",
+        "/portal/people [dark]",
+        "/portal/contracts [dark]",
+        "/portal/files [dark]",
+        "/portal/billing [dark]",
+        "/portal/invoices [dark]",
+        "/portal/services [dark]",
+        "/portal/orders [dark]",
+        "/portal/order-form [dark]",
+        "/portal/questionnaires [dark]",
+        "/portal/surveys [dark]",
+        "/portal/learning [dark]",
+        "/portal/roadmap [dark]",
+        "/portal/qbr [dark]",
+        "/portal/marketplace [dark]",
+        "/portal/procurement [dark]",
+        "/portal/vpn [dark]",
+        "/portal/cytracom [dark]",
+        "/portal/ship-center [dark]",
+        "/portal/agent [dark]",
+        "/portal/status [dark]",
+        "/portal/settings [dark]",
+        "/portal/sales-process [dark]",
+        "/portal/admin/companies [dark]",
+        "/portal/admin/contracts [dark]",
+        "/portal/admin/agents [dark]",
+        "/portal/admin/import [dark]",
+        "/portal/admin/lifecycle [dark]",
+        "/portal/admin/login-knocks [dark]",
+        "/portal/admin/openai [dark]",
+        "/portal/login [dark]",
+        "/portal/signup [dark]",
+        "/portal/forgot-password [dark]",
+        "/portal/reset-password [dark]",
+        "/portal/reset-password?token=x [dark]",
+        "/portal/dashboard [light]",
+        "/portal/tickets [light]",
+        "/portal/tickets/create [light]",
+        "/portal/forms [light]",
+        "/portal/infrastructure [light]",
+        "/portal/chat [light]",
+        "/portal/approvals [light]",
+        "/portal/kb [light]",
+        "/portal/company [light]",
+        "/portal/people [light]",
+        "/portal/contracts [light]",
+        "/portal/files [light]",
+        "/portal/billing [light]",
+        "/portal/invoices [light]",
+        "/portal/services [light]",
+        "/portal/orders [light]",
+        "/portal/order-form [light]",
+        "/portal/questionnaires [light]",
+        "/portal/surveys [light]",
+        "/portal/learning [light]",
+        "/portal/roadmap [light]",
+        "/portal/qbr [light]",
+        "/portal/marketplace [light]",
+        "/portal/procurement [light]",
+        "/portal/vpn [light]",
+        "/portal/cytracom [light]",
+        "/portal/ship-center [light]",
+        "/portal/agent [light]",
+        "/portal/status [light]",
+        "/portal/settings [light]",
+        "/portal/sales-process [light]",
+        "/portal/admin/companies [light]",
+        "/portal/admin/contracts [light]",
+        "/portal/admin/agents [light]",
+        "/portal/admin/import [light]",
+        "/portal/admin/lifecycle [light]",
+        "/portal/admin/login-knocks [light]",
+        "/portal/admin/openai [light]"
+      ],
+      "samples": [
+        {
+          "route": "/portal/dashboard",
+          "theme": "dark",
+          "target": ".skip-link",
+          "html": "<a href=\"#main-content\" class=\"skip-link\" data-testid=\"skip-to-content\">Skip to main content</a>",
+          "summary": "Fix any of the following:\n  No skip link target"
+        }
+      ]
+    },
+    {
+      "id": "aria-allowed-role",
+      "impact": "minor",
+      "help": "ARIA role should be appropriate for the element",
+      "nodes": 22,
+      "pages": [
+        "/portal/forms [dark]",
+        "/portal/roadmap [dark]",
+        "/portal/forms [light]",
+        "/portal/roadmap [light]"
+      ],
+      "samples": [
+        {
+          "route": "/portal/forms",
+          "theme": "dark",
+          "target": "button[data-testid=\"form-template-FT-001\"]",
+          "html": "<button type=\"button\" role=\"listitem\" class=\"group flex min-h-[44...\" data-testid=\"form-template-FT-001\">",
+          "summary": "Fix any of the following:\n  ARIA role listitem is not allowed for given element"
+        },
+        {
+          "route": "/portal/forms",
+          "theme": "dark",
+          "target": "button[data-testid=\"form-template-FT-002\"]",
+          "html": "<button type=\"button\" role=\"listitem\" class=\"group flex min-h-[44...\" data-testid=\"form-template-FT-002\">",
+          "summary": "Fix any of the following:\n  ARIA role listitem is not allowed for given element"
+        },
+        {
+          "route": "/portal/forms",
+          "theme": "dark",
+          "target": "button[data-testid=\"form-template-FT-003\"]",
+          "html": "<button type=\"button\" role=\"listitem\" class=\"group flex min-h-[44...\" data-testid=\"form-template-FT-003\">",
+          "summary": "Fix any of the following:\n  ARIA role listitem is not allowed for given element"
+        },
+        {
+          "route": "/portal/roadmap",
+          "theme": "dark",
+          "target": "li[data-testid=\"roadmap-item-1\"]",
+          "html": "<li role=\"button\" tabindex=\"0\" aria-expanded=\"false\" class=\"cursor-pointer px-4 py-4 transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visib",
+          "summary": "Fix any of the following:\n  ARIA role button is not allowed for given element"
+        },
+        {
+          "route": "/portal/roadmap",
+          "theme": "dark",
+          "target": "li[data-testid=\"roadmap-item-2\"]",
+          "html": "<li role=\"button\" tabindex=\"0\" aria-expanded=\"false\" class=\"cursor-pointer px-4 py-4 transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visib",
+          "summary": "Fix any of the following:\n  ARIA role button is not allowed for given element"
+        },
+        {
+          "route": "/portal/roadmap",
+          "theme": "dark",
+          "target": "li[data-testid=\"roadmap-item-3\"]",
+          "html": "<li role=\"button\" tabindex=\"0\" aria-expanded=\"false\" class=\"cursor-pointer px-4 py-4 transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visib",
+          "summary": "Fix any of the following:\n  ARIA role button is not allowed for given element"
+        },
+        {
+          "route": "/portal/roadmap",
+          "theme": "dark",
+          "target": "li[data-testid=\"roadmap-item-4\"]",
+          "html": "<li role=\"button\" tabindex=\"0\" aria-expanded=\"false\" class=\"cursor-pointer px-4 py-4 transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visib",
+          "summary": "Fix any of the following:\n  ARIA role button is not allowed for given element"
+        },
+        {
+          "route": "/portal/roadmap",
+          "theme": "dark",
+          "target": "li[data-testid=\"roadmap-item-5\"]",
+          "html": "<li role=\"button\" tabindex=\"0\" aria-expanded=\"false\" class=\"cursor-pointer px-4 py-4 transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visib",
+          "summary": "Fix any of the following:\n  ARIA role button is not allowed for given element"
+        }
+      ]
+    },
+    {
+      "id": "link-in-text-block",
+      "impact": "serious",
+      "help": "Links must be distinguishable without relying on color",
+      "nodes": 4,
+      "pages": [
+        "/portal/login [dark]",
+        "/portal/signup [dark]",
+        "/portal/forgot-password [dark]",
+        "/portal/reset-password?token=x [dark]"
+      ],
+      "samples": [
+        {
+          "route": "/portal/login",
+          "theme": "dark",
+          "target": "a[href$=\"signup\"]",
+          "html": "<a href=\"/portal/signup\" class=\"text-de-magenta-ink hover:underline\" data-testid=\"link-signup\">Sign Up</a>",
+          "summary": "Fix any of the following:\n  The link has insufficient color contrast of 1.47:1 with the surrounding text. (Minimum contrast is 3:1, link text: #f04c97, surrounding text: #ada9b2)\n  The link has no sty"
+        },
+        {
+          "route": "/portal/signup",
+          "theme": "dark",
+          "target": ".text-de-magenta-ink",
+          "html": "<a href=\"/portal/login\" class=\"text-de-magenta-ink hover:underline\">Sign In</a>",
+          "summary": "Fix any of the following:\n  The link has insufficient color contrast of 1.47:1 with the surrounding text. (Minimum contrast is 3:1, link text: #f04c97, surrounding text: #ada9b2)\n  The link has no sty"
+        }
+      ]
+    },
+    {
+      "id": "list",
+      "impact": "serious",
+      "help": "<ul> and <ol> must only directly contain <li>, <script> or <template> elements",
+      "nodes": 2,
+      "pages": [
+        "/portal/roadmap [dark]",
+        "/portal/roadmap [light]"
+      ],
+      "samples": [
+        {
+          "route": "/portal/roadmap",
+          "theme": "dark",
+          "target": ".divide-y",
+          "html": "<ul class=\"divide-y divide-border\">",
+          "summary": "Fix all of the following:\n  List element has direct children that are not allowed: [role=button]"
+        }
+      ]
+    },
+    {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "help": "Scrollable region must have keyboard access",
+      "nodes": 2,
+      "pages": [
+        "/portal/admin/login-knocks [dark]",
+        "/portal/admin/login-knocks [light]"
+      ],
+      "samples": [
+        {
+          "route": "/portal/admin/login-knocks",
+          "theme": "dark",
+          "target": ".max-h-\\[520px\\]",
+          "html": "<div class=\"max-h-[520px] overflow-auto\">",
+          "summary": "Fix any of the following:\n  Element should have focusable content\n  Element should be focusable"
+        }
+      ]
+    },
+    {
+      "id": "button-name",
+      "impact": "critical",
+      "help": "Buttons must have discernible text",
+      "nodes": 1,
+      "pages": [
+        "/portal/reset-password?token=x [dark]"
+      ],
+      "samples": [
+        {
+          "route": "/portal/reset-password?token=x",
+          "theme": "dark",
+          "target": ".right-3",
+          "html": "<button type=\"button\" class=\"absolute right-3 top-3 text-muted-foreground hover:text-foreground\" data-testid=\"button-toggle-password\">",
+          "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references "
+        }
+      ]
+    }
+  ]
+}

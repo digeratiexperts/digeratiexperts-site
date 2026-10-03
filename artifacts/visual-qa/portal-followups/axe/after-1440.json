@@ -1,0 +1,415 @@
+{
+  "width": 1440,
+  "themes": [
+    "dark",
+    "light"
+  ],
+  "perPage": [
+    {
+      "route": "/portal/dashboard",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/tickets",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/tickets/create",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/forms",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/infrastructure",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/chat",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/approvals",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/kb",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/company",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/people",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/contracts",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/files",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/billing",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/invoices",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/services",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/orders",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/order-form",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/questionnaires",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/surveys",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/learning",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/roadmap",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/qbr",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/marketplace",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/procurement",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/vpn",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/cytracom",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/ship-center",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/agent",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/status",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/settings",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/sales-process",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/admin/companies",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/admin/contracts",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/admin/agents",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/admin/import",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/admin/lifecycle",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/admin/login-knocks",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/admin/openai",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/login",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/signup",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/forgot-password",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/reset-password",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/reset-password?token=x",
+      "theme": "dark",
+      "count": 0
+    },
+    {
+      "route": "/portal/dashboard",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/tickets",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/tickets/create",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/forms",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/infrastructure",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/chat",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/approvals",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/kb",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/company",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/people",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/contracts",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/files",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/billing",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/invoices",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/services",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/orders",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/order-form",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/questionnaires",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/surveys",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/learning",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/roadmap",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/qbr",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/marketplace",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/procurement",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/vpn",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/cytracom",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/ship-center",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/agent",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/status",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/settings",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/sales-process",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/admin/companies",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/admin/contracts",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/admin/agents",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/admin/import",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/admin/lifecycle",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/admin/login-knocks",
+      "theme": "light",
+      "count": 0
+    },
+    {
+      "route": "/portal/admin/openai",
+      "theme": "light",
+      "count": 0
+    }
+  ],
+  "rules": []
+}

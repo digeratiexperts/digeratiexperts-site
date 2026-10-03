@@ -32,6 +32,9 @@
 .v7 .v7s-01 .say__phon b { font-weight: 600; color: var(--v7-magenta-ink); letter-spacing: 0.04em; }
 .v7 .v7s-01 .say__btn { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--v7-hairline-strong); background: transparent; color: var(--v7-fg); font-size: 15px; font-weight: 600; cursor: pointer; }
 .v7 .v7s-01 .say__btn svg { width: 13px; height: 13px; fill: currentColor; color: var(--v7-magenta-ink); }
+/* Phones: the row lands at the fold, under the fixed Ask DE launcher (bottom right).
+   Keep its right edge clear so "Hear it" is never covered. */
+@media (max-width: 767px) { .v7 .v7s-01 .say { padding-right: 72px; } }
 .v7 .v7s-01 .win { position: relative; margin: 0 0 26px; overflow: visible !important; border: 1px solid var(--v7-hairline-strong); border-radius: var(--v7-radius-lg); background: linear-gradient(180deg, #14111c 0%, #0c0a12 100%); box-shadow: 0 40px 80px -40px rgba(0,0,0,0.9), 0 0 0 1px rgba(91,69,224,0.08); }
 .v7 .v7s-01 .win::before, .v7 .v7s-01 .win::after { content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none; border: solid rgba(169,156,255,0.5); }
 .v7 .v7s-01 .win::before { top: -8px; left: -8px; border-width: 1px 0 0 1px; }
