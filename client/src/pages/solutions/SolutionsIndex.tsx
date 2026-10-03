@@ -140,7 +140,7 @@ const SolutionsIndex = () => {
     <div className="min-h-screen bg-de-bg">
       <MegaMenu />
       
-      <main className="de-nav-clear pb-20">
+      <main id="main-content" tabIndex={-1} className="de-nav-clear pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <motion.div 

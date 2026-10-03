@@ -27,7 +27,14 @@ type ProposalPackage = {
 
 export type ProposalSource = { archive: SubmittedSolutionArchive } | { draft: SolutionDraft };
 
-function packagesFrom(source: ProposalSource): { packages: ProposalPackage[]; relationship: string; profile: string; support: string; sized: boolean } {
+/** Resolved presentation view — shared by the on-screen sheet and the PDF packet. */
+export function packagesFrom(source: ProposalSource): {
+  packages: ProposalPackage[];
+  relationship: string;
+  profile: string;
+  support: string;
+  sized: boolean;
+} {
   if ("archive" in source) {
     const a = source.archive;
     return {
@@ -61,6 +68,48 @@ function packagesFrom(source: ProposalSource): { packages: ProposalPackage[]; re
       assessmentLabel: ASSESSMENT_LABELS[policyView.assessmentPolicy],
       lineItems: policyView.lineItems,
       setupLabel: installModeDetail(resolveInstallMode(d.fulfillment.installation, policyView).mode, policyView.shipmentMode).label,
+    })),
+  };
+}
+
+/** Payload for POST /api/public/solutions/packet-pdf — labels only, no prices. */
+export function buildSolutionPacketPayload(
+  source: ProposalSource,
+  opts: { title?: string; statusLabel?: string; reference?: string } = {},
+): {
+  title: string;
+  statusLabel: string;
+  reference?: string;
+  profile: string;
+  relationship: string;
+  support: string;
+  packages: Array<{
+    familyLabel: string;
+    offerName: string;
+    pricingLabel: string;
+    assessmentLabel: string;
+    setupLabel: string;
+    lineItems: Array<{ label: string; quantity: string }>;
+  }>;
+} {
+  const view = packagesFrom(source);
+  return {
+    title: opts.title || "Your Solution",
+    statusLabel: opts.statusLabel || ("archive" in source ? "Submitted" : "Draft"),
+    reference: opts.reference,
+    profile: view.profile,
+    relationship: view.relationship,
+    support: view.support,
+    packages: view.packages.map((entry) => ({
+      familyLabel: entry.familyLabel,
+      offerName: entry.offerName,
+      pricingLabel: entry.pricingLabel,
+      assessmentLabel: entry.assessmentLabel,
+      setupLabel: entry.setupLabel,
+      lineItems: entry.lineItems.map((line) => ({
+        label: line.label,
+        quantity: view.sized ? line.quantity : "Sized after profile",
+      })),
     })),
   };
 }

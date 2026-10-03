@@ -1,6 +1,8 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useState } from "react";
+import { SituationContinuityStrip } from "@/components/SituationContinuityStrip";
+import { situationSubmitPayload, useAnonymousSituation } from "@/lib/anonymousSituation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -41,6 +43,7 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const prefersReducedMotion = useReducedMotion();
+  const situation = useAnonymousSituation();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -65,6 +68,7 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
           phone: data.phone || "",
           company: data.company || "",
           source: "lead_form",
+          ...situationSubmitPayload(),
         }),
       });
       const result = await response.json();
@@ -112,7 +116,9 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
             </Eyebrow>
             <h2 className={`${titleClass} max-w-[20ch]`}>Get Your Free Security Assessment</h2>
             <p className={`${ledeClass("paper")} mt-5 max-w-xl`}>
-              Discover vulnerabilities before attackers do. Our experts will analyze your security posture and provide actionable recommendations.
+              {situation
+                ? "We'll size this Cyber Risk Assessment against the environment you already started in the Store. You do not need to retype users, computers, or sites."
+                : "Discover vulnerabilities before attackers do. Our experts will analyze your security posture and provide actionable recommendations."}
             </p>
 
             <ul className="mt-8 divide-y divide-[var(--de-paper-hairline)] border-y border-[var(--de-paper-hairline)]">
@@ -143,6 +149,9 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
             viewport={revealViewport}
             transition={revealTransition}
           >
+              {situation ? (
+                <SituationContinuityStrip situation={situation} door="assessment" tone="paper" className="mb-6" />
+              ) : null}
               <ul className="mb-6 flex flex-wrap gap-x-6 gap-y-2 border-b border-[var(--de-paper-hairline)] pb-5">
                 {["Independent findings", "No switch required", "Arizona-based experts"].map((item) => (
                   <li key={item} className="flex items-baseline gap-2.5 text-[15px] font-semibold leading-snug text-[#1A1228]">

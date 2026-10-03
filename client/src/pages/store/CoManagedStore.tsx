@@ -915,7 +915,7 @@ const CoManagedStore = () => {
             </h2>
             <p className="mx-auto mb-8 max-w-xl text-white/60">
               Looking for full-service managed IT instead of à la carte products? Explore ProActive
-              Ecosystem plans for all-inclusive support — or ask Digerati to recommend a stack.
+              Ecosystem plans for all-inclusive support — or ask DE to recommend a stack.
             </p>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
               <Link href="/internal/warehouse/managed">

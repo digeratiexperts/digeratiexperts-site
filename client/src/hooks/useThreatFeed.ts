@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ThreatFeedPayload } from "@shared/threatFeed";
-import { THREAT_ATTRIBUTION } from "@shared/threatFeed";
+import { normalizeThreatAttribution, THREAT_ATTRIBUTION } from "@shared/threatFeed";
 
 const emptyPayload = (status: ThreatFeedPayload["status"] = "empty"): ThreatFeedPayload => ({
   status,
@@ -9,6 +9,14 @@ const emptyPayload = (status: ThreatFeedPayload["status"] = "empty"): ThreatFeed
   sources: {},
   attribution: THREAT_ATTRIBUTION,
 });
+
+function withCanonicalAttribution(payload: ThreatFeedPayload): ThreatFeedPayload {
+  return {
+    ...payload,
+    items: Array.isArray(payload.items) ? payload.items : [],
+    attribution: normalizeThreatAttribution(payload.attribution),
+  };
+}
 
 export function useThreatFeed(scope: "homepage" | "all") {
   const [payload, setPayload] = useState<ThreatFeedPayload | null>(null);
@@ -23,7 +31,7 @@ export function useThreatFeed(scope: "homepage" | "all") {
         const res = await fetch(`/api/public/threats?scope=${scope}`, { signal: controller.signal });
         if (!res.ok) throw new Error("unavailable");
         const data = (await res.json()) as ThreatFeedPayload;
-        if (!cancelled) setPayload(data);
+        if (!cancelled) setPayload(withCanonicalAttribution(data));
       } catch {
         if (!cancelled) setPayload(emptyPayload("empty"));
       } finally {
