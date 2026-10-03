@@ -244,6 +244,31 @@ describe.each<Kind>(["DatabaseStorage", "MemStorage"])("tenant file routes keep 
     }
   });
 
+  it("A1/A2/B1 for one URL is ambiguous: two rows for A must not hide B", async () => {
+    // A second live row for tenant A, then one for tenant B. A lookup that
+    // limits rows (not distinct owners) could see only A's two rows and
+    // authorize Alice; the distinct-owner lookup must deny both.
+    const a2 = await call("POST", "/api/portal/admin/companies/client-a/files", ADMIN, {
+      fileName: "Again.pdf",
+      objectPath: A_PATH,
+    });
+    expect(a2.status).toBe(200);
+    expect((await call("GET", A_PATH, ALICE)).status).toBe(200); // still one owner
+    const b1 = await call("POST", "/api/portal/admin/companies/client-b/files", ADMIN, {
+      fileName: "Copy.pdf",
+      objectPath: A_PATH,
+    });
+    expect(b1.status).toBe(200);
+    expect((await call("GET", A_PATH, ALICE)).status).toBe(403);
+    expect((await call("GET", A_PATH, BOB)).status).toBe(403);
+    expect((await call("GET", A_PATH, ADMIN)).status).toBe(200);
+    if (kind === "DatabaseStorage") {
+      faults.reads = true;
+      expect((await call("GET", A_PATH, ALICE)).status).toBe(403);
+      expect((await call("GET", A_PATH, BOB)).status).toBe(403);
+    }
+  });
+
   if (kind === "DatabaseStorage") {
     it("ownership survives a restart and stays tenant-scoped", async () => {
       current = await newStorage();
