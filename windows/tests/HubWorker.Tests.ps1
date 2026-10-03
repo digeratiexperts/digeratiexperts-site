@@ -129,7 +129,7 @@ Describe 'DE Microsoft Admin Hub job loop' {
         @($global:HwT.Calls | ForEach-Object { $_.Headers['X-DE-Event-ID'] } | Select-Object -Unique).Count | Should -Be 5
         $claim = $global:HwT.Calls[0].Body | ConvertFrom-Json
         $claim.tenantId | Should -Be $global:HwT.Tenant; $claim.workerId | Should -Be 'TEST-WORKER'
-        $posted = Get-HwPostedResults
+        $posted = @(Get-HwPostedResults)
         $posted[0].operation | Should -Be 'Get-DEUser'; $posted[0].tenant | Should -Be $global:HwT.Tenant; $posted[0].product | Should -Be 'DE Microsoft Admin'
         $global:HwT.Posts[1].Path | Should -Match ($r.jobs[1].jobId)
         @($global:HwT.Graph | Where-Object { $_ -like 'PATCH *' }).Count | Should -Be 1
@@ -148,7 +148,7 @@ Describe 'DE Microsoft Admin Hub job loop' {
         $r = Invoke-HwLoop
         $r.stoppedBecause | Should -Be 'job_signature'; $r.ok | Should -Be $false; $r.message | Should -Match 'MSADMIN_JOB_SIGNING_SECRET'
         $global:HwT.Graph.Count | Should -Be 0
-        $p = Get-HwPostedResults
+        $p = @(Get-HwPostedResults)
         $p.Count | Should -Be 1; $p[0].status | Should -Be 'Refused'; $p[0].operation | Should -Be 'Invoke-DEMicrosoftJob'; $p[0].message | Should -Be 'signature does not verify'
         $global:HwT.Queue.Count | Should -Be 1   # the rest of the queue was left for a fixed worker
 
@@ -156,7 +156,7 @@ Describe 'DE Microsoft Admin Hub job loop' {
         $r = Invoke-HwLoop
         $r.stoppedBecause | Should -Be 'queue_empty'
         $global:HwT.Graph.Count | Should -Be 0
-        $p = Get-HwPostedResults
+        $p = @(Get-HwPostedResults)
         $p[0].status | Should -Be 'Refused'; $p[0].message | Should -Match "for tenant $($global:HwT.Other)"
     }
     It 'keeps New-DEUser''s temporary password and Intune password settings away from the Hub, and the password on this machine' {
@@ -174,7 +174,7 @@ Describe 'DE Microsoft Admin Hub job loop' {
             $post.Body | Should -Not -Match '"passw[^"]*"\s*:'   # no password* key (their names may be listed as values)
             (Find-HwSecret ($post.Body | ConvertFrom-Json)).Count | Should -Be 0
         }
-        $p = Get-HwPostedResults
+        $p = @(Get-HwPostedResults)
         $p[0].data.userPrincipalName | Should -Be 'new.hire@alamo-industries.com'
         $p[0].message | Should -Match 'kept on the worker, not sent to the Hub: data\.temporaryPassword'
         $pol = @($p[1].data)[0]
