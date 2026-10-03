@@ -30,6 +30,35 @@
 
 version: 2
 claims:
+  - id: portal-data-sources
+    owner: claude
+    subsystem: client-portal-integrations
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: e2d4ffa0
+    files:
+      - server/portalIntegrations.ts
+      - server/portalManualRecords.ts
+      - server/integrations/**
+      - server/routes.ts (registration lines only)
+      - shared/schema.ts (portalManualRecords only)
+      - migrations/0003_portal_manual_records.sql
+      - client/src/lib/portalIntegrations.ts
+      - client/src/components/portal/IntegrationNotices.tsx
+      - client/src/components/portal/shell/portalNav.ts
+      - client/src/pages/portal/PortalLayout.tsx
+      - client/src/pages/portal/PortalVPN.tsx
+      - client/src/pages/portal/PortalCytracom.tsx
+      - client/src/pages/portal/PortalShipCenter.tsx
+      - client/src/components/ExitIntentPopup.tsx (FINDINGS_ARE_THE_CLIENTS switch)
+      - scripts/qa/portal-prod-check.mjs
+      - deploy/vps/env.production.example (portal data-source section)
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: "write all of them then i will tell you what to do from
+      there" (open answers 2a/2b/2c VPN, phone and shipping sources; 3 test
+      login; 5 popup). Every option is built and off by default: sample stays
+      until PORTAL_*_PROVIDER is set; the popup switch is false.
   - id: de-auth-token-identity-binding
     owner: claude
     subsystem: portal-auth
