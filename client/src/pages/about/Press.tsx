@@ -1,3 +1,4 @@
+import { Chapter, Container } from "@/components/site/chapters";
 import { PageTemplate } from "@/components/PageTemplate";
 import { JsonLd } from "@/components/JsonLd";
 import { Link } from "wouter";
@@ -24,6 +25,8 @@ export default function Press() {
 
   return (
     <PageTemplate
+      layout="chapters"
+      eyebrow="About · Press & media"
       title="Press & media"
       subtitle="Use this page for accurate company facts, citations, and interview requests. Please do not invent metrics, client names, or certifications not listed here."
       breadcrumbs={[{ label: "About" }, { label: "Press & Media" }]}
@@ -53,81 +56,92 @@ export default function Press() {
         }}
       />
 
-      <div className="mx-auto max-w-3xl space-y-12">
-        <section className="space-y-4">
-          <h2 className="text-2xl font-semibold text-white">Boilerplate</h2>
-          <p className="rounded-lg border border-de-hairline bg-de-raised p-5 leading-relaxed text-white/80">
-            Digerati Experts is an Arizona-based managed IT and managed security provider helping
-            small and mid-size organizations protect operations, patient and client data, and
-            compliance readiness. The firm combines managed IT, cybersecurity, and documentation into
-            one accountable program for businesses that need enterprise-grade controls without a large
-            internal IT department. Headquarters: Chandler, Arizona.
-          </p>
-        </section>
 
-        <section className="space-y-3">
-          <h2 className="text-2xl font-semibold text-white">Official NAP (use exactly)</h2>
-          <address className="not-italic rounded-lg border border-de-hairline bg-de-raised p-5 leading-relaxed text-white/85">
-            {NAP.name}
-            <br />
-            {NAP.street}
-            <br />
-            {NAP.city}, {NAP.region} {NAP.postal}
-            <br />
-            Phone:{" "}
-            <a className="text-de-accent-ink underline-offset-2 hover:underline" href={PRIMARY_PHONE.telHref}>
-              {NAP.phone}
-            </a>
-            <br />
-            Email:{" "}
-            <a className="text-de-accent-ink underline-offset-2 hover:underline" href={`mailto:${NAP.email}`}>
-              {NAP.email}
-            </a>
-            <br />
-            Web:{" "}
-            <a className="text-de-accent-ink underline-offset-2 hover:underline" href="https://digeratiexperts.com">
-              https://digeratiexperts.com
-            </a>
-          </address>
-        </section>
+      <Chapter tone="paper" seam={false}>
+        <Container>
+          <div className="border-t border-[var(--de-paper-hairline)]">
+            <section className="grid gap-5 border-b border-[var(--de-paper-hairline)] py-8 lg:grid-cols-12 lg:gap-14 lg:py-10">
+              <h2 className="font-heading text-2xl font-semibold text-[#1A1228] lg:col-span-4">Boilerplate</h2>
+              <p className="max-w-[68ch] rounded-xl border border-[var(--de-paper-hairline)] bg-white p-6 leading-relaxed text-[#3A3448] lg:col-span-8">
+                Digerati Experts is an Arizona-based managed IT and managed security provider helping
+                small and mid-size organizations protect operations, patient and client data, and
+                compliance readiness. The firm combines managed IT, cybersecurity, and documentation into
+                one accountable program for businesses that need enterprise-grade controls without a large
+                internal IT department. Headquarters: Chandler, Arizona.
+              </p>
+            </section>
 
-        <section className="space-y-3">
-          <h2 className="text-2xl font-semibold text-white">Linkable resources</h2>
-          <ul className="list-disc space-y-2 pl-5 text-white/80">
-            <li>
-              <Link href="/resources/case-studies" className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
-                Case studies
-              </Link>
-            </li>
-            <li>
-              <Link href="/resources/blog" className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
-                Security & IT blog
-              </Link>
-            </li>
-            <li>
-              <Link href="/trust/trust-center" className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
-                Trust center
-              </Link>
-            </li>
-            <li>
-              <Link href="/book" className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink">
-                Free risk assessment
-              </Link>
-            </li>
-          </ul>
-        </section>
+            <section className="grid gap-5 border-b border-[var(--de-paper-hairline)] py-8 lg:grid-cols-12 lg:gap-14 lg:py-10">
+              <h2 className="font-heading text-2xl font-semibold text-[#1A1228] lg:col-span-4">Official NAP (use exactly)</h2>
+              <address className="max-w-[68ch] rounded-xl border border-[var(--de-paper-hairline)] bg-white p-6 not-italic leading-relaxed text-[#1A1228] lg:col-span-8">
+                {NAP.name}
+                <br />
+                {NAP.street}
+                <br />
+                {NAP.city}, {NAP.region} {NAP.postal}
+                <br />
+                Phone:{" "}
+                <a className="inline-flex min-h-11 items-center text-de-magenta-paper-ink underline decoration-de-magenta-paper-ink/50 underline-offset-4 hover:decoration-de-magenta-paper-ink" href={PRIMARY_PHONE.telHref}>
+                  {NAP.phone}
+                </a>
+                <br />
+                Email:{" "}
+                <a className="inline-flex min-h-11 items-center text-de-magenta-paper-ink underline decoration-de-magenta-paper-ink/50 underline-offset-4 hover:decoration-de-magenta-paper-ink" href={`mailto:${NAP.email}`}>
+                  {NAP.email}
+                </a>
+                <br />
+                Web:{" "}
+                <a className="inline-flex min-h-11 items-center text-de-magenta-paper-ink underline decoration-de-magenta-paper-ink/50 underline-offset-4 hover:decoration-de-magenta-paper-ink" href="https://digeratiexperts.com">
+                  https://digeratiexperts.com
+                </a>
+              </address>
+            </section>
+          </div>
+        </Container>
+      </Chapter>
 
-        <section className="space-y-3">
-          <h2 className="text-2xl font-semibold text-white">Media contact</h2>
-          <p className="text-white/75">
-            Interview and citation requests:{" "}
-            <a className="text-de-accent-ink underline decoration-de-accent-ink/50 underline-offset-4 hover:decoration-de-accent-ink" href={`mailto:${NAP.email}?subject=Media%20inquiry`}>
-              {NAP.email}
-            </a>{" "}
-            · {NAP.phone}
-          </p>
-        </section>
-      </div>
+      <Chapter tone="well">
+        <Container>
+          <div className="border-t border-[var(--de-hairline)]">
+            <section className="grid gap-5 border-b border-[var(--de-hairline)] py-8 lg:grid-cols-12 lg:gap-14 lg:py-10">
+              <h2 className="font-heading text-2xl font-semibold text-white lg:col-span-4">Linkable resources</h2>
+              <ul className="list-disc space-y-2 pl-5 text-white/80 lg:col-span-8">
+                <li>
+                  <Link href="/resources/case-studies" className="text-de-magenta-ink underline decoration-de-magenta-ink/50 underline-offset-4 hover:decoration-de-magenta-ink">
+                    Case studies
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/resources/blog" className="text-de-magenta-ink underline decoration-de-magenta-ink/50 underline-offset-4 hover:decoration-de-magenta-ink">
+                    Security & IT blog
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/trust/trust-center" className="text-de-magenta-ink underline decoration-de-magenta-ink/50 underline-offset-4 hover:decoration-de-magenta-ink">
+                    Trust center
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/book" className="text-de-magenta-ink underline decoration-de-magenta-ink/50 underline-offset-4 hover:decoration-de-magenta-ink">
+                    Free risk assessment
+                  </Link>
+                </li>
+              </ul>
+            </section>
+
+            <section className="grid gap-5 border-b border-[var(--de-hairline)] py-8 lg:grid-cols-12 lg:gap-14 lg:py-10">
+              <h2 className="font-heading text-2xl font-semibold text-white lg:col-span-4">Media contact</h2>
+              <p className="text-white/80 lg:col-span-8">
+                Interview and citation requests:{" "}
+                <a className="text-de-magenta-ink underline decoration-de-magenta-ink/50 underline-offset-4 hover:decoration-de-magenta-ink" href={`mailto:${NAP.email}?subject=Media%20inquiry`}>
+                  {NAP.email}
+                </a>{" "}
+                · {NAP.phone}
+              </p>
+            </section>
+          </div>
+        </Container>
+      </Chapter>
     </PageTemplate>
   );
 }
