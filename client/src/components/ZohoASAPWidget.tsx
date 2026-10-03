@@ -94,6 +94,13 @@ import {
   type DeskMotionChip,
   type DeskMotionChipIcon,
 } from "@/lib/deskAskDeMotion";
+import {
+  composerSuggestionsAllowed,
+  composerSuggestionsForPage,
+  DESK_SUGGEST_CYCLE_MS,
+  DESK_SUGGEST_MAX_PASSES,
+  nextSuggestionIndex,
+} from "@/lib/deskComposerSuggestions";
 
 interface ZohoASAPWidgetProps {
   isEnabled?: boolean;
@@ -368,6 +375,10 @@ export const ZohoASAPWidget = ({
   const composerHintPlayedRef = useRef(false);
   // The full-screen hint waits until the text box hint has played or been ruled out.
   const [composerHintSettled, setComposerHintSettled] = useState(false);
+  // Ask DE text box suggestions: the example on show in this pass, or null.
+  const [suggestIndex, setSuggestIndex] = useState<number | null>(null);
+  const [suggestPass, setSuggestPass] = useState(0);
+  const suggestAutoStartedRef = useRef(false);
   const ignoreDismissUntilRef = useRef(0);
 
   const deskDrag = useDraggableWindow({
@@ -427,7 +438,8 @@ export const ZohoASAPWidget = ({
       agentLive,
       playedThisLoad: expandHintPlayedRef.current,
       composerHintSettled,
-      composerHintShowing: composerHint,
+      // A pass of text box suggestions counts as the text box hint still showing.
+      composerHintShowing: composerHint || suggestIndex !== null,
       composerHasText: !!chatInput.trim(),
       stored,
     });
@@ -438,7 +450,7 @@ export const ZohoASAPWidget = ({
       setExpandHint(true);
     }, DESK_EXPAND_HINT_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [isOpen, canDrag, isDeskFullscreen, agentLive, composerHintSettled, composerHint, chatInput]);
+  }, [isOpen, canDrag, isDeskFullscreen, agentLive, composerHintSettled, composerHint, suggestIndex, chatInput]);
   useEffect(() => {
     if (!expandHint) return;
     const stop = window.setTimeout(() => setExpandHint(false), DESK_EXPAND_HINT_DURATION_MS);
@@ -1116,6 +1128,48 @@ export const ZohoASAPWidget = ({
   useEffect(() => {
     if (visitorHasSpoken) writeDeskHint(DESK_COMPOSER_HINT_KEY, DESK_HINT_RETIRED);
   }, [visitorHasSpoken]);
+
+  // Ask DE text box suggestions (deskComposerSuggestions.ts): examples of what a
+  // visitor might type rise into the empty box one at a time. One pass starts
+  // once the greeting has typed (in gold while the text box hint plays);
+  // focusing or clicking the empty box can start another. Typing, a live agent
+  // or leaving the tab ends a pass at once.
+  const composerSuggestions = composerSuggestionsForPage(deskPage);
+  const suggestionsAllowed = composerSuggestionsAllowed({
+    isOpen,
+    onAskDe: activeTab === "chat",
+    visitorHasSpoken,
+    agentLive,
+    hasText: !!chatInput,
+    sending: isChatSending,
+    greetingComplete,
+    expandHintShowing: expandHint,
+    reducedMotion: prefersReducedMotion(),
+  });
+  const startSuggestionPass = () => {
+    if (!suggestionsAllowed || suggestIndex !== null || suggestPass >= DESK_SUGGEST_MAX_PASSES) return;
+    setSuggestPass((pass) => pass + 1);
+    setSuggestIndex(0);
+  };
+  useEffect(() => {
+    if (!suggestionsAllowed || suggestAutoStartedRef.current) return;
+    suggestAutoStartedRef.current = true;
+    startSuggestionPass();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suggestionsAllowed]);
+  useEffect(() => {
+    if (suggestIndex === null) return;
+    if (!suggestionsAllowed) {
+      setSuggestIndex(null);
+      return;
+    }
+    const timer = window.setTimeout(
+      () => setSuggestIndex((index) => (index === null ? null : nextSuggestionIndex(index, composerSuggestions.length))),
+      DESK_SUGGEST_CYCLE_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [suggestIndex, suggestionsAllowed, composerSuggestions.length]);
+  const suggestionOnShow = suggestIndex !== null ? composerSuggestions[suggestIndex] ?? null : null;
 
   // Get Support, prefilled with what the visitor already told Ask DE. A draft
   // they have started on Get Support is never overwritten.
@@ -2493,9 +2547,10 @@ export const ZohoASAPWidget = ({
                   </div>
                 ) : null}
                 <div
-                  className={`de-desk-composer${headsUp || unreadChatCount ? " is-live" : ""}${composerHint ? " is-hinting" : ""}`}
+                  className={`de-desk-composer${headsUp || unreadChatCount ? " is-live" : ""}${composerHint ? " is-hinting" : ""}${suggestionOnShow ? " is-suggesting" : ""}`}
                   data-testid="desk-composer"
                 >
+                  <div className="de-desk-composer-field">
                   <textarea
                     ref={composerRef}
                     rows={1}
@@ -2524,10 +2579,24 @@ export const ZohoASAPWidget = ({
                     // dropped keyboard focus to the page on every send.
                     readOnly={isChatSending}
                     aria-busy={isChatSending || undefined}
+                    onFocus={startSuggestionPass}
+                    onClick={startSuggestionPass}
                     id="desk-chat-input"
                     data-testid="input-support-chat"
                     aria-label="Ask DE message"
                   />
+                  {suggestionOnShow ? (
+                    // Decoration only: the textarea keeps its own stable placeholder for assistive tech.
+                    <span
+                      key={`${suggestPass}-${suggestIndex}`}
+                      className="de-desk-composer-suggest"
+                      aria-hidden="true"
+                      data-testid="desk-composer-suggestion"
+                    >
+                      {suggestionOnShow}
+                    </span>
+                  ) : null}
+                  </div>
                   <button
                     type="button"
                     onClick={() => void handleSendChat()}
@@ -3862,6 +3931,33 @@ export const ZohoASAPWidget = ({
               caret-color: var(--desk-ink);
             }
             .de-desk-composer textarea::placeholder { color: var(--desk-ink-dim); }
+            /* Ask DE suggestions: each example rises into the empty box, holds,
+               then rises out while the next comes in. Decoration over the
+               textarea; its own placeholder is hidden while one shows. */
+            .de-desk-composer-field { position: relative; flex: 1; min-width: 0; display: flex; }
+            .de-desk-composer-field textarea { width: 100%; }
+            /* Also inside the gold hint, whose own placeholder rule comes later. */
+            .de-desk-composer.is-suggesting textarea::placeholder,
+            .de-desk-composer.is-hinting.is-suggesting textarea::placeholder { color: transparent; }
+            .de-desk-composer.is-hinting .de-desk-composer-suggest { color: var(--desk-gold-ink); }
+            .de-desk-composer-suggest {
+              position: absolute;
+              left: 15px; right: 15px; top: 11px;
+              font-size: 15.5px; line-height: 1.45;
+              color: var(--desk-ink-dim);
+              white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+              pointer-events: none;
+              animation: de-desk-suggest-cycle ${DESK_SUGGEST_CYCLE_MS}ms cubic-bezier(0.22, 1, 0.36, 1) both;
+            }
+            @keyframes de-desk-suggest-cycle {
+              0% { opacity: 0; transform: translateY(0.6em); filter: blur(4px); }
+              12% { opacity: 1; transform: translateY(0); filter: blur(0); }
+              86% { opacity: 1; transform: translateY(0); filter: blur(0); }
+              100% { opacity: 0; transform: translateY(-0.6em); filter: blur(4px); }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .de-desk-composer-suggest { display: none; }
+            }
             .de-desk-composer textarea:focus {
               outline: none;
               border-color: #E3B23C;

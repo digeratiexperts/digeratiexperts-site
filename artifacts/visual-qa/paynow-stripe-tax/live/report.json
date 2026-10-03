@@ -1,0 +1,56 @@
+{
+  "390": {
+    "addressFields": 1,
+    "emptyAddressRequestsSent": 0,
+    "errorsShown": [
+      "Street address is required for Pay Now",
+      "City is required for Pay Now",
+      "Use the two-letter state code, e.g. AZ",
+      "Use a 5-digit ZIP code"
+    ],
+    "focused": "line1",
+    "payloadBilling": {
+      "name": "Jordan Client",
+      "email": "jordan@example.com",
+      "company": "",
+      "phone": "",
+      "address": {
+        "line1": "2 N Central Ave, Suite 1800",
+        "city": "Phoenix",
+        "state": "AZ",
+        "postalCode": "85004"
+      }
+    },
+    "stepAsideToQuote": "checked",
+    "addressHiddenOnQuote": true,
+    "overflowX": 0,
+    "errors": []
+  },
+  "1440": {
+    "addressFields": 1,
+    "emptyAddressRequestsSent": 0,
+    "errorsShown": [
+      "Street address is required for Pay Now",
+      "City is required for Pay Now",
+      "Use the two-letter state code, e.g. AZ",
+      "Use a 5-digit ZIP code"
+    ],
+    "focused": "line1",
+    "payloadBilling": {
+      "name": "Jordan Client",
+      "email": "jordan@example.com",
+      "company": "",
+      "phone": "",
+      "address": {
+        "line1": "2 N Central Ave, Suite 1800",
+        "city": "Phoenix",
+        "state": "AZ",
+        "postalCode": "85004"
+      }
+    },
+    "stepAsideToQuote": "checked",
+    "addressHiddenOnQuote": true,
+    "overflowX": 0,
+    "errors": []
+  }
+}
