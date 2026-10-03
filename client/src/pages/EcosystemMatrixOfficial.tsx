@@ -113,7 +113,7 @@ export default function EcosystemMatrixOfficial() {
   })).filter(section => section.features.length > 0);
 
   return (
-    <main id="page-main" className={`min-h-screen transition-colors duration-300 ${isDark ? "bg-[#0a0a0f] text-white" : "bg-slate-50 text-slate-900"}`}>
+    <main id="main-content" tabIndex={-1} className={`min-h-screen transition-colors duration-300 ${isDark ? "bg-[#0a0a0f] text-white" : "bg-slate-50 text-slate-900"}`}>
       <Helmet>
         <title>Service Matrix | Digerati Experts</title>
         <meta name="description" content="Compare Digerati Experts IT service tiers: IT Essentials, Office, Business, and Enterprise. Interactive service matrix with feature comparison across managed IT and cybersecurity offerings." />

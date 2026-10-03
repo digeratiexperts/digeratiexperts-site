@@ -23,7 +23,12 @@ export default function ResourceAssetPage() {
   if (!resource) {
     return <NotFound />;
   }
+  // Hooks live in the view so an unknown slug's early return never changes
+  // the hook order between renders (client-side navigation between slugs).
+  return <ResourceAssetView resource={resource} />;
+}
 
+function ResourceAssetView({ resource }: { resource: NonNullable<ReturnType<typeof resourceBySlug>> }) {
   const meta = resourceLandingMeta[resource.slug];
 
   useSEO({
