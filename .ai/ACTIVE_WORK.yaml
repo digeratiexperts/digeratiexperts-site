@@ -1638,6 +1638,7 @@ claims:
     owner: claude
     subsystem: client-portal-shell
     branch: claude/nifty-newton-uk9g7t
+    pr: 408
     base_sha: cef31956cd747e3eac02a2e38ceb41c69a125054
     files:
       - client/src/styles/portal.css (light theme block and the .pt-canvas glow only)
