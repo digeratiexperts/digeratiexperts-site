@@ -1810,7 +1810,7 @@ claims:
       - client/src/pages/portal/PortalLayout.tsx (pt-canvas class on SidebarInset only)
       - client/src/styles/portalLightTheme.test.ts (new)
       - artifacts/visual-qa/portal-light-ambient/**
-    status: active
+    status: verified-live
     started: 2026-10-03
     released: 2026-10-03
     merge_sha: 9b6f364be944e3a8379f61d3ded12a3e5718d402
@@ -1827,12 +1827,16 @@ claims:
       light-mode screenshot on production (QA login is a CI secret); the same
       bundle was rendered signed in locally. VERIFIED LIVE (bundle). Evidence:
       artifacts/visual-qa/portal-light-ambient/live/. FOLLOW-UP (PR 412,
-      pending Joe's merge): a 39-page regression run (dark and light, 390
+      merged as 5929d77d on Joe's "merge 412 to master"): a 39-page regression run (dark and light, 390
       and 1440, before vs after) found dark mode pixel-identical apart from a
       clock, but light ok ink at 4.42:1 on its tint over orchid on
       /portal/sales-process and /portal/questionnaires. Light --pt-ok and
       --pt-bad are darkened (#046a4d, #b6113a) and portalLightTheme.test.ts
       now checks every tone on its 7-10% tint over field, well and card.
+      PR 412 VERIFIED LIVE (bundle) 2026-10-03: release.txt 5929d77d on both
+      hosts, deploy job passed, live entry index-B14dCa_B.js and
+      portal-D0pHb8rv.css match the local build and carry the new inks (no
+      old ones). Files released.
     note: >-
       Joe, 2026-10-03: portal light mode is liked but "the light grey I would
       replace with an ambent color". Options rendered (A amber, B Ambient, C
