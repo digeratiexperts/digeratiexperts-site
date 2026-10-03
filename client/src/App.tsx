@@ -179,10 +179,10 @@ import { servicePageData, industryPageData, supportPageData } from "@/pages/rout
 function Router() {
   return (
     <Switch>
-      {/* Homepage */}
+      {/* Homepage: Version 8 (Joe, 2026-10-03: "its approved. do it."). The previous homepage is kept at /version-0, Version 7 at /version-7. */}
       <Route path="/" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
-          <DigeratiHomepage />
+          <HomepageV8 />
         </Suspense>
       )} />
 
@@ -240,7 +240,7 @@ function Router() {
           </VersionFrame>
         </Suspense>
       )} />
-      {/* Joe, 2026-10-03: the current homepage, kept as a noindex reference before any swap. */}
+      {/* Joe, 2026-10-03: the previous homepage, kept as a noindex reference after Version 8 replaced it at /. */}
       <Route path="/version-0" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <VersionFrame n={0}>
@@ -255,13 +255,8 @@ function Router() {
           </VersionFrame>
         </Suspense>
       )} />
-      <Route path="/version-8" component={() => (
-        <Suspense fallback={<PageLoadingSkeleton />}>
-          <VersionFrame n={8}>
-            <HomepageV8 />
-          </VersionFrame>
-        </Suspense>
-      )} />
+      {/* Version 8 is the homepage now; the server answers /version-8 with a 301 to /. */}
+      <Route path="/version-8" component={() => <Redirect to="/" replace />} />
 
       {/* Solutions Pages */}
       <Route path="/solutions" component={() => (
@@ -1023,8 +1018,8 @@ function AppContent() {
   useStoreChromeGestures(location);
   const isPortal = location.startsWith("/portal");
   const isHome = location === "/";
-  // /version-0 (the homepage copy), /version-7 and /version-8 mount their own bottom bar.
-  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7" || location === "/version-8";
+  // / (Version 8), /version-0 (the previous homepage) and /version-7 mount their own bottom bar.
+  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7";
   const hideDoor2HelpDock = isDoor2Path(location) && location.split("?")[0] !== "/store";
   const hideWarehouseChrome = isWarehousePath(location);
   const accent = isPortal ? undefined : accentFor(location);

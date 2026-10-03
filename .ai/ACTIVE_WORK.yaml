@@ -1580,7 +1580,7 @@ claims:
     owner: claude
     subsystem: homepage-design-concepts
     branch: claude/sleepy-archimedes-mccoav
-    base_sha: e2d4ffa4
+    base_sha: a2ef961d
     files:
       - client/src/pages/versions/v8/** (new; a copy of v7 renamed v8)
       - client/src/pages/versions/registry.ts (the v8 entry)
@@ -1588,6 +1588,9 @@ claims:
       - client/src/App.tsx (the /version-8 route and its own-bottom-bar exclusion)
       - server/spaKnownPaths.ts (/version-0, /version-8)
       - client/src/pages/DigeratiHomepage.tsx (optional structuredData prop only, default on)
+      - client/src/App.tsx (the / route renders HomepageV8; /version-8 redirects)
+      - server/index.ts (the /version-8 301 to /, beside the other path redirects)
+      - client/src/hooks/useDockAutohide.test.ts (the bottom-bar contract)
     status: active
     started: 2026-10-03
     note: >-
@@ -1606,4 +1609,9 @@ claims:
       best of V7 and the current homepage, and the current homepage is kept
       as "version 0": /version-0 renders DigeratiHomepage noindex inside
       VersionFrame without the homepage JSON-LD (not in the registry, which
-      numbers from 1). / is unchanged.
+      numbers from 1). Merged via #368.
+      Joe, 2026-10-03, after #368: "its approved. do it. and keep the other 2
+      versions safe", then "bring everything we've worked on live". / now
+      renders Version 8 with the homepage title, description, canonical and
+      JSON-LD; /version-8 is a 301 to /; the previous homepage stays at
+      /version-0 and Version 7 at /version-7, both noindex, untouched.
