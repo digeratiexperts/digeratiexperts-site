@@ -10,16 +10,16 @@ export default function MSA() {
       subtitle="Version 2025.1 | Effective January 1, 2025"
       description="Digerati Experts Master Service Agreement (MSA) covers managed IT and security services, responsibilities, billing, and termination. Request a copy from legal."
       canonical="/legal/msa"
-      icon={<FileText className="h-8 w-8" />}
+      icon={<FileText className="h-5 w-5" />}
     >
-      <p className="mb-6 text-lg text-white/80">
+      <p className="mb-6 text-lg text-[#3A3448]">
         Our Master Service Agreement (MSA) establishes the comprehensive terms and conditions governing
         the provision of managed IT and security services by Digerati Experts to our clients.
       </p>
 
-      <div className="mb-8 rounded border border-de-hairline border-l-4 border-l-de-accent bg-de-raised p-6">
-        <h3 className="mb-3 text-xl font-semibold text-white">What's Included in Our MSA:</h3>
-        <ul className="list-disc space-y-2 pl-6 text-white/75">
+      <div className="mb-8 rounded-lg border border-[var(--de-paper-hairline)] border-l-4 border-l-[#D3126A] bg-white p-6">
+        <h3 className="mb-3 text-xl font-semibold text-[#1A1228]">What's Included in Our MSA:</h3>
+        <ul className="list-disc space-y-2 pl-6 text-[#3A3448]">
           <li>Scope of managed IT and security services</li>
           <li>Service level agreements (SLAs) and response times</li>
           <li>Client and service provider responsibilities</li>
@@ -33,8 +33,8 @@ export default function MSA() {
         </ul>
       </div>
 
-      <h2 className="mb-4 mt-8 text-2xl font-bold text-white">Request Our MSA</h2>
-      <p className="mb-6 text-white/75">
+      <h2 className="mb-4 mt-8 text-xl font-bold text-[#1A1228]">Request Our MSA</h2>
+      <p className="mb-6 text-[#3A3448]">
         To review our Master Service Agreement or discuss custom terms for your organization,
         please contact our team. We'll provide a copy and schedule a consultation to address
         your specific requirements.
@@ -53,7 +53,7 @@ export default function MSA() {
         </Button>
         <Button
           variant="outline"
-          className="border-white/20 text-white hover:bg-white/10"
+          className="border-black/25 text-[#1A1228] hover:bg-black/5"
           onClick={() => {
             window.location.href = PRIMARY_PHONE.telHref;
           }}
@@ -63,16 +63,16 @@ export default function MSA() {
         </Button>
       </div>
 
-      <div className="mt-12 rounded-lg border border-de-hairline bg-de-raised p-6">
-        <h3 className="mb-3 text-xl font-semibold text-white">Contact Legal Department</h3>
-        <p className="mb-2 text-white/75">
-          <strong className="text-white">Email:</strong> legal@digeratiexperts.com
+      <div className="mt-12 rounded-lg border border-[var(--de-paper-hairline)] bg-white p-6">
+        <h3 className="mb-3 text-xl font-semibold text-[#1A1228]">Contact Legal Department</h3>
+        <p className="mb-2 text-[#3A3448]">
+          <strong className="text-[#1A1228]">Email:</strong> legal@digeratiexperts.com
         </p>
-        <p className="mb-2 text-white/75">
-          <strong className="text-white">Phone:</strong> {PRIMARY_PHONE.display}
+        <p className="mb-2 text-[#3A3448]">
+          <strong className="text-[#1A1228]">Phone:</strong> {PRIMARY_PHONE.display}
         </p>
-        <p className="text-white/75">
-          <strong className="text-white">Address:</strong> 3165 S Alma School Rd Suite 29, Chandler, AZ 85248
+        <p className="text-[#3A3448]">
+          <strong className="text-[#1A1228]">Address:</strong> 3165 S Alma School Rd Suite 29, Chandler, AZ 85248
         </p>
       </div>
     </LegalDocumentLayout>

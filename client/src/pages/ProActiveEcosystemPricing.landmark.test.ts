@@ -14,13 +14,22 @@ describe("ProActiveEcosystemPricing skip / main landmark", () => {
     "utf8",
   );
 
+  // Since the 2026-10 site chapter pass the page renders through PageTemplate,
+  // which owns the <main>; either it or the page itself must carry the target.
+  const template = readFileSync(
+    path.resolve(__dirname, "../components/PageTemplate.tsx"),
+    "utf8",
+  );
+  const viaTemplate = /<PageTemplate\b/.test(source) && !/<main\b/.test(source);
+  const owner = viaTemplate ? template : source;
+
   it(`exposes <main id="${MAIN_CONTENT_FALLBACK_ID}"> for the skip-link hash fallback`, () => {
-    expect(source).toMatch(
+    expect(owner).toMatch(
       new RegExp(`<main[\\s\\S]*?id=["']${MAIN_CONTENT_FALLBACK_ID}["']`),
     );
   });
 
   it("makes the main landmark programmatically focusable", () => {
-    expect(source).toMatch(/tabIndex=\{-1\}/);
+    expect(owner).toMatch(/tabIndex=\{-1\}/);
   });
 });

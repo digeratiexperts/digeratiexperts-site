@@ -5,6 +5,7 @@ import {
   createSolution,
   findSolutionDurable,
   publicSolution,
+  SolutionOwnershipError,
   upsertSolutionDurable,
 } from "./storeSolutionStore";
 import type { SolutionLineInput } from "@shared/storeCommerce";
@@ -72,14 +73,23 @@ export function registerStoreSolutionRoutes(
     const items = parseLines(req.body?.items);
     const savedForLater = parseLines(req.body?.savedForLater);
     const name = typeof req.body?.name === "string" ? req.body.name.slice(0, 80) : undefined;
-    const solution = await upsertSolutionDurable({
-      id: typeof req.body?.id === "string" ? req.body.id : undefined,
-      sessionId,
-      userId,
-      name,
-      items,
-      savedForLater,
-    });
+    let solution;
+    try {
+      solution = await upsertSolutionDurable({
+        id: typeof req.body?.id === "string" ? req.body.id : undefined,
+        sessionId,
+        userId,
+        name,
+        items,
+        savedForLater,
+      });
+    } catch (error) {
+      if (error instanceof SolutionOwnershipError) {
+        return res.status(403).json({ code: error.code, error: "This solution is not available to this session." });
+      }
+      console.error("[store-solution] save failed:", (error as Error)?.message || error);
+      return res.status(500).json({ error: "Could not save the solution." });
+    }
     return res.json({ solution: publicSolution(solution) });
   });
 

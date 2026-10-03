@@ -10,17 +10,17 @@ export default function DPA() {
       subtitle="Version 2025.1 | Effective January 1, 2025"
       description="Digerati Experts Data Processing Agreement (DPA) covers how client data is processed and protected, including HIPAA BAA, GDPR, CCPA, and PCI DSS provisions."
       canonical="/legal/dpa"
-      icon={<Database className="h-8 w-8" />}
+      icon={<Database className="h-5 w-5" />}
     >
-      <p className="mb-6 text-lg text-white/80">
+      <p className="mb-6 text-lg text-[#3A3448]">
         Our Data Processing Agreement (DPA) governs how Digerati Experts processes and protects
         client data, including provisions for GDPR compliance, HIPAA Business Associate requirements,
         and other data protection regulations.
       </p>
 
-      <div className="mb-8 rounded border border-de-hairline border-l-4 border-l-de-accent bg-de-raised p-6">
-        <h3 className="mb-3 text-xl font-semibold text-white">DPA Covers:</h3>
-        <ul className="list-disc space-y-2 pl-6 text-white/75">
+      <div className="mb-8 rounded-lg border border-[var(--de-paper-hairline)] border-l-4 border-l-[#D3126A] bg-white p-6">
+        <h3 className="mb-3 text-xl font-semibold text-[#1A1228]">DPA Covers:</h3>
+        <ul className="list-disc space-y-2 pl-6 text-[#3A3448]">
           <li>Scope and duration of data processing activities</li>
           <li>Types of personal data processed</li>
           <li>Security measures and technical safeguards</li>
@@ -33,26 +33,26 @@ export default function DPA() {
         </ul>
       </div>
 
-      <div className="mb-8 rounded border border-de-hairline border-l-4 border-l-de-accent bg-de-raised p-6">
-        <h3 className="mb-3 text-xl font-semibold text-white">Compliance Frameworks:</h3>
-        <ul className="list-disc space-y-2 pl-6 text-white/75">
+      <div className="mb-8 rounded-lg border border-[var(--de-paper-hairline)] border-l-4 border-l-[#D3126A] bg-white p-6">
+        <h3 className="mb-3 text-xl font-semibold text-[#1A1228]">Compliance Frameworks:</h3>
+        <ul className="list-disc space-y-2 pl-6 text-[#3A3448]">
           <li>
-            <strong className="text-white">HIPAA:</strong> Business Associate Agreement provisions for Protected Health Information
+            <strong className="text-[#1A1228]">HIPAA:</strong> Business Associate Agreement provisions for Protected Health Information
           </li>
           <li>
-            <strong className="text-white">GDPR:</strong> Standard Contractual Clauses for EU data transfers
+            <strong className="text-[#1A1228]">GDPR:</strong> Standard Contractual Clauses for EU data transfers
           </li>
           <li>
-            <strong className="text-white">CCPA:</strong> Service provider obligations for California residents
+            <strong className="text-[#1A1228]">CCPA:</strong> Service provider obligations for California residents
           </li>
           <li>
-            <strong className="text-white">PCI DSS:</strong> Cardholder data processing requirements
+            <strong className="text-[#1A1228]">PCI DSS:</strong> Cardholder data processing requirements
           </li>
         </ul>
       </div>
 
-      <h2 className="mb-4 mt-8 text-2xl font-bold text-white">Request Our DPA</h2>
-      <p className="mb-6 text-white/75">
+      <h2 className="mb-4 mt-8 text-xl font-bold text-[#1A1228]">Request Our DPA</h2>
+      <p className="mb-6 text-[#3A3448]">
         To receive our Data Processing Agreement or discuss specific data protection requirements
         for your organization, please contact our legal team.
       </p>
@@ -70,7 +70,7 @@ export default function DPA() {
         </Button>
         <Button
           variant="outline"
-          className="border-white/20 text-white hover:bg-white/10"
+          className="border-black/25 text-[#1A1228] hover:bg-black/5"
           onClick={() => {
             window.location.href = PRIMARY_PHONE.telHref;
           }}

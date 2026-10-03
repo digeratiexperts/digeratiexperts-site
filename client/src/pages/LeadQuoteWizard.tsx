@@ -227,7 +227,7 @@ export default function LeadQuoteWizard() {
   return (
     <div className="min-h-screen bg-de-bg">
       <MegaMenu />
-      <main id="main-content" tabIndex={-1} className="de-nav-clear px-4 py-16 md:py-20">
+      <main id="main-content" tabIndex={-1} className="px-4 pb-16 pt-[calc(var(--de-nav-offset)+2.5rem)] md:pb-20 md:pt-[calc(var(--de-nav-offset)+3.5rem)]">
       <div className="de-paper-lift-lg mx-auto w-full max-w-2xl rounded-2xl p-6 text-[#1A1228] md:p-8">
       {/* Progress indicator */}
       <div className="flex items-center justify-between mb-8">
@@ -268,7 +268,7 @@ export default function LeadQuoteWizard() {
                         {...field}
                         onChange={(e) => field.onChange(parseInt(e.target.value))}
                         disabled={form.watch('enterpriseToggle')}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#D3126A]"
+                        className="h-11 w-full cursor-pointer accent-[#D3126A] disabled:cursor-not-allowed"
                       />
                     </FormControl>
                     <FormMessage />
@@ -280,13 +280,13 @@ export default function LeadQuoteWizard() {
                 control={form.control}
                 name="enterpriseToggle"
                 render={({ field }) => (
-                  <FormItem className="flex items-center space-x-3">
+                  <FormItem className="flex min-h-11 items-center space-x-3">
                     <FormControl>
                       <input
                         type="checkbox"
                         checked={field.value}
                         onChange={(e) => field.onChange(e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300"
+                        className="h-5 w-5 rounded border-gray-300 accent-[#A30E52]"
                       />
                     </FormControl>
                     <FormLabel className="!mt-0 text-[#1A1228]">More than 100 users? We'll tailor enterprise sizing.</FormLabel>

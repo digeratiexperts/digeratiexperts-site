@@ -1,0 +1,29 @@
+{
+  "_source": "Device object copied from the attributes example in Tailscale's API docs, https://github.com/tailscale/tailscale/blob/v1.72.0/publicapi/device.md#attributes (now https://tailscale.com/api); default field set (no enabledRoutes / advertisedRoutes / clientConnectivity, per publicapi/tailnet.md#list-tailnet-devices). Wrapped in { devices: [...] } and connectedToControl added, as the official client reads it: https://github.com/tailscale/tailscale-client-go-v2/blob/main/devices.go",
+  "devices": [
+    {
+      "addresses": ["100.87.74.78", "fd7a:115c:a1e0:ac82:4843:ca90:697d:c36e"],
+      "id": "393735751060",
+      "nodeId": "n5SUKe8CNTRL",
+      "user": "amelie@example.com",
+      "name": "pangolin.tailfe8c.ts.net",
+      "hostname": "pangolin",
+      "clientVersion": "",
+      "updateAvailable": false,
+      "os": "linux",
+      "created": "2022-12-01T05:23:30Z",
+      "lastSeen": "2022-12-01T05:23:30Z",
+      "keyExpiryDisabled": true,
+      "expires": "2023-05-30T04:44:05Z",
+      "authorized": true,
+      "isExternal": true,
+      "machineKey": "",
+      "nodeKey": "nodekey:01234567890abcdef",
+      "blocksIncomingConnections": false,
+      "tags": ["tag:golink"],
+      "tailnetLockError": "",
+      "tailnetLockKey": "",
+      "connectedToControl": false
+    }
+  ]
+}

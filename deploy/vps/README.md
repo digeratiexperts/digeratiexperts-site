@@ -89,6 +89,33 @@ Automatic deploys: either a cron entry polling `main`, or CyberPanel's Git
 Manager webhook calling the script. Choose ONE mechanism — if this script
 is the deployer, disable any competing timer/webhook.
 
+### Cloudflare cache after a deploy
+
+Cloudflare caches files that keep their names across releases, such as the
+resource PDFs, covers and fonts. After a deploy that changes one of them, the
+edge would keep serving the old copy. The CI deploy job therefore ends with
+**Purge Cloudflare cache for changed public files**
+(`.github/workflows/ci.yml`):
+
+- It reads the release being replaced from `release.txt` before deploying.
+- After the deploy verifies, it purges the URLs of every `client/public/` file
+  that changed between the two commits.
+- It purges the whole zone instead when the previous release is unknown, the
+  compare fails, or 300 or more files changed.
+- It needs two repository secrets (Settings → Secrets and variables → Actions):
+  - `CLOUDFLARE_API_TOKEN`: a custom token with **Zone → Cache Purge → Purge**,
+    zone resources **Include → Specific zone → digeratiexperts.com**.
+  - `CLOUDFLARE_ZONE_ID`: from the zone's Overview page, under API.
+- Without the secrets it logs a warning and skips. A rejected purge fails the
+  step with a message saying the deploy itself succeeded.
+
+A manual deploy (`deploy.sh` run by hand) does not purge. Purge the changed URLs
+in Cloudflare (Caching → Configuration → Custom Purge, full `https://` URLs).
+
+Also set Cloudflare **Caching → Configuration → Browser Cache TTL** to
+**Respect Existing Headers**. Otherwise Cloudflare tells browsers to keep these
+files for 31 days, overriding `server/staticCacheControl.ts`.
+
 ## One-time setup (staging)
 
 ```bash
