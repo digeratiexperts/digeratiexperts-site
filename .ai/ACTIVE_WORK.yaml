@@ -40,7 +40,7 @@ claims:
       - client/src/components/SiteBottomBar.tsx (the chooser's Close button moved last in the DOM)
       - client/src/lib/deskHints.ts, client/src/lib/deskHints.test.ts
       - client/src/components/ZohoASAPWidget.desk-shell.test.ts
-      - scripts/desk-browser-smoke.mjs, package.json (smoke:desk), .github/workflows/ci.yml (one line after smoke:door2)
+      - scripts/desk-browser-smoke.mjs, package.json (smoke:desk; tailwindcss-animate moved to devDependencies), package-lock.json (dev markers only), .github/workflows/ci.yml (one line after smoke:door2)
       - .cursor/skills/de-desk-ui/tokens-and-structure.md (a11y)
       - artifacts/visual-qa/desk-hardening/**
     status: active
@@ -54,7 +54,10 @@ claims:
       dropping to the page body on close; the chooser opening with focus on
       Close; gold-only states vanishing in forced colours. The hint rules move
       to a tested module, and a Desk browser smoke runs in CI. axe-core finds
-      no violations in any Desk state at 390 or 1440.
+      no violations in any Desk state at 390 or 1440. CI then failed every PR on
+      the production dependency audit (a new braces advisory with no patch,
+      reaching prod only via the build-time plugin tailwindcss-animate); Joe
+      chose to fold the fix into this PR: the plugin moves to devDependencies.
   - id: portal-people-pick-company
     owner: claude
     subsystem: client-portal-pages
