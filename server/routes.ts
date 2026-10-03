@@ -1,5 +1,20 @@
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { storage } from "./storage";
+import {
+  isTokenRevoked,
+  issuedBeforeCutoff,
+  cutoffNow,
+  revokeToken,
+  loadRevokedSessions,
+} from "./portalSessionRevocation";
+import {
+  issueAuthToken,
+  consumeAuthToken,
+  releaseAuthToken,
+  hasFreshAuthToken,
+  EMAIL_VERIFICATION_TTL_MS,
+  PASSWORD_RESET_TTL_MS,
+} from "./portalAuthTokens";
 import { durableMutationGate } from "./durableMutationGate";
 import { buildCompanyMetrics } from "./adminCompanyMetrics";
 import { randomBytes, randomInt, createHash, timingSafeEqual } from "crypto";
@@ -85,6 +100,7 @@ import {
   type OrgUserFields,
 } from "./portalOrg";
 import { registerPortalDepartmentRoutes } from "./portalDepartmentRoutes";
+import { registerPortalTenantFileRoutes } from "./portalTenantFileRoutes";
 import { registerPortalIntegrationStatusRoute } from "./portalIntegrations";
 import { registerManualRecordAdminRoutes } from "./portalManualRecords";
 import { registerPortalDataSourceRoutes } from "./portalDataSources";
@@ -93,7 +109,7 @@ import { registerPortalPhoneRoutes } from "./integrations/phone/routes";
 import { registerPortalShippingRoutes } from "./integrations/shipping/routes";
 import { registerPortalDeskAgentRoutes } from "./portalDeskAgentRoutes";
 import { canAccessPortalTicket } from "./portalTicketAccess";
-import { hasFreshVerificationToken } from "./portalVerificationThrottle";
+import { RESEND_COOLDOWN_MS } from "./portalVerificationThrottle";
 import {
   initPortalApprovals,
   createApprovalRequest,
@@ -275,6 +291,12 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
       (live as any).isActive === false
     ) {
       return res.status(401).json({ error: "Account disabled or revoked" });
+    }
+
+    // Server-side revocation (#242): a logged-out token, or any token issued before the
+    // user's sessions-valid-after cutoff (password reset), is dead even though its signature is fine.
+    if (isTokenRevoked(token) || issuedBeforeCutoff(decoded.iat, (live as any).sessionsValidAfter)) {
+      return res.status(401).json({ error: "Session ended. Please log in again." });
     }
 
     // JWT proves the session; the live Portal record is authoritative for
@@ -566,6 +588,7 @@ export async function registerRoutes(app: Express) {
   registerObjectStorageRoutes(app, {
     auth: authMiddleware,
     admin: requireAdmin,
+    // findTenantFileByFileUrl only answers for a live (not soft-deleted) row (#259).
     resolveTenantOwnerClientId: async (objectPath) => {
       const file = await storage.findTenantFileByFileUrl(objectPath);
       return file?.clientId ?? null;
@@ -688,6 +711,7 @@ export async function registerRoutes(app: Express) {
 
   // Durable portal auth (Neon) — Map-compatible shim for existing handlers
   await initPortalAuthStore();
+  await loadRevokedSessions();
   await initPortalOrg();
   await initPortalApprovals();
   await initPortalChatStore();
@@ -2057,21 +2081,7 @@ export async function registerRoutes(app: Express) {
   // Note: portalUsers / portalClients are durable via portalAuthStore (initialized above)
   // sessionStore is module-level for authMiddleware access
   
-  // Email verification tokens storage
-  const emailVerificationTokens = new Map<string, { 
-    email: string; 
-    userId: string; 
-    createdAt: number;
-    expiresAt: number;
-  }>();
-
-  // Password reset tokens storage
-  const passwordResetTokens = new Map<string, {
-    email: string;
-    userId: string;
-    createdAt: number;
-    expiresAt: number;
-  }>();
+  // Email verification and password-reset tokens are durable and hashed (server/portalAuthTokens.ts, #251).
 
   // MFA pending challenges — stores temporary MFA session tokens during login
   const mfaChallenges = new Map<string, {
@@ -2135,26 +2145,30 @@ export async function registerRoutes(app: Express) {
       // Reload after client link
       const saved = portalUsers.get(email) || newUser;
 
-      // Generate email verification token
-      const verificationToken = randomId();
-      const now = Date.now();
-      const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-      
-      emailVerificationTokens.set(verificationToken, {
-        email: saved.email,
-        userId: saved.id,
-        createdAt: now,
-        expiresAt: now + TWENTY_FOUR_HOURS,
-      });
+      // Generate email verification token (durable, hashed). The account is already
+      // committed; if the token cannot be stored the user can request a new link.
+      let verificationToken: string | null = null;
+      try {
+        verificationToken = await issueAuthToken({
+          purpose: "email_verification",
+          userId: saved.id,
+          email: saved.email,
+          ttlMs: EMAIL_VERIFICATION_TTL_MS,
+        });
+      } catch (tokenError) {
+        logger.warn("Could not store verification token at registration", { error: String((tokenError as Error)?.message || tokenError) });
+      }
 
       // Send email verification
       const baseUrl = process.env.APP_URL || "https://digeratiexperts.com";
-      const verificationLink = `${baseUrl}/api/portal/verify-email?token=${verificationToken}`;
-      notificationService.sendEmailVerification({
-        email: saved.email,
-        name: saved.fullName,
-        verificationLink,
-      }).catch(err => logger.warn("Failed to send verification email", err));
+      if (verificationToken) {
+        const verificationLink = `${baseUrl}/api/portal/verify-email?token=${verificationToken}`;
+        notificationService.sendEmailVerification({
+          email: saved.email,
+          name: saved.fullName,
+          verificationLink,
+        }).catch(err => logger.warn("Failed to send verification email", err));
+      }
 
       logSecurityEvent("PORTAL_USER_REGISTERED", req, {
         userId: saved.id,
@@ -2195,31 +2209,29 @@ export async function registerRoutes(app: Express) {
         return res.redirect('/portal/login?error=invalid_token&message=Invalid verification link');
       }
 
-      // Check if token exists
-      const tokenData = emailVerificationTokens.get(token);
-      if (!tokenData) {
-        return res.redirect('/portal/login?error=invalid_token&message=Verification link is invalid or has already been used');
+      // Single-use, atomic: a second click (or a replay) finds the token consumed.
+      const consumed = await consumeAuthToken("email_verification", token);
+      if (!consumed.ok) {
+        return consumed.reason === "expired"
+          ? res.redirect('/portal/login?error=expired_token&message=Verification link has expired. Please request a new one.')
+          : res.redirect('/portal/login?error=invalid_token&message=Verification link is invalid or has already been used');
       }
-
-      // Check if token has expired
-      if (Date.now() > tokenData.expiresAt) {
-        emailVerificationTokens.delete(token);
-        return res.redirect('/portal/login?error=expired_token&message=Verification link has expired. Please request a new one.');
-      }
+      const tokenData = { email: consumed.email };
 
       // Find and update user
       const user = portalUsers.get(tokenData.email);
       if (!user) {
-        emailVerificationTokens.delete(token);
         return res.redirect('/portal/login?error=user_not_found&message=User not found');
       }
 
-      // Mark user as verified
+      // Mark user as verified. If the durable write fails the link is released so the user can retry it.
       user.emailVerified = true;
-      await portalUsers.commit(user);
-
-      // Clear the token
-      emailVerificationTokens.delete(token);
+      try {
+        await portalUsers.commit(user);
+      } catch (commitError) {
+        await releaseAuthToken(consumed.id).catch(() => undefined);
+        throw commitError;
+      }
 
       logSecurityEvent("EMAIL_VERIFIED", req, { userId: user.id, email: tokenData.email });
 
@@ -2255,27 +2267,16 @@ export async function registerRoutes(app: Express) {
 
       // Per-email cooldown: if a link was just sent, do not mint and send another,
       // so the inbox cannot be flooded by a caller rotating IPs past the rate limit.
-      if (hasFreshVerificationToken(emailVerificationTokens.values(), email, Date.now())) {
+      if (await hasFreshAuthToken("email_verification", user.email, RESEND_COOLDOWN_MS)) {
         return genericOk();
       }
 
-      // Delete any existing tokens for this user
-      Array.from(emailVerificationTokens.entries()).forEach(([token, data]) => {
-        if (data.email === email) {
-          emailVerificationTokens.delete(token);
-        }
-      });
-
-      // Generate new verification token
-      const verificationToken = randomId();
-      const now = Date.now();
-      const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-      
-      emailVerificationTokens.set(verificationToken, {
-        email: user.email,
+      // Issuing revokes any older unused verification token for this user.
+      const verificationToken = await issueAuthToken({
+        purpose: "email_verification",
         userId: user.id,
-        createdAt: now,
-        expiresAt: now + TWENTY_FOUR_HOURS,
+        email: user.email,
+        ttlMs: EMAIL_VERIFICATION_TTL_MS,
       });
 
       // Send verification email
@@ -2291,6 +2292,7 @@ export async function registerRoutes(app: Express) {
 
       return genericOk();
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       console.error("[ERROR] Resend verification failed:", error);
       res.status(500).json({ message: "Failed to resend verification email" });
     }
@@ -2307,15 +2309,13 @@ export async function registerRoutes(app: Express) {
       const user = portalUsers.get(email);
       if (!user) return res.json(SAFE_RESPONSE);
 
-      // Invalidate any existing reset tokens for this user
-      Array.from(passwordResetTokens.entries()).forEach(([tok, data]) => {
-        if (data.email === email) passwordResetTokens.delete(tok);
+      // Issuing revokes any older unused reset token for this user.
+      const resetToken = await issueAuthToken({
+        purpose: "password_reset",
+        userId: user.id,
+        email: user.email,
+        ttlMs: PASSWORD_RESET_TTL_MS,
       });
-
-      const resetToken = randomId();
-      const ONE_HOUR = 60 * 60 * 1000;
-      const now = Date.now();
-      passwordResetTokens.set(resetToken, { email, userId: user.id, createdAt: now, expiresAt: now + ONE_HOUR });
 
       const baseUrl = process.env.APP_URL || "https://digeratiexperts.com";
       const resetLink = `${baseUrl}/portal/reset-password?token=${resetToken}`;
@@ -2325,6 +2325,7 @@ export async function registerRoutes(app: Express) {
       logSecurityEvent("PASSWORD_RESET_REQUESTED", req, { email });
       return res.json(SAFE_RESPONSE);
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       logger.error("Forgot password failed", error);
       return res.status(500).json({ message: "Request failed" });
     }
@@ -2336,22 +2337,34 @@ export async function registerRoutes(app: Express) {
       const { token, password } = req.body;
       if (!token || !password) return res.status(400).json({ message: "Token and new password are required" });
 
-      const tokenData = passwordResetTokens.get(token);
-      if (!tokenData || Date.now() > tokenData.expiresAt) {
-        return res.status(400).json({ message: "Reset link is invalid or has expired. Please request a new one." });
-      }
-
+      // Policy first, so a weak password does not burn the link.
       if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
         return res.status(400).json({ message: "Password must be at least 8 characters with 1 uppercase letter and 1 number" });
       }
+
+      // Single-use, atomic consume; released again if the new password cannot be saved.
+      const consumed = await consumeAuthToken("password_reset", token);
+      if (!consumed.ok) {
+        return res.status(400).json({ message: "Reset link is invalid or has expired. Please request a new one." });
+      }
+      const tokenData = { email: consumed.email };
 
       const user = portalUsers.get(tokenData.email);
       if (!user) return res.status(400).json({ message: "Account not found" });
 
       const bcrypt = await import('bcrypt');
       user.password = await bcrypt.hash(password, 12);
-      await portalUsers.commit(user);
-      passwordResetTokens.delete(token);
+      // Sign the account out everywhere: every token issued before this instant is rejected (#242).
+      (user as any).sessionsValidAfter = cutoffNow();
+      try {
+        await portalUsers.commit(user);
+      } catch (commitError) {
+        await releaseAuthToken(consumed.id).catch(() => undefined);
+        throw commitError;
+      }
+      for (const [sid, session] of Array.from(sessionStore.entries())) {
+        if (session.userId === user.id) sessionStore.delete(sid);
+      }
 
       logSecurityEvent("PASSWORD_RESET_COMPLETED", req, { email: tokenData.email });
       return res.json({ success: true, message: "Password updated successfully. You can now log in." });
@@ -2825,10 +2838,46 @@ export async function registerRoutes(app: Express) {
         logSecurityEvent("SESSION_TERMINATED", req, { sessionId });
       }
 
+      // Revoke every token this request presents (cookie and Bearer) server-side (#242).
+      // A copied token is dead after this, not just removed from this browser.
+      const authHeader = req.headers.authorization;
+      const presented = new Set<string>();
+      if (typeof req.cookies?.[PORTAL_AUTH_COOKIE] === "string" && req.cookies[PORTAL_AUTH_COOKIE]) {
+        presented.add(req.cookies[PORTAL_AUTH_COOKIE]);
+      }
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const bearer = authHeader.slice("Bearer ".length).trim();
+        if (bearer) presented.add(bearer);
+      }
+      let revocationDurable = true;
+      let revokedUserId: string | null = null;
+      for (const token of presented) {
+        // Only a validly signed, unexpired token is worth recording; anything else is already dead.
+        let decoded: JWTPayload | null = null;
+        try {
+          decoded = jwt.verify(token, jwtSecret()) as JWTPayload;
+        } catch {
+          continue;
+        }
+        revokedUserId = decoded.userId || revokedUserId;
+        try {
+          await revokeToken(token, { userId: decoded.userId, expiresAtSec: decoded.exp });
+        } catch {
+          revocationDurable = false;
+        }
+      }
+
       clearPortalAuthCookies(res);
 
-      logSecurityEvent("PORTAL_USER_LOGOUT", req, { userId: req.user?.id || "unknown" });
+      logSecurityEvent("PORTAL_USER_LOGOUT", req, { userId: req.user?.id || revokedUserId || "unknown" });
 
+      if (!revocationDurable) {
+        // Signed out here and revoked in this process, but not recorded durably: say so.
+        return res.status(503).json({
+          code: "PERSISTENCE_UNAVAILABLE",
+          message: "You were signed out on this device, but we could not confirm the session was revoked everywhere.",
+        });
+      }
       return res.json({ success: true, message: "Logged out successfully" });
     } catch (error: any) {
       console.error("[ERROR] Portal logout failed:", error);
@@ -4504,106 +4553,15 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Get tenant-specific files for a company (admin only)
-  app.get("/api/portal/admin/companies/:id/files", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const company = portalClients.get(req.params.id);
-      if (!company) {
-        return res.status(404).json({ error: "Company not found" });
-      }
-      
-      // Get tenant files from storage - scoped to this company
-      const tenantFiles = await storage.getTenantFilesByClientId(req.params.id);
-      
-      res.json({ files: tenantFiles });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Get files for current user's company (regular users + admin impersonation)
-  app.get("/api/portal/my-files", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      let clientId: string | null = null;
-      let companyName: string = "";
-      
-      // Check if admin is impersonating a company
-      const impersonatingCompanyId = (req.user as any)?.impersonatingCompanyId;
-      if (impersonatingCompanyId) {
-        const company = portalClients.get(impersonatingCompanyId);
-        if (company) {
-          clientId = impersonatingCompanyId;
-          companyName = company.companyName;
-        }
-      } else {
-        // Regular user - get their company
-        const user = portalUsers.get(req.user?.email || "");
-        if (user && user.clientId) {
-          const company = portalClients.get(user.clientId);
-          if (company) {
-            clientId = user.clientId;
-            companyName = company.companyName;
-          }
-        }
-      }
-      
-      if (!clientId) {
-        return res.json({ files: [], companyName: "Your Company" });
-      }
-      
-      // Get tenant files from storage
-      const tenantFiles = await storage.getTenantFilesByClientId(clientId);
-      
-      res.json({ files: tenantFiles, companyName });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Upload file for a tenant (admin only)
-  app.post("/api/portal/admin/companies/:id/files", [authMiddleware, requireAdmin, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const company = portalClients.get(req.params.id);
-      if (!company) {
-        return res.status(404).json({ error: "Company not found" });
-      }
-      
-      const { fileName, fileType, category, description, objectPath } = req.body;
-      
-      if (!fileName || !objectPath) {
-        return res.status(400).json({ error: "fileName and objectPath are required" });
-      }
-      
-      const tenantFile = await storage.createTenantFile({
-        clientId: req.params.id,
-        fileName,
-        fileType: fileType || "document",
-        category: category || "general",
-        description: description || "",
-        fileUrl: objectPath,
-        uploadedBy: req.userId || "",
-      });
-      
-      res.json({ success: true, file: tenantFile });
-      logSecurityEvent("TENANT_FILE_UPLOADED", req, { companyId: req.params.id, fileName });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Delete tenant file (admin only)
-  app.delete("/api/portal/admin/companies/:companyId/files/:fileId", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const deleted = await storage.deleteTenantFile(req.params.fileId);
-      if (!deleted) {
-        return res.status(404).json({ error: "File not found" });
-      }
-      
-      res.json({ success: true });
-      logSecurityEvent("TENANT_FILE_DELETED", req, { companyId: req.params.companyId, fileId: req.params.fileId });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
+  // Tenant file list/upload/delete + my-files (server/portalTenantFileRoutes.ts, #259).
+  registerPortalTenantFileRoutes(app, {
+    auth: authMiddleware as any,
+    admin: requireAdmin as any,
+    validateInput: validateInput as any,
+    storage,
+    getCompany: (id) => portalClients.get(id),
+    getUserByEmail: (email) => portalUsers.get(email),
+    logSecurityEvent,
   });
 
   // Get company metrics/stats (admin only)

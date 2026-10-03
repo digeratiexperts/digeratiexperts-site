@@ -131,7 +131,7 @@ describe("object storage routes enforce the current tenant-file ACL (#237)", () 
     getObjectEntityFile.mockReset().mockResolvedValue({ name: "uploads/a-secret.pdf" });
     canAccessObjectEntity.mockReset().mockResolvedValue(false);
     downloadObject.mockReset().mockImplementation(async (_f: unknown, res: any) => res.status(200).send("BYTES"));
-    for (const f of await storage.getTenantFilesByClientId("client-a")) await storage.deleteTenantFile(f.id);
+    for (const f of await storage.getTenantFilesByClientId("client-a")) await storage.deleteTenantFile(f.id, "client-a");
     const f = await storage.createTenantFile({
       clientId: "client-a", fileName: "a.pdf", fileType: "document", category: "documentation",
       description: "", fileUrl: OBJ, uploadedBy: "admin-1",
@@ -171,7 +171,7 @@ describe("object storage routes enforce the current tenant-file ACL (#237)", () 
   });
 
   it("refuses the former owner once the tenant file record is deleted", async () => {
-    expect(await storage.deleteTenantFile(fileId)).toBe(true);
+    expect(await storage.deleteTenantFile(fileId, "client-a")).toBe(true);
     expect(await storage.findTenantFileByFileUrl(OBJ)).toBeUndefined();
     const r = await fetch(base + OBJ);
     expect(r.status).toBe(403);

@@ -347,8 +347,18 @@ export const portalUsers = pgTable("portal_users", {
   mfaTotpSecret: text("mfa_totp_secret"),
   mfaBackupCodes: jsonb("mfa_backup_codes").$type<string[]>().default([]),
   lastLogin: timestamp("last_login"),
+  /** Tokens issued before this instant are no longer valid (password reset, "sign out everywhere") (#242). */
+  sessionsValidAfter: timestamp("sessions_valid_after"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+/** Individually revoked portal tokens (logout). Keyed by SHA-256 of the token; rows expire with the token (#242). */
+export const portalRevokedSessions = pgTable("portal_revoked_sessions", {
+  tokenHash: varchar("token_hash").primaryKey(),
+  userId: varchar("user_id"),
+  revokedAt: timestamp("revoked_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
 });
 
 export const portalApprovalRequests = pgTable("portal_approval_requests", {
@@ -390,6 +400,23 @@ export const portalApprovalSteps = pgTable("portal_approval_steps", {
 });
 
 /** Service order form submissions from /portal/order-form */
+/**
+ * One-way hashed, single-use email-verification and password-reset tokens (#251).
+ * The raw token only ever exists in the emailed link; the database holds its
+ * SHA-256, so a restart or deploy does not invalidate an outstanding link.
+ */
+export const portalAuthTokens = pgTable("portal_auth_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  purpose: text("purpose").notNull(), // email_verification | password_reset
+  tokenHash: text("token_hash").notNull().unique(),
+  userId: varchar("user_id").notNull().references(() => portalUsers.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  consumedAt: timestamp("consumed_at"),
+  revokedAt: timestamp("revoked_at"),
+});
+
 export const portalOrderForms = pgTable("portal_order_forms", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => portalUsers.id, { onDelete: "set null" }),
@@ -1090,6 +1117,9 @@ export const portalTenantFiles = pgTable("portal_tenant_files", {
   uploadedBy: varchar("uploaded_by").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  // Soft delete (#259): the row keeps the object path so a blob is never orphaned silently.
+  deletedAt: timestamp("deleted_at"),
+  deletedBy: varchar("deleted_by"),
 });
 
 // Insert schema for tenant files
