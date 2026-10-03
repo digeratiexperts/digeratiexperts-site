@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
-import { MegaMenu } from "@/components/MegaMenu";
-import { DigeratiEnhancedFooterSection } from "./sections/DigeratiEnhancedFooterSection";
-import { Button } from "@/components/ui/button";
+import { PageTemplate } from "@/components/PageTemplate";
+import { Chapter, Container, ClosingCta, HeroActions, cardDark, buttonSecondary } from "@/components/site/chapters";
+import { cn } from "@/lib/utils";
 import { 
   ChevronDown, ChevronUp, Shield, Server, Users, 
   Monitor, Cloud, Key, Settings, HardDrive,
@@ -151,7 +150,6 @@ const tiers = [
 ];
 
 const EcosystemPricing = () => {
-  const prefersReducedMotion = useReducedMotion();
   const [expandedCategories, setExpandedCategories] = useState<string[]>(
     serviceCategories.map(c => c.id)
   );
@@ -211,229 +209,162 @@ const EcosystemPricing = () => {
     );
   };
 
-  const containerVariants = prefersReducedMotion ? undefined : {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.05 }
-    }
-  };
-
-  const itemVariants = prefersReducedMotion ? undefined : {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
+  const ctrl =
+    "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]";
+  const ctrlIdle = "border-de-hairline bg-de-raised text-white hover:border-white/30";
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
-      <MegaMenu />
-      
-      <main className="relative z-10 de-nav-clear pb-16">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Hero */}
-          <motion.div
-            className="text-center mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-de-raised border border-de-hairline text-de-magenta-ink text-sm font-medium mb-4">
-              <Shield className="w-4 h-4" />
-              <span>Security-First IT Bundles</span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4" data-testid="heading-ecosystem-pricing">
-              Digerati Experts — Service Matrix
-            </h1>
-            <p className="text-white/60 text-lg max-w-2xl mx-auto mb-6">
-              Compare tiers · Explore capabilities · Find your fit
-            </p>
-            
-            {/* Legend */}
-            <div className="flex flex-wrap justify-center gap-6 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#D3126A]"></span>
-                <span className="text-white/60">Included / ✓</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-de-magenta"></span>
-                <span className="text-white/60">Premium / Pro</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-white/20"></span>
-                <span className="text-white/60">Not included</span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Controls */}
-          <div className="flex flex-wrap justify-center gap-3 mb-8">
-            <Button
-              size="sm"
+    <PageTemplate
+      layout="chapters"
+      eyebrow="Security-First IT Bundles"
+      title="Digerati Experts — Service Matrix"
+      subtitle="Compare tiers · Explore capabilities · Find your fit"
+      showBackButton={false}
+      actions={
+        <div data-testid="heading-ecosystem-pricing">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <HeroActions
+              primary={{ label: "Get My Cyber Risk Assessment", href: "/book" }}
+              secondary={{ label: "Compare Packages", href: "/proactive-ecosystem-pricing" }}
+            />
+          </div>
+          <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/70" aria-label="Legend">
+            <li className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-[#D3126A]" aria-hidden="true" />
+              Included / ✓
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-de-magenta" aria-hidden="true" />
+              Premium / Pro
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-white/25" aria-hidden="true" />
+              Not included
+            </li>
+          </ul>
+        </div>
+      }
+    >
+      <Chapter tone="well" seam={false}>
+        <Container>
+          <div className="mb-8 flex flex-wrap gap-3">
+            <button
+              type="button"
               onClick={() => setHighlightUpgrades(!highlightUpgrades)}
-              className={highlightUpgrades 
-                ? "bg-de-magenta hover:bg-de-magenta text-white" 
-                : "bg-white/10 border border-white/20 text-white hover:bg-white/20"}
+              aria-pressed={highlightUpgrades}
+              className={cn(ctrl, highlightUpgrades ? "border-[#D3126A] bg-[#D3126A] text-white" : ctrlIdle)}
               data-testid="btn-highlight-upgrades"
             >
-              <Star className="w-4 h-4 mr-2" />
+              <Star className="h-4 w-4" aria-hidden="true" />
               Highlight upgrades
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => setExpandedCategories(serviceCategories.map(c => c.id))}
-              className="bg-white/10 border border-white/20 text-white hover:bg-white/20"
+            </button>
+            <button
+              type="button"
+              onClick={() => setExpandedCategories(serviceCategories.map((c) => c.id))}
+              className={cn(ctrl, ctrlIdle)}
               data-testid="btn-expand-all"
             >
               Expand All
-            </Button>
-            <Button
-              size="sm"
+            </button>
+            <button
+              type="button"
               onClick={() => setExpandedCategories([])}
-              className="bg-white/10 border border-white/20 text-white hover:bg-white/20"
+              className={cn(ctrl, ctrlIdle)}
               data-testid="btn-collapse-all"
             >
               Collapse All
-            </Button>
+            </button>
           </div>
 
-          {/* Tier Headers - Sticky */}
-          <div className="sticky top-16 z-20 bg-de-bg border-b border-de-hairline mb-6 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-            <div className="max-w-[1600px] mx-auto">
-              <div className="grid grid-cols-5 gap-2 py-4">
-                <div className="text-white/55 text-sm font-medium flex items-center">
-                  Capability
+          {/* Tier headers — sticky */}
+          <div className="sticky top-16 z-20 mb-6 border-b border-de-hairline bg-[var(--de-bg)]">
+            <div className="grid grid-cols-5 gap-2 py-4">
+              <div className="flex items-center text-sm font-medium text-white/65">Capability</div>
+              {tiers.map((tier) => (
+                <div
+                  key={tier.id}
+                  className={`rounded-xl border p-3 text-center ${tier.borderColor} bg-de-raised`}
+                  data-testid={`tier-header-${tier.id}`}
+                >
+                  <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-de-magenta-ink">{tier.ribbon}</div>
+                  <h2 className="text-sm font-bold text-white md:text-base">{tier.name}</h2>
+                  <p className="text-xs text-white/65">{tier.subtitle}</p>
                 </div>
-                {tiers.map((tier, index) => (
-                  <div 
-                    key={tier.id}
-                    className={`text-center p-3 rounded-xl border ${tier.borderColor} bg-de-raised`}
-                    data-testid={`tier-header-${tier.id}`}
-                  >
-                    <div className={`text-xs font-semibold text-de-magenta-ink uppercase tracking-wide mb-1`}>
-                      {tier.ribbon}
-                    </div>
-                    <h3 className="text-white font-bold text-sm md:text-base">{tier.name}</h3>
-                    <p className="text-white/50 text-xs">{tier.subtitle}</p>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* Service Categories */}
-          <motion.div
-            className="space-y-4"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
+          <div className="space-y-4">
             {serviceCategories.map((category) => {
               const isExpanded = expandedCategories.includes(category.id);
-              
               return (
-                <motion.div
-                  key={category.id}
-                  className="rounded-xl border border-white/10 overflow-hidden"
-                  style={{
-                    background: 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))'
-                  }}
-                  variants={itemVariants}
-                  data-testid={`category-${category.id}`}
-                >
-                  {/* Category Header */}
+                <div key={category.id} className={cn(cardDark, "overflow-hidden")} data-testid={`category-${category.id}`}>
                   <button
+                    type="button"
                     onClick={() => toggleCategory(category.id)}
-                    className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors"
+                    aria-expanded={isExpanded}
+                    className="flex min-h-14 w-full items-center justify-between p-4 text-left transition-colors hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ec4899]"
                     data-testid={`btn-toggle-${category.id}`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-de-raised flex items-center justify-center text-de-magenta-ink">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-de-bg text-de-magenta-ink">
                         {category.icon}
                       </div>
-                      <span className="text-white font-bold text-lg">{category.title}</span>
-                      <span className="text-white/55 text-sm">({category.rows.length})</span>
+                      <span className="font-heading text-lg font-semibold text-white">{category.title}</span>
+                      <span className="text-sm text-white/65">({category.rows.length})</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {isExpanded ? (
-                        <ChevronUp className="w-5 h-5 text-white/55" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5 text-white/55" />
-                      )}
-                    </div>
+                    {isExpanded ? (
+                      <ChevronUp className="h-5 w-5 text-white/65" aria-hidden="true" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-white/65" aria-hidden="true" />
+                    )}
                   </button>
 
-                  {/* Category Rows */}
                   {isExpanded && (
-                    <div className="border-t border-white/10">
+                    <div className="border-t border-[var(--de-hairline)]">
                       {category.rows.map((row, rowIndex) => (
                         <div
                           key={rowIndex}
-                          className={`grid grid-cols-5 gap-2 p-3 ${
-                            rowIndex % 2 === 0 ? 'bg-white/[0.01]' : 'bg-transparent'
-                          } hover:bg-white/[0.03] transition-colors`}
+                          className="grid grid-cols-5 gap-2 border-t border-[var(--de-hairline)] p-3 first:border-t-0 hover:bg-white/[0.03]"
                           data-testid={`row-${category.id}-${rowIndex}`}
                         >
-                          <div className="text-white/80 text-sm flex items-center">
-                            {row.capability}
-                          </div>
-                          <div className="text-center flex items-center justify-center">
-                            {renderCellValue(row.essentials, 0)}
-                          </div>
-                          <div className="text-center flex items-center justify-center">
-                            {renderCellValue(row.office, 1)}
-                          </div>
-                          <div className={`text-center flex items-center justify-center ${
-                            highlightUpgrades && row.business !== row.office ? 'bg-[#D3126A]/10 rounded-lg' : ''
-                          }`}>
+                          <div className="flex items-center text-sm text-white/85">{row.capability}</div>
+                          <div className="flex items-center justify-center text-center">{renderCellValue(row.essentials, 0)}</div>
+                          <div className="flex items-center justify-center text-center">{renderCellValue(row.office, 1)}</div>
+                          <div
+                            className={`flex items-center justify-center text-center ${
+                              highlightUpgrades && row.business !== row.office ? "rounded-lg bg-[#D3126A]/15" : ""
+                            }`}
+                          >
                             {renderCellValue(row.business, 2)}
                           </div>
-                          <div className={`text-center flex items-center justify-center ${
-                            highlightUpgrades && row.enterprise !== row.business ? 'bg-[#D3126A]/10 rounded-lg' : ''
-                          }`}>
+                          <div
+                            className={`flex items-center justify-center text-center ${
+                              highlightUpgrades && row.enterprise !== row.business ? "rounded-lg bg-[#D3126A]/15" : ""
+                            }`}
+                          >
                             {renderCellValue(row.enterprise, 3)}
                           </div>
                         </div>
                       ))}
                     </div>
                   )}
-                </motion.div>
+                </div>
               );
             })}
-          </motion.div>
+          </div>
+        </Container>
+      </Chapter>
 
-          {/* Pricing Note */}
-          <motion.div
-            className="mt-8 p-6 rounded-xl border border-de-hairline bg-de-raised text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            <p className="text-white/50 text-sm mb-4">
-              * Pricing shown is per-user/month. Minimum user counts and site fees may apply. 
-              Contact us for a custom quote based on your specific requirements.
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Button asChild variant="brand" data-testid="btn-book-call">
-                  <a href="/book">
-                    Get My Cyber Risk Assessment
-                  </a>
-                </Button>
-              <Button asChild 
-                  variant="outline"
-                  className="border-de-hairline bg-transparent text-white hover:bg-de-bg"
-                  data-testid="btn-compare-packages"
-                >
-                  <a href="/proactive-ecosystem-pricing">
-                    Compare Packages
-                  </a>
-                </Button>
-            </div>
-          </motion.div>
-        </div>
-      </main>
-
-      <DigeratiEnhancedFooterSection />
-    </div>
+      <ClosingCta
+        tone="surface"
+        eyebrow="Pricing note"
+        title="Find the fit, then confirm the price"
+        lede="* Pricing shown is per-user/month. Minimum user counts and site fees may apply. Contact us for a custom quote based on your specific requirements."
+        primary={{ label: "Get My Cyber Risk Assessment", href: "/book", testId: "btn-book-call" }}
+        secondary={{ label: "Compare Packages", href: "/proactive-ecosystem-pricing", testId: "btn-compare-packages" }}
+      />
+    </PageTemplate>
   );
 };
 

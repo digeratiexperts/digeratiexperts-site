@@ -1,0 +1,116 @@
+{
+  "_source": "https://github.com/UPS-API/api-documentation/blob/main/Tracking.yaml (GET /api/track/v1/details/{inquiryNumber}, schema TrackApiResponse; rendered at https://developer.ups.com/api/reference/tracking)",
+  "_note": "The spec publishes no whole example response, only per-field examples. 'documentedExamples' assembles exactly those field examples (inquiryNumber, Activity, Address, Status, Service, packageCount...) into the TrackApiResponse shape; note the spec's own examples pair status type 'X' with simplifiedTextDescription 'Delivered'. 'delivered' and 'manifest' reuse the same shape with values changed by us (type D plus a DEL deliveryDate; type M with no activity). developer.ups.com was blocked by the build machine's egress proxy.",
+  "documentedExamples": {
+    "trackResponse": {
+      "shipment": [
+        {
+          "inquiryNumber": "1Z023E2X0214323462",
+          "package": [
+            {
+              "trackingNumber": "1Z023E2X0214323462",
+              "packageCount": 2,
+              "service": { "code": "518", "description": "UPS Ground", "levelCode": "011" },
+              "currentStatus": {
+                "code": "SR",
+                "description": "Your package was released by the customs agency.",
+                "simplifiedTextDescription": "Delivered",
+                "statusCode": "003",
+                "type": "X"
+              },
+              "activity": [
+                {
+                  "date": "20210210",
+                  "time": "071356",
+                  "gmtDate": "20210210",
+                  "gmtOffset": "-05:00",
+                  "gmtTime": "74700",
+                  "location": {
+                    "address": {
+                      "addressLine1": "100 Main St",
+                      "addressLine2": "Warehouse",
+                      "addressLine3": "Building 1",
+                      "city": "Wayne",
+                      "country": "US",
+                      "countryCode": "US",
+                      "postalCode": "07470",
+                      "stateProvince": "NJ"
+                    },
+                    "slic": "8566"
+                  },
+                  "status": {
+                    "code": "SR",
+                    "description": "Your package was released by the customs agency.",
+                    "simplifiedTextDescription": "Delivered",
+                    "statusCode": "003",
+                    "type": "X"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "delivered": {
+    "trackResponse": {
+      "shipment": [
+        {
+          "inquiryNumber": "1Z023E2X0214323462",
+          "package": [
+            {
+              "trackingNumber": "1Z023E2X0214323462",
+              "currentStatus": { "code": "011", "description": "Delivered", "type": "D" },
+              "deliveryDate": [{ "type": "DEL", "date": "20210212" }],
+              "deliveryTime": { "type": "DEL", "endTime": "141500" },
+              "deliveryInformation": { "location": "Front Door", "receivedBy": "" },
+              "activity": [
+                {
+                  "date": "20210212",
+                  "time": "141500",
+                  "gmtOffset": "-05:00",
+                  "location": { "address": { "city": "Wayne", "stateProvince": "NJ", "postalCode": "07470", "countryCode": "US" } },
+                  "status": { "code": "FS", "description": "Delivered", "type": "D" }
+                },
+                {
+                  "date": "20210212",
+                  "time": "081000",
+                  "gmtOffset": "-05:00",
+                  "location": { "address": { "city": "Parsippany", "stateProvince": "NJ", "countryCode": "US" } },
+                  "status": { "code": "OT", "description": "Out For Delivery Today", "type": "I" }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "manifest": {
+    "trackResponse": {
+      "shipment": [
+        {
+          "inquiryNumber": "1Z023E2X0214323462",
+          "package": [
+            {
+              "trackingNumber": "1Z023E2X0214323462",
+              "currentStatus": { "code": "MP", "description": "Shipper created a label, UPS has not received the package yet.", "type": "M" }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "tokenResponse": {
+    "_source": "https://github.com/UPS-API/api-documentation/blob/main/OAuthClientCredentials.yaml (tokenSuccessResponse; expires_in is a string of seconds)",
+    "token_type": "Bearer",
+    "issued_at": "1700000000000",
+    "client_id": "example-client-id",
+    "access_token": "ups-access-token-1",
+    "scope": "",
+    "expires_in": "14399",
+    "refresh_count": "0",
+    "status": "approved"
+  }
+}

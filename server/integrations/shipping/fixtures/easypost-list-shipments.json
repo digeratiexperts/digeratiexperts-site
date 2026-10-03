@@ -1,0 +1,81 @@
+{
+  "_source": "https://docs.easypost.com/docs/shipments#retrieve-all-shipments and https://docs.easypost.com/docs/trackers#tracker-object",
+  "_note": "Shaped on the documented { shipments[], has_more } list response; field names from the official @easypost/api 8.9.0 SDK types (types/Shipment/Shipment.d.ts, types/Tracker/Tracker.d.ts), which cite the pages above. docs.easypost.com was blocked by the build machine's egress proxy, so the values are not a byte copy of the docs example. The third row is refunded.",
+  "response": {
+    "shipments": [
+      {
+        "id": "shp_aaa111",
+        "object": "Shipment",
+        "mode": "production",
+        "reference": "ACME-1001",
+        "created_at": "2026-09-30T15:00:00Z",
+        "updated_at": "2026-10-01T15:00:00Z",
+        "status": "in_transit",
+        "tracking_code": "9400100000000000000001",
+        "refund_status": null,
+        "is_return": false,
+        "selected_rate": { "id": "rate_1", "object": "Rate", "carrier": "USPS", "service": "Priority" },
+        "tracker": {
+          "id": "trk_aaa111",
+          "object": "Tracker",
+          "mode": "production",
+          "tracking_code": "9400100000000000000001",
+          "status": "in_transit",
+          "status_detail": "arrived_at_facility",
+          "carrier": "USPS",
+          "public_url": "https://track.easypost.com/djE6dHJrX2FhYTExMQ",
+          "tracking_details": [
+            { "object": "TrackingDetail", "status": "pre_transit", "datetime": "2026-09-30T15:00:00Z", "message": "Pre-Shipment Info Sent to USPS" },
+            { "object": "TrackingDetail", "status": "in_transit", "datetime": "2026-10-01T09:00:00Z", "message": "Arrived at USPS Facility" }
+          ],
+          "created_at": "2026-09-30T15:00:00Z",
+          "updated_at": "2026-10-01T09:00:00Z"
+        }
+      },
+      {
+        "id": "shp_bbb222",
+        "object": "Shipment",
+        "mode": "production",
+        "reference": "ACME-1000",
+        "created_at": "2026-09-20T15:00:00Z",
+        "updated_at": "2026-09-23T15:00:00Z",
+        "status": "delivered",
+        "tracking_code": "1Z0000000000000002",
+        "refund_status": null,
+        "is_return": false,
+        "selected_rate": { "id": "rate_2", "object": "Rate", "carrier": "UPS", "service": "Ground" },
+        "tracker": {
+          "id": "trk_bbb222",
+          "object": "Tracker",
+          "mode": "production",
+          "tracking_code": "1Z0000000000000002",
+          "status": "delivered",
+          "status_detail": "arrived_at_destination",
+          "carrier": "UPS",
+          "public_url": "https://track.easypost.com/djE6dHJrX2JiYjIyMg",
+          "tracking_details": [
+            { "object": "TrackingDetail", "status": "in_transit", "datetime": "2026-09-21T09:00:00Z", "message": "Departed" },
+            { "object": "TrackingDetail", "status": "delivered", "datetime": "2026-09-23T14:05:00Z", "message": "Delivered" }
+          ],
+          "created_at": "2026-09-20T15:00:00Z",
+          "updated_at": "2026-09-23T14:05:00Z"
+        }
+      },
+      {
+        "id": "shp_ccc333",
+        "object": "Shipment",
+        "mode": "production",
+        "reference": "GLOBEX-77",
+        "created_at": "2026-09-25T15:00:00Z",
+        "updated_at": "2026-09-25T16:00:00Z",
+        "status": "pre_transit",
+        "tracking_code": "9400100000000000000003",
+        "refund_status": "refunded",
+        "is_return": false,
+        "selected_rate": { "id": "rate_3", "object": "Rate", "carrier": "USPS", "service": "First" },
+        "tracker": null
+      }
+    ],
+    "has_more": false
+  }
+}

@@ -91,6 +91,7 @@ export interface IStorage {
   createPortalTicketComment(comment: any): Promise<PortalTicketComment>;
 
   getTenantFilesByClientId(clientId: string): Promise<any[]>;
+  findTenantFileByFileUrl(fileUrl: string): Promise<{ id: string; clientId: string; fileUrl: string } | undefined>;
   createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<any>;
   /** Tenant-scoped: only deletes when the file belongs to `clientId`. */
   deleteTenantFile(id: string, clientId: string, deletedBy?: string): Promise<boolean>;
@@ -689,6 +690,14 @@ export class MemStorage implements IStorage {
     return Array.from(this.tenantFiles.values()).filter(f => f.clientId === clientId);
   }
 
+  async findTenantFileByFileUrl(fileUrl: string): Promise<{ id: string; clientId: string; fileUrl: string } | undefined> {
+    // Deleted files are removed from the map, so they never resolve here.
+    // Same ambiguity rule as DatabaseStorage: two tenants on one path → no owner.
+    const matches = Array.from(this.tenantFiles.values()).filter((f) => f.fileUrl === fileUrl);
+    if (matches.some((f) => f.clientId !== matches[0].clientId)) return undefined;
+    return matches[0];
+  }
+
   async createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<TenantFile> {
     const newFile: TenantFile = {
       id: generateId(),
@@ -1129,13 +1138,21 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
+  // Write-through mirror of live tenant file rows this process wrote durably.
+  // Only consulted by findTenantFileByFileUrl when the DB lookup *errors*
+  // (main's fallback path, kept): a row enters it only after its INSERT
+  // returned, and leaves it when it is soft-deleted, so the fallback can
+  // never resurrect a deleted file or answer for a row the DB never held.
+  private tenantFilesCache: Map<string, { id: string; clientId: string; fileUrl: string }> = new Map();
   private storeOrdersMap: Map<string, MemStoreOrder> = new Map();
 
   // Tenant file metadata is durable in portal_tenant_files (#259). Reads are
   // tenant-scoped in SQL. Delete is a soft delete: the row keeps the object
   // path (deleted_at/deleted_by set) so the blob is never silently orphaned;
-  // object removal is a deliberate, separate operation. DB errors propagate:
-  // the routes return 5xx rather than a success with no durable record.
+  // object removal is a deliberate, separate operation. Soft-deleted rows are
+  // excluded from every read, including the file-URL ownership lookup. DB
+  // errors on list/create/delete propagate: the routes return 5xx rather than
+  // a success with no durable record.
   async getTenantFilesByClientId(clientId: string): Promise<any[]> {
     const db = await this.getDb();
     return await db
@@ -1143,6 +1160,39 @@ export class DatabaseStorage implements IStorage {
       .from(portalTenantFiles)
       .where(and(eq(portalTenantFiles.clientId, clientId), isNull(portalTenantFiles.deletedAt)))
       .orderBy(desc(portalTenantFiles.createdAt));
+  }
+
+  async findTenantFileByFileUrl(fileUrl: string): Promise<{ id: string; clientId: string; fileUrl: string } | undefined> {
+    // Durable read: the object-storage ACL asks whether this path belongs to a
+    // tenant, and that answer must survive a restart, so the persisted table
+    // is authoritative. A soft-deleted row is not an owner (#259): a deleted
+    // file stops being readable through tenant ownership. If live rows for
+    // one path name different tenants, ownership is ambiguous and the lookup
+    // returns nothing, so the object route denies (default deny). The cache
+    // is consulted only when the DB lookup throws (e.g. before the DB is
+    // reachable in dev); an empty DB answer is final.
+    try {
+      const db = await this.getDb();
+      const rows: { id: string; clientId: string; fileUrl: string }[] = await db
+        .select({
+          id: portalTenantFiles.id,
+          clientId: portalTenantFiles.clientId,
+          fileUrl: portalTenantFiles.fileUrl,
+        })
+        .from(portalTenantFiles)
+        .where(and(eq(portalTenantFiles.fileUrl, fileUrl), isNull(portalTenantFiles.deletedAt)))
+        .limit(2);
+      if (rows.length > 1 && rows.some((r) => r.clientId !== rows[0].clientId)) {
+        console.warn("[SECURITY] TENANT_FILE_URL_AMBIGUOUS", { fileUrl });
+        return undefined;
+      }
+      return rows[0];
+    } catch (error) {
+      console.error("findTenantFileByFileUrl: DB lookup failed, falling back to cache", error);
+    }
+    const cached = Array.from(this.tenantFilesCache.values()).filter((f) => f.fileUrl === fileUrl);
+    if (cached.some((f) => f.clientId !== cached[0].clientId)) return undefined;
+    return cached[0];
   }
 
   async createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<any> {
@@ -1161,6 +1211,7 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     if (!created) throw new Error("Tenant file metadata was not persisted");
+    this.tenantFilesCache.set(created.id, { id: created.id, clientId: created.clientId, fileUrl: created.fileUrl });
     return created;
   }
 
@@ -1178,6 +1229,7 @@ export class DatabaseStorage implements IStorage {
         ),
       )
       .returning({ id: portalTenantFiles.id });
+    if (updated.length > 0) this.tenantFilesCache.delete(id);
     return updated.length > 0;
   }
 

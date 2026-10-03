@@ -54,13 +54,16 @@ interface TenantFile {
 
 interface CompanyMetrics {
   company: { id: string; name: string; status: string; createdAt: string };
-  tickets: { total: number; open: number; inProgress: number; resolved: number; avgResolutionTime: string };
+  tickets: { total: number; open: number; inProgress: number; resolved: number; avgResolutionHours: number | null };
   users: { total: number; activeUsers: number; admins: number };
   files: { total: number; agents: number; documents: number };
-  services: { activeServices: number; monthlyValue: string; tier: string };
-  billing: { pendingInvoices: number; totalOwed: string; lastPayment: string };
-  activity: { lastLogin: string; ticketsThisMonth: number; filesUploadedThisMonth: number };
+  /** null = no authoritative source is connected for this figure (never a placeholder). */
+  services: { activeServices: number | null; monthlyValue: string | null; tier: string | null };
+  billing: { pendingInvoices: number | null; totalOwed: string | null; lastPayment: string | null };
+  activity: { lastLogin: string | null; ticketsThisMonth: number; filesUploadedThisMonth: number };
 }
+
+const NOT_CONNECTED = "Not connected";
 
 const fieldClass = "border-border bg-background";
 
@@ -644,7 +647,7 @@ export function AdminCompanies() {
                   <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Company figures">
                     <StatTile label="Open Tickets" value={companyMetrics.tickets.open} tone={companyMetrics.tickets.open > 0 ? "warn" : "neutral"} />
                     <StatTile label="Active Users" value={companyMetrics.users.activeUsers} tone="info" />
-                    <StatTile label="Monthly Value" value={companyMetrics.services.monthlyValue} tone="ok" />
+                    <StatTile label="Monthly Value" value={companyMetrics.services.monthlyValue ?? NOT_CONNECTED} tone="neutral" />
                     <StatTile label="Files" value={companyMetrics.files.total} />
                   </section>
 
@@ -662,7 +665,7 @@ export function AdminCompanies() {
                         <DetailRow label="Total Tickets" value={<span className="pt-num">{companyMetrics.tickets.total}</span>} />
                         <DetailRow label="In Progress" value={<span className="pt-num">{companyMetrics.tickets.inProgress}</span>} />
                         <DetailRow label="Resolved" value={<span className="pt-num pt-ink pt-tone-ok">{companyMetrics.tickets.resolved}</span>} />
-                        <DetailRow label="Avg. Resolution" value={companyMetrics.tickets.avgResolutionTime} />
+                        <DetailRow label="Avg. Resolution" value={companyMetrics.tickets.avgResolutionHours == null ? "No resolved tickets" : `${companyMetrics.tickets.avgResolutionHours} hours`} />
                       </dl>
                     </Panel>
 
@@ -676,10 +679,10 @@ export function AdminCompanies() {
                       }
                     >
                       <dl className="space-y-2">
-                        <DetailRow label="Service Tier" value={<Token label={companyMetrics.services.tier} tone="brand" />} />
-                        <DetailRow label="Active Services" value={<span className="pt-num">{companyMetrics.services.activeServices}</span>} />
+                        <DetailRow label="Service Tier" value={companyMetrics.services.tier ? <Token label={companyMetrics.services.tier} tone="brand" /> : NOT_CONNECTED} />
+                        <DetailRow label="Active Services" value={companyMetrics.services.activeServices == null ? NOT_CONNECTED : <span className="pt-num">{companyMetrics.services.activeServices}</span>} />
                         <DetailRow label="Tickets This Month" value={<span className="pt-num">{companyMetrics.activity.ticketsThisMonth}</span>} />
-                        <DetailRow label="Pending Invoices" value={<span className="pt-num pt-ink pt-tone-bad">{companyMetrics.billing.pendingInvoices}</span>} />
+                        <DetailRow label="Pending Invoices" value={companyMetrics.billing.pendingInvoices == null ? NOT_CONNECTED : <span className="pt-num pt-ink pt-tone-bad">{companyMetrics.billing.pendingInvoices}</span>} />
                       </dl>
                     </Panel>
                   </div>
