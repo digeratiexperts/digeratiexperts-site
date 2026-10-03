@@ -141,7 +141,7 @@ export default function Healthcare() {
   return (
     <PageTemplate
       title="Keep Patient Data Protected Without Becoming a HIPAA Expert"
-      subtitle="Digerati manages security, backups, access controls, documentation, and ongoing IT behind Arizona practices so owners can focus on patients."
+      subtitle="Digerati Experts manages security, backups, access controls, documentation, and ongoing IT behind Arizona practices so owners can focus on patients."
       icon={<Stethoscope className="w-10 h-10 text-de-accent-ink" />}
       breadcrumbs={[{ label: "Industries", href: "/industries" }, { label: "Healthcare" }]}
       actions={
@@ -300,7 +300,7 @@ export default function Healthcare() {
         <section data-testid="section-how-we-solve">
           <div className="mb-3 flex items-center gap-3">
             <IconWell icon={Layers} size="sm" surface="dark" />
-            <h2 className="text-3xl font-bold text-white">How Digerati solves them</h2>
+            <h2 className="text-3xl font-bold text-white">How Digerati Experts solves them</h2>
           </div>
           <p className="mb-8 max-w-3xl text-white/70">
             IT, cybersecurity, and compliance as one operating program — so security is not bolted onto
@@ -327,7 +327,7 @@ export default function Healthcare() {
         </section>
 
         <section data-testid="section-differentiation">
-          <h2 className="mb-6 text-3xl font-bold text-white">Why Digerati instead of ordinary IT support</h2>
+          <h2 className="mb-6 text-3xl font-bold text-white">Why Digerati Experts instead of ordinary IT support</h2>
           <div className="max-w-4xl space-y-3">
             {differentiation.map((item, idx) => (
               <motion.div
