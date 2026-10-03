@@ -21,6 +21,13 @@ describe("sticky CTA visibility", () => {
     expect(isStickyCtaRouteAllowed("/solutions/request")).toBe(false);
   });
 
+  it("keeps the bar off the quiz room, which carries its own next step", () => {
+    expect(isStickyCtaRouteAllowed("/quote-wizard")).toBe(false);
+    expect(isStickyCtaRouteAllowed("/quote-wizard?utm_source=x")).toBe(false);
+    // The confirmation page is an ordinary page again.
+    expect(isStickyCtaRouteAllowed("/quote-confirmation")).toBe(true);
+  });
+
   it("keeps the bar off homepage version previews, exactly as it is off /", () => {
     // A /version-N page is the homepage shown somewhere else. Letting the bar
     // onto it means every homepage review is judged against chrome the real

@@ -30,6 +30,36 @@
 
 version: 2
 claims:
+  - id: quote-wizard-quiz
+    issue: 419
+    owner: claude
+    subsystem: quote-wizard
+    branch: claude/beautiful-hopper-1uem0k
+    base_sha: c99c3f5
+    files:
+      - client/src/pages/LeadQuoteWizard.tsx (rewrite), client/src/pages/LeadQuoteWizard.test.ts (new)
+      - client/src/lib/quoteMatch.ts (new), client/src/lib/quoteMatch.test.ts (new)
+      - client/src/components/quote/** (new)
+      - shared/quoteContext.ts (new), shared/quoteContext.test.ts (new)
+      - client/src/lib/quizRoom.ts (new)
+      - client/src/lib/stickyCtaVisibility.ts and its test (the /quote-wizard exclusion only)
+      - client/src/components/ExitIntentPopup.tsx (the /quote-wizard skip only)
+      - client/src/components/MegaMenu.tsx (one "Find Your Plan" item in the ProActive Ecosystem column only)
+      - client/src/pages/ProActiveEcosystemPricing.tsx (one link under the plan grid only)
+      - server/routes.ts (the /api/lead-quote handler only)
+      - scripts/qa/quote-wizard-quiz-check.mjs (new)
+      - artifacts/visual-qa/quote-wizard-quiz/**
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe/DE: a RiseGuide-level question-based selling experience on
+      digeratiexperts.com in DE's own design ("go ahead with slice 1 and all
+      slices"). Rebuilds /quote-wizard as a one-question-per-screen paper
+      room with the same match function, payload and confirmation; adds two
+      front doors; stores three non-scoring context answers on the lead.
+      Joe, 2026-10-03, on PR 425: "yes to thin chrome and plan before email,
+      merge it" (approves the MegaMenu + footer replacement on /quote-wizard
+      only, and showing the plan before the email).
   - id: paynow-stripe-tax
     owner: claude
     subsystem: store-warehouse
