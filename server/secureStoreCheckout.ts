@@ -18,6 +18,14 @@ const RECURRING_STORE_CATEGORIES = new Set<StoreProduct["category"]>([
   "ucaas_subscriptions",
 ]);
 
+// Physical goods that ship: they cannot be charged online until a shipping
+// destination and tax/fulfillment are captured (issue #247). They move through
+// Request Quote instead. The catalog flag isCheckoutEnabled is deliberately
+// left on, so these items still appear in quotes (shared/storeCommerce.ts).
+const PHYSICAL_FULFILLMENT_CATEGORIES = new Set<StoreProduct["category"]>([
+  "hardware_physical",
+]);
+
 type CheckoutRequest = Request & {
   userId?: string;
   user?: {
@@ -72,6 +80,19 @@ export function recurringCheckoutSkus(items: CanonicalCheckoutLineItem[]): strin
     .filter((item) => {
       const product = storeProducts.find((candidate) => candidate.id === item.productId);
       return !!product && isRecurringSubscriptionProduct(product);
+    })
+    .map((item) => item.sku);
+}
+
+export function isPhysicalFulfillmentProduct(product: StoreProduct): boolean {
+  return PHYSICAL_FULFILLMENT_CATEGORIES.has(product.category);
+}
+
+export function physicalFulfillmentSkus(items: CanonicalCheckoutLineItem[]): string[] {
+  return items
+    .filter((item) => {
+      const product = storeProducts.find((candidate) => candidate.id === item.productId);
+      return !!product && isPhysicalFulfillmentProduct(product);
     })
     .map((item) => item.sku);
 }
@@ -305,6 +326,22 @@ export function registerSecureZohoStoreCheckout(
             skus: recurringSkus,
             error:
               "Recurring services require subscription billing setup before online payment. Request a quote for these items.",
+          });
+        }
+
+        const physicalSkus = physicalFulfillmentSkus(lineItems);
+        if (physicalSkus.length > 0) {
+          console.warn("[SECURITY] PHYSICAL_FULFILLMENT_BLOCKED", {
+            userId: req.userId,
+            clientId: req.user?.clientId,
+            skus: physicalSkus,
+          });
+          return res.status(409).json({
+            code: "PHYSICAL_FULFILLMENT_REQUIRED",
+            quoteRequired: true,
+            skus: physicalSkus,
+            error:
+              "Physical hardware needs a shipping address and tax before payment. Request a quote for these items.",
           });
         }
 

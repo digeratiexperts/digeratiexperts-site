@@ -15,7 +15,7 @@ import { HintRow, SuggestionLine } from "@/components/store/door2/Guidance";
 import { NeedRow } from "@/components/store/door2/NeedRow";
 import { ScenarioTile } from "@/components/store/door2/ScenarioTile";
 import { JourneyRail } from "@/components/store/door2/JourneyRail";
-import { ProposalSheet } from "@/components/store/door2/ProposalSheet";
+import { buildSolutionPacketPayload, ProposalSheet } from "@/components/store/door2/ProposalSheet";
 import {
   SolutionBar,
   SolutionRail,
@@ -23,6 +23,7 @@ import {
   type SolutionPrimary,
   type SolutionStatusLine,
 } from "@/components/store/door2/SolutionChrome";
+import { downloadSolutionPacketPdf } from "@/lib/downloadSolutionPacketPdf";
 import { composeScenario, solutionScenarios, type SolutionScenario } from "@/data/solutionScenarios";
 import type { CuratedSolutionFamily } from "@/data/curatedSolutions";
 import {
@@ -284,6 +285,20 @@ export default function PublicSolutionWorkspace() {
   const [hydrating, setHydrating] = useState(false);
   const [conflict, setConflict] = useState<SolutionDraft | null>(null);
   const [seededFromLink, setSeededFromLink] = useState<CuratedSolutionFamily | null>(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  async function downloadPacketPdf() {
+    setPdfError(null);
+    setPdfBusy(true);
+    try {
+      const payload = buildSolutionPacketPayload({ draft }, { statusLabel: "Draft" });
+      const err = await downloadSolutionPacketPdf(payload, "DE-Your-Solution-draft.pdf");
+      if (err) setPdfError(err);
+    } finally {
+      setPdfBusy(false);
+    }
+  }
 
   // A `?family=` deep link to the contact step seeds an empty draft and lands here, with its Undo.
   useEffect(() => {
@@ -1227,10 +1242,23 @@ export default function PublicSolutionWorkspace() {
                       <StoreAction variant="secondary" onClick={() => void saveProgress()} ariaBusy={saving} testId="save-progress">
                         {SAVE_LABEL}
                       </StoreAction>
+                      <StoreAction
+                        variant="quiet"
+                        onClick={() => void downloadPacketPdf()}
+                        ariaBusy={pdfBusy}
+                        testId="download-solution-pdf"
+                      >
+                        {pdfBusy ? "Preparing PDF…" : "Download PDF"}
+                      </StoreAction>
                       <StoreAction variant="quiet" onClick={() => window.print()} testId="print-solution">
-                        Print / save
+                        Print
                       </StoreAction>
                     </div>
+                    {pdfError ? (
+                      <p className="d2-small mt-3 text-red-700" data-testid="solution-pdf-error">
+                        {pdfError}
+                      </p>
+                    ) : null}
                     <div className="mt-4">{saveLine("solution-rail-save")}</div>
                     <p className="d2-small d2-ink-soft mt-8" data-testid="handle-our-it-link">
                       Prefer DE to run all of IT?{" "}

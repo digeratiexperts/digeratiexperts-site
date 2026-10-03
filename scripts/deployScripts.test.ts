@@ -7,8 +7,17 @@ const root = process.cwd();
 const deployScript = resolve(root, "deploy/vps/deploy.sh");
 const runnerScript = resolve(root, "scripts/setup-github-runner.sh");
 
+function bashAvailable(): boolean {
+  try {
+    execFileSync("bash", ["--version"], { stdio: "pipe", windowsHide: true });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 describe("production deployment scripts", () => {
-  it("remain valid bash", () => {
+  it.skipIf(!bashAvailable())("remain valid bash", () => {
     expect(() => execFileSync("bash", ["-n", deployScript], { stdio: "pipe" })).not.toThrow();
     expect(() => execFileSync("bash", ["-n", runnerScript], { stdio: "pipe" })).not.toThrow();
   });
