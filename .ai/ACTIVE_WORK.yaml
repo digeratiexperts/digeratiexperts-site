@@ -30,6 +30,34 @@
 
 version: 2
 claims:
+  - id: de-desk-hardening
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 2db33c7
+    files:
+      - client/src/components/ZohoASAPWidget.tsx (docked height ceiling, focus trap and return, resize handles out of the tab order, forced-colours block, hint effects through the new module)
+      - client/src/components/SiteBottomBar.tsx (the chooser's Close button moved last in the DOM)
+      - client/src/lib/deskHints.ts, client/src/lib/deskHints.test.ts
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
+      - scripts/desk-browser-smoke.mjs, package.json (smoke:desk; tailwindcss-animate moved to devDependencies), package-lock.json (dev markers only), .github/workflows/ci.yml (one line after smoke:door2)
+      - .cursor/skills/de-desk-ui/tokens-and-structure.md (a11y)
+      - artifacts/visual-qa/desk-hardening/**
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03, on "nothing to act on": "nothing to improve, nothing to
+      test? I doubt any of those are true". A Desk hardening pass found and
+      fixed: the Desk rising off the top of short screens (a phone held
+      sideways, 200% zoom); eight pointer-only resize handles in the tab
+      order and, after removing them, the trap letting focus slip out; focus
+      dropping to the page body on close; the chooser opening with focus on
+      Close; gold-only states vanishing in forced colours. The hint rules move
+      to a tested module, and a Desk browser smoke runs in CI. axe-core finds
+      no violations in any Desk state at 390 or 1440. CI then failed every PR on
+      the production dependency audit (a new braces advisory with no patch,
+      reaching prod only via the build-time plugin tailwindcss-animate); Joe
+      chose to fold the fix into this PR: the plugin moves to devDependencies.
   - id: portal-people-pick-company
     owner: claude
     subsystem: client-portal-pages
@@ -129,7 +157,7 @@ claims:
       - client/src/components/ZohoASAPWidget.desk-shell.test.ts
       - .cursor/skills/de-desk-ui/tokens-and-structure.md (the header line)
       - artifacts/visual-qa/desk-expand-hint/**
-    status: active
+    status: verified-live
     started: 2026-10-02
     note: >-
       Joe, 2026-10-02, on the Desk's expand button: "animate this so people
@@ -144,6 +172,16 @@ claims:
       Then: "look over the entire DE Desk popup and make sure it's fully
       optimized and has all the missing touches and looks perfect": a full
       Desk polish pass on the same claim (stylesheet and presentation only).
+      RELEASED 2026-10-02: merged as 2db33c7 (PR 331, on Joe's "continue"
+      after the PR was reported waiting on his merge). The CI run for 2db33c7
+      passed, including "Deploy and verify production VPS" (14:59Z). VERIFIED
+      LIVE 14:59:32Z: production serves ZohoASAPWidget-Cr8yHhV2.js with both
+      hints, the error bubble, the ticket label and the full-screen column; a
+      browser on digeratiexperts.com at 390, 768 and 1440 saw the text box
+      hint play, the full-screen hint follow it without overlap (none at 390,
+      by design), the Details box at 148px, the full-screen flag set, and no
+      horizontal overflow (artifacts/visual-qa/desk-polish/live/). Nothing was
+      sent to production. Files released.
   - id: de-static-cache-policy
     owner: claude
     subsystem: server-static
