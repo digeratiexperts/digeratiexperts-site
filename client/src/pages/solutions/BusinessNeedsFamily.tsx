@@ -287,14 +287,15 @@ export default function BusinessNeedsFamily() {
                 </div>
               </StoreChapter>
 
-              <div className="d2-chapter" data-testid="family-actions">
+              <div className="d2-chapter d2-next" data-testid="family-actions">
+                <p className="d2-next__label d2-label">Next step</p>
                 <div className="flex flex-wrap items-center gap-3">
                   {included ? (
-                    <StoreAction variant="primary" href={SOLUTION_WORKSPACE_PATH} testId="continue-building">
+                    <StoreAction variant="primary" href={SOLUTION_WORKSPACE_PATH} testId="continue-building" lead>
                       {PRIMARY_ADDED}
                     </StoreAction>
                   ) : (
-                    <StoreAction variant="primary" onClick={addAndReview} testId="continue-building">
+                    <StoreAction variant="primary" onClick={addAndReview} testId="continue-building" lead>
                       {PRIMARY_ADD}
                     </StoreAction>
                   )}

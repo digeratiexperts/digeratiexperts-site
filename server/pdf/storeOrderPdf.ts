@@ -9,7 +9,9 @@
  */
 import { billingLabel, isRecurringPricingType, type CommercePricingType } from "@shared/storeCommerce";
 import { COMPANY } from "@shared/companyContact";
+import { accountTeamFor, type AccountTeam } from "@shared/accountManagers";
 import {
+  accountTeamBlock,
   closeBlock,
   coverBlock,
   DE_PDF,
@@ -57,6 +59,8 @@ export interface OrderPdfOptions {
    * no billing address. Bearer owners/admins see the full billing block.
    */
   redactBillingAddress?: boolean;
+  /** Assigned account manager + sales department; default team when absent. */
+  accountTeam?: AccountTeam;
 }
 
 const PRICING_TYPES: readonly CommercePricingType[] = [
@@ -199,6 +203,7 @@ export function buildOrderPdfHtml(order: OrderPdfInput, opts: OrderPdfOptions = 
       email: COMPANY.supportEmail,
       portal: true,
     })}
+    ${accountTeamBlock(opts.accountTeam ?? accountTeamFor(null))}
   </main>`;
 
   return documentHtml({

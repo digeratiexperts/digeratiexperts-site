@@ -1,7 +1,10 @@
 import { billingLabel, isRecurringPricingType } from "@shared/storeCommerce";
 import type { CanonicalQuoteLine, QuoteTotals } from "./storeQuoteCommerce";
 import { quoteTotals } from "./storeQuoteCommerce";
+import { COMPANY } from "@shared/companyContact";
+import { accountTeamFor, type AccountTeam } from "@shared/accountManagers";
 import {
+  accountTeamBlock,
   closeBlock,
   coverBlock,
   DE_PDF,
@@ -15,12 +18,6 @@ import {
 } from "./pdf/dePdfBrand";
 import { renderHtmlToPdf } from "./pdf/renderHtmlToPdf";
 
-/**
- * Pre-existing contact address on the quote (also in QuoteConfirmation.tsx).
- * Not in shared/companyContact.ts; DE to confirm the canonical sales address (#339).
- */
-const QUOTE_CONTACT_EMAIL = "sales@digerati-experts.com";
-
 export type QuotePdfInput = {
   quoteNumber: string;
   contactName: string;
@@ -29,6 +26,8 @@ export type QuotePdfInput = {
   createdAt: Date | string;
   requestedItems: CanonicalQuoteLine[];
   message?: string | null;
+  /** Assigned account manager + sales department; default team when absent. */
+  accountTeam?: AccountTeam;
 };
 
 /** Preliminary quote on the DE document system (transaction family). */
@@ -98,8 +97,9 @@ export function buildQuotePdfHtml(quote: QuotePdfInput): string {
     ${closeBlock({
       heading: "A consultant confirms terms",
       text: "This PDF restates catalog pricing for the requested solution. It is not a signed commercial offer. A consultant will confirm terms.",
-      email: QUOTE_CONTACT_EMAIL,
+      email: COMPANY.salesEmail,
     })}
+    ${accountTeamBlock(quote.accountTeam ?? accountTeamFor(null))}
   </main>`;
 
   return documentHtml({

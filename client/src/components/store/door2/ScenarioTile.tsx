@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import type { SolutionScenario } from "@/data/solutionScenarios";
 import { getFamilyById } from "@/lib/businessNeeds";
 
@@ -17,6 +17,7 @@ export function ScenarioTile({
   onStart,
   onReview,
   footer,
+  revealIndex,
 }: {
   scenario: SolutionScenario;
   compose: { add: string[]; alreadyIn: string[] };
@@ -24,6 +25,8 @@ export function ScenarioTile({
   onReview: () => void;
   /** One in-flow line beneath the action (the incident scenarios carry the phone). */
   footer?: ReactNode;
+  /** Position in the grid: staggers the scroll reveal of the row. */
+  revealIndex?: number;
 }) {
   // The press/settle of the jelly tier keys on a transient attribute set on the tap, never on steady state (§9).
   const [justSelected, setJustSelected] = useState(false);
@@ -41,7 +44,10 @@ export function ScenarioTile({
       ? `${compose.alreadyIn.length} of ${total} already in · Add ${compose.add.length}`
       : `Add these ${total}`;
   return (
-    <li className={`d2-cell d2-scenario${allIn ? " d2-cell--added" : ""}`} data-testid={`scenario-${scenario.id}`} data-state={allIn ? "added" : "idle"}>
+    <li className={`d2-cell d2-scenario${allIn ? " d2-cell--added" : ""}`} data-testid={`scenario-${scenario.id}`} data-state={allIn ? "added" : "idle"}
+      data-d2-reveal=""
+      style={revealIndex !== undefined ? ({ "--d2-delay": `${(revealIndex % 2) * 70}ms` } as CSSProperties) : undefined}
+    >
       <h3 className="d2-cell__title">{scenario.title}</h3>
       <p className="d2-cell__detail d2-scenario__pressure d2-small">{scenario.pressure}</p>
       <p className="d2-scenario__marks d2-micro d2-ink-soft mt-2">{scenario.familyIds.map(label).join(" · ")}</p>
