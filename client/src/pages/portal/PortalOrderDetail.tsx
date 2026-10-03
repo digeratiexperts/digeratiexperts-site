@@ -130,10 +130,13 @@ export default function PortalOrderDetail() {
         return;
       }
       const blob = await response.blob();
+      // The server sends a PDF, or the same branded receipt as HTML while no
+      // PDF renderer is installed; the saved file must carry the real type.
+      const isPdf = (response.headers.get("Content-Type") || "").includes("application/pdf");
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `receipt-${order?.orderNumber || orderId}.html`;
+      a.download = `DE-receipt-${order?.orderNumber || orderId}.${isPdf ? "pdf" : "html"}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

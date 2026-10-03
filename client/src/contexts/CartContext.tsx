@@ -251,38 +251,52 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!hydratedRef.current || !sessionIdRef.current) return;
     if (persistTimer.current) window.clearTimeout(persistTimer.current);
     persistTimer.current = window.setTimeout(() => {
-      void fetch("/api/store/solutions/current", {
-        method: "PUT",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: solutionIdRef.current,
-          sessionId: sessionIdRef.current,
-          items: nextItems.map((item) => ({
-            productId: item.product.id,
-            sku: item.product.sku,
-            quantity: item.quantity,
-          })),
-          savedForLater: nextSaved.map((item) => ({
-            productId: item.product.id,
-            sku: item.product.sku,
-            quantity: item.quantity,
-          })),
-        }),
-      })
-        .then((response) => (response.ok ? response.json() : null))
-        .then((payload) => {
-          if (payload?.solution?.id) {
-            setSolutionId(payload.solution.id);
-            solutionIdRef.current = payload.solution.id;
-          }
-          setLastUpdated(payload?.solution?.updatedAt || new Date().toISOString());
+      const send = (retried: boolean): void => {
+        void fetch("/api/store/solutions/current", {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: solutionIdRef.current,
+            sessionId: sessionIdRef.current,
+            items: nextItems.map((item) => ({
+              productId: item.product.id,
+              sku: item.product.sku,
+              quantity: item.quantity,
+            })),
+            savedForLater: nextSaved.map((item) => ({
+              productId: item.product.id,
+              sku: item.product.sku,
+              quantity: item.quantity,
+            })),
+          }),
         })
-        .catch(() => {
-          setLastUpdated(new Date().toISOString());
-        });
+          .then((response) => {
+            // The server refuses a solution id this browser session does not own
+            // (#244). Forget it and save once more by session, which is always ours.
+            if (response.status === 403 && !retried) {
+              solutionIdRef.current = null;
+              setSolutionId(null);
+              send(true);
+              return undefined;
+            }
+            return response.ok ? response.json() : null;
+          })
+          .then((payload) => {
+            if (payload === undefined) return;
+            if (payload?.solution?.id) {
+              setSolutionId(payload.solution.id);
+              solutionIdRef.current = payload.solution.id;
+            }
+            setLastUpdated(payload?.solution?.updatedAt || new Date().toISOString());
+          })
+          .catch(() => {
+            setLastUpdated(new Date().toISOString());
+          });
+      };
+      send(false);
     }, 400);
   }, []);
 

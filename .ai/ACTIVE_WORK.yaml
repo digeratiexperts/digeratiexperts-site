@@ -61,6 +61,114 @@ claims:
       as "version 0": /version-0 renders DigeratiHomepage noindex inside
       VersionFrame without the homepage JSON-LD (not in the registry, which
       numbers from 1). / is unchanged.
+  - id: tenant-files-durable
+    issue: 259
+    owner: claude
+    subsystem: client-portal-files
+    branch: claude/fix-259-tenant-files-durable
+    base_sha: 05093e67
+    files:
+      - migrations/0004_portal_tenant_files_durable.sql (new)
+      - shared/schema.ts (portalTenantFiles deleted_at / deleted_by only)
+      - server/storage.ts (tenant file methods on IStorage + both impls; keeps findTenantFileByFileUrl from PR 310)
+      - server/portalTenantFileRoutes.ts (new; tenant file routes lifted from routes.ts unchanged + delete scoped to company)
+      - server/routes.ts (tenant file route block replaced by registerPortalTenantFileRoutes; object-route resolver kept verbatim)
+      - server/rawIntegrationRouteGuards.test.ts (deleteTenantFile calls pass the owning company)
+      - server/portalTenantFileRoutes.test.ts, server/storage.tenantFiles.test.ts, server/tenantFilesFakeDb.testkit.ts (new)
+    status: active
+    started: 2026-10-03
+    note: >-
+      PR 373. Tenant file metadata durable in portal_tenant_files with soft
+      delete. Reconciled by merge onto main 05093e67 after the release review
+      hold: main's file-URL tenant ownership (findTenantFileByFileUrl, PR 310)
+      and its cache fallback kept; soft-deleted rows excluded from every read
+      including the ownership lookup. PR 379 is stacked on this branch.
+  - id: portal-data-sources
+    owner: claude
+    subsystem: client-portal-integrations
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: e2d4ffa0
+    files:
+      - server/portalIntegrations.ts
+      - server/portalManualRecords.ts
+      - server/integrations/**
+      - server/routes.ts (registration lines only)
+      - shared/schema.ts (portalManualRecords only)
+      - migrations/0003_portal_manual_records.sql
+      - client/src/lib/portalIntegrations.ts
+      - client/src/components/portal/IntegrationNotices.tsx
+      - client/src/components/portal/shell/portalNav.ts
+      - client/src/pages/portal/PortalLayout.tsx
+      - client/src/pages/portal/PortalVPN.tsx
+      - client/src/pages/portal/PortalCytracom.tsx
+      - client/src/pages/portal/PortalShipCenter.tsx
+      - scripts/qa/portal-prod-check.mjs
+      - deploy/vps/env.production.example (portal data-source section)
+      - server/portalDataSources.ts
+      - server/portalDataSources.test.ts
+      - artifacts/visual-qa/portal-data-sources-prep/**
+      - client/src/pages/portal/PortalAdminDataSources.tsx
+      - client/src/App.tsx (one admin route line)
+      - client/src/lib/csv.ts
+      - docs/vendor-requests/TIMUS-API-REQUEST.md
+      - docs/runbooks/PORTAL-QA-LOGIN.md
+      - .github/workflows/portal-prod-check.yml
+      - client/src/pages/portal/PortalSignup.tsx (Turnstile token only)
+      - VENDOR_SETUP_STATUS.md (Test login paragraph only)
+      - server/index.ts (manual-records import body limit line only)
+      - client/src/lib/csv.test.ts
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: "write all of them then i will tell you what to do from
+      there" (open answers 2a/2b/2c VPN, phone and shipping sources; 3 test
+      login; 5 popup). Every option is built and off by default: sample stays
+      until PORTAL_*_PROVIDER is set. The popup answer landed on main via
+      #369 ("Yours to keep") before this branch merged, so this branch keeps
+      main's popup and drops its own switch. #369 also records VPN = Timus
+      (no adapter possible until Timus sends API docs), phone = Cytracom UCaaS
+      and shipping = staff-entered: the cytracom and manual adapters here
+      match; the other adapters stay off unless Joe picks them. Joe,
+      2026-10-03: "build in preparation of getting each of these": Timus
+      provider slot and vendor request list, CSV import of staff-entered
+      records, UPS/FedEx/USPS tracking for staff-entered shipments, Cytracom
+      call history, a DE-admin Data Sources setup page, and a manual
+      production QA workflow. All off until their env vars are set.
+  - id: focus-keeps-shape
+    owner: claude
+    subsystem: a11y
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: a8d7e6c
+    files:
+      - client/src/index.css (the global :focus-visible rule, the duplicate *:focus-visible rule, and .focus-ring:focus-visible only)
+      - client/src/pages/sections/ReferenceHeroSection.tsx (the primary hero button's className and style only)
+      - client/src/focusVisible.test.ts (new)
+      - client/src/components/SiteBottomBar.tsx (one comment)
+      - design/UI-STYLE-RULES.md (the all-states line), .cursor/skills/de-desk-ui/tokens-and-structure.md (a11y line)
+      - artifacts/visual-qa/focus-shape/**
+    status: verified-live
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03, on the launcher's "rectangular focus outline": the same
+      rule squared off every rounded control. The global focus rules set
+      border-radius 4px, which beat Tailwind's rounded-* utilities while a
+      control had focus: 319 of 417 keyboard stops on /, /store and /contact at
+      1440 and 390 changed shape (pills, 8-12px buttons and cards to 4px). A
+      second, later *:focus-visible rule drew a violet outline on four Store
+      summaries. Both radius lines and the violet rule go; after the fix 0 of
+      417 stops change shape and every native outline is one colour. The
+      audit also found the hero's primary button had no visible focus at all:
+      an inline box-shadow (its glow) replaced the Button's focus ring. The
+      glow becomes a shadow class, so the ring and the glow compose. Joe
+      approved starting this ("All approved"); merge authority: Joe.
+      RELEASED 2026-10-03: merged as fca0009 (PR 386, on Joe's "Go-ahead merge
+      it all"). The CI run for fca0009 passed every job, including the
+      production deploy (finished 16:48Z); production showed the hero button's
+      focus ring from 16:51Z. The keyboard audit against
+      https://digeratiexperts.com (/, /store, /contact at 1440 and 390, 417
+      stops) found 0 stops changing shape on focus and no violet outline;
+      smoke:desk passed 88/88 against production. Evidence:
+      artifacts/visual-qa/focus-shape/live/. VERIFIED LIVE. Files released.
   - id: de-object-storage-per-object-acl
     owner: claude
     subsystem: object-storage
@@ -103,7 +211,7 @@ claims:
       - design/DESIGN-AUTHORITY.md, design/UI-STYLE-RULES.md, brand/README.md, .cursor/rules/de-desk-design.mdc, .cursor/skills/de-desk-ui/tokens-and-structure.md, docs/SITE-VISUAL-TASKS.md (launcher lines)
       - design/approved/ask-de-launcher-gold-2026-10-03.md (new)
       - artifacts/visual-qa/ask-de-launcher/**
-    status: active
+    status: verified-live
     started: 2026-10-03
     note: >-
       Joe, 2026-10-03, after the launcher mockup: "B on desktop, C on mobile,
@@ -115,6 +223,15 @@ claims:
       same badge. "Get Help" becomes "Ask a Question". On phones the bottom
       chrome moves to 20px from the edge, on the page's own margin. Merge
       authority: Joe.
+      RELEASED 2026-10-03: merged as a8d7e6c (PR 348, on Joe's "All approved").
+      The CI run for a8d7e6c passed every job, including the production deploy
+      (finished 10:46Z). Production served the gold launcher from 10:46:53Z.
+      smoke:desk against https://digeratiexperts.com passed 88/88, including
+      the nine launcher checks. Live measurements: a 40px solid gold disc 20px
+      from the edge at 390; the gold ring with a white mark at 768 and 1440; a
+      round focus ring at every width; the chooser header badge matching; "Ask
+      a Question"; the compact Store launcher gold. Evidence:
+      artifacts/visual-qa/ask-de-launcher/live/. VERIFIED LIVE. Files released.
   - id: de-auth-token-identity-binding
     owner: claude
     subsystem: portal-auth

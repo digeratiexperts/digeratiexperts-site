@@ -1,11 +1,18 @@
 import { PageTemplate } from "@/components/PageTemplate";
 import { IconWell } from "@/components/visual/IconWell";
-import { Search, Book, FileText, Zap, LifeBuoy } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, Book, FileText, Zap, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useMemo, useState } from "react";
 import { useSEO } from "@/hooks/useSEO";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import {
+  Chapter,
+  Container,
+  ChapterHeader,
+  ClosingCta,
+  HeroActions,
+  cardDark,
+} from "@/components/site/chapters";
 
 const PORTAL_LOGIN = "https://portal.digeratiexperts.com/portal/login";
 
@@ -65,111 +72,121 @@ export default function KnowledgeBase() {
 
   return (
     <PageTemplate
+      layout="chapters"
+      eyebrow="Support · Knowledge Base"
       title="Knowledge Base"
       subtitle="A public topic index for common client questions. Full articles and ticket history live in the Client Portal."
       breadcrumbs={[{ label: "Support", href: "/about/support" }, { label: "Knowledge Base" }]}
       actions={
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild variant="brand" size="lg" className="h-12 px-6 font-semibold">
-            <a href={PORTAL_LOGIN}>Open Client Portal</a>
-          </Button>
-          <Button asChild variant="outline" size="lg" className="h-12 border-white/20 px-6 font-semibold text-white hover:bg-white/10">
-            <a href="/support/submit-ticket">Submit a Ticket</a>
-          </Button>
+          <HeroActions
+            primary={{ label: "Open Client Portal", href: PORTAL_LOGIN }}
+            secondary={{ label: "Submit a Ticket", href: "/support/submit-ticket" }}
+          />
         </div>
       }
     >
-      <div className="space-y-16">
-        <div className="mx-auto w-full max-w-2xl">
-          <label htmlFor="kb-search" className="sr-only">
-            Search knowledge base topics
-          </label>
-          <div className="relative flex items-center rounded-xl border border-de-hairline bg-de-raised">
-            <Search className="absolute left-4 h-5 w-5 text-white/55" aria-hidden="true" />
-            <Input
-              id="kb-search"
-              type="search"
-              placeholder="Search topics…"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="border-0 bg-transparent py-3 pl-12 pr-4 text-lg text-white placeholder:text-white/55"
-              data-testid="input-search-kb"
-            />
+      <Chapter tone="paper" seam={false}>
+        <Container>
+          <div className="mb-12 max-w-2xl">
+            <label htmlFor="kb-search" className="sr-only">
+              Search knowledge base topics
+            </label>
+            <div className="relative flex items-center rounded-xl border border-[var(--de-paper-hairline)] bg-white focus-within:border-[#D3126A] focus-within:ring-2 focus-within:ring-[#D3126A]/30">
+              <Search className="absolute left-4 h-5 w-5 text-black/55" aria-hidden="true" />
+              <Input
+                id="kb-search"
+                type="search"
+                placeholder="Search topics…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-12 border-0 bg-transparent py-3 pl-12 pr-4 text-lg text-[#1A1228] placeholder:text-black/55 focus-visible:ring-0"
+                data-testid="input-search-kb"
+              />
+            </div>
           </div>
-        </div>
 
-        {filtered.length === 0 ? (
-          <div className="rounded-2xl border border-de-hairline bg-de-raised p-8 text-center">
-            <p className="text-lg font-semibold text-white">No matching topics</p>
-            <p className="mt-2 text-white/65">
-              Try a different search, or open a ticket if you need a technician.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-12">
-            {filtered.map((cat) => {
-              const Icon = cat.icon;
-              return (
-                <div key={cat.category}>
-                  <div className="mb-6 flex items-center gap-3">
-                    <IconWell icon={Icon} size="sm" surface="dark" />
-                    <h2 className="text-2xl font-bold text-white">{cat.category}</h2>
-                    <span className="ml-auto text-sm text-white/50">{cat.topics.length} topics</span>
-                  </div>
-                  <ul className="grid gap-3 md:grid-cols-2">
-                    {cat.topics.map((topic) => (
-                      <li
-                        key={topic}
-                        className="rounded-xl border border-de-hairline bg-de-raised px-5 py-4 text-white/85"
-                      >
-                        {topic}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
-        )}
+          {filtered.length === 0 ? (
+            <div className="rounded-xl border border-[var(--de-paper-hairline)] bg-white p-8 text-center">
+              <p className="text-lg font-semibold text-[#1A1228]">No matching topics</p>
+              <p className="mt-2 text-[#3A3448]">
+                Try a different search, or open a ticket if you need a technician.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-14">
+              {filtered.map((cat) => {
+                const Icon = cat.icon;
+                return (
+                  <section key={cat.category} className="grid gap-6 lg:grid-cols-12 lg:gap-14">
+                    <div className="flex items-start gap-4 lg:col-span-4">
+                      <IconWell icon={Icon} size="sm" surface="light" />
+                      <div>
+                        <h2 className="font-heading text-2xl font-semibold text-[#1A1228]">{cat.category}</h2>
+                        <p className="mt-1 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-black/55">
+                          {cat.topics.length} topics
+                        </p>
+                      </div>
+                    </div>
+                    <ul className="border-t border-[var(--de-paper-hairline)] lg:col-span-8">
+                      {cat.topics.map((topic) => (
+                        <li
+                          key={topic}
+                          className="border-b border-[var(--de-paper-hairline)] py-4 text-base text-[#1A1228]"
+                        >
+                          {topic}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                );
+              })}
+            </div>
+          )}
+        </Container>
+      </Chapter>
 
-        <div className="rounded-2xl border border-de-hairline bg-de-raised p-8 md:p-12">
-          <h2 className="mb-3 text-center text-2xl font-bold text-white">Need the full article?</h2>
-          <p className="mx-auto mb-8 max-w-2xl text-center text-white/65">
-            Client-facing articles, tickets, and remote sessions live in the portal and support tools.
-          </p>
-          <div className="grid gap-4 md:grid-cols-3">
+      <Chapter tone="well">
+        <Container>
+          <ChapterHeader
+            tone="well"
+            eyebrow="Full articles"
+            title="Need the full article?"
+            lede="Client-facing articles, tickets, and remote sessions live in the portal and support tools."
+          />
+          <ul className="grid gap-4 md:grid-cols-3 md:gap-5">
             {[
               { href: PORTAL_LOGIN, title: "Client Portal", desc: "Login for tickets, invoices, and published guides", cta: "Open portal" },
               { href: "/support/remote-support", title: "Remote Support", desc: "Join a Zoho Assist session with a technician", cta: "Start session" },
               { href: "/support/submit-ticket", title: "Submit a Ticket", desc: "If the topic is not published yet, we will help directly", cta: "Open ticket" },
             ].map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="de-interactive-card flex h-full flex-col rounded-2xl border border-de-hairline bg-de-bg p-6 focus-visible:outline-none"
-              >
-                <h3 className="font-semibold text-white">{item.title}</h3>
-                <p className="mt-2 flex-1 text-sm text-white/60">{item.desc}</p>
-                <span className="mt-4 text-sm font-semibold text-de-accent-ink">{item.cta}</span>
-              </a>
+              <li key={item.href} className="flex">
+                <a
+                  href={item.href}
+                  className={`${cardDark} de-interactive-card group flex w-full flex-col p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]`}
+                >
+                  <h3 className="font-heading text-lg font-semibold text-white">{item.title}</h3>
+                  <p className="mt-2 flex-1 text-[0.95rem] leading-relaxed text-white/70">{item.desc}</p>
+                  <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-de-magenta-ink">
+                    {item.cta}
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                </a>
+              </li>
             ))}
-          </div>
-        </div>
+          </ul>
+        </Container>
+      </Chapter>
 
-        <div className="rounded-2xl border border-de-hairline bg-de-raised p-8 text-center">
-          <LifeBuoy className="mx-auto mb-3 h-6 w-6 text-de-accent-ink" aria-hidden="true" />
-          <h2 className="mb-4 text-3xl font-bold text-white">Still Need Help?</h2>
-          <p className="mb-6 text-lg text-white/70">Our support team is ready to assist.</p>
-          <div className="flex flex-col justify-center gap-4 sm:flex-row">
-            <Button asChild variant="brand" size="lg" className="h-12 px-8 font-semibold" data-testid="button-submit-ticket">
-              <a href="/support/submit-ticket">Submit Support Ticket</a>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="h-12 border-white/20 px-8 font-semibold text-white hover:bg-white/10" data-testid="button-call-support">
-              <a href={PRIMARY_PHONE.telHref}>Call Support</a>
-            </Button>
-          </div>
-        </div>
-      </div>
+      <ClosingCta
+        tone="surface"
+        eyebrow="Support"
+        title="Still Need Help?"
+        lede="Our support team is ready to assist."
+        showPhone={false}
+        primary={{ label: "Submit Support Ticket", href: "/support/submit-ticket", testId: "button-submit-ticket" }}
+        secondary={{ label: "Call Support", href: PRIMARY_PHONE.telHref, testId: "button-call-support" }}
+      />
     </PageTemplate>
   );
 }
