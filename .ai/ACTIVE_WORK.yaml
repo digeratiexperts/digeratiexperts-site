@@ -30,6 +30,31 @@
 
 version: 2
 claims:
+  - id: ask-de-launcher-gold
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 9e3c285
+    files:
+      - client/src/components/SiteBottomBar.tsx (the Ask DE launcher button and badge, the chooser header badge, the "Get Help" choice label, the first-visit pulse colour)
+      - client/src/index.css (phones only: --de-chrome-inset 0.75rem to 1.25rem inside the existing max-width 639px block)
+      - client/src/components/SiteBottomBar.launcher.test.ts (new)
+      - scripts/desk-browser-smoke.mjs (launcher checks)
+      - design/DESIGN-AUTHORITY.md, design/UI-STYLE-RULES.md, brand/README.md, .cursor/rules/de-desk-design.mdc, .cursor/skills/de-desk-ui/tokens-and-structure.md, docs/SITE-VISUAL-TASKS.md (launcher lines)
+      - design/approved/ask-de-launcher-gold-2026-10-03.md (new)
+      - artifacts/visual-qa/ask-de-launcher/**
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03, after the launcher mockup: "B on desktop, C on mobile,
+      with the same speech mark and gold tone throughout". Where "Ask DE" is
+      written beside it, the launcher is a Signal Gold ring on charcoal with a
+      white mark that stays white on hover; where it stands alone (phones, the
+      compact Store launcher) it is a solid gold disc with a dark mark. One
+      white focus ring that keeps the round shape. The chooser header uses the
+      same badge. "Get Help" becomes "Ask a Question". On phones the bottom
+      chrome moves to 20px from the edge, on the page's own margin. Merge
+      authority: Joe.
   - id: de-auth-token-identity-binding
     owner: claude
     subsystem: portal-auth
