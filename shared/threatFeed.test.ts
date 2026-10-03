@@ -5,8 +5,10 @@ import {
   isNicheProduct,
   isSmbRelevant,
   kickerFor,
+  normalizeThreatAttribution,
   scoreThreat,
   selectHomepageThreats,
+  THREAT_ATTRIBUTION,
   type ThreatItem,
 } from "./threatFeed";
 
@@ -120,5 +122,18 @@ describe("threat relevance scoring", () => {
     ];
     expect(selectHomepageThreats(stale, now)).toEqual([]);
     expect(HOMEPAGE_MAX_AGE_DAYS).toBe(45);
+  });
+
+  it("keeps a canonical attribution line with Digerati Experts and real sources", () => {
+    expect(THREAT_ATTRIBUTION).toContain("Digerati Experts");
+    for (const source of ["CISA", "NIST NVD", "FIRST", "Microsoft MSRC"]) {
+      expect(THREAT_ATTRIBUTION).toContain(source);
+    }
+    expect(normalizeThreatAttribution("")).toBe(THREAT_ATTRIBUTION);
+    expect(normalizeThreatAttribution(null)).toBe(THREAT_ATTRIBUTION);
+    expect(normalizeThreatAttribution("Sources: somewhere. Digerati ranks threats.")).toBe(
+      THREAT_ATTRIBUTION,
+    );
+    expect(normalizeThreatAttribution(THREAT_ATTRIBUTION)).toBe(THREAT_ATTRIBUTION);
   });
 });

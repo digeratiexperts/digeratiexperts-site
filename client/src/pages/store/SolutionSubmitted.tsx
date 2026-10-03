@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "wouter";
-import { Printer } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
 import NotFound from "@/pages/not-found";
@@ -13,7 +13,8 @@ import {
   StoreAction,
   StoreChapter,
 } from "@/components/store/door2/primitives";
-import { ProposalSheet } from "@/components/store/door2/ProposalSheet";
+import { buildSolutionPacketPayload, ProposalSheet } from "@/components/store/door2/ProposalSheet";
+import { downloadSolutionPacketPdf } from "@/lib/downloadSolutionPacketPdf";
 import { BUSINESS_NEEDS_INDEX_PATH, getFamilyById } from "@/lib/businessNeeds";
 import {
   clearSubmittedArchive,
@@ -84,7 +85,8 @@ const BOOK_BRIDGE = "Or pick a time for that first conversation yourself. It cos
 const BOOK_ALIGNED = true;
 const START_ANOTHER = "Start another solution (your profile is kept)";
 const MARKETPLACE = "Client? Open Client Marketplace";
-const PRINT_SAVE = "Print / save";
+const DOWNLOAD_PDF = "Download PDF";
+const PRINT_SAVE = "Print";
 const TRY_AGAIN = "Try again";
 
 const QUOTE_STEPS: readonly [string, string, string] = [
@@ -169,7 +171,25 @@ export default function SolutionSubmitted() {
 
   const [lookup, setLookup] = useState<Lookup>({ state: "loading" });
   const [retryCount, setRetryCount] = useState(0);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+
+  async function downloadPacketPdf() {
+    if (!archive) return;
+    setPdfError(null);
+    setPdfBusy(true);
+    try {
+      const payload = buildSolutionPacketPayload(
+        { archive },
+        { title: "Your Solution", statusLabel: "Submitted", reference },
+      );
+      const err = await downloadSolutionPacketPdf(payload, `DE-Your-Solution-${reference}.pdf`);
+      if (err) setPdfError(err);
+    } finally {
+      setPdfBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (!reference) return;
@@ -306,12 +326,26 @@ export default function SolutionSubmitted() {
                     <div className="mt-8">
                       <ProposalSheet source={{ archive }} title={SHEET_TITLE} reference={reference} />
                     </div>
-                    <div className="mt-4 d2-no-print">
+                    <div className="mt-4 d2-no-print flex flex-wrap items-center gap-x-6 gap-y-3">
+                      <StoreAction
+                        variant="quiet"
+                        onClick={() => void downloadPacketPdf()}
+                        ariaBusy={pdfBusy}
+                        testId="download-solution-pdf"
+                      >
+                        <Download className="h-4 w-4" aria-hidden="true" />
+                        {pdfBusy ? "Preparing PDF…" : DOWNLOAD_PDF}
+                      </StoreAction>
                       <StoreAction variant="quiet" onClick={() => window.print()} testId="print-save">
                         <Printer className="h-4 w-4" aria-hidden="true" />
                         {PRINT_SAVE}
                       </StoreAction>
                     </div>
+                    {pdfError ? (
+                      <p className="d2-small mt-3 text-red-700 d2-no-print" data-testid="solution-pdf-error">
+                        {pdfError}
+                      </p>
+                    ) : null}
                   </>
                 ) : (
                   <p className="d2-body d2-ink mt-6" data-testid="summary-elsewhere">

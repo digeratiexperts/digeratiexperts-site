@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it } from "vitest";
 import { storeProducts } from "../client/src/data/storeProducts";
 import {
   canonicalizeCheckoutLineItems,
+  isPhysicalFulfillmentProduct,
   isRecurringSubscriptionProduct,
+  physicalFulfillmentSkus,
   recurringCheckoutSkus,
 } from "./secureStoreCheckout";
 import {
@@ -84,6 +86,56 @@ describe("Store commerce safety", () => {
       "comanaged",
     );
     expect(recurringCheckoutSkus(oneTimeLines)).toEqual([]);
+  });
+
+  it("holds physical hardware out of one-time payment (ships with a quote)", () => {
+    const hardware = storeProducts.find((product) => product.id === "prod-055");
+    const digital = storeProducts.find((product) => product.id === "prod-070");
+    expect(hardware).toBeDefined();
+    expect(digital).toBeDefined();
+    expect(isPhysicalFulfillmentProduct(hardware!)).toBe(true);
+    expect(isPhysicalFulfillmentProduct(digital!)).toBe(false);
+
+    const hardwareLines = canonicalizeCheckoutLineItems(
+      [{ productId: "prod-055", sku: "DE-HW-NET-FW-SMB-OT", quantity: 1 }],
+      "admin",
+    );
+    expect(physicalFulfillmentSkus(hardwareLines)).toEqual(["DE-HW-NET-FW-SMB-OT"]);
+
+    const digitalLines = canonicalizeCheckoutLineItems(
+      [{ productId: "prod-070", sku: "DE-DIG-ASMT-QUICK-OT", quantity: 1 }],
+      "admin",
+    );
+    expect(physicalFulfillmentSkus(digitalLines)).toEqual([]);
+
+    // Every checkout-enabled hardware_physical SKU is caught, so none can be charged directly.
+    const enabledHardware = storeProducts.filter(
+      (p) => p.category === "hardware_physical" && p.isCheckoutEnabled,
+    );
+    expect(enabledHardware.length).toBeGreaterThan(0);
+    for (const product of enabledHardware) {
+      expect(isPhysicalFulfillmentProduct(product), product.sku).toBe(true);
+    }
+  });
+
+  it("blocks laptop, phone and access point carts, and mixed carts cannot bypass the block", () => {
+    const laptop = { productId: "prod-060", sku: "DE-HW-ENDPOINT-LT-BASE-OT", quantity: 2 };
+    const phone = { productId: "prod-061", sku: "DE-HW-UC-PHONE-STD-OT", quantity: 5 };
+    const accessPoint = { productId: "prod-057", sku: "DE-HW-NET-AP-BIZ-OT", quantity: 1 };
+    const digital = { productId: "prod-070", sku: "DE-DIG-ASMT-QUICK-OT", quantity: 1 };
+
+    for (const line of [laptop, phone, accessPoint]) {
+      expect(physicalFulfillmentSkus(canonicalizeCheckoutLineItems([line], "admin"))).toEqual([line.sku]);
+    }
+
+    // A digital item alongside hardware does not dilute the block: every
+    // physical SKU in the cart is reported, the digital one is not.
+    const mixed = canonicalizeCheckoutLineItems([digital, laptop, accessPoint], "admin");
+    expect(physicalFulfillmentSkus(mixed)).toEqual([laptop.sku, accessPoint.sku]);
+
+    // Co-managed buyers reach the same checkout and get the same block.
+    const coManaged = canonicalizeCheckoutLineItems([digital, phone], "comanaged");
+    expect(physicalFulfillmentSkus(coManaged)).toEqual([phone.sku]);
   });
 
   it("never exposes demo client pricing in production", () => {
