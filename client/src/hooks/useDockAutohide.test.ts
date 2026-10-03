@@ -22,9 +22,15 @@ describe("bottom bar autohide (opt-in)", () => {
     expect(read("client/src/pages/DigeratiHomepage.tsx")).not.toMatch(/autohide/);
   });
 
-  it("is switched on only by the /version-7 preview, which owns its bar", () => {
+  it("is switched on only by the /version-7 and /version-8 previews, which own their bar", () => {
     expect(read("client/src/pages/versions/v7/HomepageV7.tsx")).toMatch(/<SiteBottomBar autohide \/>/);
-    expect(read("client/src/App.tsx")).toMatch(/ownsBottomBar = isHome \|\| location === "\/version-7"/);
+    expect(read("client/src/pages/versions/v8/HomepageV8.tsx")).toMatch(/<SiteBottomBar autohide \/>/);
+    const owns = read("client/src/App.tsx").match(/const ownsBottomBar = ([^;]+);/)?.[1] ?? "";
+    expect(owns).toMatch(/^isHome \|\| /);
+    expect(owns).toContain('location === "/version-7"');
+    expect(owns).toContain('location === "/version-8"');
+    // /version-0 is the live homepage component, which never opts in.
+    expect(owns).toContain('location === "/version-0"');
   });
 
   it("tucks the dock and back-to-top but never the Ask DE launcher", () => {
