@@ -33,3 +33,11 @@ Either:
 2. Ensure Chromium is present: `npx playwright install chromium` (or set `PDF_CHROMIUM_PATH`). `playwright` is a production dependency so `npm ci` keeps it.
 
 Until one renderer works, `POST /api/public/solutions/packet-pdf` returns **503** (fail soft). Browser **Print** remains available as secondary.
+
+## VPS deploy
+
+`deploy/vps/deploy.sh` runs `npx playwright install chromium` after `npm ci`
+(as the service user, so the runtime finds the browser in the same cache) and
+smoke-launches it. Both steps only log `WARN` on failure; set
+`SKIP_PDF_BROWSER=1` to skip. If the smoke launch reports missing system
+libraries, an admin runs `sudo npx playwright install-deps chromium` once.

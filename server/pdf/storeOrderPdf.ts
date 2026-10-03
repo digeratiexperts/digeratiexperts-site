@@ -8,7 +8,7 @@
  * here recomputes prices.
  */
 import { billingLabel, isRecurringPricingType, type CommercePricingType } from "@shared/storeCommerce";
-import { PRIMARY_PHONE } from "@shared/companyContact";
+import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
 import { coverBlock, DE_PDF, dePdfBaseStyles, esc, phoenixDate, usd } from "./dePdfBrand";
 import { renderHtmlToPdf } from "./renderHtmlToPdf";
 
@@ -194,7 +194,7 @@ export function buildOrderPdfHtml(order: OrderPdfInput, opts: OrderPdfOptions = 
 
     <div class="closing">
       Track provisioning, invoices and support in your portal at portal.digeratiexperts.com.
-      Questions: <span class="nowrap">support@digeratiexperts.com</span> · <span class="nowrap">${esc(PRIMARY_PHONE.display)}</span>
+      Questions: <span class="nowrap">${esc(COMPANY.supportEmail)}</span> · <span class="nowrap">${esc(PRIMARY_PHONE.display)}</span>
     </div>
   </div>
 </body></html>`;
