@@ -26,7 +26,7 @@ const PUBLIC_EMAIL_DOMAINS = [
 const FACTS = [
   { lead: "Independent.", rest: "Your current provider shouldn’t be the one grading its own work." },
   { lead: "Plain English.", rest: "Findings ranked by risk, written for the person who writes the checks." },
-  { lead: "No switch required.", rest: "Use it with the IT you have, or with us. Your call." },
+  { lead: "Yours to keep.", rest: "The findings belong to you. Digerati Experts writes them so you can put them to work." },
 ] as const;
 
 /**
