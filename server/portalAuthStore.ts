@@ -37,6 +37,8 @@ export type PortalAuthUser = {
   mfaTotpSecret?: string | null;
   mfaBackupCodes?: string[];
   lastLogin?: Date | null;
+  /** Tokens issued before this instant are rejected (#242). */
+  sessionsValidAfter?: Date | null;
   createdAt?: Date;
 };
 
@@ -116,6 +118,7 @@ function rowToUser(row: typeof portalUsersTable.$inferSelect): PortalAuthUser {
     mfaTotpSecret: decryptUserTotpSecret(row.id, row.mfaTotpSecret),
     mfaBackupCodes: Array.isArray(row.mfaBackupCodes) ? row.mfaBackupCodes : [],
     lastLogin: row.lastLogin,
+    sessionsValidAfter: (row as any).sessionsValidAfter ?? null,
     createdAt: row.createdAt,
   };
 }
@@ -207,6 +210,7 @@ async function writeUserDb(user: PortalAuthUser): Promise<void> {
       mfaTotpSecret: encryptTotpSecret(user.mfaTotpSecret),
       mfaBackupCodes: prepareBackupCodesForStorage(user.mfaBackupCodes || []),
       lastLogin: user.lastLogin || null,
+      sessionsValidAfter: user.sessionsValidAfter || null,
     };
     await db
       .insert(portalUsersTable)
@@ -232,6 +236,7 @@ async function writeUserDb(user: PortalAuthUser): Promise<void> {
           mfaTotpSecret: values.mfaTotpSecret,
           mfaBackupCodes: values.mfaBackupCodes,
           lastLogin: values.lastLogin,
+          sessionsValidAfter: values.sessionsValidAfter,
           updatedAt: new Date(),
         },
       });

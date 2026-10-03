@@ -1,6 +1,13 @@
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { storage } from "./storage";
 import {
+  isTokenRevoked,
+  issuedBeforeCutoff,
+  cutoffNow,
+  revokeToken,
+  loadRevokedSessions,
+} from "./portalSessionRevocation";
+import {
   issueAuthToken,
   consumeAuthToken,
   releaseAuthToken,
@@ -283,6 +290,12 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
       (live as any).isActive === false
     ) {
       return res.status(401).json({ error: "Account disabled or revoked" });
+    }
+
+    // Server-side revocation (#242): a logged-out token, or any token issued before the
+    // user's sessions-valid-after cutoff (password reset), is dead even though its signature is fine.
+    if (isTokenRevoked(token) || issuedBeforeCutoff(decoded.iat, (live as any).sessionsValidAfter)) {
+      return res.status(401).json({ error: "Session ended. Please log in again." });
     }
 
     // JWT proves the session; the live Portal record is authoritative for
@@ -696,6 +709,7 @@ export async function registerRoutes(app: Express) {
 
   // Durable portal auth (Neon) — Map-compatible shim for existing handlers
   await initPortalAuthStore();
+  await loadRevokedSessions();
   await initPortalOrg();
   await initPortalApprovals();
   await initPortalChatStore();
@@ -2338,11 +2352,16 @@ export async function registerRoutes(app: Express) {
 
       const bcrypt = await import('bcrypt');
       user.password = await bcrypt.hash(password, 12);
+      // Sign the account out everywhere: every token issued before this instant is rejected (#242).
+      (user as any).sessionsValidAfter = cutoffNow();
       try {
         await portalUsers.commit(user);
       } catch (commitError) {
         await releaseAuthToken(consumed.id).catch(() => undefined);
         throw commitError;
+      }
+      for (const [sid, session] of Array.from(sessionStore.entries())) {
+        if (session.userId === user.id) sessionStore.delete(sid);
       }
 
       logSecurityEvent("PASSWORD_RESET_COMPLETED", req, { email: tokenData.email });
@@ -2817,10 +2836,46 @@ export async function registerRoutes(app: Express) {
         logSecurityEvent("SESSION_TERMINATED", req, { sessionId });
       }
 
+      // Revoke every token this request presents (cookie and Bearer) server-side (#242).
+      // A copied token is dead after this, not just removed from this browser.
+      const authHeader = req.headers.authorization;
+      const presented = new Set<string>();
+      if (typeof req.cookies?.[PORTAL_AUTH_COOKIE] === "string" && req.cookies[PORTAL_AUTH_COOKIE]) {
+        presented.add(req.cookies[PORTAL_AUTH_COOKIE]);
+      }
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const bearer = authHeader.slice("Bearer ".length).trim();
+        if (bearer) presented.add(bearer);
+      }
+      let revocationDurable = true;
+      let revokedUserId: string | null = null;
+      for (const token of presented) {
+        // Only a validly signed, unexpired token is worth recording; anything else is already dead.
+        let decoded: JWTPayload | null = null;
+        try {
+          decoded = jwt.verify(token, jwtSecret()) as JWTPayload;
+        } catch {
+          continue;
+        }
+        revokedUserId = decoded.userId || revokedUserId;
+        try {
+          await revokeToken(token, { userId: decoded.userId, expiresAtSec: decoded.exp });
+        } catch {
+          revocationDurable = false;
+        }
+      }
+
       clearPortalAuthCookies(res);
 
-      logSecurityEvent("PORTAL_USER_LOGOUT", req, { userId: req.user?.id || "unknown" });
+      logSecurityEvent("PORTAL_USER_LOGOUT", req, { userId: req.user?.id || revokedUserId || "unknown" });
 
+      if (!revocationDurable) {
+        // Signed out here and revoked in this process, but not recorded durably: say so.
+        return res.status(503).json({
+          code: "PERSISTENCE_UNAVAILABLE",
+          message: "You were signed out on this device, but we could not confirm the session was revoked everywhere.",
+        });
+      }
       return res.json({ success: true, message: "Logged out successfully" });
     } catch (error: any) {
       console.error("[ERROR] Portal logout failed:", error);
