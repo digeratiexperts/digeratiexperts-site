@@ -3,7 +3,7 @@
 **For:** Joe · **PR:** #367 (draft, unmerged, not deployed) · **Claim:** #366 (VIS-015)
 **Head commit and CI run:** shown at the top of PR #367's description. This file cannot state its own commit SHA.
 
-**Status:** PR-ready for review. **Not merged. Not deployed. Not production-verified.** Nothing ships until you approve the concrete results below.
+**Status:** **Approved by Joe, 2026-10-03** (results at `9be76c4`). PR ready for merge. **Not merged. Not deployed. Not production-verified.** Merge and deploy are Joe's decision.
 
 ---
 

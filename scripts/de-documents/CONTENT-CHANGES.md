@@ -1,5 +1,7 @@
 # Content-change register — 13 public resource PDFs (VIS-015)
 
+**Approved by Joe on 2026-10-03** ("approved", in reply to the review package at `9be76c4`). This approval covers every item in this register, including C-05–C-08, A-03, A-12 and A-14.
+
 Every material difference between the May 2026 PDFs and the 2026-10 edition. Joe approved fixing all audit findings and asked for best-judgement decisions on the open items (2026-10-03). Those decisions are marked **Decided** with the reason, so any of them can be reversed by editing one content file and rebuilding.
 
 **Sources of truth:**
