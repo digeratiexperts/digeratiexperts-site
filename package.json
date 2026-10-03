@@ -16,6 +16,7 @@
     "test:watch": "vitest",
     "smoke:public": "node scripts/public-route-smoke.mjs",
     "smoke:door2": "node scripts/door2-browser-smoke.mjs",
+    "smoke:desk": "node scripts/desk-browser-smoke.mjs",
     "db:push": "drizzle-kit push",
     "db:migrate": "node scripts/run-migrations.mjs",
     "test:advisor": "tsx --test server/services/msp-advisor/*.test.ts",
