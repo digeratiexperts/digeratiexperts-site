@@ -43,7 +43,7 @@ claims:
       - client/src/lib/billingAddress.ts (new), client/src/pages/store/Checkout.tax.test.ts
       - deploy/vps/env.production.example (STRIPE_TAX_* lines), docs/STORE-WAREHOUSE.md (Pay Now sales tax section)
       - artifacts/visual-qa/paynow-stripe-tax/**
-    status: active
+    status: verified-live
     started: 2026-10-03
     note: >-
       Joe, 2026-10-03: "merge it and build the stripe tax step", after
@@ -53,6 +53,16 @@ claims:
       steps aside to a quote. Fails closed on any Stripe error, an item
       without a confirmed tax code, or an Arizona client while Stripe has no
       Arizona registration. Public Store (Door 2) never reaches it.
+      RELEASED 2026-10-03: merged as cdfe6e8 (PR 411, on Joe's "merge 411 AND
+      BRING IT TO PRODUCTION"). The CI run for cdfe6e8 passed every job,
+      including the production deploy (finished 21:10Z); the staff Checkout
+      chunk on production carried the billing address fields from 21:10:53Z.
+      Playwright at 390 and 1440 against production code (API replies stubbed
+      in the browser) confirmed the address fields, the empty-address check,
+      the address payload and the step-aside to a quote. Still switched off: no
+      STRIPE_TAX_SECRET_KEY on the server yet. Separation re-checked live.
+      Evidence: artifacts/visual-qa/paynow-stripe-tax/live/. VERIFIED LIVE.
+      Files released.
   - id: de-msadmin-worker-loop
     owner: claude
     subsystem: msp-ai-kit
@@ -85,6 +95,38 @@ claims:
       unposted result on disk for the next run. Overlap check: no open PR;
       open ACTIVE issues 270 and 272 (DE Tech Tool) touch DE.Security and
       Loader.Tests.ps1, not DE-Microsoft-Admin.
+  - id: desk-composer-suggestions
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: cdfe6e8
+    files:
+      - client/src/lib/deskComposerSuggestions.ts (new), client/src/lib/deskComposerSuggestions.test.ts (new)
+      - client/src/components/ZohoASAPWidget.tsx (composer field wrapper, suggestion state/effects, the full-screen hint's composerHintShowing input, composer CSS only)
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts (two pinned regexes)
+      - .cursor/skills/de-desk-ui/tokens-and-structure.md (composer line), design/approved/ask-de-text-box-suggestions-2026-10-03.md (new)
+      - artifacts/visual-qa/desk-composer-suggestions/**
+    status: verified-live
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: "like how Suno mobile has in the user text box
+      suggestions of what they might say, do that for DE". Page-aware examples
+      rise into the empty Ask DE box one at a time; finite passes; gold inside
+      the text box hint; decoration only (aria-hidden); none under reduced
+      motion. Suno's exact motion could not be verified from the build
+      environment, so the effect is a common rotating-placeholder pattern
+      pending Joe's review.
+      RELEASED 2026-10-03: merged as 49a6247 (PR 414, on Joe's "merge 414 and
+      bring it to production"). The CI run for 49a6247 passed every job,
+      including the production deploy; the Desk chunk on production carried
+      the suggestions from 21:26:19Z. Playwright at 390 and 1440 on the live
+      homepage: first example 3.2s / 4.0s after the Desk opened, gold inside
+      the text box hint, all five in order, the textarea's placeholder hidden
+      under them, "Type the issue…" back after the pass, focus restarts a
+      pass, typing ends it, none under reduced motion, no page errors.
+      smoke:desk against production 88/88. Evidence:
+      artifacts/visual-qa/desk-composer-suggestions/live/. VERIFIED LIVE.
+      Files released.
   - id: paynow-tax-step-aside
     owner: claude
     subsystem: store-warehouse
@@ -159,13 +201,25 @@ claims:
       - server/warehouseRoutes.test.ts
       - server/integrations/techSalesClient.ts
       - docs/STORE-WAREHOUSE.md
-    status: active
+    status: merged
     started: 2026-10-03
     note: >-
       Phase 1 staff ops console for /internal/warehouse (replace old client
       StoreLanding). Phase 2 staff Hub catalog proxy. Phase 3 Pax8 health
       surface via Hub. Admin lock unchanged. Companion Hub work on
       Intelligence-Hub staff-catalog + pax8-connector.
+      RELEASED 2026-10-03: merged as PR 371 (merge commit 60db03e,
+      18:22Z) and deployed with main 823e4d0 (18:40Z). Follow-up PR 409
+      (merge commit 1c9140a, 21:00Z, deployed 21:05Z): catalog and Pax8
+      status fall back to UNKNOWN instead of a default CONNECTED, and the
+      on-hand stock panel renders on ops home only. Production evidence:
+      anonymous /internal/warehouse and /api/internal/warehouse/{session,
+      catalog,connectors,stock} answer a generic 404 with no Location; Joe's
+      signed-in admin screenshot showed ops home with Hub catalog
+      LOCAL_WORKSHOP and Pax8 UNKNOWN. MERGED, not yet VERIFIED LIVE: the
+      admin views after PR 409 (stock panel placement, Hub feed, Vendors) are
+      unchecked. Companion Hub PR 325 is still an unmerged draft, so
+      LOCAL_WORKSHOP / UNKNOWN are expected until it merges. Files released.
   - id: site-design-pass-2026-10-03
     owner: claude
     subsystem: marketing-pages

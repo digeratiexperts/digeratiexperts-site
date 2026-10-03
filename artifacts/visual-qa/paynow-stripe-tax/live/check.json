@@ -1,0 +1,14 @@
+{
+  "checked": "2026-10-03T21:12Z",
+  "site": "https://digeratiexperts.com",
+  "release": "cdfe6e8 (PR 411), CI run 37153878217: every job passed; production deploy finished 21:10:41Z",
+  "staffCheckoutChunk": "/assets/Checkout-Bso958nN.js (via WarehouseApp-JR_G_hDo.js), carrying 'Pay Now calculates sales tax from it' from 21:10:53Z",
+  "browserCheck": "report.json: Playwright at 390 and 1440 against production code with every API reply stubbed in the browser (nothing reached the payment route). Pay Now shows the billing address; empty submit sends nothing and names four fields; a full address travels as billing.address; the stubbed TAX_RATE_UNAVAILABLE still steps aside to Request Quote. No page errors, no horizontal overflow.",
+  "switchedOff": "No STRIPE_TAX_SECRET_KEY is set on production yet, so Pay Now still steps aside to a quote for every cart.",
+  "separation": {
+    "publicStoreCheckoutChunk": "PublicStoreCheckout-Ducilb_G.js: 0 references to checkout/zoho",
+    "POST /api/store/checkout/zoho (anonymous)": 401,
+    "GET /internal/warehouse (anonymous)": 404,
+    "GET /store": 200
+  }
+}
