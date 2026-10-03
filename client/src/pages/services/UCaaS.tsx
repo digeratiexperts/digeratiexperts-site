@@ -217,7 +217,7 @@ export default function UCaaS() {
       heroAside={
         <HeroFacts
           title="Service & cost"
-          rows={pricingTiers.map((t) => ({ label: t.type === "one-time" ? "One-time" : "Monthly", value: `${t.name}: ${t.price}` }))}
+          rows={pricingTiers.map((t) => ({ label: t.type === "one-time" ? "One-time" : t.name.replace("Managed UCaaS", "Managed"), value: `${t.price}` + (t.type === "one-time" ? ` · ${t.name}` : "") }))}
           footnote="Start with implementation, add ongoing management, or take the full stack."
         />
       }
