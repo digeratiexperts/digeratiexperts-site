@@ -1,5 +1,6 @@
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { storage } from "./storage";
+import { durableMutationGate } from "./durableMutationGate";
 import { buildCompanyMetrics } from "./adminCompanyMetrics";
 import { randomBytes, randomInt, createHash, timingSafeEqual } from "crypto";
 import rateLimit from "express-rate-limit";
@@ -715,6 +716,9 @@ export async function registerRoutes(app: Express) {
     values: () => portalAuthListClients(),
   };
   
+  // Production: durable-authoritative writes fail closed (503) when the database is down (#248).
+  app.use(durableMutationGate);
+
   // ===== AUTHENTICATION ROUTES =====
   
   // Legacy generic register/login are retired (#236): they minted tokens for a
