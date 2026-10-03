@@ -257,7 +257,7 @@ export default function Blog() {
         )}
       </section>
 
-      <main className="py-12 md:py-16">
+      <main id="main-content" tabIndex={-1} className="py-12 md:py-16">
         <div className="container mx-auto px-4 max-w-7xl">
           {/* Breadcrumb + page title */}
           <div className="flex items-center gap-2 text-sm text-white/55 mb-3">

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   Shield,
   Layers,
@@ -15,6 +15,7 @@ import { EvidenceFrame } from "../evidence/EvidenceFrame";
 import { DiagramNode, SecurityBoundary } from "../evidence/DiagramPrimitives";
 
 export const ProActiveEcosystemDiagram: React.FC = () => {
+  const prefersReducedMotion = useReducedMotion() ?? false;
   const [activeStage, setActiveStage] = useState<number>(0);
 
   const stages = [
@@ -80,7 +81,12 @@ export const ProActiveEcosystemDiagram: React.FC = () => {
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="font-mono text-xs font-bold text-[#F04C97]">{stage.num}</span>
-                {isSelected && <span className="h-2 w-2 rounded-full bg-[#D3126A] animate-pulse" />}
+                {isSelected ? (
+                  <span
+                    className={`h-2 w-2 rounded-full bg-[#D3126A]${prefersReducedMotion ? "" : " animate-pulse"}`}
+                    aria-hidden="true"
+                  />
+                ) : null}
               </div>
               <p className="font-heading text-sm font-bold text-white mb-1">{stage.title}</p>
               <p className="font-mono text-[10px] text-white/50">{stage.output}</p>
@@ -93,10 +99,10 @@ export const ProActiveEcosystemDiagram: React.FC = () => {
       <AnimatePresence mode="wait">
         <motion.div
           key={stages[activeStage].id}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.2 }}
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
+          animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+          exit={prefersReducedMotion ? undefined : { opacity: 0, y: -6 }}
+          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
           className="rounded-xl border border-white/10 bg-black/50 p-5 font-sans"
         >
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3 mb-3">

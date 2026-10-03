@@ -36,7 +36,7 @@ export function HomepageTrustRail() {
     <section id="trust-rail" className="py-12 lg:py-16 bg-[#0a0a0a] border-y border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pink-300/90 mb-3">
-          Why Digerati is different
+          Why Digerati Experts is different
         </p>
         <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 max-w-2xl">
           Credible managed IT and cybersecurity — without the lock-in theater

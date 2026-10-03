@@ -47,4 +47,32 @@ describe("portalEventVisibleTo", () => {
       }),
     ).toBe(false);
   });
+
+  it("fails closed when the canonical account contradicts the entity-id fallback (#238)", () => {
+    expect(
+      portalEventVisibleTo(clientA, {
+        eventType: "account.updated",
+        entityId: "client-a",
+        canonicalAccountId: "hub-b",
+      }),
+    ).toBe(false);
+  });
+
+  it("hides a canonical-scoped event from a viewer with no Hub account, even on a client-id match", () => {
+    expect(
+      portalEventVisibleTo(
+        { role: "user", clientId: "client-a", hubAccountId: null },
+        { eventType: "account.updated", entityId: "client-a", canonicalAccountId: "hub-a" },
+      ),
+    ).toBe(false);
+  });
+
+  it("still routes a legacy event with no canonical account by client id", () => {
+    expect(
+      portalEventVisibleTo(clientA, { eventType: "account.updated", entityId: "client-a", canonicalAccountId: null }),
+    ).toBe(true);
+    expect(
+      portalEventVisibleTo(clientA, { eventType: "account.updated", entityId: "client-b" }),
+    ).toBe(false);
+  });
 });
