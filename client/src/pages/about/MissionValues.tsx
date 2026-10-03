@@ -62,8 +62,8 @@ const differentiators = [
   },
   {
     icon: Clock,
-    title: "15-Minute Response",
-    desc: "When you need help, we're there – with a 15-minute first-response target during business hours, as published in our SLA.",
+    title: "15-Minute Critical Response",
+    desc: "When a breach is active or a system is down, our published SLA sets a 15-minute response, with emergency incident response available 24/7/365.",
   },
 ];
 

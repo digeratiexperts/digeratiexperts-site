@@ -148,7 +148,7 @@ export default function PrivacyPolicy() {
                 <li>HIPAA-aligned security and compliance support, including Business Associate Agreements for healthcare clients</li>
                 <li>SOC 2 readiness and control alignment for customer programs (Digerati Experts is not SOC 2 Type II certified)</li>
                 <li>Cyber insurance readiness and security/compliance reporting support</li>
-                <li>Team members hold CISSP, CCSP, CEH, and Security+ certifications</li>
+                <li>Staff credentials are published on our <a href="/about/team" className="underline underline-offset-2">Team page</a>, each with a link to the issuer's verification record</li>
               </ul>
             </div>
 

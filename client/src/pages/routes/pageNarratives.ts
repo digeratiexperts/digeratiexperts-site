@@ -35,7 +35,7 @@ export const pageNarratives: Record<string, PageNarrative> = {
       {
         title: "Operate",
         description:
-          "Helpdesk with a 15-minute first-response target, vendor coordination, and monthly visibility into what we fixed and prevented.",
+          "Helpdesk with response targets by priority (15 minutes for critical incidents, per our SLA), vendor coordination, and monthly visibility into what we fixed and prevented.",
       },
       {
         title: "Improve",
