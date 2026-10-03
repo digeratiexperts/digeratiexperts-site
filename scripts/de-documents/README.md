@@ -123,4 +123,4 @@ Evidence: `artifacts/visual-qa/resource-pdfs-redesign-2026-10/`.
 
 ## Site-wide use
 
-The system is not tied to the resource PDFs. Store quotes, orders, receipts and solution packets (`server/pdf/*`) could adopt `system/styles.mts` tokens and the brief/spec registers. That work overlaps open PR #339 (`server/pdf/dePdfBrand.ts`) and was **not** done here; coordinate with that PR's owner first.
+The Store client documents (preliminary quote, order confirmation, portal receipt and solution packet) use the same system. Their transaction family is a brief band, then the spec body, then the brief close. It lives in `server/pdf/dePdfBrand.ts`; see `server/pdf/README.md`. Tokens and the static font list come from `shared/deDocumentTokens.ts`, which both sides import.

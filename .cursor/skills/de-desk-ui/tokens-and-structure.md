@@ -83,7 +83,7 @@ Do **not** invent service status, devices, software libraries, or vendor product
 
 ## a11y
 
-- Visible `:focus-visible` (gold ring). The Ask DE launcher on the bottom bar is the one white ring (2026-10-03): it sits around a gold badge, and it uses `focus-visible:rounded-full` so the global `*:focus-visible { border-radius: 4px }` cannot square it off.
+- Visible `:focus-visible` (gold ring). The Ask DE launcher on the bottom bar is the one white ring (2026-10-03): it sits around a gold badge, and it pins `focus-visible:rounded-full`. Site-wide, keyboard focus never changes a control's shape: the global `:focus-visible` outline sets no border-radius and follows each control's own corners (2026-10-03).
 - Interactive controls ~44px where practical.
 - `prefers-reduced-motion` on pulse, heads-up, and tool-row motion.
 - Ticket submit is fail-closed: treat `!response.ok` or missing `zohoTicketId` as failure.

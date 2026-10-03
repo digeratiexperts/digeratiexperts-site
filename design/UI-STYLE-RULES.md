@@ -123,7 +123,7 @@ Tier is marked per rule. **Tier 0** holds in every task mode. **Integration** ru
 - **Never fabricate** (Tier 0): clients, quotes, metrics, response times ("replies in minutes"), partnerships, vendor logos DE doesn't use, telemetry, compliance status, or product behavior. Classify evidence LIVE / SANITIZED REAL / EXAMPLE / ILLUSTRATIVE.
 - **No vendor names on the public homepage hero** (Joe-decided, 2026-08-30). Vendor marks live in Store merchandising where they're already sanctioned.
 - **Preserve content** (Integration; functionality/routes/SEO are Tier 0): existing copy, CTAs, nav, routes, SEO/JSON-LD, analytics, and functionality survive restyles. Elevate, don't delete.
-- **All states designed** (Tier 0): default, hover, focus-visible, active, disabled, loading, empty (honest), error, success. Keyboard: focus traps in dialogs, Escape closes + restores focus, WCAG 2.2 AA contrast.
+- **All states designed** (Tier 0): default, hover, focus-visible, active, disabled, loading, empty (honest), error, success. Keyboard: focus traps in dialogs, Escape closes + restores focus, WCAG 2.2 AA contrast. Focus never changes a control's shape: the outline or ring follows the control's own corners (no `border-radius` in a focus rule), and a control with a focus ring never takes an inline `box-shadow`, which would replace the ring (2026-10-03).
 - **Company naming** (Tier 0): "Digerati Experts" or "DE" — never standalone "Digerati". Portal login is `https://portal.digeratiexperts.com/portal/login`.
 - **Definition of done** (Tier 0): rendered result is coherent, responsive, accessible, consistent — verified in the browser and (for visual tasks) approved by Joe from screenshots, not tests alone.
 

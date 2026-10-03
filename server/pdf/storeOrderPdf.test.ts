@@ -96,7 +96,9 @@ describe("helpers", () => {
     const css = brandFontFaceCss();
     expect(css).toContain('font-family:"Inter"');
     expect(css).toContain('font-family:"Space Grotesk"');
-    expect(css).toContain('font-family:"Oxanium"');
-    expect(css).toContain("data:font/woff2;base64,");
+    expect(css).toContain('font-family:"Plex Mono"');
+    // Static TTF instances: variable fonts embed as Type 3 in Chromium.
+    expect(css).toContain("data:font/ttf;base64,");
+    expect(css).not.toContain("woff2");
   });
 });
