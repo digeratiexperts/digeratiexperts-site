@@ -286,11 +286,12 @@ export function ServiceCapabilityMatrix({
 
       {/* Footer Link */}
       <div className="p-4 bg-white/[0.02] border-t border-white/10">
-        <Link href="/ecosystem-pricing">
-          <span className="inline-flex min-h-11 items-center gap-2 text-sm text-de-accent-ink hover:text-de-accent-ink transition-colors cursor-pointer">
-            View complete service matrix
-            <ChevronRight className="w-4 h-4" />
-          </span>
+        <Link
+          href="/ecosystem-pricing"
+          className="inline-flex min-h-11 items-center gap-2 rounded-sm text-sm text-de-accent-ink transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
+        >
+          View complete service matrix
+          <ChevronRight className="w-4 h-4" aria-hidden="true" />
         </Link>
       </div>
     </motion.div>
