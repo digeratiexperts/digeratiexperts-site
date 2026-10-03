@@ -15,6 +15,10 @@
   --v6-ink-3: rgba(251, 250, 248, 0.55);
   --v6-line: rgba(255, 255, 255, 0.1);
   --v6-accent: #d3126a;
+  /* Magenta text on graphite is 3.95:1, under AA for small type; small accent
+     text on dark surfaces uses the site's lighter pink (5.8:1). Paper and white
+     surfaces switch back to the brand magenta (4.75:1 / 5.17:1). */
+  --v6-accent-ink: #ec4899;
   --v6-focus: #ec4899;
   --v6-paper-ink: #17141f;
   --v6-paper-muted: #5e5868;
@@ -40,7 +44,7 @@
 
 .v6-wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
 .v6-section { padding: 64px 0; background: var(--v6-bg); }
-.v6-paper { background: var(--v6-paper); color: var(--v6-paper-ink); }
+.v6-paper { background: var(--v6-paper); color: var(--v6-paper-ink); --v6-accent-ink: var(--v6-accent); }
 .v6-paper a { text-decoration-color: rgba(23, 20, 31, 0.4); }
 .v6-paper a:hover { text-decoration-color: var(--v6-paper-ink); }
 .v6-panel { background: var(--v6-raised); border: 1px solid var(--v6-line); border-radius: 24px; padding: 28px 24px; }
@@ -50,8 +54,7 @@
 .v6 h2 { font-size: clamp(1.625rem, 3vw, 2.35rem); line-height: 1.15; font-weight: 600; }
 .v6 h3 { font-size: 1.15rem; line-height: 1.3; font-weight: 600; }
 .v6-accent-word { color: var(--v6-accent); }
-.v6-eyebrow { display: flex; align-items: center; gap: 10px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--v6-accent); }
-.v6-paper .v6-eyebrow { color: var(--v6-accent); }
+.v6-eyebrow { display: flex; align-items: center; gap: 10px; font-size: 0.9375rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--v6-accent-ink); }
 .v6-head { max-width: 760px; display: grid; gap: 12px; margin-bottom: 32px; }
 .v6-lede { font-size: 1.0625rem; color: var(--v6-ink-2); max-width: 64ch; }
 .v6-paper .v6-lede { color: var(--v6-paper-muted); }
@@ -70,9 +73,8 @@
 .v6-paper .v6-btn-secondary { color: var(--v6-paper-ink); border-color: var(--v6-paper-line); }
 .v6-paper .v6-btn-secondary:hover { background: rgba(23, 20, 31, 0.04); }
 .v6-actions { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; }
-.v6-more { display: inline-flex; align-items: center; min-height: 32px; margin-top: 12px; font-weight: 600; font-size: 0.95rem; color: var(--v6-accent); text-decoration: none; }
+.v6-more { display: inline-flex; align-items: center; min-height: 32px; margin-top: 12px; font-weight: 600; font-size: 0.95rem; color: var(--v6-accent-ink); text-decoration: none; }
 .v6-more:hover { text-decoration: underline; }
-.v6-paper .v6-more { color: var(--v6-accent); }
 
 /* Header */
 .v6-header { position: sticky; top: 0; z-index: 40; background: rgba(5, 3, 18, 0.92); backdrop-filter: blur(10px); border-bottom: 1px solid var(--v6-line); }
@@ -103,13 +105,13 @@
 .v6-hero-aside { display: grid; gap: 16px; }
 .v6-hero-mock { margin: 0; }
 .v6-hero-mock > * { min-width: 0; }
-.v6-hero-checks { display: flex; flex-wrap: wrap; gap: 10px 16px; font-size: 0.9rem; color: var(--v6-ink-2); }
+.v6-hero-checks { display: flex; flex-wrap: wrap; gap: 10px 16px; font-size: 0.9375rem; color: var(--v6-ink-2); }
 .v6-hero-checks li { display: flex; align-items: center; gap: 6px; }
 .v6-hero-checks li::before { content: "\2713"; color: #34d399; font-weight: 700; }
 .v6-trust { display: grid; gap: 14px; margin-top: 40px; padding: 22px; background: var(--v6-paper); color: var(--v6-paper-ink); border-radius: 18px; }
 .v6-trust li { display: grid; gap: 4px; }
 .v6-trust b { font-family: "Space Grotesk", "Inter", system-ui, sans-serif; font-size: 1rem; }
-.v6-trust span { font-size: 0.9rem; color: var(--v6-paper-muted); }
+.v6-trust span { font-size: 0.9375rem; color: var(--v6-paper-muted); }
 
 /* Three-up strip */
 .v6-strip { display: grid; gap: 20px; }
@@ -136,7 +138,7 @@
 .v6-card .v6-more { margin-top: 6px; }
 .v6-card h3 a { text-decoration: none; }
 .v6-card h3 a:hover { text-decoration: underline; }
-.v6-kicker { color: var(--v6-ink-3); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
+.v6-kicker { color: var(--v6-ink-2); font-size: 0.9375rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
 .v6-paper .v6-kicker { color: var(--v6-accent); }
 
 /* Capability list */
@@ -171,9 +173,9 @@
 .v6-list li::before { content: ""; position: absolute; left: 2px; top: 0.6em; width: 10px; height: 10px; border-radius: 50%; background: var(--v6-accent); }
 .v6-list li b { color: var(--v6-ink); display: block; }
 .v6-paper .v6-list li b { color: var(--v6-paper-ink); }
-.v6-check li::before { content: "\2713"; background: none; color: var(--v6-accent); font-weight: 700; top: 0; left: 0; width: auto; height: auto; }
+.v6-check li::before { content: "\2713"; background: none; color: var(--v6-accent-ink); font-weight: 700; top: 0; left: 0; width: auto; height: auto; }
 .v6-inline-list { display: flex; flex-wrap: wrap; gap: 8px 22px; color: var(--v6-paper-muted); }
-.v6-inline-list li::before { content: "\2713 "; font-weight: 700; color: var(--v6-accent); }
+.v6-inline-list li::before { content: "\2713 "; font-weight: 700; color: var(--v6-accent-ink); }
 
 /* Boxes */
 .v6-box { border: 1px solid var(--v6-line); border-radius: 14px; padding: 22px; background: var(--v6-raised); display: grid; gap: 8px; }
@@ -202,8 +204,8 @@
 .v6-tiers { display: grid; gap: 12px; }
 .v6-tier { border: 1px solid var(--v6-line); border-radius: 16px; padding: 22px; background: var(--v6-bg); display: grid; gap: 10px; align-content: start; position: relative; }
 .v6-tier-flagship { border-color: var(--v6-accent); box-shadow: 0 0 0 1px rgba(211, 18, 106, 0.35); }
-.v6-tier-flag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--v6-accent); margin: 0; }
-.v6-tier-badge { font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--v6-accent); }
+.v6-tier-flag { font-size: 0.9375rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--v6-accent-ink); margin: 0; }
+.v6-tier-badge { font-size: 0.9375rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--v6-accent-ink); }
 .v6-price { font-family: "Oxanium", "Space Grotesk", sans-serif; font-size: 2.25rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
 .v6-tier-desc { color: var(--v6-ink-2); font-size: 0.95rem; padding-bottom: 10px; border-bottom: 1px solid var(--v6-line); }
 .v6-tier ul { display: grid; gap: 6px; color: var(--v6-ink-2); font-size: 0.95rem; }
@@ -215,14 +217,14 @@
 .v6-feed { display: grid; gap: 12px; }
 .v6-feed li { padding: 16px 18px; border: 1px solid var(--v6-line); border-radius: 14px; background: var(--v6-raised); display: grid; gap: 4px; }
 .v6-feed li a { font-weight: 600; text-decoration: none; }
-.v6-feed li a:hover { color: var(--v6-accent); }
+.v6-feed li a:hover { color: var(--v6-accent-ink); }
 
 /* FAQ */
 .v6-faq { border-top: 1px solid var(--v6-paper-line); }
 .v6-faq details { border-bottom: 1px solid var(--v6-paper-line); }
 .v6-faq summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; gap: 16px; align-items: center; min-height: 56px; padding: 14px 0; font-weight: 600; font-size: 1.0625rem; }
 .v6-faq summary::-webkit-details-marker { display: none; }
-.v6-faq summary::after { content: "+"; font-size: 1.5rem; line-height: 1; color: var(--v6-accent); flex: none; }
+.v6-faq summary::after { content: "+"; font-size: 1.5rem; line-height: 1; color: var(--v6-accent-ink); flex: none; }
 .v6-faq details[open] summary::after { content: "\2212"; }
 .v6-faq details p { padding: 0 0 18px; color: var(--v6-paper-muted); max-width: 72ch; }
 
@@ -249,7 +251,7 @@ select.v6-input { appearance: auto; }
 
 /* Contact */
 .v6-contact dl { display: grid; gap: 16px; }
-.v6-contact dt { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--v6-accent); }
+.v6-contact dt { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--v6-accent-ink); }
 .v6-contact dd { margin: 2px 0 0; font-size: 1.0625rem; }
 .v6-contact dd a { display: inline-flex; align-items: center; min-height: 32px; }
 
