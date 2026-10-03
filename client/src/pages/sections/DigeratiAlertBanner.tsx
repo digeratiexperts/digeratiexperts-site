@@ -2,7 +2,9 @@ import { ArrowRight, Phone } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Link } from "wouter";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { useBooking } from "@/contexts/BookingContext";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
+import { CTA } from "@/lib/ctaCopy";
 import {
   HomeChapter,
   HomeChapterHeader,
@@ -35,6 +37,7 @@ const features = [
 /** "Why we exist" — the manifesto chapter that follows the hero's trust strip. */
 export const DigeratiAlertBanner = (): JSX.Element => {
   const prefersReducedMotion = useReducedMotion();
+  const { openBooking } = useBooking();
 
   return (
     <HomeChapter tone="well" seam={false}>
@@ -101,10 +104,15 @@ export const DigeratiAlertBanner = (): JSX.Element => {
             </p>
           </div>
           <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-            <a href="/book" className={buttonPrimary("well")} data-testid="button-schedule-consultation-banner">
-              Schedule Consultation
+            <button
+              type="button"
+              className={buttonPrimary("well")}
+              data-testid="button-cyber-risk-assessment-banner"
+              onClick={() => openBooking("why-we-exist-banner")}
+            >
+              {CTA.primary}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </a>
+            </button>
             <a href={PRIMARY_PHONE.telHref} className={buttonSecondary("well")} data-testid="button-call-banner">
               <Phone className="h-4 w-4" aria-hidden="true" />
               Call {PRIMARY_PHONE.display}

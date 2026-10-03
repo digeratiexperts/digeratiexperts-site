@@ -18,6 +18,7 @@ import { registerWarehouseGates } from "./warehouseRoutes";
 import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
+import { cacheControlFor } from "./staticCacheControl";
 import { registerCampaignAliasRedirects } from "./campaignAliasRedirects";
 import { createServer as createViteServer } from "vite";
 import path from "path";
@@ -108,6 +109,15 @@ app.all("/api/health", async (_req, res) => {
     services: {
       database: dbAvailable ? "connected" : "fallback_memory",
       zohoPayments: zohoPayments.isConfigured() ? "configured" : "not_configured",
+      // Configured is not live: last readiness probe result + freshness (#263).
+      // Error detail stays in server logs, never here.
+      zohoPaymentsCheckout: (() => {
+        const snap = zohoPayments.readiness.snapshot();
+        return {
+          state: snap.source === "unknown" ? "unknown" : snap.ready ? "ready" : "not_ready",
+          checkedAt: snap.checkedAt ? new Date(snap.checkedAt).toISOString() : null,
+        };
+      })(),
       // Presence ≠ valid refresh token. auth_failed is set after a live Desk
       // OAuth refresh rejects the configured refresh token (e.g. invalid_code).
       zohoDesk: zohoClient.getDeskAuthStatus(),
@@ -121,10 +131,15 @@ app.all("/api/health", async (_req, res) => {
   res.status(200).json(health);
 });
 
-/** Public, secret-free flag so marketing and the portal do not promise card checkout when it is off. */
-app.get("/api/payments/availability", (_req, res) => {
+/**
+ * Public, secret-free flag so marketing and the portal do not promise card
+ * checkout when it is off. Follows a cached live readiness probe (#263), not
+ * mere configuration: unknown/stale/failed => false.
+ */
+app.get("/api/payments/availability", async (_req, res) => {
   res.set("Cache-Control", "no-store");
-  res.json({ cardCheckout: zohoPayments.isConfigured() });
+  const cardCheckout = await zohoPayments.readiness.isReady().catch(() => false);
+  res.json({ cardCheckout });
 });
 
 app.all("/healthz", async (_req, res) => {
@@ -533,19 +548,12 @@ function listEndpoints(): Array<{ method: string; path: string }> {
     const indexPath = path.join(distPath, "index.html");
     
     app.use(express.static(distPath, {
-      maxAge: '1y',
+      // Every file gets an explicit header below; only Vite's hashed output is cached forever.
+      cacheControl: false,
       etag: true,
       lastModified: true,
       setHeaders: (res, filePath) => {
-        if (filePath.match(/\.(js|css|woff2?|ttf|eot)$/)) {
-          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-        }
-        else if (filePath.match(/\.(png|jpg|jpeg|gif|svg|webp|ico)$/)) {
-          res.setHeader('Cache-Control', 'public, max-age=2592000');
-        }
-        else if (filePath.endsWith('.html')) {
-          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        }
+        res.setHeader('Cache-Control', cacheControlFor(path.relative(distPath, filePath)));
       }
     }));
     

@@ -28,7 +28,31 @@ export const HOMEPAGE_THREAT_LIMIT = 4;
 export const ARCHIVE_THREAT_LIMIT = 40;
 
 export const THREAT_ATTRIBUTION =
-  "Sources: CISA, NIST NVD, FIRST, and Microsoft MSRC. Digerati prioritizes items based on active exploitation, exploit probability, and relevance to SMB environments.";
+  "Sources: CISA, NIST NVD, FIRST, and Microsoft MSRC. Digerati Experts prioritizes items based on active exploitation, exploit probability, and relevance to SMB environments.";
+
+/** Sources the public attribution line must keep naming. */
+export const THREAT_ATTRIBUTION_REQUIRED_SOURCES = [
+  "CISA",
+  "NIST NVD",
+  "FIRST",
+  "Microsoft MSRC",
+] as const;
+
+/**
+ * Keep a canonical company + source line even when a payload omits or mangles
+ * attribution. Never invent CVEs — this only guards the footer credit.
+ */
+export function normalizeThreatAttribution(raw: unknown): string {
+  if (typeof raw !== "string") return THREAT_ATTRIBUTION;
+  const trimmed = raw.trim();
+  if (!trimmed) return THREAT_ATTRIBUTION;
+  const hasCompany = /\bDigerati Experts\b/.test(trimmed);
+  const hasSources = THREAT_ATTRIBUTION_REQUIRED_SOURCES.every((source) =>
+    trimmed.includes(source),
+  );
+  if (!hasCompany || !hasSources) return THREAT_ATTRIBUTION;
+  return trimmed;
+}
 
 export interface ThreatItem {
   id: string;

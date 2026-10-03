@@ -340,10 +340,101 @@ describe("DE Desk shell positioning", () => {
     }
   });
 
-  it("docks below the live bottom of the site header and the section bar instead of over the nav", () => {
+  it("docks below the live bottom of the site header and the section bar, and never taller than the viewport", () => {
     expect(src).toContain(
-      "height: `min(760px, max(440px, calc(100dvh - var(--de-nav-current-bottom, 0px) - var(--de-spy-h, 0px) - ${dockClear} - 16px)))`",
+      "height: `min(760px, calc(100dvh - ${dockClear} - 12px), max(440px, calc(100dvh - var(--de-nav-current-bottom, 0px) - var(--de-spy-h, 0px) - ${dockClear} - 16px)))`",
     );
+  });
+
+  it("hints at full screen a few times, then stops for good once it has been used", () => {
+    // Joe, 2026-10-02: animate the expand button so people know they can go
+    // full screen. Finite, quiet when it is not wanted, and honest to motion
+    // preferences.
+    expect(src).toMatch(/className=\{`de-desk-close de-desk-expand\$\{expandHint \? " is-hinting" : ""\}`\}/);
+    expect(src).toMatch(/data-testid="desk-expand-hint"/);
+    // A visible label, hidden from assistive tech (the button already has its name).
+    expect(src).toMatch(/<span className="de-desk-expand-hint" aria-hidden="true"/);
+    // The rules themselves (when it plays, waits, settles, retires) are tested
+    // as behaviour in client/src/lib/deskHints.test.ts. Here: the Desk feeds them
+    // the right facts and acts on the answer.
+    expect(src).toMatch(/from "@\/lib\/deskHints"/);
+    expect(src).toMatch(/const start = expandHintShouldStart\(\{\s*isOpen,\s*canExpand: canDrag,\s*isFullscreen: isDeskFullscreen,\s*agentLive,\s*playedThisLoad: expandHintPlayedRef\.current,\s*composerHintSettled,\s*composerHintShowing: composerHint,\s*composerHasText: !!chatInput\.trim\(\),\s*stored,\s*\}\);\s*if \(!start\) return;/);
+    // Retired once the visitor has used full screen.
+    expect(src).toMatch(/if \(next\) writeDeskHint\(DESK_EXPAND_HINT_KEY, DESK_HINT_RETIRED\);/);
+    // Every hint animation is finite: no infinite loop on the button.
+    const hintCss = src.slice(src.indexOf(".de-desk-expand {"), src.indexOf("@keyframes de-desk-expand-label"));
+    expect(hintCss).not.toMatch(/infinite/);
+    expect(hintCss).toMatch(/animation: de-desk-expand-ring 1\.6s ease-out 0\.1s 3;/);
+    expect(hintCss).toMatch(/animation: de-desk-expand-nudge 1\.6s [^;]+ 3;/);
+    // Reduced motion: no pulse, no nudge, the label simply shows.
+    expect(src).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.de-desk-expand\.is-hinting::after,\s*\.de-desk-expand\.is-hinting svg \{ animation: none; \}/);
+  });
+
+  it("hints at the Ask DE text box first, stops when someone types, and retires after their first message", () => {
+    // Joe, 2026-10-02: "same with the chat text box field".
+    expect(src).toMatch(/className=\{`de-desk-composer\$\{headsUp \|\| unreadChatCount \? " is-live" : ""\}\$\{composerHint \? " is-hinting" : ""\}`\}/);
+    // The rule is tested as behaviour in deskHints.test.ts; the Desk feeds it the
+    // right facts, settles when told to, and only starts on "play".
+    expect(src).toMatch(/const decision = composerHintDecision\(\{\s*isOpen,\s*playedThisLoad: composerHintPlayedRef\.current,\s*stored,\s*visitorHasSpoken,\s*agentLive,\s*onAskDe: activeTab === "chat",\s*greetingComplete,\s*expandHintShowing: expandHint,\s*\}\);\s*if \(decision === "settle"\) setComposerHintSettled\(true\);\s*if \(decision !== "play"\) return;/);
+    // Typing, leaving the tab or closing the Desk ends it at once.
+    expect(src).toMatch(/if \(composerHint && \(chatInput\.trim\(\) \|\| !isOpen \|\| activeTab !== "chat"\)\) \{/);
+    // Retired for good once the visitor has sent something.
+    expect(src).toMatch(/if \(visitorHasSpoken\) writeDeskHint\(DESK_COMPOSER_HINT_KEY, DESK_HINT_RETIRED\);/);
+    // Finite motion, and none under reduced motion.
+    const hintCss = src.slice(src.indexOf(".de-desk-composer.is-hinting textarea {"), src.indexOf("@keyframes de-desk-composer-ring"));
+    expect(hintCss).not.toMatch(/infinite/);
+    expect(hintCss).toMatch(/de-desk-composer-ring 1\.6s ease-out 0\.1s 3,\s*de-desk-composer-sweep 1\.6s ease-in-out 3;/);
+    expect(src).toMatch(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\.de-desk-composer\.is-hinting textarea \{ animation: none; background-image: none; \}/);
+  });
+
+  it("keeps the polish pass of 2026-10-02 (empty send, wrapping choices, full prompt, errors, full screen)", () => {
+    // The empty send button is a quiet well, not half-transparent gold.
+    expect(src).not.toMatch(/\.de-desk-send:disabled \{ opacity/);
+    expect(src).toMatch(/\.de-desk-send:disabled \{\s*background: var\(--desk-well\);/);
+    // Suggested questions and issue labels wrap instead of ending in an ellipsis.
+    for (const cls of ["de-desk-discover-label", "de-desk-chip-label", "de-desk-issue-label"]) {
+      const rule = src.match(new RegExp(`\\.${cls} \\{[^}]*\\}`))?.[0] ?? "";
+      expect(rule, cls).toMatch(/white-space: normal;/);
+      expect(rule, cls).not.toMatch(/text-overflow: ellipsis/);
+    }
+    // The Details box is tall enough for its whole prompt.
+    expect(src).toMatch(/\.de-desk-shell \.de-desk-ta \{[\s\S]*?min-height: 148px;/);
+    // A failed reply reads as an error, not as a normal answer.
+    expect(src).toMatch(/\$\{chatMessage\.retryText \? " is-error" : ""\}/);
+    expect(src).toMatch(/\.de-desk-bubble\.is-error \{/);
+    // The ticket number is labelled and gold, not greyed out by the hero paragraph rule.
+    expect(src).toMatch(/<span className="de-desk-ticket-ref-label">Ticket<\/span>/);
+    expect(src).toMatch(/\.de-desk-hero \.de-desk-ticket-ref \{[\s\S]*?color: var\(--desk-gold-ink\);/);
+    // Secondary actions on the confirmation look like buttons.
+    expect(src).toMatch(/className="de-desk-row de-desk-row-action"/);
+    // Full screen keeps a readable centred column.
+    expect(src).toMatch(/data-fullscreen=\{isDeskFullscreen \? "true" : undefined\}/);
+    expect(src).toMatch(/\.de-desk-shell\[data-fullscreen="true"\] \.de-desk-scroll,/);
+    expect(src).toMatch(/calc\(\(100% - 760px\) \/ 2\)/);
+  });
+
+  it("keeps the hardening of 2026-10-03 (short screens, keyboard, high contrast)", () => {
+    // Resize handles are pointer-only: out of the tab order and the accessibility tree.
+    expect(src).toMatch(/className=\{`de-desk-resize-edge de-desk-resize-\$\{edge\}`\}[\s\S]{0,400}tabIndex=\{-1\}\s*aria-hidden="true"/);
+    expect(src).toMatch(/data-testid="desk-resize-handle"\s*tabIndex=\{-1\}\s*aria-hidden="true"/);
+    expect(src).not.toMatch(/aria-label=\{`Resize DE Desk from the/);
+    // Closing returns focus to the launcher when the opener is gone.
+    expect(src).toMatch(/if \(previous\?\.isConnected\) \{\s*previous\?\.focus\?\.\(\{ preventScroll: true \}\);\s*return;\s*\}/);
+    expect(src).toMatch(/const launcher = document\.querySelector<HTMLElement>\('\[data-testid="button-open-asap-widget"\]'\);/);
+    // ...without stealing focus the visitor has already moved elsewhere.
+    expect(src).toMatch(/if \(active && active !== document\.body\) return;/);
+    // The Desk's own trap only counts what Tab can reach.
+    expect(src).toMatch(/\.filter\(\(el\) => el\.offsetParent !== null && el\.tabIndex >= 0\)/);
+    // Forced colours: every gold-only state gets a border or outline the system can colour.
+    const forced = src.slice(src.indexOf("@media (forced-colors: active) {"), src.indexOf("/* Full screen: the header spans the window"));
+    expect(forced).toMatch(/\.de-desk-tab\.is-active \{ border-bottom: 3px solid Highlight; \}/);
+    expect(forced).toMatch(/\.de-desk-urgency button\.is-on \{ outline: 2px solid Highlight;/);
+    expect(forced).toMatch(/\.de-desk-bubble\.is-user,/);
+    expect(forced).toMatch(/\.de-desk-btn-grad,/);
+    // The chooser puts Close last in the DOM so focus opens on the first choice.
+    const choices = bottomBarSrc.indexOf('testId: "ask-de-choice-support"');
+    expect(choices).toBeGreaterThan(-1);
+    expect(bottomBarSrc.indexOf('data-testid="ask-de-close"')).toBeGreaterThan(bottomBarSrc.indexOf('data-testid="ask-de-choice-phone"'));
   });
 
   it("opens with focus on the composer (desktop) or the active tab, not the first header button", () => {

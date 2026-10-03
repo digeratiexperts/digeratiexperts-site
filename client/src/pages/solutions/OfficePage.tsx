@@ -320,7 +320,7 @@ export default function OfficePage() {
       ]} />
       <MegaMenu />
       
-      <main className="relative de-nav-clear pb-32">
+      <main id="main-content" tabIndex={-1} className="relative de-nav-clear pb-32">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
           
           {/* Hero Section */}

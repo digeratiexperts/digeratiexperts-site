@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { portalGet, portalPost } from "@/lib/portalApi";
+import { usePortalSession } from "@/components/portal/shell/portalSession";
 import { useToast } from "@/hooks/use-toast";
 
 interface ChatMessage {
@@ -113,6 +114,11 @@ function clampMenuPosition(x: number, y: number, width = 240, height = 320) {
 
 export default function PortalChat() {
   const { toast } = useToast();
+  // DE Desk live handoff (claim/release/reply) is a DE-staff action; the server
+  // gates it to admins (#249). Hide the controls for everyone else so a client
+  // IT contact never sees a button that only 403s.
+  const { user: portalSessionUser } = usePortalSession();
+  const isDeskAgent = portalSessionUser?.role === "admin";
   const [, navigate] = useLocation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [messageText, setMessageText] = useState("");
@@ -584,7 +590,7 @@ export default function PortalChat() {
                 <Headphones className="h-3.5 w-3.5" aria-hidden />
                 Operations desk
               </div>
-              <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Chats &amp; DE Desk</h2>
+              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Chats &amp; DE Desk</h1>
               <p className="mt-1 max-w-2xl text-sm text-white/65">
                 Website DE Desk replies land in the visitor widget. Portal live chat is a separate
                 IT-contact channel. Tickets stay under{" "}
@@ -670,15 +676,16 @@ export default function PortalChat() {
                   </p>
                 </div>
               </div>
-              <Link href="/portal/tickets">
-                <Button
-                  size="sm"
-                  className="gap-2 border border-white/10 bg-white/[0.06] text-white hover:bg-white/10"
-                >
+              <Button
+                asChild
+                size="sm"
+                className="gap-2 border border-white/10 bg-white/[0.06] text-white hover:bg-white/10"
+              >
+                <Link href="/portal/tickets">
                   <Ticket className="h-4 w-4" aria-hidden />
                   Tickets
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
 
             {openDeskIds.length > 0 && (
@@ -826,22 +833,26 @@ export default function PortalChat() {
                                   <MessageSquare className="h-4 w-4" aria-hidden />
                                   Open conversation
                                 </ContextMenuItem>
-                                <ContextMenuItem
-                                  className="gap-2 focus:bg-white/10 focus:text-white"
-                                  disabled={!!s.agentActive}
-                                  onSelect={() => runDeskSessionAction(s, "claim")}
-                                >
-                                  <UserCheck className="h-4 w-4" aria-hidden />
-                                  Claim for live handoff
-                                </ContextMenuItem>
-                                <ContextMenuItem
-                                  className="gap-2 focus:bg-white/10 focus:text-white"
-                                  disabled={!s.agentActive}
-                                  onSelect={() => runDeskSessionAction(s, "release")}
-                                >
-                                  <Bot className="h-4 w-4" aria-hidden />
-                                  Release to AI
-                                </ContextMenuItem>
+                                {isDeskAgent && (
+                                  <>
+                                    <ContextMenuItem
+                                      className="gap-2 focus:bg-white/10 focus:text-white"
+                                      disabled={!!s.agentActive}
+                                      onSelect={() => runDeskSessionAction(s, "claim")}
+                                    >
+                                      <UserCheck className="h-4 w-4" aria-hidden />
+                                      Claim for live handoff
+                                    </ContextMenuItem>
+                                    <ContextMenuItem
+                                      className="gap-2 focus:bg-white/10 focus:text-white"
+                                      disabled={!s.agentActive}
+                                      onSelect={() => runDeskSessionAction(s, "release")}
+                                    >
+                                      <Bot className="h-4 w-4" aria-hidden />
+                                      Release to AI
+                                    </ContextMenuItem>
+                                  </>
+                                )}
                                 <ContextMenuSeparator className="bg-white/10" />
                                 <ContextMenuItem
                                   className="gap-2 focus:bg-white/10 focus:text-white"
@@ -927,7 +938,7 @@ export default function PortalChat() {
                         </p>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
-                        {activeSession?.agentActive ? (
+                        {isDeskAgent && activeSession?.agentActive ? (
                           <Button
                             type="button"
                             size="sm"
@@ -938,7 +949,7 @@ export default function PortalChat() {
                             <Bot className="h-3.5 w-3.5" aria-hidden />
                             Release
                           </Button>
-                        ) : activeSession ? (
+                        ) : isDeskAgent && activeSession ? (
                           <Button
                             type="button"
                             size="sm"
@@ -1007,40 +1018,42 @@ export default function PortalChat() {
                       <div ref={deskEndRef} />
                     </div>
 
-                    <form
-                      onSubmit={handleDeskReply}
-                      className="border-t border-white/10 bg-[#151217]/80 p-3"
-                    >
-                      <div className="flex gap-2">
-                        <Textarea
-                          ref={deskComposerRef}
-                          value={deskReply}
-                          onChange={(e) => setDeskReply(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              void handleDeskReply();
-                            }
-                          }}
-                          placeholder="Reply as agent — visitor sees this in the website chat…"
-                          rows={2}
-                          className="min-h-[56px] resize-none border-white/15 bg-[#050312] text-white placeholder:text-white/35 focus-visible:ring-[#D3126A]"
-                          disabled={deskSending}
-                        />
-                        <Button
-                          type="submit"
-                          disabled={!deskReply.trim() || deskSending}
-                          className="h-auto min-h-[56px] shrink-0 bg-gradient-to-br from-[#D3126A] to-[#D3126A] px-4 text-white hover:opacity-95"
-                          aria-label="Send agent reply"
-                        >
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <p className="mt-2 text-sm text-white/40">
-                        Enter to send · Shift+Enter for newline · This channel is website DE Desk
-                        only
-                      </p>
-                    </form>
+                    {isDeskAgent && (
+                      <form
+                        onSubmit={handleDeskReply}
+                        className="border-t border-white/10 bg-[#151217]/80 p-3"
+                      >
+                        <div className="flex gap-2">
+                          <Textarea
+                            ref={deskComposerRef}
+                            value={deskReply}
+                            onChange={(e) => setDeskReply(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                void handleDeskReply();
+                              }
+                            }}
+                            placeholder="Reply as agent — visitor sees this in the website chat…"
+                            rows={2}
+                            className="min-h-[56px] resize-none border-white/15 bg-[#050312] text-white placeholder:text-white/35 focus-visible:ring-[#D3126A]"
+                            disabled={deskSending}
+                          />
+                          <Button
+                            type="submit"
+                            disabled={!deskReply.trim() || deskSending}
+                            className="h-auto min-h-[56px] shrink-0 bg-gradient-to-br from-[#D3126A] to-[#D3126A] px-4 text-white hover:opacity-95"
+                            aria-label="Send agent reply"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <p className="mt-2 text-sm text-white/40">
+                          Enter to send · Shift+Enter for newline · This channel is website DE Desk
+                          only
+                        </p>
+                      </form>
+                    )}
                   </>
                 )}
               </div>
