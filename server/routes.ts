@@ -100,6 +100,7 @@ import {
   type OrgUserFields,
 } from "./portalOrg";
 import { registerPortalDepartmentRoutes } from "./portalDepartmentRoutes";
+import { registerPortalTenantFileRoutes } from "./portalTenantFileRoutes";
 import { registerPortalIntegrationStatusRoute } from "./portalIntegrations";
 import { registerManualRecordAdminRoutes } from "./portalManualRecords";
 import { registerPortalDataSourceRoutes } from "./portalDataSources";
@@ -587,6 +588,7 @@ export async function registerRoutes(app: Express) {
   registerObjectStorageRoutes(app, {
     auth: authMiddleware,
     admin: requireAdmin,
+    // findTenantFileByFileUrl only answers for a live (not soft-deleted) row (#259).
     resolveTenantOwnerClientId: async (objectPath) => {
       const file = await storage.findTenantFileByFileUrl(objectPath);
       return file?.clientId ?? null;
@@ -4551,106 +4553,15 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Get tenant-specific files for a company (admin only)
-  app.get("/api/portal/admin/companies/:id/files", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const company = portalClients.get(req.params.id);
-      if (!company) {
-        return res.status(404).json({ error: "Company not found" });
-      }
-      
-      // Get tenant files from storage - scoped to this company
-      const tenantFiles = await storage.getTenantFilesByClientId(req.params.id);
-      
-      res.json({ files: tenantFiles });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Get files for current user's company (regular users + admin impersonation)
-  app.get("/api/portal/my-files", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      let clientId: string | null = null;
-      let companyName: string = "";
-      
-      // Check if admin is impersonating a company
-      const impersonatingCompanyId = (req.user as any)?.impersonatingCompanyId;
-      if (impersonatingCompanyId) {
-        const company = portalClients.get(impersonatingCompanyId);
-        if (company) {
-          clientId = impersonatingCompanyId;
-          companyName = company.companyName;
-        }
-      } else {
-        // Regular user - get their company
-        const user = portalUsers.get(req.user?.email || "");
-        if (user && user.clientId) {
-          const company = portalClients.get(user.clientId);
-          if (company) {
-            clientId = user.clientId;
-            companyName = company.companyName;
-          }
-        }
-      }
-      
-      if (!clientId) {
-        return res.json({ files: [], companyName: "Your Company" });
-      }
-      
-      // Get tenant files from storage
-      const tenantFiles = await storage.getTenantFilesByClientId(clientId);
-      
-      res.json({ files: tenantFiles, companyName });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Upload file for a tenant (admin only)
-  app.post("/api/portal/admin/companies/:id/files", [authMiddleware, requireAdmin, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const company = portalClients.get(req.params.id);
-      if (!company) {
-        return res.status(404).json({ error: "Company not found" });
-      }
-      
-      const { fileName, fileType, category, description, objectPath } = req.body;
-      
-      if (!fileName || !objectPath) {
-        return res.status(400).json({ error: "fileName and objectPath are required" });
-      }
-      
-      const tenantFile = await storage.createTenantFile({
-        clientId: req.params.id,
-        fileName,
-        fileType: fileType || "document",
-        category: category || "general",
-        description: description || "",
-        fileUrl: objectPath,
-        uploadedBy: req.userId || "",
-      });
-      
-      res.json({ success: true, file: tenantFile });
-      logSecurityEvent("TENANT_FILE_UPLOADED", req, { companyId: req.params.id, fileName });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Delete tenant file (admin only)
-  app.delete("/api/portal/admin/companies/:companyId/files/:fileId", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const deleted = await storage.deleteTenantFile(req.params.fileId);
-      if (!deleted) {
-        return res.status(404).json({ error: "File not found" });
-      }
-      
-      res.json({ success: true });
-      logSecurityEvent("TENANT_FILE_DELETED", req, { companyId: req.params.companyId, fileId: req.params.fileId });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
+  // Tenant file list/upload/delete + my-files (server/portalTenantFileRoutes.ts, #259).
+  registerPortalTenantFileRoutes(app, {
+    auth: authMiddleware as any,
+    admin: requireAdmin as any,
+    validateInput: validateInput as any,
+    storage,
+    getCompany: (id) => portalClients.get(id),
+    getUserByEmail: (email) => portalUsers.get(email),
+    logSecurityEvent,
   });
 
   // Get company metrics/stats (admin only)
