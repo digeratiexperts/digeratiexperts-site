@@ -5769,11 +5769,24 @@ export async function registerRoutes(app: Express) {
         return res.status(403).json({ error: "Access denied" });
       }
 
-      const pdf = await buildQuotePdf(quoteRequest);
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `attachment; filename="${quoteRequest.quoteNumber}.pdf"`);
       res.setHeader("Cache-Control", "no-store");
-      return res.send(pdf);
+      try {
+        const pdf = await buildQuotePdf(quoteRequest);
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename="${quoteRequest.quoteNumber}.pdf"`);
+        return res.send(pdf);
+      } catch (err) {
+        // The quote download worked before the HTML renderer existed. Until
+        // WeasyPrint or Chromium is installed on the server, serve the same
+        // branded document as print-ready HTML instead of failing the button.
+        const { PdfRendererUnavailableError } = await import("./pdf/renderHtmlToPdf");
+        if (!(err instanceof PdfRendererUnavailableError)) throw err;
+        const { buildQuotePdfHtml } = await import("./storeQuotePdf");
+        console.error("[QUOTE PDF] renderer unavailable, serving HTML:", err.message);
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        res.setHeader("Content-Disposition", `attachment; filename="${quoteRequest.quoteNumber}.html"`);
+        return res.send(buildQuotePdfHtml(quoteRequest));
+      }
     } catch (error: any) {
       console.error("[GET QUOTE PDF ERROR]", error);
       return res.status(500).json({ error: "Failed to generate quote PDF" });

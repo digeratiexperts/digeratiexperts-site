@@ -99,8 +99,50 @@ async function renderWithPlaywright(html: string): Promise<Buffer> {
   }
 }
 
+/**
+ * A FIFO concurrency limiter. A released slot is handed straight to the next
+ * waiter, so a new caller can never slip in ahead and exceed the cap.
+ */
+export function createRenderLimiter(max: number): () => Promise<() => void> {
+  const cap = Math.max(1, Math.floor(max) || 1);
+  let active = 0;
+  const queue: Array<() => void> = [];
+  const release = () => {
+    const next = queue.shift();
+    if (next) next();
+    else active -= 1;
+  };
+  return async () => {
+    if (active < cap) {
+      active += 1;
+    } else {
+      await new Promise<void>((resolve) => queue.push(resolve));
+    }
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      release();
+    };
+  };
+}
+
+// Each render spawns a Python or Chromium process, and the solution packet
+// route is public. Cap concurrent renders so a burst of requests queues
+// instead of exhausting the server's memory.
+const acquireRenderSlot = createRenderLimiter(Number(process.env.PDF_MAX_CONCURRENT_RENDERS) || 2);
+
 /** Render an HTML string to a PDF buffer. */
 export async function renderHtmlToPdf(html: string): Promise<Buffer> {
+  const release = await acquireRenderSlot();
+  try {
+    return await renderHtmlToPdfNow(html);
+  } finally {
+    release();
+  }
+}
+
+async function renderHtmlToPdfNow(html: string): Promise<Buffer> {
   const dir = await mkdtemp(path.join(tmpdir(), "de-pdf-"));
   try {
     try {

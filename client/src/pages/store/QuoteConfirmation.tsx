@@ -178,11 +178,14 @@ const QuoteConfirmation = () => {
                       if (!response.ok) {
                         throw new Error("Unable to download the preliminary quote PDF.");
                       }
+                      // The server falls back to branded HTML while no PDF
+                      // renderer is installed; name the file by what came back.
+                      const isPdf = (response.headers.get("Content-Type") || "").includes("application/pdf");
                       const blob = await response.blob();
                       const url = URL.createObjectURL(blob);
                       const link = document.createElement("a");
                       link.href = url;
-                      link.download = `${quoteRequest.quoteNumber}.pdf`;
+                      link.download = `${quoteRequest.quoteNumber}.${isPdf ? "pdf" : "html"}`;
                       document.body.appendChild(link);
                       link.click();
                       link.remove();
