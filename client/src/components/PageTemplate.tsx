@@ -1,11 +1,9 @@
 import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
-import { StatementHeading } from "@/components/visual/StatementHeading";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { shouldAppendStatementColon } from "@/components/visual/StatementHeading";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion, useReducedMotion } from "framer-motion";
-import { Link } from "wouter";
-import { revealInitial, revealInView, revealTransition } from "@/lib/animations";
+import { PageHero, Breadcrumbs, Container } from "@/components/site/chapters";
 
 interface PageTemplateProps {
   title: string;
@@ -14,11 +12,35 @@ interface PageTemplateProps {
   showBackButton?: boolean;
   /** Ignored. Inner heroes stay charcoal so page-family accent can pop. */
   gradientColors?: string;
+  /** Ignored since the 2026-10 site chapter pass: an icon tile beside the h1 read as clip-art. */
   icon?: React.ReactNode;
   breadcrumbs?: { label: string; href?: string }[];
   variant?: "default" | "dark" | "light";
   /** Optional CTA group rendered under the hero subtitle (conversion pages). */
   actions?: React.ReactNode;
+  /** Tracked-caps line above the h1. */
+  eyebrow?: string;
+  /** Right column of the hero at lg (key facts, a document preview). */
+  heroAside?: React.ReactNode;
+  /**
+   * "contained" (default) wraps children in one chapter with prose styles.
+   * "chapters" renders children straight into <main> so the page composes its
+   * own full-bleed chapters (`Chapter` from components/site/chapters).
+   */
+  layout?: "contained" | "chapters";
+}
+
+function StatementTitle({ text }: { text: string }) {
+  return (
+    <>
+      {text}
+      {shouldAppendStatementColon(text) ? (
+        <span className="text-de-accent-ink" aria-hidden="true">
+          :
+        </span>
+      ) : null}
+    </>
+  );
 }
 
 export const PageTemplate = ({
@@ -26,147 +48,64 @@ export const PageTemplate = ({
   subtitle,
   children,
   showBackButton = true,
-  icon,
   breadcrumbs,
   variant = "dark",
   actions,
+  eyebrow,
+  heroAside,
+  layout = "contained",
 }: PageTemplateProps): JSX.Element => {
-  const prefersReducedMotion = useReducedMotion() ?? false;
   const isLight = variant === "light";
 
-  const pageClass = isLight ? "bg-de-paper" : "bg-de-bg";
-  const heroClass = isLight
-    ? "de-paper-chapter de-field-grain-paper"
-    : "de-dark-well de-field-grain de-field-lit";
   const contentClass = isLight
     ? "de-paper-chapter de-paper-hairline"
     : "de-dark-chapter de-chapter-hairline";
   const textClass = isLight ? "text-[#1A1228]" : "text-white";
   const proseClass = isLight ? "de-prose-light" : "de-prose-dark";
-  const crumbMuted = isLight ? "text-black/55 hover:text-[#1A1228]" : "text-white/70 hover:text-white";
+
+  const hasCrumbs = !!breadcrumbs && breadcrumbs.length > 0;
 
   return (
-    <div className={`min-h-screen ${pageClass}`}>
+    <div className={`min-h-screen ${isLight && layout === "contained" ? "bg-de-paper" : "bg-de-bg"}`}>
       <MegaMenu />
 
       {/* One <main> landmark per templated page: hero + content, chrome outside
           (a11y sweep 2026-09-12 — 41 pages had no main landmark). */}
-      <main id="page-main">
-      <section className={`relative overflow-hidden ${heroClass}`}>
-        <div className="relative z-10 mx-auto max-w-7xl px-4 pt-[calc(var(--de-nav-offset)+1rem)] pb-12 sm:px-6 md:pt-[calc(var(--de-nav-offset)+1.5rem)] md:pb-16 lg:px-8">
-          {breadcrumbs && breadcrumbs.length > 0 && (
-            <motion.nav
-              className={`mb-6 flex flex-wrap items-center gap-2 text-sm ${isLight ? "text-black/55" : "text-white/70"}`}
-              aria-label="Breadcrumb"
-              initial={prefersReducedMotion ? false : revealInitial}
-              animate={prefersReducedMotion ? undefined : revealInView}
-              transition={revealTransition}
-            >
-              <Link href="/" className={`${crumbMuted} rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-accent`}>
-                Home
-              </Link>
-              {breadcrumbs.map((crumb, index) => (
-                <span key={`${crumb.label}-${index}`} className="flex items-center gap-2">
-                  <ChevronRight className="h-4 w-4 shrink-0 opacity-60" aria-hidden="true" />
-                  {crumb.href ? (
-                    <Link
-                      href={crumb.href}
-                      className={`${crumbMuted} rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-accent`}
-                    >
-                      {crumb.label}
-                    </Link>
-                  ) : (
-                    <span className={isLight ? "text-[#1A1228]" : "text-white"}>{crumb.label}</span>
-                  )}
-                </span>
-              ))}
-            </motion.nav>
-          )}
-
-          {showBackButton && !breadcrumbs && (
-            <motion.div
-              initial={prefersReducedMotion ? false : revealInitial}
-              animate={prefersReducedMotion ? undefined : revealInView}
-              transition={revealTransition}
-            >
+      <main id="main-content" tabIndex={-1}>
+        <PageHero
+          eyebrow={eyebrow}
+          title={<StatementTitle text={title} />}
+          lede={subtitle}
+          breadcrumbs={hasCrumbs ? breadcrumbs : undefined}
+          actions={actions ? <div className="w-full">{actions}</div> : undefined}
+          aside={heroAside}
+          note={
+            showBackButton && !hasCrumbs ? (
               <Button
                 variant="ghost"
-                className={`mb-6 -ml-4 min-h-11 ${
-                  isLight
-                    ? "text-black/70 hover:bg-black/[0.04] hover:text-[#1A1228]"
-                    : "text-white/80 hover:bg-white/[0.06] hover:text-white"
-                }`}
+                className="-ml-4 min-h-11 text-white/75 hover:bg-white/[0.06] hover:text-white"
                 onClick={() => window.history.back()}
                 data-testid="button-back"
               >
-                <ArrowLeft className="mr-2 h-4 w-4" />
+                <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
                 Back
               </Button>
-            </motion.div>
-          )}
+            ) : undefined
+          }
+        />
 
-          <div className="flex items-start gap-5">
-            {icon && (
-              <motion.div
-                className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-de-hairline bg-de-raised text-de-accent-ink md:flex"
-                initial={prefersReducedMotion ? false : revealInitial}
-                animate={prefersReducedMotion ? undefined : revealInView}
-                transition={revealTransition}
-              >
-                {icon}
-              </motion.div>
-            )}
-
-            <div className="min-w-0 flex-1">
-              <motion.div
-                initial={prefersReducedMotion ? false : revealInitial}
-                animate={prefersReducedMotion ? undefined : revealInView}
-                transition={revealTransition}
-              >
-                <StatementHeading
-                  as="h1"
-                  className={`text-4xl leading-tight md:text-5xl lg:text-6xl ${isLight ? "text-[#1A1228]" : "text-white"}`}
-                >
-                  {title}
-                </StatementHeading>
-              </motion.div>
-
-              {subtitle && (
-                <motion.p
-                  className={`mt-4 max-w-3xl text-lg leading-relaxed md:text-xl ${
-                    isLight ? "text-black/65" : "text-white/80"
-                  }`}
-                  initial={prefersReducedMotion ? false : revealInitial}
-                  animate={prefersReducedMotion ? undefined : revealInView}
-                  transition={{ ...revealTransition, delay: prefersReducedMotion ? 0 : 0.045 }}
-                >
-                  {subtitle}
-                </motion.p>
-              )}
-
-              {actions && (
-                <motion.div
-                  className="mt-8"
-                  initial={prefersReducedMotion ? false : revealInitial}
-                  animate={prefersReducedMotion ? undefined : revealInView}
-                  transition={{ ...revealTransition, delay: prefersReducedMotion ? 0 : 0.09 }}
-                >
-                  {actions}
-                </motion.div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className={`py-12 md:py-16 lg:py-20 ${contentClass}`}>
-        <div className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ${textClass} ${proseClass}`}>
-          {children}
-        </div>
-      </section>
+        {layout === "chapters" ? (
+          children
+        ) : (
+          <section className={`py-12 md:py-16 lg:py-20 ${contentClass}`}>
+            <Container className={`${textClass} ${proseClass}`}>{children}</Container>
+          </section>
+        )}
       </main>
 
       <DigeratiEnhancedFooterSection />
     </div>
   );
 };
+
+export { Breadcrumbs };

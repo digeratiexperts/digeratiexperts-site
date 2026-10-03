@@ -297,14 +297,12 @@ export function DocumentFlipbook(): JSX.Element {
   return (
     <section
       id="document-flipbook"
-      className="pt-16"
       style={{ scrollMarginTop: "calc(var(--de-nav-offset) + 1rem)" }}
       aria-labelledby="document-flipbook-title"
       onKeyDown={onViewerKeyDown}
     >
       <div
-        className="overflow-hidden rounded-3xl border border-de-hairline bg-de-raised"
-        style={{ boxShadow: "0 35px 90px -60px rgba(123,108,255,0.75)" }}
+        className="overflow-hidden rounded-2xl border border-de-hairline bg-de-raised"
       >
         <div className="grid gap-8 border-b border-de-hairline px-5 py-8 sm:px-8 lg:grid-cols-2 lg:px-10 lg:py-10">
           <div>

@@ -15,6 +15,7 @@ import {
   portalUsers as portalUsersTable,
   portalTickets,
   portalTicketComments,
+  portalTenantFiles,
   type User,
   type InsertUser,
   type Workspace,
@@ -90,6 +91,7 @@ export interface IStorage {
   createPortalTicketComment(comment: any): Promise<PortalTicketComment>;
 
   getTenantFilesByClientId(clientId: string): Promise<any[]>;
+  findTenantFileByFileUrl(fileUrl: string): Promise<{ id: string; clientId: string; fileUrl: string } | undefined>;
   createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<any>;
   deleteTenantFile(id: string): Promise<boolean>;
 
@@ -687,6 +689,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.tenantFiles.values()).filter(f => f.clientId === clientId);
   }
 
+  async findTenantFileByFileUrl(fileUrl: string): Promise<{ id: string; clientId: string; fileUrl: string } | undefined> {
+    return Array.from(this.tenantFiles.values()).find((f) => f.fileUrl === fileUrl);
+  }
+
   async createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<TenantFile> {
     const newFile: TenantFile = {
       id: generateId(),
@@ -1132,6 +1138,29 @@ export class DatabaseStorage implements IStorage {
     return Array.from(this.tenantFilesCache.values()).filter(f => f.clientId === clientId);
   }
 
+  async findTenantFileByFileUrl(fileUrl: string): Promise<{ id: string; clientId: string; fileUrl: string } | undefined> {
+    // Durable read: the object-storage ACL asks whether this path belongs to a
+    // tenant, and that answer must survive a restart. The in-memory cache only
+    // holds rows created in this process, so query the persisted table first
+    // and fall back to the cache (e.g. before the DB is reachable in dev).
+    try {
+      const db = await this.getDb();
+      const [row] = await db
+        .select({
+          id: portalTenantFiles.id,
+          clientId: portalTenantFiles.clientId,
+          fileUrl: portalTenantFiles.fileUrl,
+        })
+        .from(portalTenantFiles)
+        .where(eq(portalTenantFiles.fileUrl, fileUrl))
+        .limit(1);
+      if (row) return row;
+    } catch (error) {
+      console.error("findTenantFileByFileUrl: DB lookup failed, falling back to cache", error);
+    }
+    return Array.from(this.tenantFilesCache.values()).find((f) => f.fileUrl === fileUrl);
+  }
+
   async createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<any> {
     const newFile = {
       id: crypto.randomUUID(),
@@ -1189,44 +1218,139 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-let storageInstance: IStorage;
-let dbAvailable = false;
+/**
+ * Typed "durable storage is not available" failure (#248). Production never
+ * falls back to MemStorage for writes (or reads): a request that needs the
+ * database fails with this error and the gate answers 503.
+ */
+export class StorageUnavailableError extends Error {
+  readonly code = "STORAGE_UNAVAILABLE";
+  readonly status = 503;
+  constructor() {
+    super("Durable storage is unavailable.");
+    this.name = "StorageUnavailableError";
+  }
+}
 
-async function initializeStorage(): Promise<IStorage> {
+/** Production requires the database; dev/test may run on MemStorage. */
+function strictDurability(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.NODE_ENV === "production";
+}
+
+export type StorageMode = "database" | "memory" | "unavailable";
+
+let storageInstance: IStorage | null = null;
+let storageIsDatabase = false;
+let dbAvailable = false;
+let memStorageFallback: MemStorage | null = null;
+
+function memoryStorage(): MemStorage {
+  if (!memStorageFallback) memStorageFallback = new MemStorage();
+  return memStorageFallback;
+}
+
+async function initializeStorage(): Promise<IStorage | null> {
   try {
     const dbModule = await import("./db");
     await dbModule.initPromise;
-    
+
     // Check dbReady AFTER initPromise resolves (it's updated in the module)
     const status = dbModule.getDatabaseStatus();
-    
+
     if (status.connected) {
       dbAvailable = true;
+      storageIsDatabase = true;
       console.log(`✅ Database connected (${status.type}), using DatabaseStorage`);
       return new DatabaseStorage();
     }
   } catch (error) {
     console.log("⚠️ Database module error:", (error as Error).message);
   }
-  
+
+  if (strictDurability()) {
+    console.error("❌ Database unavailable in production: durable storage routes will answer 503 (no MemStorage fallback).");
+    return null;
+  }
   console.log("⚠️ Using MemStorage fallback (database endpoint disabled)");
-  return new MemStorage();
+  return memoryStorage();
 }
 
-const memStorageFallback = new MemStorage();
-storageInstance = memStorageFallback;
+const storageReady: Promise<void> = initializeStorage()
+  .then((s) => {
+    storageInstance = s;
+  })
+  .catch(() => {
+    if (!strictDurability()) {
+      console.log("⚠️ Storage initialization failed, using MemStorage");
+      storageInstance = memoryStorage();
+    }
+  });
 
-initializeStorage().then(s => {
-  storageInstance = s;
-}).catch(() => {
-  console.log("⚠️ Storage initialization failed, using MemStorage");
-  storageInstance = memStorageFallback;
-});
+if (!strictDurability()) {
+  // Preserve dev/test behaviour: usable immediately, before the DB probe settles.
+  storageInstance = memoryStorage();
+}
+
+/** Resolve the durable backend or throw StorageUnavailableError; retries the connection (throttled) so a recovered database is picked up. */
+async function resolveStorage(): Promise<IStorage> {
+  await storageReady;
+  if (storageInstance && (storageIsDatabase || !strictDurability())) return storageInstance;
+  try {
+    const dbModule = await import("./db");
+    if (await dbModule.reconnectDatabase()) {
+      dbAvailable = true;
+      storageIsDatabase = true;
+      storageInstance = new DatabaseStorage();
+      console.log("✅ Database reconnected, durable storage restored");
+      return storageInstance;
+    }
+  } catch (error) {
+    console.log("⚠️ Database reconnect failed:", (error as Error).message);
+  }
+  throw new StorageUnavailableError();
+}
+
+export function getStorageMode(): StorageMode {
+  if (storageIsDatabase) return "database";
+  if (strictDurability()) return "unavailable";
+  return "memory";
+}
 
 export const storage: IStorage = new Proxy({} as IStorage, {
   get(_, prop) {
-    return (storageInstance as any)[prop]?.bind(storageInstance);
-  }
+    if (typeof prop === "symbol" || prop === "then") return undefined;
+    if (!strictDurability()) {
+      const target = storageInstance as any;
+      return target?.[prop]?.bind(target);
+    }
+    // Production: every call goes through the availability gate.
+    return async (...args: unknown[]) => {
+      const target = (await resolveStorage()) as any;
+      return target[prop](...args);
+    };
+  },
 });
+
+/**
+ * Shared gate for durable-authoritative mutation routes (#248). In production
+ * it answers 503 before the handler runs when the database is not connected;
+ * dev/test pass straight through.
+ */
+export async function requireDurableStorage(_req: unknown, res: any, next: (err?: unknown) => void): Promise<void> {
+  if (!strictDurability()) return next();
+  try {
+    await resolveStorage();
+    return next();
+  } catch (error) {
+    if (error instanceof StorageUnavailableError) {
+      return res.status(503).json({
+        code: error.code,
+        message: "This service cannot save changes right now. Please try again in a moment.",
+        error: "This service cannot save changes right now. Please try again in a moment.",
+      });
+    }
+    return next(error);
+  }
+}
 
 export { dbAvailable };

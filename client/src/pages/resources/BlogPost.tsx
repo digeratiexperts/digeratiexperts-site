@@ -331,7 +331,9 @@ export default function BlogPost() {
     );
   }
 
-  // Skip the first paragraph from the body if we want a drop-cap effect
+  const hasToc = headings.length >= 2;
+  const shareBtn =
+    "flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/[0.03] text-white/70 transition-colors hover:border-de-hairline hover:bg-de-raised hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]";
   let firstParagraphRendered = false;
   // Word counter for live audio highlighting — increments in render order so
   // each spoken word can be located via [data-w="N"].
@@ -366,16 +368,18 @@ export default function BlogPost() {
       <ReadingProgressBar targetRef={articleRef} />
       <MegaMenu />
 
-      {/* Cinematic hero */}
+      {/* Journal masthead: charcoal ladder, amber accent. The hero column and the
+          article column share one left edge (the TOC rides the gutter). */}
+      <main id="main-content" tabIndex={-1}>
       <section className="relative de-nav-clear pb-12 overflow-hidden">
         <div
           aria-hidden
-          className="absolute inset-0 opacity-30"
+          className="absolute inset-0 opacity-20"
           style={{
             backgroundImage: `url(${toWebImageUrl(post.coverImage)})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
-            filter: "blur(60px) saturate(1.4)",
+            filter: "blur(60px) saturate(1.2)",
           }}
         />
         <div
@@ -383,186 +387,180 @@ export default function BlogPost() {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(179,0,255,0.25), transparent 60%), linear-gradient(180deg, rgba(10,10,10,0.7), #0a0a0a 90%)",
+              "radial-gradient(ellipse 80% 60% at 50% 0%, rgb(var(--de-accent-rgb) / 0.12), transparent 60%), linear-gradient(180deg, rgba(10,10,10,0.7), #0a0a0a 90%)",
           }}
         />
-        <div className="container relative mx-auto px-4 max-w-4xl">
-          <nav
-            className="flex items-center gap-2 text-sm text-white/50 mb-8"
-            aria-label="Breadcrumb"
-          >
-            <Link
-              href="/"
-              className="hover:text-de-accent-ink transition-colors"
-            >
-              Home
-            </Link>
-            <ChevronRight className="h-4 w-4" />
-            <Link
-              href="/resources/blog"
-              className="hover:text-de-accent-ink transition-colors"
-            >
-              Blog
-            </Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="text-white/70 truncate max-w-[260px]">
-              {post.title}
-            </span>
-          </nav>
+        <div className="container relative mx-auto px-4 max-w-7xl">
+          <div className={hasToc ? "lg:grid lg:grid-cols-12 lg:gap-12" : ""}>
+            <div className={hasToc ? "lg:col-start-4 lg:col-span-9" : "mx-auto max-w-4xl"}>
+              <nav className="mb-2" aria-label="Breadcrumb">
+                <ol className="flex items-center gap-1 text-sm text-white/65">
+                  <li className="shrink-0">
+                    <Link
+                      href="/"
+                      className="inline-flex min-h-11 items-center rounded-sm pr-1 transition-colors hover:text-de-accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
+                    >
+                      Home
+                    </Link>
+                  </li>
+                  <li className="flex shrink-0 items-center gap-1">
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                    <Link
+                      href="/resources/blog"
+                      className="inline-flex min-h-11 items-center rounded-sm px-1 transition-colors hover:text-de-accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
+                    >
+                      Blog
+                    </Link>
+                  </li>
+                  <li className="flex min-w-0 items-center gap-1">
+                    <ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <span aria-current="page" className="min-w-0 truncate text-white/80">
+                      {post.title}
+                    </span>
+                  </li>
+                </ol>
+              </nav>
 
-          <Link
-            href="/resources/blog"
-            className="inline-flex items-center text-de-accent-ink hover:text-de-accent-ink mb-8 transition-colors text-sm"
-            data-testid="link-back-blog"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to all articles
-          </Link>
+              <Link
+                href="/resources/blog"
+                className="mb-6 inline-flex min-h-11 items-center rounded-sm text-sm text-de-accent-ink transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
+                data-testid="link-back-blog"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
+                Back to all articles
+              </Link>
 
-          <header className="mb-10">
-            <Badge className="mb-5 bg-de-raised text-de-accent-ink border-de-hairline backdrop-blur">
-              {post.category}
-            </Badge>
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-[1.1] tracking-tight">
-              {post.title}
-            </h1>
-            <p className="text-lg md:text-xl text-white/70 mb-8 leading-relaxed max-w-3xl">
-              {post.excerpt}
-            </p>
+              <header className="mb-10">
+                <Badge className="mb-5 bg-de-raised text-de-accent-ink border-de-hairline backdrop-blur">
+                  {post.category}
+                </Badge>
+                <h1 className="mb-6 text-[2rem] font-bold leading-[1.1] tracking-tight text-white sm:text-4xl md:text-5xl lg:text-[3.5rem]">
+                  {post.title}
+                </h1>
+                <p className="mb-8 max-w-[44rem] text-lg leading-relaxed text-white/75 md:text-xl">
+                  {post.excerpt}
+                </p>
 
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-4 pt-6 border-t border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-de-raised flex items-center justify-center shadow-[0_0_18px_rgba(179,0,255,0.4)]">
-                  <User className="h-5 w-5 text-white" />
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-white/10 pt-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full border border-de-hairline bg-de-raised">
+                      <User className="h-5 w-5 text-white" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <p className="font-medium leading-tight text-white">{post.author}</p>
+                      <p className="text-xs text-white/60">Cybersecurity-first managed IT</p>
+                    </div>
+                  </div>
+                  <div className="hidden h-8 w-px bg-white/10 sm:block" />
+                  <div className="flex items-center gap-2 text-sm text-white/70">
+                    <Calendar className="h-4 w-4" aria-hidden="true" />
+                    {new Date(post.date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-white/70">
+                    <Clock className="h-4 w-4" aria-hidden="true" />
+                    {activeReadTime}
+                  </div>
                 </div>
-                <div>
-                  <p className="text-white font-medium leading-tight">
-                    {post.author}
-                  </p>
-                  <p className="text-xs text-white/50">
-                    Cybersecurity-first managed IT
-                  </p>
-                </div>
-              </div>
-              <div className="hidden sm:block w-px h-8 bg-white/10" />
-              <div className="flex items-center gap-2 text-sm text-white/60">
-                <Calendar className="h-4 w-4" />
-                {new Date(post.date).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </div>
-              <div className="flex items-center gap-2 text-sm text-white/60">
-                <Clock className="h-4 w-4" />
-                {activeReadTime}
-              </div>
 
-              {/* Share buttons */}
-              <div className="ml-auto flex items-center gap-2">
-                <BlogAudioPlayer
-                  title={post.title}
-                  text={audioText}
-                  wordCount={totalWords}
-                  onWordChange={setCurrentWordIdx}
+                {/* Listen + share: its own row so the header never overflows on phones */}
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <BlogAudioPlayer
+                    title={post.title}
+                    text={audioText}
+                    wordCount={totalWords}
+                    onWordChange={setCurrentWordIdx}
+                  />
+                  <button
+                    onClick={() => handleShare("twitter")}
+                    className={shareBtn}
+                    aria-label="Share on Twitter"
+                    data-testid="button-share-twitter"
+                  >
+                    <Twitter className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    onClick={() => handleShare("linkedin")}
+                    className={shareBtn}
+                    aria-label="Share on LinkedIn"
+                    data-testid="button-share-linkedin"
+                  >
+                    <Linkedin className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    onClick={handleCopyLink}
+                    className={shareBtn}
+                    aria-label="Copy link"
+                    data-testid="button-share-copy"
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4 text-emerald-400" aria-hidden="true" />
+                    ) : (
+                      <Link2 className="h-4 w-4" aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
+
+                {hasDualVersion && (
+                  <div
+                    role="tablist"
+                    aria-label="Article version"
+                    className="mt-6 flex flex-col sm:inline-flex sm:flex-row w-full sm:w-auto gap-1 sm:gap-0 rounded-2xl sm:rounded-full border border-white/10 bg-white/[0.03] p-1"
+                    data-testid="tabs-blog-version"
+                  >
+                    {(
+                      [
+                        ["overview", "Overview", body.overviewReadTime, "tab-overview"],
+                        ["extended", "Extended Deep Dive", body.extendedReadTime, "tab-extended"],
+                      ] as const
+                    ).map(([key, label, readTime, testId]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        role="tab"
+                        aria-selected={view === key}
+                        onClick={() => setView(key)}
+                        className={`min-h-11 w-full rounded-xl px-4 py-2 text-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] sm:w-auto sm:rounded-full sm:px-5 ${
+                          view === key
+                            ? "bg-white/15 text-white ring-1 ring-inset ring-white/25"
+                            : "text-white/70 hover:text-white"
+                        }`}
+                        data-testid={testId}
+                      >
+                        {label}
+                        <span className="ml-2 text-sm opacity-70">{readTime}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </header>
+
+              {/* Hero image with frame */}
+              <div className="relative aspect-video overflow-hidden rounded-2xl ring-1 ring-white/10 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.9)]">
+                <img
+                  src={toWebImageUrl(post.coverImage)}
+                  alt={post.title}
+                  loading="eager"
+                  decoding="async"
+                  width={960}
+                  height={540}
+                  className="h-full w-full object-cover"
                 />
-                <button
-                  onClick={() => handleShare("twitter")}
-                  className="w-9 h-9 rounded-full border border-white/10 bg-white/[0.03] text-white/60 hover:text-white hover:border-de-hairline hover:bg-de-raised transition-all flex items-center justify-center"
-                  aria-label="Share on Twitter"
-                  data-testid="button-share-twitter"
-                >
-                  <Twitter className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => handleShare("linkedin")}
-                  className="w-9 h-9 rounded-full border border-white/10 bg-white/[0.03] text-white/60 hover:text-white hover:border-de-hairline hover:bg-de-raised transition-all flex items-center justify-center"
-                  aria-label="Share on LinkedIn"
-                  data-testid="button-share-linkedin"
-                >
-                  <Linkedin className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={handleCopyLink}
-                  className="w-9 h-9 rounded-full border border-white/10 bg-white/[0.03] text-white/60 hover:text-white hover:border-de-hairline hover:bg-de-raised transition-all flex items-center justify-center"
-                  aria-label="Copy link"
-                  data-testid="button-share-copy"
-                >
-                  {copied ? (
-                    <Check className="h-4 w-4 text-emerald-400" />
-                  ) : (
-                    <Link2 className="h-4 w-4" />
-                  )}
-                </button>
+                <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/10" />
               </div>
             </div>
-
-            {hasDualVersion && (
-              <div
-                role="tablist"
-                aria-label="Article version"
-                className="mt-8 flex flex-col sm:inline-flex sm:flex-row w-full sm:w-auto gap-1 sm:gap-0 rounded-2xl sm:rounded-full border border-white/10 bg-white/[0.03] p-1 backdrop-blur"
-                data-testid="tabs-blog-version"
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={view === "overview"}
-                  onClick={() => setView("overview")}
-                  className={`w-full sm:w-auto px-4 sm:px-5 py-2.5 sm:py-2 rounded-xl sm:rounded-full text-sm font-medium transition-all text-center ${
-                    view === "overview"
-                      ? "bg-gradient-to-r  to-fuchsia-500 text-white shadow-[0_0_18px_rgba(179,0,255,0.35)]"
-                      : "text-white/60 hover:text-white"
-                  }`}
-                  data-testid="tab-overview"
-                >
-                  Overview
-                  <span className="ml-2 text-sm opacity-70">
-                    {body.overviewReadTime}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={view === "extended"}
-                  onClick={() => setView("extended")}
-                  className={`w-full sm:w-auto px-4 sm:px-5 py-2.5 sm:py-2 rounded-xl sm:rounded-full text-sm font-medium transition-all text-center ${
-                    view === "extended"
-                      ? "bg-gradient-to-r  to-fuchsia-500 text-white shadow-[0_0_18px_rgba(179,0,255,0.35)]"
-                      : "text-white/60 hover:text-white"
-                  }`}
-                  data-testid="tab-extended"
-                >
-                  Extended Deep Dive
-                  <span className="ml-2 text-sm opacity-70">
-                    {body.extendedReadTime}
-                  </span>
-                </button>
-              </div>
-            )}
-          </header>
-
-          {/* Hero image with frame */}
-          <div className="relative aspect-video rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-[0_30px_120px_-30px_rgba(179,0,255,0.5)]">
-            <img
-              src={toWebImageUrl(post.coverImage)}
-              alt={post.title}
-              loading="eager"
-              decoding="async"
-              width={960}
-              height={540}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-2xl pointer-events-none" />
           </div>
         </div>
       </section>
 
-      <main id="main-content" tabIndex={-1} className="pb-24">
+      <div className="pb-24">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="lg:grid lg:grid-cols-12 lg:gap-12">
             {/* TOC sidebar */}
-            {headings.length >= 2 && (
+            {hasToc && (
               <aside className="hidden lg:block lg:col-span-3" aria-label="Table of contents">
                 <div className="sticky top-28">
                   <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] p-5 backdrop-blur-sm shadow-[0_10px_40px_-20px_rgba(179,0,255,0.4)]">
@@ -624,7 +622,7 @@ export default function BlogPost() {
                                         block: "start",
                                       });
                                     }}
-                                    className={`block text-sm leading-snug transition-all rounded-lg px-3 py-2 ${
+                                    className={`flex min-h-11 items-center text-sm leading-snug transition-all rounded-lg px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] ${
                                       isActive
                                         ? "bg-de-raised text-white font-medium"
                                         : isPast
@@ -668,12 +666,12 @@ export default function BlogPost() {
             {/* Article body */}
             <div
               className={
-                headings.length >= 2 ? "lg:col-span-9" : "lg:col-span-12 max-w-4xl mx-auto"
+                hasToc ? "lg:col-span-9" : "lg:col-span-12 mx-auto w-full max-w-4xl"
               }
             >
               <article
                 ref={articleRef}
-                className="max-w-[680px] mx-auto"
+                className="max-w-[680px]"
                 data-testid="article-content"
                 key={view}
               >
@@ -684,11 +682,9 @@ export default function BlogPost() {
                       <h2
                         key={idx}
                         id={id}
-                        className="group scroll-mt-28 text-2xl md:text-[34px] font-bold text-white mt-16 mb-6 leading-[1.15] tracking-tight"
+                        className="group scroll-mt-28 text-2xl md:text-[34px] font-bold text-white mt-14 mb-5 leading-[1.15] tracking-tight"
                       >
-                        <span className="bg-gradient-to-r from-white bg-clip-text text-transparent">
-                          {renderTokens(block.text, wordCounter)}
-                        </span>
+                        <span>{renderTokens(block.text, wordCounter)}</span>
                         <span
                           aria-hidden
                           className="block mt-3 h-px w-12 bg-de-raised"
@@ -707,7 +703,7 @@ export default function BlogPost() {
                             key={i}
                             className="flex items-start gap-3 leading-[1.75] text-[17px]"
                           >
-                            <span className="mt-[10px] inline-block w-1.5 h-1.5 rounded-full bg-de-raised flex-shrink-0" />
+                            <span aria-hidden="true" className="mt-[11px] inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-de-accent-ink/80" />
                             <span>{renderTokens(it, wordCounter)}</span>
                           </li>
                         ))}
@@ -910,7 +906,7 @@ export default function BlogPost() {
                   return (
                     <p
                       key={idx}
-                      className={`text-white/85 text-[18px] leading-[1.85] mb-7 ${
+                      className={`text-white/85 text-[18px] leading-[1.8] mb-6 ${
                         isFirst
                           ? "first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:text-7xl first-letter:font-bold first-letter:leading-[0.85] first-letter:text-de-accent-ink"
                           : ""
@@ -923,11 +919,11 @@ export default function BlogPost() {
               </article>
 
               {/* Bottom CTA */}
-              <Card className="mt-14 max-w-3xl border-de-hairline bg-de-raised via-[#0a0a0a] to-fuchsia-600/15 overflow-hidden">
+              <Card className="mt-14 max-w-[680px] border-de-hairline bg-de-raised via-[#0a0a0a] to-fuchsia-600/15 overflow-hidden">
                 <CardContent className="p-7 sm:p-9 relative">
                   <div
                     aria-hidden
-                    className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-fuchsia-500/15 blur-3xl"
+                    className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-de-accent/10 blur-3xl"
                   />
                   <div className="relative">
                     <h3 className="text-xl sm:text-2xl font-bold text-white mb-3">
@@ -939,7 +935,7 @@ export default function BlogPost() {
                         "A short Cyber Risk Assessment shows where your environment actually stands and what to do first."}
                     </p>
                     <div className="flex flex-wrap gap-3">
-                      <Button asChild data-testid="button-blog-assessment">
+                      <Button asChild variant="brand" data-testid="button-blog-assessment">
                         <Link href={body.bottomCta?.primaryHref ?? "/book"}>
                           {body.bottomCta?.primaryLabel ??
                             "Schedule a Cyber Risk Assessment"}
@@ -965,9 +961,9 @@ export default function BlogPost() {
               </Card>
 
               {/* Author card */}
-              <Card className="mt-8 max-w-3xl border-white/10 bg-white/[0.02]">
+              <Card className="mt-8 max-w-[680px] border-white/10 bg-white/[0.02]">
                 <CardContent className="p-6 flex items-start gap-5">
-                  <div className="w-14 h-14 flex-shrink-0 rounded-full bg-de-raised flex items-center justify-center shadow-[0_0_20px_rgba(179,0,255,0.35)]">
+                  <div className="w-14 h-14 flex-shrink-0 rounded-full border border-de-hairline bg-de-raised flex items-center justify-center">
                     <User className="h-6 w-6 text-white" />
                   </div>
                   <div className="flex-1">
@@ -981,10 +977,10 @@ export default function BlogPost() {
                       IT, Standalone Services, Co-Managed IT, vCIO, and AI
                       governance.
                     </p>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-x-3">
                       <Link
                         href="/about"
-                        className="text-de-accent-ink hover:text-de-accent-ink text-sm inline-flex items-center"
+                        className="text-de-accent-ink hover:text-white text-sm inline-flex min-h-11 items-center"
                       >
                         About Digerati Experts
                         <ArrowRight className="ml-1 h-3.5 w-3.5" />
@@ -992,7 +988,7 @@ export default function BlogPost() {
                       <span className="text-white/20">•</span>
                       <Link
                         href="/#contact"
-                        className="text-de-accent-ink hover:text-de-accent-ink text-sm inline-flex items-center"
+                        className="text-de-accent-ink hover:text-white text-sm inline-flex min-h-11 items-center"
                       >
                         Get in touch
                         <ArrowRight className="ml-1 h-3.5 w-3.5" />
@@ -1003,17 +999,17 @@ export default function BlogPost() {
               </Card>
 
               {/* Share footer */}
-              <div className="mt-8 max-w-3xl flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+              <div className="mt-8 max-w-[680px] flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
                 <div className="flex items-center gap-2 text-white/70">
                   <Share2 className="h-4 w-4" />
                   <span className="text-sm font-medium">Share this article</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleShare("twitter")}
-                    className="border-white/20 bg-transparent text-white/90 hover:text-white hover:bg-de-raised hover:border-de-hairline"
+                    className="min-h-11 border-white/20 bg-transparent text-white/90 hover:text-white hover:bg-de-raised hover:border-de-hairline"
                     data-testid="button-share-twitter-bottom"
                   >
                     <Twitter className="h-4 w-4 mr-2" />
@@ -1023,7 +1019,7 @@ export default function BlogPost() {
                     variant="outline"
                     size="sm"
                     onClick={() => handleShare("linkedin")}
-                    className="border-white/20 bg-transparent text-white/90 hover:text-white hover:bg-de-raised hover:border-de-hairline"
+                    className="min-h-11 border-white/20 bg-transparent text-white/90 hover:text-white hover:bg-de-raised hover:border-de-hairline"
                     data-testid="button-share-linkedin-bottom"
                   >
                     <Linkedin className="h-4 w-4 mr-2" />
@@ -1033,7 +1029,7 @@ export default function BlogPost() {
                     variant="outline"
                     size="sm"
                     onClick={handleCopyLink}
-                    className="border-white/20 bg-transparent text-white/90 hover:text-white hover:bg-de-raised hover:border-de-hairline"
+                    className="min-h-11 border-white/20 bg-transparent text-white/90 hover:text-white hover:bg-de-raised hover:border-de-hairline"
                     data-testid="button-share-copy-bottom"
                   >
                     {copied ? (
@@ -1070,7 +1066,7 @@ export default function BlogPost() {
                 </div>
                 <Link
                   href="/resources/blog"
-                  className="hidden sm:inline-flex items-center text-de-accent-ink hover:text-de-accent-ink text-sm font-medium"
+                  className="hidden min-h-11 items-center text-sm font-medium text-de-accent-ink hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] sm:inline-flex"
                 >
                   All articles
                   <ArrowRight className="ml-1 h-4 w-4" />
@@ -1117,6 +1113,7 @@ export default function BlogPost() {
             </section>
           )}
         </div>
+      </div>
       </main>
 
       <DigeratiEnhancedFooterSection />

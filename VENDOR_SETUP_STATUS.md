@@ -71,7 +71,7 @@ Use Cytracom’s UCaaS API for this page. Ask them for the base URL, auth method
 DE staff enter tracking numbers on a real shipment. ShipStation, EasyPost, and Shippo are not selected. Live rates, labels, and carrier tracking wait on USPS, FedEx, and UPS API keys and account numbers (`SHIPPING_SETUP.md`). Ask those carriers for that access before any live call.
 
 ### Test login
-Set `PORTAL_QA_EMAIL` and `PORTAL_QA_PASSWORD` in the portal process environment (host environment settings). The account is for QA. It is not a client company. The values stay out of git.
+Set `PORTAL_QA_EMAIL` and `PORTAL_QA_PASSWORD` as GitHub repository secrets (Settings > Secrets and variables > Actions). Only the manual "Portal production check" workflow (`scripts/qa/portal-prod-check.mjs`) reads them; the portal server does not, and setting them creates no account. The account is for QA. It is not a client company. The values stay out of git. Steps: `docs/runbooks/PORTAL-QA-LOGIN.md`.
 
 ### Exit popup
 The findings belong to the client. `ExitIntentPopup.tsx` says “Yours to keep”: Digerati Experts writes them so the client can put them to work. No delivery date and no score. Recorded in `docs/CLAIMS-REGISTER.md`.

@@ -15,6 +15,8 @@ import {
   EMAIL_VERIFICATION_TTL_MS,
   PASSWORD_RESET_TTL_MS,
 } from "./portalAuthTokens";
+import { durableMutationGate } from "./durableMutationGate";
+import { buildCompanyMetrics } from "./adminCompanyMetrics";
 import { randomBytes, randomInt, createHash, timingSafeEqual } from "crypto";
 import rateLimit from "express-rate-limit";
 import bcrypt from "bcrypt";
@@ -98,6 +100,12 @@ import {
   type OrgUserFields,
 } from "./portalOrg";
 import { registerPortalDepartmentRoutes } from "./portalDepartmentRoutes";
+import { registerPortalIntegrationStatusRoute } from "./portalIntegrations";
+import { registerManualRecordAdminRoutes } from "./portalManualRecords";
+import { registerPortalDataSourceRoutes } from "./portalDataSources";
+import { registerPortalVpnRoutes } from "./integrations/vpn/routes";
+import { registerPortalPhoneRoutes } from "./integrations/phone/routes";
+import { registerPortalShippingRoutes } from "./integrations/shipping/routes";
 import { registerPortalDeskAgentRoutes } from "./portalDeskAgentRoutes";
 import { canAccessPortalTicket } from "./portalTicketAccess";
 import { RESEND_COOLDOWN_MS } from "./portalVerificationThrottle";
@@ -575,8 +583,15 @@ const logSecurityEvent = (event: string, req: AuthenticatedRequest, data: any) =
 // ========== ROUTES ==========
 
 export async function registerRoutes(app: Express) {
-  // Register object storage routes for file uploads
-  registerObjectStorageRoutes(app, { auth: authMiddleware, admin: requireAdmin });
+  // Register object storage routes for file uploads (auth + per-object ownership ACL)
+  registerObjectStorageRoutes(app, {
+    auth: authMiddleware,
+    admin: requireAdmin,
+    resolveTenantOwnerClientId: async (objectPath) => {
+      const file = await storage.findTenantFileByFileUrl(objectPath);
+      return file?.clientId ?? null;
+    },
+  });
   registerDeSyncRoutes(app, authMiddleware as any);
 
   // Live MSP threat feed (CISA / FIRST / NVD / MSRC). Never invents CVEs.
@@ -739,6 +754,9 @@ export async function registerRoutes(app: Express) {
     values: () => portalAuthListClients(),
   };
   
+  // Production: durable-authoritative writes fail closed (503) when the database is down (#248).
+  app.use(durableMutationGate);
+
   // ===== AUTHENTICATION ROUTES =====
   
   // Legacy generic register/login are retired (#236): they minted tokens for a
@@ -1389,6 +1407,14 @@ export async function registerRoutes(app: Express) {
 
   // Department create/update: the company comes from the signed-in user, not the body (#254).
   registerPortalDepartmentRoutes(app, { guards: [authMiddleware, requireOrgManage, validateInput] });
+
+  // VPN, phone and shipping data sources: PORTAL_*_PROVIDER (server/portalIntegrations.ts).
+  registerPortalIntegrationStatusRoute(app, { guards: [authMiddleware] });
+  registerPortalVpnRoutes(app, { guards: [authMiddleware] });
+  registerPortalPhoneRoutes(app, { guards: [authMiddleware] });
+  registerPortalShippingRoutes(app, { guards: [authMiddleware] });
+  registerManualRecordAdminRoutes(app, { guards: [authMiddleware, requireAdmin, validateInput] });
+  registerPortalDataSourceRoutes(app, { guards: [authMiddleware, requireAdmin, validateInput] });
 
   // ----- Approvals -----
   app.get("/api/portal/approvals", [authMiddleware, requireApprovalsAccess], async (req: AuthenticatedRequest, res: Response) => {
@@ -3804,7 +3830,7 @@ export async function registerRoutes(app: Express) {
       // Server-authoritative amount: the balance due is the source of truth;
       // a client-supplied `amount` may only match it, never underpay.
       const { resolveInvoicePayAmount } = await import("./portalInvoicePayment");
-      const amountResult = resolveInvoicePayAmount(inv.balance ?? inv.total, amount, COMPANY.billingEmail);
+      const amountResult = resolveInvoicePayAmount(inv.balance ?? inv.total, amount, COMPANY.billingEmail, inv.status);
       if (!amountResult.ok) {
         if (amountResult.reason === "amount_mismatch") {
           console.warn("[SECURITY] INVOICE_AMOUNT_MISMATCH", {
@@ -4085,142 +4111,34 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Generate receipt HTML for order
+  // Branded order receipt (PDF). Falls back to the same branded document as
+  // print-ready HTML while no PDF renderer is installed, so the portal's
+  // Download button keeps working through the ops rollout.
   app.get("/api/portal/orders/:id/receipt", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
       const userId = req.userId;
       const clientId = req.user?.clientId;
-      
+
       const order = await storage.getStoreOrder(id);
-      
+
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
-      
+
       const isAdmin = req.user?.role === "admin";
       const ownsUser = Boolean(userId) && order.userId === userId;
       const ownsClient = Boolean(clientId) && order.clientId === clientId;
       if (!isAdmin && !ownsUser && !ownsClient) {
         return res.status(403).json({ error: "Access denied to this order" });
       }
-      
-      const lineItems = Array.isArray(order.lineItems) ? order.lineItems : [];
-      const billingAddress = order.billingAddress as { street?: string; city?: string; state?: string; zipCode?: string; country?: string } | null;
-      
-      // Generate HTML receipt
-      const receiptHtml = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Receipt - ${escapeHtml(order.orderNumber)}</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 20px; color: #333; }
-    .header { text-align: center; margin-bottom: 40px; }
-    .logo { font-size: 24px; font-weight: bold; color: #D3126A; margin-bottom: 8px; }
-    .receipt-title { font-size: 18px; color: #666; }
-    .order-info { display: flex; justify-content: space-between; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
-    .order-info div { }
-    .order-info .label { font-size: 12px; color: #666; margin-bottom: 4px; }
-    .order-info .value { font-weight: 600; }
-    table { width: 100%; border-collapse: collapse; margin: 30px 0; }
-    th { text-align: left; padding: 12px; border-bottom: 2px solid #e0e0e0; font-weight: 600; }
-    td { padding: 12px; border-bottom: 1px solid #e0e0e0; }
-    .text-right { text-align: right; }
-    .totals { margin-left: auto; width: 300px; }
-    .totals .row { display: flex; justify-content: space-between; padding: 8px 0; }
-    .totals .total { font-weight: bold; font-size: 18px; border-top: 2px solid #333; padding-top: 12px; margin-top: 8px; }
-    .billing { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
-    .billing h3 { margin: 0 0 12px 0; font-size: 14px; color: #666; }
-    .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; font-size: 12px; }
-    @media print { body { padding: 20px; } }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="logo">Digerati Experts</div>
-    <div class="receipt-title">Order Receipt</div>
-  </div>
-  
-  <div class="order-info">
-    <div>
-      <div class="label">Order Number</div>
-      <div class="value">${escapeHtml(order.orderNumber)}</div>
-    </div>
-    <div>
-      <div class="label">Order Date</div>
-      <div class="value">${new Date(order.createdAt).toLocaleDateString()}</div>
-    </div>
-    <div>
-      <div class="label">Status</div>
-      <div class="value">${(order.status || "pending").replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}</div>
-    </div>
-    ${order.paidAt ? `
-    <div>
-      <div class="label">Paid On</div>
-      <div class="value">${new Date(order.paidAt).toLocaleDateString()}</div>
-    </div>
-    ` : ""}
-  </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th class="text-right">Qty</th>
-        <th class="text-right">Unit Price</th>
-        <th class="text-right">Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${lineItems.map((item: any) => `
-        <tr>
-          <td>${escapeHtml(item.name || "Item")}<br><small style="color:#666">SKU: ${escapeHtml(item.sku || "N/A")}</small></td>
-          <td class="text-right">${item.quantity || 1}</td>
-          <td class="text-right">$${parseFloat(item.unitPrice || "0").toFixed(2)}</td>
-          <td class="text-right">$${parseFloat(item.total || "0").toFixed(2)}</td>
-        </tr>
-      `).join("")}
-    </tbody>
-  </table>
+      const { buildOrderPdfHtml, orderPdfFileBase } = await import("./pdf/storeOrderPdf");
+      const { renderHtmlToPdf, PdfRendererUnavailableError } = await import("./pdf/renderHtmlToPdf");
+      const html = buildOrderPdfHtml(order, { variant: "receipt" });
+      const fileBase = orderPdfFileBase(order, "receipt");
 
-  <div class="totals">
-    <div class="row">
-      <span>Subtotal</span>
-      <span>$${parseFloat(order.subtotal).toFixed(2)}</span>
-    </div>
-    <div class="row">
-      <span>Tax</span>
-      <span>$${parseFloat(order.tax || "0").toFixed(2)}</span>
-    </div>
-    <div class="row total">
-      <span>Total</span>
-      <span>$${parseFloat(order.total).toFixed(2)}</span>
-    </div>
-  </div>
-
-  <div class="billing">
-    <h3>Billing Information</h3>
-    <div>${escapeHtml(order.billingName || "N/A")}</div>
-    ${order.billingCompany ? `<div>${escapeHtml(order.billingCompany)}</div>` : ""}
-    ${order.billingEmail ? `<div>${escapeHtml(order.billingEmail)}</div>` : ""}
-    ${billingAddress?.street ? `<div>${escapeHtml(billingAddress.street)}</div>` : ""}
-    ${billingAddress?.city || billingAddress?.state || billingAddress?.zipCode ? `
-      <div>${escapeHtml(billingAddress.city || "")}${billingAddress.city && billingAddress.state ? ", " : ""}${escapeHtml(billingAddress.state || "")} ${escapeHtml(billingAddress.zipCode || "")}</div>
-    ` : ""}
-  </div>
-
-  <div class="footer">
-    <p>Thank you for your business!</p>
-    <p>Digerati Experts | support@digeratiexperts.com | ${PRIMARY_PHONE.display}</p>
-  </div>
-</body>
-</html>
-      `;
-      
-      logSecurityEvent("RECEIPT_GENERATED", req, { 
+      logSecurityEvent("RECEIPT_GENERATED", req, {
         orderId: order.id,
         orderNumber: order.orderNumber,
         userId,
@@ -4228,10 +4146,20 @@ export async function registerRoutes(app: Express) {
         total: order.total,
         orderStatus: order.status
       });
-      
-      res.setHeader("Content-Type", "text/html");
-      res.setHeader("Content-Disposition", `attachment; filename="receipt-${order.orderNumber}.html"`);
-      res.send(receiptHtml);
+
+      res.setHeader("Cache-Control", "private, no-store");
+      try {
+        const pdf = await renderHtmlToPdf(html);
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename="${fileBase}.pdf"`);
+        return res.send(pdf);
+      } catch (err) {
+        if (!(err instanceof PdfRendererUnavailableError)) throw err;
+        console.error("[RECEIPT PDF] renderer unavailable, serving HTML:", err.message);
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        res.setHeader("Content-Disposition", `attachment; filename="${fileBase}.html"`);
+        return res.send(html);
+      }
     } catch (error: any) {
       console.error("[ERROR] Failed to generate receipt:", error);
       res.status(500).json({ message: "Failed to generate receipt" });
@@ -4734,65 +4662,13 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Company not found" });
       }
       
-      // Calculate metrics from portal data - get tickets from storage
+      // Only real portal data; service and billing figures are null/not_connected (#234).
       const allStoredTickets = await storage.getPortalTickets();
       const allTickets = allStoredTickets.filter((t: any) => t.clientId === companyId);
-      const openTickets = allTickets.filter((t: any) => t.status === "open").length;
-      const resolvedTickets = allTickets.filter((t: any) => t.status === "resolved").length;
-      const inProgressTickets = allTickets.filter((t: any) => t.status === "in_progress").length;
-      
       const users = Array.from(portalUsers.values()).filter(u => u.clientId === companyId);
       const tenantFiles = await storage.getTenantFilesByClientId(companyId);
-      
-      // Mock service and invoice data
-      const metrics = {
-        company: {
-          id: company.id,
-          name: company.companyName,
-          status: company.status,
-          createdAt: company.createdAt,
-        },
-        tickets: {
-          total: allTickets.length,
-          open: openTickets,
-          inProgress: inProgressTickets,
-          resolved: resolvedTickets,
-          avgResolutionTime: "4.2 hours",
-        },
-        users: {
-          total: users.length,
-          activeUsers: users.filter(u => u.isActive).length,
-          admins: users.filter(u => u.role === "admin").length,
-        },
-        files: {
-          total: tenantFiles.length,
-          agents: tenantFiles.filter(f => f.category === "agents").length,
-          documents: tenantFiles.filter(f => f.category === "documents").length,
-        },
-        services: {
-          activeServices: 3,
-          monthlyValue: "$1,250.00",
-          tier: "Business",
-        },
-        billing: {
-          pendingInvoices: 1,
-          totalOwed: "$450.00",
-          lastPayment: "2024-12-15",
-        },
-        activity: {
-          lastLogin: new Date().toISOString(),
-          ticketsThisMonth: allTickets.filter((t: any) => {
-            const ticketDate = new Date(t.createdAt);
-            const now = new Date();
-            return ticketDate.getMonth() === now.getMonth() && ticketDate.getFullYear() === now.getFullYear();
-          }).length,
-          filesUploadedThisMonth: tenantFiles.filter(f => {
-            const fileDate = new Date(f.createdAt);
-            const now = new Date();
-            return fileDate.getMonth() === now.getMonth() && fileDate.getFullYear() === now.getFullYear();
-          }).length,
-        },
-      };
+
+      const metrics = buildCompanyMetrics({ company, tickets: allTickets, users, files: tenantFiles });
       
       res.json(metrics);
     } catch (error: any) {
@@ -5560,6 +5436,77 @@ export async function registerRoutes(app: Express) {
     } catch (error: any) {
       console.error("[GET ORDER ERROR]", error);
       res.status(500).json({ error: error.message || "Failed to get order" });
+    }
+  });
+
+  // Branded order PDF for the post-checkout confirmation page. Same access rule
+  // as GET /api/store/orders/:id: the confirmation token (?ct=) gets the
+  // redacted view (no billing address); otherwise Bearer ownership or admin.
+  app.get("/api/store/orders/:id/pdf", paymentRateLimiter, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { db } = await import("./db");
+      const { storeOrders } = await import("@shared/schema");
+      const { eq, or } = await import("drizzle-orm");
+
+      const [order] = await db.select().from(storeOrders).where(
+        or(
+          eq(storeOrders.id, id),
+          eq(storeOrders.stripeSessionId, id),
+          eq(storeOrders.zohoPaymentSessionId, id)
+        )
+      ).limit(1);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      const { isValidOrderConfirmationToken } = await import("./orderConfirmationToken");
+      const viaConfirmationToken = isValidOrderConfirmationToken(order.id, req.query.ct);
+      if (!viaConfirmationToken) {
+        const authHeader = req.headers.authorization;
+        const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+        if (!token) {
+          return res.status(401).json({ error: "Authentication required" });
+        }
+        let decoded: JWTPayload;
+        try {
+          decoded = jwt.verify(token, jwtSecret()) as JWTPayload;
+        } catch {
+          return res.status(401).json({ error: "Invalid token" });
+        }
+        const isAdmin = decoded.role === "admin";
+        const ownsOrder =
+          (decoded.userId && order.userId === decoded.userId) ||
+          (decoded.clientId && order.clientId === decoded.clientId);
+        if (!isAdmin && !ownsOrder) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+      }
+
+      const { renderOrderPdf, orderPdfFileBase } = await import("./pdf/storeOrderPdf");
+      const { PdfRendererUnavailableError } = await import("./pdf/renderHtmlToPdf");
+      try {
+        const pdf = await renderOrderPdf(order, {
+          variant: "confirmation",
+          redactBillingAddress: viaConfirmationToken,
+        });
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${orderPdfFileBase(order, "confirmation")}.pdf"`,
+        );
+        res.setHeader("Cache-Control", "private, no-store");
+        return res.send(pdf);
+      } catch (err) {
+        if (err instanceof PdfRendererUnavailableError) {
+          console.error("[ORDER PDF] renderer unavailable:", err.message);
+          return res.status(503).json({ error: "PDF generation is temporarily unavailable." });
+        }
+        throw err;
+      }
+    } catch (error: any) {
+      console.error("[ORDER PDF ERROR]", error);
+      res.status(500).json({ error: "Failed to generate order PDF" });
     }
   });
 
