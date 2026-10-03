@@ -1,22 +1,46 @@
 import type { Express, Request, RequestHandler, Response } from "express";
 import { effectiveClientId, readIntegrationStatus } from "../../portalIntegrations";
+import { loadShippingData } from "./index";
+import type { Env } from "./types";
 
 /**
- * GET /api/portal/shipping: the shipping page's data for the signed-in user's company.
+ * GET /api/portal/shipping: the Ship Center data for the company in view.
  *
- * Always answers { success, status }. When status.mode is "live" it also
- * answers { data } from the configured adapter (see ./index.ts), scoped to
- * effectiveClientId(req.user). Sample and hidden pages need no data.
+ * Always answers { success, status }. When status.mode is "live":
+ *   { needsCompany: true }  no company in view (DE admin in admin view)
+ *   { notMapped: true }     the company has no PORTAL_SHIPPING_CLIENT_MAP entry
+ *   { data }                ShippingData (./types.ts), this company's only;
+ *                           for a DE admin on the "manual" provider also
+ *                           { manage: { clientId } } so the page can offer the
+ *                           admin manual-records form for that company
+ *   HTTP 502 { error }      vendor or configuration fault; details are logged
+ *                           server-side, never sent to the browser
  */
 export const SHIPPING_PATH = "/api/portal/shipping";
 
-export function registerPortalShippingRoutes(app: Express, opts: { guards: RequestHandler[] }) {
+export const SHIPPING_UNAVAILABLE_MESSAGE = "Shipment tracking is unavailable right now. Please try again later.";
+
+export function registerPortalShippingRoutes(
+  app: Express,
+  opts: { guards: RequestHandler[]; env?: Env; fetchImpl?: typeof fetch },
+) {
   app.get(SHIPPING_PATH, ...opts.guards, async (req: Request, res: Response) => {
-    const status = readIntegrationStatus("shipping");
-    if (status.mode !== "live") return res.json({ success: true, status });
-    const clientId = effectiveClientId((req as any).user);
+    const env = opts.env ?? process.env;
+    const status = readIntegrationStatus("shipping", env);
+    if (status.mode !== "live" || !status.provider) return res.json({ success: true, status });
+    const user = (req as Request & { user?: Parameters<typeof effectiveClientId>[0] }).user;
+    const clientId = effectiveClientId(user);
     if (!clientId) return res.json({ success: true, status, needsCompany: true });
-    // Filled in by the shipping adapter work.
-    return res.json({ success: true, status, data: null });
+    try {
+      const result = await loadShippingData({ provider: status.provider, clientId, env, fetchImpl: opts.fetchImpl });
+      if ("notMapped" in result) return res.json({ success: true, status, notMapped: true });
+      const manage = status.provider === "manual" && user?.role === "admin" ? { manage: { clientId } } : {};
+      return res.json({ success: true, status, data: result.data, ...manage });
+    } catch (err) {
+      const name = err instanceof Error ? err.name : "Error";
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[portal shipping] ${status.provider} for client ${clientId}: ${name}: ${message}`);
+      return res.status(502).json({ success: false, status, error: SHIPPING_UNAVAILABLE_MESSAGE });
+    }
   });
 }
