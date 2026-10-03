@@ -86,7 +86,7 @@ export function LegalDocumentLayout({
       <Chapter tone="paper" seam={false}>
         <Container>
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
-            <div className="order-2 space-y-10 lg:order-1 lg:col-span-3 lg:sticky lg:top-28 lg:max-h-[calc(100vh-8rem)] lg:self-start lg:overflow-y-auto">
+            <div className={showToc ? "hidden lg:order-1 lg:col-span-3 lg:sticky lg:top-28 lg:block lg:max-h-[calc(100vh-8rem)] lg:self-start lg:overflow-y-auto" : "hidden"}>
               {showToc && (
                 <nav aria-label="On this page" className="hidden lg:block">
                   <Eyebrow tone="paper" className="mb-4">
@@ -106,37 +106,37 @@ export function LegalDocumentLayout({
                   </ol>
                 </nav>
               )}
-              <nav aria-label="Legal documents">
-                <Eyebrow tone="paper" className="mb-4">
-                  Legal documents
-                </Eyebrow>
-                <ul className="border-t border-[var(--de-paper-hairline)]">
-                  {LEGAL_DOCS.map((d) => {
-                    const current = d.href === canonical;
-                    return (
-                      <li key={d.href} className="border-b border-[var(--de-paper-hairline)]">
-                        <Link
-                          href={d.href}
-                          aria-current={current ? "page" : undefined}
-                          className={`block py-2.5 text-sm leading-snug transition-colors hover:text-[#A30E52] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] ${
-                            current ? "font-semibold text-[#1A1228]" : "text-[#3A3448]"
-                          }`}
-                        >
-                          {d.label}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </nav>
             </div>
             <article
               ref={bodyRef}
               data-testid="legal-document"
-              className={`order-1 lg:order-2 de-prose-light max-w-[68ch] text-[#3A3448] [&_h2]:font-heading [&_h3]:font-heading lg:col-span-9`}
+              className={`order-1 lg:order-2 de-prose-light max-w-[68ch] text-[#3A3448] [&_h2]:font-heading [&_h3]:font-heading ${showToc ? "lg:col-span-9" : "lg:col-span-12"}`}
             >
               {children}
             </article>
+            <nav aria-label="Legal documents" className="order-3 border-t border-[var(--de-paper-hairline)] pt-8 lg:col-span-12">
+              <Eyebrow tone="paper" className="mb-4">
+                Legal documents
+              </Eyebrow>
+              <ul className="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-4">
+                {LEGAL_DOCS.map((d) => {
+                  const current = d.href === canonical;
+                  return (
+                    <li key={d.href} className="border-b border-[var(--de-paper-hairline)]">
+                      <Link
+                        href={d.href}
+                        aria-current={current ? "page" : undefined}
+                        className={`flex min-h-11 items-center py-2 text-sm leading-snug transition-colors hover:text-[#A30E52] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] ${
+                          current ? "font-semibold text-[#1A1228]" : "text-[#3A3448]"
+                        }`}
+                      >
+                        {d.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
           </div>
         </Container>
       </Chapter>
