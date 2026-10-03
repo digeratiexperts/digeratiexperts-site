@@ -237,7 +237,7 @@ export default function PortalLogin() {
   const showZoho = zohoConfigured !== false;
 
   return (
-    <main className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
+    <main id="main-content" tabIndex={-1} className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 pt-login-glow" />
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-px pt-login-line" />
       <div className="relative w-full max-w-md">
@@ -354,7 +354,7 @@ export default function PortalLogin() {
                 <div className="mt-6 border-t border-border pt-6">
                   <p className="mb-3 text-center text-xs text-muted-foreground">
                     Don't have an account?{" "}
-                    <a href="/portal/signup" className="text-de-magenta-ink hover:underline" data-testid="link-signup">
+                    <a href="/portal/signup" className="text-de-magenta-ink underline underline-offset-2 hover:no-underline" data-testid="link-signup">
                       Sign Up
                     </a>
                   </p>

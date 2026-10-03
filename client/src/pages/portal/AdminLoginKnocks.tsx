@@ -205,7 +205,7 @@ export function AdminLoginKnocks() {
           </Panel>
 
           <Panel id="live-feed" title="Live feed" description="Auto-refreshes every 30 seconds" flush className="lg:col-span-2">
-            <div className="max-h-[520px] overflow-auto">
+            <div className="max-h-[520px] overflow-auto" tabIndex={0} role="region" aria-label="Live feed, scrollable">
               <DataTable<Knock>
                 columns={knockColumns}
                 rows={knocks}

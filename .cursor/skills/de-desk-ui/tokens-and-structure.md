@@ -26,10 +26,10 @@ Near-black text appears only on gold (and the green live mark). Do **not** paint
 
 1. **One `.de-desk-shell`** — `role="dialog"` `aria-label="DE Desk help"` `data-testid="desk-modal"`. `data-tab` is `chat` \| `ticket` \| `resources`.
 2. **Placement** — docked, the window stops below the live bottom of the site header and the homepage section bar (`--de-nav-current-bottom` + `--de-spy-h`); it never covers the nav. On open, focus lands on the composer (desktop Ask DE) or the active tab — not the first header button.
-3. **Header** — compact DE mark + green available pip; title “DE Desk”; subtitle “DE Desk is available” (or “{name} joined · live handoff”). Expand + close. On `sm+` the header moves the window; double-click resets. Drag any edge or the south-east grip to resize.
+3. **Header** — compact DE mark + green available pip; title “DE Desk”; subtitle “DE Desk is available” (or “{name} joined · live handoff”). Expand + close. On `sm+` the header moves the window; double-click resets. The expand button carries a full-screen hint (Joe, 2026-10-02): about a second after the docked Desk opens, three gold pulses with the arrows pushing outward and a gold "Full screen" label, about five seconds in all. It plays at most once per page load and three times per browser, never once the visitor has used full screen, never with a person live in the chat, and never on phones (no expand button below 640px). Reduced motion keeps the gold edge and the label without movement. Drag any edge or the south-east grip to resize.
 4. **Tabs** — Ask DE \| Get Support \| Client Tools. Active = ink label + gold underline. Unread count badges Ask DE only.
 5. **Body** — the same black field on every tab. No status row. No footer tab list.
-6. **Composer (Ask DE only)** — charcoal input + gold send. Placeholder: “Type the issue…” while nobody is in the chat (it must not imply someone is waiting); “Message {name}…” once a person has joined.
+6. **Composer (Ask DE only)** — charcoal input + gold send. Text box hint (Joe, 2026-10-02): once the greeting finishes, three gold pulses, a soft gold light sweeping across the field and a gold placeholder, about five seconds. Only on Ask DE, before the visitor has said anything and with nobody live; at most once per page load and three times per browser; it stops the moment they type and retires after their first message. It plays before the full-screen hint, which waits for it, so the two never animate together. Reduced motion keeps the gold edge and placeholder without movement. Placeholder: “Type the issue…” while nobody is in the chat (it must not imply someone is waiting); “Message {name}…” once a person has joined.
 7. **Lock line (Ask DE only)** — “Never share passwords, MFA codes, or private keys.”
 
 ## Ask DE
@@ -70,12 +70,28 @@ Authenticated (real `/api/portal/me` session only):
 
 Do **not** invent service status, devices, software libraries, or vendor product names. Do **not** put Cyber Risk Assessment, More tools, composer, or a repeated footer on this tab.
 
+## Polish rules (Joe, 2026-10-02: "make sure it's fully optimized and has all the missing touches")
+
+- The empty send button is a quiet well with a dim icon, never half-transparent gold.
+- Suggested questions and issue labels wrap to a second line; they never end in an ellipsis.
+- The Get Support Details box is tall enough to show its whole prompt at every width.
+- A failed Ask DE reply carries a faint red edge and tint, so it reads as an error before "Try again".
+- The ticket confirmation shows a labelled gold ticket number; "Back to Ask DE" and "View my tickets" are outlined secondary buttons.
+- Signed-in Client Tools opens with the welcome as a heading, and every Desk list uses gold icons.
+- Full screen keeps the header across the window and puts tabs, content and composer in a centred 760px column.
+- On phones the privacy line under the composer stays on one line.
+
 ## a11y
 
 - Visible `:focus-visible` (gold ring).
 - Interactive controls ~44px where practical.
 - `prefers-reduced-motion` on pulse, heads-up, and tool-row motion.
 - Ticket submit is fail-closed: treat `!response.ok` or missing `zohoTicketId` as failure.
+- Keyboard (2026-10-03): the chooser opens with focus on its first choice (Close is last in the DOM, pinned top-right). The Desk opens with focus on the composer (desktop Ask DE) or the active tab; Tab and Shift+Tab stay inside it and only count what Tab can reach. Tabs move with Arrow keys, Home and End. Escape closes it and focus returns to the opener, or to the Ask DE launcher when the opener is gone.
+- The resize edges and corner grip are pointer-only (`tabIndex={-1}`, `aria-hidden`); Expand in the header is the keyboard way to resize.
+- Short screens: docked, the Desk is never taller than the viewport (header and close stay on screen on a phone held sideways or at 200% zoom), even if that means sitting over the nav.
+- Forced colours (Windows contrast themes): every state drawn only in gold (active tab, selected issue and urgency, incident, gold buttons, the visitor's bubbles) has a border or outline the system can colour.
+- Hint rules live in `client/src/lib/deskHints.ts` with behavioural tests; `npm run smoke:desk` (run in CI against the production build) checks fit, overflow, keyboard, the hint sequence and the polish invariants in a real browser.
 
 ## Primary file
 

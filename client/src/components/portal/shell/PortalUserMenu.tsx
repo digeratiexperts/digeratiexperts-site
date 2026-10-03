@@ -1,16 +1,18 @@
 import { Link } from "wouter";
-import { ChevronDown, LogOut, Moon, Settings, Sun } from "lucide-react";
+import { ChevronDown, LogOut, Monitor, Moon, Settings, Sun } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { PortalUserSession } from "@/lib/portalRoles";
 import { resolveOrgRole } from "@/lib/portalRoles";
-import type { PortalTheme } from "./portalTheme";
+import type { PortalThemePreference } from "./portalTheme";
 
 const ROLE_LABEL: Record<string, string> = {
   staff: "Staff",
@@ -32,15 +34,21 @@ export function roleLabel(user: PortalUserSession | null): string {
   return ROLE_LABEL[resolveOrgRole(user)] ?? "Portal user";
 }
 
+const THEME_OPTIONS: { value: PortalThemePreference; label: string; Icon: typeof Sun }[] = [
+  { value: "system", label: "Match device", Icon: Monitor },
+  { value: "dark", label: "Dark", Icon: Moon },
+  { value: "light", label: "Light", Icon: Sun },
+];
+
 interface Props {
   user: PortalUserSession | null;
-  theme: PortalTheme;
-  onTheme: (t: PortalTheme) => void;
+  themePreference: PortalThemePreference;
+  onTheme: (t: PortalThemePreference) => void;
   onSignOut: () => void;
   compact?: boolean;
 }
 
-export function PortalUserMenu({ user, theme, onTheme, onSignOut, compact }: Props) {
+export function PortalUserMenu({ user, themePreference, onTheme, onSignOut, compact }: Props) {
   const name = user?.fullName || user?.email || "Portal user";
   return (
     <DropdownMenu>
@@ -62,10 +70,23 @@ export function PortalUserMenu({ user, theme, onTheme, onSignOut, compact }: Pro
           <p className="mt-1 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">{roleLabel(user)}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => onTheme(theme === "dark" ? "light" : "dark")} data-testid="menu-theme">
-          {theme === "dark" ? <Sun className="mr-2 h-4 w-4" aria-hidden="true" /> : <Moon className="mr-2 h-4 w-4" aria-hidden="true" />}
-          {theme === "dark" ? "Switch to light" : "Switch to dark"}
-        </DropdownMenuItem>
+        <DropdownMenuLabel className="pb-1 pt-1.5 text-[11px] font-normal uppercase tracking-[0.08em] text-muted-foreground" id="menu-theme-label">
+          Appearance
+        </DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          value={themePreference}
+          onValueChange={(v) => onTheme(v as PortalThemePreference)}
+          aria-labelledby="menu-theme-label"
+          data-testid="menu-theme"
+        >
+          {THEME_OPTIONS.map(({ value, label, Icon }) => (
+            <DropdownMenuRadioItem key={value} value={value} data-testid={`menu-theme-${value}`}>
+              <Icon className="mr-2 h-4 w-4" aria-hidden="true" />
+              {label}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/portal/settings" className="flex w-full cursor-pointer items-center">
             <Settings className="mr-2 h-4 w-4" aria-hidden="true" />

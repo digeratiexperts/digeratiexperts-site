@@ -281,18 +281,20 @@ export default function PortalRoadmap() {
                 return (
                   <li
                     key={item.id}
-                    role="button"
-                    tabIndex={0}
-                    aria-expanded={isExpanded}
                     className={cn(
-                      "cursor-pointer px-4 py-4 transition-colors hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:outline-none md:px-5",
+                      "cursor-pointer px-4 py-4 transition-colors hover:bg-accent/60 md:px-5",
                       isExpanded && "bg-accent/40",
                     )}
                     onClick={() => setExpandedItem(isExpanded ? null : item.id)}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpandedItem(isExpanded ? null : item.id); } }}
                     data-testid={`roadmap-item-${item.id}`}
                   >
-                    <div className="flex items-start gap-3">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={isExpanded}
+                      className="flex items-start gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpandedItem(isExpanded ? null : item.id); } }}
+                    >
                       <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border bg-muted text-muted-foreground" title={cat.label}>
                         <CatIcon className="h-4 w-4" aria-hidden="true" />
                         <span className="sr-only">{cat.label}</span>

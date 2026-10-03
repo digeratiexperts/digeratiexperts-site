@@ -42,7 +42,9 @@ export function TenantSelector({ currentTenant, onTenantChange }: TenantSelector
 
   const impersonateMutation = useMutation({
     mutationFn: async (companyId: string) => {
-      return await apiRequest("/api/portal/admin/impersonate", "POST", { companyId });
+      // apiRequest resolves to the Response; the token and company are in its body.
+      const response = await apiRequest("/api/portal/admin/impersonate", "POST", { companyId });
+      return response.json();
     },
     onSuccess: (data: any) => {
       localStorage.setItem("portalToken", data.token);
