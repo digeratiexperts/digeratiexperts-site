@@ -30,6 +30,29 @@
 
 version: 2
 claims:
+  - id: paynow-stripe-tax
+    owner: claude
+    subsystem: store-warehouse
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 4478a80
+    files:
+      - server/services/salesTax.ts, server/services/salesTax.test.ts
+      - shared/storeTaxCodes.ts (new), shared/storeTaxCodes.test.ts (new)
+      - server/secureStoreCheckout.ts (the Pay Now route's billing address and tax step only)
+      - client/src/pages/store/Checkout.tsx (billing address fields and the BILLING_ADDRESS_REQUIRED branch only)
+      - client/src/lib/billingAddress.ts (new), client/src/pages/store/Checkout.tax.test.ts
+      - deploy/vps/env.production.example (STRIPE_TAX_* lines), docs/STORE-WAREHOUSE.md (Pay Now sales tax section)
+      - artifacts/visual-qa/paynow-stripe-tax/**
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: "merge it and build the stripe tax step", after
+      delegating the tax choice. Staff Pay Now asks Stripe Tax (Calculations
+      API only) for sales tax; Zoho Payments still charges. Ships switched
+      off: with STRIPE_TAX_SECRET_KEY unset, Pay Now behaves as today and
+      steps aside to a quote. Fails closed on any Stripe error, an item
+      without a confirmed tax code, or an Arizona client while Stripe has no
+      Arizona registration. Public Store (Door 2) never reaches it.
   - id: paynow-tax-step-aside
     owner: claude
     subsystem: store-warehouse
