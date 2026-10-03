@@ -5,6 +5,7 @@ import { useThreatFeed } from "@/hooks/useThreatFeed";
 import { useBooking } from "@/contexts/BookingContext";
 import { CTA } from "@/lib/ctaCopy";
 import { formatThreatDate, THREAT_ATTRIBUTION, type ThreatItem } from "@shared/threatFeed";
+import { TipTag } from "./TipTag";
 import "./12-threats-insights.css";
 
 /**
@@ -57,12 +58,6 @@ const LayersIcon = () => (
     <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" />
   </svg>
 );
-
-/** Tier 0: the company is never "Digerati" alone. The live attribution string still reads
- *  "Digerati prioritizes…"; render it as "Digerati Experts prioritizes…" as the mock does. */
-function companyNamed(text: string): string {
-  return text.replace(/\bDigerati(?! Experts)\b/g, "Digerati Experts");
-}
 
 function sourceLine(item: ThreatItem): string {
   return `${item.sourceName}${item.vendor ? ` · ${item.vendor}` : ""}${item.cve ? ` · ${item.cve}` : ""}`;
@@ -180,7 +175,7 @@ export function V7ThreatsInsights(): JSX.Element {
             </>
           )}
 
-          <p className="v7-small feed-sources">{companyNamed(payload.attribution || THREAT_ATTRIBUTION)}</p>
+          <p className="v7-small feed-sources">{payload.attribution || THREAT_ATTRIBUTION}</p>
         </div>
       </section>
 
@@ -244,9 +239,9 @@ export function V7ThreatsInsights(): JSX.Element {
           </motion.div>
 
           <motion.figure className="v7-card v7-card--inset monitor-figure" {...reveal(0.04)}>
-            <span className="v7-tag" style={{ alignSelf: "flex-start" }}>
+            <TipTag style={{ alignSelf: "flex-start" }} tip="Illustrates how monitoring hands off to a person. Not live telemetry.">
               Illustrative
-            </span>
+            </TipTag>
             <ol className="dg" aria-label="Signal, then human triage, then a named owner">
               <li className="dg-step">
                 <span className="v7-seq">01</span>

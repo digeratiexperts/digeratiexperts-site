@@ -42,6 +42,101 @@ Describe 'Licences: device-bound, short-lived, Hub-signed' {
         (Test-DELicenseToken -Token (New-TestLicense -Claims @{ aud = 'someone-else' }) -DeviceKey 'lenovo:PF3ABC12').state | Should -Be 'invalid'
         (Test-DELicenseToken -Token 'not.a.licence.at.all' -DeviceKey 'lenovo:PF3ABC12').valid | Should -Be $false
     }
+    It 'refuses a licence revoked in the list shipped with the build (trust/revoked.json)' {
+        # a copy of trust/ so the repository's own folder is never written
+        $global:LicT.Trust = Join-Path $global:LicT.Dir 'trust-copy'; New-Item -ItemType Directory -Path $global:LicT.Trust -Force | Out-Null
+        Copy-Item -Path (Join-Path (Join-Path (Get-DEConsole).Root 'trust') '*.json') -Destination $global:LicT.Trust
+        [IO.File]::WriteAllText((Join-Path $global:LicT.Trust 'revoked.json'), '{"jti":["shipped-revoked-1"],"updatedAt":null}')
+        Mock -ModuleName DE.License Get-DELicenseRoot { $global:LicT.Trust }
+        $t = Test-DELicenseToken -Token (New-TestLicense -Claims @{ jti = 'shipped-revoked-1' }) -DeviceKey 'lenovo:PF3ABC12'
+        $t.state | Should -Be 'revoked'; $t.valid | Should -Be $false
+        (Test-DELicenseToken -Token (New-TestLicense) -DeviceKey 'lenovo:PF3ABC12').valid | Should -Be $true
+        (Get-DELicenseRevocations).shipped | Should -Be 1
+    }
+    It "downloads the Hub's revocation list into the data folder, never trust/, and refuses what it lists" {
+        $trust = Join-Path (Get-DEConsole).Root 'trust'
+        $before = @(Get-ChildItem -LiteralPath $trust -File | ForEach-Object { "$($_.Name):$((Get-FileHash -LiteralPath $_.FullName).Hash)" }) -join ','
+        Mock -ModuleName DE.License Invoke-DELicenseHubGet { '{"jti":["hub-revoked-1","hub-revoked-2"],"updatedAt":"2026-10-02T12:00:00.000Z"}' }
+        $r = Update-DELicenseRevocations -HubUrl 'https://hub.example/api/integrations/v1/techconsole/events'
+        $r.ok | Should -Be $true; $r.updated | Should -Be $true; $r.count | Should -Be 2
+        Assert-MockCalled -ModuleName DE.License Invoke-DELicenseHubGet -Times 1 -Exactly -Scope It -ParameterFilter { $Uri -eq 'https://hub.example/api/techtool/license/revocations' }
+        $f = Get-DELicenseRevocationFile
+        $f | Should -BeLike "$((Get-DEConsole).Dirs.Base)*"
+        Test-Path -LiteralPath $f | Should -Be $true
+        Test-Path -LiteralPath "$f.tmp" | Should -Be $false
+        $bytes = [IO.File]::ReadAllBytes($f); ($bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB) | Should -Be $false   # UTF-8 without BOM
+        (Get-Content -LiteralPath $f -Raw) | Should -Not -Match 'eyJ'                                            # no licence token in the file
+        (@(Get-ChildItem -LiteralPath $trust -File | ForEach-Object { "$($_.Name):$((Get-FileHash -LiteralPath $_.FullName).Hash)" }) -join ',') | Should -Be $before
+        $t = Test-DELicenseToken -Token (New-TestLicense -Claims @{ jti = 'hub-revoked-2' }) -DeviceKey 'lenovo:PF3ABC12'
+        $t.state | Should -Be 'revoked'; $t.reason | Should -Match 'hub-revoked-2'
+        (Test-DELicenseToken -Token (New-TestLicense) -DeviceKey 'lenovo:PF3ABC12').valid | Should -Be $true
+        $rv = Get-DELicenseRevocations; $rv.downloaded | Should -Be 2; $rv.fetchedAt | Should -Not -BeNullOrEmpty
+        Remove-Item -LiteralPath $f -Force
+    }
+    It 'a failed download keeps the last saved list and never makes a valid licence invalid' {
+        $global:LicT.Net = 'up'
+        Mock -ModuleName DE.License Invoke-DELicenseHubGet { if ($global:LicT.Net -eq 'down') { throw 'Unable to connect to the remote server' } else { '{"jti":["kept-1"],"updatedAt":"2026-10-02T12:00:00.000Z"}' } }
+        (Update-DELicenseRevocations -HubUrl 'https://hub.example').updated | Should -Be $true
+        $global:LicT.Net = 'down'
+        $r = Update-DELicenseRevocations -HubUrl 'https://hub.example'
+        $r.ok | Should -Be $false; $r.updated | Should -Be $false; $r.reason | Should -Match 'did not answer'; $r.count | Should -Be 1
+        @((Get-DELicenseRevocations).jti) | Should -Contain 'kept-1'
+        (Test-DELicenseToken -Token (New-TestLicense -Claims @{ jti = 'kept-1' }) -DeviceKey 'lenovo:PF3ABC12').state | Should -Be 'revoked'
+        (Test-DELicenseToken -Token (New-TestLicense) -DeviceKey 'lenovo:PF3ABC12').valid | Should -Be $true
+        # an unreadable saved list is ignored (logged), never a reason to refuse a valid licence
+        [IO.File]::WriteAllText((Get-DELicenseRevocationFile), '{ torn')
+        (Test-DELicenseToken -Token (New-TestLicense) -DeviceKey 'lenovo:PF3ABC12').valid | Should -Be $true
+        Remove-Item -LiteralPath (Get-DELicenseRevocationFile) -Force
+    }
+    It 'refuses a Hub that is not https, and any answer that is not a revocation list, keeping the saved list' {
+        $global:LicT.Body = '{"jti":["good-1"],"updatedAt":"2026-10-02T12:00:00.000Z"}'
+        Mock -ModuleName DE.License Invoke-DELicenseHubGet { $global:LicT.Body }
+        (Update-DELicenseRevocations -HubUrl 'https://hub.example').updated | Should -Be $true
+        $r = Update-DELicenseRevocations -HubUrl 'http://hub.example'
+        $r.ok | Should -Be $false; $r.reason | Should -Match 'https'
+        Assert-MockCalled -ModuleName DE.License Invoke-DELicenseHubGet -Times 1 -Exactly -Scope It   # the http URL was never fetched
+        $bad = @('not json', '', '[]', '{"jti":"good-2"}', '{"jti":null}', '{"nope":[]}', '{"jti":[1,2]}', '{"jti":["has space"]}', '{"jti":[{"id":"x"}]}', '{"jti":["x"],"updatedAt":"not a time"}', ('{"jti":["' + ('a' * 1048600) + '"]}'), ('{"jti":[' + ((1..20001 | ForEach-Object { '"j' + $_ + '"' }) -join ',') + ']}'))
+        foreach ($b in $bad) {
+            $global:LicT.Body = $b
+            $r = Update-DELicenseRevocations -HubUrl 'https://hub.example'
+            $r.ok | Should -Be $false -Because "body: $($b.Substring(0, [math]::Min(40, $b.Length)))"
+            $r.reason | Should -Match 'refused'
+            (@((Get-DELicenseRevocations).jti) -join ',') | Should -Be 'good-1'
+        }
+        # an answer older than the saved list does not replace it
+        $global:LicT.Body = '{"jti":[],"updatedAt":"2026-09-01T00:00:00.000Z"}'
+        $r = Update-DELicenseRevocations -HubUrl 'https://hub.example'
+        $r.updated | Should -Be $false; (@((Get-DELicenseRevocations).jti) -join ',') | Should -Be 'good-1'
+        # a newer one does, also when it is empty
+        $global:LicT.Body = '{"jti":[],"updatedAt":"2026-10-03T00:00:00.000Z"}'
+        (Update-DELicenseRevocations -HubUrl 'https://hub.example').updated | Should -Be $true
+        @((Get-DELicenseRevocations).jti).Count | Should -Be 0
+        Remove-Item -LiteralPath (Get-DELicenseRevocationFile) -Force
+    }
+    It 'a licence pinned to a build (bid) works only in that build; without bid it works in any build' {
+        $pin = 'DE-1.10.0-202610021200-a1b2c3'
+        $tok = New-TestLicense -Claims @{ bid = $pin }
+        $t = Test-DELicenseToken -Token $tok -DeviceKey 'lenovo:PF3ABC12'   # this checkout is build 'dev'
+        $t.valid | Should -Be $false; $t.state | Should -Be 'wrong-build'
+        $t.reason | Should -Match ([regex]::Escape($pin)); $t.reason | Should -Match 'this copy is build dev'
+        (Test-DELicenseToken -Token $tok -DeviceKey 'lenovo:PF3ABC12' -BuildId 'DE-1.10.0-202610021200-ffffff').state | Should -Be 'wrong-build'
+        (Test-DELicenseToken -Token $tok -DeviceKey 'lenovo:PF3ABC12' -BuildId $pin).valid | Should -Be $true
+        Mock -ModuleName DE.License Get-DEBuildInfo { [pscustomobject]@{ buildId = 'DE-1.10.0-202610021200-a1b2c3'; builtAt = $null; issuedTo = 'test'; channel = 'release' } }
+        (Test-DELicenseToken -Token $tok -DeviceKey 'lenovo:PF3ABC12').valid | Should -Be $true
+        (Test-DELicenseToken -Token (New-TestLicense) -DeviceKey 'lenovo:PF3ABC12' -BuildId 'DE-anything').valid | Should -Be $true
+        (Test-DELicenseToken -Token (New-TestLicense -Claims @{ bid = '' }) -DeviceKey 'lenovo:PF3ABC12' -BuildId 'DE-anything').valid | Should -Be $true
+    }
+    It 'a wrong-build licence is never stored, and the status and Hub record say wrong-build' {
+        Mock -ModuleName DE.License Get-DEThisDeviceKey { 'lenovo:PF3ABC12' }
+        (Get-DEThrown { Set-DELicense -Token (New-TestLicense -Claims @{ bid = 'DE-1.10.0-202610021200-a1b2c3' }) }) | Should -Match 'not accepted: this licence is for DE Tech Tool build'
+        # a licence stored before the copy changed (an upgrade, or a pinned licence moved to another build) reports wrong-build
+        try {
+            [IO.File]::WriteAllText((Get-DELicenseTokenFile), (New-TestLicense -Claims @{ bid = 'DE-1.10.0-202610021200-a1b2c3' }))
+            $s = Get-DELicenseStatus; $s.state | Should -Be 'wrong-build'; $s.valid | Should -Be $false; $s.reason | Should -Match 'build'
+            (Test-DELicenseFor -Feature apply).licensed | Should -Be $false
+            (New-DEHubPayload -Record @{ client = 'alamo'; serial = 'PF3ABC12'; manufacturer = 'LENOVO'; exceptions = @() }).session.licenseState | Should -Be 'wrong-build'
+        } finally { Clear-DELicense }
+    }
     It 'turning the clock back does not revive a licence' {
         Set-DEStateValue -Path 'license.lastSeen' -Value (Get-Date).ToUniversalTime().AddDays(2).ToString('o')
         (Test-DELicenseToken -Token (New-TestLicense) -DeviceKey 'lenovo:PF3ABC12').state | Should -Be 'clock'
@@ -54,6 +149,77 @@ Describe 'Licences: device-bound, short-lived, Hub-signed' {
         $s = Set-DELicense -Token (New-TestLicense)
         $s.valid | Should -Be $true; $s.technician | Should -Be 'jrpetro'; @($s.clients) | Should -Contain 'alamo'
         Clear-DELicense
+    }
+    It 'the stored licence survives a state save and reload, and a new session on the same data folder' {
+        Mock -ModuleName DE.License Get-DEThisDeviceKey { 'lenovo:PF3ABC12' }
+        try {
+            $tok = New-TestLicense
+            $null = Set-DELicense -Token $tok
+            $f = Get-DELicenseTokenFile
+            $f | Should -BeLike "$((Get-DEConsole).Dirs.State)*"
+            ([IO.File]::ReadAllText($f)) | Should -Be $tok
+            Test-Path -LiteralPath "$f.tmp" | Should -Be $false
+            Save-DEState; $null = Import-DEState
+            $s = Get-DELicenseStatus; $s.valid | Should -Be $true; $s.technician | Should -Be 'jrpetro'
+            # a new process: the module state is gone, only the data folder remains
+            $null = Initialize-DEConsole -Root (Get-DEConsole).Root -Mode Audit -DataDir (Get-DEConsole).Dirs.Base
+            (Get-DELicenseStatus).valid | Should -Be $true
+            $m = Get-DEState -Path 'license.current'
+            $m['sub'] | Should -Be 'jrpetro'; $m['state'] | Should -Be 'valid'; "$($m['jti'])" | Should -Not -BeNullOrEmpty; @($m['features']) | Should -Contain 'apply'
+            @($m.Keys) | Should -Not -Contain 'token'
+        } finally { Clear-DELicense }
+    }
+    It 'the licence token never reaches the state file, the evidence, a bundle, the Hub record or the log' {
+        Mock -ModuleName DE.License Get-DEThisDeviceKey { 'lenovo:PF3ABC12' }
+        try {
+            $tok = New-TestLicense; $sig = $tok.Split('.')[2]
+            $null = Set-DELicense -Token $tok
+            Set-DELicensePolicyOverride ([pscustomobject]@{ enforce = 'warn'; maxTechnicianHours = 12; maxOrderDays = 45; clockSkewMinutes = 5; issuer = 'de-hub'; audience = 'de-techtool' })
+            $null = Test-DELicenseFor -Feature rescue   # writes an evidence row about the licence
+            Add-DEEvidence -Step 'license.probe' -Module 'license' -Before 'x' -ActionTaken "status $((Get-DELicenseStatus).reason)" -Result 'INFO' | Out-Null
+            $b = Export-DEEvidenceBundle -Snapshot @{ device = @{ hostname = 'H'; serial = 'PF3ABC12'; manufacturer = 'LENOVO' } } -ClientProfile (Get-DEClientProfile -Id 'alamo')
+            $payload = New-DEHubPayload -Record @{ client = 'alamo'; serial = 'PF3ABC12'; manufacturer = 'LENOVO'; exceptions = @() }
+            $places = @{
+                state    = (Get-Content -LiteralPath (Get-DEStatePath) -Raw)
+                evidence = (@(Get-DEEvidence) | ConvertTo-Json -Depth 8)
+                bundle   = ((Get-ChildItem -LiteralPath $b.folder -Recurse -File | ForEach-Object { [IO.File]::ReadAllText($_.FullName) }) -join "`n")
+                hub      = ($payload | ConvertTo-Json -Depth 8)
+                log      = (Get-Content -LiteralPath (Get-DEConsole).LogFile -Raw)
+            }
+            foreach ($k in $places.Keys) { $places[$k] | Should -Not -Match ([regex]::Escape($sig)) -Because "the $k must not hold the licence" }
+            $places.hub | Should -Match ([regex]::Escape((Get-DELicenseStatus).id))   # the licence id is fine, the token is not
+        } finally { Set-DELicensePolicyOverride $null; Clear-DELicense }
+    }
+    It 'Clear-DELicense deletes the token file and the metadata' {
+        Mock -ModuleName DE.License Get-DEThisDeviceKey { 'lenovo:PF3ABC12' }
+        $null = Set-DELicense -Token (New-TestLicense)
+        Test-Path -LiteralPath (Get-DELicenseTokenFile) | Should -Be $true
+        Clear-DELicense
+        Test-Path -LiteralPath (Get-DELicenseTokenFile) | Should -Be $false
+        Get-DEState -Path 'license.current' | Should -BeNullOrEmpty
+        (Get-DELicenseStatus).state | Should -Be 'missing'
+    }
+    It 'a tampered or unreadable token file is refused, never trusted' {
+        Mock -ModuleName DE.License Get-DEThisDeviceKey { 'lenovo:PF3ABC12' }
+        try {
+            [IO.File]::WriteAllText((Get-DELicenseTokenFile), (New-TestLicense -Tamper))
+            $s = Get-DELicenseStatus; $s.valid | Should -Be $false; $s.state | Should -Be 'invalid'; $s.reason | Should -Match 'signature'
+            (Test-DELicenseFor -Feature apply).licensed | Should -Be $false
+            [IO.File]::WriteAllText((Get-DELicenseTokenFile), 'not a licence')
+            (Get-DELicenseStatus).valid | Should -Be $false
+            [IO.File]::WriteAllText((Get-DELicenseTokenFile), '')
+            (Get-DELicenseStatus).state | Should -Be 'missing'
+        } finally { Clear-DELicense }
+    }
+    It 'a state file from an older build ([REDACTED] token) reads as no licence and is cleaned up' {
+        Mock -ModuleName DE.License Get-DEThisDeviceKey { 'lenovo:PF3ABC12' }
+        Clear-DELicense
+        Set-DEStateValue -Path 'license.token' -Value '[REDACTED]'; $null = Import-DEState
+        (Get-DEState -Path 'license.token') | Should -Be '[REDACTED]'
+        $s = Get-DELicenseStatus; $s.state | Should -Be 'missing'; $s.valid | Should -Be $false
+        @((Get-DEState -Path 'license').Keys) | Should -Not -Contain 'token'
+        (Get-Content -LiteralPath (Get-DEStatePath) -Raw) | Should -Not -Match '"token"'
+        try { (Set-DELicense -Token (New-TestLicense)).valid | Should -Be $true } finally { Clear-DELicense }
     }
     It "policy 'warn' lets an unlicensed change run and records it; 'required' refuses changes, Toolbox scripts and other clients" {
         Mock -ModuleName DE.License Get-DEThisDeviceKey { 'lenovo:PF3ABC12' }
@@ -88,7 +254,10 @@ Describe 'Licences: device-bound, short-lived, Hub-signed' {
         Assert-MockCalled -ModuleName DE.License Invoke-DELicenseHub -Times 1 -ParameterFilter { $Body.deviceKey -eq 'lenovo:PF3ABC12' }
         $global:LicT.Polls = 0; $global:LicT.Tok = New-TestLicense
         Mock -ModuleName DE.License Invoke-DELicenseHub { $global:LicT.Polls++; if ($global:LicT.Polls -lt 2) { @{ error = 'authorization_pending' } } else { @{ license = $global:LicT.Tok } } } -ParameterFilter { $Uri -like '*token' }
+        Mock -ModuleName DE.License Invoke-DELicenseHubGet { throw 'the Hub is offline' }   # a failed refresh never undoes the activation
         (Complete-DELicenseActivation -HubUrl 'https://hub.example' -DeviceCode 'dc-1' -Interval 1 -TimeoutSeconds 30).valid | Should -Be $true
+        Assert-MockCalled -ModuleName DE.License Invoke-DELicenseHubGet -Times 1 -Exactly -Scope It -ParameterFilter { $Uri -eq 'https://hub.example/api/techtool/license/revocations' }
+        (Get-DELicenseStatus).valid | Should -Be $true
         (Get-DEThrown { Start-DELicenseActivation -HubUrl 'http://hub.example' }) | Should -Match 'https'
         Clear-DELicense
     }
@@ -125,5 +294,22 @@ Describe 'Watermarked builds and the command-line cheat sheet' {
         '{"keys":[{"kty":"RSA","kid":"k1","n":"AQAB","e":"AQAB","d":"secret"}]}' | Set-Content -LiteralPath $jwks
         (Get-DEThrown { & $pk -IssuedTo 'test-tech' -SkipSigning -NoCommunity -OutDir $out -PublicKeysFile $jwks }) | Should -Match 'private component'
         (Get-DEThrown { & $pk -IssuedTo 'test-tech' -SkipSigning -NoCommunity -OutDir $out -Enforce }) | Should -Match 'public keys'
+    }
+    It "a release with -HubUrl ships the Hub's revocation list as trust/revoked.json, covered by integrity.json" {
+        $out = Join-Path $global:LicT.Dir 'rel-hub'
+        $pk = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'packaging/New-DEReleasePackage.ps1'
+        Mock Invoke-RestMethod { [pscustomobject]@{ keys = @([pscustomobject]@{ kty = 'RSA'; kid = 'k1'; n = 'AQAB'; e = 'AQAB' }) } } -ParameterFilter { $Uri -eq 'https://hub.example/api/techtool/license/jwks' }
+        $global:LicT.RelBody = '{"jti":["rel-revoked-1"],"updatedAt":"2026-10-02T12:00:00.000Z"}'
+        Mock Invoke-WebRequest { [pscustomobject]@{ Content = $global:LicT.RelBody } } -ParameterFilter { $Uri -eq 'https://hub.example/api/techtool/license/revocations' }
+        $r = & $pk -IssuedTo 'test-tech' -SkipSigning -NoCommunity -OutDir $out -HubUrl 'https://hub.example'
+        $x = Join-Path $out 'x'; Expand-Archive -LiteralPath $r.zip -DestinationPath $x
+        $w = Join-Path $x 'msp-ai-kit/windows'
+        $rv = Get-Content -LiteralPath (Join-Path $w 'console/trust/revoked.json') -Raw | ConvertFrom-Json
+        @($rv.jti) -join ',' | Should -Be 'rel-revoked-1'
+        (@((Get-Content -LiteralPath (Join-Path $w 'integrity.json') -Raw | ConvertFrom-Json).files | ForEach-Object { "$($_.path)" -replace '\\', '/' }) -join ' ') | Should -Match 'console/trust/revoked\.json'
+        Test-Path -LiteralPath (Join-Path (Get-DEConsole).Root 'trust/revoked.json') | Should -Be $false   # the repository copy is untouched
+        $global:LicT.RelBody = '{"jti":"rel-revoked-1"}'
+        (Get-DEThrown { & $pk -IssuedTo 'test-tech' -SkipSigning -NoCommunity -OutDir $out -HubUrl 'https://hub.example' }) | Should -Match 'revocation list was refused'
+        (Get-DEThrown { & $pk -IssuedTo 'test-tech' -SkipSigning -NoCommunity -OutDir $out -HubUrl 'http://hub.example' }) | Should -Match 'https'
     }
 }

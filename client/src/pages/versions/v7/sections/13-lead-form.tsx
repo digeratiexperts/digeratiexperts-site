@@ -7,6 +7,7 @@ import { revealInitial, revealInView, revealTransition, revealViewport } from "@
 import { useToast } from "@/hooks/use-toast";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { FieldOk, SubmitFace, submitPhase, useSentFlash } from "./SubmitFace";
 import "./13-lead-form.css";
 
 /**
@@ -64,6 +65,8 @@ export function V7LeadForm(): JSX.Element {
     },
   });
   const { errors } = form.formState;
+  const [sent, flashSent] = useSentFlash();
+  const phase = submitPhase(isSubmitting, sent);
 
   const handleSubmit = async (data: FormData) => {
     setIsSubmitting(true);
@@ -92,6 +95,7 @@ export function V7LeadForm(): JSX.Element {
       });
 
       form.reset();
+      flashSent();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -120,7 +124,7 @@ export function V7LeadForm(): JSX.Element {
         <motion.div className="lead__form" {...reveal(0.04)}>
           <form className="v7-card--paper lead__card" noValidate onSubmit={form.handleSubmit(handleSubmit)}>
             <div className="lead__fields">
-              <div>
+              <div className="v7-float">
                 <label className="v7-label" htmlFor="lead-name">
                   Full Name <span aria-hidden="true">*</span>
                 </label>
@@ -128,7 +132,7 @@ export function V7LeadForm(): JSX.Element {
                   className="v7-input"
                   id="lead-name"
                   type="text"
-                  placeholder="John Smith"
+                  placeholder=" "
                   autoComplete="name"
                   required
                   aria-invalid={errors.fullName ? true : undefined}
@@ -137,13 +141,14 @@ export function V7LeadForm(): JSX.Element {
                   disabled={isSubmitting}
                   {...form.register("fullName")}
                 />
+                <FieldOk />
                 {errors.fullName ? (
                   <p className="v7-field-error" id="lead-name-error" role="alert">
                     {errors.fullName.message}
                   </p>
                 ) : null}
               </div>
-              <div>
+              <div className="v7-float">
                 <label className="v7-label" htmlFor="lead-email">
                   Work Email <span aria-hidden="true">*</span>
                 </label>
@@ -151,7 +156,7 @@ export function V7LeadForm(): JSX.Element {
                   className="v7-input"
                   id="lead-email"
                   type="email"
-                  placeholder="john@company.com"
+                  placeholder=" "
                   autoComplete="email"
                   required
                   aria-invalid={errors.email ? true : undefined}
@@ -160,13 +165,14 @@ export function V7LeadForm(): JSX.Element {
                   disabled={isSubmitting}
                   {...form.register("email")}
                 />
+                <FieldOk />
                 {errors.email ? (
                   <p className="v7-field-error" id="lead-email-error" role="alert">
                     {errors.email.message}
                   </p>
                 ) : null}
               </div>
-              <div>
+              <div className="v7-float">
                 <label className="v7-label" htmlFor="lead-phone">
                   Phone (Optional)
                 </label>
@@ -174,14 +180,14 @@ export function V7LeadForm(): JSX.Element {
                   className="v7-input"
                   id="lead-phone"
                   type="tel"
-                  placeholder="(555) 123-4567"
+                  placeholder=" "
                   autoComplete="tel"
                   data-testid="input-lead-phone"
                   disabled={isSubmitting}
                   {...form.register("phone")}
                 />
               </div>
-              <div>
+              <div className="v7-float">
                 <label className="v7-label" htmlFor="lead-company">
                   Company (Optional)
                 </label>
@@ -189,7 +195,7 @@ export function V7LeadForm(): JSX.Element {
                   className="v7-input"
                   id="lead-company"
                   type="text"
-                  placeholder="Acme Corp"
+                  placeholder=" "
                   autoComplete="organization"
                   data-testid="input-lead-company"
                   disabled={isSubmitting}
@@ -198,22 +204,19 @@ export function V7LeadForm(): JSX.Element {
               </div>
             </div>
             <button
-              className="v7-btn v7-btn--primary lead__submit"
+              className="v7-btn v7-btn--primary lead__submit v7-submit"
               type="submit"
               disabled={isSubmitting}
+              data-state={phase}
               data-testid="button-lead-submit"
             >
-              {isSubmitting ? (
-                "Submitting..."
-              ) : (
-                <>
-                  {CTA.primary}{" "}
-                  <svg {...svgProps}>
-                    <path d="M5 12h14" />
-                    <path d="m12 5 7 7-7 7" />
-                  </svg>
-                </>
-              )}
+              <SubmitFace phase={phase} sendingLabel="Submitting your request" sentLabel="Request sent">
+                {CTA.primary}{" "}
+                <svg {...svgProps}>
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </SubmitFace>
             </button>
             <ul className="lead__footers">
               <li>
