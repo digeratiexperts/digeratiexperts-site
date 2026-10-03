@@ -106,7 +106,7 @@ claims:
       - client/src/components/ZohoASAPWidget.desk-shell.test.ts (two pinned regexes)
       - .cursor/skills/de-desk-ui/tokens-and-structure.md (composer line), design/approved/ask-de-text-box-suggestions-2026-10-03.md (new)
       - artifacts/visual-qa/desk-composer-suggestions/**
-    status: active
+    status: verified-live
     started: 2026-10-03
     note: >-
       Joe, 2026-10-03: "like how Suno mobile has in the user text box
@@ -116,6 +116,17 @@ claims:
       motion. Suno's exact motion could not be verified from the build
       environment, so the effect is a common rotating-placeholder pattern
       pending Joe's review.
+      RELEASED 2026-10-03: merged as 49a6247 (PR 414, on Joe's "merge 414 and
+      bring it to production"). The CI run for 49a6247 passed every job,
+      including the production deploy; the Desk chunk on production carried
+      the suggestions from 21:26:19Z. Playwright at 390 and 1440 on the live
+      homepage: first example 3.2s / 4.0s after the Desk opened, gold inside
+      the text box hint, all five in order, the textarea's placeholder hidden
+      under them, "Type the issue…" back after the pass, focus restarts a
+      pass, typing ends it, none under reduced motion, no page errors.
+      smoke:desk against production 88/88. Evidence:
+      artifacts/visual-qa/desk-composer-suggestions/live/. VERIFIED LIVE.
+      Files released.
   - id: paynow-tax-step-aside
     owner: claude
     subsystem: store-warehouse
