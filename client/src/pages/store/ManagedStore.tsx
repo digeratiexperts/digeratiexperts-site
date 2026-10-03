@@ -1,5 +1,4 @@
 import { motion, useReducedMotion } from "framer-motion";
-import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "../sections/DigeratiEnhancedFooterSection";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -141,16 +140,15 @@ const ManagedStore = () => {
   return (
     <div className="relative min-h-screen bg-[#0a0a0a]">
       <StorePageAtmosphere />
-      <MegaMenu />
-      
-      <main id="main-content" tabIndex={-1} className="relative z-10 de-nav-clear pb-20">
+
+      <main id="main-content" tabIndex={-1} className="relative z-10 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <StoreClientBar />
           <div className="mb-8 flex items-center gap-2 text-sm text-white/50">
-            <Link href="/internal/warehouse" className="transition-colors hover:text-white">Store</Link>
+            <Link href="/internal/warehouse" className="transition-colors hover:text-white">Warehouse</Link>
             <span>/</span>
-            <span className="text-white">Managed Clients</span>
+            <span className="text-white">Managed packages</span>
           </div>
 
           {/* Hero Section */}

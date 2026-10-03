@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "../sections/DigeratiEnhancedFooterSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -184,9 +183,7 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
-      <MegaMenu />
-
-      <main className="de-nav-clear pb-[calc(5rem+var(--de-cookie-h)+var(--de-sticky-cta-h)+var(--de-unified-bar-h))]">
+      <main className="pb-[calc(5rem+var(--de-cookie-h)+var(--de-sticky-cta-h)+var(--de-unified-bar-h))]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

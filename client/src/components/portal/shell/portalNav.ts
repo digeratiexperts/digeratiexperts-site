@@ -120,7 +120,7 @@ export const PORTAL_ADMIN_GROUP: PortalNavGroup = {
   id: "admin",
   label: "DE Admin",
   items: [
-    { href: "/internal/warehouse", label: "Digital Warehouse", icon: Warehouse, key: "other", hint: "Staff store and stock" },
+    { href: "/internal/warehouse", label: "Digital Warehouse", icon: Warehouse, key: "other", hint: "Staff ops · SKUs · Hub feed" },
     { href: "/portal/admin/companies", label: "Companies", icon: Building2, key: "other", hint: "Tenants and impersonation" },
     { href: "/portal/admin/login-knocks", label: "Login Alerts", icon: Shield, key: "other", hint: "Door knocks" },
     { href: "/portal/admin/lifecycle", label: "Onboard / Offboard", icon: Users, key: "other", hint: "JumpCloud identity lifecycle" },

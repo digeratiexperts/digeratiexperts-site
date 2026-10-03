@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "../sections/DigeratiEnhancedFooterSection";
 import { Button } from "@/components/ui/button";
 import { Link, useSearch, useLocation } from "wouter";
@@ -561,15 +560,14 @@ const CoManagedStore = () => {
   return (
     <div className="relative min-h-screen bg-[#0a0a0a]">
       <StorePageAtmosphere />
-      <MegaMenu />
 
-      <main className="relative z-10 pb-20 de-nav-clear">
+      <main className="relative z-10 pb-20">
         <div className="mx-auto max-w-[var(--de-canvas)] px-3 sm:px-4 lg:px-6">
           <StoreClientBar />
 
           <div className="mb-8 flex items-center gap-2 text-base text-white/50">
             <Link href="/internal/warehouse" className="transition-colors hover:text-white">
-              Store
+              Warehouse
             </Link>
             <span>/</span>
             <span className="text-white">Catalog</span>

@@ -30,6 +30,37 @@
 
 version: 2
 claims:
+  - id: staff-warehouse-ops-console
+    owner: cursor
+    subsystem: digital-warehouse
+    branch: cursor/staff-warehouse-ops-20261003
+    base_sha: 9e3c28599d46a63f340117a1d01292e210b1d874
+    files:
+      - client/src/pages/store/WarehouseApp.tsx
+      - client/src/pages/store/WarehouseShell.tsx
+      - client/src/pages/store/WarehouseHome.tsx
+      - client/src/pages/store/WarehouseHubCatalog.tsx
+      - client/src/pages/store/WarehouseVendors.tsx
+      - client/src/pages/store/warehouseIsolation.test.ts
+      - client/src/pages/store/ManagedStore.tsx
+      - client/src/pages/store/CoManagedStore.tsx
+      - client/src/pages/store/Checkout.tsx
+      - client/src/pages/store/ProductDetail.tsx
+      - client/src/pages/store/QuoteRequest.tsx
+      - client/src/pages/store/QuoteConfirmation.tsx
+      - client/src/pages/store/OrderConfirmation.tsx
+      - client/src/components/portal/shell/portalNav.ts
+      - server/warehouseRoutes.ts
+      - server/warehouseRoutes.test.ts
+      - server/integrations/techSalesClient.ts
+      - docs/STORE-WAREHOUSE.md
+    status: active
+    started: 2026-10-03
+    note: >-
+      Phase 1 staff ops console for /internal/warehouse (replace old client
+      StoreLanding). Phase 2 staff Hub catalog proxy. Phase 3 Pax8 health
+      surface via Hub. Admin lock unchanged. Companion Hub work on
+      Intelligence-Hub staff-catalog + pax8-connector.
   - id: de-auth-token-identity-binding
     owner: claude
     subsystem: portal-auth

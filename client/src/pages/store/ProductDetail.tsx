@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, Link } from "wouter";
 import { motion } from "framer-motion";
-import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "../sections/DigeratiEnhancedFooterSection";
 import { Button } from "@/components/ui/button";
 import { useSEO } from "@/hooks/useSEO";
@@ -101,7 +100,6 @@ const ProductDetail = () => {
   if (!product) {
     return (
       <div className="min-h-screen bg-[#0a0a0a]">
-        <MegaMenu />
         <main className="de-nav-clear pb-20">
           <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
             <h1 className="mb-4 text-3xl font-bold text-white">Product Not Found</h1>
@@ -195,7 +193,6 @@ const ProductDetail = () => {
           { name: product.name, url: `/internal/warehouse/product/${product.sku}` },
         ]}
       />
-      <MegaMenu />
 
       <main className="relative z-10 de-nav-clear pb-28 lg:pb-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

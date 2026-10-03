@@ -38,4 +38,12 @@ describe("public SPA isolation from the Digital Warehouse", () => {
     expect(gate).not.toContain("vendorLogos");
     expect(gate).toContain('import("./WarehouseApp")');
   });
+
+  it("uses a staff ops home instead of the old client StoreLanding", () => {
+    const app = readFileSync(path.join(root, "client/src/pages/store/WarehouseApp.tsx"), "utf8");
+    expect(app).toContain("WarehouseHome");
+    expect(app).toContain("WarehouseShell");
+    expect(app).not.toMatch(/from ["']\.\/StoreLanding["']/);
+    expect(app).not.toMatch(/import\(["']\.\/StoreLanding["']\)/);
+  });
 });
