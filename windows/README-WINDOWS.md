@@ -7,6 +7,9 @@ evidence with Intelligence Hub handoff. Every change goes through one engine: de
 desired state, apply, verify, retry, then remediate or roll back. The evidence log records what happened
 at each step.
 
+Putting it into production (the Hub secrets and migrations, licences, the signed release, the Microsoft 365 job
+worker and the rescue media) is one ordered checklist: [GO-LIVE.md](GO-LIVE.md).
+
 ## Install or update (one file)
 
 Download the zip and `Install-DETechConsole.ps1` into the same folder (for example `C:\DE-Provisioning`), then:
@@ -18,7 +21,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-DETechConsole.
 
 It unpacks the newest `DE-TechTool*.zip` (or an older `DE-TechConsole*.zip`) into `DE-TechConsole\`, clears
 Windows' downloaded-file block, keeps the previous copy as `DE-TechConsole.previous`, and opens DE Tech Tool.
-The window title shows the version (for example `DE Tech Tool v1.5.0`), so you always know which build is
+The window title shows the version (for example `DE Tech Tool v1.10.2`), so you always know which build is
 running. The zip itself is not a script; do not pass it to `-File`.
 
 ## Start
@@ -148,7 +151,9 @@ on screen. There are three ways to provide them:
 | `S1_SITE_TOKEN` | SentinelOne site token |
 | `GUARDZ_ORG_KEY` | Guardz organization key |
 | `WAZUH_REG_PASSWORD` | Wazuh agent registration |
-| `DE_HUB_TOKEN` | Intelligence Hub device endpoint |
+| `DE_HUB_SIGNING_SECRET` | Signed events to the Intelligence Hub (the same value as `TECHCONSOLE_TO_HUB_SECRET` on the Hub) |
+| `DE_HUB_TOKEN` | Intelligence Hub device endpoint, legacy Bearer POST (used only when no signing secret is set) |
+| `DELL_API_KEY`, `DELL_API_SECRET` | Dell TechDirect warranty lookups |
 
 ## Plans: ProActive tiers, variants, add-ons and standalone solutions
 
@@ -286,12 +291,21 @@ handoffs and warranty. The shared contracts are in `console/contracts/`.
 - **Account number.** The client profile needs the client's Hub account number, set as
   `"hub": { "accountId": 123 }`. Without it the signed send is refused and the record is saved for
   manual upload.
+- **What is left out.** The Hub refuses a record with a secret-named key anywhere in it (`apiToken`,
+  `mfaSeed`, `pin` and so on), whatever its value. So such keys are left out of the device record that is
+  sent and of its saved copy, and the evidence line names them; local state and logs keep them as
+  `[REDACTED]`. A migration record is never altered this way: one with such a key is refused before
+  signing.
+- **When the Hub refuses.** The evidence line, the Evidence page status and the Migration page error carry
+  the Hub's own reason (for example `Hub refused: account not mapped`), not only the HTTP status. The
+  signing secret and the signed body are never in it.
 - **Legacy sending.** Without a signing secret, the older Bearer POST (`DE_HUB_TOKEN`) is used.
 - **Email migration records.** The Email migration page sends a signed `email_migration.recorded` event.
   The Hub keeps the newest record per project and shows it under IT Operations.
 - **Merged to the Hub.** The route is in Intelligence-Hub `master`, which auto-deploys. The Hub answers
-  503 until `TECHCONSOLE_TO_HUB_SECRET` is set on its server. Until a send succeeds, the record is saved
-  to evidence for manual upload.
+  503 until `TECHCONSOLE_TO_HUB_SECRET` is set on its server, and migration records also need the Hub's
+  `2026-09-29-email-migration-records.sql` migration. Until a send succeeds, the record is saved to
+  evidence for manual upload. Everything DE sets up on the Hub, in order: [GO-LIVE.md](GO-LIVE.md).
 
 ### Connecting to the Hub (Settings > Intelligence Hub connection)
 
@@ -362,8 +376,9 @@ in [MIGRATION-STANDARD.md](microsoft/DE-Microsoft-Admin/MIGRATION-STANDARD.md).
 
 ### Intelligence Hub jobs (DE Microsoft Admin 0.5)
 
-The Intelligence Hub can queue Microsoft 365 admin jobs for a client: DE approves each change, with a second person
-for anything that changes the tenant. A worker machine runs them with `Invoke-DEHubJobLoop`:
+The Intelligence Hub can queue Microsoft 365 admin jobs for a client. Read-only jobs and changes in plan mode (run
+as a dry run) are approved when they are created; a change in apply mode waits for an owner_admin who did not ask for
+it, or for the requesting owner's typed self-approval phrase. A worker machine runs them with `Invoke-DEHubJobLoop`:
 
 - It claims the Hub's approved jobs for the tenant it is connected to.
 - It verifies each job before running it (signature, expiry, replay, tenant, allowlist, approval) and runs it.
@@ -551,9 +566,10 @@ included, and `maint.bitlocker-resume` checks that protection comes back on.
 | 1 | Not ready: a control failed, or work is still in progress or has not run |
 | 2 | Blocked or refused: a gate, secret or elevation is missing, the console files were changed after packaging, the client profile is unknown, or a dropship order names a different device |
 
+| 3 | RMM deploy only: download or verification failure |
+
 The launchers (`Start-DETechTool.cmd`, and `Start-DETechConsole.cmd`, which forwards to it) return these
 codes unchanged.
-| 3 | RMM deploy only: download or verification failure |
 
 ## Data folders
 
@@ -565,7 +581,8 @@ backups.
 
 | Step | Command |
 |---|---|
-| Sign and write the integrity manifest | `packaging\Sign-DETechConsole.ps1 -Thumbprint <code-signing cert>` |
+| Build a signed, watermarked release (the normal route) | `packaging\New-DEReleasePackage.ps1 -IssuedTo <name> -HubUrl https://techsales.digerati-experts.com -Enforce -Thumbprint <code-signing cert>` |
+| Sign and write the integrity manifest only | `packaging\Sign-DETechConsole.ps1 -Thumbprint <code-signing cert>` |
 | Check a package | `packaging\Sign-DETechConsole.ps1 -Verify` |
 | Deploy from the RMM | `packaging\Deploy-DETechConsole.ps1 -PackageUrl https://... -Sha256 <hash> [-Client alamo -Mode takeover]` |
 | Intune Win32 app | `packaging\New-DEIntunePackage.ps1 -IntuneWinAppUtil C:\Tools\IntuneWinAppUtil.exe` |
@@ -613,7 +630,7 @@ Invoke-ScriptAnalyzer -Path . -Recurse -Settings .\tests\PSScriptAnalyzerSetting
 The Pester suites run on Windows and Linux because Windows-only calls are mocked. They cover:
 
 - the dsregcmd parser for every join type
-- secrets, redaction and state scrubbing
+- secrets, redaction and state scrubbing, the keys left out of a Hub record, and the Hub's reason kept on a refused send
 - gates, exceptions, idempotence, retry and remediation, and WhatIf planning
 - mocked identity states: Entra joined, local or workgroup, Intune-managed, JumpCloud-managed, dual MDM,
   and username collisions

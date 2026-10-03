@@ -93,6 +93,50 @@ function Find-DEContractSecrets {
     elseif ($kind -eq 'string' -and "$Object" -match $script:RecoveryShape) { $hits += "$Path (recovery-password-shaped value)" }
     return $hits
 }
+function Remove-DEContractSecretKeys {
+    <#
+        A deep copy of -Object without the keys a contract refuses (the secret-looking names Find-DEContractSecrets
+        reports). Values are kept as they are: a recovery-password-shaped value still stops New-DEHubEvent. Dictionaries
+        come back as ordered dictionaries, objects as objects, lists as lists (also with one or no item). -DroppedKeys,
+        when given, collects the names of the keys left out.
+    #>
+    param([Parameter(Mandatory = $true)][AllowNull()]$Object, [AllowNull()][System.Collections.Generic.List[string]]$DroppedKeys)
+    switch (Get-DEJsonKind $Object) {
+        'object' {
+            $o = [ordered]@{}
+            foreach ($k in (Get-DEContractKeys $Object)) {
+                if ($k -match $script:SecretKey) { if ($null -ne $DroppedKeys) { $DroppedKeys.Add($k) } }
+                else { $o[$k] = Remove-DEContractSecretKeys -Object (Get-DEContractProp $Object $k).value -DroppedKeys $DroppedKeys }
+            }
+            if ($Object -is [System.Collections.IDictionary]) { return $o }
+            return [pscustomobject]$o
+        }
+        'array' { $list = New-Object System.Collections.Generic.List[object]; foreach ($el in @($Object)) { $list.Add((Remove-DEContractSecretKeys -Object $el -DroppedKeys $DroppedKeys)) }; return , $list.ToArray() }
+        default { return $Object }
+    }
+}
+function Get-DEHubErrorReason {
+    <#
+        What to record when a call to the Intelligence Hub failed: the Hub's own reason from its response body
+        (-ErrorRecord's ErrorDetails.Message; the JSON 'error' and 'message' fields when it is JSON, its text otherwise)
+        followed by the .NET message, e.g. "Hub refused: account not mapped (The remote server returned an error:
+        (422) Unprocessable Entity.)". The response body is the Hub's answer, never the signed request; control
+        characters are flattened, a recovery-password-shaped value is masked, and the result is at most 400 characters.
+    #>
+    param([Parameter(Mandatory = $true)]$ErrorRecord)
+    $why = $(if ($ErrorRecord -is [System.Management.Automation.ErrorRecord]) { "$($ErrorRecord.Exception.Message)" } elseif ($ErrorRecord -is [Exception]) { "$($ErrorRecord.Message)" } else { "$ErrorRecord" })
+    $hub = $null
+    if ($ErrorRecord -is [System.Management.Automation.ErrorRecord] -and $ErrorRecord.ErrorDetails -and $ErrorRecord.ErrorDetails.Message) {
+        $hub = "$($ErrorRecord.ErrorDetails.Message)"
+        try { $j = $hub | ConvertFrom-Json -ErrorAction Stop; if ($j -is [System.Management.Automation.PSCustomObject]) { $hub = (@($j.PSObject.Properties['error'], $j.PSObject.Properties['message']) | Where-Object { $_ -and $_.Value } | ForEach-Object { "$($_.Value)" }) -join ': ' } } catch { $null = $_ }   # not JSON: keep the Hub's text as it came
+        $hub = ($hub -replace '[\x00-\x1f\x7f]+', ' ').Trim()
+        if ($hub.Length -gt 300) { $hub = $hub.Substring(0, 300) + '...' }
+    }
+    $detail = $(if ($hub) { "Hub refused: $hub ($why)" } else { $why })
+    $detail = $detail -replace $script:RecoveryShape, '[REDACTED]'
+    if ($detail.Length -gt 400) { $detail = $detail.Substring(0, 400) }
+    return $detail
+}
 function Test-DEContract {
     <# Problems with -Object against contract -Name; an empty list means valid. Secrets are always a problem. #>
     param([Parameter(Mandatory = $true)][ValidateSet('device', 'order', 'handoff', 'warranty', 'job', 'migration')][string]$Name, [Parameter(Mandatory = $true)]$Object)
@@ -285,4 +329,4 @@ function Send-DEHubEvent {
     return (Invoke-DEHubHttp -Uri ($BaseUrl.TrimEnd('/') + $script:HubEventsPath) -Headers $headers -Body $body)
 }
 
-Export-ModuleMember -Function ConvertTo-DECanonicalJson, Get-DEHubSignature, New-DEHubEvent, Invoke-DEHubHttp, Send-DEHubEvent, Get-DEContractsRoot, Get-DEContractSchema, Test-DEContract, Find-DEContractSecrets, ConvertTo-DEDeviceKey, New-DEHandoff, Add-DEHandoffAction, Save-DEHandoff, Get-DEHandoffs, Confirm-DEHandoffReviewed
+Export-ModuleMember -Function ConvertTo-DECanonicalJson, Get-DEHubSignature, New-DEHubEvent, Invoke-DEHubHttp, Send-DEHubEvent, Get-DEHubErrorReason, Get-DEContractsRoot, Get-DEContractSchema, Test-DEContract, Find-DEContractSecrets, Remove-DEContractSecretKeys, ConvertTo-DEDeviceKey, New-DEHandoff, Add-DEHandoffAction, Save-DEHandoff, Get-DEHandoffs, Confirm-DEHandoffReviewed
