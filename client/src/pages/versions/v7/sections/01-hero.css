@@ -96,7 +96,8 @@
   .v7 .v7s-01 .hero__body { grid-template-columns: minmax(0, 1fr); row-gap: 48px; }
   .v7 .v7s-01 .hero .v7-h1 { font-size: clamp(2.45rem, 7vw, 4.25rem); }
   .v7 .v7s-01 .hero .v7-h1 span { white-space: normal; }
-  .v7 .v7s-01 .win { max-width: 680px; }
+  /* Assessment overview chrome is desktop side-by-side only — hide on tablet/phone. */
+  .v7 .v7s-01 .win { display: none; }
   .v7 .v7s-01 .hero__plate { left: 0; }
   .v7 .v7s-01 .hero__grid { inset: 0; }
 }
