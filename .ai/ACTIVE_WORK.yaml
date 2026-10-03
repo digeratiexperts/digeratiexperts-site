@@ -1786,22 +1786,43 @@ claims:
     owner: claude
     subsystem: client-portal-shell
     branch: claude/nifty-newton-uk9g7t
-    pr: 408
+    pr: 412
     base_sha: cef31956cd747e3eac02a2e38ceb41c69a125054
     files:
-      - client/src/styles/portal.css (light theme block and the .pt-canvas glow only)
+      - client/src/styles/portal.css (light theme block, light state inks and the .pt-canvas glow only)
       - client/src/pages/portal/PortalLayout.tsx (pt-canvas class on SidebarInset only)
       - client/src/styles/portalLightTheme.test.ts (new)
       - artifacts/visual-qa/portal-light-ambient/**
     status: active
     started: 2026-10-03
+    released: 2026-10-03
+    merge_sha: 9b6f364be944e3a8379f61d3ded12a3e5718d402
+    verification: >-
+      Merged on Joe's "merge 408" (2026-10-03) after reconciling with main
+      4478a802 (PR 407, disjoint) and green CI on 2c76e02a. The main CI and
+      the deploy job (with its runtime check) passed; release.txt reads
+      9b6f364b on digeratiexperts.com and portal.digeratiexperts.com. The live
+      entry index-BDIuU1zN.js matches the local build of the merged tree and
+      references portal-Xybf7wEt.css (orchid 290 42% 96%, magenta and violet
+      glows, no old 36 24% 96% grey) and PortalLayout-CRAL-_zI.js (pt-canvas).
+      Signed out, /portal/login and /portal/signup at 390 and 1440 load the
+      new CSS: axe clean, no overflow, no runtime errors. Limit: no signed-in
+      light-mode screenshot on production (QA login is a CI secret); the same
+      bundle was rendered signed in locally. VERIFIED LIVE (bundle). Evidence:
+      artifacts/visual-qa/portal-light-ambient/live/. FOLLOW-UP (PR 412,
+      pending Joe's merge): a 39-page regression run (dark and light, 390
+      and 1440, before vs after) found dark mode pixel-identical apart from a
+      clock, but light ok ink at 4.42:1 on its tint over orchid on
+      /portal/sales-process and /portal/questionnaires. Light --pt-ok and
+      --pt-bad are darkened (#046a4d, #b6113a) and portalLightTheme.test.ts
+      now checks every tone on its 7-10% tint over field, well and card.
     note: >-
       Joe, 2026-10-03: portal light mode is liked but "the light grey I would
       replace with an ambent color". Options rendered (A amber, B Ambient, C
       keep grey); Joe: "B, cards but show me first". The light field and
       wells go orchid with a magenta and a violet glow over the content area;
-      cards stay white, the rail stays graphite, dark mode untouched. HELD for
-      Joe's approval of the built screens before merge. Concurrency audit
+      cards stay white, the rail stays graphite, dark mode untouched. Joe approved
+      the built screens ("merge 408"). Concurrency audit
       2026-10-03: no open PR touches these files (407, 406, 405 are
       disjoint; 407 and 405 add ledger claims at the top, this one is at the
       end); the claims that list PortalLayout.tsx (portal-data-sources,
