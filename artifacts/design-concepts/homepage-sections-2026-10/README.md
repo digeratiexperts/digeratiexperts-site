@@ -74,12 +74,14 @@ just backup what we have so we dont lose it and can revert back if need be").
 
 - `element-kit/de-element-kit.html`: the interactive kit Joe reviewed (also
   published as a private claude.ai artifact). Open it in any browser.
-- Backup tags on GitHub, each a permanent pointer to a full copy of the site:
+- Backup branches on GitHub, each a full copy of the site frozen at one point
+  (branches, because this environment may push only its own work branch; the
+  GitHub API can create branches but not tags). Do not commit to them.
 
-  | Tag | Points at | What it is |
+  | Branch | Points at | What it is |
   | --- | --- | --- |
   | `backup/2026-10-03-before-v7-restyle` | `c702a4fc` | The site as it was live before PR 344: /version-7 with the cream/navy look. |
-  | `backup/2026-10-03-v7-restyle-merged` | the PR 344 merge commit | The approved restyle + element kit as merged. |
+  | `backup/2026-10-03-v7-restyle-approved` | the PR 344 head as approved | The approved restyle + element kit, exactly as Joe approved it. |
 
 How to go back (the lead integrator or any agent, on Joe's word):
 
@@ -87,6 +89,6 @@ How to go back (the lead integrator or any agent, on Joe's word):
    `git revert -m 1 <PR 344 merge commit>` on a fresh branch from `main`.
    The restyle lives in `client/src/pages/versions/v7/` only, so `/` is
    never affected either way.
-2. See or rebuild the old look without touching `main`: check out
-   `backup/2026-10-03-before-v7-restyle` (read-only) and build it.
-3. Never force-push `main` to a tag; reverts go through a PR like any change.
+2. See or rebuild the old look without touching `main`: check out the
+   `backup/2026-10-03-before-v7-restyle` branch (treat it as read-only) and build it.
+3. Never force-push `main` to a backup branch; reverts go through a PR like any change.
