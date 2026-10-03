@@ -1,4 +1,4 @@
-﻿# Homepage versions
+# Homepage versions
 
 Every homepage the site has had or is considering stays reachable at
 `/version-<n>`, listed at `/versions`, so nothing is lost when the next
