@@ -1,0 +1,27 @@
+{
+  "_source": "https://docs.easypost.com/docs/api-keys#retrieve-an-api-key",
+  "_note": "Shaped on the documented answer: the user's keys plus a `children` array of Child Users presented with only id, children and keys (field names per the official @easypost/api 8.9.0 SDK, src/services/api_key_service.js and types/ApiKey). Values are placeholders, not real keys.",
+  "response": {
+    "id": "user_parent",
+    "keys": [
+      { "object": "ApiKey", "id": "ak_p1", "mode": "production", "key": "PARENT_PROD_KEY", "active": true, "created_at": "2026-01-01T00:00:00Z" }
+    ],
+    "children": [
+      {
+        "id": "user_acme",
+        "keys": [
+          { "object": "ApiKey", "id": "ak_a0", "mode": "test", "key": "ACME_TEST_KEY", "active": true, "created_at": "2026-01-01T00:00:00Z" },
+          { "object": "ApiKey", "id": "ak_a1", "mode": "production", "key": "ACME_PROD_KEY", "active": true, "created_at": "2026-01-01T00:00:00Z" }
+        ],
+        "children": []
+      },
+      {
+        "id": "user_globex",
+        "keys": [
+          { "object": "ApiKey", "id": "ak_g1", "mode": "production", "key": "GLOBEX_PROD_KEY", "active": true, "created_at": "2026-01-01T00:00:00Z" }
+        ],
+        "children": []
+      }
+    ]
+  }
+}

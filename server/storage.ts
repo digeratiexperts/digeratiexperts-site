@@ -15,6 +15,7 @@ import {
   portalUsers as portalUsersTable,
   portalTickets,
   portalTicketComments,
+  portalTenantFiles,
   type User,
   type InsertUser,
   type Workspace,
@@ -90,6 +91,7 @@ export interface IStorage {
   createPortalTicketComment(comment: any): Promise<PortalTicketComment>;
 
   getTenantFilesByClientId(clientId: string): Promise<any[]>;
+  findTenantFileByFileUrl(fileUrl: string): Promise<{ id: string; clientId: string; fileUrl: string } | undefined>;
   createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<any>;
   deleteTenantFile(id: string): Promise<boolean>;
 
@@ -687,6 +689,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.tenantFiles.values()).filter(f => f.clientId === clientId);
   }
 
+  async findTenantFileByFileUrl(fileUrl: string): Promise<{ id: string; clientId: string; fileUrl: string } | undefined> {
+    return Array.from(this.tenantFiles.values()).find((f) => f.fileUrl === fileUrl);
+  }
+
   async createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<TenantFile> {
     const newFile: TenantFile = {
       id: generateId(),
@@ -1130,6 +1136,29 @@ export class DatabaseStorage implements IStorage {
 
   async getTenantFilesByClientId(clientId: string): Promise<any[]> {
     return Array.from(this.tenantFilesCache.values()).filter(f => f.clientId === clientId);
+  }
+
+  async findTenantFileByFileUrl(fileUrl: string): Promise<{ id: string; clientId: string; fileUrl: string } | undefined> {
+    // Durable read: the object-storage ACL asks whether this path belongs to a
+    // tenant, and that answer must survive a restart. The in-memory cache only
+    // holds rows created in this process, so query the persisted table first
+    // and fall back to the cache (e.g. before the DB is reachable in dev).
+    try {
+      const db = await this.getDb();
+      const [row] = await db
+        .select({
+          id: portalTenantFiles.id,
+          clientId: portalTenantFiles.clientId,
+          fileUrl: portalTenantFiles.fileUrl,
+        })
+        .from(portalTenantFiles)
+        .where(eq(portalTenantFiles.fileUrl, fileUrl))
+        .limit(1);
+      if (row) return row;
+    } catch (error) {
+      console.error("findTenantFileByFileUrl: DB lookup failed, falling back to cache", error);
+    }
+    return Array.from(this.tenantFilesCache.values()).find((f) => f.fileUrl === fileUrl);
   }
 
   async createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<any> {
