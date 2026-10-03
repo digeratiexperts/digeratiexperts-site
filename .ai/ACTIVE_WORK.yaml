@@ -86,8 +86,18 @@ claims:
       - VENDOR_SETUP_STATUS.md (Test login paragraph only)
       - server/index.ts (manual-records import body limit line only)
       - client/src/lib/csv.test.ts
-    status: active
+    status: verified-live
     started: 2026-10-03
+    released: 2026-10-03
+    pr: 375
+    merge_sha: 3097df07b7d98154437bf99770d9b4658882fe3d
+    verification: >-
+      Merged on Joe's "Merge 375" (2026-10-03). Main CI and the production
+      deploy passed; release.txt read 3097df07, then 2092d946 with the rest of
+      the batch. /api/portal/integrations and /api/portal/admin/data-sources
+      answer 401 signed out; PortalAdminDataSources, PortalShipCenter
+      (carrierStatus) and PortalSignup (turnstileToken) chunks are served.
+      Evidence: artifacts/visual-qa/live-2026-10-03/. Follow-ups: issue 395.
     note: >-
       Joe, 2026-10-03: "write all of them then i will tell you what to do from
       there" (open answers 2a/2b/2c VPN, phone and shipping sources; 3 test
