@@ -30,6 +30,9 @@ const PASSWORD = process.env.PORTAL_QA_PASSWORD || "";
 const TOKEN = process.env.PORTAL_QA_TOKEN || "";
 const AXE = process.env.AXE_PATH ? fs.readFileSync(process.env.AXE_PATH, "utf8") : null;
 const OUT = process.argv[2] || "artifacts/visual-qa/portal-prod-check";
+// Pinned Chromium path for sandboxes that ship one (/opt/pw-browsers). Anywhere
+// else, including GitHub-hosted runners after `npx playwright install chromium`,
+// this stays undefined and Playwright uses its own downloaded browser.
 const EXECUTABLE = process.env.PLAYWRIGHT_CHROMIUM || (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined);
 
 const ROUTES = [
@@ -63,7 +66,10 @@ async function signIn() {
   await page
     .waitForFunction(() => {
       const el = document.querySelector('input[name="cf-turnstile-response"]');
-      return !el || (el instanceof HTMLInputElement && el.value.length > 0);
+      if (el) return el instanceof HTMLInputElement && el.value.length > 0;
+      // Widget mounted but its hidden input not injected yet: keep waiting.
+      // No widget at all (test site key): nothing to wait for.
+      return !document.querySelector('[data-testid="turnstile-widget"]');
     }, null, { timeout: 30_000 })
     .catch(() => {});
   await page.click('[data-testid="button-login"]');

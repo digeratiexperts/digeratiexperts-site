@@ -58,6 +58,8 @@ claims:
       - docs/vendor-requests/TIMUS-API-REQUEST.md
       - docs/runbooks/PORTAL-QA-LOGIN.md
       - .github/workflows/portal-prod-check.yml
+      - client/src/pages/portal/PortalSignup.tsx (Turnstile token only)
+      - VENDOR_SETUP_STATUS.md (Test login paragraph only)
     status: active
     started: 2026-10-03
     note: >-
