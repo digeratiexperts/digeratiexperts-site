@@ -615,7 +615,7 @@ export default function Ebook() {
               <div className="mt-12">
                 <ConversionPathBar
                   headline="Ready to assess your environment?"
-                  body="Use this framework with a Digerati Cyber Risk Assessment — not a generic checklist."
+                  body="Use this framework with a Digerati Experts Cyber Risk Assessment — not a generic checklist."
                 />
               </div>
             </motion.div>

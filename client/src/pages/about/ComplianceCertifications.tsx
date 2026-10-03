@@ -152,7 +152,7 @@ export default function ComplianceCertifications() {
   useSEO({
     title: "Compliance Frameworks We Support",
     description:
-      "HIPAA, CMMC, PCI DSS, SOC 2, and FTC Safeguards support from Digerati Experts. Framework names describe customer requirements — not Digerati certifications.",
+      "HIPAA, CMMC, PCI DSS, SOC 2, and FTC Safeguards support from Digerati Experts. Framework names describe customer requirements — not Digerati Experts certifications.",
     canonical: "/about/compliance-certifications",
   });
 

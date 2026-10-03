@@ -148,7 +148,7 @@ export default function Accounting() {
           <div className="grid gap-4 md:grid-cols-4">
             {[
               { title: "HIPAA-aligned support", label: "Security and compliance support for practices handling PHI" },
-              { title: "SOC 2 readiness", label: "Control mapping and evidence — not a Digerati certification" },
+              { title: "SOC 2 readiness", label: "Control mapping and evidence — not a Digerati Experts certification" },
               { title: "Cyber insurance readiness", label: "Documentation carriers typically request in underwriting" },
               { title: "Security reporting", label: "Repeatable evidence for audits and client questionnaires" },
             ].map((item) => (
