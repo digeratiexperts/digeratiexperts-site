@@ -359,6 +359,22 @@ the email migration engine (consumer Gmail to Microsoft 365):
 Start with its [README](microsoft/DE-Microsoft-Admin/README.md). The rules every migration follows are
 in [MIGRATION-STANDARD.md](microsoft/DE-Microsoft-Admin/MIGRATION-STANDARD.md).
 
+### Intelligence Hub jobs (DE Microsoft Admin 0.5)
+
+The Intelligence Hub can queue Microsoft 365 admin jobs for a client: DE approves each change, with a second person
+for anything that changes the tenant. A worker machine runs them with `Invoke-DEHubJobLoop`:
+
+- It claims the Hub's approved jobs for the tenant it is connected to.
+- It verifies each job before running it (signature, expiry, replay, tenant, allowlist, approval) and runs it.
+- It posts each result back with nothing secret in it. `New-DEUser`'s temporary password stays on the worker.
+- A result it could not post waits on disk for the next run. The job never runs twice.
+
+The worker signs in app-only with a certificate. It keeps the two Hub secrets (`MSADMIN_JOB_SIGNING_SECRET`,
+`MSADMIN_WORKER_SECRET`) in a SecretManagement vault and loads them only for each run. It runs at a prompt, or as a
+scheduled task every few minutes. The Hub setup, the worker setup and the commands are in the module README's
+[Hub job loop](microsoft/DE-Microsoft-Admin/README.md#the-hub-job-loop) section. The email migration is not a Hub job
+(see MIGRATION-STANDARD.md).
+
 ### The Email migration page
 
 The window's **Email migration** page does the on-device part and shows where a project stands.
@@ -607,6 +623,8 @@ The Pester suites run on Windows and Linux because Windows-only calls are mocked
 - the Toolbox (pinned downloads, hash checks, device requirements) and OEM update exit codes
 - DE Microsoft Admin and the email migration: a scripted IMAP server, Google contact and calendar
   exports, DNS records, bounce messages and the sign-off rules
+- the DE Microsoft Admin Hub job loop against a mocked Hub: signed calls, refused and other-tenant jobs,
+  results with nothing secret in them, retries, 4xx stops, and results posted on the next run
 - the Windows PowerShell 5.1 behaviours that pwsh hides (single-item unwrapping, culture-dependent
   formats, `Invoke-RestMethod` arrays)
 
