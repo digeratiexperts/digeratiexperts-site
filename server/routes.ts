@@ -46,6 +46,7 @@ import {
   listClients as portalAuthListClients,
   createProspectClientForUser,
   saveOrderForm,
+  PortalPersistenceError,
   updateUserOrgFields,
   ensureInternalMspClient,
 } from "./portalAuthStore";
@@ -3108,16 +3109,20 @@ export async function registerRoutes(app: Express) {
         payableCheckout: validated.payableCheckout,
       };
 
+      const idempotencyKey = typeof payload.idempotencyKey === "string" ? payload.idempotencyKey : undefined;
+      delete payload.idempotencyKey;
       const saved = await saveOrderForm({
         userId: user.id,
         clientId: user.clientId || null,
         payload,
+        idempotencyKey,
       });
 
       const company = payload?.clientInfo?.legalName || user.fullName || user.email;
       logger.info("Portal order form submitted", { orderFormId: saved.id, email: user.email, company });
 
-      try {
+      // A retry of a submission that already committed must not fire a second lead.
+      if (!saved.replayed) try {
         await eventBus.emit(EventTypes.LEAD_CREATED, {
           source: "portal-order-form",
           email: user.email,
@@ -3129,7 +3134,7 @@ export async function registerRoutes(app: Express) {
         /* non-fatal */
       }
 
-      logSecurityEvent("PORTAL_ORDER_FORM_SUBMITTED", req, { userId: user.id, orderFormId: saved.id });
+      if (!saved.replayed) logSecurityEvent("PORTAL_ORDER_FORM_SUBMITTED", req, { userId: user.id, orderFormId: saved.id });
 
       return res.json({
         success: true,
@@ -3139,6 +3144,13 @@ export async function registerRoutes(app: Express) {
         orderFormId: saved.id,
       });
     } catch (error: any) {
+      if (error instanceof PortalPersistenceError) {
+        logger.error("Order form not persisted", error);
+        return res.status(503).json({
+          code: error.code,
+          message: "We could not save your order just now. Your selections are still on this page; please try again in a moment.",
+        });
+      }
       logger.error("Order form submit failed", error);
       return res.status(500).json({ message: "Failed to submit order form" });
     }
