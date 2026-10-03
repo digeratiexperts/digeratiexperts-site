@@ -148,8 +148,9 @@ export function ReferenceHeroSection(): JSX.Element {
               type="button"
               onClick={openAssessment}
               size="lg"
-              className="h-12 rounded-lg border-0 bg-gradient-to-r from-[#5f4ae8] to-[#7d5cf4] px-7 text-base font-semibold text-white hover:brightness-110"
-              style={{ boxShadow: "0 14px 36px -18px rgba(111,92,255,0.9)" }}
+              // The glow is a shadow class, not an inline style: an inline box-shadow
+              // replaced the Button's focus ring, so keyboard focus was invisible here.
+              className="h-12 rounded-lg border-0 bg-gradient-to-r from-[#5f4ae8] to-[#7d5cf4] px-7 text-base font-semibold text-white shadow-[0_14px_36px_-18px_rgba(111,92,255,0.9)] hover:brightness-110 hover:shadow-[0_14px_36px_-18px_rgba(111,92,255,0.9)]"
               data-testid="button-hero-schedule"
             >
               {CTA.primary}

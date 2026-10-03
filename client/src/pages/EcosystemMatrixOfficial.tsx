@@ -94,12 +94,12 @@ export default function EcosystemMatrixOfficial() {
 
   const renderBadge = (value: string | boolean) => {
     if (value === true) return <Badge className="border-de-hairline bg-de-bg text-de-accent-ink hover:bg-de-bg"><Check className="w-3 h-3" /></Badge>;
-    if (value === false || value === "—") return <span className="text-white/20">—</span>;
+    if (value === false || value === "—") return <span className="text-white/55">—</span>;
     
     const isPro = typeof value === 'string' && (value.includes("VIP") || value.includes("MDR") || value.includes("Full"));
     
     return (
-      <Badge variant="outline" className={`${isPro ? 'border-de-hairline text-de-magenta-ink bg-de-raised' : 'border-de-hairline text-white/70 bg-de-bg'}`}>
+      <Badge variant="outline" className={`h-auto max-w-full whitespace-normal text-center leading-tight ${isPro ? 'border-de-hairline text-de-magenta-ink bg-de-raised' : 'border-de-hairline text-white/70 bg-de-bg'}`}>
         {value}
       </Badge>
     );
@@ -113,7 +113,7 @@ export default function EcosystemMatrixOfficial() {
   })).filter(section => section.features.length > 0);
 
   return (
-    <main id="page-main" className={`min-h-screen transition-colors duration-300 ${isDark ? "bg-[#0a0a0f] text-white" : "bg-slate-50 text-slate-900"}`}>
+    <main id="main-content" tabIndex={-1} className={`min-h-screen transition-colors duration-300 ${isDark ? "bg-[#0a0a0f] text-white" : "bg-slate-50 text-slate-900"}`}>
       <Helmet>
         <title>Service Matrix | Digerati Experts</title>
         <meta name="description" content="Compare Digerati Experts IT service tiers: IT Essentials, Office, Business, and Enterprise. Interactive service matrix with feature comparison across managed IT and cybersecurity offerings." />
@@ -153,64 +153,66 @@ export default function EcosystemMatrixOfficial() {
                 variant={showUpgrades ? "default" : "outline"}
                 size="sm"
                 aria-pressed={showUpgrades}
-                className={showUpgrades ? "bg-de-magenta text-white" : "border-white/20 text-white hover:text-white"}
+                className={showUpgrades ? "min-h-11 bg-de-magenta text-white" : "min-h-11 border-white/20 text-white hover:text-white"}
                 onClick={() => setShowUpgrades(!showUpgrades)}
               >
                 <Zap className="w-4 h-4 mr-2" aria-hidden="true" /> Highlight Upgrades
               </Button>
-              <div className="flex rounded-md border border-de-hairline bg-de-raised p-1">
+              <div className="flex flex-wrap rounded-md border border-de-hairline bg-de-raised p-1">
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   aria-pressed={density === "cozy"}
-                  className={density === "cozy" ? "bg-white/10 text-white" : "text-white"}
+                  className={density === "cozy" ? "min-h-11 bg-white/10 text-white" : "min-h-11 text-white"}
                   onClick={() => setDensity("cozy")}
                 >Cozy</Button>
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   aria-pressed={density === "compact"}
-                  className={density === "compact" ? "bg-white/10 text-white" : "text-white"}
+                  className={density === "compact" ? "min-h-11 bg-white/10 text-white" : "min-h-11 text-white"}
                   onClick={() => setDensity("compact")}
                 >Compact</Button>
               </div>
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="border-white/20 text-white hover:text-white"
+                className="min-h-11 min-w-11 border-white/20 text-white hover:text-white"
                 aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
                 aria-pressed={isDark}
                 onClick={() => setIsDark(!isDark)}
               >
                 {isDark ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
               </Button>
-              <Button variant="outline" size="sm" className="border-white/20 text-white hover:text-white" aria-label="Print this matrix" onClick={() => window.print()}>
+              <Button variant="outline" size="sm" className="min-h-11 min-w-11 border-white/20 text-white hover:text-white" aria-label="Print this matrix" onClick={() => window.print()}>
                 <Printer className="w-4 h-4" aria-hidden="true" />
               </Button>
             </div>
           </div>
         </div>
 
+        <div className="overflow-x-auto md:overflow-visible" tabIndex={0} role="region" aria-label="Service matrix">
+        <div className="min-w-[760px] md:min-w-0">
         {/* TIERS HEADER */}
         <div className="grid grid-cols-5 gap-4 mb-6 sticky top-0 z-40 bg-de-bg py-4 border-b border-de-hairline">
           <div className="text-white/55 font-bold uppercase text-xs self-center">Capability</div>
-          <div className="p-4 rounded-xl bg-de-raised border border-de-hairline text-center">
-            <Badge variant="secondary" className="mb-2 border border-de-hairline bg-de-bg text-white/70">IT</Badge>
+          <div className="min-w-0 rounded-xl border border-de-hairline bg-de-raised p-4 text-center">
+            <Badge variant="secondary" className="mb-2 max-w-full border border-de-hairline bg-de-bg text-white/70">IT</Badge>
             <h3 className="font-bold text-lg">IT</h3>
             <p className="text-xs text-white/50">${pricing.it.user} /user·mo</p>
           </div>
-          <div className="p-4 rounded-xl bg-de-raised border border-de-hairline text-center">
-            <Badge variant="secondary" className="mb-2 bg-de-bg text-de-magenta-ink">Office</Badge>
+          <div className="min-w-0 rounded-xl border border-de-hairline bg-de-raised p-4 text-center">
+            <Badge variant="secondary" className="mb-2 max-w-full bg-de-bg text-de-magenta-ink">Office</Badge>
             <h3 className="font-bold text-lg text-de-magenta-ink">Office</h3>
             <p className="text-xs text-de-magenta-ink/60">${pricing.office.user} /user·mo</p>
           </div>
-          <div className="p-4 rounded-xl bg-de-raised border border-de-hairline text-center">
-            <Badge variant="secondary" className="mb-2 bg-de-bg text-de-magenta-ink">Business</Badge>
+          <div className="min-w-0 rounded-xl border border-de-hairline bg-de-raised p-4 text-center">
+            <Badge variant="secondary" className="mb-2 max-w-full bg-de-bg text-de-magenta-ink">Business</Badge>
             <h3 className="font-bold text-lg text-white">Business</h3>
             <p className="text-xs text-white/50">${pricing.business.user} /user·mo</p>
           </div>
-          <div className="p-4 rounded-xl bg-de-raised border border-de-hairline text-center">
-            <Badge variant="secondary" className="mb-2 bg-de-raised text-de-magenta-ink">Custom</Badge>
+          <div className="min-w-0 rounded-xl border border-de-hairline bg-de-raised p-4 text-center">
+            <Badge variant="secondary" className="mb-2 max-w-full bg-de-raised text-de-magenta-ink">Custom</Badge>
             <h3 className="font-bold text-lg text-de-magenta-ink">Enterprise</h3>
             <p className="text-xs text-de-magenta-ink/60">Multi-site + MDR</p>
           </div>
@@ -244,7 +246,7 @@ export default function EcosystemMatrixOfficial() {
                         <span className="text-sm font-medium text-white/80 group-hover:text-white transition-colors">{feature.name}</span>
                         <TooltipProvider>
                           <Tooltip>
-                            <TooltipTrigger aria-label={`About ${feature.name}`} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink"><Info className="w-3.5 h-3.5 text-white/55 hover:text-white" aria-hidden="true" /></TooltipTrigger>
+                            <TooltipTrigger aria-label={`About ${feature.name}`} className="-m-3.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-de-magenta-ink"><Info className="w-3.5 h-3.5 text-white/55 hover:text-white" aria-hidden="true" /></TooltipTrigger>
                             <TooltipContent><p className="max-w-xs text-xs">Standard industry definition for {feature.name}.</p></TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -259,6 +261,9 @@ export default function EcosystemMatrixOfficial() {
               )}
             </div>
           ))}
+        </div>
+
+        </div>
         </div>
 
         {/* FOOTER NOTE */}

@@ -1,0 +1,83 @@
+{
+  "_source": "https://developer.fedex.com/api/en-us/catalog/track/docs.html (POST /track/v1/trackingnumbers, 'Track by Tracking Number')",
+  "_note": "developer.fedex.com was blocked by the build machine's egress proxy and FedEx publishes no official SDK or OpenAPI file on GitHub or npm, so this is NOT a copy of FedEx's example response. It uses the response field names confirmed from search excerpts of the official page (output.completeTrackResults[].trackResults[], latestStatusDetail {code, derivedCode, statusByLocale, description, scanLocation}, scanEvents[] {date, eventType, eventDescription, scanLocation {city, stateOrProvinceCode}}, error); values are ours. Replace with the docs' example before relying on it.",
+  "delivered": {
+    "transactionId": "624deea6-b709-470c-8c39-4b5511281492",
+    "output": {
+      "completeTrackResults": [
+        {
+          "trackingNumber": "123456789012",
+          "trackResults": [
+            {
+              "trackingNumberInfo": { "trackingNumber": "123456789012", "carrierCode": "FDXE", "trackingNumberUniqueId": "12013~123456789012~FDEG" },
+              "latestStatusDetail": {
+                "code": "DL",
+                "derivedCode": "DL",
+                "statusByLocale": "Delivered",
+                "description": "Delivered",
+                "scanLocation": { "city": "Norton", "stateOrProvinceCode": "VA", "countryCode": "US" }
+              },
+              "scanEvents": [
+                {
+                  "date": "2018-02-01T07:35:00-06:00",
+                  "eventType": "IT",
+                  "eventDescription": "In transit",
+                  "scanLocation": { "city": "Memphis", "stateOrProvinceCode": "TN", "countryCode": "US" }
+                },
+                {
+                  "date": "2018-02-02T12:01:00-07:00",
+                  "eventType": "DL",
+                  "eventDescription": "Delivered",
+                  "scanLocation": { "city": "Norton", "stateOrProvinceCode": "VA", "countryCode": "US", "postalCode": "24273" }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "inTransit": {
+    "output": {
+      "completeTrackResults": [
+        {
+          "trackingNumber": "123456789012",
+          "trackResults": [
+            {
+              "latestStatusDetail": {
+                "code": "IT",
+                "derivedCode": "IT",
+                "statusByLocale": "On the way",
+                "description": "In transit",
+                "scanLocation": { "city": "Memphis", "stateOrProvinceCode": "TN" }
+              },
+              "scanEvents": []
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "notFound": {
+    "output": {
+      "completeTrackResults": [
+        {
+          "trackingNumber": "123456789012",
+          "trackResults": [
+            {
+              "trackingNumberInfo": { "trackingNumber": "123456789012" },
+              "error": { "code": "TRACKING.TRACKINGNUMBER.NOTFOUND", "message": "Tracking number cannot be found. Please correct the tracking number and try again." }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "tokenResponse": {
+    "_source": "https://developer.fedex.com/api/en-us/catalog/authorization/docs.html (access_token, token_type, expires_in seconds, scope)",
+    "access_token": "fedex-access-token-1",
+    "token_type": "bearer",
+    "expires_in": 3599,
+    "scope": "CXS"
+  }
+}

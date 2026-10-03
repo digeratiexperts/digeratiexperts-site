@@ -134,6 +134,7 @@ const AdminImportPage = lazy(() => import("@/pages/portal/AdminImport").then(m =
 const AdminAgentsPage = lazy(() => import("@/pages/portal/AdminAgents").then(m => ({ default: m.AdminAgents })));
 const AdminOpenAIPage = lazy(() => import("@/pages/portal/AdminOpenAI").then(m => ({ default: m.AdminOpenAI })));
 const AdminCompaniesPage = lazy(() => import("@/pages/portal/AdminCompanies").then(m => ({ default: m.AdminCompanies })));
+const AdminDataSourcesPage = lazy(() => import("@/pages/portal/PortalAdminDataSources").then(m => ({ default: m.PortalAdminDataSources })));
 const AdminLoginKnocksPage = lazy(() => import("@/pages/portal/AdminLoginKnocks").then(m => ({ default: m.AdminLoginKnocks })));
 const AdminLifecyclePage = lazy(() => import("@/pages/portal/AdminLifecycle").then(m => ({ default: m.AdminLifecycle })));
 const AdminContractsPage = lazy(() => import("@/pages/portal/AdminContracts").then(m => ({ default: m.AdminContracts })));
@@ -853,6 +854,11 @@ function Router() {
       <Route path="/portal/admin/companies" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <AdminCompaniesPage />
+        </Suspense>
+      )} />
+      <Route path="/portal/admin/data-sources" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <AdminDataSourcesPage />
         </Suspense>
       )} />
       <Route path="/portal/admin/login-knocks" component={() => (

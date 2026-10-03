@@ -1,9 +1,9 @@
 import { Link } from "wouter";
 import { PageTemplate } from "@/components/PageTemplate";
-import { ConversionPathBar } from "@/components/ConversionPathBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Calendar } from "lucide-react";
+import { BookOpen } from "lucide-react";
+import { Chapter, ChapterHeader, ClosingCta, Container, HeroActions, cardPaper } from "@/components/site/chapters";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
 
@@ -13,8 +13,6 @@ import ransomwareImg from "@assets/stock_images/ransomware_protectio_63d2a35d.jp
 import cloudImg from "@assets/stock_images/cloud_backup_server__4ac65288.jpg";
 import realEstateImg from "@assets/stock_images/real_estate_house_ke_f7c5422b.jpg";
 import trainingImg from "@assets/stock_images/employee_security_tr_12ae4644.jpg";
-
-const cardClass = "rounded-2xl border border-de-hairline bg-de-raised";
 
 const topics = [
   {
@@ -90,88 +88,96 @@ export default function Videos() {
   return (
     <PageTemplate
       title="Learn From the Experts"
+      eyebrow="Topic guides"
       subtitle="Explore cybersecurity topics we cover with Arizona businesses. This page is a topic guide — not a live on-demand webinar library."
-      icon={<BookOpen className="h-10 w-10 text-de-accent-ink" />}
       breadcrumbs={[{ label: "Resources", href: "/resources" }, { label: "Videos" }]}
-      actions={
-        <Button asChild variant="brand" size="lg" className="h-12 px-6 font-semibold">
-          <a href="/book">{CTA.primary}</a>
-        </Button>
-      }
+      layout="chapters"
+      actions={<HeroActions primary={{ label: CTA.primary, href: "/book" }} />}
     >
-      <div className="space-y-16">
-        <section className={`p-6 md:p-8 ${cardClass}`}>
-          <div className="mb-6 flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-de-accent-ink" aria-hidden="true" />
-            <h2 className="text-2xl font-semibold text-white">Request a Live Session</h2>
-          </div>
-          <p className="mb-6 text-white/65">
-            Interested in a briefing or team workshop on these topics? Book a conversation and we&apos;ll schedule it with
-            you.
-          </p>
-          <div className="grid gap-6 md:grid-cols-3">
-            {trainingTopics.map((topic) => (
-              <article key={topic.id} className="rounded-xl border border-de-hairline bg-de-bg p-6" data-testid={`card-upcoming-${topic.id}`}>
-                <h3 className="mb-2 font-semibold text-white">{topic.title}</h3>
-                <p className="mb-4 text-sm text-white/55">{topic.summary}</p>
-                <Button asChild variant="brand" className="w-full" data-testid={`button-register-${topic.id}`}>
+      <Chapter tone="surface" seam={false}>
+        <Container>
+          <ChapterHeader
+            tone="surface"
+            eyebrow="Live sessions"
+            title="Request a Live Session"
+            lede="Interested in a briefing or team workshop on these topics? Book a conversation and we'll schedule it with you."
+          />
+          <ol className="grid border-t border-[var(--de-hairline)] md:grid-cols-3 md:gap-x-10">
+            {trainingTopics.map((topic, i) => (
+              <li
+                key={topic.id}
+                className="flex flex-col border-b border-[var(--de-hairline)] py-7"
+                data-testid={`card-upcoming-${topic.id}`}
+              >
+                <span className="font-mono text-sm font-semibold text-de-magenta-ink">{String(i + 1).padStart(2, "0")}</span>
+                <h3 className="mt-3 font-heading text-lg font-semibold leading-snug text-white">{topic.title}</h3>
+                <p className="mb-5 mt-2 flex-1 text-base leading-relaxed text-white/70">{topic.summary}</p>
+                <Button asChild variant="brand" className="min-h-11 w-full sm:w-auto sm:self-start" data-testid={`button-register-${topic.id}`}>
                   <Link href="/book">Book a Session</Link>
                 </Button>
-              </article>
+              </li>
             ))}
-          </div>
-        </section>
+          </ol>
+        </Container>
+      </Chapter>
 
-        <section>
-          <h2 className="mb-2 text-2xl font-bold text-white">Topic Library</h2>
-          <p className="mb-6 text-white/60">
-            Related reading from our journal — these are articles and guides, not playable webinar recordings.
-          </p>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <Chapter tone="paper">
+        <Container>
+          <ChapterHeader
+            tone="paper"
+            eyebrow="Library"
+            title="Topic Library"
+            lede="Related reading from our journal — these are articles and guides, not playable webinar recordings."
+          />
+          <ul className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {topics.map((topic) => (
-              <article
-                key={topic.id}
-                className={`overflow-hidden ${cardClass}`}
-                data-testid={`card-video-${topic.id}`}
-              >
-                <div className="relative aspect-video overflow-hidden">
-                  <img
-                    src={topic.thumbnail}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    width={400}
-                    height={225}
-                    className="h-full w-full object-cover"
-                  />
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full border border-de-hairline bg-de-raised">
-                      <BookOpen className="h-8 w-8 text-white" aria-hidden="true" />
-                    </div>
+              <li key={topic.id} className="flex">
+                <article
+                  className={`${cardPaper} flex w-full flex-col overflow-hidden`}
+                  data-testid={`card-video-${topic.id}`}
+                >
+                  <div className="relative aspect-video overflow-hidden">
+                    <img
+                      src={topic.thumbnail}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      width={400}
+                      height={225}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
-                </div>
-                <div className="p-6">
-                  <Badge className="mb-2 border border-de-hairline bg-de-bg text-de-accent-ink">{topic.type}</Badge>
-                  <h3 className="text-lg font-semibold text-white">{topic.title}</h3>
-                  <p className="mt-2 text-white/60">{topic.description}</p>
-                  <Button asChild variant="outline" className="mt-4 w-full border-de-hairline text-white hover:bg-de-bg" data-testid={`button-related-reading-${topic.id}`}>
-                    <Link href="/resources/blog">
-                      <BookOpen className="mr-2 h-4 w-4" aria-hidden="true" />
-                      Related reading
-                    </Link>
-                  </Button>
-                </div>
-              </article>
+                  <div className="flex flex-1 flex-col p-6">
+                    <Badge className="mb-3 self-start border border-[var(--de-paper-hairline)] bg-[var(--de-paper)] text-de-magenta-paper-ink">
+                      {topic.type}
+                    </Badge>
+                    <h3 className="font-heading text-lg font-semibold leading-snug text-[#1A1228]">{topic.title}</h3>
+                    <p className="mt-2 flex-1 text-[0.95rem] leading-relaxed text-[#3A3448]">{topic.description}</p>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="mt-5 min-h-11 w-full border-[var(--de-paper-hairline)] bg-white text-[#1A1228] hover:bg-[var(--de-paper)] hover:text-[#1A1228]"
+                      data-testid={`button-related-reading-${topic.id}`}
+                    >
+                      <Link href="/resources/blog">
+                        <BookOpen className="mr-2 h-4 w-4" aria-hidden="true" />
+                        Related reading
+                      </Link>
+                    </Button>
+                  </div>
+                </article>
+              </li>
             ))}
-          </div>
-        </section>
+          </ul>
+        </Container>
+      </Chapter>
 
-        <ConversionPathBar
-          headline="Want a custom training session?"
-          body="We offer personalized security training for your team. Book an assessment to scope it."
-          primaryTestId="button-schedule-training"
-        />
-      </div>
+      <ClosingCta
+        tone="well"
+        title="Want a custom training session?"
+        lede="We offer personalized security training for your team. Book an assessment to scope it."
+        primary={{ label: CTA.primary, href: "/book", testId: "button-schedule-training" }}
+      />
     </PageTemplate>
   );
 }

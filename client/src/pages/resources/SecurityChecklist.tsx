@@ -1,9 +1,9 @@
 import { PageTemplate } from "@/components/PageTemplate";
-import { ConversionPathBar } from "@/components/ConversionPathBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Shield, Lock, Server, Users, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Chapter, ClosingCta, Container, HeroActions, cardPaper } from "@/components/site/chapters";
 import { useState } from "react";
 import { CTA } from "@/lib/ctaCopy";
 import { useSEO } from "@/hooks/useSEO";
@@ -99,13 +99,13 @@ export default function SecurityChecklist() {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "critical":
-        return "border border-red-500/40 bg-transparent text-red-300";
+        return "border border-red-300 bg-red-50 text-red-800";
       case "high":
-        return "border border-de-hairline bg-transparent text-white";
+        return "border border-[#A30E52]/50 bg-transparent text-[#A30E52]";
       case "medium":
-        return "border border-de-hairline bg-transparent text-white/70";
+        return "border border-[var(--de-paper-hairline)] bg-transparent text-[#3A3448]";
       default:
-        return "border border-de-hairline bg-transparent text-white/55";
+        return "border border-[var(--de-paper-hairline)] bg-transparent text-[#4A445A]";
     }
   };
 
@@ -119,102 +119,112 @@ export default function SecurityChecklist() {
   return (
     <PageTemplate
       title="Business Security Checklist"
+      eyebrow="Interactive checklist"
       subtitle="Use this interactive checklist to assess your organization's security posture. Complete these essential items to strengthen your defenses."
-      icon={<Shield className="h-10 w-10 text-de-accent-ink" />}
       breadcrumbs={[{ label: "Resources", href: "/resources" }, { label: "Security Checklist" }]}
+      layout="chapters"
       actions={
-        <Button asChild variant="brand" size="lg" className="h-12 px-6 font-semibold" data-testid="button-get-assessment">
-          <a href="/book">{CTA.primary}</a>
-        </Button>
+        <HeroActions primary={{ label: CTA.primary, href: "/book", testId: "button-get-assessment" }} />
       }
     >
-      <div className="mx-auto max-w-5xl space-y-12">
-          <div className="rounded-2xl border border-de-hairline bg-de-raised p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-white">Your Progress</h2>
-                  <p className="text-white/70">
-                    {completedItems} of {totalItems} items completed
-                  </p>
+      <Chapter tone="paper" seam={false}>
+        <Container>
+          <div className="grid items-start gap-8 lg:grid-cols-12 lg:gap-14">
+            <aside className="lg:col-span-4 lg:sticky lg:top-[calc(var(--de-nav-offset)+1rem)]">
+              <div className={`${cardPaper} p-6`}>
+                <div className="mb-4 flex items-end justify-between gap-4">
+                  <div>
+                    <h2 className="font-heading text-xl font-semibold text-[#1A1228]">Your Progress</h2>
+                    <p className="mt-1 text-base text-[#3A3448]" aria-live="polite">
+                      {completedItems} of {totalItems} items completed
+                    </p>
+                  </div>
+                  <div className="font-mono text-4xl font-bold text-de-magenta-paper-ink">{percentComplete}%</div>
                 </div>
-                <div className="text-4xl font-bold text-de-accent-ink">{percentComplete}%</div>
-              </div>
-              <div className="h-4 w-full rounded-full bg-de-bg">
                 <div
-                  className="h-4 rounded-full bg-[#D3126A] transition-all duration-500"
-                  style={{ width: `${percentComplete}%` }}
-                />
-              </div>
-              <div className="mt-4">
-                <Button
-                  asChild
-                  variant="outline"
-                  className="border-de-hairline bg-transparent text-white/70 hover:bg-de-bg hover:text-white"
-                  data-testid="button-request-checklist"
+                  className="h-3 w-full overflow-hidden rounded-full bg-[var(--de-paper)] ring-1 ring-inset ring-[var(--de-paper-hairline)]"
+                  role="progressbar"
+                  aria-label="Checklist progress"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={percentComplete}
                 >
-                  <a href="/book">Request a reviewed checklist</a>
-                </Button>
+                  <div
+                    className="h-3 rounded-full bg-[#D3126A] transition-all duration-500 motion-reduce:transition-none"
+                    style={{ width: `${percentComplete}%` }}
+                  />
+                </div>
+                <div className="mt-5">
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="min-h-11 w-full border-[var(--de-paper-hairline)] bg-white text-[#1A1228] hover:bg-[var(--de-paper)] hover:text-[#1A1228]"
+                    data-testid="button-request-checklist"
+                  >
+                    <a href="/book">Request a reviewed checklist</a>
+                  </Button>
+                </div>
               </div>
-          </div>
+            </aside>
 
-          <div className="space-y-8">
-            {checklistData.map((category) => (
-              <section
-                key={category.name}
-                className="rounded-2xl border border-de-hairline bg-de-raised p-6"
-                data-testid={`card-category-${category.name.toLowerCase().replace(/\s+/g, "-")}`}
-              >
-                  <h2 className="mb-6 flex items-center gap-3 text-xl font-semibold text-white">
-                    <category.icon className="h-6 w-6 text-de-accent-ink" aria-hidden="true" />
+            <div className="space-y-10 lg:col-span-8">
+              {checklistData.map((category) => (
+                <section
+                  key={category.name}
+                  data-testid={`card-category-${category.name.toLowerCase().replace(/\s+/g, "-")}`}
+                >
+                  <h2 className="mb-2 flex items-center gap-3 font-heading text-xl font-semibold text-[#1A1228] md:text-2xl">
+                    <category.icon className="h-6 w-6 text-de-magenta-paper-ink" aria-hidden="true" />
                     {category.name}
                   </h2>
-                  <div className="space-y-4">
-                  {category.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`rounded-lg border p-4 transition-colors ${
-                        checkedItems.has(item.id)
-                          ? "border-[#D3126A]/40 bg-de-bg"
-                          : "border-de-hairline bg-de-bg"
-                      }`}
-                    >
-                      <div className="flex items-start gap-4">
-                        <Checkbox
-                          id={item.id}
-                          checked={checkedItems.has(item.id)}
-                          onCheckedChange={() => toggleItem(item.id)}
-                          className="mt-1 border-white/30 data-[state=checked]:border-[#D3126A] data-[state=checked]:bg-[#D3126A]"
-                          data-testid={`checkbox-${item.id}`}
-                        />
-                        <div className="flex-1">
-                          <div className="mb-1 flex items-center gap-3">
-                            <label
-                              htmlFor={item.id}
-                              className={`cursor-pointer font-medium ${checkedItems.has(item.id) ? "text-white/55 line-through" : "text-white"}`}
-                            >
-                              {item.title}
-                            </label>
-                            <Badge className={getPriorityColor(item.priority)}>{item.priority}</Badge>
-                          </div>
-                          <p className="text-sm text-white/55">{item.description}</p>
-                        </div>
-                        {checkedItems.has(item.id) && (
-                          <CheckCircle2 className="h-5 w-5 text-de-accent-ink" aria-hidden="true" />
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  </div>
-              </section>
-            ))}
+                  <ul className="border-t border-[var(--de-paper-hairline)]">
+                    {category.items.map((item) => {
+                      const done = checkedItems.has(item.id);
+                      return (
+                        <li key={item.id} className="border-b border-[var(--de-paper-hairline)]">
+                          <label
+                            htmlFor={item.id}
+                            className={`flex min-h-11 cursor-pointer items-start gap-4 px-2 py-4 transition-colors hover:bg-white/70 focus-within:bg-white md:px-3 ${
+                              done ? "bg-white/60" : ""
+                            }`}
+                          >
+                            <Checkbox
+                              id={item.id}
+                              checked={done}
+                              onCheckedChange={() => toggleItem(item.id)}
+                              className="mt-0 h-8 w-8 rounded-md border-[#6B6478] bg-white data-[state=checked]:border-[#D3126A] data-[state=checked]:bg-[#D3126A] focus-visible:ring-[#ec4899]"
+                              data-testid={`checkbox-${item.id}`}
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <span className={`font-medium ${done ? "text-[#4A445A] line-through" : "text-[#1A1228]"}`}>
+                                  {item.title}
+                                </span>
+                                <Badge className={getPriorityColor(item.priority)}>{item.priority}</Badge>
+                              </span>
+                              <span className="block text-sm leading-relaxed text-[#3A3448]">{item.description}</span>
+                            </span>
+                            {done && (
+                              <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-de-magenta-paper-ink" aria-hidden="true" />
+                            )}
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              ))}
+            </div>
           </div>
+        </Container>
+      </Chapter>
 
-          <ConversionPathBar
-            headline="Need help completing your checklist?"
-            body="Our security experts can help you implement these controls. Start with a Cyber Risk Assessment."
-            primaryTestId="button-schedule-consultation"
-          />
-      </div>
+      <ClosingCta
+        tone="surface"
+        title="Need help completing your checklist?"
+        lede="Our security experts can help you implement these controls. Start with a Cyber Risk Assessment."
+        primary={{ label: CTA.primary, href: "/book", testId: "button-schedule-consultation" }}
+      />
     </PageTemplate>
   );
 }
