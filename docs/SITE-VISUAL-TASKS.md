@@ -74,7 +74,7 @@ The `87e2858` / `2722dd5` / `e21dc6e` ledgers on `main` marked VIS-001–VIS-009
 
 | Work | Branch / surface | Rule |
 |------|------------------|------|
-| DE Desk black + grey + gold (Joe's pick, 2026-10-01; live) and the gold Ask DE launcher (Joe, 2026-10-03; in progress) | `claude/awesome-bardeen-4pbl2m` · `client/src/components/ZohoASAPWidget.tsx` (stylesheet), `SiteBottomBar.tsx` (the Ask DE chooser and launcher), `client/src/index.css` (phone chrome inset) | **Do not touch** the launcher until merged. Visual System v2 does not restyle Desk in VIS-001–VIS-016 unless DE adds a ledger row. |
+| DE Desk black + grey + gold (Joe's pick, 2026-10-01; live) and the gold Ask DE launcher (Joe, 2026-10-03; live) | `claude/awesome-bardeen-4pbl2m` · `client/src/components/ZohoASAPWidget.tsx` (stylesheet), `SiteBottomBar.tsx` (the Ask DE chooser and launcher), `client/src/index.css` (phone chrome inset) | Joe-decided; change only on his say. Visual System v2 does not restyle Desk in VIS-001–VIS-016 unless DE adds a ledger row. |
 | Blog / Journal colors | `/resources`, `/case-studies` | Locked amber |
 | Store colors | `/store` | Locked electric + 14 pills |
 | Draft PRs #57, #59, #72 | See quarantine below | Do not merge as-is |

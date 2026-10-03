@@ -1094,11 +1094,15 @@ html[data-dock-hidden="true"] .de-bottom-bar {
   letter-spacing: -0.02em;
 }
 
-/* Improved focus indicators for keyboard navigation */
+/*
+ * Keyboard focus: one 2px outline, 2px out, that follows each control's own
+ * corners. No border-radius here: setting one squared off every rounded
+ * control while it had focus (pills, rounded buttons and cards snapped to 4px),
+ * and the outline already traces the element's own radius.
+ */
 :focus-visible {
   outline: 2px solid rgb(236, 72, 153);
   outline-offset: 2px;
-  border-radius: 4px;
 }
 
 button:focus-visible,
@@ -1291,7 +1295,6 @@ textarea:focus-visible {
 .focus-ring:focus-visible {
   outline: 2px solid rgb(var(--de-accent-rgb) / 1);
   outline-offset: 2px;
-  border-radius: 4px;
 }
 
 /* Link underline animation */
@@ -1856,13 +1859,6 @@ html {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-/* Enhanced focus states for accessibility */
-*:focus-visible {
-  outline: 2px solid hsl(262, 83%, 58%);
-  outline-offset: 2px;
-  border-radius: 4px;
 }
 
 /* Button global improvements */

@@ -30,6 +30,33 @@
 
 version: 2
 claims:
+  - id: focus-keeps-shape
+    owner: claude
+    subsystem: a11y
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: a8d7e6c
+    files:
+      - client/src/index.css (the global :focus-visible rule, the duplicate *:focus-visible rule, and .focus-ring:focus-visible only)
+      - client/src/pages/sections/ReferenceHeroSection.tsx (the primary hero button's className and style only)
+      - client/src/focusVisible.test.ts (new)
+      - client/src/components/SiteBottomBar.tsx (one comment)
+      - design/UI-STYLE-RULES.md (the all-states line), .cursor/skills/de-desk-ui/tokens-and-structure.md (a11y line)
+      - artifacts/visual-qa/focus-shape/**
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03, on the launcher's "rectangular focus outline": the same
+      rule squared off every rounded control. The global focus rules set
+      border-radius 4px, which beat Tailwind's rounded-* utilities while a
+      control had focus: 319 of 417 keyboard stops on /, /store and /contact at
+      1440 and 390 changed shape (pills, 8-12px buttons and cards to 4px). A
+      second, later *:focus-visible rule drew a violet outline on four Store
+      summaries. Both radius lines and the violet rule go; after the fix 0 of
+      417 stops change shape and every native outline is one colour. The
+      audit also found the hero's primary button had no visible focus at all:
+      an inline box-shadow (its glow) replaced the Button's focus ring. The
+      glow becomes a shadow class, so the ring and the glow compose. Joe
+      approved starting this ("All approved"); merge authority: Joe.
   - id: ask-de-launcher-gold
     owner: claude
     subsystem: de-desk
@@ -43,7 +70,7 @@ claims:
       - design/DESIGN-AUTHORITY.md, design/UI-STYLE-RULES.md, brand/README.md, .cursor/rules/de-desk-design.mdc, .cursor/skills/de-desk-ui/tokens-and-structure.md, docs/SITE-VISUAL-TASKS.md (launcher lines)
       - design/approved/ask-de-launcher-gold-2026-10-03.md (new)
       - artifacts/visual-qa/ask-de-launcher/**
-    status: active
+    status: verified-live
     started: 2026-10-03
     note: >-
       Joe, 2026-10-03, after the launcher mockup: "B on desktop, C on mobile,
@@ -55,6 +82,15 @@ claims:
       same badge. "Get Help" becomes "Ask a Question". On phones the bottom
       chrome moves to 20px from the edge, on the page's own margin. Merge
       authority: Joe.
+      RELEASED 2026-10-03: merged as a8d7e6c (PR 348, on Joe's "All approved").
+      The CI run for a8d7e6c passed every job, including the production deploy
+      (finished 10:46Z). Production served the gold launcher from 10:46:53Z.
+      smoke:desk against https://digeratiexperts.com passed 88/88, including
+      the nine launcher checks. Live measurements: a 40px solid gold disc 20px
+      from the edge at 390; the gold ring with a white mark at 768 and 1440; a
+      round focus ring at every width; the chooser header badge matching; "Ask
+      a Question"; the compact Store launcher gold. Evidence:
+      artifacts/visual-qa/ask-de-launcher/live/. VERIFIED LIVE. Files released.
   - id: de-auth-token-identity-binding
     owner: claude
     subsystem: portal-auth
