@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { LogOut, Search } from "lucide-react";
 import "@/styles/portal.css";
@@ -76,7 +76,18 @@ export function PortalLayout({
 }: PortalLayoutProps) {
   const [location] = useLocation();
   const { ready, user } = usePortalSession();
-  const [theme, setTheme] = usePortalTheme();
+  const [theme, themePreference, setThemePreference] = usePortalTheme();
+  // Portalled overlays (dialogs, menus, popovers) render into <body>; give
+  // <body> the portal token scope while a portal page is mounted.
+  useEffect(() => {
+    const body = document.body;
+    body.classList.add("de-portal-scope");
+    body.dataset.portalTheme = theme;
+    return () => {
+      body.classList.remove("de-portal-scope");
+      delete body.dataset.portalTheme;
+    };
+  }, [theme]);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const impersonatingCompany = readImpersonatingCompany();
   usePortalHubEvents();
@@ -141,6 +152,7 @@ export function PortalLayout({
     <div className={cn("de-portal", theme === "dark" && "dark")} data-theme={theme}>
       <SidebarProvider defaultOpen={typeof window === "undefined" ? true : window.innerWidth >= 1024}>
         <Sidebar collapsible="icon" className="border-sidebar-border">
+          <nav aria-label="Client portal" className="flex h-full min-h-0 flex-col">
           <SidebarHeader className="px-3 pb-2 pt-3">
             <Link href="/portal/dashboard" className="flex items-center gap-2 rounded-md px-1 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring" aria-label="Digerati Experts client portal home">
               <img src={DE_MARK} alt="" className="h-7 w-7 shrink-0 group-data-[collapsible=icon]:block hidden" />
@@ -150,6 +162,12 @@ export function PortalLayout({
               <div className="mt-2 flex items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/60 px-2.5 py-1.5 text-xs text-sidebar-foreground group-data-[collapsible=icon]:hidden">
                 <span className="h-1.5 w-1.5 shrink-0 pt-dot-ok rounded-full" aria-hidden="true" />
                 <span className="truncate">{companyName}</span>
+              </div>
+            )}
+            {user?.role === "admin" && (
+              // Below 1024px the topbar switcher is hidden; admins switch company here.
+              <div className="mt-2 lg:hidden group-data-[collapsible=icon]:hidden" data-testid="sidebar-tenant-selector">
+                <TenantSelector currentTenant={impersonatingCompany ? { id: impersonatingCompany.id ?? "", companyName: impersonatingCompany.companyName ?? "" } : null} />
               </div>
             )}
           </SidebarHeader>
@@ -208,6 +226,7 @@ export function PortalLayout({
               </button>
             </div>
           </SidebarFooter>
+          </nav>
           <SidebarRail />
         </Sidebar>
 
@@ -246,7 +265,7 @@ export function PortalLayout({
                 </Button>
               )}
               <PortalActivityPopover />
-              <PortalUserMenu user={user} theme={theme} onTheme={setTheme} onSignOut={handleLogout} />
+              <PortalUserMenu user={user} themePreference={themePreference} onTheme={setThemePreference} onSignOut={handleLogout} />
             </div>
           </header>
 
@@ -257,7 +276,7 @@ export function PortalLayout({
             </div>
           )}
 
-          <main id="portal-main" className={cn("mx-auto w-full flex-1 px-4 py-5 md:px-6 md:py-6", widthClass[width])}>
+          <main id="main-content" tabIndex={-1} className={cn("mx-auto w-full flex-1 px-4 py-5 md:px-6 md:py-6", widthClass[width])}>
             {!hideHeader && (
               <PageHeader
                 title={title}
