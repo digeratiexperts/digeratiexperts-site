@@ -15,7 +15,7 @@ export default function Contact() {
   return (
     <div className="min-h-screen bg-[#050312]">
       <MegaMenu />
-      <main className="de-nav-clear">
+      <main id="main-content" tabIndex={-1} className="de-nav-clear">
         <DigeratiContactSection headingAs="h1" />
       </main>
       <DigeratiEnhancedFooterSection />
