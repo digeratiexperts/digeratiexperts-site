@@ -28,9 +28,11 @@ type AuthedRequest = Request & {
 
 type AuthMiddleware = (req: AuthedRequest, res: Response, next: NextFunction) => void;
 
-const PORTAL_COMMANDS: DeSyncEventType[] = [
+// quote.requested is website-only on the Hub (website intake route, website
+// source and secret); a portal-sourced one cannot be delivered, so it is not
+// accepted here (Store quote requests are enqueued with source "website").
+export const PORTAL_COMMANDS: readonly DeSyncEventType[] = [
   "account.profile_update_requested",
-  "quote.requested",
   "quote.response_submitted",
   "approval.submitted",
   "assessment.response_submitted",
