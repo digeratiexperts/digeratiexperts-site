@@ -34,6 +34,10 @@ import {
 /** Original used 0.28s easeOut layout + 300ms grid. Keep that pacing without transform. */
 const EXPAND_S = 0.4;
 const EXPAND_EASE = "easeOut" as const;
+/** Phones: where the Ask DE nudge waits for the reader to leave the first screen. */
+const NUDGE_PHONE_QUERY = "(max-width: 767px)";
+/** Phones: scroll distance after which a shown nudge steps away. */
+const NUDGE_PHONE_SCROLL_AWAY = 160;
 
 type QuickMenuItem = {
   title: string;
@@ -66,9 +70,18 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
     syncAskMotion();
 
     let timer = 0;
+    // Phones: the nudge sits over the lower right of the first screen, which on
+    // every homepage is the hero's CTAs and pronunciation row. Hold it until
+    // the reader is past the first viewport, so it never covers the opener.
+    const phone = window.matchMedia(NUDGE_PHONE_QUERY);
+    const inOpener = () => phone.matches && window.scrollY < window.innerHeight;
     const fireNudge = () => {
       if (isDeskNudgeDismissed() || hasDeskNudgeBeenShown()) return;
       if (document.documentElement.hasAttribute("data-de-desk-open")) return;
+      if (inOpener()) {
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return;
+      }
       markDeskNudgeShown();
       setShowNudge(true);
     };
@@ -77,9 +90,19 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
       if (showMenu || showNudge) return;
       if (isDeskNudgeDismissed() || hasDeskNudgeBeenShown()) return;
       if (!ignoreBanner && isCookieBannerBlocking()) return;
+      if (inOpener()) {
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return;
+      }
       const delay = prefersReducedMotion() ? 0 : 6000;
       timer = window.setTimeout(fireNudge, delay);
     };
+    function onScroll() {
+      if (inOpener()) return;
+      window.removeEventListener("scroll", onScroll);
+      // Only registered once the cookie banner was already cleared.
+      arm(true);
+    }
 
     arm();
     const onConsent = () => {
@@ -89,9 +112,32 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
     window.addEventListener("de-cookie-consent", onConsent);
     return () => {
       window.clearTimeout(timer);
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("de-cookie-consent", onConsent);
     };
   }, [showMenu, showNudge]);
+
+  // Phones: once shown, the nudge steps away when the reader keeps scrolling
+  // or starts typing, instead of covering what they are reading. It counts as
+  // shown (once per session) but not dismissed, so the launcher keeps its cue.
+  useEffect(() => {
+    if (!showNudge || !window.matchMedia(NUDGE_PHONE_QUERY).matches) return;
+    const startY = window.scrollY;
+    const hide = () => setShowNudge(false);
+    const onScroll = () => {
+      if (Math.abs(window.scrollY - startY) > NUDGE_PHONE_SCROLL_AWAY) hide();
+    };
+    const onFocusIn = (event: FocusEvent) => {
+      const el = event.target;
+      if (el instanceof HTMLElement && el.matches("input, textarea, select, [contenteditable=true]")) hide();
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    document.addEventListener("focusin", onFocusIn);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("focusin", onFocusIn);
+    };
+  }, [showNudge]);
 
   useEffect(() => {
     if (!showMenu) return;
@@ -244,15 +290,6 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
             {!isMobile && (
               <div className="pointer-events-none absolute -bottom-2 right-7 h-4 w-4 rotate-45 border-b border-r border-white/10 bg-[#0b0b0d]" aria-hidden="true" />
             )}
-            <button
-              type="button"
-              onClick={() => setShowMenu(false)}
-              className="absolute right-3.5 top-3.5 flex h-8 w-8 items-center justify-center rounded-full text-[#b4b4ba] transition-colors hover:bg-white/[0.08] hover:text-[#f5f5f4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E3B23C]"
-              aria-label="Close Ask DE"
-              data-testid="ask-de-close"
-            >
-              <X className="h-4.5 w-4.5" style={{ width: 18, height: 18 }} aria-hidden="true" />
-            </button>
 
             <div className="mb-5 flex items-start justify-between gap-4 pr-8">
               <div>
@@ -295,6 +332,17 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
                 Call {PRIMARY_PHONE.display}
               </a>
             </div>
+            {/* Last in the DOM, pinned top-right on screen: keyboard focus lands on
+                the first choice when the chooser opens, not on Close. */}
+            <button
+              type="button"
+              onClick={() => setShowMenu(false)}
+              className="absolute right-3.5 top-3.5 flex h-8 w-8 items-center justify-center rounded-full text-[#b4b4ba] transition-colors hover:bg-white/[0.08] hover:text-[#f5f5f4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E3B23C]"
+              aria-label="Close Ask DE"
+              data-testid="ask-de-close"
+            >
+              <X className="h-4.5 w-4.5" style={{ width: 18, height: 18 }} aria-hidden="true" />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

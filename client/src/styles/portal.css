@@ -9,9 +9,16 @@
  * swaps the content field to warm paper; the sidebar stays graphite in both so
  * the brand rail is constant. Values are HSL triplets because shadcn wraps them
  * in hsl(var(--x)); the `--pt-*` state colours are RGB triplets for rgb(var()/a).
+ *
+ * Dialogs, dropdowns and popovers render through Radix portals into <body>,
+ * outside `.de-portal`. While a portal page is mounted, PortalLayout puts
+ * `de-portal-scope` (and `data-portal-theme`) on <body> so that portalled
+ * content reads these tokens too instead of the marketing values (where
+ * --card is transparent).
  */
 
-.de-portal {
+.de-portal,
+body.de-portal-scope {
   /* field */
   --background: 248 71% 4%;          /* #050312 graphite well */
   --foreground: 270 20% 96%;         /* #f5f3f7 */
@@ -53,7 +60,7 @@
   --pt-warn: 251 191 36;
   --pt-bad: 251 113 133;
   --pt-info: 125 211 252;
-  --pt-brand: 240 76 151;            /* magenta ink on dark */
+  --pt-brand: 244 94 163;            /* magenta ink on dark; 4.5:1 on tinted accent */
 
   --pt-topbar: 248 71% 4% / 0.82;
 
@@ -63,7 +70,8 @@
   min-height: 100dvh;
 }
 
-.de-portal[data-theme="light"] {
+.de-portal[data-theme="light"],
+body.de-portal-scope[data-portal-theme="light"] {
   --background: 36 24% 96%;          /* #f7f5f2 paper */
   --foreground: 12 24% 8%;           /* #1a1210 */
   --card: 0 0% 100%;
@@ -85,28 +93,49 @@
   --destructive-foreground: 0 0% 100%;
 
   --pt-ok: 4 120 87;
-  --pt-warn: 180 83 9;
+  --pt-warn: 146 64 14;              /* #92400e: 4.5:1 on tinted paper */
   --pt-bad: 190 18 60;
-  --pt-info: 14 116 144;
+  --pt-info: 21 94 117;              /* #155e75 */
   --pt-brand: 163 14 82;
 
   --pt-topbar: 36 24% 96% / 0.85;
   color-scheme: light;
 }
 
+/* The sidebar stays graphite in both themes, so its state colours stay the
+   dark-field values even when the content field is paper. */
+.de-portal[data-theme="light"] [data-sidebar="sidebar"],
+body.de-portal-scope[data-portal-theme="light"] [data-sidebar="sidebar"] {
+  --pt-ok: 52 211 153;
+  --pt-warn: 251 191 36;
+  --pt-bad: 251 113 133;
+  --pt-info: 125 211 252;
+  --pt-brand: 244 94 163;
+  /* Surfaces placed inside the rail (e.g. the admin company switcher) match it. */
+  --background: 248 71% 4%;
+  --foreground: 270 20% 96%;
+  --card: 276 12% 8%;
+  --card-foreground: 270 20% 96%;
+  --muted-foreground: 270 6% 68%;
+  --border: 270 12% 17%;
+  --input: 270 12% 20%;
+  --accent: 270 12% 16%;
+  --accent-foreground: 270 20% 96%;
+}
+
 /* The marketing scale lifts text-sm to 16px for long-form pages. A working
    portal needs the standard scale back: 14px UI text, 12px captions. */
-.de-portal .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-.de-portal .text-xs { font-size: 0.75rem; line-height: 1rem; }
+:is(.de-portal, .de-portal-scope) .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+:is(.de-portal, .de-portal-scope) .text-xs { font-size: 0.75rem; line-height: 1rem; }
 
 /* Global focus ring is violet for marketing; the portal uses its ring token. */
-.de-portal *:focus-visible {
+:is(.de-portal, .de-portal-scope) *:focus-visible {
   outline: 2px solid hsl(var(--ring));
   outline-offset: 2px;
 }
 
 /* Numbers align in tables and tiles. */
-.de-portal .pt-num {
+:is(.de-portal, .de-portal-scope) .pt-num {
   font-family: "Oxanium", "JetBrains Mono", ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
@@ -114,12 +143,12 @@
 
 /* Cards in the marketing system are transparent with a lift-on-hover; a
    working surface should sit still. */
-.de-portal .pt-still:hover { transform: none; box-shadow: none; }
+:is(.de-portal, .de-portal-scope) .pt-still:hover { transform: none; box-shadow: none; }
 
 /* Scrollbars that match the field. */
-.de-portal ::-webkit-scrollbar { width: 10px; height: 10px; }
-.de-portal ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 8px; border: 2px solid hsl(var(--background)); }
-.de-portal ::-webkit-scrollbar-track { background: transparent; }
+:is(.de-portal, .de-portal-scope) ::-webkit-scrollbar { width: 10px; height: 10px; }
+:is(.de-portal, .de-portal-scope) ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 8px; border: 2px solid hsl(var(--background)); }
+:is(.de-portal, .de-portal-scope) ::-webkit-scrollbar-track { background: transparent; }
 
 /* Tone utilities: one class sets --pt-tone, the others read it. Keeping these
    here (a lazy portal chunk) instead of as Tailwind arbitrary values keeps the
@@ -157,5 +186,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .de-portal * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+  :is(.de-portal, .de-portal-scope) * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }

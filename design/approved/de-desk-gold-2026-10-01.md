@@ -58,3 +58,11 @@ the Vite dev server on this branch after main (with PR 303) was merged in
 
 No horizontal overflow at any width. The notice's phone link was restyled
 (ink + gold underline) so it reads as a link inside the red error box.
+
+## Live
+
+Merged as `4b25793` (PR 319) on 2026-10-02 with Joe's approval, and deployed
+by the CI run for that commit. Verified on digeratiexperts.com at 13:20Z:
+the served Desk chunk carries the black + gold tokens and none of the white
+panel. Browser shots of the production site at 390, 768 and 1440 (the
+chooser, Get Support and Ask DE) are in `artifacts/visual-qa/desk-gold/live/`.

@@ -62,6 +62,19 @@ import { DeskRichText } from "@/lib/deskRichText";
 import { useDraggableWindow } from "@/hooks/useDraggableWindow";
 import { useEscapeKey } from "@/hooks/useFocusTrap";
 import {
+  DESK_COMPOSER_HINT_DELAY_MS,
+  DESK_COMPOSER_HINT_DURATION_MS,
+  DESK_COMPOSER_HINT_KEY,
+  DESK_EXPAND_HINT_DELAY_MS,
+  DESK_EXPAND_HINT_DURATION_MS,
+  DESK_EXPAND_HINT_KEY,
+  DESK_HINT_RETIRED,
+  composerHintDecision,
+  expandHintShouldStart,
+  readDeskHint,
+  writeDeskHint,
+} from "@/lib/deskHints";
+import {
   DESK_INCIDENT_CHIP,
   DESK_STANDARD_TICKET_CHIPS,
   DESK_TICKET_CATEGORIES,
@@ -349,6 +362,12 @@ export const ZohoASAPWidget = ({
 
   const [canDrag, setCanDrag] = useState(false);
   const [isDeskFullscreen, setIsDeskFullscreen] = useState(false);
+  const [expandHint, setExpandHint] = useState(false);
+  const expandHintPlayedRef = useRef(false);
+  const [composerHint, setComposerHint] = useState(false);
+  const composerHintPlayedRef = useRef(false);
+  // The full-screen hint waits until the text box hint has played or been ruled out.
+  const [composerHintSettled, setComposerHintSettled] = useState(false);
   const ignoreDismissUntilRef = useRef(0);
 
   const deskDrag = useDraggableWindow({
@@ -395,6 +414,39 @@ export const ZohoASAPWidget = ({
   useEffect(() => {
     if (!canDrag) setIsDeskFullscreen(false);
   }, [canDrag]);
+
+  // Full-screen hint: shortly after the docked Desk opens on a screen wide
+  // enough to expand, unless a person is live in the chat (no distraction then).
+  // It waits for the text box hint, and never starts while someone is typing.
+  useEffect(() => {
+    const stored = readDeskHint(DESK_EXPAND_HINT_KEY);
+    const start = expandHintShouldStart({
+      isOpen,
+      canExpand: canDrag,
+      isFullscreen: isDeskFullscreen,
+      agentLive,
+      playedThisLoad: expandHintPlayedRef.current,
+      composerHintSettled,
+      composerHintShowing: composerHint,
+      composerHasText: !!chatInput.trim(),
+      stored,
+    });
+    if (!start) return;
+    const timer = window.setTimeout(() => {
+      expandHintPlayedRef.current = true;
+      writeDeskHint(DESK_EXPAND_HINT_KEY, { used: false, shown: stored.shown + 1 });
+      setExpandHint(true);
+    }, DESK_EXPAND_HINT_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [isOpen, canDrag, isDeskFullscreen, agentLive, composerHintSettled, composerHint, chatInput]);
+  useEffect(() => {
+    if (!expandHint) return;
+    const stop = window.setTimeout(() => setExpandHint(false), DESK_EXPAND_HINT_DURATION_MS);
+    return () => window.clearTimeout(stop);
+  }, [expandHint]);
+  useEffect(() => {
+    if (!isOpen || isDeskFullscreen || !canDrag) setExpandHint(false);
+  }, [isOpen, isDeskFullscreen, canDrag]);
   useEffect(() => {
     if (!isDeskFullscreen) return;
     // Ref-counted lock instead of capture/restore: when the MegaMenu mobile
@@ -414,7 +466,9 @@ export const ZohoASAPWidget = ({
         container.querySelectorAll<HTMLElement>(
           'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
         ),
-      ).filter((el) => el.offsetParent !== null);
+        // Only what Tab can reach: the pointer-only resize handles (tabindex -1)
+        // must not be the trap's first or last stop, or focus slips out.
+      ).filter((el) => el.offsetParent !== null && el.tabIndex >= 0);
     };
     window.requestAnimationFrame(() => {
       // Land somewhere useful instead of on the first header button (which
@@ -450,7 +504,24 @@ export const ZohoASAPWidget = ({
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
-      previous?.focus?.();
+      if (previous?.isConnected) {
+        previous?.focus?.({ preventScroll: true });
+        return;
+      }
+      // The element that opened the Desk is gone (a chooser choice unmounts as
+      // the Desk opens), and the Ask DE launcher only re-mounts once the bottom
+      // bar hears the Desk closed. Wait briefly for it so focus does not drop
+      // to the page body, and never take focus from something the visitor has
+      // already moved to.
+      let tries = 0;
+      const returnToLauncher = () => {
+        const active = document.activeElement;
+        if (active && active !== document.body) return;
+        const launcher = document.querySelector<HTMLElement>('[data-testid="button-open-asap-widget"]');
+        if (launcher) launcher.focus({ preventScroll: true });
+        else if (++tries < 10) window.setTimeout(returnToLauncher, 30);
+      };
+      window.setTimeout(returnToLauncher, 0);
     };
   }, [isOpen, deskDrag.panelRef]);
 
@@ -1003,6 +1074,49 @@ export const ZohoASAPWidget = ({
 
   const visitorHasSpoken = chatMessages.some((m) => m.role === "user");
 
+  // Ask DE text box hint: once the greeting has finished, on the Ask DE tab,
+  // for a visitor who has not said anything yet and with nobody live.
+  useEffect(() => {
+    const stored = readDeskHint(DESK_COMPOSER_HINT_KEY);
+    const decision = composerHintDecision({
+      isOpen,
+      playedThisLoad: composerHintPlayedRef.current,
+      stored,
+      visitorHasSpoken,
+      agentLive,
+      onAskDe: activeTab === "chat",
+      greetingComplete,
+      expandHintShowing: expandHint,
+    });
+    if (decision === "settle") setComposerHintSettled(true);
+    if (decision !== "play") return;
+    const timer = window.setTimeout(() => {
+      composerHintPlayedRef.current = true;
+      writeDeskHint(DESK_COMPOSER_HINT_KEY, { used: false, shown: stored.shown + 1 });
+      setComposerHint(true);
+    }, DESK_COMPOSER_HINT_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [isOpen, activeTab, greetingComplete, visitorHasSpoken, agentLive, expandHint]);
+  useEffect(() => {
+    if (!composerHint) return;
+    const stop = window.setTimeout(() => {
+      setComposerHint(false);
+      setComposerHintSettled(true);
+    }, DESK_COMPOSER_HINT_DURATION_MS);
+    return () => window.clearTimeout(stop);
+  }, [composerHint]);
+  // Typing, leaving the tab or closing the Desk ends the hint at once.
+  useEffect(() => {
+    if (composerHint && (chatInput.trim() || !isOpen || activeTab !== "chat")) {
+      setComposerHint(false);
+      setComposerHintSettled(true);
+    }
+  }, [composerHint, chatInput, isOpen, activeTab]);
+  // Once the visitor has sent something, the text box hint has done its job for good.
+  useEffect(() => {
+    if (visitorHasSpoken) writeDeskHint(DESK_COMPOSER_HINT_KEY, DESK_HINT_RETIRED);
+  }, [visitorHasSpoken]);
+
   // Get Support, prefilled with what the visitor already told Ask DE. A draft
   // they have started on Get Support is never overwritten.
   const openTicketFromChat = () => {
@@ -1378,11 +1492,14 @@ export const ZohoASAPWidget = ({
               // Docked, the window stops below the live bottom of the site
               // header instead of rising over the nav (it used to cover the
               // right end of the main menu at 1440x900). A floor keeps it
-              // usable on a very short window.
+              // usable on a short window, and a ceiling of the viewport itself
+              // keeps the header and close button on screen when the window is
+              // shorter than the floor (a phone held sideways, 200% zoom); on
+              // those the Desk may sit over the nav rather than off the top.
               ...(deskDrag.size
                 ? {}
                 : {
-                    height: `min(760px, max(440px, calc(100dvh - var(--de-nav-current-bottom, 0px) - var(--de-spy-h, 0px) - ${dockClear} - 16px)))`,
+                    height: `min(760px, calc(100dvh - ${dockClear} - 12px), max(440px, calc(100dvh - var(--de-nav-current-bottom, 0px) - var(--de-spy-h, 0px) - ${dockClear} - 16px)))`,
                     maxHeight: "none",
                   }),
             }),
@@ -1409,6 +1526,7 @@ export const ZohoASAPWidget = ({
             aria-label="DE Desk help"
             data-testid="desk-modal"
             data-tab={activeTab}
+            data-fullscreen={isDeskFullscreen ? "true" : undefined}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => event.stopPropagation()}
           >
@@ -1443,18 +1561,29 @@ export const ZohoASAPWidget = ({
               {canDrag ? (
                 <button
                   type="button"
-                  className="de-desk-close"
+                  className={`de-desk-close de-desk-expand${expandHint ? " is-hinting" : ""}`}
                   data-testid="button-expand-desk"
                   aria-label={isDeskFullscreen ? "Exit full screen" : "Expand DE Desk to full screen"}
                   title={isDeskFullscreen ? "Exit full screen" : "Full screen"}
                   onPointerDown={(event) => event.stopPropagation()}
-                  onClick={() => setIsDeskFullscreen((current) => !current)}
+                  onClick={() => {
+                    const next = !isDeskFullscreen;
+                    // Once someone has used full screen, the hint has done its job.
+                    if (next) writeDeskHint(DESK_EXPAND_HINT_KEY, DESK_HINT_RETIRED);
+                    setExpandHint(false);
+                    setIsDeskFullscreen(next);
+                  }}
                 >
                   {isDeskFullscreen ? (
                     <Minimize2 size={13} aria-hidden="true" />
                   ) : (
                     <Maximize2 size={13} aria-hidden="true" />
                   )}
+                  {expandHint ? (
+                    <span className="de-desk-expand-hint" aria-hidden="true" data-testid="desk-expand-hint">
+                      Full screen
+                    </span>
+                  ) : null}
                 </button>
               ) : null}
               <button
@@ -1606,7 +1735,7 @@ export const ZohoASAPWidget = ({
                             <div
                               className={`de-desk-bubble ${
                                 isUser ? "is-user" : isAgent ? "is-agent" : "is-bot"
-                              }`}
+                              }${chatMessage.retryText ? " is-error" : ""}`}
                             >
                               {/* R3: sr-only only while the visible <p> is aria-hidden (during caret reveal). */}
                               {showCaret ? (
@@ -1895,6 +2024,7 @@ export const ZohoASAPWidget = ({
                         <h3>Support request received</h3>
                         {ticketResult.ticketNumber && (
                           <p className="de-desk-ticket-ref">
+                            <span className="de-desk-ticket-ref-label">Ticket</span>
                             {ticketResult.ticketNumber}
                             <button
                               type="button"
@@ -1910,7 +2040,7 @@ export const ZohoASAPWidget = ({
                         <p>{ticketResult.message}</p>
                         <div className="de-desk-success-actions">
                           {portalSession ? (
-                            <a href={PORTAL_TICKETS} className="de-desk-row" data-testid="link-success-view-tickets">
+                            <a href={PORTAL_TICKETS} className="de-desk-row de-desk-row-action" data-testid="link-success-view-tickets">
                               <span className="de-desk-row-t">View my tickets</span>
                             </a>
                           ) : null}
@@ -1920,7 +2050,7 @@ export const ZohoASAPWidget = ({
                               setTicketResult(null);
                               selectTab("chat");
                             }}
-                            className="de-desk-row"
+                            className="de-desk-row de-desk-row-action"
                           >
                             <span className="de-desk-row-t">Back to Ask DE</span>
                           </button>
@@ -2220,10 +2350,10 @@ export const ZohoASAPWidget = ({
                         {/* No <h3>Client Tools</h3> here: the active tab already
                             says it, one line above. */}
                         <div className="de-desk-tools-intro">
-                          <p>
+                          <h3 className="de-desk-tools-welcome">
                             Welcome back
                             {portalSession.fullName ? `, ${portalSession.fullName.split(" ")[0]}` : ""}.
-                          </p>
+                          </h3>
                         </div>
                         {authToolGroups.map((group) => (
                           <div key={group.heading} className="de-desk-launch-group">
@@ -2362,7 +2492,10 @@ export const ZohoASAPWidget = ({
                     </button>
                   </div>
                 ) : null}
-                <div className={`de-desk-composer${headsUp || unreadChatCount ? " is-live" : ""}`}>
+                <div
+                  className={`de-desk-composer${headsUp || unreadChatCount ? " is-live" : ""}${composerHint ? " is-hinting" : ""}`}
+                  data-testid="desk-composer"
+                >
                   <textarea
                     ref={composerRef}
                     rows={1}
@@ -2422,7 +2555,11 @@ export const ZohoASAPWidget = ({
                     type="button"
                     className={`de-desk-resize-edge de-desk-resize-${edge}`}
                     data-testid={`desk-resize-${edge}`}
-                    aria-label={`Resize DE Desk from the ${edge} edge`}
+                    // Pointer-only: resizing has no keyboard path here, so the
+                    // handles stay out of the tab order and the accessibility
+                    // tree. Expand in the header is the keyboard way to resize.
+                    tabIndex={-1}
+                    aria-hidden="true"
                     onPointerDown={deskDrag.onResizePointerDown(edge)}
                   />
                 ))}
@@ -2430,7 +2567,9 @@ export const ZohoASAPWidget = ({
                   type="button"
                   className={`de-desk-resize de-desk-resize-se${deskDrag.resizing ? " is-active" : ""}`}
                   data-testid="desk-resize-handle"
-                  aria-label="Resize DE Desk. Drag any edge or this corner, or use Expand in the header."
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  title="Drag any edge or this corner to resize"
                   onPointerDown={deskDrag.onResizePointerDown("se")}
                 >
                   <span aria-hidden="true" />
@@ -2616,6 +2755,63 @@ export const ZohoASAPWidget = ({
               flex: none;
             }
             .de-desk-close:hover { color: var(--desk-ink); border-color: rgba(255,255,255,0.28); }
+            /* Full-screen hint: three gold pulses with the arrows pushing
+               outward, and a label saying what the button does. Finite on
+               purpose: it plays, then the button goes quiet. */
+            .de-desk-expand { position: relative; }
+            .de-desk-expand.is-hinting {
+              color: var(--desk-gold-ink);
+              border-color: rgba(227,178,60,0.6);
+            }
+            .de-desk-expand.is-hinting::after {
+              content: "";
+              position: absolute;
+              inset: -1px;
+              border-radius: inherit;
+              pointer-events: none;
+              animation: de-desk-expand-ring 1.6s ease-out 0.1s 3;
+            }
+            .de-desk-expand.is-hinting svg {
+              animation: de-desk-expand-nudge 1.6s cubic-bezier(0.22, 1, 0.36, 1) 3;
+            }
+            .de-desk-expand-hint {
+              position: absolute;
+              right: calc(100% + 8px);
+              top: 50%;
+              transform: translateY(-50%);
+              padding: 5px 10px;
+              border-radius: 999px;
+              background: var(--desk-gold);
+              color: var(--desk-on-gold);
+              font-size: 12px;
+              font-weight: 700;
+              line-height: 1;
+              letter-spacing: 0.01em;
+              white-space: nowrap;
+              pointer-events: none;
+              box-shadow: 0 6px 16px -8px rgba(0,0,0,0.7);
+              animation: de-desk-expand-label 5.2s ease both;
+            }
+            @keyframes de-desk-expand-ring {
+              0% { box-shadow: 0 0 0 0 rgba(227,178,60,0.55); }
+              75%, 100% { box-shadow: 0 0 0 10px rgba(227,178,60,0); }
+            }
+            @keyframes de-desk-expand-nudge {
+              0%, 55%, 100% { transform: scale(1); }
+              25% { transform: scale(1.32); }
+            }
+            @keyframes de-desk-expand-label {
+              0% { opacity: 0; transform: translate(6px, -50%); }
+              8%, 88% { opacity: 1; transform: translate(0, -50%); }
+              100% { opacity: 0; transform: translate(6px, -50%); }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              /* No motion: the gold edge and the label still say it, for the
+                 same few seconds. */
+              .de-desk-expand.is-hinting::after,
+              .de-desk-expand.is-hinting svg { animation: none; }
+              .de-desk-expand-hint { animation: none; opacity: 1; transform: translateY(-50%); }
+            }
             .de-desk-tabs {
               position: relative;
               z-index: 1;
@@ -2715,6 +2911,15 @@ export const ZohoASAPWidget = ({
               border: 1px solid var(--desk-border);
               color: var(--desk-ink); text-align: left; width: 100%;
             }
+            .de-desk-row-action {
+              justify-content: center;
+              font-weight: 650;
+              background: transparent;
+              border-color: var(--desk-border-strong);
+              text-decoration: none;
+              transition: background 0.15s ease, border-color 0.15s ease;
+            }
+            .de-desk-row-action:hover { background: var(--desk-box-hover); border-color: rgba(255,255,255,0.28); }
             .de-desk-msg { display: flex; gap: 10px; align-items: flex-start; }
             .de-desk-msg + .de-desk-msg { margin-top: 12px; }
             .de-desk-msg.is-user { justify-content: flex-end; }
@@ -2960,7 +3165,8 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-issue-label {
               flex: 1; min-width: 0;
-              overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+              /* Wrap to a second line rather than cut a question off with an ellipsis. */
+              overflow-wrap: anywhere; white-space: normal;
               color: var(--desk-ink);
             }
             .de-desk-issue-arrow {
@@ -3151,7 +3357,8 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-ta-wrap { position: relative; }
             .de-desk-shell .de-desk-ta {
-              min-height: 90px; height: auto; padding-left: 14px; resize: vertical;
+              /* Tall enough for the whole four-line prompt at every width. */
+              min-height: 148px; height: auto; padding-left: 14px; resize: vertical;
               line-height: 1.5;
             }
             .de-desk-counter {
@@ -3249,6 +3456,10 @@ export const ZohoASAPWidget = ({
               border-bottom-left-radius: 5px;
               max-width: 640px; /* keeps chat readable in the full-screen desk */
             }
+            .de-desk-bubble.is-error {
+              border-color: rgba(248,113,113,0.45);
+              background: color-mix(in srgb, #f87171 7%, var(--desk-box));
+            }
             .de-desk-msg-time {
               display: block;
               margin-top: 5px;
@@ -3335,7 +3546,8 @@ export const ZohoASAPWidget = ({
             .de-desk-discover-icon svg { width: 15px; height: 15px; stroke-width: 1.9; }
             .de-desk-discover-label {
               flex: 1; min-width: 0;
-              overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+              /* Wrap to a second line rather than cut a question off with an ellipsis. */
+              overflow-wrap: anywhere; white-space: normal;
             }
             .de-desk-discover-arrow {
               width: 15px; height: 15px; flex: none;
@@ -3383,7 +3595,8 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-chip-label {
               flex: 1; min-width: 0;
-              overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+              /* Wrap to a second line rather than cut a question off with an ellipsis. */
+              overflow-wrap: anywhere; white-space: normal;
             }
             .de-desk-chip-arrow {
               width: 14px; height: 14px; flex: none;
@@ -3405,10 +3618,18 @@ export const ZohoASAPWidget = ({
             }
             .de-desk-success { flex-direction: column; align-items: flex-start; }
             .de-desk-success p { max-width: none; }
-            .de-desk-ticket-ref {
+            /* .de-desk-hero p would otherwise grey it out. */
+            .de-desk-hero .de-desk-ticket-ref {
+              display: inline-flex; align-items: center; gap: 8px;
+              margin-top: 4px;
               font-family: ui-monospace, monospace;
-              font-size: 13px; font-weight: 600; color: var(--desk-gold);
-              margin-top: 8px;
+              font-size: 16px; font-weight: 700; letter-spacing: 0.02em;
+              color: var(--desk-gold-ink);
+            }
+            .de-desk-ticket-ref-label {
+              font-family: "Space Grotesk", sans-serif;
+              font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+              color: var(--desk-ink-muted);
             }
             .de-desk-success-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 14px; }
             .de-desk-heads-up {
@@ -3647,6 +3868,35 @@ export const ZohoASAPWidget = ({
               box-shadow: 0 0 0 3px rgba(227,178,60,0.16);
             }
             .de-desk-composer { align-items: flex-end; }
+            /* Text box hint: three gold pulses, a soft gold light sweeping
+               across the field, and a gold placeholder. Finite on purpose. */
+            .de-desk-composer.is-hinting textarea {
+              border-color: var(--desk-gold);
+              background-image: linear-gradient(
+                100deg,
+                transparent 35%,
+                rgba(227,178,60,0.16) 50%,
+                transparent 65%
+              );
+              background-size: 300% 100%;
+              background-repeat: no-repeat;
+              animation:
+                de-desk-composer-ring 1.6s ease-out 0.1s 3,
+                de-desk-composer-sweep 1.6s ease-in-out 3;
+            }
+            .de-desk-composer.is-hinting textarea::placeholder { color: var(--desk-gold-ink); }
+            @keyframes de-desk-composer-ring {
+              0% { box-shadow: 0 0 0 0 rgba(227,178,60,0.5); }
+              75%, 100% { box-shadow: 0 0 0 8px rgba(227,178,60,0); }
+            }
+            @keyframes de-desk-composer-sweep {
+              0% { background-position: 100% 0; }
+              100% { background-position: 0% 0; }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              /* No motion: the gold edge and the gold placeholder still say it. */
+              .de-desk-composer.is-hinting textarea { animation: none; background-image: none; }
+            }
             .de-desk-send {
               width: 44px; height: 44px; border-radius: 10px;
               background: #E3B23C; border: none;
@@ -3655,7 +3905,12 @@ export const ZohoASAPWidget = ({
               box-shadow: 0 8px 18px -10px rgba(227,178,60,0.8);
             }
             .de-desk-send:hover:not(:disabled) { background: #c99a2e; }
-            .de-desk-send:disabled { opacity: 0.5; box-shadow: none; }
+            .de-desk-send:disabled {
+              background: var(--desk-well);
+              box-shadow: inset 0 0 0 1px var(--desk-border);
+              cursor: default;
+            }
+            .de-desk-send:disabled svg { color: var(--desk-ink-dim); }
             .de-desk-send svg { width: 16px; height: 16px; color: var(--desk-on-gold); }
             .de-desk-composer-caption {
               position: relative;
@@ -3706,6 +3961,7 @@ export const ZohoASAPWidget = ({
               font-size: 14.5px;
               line-height: 1.45;
             }
+            .de-desk-tools-intro h3.de-desk-tools-welcome { margin-bottom: 2px; }
             .de-desk-tools-kicker {
               margin: 10px 0 6px !important;
               color: var(--desk-ink) !important;
@@ -3913,7 +4169,7 @@ export const ZohoASAPWidget = ({
               border: 1px solid rgba(255,255,255,0.10);
               border-radius: 11px;
               background: var(--desk-well);
-              color: var(--tool-color);
+              color: var(--desk-gold);
             }
             .de-desk-tool-group.is-featured .de-desk-tool-icon {
               border-color: color-mix(in srgb, #E3B23C 38%, transparent);
@@ -4147,8 +4403,46 @@ export const ZohoASAPWidget = ({
               outline-offset: -4px;
               border-radius: 10px;
             }
+            /* Forced colours (Windows contrast themes): fills are replaced by the
+               system's, so every state drawn only with gold would vanish. Give
+               each one a border or outline the system can colour instead. */
+            @media (forced-colors: active) {
+              .de-desk-tab.is-active { border-bottom: 3px solid Highlight; }
+              .de-desk-tab.is-active::after { display: none; }
+              .de-desk-issue-row.is-on,
+              .de-desk-incident.is-on,
+              .de-desk-urgency button.is-on { outline: 2px solid Highlight; outline-offset: -2px; }
+              .de-desk-incident { border: 2px solid CanvasText; }
+              .de-desk-bubble.is-user,
+              .de-desk-btn-grad,
+              .de-desk-send,
+              .de-desk-signin,
+              .de-desk-next-btn.is-primary,
+              .de-desk-action-form-send,
+              .de-desk-jump,
+              .de-desk-security-action,
+              .de-desk-expand-hint { border: 1px solid CanvasText; }
+              .de-desk-send:disabled { border-color: GrayText; }
+              .de-desk-send:disabled svg { color: GrayText; }
+              .de-desk-shell :is(button, a, input, textarea, select):focus-visible { outline-color: Highlight; }
+            }
+            /* Full screen: the header spans the window, the content sits in a
+               readable centred column instead of stretching edge to edge. */
+            .de-desk-shell[data-fullscreen="true"] .de-desk-tabs {
+              margin-left: max(14px, calc((100% - 760px) / 2));
+              margin-right: max(14px, calc((100% - 760px) / 2));
+            }
+            .de-desk-shell[data-fullscreen="true"] .de-desk-scroll,
+            .de-desk-shell[data-fullscreen="true"] .de-desk-tools-panel .de-desk-scroll,
+            .de-desk-shell[data-fullscreen="true"] .de-desk-composer,
+            .de-desk-shell[data-fullscreen="true"] .de-desk-chat-actions,
+            .de-desk-shell[data-fullscreen="true"] .de-desk-composer-caption {
+              padding-left: max(16px, calc((100% - 760px) / 2));
+              padding-right: max(16px, calc((100% - 760px) / 2));
+            }
             @media (max-width: 420px) {
               .de-desk-grid2 { grid-template-columns: 1fr; }
+              .de-desk-composer-caption { font-size: 12px; }
               .de-desk-hero-art { display: none; }
               .de-desk-tab { font-size: 13.5px; gap: 4px; padding: 8px 2px 10px; }
               .de-desk-tab svg { width: 13px; height: 13px; }

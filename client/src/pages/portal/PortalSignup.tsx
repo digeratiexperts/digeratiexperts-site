@@ -83,18 +83,18 @@ export default function PortalSignup() {
 
   if (success) {
     return (
-      <main className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
+      <main id="main-content" tabIndex={-1} className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
       <div aria-hidden="true" className="pt-login-glow pointer-events-none absolute inset-0" />
       <div aria-hidden="true" className="pt-login-line pointer-events-none absolute inset-x-0 top-0 h-px" />
         <div className="w-full max-w-md">
           <Card className="pt-still relative border-border bg-card shadow-none">
             <CardContent className="pt-12 pb-12 text-center">
               <CheckCircle className="pt-ink pt-tone-ok mx-auto mb-4 h-12 w-12" />
-              <h2 className="font-heading mb-2 text-xl font-semibold">Account Created Successfully!</h2>
+              <h1 className="font-heading mb-2 text-xl font-semibold">Account Created Successfully!</h1>
               <p className="mb-4 text-sm text-muted-foreground">
                 Your portal account has been created. Redirecting to login...
               </p>
-              <div className="animate-spin h-5 w-5 border-2 border-gray-300 border-t-white rounded-full mx-auto" />
+              <div role="status" aria-label="Redirecting to sign in" className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-border border-t-foreground" />
             </CardContent>
           </Card>
         </div>
@@ -103,7 +103,7 @@ export default function PortalSignup() {
   }
 
   return (
-    <main className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
+    <main id="main-content" tabIndex={-1} className="de-portal dark relative flex min-h-dvh items-center justify-center overflow-hidden p-4" data-theme="dark">
       <div aria-hidden="true" className="pt-login-glow pointer-events-none absolute inset-0" />
       <div aria-hidden="true" className="pt-login-line pointer-events-none absolute inset-x-0 top-0 h-px" />
       <div className="w-full max-w-md">
@@ -215,7 +215,7 @@ export default function PortalSignup() {
             <div className="mt-6 border-t border-border pt-6">
               <p className="text-center text-xs text-muted-foreground">
                 Already have an account?{" "}
-                <a href="/portal/login" className="text-de-magenta-ink hover:underline">
+                <a href="/portal/login" className="text-de-magenta-ink underline underline-offset-2 hover:no-underline">
                   Sign In
                 </a>
               </p>
