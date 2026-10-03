@@ -35,19 +35,20 @@ claims:
     owner: claude
     subsystem: client-portal-files
     branch: claude/fix-259-tenant-files-durable
-    base_sha: 0cc9de28
+    base_sha: 05093e67
     files:
       - migrations/0004_portal_tenant_files_durable.sql (new)
       - shared/schema.ts (portalTenantFiles deleted_at / deleted_by only)
       - server/storage.ts (tenant file methods on IStorage + both impls; keeps findTenantFileByFileUrl from PR 310)
       - server/portalTenantFileRoutes.ts (new; tenant file routes lifted from routes.ts unchanged + delete scoped to company)
-      - server/routes.ts (tenant file route block replaced by registerPortalTenantFileRoutes; resolver call only)
+      - server/routes.ts (tenant file route block replaced by registerPortalTenantFileRoutes; object-route resolver kept verbatim)
+      - server/rawIntegrationRouteGuards.test.ts (deleteTenantFile calls pass the owning company)
       - server/portalTenantFileRoutes.test.ts, server/storage.tenantFiles.test.ts, server/tenantFilesFakeDb.testkit.ts (new)
     status: active
     started: 2026-10-03
     note: >-
       PR 373. Tenant file metadata durable in portal_tenant_files with soft
-      delete. Reconciled by merge onto main 0cc9de28 after the release review
+      delete. Reconciled by merge onto main 05093e67 after the release review
       hold: main's file-URL tenant ownership (findTenantFileByFileUrl, PR 310)
       and its cache fallback kept; soft-deleted rows excluded from every read
       including the ownership lookup. PR 379 is stacked on this branch.

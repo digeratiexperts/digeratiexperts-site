@@ -10,8 +10,8 @@ import { portalManualRecords } from "@shared/schema";
  *   vpn_device  a WireGuard / OpenVPN device or profile for the VPN Access page
  *   shipment    a staff-entered tracking number for the Ship Center page
  *
- * Postgres when the database is up (table created on first use, mirrored by
- * migrations/0003_portal_manual_records.sql); an in-process map otherwise, so
+ * Postgres when the database is up (table owned by
+ * migrations/0003_portal_manual_records.sql, never created at runtime); an in-process map otherwise, so
  * the dev server's memory mode can exercise the same flow.
  */
 
@@ -50,26 +50,30 @@ export function validateRecordData(data: unknown): string | null {
 // ---------- storage ----------
 
 const memory = new Map<string, ManualRecord>();
-let schemaReady = false;
+let schemaVerified = false;
 
+/**
+ * Verify (never create) the migrated table (#253). The schema is owned by
+ * migrations/0003_portal_manual_records.sql, applied by `npm run db:migrate`
+ * before a release is activated. A missing table is logged once per attempt
+ * with the remedy; the query that follows then fails as it would for any
+ * unprovisioned table. Success is cached.
+ */
 async function ensureSchema() {
-  if (schemaReady || !dbReady || !db) return;
-  await db.execute(sql`
-    CREATE TABLE IF NOT EXISTS portal_manual_records (
-      id varchar PRIMARY KEY DEFAULT gen_random_uuid()::text,
-      client_id varchar NOT NULL REFERENCES portal_clients(id) ON DELETE CASCADE,
-      kind text NOT NULL,
-      data jsonb NOT NULL,
-      created_by varchar,
-      created_at timestamp DEFAULT now() NOT NULL,
-      updated_at timestamp DEFAULT now() NOT NULL
-    )
-  `);
-  await db.execute(sql`
-    CREATE INDEX IF NOT EXISTS portal_manual_records_client_kind_idx
-      ON portal_manual_records (client_id, kind)
-  `);
-  schemaReady = true;
+  if (schemaVerified || !dbReady || !db) return;
+  try {
+    const result: any = await db.execute(sql`SELECT to_regclass('public.portal_manual_records') AS present`);
+    const row = Array.isArray(result) ? result[0] : result?.rows?.[0];
+    if (row && !row.present) {
+      console.error(
+        "[manual-records] required table portal_manual_records is missing; run `npm run db:migrate` (migrations/0003_portal_manual_records.sql).",
+      );
+      return;
+    }
+    schemaVerified = true;
+  } catch (error: any) {
+    console.warn("[manual-records] could not verify portal_manual_records:", error?.message || error);
+  }
 }
 
 function toRecord(row: any): ManualRecord {

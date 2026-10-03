@@ -9,7 +9,7 @@ import { faults, resetFakeDb, tables } from "./tenantFilesFakeDb.testkit";
  * Runs the real tenant file routes (portalTenantFileRoutes.ts) and the real
  * object serve route (registerObjectStorageRoutes + authorizeObjectRead) over
  * HTTP, wired to the real storage classes exactly as routes.ts wires them
- * (`tenantOwnerResolver(storage)`). DatabaseStorage runs its real Drizzle
+ * (storage.findTenantFileByFileUrl). DatabaseStorage runs its real Drizzle
  * queries against the pg-proxy fake; MemStorage runs as-is. Only the auth
  * middleware (the test names the user in a header), the portal company/user
  * directory, and the GCS client are stood in.
@@ -82,7 +82,7 @@ describe.each<Kind>(["DatabaseStorage", "MemStorage"])("tenant file routes keep 
 
   beforeAll(async () => {
     await import("./db");
-    const { registerPortalTenantFileRoutes, tenantOwnerResolver } = await import("./portalTenantFileRoutes");
+    const { registerPortalTenantFileRoutes } = await import("./portalTenantFileRoutes");
     const { registerObjectStorageRoutes } = await import("./replit_integrations/object_storage/routes");
 
     // Delegates to whichever storage instance is current, so a test can
@@ -91,7 +91,15 @@ describe.each<Kind>(["DatabaseStorage", "MemStorage"])("tenant file routes keep 
 
     const app = express();
     app.use(express.json());
-    registerObjectStorageRoutes(app, { auth, admin, resolveTenantOwnerClientId: tenantOwnerResolver(storage) });
+    // Same resolver as registerRoutes in routes.ts.
+    registerObjectStorageRoutes(app, {
+      auth,
+      admin,
+      resolveTenantOwnerClientId: async (objectPath) => {
+        const file = await storage.findTenantFileByFileUrl(objectPath);
+        return file?.clientId ?? null;
+      },
+    });
     registerPortalTenantFileRoutes(app, {
       auth,
       admin,

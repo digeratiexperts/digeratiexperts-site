@@ -8,8 +8,8 @@ import type { IStorage } from "./storage";
  * be exercised over real HTTP, the same way portalDepartmentRoutes is (#254).
  * Metadata lives in portal_tenant_files (DatabaseStorage); the bytes live in
  * object storage and are served only by GET /objects/... behind
- * authorizeObjectRead, which asks `resolveTenantOwnerClientId` below who owns
- * a path. Invariants kept from main:
+ * authorizeObjectRead, whose resolveTenantOwnerClientId (wired in routes.ts)
+ * asks storage.findTenantFileByFileUrl who owns a path. Invariants kept from main:
  *
  * - list/upload/delete by company id are DE-admin only (requireAdmin);
  * - /api/portal/my-files lists only the caller's own company (an admin may
@@ -49,17 +49,6 @@ export type TenantFileRouteDeps = {
   getUserByEmail: (email: string) => { clientId?: string | null } | undefined | null;
   logSecurityEvent: (event: string, req: any, data: Record<string, unknown>) => void;
 };
-
-/**
- * Who owns an object path, for registerObjectStorageRoutes. Null (deny unless
- * admin / ACL owner) when no live tenant file row names the path.
- */
-export function tenantOwnerResolver(storage: Pick<IStorage, "findTenantFileByFileUrl">) {
-  return async (objectPath: string): Promise<string | null> => {
-    const file = await storage.findTenantFileByFileUrl(objectPath);
-    return file?.clientId ?? null;
-  };
-}
 
 export function registerPortalTenantFileRoutes(app: Express, deps: TenantFileRouteDeps): void {
   const { auth, admin, validateInput, storage, getCompany, getUserByEmail, logSecurityEvent } = deps;

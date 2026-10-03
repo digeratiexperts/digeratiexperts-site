@@ -232,3 +232,26 @@ describe("manual records bulk import, database mode", () => {
     vi.resetModules();
   });
 });
+
+describe("manual records schema ownership (#253)", () => {
+  it("only verifies the migrated table and never issues DDL", async () => {
+    const statements: string[] = [];
+    const fakeDb = {
+      execute: vi.fn(async (q: any) => {
+        statements.push(JSON.stringify(q));
+        return { rows: [{ present: "portal_manual_records" }] };
+      }),
+      select: () => ({ from: () => ({ where: async () => [] }) }),
+    };
+    vi.resetModules();
+    vi.doMock("./db", () => ({ db: fakeDb, dbReady: true }));
+    const m = await import("./portalManualRecords");
+    await m.listManualRecords("acme", "shipment");
+    await m.listManualRecords("acme", "shipment");
+    expect(fakeDb.execute).toHaveBeenCalledTimes(1);
+    expect(statements.join(" ")).toMatch(/to_regclass/);
+    expect(statements.join(" ")).not.toMatch(/CREATE|ALTER/i);
+    vi.doUnmock("./db");
+    vi.resetModules();
+  });
+});
