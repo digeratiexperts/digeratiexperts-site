@@ -25,13 +25,14 @@ const clients = new Set<PortalSseClient>();
 export function portalEventVisibleTo(viewer: PortalSseViewer, event: PortalSsePayload): boolean {
   if (viewer.role === "admin") return true;
   if (SHARED_PORTAL_EVENTS.has(event.eventType)) return true;
-  if (
-    event.canonicalAccountId &&
-    viewer.hubAccountId &&
-    event.canonicalAccountId === viewer.hubAccountId
-  ) {
-    return true;
+  // The canonical Hub account is the tenant of record. When the event names
+  // one, it alone decides: a mismatch (or a viewer with no Hub account) fails
+  // closed even if the entity id happens to equal the viewer's client id (#238).
+  const canonical = typeof event.canonicalAccountId === "string" ? event.canonicalAccountId.trim() : "";
+  if (canonical) {
+    return Boolean(viewer.hubAccountId) && canonical === viewer.hubAccountId;
   }
+  // Legacy events without a canonical account fall back to the portal client id.
   if (viewer.clientId && event.entityId === viewer.clientId) return true;
   return false;
 }

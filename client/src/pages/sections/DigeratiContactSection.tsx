@@ -8,7 +8,9 @@ import { Mail, Phone, MapPin, Linkedin, Facebook, Twitter, Loader2, Clock, Shiel
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { SituationContinuityStrip } from "@/components/SituationContinuityStrip";
+import { situationSubmitPayload, suggestedContactService, useAnonymousSituation } from "@/lib/anonymousSituation";
 import { motion, useReducedMotion } from "framer-motion";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { analytics } from "@/lib/analytics";
@@ -100,6 +102,8 @@ export const DigeratiContactSection = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const prefersReducedMotion = useReducedMotion();
+  const situation = useAnonymousSituation();
+  const suggestedService = situation ? suggestedContactService(situation) : "";
 
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactFormSchema),
@@ -113,6 +117,12 @@ export const DigeratiContactSection = ({
     },
   });
 
+  useEffect(() => {
+    if (!suggestedService) return;
+    if (form.getValues("service")) return;
+    form.setValue("service", suggestedService);
+  }, [form, suggestedService]);
+
   const handleSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true);
 
@@ -120,7 +130,10 @@ export const DigeratiContactSection = ({
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          ...situationSubmitPayload(),
+        }),
       });
 
       const result = await response.json();
@@ -198,8 +211,9 @@ export const DigeratiContactSection = ({
               <h2 className={`${titleClass} max-w-[20ch]`}>Ready to Secure Your Business?</h2>
             )}
             <p className={`${ledeClass("well")} mb-8 mt-5 max-w-xl`}>
-              Located in the heart of Chandler, we&apos;re your local cybersecurity experts.
-              Whether you need immediate help or want to explore our services, we&apos;re here for you.
+              {situation
+                ? "We already have the environment you started in the Store. This conversation is another way in — or continue that solution if you would rather send the package."
+                : "Located in the heart of Chandler, we're your local cybersecurity experts. Whether you need immediate help or want to explore our services, we're here for you."}
             </p>
 
             <div className="mb-10 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
@@ -283,8 +297,13 @@ export const DigeratiContactSection = ({
                 Get in Touch
               </h3>
               <p className="mb-6 mt-1 text-base text-black/55">
-                Tell us about the environment. We&apos;ll follow up on a Cyber Risk Assessment — no hard sell.
+                {situation
+                  ? "Tell us what you want from this conversation. We'll already have the Store environment — no hard sell."
+                  : "Tell us about the environment. We'll follow up on a Cyber Risk Assessment — no hard sell."}
               </p>
+              {situation ? (
+                <SituationContinuityStrip situation={situation} door="contact" tone="paper" className="mb-6" />
+              ) : null}
 
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -380,7 +399,7 @@ export const DigeratiContactSection = ({
                         <FormLabel className="text-base font-medium text-[#1A1228]">Service Interested In</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value || undefined}
                           disabled={isSubmitting}
                         >
                           <FormControl>
@@ -412,7 +431,11 @@ export const DigeratiContactSection = ({
                         <FormLabel className="text-base font-medium text-[#1A1228]">Message</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Tell us about your security needs..."
+                            placeholder={
+                              situation
+                                ? "What do you want from this conversation?"
+                                : "Tell us about your security needs..."
+                            }
                             rows={4}
                             data-testid="textarea-contact-message"
                             className="resize-none border-[var(--de-paper-hairline)] bg-white text-[#1A1228] placeholder:text-black/55 focus-visible:border-[#D3126A] focus-visible:ring-2 focus-visible:ring-[#D3126A]/40"

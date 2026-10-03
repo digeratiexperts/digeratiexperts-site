@@ -33,7 +33,7 @@ Status: 🟢 in flight · 🟡 ready to start · 🔵 needs Joe decision · ⚪ 
 | 2.4 | Technician eligibility + scheduling handoff (issue #123) | 🟡 separate workstream |
 | 2.5 | Zoho Payments enablement for authenticated co-managed/admin checkout — policy decision; Door 2 stays request-only regardless (`docs/PR146-PRESERVATION-AUDIT.md` D1) | 🔵 |
 | 2.6 | Store 390px: "Your Solution" pill overlaps autosave chip (evidence in `artifacts/visual-qa/pr-116/sweep_store-390.png`) — route into #121–123 chrome work | 🟡 |
-| 2.7 | Anonymous situation-continuity recovery (issue #119) | ⚪ |
+| 2.7 | Anonymous situation-continuity recovery (issue #119) | 🟢 website projection from Store draft (this PR); Hub still owns people after submit |
 
 ## 3. Client Portal — user side
 

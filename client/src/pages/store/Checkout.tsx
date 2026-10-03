@@ -126,6 +126,16 @@ const Checkout = () => {
             setPaymentMethod("quote_request");
             return;
           }
+          if (errorData.code === "PHYSICAL_FULFILLMENT_REQUIRED" && errorData.quoteRequired) {
+            writeContactHandoff({ ...data, reason: "physical_fulfillment" });
+            toast({
+              title: "Hardware ships with a quote",
+              description:
+                "Physical hardware needs a shipping address and tax, so we switched checkout to Request Quote instead of charging it directly. Your solution is intact.",
+            });
+            setPaymentMethod("quote_request");
+            return;
+          }
           if (errorData.code === "DURABLE_DATABASE_REQUIRED") {
             writeContactHandoff({ ...data, reason: "durable_db" });
             toast({

@@ -17,7 +17,7 @@ export default function TrustCenter() {
   useSEO({
     title: "Trust Center",
     description:
-      "Digerati Experts Trust Center: security practices, compliance support, and how to request questionnaires. Framework names describe customer requirements — not Digerati certifications.",
+      "Digerati Experts Trust Center: security practices, compliance support, and how to request questionnaires. Framework names describe customer requirements — not DE certifications.",
     canonical: "/trust/trust-center",
   });
   

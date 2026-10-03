@@ -11,6 +11,8 @@ import { DE_LOGO_REVERSE } from "@/lib/brandAssets";
 import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
 // Closing bookend (Joe 2026-08-31): the hero's Phoenix city-lights plate returns behind the contact chapter.
 import contactBgImage from "@assets/de-hero-arizona-dusk-1600.webp";
+import { CopyButton } from "./CopyButton";
+import { FieldOk, SubmitFace, submitPhase, useSentFlash } from "./SubmitFace";
 import "./16-contact-footer.css";
 
 /**
@@ -147,6 +149,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 function ContactForm(): JSX.Element {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const [sent, flashSent] = useSentFlash();
 
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactFormSchema),
@@ -185,6 +188,7 @@ function ContactForm(): JSX.Element {
       });
 
       form.reset();
+      flashSent();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -199,6 +203,8 @@ function ContactForm(): JSX.Element {
   const described = (field: keyof ContactFormData) =>
     errors[field] ? { "aria-invalid": true, "aria-describedby": `c-${field}-error` } : {};
 
+  const phase = submitPhase(isSubmitting, sent);
+
   return (
     <form
       className="v7-card--paper contact__card"
@@ -211,7 +217,7 @@ function ContactForm(): JSX.Element {
       </h3>
       <p className="v7-body">Tell us about the environment. We'll follow up on a Cyber Risk Assessment — no hard sell.</p>
       <div className="fields">
-        <div className="is-full">
+        <div className="is-full v7-float">
           <label className="v7-label" htmlFor="c-name">
             Your Name *
           </label>
@@ -219,7 +225,7 @@ function ContactForm(): JSX.Element {
             className="v7-input"
             id="c-name"
             type="text"
-            placeholder="John Smith"
+            placeholder=" "
             autoComplete="name"
             required
             data-testid="input-contact-name"
@@ -227,9 +233,10 @@ function ContactForm(): JSX.Element {
             {...described("name")}
             {...form.register("name")}
           />
+          <FieldOk />
           <FieldError id="c-name-error" message={errors.name?.message} />
         </div>
-        <div>
+        <div className="v7-float">
           <label className="v7-label" htmlFor="c-email">
             Business Email *
           </label>
@@ -237,7 +244,7 @@ function ContactForm(): JSX.Element {
             className="v7-input"
             id="c-email"
             type="email"
-            placeholder="john@company.com"
+            placeholder=" "
             autoComplete="email"
             required
             data-testid="input-contact-email"
@@ -245,9 +252,10 @@ function ContactForm(): JSX.Element {
             {...described("email")}
             {...form.register("email")}
           />
+          <FieldOk />
           <FieldError id="c-email-error" message={errors.email?.message} />
         </div>
-        <div>
+        <div className="v7-float">
           <label className="v7-label" htmlFor="c-phone">
             Phone Number *
           </label>
@@ -255,7 +263,7 @@ function ContactForm(): JSX.Element {
             className="v7-input"
             id="c-phone"
             type="tel"
-            placeholder="(480) 000-0000"
+            placeholder=" "
             autoComplete="tel"
             required
             data-testid="input-contact-phone"
@@ -263,9 +271,10 @@ function ContactForm(): JSX.Element {
             {...described("phone")}
             {...form.register("phone")}
           />
+          <FieldOk />
           <FieldError id="c-phone-error" message={errors.phone?.message} />
         </div>
-        <div>
+        <div className="v7-float">
           <label className="v7-label" htmlFor="c-company">
             Company Name
           </label>
@@ -273,14 +282,14 @@ function ContactForm(): JSX.Element {
             className="v7-input"
             id="c-company"
             type="text"
-            placeholder="Your Company Inc."
+            placeholder=" "
             autoComplete="organization"
             data-testid="input-contact-company"
             disabled={isSubmitting}
             {...form.register("company")}
           />
         </div>
-        <div>
+        <div className="v7-float">
           <label className="v7-label" htmlFor="c-service">
             Service Interested In
           </label>
@@ -304,7 +313,7 @@ function ContactForm(): JSX.Element {
             </svg>
           </div>
         </div>
-        <div className="is-full">
+        <div className="is-full v7-float">
           <label className="v7-label" htmlFor="c-message">
             Message
           </label>
@@ -312,7 +321,7 @@ function ContactForm(): JSX.Element {
             className="v7-input"
             id="c-message"
             rows={4}
-            placeholder="Tell us about your security needs..."
+            placeholder=" "
             data-testid="textarea-contact-message"
             disabled={isSubmitting}
             {...described("message")}
@@ -322,12 +331,15 @@ function ContactForm(): JSX.Element {
         </div>
       </div>
       <button
-        className="v7-btn v7-btn--dark contact__submit"
+        className="v7-btn v7-btn--dark contact__submit v7-submit"
         type="submit"
         disabled={isSubmitting}
+        data-state={phase}
         data-testid="button-send-message"
       >
-        {isSubmitting ? "Sending..." : "Send Message"}
+        <SubmitFace phase={phase} sendingLabel="Sending your message" sentLabel="Message sent">
+          Send Message
+        </SubmitFace>
       </button>
     </form>
   );
@@ -486,9 +498,12 @@ export function V7ContactFooter(): JSX.Element {
                   </svg>
                 </span>
                 <span className="v7-meta">Email</span>
-                <a className="dir__value" href={`mailto:${COMPANY.email}`} data-testid="contact-email">
-                  {COMPANY.email}
-                </a>
+                <span className="dir__copyrow">
+                  <a className="dir__value" href={`mailto:${COMPANY.email}`} data-testid="contact-email">
+                    {COMPANY.email}
+                  </a>
+                  <CopyButton value={COMPANY.email} what="email address" testId="contact-email-copy" />
+                </span>
               </li>
               <li>
                 <span className="v7-iconwell">
@@ -497,9 +512,12 @@ export function V7ContactFooter(): JSX.Element {
                   </svg>
                 </span>
                 <span className="v7-meta">Phone</span>
-                <a className="dir__value" href={PRIMARY_PHONE.telHref} data-testid="contact-phone">
-                  {PRIMARY_PHONE.display}
-                </a>
+                <span className="dir__copyrow">
+                  <a className="dir__value" href={PRIMARY_PHONE.telHref} data-testid="contact-phone">
+                    {PRIMARY_PHONE.display}
+                  </a>
+                  <CopyButton value={PRIMARY_PHONE.display} what="phone number" testId="contact-phone-copy" />
+                </span>
               </li>
               <li>
                 <span className="v7-iconwell">

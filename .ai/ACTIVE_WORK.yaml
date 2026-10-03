@@ -59,6 +59,63 @@ claims:
       (portal_tenant_files) with a cache fallback so it survives restarts;
       full reliability of the tenant-file flow still depends on durable writes
       (tenant-file durability, issues 233/259). Reconciled onto main d5f3479.
+  - id: de-auth-token-identity-binding
+    owner: claude
+    subsystem: portal-auth
+    branch: claude/auth-token-identity-binding
+    base_sha: 634390fd
+    files:
+      - server/routes.ts (authMiddleware's live-user resolution only)
+      - server/warehouseAccess.ts (resolveWarehouseStaff's live-user resolution only)
+      - server/portalAuthFailClosed.test.ts (two added cases)
+      - server/legacyAuthRetired.ts, server/legacyAuthRetired.test.ts (legacy /api/auth/register and /api/auth/login answer 410)
+      - server/routes.ts (legacy register/login handlers and their now-unused helpers removed)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Issue 236 (P0), confirmed on a local production build after Joe's "so
+      everything is complete and we cant think of things to do now?":
+      authMiddleware resolved the live user by the token's email before its
+      userId and never checked the two agreed, so a validly-signed token whose
+      email names another account (e.g. one minted by the unauthenticated
+      legacy /api/auth/register, which lets the caller choose any email)
+      resolved to that account and assumed its role, admin included, with no
+      password or MFA. Reproduced: a legacy-register token carrying a portal
+      admin's email authenticated as that admin. The email lookup is now
+      trusted only when it resolves to the token's own userId, in both
+      authMiddleware and resolveWarehouseStaff. Two regression tests fail
+      against the old code. Per the issue's preferred fix, the legacy
+      /api/auth/register and /api/auth/login token minters are retired (410
+      Gone, end-to-end test). Follow-up (own PR): gate the PATCH
+      /api/portal/profile email change on a confirmation to the new address.
+  - id: de-desk-hardening
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 2db33c7
+    files:
+      - client/src/components/ZohoASAPWidget.tsx (docked height ceiling, focus trap and return, resize handles out of the tab order, forced-colours block, hint effects through the new module)
+      - client/src/components/SiteBottomBar.tsx (the chooser's Close button moved last in the DOM)
+      - client/src/lib/deskHints.ts, client/src/lib/deskHints.test.ts
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts
+      - scripts/desk-browser-smoke.mjs, package.json (smoke:desk; tailwindcss-animate moved to devDependencies), package-lock.json (dev markers only), .github/workflows/ci.yml (one line after smoke:door2)
+      - .cursor/skills/de-desk-ui/tokens-and-structure.md (a11y)
+      - artifacts/visual-qa/desk-hardening/**
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03, on "nothing to act on": "nothing to improve, nothing to
+      test? I doubt any of those are true". A Desk hardening pass found and
+      fixed: the Desk rising off the top of short screens (a phone held
+      sideways, 200% zoom); eight pointer-only resize handles in the tab
+      order and, after removing them, the trap letting focus slip out; focus
+      dropping to the page body on close; the chooser opening with focus on
+      Close; gold-only states vanishing in forced colours. The hint rules move
+      to a tested module, and a Desk browser smoke runs in CI. axe-core finds
+      no violations in any Desk state at 390 or 1440. CI then failed every PR on
+      the production dependency audit (a new braces advisory with no patch,
+      reaching prod only via the build-time plugin tailwindcss-animate); Joe
+      chose to fold the fix into this PR: the plugin moves to devDependencies.
   - id: portal-people-pick-company
     owner: claude
     subsystem: client-portal-pages
@@ -68,8 +125,15 @@ claims:
       - client/src/pages/portal/PortalPeople.tsx
       - client/src/components/portal/TenantSelector.tsx
       - artifacts/visual-qa/portal-people-pick-company/**
-    status: active
+    status: verified-live
     started: 2026-10-02
+    released: 2026-10-02
+    pr: 330
+    merge_sha: 2859b15c4ad9a5131ca6c8ce086afe4ba1cf3f0d
+    verification: >-
+      Merged on Joe's "merge" (2026-10-02). Production release.txt reads
+      2859b15c; PortalPeople-DMDwOVcy.js carries "Pick a company to view its
+      people", the switcher actions and the clientId scoping; /healthz 200.
     note: >-
       Joe, 2026-10-02, "6. a": replace People & Org's error for a DE admin who
       is not viewing as a company with a pick-a-company prompt, as a small
@@ -112,8 +176,16 @@ claims:
       - client/src/pages/portal/AdminLoginKnocks.tsx (scroll region)
       - client/src/components/CookieConsentBanner.tsx (role and label only)
       - artifacts/visual-qa/portal-followups/**
-    status: active
+    status: verified-live
     started: 2026-10-02
+    released: 2026-10-02
+    pr: 333
+    merge_sha: 0556880b817a3990395baba979a66e0c090b574a
+    verification: >-
+      Merged on Joe's "merge" (2026-10-02). Main CI and the production deploy
+      passed; release.txt read 0556880b; portal-By2NtNGL.css carries the
+      de-portal-scope dialog fix and PortalLayout-vWUJudun.js carries "Match
+      device" and the "Client portal" nav landmark; /healthz 200.
     note: >-
       Joe's answers of 2026-10-02 on the portal follow-ups. 4 "a and c": dark
       stays the default and "Match device" joins the user menu (browsers never
@@ -158,7 +230,7 @@ claims:
       - client/src/components/ZohoASAPWidget.desk-shell.test.ts
       - .cursor/skills/de-desk-ui/tokens-and-structure.md (the header line)
       - artifacts/visual-qa/desk-expand-hint/**
-    status: active
+    status: verified-live
     started: 2026-10-02
     note: >-
       Joe, 2026-10-02, on the Desk's expand button: "animate this so people
@@ -173,6 +245,16 @@ claims:
       Then: "look over the entire DE Desk popup and make sure it's fully
       optimized and has all the missing touches and looks perfect": a full
       Desk polish pass on the same claim (stylesheet and presentation only).
+      RELEASED 2026-10-02: merged as 2db33c7 (PR 331, on Joe's "continue"
+      after the PR was reported waiting on his merge). The CI run for 2db33c7
+      passed, including "Deploy and verify production VPS" (14:59Z). VERIFIED
+      LIVE 14:59:32Z: production serves ZohoASAPWidget-Cr8yHhV2.js with both
+      hints, the error bubble, the ticket label and the full-screen column; a
+      browser on digeratiexperts.com at 390, 768 and 1440 saw the text box
+      hint play, the full-screen hint follow it without overlap (none at 390,
+      by design), the Details box at 148px, the full-screen flag set, and no
+      horizontal overflow (artifacts/visual-qa/desk-polish/live/). Nothing was
+      sent to production. Files released.
   - id: de-static-cache-policy
     owner: claude
     subsystem: server-static
@@ -216,7 +298,7 @@ claims:
       - client/src/components/HomepageSectionNav.tsx (opt-in chapter progress in HomepageDockMenu only)
       - shared/threatFeed.ts (THREAT_ATTRIBUTION string only)
       - server/routes.ts (the public-threats error-path attribution string only)
-    status: active
+    status: verified-live
     started: 2026-10-01
     note: >-
       Joe, 2026-10-01: "can you mock up every section on the live
@@ -273,6 +355,44 @@ claims:
       PronunciationCard (claimed by pronunciation-and-flipbook-recovery and
       de-site-v2-scrollcraft); at 430px the launcher still sits over the live
       card's "Hear it" until one of those lanes or a release frees the files.
+      MERGED 2026-10-02: PR 332 as c702a4fc (Joe: "Merge #332 first").
+      VERIFIED LIVE: production release.txt c702a4fc; /api/public/threats
+      attribution reads "Digerati Experts prioritizes"; the served bundle
+      carries the Ask DE nudge with the 767px phone hold.
+      Round 4 (Joe, 2026-10-02, three dashboard references): "convert the
+      white sections to this style, well i still want white but the white on
+      cream looks stupid", "text looks so much better ... and the accent
+      colors", "this is what i mean by grey cards"; dark sections "Yes,
+      neutral grey". /version-7 only, via one overlay stylesheet
+      (client/src/pages/versions/v7/v7-dashboard.css, loaded last): white
+      paper bands with neutral grey cards, charcoal dark bands with
+      one-step-lighter cards, Inter headings, magenta-violet accents
+      (magenta stays the CTA fill). Tier 2 defaults changed on Joe's
+      direction; Tier 0/1 untouched. / is unchanged.
+      Round 5 (Joe: "we need this level of work" (uiverse.io elements), then
+      "all of it" after reviewing the DE Element Kit artifact): pointer
+      spotlight on cards (useSpotlight.ts), raised/sheen/pressed buttons,
+      drawn link underlines, floating-label fields with drawn valid checks and
+      an invalid nudge, sending → sent submit (SubmitFace.tsx), FAQ plus/minus
+      with real-height opening, city chip states, classification-tag tooltips
+      (TipTag.tsx, truthful tip text), copy buttons for email and phone
+      (CopyButton.tsx), hero posture bars fill once. Kit's switch, checkbox and
+      segmented control have no matching control on the page, so none added.
+      RELEASED 2026-10-03: rounds 4 and 5 merged as PR 344 (6ce035d6) on
+      Joe's "everything is approved" / "all approved", after merging main for
+      PR 342's production-audit fix. VERIFIED LIVE: production release.txt
+      6ce035d6; /version-7 answers 200 with X-Robots-Tag noindex, nofollow;
+      / answers 200 and is unchanged; scripts/qa/homepage-v7-check.mjs passes
+      31/31 against production; the live page shows the grey-card restyle.
+      Backups (branches, do not commit to them):
+      backup/2026-10-03-before-v7-restyle (c702a4fc),
+      backup/2026-10-03-v7-restyle-approved, backup/2026-10-03-v7-restyle-merged
+      (6ce035d6); revert guide in
+      artifacts/design-concepts/homepage-sections-2026-10/README.md. Files
+      released. Open, not claimed: the review-source funnel (postponed by
+      Joe); the 430px launcher over the live PronunciationCard "Hear it"
+      (pronunciation lane); / replacement by V7 waits on Joe.
+
   - id: de-desk-gold
     owner: claude
     subsystem: de-desk

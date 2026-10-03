@@ -77,7 +77,7 @@ function InternalToolGate({ children }: { children: React.ReactNode }) {
           </div>
           <h1 className="text-xl font-bold">Internal tool — sign-in required</h1>
           <p className="text-slate-400 text-sm leading-relaxed">
-            The Networking Planner is for authorized Digerati staff and partners. It is not a public
+            The Networking Planner is for authorized DE staff and partners. It is not a public
             marketing calculator. Sign in through the Client Portal to continue.
           </p>
           <a
