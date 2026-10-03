@@ -4797,7 +4797,8 @@ export async function registerRoutes(app: Express) {
   // Delete tenant file (admin only)
   app.delete("/api/portal/admin/companies/:companyId/files/:fileId", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const deleted = await storage.deleteTenantFile(req.params.fileId);
+      // Tenant-scoped: a file id from another company is a 404, not a delete.
+      const deleted = await storage.deleteTenantFile(req.params.fileId, req.params.companyId, req.userId || undefined);
       if (!deleted) {
         return res.status(404).json({ error: "File not found" });
       }

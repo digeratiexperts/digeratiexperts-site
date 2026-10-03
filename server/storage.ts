@@ -15,6 +15,7 @@ import {
   portalUsers as portalUsersTable,
   portalTickets,
   portalTicketComments,
+  portalTenantFiles,
   type User,
   type InsertUser,
   type Workspace,
@@ -35,7 +36,7 @@ import {
   type PortalTicket,
   type PortalTicketComment,
 } from "@shared/schema";
-import { eq, and, desc, asc, sql } from "drizzle-orm";
+import { eq, and, desc, asc, sql, isNull } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -91,7 +92,8 @@ export interface IStorage {
 
   getTenantFilesByClientId(clientId: string): Promise<any[]>;
   createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<any>;
-  deleteTenantFile(id: string): Promise<boolean>;
+  /** Tenant-scoped: only deletes when the file belongs to `clientId`. */
+  deleteTenantFile(id: string, clientId: string, deletedBy?: string): Promise<boolean>;
 
   getStoreOrders(): Promise<any[]>;
   getStoreOrder(id: string): Promise<any | undefined>;
@@ -703,7 +705,9 @@ export class MemStorage implements IStorage {
     return newFile;
   }
 
-  async deleteTenantFile(id: string): Promise<boolean> {
+  async deleteTenantFile(id: string, clientId: string, _deletedBy?: string): Promise<boolean> {
+    const file = this.tenantFiles.get(id);
+    if (!file || file.clientId !== clientId) return false;
     return this.tenantFiles.delete(id);
   }
 
@@ -1125,31 +1129,56 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  private tenantFilesCache: Map<string, any> = new Map();
   private storeOrdersMap: Map<string, MemStoreOrder> = new Map();
 
+  // Tenant file metadata is durable in portal_tenant_files (#259). Reads are
+  // tenant-scoped in SQL. Delete is a soft delete: the row keeps the object
+  // path (deleted_at/deleted_by set) so the blob is never silently orphaned;
+  // object removal is a deliberate, separate operation. DB errors propagate:
+  // the routes return 5xx rather than a success with no durable record.
   async getTenantFilesByClientId(clientId: string): Promise<any[]> {
-    return Array.from(this.tenantFilesCache.values()).filter(f => f.clientId === clientId);
+    const db = await this.getDb();
+    return await db
+      .select()
+      .from(portalTenantFiles)
+      .where(and(eq(portalTenantFiles.clientId, clientId), isNull(portalTenantFiles.deletedAt)))
+      .orderBy(desc(portalTenantFiles.createdAt));
   }
 
   async createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<any> {
-    const newFile = {
-      id: crypto.randomUUID(),
-      clientId: data.clientId,
-      fileName: data.fileName,
-      fileType: data.fileType,
-      category: data.category,
-      description: data.description,
-      fileUrl: data.fileUrl,
-      uploadedBy: data.uploadedBy,
-      createdAt: new Date(),
-    };
-    this.tenantFilesCache.set(newFile.id, newFile);
-    return newFile;
+    const db = await this.getDb();
+    const [created] = await db
+      .insert(portalTenantFiles)
+      .values({
+        id: crypto.randomUUID(),
+        clientId: data.clientId,
+        fileName: data.fileName,
+        fileType: data.fileType,
+        category: data.category,
+        description: data.description,
+        fileUrl: data.fileUrl,
+        uploadedBy: data.uploadedBy,
+      })
+      .returning();
+    if (!created) throw new Error("Tenant file metadata was not persisted");
+    return created;
   }
 
-  async deleteTenantFile(id: string): Promise<boolean> {
-    return this.tenantFilesCache.delete(id);
+  async deleteTenantFile(id: string, clientId: string, deletedBy?: string): Promise<boolean> {
+    const db = await this.getDb();
+    const now = new Date();
+    const updated = await db
+      .update(portalTenantFiles)
+      .set({ deletedAt: now, deletedBy: deletedBy || null, updatedAt: now })
+      .where(
+        and(
+          eq(portalTenantFiles.id, id),
+          eq(portalTenantFiles.clientId, clientId),
+          isNull(portalTenantFiles.deletedAt),
+        ),
+      )
+      .returning({ id: portalTenantFiles.id });
+    return updated.length > 0;
   }
 
   async getStoreOrders(): Promise<any[]> {

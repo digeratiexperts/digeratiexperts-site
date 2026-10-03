@@ -1072,6 +1072,9 @@ export const portalTenantFiles = pgTable("portal_tenant_files", {
   uploadedBy: varchar("uploaded_by").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  // Soft delete (#259): the row keeps the object path so a blob is never orphaned silently.
+  deletedAt: timestamp("deleted_at"),
+  deletedBy: varchar("deleted_by"),
 });
 
 // Insert schema for tenant files
