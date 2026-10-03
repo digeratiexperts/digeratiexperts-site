@@ -16,7 +16,10 @@ import { mkdirSync } from "node:fs";
  *   follows once it has ended (never both at once), and typing ends the text
  *   box hint;
  * - a few polish invariants (the empty send button is not half-transparent, the
- *   Details box shows its whole prompt, full screen keeps a centred column).
+ *   Details box shows its whole prompt, full screen keeps a centred column);
+ * - the Ask DE launcher: a solid gold disc on phones, a gold ring with a white
+ *   mark beside its label at desktop widths, one round white focus ring, the same
+ *   badge in the chooser header, and phone chrome 20px in from the edge.
  *
  * Network calls the Desk makes are answered by the browser (route stubs), so
  * the run is deterministic and never reaches Zoho or the advisor.
@@ -210,6 +213,63 @@ for (const viewport of [
   const tabsLeft = await page.locator(".de-desk-tabs").evaluate((el) => Math.round(el.getBoundingClientRect().left));
   check("polish", "full screen keeps a centred column", tabsLeft > 200, `tabs start at ${tabsLeft}px`);
   await context.close();
+}
+
+// 5. The Ask DE launcher (Joe, 2026-10-03): "B on desktop, C on mobile".
+{
+  const GOLD = "rgb(227, 178, 60)";
+  const CHARCOAL = "rgb(11, 11, 13)";
+  const INK = "rgb(245, 245, 244)";
+  const badge = (page, testId) =>
+    page.locator(`[data-testid="${testId}"]`).first().evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { bg: s.backgroundColor, border: s.borderTopColor, mark: s.color };
+    });
+  for (const viewport of [
+    { name: "390", width: 390, height: 844 },
+    { name: "1440", width: 1440, height: 900 },
+  ]) {
+    const { context, page } = await newPage(viewport);
+    const launcher = page.locator(LAUNCHER).first();
+    await page.mouse.move(2, 2, { steps: 4 });
+    const phone = viewport.width < 640;
+    const rest = await badge(page, "ask-de-launcher-badge");
+    if (phone) {
+      check("launcher", `${viewport.name}: a solid gold disc with a dark mark`, rest.bg === GOLD && rest.mark === CHARCOAL, JSON.stringify(rest));
+      const geo = await page.evaluate(() => {
+        const button = document.querySelector('[data-testid="button-open-asap-widget"]').getBoundingClientRect();
+        const bar = document.querySelector(".de-unified-bar-shell").getBoundingClientRect();
+        return { w: Math.round(button.width), h: Math.round(button.height), right: Math.round(innerWidth - bar.right), bottom: Math.round(innerHeight - bar.bottom) };
+      });
+      check("launcher", `${viewport.name}: the button is a circle`, geo.w === geo.h, `${geo.w}x${geo.h}`);
+      check("launcher", `${viewport.name}: the bar sits 20px in from the edge`, geo.right === 20 && geo.bottom === 20, `right ${geo.right} bottom ${geo.bottom}`);
+    } else {
+      check("launcher", `${viewport.name}: a gold ring on charcoal with a white mark`, rest.bg === CHARCOAL && rest.border === GOLD && rest.mark === INK, JSON.stringify(rest));
+      await launcher.hover();
+      await page.waitForTimeout(250);
+      const hover = await badge(page, "ask-de-launcher-badge");
+      check("launcher", `${viewport.name}: the mark stays white on hover`, hover.mark === INK, JSON.stringify(hover));
+      await page.mouse.move(2, 2, { steps: 4 });
+    }
+    await page.keyboard.press("Tab");
+    await launcher.focus();
+    await page.waitForTimeout(200);
+    const ring = await launcher.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { visible: el.matches(":focus-visible"), radius: s.borderTopLeftRadius, shadow: s.boxShadow };
+    });
+    check(
+      "launcher",
+      `${viewport.name}: keyboard focus draws one round white ring`,
+      ring.visible && parseFloat(ring.radius) >= 20 && ring.shadow.includes(INK),
+      JSON.stringify(ring),
+    );
+    await page.keyboard.press("Enter");
+    await page.waitForSelector(CHOOSER, { timeout: 10000 });
+    const header = await badge(page, "ask-de-chooser-badge");
+    check("launcher", `${viewport.name}: the chooser header wears the same badge`, header.bg === rest.bg && header.mark === rest.mark, JSON.stringify(header));
+    await context.close();
+  }
 }
 
 await browser.close();
