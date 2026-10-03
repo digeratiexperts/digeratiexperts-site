@@ -116,6 +116,20 @@ Intent (quote / consultation / assessment) is derived from policy on both sides 
 
 The same draft is rendered by the Store, family pages, `/store/solution`, and the final contact page. A submitted solution is archived on the device (`de-solution-submitted-v1`) so the confirmation page can show a masked contact line (the email masked, the last four digits of the phone) without the server ever serving contact details by reference.
 
+## Anonymous situation continuity
+
+The Store profile and selected needs are **operating facts**, not a person. Public assessment, contact, booking, and Ask DE may read that situation from the same `de-solution-draft-v2` key so those doors can advertise another path without asking the buyer to retype users, computers, or sites.
+
+Rules:
+
+- Remember the situation, never the person. Name, email, phone, and company stay in the form the buyer is filling and go to Hub/CRM only on submit.
+- Do not create a second browser store for this. Project the live draft through `shared/anonymousSituation.ts` (allow-listed fields only).
+- The server re-sanitizes whatever is posted to `/api/assessment` and `/api/contact` before it reaches CRM description text.
+- Compatibility free-text on older drafts (`currentProvider`, `complianceNeeds`, `deviceMix`, `urgency`) is never part of the situation payload.
+- Ask DE greets from `deskAskDeMotion` using the same projection. Do not restyle Desk chrome for this.
+
+Empty forms stay empty when there is no Store situation.
+
 The server companion is `/api/public/solutions/request` (contract in `docs/STORE-SOLUTION-ENGINE.md` → Persistence):
 
 - `GET` — retrieve/create the current browser-session draft record

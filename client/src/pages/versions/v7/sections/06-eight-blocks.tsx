@@ -7,6 +7,7 @@ import { revealInitial, revealInView, revealTransition, revealViewport } from "@
 // v7.css first so this section's rules follow the base system in the cascade,
 // as the section stylesheet follows tokens.css in the mock.
 import "../v7.css";
+import { TipTag } from "./TipTag";
 import "./06-eight-blocks.css";
 
 /**
@@ -331,7 +332,7 @@ export function V7EightBlocks(): JSX.Element {
                     every client receives the same controls or tooling.
                   </p>
                 </div>
-                <span className="v7-tag">Illustrative · Interactive model</span>
+                <TipTag tip="Illustrative architecture. Scope and controls depend on your operating model and environment.">Illustrative · Interactive model</TipTag>
               </div>
               <div className="model__body">
                 <div
