@@ -23,6 +23,7 @@ import { analytics } from "@/lib/analytics";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import heroCityLights from "@assets/de-hero-arizona-dusk-1600.webp";
+import { TipTag } from "./TipTag";
 import "./01-hero.css";
 
 /**
@@ -246,11 +247,11 @@ function AssessmentPreview(): JSX.Element {
           <Shield {...ICON} />
           Cyber Risk Assessment · overview
         </span>
-        <span className="v7-tag">Illustrative preview</span>
+        <TipTag tip="Example format, not client data. Real scores come from your assessment.">Illustrative preview</TipTag>
       </div>
 
       <div className="win__sec">
-        <span className="v7-tag win__tag-sm">Illustrative preview</span>
+        <TipTag className="win__tag-sm" tip="Example format, not client data. Real scores come from your assessment.">Illustrative preview</TipTag>
         <p className="win__h">What the assessment reviews</p>
         <p className="win__lead">Review of identity, endpoints, email, backups, and foundational security controls.</p>
         <ul className="areas">
