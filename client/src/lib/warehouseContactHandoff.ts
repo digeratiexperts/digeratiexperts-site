@@ -18,7 +18,8 @@ export type WarehouseContactHandoffReason =
   | "role_required"
   | "subscription_billing"
   | "durable_db"
-  | "physical_fulfillment";
+  | "physical_fulfillment"
+  | "tax_unavailable";
 
 export type WarehouseContactHandoff = {
   version: 1;
@@ -39,6 +40,7 @@ const REASONS: ReadonlySet<string> = new Set<WarehouseContactHandoffReason>([
   "subscription_billing",
   "durable_db",
   "physical_fulfillment",
+  "tax_unavailable",
 ]);
 
 function storage(): Storage | null {

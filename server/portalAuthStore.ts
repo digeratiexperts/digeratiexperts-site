@@ -53,6 +53,8 @@ export type PortalAuthClient = {
   type?: string;
   serviceType?: string | null;
   hubAccountId?: string | null;
+  /** shared/accountManagers.ts profile id; null = default manager. */
+  accountManager?: string | null;
   createdAt?: Date;
 };
 
@@ -134,6 +136,7 @@ function rowToClient(row: typeof portalClientsTable.$inferSelect): PortalAuthCli
     status: row.status,
     serviceType: row.serviceType,
     hubAccountId: (row as { hubAccountId?: string | null }).hubAccountId || null,
+    accountManager: row.accountManager || null,
     createdAt: row.createdAt,
   };
 }
@@ -266,6 +269,7 @@ async function writeClientDb(client: PortalAuthClient): Promise<void> {
         status: client.status || "active",
         serviceType: client.serviceType || "prospect",
         hubAccountId: client.hubAccountId || null,
+        accountManager: client.accountManager || null,
       })
       .onConflictDoUpdate({
         target: portalClientsTable.id,
@@ -278,6 +282,7 @@ async function writeClientDb(client: PortalAuthClient): Promise<void> {
           status: client.status || "active",
           serviceType: client.serviceType || "prospect",
           ...(client.hubAccountId ? { hubAccountId: client.hubAccountId } : {}),
+          accountManager: client.accountManager || null,
           updatedAt: new Date(),
         },
       });

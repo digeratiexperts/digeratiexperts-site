@@ -232,7 +232,7 @@ export function PortalLayout({
           <SidebarRail />
         </Sidebar>
 
-        <SidebarInset className="min-w-0 bg-background">
+        <SidebarInset className="pt-canvas min-w-0 bg-background">
           <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-[hsl(var(--pt-topbar))] px-3 backdrop-blur md:px-5">
             <SidebarTrigger className="h-9 w-9 text-foreground hover:bg-accent" aria-label="Toggle navigation" />
             <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-1.5 text-sm text-muted-foreground md:flex">
