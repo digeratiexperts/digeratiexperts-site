@@ -6,20 +6,20 @@ export const locationPageData = {
     localArea: 'Chandler, Arizona',
     serviceRadius: 'Serving Chandler, Ahwatukee, South Phoenix, and surrounding areas',
     title: "Managed IT Services & Cybersecurity in Chandler, AZ",
-    metaDescription: "Chandler-based managed IT and cybersecurity with 15-minute response times for healthcare, law, accounting and growing Arizona businesses.",
+    metaDescription: "Chandler-based managed IT and cybersecurity for healthcare, law, accounting and growing Arizona businesses, with a published SLA: 15-minute response for critical incidents.",
     subtitle: "Local IT support and security solutions for Chandler businesses",
-    description: "Digerati Experts provides comprehensive managed IT services and cybersecurity solutions to businesses throughout Chandler, Arizona. Based in Chandler, we deliver 15-minute response times and local expertise for healthcare, law firms, accounting firms, and growing businesses.",
+    description: "Digerati Experts provides comprehensive managed IT services and cybersecurity solutions to businesses throughout Chandler, Arizona. Based in Chandler, we bring local expertise to healthcare, law firms, accounting firms, and growing businesses, backed by a published SLA with a 15-minute response for critical incidents.",
     heroImage: "🏢",
     keywordPhrase: "Managed IT Chandler",
     whyChooseUs: [
-      "Local Chandler-based team with deep community connections",
-      "15-minute first-response target during business hours for critical issues",
+      "A Chandler-based team: the office you call is down the road",
+      "15-minute response for critical incidents, per our published SLA",
       "Support for Arizona-specific compliance requirements (HIPAA, ADA)",
-      "Same-day onsite support available",
+      "Onsite visits from our Chandler office, as your plan sets",
       "Understanding of Chandler business ecosystem"
     ],
     localProof: {
-      officeLocation: "Chandler, AZ (Primary Office)",
+      officeLocation: "Chandler, AZ office",
       yearsServing: "Local Chandler team",
       testimonialCount: "Published reviews appear on the reviews page when available",
       industries: ["Healthcare practices", "Law firms", "Accounting firms", "Manufacturing", "Nonprofit organizations"]
@@ -39,25 +39,25 @@ export const locationPageData = {
     state: 'Arizona',
     slug: 'phoenix-az',
     localArea: 'Phoenix, Arizona',
-    serviceRadius: 'Serving Phoenix, North Phoenix, East Phoenix, and greater metro area',
+    serviceRadius: 'Serving Downtown, North, East and West Phoenix from our Chandler office',
     title: "IT Support & Cybersecurity Services in Phoenix, AZ",
-    metaDescription: "Managed IT, 24/7 monitoring and compliance support for Phoenix organizations — North, Downtown and East Phoenix — from an Arizona MSSP.",
-    subtitle: "Enterprise IT solutions for Phoenix businesses",
-    description: "Digerati Experts delivers managed IT services and advanced cybersecurity to Phoenix-based organizations. Whether you're in North Phoenix, Downtown, or East Phoenix, we provide 24/7 monitoring, expert support, and compliance solutions tailored to Arizona businesses.",
+    metaDescription: "Managed IT, cybersecurity and compliance support for Phoenix organizations, from Digerati Experts' Chandler-based team, with a published SLA and 24/7/365 emergency incident response.",
+    subtitle: "Managed IT and cybersecurity for Phoenix businesses, from a Chandler-based team",
+    description: "Digerati Experts serves Phoenix organizations from our office in Chandler, in the Southeast Valley. Downtown, North, East or West Phoenix, you get the same published SLA, emergency incident response 24/7/365, and compliance support built for Arizona businesses.",
     heroImage: "🌆",
     keywordPhrase: "IT Support Phoenix",
     whyChooseUs: [
-      "Serving Phoenix's largest businesses and nonprofits",
-      "24/7/365 monitoring and incident response",
-      "Expertise in Arizona healthcare compliance",
-      "Strategic IT planning for enterprise growth",
-      "Local presence across greater Phoenix"
+      "One published SLA across the Valley: 15-minute response for critical incidents",
+      "Emergency incident response 24/7/365",
+      "HIPAA-aligned support, including Business Associate Agreements for healthcare",
+      "Planning reviews at the cadence your tier sets",
+      "A Chandler-based team serving the whole Phoenix metro"
     ],
     localProof: {
-      officeLocation: "Phoenix office location serving metro area",
-      yearsServing: "Greater Phoenix coverage",
+      officeLocation: "Chandler, AZ office, serving Phoenix",
+      yearsServing: "Phoenix metro service area",
       testimonialCount: "Published reviews appear on the reviews page when available",
-      industries: ["Large healthcare networks", "Enterprise law firms", "Biotech firms", "Government contractors"]
+      industries: ["Healthcare practices", "Law firms", "Accounting and finance", "Nonprofit organizations"]
     },
     serviceFocus: [
       "Enterprise Managed IT",
@@ -67,7 +67,7 @@ export const locationPageData = {
       "Multi-location IT management"
     ],
     neighborhoods: ["Downtown Phoenix", "North Phoenix", "East Phoenix", "West Phoenix"],
-    cta: "Schedule Your Enterprise IT Consultation"
+    cta: "Get Your Free IT Security Assessment for Your Phoenix Business"
   },
   'mesa-az': {
     city: 'Mesa',
@@ -82,14 +82,14 @@ export const locationPageData = {
     heroImage: "🏭",
     keywordPhrase: "Managed IT Mesa",
     whyChooseUs: [
-      "Mesa-based technical team available for on-site support",
-      "Fast response times for Mesa-area clients",
+      "Onsite visits from our Chandler office, next door in the East Valley, as your plan sets",
+      "15-minute response for critical incidents, per our published SLA",
       "Experience with East Valley business environment",
-      "Local vendor relationships and supply chain",
+      "One accountable team from assessment to day-to-day support",
       "Understanding of Arizona manufacturing regulations"
     ],
     localProof: {
-      officeLocation: "Mesa service office",
+      officeLocation: "Chandler, AZ office, serving Mesa",
       yearsServing: "East Valley coverage",
       testimonialCount: "Published reviews appear on the reviews page when available",
       industries: ["Manufacturing", "Distribution", "Professional services", "Retail"]

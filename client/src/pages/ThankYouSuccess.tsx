@@ -1,4 +1,4 @@
-import { Calendar, Clock, MapPin, Video } from "lucide-react";
+import { Calendar, Clock, MapPin, ShieldCheck, Video } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
 import { PageTemplate } from "@/components/PageTemplate";
 import {
@@ -11,7 +11,7 @@ import {
 } from "@/components/site/chapters";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { COMPANY, PRIMARY_PHONE } from "@/data/companyContact";
 
 const calendars = [
   { href: "https://calendar.google.com", label: "Google Calendar", testId: "button-google-calendar", icon: "google" },
@@ -120,20 +120,32 @@ export default function ThankYouSuccess() {
           <ul className="flex flex-wrap items-center gap-4">
             <li>
               <a
-                href="/#google-reviews"
+                href={COMPANY.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex min-h-11 items-center gap-3 rounded-lg border border-[var(--de-hairline)] bg-de-raised px-4 py-3 transition-colors hover:border-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
                 data-testid="link-thank-you-reviews"
               >
                 <SiGoogle className="h-5 w-5 text-white" aria-hidden="true" />
                 <span>
-                  <span className="block text-xs font-semibold text-white">Google Reviews</span>
-                  <span className="block text-xs text-white/65 underline">See client reviews</span>
+                  <span className="block text-xs font-semibold text-white">Read us on Google</span>
+                  <span className="block text-xs text-white/65 underline">Our Google Business Profile</span>
+                  <span className="sr-only">(opens in a new tab)</span>
                 </span>
               </a>
             </li>
-            <li className="flex min-h-11 items-center gap-3 rounded-lg border border-[var(--de-hairline)] bg-de-raised px-4 py-3">
-              <SiGoogle className="h-5 w-5 text-white" aria-hidden="true" />
-              <span className="text-xs font-semibold text-white">Google Partner</span>
+            <li>
+              <a
+                href="/about/guarantee"
+                className="flex min-h-11 items-center gap-3 rounded-lg border border-[var(--de-hairline)] bg-de-raised px-4 py-3 transition-colors hover:border-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
+                data-testid="link-thank-you-guarantee"
+              >
+                <ShieldCheck className="h-5 w-5 text-white" aria-hidden="true" />
+                <span>
+                  <span className="block text-xs font-semibold text-white">30-day guarantee</span>
+                  <span className="block text-xs text-white/65 underline">Money back, no questions asked</span>
+                </span>
+              </a>
             </li>
           </ul>
         </Container>

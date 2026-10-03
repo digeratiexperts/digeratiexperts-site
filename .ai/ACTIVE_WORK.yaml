@@ -30,6 +30,45 @@
 
 version: 2
 claims:
+  - id: site-truth-pass
+    owner: claude
+    subsystem: marketing-claims
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: 2092d946
+    files:
+      - client/src/data/credentials.ts
+      - client/src/data/credentials.test.ts
+      - client/src/components/site/VerifiedCredentials.tsx
+      - client/src/pages/about/Team.tsx
+      - client/src/pages/about/ComplianceCertifications.tsx (credentials chapter only)
+      - client/src/pages/about/MissionValues.tsx (response value only)
+      - client/src/pages/about/Guarantee.tsx (superlative paragraph only)
+      - client/src/pages/legal/PrivacyPolicy.tsx (4.3 certifications line only)
+      - client/src/pages/ThankYouSuccess.tsx (trust badges only)
+      - client/src/pages/locations/LocationServicePage.tsx (stats and partner note only)
+      - client/src/pages/routes/locationPages.tsx (Chandler, Phoenix, Mesa entries)
+      - client/src/pages/routes/pageNarratives.ts (Operate step only)
+      - client/src/pages/routes/servicePages.tsx (first-response benefit only)
+      - client/src/pages/store/ManagedStore.tsx (stats row only)
+      - client/src/pages/support/RemoteSupport.tsx (availability card only)
+      - client/src/pages/sections/DigeratiNewsletterSection.tsx (partner chips only)
+      - client/src/pages/resources/CyberFacts.tsx
+      - client/src/pages/resources/Ebook.tsx (chapters 1 and 3 only)
+      - client/src/pages/support/SubmitTicket.tsx (response tiers only)
+      - client/src/pages/about/TwentyOneQuestions.tsx (question 18 note only)
+      - client/src/assets/images/ebook-defending-digital-realm-cover.webp
+      - design/source/ebook-cover/**
+      - docs/CLAIMS-REGISTER.md
+      - artifacts/visual-qa/site-truth-pass/**
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: make the claims PR 370 flagged authentic, branded and
+      true rather than remove or flag them. Response times bound to the SLA's
+      critical tier; Phoenix and Mesa served from the Chandler office;
+      credentials only from a verified list with issuer links; Google Partner
+      badge replaced; ebook stories labelled as examples and tied to sourced
+      facts; new code-drawn ebook cover; developer notes off Cyber Facts.
   - id: tenant-files-durable
     issue: 259
     owner: claude
@@ -86,8 +125,18 @@ claims:
       - VENDOR_SETUP_STATUS.md (Test login paragraph only)
       - server/index.ts (manual-records import body limit line only)
       - client/src/lib/csv.test.ts
-    status: active
+    status: verified-live
     started: 2026-10-03
+    released: 2026-10-03
+    pr: 375
+    merge_sha: 3097df07b7d98154437bf99770d9b4658882fe3d
+    verification: >-
+      Merged on Joe's "Merge 375" (2026-10-03). Main CI and the production
+      deploy passed; release.txt read 3097df07, then 2092d946 with the rest of
+      the batch. /api/portal/integrations and /api/portal/admin/data-sources
+      answer 401 signed out; PortalAdminDataSources, PortalShipCenter
+      (carrierStatus) and PortalSignup (turnstileToken) chunks are served.
+      Evidence: artifacts/visual-qa/live-2026-10-03/. Follow-ups: issue 395.
     note: >-
       Joe, 2026-10-03: "write all of them then i will tell you what to do from
       there" (open answers 2a/2b/2c VPN, phone and shipping sources; 3 test
