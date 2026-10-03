@@ -113,11 +113,11 @@ Every figure on this page is read at build time from a file the rest of the site
 
 ## Version 6 preview `/version-6` (noindex)
 
-Every section of the live homepage, redrawn on the Version 5 system. The same acceptance script checks it (`scripts/qa/homepage-v5-acceptance.mjs --scope v6`, limits in `client/src/pages/versions/v6/ACCEPTANCE.md`): every figure on the rendered page must appear verbatim in one of the source files below.
+Every section of the live homepage, cleaned in the current DE theme (graphite / paper / magenta). Not the Version 5 paper system. Version 7 is a separate reviewed-mockups build; ChatGPT's other-theme board stays held for a later version. The same acceptance script checks it (`scripts/qa/homepage-v5-acceptance.mjs --scope v6`, limits in `client/src/pages/versions/v6/ACCEPTANCE.md`): every figure on the rendered page must appear verbatim in one of the source files below.
 
 | Where | Claim | Basis | Status | Action |
 | --- | --- | --- | --- | --- |
-| Hero facts, pricing | $125 per user a month, $1,600 monthly minimum; the four tiers, minimums, ideal-buyer lines, first three inclusions; the scope note | `client/src/data/pricing.ts`, rendered from the import | Published | Bound to the file; never hand-edited |
+| Pricing | $125 per user a month, $1,600 monthly minimum; the four tiers, minimums, ideal-buyer lines, first three inclusions; the scope note | `client/src/data/pricing.ts`, rendered from the import | Published | Bound to the file; never hand-edited |
 | Hero facts, response times table, contact hours | Critical 15 minutes, High 1 hour, Medium 4 hours, Low next business day; 24/7/365 emergency incident response; service credits | `client/src/pages/legal/SLA.tsx` | Published | Change the SLA page first |
 | Why it matters | 48% of breaches involve ransomware; $11.5M average US breach cost; 99%+ of unauthorized access attempts blocked by MFA; $392M Arizona internet-crime losses in 2024 | `client/src/data/cyberAwarenessFacts.ts` (`getHomepageCyberFacts`), each linked to its report | Published, sourced | Bound to the file |
 | Why we exist, what we tackle, three paths, capabilities, four steps, outcomes, pillars, roles, industries, detection points, CTA items, compliance chips | The live homepage's own copy for those sections, de-dashed | The live section components under `client/src/pages/sections/` | Published on `/` | Keep in step with the live sections, or retire the live ones |
