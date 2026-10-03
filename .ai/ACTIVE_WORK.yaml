@@ -30,6 +30,38 @@
 
 version: 2
 claims:
+  - id: site-design-pass-2026-10-03
+    owner: claude
+    subsystem: marketing-pages
+    branch: claude/exciting-fermi-py7e0b
+    base_sha: 8c16090
+    files:
+      - client/src/components/site/** (new chapter primitives)
+      - client/src/components/PageTemplate.tsx, PremiumCTASection.tsx, LegalDocumentLayout.tsx, ServiceCapabilityMatrix.tsx (footer link)
+      - client/src/pages/** interior marketing pages (industries, locations, solutions, pricing, services, about, trust, legal, contact, book, support, resources, campaigns, 404)
+      - client/src/pages/marketingMainTarget.test.ts, ProActiveEcosystemPricing.landmark.test.ts, marketingFallbackNotFound.test.ts
+    status: verified-live
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: "go hard with design on all the pages of the website.
+      Like every single page." Run in Maintenance Mode (ambitious) per
+      DESIGN-AUTHORITY.md: every interior marketing page recomposed on shared
+      chapter primitives (well / surface / paper rhythm); homepage, /version-*,
+      Portal, Desk and Store colours out of scope. Rendered audit of 143 public
+      routes at 390 and 1440 before merge: horizontal overflow 17 -> 0 pages,
+      wrong h1 count 12 -> 0, sub-32px targets 242 -> 9 (8 false positives),
+      crashes 3 -> 0 (unknown brief/datasheet/campaign slugs recursed through
+      NotFound). RELEASED 2026-10-03: merged as 0cc9de28 (PR 370, Joe). The CI
+      run for 0cc9de28 passed every job, including "Deploy and verify
+      production VPS" (finished 17:08Z) and the Cloudflare purge. Production
+      verification: https://digeratiexperts.com serves the new bundle; the
+      live Healthcare chunk contains the recomposed page ("Program focus",
+      "Exposure check", "Digerati Experts manages") and the live
+      LegalDocumentLayout chunk contains the new "Legal documents" index.
+      Limit: rendered screenshots against production were not taken from the
+      agent environment (its headless browser does not trust the egress proxy
+      CA and TLS verification was not disabled); the 390/1440 render audit ran
+      on the merged code locally. VERIFIED LIVE (bundle). Files released.
   - id: tenant-files-durable
     issue: 259
     owner: claude
