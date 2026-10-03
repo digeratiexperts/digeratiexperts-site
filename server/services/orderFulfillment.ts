@@ -15,7 +15,6 @@ import { storeOrders, type StoreOrder } from "@shared/schema";
 import { notificationService } from "./notificationService";
 import { zohoClient } from "../zoho/zohoClient";
 import { zohoDeskService } from "../zoho/zohoDesk";
-import { eventBus, EventTypes } from "../eventBus";
 
 const ACTIVE_FULFILLMENT_STATUSES = new Set(["provisioning", "processing"]);
 const TERMINAL_FULFILLMENT_STATUSES = new Set(["completed", "cancelled", "refunded"]);
@@ -260,22 +259,9 @@ export async function fulfillPaidOrder(orderId: string | number): Promise<boolea
     await sendConfirmation(order, items);
     const deskTicketId = await createFulfillmentDeskTicket(order, items);
 
-    try {
-      await eventBus.emit(EventTypes.LEAD_CREATED, {
-        id: String(order.id),
-        name: order.billingName || undefined,
-        email: order.billingEmail || undefined,
-        company: order.billingCompany || undefined,
-        phone: undefined,
-        message: `Store purchase paid: ${order.orderNumber} ($${Number(order.total || 0).toFixed(2)})`,
-        source: "store_purchase",
-      });
-    } catch (syncErr: any) {
-      console.warn(
-        "[ORDER FULFILLMENT] TechSales purchase sync emit failed:",
-        syncErr?.message || syncErr,
-      );
-    }
+    // The paid store.order_created command for the Hub is queued once, by the
+    // Zoho Payments webhook at the paid transition (server/index.ts). Queuing it
+    // again here would hand the Hub a duplicate order event.
 
     const fulfilledAt = new Date().toISOString();
     const noteParts = [

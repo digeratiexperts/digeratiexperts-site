@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { PortalLayout } from "./PortalLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -165,6 +165,8 @@ export function OrderForm() {
 
   const [, navigate] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // One key per page visit: a retry after a failed or lost response names the same order.
+  const submitKeyRef = useRef<string>(`${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`);
 
   const handleSubmit = async () => {
     if (!clientInfo.legalName || !clientInfo.signatoryEmail) {
@@ -232,6 +234,7 @@ export function OrderForm() {
           payableCheckout: validated.payableCheckout,
         },
         name: `Service Order - ${clientInfo.legalName} - ${new Date().toLocaleDateString()}`,
+        idempotencyKey: submitKeyRef.current,
       };
 
       await portalPost<{ success: boolean; packet: any; items: any[]; message: string }>(
