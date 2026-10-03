@@ -8,7 +8,8 @@ import { PRIMARY_PHONE } from "@/data/companyContact";
 import { campaignBySlug } from "@/data/campaigns";
 import { RESOURCE_TYPE_LABEL, resourceBySlug, resourceLandingMeta } from "@/data/resourceRegistry";
 import { briefBySlug } from "@/data/executiveBriefs";
-import NotFound from "@/pages/not-found";
+// The plain 404: the default export re-dispatches marketing paths back here (infinite loop on an unknown slug).
+import { NotFoundPage as NotFound } from "@/pages/not-found";
 import {
   Chapter,
   ChapterHeader,

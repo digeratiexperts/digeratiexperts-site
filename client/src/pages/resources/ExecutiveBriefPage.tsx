@@ -10,7 +10,8 @@ import { briefBySlug, EXECUTIVE_BRIEFS } from "@/data/executiveBriefs";
 import { resourceBySlug } from "@/data/resourceRegistry";
 import { COMPANY } from "@/data/companyContact";
 import { Breadcrumbs } from "@/components/site/chapters";
-import NotFound from "@/pages/not-found";
+// The plain 404: the default export re-dispatches marketing paths back here (infinite loop on an unknown slug).
+import { NotFoundPage as NotFound } from "@/pages/not-found";
 
 export function ExecutiveBriefIndex() {
   useSEO({
@@ -23,7 +24,7 @@ export function ExecutiveBriefIndex() {
   return (
     <div className="min-h-screen bg-de-paper">
       <MegaMenu />
-      <main id="main-content" className="de-nav-clear mx-auto max-w-3xl px-4 py-12 sm:px-6 md:py-16">
+      <main id="main-content" className="mx-auto max-w-3xl px-4 pb-12 pt-[calc(var(--de-nav-offset)+3rem)] sm:px-6 md:pb-16 md:pt-[calc(var(--de-nav-offset)+4rem)]">
         <Breadcrumbs tone="paper" items={[{ label: "Resources", href: "/resources" }, { label: "Executive briefs" }]} />
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#A30E52]">Digerati Experts</p>
         <h1 className="mt-4 font-heading text-4xl font-semibold tracking-[-0.03em] text-[#1A1228]">

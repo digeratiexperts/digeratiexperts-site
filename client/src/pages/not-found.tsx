@@ -15,7 +15,7 @@ import {
   MarketingRouteFallback,
 } from "@/pages/MarketingRouteFallback";
 
-function NotFoundPage() {
+export function NotFoundPage() {
   useSEO({
     title: "404 - Page Not Found",
     description:
