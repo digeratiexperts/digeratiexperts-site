@@ -1,0 +1,79 @@
+{
+  "_source": "https://docs.goshippo.com/api-reference/transactions/list-all-shipping-labels",
+  "_note": "Shaped on the documented { next, previous, results[] } response and Transaction fields (field names per Shippo's official OpenAPI-generated SDK, shippo 2.18.0, src/models/components/transaction.ts). docs.goshippo.com was blocked by the build machine's egress proxy, so the values are not a byte copy of the docs example. Rows: delivered, in transit, queued, a failed purchase (ERROR) and a refunded label.",
+  "response": {
+    "next": null,
+    "previous": null,
+    "results": [
+      {
+        "object_id": "70ae8117ee1749e393f249d5b77c45e0",
+        "object_state": "VALID",
+        "status": "SUCCESS",
+        "object_created": "2026-09-22T19:14:48.273Z",
+        "object_updated": "2026-09-24T19:14:48.273Z",
+        "object_owner": "shippotle@shippo.com",
+        "test": false,
+        "rate": "ee81fab0372e419ab52245c8952ccaeb",
+        "tracking_number": "9499907123456123456781",
+        "tracking_status": "DELIVERED",
+        "tracking_url_provider": "https://tools.usps.com/go/TrackConfirmAction_input?origTrackNum=9499907123456123456781",
+        "eta": "2026-09-24T12:00:00Z",
+        "label_url": "https://shippo-delivery.s3.amazonaws.com/70ae8117ee1749e393f249d5b77c45e0.pdf",
+        "commercial_invoice_url": "",
+        "metadata": "ACME-Order 1001",
+        "messages": []
+      },
+      {
+        "object_id": "915d94940ea54c3a80cbfa328722f5a1",
+        "object_state": "VALID",
+        "status": "SUCCESS",
+        "object_created": "2026-09-29T10:00:00.000Z",
+        "object_updated": "2026-09-30T10:00:00.000Z",
+        "object_owner": "shippotle@shippo.com",
+        "test": false,
+        "rate": { "object_id": "r2", "provider": "UPS", "servicelevel_name": "Ground", "amount": "9.10", "currency": "USD" },
+        "tracking_number": "1Z0000000000000099",
+        "tracking_status": "TRANSIT",
+        "tracking_url_provider": "https://www.ups.com/track?tracknum=1Z0000000000000099",
+        "eta": "2026-10-04T12:00:00Z",
+        "metadata": "ACME-Order 1002",
+        "messages": []
+      },
+      {
+        "object_id": "a1b2c3",
+        "object_state": "VALID",
+        "status": "QUEUED",
+        "object_created": "2026-10-01T10:00:00.000Z",
+        "test": false,
+        "rate": "r3",
+        "tracking_number": "",
+        "tracking_status": "UNKNOWN",
+        "metadata": "GLOBEX-55",
+        "messages": []
+      },
+      {
+        "object_id": "d4e5f6",
+        "object_state": "VALID",
+        "status": "ERROR",
+        "object_created": "2026-10-01T11:00:00.000Z",
+        "test": false,
+        "rate": "r4",
+        "tracking_number": "",
+        "metadata": "ACME-Order 1003",
+        "messages": [{ "source": "USPS", "code": "", "text": "Invalid address" }]
+      },
+      {
+        "object_id": "f7a8b9",
+        "object_state": "VALID",
+        "status": "REFUNDED",
+        "object_created": "2026-09-15T11:00:00.000Z",
+        "test": false,
+        "rate": "r5",
+        "tracking_number": "9499907123456123450000",
+        "tracking_status": "PRE_TRANSIT",
+        "metadata": "ACME-Order 0999",
+        "messages": []
+      }
+    ]
+  }
+}

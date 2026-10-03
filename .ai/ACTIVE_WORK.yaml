@@ -30,6 +30,57 @@
 
 version: 2
 claims:
+  - id: portal-data-sources
+    owner: claude
+    subsystem: client-portal-integrations
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: e2d4ffa0
+    files:
+      - server/portalIntegrations.ts
+      - server/portalManualRecords.ts
+      - server/integrations/**
+      - server/routes.ts (registration lines only)
+      - shared/schema.ts (portalManualRecords only)
+      - migrations/0003_portal_manual_records.sql
+      - client/src/lib/portalIntegrations.ts
+      - client/src/components/portal/IntegrationNotices.tsx
+      - client/src/components/portal/shell/portalNav.ts
+      - client/src/pages/portal/PortalLayout.tsx
+      - client/src/pages/portal/PortalVPN.tsx
+      - client/src/pages/portal/PortalCytracom.tsx
+      - client/src/pages/portal/PortalShipCenter.tsx
+      - scripts/qa/portal-prod-check.mjs
+      - deploy/vps/env.production.example (portal data-source section)
+      - server/portalDataSources.ts
+      - server/portalDataSources.test.ts
+      - artifacts/visual-qa/portal-data-sources-prep/**
+      - client/src/pages/portal/PortalAdminDataSources.tsx
+      - client/src/App.tsx (one admin route line)
+      - client/src/lib/csv.ts
+      - docs/vendor-requests/TIMUS-API-REQUEST.md
+      - docs/runbooks/PORTAL-QA-LOGIN.md
+      - .github/workflows/portal-prod-check.yml
+      - client/src/pages/portal/PortalSignup.tsx (Turnstile token only)
+      - VENDOR_SETUP_STATUS.md (Test login paragraph only)
+      - server/index.ts (manual-records import body limit line only)
+      - client/src/lib/csv.test.ts
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: "write all of them then i will tell you what to do from
+      there" (open answers 2a/2b/2c VPN, phone and shipping sources; 3 test
+      login; 5 popup). Every option is built and off by default: sample stays
+      until PORTAL_*_PROVIDER is set. The popup answer landed on main via
+      #369 ("Yours to keep") before this branch merged, so this branch keeps
+      main's popup and drops its own switch. #369 also records VPN = Timus
+      (no adapter possible until Timus sends API docs), phone = Cytracom UCaaS
+      and shipping = staff-entered: the cytracom and manual adapters here
+      match; the other adapters stay off unless Joe picks them. Joe,
+      2026-10-03: "build in preparation of getting each of these": Timus
+      provider slot and vendor request list, CSV import of staff-entered
+      records, UPS/FedEx/USPS tracking for staff-entered shipments, Cytracom
+      call history, a DE-admin Data Sources setup page, and a manual
+      production QA workflow. All off until their env vars are set.
   - id: focus-keeps-shape
     owner: claude
     subsystem: a11y

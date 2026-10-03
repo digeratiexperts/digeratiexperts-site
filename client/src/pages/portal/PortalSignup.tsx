@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/
 import { AlertCircle, Mail, Lock, User, ArrowRight, CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
+import TurnstileWidget from "@/components/TurnstileWidget";
 import "@/styles/portal.css";
 
 export default function PortalSignup() {
@@ -15,6 +16,15 @@ export default function PortalSignup() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  // POST /api/portal/register runs verifyTurnstile, like sign-in: without a
+  // token it answers 400 "Bot verification required" wherever
+  // TURNSTILE_SECRET_KEY is set.
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileKey, setTurnstileKey] = useState(0);
+  const resetTurnstile = () => {
+    setTurnstileToken("");
+    setTurnstileKey((k) => k + 1);
+  };
   const [, navigate] = useLocation();
 
   const validateEmail = (email: string) => {
@@ -60,14 +70,15 @@ export default function PortalSignup() {
       const response = await fetch("/api/portal/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, username, password }),
+        body: JSON.stringify({ email, username, password, turnstileToken }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Signup failed");
+        setError(data.message || data.error || "Signup failed");
         setLoading(false);
+        resetTurnstile();
         return;
       }
 
@@ -78,6 +89,7 @@ export default function PortalSignup() {
     } catch (err) {
       setError("Connection error. Please try again.");
       setLoading(false);
+      resetTurnstile();
     }
   };
 
@@ -199,6 +211,8 @@ export default function PortalSignup() {
                   />
                 </div>
               </div>
+
+              <TurnstileWidget key={turnstileKey} onVerify={setTurnstileToken} />
 
               <Button
                 type="submit"
