@@ -87,6 +87,11 @@ Do **not** invent service status, devices, software libraries, or vendor product
 - Interactive controls ~44px where practical.
 - `prefers-reduced-motion` on pulse, heads-up, and tool-row motion.
 - Ticket submit is fail-closed: treat `!response.ok` or missing `zohoTicketId` as failure.
+- Keyboard (2026-10-03): the chooser opens with focus on its first choice (Close is last in the DOM, pinned top-right). The Desk opens with focus on the composer (desktop Ask DE) or the active tab; Tab and Shift+Tab stay inside it and only count what Tab can reach. Tabs move with Arrow keys, Home and End. Escape closes it and focus returns to the opener, or to the Ask DE launcher when the opener is gone.
+- The resize edges and corner grip are pointer-only (`tabIndex={-1}`, `aria-hidden`); Expand in the header is the keyboard way to resize.
+- Short screens: docked, the Desk is never taller than the viewport (header and close stay on screen on a phone held sideways or at 200% zoom), even if that means sitting over the nav.
+- Forced colours (Windows contrast themes): every state drawn only in gold (active tab, selected issue and urgency, incident, gold buttons, the visitor's bubbles) has a border or outline the system can colour.
+- Hint rules live in `client/src/lib/deskHints.ts` with behavioural tests; `npm run smoke:desk` (run in CI against the production build) checks fit, overflow, keyboard, the hint sequence and the polish invariants in a real browser.
 
 ## Primary file
 

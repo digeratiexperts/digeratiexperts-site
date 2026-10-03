@@ -290,15 +290,6 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
             {!isMobile && (
               <div className="pointer-events-none absolute -bottom-2 right-7 h-4 w-4 rotate-45 border-b border-r border-white/10 bg-[#0b0b0d]" aria-hidden="true" />
             )}
-            <button
-              type="button"
-              onClick={() => setShowMenu(false)}
-              className="absolute right-3.5 top-3.5 flex h-8 w-8 items-center justify-center rounded-full text-[#b4b4ba] transition-colors hover:bg-white/[0.08] hover:text-[#f5f5f4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E3B23C]"
-              aria-label="Close Ask DE"
-              data-testid="ask-de-close"
-            >
-              <X className="h-4.5 w-4.5" style={{ width: 18, height: 18 }} aria-hidden="true" />
-            </button>
 
             <div className="mb-5 flex items-start justify-between gap-4 pr-8">
               <div>
@@ -341,6 +332,17 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
                 Call {PRIMARY_PHONE.display}
               </a>
             </div>
+            {/* Last in the DOM, pinned top-right on screen: keyboard focus lands on
+                the first choice when the chooser opens, not on Close. */}
+            <button
+              type="button"
+              onClick={() => setShowMenu(false)}
+              className="absolute right-3.5 top-3.5 flex h-8 w-8 items-center justify-center rounded-full text-[#b4b4ba] transition-colors hover:bg-white/[0.08] hover:text-[#f5f5f4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E3B23C]"
+              aria-label="Close Ask DE"
+              data-testid="ask-de-close"
+            >
+              <X className="h-4.5 w-4.5" style={{ width: 18, height: 18 }} aria-hidden="true" />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
