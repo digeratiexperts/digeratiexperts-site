@@ -22,6 +22,9 @@ export const CYTRACOM_TOKEN_ENV_PREFIX = "PORTAL_PHONE_CYTRACOM_TOKEN_";
 
 type Env = Record<string, string | undefined>;
 
+/** A token key as allowed in PORTAL_PHONE_CLIENT_MAP (upper-cased before the test). */
+const TOKEN_KEY_RE = /^[A-Z0-9_]{1,64}$/;
+
 /** Thrown for configuration faults; the route logs the message and answers 502. */
 export class PhoneConfigError extends Error {
   constructor(message: string) {
@@ -59,12 +62,47 @@ export function phoneScopeFor(clientId: string, env: Env): string | null {
 /** Resolves a token key to its token. Missing or malformed is a config fault. */
 export function cytracomTokenFor(tokenKey: string, env: Env): string {
   const key = tokenKey.toUpperCase();
-  if (!/^[A-Z0-9_]{1,64}$/.test(key)) {
+  if (!TOKEN_KEY_RE.test(key)) {
     throw new PhoneConfigError(`token key for this company must match [A-Z0-9_]{1,64}`);
   }
   const token = (env[`${CYTRACOM_TOKEN_ENV_PREFIX}${key}`] || "").trim();
   if (!token) throw new PhoneConfigError(`${CYTRACOM_TOKEN_ENV_PREFIX}${key} is not set`);
   return token;
+}
+
+/** One company's phone setup, for the DE admin setup page. Names and booleans only. */
+export type PhoneSetupEntry = {
+  /** The company has an entry in PORTAL_PHONE_CLIENT_MAP. */
+  mapped: boolean;
+  /** The token variable that entry names is set to a non-blank value. */
+  tokenSet: boolean;
+  /** Name of the token variable (never its value); null when unmapped or the key is invalid. */
+  tokenEnvName: string | null;
+};
+
+/**
+ * Setup state per portal clientId for the admin setup page. Never returns a
+ * token value. Throws PhoneConfigError when PORTAL_PHONE_CLIENT_MAP is not a
+ * valid JSON object (the phone page answers 502 in that state too), so the
+ * caller can show that fault instead of "not mapped" for every company.
+ */
+export function phoneSetupStatus(env: Env, clientIds: string[]): Record<string, PhoneSetupEntry> {
+  const map = readPhoneClientMap(env);
+  const out: Record<string, PhoneSetupEntry> = {};
+  for (const clientId of clientIds) {
+    const key = Object.prototype.hasOwnProperty.call(map, clientId) ? map[clientId].toUpperCase() : null;
+    if (key === null) {
+      out[clientId] = { mapped: false, tokenSet: false, tokenEnvName: null };
+      continue;
+    }
+    if (!TOKEN_KEY_RE.test(key)) {
+      out[clientId] = { mapped: true, tokenSet: false, tokenEnvName: null };
+      continue;
+    }
+    const tokenEnvName = `${CYTRACOM_TOKEN_ENV_PREFIX}${key}`;
+    out[clientId] = { mapped: true, tokenSet: Boolean((env[tokenEnvName] || "").trim()), tokenEnvName };
+  }
+  return out;
 }
 
 export async function loadPhoneData(opts: {

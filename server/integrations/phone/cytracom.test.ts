@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { CytracomError, loadCytracomPhoneData, mapCytracomUsers } from "./cytracom";
 import { CYTRACOM_DATA_USERS_EXAMPLE } from "./cytracom.fixtures";
-import { cytracomTokenFor, phoneScopeFor, PhoneConfigError, readPhoneClientMap } from "./index";
+import { cytracomTokenFor, phoneScopeFor, PhoneConfigError, phoneSetupStatus, readPhoneClientMap } from "./index";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -64,5 +64,35 @@ describe("phone client map", () => {
     expect(cytracomTokenFor("acme", env)).toBe("tok");
     expect(() => cytracomTokenFor("../DATABASE_URL", env)).toThrow(PhoneConfigError);
     expect(() => cytracomTokenFor("GLOBEX", env)).toThrow(/PORTAL_PHONE_CYTRACOM_TOKEN_GLOBEX is not set/);
+  });
+});
+
+describe("phoneSetupStatus (admin setup page)", () => {
+  const env = {
+    PORTAL_PHONE_CLIENT_MAP: JSON.stringify({ acme: "acme", globex: "GLOBEX", bad: "../DATABASE_URL" }),
+    PORTAL_PHONE_CYTRACOM_TOKEN_ACME: "tok-acme-secret",
+    PORTAL_PHONE_CYTRACOM_TOKEN_GLOBEX: "  ",
+    DATABASE_URL: "postgres://x",
+  };
+
+  it("reports mapping, token presence and the variable name per company", () => {
+    expect(phoneSetupStatus(env, ["acme", "globex", "initech", "bad", "toString"])).toEqual({
+      acme: { mapped: true, tokenSet: true, tokenEnvName: "PORTAL_PHONE_CYTRACOM_TOKEN_ACME" },
+      globex: { mapped: true, tokenSet: false, tokenEnvName: "PORTAL_PHONE_CYTRACOM_TOKEN_GLOBEX" },
+      initech: { mapped: false, tokenSet: false, tokenEnvName: null },
+      bad: { mapped: true, tokenSet: false, tokenEnvName: null },
+      toString: { mapped: false, tokenSet: false, tokenEnvName: null },
+    });
+  });
+
+  it("never returns a token value", () => {
+    const out = JSON.stringify(phoneSetupStatus(env, ["acme", "globex", "bad"]));
+    expect(out).not.toContain("tok-acme-secret");
+    expect(out).not.toContain("postgres");
+  });
+
+  it("is empty-safe and throws on a malformed map", () => {
+    expect(phoneSetupStatus({}, ["acme"])).toEqual({ acme: { mapped: false, tokenSet: false, tokenEnvName: null } });
+    expect(() => phoneSetupStatus({ PORTAL_PHONE_CLIENT_MAP: "{nope" }, ["acme"])).toThrow(PhoneConfigError);
   });
 });
