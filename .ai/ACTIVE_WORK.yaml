@@ -75,6 +75,7 @@ claims:
       Rebased onto main 8c160909 (2026-10-02). Preview-only at /version-6;
       production / untouched. Uses live ProtectionCommandDeck and flagship
       Business tier cue.
+  - id: portal-people-pick-company
     owner: claude
     subsystem: client-portal-pages
     branch: claude/portal-people-pick-company
