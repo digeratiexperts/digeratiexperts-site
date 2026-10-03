@@ -4,6 +4,7 @@
  */
 
 import { isDoor2Path } from "@/lib/isDoor2Path";
+import { readAnonymousSituation } from "@/lib/anonymousSituation";
 
 export type DeskMotionPage =
   | "home"
@@ -133,6 +134,13 @@ export function inferDeskPageType(pathname: string): DeskMotionPage {
   return "other";
 }
 
+function deskSituationClause(): string {
+  const situation = readAnonymousSituation();
+  if (!situation) return "";
+  // Keep this short: Ask DE typewrites the greeting before starter chips appear.
+  return "This device already has a Store situation. I don't have a name or email from that — ask about that environment or a different path.";
+}
+
 export function startersForPage(page: DeskMotionPage): DeskMotionChip[] {
   const base = DESK_PAGE_COPY[page].chips.filter((c) => c.ticketChip !== "security-incident");
   const alreadyHasIncident = DESK_PAGE_COPY[page].chips.some((c) => c.ticketChip === "security-incident");
@@ -140,11 +148,23 @@ export function startersForPage(page: DeskMotionPage): DeskMotionChip[] {
   const withoutDupIncident = alreadyHasIncident
     ? DESK_PAGE_COPY[page].chips.filter((c) => c.ticketChip !== "security-incident")
     : base;
-  return [...withoutDupIncident.slice(0, 4), DESK_INCIDENT_STARTER];
+  const chips = withoutDupIncident.slice(0, 4);
+  if (readAnonymousSituation() && chips.length > 0) {
+    chips[0] = {
+      label:
+        page === "store"
+          ? "Help me finish the solution I started"
+          : "Talk through the environment I started in the Store",
+      icon: "grid",
+    };
+  }
+  return [...chips, DESK_INCIDENT_STARTER];
 }
 
 export function greetingForPage(page: DeskMotionPage): string {
-  return DESK_PAGE_COPY[page].greet;
+  const base = DESK_PAGE_COPY[page].greet;
+  const clause = deskSituationClause();
+  return clause ? `${base} ${clause}` : base;
 }
 
 export function prefersReducedMotion(): boolean {

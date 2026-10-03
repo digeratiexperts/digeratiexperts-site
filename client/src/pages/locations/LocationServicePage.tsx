@@ -34,6 +34,8 @@ import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE } from "@/data/companyContact";
 import { GREATER_PHOENIX_CITIES, cityPageSlug } from "@/data/greaterPhoenixCities";
 import { IconWell } from "@/components/visual/IconWell";
 import { ConversionPathBar } from "@/components/ConversionPathBar";
+import { SituationContinuityStrip } from "@/components/SituationContinuityStrip";
+import { situationSubmitPayload, useAnonymousSituation } from "@/lib/anonymousSituation";
 import heroBgImage from "@assets/de-hero-arizona-dusk-1600.webp";
 
 const assessmentFormSchema = z.object({
@@ -84,6 +86,7 @@ export function LocationServicePage(props: LocationPageProps) {
   const { toast } = useToast();
   const prefersReducedMotion = useReducedMotion();
   const currentSlug = cityPageSlug(props.city);
+  const situation = useAnonymousSituation();
 
   useSEO({
     title: props.title,
@@ -178,6 +181,7 @@ export function LocationServicePage(props: LocationPageProps) {
           company: data.company || "",
           source: `location_${props.city.toLowerCase().replace(/\s+/g, "_")}`,
           message: `${props.city} assessment request — ${props.serviceFocus || props.title}`,
+          ...situationSubmitPayload(),
         }),
       });
       const result = await response.json().catch(() => ({}));
@@ -363,8 +367,13 @@ export function LocationServicePage(props: LocationPageProps) {
                     Get Your Free {props.city} Security Assessment
                   </h2>
                   <p className="mb-4 mt-1 text-base text-[#2A2438]">
-                    Tell us about your environment. We will follow up with independent findings you can use with your current IT or with us.
+                    {situation
+                      ? "We'll size this conversation against the environment you already started in the Store. You do not need to retype users, computers, or sites."
+                      : "Tell us about your environment. We will follow up with independent findings you can use with your current IT or with us."}
                   </p>
+                  {situation ? (
+                    <SituationContinuityStrip situation={situation} door="assessment" tone="paper" className="mb-4" />
+                  ) : null}
 
                   <div className="mb-6 grid grid-cols-1 gap-2 rounded-xl border border-[var(--de-paper-hairline)] bg-white px-4 py-3 sm:grid-cols-3">
                     <div className="flex items-baseline gap-2 text-xs font-semibold text-[#1A1228]">

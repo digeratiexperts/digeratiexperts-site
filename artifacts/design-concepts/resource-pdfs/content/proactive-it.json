@@ -1,0 +1,76 @@
+{
+  "_note": "Shared content for the three concept renders. Every claim traces to a source in the 'sources' map. Lines that differ from the current public PDF are listed in CONTENT-CHANGES.md (C-01..C-08) for Joe's review.",
+  "docId": "DE-DS-PIT",
+  "family": "Datasheet",
+  "title": "ProActive IT",
+  "titleFull": "ProActive IT Ecosystem",
+  "edition": "Edition 2026.10",
+  "lang": "en-US",
+  "subtitle": "Essential managed IT with the DE Security Foundation included, for smaller, less complex environments that need professional technology ownership without a large internal IT burden.",
+  "intro": "ProActive IT is the starting point of the ProActive Ecosystem. It replaces reactive break-fix support with one accountable partner for users, devices, access and support, and establishes a documented, security-first baseline before the business expands into deeper workplace, backup, security operations and compliance programs.",
+  "facts": [
+    { "label": "Best fit", "value": "Smaller, less complex environments that need essential protection and a documented baseline." },
+    { "label": "Primary outcome", "value": "A managed baseline for users, devices, support and security hygiene." },
+    { "label": "Published starting point", "value": "From $125 per user per month, with a $1,600 monthly minimum." }
+  ],
+  "price": { "rate": "$125", "unit": "per user / month", "minimum": "$1,600 monthly minimum" },
+  "purpose": [
+    "Replace purely reactive IT support with a stable managed model.",
+    "Establish ownership of users, endpoints, access, patching and support flow.",
+    "Give leadership one accountable partner for day-to-day IT direction and risk reduction."
+  ],
+  "included": [
+    { "item": "Service desk and issue ownership", "detail": "Triage and coordination for covered users." },
+    { "item": "DE Security Foundation", "detail": "Included at every ProActive level." },
+    { "item": "Managed security baseline", "detail": "Endpoint, identity, email and security monitoring baseline." },
+    { "item": "Security awareness", "detail": "Awareness and phishing resilience for users." },
+    { "item": "Documented environment", "detail": "Users, devices and access recorded as the operating baseline." },
+    { "item": "Upgrade path", "detail": "A clear route into ProActive Office as needs grow." }
+  ],
+  "notIncluded": [
+    { "item": "Backup program", "detail": "No default backup program at this level. Endpoint backup begins in ProActive Office." },
+    { "item": "24/7 managed detection and response", "detail": "Begins in ProActive Office; available to ProActive IT clients only as a separately scoped addition." },
+    { "item": "Compliance reporting", "detail": "Audit-grade documentation is handled in higher tiers or standalone engagements." }
+  ],
+  "ladder": [
+    { "key": "it", "name": "IT", "rate": "$125", "min": "$1,600", "focus": "Visibility and essential control", "current": true },
+    { "key": "office", "name": "Office", "rate": "$165", "min": "$2,400", "focus": "Managed daily workplace, endpoint backup, 24/7 MDR" },
+    { "key": "business", "name": "Business", "rate": "$245", "min": "$5,400", "focus": "Backup and DR posture, compliance and risk reporting" },
+    { "key": "enterprise", "name": "Enterprise", "rate": "$345", "min": "$9,000", "focus": "Multi-site, regulated, quarterly executive reviews" }
+  ],
+  "moveUp": [
+    { "to": "ProActive Office", "when": "Onboarding, productivity platforms, managed network, endpoint backup and 24/7 detection and response become important." },
+    { "to": "ProActive Business", "when": "The organization needs backup and disaster recovery posture, compliance and risk reporting, and semi-annual planning reviews." },
+    { "to": "ProActive Enterprise", "when": "Multiple sites, regulated data, advanced compliance reporting or quarterly executive reviews are required." }
+  ],
+  "deliverables": [
+    "Managed IT operating baseline",
+    "User and device inventory direction",
+    "Support escalation path",
+    "Initial Cyber Risk Assessment findings",
+    "Recommended roadmap for add-ons and tier movement"
+  ],
+  "engagement": [
+    { "step": "Cyber Risk Assessment", "detail": "Finds risk, gaps and current conditions." },
+    { "step": "Written recommendation", "detail": "One of four ProActive models, with scope." },
+    { "step": "Onboarding", "detail": "Access, inventory and baseline established." },
+    { "step": "Ongoing operations", "detail": "Support, security baseline and reviews." }
+  ],
+  "cta": {
+    "label": "Schedule a Cyber Risk Assessment",
+    "detail": "Confirm the right service level, required controls and implementation roadmap for your environment.",
+    "url": "https://digeratiexperts.com/book",
+    "urlLabel": "digeratiexperts.com/book",
+    "phone": "325-480-9870",
+    "phoneHref": "tel:+13254809870",
+    "email": "info@digeratiexperts.com"
+  },
+  "scopeNote": "Published rates are starting points, not quotes. Final pricing depends on users, endpoints, locations, infrastructure, backup requirements and security and compliance scope; your Cyber Risk Assessment confirms final scope. This datasheet names no customers and makes no vendor-specific claims.",
+  "sources": {
+    "price, minimums, inclusions, tier cadence": "client/src/data/pricing.ts (TechSales CANONICAL_TIERS)",
+    "scope note": "client/src/data/pricing.ts PRICING_SCOPE_NOTE",
+    "engagement sequence": "docs/CLAIMS-REGISTER.md 'How it works' row (Structural)",
+    "contact": "shared/companyContact.ts",
+    "purpose, deliverables, not-included backup/compliance": "current public PDF (May 2026)"
+  }
+}
