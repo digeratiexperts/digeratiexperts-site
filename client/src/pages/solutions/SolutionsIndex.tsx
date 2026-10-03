@@ -1,28 +1,27 @@
-import { motion, useReducedMotion } from "framer-motion";
-import { MegaMenu } from "@/components/MegaMenu";
-import { DigeratiEnhancedFooterSection } from "../sections/DigeratiEnhancedFooterSection";
-import { Button } from "@/components/ui/button";
+import { PageTemplate } from "@/components/PageTemplate";
+import {
+  Chapter,
+  Container,
+  ChapterHeader,
+  ClosingCta,
+  FactStrip,
+  FeatureGrid,
+  HeroActions,
+  IndexedList,
+  buttonSecondary,
+  cardDark,
+} from "@/components/site/chapters";
 import { 
   CheckCircle, ArrowRight, Shield, Headphones, Wifi, Monitor, 
   Activity, RefreshCw, Lock, Users, Cloud, FileCheck, Zap, 
-  BarChart3, Clock, Phone, Award
+  BarChart3, Clock, Phone, Award, MapPin
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { pricingTiers, getPricingFooterText } from "@/data/pricing";
-import { IconWell } from "@/components/visual/IconWell";
-import { PRIMARY_PHONE } from "@/data/companyContact";
 import { CTA } from "@/lib/ctaCopy";
-import { StatementHeading } from "@/components/visual/StatementHeading";
-import { ConversionPathBar } from "@/components/ConversionPathBar";
-import { revealInView, revealInitial, revealTransition, revealViewport } from "@/lib/animations";
-import { ProofChip } from "@/components/evidence/ProofChip";
 import { IncidentFlow } from "@/components/evidence/IncidentFlow";
-import { HUDFrame } from "@/components/evidence/HUDFrame";
-import { StatusToken } from "@/components/evidence/StatusToken";
 
 const SolutionsIndex = () => {
-  const prefersReducedMotion = useReducedMotion();
-
   useSEO({
     title: 'Managed IT & Security Solutions',
     description: 'Comprehensive managed IT and cybersecurity solutions. Network security, endpoint protection, cloud security, compliance support, and 24/7 monitoring for Arizona businesses.',
@@ -126,333 +125,176 @@ const SolutionsIndex = () => {
     }
   ];
 
-  const containerVariants = prefersReducedMotion ? undefined : {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
-  };
+  const trustFacts = [
+    { icon: Lock, title: "24/7 Human-Led SOC", text: "Real analysts watching the environment" },
+    { icon: MapPin, title: "Arizona local engineering team", text: "Chandler / East Valley operator" },
+    { icon: Shield, title: "8 blocks", text: "Assessed & protected" },
+    { icon: Activity, title: "RTO / RPO defined", text: "SLA commitments set in your agreement" },
+  ];
 
-  const itemVariants = prefersReducedMotion ? undefined : {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
-  };
+  const whyFacts = [
+    { icon: Clock, value: "Assessment-led", label: "Engagement", description: "Prioritize before you buy" },
+    { icon: Shield, value: "Client-owned", label: "Access model", description: "Credentials & tenants stay yours" },
+    { icon: Phone, value: "Human support", label: "Service desk", description: "Accountable issue ownership" },
+    { icon: Award, value: "Security-first", label: "Operating model", description: "IT + cyber together" },
+  ];
+
+  const doorLink =
+    "group block rounded-xl border border-de-hairline bg-de-raised p-5 transition-colors hover:border-[#D3126A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] md:p-6";
 
   return (
-    <div className="min-h-screen bg-de-bg">
-      <MegaMenu />
-      
-      <main id="main-content" tabIndex={-1} className="de-nav-clear pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <motion.div 
-            className="mb-16 text-center"
-            initial={prefersReducedMotion ? false : revealInitial}
-            animate={prefersReducedMotion ? undefined : revealInView}
-            transition={revealTransition}
-          >
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-de-hairline bg-de-raised px-4 py-2">
-              <Shield className="h-4 w-4 text-de-accent-ink" />
-              <span className="text-sm text-de-accent-ink">Complete IT & Security Solutions</span>
-            </div>
-            <StatementHeading as="h1" className="mb-6 text-4xl md:text-5xl lg:text-6xl">
-              The ProActive Ecosystem
-            </StatementHeading>
-            <p className="mx-auto max-w-3xl text-xl leading-relaxed text-white/70">
-              Everything your business needs to stay secure, productive, and compliant—all in one monthly subscription. 
-              No surprise bills. No nickel-and-diming. Just predictable, professional IT.
-            </p>
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button asChild variant="brand" size="lg" className="h-12">
-                <a href="/book">{CTA.primary}<ArrowRight className="ml-2 h-4 w-4" /></a>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="h-12 border-de-hairline bg-de-raised text-white hover:text-white">
-                <a href={CTA.secondaryHref}>{CTA.secondary}</a>
-              </Button>
-            </div>
-
-            <div className="mx-auto mt-10 grid max-w-4xl gap-4 text-left sm:grid-cols-2" data-testid="solutions-two-doors">
-              <a
-                href="/solutions/proactive-ecosystem"
-                className="rounded-2xl border border-de-hairline bg-de-raised p-6 transition-colors hover:border-[#D3126A]"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wide text-de-accent-ink">Door 1</p>
-                <h2 className="mt-2 font-heading text-xl text-white">Handle Our IT</h2>
-                <p className="mt-2 text-sm leading-relaxed text-white/65">
-                  ProActive operating models. Assessment first — not a catalog checkout.
-                </p>
-              </a>
-              <a
-                href="/store"
-                className="rounded-2xl border border-de-hairline bg-de-raised p-6 transition-colors hover:border-[#D3126A]"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wide text-de-accent-ink">Door 2</p>
-                <h2 className="mt-2 font-heading text-xl text-white">Solve a Business Need</h2>
-                <p className="mt-2 text-sm leading-relaxed text-white/65">
-                  Thirteen solution families. Request a scoped recommendation — not a catalog checkout.
-                </p>
-              </a>
-            </div>
-
-            {/* Factual Proof Chips */}
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-              <ProofChip metric="24/7" label="Human-Led SOC" icon={Lock} />
-              <ProofChip metric="ARIZONA" label="Local Engineering Team" icon={Users} />
-              <ProofChip metric="8 BLOCKS" label="Assessed & Protected" icon={Shield} />
-              <ProofChip metric="RTO/RPO" label="Defined SLA Commitments" icon={Activity} />
-            </div>
-          </motion.div>
-
-          {/* Pricing Tiers */}
-          <motion.section 
-            className="mb-20"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            <div className="mb-10 text-center">
-              <StatementHeading as="h2" className="mb-3 text-2xl md:text-3xl">
-                Four operating models. One matched to your environment
-              </StatementHeading>
-              <p className="text-white/60">Baseline capabilities are shared. Network, backup, SOC, BCDR, and governance depth increase by fit — not because a higher tier is universally “better.”</p>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-              {plans.map((plan, index) => (
-                <motion.div
-                  key={plan.name}
-                  variants={itemVariants}
-                  className="de-hud-card relative p-6 transition-all duration-200 hover:border-[#D3126A]/40"
-                  data-testid={`plan-${plan.name.toLowerCase()}`}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-lg font-bold text-white font-heading">{plan.name}</span>
-                    <span className="px-2 py-0.5 text-xs font-mono font-semibold bg-white/10 text-white/80 rounded border border-white/10">
-                      {plan.tier}
-                    </span>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <span className="text-4xl font-black text-white font-mono tracking-tight">${plan.price}</span>
-                    <span className="text-white/50 text-sm ml-2">/ user / mo</span>
-                  </div>
-                  
-                  <p className="text-white/60 text-sm mb-6 leading-relaxed">
-                    {plan.description}
-                  </p>
-                  
-                  <ul className="space-y-3 mb-6">
-                    {plan.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-de-accent-ink mt-0.5 flex-shrink-0" />
-                        <span className="text-white/80 text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  
-                  <Button asChild variant="outline" className="w-full border-white/15 bg-black/40 text-white hover:text-white hover:border-[#D3126A]/50" data-testid={`button-get-${plan.name.toLowerCase()}`}>
-                    <a href="/book">
-                      {CTA.primaryShort}
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </a>
-                  </Button>
-                </motion.div>
-              ))}
-            </div>
-            
-            <p className="text-center text-white/55 text-sm mt-6">
-              {getPricingFooterText()}. Final pricing tailored to your users, sites, and compliance needs.
-            </p>
-          </motion.section>
-
-          {/* Foundation Services - What's Included in ALL Plans */}
-          <motion.section 
-            className="mb-20 rounded-2xl border border-de-hairline bg-de-raised p-8"
-            initial={prefersReducedMotion ? false : revealInitial}
-            whileInView={revealInView}
-            viewport={revealViewport}
-            transition={revealTransition}
-          >
-            <div className="mb-10 text-center">
-              <span className="mb-4 inline-flex items-center rounded-full border border-de-hairline bg-de-bg px-3 py-1 text-xs font-medium text-white/70 font-mono uppercase tracking-wider">
-                Baseline vs depth
-              </span>
-              <StatementHeading as="h2" className="mb-3 text-2xl md:text-3xl">
-                What every model starts from
-              </StatementHeading>
-              <p className="text-white/60 max-w-2xl mx-auto">
-                Service desk, endpoint foundation, identity guidance, and a documented environment are the baseline.
-                Managed network and endpoint backup typically arrive at Office. Security operations, awareness training,
-                and BCDR posture typically arrive at Business. Unified posture reporting and deeper governance typically
-                arrive at Enterprise.
-              </p>
-            </div>
-            
-            <motion.div 
-              className="grid md:grid-cols-2 lg:grid-cols-3 gap-5"
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-            >
-              {foundationServices.map((service, index) => {
-                return (
-                <motion.div
-                  key={service.title}
-                  variants={itemVariants}
-                  className="de-interactive-card rounded-2xl border border-de-hairline bg-de-bg p-5"
-                  data-testid={`foundation-${index}`}
-                >
-                  <div className="mb-4">
-                    <IconWell icon={service.icon} size="md" surface="dark" />
-                  </div>
-                  <h3 className="text-white font-semibold mb-2">{service.title}</h3>
-                  <p className="text-white/60 text-sm leading-relaxed">{service.description}</p>
-                </motion.div>
-                );
-              })}
-            </motion.div>
-          </motion.section>
-
-          {/* Security Services & Evidence Scenario */}
-          <motion.section 
-            className="mb-20"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="mb-10 text-center">
-              <StatementHeading as="h2" className="mb-3 text-2xl md:text-3xl">
-                Security & Threat Containment
-              </StatementHeading>
-              <p className="text-white/60 max-w-2xl mx-auto">
-                Real human analysts backed by behavioral telemetry watching and neutralizing threat vectors around the clock.
-              </p>
-            </div>
-            
-            {/* Operational Incident Flow Evidence Module */}
-            <div className="mb-10">
-              <IncidentFlow />
-            </div>
-
-            <motion.div 
-              className="grid md:grid-cols-2 gap-5"
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-            >
-              {securityServices.map((service, index) => {
-                return (
-                <motion.div
-                  key={service.title}
-                  variants={itemVariants}
-                  className="de-interactive-card flex gap-4 rounded-2xl border border-de-hairline bg-de-raised p-5"
-                  data-testid={`security-${index}`}
-                >
-                  <IconWell icon={service.icon} size="md" surface="dark" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-white font-semibold">{service.title}</h3>
-                      <span className="px-2 py-0.5 text-xs bg-de-raised text-de-magenta-ink rounded font-mono font-medium">
-                        {service.tier}
-                      </span>
-                    </div>
-                    <p className="text-white/60 text-sm leading-relaxed">{service.description}</p>
-                  </div>
-                </motion.div>
-                );
-              })}
-            </motion.div>
-          </motion.section>
-
-          {/* Compliance & Strategy Services */}
-          <motion.section 
-            className="mb-20"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="mb-10 text-center">
-              <StatementHeading as="h2" className="mb-3 text-2xl md:text-3xl">
-                Compliance & Strategy
-              </StatementHeading>
-              <p className="text-white/60">Governance, audit readiness, and executive IT guidance for regulated industries.</p>
-            </div>
-            
-            <motion.div 
-              className="grid md:grid-cols-2 gap-5"
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-            >
-              {complianceServices.map((service, index) => (
-                <motion.div
-                  key={service.title}
-                  variants={itemVariants}
-                  className="de-interactive-card flex gap-4 rounded-2xl border border-de-hairline bg-de-raised p-5"
-                  data-testid={`compliance-${index}`}
-                >
-                  <IconWell icon={service.icon} size="md" surface="dark" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-white font-semibold">{service.title}</h3>
-                      <span className="px-2 py-0.5 text-xs bg-de-raised text-de-magenta-ink rounded">
-                        {service.tier}
-                      </span>
-                    </div>
-                    <p className="text-white/60 text-sm leading-relaxed">{service.description}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </motion.section>
-
-          {/* Why Choose Us */}
-          <motion.section 
-            className="mb-20 rounded-2xl p-8 bg-de-raised border border-de-hairline"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="mb-10 text-center">
-              <StatementHeading as="h2" className="text-2xl md:text-3xl">
-                Why Arizona Businesses Choose Us
-              </StatementHeading>
-            </div>
-            
-            <div className="grid md:grid-cols-4 gap-6">
-              {[
-                { icon: Clock, value: "Assessment-led", label: "Engagement", description: "Prioritize before you buy" },
-                { icon: Shield, value: "Client-owned", label: "Access model", description: "Credentials & tenants stay yours" },
-                { icon: Phone, value: "Human support", label: "Service desk", description: "Accountable issue ownership" },
-                { icon: Award, value: "Security-first", label: "Operating model", description: "IT + cyber together" }
-              ].map((stat, index) => (
-                <div key={index} className="text-center p-4">
-                  <div className="w-12 h-12 rounded-full bg-de-raised flex items-center justify-center mx-auto mb-3">
-                    <stat.icon className="w-6 h-6 text-de-magenta-ink" />
-                  </div>
-                  <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
-                  <div className="text-white/80 font-medium text-sm">{stat.label}</div>
-                  <div className="text-white/50 text-xs">{stat.description}</div>
-                </div>
-              ))}
-            </div>
-          </motion.section>
-
-          <ConversionPathBar
-            headline="Ready to get protected"
-            body="Schedule a Cyber Risk Assessment to discuss your needs. No pressure, no obligation — honest advice about what your business actually needs."
+    <PageTemplate
+      layout="chapters"
+      eyebrow="Complete IT & Security Solutions"
+      title="The ProActive Ecosystem"
+      subtitle="Everything your business needs to stay secure, productive, and compliant—all in one monthly subscription. No surprise bills. No nickel-and-diming. Just predictable, professional IT."
+      showBackButton={false}
+      actions={
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <HeroActions
+            primary={{ label: CTA.primary, href: "/book" }}
+            secondary={{ label: CTA.secondary, href: CTA.secondaryHref }}
           />
-
         </div>
-      </main>
+      }
+      heroAside={
+        <div className="space-y-4" data-testid="solutions-two-doors">
+          <a href="/solutions/proactive-ecosystem" className={doorLink}>
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-de-accent-ink">Door 1</p>
+            <h2 className="mt-2 font-heading text-xl font-semibold text-white">Handle Our IT</h2>
+            <p className="mt-2 text-sm leading-relaxed text-white/70">
+              ProActive operating models. Assessment first — not a catalog checkout.
+            </p>
+          </a>
+          <a href="/store" className={doorLink}>
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-de-accent-ink">Door 2</p>
+            <h2 className="mt-2 font-heading text-xl font-semibold text-white">Solve a Business Need</h2>
+            <p className="mt-2 text-sm leading-relaxed text-white/70">
+              Thirteen solution families. Request a scoped recommendation — not a catalog checkout.
+            </p>
+          </a>
+        </div>
+      }
+    >
+      <FactStrip facts={trustFacts} label="Why businesses choose the ProActive Ecosystem" />
 
-      <DigeratiEnhancedFooterSection />
-    </div>
+      <Chapter tone="well" seam={false} data-testid="solutions-pricing">
+        <Container>
+          <ChapterHeader
+            tone="well"
+            eyebrow="Operating models"
+            title="Four operating models. One matched to your environment"
+            lede="Baseline capabilities are shared. Network, backup, SOC, BCDR, and governance depth increase by fit — not because a higher tier is universally “better.”"
+          />
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5 xl:grid-cols-4">
+            {plans.map((plan) => (
+              <li
+                key={plan.name}
+                className={`${cardDark} flex flex-col p-6 transition-colors duration-200 hover:border-[#D3126A]/50`}
+                data-testid={`plan-${plan.name.toLowerCase()}`}
+              >
+                <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-de-magenta-ink">
+                  {plan.name}
+                </p>
+                <h3 className="mt-2 font-heading text-xl font-semibold leading-tight text-white">{plan.tier}</h3>
+                <p className="mt-5 flex flex-wrap items-baseline gap-x-2">
+                  <span className="font-mono text-4xl font-black tracking-tight text-white">${plan.price}</span>
+                  <span className="text-sm text-white/65">/ user / mo</span>
+                </p>
+                <p className="mt-4 text-sm leading-relaxed text-white/70">{plan.description}</p>
+                <ul className="mb-6 mt-5 flex-1 space-y-3 border-t border-[var(--de-hairline)] pt-5">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2.5">
+                      <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-de-accent-ink" aria-hidden="true" />
+                      <span className="text-sm text-white/80">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href="/book"
+                  className={`${buttonSecondary("well")} w-full`}
+                  data-testid={`button-get-${plan.name.toLowerCase()}`}
+                >
+                  {CTA.primaryShort}
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-8 max-w-3xl text-sm text-white/65">
+            {getPricingFooterText().replace(/\.+$/, "")}. Final pricing tailored to your users, sites, and compliance needs.
+          </p>
+        </Container>
+      </Chapter>
+
+      <Chapter tone="surface" data-testid="solutions-foundation">
+        <Container>
+          <ChapterHeader
+            tone="surface"
+            eyebrow="Baseline vs depth"
+            title="What every model starts from"
+            lede="Service desk, endpoint foundation, identity guidance, and a documented environment are the baseline. Managed network and endpoint backup typically arrive at Office. Security operations, awareness training, and BCDR posture typically arrive at Business. Unified posture reporting and deeper governance typically arrive at Enterprise."
+          />
+          <FeatureGrid
+            tone="surface"
+            items={foundationServices.map((s) => ({ icon: s.icon, title: s.title, text: s.description }))}
+          />
+        </Container>
+      </Chapter>
+
+      <Chapter tone="well" data-testid="solutions-security">
+        <Container>
+          <ChapterHeader
+            tone="well"
+            eyebrow="Security"
+            title="Security & Threat Containment"
+            lede="Real human analysts backed by behavioral telemetry watching and neutralizing threat vectors around the clock."
+          />
+          <div className="mb-12">
+            <IncidentFlow />
+          </div>
+          <FeatureGrid
+            tone="well"
+            columns={2}
+            items={securityServices.map((s) => ({ icon: s.icon, title: s.title, text: s.description, tag: s.tier }))}
+          />
+        </Container>
+      </Chapter>
+
+      <Chapter tone="paper" data-testid="solutions-compliance">
+        <Container>
+          <ChapterHeader
+            tone="paper"
+            eyebrow="Governance"
+            title="Compliance & Strategy"
+            lede="Governance, audit readiness, and executive IT guidance for regulated industries."
+          />
+          <FeatureGrid
+            tone="paper"
+            columns={2}
+            items={complianceServices.map((s) => ({ icon: s.icon, title: s.title, text: s.description, tag: s.tier }))}
+          />
+        </Container>
+      </Chapter>
+
+      <Chapter tone="surface" data-testid="solutions-why">
+        <Container>
+          <ChapterHeader tone="surface" eyebrow="Why DE" title="Why Arizona Businesses Choose Us" layout="stack" />
+          <IndexedList
+            tone="surface"
+            columns={2}
+            items={whyFacts.map((f) => ({ title: f.value, text: `${f.label}. ${f.description}` }))}
+          />
+        </Container>
+      </Chapter>
+
+      <ClosingCta
+        tone="well"
+        title="Ready to get protected"
+        lede="Schedule a Cyber Risk Assessment to discuss your needs. No pressure, no obligation — honest advice about what your business actually needs."
+        primary={{ label: CTA.primary, href: "/book", testId: "button-conversion-assessment" }}
+      />
+    </PageTemplate>
   );
 };
 

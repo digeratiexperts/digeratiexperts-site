@@ -13,6 +13,8 @@ import {
   BookOpen, 
   ArrowLeft,
   Download,
+  Route as RouteIcon,
+  ClipboardList,
   Bookmark,
   BookMarked,
   List,
@@ -24,7 +26,36 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import ebookCover from "@/assets/images/ebook-defending-digital-realm-cover.webp";
 import { ConversionPathBar } from "@/components/ConversionPathBar";
+import { Chapter as SiteChapter, ClosingCta, Container, FactStrip, PageHero } from "@/components/site/chapters";
 import { CTA } from "@/lib/ctaCopy";
+import { getCyberFact, formatFactSource } from "@/data/cyberAwarenessFacts";
+
+// Industry figures quoted in the chapters come from the sourced facts registry,
+// never typed into the copy (docs/CLAIMS-REGISTER.md, "How to add a claim").
+const VULN_FACT = getCyberFact("dbir-vuln-exploit-2026");
+const HUMAN_FACT = getCyberFact("dbir-human-element-2026");
+const SMB_RANSOM_FACT = getCyberFact("dbir-smb-ransomware-victims-2026");
+const BEC_FACT = getCyberFact("ic3-bec-losses-2024");
+
+/**
+ * The chapters' stories are EXAMPLE scenarios (design/VISUAL_EVIDENCE.md):
+ * composites of common findings, not a Digerati Experts client, and labelled
+ * so on the page.
+ */
+function ExampleScenario({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <figure
+      data-classification="EXAMPLE"
+      className="my-8 rounded-xl border-2 border-[#D3126A] bg-gradient-to-br from-[#D3126A]/10 to-[#D3126A]/5 p-6"
+    >
+      <p className="mb-2 font-mono text-xs font-semibold uppercase tracking-wider text-white/70">
+        Example scenario · not a client
+      </p>
+      <h4 className="mb-4 text-xl font-bold text-de-accent-ink">{title}</h4>
+      <div className="space-y-4 text-white/75">{children}</div>
+    </figure>
+  );
+}
 
 interface Chapter {
   id: number;
@@ -49,9 +80,9 @@ const chapters: Chapter[] = [
       "In today's interconnected world, cybersecurity risk assessment isn't just a technical exercise—it's a business imperative. As digital threats continue to evolve in sophistication and frequency, organizations of all sizes must understand their vulnerabilities and take proactive steps to protect their assets, data, and reputation.",
       "What Is Cybersecurity Risk Assessment?",
       "A cybersecurity risk assessment is a systematic process of identifying, analyzing, and evaluating risks to your organization's information systems and data. It helps you understand what assets you have, what threats they face, what vulnerabilities exist, and what the potential impact of a security incident could be.",
-      "Case Study: The Wake-Up Call.",
-      "A mid-sized manufacturing company in Arizona believed they were too small to be a target. Their IT infrastructure had grown organically over 15 years, with minimal security oversight. When they finally conducted their first risk assessment, they discovered: 147 devices connected to their network—40 more than they knew existed; 23 systems running outdated, unpatched software; no multi-factor authentication on their email or financial systems; and backup systems that hadn't been tested in over two years.",
-      "Three months after the assessment, they successfully defended against a ransomware attack that had encrypted files at a competitor. The difference? They had addressed their critical vulnerabilities.",
+      "Example scenario, not a client: The Wake-Up Call.",
+      "Picture a growing Arizona manufacturer that believes it is too small to be a target. Its network has grown for years without anyone owning security. A first risk assessment typically turns up the same things: more devices on the network than anyone has listed; systems missing security updates; no multi-factor authentication on email or the finance system; and backups nobody has tested.",
+      `Size is no shield: ${SMB_RANSOM_FACT.metric} ${SMB_RANSOM_FACT.statement}, according to ${formatFactSource(SMB_RANSOM_FACT)}. Each finding has a known fix, and the assessment puts them in order.`,
       "Key Lesson: The organizations that survive cyber attacks aren't necessarily the ones with the biggest budgets—they're the ones that understand their risks and address them systematically.",
     ].join(" "),
     content: (
@@ -67,23 +98,24 @@ const chapters: Chapter[] = [
           A cybersecurity risk assessment is a systematic process of identifying, analyzing, and evaluating risks to your organization's information systems and data. It helps you understand what assets you have, what threats they face, what vulnerabilities exist, and what the potential impact of a security incident could be.
         </p>
 
-        <div className="bg-gradient-to-br from-[#D3126A]/10 to-[#D3126A]/5 border-2 border-[#D3126A] rounded-xl p-6 my-8">
-          <h4 className="text-xl font-bold text-de-accent-ink mb-4">Case Study: The Wake-Up Call</h4>
-          <div className="text-white/75 space-y-4">
-            <p>
-              A mid-sized manufacturing company in Arizona believed they were "too small to be a target." Their IT infrastructure had grown organically over 15 years, with minimal security oversight. When they finally conducted their first risk assessment, they discovered:
-            </p>
-            <ul className="list-disc ml-6 space-y-2">
-              <li><strong className="text-de-accent-ink">147 devices</strong> connected to their network—40 more than they knew existed</li>
-              <li><strong className="text-de-accent-ink">23 systems</strong> running outdated, unpatched software</li>
-              <li><strong className="text-de-accent-ink">No multi-factor authentication</strong> on their email or financial systems</li>
-              <li><strong className="text-de-accent-ink">Backup systems</strong> that hadn't been tested in over two years</li>
-            </ul>
-            <p>
-              Three months after the assessment, they successfully defended against a ransomware attack that had encrypted files at a competitor. The difference? They had addressed their critical vulnerabilities.
-            </p>
-          </div>
-        </div>
+        <ExampleScenario title="The Wake-Up Call">
+          <p>
+            Picture a growing Arizona manufacturer that believes it is "too small to be a target." Its network has grown for years without anyone owning security. A first risk assessment typically turns up the same things:
+          </p>
+          <ul className="list-disc ml-6 space-y-2">
+            <li><strong className="text-de-accent-ink">More devices</strong> on the network than anyone has listed</li>
+            <li><strong className="text-de-accent-ink">Systems missing security updates</strong></li>
+            <li><strong className="text-de-accent-ink">No multi-factor authentication</strong> on email or the finance system</li>
+            <li><strong className="text-de-accent-ink">Backups</strong> nobody has tested</li>
+          </ul>
+          <p>
+            Size is no shield: {SMB_RANSOM_FACT.metric} {SMB_RANSOM_FACT.statement} (
+            <a href={SMB_RANSOM_FACT.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+              {formatFactSource(SMB_RANSOM_FACT)}
+            </a>
+            ). Each finding has a known fix, and the assessment puts them in order.
+          </p>
+        </ExampleScenario>
 
         <div className="bg-de-bg border-l-4 border-[#D3126A] p-5 my-6 rounded-r-lg">
           <p className="text-de-accent-ink font-semibold">
@@ -159,24 +191,28 @@ const chapters: Chapter[] = [
   {
     id: 3,
     title: "Common Vulnerabilities",
-    subtitle: "What We Find in Most Assessments",
+    subtitle: "The Weaknesses Breach Data Keeps Pointing To",
     narrationText: [
-      "Chapter 3. Common Vulnerabilities. What We Find in Most Assessments.",
-      "After conducting hundreds of risk assessments for Arizona businesses, certain patterns emerge. Understanding these common vulnerabilities can help you identify areas that likely need attention in your own organization.",
+      "Chapter 3. Common Vulnerabilities. The Weaknesses Breach Data Keeps Pointing To.",
+      `Breach data keeps pointing at the same weaknesses. ${VULN_FACT.metric} ${VULN_FACT.statement}, and ${HUMAN_FACT.metric} ${HUMAN_FACT.statement}, according to ${formatFactSource(VULN_FACT)}. These are the areas a risk assessment checks first.`,
       "Weak Authentication: Single-factor authentication remains the norm for many business applications, leaving them vulnerable to credential theft and brute force attacks.",
       "Unpatched Systems: Many organizations struggle to maintain current patches, leaving known vulnerabilities exposed for weeks or months.",
       "Inadequate Backups: Backups exist but are rarely tested. When disaster strikes, organizations discover their backups are incomplete or corrupted.",
       "Poor Network Segmentation: Flat networks allow attackers to move laterally, turning a single compromised device into a complete network breach.",
       "Shadow IT: Employees use unauthorized cloud services and applications, creating data leakage risks and compliance violations.",
       "Insufficient Logging: Many organizations can't answer basic questions about their security events because they lack adequate logging and monitoring.",
-      "Case Study: The Email Compromise.",
-      "A real estate title company lost 1.2 million dollars when attackers compromised their email system and redirected a closing wire transfer. The post-incident assessment revealed: no multi-factor authentication on email accounts; no email filtering for suspicious attachments or links; no procedures for verifying wire transfer instructions; and no employee training on business email compromise tactics.",
-      "Each of these vulnerabilities could have been identified and addressed through a proper risk assessment—at a fraction of the cost of the eventual loss.",
+      "Example scenario, not a client: The Email Compromise.",
+      "Picture a title company where an attacker signs in to one employee's mailbox, watches a closing, and sends the buyer new wire instructions. The money is gone before anyone calls. Afterwards the gaps are plain: no multi-factor authentication on email; no filtering for suspicious links and attachments; no rule to confirm wire changes by phone; and no training on business email compromise.",
+      `It is one of the costliest crimes in the FBI's data: ${BEC_FACT.metric} ${BEC_FACT.statement} in ${BEC_FACT.year}, according to the ${formatFactSource(BEC_FACT)}. Every gap in the list is something a risk assessment finds before an attacker does.`,
     ].join(" "),
     content: (
       <>
         <p className="text-white/75 mb-6 leading-relaxed">
-          After conducting hundreds of risk assessments for Arizona businesses, certain patterns emerge. Understanding these common vulnerabilities can help you identify areas that likely need attention in your own organization.
+          Breach data keeps pointing at the same weaknesses. {VULN_FACT.metric} {VULN_FACT.statement}, and {HUMAN_FACT.metric} {HUMAN_FACT.statement} (
+          <a href={VULN_FACT.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+            {formatFactSource(VULN_FACT)}
+          </a>
+          ). These are the areas a risk assessment checks first.
         </p>
 
         <div className="grid md:grid-cols-2 gap-4 my-8">
@@ -195,23 +231,24 @@ const chapters: Chapter[] = [
           ))}
         </div>
 
-        <div className="bg-gradient-to-br from-[#D3126A]/10 to-[#D3126A]/5 border-2 border-[#D3126A] rounded-xl p-6 my-8">
-          <h4 className="text-xl font-bold text-de-accent-ink mb-4">Case Study: The Email Compromise</h4>
-          <div className="text-white/75 space-y-4">
-            <p>
-              A real estate title company lost $1.2 million when attackers compromised their email system and redirected a closing wire transfer. The post-incident assessment revealed:
-            </p>
-            <ul className="list-disc ml-6 space-y-2">
-              <li>No multi-factor authentication on email accounts</li>
-              <li>No email filtering for suspicious attachments or links</li>
-              <li>No procedures for verifying wire transfer instructions</li>
-              <li>No employee training on business email compromise tactics</li>
-            </ul>
-            <p>
-              Each of these vulnerabilities could have been identified and addressed through a proper risk assessment—at a fraction of the cost of the eventual loss.
-            </p>
-          </div>
-        </div>
+        <ExampleScenario title="The Email Compromise">
+          <p>
+            Picture a title company where an attacker signs in to one employee's mailbox, watches a closing, and sends the buyer new wire instructions. The money is gone before anyone calls. Afterwards the gaps are plain:
+          </p>
+          <ul className="list-disc ml-6 space-y-2">
+            <li>No multi-factor authentication on email</li>
+            <li>No filtering for suspicious links and attachments</li>
+            <li>No rule to confirm wire changes by phone</li>
+            <li>No training on business email compromise</li>
+          </ul>
+          <p>
+            It is one of the costliest crimes in the FBI's data: {BEC_FACT.metric} {BEC_FACT.statement} in {BEC_FACT.year} (
+            <a href={BEC_FACT.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+              {formatFactSource(BEC_FACT)}
+            </a>
+            ). Every gap in the list is something a risk assessment finds before an attacker does.
+          </p>
+        </ExampleScenario>
       </>
     )
   },
@@ -515,111 +552,99 @@ export default function Ebook() {
         </div>
       )}
 
-      <main className="de-nav-clear pb-20">
+      <main className={showCover ? "" : "de-nav-clear pb-20"}>
+        {showCover && (
+          <>
+            <PageHero
+              eyebrow="Free Ebook"
+              breadcrumbs={[{ label: "Resources", href: "/resources" }, { label: "Defending the Digital Realm" }]}
+              title="Defending the Digital Realm"
+              lede="A Cyber Risk Assessment Framework for Modern Businesses"
+              aside={
+                <div className="mx-auto max-w-xs lg:ml-auto lg:mr-0">
+                  <img
+                    src={ebookCover}
+                    alt="Defending the Digital Realm ebook cover"
+                    loading="eager"
+                    decoding="async"
+                    width={448}
+                    height={580}
+                    className="w-full rounded-xl border border-white/10 shadow-[0_30px_60px_-30px_rgba(0,0,0,0.9)]"
+                    data-testid="img-ebook-cover"
+                  />
+                </div>
+              }
+              asideOnMobile
+              actions={
+                <>
+                  <Button
+                    onClick={() => setShowCover(false)}
+                    className="min-h-12 bg-[#D3126A] px-7 text-base font-semibold text-white hover:bg-[#b80f5c]"
+                    data-testid="button-start-reading"
+                  >
+                    <BookOpen className="mr-2 h-5 w-5" aria-hidden="true" />
+                    Start Reading
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="min-h-12 border-white/25 bg-transparent px-6 text-base text-white hover:bg-white/10 hover:text-white"
+                    onClick={() => window.print()}
+                    data-testid="button-download"
+                  >
+                    <Download className="mr-2 h-5 w-5" aria-hidden="true" />
+                    Save as PDF
+                  </Button>
+                </>
+              }
+              note="Joe Petro — Founder, Digerati Experts"
+            />
+
+            <FactStrip
+              label="Inside the ebook"
+              facts={[
+                { icon: BookOpen, title: "6 Chapters", text: "Comprehensive coverage of risk assessment fundamentals" },
+                { icon: ClipboardList, title: "Practical scenarios", text: "Common patterns Arizona businesses run into" },
+                { icon: RouteIcon, title: "Actionable Roadmap", text: "90-day plan to improve your security posture" },
+              ]}
+            />
+
+            <SiteChapter tone="well" seam={false}>
+              <Container>
+                <div className="grid items-center gap-6 lg:grid-cols-12 lg:gap-14">
+                  <div className="lg:col-span-5">
+                    <h2 className="font-heading text-2xl font-semibold tracking-[-0.02em] text-white md:text-3xl">
+                      Read Chapter 1 to you
+                    </h2>
+                  </div>
+                  <div className="lg:col-span-7">
+                    <BlogAudioPlayer
+                      key="ebook-cover-ch1"
+                      title={`${chapters[0].title} — Defending the Digital Realm`}
+                      text={chapters[0].narrationText}
+                      wordCount={countWords(chapters[0].narrationText)}
+                    />
+                  </div>
+                </div>
+              </Container>
+            </SiteChapter>
+
+            <ClosingCta
+              tone="paper"
+              eyebrow="Next step"
+              title="Ready to assess your environment?"
+              lede="Use this framework with a DE Cyber Risk Assessment — not a generic checklist."
+              primary={{ label: CTA.primary, href: "/book", testId: "button-conversion-assessment" }}
+            />
+          </>
+        )}
+
+        {!showCover && (
         <div className="container mx-auto px-4 max-w-7xl">
-          <Link href="/resources/blog" className="inline-flex items-center text-de-accent-ink hover:text-de-accent-ink mb-6 transition-colors" data-testid="link-back-blog">
-            <ArrowLeft className="mr-2 h-4 w-4" />
+          <Link href="/resources/blog" className="mb-4 inline-flex min-h-11 items-center text-de-accent-ink transition-colors hover:text-white" data-testid="link-back-blog">
+            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
             Back to Resources
           </Link>
 
-          {showCover ? (
-            <motion.div 
-              className="text-center py-12"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <motion.div 
-                className="max-w-md mx-auto mb-8 perspective-1000"
-                whileHover={{ scale: 1.02, rotateY: 5 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <img 
-                  src={ebookCover} 
-                  alt="Defending the Digital Realm ebook cover" 
-                  loading="eager"
-                  decoding="async"
-                  width={448}
-                  height={580}
-                  className="w-full rounded-xl shadow-2xl shadow-none border border-[#D3126A]/30"
-                  style={{ 
-                    boxShadow: '0 25px 50px -12px rgba(211, 18, 106, 0.18), 0 0 0 1px rgba(211, 18, 106, 0.12), inset 0 0 0 1px rgba(255,255,255,0.05)'
-                  }}
-                  data-testid="img-ebook-cover"
-                />
-              </motion.div>
-              <Badge className="mb-4 bg-gradient-to-r from-[#D3126A]/20 to-[#D3126A]/10 text-de-accent-ink border-[#D3126A]/30 px-4 py-1">
-                Free Ebook
-              </Badge>
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                Defending the Digital Realm
-              </h1>
-              <p className="text-xl text-white/70 mb-2">
-                A Cyber Risk Assessment Framework for Modern Businesses
-              </p>
-              <p className="text-white/50 mb-8">Joe Petro — Founder, Digerati Experts</p>
-              
-              <div className="flex flex-wrap justify-center items-center gap-4 mb-8">
-                <Button 
-                  onClick={() => setShowCover(false)}
-                  className="bg-[#D3126A] text-white font-bold px-8 py-6 text-lg hover:shadow-xl hover:shadow-[#D3126A]/20 hover:-translate-y-1 transition-all"
-                  data-testid="button-start-reading"
-                >
-                  <BookOpen className="mr-2 h-5 w-5" />
-                  Start Reading
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-[#D3126A]/40 text-de-accent-ink hover:bg-[#D3126A]/10 px-6 py-6"
-                  onClick={() => window.print()}
-                  data-testid="button-download"
-                >
-                  <Download className="mr-2 h-5 w-5" />
-                  Save as PDF
-                </Button>
-              </div>
-              <div className="flex justify-center mb-10">
-                <div className="flex flex-col items-center gap-2">
-                  <p className="text-xs uppercase tracking-wider text-white/55">
-                    Read Chapter 1 to you
-                  </p>
-                  <BlogAudioPlayer
-                    key="ebook-cover-ch1"
-                    title={`${chapters[0].title} — Defending the Digital Realm`}
-                    text={chapters[0].narrationText}
-                    wordCount={countWords(chapters[0].narrationText)}
-                  />
-                </div>
-              </div>
-
-              <div className="mt-12 grid md:grid-cols-3 gap-6 text-left">
-                {[
-                  { title: "6 Chapters", desc: "Comprehensive coverage of risk assessment fundamentals", icon: "📚" },
-                  { title: "Practical scenarios", desc: "Common patterns Arizona businesses run into", icon: "📊" },
-                  { title: "Actionable Roadmap", desc: "90-day plan to improve your security posture", icon: "🗺️" }
-                ].map((item, idx) => (
-                  <motion.div 
-                    key={idx}
-                    className="rounded-xl border border-de-hairline bg-de-raised p-6 transition-colors hover:border-[#D3126A]/30"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 + idx * 0.1 }}
-                  >
-                    <span className="text-2xl mb-3 block">{item.icon}</span>
-                    <h3 className="text-lg font-bold text-de-accent-ink mb-2">{item.title}</h3>
-                    <p className="text-white/60 text-sm">{item.desc}</p>
-                  </motion.div>
-                ))}
-              </div>
-
-              <div className="mt-12">
-                <ConversionPathBar
-                  headline="Ready to assess your environment?"
-                  body="Use this framework with a DE Cyber Risk Assessment — not a generic checklist."
-                />
-              </div>
-            </motion.div>
-          ) : (
             <div className="relative">
               {/* Table of Contents Sidebar */}
               <AnimatePresence>
@@ -851,8 +876,8 @@ export default function Ebook() {
                 </div>
               </div>
             </div>
-          )}
         </div>
+        )}
       </main>
 
       <DigeratiEnhancedFooterSection />

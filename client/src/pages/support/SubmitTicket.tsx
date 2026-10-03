@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { PageTemplate } from "@/components/PageTemplate";
-import { IconWell } from "@/components/visual/IconWell";
+import { Chapter, Container, HeroActions } from "@/components/site/chapters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,11 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useSEO } from "@/hooks/useSEO";
-import { AlertCircle, Clock, Phone, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 
-const cardClass = "rounded-2xl border border-de-hairline bg-de-raised";
-const fieldClass = "border-de-hairline bg-de-bg text-white placeholder:text-white/55";
+const fieldClass =
+  "h-11 border-[var(--de-paper-hairline)] bg-white text-[#1A1228] placeholder:text-black/55 focus-visible:border-[#D3126A] focus-visible:ring-2 focus-visible:ring-[#D3126A]/40";
+const labelClass = "text-base font-medium text-[#1A1228]";
+const selectItemClass = "text-base text-[#1A1228] focus:bg-black/5 focus:text-[#1A1228]";
 
 export default function SubmitTicket() {
   const { toast } = useToast();
@@ -96,31 +98,33 @@ export default function SubmitTicket() {
 
   return (
     <PageTemplate
+      layout="chapters"
+      eyebrow="Support · Tickets"
       title="Submit Support Ticket"
       subtitle="Get help from our support team. Open a ticket and we’ll track it to resolution."
       breadcrumbs={[{ label: "Support", href: "/about/support" }, { label: "Submit Ticket" }]}
       actions={
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild variant="outline" size="lg" className="h-12 border-white/20 px-6 font-semibold text-white hover:bg-white/10">
-            <a href={PRIMARY_PHONE.telHref}>
-              <Phone className="mr-2 h-4 w-4" />
-              Call {PRIMARY_PHONE.display}
-            </a>
-          </Button>
+          <HeroActions
+            primary={{ label: `Call ${PRIMARY_PHONE.display}`, href: PRIMARY_PHONE.telHref }}
+            secondary={{ label: "Remote Support", href: "/support/remote-support" }}
+          />
         </div>
       }
     >
-      <div className="grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <div className={`p-6 md:p-8 ${cardClass}`}>
-            <h2 className="text-xl font-semibold text-white">New Support Request</h2>
-            <p className="mt-2 text-white/60">
-              Please provide as much detail as possible to help us resolve your issue quickly.
-            </p>
+      <Chapter tone="paper" seam={false}>
+        <Container>
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+            <div className="lg:col-span-8">
+              <div className="rounded-xl border border-[var(--de-paper-hairline)] bg-white p-6 md:p-8">
+                <h2 className="font-heading text-xl font-semibold text-[#1A1228]">New Support Request</h2>
+                <p className="mt-2 text-[#3A3448]">
+                  Please provide as much detail as possible to help us resolve your issue quickly.
+                </p>
             <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <Label htmlFor="name" className="text-white/80">Your Name *</Label>
+                  <Label htmlFor="name" className={labelClass}>Your Name *</Label>
                   <Input
                     id="name"
                     value={name}
@@ -132,7 +136,7 @@ export default function SubmitTicket() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email" className="text-white/80">Email Address *</Label>
+                  <Label htmlFor="email" className={labelClass}>Email Address *</Label>
                   <Input
                     id="email"
                     type="email"
@@ -148,7 +152,7 @@ export default function SubmitTicket() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <Label htmlFor="phone" className="text-white/80">Phone Number *</Label>
+                  <Label htmlFor="phone" className={labelClass}>Phone Number *</Label>
                   <Input
                     id="phone"
                     type="tel"
@@ -161,23 +165,23 @@ export default function SubmitTicket() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="priority" className="text-white/80">Priority *</Label>
+                  <Label htmlFor="priority" className={labelClass}>Priority *</Label>
                   <Select value={priority} onValueChange={setPriority}>
                     <SelectTrigger id="priority" data-testid="select-priority" className={`mt-1.5 ${fieldClass}`}>
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low - General Question</SelectItem>
-                      <SelectItem value="medium">Medium - Minor Issue</SelectItem>
-                      <SelectItem value="high">High - Production Issue</SelectItem>
-                      <SelectItem value="critical">Critical - System Down</SelectItem>
+                    <SelectContent className="border-[var(--de-paper-hairline)] bg-white">
+                      <SelectItem value="low" className={selectItemClass}>Low - General Question</SelectItem>
+                      <SelectItem value="medium" className={selectItemClass}>Medium - Minor Issue</SelectItem>
+                      <SelectItem value="high" className={selectItemClass}>High - Production Issue</SelectItem>
+                      <SelectItem value="critical" className={selectItemClass}>Critical - System Down</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="subject" className="text-white/80">Subject *</Label>
+                <Label htmlFor="subject" className={labelClass}>Subject *</Label>
                 <Input
                   id="subject"
                   value={subject}
@@ -190,7 +194,7 @@ export default function SubmitTicket() {
               </div>
 
               <div>
-                <Label htmlFor="description" className="text-white/80">Detailed Description *</Label>
+                <Label htmlFor="description" className={labelClass}>Detailed Description *</Label>
                 <Textarea
                   id="description"
                   value={description}
@@ -199,7 +203,7 @@ export default function SubmitTicket() {
                   rows={8}
                   required
                   data-testid="textarea-description"
-                  className={`mt-1.5 ${fieldClass}`}
+                  className={`mt-1.5 h-auto ${fieldClass}`}
                 />
               </div>
 
@@ -221,50 +225,57 @@ export default function SubmitTicket() {
                 )}
               </Button>
             </form>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className={`p-6 ${cardClass}`}>
-            <IconWell icon={Clock} size="md" surface="dark" className="mb-3" />
-            <h2 className="text-lg font-semibold text-white">Response Times</h2>
-            <div className="mt-4 space-y-3">
-              <div>
-                <p className="font-semibold text-de-accent-ink">Critical Issues</p>
-                <p className="text-sm text-white/60">Immediate response</p>
-              </div>
-              <div>
-                <p className="font-semibold text-white">High Priority</p>
-                <p className="text-sm text-white/60">Tracked to resolution</p>
-              </div>
-              <div>
-                <p className="font-semibold text-white/80">Medium/Low Priority</p>
-                <p className="text-sm text-white/60">Within 2 hours</p>
               </div>
             </div>
-          </div>
 
-          <div className={`p-6 ${cardClass}`}>
-            <IconWell icon={Phone} size="md" surface="dark" className="mb-3" />
-            <h2 className="text-lg font-semibold text-white">Need Immediate Help?</h2>
-            <p className="mt-2 mb-4 text-white/65">For urgent issues, call us directly:</p>
-            <a
-              href={PRIMARY_PHONE.telHref}
-              className="text-2xl font-bold text-de-accent-ink hover:text-white"
-            >
-              {PRIMARY_PHONE.display}
-            </a>
-          </div>
+            <aside className="space-y-8 lg:col-span-4">
+              <section>
+                <h2 className="font-heading text-lg font-semibold text-[#1A1228]">Response Times</h2>
+                {/* The four tiers of client/src/pages/legal/SLA.tsx, verbatim. */}
+                <dl className="mt-3 border-t border-[var(--de-paper-hairline)]">
+                  <div className="border-b border-[var(--de-paper-hairline)] py-3">
+                    <dt className="font-semibold text-de-magenta-paper-ink">Critical (active breach or system down)</dt>
+                    <dd className="text-sm text-[#3A3448]">15 minutes</dd>
+                  </div>
+                  <div className="border-b border-[var(--de-paper-hairline)] py-3">
+                    <dt className="font-semibold text-[#1A1228]">High (major functionality impaired)</dt>
+                    <dd className="text-sm text-[#3A3448]">1 hour</dd>
+                  </div>
+                  <div className="border-b border-[var(--de-paper-hairline)] py-3">
+                    <dt className="font-semibold text-[#1A1228]">Medium (partial loss)</dt>
+                    <dd className="text-sm text-[#3A3448]">4 hours</dd>
+                  </div>
+                  <div className="border-b border-[var(--de-paper-hairline)] py-3">
+                    <dt className="font-semibold text-[#1A1228]">Low (questions, minor issues)</dt>
+                    <dd className="text-sm text-[#3A3448]">Next business day</dd>
+                  </div>
+                </dl>
+                <p className="mt-3 text-sm text-[#3A3448]">
+                  From our <a href="/legal/sla" className="underline underline-offset-2">Service Level Agreement</a>.
+                </p>
+              </section>
 
-          <div className={`p-6 ${cardClass}`}>
-            <IconWell icon={AlertCircle} size="md" surface="dark" className="mb-3" />
-            <h2 className="text-lg font-semibold text-white">Emergency Contact</h2>
-            <p className="mt-2 text-sm leading-relaxed text-white/65">
-              For after-hours emergencies, use our emergency hotline available 24/7 to all managed service clients.
-            </p>
+              <section>
+                <h2 className="font-heading text-lg font-semibold text-[#1A1228]">Need Immediate Help?</h2>
+                <p className="mb-2 mt-2 text-[#3A3448]">For urgent issues, call us directly:</p>
+                <a
+                  href={PRIMARY_PHONE.telHref}
+                  className="inline-flex min-h-11 items-center text-2xl font-semibold text-de-magenta-paper-ink underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
+                >
+                  {PRIMARY_PHONE.display}
+                </a>
+              </section>
+
+              <section className="border-t border-[var(--de-paper-hairline)] pt-8">
+                <h2 className="font-heading text-lg font-semibold text-[#1A1228]">Emergency Contact</h2>
+                <p className="mt-2 text-sm leading-relaxed text-[#3A3448]">
+                  For after-hours emergencies, use our emergency hotline available 24/7 to all managed service clients.
+                </p>
+              </section>
+            </aside>
           </div>
-        </div>
-      </div>
+        </Container>
+      </Chapter>
     </PageTemplate>
   );
 }

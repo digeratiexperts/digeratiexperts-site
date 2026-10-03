@@ -135,7 +135,7 @@ describe("paid-order fulfillment behavior", () => {
     await expect(first).resolves.toBe(true);
 
     expect(mocks.sendOrderConfirmation).toHaveBeenCalledTimes(1);
-    expect(mocks.eventEmit).toHaveBeenCalledTimes(1);
+    expect(mocks.eventEmit).not.toHaveBeenCalled();
     expect(updateSets.map((set) => set.status)).toEqual([
       "provisioning",
       "provisioning",

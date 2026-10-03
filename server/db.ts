@@ -122,4 +122,26 @@ export function getDatabaseStatus(): { connected: boolean; type: string } {
 
 const initPromise = initDb();
 
+let reconnecting: Promise<boolean> | null = null;
+let lastReconnectAt = 0;
+const RECONNECT_COOLDOWN_MS = 10_000;
+
+/**
+ * Re-attempt the database connection after a failed boot or a dropped pool (#248),
+ * so durable storage can recover without a process restart. Throttled; callers
+ * share one in-flight attempt. The exported `db`/`dbReady` bindings are live.
+ */
+export async function reconnectDatabase(): Promise<boolean> {
+  if (dbReady) return true;
+  if (!process.env.DATABASE_URL) return false;
+  if (reconnecting) return reconnecting;
+  if (Date.now() - lastReconnectAt < RECONNECT_COOLDOWN_MS) return false;
+  lastReconnectAt = Date.now();
+  initAttempted = false;
+  reconnecting = initDb().finally(() => {
+    reconnecting = null;
+  });
+  return reconnecting;
+}
+
 export { pool, db, dbReady, initPromise, initAttempted, dbType };

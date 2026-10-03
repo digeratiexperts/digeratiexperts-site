@@ -1,0 +1,146 @@
+# Read-only check of the live client portal, signed in as a test client.
+#
+# Manual only: no schedule, no push trigger. Each run signs in through the real
+# login page, opens every portal route with GET requests only, takes 390px and
+# 1440px screenshots, and reports page errors, failed requests, horizontal
+# overflow and WCAG 2.1 AA (axe-core) violations. Nothing is created, changed
+# or submitted.
+#
+# Setup and troubleshooting: docs/runbooks/PORTAL-QA-LOGIN.md
+#
+# Repository secrets (Settings > Secrets and variables > Actions). The values
+# only ever reach this job through env, and are never printed:
+#   PORTAL_QA_EMAIL + PORTAL_QA_PASSWORD   the test account
+#   PORTAL_QA_TOKEN                        optional: portalAuth cookie value,
+#                                          used instead when Cloudflare
+#                                          Turnstile blocks the automated login
+# With none of these set the job prints how to add them and finishes green.
+name: Portal production check
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Portal base URL (must be on digeratiexperts.com)"
+        required: false
+        default: "https://digeratiexperts.com"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portal-prod-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check the live portal
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PORTAL_QA_EMAIL: ${{ secrets.PORTAL_QA_EMAIL }}
+      PORTAL_QA_PASSWORD: ${{ secrets.PORTAL_QA_PASSWORD }}
+      PORTAL_QA_TOKEN: ${{ secrets.PORTAL_QA_TOKEN }}
+      # Passed through env, never interpolated into a script body.
+      INPUT_BASE_URL: ${{ inputs.base_url }}
+
+    steps:
+      - name: Check for test login secrets
+        id: creds
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${PORTAL_QA_TOKEN:-}" ] || { [ -n "${PORTAL_QA_EMAIL:-}" ] && [ -n "${PORTAL_QA_PASSWORD:-}" ]; }; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "No test login is configured, so nothing was checked."
+            echo "Add PORTAL_QA_EMAIL and PORTAL_QA_PASSWORD as repository secrets: Settings > Secrets and variables > Actions"
+            echo "Steps: docs/runbooks/PORTAL-QA-LOGIN.md"
+            {
+              echo "### Portal production check skipped"
+              echo
+              echo "No test login is configured. Add \`PORTAL_QA_EMAIL\` and \`PORTAL_QA_PASSWORD\` as repository secrets: Settings > Secrets and variables > Actions. Steps: \`docs/runbooks/PORTAL-QA-LOGIN.md\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # Credentials are sent to this URL, so it must stay on our own domain.
+      - name: Validate base URL
+        if: steps.creds.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${INPUT_BASE_URL:-https://digeratiexperts.com}"
+          if ! printf '%s' "$BASE" | grep -Eq '^https://([a-z0-9-]+\.)*digeratiexperts\.com/?$'; then
+            echo "base_url must be an https URL on digeratiexperts.com (got: $BASE)" >&2
+            exit 1
+          fi
+          echo "PORTAL_QA_BASE=${BASE%/}" >> "$GITHUB_ENV"
+
+      - name: Checkout
+        if: steps.creds.outputs.run == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        if: steps.creds.outputs.run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.creds.outputs.run == 'true'
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Playwright Chromium
+        if: steps.creds.outputs.run == 'true'
+        run: npx playwright install --with-deps chromium
+
+      # axe-core goes into a temp prefix, so package.json and the lockfile are
+      # never touched.
+      - name: Install axe-core (temp prefix)
+        if: steps.creds.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/axe" --no-save --no-audit --no-fund axe-core@4
+          AXE="$RUNNER_TEMP/axe/node_modules/axe-core/axe.min.js"
+          test -s "$AXE"
+          echo "AXE_PATH=$AXE" >> "$GITHUB_ENV"
+
+      - name: Run portal check
+        id: check
+        if: steps.creds.outputs.run == 'true'
+        run: node scripts/qa/portal-prod-check.mjs artifacts/portal-prod-check
+
+      - name: Summarize report
+        if: always() && steps.creds.outputs.run == 'true'
+        shell: bash
+        run: |
+          node -e '
+            const fs = require("fs");
+            const f = "artifacts/portal-prod-check/report.json";
+            const out = process.env.GITHUB_STEP_SUMMARY;
+            if (!fs.existsSync(f)) {
+              fs.appendFileSync(out, "### Portal production check\n\nNo report was written. Sign-in probably failed: open the run log, and the `login-failed.png` in the artifact. If Cloudflare Turnstile blocked the browser, add the PORTAL_QA_TOKEN secret (see docs/runbooks/PORTAL-QA-LOGIN.md).\n");
+              process.exit(0);
+            }
+            const r = JSON.parse(fs.readFileSync(f, "utf8"));
+            const lines = ["### Portal production check", "", `${r.summary.length} page views against ${r.base}, ${r.issues.length} issues.`, ""];
+            if (r.issues.length) {
+              lines.push("| Width | Route | Kind | Detail |", "|---|---|---|---|");
+              for (const i of r.issues.slice(0, 100)) lines.push(`| ${i.width} | ${i.route} | ${i.kind} | ${String(i.detail).replace(/\|/g, "/")} |`);
+              if (r.issues.length > 100) lines.push("", `${r.issues.length - 100} more in report.json (artifact).`);
+            }
+            fs.appendFileSync(out, lines.join("\n") + "\n");
+          '
+
+      - name: Upload report and screenshots
+        if: always() && steps.creds.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: portal-prod-check
+          path: artifacts/portal-prod-check
+          retention-days: 14
+          if-no-files-found: warn

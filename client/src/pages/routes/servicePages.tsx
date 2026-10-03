@@ -37,7 +37,7 @@ export const servicePageData = {
       { title: "Repeat Issue Reduction", description: "Tracking and follow-up to reduce repeat incidents over time" }
     ],
     benefits: [
-      "First-response SLA: 15-minute response target during business hours",
+      "Published SLA response targets by priority: 15 minutes for critical incidents",
       "Reduced repeat incident rate",
       "Users guided toward solutions, not band-aids",
       "Vendor issues resolved—we handle ISPs, SaaS vendors, hardware vendors",
@@ -155,7 +155,7 @@ export const servicePageData = {
     ],
     benefits: [
       "Real-time threat detection 24/7/365",
-      "Minutes-to-respond incident response",
+      "15-minute response for critical incidents, per our published SLA",
       "Automated containment stops spread in seconds",
       "Forensic investigation and root cause analysis",
       "Compliance-ready incident documentation",

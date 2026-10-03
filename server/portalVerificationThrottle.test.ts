@@ -43,6 +43,8 @@ describe("the resend-verification route is protected (issue #252)", () => {
 
   it("no longer answers a distinct 'already verified' status, which leaked account existence", () => {
     expect(route).not.toContain("Email is already verified");
-    expect(route).toContain("hasFreshVerificationToken");
+    // The durable store applies the same per-email cooldown (#251).
+    expect(route).toContain("hasFreshAuthToken");
+    expect(route).toContain("RESEND_COOLDOWN_MS");
   });
 });

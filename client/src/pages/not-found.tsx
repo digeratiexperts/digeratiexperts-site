@@ -1,8 +1,13 @@
-import { AlertCircle, ArrowRight, Home } from "lucide-react";
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
 import { PageTemplate } from "@/components/PageTemplate";
-import { ConversionPathBar } from "@/components/ConversionPathBar";
+import {
+  Chapter,
+  Container,
+  ChapterHeader,
+  ClosingCta,
+  FeatureGrid,
+  HeroActions,
+} from "@/components/site/chapters";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
 import {
@@ -10,7 +15,7 @@ import {
   MarketingRouteFallback,
 } from "@/pages/MarketingRouteFallback";
 
-function NotFoundPage() {
+export function NotFoundPage() {
   useSEO({
     title: "404 - Page Not Found",
     description:
@@ -20,39 +25,42 @@ function NotFoundPage() {
 
   return (
     <PageTemplate
+      layout="chapters"
+      eyebrow="Error 404"
       title="Page not found"
       subtitle="That URL isn’t on digeratiexperts.com. Head home, or book a Cyber Risk Assessment if you were looking for help."
-      icon={<AlertCircle className="h-8 w-8" />}
       showBackButton={false}
-    >
-      <div className="mx-auto max-w-2xl space-y-10">
-        <div className="flex flex-col justify-center gap-3 sm:flex-row">
-          <Button asChild size="lg" variant="brand" className="h-12">
-            <a href="/">
-              <Home className="mr-2 h-5 w-5" aria-hidden="true" />
-              Back to Home
-            </a>
-          </Button>
-          <Button
-            asChild
-            size="lg"
-            variant="outline"
-            className="h-12 border-white/20 text-white hover:bg-white/10"
-          >
-            <a href="/contact">
-              Contact us
-              <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-            </a>
-          </Button>
+      actions={
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <HeroActions
+            primary={{ label: "Back to Home", href: "/" }}
+            secondary={{ label: "Contact us", href: "/contact" }}
+          />
         </div>
+      }
+    >
+      <Chapter tone="paper" seam={false}>
+        <Container>
+          <ChapterHeader tone="paper" eyebrow="Try these" title="Where people usually mean to go" />
+          <FeatureGrid
+            tone="paper"
+            columns={4}
+            items={[
+              { title: "Solutions", text: "Managed IT, security and compliance.", href: "/solutions", linkLabel: "Browse solutions" },
+              { title: "Plans & pricing", text: "How engagements are scoped.", href: CTA.secondaryHref, linkLabel: "See pricing" },
+              { title: "Support", text: "Self-service topics for clients.", href: "/support/knowledge-base", linkLabel: "Knowledge base" },
+              { title: "Contact", text: "Call or send a message.", href: "/contact", linkLabel: "Contact us" },
+            ]}
+          />
+        </Container>
+      </Chapter>
 
-        <ConversionPathBar
-          headline="Need a Cyber Risk Assessment instead?"
-          body="If you landed here looking for help, book a time. We’ll review the environment and recommend a fit."
-          primaryHref="/book"
-          primaryLabel={CTA.primary}
-        />
-      </div>
+      <ClosingCta
+        tone="well"
+        title="Need a Cyber Risk Assessment instead?"
+        lede="If you landed here looking for help, book a time. We’ll review the environment and recommend a fit."
+        primary={{ label: CTA.primary, href: "/book" }}
+      />
     </PageTemplate>
   );
 }

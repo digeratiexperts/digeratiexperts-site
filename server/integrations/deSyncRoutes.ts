@@ -188,6 +188,8 @@ export function registerDeSyncRoutes(app: Express, authMiddleware: AuthMiddlewar
         portalClientId: req.user?.clientId || null,
         actorUserId: req.userId || null,
       };
+      delete payload.canonicalAccountId;
+      delete payload.hubAccountId;
       if (eventType === "account.profile_update_requested") {
         const command = buildPortalProfileCommand({
           hubAccountId: client?.hubAccountId,

@@ -180,6 +180,22 @@ jobs:
             exit 1
           fi
 
+      # deploy.sh writes the commit it serves to release.txt. Read the release
+      # being replaced, so the Cloudflare purge below knows which public files
+      # changed. Unreadable is fine: the purge then clears the whole zone.
+      - name: Record the release being replaced
+        if: env.DE_DEPLOY_STALE != 'true'
+        shell: bash
+        run: |
+          set -uo pipefail
+          PREV="$(curl -fsS --max-time 10 http://127.0.0.1:3300/release.txt 2>/dev/null | tr -d '\r\n' || true)"
+          if [[ "$PREV" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "DE_PREVIOUS_RELEASE=$PREV" >> "$GITHUB_ENV"
+            echo "Replacing release $PREV"
+          else
+            echo "No readable previous release; the cache purge will clear the whole zone."
+          fi
+
       - name: Deploy current main with canonical release script
         if: env.DE_DEPLOY_STALE != 'true'
         shell: bash
@@ -218,6 +234,99 @@ jobs:
           printf '%s' "$BODY" | grep -q '"enabled":true'
           printf '%s' "$BODY" | grep -Eq '"publicGovernedRecords":[1-9][0-9]*'
           echo "Production is serving DE Intelligence v1"
+
+      # Cloudflare caches public files under their unchanging names (the resource
+      # PDFs, covers, fonts), so without a purge a deploy that changes one keeps
+      # serving the old copy from the edge. On 2026-10-03 three redesigned PDFs
+      # stayed stale this way until a manual purge. Purge exactly the
+      # client/public files changed since the release being replaced, and the
+      # whole zone when that list cannot be known. Needs the repository secrets
+      # CLOUDFLARE_API_TOKEN (Zone > Cache Purge > Purge, digeratiexperts.com only)
+      # and CLOUDFLARE_ZONE_ID; without them it warns and skips.
+      - name: Purge Cloudflare cache for changed public files
+        if: env.DE_DEPLOY_STALE != 'true'
+        uses: actions/github-script@v7
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+        with:
+          script: |
+            const token = process.env.CF_API_TOKEN;
+            const zone = process.env.CF_ZONE_ID;
+            if (!token || !zone) {
+              core.warning("CLOUDFLARE_API_TOKEN / CLOUDFLARE_ZONE_ID are not set, so the Cloudflare cache was not purged. Changed public files may be served stale.");
+              return;
+            }
+            const SITE = "https://digeratiexperts.com";
+            const PUBLIC = "client/public/";
+            const prev = process.env.DE_PREVIOUS_RELEASE || "";
+            const head = context.sha;
+            if (prev === head) {
+              core.info("Same release redeployed; nothing to purge.");
+              return;
+            }
+
+            // null = the changed-file list is unknown, so purge everything.
+            let urls = null;
+            if (prev) {
+              try {
+                const { data } = await github.rest.repos.compareCommitsWithBasehead({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  basehead: `${prev}...${head}`,
+                  // Paginates commits only; the file list arrives complete on page 1 (up to 300).
+                  per_page: 1,
+                });
+                const files = data.files ?? [];
+                // The compare API lists at most 300 files; past that the list is partial.
+                if (files.length < 300) {
+                  const paths = new Set();
+                  for (const f of files) {
+                    for (const name of [f.filename, f.previous_filename]) {
+                      if (name && name.startsWith(PUBLIC)) paths.add(name.slice(PUBLIC.length));
+                    }
+                  }
+                  urls = [...paths].map((p) => `${SITE}/${encodeURI(p)}`);
+                } else {
+                  core.info("300 or more files changed; purging the whole zone.");
+                }
+              } catch (err) {
+                core.warning(`Could not compare ${prev}...${head} (${err.message}); purging the whole zone.`);
+              }
+            }
+
+            const purge = async (body) => {
+              const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${zone}/purge_cache`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+              });
+              const json = await res.json().catch(() => ({}));
+              if (!res.ok || !json.success) {
+                throw new Error(`Cloudflare purge failed (HTTP ${res.status}): ${JSON.stringify(json.errors ?? json)}`);
+              }
+            };
+
+            try {
+              if (urls === null) {
+                await purge({ purge_everything: true });
+                await core.summary.addHeading("Cloudflare cache", 3).addRaw("Purged the whole zone.").write();
+                core.info("Purged the whole Cloudflare zone.");
+              } else if (urls.length === 0) {
+                core.info("No client/public files changed; nothing to purge.");
+              } else {
+                // Purge-by-URL takes at most 30 URLs per call.
+                for (let i = 0; i < urls.length; i += 30) await purge({ files: urls.slice(i, i + 30) });
+                await core.summary
+                  .addHeading("Cloudflare cache", 3)
+                  .addRaw(`Purged ${urls.length} changed public file(s):`)
+                  .addList(urls)
+                  .write();
+                core.info(`Purged ${urls.length} URL(s):\n${urls.join("\n")}`);
+              }
+            } catch (err) {
+              core.setFailed(`${err.message}. The deploy itself succeeded; purge the changed files by hand in Cloudflare.`);
+            }
 
   # Four production deploys failed between 2026-09-19 and 2026-09-27 and produced
   # no signal at all; the gap was found by hand eight days later. This job runs on

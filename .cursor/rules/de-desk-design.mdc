@@ -13,6 +13,7 @@ Primary file: `client/src/components/ZohoASAPWidget.tsx`. Full playbook: `.curso
 - **One black + grey + gold panel** (Joe, 2026-10-01; `design/UI-STYLE-RULES.md` support chrome): `#0b0b0d` panel, charcoal rows and icon wells, white/10 hairline, white ink, all through the one `--desk-*` token set in the widget. A 1px gold cap on the panel; no glow, no gold ring, no second theme or `!important` override.
 - The mark's Signal Gold `#E3B23C` (`--desk-gold`) for the avatar ring, active underline, send, CTAs, selected states and the incident rail, with near-black `--desk-on-gold` text on gold fills. No magenta anywhere on the Desk. Violet is lighting only and is not used here.
 - Active tab: white label + gold underline.
+- The Ask DE launcher that opens the chooser (`SiteBottomBar.tsx`, Joe 2026-10-03): a gold ring on charcoal with a white mark beside its "Ask DE" label (640px and up), a solid gold disc with a dark mark when it stands alone (phones, the compact Store launcher). The mark stays white on hover. One white focus ring that keeps the round shape. The chooser header uses the same badge (`askDeBadgeClasses`).
 - Composer, status strip, and repeated footer stay off Client Tools.
 
 ## Tab content

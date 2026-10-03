@@ -1,206 +1,195 @@
 import { PageTemplate } from "@/components/PageTemplate";
-import { ConversionPathBar } from "@/components/ConversionPathBar";
+import {
+  Chapter,
+  Container,
+  ChapterHeader,
+  ClosingCta,
+  FactStrip,
+  HeroActions,
+} from "@/components/site/chapters";
 import { IconWell } from "@/components/visual/IconWell";
-import { Button } from "@/components/ui/button";
-import { Shield, Award, Briefcase, Users, Star, Trophy, CheckCircle, ArrowRight } from "lucide-react";
+import { VerifiedCredentials } from "@/components/site/VerifiedCredentials";
+import {
+  Shield,
+  Briefcase,
+  Users,
+  Trophy,
+  Clock,
+  MapPin,
+  Activity,
+} from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { photography } from "@/lib/visualAssets";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 
-const cardClass = "rounded-2xl border border-de-hairline bg-de-raised";
-const insetClass = "rounded-xl border border-de-hairline bg-de-bg";
-
+// What each discipline does. Credentials are not typed here: they come from
+// client/src/data/credentials.ts with the issuer's verification link.
 const team = [
   {
-    name: "Leadership Team",
-    description: "Industry veterans with decades of combined experience in IT and cybersecurity",
-    certifications: ["CISSP", "CISM", "Microsoft Certified", "CompTIA Security+"],
+    name: "Leadership & architecture",
+    description:
+      "The founder leads every Cyber Risk Assessment and the architecture that follows, and stays involved in the milestones that matter.",
     icon: Trophy,
   },
   {
-    name: "Security Engineers",
-    description: "Specialized cybersecurity experts protecting your business 24/7",
-    certifications: ["CEH", "GIAC", "OSCP", "Security+"],
+    name: "Security operations",
+    description:
+      "Detection and response for the DE Security Foundation, with emergency incident response available 24/7/365 under our published SLA.",
     icon: Shield,
   },
   {
-    name: "System Engineers",
-    description: "Infrastructure experts ensuring your systems run smoothly",
-    certifications: ["MCSE", "VMware VCP", "AWS Certified", "Azure Administrator"],
+    name: "Systems & infrastructure",
+    description:
+      "Microsoft 365, Google Workspace and Zoho workspaces, endpoints, networks and backup, run to the standard your plan sets.",
     icon: Briefcase,
   },
   {
-    name: "Support Team",
-    description: "Friendly, responsive technicians ready to help when you need it",
-    certifications: ["A+", "Network+", "ITIL", "HDI Support"],
+    name: "Service desk",
+    description:
+      "Owns each ticket to resolution, with response targets by priority set in the SLA: 15 minutes for a critical incident.",
     icon: Users,
-  },
-];
-
-const certCategories = [
-  {
-    title: "Security Certifications",
-    items: [
-      "CISSP - Certified Information Systems Security Professional",
-      "CISM - Certified Information Security Manager",
-      "CEH - Certified Ethical Hacker",
-      "OSCP - Offensive Security Certified Professional",
-    ],
-  },
-  {
-    title: "Technical Certifications",
-    items: [
-      "Microsoft Certified Solutions Expert",
-      "VMware Certified Professional",
-      "AWS Certified Solutions Architect",
-      "CompTIA A+, Network+, Security+",
-    ],
-  },
-  {
-    title: "Partner Status",
-    items: [
-      "Microsoft Partner Network",
-      "Apple Consultants Network",
-      "Better Business Bureau A+ Rating",
-    ],
   },
 ];
 
 export default function Team() {
   useSEO({
-    title: "Our Team - Certified IT & Security Experts",
+    title: "Our Team - IT & Security Experts in Chandler, AZ",
     description:
-      "Meet the Digerati Experts team. Certified cybersecurity professionals, system engineers, and IT support specialists serving Arizona businesses.",
+      "Meet the people behind Digerati Experts: cybersecurity, systems and service-desk work led by founder Joseph Petro, serving Arizona businesses from Chandler.",
     canonical: "/about/team",
   });
 
   return (
     <PageTemplate
+      layout="chapters"
+      eyebrow="About · Team"
       title="Meet The Experts"
-      subtitle="Our certified team of IT and security professionals serving Chandler and the Phoenix metro area"
-      icon={<Users className="h-10 w-10 text-de-accent-ink" />}
+      subtitle="The IT and security people behind Digerati Experts, serving Chandler and the Phoenix metro area"
       breadcrumbs={[{ label: "About" }, { label: "Team" }]}
       actions={
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild variant="brand" size="lg" className="h-12 px-6 font-semibold">
-            <a href="/book">
-              {CTA.primary}
-              <ArrowRight className="ml-1 h-4 w-4" aria-hidden="true" />
-            </a>
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            size="lg"
-            className="h-12 border-white/20 px-6 font-semibold text-white hover:bg-white/10"
-          >
-            <a href={PRIMARY_PHONE.telHref}>Call {PRIMARY_PHONE.display}</a>
-          </Button>
+          <HeroActions
+            primary={{ label: CTA.primary, href: "/book" }}
+            secondary={{
+              label: `Call ${PRIMARY_PHONE.display}`,
+              href: PRIMARY_PHONE.telHref,
+            }}
+          />
+        </div>
+      }
+      heroAside={
+        <div
+          className="flex flex-col items-start gap-6 rounded-xl border border-[var(--de-hairline)] bg-de-raised p-6 sm:flex-row sm:items-center md:p-7"
+          data-testid="founder-spotlight"
+        >
+          {photography.founderHeadshot.available && (
+            <picture>
+              <source
+                srcSet={photography.founderHeadshot.src}
+                type="image/webp"
+              />
+              <img
+                src={photography.founderHeadshot.srcPng}
+                alt={photography.founderHeadshot.alt}
+                width={160}
+                height={160}
+                loading="lazy"
+                decoding="async"
+                className="h-36 w-36 shrink-0 rounded-xl border border-[var(--de-hairline)] object-cover sm:h-40 sm:w-40"
+              />
+            </picture>
+          )}
+          <div>
+            <p className="mb-2 font-mono text-xs font-semibold uppercase tracking-[0.18em] text-de-magenta-ink">
+              Founder
+            </p>
+            <h2 className="mb-2 font-heading text-2xl font-semibold text-white">
+              Joseph Petro
+            </h2>
+            <p className="text-sm leading-relaxed text-white/70">
+              Principal-led cybersecurity and managed IT for Arizona businesses
+              — accountable recommendations from the people who stand behind the
+              work.
+            </p>
+          </div>
         </div>
       }
     >
-      <div className="space-y-16">
-        <p className="mx-auto max-w-3xl text-center text-xl leading-relaxed text-white/80">
-          Our team brings together decades of experience in IT management, cybersecurity, and business technology.
-          We&apos;re passionate about protecting Arizona businesses and helping them succeed with technology.
-        </p>
+      <FactStrip
+        label="Team coverage"
+        facts={[
+          {
+            icon: Activity,
+            title: "24/7 monitoring",
+            text: "Security operations coverage as documented in our SLA.",
+          },
+          {
+            icon: Clock,
+            title: "15-minute critical response",
+            text: "Our published SLA response for an active breach or system down.",
+          },
+          {
+            icon: MapPin,
+            title: "Chandler, Arizona",
+            text: "Local accountability for Phoenix-metro businesses.",
+          },
+        ]}
+      />
 
-        {photography.founderHeadshot.available && (
-          <div className={`mx-auto max-w-3xl p-6 md:p-8 ${cardClass}`} data-testid="founder-spotlight">
-            <div className="flex flex-col items-center gap-6 sm:flex-row">
-              <picture>
-                <source srcSet={photography.founderHeadshot.src} type="image/webp" />
-                <img
-                  src={photography.founderHeadshot.srcPng}
-                  alt={photography.founderHeadshot.alt}
-                  width={160}
-                  height={160}
-                  loading="lazy"
-                  decoding="async"
-                  className="h-36 w-36 rounded-2xl border border-de-hairline object-cover sm:h-40 sm:w-40"
-                />
-              </picture>
-              <div className="text-center sm:text-left">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-de-accent-ink">Founder</p>
-                <h2 className="mb-2 text-2xl font-bold text-white">Joseph Petro</h2>
-                <p className="leading-relaxed text-white/75">
-                  Principal-led cybersecurity and managed IT for Arizona businesses — accountable recommendations from
-                  the people who stand behind the work.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="grid gap-6 md:grid-cols-2">
-          {team.map((group) => {
-            const Icon = group.icon;
-            return (
-              <article key={group.name} className={`de-interactive-card p-6 md:p-8 ${cardClass}`}>
-                <IconWell icon={Icon} size="md" surface="dark" />
-                <h3 className="mt-4 text-2xl font-semibold text-white">{group.name}</h3>
-                <p className="mt-3 leading-relaxed text-white/70">{group.description}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {group.certifications.map((cert) => (
-                    <span
-                      key={cert}
-                      className="rounded-md border border-de-hairline bg-de-bg px-3 py-1.5 text-sm text-white/80"
-                    >
-                      {cert}
-                    </span>
-                  ))}
+      <Chapter tone="paper" seam={false}>
+        <Container>
+          <ChapterHeader
+            tone="paper"
+            eyebrow="Who does the work"
+            title="Four disciplines, one accountable owner"
+            lede="Every discipline answers to the founder, so the person who scoped your environment is the person accountable for it."
+          />
+          <ul className="border-t border-[var(--de-paper-hairline)]">
+            {team.map((group) => (
+              <li
+                key={group.name}
+                className="grid gap-5 border-b border-[var(--de-paper-hairline)] py-8 lg:grid-cols-12 lg:gap-14"
+              >
+                <div className="flex items-center gap-4 lg:col-span-4">
+                  <IconWell icon={group.icon} size="md" surface="light" />
+                  <h3 className="font-heading text-xl font-semibold text-[#1A1228]">
+                    {group.name}
+                  </h3>
                 </div>
-              </article>
-            );
-          })}
-        </div>
-
-        <div className={`grid gap-4 p-8 md:grid-cols-3 ${cardClass}`}>
-          <div className={`p-4 text-center ${insetClass}`}>
-            <p className="text-lg font-semibold text-white">24/7 monitoring</p>
-            <p className="mt-1 text-sm text-white/60">Security operations coverage as documented in our SLA.</p>
-          </div>
-          <div className={`p-4 text-center ${insetClass}`}>
-            <p className="text-lg font-semibold text-white">15-minute first response</p>
-            <p className="mt-1 text-sm text-white/60">Published first-response target during covered hours.</p>
-          </div>
-          <div className={`p-4 text-center ${insetClass}`}>
-            <p className="text-lg font-semibold text-white">Chandler, Arizona</p>
-            <p className="mt-1 text-sm text-white/60">Local accountability for Phoenix-metro businesses.</p>
-          </div>
-        </div>
-
-        <section className={`p-8 md:p-12 ${cardClass}`}>
-          <div className="mb-8 flex items-center gap-3">
-            <IconWell icon={Award} size="sm" surface="dark" />
-            <h2 className="text-3xl font-bold text-white">Our Certifications & Partnerships</h2>
-          </div>
-          <div className="grid gap-6 md:grid-cols-3">
-            {certCategories.map((category) => (
-              <div key={category.title} className={`p-6 ${insetClass}`}>
-                <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
-                  <Star className="h-5 w-5 text-de-accent-ink" aria-hidden="true" />
-                  {category.title}
-                </h3>
-                <ul className="space-y-3">
-                  {category.items.map((item) => (
-                    <li key={item} className="flex gap-2 text-sm text-white/75">
-                      <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-de-accent-ink" aria-hidden="true" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                <div className="lg:col-span-8">
+                  <p className="max-w-[60ch] text-base leading-relaxed text-[#3A3448]">
+                    {group.description}
+                  </p>
+                </div>
+              </li>
             ))}
-          </div>
-        </section>
+          </ul>
+        </Container>
+      </Chapter>
 
-        <ConversionPathBar
-          headline="Ready to work with our team?"
-          body="Schedule a Cyber Risk Assessment and meet the people who will protect your Arizona business."
-        />
-      </div>
+      <Chapter tone="well">
+        <Container>
+          <ChapterHeader
+            tone="well"
+            eyebrow="Credentials"
+            title="Credentials you can check"
+            lede="Certifications, partner programs and ratings, each linked to the issuer's own record."
+          />
+          <VerifiedCredentials />
+        </Container>
+      </Chapter>
+
+      <ClosingCta
+        tone="surface"
+        title="Ready to work with our team?"
+        lede="Schedule a Cyber Risk Assessment and meet the people who will protect your Arizona business."
+        primary={{
+          label: CTA.primary,
+          href: "/book",
+          testId: "button-conversion-assessment",
+        }}
+      />
     </PageTemplate>
   );
 }
