@@ -3,6 +3,8 @@ import "./v8.css";
 import { MegaMenu } from "@/components/MegaMenu";
 import { FullPageScrollProvider, ScrollSectionAuto } from "@/components/FullPageScroll";
 import { SiteBottomBar } from "@/components/SiteBottomBar";
+import { useSEO } from "@/hooks/useSEO";
+import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/JsonLd";
 import { V8Hero } from "./sections/01-hero";
 import { V8WhyWeExist } from "./sections/02-why-we-exist";
 import { V8ThreatsAreReal } from "./sections/03-threats-are-real";
@@ -43,7 +45,10 @@ import { useSpotlight } from "./useSpotlight";
  * Real site chrome (MegaMenu, the unified bottom bar with autohide on), the live
  * section ids so the spy row and the dock work, every fact read from the file
  * that already carries it, forms posting to the live endpoints.
- * Preview only (noindex, VersionFrame); production / is unchanged.
+ * The homepage at / since Joe, 2026-10-03 ("its approved. do it."): it carries
+ * the homepage title, description, canonical and structured data. The previous
+ * homepage is kept at /version-0 and Version 7 at /version-7; /version-8 is a
+ * 301 to /.
  *
  * Each section sits in a `v8s-NN` wrapper and its stylesheet is scoped to it:
  * the mocks were standalone pages, so class names repeat across sections
@@ -69,9 +74,16 @@ const sections: { id: string; label: string; theme: "dark" | "light"; showInNav?
 export default function HomepageV8(): JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null);
   useSpotlight(rootRef);
+  useSEO({
+    title: "Managed Security Service Provider",
+    description: "Arizona MSP/MSSP. Cybersecurity-first managed IT, 24/7 emergency incident response, and a Cyber Risk Assessment that matches the operating model to your environment.",
+    canonical: "/",
+  });
   return (
     <FullPageScrollProvider sections={sections} enableOnMobile={false}>
       <div className="v8 min-h-screen bg-[#050312]" ref={rootRef}>
+        <OrganizationJsonLd />
+        <WebSiteJsonLd />
         <MegaMenu />
         <SiteBottomBar autohide />
         <main id="home-main" className="contents">
