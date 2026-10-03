@@ -20,6 +20,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { blogs, blogBodies } from "@/data/resourceRegistry";
+import { ClosingCta } from "@/components/site/chapters";
+import { containerClass } from "@/components/home/HomeChapter";
 import ebookCover from "@/assets/images/ebook-defending-digital-realm-cover.webp";
 
 const APPROVED_CATEGORIES = [
@@ -86,6 +88,9 @@ export default function Blog() {
 
   const pageTitle =
     activeCategory === "All" ? "All Posts" : activeCategory;
+  const showLead = activeCategory === "All" && !query.trim() && filtered.length > 3;
+  const lead = showLead ? filtered[0] : null;
+  const rest = showLead ? filtered.slice(1) : filtered;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
@@ -98,6 +103,7 @@ export default function Blog() {
       </Helmet>
       <MegaMenu />
 
+      <main id="main-content" tabIndex={-1}>
       {/* Branded publication banner */}
       <section
         className="relative de-nav-clear overflow-hidden"
@@ -129,7 +135,7 @@ export default function Blog() {
           }}
         />
 
-        <div className="container relative mx-auto px-4 max-w-7xl py-10 md:py-14">
+        <div className={`${containerClass} relative py-10 md:py-14`}>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div>
               <div className="inline-flex items-center gap-2 text-sm font-semibold tracking-[0.2em] text-white/70 uppercase mb-3">
@@ -156,8 +162,9 @@ export default function Blog() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSearchOpen((o) => !o)}
-                className="group relative w-12 h-12 rounded-full text-white border border-de-hairline backdrop-blur-md transition-all duration-200 flex items-center justify-center bg-gradient-to-b from-white/15 to-white/5 hover:from-white/25 hover:to-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-1px_0_rgba(0,0,0,0.2),0_8px_24px_-8px_rgba(139,92,246,0.55)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.45),inset_0_-1px_0_rgba(0,0,0,0.2),0_10px_28px_-6px_rgba(217,70,239,0.6)] active:translate-y-px"
+                className="group relative w-12 h-12 rounded-full text-white border border-de-hairline backdrop-blur-md transition-all duration-200 flex items-center justify-center bg-gradient-to-b from-white/15 to-white/5 hover:from-white/25 hover:to-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] active:translate-y-px"
                 aria-label={searchOpen ? "Close search" : "Open search"}
+                aria-expanded={searchOpen}
                 data-testid="button-search-toggle"
               >
                 <span className="pointer-events-none absolute inset-x-2 top-1 h-1/2 rounded-full bg-gradient-to-b from-white/30 to-transparent opacity-70" aria-hidden />
@@ -169,7 +176,7 @@ export default function Blog() {
               </button>
               <Button
                 asChild
-                className="group relative inline-flex items-center gap-2 h-12 px-6 rounded-full font-semibold text-white border border-de-hairline backdrop-blur-md transition-all duration-200 bg-de-raised hover:bg-de-raised shadow-[inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-1px_0_rgba(0,0,0,0.2),0_10px_28px_-8px_rgb(var(--de-accent-rgb) / 0.35)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.5),inset_0_-1px_0_rgba(0,0,0,0.2),0_14px_36px_-8px_rgb(var(--de-accent-rgb) / 0.4)] active:translate-y-px"
+                className="group relative inline-flex items-center gap-2 h-12 px-6 rounded-full font-semibold text-white border border-white/25 transition-colors duration-200 bg-de-raised hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#ec4899] active:translate-y-px"
                 data-testid="button-subscribe"
               >
                 <Link href="/#contact">
@@ -184,7 +191,7 @@ export default function Blog() {
 
         {/* Horizontal category nav inside banner */}
         <div className="relative border-t border-white/15 bg-black/20 backdrop-blur-sm">
-          <div className="container mx-auto px-4 max-w-7xl">
+          <div className={containerClass}>
             <nav
               className="flex items-center gap-1 overflow-x-auto scrollbar-none"
               data-testid="filter-categories"
@@ -195,14 +202,16 @@ export default function Blog() {
                 return (
                   <button
                     key={cat}
+                    type="button"
+                    aria-pressed={isActive}
                     onClick={() => setActiveCategory(cat)}
                     data-testid={`button-filter-${cat
                       .toLowerCase()
                       .replace(/[^a-z0-9]+/g, "-")}`}
-                    className={`relative whitespace-nowrap px-5 py-4 text-sm font-medium transition-colors ${
+                    className={`relative whitespace-nowrap px-5 py-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ec4899] ${
                       isActive
                         ? "text-white"
-                        : "text-white/60 hover:text-white"
+                        : "text-white/70 hover:text-white"
                     }`}
                   >
                     {cat === "All" ? "All Posts" : cat}
@@ -231,7 +240,7 @@ export default function Blog() {
         {/* Expandable search bar */}
         {searchOpen && (
           <div className="relative bg-black/40 backdrop-blur border-t border-white/10">
-            <div className="container mx-auto px-4 max-w-7xl py-4">
+            <div className={`${containerClass} py-4`}>
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
                 <Input
@@ -257,27 +266,45 @@ export default function Blog() {
         )}
       </section>
 
-      <main id="main-content" tabIndex={-1} className="py-12 md:py-16">
-        <div className="container mx-auto px-4 max-w-7xl">
+      <div className="pt-12 md:pt-16">
+        <div className={`${containerClass} pb-16 md:pb-20`}>
           {/* Breadcrumb + page title */}
-          <div className="flex items-center gap-2 text-sm text-white/55 mb-3">
-            <Link href="/" className="hover:text-de-accent-ink transition-colors">
-              Home
-            </Link>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <Link
-              href="/resources/blog"
-              className="hover:text-de-accent-ink transition-colors"
-            >
-              Journal
-            </Link>
-            {activeCategory !== "All" && (
-              <>
-                <ChevronRight className="h-3.5 w-3.5" />
-                <span className="text-white/60">{activeCategory}</span>
-              </>
-            )}
-          </div>
+          <nav aria-label="Breadcrumb" className="mb-2">
+            <ol className="flex flex-wrap items-center gap-x-1 text-sm text-white/65">
+              <li>
+                <Link
+                  href="/"
+                  className="inline-flex min-h-11 items-center rounded-sm pr-1 transition-colors hover:text-de-accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
+                >
+                  Home
+                </Link>
+              </li>
+              <li className="flex items-center gap-1">
+                <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                {activeCategory === "All" ? (
+                  <span aria-current="page" className="px-1 text-white/85">
+                    Journal
+                  </span>
+                ) : (
+                  <Link
+                    href="/resources/blog"
+                    onClick={() => setActiveCategory("All")}
+                    className="inline-flex min-h-11 items-center rounded-sm px-1 transition-colors hover:text-de-accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899]"
+                  >
+                    Journal
+                  </Link>
+                )}
+              </li>
+              {activeCategory !== "All" && (
+                <li className="flex items-center gap-1">
+                  <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span aria-current="page" className="px-1 text-white/85">
+                    {activeCategory}
+                  </span>
+                </li>
+              )}
+            </ol>
+          </nav>
           <div className="flex items-end justify-between gap-4 mb-10 flex-wrap">
             <h2 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
               {pageTitle}
@@ -321,24 +348,83 @@ export default function Blog() {
             </div>
           )}
 
+          {/* Lead story: the newest post leads the unfiltered Journal */}
+          {lead && (
+            <Link
+              href={lead.href}
+              className="group mb-8 block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0a] md:mb-10"
+              data-testid={`card-post-${lead.slug}`}
+            >
+              <article className="grid overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] transition-colors group-hover:border-de-accent/40 lg:grid-cols-12">
+                <div className="relative aspect-[16/9] overflow-hidden lg:col-span-7 lg:aspect-auto lg:min-h-[22rem]">
+                  <img
+                    src={lead.image}
+                    alt=""
+                    decoding="async"
+                    fetchPriority="high"
+                    width={960}
+                    height={540}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03] motion-reduce:transition-none"
+                  />
+                </div>
+                <div className="flex flex-col justify-center p-6 md:p-8 lg:col-span-5 lg:p-10">
+                  <p className="mb-4 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.16em]">
+                    <span className="text-de-accent-ink">Latest</span>
+                    <span aria-hidden="true" className="h-px w-6 bg-white/20" />
+                    <span className="text-white/70">{lead.category}</span>
+                  </p>
+                  <h3 className="mb-4 font-heading text-2xl font-bold leading-tight text-white transition-colors group-hover:text-de-accent-ink md:text-3xl">
+                    {lead.title}
+                  </h3>
+                  <p className="mb-6 text-base leading-relaxed text-white/70 line-clamp-4">{lead.excerpt}</p>
+                  <div className="flex items-center gap-3 text-sm text-white/65">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+                      {new Date(lead.date).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                    <span aria-hidden="true" className="text-white/25">
+                      /
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                      {lead.readTime}
+                    </span>
+                  </div>
+                  <span className="mt-6 inline-flex items-center font-medium text-de-accent-ink">
+                    Read the article
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                  </span>
+                </div>
+              </article>
+            </Link>
+          )}
+
           {/* Magazine grid — equal cards, dense */}
-          {filtered.length > 0 && (
+          {rest.length > 0 && (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7">
-              {filtered.map((post) => (
-                <Link href={post.href} key={post.slug}>
+              {rest.map((post) => (
+                <Link
+                  href={post.href}
+                  key={post.slug}
+                  className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ec4899] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0a]"
+                >
                   <Card
-                    className="group h-full overflow-hidden border-white/10 bg-white/[0.02] hover:border-de-accent/40 transition-all cursor-pointer flex flex-col"
+                    className="h-full overflow-hidden border-white/10 bg-white/[0.02] group-hover:border-de-accent/40 transition-colors cursor-pointer flex flex-col"
                     data-testid={`card-post-${post.slug}`}
                   >
                     <div className="relative aspect-[16/9] overflow-hidden">
                       <img
                         src={post.image}
-                        alt={post.title}
+                        alt=""
                         loading="lazy"
                         decoding="async"
                         width={500}
                         height={281}
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04] motion-reduce:transition-none"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a]/70 via-transparent to-transparent" />
                       <div className="absolute top-3 left-3">
@@ -351,21 +437,21 @@ export default function Blog() {
                       <h3 className="text-lg md:text-xl font-bold text-white mb-3 leading-snug group-hover:text-de-accent-ink transition-colors line-clamp-3">
                         {post.title}
                       </h3>
-                      <p className="text-white/55 text-sm mb-5 line-clamp-3 flex-1 leading-relaxed">
+                      <p className="text-white/65 text-sm mb-5 line-clamp-3 flex-1 leading-relaxed">
                         {post.excerpt}
                       </p>
-                      <div className="flex items-center gap-3 text-xs text-white/55 pt-4 border-t border-white/5">
+                      <div className="flex items-center gap-3 text-xs text-white/65 pt-4 border-t border-white/10">
                         <span className="inline-flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
+                          <Calendar className="h-3 w-3" aria-hidden="true" />
                           {new Date(post.date).toLocaleDateString("en-US", {
                             month: "long",
                             day: "numeric",
                             year: "numeric",
                           })}
                         </span>
-                        <span className="text-white/20">/</span>
+                        <span aria-hidden="true" className="text-white/25">/</span>
                         <span className="inline-flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
+                          <Clock className="h-3 w-3" aria-hidden="true" />
                           {post.readTime}
                         </span>
                       </div>
@@ -378,8 +464,11 @@ export default function Blog() {
 
           {/* Ebook spotlight — editorial bottom feature */}
           <section className="mt-20" aria-label="Featured ebook">
-            <div className="rounded-3xl border border-white/10 bg-de-raised overflow-hidden">
-              <Link href={ebookFeature.href}>
+            <div className="overflow-hidden rounded-xl border border-white/10 bg-de-raised">
+              <Link
+                href={ebookFeature.href}
+                className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ec4899]"
+              >
                 <div
                   className="grid md:grid-cols-2 gap-0 group cursor-pointer"
                   data-testid="card-featured-ebook"
@@ -405,7 +494,7 @@ export default function Blog() {
                     <p className="text-white/65 text-base mb-6 leading-relaxed">
                       {ebookFeature.excerpt}
                     </p>
-                    <div className="flex items-center gap-4 text-sm text-white/50 mb-6">
+                    <div className="flex items-center gap-4 text-sm text-white/65 mb-6">
                       <span className="inline-flex items-center gap-1.5">
                         <Clock className="h-4 w-4" />
                         {ebookFeature.readTime}
@@ -423,34 +512,15 @@ export default function Blog() {
             </div>
           </section>
 
-          {/* Bottom CTA */}
-          <section className="mt-16">
-            <Card className="overflow-hidden border-de-hairline bg-de-raised ">
-              <CardContent className="p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="text-center md:text-left">
-                  <h3 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                    Want a tailored recommendation?
-                  </h3>
-                  <p className="text-white/70 max-w-xl">
-                    A short Cyber Risk Assessment shows where your environment
-                    actually stands and what to do first.
-                  </p>
-                </div>
-                <Button
-                  asChild
-                  className="group relative inline-flex items-center gap-3 h-14 px-8 rounded-2xl font-semibold text-white whitespace-nowrap border border-de-hairline backdrop-blur-md transition-all duration-200 bg-de-raised hover:bg-de-raised shadow-[inset_0_1px_0_rgba(255,255,255,0.45),inset_0_-1px_0_rgba(0,0,0,0.25),0_14px_36px_-10px_rgb(var(--de-accent-rgb) / 0.4)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.55),inset_0_-1px_0_rgba(0,0,0,0.25),0_18px_44px_-10px_rgb(var(--de-accent-rgb) / 0.45)] active:translate-y-px"
-                  data-testid="button-blog-assessment"
-                >
-                  <Link href="/book">
-                    <span className="pointer-events-none absolute inset-x-4 top-1 h-1/2 rounded-2xl bg-gradient-to-b from-white/35 to-transparent opacity-70" aria-hidden />
-                    <span className="relative">Schedule a Cyber Risk Assessment</span>
-                    <ArrowRight className="relative h-5 w-5 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </section>
         </div>
+
+        <ClosingCta
+          title="Want a tailored recommendation?"
+          lede="A short Cyber Risk Assessment shows where your environment actually stands and what to do first."
+          primary={{ label: "Schedule a Cyber Risk Assessment", href: "/book", testId: "button-blog-assessment" }}
+          tone="surface"
+        />
+      </div>
       </main>
 
       <DigeratiEnhancedFooterSection />

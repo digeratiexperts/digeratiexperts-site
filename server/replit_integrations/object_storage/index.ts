@@ -18,4 +18,7 @@ export {
 } from "./objectAcl";
 
 export { registerObjectStorageRoutes } from "./routes";
+export type { ObjectStorageGuards } from "./routes";
+export { authorizeObjectRead } from "./objectAccess";
+export type { ObjectReadSubject, ObjectReadEvidence, ObjectReadDecision } from "./objectAccess";
 

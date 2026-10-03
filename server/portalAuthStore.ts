@@ -2,6 +2,7 @@
  * Durable portal auth store — Neon-backed with in-memory cache.
  * Sync get/set API matches the former Map so routes can migrate cleanly.
  */
+import { createHash } from "node:crypto";
 import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { db, dbReady, initPromise } from "./db";
 import {
@@ -583,30 +584,73 @@ export async function createProspectClientForUser(user: PortalAuthUser, companyN
   return client;
 }
 
+/**
+ * A durable write the database did not confirm (#245/#246). Routes translate
+ * this to a 503 so the caller never sees success for a record that exists only
+ * in process memory.
+ */
+export class PortalPersistenceError extends Error {
+  readonly code = "PERSISTENCE_UNAVAILABLE";
+  constructor(message = "This change could not be saved. Please try again in a moment.") {
+    super(message);
+    this.name = "PortalPersistenceError";
+  }
+}
+
+/** Dev/test may keep running on memory when there is no database; production never does. */
+export function memoryOnlyWritesAllowed(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.NODE_ENV !== "production";
+}
+
+/** Stable id for a retried submission: same user + same key always names the same row. */
+function orderFormIdFor(userId: string | null | undefined, key: string): string {
+  const digest = createHash("sha256").update(`${userId || "anon"}\n${key}`).digest("hex").slice(0, 24);
+  return `order-${digest}`;
+}
+
 export async function saveOrderForm(opts: {
   userId?: string | null;
   clientId?: string | null;
   payload: Record<string, unknown>;
-}): Promise<{ id: string }> {
-  const id = `order-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-  if (dbReady && db) {
-    try {
-      const [row] = await db
-        .insert(portalOrderForms)
-        .values({
-          id,
-          userId: opts.userId || null,
-          clientId: opts.clientId || null,
-          payload: opts.payload,
-          status: "submitted",
-        })
-        .returning({ id: portalOrderForms.id });
-      return { id: row.id };
-    } catch (err: any) {
-      console.warn("[portalAuthStore] order form insert failed:", err?.message);
-    }
+  /** Client-generated per form; a retry with the same key returns the same record. */
+  idempotencyKey?: string | null;
+}): Promise<{ id: string; replayed?: boolean }> {
+  const key = typeof opts.idempotencyKey === "string" ? opts.idempotencyKey.trim().slice(0, 120) : "";
+  const id = key
+    ? orderFormIdFor(opts.userId, key)
+    : `order-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  await initPromise;
+  if (!dbReady || !db) {
+    // A submitted order is a commercial record: no durable store, no success.
+    if (!memoryOnlyWritesAllowed()) throw new PortalPersistenceError();
+    return { id };
   }
-  return { id };
+  try {
+    const [row] = await db
+      .insert(portalOrderForms)
+      .values({
+        id,
+        userId: opts.userId || null,
+        clientId: opts.clientId || null,
+        payload: opts.payload,
+        status: "submitted",
+      })
+      .onConflictDoNothing({ target: portalOrderForms.id })
+      .returning({ id: portalOrderForms.id });
+    if (row) return { id: row.id };
+    // Conflict: a retry of a submission that already committed.
+    const [existing] = await db
+      .select({ id: portalOrderForms.id, userId: portalOrderForms.userId })
+      .from(portalOrderForms)
+      .where(eq(portalOrderForms.id, id))
+      .limit(1);
+    if (existing && (existing.userId || null) === (opts.userId || null)) return { id: existing.id, replayed: true };
+    throw new PortalPersistenceError("The order form was not written to durable storage.");
+  } catch (err: any) {
+    if (err instanceof PortalPersistenceError) throw err;
+    console.error("[portalAuthStore] order form insert failed:", err?.message);
+    throw new PortalPersistenceError();
+  }
 }
 
 export async function findUserByEmailOrUsername(identifier: string): Promise<PortalAuthUser | undefined> {
