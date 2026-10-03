@@ -40,10 +40,6 @@ export default function PortalCytracom() {
   const [extension, setExtension] = useState("1001");
   const [voicemailPin, setVoicemailPin] = useState("");
 
-  const handleSaveSettings = () => {
-    alert("Settings saved successfully!");
-  };
-
   const columns: DataColumn<CallHistory>[] = [
     {
       key: "contact",
@@ -71,12 +67,12 @@ export default function PortalCytracom() {
     <PortalLayout title="Cytracom Phone" description="Your softphone downloads, extension settings and recent call activity.">
       <div className="space-y-4">
         <Callout tone="info" title="Sample data">
-          The status, call counts and call history shown here are examples. Live phone figures appear once your Cytracom account is linked.
+          The status, extension and call history shown here are examples, not your account data. Downloads, voicemail and settings changes are unavailable until the phone service is connected.
         </Callout>
 
         <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Phone figures">
           <StatTile label="Phone status" value="Online" tone="ok" hint="sample" />
-          <StatTile label="Extension" value={<span>x{extension}</span>} hint="your direct extension" />
+          <StatTile label="Extension" value={<span>x{extension}</span>} hint="sample extension" />
           <StatTile label="Today's calls" value={12} hint="sample" />
           <StatTile label="Voicemails" value={3} suffix="new" hint="sample" />
         </section>
@@ -86,10 +82,10 @@ export default function PortalCytracom() {
             {SOFTPHONES.map((s) => {
               const Icon = s.icon;
               return (
-                <Button key={s.testId} variant="outline" className="h-auto flex-col gap-1.5 border-border bg-card py-4 hover:bg-accent" data-testid={s.testId}>
+                <Button key={s.testId} disabled variant="outline" className="h-auto flex-col gap-1.5 border-border bg-card py-4 hover:bg-accent" data-testid={s.testId}>
                   <Icon className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
                   <span className="text-sm font-medium">{s.label}</span>
-                  <span className="text-xs text-muted-foreground">{s.hint}</span>
+                  <span className="text-xs text-muted-foreground">Not connected</span>
                 </Button>
               );
             })}
@@ -97,18 +93,19 @@ export default function PortalCytracom() {
         </Panel>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <Panel id="phone-settings" title="Phone settings" description="Extension and voicemail">
+          <Panel id="phone-settings" title="Phone settings" description="Example settings. Changes are unavailable until the phone service is connected.">
             <div className="space-y-4">
               <Field label="Extension Number" htmlFor="extension">
-                <Input id="extension" value={extension} onChange={(e) => setExtension(e.target.value)} className="border-border bg-background" data-testid="input-extension" />
+                <Input id="extension" disabled value={extension} onChange={(e) => setExtension(e.target.value)} className="border-border bg-background" data-testid="input-extension" />
               </Field>
               <Field label="Voicemail PIN" htmlFor="voicemail-pin">
                 <Input
                   id="voicemail-pin"
                   type="password"
+                  disabled
                   value={voicemailPin}
                   onChange={(e) => setVoicemailPin(e.target.value)}
-                  placeholder="Enter new PIN"
+                  placeholder="Phone connection pending"
                   className="border-border bg-background"
                   data-testid="input-voicemail-pin"
                 />
@@ -125,13 +122,13 @@ export default function PortalCytracom() {
                   <dd className="text-foreground">Default</dd>
                 </div>
               </dl>
-              <Button variant="brand" onClick={handleSaveSettings} className="w-full" data-testid="button-save-settings">
+              <Button variant="brand" disabled className="w-full" data-testid="button-save-settings">
                 Save Settings
               </Button>
             </div>
           </Panel>
 
-          <Panel id="recent-calls" title="Recent calls" description={`${recentCalls.length} calls`} flush>
+          <Panel id="recent-calls" title="Example calls" description={`${recentCalls.length} sample calls; not your call history`} flush>
             <DataTable<CallHistory>
               columns={columns}
               rows={recentCalls}
@@ -145,15 +142,15 @@ export default function PortalCytracom() {
 
         <Panel id="quick-actions" title="Quick actions">
           <div className="grid gap-3 sm:grid-cols-3">
-            <Button variant="outline" className="border-border bg-card hover:bg-accent" data-testid="button-check-voicemail">
+            <Button variant="outline" disabled className="border-border bg-card hover:bg-accent" data-testid="button-check-voicemail">
               <Volume2 aria-hidden="true" />
               Check Voicemail
             </Button>
-            <Button variant="outline" className="border-border bg-card hover:bg-accent" data-testid="button-update-greeting">
+            <Button variant="outline" disabled className="border-border bg-card hover:bg-accent" data-testid="button-update-greeting">
               <Mic aria-hidden="true" />
               Update Greeting
             </Button>
-            <Button variant="outline" className="border-border bg-card hover:bg-accent" data-testid="button-call-forwarding">
+            <Button variant="outline" disabled className="border-border bg-card hover:bg-accent" data-testid="button-call-forwarding">
               <Phone aria-hidden="true" />
               Call Forwarding
             </Button>

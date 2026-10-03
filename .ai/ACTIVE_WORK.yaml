@@ -30,6 +30,37 @@
 
 version: 2
 claims:
+  - id: codex-portal-claude-takeover
+    issue: 365
+    owner: codex
+    subsystem: portal-vendor-previews-and-marketing-claims
+    branch: chatgpt/portal-claude-takeover-20261002
+    base_sha: e2d4ffa4910a12bbe80521cd67fa6ef1aa3da758
+    files:
+      - VENDOR_SETUP_STATUS.md
+      - docs/CLAIMS-REGISTER.md
+      - docs/CLAUDE-TAKEOVER-20261002.md
+      - .env.example
+      - client/src/components/ExitIntentPopup.tsx
+      - client/src/pages/portal/PortalVPN.tsx
+      - client/src/pages/portal/PortalCytracom.tsx
+      - client/src/pages/portal/PortalShipCenter.tsx
+      - client/src/pages/sections/ (assessment and enquiry deadline copy only)
+      - client/src/pages/solutions/ (quote and workplace timing copy only)
+      - client/src/pages/routes/ (Critical SLA qualifiers and onboarding copy only)
+      - client/src/pages/locations/LocationServicePage.tsx
+      - client/src/pages/about/Team.tsx
+      - client/src/pages/about/MissionValues.tsx
+      - client/src/pages/QuoteConfirmation.tsx
+      - client/src/pages/versions/v7/sections/13-lead-form.tsx
+      - client/src/pages/versions/v7/sections/16-contact-footer.tsx
+    status: active
+    started: 2026-10-02
+    note: >-
+      Joe reassigned the supplied Claude handoff. PR 343 is merged.
+      Local decisions preserved, findings ownership explicit, unavailable vendor
+      actions disabled, unsupported deadlines removed. QA credentials and provider
+      API access remain external prerequisites. No new production release.
   - id: de-auth-token-identity-binding
     owner: claude
     subsystem: portal-auth

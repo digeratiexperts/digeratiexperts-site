@@ -190,7 +190,7 @@ export function LocationServicePage(props: LocationPageProps) {
       }
       toast({
         title: "Assessment Request Submitted!",
-        description: `We'll contact you within 24 hours to schedule your free ${props.city} assessment.`,
+        description: `We'll contact you to discuss and schedule your free ${props.city} assessment.`,
       });
       form.reset();
     } catch (error: unknown) {

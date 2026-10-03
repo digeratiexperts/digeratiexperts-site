@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "wouter";
 import { Download, Key, Monitor, RefreshCw, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,16 +25,6 @@ const CLIENTS = [
 ];
 
 export default function PortalVPN() {
-  const [isRegenerating, setIsRegenerating] = useState(false);
-
-  const handleRegenerateConfig = () => {
-    setIsRegenerating(true);
-    setTimeout(() => {
-      setIsRegenerating(false);
-      alert("New VPN configuration generated! Check your email for the updated config file.");
-    }, 2000);
-  };
-
   const connectedCount = connections.filter((c) => c.status === "connected").length;
 
   const columns: DataColumn<VPNConnection>[] = [
@@ -67,17 +56,17 @@ export default function PortalVPN() {
   return (
     <PortalLayout
       title="VPN Access"
-      description="Install the client, download your personal configuration and see which devices are allowed on the DE VPN."
+      description="Preview your secure-access tools. Downloads and configuration are unavailable until the service is connected."
     >
       <div className="space-y-4">
         <Callout tone="info" title="Sample data">
-          The status, devices and configuration shown here are examples. Live VPN figures appear once your account is linked.
+          The status and devices shown here are examples, not your account data. Downloads and configuration changes are unavailable while the secure-access connection is being prepared.
         </Callout>
 
         <section className="grid grid-cols-2 gap-3 lg:grid-cols-3" aria-label="VPN figures">
           <StatTile label="VPN status" value="Active" tone="ok" hint="sample" />
-          <StatTile label="Connected devices" value={connectedCount} suffix="/5" hint="of your allowance" />
-          <StatTile label="Server location" value="Phoenix, AZ" hint="nearest gateway" className="col-span-2 lg:col-span-1" />
+          <StatTile label="Connected devices" value={connectedCount} suffix="/5" hint="sample allowance" />
+          <StatTile label="Server location" value="Phoenix, AZ" hint="sample gateway" className="col-span-2 lg:col-span-1" />
         </section>
 
         <Panel id="vpn-clients" title="Download VPN client" description="Install the VPN client on your devices to securely connect to company resources">
@@ -85,10 +74,10 @@ export default function PortalVPN() {
             {CLIENTS.map((c) => {
               const Icon = c.icon;
               return (
-                <Button key={c.testId} variant="outline" className="h-auto flex-col gap-1.5 border-border bg-card py-4 hover:bg-accent" data-testid={c.testId}>
+                <Button key={c.testId} disabled variant="outline" className="h-auto flex-col gap-1.5 border-border bg-card py-4 hover:bg-accent" data-testid={c.testId}>
                   <Icon className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
                   <span className="text-sm font-medium">{c.label}</span>
-                  <span className="text-xs text-muted-foreground">{c.hint}</span>
+                  <span className="text-xs text-muted-foreground">Not connected</span>
                 </Button>
               );
             })}
@@ -98,11 +87,11 @@ export default function PortalVPN() {
         <Panel
           id="vpn-config"
           title="VPN configuration"
-          description="Your personal VPN configuration file"
+          description="Configuration downloads will be available after the secure-access service is connected."
           actions={
-            <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" onClick={handleRegenerateConfig} disabled={isRegenerating} data-testid="button-regenerate-config">
-              <RefreshCw className={isRegenerating ? "animate-spin" : ""} aria-hidden="true" />
-              {isRegenerating ? "Regenerating..." : "Regenerate Config"}
+            <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" disabled data-testid="button-regenerate-config">
+              <RefreshCw aria-hidden="true" />
+              Regenerate Config
             </Button>
           }
         >
@@ -110,18 +99,18 @@ export default function PortalVPN() {
             <div className="flex min-w-0 items-center gap-3">
               <Key className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">digerati-vpn-config.ovpn</p>
-                <p className="pt-num text-xs text-muted-foreground">Generated: Jan 15, 2025</p>
+                <p className="text-sm font-medium">No configuration available</p>
+                <p className="text-xs text-muted-foreground">Secure-access connection pending</p>
               </div>
             </div>
-            <Button variant="brand" data-testid="button-download-config">
+            <Button variant="brand" disabled data-testid="button-download-config">
               <Download aria-hidden="true" />
               Download
             </Button>
           </div>
         </Panel>
 
-        <Panel id="vpn-devices" title="Connected devices" description="Devices authorized to use your VPN connection" flush>
+        <Panel id="vpn-devices" title="Example devices" description="Sample records showing the device view; not devices authorized on your account." flush>
           <DataTable<VPNConnection>
             columns={columns}
             rows={connections}

@@ -1,4 +1,5 @@
 import { Package, Truck } from "lucide-react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { PortalLayout } from "./PortalLayout";
 import { Callout, DataTable, EmptyState, Panel, StatTile, Token, type DataColumn, type TokenTone } from "@/components/portal/ui";
@@ -56,7 +57,7 @@ export default function PortalShipCenter() {
       align: "right",
       className: "w-28",
       cell: (s) => (
-        <Button variant="outline" size="sm" className="border-border bg-card hover:bg-accent" data-testid={`button-track-${s.id}`}>
+        <Button variant="outline" disabled size="sm" className="border-border bg-card hover:bg-accent" data-testid={`button-track-${s.id}`}>
           Track
         </Button>
       ),
@@ -64,23 +65,23 @@ export default function PortalShipCenter() {
   ];
 
   return (
-    <PortalLayout title="Ship Center" description="Track shipments, schedule a new one and reach logistics support.">
+    <PortalLayout title="Ship Center" description="Preview shipment tracking and contact DE for help with a shipment.">
       <div className="space-y-4">
         <Callout tone="info" title="Sample data">
-          The shipments and figures shown here are examples. Live shipment tracking appears once your logistics account is linked.
+          The shipments, tracking numbers and figures shown here are examples, not your shipments. DE staff will enter tracking numbers for real shipments. Live carrier tracking, rates and labels are not connected yet.
         </Callout>
 
         <section className="grid grid-cols-2 gap-3" aria-label="Shipment figures">
           <div data-testid="card-active-shipments">
-            <StatTile label="Active shipments" value={2} hint="Currently in transit" tone="info" />
+            <StatTile label="Active shipments" value={2} hint="sample" tone="info" />
           </div>
           <div data-testid="card-total-shipments">
-            <StatTile label="Total shipments" value={47} hint="All time" />
+            <StatTile label="Total shipments" value={47} hint="sample" />
           </div>
         </section>
 
         <div data-testid="card-shipment-history">
-          <Panel id="shipment-history" title="Shipment history" description="Track your recent shipments and orders" flush>
+          <Panel id="shipment-history" title="Example shipment history" description="Sample records; tracking actions are unavailable until real shipments are connected." flush>
             <DataTable<Shipment>
               columns={columns}
               rows={shipmentHistory}
@@ -94,8 +95,8 @@ export default function PortalShipCenter() {
 
         <div className="grid gap-4 md:grid-cols-2">
           <div data-testid="card-create-shipment">
-            <Panel id="create-shipment" title="Create new shipment" description="Schedule a new shipment for your business" className="h-full">
-              <Button variant="brand" className="w-full" data-testid="button-create-shipment">
+            <Panel id="create-shipment" title="Create new shipment" description="Contact DE to arrange a shipment. Online shipment creation is not connected." className="h-full">
+              <Button variant="brand" disabled className="w-full" data-testid="button-create-shipment">
                 <Package aria-hidden="true" />
                 New Shipment
               </Button>
@@ -103,8 +104,8 @@ export default function PortalShipCenter() {
           </div>
           <div data-testid="card-contact-logistics">
             <Panel id="logistics-support" title="Logistics support" description="Need help with your shipment?" className="h-full">
-              <Button variant="outline" className="w-full border-border bg-card hover:bg-accent" data-testid="button-contact-logistics">
-                Contact Support
+              <Button asChild variant="outline" className="w-full border-border bg-card hover:bg-accent" data-testid="button-contact-logistics">
+                <Link href="/portal/tickets">Contact Support</Link>
               </Button>
             </Panel>
           </div>

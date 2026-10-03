@@ -111,7 +111,7 @@ export default function QuoteConfirmation() {
 
           <div className={`border-t border-de-hairline p-6 ${insetClass}`}>
             <p className="mb-4 text-sm text-white/60">
-              Next steps: Our team will review your profile and reach out within 24 hours with:
+              Next steps: Our team will review your profile and follow up with:
             </p>
             <ul className="space-y-2 text-white/80">
               <li className="flex items-center gap-2">

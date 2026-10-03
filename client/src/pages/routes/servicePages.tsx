@@ -37,7 +37,7 @@ export const servicePageData = {
       { title: "Repeat Issue Reduction", description: "Tracking and follow-up to reduce repeat incidents over time" }
     ],
     benefits: [
-      "First-response SLA: 15-minute response target during business hours",
+      "Critical first-response target: 15 minutes per our SLA; other priorities have longer targets",
       "Reduced repeat incident rate",
       "Users guided toward solutions, not band-aids",
       "Vendor issues resolved—we handle ISPs, SaaS vendors, hardware vendors",
@@ -50,7 +50,7 @@ export const servicePageData = {
   'managed-workplace': {
     title: "Managed Workplace",
     subtitle: "End-to-end employee digital experience management",
-    description: "Managed Workplace is your digital employee lifecycle engine. We manage identity, apps, devices, email, voice, and workflow automation—everything employees need to work productively and securely. New hires productive in one day, not a week. Your environment stays standardized, secure, and compliant.",
+    description: "Managed Workplace is your digital employee lifecycle engine. We manage identity, apps, devices, email, voice, and workflow automation—everything employees need to work productively and securely. Onboarding planned around your environment and start dates. Your environment stays standardized, secure, and compliant.",
     features: [
       { title: "Identity Lifecycle Management", description: "DE cloud directory with SSO, MFA, conditional access, and automated provisioning to all SaaS" },
       { title: "Business App Management", description: "SaaS licensing management, app onboarding, role mapping, shadow IT discovery, and access reviews" },
@@ -60,7 +60,7 @@ export const servicePageData = {
       { title: "HR-to-IAM Workflows", description: "Onboarding automation: HR system → identity → device → SaaS app provisioning" }
     ],
     benefits: [
-      "New hires productive in one day with full app access",
+      "Coordinated onboarding with required app access",
       "Consistent access control across all employee tools",
       "Seamless hybrid and remote work enablement",
       "Reduced license waste and SaaS sprawl",

@@ -78,7 +78,7 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
       
       toast({
         title: "Assessment Request Submitted!",
-        description: "We'll contact you within 24 hours to schedule your Cyber Risk Assessment.",
+        description: "We'll contact you to discuss and schedule your Cyber Risk Assessment.",
         variant: "default",
       });
       
@@ -96,7 +96,7 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
 
   const benefits = [
     { icon: Shield, text: "Complimentary security assessment" },
-    { icon: Clock, text: "Results in 24-48 hours" },
+    { icon: Clock, text: "Findings in plain English" },
     { icon: CheckCircle, text: "No obligation, no credit card" },
   ];
 

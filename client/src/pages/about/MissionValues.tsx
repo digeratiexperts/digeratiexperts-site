@@ -59,7 +59,7 @@ const differentiators = [
   {
     icon: Clock,
     title: "15-Minute Response",
-    desc: "When you need help, we're there – with a 15-minute first-response target during business hours, as published in our SLA.",
+    desc: "When you need help, we're there – with a 15-minute Critical first-response target per our SLA. Other priorities have longer targets.",
   },
 ];
 

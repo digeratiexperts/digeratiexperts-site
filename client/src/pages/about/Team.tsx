@@ -162,8 +162,8 @@ export default function Team() {
             <p className="mt-1 text-sm text-white/60">Security operations coverage as documented in our SLA.</p>
           </div>
           <div className={`p-4 text-center ${insetClass}`}>
-            <p className="text-lg font-semibold text-white">15-minute first response</p>
-            <p className="mt-1 text-sm text-white/60">Published first-response target during covered hours.</p>
+            <p className="text-lg font-semibold text-white">15-minute Critical response</p>
+            <p className="mt-1 text-sm text-white/60">Critical means active breach or system down; other priorities have longer SLA targets.</p>
           </div>
           <div className={`p-4 text-center ${insetClass}`}>
             <p className="text-lg font-semibold text-white">Chandler, Arizona</p>

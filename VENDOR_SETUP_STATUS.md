@@ -57,6 +57,27 @@
 
 ---
 
+## Portal tools waiting on vendors (decided 2026-10-02)
+
+These answers stand in for the portal questions that were still open. The pages stay in the nav. Build the real connection when the vendor sends API access and the facts below. Until then the screens are samples: do not treat their devices, call lists, or tracking numbers as live.
+
+### VPN Access (`/portal/vpn`) — Timus
+Timus is the secure-access platform. Ask Timus for partner API docs, the auth method, a tenant id, a sandbox, and which fields a client may see (profile status, device name, last connected). JumpCloud stays the identity side. Tailscale, WireGuard, OpenVPN, Perimeter 81, and Twingate are not this page.
+
+### Cytracom Phone (`/portal/cytracom`) — Cytracom voice API
+Use Cytracom’s UCaaS API for this page. Ask them for the base URL, auth method, a sandbox tenant, the extension list, and whether call history and voicemail are in the API. When they send a key, store it as an environment variable taken from their docs. Do not commit the value. ControlOne is the migration item above, not this page.
+
+### Ship Center (`/portal/ship-center`) — staff-entered tracking
+DE staff enter tracking numbers on a real shipment. ShipStation, EasyPost, and Shippo are not selected. Live rates, labels, and carrier tracking wait on USPS, FedEx, and UPS API keys and account numbers (`SHIPPING_SETUP.md`). Ask those carriers for that access before any live call.
+
+### Test login
+`PORTAL_QA_EMAIL` and `PORTAL_QA_PASSWORD` are optional inputs for authenticated QA tooling, not application settings that create an account. Neither is set in this host. Joe must provide an approved existing QA account through the test environment's secure settings; never create or guess credentials. Use a designated test company and verify server-side company permissions before authenticated tests. The values stay out of git. Local fixture rendering does not verify authentication or tenant isolation.
+
+### Exit popup
+The client keeps the assessment findings either way, including when they do not engage DE. The local takeover change to `client/src/components/ExitIntentPopup.tsx` now says "Yours to keep" on the third fact and explains that ownership applies with DE, the current IT provider, or no engagement. No delivery date or score is added. This change is not yet released. Recorded in `docs/CLAIMS-REGISTER.md`.
+
+---
+
 ## 🚀 Next Steps
 
 1. **Complete Timus adoption gates**
@@ -86,6 +107,8 @@ JUMPCLOUD_API_KEY=<set in environment — do not commit>
 CORO_CLIENT_ID=<set in environment — do not commit>
 CORO_CLIENT_SECRET=<set in environment — do not commit>
 ```
+
+QA variables `PORTAL_QA_EMAIL` and `PORTAL_QA_PASSWORD` are missing on this host. The other entries above are historical integration notes, not a fresh verification of provider access or live integration health.
 
 > ⚠️ Real values were previously committed to this public repo and remain in git
 > history. Those Zoho, JumpCloud, and Coro credentials must be rotated.

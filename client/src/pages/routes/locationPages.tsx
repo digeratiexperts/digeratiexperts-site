@@ -6,16 +6,16 @@ export const locationPageData = {
     localArea: 'Chandler, Arizona',
     serviceRadius: 'Serving Chandler, Ahwatukee, South Phoenix, and surrounding areas',
     title: "Managed IT Services & Cybersecurity in Chandler, AZ",
-    metaDescription: "Chandler-based managed IT and cybersecurity with 15-minute response times for healthcare, law, accounting and growing Arizona businesses.",
+    metaDescription: "Chandler-based managed IT and cybersecurity with SLA response targets for healthcare, law, accounting and growing Arizona businesses.",
     subtitle: "Local IT support and security solutions for Chandler businesses",
-    description: "Digerati Experts provides comprehensive managed IT services and cybersecurity solutions to businesses throughout Chandler, Arizona. Based in Chandler, we deliver 15-minute response times and local expertise for healthcare, law firms, accounting firms, and growing businesses.",
+    description: "Digerati Experts provides comprehensive managed IT services and cybersecurity solutions to businesses throughout Chandler, Arizona. Based in Chandler, we provide local expertise and a 15-minute Critical first-response target per our SLA for healthcare, law firms, accounting firms, and growing businesses.",
     heroImage: "🏢",
     keywordPhrase: "Managed IT Chandler",
     whyChooseUs: [
       "Local Chandler-based team with deep community connections",
-      "15-minute first-response target during business hours for critical issues",
+      "15-minute Critical first-response target per our SLA",
       "Support for Arizona-specific compliance requirements (HIPAA, ADA)",
-      "Same-day onsite support available",
+      "Onsite support arranged according to your service agreement",
       "Understanding of Chandler business ecosystem"
     ],
     localProof: {
@@ -83,7 +83,7 @@ export const locationPageData = {
     keywordPhrase: "Managed IT Mesa",
     whyChooseUs: [
       "Mesa-based technical team available for on-site support",
-      "Fast response times for Mesa-area clients",
+      "Response targets published in our SLA",
       "Experience with East Valley business environment",
       "Local vendor relationships and supply chain",
       "Understanding of Arizona manufacturing regulations"

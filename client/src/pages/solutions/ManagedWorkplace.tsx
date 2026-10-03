@@ -48,7 +48,7 @@ const workplaceData = {
         "Email/collab admin",
         "Basic onboarding/offboarding"
       ],
-      outcomes: ["New hires ready in 1 day", "Consistent access controls"],
+      outcomes: ["Coordinated new-hire setup", "Consistent access controls"],
       not_included: ["Privileged access management", "Advanced DLP", "Custom compliance reporting", "Advanced conditional access"]
     },
     {
@@ -64,7 +64,7 @@ const workplaceData = {
         "Quarterly business reviews",
         "Enhanced device compliance"
       ],
-      outcomes: ["Reduced SaaS sprawl", "Offboarding in minutes"],
+      outcomes: ["Reduced SaaS sprawl", "Coordinated offboarding"],
       not_included: ["PAM/privileged access", "Advanced DLP"]
     },
     {
@@ -92,7 +92,7 @@ const workplaceData = {
   ],
   compareRows: [
     { feature: "Onboarding automation (HR→Identity→Apps)", essentials: true, business: true, enterprise: true },
-    { feature: "Offboarding in minutes (full access revocation)", essentials: "basic", business: true, enterprise: true },
+    { feature: "Coordinated offboarding and access revocation", essentials: "basic", business: true, enterprise: true },
     { feature: "MFA + Conditional Access policies", essentials: "basic", business: "advanced", enterprise: "zero-trust" },
     { feature: "Device baseline + compliance policies", essentials: true, business: "enhanced", enterprise: "custom" },
     { feature: "App access + role mapping", essentials: true, business: true, enterprise: true },
@@ -117,7 +117,7 @@ const workplaceData = {
     },
     {
       question: "How fast can you onboard/offboard?",
-      answer: "New hires can be fully productive within 1 business day—with email, apps, SSO access, and device baseline configured. Offboarding takes minutes: we revoke all access, disable accounts, and transfer data per your policies."
+      answer: "We plan onboarding around your start dates, required applications, device readiness and access approvals. Offboarding includes access revocation, account disabling and data transfer under your policies. Timing is agreed for your environment."
     },
     {
       question: "What's included vs add-ons?",
@@ -131,8 +131,8 @@ const workplaceData = {
 };
 
 const outcomes = [
-  { icon: UserPlus, text: "New hires ready in 1 day", detail: "Email, SSO, apps, device baseline—all configured" },
-  { icon: UserMinus, text: "Offboarding completed in minutes", detail: "Full access revocation, data transfer, audit trail" },
+  { icon: UserPlus, text: "Coordinated new-hire setup", detail: "Email, SSO, apps, device baseline—all configured" },
+  { icon: UserMinus, text: "Coordinated offboarding", detail: "Full access revocation, data transfer, audit trail" },
   { icon: Laptop, text: "Reduce tool sprawl", detail: "License + access governance across all SaaS apps" },
   { icon: Lock, text: "MFA + conditional access everywhere", detail: "Consistent login security for every user" },
   { icon: Zap, text: "Fewer support tickets", detail: "Standard baselines reduce endpoint issues" }
@@ -201,7 +201,7 @@ export default function ManagedWorkplace() {
 
   useSEO({
     title: "Managed Workplace - Identity, Devices & Apps Management | Digerati Experts",
-    description: "We manage identity, devices, email, and app access so your staff stays productive and your business stays protected. New hires ready in 1 day.",
+    description: "We manage identity, devices, email, and app access so your staff stays productive and your business stays protected. Coordinated new-hire setup.",
     canonical: "/solutions/managed-workplace"
   });
 
@@ -215,7 +215,7 @@ export default function ManagedWorkplace() {
   return (
     <PageTemplate 
       title="Managed Workplace" 
-      subtitle="We manage identity, devices, email, and app access so your staff stays productive—and your business stays protected. New hires ready in 1 day, not a week."
+      subtitle="We manage identity, devices, email, and app access so your staff stays productive—and your business stays protected. Onboarding planned around your environment and start dates."
       breadcrumbs={[{ label: "Solutions", href: "/solutions" }, { label: "Managed Workplace" }]}
       actions={
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -230,7 +230,7 @@ export default function ManagedWorkplace() {
     >
       <ServiceJsonLd
         name="Managed Workplace"
-        description="We manage identity, devices, email, and app access so your staff stays productive and your business stays protected. New hires ready in 1 day."
+        description="We manage identity, devices, email, and app access so your staff stays productive and your business stays protected. Coordinated new-hire setup."
         url="/solutions/managed-workplace"
       />
       <BreadcrumbJsonLd items={[
@@ -549,7 +549,7 @@ export default function ManagedWorkplace() {
             Ready to Simplify Your Workplace?
           </h2>
           <p className="mx-auto mb-8 max-w-2xl text-lg text-white/70">
-            Book a consultation to discuss your team's needs. Get a quote within 24 hours.
+            Book a consultation to discuss your team's needs. We'll discuss your scope and prepare a quote.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button asChild variant="brand" size="lg" className="h-12 px-8 font-semibold" data-testid="btn-final-consultation">

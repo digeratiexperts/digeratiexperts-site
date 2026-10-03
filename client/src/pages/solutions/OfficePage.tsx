@@ -645,7 +645,7 @@ export default function OfficePage() {
                   Ready for IT That Just Works?
                 </h2>
                 <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
-                  Schedule a consultation. We'll review your environment and provide a quote within 24 hours.
+                  Schedule a consultation. We'll review your environment and prepare a quote.
                 </p>
                 <div className="flex flex-wrap justify-center gap-4">
                   <Button

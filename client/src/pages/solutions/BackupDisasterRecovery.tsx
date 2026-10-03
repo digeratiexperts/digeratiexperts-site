@@ -731,7 +731,7 @@ export default function BackupDisasterRecovery() {
             Ready to Know You Can Recover?
           </h2>
           <p className="mx-auto mb-8 max-w-2xl text-lg text-white/70">
-            Schedule a BCDR assessment. We'll scope your environment and provide a quote within 24 hours.
+            Schedule a BCDR assessment. We'll scope your environment and prepare a quote.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button asChild variant="brand" size="lg" className="h-12 px-8 font-semibold" data-testid="btn-final-assessment">

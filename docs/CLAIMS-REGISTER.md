@@ -34,9 +34,9 @@ from how the site is built (canonical data, product capture) · **Unsupported**
 | Stats section | 99%+ of unauthorized access attempts blocked by MFA | Microsoft Digital Defense Report 2025, URL in registry | Sourced | Re-verify at the 2026 report |
 | Stats section | $392M internet-crime losses reported from Arizona in 2024 | FBI IC3 Annual Report 2024, URL in registry | Sourced | Re-verify when the 2025 IC3 report publishes |
 | Threats & insights (`DigeratiThreatsInsightsSection`) | 45-day Arizona breach-notification window | A.R.S. § 18-552 via Arizona Attorney General FAQ, URL in registry | Sourced | None |
-| Lead form and hero copy (`DigeratiLeadFormSection`, `DigeratiHeroSection`, `LeadCaptureBand`) | "24 hours to schedule your Cyber Risk Assessment" | No SLA or published document states a 24-hour scheduling commitment | Unsupported | Joe: confirm it is operationally true, or change to "one business day" to match the SLA |
-| Lead form (`DigeratiLeadFormSection`, "48 hours") | 48-hour turnaround statement | No published basis found | Unsupported | Joe: confirm or remove |
-| Contact section (`DigeratiContactSection`) | "We'll get back to you within 24 hours" | No published basis; SLA standard tier is next business day | Unsupported | Align to "within one business day" unless Joe confirms 24 hours |
+| Lead form and hero copy (`DigeratiLeadFormSection`, `DigeratiHeroSection`, `LeadCaptureBand`) | "24 hours to schedule your Cyber Risk Assessment" | No SLA or published document states a 24-hour scheduling commitment | Unsupported | Removed in the local 2026-10-02 takeover change; now says we will contact the requester to discuss and schedule the assessment. Support response targets do not establish assessment scheduling deadlines. |
+| Lead form (`DigeratiLeadFormSection`, "48 hours") | 48-hour turnaround statement | No published basis found | Unsupported | Removed in the local 2026-10-02 takeover change; now says "Findings in plain English". |
+| Contact section (`DigeratiContactSection`) | "We'll get back to you within 24 hours" | No published basis; SLA standard tier is next business day | Unsupported | Removed in the local 2026-10-02 takeover change; now says our team will follow up on the enquiry. |
 | Services section, capability list (PR #178) | "SOC / MDR Monitoring: 24/7 detection and response" | Service definition; SLA lists 24/7/365 emergency incident response availability | Published | None |
 | Diagrams (PR #178): "DETECTION & RESPONSE · 24/7" (was "SECURITY OPERATIONS · 24/7"), "24/7 · vCIO" | 24/7 detection and response | Same basis as above; the frame is named for block 06 of the eight-block model | Published | None |
 | What we protect / How protection works (PR #178) | Eight blocks (seven layers plus Risk & Exposure as the continuous layer); four stages (assessment → roadmap → implementation → continuous) | Structural description of DE's delivery model per `docs/DE-SERVICE-MODEL-2026.md`; labelled as illustration | Structural | Corrected 2026-09-02 from "six layers" |
@@ -70,8 +70,8 @@ V4 is proposed for `/`, per `docs/VERSION-4-HOMEPAGE-SOURCE-OF-TRUTH.md` §10.
 | 02 Sizer | "They stay on this device, and this step asks for no contact details." | `client/src/lib/solutionDraft.ts` writes `localStorage` only; the sizer has three numeric inputs and no contact field | Structural | Re-verify if the sizer ever gains a network call |
 | 02 Sizer | "It is the same profile the store sizes every solution from, so nothing is asked twice." | `BusinessNeedsIndex.tsx` reads the same draft on mount and on `SOLUTION_DRAFT_EVENT`; harness verifies the draft round-trip | Structural | None |
 | 03 Scope | Eight questions, one per block, sized to the visitor's numbers | The eight-block model (`docs/DE-SERVICE-MODEL-2026.md` via PR #185); the counts are the visitor's own input | Structural | None. No result or score is shown. |
-| 03 Scope, "Then" | "You get the findings in plain English, and you keep them whichever way you go — including the way where the answer is that you do not need us for this." | "Plain English" is the Bill of Rights pledge; "you keep the findings" and the no-engagement outcome are practice statements with no published page | Practice | Joe: confirm the assessment findings are the client's to keep regardless of engagement, or reword to "you get the findings" |
-| 04 Path | "what we would not take on" · exit D "No engagement … You keep the findings." | Practice statement | Practice | Same confirmation as the row above |
+| 03 Scope, "Then" | "You get the findings in plain English, and you keep them whichever way you go — including the way where the answer is that you do not need us for this." | "Plain English" is the Bill of Rights pledge. 2026-10-02: Joe supplied the local decision — the client keeps the findings either way, including no engagement. | Practice | Implemented "Yours to keep" on the exit popup (`ExitIntentPopup.tsx`) in the local takeover branch; not yet released. No delivery date, no score. See `VENDOR_SETUP_STATUS.md`. |
+| 04 Path | "what we would not take on" · exit D "No engagement … You keep the findings." | Same 2026-10-02 decision as the row above | Practice | Same popup line. No delivery date. |
 | 05 Blocks | Eight blocks, Risk & Exposure continuous | Same basis as the homepage row above; code-drawn, caption says "states no metric" | Structural | None |
 | 06 Desk | DE Desk capture, `client/public/images/evidence/de-desk-shell.webp` | Captured from this site's own support widget (`ZohoASAPWidget`); QA placeholder details removed; labelled "Real, details removed" with `data-classification="SANITIZED_REAL"` | Structural | The capture carries the widget's own line "100% Arizona-based engineering desk" (`ZohoASAPWidget.tsx:1456`); that claim is the widget's, already live, and is not restated in V4 copy |
 | 07 Ledger, right column | Service names: DE Security Foundation, Detection & Response, Managed Workplace, DE Desk, Microsoft 365 / Google Workspace / Zoho workspace support, UCaaS: Voice & Meetings, Compliance Evidence & Risk Reporting, BCDR, Endpoint Backup, User Cloud Storage Backup, ProActive IT → Office → Business → Enterprise, Hybrid / Multi-Site | Package lines in `client/src/pages/ProActiveEcosystemPricing.tsx` and `client/src/data/pricing.ts`; network names from `docs/DE-NAMING-CANON.md` | Published | **Threadline and Switchboard were removed on 2026-09-28**: they exist only in the naming canon, with no page, package or store entry behind them, so naming them as "the thing we run" would have implied an available service. Restore them here only when a page publishes them. Footnote on the page: no supplier named, no tier priced |
@@ -131,14 +131,14 @@ Every section of the live homepage, redrawn on the Version 5 system. The same ac
 | Questions | Four questions and answers | `client/src/pages/sections/DigeratiFAQSection.tsx`, minus the dashes | Published | Keep in step |
 | Removed on purpose | "Results in 24-48 hours"; Microsoft Partner and Apple Consultants badges; the generated office and desk stills; the industry stock photographs; the illustrative assessment dashboard | No source for the first two; `design/IMAGERY.md` for the rest | Not on the page | Add back only with a source |
 
-## Elsewhere on the site (outside this PR, listed so they are not forgotten)
+## Related claims corrected in the local takeover branch (not yet released)
 
 | Where | Claim | Status | Action |
 | --- | --- | --- | --- |
-| `client/src/pages/routes/locationPages.tsx` (Chandler) | "we deliver 15-minute response times" | Unsupported as a blanket claim; the SLA's 15 minutes applies to Critical only | Reword to "15-minute critical response per our SLA" or remove |
+| `client/src/pages/routes/locationPages.tsx` (Chandler) | "we deliver 15-minute response times" | Unsupported as a blanket claim; the SLA's 15 minutes applies to Critical only | Qualified as Critical first response per the SLA; equivalent broad claims on Team, Mission & Values and service narratives are qualified too. |
 | `locationPages.tsx` (Chandler, Mesa) | "Same-day onsite support available", "Fast response times" | Unsupported | Joe: confirm or remove |
-| Solution pages (`BackupDisasterRecovery`, `ManagedWorkplace`, `OfficePage`) | "quote within 24 hours" | Unsupported | Joe: confirm or align to one business day |
-| `ManagedWorkplace.tsx` FAQ | "fully productive within 1 business day" (onboarding) | Unsupported | Joe: confirm or soften |
+| Solution pages (`BackupDisasterRecovery`, `ManagedWorkplace`, `OfficePage`) | "quote within 24 hours" | Unsupported | Removed the deadline; follow-up and quote preparation now carry no unsupported turnaround. |
+| `ManagedWorkplace.tsx` FAQ | "fully productive within 1 business day" (onboarding) | Unsupported | Removed fixed onboarding and offboarding turnaround; timing is agreed for the environment and required approvals. |
 
 ## How to add a claim
 
@@ -147,3 +147,7 @@ Every section of the live homepage, redrawn on the Version 5 system. The same ac
 2. Service levels: quote the SLA or Terms tier by name; link to `/legal/sla`.
 3. Anything about DE's own performance, clients, or certifications: not
    without a real artifact classified per `design/VISUAL_EVIDENCE.md`.
+
+## Takeover validation boundary — 2026-10-02
+
+The local branch also corrects quote confirmation, location assessment confirmations and Version 7 follow-up copy. It does not alter frozen preview snapshots or the separately owned Version 6 PR. Vendor portal screens explicitly label sample data and disable unavailable mutations/downloads; no vendor integration is represented as live. Historical statistics above were not independently revalidated in this change. Local browser fixtures establish rendering and interaction only, not authenticated tenant isolation. See `docs/CLAUDE-TAKEOVER-20261002.md` for decisions, requirements and release boundaries.
