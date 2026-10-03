@@ -13,6 +13,8 @@ import {
   BookOpen, 
   ArrowLeft,
   Download,
+  Route as RouteIcon,
+  ClipboardList,
   Bookmark,
   BookMarked,
   List,
@@ -24,6 +26,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import ebookCover from "@/assets/images/ebook-defending-digital-realm-cover.webp";
 import { ConversionPathBar } from "@/components/ConversionPathBar";
+import { Chapter as SiteChapter, ClosingCta, Container, FactStrip, PageHero } from "@/components/site/chapters";
 import { CTA } from "@/lib/ctaCopy";
 
 interface Chapter {
@@ -515,111 +518,99 @@ export default function Ebook() {
         </div>
       )}
 
-      <main className="de-nav-clear pb-20">
+      <main className={showCover ? "" : "de-nav-clear pb-20"}>
+        {showCover && (
+          <>
+            <PageHero
+              eyebrow="Free Ebook"
+              breadcrumbs={[{ label: "Resources", href: "/resources" }, { label: "Defending the Digital Realm" }]}
+              title="Defending the Digital Realm"
+              lede="A Cyber Risk Assessment Framework for Modern Businesses"
+              aside={
+                <div className="mx-auto max-w-xs lg:ml-auto lg:mr-0">
+                  <img
+                    src={ebookCover}
+                    alt="Defending the Digital Realm ebook cover"
+                    loading="eager"
+                    decoding="async"
+                    width={448}
+                    height={580}
+                    className="w-full rounded-xl border border-white/10 shadow-[0_30px_60px_-30px_rgba(0,0,0,0.9)]"
+                    data-testid="img-ebook-cover"
+                  />
+                </div>
+              }
+              asideOnMobile
+              actions={
+                <>
+                  <Button
+                    onClick={() => setShowCover(false)}
+                    className="min-h-12 bg-[#D3126A] px-7 text-base font-semibold text-white hover:bg-[#b80f5c]"
+                    data-testid="button-start-reading"
+                  >
+                    <BookOpen className="mr-2 h-5 w-5" aria-hidden="true" />
+                    Start Reading
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="min-h-12 border-white/25 bg-transparent px-6 text-base text-white hover:bg-white/10 hover:text-white"
+                    onClick={() => window.print()}
+                    data-testid="button-download"
+                  >
+                    <Download className="mr-2 h-5 w-5" aria-hidden="true" />
+                    Save as PDF
+                  </Button>
+                </>
+              }
+              note="Joe Petro — Founder, Digerati Experts"
+            />
+
+            <FactStrip
+              label="Inside the ebook"
+              facts={[
+                { icon: BookOpen, title: "6 Chapters", text: "Comprehensive coverage of risk assessment fundamentals" },
+                { icon: ClipboardList, title: "Practical scenarios", text: "Common patterns Arizona businesses run into" },
+                { icon: RouteIcon, title: "Actionable Roadmap", text: "90-day plan to improve your security posture" },
+              ]}
+            />
+
+            <SiteChapter tone="well" seam={false}>
+              <Container>
+                <div className="grid items-center gap-6 lg:grid-cols-12 lg:gap-14">
+                  <div className="lg:col-span-5">
+                    <h2 className="font-heading text-2xl font-semibold tracking-[-0.02em] text-white md:text-3xl">
+                      Read Chapter 1 to you
+                    </h2>
+                  </div>
+                  <div className="lg:col-span-7">
+                    <BlogAudioPlayer
+                      key="ebook-cover-ch1"
+                      title={`${chapters[0].title} — Defending the Digital Realm`}
+                      text={chapters[0].narrationText}
+                      wordCount={countWords(chapters[0].narrationText)}
+                    />
+                  </div>
+                </div>
+              </Container>
+            </SiteChapter>
+
+            <ClosingCta
+              tone="paper"
+              eyebrow="Next step"
+              title="Ready to assess your environment?"
+              lede="Use this framework with a DE Cyber Risk Assessment — not a generic checklist."
+              primary={{ label: CTA.primary, href: "/book", testId: "button-conversion-assessment" }}
+            />
+          </>
+        )}
+
+        {!showCover && (
         <div className="container mx-auto px-4 max-w-7xl">
-          <Link href="/resources/blog" className="inline-flex items-center text-de-accent-ink hover:text-de-accent-ink mb-6 transition-colors" data-testid="link-back-blog">
-            <ArrowLeft className="mr-2 h-4 w-4" />
+          <Link href="/resources/blog" className="mb-4 inline-flex min-h-11 items-center text-de-accent-ink transition-colors hover:text-white" data-testid="link-back-blog">
+            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
             Back to Resources
           </Link>
 
-          {showCover ? (
-            <motion.div 
-              className="text-center py-12"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <motion.div 
-                className="max-w-md mx-auto mb-8 perspective-1000"
-                whileHover={{ scale: 1.02, rotateY: 5 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <img 
-                  src={ebookCover} 
-                  alt="Defending the Digital Realm ebook cover" 
-                  loading="eager"
-                  decoding="async"
-                  width={448}
-                  height={580}
-                  className="w-full rounded-xl shadow-2xl shadow-none border border-[#D3126A]/30"
-                  style={{ 
-                    boxShadow: '0 25px 50px -12px rgba(211, 18, 106, 0.18), 0 0 0 1px rgba(211, 18, 106, 0.12), inset 0 0 0 1px rgba(255,255,255,0.05)'
-                  }}
-                  data-testid="img-ebook-cover"
-                />
-              </motion.div>
-              <Badge className="mb-4 bg-gradient-to-r from-[#D3126A]/20 to-[#D3126A]/10 text-de-accent-ink border-[#D3126A]/30 px-4 py-1">
-                Free Ebook
-              </Badge>
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                Defending the Digital Realm
-              </h1>
-              <p className="text-xl text-white/70 mb-2">
-                A Cyber Risk Assessment Framework for Modern Businesses
-              </p>
-              <p className="text-white/50 mb-8">Joe Petro — Founder, Digerati Experts</p>
-              
-              <div className="flex flex-wrap justify-center items-center gap-4 mb-8">
-                <Button 
-                  onClick={() => setShowCover(false)}
-                  className="bg-[#D3126A] text-white font-bold px-8 py-6 text-lg hover:shadow-xl hover:shadow-[#D3126A]/20 hover:-translate-y-1 transition-all"
-                  data-testid="button-start-reading"
-                >
-                  <BookOpen className="mr-2 h-5 w-5" />
-                  Start Reading
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-[#D3126A]/40 text-de-accent-ink hover:bg-[#D3126A]/10 px-6 py-6"
-                  onClick={() => window.print()}
-                  data-testid="button-download"
-                >
-                  <Download className="mr-2 h-5 w-5" />
-                  Save as PDF
-                </Button>
-              </div>
-              <div className="flex justify-center mb-10">
-                <div className="flex flex-col items-center gap-2">
-                  <p className="text-xs uppercase tracking-wider text-white/55">
-                    Read Chapter 1 to you
-                  </p>
-                  <BlogAudioPlayer
-                    key="ebook-cover-ch1"
-                    title={`${chapters[0].title} — Defending the Digital Realm`}
-                    text={chapters[0].narrationText}
-                    wordCount={countWords(chapters[0].narrationText)}
-                  />
-                </div>
-              </div>
-
-              <div className="mt-12 grid md:grid-cols-3 gap-6 text-left">
-                {[
-                  { title: "6 Chapters", desc: "Comprehensive coverage of risk assessment fundamentals", icon: "📚" },
-                  { title: "Practical scenarios", desc: "Common patterns Arizona businesses run into", icon: "📊" },
-                  { title: "Actionable Roadmap", desc: "90-day plan to improve your security posture", icon: "🗺️" }
-                ].map((item, idx) => (
-                  <motion.div 
-                    key={idx}
-                    className="rounded-xl border border-de-hairline bg-de-raised p-6 transition-colors hover:border-[#D3126A]/30"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 + idx * 0.1 }}
-                  >
-                    <span className="text-2xl mb-3 block">{item.icon}</span>
-                    <h3 className="text-lg font-bold text-de-accent-ink mb-2">{item.title}</h3>
-                    <p className="text-white/60 text-sm">{item.desc}</p>
-                  </motion.div>
-                ))}
-              </div>
-
-              <div className="mt-12">
-                <ConversionPathBar
-                  headline="Ready to assess your environment?"
-                  body="Use this framework with a DE Cyber Risk Assessment — not a generic checklist."
-                />
-              </div>
-            </motion.div>
-          ) : (
             <div className="relative">
               {/* Table of Contents Sidebar */}
               <AnimatePresence>
@@ -851,8 +842,8 @@ export default function Ebook() {
                 </div>
               </div>
             </div>
-          )}
         </div>
+        )}
       </main>
 
       <DigeratiEnhancedFooterSection />
