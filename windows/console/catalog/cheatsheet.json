@@ -20,7 +20,7 @@
         {
           "title": "Open on a page",
           "command": "& \"{root}\\Start-DETechTool.cmd\" -Page Toolbox",
-          "note": "Pages: Scan, Dashboard, Discovery, Identity, Security, Apps, Browser, Baseline, Branding, Network, Toolbox, Vendors, AiToolkit, Evidence, Settings.",
+          "note": "Pages: Scan, Dashboard, Workflow, Discovery, Identity, Security, Apps, Browser, Baseline, Branding, Network, Toolbox, CommandLine, Migration, Vendors, AiToolkit, Evidence, Settings.",
           "shell": "PowerShell (admin)"
         },
         {
@@ -319,6 +319,48 @@
           "title": "Sign-off, close and the Hub record",
           "command": "New-DEMigrationSignoff -ProjectId alamo-mail -ApprovedBy 'Mike Daniels' -Decision Approved; Close-DEMigrationProject -ProjectId alamo-mail; Export-DEMigrationRecord -ProjectId alamo-mail -Path .\\alamo-mail-record.json",
           "note": "Approved needs every check passed; closing removes the batches and the credentials Exchange stored.",
+          "shell": "PowerShell"
+        }
+      ]
+    },
+    {
+      "id": "hub",
+      "title": "Intelligence Hub: records and the Microsoft Admin job worker",
+      "items": [
+        {
+          "title": "Send the device and warranty records",
+          "command": "& \"{root}\\Start-DETechTool.cmd\" -Page Evidence",
+          "note": "Export the evidence bundle, then Send to Intelligence Hub: the device record, then the warranty when a lookup gave a confirmed answer (active, expired with an end date, or not applicable). Needs the Hub URL, the client's Hub account number and DE_HUB_SIGNING_SECRET for this session. A refusal shows the Hub's own reason.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Send an email migration record",
+          "command": "& \"{root}\\Start-DETechTool.cmd\" -Page Migration",
+          "note": "Pick the project, then Send to Intelligence Hub on the Migration page (it exports the record first). In plan-only mode it shows the signed event it would send.",
+          "shell": "PowerShell (admin)"
+        },
+        {
+          "title": "Check the job worker's setup (contacts nothing)",
+          "command": "Import-Module \"{root}\\microsoft\\DE-Microsoft-Admin\\DE-Microsoft-Admin.psd1\"; Connect-DEMicrosoft -TenantId <tenant guid> -ClientId <app id> -CertificateThumbprint <thumbprint>; Invoke-DEHubJobLoop -HubUrl https://techsales.digerati-experts.com -Vault DE -ExchangeOrganization <name>.onmicrosoft.com -WhatIf",
+          "note": "Says whether Graph, Exchange Online and Azure jobs could run unattended, and exactly what is missing. Secrets come from the vault (MSADMIN_JOB_SIGNING_SECRET, MSADMIN_WORKER_SECRET).",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Run one approved Hub job",
+          "command": "Import-Module \"{root}\\microsoft\\DE-Microsoft-Admin\\DE-Microsoft-Admin.psd1\"; Connect-DEMicrosoft -TenantId <tenant guid> -ClientId <app id> -CertificateThumbprint <thumbprint>; Invoke-DEHubJobLoop -HubUrl https://techsales.digerati-experts.com -Vault DE -ExchangeOrganization <name>.onmicrosoft.com -Once",
+          "note": "Drop -Once to run until the queue is empty. Add -AzureSubscriptionId <guid> to pin Azure jobs to one subscription. The scheduled task runs the same command (module README).",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Exchange Online app-only with the worker's certificate",
+          "command": "Connect-DEExchange -AppId <app id> -CertificateThumbprint <thumbprint> -Organization <name>.onmicrosoft.com",
+          "note": "Needs Exchange.ManageAsApp with admin consent and an Exchange role (Recipient Administrator) on the app's service principal. The certificate stays in the Windows store; no secret.",
+          "shell": "PowerShell"
+        },
+        {
+          "title": "Azure app-only with the worker's certificate",
+          "command": "Connect-DEAzure -ServicePrincipal -ApplicationId <app id> -CertificateThumbprint <thumbprint> -TenantId <tenant guid>",
+          "note": "Needs an Azure role for the service principal on the subscription. Add -SubscriptionId <guid> to choose one.",
           "shell": "PowerShell"
         }
       ]
