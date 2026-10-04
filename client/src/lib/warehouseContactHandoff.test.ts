@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   WAREHOUSE_CONTACT_HANDOFF_KEY,
   WAREHOUSE_CONTACT_HANDOFF_MAX_AGE_MS,
+  WAREHOUSE_HANDOFF_MESSAGE_MAX,
   clearContactHandoff,
   readContactHandoff,
   writeContactHandoff,
@@ -46,10 +47,39 @@ describe("warehouse contact handoff (issues #235 / #258)", () => {
       email: "jordan@example.com",
       company: "Example Co",
       phone: "602-555-1212",
+      message: "",
       reason: "role_required",
       writtenAt: 1_000,
     });
     expect(window.sessionStorage.getItem(WAREHOUSE_CONTACT_HANDOFF_KEY)).not.toContain("http");
+  });
+
+  it("keeps Request Quote's message draft across a reload, capped in length (#235)", () => {
+    writeContactHandoff(
+      { name: "Jordan", email: "j@example.com", message: "  Need 25 seats by Q1.\nCall after 2pm. ", reason: "auth_required" },
+      10,
+    );
+    expect(readContactHandoff(20)).toMatchObject({
+      name: "Jordan",
+      message: "Need 25 seats by Q1.\nCall after 2pm.",
+      reason: "auth_required",
+    });
+    writeContactHandoff({ name: "Jordan", message: "x".repeat(WAREHOUSE_HANDOFF_MESSAGE_MAX + 50), reason: "user_choice" }, 30);
+    expect(readContactHandoff(40)?.message).toHaveLength(WAREHOUSE_HANDOFF_MESSAGE_MAX);
+  });
+
+  it("reads a draft written before the message field existed as an empty message", () => {
+    window.sessionStorage.setItem(
+      WAREHOUSE_CONTACT_HANDOFF_KEY,
+      JSON.stringify({ version: 1, name: "J", email: "j@example.com", company: "", phone: "", reason: "user_choice", writtenAt: 1 }),
+    );
+    expect(readContactHandoff(2)?.message).toBe("");
+  });
+
+  it("each save restarts the expiry, so an active draft does not lapse", () => {
+    writeContactHandoff({ name: "J", reason: "user_choice" }, 0);
+    writeContactHandoff({ name: "J", message: "still typing", reason: "user_choice" }, WAREHOUSE_CONTACT_HANDOFF_MAX_AGE_MS);
+    expect(readContactHandoff(WAREHOUSE_CONTACT_HANDOFF_MAX_AGE_MS + 1_000)?.message).toBe("still typing");
   });
 
   it("expires on its own and is removed once stale", () => {
