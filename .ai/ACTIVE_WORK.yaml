@@ -30,6 +30,32 @@
 
 version: 2
 claims:
+  - id: quiz-lead-call-flow
+    issue: 449
+    owner: claude
+    subsystem: lead-follow-up
+    branch: claude/beautiful-hopper-1uem0k
+    base_sha: 7bbe042
+    files:
+      - shared/leadFollowUp.ts (new), shared/leadFollowUp.test.ts (new)
+      - server/zoho/zohoCRM.ts (createCall, getRecordOwnerId and the createLead assignment-rule option only)
+      - server/quoteLeadCrm.ts (new), server/quoteLeadCrm.test.ts (new)
+      - server/routes.ts (the /api/lead-quote handler only)
+      - server/integrations/enqueueWebsiteCommand.ts (followUp passthrough only)
+      - server/crossServiceHandler.ts (LEAD_CREATED followUp passthrough only)
+      - client/src/pages/LeadQuoteWizard.tsx (contact step phone field only), client/src/pages/LeadQuoteWizard.test.ts
+      - scripts/qa/quote-wizard-quiz-check.mjs (phone fill only)
+      - deploy/vps/env.production.example (the quiz-lead Zoho lines under ZOHO_REFRESH_TOKEN only)
+      - client/src/components/ScrollProgress.tsx (the quiz-room skip only)
+      - artifacts/visual-qa/quiz-lead-call-flow/**
+    status: active
+    started: 2026-10-04
+    note: >-
+      Joe, 2026-10-04: "Build a flow for us to know who to call and when";
+      all three channels with Zoho as the one record, tiered speed, required
+      phone, owner by Zoho assignment rule. Slice 1 here; closing the Hub item
+      on call completion needs the Intelligence Hub repo (slice 2).
+      notificationService.ts is deliberately untouched (PRs 448 and 445).
   - id: remove-keyword-input-guard
     issue: 436
     owner: claude
@@ -40,8 +66,17 @@ claims:
       - server/middleware/security.ts (the unused keyword validateInput only)
       - server/middleware/noKeywordBlocklist.test.ts (new)
       - shared/quoteContext.test.ts (the request-guard case only)
-    status: active
+    status: verified-live
     started: 2026-10-04
+    released: 2026-10-04
+    pr: 437
+    merge_sha: 7bbe04228344cb261280dd91e92d5dfcbf5a701a
+    verification: >-
+      Merged as 7bbe042 on Joe's "merge and verify". Production /api/health
+      reports release.commit 7bbe04228344 (built 12:39:27Z) and release.txt
+      matched at 12:39:39Z. The removed function had no callers, so there is
+      no behaviour to observe live; the regression test guards it. VERIFIED
+      LIVE. Files released.
     note: >-
       Joe, 2026-10-04: "fix the and/or input guard bug". Investigation showed
       the keyword guard is never wired to a route (routes use a local

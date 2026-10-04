@@ -112,6 +112,7 @@ export function setupCrossServiceHandlers() {
         phone: data.phone,
         message: data.message,
         source: data.source || "lead",
+        ...(data.followUp ? { followUp: data.followUp } : {}),
       });
     } catch (error) {
       logger.error("Error handling new lead", error);
