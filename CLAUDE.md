@@ -24,6 +24,7 @@ Each vendored skill carries an `UPSTREAM.md` with provenance, local deviations a
 |---|---|---|---|
 | `/scrollcraft` | scroll-driven / "Apple-style" landing page | Isolated scroll-experience builds | `scrollcraft/builds/<name>/` |
 | `/nano-banana-images` | "nano banana image ofâ€¦", any generated photo/still | JSON-prompted Nano Banana 2 generation via kie.ai (Python) | `artifacts/kie-ai/nano-banana/` |
+| `/recraft-icons` | "Recraft icon of...", a custom or missing icon, icon set, SVG glyph Lucide lacks | Native SVG via Recraft (Node), cleaned to `currentColor` for IconWell; key `RECRAFT_API_KEY`, paid plan | `artifacts/recraft/icons/<set>/` |
 | `/excalidraw-visuals` | "excalidraw visual/image ofâ€¦" | Hand-drawn-style PNG diagrams via kie.ai (Node) | `artifacts/kie-ai/excalidraw/` |
 | `/excalidraw-diagram` | "draw me a diagram ofâ€¦" | Editable `.excalidraw` JSON, no API | `artifacts/diagrams/` |
 | `/frontend-design` | build a component, page or site | Distinctive frontend code. Maintenance Mode: Tier 2 current system applies on `client/`. Exploration Mode: only Tier 0/1 apply (`design/DESIGN-AUTHORITY.md`) | in place |

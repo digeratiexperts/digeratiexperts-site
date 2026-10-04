@@ -1,0 +1,577 @@
+{
+  "base": "https://digeratiexperts.com",
+  "checked": "2026-10-04T00:05:14.106Z",
+  "widths": {
+    "390": {
+      "checks": [
+        {
+          "name": "MegaMenu absent",
+          "ok": true
+        },
+        {
+          "name": "sticky CTA bar absent",
+          "ok": true
+        },
+        {
+          "name": "canonical is /quote-wizard",
+          "ok": true,
+          "detail": "https://digeratiexperts.com/quote-wizard"
+        },
+        {
+          "name": "talk link goes to /book",
+          "ok": true
+        },
+        {
+          "name": "first Tab reaches the skip link",
+          "ok": true,
+          "detail": "Skip to main content"
+        },
+        {
+          "name": "skip link lands in main#main-content",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 1-seats",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 1-seats",
+          "ok": true
+        },
+        {
+          "name": "100+ shows 100+",
+          "ok": true
+        },
+        {
+          "name": "Continue moves to connectivity",
+          "ok": true
+        },
+        {
+          "name": "focus moves to the new question",
+          "ok": true
+        },
+        {
+          "name": "arrow keys do not answer",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 2-connectivity",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 2-connectivity",
+          "ok": true
+        },
+        {
+          "name": "tile tap advances",
+          "ok": true
+        },
+        {
+          "name": "Back keeps the answer",
+          "ok": true
+        },
+        {
+          "name": "Enter on a tile advances",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 3-devices",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 3-devices",
+          "ok": true
+        },
+        {
+          "name": "browser Back stays in the quiz",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 4-it-today",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 4-it-today",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 5-trigger",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 5-trigger",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 6-frameworks",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 6-frameworks",
+          "ok": true
+        },
+        {
+          "name": "match shown before email",
+          "ok": true
+        },
+        {
+          "name": "20 seats + remote + managed devices matches Business",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 7-match",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 7-match",
+          "ok": true
+        },
+        {
+          "name": "empty submit does not post",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 8-contact-errors",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 8-contact-errors",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 8-contact",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 8-contact",
+          "ok": true
+        },
+        {
+          "name": "hand-off reaches /quote-confirmation",
+          "ok": true,
+          "detail": "https://digeratiexperts.com/quote-confirmation"
+        },
+        {
+          "name": "payload keeps every pre-quiz key",
+          "ok": true,
+          "detail": "seats,enterpriseToggle,connectivity,devices,recommendedPlan,firstName,lastName,company,email,consent,source,pageUrl,timestamp,context"
+        },
+        {
+          "name": "payload adds only context",
+          "ok": true,
+          "detail": "seats,enterpriseToggle,connectivity,devices,recommendedPlan,firstName,lastName,company,email,consent,source,pageUrl,timestamp,context"
+        },
+        {
+          "name": "payload values",
+          "ok": true,
+          "detail": "{\"seats\":20,\"enterpriseToggle\":false,\"connectivity\":\"yes\",\"devices\":\"yes\",\"recommendedPlan\":\"Business\",\"firstName\":\"Quiz\",\"lastName\":\"Tester\",\"company\":\"Example Co\",\"email\":\"quiz.tester@example-co.test\",\"consent\":true,\"source\":\"header-instant-quote\",\"pageUrl\":\"https://digeratiexperts.com/quote-wizard\",\"timestamp\":\"2026-10-04T00:05:31.835Z\",\"context\":{\"itToday\":\"provider\",\"trigger\":\"insurance\",\"frameworks\":[\"hipaa\",\"pci\"]}}"
+        },
+        {
+          "name": "context answers sent",
+          "ok": true,
+          "detail": "{\"itToday\":\"provider\",\"trigger\":\"insurance\",\"frameworks\":[\"hipaa\",\"pci\"]}"
+        },
+        {
+          "name": "confirmation names the plan",
+          "ok": true
+        },
+        {
+          "name": "no runtime errors",
+          "ok": true
+        }
+      ],
+      "axe": {
+        "1-seats": [],
+        "2-connectivity": [],
+        "3-devices": [],
+        "4-it-today": [],
+        "5-trigger": [],
+        "6-frameworks": [],
+        "7-match": [],
+        "8-contact-errors": [],
+        "8-contact": []
+      }
+    },
+    "768": {
+      "checks": [
+        {
+          "name": "MegaMenu absent",
+          "ok": true
+        },
+        {
+          "name": "sticky CTA bar absent",
+          "ok": true
+        },
+        {
+          "name": "canonical is /quote-wizard",
+          "ok": true,
+          "detail": "https://digeratiexperts.com/quote-wizard"
+        },
+        {
+          "name": "talk link goes to /book",
+          "ok": true
+        },
+        {
+          "name": "first Tab reaches the skip link",
+          "ok": true,
+          "detail": "Skip to main content"
+        },
+        {
+          "name": "skip link lands in main#main-content",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 1-seats",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 1-seats",
+          "ok": true
+        },
+        {
+          "name": "100+ shows 100+",
+          "ok": true
+        },
+        {
+          "name": "Continue moves to connectivity",
+          "ok": true
+        },
+        {
+          "name": "focus moves to the new question",
+          "ok": true
+        },
+        {
+          "name": "arrow keys do not answer",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 2-connectivity",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 2-connectivity",
+          "ok": true
+        },
+        {
+          "name": "tile tap advances",
+          "ok": true
+        },
+        {
+          "name": "Back keeps the answer",
+          "ok": true
+        },
+        {
+          "name": "Enter on a tile advances",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 3-devices",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 3-devices",
+          "ok": true
+        },
+        {
+          "name": "browser Back stays in the quiz",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 4-it-today",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 4-it-today",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 5-trigger",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 5-trigger",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 6-frameworks",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 6-frameworks",
+          "ok": true
+        },
+        {
+          "name": "match shown before email",
+          "ok": true
+        },
+        {
+          "name": "20 seats + remote + managed devices matches Business",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 7-match",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 7-match",
+          "ok": true
+        },
+        {
+          "name": "empty submit does not post",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 8-contact-errors",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 8-contact-errors",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 8-contact",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 8-contact",
+          "ok": true
+        },
+        {
+          "name": "hand-off reaches /quote-confirmation",
+          "ok": true,
+          "detail": "https://digeratiexperts.com/quote-confirmation"
+        },
+        {
+          "name": "payload keeps every pre-quiz key",
+          "ok": true,
+          "detail": "seats,enterpriseToggle,connectivity,devices,recommendedPlan,firstName,lastName,company,email,consent,source,pageUrl,timestamp,context"
+        },
+        {
+          "name": "payload adds only context",
+          "ok": true,
+          "detail": "seats,enterpriseToggle,connectivity,devices,recommendedPlan,firstName,lastName,company,email,consent,source,pageUrl,timestamp,context"
+        },
+        {
+          "name": "payload values",
+          "ok": true,
+          "detail": "{\"seats\":20,\"enterpriseToggle\":false,\"connectivity\":\"yes\",\"devices\":\"yes\",\"recommendedPlan\":\"Business\",\"firstName\":\"Quiz\",\"lastName\":\"Tester\",\"company\":\"Example Co\",\"email\":\"quiz.tester@example-co.test\",\"consent\":true,\"source\":\"header-instant-quote\",\"pageUrl\":\"https://digeratiexperts.com/quote-wizard\",\"timestamp\":\"2026-10-04T00:05:48.867Z\",\"context\":{\"itToday\":\"provider\",\"trigger\":\"insurance\",\"frameworks\":[\"hipaa\",\"pci\"]}}"
+        },
+        {
+          "name": "context answers sent",
+          "ok": true,
+          "detail": "{\"itToday\":\"provider\",\"trigger\":\"insurance\",\"frameworks\":[\"hipaa\",\"pci\"]}"
+        },
+        {
+          "name": "confirmation names the plan",
+          "ok": true
+        },
+        {
+          "name": "no runtime errors",
+          "ok": true
+        }
+      ],
+      "axe": {
+        "1-seats": [],
+        "2-connectivity": [],
+        "3-devices": [],
+        "4-it-today": [],
+        "5-trigger": [],
+        "6-frameworks": [],
+        "7-match": [],
+        "8-contact-errors": [],
+        "8-contact": []
+      }
+    },
+    "1440": {
+      "checks": [
+        {
+          "name": "MegaMenu absent",
+          "ok": true
+        },
+        {
+          "name": "sticky CTA bar absent",
+          "ok": true
+        },
+        {
+          "name": "canonical is /quote-wizard",
+          "ok": true,
+          "detail": "https://digeratiexperts.com/quote-wizard"
+        },
+        {
+          "name": "talk link goes to /book",
+          "ok": true
+        },
+        {
+          "name": "first Tab reaches the skip link",
+          "ok": true,
+          "detail": "Skip to main content"
+        },
+        {
+          "name": "skip link lands in main#main-content",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 1-seats",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 1-seats",
+          "ok": true
+        },
+        {
+          "name": "100+ shows 100+",
+          "ok": true
+        },
+        {
+          "name": "Continue moves to connectivity",
+          "ok": true
+        },
+        {
+          "name": "focus moves to the new question",
+          "ok": true
+        },
+        {
+          "name": "arrow keys do not answer",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 2-connectivity",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 2-connectivity",
+          "ok": true
+        },
+        {
+          "name": "tile tap advances",
+          "ok": true
+        },
+        {
+          "name": "Back keeps the answer",
+          "ok": true
+        },
+        {
+          "name": "Enter on a tile advances",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 3-devices",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 3-devices",
+          "ok": true
+        },
+        {
+          "name": "browser Back stays in the quiz",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 4-it-today",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 4-it-today",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 5-trigger",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 5-trigger",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 6-frameworks",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 6-frameworks",
+          "ok": true
+        },
+        {
+          "name": "match shown before email",
+          "ok": true
+        },
+        {
+          "name": "20 seats + remote + managed devices matches Business",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 7-match",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 7-match",
+          "ok": true
+        },
+        {
+          "name": "empty submit does not post",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 8-contact-errors",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 8-contact-errors",
+          "ok": true
+        },
+        {
+          "name": "axe serious/critical on 8-contact",
+          "ok": true
+        },
+        {
+          "name": "no sideways overflow on 8-contact",
+          "ok": true
+        },
+        {
+          "name": "hand-off reaches /quote-confirmation",
+          "ok": true,
+          "detail": "https://digeratiexperts.com/quote-confirmation"
+        },
+        {
+          "name": "payload keeps every pre-quiz key",
+          "ok": true,
+          "detail": "seats,enterpriseToggle,connectivity,devices,recommendedPlan,firstName,lastName,company,email,consent,source,pageUrl,timestamp,context"
+        },
+        {
+          "name": "payload adds only context",
+          "ok": true,
+          "detail": "seats,enterpriseToggle,connectivity,devices,recommendedPlan,firstName,lastName,company,email,consent,source,pageUrl,timestamp,context"
+        },
+        {
+          "name": "payload values",
+          "ok": true,
+          "detail": "{\"seats\":20,\"enterpriseToggle\":false,\"connectivity\":\"yes\",\"devices\":\"yes\",\"recommendedPlan\":\"Business\",\"firstName\":\"Quiz\",\"lastName\":\"Tester\",\"company\":\"Example Co\",\"email\":\"quiz.tester@example-co.test\",\"consent\":true,\"source\":\"header-instant-quote\",\"pageUrl\":\"https://digeratiexperts.com/quote-wizard\",\"timestamp\":\"2026-10-04T00:06:06.216Z\",\"context\":{\"itToday\":\"provider\",\"trigger\":\"insurance\",\"frameworks\":[\"hipaa\",\"pci\"]}}"
+        },
+        {
+          "name": "context answers sent",
+          "ok": true,
+          "detail": "{\"itToday\":\"provider\",\"trigger\":\"insurance\",\"frameworks\":[\"hipaa\",\"pci\"]}"
+        },
+        {
+          "name": "confirmation names the plan",
+          "ok": true
+        },
+        {
+          "name": "no runtime errors",
+          "ok": true
+        }
+      ],
+      "axe": {
+        "1-seats": [],
+        "2-connectivity": [],
+        "3-devices": [],
+        "4-it-today": [],
+        "5-trigger": [],
+        "6-frameworks": [],
+        "7-match": [],
+        "8-contact-errors": [],
+        "8-contact": []
+      }
+    }
+  },
+  "failures": []
+}

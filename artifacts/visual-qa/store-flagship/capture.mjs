@@ -15,6 +15,8 @@ for (const w of [1440, 768, 390]) {
   await p.screenshot({ path: path.join(here, `${w}-0-fold.png`) });
   await p.evaluate(() => document.querySelectorAll("[data-d2-reveal]").forEach((e) => (e.dataset.d2Reveal = "in")));
   await p.locator("[data-testid='scenario-it-person-left-action']").click();
+  await p.locator("#profile-users").fill("25");
+  await p.getByRole("radio", { name: "No", exact: true }).check();
   await p.waitForTimeout(800);
   const over = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   // Section shots without the fixed chrome (site nav, dock, bar) stamped over them.
@@ -26,7 +28,7 @@ for (const w of [1440, 768, 390]) {
     document.querySelector(".d2-flag-lnav").style.position = "static";
   });
   let i = 1;
-  for (const sel of ["#situations", "#profile", "#families", "#why", ".d2-flag-close"]) await p.locator(sel).screenshot({ path: path.join(here, `${w}-${i++}-${sel.replace(/^[#.]/, "")}.png`) });
+  for (const sel of ["#situations", "#profile", "#families", "#ways", "#why", ".d2-flag-close"]) await p.locator(sel).screenshot({ path: path.join(here, `${w}-${i++}-${sel.replace(/^[#.]/, "")}.png`) });
   console.log(w, "overflow", over, errs.join(" | "));
   await p.close();
 }

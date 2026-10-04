@@ -27,7 +27,7 @@ Prices come from vendor-comparison pages found by search on 2026-10-03, not from
 | 5 | kie.ai (existing key) | Pay per use. Veo 3.1 Fast ≈ $0.10–0.12/s; Lite ≈ $0.05/s | Website, `/scrollcraft` | Images (Nano Banana, Flux, Midjourney), video (Veo, Kling, Runway), music (Suno) through one account | **In use** for images; video when a page needs it |
 | 6 | DataForSEO (official MCP server) | $50 prepaid, credits never expire; ≈ $0.0006 per standard SERP call | Website / Blog, Hub research | Live keyword volumes, SERPs, competitor pages for Claude | Joe: create account |
 | 7 | Canva (Brand Kit) | Pro ≈ $12–15/mo if not already on it | Store promos, social, PDFs | Brand-locked graphics for non-developers; Canva MCP already connects to Claude | Joe: confirm plan, load DE kit |
-| 8 | Recraft (Basic or Pro) | ≈ $12–20/mo. **Free plan is not licensed for commercial use** | Website, Store, Portal | Native SVG icons and illustrations with style locks | Joe: subscribe |
+| 8 | Recraft (Basic or Pro) | ≈ $12–20/mo. **Free plan is not licensed for commercial use** | Website, Store, Portal | Native SVG icons and illustrations with style locks | **Skill built** (`/recraft-icons`); Joe: subscribe and set `RECRAFT_API_KEY` |
 | 9 | Frase (Starter) | ≈ $39–49/mo | Website / Blog | SERP-based content scoring with a read-write MCP server | Decide after 30 days of #6 |
 
 Baseline monthly cost: about $12–35 plus pay-per-use (kie.ai, DataForSEO after the $50). With Frase: about $55–85.
@@ -92,10 +92,10 @@ import heroFallback from "@/assets/hero.jpg?w=1280&format=jpg";
 ```
 Source images live next to the code that imports them; reviewed, already-optimized files may still go under `client/public/images/` per `design/IMAGERY.md`.
 
-### Step 2: Recraft (Joe subscribes, then an agent wires it)
-1. Subscribe to Basic or Pro (commercial rights need a paid plan).
-2. Put the API key in `.env` as `RECRAFT_API_KEY`; add the name to `.env.example`.
-3. Agent builds a `recraft-icons` skill (pattern of `.claude/skills/nano-banana-images/`) with one style spec for the DE icon set; output to `artifacts/recraft/` for `IMAGERY.md` review.
+### Step 2: Recraft
+1. **Done:** the `recraft-icons` skill (`.claude/skills/recraft-icons/`, mirrored at `.agents/skills/`). It generates with `recraftv4_1_utility_vector`, cleans each SVG into a single-colour `currentColor` glyph that sits beside Lucide in `IconWell`, and writes candidates, manifests and a `review.html` sheet to `artifacts/recraft/icons/<set>/`. Offline tests run in CI (`npm run test:recraft-icons`).
+2. Joe: subscribe to Basic or Pro (commercial rights need a paid plan) and put the key in `.env` as `RECRAFT_API_KEY`.
+3. First run: `node .claude/skills/recraft-icons/scripts/recraft.mjs check`, then one `generate` for a concept Lucide lacks, review the sheet against Lucide at 20px, and approve per `IMAGERY.md`. Optionally lock the set with `create-style` from 2-5 approved icons.
 
 ### Step 3: DataForSEO
 1. Create an account and prepay $50.

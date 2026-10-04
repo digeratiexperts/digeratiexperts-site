@@ -102,6 +102,7 @@ Reusable skill packs live in `.claude/skills/<name>/SKILL.md` (Claude Code disco
 |---|---|---|
 | `scrollcraft` | Scroll-driven experience builds under `scrollcraft/builds/<name>/` | Only if `scripts/kie.mjs` is run |
 | `nano-banana-images` | Nano Banana 2 images via kie.ai from a JSON prompt file (Python) | Yes, per image |
+| `recraft-icons` | On-brand SVG icons via Recraft, cleaned to `currentColor` glyphs for IconWell, for concepts Lucide lacks (Node) | Yes, per image (`--dry-run` and `clean` are free) |
 | `excalidraw-visuals` | Hand-drawn-style PNG diagrams via kie.ai (Node) | Yes, per image |
 | `excalidraw-diagram` | Editable `.excalidraw` files, no API | No |
 | `frontend-design` | Distinctive frontend code. Maintenance Mode: Tier 2 current system applies on `client/`. Exploration Mode: only Tier 0/1 apply, on `client/` too (`design/DESIGN-AUTHORITY.md`) | No |
@@ -112,7 +113,7 @@ Reusable skill packs live in `.claude/skills/<name>/SKILL.md` (Claude Code disco
 | `trigger-dev`, `trigger-ref` | Trigger.dev automations (in a dedicated Trigger.dev project, never deployed via this repo's CI) | Trigger.dev usage |
 | `msp-ai-kit` | MSP/MSSP operating prompts and instruction packs from `kit.config.json` (ChatGPT, Custom GPT, Claude, Cursor, Copilot); optional clone of external MSP kits into `artifacts/msp-ai-kit/vendor/` | No |
 
-Key handling: `KIE_AI_API_KEY` (and `KIE_API_KEY` for `scripts/kie-assets.mjs`) come from the environment or the gitignored `.env`; `.env.example` is the template. Never commit, print or paste a key. Generated images are ILLUSTRATIVE candidates under `artifacts/kie-ai/` until they pass `design/IMAGERY.md` review.
+Key handling: `KIE_AI_API_KEY` (and `KIE_API_KEY` for `scripts/kie-assets.mjs`) and `RECRAFT_API_KEY` (paid plan only) come from the environment or the gitignored `.env`; `.env.example` is the template. Never commit, print or paste a key. Generated images are ILLUSTRATIVE candidates under `artifacts/kie-ai/` until they pass `design/IMAGERY.md` review.
 
 ## Content and webmaster tooling (all agents)
 

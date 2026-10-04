@@ -2067,11 +2067,11 @@ html.d2-reveal-ready .d2-grid--cards > [data-d2-reveal="in"]:hover {
   position: sticky;
   top: var(--de-nav-current-bottom, 4rem);
   z-index: 20;
-  background: rgba(0, 0, 0, 0.72);
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--f-on-dark);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  color: var(--f-ink);
 }
 .d2-flag-lnav__row {
   display: flex;
@@ -2092,11 +2092,11 @@ html.d2-reveal-ready .d2-grid--cards > [data-d2-reveal="in"]:hover {
   font-size: 13px;
 }
 .d2-flag-lnav__links a {
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--f-ink-2);
   text-decoration: none;
 }
 .d2-flag-lnav__links a:hover {
-  color: #fff;
+  color: var(--f-ink);
 }
 .d2-flag-lnav__solution {
   margin-left: auto;
@@ -2106,14 +2106,14 @@ html.d2-reveal-ready .d2-grid--cards > [data-d2-reveal="in"]:hover {
   min-height: 2.75rem;
   padding: 0 0.6rem 0 1rem;
   border-radius: 9999px;
-  background: rgb(var(--de-accent-rgb));
+  background: var(--de-magenta);
   color: #fff;
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
 }
 .d2-flag-lnav__solution:hover {
-  background: color-mix(in srgb, rgb(var(--de-accent-rgb)) 85%, var(--de-bg));
+  background: var(--de-magenta-hover);
 }
 .d2-flag-lnav__count {
   min-width: 1.5rem;
@@ -2165,7 +2165,7 @@ html.d2-reveal-ready .d2-grid--cards > [data-d2-reveal="in"]:hover {
 }
 .d2-flag-hero .d2-step {
   font-family: "Oxanium", sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.2em;
   color: rgb(var(--de-accent-ink-rgb));
@@ -2635,7 +2635,43 @@ html.d2-reveal-ready .d2-gcard[data-d2-reveal="in"]:hover {
   color: var(--f-ink);
 }
 .d2-flag-config__form .d2-input::placeholder {
-  color: rgba(0, 0, 0, 0.3);
+  color: rgba(0, 0, 0, 0.18);
+}
+.d2-dial {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.d2-dial .d2-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.d2-dial__steps {
+  display: flex;
+  flex: none;
+  gap: 0.5rem;
+}
+.d2-dial__step {
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  color: var(--d2-ink-strong);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 200ms var(--d2-ease);
+}
+.d2-dial__step:hover:not(:disabled) {
+  transform: scale(1.06);
+}
+.d2-dial__step:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 .d2-flag-config__form .d2-input:hover {
   border: 0;
@@ -2840,6 +2876,141 @@ html.d2-reveal-ready .d2-fcard[data-d2-reveal="in"]:hover {
   border-color: rgba(5, 3, 18, 0.3);
 }
 
+/* How DE works with you: the plan-card pattern (Joe, 2026-10-04) */
+.d2-plans {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 900px) {
+  .d2-plans {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.d2-plan {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: var(--f-ink);
+  color: var(--f-on-dark);
+  overflow: hidden;
+}
+.d2-plan--suggested {
+  border-color: rgb(var(--de-accent-rgb));
+  box-shadow: 0 0 0 1px rgb(var(--de-accent-rgb)), 0 30px 60px -30px rgb(var(--de-accent-rgb) / 0.6);
+}
+.d2-plan__ribbon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.3rem 0.75rem;
+  border-bottom-left-radius: 10px;
+  background: rgb(var(--de-accent-rgb));
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+.d2-plan__head {
+  padding: 1.5rem 1.25rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.d2-plan__title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.d2-plan__line {
+  margin-top: 0.5rem;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--f-grey-on-black);
+}
+.d2-plan__price {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.5rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.d2-plan__amount {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(1.9rem, 3vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+.d2-plan__why {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--f-grey-on-black);
+}
+.d2-plan__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  margin-top: auto;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 10px;
+  color: var(--f-on-dark);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 200ms var(--f-ease), border-color 200ms var(--f-ease);
+}
+.d2-plan__cta:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.04);
+}
+.d2-plan__cta--solid {
+  border-color: #fff;
+  background: #fff;
+  color: var(--f-ink);
+}
+.d2-plan__cta--solid:hover {
+  background: var(--f-mist);
+}
+.d2-plan--suggested .d2-plan__cta--solid {
+  border-color: rgb(var(--de-accent-rgb));
+  background: rgb(var(--de-accent-rgb));
+  color: #fff;
+}
+.d2-plan__body {
+  padding: 1.25rem 1.25rem 1.5rem;
+}
+.d2-plan__kicker {
+  font-size: 14px;
+  color: var(--f-grey-on-black);
+}
+.d2-plan__points {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.d2-plan__points li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+.d2-plan__points svg {
+  flex: none;
+  margin-top: 2px;
+  color: rgb(var(--de-accent-ink-rgb));
+}
+.d2-plan :is(a, button):focus-visible {
+  outline-color: var(--de-magenta);
+}
+
 /* Why DE */
 .d2-why {
   display: flex;
@@ -2855,6 +3026,7 @@ html.d2-reveal-ready .d2-fcard[data-d2-reveal="in"]:hover {
   display: none;
 }
 .d2-why__card {
+  color: var(--f-on-dark);
   flex: 0 0 min(78vw, 330px);
   min-height: 260px;
   display: flex;
