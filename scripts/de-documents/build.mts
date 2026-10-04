@@ -81,7 +81,8 @@ try {
       keywords: doc.keywords,
       lang: "en-US",
     })]);
-    results.push(target);
+    // verify.py compares the text layer with the source HTML to catch split words.
+    results.push(`${target}::${path.join(workDir, `${doc.slug}.html`)}`);
     console.log(`built ${path.relative(REPO_ROOT, target)}`);
   }
 } finally {
