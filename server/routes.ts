@@ -5561,6 +5561,10 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: error?.message || "Invalid quote items" });
       }
 
+      const hubAccountId = req.user?.clientId ? portalClients.get(req.user.clientId)?.hubAccountId ?? null : null;
+      const quoteContext = { canonicalAccountId: hubAccountId, portalClientId: req.user?.clientId || null };
+      const { quoteRequestedEvent } = await import("./storeQuoteFallback");
+
       let quoteRequest;
       try {
         quoteRequest = await insertQuoteRequest({
@@ -5574,52 +5578,60 @@ export async function registerRoutes(app: Express) {
           requestedItems: canonicalItems,
         });
       } catch (error: any) {
-        // Fail closed (issue #240): no durable row means no quote number, no
-        // QUOTE_REQUESTED event, no CRM sync and no success message. Mirrors the
-        // DURABLE_DATABASE_REQUIRED contract of /api/store/checkout/zoho so the
-        // client shows the same "your solution is intact" treatment.
-        if (error?.code === "DURABLE_DATABASE_REQUIRED") {
-          console.error("[SECURITY] QUOTE_DATABASE_UNAVAILABLE", {
-            userId: req.userId,
-            clientId: req.user?.clientId,
-            reason: error?.message,
-          });
+        if (error?.code !== "DURABLE_DATABASE_REQUIRED") throw error;
+        console.error("[SECURITY] QUOTE_DATABASE_UNAVAILABLE", {
+          userId: req.userId,
+          clientId: req.user?.clientId,
+          reason: error?.message,
+        });
+        // Never lose a quote request (#240, owner rule from #243): try the disk
+        // spool, the CRM and the sales email. Any one holding means accepted;
+        // the replay worker writes the row and sends QUOTE_REQUESTED (the Hub
+        // outbox needs the database) once Postgres is back.
+        const { saveQuoteOutsideDatabase } = await import("./storeQuoteFallback");
+        const { rememberQuoteRequest } = await import("./storeQuoteStore");
+        const outcome = error.record
+          ? await saveQuoteOutsideDatabase({ id: error.record.id, quote: error.record, ...quoteContext, crmRecorded: false })
+          : null;
+        if (!outcome?.durable) {
+          // Every layer failed: no quote number and no success message. Mirrors
+          // the DURABLE_DATABASE_REQUIRED contract of /api/store/checkout/zoho;
+          // the client keeps the buyer's cart and contact draft for a retry.
           return res.status(503).json({
             code: "DURABLE_DATABASE_REQUIRED",
             error:
               "Quote requests are temporarily unavailable because durable storage is not connected. Your solution and contact details are intact; please try again shortly.",
           });
         }
-        throw error;
+        const saved = rememberQuoteRequest(error.record);
+        console.error("[store-quote] saved outside the database", {
+          quoteNumber: saved.quoteNumber,
+          durable: outcome.durable,
+          spooled: outcome.spooled,
+          crmRecorded: outcome.crmRecorded,
+          salesEmailed: outcome.salesEmailed,
+        });
+        logSecurityEvent("QUOTE_REQUESTED", req, {
+          quoteId: saved.id,
+          quoteNumber: saved.quoteNumber,
+          clientId: req.user?.clientId,
+          userId: req.userId,
+          contactEmail,
+          companyName,
+          itemCount: canonicalItems.length,
+          durable: outcome.durable,
+        });
+        return res.json({
+          id: saved.id,
+          quoteNumber: saved.quoteNumber,
+          pdfUrl: `/api/store/quote-requests/${saved.id}/pdf`,
+          message: "Quote request submitted successfully",
+        });
       }
 
       console.log(`[QUOTE REQUEST] Created: ${quoteRequest.quoteNumber} for ${contactEmail}`);
 
-      const hubAccountId = req.user?.clientId ? portalClients.get(req.user.clientId)?.hubAccountId : null;
-      const { buildCommercialSnapshot } = await import("./integrations/commercialSnapshot");
-      const commercial = buildCommercialSnapshot({
-        reference: quoteRequest.quoteNumber,
-        status: "requested",
-        portalClientId: req.user?.clientId || null,
-        company: companyName,
-        email: contactEmail,
-        lineItems: canonicalItems,
-      });
-
-      void eventBus.emit(EventTypes.QUOTE_REQUESTED, {
-        id: quoteRequest.id,
-        quoteId: quoteRequest.id,
-        quoteNumber: quoteRequest.quoteNumber,
-        contactName,
-        contactEmail,
-        contactPhone,
-        companyName,
-        message,
-        source: "store_quote",
-        canonicalAccountId: hubAccountId,
-        portalClientId: req.user?.clientId || null,
-        commercial,
-      });
+      void eventBus.emit(EventTypes.QUOTE_REQUESTED, quoteRequestedEvent(quoteRequest, quoteContext));
 
       void import("./storeQuoteCrm")
         .then(({ syncStoreQuoteToCrm }) => syncStoreQuoteToCrm({

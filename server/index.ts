@@ -19,7 +19,7 @@ import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
 import { cacheControlFor } from "./staticCacheControl";
-import { spoolPendingCount } from "./publicSolutionSpool";
+import { quoteSpoolDir, spoolPendingCount } from "./publicSolutionSpool";
 import { registerCampaignAliasRedirects } from "./campaignAliasRedirects";
 import { createServer as createViteServer } from "vite";
 import path from "path";
@@ -128,6 +128,8 @@ app.all("/api/health", async (_req, res) => {
       openai: openaiConfigured ? "configured" : "not_configured",
       // Solution requests waiting on disk for the database (#243). A count only.
       solutionSpool: { pending: spoolPendingCount() },
+      // Store quote requests waiting on disk for the database (#240). A count only.
+      quoteSpool: { pending: spoolPendingCount(quoteSpoolDir()) },
     },
     // Lets a reviewer confirm outbound mutations are locked down.
     stagingReview: stagingReviewStatus(),
@@ -668,6 +670,12 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       .then(({ startSolutionReplayWorker }) => startSolutionReplayWorker())
       .catch((error) => {
         log(`⚠️ solution replay worker not started: ${error?.message || error}`);
+      });
+    // Store quote requests saved outside the database likewise (#240).
+    void import("./storeQuoteReplayWorker")
+      .then(({ startQuoteReplayWorker }) => startQuoteReplayWorker())
+      .catch((error) => {
+        log(`⚠️ quote replay worker not started: ${error?.message || error}`);
       });
     void import("./services/threat-intel/ingest")
       .then(({ startThreatIntelScheduler }) => startThreatIntelScheduler())
