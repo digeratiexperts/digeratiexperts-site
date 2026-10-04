@@ -81,6 +81,7 @@ Typecheck: `npx tsc -p scripts/de-documents/tsconfig.json`.
 - carrying any font that is not embedded, is Type 3, or lacks a ToUnicode map
 - holding any painting operator that is neither tagged nor an artifact
 - carrying under 50 words of extractable text
+- extracting a word split in two (for example "SOLUTI ON"), checked against the source HTML; copy/paste, search and screen readers would get the broken word. Proportional caps labels therefore keep letter-spacing at .03em or less
 
 It also reports pages, size, structure element counts and link targets.
 

@@ -1,15 +1,19 @@
 """Technical checks for a DE document-system PDF.
-Usage: verify.py <file.pdf> [...]
+Usage: verify.py <file.pdf>[::<source.html>] [...]
 Reports: pages, size, title/lang/DisplayDocTitle, tagging and structure
 element counts, font embedding and type, link targets, extractable words.
 Exit code 1 if a hard requirement fails (untagged, unembedded or Type 3 font,
-missing title or language, untagged content, no extractable text) or, when the
+missing title or language, untagged content, no extractable text, or, when the
+source HTML is given, words that extract split such as "SOLUTI ON") or, when the
 VERAPDF environment variable points at the veraPDF CLI, if PDF/UA-1 fails."""
 import collections
+import html as htmllib
 import json
 import os
 import subprocess
 import sys
+
+import re
 
 import pikepdf
 
@@ -64,6 +68,32 @@ def fonts(path):
     return rows
 
 
+WORD = re.compile(r"[A-Za-z]+")
+
+
+def source_vocab(html_path):
+    """Lower-cased words of the source HTML (body text and CSS strings such as
+    the running header), with data: URIs removed."""
+    raw = open(html_path, encoding="utf-8").read()
+    raw = re.sub(r"data:[^)\"'\s]+", " ", raw)
+    raw = htmllib.unescape(re.sub(r"<[^>]+>", " ", raw))
+    return {w.lower() for w in WORD.findall(raw)}
+
+
+def split_words(pdf_path, vocab):
+    """Words the PDF's text layer breaks in two: a token that is not a source
+    word but joins its neighbour into one ("SOLUTI" + "ON" -> "solution").
+    Copy/paste, search and screen readers get these broken."""
+    text = subprocess.run(["pdftotext", pdf_path, "-"], capture_output=True, text=True).stdout
+    toks = WORD.findall(text)
+    found = set()
+    for a, b in zip(toks, toks[1:]):
+        joined = (a + b).lower()
+        if joined in vocab and (a.lower() not in vocab or b.lower() not in vocab):
+            found.add(f"{a} {b}")
+    return sorted(found)
+
+
 def verapdf(paths):
     """Run veraPDF's PDF/UA-1 profile when VERAPDF points at the CLI.
     Returns {file name: (compliant, failed rules)} or None when unavailable."""
@@ -80,10 +110,12 @@ def verapdf(paths):
     return res
 
 
-def main(paths):
+def main(args):
     bad = False
+    pairs = [a.split("::", 1) if "::" in a else (a, None) for a in args]
+    paths = [p for p, _ in pairs]
     ua = verapdf(paths)
-    for p in paths:
+    for p, src in pairs:
         pdf = pikepdf.open(p)
         info = pdf.docinfo
         lang = str(pdf.Root.get("/Lang", ""))
@@ -120,6 +152,9 @@ def main(paths):
             problems.append(f"{loose} painting operators neither tagged nor artifact")
         if words < 50:
             problems.append("little or no extractable text")
+        splits = split_words(p, source_vocab(src)) if src else None
+        if splits:
+            problems.append("words extract split: " + ", ".join(f'"{w}"' for w in splits[:8]))
         if ua is not None:
             ok, rules = ua.get(os.path.basename(p), (False, ["not validated"]))
             if not ok:
@@ -130,6 +165,7 @@ def main(paths):
         print(f"   structure: " + ", ".join(f"{k}:{v}" for k, v in sorted(sc.items())))
         print(f"   untagged content: {loose} · fonts: {len(fr)} ({', '.join(sorted({t for _, t, _, _ in fr}))}) · words {words}")
         print(f"   links: {sorted(set(links))}")
+        print(f"   split words: {'not checked (no source HTML)' if splits is None else (len(splits) or 'none')}")
         print(f"   veraPDF PDF/UA-1: {'not run (set VERAPDF)' if ua is None else ('pass' if ua.get(os.path.basename(p), (False,))[0] else 'FAIL')}")
         print(f"   {'FAIL: ' + '; '.join(problems) if problems else 'PASS'}")
     return 1 if bad else 0
