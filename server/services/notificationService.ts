@@ -3,6 +3,7 @@
  * Email notifications via ZeptoMail transactional email service
  */
 
+import { escapeEmailHtml } from "./emailEscape";
 import { logger } from "../logger";
 import { shouldBlockMutation } from "../stagingReviewGuard";
 
@@ -160,13 +161,13 @@ export const notificationService = {
       <h2>New Lead Received</h2>
       <p>A new lead has been submitted through the website:</p>
       <table style="width: 100%; margin: 20px 0;">
-        <tr><td style="padding: 8px 0; color: #888;">Name:</td><td class="highlight">${lead.name}</td></tr>
-        <tr><td style="padding: 8px 0; color: #888;">Email:</td><td class="highlight">${lead.email}</td></tr>
-        ${lead.company ? `<tr><td style="padding: 8px 0; color: #888;">Company:</td><td>${lead.company}</td></tr>` : ''}
-        ${lead.phone ? `<tr><td style="padding: 8px 0; color: #888;">Phone:</td><td>${lead.phone}</td></tr>` : ''}
-        ${lead.source ? `<tr><td style="padding: 8px 0; color: #888;">Source:</td><td>${lead.source}</td></tr>` : ''}
+        <tr><td style="padding: 8px 0; color: #888;">Name:</td><td class="highlight">${escapeEmailHtml(lead.name)}</td></tr>
+        <tr><td style="padding: 8px 0; color: #888;">Email:</td><td class="highlight">${escapeEmailHtml(lead.email)}</td></tr>
+        ${lead.company ? `<tr><td style="padding: 8px 0; color: #888;">Company:</td><td>${escapeEmailHtml(lead.company)}</td></tr>` : ''}
+        ${lead.phone ? `<tr><td style="padding: 8px 0; color: #888;">Phone:</td><td>${escapeEmailHtml(lead.phone)}</td></tr>` : ''}
+        ${lead.source ? `<tr><td style="padding: 8px 0; color: #888;">Source:</td><td>${escapeEmailHtml(lead.source)}</td></tr>` : ''}
       </table>
-      ${lead.message ? `<p><strong>Message:</strong></p><p style="background: #1a1a2e; padding: 15px; border-radius: 6px;">${lead.message}</p>` : ''}
+      ${lead.message ? `<p><strong>Message:</strong></p><p style="background: #1a1a2e; padding: 15px; border-radius: 6px; white-space: pre-wrap;">${escapeEmailHtml(lead.message)}</p>` : ''}
     `;
 
     return sendEmail({
@@ -184,14 +185,14 @@ export const notificationService = {
     total: number;
   }): Promise<boolean> {
     const itemsHtml = data.items
-      .map(item => `<tr><td style="padding: 8px;">${item.name}</td><td style="padding: 8px; text-align: right;">$${item.price.toFixed(2)}</td></tr>`)
+      .map(item => `<tr><td style="padding: 8px;">${escapeEmailHtml(item.name)}</td><td style="padding: 8px; text-align: right;">$${item.price.toFixed(2)}</td></tr>`)
       .join('');
 
     const content = `
       <h2>Quote Request Received</h2>
-      <p>Hi ${data.name},</p>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
       <p>Thank you for your quote request. We've received it and will get back to you within 24 hours.</p>
-      <p><strong>Quote ID:</strong> <span class="highlight">${data.quoteId}</span></p>
+      <p><strong>Quote ID:</strong> <span class="highlight">${escapeEmailHtml(data.quoteId)}</span></p>
       <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
         <tr style="background: #1a1a2e;"><th style="padding: 12px; text-align: left;">Item</th><th style="padding: 12px; text-align: right;">Price</th></tr>
         ${itemsHtml}
@@ -215,14 +216,14 @@ export const notificationService = {
     total: number;
   }): Promise<boolean> {
     const itemsHtml = data.items
-      .map(item => `<tr><td style="padding: 8px;">${item.name}</td><td style="padding: 8px; text-align: center;">${item.quantity}</td><td style="padding: 8px; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td></tr>`)
+      .map(item => `<tr><td style="padding: 8px;">${escapeEmailHtml(item.name)}</td><td style="padding: 8px; text-align: center;">${escapeEmailHtml(item.quantity)}</td><td style="padding: 8px; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td></tr>`)
       .join('');
 
     const content = `
       <h2>Order Confirmed</h2>
-      <p>Hi ${data.name},</p>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
       <p>Thank you for your order! We're processing it now.</p>
-      <p><strong>Order ID:</strong> <span class="highlight">${data.orderId}</span></p>
+      <p><strong>Order ID:</strong> <span class="highlight">${escapeEmailHtml(data.orderId)}</span></p>
       <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
         <tr style="background: #1a1a2e;"><th style="padding: 12px; text-align: left;">Item</th><th style="padding: 12px; text-align: center;">Qty</th><th style="padding: 12px; text-align: right;">Price</th></tr>
         ${itemsHtml}
@@ -248,15 +249,15 @@ export const notificationService = {
   }): Promise<boolean> {
     const content = `
       <h2>Support Ticket Update</h2>
-      <p>Hi ${data.name},</p>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
       <p>Your support ticket has been updated:</p>
       <table style="width: 100%; margin: 20px 0;">
-        <tr><td style="padding: 8px 0; color: #888;">Ticket ID:</td><td class="highlight">${data.ticketId}</td></tr>
-        <tr><td style="padding: 8px 0; color: #888;">Subject:</td><td>${data.subject}</td></tr>
-        <tr><td style="padding: 8px 0; color: #888;">Status:</td><td class="highlight">${data.status}</td></tr>
+        <tr><td style="padding: 8px 0; color: #888;">Ticket ID:</td><td class="highlight">${escapeEmailHtml(data.ticketId)}</td></tr>
+        <tr><td style="padding: 8px 0; color: #888;">Subject:</td><td>${escapeEmailHtml(data.subject)}</td></tr>
+        <tr><td style="padding: 8px 0; color: #888;">Status:</td><td class="highlight">${escapeEmailHtml(data.status)}</td></tr>
       </table>
-      ${data.message ? `<p><strong>Latest Update:</strong></p><p style="background: #1a1a2e; padding: 15px; border-radius: 6px;">${data.message}</p>` : ''}
-      <a href="https://portal.digeratiexperts.com/portal/tickets/${data.ticketId}" class="button">View Ticket</a>
+      ${data.message ? `<p><strong>Latest Update:</strong></p><p style="background: #1a1a2e; padding: 15px; border-radius: 6px; white-space: pre-wrap;">${escapeEmailHtml(data.message)}</p>` : ''}
+      <a href="https://portal.digeratiexperts.com/portal/tickets/${escapeEmailHtml(data.ticketId)}" class="button">View Ticket</a>
     `;
 
     return sendEmail({
@@ -280,13 +281,13 @@ export const notificationService = {
 
     const detailsHtml = data.details
       ? Object.entries(data.details)
-          .map(([key, value]) => `<tr><td style="padding: 4px 8px; color: #888;">${key}:</td><td>${JSON.stringify(value)}</td></tr>`)
+          .map(([key, value]) => `<tr><td style="padding: 4px 8px; color: #888;">${escapeEmailHtml(key)}:</td><td>${escapeEmailHtml(JSON.stringify(value))}</td></tr>`)
           .join('')
       : '';
 
     const content = `
-      <h2 style="color: ${typeColors[data.type]};">[${data.type.toUpperCase()}] ${data.title}</h2>
-      <p>${data.message}</p>
+      <h2 style="color: ${typeColors[data.type]};">[${escapeEmailHtml(data.type.toUpperCase())}] ${escapeEmailHtml(data.title)}</h2>
+      <p style="white-space: pre-wrap;">${escapeEmailHtml(data.message)}</p>
       ${detailsHtml ? `<table style="width: 100%; margin: 20px 0; background: #1a1a2e; border-radius: 6px;">${detailsHtml}</table>` : ''}
       <p style="color: #888; font-size: 12px;">Timestamp: ${new Date().toISOString()}</p>
     `;
@@ -305,9 +306,9 @@ export const notificationService = {
   }): Promise<boolean> {
     const content = `
       <h2>Password Reset Request</h2>
-      <p>Hi ${data.name},</p>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
       <p>We received a request to reset your password. Click the button below to create a new password:</p>
-      <a href="${data.resetLink}" class="button">Reset Password</a>
+      <a href="${escapeEmailHtml(data.resetLink)}" class="button">Reset Password</a>
       <p style="color: #888; font-size: 12px; margin-top: 20px;">This link will expire in 1 hour. If you didn't request this, please ignore this email.</p>
     `;
 
@@ -324,7 +325,7 @@ export const notificationService = {
   }): Promise<boolean> {
     const content = `
       <h2>Welcome to Digerati Experts!</h2>
-      <p>Hi ${data.name},</p>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
       <p>Thank you for creating an account with Digerati Experts. We're excited to have you on board!</p>
       <p>With your account, you can:</p>
       <ul style="margin: 20px 0; padding-left: 20px;">
@@ -350,10 +351,10 @@ export const notificationService = {
   }): Promise<boolean> {
     const content = `
       <h2>Your Login Verification Code</h2>
-      <p>Hi ${data.name},</p>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
       <p>Your one-time verification code is:</p>
       <div style="text-align: center; margin: 24px 0;">
-        <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #8b5cf6; background: #1a1a2e; padding: 16px 32px; border-radius: 8px; display: inline-block;">${data.code}</span>
+        <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #8b5cf6; background: #1a1a2e; padding: 16px 32px; border-radius: 8px; display: inline-block;">${escapeEmailHtml(data.code)}</span>
       </div>
       <p style="color: #888; font-size: 13px;">This code expires in 10 minutes. If you didn't request this, please secure your account immediately.</p>
     `;
@@ -372,9 +373,9 @@ export const notificationService = {
   }): Promise<boolean> {
     const content = `
       <h2>Verify Your Email Address</h2>
-      <p>Hi ${data.name},</p>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
       <p>Thanks for signing up for the Digerati Experts client portal. Please verify your email address to activate your account:</p>
-      <a href="${data.verificationLink}" class="button">Verify My Email</a>
+      <a href="${escapeEmailHtml(data.verificationLink)}" class="button">Verify My Email</a>
       <p style="color: #888; font-size: 12px; margin-top: 20px;">This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.</p>
     `;
 
