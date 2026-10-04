@@ -26,7 +26,7 @@ So the protection does not depend on hiding the code. Instead:
 | Keep using an old copy offline | Licences expire. Dropship kits carry an order licence bound to the ordered serial, valid until the order's expiry date and never for another device. |
 | Keep using a licence DE has revoked (a lost laptop, someone leaving) | DE revokes it on the Hub. The tool downloads the Hub's revocation list at launch and after activation, and every release built with `-HubUrl` ships the list current at build time (`console/trust/revoked.json`). A licence in either list is refused, also offline once the list has been seen. |
 | Use a licence in a different copy of the tool | A licence approved with the build pin (`bid`) works only in the build it was issued for. In any other copy it is refused as `wrong-build`. |
-| Use the Hub-side tools (Microsoft Admin jobs) | Hub jobs are HMAC-signed per job, tied to a tenant, allowlisted, replay-proof, and need an approver to change anything (DE Microsoft Admin v0.2). |
+| Use the Hub-side tools (Microsoft Admin jobs) | Hub jobs are HMAC-signed per job, tied to a tenant, allowlisted and replay-proof. A change runs for real only in apply mode with an approver: an owner_admin who did not request it, or the requesting owner with a typed self-approval phrase. The worker (DE Microsoft Admin 0.5.0, `Invoke-DEHubJobLoop`) verifies every job before it runs and needs two secrets the Hub and the worker hold, never the technician's copy of the tool. |
 
 ## Layers
 
@@ -101,18 +101,22 @@ What the Hub serves:
 - The licence and build fields in the device record (`session.licenseId`, `licenseState`, `buildId`,
   `issuedTo`).
 
-Checked on 2026-10-02 against `https://techsales.digerati-experts.com`:
+Checked on 2026-10-02 against `https://techsales.digerati-experts.com` (a dated reading, not the current state;
+re-check with the commands in [GO-LIVE.md](GO-LIVE.md)):
 
 - `GET /api/techtool/license/revocations` answers 200 with `{"jti":[],"updatedAt":null}`, so it is
   live.
 - `GET /api/techtool/license/jwks` answers 503 `licensing_not_configured`. No licence can be issued yet.
 
-What DE still configures on the Hub (a production change, DE only; steps in `docs/TECHTOOL-LICENSING.md`):
+What DE still configures on the Hub (a production change, DE only; steps in `docs/TECHTOOL-LICENSING.md`, and
+the whole production order, licensing included, in [GO-LIVE.md](GO-LIVE.md)):
 
 1. Generate the RS256 signing key offline and set `TECHTOOL_LICENSE_SIGNING_KEY` in the Hub's env file,
    then restart. The JWKS check above then returns the public key.
 2. Confirm the database migration `2026-10-01-techtool-licenses.sql` is applied. The revocation list
-   answering 200 suggests it is.
+   answering 200 suggests it is. Then apply `2026-10-02-techtool-profile-id-and-zoho-inbox-state.sql`, so each
+   Hub account can carry its confirmed DE Tech Tool profile id and the approval page stops asking for a typed
+   one.
 3. Build a release with `New-DEReleasePackage.ps1 -HubUrl https://techsales.digerati-experts.com`, so
    `license-keys.json` and `revoked.json` come from the Hub. Add `-Enforce` once technicians can
    activate, to switch the policy to `required`.

@@ -30,6 +30,36 @@
 
 version: 2
 claims:
+  - id: quote-wizard-quiz
+    issue: 419
+    owner: claude
+    subsystem: quote-wizard
+    branch: claude/beautiful-hopper-1uem0k
+    base_sha: c99c3f5
+    files:
+      - client/src/pages/LeadQuoteWizard.tsx (rewrite), client/src/pages/LeadQuoteWizard.test.ts (new)
+      - client/src/lib/quoteMatch.ts (new), client/src/lib/quoteMatch.test.ts (new)
+      - client/src/components/quote/** (new)
+      - shared/quoteContext.ts (new), shared/quoteContext.test.ts (new)
+      - client/src/lib/quizRoom.ts (new)
+      - client/src/lib/stickyCtaVisibility.ts and its test (the /quote-wizard exclusion only)
+      - client/src/components/ExitIntentPopup.tsx (the /quote-wizard skip only)
+      - client/src/components/MegaMenu.tsx (one "Find Your Plan" item in the ProActive Ecosystem column only)
+      - client/src/pages/ProActiveEcosystemPricing.tsx (one link under the plan grid only)
+      - server/routes.ts (the /api/lead-quote handler only)
+      - scripts/qa/quote-wizard-quiz-check.mjs (new)
+      - artifacts/visual-qa/quote-wizard-quiz/**
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe/DE: a RiseGuide-level question-based selling experience on
+      digeratiexperts.com in DE's own design ("go ahead with slice 1 and all
+      slices"). Rebuilds /quote-wizard as a one-question-per-screen paper
+      room with the same match function, payload and confirmation; adds two
+      front doors; stores three non-scoring context answers on the lead.
+      Joe, 2026-10-03, on PR 425: "yes to thin chrome and plan before email,
+      merge it" (approves the MegaMenu + footer replacement on /quote-wizard
+      only, and showing the plan before the email).
   - id: paynow-stripe-tax
     owner: claude
     subsystem: store-warehouse
@@ -81,7 +111,7 @@ claims:
       - .claude/skills/msp-ai-kit/windows/rescue/New-DERescueMedia.ps1 (-HubAccountId into rescue.config.json)
       - .claude/skills/msp-ai-kit/windows/console/tests/Components.Tests.ps1 (one new Boot rescue test)
       - .claude/skills/msp-ai-kit/windows/console/VERSION, .claude/skills/msp-ai-kit/windows/DE-TECH-TOOL-ARCHITECTURE.md (1.10.1 line only)
-    status: active
+    status: verified-live
     started: 2026-10-03
     note: >-
       Joe, 2026-10-03: "continue the tech tool work", decision 3A (build the
@@ -95,6 +125,41 @@ claims:
       unposted result on disk for the next run. Overlap check: no open PR;
       open ACTIVE issues 270 and 272 (DE Tech Tool) touch DE.Security and
       Loader.Tests.ps1, not DE-Microsoft-Admin.
+      RELEASED 2026-10-03: merged as e9cb7ade (PR 405). Tool-only: nothing
+      deploys from this repository; it ships through New-DEReleasePackage.ps1.
+      All CI passed on 947db1bf, including Windows PowerShell 5.1 and the WPF
+      smoke render. The DE Tech Tool 1.10.1 release zip was built from
+      e9cb7ade. VERIFIED LIVE as a Tool release. Files released.
+  - id: de-techtool-ship-readiness
+    owner: claude
+    subsystem: msp-ai-kit
+    branch: claude/msp-ai-skills-prompts-htqi09
+    base_sha: c99c3f51
+    files:
+      - .claude/skills/msp-ai-kit/windows/console/modules/DE.Contracts/DE.Contracts.psm1 (Remove-DEContractSecretKeys, Get-DEHubErrorReason, the export line)
+      - .claude/skills/msp-ai-kit/windows/console/modules/DE.Core/DE.Core.psm1 (Remove-DESecretKeys only)
+      - .claude/skills/msp-ai-kit/windows/console/modules/DE.Evidence/DE.Evidence.psm1 (Send-DEHubPayload and Send-DEHubMigrationRecord only)
+      - .claude/skills/msp-ai-kit/windows/rescue/DE.Rescue.psm1 (the catch in Send-DERescueHandoffToHub only)
+      - .claude/skills/msp-ai-kit/windows/console/DETechConsole.ps1 (the Evidence page's Hub send status line only)
+      - .claude/skills/msp-ai-kit/windows/console/tests/Components.Tests.ps1 (four new Shared contracts tests)
+      - .claude/skills/msp-ai-kit/windows/GO-LIVE.md (new)
+      - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md, DE-TECH-TOOL-ARCHITECTURE.md, PROTECTING-THE-TOOL.md (stale statements, GO-LIVE links, the 1.10.2 line)
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/README.md (Hub setup step 3 and the GO-LIVE link only)
+      - .claude/skills/msp-ai-kit/windows/packaging/Install-DETechConsole.ps1, Deploy-DETechConsole.ps1 (help examples only)
+      - .claude/skills/msp-ai-kit/windows/console/VERSION
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: "whats next, whatever it is do it". DE Tech Tool
+      1.10.2: the device and migration Hub sends record the Hub's own reason
+      on a refusal (shared with the boot rescue through DE.Contracts); the
+      device record leaves secret-named keys out instead of sending them as
+      [REDACTED], which the Hub refused, failing every send closed (local
+      state and logs keep the redaction); a ship-readiness pass over the
+      Tool's docs; GO-LIVE.md, the ordered production checklist. Overlap
+      check: open PRs 406, 412 and 413 touch no msp-ai-kit file; open ACTIVE
+      issues 270 and 272 touch DE.Security and Loader.Tests.ps1, not these
+      files.
   - id: desk-composer-suggestions
     owner: claude
     subsystem: de-desk
@@ -1868,3 +1933,33 @@ claims:
       Joe, 2026-10-04: build concept 4 (apple.com/iphone grammar) into /store
       ("2. yes"), and kie.ai spend needs a per-job projection plus soft and
       hard limits. Family page, workspace and contact are untouched.
+  - id: content-tooling-step1
+    owner: claude
+    subsystem: tooling-ci
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: bae9166
+    files:
+      - docs/CONTENT-TOOLING-PLAN.md (new)
+      - scripts/a11y-smoke.mjs (new), package.json, package-lock.json
+      - .github/workflows/ci.yml (one smoke:a11y line in the local production smoke step only)
+      - vite.config.ts (imagetools plugin registration only), client/src/imagetools.d.ts (new)
+      - .mcp.json, .cursor/mcp.json (new), .cursor/rules/content-tooling.mdc (new)
+      - AGENTS.md, CLAUDE.md, GEMINI.md (pointer lines only)
+    status: verified-live
+    started: 2026-10-04
+    note: >-
+      Joe, 2026-10-04: "yes start the step 1 PR, we need all AI and IDE
+      tools to find it". Records the adopted content/webmaster tooling plan
+      and wires the free step: Chrome DevTools MCP, axe accessibility smoke
+      in CI (gate on critical; baseline 0 critical, 6 serious
+      color-contrast groups reported), vite-imagetools. JSON-LD already
+      existed (client/src/components/JsonLd.tsx), so not touched. Open PRs
+      427, 426, 425, 421, 420, 413, 406 checked 2026-10-04: none touch
+      these files except ledger claims in this YAML.
+      RELEASED 2026-10-04: merged as 7bab09b (PR 428, on Joe's "merge 428
+      and bring it to production"). CI run 37165596167 passed every job,
+      including the new smoke:a11y step and the production deploy, whose
+      release script reported "main @ 7bab09b is verified live on
+      127.0.0.1:3300 and public HTTPS" at 00:44:51Z; /api/health returned
+      ok with uptime matching the restart. No client/public files changed,
+      so the skipped Cloudflare purge (token unset) left nothing stale.

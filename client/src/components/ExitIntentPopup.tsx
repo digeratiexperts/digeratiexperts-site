@@ -9,6 +9,7 @@ import { DE_LOGO_PRIMARY } from "@/lib/brandAssets";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { isDoor2Path } from "@/lib/isDoor2Path";
 import { isWarehousePath } from "@/lib/warehousePaths";
+import { isQuizRoomPath } from "@/lib/quizRoom";
 
 const PUBLIC_EMAIL_DOMAINS = [
   "gmail.com",
@@ -115,6 +116,8 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
     if (window.location.pathname.startsWith("/portal")) return;
     if (isDoor2Path(window.location.pathname)) return;
     if (isWarehousePath(window.location.pathname)) return;
+    // Never interrupt someone mid-answer in the quiz room (issue 419).
+    if (isQuizRoomPath(window.location.pathname)) return;
     if (document.documentElement.hasAttribute("data-de-desk-open")) return;
     if (!force) {
       try {
@@ -164,6 +167,7 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
     if (window.location.pathname.startsWith("/portal")) return;
     if (isDoor2Path(window.location.pathname)) return;
     if (isWarehousePath(window.location.pathname)) return;
+    if (isQuizRoomPath(window.location.pathname)) return;
 
     // Desktop leave toward the tab/address chrome only. No timer, no scroll bait.
     let armed = false;

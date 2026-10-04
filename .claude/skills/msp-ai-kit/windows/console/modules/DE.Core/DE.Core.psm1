@@ -203,19 +203,24 @@ function Get-DESecretNames { return @($script:DE.SecretNames) }
 
 $script:SecretKeyPattern = '(?i)(password|passwd|passphrase|secret|token|apikey|api_key|connectkey|connect_key|orgkey|org_key|sitetoken|site_token|recoverypassword|recovery_password|recoverykey|recovery_key|privatekey|private_key|psk\b|tap\b|bearer|credential)'
 function Remove-DESecretKeys {
-    <# Deep-copies an object and drops any key whose name looks like a secret; scrubs string values. #>
-    param([Parameter(Mandatory = $true)][AllowNull()]$Object)
+    <#
+        Deep-copies an object, replaces the value of every key whose name looks like a secret with '[REDACTED]' (the
+        key stays, so local state, logs and receipts show that something was withheld) and scrubs string values with
+        Protect-DEText. -Drop leaves those keys out instead, for records that go to a system that refuses a
+        secret-named key whatever its value (the Intelligence Hub); -DroppedKeys, when given, collects their names.
+    #>
+    param([Parameter(Mandatory = $true)][AllowNull()]$Object, [switch]$Drop, [AllowNull()][System.Collections.Generic.List[string]]$DroppedKeys)
     if ($null -eq $Object) { return $null }
     if ($Object -is [string]) { return (Protect-DEText $Object) }
     if ($Object -is [System.Collections.IDictionary]) {
         $o = [ordered]@{}
-        foreach ($k in $Object.Keys) { if ("$k" -match $script:SecretKeyPattern) { $o[$k] = '[REDACTED]' } else { $o[$k] = Remove-DESecretKeys -Object $Object[$k] } }
+        foreach ($k in $Object.Keys) { if ("$k" -match $script:SecretKeyPattern) { if ($Drop) { if ($null -ne $DroppedKeys) { $DroppedKeys.Add("$k") } } else { $o[$k] = '[REDACTED]' } } else { $o[$k] = Remove-DESecretKeys -Object $Object[$k] -Drop:$Drop -DroppedKeys $DroppedKeys } }
         return $o
     }
-    if ($Object -is [System.Collections.IEnumerable] -and -not ($Object -is [string])) { $list = New-Object System.Collections.Generic.List[object]; foreach ($i in $Object) { $list.Add((Remove-DESecretKeys -Object $i)) }; return , $list.ToArray() }   # a list stays a list, also with one or no item
+    if ($Object -is [System.Collections.IEnumerable] -and -not ($Object -is [string])) { $list = New-Object System.Collections.Generic.List[object]; foreach ($i in $Object) { $list.Add((Remove-DESecretKeys -Object $i -Drop:$Drop -DroppedKeys $DroppedKeys)) }; return , $list.ToArray() }   # a list stays a list, also with one or no item
     if ($Object -is [pscustomobject]) {
         $o = [ordered]@{}
-        foreach ($p in $Object.PSObject.Properties) { if ($p.Name -match $script:SecretKeyPattern) { $o[$p.Name] = '[REDACTED]' } else { $o[$p.Name] = Remove-DESecretKeys -Object $p.Value } }
+        foreach ($p in $Object.PSObject.Properties) { if ($p.Name -match $script:SecretKeyPattern) { if ($Drop) { if ($null -ne $DroppedKeys) { $DroppedKeys.Add($p.Name) } } else { $o[$p.Name] = '[REDACTED]' } } else { $o[$p.Name] = Remove-DESecretKeys -Object $p.Value -Drop:$Drop -DroppedKeys $DroppedKeys } }
         return [pscustomobject]$o
     }
     return $Object

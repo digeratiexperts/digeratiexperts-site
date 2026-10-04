@@ -253,14 +253,20 @@ These are production steps on the Hub. Only DE carries them out.
    MSADMIN_WORKER_SECRET=<value 2>
    ```
 
-3. Apply the database migration. It adds one table and nothing else:
+3. Apply the two database migrations, in order. The first adds one table; the second adds the check constraints
+   for owner self-approval and plan-mode auto-approval (no data change). Both are safe to run again:
 
    ```bash
-   psql "$DATABASE_URL" -f lib/db/migrations/2026-10-02-msadmin-jobs.sql
+   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f lib/db/migrations/2026-10-02-msadmin-jobs.sql
+   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f lib/db/migrations/2026-10-03-msadmin-jobs-self-and-plan-approval.sql
    ```
+
+   Without the second, a plan-mode change waits for approval and self-approval answers `503 migration_required`.
 
 4. Check the status page. Signed in, `GET /api/msadmin-jobs/status` should say both secrets are configured; it
    never shows their values.
+
+The whole production order (Hub, worker PC, DE Tech Tool) is in [GO-LIVE.md](../../GO-LIVE.md).
 
 ### Set up the worker
 

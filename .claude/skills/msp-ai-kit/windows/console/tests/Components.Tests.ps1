@@ -82,6 +82,76 @@ Describe 'Shared contracts' {
         Test-Path -LiteralPath $r.file | Should -Be $true
         Clear-DESecrets
     }
+    It 'a refused device send records the Hub''s own reason, not only the HTTP status, and never the secret' {
+        Set-DEStateValue -Path 'settings.hub.endpoint' -Value 'https://hub.example'
+        Set-DEContext -Values @{ hubAccountId = '999999' }
+        Set-DESecret -Name 'DE_HUB_SIGNING_SECRET' -Plain 'signing-secret-9876'
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp {
+            $e = New-Object System.Management.Automation.ErrorRecord ((New-Object System.Exception 'The remote server returned an error: (422) Unprocessable Entity.'), 'HubRefused', 'InvalidOperation', $null)
+            $e.ErrorDetails = New-Object System.Management.Automation.ErrorDetails '{"error":"account not mapped"}'
+            throw $e
+        }
+        $r = Send-DEHubPayload -Payload (New-DEHubPayload -Record @{ client = 'alamo'; serial = 'PF3ABC12'; manufacturer = 'LENOVO'; exceptions = @() }) -Confirm:$false
+        $r.sent | Should -Be $false
+        $r.error | Should -Match 'Hub refused: account not mapped'; $r.error | Should -Match '422'
+        $ev = @(Get-DEEvidence | Where-Object { $_.step -eq 'hub.push' }) | Select-Object -Last 1
+        $ev.result | Should -Be 'FAIL'; $ev.verification | Should -Match 'account not mapped'
+        "$($r.error) $($ev.verification) $($ev.action)" | Should -Not -Match 'signing-secret-9876'
+        Clear-DESecrets
+    }
+    It 'a refused migration send throws and records the Hub''s own reason, never the secret' {
+        $rec = [ordered]@{ schema = 'de.email-migration.record/v1'; projectId = 'alamo-mail' }
+        $file = Join-Path $global:DETest.Dir 'refused-record.json'; [IO.File]::WriteAllText($file, ($rec | ConvertTo-Json))
+        Set-DEStateValue -Path 'settings.hub.endpoint' -Value 'https://hub.example'
+        Set-DESecret -Name 'DE_HUB_SIGNING_SECRET' -Plain 'signing-secret-9876'
+        Mock -ModuleName DE.Evidence New-DEHubEvent { [ordered]@{ eventId = 'e-refused'; eventType = $EventType; payload = $Payload } }
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp {
+            $e = New-Object System.Management.Automation.ErrorRecord ((New-Object System.Exception 'The remote server returned an error: (422) Unprocessable Entity.'), 'HubRefused', 'InvalidOperation', $null)
+            $e.ErrorDetails = New-Object System.Management.Automation.ErrorDetails '{"error":"account not mapped"}'
+            throw $e
+        }
+        $msg = Get-DEThrown { Send-DEHubMigrationRecord -Path $file -AccountId '999999' -Confirm:$false }
+        $msg | Should -Match 'account not mapped'; $msg | Should -Not -Match 'signing-secret-9876'
+        $ev = @(Get-DEEvidence | Where-Object { $_.step -eq 'hub.migration' }) | Select-Object -Last 1
+        $ev.result | Should -Be 'FAIL'; $ev.verification | Should -Match 'Hub refused: account not mapped'; $ev.verification | Should -Not -Match 'signing-secret-9876'
+        Clear-DESecrets
+    }
+    It 'Get-DEHubErrorReason: JSON error and message, plain text, no details, length cap, recovery-shaped values masked' {
+        $mk = { param($Body) $e = New-Object System.Management.Automation.ErrorRecord ((New-Object System.Exception '(400) Bad Request.'), 'x', 'InvalidOperation', $null); if ($null -ne $Body) { $e.ErrorDetails = New-Object System.Management.Automation.ErrorDetails $Body }; $e }
+        Get-DEHubErrorReason -ErrorRecord (& $mk '{"error":"Invalid techconsole envelope","message":"payload.device required"}') | Should -Be 'Hub refused: Invalid techconsole envelope: payload.device required ((400) Bad Request.)'
+        Get-DEHubErrorReason -ErrorRecord (& $mk "<html>`r`n502 Bad Gateway</html>") | Should -Be 'Hub refused: <html> 502 Bad Gateway</html> ((400) Bad Request.)'
+        Get-DEHubErrorReason -ErrorRecord (& $mk $null) | Should -Be '(400) Bad Request.'
+        (Get-DEHubErrorReason -ErrorRecord (& $mk ('{"error":"' + ('x' * 2000) + '"}'))).Length | Should -BeLessOrEqual 400
+        Get-DEHubErrorReason -ErrorRecord (& $mk '{"error":"echo 111111-222222-333333-444444-555555-666666-000011-719873"}') | Should -Not -Match '111111-222222'
+        Get-DEHubErrorReason -ErrorRecord 'no answer' | Should -Be 'no answer'
+    }
+    It 'secret-named keys stay [REDACTED] locally but are left out of what goes to the Hub, so the send is not refused' {
+        # local state, logs and receipts keep the key and withhold the value
+        $local = Remove-DESecretKeys -Object @{ note = 'x'; apiToken = 'tok-123'; nested = @{ password = 'p' } }
+        $local.apiToken | Should -Be '[REDACTED]'; $local.nested.password | Should -Be '[REDACTED]'
+        $kept = New-Object System.Collections.Generic.List[string]
+        $dropped = Remove-DESecretKeys -Object @{ note = 'x'; apiToken = 'tok-123'; nested = @{ password = 'p' }; list = @(@{ credential = 'c' }) } -Drop -DroppedKeys $kept
+        $dropped.Contains('apiToken') | Should -Be $false; $dropped.nested.Contains('password') | Should -Be $false; $dropped.note | Should -Be 'x'
+        $dropped.list.GetType().IsArray | Should -Be $true; $dropped.list[0].Contains('credential') | Should -Be $false
+        (@($kept) | Sort-Object) -join ',' | Should -Be 'apiToken,credential,password'
+        # the contract's names (the Hub's own) are wider: mfa, seed, pin
+        $c = Remove-DEContractSecretKeys -Object ([pscustomobject]@{ keep = 1; mfaSeed = 's'; inner = @{ pin = '1'; ok = 2 } })
+        @($c.PSObject.Properties.Name) -join ',' | Should -Be 'keep,inner'; $c.inner.Contains('pin') | Should -Be $false; $c.inner.ok | Should -Be 2
+        # a device record with a stray apiToken and an mfa note now reaches the Hub without them
+        Set-DEStateValue -Path 'settings.hub.endpoint' -Value 'https://hub.example'
+        Set-DEContext -Values @{ hubAccountId = '42' }
+        Set-DESecret -Name 'DE_HUB_SIGNING_SECRET' -Plain 'signing-secret-9876'
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp { $global:DETest.Sent = @{ Uri = $Uri; Headers = $Headers; Body = $Body }; @{ status = 'applied' } }
+        $rec = @{ client = 'alamo'; serial = 'PF3ABC12'; manufacturer = 'LENOVO'; exceptions = @(@{ control = 'jumpcloud'; reason = 'pending'; apiToken = 'tok-123'; mfaMethod = 'sms' }) }
+        $r = Send-DEHubPayload -Payload (New-DEHubPayload -Record $rec) -Confirm:$false
+        $r.sent | Should -Be $true
+        @($r.leftOut) -join ',' | Should -Be 'apiToken,mfaMethod'
+        $global:DETest.Sent.Body | Should -Not -Match 'apiToken|tok-123|mfaMethod|REDACTED'
+        ($global:DETest.Sent.Body | ConvertFrom-Json).payload.exceptions[0].reason | Should -Be 'pending'
+        Get-Content -LiteralPath $r.file -Raw | Should -Not -Match 'apiToken|tok-123|mfaMethod'
+        (@(Get-DEEvidence | Where-Object { $_.step -eq 'hub.push' }) | Select-Object -Last 1).action | Should -Match 'left out secret-named field\(s\): apiToken, mfaMethod'
+        Clear-DESecrets
+    }
     It 'a migration record from DE Microsoft Admin goes to the Hub as one signed email_migration.recorded event' {
         Import-Module (Join-Path (Split-Path -Parent (Get-DEConsole).Root) 'microsoft/DE-Microsoft-Admin/DE-Microsoft-Admin.psd1') -Force -DisableNameChecking
         $mig = Join-Path $global:DETest.Dir 'migrations'; New-Item -ItemType Directory -Path $mig -Force | Out-Null; $null = Set-DEMigrationDirectory -Path $mig
