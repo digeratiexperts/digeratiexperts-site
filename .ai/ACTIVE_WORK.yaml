@@ -1935,8 +1935,25 @@ claims:
       - client/src/data/solutionScenarios.ts, solutionScenarios.test.ts (SCENARIO_GROUPS)
       - .claude/kie-budget/**, kie.ai generator scripts (budget gate)
       - artifacts/design-concepts/store-situations-2026-10/**, artifacts/design-concepts/store-redesign-2026-10/**, artifacts/visual-qa/store-flagship/**
-    status: active
+    status: verified-live
     started: 2026-10-03
+    released: 2026-10-04
+    merge_sha: 2863df1ae26d4ecd981e196a257acaa83b02b47f
+    verification: >-
+      Merged on Joe's "merge and release it" (2026-10-04) after reconciling
+      with main f9b6f785 (PRs 425, 426, 428, 430, 431; only the registry
+      conflicted, both claims kept) and green CI on 650dda49, including the
+      new axe gate (smoke:a11y: /store clean; serious contrast findings are on
+      / and /contact only). Main CI and the deploy job (runtime check,
+      Cloudflare purge) passed on 2863df1a, which also carries PR 427 (icons,
+      disjoint). release.txt reads 2863df1a on digeratiexperts.com. The live
+      entry index-DEmEjPG7.js, BusinessNeedsIndex-BiBtK_L_.js and
+      StorePageAtmosphere-BC800J37.css are byte-identical to the local build
+      of the merged tree and carry the flagship classes (d2-flag-lnav,
+      d2-gallery, d2-sculpt). VERIFIED LIVE (bundle). Limit: no rendered
+      screenshot of production from the session environment (its browser
+      does not trust the egress proxy); the same bundle was rendered locally,
+      artifacts/visual-qa/store-flagship/.
     note: >-
       Joe, 2026-10-04: build concept 4 (apple.com/iphone grammar) into /store
       ("2. yes"), and kie.ai spend needs a per-job projection plus soft and
