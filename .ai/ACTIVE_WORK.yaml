@@ -49,8 +49,25 @@ claims:
       - server/routes.ts (the /api/lead-quote handler only)
       - scripts/qa/quote-wizard-quiz-check.mjs (new)
       - artifacts/visual-qa/quote-wizard-quiz/**
-    status: active
+    status: verified-live
     started: 2026-10-03
+    released: 2026-10-04
+    pr: 425
+    merge_sha: 6f8b646b9e7b228ef3b96f9fa158e323ba712b9c
+    verification: >-
+      Merged as 6f8b646 on Joe's "yes to thin chrome and plan before email,
+      merge it" after green CI on 84c6e4c. Production release.txt read
+      6f8b646b at 00:04:32Z; /api/health 200. scripts/qa/quote-wizard-quiz-check.mjs
+      run against https://digeratiexperts.com at 390, 768 and 1440: 42/42
+      checks per width, axe serious/critical 0 on all 9 screens (the lead POST
+      was answered in the browser, so no test lead reached Zoho; page
+      requests were fetched by Node against the proxy CA because the sandbox
+      Chromium has no trust for it). The live entry bundle carries the
+      MegaMenu "Find Your Plan" item and the pricing chunk carries the
+      pricing-page link. Limit: the Zoho Description with context was proven
+      by unit test and a dev-server POST, not by a real CRM lead. VERIFIED
+      LIVE. Evidence: artifacts/visual-qa/quote-wizard-quiz/live/. Files
+      released.
     note: >-
       Joe/DE: a RiseGuide-level question-based selling experience on
       digeratiexperts.com in DE's own design ("go ahead with slice 1 and all
