@@ -30,11 +30,27 @@ export type SolutionScenario = {
   why: Record<string, string>;
   /** Whether the situation itself implies a relationship, or the profile decides. */
   relationship: ScenarioRelationshipHint;
+  /** Which of the three Store groups the situation sits in (SCENARIO_GROUPS). */
+  group: ScenarioGroupId;
 };
+
+export type ScenarioGroupId = "now" | "change" | "prove";
+
+/**
+ * The three groups the Store shows the situations in (Joe, 2026-10-03, option E
+ * of the situation-card mockups). "now" holds the incident situations, which
+ * carry the phone in flow.
+ */
+export const SCENARIO_GROUPS: ReadonlyArray<{ id: ScenarioGroupId; heading: string; line: string }> = [
+  { id: "now", heading: "Something just happened", line: "Urgent. Call if it is happening right now." },
+  { id: "change", heading: "We're growing or changing", line: "New people, new places, new phones." },
+  { id: "prove", heading: "We have to prove it or keep up", line: "Insurers, auditors and an IT team out of hours." },
+];
 
 export const solutionScenarios: SolutionScenario[] = [
   {
     id: "phishing-close-call",
+    group: "now",
     // Wording approved by Joe 2026-09-28 (§16.3a): an owner whose domain is being spoofed recognises it too.
     title: "A phishing or spoofed email got through",
     pressure: "Someone clicked, or a client got mail pretending to be us.",
@@ -48,6 +64,7 @@ export const solutionScenarios: SolutionScenario[] = [
   },
   {
     id: "insurance-questionnaire",
+    group: "prove",
     title: "Cyber-insurance renewal sent a questionnaire we can't answer",
     pressure: "The form asks about MFA, backups and evidence, and the answers have to be true.",
     familyIds: ["compliance_risk", "identity_access", "backup_continuity"],
@@ -60,6 +77,7 @@ export const solutionScenarios: SolutionScenario[] = [
   },
   {
     id: "second-location",
+    group: "change",
     title: "We're opening a second office",
     pressure: "Day one needs internet, phones and working computers, and nobody has done this before.",
     familyIds: ["network_connectivity", "business_communications", "hardware_lifecycle"],
@@ -72,6 +90,7 @@ export const solutionScenarios: SolutionScenario[] = [
   },
   {
     id: "it-person-left",
+    group: "now",
     title: "Our only IT person just left",
     pressure: "The passwords, the diagrams and the vendor logins walked out with them.",
     familyIds: ["it_operations", "documentation_standards", "endpoint_devices"],
@@ -88,6 +107,7 @@ export const solutionScenarios: SolutionScenario[] = [
   },
   {
     id: "internal-it-stretched",
+    group: "prove",
     title: "Our internal IT team is stretched thin",
     pressure: "Tickets pile up, patches slip, and security is whoever has time this week.",
     familyIds: ["it_operations", "cybersecurity_operations", "endpoint_devices"],
@@ -104,6 +124,7 @@ export const solutionScenarios: SolutionScenario[] = [
   },
   {
     id: "new-hires-fast",
+    group: "change",
     title: "New hires need laptops and accounts fast",
     pressure: "People start Monday and the last onboarding took two weeks and three vendors.",
     familyIds: ["hardware_lifecycle", "endpoint_devices", "identity_access"],
@@ -116,6 +137,7 @@ export const solutionScenarios: SolutionScenario[] = [
   },
   {
     id: "auditor-evidence",
+    group: "prove",
     title: "A client or auditor asked for our policies and evidence",
     pressure: "A contract or an audit wants documents that do not exist yet.",
     familyIds: ["compliance_risk", "documentation_standards", "technology_strategy"],
@@ -128,6 +150,7 @@ export const solutionScenarios: SolutionScenario[] = [
   },
   {
     id: "ransomware-recovery",
+    group: "now",
     title: "We don't know if we'd recover from ransomware",
     pressure: "There is a backup somewhere; nobody has restored from it.",
     familyIds: ["backup_continuity", "cybersecurity_operations", "endpoint_devices"],
@@ -140,6 +163,7 @@ export const solutionScenarios: SolutionScenario[] = [
   },
   {
     id: "hybrid-byod",
+    group: "change",
     title: "Half the team works from home on their own devices",
     pressure: "Company data lives on personal laptops and phones nobody manages.",
     familyIds: ["endpoint_devices", "identity_access", "email_collaboration"],
@@ -152,6 +176,7 @@ export const solutionScenarios: SolutionScenario[] = [
   },
   {
     id: "phone-contract-ending",
+    group: "change",
     title: "Our phone system is old and the contract is ending",
     pressure: "Numbers have to move without dropping a call, and the network has to carry them.",
     familyIds: ["business_communications", "network_connectivity"],

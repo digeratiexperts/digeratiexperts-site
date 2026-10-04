@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { curatedSolutionFamilies } from "./curatedSolutions";
-import { composeScenario, getScenarioById, solutionScenarios } from "./solutionScenarios";
+import { composeScenario, getScenarioById, SCENARIO_GROUPS, solutionScenarios } from "./solutionScenarios";
 
 const familyIds = new Set(curatedSolutionFamilies.map((family) => family.id));
 
@@ -29,6 +29,13 @@ describe("Store scenario starters", () => {
         expect(scenario.relationship.reason.length, scenario.id).toBeGreaterThan(40);
       }
     }
+  });
+
+  it("puts every starter in one of the three Store groups, each group non-empty", () => {
+    const groupIds = new Set(SCENARIO_GROUPS.map((group) => group.id));
+    expect(SCENARIO_GROUPS).toHaveLength(3);
+    for (const scenario of solutionScenarios) expect(groupIds.has(scenario.group), scenario.id).toBe(true);
+    for (const group of SCENARIO_GROUPS) expect(solutionScenarios.some((scenario) => scenario.group === group.id), group.id).toBe(true);
   });
 
   it("makes every family reachable from at least one starter", () => {
