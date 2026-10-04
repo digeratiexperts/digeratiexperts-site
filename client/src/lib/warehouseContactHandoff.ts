@@ -8,6 +8,10 @@
  * are parked in sessionStorage, never in the URL, and Request Quote reads them
  * as its defaults. The handoff expires on its own, is cleared after a
  * successful quote submission, and never carries payment data.
+ *
+ * Request Quote also writes its own draft back here as the buyer types,
+ * including the free-text message, so a refresh, a sign-in redirect or going
+ * back restores it (issue #235). "Start over" clears it.
  */
 
 export const WAREHOUSE_CONTACT_HANDOFF_KEY = "de-warehouse-contact-handoff";
@@ -27,9 +31,13 @@ export type WarehouseContactHandoff = {
   email: string;
   company: string;
   phone: string;
+  /** Request Quote's free-text message; empty when written by Checkout. */
+  message: string;
   reason: WarehouseContactHandoffReason;
   writtenAt: number;
 };
+
+export const WAREHOUSE_HANDOFF_MESSAGE_MAX = 2000;
 
 export const WAREHOUSE_CONTACT_HANDOFF_MAX_AGE_MS = 30 * 60_000;
 
@@ -81,6 +89,7 @@ export function readContactHandoff(
       email: text(parsed.email).toLowerCase(),
       company: text(parsed.company),
       phone: text(parsed.phone, 40),
+      message: text(parsed.message, WAREHOUSE_HANDOFF_MESSAGE_MAX),
       reason,
       writtenAt,
     };
@@ -95,6 +104,7 @@ export function writeContactHandoff(
     email?: string;
     company?: string;
     phone?: string;
+    message?: string;
     reason: WarehouseContactHandoffReason;
   },
   now: number = Date.now(),
@@ -106,6 +116,7 @@ export function writeContactHandoff(
     email: text(input.email).toLowerCase(),
     company: text(input.company),
     phone: text(input.phone, 40),
+    message: text(input.message, WAREHOUSE_HANDOFF_MESSAGE_MAX),
     reason: input.reason,
     writtenAt: now,
   };

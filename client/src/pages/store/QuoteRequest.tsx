@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SolutionOrderSummary } from "@/components/store/SolutionOrderSummary";
 import { snapshotSubmitLines } from "@/lib/solutionSnapshotView";
 import { readGuidedSession } from "@/lib/storeGuidedSession";
-import { clearContactHandoff, readContactHandoff } from "@/lib/warehouseContactHandoff";
+import { clearContactHandoff, readContactHandoff, writeContactHandoff } from "@/lib/warehouseContactHandoff";
 import { warehousePath } from "@/lib/warehousePaths";
 import {
   ArrowLeft,
@@ -56,6 +56,8 @@ const QuoteRequest = () => {
   const {
     register,
     handleSubmit,
+    watch,
+    reset,
     formState: { errors },
   } = useForm<QuoteRequestFormData>({
     resolver: zodResolver(quoteRequestSchema),
@@ -67,9 +69,24 @@ const QuoteRequest = () => {
         (typeof window !== "undefined" ? window.localStorage.getItem("userEmail") || "" : ""),
       phone: handoff?.phone ?? "",
       company: handoff?.company ?? "",
-      message: "",
+      message: handoff?.message ?? "",
     },
   });
+
+  // Keep the draft as the buyer types (issue #235), so a refresh, a sign-in
+  // redirect or going back restores it. Session storage only; cleared on a
+  // successful submit or "Start over".
+  useEffect(() => {
+    const subscription = watch((values) => {
+      writeContactHandoff({ ...values, reason: handoff?.reason ?? "user_choice" });
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, handoff?.reason]);
+
+  const startOver = () => {
+    clearContactHandoff();
+    reset({ name: "", email: "", phone: "", company: "", message: "" });
+  };
 
   const onSubmit = async (data: QuoteRequestFormData) => {
     if (items.length === 0) {
@@ -299,6 +316,17 @@ const QuoteRequest = () => {
                         className="mt-1 bg-white/5 border-white/20 text-white placeholder:text-white/55 focus:border-de-hairline resize-none"
                         data-testid="input-message"
                       />
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={startOver}
+                        className="inline-flex min-h-11 items-center px-2 text-sm text-white/60 underline underline-offset-4 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-de-hairline"
+                        data-testid="button-start-over"
+                      >
+                        Start over
+                      </button>
                     </div>
                   </form>
                 </div>
