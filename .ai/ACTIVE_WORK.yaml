@@ -30,6 +30,55 @@
 
 version: 2
 claims:
+  - id: brand-maskable-icon
+    issue: 210
+    owner: claude
+    subsystem: brand
+    branch: claude/brand-icon-192-maskable
+    base_sha: 14265a90
+    pr: 427
+    files:
+      - brand/digerati-mark-maskable.svg (new), brand/png/digerati-mark-maskable-512.png (new)
+      - client/public/favicon-maskable-512x512.png (new), client/public/favicon-192x192.png (new)
+      - client/public/site.webmanifest (icon purposes, 192 entry, short_name)
+      - artifacts/visual-qa/brand-maskable-icon/**
+    status: verified-live
+    started: 2026-10-04
+    note: >-
+      PWA icon correctness for the existing canonical mark. No redesign, no
+      recolour, no new mark. The manifest declared "purpose": "any maskable"
+      on favicon-512x512.png, which is transparent and whose gold bars reach
+      0.409 x tile against the 0.400 maskable safe limit (measured from
+      brand/digerati-mark-tile.svg), so Android clipped them and composited
+      over an arbitrary ground. Adds a dedicated maskable variant at 0.327,
+      opaque full bleed, reusing the canonical bar geometry byte-for-byte.
+      Adds favicon-192x192.png, the Chrome/Android install icon, which the
+      set did not contain. site.webmanifest splits any/maskable purposes.
+      A set of externally prepared assets was evaluated and REJECTED: it
+      would have recoloured gold to #F5E48A, reintroduced a #3C3C3C plate and
+      moved theme_color off #050312. brand/README.md records the
+      #F5E48A -> #E3B23C correction as deliberate. Nothing from it was
+      imported. Joe, 2026-10-04, ruled #E3B23C canonical for implementation
+      with the colour question to be resolved separately in one controlled
+      change, and approved short_name "Digerati" -> "DE" per
+      .cursor/rules/digerati-naming.mdc, the home-screen label being
+      customer-facing. The 16px optical-size variant (four bars render 1px
+      each and alias) was deliberately NOT shipped: fewer/heavier bars alter
+      the protected silhouette, so it is flagged on issue 210 for an explicit
+      brand decision.
+      RELEASED 2026-10-04: merged as 6734c1f (PR 427, on Joe's "merge it").
+      Rebased onto current main first so CI re-ran against the axe a11y gate
+      added by PR 428, which the branch predated. CI run 37170281995 passed
+      every job including the production deploy. Production verified
+      cache-busted: live favicon-maskable-512x512.png and favicon-192x192.png
+      are byte-identical to source (sha256 50da5121c0cf25b9 / 69f81d1567e5ca7a),
+      live manifest serves short_name DE, 5 icons, dedicated maskable.
+      CAVEAT: this changed client/public assets and the Cloudflare purge is
+      skipped when the token is unset; Cache-Control is max-age=86400, so the
+      first post-deploy fetch returned the old manifest and 404s on the new
+      icons. Edge copies may stay stale for up to 24h. Evidence:
+      artifacts/visual-qa/brand-maskable-icon/live/. VERIFIED LIVE.
+      Files released.
   - id: quote-wizard-quiz
     issue: 419
     owner: claude
