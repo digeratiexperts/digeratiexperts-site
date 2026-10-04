@@ -11,6 +11,7 @@ import {
   buttonSecondary,
   cardDark,
   cardPaper,
+  textLinkClass,
 } from "@/components/site/chapters";
 import {
   Users, Building2, Shield, Server, Bookmark, Briefcase,
@@ -453,6 +454,13 @@ export default function ProActiveEcosystemPricing() {
           <p className="mt-8 max-w-2xl text-sm leading-relaxed text-white/65">
             All numbers shown are estimated starting points, not exact totals. Final pricing is confirmed after a brief
             assessment of your environment, security needs, and selected add-ons.
+          </p>
+          <p className="mt-4 text-sm leading-relaxed text-white/65">
+            Not sure which fits?{" "}
+            <Link href="/quote-wizard" className={textLinkClass("well")} data-testid="pricing-find-your-plan">
+              Answer six questions and we&apos;ll match you
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
           </p>
         </Container>
       </Chapter>
