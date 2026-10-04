@@ -95,6 +95,7 @@ app.all("/api/health", async (_req, res) => {
   const port = process.env.REPLIT_SERVER_PORT || process.env.PORT || "unknown";
   const { databaseAcceptsConnections } = await import("./healthProbe");
   const dbAvailable = await databaseAcceptsConnections();
+  const { releaseIdentity } = await import("./releaseIdentity");
   const openaiConfigured = !!(
     process.env.OPENAI_API_KEY ||
     process.env.OPENAI_API ||
@@ -105,6 +106,8 @@ app.all("/api/health", async (_req, res) => {
     status: "ok",
     timestamp: new Date().toISOString(),
     version: "1.0.0",
+    // Deployed commit from deploy.sh's release.txt marker, so LIVE is checkable (#224).
+    release: releaseIdentity(),
     env: app.get("env"),
     port,
     services: {

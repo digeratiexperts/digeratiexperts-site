@@ -89,4 +89,51 @@ describe("store quote store (issue #240: a quote request must be durable or fail
     expect(byNumber?.id).toBe(created.id);
     expect(byId?.requestedItems[0].unitPrice).toBe(39);
   });
+
+  it("reads a stored quote back from the database after a restart empties the cache", async () => {
+    const stored = {
+      id: "6f2c1a1e-0000-4000-8000-000000000001",
+      quoteNumber: "QR-20260928-AB12",
+      userId: "u-jordan",
+      clientId: "client-a",
+      contactName: "Jordan Buyer",
+      contactEmail: "jordan@example.com",
+      requestedItems,
+      status: "pending",
+      createdAt: "2026-09-28T00:00:00.000Z",
+      updatedAt: "2026-09-28T00:00:00.000Z",
+    };
+    let lookups = 0;
+    let failNext = false;
+    const db = {
+      select: () => ({
+        from: () => ({
+          where: () => ({
+            limit: async () => {
+              lookups += 1;
+              if (failNext) throw new Error("connection reset");
+              return lookups === 1 ? [stored] : [];
+            },
+          }),
+        }),
+      }),
+    };
+    // A fresh module is a fresh process: nothing is cached, so both lookups go to the database.
+    const { getQuoteRequest } = await loadStoreWithDb({ dbReady: true, db });
+
+    const byNumber = await getQuoteRequest(stored.quoteNumber);
+    expect(byNumber).toMatchObject({ id: stored.id, clientId: "client-a", contactEmail: "jordan@example.com" });
+    expect(byNumber?.createdAt).toBeInstanceOf(Date);
+    expect(byNumber?.requestedItems[0].unitPrice).toBe(39);
+    expect(lookups).toBe(1);
+
+    // Remembered by both keys once read, so the id does not hit the database again.
+    expect((await getQuoteRequest(stored.id))?.quoteNumber).toBe(stored.quoteNumber);
+    expect(lookups).toBe(1);
+
+    expect(await getQuoteRequest("QR-00000000-NONE")).toBeUndefined();
+    failNext = true;
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    expect(await getQuoteRequest("QR-00000000-FAIL")).toBeUndefined();
+  });
 });

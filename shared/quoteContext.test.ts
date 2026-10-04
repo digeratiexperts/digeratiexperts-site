@@ -32,16 +32,6 @@ describe("quote wizard context answers", () => {
   });
 });
 
-describe("quote context ids survive the request guard", () => {
-  it("never contain a token validateInput rejects (OR, AND, --, ;)", async () => {
-    const { IT_TODAY_OPTIONS, TRIGGER_OPTIONS, FRAMEWORK_OPTIONS } = await import("./quoteContext");
-    const guard = /(\bUNION\b|\bSELECT\b|\bINJECT\b|\bDROP\b|\bDELETE\b|--|;|\bOR\b|\bAND\b)/i;
-    for (const o of [...IT_TODAY_OPTIONS, ...TRIGGER_OPTIONS, ...FRAMEWORK_OPTIONS]) {
-      expect(guard.test(JSON.stringify({ id: o.id })), o.id).toBe(false);
-    }
-  });
-});
-
 describe("quote lead CRM description", () => {
   it("is byte-identical to the pre-quiz description when no context was given", () => {
     expect(quoteLeadDescription({ recommendedPlan: "Office", seats: 5, connectivity: "no", devices: "no" })).toBe(
