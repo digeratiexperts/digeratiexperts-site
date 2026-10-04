@@ -237,34 +237,6 @@ export function validatePhoneNumber(phone: string): boolean {
   return /^[\d\s\-\+\(\)]{10,15}$/.test(phone);
 }
 
-export function validateInput(req: Request, res: Response, next: NextFunction) {
-  // Validate common fields
-  if (req.body.email && !validateEmail(req.body.email)) {
-    return res.status(400).json({ message: "Invalid email format" });
-  }
-
-  if (req.body.phone && !validatePhoneNumber(req.body.phone)) {
-    return res.status(400).json({ message: "Invalid phone format" });
-  }
-
-  if (req.body.website && !validateURL(req.body.website)) {
-    return res.status(400).json({ message: "Invalid URL format" });
-  }
-
-  // Check for SQL injection patterns
-  const sqlInjectionPatterns = [
-    /(\bUNION\b|\bSELECT\b|\bINJECT\b|\bDROP\b|\bDELETE\b|--|;|\bOR\b|\bAND\b)/i,
-  ];
-
-  const bodyString = JSON.stringify(req.body);
-  if (sqlInjectionPatterns.some(pattern => pattern.test(bodyString))) {
-    console.warn(`[SECURITY] SQL injection attempt detected. IP: ${req.ip}`);
-    return res.status(400).json({ message: "Invalid input detected" });
-  }
-
-  next();
-}
-
 // ==================== REQUEST SIZE LIMITS ====================
 export function requestSizeValidator(req: Request, res: Response, next: NextFunction) {
   const contentLength = parseInt(req.headers["content-length"] || "0");

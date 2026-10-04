@@ -14,6 +14,8 @@ export type WebsiteLeadLike = {
   portalClientId?: string | null;
   zohoAccountId?: string | null;
   commercial?: Record<string, unknown> | null;
+  /** Who to call and by when (issue 449); the Zoho call it names is the record of the call. */
+  followUp?: Record<string, unknown> | null;
 };
 
 function eventTypeForSource(source?: string): DeSyncEventType {
@@ -51,6 +53,7 @@ export async function enqueueWebsiteCommand(payload: WebsiteLeadLike, eventType?
       ...(payload.portalClientId ? { portalClientId: payload.portalClientId } : {}),
       ...(payload.zohoAccountId ? { zohoAccountId: payload.zohoAccountId } : {}),
       ...(payload.commercial ? { commercial: payload.commercial } : {}),
+      ...(payload.followUp ? { followUp: payload.followUp } : {}),
     },
   });
 }

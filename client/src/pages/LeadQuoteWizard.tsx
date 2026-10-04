@@ -65,6 +65,14 @@ const contactSchema = z.object({
     isValidCorporateEmail,
     'Please use your company email address, not a personal email'
   ),
+  // Required so the scheduled call has a number to dial (issue 449).
+  phone: z
+    .string()
+    .trim()
+    .refine(
+      (v) => /^[+\d\s().-]{7,40}$/.test(v) && (v.match(/\d/g)?.length ?? 0) >= 10,
+      'Enter a phone number with area code',
+    ),
   consent: z.boolean().refine(val => val === true, 'You must agree to be contacted'),
 });
 type ContactData = z.infer<typeof contactSchema>;
@@ -297,7 +305,7 @@ export default function LeadQuoteWizard() {
 
   const form = useForm<ContactData>({
     resolver: zodResolver(contactSchema),
-    defaultValues: { firstName: '', lastName: '', company: '', email: '', consent: false },
+    defaultValues: { firstName: '', lastName: '', company: '', email: '', phone: '', consent: false },
   });
 
   const handleSubmit = async (data: ContactData) => {
@@ -328,6 +336,7 @@ export default function LeadQuoteWizard() {
         lastName: data.lastName,
         company: data.company,
         email: data.email,
+        phone: data.phone,
         consent: data.consent,
         source: 'header-instant-quote',
         pageUrl: window.location.href,
@@ -675,7 +684,7 @@ export default function LeadQuoteWizard() {
       body = (
         <>
           {heading('Where should we send it?')}
-          {why("Work email only. We'll use it to follow up about this plan.")}
+          {why("Work email and a direct number. We'll use them to follow up about this plan.")}
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(handleSubmit)}
@@ -691,6 +700,19 @@ export default function LeadQuoteWizard() {
                     <FormLabel className="text-[#1A1228]">Work email</FormLabel>
                     <FormControl>
                       <Input type="email" autoComplete="email" placeholder="you@company.com" className={paperFieldClass} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem required>
+                    <FormLabel className="text-[#1A1228]">Phone</FormLabel>
+                    <FormControl>
+                      <Input type="tel" inputMode="tel" autoComplete="tel" placeholder="(480) 555-0100" className={paperFieldClass} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
