@@ -250,7 +250,7 @@ table.team{width:100%;border-collapse:collapse;margin-top:10pt;border:.7pt solid
 table.team td{vertical-align:top}
 table.team td.who{padding:8pt 12pt}
 table.team td.dept{padding:8pt 12pt;width:36%;border-left:.7pt solid ${T.rule}}
-.team .eyebrow{font-size:7.2pt;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:${T.magText};margin-bottom:4pt}
+.team .eyebrow{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:${T.magText};margin-bottom:4pt}
 .team td.ph{width:34pt;padding:0 9pt 0 0;vertical-align:middle}
 .team td.ph img{width:34pt;height:34pt;border-radius:50%;display:block}
 .team .nm{font-weight:600;font-size:9.6pt}
