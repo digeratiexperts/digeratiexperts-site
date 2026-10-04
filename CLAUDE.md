@@ -14,6 +14,8 @@ That role does not permit bypassing PR review, concurrency audits, visual QA, pr
 
 Never develop directly on `main`. Use an isolated branch/worktree. Reconcile against current `origin/main` before merge. Treat `MERGED` and `LIVE` as separate states.
 
+**Content and webmaster tools:** `docs/CONTENT-TOOLING-PLAN.md` decides which outside tools to use (and which not) for images, icons, video, voice, SEO data, Lighthouse, accessibility and image optimization. Read it before adopting any.
+
 ## Project skills (`.claude/skills/`)
 
 Each vendored skill carries an `UPSTREAM.md` with provenance, local deviations and its external-service boundary. Skills that call kie.ai spend credits; run them only when the user asks for an image, and read the key from the environment or the gitignored `.env` (`KIE_AI_API_KEY`, or `KIE_API_KEY` per PR #168), never from a committed file. Copy `.env.example` to `.env` to start. The same skills are mirrored at `.agents/skills/` (symlinks) for Codex / ChatGPT and other tools; `AGENTS.md` carries the cross-agent catalog. To use these skills in every project on a machine, run `bash .claude/install-user-skills.sh` once (links them into `~/.claude/skills` and `~/.agents/skills`).

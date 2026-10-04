@@ -1879,3 +1879,26 @@ claims:
       end); the claims that list PortalLayout.tsx (portal-data-sources,
       portal-followups-2026-10-02, portal-redesign-control-room) are all
       verified-live.
+  - id: content-tooling-step1
+    owner: claude
+    subsystem: tooling-ci
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: bae9166
+    files:
+      - docs/CONTENT-TOOLING-PLAN.md (new)
+      - scripts/a11y-smoke.mjs (new), package.json, package-lock.json
+      - .github/workflows/ci.yml (one smoke:a11y line in the local production smoke step only)
+      - vite.config.ts (imagetools plugin registration only), client/src/imagetools.d.ts (new)
+      - .mcp.json, .cursor/mcp.json (new), .cursor/rules/content-tooling.mdc (new)
+      - AGENTS.md, CLAUDE.md, GEMINI.md (pointer lines only)
+    status: active
+    started: 2026-10-04
+    note: >-
+      Joe, 2026-10-04: "yes start the step 1 PR, we need all AI and IDE
+      tools to find it". Records the adopted content/webmaster tooling plan
+      and wires the free step: Chrome DevTools MCP, axe accessibility smoke
+      in CI (gate on critical; baseline 0 critical, 6 serious
+      color-contrast groups reported), vite-imagetools. JSON-LD already
+      existed (client/src/components/JsonLd.tsx), so not touched. Open PRs
+      427, 426, 425, 421, 420, 413, 406 checked 2026-10-04: none touch
+      these files except ledger claims in this YAML.

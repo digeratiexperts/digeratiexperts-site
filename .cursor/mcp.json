@@ -1,12 +1,5 @@
 {
   "mcpServers": {
-    "trigger": {
-      "args": [
-        "trigger.dev@4.4.0",
-        "mcp"
-      ],
-      "command": "npx"
-    },
     "chrome-devtools": {
       "command": "npx",
       "args": [

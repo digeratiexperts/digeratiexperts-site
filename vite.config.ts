@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import { imagetools } from "vite-imagetools";
 
 const isProduction = process.env.NODE_ENV === "production";
 const isReplitDevelopment = !isProduction && process.env.REPL_ID !== undefined;
@@ -9,6 +10,10 @@ const isReplitDevelopment = !isProduction && process.env.REPL_ID !== undefined;
 export default defineConfig({
   plugins: [
     react(),
+    // Build-time AVIF/WebP + responsive srcsets. Only acts on image imports
+    // that carry a query (e.g. `hero.jpg?w=640;1280&format=avif;webp&as=srcset`);
+    // plain imports are untouched. See docs/CONTENT-TOOLING-PLAN.md.
+    imagetools(),
     // Replit's runtime error overlay is development tooling. Shipping it in a
     // production build adds avoidable transforms/styles and can leak dev-only
     // chrome into the public bundle.
