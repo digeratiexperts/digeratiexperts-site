@@ -2041,6 +2041,8 @@ claims:
       - .claude/skills/msp-ai-kit/windows/console/VERSION, .claude/skills/msp-ai-kit/windows/DE-TECH-TOOL-ARCHITECTURE.md (1.10.3 line only)
       - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md (version example, the Hub section and the Hub jobs subsection only), .claude/skills/msp-ai-kit/windows/GO-LIVE.md (header, D5, part E)
       - .claude/skills/msp-ai-kit/windows/packaging/Deploy-DETechConsole.ps1, Install-DETechConsole.ps1 (the example file name only)
+      - .claude/skills/msp-ai-kit/windows/console/catalog/cheatsheet.json (the new hub group and the -Page list only)
+      - docs/DE-SYSTEM-INTEGRATION.md (three Tech Tool rows, the BUILT status key and the DE Tech Tool section only)
     status: active
     started: 2026-10-04
     note: >-
@@ -2056,3 +2058,9 @@ claims:
       (claims of their own), 420 and 413 touch none of these files; open
       ACTIVE issues 270 and 272 (DE Tech Tool) touch DE.Security and the
       installer test fixture, not these files.
+      Item 3 (same PR): the website side of the Tech Tool / Hub integration.
+      The de-sync contract fixture was already identical to Intelligence-Hub
+      master (45 event types, techconsole source); what was missing was the
+      documentation: DE-SYSTEM-INTEGRATION.md now lists the Tech Tool, licence
+      and Microsoft Admin worker paths, and the Tool's command-line cheat sheet
+      has the Hub sends and the job worker.
