@@ -1,3 +1,6 @@
+import express from "express";
+import { once } from "node:events";
+import type { AddressInfo } from "node:net";
 import { describe, it } from "vitest";
 import assert from "node:assert/strict";
 import { requestTelemetry, releaseIdentity, routeTemplate, applicationForPath } from "./requestTelemetry";
@@ -58,5 +61,58 @@ describe("request telemetry", () => {
     for (const value of [undefined, /private/, "/x?secret", "/x#secret", "/x\nsecret"]) assert.equal(routeTemplate(value), "unmatched");
     assert.equal(releaseIdentity("token=secret"), null);
     assert.equal(releaseIdentity("ABCDEF1"), "abcdef1");
+  });
+});
+
+describe("request telemetry with Express", () => {
+  it("returns the generated ID and logs templates rather than request secrets", async () => {
+    const events: Event[] = [];
+    const emit = (event: object) => { events.push(event as Event); };
+    const app = express();
+    app.use(requestTelemetry({ info: emit, warn: emit, error: emit }, { environment: "test", release: "abcdef123" }));
+    app.use(express.json());
+    app.get("/orders/:id", (_req, res) => { res.status(404).json({ error: "not found" }); });
+    const server = app.listen(0, "127.0.0.1");
+    try {
+      await once(server, "listening");
+      const address = server.address() as AddressInfo;
+      const response = await fetch(`http://127.0.0.1:${address.port}/orders/private-key?token=secret&email=private@example.com`, { headers: { "x-request-id": "caller-secret", authorization: "Bearer secret" } });
+      await response.text();
+      assert.equal(response.status, 404);
+      assert.equal(events.length, 1);
+      assert.equal(events[0].route, "/orders/:id");
+      assert.equal(events[0].requestId, response.headers.get("x-request-id"));
+      assert.notEqual(events[0].requestId, "caller-secret");
+      assert.ok(!JSON.stringify(events).includes("private-key"));
+      assert.ok(!JSON.stringify(events).includes("secret"));
+      assert.ok(!JSON.stringify(events).includes("@"));
+    } finally {
+      server.closeAllConnections();
+      await new Promise<void>((resolve, reject) => { server.close(err => err ? reject(err) : resolve()); });
+    }
+  });
+  it("records parser failures before a route is matched", async () => {
+    const events: Event[] = [];
+    const emit = (event: object) => { events.push(event as Event); };
+    const app = express();
+    app.use(requestTelemetry({ info: emit, warn: emit, error: emit }, { environment: "test", release: undefined }));
+    app.use(express.json());
+    app.post("/orders", (_req, res) => { res.sendStatus(204); });
+    app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => { res.sendStatus(err ? 400 : 500); });
+    const server = app.listen(0, "127.0.0.1");
+    try {
+      await once(server, "listening");
+      const address = server.address() as AddressInfo;
+      const response = await fetch(`http://127.0.0.1:${address.port}/orders`, {method: "POST", headers: {"content-type": "application/json"}, body: "{invalid-secret"});
+      await response.text();
+      assert.equal(response.status, 400);
+      assert.equal(events.length, 1);
+      assert.equal(events[0].route, "unmatched");
+      assert.equal(events[0].outcome, "failure");
+      assert.ok(!JSON.stringify(events).includes("invalid-secret"));
+    } finally {
+      server.closeAllConnections();
+      await new Promise<void>((resolve, reject) => { server.close(err => err ? reject(err) : resolve()); });
+    }
   });
 });
