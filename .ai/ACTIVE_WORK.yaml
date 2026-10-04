@@ -1971,3 +1971,34 @@ claims:
       127.0.0.1:3300 and public HTTPS" at 00:44:51Z; /api/health returned
       ok with uptime matching the restart. No client/public files changed,
       so the skipped Cloudflare purge (token unset) left nothing stale.
+  - id: de-techtool-unattended-and-warranty
+    owner: claude
+    subsystem: msp-ai-kit
+    branch: claude/msp-ai-skills-prompts-htqi09
+    base_sha: 2863df1ae26d4ecd981e196a257acaa83b02b47f
+    files:
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/DE-Microsoft-Admin.psm1 (Connect-DEMicrosoft context, Connect-DEExchange, Connect-DEAzure, the job service map, Invoke-DEMicrosoftJob -BeforeRun, the result version)
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/DE-HubWorker.ps1 (lazy Exchange and Azure sign-in, the -WhatIf service check, disconnect at the end)
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/DE-Microsoft-Admin.psd1 (version 0.6.0), README.md
+      - .claude/skills/msp-ai-kit/windows/tests/HubWorker.Tests.ps1 (Exchange and Azure stand-ins and new tests only)
+      - .claude/skills/msp-ai-kit/windows/console/modules/DE.Evidence/DE.Evidence.psm1 (Send-DEHubWarranty, Format-DEHubSendStatus, the checklist's step list, the export line)
+      - .claude/skills/msp-ai-kit/windows/console/DETechConsole.ps1 (the Evidence page Send to Intelligence Hub button only)
+      - .claude/skills/msp-ai-kit/windows/console/tests/Components.Tests.ps1 (new warranty send tests)
+      - .claude/skills/msp-ai-kit/windows/console/VERSION, .claude/skills/msp-ai-kit/windows/DE-TECH-TOOL-ARCHITECTURE.md (1.10.3 line only)
+      - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md (version example, the Hub section and the Hub jobs subsection only), .claude/skills/msp-ai-kit/windows/GO-LIVE.md (header, D5, part E)
+      - .claude/skills/msp-ai-kit/windows/packaging/Deploy-DETechConsole.ps1, Install-DETechConsole.ps1 (the example file name only)
+    status: active
+    started: 2026-10-04
+    note: >-
+      Joe, 2026-10-04: "go, do 1 and 2 then do 3 and then 4". DE Microsoft
+      Admin 0.6.0: the Hub worker signs in to Exchange Online and Azure
+      app-only with the same certificate app as Graph, lazily and only for
+      a job that needs that service; a missing setting or module fails that
+      job with the reason and the loop carries on. DE Tech Tool 1.10.3: the
+      Evidence page sends the latest warranty lookup to the Hub as a signed
+      device.warranty event after the device record (Intelligence-Hub
+      master accepts device.warranty: techconsole-contract.ts). Overlap
+      check 2026-10-04: open PRs 432, 429 and 406 touch only this YAML
+      (claims of their own), 420 and 413 touch none of these files; open
+      ACTIVE issues 270 and 272 (DE Tech Tool) touch DE.Security and the
+      installer test fixture, not these files.
