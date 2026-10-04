@@ -1,0 +1,48 @@
+{
+  "verified_at": "2026-10-04T02:30Z",
+  "origin": "https://digeratiexperts.com",
+  "merge_commit": "6734c1fe930d305f55451ad261eca317aba95c84",
+  "pr": 427,
+  "ci_run": 37170281995,
+  "assets": [
+    {
+      "asset": "favicon-maskable-512x512.png",
+      "live_sha256_16": "50da5121c0cf25b9",
+      "repo_sha256_16": "50da5121c0cf25b9",
+      "byte_identical": true,
+      "dimensions": "512x512",
+      "bytes": 11546
+    },
+    {
+      "asset": "favicon-192x192.png",
+      "live_sha256_16": "69f81d1567e5ca7a",
+      "repo_sha256_16": "69f81d1567e5ca7a",
+      "byte_identical": true,
+      "dimensions": "192x192",
+      "bytes": 4455
+    }
+  ],
+  "manifest_live": {
+    "short_name": "DE",
+    "icon_count": 5,
+    "purposes": [
+      "any",
+      "any",
+      "any",
+      "any",
+      "maskable"
+    ],
+    "has_192": true,
+    "has_dedicated_maskable": true
+  },
+  "maskable_geometry": {
+    "canonical_corner_ratio": 0.409,
+    "safe_limit": 0.4,
+    "new_corner_ratio": 0.327,
+    "bar_geometry": "byte-identical to brand/digerati-mark-tile.svg"
+  },
+  "edge_cache": {
+    "cache_control": "public, max-age=86400, must-revalidate",
+    "note": "client/public assets changed; Cloudflare purge is skipped when the token is unset, so stale manifest/icons can persist at the edge for up to 24h. First post-deploy fetch returned the old manifest and 404s; cache-busted fetch returned the new files."
+  }
+}
