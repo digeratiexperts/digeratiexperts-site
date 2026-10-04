@@ -1,0 +1,37 @@
+{
+  "name": "de-icon-v1",
+  "purpose": "Single-colour glyphs that sit beside Lucide icons in IconWell (20px glyph in a 44-48px well), for MSP / security concepts Lucide does not cover.",
+  "model": "recraftv4_1_utility_vector",
+  "size": "1024x1024",
+  "n": 2,
+  "prompt_template": "Minimal line icon of {subject}. Single glyph, centered, generous padding, outline style with uniform medium-weight strokes and rounded caps and joins, matching the Lucide icon set on a 24 by 24 grid. Flat, one colour, no shading, no gradients, no text, no letters, no background shapes, no frame. Must stay legible at 20 pixels.",
+  "negative_prompt": "text, letters, words, numbers, watermark, gradient, shadow, 3d, isometric, photorealistic, texture, multiple colours, background scene, frame, badge, circle background, clip art, cartoon face",
+  "controls": {
+    "colors": [
+      {
+        "rgb": [
+          5,
+          3,
+          18
+        ]
+      }
+    ],
+    "background_color": {
+      "rgb": [
+        255,
+        255,
+        255
+      ]
+    },
+    "no_text": true
+  },
+  "post": {
+    "mono": true,
+    "drop_full_canvas_background": true
+  },
+  "notes": [
+    "Generated in graphite on white so Recraft draws one dark glyph. The cleaner rebuilds it as a luminance mask: dark paint is drawn, white paint is cut out (in the original stacking order), and one currentColor shape shows through, so IconWell's magenta / paper-ink tone applies exactly as it does to Lucide.",
+    "Use --keep-colour for illustrations that should keep Recraft's colours.",
+    "Brand palette for illustrations (not icons): graphite #050312 rgb(5,3,18), paper #F7F5F2 rgb(247,245,242), magenta #D3126A rgb(211,18,106). Magenta is action and punctuation only (design/UI-STYLE-RULES.md)."
+  ]
+}
