@@ -10,6 +10,7 @@
  */
 
 const fs = require('fs');
+const budget = require(require('path').join(__dirname, '..', '..', '..', 'kie-budget', 'gate.cjs'));
 const path = require('path');
 const https = require('https');
 const http = require('http');
@@ -240,6 +241,9 @@ async function main() {
     input.image_input = prepared;
   }
 
+  // Repo-wide kie.ai budget gate (.claude/kie-budget): refuses before any spend.
+  budget.gate('google/nano-banana');
+
   const createBody = JSON.stringify({
     model: 'google/nano-banana',
     input: input,
@@ -331,6 +335,7 @@ async function main() {
         }
 
         fs.writeFileSync(OUTPUT_FILE, imageBuffer);
+        budget.record('google/nano-banana', pollData?.data?.creditsConsumed ?? 4, { task: taskId, file: OUTPUT_FILE });
         console.log(`Saved to: ${OUTPUT_FILE}`);
         process.exit(0);
       }

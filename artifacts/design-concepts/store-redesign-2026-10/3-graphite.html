@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Store Concept 3 · Graphite</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+/* Elevation ladder: each layer is one step lighter AND carries its own edge.
+   L0 page → L1 panel → L2 card → L3 floating. Today's Store skips L1, so cards sit on the page. */
+:root{
+  --l0:#07060b; --l1:#0f0e15; --l2:#18171f; --l2h:#1e1d27; --l3:#22212c;
+  --edge-1:rgba(255,255,255,.06); --edge-2:rgba(255,255,255,.09); --edge-3:rgba(255,255,255,.14);
+  --hi:inset 0 1px 0 rgba(255,255,255,.06);
+  --ink:#f3f2f7; --ink-2:rgba(243,242,247,.74); --ink-3:rgba(243,242,247,.55);
+  --magenta:#d3126a; --magenta-d:#e0237a; --blue:#1d6ff2; --blue-ink:#7db4ff; --urgent:#ff6b9d;
+  --sh-2:0 1px 0 rgba(0,0,0,.4),0 12px 28px -16px rgba(0,0,0,.8);
+  --sh-3:0 30px 60px -24px rgba(0,0,0,.9),0 0 0 1px var(--edge-3);
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box} body{margin:0;background:var(--l0);color:var(--ink);font:15px/1.6 Inter,system-ui,sans-serif}
+a{color:inherit} button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--magenta);outline-offset:2px}
+h1,h2,h3,h4{font-family:"Space Grotesk",Inter,sans-serif;letter-spacing:-.02em;margin:0}
+.wrap{max-width:1240px;margin:0 auto;padding:0 24px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid transparent;font-weight:600;font-size:14.5px;text-decoration:none;transition:background-color .15s var(--ease),border-color .15s var(--ease),transform .15s var(--ease)}
+.btn:active{transform:translateY(1px)}
+.btn--primary{background:var(--magenta);color:#fff}.btn--primary:hover{background:var(--magenta-d)}
+.btn--primary[disabled]{background:#3a2130;color:rgba(255,255,255,.55);cursor:not-allowed}
+.btn--add{background:rgba(29,111,242,.14);border-color:rgba(29,111,242,.45);color:var(--blue-ink);min-height:40px;padding:0 14px;font-size:14px}
+.btn--add:hover{background:rgba(29,111,242,.24);border-color:var(--blue)}
+.btn--sm{min-height:40px;padding:0 14px;font-size:14px}
+
+.nav{position:sticky;top:0;z-index:10;background:rgba(7,6,11,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--edge-1)}
+.nav .wrap{display:flex;align-items:center;gap:28px;height:68px}
+.nav img{height:30px}
+.nav ul{display:flex;gap:22px;list-style:none;margin:0;padding:0;font-size:14.5px;font-weight:500;color:var(--ink-2)}
+.nav li[aria-current]{color:#fff}
+.nav .sp{flex:1}
+
+.hero{padding:64px 0 40px;background:radial-gradient(800px 360px at 80% 0%,rgba(29,111,242,.16),transparent 60%),radial-gradient(600px 300px at 0% 100%,rgba(211,18,106,.10),transparent 60%)}
+.eyebrow{font:600 12px Oxanium;letter-spacing:.18em;text-transform:uppercase;color:var(--blue-ink)}
+.hero h1{font-size:clamp(34px,5vw,60px);line-height:1.02;margin:14px 0 16px;max-width:22ch}
+.hero h1 span{color:#9cc4ff}
+.hero p{margin:0;color:var(--ink-2);font-size:17px;max-width:56ch}
+.track{display:flex;gap:0;margin-top:34px;border-radius:14px;background:var(--l1);border:1px solid var(--edge-1);box-shadow:var(--hi);overflow:hidden}
+.track li{list-style:none;flex:1;display:flex;align-items:center;gap:10px;padding:14px 16px;font-size:14px;color:var(--ink-3);border-right:1px solid var(--edge-1);position:relative}
+.track li:last-child{border-right:0}
+.track b{font:600 12px Oxanium;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--edge-3);flex:none}
+.track li[aria-current]{color:#fff;background:var(--l2)}
+.track li[aria-current]::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--blue)}
+.track li[aria-current] b{background:var(--blue);border-color:var(--blue);color:#fff}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start;padding-bottom:80px}
+/* L1 panel */
+.panel{background:var(--l1);border:1px solid var(--edge-1);border-radius:22px;box-shadow:var(--hi);padding:26px;margin-bottom:24px}
+.panel__h .k{font:600 12px Oxanium;letter-spacing:.16em;text-transform:uppercase;color:var(--blue-ink)}
+.panel__h h2{font-size:28px;line-height:1.15;margin:6px 0}
+.panel__h p{margin:0;color:var(--ink-2);max-width:60ch}
+/* profile */
+.counts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.count{background:var(--l2);border:1px solid var(--edge-2);border-radius:14px;padding:12px 14px;box-shadow:var(--hi);transition:border-color .15s}
+.count:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(29,111,242,.25)}
+.count label{display:flex;gap:6px;align-items:center;font-size:12.5px;font-weight:600;color:var(--ink-3)}
+.count input{width:100%;border:0;outline:0;background:transparent;color:#fff;font:600 24px Oxanium;padding:2px 0 0}
+.count input::placeholder{color:rgba(255,255,255,.25)}
+/* group tabs on top of cards */
+.group{margin-top:22px}
+.group__h{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.group__h .ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:rgba(29,111,242,.14);color:var(--blue-ink);flex:none}
+.group--now .group__h .ico{background:rgba(255,107,157,.12);color:var(--urgent)}
+.group__h h3{font-size:17px}.group__h p{margin:0;font-size:13.5px;color:var(--ink-3)}
+.group__h a{margin-left:auto;font-size:14px;font-weight:600;color:var(--urgent);white-space:nowrap}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;list-style:none;margin:0;padding:0}
+.cards--4{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* L2 card */
+.card{display:flex;flex-direction:column;padding:18px;background:var(--l2);border:1px solid var(--edge-2);border-radius:16px;box-shadow:var(--hi),var(--sh-2);transition:transform .2s var(--ease),background-color .2s var(--ease),border-color .2s var(--ease)}
+.card:hover{transform:translateY(-2px);background:var(--l2h);border-color:var(--edge-3)}
+.group--now .card{background:linear-gradient(180deg,rgba(255,107,157,.07),transparent 40%),var(--l2)}
+.card h4{font:600 16px/1.3 "Space Grotesk";margin:0 0 6px}
+.card p{margin:0;font-size:14px;color:var(--ink-2)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 16px}
+.tag{font-size:12px;color:var(--ink-2);background:rgba(255,255,255,.05);border:1px solid var(--edge-1);border-radius:6px;padding:2px 8px}
+.card .btn{margin-top:auto;align-self:flex-start}
+/* families */
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 14px}
+.pill{min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--edge-2);background:var(--l2);color:var(--ink-2);font-size:14px;font-weight:500}
+.pill:hover{border-color:var(--edge-3);color:#fff}
+.pill[aria-pressed=true]{background:#fff;color:#0b0a12;border-color:#fff}
+.fam{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fam .card{flex-direction:row;gap:14px;align-items:flex-start}
+.fam .ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(160deg,rgba(29,111,242,.28),rgba(29,111,242,.08));color:var(--blue-ink);border:1px solid rgba(29,111,242,.3);flex:none}
+.fam .body{flex:1;min-width:0}
+.fam .goal{font:600 11px Oxanium;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.fam p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:13.5px}
+.fam .foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.fam .foot a{font-size:14px;font-weight:600;color:var(--ink-2)}
+/* L3 rail */
+.rail{position:sticky;top:92px;background:var(--l3);border-radius:22px;padding:22px;box-shadow:var(--sh-3)}
+.rail h3{font-size:20px;display:flex;align-items:center;gap:8px}
+.rail .n{margin-left:auto;font:600 12px Oxanium;color:var(--ink-3);background:rgba(255,255,255,.06);border-radius:999px;padding:3px 10px}
+.rail .empty{margin:16px 0;padding:20px;border-radius:14px;border:1.5px dashed var(--edge-3);text-align:center;font-size:14px;color:var(--ink-3)}
+.rail .row{display:flex;justify-content:space-between;padding:12px 0;border-top:1px solid var(--edge-2);font-size:14px;color:var(--ink-2)}
+.rail .row a{color:var(--blue-ink);font-weight:600}
+.rail .btn--primary{width:100%}
+.rail small{display:block;text-align:center;color:var(--ink-3);font-size:13px;margin-top:10px}
+.rail .assure{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--edge-2);font-size:13px;color:var(--ink-3)}
+
+@media (max-width:1100px){.nav ul{display:none}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:960px){.grid{grid-template-columns:1fr}.rail{position:static}.track li span{display:none}.track li{justify-content:center}}
+@media (max-width:720px){
+  .wrap{padding:0 16px}.nav .btn{display:none}.panel{padding:18px;border-radius:18px}
+  .counts{grid-template-columns:1fr 1fr}.cards,.cards--4,.fam{grid-template-columns:1fr}
+  .group__h{flex-wrap:wrap}.group__h a{margin-left:42px}.panel__h h2{font-size:24px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="nav"><div class="wrap"><img src="digerati-logo-reverse.svg" alt="Digerati Experts">
+<nav aria-label="Main"><ul><li>Solutions</li><li>Industries</li><li>Resources</li><li>Pricing</li><li>About</li><li aria-current="page">Store</li><li>Contact</li></ul></nav>
+<span class="sp"></span><a class="btn btn--primary btn--sm" href="#">Cyber Risk Assessment</a></div></header>
+<main id="app"></main>
+<script src="icons.js"></script><script src="data.js"></script>
+<script>
+const S = STORE, F = S.families;
+const goalOf = id => S.goals.find(g => g.f.includes(id)).l;
+document.getElementById("app").innerHTML = `
+<section class="hero"><div class="wrap"><div class="eyebrow">${S.hero.eyebrow}</div><h1>${S.hero.h1a} <span>${S.hero.h1b}</span></h1><p>${S.hero.lede}</p>
+<ol class="track" aria-label="Your journey" style="padding:0">${S.steps.map((s, i) => `<li ${i === 1 ? 'aria-current="step"' : ""}><b>${i + 1}</b><span>${s}</span></li>`).join("")}</ol></div></section>
+<div class="wrap grid"><div>
+  <section class="panel" aria-labelledby="p-h"><div class="panel__h"><div class="k">Step 1 · Profile</div><h2 id="p-h">Size it to your business</h2><p>Four counts and two facts. Then every package sizes itself. Skip for now if you like; it is needed before you submit.</p></div>
+    <div class="counts">${S.profile.map(p => `<div class="count"><label for="c-${p.k}">${ic(p.i, 15)}${p.k}</label><input id="c-${p.k}" inputmode="numeric" placeholder="0"></div>`).join("")}</div></section>
+  <section class="panel" aria-labelledby="s-h"><div class="panel__h"><div class="k">Step 2 · Pain or need</div><h2 id="s-h">Start from a situation</h2><p>Pick the one that sounds like you. It adds the needs that situation calls for, and you can undo.</p></div>
+    ${S.groups.map(g => { const items = S.scenarios.filter(s => s.g === g.k); return `<div class="group group--${g.k}"><div class="group__h"><span class="ico">${ic(g.i, 17)}</span><div><h3>${g.h}</h3><p>${g.sub}</p></div>${g.k === "now" ? `<a href="tel:+13254809870">Call ${S.phone} →</a>` : ""}</div>
+    <ul class="cards${items.length === 4 ? " cards--4" : ""}">${items.map(s => `<li class="card"><h4>${s.t}</h4><p>${s.p}</p><div class="tags">${s.f.map(id => `<span class="tag">${F[id].l}</span>`).join("")}</div><button class="btn btn--add" type="button">${ic("plus", 16)}Add these ${s.f.length}</button></li>`).join("")}</ul></div>`; }).join("")}</section>
+  <section class="panel" aria-labelledby="f-h"><div class="panel__h"><div class="k">Or browse</div><h2 id="f-h">Pick a family</h2><p>Thirteen families, grouped by what you are trying to do. Open one for the full package, or add it from here.</p></div>
+    <div class="pills" role="group" aria-label="Business goals"><button class="pill" aria-pressed="true">All</button>${S.goals.map(g => `<button class="pill" aria-pressed="false">${g.l}</button>`).join("")}</div>
+    <div class="fam">${S.goals.flatMap(g => g.f).map(id => { const f = F[id]; return `<article class="card"><span class="ico">${ic(f.i, 20)}</span><div class="body"><div class="goal">${goalOf(id)}</div><h4>${f.l}</h4><p>${f.d}</p><div class="foot"><a href="#">View package</a><button class="btn btn--add" type="button">${ic("plus", 15)}Add</button></div></div></article>`; }).join("")}
+    <article class="card" style="background:var(--l1);border-style:dashed"><span class="ico" style="background:rgba(255,255,255,.06);border-color:var(--edge-2);color:#fff">${ic("phone-call", 20)}</span><div class="body"><h4>Not sure which one?</h4><p>Tell us what is going on and DE points you at the right families.</p><div class="foot"><a href="tel:+13254809870">Call ${S.phone}</a></div></div></article></div></section>
+</div>
+<aside class="rail" aria-label="Your Solution"><h3>${ic("layers", 20)}Your Solution<span class="n">0 needs</span></h3>
+  <div class="empty">Nothing added yet.<br>Start from a situation or add a need.</div>
+  <div class="row"><span>Sized to</span><a href="#p-h">Add your counts</a></div>
+  <button class="btn btn--primary" disabled>Review Your Solution</button><small>Add at least one need</small>
+  <div class="assure">${ic("lock", 16)}No payment here. You send it for a real quote.</div></aside>
+</div>`;
+</script>
+</body>
+</html>
