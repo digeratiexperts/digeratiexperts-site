@@ -1,5 +1,6 @@
 import { isDoor2Path } from "./isDoor2Path";
 import { isWarehousePath } from "./warehousePaths";
+import { isQuizRoomPath } from "./quizRoom";
 
 export const STICKY_CTA_SCROLL_IDLE_MS = 900;
 export const STICKY_CTA_AUTO_HIDE_MS = 12_000;
@@ -50,7 +51,10 @@ export function isStickyCtaRouteAllowed(path: string): boolean {
     !pathname.startsWith("/portal") &&
     !pathname.startsWith("/store") &&
     !isDoor2Path(pathname) &&
-    !isWarehousePath(pathname)
+    !isWarehousePath(pathname) &&
+    // The quiz room carries its own next step; a second CTA would compete with
+    // the question being answered (issue 419).
+    !isQuizRoomPath(pathname)
   );
 }
 
