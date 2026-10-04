@@ -163,6 +163,7 @@ import {
   resolveAccountManager,
 } from "@shared/accountManagers";
 import { appendSituationToDescription, parseAnonymousSituation } from "@shared/anonymousSituation";
+import { canAccessQuote, toClientQuote } from "./storeQuoteAccess";
 
 /** Assigned account manager + sales department for a prospect/client (default when unassigned). */
 function accountTeamForClient(clientId: string | null | undefined) {
@@ -5621,16 +5622,6 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  const canAccessQuote = (req: AuthenticatedRequest, quoteRequest: { userId: string | null; clientId: string | null; contactEmail: string | null }) => {
-    const isAdmin = req.user?.role === "admin";
-    const ownsQuote =
-      (req.userId && quoteRequest.userId === req.userId) ||
-      (req.user?.clientId && quoteRequest.clientId === req.user.clientId) ||
-      (req.user?.email &&
-        quoteRequest.contactEmail?.toLowerCase() === req.user.email.toLowerCase());
-    return { isAdmin, ownsQuote: !!(isAdmin || ownsQuote) };
-  };
-
   app.get("/api/store/quote-requests/:id/pdf", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { getQuoteRequest } = await import("./storeQuoteStore");
@@ -5683,19 +5674,8 @@ export async function registerRoutes(app: Express) {
         return res.status(403).json({ error: "Access denied" });
       }
 
-      // Client-safe projection only (issue #257): the confirmation page needs the
-      // reference, the contact echo and the PDF link. Requested lines with list
-      // prices, assignment, conversion and internal ids never leave the server here.
-      res.json({
-        id: quoteRequest.id,
-        quoteNumber: quoteRequest.quoteNumber,
-        contactEmail: quoteRequest.contactEmail,
-        companyName: quoteRequest.companyName,
-        status: quoteRequest.status,
-        createdAt: quoteRequest.createdAt,
-        pdfUrl: `/api/store/quote-requests/${quoteRequest.id}/pdf`,
-        accountTeam: accountTeamForClient(quoteRequest.clientId),
-      });
+      // Client-safe projection only (issue #257); see toClientQuote.
+      res.json(toClientQuote(quoteRequest, accountTeamForClient(quoteRequest.clientId)));
     } catch (error: any) {
       console.error("[GET QUOTE REQUEST ERROR]", error);
       res.status(500).json({ error: error.message || "Failed to get quote request" });
