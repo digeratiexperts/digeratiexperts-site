@@ -30,6 +30,21 @@
 
 version: 2
 claims:
+  - id: quote-match-include-it
+    issue: 417
+    owner: cursor
+    subsystem: quote-wizard
+    branch: cursor/qbs-quote-wizard-20261003
+    base_sha: 2863df1a
+    files:
+      - client/src/lib/quoteMatch.ts
+      - client/src/lib/quoteMatch.test.ts
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: approved matching seats ≤10 to ProActive IT even with
+      remote (was incorrectly Business). Mid-size remote stays Business;
+      >30 / 100+ stays Enterprise. Builds on the quiz room from PR 425.
   - id: quote-wizard-quiz
     issue: 419
     owner: claude
