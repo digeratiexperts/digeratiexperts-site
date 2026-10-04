@@ -1971,6 +1971,15 @@ claims:
       screenshot of production from the session environment (its browser
       does not trust the egress proxy); the same bundle was rendered locally,
       artifacts/visual-qa/store-flagship/.
+      FOLLOW-UP (PR 434, merged as 308d460f on Joe's "merge and release it"):
+      plan-card "Choose how DE works with you" section, white local nav with
+      the magenta pill, − / + dial steppers (SolutionProfileForm dials prop,
+      /store only). Deployed inside release c78ef219 (PRs 432 and 429 merged
+      on top; the deploy coalesced): release.txt reads c78ef219, the live
+      entry index-0kCQ7ls4.js, BusinessNeedsIndex-C4H2ih-k.js and
+      StorePageAtmosphere-Dw7hFf7k.css are byte-identical to a local build of
+      c78ef219 and carry d2-plans and "Suggested from your profile".
+      PR 434 VERIFIED LIVE (bundle) 2026-10-04.
     note: >-
       Joe, 2026-10-04: build concept 4 (apple.com/iphone grammar) into /store
       ("2. yes"), and kie.ai spend needs a per-job projection plus soft and
