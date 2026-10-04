@@ -15,7 +15,7 @@
     Exit codes: 0 ready / installed, 1 not ready, 2 blocked or refused, 3 download or verification failure.
 
 .EXAMPLE
-    .\Deploy-DETechConsole.ps1 -PackageUrl https://downloads.example/DE-TechTool-v1.10.2-<buildId>.zip -Sha256 <hash>
+    .\Deploy-DETechConsole.ps1 -PackageUrl https://downloads.example/DE-TechTool-v1.10.3-<buildId>.zip -Sha256 <hash>
     .\Deploy-DETechConsole.ps1 -PackageUrl ... -Sha256 ... -Client alamo -Mode takeover
     .\Deploy-DETechConsole.ps1 -PackageUrl ... -Sha256 ... -Client alamo -Mode repair -Apply
 #>
