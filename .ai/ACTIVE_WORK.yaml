@@ -30,6 +30,55 @@
 
 version: 2
 claims:
+  - id: brand-maskable-icon
+    issue: 210
+    owner: claude
+    subsystem: brand
+    branch: claude/brand-icon-192-maskable
+    base_sha: 14265a90
+    pr: 427
+    files:
+      - brand/digerati-mark-maskable.svg (new), brand/png/digerati-mark-maskable-512.png (new)
+      - client/public/favicon-maskable-512x512.png (new), client/public/favicon-192x192.png (new)
+      - client/public/site.webmanifest (icon purposes, 192 entry, short_name)
+      - artifacts/visual-qa/brand-maskable-icon/**
+    status: verified-live
+    started: 2026-10-04
+    note: >-
+      PWA icon correctness for the existing canonical mark. No redesign, no
+      recolour, no new mark. The manifest declared "purpose": "any maskable"
+      on favicon-512x512.png, which is transparent and whose gold bars reach
+      0.409 x tile against the 0.400 maskable safe limit (measured from
+      brand/digerati-mark-tile.svg), so Android clipped them and composited
+      over an arbitrary ground. Adds a dedicated maskable variant at 0.327,
+      opaque full bleed, reusing the canonical bar geometry byte-for-byte.
+      Adds favicon-192x192.png, the Chrome/Android install icon, which the
+      set did not contain. site.webmanifest splits any/maskable purposes.
+      A set of externally prepared assets was evaluated and REJECTED: it
+      would have recoloured gold to #F5E48A, reintroduced a #3C3C3C plate and
+      moved theme_color off #050312. brand/README.md records the
+      #F5E48A -> #E3B23C correction as deliberate. Nothing from it was
+      imported. Joe, 2026-10-04, ruled #E3B23C canonical for implementation
+      with the colour question to be resolved separately in one controlled
+      change, and approved short_name "Digerati" -> "DE" per
+      .cursor/rules/digerati-naming.mdc, the home-screen label being
+      customer-facing. The 16px optical-size variant (four bars render 1px
+      each and alias) was deliberately NOT shipped: fewer/heavier bars alter
+      the protected silhouette, so it is flagged on issue 210 for an explicit
+      brand decision.
+      RELEASED 2026-10-04: merged as 6734c1f (PR 427, on Joe's "merge it").
+      Rebased onto current main first so CI re-ran against the axe a11y gate
+      added by PR 428, which the branch predated. CI run 37170281995 passed
+      every job including the production deploy. Production verified
+      cache-busted: live favicon-maskable-512x512.png and favicon-192x192.png
+      are byte-identical to source (sha256 50da5121c0cf25b9 / 69f81d1567e5ca7a),
+      live manifest serves short_name DE, 5 icons, dedicated maskable.
+      CAVEAT: this changed client/public assets and the Cloudflare purge is
+      skipped when the token is unset; Cache-Control is max-age=86400, so the
+      first post-deploy fetch returned the old manifest and 404s on the new
+      icons. Edge copies may stay stale for up to 24h. Evidence:
+      artifacts/visual-qa/brand-maskable-icon/live/. VERIFIED LIVE.
+      Files released.
   - id: quote-wizard-quiz
     issue: 419
     owner: claude
@@ -49,8 +98,25 @@ claims:
       - server/routes.ts (the /api/lead-quote handler only)
       - scripts/qa/quote-wizard-quiz-check.mjs (new)
       - artifacts/visual-qa/quote-wizard-quiz/**
-    status: active
+    status: verified-live
     started: 2026-10-03
+    released: 2026-10-04
+    pr: 425
+    merge_sha: 6f8b646b9e7b228ef3b96f9fa158e323ba712b9c
+    verification: >-
+      Merged as 6f8b646 on Joe's "yes to thin chrome and plan before email,
+      merge it" after green CI on 84c6e4c. Production release.txt read
+      6f8b646b at 00:04:32Z; /api/health 200. scripts/qa/quote-wizard-quiz-check.mjs
+      run against https://digeratiexperts.com at 390, 768 and 1440: 42/42
+      checks per width, axe serious/critical 0 on all 9 screens (the lead POST
+      was answered in the browser, so no test lead reached Zoho; page
+      requests were fetched by Node against the proxy CA because the sandbox
+      Chromium has no trust for it). The live entry bundle carries the
+      MegaMenu "Find Your Plan" item and the pricing chunk carries the
+      pricing-page link. Limit: the Zoho Description with context was proven
+      by unit test and a dev-server POST, not by a real CRM lead. VERIFIED
+      LIVE. Evidence: artifacts/visual-qa/quote-wizard-quiz/live/. Files
+      released.
     note: >-
       Joe/DE: a RiseGuide-level question-based selling experience on
       digeratiexperts.com in DE's own design ("go ahead with slice 1 and all
@@ -1954,6 +2020,15 @@ claims:
       screenshot of production from the session environment (its browser
       does not trust the egress proxy); the same bundle was rendered locally,
       artifacts/visual-qa/store-flagship/.
+      FOLLOW-UP (PR 434, merged as 308d460f on Joe's "merge and release it"):
+      plan-card "Choose how DE works with you" section, white local nav with
+      the magenta pill, − / + dial steppers (SolutionProfileForm dials prop,
+      /store only). Deployed inside release c78ef219 (PRs 432 and 429 merged
+      on top; the deploy coalesced): release.txt reads c78ef219, the live
+      entry index-0kCQ7ls4.js, BusinessNeedsIndex-C4H2ih-k.js and
+      StorePageAtmosphere-Dw7hFf7k.css are byte-identical to a local build of
+      c78ef219 and carry d2-plans and "Suggested from your profile".
+      PR 434 VERIFIED LIVE (bundle) 2026-10-04.
     note: >-
       Joe, 2026-10-04: build concept 4 (apple.com/iphone grammar) into /store
       ("2. yes"), and kie.ai spend needs a per-job projection plus soft and
@@ -1988,3 +2063,23 @@ claims:
       127.0.0.1:3300 and public HTTPS" at 00:44:51Z; /api/health returned
       ok with uptime matching the restart. No client/public files changed,
       so the skipped Cloudflare purge (token unset) left nothing stale.
+  - id: recraft-icons-skill
+    owner: claude
+    subsystem: tooling-skills
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: f9b6f78
+    files:
+      - .claude/skills/recraft-icons/** (new), .agents/skills/recraft-icons (new symlink)
+      - package.json (test:recraft-icons script only), .github/workflows/ci.yml (one test step)
+      - .env.example (RECRAFT_API_KEY line), docs/CONTENT-TOOLING-PLAN.md (Recraft row and step 2 only)
+      - AGENTS.md, CLAUDE.md (one skills-table row each; AGENTS key-handling sentence)
+    status: active
+    started: 2026-10-04
+    note: >-
+      Joe, 2026-10-04: "build the Recraft icon skill" (plan step 2). Node,
+      no dependencies; generate / create-style / check / clean; cleaner
+      rebuilds Recraft SVGs as a currentColor luminance mask so glyphs sit
+      beside Lucide in IconWell; offline tests in CI. No live call made:
+      RECRAFT_API_KEY is not set and recraft.ai is unreachable from the
+      build sandbox. Open PRs 429, 427, 421, 420, 413, 406 checked: only
+      421 touches CLAUDE.md (a different paragraph) and ledger claims.
