@@ -57,6 +57,20 @@ export interface ZohoCRMLead {
   Modified_Time?: string;
 }
 
+export interface ZohoCRMCall {
+  Subject: string;
+  Call_Type: 'Outbound' | 'Inbound' | 'Missed';
+  Outgoing_Call_Status?: 'Scheduled' | 'Completed' | 'Overdue' | 'Cancelled';
+  /** ISO 8601 with offset, e.g. 2026-10-05T09:30:00-07:00 */
+  Call_Start_Time: string;
+  Call_Purpose?: string;
+  Reminder?: string;
+  Description?: string;
+  What_Id?: { id: string };
+  $se_module?: string;
+  Owner?: { id: string };
+}
+
 class ZohoCRMService {
   async getAccounts(params?: {
     page?: number;
@@ -223,18 +237,43 @@ class ZohoCRMService {
     }
   }
 
-  async createLead(data: Partial<ZohoCRMLead>): Promise<ZohoCRMLead> {
+  async createLead(data: Partial<ZohoCRMLead>, options?: { assignmentRuleId?: string }): Promise<ZohoCRMLead> {
     try {
       const client = await zohoClient.getClient();
       
+      // lar_id runs a Leads assignment rule on create, so the rule (not the API user) picks the owner.
       const response = await client.post('/crm/v6/Leads', {
         data: [data],
-      });
+      }, options?.assignmentRuleId ? { params: { lar_id: options.assignmentRuleId } } : undefined);
 
       console.log('✅ Lead created in Zoho CRM:', response.data?.data?.[0]?.details?.id);
       return response.data?.data?.[0];
     } catch (error: any) {
       console.error('Error creating lead:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  /** Owner (Zoho user id) of a record, or null when it cannot be read. */
+  async getRecordOwnerId(module: string, id: string): Promise<string | null> {
+    try {
+      const client = await zohoClient.getClient();
+      const response = await client.get(`/crm/v6/${module}/${id}`, { params: { fields: 'Owner' } });
+      return response.data?.data?.[0]?.Owner?.id ?? null;
+    } catch (error: any) {
+      console.error('Error reading record owner:', error.response?.data || error.message);
+      return null;
+    }
+  }
+
+  /** Create a record in the Calls module (a scheduled outbound call, for example). */
+  async createCall(data: ZohoCRMCall): Promise<{ id?: string } | undefined> {
+    try {
+      const client = await zohoClient.getClient();
+      const response = await client.post('/crm/v6/Calls', { data: [data] });
+      return response.data?.data?.[0]?.details;
+    } catch (error: any) {
+      console.error('Error creating call:', error.response?.data || error.message);
       throw error;
     }
   }

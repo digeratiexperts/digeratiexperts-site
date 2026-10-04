@@ -25,6 +25,8 @@ import { registerObjectStorageRoutes, ObjectStorageService } from "./replit_inte
 import { zohoClient, zohoDeskService, zohoCRMService, zohoBillingService } from "./zoho";
 import { websiteLeadTaxonomy } from "./zoho/leadTaxonomy";
 import { describeQuoteContext, quoteLeadDescription, sanitizeQuoteContext } from "@shared/quoteContext";
+import { followUpHeadline, planLeadFollowUp } from "@shared/leadFollowUp";
+import { createQuoteLeadWithCall, normalizeLeadPhone, zohoLeadUrl } from "./quoteLeadCrm";
 import { findBackupCodeIndex, generateBackupCodes } from "./portalMfaCrypto";
 import {
   parseZohoTicketId,
@@ -4672,9 +4674,14 @@ export async function registerRoutes(app: Express) {
   app.post("/api/lead-quote", [leadQuoteRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { seats, enterpriseToggle, connectivity, devices, recommendedPlan, firstName, lastName, company, email, consent, source, pageUrl, timestamp } = req.body;
+      if (typeof email !== "string" || !email.includes("@")) {
+        return res.status(400).json({ error: "A valid company email is required" });
+      }
       // Optional quiz answers that never change the match; only known ids survive (issue 419).
       const context = sanitizeQuoteContext(req.body.context);
       const contextLine = describeQuoteContext(context);
+      // The quiz requires a phone (issue 449); older cached pages may still post without one.
+      const phone = normalizeLeadPhone(req.body.phone);
       
       // Corporate email validation
       const domain = email.split('@')[1]?.toLowerCase();
@@ -4703,6 +4710,7 @@ export async function registerRoutes(app: Express) {
         lastName,
         company,
         email,
+        phone,
         consent,
         source,
         pageUrl,
@@ -4716,34 +4724,57 @@ export async function registerRoutes(app: Express) {
       logger.info("[LEAD] Quote form submitted", { email, company, recommendedPlan, timestamp });
       logSecurityEvent("LEAD_QUOTE_SUBMITTED", req, { email, company, recommendedPlan });
 
-      // Emit lead event for cross-service handling (email notifications, CRM sync)
-      eventBus.emit(EventTypes.LEAD_CREATED, {
-        id: leadData.id,
-        name: `${firstName} ${lastName}`,
-        email,
-        company,
-        source: source || "quote_wizard",
-        message: `Recommended Plan: ${recommendedPlan}, Seats: ${seats}${contextLine ? `. ${contextLine}` : ""}`,
-      }, "lead-quote");
-
-      // Push lead to Zoho CRM
-      let zohoLeadId = null;
-      try {
-        const taxonomy = websiteLeadTaxonomy("quote_wizard");
-        const zohoLead = await zohoCRMService.createLead({
+      // Who to call and by when (issue 449). The Zoho scheduled call is the one
+      // record of it; the email and the Hub item carry the same deadline and
+      // point at the Zoho lead rather than tracking the call themselves.
+      const followUp = planLeadFollowUp({ plan: String(recommendedPlan), context });
+      const name = `${firstName} ${lastName}`;
+      const description = quoteLeadDescription({ recommendedPlan, seats, connectivity, devices, context });
+      const taxonomy = websiteLeadTaxonomy("quote_wizard");
+      const crm = await createQuoteLeadWithCall(zohoCRMService, {
+        lead: {
           First_Name: firstName,
           Last_Name: lastName,
           Email: email,
+          ...(phone ? { Phone: phone } : {}),
           Company: company || 'Not Specified',
           Lead_Source: taxonomy.leadSource,
           Lead_Status: taxonomy.leadStatus,
-          Description: quoteLeadDescription({ recommendedPlan, seats, connectivity, devices, context }),
-        });
-        zohoLeadId = (zohoLead as any)?.details?.id || zohoLead?.id;
-        console.log("[ZOHO] Quote wizard lead created:", zohoLeadId);
-      } catch (zohoError: any) {
-        console.error("[ZOHO] Failed to create quote lead (non-blocking):", zohoError.message);
-      }
+          Description: description,
+        },
+        name,
+        company: company || "",
+        phone,
+        plan: String(recommendedPlan),
+        description,
+        followUp,
+        assignmentRuleId: process.env.ZOHO_LEAD_ASSIGNMENT_RULE_ID || undefined,
+      });
+      const zohoLeadId = crm.zohoLeadId;
+      const crmLink = zohoLeadId ? zohoLeadUrl(zohoLeadId) : null;
+      if (zohoLeadId) console.log("[ZOHO] Quote wizard lead created:", zohoLeadId, "call:", crm.zohoCallId);
+
+      // One email and one Hub item for this lead; reminders come from the Zoho call, never more email.
+      eventBus.emit(EventTypes.LEAD_CREATED, {
+        id: leadData.id,
+        name,
+        email,
+        company,
+        phone,
+        source: source || "quote_wizard",
+        message: [
+          followUpHeadline(followUp, phone),
+          crmLink ? `Zoho lead and scheduled call: ${crmLink}` : "Zoho lead not created; call from this email.",
+          `Recommended Plan: ${recommendedPlan}, Seats: ${seats}${contextLine ? `. ${contextLine}` : ""}`,
+        ].join("\n"),
+        followUp: {
+          ...followUp,
+          zohoLeadId,
+          zohoCallId: crm.zohoCallId,
+          zohoLeadUrl: crmLink,
+          ownerId: crm.ownerId,
+        },
+      }, "lead-quote");
 
       res.json({
         success: true,

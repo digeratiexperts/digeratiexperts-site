@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
+import { isQuizRoomPath } from "@/lib/quizRoom";
 
 export function ScrollProgress() {
+  const [location] = useLocation();
   const [progress, setProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -28,7 +31,8 @@ export function ScrollProgress() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  if (!isVisible) return null;
+  // The quiz room has its own stage progress; a second bar would compete with it (issue 449).
+  if (!isVisible || isQuizRoomPath(location)) return null;
 
   return (
     <div 
