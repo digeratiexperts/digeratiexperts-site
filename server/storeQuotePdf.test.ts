@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { PDFDict, PDFDocument, PDFName } from "pdf-lib";
 import { canonicalizeQuoteItems } from "./storeQuoteCommerce";
 import { buildQuotePdf, buildQuotePdfHtml } from "./storeQuotePdf";
 
@@ -55,6 +56,23 @@ describe("store quote PDF", () => {
 
       expect(pdf.subarray(0, 5).toString("latin1")).toBe("%PDF-");
       expect(pdf.byteLength).toBeGreaterThan(1500);
+      // Finished for PDF/UA-1: tagged, identified, links described.
+      const text = pdf.toString("latin1");
+      expect(text).toContain("/StructTreeRoot");
+      expect(text).toContain("<pdfuaid:part>1</pdfuaid:part>");
+      expect(text).toContain("/DisplayDocTitle true");
+      // Every link annotation carries a text alternative (wording varies by renderer).
+      const doc = await PDFDocument.load(pdf);
+      let links = 0;
+      for (const page of doc.getPages()) {
+        for (const ref of page.node.Annots()?.asArray() ?? []) {
+          const a = doc.context.lookup(ref) as PDFDict;
+          if (a.get(PDFName.of("Subtype")) !== PDFName.of("Link")) continue;
+          links++;
+          expect(a.has(PDFName.of("Contents"))).toBe(true);
+        }
+      }
+      expect(links).toBeGreaterThan(0);
     },
     90_000,
   );
