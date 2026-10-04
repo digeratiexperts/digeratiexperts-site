@@ -1944,3 +1944,23 @@ claims:
       127.0.0.1:3300 and public HTTPS" at 00:44:51Z; /api/health returned
       ok with uptime matching the restart. No client/public files changed,
       so the skipped Cloudflare purge (token unset) left nothing stale.
+  - id: recraft-icons-skill
+    owner: claude
+    subsystem: tooling-skills
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: f9b6f78
+    files:
+      - .claude/skills/recraft-icons/** (new), .agents/skills/recraft-icons (new symlink)
+      - package.json (test:recraft-icons script only), .github/workflows/ci.yml (one test step)
+      - .env.example (RECRAFT_API_KEY line), docs/CONTENT-TOOLING-PLAN.md (Recraft row and step 2 only)
+      - AGENTS.md, CLAUDE.md (one skills-table row each; AGENTS key-handling sentence)
+    status: active
+    started: 2026-10-04
+    note: >-
+      Joe, 2026-10-04: "build the Recraft icon skill" (plan step 2). Node,
+      no dependencies; generate / create-style / check / clean; cleaner
+      rebuilds Recraft SVGs as a currentColor luminance mask so glyphs sit
+      beside Lucide in IconWell; offline tests in CI. No live call made:
+      RECRAFT_API_KEY is not set and recraft.ai is unreachable from the
+      build sandbox. Open PRs 429, 427, 421, 420, 413, 406 checked: only
+      421 touches CLAUDE.md (a different paragraph) and ledger claims.
