@@ -5,11 +5,23 @@
 
 import { logger } from "../logger";
 import { shouldBlockMutation } from "../stagingReviewGuard";
+import { COMPANY } from "@shared/companyContact";
 
 const ZEPTOMAIL_API_URL = "https://api.zeptomail.com/v1.1/email";
 const FROM_EMAIL = "noreply@digeratiexperts.com";
 const FROM_NAME = "Digerati Experts";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "info@digeratiexperts.com";
+
+/** Visitor-supplied text goes into these emails escaped. */
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]!);
+}
+
+/** Lead address and sales (#243 owner decision: both), without duplicates. */
+export function solutionFallbackRecipients(): string[] {
+  const sales = process.env.SALES_LEAD_EMAIL || COMPANY.salesEmail;
+  return Array.from(new Set([ADMIN_EMAIL, sales].map((address) => address.trim().toLowerCase()).filter(Boolean)));
+}
 
 interface EmailOptions {
   to: string | string[];
@@ -148,6 +160,75 @@ function baseEmailTemplate(content: string, title: string): string {
 
 // Notification Functions
 export const notificationService = {
+  /**
+   * A solution request the database could not take (#243). Sent straight to the
+   * lead address and sales, not through the event bus, whose listener also
+   * needs the database. Carries the full request so nothing depends on recovery.
+   */
+  async sendSolutionRequestFallback(request: {
+    reference: string;
+    contactName: string;
+    contactEmail: string;
+    contactPhone: string;
+    organizationName: string;
+    description: string;
+  }): Promise<boolean> {
+    const row = (label: string, value: string) =>
+      value ? `<tr><td style="padding: 8px 0; color: #888;">${label}:</td><td>${escapeHtml(value)}</td></tr>` : "";
+    const content = `
+      <h2>Solution request ${escapeHtml(request.reference)} (saved outside the database)</h2>
+      <p>The website database was unavailable when this request was submitted. It is held on the server and will be written to the database automatically when it recovers. Act on it from this email.</p>
+      <table style="width: 100%; margin: 20px 0;">
+        ${row("Reference", request.reference)}
+        ${row("Name", request.contactName)}
+        ${row("Email", request.contactEmail)}
+        ${row("Phone", request.contactPhone)}
+        ${row("Company", request.organizationName)}
+      </table>
+      <p style="background: #1a1a2e; padding: 15px; border-radius: 6px; white-space: pre-wrap;">${escapeHtml(request.description)}</p>
+    `;
+    return sendEmail({
+      to: solutionFallbackRecipients(),
+      subject: `Solution request ${request.reference}: ${request.organizationName || request.contactName}`,
+      htmlBody: baseEmailTemplate(content, "Solution request"),
+      textBody: [
+        `Solution request ${request.reference} (saved outside the database)`,
+        `Name: ${request.contactName}`,
+        `Email: ${request.contactEmail}`,
+        `Phone: ${request.contactPhone}`,
+        `Company: ${request.organizationName}`,
+        "",
+        request.description,
+      ].join("\n"),
+    });
+  },
+
+  /** The visitor's own confirmation with their reference (#243 owner decision: always). */
+  async sendSolutionRequestAcknowledgement(request: {
+    reference: string;
+    contactName: string;
+    contactEmail: string;
+  }): Promise<boolean> {
+    const firstName = request.contactName.trim().split(/\s+/)[0] || "there";
+    const content = `
+      <h2>We received your solution request</h2>
+      <p>Hi ${escapeHtml(firstName)},</p>
+      <p>Thank you. Your reference is <span class="highlight">${escapeHtml(request.reference)}</span>. Quote it if you contact us.</p>
+      <p>Digerati Experts will confirm package fit, scope, fulfillment and pricing with you before you commit to anything.</p>
+    `;
+    return sendEmail({
+      to: request.contactEmail,
+      subject: `Your Digerati Experts solution request ${request.reference}`,
+      htmlBody: baseEmailTemplate(content, "Solution request received"),
+      textBody: [
+        `Hi ${firstName},`,
+        "",
+        `Thank you. Your reference is ${request.reference}. Quote it if you contact us.`,
+        "Digerati Experts will confirm package fit, scope, fulfillment and pricing with you before you commit to anything.",
+      ].join("\n"),
+    });
+  },
+
   async sendNewLeadNotification(lead: {
     name: string;
     email: string;
