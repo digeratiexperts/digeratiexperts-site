@@ -4,7 +4,7 @@
     and launch the console.
 
 .DESCRIPTION
-    Put this file next to the DE-TechConsole-and-MSP-AI-Kit-*.zip you downloaded (or pass -ZipPath), then run:
+    Put this file next to the DE-TechTool-v*.zip you downloaded (or pass -ZipPath), then run:
 
         powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-DETechConsole.ps1
 
@@ -18,7 +18,7 @@
 
 .EXAMPLE
     .\Install-DETechConsole.ps1
-    .\Install-DETechConsole.ps1 -ZipPath C:\Temp\DE-TechTool-v1.5.0.zip -Sha256 <hash>
+    .\Install-DETechConsole.ps1 -ZipPath C:\Temp\DE-TechTool-v1.10.2-<buildId>.zip -Sha256 <hash>
     .\Install-DETechConsole.ps1 -NoLaunch
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]

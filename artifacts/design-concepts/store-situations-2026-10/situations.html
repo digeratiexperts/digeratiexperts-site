@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Situation Card Options</title>
+<style>
+@font-face{font-family:Inter;src:url(../../../client/public/fonts/inter-latin.woff2) format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Space Grotesk";src:url(../../../client/public/fonts/space-grotesk-latin.woff2) format("woff2");font-weight:300 700;font-display:swap}
+@font-face{font-family:Oxanium;src:url(../../../client/public/fonts/oxanium-latin.woff2) format("woff2");font-weight:200 800;font-display:swap}
+
+/* Values from client/src/index.css and client/src/styles/store-builder.css */
+:root{
+  --de-bg:#050312; --de-surface:#0a0a0a; --de-raised:#151217;
+  --de-paper:#f7f5f2; --de-paper-raised:#ffffff; --de-paper-hairline:rgba(26,18,16,.1);
+  --de-hairline:rgba(255,255,255,.1);
+  --magenta:#D3126A; --acc:29 111 242; --acc-ink:111 179 255;
+  --ink-strong:rgba(255,255,255,.92); --ink:rgba(255,255,255,.72); --ink-soft:rgba(255,255,255,.55);
+  --p-ink-strong:#050312; --p-ink:rgba(5,3,18,.78); --p-ink-soft:rgba(5,3,18,.6);
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:#000;color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif}
+.sheet-title{max-width:1240px;margin:0 auto;padding:40px 24px 8px;color:#fff}
+.sheet-title h1{font:700 32px/1.1 "Space Grotesk";margin:0 0 6px}
+.sheet-title p{margin:0;color:var(--ink-soft);max-width:70ch}
+
+/* One option */
+.option{max-width:1240px;margin:28px auto 56px;padding:0 24px}
+.option__tag{display:flex;gap:14px;align-items:baseline;margin-bottom:12px;color:#fff}
+.option__tag b{font:600 13px Oxanium;letter-spacing:.14em;color:#fff;background:var(--magenta);padding:4px 10px;border-radius:6px}
+.option__tag span{font:600 20px "Space Grotesk"}
+.option__tag em{font-style:normal;color:var(--ink-soft);font-size:14px}
+.frame{background:var(--de-bg);border:1px solid #222;border-radius:14px;overflow:hidden;padding:36px 32px 40px;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:40px;align-items:start}
+
+/* Chapter head (shared) */
+.step{font:600 12px Oxanium;letter-spacing:.16em;text-transform:uppercase;color:rgb(var(--acc-ink))}
+.chapter h2{font:600 30px/1.15 "Space Grotesk";color:var(--ink-strong);margin:8px 0 6px}
+.lede{margin:0;color:var(--ink);max-width:58ch}
+.cue{display:inline-flex;gap:6px;align-items:center;margin-top:18px;padding:5px 14px;border-radius:999px;border:1px solid rgb(var(--acc)/.55);background:rgb(var(--acc)/.14);color:rgb(var(--acc-ink));font:600 12px Inter;letter-spacing:.12em;text-transform:uppercase}
+
+/* Cell content (shared) */
+.grid{list-style:none;margin:20px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cell h3{font:600 17px/1.3 "Space Grotesk";color:var(--ink-strong);margin:0 0 6px}
+.cell .pressure{margin:0;color:var(--ink);font-size:14.5px}
+.cell .marks{margin:10px 0 0;font:500 10.5px/1.6 Oxanium;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+.cell .act{margin-top:16px;display:inline-flex;min-height:44px;align-items:center;padding:0 16px;border-radius:999px;border:1px solid rgb(var(--acc)/.7);color:rgb(var(--acc-ink));background:transparent;font:600 14px Inter;cursor:pointer}
+.cell .act:hover{background:rgb(var(--acc)/.12)}
+.cell .act:focus-visible{outline:2px solid var(--magenta);outline-offset:2px}
+.cell .foot{margin:12px 0 0;font-size:14px;color:var(--ink-soft)}
+.cell .foot a{color:rgb(var(--acc-ink));text-underline-offset:3px}
+
+/* Rail (shared) */
+.rail{position:sticky;top:20px;background:var(--de-raised);border:1px solid var(--de-hairline);border-radius:16px;padding:22px 20px}
+.rail h4{margin:0;font:700 22px "Space Grotesk";color:#fff}
+.rail .meta{font:500 12px Oxanium;color:rgb(var(--acc-ink));margin-top:4px}
+.rail hr{border:0;border-top:1px solid var(--de-hairline);margin:16px 0}
+.rail .row{display:flex;justify-content:space-between;font-size:14px;color:var(--ink)}
+.rail .row a{color:#fff;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.rail p{margin:0;font-size:14px;color:var(--ink)}
+.rail .primary{display:block;width:100%;margin-top:18px;min-height:46px;border:0;border-radius:999px;background:var(--magenta);opacity:.45;color:#fff;font:600 15px Inter}
+.rail small{display:block;margin-top:10px;color:var(--ink-soft);font-size:13.5px}
+
+/* Groups (used by D, E, F) */
+.group{margin-top:22px}
+.group__head{display:flex;align-items:center;gap:10px;margin:0 0 4px}
+.group__head h3{margin:0;font:600 13px Oxanium;letter-spacing:.16em;text-transform:uppercase}
+.group__head .count{font:500 12px Oxanium;color:var(--ink-soft)}
+.group__sub{margin:0;font-size:14px;color:var(--ink-soft)}
+
+/* ---------- A · Today ---------- */
+.A .cell{padding:20px 20px 22px;border:1px solid rgba(255,255,255,.09);border-top:3px solid rgba(255,255,255,.14);border-radius:16px;background:linear-gradient(160deg,rgb(var(--acc)/.07),var(--de-raised) 55%)}
+
+/* ---------- B · Paper chapter ---------- */
+.B .chapter{background:var(--de-paper);border-radius:20px;padding:28px 28px 32px;margin:-8px 0}
+.B .step{color:rgb(var(--acc))}
+.B h2,.B .cell h3{color:var(--p-ink-strong)}
+.B .lede,.B .cell .pressure{color:var(--p-ink)}
+.B .cell .marks,.B .cell .foot{color:var(--p-ink-soft)}
+.B .cue{color:#0b4fc4;background:rgb(var(--acc)/.1);border-color:rgb(var(--acc)/.45)}
+.B .cell{padding:20px;background:var(--de-paper-raised);border:1px solid var(--de-paper-hairline);border-top:3px solid rgb(var(--acc)/.85);border-radius:14px;box-shadow:0 1px 2px rgba(26,18,16,.05),0 8px 24px -16px rgba(26,18,16,.25)}
+.B .cell .act{color:#0b4fc4;border-color:#1d6ff2}
+.B .cell .act:hover{background:rgb(var(--acc)/.08)}
+.B .cell .foot a{color:#0b4fc4}
+
+/* ---------- C · Paper cards on dark ---------- */
+.C .cell{padding:20px;background:var(--de-paper);border-radius:14px;border-top:3px solid #1d6ff2}
+.C .cell h3{color:var(--p-ink-strong)}
+.C .cell .pressure{color:var(--p-ink)}
+.C .cell .marks,.C .cell .foot{color:var(--p-ink-soft)}
+.C .cell .act{color:#0b4fc4;border-color:#1d6ff2}
+.C .cell .act:hover{background:rgb(var(--acc)/.08)}
+.C .cell .foot a{color:#0b4fc4}
+
+/* ---------- D · Grouped panels, dark ---------- */
+.D .group{padding:18px 22px 6px;border-radius:18px;background:linear-gradient(180deg,rgb(var(--acc)/.09),var(--de-raised) 70%);border:1px solid rgba(255,255,255,.08)}
+.D .group__head h3{color:rgb(var(--acc-ink))}
+.D .group__head::before{content:"";width:4px;height:18px;border-radius:9px;background:rgb(var(--acc))}
+.D .grid{gap:0 28px;margin-top:6px}
+.D .cell{padding:18px 0 20px;border-top:1px solid rgba(255,255,255,.1)}
+
+/* ---------- E · Grouped panels, paper ---------- */
+.E .group{padding:18px 22px 6px;border-radius:18px;background:var(--de-paper)}
+.E .group__head h3{color:#0b4fc4}
+.E .group__head .count,.E .group__sub{color:var(--p-ink-soft)}
+.E .group__head::before{content:"";width:4px;height:18px;border-radius:9px;background:#1d6ff2}
+.E .grid{gap:0 28px;margin-top:6px}
+.E .cell{padding:18px 0 20px;border-top:1px solid var(--de-paper-hairline)}
+.E .cell h3{color:var(--p-ink-strong)}
+.E .cell .pressure{color:var(--p-ink)}
+.E .cell .marks,.E .cell .foot{color:var(--p-ink-soft)}
+.E .cell .act{color:#0b4fc4;border-color:#1d6ff2}
+.E .cell .act:hover{background:rgb(var(--acc)/.08)}
+.E .cell .foot a{color:#0b4fc4}
+
+/* ---------- F · No boxes, grouped hairlines ---------- */
+.F .group{margin-top:30px}
+.F .group__head h3{color:rgb(var(--acc-ink))}
+.F .grid{gap:0 32px;margin-top:4px}
+.F .cell{padding:18px 0 22px;border-top:1px solid var(--de-hairline);transition:border-color .2s var(--ease)}
+.F .cell:hover{border-top-color:rgb(var(--acc))}
+.F .group[data-tone="urgent"] .group__head h3{color:#ff7aa8}
+
+@media (max-width:900px){
+  .frame{grid-template-columns:1fr;padding:24px 16px 28px;gap:24px}
+  .rail{position:static}
+}
+@media (max-width:640px){
+  .grid{grid-template-columns:1fr}
+  .chapter h2{font-size:25px}
+  .B .chapter{padding:22px 16px 24px;margin:0 -4px}
+  .D .group,.E .group{padding:16px 16px 4px}
+  .option{padding:0 12px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="sheet-title">
+  <h1>Step 02 situation cards: six options</h1>
+  <p>Same copy, same buttons, same order of actions. Only the separation changes. A is what's live today.</p>
+</header>
+<main id="options"></main>
+
+<script>
+const PHONE = "325-480-9870";
+const L = {security_awareness:"Security Awareness & Human Risk",email_collaboration:"Email & Collaboration",identity_access:"Identity & Access",compliance_risk:"Compliance & Risk Readiness",backup_continuity:"Backup & Business Continuity",network_connectivity:"Network & Connectivity",business_communications:"Business Communications",hardware_lifecycle:"Hardware & Lifecycle",it_operations:"IT Operations & Support",documentation_standards:"Documentation & Standards",endpoint_devices:"Endpoint & Device Management",cybersecurity_operations:"Cybersecurity Operations",technology_strategy:"Technology Strategy"};
+const S = [
+ {id:"phishing-close-call",t:"A phishing or spoofed email got through",p:"Someone clicked, or a client got mail pretending to be us.",f:["security_awareness","email_collaboration","identity_access"],inc:1,g:"now"},
+ {id:"insurance-questionnaire",t:"Cyber-insurance renewal sent a questionnaire we can't answer",p:"The form asks about MFA, backups and evidence, and the answers have to be true.",f:["compliance_risk","identity_access","backup_continuity"],g:"prove"},
+ {id:"second-location",t:"We're opening a second office",p:"Day one needs internet, phones and working computers, and nobody has done this before.",f:["network_connectivity","business_communications","hardware_lifecycle"],g:"grow"},
+ {id:"it-person-left",t:"Our only IT person just left",p:"The passwords, the diagrams and the vendor logins walked out with them.",f:["it_operations","documentation_standards","endpoint_devices"],inc:1,g:"now"},
+ {id:"internal-it-stretched",t:"Our internal IT team is stretched thin",p:"Tickets pile up, patches slip, and security is whoever has time this week.",f:["it_operations","cybersecurity_operations","endpoint_devices"],g:"prove"},
+ {id:"new-hires-fast",t:"New hires need laptops and accounts fast",p:"People start Monday and the last onboarding took two weeks and three vendors.",f:["hardware_lifecycle","endpoint_devices","identity_access"],g:"grow"},
+ {id:"auditor-evidence",t:"A client or auditor asked for our policies and evidence",p:"A contract or an audit wants documents that do not exist yet.",f:["compliance_risk","documentation_standards","technology_strategy"],g:"prove"},
+ {id:"ransomware-recovery",t:"We don't know if we'd recover from ransomware",p:"There is a backup somewhere; nobody has restored from it.",f:["backup_continuity","cybersecurity_operations","endpoint_devices"],inc:1,g:"now"},
+ {id:"hybrid-byod",t:"Half the team works from home on their own devices",p:"Company data lives on personal laptops and phones nobody manages.",f:["endpoint_devices","identity_access","email_collaboration"],g:"grow"},
+ {id:"phone-contract-ending",t:"Our phone system is old and the contract is ending",p:"Numbers have to move without dropping a call, and the network has to carry them.",f:["business_communications","network_connectivity"],g:"grow"},
+];
+// Proposed grouping (new copy, for D/E/F only)
+const G = [
+ {k:"now",h:"Something just happened",sub:"Urgent. Call if it is happening right now.",tone:"urgent"},
+ {k:"grow",h:"We're growing or changing",sub:"New people, new places, new phones."},
+ {k:"prove",h:"We have to prove it or keep up",sub:"Insurers, auditors and an IT team out of hours."},
+];
+const OPTS = [
+ {k:"A",name:"Today",note:"Dark gradient cards on the dark page (live)",grouped:0},
+ {k:"B",name:"Paper chapter",note:"The whole step sits on warm paper; white cards with an electric top rule",grouped:0},
+ {k:"C",name:"Paper cards",note:"Dark page stays; each card is warm paper",grouped:0},
+ {k:"D",name:"Grouped panels, dark",note:"No card per situation; three tinted panels hold them, hairlines inside",grouped:1},
+ {k:"E",name:"Grouped panels, paper",note:"Three warm-paper panels on the dark page, hairlines inside",grouped:1},
+ {k:"F",name:"No boxes",note:"Group headings and hairlines only; the quietest option",grouped:1},
+];
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const cell = s => `<li class="cell"><h3>${esc(s.t)}</h3><p class="pressure">${esc(s.p)}</p>
+ <p class="marks">${s.f.map(x=>esc(L[x])).join(" · ")}</p>
+ <button type="button" class="act">Add these ${s.f.length}</button>
+ ${s.inc?`<p class="foot">Happening right now? <a href="tel:+13254809870">Call ${PHONE}</a></p>`:""}</li>`;
+const rail = `<aside class="rail" aria-label="Your Solution"><h4>Your Solution</h4><div class="meta">0 needs · not sized yet</div><hr>
+ <div class="row"><span>Add your counts to size this</span><a href="#">Size it</a></div><hr>
+ <p>Nothing added yet. Start from a situation or add a need.</p>
+ <button class="primary" disabled>Review Your Solution</button><small>Add at least one need</small></aside>`;
+document.getElementById("options").innerHTML = OPTS.map(o=>{
+  const body = o.grouped
+   ? G.map(g=>{const items=S.filter(s=>s.g===g.k);return `<section class="group" data-tone="${g.tone||""}" aria-labelledby="${o.k}-${g.k}">
+      <div class="group__head"><h3 id="${o.k}-${g.k}">${g.h}</h3><span class="count">${items.length}</span></div>
+      <p class="group__sub">${g.sub}</p><ul class="grid">${items.map(cell).join("")}</ul></section>`}).join("")
+   : `<ul class="grid">${S.map(cell).join("")}</ul>`;
+  return `<section class="option ${o.k}" id="opt-${o.k}" aria-label="Option ${o.k}">
+   <div class="option__tag"><b>${o.k}</b><span>${o.name}</span><em>${o.note}</em></div>
+   <div class="frame"><div class="chapter"><div class="step">02 ── Pain or need</div>
+   <h2>Start from a situation</h2><p class="lede">Pick the one that sounds like you. It adds the needs that situation calls for, and you can undo.</p>
+   <p class="cue">Start here ⌄</p>${body}</div>${rail}</div></section>`;
+}).join("");
+</script>
+</body>
+</html>

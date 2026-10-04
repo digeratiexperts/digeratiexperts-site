@@ -320,11 +320,19 @@ function Send-DEHubPayload {
     Preferred: a signed de-sync event (device.observed) to <Hub>/api/integrations/v1/techconsole/events, signed with
     the runtime secret DE_HUB_SIGNING_SECRET (TECHCONSOLE_TO_HUB_SECRET on the Hub). Legacy: a Bearer POST to the
     configured URL with DE_HUB_TOKEN. Nothing is sent when neither is present; the payload is saved for manual upload.
+    The Hub refuses a record with a secret-named key anywhere in it, so such keys (an apiToken a technician typed into
+    a note field, say) are left out of what is sent and of the saved copy rather than kept as [REDACTED]; the evidence
+    line names the keys that were left out. A refused send records the Hub's own reason, never the secret.
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param([Parameter(Mandatory = $true)]$Payload, [string]$Endpoint)
-    # the same scrub as the saved copy and the legacy POST: key names and secret-shaped values never reach the Hub
-    $Payload = Remove-DESecretKeys -Object $Payload
+    # Secret values are scrubbed as everywhere else, but secret-named keys are left out, not kept as [REDACTED]: the
+    # Hub refuses a record with such a key whatever its value, so one stray apiToken used to fail every send closed.
+    # Both name lists apply: the local scrub's and the contract's (the Hub's own, which also covers mfa, seed, pin).
+    $droppedKeys = New-Object System.Collections.Generic.List[string]
+    $Payload = Remove-DEContractSecretKeys -Object (Remove-DESecretKeys -Object $Payload -Drop -DroppedKeys $droppedKeys) -DroppedKeys $droppedKeys
+    $dropped = @($droppedKeys | Select-Object -Unique)
+    $leftOut = $(if ($dropped.Count) { " (left out secret-named field(s): $($dropped -join ', '))" } else { '' })
     $de = Get-DEConsole
     $file = Join-Path $de.Dirs.Evidence ("hub-payload-{0}-{1}.json" -f $env:COMPUTERNAME, (Get-Date -Format 'yyyyMMdd-HHmmss'))
     Set-DEJsonFile -Path $file -Object $Payload
@@ -338,17 +346,17 @@ function Send-DEHubPayload {
             $acct = "$((Get-DEContext)['hubAccountId'])"; if ($acct -notmatch '^[1-9]\d*$') { throw 'the client profile has no hub.accountId (the client''s Intelligence Hub account number), so the Hub cannot file this device' }
             $ev = New-DEHubEvent -EventType 'device.observed' -EntityId $Payload.deviceKey -Payload $Payload -AccountId $acct
             $resp = Send-DEHubEvent -BaseUrl $base -Event $ev -Secret (Get-DESecretSecure -Name 'DE_HUB_SIGNING_SECRET')
-            Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken "sent to Hub as signed event $($ev.eventId)" -Result 'PASS' -Verification $base | Out-Null
-            return @{ sent = $true; file = $file; response = $resp; eventId = $ev.eventId }
-        } catch { Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken 'signed send failed; saved for manual upload' -Result 'FAIL' -Verification $_.Exception.Message -Remediation $file | Out-Null; return @{ sent = $false; file = $file; error = $_.Exception.Message } }
+            Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken "sent to Hub as signed event $($ev.eventId)$leftOut" -Result 'PASS' -Verification $base | Out-Null
+            return @{ sent = $true; file = $file; response = $resp; eventId = $ev.eventId; leftOut = $dropped }
+        } catch { $why = Get-DEHubErrorReason -ErrorRecord $_; Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken "signed send failed; saved for manual upload$leftOut" -Result 'FAIL' -Verification $why -Remediation $file | Out-Null; return @{ sent = $false; file = $file; error = $why; leftOut = $dropped } }
     }
     if (-not ((Test-DESecret -Name 'DE_HUB_TOKEN') -or $env:DE_HUB_TOKEN)) { Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken 'saved for manual upload (no Hub token this session)' -Result 'WARN' -Verification $file | Out-Null; return @{ sent = $false; file = $file } }
     if (-not $PSCmdlet.ShouldProcess($Endpoint, 'POST device record')) { return @{ sent = $false; planned = $true; file = $file } }
     try {
         $resp = Invoke-DEJsonPost -Uri $Endpoint -Body $Payload -TokenSecret 'DE_HUB_TOKEN' -TokenEnv 'DE_HUB_TOKEN'
-        Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken "sent to Hub" -Result 'PASS' -Verification "$Endpoint" | Out-Null
+        Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken "sent to Hub$leftOut" -Result 'PASS' -Verification "$Endpoint" | Out-Null
         return @{ sent = $true; file = $file; response = $resp }
-    } catch { Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken 'send failed; saved for manual upload' -Result 'FAIL' -Verification $_.Exception.Message -Remediation $file | Out-Null; return @{ sent = $false; file = $file } }
+    } catch { $why = Get-DEHubErrorReason -ErrorRecord $_; Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken 'send failed; saved for manual upload' -Result 'FAIL' -Verification $why -Remediation $file | Out-Null; return @{ sent = $false; file = $file; error = $why } }
 }
 
 function Send-DEHubMigrationRecord {
@@ -356,7 +364,9 @@ function Send-DEHubMigrationRecord {
         Sends an email migration record (DE Microsoft Admin Export-DEMigrationRecord, contracts\migration.schema.json)
         to the Intelligence Hub as a signed email_migration.recorded event: the same endpoint (settings.hub.endpoint),
         signing secret (DE_HUB_SIGNING_SECRET, this session only) and account rule as the device record. The record is
-        checked against its contract and for secret-looking keys before anything is signed. Throws with the reason.
+        checked against its contract and for secret-looking keys before anything is signed (a migration record is built
+        by Export-DEMigrationRecord, so a secret-named key there is a bug and stops the send). Throws with the reason;
+        a refused send throws and records the Hub's own reason, never the secret.
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param([Parameter(Mandatory = $true)][string]$Path, [string]$AccountId, [string]$Endpoint)
@@ -372,7 +382,7 @@ function Send-DEHubMigrationRecord {
     $ev = New-DEHubEvent -EventType 'email_migration.recorded' -EntityId "$($rec.projectId)" -Payload $rec -AccountId $AccountId
     if (-not $PSCmdlet.ShouldProcess($base, "send signed email_migration.recorded for $($rec.projectId)")) { return @{ sent = $false; planned = $true; eventId = $ev.eventId } }
     try { $resp = Send-DEHubEvent -BaseUrl $base -Event $ev -Secret (Get-DESecretSecure -Name 'DE_HUB_SIGNING_SECRET') }
-    catch { Add-DEEvidence -Step 'hub.migration' -Module 'migration' -Before "record $($rec.projectId) ready" -ActionTaken 'signed send to the Hub failed' -Result 'FAIL' -Verification $_.Exception.Message -Remediation $Path | Out-Null; throw }
+    catch { $why = Get-DEHubErrorReason -ErrorRecord $_; Add-DEEvidence -Step 'hub.migration' -Module 'migration' -Before "record $($rec.projectId) ready" -ActionTaken 'signed send to the Hub failed' -Result 'FAIL' -Verification $why -Remediation $Path | Out-Null; throw "signed send to the Hub failed: $why" }
     Add-DEEvidence -Step 'hub.migration' -Module 'migration' -Before "record $($rec.projectId) ready" -ActionTaken "sent to the Hub as signed event $($ev.eventId)" -Result 'PASS' -Verification "$base : $($resp.status)" -Artifacts @($Path) | Out-Null
     return @{ sent = $true; eventId = $ev.eventId; response = $resp }
 }

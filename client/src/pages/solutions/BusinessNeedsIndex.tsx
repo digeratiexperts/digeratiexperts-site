@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Briefcase,
@@ -15,14 +15,20 @@ import {
   Shield,
   ShieldAlert,
   type LucideIcon,
-  ChevronDown,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardCheck,
+  Layers,
+  Lock,
+  PhoneCall,
 } from "lucide-react";
 import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
 import { useAnnouncer } from "@/components/AccessibleAnnouncer";
 import { Door2Frame } from "@/components/store/door2/Door2Frame";
 import { SolutionProfileForm } from "@/components/store/SolutionProfileForm";
-import { GridCell, HairGrid, LiveLine, StepLabel, StoreChapter, UndoRow } from "@/components/store/door2/primitives";
+import { LiveLine, StepLabel, UndoRow } from "@/components/store/door2/primitives";
 import { ScenarioTile } from "@/components/store/door2/ScenarioTile";
 import { SuggestionLine } from "@/components/store/door2/Guidance";
 import { SolutionBar, SolutionRail, type SolutionChromeProps } from "@/components/store/door2/SolutionChrome";
@@ -30,9 +36,9 @@ import { IconWell } from "@/components/visual/IconWell";
 import { useSEO } from "@/hooks/useSEO";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useStoreReveal } from "@/hooks/useStoreGuidance";
-import { useMinWidth, useSolutionDraft } from "@/hooks/useSolutionDraft";
+import { useSolutionDraft } from "@/hooks/useSolutionDraft";
 import { curatedSolutionFamilies, type CuratedSolutionFamily } from "@/data/curatedSolutions";
-import { composeScenario, solutionScenarios, type SolutionScenario } from "@/data/solutionScenarios";
+import { composeScenario, SCENARIO_GROUPS, solutionScenarios, type ScenarioGroupId, type SolutionScenario } from "@/data/solutionScenarios";
 import { BUSINESS_GOALS, familyPath, getFamilyById, SOLUTION_WORKSPACE_PATH, STORE_STEPS, type BusinessGoalId } from "@/lib/businessNeeds";
 import { suggestRelationship, type RelationshipSuggestion } from "@/lib/solutionGuidance";
 import {
@@ -59,6 +65,12 @@ import { PRIMARY_PHONE } from "@shared/companyContact";
  * five goal groups). Every add is in place with a persistent Undo; nothing
  * toasts, nothing moves focus, and the one magenta action is the rail's or
  * bar's "Review Your Solution".
+ *
+ * Layout: the flagship (Joe, 2026-10-04, concept 4 of
+ * artifacts/design-concepts/store-redesign-2026-10, apple.com/iphone grammar):
+ * a frosted local nav, a black hero with the thirteen families as one lit
+ * object, the situations as a gallery, the profile as a configurator, the
+ * families as a lineup beside the rail, a "why DE" carousel and a close.
  */
 
 type FamilyId = CuratedSolutionFamily["id"];
@@ -84,8 +96,39 @@ const FAMILY_ICONS: Record<FamilyId, LucideIcon> = {
   technology_strategy: ShieldAlert,
 };
 
-/** The three situations where someone may be mid-incident carry the phone in flow (§5.1 region 5). */
-const INCIDENT_SCENARIOS = new Set(["phishing-close-call", "ransomware-recovery", "it-person-left"]);
+/** Each goal's families share a finish, so a family reads the same in the hero, a situation card and the lineup. */
+type GlyphTone = "electric" | "graphite" | "paper";
+const GOAL_TONE: Record<BusinessGoalId, GlyphTone> = {
+  productive: "electric",
+  protect: "graphite",
+  requirements: "paper",
+  connect: "electric",
+  modernize: "graphite",
+};
+const FAMILY_GOAL = new Map<string, (typeof BUSINESS_GOALS)[number]>(BUSINESS_GOALS.flatMap((goal) => goal.familyIds.map((id) => [id, goal] as const)));
+const FAMILY_ORDER = BUSINESS_GOALS.flatMap((goal) => goal.familyIds);
+
+const GROUP_LABEL: Record<ScenarioGroupId, string> = Object.fromEntries(SCENARIO_GROUPS.map((group) => [group.id, group.heading])) as Record<ScenarioGroupId, string>;
+
+/** Why DE: the protected differentiators only (design/DESIGN-AUTHORITY.md Tier 1), each true of every family. */
+const WHY_DE: ReadonlyArray<{ icon: LucideIcon; title: string; line: string; feature?: boolean }> = [
+  { icon: Lock, title: "No payment here.", line: "DE confirms package fit, scope, fulfillment and pricing before you commit." },
+  { icon: KeyRound, title: "Your Technology. Your Data. Your Keys.", line: "You own the environment, the accounts and the documentation.", feature: true },
+  { icon: Layers, title: "Standalone or co-managed.", line: "Every family comes both ways: on its own, or beside your IT team." },
+  { icon: ClipboardCheck, title: "Sized from what you have.", line: "Your profile sizes every package. Recommendations start from your counts." },
+  { icon: FileText, title: "Everything gets written down.", line: "Documented environments, so nothing walks out the door with one person." },
+  { icon: PhoneCall, title: "A person when you need one.", line: `Call ${PRIMARY_PHONE.display}. Happening right now? Say so first.` },
+];
+
+function Glyph({ familyId, tone, className = "" }: { familyId: FamilyId; tone?: GlyphTone | "magenta"; className?: string }) {
+  const Icon = FAMILY_ICONS[familyId];
+  const finish = tone ?? GOAL_TONE[FAMILY_GOAL.get(familyId)?.id ?? "productive"];
+  return (
+    <span className={`d2-glyph d2-glyph--${finish} ${className}`} aria-hidden="true">
+      <Icon strokeWidth={1.5} />
+    </span>
+  );
+}
 
 function familyLabel(id: string): string {
   return getFamilyById(id)?.label ?? id;
@@ -118,20 +161,21 @@ type FamilyUndo = {
   source?: string;
 };
 
-function FamilyCell({
+function FamilyCard({
   family,
   included,
   undo,
   onToggle,
   onUndo,
+  revealIndex,
 }: {
   family: CuratedSolutionFamily;
   included: boolean;
   undo: boolean;
   onToggle: () => void;
   onUndo: () => void;
+  revealIndex: number;
 }) {
-  const Icon = FAMILY_ICONS[family.id];
   const lead = family.offers[0]?.outcomes[0];
   // The jelly settle keys on a transient attribute set on the tap, never on the steady aria-pressed state (§9).
   const [justSelected, setJustSelected] = useState(false);
@@ -141,37 +185,50 @@ function FamilyCell({
     return () => window.clearTimeout(timer);
   }, [justSelected]);
   return (
-    <GridCell
-      as="li"
-      testId={`family-card-${family.id}`}
-      state={included ? "added" : "idle"}
-      label={<IconWell icon={Icon} size="sm" />}
-      title={family.label}
-      href={familyPath(family.id)}
-      detail={family.description}
-      clampDetail
-      className="d2-cell--row"
+    <li
+      className="d2-fcard"
+      data-testid={`family-card-${family.id}`}
+      data-state={included ? "added" : "idle"}
+      data-d2-reveal=""
+      style={{ "--d2-delay": `${(revealIndex % 2) * 70}ms` } as CSSProperties}
     >
-      {lead ? <p className="d2-cell__lead d2-small d2-ink d2-clamp-2 w-full">{lead}</p> : null}
-      <button
-        type="button"
-        className="d2-toggle"
-        aria-pressed={included}
-        onClick={() => {
-          setJustSelected(true);
-          onToggle();
-        }}
-        data-de-just-selected={justSelected ? "true" : undefined}
-        data-testid={`family-toggle-${family.id}`}
-      >
-        {included ? "Added ✓" : "Add need"}
-      </button>
+      <Glyph familyId={family.id} className="d2-fcard__glyph" />
+      <p className="d2-fcard__goal">{FAMILY_GOAL.get(family.id)?.label}</p>
+      <h3 className="d2-fcard__title">
+        <Link href={familyPath(family.id)}>{family.label}</Link>
+      </h3>
+      <p className="d2-fcard__detail">{family.description}</p>
+      {lead ? (
+        <p className="d2-fcard__lead">
+          <Check className="h-[18px] w-[18px]" aria-hidden="true" />
+          {lead}
+        </p>
+      ) : null}
+      <div className="d2-fcard__acts">
+        <button
+          type="button"
+          className="d2-fcard__add"
+          aria-pressed={included}
+          onClick={() => {
+            setJustSelected(true);
+            onToggle();
+          }}
+          data-de-just-selected={justSelected ? "true" : undefined}
+          data-testid={`family-toggle-${family.id}`}
+        >
+          {included ? "Added ✓" : "Add need"}
+        </button>
+        {/* The title is the link; this visual repeat stays out of the tab order and the accessibility tree. */}
+        <Link href={familyPath(family.id)} className="d2-flag-more" tabIndex={-1} aria-hidden="true">
+          Learn more
+        </Link>
+      </div>
       {undo ? (
-        <div className="w-full">
+        <div className="d2-fcard__undo">
           <UndoRow text={`${family.label} removed`} onUndo={onUndo} testId={`family-undo-${family.id}`} />
         </div>
       ) : null}
-    </GridCell>
+    </li>
   );
 }
 
@@ -187,11 +244,11 @@ export default function BusinessNeedsIndex() {
   const [, navigate] = useLocation();
   const reducedMotion = useReducedMotion();
   useStoreReveal();
-  const twoColumns = useMinWidth(640);
-  const groupsOpenByWidth = useMinWidth(768);
 
   const [query, setQuery] = useState("");
-  const [openGroups, setOpenGroups] = useState<ReadonlySet<BusinessGoalId>>(() => new Set());
+  const [goalFilter, setGoalFilter] = useState<BusinessGoalId | "all">("all");
+  const [groupFilter, setGroupFilter] = useState<ScenarioGroupId | "all">("all");
+  const galleryRef = useRef<HTMLUListElement>(null);
   const [scenarioMoment, setScenarioMoment] = useState<ScenarioMoment | null>(null);
   const [familyUndo, setFamilyUndo] = useState<FamilyUndo | null>(null);
   const [pulseKey, setPulseKey] = useState(0);
@@ -344,23 +401,21 @@ export default function BusinessNeedsIndex() {
     ) : null;
 
   /* ---------------------------------------------------------------------- */
-  /* Families — five goal groups, search, disclosures under 768             */
+  /* Families — one goal at a time (or all), plus search                     */
   /* ---------------------------------------------------------------------- */
 
   const needle = query.trim().toLowerCase();
   const searching = needle.length > 0;
-  const groups = useMemo(
+  const families = useMemo(
     () =>
-      BUSINESS_GOALS.map((goal) => ({
-        goal,
-        families: goal.familyIds
-          .map((id) => getFamilyById(id))
-          .filter((family): family is CuratedSolutionFamily => family !== null && (!needle || FAMILY_HAYSTACK[family.id].includes(needle))),
-      })),
-    [needle],
+      FAMILY_ORDER.filter((id) => goalFilter === "all" || FAMILY_GOAL.get(id)?.id === goalFilter)
+        .map((id) => getFamilyById(id))
+        .filter((family): family is CuratedSolutionFamily => family !== null && (!needle || FAMILY_HAYSTACK[family.id].includes(needle))),
+    [goalFilter, needle],
   );
-  const total = groups.reduce((sum, group) => sum + group.families.length, 0);
-  const countText = !searching ? `${total} solutions shown` : total === 1 ? "1 solution matches" : `${total} solutions match`;
+  const total = families.length;
+  const narrowed = searching || goalFilter !== "all";
+  const countText = !narrowed ? `${total} solutions shown` : total === 1 ? "1 solution matches" : `${total} solutions match`;
 
   // The count line is plain text; the page's one live region hears it after the buyer pauses typing.
   useEffect(() => {
@@ -369,28 +424,16 @@ export default function BusinessNeedsIndex() {
     return () => window.clearTimeout(timer);
   }, [announce, countText, query, searching, total]);
 
-  const disclosureIds = useMemo(() => BUSINESS_GOALS.slice(1).map((goal) => goal.id), []);
-  const allShown = !searching && (groupsOpenByWidth || openGroups.size === disclosureIds.length);
-
   const showAll = () => {
     setQuery("");
-    setOpenGroups(new Set(disclosureIds));
+    setGoalFilter("all");
   };
-  const toggleAll = () => {
-    if (searching || groupsOpenByWidth) {
-      showAll();
-      return;
-    }
-    setOpenGroups(allShown ? new Set() : new Set(disclosureIds));
-  };
-  const setGroupOpen = (id: BusinessGoalId, open: boolean) => {
-    setOpenGroups((current) => {
-      if (current.has(id) === open) return current;
-      const next = new Set(current);
-      if (open) next.add(id);
-      else next.delete(id);
-      return next;
-    });
+
+  const scenarios = groupFilter === "all" ? solutionScenarios : solutionScenarios.filter((scenario) => scenario.group === groupFilter);
+  const page = (direction: 1 | -1) => {
+    const gallery = galleryRef.current;
+    if (!gallery) return;
+    gallery.scrollBy({ left: direction * Math.max(320, gallery.clientWidth * 0.8), behavior: reducedMotion ? "auto" : "smooth" });
   };
 
   /* ---------------------------------------------------------------------- */
@@ -414,236 +457,293 @@ export default function BusinessNeedsIndex() {
     compactVariant: "primary",
   };
 
-  const momentIndex = scenarioMoment ? solutionScenarios.findIndex((scenario) => scenario.id === scenarioMoment.scenarioId) : -1;
-  const momentScenario = momentIndex >= 0 ? solutionScenarios[momentIndex] : null;
-  // The Undo row spans the grid, so it sits under the row that holds the tapped tile and nothing shifts.
-  const undoAfterIndex =
-    momentIndex < 0 ? -1 : Math.min(solutionScenarios.length - 1, twoColumns ? Math.floor(momentIndex / 2) * 2 + 1 : momentIndex);
+  const momentScenario = scenarioMoment ? solutionScenarios.find((scenario) => scenario.id === scenarioMoment.scenarioId) ?? null : null;
+  const needCount = draft.needs.length;
+  const sculpture = [...FAMILY_ORDER, null, null, null] as Array<FamilyId | null>;
 
   return (
     <Door2Frame intensity={0.44} jelly>
       <MegaMenu />
-          <main id="main-content" tabIndex={-1} className="d2-main de-nav-clear">
-            <header className="d2-chapter d2-chapter--first" data-testid="store-enter">
+      <main id="main-content" tabIndex={-1} className="d2-flag de-nav-clear">
+        <div className="d2-flag-lnav" role="region" aria-label="Store">
+          <div className="d2-flag-wrap d2-flag-lnav__row">
+            <p className="d2-flag-lnav__title">Store</p>
+            <nav className="d2-flag-lnav__links" aria-label="Store sections">
+              <a href="#situations">Situations</a>
+              <a href="#profile">Size it</a>
+              <a href="#families">Families</a>
+              <a href="#why">Why DE</a>
+            </nav>
+            <Link href={SOLUTION_WORKSPACE_PATH} className="d2-flag-lnav__solution" data-testid="store-local-solution">
+              Your Solution
+              <span className="d2-flag-lnav__count" aria-label={needCount === 1 ? "1 need" : `${needCount} needs`}>
+                {needCount}
+              </span>
+            </Link>
+          </div>
+        </div>
+
+        <header className="d2-flag-hero" data-testid="store-enter">
+          <div className="d2-flag-wrap d2-flag-hero__grid">
+            <div className="min-w-0">
               <StepLabel>SOLVE A BUSINESS NEED</StepLabel>
-              <h1 className="d2-display d2-measure" data-testid="heading-business-needs">
-                Start with your business. Then solve what hurts.
+              <h1 className="d2-flag-hero__title" data-testid="heading-business-needs">
+                Start with your business. <span>Then solve what hurts.</span>
               </h1>
-              <p className="d2-lede d2-ink d2-measure mt-5">
-                Tell us what you have once. Pick what needs attention. DE sizes a solution you can send for a real quote. No payment here.
+              <p className="d2-flag-hero__lede">
+                <strong>Tell us what you have once.</strong> Pick what needs attention. DE sizes a solution you can send for a real quote.
               </p>
-              <nav aria-label="Pathways" className="d2-pathways" data-testid="pathways">
-                <div className="d2-pathways__row">
-                  <p className="d2-pathways__item">
-                    <span className="d2-pathways__mark d2-label" aria-hidden="true">A</span>
-                    <Link href={HANDLE_OUR_IT_PATH} data-testid="link-handle-our-it">Handle Our IT</Link>
-                    <span className="d2-pathways__kind d2-small">One accountable team for the technology.</span>
-                  </p>
-                  <p className="d2-pathways__item">
-                    <span className="d2-pathways__mark d2-label" aria-hidden="true">B</span>
-                    <span aria-current="page">Solve a Business Need · You are here</span>
-                    <span className="d2-pathways__kind d2-small">Something specific is in the way. A package with a start and an end.</span>
-                  </p>
-                  <p className="d2-pathways__item">
-                    <span className="d2-pathways__mark d2-label" aria-hidden="true">C</span>
-                    <a href={portalMarketplaceLoginUrl()} data-testid="link-client-marketplace">Client Marketplace</a>
-                    <span className="d2-pathways__kind d2-small">Already a client? Continue in the Client Marketplace.</span>
-                  </p>
-                </div>
-                <p className="d2-pathways__sentence d2-small">
-                  Want DE to run all of IT?{" "}
-                  <Link href={HANDLE_OUR_IT_PATH} className="d2-link">Handle Our IT</Link> · Already a client?{" "}
-                  <a href={portalMarketplaceLoginUrl()} className="d2-link">Client Marketplace</a>
-                </p>
+              <div className="d2-flag-hero__ctas">
+                <a href="#situations" className="d2-action d2-action--primary">
+                  Start from a situation
+                </a>
+                <a href="#profile" className="d2-flag-more">
+                  Size it to your business
+                </a>
+              </div>
+              <nav aria-label="Pathways" className="d2-flag-hero__paths d2-small" data-testid="pathways">
+                No payment here. Want DE to run all of IT?{" "}
+                <Link href={HANDLE_OUR_IT_PATH} className="d2-link" data-testid="link-handle-our-it">
+                  Handle Our IT
+                </Link>{" "}
+                · Already a client?{" "}
+                <a href={portalMarketplaceLoginUrl()} className="d2-link" data-testid="link-client-marketplace">
+                  Client Marketplace
+                </a>
               </nav>
               {!storageOk ? (
-                <LiveLine className="mt-6" testId="storage-line">
+                <LiveLine className="mt-4" testId="storage-line">
                   Not saving on this device
                 </LiveLine>
               ) : null}
-            </header>
-
-            <div className="d2-layout">
-              <div className="min-w-0">
-                <StoreChapter id="profile" n="01" eyebrow="Profile" srText={STORE_STEPS[0].sr} testId="store-profile">
-                  <SolutionProfileForm
-                    environment={draft.environment}
-                    onChange={setProfile}
-                    headingLevel={2}
-                    description="Four counts and two facts. Then every package sizes itself. Skip for now if you like; it is needed before you submit."
-                    expandKey={expandKey}
-                    suggestionSlot={profileSuggestionSlot}
-                  />
-                </StoreChapter>
-
-                <StoreChapter
-                  id="situations"
-                  n="02"
-                  eyebrow="Pain or need"
-                  srText={STORE_STEPS[1].sr}
-                  heading="Start from a situation"
-                  lede="Pick the one that sounds like you. It adds the needs that situation calls for, and you can undo."
-                  testId="store-situations"
-                >
-                  {draft.needs.length === 0 ? (
-                    <p className="d2-cue mt-6" data-testid="store-start-here">
-                      Start here
-                      <ChevronDown className="d2-cue__chevron h-4 w-4" aria-hidden="true" />
-                    </p>
-                  ) : null}
-                  <HairGrid cols={2} as="ul" className="mt-6 d2-grid--cards">
-                    {solutionScenarios.map((scenario, index) => (
-                      <Fragment key={scenario.id}>
-                        <ScenarioTile
-                          scenario={scenario}
-                          compose={composeScenario(scenario, familyIds)}
-                          onStart={startScenario}
-                          onReview={() => navigate(SOLUTION_WORKSPACE_PATH)}
-                          revealIndex={index}
-                          footer={
-                            INCIDENT_SCENARIOS.has(scenario.id) ? (
-                              <>
-                                Happening right now?{" "}
-                                <a href={PRIMARY_PHONE.telHref} className="d2-link" aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
-                                  Call {PRIMARY_PHONE.display}
-                                </a>
-                              </>
-                            ) : undefined
-                          }
-                        />
-                        {scenarioMoment && index === undoAfterIndex ? (
-                          <li className="min-w-0 d2-grid__span" data-testid="scenario-moment">
-                            <UndoRow text={`Added ${scenarioMoment.added.map(familyLabel).join(", ")}`} onUndo={undoScenario} testId="scenario-undo" />
-                            <ul className="d2-rows d2-small d2-ink-soft mt-2" data-testid="scenario-why">
-                              {scenarioMoment.added.map((familyId) => (
-                                <li key={familyId}>
-                                  <span className="d2-ink-strong">{familyLabel(familyId)}</span> · {momentScenario?.why[familyId] ?? ""}
-                                </li>
-                              ))}
-                            </ul>
-                            {renderScenarioSuggestion("scenario-suggestion")}
-                          </li>
-                        ) : null}
-                      </Fragment>
-                    ))}
-                  </HairGrid>
-                </StoreChapter>
-
-
-                <StoreChapter
-                  id="families"
-                  n="02"
-                  eyebrow="Pain or need"
-                  srText={STORE_STEPS[1].sr}
-                  heading="Or pick a family"
-                  lede="Thirteen families, grouped by what you are trying to do. Open one for the full package, or add it from here."
-                  testId="business-needs-families"
-                >
-                  <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Business goals">
-                      <button type="button" className="d2-toggle" aria-pressed={allShown} onClick={toggleAll} data-testid="business-goal-all">
-                        All
-                      </button>
-                      {BUSINESS_GOALS.map((goal) => (
-                        <a
-                          key={goal.id}
-                          href={`#goal-${goal.id}`}
-                          className="d2-toggle"
-                          onClick={() => setGroupOpen(goal.id, true)}
-                          data-testid={`business-goal-${goal.id}`}
-                        >
-                          {goal.label}
-                        </a>
-                      ))}
-                    </div>
-                    <label className="d2-field d2-search">
-                      <span className="sr-only">Search needs</span>
-                      <input
-                        className="d2-input"
-                        type="text"
-                        inputMode="search"
-                        autoComplete="off"
-                        placeholder="Search needs"
-                        value={query}
-                        onChange={(event) => setQuery(event.target.value)}
-                        data-testid="families-search"
-                      />
-                    </label>
-                  </div>
-
-                  <LiveLine className="mt-4" testId="families-count">
-                    {searching && total === 0 ? (
-                      <>
-                        Nothing matches “{query.trim()}”.{" "}
-                        <button type="button" className="d2-action d2-action--quiet" onClick={() => setQuery("")}>
-                          Clear search
-                        </button>{" "}
-                        ·{" "}
-                        <button type="button" className="d2-action d2-action--quiet" onClick={showAll}>
-                          Show all
-                        </button>
-                      </>
-                    ) : (
-                      countText
-                    )}
-                  </LiveLine>
-
-                  {groups.map(({ goal, families }, index) => {
-                    if (families.length === 0) return null;
-                    const headingId = `goal-${goal.id}`;
-                    const cells = (
-                      <HairGrid cols={4} as="ul" className="d2-grid--rows mt-4">
-                        {families.map((family) => (
-                          <FamilyCell
-                            key={family.id}
-                            family={family}
-                            included={includedIds.has(family.id)}
-                            undo={familyUndo?.familyId === family.id}
-                            onToggle={() => toggleFamily(family)}
-                            onUndo={undoRemove}
-                          />
-                        ))}
-                      </HairGrid>
-                    );
-                    const disclosed = index > 0 && !groupsOpenByWidth && !searching;
-                    if (disclosed) {
-                      return (
-                        <details
-                          key={goal.id}
-                          className="d2-group d2-group--card"
-                          data-d2-reveal=""
-                          open={openGroups.has(goal.id)}
-                          onToggle={(event) => setGroupOpen(goal.id, event.currentTarget.open)}
-                          data-testid={`goal-group-${goal.id}`}
-                        >
-                          <summary>
-                            <h3 id={headingId} className="d2-h3">
-                              {goal.label}
-                            </h3>
-                          </summary>
-                          {cells}
-                        </details>
-                      );
-                    }
-                    return (
-                      <section key={goal.id} className="d2-group d2-group--card" aria-labelledby={headingId} data-testid={`goal-group-${goal.id}`} data-d2-reveal="">
-                        <h3 id={headingId} className="d2-h3">
-                          {goal.label}
-                        </h3>
-                        {cells}
-                      </section>
-                    );
-                  })}
-                </StoreChapter>
-
-                <p className="d2-chapter d2-small d2-ink-soft d2-measure" data-testid="store-close">
-                  {SANCTIONED_CLOSE}
-                </p>
+            </div>
+            <div className="d2-sculpt" aria-hidden="true">
+              <div className="d2-sculpt__plane">
+                {sculpture.map((id, index) =>
+                  id ? (
+                    <span key={id} className="d2-sculpt__cell" style={{ "--z": `${(index * 37) % 60}px`, "--dl": `${-(index * 0.7)}s` } as CSSProperties}>
+                      <Glyph familyId={id} tone={index === 6 ? "magenta" : undefined} />
+                    </span>
+                  ) : (
+                    <span key={`empty-${index}`} className="d2-sculpt__cell d2-sculpt__cell--empty" />
+                  ),
+                )}
               </div>
+            </div>
+          </div>
+        </header>
 
+        <section id="situations" className="d2-flag-sec d2-flag-sec--mist d2-light" aria-labelledby="situations-heading" data-testid="store-situations">
+          <div className="d2-flag-wrap">
+            <div className="d2-flag-head" data-d2-reveal="">
+              <h2 id="situations-heading" className="d2-flag-head__title">
+                <span className="sr-only">{STORE_STEPS[1].sr}: </span>
+                Start from a situation. <span>Pick the one that sounds like you.</span>
+              </h2>
+              <p className="d2-flag-head__aside">It adds the needs that situation calls for, and you can undo.</p>
+            </div>
+            <div className="d2-flag-seg" role="group" aria-label="Situation groups">
+              <button type="button" aria-pressed={groupFilter === "all"} onClick={() => setGroupFilter("all")}>
+                All situations
+              </button>
+              {SCENARIO_GROUPS.map((group) => (
+                <button key={group.id} type="button" aria-pressed={groupFilter === group.id} onClick={() => setGroupFilter(group.id)}>
+                  {group.heading}
+                </button>
+              ))}
+            </div>
+            <ul className="d2-gallery" ref={galleryRef} aria-label="Situations" tabIndex={0}>
+              {scenarios.map((scenario, index) => (
+                <ScenarioTile
+                  key={scenario.id}
+                  scenario={scenario}
+                  compose={composeScenario(scenario, familyIds)}
+                  onStart={startScenario}
+                  onReview={() => navigate(SOLUTION_WORKSPACE_PATH)}
+                  revealIndex={index}
+                  variant="card"
+                  groupLabel={GROUP_LABEL[scenario.group]}
+                  tone={scenario.group === "now" ? "urgent" : index % 2 ? "white" : "black"}
+                  art={scenario.familyIds.map((id) => (
+                    <Glyph key={id} familyId={id} className="d2-gcard__glyph" />
+                  ))}
+                  footer={
+                    scenario.group === "now" ? (
+                      <>
+                        Happening now?{" "}
+                        <a href={PRIMARY_PHONE.telHref} aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
+                          Call {PRIMARY_PHONE.display}
+                        </a>
+                      </>
+                    ) : undefined
+                  }
+                />
+              ))}
+            </ul>
+            <div className="d2-flag-paddles">
+              <button type="button" className="d2-flag-paddle" aria-label="Previous situations" onClick={() => page(-1)}>
+                <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+              </button>
+              <button type="button" className="d2-flag-paddle" aria-label="Next situations" onClick={() => page(1)}>
+                <ChevronRight className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </div>
+            {scenarioMoment ? (
+              <div className="d2-flag-moment" data-testid="scenario-moment">
+                <UndoRow text={`Added ${scenarioMoment.added.map(familyLabel).join(", ")}`} onUndo={undoScenario} testId="scenario-undo" />
+                <ul className="d2-rows d2-small d2-ink-soft mt-2" data-testid="scenario-why">
+                  {scenarioMoment.added.map((familyId) => (
+                    <li key={familyId}>
+                      <span className="d2-ink-strong">{familyLabel(familyId)}</span> · {momentScenario?.why[familyId] ?? ""}
+                    </li>
+                  ))}
+                </ul>
+                {renderScenarioSuggestion("scenario-suggestion")}
+              </div>
+            ) : null}
+          </div>
+        </section>
+
+        <section id="profile" className="d2-flag-sec d2-light" aria-labelledby="profile-heading" data-testid="store-profile">
+          <div className="d2-flag-wrap d2-flag-config">
+            <div data-d2-reveal="">
+              <p className="d2-flag-eyebrow">{STORE_STEPS[0].sr}</p>
+              <h2 id="profile-heading" className="d2-flag-head__title">
+                Size it once. <span>Every package follows.</span>
+              </h2>
+              <p className="d2-flag-config__lede">Four counts and two facts. Skip for now if you like; it is needed before you submit.</p>
+            </div>
+            <div className="d2-flag-config__form">
+              <SolutionProfileForm
+                environment={draft.environment}
+                onChange={setProfile}
+                heading="Your counts"
+                headingLevel={3}
+                description="Users, computers, mobile devices and sites, then who owns the devices and who does IT."
+                expandKey={expandKey}
+                collapsible={false}
+                suggestionSlot={profileSuggestionSlot}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section id="families" className="d2-flag-sec d2-flag-sec--mist d2-light" aria-labelledby="families-heading" data-testid="business-needs-families">
+          <div className="d2-flag-wrap">
+            <div className="d2-flag-head" data-d2-reveal="">
+              <h2 id="families-heading" className="d2-flag-head__title">
+                Explore the families. <span>Thirteen ways to fix what hurts.</span>
+              </h2>
+              <p className="d2-flag-head__aside">Open one for the full package, or add it from here.</p>
+            </div>
+            <div className="d2-flag-tools">
+              <div className="d2-flag-seg" role="group" aria-label="Business goals">
+                <button type="button" aria-pressed={goalFilter === "all"} onClick={() => setGoalFilter("all")} data-testid="business-goal-all">
+                  All
+                </button>
+                {BUSINESS_GOALS.map((goal) => (
+                  <button key={goal.id} type="button" aria-pressed={goalFilter === goal.id} onClick={() => setGoalFilter(goal.id)} data-testid={`business-goal-${goal.id}`}>
+                    {goal.label}
+                  </button>
+                ))}
+              </div>
+              <label className="d2-flag-search">
+                <span className="sr-only">Search needs</span>
+                <input
+                  type="text"
+                  inputMode="search"
+                  autoComplete="off"
+                  placeholder="Search needs"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  data-testid="families-search"
+                />
+              </label>
+            </div>
+            <LiveLine className="mt-1" testId="families-count">
+              {total === 0 ? (
+                <>
+                  Nothing matches{searching ? ` “${query.trim()}”` : ""}.{" "}
+                  <button type="button" className="d2-action d2-action--quiet" onClick={showAll}>
+                    Show all
+                  </button>
+                </>
+              ) : (
+                countText
+              )}
+            </LiveLine>
+            <div className="d2-flag-shop">
+              <ul className="d2-lineup">
+                {families.map((family, index) => (
+                  <FamilyCard
+                    key={family.id}
+                    family={family}
+                    included={includedIds.has(family.id)}
+                    undo={familyUndo?.familyId === family.id}
+                    onToggle={() => toggleFamily(family)}
+                    onUndo={undoRemove}
+                    revealIndex={index}
+                  />
+                ))}
+                <li className="d2-fcard d2-fcard--help" data-d2-reveal="">
+                  <span className="d2-glyph d2-glyph--magenta d2-fcard__glyph" aria-hidden="true">
+                    <PhoneCall strokeWidth={1.5} />
+                  </span>
+                  <h3 className="d2-fcard__title">Not sure which one?</h3>
+                  <p className="d2-fcard__detail">Tell us what is going on and DE points you at the right families.</p>
+                  <div className="d2-fcard__acts">
+                    <a href={PRIMARY_PHONE.telHref} className="d2-fcard__add" aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
+                      Call {PRIMARY_PHONE.display}
+                    </a>
+                  </div>
+                </li>
+              </ul>
               <SolutionRail {...chrome} />
             </div>
-          </main>
+            <p className="d2-small d2-ink-soft d2-measure mt-10" data-testid="store-close">
+              {SANCTIONED_CLOSE}
+            </p>
+          </div>
+        </section>
+
+        <section id="why" className="d2-flag-sec d2-flag-sec--dark" aria-labelledby="why-heading">
+          <div className="d2-flag-wrap">
+            <div className="d2-flag-head" data-d2-reveal="">
+              <h2 id="why-heading" className="d2-flag-head__title">
+                Why DE is the place to solve it. <span>No catalog games.</span>
+              </h2>
+            </div>
+            <ul className="d2-why" aria-label="Why DE" tabIndex={0}>
+              {WHY_DE.map((item, index) => (
+                <li key={item.title} className={`d2-why__card${item.feature ? " d2-why__card--feature" : ""}`} data-d2-reveal="" style={{ "--d2-delay": `${(index % 3) * 70}ms` } as CSSProperties}>
+                  <span className="d2-why__icon" aria-hidden="true">
+                    <item.icon className="h-[22px] w-[22px]" />
+                  </span>
+                  <h3 className="d2-why__title">{item.title}</h3>
+                  <p className="d2-why__line">{item.line}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        <section className="d2-flag-close d2-light" aria-labelledby="close-heading">
+          <div className="d2-flag-wrap" data-d2-reveal="">
+            <h2 id="close-heading" className="d2-flag-close__title">
+              Not sure where to start?
+            </h2>
+            <p className="d2-flag-close__lede">Pick the situation closest to yours. It adds the right needs, and you can undo anything.</p>
+            <div className="d2-flag-close__ctas">
+              <a href="#situations" className="d2-flag-pill">
+                Start from a situation
+              </a>
+              <a href={PRIMARY_PHONE.telHref} className="d2-flag-more" aria-label={`Talk to DE: call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
+                Talk to DE · {PRIMARY_PHONE.display}
+              </a>
+            </div>
+          </div>
+        </section>
+      </main>
       <SolutionBar {...chrome} />
       <DigeratiEnhancedFooterSection variant="store" />
     </Door2Frame>
