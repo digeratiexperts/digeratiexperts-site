@@ -61,6 +61,10 @@ def run():
 
     api_key = _kie.load_api_key()
 
+    # Repo-wide kie.ai budget gate (.claude/kie-budget): refuses before any spend.
+    _kie.budget_gate(_kie.MODEL, payload["input"]["resolution"])
+    balance_before = _kie.balance(api_key)
+
     print("Creating task via kie.ai API...")
     try:
         response = _kie.requests.post(_kie.CREATE_URL, headers=_kie.headers(api_key), json=payload, timeout=30)
@@ -94,6 +98,11 @@ def run():
         except Exception as e:
             print(f"ERROR downloading image: {e}")
             sys.exit(1)
+        balance_after = _kie.balance(api_key)
+        spent = data.get("creditsConsumed")
+        if spent is None and balance_before is not None and balance_after is not None:
+            spent = balance_before - balance_after
+        _kie.budget_record(_kie.MODEL, spent if spent is not None else 8, task_id, output_file)
         manifest = _kie.write_manifest(output_file, {
             "provider": "kie.ai",
             "taskId": task_id,

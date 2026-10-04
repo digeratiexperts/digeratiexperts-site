@@ -1,0 +1,18 @@
+{
+  "_doc": "kie.ai spend limits. Joe owns this file. Amounts are US dollars. A job is one named piece of work (e.g. 'store-flagship-imagery'). Soft limit: the gate stops and needs --soft-ok \"<Joe, date>\" to go past it. Hard limit: the gate always refuses; only editing this file raises it. See README.md.",
+  "usdPerCredit": 0.005,
+  "_usdPerCreditSource": "kie.ai lists Nano Banana 2 at 1K from $0.04, which the API debits as 8 credits (scrollcraft probe 2026-09-02): $0.005 per credit. Re-check when topping up.",
+  "limits": {
+    "job": { "soft": 2.0, "hard": 5.0 },
+    "month": { "soft": 25.0, "hard": 50.0 }
+  },
+  "models": {
+    "nano-banana-2": { "credits": { "1K": 8, "2K": 12, "4K": 18 }, "note": "1K listed; 2K/4K are estimates until a real run records them" },
+    "google/nano-banana": { "credits": { "default": 4 }, "note": "excalidraw-visuals" },
+    "gpt-image-2-text-to-image": { "credits": { "default": 9 } },
+    "flux-2/pro-text-to-image": { "credits": { "default": 5 } },
+    "seedream/5-pro-text-to-image": { "credits": { "default": 28 } },
+    "kling/v2-1-pro": { "creditsPerSecond": 20, "note": "video; estimate, verify on kie.ai before the first job" },
+    "veo3_fast": { "creditsPerSecond": 22, "note": "video; estimate (~$0.11/s), verify on kie.ai before the first job" }
+  }
+}

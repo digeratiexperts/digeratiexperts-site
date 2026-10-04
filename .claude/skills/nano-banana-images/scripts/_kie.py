@@ -144,3 +144,42 @@ def poll_until_done(api_key, task_id, timeout_s=600, first_delay=4.0, max_delay=
             return data
         delay = min(delay * 1.25, max_delay)
     return {"state": "timeout"}
+
+
+BUDGET = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "kie-budget", "budget.mjs")
+
+
+def balance(api_key):
+    """Credit balance, or None when it cannot be read."""
+    try:
+        r = requests.get(CREDIT_URL, headers=headers(api_key), timeout=15)
+        body = r.json()
+        return float(body.get("data")) if body.get("code") == 200 else None
+    except Exception:
+        return None
+
+
+def budget_gate(model, resolution=None):
+    """Ask the repo-wide budget gate (.claude/kie-budget) before any spend; exit 2 when it refuses."""
+    import subprocess
+    argv = ["node", BUDGET, "gate", "--job", os.environ.get("KIE_JOB", ""), "--model", model]
+    if resolution:
+        argv += ["--resolution", str(resolution)]
+    r = subprocess.run(argv, capture_output=True, text=True)
+    sys.stderr.write(r.stdout + r.stderr)
+    if r.returncode != 0:
+        sys.stderr.write("kie.ai budget gate refused; nothing was sent. Open a job first:\n"
+                         "  node .claude/kie-budget/budget.mjs open --job <name> --model <id> --count <n>\n"
+                         "  then run with KIE_JOB=<name>\n")
+        sys.exit(2)
+
+
+def budget_record(model, credits, task_id=None, output_file=None):
+    import subprocess
+    argv = ["node", BUDGET, "record", "--job", os.environ.get("KIE_JOB", ""), "--model", model, "--credits", str(credits)]
+    if task_id:
+        argv += ["--task", task_id]
+    if output_file:
+        argv += ["--file", output_file]
+    r = subprocess.run(argv, capture_output=True, text=True)
+    sys.stderr.write(r.stdout + r.stderr)
