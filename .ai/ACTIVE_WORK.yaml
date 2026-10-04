@@ -1926,7 +1926,7 @@ claims:
       - vite.config.ts (imagetools plugin registration only), client/src/imagetools.d.ts (new)
       - .mcp.json, .cursor/mcp.json (new), .cursor/rules/content-tooling.mdc (new)
       - AGENTS.md, CLAUDE.md, GEMINI.md (pointer lines only)
-    status: active
+    status: verified-live
     started: 2026-10-04
     note: >-
       Joe, 2026-10-04: "yes start the step 1 PR, we need all AI and IDE
@@ -1937,3 +1937,10 @@ claims:
       existed (client/src/components/JsonLd.tsx), so not touched. Open PRs
       427, 426, 425, 421, 420, 413, 406 checked 2026-10-04: none touch
       these files except ledger claims in this YAML.
+      RELEASED 2026-10-04: merged as 7bab09b (PR 428, on Joe's "merge 428
+      and bring it to production"). CI run 37165596167 passed every job,
+      including the new smoke:a11y step and the production deploy, whose
+      release script reported "main @ 7bab09b is verified live on
+      127.0.0.1:3300 and public HTTPS" at 00:44:51Z; /api/health returned
+      ok with uptime matching the restart. No client/public files changed,
+      so the skipped Cloudflare purge (token unset) left nothing stale.
