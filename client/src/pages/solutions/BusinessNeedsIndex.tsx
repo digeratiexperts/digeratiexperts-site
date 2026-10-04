@@ -120,6 +120,50 @@ const WHY_DE: ReadonlyArray<{ icon: LucideIcon; title: string; line: string; fea
   { icon: PhoneCall, title: "A person when you need one.", line: `Call ${PRIMARY_PHONE.display}. Happening right now? Say so first.` },
 ];
 
+/**
+ * How DE works with you, in the plan-card pattern (Joe, 2026-10-04). Copy is the workspace's own
+ * relationship options and the family compare's lines; the choice itself is still made once, on the
+ * workspace, so these cards explain and never select.
+ */
+const WAYS: ReadonlyArray<{ id: "standalone" | "co_managed" | "unsure"; title: string; line: string; price: string; points: string[] }> = [
+  {
+    id: "standalone",
+    title: "Standalone",
+    line: "DE's packaged solution. You, or your IT provider, run it day to day.",
+    price: "Standard price",
+    points: [
+      "DE designs, builds and hands over each package",
+      "Set up remotely by DE unless you choose to do it yourself",
+      "Implementation or support only when you select it",
+      "Every family comes this way",
+    ],
+  },
+  {
+    id: "co_managed",
+    title: "Co-Managed",
+    line: "DE and your IT team share it, by an agreed responsibility split.",
+    price: "Preferred pricing",
+    points: [
+      "DE and your IT team share day-to-day operation",
+      "An agreed responsibility split, written down",
+      "Preferred pricing where sharing lowers the work, never a blanket price cut",
+      "Every family comes this way",
+    ],
+  },
+  {
+    id: "unsure",
+    title: "Help me choose",
+    line: "Submit as-is and DE recommends. You still see both packages.",
+    price: "DE confirms",
+    points: [
+      "Both packages sized from your profile, side by side",
+      "DE recommends with the reason shown",
+      "Choose once for the whole solution, on the next step",
+      "No payment here",
+    ],
+  },
+];
+
 function Glyph({ familyId, tone, className = "" }: { familyId: FamilyId; tone?: GlyphTone | "magenta"; className?: string }) {
   const Icon = FAMILY_ICONS[familyId];
   const finish = tone ?? GOAL_TONE[FAMILY_GOAL.get(familyId)?.id ?? "productive"];
@@ -472,6 +516,7 @@ export default function BusinessNeedsIndex() {
               <a href="#situations">Situations</a>
               <a href="#profile">Size it</a>
               <a href="#families">Families</a>
+              <a href="#ways">How it works</a>
               <a href="#why">Why DE</a>
             </nav>
             <Link href={SOLUTION_WORKSPACE_PATH} className="d2-flag-lnav__solution" data-testid="store-local-solution">
@@ -622,6 +667,7 @@ export default function BusinessNeedsIndex() {
                 description="Users, computers, mobile devices and sites, then who owns the devices and who does IT."
                 expandKey={expandKey}
                 collapsible={false}
+                dials
                 suggestionSlot={profileSuggestionSlot}
               />
             </div>
@@ -706,7 +752,56 @@ export default function BusinessNeedsIndex() {
           </div>
         </section>
 
-        <section id="why" className="d2-flag-sec d2-flag-sec--dark" aria-labelledby="why-heading">
+        <section id="ways" className="d2-flag-sec d2-flag-sec--dark" aria-labelledby="ways-heading">
+          <div className="d2-flag-wrap">
+            <div className="d2-flag-head" data-d2-reveal="">
+              <h2 id="ways-heading" className="d2-flag-head__title">
+                Choose how DE works with you. <span>Once, for the whole solution.</span>
+              </h2>
+              <p className="d2-flag-head__aside">Every family comes both ways. You pick on the next step, with every package in front of you.</p>
+            </div>
+            <ul className="d2-plans">
+              {WAYS.map((way, index) => {
+                const suggested = profileSuggestion?.value === way.id;
+                return (
+                  <li
+                    key={way.id}
+                    className={`d2-plan${suggested ? " d2-plan--suggested" : ""}`}
+                    data-testid={`way-${way.id}`}
+                    data-d2-reveal=""
+                    style={{ "--d2-delay": `${index * 70}ms` } as CSSProperties}
+                  >
+                    {suggested ? <p className="d2-plan__ribbon">Suggested from your profile</p> : null}
+                    <div className="d2-plan__head">
+                      <h3 className="d2-plan__title">{way.title}</h3>
+                      <p className="d2-plan__line">{way.line}</p>
+                    </div>
+                    <div className="d2-plan__price">
+                      <p className="d2-plan__amount">{way.price}</p>
+                      {suggested && profileSuggestion ? <p className="d2-plan__why">{profileSuggestion.reason}</p> : null}
+                      <a href="#situations" className={`d2-plan__cta${suggested || (!profileSuggestion && index === 0) ? " d2-plan__cta--solid" : ""}`}>
+                        Start from a situation
+                      </a>
+                    </div>
+                    <div className="d2-plan__body">
+                      <p className="d2-plan__kicker">What it means</p>
+                      <ul className="d2-plan__points">
+                        {way.points.map((point) => (
+                          <li key={point}>
+                            <Check className="h-4 w-4" aria-hidden="true" />
+                            {point}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </section>
+
+        <section id="why" className="d2-flag-sec" aria-labelledby="why-heading">
           <div className="d2-flag-wrap">
             <div className="d2-flag-head" data-d2-reveal="">
               <h2 id="why-heading" className="d2-flag-head__title">
