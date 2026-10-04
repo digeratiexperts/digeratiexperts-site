@@ -1,0 +1,12 @@
+---
+description: Which outside tools DE uses for images, vector icons, video, voice, live SEO data, Lighthouse, accessibility and image optimization — read before adopting any external generator, site builder or SEO tool
+alwaysApply: false
+---
+
+# Content and webmaster tooling
+
+Authority: `docs/CONTENT-TOOLING-PLAN.md` (Joe-adopted, 2026-10-04). Read it before using or proposing an outside tool.
+
+- Use: Chrome DevTools MCP (Lighthouse), axe (`npm run smoke:a11y`), `vite-imagetools`, `JsonLd.tsx`, kie.ai (existing key), DataForSEO MCP, Canva Brand Kit, Recraft (paid plan only), Frase after review.
+- Not using without Joe: Framer, Webflow, Lovable, Bolt, v0, Figma Make, Surfer, Clearscope, MarketMuse, separate Midjourney / Runway / Kling plans.
+- `design/IMAGERY.md` still governs imagery: no AI images of people as DE staff, clients or offices. Keys only from the environment or gitignored `.env`.

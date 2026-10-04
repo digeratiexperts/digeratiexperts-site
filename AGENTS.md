@@ -114,6 +114,10 @@ Reusable skill packs live in `.claude/skills/<name>/SKILL.md` (Claude Code disco
 
 Key handling: `KIE_AI_API_KEY` (and `KIE_API_KEY` for `scripts/kie-assets.mjs`) come from the environment or the gitignored `.env`; `.env.example` is the template. Never commit, print or paste a key. Generated images are ILLUSTRATIVE candidates under `artifacts/kie-ai/` until they pass `design/IMAGERY.md` review.
 
+## Content and webmaster tooling (all agents)
+
+**`docs/CONTENT-TOOLING-PLAN.md`** is Joe's adopted decision (2026-10-04) on which outside tools DE uses for work general assistants can't do well on their own (vector icons, video, voice, live SEO data) and for webmaster-grade finishing (Lighthouse, axe, image optimization, JSON-LD), across the Website, Store, Client Portal and Intelligence Hub. Read it before reaching for an outside generator, builder or SEO tool; do not adopt a tool from its "Not using" list without Joe. Wired in this repo: Chrome DevTools MCP (`.mcp.json`, `.cursor/mcp.json`; Codex and Gemini setup in the plan), `npm run smoke:a11y` in CI, and `vite-imagetools` in `vite.config.ts`.
+
 <!-- >>> DE token-discipline (managed; edit in DE\Governance\repo-kit) >>> -->
 ## Token discipline (DE operating standard)
 
