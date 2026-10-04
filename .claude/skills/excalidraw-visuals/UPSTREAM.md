@@ -114,3 +114,5 @@ this section is the only code change.
 `kieai.redpandaai.co/api/file-base64-upload`, then downloads the result. Each
 run incurs third-party charges. Installing the skill makes no call and adds no
 credential.
+
+- **Budget gate (local, 2026-10-04):** every paid call passes `.claude/kie-budget/budget.mjs gate` first (needs `KIE_JOB` set to an open job; per-job and per-month soft/hard limits) and records the real debit after. See `.claude/kie-budget/README.md`.

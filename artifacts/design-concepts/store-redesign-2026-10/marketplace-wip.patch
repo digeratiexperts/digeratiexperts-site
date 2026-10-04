@@ -1,0 +1,1508 @@
+diff --git a/client/src/components/store/door2/ScenarioTile.tsx b/client/src/components/store/door2/ScenarioTile.tsx
+index 46882d8..4201ded 100644
+--- a/client/src/components/store/door2/ScenarioTile.tsx
++++ b/client/src/components/store/door2/ScenarioTile.tsx
+@@ -1,4 +1,5 @@
+ import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
++import { Plus } from "lucide-react";
+ import type { SolutionScenario } from "@/data/solutionScenarios";
+ import { getFamilyById } from "@/lib/businessNeeds";
+ 
+@@ -9,7 +10,9 @@ function label(id: string): string {
+ /**
+  * A situation in the buyer's words that composes 2–3 families. The action
+  * says exactly what it will do: "Add these 3", "2 of 3 already in · Add 1",
+- * "All 3 in · Review Your Solution".
++ * "All 3 in · Review Your Solution". The `row` variant is the Marketplace box
++ * row (title, the families it adds, a short action whose accessible name is
++ * the full sentence).
+  */
+ export function ScenarioTile({
+   scenario,
+@@ -18,6 +21,7 @@ export function ScenarioTile({
+   onReview,
+   footer,
+   revealIndex,
++  variant = "tile",
+ }: {
+   scenario: SolutionScenario;
+   compose: { add: string[]; alreadyIn: string[] };
+@@ -27,6 +31,7 @@ export function ScenarioTile({
+   footer?: ReactNode;
+   /** Position in the grid: staggers the scroll reveal of the row. */
+   revealIndex?: number;
++  variant?: "tile" | "row";
+ }) {
+   // The press/settle of the jelly tier keys on a transient attribute set on the tap, never on steady state (§9).
+   const [justSelected, setJustSelected] = useState(false);
+@@ -43,6 +48,35 @@ export function ScenarioTile({
+     : someIn
+       ? `${compose.alreadyIn.length} of ${total} already in · Add ${compose.add.length}`
+       : `Add these ${total}`;
++  const act = () => {
++    setJustSelected(true);
++    if (allIn) onReview();
++    else onStart(scenario);
++  };
++  if (variant === "row") {
++    const shortLabel = allIn ? "All in ✓" : someIn ? `Add ${compose.add.length} more` : `Add ${total}`;
++    return (
++      <li className="d2-mrow" data-testid={`scenario-${scenario.id}`} data-state={allIn ? "added" : "idle"}>
++        <div className="min-w-0">
++          <h3 className="d2-mrow__title">{scenario.title}</h3>
++          <p className="d2-mrow__marks">{scenario.familyIds.map(label).join(" · ")}</p>
++        </div>
++        <button
++          type="button"
++          className={`d2-mrow__action${allIn ? " d2-mrow__action--done" : ""}`}
++          onClick={act}
++          aria-label={`${actionLabel}: ${scenario.title}`}
++          data-testid={`scenario-${scenario.id}-action`}
++          data-de-jelly-choice=""
++          data-de-just-selected={justSelected ? "true" : undefined}
++        >
++          {allIn ? null : <Plus className="h-4 w-4" aria-hidden="true" />}
++          {shortLabel}
++        </button>
++        {footer ? <div className="d2-mrow__foot">{footer}</div> : null}
++      </li>
++    );
++  }
+   return (
+     <li className={`d2-cell d2-scenario${allIn ? " d2-cell--added" : ""}`} data-testid={`scenario-${scenario.id}`} data-state={allIn ? "added" : "idle"}
+       data-d2-reveal=""
+@@ -55,11 +89,7 @@ export function ScenarioTile({
+         <button
+           type="button"
+           className={`d2-action d2-action--sm ${allIn ? "d2-action--quiet" : "d2-action--secondary"}`}
+-          onClick={() => {
+-            setJustSelected(true);
+-            if (allIn) onReview();
+-            else onStart(scenario);
+-          }}
++          onClick={act}
+           data-testid={`scenario-${scenario.id}-action`}
+           data-de-jelly-choice=""
+           data-de-just-selected={justSelected ? "true" : undefined}
+diff --git a/client/src/pages/solutions/BusinessNeedsIndex.tsx b/client/src/pages/solutions/BusinessNeedsIndex.tsx
+index 61f84ad..e439d98 100644
+--- a/client/src/pages/solutions/BusinessNeedsIndex.tsx
++++ b/client/src/pages/solutions/BusinessNeedsIndex.tsx
+@@ -15,14 +15,19 @@ import {
+   Shield,
+   ShieldAlert,
+   type LucideIcon,
+-  ChevronDown,
++  Check,
++  Layers,
++  Search,
++  TriangleAlert,
++  TrendingUp,
++  ClipboardCheck,
+ } from "lucide-react";
+ import { MegaMenu } from "@/components/MegaMenu";
+ import { DigeratiEnhancedFooterSection } from "@/pages/sections/DigeratiEnhancedFooterSection";
+ import { useAnnouncer } from "@/components/AccessibleAnnouncer";
+ import { Door2Frame } from "@/components/store/door2/Door2Frame";
+ import { SolutionProfileForm } from "@/components/store/SolutionProfileForm";
+-import { GridCell, HairGrid, LiveLine, StepLabel, StoreChapter, UndoRow } from "@/components/store/door2/primitives";
++import { LiveLine, StepLabel, UndoRow } from "@/components/store/door2/primitives";
+ import { ScenarioTile } from "@/components/store/door2/ScenarioTile";
+ import { SuggestionLine } from "@/components/store/door2/Guidance";
+ import { SolutionBar, SolutionRail, type SolutionChromeProps } from "@/components/store/door2/SolutionChrome";
+@@ -30,9 +35,9 @@ import { IconWell } from "@/components/visual/IconWell";
+ import { useSEO } from "@/hooks/useSEO";
+ import { useReducedMotion } from "@/hooks/useReducedMotion";
+ import { useStoreReveal } from "@/hooks/useStoreGuidance";
+-import { useMinWidth, useSolutionDraft } from "@/hooks/useSolutionDraft";
++import { useSolutionDraft } from "@/hooks/useSolutionDraft";
+ import { curatedSolutionFamilies, type CuratedSolutionFamily } from "@/data/curatedSolutions";
+-import { composeScenario, solutionScenarios, type SolutionScenario } from "@/data/solutionScenarios";
++import { composeScenario, SCENARIO_GROUPS, solutionScenarios, type ScenarioGroupId, type SolutionScenario } from "@/data/solutionScenarios";
+ import { BUSINESS_GOALS, familyPath, getFamilyById, SOLUTION_WORKSPACE_PATH, STORE_STEPS, type BusinessGoalId } from "@/lib/businessNeeds";
+ import { suggestRelationship, type RelationshipSuggestion } from "@/lib/solutionGuidance";
+ import {
+@@ -59,6 +64,12 @@ import { PRIMARY_PHONE } from "@shared/companyContact";
+  * five goal groups). Every add is in place with a persistent Undo; nothing
+  * toasts, nothing moves focus, and the one magenta action is the rail's or
+  * bar's "Review Your Solution".
++ *
++ * Layout: the Marketplace baseline (Joe, 2026-10-03, concept 2 of
++ * artifacts/design-concepts/store-redesign-2026-10): a store bar with search
++ * and Your Solution, a goal strip, a dark banner holding the profile, the
++ * three situation groups as boxes over the banner's edge, then a light field
++ * with goal filters, the family list and the rail.
+  */
+ 
+ type FamilyId = CuratedSolutionFamily["id"];
+@@ -84,8 +95,15 @@ const FAMILY_ICONS: Record<FamilyId, LucideIcon> = {
+   technology_strategy: ShieldAlert,
+ };
+ 
+-/** The three situations where someone may be mid-incident carry the phone in flow (§5.1 region 5). */
+-const INCIDENT_SCENARIOS = new Set(["phishing-close-call", "ransomware-recovery", "it-person-left"]);
++const GROUP_ICONS: Record<ScenarioGroupId, LucideIcon> = {
++  now: TriangleAlert,
++  change: TrendingUp,
++  prove: ClipboardCheck,
++};
++
++const GOAL_LABEL: Record<string, string> = Object.fromEntries(
++  BUSINESS_GOALS.flatMap((goal) => goal.familyIds.map((id) => [id, goal.label])),
++);
+ 
+ function familyLabel(id: string): string {
+   return getFamilyById(id)?.label ?? id;
+@@ -118,7 +136,7 @@ type FamilyUndo = {
+   source?: string;
+ };
+ 
+-function FamilyCell({
++function FamilyItem({
+   family,
+   included,
+   undo,
+@@ -141,37 +159,53 @@ function FamilyCell({
+     return () => window.clearTimeout(timer);
+   }, [justSelected]);
+   return (
+-    <GridCell
+-      as="li"
+-      testId={`family-card-${family.id}`}
+-      state={included ? "added" : "idle"}
+-      label={<IconWell icon={Icon} size="sm" />}
+-      title={family.label}
+-      href={familyPath(family.id)}
+-      detail={family.description}
+-      clampDetail
+-      className="d2-cell--row"
+-    >
+-      {lead ? <p className="d2-cell__lead d2-small d2-ink d2-clamp-2 w-full">{lead}</p> : null}
+-      <button
+-        type="button"
+-        className="d2-toggle"
+-        aria-pressed={included}
+-        onClick={() => {
+-          setJustSelected(true);
+-          onToggle();
+-        }}
+-        data-de-just-selected={justSelected ? "true" : undefined}
+-        data-testid={`family-toggle-${family.id}`}
+-      >
+-        {included ? "Added ✓" : "Add need"}
+-      </button>
++    <li className="d2-mitem" data-testid={`family-card-${family.id}`} data-state={included ? "added" : "idle"}>
++      <span className="d2-mitem__thumb" aria-hidden="true">
++        <Icon className="h-9 w-9" strokeWidth={1.6} />
++      </span>
++      <div className="min-w-0">
++        <p className="d2-mitem__goal">{GOAL_LABEL[family.id]}</p>
++        <h3 className="d2-mitem__title">
++          <Link href={familyPath(family.id)}>{family.label}</Link>
++        </h3>
++        <p className="d2-mitem__detail">{family.description}</p>
++        <ul className="d2-mitem__meta">
++          {lead ? (
++            <li>
++              <Check className="h-4 w-4" aria-hidden="true" />
++              {lead}
++            </li>
++          ) : null}
++          <li>
++            <Check className="h-4 w-4" aria-hidden="true" />
++            Standalone or co-managed
++          </li>
++        </ul>
++      </div>
++      <div className="d2-mitem__acts">
++        <button
++          type="button"
++          className="d2-mitem__add"
++          aria-pressed={included}
++          onClick={() => {
++            setJustSelected(true);
++            onToggle();
++          }}
++          data-de-just-selected={justSelected ? "true" : undefined}
++          data-testid={`family-toggle-${family.id}`}
++        >
++          {included ? "Added ✓" : "Add need"}
++        </button>
++        <Link href={familyPath(family.id)} className="d2-mitem__view" tabIndex={-1} aria-hidden="true">
++          View package
++        </Link>
++      </div>
+       {undo ? (
+-        <div className="w-full">
++        <div className="d2-mitem__undo">
+           <UndoRow text={`${family.label} removed`} onUndo={onUndo} testId={`family-undo-${family.id}`} />
+         </div>
+       ) : null}
+-    </GridCell>
++    </li>
+   );
+ }
+ 
+@@ -187,11 +221,9 @@ export default function BusinessNeedsIndex() {
+   const [, navigate] = useLocation();
+   const reducedMotion = useReducedMotion();
+   useStoreReveal();
+-  const twoColumns = useMinWidth(640);
+-  const groupsOpenByWidth = useMinWidth(768);
+ 
+   const [query, setQuery] = useState("");
+-  const [openGroups, setOpenGroups] = useState<ReadonlySet<BusinessGoalId>>(() => new Set());
++  const [goalFilter, setGoalFilter] = useState<ReadonlySet<BusinessGoalId>>(() => new Set());
+   const [scenarioMoment, setScenarioMoment] = useState<ScenarioMoment | null>(null);
+   const [familyUndo, setFamilyUndo] = useState<FamilyUndo | null>(null);
+   const [pulseKey, setPulseKey] = useState(0);
+@@ -344,54 +376,51 @@ export default function BusinessNeedsIndex() {
+     ) : null;
+ 
+   /* ---------------------------------------------------------------------- */
+-  /* Families — five goal groups, search, disclosures under 768             */
++  /* Families — search from the store bar, goal filters, one list            */
+   /* ---------------------------------------------------------------------- */
+ 
+   const needle = query.trim().toLowerCase();
+   const searching = needle.length > 0;
+-  const groups = useMemo(
++  const filtering = goalFilter.size > 0;
++  const families = useMemo(
+     () =>
+-      BUSINESS_GOALS.map((goal) => ({
+-        goal,
+-        families: goal.familyIds
+-          .map((id) => getFamilyById(id))
+-          .filter((family): family is CuratedSolutionFamily => family !== null && (!needle || FAMILY_HAYSTACK[family.id].includes(needle))),
+-      })),
+-    [needle],
++      BUSINESS_GOALS.filter((goal) => goalFilter.size === 0 || goalFilter.has(goal.id))
++        .flatMap((goal) => goal.familyIds)
++        .map((id) => getFamilyById(id))
++        .filter((family): family is CuratedSolutionFamily => family !== null && (!needle || FAMILY_HAYSTACK[family.id].includes(needle))),
++    [goalFilter, needle],
+   );
+-  const total = groups.reduce((sum, group) => sum + group.families.length, 0);
+-  const countText = !searching ? `${total} solutions shown` : total === 1 ? "1 solution matches" : `${total} solutions match`;
++  const total = families.length;
++  const countText = !searching && !filtering ? `${total} solutions shown` : total === 1 ? "1 solution matches" : `${total} solutions match`;
+ 
+-  // The count line is plain text; the page's one live region hears it after the buyer pauses typing.
++  // The count line is plain text; the page's one live region hears it after the buyer pauses typing or filtering.
+   useEffect(() => {
+-    if (!searching) return undefined;
+-    const timer = window.setTimeout(() => announce(total === 0 ? `Nothing matches ${query.trim()}` : countText), 600);
++    if (!searching && !filtering) return undefined;
++    const timer = window.setTimeout(() => announce(total === 0 ? "Nothing matches" : countText), 600);
+     return () => window.clearTimeout(timer);
+-  }, [announce, countText, query, searching, total]);
+-
+-  const disclosureIds = useMemo(() => BUSINESS_GOALS.slice(1).map((goal) => goal.id), []);
+-  const allShown = !searching && (groupsOpenByWidth || openGroups.size === disclosureIds.length);
++  }, [announce, countText, filtering, searching, total]);
+ 
+   const showAll = () => {
+     setQuery("");
+-    setOpenGroups(new Set(disclosureIds));
+-  };
+-  const toggleAll = () => {
+-    if (searching || groupsOpenByWidth) {
+-      showAll();
+-      return;
+-    }
+-    setOpenGroups(allShown ? new Set() : new Set(disclosureIds));
++    setGoalFilter(new Set());
+   };
+-  const setGroupOpen = (id: BusinessGoalId, open: boolean) => {
+-    setOpenGroups((current) => {
+-      if (current.has(id) === open) return current;
++  const toggleGoal = (id: BusinessGoalId) => {
++    setGoalFilter((current) => {
+       const next = new Set(current);
+-      if (open) next.add(id);
+-      else next.delete(id);
++      if (next.has(id)) next.delete(id);
++      else next.add(id);
+       return next;
+     });
+   };
++  const scrollToFamilies = () => {
++    document.getElementById("families")?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
++  };
++  /** The goal strip shows one goal: it sets the filter to that goal alone and brings the list into view. */
++  const showGoal = (id: BusinessGoalId) => {
++    setQuery("");
++    setGoalFilter(new Set([id]));
++    scrollToFamilies();
++  };
+ 
+   /* ---------------------------------------------------------------------- */
+   /* Chrome                                                                  */
+@@ -414,236 +443,241 @@ export default function BusinessNeedsIndex() {
+     compactVariant: "primary",
+   };
+ 
+-  const momentIndex = scenarioMoment ? solutionScenarios.findIndex((scenario) => scenario.id === scenarioMoment.scenarioId) : -1;
+-  const momentScenario = momentIndex >= 0 ? solutionScenarios[momentIndex] : null;
+-  // The Undo row spans the grid, so it sits under the row that holds the tapped tile and nothing shifts.
+-  const undoAfterIndex =
+-    momentIndex < 0 ? -1 : Math.min(solutionScenarios.length - 1, twoColumns ? Math.floor(momentIndex / 2) * 2 + 1 : momentIndex);
++  const momentScenario = scenarioMoment ? solutionScenarios.find((scenario) => scenario.id === scenarioMoment.scenarioId) ?? null : null;
++  const needCount = draft.needs.length;
+ 
+   return (
+     <Door2Frame intensity={0.44} jelly>
+       <MegaMenu />
+-          <main id="main-content" tabIndex={-1} className="d2-main de-nav-clear">
+-            <header className="d2-chapter d2-chapter--first" data-testid="store-enter">
++      <main id="main-content" tabIndex={-1} className="d2-market de-nav-clear">
++        {/* Store bar: search the families, reach Your Solution. */}
++        <div className="d2-mbar">
++          <div className="d2-mwrap d2-mbar__row">
++            <form
++              className="d2-msearch"
++              role="search"
++              aria-label="Search needs"
++              onSubmit={(event) => {
++                event.preventDefault();
++                scrollToFamilies();
++              }}
++            >
++              <label htmlFor="store-search" className="sr-only">
++                Search needs
++              </label>
++              <input
++                id="store-search"
++                type="text"
++                inputMode="search"
++                autoComplete="off"
++                enterKeyHint="search"
++                placeholder="Search needs: backups, phones, MFA, new hires…"
++                value={query}
++                onChange={(event) => setQuery(event.target.value)}
++                data-testid="families-search"
++              />
++              <button type="submit" aria-label="Show matching needs">
++                <Search className="h-5 w-5" aria-hidden="true" />
++              </button>
++            </form>
++            <a className="d2-mbar__tel" href={PRIMARY_PHONE.telHref} aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
++              <span>Talk to DE</span>
++              {PRIMARY_PHONE.display}
++            </a>
++            <Link href={SOLUTION_WORKSPACE_PATH} className="d2-mbar__solution" data-testid="store-bar-solution">
++              <Layers className="h-5 w-5" aria-hidden="true" />
++              <span className="d2-mbar__solution-text">Your Solution</span>
++              <span className="d2-mbar__count" aria-label={needCount === 1 ? "1 need" : `${needCount} needs`}>
++                {needCount}
++              </span>
++            </Link>
++          </div>
++        </div>
++        <nav className="d2-mgoals" aria-label="Shop by goal">
++          <div className="d2-mwrap d2-mgoals__row">
++            {BUSINESS_GOALS.map((goal) => (
++              <a
++                key={goal.id}
++                href="#families"
++                onClick={(event) => {
++                  event.preventDefault();
++                  showGoal(goal.id);
++                }}
++                aria-current={goalFilter.size === 1 && goalFilter.has(goal.id) ? "true" : undefined}
++              >
++                {goal.label}
++              </a>
++            ))}
++          </div>
++        </nav>
++
++        {/* Banner: the promise, the journey, the pathways, and the profile as the "deliver to" box. */}
++        <header className="d2-mbanner" data-testid="store-enter">
++          <div className="d2-mwrap d2-mbanner__grid">
++            <div className="min-w-0">
+               <StepLabel>SOLVE A BUSINESS NEED</StepLabel>
+-              <h1 className="d2-display d2-measure" data-testid="heading-business-needs">
++              <h1 className="d2-display d2-mbanner__title" data-testid="heading-business-needs">
+                 Start with your business. Then solve what hurts.
+               </h1>
+-              <p className="d2-lede d2-ink d2-measure mt-5">
++              <p className="d2-lede d2-ink d2-measure mt-4">
+                 Tell us what you have once. Pick what needs attention. DE sizes a solution you can send for a real quote. No payment here.
+               </p>
+-              <nav aria-label="Pathways" className="d2-pathways" data-testid="pathways">
+-                <div className="d2-pathways__row">
+-                  <p className="d2-pathways__item">
+-                    <span className="d2-pathways__mark d2-label" aria-hidden="true">A</span>
+-                    <Link href={HANDLE_OUR_IT_PATH} data-testid="link-handle-our-it">Handle Our IT</Link>
+-                    <span className="d2-pathways__kind d2-small">One accountable team for the technology.</span>
+-                  </p>
+-                  <p className="d2-pathways__item">
+-                    <span className="d2-pathways__mark d2-label" aria-hidden="true">B</span>
+-                    <span aria-current="page">Solve a Business Need · You are here</span>
+-                    <span className="d2-pathways__kind d2-small">Something specific is in the way. A package with a start and an end.</span>
+-                  </p>
+-                  <p className="d2-pathways__item">
+-                    <span className="d2-pathways__mark d2-label" aria-hidden="true">C</span>
+-                    <a href={portalMarketplaceLoginUrl()} data-testid="link-client-marketplace">Client Marketplace</a>
+-                    <span className="d2-pathways__kind d2-small">Already a client? Continue in the Client Marketplace.</span>
+-                  </p>
+-                </div>
+-                <p className="d2-pathways__sentence d2-small">
+-                  Want DE to run all of IT?{" "}
+-                  <Link href={HANDLE_OUR_IT_PATH} className="d2-link">Handle Our IT</Link> · Already a client?{" "}
+-                  <a href={portalMarketplaceLoginUrl()} className="d2-link">Client Marketplace</a>
+-                </p>
++              <ol className="d2-mjourney" aria-label="The steps">
++                {STORE_STEPS.map((step, index) => (
++                  <li key={step.id} data-here={index < 2 ? "true" : undefined} aria-current={index === 1 ? "step" : undefined}>
++                    {index + 1} · {step.label}
++                  </li>
++                ))}
++              </ol>
++              <nav aria-label="Pathways" className="d2-mpathways d2-small" data-testid="pathways">
++                Want DE to run all of IT?{" "}
++                <Link href={HANDLE_OUR_IT_PATH} className="d2-link" data-testid="link-handle-our-it">
++                  Handle Our IT
++                </Link>{" "}
++                · Already a client?{" "}
++                <a href={portalMarketplaceLoginUrl()} className="d2-link" data-testid="link-client-marketplace">
++                  Client Marketplace
++                </a>
+               </nav>
+               {!storageOk ? (
+-                <LiveLine className="mt-6" testId="storage-line">
++                <LiveLine className="mt-4" testId="storage-line">
+                   Not saving on this device
+                 </LiveLine>
+               ) : null}
+-            </header>
+-
+-            <div className="d2-layout">
+-              <div className="min-w-0">
+-                <StoreChapter id="profile" n="01" eyebrow="Profile" srText={STORE_STEPS[0].sr} testId="store-profile">
+-                  <SolutionProfileForm
+-                    environment={draft.environment}
+-                    onChange={setProfile}
+-                    headingLevel={2}
+-                    description="Four counts and two facts. Then every package sizes itself. Skip for now if you like; it is needed before you submit."
+-                    expandKey={expandKey}
+-                    suggestionSlot={profileSuggestionSlot}
+-                  />
+-                </StoreChapter>
+-
+-                <StoreChapter
+-                  id="situations"
+-                  n="02"
+-                  eyebrow="Pain or need"
+-                  srText={STORE_STEPS[1].sr}
+-                  heading="Start from a situation"
+-                  lede="Pick the one that sounds like you. It adds the needs that situation calls for, and you can undo."
+-                  testId="store-situations"
+-                >
+-                  {draft.needs.length === 0 ? (
+-                    <p className="d2-cue mt-6" data-testid="store-start-here">
+-                      Start here
+-                      <ChevronDown className="d2-cue__chevron h-4 w-4" aria-hidden="true" />
+-                    </p>
+-                  ) : null}
+-                  <HairGrid cols={2} as="ul" className="mt-6 d2-grid--cards">
+-                    {solutionScenarios.map((scenario, index) => (
+-                      <Fragment key={scenario.id}>
+-                        <ScenarioTile
+-                          scenario={scenario}
+-                          compose={composeScenario(scenario, familyIds)}
+-                          onStart={startScenario}
+-                          onReview={() => navigate(SOLUTION_WORKSPACE_PATH)}
+-                          revealIndex={index}
+-                          footer={
+-                            INCIDENT_SCENARIOS.has(scenario.id) ? (
+-                              <>
+-                                Happening right now?{" "}
+-                                <a href={PRIMARY_PHONE.telHref} className="d2-link" aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
+-                                  Call {PRIMARY_PHONE.display}
+-                                </a>
+-                              </>
+-                            ) : undefined
+-                          }
+-                        />
+-                        {scenarioMoment && index === undoAfterIndex ? (
+-                          <li className="min-w-0 d2-grid__span" data-testid="scenario-moment">
+-                            <UndoRow text={`Added ${scenarioMoment.added.map(familyLabel).join(", ")}`} onUndo={undoScenario} testId="scenario-undo" />
+-                            <ul className="d2-rows d2-small d2-ink-soft mt-2" data-testid="scenario-why">
+-                              {scenarioMoment.added.map((familyId) => (
+-                                <li key={familyId}>
+-                                  <span className="d2-ink-strong">{familyLabel(familyId)}</span> · {momentScenario?.why[familyId] ?? ""}
+-                                </li>
+-                              ))}
+-                            </ul>
+-                            {renderScenarioSuggestion("scenario-suggestion")}
+-                          </li>
+-                        ) : null}
+-                      </Fragment>
+-                    ))}
+-                  </HairGrid>
+-                </StoreChapter>
+-
+-
+-                <StoreChapter
+-                  id="families"
+-                  n="02"
+-                  eyebrow="Pain or need"
+-                  srText={STORE_STEPS[1].sr}
+-                  heading="Or pick a family"
+-                  lede="Thirteen families, grouped by what you are trying to do. Open one for the full package, or add it from here."
+-                  testId="business-needs-families"
+-                >
+-                  <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+-                    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Business goals">
+-                      <button type="button" className="d2-toggle" aria-pressed={allShown} onClick={toggleAll} data-testid="business-goal-all">
+-                        All
+-                      </button>
+-                      {BUSINESS_GOALS.map((goal) => (
+-                        <a
+-                          key={goal.id}
+-                          href={`#goal-${goal.id}`}
+-                          className="d2-toggle"
+-                          onClick={() => setGroupOpen(goal.id, true)}
+-                          data-testid={`business-goal-${goal.id}`}
+-                        >
+-                          {goal.label}
+-                        </a>
+-                      ))}
++            </div>
++            <section id="profile" className="d2-mprofile d2-light" aria-label={STORE_STEPS[0].sr} data-testid="store-profile">
++              <SolutionProfileForm
++                environment={draft.environment}
++                onChange={setProfile}
++                headingLevel={2}
++                description="Four counts and two facts. Then every package sizes itself. Skip for now if you like; it is needed before you submit."
++                expandKey={expandKey}
++                suggestionSlot={profileSuggestionSlot}
++              />
++            </section>
++          </div>
++        </header>
++
++        <div className="d2-mfield d2-light">
++          {/* Situations: three boxes over the banner's edge. */}
++          <section id="situations" className="d2-mwrap" aria-labelledby="situations-heading" data-testid="store-situations">
++            <h2 id="situations-heading" className="sr-only">
++              {STORE_STEPS[1].sr}: start from a situation
++            </h2>
++            <div className="d2-mboxes">
++              {SCENARIO_GROUPS.map((group) => {
++                const GroupIcon = GROUP_ICONS[group.id];
++                const scenarios = solutionScenarios.filter((scenario) => scenario.group === group.id);
++                return (
++                  <section key={group.id} className={`d2-mbox d2-mbox--${group.id}`} aria-labelledby={`group-${group.id}`} data-testid={`scenario-group-${group.id}`}>
++                    <div className="d2-mbox__head">
++                      <span className="d2-mbox__icon" aria-hidden="true">
++                        <GroupIcon className="h-[18px] w-[18px]" />
++                      </span>
++                      <div className="min-w-0">
++                        <h3 id={`group-${group.id}`} className="d2-mbox__title">
++                          {group.heading}
++                        </h3>
++                        <p className="d2-mbox__line">{group.line}</p>
++                      </div>
+                     </div>
+-                    <label className="d2-field d2-search">
+-                      <span className="sr-only">Search needs</span>
+-                      <input
+-                        className="d2-input"
+-                        type="text"
+-                        inputMode="search"
+-                        autoComplete="off"
+-                        placeholder="Search needs"
+-                        value={query}
+-                        onChange={(event) => setQuery(event.target.value)}
+-                        data-testid="families-search"
+-                      />
+-                    </label>
+-                  </div>
+-
+-                  <LiveLine className="mt-4" testId="families-count">
+-                    {searching && total === 0 ? (
+-                      <>
+-                        Nothing matches “{query.trim()}”.{" "}
+-                        <button type="button" className="d2-action d2-action--quiet" onClick={() => setQuery("")}>
+-                          Clear search
+-                        </button>{" "}
+-                        ·{" "}
+-                        <button type="button" className="d2-action d2-action--quiet" onClick={showAll}>
+-                          Show all
+-                        </button>
+-                      </>
+-                    ) : (
+-                      countText
+-                    )}
+-                  </LiveLine>
+-
+-                  {groups.map(({ goal, families }, index) => {
+-                    if (families.length === 0) return null;
+-                    const headingId = `goal-${goal.id}`;
+-                    const cells = (
+-                      <HairGrid cols={4} as="ul" className="d2-grid--rows mt-4">
+-                        {families.map((family) => (
+-                          <FamilyCell
+-                            key={family.id}
+-                            family={family}
+-                            included={includedIds.has(family.id)}
+-                            undo={familyUndo?.familyId === family.id}
+-                            onToggle={() => toggleFamily(family)}
+-                            onUndo={undoRemove}
++                    <ul className="d2-mbox__rows">
++                      {scenarios.map((scenario) => (
++                        <Fragment key={scenario.id}>
++                          <ScenarioTile
++                            scenario={scenario}
++                            compose={composeScenario(scenario, familyIds)}
++                            onStart={startScenario}
++                            onReview={() => navigate(SOLUTION_WORKSPACE_PATH)}
++                            variant="row"
+                           />
+-                        ))}
+-                      </HairGrid>
+-                    );
+-                    const disclosed = index > 0 && !groupsOpenByWidth && !searching;
+-                    if (disclosed) {
+-                      return (
+-                        <details
+-                          key={goal.id}
+-                          className="d2-group d2-group--card"
+-                          data-d2-reveal=""
+-                          open={openGroups.has(goal.id)}
+-                          onToggle={(event) => setGroupOpen(goal.id, event.currentTarget.open)}
+-                          data-testid={`goal-group-${goal.id}`}
+-                        >
+-                          <summary>
+-                            <h3 id={headingId} className="d2-h3">
+-                              {goal.label}
+-                            </h3>
+-                          </summary>
+-                          {cells}
+-                        </details>
+-                      );
+-                    }
+-                    return (
+-                      <section key={goal.id} className="d2-group d2-group--card" aria-labelledby={headingId} data-testid={`goal-group-${goal.id}`} data-d2-reveal="">
+-                        <h3 id={headingId} className="d2-h3">
+-                          {goal.label}
+-                        </h3>
+-                        {cells}
+-                      </section>
+-                    );
+-                  })}
+-                </StoreChapter>
+-
+-                <p className="d2-chapter d2-small d2-ink-soft d2-measure" data-testid="store-close">
+-                  {SANCTIONED_CLOSE}
+-                </p>
++                          {scenarioMoment && scenarioMoment.scenarioId === scenario.id ? (
++                            <li className="d2-mbox__moment" data-testid="scenario-moment">
++                              <UndoRow text={`Added ${scenarioMoment.added.map(familyLabel).join(", ")}`} onUndo={undoScenario} testId="scenario-undo" />
++                              <ul className="d2-rows d2-small d2-ink-soft mt-2" data-testid="scenario-why">
++                                {scenarioMoment.added.map((familyId) => (
++                                  <li key={familyId}>
++                                    <span className="d2-ink-strong">{familyLabel(familyId)}</span> · {momentScenario?.why[familyId] ?? ""}
++                                  </li>
++                                ))}
++                              </ul>
++                              {renderScenarioSuggestion("scenario-suggestion")}
++                            </li>
++                          ) : null}
++                        </Fragment>
++                      ))}
++                    </ul>
++                    {group.id === "now" ? (
++                      <a className="d2-mbox__call" href={PRIMARY_PHONE.telHref} aria-label={`Happening right now? Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
++                        Happening right now? Call {PRIMARY_PHONE.display} →
++                      </a>
++                    ) : null}
++                  </section>
++                );
++              })}
++            </div>
++          </section>
++
++          {/* Catalog: goal filters, the family list, the rail. */}
++          <div className="d2-mwrap d2-mcatalog">
++            <aside className="d2-mfilters" aria-label="Filter the families">
++              <fieldset>
++                <legend>Goal</legend>
++                {BUSINESS_GOALS.map((goal) => (
++                  <label key={goal.id}>
++                    <input type="checkbox" checked={goalFilter.has(goal.id)} onChange={() => toggleGoal(goal.id)} data-testid={`business-goal-${goal.id}`} />
++                    <span>{goal.label}</span>
++                    <span className="d2-mfilters__count">{goal.familyIds.length}</span>
++                  </label>
++                ))}
++              </fieldset>
++              <button type="button" className="d2-action d2-action--quiet" onClick={showAll} disabled={!searching && !filtering} data-testid="business-goal-all">
++                Show all
++              </button>
++            </aside>
++
++            <section id="families" className="min-w-0" aria-labelledby="families-heading" data-testid="business-needs-families">
++              <div className="d2-mresults__head">
++                <div className="min-w-0">
++                  <h2 id="families-heading" className="d2-mresults__title">
++                    Or pick a family
++                  </h2>
++                  <p className="d2-small d2-ink-soft">Thirteen families, grouped by what you are trying to do. Open one for the full package, or add it from here.</p>
++                </div>
+               </div>
++              <LiveLine className="mt-2" testId="families-count">
++                {total === 0 ? (
++                  <>
++                    Nothing matches{searching ? ` “${query.trim()}”` : ""}.{" "}
++                    <button type="button" className="d2-action d2-action--quiet" onClick={showAll}>
++                      Show all
++                    </button>
++                  </>
++                ) : (
++                  countText
++                )}
++              </LiveLine>
++              <ul className="d2-mlist">
++                {families.map((family) => (
++                  <FamilyItem
++                    key={family.id}
++                    family={family}
++                    included={includedIds.has(family.id)}
++                    undo={familyUndo?.familyId === family.id}
++                    onToggle={() => toggleFamily(family)}
++                    onUndo={undoRemove}
++                  />
++                ))}
++              </ul>
++              <p className="d2-small d2-ink-soft d2-measure mt-8" data-testid="store-close">
++                {SANCTIONED_CLOSE}
++              </p>
++            </section>
+ 
+-              <SolutionRail {...chrome} />
+-            </div>
+-          </main>
++            <SolutionRail {...chrome} />
++          </div>
++        </div>
++      </main>
+       <SolutionBar {...chrome} />
+       <DigeratiEnhancedFooterSection variant="store" />
+     </Door2Frame>
+diff --git a/client/src/styles/store-builder.css b/client/src/styles/store-builder.css
+index 134d27d..9cb7097 100644
+--- a/client/src/styles/store-builder.css
++++ b/client/src/styles/store-builder.css
+@@ -1951,3 +1951,708 @@ html.d2-reveal-ready .d2-grid--cards > [data-d2-reveal="in"]:hover {
+     transform: none !important;
+   }
+ }
++
++/* ---------------------------------------------------------------------- */
++/* Marketplace baseline (Joe, 2026-10-03)                                   */
++/* ---------------------------------------------------------------------- */
++/*
++ * /store as a store: a dark store bar with search and Your Solution, a goal
++ * strip, a dark banner with the profile as its "deliver to" box, the three
++ * situation groups as white boxes over the banner's edge, then a light field
++ * with goal filters, the family list and the rail. Concept 2 of
++ * artifacts/design-concepts/store-redesign-2026-10. The elevation ladder is
++ * field → white box → floating rail; nothing dark sits on dark any more.
++ */
++
++/* A light scope any Store surface can wear: the profile panel's inks (every one clears 4.5:1 on the field and on white). */
++.d2-light {
++  --d2-rule: rgba(5, 3, 18, 0.14);
++  --d2-ink-strong: var(--de-bg);
++  --d2-ink: rgba(5, 3, 18, 0.78);
++  --d2-ink-soft: rgba(5, 3, 18, 0.64);
++  --d2-accent: rgb(var(--de-accent-rgb));
++  --d2-accent-ink: color-mix(in srgb, rgb(var(--de-accent-rgb)) 75%, var(--de-bg));
++  --d2-error-ink-panel: color-mix(in srgb, hsl(var(--destructive)) 80%, var(--de-bg));
++  color: var(--d2-ink-strong);
++}
++.d2-light .d2-action--quiet,
++.d2-light .d2-link {
++  text-decoration-color: rgba(5, 3, 18, 0.3);
++}
++.d2-light .d2-toggle:hover {
++  border-color: rgba(5, 3, 18, 0.35);
++}
++.d2-light :is(a, button, input, select, textarea, [tabindex]):focus-visible,
++.d2-light .d2-tile:has(input:focus-visible) {
++  outline-color: var(--de-magenta);
++}
++
++.d2-market {
++  --d2-mfield: #eceef2;
++  --d2-mcard: var(--de-paper-raised);
++  --d2-mshadow-1: 0 1px 2px rgba(5, 3, 18, 0.07);
++  --d2-mshadow-2: 0 1px 3px rgba(5, 3, 18, 0.06), 0 12px 30px -16px rgba(5, 3, 18, 0.3);
++  position: relative;
++  z-index: 1;
++}
++.d2-mwrap {
++  width: 100%;
++  max-width: 1360px;
++  margin: 0 auto;
++  padding-left: 1rem;
++  padding-right: 1rem;
++}
++@media (min-width: 640px) {
++  .d2-mwrap {
++    padding-left: 1.5rem;
++    padding-right: 1.5rem;
++  }
++}
++
++/* Store bar */
++.d2-mbar {
++  background: var(--de-bg);
++  border-bottom: 1px solid var(--de-hairline);
++}
++.d2-mbar__row {
++  display: flex;
++  flex-wrap: wrap;
++  align-items: center;
++  gap: 0.75rem 1.25rem;
++  padding-top: 0.75rem;
++  padding-bottom: 0.75rem;
++}
++.d2-msearch {
++  order: 3;
++  flex: 1 1 100%;
++  display: flex;
++  min-height: 3rem;
++  border-radius: 0.8rem;
++  overflow: hidden;
++  background: var(--de-paper-raised);
++  transition: box-shadow 150ms var(--d2-ease);
++}
++.d2-msearch:focus-within {
++  box-shadow: 0 0 0 3px rgb(var(--de-accent-rgb) / 0.6);
++}
++.d2-msearch input {
++  flex: 1 1 auto;
++  min-width: 0;
++  border: 0;
++  outline: 0;
++  padding: 0 1rem;
++  background: transparent;
++  color: var(--de-bg);
++  font-size: 16px;
++}
++.d2-msearch input::placeholder {
++  color: rgba(5, 3, 18, 0.55);
++}
++.d2-msearch button {
++  flex: none;
++  width: 3.4rem;
++  display: grid;
++  place-items: center;
++  border: 0;
++  background: var(--de-magenta);
++  color: #fff;
++  cursor: pointer;
++  transition: background-color 150ms var(--d2-ease);
++}
++.d2-msearch button:hover {
++  background: var(--de-magenta-hover);
++}
++.d2-msearch button:focus-visible {
++  outline-offset: -4px;
++  outline-color: #fff;
++}
++.d2-mbar__tel {
++  display: none;
++  flex-direction: column;
++  color: #fff;
++  font-weight: 600;
++  font-size: 15px;
++  line-height: 1.25;
++  text-decoration: none;
++}
++.d2-mbar__tel span {
++  font-size: 12px;
++  font-weight: 500;
++  color: var(--d2-ink-soft);
++}
++.d2-mbar__solution {
++  margin-left: auto;
++  display: inline-flex;
++  align-items: center;
++  gap: 0.6rem;
++  min-height: 3rem;
++  padding: 0 0.9rem;
++  border: 1px solid rgba(255, 255, 255, 0.2);
++  border-radius: 0.8rem;
++  color: #fff;
++  font-weight: 600;
++  font-size: 15px;
++  text-decoration: none;
++  transition: border-color 150ms var(--d2-ease);
++}
++.d2-mbar__solution:hover {
++  border-color: #fff;
++}
++.d2-mbar__count {
++  min-width: 1.6rem;
++  height: 1.6rem;
++  padding: 0 0.4rem;
++  border-radius: 9999px;
++  background: var(--de-magenta);
++  display: inline-grid;
++  place-items: center;
++  font-family: "Oxanium", sans-serif;
++  font-size: 13px;
++  font-weight: 700;
++}
++@media (min-width: 768px) {
++  .d2-msearch {
++    order: 0;
++    flex: 1 1 auto;
++    max-width: 46rem;
++  }
++  .d2-mbar__tel {
++    display: flex;
++    margin-left: auto;
++  }
++  .d2-mbar__solution {
++    margin-left: 0;
++  }
++}
++
++/* Goal strip */
++.d2-mgoals {
++  background: color-mix(in srgb, var(--de-bg) 88%, white);
++  border-bottom: 1px solid var(--de-hairline);
++}
++.d2-mgoals__row {
++  display: flex;
++  gap: 0.25rem;
++  overflow-x: auto;
++  scrollbar-width: none;
++}
++.d2-mgoals__row::-webkit-scrollbar {
++  display: none;
++}
++.d2-mgoals a {
++  flex: none;
++  display: inline-flex;
++  align-items: center;
++  min-height: 2.75rem;
++  padding: 0 0.75rem;
++  border-radius: 0.5rem;
++  color: var(--d2-ink);
++  font-size: 14px;
++  font-weight: 500;
++  text-decoration: none;
++  white-space: nowrap;
++  transition: background-color 150ms var(--d2-ease), color 150ms var(--d2-ease);
++}
++.d2-mgoals a:hover,
++.d2-mgoals a[aria-current="true"] {
++  background: rgba(255, 255, 255, 0.08);
++  color: #fff;
++}
++
++/* Banner */
++.d2-mbanner {
++  position: relative;
++  background:
++    radial-gradient(60% 120% at 85% 110%, rgb(var(--de-accent-rgb) / 0.28), transparent 70%),
++    linear-gradient(100deg, var(--de-bg) 0%, color-mix(in srgb, var(--de-bg) 80%, rgb(var(--de-accent-rgb))) 100%);
++  padding: 2.25rem 0 7rem;
++}
++.d2-mbanner__grid {
++  display: grid;
++  grid-template-columns: minmax(0, 1fr);
++  gap: 2rem;
++  align-items: start;
++}
++.d2-mbanner__title {
++  margin-top: 0.75rem;
++  max-width: 18ch;
++}
++.d2-mjourney {
++  display: flex;
++  flex-wrap: wrap;
++  gap: 0.4rem;
++  margin: 1.5rem 0 0;
++  padding: 0;
++  list-style: none;
++}
++.d2-mjourney li {
++  padding: 0.3rem 0.75rem;
++  border-radius: 9999px;
++  background: rgba(255, 255, 255, 0.07);
++  color: var(--d2-ink);
++  font-size: 13px;
++}
++.d2-mjourney li[data-here] {
++  background: var(--de-paper-raised);
++  color: var(--de-bg);
++  font-weight: 600;
++}
++.d2-mpathways {
++  margin-top: 1.25rem;
++  color: var(--d2-ink);
++}
++.d2-mprofile {
++  border-radius: 1rem;
++  background: var(--d2-mcard);
++  padding: 1.1rem 1.1rem 1rem;
++  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.7);
++}
++/* The profile strip inside the card: the card is the panel, so the strip drops its own grey and padding. */
++.d2-mprofile .d2-profile-panel {
++  padding: 0;
++  background: transparent;
++}
++.d2-mprofile .d2-profile-panel .d2-h2 {
++  font-size: 1.35rem;
++}
++.d2-mprofile .d2-profile-empty {
++  border-top: 0;
++  border-bottom: 0;
++  padding: 0;
++}
++.d2-mprofile .d2-profile-line {
++  border: 0;
++  padding: 0;
++}
++@media (min-width: 1024px) {
++  .d2-mbanner {
++    padding-top: 2.75rem;
++  }
++  .d2-mbanner__grid {
++    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
++    gap: 3rem;
++  }
++  /* The card column is narrow: the four counts sit two by two. */
++  .d2-mprofile .lg\:grid-cols-4 {
++    grid-template-columns: repeat(2, minmax(0, 1fr));
++  }
++}
++
++/* The light field */
++.d2-mfield {
++  background: var(--d2-mfield);
++  padding-bottom: 4rem;
++}
++
++/* Situation boxes over the banner's edge */
++.d2-mboxes {
++  position: relative;
++  z-index: 2;
++  display: grid;
++  grid-template-columns: minmax(0, 1fr);
++  gap: 1rem;
++  margin-top: -5rem;
++}
++@media (min-width: 768px) {
++  .d2-mboxes {
++    grid-template-columns: repeat(2, minmax(0, 1fr));
++  }
++  .d2-mbox--prove {
++    grid-column: 1 / -1;
++  }
++}
++@media (min-width: 1100px) {
++  .d2-mboxes {
++    grid-template-columns: repeat(3, minmax(0, 1fr));
++  }
++  .d2-mbox--prove {
++    grid-column: auto;
++  }
++}
++.d2-mbox {
++  display: flex;
++  flex-direction: column;
++  border-radius: 0.9rem;
++  background: var(--d2-mcard);
++  padding: 1.1rem 1.1rem 0.4rem;
++  box-shadow: var(--d2-mshadow-2);
++}
++.d2-mbox__head {
++  display: flex;
++  gap: 0.7rem;
++  align-items: flex-start;
++  padding-bottom: 0.6rem;
++}
++.d2-mbox__icon {
++  flex: none;
++  width: 2.1rem;
++  height: 2.1rem;
++  border-radius: 0.6rem;
++  display: grid;
++  place-items: center;
++  background: rgb(var(--de-accent-rgb) / 0.1);
++  color: var(--d2-accent-ink);
++}
++.d2-mbox--now .d2-mbox__icon {
++  background: color-mix(in srgb, var(--de-magenta) 10%, transparent);
++  color: color-mix(in srgb, var(--de-magenta) 85%, var(--de-bg));
++}
++.d2-mbox__title {
++  font-family: "Space Grotesk", sans-serif;
++  font-size: 1.1rem;
++  font-weight: 700;
++  line-height: 1.25;
++}
++.d2-mbox__line {
++  margin-top: 0.15rem;
++  font-size: 13.5px;
++  color: var(--d2-ink-soft);
++}
++.d2-mbox__rows {
++  list-style: none;
++  margin: 0;
++  padding: 0;
++}
++.d2-mbox__moment {
++  padding: 0.25rem 0 0.75rem;
++}
++.d2-mbox__call {
++  margin-top: auto;
++  display: flex;
++  align-items: center;
++  min-height: 2.75rem;
++  border-top: 1px solid var(--d2-rule);
++  color: color-mix(in srgb, var(--de-magenta) 85%, var(--de-bg));
++  font-size: 14px;
++  font-weight: 600;
++  text-decoration: none;
++}
++.d2-mbox__call:hover {
++  text-decoration: underline;
++  text-underline-offset: 3px;
++}
++
++/* A situation as a box row */
++.d2-mrow {
++  display: grid;
++  grid-template-columns: minmax(0, 1fr) auto;
++  gap: 0.25rem 0.9rem;
++  align-items: center;
++  padding: 0.8rem 0;
++  border-top: 1px solid var(--d2-rule);
++}
++.d2-mrow__title {
++  font-family: "Space Grotesk", sans-serif;
++  font-size: 15px;
++  font-weight: 700;
++  line-height: 1.3;
++  color: var(--d2-ink-strong);
++}
++.d2-mrow__marks {
++  margin-top: 0.2rem;
++  font-size: 13px;
++  line-height: 1.45;
++  color: var(--d2-ink-soft);
++}
++.d2-mrow__action {
++  display: inline-flex;
++  align-items: center;
++  gap: 0.35rem;
++  min-height: 2.75rem;
++  padding: 0 0.85rem;
++  border: 1px solid rgba(5, 3, 18, 0.22);
++  border-radius: 0.6rem;
++  background: var(--d2-mcard);
++  color: var(--d2-ink-strong);
++  font-size: 14px;
++  font-weight: 600;
++  white-space: nowrap;
++  cursor: pointer;
++  transition: border-color 150ms var(--d2-ease), background-color 150ms var(--d2-ease);
++}
++.d2-mrow__action:hover {
++  border-color: var(--d2-ink-strong);
++}
++.d2-mrow__action--done {
++  border-color: var(--d2-accent);
++  color: var(--d2-accent-ink);
++}
++.d2-mrow[data-state="added"] .d2-mrow__title {
++  color: var(--d2-accent-ink);
++}
++
++/* Catalog: filters | list | rail */
++.d2-mcatalog {
++  display: grid;
++  grid-template-columns: minmax(0, 1fr);
++  gap: 1.25rem;
++  align-items: start;
++  margin-top: 1.75rem;
++}
++.d2-mfilters {
++  border-radius: 0.9rem;
++  background: var(--d2-mcard);
++  padding: 0.9rem 1rem 0.4rem;
++  box-shadow: var(--d2-mshadow-1);
++}
++.d2-mfilters fieldset {
++  border: 0;
++  margin: 0;
++  padding: 0;
++  min-width: 0;
++}
++.d2-mfilters legend {
++  margin-bottom: 0.25rem;
++  font-family: "Oxanium", sans-serif;
++  font-size: 12px;
++  font-weight: 600;
++  letter-spacing: 0.14em;
++  text-transform: uppercase;
++  color: var(--d2-ink-soft);
++}
++.d2-mfilters label {
++  display: flex;
++  align-items: center;
++  gap: 0.65rem;
++  min-height: 2.75rem;
++  font-size: 14px;
++  color: var(--d2-ink);
++  cursor: pointer;
++}
++.d2-mfilters input {
++  flex: none;
++  width: 1.15rem;
++  height: 1.15rem;
++  accent-color: rgb(var(--de-accent-rgb));
++}
++.d2-mfilters__count {
++  margin-left: auto;
++  font-family: "Oxanium", sans-serif;
++  font-size: 12px;
++  color: var(--d2-ink-soft);
++}
++.d2-mfilters .d2-action--quiet:disabled {
++  opacity: 0.45;
++}
++@media (max-width: 1023px) {
++  /* Below the rail breakpoint the filters are one scrolling row of chips. */
++  .d2-mfilters {
++    padding: 0.6rem 0.75rem;
++  }
++  .d2-mfilters fieldset {
++    display: flex;
++    gap: 0.5rem;
++    overflow-x: auto;
++    scrollbar-width: none;
++  }
++  .d2-mfilters legend {
++    float: left;
++    margin: 0;
++    align-self: center;
++  }
++  .d2-mfilters label {
++    flex: none;
++    min-height: 2.5rem;
++    padding: 0 0.8rem;
++    border: 1px solid var(--d2-rule);
++    border-radius: 9999px;
++    white-space: nowrap;
++  }
++  .d2-mfilters label:has(input:checked) {
++    border-color: var(--d2-accent);
++    color: var(--d2-accent-ink);
++  }
++  .d2-mfilters .d2-mfilters__count {
++    margin-left: 0;
++  }
++}
++@media (min-width: 1024px) {
++  .d2-mcatalog {
++    grid-template-columns: 220px minmax(0, 1fr) 300px;
++  }
++  .d2-mfilters {
++    position: sticky;
++    top: calc(var(--de-nav-current-bottom, 6rem) + 1rem);
++  }
++}
++.d2-mresults__title {
++  font-family: "Space Grotesk", sans-serif;
++  font-size: clamp(1.4rem, 2.4vw, 1.75rem);
++  font-weight: 700;
++  line-height: 1.15;
++}
++.d2-mlist {
++  list-style: none;
++  margin: 0.5rem 0 0;
++  padding: 0;
++  display: grid;
++  gap: 0.75rem;
++}
++
++/* A family as a list item */
++.d2-mitem {
++  display: grid;
++  grid-template-columns: 4rem minmax(0, 1fr);
++  gap: 0.9rem 1rem;
++  align-items: start;
++  border: 1px solid transparent;
++  border-radius: 0.9rem;
++  background: var(--d2-mcard);
++  padding: 0.9rem;
++  box-shadow: var(--d2-mshadow-1);
++  transition: border-color 150ms var(--d2-ease), box-shadow 200ms var(--d2-ease);
++}
++.d2-mitem:hover {
++  border-color: var(--d2-rule);
++  box-shadow: var(--d2-mshadow-2);
++}
++.d2-mitem[data-state="added"] {
++  border-color: var(--d2-accent);
++}
++.d2-mitem__thumb {
++  width: 4rem;
++  height: 4rem;
++  border-radius: 0.65rem;
++  display: grid;
++  place-items: center;
++  background: radial-gradient(120% 120% at 20% 0%, color-mix(in srgb, rgb(var(--de-accent-rgb)) 6%, white), color-mix(in srgb, rgb(var(--de-accent-rgb)) 12%, var(--d2-mfield)));
++  color: var(--d2-accent-ink);
++}
++.d2-mitem__thumb svg {
++  width: 1.8rem;
++  height: 1.8rem;
++}
++.d2-mitem__goal {
++  font-family: "Oxanium", sans-serif;
++  font-size: 11px;
++  font-weight: 600;
++  letter-spacing: 0.12em;
++  text-transform: uppercase;
++  color: var(--d2-ink-soft);
++}
++.d2-mitem__title {
++  margin-top: 0.1rem;
++  font-family: "Space Grotesk", sans-serif;
++  font-size: 1.05rem;
++  font-weight: 700;
++  line-height: 1.3;
++}
++.d2-mitem__title a {
++  color: var(--d2-ink-strong);
++  text-decoration: none;
++}
++.d2-mitem__title a:hover {
++  text-decoration: underline;
++  text-underline-offset: 4px;
++}
++.d2-mitem__detail {
++  margin-top: 0.25rem;
++  font-size: 14px;
++  line-height: 1.5;
++  color: var(--d2-ink);
++}
++.d2-mitem__meta {
++  display: flex;
++  flex-wrap: wrap;
++  gap: 0.25rem 1rem;
++  margin: 0.5rem 0 0;
++  padding: 0;
++  list-style: none;
++  font-size: 13px;
++  color: var(--d2-ink);
++}
++.d2-mitem__meta li {
++  display: inline-flex;
++  align-items: center;
++  gap: 0.35rem;
++}
++.d2-mitem__meta svg {
++  flex: none;
++  color: #137a49;
++}
++.d2-mitem__acts {
++  grid-column: 1 / -1;
++  display: flex;
++  gap: 0.5rem;
++}
++.d2-mitem__acts > * {
++  flex: 1 1 0;
++}
++.d2-mitem__add,
++.d2-mitem__view {
++  display: inline-flex;
++  align-items: center;
++  justify-content: center;
++  min-height: 2.75rem;
++  padding: 0 1rem;
++  border-radius: 0.6rem;
++  font-size: 14px;
++  font-weight: 600;
++  white-space: nowrap;
++  text-decoration: none;
++  cursor: pointer;
++  transition: background-color 150ms var(--d2-ease), border-color 150ms var(--d2-ease), color 150ms var(--d2-ease);
++}
++.d2-mitem__add {
++  border: 1px solid transparent;
++  background: rgb(var(--de-accent-rgb));
++  color: #fff;
++}
++.d2-mitem__add:hover {
++  background: color-mix(in srgb, rgb(var(--de-accent-rgb)) 85%, var(--de-bg));
++}
++.d2-mitem__add[aria-pressed="true"] {
++  background: var(--d2-mcard);
++  border-color: var(--d2-accent);
++  color: var(--d2-accent-ink);
++}
++.d2-mitem__view {
++  border: 1px solid rgba(5, 3, 18, 0.22);
++  background: var(--d2-mcard);
++  color: var(--d2-ink-strong);
++}
++.d2-mitem__view:hover {
++  border-color: var(--d2-ink-strong);
++}
++.d2-mitem__undo {
++  grid-column: 1 / -1;
++}
++@media (min-width: 640px) {
++  .d2-mitem {
++    grid-template-columns: 6.5rem minmax(0, 1fr) auto;
++    align-items: center;
++    padding: 1rem;
++  }
++  .d2-mitem__thumb {
++    width: 6.5rem;
++    height: 5.5rem;
++  }
++  .d2-mitem__thumb svg {
++    width: 2.25rem;
++    height: 2.25rem;
++  }
++  .d2-mitem__acts {
++    grid-column: auto;
++    flex-direction: column;
++    min-width: 9.5rem;
++  }
++}
++
++/* The rail on the light field: a white floating card, the top of the ladder. */
++.d2-market .d2-rail {
++  border-color: transparent;
++  background: var(--d2-mcard);
++  box-shadow: var(--d2-mshadow-2);
++}
++.d2-market .d2-status__mark {
++  border-color: rgba(5, 3, 18, 0.3);
++}
++
++@media (prefers-reduced-motion: reduce) {
++  .d2-mitem,
++  .d2-mrow__action,
++  .d2-msearch,
++  .d2-mgoals a {
++    transition: none;
++  }
++}

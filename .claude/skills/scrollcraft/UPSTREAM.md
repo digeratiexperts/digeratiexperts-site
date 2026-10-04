@@ -16,3 +16,5 @@ reference images to `api.kie.ai` and `kieai.redpandaai.co`, and may incur
 third-party generation charges. Installing the skill does not make those calls
 and does not add `KIE_AI_API_KEY`. Do not invoke that optional generator or add
 its credential without explicit owner authorization for the specific build.
+
+- **Budget gate (local, 2026-10-04):** every paid call passes `.claude/kie-budget/budget.mjs gate` first (needs `KIE_JOB` set to an open job; per-job and per-month soft/hard limits) and records the real debit after. See `.claude/kie-budget/README.md`.

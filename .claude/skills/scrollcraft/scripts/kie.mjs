@@ -59,6 +59,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
+import { createRequire } from "node:module";
+
+// Every paid call also passes the repo-wide budget gate (.claude/kie-budget): per-job and per-month soft/hard limits, and a ledger.
+const budget = createRequire(import.meta.url)("../../../kie-budget/gate.cjs");
 
 const API = "https://api.kie.ai";
 const UPLOAD = "https://kieai.redpandaai.co/api/file-base64-upload";
@@ -333,6 +337,7 @@ function assetMeta(rest, out) {
 // The shared paid path: one createTask, manifest first, poll, balance, download.
 async function generateImage({ rest, out, modelId, model, input, extra = {} }) {
   const { approved, cap } = requireApproval(rest);
+  budget.gate(modelId, { resolution: input.resolution });
   const before = await preflightSpend(model, cap);
   process.stderr.write(`  balance ${before} credits, cap ${cap}, model ${modelId}${model.credits != null ? ` (lists ${model.credits})` : ""}\n`);
 
@@ -352,10 +357,12 @@ async function generateImage({ rest, out, modelId, model, input, extra = {} }) {
   } catch (err) {
     const after = await credit().catch(() => null);
     upsertManifest(out, { taskId, status: "failed", failedAt: now(), error: err.message, creditsAfter: after, creditsSpent: after == null ? null : before - after });
+    if (after != null && before - after > 0) budget.record(modelId, before - after, { task: taskId, file: out });
     throw new Error(`${err.message}\n  recorded as failed; no retry (Joe's rule 4). Balance now ${after ?? "unknown"}.`);
   }
   const after = await credit();
   const spent = before - after;
+  budget.record(modelId, spent, { task: taskId, file: out });
   upsertManifest(out, { taskId, status: "generated", completedAt: now(), resultUrls: urls, kie: record, creditsAfter: after, creditsSpent: spent, capExceeded: spent > cap });
   if (spent > cap) process.stderr.write(`  WARNING: spent ${spent} credits, above the cap of ${cap}. Reported in the manifest; tell Joe.\n`);
 
@@ -479,11 +486,13 @@ try {
       cfg_scale: 0.5,
     };
     if (tail) input.tail_image_url = await asUrl(tail);
+    budget.gate(VIDEO_MODEL, { seconds: dur });
     const before = await preflightSpend({ name: VIDEO_MODEL, credits: null }, cap);
     const taskId = await createTask(VIDEO_MODEL, input);
     upsertManifest(out, { provider: "kie.ai", model: VIDEO_MODEL, prompt: input.prompt, head, tail, taskId, submittedAt: now(), approvedBy: approved, cap, creditsBefore: before, classification: "ILLUSTRATIVE", status: "submitted", usage: [] });
     const { urls, record } = await waitTask(taskId, { label: path.basename(out), timeoutMs: 20 * 60 * 1000 });
     const after = await credit();
+    budget.record(VIDEO_MODEL, before - after, { task: taskId, file: out });
     upsertManifest(out, { taskId, status: "generated", completedAt: now(), resultUrls: urls, kie: record, creditsAfter: after, creditsSpent: before - after, capExceeded: before - after > cap });
     fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
     const res = await fetch(urls[0]);

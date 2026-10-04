@@ -1922,6 +1922,25 @@ claims:
       end); the claims that list PortalLayout.tsx (portal-data-sources,
       portal-followups-2026-10-02, portal-redesign-control-room) are all
       verified-live.
+  - id: store-flagship
+    owner: claude
+    subsystem: public-store-door2
+    branch: claude/lucid-dijkstra-s3v2s3
+    pr: 421
+    base_sha: bae91666b11a0c567338e3a1726d43b151fd6481
+    files:
+      - client/src/pages/solutions/BusinessNeedsIndex.tsx (the /store layout only; every write, undo, suggestion and test id kept)
+      - client/src/components/store/door2/ScenarioTile.tsx (card variant)
+      - client/src/styles/store-builder.css (appended flagship block and .d2-light scope)
+      - client/src/data/solutionScenarios.ts, solutionScenarios.test.ts (SCENARIO_GROUPS)
+      - .claude/kie-budget/**, kie.ai generator scripts (budget gate)
+      - artifacts/design-concepts/store-situations-2026-10/**, artifacts/design-concepts/store-redesign-2026-10/**, artifacts/visual-qa/store-flagship/**
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-04: build concept 4 (apple.com/iphone grammar) into /store
+      ("2. yes"), and kie.ai spend needs a per-job projection plus soft and
+      hard limits. Family page, workspace and contact are untouched.
   - id: content-tooling-step1
     owner: claude
     subsystem: tooling-ci

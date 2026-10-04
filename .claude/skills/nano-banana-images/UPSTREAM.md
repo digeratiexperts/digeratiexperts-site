@@ -44,3 +44,5 @@ folder, the DE `GEMINI.md`, or the ChatGPT Kie connector from PR #168:
 returns. Generation incurs third-party charges. Installing the skill makes no
 call and adds no credential; the key lives only in the environment or the
 gitignored `.env`.
+
+- **Budget gate (local, 2026-10-04):** every paid call passes `.claude/kie-budget/budget.mjs gate` first (needs `KIE_JOB` set to an open job; per-job and per-month soft/hard limits) and records the real debit after. See `.claude/kie-budget/README.md`.
