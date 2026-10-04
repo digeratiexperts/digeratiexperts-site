@@ -11,7 +11,8 @@
       * Graph calls page through @odata.nextLink (no silent truncation at 999), retry throttling (429/503/504)
         with Retry-After, and use server-side $search/$filter instead of downloading whole directories.
       * Least privilege: Connect-DEMicrosoft asks only for the scopes a scenario needs. The Hub worker signs in
-        app-only with a certificate from the machine store (no secret on disk).
+        app-only with a certificate from the machine store (no secret on disk), to Graph, and with the same app and
+        certificate to Exchange Online and Azure when a job needs them.
       * Every operation returns one result object and appends one line to the audit log (operation, target,
         status, who, when; never data).
       * Destructive operations are ConfirmImpact High, verify their own effect, and refuse ambiguous targets.
@@ -23,7 +24,12 @@
 Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 
-$script:Ctx = [ordered]@{ TenantId = $null; Mode = $null; Account = $null; Scopes = @(); ConnectedAt = $null }
+# ClientId and CertificateThumbprint are the app-only Graph sign-in (public identifiers, never a secret): the Hub
+# worker signs in to Exchange Online and Azure with the same app and certificate.
+$script:Ctx = [ordered]@{ TenantId = $null; Mode = $null; Account = $null; Scopes = @(); ConnectedAt = $null; ClientId = $null; CertificateThumbprint = $null }
+# Exchange Online and Azure sessions opened through this module in this PowerShell session (Connect-DEExchange,
+# Connect-DEAzure): $null, or mode (user, app, interactive, service-principal), target and tenant.
+$script:ServiceSessions = @{ Exchange = $null; Azure = $null }
 $script:AuditPath = $(if ($env:ProgramData) { Join-Path $env:ProgramData 'DE\MicrosoftAdmin\audit.jsonl' } else { Join-Path ([IO.Path]::GetTempPath()) 'de-microsoft-admin-audit.jsonl' })
 $script:GraphRoot = 'https://graph.microsoft.com'
 $script:RecoveryShape = '(?<!\d)\d{6}(-\d{6}){7}(?!\d)'
@@ -56,7 +62,7 @@ function New-DEResult {
     <# One result shape for every operation: Succeeded | DryRun | Failed | Refused | Partial. #>
     param([Parameter(Mandatory = $true)][string]$Operation, [ValidateSet('Succeeded', 'DryRun', 'Failed', 'Refused', 'Partial')][string]$Status = 'Succeeded', [object]$Data, [string]$Message = '', [string]$Target = '', [string]$JobId)
     Write-DEMsAudit -Operation $Operation -Status $Status -Target $Target -Message $Message -JobId $JobId
-    return [pscustomobject][ordered]@{ product = 'DE Microsoft Admin'; version = '0.5.0'; operation = $Operation; status = $Status; target = $Target; tenant = $script:Ctx.TenantId; at = (Get-Date).ToUniversalTime().ToString('o'); message = $Message; data = $Data }
+    return [pscustomobject][ordered]@{ product = 'DE Microsoft Admin'; version = '0.6.0'; operation = $Operation; status = $Status; target = $Target; tenant = $script:Ctx.TenantId; at = (Get-Date).ToUniversalTime().ToString('o'); message = $Message; data = $Data }
 }
 function Export-DEResult {
     <# Writes a result as UTF-8 JSON without a BOM (Node, Python and the Hub reject one). #>
@@ -84,11 +90,11 @@ function Connect-DEMicrosoft {
     Assert-DECommand 'Connect-MgGraph' 'Microsoft.Graph.Authentication'
     if ($PSCmdlet.ParameterSetName -eq 'App') {
         Connect-MgGraph -TenantId $TenantId -ClientId $ClientId -CertificateThumbprint $CertificateThumbprint -NoWelcome
-        $script:Ctx.Mode = 'app'; $script:Ctx.Scopes = @()
+        $script:Ctx.Mode = 'app'; $script:Ctx.Scopes = @(); $script:Ctx.ClientId = $ClientId; $script:Ctx.CertificateThumbprint = $CertificateThumbprint
     } else {
         $scopes = Get-DEMsScopeSet -Scenario $Scenario
         Connect-MgGraph -TenantId $TenantId -Scopes $scopes -NoWelcome
-        $script:Ctx.Mode = 'delegated'; $script:Ctx.Scopes = $scopes
+        $script:Ctx.Mode = 'delegated'; $script:Ctx.Scopes = $scopes; $script:Ctx.ClientId = $null; $script:Ctx.CertificateThumbprint = $null
     }
     $mg = Get-MgContext
     $script:Ctx.TenantId = $(if ($mg -and $mg.TenantId) { "$($mg.TenantId)" } else { $TenantId }); $script:Ctx.Account = $(if ($mg) { "$($mg.Account)$(if (-not $mg.Account) { $mg.AppName })" } else { $null }); $script:Ctx.ConnectedAt = (Get-Date).ToUniversalTime().ToString('o')
@@ -344,9 +350,27 @@ function Test-DEEntraBitLockerEscrow {
 
 # ============================================================ Exchange Online
 function Connect-DEExchange {
-    [CmdletBinding()] param([Parameter(Mandatory = $true)][string]$UserPrincipalName)
+    <#
+        User sign-in: -UserPrincipalName (interactive, modern auth). App-only (the Hub worker, unattended): -AppId (or
+        -ClientId) and -CertificateThumbprint of a certificate in the worker's store, and -Organization, the tenant's
+        <name>.onmicrosoft.com domain. The app needs Exchange.ManageAsApp and an Exchange admin role on its service
+        principal. No client secret, certificate file or password is ever accepted.
+    #>
+    [CmdletBinding(DefaultParameterSetName = 'User')]
+    param(
+        [Parameter(ParameterSetName = 'User', Mandatory = $true)][string]$UserPrincipalName,
+        [Parameter(ParameterSetName = 'App', Mandatory = $true)][Alias('ClientId')][string]$AppId,
+        [Parameter(ParameterSetName = 'App', Mandatory = $true)][string]$CertificateThumbprint,
+        [Parameter(ParameterSetName = 'App', Mandatory = $true)][ValidatePattern('^[A-Za-z0-9][A-Za-z0-9-]*\.onmicrosoft\.(com|us)$')][string]$Organization
+    )
     Assert-DECommand 'Connect-ExchangeOnline' 'ExchangeOnlineManagement'
+    if ($PSCmdlet.ParameterSetName -eq 'App') {
+        Connect-ExchangeOnline -AppId $AppId -CertificateThumbprint $CertificateThumbprint -Organization $Organization -ShowBanner:$false -ErrorAction Stop | Out-Null
+        $script:ServiceSessions.Exchange = [pscustomobject]@{ mode = 'app'; target = $Organization; tenant = $script:Ctx.TenantId }
+        return (New-DEResult -Operation 'Connect-DEExchange' -Target $Organization -Data ([pscustomobject]@{ organization = $Organization; appId = $AppId; mode = 'app'; connected = $true }))
+    }
     Connect-ExchangeOnline -UserPrincipalName $UserPrincipalName -ShowBanner:$false -ErrorAction Stop | Out-Null
+    $script:ServiceSessions.Exchange = [pscustomobject]@{ mode = 'user'; target = $UserPrincipalName; tenant = $script:Ctx.TenantId }
     return (New-DEResult -Operation 'Connect-DEExchange' -Target $UserPrincipalName -Data ([pscustomobject]@{ userPrincipalName = $UserPrincipalName; connected = $true }))
 }
 function Get-DEMailbox {
@@ -462,10 +486,31 @@ function Get-DETransportRule {
 
 # ============================================================ Azure
 function Connect-DEAzure {
-    [CmdletBinding()] param([Parameter(Mandatory = $true)][string]$TenantId, [string]$SubscriptionId)
+    <#
+        Interactive: -TenantId (and -SubscriptionId). Service principal (the Hub worker, unattended): -ServicePrincipal
+        with -ApplicationId (or -ClientId) and -CertificateThumbprint of a certificate in the worker's store, -TenantId,
+        and optionally -SubscriptionId. The service principal needs an Azure RBAC role on the subscription(s). No
+        client secret, certificate file or password is ever accepted.
+    #>
+    [CmdletBinding(DefaultParameterSetName = 'Interactive')]
+    param(
+        [Parameter(Mandatory = $true)][string]$TenantId,
+        [string]$SubscriptionId,
+        [Parameter(ParameterSetName = 'ServicePrincipal', Mandatory = $true)][switch]$ServicePrincipal,
+        [Parameter(ParameterSetName = 'ServicePrincipal', Mandatory = $true)][Alias('ClientId', 'AppId')][string]$ApplicationId,
+        [Parameter(ParameterSetName = 'ServicePrincipal', Mandatory = $true)][string]$CertificateThumbprint
+    )
     Assert-DECommand 'Connect-AzAccount' 'Az.Accounts'
-    Connect-AzAccount -Tenant $TenantId -ErrorAction Stop | Out-Null
-    if ($SubscriptionId) { Set-AzContext -SubscriptionId $SubscriptionId -ErrorAction Stop | Out-Null }
+    if ($PSCmdlet.ParameterSetName -eq 'ServicePrincipal') {
+        $p = @{ ServicePrincipal = $true; ApplicationId = $ApplicationId; CertificateThumbprint = $CertificateThumbprint; Tenant = $TenantId; ErrorAction = 'Stop' }
+        if ($SubscriptionId) { $p['Subscription'] = $SubscriptionId }
+        Connect-AzAccount @p | Out-Null
+        $script:ServiceSessions.Azure = [pscustomobject]@{ mode = 'service-principal'; target = $(if ($SubscriptionId) { $SubscriptionId } else { $TenantId }); tenant = $TenantId }
+    } else {
+        Connect-AzAccount -Tenant $TenantId -ErrorAction Stop | Out-Null
+        if ($SubscriptionId) { Set-AzContext -SubscriptionId $SubscriptionId -ErrorAction Stop | Out-Null }
+        $script:ServiceSessions.Azure = [pscustomobject]@{ mode = 'interactive'; target = $(if ($SubscriptionId) { $SubscriptionId } else { $TenantId }); tenant = $TenantId }
+    }
     $c = Get-AzContext
     return (New-DEResult -Operation 'Connect-DEAzure' -Target "$($c.Subscription.Name)" -Data ([pscustomobject]@{ tenant = "$($c.Tenant.Id)"; subscription = "$($c.Subscription.Name)"; subscriptionId = "$($c.Subscription.Id)"; account = "$($c.Account.Id)" }))
 }
@@ -642,6 +687,18 @@ $script:JobAllowlist = @{
     'New-DEUser' = $true; 'New-DEGroup' = $true; 'Set-DEConditionalAccessPolicyState' = $true; 'Set-DEMailboxAlias' = $true; 'Set-DEMailboxForwarding' = $true
     'Invoke-DEIntuneDeviceAction' = $true; 'Set-DEAutopilotGroupTag' = $true; 'New-DEAzureResourceLock' = $true
 }
+# The service an allowlisted operation signs in to besides Graph (every operation not listed here is Graph only).
+# The Hub worker connects that service only when a job for it has verified (Invoke-DEMicrosoftJob -BeforeRun).
+$script:JobService = @{
+    'Get-DEMailbox' = 'Exchange'; 'New-DESharedMailbox' = 'Exchange'; 'Set-DEMailboxPermission' = 'Exchange'; 'Set-DEMailboxAlias' = 'Exchange'; 'Set-DEMailboxForwarding' = 'Exchange'; 'Get-DETransportRule' = 'Exchange'
+    'Get-DEAzureSubscription' = 'Azure'; 'Get-DEAzureInventory' = 'Azure'; 'New-DEAzureResourceGroup' = 'Azure'; 'New-DEAzureResourceLock' = 'Azure'
+}
+function Get-DEJobService {
+    <# Graph, Exchange or Azure: the service an allowlisted job operation needs. #>
+    param([Parameter(Mandatory = $true)][string]$Operation)
+    if ($script:JobService.ContainsKey($Operation)) { return $script:JobService[$Operation] }
+    return 'Graph'
+}
 function ConvertTo-DEJsonText {
     <# A JSON string exactly as JavaScript's JSON.stringify writes it (only " \ and control characters escaped), so a Node signer and this module sign the same bytes. #>
     param([AllowEmptyString()][string]$Text)
@@ -702,8 +759,11 @@ function Invoke-DEMicrosoftJob {
         Runs one Hub job after every check passes: schema, HMAC signature (constant-time compare), issued/expiry window
         (at most 60 minutes, 5 minutes clock skew), replay ledger, connected tenant, allowlisted operation, only that
         operation's own parameters, and for changes mode 'apply' plus approvedBy. A 'plan' job runs a change as -DryRun.
+        -BeforeRun (the Hub worker's lazy Exchange / Azure sign-in) is called only after every check has passed, with
+        the service the operation needs (Graph, Exchange or Azure) and the operation. Text back means the job cannot
+        run here: it is reported as Failed with that text, nothing runs, and the replay ledger is not written.
     #>
-    param([Parameter(Mandatory = $true)][string]$JobJson, [Parameter(Mandatory = $true)][securestring]$Secret, [string]$LedgerPath = (Join-Path (Split-Path -Parent $script:AuditPath) 'job-ledger.txt'))
+    param([Parameter(Mandatory = $true)][string]$JobJson, [Parameter(Mandatory = $true)][securestring]$Secret, [string]$LedgerPath = (Join-Path (Split-Path -Parent $script:AuditPath) 'job-ledger.txt'), [scriptblock]$BeforeRun)
     $refuse = { param($why, $id) return (New-DEResult -Operation 'Invoke-DEMicrosoftJob' -Status Refused -Target "$id" -Message $why -JobId "$id") }
     # PowerShell 7 turns ISO date strings into DateTime while parsing, which would change the signed bytes
     $cf = @{}; if ((Get-Command -Name ConvertFrom-Json).Parameters.ContainsKey('DateKind')) { $cf['DateKind'] = 'String' }
@@ -730,6 +790,11 @@ function Invoke-DEMicrosoftJob {
     if ($mutating) {
         if ("$($job.mode)" -eq 'apply') { if (-not "$($job.approvedBy)") { return (& $refuse "$op changes the tenant: an apply job needs approvedBy" $id) }; $params['Confirm'] = $false }
         else { $params['DryRun'] = $true }
+    }
+    if ($BeforeRun) {
+        $service = Get-DEJobService -Operation $op
+        $notReady = "$(& $BeforeRun $service $op)".Trim()
+        if ($notReady) { return (New-DEResult -Operation $op -Status Failed -Target "$id" -Message "not run: $notReady" -JobId $id) }
     }
     $dir = Split-Path -Parent $LedgerPath; if ($dir -and -not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
     [IO.File]::AppendAllText($LedgerPath, "$id`n", (New-Object Text.UTF8Encoding $false))   # recorded before running: a crash never allows a second run

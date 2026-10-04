@@ -266,6 +266,91 @@ function Send-DEHubPendingResult {
     return [pscustomobject]@{ State = 'rejected'; Answer = $text; StatusCode = $call.StatusCode }
 }
 
+# ============================================================ Exchange Online and Azure, unattended
+$script:HubServiceLabel = @{ Exchange = 'Exchange Online'; Azure = 'Azure' }
+$script:HubServiceCommand = @{ Exchange = @('Connect-ExchangeOnline', 'ExchangeOnlineManagement'); Azure = @('Connect-AzAccount', 'Az.Accounts') }
+function Get-DEHubServiceReadiness {
+    <#
+        Whether this worker can sign in to Exchange Online or Azure without anyone at the keyboard, worked out without
+        signing in: a session already opened through this module for the connected tenant is used as it is; otherwise
+        it needs Graph connected app-only with a certificate (the same app and certificate sign in to the service),
+        for Exchange the tenant's <name>.onmicrosoft.com domain (-ExchangeOrganization), and the service's module.
+        Returns Ready, Reuse and Detail (what is in place, or exactly what is missing).
+    #>
+    param([Parameter(Mandatory = $true)][ValidateSet('Exchange', 'Azure')][string]$Service, [hashtable]$Settings = @{})
+    $label = $script:HubServiceLabel[$Service]
+    $open = $script:ServiceSessions[$Service]
+    if ($open -and $script:Ctx.TenantId -and "$($open.tenant)" -eq "$($script:Ctx.TenantId)") {
+        return [pscustomobject]@{ Ready = $true; Reuse = $true; Detail = "a $label session is already open in this PowerShell session ($($open.mode), $($open.target)); it is used as it is and left open" }
+    }
+    $missing = New-Object System.Collections.Generic.List[string]
+    if ("$($script:Ctx.Mode)" -ne 'app' -or -not "$($script:Ctx.ClientId)" -or -not "$($script:Ctx.CertificateThumbprint)") {
+        $missing.Add("Graph is not connected app-only with a certificate (Connect-DEMicrosoft -TenantId <tenant> -ClientId <app id> -CertificateThumbprint <thumbprint>), so there is no app to sign in to $label with")
+    }
+    if ($Service -eq 'Exchange' -and -not "$($Settings['ExchangeOrganization'])") {
+        $missing.Add("-ExchangeOrganization is not set (the tenant's <name>.onmicrosoft.com domain, for example contoso.onmicrosoft.com)")
+    }
+    $cmd = $script:HubServiceCommand[$Service]
+    if (-not (Get-Command -Name $cmd[0] -ErrorAction SilentlyContinue)) {
+        $missing.Add("the $($cmd[1]) module is not installed on this worker (Install-DEMicrosoftDependencies.ps1 -Only $Service)")
+    }
+    if ($missing.Count) { return [pscustomobject]@{ Ready = $false; Reuse = $false; Detail = ($missing.ToArray() -join '; ') } }
+    $where = $(if ($Service -eq 'Exchange') { "organization $($Settings['ExchangeOrganization'])" } elseif ("$($Settings['AzureSubscriptionId'])") { "subscription $($Settings['AzureSubscriptionId'])" } else { "the service principal's default subscription" })
+    return [pscustomobject]@{ Ready = $true; Reuse = $false; Detail = "app-only as $($script:Ctx.ClientId) with certificate $($script:Ctx.CertificateThumbprint), $where" }
+}
+function Connect-DEHubJobService {
+    <#
+        Signs in to Exchange Online or Azure for a verified job, once per run (the outcome is kept in -State), with the
+        same app and certificate as the Graph connection: Connect-DEExchange -AppId -CertificateThumbprint
+        -Organization, or Connect-DEAzure -ServicePrincipal -ApplicationId -CertificateThumbprint -TenantId. Returns ''
+        when the job can run, else why not (the job is then reported as Failed with that reason; the loop goes on).
+        Graph jobs need nothing here: Graph is connected before the loop starts.
+    #>
+    param([Parameter(Mandatory = $true)][string]$Service, [Parameter(Mandatory = $true)][hashtable]$State, [hashtable]$Settings = @{})
+    if ($Service -notin @('Exchange', 'Azure')) { return '' }
+    if ($State.ContainsKey($Service)) { return $State[$Service].Why }
+    $label = $script:HubServiceLabel[$Service]
+    $entry = [pscustomobject]@{ Why = ''; Connected = $false; Reused = $false; Disconnected = $false }
+    $ready = Get-DEHubServiceReadiness -Service $Service -Settings $Settings
+    if (-not $ready.Ready) { $entry.Why = "$label unattended sign-in is not configured on this worker: $($ready.Detail)" }
+    elseif ($ready.Reuse) { $entry.Reused = $true }
+    else {
+        try {
+            if ($Service -eq 'Exchange') { $null = Connect-DEExchange -AppId "$($script:Ctx.ClientId)" -CertificateThumbprint "$($script:Ctx.CertificateThumbprint)" -Organization "$($Settings['ExchangeOrganization'])" }
+            else {
+                $p = @{ ServicePrincipal = $true; ApplicationId = "$($script:Ctx.ClientId)"; CertificateThumbprint = "$($script:Ctx.CertificateThumbprint)"; TenantId = "$($script:Ctx.TenantId)" }
+                if ("$($Settings['AzureSubscriptionId'])") { $p['SubscriptionId'] = "$($Settings['AzureSubscriptionId'])" }
+                $null = Connect-DEAzure @p
+            }
+            $entry.Connected = $true
+        } catch { $entry.Why = "$label app-only sign-in failed: $($_.Exception.Message)" }
+    }
+    Write-DEMsAudit -Operation 'Invoke-DEHubJobLoop' -Status $(if ($entry.Why) { 'ServiceUnavailable' } else { 'ServiceReady' }) -Target $label -Message $(if ($entry.Why) { $entry.Why } elseif ($entry.Reused) { 'using the session already open' } else { 'signed in app-only with the certificate' })
+    $State[$Service] = $entry
+    return $entry.Why
+}
+function Disconnect-DEHubJobService {
+    <# Signs out of the services this run signed in to (never a session that was already open before the run). #>
+    param([Parameter(Mandatory = $true)][hashtable]$State)
+    foreach ($svc in @('Exchange', 'Azure')) {
+        if (-not $State.ContainsKey($svc) -or -not $State[$svc].Connected) { continue }
+        try {
+            if ($svc -eq 'Exchange') { Disconnect-ExchangeOnline -Confirm:$false -ErrorAction Stop | Out-Null } else { Disconnect-AzAccount -ErrorAction Stop | Out-Null }
+            $State[$svc].Disconnected = $true
+        } catch { Write-DEMsAudit -Operation 'Invoke-DEHubJobLoop' -Status 'DisconnectFailed' -Target $script:HubServiceLabel[$svc] -Message "$($_.Exception.Message)" }
+        $script:ServiceSessions[$svc] = $null
+    }
+}
+function Get-DEHubServiceSummary {
+    <# One line per service for the run summary: what this run did with Exchange Online and Azure. #>
+    param([Parameter(Mandatory = $true)][hashtable]$State, [Parameter(Mandatory = $true)][string]$Service)
+    if (-not $State.ContainsKey($Service)) { return 'not needed this run' }
+    $e = $State[$Service]
+    if ($e.Why) { return "not available: $($e.Why)" }
+    if ($e.Reused) { return 'used the session that was already open' }
+    return 'signed in app-only with the certificate for this run; signed out at the end'
+}
+
 # ============================================================ the loop
 function Invoke-DEHubJobLoop {
     <#
@@ -288,11 +373,20 @@ function Invoke-DEHubJobLoop {
         Secrets: -JobSecret / -WorkerSecret, else -Vault (SecretManagement, secrets named MSADMIN_JOB_SIGNING_SECRET
         and MSADMIN_WORKER_SECRET), else the environment variables of those names. Held for this run only; never
         written, logged or sent.
+        Exchange Online and Azure: signed in only when a verified job needs them, at most once per run, with the
+        same app and certificate as the Graph connection (Connect-DEExchange -AppId -CertificateThumbprint
+        -Organization <-ExchangeOrganization>; Connect-DEAzure -ServicePrincipal, optionally -AzureSubscriptionId), and
+        signed out at the end of the run. A session already opened with Connect-DEExchange or Connect-DEAzure in this
+        PowerShell session (at a prompt) is used as it is and left open. When the setting, the app-only Graph
+        connection or the module is missing, or the sign-in fails, that job is not run: it is posted as Failed with
+        exactly what is missing, and the loop carries on with the next job.
         -WhatIf contacts nothing: claiming hands a job out (approved -> running), so a what-if run only checks the setup
-        and says what it would do. Rehearse a change with a plan-mode job, which the worker runs as -DryRun.
+        (including whether Exchange Online and Azure jobs could sign in unattended) and says what it would do.
+        Rehearse a change with a plan-mode job, which the worker runs as -DryRun.
     .OUTPUTS
         One summary: ok, stoppedBecause (queue_empty, max_jobs, time_budget, whatif, busy, network, hub_refused,
-        job_signature), message, counts, and each job with its local result (as the operation returned it).
+        job_signature), message, counts, services (what the run did with Exchange Online and Azure, or under -WhatIf
+        whether each is ready), and each job with its local result (as the operation returned it).
     #>
     [CmdletBinding(SupportsShouldProcess = $true)]
     param(
@@ -308,7 +402,9 @@ function Invoke-DEHubJobLoop {
         [string]$LedgerPath = (Join-Path (Split-Path -Parent $script:AuditPath) 'job-ledger.txt'),
         [ValidateRange(0, 10)][int]$MaxRetries = 4,
         [ValidateRange(0, 60)][double]$RetryBaseSeconds = 2,
-        [ValidateRange(1, 600)][int]$TimeoutSec = 60
+        [ValidateRange(1, 600)][int]$TimeoutSec = 60,
+        [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9-]*\.onmicrosoft\.(com|us)$')][string]$ExchangeOrganization,
+        [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')][string]$AzureSubscriptionId
     )
     # ---- setup problems throw: nothing has been claimed or run
     $u = $null
@@ -333,12 +429,15 @@ function Invoke-DEHubJobLoop {
     $retry = @{ MaxRetries = $MaxRetries; RetryBaseSeconds = $RetryBaseSeconds; TimeoutSec = $TimeoutSec }
     $max = $(if ($Once) { 1 } else { $MaxJobs })
     $jobs = New-Object System.Collections.Generic.List[object]
-    $summary = [ordered]@{ ok = $false; stoppedBecause = $null; message = ''; hubUrl = $base; tenantId = $tenant; workerId = $WorkerId; startedAt = (Get-Date).ToUniversalTime().ToString('o'); finishedAt = $null; claimed = 0; posted = 0; pendingPosted = 0; pendingLeft = 0; rejected = 0; jobs = @() }
+    $hubServiceSettings = @{ ExchangeOrganization = $ExchangeOrganization; AzureSubscriptionId = $AzureSubscriptionId }
+    $hubServiceState = @{}   # Exchange / Azure: signed in this run, reused, or why not (Connect-DEHubJobService)
+    $summary = [ordered]@{ ok = $false; stoppedBecause = $null; message = ''; hubUrl = $base; tenantId = $tenant; workerId = $WorkerId; startedAt = (Get-Date).ToUniversalTime().ToString('o'); finishedAt = $null; claimed = 0; posted = 0; pendingPosted = 0; pendingLeft = 0; rejected = 0; services = $null; jobs = @() }
     $finish = {
         param([string]$Why, [string]$Message)
         $summary.stoppedBecause = $Why; $summary.message = $Message
         $summary.ok = ($Why -in @('queue_empty', 'max_jobs', 'time_budget', 'whatif'))
         $summary.pendingLeft = @(Get-ChildItem -LiteralPath $pendingDir -Filter '*.json' -File -ErrorAction SilentlyContinue).Count
+        if ($Why -ne 'whatif') { $summary.services = [pscustomobject][ordered]@{ exchange = (Get-DEHubServiceSummary -State $hubServiceState -Service 'Exchange'); azure = (Get-DEHubServiceSummary -State $hubServiceState -Service 'Azure') } }
         $summary.jobs = $jobs.ToArray(); $summary.finishedAt = (Get-Date).ToUniversalTime().ToString('o')
         if (-not $summary.ok) { Write-Warning "Hub job loop stopped ($Why): $Message" } else { Write-Verbose "Hub job loop finished ($Why): $Message" }
         Write-DEMsAudit -Operation 'Invoke-DEHubJobLoop' -Status $Why -Target $base -Message ("$Message (claimed $($summary.claimed), posted $($summary.posted), earlier results posted $($summary.pendingPosted), waiting $($summary.pendingLeft))")
@@ -347,7 +446,11 @@ function Invoke-DEHubJobLoop {
 
     if (-not $PSCmdlet.ShouldProcess($base, "claim and run up to $max approved job(s) for tenant $tenant as $WorkerId")) {
         $n = @(Get-ChildItem -LiteralPath $pendingDir -Filter '*.json' -File -ErrorAction SilentlyContinue).Count
-        return (& $finish 'whatif' "nothing claimed or posted (claiming hands a job out); setup is complete; $n earlier result(s) waiting to be posted")
+        $exo = Get-DEHubServiceReadiness -Service 'Exchange' -Settings $hubServiceSettings
+        $az = Get-DEHubServiceReadiness -Service 'Azure' -Settings $hubServiceSettings
+        $say = { param($r) if ($r.Ready) { "ready ($($r.Detail))" } else { "not configured: $($r.Detail)" } }
+        $summary.services = [pscustomobject][ordered]@{ exchange = (& $say $exo); azure = (& $say $az); exchangeReady = [bool]$exo.Ready; azureReady = [bool]$az.Ready }
+        return (& $finish 'whatif' "nothing claimed or posted (claiming hands a job out); setup for Graph jobs is complete; $n earlier result(s) waiting to be posted; Exchange Online jobs: $(& $say $exo); Azure jobs: $(& $say $az)")
     }
 
     foreach ($d in @($StatePath, $pendingDir)) { if (-not (Test-Path -LiteralPath $d)) { New-Item -ItemType Directory -Path $d -Force -WhatIf:$false | Out-Null } }
@@ -392,7 +495,9 @@ function Invoke-DEHubJobLoop {
             if ($jid -notmatch $script:HubGuidShape) { return (& $finish 'hub_refused' 'the Hub handed out a job without a valid jobId; nothing was run and no result can be addressed') }
             $jid = $jid.ToLowerInvariant()
             Write-Verbose "job $jid ($($peek.operation), $($peek.mode)): verifying and running"
-            try { $out = @(Invoke-DEMicrosoftJob -JobJson $jobJson -Secret $JobSecret -LedgerPath $LedgerPath) }
+            # Exchange / Azure are signed in to here, lazily, only once the job has verified (never for a refused job)
+            $beforeRun = { param($Service, $Operation) Connect-DEHubJobService -Service $Service -State $hubServiceState -Settings $hubServiceSettings }
+            try { $out = @(Invoke-DEMicrosoftJob -JobJson $jobJson -Secret $JobSecret -LedgerPath $LedgerPath -BeforeRun $beforeRun) }
             catch { $out = @(New-DEResult -Operation 'Invoke-DEMicrosoftJob' -Status Failed -Target $jid -Message "the worker could not run the job: $($_.Exception.Message)" -JobId $jid) }
             $local = @($out | Where-Object { $_ -and $_.PSObject.Properties['product'] -and $_.PSObject.Properties['status'] }) | Select-Object -Last 1
             if (-not $local) { $local = New-DEResult -Operation 'Invoke-DEMicrosoftJob' -Status Failed -Target $jid -Message 'the operation returned no result' -JobId $jid }
@@ -413,5 +518,8 @@ function Invoke-DEHubJobLoop {
                 return (& $finish 'job_signature' "job $jid did not verify and was reported as Refused; stopping so the rest of the queue is not refused too. Check that MSADMIN_JOB_SIGNING_SECRET is the same on the Hub and on this worker.")
             }
         }
-    } finally { if ($lock) { $lock.Dispose() } }
+    } finally {
+        Disconnect-DEHubJobService -State $hubServiceState
+        if ($lock) { $lock.Dispose() }
+    }
 }

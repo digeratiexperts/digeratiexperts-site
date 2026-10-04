@@ -189,6 +189,122 @@ Describe 'Shared contracts' {
         (Get-DEThrown { Send-DEHubMigrationRecord -Path $badFile -AccountId '42' -Confirm:$false }) | Should -Match 'mfaSeed: secrets never go'
         Clear-DESecrets; Remove-Module DE-Microsoft-Admin -Force -ErrorAction SilentlyContinue
     }
+    It 'Send-DEHubWarranty sends the latest lookup as one signed device.warranty event the Hub accepts, and never a secret' {
+        Set-DEStateValue -Path 'settings.hub.endpoint' -Value 'https://hub.example/api/whatever'
+        Set-DESecret -Name 'DE_HUB_SIGNING_SECRET' -Plain 'signing-secret-9876'
+        Set-DEContext -Values @{ hubAccountId = '42' }
+        $end = (Get-Date).Date.AddDays(400).ToString('yyyy-MM-dd')
+        # what Get-DEWarranty caches (a hashtable after the state round trip), with a stale daysLeft and a stray secret-named key
+        Set-DEStateValue -Path 'warranty.lookups.PF3ABC12' -Value @{ serial = 'pf3abc12'; manufacturer = 'LENOVO'; vendor = 'lenovo'; source = 'lenovo-support-site'; status = 'active'; start = '2024-01-31'; end = $end; daysLeft = 9999
+            entitlements = @(@{ name = 'Base Warranty'; start = '2024-01-31'; end = $end }); checkUrl = 'https://pcsupport.lenovo.com/warranty?serial=PF3ABC12'; detail = 'product 21hm'; fetchedAt = '2026-10-04T09:00:00.0000000Z'; apiToken = 'tok-123' }
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp { $global:DETest.Sent = @{ Uri = $Uri; Headers = $Headers; Body = $Body }; @{ status = 'applied' } }
+        $r = Send-DEHubWarranty -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -Confirm:$false
+        $r.sent | Should -Be $true; $r.what | Should -Be 'warranty'; $r.status | Should -Be 'active'
+        Assert-MockCalled Invoke-DEHubHttp -ModuleName DE.Contracts -Times 1 -Exactly
+        $s = $global:DETest.Sent
+        $s.Uri | Should -Be 'https://hub.example/api/integrations/v1/techconsole/events'
+        $s.Headers['X-DE-Source'] | Should -Be 'techconsole'
+        $ev = $s.Body | ConvertFrom-Json
+        $ev.eventType | Should -Be 'device.warranty'; $ev.source | Should -Be 'techconsole'; $ev.version | Should -Be 1
+        $ev.entityType | Should -Be 'device'; $ev.entityId | Should -Be 'lenovo:PF3ABC12'; $ev.canonicalAccountId | Should -Be '42'
+        $ev.eventId | Should -Be $s.Headers['X-DE-Event-ID']
+        # the Hub's rules (Intelligence-Hub techconsole-contract.ts): the contract, and entityId's serial = payload.serial upper-cased
+        @(Test-DEContract -Name warranty -Object $ev.payload) -join ' | ' | Should -Be ''
+        $ev.entityId.Substring($ev.entityId.IndexOf(':') + 1) | Should -BeExactly $ev.payload.serial.Trim().ToUpperInvariant()
+        $ev.payload.status | Should -Be 'active'; $ev.payload.end | Should -Be $end; $ev.payload.daysLeft | Should -Be 400; $ev.payload.source | Should -Be 'lenovo-support-site'
+        @($ev.payload.entitlements).Count | Should -Be 1; $s.Body | Should -Match '"fetchedAt":"2026-10-04T09:00:00.0000000Z"'   # as text: PowerShell 7 reads ISO dates back as [datetime]
+        $s.Body | Should -Not -Match 'signing-secret-9876|apiToken|tok-123|REDACTED'
+        ($s.Headers.Values -join ' ') | Should -Not -Match 'signing-secret-9876'
+        Get-DEHubSignature -Method POST -Path '/api/integrations/v1/techconsole/events' -Timestamp $s.Headers['X-DE-Timestamp'] -EventId $ev.eventId -Body $s.Body -Secret 'signing-secret-9876' | Should -Be $s.Headers['X-DE-Signature']
+        Get-Content -LiteralPath $r.file -Raw | Should -Not -Match 'apiToken|tok-123'
+        $last = @(Get-DEEvidence | Where-Object { $_.step -eq 'hub.warranty' }) | Select-Object -Last 1
+        $last.result | Should -Be 'PASS'; $last.action | Should -Match "signed event $($ev.eventId)"; $last.action | Should -Not -Match 'tok-123'   # the record is built from the contract's fields only, so the stray key never got in
+        # a warranty that ended since the lookup goes as expired, not as the cached 'active'
+        $old = @{ serial = 'PF3ABC12'; manufacturer = 'LENOVO'; vendor = 'lenovo'; source = 'lenovo-support-site'; status = 'active'; end = '2020-05-01'; entitlements = @(); fetchedAt = '2020-01-01T00:00:00Z' }
+        $r = Send-DEHubWarranty -Result $old -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -Confirm:$false
+        $r.sent | Should -Be $true; $r.status | Should -Be 'expired'
+        $p = ($global:DETest.Sent.Body | ConvertFrom-Json).payload
+        $p.status | Should -Be 'expired'; $p.daysLeft | Should -BeLessThan 0
+        # a virtual machine's "no hardware warranty" is a real answer
+        # (start and end as Windows PowerShell 5.1 reads back a value it wrote unset: {}, an empty object)
+        $vm = @{ serial = 'VMW-1234'; manufacturer = 'VMware, Inc.'; vendor = 'virtual'; source = 'none'; status = 'not-applicable'; start = @{}; end = ('{}' | ConvertFrom-Json); detail = 'virtual machine: no hardware warranty' }
+        $r = Send-DEHubWarranty -Result $vm -Confirm:$false
+        $r.sent | Should -Be $true
+        $ev = $global:DETest.Sent.Body | ConvertFrom-Json
+        $ev.entityId | Should -Be 'vmware-inc:VMW-1234'; $ev.payload.status | Should -Be 'not-applicable'; $ev.payload.daysLeft | Should -BeNullOrEmpty
+        $ev.payload.start | Should -BeNullOrEmpty; $ev.payload.end | Should -BeNullOrEmpty; $global:DETest.Sent.Body | Should -Not -Match 'Hashtable|PSCustomObject|"start":\{'
+        # -WhatIf plans and sends nothing
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp { throw 'must not be called under -WhatIf' }
+        $r = Send-DEHubWarranty -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -WhatIf
+        $r.sent | Should -Be $false; $r.planned | Should -Be $true
+        Clear-DESecrets
+    }
+    It 'no warranty lookup on this PC: nothing is sent and the evidence says why' {
+        Set-DEStateValue -Path 'settings.hub.endpoint' -Value 'https://hub.example'
+        Set-DESecret -Name 'DE_HUB_SIGNING_SECRET' -Plain 'signing-secret-9876'
+        Set-DEContext -Values @{ hubAccountId = '42' }
+        Set-DEStateValue -Path 'warranty.lookups' -Value @{}; Set-DEStateValue -Path 'warranty.current' -Value $null
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp { throw 'must not be called' }
+        $r = Send-DEHubWarranty -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -Confirm:$false
+        $r.sent | Should -Be $false; $r.skipped | Should -Be $true; $r.reason | Should -Match 'no warranty lookup for serial PF3ABC12'
+        $last = @(Get-DEEvidence | Where-Object { $_.step -eq 'hub.warranty' }) | Select-Object -Last 1
+        $last.result | Should -Be 'WARN'; $last.action | Should -Match '^not sent: no warranty lookup'; $last.remediation | Should -Match 'Hardware warranty'
+        (Send-DEHubWarranty -Serial '' -Confirm:$false).reason | Should -Match 'no serial number'
+        Assert-MockCalled Invoke-DEHubHttp -ModuleName DE.Contracts -Times 0 -Exactly
+        Clear-DESecrets
+    }
+    It 'a warranty lookup that failed or could not say is never sent as a warranty status' {
+        Set-DEStateValue -Path 'settings.hub.endpoint' -Value 'https://hub.example'
+        Set-DESecret -Name 'DE_HUB_SIGNING_SECRET' -Plain 'signing-secret-9876'
+        Set-DEContext -Values @{ hubAccountId = '42' }
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp { throw 'must not be called' }
+        # Get-DEWarranty does not cache a fallback to the maker's check page; warranty.current still says what happened
+        Set-DEStateValue -Path 'warranty.lookups' -Value @{}; Set-DEStateValue -Path 'warranty.current' -Value @{ status = 'manual'; end = $null; source = 'manual' }
+        $r = Send-DEHubWarranty -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -Confirm:$false
+        $r.skipped | Should -Be $true; $r.reason | Should -Match "no confirmed status \('manual'\)"
+        $failed = @{ serial = 'PF3ABC12'; manufacturer = 'LENOVO'; vendor = 'lenovo'; source = 'manual'; status = 'manual'; detail = 'Lookup failed: The operation has timed out.. Check the manufacturer site and record the end date.' }
+        $r = Send-DEHubWarranty -Result $failed -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -Confirm:$false
+        $r.skipped | Should -Be $true; $r.reason | Should -Match "'manual': Lookup failed"
+        $unknown = @{ serial = 'PF3ABC12'; manufacturer = 'LENOVO'; vendor = 'lenovo'; source = 'lenovo-support-site'; status = 'unknown'; end = $null }
+        (Send-DEHubWarranty -Result $unknown -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -Confirm:$false).reason | Should -Match "'unknown'"
+        $noEnd = @{ serial = 'PF3ABC12'; manufacturer = 'LENOVO'; source = 'lenovo-support-site'; status = 'active'; end = $null }
+        (Send-DEHubWarranty -Result $noEnd -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -Confirm:$false).skipped | Should -Be $true
+        $other = @{ serial = 'ZZZ999'; manufacturer = 'LENOVO'; source = 'lenovo-support-site'; status = 'active'; end = '2099-01-01' }
+        (Send-DEHubWarranty -Result $other -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -Confirm:$false).reason | Should -Match 'for serial ZZZ999, not this device'
+        $placeholder = @{ serial = 'To be filled by O.E.M.'; manufacturer = 'x'; source = 'none'; status = 'active'; end = '2099-01-01' }
+        (Send-DEHubWarranty -Result $placeholder -Confirm:$false).reason | Should -Match 'placeholder'
+        Assert-MockCalled Invoke-DEHubHttp -ModuleName DE.Contracts -Times 0 -Exactly
+        Clear-DESecrets
+    }
+    It 'a refused warranty send records the Hub''s own reason, never the secret; the status line reports both sends' {
+        Set-DEStateValue -Path 'settings.hub.endpoint' -Value 'https://hub.example'
+        Set-DESecret -Name 'DE_HUB_SIGNING_SECRET' -Plain 'signing-secret-9876'
+        Set-DEContext -Values @{ hubAccountId = '999999' }
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp {
+            $e = New-Object System.Management.Automation.ErrorRecord ((New-Object System.Exception 'The remote server returned an error: (422) Unprocessable Entity.'), 'HubRefused', 'InvalidOperation', $null)
+            $e.ErrorDetails = New-Object System.Management.Automation.ErrorDetails '{"error":"account not mapped"}'
+            throw $e
+        }
+        $res = @{ serial = 'PF3ABC12'; manufacturer = 'LENOVO'; vendor = 'lenovo'; source = 'lenovo-support-site'; status = 'active'; end = '2099-01-31'; fetchedAt = '2026-10-04T09:00:00Z' }
+        $r = Send-DEHubWarranty -Result $res -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -Confirm:$false
+        $r.sent | Should -Be $false; $r.error | Should -Match 'Hub refused: account not mapped'; $r.error | Should -Match '422'
+        $ev = @(Get-DEEvidence | Where-Object { $_.step -eq 'hub.warranty' }) | Select-Object -Last 1
+        $ev.result | Should -Be 'FAIL'; $ev.verification | Should -Match 'Hub refused: account not mapped'
+        "$($r.error) $($ev.verification) $($ev.action)" | Should -Not -Match 'signing-secret-9876'
+        Test-Path -LiteralPath $r.file | Should -Be $true
+        # the Evidence page status line names both outcomes
+        Format-DEHubSendStatus -Device @{ sent = $true } -Warranty @{ what = 'warranty'; sent = $true; status = 'active' } | Should -Be 'Device record: sent to the Hub. Warranty: sent to the Hub (active).'
+        Format-DEHubSendStatus -Device @{ sent = $true } -Warranty $r | Should -Match '^Device record: sent to the Hub\. Warranty: not sent: Hub refused: account not mapped'
+        Format-DEHubSendStatus -Device @{ sent = $false; error = 'x'; file = 'f.json' } -Warranty @{ what = 'warranty'; sent = $false; skipped = $true; reason = 'no warranty lookup for serial PF3ABC12 on this PC yet' } | Should -Be 'Device record: not sent: x. Saved for manual upload: f.json Warranty: not sent: no warranty lookup for serial PF3ABC12 on this PC yet.'
+        # a skipped warranty does not hide the device send from the connection checklist
+        Set-DEContext -Values @{ hubAccountId = '42' }
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp { @{ status = 'applied' } }
+        $null = Send-DEHubPayload -Payload (New-DEHubPayload -Record @{ client = 'alamo'; serial = 'PF3ABC12'; manufacturer = 'LENOVO'; exceptions = @() }) -Confirm:$false
+        Set-DEStateValue -Path 'warranty.lookups' -Value @{}; Set-DEStateValue -Path 'warranty.current' -Value $null
+        $null = Send-DEHubWarranty -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -Confirm:$false
+        (@(Get-DEHubConnectionChecklist) | Select-Object -Last 1).ok | Should -Be $true
+        Clear-DESecrets
+    }
     It 'Send-DEHubEvent refuses plain http' {
         $ev = New-DEHubEvent -EventType 'device.warranty' -EntityId 'dell:ABC' -Payload @{ serial = 'ABC'; source = 'manual'; status = 'manual' }
         (Get-DEThrown { Send-DEHubEvent -BaseUrl 'http://hub.example' -Event $ev -Secret (New-Object Security.SecureString) }) | Should -Match 'https'

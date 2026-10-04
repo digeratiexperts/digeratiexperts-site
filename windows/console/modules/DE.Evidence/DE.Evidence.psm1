@@ -3,7 +3,7 @@
 .SYNOPSIS
     Evidence bundle (sanitized JSON + internal HTML + client-safe HTML +
     sha256 manifest), asset / documentation handoff record, Intelligence Hub
-    push, readiness dashboard data and gap report.
+    push (device record and warranty), readiness dashboard data and gap report.
 
 .DESCRIPTION
     Every artifact passes through Remove-DESecretKeys and Protect-DEText
@@ -359,6 +359,117 @@ function Send-DEHubPayload {
     } catch { $why = Get-DEHubErrorReason -ErrorRecord $_; Add-DEEvidence -Step 'hub.push' -Module 'evidence' -Before 'payload ready' -ActionTaken 'send failed; saved for manual upload' -Result 'FAIL' -Verification $why -Remediation $file | Out-Null; return @{ sent = $false; file = $file; error = $why } }
 }
 
+function Send-DEHubWarranty {
+    <#
+    Sends the latest warranty lookup to the Intelligence Hub as a signed device.warranty event (contracts\warranty.schema.json),
+    on the same terms as the device record: Hub URL from settings.hub.endpoint, the runtime secret DE_HUB_SIGNING_SECRET,
+    and the client's Hub account number (hubAccountId, or -AccountId). The event's entityId is the device key
+    (<maker>:<SERIAL>, from -Manufacturer and the serial) and the payload's serial is that key's serial, as the Hub checks.
+    The lookup is -Result, else the one Get-DEWarranty cached for -Serial on this PC.
+    Only a confirmed answer goes: active or expired with an end date (status and days left worked out again for today), or
+    not-applicable. No lookup, or one that failed or could not say (unknown, manual: check the maker's page), sends
+    nothing and records a WARN saying why: the Hub keeps one warranty per device, so "not known" would replace a real
+    status there. Secret-named keys are left out as for the device record; a refused send records the Hub's own reason.
+    No legacy Bearer path: without the signing secret the record is saved for manual upload.
+    Returns what = 'warranty', sent, skipped, planned, reason, error, status, eventId, file.
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param([string]$Serial, [string]$Manufacturer, $Result, [string]$AccountId, [string]$Endpoint)
+    $skip = {
+        param([string]$Why, [string]$Fix)
+        Add-DEEvidence -Step 'hub.warranty' -Module 'evidence' -Before 'warranty lookup' -ActionTaken "not sent: $Why" -Result 'WARN' -Remediation $Fix | Out-Null
+        return @{ what = 'warranty'; sent = $false; skipped = $true; reason = $Why }
+    }
+    # a value read back from state may be a [datetime] (PowerShell 7 parses ISO dates in JSON): back to text, or $null.
+    # Windows PowerShell 5.1 writes an unset value as {}, which reads back as an empty object: that is $null too.
+    $text = {
+        param($Value, [string]$Format)
+        if ($null -eq $Value -or -not ($Value -is [string] -or $Value -is [datetime] -or $Value -is [System.ValueType])) { return $null }
+        if ($Value -is [datetime]) { if ($Format) { return $Value.ToString($Format, [Globalization.CultureInfo]::InvariantCulture) }; return $Value.ToUniversalTime().ToString('o', [Globalization.CultureInfo]::InvariantCulture) }
+        $s = "$Value".Trim(); if ($s) { return $s }; return $null
+    }
+    if ($null -eq $Result) {
+        $cacheKey = "$Serial".Trim() -replace '[^A-Za-z0-9]', ''
+        if (-not $cacheKey) { return (& $skip 'no serial number to look a warranty up for' 'Run discovery first; a blank or placeholder serial has no warranty record.') }
+        $Result = Get-DEState -Path "warranty.lookups.$cacheKey"
+        if ($null -eq $Result) {
+            # Get-DEWarranty caches only real answers; a lookup that fell back to the maker's check page is kept in warranty.current
+            $last = "$(Get-DEState -Path 'warranty.current.status')"
+            if ($last) { return (& $skip "the last warranty lookup on this PC has no confirmed status ('$last'), so nothing is sent as a warranty status" 'Open the check page from Scan & fix > Hardware warranty known and active, record the end date, check again, then send.') }
+            return (& $skip "no warranty lookup for serial $Serial on this PC yet" 'Check the warranty first (Scan & fix > Hardware warranty known and active), then send again.')
+        }
+    }
+    $status = "$(Get-DEHashPath -Object $Result -Path 'status')".Trim().ToLowerInvariant()
+    $endText = & $text (Get-DEHashPath -Object $Result -Path 'end') 'yyyy-MM-dd'
+    $endDate = $null
+    if ($endText) { try { $endDate = [datetime]::ParseExact($endText.Substring(0, [Math]::Min(10, $endText.Length)), 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture) } catch { $endDate = $null } }
+    $days = $null
+    if ($status -in @('active', 'expired') -and $endDate) { $days = [int][Math]::Floor(($endDate.Date - (Get-Date).Date).TotalDays); $status = $(if ($days -ge 0) { 'active' } else { 'expired' }) }
+    elseif ($status -ne 'not-applicable') {
+        $detail = & $text (Get-DEHashPath -Object $Result -Path 'detail')
+        return (& $skip "the warranty lookup has no confirmed status ('$(if ($status) { $status } else { 'none' })'$(if ($detail) { ": $detail" })), so nothing is sent as a warranty status" 'Record the end date from the maker''s page (Scan & fix > Hardware warranty known and active), check again, then send.')
+    }
+    $lookupSerial = & $text (Get-DEHashPath -Object $Result -Path 'serial')
+    if (-not $lookupSerial) { $lookupSerial = "$Serial".Trim() }
+    $maker = $(if ($Manufacturer) { $Manufacturer } else { "$(Get-DEHashPath -Object $Result -Path 'manufacturer')" })
+    try {
+        $deviceKey = ConvertTo-DEDeviceKey -Manufacturer $maker -Serial $lookupSerial
+        if ($Serial -and (ConvertTo-DEDeviceKey -Manufacturer $maker -Serial $Serial) -ne $deviceKey) { return (& $skip "the warranty lookup is for serial $lookupSerial, not this device's serial $Serial" 'Check the warranty again on this device, then send.') }
+    } catch { return (& $skip "$($_.Exception.Message)" 'Type the serial from the chassis sticker, check the warranty again, then send.') }
+    $entitlements = New-Object System.Collections.Generic.List[object]
+    foreach ($e in @(Get-DEHashPath -Object $Result -Path 'entitlements')) {
+        if ($null -eq $e) { continue }
+        $entitlements.Add([ordered]@{ name = (& $text (Get-DEHashPath -Object $e -Path 'name')); start = (& $text (Get-DEHashPath -Object $e -Path 'start') 'yyyy-MM-dd'); end = (& $text (Get-DEHashPath -Object $e -Path 'end') 'yyyy-MM-dd') })
+    }
+    $source = & $text (Get-DEHashPath -Object $Result -Path 'source')
+    $payload = [ordered]@{
+        serial = $deviceKey.Substring($deviceKey.IndexOf(':') + 1); manufacturer = (& $text $maker); vendor = (& $text (Get-DEHashPath -Object $Result -Path 'vendor'))
+        source = $(if ($source) { $source } else { 'unknown' }); status = $status
+        start = (& $text (Get-DEHashPath -Object $Result -Path 'start') 'yyyy-MM-dd'); end = $(if ($endDate) { $endDate.ToString('yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture) } else { $null }); daysLeft = $days
+        entitlements = $entitlements.ToArray(); checkUrl = (& $text (Get-DEHashPath -Object $Result -Path 'checkUrl')); detail = (& $text (Get-DEHashPath -Object $Result -Path 'detail')); fetchedAt = (& $text (Get-DEHashPath -Object $Result -Path 'fetchedAt'))
+    }
+    # the same two name lists as the device record: the local scrub's and the contract's (the Hub's own)
+    $droppedKeys = New-Object System.Collections.Generic.List[string]
+    $payload = Remove-DEContractSecretKeys -Object (Remove-DESecretKeys -Object $payload -Drop -DroppedKeys $droppedKeys) -DroppedKeys $droppedKeys
+    $dropped = @($droppedKeys | Select-Object -Unique)
+    $leftOut = $(if ($dropped.Count) { " (left out secret-named field(s): $($dropped -join ', '))" } else { '' })
+    $what = "warranty $status$(if ($payload.end) { ", ends $($payload.end)" }) for $deviceKey"
+    $problems = @(Test-DEContract -Name warranty -Object $payload)
+    if ($problems.Count) { $why = "the warranty record does not match its contract: $($problems -join '; ')"; Add-DEEvidence -Step 'hub.warranty' -Module 'evidence' -Before $what -ActionTaken 'not sent' -Result 'FAIL' -Verification $why | Out-Null; return @{ what = 'warranty'; sent = $false; error = $why } }
+    $de = Get-DEConsole
+    $file = Join-Path $de.Dirs.Evidence ("hub-warranty-{0}-{1}.json" -f $env:COMPUTERNAME, (Get-Date -Format 'yyyyMMdd-HHmmss'))
+    Set-DEJsonFile -Path $file -Object $payload
+    if (-not $Endpoint) { $Endpoint = Get-DEState -Path 'settings.hub.endpoint' }
+    if (-not $Endpoint) { Add-DEEvidence -Step 'hub.warranty' -Module 'evidence' -Before $what -ActionTaken 'saved for manual upload (no Hub endpoint configured)' -Result 'WARN' -Verification $file -Remediation 'Set the Hub endpoint in Settings.' | Out-Null; return @{ what = 'warranty'; sent = $false; file = $file; status = $status } }
+    if (-not (Test-DESecret -Name 'DE_HUB_SIGNING_SECRET')) { Add-DEEvidence -Step 'hub.warranty' -Module 'evidence' -Before $what -ActionTaken 'saved for manual upload (no Hub signing secret this session; warranty records are sent signed only)' -Result 'WARN' -Verification $file -Remediation 'Enter the Intelligence Hub signing secret under Runtime secrets.' | Out-Null; return @{ what = 'warranty'; sent = $false; file = $file; status = $status } }
+    $base = ([uri]$Endpoint).GetLeftPart([UriPartial]::Authority)
+    if (-not $PSCmdlet.ShouldProcess($base, "send signed device.warranty event ($what)")) { return @{ what = 'warranty'; sent = $false; planned = $true; file = $file; status = $status } }
+    try {
+        if (-not $AccountId) { $AccountId = "$((Get-DEContext)['hubAccountId'])" }
+        if ($AccountId -notmatch '^[1-9]\d*$') { throw 'the client profile has no hub.accountId (the client''s Intelligence Hub account number), so the Hub cannot file this warranty' }
+        $ev = New-DEHubEvent -EventType 'device.warranty' -EntityId $deviceKey -Payload $payload -AccountId $AccountId
+        $resp = Send-DEHubEvent -BaseUrl $base -Event $ev -Secret (Get-DESecretSecure -Name 'DE_HUB_SIGNING_SECRET')
+        Add-DEEvidence -Step 'hub.warranty' -Module 'evidence' -Before $what -ActionTaken "sent to Hub as signed event $($ev.eventId)$leftOut" -Result 'PASS' -Verification $base | Out-Null
+        return @{ what = 'warranty'; sent = $true; file = $file; response = $resp; eventId = $ev.eventId; status = $status; leftOut = $dropped }
+    } catch { $why = Get-DEHubErrorReason -ErrorRecord $_; Add-DEEvidence -Step 'hub.warranty' -Module 'evidence' -Before $what -ActionTaken "signed send failed; saved for manual upload$leftOut" -Result 'FAIL' -Verification $why -Remediation $file | Out-Null; return @{ what = 'warranty'; sent = $false; file = $file; error = $why; status = $status; leftOut = $dropped } }
+}
+function Format-DEHubSendStatus {
+    <# The Evidence page status line after "Send to Intelligence Hub": what happened to the device record, then to the warranty record. #>
+    param($Device, $Warranty)
+    $d = $(if (-not $Device) { 'Device record: no answer; see Evidence.' }
+        elseif ($Device.sent) { 'Device record: sent to the Hub.' }
+        elseif ($Device.planned) { 'Device record: plan only, not sent.' }
+        elseif ($Device.error) { "Device record: not sent: $($Device.error). Saved for manual upload: $($Device.file)" }
+        else { "Device record: saved for manual upload: $($Device.file)" })
+    $w = $(if (-not $Warranty) { 'Warranty: no answer; see Evidence.' }
+        elseif ($Warranty.sent) { "Warranty: sent to the Hub ($($Warranty.status))." }
+        elseif ($Warranty.planned) { 'Warranty: plan only, not sent.' }
+        elseif ($Warranty.skipped) { "Warranty: not sent: $($Warranty.reason)." }
+        elseif ($Warranty.error) { "Warranty: not sent: $($Warranty.error)$(if ($Warranty.file) { ". Saved for manual upload: $($Warranty.file)" })" }
+        else { "Warranty: saved for manual upload: $($Warranty.file)" })
+    return "$d $w"
+}
+
 function Send-DEHubMigrationRecord {
     <#
         Sends an email migration record (DE Microsoft Admin Export-DEMigrationRecord, contracts\migration.schema.json)
@@ -407,7 +518,7 @@ function Get-DEHubConnectionChecklist {
     param([string]$Endpoint)
     if (-not $Endpoint) { $Endpoint = "$(Get-DEState -Path 'settings.hub.endpoint')" }
     $acct = "$((Get-DEContext)['hubAccountId'])"
-    $last = @(Get-DEEvidence | Where-Object { $_ -and $_.step -in @('hub.push', 'hub.migration') }) | Select-Object -Last 1
+    $last = @(Get-DEEvidence | Where-Object { $_ -and ($_.step -in @('hub.push', 'hub.migration') -or ($_.step -eq 'hub.warranty' -and $_.result -ne 'WARN')) }) | Select-Object -Last 1
     $sentOk = [bool]($last -and $last.result -eq 'PASS' -and "$($last.action)" -match 'signed event')
     $items = @(
         [pscustomobject]@{ step = 'Hub URL (Settings > Console settings)'; ok = ($Endpoint -match '^https://'); detail = $(if ($Endpoint) { $Endpoint } else { 'not set' }) }
@@ -418,4 +529,4 @@ function Get-DEHubConnectionChecklist {
     return $items
 }
 
-Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload, Send-DEHubMigrationRecord, Test-DEHubReachable, Get-DEHubConnectionChecklist
+Export-ModuleMember -Function Convert-DEHtmlToPdf, Get-DEReadiness, Get-DEGapReport, New-DEAssetRecord, ConvertTo-DEHtmlReport, Export-DEEvidenceBundle, New-DEHubPayload, Send-DEHubPayload, Send-DEHubWarranty, Format-DEHubSendStatus, Send-DEHubMigrationRecord, Test-DEHubReachable, Get-DEHubConnectionChecklist

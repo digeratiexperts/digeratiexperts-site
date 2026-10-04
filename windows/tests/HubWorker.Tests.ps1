@@ -5,6 +5,15 @@ Describe 'DE Microsoft Admin Hub job loop' {
         function global:Invoke-MgGraphRequest { param([string]$Method, [string]$Uri, $Body, [hashtable]$Headers, [string]$ContentType, [string]$OutputType) throw 'not mocked' }
         function global:Get-MgContext { param() throw 'not mocked' }
         function global:Connect-MgGraph { param([string]$TenantId, [string[]]$Scopes, [string]$ClientId, [string]$CertificateThumbprint, [switch]$NoWelcome) throw 'not mocked' }
+        # Exchange Online and Az stand-ins with the real parameter names, including the secret-bearing ones the module must never use
+        function global:Connect-ExchangeOnline { [CmdletBinding()] param([string]$UserPrincipalName, [string]$AppId, [string]$CertificateThumbprint, [string]$Organization, $Certificate, [string]$CertificateFilePath, [securestring]$CertificatePassword, [pscredential]$Credential, [switch]$ShowBanner) throw 'not mocked' }
+        function global:Disconnect-ExchangeOnline { [CmdletBinding(SupportsShouldProcess = $true)] param() if ($PSCmdlet.ShouldProcess('Exchange Online session', 'disconnect')) { throw 'not mocked' } }
+        function global:Get-EXOMailbox { [CmdletBinding()] param([string]$Identity, [string[]]$Properties, $ResultSize, $RecipientTypeDetails) throw 'not mocked' }
+        function global:Connect-AzAccount { [CmdletBinding()] param([switch]$ServicePrincipal, [string]$ApplicationId, [string]$CertificateThumbprint, [string]$Tenant, [string]$Subscription, [pscredential]$Credential, [string]$CertificatePath, [securestring]$CertificatePassword, [switch]$UseDeviceAuthentication) throw 'not mocked' }
+        function global:Disconnect-AzAccount { [CmdletBinding()] param() throw 'not mocked' }
+        function global:Get-AzContext { [CmdletBinding()] param() throw 'not mocked' }
+        function global:Set-AzContext { [CmdletBinding()] param([string]$SubscriptionId) throw 'not mocked' }
+        function global:Get-AzSubscription { [CmdletBinding()] param() throw 'not mocked' }
         $mod = @((Join-Path (Split-Path -Parent $PSScriptRoot) 'microsoft/DE-Microsoft-Admin/DE-Microsoft-Admin.psd1'), (Join-Path (Split-Path -Parent $PSScriptRoot) 'DE-Microsoft-Admin.psd1')) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
         Import-Module $mod -Force
         function global:ConvertTo-HwSecure([string]$s) { $x = New-Object Security.SecureString; foreach ($c in $s.ToCharArray()) { $x.AppendChar($c) }; $x.MakeReadOnly(); return $x }
@@ -81,6 +90,7 @@ Describe 'DE Microsoft Admin Hub job loop' {
     AfterAll {
         Remove-Item -LiteralPath $global:HwT.Dir -Recurse -Force -ErrorAction SilentlyContinue
         Remove-Module DE-Microsoft-Admin -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path Function:\Connect-ExchangeOnline, Function:\Disconnect-ExchangeOnline, Function:\Get-EXOMailbox, Function:\Connect-AzAccount, Function:\Disconnect-AzAccount, Function:\Get-AzContext, Function:\Set-AzContext, Function:\Get-AzSubscription -ErrorAction SilentlyContinue
         Remove-Item -Path Function:\Invoke-MgGraphRequest, Function:\Get-MgContext, Function:\Connect-MgGraph, Function:\ConvertTo-HwSecure, Function:\Test-HwSignature, Function:\Find-HwSecret, Function:\New-HwJob, Function:\Reset-Hw, Function:\Invoke-HwLoop, Function:\Get-HwPostedResults -ErrorAction SilentlyContinue
     }
     BeforeEach {
@@ -112,6 +122,15 @@ Describe 'DE Microsoft Admin Hub job loop' {
             return @{ id = 'u9'; userPrincipalName = 'new.hire@alamo-industries.com'; displayName = 'New Hire'; accountEnabled = $false; usageLocation = 'US' }
         }
         $null = Connect-DEMicrosoft -TenantId $global:HwT.Tenant -ClientId 'app-id' -CertificateThumbprint 'ABCDEF'
+        InModuleScope DE-Microsoft-Admin { $script:ServiceSessions.Exchange = $null; $script:ServiceSessions.Azure = $null }
+        # Exchange Online and Azure: a sign-in or sign-out nobody expects fails the test
+        Mock -ModuleName DE-Microsoft-Admin Connect-ExchangeOnline { throw 'Connect-ExchangeOnline must not be called' }
+        Mock -ModuleName DE-Microsoft-Admin Disconnect-ExchangeOnline { throw 'Disconnect-ExchangeOnline must not be called' }
+        Mock -ModuleName DE-Microsoft-Admin Connect-AzAccount { throw 'Connect-AzAccount must not be called' }
+        Mock -ModuleName DE-Microsoft-Admin Disconnect-AzAccount { throw 'Disconnect-AzAccount must not be called' }
+        Mock -ModuleName DE-Microsoft-Admin Get-AzContext { [pscustomobject]@{ Tenant = [pscustomobject]@{ Id = $global:HwT.Tenant }; Subscription = [pscustomobject]@{ Name = 'Alamo production'; Id = '7a7a7a7a-0000-1111-2222-333344445555' }; Account = [pscustomobject]@{ Id = 'app-id' } } }
+        Mock -ModuleName DE-Microsoft-Admin Get-EXOMailbox { @([pscustomobject]@{ DisplayName = 'Office'; PrimarySmtpAddress = 'office@alamo-industries.com'; RecipientTypeDetails = 'SharedMailbox'; ForwardingSmtpAddress = $null; HiddenFromAddressListsEnabled = $false }) }
+        Mock -ModuleName DE-Microsoft-Admin Get-AzSubscription { @([pscustomobject]@{ Name = 'Alamo production'; Id = '7a7a7a7a-0000-1111-2222-333344445555'; State = 'Enabled'; TenantId = $global:HwT.Tenant }) }
     }
 
     It 'claims, verifies, runs and posts each job until the queue is empty, every call signed the way the Hub checks' {
@@ -330,5 +349,135 @@ Describe 'DE Microsoft Admin Hub job loop' {
         $o = (ConvertTo-DEHubSafeResult -Result $res).Json | ConvertFrom-Json
         $o.data.omitted | Should -Be $true; $o.data.items | Should -Be 3
         $o.message | Should -Match "over the Hub's limit"
+    }
+
+    It 'Connect-DEExchange and Connect-DEAzure sign in app-only with the certificate thumbprint, never a secret; the interactive paths are unchanged' {
+        $secretParams = '^(CertificatePassword|Certificate|CertificateFilePath|CertificatePath|Credential|UseDeviceAuthentication|UserPrincipalName)$'
+        Mock -ModuleName DE-Microsoft-Admin Connect-ExchangeOnline { $global:HwT.ExoBound = @{} + $PesterBoundParameters }
+        $r = Connect-DEExchange -ClientId 'app-id' -CertificateThumbprint 'ABCDEF' -Organization 'alamoindustries.onmicrosoft.com'
+        $b = $global:HwT.ExoBound
+        $b.AppId | Should -Be 'app-id'; $b.CertificateThumbprint | Should -Be 'ABCDEF'; $b.Organization | Should -Be 'alamoindustries.onmicrosoft.com'; $b.ShowBanner.IsPresent | Should -Be $false
+        @($b.Keys | Where-Object { $_ -match $secretParams }).Count | Should -Be 0
+        $r.status | Should -Be 'Succeeded'; $r.data.mode | Should -Be 'app'; $r.version | Should -Be '0.6.0'
+        { Connect-DEExchange -AppId 'app-id' -CertificateThumbprint 'ABCDEF' -Organization 'alamo-industries.com' } | Should -Throw
+        $null = Connect-DEExchange -UserPrincipalName 'admin@alamo-industries.com'
+        $global:HwT.ExoBound.UserPrincipalName | Should -Be 'admin@alamo-industries.com'; $global:HwT.ExoBound.ContainsKey('AppId') | Should -Be $false
+
+        Mock -ModuleName DE-Microsoft-Admin Connect-AzAccount { $global:HwT.AzBound = @{} + $PesterBoundParameters }
+        $r = Connect-DEAzure -ServicePrincipal -ApplicationId 'app-id' -CertificateThumbprint 'ABCDEF' -TenantId $global:HwT.Tenant -SubscriptionId '7a7a7a7a-0000-1111-2222-333344445555'
+        $b = $global:HwT.AzBound
+        $b.ServicePrincipal.IsPresent | Should -Be $true; $b.ApplicationId | Should -Be 'app-id'; $b.CertificateThumbprint | Should -Be 'ABCDEF'
+        $b.Tenant | Should -Be $global:HwT.Tenant; $b.Subscription | Should -Be '7a7a7a7a-0000-1111-2222-333344445555'
+        @($b.Keys | Where-Object { $_ -match $secretParams }).Count | Should -Be 0
+        $r.status | Should -Be 'Succeeded'; $r.data.subscription | Should -Be 'Alamo production'
+        $null = Connect-DEAzure -TenantId $global:HwT.Tenant
+        $global:HwT.AzBound.Tenant | Should -Be $global:HwT.Tenant; $global:HwT.AzBound.ContainsKey('ServicePrincipal') | Should -Be $false; $global:HwT.AzBound.ContainsKey('CertificateThumbprint') | Should -Be $false
+        # the Graph connection keeps the app and thumbprint (public identifiers) for the worker, and a delegated sign-in clears them
+        (Get-DEMsContext).ClientId | Should -Be 'app-id'; (Get-DEMsContext).CertificateThumbprint | Should -Be 'ABCDEF'
+        $null = Connect-DEMicrosoft -TenantId $global:HwT.Tenant -Scenario Read
+        (Get-DEMsContext).ClientId | Should -BeNullOrEmpty; (Get-DEMsContext).CertificateThumbprint | Should -BeNullOrEmpty
+    }
+    It 'a Graph-only run never signs in to Exchange Online or Azure' {
+        Reset-Hw -Queue @((New-HwJob -Operation 'Get-DEUser'), (New-HwJob -Operation 'Set-DEUserAccountState' -Parameters @{ UserId = 'suzette@alamo-industries.com'; Enabled = $false }))
+        $r = Invoke-HwLoop -Extra @{ ExchangeOrganization = 'alamoindustries.onmicrosoft.com'; AzureSubscriptionId = '7a7a7a7a-0000-1111-2222-333344445555' }
+        $r.ok | Should -Be $true; $r.posted | Should -Be 2
+        @(Get-HwPostedResults | ForEach-Object { $_.status }) -join ',' | Should -Be 'Succeeded,DryRun'
+        Should -Invoke Connect-ExchangeOnline -ModuleName DE-Microsoft-Admin -Times 0 -Exactly
+        Should -Invoke Connect-AzAccount -ModuleName DE-Microsoft-Admin -Times 0 -Exactly
+        Should -Invoke Disconnect-ExchangeOnline -ModuleName DE-Microsoft-Admin -Times 0 -Exactly
+        Should -Invoke Disconnect-AzAccount -ModuleName DE-Microsoft-Admin -Times 0 -Exactly
+        $r.services.exchange | Should -Be 'not needed this run'; $r.services.azure | Should -Be 'not needed this run'
+    }
+    It 'Exchange and Azure jobs sign in once, app-only with the Graph app and certificate, only after the job verified, and sign out at the end' {
+        $tampered = (New-HwJob -Operation 'Get-DEMailbox') -replace '"signature":"[0-9a-f]+"', ('"signature":"' + ('0' * 64) + '"')
+        Reset-Hw -Queue @($tampered)
+        $r = Invoke-HwLoop -Extra @{ ExchangeOrganization = 'alamoindustries.onmicrosoft.com' }
+        $r.stoppedBecause | Should -Be 'job_signature'
+        Should -Invoke Connect-ExchangeOnline -ModuleName DE-Microsoft-Admin -Times 0 -Exactly   # a job that does not verify never signs anything in
+
+        Mock -ModuleName DE-Microsoft-Admin Connect-ExchangeOnline { $global:HwT.ExoBound = @{} + $PesterBoundParameters }
+        Mock -ModuleName DE-Microsoft-Admin Disconnect-ExchangeOnline { }
+        Mock -ModuleName DE-Microsoft-Admin Connect-AzAccount { $global:HwT.AzBound = @{} + $PesterBoundParameters }
+        Mock -ModuleName DE-Microsoft-Admin Disconnect-AzAccount { }
+        Reset-Hw -Queue @((New-HwJob -Operation 'Get-DEMailbox'), (New-HwJob -Operation 'Get-DEUser'), (New-HwJob -Operation 'Get-DEMailbox' -Parameters @{ Type = 'SharedMailbox' }), (New-HwJob -Operation 'Get-DEAzureSubscription'))
+        $r = Invoke-HwLoop -Extra @{ ExchangeOrganization = 'alamoindustries.onmicrosoft.com'; AzureSubscriptionId = '7a7a7a7a-0000-1111-2222-333344445555' }
+        $r.ok | Should -Be $true; $r.posted | Should -Be 4
+        @(Get-HwPostedResults | ForEach-Object { $_.status }) -join ',' | Should -Be 'Succeeded,Succeeded,Succeeded,Succeeded'
+        Should -Invoke Connect-ExchangeOnline -ModuleName DE-Microsoft-Admin -Times 1 -Exactly
+        Should -Invoke Connect-AzAccount -ModuleName DE-Microsoft-Admin -Times 1 -Exactly
+        Should -Invoke Disconnect-ExchangeOnline -ModuleName DE-Microsoft-Admin -Times 1 -Exactly
+        Should -Invoke Disconnect-AzAccount -ModuleName DE-Microsoft-Admin -Times 1 -Exactly
+        $global:HwT.ExoBound.AppId | Should -Be 'app-id'; $global:HwT.ExoBound.CertificateThumbprint | Should -Be 'ABCDEF'; $global:HwT.ExoBound.Organization | Should -Be 'alamoindustries.onmicrosoft.com'
+        $global:HwT.AzBound.ServicePrincipal.IsPresent | Should -Be $true; $global:HwT.AzBound.ApplicationId | Should -Be 'app-id'; $global:HwT.AzBound.Tenant | Should -Be $global:HwT.Tenant; $global:HwT.AzBound.Subscription | Should -Be '7a7a7a7a-0000-1111-2222-333344445555'
+        $r.services.exchange | Should -Match 'signed in app-only'; $r.services.azure | Should -Match 'signed in app-only'
+        InModuleScope DE-Microsoft-Admin { $script:ServiceSessions.Exchange | Should -BeNullOrEmpty; $script:ServiceSessions.Azure | Should -BeNullOrEmpty }
+        $global:HwT.Posts | ForEach-Object { $_.Body | Should -Not -Match 'ABCDEF' }   # the thumbprint is not a secret, but it has no business in a result
+
+        # at a prompt, a session the technician opened with Connect-DEExchange is used as it is and left open
+        $null = Connect-DEExchange -UserPrincipalName 'admin@alamo-industries.com'
+        Reset-Hw -Queue @((New-HwJob -Operation 'Get-DEMailbox'))
+        $r = Invoke-HwLoop
+        @(Get-HwPostedResults)[0].status | Should -Be 'Succeeded'
+        Should -Invoke Connect-ExchangeOnline -ModuleName DE-Microsoft-Admin -Times 2 -Exactly   # the first run's and the technician's, no third
+        Should -Invoke Disconnect-ExchangeOnline -ModuleName DE-Microsoft-Admin -Times 1 -Exactly
+        $r.services.exchange | Should -Match 'already open'
+    }
+    It 'an Exchange or Azure job that cannot sign in is posted as Failed with exactly what is missing, and the loop carries on' {
+        Reset-Hw -Queue @((New-HwJob -Operation 'Get-DEMailbox'), (New-HwJob -Operation 'Get-DEUser'), (New-HwJob -Operation 'Set-DEMailboxForwarding' -Parameters @{ Identity = 'helen@alamo-industries.com'; Disable = $true }))
+        $r = Invoke-HwLoop
+        $r.ok | Should -Be $true; $r.stoppedBecause | Should -Be 'queue_empty'; $r.posted | Should -Be 3
+        $p = @(Get-HwPostedResults)
+        $p[0].status | Should -Be 'Failed'; $p[0].operation | Should -Be 'Get-DEMailbox'
+        $p[0].message | Should -Match '^not run: Exchange Online unattended sign-in is not configured on this worker: -ExchangeOrganization is not set'
+        $p[1].status | Should -Be 'Succeeded'
+        $p[2].status | Should -Be 'Failed'; $p[2].message | Should -Match 'ExchangeOrganization is not set'
+        Should -Invoke Connect-ExchangeOnline -ModuleName DE-Microsoft-Admin -Times 0 -Exactly
+        $r.services.exchange | Should -Match '^not available: .*ExchangeOrganization'
+        @(Get-Content -LiteralPath $global:HwT.Ledger) | Should -Not -Contain ($p[0].target)   # nothing ran, so the job is not in the replay ledger
+
+        # a failed sign-in is tried once per run, and its reason reaches the Hub
+        Mock -ModuleName DE-Microsoft-Admin Connect-AzAccount { throw 'AADSTS700027: the certificate is not registered on the application' }
+        Reset-Hw -Queue @((New-HwJob -Operation 'Get-DEAzureSubscription'), (New-HwJob -Operation 'Get-DEAzureSubscription'), (New-HwJob -Operation 'Get-DEUser'))
+        $r = Invoke-HwLoop
+        $r.ok | Should -Be $true; $r.posted | Should -Be 3
+        $p = @(Get-HwPostedResults)
+        $p[0].status | Should -Be 'Failed'; $p[0].message | Should -Match 'Azure app-only sign-in failed: AADSTS700027'
+        $p[1].status | Should -Be 'Failed'; $p[2].status | Should -Be 'Succeeded'
+        Should -Invoke Connect-AzAccount -ModuleName DE-Microsoft-Admin -Times 1 -Exactly
+        Should -Invoke Disconnect-AzAccount -ModuleName DE-Microsoft-Admin -Times 0 -Exactly
+
+        # Graph signed in delegated: there is no app to sign in to Exchange with
+        $null = Connect-DEMicrosoft -TenantId $global:HwT.Tenant -Scenario Read
+        Reset-Hw -Queue @((New-HwJob -Operation 'Get-DEMailbox'))
+        $null = Invoke-HwLoop -Extra @{ ExchangeOrganization = 'alamoindustries.onmicrosoft.com' }
+        @(Get-HwPostedResults)[0].message | Should -Match 'Graph is not connected app-only with a certificate'
+
+        # the module missing on the worker
+        $null = Connect-DEMicrosoft -TenantId $global:HwT.Tenant -ClientId 'app-id' -CertificateThumbprint 'ABCDEF'
+        Mock -ModuleName DE-Microsoft-Admin Get-Command { $null } -ParameterFilter { $Name -eq 'Connect-ExchangeOnline' }
+        Reset-Hw -Queue @((New-HwJob -Operation 'Get-DEMailbox'))
+        $null = Invoke-HwLoop -Extra @{ ExchangeOrganization = 'alamoindustries.onmicrosoft.com' }
+        @(Get-HwPostedResults)[0].message | Should -Match 'the ExchangeOnlineManagement module is not installed on this worker'
+    }
+    It '-WhatIf reports whether Exchange Online and Azure jobs can sign in unattended, and signs nothing in' {
+        Reset-Hw -Queue @((New-HwJob -Operation 'Get-DEMailbox'))
+        $r = Invoke-HwLoop -Extra @{ WhatIf = $true }
+        $r.stoppedBecause | Should -Be 'whatif'; $r.ok | Should -Be $true
+        $r.services.exchangeReady | Should -Be $false; $r.services.exchange | Should -Match '^not configured: -ExchangeOrganization is not set'
+        $r.services.azureReady | Should -Be $true; $r.services.azure | Should -Match "app-only as app-id with certificate ABCDEF, the service principal's default subscription"
+        $r.message | Should -Match 'Exchange Online jobs: not configured'; $r.message | Should -Match 'Azure jobs: ready'
+
+        $r = Invoke-HwLoop -Extra @{ WhatIf = $true; ExchangeOrganization = 'alamoindustries.onmicrosoft.com'; AzureSubscriptionId = '7a7a7a7a-0000-1111-2222-333344445555' }
+        $r.services.exchangeReady | Should -Be $true; $r.services.exchange | Should -Match 'organization alamoindustries.onmicrosoft.com'
+        $r.services.azure | Should -Match 'subscription 7a7a7a7a-0000-1111-2222-333344445555'
+
+        $null = Connect-DEMicrosoft -TenantId $global:HwT.Tenant -Scenario Read
+        $r = Invoke-HwLoop -Extra @{ WhatIf = $true; ExchangeOrganization = 'alamoindustries.onmicrosoft.com' }
+        $r.services.exchangeReady | Should -Be $false; $r.services.azureReady | Should -Be $false; $r.services.azure | Should -Match 'Graph is not connected app-only'
+        { Invoke-HwLoop -Extra @{ WhatIf = $true; ExchangeOrganization = 'alamo-industries.com' } } | Should -Throw
+
+        $global:HwT.Calls.Count | Should -Be 0; $global:HwT.Queue.Count | Should -Be 1
+        Should -Invoke Connect-ExchangeOnline -ModuleName DE-Microsoft-Admin -Times 0 -Exactly
+        Should -Invoke Connect-AzAccount -ModuleName DE-Microsoft-Admin -Times 0 -Exactly
     }
 }
