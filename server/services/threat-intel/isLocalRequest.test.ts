@@ -27,6 +27,12 @@ describe("isLocalRequest", () => {
     ).toBe(false);
     expect(
       isLocalRequest({
+        socket: { remoteAddress: "127.0.0.1" },
+        headers: { "x-forwarded-for": "203.0.113.10, 127.0.0.1" },
+      }),
+    ).toBe(false);
+    expect(
+      isLocalRequest({
         socket: { remoteAddress: "::ffff:127.0.0.1" },
         headers: { "x-real-ip": "198.51.100.4" },
       }),
@@ -35,6 +41,21 @@ describe("isLocalRequest", () => {
       isLocalRequest({
         socket: { remoteAddress: "::ffff:127.0.0.1" },
         headers: { "x-real-ip": "127.0.0.1" },
+      }),
+    ).toBe(false);
+  });
+
+  it("never trusts a forged CF-Connecting-IP (#261)", () => {
+    expect(
+      isLocalRequest({
+        socket: { remoteAddress: "203.0.113.10" },
+        headers: { "cf-connecting-ip": "127.0.0.1" },
+      }),
+    ).toBe(false);
+    expect(
+      isLocalRequest({
+        socket: { remoteAddress: "127.0.0.1" },
+        headers: { "cf-connecting-ip": "127.0.0.1", "x-forwarded-for": "127.0.0.1, 203.0.113.10" },
       }),
     ).toBe(false);
   });
