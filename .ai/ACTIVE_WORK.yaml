@@ -30,6 +30,24 @@
 
 version: 2
 claims:
+  - id: remove-keyword-input-guard
+    issue: 436
+    owner: claude
+    subsystem: server-security
+    branch: claude/beautiful-hopper-1uem0k
+    base_sha: c78ef21
+    files:
+      - server/middleware/security.ts (the unused keyword validateInput only)
+      - server/middleware/noKeywordBlocklist.test.ts (new)
+      - shared/quoteContext.test.ts (the request-guard case only)
+    status: active
+    started: 2026-10-04
+    note: >-
+      Joe, 2026-10-04: "fix the and/or input guard bug". Investigation showed
+      the keyword guard is never wired to a route (routes use a local
+      size-only validateInput); a dev-server POST with "Smith and Sons;
+      Backup or Recovery -- LLC" is accepted. The unused guard is removed so
+      it cannot be imported later, and a test keeps it out.
   - id: brand-maskable-icon
     issue: 210
     owner: claude
