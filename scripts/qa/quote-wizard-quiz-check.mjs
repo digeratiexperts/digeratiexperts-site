@@ -92,6 +92,7 @@ for (const viewport of VIEWPORTS) {
 
   // Chrome: the room's own, nothing competing.
   check(w, "MegaMenu absent", (await page.locator("[data-testid='logo-header']").count()) === 0);
+  check(w, "only the quiz's own progress bar is present", (await page.locator("[role='progressbar']").count()) === 1);
   check(w, "sticky CTA bar absent", !(await page.locator("[data-testid='sticky-cta-bar']").isVisible().catch(() => false)));
   const canonical = await page.locator("link[rel='canonical']").getAttribute("href").catch(() => null);
   check(w, "canonical is /quote-wizard", !!canonical && /\/quote-wizard$/.test(canonical), String(canonical));
@@ -178,9 +179,15 @@ for (const viewport of VIEWPORTS) {
   await page.getByTestId("quiz-submit").click();
   await settle();
   check(w, "empty submit does not post", posted === null);
+  check(w, "no site scroll-progress bar after scrolling", (await page.locator(".scroll-progress").count()) === 0);
   await shot("8-contact-errors");
 
   await page.getByLabel("Work email").fill("quiz.tester@example-co.test");
+  await page.getByLabel("Phone").fill("480-555-x");
+  await page.getByTestId("quiz-submit").click();
+  await settle();
+  check(w, "a phone without an area code does not post", posted === null);
+  await page.getByLabel("Phone").fill("(480) 555-0100");
   await page.getByLabel("First name").fill("Quiz");
   await page.getByLabel("Last name").fill("Tester");
   await page.getByLabel("Company").fill("Example Co");
@@ -192,7 +199,8 @@ for (const viewport of VIEWPORTS) {
 
   const keys = posted ? Object.keys(posted) : [];
   check(w, "payload keeps every pre-quiz key", PRE_QUIZ_KEYS.every((k) => keys.includes(k)), keys.join(","));
-  check(w, "payload adds only context", keys.every((k) => PRE_QUIZ_KEYS.includes(k) || k === "context"), keys.join(","));
+  check(w, "payload adds only context and phone", keys.every((k) => PRE_QUIZ_KEYS.includes(k) || k === "context" || k === "phone"), keys.join(","));
+  check(w, "phone sent as typed", posted?.phone === "(480) 555-0100", String(posted?.phone));
   check(
     w,
     "payload values",

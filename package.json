@@ -25,6 +25,7 @@
     "test:advisor": "tsx --test server/services/msp-advisor/*.test.ts",
     "eval:advisor": "tsx server/services/msp-advisor/eval/score.ts",
     "check:active-work": "node scripts/check-active-work.mjs",
+    "test:recraft-icons": "node --test .claude/skills/recraft-icons/scripts/recraft.test.mjs",
     "test:msp-ai-kit": "node --test .claude/skills/msp-ai-kit/scripts/build.test.mjs && node .claude/skills/msp-ai-kit/scripts/build.mjs --check && node .claude/skills/msp-ai-kit/scripts/build.mjs --verify .claude/skills/msp-ai-kit/examples/digerati-experts && node .claude/skills/msp-ai-kit/scripts/eval.mjs --score-golden && node .claude/skills/msp-ai-kit/scripts/sync-facts.mjs --check"
   },
   "dependencies": {
@@ -100,6 +101,7 @@
     "otplib": "^13.4.0",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
+    "pdf-lib": "^1.17.1",
     "pg": "^8.16.3",
     "playwright": "^1.62.1",
     "qrcode": "^1.5.4",

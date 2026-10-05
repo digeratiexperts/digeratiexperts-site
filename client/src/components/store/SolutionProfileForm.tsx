@@ -49,6 +49,7 @@ function CountField({
   placeholder,
   allowZero,
   onChange,
+  stepper = false,
   children,
 }: {
   id: string;
@@ -57,15 +58,24 @@ function CountField({
   placeholder: string;
   allowZero: boolean;
   onChange: (value: string) => void;
+  /** Large-dial layout: − / + buttons beside the number (the Store's configurator). */
+  stepper?: boolean;
   children?: ReactNode;
 }) {
   const problem = countProblem(value, allowZero);
+  const floor = allowZero ? 0 : 1;
+  const current = /^\d{1,6}$/.test(value.trim()) ? Number(value.trim()) : null;
+  const step = (delta: 1 | -1) => {
+    const next = current === null ? (delta > 0 ? floor : null) : Math.min(999999, Math.max(floor, current + delta));
+    if (next !== null) onChange(String(next));
+  };
   const errorId = `${id}-error`;
   return (
     <div className="d2-field">
       <label htmlFor={id} className="d2-field__label">
         {label}
       </label>
+      <div className={stepper ? "d2-dial" : "contents"}>
       <input
         id={id}
         className="d2-input"
@@ -78,6 +88,17 @@ function CountField({
         aria-describedby={problem ? errorId : undefined}
         onChange={(event) => onChange(event.target.value)}
       />
+      {stepper ? (
+        <span className="d2-dial__steps">
+          <button type="button" className="d2-dial__step" aria-label={`Fewer ${label.toLowerCase()}`} onClick={() => step(-1)} disabled={current === null || current <= floor}>
+            −
+          </button>
+          <button type="button" className="d2-dial__step" aria-label={`More ${label.toLowerCase()}`} onClick={() => step(1)}>
+            +
+          </button>
+        </span>
+      ) : null}
+      </div>
       {problem ? (
         <p id={errorId} className="d2-field__error">
           {problem}
@@ -137,6 +158,7 @@ export function SolutionProfileForm({
   collapsible = true,
   suggestionSlot,
   testId = "profile-strip",
+  dials = false,
 }: {
   environment: SolutionEnvironment;
   onChange: <K extends keyof SolutionEnvironment>(key: K, value: SolutionEnvironment[K]) => void;
@@ -150,6 +172,8 @@ export function SolutionProfileForm({
   /** A SuggestionLine rendered under the internal-IT question once it is answered. */
   suggestionSlot?: ReactNode;
   testId?: string;
+  /** The Store's configurator: − / + steppers on each count. */
+  dials?: boolean;
 }) {
   const complete = isProfileComplete(environment);
   const empty = profileGaps(environment).length === 6;
@@ -277,7 +301,7 @@ export function SolutionProfileForm({
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <CountField id="profile-users" label="Users" value={environment.userCount} placeholder="25" allowZero={false} onChange={set("userCount")}>
+        <CountField stepper={dials} id="profile-users" label="Users" value={environment.userCount} placeholder="25" allowZero={false} onChange={set("userCount")}>
           <div className="d2-chips" aria-label="Quick size">
             {QUICK_USERS.map((count) => (
               <button key={count} type="button" className="d2-chip" onClick={() => onChange("userCount", count)}>
@@ -286,7 +310,7 @@ export function SolutionProfileForm({
             ))}
           </div>
         </CountField>
-        <CountField id="profile-computers" label="Computers" value={environment.workstationCount} placeholder="30" allowZero onChange={set("workstationCount")}>
+        <CountField stepper={dials} id="profile-computers" label="Computers" value={environment.workstationCount} placeholder="30" allowZero onChange={set("workstationCount")}>
           <div className="d2-chips">
             <button
               type="button"
@@ -298,10 +322,10 @@ export function SolutionProfileForm({
             </button>
           </div>
         </CountField>
-        <CountField id="profile-mobile" label="Mobile devices" value={environment.mobileDeviceCount} placeholder="15" allowZero onChange={set("mobileDeviceCount")}>
+        <CountField stepper={dials} id="profile-mobile" label="Mobile devices" value={environment.mobileDeviceCount} placeholder="15" allowZero onChange={set("mobileDeviceCount")}>
           <p className="d2-small d2-ink-soft mt-1">Phones and tablets that open company email or files. 0 is fine.</p>
         </CountField>
-        <CountField id="profile-sites" label="Sites" value={environment.siteCount} placeholder="1" allowZero={false} onChange={set("siteCount")}>
+        <CountField stepper={dials} id="profile-sites" label="Sites" value={environment.siteCount} placeholder="1" allowZero={false} onChange={set("siteCount")}>
           <p className="d2-small d2-ink-soft mt-1">Offices DE would need to reach. Home workers are not sites. At least 1.</p>
         </CountField>
       </div>

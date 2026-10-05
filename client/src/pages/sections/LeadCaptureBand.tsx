@@ -69,7 +69,7 @@ export const LeadCaptureBand = (): JSX.Element => {
       
       toast({
         title: "Assessment Request Submitted!",
-        description: "We'll contact you within 24 hours to schedule your Cyber Risk Assessment.",
+        description: "We'll contact you within one business day to schedule your Cyber Risk Assessment.",
         variant: "default",
       });
       

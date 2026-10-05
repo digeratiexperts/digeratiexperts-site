@@ -148,7 +148,7 @@ export const DigeratiContactSection = ({
       analytics.contactFormSubmitted(data.service || "general");
       toast({
         title: "Message Sent Successfully!",
-        description: "We'll get back to you within 24 hours.",
+        description: "We'll get back to you within one business day.",
         variant: "default",
       });
 

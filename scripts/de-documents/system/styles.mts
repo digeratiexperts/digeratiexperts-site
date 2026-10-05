@@ -37,7 +37,7 @@ export function stylesheet(head: RunningHead): string {
   ).join("\n");
   const marginLabel = `font-family:"Plex Mono";font-size:7pt;letter-spacing:.06em;color:${T.muted}`;
   const stamp = head.stamp
-    ? `@top-center{content:${cssString(head.stamp)};font-family:"Inter";font-weight:700;font-size:7pt;letter-spacing:.08em;color:${T.magText};text-transform:uppercase}`
+    ? `@top-center{content:${cssString(head.stamp)};font-family:"Inter";font-weight:700;font-size:7pt;letter-spacing:.03em;color:${T.magText};text-transform:uppercase}`
     : "";
   return `
 ${faces}
@@ -82,9 +82,13 @@ p,li{orphans:3;widows:3}
 .sec-head{break-after:avoid}
 .break{break-before:page}
 
-/* ---------- shared atoms ---------- */
+/* ---------- shared atoms ----------
+   Proportional (Inter) caps labels keep tracking at .03em. Newer Chromium
+   (151) breaks wider-tracked runs, so copy/paste and screen readers read
+   "SOLUTI ON". lib/verify.py fails any build whose text extracts split.
+   Plex Mono labels are monospaced and unaffected. */
 .lbl{font-family:"Plex Mono";font-size:7pt;letter-spacing:.08em;text-transform:uppercase;color:${T.muted};font-weight:400}
-.eyebrow{font-size:7.2pt;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:${T.magText}}
+.eyebrow{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:${T.magText}}
 .muted{color:${T.muted}}
 .d{color:${T.ink2}}
 .link{border-bottom:.7pt solid ${T.mag}}
@@ -173,7 +177,7 @@ figcaption{font-size:7.4pt;color:${T.muted};margin-top:6pt;max-width:470pt}
 .ed-title{font-family:"Newsreader Display",serif;font-weight:400;font-size:38pt;line-height:1.04;letter-spacing:-.02em;margin-top:18pt}
 .ed-stand{font-family:"Newsreader",serif;font-style:italic;font-size:13pt;line-height:1.38;color:${T.ink2};margin-top:9pt;max-width:440pt}
 .ed{display:grid;grid-template-columns:110pt 1fr;column-gap:22pt;margin-top:15pt;padding-top:8pt;border-top:.6pt solid ${T.ink}}
-.ed .rail,.editorial-inline .rail{font-size:7.2pt;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:${T.magText};padding-top:3pt}
+.ed .rail,.editorial-inline .rail{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:${T.magText};padding-top:3pt}
 .ed h2{font-family:"Newsreader",serif;font-weight:500;font-size:16pt;margin-bottom:6pt;letter-spacing:0}
 .ed p{font-size:9.8pt;line-height:1.56;color:${T.ink2};max-width:400pt}
 .ed p + p{margin-top:6pt}
@@ -197,11 +201,11 @@ figcaption{font-size:7.4pt;color:${T.muted};margin-top:6pt;max-width:470pt}
 .band{background:${T.ink};color:#fff;padding:34pt 50pt 24pt}
 .band .top{display:flex;justify-content:space-between;align-items:center}
 .band .logo{height:22pt}
-.band .k{font-size:7.2pt;letter-spacing:.08em;text-transform:uppercase;color:#cfccd8}
+.band .k{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;color:#cfccd8}
 .band h1{font-size:32pt;margin-top:22pt;color:#fff}
 .band .q{font-size:11pt;color:#e6e4ea;margin-top:9pt;max-width:440pt}
 .band .q b{color:#fff}
-.band .stamp{display:inline-block;margin-top:14pt;border:1pt solid #fff;padding:2pt 7pt;font-size:7.4pt;font-weight:700;letter-spacing:.08em}
+.band .stamp{display:inline-block;margin-top:14pt;border:1pt solid #fff;padding:2pt 7pt;font-size:7.4pt;font-weight:700;letter-spacing:.03em}
 .brief-body{padding:18pt 50pt 0}
 .bottomline{display:grid;grid-template-columns:1fr 150pt;column-gap:24pt;align-items:start}
 .bottomline .s{font-family:"Space Grotesk";font-weight:500;font-size:12.6pt;line-height:1.34;margin-top:5pt}

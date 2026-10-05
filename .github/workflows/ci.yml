@@ -62,6 +62,10 @@ jobs:
       - name: MSP AI Kit tests
         run: npm run test:msp-ai-kit
 
+      # The Recraft icon skill's cleaner and request builder, offline (stubbed API, no key).
+      - name: Recraft icon skill tests
+        run: npm run test:recraft-icons
+
       - name: Production build
         run: npm run build
 
@@ -199,12 +203,16 @@ jobs:
             echo "No readable previous release; the cache purge will clear the whole zone."
           fi
 
-      - name: Deploy current main with canonical release script
+      # Deploy exactly the commit this run's checks passed on (#391). main can
+      # advance between the stale check above and deploy.sh's fetch; pinning
+      # DEPLOY_COMMIT means that newer commit waits for its own green run.
+      - name: Deploy the CI-tested commit with canonical release script
         if: env.DE_DEPLOY_STALE != 'true'
         shell: bash
         run: |
           set -euo pipefail
-          CMD='DEPLOY_BRANCH=main bash /home/digeratiexperts.com/current/deploy/vps/deploy.sh production'
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::Unexpected GITHUB_SHA '$GITHUB_SHA'"; exit 1; }
+          CMD="DEPLOY_BRANCH=main DEPLOY_COMMIT=$GITHUB_SHA bash /home/digeratiexperts.com/current/deploy/vps/deploy.sh production"
           case "$DE_DEPLOY_AS" in
             site-user)
               bash -lc "$CMD"
@@ -228,6 +236,18 @@ jobs:
           set -euo pipefail
           curl -fsS http://127.0.0.1:3300/healthz
           curl -fsS https://digeratiexperts.com/healthz
+
+          # The release now serving must be the commit this run tested (#391).
+          LOCAL_RELEASE="$(curl -fsS --max-time 10 http://127.0.0.1:3300/release.txt | tr -d '\r\n')"
+          PUBLIC_RELEASE="$(curl -fsS --max-time 15 "https://digeratiexperts.com/release.txt?ts=$(date +%s)" | tr -d '\r\n')"
+          echo "Tested:  $GITHUB_SHA"
+          echo "Local:   $LOCAL_RELEASE"
+          echo "Public:  $PUBLIC_RELEASE"
+          if [ "$LOCAL_RELEASE" != "$GITHUB_SHA" ] || [ "$PUBLIC_RELEASE" != "$GITHUB_SHA" ]; then
+            echo "::error::Production serves ${LOCAL_RELEASE:-<none>} (public ${PUBLIC_RELEASE:-<none>}), not the tested $GITHUB_SHA"
+            exit 1
+          fi
+          echo "DE_DEPLOYED_RELEASE=$LOCAL_RELEASE" >> "$GITHUB_ENV"
 
           URL="https://digeratiexperts.com/api/portal/zoho/chat/status"
           BODY="$(curl -fsS --max-time 15 "$URL")"
@@ -263,7 +283,9 @@ jobs:
             const SITE = "https://digeratiexperts.com";
             const PUBLIC = "client/public/";
             const prev = process.env.DE_PREVIOUS_RELEASE || "";
-            const head = context.sha;
+            // The release actually serving (asserted equal to the tested SHA
+            // above), so files from any other commit cannot be missed (#391).
+            const head = process.env.DE_DEPLOYED_RELEASE || context.sha;
             if (prev === head) {
               core.info("Same release redeployed; nothing to purge.");
               return;

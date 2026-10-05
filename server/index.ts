@@ -19,6 +19,7 @@ import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
 import { cacheControlFor } from "./staticCacheControl";
+import { quoteSpoolDir, spoolPendingCount } from "./publicSolutionSpool";
 import { registerCampaignAliasRedirects } from "./campaignAliasRedirects";
 import { createServer as createViteServer } from "vite";
 import path from "path";
@@ -31,6 +32,7 @@ import { zohoClient } from "./zoho/zohoClient";
 import { evaluatePaymentSucceeded } from "./zohoPaymentWebhook";
 import { setupCrossServiceHandlers } from "./crossServiceHandler";
 import { eventBus, EventTypes } from "./eventBus";
+import { revocationLoadState } from "./portalSessionRevocation";
 
 process.on('unhandledRejection', (reason, promise) => {
   const errorStr = String(reason);
@@ -94,6 +96,7 @@ app.all("/api/health", async (_req, res) => {
   const port = process.env.REPLIT_SERVER_PORT || process.env.PORT || "unknown";
   const { databaseAcceptsConnections } = await import("./healthProbe");
   const dbAvailable = await databaseAcceptsConnections();
+  const { releaseIdentity } = await import("./releaseIdentity");
   const openaiConfigured = !!(
     process.env.OPENAI_API_KEY ||
     process.env.OPENAI_API ||
@@ -104,10 +107,14 @@ app.all("/api/health", async (_req, res) => {
     status: "ok",
     timestamp: new Date().toISOString(),
     version: "1.0.0",
+    // Deployed commit from deploy.sh's release.txt marker, so LIVE is checkable (#224).
+    release: releaseIdentity(),
     env: app.get("env"),
     port,
     services: {
       database: dbAvailable ? "connected" : "fallback_memory",
+      // "ready" once logged-out tokens are loaded; otherwise sign-in answers 503 (#393).
+      sessionRevocation: revocationLoadState(),
       zohoPayments: zohoPayments.isConfigured() ? "configured" : "not_configured",
       // Configured is not live: last readiness probe result + freshness (#263).
       // Error detail stays in server logs, never here.
@@ -122,6 +129,10 @@ app.all("/api/health", async (_req, res) => {
       // OAuth refresh rejects the configured refresh token (e.g. invalid_code).
       zohoDesk: zohoClient.getDeskAuthStatus(),
       openai: openaiConfigured ? "configured" : "not_configured",
+      // Solution requests waiting on disk for the database (#243). A count only.
+      solutionSpool: { pending: spoolPendingCount() },
+      // Store quote requests waiting on disk for the database (#240). A count only.
+      quoteSpool: { pending: spoolPendingCount(quoteSpoolDir()) },
     },
     // Lets a reviewer confirm outbound mutations are locked down.
     stagingReview: stagingReviewStatus(),
@@ -656,6 +667,18 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       .then(({ startDeSyncWorker }) => startDeSyncWorker())
       .catch((error) => {
         log(`⚠️ de-sync worker not started: ${error?.message || error}`);
+      });
+    // Solution requests saved outside the database are written back once it is reachable (#243).
+    void import("./publicSolutionReplayWorker")
+      .then(({ startSolutionReplayWorker }) => startSolutionReplayWorker())
+      .catch((error) => {
+        log(`⚠️ solution replay worker not started: ${error?.message || error}`);
+      });
+    // Store quote requests saved outside the database likewise (#240).
+    void import("./storeQuoteReplayWorker")
+      .then(({ startQuoteReplayWorker }) => startQuoteReplayWorker())
+      .catch((error) => {
+        log(`⚠️ quote replay worker not started: ${error?.message || error}`);
       });
     void import("./services/threat-intel/ingest")
       .then(({ startThreatIntelScheduler }) => startThreatIntelScheduler())

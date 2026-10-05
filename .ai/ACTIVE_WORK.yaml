@@ -45,6 +45,260 @@ claims:
       Joe, 2026-10-03: approved matching seats ≤10 to ProActive IT even with
       remote (was incorrectly Business). Mid-size remote stays Business;
       >30 / 100+ stays Enterprise. Builds on the quiz room from PR 425.
+  - id: the-digerati-box
+    owner: claude
+    subsystem: marketing-the-box
+    branch: claude/digerati-box
+    base_sha: 29834cd
+    files:
+      - client/src/pages/TheBox.tsx (new)
+      - client/src/data/digeratiBox.ts (new)
+      - client/src/App.tsx (the /the-box route registration only)
+    status: active
+    started: 2026-10-05
+    note: >-
+      A virtual shock-and-awe box: five compartments of collateral that already
+      exists in this repository (13 registry PDFs, 4 executive briefs, the
+      canonical pricing ladder). Deliberately at /the-box rather than under
+      /resources so it does not inherit the Journal colour lock. No case study,
+      logo, testimonial or metric appears on it; the registry forbids those
+      until a client has approved scope and outcome.
+  - id: portal-chat-sessions
+    owner: claude
+    subsystem: portal-chat
+    branch: claude/portal-chat-sessions
+    base_sha: 29834cd
+    files:
+      - server/portalChatSessions.ts (new)
+      - server/portalChatStore.ts (session resolution, listing and the session_id column)
+      - server/routes.ts (the three /api/portal/chat endpoints only)
+      - client/src/pages/portal/PortalChat.tsx (the portal live-chat panel only)
+    status: active
+    started: 2026-10-05
+    note: >-
+      The portal live chat was one endless transcript per user, keyed live-{userId}:
+      a message today appended to one from weeks ago with nothing marking the gap.
+      This splits it into runs on a 12-hour idle rule, keeps every closed run, and
+      collapses the past ones in the UI to a date, preview and count. The website
+      DE Desk store, its routes and the desk panel in this page are untouched.
+  - id: document-flipbook-page-turn
+    owner: claude
+    subsystem: resources-flipbook
+    branch: claude/unfinished-threads-survey-y92doz
+    base_sha: 48f4a0a
+    files:
+      - client/src/pages/resources/DocumentFlipbook.tsx (the page-display block and its render effect only)
+      - client/src/lib/pageFlip.ts (new)
+      - client/src/styles/page-flip.css (new)
+      - artifacts/design-concepts/page-flip/** (prototype, PR 470)
+    status: active
+    started: 2026-10-05
+    note: >-
+      Replacing the flipbook's page change with a real page turn. The component
+      is named a flipbook but crossfades: opacity, rotateY(4deg) and an 8px
+      slide over 200ms. Engine prototyped in PR 470 with no new dependency;
+      this claim covers wiring it into the shipped route on Joe's 2026-10-05
+      go-ahead. The pdf.js loader, the 75MB guard, the Office-file rejection,
+      the upload and drag-drop paths, the original-file link and the toolbar
+      are preserved unchanged — only the page-display block and the render
+      effect that drove the two canvases are touched.
+  - id: unsupported-timing-claims
+    owner: claude
+    subsystem: marketing-copy
+    branch: claude/beautiful-hopper-1uem0k
+    base_sha: 8847b93
+    files:
+      - client/src/pages/sections/DigeratiLeadFormSection.tsx (the benefits list and its icon import only)
+      - client/src/pages/solutions/ManagedWorkplace.tsx (the onboarding FAQ entry only)
+      - docs/CLAIMS-REGISTER.md (the "48 hours" and onboarding rows only)
+      - artifacts/visual-qa/unsupported-timing-claims/**
+    status: verified-live
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "you make up the answers", then "keep building". The
+      last two timing rows the claims register marks Unsupported with "Joe:
+      confirm or remove/soften": "Results in 24-48 hours" on the assessment
+      form of the previous homepage (/version-0, DigeratiLeadFormSection; the
+      live Version 8 form never had it) is removed, and the Managed Workplace
+      FAQ's "fully productive within 1 business day" / "offboarding takes
+      minutes" becomes a checklist answer with no timing. Joe can restore
+      either with a source. The "Fourteen domains" row stays Unsupported: it
+      waits on Joe's taxonomy, not on copy.
+      MERGED as c9526ea (PR 468). VERIFIED LIVE 2026-10-05: release.txt
+      serves c9526ea; the ManagedWorkplace bundle carries the new FAQ and
+      none of the old timing; the /version-0 homepage bundle has no "24-48
+      hours". The frozen /version-1 and /version-3 snapshots still carry it,
+      kept as historical record.
+  - id: homepage-response-promise
+    owner: claude
+    subsystem: marketing-copy
+    branch: claude/beautiful-hopper-1uem0k
+    base_sha: f4a9bc3
+    files:
+      - client/src/pages/versions/v8/sections/13-lead-form.tsx (the success toast string only)
+      - client/src/pages/versions/v8/sections/16-contact-footer.tsx (the success toast string only)
+      - docs/CLAIMS-REGISTER.md (the three "24 hours" rows only)
+    status: verified-live
+    started: 2026-10-05
+    note: >-
+      Follow-up to response-promise-one-business-day (PR 456) under Joe's
+      2026-10-05 "you make up the answers". The live homepage (Version 8,
+      de-homepage-v8 verified-live) still promised "within 24 hours" in its
+      lead-form and contact toasts; both now say "within one business day".
+      Overlaps: de-site-v2-scrollcraft's broad versions/** glob (same owner,
+      older experiment lane) and site-atmosphere-and-plates (PR 454), which
+      adds lines elsewhere in 13-lead-form.tsx, so the two merge cleanly.
+      The register rows were claimed by de-eight-block-correction, whose
+      branch merged via PR 199 on 2026-09-06; only the three response-time
+      rows change. Not touched: the quote email in notificationService.ts
+      (open PRs 448 and 445) and the frozen v1/v3/v7 snapshots.
+      MERGED as 8847b93 (PR 461). VERIFIED LIVE 2026-10-05: release.txt
+      serves 8847b93 and the production HomepageV8 bundle carries both
+      "within one business day" toasts and no "within 24 hours".
+  - id: response-promise-one-business-day
+    owner: claude
+    subsystem: marketing-copy
+    branch: claude/beautiful-hopper-1uem0k
+    base_sha: 64e3a2c
+    files:
+      - client/src/pages/QuoteConfirmation.tsx (the next-steps sentence only)
+      - client/src/pages/locations/LocationServicePage.tsx (the success toast only)
+      - client/src/pages/sections/DigeratiLeadFormSection.tsx, DigeratiHeroSection.tsx, LeadCaptureBand.tsx, DigeratiContactSection.tsx (the success toast only)
+      - client/src/pages/solutions/OfficePage.tsx, ManagedWorkplace.tsx, BackupDisasterRecovery.tsx (the quote-turnaround sentence only)
+      - artifacts/visual-qa/response-promise/**
+    status: verified-live
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "you make up the answers and i will fix things later",
+      delegating the open decisions. docs/CLAIMS-REGISTER.md marks the
+      "within 24 hours" contact and quote promises Unsupported with the
+      instruction "align to one business day unless Joe confirms 24 hours";
+      the SLA's standard tier is next business day and quiz leads now carry
+      a call-by deadline of at most one business day (PR 451). Not touched:
+      the homepage copies under client/src/pages/versions/** (claimed by
+      de-site-v2-scrollcraft), docs/CLAIMS-REGISTER.md (claimed by
+      de-eight-block-correction) and the quote email in notificationService.ts
+      (open PRs 448 and 445).
+      MERGED as c129372 (PR 456). VERIFIED LIVE 2026-10-05: release.txt
+      serves c129372 and the production bundles carry "within one business
+      day" for every edited string; only the homepage version bundles
+      (versions/**, out of scope) still promise 24 hours.
+  - id: quiz-lead-call-flow
+    issue: 449
+    owner: claude
+    subsystem: lead-follow-up
+    branch: claude/beautiful-hopper-1uem0k
+    base_sha: 7bbe042
+    files:
+      - shared/leadFollowUp.ts (new), shared/leadFollowUp.test.ts (new)
+      - server/zoho/zohoCRM.ts (createCall, getRecordOwnerId and the createLead assignment-rule option only)
+      - server/quoteLeadCrm.ts (new), server/quoteLeadCrm.test.ts (new)
+      - server/routes.ts (the /api/lead-quote handler only)
+      - server/integrations/enqueueWebsiteCommand.ts (followUp passthrough only)
+      - server/crossServiceHandler.ts (LEAD_CREATED followUp passthrough only)
+      - client/src/pages/LeadQuoteWizard.tsx (contact step phone field only), client/src/pages/LeadQuoteWizard.test.ts
+      - scripts/qa/quote-wizard-quiz-check.mjs (phone fill only)
+      - deploy/vps/env.production.example (the quiz-lead Zoho lines under ZOHO_REFRESH_TOKEN only)
+      - client/src/components/ScrollProgress.tsx (the quiz-room skip only)
+      - artifacts/visual-qa/quiz-lead-call-flow/**
+    status: merged
+    started: 2026-10-04
+    pr: 451
+    merge_sha: 8c7c90f114f9f42a8d9ca71e765b9f98655f416c
+    verification: >-
+      Merged as 8c7c90f on Joe's "merge 451 and push to production"; served
+      from 19:30:08Z (release.txt and /api/health release.commit 8c7c90f1).
+      scripts/qa/quote-wizard-quiz-check.mjs against digeratiexperts.com:
+      46/46 checks at 390, 768 and 1440, axe serious/critical 0 (required
+      phone, one progress bar; the lead POST answered in the browser).
+      POST /api/lead-quote with an empty body answers 400 live. NOT VERIFIED:
+      the Zoho lead and scheduled call. Production Zoho CRM is disconnected
+      (/api/zoho/status: "No access token in Zoho CRM response") and Desk is
+      auth_failed (issue 418); leads still reach email and the Hub. Mark
+      verified-live after the refresh tokens are replaced and one real quiz
+      lead shows its scheduled call in Zoho.
+    note: >-
+      Joe, 2026-10-04: "Build a flow for us to know who to call and when";
+      all three channels with Zoho as the one record, tiered speed, required
+      phone, owner by Zoho assignment rule. Slice 1 here; closing the Hub item
+      on call completion needs the Intelligence Hub repo (slice 2).
+      notificationService.ts is deliberately untouched (PRs 448 and 445).
+  - id: remove-keyword-input-guard
+    issue: 436
+    owner: claude
+    subsystem: server-security
+    branch: claude/beautiful-hopper-1uem0k
+    base_sha: c78ef21
+    files:
+      - server/middleware/security.ts (the unused keyword validateInput only)
+      - server/middleware/noKeywordBlocklist.test.ts (new)
+      - shared/quoteContext.test.ts (the request-guard case only)
+    status: verified-live
+    started: 2026-10-04
+    released: 2026-10-04
+    pr: 437
+    merge_sha: 7bbe04228344cb261280dd91e92d5dfcbf5a701a
+    verification: >-
+      Merged as 7bbe042 on Joe's "merge and verify". Production /api/health
+      reports release.commit 7bbe04228344 (built 12:39:27Z) and release.txt
+      matched at 12:39:39Z. The removed function had no callers, so there is
+      no behaviour to observe live; the regression test guards it. VERIFIED
+      LIVE. Files released.
+    note: >-
+      Joe, 2026-10-04: "fix the and/or input guard bug". Investigation showed
+      the keyword guard is never wired to a route (routes use a local
+      size-only validateInput); a dev-server POST with "Smith and Sons;
+      Backup or Recovery -- LLC" is accepted. The unused guard is removed so
+      it cannot be imported later, and a test keeps it out.
+  - id: brand-maskable-icon
+    issue: 210
+    owner: claude
+    subsystem: brand
+    branch: claude/brand-icon-192-maskable
+    base_sha: 14265a90
+    pr: 427
+    files:
+      - brand/digerati-mark-maskable.svg (new), brand/png/digerati-mark-maskable-512.png (new)
+      - client/public/favicon-maskable-512x512.png (new), client/public/favicon-192x192.png (new)
+      - client/public/site.webmanifest (icon purposes, 192 entry, short_name)
+      - artifacts/visual-qa/brand-maskable-icon/**
+    status: verified-live
+    started: 2026-10-04
+    note: >-
+      PWA icon correctness for the existing canonical mark. No redesign, no
+      recolour, no new mark. The manifest declared "purpose": "any maskable"
+      on favicon-512x512.png, which is transparent and whose gold bars reach
+      0.409 x tile against the 0.400 maskable safe limit (measured from
+      brand/digerati-mark-tile.svg), so Android clipped them and composited
+      over an arbitrary ground. Adds a dedicated maskable variant at 0.327,
+      opaque full bleed, reusing the canonical bar geometry byte-for-byte.
+      Adds favicon-192x192.png, the Chrome/Android install icon, which the
+      set did not contain. site.webmanifest splits any/maskable purposes.
+      A set of externally prepared assets was evaluated and REJECTED: it
+      would have recoloured gold to #F5E48A, reintroduced a #3C3C3C plate and
+      moved theme_color off #050312. brand/README.md records the
+      #F5E48A -> #E3B23C correction as deliberate. Nothing from it was
+      imported. Joe, 2026-10-04, ruled #E3B23C canonical for implementation
+      with the colour question to be resolved separately in one controlled
+      change, and approved short_name "Digerati" -> "DE" per
+      .cursor/rules/digerati-naming.mdc, the home-screen label being
+      customer-facing. The 16px optical-size variant (four bars render 1px
+      each and alias) was deliberately NOT shipped: fewer/heavier bars alter
+      the protected silhouette, so it is flagged on issue 210 for an explicit
+      brand decision.
+      RELEASED 2026-10-04: merged as 6734c1f (PR 427, on Joe's "merge it").
+      Rebased onto current main first so CI re-ran against the axe a11y gate
+      added by PR 428, which the branch predated. CI run 37170281995 passed
+      every job including the production deploy. Production verified
+      cache-busted: live favicon-maskable-512x512.png and favicon-192x192.png
+      are byte-identical to source (sha256 50da5121c0cf25b9 / 69f81d1567e5ca7a),
+      live manifest serves short_name DE, 5 icons, dedicated maskable.
+      CAVEAT: this changed client/public assets and the Cloudflare purge is
+      skipped when the token is unset; Cache-Control is max-age=86400, so the
+      first post-deploy fetch returned the old manifest and 404s on the new
+      icons. Edge copies may stay stale for up to 24h. Evidence:
+      artifacts/visual-qa/brand-maskable-icon/live/. VERIFIED LIVE.
+      Files released.
   - id: quote-wizard-quiz
     issue: 419
     owner: claude
@@ -64,8 +318,25 @@ claims:
       - server/routes.ts (the /api/lead-quote handler only)
       - scripts/qa/quote-wizard-quiz-check.mjs (new)
       - artifacts/visual-qa/quote-wizard-quiz/**
-    status: active
+    status: verified-live
     started: 2026-10-03
+    released: 2026-10-04
+    pr: 425
+    merge_sha: 6f8b646b9e7b228ef3b96f9fa158e323ba712b9c
+    verification: >-
+      Merged as 6f8b646 on Joe's "yes to thin chrome and plan before email,
+      merge it" after green CI on 84c6e4c. Production release.txt read
+      6f8b646b at 00:04:32Z; /api/health 200. scripts/qa/quote-wizard-quiz-check.mjs
+      run against https://digeratiexperts.com at 390, 768 and 1440: 42/42
+      checks per width, axe serious/critical 0 on all 9 screens (the lead POST
+      was answered in the browser, so no test lead reached Zoho; page
+      requests were fetched by Node against the proxy CA because the sandbox
+      Chromium has no trust for it). The live entry bundle carries the
+      MegaMenu "Find Your Plan" item and the pricing chunk carries the
+      pricing-page link. Limit: the Zoho Description with context was proven
+      by unit test and a dev-server POST, not by a real CRM lead. VERIFIED
+      LIVE. Evidence: artifacts/visual-qa/quote-wizard-quiz/live/. Files
+      released.
     note: >-
       Joe/DE: a RiseGuide-level question-based selling experience on
       digeratiexperts.com in DE's own design ("go ahead with slice 1 and all
@@ -258,7 +529,7 @@ claims:
       - server/integrations/deSyncAuth.ts
       - server/integrations/techSalesClient.ts (portal-bridge calls + signedGet only)
       - server/integrations/portalBridgeSigning.test.ts
-    status: active
+    status: merged
     started: 2026-10-03
     note: >-
       Sign portal-bridge GETs to the Hub over pathname + search and stop sending
@@ -402,7 +673,7 @@ claims:
       - server/routes.ts (tenant file route block replaced by registerPortalTenantFileRoutes; object-route resolver kept verbatim)
       - server/rawIntegrationRouteGuards.test.ts (deleteTenantFile calls pass the owning company)
       - server/portalTenantFileRoutes.test.ts, server/storage.tenantFiles.test.ts, server/tenantFilesFakeDb.testkit.ts (new)
-    status: active
+    status: merged
     started: 2026-10-03
     note: >-
       PR 373. Tenant file metadata durable in portal_tenant_files with soft
@@ -519,7 +790,7 @@ claims:
       - server/replit_integrations/object_storage/index.ts
       - server/routes.ts (registerObjectStorageRoutes call only)
       - server/storage.ts (findTenantFileByFileUrl on IStorage + both impls)
-    status: active
+    status: merged
     started: 2026-10-01
     note: >-
       Per-object read ACL for private object storage, the follow-up from the
@@ -580,7 +851,7 @@ claims:
       - server/portalAuthFailClosed.test.ts (two added cases)
       - server/legacyAuthRetired.ts, server/legacyAuthRetired.test.ts (legacy /api/auth/register and /api/auth/login answer 410)
       - server/routes.ts (legacy register/login handlers and their now-unused helpers removed)
-    status: merged
+    status: verified-live
     started: 2026-10-01
     note: >-
       Issue 236 (P0), confirmed on a local production build after Joe's "so
@@ -598,7 +869,7 @@ claims:
       /api/auth/register and /api/auth/login token minters are retired (410
       Gone, end-to-end test). Follow-up (own PR): gate the PATCH
       /api/portal/profile email change on a confirmation to the new address.
-      RELEASED 2026-10-03: merged as PR 329 (merge commit ae69ba0a, 2026-10-03T02:40Z). MERGED, not yet recorded as VERIFIED LIVE; production verification is pending. Files released.
+      RELEASED 2026-10-03: merged as PR 329 (merge commit ae69ba0a, 2026-10-03T02:40Z). VERIFIED LIVE 2026-10-03 19:10Z: production release.txt 823e4d07 contains ae69ba0a; POST /api/auth/login answers 410 Gone. The identity binding is covered by its regression tests, not probed against production (needs a signed-in account). Files released.
   - id: de-desk-hardening
     owner: claude
     subsystem: de-desk
@@ -647,7 +918,7 @@ claims:
       - client/src/pages/versions/v6/v6.css
       - client/src/pages/versions/v6/ACCEPTANCE.md
       - client/src/pages/versions/registry.ts
-    status: active
+    status: merged
     started: 2026-10-01
     note: >-
       Rebased onto main 8c160909 (2026-10-02). Preview-only at /version-6;
@@ -1021,7 +1292,7 @@ claims:
       - server/campaignAliasRedirects.ts
       - server/campaignAliasRedirects.test.ts
       - server/index.ts (the campaign alias redirect registration only)
-    status: merged
+    status: verified-live
     started: 2026-10-01
     note: >-
       Found by a link sweep after Joe's "so everything is complete and we cant
@@ -1031,7 +1302,7 @@ claims:
       /support/system-status rendered while answering HTTP 404 in production,
       and /ads/<slug> and /lp/<slug> answered 404 before a browser redirect
       that dropped the query string. Exact paths, so unknown slugs stay 404.
-      RELEASED 2026-10-03: merged as PR 328 (squash e7203266). MERGED, not yet recorded as VERIFIED LIVE; production verification is pending. Files released.
+      RELEASED 2026-10-03: merged as PR 328 (squash e7203266). VERIFIED LIVE 2026-10-03 19:10Z: production release.txt 823e4d07 contains e7203266; /go/cyber-risk-assessment, /industries/professional-services and /support/system-status answer 200; /ads/managed-it?utm_source=t&gclid=1 answers 302 to /go/managed-it with the query intact; unknown /go and /lp slugs still answer 404. Files released.
   - id: de-org-department-tenant-boundary
     owner: claude
     subsystem: portal-org
@@ -1041,7 +1312,7 @@ claims:
       - server/portalDepartmentRoutes.ts
       - server/portalDepartmentRoutes.test.ts
       - server/routes.ts (the two department routes and their imports only)
-    status: merged
+    status: verified-live
     started: 2026-10-01
     note: >-
       Issue 254 (P0), verified still present on main 576aa76d after Joe's
@@ -1053,7 +1324,7 @@ claims:
       order; the company now comes from the signed-in user unless the caller is
       a DE admin, and the IT contact must be in the same company. The People
       page's only call (create with a name) is unaffected.
-      RELEASED 2026-10-03: merged as PR 326 (squash e5945de3). MERGED, not yet recorded as VERIFIED LIVE; production verification is pending. Files released.
+      RELEASED 2026-10-03: merged as PR 326 (squash e5945de3). VERIFIED LIVE 2026-10-03 19:10Z: production release.txt 823e4d07 contains e5945de3. The tenant boundary is covered by its route tests, not probed against production (needs signed-in accounts in two companies). Files released.
   - id: de-desk-store-seed-door2
     owner: claude
     subsystem: de-desk
@@ -1514,7 +1785,7 @@ claims:
     files:
       - scrollcraft/builds/directions-v1/**
       - public/scrollcraft/directions/**
-    status: active
+    status: merged
     started: 2026-09-27
     note: >-
       Exploration Mode concept set for the flagship visual reset, published at
@@ -1548,7 +1819,7 @@ claims:
       - scripts/vendor-pdfjs.mjs
       - scripts/public-route-smoke.mjs
       - package.json
-    status: active
+    status: merged
     started: 2026-08-31
     note: >-
       Reassigned by Joe on 2026-08-31. Supersedes the `chatgpt` claim
@@ -1572,7 +1843,7 @@ claims:
     files:
       - scrollcraft/experience-v1/**
       - scrollcraft/builds/experience-v1/**
-    status: active
+    status: merged
     started: 2026-09-03
     note: >-
       Joe's 2026-09-02/03 creative reset for the DE flagship (Phases 0-5 of
@@ -1610,7 +1881,7 @@ claims:
       - client/src/pages/solutions/SolutionsIndex.tsx (one ProofChip)
       - design/PROOF_SYSTEM.md
       - docs/CLAIMS-REGISTER.md
-    status: active
+    status: merged
     started: 2026-09-02
     note: >-
       Joe-routed, small, content-only: the live homepage presented the stale
@@ -1656,7 +1927,7 @@ claims:
       - public/scrollcraft/**
       - public/robots.txt (Disallow /scrollcraft/ only)
       - docs/kie/**
-    status: active
+    status: merged
     started: 2026-09-01
     note: >-
       Version B: an isolated, independently runnable Scrollcraft
@@ -1705,7 +1976,7 @@ claims:
       - scrollcraft/builds/why-passage/**
       - scrollcraft/FINGERPRINTS.md
       - docs/DE-WHY-PASSAGE-BRIEF.md
-    status: active
+    status: merged
     started: 2026-09-02
     note: >-
       FREEZE LIFTED FOR ONE PAGE (Joe, 2026-09-02, in session
@@ -1746,7 +2017,7 @@ claims:
       - docs/CLAIMS-REGISTER.md (the Version 4 section only)
       - artifacts/visual-qa/homepage-v4/**
       - artifacts/visual-qa/real-product/**
-    status: active
+    status: merged
     started: 2026-09-27
     note: >-
       Homepage Version 4, the clean-sheet rebuild Joe directed on 2026-09-27
@@ -1950,8 +2221,34 @@ claims:
       - client/src/data/solutionScenarios.ts, solutionScenarios.test.ts (SCENARIO_GROUPS)
       - .claude/kie-budget/**, kie.ai generator scripts (budget gate)
       - artifacts/design-concepts/store-situations-2026-10/**, artifacts/design-concepts/store-redesign-2026-10/**, artifacts/visual-qa/store-flagship/**
-    status: active
+    status: verified-live
     started: 2026-10-03
+    released: 2026-10-04
+    merge_sha: 2863df1ae26d4ecd981e196a257acaa83b02b47f
+    verification: >-
+      Merged on Joe's "merge and release it" (2026-10-04) after reconciling
+      with main f9b6f785 (PRs 425, 426, 428, 430, 431; only the registry
+      conflicted, both claims kept) and green CI on 650dda49, including the
+      new axe gate (smoke:a11y: /store clean; serious contrast findings are on
+      / and /contact only). Main CI and the deploy job (runtime check,
+      Cloudflare purge) passed on 2863df1a, which also carries PR 427 (icons,
+      disjoint). release.txt reads 2863df1a on digeratiexperts.com. The live
+      entry index-DEmEjPG7.js, BusinessNeedsIndex-BiBtK_L_.js and
+      StorePageAtmosphere-BC800J37.css are byte-identical to the local build
+      of the merged tree and carry the flagship classes (d2-flag-lnav,
+      d2-gallery, d2-sculpt). VERIFIED LIVE (bundle). Limit: no rendered
+      screenshot of production from the session environment (its browser
+      does not trust the egress proxy); the same bundle was rendered locally,
+      artifacts/visual-qa/store-flagship/.
+      FOLLOW-UP (PR 434, merged as 308d460f on Joe's "merge and release it"):
+      plan-card "Choose how DE works with you" section, white local nav with
+      the magenta pill, − / + dial steppers (SolutionProfileForm dials prop,
+      /store only). Deployed inside release c78ef219 (PRs 432 and 429 merged
+      on top; the deploy coalesced): release.txt reads c78ef219, the live
+      entry index-0kCQ7ls4.js, BusinessNeedsIndex-C4H2ih-k.js and
+      StorePageAtmosphere-Dw7hFf7k.css are byte-identical to a local build of
+      c78ef219 and carry d2-plans and "Suggested from your profile".
+      PR 434 VERIFIED LIVE (bundle) 2026-10-04.
     note: >-
       Joe, 2026-10-04: build concept 4 (apple.com/iphone grammar) into /store
       ("2. yes"), and kie.ai spend needs a per-job projection plus soft and
@@ -1986,3 +2283,71 @@ claims:
       127.0.0.1:3300 and public HTTPS" at 00:44:51Z; /api/health returned
       ok with uptime matching the restart. No client/public files changed,
       so the skipped Cloudflare purge (token unset) left nothing stale.
+  - id: recraft-icons-skill
+    owner: claude
+    subsystem: tooling-skills
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: f9b6f78
+    files:
+      - .claude/skills/recraft-icons/** (new), .agents/skills/recraft-icons (new symlink)
+      - package.json (test:recraft-icons script only), .github/workflows/ci.yml (one test step)
+      - .env.example (RECRAFT_API_KEY line), docs/CONTENT-TOOLING-PLAN.md (Recraft row and step 2 only)
+      - AGENTS.md, CLAUDE.md (one skills-table row each; AGENTS key-handling sentence)
+    status: merged
+    started: 2026-10-04
+    note: >-
+      Joe, 2026-10-04: "build the Recraft icon skill" (plan step 2). Node,
+      no dependencies; generate / create-style / check / clean; cleaner
+      rebuilds Recraft SVGs as a currentColor luminance mask so glyphs sit
+      beside Lucide in IconWell; offline tests in CI. No live call made:
+      RECRAFT_API_KEY is not set and recraft.ai is unreachable from the
+      build sandbox. Open PRs 429, 427, 421, 420, 413, 406 checked: only
+      421 touches CLAUDE.md (a different paragraph) and ledger claims.
+  - id: de-techtool-unattended-and-warranty
+    owner: claude
+    subsystem: msp-ai-kit
+    branch: claude/msp-ai-skills-prompts-htqi09
+    base_sha: 2863df1ae26d4ecd981e196a257acaa83b02b47f
+    files:
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/DE-Microsoft-Admin.psm1 (Connect-DEMicrosoft context, Connect-DEExchange, Connect-DEAzure, the job service map, Invoke-DEMicrosoftJob -BeforeRun, the result version)
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/DE-HubWorker.ps1 (lazy Exchange and Azure sign-in, the -WhatIf service check, disconnect at the end)
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/DE-Microsoft-Admin.psd1 (version 0.6.0), README.md
+      - .claude/skills/msp-ai-kit/windows/tests/HubWorker.Tests.ps1 (Exchange and Azure stand-ins and new tests only)
+      - .claude/skills/msp-ai-kit/windows/console/modules/DE.Evidence/DE.Evidence.psm1 (Send-DEHubWarranty, Format-DEHubSendStatus, the checklist's step list, the export line)
+      - .claude/skills/msp-ai-kit/windows/console/DETechConsole.ps1 (the Evidence page Send to Intelligence Hub button only)
+      - .claude/skills/msp-ai-kit/windows/console/tests/Components.Tests.ps1 (new warranty send tests)
+      - .claude/skills/msp-ai-kit/windows/console/VERSION, .claude/skills/msp-ai-kit/windows/DE-TECH-TOOL-ARCHITECTURE.md (1.10.3 line only)
+      - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md (version example, the Hub section and the Hub jobs subsection only), .claude/skills/msp-ai-kit/windows/GO-LIVE.md (header, D5, part E)
+      - .claude/skills/msp-ai-kit/windows/packaging/Deploy-DETechConsole.ps1, Install-DETechConsole.ps1 (the example file name only)
+      - .claude/skills/msp-ai-kit/windows/console/catalog/cheatsheet.json (the new hub group and the -Page list only)
+      - docs/DE-SYSTEM-INTEGRATION.md (three Tech Tool rows, the BUILT status key and the DE Tech Tool section only)
+    status: verified-live
+    started: 2026-10-04
+    note: >-
+      Joe, 2026-10-04: "go, do 1 and 2 then do 3 and then 4". DE Microsoft
+      Admin 0.6.0: the Hub worker signs in to Exchange Online and Azure
+      app-only with the same certificate app as Graph, lazily and only for
+      a job that needs that service; a missing setting or module fails that
+      job with the reason and the loop carries on. DE Tech Tool 1.10.3: the
+      Evidence page sends the latest warranty lookup to the Hub as a signed
+      device.warranty event after the device record (Intelligence-Hub
+      master accepts device.warranty: techconsole-contract.ts). Overlap
+      check 2026-10-04: open PRs 432, 429 and 406 touch only this YAML
+      (claims of their own), 420 and 413 touch none of these files; open
+      ACTIVE issues 270 and 272 (DE Tech Tool) touch DE.Security and the
+      installer test fixture, not these files.
+      Item 3 (same PR): the website side of the Tech Tool / Hub integration.
+      The de-sync contract fixture was already identical to Intelligence-Hub
+      master (45 event types, techconsole source); what was missing was the
+      documentation: DE-SYSTEM-INTEGRATION.md now lists the Tech Tool, licence
+      and Microsoft Admin worker paths, and the Tool's command-line cheat sheet
+      has the Hub sends and the job worker.
+      RELEASED 2026-10-05: Joe, "merge 438 and 343". Merged as 12c3b5f4 (PR
+      438). Tool-only: nothing deploys from this repository; it ships through
+      New-DEReleasePackage.ps1. All CI passed on a9d8b549 and on main at
+      12c3b5f4, including Windows PowerShell 5.1 and the WPF smoke render.
+      The DE Tech Tool 1.10.3 release zip (build DE-1.10.3-202610050024-63d4fc,
+      sourceCommit 12c3b5f4) and the DE Microsoft Admin 0.6.0 zip were built
+      from 12c3b5f4. Item 4 shipped in Intelligence-Hub PR 343 (master
+      44185ad8: regenerated API client, frontend bundle byte-identical).
+      VERIFIED LIVE as a Tool release. Files released.

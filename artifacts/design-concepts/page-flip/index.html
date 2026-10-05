@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page Flip Engine</title>
+<link rel="stylesheet" href="page-flip.css">
+<style>
+  /* Brand faces, self-hosted. Copied from client/public/fonts/ so this prototype
+     renders correctly with no network at all — the same reason PR #301 made
+     self-host the primary source for the app: a blocked fonts.gstatic.com was
+     silently dropping the site to a system serif. These three are the canonical
+     DE stack (design/BRAND.md); when this engine moves into client/ the app has
+     them loaded already and this fonts/ copy goes away. */
+  @font-face {
+    font-family: "Space Grotesk"; font-style: normal; font-weight: 400 700;
+    font-display: swap; src: url("fonts/space-grotesk-latin.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Inter"; font-style: normal; font-weight: 400 900;
+    font-display: swap; src: url("fonts/inter-latin.woff2") format("woff2");
+  }
+  @font-face {
+    font-family: "Oxanium"; font-style: normal; font-weight: 400 700;
+    font-display: swap; src: url("fonts/oxanium-latin.woff2") format("woff2");
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #050312;
+    color: #e8e8ea;
+    font-family: "Inter", system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 56px;
+  }
+
+  header { width: 100%; max-width: 880px; margin-bottom: 28px; }
+  h1 {
+    margin: 0 0 6px;
+    font: 500 1.05rem/1.2 "Inter", sans-serif;
+    letter-spacing: -0.01em;
+  }
+  .sub {
+    margin: 0;
+    font: 400 .76rem/1.5 "Oxanium", ui-monospace, monospace;
+    letter-spacing: .1em; text-transform: uppercase; color: #8d8d96;
+  }
+
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
+  .controls button {
+    min-width: 44px; min-height: 44px;           /* Tier 0 tap target */
+    padding: 0 18px;
+    font: 500 .8rem/1 "Inter", sans-serif;
+    color: #cfcfd6; background: transparent;
+    border: 1px solid rgba(255,255,255,.2); border-radius: 6px;
+    cursor: pointer;
+    transition: border-color .16s ease, color .16s ease;
+  }
+  .controls button:hover:not(:disabled) { border-color: rgba(255,255,255,.5); color: #fff; }
+  .controls button:focus-visible { outline: 2px solid #d3126a; outline-offset: 2px; }
+  .controls button:disabled { opacity: .35; cursor: default; }
+
+  .hint {
+    margin: 18px 0 0; max-width: 60ch; text-align: center;
+    font-size: .86rem; line-height: 1.6; color: #8d8d96;
+  }
+  .hint b { color: #cfcfd6; font-weight: 500; }
+
+  /* ---- sample document pages (content, not engine) ---- */
+  .doc {
+    position: absolute; inset: 0;
+    padding: 9% 10%;
+    background: #f7f5f2; color: #14120f;
+    display: flex; flex-direction: column;
+  }
+  .doc-rule { height: 2px; background: #14120f; margin-bottom: 14px; }
+  .doc-eyebrow {
+    font: 500 .52rem/1 "Oxanium", ui-monospace, monospace;
+    letter-spacing: .18em; text-transform: uppercase; color: #d3126a; margin-bottom: 10px;
+  }
+  .doc h2 {
+    margin: 0 0 12px;
+    font: 400 1.45rem/1.1 "Space Grotesk", sans-serif; letter-spacing: -.02em;
+  }
+  .doc p { margin: 0 0 9px; font-size: .62rem; line-height: 1.65; color: #5a544c; }
+  .doc table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  .doc th {
+    text-align: left; padding: 0 6px 5px 0;
+    font: 500 .5rem/1 "Oxanium", ui-monospace, monospace;
+    letter-spacing: .1em; text-transform: uppercase; color: #5a544c;
+    border-bottom: 1.5px solid #14120f;
+  }
+  .doc td { padding: 7px 6px 7px 0; border-bottom: 1px solid rgba(20,18,15,.12); font-size: .58rem; }
+  .doc td b { font-weight: 500; font-size: .66rem; }
+  .doc-num {
+    margin-top: auto; padding-top: 10px;
+    font: 400 .5rem/1 "Oxanium", ui-monospace, monospace; color: #8a8278;
+    display: flex; justify-content: space-between;
+  }
+  .doc-cover { justify-content: center; background: #14120f; color: #f7f5f2; }
+  .doc-cover h2 { font-size: 2rem; color: #f7f5f2; max-width: 11ch; }
+  .doc-cover p { color: rgba(247,245,242,.62); font-size: .64rem; }
+  .doc-cover .doc-rule { background: #d3126a; width: 48px; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Page-flip engine — turning, not crossfading</h1>
+  <p class="sub">Prototype · zero dependencies · drag a page corner, or use the arrow keys</p>
+</header>
+
+<div id="book"></div>
+
+<div class="controls">
+  <button id="prev" type="button">‹ Back</button>
+  <button id="next" type="button">Forward ›</button>
+</div>
+
+<p class="hint">
+  <b>Drag from the outer third</b> of either page and the leaf tracks your pointer; let go past
+  a third of the way and it completes, short of that it springs back. The shading, the fold
+  near the spine and the shadow cast on the page beneath are all driven off the same turn angle.
+  Under <b>prefers-reduced-motion</b> there is no rotation at all — pages just change.
+</p>
+
+<script type="module">
+  import { PageFlip } from './page-flip.js';
+
+  // Sample document. Pricing figures are the real canonical ones from
+  // client/src/data/pricing.ts; everything else is structure, and the cover says
+  // SAMPLE so nothing here can be mistaken for a client deliverable.
+  const TIERS = [
+    ['ProActive IT', 'Entry', '$125', '$1,600', 'Smaller, less complex environments needing essential protection and a documented baseline.'],
+    ['ProActive Office', 'Foundation', '$165', '$2,400', 'A broader managed workplace — more users, devices, a professionally operated network.'],
+    ['ProActive Business', 'Operations', '$245', '$5,400', 'Deeper infrastructure, cyber operations, recovery, governance and strategy.'],
+    ['ProActive Enterprise', 'Compliance', '$345', '$9,000', 'Multi-site, regulated or security-sensitive environments needing the greatest depth.'],
+  ];
+
+  const el = (html) => {
+    const d = document.createElement('div');
+    d.innerHTML = html.trim();
+    return d.firstElementChild;
+  };
+
+  const page = (n, inner) => el(`
+    <div class="doc">
+      ${inner}
+      <div class="doc-num"><span>Digerati Experts</span><span>${n}</span></div>
+    </div>
+  `);
+
+  const pages = [
+    () => el(`
+      <div class="doc doc-cover">
+        <div class="doc-rule"></div>
+        <div class="doc-eyebrow" style="color:#d3126a">Sample document</div>
+        <h2>Cyber Risk Assessment</h2>
+        <p>Scope, findings and the service tier they point to. Figures shown are published starting rates, not a quote.</p>
+      </div>`),
+
+    () => page(2, `
+      <div class="doc-rule"></div>
+      <div class="doc-eyebrow">Section one</div>
+      <h2>What we looked at</h2>
+      <p>Identity and access, endpoint posture, email security, network boundary, backup and recovery, and the documentation that has to exist before any of it can be operated.</p>
+      <p>Each area is recorded as observed, not inferred. Where evidence was unavailable the finding says so rather than assuming a result.</p>
+      <p>This page exists to give the turning engine real text to carry — the density and the serif heading are what reveal whether a flip reads as paper or as a sliding card.</p>`),
+
+    () => page(3, `
+      <div class="doc-rule"></div>
+      <div class="doc-eyebrow">Section two</div>
+      <h2>The service ladder</h2>
+      <p>Four tiers. The DE Security Foundation is included in every one of them.</p>
+      <table>
+        <thead><tr><th>Plan</th><th>Per user</th><th>Floor</th></tr></thead>
+        <tbody>
+          ${TIERS.map(([name, tier, user, floor]) => `
+            <tr><td><b>${name}</b><br><span style="color:#8a8278">${tier}</span></td>
+            <td>${user}</td><td>${floor}</td></tr>`).join('')}
+        </tbody>
+      </table>`),
+
+    () => page(4, `
+      <div class="doc-rule"></div>
+      <div class="doc-eyebrow">Section three</div>
+      <h2>Who each tier suits</h2>
+      ${TIERS.map(([name, , , , fit]) => `<p><b style="color:#14120f">${name}.</b> ${fit}</p>`).join('')}`),
+
+    () => page(5, `
+      <div class="doc-rule"></div>
+      <div class="doc-eyebrow">Section four</div>
+      <h2>Scope and limits</h2>
+      <p>Final pricing depends on users, endpoints, locations, infrastructure, backup requirements, and security and compliance scope. Estimates are not quotes — the assessment confirms final scope.</p>
+      <p>Nothing in this sample represents a specific client environment.</p>`),
+
+    () => page(6, `
+      <div class="doc-rule"></div>
+      <div class="doc-eyebrow">Section five</div>
+      <h2>Next step</h2>
+      <p>A thirty-minute scope call, then the assessment, then a written scope and a fixed rate before anything is signed.</p>`),
+  ];
+
+  const book = new PageFlip(document.getElementById('book'), { pages });
+
+  const prev = document.getElementById('prev');
+  const next = document.getElementById('next');
+  prev.addEventListener('click', () => book.prev());
+  next.addEventListener('click', () => book.next());
+
+  book.onChange = ({ page: p, pages: total }) => {
+    prev.disabled = p <= 0;
+    next.disabled = p >= total - 1;
+  };
+  book.onChange({ page: 0, pages: pages.length });
+</script>
+</body>
+</html>

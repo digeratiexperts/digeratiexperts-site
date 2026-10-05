@@ -14,6 +14,7 @@ import {
 import { selectBackfillUpdates } from "./integrations/backfillHubIdentity";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { decryptTotpSecret, encryptTotpSecret, prepareBackupCodesForStorage } from "./portalMfaCrypto";
+import type { StoredPasskey } from "./portalPasskeys";
 
 type StoreRole = "public" | "prospect" | "managed" | "comanaged" | "admin";
 
@@ -36,6 +37,8 @@ export type PortalAuthUser = {
   mfaMethod?: string | null;
   mfaTotpSecret?: string | null;
   mfaBackupCodes?: string[];
+  /** WebAuthn passkeys (public keys only; nothing secret). */
+  mfaPasskeys?: StoredPasskey[];
   lastLogin?: Date | null;
   /** Tokens issued before this instant are rejected (#242). */
   sessionsValidAfter?: Date | null;
@@ -67,7 +70,11 @@ const committedUsers = new Map<string, PortalAuthUser>();
 const committedClients = new Map<string, PortalAuthClient>();
 
 function cloneUser(user: PortalAuthUser): PortalAuthUser {
-  return { ...user, mfaBackupCodes: user.mfaBackupCodes ? [...user.mfaBackupCodes] : user.mfaBackupCodes };
+  return {
+    ...user,
+    mfaBackupCodes: user.mfaBackupCodes ? [...user.mfaBackupCodes] : user.mfaBackupCodes,
+    mfaPasskeys: user.mfaPasskeys ? user.mfaPasskeys.map((p) => ({ ...p, transports: [...p.transports] })) : user.mfaPasskeys,
+  };
 }
 
 /** Put a live object back to its last committed state (handlers mutate cached users in place). */
@@ -119,6 +126,7 @@ function rowToUser(row: typeof portalUsersTable.$inferSelect): PortalAuthUser {
     mfaMethod: row.mfaMethod,
     mfaTotpSecret: decryptUserTotpSecret(row.id, row.mfaTotpSecret),
     mfaBackupCodes: Array.isArray(row.mfaBackupCodes) ? row.mfaBackupCodes : [],
+    mfaPasskeys: Array.isArray((row as any).mfaPasskeys) ? (row as any).mfaPasskeys : [],
     lastLogin: row.lastLogin,
     sessionsValidAfter: (row as any).sessionsValidAfter ?? null,
     createdAt: row.createdAt,
@@ -158,6 +166,7 @@ async function ensureSchema() {
     await db.execute(sql`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS mfa_method text`);
     await db.execute(sql`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS mfa_totp_secret text`);
     await db.execute(sql`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS mfa_backup_codes jsonb DEFAULT '[]'::jsonb`);
+    await db.execute(sql`ALTER TABLE portal_users ADD COLUMN IF NOT EXISTS mfa_passkeys jsonb DEFAULT '[]'::jsonb`);
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS portal_order_forms (
         id varchar PRIMARY KEY DEFAULT gen_random_uuid()::text,
@@ -212,6 +221,7 @@ async function writeUserDb(user: PortalAuthUser): Promise<void> {
       mfaMethod: user.mfaMethod || null,
       mfaTotpSecret: encryptTotpSecret(user.mfaTotpSecret),
       mfaBackupCodes: prepareBackupCodesForStorage(user.mfaBackupCodes || []),
+      mfaPasskeys: user.mfaPasskeys || [],
       lastLogin: user.lastLogin || null,
       sessionsValidAfter: user.sessionsValidAfter || null,
     };
@@ -238,6 +248,7 @@ async function writeUserDb(user: PortalAuthUser): Promise<void> {
           mfaMethod: values.mfaMethod,
           mfaTotpSecret: values.mfaTotpSecret,
           mfaBackupCodes: values.mfaBackupCodes,
+          mfaPasskeys: values.mfaPasskeys,
           lastLogin: values.lastLogin,
           sessionsValidAfter: values.sessionsValidAfter,
           updatedAt: new Date(),

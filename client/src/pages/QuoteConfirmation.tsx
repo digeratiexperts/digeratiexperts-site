@@ -133,7 +133,7 @@ export default function QuoteConfirmation() {
             <aside className="space-y-8 lg:col-span-5">
               <div className="rounded-xl border border-[var(--de-paper-hairline)] bg-white p-6">
                 <p className="mb-4 text-sm text-[#3A3448]">
-                  Next steps: Our team will review your profile and reach out within 24 hours with:
+                  Next steps: Our team will review your answers and reach out within one business day with:
                 </p>
                 <CheckList
                   tone="paper"

@@ -39,6 +39,26 @@ Magenta `#D3126A` is used only for rules and bars. Magenta text uses `#B80F5C`. 
 
 The Hub (`artifacts/api-server/src/lib/de-pdf-brand.ts`) and the RIC Master Plan keep their own palettes and do not import these tokens.
 
+## Accessibility (PDF/UA-1)
+
+`renderHtmlToPdf` finishes every document with `finalizePdf.ts`. This is the server-side port of `scripts/de-documents/lib/finalize.py`, built on `pdf-lib`. It fixes the three gaps veraPDF finds in both engines' tagged output:
+
+- **Artifacts:** painting outside marked content (rules, cell borders, backgrounds, the running header and footer) is wrapped as `/Artifact`.
+- **Links:** every link annotation gets `/Contents`, for example "Email Digerati Experts at …".
+- **Metadata:** XMP with `dc:title`, the language and the PDF/UA identifier, plus `DisplayDocTitle`.
+
+The PDF/UA identifier is written only when the file is tagged. If finishing fails, the PDF is returned as rendered.
+
+**Validation (2026-10-04):** veraPDF 1.30.2, PDF/UA-1 profile, through `renderHtmlToPdf`. The quote, order confirmation, portal receipt, a 3-page order opened by confirmation token, and the solution packet all pass:
+- Chromium (production): 5/5.
+- WeasyPrint 70: 5/5.
+
+Rendering is pixel-identical before and after finishing. veraPDF is not in CI, so re-validate after template changes.
+
+**Not claimed:** the human-judgement PDF/UA checkpoints (alt-text quality, reading order) have had no independent or screen-reader test. WCAG is not claimed.
+
+**Letter spacing:** Inter caps labels stay at `.03em` or less. Production Chromium 151 splits wider-tracked runs ("SOLUTI ON") for copy/paste and screen readers.
+
 ## Rendering
 
 - Hub: WeasyPrint via `renderHtmlToPdf` in `signature-doc-renderer.ts`

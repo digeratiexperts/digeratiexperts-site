@@ -157,14 +157,14 @@ tr,.keep,.pkg-head,.rec,.team,.panel{break-inside:avoid;page-break-inside:avoid}
    unaffected. */
 
 /* ---------- brief band (page 1, full bleed) ---------- */
-.band{background:${T.ink};color:#fff;padding:30pt 50pt 22pt}
+.band{background:${T.ink};color:#fff;padding:26pt 50pt 18pt}
 .band-top{width:100%;border-collapse:collapse}
 .band-top td{padding:0;vertical-align:middle}
 .band-top td.r{text-align:right}
 .band .logo{height:22pt;width:auto;display:block}
 .band .brand-fallback{font-family:${DE_FONT.display};font-weight:600;font-size:13pt;letter-spacing:.04em}
 .band .k{font-family:${DE_FONT.label};font-size:7pt;letter-spacing:.08em;text-transform:uppercase;color:#cfccd8}
-.band .eyebrow{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:#cfccd8;margin-top:22pt}
+.band .eyebrow{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:#cfccd8;margin-top:16pt}
 .band h1{font-family:${DE_FONT.display};font-weight:600;font-size:28pt;line-height:1.05;letter-spacing:-.02em;color:#fff;margin-top:5pt}
 .band .q{font-size:10.4pt;color:#e6e4ea;margin-top:7pt}
 .band .stamp{display:inline-block;margin-top:12pt;border:1pt solid #fff;padding:2pt 7pt;font-size:7.2pt;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
@@ -181,7 +181,7 @@ tr,.keep,.pkg-head,.rec,.team,.panel{break-inside:avoid;page-break-inside:avoid}
 .wrap{padding:0 50pt}
 
 /* ---------- spec register ---------- */
-.sec{margin-top:16pt}
+.sec{margin-top:14pt}
 .sec-head{border-top:.8pt solid ${T.ink};padding-top:7pt;margin-bottom:8pt;break-after:avoid;page-break-after:avoid}
 .sec-head .no{font-family:${DE_FONT.label};font-weight:500;font-size:7.8pt;color:${T.magText};margin-right:9pt}
 h2{display:inline;font-family:${DE_FONT.display};font-weight:600;font-size:12.5pt;line-height:1.2}
@@ -197,7 +197,9 @@ table.items th.num,table.items td.num{text-align:right;white-space:nowrap}
 table.items th:last-child,table.items td:last-child{padding-right:0}
 table.items .item-name{font-weight:600}
 table.items .item-sub{color:${T.ink2};font-size:8pt;margin-top:2pt}
-table.items .ref{font-family:${DE_FONT.label};font-size:7pt;letter-spacing:.04em;color:${T.muted}}
+table.items .ref{display:inline-block;margin:2pt 8pt 0 0;vertical-align:middle;font-family:${DE_FONT.label};font-size:7pt;letter-spacing:.04em;color:${T.muted}}
+/* SKU and cadence label share one line in the item cell */
+table.items .chip{margin-top:2pt;vertical-align:middle}
 table.items td.amount{font-weight:600}
 .chip{display:inline-block;font-family:${DE_FONT.label};font-size:6.8pt;letter-spacing:.06em;text-transform:uppercase;padding:.5pt 4pt;margin-top:4pt;border:.7pt solid ${T.rule};color:${T.ink2}}
 .chip.recurring{border-color:${T.ink};color:${T.ink}}
@@ -222,7 +224,7 @@ table.facts td{width:33.33%;vertical-align:top;padding:6pt 12pt 6pt 0;border-bot
 table.facts .v{font-weight:600;font-size:9.6pt;margin-top:2pt}
 
 /* two panels (billed to / what happens next) */
-table.two{width:100%;border-collapse:collapse;margin-top:16pt}
+table.two{width:100%;border-collapse:collapse;margin-top:13pt}
 table.two > tbody > tr > td{width:50%;vertical-align:top}
 table.two > tbody > tr > td:first-child{padding-right:12pt}
 table.two > tbody > tr > td:last-child{padding-left:12pt}
@@ -245,20 +247,20 @@ table.lines td.qty{text-align:right;white-space:nowrap;color:${T.ink2};padding-r
 .callout{border-left:2.4pt solid ${T.ink};padding:5pt 0 5pt 12pt;color:${T.ink2}}
 
 /* ---------- brief close ---------- */
-table.rec{width:100%;border-collapse:collapse;margin-top:18pt;background:${T.paper}}
-table.team{width:100%;border-collapse:collapse;margin-top:10pt;border:.7pt solid ${T.rule}}
-table.team td{vertical-align:top}
-table.team td.who{padding:8pt 12pt}
-table.team td.dept{padding:8pt 12pt;width:36%;border-left:.7pt solid ${T.rule}}
-.team .eyebrow{font-size:7.2pt;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:${T.magText};margin-bottom:4pt}
-.team td.ph{width:34pt;padding:0 9pt 0 0;vertical-align:middle}
-.team td.ph img{width:34pt;height:34pt;border-radius:50%;display:block}
-.team .nm{font-weight:600;font-size:9.6pt}
+table.rec{width:100%;border-collapse:collapse;margin-top:14pt;background:${T.paper}}
+/* account team row inside the close panel */
+table.team{width:100%;border-collapse:collapse;margin-top:7pt;border-top:.6pt solid ${T.paperRule}}
+table.team td{vertical-align:top;padding-top:6pt}
+table.team td.dept{width:36%;padding-left:14pt;border-left:.6pt solid ${T.paperRule}}
+.team .eyebrow{margin-bottom:3pt}
+.team td.ph{width:30pt;padding:0 9pt 0 0;vertical-align:middle}
+.team td.ph img{width:30pt;height:30pt;border-radius:50%;display:block}
+.team .nm{font-weight:600;font-size:9.4pt}
 .team .tt{color:${T.ink2};font-size:8.2pt;font-weight:400}
 .team .ct{font-size:8.4pt;margin-top:3pt}
 .team .ct a{margin-right:12pt}
 table.rec td.bar{width:4pt;background:${T.mag};padding:0}
-table.rec td.in{padding:10pt 15pt 11pt}
+table.rec td.in{padding:9pt 15pt 10pt}
 .rec .eyebrow{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:${T.magText}}
 .rec h2{display:block;font-size:14pt;margin:3pt 0 4pt}
 .rec p{color:${T.ink2}}
@@ -308,17 +310,40 @@ export function section(no: number, title: string, body: string): string {
 }
 
 /** Brief close: next step and live contact links. `text` is escaped here. */
-export function closeBlock(opts: { heading: string; text: string; email?: string; portal?: boolean }): string {
+/**
+ * Brief close: next step and live contact links. `text` is escaped here.
+ * With a `team`, the account manager and sales department sit in the panel
+ * and carry the phone and email; the bottom row keeps only what they don't
+ * already show (e.g. the support desk) and the portal or site link.
+ */
+export function closeBlock(opts: {
+  heading: string;
+  text: string;
+  email?: string;
+  portal?: boolean;
+  team?: AccountTeam;
+}): string {
   const email = opts.email || COMPANY.email;
+  const site = opts.portal
+    ? `<a class="link" href="https://${DE_PDF.portal}">${DE_PDF.portal}</a>`
+    : `<a class="link" href="https://${DE_PDF.website}">${DE_PDF.website}</a>`;
+  const team = opts.team;
+  const teamEmails = team ? [team.manager.email, team.sales.email].map((e) => e.toLowerCase()) : [];
+  const emailLink = teamEmails.includes(email.toLowerCase())
+    ? ""
+    : `<a class="link" href="mailto:${esc(email)}">${esc(email)}</a>`;
+  const contacts = team
+    ? `${teamRow(team)}<div class="ct">${emailLink}${site}</div>`
+    : `<div class="ct">
+      <a class="link" href="${esc(PRIMARY_PHONE.telHref)}">${esc(PRIMARY_PHONE.display)}</a>
+      ${emailLink}
+      ${site}
+    </div>`;
   return `<table class="rec" role="presentation"><tr><td class="bar"></td><td class="in">
     <div class="eyebrow">Next step</div>
     <h2>${esc(opts.heading)}</h2>
     <p>${esc(opts.text)}</p>
-    <div class="ct">
-      <a class="link" href="${esc(PRIMARY_PHONE.telHref)}">${esc(PRIMARY_PHONE.display)}</a>
-      <a class="link" href="mailto:${esc(email)}">${esc(email)}</a>
-      ${opts.portal ? `<a class="link" href="https://${DE_PDF.portal}">${DE_PDF.portal}</a>` : `<a class="link" href="https://${DE_PDF.website}">${DE_PDF.website}</a>`}
-    </div>
+    ${contacts}
   </td></tr></table>`;
 }
 
@@ -341,7 +366,8 @@ export function accountPhotoDataUri(sitePath: string): string | null {
 }
 
 /** "Your account team": assigned account manager (photo, title, contact) plus the sales department. */
-export function accountTeamBlock(team: AccountTeam): string {
+/** Account manager (photo, name, title, email, phone) beside the sales department. */
+function teamRow(team: AccountTeam): string {
   const m = team.manager;
   const photo = accountPhotoDataUri(m.photo.jpg);
   return `<table class="team" role="presentation"><tr>
