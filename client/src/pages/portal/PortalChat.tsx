@@ -25,6 +25,7 @@ import {
   Copy,
   UserCheck,
   Bot,
+  ChevronDown,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { portalGet, portalPost } from "@/lib/portalApi";
@@ -65,6 +66,16 @@ interface DeskMessage {
 
 type OpsChannel = "website" | "portal";
 
+/** One past portal chat, as the collapsed list shows it. */
+type ChatSession = {
+  sessionId: string;
+  startedAt: string;
+  lastAt: string;
+  messageCount: number;
+  preview: string;
+  open: boolean;
+};
+
 type DeskSessionAction =
   | "open"
   | "claim"
@@ -102,6 +113,29 @@ function formatClock(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+/**
+ * The label a collapsed row leads with. Recent chats are easiest to place by
+ * day, older ones by date; a year is only worth the space once it is not this
+ * one.
+ */
+function sessionDateLabel(iso: string, now: Date = new Date()): string {
+  const when = new Date(iso);
+  if (Number.isNaN(when.getTime())) return "Unknown date";
+
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((startOfDay(now) - startOfDay(when)) / 86_400_000);
+
+  if (days === 0) return `Today, ${formatClock(iso)}`;
+  if (days === 1) return `Yesterday, ${formatClock(iso)}`;
+  if (days < 7) return when.toLocaleDateString([], { weekday: "long" });
+  const sameYear = when.getFullYear() === now.getFullYear();
+  return when.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+    ...(sameYear ? {} : { year: "numeric" }),
+  });
+}
+
 function clampMenuPosition(x: number, y: number, width = 240, height = 320) {
   const pad = 8;
   const maxX = Math.max(pad, window.innerWidth - width - pad);
@@ -136,7 +170,17 @@ export default function PortalChat() {
   const [deskSending, setDeskSending] = useState(false);
   const [channel, setChannel] = useState<OpsChannel>("website");
   const [floatingMenu, setFloatingMenu] = useState<FloatingSessionMenu | null>(null);
+  // The chat in progress. Past ones stay collapsed until asked for, so the
+  // pane shows a conversation rather than a lifetime of them.
+  const [liveSessionId, setLiveSessionId] = useState<string | null>(null);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [openPastId, setOpenPastId] = useState<string | null>(null);
+  const [pastMessages, setPastMessages] = useState<Record<string, ChatMessage[]>>({});
+  const [pastLoading, setPastLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const liveSessionIdRef = useRef<string | null>(null);
+  const loadChatSessionsRef = useRef<(() => Promise<void>) | null>(null);
   const deskEndRef = useRef<HTMLDivElement>(null);
   const deskComposerRef = useRef<HTMLTextAreaElement>(null);
   const liveMessagesRef = useRef<ChatMessage[]>([]);
@@ -162,6 +206,50 @@ export default function PortalChat() {
     openDeskIdsRef.current = openDeskIds;
   }, [openDeskIds]);
 
+  const loadChatSessions = useCallback(async () => {
+    try {
+      const data = await portalGet<{ success: boolean; sessions: ChatSession[] }>(
+        "/api/portal/chat/sessions",
+      );
+      if (data?.success && Array.isArray(data.sessions)) setChatSessions(data.sessions);
+    } catch {
+      // The history list is an aid, not the chat. A failure here must not take
+      // the live pane down with it.
+    }
+  }, []);
+
+  useEffect(() => {
+    loadChatSessionsRef.current = loadChatSessions;
+  }, [loadChatSessions]);
+
+  /** Open one past chat, read-only. Fetched on demand: history is rarely
+   *  wanted, and loading every transcript up front to show a list of dates
+   *  would cost far more than it is worth. */
+  const openPastSession = useCallback(
+    async (sessionId: string) => {
+      if (openPastId === sessionId) {
+        setOpenPastId(null);
+        return;
+      }
+      setOpenPastId(sessionId);
+      if (pastMessages[sessionId]) return;
+      setPastLoading(true);
+      try {
+        const data = await portalGet<{ success: boolean; messages: ChatMessage[] }>(
+          `/api/portal/chat/messages?sessionId=${encodeURIComponent(sessionId)}`,
+        );
+        if (data?.success && Array.isArray(data.messages)) {
+          setPastMessages((prev) => ({ ...prev, [sessionId]: data.messages }));
+        }
+      } catch {
+        setPastMessages((prev) => ({ ...prev, [sessionId]: [] }));
+      } finally {
+        setPastLoading(false);
+      }
+    },
+    [openPastId, pastMessages],
+  );
+
   const loadLiveMessages = useCallback(async (authToken: string | null, since?: string) => {
     const url = since
       ? `/api/portal/chat/messages?since=${encodeURIComponent(since)}`
@@ -180,6 +268,18 @@ export default function PortalChat() {
     if (!res.ok) throw new Error("Failed to load chat");
     const data = await res.json();
     if (data.success && Array.isArray(data.messages)) {
+      // The chat rolled over while the tab sat open: an incremental page of a
+      // new conversation must not be glued onto the end of the old one.
+      const rolled = since && data.sessionId && liveSessionIdRef.current && data.sessionId !== liveSessionIdRef.current;
+      if (data.sessionId) {
+        liveSessionIdRef.current = data.sessionId;
+        setLiveSessionId(data.sessionId);
+      }
+      if (rolled) {
+        void loadChatSessionsRef.current?.();
+        setMessages([]);
+        return;
+      }
       if (since) {
         setMessages((prev) => {
           const known = new Set(prev.map((m) => m.id));
@@ -249,6 +349,7 @@ export default function PortalChat() {
 
     loadLiveMessages(authToken).catch((err) => console.error(err));
     loadDeskSessions();
+    void loadChatSessions();
 
     pollRef.current = setInterval(() => {
       const live = liveMessagesRef.current;
@@ -521,6 +622,9 @@ export default function PortalChat() {
     }
   };
 
+  // History is everything but the chat in hand — that one is already on screen.
+  const pastSessions = chatSessions.filter((s) => s.sessionId !== liveSessionId);
+
   const handleSendMessage = useCallback(
     async (e?: React.FormEvent) => {
       e?.preventDefault();
@@ -564,6 +668,12 @@ export default function PortalChat() {
             if (data.reply) next.push(data.reply);
             return next;
           });
+          if (data.sessionId) {
+            liveSessionIdRef.current = data.sessionId;
+            setLiveSessionId(data.sessionId);
+          }
+          // This send may have opened a new chat; keep the collapsed list true.
+          void loadChatSessions();
         }
       } catch (error) {
         console.error("Error sending message:", error);
@@ -1088,6 +1198,82 @@ export default function PortalChat() {
                     {connected ? "Online" : "Offline"}
                   </div>
                 </div>
+
+                {/* Earlier chats, collapsed. One line until asked for: the
+                    pane is for the conversation in hand, and a list of old ones
+                    standing open would cost more screen than it earns. */}
+                {pastSessions.length > 0 && (
+                  <div className="border-b border-white/10 bg-black/20">
+                    <button
+                      type="button"
+                      onClick={() => setHistoryOpen((open) => !open)}
+                      aria-expanded={historyOpen}
+                      aria-controls="portal-chat-history"
+                      className="flex min-h-11 w-full items-center gap-2 px-4 py-2 text-left text-xs text-white/60 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#D3126A]"
+                      data-testid="chat-history-toggle"
+                    >
+                      <ChevronDown
+                        className={`h-3.5 w-3.5 shrink-0 transition-transform ${historyOpen ? "" : "-rotate-90"}`}
+                        aria-hidden="true"
+                      />
+                      <span>
+                        Earlier conversations
+                        <span className="ml-1.5 text-white/40">{pastSessions.length}</span>
+                      </span>
+                    </button>
+
+                    {historyOpen && (
+                      <ul id="portal-chat-history" className="max-h-56 overflow-y-auto pb-2">
+                        {pastSessions.map((session) => {
+                          const isOpen = openPastId === session.sessionId;
+                          const thread = pastMessages[session.sessionId];
+                          return (
+                            <li key={session.sessionId} className="px-2">
+                              <button
+                                type="button"
+                                onClick={() => void openPastSession(session.sessionId)}
+                                aria-expanded={isOpen}
+                                className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#D3126A]"
+                                data-testid={`chat-history-${session.sessionId}`}
+                              >
+                                <span className="shrink-0 text-xs font-medium text-white/80">
+                                  {sessionDateLabel(session.lastAt)}
+                                </span>
+                                <span className="truncate text-xs text-white/45">
+                                  {session.preview || "No question asked"}
+                                </span>
+                                <span className="ml-auto shrink-0 text-[11px] text-white/30">
+                                  {session.messageCount}
+                                </span>
+                              </button>
+
+                              {isOpen && (
+                                <div className="mb-2 ml-2 space-y-2 border-l border-white/10 pl-3 pt-1">
+                                  {pastLoading && !thread ? (
+                                    <p className="text-xs text-white/40">Loading…</p>
+                                  ) : thread && thread.length > 0 ? (
+                                    thread.map((message) => (
+                                      <p key={message.id} className="text-xs leading-relaxed text-white/60">
+                                        <span className="font-medium text-white/80">
+                                          {message.senderRole === "client" ? "You" : message.senderName}:
+                                        </span>{" "}
+                                        {message.content}
+                                      </p>
+                                    ))
+                                  ) : (
+                                    <p className="text-xs text-white/40">
+                                      This conversation could not be loaded.
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                )}
 
                 <div className="flex-1 space-y-3 overflow-y-auto p-4">
                   {messages.length === 0 ? (
