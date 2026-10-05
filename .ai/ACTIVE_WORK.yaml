@@ -2428,3 +2428,27 @@ claims:
       from 12c3b5f4. Item 4 shipped in Intelligence-Hub PR 343 (master
       44185ad8: regenerated API client, frontend bundle byte-identical).
       VERIFIED LIVE as a Tool release. Files released.
+  - id: de-techtool-golive-devices-panel
+    owner: claude
+    subsystem: msp-ai-kit
+    branch: claude/msp-ai-skills-prompts-htqi09
+    base_sha: baa6e3eae0a3f421beec78f784726f0379ca57c1
+    files:
+      - .claude/skills/msp-ai-kit/windows/GO-LIVE.md (D5 verify bullet and the Part H device row only)
+      - docs/DE-SYSTEM-INTEGRATION.md (one "Where staff see it" bullet in the DE Tech Tool section only)
+      - .claude/skills/msp-ai-kit/windows/console/DETechConsole.ps1 (the headless run's Hub send only: one Send-DEHubWarranty line)
+      - .claude/skills/msp-ai-kit/windows/console/VERSION (1.10.4), DE-TECH-TOOL-ARCHITECTURE.md (1.10.4 line only), README-WINDOWS.md (the Hub warranty bullet only), GO-LIVE.md (Part G step 10)
+    status: active
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "Yes do it". Docs only: GO-LIVE.md D5 and Part H now
+      point at the Hub's new Devices from DE Tech Tool panel (Intelligence-Hub
+      PR 348, live at master 2e3316ae) as the check that a first signed send
+      landed under the right account; DE-SYSTEM-INTEGRATION.md names where
+      staff see Tool devices, migrations, licences and jobs. Overlap check
+      2026-10-05: no open PR touches these two files.
+      Joe, 2026-10-05: "Make sure we do the full scope". DE Tech Tool 1.10.4:
+      a headless run sends the warranty lookup to the Hub right after the
+      device record it already sends (same terms as the Evidence page button;
+      -WhatIf sends nothing; a send that cannot happen is a WARN and never
+      changes the exit code). Overlap check: no open PR touches these files.
