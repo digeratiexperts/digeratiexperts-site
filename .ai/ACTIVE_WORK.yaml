@@ -30,6 +30,27 @@
 
 version: 2
 claims:
+  - id: document-flipbook-page-turn
+    owner: claude
+    subsystem: resources-flipbook
+    branch: claude/unfinished-threads-survey-y92doz
+    base_sha: 48f4a0a
+    files:
+      - client/src/pages/resources/DocumentFlipbook.tsx (the page-display block and its render effect only)
+      - client/src/lib/pageFlip.ts (new)
+      - client/src/styles/page-flip.css (new)
+      - artifacts/design-concepts/page-flip/** (prototype, PR 470)
+    status: active
+    started: 2026-10-05
+    note: >-
+      Replacing the flipbook's page change with a real page turn. The component
+      is named a flipbook but crossfades: opacity, rotateY(4deg) and an 8px
+      slide over 200ms. Engine prototyped in PR 470 with no new dependency;
+      this claim covers wiring it into the shipped route on Joe's 2026-10-05
+      go-ahead. The pdf.js loader, the 75MB guard, the Office-file rejection,
+      the upload and drag-drop paths, the original-file link and the toolbar
+      are preserved unchanged — only the page-display block and the render
+      effect that drove the two canvases are touched.
   - id: unsupported-timing-claims
     owner: claude
     subsystem: marketing-copy
