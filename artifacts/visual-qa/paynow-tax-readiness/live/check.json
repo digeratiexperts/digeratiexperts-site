@@ -1,0 +1,8 @@
+{
+  "checked": "2026-10-05T04:50Z",
+  "site": "https://digeratiexperts.com",
+  "release": "PR 466 squash-merged as ba5022f; production runs 828fa32 (contains ba5022f), /api/health release.builtAt 2026-10-05T04:44:49Z",
+  "gate": "GET /api/internal/warehouse/tax-status (anonymous): 404",
+  "browserCheck": "report.json: Playwright at 1440 and 390 against production code with the staff session and tax-status replies stubbed in the browser. NOT_CONFIGURED, INCOMPLETE and READY each render the Vendors card (status + three checks) and the Staff Pay Now line with the right sentence; no overflow, no page errors.",
+  "expectedLiveState": "NOT_CONFIGURED until STRIPE_TAX_SECRET_KEY is set on the server (staff-only; not probed without a staff session)."
+}
