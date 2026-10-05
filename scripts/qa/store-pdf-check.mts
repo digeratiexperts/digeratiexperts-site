@@ -1,6 +1,7 @@
 // Store PDF regression check. Renders every sample in storePdfCases.ts through
 // the production pipeline (renderHtmlToPdf -> finalizePdf), then checks each PDF:
-//   - layout: page count (short documents stay on one page, long ones paginate);
+//   - layout: page count (short documents stay on one page, long ones paginate),
+//     and the "Next step" close never sits alone on the last page;
 //   - content: expected text extracts, redacted text is absent, no template
 //     leaks ("undefined", "NaN", entities) and no account lifecycle values;
 //   - metadata: title matches the HTML title, every link has a text alternative,
@@ -21,7 +22,7 @@ import { PDFDict, PDFDocument, PDFName } from "pdf-lib";
 import { htmlTitle } from "../../server/pdf/finalizePdf";
 import { renderHtmlToPdf } from "../../server/pdf/renderHtmlToPdf";
 import { storePdfCases } from "./storePdfCases";
-import { describePages, formatKb, pageProblem, parseVerifyOutput, textProblems } from "./storePdfChecks";
+import { closeAloneOnLastPage, describePages, formatKb, pageProblem, parseVerifyOutput, textProblems } from "./storePdfChecks";
 
 /** Per-document size budget. Current documents are well under it. */
 const MAX_BYTES = 1024 * 1024;
@@ -100,6 +101,10 @@ for (const c of cases) {
 
   const text = execFileSync("pdftotext", ["-enc", "UTF-8", pdfFile, "-"]).toString("utf8");
   problems.push(...textProblems(text, c));
+  if (pages > 1) {
+    const last = execFileSync("pdftotext", ["-enc", "UTF-8", "-f", String(pages), "-l", String(pages), pdfFile, "-"]).toString("utf8");
+    if (closeAloneOnLastPage(last, c.html)) problems.push(`page ${pages} holds only the "Next step" close`);
+  }
 
   execFileSync("pdftoppm", ["-r", "45", "-png", pdfFile, path.join(outDir, "previews", c.name)]);
   rows.push({ name: c.name, kind: c.kind, pages, expectedPages: describePages(c.pages), bytes: pdf.length, title, pdfua: "not run", fonts: "", problems });

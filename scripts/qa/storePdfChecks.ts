@@ -53,6 +53,39 @@ export function textProblems(rawText: string, c: Pick<StorePdfCase, "mustInclude
   return out;
 }
 
+const WORDS = /[\p{L}\p{N}]+/gu;
+
+function htmlText(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+/**
+ * True when the last page of a multi-page document holds nothing but the
+ * brief close ("Next step" panel): every word on it belongs to the close, the
+ * running header or the footer. The close must travel with real content.
+ */
+export function closeAloneOnLastPage(lastPageText: string, html: string): boolean {
+  const start = html.indexOf('<table class="rec"');
+  if (start < 0) return false;
+  const vocab = new Set<string>();
+  const add = (s: string) => {
+    for (const w of s.toLowerCase().match(WORDS) ?? []) vocab.add(w);
+  };
+  add(htmlText(html.slice(start)));
+  // Running header and footer strings from the @page margin boxes.
+  for (const m of html.matchAll(/content:"((?:[^"\\]|\\.)*)"/g)) add(m[1]);
+  add("page of");
+  const rest = (lastPageText.toLowerCase().match(WORDS) ?? []).filter((w) => !vocab.has(w) && !/^\d+$/.test(w));
+  return rest.length === 0;
+}
+
 export interface VerifyResult {
   pass: boolean;
   problems: string[];
