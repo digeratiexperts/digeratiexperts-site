@@ -51,6 +51,33 @@ claims:
       the upload and drag-drop paths, the original-file link and the toolbar
       are preserved unchanged — only the page-display block and the render
       effect that drove the two canvases are touched.
+  - id: unsupported-timing-claims
+    owner: claude
+    subsystem: marketing-copy
+    branch: claude/beautiful-hopper-1uem0k
+    base_sha: 8847b93
+    files:
+      - client/src/pages/sections/DigeratiLeadFormSection.tsx (the benefits list and its icon import only)
+      - client/src/pages/solutions/ManagedWorkplace.tsx (the onboarding FAQ entry only)
+      - docs/CLAIMS-REGISTER.md (the "48 hours" and onboarding rows only)
+      - artifacts/visual-qa/unsupported-timing-claims/**
+    status: verified-live
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "you make up the answers", then "keep building". The
+      last two timing rows the claims register marks Unsupported with "Joe:
+      confirm or remove/soften": "Results in 24-48 hours" on the assessment
+      form of the previous homepage (/version-0, DigeratiLeadFormSection; the
+      live Version 8 form never had it) is removed, and the Managed Workplace
+      FAQ's "fully productive within 1 business day" / "offboarding takes
+      minutes" becomes a checklist answer with no timing. Joe can restore
+      either with a source. The "Fourteen domains" row stays Unsupported: it
+      waits on Joe's taxonomy, not on copy.
+      MERGED as c9526ea (PR 468). VERIFIED LIVE 2026-10-05: release.txt
+      serves c9526ea; the ManagedWorkplace bundle carries the new FAQ and
+      none of the old timing; the /version-0 homepage bundle has no "24-48
+      hours". The frozen /version-1 and /version-3 snapshots still carry it,
+      kept as historical record.
   - id: homepage-response-promise
     owner: claude
     subsystem: marketing-copy
@@ -60,7 +87,7 @@ claims:
       - client/src/pages/versions/v8/sections/13-lead-form.tsx (the success toast string only)
       - client/src/pages/versions/v8/sections/16-contact-footer.tsx (the success toast string only)
       - docs/CLAIMS-REGISTER.md (the three "24 hours" rows only)
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       Follow-up to response-promise-one-business-day (PR 456) under Joe's
@@ -74,6 +101,9 @@ claims:
       branch merged via PR 199 on 2026-09-06; only the three response-time
       rows change. Not touched: the quote email in notificationService.ts
       (open PRs 448 and 445) and the frozen v1/v3/v7 snapshots.
+      MERGED as 8847b93 (PR 461). VERIFIED LIVE 2026-10-05: release.txt
+      serves 8847b93 and the production HomepageV8 bundle carries both
+      "within one business day" toasts and no "within 24 hours".
   - id: response-promise-one-business-day
     owner: claude
     subsystem: marketing-copy
