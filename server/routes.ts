@@ -3,6 +3,7 @@ import { storage } from "./storage";
 import {
   isTokenRevoked,
   issuedBeforeCutoff,
+  revocationsReady,
   cutoffNow,
   revokeToken,
   loadRevokedSessions,
@@ -279,6 +280,14 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
   const token = cookieToken || bearer;
   if (!token) {
     return res.status(401).json({ error: "Authentication required" });
+  }
+  // Fail closed until the durable revocation set is loaded (#393): checking a
+  // token against an empty set would accept one that was logged out.
+  if (!revocationsReady()) {
+    return res.status(503).json({
+      code: "AUTH_NOT_READY",
+      error: "Sign-in is temporarily unavailable. Please try again shortly.",
+    });
   }
   
   try {
