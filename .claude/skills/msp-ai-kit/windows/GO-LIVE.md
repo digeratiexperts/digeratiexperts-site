@@ -4,8 +4,8 @@ Everything DE does to put DE Tech Tool, its licences, device intake, email migra
 Admin Hub jobs into production, in the order to do it. Each step says where it is done, the exact command or
 setting, how to check it worked, and what breaks if it is skipped.
 
-Written for DE Tech Tool 1.10.2, DE Microsoft Admin 0.5.0, and the Intelligence Hub as merged on `master`
-(read 2026-10-03). Hub-side facts come from these Intelligence-Hub documents, which win if they disagree with this
+Written for DE Tech Tool 1.10.3, DE Microsoft Admin 0.6.0, and the Intelligence Hub as merged on `master`
+(read 2026-10-03; the `device.warranty` intake re-read 2026-10-04 at `3bc519bf`). Hub-side facts come from these Intelligence-Hub documents, which win if they disagree with this
 page: `docs/TECHTOOL-LICENSING.md`, `docs/MSADMIN-JOBS.md`, `docs/integrations-v1-openapi.yaml`,
 `deploy/.env.example` and `lib/db/migrations/`.
 
@@ -320,12 +320,19 @@ last webhook that still takes a secret in the URL.
 ### D5. First signed sends
 
 - **Where:** a test device, then the Hub UI.
-- **Do:** on the Evidence page, **Export the bundle**, then **Send to Intelligence Hub**. On the Email migration
-  page of a test project, **Send to Intelligence Hub**.
+- **Do:** on Scan & fix, check **Hardware warranty known and active** (so the device has a warranty lookup). On the
+  Evidence page, **Export the bundle**, then **Send to Intelligence Hub**: it sends the device record, then the
+  warranty record. On the Email migration page of a test project, **Send to Intelligence Hub**.
 - **Verify:**
-  - The status line says "Sent to the Hub". The evidence line reads `sent to Hub as signed event <id>`, and the
-    connection checklist's fourth item ("The same secret on the Hub server") ticks.
-  - The device appears on the Hub under the account (asset `asset:<accountId>:detechconsole:<maker>:<SERIAL>`).
+  - The status line names both sends: "Device record: sent to the Hub. Warranty: sent to the Hub (active)." The
+    evidence lines `hub.push` and `hub.warranty` read `sent to Hub as signed event <id>`, and the connection
+    checklist's fourth item ("The same secret on the Hub server") ticks.
+  - The device appears on the Hub under the account (asset `asset:<accountId>:detechconsole:<maker>:<SERIAL>`),
+    and its evidence carries `warranty` with the status, end date, source and `fetchedAt` from the
+    `device.warranty` event.
+  - A device whose lookup could not confirm a status (the maker's check page, `unknown`) says "Warranty: not sent:
+    ... no confirmed status": nothing is sent as a warranty status until the end date is recorded on Scan & fix.
+    That is a WARN by design, not a failed send.
   - The migration appears under IT Operations (`GET /api/it-operations/email-migrations?accountId=<id>`).
   - A refusal shows the Hub's own reason, for example `Hub refused: account not mapped`, with the HTTP status. Fix
     what it names: the account number (D2), the secret (A2, D3), or the clock (more than 5 minutes off breaks the
@@ -348,9 +355,28 @@ One worker serves one client tenant. For several clients, repeat this part per t
   `Connect-DEMicrosoft -TenantId <tenant guid> -ClientId <app id> -CertificateThumbprint <thumbprint>` succeeds, and
   `(Get-DEMsContext).TenantId` is the client's tenant.
 - **If skipped:** the loop cannot connect, and every job for that tenant waits until it expires.
-- **Known limit:** `Connect-DEExchange` signs in as a user (`-UserPrincipalName`), and `Connect-DEAzure` is
-  interactive too. So an unattended scheduled worker cannot run the Exchange mailbox or Azure jobs yet. Run those
-  from a prompt, or do not queue them for unattended tenants.
+- **Exchange Online and Azure jobs (only if you will queue them):** the same app and certificate sign in to both;
+  no second app and no secret. In the client tenant:
+  1. Exchange Online: add the application permission **Office 365 Exchange Online > `Exchange.ManageAsApp`** (API
+     permissions > Add a permission > APIs my organization uses), grant admin consent, then assign an Exchange role
+     to the app's service principal (Entra > Roles and administrators): **Exchange Recipient Administrator** for the
+     mailbox jobs; a role that reads transport rules, such as **Exchange Administrator**, if you will queue
+     `Get-DETransportRule`.
+  2. Note the tenant's `*.onmicrosoft.com` domain (Microsoft 365 admin center > Settings > Domains). It goes in
+     the scheduled task script as `-ExchangeOrganization` (E4).
+  3. Azure: give the app's service principal an RBAC role on each subscription the jobs touch (subscription >
+     Access control (IAM)): **Reader** for the inventory jobs, **Contributor** for `New-DEAzureResourceGroup`, a
+     role with `Microsoft.Authorization/locks/*` for `New-DEAzureResourceLock`. To pin one subscription, note its
+     id for `-AzureSubscriptionId` (E4).
+- **Verify Exchange and Azure:** on the worker, after the Graph check,
+  `Connect-DEExchange -AppId <app id> -CertificateThumbprint <thumbprint> -Organization <name>.onmicrosoft.com`
+  and `Connect-DEAzure -ServicePrincipal -ApplicationId <app id> -CertificateThumbprint <thumbprint> -TenantId <tenant guid>`
+  both return `Succeeded`; then `Get-DEMailbox -Type SharedMailbox` and `Get-DEAzureSubscription` list what you
+  expect. Sign out (`Disconnect-ExchangeOnline -Confirm:$false; Disconnect-AzAccount`). E3's `-WhatIf` run reports
+  both services as `ready`.
+- **If skipped:** Graph jobs run as usual. Each Exchange Online or Azure job is posted to the Hub as `Failed`, with
+  what is missing (for example `-ExchangeOrganization is not set`, or the sign-in error Microsoft returned), and the
+  loop carries on with the next job.
 
 ### E2. Install the module
 
@@ -363,7 +389,7 @@ One worker serves one client tenant. For several clients, repeat this part per t
   ```
 
 - **Verify:** `Import-Module 'C:\Program Files\DE\DE-Microsoft-Admin\DE-Microsoft-Admin.psd1'; (Get-Module DE-Microsoft-Admin).Version`
-  shows `0.5.0`.
+  shows `0.6.0`.
 - **If skipped:** the scheduled task fails at its first line.
 
 ### E3. The vault with the two Hub secrets
@@ -379,7 +405,9 @@ One worker serves one client tenant. For several clients, repeat this part per t
   ```
 
 - **Verify:** `Invoke-DEHubJobLoop -HubUrl https://techsales.digerati-experts.com -Vault DE -WhatIf` reports the URL,
-  the tenant and both secrets as ready, and contacts nothing.
+  the tenant and both secrets as ready, and contacts nothing. With `-ExchangeOrganization <name>.onmicrosoft.com`
+  (and `-AzureSubscriptionId`, if you use it) added, its `services` say `ready (...)` for Exchange Online and Azure,
+  or `not configured:` with what is missing.
 - **If skipped, or the values differ from the Hub's:** with a wrong worker secret, every call answers 401 and the
   loop stops with `stoppedBecause: hub_refused`. With a wrong job secret, the first job is reported as `Refused` and
   the loop stops with `stoppedBecause: job_signature`, so the rest of the queue is not refused too.
@@ -388,7 +416,9 @@ One worker serves one client tenant. For several clients, repeat this part per t
 
 - **Where:** Worker PC, elevated.
 - **Do:** write `C:\ProgramData\DE\MicrosoftAdmin\Run-DEHubJobs.ps1` and register the task every 5 minutes, one
-  instance at a time, exactly as in the module README ("Run it"). The script holds no secret.
+  instance at a time, exactly as in the module README ("Run it"). The script holds no secret. For Exchange Online
+  jobs it passes `-ExchangeOrganization <name>.onmicrosoft.com` (E1), and `-AzureSubscriptionId <guid>` to pin
+  Azure jobs to one subscription.
 - **Verify:** `Get-ScheduledTaskInfo -TaskName 'DE Microsoft Admin Hub jobs'` shows a last result of 0 after the
   first run. `C:\ProgramData\DE\MicrosoftAdmin\audit.jsonl` has an `Invoke-DEHubJobLoop` line. Limit
   `C:\ProgramData\DE\MicrosoftAdmin\hub-worker` to the worker account and administrators (`icacls`).
@@ -399,7 +429,9 @@ One worker serves one client tenant. For several clients, repeat this part per t
 - **Where:** Hub UI (Tech Center > Microsoft 365 admin jobs), then the worker.
 - **Do:** queue a read-only job (for example `Get-DETenantSummary`) for the tenant, then a change in **plan** mode.
 - **Verify:** both are approved on creation, claimed within 5 minutes, and end `succeeded` and `dry_run`. The plan
-  job changed nothing in the tenant.
+  job changed nothing in the tenant. If you set up Exchange Online or Azure (E1), also queue `Get-DEMailbox` and
+  `Get-DEAzureSubscription`: they end `succeeded`, and the run's `services` read "signed in app-only with the
+  certificate for this run; signed out at the end".
 - **If skipped:** the first real change is also the first test.
 
 ## Part F. Boot rescue media (WinPE build PC)

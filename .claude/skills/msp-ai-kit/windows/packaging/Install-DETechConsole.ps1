@@ -18,7 +18,7 @@
 
 .EXAMPLE
     .\Install-DETechConsole.ps1
-    .\Install-DETechConsole.ps1 -ZipPath C:\Temp\DE-TechTool-v1.10.2-<buildId>.zip -Sha256 <hash>
+    .\Install-DETechConsole.ps1 -ZipPath C:\Temp\DE-TechTool-v1.10.3-<buildId>.zip -Sha256 <hash>
     .\Install-DETechConsole.ps1 -NoLaunch
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]

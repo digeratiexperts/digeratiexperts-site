@@ -26,8 +26,20 @@ Once an object is an account, deal, quote, agreement, client, or managed order, 
 | Website ↔ Portal | Auth, cart, entitlements | Same Express app | Portal JWT | Portal users / website session | LIVE | n/a | portal user id | `portalClients.id` + `hubAccountId` |
 | Zoho → TechSales | Deal stage | `POST /api/webhooks/zoho/deal-stage` | `ZOHO_HUB_WEBHOOK_SECRET` | Hub (conflicts recorded) | LIVE | Hub Zoho rules | `deals.zoho_id` | Zoho deal/account ids |
 | TechSales → Zoho | Deal push | none | — | Hub | MISSING / LEGACY outbound | — | — | — |
+| DE Tech Tool → TechSales | Device record, warranty, boot-rescue handoff, email migration record (`device.observed`, `device.warranty`, `device.rescue_handoff`, `email_migration.recorded`) | `POST /api/integrations/v1/techconsole/events` | HMAC: `TECHCONSOLE_TO_HUB_SECRET` on the Hub = `DE_HUB_SIGNING_SECRET` on the technician PC (runtime only) | Hub | BUILT | Saved for manual upload on failure | `eventId` | `canonicalAccountId` (the client's Hub account number) |
+| DE Tech Tool ↔ TechSales | Licence activation, revocation list | `POST /api/techtool/license/device-code`, `POST /api/techtool/license/token`, `GET /api/techtool/license/jwks`, `GET /api/techtool/license/revocations` | Device code approved in the Hub by technical / owner_admin; RS256 token, key held by the Hub (`TECHTOOL_LICENSE_SIGNING_KEY`) | Hub | BUILT | Poll; last saved revocation list kept offline | token `jti` | Tool profile id on the Hub account |
+| DE Microsoft Admin worker ↔ TechSales | Microsoft 365 / Entra / Intune / Exchange / Azure jobs and their results | `POST /api/msadmin/worker/v1/jobs/claim`, `POST /api/msadmin/worker/v1/jobs/:jobId/result` | Worker calls HMAC `MSADMIN_WORKER_SECRET`; each job signed by the Hub with `MSADMIN_JOB_SIGNING_SECRET` when claimed | Hub queue, approvals | BUILT | Unposted results kept on the worker and posted next run | `jobId` + worker replay ledger | Entra tenant id on the job |
 
-Status key: **LIVE** working in production · **PARTIAL** new durable path alongside live · **READ ONLY** pull · **MISSING** not built · **LEGACY** keep until fallback removed.
+Status key: **LIVE** working in production · **PARTIAL** new durable path alongside live · **BUILT** merged and deployed, waiting for its production secrets and migrations (see the Tech Tool section below) · **READ ONLY** pull · **MISSING** not built · **LEGACY** keep until fallback removed.
+
+## DE Tech Tool and DE Microsoft Admin
+
+The technician tools live in this repository under `.claude/skills/msp-ai-kit/windows/` and ship as a release zip (`packaging/New-DEReleasePackage.ps1`); nothing in them deploys with the website. They talk to TechSales only, never to the website or portal.
+
+- **Contract.** The Tool's events use the same de-sync envelope as the website and portal: source `techconsole`, signed with the canonical string `POST\n<path>\n<timestamp>\n<eventId>\n<sha256 of the body>`, with `X-DE-Event-ID` equal to the body's `eventId`. The event list is shared: `server/integrations/deSyncContract.fixture.json` here and `artifacts/api-server/src/lib/de-sync-contract.fixture.json` in Intelligence-Hub must stay identical (each side's parity test checks its own copy; compare the two when either changes).
+- **Never sent.** No password, token, MFA seed, BitLocker recovery password, Guardz or SentinelOne key or other secret: the Hub refuses a payload with a secret-named key or a recovery-password-shaped value, and the Tool leaves secret-named keys out of device records and fails closed on migration records and rescue handoffs.
+- **Going live.** Every production step (Hub secrets and migrations, licence key, signed release, technician PC, worker PC with its Entra app and certificate, boot rescue media, the real-laptop test) is in `.claude/skills/msp-ai-kit/windows/GO-LIVE.md`. The Hub side is documented in Intelligence-Hub `docs/TECHTOOL-LICENSING.md`, `docs/MSADMIN-JOBS.md` and `docs/integrations-v1-openapi.yaml`.
+- **Unattended jobs.** The DE Microsoft Admin worker (`Invoke-DEHubJobLoop`) signs in to Graph, and when a verified job needs them Exchange Online and Azure, app-only with one certificate from the Windows store; no client secret.
 
 ## Identity
 

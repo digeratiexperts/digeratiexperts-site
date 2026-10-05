@@ -1,4 +1,4 @@
-# DE Microsoft Admin (v0.5.0)
+# DE Microsoft Admin (v0.6.0)
 
 A standalone PowerShell module that Digerati Experts uses to administer Microsoft 365, Entra ID, Exchange
 Online, Intune, Windows Autopilot and Azure.
@@ -8,6 +8,16 @@ Online, Intune, Windows Autopilot and Azure.
 - The Intelligence Hub can run it through signed jobs.
 
 It works on Windows PowerShell 5.1 and PowerShell 7.
+
+**0.6.0:**
+- The Hub worker runs Exchange Online and Azure jobs unattended. `Invoke-DEHubJobLoop` signs in to Exchange Online
+  (`Connect-DEExchange -AppId -CertificateThumbprint -Organization`) or Azure (`Connect-DEAzure -ServicePrincipal`)
+  with the same app and certificate as Graph, only when a job that needs that service has verified, once per run,
+  and signs out at the end. New settings: `-ExchangeOrganization` and `-AzureSubscriptionId`. See
+  [Exchange Online and Azure jobs](#exchange-online-and-azure-jobs).
+- A job that cannot sign in (a setting, the app-only Graph connection or the module missing, or the sign-in refused)
+  is posted as `Failed` with exactly what is missing, and the loop carries on with the next job.
+- `Invoke-DEHubJobLoop -WhatIf` also reports whether Exchange Online and Azure jobs could sign in unattended.
 
 **0.5.0:**
 - `Invoke-DEHubJobLoop` is the worker side of the Intelligence Hub's job queue. It claims the Hub's approved jobs for
@@ -68,8 +78,8 @@ $r = New-DEUser -DisplayName 'New Hire' -UserPrincipalName new.hire@alamo-indust
 | Connection | `Connect-DEMicrosoft` (delegated, or app-only with a certificate), `Get-DEMsScopeSet`, `Get-DEMsContext`, `Invoke-DEGraphRequest` |
 | Entra | `Get-DETenantSummary`, `Get-DEUser`, `New-DEUser`, `Set-DEUserAccountState` (with `-RevokeSessions`), `Get-DEGroup`, `New-DEGroup` (security or Microsoft 365, with owners), `Add-DEGroupMember`, `Get-DELicenseInventory`, `Get-DEConditionalAccessPolicy`, `Set-DEConditionalAccessPolicyState`, `Get-DEMfaRegistration` |
 | Devices | `Get-DEEntraDevice`, `Test-DEEntraBitLockerEscrow` |
-| Exchange | `Connect-DEExchange`, `Get-DEMailbox`, `New-DESharedMailbox`, `Set-DEMailboxPermission` (FullAccess, SendAs, SendOnBehalf), `Set-DEMailboxAlias` (add or remove), `Set-DEMailboxForwarding` (set or stop), `Get-DETransportRule` (risky rules flagged) |
-| Azure | `Connect-DEAzure`, `Get-DEAzureSubscription`, `Get-DEAzureInventory`, `New-DEAzureResourceGroup`, `New-DEAzureResourceLock` |
+| Exchange | `Connect-DEExchange` (user sign-in, or app-only with a certificate), `Get-DEMailbox`, `New-DESharedMailbox`, `Set-DEMailboxPermission` (FullAccess, SendAs, SendOnBehalf), `Set-DEMailboxAlias` (add or remove), `Set-DEMailboxForwarding` (set or stop), `Get-DETransportRule` (risky rules flagged) |
+| Azure | `Connect-DEAzure` (interactive, or a service principal with a certificate), `Get-DEAzureSubscription`, `Get-DEAzureInventory`, `New-DEAzureResourceGroup`, `New-DEAzureResourceLock` |
 | Intune | `Get-DEIntuneDevice` (by serial or user, filtered on the server), `Get-DEIntuneCompliancePolicy`, `Get-DEIntuneConfigurationProfile` (classic and Settings Catalog), `Sync-DEIntuneDevice`, `Invoke-DEIntuneDeviceAction` (Sync, Restart, Lock, Retire, Wipe, FreshStart) |
 | Autopilot | `Get-DEAutopilotDevice`, `Get-DEAutopilotProfile` (Graph beta), `Set-DEAutopilotGroupTag`, `Remove-DEAutopilotDevice` |
 | Results | `New-DEResult`, `Export-DEResult` (UTF-8 without a BOM), `Set-DEMsAuditPath` |
@@ -179,8 +189,11 @@ them. Each run does this:
    and deletes the saved copy once the Hub has it.
 5. It repeats until no job is waiting, or until `-MaxJobs` (default 50) or `-MaxMinutes` (default 30) is reached.
    `-Once` runs at most one job.
+6. It signs out of Exchange Online and Azure if this run signed in to them (see
+   [Exchange Online and Azure jobs](#exchange-online-and-azure-jobs)).
 
-It returns one summary: `ok`, `stoppedBecause`, `message`, the counts, and each job with its local result.
+It returns one summary: `ok`, `stoppedBecause`, `message`, the counts, `services` (what the run did with Exchange
+Online and Azure) and each job with its local result.
 
 | `stoppedBecause` | `ok` | Meaning |
 |---|---|---|
@@ -216,6 +229,57 @@ It returns one summary: `ok`, `stoppedBecause`, `message`, the counts, and each 
 - **The two Hub secrets.** They are held as SecureStrings for the run. They are never written to disk, the audit
   log, the output or a result.
 - **Oversized data.** A result over the Hub's 2 MB limit is sent without its data, and its message says so.
+
+### Exchange Online and Azure jobs
+
+Graph is connected before the loop starts. Exchange Online and Azure are not: the loop signs in to them only when a
+claimed job needs them, and only after that job has verified (a job that fails verification never signs anything
+in). The operations that need them:
+
+- Exchange Online: `Get-DEMailbox`, `New-DESharedMailbox`, `Set-DEMailboxPermission`, `Set-DEMailboxAlias`,
+  `Set-DEMailboxForwarding`, `Get-DETransportRule`.
+- Azure: `Get-DEAzureSubscription`, `Get-DEAzureInventory`, `New-DEAzureResourceGroup`, `New-DEAzureResourceLock`.
+
+The sign-in uses the app and certificate thumbprint of the Graph connection (`Connect-DEMicrosoft -ClientId
+-CertificateThumbprint`), plus these settings of `Invoke-DEHubJobLoop`:
+
+| Setting | Needed for | Value |
+|---|---|---|
+| `-ExchangeOrganization` | Exchange Online jobs | The tenant's initial domain, for example `alamoindustries.onmicrosoft.com` (Microsoft 365 admin center > Settings > Domains: the `*.onmicrosoft.com` one, which is not always the primary domain). |
+| `-AzureSubscriptionId` | Azure jobs (optional) | The subscription GUID to work in. Without it, Azure picks the service principal's default subscription. |
+
+- **Exchange Online:** `Connect-ExchangeOnline -AppId <app id> -CertificateThumbprint <thumbprint> -Organization
+  <-ExchangeOrganization>`.
+- **Azure:** `Connect-AzAccount -ServicePrincipal -ApplicationId <app id> -CertificateThumbprint <thumbprint>
+  -Tenant <tenant>`, with `-Subscription <-AzureSubscriptionId>` when it is set.
+- **Once per run.** The first job that needs a service signs in; later jobs in the run use that session. A sign-in
+  that failed is not retried in the same run: each later job for that service gets the same reason.
+- **Signed out at the end** of every run that signed in (`Disconnect-ExchangeOnline`, `Disconnect-AzAccount`).
+- **At a prompt**, a session you opened yourself with `Connect-DEExchange` or `Connect-DEAzure` (in the same
+  PowerShell session, for the connected tenant) is used as it is and left open.
+- **When it cannot sign in**, the job does not run. It is posted to the Hub as `Failed`, with a message that says
+  exactly what is missing, for example `not run: Exchange Online unattended sign-in is not configured on this worker:
+  -ExchangeOrganization is not set (...)`, `Graph is not connected app-only with a certificate`, `the
+  ExchangeOnlineManagement module is not installed on this worker`, or `Azure app-only sign-in failed: <reason>`. The
+  loop carries on with the next job, and the job is not written to the replay ledger (nothing ran).
+- **`-WhatIf`** reports, for each service, `ready (...)` or `not configured: <what is missing>` (in `services` and
+  in the message), and signs nothing in.
+
+The Entra app needs, besides its Graph permissions:
+
+- **Exchange Online:** the application permission **Office 365 Exchange Online > `Exchange.ManageAsApp`** (API
+  permissions > Add a permission > APIs my organization uses > Office 365 Exchange Online), with admin consent, and an
+  Exchange admin role assigned to the app's service principal (Entra > Roles and administrators). **Exchange
+  Recipient Administrator** covers the mailbox jobs (mailboxes, permissions, aliases, forwarding);
+  `Get-DETransportRule` also needs a role that can read transport rules, such as **Exchange Administrator**. Assign
+  the smallest role that covers the jobs you queue.
+- **Azure:** an Azure RBAC role for the app's service principal on each subscription (or resource group) the jobs
+  touch (subscription > Access control (IAM) > Add role assignment): **Reader** for `Get-DEAzureSubscription` and
+  `Get-DEAzureInventory`; **Contributor** on the scope for `New-DEAzureResourceGroup`; a role with
+  `Microsoft.Authorization/locks/*` (for example **User Access Administrator** or Owner, scoped as narrowly as you
+  can) for `New-DEAzureResourceLock`.
+- No client secret, certificate file or certificate password, for either service: the certificate is found by its
+  thumbprint in the worker's certificate store.
 
 ### Network failures and results that could not be posted
 
@@ -271,10 +335,13 @@ The whole production order (Hub, worker PC, DE Tech Tool) is in [GO-LIVE.md](../
 ### Set up the worker
 
 - **The machine.** A Windows machine or service account with this module, Microsoft.Graph.Authentication
-  (`Install-DEMicrosoftDependencies.ps1`) and Microsoft.PowerShell.SecretManagement.
+  (`Install-DEMicrosoftDependencies.ps1`) and Microsoft.PowerShell.SecretManagement. For Exchange Online and Azure
+  jobs, also ExchangeOnlineManagement and Az.Accounts / Az.Resources (the same script installs all of them; `-Only
+  Graph` skips them).
 - **The Entra app registration.** An app in the client tenant with a certificate, and the application permissions
   the allowlisted operations need. The certificate goes in the worker account's store, or in LocalMachine with
-  private-key access for that account. A client secret is never accepted.
+  private-key access for that account. A client secret is never accepted. For Exchange Online and Azure jobs, add
+  the permissions and roles in [Exchange Online and Azure jobs](#exchange-online-and-azure-jobs).
 - **The secrets.** Store the same two values in a SecretManagement vault that the worker account can open without a
   prompt, under the names `MSADMIN_JOB_SIGNING_SECRET` and `MSADMIN_WORKER_SECRET`. Examples: SecretStore
   configured with `-Authentication None -Interaction None` for that account (its store sits in that account's
@@ -296,6 +363,7 @@ At a prompt:
 Import-Module .\DE-Microsoft-Admin.psd1
 Connect-DEMicrosoft -TenantId <tenant guid> -ClientId <app id> -CertificateThumbprint <thumbprint>
 Invoke-DEHubJobLoop -HubUrl https://hub.example.com -Vault DE -WhatIf   # checks the setup; contacts nothing
+Invoke-DEHubJobLoop -HubUrl https://hub.example.com -Vault DE -ExchangeOrganization alamoindustries.onmicrosoft.com -WhatIf   # ...and whether Exchange / Azure jobs can sign in
 Invoke-DEHubJobLoop -HubUrl https://hub.example.com -Vault DE -Once     # one job
 Invoke-DEHubJobLoop -HubUrl https://hub.example.com -Vault DE           # until the queue is empty
 ```
@@ -306,6 +374,7 @@ Invoke-DEHubJobLoop -HubUrl https://hub.example.com -Vault DE           # until 
   the URL, the tenant and the secrets, and says what it would do. To rehearse a change, queue it on the Hub in
   `plan` mode: the worker runs it with `-DryRun`.
 - `-WorkerId` defaults to the computer name. The Hub records it on each job.
+- `-ExchangeOrganization` and `-AzureSubscriptionId` are needed only for Exchange Online and Azure jobs (see above).
 
 As a scheduled task, every 5 minutes, one instance at a time:
 
@@ -313,8 +382,8 @@ As a scheduled task, every 5 minutes, one instance at a time:
 # C:\ProgramData\DE\MicrosoftAdmin\Run-DEHubJobs.ps1  (no secrets in this file)
 Import-Module 'C:\Program Files\DE\DE-Microsoft-Admin\DE-Microsoft-Admin.psd1'
 $null = Connect-DEMicrosoft -TenantId <tenant guid> -ClientId <app id> -CertificateThumbprint <thumbprint>
-$r = Invoke-DEHubJobLoop -HubUrl https://hub.example.com -Vault DE -MaxMinutes 10
-$r | Select-Object ok, stoppedBecause, message, claimed, posted, pendingLeft | Format-List
+$r = Invoke-DEHubJobLoop -HubUrl https://hub.example.com -Vault DE -MaxMinutes 10 -ExchangeOrganization <name>.onmicrosoft.com   # add -AzureSubscriptionId <guid> for Azure jobs in one subscription
+$r | Select-Object ok, stoppedBecause, message, claimed, posted, pendingLeft, services | Format-List
 if (-not $r.ok) { exit 1 }
 ```
 
