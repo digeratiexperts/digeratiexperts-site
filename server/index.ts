@@ -32,6 +32,7 @@ import { zohoClient } from "./zoho/zohoClient";
 import { evaluatePaymentSucceeded } from "./zohoPaymentWebhook";
 import { setupCrossServiceHandlers } from "./crossServiceHandler";
 import { eventBus, EventTypes } from "./eventBus";
+import { revocationLoadState } from "./portalSessionRevocation";
 
 process.on('unhandledRejection', (reason, promise) => {
   const errorStr = String(reason);
@@ -112,6 +113,8 @@ app.all("/api/health", async (_req, res) => {
     port,
     services: {
       database: dbAvailable ? "connected" : "fallback_memory",
+      // "ready" once logged-out tokens are loaded; otherwise sign-in answers 503 (#393).
+      sessionRevocation: revocationLoadState(),
       zohoPayments: zohoPayments.isConfigured() ? "configured" : "not_configured",
       // Configured is not live: last readiness probe result + freshness (#263).
       // Error detail stays in server logs, never here.

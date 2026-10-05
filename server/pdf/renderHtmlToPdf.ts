@@ -15,6 +15,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
+import { finalizePdf, htmlTitle } from "./finalizePdf";
 
 const execFileAsync = promisify(execFile);
 
@@ -29,12 +30,19 @@ export class PdfRendererUnavailableError extends Error {
 }
 
 const PY_RUNNER = `import sys, os
-from weasyprint import HTML, default_url_fetcher
+from weasyprint import HTML
 
-def _no_remote(url):
-    if url.startswith(("http://", "https://")):
-        return {"string": b"", "mime_type": "text/css"}
-    return default_url_fetcher(url)
+# Never fetch over the network: documents embed their fonts and images.
+try:
+    from weasyprint import default_url_fetcher
+
+    def _no_remote(url):
+        if url.startswith(("http://", "https://")):
+            return {"string": b"", "mime_type": "text/css"}
+        return default_url_fetcher(url)
+except ImportError:  # WeasyPrint 66+ replaced the function with a class
+    from weasyprint.urls import URLFetcher
+    _no_remote = URLFetcher(allowed_protocols=("data", "file"))
 
 src, out = sys.argv[1], sys.argv[2]
 doc = HTML(filename=src, url_fetcher=_no_remote)
@@ -145,7 +153,15 @@ const acquireRenderSlot = createRenderLimiter(Number(process.env.PDF_MAX_CONCURR
 export async function renderHtmlToPdf(html: string): Promise<Buffer> {
   const release = await acquireRenderSlot();
   try {
-    return await renderHtmlToPdfNow(html);
+    const pdf = await renderHtmlToPdfNow(html);
+    // PDF/UA-1 finishing (artifacts, link text, XMP). Fail soft: on any error
+    // the tagged PDF as rendered is still returned.
+    try {
+      return await finalizePdf(pdf, { title: htmlTitle(html) });
+    } catch (err) {
+      console.warn("[pdf] finalize skipped:", err instanceof Error ? err.message : err);
+      return pdf;
+    }
   } finally {
     release();
   }

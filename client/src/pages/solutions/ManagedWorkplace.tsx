@@ -122,8 +122,8 @@ const workplaceData = {
       answer: `Pricing starts at $${pricing.office.user}/user/month. Minimum billing applies if the per-user total is below the tier minimum: Office $${pricing.office.monthlyMinimum.toLocaleString()}/mo, Business $${pricing.business.monthlyMinimum.toLocaleString()}/mo, Enterprise $${pricing.enterprise.monthlyMinimum.toLocaleString()}/mo.`
     },
     {
-      question: "How fast can you onboard/offboard?",
-      answer: "New hires can be fully productive within 1 business day—with email, apps, SSO access, and device baseline configured. Offboarding takes minutes: we revoke all access, disable accounts, and transfer data per your policies."
+      question: "How do onboarding and offboarding work?",
+      answer: "Onboarding follows a checklist: email, apps, SSO access and the device baseline are set up for each new hire. Offboarding revokes all access, disables accounts and transfers data per your policies."
     },
     {
       question: "What's included vs add-ons?",
@@ -433,7 +433,7 @@ export default function ManagedWorkplace() {
 
       <ClosingCta
         title="Ready to Simplify Your Workplace?"
-        lede="Book a consultation to discuss your team's needs. Get a quote within 24 hours."
+        lede="Book a consultation to discuss your team's needs. Get a quote within one business day."
         primary={{ label: CTA.primary, href: "/book", testId: "btn-final-consultation" }}
         phoneTestId="btn-final-call"
       />

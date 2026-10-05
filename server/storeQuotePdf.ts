@@ -4,7 +4,6 @@ import { quoteTotals } from "./storeQuoteCommerce";
 import { COMPANY } from "@shared/companyContact";
 import { accountTeamFor, type AccountTeam } from "@shared/accountManagers";
 import {
-  accountTeamBlock,
   closeBlock,
   coverBlock,
   DE_PDF,
@@ -98,8 +97,8 @@ export function buildQuotePdfHtml(quote: QuotePdfInput): string {
       heading: "A consultant confirms terms",
       text: "This PDF restates catalog pricing for the requested solution. It is not a signed commercial offer. A consultant will confirm terms.",
       email: COMPANY.salesEmail,
+      team: quote.accountTeam ?? accountTeamFor(null),
     })}
-    ${accountTeamBlock(quote.accountTeam ?? accountTeamFor(null))}
   </main>`;
 
   return documentHtml({
