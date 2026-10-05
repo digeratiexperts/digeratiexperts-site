@@ -433,7 +433,7 @@ export default function ManagedWorkplace() {
 
       <ClosingCta
         title="Ready to Simplify Your Workplace?"
-        lede="Book a consultation to discuss your team's needs. Get a quote within 24 hours."
+        lede="Book a consultation to discuss your team's needs. Get a quote within one business day."
         primary={{ label: CTA.primary, href: "/book", testId: "btn-final-consultation" }}
         phoneTestId="btn-final-call"
       />
