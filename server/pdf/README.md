@@ -55,7 +55,21 @@ The PDF/UA identifier is written only when the file is tagged. If finishing fail
 
 Rendering is pixel-identical before and after finishing.
 
-**CI guard:** the "Store PDF accessibility and layout check" step runs `scripts/qa/store-pdf-check.mts`. It renders six samples through `renderHtmlToPdf`: two quotes, an order confirmation, a receipt, a 26-line order and a solution packet. The step fails if a short document runs past one page, the long order does not paginate, or veraPDF 1.30.2 (installed by `scripts/qa/install-verapdf.sh`) reports a PDF/UA-1 failure. To run it locally, install veraPDF first: `VERAPDF="$(bash scripts/qa/install-verapdf.sh /tmp/verapdf | tail -1)" npx tsx scripts/qa/store-pdf-check.mts --require-verapdf`.
+**CI guard:** the "Store PDF check" step (`npm run check:store-pdfs`) renders every sample in `scripts/qa/storePdfCases.ts` through `renderHtmlToPdf`. There are 13 of them, covering each template state: quotes with 1, 5 and 30 items, notes, and special characters; orders that are paid, awaiting payment, cancelled, empty, or long and redacted; a receipt; solution packets with 1 and 3 packages. Each PDF is checked for:
+- **Layout:** the page count. Short documents stay on one page; long ones paginate.
+- **Content:** the expected text extracts. Redacted text is absent. Nothing like "undefined", "NaN", an HTML entity or a placeholder leaks into the text, and no account lifecycle value prints.
+- **Metadata:** the title matches the HTML, every link has a text alternative, and the file is under 1 MB.
+- **Structure:** checked by `scripts/de-documents/lib/verify.py`, the same verifier the resource PDFs use. The file is tagged; fonts are embedded with ToUnicode and none are Type 3; there is no untagged painting and no split words; and veraPDF PDF/UA-1 passes.
+
+CI uploads the PDFs, their HTML sources, page previews, `report.json` and `summary.md` as the `store-pdfs` artifact, and writes the summary table to the run page.
+
+Locally, the check needs poppler-utils and Python pikepdf; veraPDF is optional. Run:
+
+```
+VERAPDF="$(bash scripts/qa/install-verapdf.sh /tmp/verapdf | tail -1)" npm run check:store-pdfs -- --require-verapdf [--only=order-paid,receipt] [out-dir]
+```
+
+To add a template state, add a case to `storePdfCases.ts`.
 
 **Not claimed:** the human-judgement PDF/UA checkpoints (alt-text quality, reading order) have had no independent or screen-reader test. WCAG is not claimed.
 
