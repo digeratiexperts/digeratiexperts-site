@@ -30,6 +30,28 @@
 
 version: 2
 claims:
+  - id: paynow-tax-readiness
+    owner: claude
+    subsystem: store-warehouse
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: f4a9bc3
+    files:
+      - server/services/stripeTaxReadiness.ts (new), server/services/stripeTaxReadiness.test.ts (new)
+      - server/warehouseRoutes.ts (the tax-status route only), server/warehouseRoutes.test.ts (one case)
+      - client/src/hooks/useStripeTaxReadiness.ts (new)
+      - client/src/pages/store/WarehouseVendors.tsx (Site integrations section only)
+      - client/src/pages/store/Checkout.tsx (the Pay Now tax status line only), client/src/pages/store/Checkout.tax.test.ts
+      - docs/STORE-WAREHOUSE.md (readiness bullet), deploy/vps/env.production.example (key permission comment)
+      - artifacts/visual-qa/paynow-tax-readiness/**
+    status: active
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "Keep building", after the Stripe Tax step shipped
+      switched off. A staff-only, read-only readiness check (Stripe Tax
+      settings + active Arizona registration, cached 5 min) shown on the
+      Warehouse Vendors page and as one line under Staff Pay Now, so the
+      Stripe setup confirms itself without a test charge. Never reads READY
+      on a failed check. Public Store never asks for it.
   - id: response-promise-one-business-day
     owner: claude
     subsystem: marketing-copy

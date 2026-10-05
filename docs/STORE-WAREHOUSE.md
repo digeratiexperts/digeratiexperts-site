@@ -89,4 +89,9 @@ Decided 2026-10-03 (Joe delegated the choice; PR 407 and its follow-up).
   1. Create a restricted key limited to Tax.
   2. Set it as `STRIPE_TAX_SECRET_KEY` on the production server.
   3. In Stripe Tax settings, set DE's Phoenix origin address and add the Arizona registration.
+- **Readiness check** (2026-10-05). Code: `server/services/stripeTaxReadiness.ts`, `GET /api/internal/warehouse/tax-status`. It is staff-only and returns a generic 404 to anyone else.
+  - It reads Stripe's Tax settings (origin address) and active registrations (Arizona) with the same key. It never charges or changes anything, and the answer is cached for 5 minutes.
+  - Statuses: `READY`, `NOT_CONFIGURED`, `AUTH_REQUIRED`, `INCOMPLETE` or `UNKNOWN`. A failed check never reads READY.
+  - Staff see it in two places: the full card under **Vendors → Site integrations**, and one line under Staff Pay Now on the checkout.
+  - The restricted key needs **Tax Calculations and Transactions: Write** (Pay Now) plus **Tax Settings: Read** and **Tax Registrations: Read** (this check). Everything else stays None.
 - **The public Store never reaches any of this.** `server/services/salesTax.test.ts` guards it.

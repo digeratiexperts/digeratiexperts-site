@@ -4,6 +4,13 @@ import { storeProducts } from "@/data/storeProducts";
 import { listVendorsForProducts } from "@/data/storeMerchandising";
 import { StorePageAtmosphere } from "@/components/store/StorePageAtmosphere";
 import { VENDOR_LOGO_BASE } from "@/data/vendorLogos";
+import { useStripeTaxReadiness } from "@/hooks/useStripeTaxReadiness";
+
+const TAX_CHECK_ROWS = [
+  ["key", "Stripe key on the server"],
+  ["originAddress", "Origin address in Stripe Tax"],
+  ["arizona", "Arizona registration"],
+] as const;
 
 type ConnectorHealth = {
   connector: string;
@@ -26,6 +33,7 @@ export default function WarehouseVendors() {
   const vendors = useMemo(() => listVendorsForProducts(storeProducts), []);
   const [connectors, setConnectors] = useState<ConnectorHealth[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const taxReadiness = useStripeTaxReadiness();
 
   useEffect(() => {
     let cancelled = false;
@@ -92,6 +100,44 @@ export default function WarehouseVendors() {
                 ) : null}
               </li>
             ))}
+          </ul>
+        </section>
+
+        <section className="mb-12" aria-label="Site integrations">
+          <h3 className="mb-3 text-lg font-semibold text-white">Site integrations</h3>
+          <ul className="grid gap-3 sm:grid-cols-2" data-testid="warehouse-site-integrations">
+            <li
+              className="rounded-2xl border border-de-hairline bg-de-raised px-4 py-4"
+              data-testid="integration-stripe-tax"
+              data-status={taxReadiness?.status ?? "LOADING"}
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="font-semibold text-white">Stripe Tax (Pay Now sales tax)</p>
+                <p className="font-mono text-xs text-de-accent-ink">{taxReadiness?.status ?? "CHECKING"}</p>
+              </div>
+              {taxReadiness ? (
+                <>
+                  <p className="mt-2 text-sm text-white/55">{taxReadiness.message}</p>
+                  <dl className="mt-3 grid grid-cols-[1fr_auto] items-baseline gap-x-3 gap-y-1 text-sm">
+                    {TAX_CHECK_ROWS.map(([field, label]) => (
+                      <div key={field} className="contents">
+                        <dt className="text-white/60">{label}</dt>
+                        <dd className="font-mono text-xs text-white/80" data-testid={`tax-check-${field}`}>
+                          {taxReadiness.checks[field]}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                  {taxReadiness.quoteOnlyCategories.length ? (
+                    <p className="mt-3 text-xs text-white/45">
+                      Quote-only until a tax code is confirmed:{" "}
+                      <span className="font-mono">{taxReadiness.quoteOnlyCategories.join(", ")}</span>
+                    </p>
+                  ) : null}
+                  <p className="mt-2 font-mono text-[11px] text-white/35">{taxReadiness.checkedAt}</p>
+                </>
+              ) : null}
+            </li>
           </ul>
         </section>
 

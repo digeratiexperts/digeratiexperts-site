@@ -115,6 +115,17 @@ export function registerWarehouseGates(app: Express): void {
     });
   });
 
+  /** Staff Pay Now sales tax readiness (Stripe Tax, read-only, cached). */
+  app.get("/api/internal/warehouse/tax-status", async (req: Request, res: Response) => {
+    applyPrivateCacheHeaders(res);
+    if (!resolveWarehouseStaff(req)) {
+      sendGenericNotFound(req, res);
+      return;
+    }
+    const { cachedStripeTaxReadiness } = await import("./services/stripeTaxReadiness");
+    res.json(await cachedStripeTaxReadiness());
+  });
+
   app.get("/api/internal/warehouse/stock", (req, res) => {
     requireWarehouseStaffApi(req, res, () => {
       void listWarehouseStock()
