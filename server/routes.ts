@@ -80,6 +80,8 @@ import {
   appendMessage as appendLiveChatMessage,
   ensureWelcomeMessage,
   getChatStoreStatus,
+  listSessions as listLiveChatSessions,
+  currentSessionId as currentLiveChatSessionId,
 } from "./portalChatStore";
 import {
   initPortalSurveyStore,
@@ -1253,6 +1255,10 @@ export async function registerRoutes(app: Express) {
 
       const conversationId = conversationIdForUser(req.userId);
       await ensureWelcomeMessage(conversationId, req.userId);
+      // Resolved once, so the visitor's message, the history the model sees and
+      // its reply all land in the same chat even if the idle boundary falls
+      // between them.
+      const sessionId = await currentLiveChatSessionId(conversationId);
 
       const displayName =
         (typeof senderName === "string" && senderName.trim()) ||
@@ -1266,11 +1272,14 @@ export async function registerRoutes(app: Express) {
         senderName: displayName,
         senderRole: "client",
         content: content.trim(),
+        sessionId,
       });
 
       let reply = null as Awaited<ReturnType<typeof appendLiveChatMessage>> | null;
       try {
-        const history = await listLiveChatMessages(conversationId, { limit: 20 });
+        // This chat only. Feeding the model a transcript from weeks ago made it
+        // answer questions nobody had just asked.
+        const history = await listLiveChatMessages(conversationId, { limit: 20, sessionId });
         const conversationHistory = history
           .filter((m) => m.id !== message.id)
           .map((m) => ({
@@ -1286,6 +1295,7 @@ export async function registerRoutes(app: Express) {
             senderName: "DE Support",
             senderRole: "support",
             content: aiText,
+            sessionId,
           });
         }
       } catch (aiErr: any) {
@@ -1297,6 +1307,7 @@ export async function registerRoutes(app: Express) {
         message,
         reply,
         conversationId,
+        sessionId,
       });
       logSecurityEvent("LIVE_CHAT_MESSAGE", req, { conversationId });
     } catch (error: any) {
@@ -1312,18 +1323,47 @@ export async function registerRoutes(app: Express) {
       }
       const conversationId = conversationIdForUser(req.userId);
       await ensureWelcomeMessage(conversationId, req.userId);
+      // Default to the chat in progress rather than the whole history. Someone
+      // returning after a week opens a new thread; the old ones are still
+      // there, asked for by id, but they do not pour into the live pane.
+      const sessionId =
+        typeof req.query.sessionId === "string" && req.query.sessionId
+          ? req.query.sessionId
+          : await currentLiveChatSessionId(conversationId);
       const since = typeof req.query.since === "string" ? req.query.since : undefined;
-      const messages = await listLiveChatMessages(conversationId, { since, limit: 200 });
+      const messages = await listLiveChatMessages(conversationId, { since, limit: 200, sessionId });
 
       res.json({
         success: true,
         connected: true,
         conversationId,
+        sessionId,
         messages,
         transport: "http-poll",
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message, connected: false });
+    }
+  });
+
+  // Live chat — the user's own past chats, collapsed to one row each.
+  // Closed chats are kept deliberately: a conversation nobody continued is
+  // still one DE may need to pick up.
+  app.get("/api/portal/chat/sessions", [authMiddleware, requireChatAccess], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (!req.userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      const conversationId = conversationIdForUser(req.userId);
+      const sessions = await listLiveChatSessions(conversationId);
+      res.json({
+        success: true,
+        conversationId,
+        // Newest first: the collapsed list is read from the top.
+        sessions: [...sessions].reverse(),
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 

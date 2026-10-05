@@ -95,3 +95,5 @@ artifacts/design-concepts/*/shots-integrated/*.png
 .claude/skills/msp-ai-kit/windows/packaging/out/
 .claude/skills/msp-ai-kit/windows/integrity.json
 .claude/skills/msp-ai-kit/windows/community/
+artifacts/visual-qa/the-box/shots/*.png
+artifacts/visual-qa/*-history/shots/*.png

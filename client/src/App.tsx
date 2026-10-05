@@ -61,6 +61,7 @@ const SecurityChecklist = lazy(() => import("@/pages/resources/SecurityChecklist
 const Datasheets = lazy(() => import("@/pages/resources/Datasheets"));
 const DowntimeCalculator = lazy(() => import("@/pages/resources/DowntimeCalculator"));
 const ResourcesIndex = lazy(() => import("@/pages/resources/ResourcesIndex"));
+const TheBox = lazy(() => import("@/pages/TheBox"));
 const KnowledgeBase = lazy(() => import("@/pages/support/KnowledgeBase"));
 const RemoteSupport = lazy(() => import("@/pages/support/RemoteSupport"));
 const PayInvoice = lazy(() => import("@/pages/support/PayInvoice"));
@@ -425,6 +426,14 @@ function Router() {
         )} />
       ))}
       
+      {/* The Digerati Box — marketing core, deliberately NOT under /resources
+          so it does not inherit the Journal colour lock. */}
+      <Route path="/the-box" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <TheBox />
+        </Suspense>
+      )} />
+
       {/* Resources Pages */}
       <Route path="/resources" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
