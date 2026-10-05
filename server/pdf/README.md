@@ -53,7 +53,9 @@ The PDF/UA identifier is written only when the file is tagged. If finishing fail
 - Chromium (production): 5/5.
 - WeasyPrint 70: 5/5.
 
-Rendering is pixel-identical before and after finishing. veraPDF is not in CI, so re-validate after template changes.
+Rendering is pixel-identical before and after finishing.
+
+**CI guard:** the "Store PDF accessibility and layout check" step runs `scripts/qa/store-pdf-check.mts`. It renders six samples through `renderHtmlToPdf`: two quotes, an order confirmation, a receipt, a 26-line order and a solution packet. The step fails if a short document runs past one page, the long order does not paginate, or veraPDF 1.30.2 (installed by `scripts/qa/install-verapdf.sh`) reports a PDF/UA-1 failure. To run it locally, install veraPDF first: `VERAPDF="$(bash scripts/qa/install-verapdf.sh /tmp/verapdf | tail -1)" npx tsx scripts/qa/store-pdf-check.mts --require-verapdf`.
 
 **Not claimed:** the human-judgement PDF/UA checkpoints (alt-text quality, reading order) have had no independent or screen-reader test. WCAG is not claimed.
 

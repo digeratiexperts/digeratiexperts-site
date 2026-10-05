@@ -66,6 +66,16 @@ jobs:
       - name: Recraft icon skill tests
         run: npm run test:recraft-icons
 
+      # Store PDFs (quote, order, receipt, solution packet): renders samples with
+      # the production pipeline, checks page counts and veraPDF PDF/UA-1.
+      - name: Install veraPDF
+        run: |
+          cli="$(bash scripts/qa/install-verapdf.sh "$RUNNER_TEMP/verapdf" | tail -1)"
+          echo "VERAPDF=$cli" >> "$GITHUB_ENV"
+
+      - name: Store PDF accessibility and layout check
+        run: npx tsx scripts/qa/store-pdf-check.mts --require-verapdf "$RUNNER_TEMP/store-pdfs"
+
       - name: Production build
         run: npm run build
 
