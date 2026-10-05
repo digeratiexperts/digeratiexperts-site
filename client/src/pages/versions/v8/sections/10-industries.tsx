@@ -18,6 +18,7 @@ import healthcareImg from "@assets/Rectangle-152058-2_1767027918698.webp";
 import realEstateImg from "@assets/Rectangle-152058-3_1767027918698.webp";
 import animalHospitalImg from "@assets/Rectangle-152058-4_1767027918698.webp";
 import "./10-industries.css";
+import { ChapterPattern } from "@/components/site/Atmosphere";
 
 /**
  * 10 · Industries we serve (mock: sections/10-industries.html).
@@ -123,6 +124,7 @@ export function V8Industries(): JSX.Element {
 
   return (
     <section className="f-surface v8-section v8-grain" aria-labelledby="industries-heading">
+      <ChapterPattern variant="contour" />
       <div className="v8-canvas">
         <motion.div className="ind-head" {...reveal}>
           <div className="v8-head">

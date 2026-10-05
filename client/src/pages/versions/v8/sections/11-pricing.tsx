@@ -5,6 +5,7 @@ import { revealInitial, revealInView, revealTransition, revealViewport } from "@
 import { PRICING_SCOPE_NOTE, formatPrice, pricingTiers, type PricingTierKey } from "@/data/pricing";
 import { ecosystemFitCopy } from "@/components/EcosystemProgression";
 import "./11-pricing.css";
+import { ChapterPattern } from "@/components/site/Atmosphere";
 
 /**
  * 11 · Pricing (mock: sections/11-pricing.html). Names, rates, minimums, labels and links come
@@ -33,6 +34,7 @@ export function V8Pricing(): JSX.Element {
 
   return (
     <section className="f-well v8-section" aria-labelledby="pricing-heading" data-testid="homepage-pricing">
+      <ChapterPattern variant="lattice" />
       <div className="v8-canvas">
         <div className="v8-box pricing-box">
           <motion.div className="v8-head" {...reveal}>

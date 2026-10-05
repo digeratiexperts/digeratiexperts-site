@@ -242,7 +242,7 @@ const SolutionsIndex = () => {
         </Container>
       </Chapter>
 
-      <Chapter tone="well" data-testid="solutions-security">
+      <Chapter plate="ring" tone="well" data-testid="solutions-security">
         <Container>
           <ChapterHeader
             tone="well"

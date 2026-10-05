@@ -1,0 +1,13 @@
+{
+  "prompt": "Studio product photograph, isometric three-quarter view from above at 35 degrees, 100mm lens, f/8, ISO 100. An orderly grid field of thirteen floating tiles on a pure black seamless ground, spaced evenly, a few lifted slightly higher than others so the field reads as a calm wave. Rounded-square tiles about 9 cm across and 2 cm thick with generous corner radius like premium app-icon blanks, faces completely blank and smooth. Three finishes only: deep electric-blue glass (#1D6FF2 core, translucent, faint internal refraction, polished bevel catching a thin white specular line), graphite anodized aluminium (near-black, fine brushed grain, crisp chamfer), and matte white ceramic (soft subsurface glow, faint pores). One single tile in polished magenta glass (#D3126A) sits near the centre as the only accent. Lighting: a soft electric-blue light pool rising from beneath the centre of the field, glowing through the blue glass tiles and casting soft blue bounce onto the undersides of the graphite and white tiles; a faint cool rim light from top left; deep falloff to pure black at all frame edges. The field occupies the right two thirds of the frame, the left third is empty black negative space for headline text. Realistic contact shadows and gentle reflections on the black ground. Do not add any symbols or text to the tiles.",
+  "negative_prompt": "text, letters, numbers, logos, icons, symbols, engraved glyphs, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, CGI sheen, oversaturated, blurry, distorted geometry, melted edges",
+  "api_parameters": {
+    "resolution": "2K",
+    "output_format": "jpg",
+    "aspect_ratio": "16:9"
+  },
+  "settings": {
+    "style": "premium studio product photography, physically based materials",
+    "quality": "tack sharp, true material texture, controlled highlights"
+  }
+}

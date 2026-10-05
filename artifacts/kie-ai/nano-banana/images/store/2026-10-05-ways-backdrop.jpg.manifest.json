@@ -1,0 +1,19 @@
+{
+  "provider": "kie.ai",
+  "taskId": "490f5afc87a41353db14119c20338d26",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/store/2026-10-05-ways-backdrop.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Wide cinematic product photograph, 50mm lens, f/4, ISO 200, eye-level view across a long matte black table surface. Far in the background, softly out of focus, a low row of tiles stands on edge in a gentle arc. Rounded-square tiles about 9 cm across and 2 cm thick with generous corner radius like premium app-icon blanks, faces completely blank and smooth. Three finishes only: deep electric-blue glass (#1D6FF2 core, translucent, faint internal refraction, polished bevel catching a thin white specular line), graphite anodized aluminium (near-black, fine brushed grain, crisp chamfer), and matte white ceramic (soft subsurface glow, faint pores). Lighting: one broad electric-blue light pool on the table in the centre background, everything else falling off into deep black; faint horizontal reflection of the glow on the table. The foreground and the whole upper two thirds of the frame are near-black and empty so cards and text can sit on top. Subtle, restrained, no glare. Do not add any symbols or text.\", \"negative_prompt\": \"text, letters, numbers, logos, icons, symbols, engraved glyphs, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, CGI sheen, oversaturated, blurry, distorted geometry, melted edges\", \"settings\": {\"style\": \"premium studio product photography, physically based materials\", \"quality\": \"tack sharp, true material texture, controlled highlights\"}}",
+    "aspect_ratio": "21:9",
+    "resolution": "2K",
+    "output_format": "jpg"
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/models/nano-banana-2/1791159752141-kujenlqckc.jpg"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-05T00:22:35.778167+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}

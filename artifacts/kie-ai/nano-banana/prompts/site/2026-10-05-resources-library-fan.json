@@ -1,0 +1,13 @@
+{
+  "prompt": "Resources and blog: a library of knowledge. Studio product photograph, three-quarter top view, 90mm lens, f/8, ISO 100. A long row of thin tiles fanned open like the pages of a book or index cards, mostly matte white ceramic with three graphite and two electric-blue glass tiles interleaved; the fan arcs gently from left to right. Rounded-square tiles about 9 cm across and 2 cm thick with generous corner radius like premium app-icon blanks, faces completely blank and smooth. Finishes: deep electric-blue glass (#1D6FF2, translucent, faint internal refraction, thin white specular line on the bevel), graphite anodized aluminium (near-black, fine brushed grain, crisp chamfer) and matte white ceramic (soft subsurface glow, faint pores). Soft overhead key light, crisp thin shadows between each tile. Top half empty. Seamless very light cool-grey sweep (#F5F5F7), large soft overhead softbox, gentle shadows under each tile. Do not add any symbols or text to the tiles.",
+  "negative_prompt": "text, letters, numbers, logos, icons, symbols, engraved glyphs, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, CGI sheen, oversaturated, blurry, distorted geometry, melted edges",
+  "api_parameters": {
+    "resolution": "2K",
+    "output_format": "jpg",
+    "aspect_ratio": "16:9"
+  },
+  "settings": {
+    "style": "premium studio product photography, physically based materials",
+    "quality": "tack sharp, true material texture, controlled highlights"
+  }
+}

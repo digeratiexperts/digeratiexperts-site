@@ -213,7 +213,7 @@ export default function GenericServicePage({
       )}
 
       {process.length > 0 && (
-        <Chapter tone="well" data-testid="section-process">
+        <Chapter plate="row" tone="well" data-testid="section-process">
           <Container>
             <ChapterHeader
               tone="well"

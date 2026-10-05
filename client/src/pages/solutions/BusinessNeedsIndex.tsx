@@ -55,6 +55,17 @@ import {
 } from "@/lib/solutionDraft";
 import { portalMarketplaceLoginUrl } from "@/lib/portalUrls";
 import { PRIMARY_PHONE } from "@shared/companyContact";
+import { ParallaxLayer } from "@/components/site/Atmosphere";
+import heroTilesAvif from "@/assets/flagship/hero-tile-field.jpg?w=800;1400;2200&format=avif&as=srcset";
+import heroTilesWebp from "@/assets/flagship/hero-tile-field.jpg?w=800;1400;2200&format=webp&as=srcset";
+import heroTilesJpg from "@/assets/flagship/hero-tile-field.jpg?w=1400&format=jpg";
+import trioAvif from "@/assets/flagship/situation-trio.jpg?w=520;900&format=avif&as=srcset";
+import trioWebp from "@/assets/flagship/situation-trio.jpg?w=520;900&format=webp&as=srcset";
+import trioJpg from "@/assets/flagship/situation-trio.jpg?w=900&format=jpg";
+import waysWebp from "@/assets/flagship/ways-backdrop.jpg?w=2400&format=webp";
+import closeAvif from "@/assets/flagship/close-white.jpg?w=800;1400;2200&format=avif&as=srcset";
+import closeWebp from "@/assets/flagship/close-white.jpg?w=800;1400;2200&format=webp&as=srcset";
+import closeJpg from "@/assets/flagship/close-white.jpg?w=1400&format=jpg";
 
 /*
  * /store — Enter (docs/STORE-EXPERIENCE-SOURCE-OF-TRUTH.md §5.1).
@@ -163,6 +174,17 @@ const WAYS: ReadonlyArray<{ id: "standalone" | "co_managed" | "unsure"; title: s
     ],
   },
 ];
+
+/** A decorative product plate: AVIF / WebP srcsets with a JPEG fallback. */
+function Plate({ avif, webp, jpg, width, height, sizes, className, eager = false }: { avif: string; webp: string; jpg: string; width: number; height: number; sizes: string; className?: string; eager?: boolean }) {
+  return (
+    <picture className={className}>
+      <source type="image/avif" srcSet={avif} sizes={sizes} />
+      <source type="image/webp" srcSet={webp} sizes={sizes} />
+      <img src={jpg} width={width} height={height} alt="" loading={eager ? "eager" : "lazy"} decoding="async" />
+    </picture>
+  );
+}
 
 function Glyph({ familyId, tone, className = "" }: { familyId: FamilyId; tone?: GlyphTone | "magenta"; className?: string }) {
   const Icon = FAMILY_ICONS[familyId];
@@ -503,7 +525,6 @@ export default function BusinessNeedsIndex() {
 
   const momentScenario = scenarioMoment ? solutionScenarios.find((scenario) => scenario.id === scenarioMoment.scenarioId) ?? null : null;
   const needCount = draft.needs.length;
-  const sculpture = [...FAMILY_ORDER, null, null, null] as Array<FamilyId | null>;
 
   return (
     <Door2Frame intensity={0.44} jelly>
@@ -562,18 +583,10 @@ export default function BusinessNeedsIndex() {
                 </LiveLine>
               ) : null}
             </div>
-            <div className="d2-sculpt" aria-hidden="true">
-              <div className="d2-sculpt__plane">
-                {sculpture.map((id, index) =>
-                  id ? (
-                    <span key={id} className="d2-sculpt__cell" style={{ "--z": `${(index * 37) % 60}px`, "--dl": `${-(index * 0.7)}s` } as CSSProperties}>
-                      <Glyph familyId={id} tone={index === 6 ? "magenta" : undefined} />
-                    </span>
-                  ) : (
-                    <span key={`empty-${index}`} className="d2-sculpt__cell d2-sculpt__cell--empty" />
-                  ),
-                )}
-              </div>
+            <div className="d2-flag-hero__plate" aria-hidden="true">
+              <ParallaxLayer depth={70}>
+                <Plate avif={heroTilesAvif} webp={heroTilesWebp} jpg={heroTilesJpg} width={1400} height={781} sizes="(min-width: 1069px) 55vw, 100vw" eager />
+              </ParallaxLayer>
             </div>
           </div>
         </header>
@@ -657,6 +670,7 @@ export default function BusinessNeedsIndex() {
                 Size it once. <span>Every package follows.</span>
               </h2>
               <p className="d2-flag-config__lede">Four counts and two facts. Skip for now if you like; it is needed before you submit.</p>
+              <Plate avif={trioAvif} webp={trioWebp} jpg={trioJpg} width={900} height={1117} sizes="(min-width: 1069px) 30vw, 0px" className="d2-flag-config__art" />
             </div>
             <div className="d2-flag-config__form">
               <SolutionProfileForm
@@ -752,7 +766,10 @@ export default function BusinessNeedsIndex() {
           </div>
         </section>
 
-        <section id="ways" className="d2-flag-sec d2-flag-sec--dark" aria-labelledby="ways-heading">
+        <section id="ways" className="d2-flag-sec d2-flag-sec--dark d2-flag-sec--backdrop" aria-labelledby="ways-heading">
+          <ParallaxLayer depth={-60} className="d2-flag-backdrop">
+            <div className="d2-flag-backdrop__img" style={{ backgroundImage: `url(${waysWebp})` }} />
+          </ParallaxLayer>
           <div className="d2-flag-wrap">
             <div className="d2-flag-head" data-d2-reveal="">
               <h2 id="ways-heading" className="d2-flag-head__title">
@@ -836,6 +853,7 @@ export default function BusinessNeedsIndex() {
                 Talk to DE · {PRIMARY_PHONE.display}
               </a>
             </div>
+            <Plate avif={closeAvif} webp={closeWebp} jpg={closeJpg} width={1400} height={781} sizes="(min-width: 1180px) 1100px, 100vw" className="d2-flag-close__plate" />
           </div>
         </section>
       </main>
