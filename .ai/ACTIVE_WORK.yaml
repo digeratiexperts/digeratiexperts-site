@@ -2228,6 +2228,8 @@ claims:
       - client/src/pages/solutions/BusinessNeedsIndex.tsx, client/src/styles/store-builder.css (Store image plates)
       - client/src/assets/flagship/** (approved generated plates, resized)
       - artifacts/kie-ai/nano-banana/**, artifacts/visual-qa/site-atmosphere/**, artifacts/visual-qa/store-flagship/**
+      - scrollcraft/builds/situation-gallery/** (new scrollcraft build), scrollcraft/FINGERPRINTS.md (row appended)
+      - public/scrollcraft/situation-gallery/** (published lab copy), public/scrollcraft/index.html (one entry added), artifacts/visual-qa/situation-gallery/**
     status: in-review
     started: 2026-10-05
     note: >-
