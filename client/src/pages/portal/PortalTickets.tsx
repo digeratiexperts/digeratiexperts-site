@@ -25,7 +25,17 @@ interface Ticket {
 
 interface TicketsResponse {
   tickets: Ticket[];
+  /** Live Zoho Desk sync state for the company being viewed. */
+  desk?: {
+    scope: "company" | "all-local" | "own";
+    linked?: boolean;
+    syncedAt: string | null;
+    error: string | null;
+  };
 }
+
+/** How often the open page re-reads tickets; the server caches Desk for 60s. */
+const TICKETS_POLL_MS = 30_000;
 
 const FILTERS: { value: string; label: string }[] = [
   { value: "all", label: "All" },
@@ -54,7 +64,11 @@ export default function PortalTickets() {
   const { data, isLoading, isError, error } = useQuery<TicketsResponse>({
     queryKey: ["/api/portal/tickets"],
     queryFn: () => portalGet<TicketsResponse>("/api/portal/tickets"),
+    refetchInterval: TICKETS_POLL_MS,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
+  const desk = data?.desk;
 
   const tickets = data?.tickets || [];
 
@@ -113,6 +127,16 @@ export default function PortalTickets() {
             {error instanceof Error ? error.message : "Unknown error"}
           </Callout>
         )}
+        {desk?.error && (
+          <Callout tone="warn" title="Showing the last synced tickets">
+            {desk.error} {desk.syncedAt ? `Last synced ${formatDeskTimestamp(desk.syncedAt)}.` : ""}
+          </Callout>
+        )}
+        {desk?.scope === "company" && desk.linked === false && !desk.error && (
+          <Callout tone="info" title="No DE Desk account linked yet">
+            This company has no matching account in DE Desk, so only tickets opened in the portal appear here.
+          </Callout>
+        )}
 
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative lg:w-80 lg:shrink-0">
@@ -156,7 +180,12 @@ export default function PortalTickets() {
         <Panel
           id="tickets-list"
           title={filter === "all" ? "All tickets" : FILTERS.find((f) => f.value === filter)?.label}
-          description={isLoading ? "Loading…" : `${filteredTickets.length} ticket${filteredTickets.length === 1 ? "" : "s"}`}
+          description={
+            isLoading
+              ? "Loading…"
+              : `${filteredTickets.length} ticket${filteredTickets.length === 1 ? "" : "s"}` +
+                (desk?.syncedAt && !desk.error ? ` · synced with DE Desk ${formatDeskTimestamp(desk.syncedAt)}` : "")
+          }
           flush
         >
           <DataTable<Ticket>

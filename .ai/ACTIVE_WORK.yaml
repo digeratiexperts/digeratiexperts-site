@@ -2306,7 +2306,7 @@ claims:
       - .claude/skills/msp-ai-kit/windows/packaging/Deploy-DETechConsole.ps1, Install-DETechConsole.ps1 (the example file name only)
       - .claude/skills/msp-ai-kit/windows/console/catalog/cheatsheet.json (the new hub group and the -Page list only)
       - docs/DE-SYSTEM-INTEGRATION.md (three Tech Tool rows, the BUILT status key and the DE Tech Tool section only)
-    status: active
+    status: verified-live
     started: 2026-10-04
     note: >-
       Joe, 2026-10-04: "go, do 1 and 2 then do 3 and then 4". DE Microsoft
@@ -2354,3 +2354,12 @@ claims:
       2026-10-05: open PRs 455, 453, 448, 445, 444, 441, 433 touch none of
       these files; 453, 444 and 433 also edit this ledger (claims added
       elsewhere, this one is appended at the end).
+      RELEASED 2026-10-05: Joe, "merge 438 and 343". Merged as 12c3b5f4 (PR
+      438). Tool-only: nothing deploys from this repository; it ships through
+      New-DEReleasePackage.ps1. All CI passed on a9d8b549 and on main at
+      12c3b5f4, including Windows PowerShell 5.1 and the WPF smoke render.
+      The DE Tech Tool 1.10.3 release zip (build DE-1.10.3-202610050024-63d4fc,
+      sourceCommit 12c3b5f4) and the DE Microsoft Admin 0.6.0 zip were built
+      from 12c3b5f4. Item 4 shipped in Intelligence-Hub PR 343 (master
+      44185ad8: regenerated API client, frontend bundle byte-identical).
+      VERIFIED LIVE as a Tool release. Files released.

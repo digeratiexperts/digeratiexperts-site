@@ -3,13 +3,26 @@
  * Email notifications via ZeptoMail transactional email service
  */
 
+import { escapeEmailHtml } from "./emailEscape";
 import { logger } from "../logger";
 import { shouldBlockMutation } from "../stagingReviewGuard";
+import { COMPANY } from "@shared/companyContact";
 
 const ZEPTOMAIL_API_URL = "https://api.zeptomail.com/v1.1/email";
 const FROM_EMAIL = "noreply@digeratiexperts.com";
 const FROM_NAME = "Digerati Experts";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "info@digeratiexperts.com";
+
+/** Visitor-supplied text goes into these emails escaped. */
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]!);
+}
+
+/** Lead address and sales (#243 owner decision: both), without duplicates. */
+export function solutionFallbackRecipients(): string[] {
+  const sales = process.env.SALES_LEAD_EMAIL || COMPANY.salesEmail;
+  return Array.from(new Set([ADMIN_EMAIL, sales].map((address) => address.trim().toLowerCase()).filter(Boolean)));
+}
 
 interface EmailOptions {
   to: string | string[];
@@ -148,6 +161,75 @@ function baseEmailTemplate(content: string, title: string): string {
 
 // Notification Functions
 export const notificationService = {
+  /**
+   * A solution request the database could not take (#243). Sent straight to the
+   * lead address and sales, not through the event bus, whose listener also
+   * needs the database. Carries the full request so nothing depends on recovery.
+   */
+  async sendSolutionRequestFallback(request: {
+    reference: string;
+    contactName: string;
+    contactEmail: string;
+    contactPhone: string;
+    organizationName: string;
+    description: string;
+  }): Promise<boolean> {
+    const row = (label: string, value: string) =>
+      value ? `<tr><td style="padding: 8px 0; color: #888;">${label}:</td><td>${escapeHtml(value)}</td></tr>` : "";
+    const content = `
+      <h2>Solution request ${escapeHtml(request.reference)} (saved outside the database)</h2>
+      <p>The website database was unavailable when this request was submitted. It is held on the server and will be written to the database automatically when it recovers. Act on it from this email.</p>
+      <table style="width: 100%; margin: 20px 0;">
+        ${row("Reference", request.reference)}
+        ${row("Name", request.contactName)}
+        ${row("Email", request.contactEmail)}
+        ${row("Phone", request.contactPhone)}
+        ${row("Company", request.organizationName)}
+      </table>
+      <p style="background: #1a1a2e; padding: 15px; border-radius: 6px; white-space: pre-wrap;">${escapeHtml(request.description)}</p>
+    `;
+    return sendEmail({
+      to: solutionFallbackRecipients(),
+      subject: `Solution request ${request.reference}: ${request.organizationName || request.contactName}`,
+      htmlBody: baseEmailTemplate(content, "Solution request"),
+      textBody: [
+        `Solution request ${request.reference} (saved outside the database)`,
+        `Name: ${request.contactName}`,
+        `Email: ${request.contactEmail}`,
+        `Phone: ${request.contactPhone}`,
+        `Company: ${request.organizationName}`,
+        "",
+        request.description,
+      ].join("\n"),
+    });
+  },
+
+  /** The visitor's own confirmation with their reference (#243 owner decision: always). */
+  async sendSolutionRequestAcknowledgement(request: {
+    reference: string;
+    contactName: string;
+    contactEmail: string;
+  }): Promise<boolean> {
+    const firstName = request.contactName.trim().split(/\s+/)[0] || "there";
+    const content = `
+      <h2>We received your solution request</h2>
+      <p>Hi ${escapeHtml(firstName)},</p>
+      <p>Thank you. Your reference is <span class="highlight">${escapeHtml(request.reference)}</span>. Quote it if you contact us.</p>
+      <p>Digerati Experts will confirm package fit, scope, fulfillment and pricing with you before you commit to anything.</p>
+    `;
+    return sendEmail({
+      to: request.contactEmail,
+      subject: `Your Digerati Experts solution request ${request.reference}`,
+      htmlBody: baseEmailTemplate(content, "Solution request received"),
+      textBody: [
+        `Hi ${firstName},`,
+        "",
+        `Thank you. Your reference is ${request.reference}. Quote it if you contact us.`,
+        "Digerati Experts will confirm package fit, scope, fulfillment and pricing with you before you commit to anything.",
+      ].join("\n"),
+    });
+  },
+
   async sendNewLeadNotification(lead: {
     name: string;
     email: string;
@@ -160,13 +242,13 @@ export const notificationService = {
       <h2>New Lead Received</h2>
       <p>A new lead has been submitted through the website:</p>
       <table style="width: 100%; margin: 20px 0;">
-        <tr><td style="padding: 8px 0; color: #888;">Name:</td><td class="highlight">${lead.name}</td></tr>
-        <tr><td style="padding: 8px 0; color: #888;">Email:</td><td class="highlight">${lead.email}</td></tr>
-        ${lead.company ? `<tr><td style="padding: 8px 0; color: #888;">Company:</td><td>${lead.company}</td></tr>` : ''}
-        ${lead.phone ? `<tr><td style="padding: 8px 0; color: #888;">Phone:</td><td>${lead.phone}</td></tr>` : ''}
-        ${lead.source ? `<tr><td style="padding: 8px 0; color: #888;">Source:</td><td>${lead.source}</td></tr>` : ''}
+        <tr><td style="padding: 8px 0; color: #888;">Name:</td><td class="highlight">${escapeEmailHtml(lead.name)}</td></tr>
+        <tr><td style="padding: 8px 0; color: #888;">Email:</td><td class="highlight">${escapeEmailHtml(lead.email)}</td></tr>
+        ${lead.company ? `<tr><td style="padding: 8px 0; color: #888;">Company:</td><td>${escapeEmailHtml(lead.company)}</td></tr>` : ''}
+        ${lead.phone ? `<tr><td style="padding: 8px 0; color: #888;">Phone:</td><td>${escapeEmailHtml(lead.phone)}</td></tr>` : ''}
+        ${lead.source ? `<tr><td style="padding: 8px 0; color: #888;">Source:</td><td>${escapeEmailHtml(lead.source)}</td></tr>` : ''}
       </table>
-      ${lead.message ? `<p><strong>Message:</strong></p><p style="background: #1a1a2e; padding: 15px; border-radius: 6px;">${lead.message}</p>` : ''}
+      ${lead.message ? `<p><strong>Message:</strong></p><p style="background: #1a1a2e; padding: 15px; border-radius: 6px; white-space: pre-wrap;">${escapeEmailHtml(lead.message)}</p>` : ''}
     `;
 
     return sendEmail({
@@ -184,14 +266,14 @@ export const notificationService = {
     total: number;
   }): Promise<boolean> {
     const itemsHtml = data.items
-      .map(item => `<tr><td style="padding: 8px;">${item.name}</td><td style="padding: 8px; text-align: right;">$${item.price.toFixed(2)}</td></tr>`)
+      .map(item => `<tr><td style="padding: 8px;">${escapeEmailHtml(item.name)}</td><td style="padding: 8px; text-align: right;">$${item.price.toFixed(2)}</td></tr>`)
       .join('');
 
     const content = `
       <h2>Quote Request Received</h2>
-      <p>Hi ${data.name},</p>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
       <p>Thank you for your quote request. We've received it and will get back to you within 24 hours.</p>
-      <p><strong>Quote ID:</strong> <span class="highlight">${data.quoteId}</span></p>
+      <p><strong>Quote ID:</strong> <span class="highlight">${escapeEmailHtml(data.quoteId)}</span></p>
       <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
         <tr style="background: #1a1a2e;"><th style="padding: 12px; text-align: left;">Item</th><th style="padding: 12px; text-align: right;">Price</th></tr>
         ${itemsHtml}
@@ -215,14 +297,14 @@ export const notificationService = {
     total: number;
   }): Promise<boolean> {
     const itemsHtml = data.items
-      .map(item => `<tr><td style="padding: 8px;">${item.name}</td><td style="padding: 8px; text-align: center;">${item.quantity}</td><td style="padding: 8px; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td></tr>`)
+      .map(item => `<tr><td style="padding: 8px;">${escapeEmailHtml(item.name)}</td><td style="padding: 8px; text-align: center;">${escapeEmailHtml(item.quantity)}</td><td style="padding: 8px; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td></tr>`)
       .join('');
 
     const content = `
       <h2>Order Confirmed</h2>
-      <p>Hi ${data.name},</p>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
       <p>Thank you for your order! We're processing it now.</p>
-      <p><strong>Order ID:</strong> <span class="highlight">${data.orderId}</span></p>
+      <p><strong>Order ID:</strong> <span class="highlight">${escapeEmailHtml(data.orderId)}</span></p>
       <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
         <tr style="background: #1a1a2e;"><th style="padding: 12px; text-align: left;">Item</th><th style="padding: 12px; text-align: center;">Qty</th><th style="padding: 12px; text-align: right;">Price</th></tr>
         ${itemsHtml}
@@ -248,15 +330,15 @@ export const notificationService = {
   }): Promise<boolean> {
     const content = `
       <h2>Support Ticket Update</h2>
-      <p>Hi ${data.name},</p>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
       <p>Your support ticket has been updated:</p>
       <table style="width: 100%; margin: 20px 0;">
-        <tr><td style="padding: 8px 0; color: #888;">Ticket ID:</td><td class="highlight">${data.ticketId}</td></tr>
-        <tr><td style="padding: 8px 0; color: #888;">Subject:</td><td>${data.subject}</td></tr>
-        <tr><td style="padding: 8px 0; color: #888;">Status:</td><td class="highlight">${data.status}</td></tr>
+        <tr><td style="padding: 8px 0; color: #888;">Ticket ID:</td><td class="highlight">${escapeEmailHtml(data.ticketId)}</td></tr>
+        <tr><td style="padding: 8px 0; color: #888;">Subject:</td><td>${escapeEmailHtml(data.subject)}</td></tr>
+        <tr><td style="padding: 8px 0; color: #888;">Status:</td><td class="highlight">${escapeEmailHtml(data.status)}</td></tr>
       </table>
-      ${data.message ? `<p><strong>Latest Update:</strong></p><p style="background: #1a1a2e; padding: 15px; border-radius: 6px;">${data.message}</p>` : ''}
-      <a href="https://portal.digeratiexperts.com/portal/tickets/${data.ticketId}" class="button">View Ticket</a>
+      ${data.message ? `<p><strong>Latest Update:</strong></p><p style="background: #1a1a2e; padding: 15px; border-radius: 6px; white-space: pre-wrap;">${escapeEmailHtml(data.message)}</p>` : ''}
+      <a href="https://portal.digeratiexperts.com/portal/tickets/${escapeEmailHtml(data.ticketId)}" class="button">View Ticket</a>
     `;
 
     return sendEmail({
@@ -280,13 +362,13 @@ export const notificationService = {
 
     const detailsHtml = data.details
       ? Object.entries(data.details)
-          .map(([key, value]) => `<tr><td style="padding: 4px 8px; color: #888;">${key}:</td><td>${JSON.stringify(value)}</td></tr>`)
+          .map(([key, value]) => `<tr><td style="padding: 4px 8px; color: #888;">${escapeEmailHtml(key)}:</td><td>${escapeEmailHtml(JSON.stringify(value))}</td></tr>`)
           .join('')
       : '';
 
     const content = `
-      <h2 style="color: ${typeColors[data.type]};">[${data.type.toUpperCase()}] ${data.title}</h2>
-      <p>${data.message}</p>
+      <h2 style="color: ${typeColors[data.type]};">[${escapeEmailHtml(data.type.toUpperCase())}] ${escapeEmailHtml(data.title)}</h2>
+      <p style="white-space: pre-wrap;">${escapeEmailHtml(data.message)}</p>
       ${detailsHtml ? `<table style="width: 100%; margin: 20px 0; background: #1a1a2e; border-radius: 6px;">${detailsHtml}</table>` : ''}
       <p style="color: #888; font-size: 12px;">Timestamp: ${new Date().toISOString()}</p>
     `;
@@ -305,9 +387,9 @@ export const notificationService = {
   }): Promise<boolean> {
     const content = `
       <h2>Password Reset Request</h2>
-      <p>Hi ${data.name},</p>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
       <p>We received a request to reset your password. Click the button below to create a new password:</p>
-      <a href="${data.resetLink}" class="button">Reset Password</a>
+      <a href="${escapeEmailHtml(data.resetLink)}" class="button">Reset Password</a>
       <p style="color: #888; font-size: 12px; margin-top: 20px;">This link will expire in 1 hour. If you didn't request this, please ignore this email.</p>
     `;
 
@@ -324,7 +406,7 @@ export const notificationService = {
   }): Promise<boolean> {
     const content = `
       <h2>Welcome to Digerati Experts!</h2>
-      <p>Hi ${data.name},</p>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
       <p>Thank you for creating an account with Digerati Experts. We're excited to have you on board!</p>
       <p>With your account, you can:</p>
       <ul style="margin: 20px 0; padding-left: 20px;">
@@ -350,10 +432,10 @@ export const notificationService = {
   }): Promise<boolean> {
     const content = `
       <h2>Your Login Verification Code</h2>
-      <p>Hi ${data.name},</p>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
       <p>Your one-time verification code is:</p>
       <div style="text-align: center; margin: 24px 0;">
-        <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #8b5cf6; background: #1a1a2e; padding: 16px 32px; border-radius: 8px; display: inline-block;">${data.code}</span>
+        <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #8b5cf6; background: #1a1a2e; padding: 16px 32px; border-radius: 8px; display: inline-block;">${escapeEmailHtml(data.code)}</span>
       </div>
       <p style="color: #888; font-size: 13px;">This code expires in 10 minutes. If you didn't request this, please secure your account immediately.</p>
     `;
@@ -372,9 +454,9 @@ export const notificationService = {
   }): Promise<boolean> {
     const content = `
       <h2>Verify Your Email Address</h2>
-      <p>Hi ${data.name},</p>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
       <p>Thanks for signing up for the Digerati Experts client portal. Please verify your email address to activate your account:</p>
-      <a href="${data.verificationLink}" class="button">Verify My Email</a>
+      <a href="${escapeEmailHtml(data.verificationLink)}" class="button">Verify My Email</a>
       <p style="color: #888; font-size: 12px; margin-top: 20px;">This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.</p>
     `;
 
