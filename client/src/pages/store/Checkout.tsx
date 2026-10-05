@@ -18,6 +18,7 @@ import { readGuidedSession } from "@/lib/storeGuidedSession";
 import { writeContactHandoff } from "@/lib/warehouseContactHandoff";
 import { warehousePath } from "@/lib/warehousePaths";
 import { ADDRESS_ERRORS, missingBillingAddress } from "@/lib/billingAddress";
+import { STRIPE_TAX_STATUS_LABEL, checkoutTaxNote, useStripeTaxReadiness } from "@/hooks/useStripeTaxReadiness";
 
 import {
   ArrowLeft,
@@ -52,6 +53,7 @@ const Checkout = () => {
   const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("zoho");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const taxReadiness = useStripeTaxReadiness();
 
   useSEO({
     title: "Staff Pay Now | Digital Warehouse",
@@ -470,6 +472,17 @@ const Checkout = () => {
                         <p className="text-sm text-white/60 mt-1">
                           Charge eligible workshop lines. Not a public Store default.
                         </p>
+                        {taxReadiness ? (
+                          // Staff know before they try: a paused or incomplete Stripe Tax setup
+                          // means Pay Now will switch to a quote (server/services/stripeTaxReadiness.ts).
+                          <p className="text-xs text-white/55 mt-2" data-testid="text-paynow-tax-status" data-status={taxReadiness.status}>
+                            <span className="font-mono text-de-accent-ink">{STRIPE_TAX_STATUS_LABEL[taxReadiness.status]}.</span>{" "}
+                            {checkoutTaxNote(taxReadiness)}{" "}
+                            <Link href="/internal/warehouse/vendors" className="underline underline-offset-2 hover:text-white">
+                              Status
+                            </Link>
+                          </p>
+                        ) : null}
                       </div>
                       {paymentMethod === "zoho" && (
                         <Check className="w-5 h-5 text-de-accent-ink" />
