@@ -57,6 +57,7 @@ const EXACT = new Set([
   "/industries/real-estate",
   "/industries/nonprofits",
   "/industries/animal-hospitals",
+  "/the-box",
   "/resources",
   "/resources/case-studies",
   "/resources/blog",
