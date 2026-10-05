@@ -112,6 +112,18 @@ import { registerPortalPhoneRoutes } from "./integrations/phone/routes";
 import { registerPortalShippingRoutes } from "./integrations/shipping/routes";
 import { registerPortalDeskAgentRoutes } from "./portalDeskAgentRoutes";
 import { canAccessPortalTicket } from "./portalTicketAccess";
+import {
+  canSeeDeskTicket,
+  createDeskTicketSync,
+  deskConversationsToComments,
+  deskHtmlToText,
+  deskTicketToListed,
+  mapDeskPriority,
+  mapDeskStatus,
+  mergePortalAndDeskTickets,
+  parseDeskPortalTicketId,
+  startDeskTicketSyncWorker,
+} from "./portalDeskTickets";
 import { RESEND_COOLDOWN_MS } from "./portalVerificationThrottle";
 import {
   initPortalApprovals,
@@ -772,6 +784,19 @@ export async function registerRoutes(app: Express) {
     commit: (client: any) => portalAuthCommitClient(client),
     values: () => portalAuthListClients(),
   };
+
+  // Live Zoho Desk tickets per company (server/portalDeskTickets.ts). Page loads
+  // read a 60s cache; the worker re-reads recently viewed companies every 5 min.
+  const deskTicketSync = createDeskTicketSync({
+    api: zohoDeskService,
+    isConfigured: () => zohoClient.isConfigured(),
+    log: (message, meta) => console.log(`[DESK-SYNC] ${message}`, meta ?? ""),
+  });
+  startDeskTicketSyncWorker(
+    deskTicketSync,
+    Number(process.env.PORTAL_DESK_TICKET_SYNC_MS ?? 5 * 60_000),
+    (message, meta) => console.log(`[DESK-SYNC] ${message}`, meta ?? ""),
+  );
   
   // Production: durable-authoritative writes fail closed (503) when the database is down (#248).
   app.use(durableMutationGate);
@@ -1812,34 +1837,119 @@ export async function registerRoutes(app: Express) {
   });
 
   // ===== PORTAL TICKET ROUTES =====
-  // Get all tickets for user (admins see all local tickets)
+  // A company's tickets: its portal tickets plus the live ones in its Zoho Desk
+  // account. Clients see their company (subject to canAccessPortalTicket /
+  // canSeeDeskTicket); an admin viewing as a company sees that company; an
+  // admin not viewing as anyone sees every local ticket.
   app.get("/api/portal/tickets", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const isAdmin = req.user?.role === "admin";
-      const tickets = await storage.getPortalTickets(isAdmin ? undefined : req.userId || "");
+      const scope = portalCompanyContext(req);
+      const scopedClientId = isAdmin ? scope.impersonatingCompanyId : scope.companyId;
+
+      const toListed = (t: any) => {
+        const org = annotateTicketOrg(t, (id) => portalClients.get(id));
+        return {
+          id: t.id,
+          ticketNumber: t.ticketNumber || `#TK${String(t.id).padStart(3, '0')}`,
+          subject: t.subject,
+          description: t.description,
+          status: t.status,
+          priority: t.priority,
+          category: t.category || "General",
+          createdAt: t.createdAt,
+          updatedAt: t.updatedAt,
+          clientId: t.clientId || null,
+          companyName: org.companyName,
+          isInternal: org.isInternal,
+          zohoTicketId: parseZohoTicketId(t.assignedTo),
+        };
+      };
+
+      if (isAdmin && !scopedClientId) {
+        const tickets = await storage.getPortalTickets(undefined);
+        return res.json({
+          tickets: tickets.map(toListed).map(({ zohoTicketId: _z, ...t }) => ({ ...t, source: "portal" })),
+          desk: { scope: "all-local", syncedAt: null, error: null },
+        });
+      }
+
+      if (!scopedClientId) {
+        // A signed-in user with no company: only what they opened themselves.
+        const own = await storage.getPortalTickets(req.userId || "");
+        return res.json({
+          tickets: own.map(toListed).map(({ zohoTicketId: _z, ...t }) => ({ ...t, source: "portal" })),
+          desk: { scope: "own", syncedAt: null, error: null },
+        });
+      }
+
+      const allLocal = await storage.getPortalTickets(undefined);
+      const local = allLocal
+        .filter((t) => t.clientId === scopedClientId)
+        .filter((t) => isAdmin || canAccessPortalTicket(req.user, t))
+        .map(toListed);
+
+      const client = portalClients.get(scopedClientId);
+      const desk = client
+        ? await deskTicketSync.getTicketsForClient({
+            id: client.id,
+            companyName: client.companyName,
+            contactEmail: client.contactEmail,
+          })
+        : { accountId: null, tickets: [], syncedAt: null, error: null };
+      const visibleDesk = isAdmin ? desk.tickets : desk.tickets.filter((t) => canSeeDeskTicket(req.user, t));
+
       res.json({
-        tickets: tickets.map(t => {
-          const org = annotateTicketOrg(t, (id) => portalClients.get(id));
-          return {
-            id: t.id,
-            ticketNumber: t.ticketNumber || `#TK${String(t.id).padStart(3, '0')}`,
-            subject: t.subject,
-            description: t.description,
-            status: t.status,
-            priority: t.priority,
-            category: t.category || "General",
-            createdAt: t.createdAt,
-            updatedAt: t.updatedAt,
-            clientId: t.clientId || null,
-            companyName: org.companyName,
-            isInternal: org.isInternal,
-          };
+        tickets: mergePortalAndDeskTickets(local, visibleDesk, {
+          clientId: scopedClientId,
+          companyName: client?.companyName || scope.companyName || null,
         }),
+        desk: {
+          scope: "company",
+          linked: !!desk.accountId,
+          syncedAt: desk.syncedAt ? new Date(desk.syncedAt).toISOString() : null,
+          error: desk.error,
+        },
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
+
+  /**
+   * Load a Desk-only ticket (`desk-<id>`) for the caller, or answer the request.
+   * Allowed when the ticket sits in the Desk account of the company the caller
+   * is scoped to and canSeeDeskTicket passes; an unscoped admin may read any.
+   */
+  async function loadScopedDeskTicket(req: AuthenticatedRequest, res: Response, deskTicketId: string) {
+    if (!zohoClient.isConfigured()) {
+      res.status(404).json({ error: "Ticket not found" });
+      return null;
+    }
+    const isAdmin = req.user?.role === "admin";
+    const scope = portalCompanyContext(req);
+    const scopedClientId = isAdmin ? scope.impersonatingCompanyId : scope.companyId;
+    const ticket = await zohoDeskService.getTicketById(deskTicketId);
+    if (!ticket) {
+      res.status(404).json({ error: "Ticket not found" });
+      return null;
+    }
+    const client = scopedClientId ? portalClients.get(scopedClientId) : undefined;
+    if (!(isAdmin && !scopedClientId)) {
+      const accountId = client
+        ? await deskTicketSync.accountIdFor({ id: client.id, companyName: client.companyName, contactEmail: client.contactEmail })
+        : null;
+      if (!accountId || ticket.accountId !== accountId) {
+        res.status(404).json({ error: "Ticket not found" });
+        return null;
+      }
+      if (!isAdmin && !canSeeDeskTicket(req.user, ticket)) {
+        res.status(403).json({ error: "Access denied" });
+        return null;
+      }
+    }
+    return { ticket, clientId: client?.id || null, companyName: client?.companyName || null };
+  }
 
   // Create new ticket
   app.post("/api/portal/tickets", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
@@ -2029,6 +2139,28 @@ export async function registerRoutes(app: Express) {
   app.get("/api/portal/tickets/:id", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
+      const deskTicketId = parseDeskPortalTicketId(id);
+      if (deskTicketId) {
+        const loaded = await loadScopedDeskTicket(req, res, deskTicketId);
+        if (!loaded) return;
+        const isAdmin = req.user?.role === "admin";
+        let conversations: Awaited<ReturnType<typeof zohoDeskService.getTicketConversations>> = [];
+        try {
+          conversations = await zohoDeskService.getTicketConversations(deskTicketId);
+        } catch (convError: any) {
+          console.warn("Could not read Desk conversations:", convError?.message || convError);
+        }
+        const listed = deskTicketToListed(loaded.ticket, { clientId: loaded.clientId, companyName: loaded.companyName });
+        return res.json({
+          ticket: {
+            ...listed,
+            description: deskHtmlToText(loaded.ticket.description),
+            status: mapDeskStatus(loaded.ticket.status, loaded.ticket.statusType),
+            priority: mapDeskPriority(loaded.ticket.priority),
+            comments: deskConversationsToComments(conversations, { isAdmin, viewerEmail: req.user?.email }),
+          },
+        });
+      }
       const ticket = await storage.getPortalTicket(id);
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
@@ -2074,6 +2206,22 @@ export async function registerRoutes(app: Express) {
       
       if (!content) {
         return res.status(400).json({ error: "Content is required" });
+      }
+
+      const deskTicketId = parseDeskPortalTicketId(id);
+      if (deskTicketId) {
+        const loaded = await loadScopedDeskTicket(req, res, deskTicketId);
+        if (!loaded) return;
+        const author = req.user?.fullName || req.user?.email || "Client";
+        try {
+          await zohoDeskService.addPublicTicketComment(deskTicketId, `${author}:\n${String(content).slice(0, 8000)}`);
+        } catch (deskError: any) {
+          console.warn("Could not post reply to Zoho Desk:", deskError?.response?.data || deskError?.message);
+          return res.status(502).json({ error: "We couldn't send that reply just now. Please try again in a moment." });
+        }
+        res.json({ success: true });
+        logSecurityEvent("TICKET_COMMENT_ADDED", req, { ticketId: id, zohoTicketId: deskTicketId });
+        return;
       }
 
       const ticket = await storage.getPortalTicket(id);
@@ -4268,7 +4416,7 @@ export async function registerRoutes(app: Express) {
       impersonatingCompanyId: jwtImpersonation || impersonatingCompanyId,
       getClient: (id) => portalClients.get(id),
     });
-    return { companyId, companyName, hubAccountId };
+    return { companyId, companyName, hubAccountId, impersonatingCompanyId: jwtImpersonation || impersonatingCompanyId };
   }
 
   app.get("/api/portal/contracts", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {

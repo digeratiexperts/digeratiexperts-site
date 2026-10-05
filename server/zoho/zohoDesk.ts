@@ -23,6 +23,9 @@ export interface ZohoTicket {
   priority: string;
   channel: string;
   contactId: string;
+  accountId?: string;
+  email?: string;
+  statusType?: string;
   departmentId: string;
   assigneeId: string;
   createdTime: string;
@@ -316,6 +319,81 @@ class ZohoDeskService {
       );
     }
   }
+
+  /** Like addTicketComment, but throws so the caller can tell the client it failed. */
+  async addPublicTicketComment(ticketId: string, content: string): Promise<void> {
+    const client = await zohoClient.getDeskClient();
+    const orgId = await this.getOrgId();
+    await client.post(
+      `/tickets/${ticketId}/comments`,
+      { content, isPublic: true },
+      { headers: { orgId } },
+    );
+  }
+
+  /** Desk accounts whose name matches `accountName`. Throws on transport/auth errors. */
+  async searchAccountsByName(accountName: string): Promise<ZohoDeskAccount[]> {
+    const client = await zohoClient.getDeskClient();
+    const orgId = await this.getOrgId();
+    const response = await client.get('/accounts/search', {
+      headers: { orgId },
+      params: { accountName, limit: 10 },
+    });
+    return response.data?.data || [];
+  }
+
+  /**
+   * Every ticket filed under a Desk account, newest activity first, paged to
+   * `max`. Throws on transport/auth errors so callers can keep a stale cache
+   * instead of showing an empty list.
+   */
+  async getTicketsByAccount(accountId: string, max = 200): Promise<ZohoTicket[]> {
+    const client = await zohoClient.getDeskClient();
+    const orgId = await this.getOrgId();
+    const pageSize = 100;
+    const out: ZohoTicket[] = [];
+    for (let from = 0; from < max; from += pageSize) {
+      const response = await client.get(`/accounts/${accountId}/tickets`, {
+        headers: { orgId },
+        params: { from, limit: Math.min(pageSize, max - from), sortBy: '-modifiedTime' },
+      });
+      const page: ZohoTicket[] = response.data?.data || [];
+      out.push(...page);
+      if (page.length < pageSize) break;
+    }
+    return out;
+  }
+
+  /** Threads and comments on a ticket, as Desk returns them. */
+  async getTicketConversations(ticketId: string): Promise<ZohoDeskConversation[]> {
+    const client = await zohoClient.getDeskClient();
+    const orgId = await this.getOrgId();
+    const response = await client.get(`/tickets/${ticketId}/conversations`, {
+      headers: { orgId },
+      params: { limit: 100 },
+    });
+    return response.data?.data || [];
+  }
+}
+
+export interface ZohoDeskAccount {
+  id: string;
+  accountName: string;
+}
+
+export interface ZohoDeskConversation {
+  id: string;
+  type: string;
+  /** Threads carry a summary; comments carry content. */
+  summary?: string;
+  content?: string;
+  direction?: string;
+  isPublic?: boolean;
+  visibility?: string;
+  createdTime?: string;
+  commentedTime?: string;
+  author?: { name?: string; type?: string; email?: string } | null;
+  commenter?: { name?: string; type?: string; email?: string } | null;
 }
 
 export const zohoDeskService = new ZohoDeskService();
