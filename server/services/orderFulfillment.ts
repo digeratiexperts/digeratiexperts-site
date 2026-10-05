@@ -120,6 +120,7 @@ async function createFulfillmentDeskTicket(order: StoreOrder, items: LineItem[])
     }
 
     const ticket = await zohoDeskService.createTicket({
+      source: "order-fulfillment",
       subject: `Store order fulfillment: ${order.orderNumber}`,
       description: buildDeskDescription(order, items),
       contactId,

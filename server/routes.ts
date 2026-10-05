@@ -1603,6 +1603,7 @@ export async function registerRoutes(app: Express) {
       if (zohoClient.isConfigured()) {
         const requester = findUserById(bundle.request.requesterUserId);
         await zohoDeskService.createTicket({
+          source: "internal-request",
           subject: `[Approved] ${bundle.request.title}`,
           description: bundle.request.description,
           email: requester?.email,
@@ -1956,6 +1957,7 @@ export async function registerRoutes(app: Express) {
             ? portalClients.get(resolvedClientId)?.hubAccountId
             : null;
           const zohoTicket = await zohoDeskService.createTicket({
+            source: "client-portal",
             subject,
             description: hubAccountId
               ? `${description}\n\ncanonicalAccountId: ${hubAccountId}`
@@ -4966,6 +4968,7 @@ export async function registerRoutes(app: Express) {
         try {
           if (zohoDeskService?.createTicket) {
             await zohoDeskService.createTicket({
+              source: "advisor-chat",
               subject: `Advisor chat message from ${email}`,
               description: `${visitorMessage}\n\n---\n${summary}`,
               email,
@@ -5837,6 +5840,7 @@ export async function registerRoutes(app: Express) {
       }
       
       const ticket = await zohoDeskService.createTicket({
+        source: "client-portal",
         subject,
         description,
         contactId, // Use contactId if we found one

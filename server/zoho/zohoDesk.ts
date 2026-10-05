@@ -1,4 +1,11 @@
 import { zohoClient } from './zohoClient';
+import {
+  clampPriorityForSource,
+  deskSourceCustomField,
+  wasPriorityClamped,
+  withDeskProvenance,
+  type DeskTicketSource,
+} from "@shared/deskTicketSource";
 
 /** Zoho Desk requires lastName when creating a contact inline on a ticket. */
 export function splitVisitorName(
@@ -127,9 +134,18 @@ class ZohoDeskService {
     }
   }
 
+  /**
+   * Create a Desk ticket.
+   *
+   * `source` is required: every caller has to say which surface raised the
+   * ticket, so triage can tell an anonymous submission from a signed-in
+   * client's. Making it optional would let a new call site silently go back to
+   * being indistinguishable, which is the bug this parameter exists to fix.
+   */
   async createTicket(data: {
     subject: string;
     description: string;
+    source: DeskTicketSource;
     contactId?: string;
     email?: string;
     firstName?: string;
@@ -143,13 +159,37 @@ class ZohoDeskService {
       
       const departmentId = data.departmentId || await this.getDefaultDepartmentId();
       
+      // The description carries the provenance stamp because it needs no Desk
+      // configuration. `channel` stays 'Web' deliberately: Desk only accepts
+      // channels enabled for the org, and a rejected value fails the whole
+      // create — losing a real ticket to tighten a label is a bad trade.
+      // Priority is capped here rather than at any one route so a new caller
+      // cannot reintroduce the hole: an anonymous submitter ticking "Critical"
+      // on the public form must not land in the out-of-hours queue.
+      const priority = clampPriorityForSource(data.priority, data.source);
+      if (wasPriorityClamped(data.priority, data.source)) {
+        console.warn('[DESK] Priority capped for unverified source', {
+          source: data.source,
+          requested: data.priority,
+          applied: priority,
+        });
+      }
+
       const ticketData: Record<string, any> = {
         subject: data.subject,
-        description: data.description,
+        description: withDeskProvenance(data.description, data.source),
         departmentId,
-        priority: data.priority || 'Medium',
+        priority,
         channel: 'Web',
       };
+
+      const sourceField = deskSourceCustomField(
+        data.source,
+        process.env.ZOHO_DESK_SOURCE_FIELD,
+      );
+      if (sourceField) {
+        ticketData.cf = { ...(ticketData.cf as object | undefined), ...sourceField };
+      }
 
       if (data.contactId) {
         ticketData.contactId = data.contactId;
