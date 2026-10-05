@@ -30,6 +30,29 @@
 
 version: 2
 claims:
+  - id: homepage-response-promise
+    owner: claude
+    subsystem: marketing-copy
+    branch: claude/beautiful-hopper-1uem0k
+    base_sha: f4a9bc3
+    files:
+      - client/src/pages/versions/v8/sections/13-lead-form.tsx (the success toast string only)
+      - client/src/pages/versions/v8/sections/16-contact-footer.tsx (the success toast string only)
+      - docs/CLAIMS-REGISTER.md (the three "24 hours" rows only)
+    status: active
+    started: 2026-10-05
+    note: >-
+      Follow-up to response-promise-one-business-day (PR 456) under Joe's
+      2026-10-05 "you make up the answers". The live homepage (Version 8,
+      de-homepage-v8 verified-live) still promised "within 24 hours" in its
+      lead-form and contact toasts; both now say "within one business day".
+      Overlaps: de-site-v2-scrollcraft's broad versions/** glob (same owner,
+      older experiment lane) and site-atmosphere-and-plates (PR 454), which
+      adds lines elsewhere in 13-lead-form.tsx, so the two merge cleanly.
+      The register rows were claimed by de-eight-block-correction, whose
+      branch merged via PR 199 on 2026-09-06; only the three response-time
+      rows change. Not touched: the quote email in notificationService.ts
+      (open PRs 448 and 445) and the frozen v1/v3/v7 snapshots.
   - id: response-promise-one-business-day
     owner: claude
     subsystem: marketing-copy
