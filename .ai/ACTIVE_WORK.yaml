@@ -41,7 +41,7 @@ claims:
       - client/src/pages/sections/DigeratiLeadFormSection.tsx, DigeratiHeroSection.tsx, LeadCaptureBand.tsx, DigeratiContactSection.tsx (the success toast only)
       - client/src/pages/solutions/OfficePage.tsx, ManagedWorkplace.tsx, BackupDisasterRecovery.tsx (the quote-turnaround sentence only)
       - artifacts/visual-qa/response-promise/**
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       Joe, 2026-10-05: "you make up the answers and i will fix things later",
@@ -54,6 +54,10 @@ claims:
       de-site-v2-scrollcraft), docs/CLAIMS-REGISTER.md (claimed by
       de-eight-block-correction) and the quote email in notificationService.ts
       (open PRs 448 and 445).
+      MERGED as c129372 (PR 456). VERIFIED LIVE 2026-10-05: release.txt
+      serves c129372 and the production bundles carry "within one business
+      day" for every edited string; only the homepage version bundles
+      (versions/**, out of scope) still promise 24 hours.
   - id: quiz-lead-call-flow
     issue: 449
     owner: claude
