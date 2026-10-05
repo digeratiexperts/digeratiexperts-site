@@ -548,7 +548,7 @@ export default function BackupDisasterRecovery() {
 
       <ClosingCta
         title="Ready to Know You Can Recover?"
-        lede="Schedule a BCDR assessment. We'll scope your environment and provide a quote within 24 hours."
+        lede="Schedule a BCDR assessment. We'll scope your environment and provide a quote within one business day."
         primary={{ label: CTA.primary, href: "/book", testId: "btn-final-assessment" }}
         phoneTestId="btn-final-call"
       />

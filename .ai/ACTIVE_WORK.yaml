@@ -30,6 +30,30 @@
 
 version: 2
 claims:
+  - id: response-promise-one-business-day
+    owner: claude
+    subsystem: marketing-copy
+    branch: claude/beautiful-hopper-1uem0k
+    base_sha: 64e3a2c
+    files:
+      - client/src/pages/QuoteConfirmation.tsx (the next-steps sentence only)
+      - client/src/pages/locations/LocationServicePage.tsx (the success toast only)
+      - client/src/pages/sections/DigeratiLeadFormSection.tsx, DigeratiHeroSection.tsx, LeadCaptureBand.tsx, DigeratiContactSection.tsx (the success toast only)
+      - client/src/pages/solutions/OfficePage.tsx, ManagedWorkplace.tsx, BackupDisasterRecovery.tsx (the quote-turnaround sentence only)
+      - artifacts/visual-qa/response-promise/**
+    status: active
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "you make up the answers and i will fix things later",
+      delegating the open decisions. docs/CLAIMS-REGISTER.md marks the
+      "within 24 hours" contact and quote promises Unsupported with the
+      instruction "align to one business day unless Joe confirms 24 hours";
+      the SLA's standard tier is next business day and quiz leads now carry
+      a call-by deadline of at most one business day (PR 451). Not touched:
+      the homepage copies under client/src/pages/versions/** (claimed by
+      de-site-v2-scrollcraft), docs/CLAIMS-REGISTER.md (claimed by
+      de-eight-block-correction) and the quote email in notificationService.ts
+      (open PRs 448 and 445).
   - id: quiz-lead-call-flow
     issue: 449
     owner: claude
@@ -48,8 +72,22 @@ claims:
       - deploy/vps/env.production.example (the quiz-lead Zoho lines under ZOHO_REFRESH_TOKEN only)
       - client/src/components/ScrollProgress.tsx (the quiz-room skip only)
       - artifacts/visual-qa/quiz-lead-call-flow/**
-    status: active
+    status: merged
     started: 2026-10-04
+    pr: 451
+    merge_sha: 8c7c90f114f9f42a8d9ca71e765b9f98655f416c
+    verification: >-
+      Merged as 8c7c90f on Joe's "merge 451 and push to production"; served
+      from 19:30:08Z (release.txt and /api/health release.commit 8c7c90f1).
+      scripts/qa/quote-wizard-quiz-check.mjs against digeratiexperts.com:
+      46/46 checks at 390, 768 and 1440, axe serious/critical 0 (required
+      phone, one progress bar; the lead POST answered in the browser).
+      POST /api/lead-quote with an empty body answers 400 live. NOT VERIFIED:
+      the Zoho lead and scheduled call. Production Zoho CRM is disconnected
+      (/api/zoho/status: "No access token in Zoho CRM response") and Desk is
+      auth_failed (issue 418); leads still reach email and the Hub. Mark
+      verified-live after the refresh tokens are replaced and one real quiz
+      lead shows its scheduled call in Zoho.
     note: >-
       Joe, 2026-10-04: "Build a flow for us to know who to call and when";
       all three channels with Zoho as the one record, tiered speed, required
