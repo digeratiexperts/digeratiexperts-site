@@ -138,7 +138,7 @@ export default function CoManagedIT() {
         </Container>
       </Chapter>
 
-      <Chapter tone="surface" aria-labelledby="same-engine">
+      <Chapter plate="row" tone="surface" aria-labelledby="same-engine">
         <Container>
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
             <div className="lg:col-span-7">

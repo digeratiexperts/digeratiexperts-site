@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import "./04-what-we-tackle.css";
+import { ChapterPattern } from "@/components/site/Atmosphere";
 
 /**
  * 04 · What we tackle, ported from
@@ -63,6 +64,7 @@ export function V8WhatWeTackle(): JSX.Element {
 
   return (
     <section className="f-paper v8-section" id="challenges" aria-labelledby="what-we-tackle-title">
+      <ChapterPattern variant="dots" />
       <div className="v8-canvas">
         <motion.div className="tackle__head" {...reveal}>
           <div className="v8-head">

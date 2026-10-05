@@ -1,0 +1,13 @@
+{
+  "prompt": "About DE: precision and documented order. Macro product photograph, 85mm lens, f/8, ISO 100, eye-level. Seven tiles stacked perfectly flush in a single column, alternating white ceramic and graphite aluminium, one electric-blue glass tile third from the top; edges aligned to the millimetre, faint machining marks visible on the graphite. Rounded-square tiles about 9 cm across and 2 cm thick with generous corner radius like premium app-icon blanks, faces completely blank and smooth. Finishes: deep electric-blue glass (#1D6FF2, translucent, faint internal refraction, thin white specular line on the bevel), graphite anodized aluminium (near-black, fine brushed grain, crisp chamfer) and matte white ceramic (soft subsurface glow, faint pores). Single soft key light from upper left, thin cool rim from behind right. Stack sits in the lower right; upper left empty for a title. Pure black seamless studio ground, realistic contact shadows, deep falloff to black at the frame edges. Do not add any symbols or text to the tiles.",
+  "negative_prompt": "text, letters, numbers, logos, icons, symbols, engraved glyphs, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, CGI sheen, oversaturated, blurry, distorted geometry, melted edges",
+  "api_parameters": {
+    "resolution": "2K",
+    "output_format": "jpg",
+    "aspect_ratio": "4:5"
+  },
+  "settings": {
+    "style": "premium studio product photography, physically based materials",
+    "quality": "tack sharp, true material texture, controlled highlights"
+  }
+}

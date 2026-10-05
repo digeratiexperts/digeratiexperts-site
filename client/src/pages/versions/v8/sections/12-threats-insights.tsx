@@ -7,6 +7,7 @@ import { CTA } from "@/lib/ctaCopy";
 import { formatThreatDate, THREAT_ATTRIBUTION, type ThreatItem } from "@shared/threatFeed";
 import { TipTag } from "./TipTag";
 import "./12-threats-insights.css";
+import { ChapterPattern } from "@/components/site/Atmosphere";
 
 /**
  * Section 12 (mock: artifacts/design-concepts/homepage-sections-2026-10/sections/12-threats-insights.html).
@@ -95,6 +96,7 @@ export function V8ThreatsInsights(): JSX.Element {
   return (
     <>
       <section className="f-well v8-section feed" aria-labelledby="insights-heading" data-testid="v8-insights">
+        <ChapterPattern variant="lattice" />
         <div className="v8-canvas">
           <motion.div className="feed-head" {...reveal()}>
             <div className="v8-head">
@@ -180,6 +182,7 @@ export function V8ThreatsInsights(): JSX.Element {
       </section>
 
       <section className="f-well v8-section monitor" aria-labelledby="monitor-heading">
+        <ChapterPattern variant="lattice" />
         <div className="v8-canvas monitor-grid">
           <motion.div className="monitor-copy" {...reveal()}>
             <p className="v8-eyebrow">Detection &amp; Response</p>

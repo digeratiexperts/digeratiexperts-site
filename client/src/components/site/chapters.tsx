@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { FAQJsonLd } from "@/components/JsonLd";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { IconWell } from "@/components/visual/IconWell";
+import { HeroArt } from "@/components/site/Atmosphere";
 import {
   HomeChapter,
   HomeChapterHeader,
@@ -142,10 +143,11 @@ export function PageHero({
   return (
     <section
       className={cn(
-        "de-dark-well de-field-grain de-field-lit relative overflow-hidden text-white",
+        "de-dark-well de-field-grain de-field-lit relative isolate overflow-hidden text-white",
         className,
       )}
     >
+      <HeroArt quiet={Boolean(aside)} />
       <HomeContainer className="relative z-10 pb-14 pt-[calc(var(--de-nav-offset)+1.25rem)] md:pb-20 md:pt-[calc(var(--de-nav-offset)+2rem)]">
         {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} />}
         <div className={cn(aside && "grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-14")}>

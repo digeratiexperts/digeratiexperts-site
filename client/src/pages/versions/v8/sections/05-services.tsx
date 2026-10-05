@@ -19,6 +19,7 @@ import { revealInitial, revealInView, revealTransition, revealViewport } from "@
 // as the section stylesheet follows tokens.css in the mock.
 import "../v8.css";
 import "./05-services.css";
+import { ChapterPattern } from "@/components/site/Atmosphere";
 
 /**
  * Section 05: Services on the surface field. One head, three paths, one stack
@@ -89,6 +90,7 @@ export function V8Services(): JSX.Element {
 
   return (
     <section className="f-surface v8-section v8-grain" data-section="services" aria-labelledby="services-heading">
+      <ChapterPattern variant="contour" />
       <div className="v8-canvas">
         <motion.div className="svc-head" {...reveal}>
           <div className="v8-head">
