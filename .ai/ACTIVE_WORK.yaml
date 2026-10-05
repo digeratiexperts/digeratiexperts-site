@@ -30,6 +30,24 @@
 
 version: 2
 claims:
+  - id: the-digerati-box
+    owner: claude
+    subsystem: marketing-the-box
+    branch: claude/digerati-box
+    base_sha: 29834cd
+    files:
+      - client/src/pages/TheBox.tsx (new)
+      - client/src/data/digeratiBox.ts (new)
+      - client/src/App.tsx (the /the-box route registration only)
+    status: active
+    started: 2026-10-05
+    note: >-
+      A virtual shock-and-awe box: five compartments of collateral that already
+      exists in this repository (13 registry PDFs, 4 executive briefs, the
+      canonical pricing ladder). Deliberately at /the-box rather than under
+      /resources so it does not inherit the Journal colour lock. No case study,
+      logo, testimonial or metric appears on it; the registry forbids those
+      until a client has approved scope and outcome.
   - id: unsupported-timing-claims
     owner: claude
     subsystem: marketing-copy

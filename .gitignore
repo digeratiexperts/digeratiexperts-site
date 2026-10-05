@@ -93,3 +93,4 @@ artifacts/visual-qa/*-directions/shots/*.png
 .claude/skills/msp-ai-kit/windows/packaging/out/
 .claude/skills/msp-ai-kit/windows/integrity.json
 .claude/skills/msp-ai-kit/windows/community/
+artifacts/visual-qa/the-box/shots/*.png
