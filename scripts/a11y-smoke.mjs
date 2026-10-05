@@ -1,34 +1,32 @@
 import { chromium } from "playwright";
 import { AxeBuilder } from "@axe-core/playwright";
 import { mkdirSync, writeFileSync } from "node:fs";
+import { APP_ENTRY_ROUTES, PUBLIC_ROUTES } from "./public-routes.mjs";
 
 /**
  * Accessibility smoke: runs axe-core (WCAG 2.0/2.1/2.2 A + AA rules) against a
- * running server on one representative route per surface (website, Store,
- * Client Portal entry, blog) at 390 and 1440.
+ * running server on every public marketing route plus the Store, quote wizard
+ * and Client Portal entry pages (scripts/public-routes.mjs), at 390 and 1440.
  *
- * Gate: any violation with impact "critical" fails the run. Everything else
- * ("serious", "moderate", "minor") is reported, and written to the JSON
- * report, but does not fail CI yet. Tighten A11Y_FAIL_ON to "serious" once
- * the reported backlog is cleared (docs/CONTENT-TOOLING-PLAN.md, step 1).
+ * Gate: any violation with impact "critical" or "serious" fails the run;
+ * "moderate" and "minor" are reported and written to the JSON report.
+ *
+ * The page is scanned settled, with prefers-reduced-motion: reduce. With
+ * motion on, axe reads scroll-reveal text mid-fade (and reads opacity on
+ * `display: contents` wrappers the browser never paints), which produced 6
+ * "serious" color-contrast groups that no visitor sees. Measured 2026-10-05:
+ * reduced motion 0 violations; motion on, every section scrolled into view
+ * and settled, only the display:contents artefact remained.
  *
  * Usage: A11Y_BASE=http://127.0.0.1:3300 node scripts/a11y-smoke.mjs
  */
 
 const base = process.env.A11Y_BASE || "http://127.0.0.1:3300";
 const outDir = process.env.A11Y_OUT || "tmp/a11y-qa";
-const failOn = (process.env.A11Y_FAIL_ON || "critical").split(",").map((s) => s.trim());
+const failOn = (process.env.A11Y_FAIL_ON || "critical,serious").split(",").map((s) => s.trim());
 mkdirSync(outDir, { recursive: true });
 
-const routes = [
-  "/",
-  "/solutions/managed-it-support",
-  "/pricing",
-  "/contact",
-  "/resources/blog",
-  "/store",
-  "/portal/login",
-];
+const routes = [...PUBLIC_ROUTES, ...APP_ENTRY_ROUTES];
 
 const viewports = [
   { name: "390", width: 390, height: 844 },
@@ -42,7 +40,7 @@ const failures = [];
 
 try {
   for (const vp of viewports) {
-    const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
+    const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, reducedMotion: "reduce" });
     const page = await context.newPage();
     for (const route of routes) {
       await page.goto(`${base}${route}`, { waitUntil: "networkidle", timeout: 45_000 });

@@ -114,8 +114,8 @@ jobs:
           BASE_URL=http://127.0.0.1:3300 npm run smoke:public
           DOOR2_BASE=http://127.0.0.1:3300 npm run smoke:door2
           DESK_BASE=http://127.0.0.1:3300 npm run smoke:desk
-          # axe-core WCAG A/AA scan; fails on "critical" only, reports the rest
-          # (docs/CONTENT-TOOLING-PLAN.md).
+          # axe-core WCAG A/AA scan of the settled page; fails on "critical" or
+          # "serious", reports the rest (docs/CONTENT-TOOLING-PLAN.md).
           A11Y_BASE=http://127.0.0.1:3300 npm run smoke:a11y
 
   # Production is a CyberPanel/OpenLiteSpeed VPS, not a Replit deployment.
