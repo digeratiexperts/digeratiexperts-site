@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
-import { AlertCircle, Mail, Lock, ArrowRight, ShieldCheck, ArrowLeft } from "lucide-react";
+import { AlertCircle, Mail, Lock, ArrowRight, ShieldCheck, ArrowLeft, KeyRound } from "lucide-react";
 import { useLocation } from "wouter";
 import { DE_LOGO_REVERSE } from '@/lib/brandAssets';
 import TurnstileWidget from "@/components/TurnstileWidget";
@@ -10,6 +10,7 @@ import { useSEO } from "@/hooks/useSEO";
 import "@/styles/portal.css";
 import { portalReturnLabel } from "@/lib/portalUrls";
 import { marketplaceReturnTo } from "@shared/portalReturnTo";
+import { getPasskey, passkeyErrorMessage, passkeysSupported } from "@/lib/webauthn";
 
 type LoginStep = "credentials" | "mfa";
 
@@ -29,7 +30,8 @@ export default function PortalLogin() {
   const [password, setPassword] = useState("");
   const [mfaCode, setMfaCode] = useState("");
   const [mfaToken, setMfaToken] = useState("");
-  const [mfaMethod, setMfaMethod] = useState<"totp" | "email">("totp");
+  const [mfaMethod, setMfaMethod] = useState<"totp" | "email" | "passkey">("totp");
+  const [passkeyAvailable, setPasskeyAvailable] = useState(false);
   const [mfaMessage, setMfaMessage] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
   // Remounting the widget issues a fresh single-use token after a failed
@@ -181,6 +183,7 @@ export default function PortalLogin() {
       if (data.mfaRequired) {
         setMfaToken(data.mfaToken);
         setMfaMethod(data.mfaMethod);
+        setPasskeyAvailable(!!data.passkeyAvailable && passkeysSupported());
         setMfaMessage(data.message);
         setStep("mfa");
         return;
@@ -219,6 +222,51 @@ export default function PortalLogin() {
         return;
       }
 
+      localStorage.setItem("portalUser", JSON.stringify(data.user));
+      localStorage.setItem("portalToken", data.token);
+      localStorage.setItem("portalUserId", data.user?.id || "portal-user");
+      localStorage.setItem("userEmail", email);
+      navigate(marketplaceReturnTo(readQueryParam("returnTo")));
+    } catch (err) {
+      setError("Connection error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasskeyVerify = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const optionsResponse = await fetch("/api/portal/mfa/passkey/login/options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mfaToken }),
+        credentials: "include",
+      });
+      const optionsData = await optionsResponse.json();
+      if (!optionsResponse.ok) {
+        setError(optionsData.message || "Could not start passkey sign-in");
+        return;
+      }
+      let credential: Record<string, unknown>;
+      try {
+        credential = await getPasskey(optionsData.options);
+      } catch (err) {
+        setError(passkeyErrorMessage(err));
+        return;
+      }
+      const response = await fetch("/api/portal/mfa/passkey/login/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mfaToken, credential }),
+        credentials: "include",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.message || "Verification failed");
+        return;
+      }
       localStorage.setItem("portalUser", JSON.stringify(data.user));
       localStorage.setItem("portalToken", data.token);
       localStorage.setItem("portalUserId", data.user?.id || "portal-user");
@@ -385,31 +433,54 @@ export default function PortalLogin() {
                     </div>
                   )}
 
+                  {passkeyAvailable && (
+                    <div className="space-y-3">
+                      <Button
+                        type="button"
+                        onClick={handlePasskeyVerify}
+                        disabled={loading}
+                        variant="brand"
+                        className="w-full font-semibold"
+                        data-testid="button-verify-passkey"
+                      >
+                        <KeyRound className="mr-2 h-4 w-4" />
+                        {loading ? "Waiting for your passkey..." : "Use passkey"}
+                      </Button>
+                      <p className="text-center text-xs text-muted-foreground">
+                        Face ID, Touch ID, fingerprint or PIN · Apple, Android, Microsoft Authenticator or JumpCloud
+                      </p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground" aria-hidden="true">
+                        <span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" />
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <label htmlFor="login-mfa" className="text-sm font-medium">
-                      {mfaMethod === "totp" ? "Authenticator Code" : "Email Verification Code"}
+                      {mfaMethod === "totp" ? "Authenticator Code" : mfaMethod === "passkey" ? "Backup Code" : "Email Verification Code"}
                     </label>
                     <Input
                       id="login-mfa"
                       type="text"
-                      inputMode="numeric"
+                      inputMode={mfaMethod === "passkey" ? "text" : "numeric"}
+                      autoComplete="one-time-code"
                       pattern="[0-9A-Za-z]*"
-                      maxLength={8}
-                      placeholder={mfaMethod === "totp" ? "Enter 6-digit code" : "Enter code from email"}
+                      maxLength={10}
+                      placeholder={mfaMethod === "totp" ? "Enter 6-digit code" : mfaMethod === "passkey" ? "Enter a backup code" : "Enter code from email"}
                       value={mfaCode}
                       onChange={(e) => setMfaCode(e.target.value)}
                       className="pt-num border-input bg-background text-center text-lg tracking-widest"
-                      autoFocus
+                      autoFocus={!passkeyAvailable}
                       required
                       data-testid="input-mfa-code"
                     />
-                    <p className="text-xs text-muted-foreground">You can also enter a backup code</p>
+                    {mfaMethod !== "passkey" && <p className="text-xs text-muted-foreground">You can also enter a backup code</p>}
                   </div>
 
                   <Button
                     type="submit"
                     disabled={loading || mfaCode.length < 6}
-                    variant="brand"
+                    variant={passkeyAvailable ? "outline" : "brand"}
                     className="w-full font-semibold"
                     data-testid="button-verify-mfa"
                   >

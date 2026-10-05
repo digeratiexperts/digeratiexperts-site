@@ -28,6 +28,19 @@ import { describeQuoteContext, quoteLeadDescription, sanitizeQuoteContext } from
 import { followUpHeadline, planLeadFollowUp } from "@shared/leadFollowUp";
 import { createQuoteLeadWithCall, normalizeLeadPhone, zohoLeadUrl } from "./quoteLeadCrm";
 import { findBackupCodeIndex, generateBackupCodes } from "./portalMfaCrypto";
+import { generateTotpSecret, totpKeyUri, verifyTotp } from "./portalTotp";
+import {
+  buildAuthenticationOptions,
+  buildRegistrationOptions,
+  isPasskeyProvider,
+  newChallenge,
+  PASSKEY_PROVIDERS,
+  publicPasskeyView,
+  resolveRpId,
+  verifyAuthentication,
+  verifyRegistration,
+  type PasskeyProviderId,
+} from "./portalPasskeys";
 import {
   parseZohoTicketId,
   validatePortalTicketUpload,
@@ -2121,8 +2134,11 @@ export async function registerRoutes(app: Express) {
   const mfaChallenges = new Map<string, {
     userId: string;
     email: string;
-    method: 'totp' | 'email';
+    method: 'totp' | 'email' | 'passkey';
     emailCode?: string;
+    /** WebAuthn challenge issued by /mfa/passkey/login/options for this login. */
+    passkeyChallenge?: string;
+    passkeyRpId?: string;
     createdAt: number;
     expiresAt: number;
     attempts: number;
@@ -2132,9 +2148,21 @@ export async function registerRoutes(app: Express) {
   // MFA TOTP setup — temporary storage while user confirms setup
   const mfaPendingSetups = new Map<string, {
     userId: string;
+    method: 'totp' | 'email';
     secret: string;
     createdAt: number;
   }>();
+
+  // Passkey registration ceremonies in flight (challenge is single use, 10 minutes).
+  const passkeyRegistrations = new Map<string, {
+    userId: string;
+    challenge: string;
+    rpId: string;
+    provider: PasskeyProviderId;
+    nickname: string;
+    createdAt: number;
+  }>();
+  const PASSKEY_CEREMONY_TTL = 10 * 60 * 1000;
 
   // Portal Register Endpoint — creates prospect client + durable user
   app.post("/api/portal/register", [formSubmissionRateLimiter, verifyTurnstile, validateInput], async (req: AuthenticatedRequest, res: Response) => {
@@ -2768,13 +2796,14 @@ export async function registerRoutes(app: Express) {
           mfaChallenges.set(challengeToken, {
             userId: user.id,
             email: user.email,
-            method: 'totp',
+            method: user.mfaMethod === 'passkey' ? 'passkey' : 'totp',
             createdAt: now,
             expiresAt: now + TEN_MINUTES,
             attempts: 0,
           });
         }
 
+        const passkeyAvailable = (user.mfaPasskeys || []).some((p) => p.rpId === resolveRpId(req.hostname));
         logSecurityEvent("MFA_CHALLENGE_ISSUED", req, { email, method: user.mfaMethod });
 
         return res.json({
@@ -2782,9 +2811,12 @@ export async function registerRoutes(app: Express) {
           mfaRequired: true,
           mfaMethod: user.mfaMethod,
           mfaToken: challengeToken,
+          passkeyAvailable,
           message: user.mfaMethod === 'email'
             ? "A verification code has been sent to your email."
-            : "Enter the code from your authenticator app.",
+            : user.mfaMethod === 'passkey'
+              ? "Confirm it's you with your passkey, or enter a backup code."
+              : "Enter the code from your authenticator app.",
         });
       }
 
@@ -2828,9 +2860,7 @@ export async function registerRoutes(app: Express) {
       if (challenge.method === 'email') {
         verified = timingSafeStrEqual(String(challenge.emailCode ?? ""), code.trim());
       } else if (challenge.method === 'totp' && user.mfaTotpSecret) {
-        const otplib = await import('otplib');
-        const auth = (otplib as any).authenticator || (otplib as any).default?.authenticator || otplib;
-        verified = auth.verify({ token: code.trim(), secret: user.mfaTotpSecret });
+        verified = verifyTotp(String(code), user.mfaTotpSecret);
       }
 
       const backupCodes = (user as any).mfaBackupCodes || [];
@@ -2931,6 +2961,7 @@ export async function registerRoutes(app: Express) {
         mfaEnabled: !!user.mfaEnabled,
         mfaMethod: user.mfaMethod || null,
         backupCodesRemaining: user.mfaBackupCodes?.length || 0,
+        passkeys: (user.mfaPasskeys || []).map(publicPasskeyView),
       });
     } catch (error: any) {
       logger.error("Failed to get MFA status", error);
@@ -2954,27 +2985,27 @@ export async function registerRoutes(app: Express) {
       }
 
       if (method === 'totp') {
-        const otplib = await import('otplib');
-        const auth = (otplib as any).authenticator || (otplib as any).default?.authenticator || otplib;
         const QRCode = await import('qrcode');
-        const secret = auth.generateSecret();
-        const otpauthUrl = auth.keyuri(user.email, 'Digerati Experts', secret);
-        const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
+        const secret = generateTotpSecret();
+        const otpauthUrl = totpKeyUri(user.email, secret);
+        const toDataURL = (QRCode as any).toDataURL ?? (QRCode as any).default?.toDataURL;
+        const qrCodeDataUrl: string = await toDataURL(otpauthUrl, { margin: 2, width: 240 });
 
         const setupToken = randomId();
-        mfaPendingSetups.set(setupToken, { userId: user.id, secret, createdAt: Date.now() });
+        mfaPendingSetups.set(setupToken, { userId: user.id, method: 'totp', secret, createdAt: Date.now() });
 
         return res.json({
           method: 'totp',
           setupToken,
           qrCode: qrCodeDataUrl,
           secret,
+          otpauthUrl,
           message: "Scan the QR code with your authenticator app, then confirm with a code.",
         });
       } else {
         const code = String(randomInt(100000, 1000000));
         const setupToken = randomId();
-        mfaPendingSetups.set(setupToken, { userId: user.id, secret: code, createdAt: Date.now() });
+        mfaPendingSetups.set(setupToken, { userId: user.id, method: 'email', secret: code, createdAt: Date.now() });
 
         notificationService.sendMfaCode({
           email: user.email,
@@ -3014,12 +3045,15 @@ export async function registerRoutes(app: Express) {
         return res.status(403).json({ message: "Unauthorized" });
       }
 
+      // The method is the one this setup token was issued for, never the client's claim.
+      if (method !== setup.method) {
+        return res.status(400).json({ message: "Setup method does not match. Please start again." });
+      }
+
       let verified = false;
 
       if (method === 'totp') {
-        const otplib = await import('otplib');
-        const auth = (otplib as any).authenticator || (otplib as any).default?.authenticator || otplib;
-        verified = auth.verify({ token: code.trim(), secret: setup.secret });
+        verified = verifyTotp(String(code), setup.secret);
       } else if (method === 'email') {
         verified = setup.secret === code.trim();
       }
@@ -3071,6 +3105,7 @@ export async function registerRoutes(app: Express) {
       user.mfaMethod = null;
       user.mfaTotpSecret = null;
       user.mfaBackupCodes = [];
+      user.mfaPasskeys = [];
       await portalUsers.commit(user);
 
       logSecurityEvent("MFA_DISABLED", req, { email: user.email });
@@ -3105,6 +3140,215 @@ export async function registerRoutes(app: Express) {
       if (sendPersistenceFailure(res, error)) return;
       logger.error("Backup code regeneration failed", error);
       return res.status(500).json({ message: "Failed to regenerate backup codes" });
+    }
+  });
+
+  // ===== PASSKEYS (WebAuthn) =====
+  // Apple (iCloud Keychain), Android (Google Password Manager), Microsoft Authenticator
+  // and JumpCloud. A passkey is a second factor after the password, alongside or instead
+  // of an authenticator app, and can be added while another MFA method is on.
+
+  const prunePasskeyCeremonies = () => {
+    const now = Date.now();
+    for (const [token, entry] of passkeyRegistrations) {
+      if (now - entry.createdAt > PASSKEY_CEREMONY_TTL) passkeyRegistrations.delete(token);
+    }
+  };
+
+  // Step 1: options for navigator.credentials.create(), tuned to the chosen provider.
+  app.post("/api/portal/mfa/passkey/register/options", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { provider, nickname } = req.body || {};
+      if (!isPasskeyProvider(provider)) {
+        return res.status(400).json({ message: "Provider must be apple, android, microsoft or jumpcloud" });
+      }
+      const user = portalUsers.get(req.user?.email || "");
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if ((user.mfaPasskeys || []).length >= 10) {
+        return res.status(400).json({ message: "You can register up to 10 passkeys. Remove one first." });
+      }
+
+      prunePasskeyCeremonies();
+      const rpId = resolveRpId(req.hostname);
+      const challenge = newChallenge();
+      const setupToken = randomId();
+      passkeyRegistrations.set(setupToken, {
+        userId: user.id,
+        challenge,
+        rpId,
+        provider,
+        nickname: typeof nickname === "string" ? nickname : "",
+        createdAt: Date.now(),
+      });
+
+      const options = buildRegistrationOptions({
+        rpId,
+        user: { id: user.id, email: user.email, fullName: user.fullName },
+        provider,
+        challenge,
+        existing: user.mfaPasskeys || [],
+        userAgent: String(req.headers["user-agent"] || ""),
+      });
+      return res.json({ setupToken, provider, providerLabel: PASSKEY_PROVIDERS[provider].store, options });
+    } catch (error: any) {
+      logger.error("Passkey registration options failed", error);
+      return res.status(500).json({ message: "Could not start passkey setup" });
+    }
+  });
+
+  // Step 2: verify the new credential and save it. Turns MFA on when it was off.
+  app.post("/api/portal/mfa/passkey/register/verify", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { setupToken, credential } = req.body || {};
+      const pending = typeof setupToken === "string" ? passkeyRegistrations.get(setupToken) : undefined;
+      if (typeof setupToken === "string") passkeyRegistrations.delete(setupToken); // single use
+      if (!pending || Date.now() - pending.createdAt > PASSKEY_CEREMONY_TTL) {
+        return res.status(400).json({ message: "Passkey setup expired. Please try again." });
+      }
+      const user = portalUsers.get(req.user?.email || "");
+      if (!user || user.id !== pending.userId) return res.status(403).json({ message: "Unauthorized" });
+
+      let passkey;
+      try {
+        passkey = verifyRegistration({
+          credential,
+          expectedChallenge: pending.challenge,
+          rpId: pending.rpId,
+          provider: pending.provider,
+          nickname: pending.nickname,
+        });
+      } catch (err: any) {
+        logSecurityEvent("PASSKEY_REGISTRATION_REJECTED", req, { email: user.email, reason: err?.message });
+        return res.status(400).json({ message: `Passkey could not be verified: ${err?.message || "invalid response"}` });
+      }
+      if ((user.mfaPasskeys || []).some((p) => p.id === passkey.id)) {
+        return res.status(409).json({ message: "This passkey is already registered." });
+      }
+
+      user.mfaPasskeys = [...(user.mfaPasskeys || []), passkey];
+      let backupCodes: string[] | undefined;
+      if (!user.mfaEnabled) {
+        backupCodes = generateBackupCodes(8);
+        user.mfaEnabled = true;
+        user.mfaMethod = "passkey";
+        user.mfaBackupCodes = backupCodes;
+      }
+      await portalUsers.commit(user);
+
+      logSecurityEvent("PASSKEY_REGISTERED", req, { email: user.email, provider: passkey.provider, aaguid: passkey.aaguid });
+      if (backupCodes) logSecurityEvent("MFA_ENABLED", req, { email: user.email, method: "passkey" });
+
+      return res.json({ success: true, passkey: publicPasskeyView(passkey), backupCodes });
+    } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
+      logger.error("Passkey registration failed", error);
+      return res.status(500).json({ message: "Passkey setup failed" });
+    }
+  });
+
+  // Remove one passkey (password required). Removing the last passkey of a passkey-only
+  // account turns MFA off, the same as "Disable MFA".
+  app.post("/api/portal/mfa/passkey/remove", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id, password } = req.body || {};
+      if (!id || !password) return res.status(400).json({ message: "Passkey and password are required" });
+      const user = portalUsers.get(req.user?.email || "");
+      if (!user) return res.status(404).json({ message: "User not found" });
+      const valid = await bcrypt.compare(String(password), user.password);
+      if (!valid) return res.status(401).json({ message: "Invalid password" });
+
+      const remaining = (user.mfaPasskeys || []).filter((p) => p.id !== id);
+      if (remaining.length === (user.mfaPasskeys || []).length) {
+        return res.status(404).json({ message: "Passkey not found" });
+      }
+      user.mfaPasskeys = remaining;
+      if (remaining.length === 0 && user.mfaMethod === "passkey") {
+        user.mfaEnabled = false;
+        user.mfaMethod = null;
+        user.mfaBackupCodes = [];
+      }
+      await portalUsers.commit(user);
+      logSecurityEvent("PASSKEY_REMOVED", req, { email: user.email });
+      return res.json({ success: true, mfaEnabled: !!user.mfaEnabled });
+    } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
+      logger.error("Passkey removal failed", error);
+      return res.status(500).json({ message: "Could not remove passkey" });
+    }
+  });
+
+  // Login step 2 with a passkey: options for navigator.credentials.get().
+  app.post("/api/portal/mfa/passkey/login/options", [loginRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { mfaToken } = req.body || {};
+      const challenge = typeof mfaToken === "string" ? mfaChallenges.get(mfaToken) : undefined;
+      if (!challenge || Date.now() > challenge.expiresAt) {
+        if (typeof mfaToken === "string") mfaChallenges.delete(mfaToken);
+        return res.status(400).json({ message: "MFA session expired. Please log in again." });
+      }
+      const user = portalUsers.get(challenge.email);
+      const rpId = resolveRpId(req.hostname);
+      const passkeys = (user?.mfaPasskeys || []).filter((p) => p.rpId === rpId);
+      if (!user || passkeys.length === 0) {
+        return res.status(400).json({ message: "No passkey is registered for this account on this site." });
+      }
+      challenge.passkeyChallenge = newChallenge();
+      challenge.passkeyRpId = rpId;
+      return res.json({ options: buildAuthenticationOptions({ rpId, challenge: challenge.passkeyChallenge, passkeys }) });
+    } catch (error: any) {
+      logger.error("Passkey login options failed", error);
+      return res.status(500).json({ message: "Could not start passkey sign-in" });
+    }
+  });
+
+  // Login step 2 with a passkey: verify the assertion and sign in.
+  app.post("/api/portal/mfa/passkey/login/verify", [loginRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { mfaToken, credential } = req.body || {};
+      const challenge = typeof mfaToken === "string" ? mfaChallenges.get(mfaToken) : undefined;
+      if (!challenge || Date.now() > challenge.expiresAt || !challenge.passkeyChallenge || !challenge.passkeyRpId) {
+        if (challenge && Date.now() > challenge.expiresAt) mfaChallenges.delete(mfaToken);
+        return res.status(400).json({ message: "MFA session expired. Please log in again." });
+      }
+      if (challenge.attempts >= MFA_MAX_ATTEMPTS) {
+        mfaChallenges.delete(mfaToken);
+        logSecurityEvent("MFA_LOCKED_OUT", req, { email: challenge.email });
+        return res.status(429).json({ message: "Too many attempts. Please log in again." });
+      }
+      challenge.attempts++;
+      const expectedChallenge = challenge.passkeyChallenge;
+      challenge.passkeyChallenge = undefined; // single use
+
+      const user = portalUsers.get(challenge.email);
+      if (!user) {
+        mfaChallenges.delete(mfaToken);
+        return res.status(400).json({ message: "User not found" });
+      }
+
+      let updated;
+      try {
+        updated = verifyAuthentication({
+          credential,
+          expectedChallenge,
+          rpId: challenge.passkeyRpId,
+          passkeys: user.mfaPasskeys || [],
+          userId: user.id,
+        });
+      } catch (err: any) {
+        logSecurityEvent("MFA_VERIFICATION_FAILED", req, { email: challenge.email, method: "passkey", attempt: challenge.attempts, reason: err?.message });
+        return res.status(401).json({ message: "That passkey could not be verified. Try again or use a backup code." });
+      }
+
+      user.mfaPasskeys = (user.mfaPasskeys || []).map((p) => (p.id === updated.id ? updated : p));
+      await portalUsers.commit(user);
+
+      mfaChallenges.delete(mfaToken);
+      logSecurityEvent("MFA_VERIFICATION_SUCCESS", req, { email: challenge.email, method: "passkey" });
+      return completeLogin(user, req, res);
+    } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
+      logger.error("Passkey login failed", error);
+      return res.status(500).json({ message: "Verification failed" });
     }
   });
 

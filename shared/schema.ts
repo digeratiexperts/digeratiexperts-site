@@ -346,6 +346,8 @@ export const portalUsers = pgTable("portal_users", {
   mfaMethod: text("mfa_method"),
   mfaTotpSecret: text("mfa_totp_secret"),
   mfaBackupCodes: jsonb("mfa_backup_codes").$type<string[]>().default([]),
+  /** WebAuthn passkeys: credential id, public key, counter, provider. No secrets. */
+  mfaPasskeys: jsonb("mfa_passkeys").$type<Array<Record<string, unknown>>>().default([]),
   lastLogin: timestamp("last_login"),
   /** Tokens issued before this instant are no longer valid (password reset, "sign out everywhere") (#242). */
   sessionsValidAfter: timestamp("sessions_valid_after"),
