@@ -40,7 +40,7 @@ claims:
       - client/src/pages/solutions/ManagedWorkplace.tsx (the onboarding FAQ entry only)
       - docs/CLAIMS-REGISTER.md (the "48 hours" and onboarding rows only)
       - artifacts/visual-qa/unsupported-timing-claims/**
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       Joe, 2026-10-05: "you make up the answers", then "keep building". The
@@ -52,6 +52,11 @@ claims:
       minutes" becomes a checklist answer with no timing. Joe can restore
       either with a source. The "Fourteen domains" row stays Unsupported: it
       waits on Joe's taxonomy, not on copy.
+      MERGED as c9526ea (PR 468). VERIFIED LIVE 2026-10-05: release.txt
+      serves c9526ea; the ManagedWorkplace bundle carries the new FAQ and
+      none of the old timing; the /version-0 homepage bundle has no "24-48
+      hours". The frozen /version-1 and /version-3 snapshots still carry it,
+      kept as historical record.
   - id: homepage-response-promise
     owner: claude
     subsystem: marketing-copy
