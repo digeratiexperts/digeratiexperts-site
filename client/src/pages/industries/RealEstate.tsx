@@ -164,7 +164,7 @@ export default function RealEstate() {
         </Container>
       </Chapter>
 
-      <Chapter tone="well" data-testid="section-promises">
+      <Chapter plate="field" tone="well" data-testid="section-promises">
         <Container>
           <ChapterHeader tone="well" eyebrow="What to expect" title="Practical, not promised" lede="Three commitments, stated without guarantees we cannot back." />
           <IndexedList tone="well" items={promises} />

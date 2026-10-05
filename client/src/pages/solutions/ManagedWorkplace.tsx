@@ -399,7 +399,7 @@ export default function ManagedWorkplace() {
         </Container>
       </Chapter>
 
-      <Chapter tone="well">
+      <Chapter plate="field" tone="well">
         <Container>
           <ChapterHeader
             tone="well"

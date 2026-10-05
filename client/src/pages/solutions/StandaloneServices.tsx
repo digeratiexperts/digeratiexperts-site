@@ -103,7 +103,7 @@ export default function StandaloneServices() {
         </Container>
       </Chapter>
 
-      <Chapter tone="paper" aria-labelledby="standalone-flow">
+      <Chapter plate="white" tone="paper" aria-labelledby="standalone-flow">
         <Container>
           <ChapterHeader
             tone="paper"

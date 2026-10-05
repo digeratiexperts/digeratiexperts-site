@@ -2230,6 +2230,7 @@ claims:
       - artifacts/kie-ai/nano-banana/**, artifacts/visual-qa/site-atmosphere/**, artifacts/visual-qa/store-flagship/**
       - scrollcraft/builds/situation-gallery/** (new scrollcraft build), scrollcraft/FINGERPRINTS.md (row appended)
       - public/scrollcraft/situation-gallery/** (published lab copy), public/scrollcraft/index.html (one entry added), artifacts/visual-qa/situation-gallery/**
+      - client/src/components/site/PlateBand.tsx (new), HomeChapter.tsx (plate prop), and one plate="..." attribute on a chapter in GenericServicePage, SolutionsIndex, ManagedWorkplace, CoManagedIT, BackupDisasterRecovery, StandaloneServices, ProActiveEcosystemPricing, MissionValues and the six industry pages; artifacts/visual-qa/plate-bands/**
     status: in-review
     started: 2026-10-05
     note: >-

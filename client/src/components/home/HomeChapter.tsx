@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { ChapterPattern, patternForTone, type PatternVariant } from "@/components/site/Atmosphere";
+import { PlateBand, type PlateName } from "@/components/site/PlateBand";
 
 /**
  * Homepage chapter grammar (Tier 2, design/UI-STYLE-RULES.md §2, §5, §6).
@@ -51,6 +52,8 @@ type HomeChapterProps<T extends ElementType> = {
   compact?: boolean;
   /** Decorative background that drifts on scroll (site atmosphere). Defaults to the tone's pattern; "none" turns it off. */
   pattern?: PatternVariant | "none";
+  /** A photographic interlude from the approved tile series, drawn at the top of the chapter (long pages only). */
+  plate?: PlateName;
   className?: string;
   children: ReactNode;
 } & Omit<ComponentPropsWithoutRef<T>, "as" | "className" | "children">;
@@ -61,6 +64,7 @@ export function HomeChapter<T extends ElementType = "section">({
   seam = true,
   compact = false,
   pattern,
+  plate,
   className,
   children,
   ...rest
@@ -79,6 +83,11 @@ export function HomeChapter<T extends ElementType = "section">({
       {...rest}
     >
       {variant !== "none" ? <ChapterPattern variant={variant} /> : null}
+      {plate ? (
+        <div className={cn(containerClass, "mb-10 md:mb-14")}>
+          <PlateBand plate={plate} />
+        </div>
+      ) : null}
       {children}
     </Tag>
   );
