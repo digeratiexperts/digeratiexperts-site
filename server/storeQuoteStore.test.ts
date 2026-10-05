@@ -47,6 +47,67 @@ describe("store quote store (issue #240: a quote request must be durable or fail
     expect(await getQuoteRequest("QR-00000000-NONE")).toBeUndefined();
   });
 
+  it("hands the route the built request so it can be saved outside the database (#240)", async () => {
+    const { insertQuoteRequest, getQuoteRequest, rememberQuoteRequest } = await loadStoreWithDb({
+      dbReady: false,
+      db: null,
+    });
+    const error: any = await insertQuoteRequest({
+      contactName: "Jordan Buyer",
+      contactEmail: "jordan@example.com",
+      requestedItems,
+    }).catch((caught) => caught);
+    expect(error.record).toMatchObject({ contactEmail: "jordan@example.com", status: "pending" });
+    expect(error.record.quoteNumber).toMatch(/^QR-\d{8}-[A-Z0-9]{4}$/);
+    // Not remembered until the route says a fallback layer held.
+    expect(await getQuoteRequest(error.record.id)).toBeUndefined();
+    rememberQuoteRequest(error.record);
+    expect((await getQuoteRequest(error.record.quoteNumber))?.id).toBe(error.record.id);
+  });
+
+  it("writes a spooled request back idempotently, and reports false while the database is down", async () => {
+    let values: Record<string, unknown> | null = null;
+    let conflictTarget: unknown = null;
+    const db = {
+      insert: () => ({
+        values: (row: Record<string, unknown>) => {
+          values = row;
+          return {
+            onConflictDoNothing: async (options: { target: unknown }) => {
+              conflictTarget = options.target;
+            },
+          };
+        },
+      }),
+    };
+    const { persistSpooledQuoteRequest } = await loadStoreWithDb({ dbReady: true, db });
+    const spooled = JSON.parse(
+      JSON.stringify({
+        id: "6f2c1a1e-0000-4000-8000-000000000002",
+        quoteNumber: "QR-20261004-CD34",
+        userId: null,
+        clientId: null,
+        contactName: "Jordan Buyer",
+        contactEmail: "jordan@example.com",
+        contactPhone: null,
+        companyName: null,
+        requestedItems,
+        message: null,
+        status: "pending",
+        quoteSentAt: "2026-10-04T12:00:00.000Z",
+        createdAt: "2026-10-04T12:00:00.000Z",
+        updatedAt: "2026-10-04T12:00:00.000Z",
+      }),
+    );
+    expect(await persistSpooledQuoteRequest(spooled)).toBe(true);
+    expect(conflictTarget).not.toBeNull();
+    expect(values).toMatchObject({ id: spooled.id, quoteNumber: spooled.quoteNumber });
+    expect((values as any).createdAt).toEqual(new Date("2026-10-04T12:00:00.000Z"));
+
+    const down = await loadStoreWithDb({ dbReady: false, db: null });
+    expect(await down.persistSpooledQuoteRequest(spooled)).toBe(false);
+  });
+
   it("fails closed when the insert itself throws", async () => {
     const db = {
       insert: () => ({

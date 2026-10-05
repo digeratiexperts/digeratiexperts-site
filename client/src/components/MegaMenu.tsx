@@ -286,7 +286,7 @@ export function MegaMenu() {
             { title: 'Business', description: pricing.business.idealBuyer, icon: <BarChart3 className="h-5 w-5" />, url: pricing.business.learnMoreUrl, price: `From $${pricing.business.user}/user` },
             { title: 'Enterprise', description: pricing.enterprise.idealBuyer, icon: <Award className="h-5 w-5" />, url: pricing.enterprise.learnMoreUrl, price: `From $${pricing.enterprise.user}/user` },
             { title: 'Compare All Packages', description: 'Capabilities and operating depth — not a ranking', icon: <LayoutGrid className="h-5 w-5" />, url: '/proactive-ecosystem-pricing' },
-            { title: 'Find Your Plan', description: 'Six questions, matched to Office, Business or Enterprise', icon: <CheckCircle className="h-5 w-5" />, url: '/quote-wizard' },
+            { title: 'Find Your Plan', description: 'Six questions, matched to IT, Office, Business or Enterprise', icon: <CheckCircle className="h-5 w-5" />, url: '/quote-wizard' },
           ]
         },
         {

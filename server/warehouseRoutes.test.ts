@@ -138,6 +138,25 @@ describe("warehouse HTTP gates", () => {
     expect(await connectors.json()).toEqual({ error: "Not found" });
   });
 
+  it("keeps the Pay Now tax readiness check staff-only, and honest without a key", async () => {
+    const anonymous = await fetch(`${baseUrl}/api/internal/warehouse/tax-status`);
+    expect(anonymous.status).toBe(404);
+    expect(await anonymous.json()).toEqual({ error: "Not found" });
+
+    getUser.mockReturnValue({ id: "a1", email: "admin@digeratiexperts.com", role: "admin", isActive: true });
+    const token = sign({ userId: "a1", email: "admin@digeratiexperts.com" });
+    const saved = process.env.STRIPE_TAX_SECRET_KEY;
+    delete process.env.STRIPE_TAX_SECRET_KEY;
+    try {
+      const staff = await fetch(`${baseUrl}/api/internal/warehouse/tax-status`, { headers: { cookie: `portalAuth=${token}` } });
+      expect(staff.status).toBe(200);
+      expect(staff.headers.get("cache-control")).toMatch(/private|no-store/);
+      expect(await staff.json()).toMatchObject({ status: "NOT_CONFIGURED", checks: { key: "missing" } });
+    } finally {
+      if (saved !== undefined) process.env.STRIPE_TAX_SECRET_KEY = saved;
+    }
+  });
+
   it("serves staff catalog fallback and connector list for a live admin", async () => {
     getUser.mockReturnValue({
       id: "a1",
