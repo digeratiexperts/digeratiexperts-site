@@ -218,6 +218,7 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
       let zohoTicket: { id?: string; ticketNumber?: string } | undefined;
       try {
         zohoTicket = await zohoDeskService.createTicket({
+          source: "website-widget",
           subject,
           description,
           email,

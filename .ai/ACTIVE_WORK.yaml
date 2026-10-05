@@ -30,6 +30,42 @@
 
 version: 2
 claims:
+  - id: the-digerati-box
+    owner: claude
+    subsystem: marketing-the-box
+    branch: claude/digerati-box
+    base_sha: 29834cd
+    files:
+      - client/src/pages/TheBox.tsx (new)
+      - client/src/data/digeratiBox.ts (new)
+      - client/src/App.tsx (the /the-box route registration only)
+    status: active
+    started: 2026-10-05
+    note: >-
+      A virtual shock-and-awe box: five compartments of collateral that already
+      exists in this repository (13 registry PDFs, 4 executive briefs, the
+      canonical pricing ladder). Deliberately at /the-box rather than under
+      /resources so it does not inherit the Journal colour lock. No case study,
+      logo, testimonial or metric appears on it; the registry forbids those
+      until a client has approved scope and outcome.
+  - id: portal-chat-sessions
+    owner: claude
+    subsystem: portal-chat
+    branch: claude/portal-chat-sessions
+    base_sha: 29834cd
+    files:
+      - server/portalChatSessions.ts (new)
+      - server/portalChatStore.ts (session resolution, listing and the session_id column)
+      - server/routes.ts (the three /api/portal/chat endpoints only)
+      - client/src/pages/portal/PortalChat.tsx (the portal live-chat panel only)
+    status: active
+    started: 2026-10-05
+    note: >-
+      The portal live chat was one endless transcript per user, keyed live-{userId}:
+      a message today appended to one from weeks ago with nothing marking the gap.
+      This splits it into runs on a 12-hour idle rule, keeps every closed run, and
+      collapses the past ones in the UI to a date, preview and count. The website
+      DE Desk store, its routes and the desk panel in this page are untouched.
   - id: document-flipbook-page-turn
     owner: claude
     subsystem: resources-flipbook
@@ -2270,7 +2306,7 @@ claims:
       - .claude/skills/msp-ai-kit/windows/packaging/Deploy-DETechConsole.ps1, Install-DETechConsole.ps1 (the example file name only)
       - .claude/skills/msp-ai-kit/windows/console/catalog/cheatsheet.json (the new hub group and the -Page list only)
       - docs/DE-SYSTEM-INTEGRATION.md (three Tech Tool rows, the BUILT status key and the DE Tech Tool section only)
-    status: active
+    status: verified-live
     started: 2026-10-04
     note: >-
       Joe, 2026-10-04: "go, do 1 and 2 then do 3 and then 4". DE Microsoft
@@ -2313,3 +2349,12 @@ claims:
       Warehouse Vendors page and as one line under Staff Pay Now, so the
       Stripe setup confirms itself without a test charge. Never reads READY
       on a failed check. Public Store never asks for it.
+      RELEASED 2026-10-05: Joe, "merge 438 and 343". Merged as 12c3b5f4 (PR
+      438). Tool-only: nothing deploys from this repository; it ships through
+      New-DEReleasePackage.ps1. All CI passed on a9d8b549 and on main at
+      12c3b5f4, including Windows PowerShell 5.1 and the WPF smoke render.
+      The DE Tech Tool 1.10.3 release zip (build DE-1.10.3-202610050024-63d4fc,
+      sourceCommit 12c3b5f4) and the DE Microsoft Admin 0.6.0 zip were built
+      from 12c3b5f4. Item 4 shipped in Intelligence-Hub PR 343 (master
+      44185ad8: regenerated API client, frontend bundle byte-identical).
+      VERIFIED LIVE as a Tool release. Files released.

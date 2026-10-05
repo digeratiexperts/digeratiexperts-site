@@ -3,6 +3,7 @@ import { storage } from "./storage";
 import {
   isTokenRevoked,
   issuedBeforeCutoff,
+  revocationsReady,
   cutoffNow,
   revokeToken,
   loadRevokedSessions,
@@ -80,6 +81,8 @@ import {
   appendMessage as appendLiveChatMessage,
   ensureWelcomeMessage,
   getChatStoreStatus,
+  listSessions as listLiveChatSessions,
+  currentSessionId as currentLiveChatSessionId,
 } from "./portalChatStore";
 import {
   initPortalSurveyStore,
@@ -112,6 +115,18 @@ import { registerPortalPhoneRoutes } from "./integrations/phone/routes";
 import { registerPortalShippingRoutes } from "./integrations/shipping/routes";
 import { registerPortalDeskAgentRoutes } from "./portalDeskAgentRoutes";
 import { canAccessPortalTicket } from "./portalTicketAccess";
+import {
+  canSeeDeskTicket,
+  createDeskTicketSync,
+  deskConversationsToComments,
+  deskHtmlToText,
+  deskTicketToListed,
+  mapDeskPriority,
+  mapDeskStatus,
+  mergePortalAndDeskTickets,
+  parseDeskPortalTicketId,
+  startDeskTicketSyncWorker,
+} from "./portalDeskTickets";
 import { RESEND_COOLDOWN_MS } from "./portalVerificationThrottle";
 import {
   initPortalApprovals,
@@ -153,6 +168,7 @@ import {
 import { registerDeSyncRoutes } from "./integrations/deSyncRoutes";
 import { resolveJwtSecret } from "./config/authSecrets";
 import { registerRetiredLegacyAuthRoutes } from "./legacyAuthRetired";
+import { registerRetiredLegacyGenericRoutes } from "./legacyGenericRetired";
 import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter, paymentRateLimiter } from "./middleware/rateLimiter";
 import { enqueueOutbox } from "./integrations/deSyncStore";
 import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
@@ -276,6 +292,14 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
   const token = cookieToken || bearer;
   if (!token) {
     return res.status(401).json({ error: "Authentication required" });
+  }
+  // Fail closed until the durable revocation set is loaded (#393): checking a
+  // token against an empty set would accept one that was logged out.
+  if (!revocationsReady()) {
+    return res.status(503).json({
+      code: "AUTH_NOT_READY",
+      error: "Sign-in is temporarily unavailable. Please try again shortly.",
+    });
   }
   
   try {
@@ -403,40 +427,6 @@ export function requireAdmin(req: AuthenticatedRequest, res: Response, next: Nex
     return res.status(403).json({ error: 'Admin access required' });
   }
   next();
-}
-
-type RecordAccess = "ok" | "missing" | "denied";
-
-function denyRecordAccess(res: Response, access: RecordAccess, missing: string): boolean {
-  if (access === "ok") return false;
-  if (access === "missing") res.status(404).json({ error: missing });
-  else res.status(403).json({ error: "Access denied" });
-  return true;
-}
-
-async function workspaceAccess(req: AuthenticatedRequest, workspaceId: string): Promise<RecordAccess> {
-  const workspace = await storage.getWorkspace(workspaceId);
-  if (!workspace) return "missing";
-  if (req.user?.role === "admin" || workspace.ownerId === req.userId) return "ok";
-  return "denied";
-}
-
-async function projectAccess(req: AuthenticatedRequest, projectId: string): Promise<RecordAccess> {
-  const project = await storage.getProject(projectId);
-  if (!project) return "missing";
-  return workspaceAccess(req, project.workspaceId);
-}
-
-async function boardAccess(req: AuthenticatedRequest, boardId: string): Promise<RecordAccess> {
-  const board = await storage.getBoard(boardId);
-  if (!board) return "missing";
-  return projectAccess(req, board.projectId);
-}
-
-async function taskAccess(req: AuthenticatedRequest, taskId: string): Promise<RecordAccess> {
-  const task = await storage.getTask(taskId);
-  if (!task) return "missing";
-  return projectAccess(req, task.projectId);
 }
 
 function asOrgUser(req: AuthenticatedRequest): OrgUserFields {
@@ -772,7 +762,25 @@ export async function registerRoutes(app: Express) {
     commit: (client: any) => portalAuthCommitClient(client),
     values: () => portalAuthListClients(),
   };
+
+  // Live Zoho Desk tickets per company (server/portalDeskTickets.ts). Page loads
+  // read a 60s cache; the worker re-reads recently viewed companies every 5 min.
+  const deskTicketSync = createDeskTicketSync({
+    api: zohoDeskService,
+    isConfigured: () => zohoClient.isConfigured(),
+    log: (message, meta) => console.log(`[DESK-SYNC] ${message}`, meta ?? ""),
+  });
+  startDeskTicketSyncWorker(
+    deskTicketSync,
+    Number(process.env.PORTAL_DESK_TICKET_SYNC_MS ?? 5 * 60_000),
+    (message, meta) => console.log(`[DESK-SYNC] ${message}`, meta ?? ""),
+  );
   
+  // Legacy generic data APIs (workspaces, projects, boards, tasks, labels,
+  // comments) and /api/chat are retired (#232): nothing calls them. Mounted
+  // ahead of the durable-storage gate so every method answers 410 Gone.
+  registerRetiredLegacyGenericRoutes(app);
+
   // Production: durable-authoritative writes fail closed (503) when the database is down (#248).
   app.use(durableMutationGate);
 
@@ -791,338 +799,6 @@ export async function registerRoutes(app: Express) {
       }
       const { password: _, ...safeUser } = user;
       res.json({ user: safeUser });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ===== WORKSPACE ROUTES =====
-  app.get("/api/workspaces", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const workspaces = await storage.getWorkspacesByUserId(req.userId || "");
-      res.json({ workspaces });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/workspaces", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { name, description } = req.body;
-      if (!name) {
-        return res.status(400).json({ error: "Name is required" });
-      }
-
-      const workspace = await storage.createWorkspace({
-        name,
-        description: description || "",
-        ownerId: req.userId || "",
-        icon: "📦",
-        color: "#D3126A",
-      });
-
-      res.json({ workspace });
-      logSecurityEvent("WORKSPACE_CREATED", req, { workspaceId: workspace.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.get("/api/workspaces/:id", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      if (await denyRecordAccess(res, await workspaceAccess(req, req.params.id), "Workspace not found")) return;
-      const workspace = await storage.getWorkspace(req.params.id);
-      res.json({ workspace });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ===== PROJECT ROUTES =====
-  app.get("/api/projects", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { workspaceId } = req.query;
-      if (!workspaceId) {
-        return res.status(400).json({ error: "workspaceId required" });
-      }
-      if (await denyRecordAccess(res, await workspaceAccess(req, String(workspaceId)), "Workspace not found")) return;
-      const projects = await storage.getProjectsByWorkspaceId(String(workspaceId));
-      res.json({ projects });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/projects", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { name, workspaceId, description } = req.body;
-      if (!name || !workspaceId) {
-        return res.status(400).json({ error: "Name and workspaceId required" });
-      }
-      if (await denyRecordAccess(res, await workspaceAccess(req, workspaceId), "Workspace not found")) return;
-
-      const project = await storage.createProject({
-        workspaceId,
-        name,
-        createdBy: req.userId || "",
-        description: description || "",
-        color: "#D3126A",
-        isFavorite: false,
-      });
-
-      res.json({ project });
-      logSecurityEvent("PROJECT_CREATED", req, { projectId: project.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ===== BOARD ROUTES =====
-  app.get("/api/boards", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { projectId } = req.query;
-      if (!projectId) {
-        return res.status(400).json({ error: "projectId required" });
-      }
-      if (await denyRecordAccess(res, await projectAccess(req, String(projectId)), "Project not found")) return;
-      const boards = await storage.getBoardsByProjectId(String(projectId));
-      res.json({ boards });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/boards", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { name, projectId } = req.body;
-      if (!name || !projectId) {
-        return res.status(400).json({ error: "Name and projectId required" });
-      }
-
-      if (await denyRecordAccess(res, await projectAccess(req, projectId), "Project not found")) return;
-      const board = await storage.createBoard({
-        projectId,
-        name,
-        position: 0,
-      });
-
-      res.json({ board });
-      logSecurityEvent("BOARD_CREATED", req, { boardId: board.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ===== TASK ROUTES =====
-  app.get("/api/tasks", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { boardId, projectId } = req.query;
-      let tasks: any[] = [];
-      
-      if (boardId) {
-        if (await denyRecordAccess(res, await boardAccess(req, String(boardId)), "Board not found")) return;
-        tasks = await storage.getTasksByBoardId(String(boardId));
-      } else if (projectId) {
-        if (await denyRecordAccess(res, await projectAccess(req, String(projectId)), "Project not found")) return;
-        tasks = await storage.getTasksByProjectId(String(projectId));
-      }
-      
-      res.json({ tasks });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/tasks", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { title, boardId, projectId, description } = req.body;
-      if (!title || !projectId) {
-        return res.status(400).json({ error: "Title and projectId required" });
-      }
-
-      if (await denyRecordAccess(res, await projectAccess(req, projectId), "Project not found")) return;
-      if (boardId && await denyRecordAccess(res, await boardAccess(req, boardId), "Board not found")) return;
-      const task = await storage.createTask({
-        projectId,
-        boardId: boardId || null,
-        title,
-        description: description || null,
-        status: "todo",
-        priority: "medium",
-        position: 0,
-        isArchived: false,
-        createdBy: req.userId || "",
-      });
-
-      res.json({ task });
-      logSecurityEvent("TASK_CREATED", req, { taskId: task.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.patch("/api/tasks/:id", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { title, status, priority, description } = req.body;
-      if (await denyRecordAccess(res, await taskAccess(req, req.params.id), "Task not found")) return;
-      const task = await storage.updateTask(req.params.id, {
-        title,
-        status,
-        priority,
-        description,
-      });
-
-      if (!task) {
-        return res.status(404).json({ error: "Task not found" });
-      }
-
-      res.json({ task });
-      logSecurityEvent("TASK_UPDATED", req, { taskId: task.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.delete("/api/tasks/:id", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      if (await denyRecordAccess(res, await taskAccess(req, req.params.id), "Task not found")) return;
-      await storage.deleteTask(req.params.id);
-      res.json({ success: true });
-      logSecurityEvent("TASK_DELETED", req, { taskId: req.params.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ===== LABEL ROUTES =====
-  app.get("/api/labels", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { workspaceId } = req.query;
-      if (!workspaceId) {
-        return res.status(400).json({ error: "workspaceId required" });
-      }
-      if (await denyRecordAccess(res, await workspaceAccess(req, String(workspaceId)), "Workspace not found")) return;
-      const labels = await storage.getLabelsByWorkspaceId(String(workspaceId));
-      res.json({ labels });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/labels", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { name, workspaceId, color } = req.body;
-      if (!name || !workspaceId) {
-        return res.status(400).json({ error: "Name and workspaceId required" });
-      }
-
-      if (await denyRecordAccess(res, await workspaceAccess(req, workspaceId), "Workspace not found")) return;
-      const label = await storage.createLabel({
-        workspaceId,
-        name,
-        color: color || "#D3126A",
-      });
-
-      res.json({ label });
-      logSecurityEvent("LABEL_CREATED", req, { labelId: label.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ===== COMMENT ROUTES =====
-  app.get("/api/comments", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { taskId } = req.query;
-      if (!taskId) {
-        return res.status(400).json({ error: "taskId required" });
-      }
-      if (await denyRecordAccess(res, await taskAccess(req, String(taskId)), "Task not found")) return;
-      const comments = await storage.getCommentsByTaskId(String(taskId));
-      res.json({ comments });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/comments", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { content, taskId } = req.body;
-      if (!content || !taskId) {
-        return res.status(400).json({ error: "Content and taskId required" });
-      }
-
-      if (await denyRecordAccess(res, await taskAccess(req, taskId), "Task not found")) return;
-      const comment = await storage.createComment({
-        taskId,
-        userId: req.userId || "",
-        content,
-      });
-
-      res.json({ comment });
-      logSecurityEvent("COMMENT_CREATED", req, { commentId: comment.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.delete("/api/comments/:id", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const existingComment = await storage.getComment(req.params.id);
-      if (!existingComment) return res.status(404).json({ error: "Comment not found" });
-      if (await denyRecordAccess(res, await taskAccess(req, existingComment.taskId), "Task not found")) return;
-      await storage.deleteComment(req.params.id);
-      res.json({ success: true });
-      logSecurityEvent("COMMENT_DELETED", req, { commentId: req.params.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ===== CHAT ROUTES =====
-  app.get("/api/chat", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { ticketId } = req.query;
-      if (!ticketId) {
-        return res.status(400).json({ error: "ticketId required" });
-      }
-      const ticket = await storage.getPortalTicket(String(ticketId));
-      if (!ticket) return res.status(404).json({ error: "Ticket not found" });
-      const sameClient = Boolean(req.user?.clientId) && ticket.clientId === req.user?.clientId;
-      if (req.user?.role !== "admin" && !sameClient) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-      const messages = await storage.getChatMessagesByTicketId(String(ticketId));
-      res.json({ messages });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/chat", [authMiddleware, chatRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { ticketId, content, isRead } = req.body;
-      if (!ticketId || !content) {
-        return res.status(400).json({ error: "ticketId and content required" });
-      }
-      const ticket = await storage.getPortalTicket(String(ticketId));
-      if (!ticket) return res.status(404).json({ error: "Ticket not found" });
-      const sameClient = Boolean(req.user?.clientId) && ticket.clientId === req.user?.clientId;
-      if (req.user?.role !== "admin" && !sameClient) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      const message = await storage.createChatMessage({
-        ticketId,
-        userId: req.userId || "",
-        content,
-        senderName: req.user?.fullName || "User",
-        senderRole: "client",
-        isRead: isRead || false,
-      });
-
-      res.json({ message });
-      logSecurityEvent("CHAT_MESSAGE_SENT", req, { ticketId });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -1228,6 +904,10 @@ export async function registerRoutes(app: Express) {
 
       const conversationId = conversationIdForUser(req.userId);
       await ensureWelcomeMessage(conversationId, req.userId);
+      // Resolved once, so the visitor's message, the history the model sees and
+      // its reply all land in the same chat even if the idle boundary falls
+      // between them.
+      const sessionId = await currentLiveChatSessionId(conversationId);
 
       const displayName =
         (typeof senderName === "string" && senderName.trim()) ||
@@ -1241,11 +921,14 @@ export async function registerRoutes(app: Express) {
         senderName: displayName,
         senderRole: "client",
         content: content.trim(),
+        sessionId,
       });
 
       let reply = null as Awaited<ReturnType<typeof appendLiveChatMessage>> | null;
       try {
-        const history = await listLiveChatMessages(conversationId, { limit: 20 });
+        // This chat only. Feeding the model a transcript from weeks ago made it
+        // answer questions nobody had just asked.
+        const history = await listLiveChatMessages(conversationId, { limit: 20, sessionId });
         const conversationHistory = history
           .filter((m) => m.id !== message.id)
           .map((m) => ({
@@ -1261,6 +944,7 @@ export async function registerRoutes(app: Express) {
             senderName: "DE Support",
             senderRole: "support",
             content: aiText,
+            sessionId,
           });
         }
       } catch (aiErr: any) {
@@ -1272,6 +956,7 @@ export async function registerRoutes(app: Express) {
         message,
         reply,
         conversationId,
+        sessionId,
       });
       logSecurityEvent("LIVE_CHAT_MESSAGE", req, { conversationId });
     } catch (error: any) {
@@ -1287,18 +972,47 @@ export async function registerRoutes(app: Express) {
       }
       const conversationId = conversationIdForUser(req.userId);
       await ensureWelcomeMessage(conversationId, req.userId);
+      // Default to the chat in progress rather than the whole history. Someone
+      // returning after a week opens a new thread; the old ones are still
+      // there, asked for by id, but they do not pour into the live pane.
+      const sessionId =
+        typeof req.query.sessionId === "string" && req.query.sessionId
+          ? req.query.sessionId
+          : await currentLiveChatSessionId(conversationId);
       const since = typeof req.query.since === "string" ? req.query.since : undefined;
-      const messages = await listLiveChatMessages(conversationId, { since, limit: 200 });
+      const messages = await listLiveChatMessages(conversationId, { since, limit: 200, sessionId });
 
       res.json({
         success: true,
         connected: true,
         conversationId,
+        sessionId,
         messages,
         transport: "http-poll",
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message, connected: false });
+    }
+  });
+
+  // Live chat — the user's own past chats, collapsed to one row each.
+  // Closed chats are kept deliberately: a conversation nobody continued is
+  // still one DE may need to pick up.
+  app.get("/api/portal/chat/sessions", [authMiddleware, requireChatAccess], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (!req.userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      const conversationId = conversationIdForUser(req.userId);
+      const sessions = await listLiveChatSessions(conversationId);
+      res.json({
+        success: true,
+        conversationId,
+        // Newest first: the collapsed list is read from the top.
+        sessions: [...sessions].reverse(),
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 
@@ -1563,6 +1277,7 @@ export async function registerRoutes(app: Express) {
       if (zohoClient.isConfigured()) {
         const requester = findUserById(bundle.request.requesterUserId);
         await zohoDeskService.createTicket({
+          source: "internal-request",
           subject: `[Approved] ${bundle.request.title}`,
           description: bundle.request.description,
           email: requester?.email,
@@ -1812,34 +1527,119 @@ export async function registerRoutes(app: Express) {
   });
 
   // ===== PORTAL TICKET ROUTES =====
-  // Get all tickets for user (admins see all local tickets)
+  // A company's tickets: its portal tickets plus the live ones in its Zoho Desk
+  // account. Clients see their company (subject to canAccessPortalTicket /
+  // canSeeDeskTicket); an admin viewing as a company sees that company; an
+  // admin not viewing as anyone sees every local ticket.
   app.get("/api/portal/tickets", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const isAdmin = req.user?.role === "admin";
-      const tickets = await storage.getPortalTickets(isAdmin ? undefined : req.userId || "");
+      const scope = portalCompanyContext(req);
+      const scopedClientId = isAdmin ? scope.impersonatingCompanyId : scope.companyId;
+
+      const toListed = (t: any) => {
+        const org = annotateTicketOrg(t, (id) => portalClients.get(id));
+        return {
+          id: t.id,
+          ticketNumber: t.ticketNumber || `#TK${String(t.id).padStart(3, '0')}`,
+          subject: t.subject,
+          description: t.description,
+          status: t.status,
+          priority: t.priority,
+          category: t.category || "General",
+          createdAt: t.createdAt,
+          updatedAt: t.updatedAt,
+          clientId: t.clientId || null,
+          companyName: org.companyName,
+          isInternal: org.isInternal,
+          zohoTicketId: parseZohoTicketId(t.assignedTo),
+        };
+      };
+
+      if (isAdmin && !scopedClientId) {
+        const tickets = await storage.getPortalTickets(undefined);
+        return res.json({
+          tickets: tickets.map(toListed).map(({ zohoTicketId: _z, ...t }) => ({ ...t, source: "portal" })),
+          desk: { scope: "all-local", syncedAt: null, error: null },
+        });
+      }
+
+      if (!scopedClientId) {
+        // A signed-in user with no company: only what they opened themselves.
+        const own = await storage.getPortalTickets(req.userId || "");
+        return res.json({
+          tickets: own.map(toListed).map(({ zohoTicketId: _z, ...t }) => ({ ...t, source: "portal" })),
+          desk: { scope: "own", syncedAt: null, error: null },
+        });
+      }
+
+      const allLocal = await storage.getPortalTickets(undefined);
+      const local = allLocal
+        .filter((t) => t.clientId === scopedClientId)
+        .filter((t) => isAdmin || canAccessPortalTicket(req.user, t))
+        .map(toListed);
+
+      const client = portalClients.get(scopedClientId);
+      const desk = client
+        ? await deskTicketSync.getTicketsForClient({
+            id: client.id,
+            companyName: client.companyName,
+            contactEmail: client.contactEmail,
+          })
+        : { accountId: null, tickets: [], syncedAt: null, error: null };
+      const visibleDesk = isAdmin ? desk.tickets : desk.tickets.filter((t) => canSeeDeskTicket(req.user, t));
+
       res.json({
-        tickets: tickets.map(t => {
-          const org = annotateTicketOrg(t, (id) => portalClients.get(id));
-          return {
-            id: t.id,
-            ticketNumber: t.ticketNumber || `#TK${String(t.id).padStart(3, '0')}`,
-            subject: t.subject,
-            description: t.description,
-            status: t.status,
-            priority: t.priority,
-            category: t.category || "General",
-            createdAt: t.createdAt,
-            updatedAt: t.updatedAt,
-            clientId: t.clientId || null,
-            companyName: org.companyName,
-            isInternal: org.isInternal,
-          };
+        tickets: mergePortalAndDeskTickets(local, visibleDesk, {
+          clientId: scopedClientId,
+          companyName: client?.companyName || scope.companyName || null,
         }),
+        desk: {
+          scope: "company",
+          linked: !!desk.accountId,
+          syncedAt: desk.syncedAt ? new Date(desk.syncedAt).toISOString() : null,
+          error: desk.error,
+        },
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
+
+  /**
+   * Load a Desk-only ticket (`desk-<id>`) for the caller, or answer the request.
+   * Allowed when the ticket sits in the Desk account of the company the caller
+   * is scoped to and canSeeDeskTicket passes; an unscoped admin may read any.
+   */
+  async function loadScopedDeskTicket(req: AuthenticatedRequest, res: Response, deskTicketId: string) {
+    if (!zohoClient.isConfigured()) {
+      res.status(404).json({ error: "Ticket not found" });
+      return null;
+    }
+    const isAdmin = req.user?.role === "admin";
+    const scope = portalCompanyContext(req);
+    const scopedClientId = isAdmin ? scope.impersonatingCompanyId : scope.companyId;
+    const ticket = await zohoDeskService.getTicketById(deskTicketId);
+    if (!ticket) {
+      res.status(404).json({ error: "Ticket not found" });
+      return null;
+    }
+    const client = scopedClientId ? portalClients.get(scopedClientId) : undefined;
+    if (!(isAdmin && !scopedClientId)) {
+      const accountId = client
+        ? await deskTicketSync.accountIdFor({ id: client.id, companyName: client.companyName, contactEmail: client.contactEmail })
+        : null;
+      if (!accountId || ticket.accountId !== accountId) {
+        res.status(404).json({ error: "Ticket not found" });
+        return null;
+      }
+      if (!isAdmin && !canSeeDeskTicket(req.user, ticket)) {
+        res.status(403).json({ error: "Access denied" });
+        return null;
+      }
+    }
+    return { ticket, clientId: client?.id || null, companyName: client?.companyName || null };
+  }
 
   // Create new ticket
   app.post("/api/portal/tickets", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
@@ -1916,6 +1716,7 @@ export async function registerRoutes(app: Express) {
             ? portalClients.get(resolvedClientId)?.hubAccountId
             : null;
           const zohoTicket = await zohoDeskService.createTicket({
+            source: "client-portal",
             subject,
             description: hubAccountId
               ? `${description}\n\ncanonicalAccountId: ${hubAccountId}`
@@ -2029,6 +1830,28 @@ export async function registerRoutes(app: Express) {
   app.get("/api/portal/tickets/:id", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
+      const deskTicketId = parseDeskPortalTicketId(id);
+      if (deskTicketId) {
+        const loaded = await loadScopedDeskTicket(req, res, deskTicketId);
+        if (!loaded) return;
+        const isAdmin = req.user?.role === "admin";
+        let conversations: Awaited<ReturnType<typeof zohoDeskService.getTicketConversations>> = [];
+        try {
+          conversations = await zohoDeskService.getTicketConversations(deskTicketId);
+        } catch (convError: any) {
+          console.warn("Could not read Desk conversations:", convError?.message || convError);
+        }
+        const listed = deskTicketToListed(loaded.ticket, { clientId: loaded.clientId, companyName: loaded.companyName });
+        return res.json({
+          ticket: {
+            ...listed,
+            description: deskHtmlToText(loaded.ticket.description),
+            status: mapDeskStatus(loaded.ticket.status, loaded.ticket.statusType),
+            priority: mapDeskPriority(loaded.ticket.priority),
+            comments: deskConversationsToComments(conversations, { isAdmin, viewerEmail: req.user?.email }),
+          },
+        });
+      }
       const ticket = await storage.getPortalTicket(id);
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
@@ -2074,6 +1897,22 @@ export async function registerRoutes(app: Express) {
       
       if (!content) {
         return res.status(400).json({ error: "Content is required" });
+      }
+
+      const deskTicketId = parseDeskPortalTicketId(id);
+      if (deskTicketId) {
+        const loaded = await loadScopedDeskTicket(req, res, deskTicketId);
+        if (!loaded) return;
+        const author = req.user?.fullName || req.user?.email || "Client";
+        try {
+          await zohoDeskService.addPublicTicketComment(deskTicketId, `${author}:\n${String(content).slice(0, 8000)}`);
+        } catch (deskError: any) {
+          console.warn("Could not post reply to Zoho Desk:", deskError?.response?.data || deskError?.message);
+          return res.status(502).json({ error: "We couldn't send that reply just now. Please try again in a moment." });
+        }
+        res.json({ success: true });
+        logSecurityEvent("TICKET_COMMENT_ADDED", req, { ticketId: id, zohoTicketId: deskTicketId });
+        return;
       }
 
       const ticket = await storage.getPortalTicket(id);
@@ -4268,7 +4107,7 @@ export async function registerRoutes(app: Express) {
       impersonatingCompanyId: jwtImpersonation || impersonatingCompanyId,
       getClient: (id) => portalClients.get(id),
     });
-    return { companyId, companyName, hubAccountId };
+    return { companyId, companyName, hubAccountId, impersonatingCompanyId: jwtImpersonation || impersonatingCompanyId };
   }
 
   app.get("/api/portal/contracts", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
@@ -4926,6 +4765,7 @@ export async function registerRoutes(app: Express) {
         try {
           if (zohoDeskService?.createTicket) {
             await zohoDeskService.createTicket({
+              source: "advisor-chat",
               subject: `Advisor chat message from ${email}`,
               description: `${visitorMessage}\n\n---\n${summary}`,
               email,
@@ -5797,6 +5637,7 @@ export async function registerRoutes(app: Express) {
       }
       
       const ticket = await zohoDeskService.createTicket({
+        source: "client-portal",
         subject,
         description,
         contactId, // Use contactId if we found one
