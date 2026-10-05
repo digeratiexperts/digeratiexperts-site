@@ -21,7 +21,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-DETechConsole.
 
 It unpacks the newest `DE-TechTool*.zip` (or an older `DE-TechConsole*.zip`) into `DE-TechConsole\`, clears
 Windows' downloaded-file block, keeps the previous copy as `DE-TechConsole.previous`, and opens DE Tech Tool.
-The window title shows the version (for example `DE Tech Tool v1.10.2`), so you always know which build is
+The window title shows the version (for example `DE Tech Tool v1.10.3`), so you always know which build is
 running. The zip itself is not a script; do not pass it to `-File`.
 
 ## Start
@@ -288,6 +288,13 @@ handoffs and warranty. The shared contracts are in `console/contracts/`.
 
 - **Signed sending.** When `DE_HUB_SIGNING_SECRET` is entered as a runtime secret, `Send-DEHubPayload`
   sends a signed `device.observed` event to `<Hub>/api/integrations/v1/techconsole/events`.
+- **Warranty.** The Evidence page's **Send to Intelligence Hub** then sends the latest warranty lookup as its own
+  signed `device.warranty` event (`Send-DEHubWarranty`; `contracts/warranty.schema.json`, entityId = the device
+  key, same Hub URL, secret and account number). The Hub keeps it with the device. Only a confirmed answer goes:
+  active or expired with an end date (status and days left worked out again on the day it is sent), or
+  not-applicable for a virtual machine. With no lookup yet, or one that fell back to the maker's check page
+  (`manual`) or could not say (`unknown`), nothing is sent, and the evidence line and status line say why. The
+  status line reports both sends. No new automatic network call: the warranty goes only from this button.
 - **Account number.** The client profile needs the client's Hub account number, set as
   `"hub": { "accountId": 123 }`. Without it the signed send is refused and the record is saved for
   manual upload.
@@ -374,7 +381,7 @@ the email migration engine (consumer Gmail to Microsoft 365):
 Start with its [README](microsoft/DE-Microsoft-Admin/README.md). The rules every migration follows are
 in [MIGRATION-STANDARD.md](microsoft/DE-Microsoft-Admin/MIGRATION-STANDARD.md).
 
-### Intelligence Hub jobs (DE Microsoft Admin 0.5)
+### Intelligence Hub jobs (DE Microsoft Admin 0.6)
 
 The Intelligence Hub can queue Microsoft 365 admin jobs for a client. Read-only jobs and changes in plan mode (run
 as a dry run) are approved when they are created; a change in apply mode waits for an owner_admin who did not ask for
@@ -385,7 +392,11 @@ it, or for the requesting owner's typed self-approval phrase. A worker machine r
 - It posts each result back with nothing secret in it. `New-DEUser`'s temporary password stays on the worker.
 - A result it could not post waits on disk for the next run. The job never runs twice.
 
-The worker signs in app-only with a certificate. It keeps the two Hub secrets (`MSADMIN_JOB_SIGNING_SECRET`,
+The worker signs in app-only with a certificate. Since 0.6 it also runs Exchange Online and Azure jobs unattended:
+it signs in to them with the same app and certificate, only when such a job comes up, and signs out at the end of the
+run (`-ExchangeOrganization`, the tenant's `*.onmicrosoft.com` domain, is needed for Exchange; the app needs
+`Exchange.ManageAsApp` and an Exchange role, and an Azure RBAC role). A job it cannot sign in for is reported to the
+Hub as `Failed` with what is missing. It keeps the two Hub secrets (`MSADMIN_JOB_SIGNING_SECRET`,
 `MSADMIN_WORKER_SECRET`) in a SecretManagement vault and loads them only for each run. It runs at a prompt, or as a
 scheduled task every few minutes. The Hub setup, the worker setup and the commands are in the module README's
 [Hub job loop](microsoft/DE-Microsoft-Admin/README.md#the-hub-job-loop) section. The email migration is not a Hub job
