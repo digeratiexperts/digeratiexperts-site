@@ -84,6 +84,39 @@ describe("spaKnownPaths", () => {
     }
   });
 
+  /**
+   * The failure this guards against: a page is added to App.tsx, renders
+   * perfectly in dev, and then serves HTTP 404 in production because nobody
+   * added it here. Humans still see the page, so it looks fine — but crawlers,
+   * link checkers and uptime monitors are told it does not exist. /the-box
+   * shipped exactly this way on 2026-10-05 and was caught only by hitting
+   * production.
+   *
+   * So rather than assert one path, read every static route the client
+   * registers and require each to be resolvable.
+   */
+  it("knows every static route App.tsx registers", () => {
+    const app = readFileSync(
+      path.resolve(__dirname, "../client/src/App.tsx"),
+      "utf8",
+    );
+    const declared = [...app.matchAll(/<Route\s+path="(\/[^"{]*)"/g)].map((m) => m[1]);
+    const staticRoutes = [...new Set(declared)].filter(
+      (route) => !route.includes(":") && !route.includes("*"),
+    );
+
+    // Retired routes the server 301s before the SPA catch-all ever runs. They
+    // must NOT be known SPA paths — a redirect that returns the shell instead
+    // would strand the visitor on a page that no longer exists.
+    const REDIRECTED = new Set(["/solutions/business-needs"]);
+
+    expect(staticRoutes.length).toBeGreaterThan(100);
+    const unreachable = staticRoutes.filter(
+      (route) => !REDIRECTED.has(route) && !isKnownSpaPath(route),
+    );
+    expect(unreachable).toEqual([]);
+  });
+
   it("returns false for unknown paths so the SPA catch-all can send HTTP 404", () => {
     expect(isKnownSpaPath("/this-is-not-a-real-page")).toBe(false);
     expect(isKnownSpaPath("/store/product/secret-sku")).toBe(false);
