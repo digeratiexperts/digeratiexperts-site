@@ -54,7 +54,7 @@ claims:
       - client/src/pages/TheBox.tsx (new)
       - client/src/data/digeratiBox.ts (new)
       - client/src/App.tsx (the /the-box route registration only)
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       A virtual shock-and-awe box: five compartments of collateral that already
@@ -73,7 +73,7 @@ claims:
       - server/portalChatStore.ts (session resolution, listing and the session_id column)
       - server/routes.ts (the three /api/portal/chat endpoints only)
       - client/src/pages/portal/PortalChat.tsx (the portal live-chat panel only)
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       The portal live chat was one endless transcript per user, keyed live-{userId}:
@@ -91,7 +91,7 @@ claims:
       - client/src/lib/pageFlip.ts (new)
       - client/src/styles/page-flip.css (new)
       - artifacts/design-concepts/page-flip/** (prototype, PR 470)
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       Replacing the flipbook's page change with a real page turn. The component
@@ -2158,6 +2158,14 @@ claims:
       Merged via #400; verified live 2026-10-03 on release e76a6777: / renders
       Version 8 (index, follow; Organization/WebSite JSON-LD), /version-8 is a
       301 to / (query kept), /version-0 and /version-7 answer 200 noindex.
+      Joe, 2026-10-05, phone screenshot of the live hero: "This didn't look
+      good change it back", then "Just this hero part": on phones (<768px) the
+      V8 hero's reassurance lines, positioning line and pronunciation row are
+      the previous homepage's again (icon list, dotted line, compact
+      PronunciationCard). Wider screens unchanged. File:
+      client/src/pages/versions/v8/sections/01-hero.tsx. Merged via #483;
+      verified live 2026-10-05 on release 08f986c4 at 430, 390 and 375px
+      (phone block shown, no overflow) and 768/1440 (V8 block unchanged).
   - id: portal-light-ambient
     owner: claude
     subsystem: client-portal-shell
@@ -2342,6 +2350,28 @@ claims:
       documentation: DE-SYSTEM-INTEGRATION.md now lists the Tech Tool, licence
       and Microsoft Admin worker paths, and the Tool's command-line cheat sheet
       has the Hub sends and the job worker.
+  - id: a11y-gate-serious
+    owner: claude
+    subsystem: tooling-ci
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: f4a9bc3
+    files:
+      - scripts/a11y-smoke.mjs, scripts/public-routes.mjs (new)
+      - scripts/public-route-smoke.mjs (route list moved to public-routes.mjs only)
+      - .github/workflows/ci.yml (comment on the smoke:a11y line only)
+      - docs/CONTENT-TOOLING-PLAN.md (accessibility CI paragraph only)
+    status: active
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "Keep building" (plan step 1 follow-up). The 6
+      serious color-contrast groups from 2026-10-04 were axe reading
+      scroll-reveal text mid-fade; with reduced motion, 30 routes x 390/1440
+      report 0 violations. Scan settled, gate on critical+serious, cover
+      every public route plus Store / quote / portal entry pages. No client/
+      code changes. First CI run found 6 critical aria-required-attr nodes on
+      /book that only appear when the Zoho Bookings iframe
+      (meet.digerati-experts.com) loads; cross-origin embeds are now scanned
+      report-only, verified with a two-origin fixture.
   - id: site-atmosphere-and-plates
     owner: claude
     subsystem: public-marketing-visual-layer
@@ -2409,3 +2439,27 @@ claims:
       Expected live state until the Stripe key is set: NOT_CONFIGURED.
       Evidence: artifacts/visual-qa/paynow-tax-readiness/live/. VERIFIED
       LIVE. Files released.
+  - id: de-techtool-golive-devices-panel
+    owner: claude
+    subsystem: msp-ai-kit
+    branch: claude/msp-ai-skills-prompts-htqi09
+    base_sha: baa6e3eae0a3f421beec78f784726f0379ca57c1
+    files:
+      - .claude/skills/msp-ai-kit/windows/GO-LIVE.md (D5 verify bullet and the Part H device row only)
+      - docs/DE-SYSTEM-INTEGRATION.md (one "Where staff see it" bullet in the DE Tech Tool section only)
+      - .claude/skills/msp-ai-kit/windows/console/DETechConsole.ps1 (the headless run's Hub send only: one Send-DEHubWarranty line)
+      - .claude/skills/msp-ai-kit/windows/console/VERSION (1.10.4), DE-TECH-TOOL-ARCHITECTURE.md (1.10.4 line only), README-WINDOWS.md (the Hub warranty bullet only), GO-LIVE.md (Part G step 10)
+    status: active
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "Yes do it". Docs only: GO-LIVE.md D5 and Part H now
+      point at the Hub's new Devices from DE Tech Tool panel (Intelligence-Hub
+      PR 348, live at master 2e3316ae) as the check that a first signed send
+      landed under the right account; DE-SYSTEM-INTEGRATION.md names where
+      staff see Tool devices, migrations, licences and jobs. Overlap check
+      2026-10-05: no open PR touches these two files.
+      Joe, 2026-10-05: "Make sure we do the full scope". DE Tech Tool 1.10.4:
+      a headless run sends the warranty lookup to the Hub right after the
+      device record it already sends (same terms as the Evidence page button;
+      -WhatIf sends nothing; a send that cannot happen is a WARN and never
+      changes the exit code). Overlap check: no open PR touches these files.

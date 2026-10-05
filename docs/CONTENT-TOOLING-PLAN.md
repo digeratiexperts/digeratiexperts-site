@@ -72,11 +72,11 @@ Baseline monthly cost: about $12–35 plus pay-per-use (kie.ai, DataForSEO after
 - Gemini / Antigravity: add the same `command` / `args` under `mcpServers` in its MCP settings.
 - Use: start the site (`npm run dev` or a production build), then ask the agent to run `lighthouse_audit` on the URL at mobile and desktop and fix what it reports. Rendered checks at 390 / 768 / 1440 still apply.
 
-**Accessibility CI**: `scripts/a11y-smoke.mjs` runs axe (WCAG 2.0/2.1/2.2 A + AA) on `/`, a service page, `/pricing`, `/contact`, `/resources/blog`, `/store` and `/portal/login` at 390 and 1440. CI fails on **critical** violations and prints the rest. Local run against a running server:
+**Accessibility CI**: `scripts/a11y-smoke.mjs` runs axe (WCAG 2.0/2.1/2.2 A + AA) on every public route in `scripts/public-routes.mjs` (the same list the public-route smoke uses) plus the Store solution flow, `/quote-wizard` and the Client Portal login, signup and password pages: 30 routes at 390 and 1440, scanned settled with reduced motion. CI fails on **critical or serious** violations in DE's own markup and prints the rest. Cross-origin embeds (the Zoho Bookings calendar on `/book`) are third-party code: they are scanned separately and reported, never gated. Local run against a running server:
 ```bash
 A11Y_BASE=http://127.0.0.1:3300 npm run smoke:a11y   # CHROME=/path/to/chrome if Playwright has no browser
 ```
-Baseline on 2026-10-04: 0 critical, 6 serious `color-contrast` groups (home ≈ 135–147 nodes, `/contact` 16, service 5, blog 2, pricing 1). Clearing them is a visual task (claim it in `docs/SITE-VISUAL-TASKS.md`); after that set `A11Y_FAIL_ON=critical,serious` in `ci.yml`.
+Baseline: 2026-10-04 reported 6 serious `color-contrast` groups. On 2026-10-05 every one traced to axe reading text mid scroll-reveal (and opacity on a `display: contents` wrapper the browser never paints); the settled pages, screenshot-checked, have none. With reduced motion the scan reports 0 violations of any impact on all 30 routes, so the gate was raised to `critical,serious`. The scan adds about 2 minutes to CI.
 
 **Image optimization**: `vite-imagetools` is registered in `vite.config.ts` and only acts on imports with a query:
 ```tsx

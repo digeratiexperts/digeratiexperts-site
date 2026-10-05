@@ -330,6 +330,11 @@ last webhook that still takes a secret in the URL.
   - The device appears on the Hub under the account (asset `asset:<accountId>:detechconsole:<maker>:<SERIAL>`),
     and its evidence carries `warranty` with the status, end date, source and `fetchedAt` from the
     `device.warranty` event.
+  - In the Hub UI, **Customers > the account > Environment > Devices from DE Tech Tool** lists the device: hostname,
+    device key, class, last seen, the warranty chip with its end date, and the rescue handoff date when there is one.
+    The panel is staff-only (Client View never shows it) and reads
+    `GET /api/it-operations/techtool-devices?accountId=<id>` (Intelligence-Hub PR 348). A device that does not appear
+    there was not filed under this account: check D2.
   - A device whose lookup could not confirm a status (the maker's check page, `unknown`) says "Warranty: not sent:
     ... no confirmed status": nothing is sent as a warranty status until the end date is recorded on Scan & fix.
     That is a WARN by design, not a failed send.
@@ -482,7 +487,9 @@ On a real Windows 10 or 11 laptop (not a VM), with the enforced release from ste
    `Hub refused: account not mapped`.
 10. Run headless from an elevated 32-bit prompt (`%SystemRoot%\SysWOW64\WindowsPowerShell\v1.0\powershell.exe`):
     `console\DETechConsole.ps1 -Headless -Client <id> -ResultFile C:\DE\result.json`. The result file is written and
-    the exit code comes through.
+    the exit code comes through. With the signing secret set (`DE_SECRET_DE_HUB_SIGNING_SECRET` or the vault), the
+    run's evidence has `hub.push` and `hub.warranty` lines, and the device shows on the Hub's Devices from DE Tech Tool
+    panel with its warranty.
 11. Boot the rescue USB (F1) on the same laptop with BitLocker on: unlock with the recovery password, back up a
     profile to a second USB, save the handoff and send it. Boot Windows and confirm DE Tech Tool shows **Review what
     the boot rescue did** first.
@@ -525,7 +532,7 @@ SQL
 | Release | Build PC: `build-register.csv`, `Sign-DETechConsole.ps1 -Verify -RequireSignature` | row present, verify passes, policy `required` |
 | Technician PC | DE Tech Tool > Settings > Intelligence Hub connection | all four items ticked |
 | Licence | DE Tech Tool > Settings > Licence | valid, correct device key |
-| Device record | Hub account page | the device under its account, latest evidence |
+| Device record | Hub: Customers > the account > Environment > Devices from DE Tech Tool | the device listed, last seen today, warranty chip as the Tool reported it |
 | Migration record | Hub > IT Operations | the project with its stage |
 | Worker | Worker PC: `Get-ScheduledTaskInfo -TaskName 'DE Microsoft Admin Hub jobs'`; Hub job page | last result 0; test jobs `succeeded` and `dry_run` |
 | Rescue | test device | handoff sent, reviewed in DE Tech Tool |

@@ -388,16 +388,34 @@ class ZohoDeskService {
    * instead of showing an empty list.
    */
   async getTicketsByAccount(accountId: string, max = 200): Promise<ZohoTicket[]> {
+    return this.getPaged<ZohoTicket>(`/accounts/${accountId}/tickets`, max, { sortBy: '-modifiedTime' });
+  }
+
+  /**
+   * Every ticket raised by a Desk contact, paged to `max`. Unlike
+   * getTicketsByContact this throws on errors and does not stop at Desk's
+   * default page size.
+   */
+  async getAllTicketsForContact(contactId: string, max = 200): Promise<ZohoTicket[]> {
+    return this.getPaged<ZohoTicket>(`/contacts/${contactId}/tickets`, max, { sortBy: '-modifiedTime' });
+  }
+
+  /** Contacts filed under a Desk account. Throws on transport/auth errors. */
+  async getAccountContacts(accountId: string, max = 200): Promise<ZohoDeskContact[]> {
+    return this.getPaged<ZohoDeskContact>(`/accounts/${accountId}/contacts`, max);
+  }
+
+  private async getPaged<T>(path: string, max: number, params: Record<string, unknown> = {}): Promise<T[]> {
     const client = await zohoClient.getDeskClient();
     const orgId = await this.getOrgId();
     const pageSize = 100;
-    const out: ZohoTicket[] = [];
+    const out: T[] = [];
     for (let from = 0; from < max; from += pageSize) {
-      const response = await client.get(`/accounts/${accountId}/tickets`, {
+      const response = await client.get(path, {
         headers: { orgId },
-        params: { from, limit: Math.min(pageSize, max - from), sortBy: '-modifiedTime' },
+        params: { ...params, from, limit: Math.min(pageSize, max - from) },
       });
-      const page: ZohoTicket[] = response.data?.data || [];
+      const page: T[] = response.data?.data || [];
       out.push(...page);
       if (page.length < pageSize) break;
     }
