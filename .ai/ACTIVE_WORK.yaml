@@ -2440,7 +2440,7 @@ claims:
       - docs/DE-SYSTEM-INTEGRATION.md (one "Where staff see it" bullet in the DE Tech Tool section only)
       - .claude/skills/msp-ai-kit/windows/console/DETechConsole.ps1 (the headless run's Hub send only: one Send-DEHubWarranty line)
       - .claude/skills/msp-ai-kit/windows/console/VERSION (1.10.4), DE-TECH-TOOL-ARCHITECTURE.md (1.10.4 line only), README-WINDOWS.md (the Hub warranty bullet only), GO-LIVE.md (Part G step 10)
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       Joe, 2026-10-05: "Yes do it". Docs only: GO-LIVE.md D5 and Part H now
@@ -2454,3 +2454,10 @@ claims:
       device record it already sends (same terms as the Evidence page button;
       -WhatIf sends nothing; a send that cannot happen is a WARN and never
       changes the exit code). Overlap check: no open PR touches these files.
+      RELEASED 2026-10-05: Joe, "Check again or merge". Merged as f0c31343 (PR
+      476). Tool-only plus docs: nothing deploys from this repository; the Tool
+      ships through New-DEReleasePackage.ps1. All CI passed on 5d2126b3 and on
+      main at f0c31343, including Windows PowerShell 5.1, the WPF smoke render
+      and "Deploy and verify production VPS". The DE Tech Tool 1.10.4 release
+      zip (build DE-1.10.4-202610050518-568c45, sourceCommit f0c31343) was
+      built from f0c31343. VERIFIED LIVE as a Tool release. Files released.
