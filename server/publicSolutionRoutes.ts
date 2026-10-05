@@ -9,8 +9,10 @@ import {
 } from "../client/src/lib/businessNeeds";
 import { eventBus, EventTypes } from "./eventBus";
 import { apiGeneralRateLimiter } from "./middleware/rateLimiter";
-import { buildPublicSolutionRequestDescription, syncPublicSolutionRequestToCrm } from "./publicSolutionRequestCrm";
+import { syncPublicSolutionRequestToCrm } from "./publicSolutionRequestCrm";
 import { durablePersistenceAvailable } from "./publicSolutionRequestPersistence";
+import { saveOutsideDatabase, solutionLeadEvent } from "./publicSolutionFallback";
+import { notificationService } from "./services/notificationService";
 import {
   createPublicSolutionRequest,
   findPublicSolutionRequestDurable,
@@ -21,6 +23,7 @@ import {
   normalizeSolutionReference,
   publicSolutionStatusView,
   submissionProblem,
+  markPublicSolutionRequestCrm,
   markPublicSolutionRequestCrmDurable,
   publicFamilyExists,
   publicSolutionDraftView,
@@ -29,6 +32,7 @@ import {
   unsubmitPublicSolutionRequest,
   upsertPublicSolutionRequestDurable,
   type PublicSolutionRequest,
+  type SolutionDurability,
 } from "./publicSolutionRequestStore";
 
 const SESSION_COOKIE = "de_solution_request";
@@ -247,56 +251,46 @@ export function registerPublicSolutionRoutes(app: Express): void {
       return res.status(500).json({ error: "We could not save your solution request. Please try again." });
     }
 
-    // A submitted solution is a lead, not disposable UI state. In production a
-    // submit that could not be written durably is accepted only if the CRM has
-    // recorded it; otherwise the visitor is told to retry and the memory record
-    // is rolled back to a draft so the retry is a real submit, not a "replay".
-    let durable: "database" | "crm" | "memory" = submitted.persisted ? "database" : "memory";
+    // A submitted solution is a lead, not disposable UI state, and it is never
+    // lost (#243). In production a submit the database refused is saved three
+    // other ways (disk spool, CRM, email to the lead address and sales) and is
+    // accepted when any of them held. Only when all three fail is the visitor
+    // asked to retry; the memory record is rolled back so the retry is a real
+    // submit, not a "replay", and the browser still holds the draft.
+    let durable: SolutionDurability = submitted.persisted ? "database" : "memory";
     let crmSyncedInline = false;
+    let savedOutsideDatabase = false;
     if (!submitted.persisted && !submitted.replayed && !memoryOnlySubmissionAllowed()) {
-      let crmStatus: "pending" | "recorded" = "pending";
-      try {
-        crmStatus = await syncPublicSolutionRequestToCrm(submitted.record);
-      } catch (error: any) {
-        console.warn("[solution-request] CRM sync failed while storage was unavailable:", error?.message || error);
-      }
-      if (crmStatus === "recorded") {
-        durable = "crm";
-        crmSyncedInline = true;
-        await markPublicSolutionRequestCrmDurable(submitted.record.id, "recorded");
-      } else {
+      const outcome = await saveOutsideDatabase(submitted.record);
+      if (!outcome.durable) {
         unsubmitPublicSolutionRequest(submitted.record.id);
-        console.error("[solution-request] DURABLE_STORAGE_REQUIRED", { id: submitted.record.id });
+        console.error("[solution-request] DURABLE_STORAGE_REQUIRED: spool, CRM and email all failed", { id: submitted.record.id });
         return res.status(503).json({
           code: "DURABLE_STORAGE_REQUIRED",
           error:
             "We could not save your solution just now. Nothing you entered was lost on this device; please try again in a moment.",
         });
       }
+      durable = outcome.durable;
+      savedOutsideDatabase = true;
+      crmSyncedInline = outcome.crmRecorded;
+      if (outcome.crmRecorded) markPublicSolutionRequestCrm(submitted.record.id, "recorded");
+      console.warn("[solution-request] saved outside the database", {
+        id: submitted.record.id,
+        spooled: outcome.spooled,
+        crm: outcome.crmRecorded,
+        emailed: outcome.salesEmailed,
+      });
     }
 
-    if (!submitted.replayed) {
+    // Saved outside the database: the fallback email already told sales and the
+    // Hub outbox needs the database, so the lead event waits for recovery
+    // (publicSolutionReplayWorker) instead of notifying twice now.
+    if (!submitted.replayed && !savedOutsideDatabase) {
       const record = submitted.record;
       // The listener sends the admin email and writes the Hub outbox from
       // these fields; without them the notification read "New Lead: undefined".
-      void eventBus.emit(EventTypes.LEAD_CREATED, {
-        id: record.id,
-        name: record.contactName,
-        email: record.contactEmail,
-        company: record.organizationName,
-        phone: record.contactPhone,
-        message: buildPublicSolutionRequestDescription(record),
-        source: "solution_request",
-        correlationId: record.correlationId,
-        familyId: record.familyId,
-        offerId: record.offerId,
-        deliveryModel: record.deliveryModel,
-        deliveryPreference: record.deliveryPreference,
-        selectedNeeds: record.selectedNeeds.map((need) => need.familyId),
-        installation: record.fulfillment.installation,
-        remoteSupport: record.fulfillment.remoteSupport,
-        intent: record.intent,
-      });
+      void eventBus.emit(EventTypes.LEAD_CREATED, solutionLeadEvent(record));
       if (!crmSyncedInline) {
         void syncPublicSolutionRequestToCrm(record)
           .then((crmStatus) => markPublicSolutionRequestCrmDurable(record.id, crmStatus))
@@ -306,6 +300,14 @@ export function registerPublicSolutionRoutes(app: Express): void {
 
     if (!submitted.replayed) {
       await markPublicSolutionRequestDurabilityDurable(submitted.record.id, durable);
+      // The visitor's own confirmation with their reference (#243: always).
+      // Never blocks or fails the submit.
+      const { reference, contactName, contactEmail } = submitted.record;
+      if (reference) {
+        void notificationService
+          .sendSolutionRequestAcknowledgement({ reference, contactName, contactEmail })
+          .catch((error: any) => console.warn("[solution-request] acknowledgement email failed:", error?.message || error));
+      }
     }
 
     // A replay must not downgrade a CRM status the first submission already earned.
@@ -323,8 +325,9 @@ export function registerPublicSolutionRoutes(app: Express): void {
       durable: submitted.replayed ? (final.durable ?? durable) : durable,
       intent: view.intent,
       nextStep: nextStepFor(final),
-      // No acknowledgement email is sent yet (owner decision pending); the page and the reference are the record.
-      acknowledged: false,
+      // An acknowledgement email with the reference is sent on every first
+      // submit (#243). True means it was sent off, not that it was delivered.
+      acknowledged: !submitted.replayed,
       message:
         (submitted.replayed ? (final.durable ?? durable) : durable) === "memory"
           ? "Your solution is recorded. DE will confirm package fit, scope, fulfillment, and pricing before you commit."

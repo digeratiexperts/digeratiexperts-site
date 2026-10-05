@@ -19,6 +19,7 @@ import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
 import { cacheControlFor } from "./staticCacheControl";
+import { spoolPendingCount } from "./publicSolutionSpool";
 import { registerCampaignAliasRedirects } from "./campaignAliasRedirects";
 import { createServer as createViteServer } from "vite";
 import path from "path";
@@ -125,6 +126,8 @@ app.all("/api/health", async (_req, res) => {
       // OAuth refresh rejects the configured refresh token (e.g. invalid_code).
       zohoDesk: zohoClient.getDeskAuthStatus(),
       openai: openaiConfigured ? "configured" : "not_configured",
+      // Solution requests waiting on disk for the database (#243). A count only.
+      solutionSpool: { pending: spoolPendingCount() },
     },
     // Lets a reviewer confirm outbound mutations are locked down.
     stagingReview: stagingReviewStatus(),
@@ -659,6 +662,12 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       .then(({ startDeSyncWorker }) => startDeSyncWorker())
       .catch((error) => {
         log(`⚠️ de-sync worker not started: ${error?.message || error}`);
+      });
+    // Solution requests saved outside the database are written back once it is reachable (#243).
+    void import("./publicSolutionReplayWorker")
+      .then(({ startSolutionReplayWorker }) => startSolutionReplayWorker())
+      .catch((error) => {
+        log(`⚠️ solution replay worker not started: ${error?.message || error}`);
       });
     void import("./services/threat-intel/ingest")
       .then(({ startThreatIntelScheduler }) => startThreatIntelScheduler())
