@@ -20,6 +20,8 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret-for-session-revo
 
 const dbRows: Array<{ tokenHash: string; expiresAt: Date }> = [];
 let failWrites = false;
+let failSelect = false;
+let failPrune = false;
 vi.mock("./db", () => {
   const db = {
     insert: () => ({
@@ -30,8 +32,19 @@ vi.mock("./db", () => {
         },
       }),
     }),
-    select: () => ({ from: () => ({ where: async () => dbRows.map((r) => ({ ...r })) }) }),
-    delete: () => ({ where: async () => undefined }),
+    select: () => ({
+      from: () => ({
+        where: async () => {
+          if (failSelect) throw new Error("permission denied for table portal_revoked_sessions");
+          return dbRows.map((r) => ({ ...r }));
+        },
+      }),
+    }),
+    delete: () => ({
+      where: async () => {
+        if (failPrune) throw new Error("lock timeout");
+      },
+    }),
   };
   return { db, dbReady: true, initPromise: Promise.resolve(true) };
 });
@@ -80,6 +93,8 @@ describe("portal session revocation (#242)", () => {
   beforeEach(async () => {
     dbRows.length = 0;
     failWrites = false;
+    failSelect = false;
+    failPrune = false;
     live.sessionsValidAfter = null;
     const rev = await import("./portalSessionRevocation");
     rev.resetRevocationsForTests();
@@ -133,6 +148,60 @@ describe("portal session revocation (#242)", () => {
     expect(rev.isTokenRevoked(token)).toBe(false);
     await rev.loadRevokedSessions();
     expect(rev.isTokenRevoked(token)).toBe(true);
+  });
+
+  it("a failed load after a restart refuses the revoked token until the set is reloaded (#393)", async () => {
+    const token = sign();
+    const rev = await import("./portalSessionRevocation");
+    await rev.revokeToken(token, { userId: "u1", expiresAtSec: Math.floor(Date.now() / 1000) + 3600 });
+
+    // Restart: memory gone, database kept, and the first SELECT fails.
+    rev.resetRevocationsForTests({ loadState: "pending" });
+    vi.useFakeTimers();
+    try {
+      failSelect = true;
+      await rev.loadRevokedSessions();
+      expect(rev.revocationLoadState()).toBe("failed");
+      const refused = await call(token);
+      expect(refused.status).toBe(503);
+      expect(refused.body.code).toBe("AUTH_NOT_READY");
+      expect(refused.next).not.toHaveBeenCalled();
+      // Any token is refused while not ready, not only the revoked one.
+      expect((await call(sign())).status).toBe(503);
+
+      // The scheduled retry succeeds once the database answers again.
+      failSelect = false;
+      await vi.advanceTimersByTimeAsync(2_000);
+      expect(rev.revocationLoadState()).toBe("ready");
+    } finally {
+      vi.useRealTimers();
+    }
+    const after = await call(token);
+    expect(after.status).toBe(401);
+    expect(after.next).not.toHaveBeenCalled();
+    // Another device's token (distinct claims, so a distinct hash) works again.
+    const other = jwt.sign({ userId: "u1", email: live.email, role: "user", n: 3 }, process.env.JWT_SECRET as string, { expiresIn: "24h" });
+    expect((await call(other)).next).toHaveBeenCalled();
+  });
+
+  it("refuses authenticated requests before the first load completes", async () => {
+    const rev = await import("./portalSessionRevocation");
+    rev.resetRevocationsForTests({ loadState: "pending" });
+    expect((await call(sign())).status).toBe(503);
+    await rev.loadRevokedSessions();
+    expect((await call(sign())).next).toHaveBeenCalled();
+  });
+
+  it("a failed prune of expired rows does not undo a successful load", async () => {
+    const token = sign();
+    const rev = await import("./portalSessionRevocation");
+    await rev.revokeToken(token, { userId: "u1", expiresAtSec: Math.floor(Date.now() / 1000) + 3600 });
+    rev.resetRevocationsForTests({ loadState: "pending" });
+    failPrune = true;
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    await rev.loadRevokedSessions();
+    expect(rev.revocationLoadState()).toBe("ready");
+    expect((await call(token)).status).toBe(401);
   });
 
   it("a failed durable write still revokes in memory but is reported to the caller", async () => {

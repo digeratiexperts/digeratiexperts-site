@@ -24,7 +24,7 @@ export type PublicSolutionNeed = {
 };
 
 export type SolutionNextStep = "quote" | "consultation" | "assessment";
-export type SolutionDurability = "database" | "crm" | "memory";
+export type SolutionDurability = "database" | "spool" | "crm" | "email" | "memory";
 
 export type PublicSolutionEnvironment = {
   userCount: string;

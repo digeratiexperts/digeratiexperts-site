@@ -11,7 +11,6 @@ import { billingLabel, isRecurringPricingType, type CommercePricingType } from "
 import { COMPANY } from "@shared/companyContact";
 import { accountTeamFor, type AccountTeam } from "@shared/accountManagers";
 import {
-  accountTeamBlock,
   closeBlock,
   coverBlock,
   DE_PDF,
@@ -202,8 +201,8 @@ export function buildOrderPdfHtml(order: OrderPdfInput, opts: OrderPdfOptions = 
       text: "Track provisioning, invoices and support in your portal. Questions go to the support desk below.",
       email: COMPANY.supportEmail,
       portal: true,
+      team: opts.accountTeam ?? accountTeamFor(null),
     })}
-    ${accountTeamBlock(opts.accountTeam ?? accountTeamFor(null))}
   </main>`;
 
   return documentHtml({

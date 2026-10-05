@@ -20,6 +20,7 @@ describe("production deployment scripts", () => {
   it.skipIf(!bashAvailable())("remain valid bash", () => {
     expect(() => execFileSync("bash", ["-n", deployScript], { stdio: "pipe" })).not.toThrow();
     expect(() => execFileSync("bash", ["-n", runnerScript], { stdio: "pipe" })).not.toThrow();
+    expect(() => execFileSync("bash", ["-n", resolve(root, "deploy/vps/resolve-deploy-commit.sh")], { stdio: "pipe" })).not.toThrow();
   });
 
   it("pins production to the canonical digeratiexperts-site repository", () => {

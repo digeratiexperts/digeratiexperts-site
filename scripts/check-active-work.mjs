@@ -12,6 +12,7 @@
 //      introduced by PR #199.
 
 import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { parse } from 'yaml';
 
 const FILE = '.ai/ACTIVE_WORK.yaml';
@@ -95,6 +96,52 @@ if (errors.length > 0) {
   console.error(`${FILE}: ${errors.length} problem${errors.length === 1 ? '' : 's'} found\n`);
   for (const error of errors) console.error(`  - ${error}`);
   process.exit(1);
+}
+
+// 4. Staleness. The checks above prove the file is well formed; they say nothing
+// about whether a claim still describes work in flight. A claim whose branch is
+// already fully merged is finished, but it is still read as a lock, and an agent
+// that honours it defers to nothing (see #460: twelve claims, one of them 34 days
+// old, holding eleven homepage components while four homepage rebuilds shipped).
+//
+// Deliberately a WARNING, not a failure: a hard check here would turn one agent's
+// forgotten claim into a red build on everyone else's unrelated PR — the same
+// "blocks real work" problem in a new place. Harden it if warnings get ignored.
+const stale = [];
+const unresolved = [];
+
+for (const claim of claims) {
+  if (claim?.status !== 'active' || !claim.branch) continue;
+
+  const ref = `origin/${claim.branch}`;
+  const resolved = spawnSync('git', ['rev-parse', '--verify', '--quiet', ref], { encoding: 'utf8' });
+  if (resolved.status !== 0) {
+    // No remote-tracking ref: a shallow clone, a pruned branch, or a local-only
+    // branch. Not evidence of staleness either way, so just note it.
+    unresolved.push(`${claim.id} (${ref} not found locally)`);
+    continue;
+  }
+
+  const merged = spawnSync('git', ['merge-base', '--is-ancestor', ref, 'origin/main']);
+  if (merged.status === 0) {
+    const ahead = spawnSync('git', ['rev-list', '--count', `origin/main..${ref}`], { encoding: 'utf8' });
+    stale.push(`${claim.id} — ${claim.branch} is fully merged into main (${ahead.stdout.trim()} unmerged commits)`);
+  }
+}
+
+if (stale.length > 0) {
+  console.warn(
+    `\n${FILE}: ${stale.length} active claim${stale.length === 1 ? '' : 's'} whose branch is already merged.\n` +
+      `These read as locks but hold nothing. Retire each with \`status: merged\`, ` +
+      `or \`verified-live\` once production is checked:\n`
+  );
+  for (const line of stale) console.warn(`  ! ${line}`);
+  console.warn('');
+}
+
+if (unresolved.length > 0 && process.env.DE_CLAIM_CHECK_VERBOSE) {
+  console.warn(`${FILE}: could not resolve ${unresolved.length} claim branch(es):`);
+  for (const line of unresolved) console.warn(`  ? ${line}`);
 }
 
 console.log(`${FILE}: OK — ${claims.length} claim${claims.length === 1 ? '' : 's'}, schema and scalar checks passed`);

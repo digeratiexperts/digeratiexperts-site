@@ -1,11 +1,13 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import { createServer, type Server } from "http";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { registerPublicSolutionRoutes } from "./publicSolutionRoutes";
 import { resetPublicSolutionRequestsForTests } from "./publicSolutionRequestStore";
 import { eventBus, EventTypes } from "./eventBus";
 import { syncPublicSolutionRequestToCrm } from "./publicSolutionRequestCrm";
+import { writeSpoolEntry } from "./publicSolutionSpool";
+import { notificationService } from "./services/notificationService";
 
 vi.mock("./publicSolutionRequestCrm", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./publicSolutionRequestCrm")>();
@@ -13,6 +15,20 @@ vi.mock("./publicSolutionRequestCrm", async (importOriginal) => {
     ...actual,
     syncPublicSolutionRequestToCrm: vi.fn(async () => "pending"),
   };
+});
+
+// #243: each layer outside the database can be made to fail on demand.
+vi.mock("./publicSolutionSpool", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./publicSolutionSpool")>();
+  return { ...actual, writeSpoolEntry: vi.fn(() => true), updateSpoolEntry: vi.fn(() => true) };
+});
+
+vi.mock("./services/notificationService", () => {
+  const notificationService = {
+    sendSolutionRequestFallback: vi.fn(async () => true),
+    sendSolutionRequestAcknowledgement: vi.fn(async () => true),
+  };
+  return { notificationService, default: notificationService };
 });
 
 const prohibited = [
@@ -268,34 +284,79 @@ describe("public solution Door 2 API", () => {
     }
   });
 
-  it("refuses a production submit that is neither durable nor in the CRM, and lets the retry be a real submit", async () => {
-    const originalEnv = process.env.NODE_ENV;
-    const originalSmoke = process.env.DE_SMOKE_ALLOW_MEMORY_ONLY;
-    process.env.NODE_ENV = "production";
-    delete process.env.DE_SMOKE_ALLOW_MEMORY_ONLY;
-    const emitSpy = vi.spyOn(eventBus, "emit").mockImplementation(async () => undefined as any);
-    try {
-      const refused = await fourFieldSubmit({ idempotencyKey: "durability-test" });
-      expect(refused.status).toBe(503);
-      const body = await refused.json();
-      expect(body.code).toBe("DURABLE_STORAGE_REQUIRED");
-      expect(emitSpy).not.toHaveBeenCalledWith(EventTypes.LEAD_CREATED, expect.anything());
+  describe("in production, when the database refuses the submit (#243: never lost)", () => {
+    let originalEnv: string | undefined;
+    let originalSmoke: string | undefined;
+    let emitSpy: ReturnType<typeof vi.spyOn>;
 
-      // Once the CRM records it, the same submit is accepted and is not a replay.
-      vi.mocked(syncPublicSolutionRequestToCrm).mockResolvedValueOnce("recorded");
-      const accepted = await fourFieldSubmit({ idempotencyKey: "durability-test" });
-      expect(accepted.status).toBe(200);
-      const acceptedBody = await accepted.json();
-      expect(acceptedBody.replayed).toBe(false);
-      expect(acceptedBody.durable).toBe("crm");
-      expect(acceptedBody.crm).toBe("recorded");
-      expect(emitSpy).toHaveBeenCalledWith(EventTypes.LEAD_CREATED, expect.objectContaining({ email: "riley@example.com" }));
-    } finally {
+    beforeEach(() => {
+      originalEnv = process.env.NODE_ENV;
+      originalSmoke = process.env.DE_SMOKE_ALLOW_MEMORY_ONLY;
+      process.env.NODE_ENV = "production";
+      delete process.env.DE_SMOKE_ALLOW_MEMORY_ONLY;
+      emitSpy = vi.spyOn(eventBus, "emit").mockImplementation(async () => undefined as any);
+      vi.mocked(writeSpoolEntry).mockReset().mockReturnValue(true);
+      vi.mocked(syncPublicSolutionRequestToCrm).mockReset().mockResolvedValue("pending");
+      vi.mocked(notificationService.sendSolutionRequestFallback).mockReset().mockResolvedValue(true);
+      vi.mocked(notificationService.sendSolutionRequestAcknowledgement).mockClear();
+    });
+
+    afterEach(() => {
       emitSpy.mockRestore();
       process.env.NODE_ENV = originalEnv;
       if (originalSmoke === undefined) delete process.env.DE_SMOKE_ALLOW_MEMORY_ONLY;
       else process.env.DE_SMOKE_ALLOW_MEMORY_ONLY = originalSmoke;
-    }
+    });
+
+    it("accepts it from the disk spool, tells sales directly, and leaves the lead event to recovery", async () => {
+      const response = await fourFieldSubmit({ idempotencyKey: "spool-test" });
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.durable).toBe("spool");
+      expect(body.reference).toMatch(/^DE-/);
+      expect(body.acknowledged).toBe(true);
+      expect(writeSpoolEntry).toHaveBeenCalledWith(
+        expect.objectContaining({ version: 1, record: expect.objectContaining({ reference: body.reference }) }),
+      );
+      expect(notificationService.sendSolutionRequestFallback).toHaveBeenCalledWith(
+        expect.objectContaining({ reference: body.reference, contactEmail: "riley@example.com" }),
+      );
+      expect(emitSpy).not.toHaveBeenCalledWith(EventTypes.LEAD_CREATED, expect.anything());
+    });
+
+    it("accepts it from the CRM alone when the disk refuses it", async () => {
+      vi.mocked(writeSpoolEntry).mockReturnValue(false);
+      vi.mocked(notificationService.sendSolutionRequestFallback).mockResolvedValue(false);
+      vi.mocked(syncPublicSolutionRequestToCrm).mockResolvedValue("recorded");
+      const body = await (await fourFieldSubmit({ idempotencyKey: "crm-only-test" })).json();
+      expect(body.durable).toBe("crm");
+      expect(body.crm).toBe("recorded");
+    });
+
+    it("accepts it from the email alone when disk and CRM both refuse it", async () => {
+      vi.mocked(writeSpoolEntry).mockReturnValue(false);
+      const response = await fourFieldSubmit({ idempotencyKey: "email-only-test" });
+      expect(response.status).toBe(200);
+      expect((await response.json()).durable).toBe("email");
+    });
+
+    it("asks for a retry only when all three fail, and lets the retry be a real submit", async () => {
+      vi.mocked(writeSpoolEntry).mockReturnValue(false);
+      vi.mocked(notificationService.sendSolutionRequestFallback).mockResolvedValue(false);
+      const refused = await fourFieldSubmit({ idempotencyKey: "durability-test" });
+      expect(refused.status).toBe(503);
+      expect((await refused.json()).code).toBe("DURABLE_STORAGE_REQUIRED");
+      expect(emitSpy).not.toHaveBeenCalledWith(EventTypes.LEAD_CREATED, expect.anything());
+      expect(notificationService.sendSolutionRequestAcknowledgement).not.toHaveBeenCalled();
+
+      // Once any layer holds, the same submit is accepted and is not a replay.
+      vi.mocked(writeSpoolEntry).mockReturnValue(true);
+      const accepted = await fourFieldSubmit({ idempotencyKey: "durability-test" });
+      expect(accepted.status).toBe(200);
+      const acceptedBody = await accepted.json();
+      expect(acceptedBody.replayed).toBe(false);
+      expect(acceptedBody.durable).toBe("spool");
+    });
   });
 
   it("mints a short human reference on submit and serves its status without contact details", async () => {
@@ -305,10 +366,19 @@ describe("public solution Door 2 API", () => {
     expect(body.request.reference).toMatch(/^DE-[0-9A-HJKMNP-TV-Z]{6}$/);
     expect(body.reference).toBe(body.request.reference);
     expect(body.nextStep).toBe("quote");
-    expect(body.acknowledged).toBe(false);
-    // A replay returns the same reference, not a second one.
+    // #243: the visitor is sent their reference, once.
+    expect(body.acknowledged).toBe(true);
+    expect(notificationService.sendSolutionRequestAcknowledgement).toHaveBeenCalledWith({
+      reference: body.request.reference,
+      contactName: "Riley Owner",
+      contactEmail: "riley@example.com",
+    });
+    // A replay returns the same reference, not a second one, and no second email.
+    vi.mocked(notificationService.sendSolutionRequestAcknowledgement).mockClear();
     const replay = await (await fourFieldSubmit({ idempotencyKey: "reference-test" })).json();
     expect(replay.replayed).toBe(true);
+    expect(replay.acknowledged).toBe(false);
+    expect(notificationService.sendSolutionRequestAcknowledgement).not.toHaveBeenCalled();
     expect(replay.request.reference).toBe(body.request.reference);
 
     // Read back the way a person types it: lower case, no hyphen.

@@ -31,7 +31,8 @@ export default function DeskLoginCard({ onSignedIn, onBack }: DeskLoginCardProps
   const [password, setPassword] = useState("");
   const [mfaCode, setMfaCode] = useState("");
   const [mfaToken, setMfaToken] = useState("");
-  const [mfaMethod, setMfaMethod] = useState<"totp" | "email">("totp");
+  // Any other method answers here with a backup code.
+  const [mfaMethod, setMfaMethod] = useState<string>("totp");
   const [mfaMessage, setMfaMessage] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileKey, setTurnstileKey] = useState(0);
@@ -225,15 +226,15 @@ export default function DeskLoginCard({ onSignedIn, onBack }: DeskLoginCardProps
         ) : null}
         <div className="de-desk-field">
           <label htmlFor="desk-login-mfa">
-            {mfaMethod === "totp" ? "Authenticator code" : "Email verification code"}
+            {mfaMethod === "totp" ? "Authenticator code" : mfaMethod === "email" ? "Email verification code" : "Backup code"}
           </label>
           <Input
             id="desk-login-mfa"
             type="text"
-            inputMode="numeric"
+            inputMode={mfaMethod === "totp" || mfaMethod === "email" ? "numeric" : "text"}
             pattern="[0-9A-Za-z]*"
-            maxLength={8}
-            placeholder={mfaMethod === "totp" ? "6-digit code" : "Code from your email"}
+            maxLength={10}
+            placeholder={mfaMethod === "totp" ? "6-digit code" : mfaMethod === "email" ? "Code from your email" : "Backup code"}
             value={mfaCode}
             onChange={(event) => setMfaCode(event.target.value)}
             className="de-desk-input is-bare"

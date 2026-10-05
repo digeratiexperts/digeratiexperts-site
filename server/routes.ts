@@ -3,6 +3,7 @@ import { storage } from "./storage";
 import {
   isTokenRevoked,
   issuedBeforeCutoff,
+  revocationsReady,
   cutoffNow,
   revokeToken,
   loadRevokedSessions,
@@ -28,6 +29,19 @@ import { describeQuoteContext, quoteLeadDescription, sanitizeQuoteContext } from
 import { followUpHeadline, planLeadFollowUp } from "@shared/leadFollowUp";
 import { createQuoteLeadWithCall, normalizeLeadPhone, zohoLeadUrl } from "./quoteLeadCrm";
 import { findBackupCodeIndex, generateBackupCodes } from "./portalMfaCrypto";
+import { generateTotpSecret, totpKeyUri, verifyTotp } from "./portalTotp";
+import {
+  buildAuthenticationOptions,
+  buildRegistrationOptions,
+  isPasskeyProvider,
+  newChallenge,
+  PASSKEY_PROVIDERS,
+  publicPasskeyView,
+  resolveRpId,
+  verifyAuthentication,
+  verifyRegistration,
+  type PasskeyProviderId,
+} from "./portalPasskeys";
 import {
   parseZohoTicketId,
   validatePortalTicketUpload,
@@ -80,6 +94,8 @@ import {
   appendMessage as appendLiveChatMessage,
   ensureWelcomeMessage,
   getChatStoreStatus,
+  listSessions as listLiveChatSessions,
+  currentSessionId as currentLiveChatSessionId,
 } from "./portalChatStore";
 import {
   initPortalSurveyStore,
@@ -112,6 +128,18 @@ import { registerPortalPhoneRoutes } from "./integrations/phone/routes";
 import { registerPortalShippingRoutes } from "./integrations/shipping/routes";
 import { registerPortalDeskAgentRoutes } from "./portalDeskAgentRoutes";
 import { canAccessPortalTicket } from "./portalTicketAccess";
+import {
+  canSeeDeskTicket,
+  createDeskTicketSync,
+  deskConversationsToComments,
+  deskHtmlToText,
+  deskTicketToListed,
+  mapDeskPriority,
+  mapDeskStatus,
+  mergePortalAndDeskTickets,
+  parseDeskPortalTicketId,
+  startDeskTicketSyncWorker,
+} from "./portalDeskTickets";
 import { RESEND_COOLDOWN_MS } from "./portalVerificationThrottle";
 import {
   initPortalApprovals,
@@ -153,6 +181,7 @@ import {
 import { registerDeSyncRoutes } from "./integrations/deSyncRoutes";
 import { resolveJwtSecret } from "./config/authSecrets";
 import { registerRetiredLegacyAuthRoutes } from "./legacyAuthRetired";
+import { registerRetiredLegacyGenericRoutes } from "./legacyGenericRetired";
 import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter, paymentRateLimiter } from "./middleware/rateLimiter";
 import { enqueueOutbox } from "./integrations/deSyncStore";
 import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
@@ -276,6 +305,14 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
   const token = cookieToken || bearer;
   if (!token) {
     return res.status(401).json({ error: "Authentication required" });
+  }
+  // Fail closed until the durable revocation set is loaded (#393): checking a
+  // token against an empty set would accept one that was logged out.
+  if (!revocationsReady()) {
+    return res.status(503).json({
+      code: "AUTH_NOT_READY",
+      error: "Sign-in is temporarily unavailable. Please try again shortly.",
+    });
   }
   
   try {
@@ -403,40 +440,6 @@ export function requireAdmin(req: AuthenticatedRequest, res: Response, next: Nex
     return res.status(403).json({ error: 'Admin access required' });
   }
   next();
-}
-
-type RecordAccess = "ok" | "missing" | "denied";
-
-function denyRecordAccess(res: Response, access: RecordAccess, missing: string): boolean {
-  if (access === "ok") return false;
-  if (access === "missing") res.status(404).json({ error: missing });
-  else res.status(403).json({ error: "Access denied" });
-  return true;
-}
-
-async function workspaceAccess(req: AuthenticatedRequest, workspaceId: string): Promise<RecordAccess> {
-  const workspace = await storage.getWorkspace(workspaceId);
-  if (!workspace) return "missing";
-  if (req.user?.role === "admin" || workspace.ownerId === req.userId) return "ok";
-  return "denied";
-}
-
-async function projectAccess(req: AuthenticatedRequest, projectId: string): Promise<RecordAccess> {
-  const project = await storage.getProject(projectId);
-  if (!project) return "missing";
-  return workspaceAccess(req, project.workspaceId);
-}
-
-async function boardAccess(req: AuthenticatedRequest, boardId: string): Promise<RecordAccess> {
-  const board = await storage.getBoard(boardId);
-  if (!board) return "missing";
-  return projectAccess(req, board.projectId);
-}
-
-async function taskAccess(req: AuthenticatedRequest, taskId: string): Promise<RecordAccess> {
-  const task = await storage.getTask(taskId);
-  if (!task) return "missing";
-  return projectAccess(req, task.projectId);
 }
 
 function asOrgUser(req: AuthenticatedRequest): OrgUserFields {
@@ -772,7 +775,25 @@ export async function registerRoutes(app: Express) {
     commit: (client: any) => portalAuthCommitClient(client),
     values: () => portalAuthListClients(),
   };
+
+  // Live Zoho Desk tickets per company (server/portalDeskTickets.ts). Page loads
+  // read a 60s cache; the worker re-reads recently viewed companies every 5 min.
+  const deskTicketSync = createDeskTicketSync({
+    api: zohoDeskService,
+    isConfigured: () => zohoClient.isConfigured(),
+    log: (message, meta) => console.log(`[DESK-SYNC] ${message}`, meta ?? ""),
+  });
+  startDeskTicketSyncWorker(
+    deskTicketSync,
+    Number(process.env.PORTAL_DESK_TICKET_SYNC_MS ?? 5 * 60_000),
+    (message, meta) => console.log(`[DESK-SYNC] ${message}`, meta ?? ""),
+  );
   
+  // Legacy generic data APIs (workspaces, projects, boards, tasks, labels,
+  // comments) and /api/chat are retired (#232): nothing calls them. Mounted
+  // ahead of the durable-storage gate so every method answers 410 Gone.
+  registerRetiredLegacyGenericRoutes(app);
+
   // Production: durable-authoritative writes fail closed (503) when the database is down (#248).
   app.use(durableMutationGate);
 
@@ -791,338 +812,6 @@ export async function registerRoutes(app: Express) {
       }
       const { password: _, ...safeUser } = user;
       res.json({ user: safeUser });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ===== WORKSPACE ROUTES =====
-  app.get("/api/workspaces", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const workspaces = await storage.getWorkspacesByUserId(req.userId || "");
-      res.json({ workspaces });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/workspaces", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { name, description } = req.body;
-      if (!name) {
-        return res.status(400).json({ error: "Name is required" });
-      }
-
-      const workspace = await storage.createWorkspace({
-        name,
-        description: description || "",
-        ownerId: req.userId || "",
-        icon: "📦",
-        color: "#D3126A",
-      });
-
-      res.json({ workspace });
-      logSecurityEvent("WORKSPACE_CREATED", req, { workspaceId: workspace.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.get("/api/workspaces/:id", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      if (await denyRecordAccess(res, await workspaceAccess(req, req.params.id), "Workspace not found")) return;
-      const workspace = await storage.getWorkspace(req.params.id);
-      res.json({ workspace });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ===== PROJECT ROUTES =====
-  app.get("/api/projects", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { workspaceId } = req.query;
-      if (!workspaceId) {
-        return res.status(400).json({ error: "workspaceId required" });
-      }
-      if (await denyRecordAccess(res, await workspaceAccess(req, String(workspaceId)), "Workspace not found")) return;
-      const projects = await storage.getProjectsByWorkspaceId(String(workspaceId));
-      res.json({ projects });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/projects", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { name, workspaceId, description } = req.body;
-      if (!name || !workspaceId) {
-        return res.status(400).json({ error: "Name and workspaceId required" });
-      }
-      if (await denyRecordAccess(res, await workspaceAccess(req, workspaceId), "Workspace not found")) return;
-
-      const project = await storage.createProject({
-        workspaceId,
-        name,
-        createdBy: req.userId || "",
-        description: description || "",
-        color: "#D3126A",
-        isFavorite: false,
-      });
-
-      res.json({ project });
-      logSecurityEvent("PROJECT_CREATED", req, { projectId: project.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ===== BOARD ROUTES =====
-  app.get("/api/boards", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { projectId } = req.query;
-      if (!projectId) {
-        return res.status(400).json({ error: "projectId required" });
-      }
-      if (await denyRecordAccess(res, await projectAccess(req, String(projectId)), "Project not found")) return;
-      const boards = await storage.getBoardsByProjectId(String(projectId));
-      res.json({ boards });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/boards", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { name, projectId } = req.body;
-      if (!name || !projectId) {
-        return res.status(400).json({ error: "Name and projectId required" });
-      }
-
-      if (await denyRecordAccess(res, await projectAccess(req, projectId), "Project not found")) return;
-      const board = await storage.createBoard({
-        projectId,
-        name,
-        position: 0,
-      });
-
-      res.json({ board });
-      logSecurityEvent("BOARD_CREATED", req, { boardId: board.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ===== TASK ROUTES =====
-  app.get("/api/tasks", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { boardId, projectId } = req.query;
-      let tasks: any[] = [];
-      
-      if (boardId) {
-        if (await denyRecordAccess(res, await boardAccess(req, String(boardId)), "Board not found")) return;
-        tasks = await storage.getTasksByBoardId(String(boardId));
-      } else if (projectId) {
-        if (await denyRecordAccess(res, await projectAccess(req, String(projectId)), "Project not found")) return;
-        tasks = await storage.getTasksByProjectId(String(projectId));
-      }
-      
-      res.json({ tasks });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/tasks", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { title, boardId, projectId, description } = req.body;
-      if (!title || !projectId) {
-        return res.status(400).json({ error: "Title and projectId required" });
-      }
-
-      if (await denyRecordAccess(res, await projectAccess(req, projectId), "Project not found")) return;
-      if (boardId && await denyRecordAccess(res, await boardAccess(req, boardId), "Board not found")) return;
-      const task = await storage.createTask({
-        projectId,
-        boardId: boardId || null,
-        title,
-        description: description || null,
-        status: "todo",
-        priority: "medium",
-        position: 0,
-        isArchived: false,
-        createdBy: req.userId || "",
-      });
-
-      res.json({ task });
-      logSecurityEvent("TASK_CREATED", req, { taskId: task.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.patch("/api/tasks/:id", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { title, status, priority, description } = req.body;
-      if (await denyRecordAccess(res, await taskAccess(req, req.params.id), "Task not found")) return;
-      const task = await storage.updateTask(req.params.id, {
-        title,
-        status,
-        priority,
-        description,
-      });
-
-      if (!task) {
-        return res.status(404).json({ error: "Task not found" });
-      }
-
-      res.json({ task });
-      logSecurityEvent("TASK_UPDATED", req, { taskId: task.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.delete("/api/tasks/:id", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      if (await denyRecordAccess(res, await taskAccess(req, req.params.id), "Task not found")) return;
-      await storage.deleteTask(req.params.id);
-      res.json({ success: true });
-      logSecurityEvent("TASK_DELETED", req, { taskId: req.params.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ===== LABEL ROUTES =====
-  app.get("/api/labels", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { workspaceId } = req.query;
-      if (!workspaceId) {
-        return res.status(400).json({ error: "workspaceId required" });
-      }
-      if (await denyRecordAccess(res, await workspaceAccess(req, String(workspaceId)), "Workspace not found")) return;
-      const labels = await storage.getLabelsByWorkspaceId(String(workspaceId));
-      res.json({ labels });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/labels", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { name, workspaceId, color } = req.body;
-      if (!name || !workspaceId) {
-        return res.status(400).json({ error: "Name and workspaceId required" });
-      }
-
-      if (await denyRecordAccess(res, await workspaceAccess(req, workspaceId), "Workspace not found")) return;
-      const label = await storage.createLabel({
-        workspaceId,
-        name,
-        color: color || "#D3126A",
-      });
-
-      res.json({ label });
-      logSecurityEvent("LABEL_CREATED", req, { labelId: label.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ===== COMMENT ROUTES =====
-  app.get("/api/comments", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { taskId } = req.query;
-      if (!taskId) {
-        return res.status(400).json({ error: "taskId required" });
-      }
-      if (await denyRecordAccess(res, await taskAccess(req, String(taskId)), "Task not found")) return;
-      const comments = await storage.getCommentsByTaskId(String(taskId));
-      res.json({ comments });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/comments", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { content, taskId } = req.body;
-      if (!content || !taskId) {
-        return res.status(400).json({ error: "Content and taskId required" });
-      }
-
-      if (await denyRecordAccess(res, await taskAccess(req, taskId), "Task not found")) return;
-      const comment = await storage.createComment({
-        taskId,
-        userId: req.userId || "",
-        content,
-      });
-
-      res.json({ comment });
-      logSecurityEvent("COMMENT_CREATED", req, { commentId: comment.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.delete("/api/comments/:id", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const existingComment = await storage.getComment(req.params.id);
-      if (!existingComment) return res.status(404).json({ error: "Comment not found" });
-      if (await denyRecordAccess(res, await taskAccess(req, existingComment.taskId), "Task not found")) return;
-      await storage.deleteComment(req.params.id);
-      res.json({ success: true });
-      logSecurityEvent("COMMENT_DELETED", req, { commentId: req.params.id });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // ===== CHAT ROUTES =====
-  app.get("/api/chat", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { ticketId } = req.query;
-      if (!ticketId) {
-        return res.status(400).json({ error: "ticketId required" });
-      }
-      const ticket = await storage.getPortalTicket(String(ticketId));
-      if (!ticket) return res.status(404).json({ error: "Ticket not found" });
-      const sameClient = Boolean(req.user?.clientId) && ticket.clientId === req.user?.clientId;
-      if (req.user?.role !== "admin" && !sameClient) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-      const messages = await storage.getChatMessagesByTicketId(String(ticketId));
-      res.json({ messages });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.post("/api/chat", [authMiddleware, chatRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { ticketId, content, isRead } = req.body;
-      if (!ticketId || !content) {
-        return res.status(400).json({ error: "ticketId and content required" });
-      }
-      const ticket = await storage.getPortalTicket(String(ticketId));
-      if (!ticket) return res.status(404).json({ error: "Ticket not found" });
-      const sameClient = Boolean(req.user?.clientId) && ticket.clientId === req.user?.clientId;
-      if (req.user?.role !== "admin" && !sameClient) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      const message = await storage.createChatMessage({
-        ticketId,
-        userId: req.userId || "",
-        content,
-        senderName: req.user?.fullName || "User",
-        senderRole: "client",
-        isRead: isRead || false,
-      });
-
-      res.json({ message });
-      logSecurityEvent("CHAT_MESSAGE_SENT", req, { ticketId });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -1228,6 +917,10 @@ export async function registerRoutes(app: Express) {
 
       const conversationId = conversationIdForUser(req.userId);
       await ensureWelcomeMessage(conversationId, req.userId);
+      // Resolved once, so the visitor's message, the history the model sees and
+      // its reply all land in the same chat even if the idle boundary falls
+      // between them.
+      const sessionId = await currentLiveChatSessionId(conversationId);
 
       const displayName =
         (typeof senderName === "string" && senderName.trim()) ||
@@ -1241,11 +934,14 @@ export async function registerRoutes(app: Express) {
         senderName: displayName,
         senderRole: "client",
         content: content.trim(),
+        sessionId,
       });
 
       let reply = null as Awaited<ReturnType<typeof appendLiveChatMessage>> | null;
       try {
-        const history = await listLiveChatMessages(conversationId, { limit: 20 });
+        // This chat only. Feeding the model a transcript from weeks ago made it
+        // answer questions nobody had just asked.
+        const history = await listLiveChatMessages(conversationId, { limit: 20, sessionId });
         const conversationHistory = history
           .filter((m) => m.id !== message.id)
           .map((m) => ({
@@ -1261,6 +957,7 @@ export async function registerRoutes(app: Express) {
             senderName: "DE Support",
             senderRole: "support",
             content: aiText,
+            sessionId,
           });
         }
       } catch (aiErr: any) {
@@ -1272,6 +969,7 @@ export async function registerRoutes(app: Express) {
         message,
         reply,
         conversationId,
+        sessionId,
       });
       logSecurityEvent("LIVE_CHAT_MESSAGE", req, { conversationId });
     } catch (error: any) {
@@ -1287,18 +985,47 @@ export async function registerRoutes(app: Express) {
       }
       const conversationId = conversationIdForUser(req.userId);
       await ensureWelcomeMessage(conversationId, req.userId);
+      // Default to the chat in progress rather than the whole history. Someone
+      // returning after a week opens a new thread; the old ones are still
+      // there, asked for by id, but they do not pour into the live pane.
+      const sessionId =
+        typeof req.query.sessionId === "string" && req.query.sessionId
+          ? req.query.sessionId
+          : await currentLiveChatSessionId(conversationId);
       const since = typeof req.query.since === "string" ? req.query.since : undefined;
-      const messages = await listLiveChatMessages(conversationId, { since, limit: 200 });
+      const messages = await listLiveChatMessages(conversationId, { since, limit: 200, sessionId });
 
       res.json({
         success: true,
         connected: true,
         conversationId,
+        sessionId,
         messages,
         transport: "http-poll",
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message, connected: false });
+    }
+  });
+
+  // Live chat — the user's own past chats, collapsed to one row each.
+  // Closed chats are kept deliberately: a conversation nobody continued is
+  // still one DE may need to pick up.
+  app.get("/api/portal/chat/sessions", [authMiddleware, requireChatAccess], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (!req.userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      const conversationId = conversationIdForUser(req.userId);
+      const sessions = await listLiveChatSessions(conversationId);
+      res.json({
+        success: true,
+        conversationId,
+        // Newest first: the collapsed list is read from the top.
+        sessions: [...sessions].reverse(),
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 
@@ -1563,6 +1290,7 @@ export async function registerRoutes(app: Express) {
       if (zohoClient.isConfigured()) {
         const requester = findUserById(bundle.request.requesterUserId);
         await zohoDeskService.createTicket({
+          source: "internal-request",
           subject: `[Approved] ${bundle.request.title}`,
           description: bundle.request.description,
           email: requester?.email,
@@ -1812,34 +1540,119 @@ export async function registerRoutes(app: Express) {
   });
 
   // ===== PORTAL TICKET ROUTES =====
-  // Get all tickets for user (admins see all local tickets)
+  // A company's tickets: its portal tickets plus the live ones in its Zoho Desk
+  // account. Clients see their company (subject to canAccessPortalTicket /
+  // canSeeDeskTicket); an admin viewing as a company sees that company; an
+  // admin not viewing as anyone sees every local ticket.
   app.get("/api/portal/tickets", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const isAdmin = req.user?.role === "admin";
-      const tickets = await storage.getPortalTickets(isAdmin ? undefined : req.userId || "");
+      const scope = portalCompanyContext(req);
+      const scopedClientId = isAdmin ? scope.impersonatingCompanyId : scope.companyId;
+
+      const toListed = (t: any) => {
+        const org = annotateTicketOrg(t, (id) => portalClients.get(id));
+        return {
+          id: t.id,
+          ticketNumber: t.ticketNumber || `#TK${String(t.id).padStart(3, '0')}`,
+          subject: t.subject,
+          description: t.description,
+          status: t.status,
+          priority: t.priority,
+          category: t.category || "General",
+          createdAt: t.createdAt,
+          updatedAt: t.updatedAt,
+          clientId: t.clientId || null,
+          companyName: org.companyName,
+          isInternal: org.isInternal,
+          zohoTicketId: parseZohoTicketId(t.assignedTo),
+        };
+      };
+
+      if (isAdmin && !scopedClientId) {
+        const tickets = await storage.getPortalTickets(undefined);
+        return res.json({
+          tickets: tickets.map(toListed).map(({ zohoTicketId: _z, ...t }) => ({ ...t, source: "portal" })),
+          desk: { scope: "all-local", syncedAt: null, error: null },
+        });
+      }
+
+      if (!scopedClientId) {
+        // A signed-in user with no company: only what they opened themselves.
+        const own = await storage.getPortalTickets(req.userId || "");
+        return res.json({
+          tickets: own.map(toListed).map(({ zohoTicketId: _z, ...t }) => ({ ...t, source: "portal" })),
+          desk: { scope: "own", syncedAt: null, error: null },
+        });
+      }
+
+      const allLocal = await storage.getPortalTickets(undefined);
+      const local = allLocal
+        .filter((t) => t.clientId === scopedClientId)
+        .filter((t) => isAdmin || canAccessPortalTicket(req.user, t))
+        .map(toListed);
+
+      const client = portalClients.get(scopedClientId);
+      const desk = client
+        ? await deskTicketSync.getTicketsForClient({
+            id: client.id,
+            companyName: client.companyName,
+            contactEmail: client.contactEmail,
+          })
+        : { accountId: null, tickets: [], syncedAt: null, error: null };
+      const visibleDesk = isAdmin ? desk.tickets : desk.tickets.filter((t) => canSeeDeskTicket(req.user, t));
+
       res.json({
-        tickets: tickets.map(t => {
-          const org = annotateTicketOrg(t, (id) => portalClients.get(id));
-          return {
-            id: t.id,
-            ticketNumber: t.ticketNumber || `#TK${String(t.id).padStart(3, '0')}`,
-            subject: t.subject,
-            description: t.description,
-            status: t.status,
-            priority: t.priority,
-            category: t.category || "General",
-            createdAt: t.createdAt,
-            updatedAt: t.updatedAt,
-            clientId: t.clientId || null,
-            companyName: org.companyName,
-            isInternal: org.isInternal,
-          };
+        tickets: mergePortalAndDeskTickets(local, visibleDesk, {
+          clientId: scopedClientId,
+          companyName: client?.companyName || scope.companyName || null,
         }),
+        desk: {
+          scope: "company",
+          linked: !!desk.accountId,
+          syncedAt: desk.syncedAt ? new Date(desk.syncedAt).toISOString() : null,
+          error: desk.error,
+        },
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
+
+  /**
+   * Load a Desk-only ticket (`desk-<id>`) for the caller, or answer the request.
+   * Allowed when the ticket sits in the Desk account of the company the caller
+   * is scoped to and canSeeDeskTicket passes; an unscoped admin may read any.
+   */
+  async function loadScopedDeskTicket(req: AuthenticatedRequest, res: Response, deskTicketId: string) {
+    if (!zohoClient.isConfigured()) {
+      res.status(404).json({ error: "Ticket not found" });
+      return null;
+    }
+    const isAdmin = req.user?.role === "admin";
+    const scope = portalCompanyContext(req);
+    const scopedClientId = isAdmin ? scope.impersonatingCompanyId : scope.companyId;
+    const ticket = await zohoDeskService.getTicketById(deskTicketId);
+    if (!ticket) {
+      res.status(404).json({ error: "Ticket not found" });
+      return null;
+    }
+    const client = scopedClientId ? portalClients.get(scopedClientId) : undefined;
+    if (!(isAdmin && !scopedClientId)) {
+      const accountId = client
+        ? await deskTicketSync.accountIdFor({ id: client.id, companyName: client.companyName, contactEmail: client.contactEmail })
+        : null;
+      if (!accountId || ticket.accountId !== accountId) {
+        res.status(404).json({ error: "Ticket not found" });
+        return null;
+      }
+      if (!isAdmin && !canSeeDeskTicket(req.user, ticket)) {
+        res.status(403).json({ error: "Access denied" });
+        return null;
+      }
+    }
+    return { ticket, clientId: client?.id || null, companyName: client?.companyName || null };
+  }
 
   // Create new ticket
   app.post("/api/portal/tickets", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
@@ -1916,6 +1729,7 @@ export async function registerRoutes(app: Express) {
             ? portalClients.get(resolvedClientId)?.hubAccountId
             : null;
           const zohoTicket = await zohoDeskService.createTicket({
+            source: "client-portal",
             subject,
             description: hubAccountId
               ? `${description}\n\ncanonicalAccountId: ${hubAccountId}`
@@ -2029,6 +1843,28 @@ export async function registerRoutes(app: Express) {
   app.get("/api/portal/tickets/:id", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
+      const deskTicketId = parseDeskPortalTicketId(id);
+      if (deskTicketId) {
+        const loaded = await loadScopedDeskTicket(req, res, deskTicketId);
+        if (!loaded) return;
+        const isAdmin = req.user?.role === "admin";
+        let conversations: Awaited<ReturnType<typeof zohoDeskService.getTicketConversations>> = [];
+        try {
+          conversations = await zohoDeskService.getTicketConversations(deskTicketId);
+        } catch (convError: any) {
+          console.warn("Could not read Desk conversations:", convError?.message || convError);
+        }
+        const listed = deskTicketToListed(loaded.ticket, { clientId: loaded.clientId, companyName: loaded.companyName });
+        return res.json({
+          ticket: {
+            ...listed,
+            description: deskHtmlToText(loaded.ticket.description),
+            status: mapDeskStatus(loaded.ticket.status, loaded.ticket.statusType),
+            priority: mapDeskPriority(loaded.ticket.priority),
+            comments: deskConversationsToComments(conversations, { isAdmin, viewerEmail: req.user?.email }),
+          },
+        });
+      }
       const ticket = await storage.getPortalTicket(id);
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
@@ -2076,6 +1912,22 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: "Content is required" });
       }
 
+      const deskTicketId = parseDeskPortalTicketId(id);
+      if (deskTicketId) {
+        const loaded = await loadScopedDeskTicket(req, res, deskTicketId);
+        if (!loaded) return;
+        const author = req.user?.fullName || req.user?.email || "Client";
+        try {
+          await zohoDeskService.addPublicTicketComment(deskTicketId, `${author}:\n${String(content).slice(0, 8000)}`);
+        } catch (deskError: any) {
+          console.warn("Could not post reply to Zoho Desk:", deskError?.response?.data || deskError?.message);
+          return res.status(502).json({ error: "We couldn't send that reply just now. Please try again in a moment." });
+        }
+        res.json({ success: true });
+        logSecurityEvent("TICKET_COMMENT_ADDED", req, { ticketId: id, zohoTicketId: deskTicketId });
+        return;
+      }
+
       const ticket = await storage.getPortalTicket(id);
       if (!ticket) {
         return res.status(404).json({ error: "Ticket not found" });
@@ -2121,8 +1973,11 @@ export async function registerRoutes(app: Express) {
   const mfaChallenges = new Map<string, {
     userId: string;
     email: string;
-    method: 'totp' | 'email';
+    method: 'totp' | 'email' | 'passkey';
     emailCode?: string;
+    /** WebAuthn challenge issued by /mfa/passkey/login/options for this login. */
+    passkeyChallenge?: string;
+    passkeyRpId?: string;
     createdAt: number;
     expiresAt: number;
     attempts: number;
@@ -2132,9 +1987,21 @@ export async function registerRoutes(app: Express) {
   // MFA TOTP setup — temporary storage while user confirms setup
   const mfaPendingSetups = new Map<string, {
     userId: string;
+    method: 'totp' | 'email';
     secret: string;
     createdAt: number;
   }>();
+
+  // Passkey registration ceremonies in flight (challenge is single use, 10 minutes).
+  const passkeyRegistrations = new Map<string, {
+    userId: string;
+    challenge: string;
+    rpId: string;
+    provider: PasskeyProviderId;
+    nickname: string;
+    createdAt: number;
+  }>();
+  const PASSKEY_CEREMONY_TTL = 10 * 60 * 1000;
 
   // Portal Register Endpoint — creates prospect client + durable user
   app.post("/api/portal/register", [formSubmissionRateLimiter, verifyTurnstile, validateInput], async (req: AuthenticatedRequest, res: Response) => {
@@ -2768,13 +2635,14 @@ export async function registerRoutes(app: Express) {
           mfaChallenges.set(challengeToken, {
             userId: user.id,
             email: user.email,
-            method: 'totp',
+            method: user.mfaMethod === 'passkey' ? 'passkey' : 'totp',
             createdAt: now,
             expiresAt: now + TEN_MINUTES,
             attempts: 0,
           });
         }
 
+        const passkeyAvailable = (user.mfaPasskeys || []).some((p) => p.rpId === resolveRpId(req.hostname));
         logSecurityEvent("MFA_CHALLENGE_ISSUED", req, { email, method: user.mfaMethod });
 
         return res.json({
@@ -2782,9 +2650,12 @@ export async function registerRoutes(app: Express) {
           mfaRequired: true,
           mfaMethod: user.mfaMethod,
           mfaToken: challengeToken,
+          passkeyAvailable,
           message: user.mfaMethod === 'email'
             ? "A verification code has been sent to your email."
-            : "Enter the code from your authenticator app.",
+            : user.mfaMethod === 'passkey'
+              ? "Confirm it's you with your passkey, or enter a backup code."
+              : "Enter the code from your authenticator app.",
         });
       }
 
@@ -2828,9 +2699,7 @@ export async function registerRoutes(app: Express) {
       if (challenge.method === 'email') {
         verified = timingSafeStrEqual(String(challenge.emailCode ?? ""), code.trim());
       } else if (challenge.method === 'totp' && user.mfaTotpSecret) {
-        const otplib = await import('otplib');
-        const auth = (otplib as any).authenticator || (otplib as any).default?.authenticator || otplib;
-        verified = auth.verify({ token: code.trim(), secret: user.mfaTotpSecret });
+        verified = verifyTotp(String(code), user.mfaTotpSecret);
       }
 
       const backupCodes = (user as any).mfaBackupCodes || [];
@@ -2931,6 +2800,7 @@ export async function registerRoutes(app: Express) {
         mfaEnabled: !!user.mfaEnabled,
         mfaMethod: user.mfaMethod || null,
         backupCodesRemaining: user.mfaBackupCodes?.length || 0,
+        passkeys: (user.mfaPasskeys || []).map(publicPasskeyView),
       });
     } catch (error: any) {
       logger.error("Failed to get MFA status", error);
@@ -2954,27 +2824,27 @@ export async function registerRoutes(app: Express) {
       }
 
       if (method === 'totp') {
-        const otplib = await import('otplib');
-        const auth = (otplib as any).authenticator || (otplib as any).default?.authenticator || otplib;
         const QRCode = await import('qrcode');
-        const secret = auth.generateSecret();
-        const otpauthUrl = auth.keyuri(user.email, 'Digerati Experts', secret);
-        const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
+        const secret = generateTotpSecret();
+        const otpauthUrl = totpKeyUri(user.email, secret);
+        const toDataURL = (QRCode as any).toDataURL ?? (QRCode as any).default?.toDataURL;
+        const qrCodeDataUrl: string = await toDataURL(otpauthUrl, { margin: 2, width: 240 });
 
         const setupToken = randomId();
-        mfaPendingSetups.set(setupToken, { userId: user.id, secret, createdAt: Date.now() });
+        mfaPendingSetups.set(setupToken, { userId: user.id, method: 'totp', secret, createdAt: Date.now() });
 
         return res.json({
           method: 'totp',
           setupToken,
           qrCode: qrCodeDataUrl,
           secret,
+          otpauthUrl,
           message: "Scan the QR code with your authenticator app, then confirm with a code.",
         });
       } else {
         const code = String(randomInt(100000, 1000000));
         const setupToken = randomId();
-        mfaPendingSetups.set(setupToken, { userId: user.id, secret: code, createdAt: Date.now() });
+        mfaPendingSetups.set(setupToken, { userId: user.id, method: 'email', secret: code, createdAt: Date.now() });
 
         notificationService.sendMfaCode({
           email: user.email,
@@ -3014,12 +2884,15 @@ export async function registerRoutes(app: Express) {
         return res.status(403).json({ message: "Unauthorized" });
       }
 
+      // The method is the one this setup token was issued for, never the client's claim.
+      if (method !== setup.method) {
+        return res.status(400).json({ message: "Setup method does not match. Please start again." });
+      }
+
       let verified = false;
 
       if (method === 'totp') {
-        const otplib = await import('otplib');
-        const auth = (otplib as any).authenticator || (otplib as any).default?.authenticator || otplib;
-        verified = auth.verify({ token: code.trim(), secret: setup.secret });
+        verified = verifyTotp(String(code), setup.secret);
       } else if (method === 'email') {
         verified = setup.secret === code.trim();
       }
@@ -3071,6 +2944,7 @@ export async function registerRoutes(app: Express) {
       user.mfaMethod = null;
       user.mfaTotpSecret = null;
       user.mfaBackupCodes = [];
+      user.mfaPasskeys = [];
       await portalUsers.commit(user);
 
       logSecurityEvent("MFA_DISABLED", req, { email: user.email });
@@ -3105,6 +2979,215 @@ export async function registerRoutes(app: Express) {
       if (sendPersistenceFailure(res, error)) return;
       logger.error("Backup code regeneration failed", error);
       return res.status(500).json({ message: "Failed to regenerate backup codes" });
+    }
+  });
+
+  // ===== PASSKEYS (WebAuthn) =====
+  // Apple (iCloud Keychain), Android (Google Password Manager), Microsoft Authenticator
+  // and JumpCloud. A passkey is a second factor after the password, alongside or instead
+  // of an authenticator app, and can be added while another MFA method is on.
+
+  const prunePasskeyCeremonies = () => {
+    const now = Date.now();
+    for (const [token, entry] of passkeyRegistrations) {
+      if (now - entry.createdAt > PASSKEY_CEREMONY_TTL) passkeyRegistrations.delete(token);
+    }
+  };
+
+  // Step 1: options for navigator.credentials.create(), tuned to the chosen provider.
+  app.post("/api/portal/mfa/passkey/register/options", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { provider, nickname } = req.body || {};
+      if (!isPasskeyProvider(provider)) {
+        return res.status(400).json({ message: "Provider must be apple, android, microsoft or jumpcloud" });
+      }
+      const user = portalUsers.get(req.user?.email || "");
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if ((user.mfaPasskeys || []).length >= 10) {
+        return res.status(400).json({ message: "You can register up to 10 passkeys. Remove one first." });
+      }
+
+      prunePasskeyCeremonies();
+      const rpId = resolveRpId(req.hostname);
+      const challenge = newChallenge();
+      const setupToken = randomId();
+      passkeyRegistrations.set(setupToken, {
+        userId: user.id,
+        challenge,
+        rpId,
+        provider,
+        nickname: typeof nickname === "string" ? nickname : "",
+        createdAt: Date.now(),
+      });
+
+      const options = buildRegistrationOptions({
+        rpId,
+        user: { id: user.id, email: user.email, fullName: user.fullName },
+        provider,
+        challenge,
+        existing: user.mfaPasskeys || [],
+        userAgent: String(req.headers["user-agent"] || ""),
+      });
+      return res.json({ setupToken, provider, providerLabel: PASSKEY_PROVIDERS[provider].store, options });
+    } catch (error: any) {
+      logger.error("Passkey registration options failed", error);
+      return res.status(500).json({ message: "Could not start passkey setup" });
+    }
+  });
+
+  // Step 2: verify the new credential and save it. Turns MFA on when it was off.
+  app.post("/api/portal/mfa/passkey/register/verify", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { setupToken, credential } = req.body || {};
+      const pending = typeof setupToken === "string" ? passkeyRegistrations.get(setupToken) : undefined;
+      if (typeof setupToken === "string") passkeyRegistrations.delete(setupToken); // single use
+      if (!pending || Date.now() - pending.createdAt > PASSKEY_CEREMONY_TTL) {
+        return res.status(400).json({ message: "Passkey setup expired. Please try again." });
+      }
+      const user = portalUsers.get(req.user?.email || "");
+      if (!user || user.id !== pending.userId) return res.status(403).json({ message: "Unauthorized" });
+
+      let passkey;
+      try {
+        passkey = verifyRegistration({
+          credential,
+          expectedChallenge: pending.challenge,
+          rpId: pending.rpId,
+          provider: pending.provider,
+          nickname: pending.nickname,
+        });
+      } catch (err: any) {
+        logSecurityEvent("PASSKEY_REGISTRATION_REJECTED", req, { email: user.email, reason: err?.message });
+        return res.status(400).json({ message: `Passkey could not be verified: ${err?.message || "invalid response"}` });
+      }
+      if ((user.mfaPasskeys || []).some((p) => p.id === passkey.id)) {
+        return res.status(409).json({ message: "This passkey is already registered." });
+      }
+
+      user.mfaPasskeys = [...(user.mfaPasskeys || []), passkey];
+      let backupCodes: string[] | undefined;
+      if (!user.mfaEnabled) {
+        backupCodes = generateBackupCodes(8);
+        user.mfaEnabled = true;
+        user.mfaMethod = "passkey";
+        user.mfaBackupCodes = backupCodes;
+      }
+      await portalUsers.commit(user);
+
+      logSecurityEvent("PASSKEY_REGISTERED", req, { email: user.email, provider: passkey.provider, aaguid: passkey.aaguid });
+      if (backupCodes) logSecurityEvent("MFA_ENABLED", req, { email: user.email, method: "passkey" });
+
+      return res.json({ success: true, passkey: publicPasskeyView(passkey), backupCodes });
+    } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
+      logger.error("Passkey registration failed", error);
+      return res.status(500).json({ message: "Passkey setup failed" });
+    }
+  });
+
+  // Remove one passkey (password required). Removing the last passkey of a passkey-only
+  // account turns MFA off, the same as "Disable MFA".
+  app.post("/api/portal/mfa/passkey/remove", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id, password } = req.body || {};
+      if (!id || !password) return res.status(400).json({ message: "Passkey and password are required" });
+      const user = portalUsers.get(req.user?.email || "");
+      if (!user) return res.status(404).json({ message: "User not found" });
+      const valid = await bcrypt.compare(String(password), user.password);
+      if (!valid) return res.status(401).json({ message: "Invalid password" });
+
+      const remaining = (user.mfaPasskeys || []).filter((p) => p.id !== id);
+      if (remaining.length === (user.mfaPasskeys || []).length) {
+        return res.status(404).json({ message: "Passkey not found" });
+      }
+      user.mfaPasskeys = remaining;
+      if (remaining.length === 0 && user.mfaMethod === "passkey") {
+        user.mfaEnabled = false;
+        user.mfaMethod = null;
+        user.mfaBackupCodes = [];
+      }
+      await portalUsers.commit(user);
+      logSecurityEvent("PASSKEY_REMOVED", req, { email: user.email });
+      return res.json({ success: true, mfaEnabled: !!user.mfaEnabled });
+    } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
+      logger.error("Passkey removal failed", error);
+      return res.status(500).json({ message: "Could not remove passkey" });
+    }
+  });
+
+  // Login step 2 with a passkey: options for navigator.credentials.get().
+  app.post("/api/portal/mfa/passkey/login/options", [loginRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { mfaToken } = req.body || {};
+      const challenge = typeof mfaToken === "string" ? mfaChallenges.get(mfaToken) : undefined;
+      if (!challenge || Date.now() > challenge.expiresAt) {
+        if (typeof mfaToken === "string") mfaChallenges.delete(mfaToken);
+        return res.status(400).json({ message: "MFA session expired. Please log in again." });
+      }
+      const user = portalUsers.get(challenge.email);
+      const rpId = resolveRpId(req.hostname);
+      const passkeys = (user?.mfaPasskeys || []).filter((p) => p.rpId === rpId);
+      if (!user || passkeys.length === 0) {
+        return res.status(400).json({ message: "No passkey is registered for this account on this site." });
+      }
+      challenge.passkeyChallenge = newChallenge();
+      challenge.passkeyRpId = rpId;
+      return res.json({ options: buildAuthenticationOptions({ rpId, challenge: challenge.passkeyChallenge, passkeys }) });
+    } catch (error: any) {
+      logger.error("Passkey login options failed", error);
+      return res.status(500).json({ message: "Could not start passkey sign-in" });
+    }
+  });
+
+  // Login step 2 with a passkey: verify the assertion and sign in.
+  app.post("/api/portal/mfa/passkey/login/verify", [loginRateLimiter, validateInput], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { mfaToken, credential } = req.body || {};
+      const challenge = typeof mfaToken === "string" ? mfaChallenges.get(mfaToken) : undefined;
+      if (!challenge || Date.now() > challenge.expiresAt || !challenge.passkeyChallenge || !challenge.passkeyRpId) {
+        if (challenge && Date.now() > challenge.expiresAt) mfaChallenges.delete(mfaToken);
+        return res.status(400).json({ message: "MFA session expired. Please log in again." });
+      }
+      if (challenge.attempts >= MFA_MAX_ATTEMPTS) {
+        mfaChallenges.delete(mfaToken);
+        logSecurityEvent("MFA_LOCKED_OUT", req, { email: challenge.email });
+        return res.status(429).json({ message: "Too many attempts. Please log in again." });
+      }
+      challenge.attempts++;
+      const expectedChallenge = challenge.passkeyChallenge;
+      challenge.passkeyChallenge = undefined; // single use
+
+      const user = portalUsers.get(challenge.email);
+      if (!user) {
+        mfaChallenges.delete(mfaToken);
+        return res.status(400).json({ message: "User not found" });
+      }
+
+      let updated;
+      try {
+        updated = verifyAuthentication({
+          credential,
+          expectedChallenge,
+          rpId: challenge.passkeyRpId,
+          passkeys: user.mfaPasskeys || [],
+          userId: user.id,
+        });
+      } catch (err: any) {
+        logSecurityEvent("MFA_VERIFICATION_FAILED", req, { email: challenge.email, method: "passkey", attempt: challenge.attempts, reason: err?.message });
+        return res.status(401).json({ message: "That passkey could not be verified. Try again or use a backup code." });
+      }
+
+      user.mfaPasskeys = (user.mfaPasskeys || []).map((p) => (p.id === updated.id ? updated : p));
+      await portalUsers.commit(user);
+
+      mfaChallenges.delete(mfaToken);
+      logSecurityEvent("MFA_VERIFICATION_SUCCESS", req, { email: challenge.email, method: "passkey" });
+      return completeLogin(user, req, res);
+    } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
+      logger.error("Passkey login failed", error);
+      return res.status(500).json({ message: "Verification failed" });
     }
   });
 
@@ -4268,7 +4351,7 @@ export async function registerRoutes(app: Express) {
       impersonatingCompanyId: jwtImpersonation || impersonatingCompanyId,
       getClient: (id) => portalClients.get(id),
     });
-    return { companyId, companyName, hubAccountId };
+    return { companyId, companyName, hubAccountId, impersonatingCompanyId: jwtImpersonation || impersonatingCompanyId };
   }
 
   app.get("/api/portal/contracts", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
@@ -4926,6 +5009,7 @@ export async function registerRoutes(app: Express) {
         try {
           if (zohoDeskService?.createTicket) {
             await zohoDeskService.createTicket({
+              source: "advisor-chat",
               subject: `Advisor chat message from ${email}`,
               description: `${visitorMessage}\n\n---\n${summary}`,
               email,
@@ -5797,6 +5881,7 @@ export async function registerRoutes(app: Express) {
       }
       
       const ticket = await zohoDeskService.createTicket({
+        source: "client-portal",
         subject,
         description,
         contactId, // Use contactId if we found one
