@@ -2373,3 +2373,20 @@ claims:
       from 12c3b5f4. Item 4 shipped in Intelligence-Hub PR 343 (master
       44185ad8: regenerated API client, frontend bundle byte-identical).
       VERIFIED LIVE as a Tool release. Files released.
+  - id: de-techtool-golive-devices-panel
+    owner: claude
+    subsystem: msp-ai-kit
+    branch: claude/msp-ai-skills-prompts-htqi09
+    base_sha: baa6e3eae0a3f421beec78f784726f0379ca57c1
+    files:
+      - .claude/skills/msp-ai-kit/windows/GO-LIVE.md (D5 verify bullet and the Part H device row only)
+      - docs/DE-SYSTEM-INTEGRATION.md (one "Where staff see it" bullet in the DE Tech Tool section only)
+    status: active
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "Yes do it". Docs only: GO-LIVE.md D5 and Part H now
+      point at the Hub's new Devices from DE Tech Tool panel (Intelligence-Hub
+      PR 348, live at master 2e3316ae) as the check that a first signed send
+      landed under the right account; DE-SYSTEM-INTEGRATION.md names where
+      staff see Tool devices, migrations, licences and jobs. Overlap check
+      2026-10-05: no open PR touches these two files.
