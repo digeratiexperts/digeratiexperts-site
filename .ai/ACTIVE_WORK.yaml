@@ -2131,7 +2131,7 @@ claims:
       - client/src/App.tsx (the / route renders HomepageV8; /version-8 redirects)
       - server/index.ts (the /version-8 301 to /, beside the other path redirects)
       - client/src/hooks/useDockAutohide.test.ts (the bottom-bar contract)
-    status: active
+    status: verified-live
     started: 2026-10-03
     note: >-
       Joe, 2026-10-03: "one main version based on version 7 but with my
@@ -2163,7 +2163,9 @@ claims:
       V8 hero's reassurance lines, positioning line and pronunciation row are
       the previous homepage's again (icon list, dotted line, compact
       PronunciationCard). Wider screens unchanged. File:
-      client/src/pages/versions/v8/sections/01-hero.tsx.
+      client/src/pages/versions/v8/sections/01-hero.tsx. Merged via #483;
+      verified live 2026-10-05 on release 08f986c4 at 430, 390 and 375px
+      (phone block shown, no overflow) and 768/1440 (V8 block unchanged).
   - id: portal-light-ambient
     owner: claude
     subsystem: client-portal-shell
