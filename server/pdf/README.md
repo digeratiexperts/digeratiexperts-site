@@ -46,6 +46,7 @@ The Hub (`artifacts/api-server/src/lib/de-pdf-brand.ts`) and the RIC Master Plan
 - **Artifacts:** painting outside marked content (rules, cell borders, backgrounds, the running header and footer) is wrapped as `/Artifact`.
 - **Links:** every link annotation gets `/Contents`, for example "Email Digerati Experts at …".
 - **Metadata:** XMP with `dc:title`, the language and the PDF/UA identifier, plus `DisplayDocTitle`.
+- **PDF 2.0 tags:** Chromium 151 tags `<strong>` as `/Strong`, a type PDF 1.7 does not define. The order template's billing name is one such tag. Such types are role-mapped to their PDF 1.7 equivalent (`Strong`/`Em` → `Span`), which fixes veraPDF 7.1-5. The CI guard found this on 2026-10-05: production order and receipt PDFs had been failing it since Chromium 151.
 
 The PDF/UA identifier is written only when the file is tagged. If finishing fails, the PDF is returned as rendered.
 
@@ -53,7 +54,23 @@ The PDF/UA identifier is written only when the file is tagged. If finishing fail
 - Chromium (production): 5/5.
 - WeasyPrint 70: 5/5.
 
-Rendering is pixel-identical before and after finishing. veraPDF is not in CI, so re-validate after template changes.
+Rendering is pixel-identical before and after finishing.
+
+**CI guard:** the "Store PDF check" step (`npm run check:store-pdfs`) renders every sample in `scripts/qa/storePdfCases.ts` through `renderHtmlToPdf`. There are 13 of them, covering each template state: quotes with 1, 5 and 30 items, notes, and special characters; orders that are paid, awaiting payment, cancelled, empty, or long and redacted; a receipt; solution packets with 1 and 3 packages. Each PDF is checked for:
+- **Layout:** the page count. Short documents stay on one page; long ones paginate.
+- **Content:** the expected text extracts. Redacted text is absent. Nothing like "undefined", "NaN", an HTML entity or a placeholder leaks into the text, and no account lifecycle value prints.
+- **Metadata:** the title matches the HTML, every link has a text alternative, and the file is under 1 MB.
+- **Structure:** checked by `scripts/de-documents/lib/verify.py`, the same verifier the resource PDFs use. The file is tagged; fonts are embedded with ToUnicode and none are Type 3; there is no untagged painting and no split words; and veraPDF PDF/UA-1 passes.
+
+CI uploads the PDFs, their HTML sources, page previews, `report.json` and `summary.md` as the `store-pdfs` artifact, and writes the summary table to the run page.
+
+Locally, the check needs poppler-utils and Python pikepdf; veraPDF is optional. Run:
+
+```
+VERAPDF="$(bash scripts/qa/install-verapdf.sh /tmp/verapdf | tail -1)" npm run check:store-pdfs -- --require-verapdf [--only=order-paid,receipt] [out-dir]
+```
+
+To add a template state, add a case to `storePdfCases.ts`.
 
 **Not claimed:** the human-judgement PDF/UA checkpoints (alt-text quality, reading order) have had no independent or screen-reader test. WCAG is not claimed.
 

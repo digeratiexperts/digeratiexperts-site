@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PDFDict, PDFDocument, PDFName, PDFRawStream, PDFString, decodePDFRawStream } from "pdf-lib";
-import { finalizePdf, htmlTitle, markArtifacts } from "./finalizePdf";
+import { finalizePdf, htmlTitle, mapPdf2Roles, markArtifacts } from "./finalizePdf";
 
 describe("markArtifacts", () => {
   it("wraps painting outside marked content and leaves tagged content alone", () => {
@@ -53,6 +53,23 @@ describe("finalizePdf", () => {
     expect(xmp).not.toContain("pdfuaid:part>1"); // untagged input: no PDF/UA claim
     const vp = res.catalog.lookup(PDFName.of("ViewerPreferences")) as PDFDict;
     expect(vp.get(PDFName.of("DisplayDocTitle"))?.toString()).toBe("true");
+  });
+
+  it("role-maps PDF 2.0 structure types such as Chromium's /Strong, once", async () => {
+    const doc = await PDFDocument.create();
+    doc.addPage([200, 200]);
+    const ctx = doc.context;
+    const strong = ctx.register(ctx.obj({ Type: "StructElem", S: "Strong" }));
+    const p = ctx.register(ctx.obj({ Type: "StructElem", S: "P", K: [strong] }));
+    const root = ctx.obj({ Type: "StructTreeRoot", K: ctx.obj({ Type: "StructElem", S: "Document", K: [p] }), RoleMap: { Custom: "P" } });
+    doc.catalog.set(PDFName.of("StructTreeRoot"), ctx.register(root));
+
+    expect(mapPdf2Roles(doc)).toEqual(["Strong"]);
+    const roleMap = root.lookup(PDFName.of("RoleMap"), PDFDict);
+    expect(roleMap.get(PDFName.of("Strong"))).toBe(PDFName.of("Span"));
+    expect(roleMap.get(PDFName.of("Custom"))).toBe(PDFName.of("P")); // existing entries kept
+    expect(roleMap.has(PDFName.of("P"))).toBe(false); // standard types are never remapped
+    expect(mapPdf2Roles(doc)).toEqual([]); // idempotent
   });
 
   it("reads the title from the HTML", () => {
