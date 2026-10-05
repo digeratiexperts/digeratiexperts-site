@@ -54,7 +54,7 @@ claims:
       - client/src/pages/TheBox.tsx (new)
       - client/src/data/digeratiBox.ts (new)
       - client/src/App.tsx (the /the-box route registration only)
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       A virtual shock-and-awe box: five compartments of collateral that already
@@ -73,7 +73,7 @@ claims:
       - server/portalChatStore.ts (session resolution, listing and the session_id column)
       - server/routes.ts (the three /api/portal/chat endpoints only)
       - client/src/pages/portal/PortalChat.tsx (the portal live-chat panel only)
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       The portal live chat was one endless transcript per user, keyed live-{userId}:
@@ -91,7 +91,7 @@ claims:
       - client/src/lib/pageFlip.ts (new)
       - client/src/styles/page-flip.css (new)
       - artifacts/design-concepts/page-flip/** (prototype, PR 470)
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       Replacing the flipbook's page change with a real page turn. The component
