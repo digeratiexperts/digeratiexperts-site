@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { htmlTitle } from "../../server/pdf/finalizePdf";
 import { storePdfCases } from "./storePdfCases";
-import { LIFECYCLE_TERMS, pageProblem, parseVerifyOutput, textProblems } from "./storePdfChecks";
+import { LIFECYCLE_TERMS, closeAloneOnLastPage, pageProblem, parseVerifyOutput, textProblems } from "./storePdfChecks";
 
 describe("pageProblem", () => {
   it("checks exact counts and ranges", () => {
@@ -40,6 +40,24 @@ describe("textProblems", () => {
     expect(textProblems("Status At Risk", { mustInclude: [] })).toEqual(['account lifecycle value printed: "At Risk"']);
     expect(textProblems("STATUS AT RISK", { mustInclude: [] })).toEqual(['account lifecycle value printed: "At Risk"']);
     expect(textProblems("Status Pending · Onboarding · Active", { mustInclude: [] })).toEqual([]);
+  });
+});
+
+describe("closeAloneOnLastPage", () => {
+  const html = `<style>@page{@top-left{content:"PRELIMINARY QUOTE \\00B7  QR-1"}@top-right{content:"DE-ST-QTE"}@bottom-left{content:"DIGERATI EXPERTS \\00B7  DIGERATIEXPERTS.COM"}}</style>
+    <main><table class="items"><tr><td>Co-Managed Endpoint</td></tr></table>
+    <table class="rec"><tr><td><div class="eyebrow">Next step</div><h2>A consultant confirms terms</h2>
+    <p>This PDF restates catalog pricing.</p><a href="mailto:sales@digerati-experts.com">sales@digerati-experts.com</a></td></tr></table></main>`;
+  it("flags a last page with only the close, running header and footer", () => {
+    const page = "PRELIMINARY QUOTE · QR-1\nDE-ST-QTE\nNEXT STEP\nA consultant confirms terms\nThis PDF restates catalog pricing.\nsales@digerati-experts.com\nDIGERATI EXPERTS · DIGERATIEXPERTS.COM\nPAGE 2 OF 2";
+    expect(closeAloneOnLastPage(page, html)).toBe(true);
+  });
+  it("passes when real content travels with the close", () => {
+    const page = "PRELIMINARY QUOTE · QR-1\nCo-Managed Endpoint\nNEXT STEP\nA consultant confirms terms\nPAGE 2 OF 2";
+    expect(closeAloneOnLastPage(page, html)).toBe(false);
+  });
+  it("ignores documents without a close", () => {
+    expect(closeAloneOnLastPage("NEXT STEP", "<main></main>")).toBe(false);
   });
 });
 

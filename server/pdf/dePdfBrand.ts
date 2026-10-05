@@ -247,7 +247,9 @@ table.lines td.qty{text-align:right;white-space:nowrap;color:${T.ink2};padding-r
 .callout{border-left:2.4pt solid ${T.ink};padding:5pt 0 5pt 12pt;color:${T.ink2}}
 
 /* ---------- brief close ---------- */
-table.rec{width:100%;border-collapse:collapse;margin-top:14pt;background:${T.paper}}
+/* The close never starts a page on its own: when it does not fit, the last
+   rows travel to the next page with it (break-before:avoid). */
+table.rec{width:100%;border-collapse:collapse;margin-top:14pt;background:${T.paper};break-before:avoid;page-break-before:avoid}
 /* account team row inside the close panel */
 table.team{width:100%;border-collapse:collapse;margin-top:7pt;border-top:.6pt solid ${T.paperRule}}
 table.team td{vertical-align:top;padding-top:6pt}
