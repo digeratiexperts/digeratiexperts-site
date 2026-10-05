@@ -1,0 +1,240 @@
+/**
+ * PageFlip stylesheet. Pairs with page-flip.js.
+ *
+ * Only the geometry and the lighting live here. Page CONTENT is whatever the
+ * renderer returns (a pdf.js canvas, an <img>, a div) so this file never assumes
+ * what a page is made of.
+ *
+ * Ported from artifacts/design-concepts/page-flip/ (PR 470), where it was
+ * verified at 1440 / 768 / 390 closed and at three points through a turn.
+ * Colours defer to the app's --de-* tokens; magenta stays an accent on focus
+ * only, and violet is never a fill, per design/BRAND.md.
+ */
+
+.pf-root {
+  /* Pages here are pdf.js canvases, which render on white — so paper is white,
+     not the warm --de-paper used for marketing chapters. Everything else defers
+     to the app's own tokens so a brand change reaches this surface too. */
+  --pf-paper: #ffffff;
+  --pf-well: var(--de-bg, #050312);
+  --pf-accent: var(--de-magenta, #d3126a);
+  --pf-radius: 4px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  /* Must be stated. A centred flex column shrink-to-fits its children, so
+     without this the root has no resolved width, .pf-book's `width: 100%`
+     resolves against nothing and the whole book collapses to its text. */
+  width: 100%;
+  /* Headroom for the turn. A rotating plane under perspective genuinely projects
+     its corners past the page block — a real page rises off the book too — so
+     this is room for that, not a clip. Clipping it would shear the leaf off
+     mid-turn, which is the one moment the engine exists to show. */
+  padding-block: 44px;
+}
+
+/* ---------------------------------------------------------------- the book */
+
+.pf-book {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1 / 1.414;           /* A-series; a document, not a photo */
+  /* Perspective is what separates a page turn from a width animation. Too short
+     and the leaf fish-eyes and throws its corners far outside the book; too long
+     and it flattens into a sliding card. 3000px keeps the turn readable while
+     holding the projected corners close to the page block.
+     Origin centred: an off-centre origin skews the projection so the top and
+     bottom corners swing by different amounts, which reads as a warped sheet. */
+  perspective: 3000px;
+  perspective-origin: 50% 50%;
+  outline: none;
+  touch-action: pan-y;               /* let the page scroll; we own horizontal */
+}
+
+.pf-root.is-spread .pf-book {
+  max-width: 840px;
+  aspect-ratio: 1.414 / 1;           /* two A-pages side by side */
+}
+
+.pf-book:focus-visible {
+  outline: 2px solid var(--pf-accent);
+  outline-offset: 6px;
+  border-radius: 2px;
+}
+
+/* --------------------------------------------------------------- the sides */
+
+.pf-side {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  background: var(--pf-paper);
+  border-radius: var(--pf-radius);
+  overflow: hidden;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+}
+
+/* Single-page: only the right side is used, and it fills the book. */
+.pf-side-left { display: none; }
+.pf-side-right { left: 0; }
+
+.pf-root.is-spread .pf-side { width: 50%; }
+.pf-root.is-spread .pf-side-left {
+  display: block;
+  left: 0;
+  border-radius: var(--pf-radius) 0 0 var(--pf-radius);
+  /* Gutter shading: paper curving into the spine. */
+  box-shadow: inset -18px 0 26px -18px rgba(0, 0, 0, 0.45), 0 18px 50px rgba(0, 0, 0, 0.55);
+}
+.pf-root.is-spread .pf-side-right {
+  left: 50%;
+  border-radius: 0 var(--pf-radius) var(--pf-radius) 0;
+  box-shadow: inset 18px 0 26px -18px rgba(0, 0, 0, 0.45), 0 18px 50px rgba(0, 0, 0, 0.55);
+}
+
+/* A page the book does not have (the back of a final odd leaf) stays paper
+   rather than a hole — a real book's last sheet has a blank verso. */
+.pf-side.is-blank::after,
+.pf-content.is-blank::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--pf-paper);
+}
+
+/* --------------------------------------------------------------- the leaf */
+
+.pf-leaf {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  transform-style: preserve-3d;
+  /* The spine. Everything rotates about this edge — that is the whole trick. */
+  transform-origin: left center;
+  will-change: transform;
+  pointer-events: none;              /* the book handles pointers, not the leaf */
+  z-index: 3;
+}
+
+/* Single-page: the leaf is the whole book and hinges on its left edge. */
+.pf-root:not(.is-spread) .pf-leaf { left: 0; width: 100%; }
+
+.pf-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: var(--pf-paper);
+  border-radius: 0 var(--pf-radius) var(--pf-radius) 0;
+  overflow: hidden;
+}
+
+/* The back face is the same sheet seen from behind: pre-rotated, so when the leaf
+   reaches -180deg this face is the one squarely facing the reader. */
+.pf-face-back {
+  transform: rotateY(180deg);
+  border-radius: var(--pf-radius) 0 0 var(--pf-radius);
+}
+
+.pf-content {
+  position: absolute;
+  inset: 0;
+}
+
+.pf-content > * {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ------------------------------------------------------------- the lighting */
+
+/* Flat tint over a whole face: the receding side loses light, the arriving side
+   climbs out of shadow. Opacity is set per frame from JS. */
+.pf-shade {
+  position: absolute;
+  inset: 0;
+  background: #0b0a12;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The fold: paper does not pivot on a knife edge, it stiffens near the spine and
+   catches light there. A gradient hugging the hinge stands in for that curl. */
+.pf-fold {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.42) 0%,
+    rgba(0, 0, 0, 0.16) 7%,
+    rgba(255, 255, 255, 0.10) 15%,
+    rgba(255, 255, 255, 0) 32%
+  );
+}
+
+.pf-face-back .pf-fold {
+  background: linear-gradient(
+    to left,
+    rgba(0, 0, 0, 0.42) 0%,
+    rgba(0, 0, 0, 0.16) 7%,
+    rgba(255, 255, 255, 0.10) 15%,
+    rgba(255, 255, 255, 0) 32%
+  );
+}
+
+/* The shadow the turning leaf throws onto the page beneath it. Without this the
+   leaf floats; with it, the book has a floor. */
+.pf-cast {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  z-index: 2;
+  opacity: 0;
+  transform-origin: left center;
+  pointer-events: none;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0) 70%);
+  border-radius: 0 var(--pf-radius) var(--pf-radius) 0;
+}
+
+.pf-root:not(.is-spread) .pf-cast { left: 0; width: 100%; }
+
+/* While a finger is on the page, drop the transition so the leaf tracks the
+   pointer exactly. Any lag here reads as the page being made of rubber. */
+.pf-book.is-dragging .pf-leaf { transition: none; }
+
+/* ------------------------------------------------------------------ status */
+
+.pf-status {
+  margin: 0;
+  font: 500 0.78rem/1 "Oxanium", ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8d8d96;
+}
+
+/* ---------------------------------------------------------- reduced motion */
+
+/* Tier 0. Not a softer animation — no animation. The page simply changes, and
+   the drag path is disabled in JS so there is no half-turned state to land. */
+@media (prefers-reduced-motion: reduce) {
+  .pf-leaf,
+  .pf-cast,
+  .pf-shade,
+  .pf-fold {
+    transition: none !important;
+    animation: none !important;
+  }
+  .pf-leaf { visibility: hidden !important; }
+}
