@@ -54,7 +54,7 @@ claims:
       - client/src/pages/TheBox.tsx (new)
       - client/src/data/digeratiBox.ts (new)
       - client/src/App.tsx (the /the-box route registration only)
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       A virtual shock-and-awe box: five compartments of collateral that already
@@ -73,7 +73,7 @@ claims:
       - server/portalChatStore.ts (session resolution, listing and the session_id column)
       - server/routes.ts (the three /api/portal/chat endpoints only)
       - client/src/pages/portal/PortalChat.tsx (the portal live-chat panel only)
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       The portal live chat was one endless transcript per user, keyed live-{userId}:
@@ -91,7 +91,7 @@ claims:
       - client/src/lib/pageFlip.ts (new)
       - client/src/styles/page-flip.css (new)
       - artifacts/design-concepts/page-flip/** (prototype, PR 470)
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       Replacing the flipbook's page change with a real page turn. The component
@@ -2342,6 +2342,55 @@ claims:
       documentation: DE-SYSTEM-INTEGRATION.md now lists the Tech Tool, licence
       and Microsoft Admin worker paths, and the Tool's command-line cheat sheet
       has the Hub sends and the job worker.
+  - id: a11y-gate-serious
+    owner: claude
+    subsystem: tooling-ci
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: f4a9bc3
+    files:
+      - scripts/a11y-smoke.mjs, scripts/public-routes.mjs (new)
+      - scripts/public-route-smoke.mjs (route list moved to public-routes.mjs only)
+      - .github/workflows/ci.yml (comment on the smoke:a11y line only)
+      - docs/CONTENT-TOOLING-PLAN.md (accessibility CI paragraph only)
+    status: active
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "Keep building" (plan step 1 follow-up). The 6
+      serious color-contrast groups from 2026-10-04 were axe reading
+      scroll-reveal text mid-fade; with reduced motion, 30 routes x 390/1440
+      report 0 violations. Scan settled, gate on critical+serious, cover
+      every public route plus Store / quote / portal entry pages. No client/
+      code changes. First CI run found 6 critical aria-required-attr nodes on
+      /book that only appear when the Zoho Bookings iframe
+      (meet.digerati-experts.com) loads; cross-origin embeds are now scanned
+      report-only, verified with a two-origin fixture.
+  - id: site-atmosphere-and-plates
+    owner: claude
+    subsystem: public-marketing-visual-layer
+    branch: claude/lucid-dijkstra-s3v2s3
+    pr: 454
+    base_sha: 12c3b5f4785183593013430925425f92b89673ed
+    files:
+      - client/src/components/site/Atmosphere.tsx (new; parallax loop, HeroArt, ChapterPattern)
+      - client/src/index.css (appended atmosphere block)
+      - client/src/components/site/chapters.tsx (PageHero gets HeroArt)
+      - client/src/components/home/HomeChapter.tsx (pattern prop)
+      - client/src/pages/versions/v8/sections/*.tsx, v8.css, 01-hero.css (ChapterPattern; homepage hero plate)
+      - client/src/pages/solutions/BusinessNeedsIndex.tsx, client/src/styles/store-builder.css (Store image plates)
+      - client/src/assets/flagship/** (approved generated plates, resized)
+      - artifacts/kie-ai/nano-banana/**, artifacts/visual-qa/site-atmosphere/**, artifacts/visual-qa/store-flagship/**
+      - scrollcraft/builds/situation-gallery/** (new scrollcraft build), scrollcraft/FINGERPRINTS.md (row appended)
+      - public/scrollcraft/situation-gallery/** (published lab copy), public/scrollcraft/index.html (one entry added), artifacts/visual-qa/situation-gallery/**
+      - client/src/components/site/PlateBand.tsx (new), HomeChapter.tsx (plate prop), and one plate="..." attribute on a chapter in GenericServicePage, SolutionsIndex, ManagedWorkplace, CoManagedIT, BackupDisasterRecovery, StandaloneServices, ProActiveEcosystemPricing, MissionValues and the six industry pages; artifacts/visual-qa/plate-bands/**
+    status: in-review
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "make a parallax effect on pages upon scroll and make
+      background patterns and artistic things" and "all approved, keep going"
+      (the generated plates approved for placement). Concurrency audit
+      2026-10-05: open PRs 455, 453, 448, 445, 444, 441, 433 touch none of
+      these files; 453, 444 and 433 also edit this ledger (claims added
+      elsewhere, this one is appended at the end).
   - id: paynow-tax-readiness
     owner: claude
     subsystem: store-warehouse

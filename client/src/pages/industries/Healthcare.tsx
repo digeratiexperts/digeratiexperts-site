@@ -223,7 +223,7 @@ export default function Healthcare() {
         </Container>
       </Chapter>
 
-      <Chapter tone="well" data-testid="section-security-stack">
+      <Chapter plate="row" tone="well" data-testid="section-security-stack">
         <Container>
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
             <div className="lg:col-span-4">

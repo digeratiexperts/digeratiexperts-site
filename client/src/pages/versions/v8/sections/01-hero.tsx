@@ -22,7 +22,7 @@ import { useBooking } from "@/contexts/BookingContext";
 import { analytics } from "@/lib/analytics";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
-import heroCityLights from "@assets/de-hero-arizona-dusk-1600.webp";
+import heroCityLights from "@/assets/flagship/home-managed-core.jpg?w=2000&format=webp";
 import { TipTag } from "./TipTag";
 import "./01-hero.css";
 

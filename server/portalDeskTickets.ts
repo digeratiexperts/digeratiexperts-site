@@ -10,10 +10,11 @@
  * companies people have been looking at on a timer so the list is already
  * current when someone comes back.
  *
- * Tenant safety: a company is matched to exactly one Desk account, by its own
- * contact email first and then by an exact (normalized) account-name match. An
- * ambiguous or fuzzy name match returns nothing rather than risk showing one
- * company another company's tickets.
+ * Tenant safety: a company's Desk scope is its account — found through its own
+ * contact email, else a single exact (normalized) account-name match — plus
+ * the Desk contacts under that account and the contacts whose email is
+ * exactly one of the company's own. Fuzzy names, ambiguous names, email
+ * domains and loose search hits never widen the scope.
  */
 import type { ZohoDeskAccount, ZohoDeskContact, ZohoDeskConversation, ZohoTicket } from "./zoho/zohoDesk";
 
@@ -90,16 +91,52 @@ export interface DeskClientSnapshot {
   id: string;
   companyName: string;
   contactEmail?: string | null;
+  /** Emails of the company's portal users. Exact matches only. */
+  memberEmails?: string[];
 }
 
 export interface DeskTicketApi {
   searchAccountsByName(name: string): Promise<ZohoDeskAccount[]>;
   getContactByEmail(email: string): Promise<ZohoDeskContact | null>;
   getTicketsByAccount(accountId: string): Promise<ZohoTicket[]>;
+  getAccountContacts(accountId: string): Promise<ZohoDeskContact[]>;
+  getAllTicketsForContact(contactId: string): Promise<ZohoTicket[]>;
+}
+
+/**
+ * Where a company's tickets live in Desk: its account (if one exists) and the
+ * Desk contacts that belong to it — the account's contacts plus any contact
+ * whose email is exactly one of the company's own (contact email or a portal
+ * user's). Contacts matter because Desk only stamps an account on a ticket
+ * when the contact was already linked to one; plenty of real tickets carry
+ * no account at all.
+ */
+export interface DeskScope {
+  accountId: string | null;
+  contactIds: string[];
+  /** Lower-cased email → Desk contact id, for the company's own emails. */
+  contactIdsByEmail: Record<string, string>;
+}
+
+const EMPTY_SCOPE: DeskScope = { accountId: null, contactIds: [], contactIdsByEmail: {} };
+/** Upper bound on per-contact ticket reads for one company per refresh. */
+const MAX_SCOPE_CONTACTS = 50;
+
+export function isScopeLinked(scope: DeskScope): boolean {
+  return !!scope.accountId || scope.contactIds.length > 0;
+}
+
+/** Whether a Desk ticket belongs to the company described by `scope`. */
+export function ticketInScope(ticket: Pick<ZohoTicket, "accountId" | "contactId">, scope: DeskScope): boolean {
+  if (scope.accountId && ticket.accountId === scope.accountId) return true;
+  return !!ticket.contactId && scope.contactIds.includes(ticket.contactId);
 }
 
 export interface DeskTicketsResult {
   accountId: string | null;
+  /** True when the company maps to a Desk account or at least one Desk contact. */
+  linked: boolean;
+  scope: DeskScope;
   tickets: ZohoTicket[];
   /** When the tickets were last read from Desk (epoch ms), null if never. */
   syncedAt: number | null;
@@ -107,13 +144,13 @@ export interface DeskTicketsResult {
   error: string | null;
 }
 
-interface AccountEntry {
-  accountId: string | null;
+interface ScopeEntry {
+  scope: DeskScope;
   resolvedAt: number;
 }
 
 interface TicketEntry {
-  accountId: string;
+  scope: DeskScope;
   tickets: ZohoTicket[];
   syncedAt: number;
 }
@@ -124,13 +161,26 @@ export interface DeskTicketSyncOptions {
   now?: () => number;
   /** How long a company's ticket list is served from cache. */
   ticketTtlMs?: number;
-  /** How long a found company → account match is trusted. */
+  /** How long a found company → Desk scope is trusted. */
   accountTtlMs?: number;
-  /** How long "no Desk account for this company" is trusted. */
+  /** How long "nothing in Desk for this company" is trusted. */
   missingAccountTtlMs?: number;
   /** Companies not viewed for this long drop out of the background refresh. */
   watchWindowMs?: number;
   log?: (message: string, meta?: Record<string, unknown>) => void;
+}
+
+function companyEmails(client: DeskClientSnapshot): string[] {
+  const all = [client.contactEmail, ...(client.memberEmails ?? [])]
+    .map((e) => (e || "").trim().toLowerCase())
+    .filter((e) => e.includes("@"));
+  return Array.from(new Set(all));
+}
+
+function sortByActivity(list: ZohoTicket[]): ZohoTicket[] {
+  return list.sort(
+    (a, b) => new Date(b.modifiedTime || b.createdTime).getTime() - new Date(a.modifiedTime || a.createdTime).getTime(),
+  );
 }
 
 export function createDeskTicketSync(options: DeskTicketSyncOptions) {
@@ -141,51 +191,79 @@ export function createDeskTicketSync(options: DeskTicketSyncOptions) {
   const watchWindowMs = options.watchWindowMs ?? 24 * 60 * 60_000;
   const log = options.log ?? (() => {});
 
-  const accounts = new Map<string, AccountEntry>();
+  const scopes = new Map<string, ScopeEntry>();
   const tickets = new Map<string, TicketEntry>();
   const inflight = new Map<string, Promise<DeskTicketsResult>>();
   const watched = new Map<string, { client: DeskClientSnapshot; lastViewedAt: number }>();
 
-  async function resolveAccountId(client: DeskClientSnapshot): Promise<string | null> {
-    const cached = accounts.get(client.id);
+  async function resolveScope(client: DeskClientSnapshot): Promise<DeskScope> {
+    const cached = scopes.get(client.id);
     if (cached) {
-      const ttl = cached.accountId ? accountTtlMs : missingAccountTtlMs;
-      if (now() - cached.resolvedAt < ttl) return cached.accountId;
+      const ttl = isScopeLinked(cached.scope) ? accountTtlMs : missingAccountTtlMs;
+      if (now() - cached.resolvedAt < ttl) return cached.scope;
     }
 
+    const contactIdsByEmail: Record<string, string> = {};
+    const contactIds = new Set<string>();
     let accountId: string | null = null;
-    const email = client.contactEmail?.trim();
-    if (email) {
+
+    // The company's own emails, contact email first so its account wins.
+    for (const email of companyEmails(client)) {
       const contact = await options.api.getContactByEmail(email);
-      if (contact?.accountId) accountId = contact.accountId;
+      // Desk search can be loose; only an exact email match counts.
+      if (!contact?.id || (contact.email || "").trim().toLowerCase() !== email) continue;
+      contactIdsByEmail[email] = contact.id;
+      contactIds.add(contact.id);
+      if (!accountId && contact.accountId) accountId = contact.accountId;
     }
     if (!accountId && client.companyName?.trim()) {
       const found = await options.api.searchAccountsByName(client.companyName.trim());
       accountId = pickDeskAccount(client.companyName, found)?.id ?? null;
     }
+    if (accountId) {
+      for (const c of await options.api.getAccountContacts(accountId)) {
+        if (c?.id) contactIds.add(c.id);
+      }
+    }
 
-    accounts.set(client.id, { accountId, resolvedAt: now() });
-    if (!accountId) log("portal desk sync: no Desk account matched", { clientId: client.id });
-    return accountId;
+    const scope: DeskScope = {
+      accountId,
+      contactIds: Array.from(contactIds).slice(0, MAX_SCOPE_CONTACTS),
+      contactIdsByEmail,
+    };
+    scopes.set(client.id, { scope, resolvedAt: now() });
+    if (!isScopeLinked(scope)) log("portal desk sync: nothing in Desk matched", { clientId: client.id });
+    return scope;
   }
 
   async function fetchFor(client: DeskClientSnapshot): Promise<DeskTicketsResult> {
     const previous = tickets.get(client.id);
     try {
-      const accountId = await resolveAccountId(client);
-      if (!accountId) {
+      const scope = await resolveScope(client);
+      if (!isScopeLinked(scope)) {
         tickets.delete(client.id);
-        return { accountId: null, tickets: [], syncedAt: now(), error: null };
+        return { accountId: null, linked: false, scope, tickets: [], syncedAt: now(), error: null };
       }
-      const list = await options.api.getTicketsByAccount(accountId);
-      const entry: TicketEntry = { accountId, tickets: list, syncedAt: now() };
+      const byId = new Map<string, ZohoTicket>();
+      if (scope.accountId) {
+        for (const t of await options.api.getTicketsByAccount(scope.accountId)) byId.set(t.id, t);
+      }
+      for (const contactId of scope.contactIds) {
+        for (const t of await options.api.getAllTicketsForContact(contactId)) {
+          if (!byId.has(t.id)) byId.set(t.id, t);
+        }
+      }
+      const entry: TicketEntry = { scope, tickets: sortByActivity(Array.from(byId.values())), syncedAt: now() };
       tickets.set(client.id, entry);
-      return { ...entry, error: null };
+      return { ...entry, accountId: scope.accountId, linked: true, error: null };
     } catch (error: any) {
       const message = error?.response?.data?.message || error?.message || String(error);
       log("portal desk sync: Desk read failed", { clientId: client.id, message });
+      const scope = previous?.scope ?? EMPTY_SCOPE;
       return {
-        accountId: previous?.accountId ?? null,
+        accountId: scope.accountId,
+        linked: isScopeLinked(scope),
+        scope,
         tickets: previous?.tickets ?? [],
         syncedAt: previous?.syncedAt ?? null,
         error: "Live ticket sync with DE Desk is unavailable right now.",
@@ -200,11 +278,11 @@ export function createDeskTicketSync(options: DeskTicketSyncOptions) {
   ): Promise<DeskTicketsResult> {
     watched.set(client.id, { client, lastViewedAt: now() });
     if (!options.isConfigured()) {
-      return { accountId: null, tickets: [], syncedAt: null, error: null };
+      return { accountId: null, linked: false, scope: EMPTY_SCOPE, tickets: [], syncedAt: null, error: null };
     }
     const cached = tickets.get(client.id);
     if (!opts.force && cached && now() - cached.syncedAt < ticketTtlMs) {
-      return { ...cached, error: null };
+      return { ...cached, accountId: cached.scope.accountId, linked: true, error: null };
     }
     const running = inflight.get(client.id);
     if (running) return running;
@@ -239,16 +317,16 @@ export function createDeskTicketSync(options: DeskTicketSyncOptions) {
     return { refreshed, failed, dropped };
   }
 
-  /** The Desk account a company maps to (cached). Used to authorize single-ticket reads. */
-  async function accountIdFor(client: DeskClientSnapshot): Promise<string | null> {
-    if (!options.isConfigured()) return null;
-    return resolveAccountId(client);
+  /** The Desk scope a company maps to (cached). Used to authorize single-ticket reads. */
+  async function scopeFor(client: DeskClientSnapshot): Promise<DeskScope> {
+    if (!options.isConfigured()) return EMPTY_SCOPE;
+    return resolveScope(client);
   }
 
   return {
     getTicketsForClient,
     refreshWatched,
-    accountIdFor,
+    scopeFor,
     watchedCount: () => watched.size,
   };
 }
@@ -364,12 +442,17 @@ export function mergePortalAndDeskTickets(
  */
 export function canSeeDeskTicket(
   actor: { email?: string | null; orgRole?: string | null; isCompanyItContact?: boolean | null } | undefined,
-  ticket: Pick<ZohoTicket, "email">,
+  ticket: Pick<ZohoTicket, "email" | "contactId">,
+  scope?: Pick<DeskScope, "contactIdsByEmail">,
 ): boolean {
   if (!actor) return false;
   if (actor.isCompanyItContact === true || actor.orgRole === "company_it_contact") return true;
   const mine = actor.email?.trim().toLowerCase();
-  return !!mine && !!ticket.email && ticket.email.trim().toLowerCase() === mine;
+  if (!mine) return false;
+  if (ticket.email && ticket.email.trim().toLowerCase() === mine) return true;
+  // Desk leaves `email` empty on some tickets; the raising contact still identifies the person.
+  const myContactId = scope?.contactIdsByEmail[mine];
+  return !!myContactId && ticket.contactId === myContactId;
 }
 
 /** Desk bodies are HTML; the portal renders plain text. */

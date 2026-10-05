@@ -139,6 +139,7 @@ import {
   mergePortalAndDeskTickets,
   parseDeskPortalTicketId,
   startDeskTicketSyncWorker,
+  ticketInScope,
 } from "./portalDeskTickets";
 import { RESEND_COOLDOWN_MS } from "./portalVerificationThrottle";
 import {
@@ -782,6 +783,15 @@ export async function registerRoutes(app: Express) {
     api: zohoDeskService,
     isConfigured: () => zohoClient.isConfigured(),
     log: (message, meta) => console.log(`[DESK-SYNC] ${message}`, meta ?? ""),
+  });
+  /** What the Desk sync needs to find a company's tickets: its name and its own emails. */
+  const deskSnapshot = (client: { id: string; companyName: string; contactEmail?: string | null }) => ({
+    id: client.id,
+    companyName: client.companyName,
+    contactEmail: client.contactEmail,
+    memberEmails: Array.from(portalUsers.values())
+      .filter((u: any) => u?.clientId === client.id && u?.email)
+      .map((u: any) => String(u.email)),
   });
   startDeskTicketSyncWorker(
     deskTicketSync,
@@ -1594,13 +1604,12 @@ export async function registerRoutes(app: Express) {
 
       const client = portalClients.get(scopedClientId);
       const desk = client
-        ? await deskTicketSync.getTicketsForClient({
-            id: client.id,
-            companyName: client.companyName,
-            contactEmail: client.contactEmail,
-          })
-        : { accountId: null, tickets: [], syncedAt: null, error: null };
-      const visibleDesk = isAdmin ? desk.tickets : desk.tickets.filter((t) => canSeeDeskTicket(req.user, t));
+        ? await deskTicketSync.getTicketsForClient(deskSnapshot(client))
+        : null;
+      const deskTickets = desk?.tickets ?? [];
+      const visibleDesk = isAdmin
+        ? deskTickets
+        : deskTickets.filter((t) => canSeeDeskTicket(req.user, t, desk?.scope));
 
       res.json({
         tickets: mergePortalAndDeskTickets(local, visibleDesk, {
@@ -1609,9 +1618,9 @@ export async function registerRoutes(app: Express) {
         }),
         desk: {
           scope: "company",
-          linked: !!desk.accountId,
-          syncedAt: desk.syncedAt ? new Date(desk.syncedAt).toISOString() : null,
-          error: desk.error,
+          linked: !!desk?.linked,
+          syncedAt: desk?.syncedAt ? new Date(desk.syncedAt).toISOString() : null,
+          error: desk?.error ?? null,
         },
       });
     } catch (error: any) {
@@ -1621,8 +1630,9 @@ export async function registerRoutes(app: Express) {
 
   /**
    * Load a Desk-only ticket (`desk-<id>`) for the caller, or answer the request.
-   * Allowed when the ticket sits in the Desk account of the company the caller
-   * is scoped to and canSeeDeskTicket passes; an unscoped admin may read any.
+   * Allowed when the ticket is in the Desk scope (account or contacts) of the
+   * company the caller is scoped to and canSeeDeskTicket passes; an unscoped
+   * admin may read any.
    */
   async function loadScopedDeskTicket(req: AuthenticatedRequest, res: Response, deskTicketId: string) {
     if (!zohoClient.isConfigured()) {
@@ -1639,14 +1649,12 @@ export async function registerRoutes(app: Express) {
     }
     const client = scopedClientId ? portalClients.get(scopedClientId) : undefined;
     if (!(isAdmin && !scopedClientId)) {
-      const accountId = client
-        ? await deskTicketSync.accountIdFor({ id: client.id, companyName: client.companyName, contactEmail: client.contactEmail })
-        : null;
-      if (!accountId || ticket.accountId !== accountId) {
+      const deskScope = client ? await deskTicketSync.scopeFor(deskSnapshot(client)) : null;
+      if (!deskScope || !ticketInScope(ticket, deskScope)) {
         res.status(404).json({ error: "Ticket not found" });
         return null;
       }
-      if (!isAdmin && !canSeeDeskTicket(req.user, ticket)) {
+      if (!isAdmin && !canSeeDeskTicket(req.user, ticket, deskScope)) {
         res.status(403).json({ error: "Access denied" });
         return null;
       }

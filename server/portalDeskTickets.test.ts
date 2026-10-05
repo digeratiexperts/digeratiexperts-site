@@ -10,6 +10,7 @@ import {
   normalizeCompanyName,
   parseDeskPortalTicketId,
   pickDeskAccount,
+  ticketInScope,
   type DeskTicketApi,
 } from "./portalDeskTickets";
 import type { ZohoTicket } from "./zoho/zohoDesk";
@@ -42,6 +43,8 @@ function fakeApi(over: Partial<DeskTicketApi> = {}): DeskTicketApi {
     getContactByEmail: vi.fn(async () => null),
     searchAccountsByName: vi.fn(async () => [{ id: "acc-alamo", accountName: "Alamo Industries, Inc." }]),
     getTicketsByAccount: vi.fn(async () => [deskTicket()]),
+    getAccountContacts: vi.fn(async () => []),
+    getAllTicketsForContact: vi.fn(async () => []),
     ...over,
   };
 }
@@ -91,7 +94,7 @@ describe("company → Desk account matching", () => {
 describe("createDeskTicketSync", () => {
   it("prefers the company contact's Desk account over a name search", async () => {
     const api = fakeApi({
-      getContactByEmail: vi.fn(async () => ({ id: "c", firstName: "", lastName: "", email: "", phone: "", accountId: "acc-from-contact" })),
+      getContactByEmail: vi.fn(async () => ({ id: "c", firstName: "", lastName: "", email: "it@alamo.example", phone: "", accountId: "acc-from-contact" })),
     });
     const sync = createDeskTicketSync({ api, isConfigured: () => true });
     const result = await sync.getTicketsForClient(alamo);
@@ -132,11 +135,65 @@ describe("createDeskTicketSync", () => {
     expect(result.syncedAt).toBe(0);
   });
 
+  it("finds tickets through the company's own contacts when Desk has no account (Alamo's real shape)", async () => {
+    // Alamo in production: no Desk account, contacts with no account, and
+    // every ticket carrying accountId null.
+    const contacts: Record<string, { id: string; email: string }> = {
+      "suzette.alamo@gmail.com": { id: "c-suz", email: "suzette.alamo@gmail.com" },
+      "indy.alamo@gmail.com": { id: "c-norma", email: "indy.alamo@gmail.com" },
+    };
+    const api = fakeApi({
+      searchAccountsByName: vi.fn(async () => []),
+      getContactByEmail: vi.fn(async (email: string) => {
+        const c = contacts[email];
+        return c ? { ...c, firstName: "", lastName: "", phone: "", accountId: undefined } : null;
+      }),
+      getAllTicketsForContact: vi.fn(async (contactId: string) =>
+        contactId === "c-suz"
+          ? [deskTicket({ id: "117", accountId: undefined, contactId: "c-suz", modifiedTime: "2026-05-19T00:00:00Z" })]
+          : [deskTicket({ id: "129", accountId: undefined, contactId: "c-norma", modifiedTime: "2026-09-23T00:00:00Z" })],
+      ),
+    });
+    const sync = createDeskTicketSync({ api, isConfigured: () => true });
+    const result = await sync.getTicketsForClient({
+      ...alamo,
+      contactEmail: null,
+      memberEmails: ["Suzette.Alamo@gmail.com", "indy.alamo@gmail.com", "nobody@alamo.example"],
+    });
+    expect(result.linked).toBe(true);
+    expect(result.accountId).toBeNull();
+    expect(result.tickets.map((t) => t.id)).toEqual(["129", "117"]);
+    expect(api.getTicketsByAccount).not.toHaveBeenCalled();
+  });
+
+  it("ignores a loose Desk search hit whose email is not exactly the company's", async () => {
+    const api = fakeApi({
+      searchAccountsByName: vi.fn(async () => []),
+      getContactByEmail: vi.fn(async () => ({ id: "c-other", firstName: "", lastName: "", email: "it@alamo.example.org", phone: "" })),
+    });
+    const sync = createDeskTicketSync({ api, isConfigured: () => true });
+    const result = await sync.getTicketsForClient(alamo);
+    expect(result.linked).toBe(false);
+    expect(api.getAllTicketsForContact).not.toHaveBeenCalled();
+  });
+
+  it("merges account tickets with tickets from the account's contacts, once each", async () => {
+    const api = fakeApi({
+      getAccountContacts: vi.fn(async () => [{ id: "c1", firstName: "", lastName: "", email: "pat@alamo.example", phone: "" }]),
+      getAllTicketsForContact: vi.fn(async () => [deskTicket(), deskTicket({ id: "9002", accountId: undefined })]),
+    });
+    const sync = createDeskTicketSync({ api, isConfigured: () => true });
+    const result = await sync.getTicketsForClient(alamo);
+    expect(result.tickets.map((t) => t.id).sort()).toEqual(["9001", "9002"]);
+    expect(result.scope.contactIds).toEqual(["c1"]);
+  });
+
   it("returns nothing when no account matches", async () => {
     const api = fakeApi({ searchAccountsByName: vi.fn(async () => [{ id: "x", accountName: "Other Co" }]) });
     const sync = createDeskTicketSync({ api, isConfigured: () => true });
     const result = await sync.getTicketsForClient(alamo);
     expect(result.accountId).toBeNull();
+    expect(result.linked).toBe(false);
     expect(result.tickets).toEqual([]);
     expect(api.getTicketsByAccount).not.toHaveBeenCalled();
   });
@@ -219,6 +276,22 @@ describe("access and rendering helpers", () => {
     expect(canSeeDeskTicket({ email: "sam@alamo.example" }, t)).toBe(false);
     expect(canSeeDeskTicket({ email: "sam@alamo.example", isCompanyItContact: true }, t)).toBe(true);
     expect(canSeeDeskTicket(undefined, t)).toBe(false);
+  });
+
+  it("matches the raising contact when Desk left the ticket email empty", () => {
+    const scope = { contactIdsByEmail: { "suzette.alamo@gmail.com": "c-suz" } };
+    const t = { email: undefined, contactId: "c-suz" };
+    expect(canSeeDeskTicket({ email: "suzette.alamo@gmail.com" }, t, scope)).toBe(true);
+    expect(canSeeDeskTicket({ email: "indy.alamo@gmail.com" }, t, scope)).toBe(false);
+  });
+
+  it("keeps single-ticket reads inside the company's Desk scope", () => {
+    const scope = { accountId: null, contactIds: ["c-suz"], contactIdsByEmail: {} };
+    expect(ticketInScope({ accountId: undefined, contactId: "c-suz" }, scope)).toBe(true);
+    expect(ticketInScope({ accountId: undefined, contactId: "c-stranger" }, scope)).toBe(false);
+    // No account in scope must never match a ticket that also has none.
+    expect(ticketInScope({ accountId: undefined, contactId: "" }, scope)).toBe(false);
+    expect(ticketInScope({ accountId: "acc-1", contactId: "x" }, { ...scope, accountId: "acc-1" })).toBe(true);
   });
 
   it("strips Desk HTML", () => {

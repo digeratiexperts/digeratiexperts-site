@@ -5,6 +5,7 @@ import { DE_LOGO_PRIMARY } from "@/lib/brandAssets";
 import { CTA } from "@/lib/ctaCopy";
 import { TipTag } from "./TipTag";
 import "./08-why-arizona.css";
+import { ChapterPattern } from "@/components/site/Atmosphere";
 
 /**
  * 08 · Why Arizona businesses work with us (mock: sections/08-why-arizona.html).
@@ -54,6 +55,7 @@ export function V8WhyArizona(): JSX.Element {
 
   return (
     <section className="f-paper v8-section" aria-labelledby="trust-title" data-testid="section-trust-photo">
+      <ChapterPattern variant="dots" />
       <div className="v8-canvas why">
         <motion.div className="why__copy" {...reveal}>
           <p className="v8-eyebrow">Why Arizona businesses work with us</p>

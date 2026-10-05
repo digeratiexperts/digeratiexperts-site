@@ -1,0 +1,765 @@
+<!doctype html>
+<!-- Source template. build.py fills the rooms and writes index.html; edit this file, not index.html. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Situation Gallery · Digerati Experts</title>
+<meta name="description" content="Ten IT situations Arizona businesses bring to Digerati Experts. Keep the ones that are yours and see the one solution they add up to.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23050312'/><rect x='9' y='9' width='14' height='14' rx='4' fill='%23ec4899'/></svg>">
+<link rel="preload" href="assets/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/o10.webp" as="image">
+<link rel="stylesheet" href="scrollcraft.css">
+<style>
+  @font-face { font-family: "Space Grotesk"; src: url("assets/space-grotesk-latin.woff2") format("woff2"); font-weight: 300 700; font-display: swap; }
+  @font-face { font-family: "Inter"; src: url("assets/inter-latin.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+
+  /* Brand roles (design/BRAND.md): graphite well, charcoal raised, paper chapters, magenta as the one accent. */
+  :root {
+    --sc-canvas:     #050312;
+    --sc-surface:    #12101a;
+    --sc-ink:        #f3f1f6;
+    --sc-ink-soft:   #aaa4b6;
+    --sc-accent:     #ec4899;
+    --sc-accent-ink: #16050e;
+    --sc-font-display: "Space Grotesk", system-ui, sans-serif;
+    --sc-font-text:    "Inter", system-ui, sans-serif;
+    --sg-bar: 4rem;
+    --sg-r: 22px;
+    --sg-paper: #f7f5f2;
+    --sg-raised: #0d0b14;
+  }
+  body { background: var(--sc-canvas); color: var(--sc-ink); }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .skip { position: fixed; left: var(--sc-4); top: -4rem; z-index: 60; background: var(--sc-accent); color: var(--sc-accent-ink); padding: var(--sc-2) var(--sc-4); border-radius: 10px; font-weight: 600; }
+  .skip:focus { top: var(--sc-3); }
+
+  /* Grounds are painted per section: rooms are hard cuts, not a drift. */
+  .g-well  { background: var(--sc-canvas); }
+  .g-raised { background: var(--sg-raised); }
+  .g-paper { --sc-ink: #17121d; --sc-ink-soft: #564f61; --sc-accent: #be185d; --sc-accent-ink: #fff; --sc-hairline: rgba(23, 18, 29, 0.12); --sc-hairline-strong: rgba(23, 18, 29, 0.24); background: var(--sg-paper); color: var(--sc-ink); }
+
+  /* ---------------------------------------------------------------- bar -- */
+  .bar { position: fixed; inset: 0 0 auto; height: var(--sg-bar); z-index: 40; display: flex; align-items: center; gap: var(--sc-5); padding-inline: var(--sc-gutter);
+         background: color-mix(in oklab, var(--sc-canvas) 92%, transparent); border-bottom: 1px solid var(--sc-hairline); }
+  .bar__mark img { display: block; height: 26px; width: auto; }
+  .bar__where { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--sc-3); }
+  .index-btn { display: inline-flex; align-items: center; gap: var(--sc-2); height: 2.25rem; padding: 0 var(--sc-4); border-radius: 999px; border: 1px solid var(--sc-hairline-strong);
+               background: transparent; color: var(--sc-ink); font: 600 var(--sc-t-sm)/1 var(--sc-font-text); cursor: pointer; transition: background-color 160ms var(--sc-ease-out), transform 120ms var(--sc-ease-out); }
+  .index-btn:active { transform: scale(0.97); }
+  .index-btn svg { width: 12px; height: 12px; transition: transform 180ms var(--sc-ease-out); }
+  .index-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .where { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--sc-t-sm); color: var(--sc-ink-soft); }
+  .where b { color: var(--sc-ink); font-weight: 600; }
+  .cta { display: inline-flex; align-items: center; justify-content: center; height: 2.5rem; padding: 0 var(--sc-5); border-radius: 999px; background: var(--sc-accent); color: var(--sc-accent-ink);
+         font: 650 var(--sc-t-sm)/1 var(--sc-font-text); text-decoration: none; white-space: nowrap; transition: filter 160ms var(--sc-ease-out), transform 120ms var(--sc-ease-out); }
+  .cta:active { transform: scale(0.97); }
+  @media (hover: hover) and (pointer: fine) { .cta:hover { filter: brightness(1.08); } .index-btn:hover { background: color-mix(in oklab, var(--sc-ink) 8%, transparent); } }
+  :focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 3px; border-radius: 6px; }
+  .g-paper :focus-visible { outline-color: #be185d; }
+
+  /* The object index: a jump list, grouped by room. */
+  .index { position: fixed; z-index: 39; top: calc(var(--sg-bar) + var(--sc-2)); left: var(--sc-gutter); width: min(52rem, calc(100vw - 2 * var(--sc-gutter)));
+           background: var(--sc-surface); border: 1px solid var(--sc-hairline-strong); border-radius: var(--sg-r); padding: var(--sc-6);
+           box-shadow: 0 24px 60px -20px rgba(2, 1, 8, 0.8); box-shadow: 0 1px 0 0 color-mix(in oklab, var(--sc-ink) 8%, transparent) inset, 0 24px 60px -20px rgba(2, 1, 8, 0.8);
+           opacity: 0; transform: translateY(-6px) scale(0.99); pointer-events: none; visibility: hidden; transition: opacity 180ms var(--sc-ease-out), transform 180ms var(--sc-ease-out), visibility 0s linear 180ms; }
+  .index.is-open { opacity: 1; transform: none; pointer-events: auto; visibility: visible; transition-delay: 0s; }
+  .index > ol { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sc-6); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .index__room-name { display: block; font: 600 var(--sc-t-xs)/1.3 var(--sc-font-text); letter-spacing: 0.06em; text-transform: uppercase; color: var(--sc-ink-soft); margin-bottom: var(--sc-3); }
+  .index ol ol { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sc-1); }
+  .index a { display: flex; align-items: center; gap: var(--sc-2); padding: var(--sc-2) var(--sc-2); margin-inline: calc(-1 * var(--sc-2)); border-radius: 10px; color: var(--sc-ink); text-decoration: none; font-size: var(--sc-t-sm); }
+  .index a::after { content: ""; width: 8px; height: 8px; border-radius: 3px; margin-left: auto; border: 1px solid var(--sc-hairline-strong); flex: none; }
+  .index a.is-kept::after { background: var(--sc-accent); border-color: var(--sc-accent); }
+  .index a[aria-current="true"] { background: color-mix(in oklab, var(--sc-ink) 8%, transparent); }
+  @media (hover: hover) and (pointer: fine) { .index a:hover { background: color-mix(in oklab, var(--sc-ink) 6%, transparent); } }
+  @media (max-width: 760px) {
+    .index > ol { grid-template-columns: 1fr; gap: var(--sc-5); }
+    .index { padding: var(--sc-5); max-height: calc(100svh - var(--sg-bar) - 6rem); overflow-y: auto; }
+    .where { display: none; }
+    .bar { gap: var(--sc-3); }
+    .bar__mark img { height: 22px; }
+  }
+
+  /* --------------------------------------------------------------- tray -- */
+  .tray { position: fixed; z-index: 38; right: var(--sc-gutter); bottom: max(var(--sc-5), env(safe-area-inset-bottom)); display: inline-flex; align-items: center; gap: var(--sc-3);
+          height: 3.25rem; padding: 0 var(--sc-4) 0 var(--sc-3); border-radius: 999px; border: 1px solid var(--sc-hairline-strong); background: var(--sc-surface); color: var(--sc-ink);
+          box-shadow: 0 1px 0 0 color-mix(in oklab, var(--sc-ink) 9%, transparent) inset, 0 16px 40px -14px rgba(2, 1, 8, 0.85); cursor: pointer;
+          font: 600 var(--sc-t-sm)/1 var(--sc-font-text); transition: opacity 260ms var(--sc-ease-out), transform 260ms var(--sc-ease-out); }
+  .tray:active { transform: scale(0.97); }
+  .tray.is-away { opacity: 0; transform: translateY(12px) scale(0.96); pointer-events: none; }
+  .tray__pile { position: relative; width: 44px; height: 32px; }
+  .tray__pile span { position: absolute; left: 6px; top: 2px; width: 26px; height: 26px; border-radius: 7px; background-size: cover; background-position: center;
+                     box-shadow: 0 0 0 1px color-mix(in oklab, var(--sc-ink) 18%, transparent), 0 4px 10px -4px rgba(0, 0, 0, 0.8); }
+  .tray__pile:empty::before { content: ""; position: absolute; left: 6px; top: 2px; width: 26px; height: 26px; border-radius: 7px; border: 1px dashed var(--sc-hairline-strong); }
+  .tray__count { min-width: 1.6rem; height: 1.6rem; padding: 0 0.4rem; border-radius: 999px; display: inline-grid; place-items: center; background: color-mix(in oklab, var(--sc-ink) 10%, transparent); font-variant-numeric: tabular-nums; }
+  .tray.has-items .tray__count { background: var(--sc-accent); color: var(--sc-accent-ink); }
+  .flyer { position: fixed; z-index: 45; border-radius: 14px; background-size: cover; background-position: center; pointer-events: none; will-change: transform, opacity; }
+
+  /* -------------------------------------------------------------- rooms -- */
+  .room [data-sc-stage] { display: flex; align-items: center; padding-top: var(--sg-bar); }
+  .rail { gap: clamp(1.5rem, 3.4vw, 3.5rem); padding-inline: var(--sc-gutter); align-items: flex-start; }
+  .rail > .wall, .rail > .note, .rail > .room-plate { align-self: center; }
+  .wall { flex: 0 0 clamp(17rem, 30vw, 27rem); }
+  .wall h1 { font: 600 var(--sc-t-sm)/1.4 var(--sc-font-text); letter-spacing: 0.02em; color: var(--sc-ink-soft); margin: 0 0 var(--sc-7); max-width: 26ch; }
+  .wall h1 b { color: var(--sc-ink); font-weight: 600; }
+  .wall h2 { font: 600 var(--sc-t-2xl)/1.02 var(--sc-font-display); letter-spacing: var(--sc-track-tight); margin: 0; text-wrap: balance; }
+  .wall p { margin: var(--sc-4) 0 0; color: var(--sc-ink-soft); font-size: var(--sc-t-base); max-width: 30ch; }
+  .wall__phone { display: inline-block; margin-top: var(--sc-5); color: var(--sc-ink); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; text-decoration-color: var(--sc-accent); }
+  .note { flex: 0 0 clamp(13rem, 18vw, 17rem); color: var(--sc-ink-soft); font-size: var(--sc-t-sm); line-height: 1.55; border-left: 1px solid var(--sc-hairline-strong); padding-left: var(--sc-5); }
+  .note b { display: block; color: var(--sc-ink); font: 600 var(--sc-t-lg)/1.2 var(--sc-font-display); letter-spacing: var(--sc-track-snug); margin-bottom: var(--sc-2); }
+  .room-plate { flex: 0 0 clamp(18rem, 34vw, 30rem); margin: 0; }
+  .room-plate img { display: block; width: 100%; height: auto; border-radius: var(--sg-r); }
+
+  /* One label schema for every object: title, pressure, made of, arrangement, keep. */
+  .obj { flex: 0 0 clamp(16.5rem, 25vw, 23rem); position: relative; scroll-margin-top: var(--sg-bar); }
+  .obj__frame { margin: 0; aspect-ratio: 1 / 1; border-radius: var(--sg-r); overflow: hidden; background: #0b0912; position: relative;
+                box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.07) inset, 0 22px 48px -26px rgba(2, 1, 8, 0.9); }
+  .obj__frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .obj__frame .obj__deep { height: 118%; margin-top: -9%; }
+  .obj__tilt { width: 100%; height: 100%; }
+  .obj.is-kept .obj__frame { box-shadow: 0 0 0 2px var(--sc-accent), 0 22px 48px -26px rgba(2, 1, 8, 0.9); }
+  .obj__label { padding-top: var(--sc-5); }
+  .obj__title { font: 600 var(--sc-t-lg)/1.2 var(--sc-font-display); letter-spacing: var(--sc-track-snug); margin: 0; text-wrap: balance; }
+  .obj__pressure { margin: var(--sc-2) 0 0; color: var(--sc-ink-soft); font-size: var(--sc-t-sm); line-height: 1.5; }
+  .obj__facts { margin: var(--sc-4) 0 0; display: grid; gap: var(--sc-2); font-size: var(--sc-t-xs); line-height: 1.45; }
+  .obj__facts > div { display: grid; grid-template-columns: 6.5rem 1fr; gap: var(--sc-3); padding-top: var(--sc-2); border-top: 1px solid var(--sc-hairline); }
+  .obj__facts dt { color: var(--sc-ink-soft); letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; font-size: 0.7rem; padding-top: 0.1em; }
+  .obj__facts dd { margin: 0; color: var(--sc-ink); }
+  .obj__facts ul { list-style: none; margin: 0; padding: 0; }
+  .keep { margin-top: var(--sc-4); display: inline-flex; align-items: center; gap: var(--sc-2); height: 2.5rem; padding: 0 var(--sc-4) 0 var(--sc-3); border-radius: 999px;
+          border: 1px solid var(--sc-hairline-strong); background: transparent; color: var(--sc-ink); font: 600 var(--sc-t-sm)/1 var(--sc-font-text); cursor: pointer;
+          transition: background-color 160ms var(--sc-ease-out), border-color 160ms var(--sc-ease-out), transform 120ms var(--sc-ease-out); }
+  .keep:active { transform: scale(0.97); }
+  .keep__box { width: 16px; height: 16px; border-radius: 5px; border: 1.5px solid var(--sc-hairline-strong); display: grid; place-items: center; transition: background-color 160ms var(--sc-ease-out), border-color 160ms var(--sc-ease-out); }
+  .keep[aria-pressed="true"] { border-color: var(--sc-accent); background: color-mix(in oklab, var(--sc-accent) 14%, transparent); }
+  .keep[aria-pressed="true"] .keep__box { background: var(--sc-accent); border-color: var(--sc-accent); }
+  .keep[aria-pressed="true"] .keep__box::after { content: ""; width: 8px; height: 4px; border: 2px solid var(--sc-accent-ink); border-top: 0; border-right: 0; transform: translateY(-1px) rotate(-45deg); }
+  @media (hover: hover) and (pointer: fine) { .keep:hover { border-color: var(--sc-ink-soft); } }
+  .g-paper .obj__frame { background: #e9e6ea; box-shadow: 0 22px 48px -30px rgba(30, 20, 40, 0.45); }
+  @media (max-width: 760px) {
+    .obj { flex-basis: 78vw; }
+    .obj__frame { aspect-ratio: 5 / 4; }
+    .wall { flex-basis: 64vw; }
+    .wall h1 { margin-bottom: var(--sc-5); }
+    .room-plate { flex-basis: 70vw; }
+    .note { flex-basis: 62vw; }
+  }
+  @media (max-height: 760px) and (min-width: 761px) { .obj { flex-basis: clamp(15rem, 21vw, 19rem); } .obj__facts { display: none; } }
+
+  /* Gallery settle: objects arrive in sequence, the first one is already there. */
+  @media (prefers-reduced-motion: no-preference) {
+    .rail > :not(:first-child) { opacity: max(0.55, min(1, calc((var(--sc-p, 0) * 6) - var(--i, 0) * 0.9 + 1.6))); }
+  }
+
+  /* -------------------------------------------------------- between rooms -- */
+  .between .sc-wrap { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: clamp(2rem, 6vw, 6rem); align-items: center; }
+  .between h2 { font: 600 var(--sc-t-3xl)/1 var(--sc-font-display); letter-spacing: var(--sc-track-tight); margin: 0; text-wrap: balance; }
+  .between .lead { margin: var(--sc-5) 0 0; max-width: 46ch; color: var(--sc-ink-soft); font-size: var(--sc-t-base); line-height: 1.6; }
+  .tally { display: flex; gap: clamp(1.5rem, 4vw, 3.5rem); margin: var(--sc-7) 0 0; }
+  .tally div { display: grid; gap: var(--sc-1); }
+  .tally dt { order: 2; font-size: var(--sc-t-xs); letter-spacing: 0.05em; text-transform: uppercase; font-weight: 600; color: var(--sc-ink-soft); }
+  .tally dd { order: 1; margin: 0; font: 600 var(--sc-t-2xl)/1 var(--sc-font-display); letter-spacing: var(--sc-track-tight); font-variant-numeric: tabular-nums; }
+  .fam-list { list-style: none; margin: var(--sc-6) 0 0; padding: var(--sc-5) 0 0; border-top: 1px solid var(--sc-hairline-strong); columns: 2; column-gap: var(--sc-6); font-size: var(--sc-t-sm); }
+  .fam-list li { break-inside: avoid; padding: var(--sc-1) 0; }
+  .between figure { margin: 0; }
+  .between figure img { display: block; width: 100%; height: auto; border-radius: var(--sg-r); }
+  .between figcaption { margin-top: var(--sc-3); font-size: var(--sc-t-xs); color: var(--sc-ink-soft); }
+  @media (max-width: 900px) { .between .sc-wrap { grid-template-columns: 1fr; } .between figure { max-width: 26rem; } }
+
+  /* --------------------------------------------------------- room three wall -- */
+  .wall3 { padding-block: clamp(3.5rem, 8vw, 7rem) clamp(1rem, 3vw, 2rem); }
+  .wall3 h2 { font: 600 var(--sc-t-3xl)/1 var(--sc-font-display); letter-spacing: var(--sc-track-tight); margin: 0; max-width: 16ch; text-wrap: balance; }
+  .wall3 p { margin: var(--sc-4) 0 0; color: var(--sc-ink-soft); font-size: var(--sc-t-lg); }
+
+  /* ----------------------------------------------------------- silence -- */
+  .silence { min-height: 66vh; display: grid; align-items: center; }
+  .silence .sc-wrap { display: flex; justify-content: flex-end; }
+  .silence__inner { max-width: 30rem; }
+  .silence h2 { font: 600 var(--sc-t-3xl)/1 var(--sc-font-display); letter-spacing: var(--sc-track-tight); margin: 0; }
+  .silence p { margin: var(--sc-4) 0 0; color: var(--sc-ink-soft); font-size: var(--sc-t-base); }
+
+  /* ------------------------------------------------------- the assembly -- */
+  .asm [data-sc-stage] { padding-top: var(--sg-bar); }
+  .asm__ground { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 70% 50%; opacity: calc(0.16 + var(--sg-snap, 0) * 0.22);
+                 -webkit-mask-image: radial-gradient(70% 70% at 70% 50%, #000 0%, transparent 85%); mask-image: radial-gradient(70% 70% at 70% 50%, #000 0%, transparent 85%); }
+  .asm__copy { position: absolute; left: var(--sc-gutter); top: calc(var(--sg-bar) + clamp(1.5rem, 5vh, 3.5rem)); display: grid; z-index: 2; }
+  .asm__copy > * { grid-area: 1 / 1; }
+  .asm__h { font: 600 var(--sc-t-3xl)/1 var(--sc-font-display); letter-spacing: var(--sc-track-tight); margin: 0; }
+  .asm__h small { display: block; margin-top: var(--sc-3); font: 400 var(--sc-t-base)/1.5 var(--sc-font-text); letter-spacing: 0; color: var(--sc-ink-soft); max-width: 34ch; }
+  .asm__field { position: absolute; inset: 0; z-index: 1; }
+  .asm-tile { position: absolute; left: 0; top: 0; border-radius: 14px; background-size: cover; background-position: center; will-change: transform, opacity; opacity: 0;
+              box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.12) inset, 0 18px 36px -18px rgba(0, 0, 0, 0.9); }
+  .asm-tile span { position: absolute; left: 0; right: 0; top: 100%; margin-top: 8px; font: 600 11px/1.25 var(--sc-font-text); color: var(--sc-ink-soft); text-align: center; opacity: var(--sg-snap, 0); }
+  .asm__frame { position: absolute; z-index: 1; border: 1px solid var(--sc-accent); border-radius: 26px; opacity: 0; transform-origin: center; pointer-events: none; }
+  .asm__result { position: absolute; z-index: 2; left: var(--sc-gutter); right: var(--sc-gutter); bottom: clamp(1.5rem, 6vh, 4rem); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); gap: var(--sc-6); align-items: end; }
+  .asm__fams { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sc-2); }
+  .asm__fams li { display: inline-flex; align-items: center; gap: var(--sc-2); height: 2.1rem; padding: 0 var(--sc-3); border-radius: 10px; border: 1px solid var(--sc-hairline-strong); background: color-mix(in oklab, var(--sc-canvas) 70%, transparent);
+                  font-size: var(--sc-t-xs); opacity: 0; transform: translateY(8px); }
+  .asm__fams li em { font-style: normal; color: var(--sc-accent); font-weight: 650; }
+  .asm__sum { margin: 0; font-size: var(--sc-t-base); line-height: 1.5; color: var(--sc-ink); opacity: 0; }
+  .asm__sum b { font-weight: 650; }
+  @media (max-width: 760px) { .asm__result { grid-template-columns: 1fr; gap: var(--sc-4); } .asm__fams li { height: 1.9rem; } }
+
+  /* --------------------------------------------------------------- how -- */
+  .how .sc-wrap { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: clamp(2rem, 6vw, 6rem); align-items: start; }
+  .how h2 { font: 600 var(--sc-t-3xl)/1 var(--sc-font-display); letter-spacing: var(--sc-track-tight); margin: 0 0 var(--sc-7); text-wrap: balance; }
+  .who { margin: 0; position: sticky; top: calc(var(--sg-bar) + var(--sc-6)); }
+  .who__frame { aspect-ratio: 4 / 5; border-radius: var(--sg-r); overflow: hidden; background: #e7e4e8; }
+  .who__frame img { display: block; width: 100%; height: 112%; margin-top: -6%; object-fit: cover; object-position: 50% 20%; }
+  .who figcaption { margin-top: var(--sc-4); font-size: var(--sc-t-sm); color: var(--sc-ink-soft); line-height: 1.55; }
+  .who figcaption b { display: block; color: var(--sc-ink); font: 600 var(--sc-t-lg)/1.2 var(--sc-font-display); margin-bottom: var(--sc-1); }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sc-6); }
+  .step { display: grid; grid-template-columns: 7rem 1fr; gap: var(--sc-5); padding-top: var(--sc-5); border-top: 1px solid var(--sc-hairline-strong); }
+  .step__k { font-size: var(--sc-t-xs); letter-spacing: 0.05em; text-transform: uppercase; font-weight: 600; color: var(--sc-ink-soft); padding-top: 0.35em; }
+  .step h3 { font: 600 var(--sc-t-xl)/1.15 var(--sc-font-display); letter-spacing: var(--sc-track-snug); margin: 0; }
+  .step p { margin: var(--sc-2) 0 0; color: var(--sc-ink-soft); max-width: 48ch; line-height: 1.6; }
+  @media (max-width: 900px) { .how .sc-wrap { grid-template-columns: 1fr; } .who { position: static; max-width: 20rem; } .step { grid-template-columns: 1fr; gap: var(--sc-2); } }
+
+  /* ------------------------------------------------------------- close -- */
+  .close [data-sc-stage] { display: grid; grid-template-rows: 1fr auto; padding-top: var(--sg-bar); }
+  .close__ground { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 75% 50%; opacity: 0.22;
+                   -webkit-mask-image: linear-gradient(to left, #000 0%, transparent 70%); mask-image: linear-gradient(to left, #000 0%, transparent 70%); }
+  .plate { position: relative; z-index: 2; align-self: center; margin-left: var(--sc-gutter); width: min(36rem, calc(100vw - 2 * var(--sc-gutter))); }
+  .plate__title { font: 600 var(--sc-t-3xl)/1 var(--sc-font-display); letter-spacing: var(--sc-track-tight); margin: 0; }
+  .plate dl { margin: var(--sc-6) 0 0; display: grid; gap: 0; font-size: var(--sc-t-sm); line-height: 1.5; }
+  .plate dl > div { display: grid; grid-template-columns: 7.5rem 1fr; gap: var(--sc-4); padding: var(--sc-3) 0; border-top: 1px solid var(--sc-hairline-strong); }
+  .plate dl > div:last-child { border-bottom: 1px solid var(--sc-hairline-strong); }
+  .plate dt { color: var(--sc-ink-soft); letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; font-size: 0.72rem; padding-top: 0.2em; }
+  .plate dd { margin: 0; }
+  .plate__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sc-3) var(--sc-5); margin-top: var(--sc-6); }
+  .plate__link { color: var(--sc-ink); font-size: var(--sc-t-sm); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; text-decoration-color: color-mix(in oklab, var(--sc-ink) 40%, transparent); }
+  .foot { position: relative; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sc-3); padding: var(--sc-5) var(--sc-gutter); border-top: 1px solid var(--sc-hairline); font-size: var(--sc-t-xs); color: var(--sc-ink-soft); }
+  .foot img { height: 20px; width: auto; display: block; }
+
+  @media (max-width: 760px) {
+    .between h2, .wall3 h2, .silence h2, .asm__h, .how h2, .plate__title { font-size: var(--sc-t-2xl); }
+    .plate dl > div { grid-template-columns: 1fr; gap: var(--sc-1); }
+    .tray__label { display: none; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#assembly">Skip to your set</a>
+<span data-sc-progress></span>
+<div class="sc-grain" aria-hidden="true"></div>
+
+<header class="bar">
+  <a class="bar__mark" href="https://digeratiexperts.com/" aria-label="Digerati Experts home"><img src="assets/mark.png" width="360" height="87" alt="Digerati Experts"></a>
+  <div class="bar__where">
+    <button type="button" class="index-btn" id="index-btn" aria-expanded="false" aria-controls="index">Index
+      <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4.5 6 8l4-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <p class="where" id="where" aria-hidden="true"><b>Something just happened</b> · Phishing got through</p>
+  </div>
+  <a class="cta" href="https://digeratiexperts.com/contact">Talk to DE</a>
+</header>
+
+<nav class="index" id="index" aria-label="Situation index">
+  <ol><li class="index__room"><span class="index__room-name">Something just happened</span><ol><li><a href="#s-phishing-close-call" data-jump="phishing-close-call">Phishing got through</a></li><li><a href="#s-it-person-left" data-jump="it-person-left">Our IT person left</a></li><li><a href="#s-ransomware-recovery" data-jump="ransomware-recovery">Would we recover?</a></li></ol></li><li class="index__room"><span class="index__room-name">We&#x27;re growing or changing</span><ol><li><a href="#s-second-location" data-jump="second-location">A second office</a></li><li><a href="#s-new-hires-fast" data-jump="new-hires-fast">New hires, fast</a></li><li><a href="#s-hybrid-byod" data-jump="hybrid-byod">Own devices at home</a></li><li><a href="#s-phone-contract-ending" data-jump="phone-contract-ending">Old phone system</a></li></ol></li><li class="index__room"><span class="index__room-name">We have to prove it or keep up</span><ol><li><a href="#s-insurance-questionnaire" data-jump="insurance-questionnaire">Insurance questionnaire</a></li><li><a href="#s-auditor-evidence" data-jump="auditor-evidence">Policies and evidence</a></li><li><a href="#s-internal-it-stretched" data-jump="internal-it-stretched">IT team stretched</a></li></ol></li></ol>
+</nav>
+
+<button type="button" class="tray" id="tray" aria-describedby="tray-desc">
+  <span class="tray__pile" id="tray-pile" aria-hidden="true"></span>
+  <span class="tray__label">Your set</span>
+  <span class="tray__count" id="tray-count">0</span>
+  <span class="sr-only" id="tray-desc">situations kept. Go to your set.</span>
+</button>
+<p class="sr-only" aria-live="polite" id="live"></p>
+
+<main id="top">
+
+  <!-- ROOM ONE · Recognition. The collection starts at the top: object one is on screen at load. -->
+  <section class="room g-well" id="room-now" data-sc-act="pan" data-sc-span="2.0" aria-labelledby="room-now-h">
+    <div data-sc-stage>
+      <div class="rail" data-sc-pan="0">
+        <div class="wall">
+          <h1><b>The situation gallery.</b> Ten situations Arizona businesses bring to DE. Keep the ones that are yours.</h1>
+          <h2 id="room-now-h">Something just happened</h2>
+          <p>Urgent. Call if it is happening right now.</p>
+          <a class="wall__phone" href="tel:+13254809870">325-480-9870</a>
+        </div>
+        
+        <article class="obj" id="s-phishing-close-call" data-obj="phishing-close-call" data-short="Phishing got through" data-img="o10" data-fams="security_awareness email_collaboration identity_access">
+          <figure class="obj__frame"><img src="assets/o10.webp" width="880" height="1100" alt="" loading="eager" decoding="async"></figure>
+          <div class="obj__label">
+            <h3 class="obj__title">A phishing or spoofed email got through</h3>
+            <p class="obj__pressure">Someone clicked, or a client got mail pretending to be us.</p>
+            <dl class="obj__facts">
+              <div><dt>Made of</dt><dd><ul><li>Security Awareness &amp; Human Risk</li><li>Email &amp; Collaboration</li><li>Identity &amp; Access</li></ul></dd></div>
+              <div><dt>Arrangement</dt><dd>Your counts decide: Standalone or Co-Managed</dd></div>
+            </dl>
+            <button type="button" class="keep" aria-pressed="false" data-keep="phishing-close-call"><span class="keep__box" aria-hidden="true"></span><span class="keep__text">Keep</span><span class="sr-only"> Phishing got through</span></button>
+          </div>
+        </article>
+        <article class="obj" id="s-it-person-left" data-obj="it-person-left" data-short="Our IT person left" data-img="o02" data-fams="it_operations documentation_standards endpoint_devices">
+          <figure class="obj__frame"><img src="assets/o02.webp" width="880" height="1100" alt="" loading="lazy" decoding="async"></figure>
+          <div class="obj__label">
+            <h3 class="obj__title">Our only IT person just left</h3>
+            <p class="obj__pressure">The passwords, the diagrams and the vendor logins walked out with them.</p>
+            <dl class="obj__facts">
+              <div><dt>Made of</dt><dd><ul><li>IT Operations &amp; Support</li><li>Documentation &amp; Standards</li><li>Endpoint &amp; Device Management</li></ul></dd></div>
+              <div><dt>Arrangement</dt><dd>Standalone suggested</dd></div>
+            </dl>
+            <button type="button" class="keep" aria-pressed="false" data-keep="it-person-left"><span class="keep__box" aria-hidden="true"></span><span class="keep__text">Keep</span><span class="sr-only"> Our IT person left</span></button>
+          </div>
+        </article>
+        <article class="obj" id="s-ransomware-recovery" data-obj="ransomware-recovery" data-short="Would we recover?" data-img="o04" data-fams="backup_continuity cybersecurity_operations endpoint_devices">
+          <figure class="obj__frame"><img src="assets/o04.webp" width="880" height="1100" alt="" loading="lazy" decoding="async"></figure>
+          <div class="obj__label">
+            <h3 class="obj__title">We don&#x27;t know if we&#x27;d recover from ransomware</h3>
+            <p class="obj__pressure">There is a backup somewhere; nobody has restored from it.</p>
+            <dl class="obj__facts">
+              <div><dt>Made of</dt><dd><ul><li>Backup &amp; Business Continuity</li><li>Cybersecurity Operations</li><li>Endpoint &amp; Device Management</li></ul></dd></div>
+              <div><dt>Arrangement</dt><dd>Your counts decide: Standalone or Co-Managed</dd></div>
+            </dl>
+            <button type="button" class="keep" aria-pressed="false" data-keep="ransomware-recovery"><span class="keep__box" aria-hidden="true"></span><span class="keep__text">Keep</span><span class="sr-only"> Would we recover?</span></button>
+          </div>
+        </article>
+        <p class="note"><b>Next room</b>We're growing or changing. New people, new places, new phones.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- BETWEEN ROOMS · Clarity. A wipe, and the collection's schema named with the real counts. -->
+  <section class="between g-paper sc-section" aria-labelledby="between-h">
+    <div class="sc-wrap">
+      <div>
+        <h2 id="between-h">Different situations. The same families.</h2>
+        <p class="lead">Every situation in this gallery is made of two or three of the same thirteen families. Keep three situations and they usually share some, which is why they add up to one solution, not three projects.</p>
+        <dl class="tally">
+          <div><dt>Situations</dt><dd data-sc-count="0 10" data-sc-count-at="0.1 0.45">10</dd></div>
+          <div><dt>Families</dt><dd data-sc-count="0 13" data-sc-count-at="0.12 0.5">13</dd></div>
+          <div><dt>Per situation</dt><dd>2 to 3</dd></div>
+        </dl>
+        <ul class="fam-list" aria-label="The thirteen families"><li>IT Operations &amp; Support</li><li>Endpoint &amp; Device Management</li><li>Identity &amp; Access</li><li>Email &amp; Collaboration</li><li>Cybersecurity Operations</li><li>Network &amp; Connectivity</li><li>Backup &amp; Business Continuity</li><li>Compliance &amp; Risk Readiness</li><li>Security Awareness &amp; Human Risk</li><li>Business Communications</li><li>Hardware &amp; Lifecycle</li><li>Documentation &amp; Standards</li><li>Technology Strategy &amp; Advisory</li></ul>
+      </div>
+      <figure data-sc-reveal="left" data-sc-reveal-at="0.12 0.5">
+        <img src="assets/trio.webp" width="900" height="1117" alt="Three tiles, one glass, one ceramic, one graphite, standing together" loading="lazy" decoding="async">
+        <figcaption>Glass, ceramic, graphite. Three materials, one set.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ROOM TWO · Momentum. Four objects, a faster walk; the frames tilt toward the pointer. -->
+  <section class="room g-raised" id="room-change" data-sc-act="pan" data-sc-span="2.0" aria-labelledby="room-change-h">
+    <div data-sc-stage>
+      <div class="rail" data-sc-pan="0">
+        <div class="wall">
+          <h2 id="room-change-h">We're growing or changing</h2>
+          <p>New people, new places, new phones.</p>
+        </div>
+        
+        <article class="obj" id="s-second-location" data-obj="second-location" data-short="A second office" data-img="o05" data-fams="network_connectivity business_communications hardware_lifecycle">
+          <figure class="obj__frame"><div class="obj__tilt" data-sc-tilt="6"><img src="assets/o05.webp" width="880" height="1100" alt="" loading="lazy" decoding="async"></div></figure>
+          <div class="obj__label">
+            <h3 class="obj__title">We&#x27;re opening a second office</h3>
+            <p class="obj__pressure">Day one needs internet, phones and working computers, and nobody has done this before.</p>
+            <dl class="obj__facts">
+              <div><dt>Made of</dt><dd><ul><li>Network &amp; Connectivity</li><li>Business Communications</li><li>Hardware &amp; Lifecycle</li></ul></dd></div>
+              <div><dt>Arrangement</dt><dd>Your counts decide: Standalone or Co-Managed</dd></div>
+            </dl>
+            <button type="button" class="keep" aria-pressed="false" data-keep="second-location"><span class="keep__box" aria-hidden="true"></span><span class="keep__text">Keep</span><span class="sr-only"> A second office</span></button>
+          </div>
+        </article>
+        <article class="obj" id="s-new-hires-fast" data-obj="new-hires-fast" data-short="New hires, fast" data-img="o06" data-fams="hardware_lifecycle endpoint_devices identity_access">
+          <figure class="obj__frame"><div class="obj__tilt" data-sc-tilt="6"><img src="assets/o06.webp" width="880" height="1100" alt="" loading="lazy" decoding="async"></div></figure>
+          <div class="obj__label">
+            <h3 class="obj__title">New hires need laptops and accounts fast</h3>
+            <p class="obj__pressure">People start Monday and the last onboarding took two weeks and three vendors.</p>
+            <dl class="obj__facts">
+              <div><dt>Made of</dt><dd><ul><li>Hardware &amp; Lifecycle</li><li>Endpoint &amp; Device Management</li><li>Identity &amp; Access</li></ul></dd></div>
+              <div><dt>Arrangement</dt><dd>Your counts decide: Standalone or Co-Managed</dd></div>
+            </dl>
+            <button type="button" class="keep" aria-pressed="false" data-keep="new-hires-fast"><span class="keep__box" aria-hidden="true"></span><span class="keep__text">Keep</span><span class="sr-only"> New hires, fast</span></button>
+          </div>
+        </article>
+        <article class="obj" id="s-hybrid-byod" data-obj="hybrid-byod" data-short="Own devices at home" data-img="o07" data-fams="endpoint_devices identity_access email_collaboration">
+          <figure class="obj__frame"><div class="obj__tilt" data-sc-tilt="6"><img src="assets/o07.webp" width="880" height="1100" alt="" loading="lazy" decoding="async"></div></figure>
+          <div class="obj__label">
+            <h3 class="obj__title">Half the team works from home on their own devices</h3>
+            <p class="obj__pressure">Company data lives on personal laptops and phones nobody manages.</p>
+            <dl class="obj__facts">
+              <div><dt>Made of</dt><dd><ul><li>Endpoint &amp; Device Management</li><li>Identity &amp; Access</li><li>Email &amp; Collaboration</li></ul></dd></div>
+              <div><dt>Arrangement</dt><dd>Your counts decide: Standalone or Co-Managed</dd></div>
+            </dl>
+            <button type="button" class="keep" aria-pressed="false" data-keep="hybrid-byod"><span class="keep__box" aria-hidden="true"></span><span class="keep__text">Keep</span><span class="sr-only"> Own devices at home</span></button>
+          </div>
+        </article>
+        <article class="obj" id="s-phone-contract-ending" data-obj="phone-contract-ending" data-short="Old phone system" data-img="o08" data-fams="business_communications network_connectivity">
+          <figure class="obj__frame"><div class="obj__tilt" data-sc-tilt="6"><img src="assets/o08.webp" width="880" height="1100" alt="" loading="lazy" decoding="async"></div></figure>
+          <div class="obj__label">
+            <h3 class="obj__title">Our phone system is old and the contract is ending</h3>
+            <p class="obj__pressure">Numbers have to move without dropping a call, and the network has to carry them.</p>
+            <dl class="obj__facts">
+              <div><dt>Made of</dt><dd><ul><li>Business Communications</li><li>Network &amp; Connectivity</li></ul></dd></div>
+              <div><dt>Arrangement</dt><dd>Your counts decide: Standalone or Co-Managed</dd></div>
+            </dl>
+            <button type="button" class="keep" aria-pressed="false" data-keep="phone-contract-ending"><span class="keep__box" aria-hidden="true"></span><span class="keep__text">Keep</span><span class="sr-only"> Old phone system</span></button>
+          </div>
+        </article>
+        <p class="note"><b>Next room</b>We have to prove it or keep up.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROOM THREE WALL · flow, short. Separates the two pans and lands the hard cut to paper. -->
+  <section class="wall3 g-paper" aria-labelledby="room-prove-h">
+    <div class="sc-wrap" data-sc-in>
+      <h2 id="room-prove-h">We have to prove it or keep up</h2>
+      <p>Insurers, auditors and an IT team out of hours.</p>
+    </div>
+  </section>
+
+  <!-- ROOM THREE · Weight. Slower; depth inside each frame. -->
+  <section class="room g-paper" id="room-prove" data-sc-act="pan" data-sc-span="1.6" aria-label="Room three objects">
+    <div data-sc-stage>
+      <div class="rail" data-sc-pan="0">
+        <figure class="room-plate"><img src="assets/room3.webp" width="900" height="804" alt="" loading="lazy" decoding="async"></figure>
+        
+        <article class="obj" id="s-insurance-questionnaire" data-obj="insurance-questionnaire" data-short="Insurance questionnaire" data-img="o03" data-fams="compliance_risk identity_access backup_continuity">
+          <figure class="obj__frame"><img class="obj__deep" src="assets/o03.webp" width="880" height="1100" alt="" loading="lazy" decoding="async" data-sc-parallax="-0.9"></figure>
+          <div class="obj__label">
+            <h3 class="obj__title">Cyber-insurance renewal sent a questionnaire we can&#x27;t answer</h3>
+            <p class="obj__pressure">The form asks about MFA, backups and evidence, and the answers have to be true.</p>
+            <dl class="obj__facts">
+              <div><dt>Made of</dt><dd><ul><li>Compliance &amp; Risk Readiness</li><li>Identity &amp; Access</li><li>Backup &amp; Business Continuity</li></ul></dd></div>
+              <div><dt>Arrangement</dt><dd>Your counts decide: Standalone or Co-Managed</dd></div>
+            </dl>
+            <button type="button" class="keep" aria-pressed="false" data-keep="insurance-questionnaire"><span class="keep__box" aria-hidden="true"></span><span class="keep__text">Keep</span><span class="sr-only"> Insurance questionnaire</span></button>
+          </div>
+        </article>
+        <article class="obj" id="s-auditor-evidence" data-obj="auditor-evidence" data-short="Policies and evidence" data-img="o09" data-fams="compliance_risk documentation_standards technology_strategy">
+          <figure class="obj__frame"><img class="obj__deep" src="assets/o09.webp" width="880" height="1100" alt="" loading="lazy" decoding="async" data-sc-parallax="-0.9"></figure>
+          <div class="obj__label">
+            <h3 class="obj__title">A client or auditor asked for our policies and evidence</h3>
+            <p class="obj__pressure">A contract or an audit wants documents that do not exist yet.</p>
+            <dl class="obj__facts">
+              <div><dt>Made of</dt><dd><ul><li>Compliance &amp; Risk Readiness</li><li>Documentation &amp; Standards</li><li>Technology Strategy &amp; Advisory</li></ul></dd></div>
+              <div><dt>Arrangement</dt><dd>Your counts decide: Standalone or Co-Managed</dd></div>
+            </dl>
+            <button type="button" class="keep" aria-pressed="false" data-keep="auditor-evidence"><span class="keep__box" aria-hidden="true"></span><span class="keep__text">Keep</span><span class="sr-only"> Policies and evidence</span></button>
+          </div>
+        </article>
+        <article class="obj" id="s-internal-it-stretched" data-obj="internal-it-stretched" data-short="IT team stretched" data-img="o01" data-fams="it_operations cybersecurity_operations endpoint_devices">
+          <figure class="obj__frame"><img class="obj__deep" src="assets/o01.webp" width="880" height="1100" alt="" loading="lazy" decoding="async" data-sc-parallax="-0.9"></figure>
+          <div class="obj__label">
+            <h3 class="obj__title">Our internal IT team is stretched thin</h3>
+            <p class="obj__pressure">Tickets pile up, patches slip, and security is whoever has time this week.</p>
+            <dl class="obj__facts">
+              <div><dt>Made of</dt><dd><ul><li>IT Operations &amp; Support</li><li>Cybersecurity Operations</li><li>Endpoint &amp; Device Management</li></ul></dd></div>
+              <div><dt>Arrangement</dt><dd>Co-Managed suggested</dd></div>
+            </dl>
+            <button type="button" class="keep" aria-pressed="false" data-keep="internal-it-stretched"><span class="keep__box" aria-hidden="true"></span><span class="keep__text">Keep</span><span class="sr-only"> IT team stretched</span></button>
+          </div>
+        </article>
+        <p class="note"><b>End of the gallery</b>Your set is in the tray. Next, it comes together.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SILENCE · authored. Quiet before the peak. -->
+  <section class="silence g-well" aria-labelledby="silence-h">
+    <div class="sc-wrap">
+      <div class="silence__inner" data-sc-in>
+        <h2 id="silence-h">That's your set.</h2>
+        <p id="silence-line">You kept none yet. The next screen uses the first room.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE ASSEMBLY · Relief. The peak: the visitor's tiles leave the tray, scatter, snap into one grid. -->
+  <section class="asm g-well" id="assembly" data-sc-act="pin" data-sc-span="2.8" aria-labelledby="asm-h-b" tabindex="-1">
+    <div data-sc-stage>
+      <img class="asm__ground" src="assets/peak.webp" width="2000" height="1117" alt="" loading="lazy" decoding="async">
+      <div class="asm__field" id="asm-field" aria-hidden="true"></div>
+      <div class="asm__frame" id="asm-frame" aria-hidden="true"></div>
+      <div class="asm__copy">
+        <h2 class="asm__h" data-sc-cue="0.02 0.46" aria-hidden="true">Your set.<small id="asm-sub">Everything you kept, as it is now: separate.</small></h2>
+        <h2 class="asm__h" id="asm-h-b" data-sc-cue="0.42 1 0.08 0.02">One solution.</h2>
+      </div>
+      <div class="asm__result">
+        <ul class="asm__fams" id="asm-fams" aria-label="Families in your solution"></ul>
+        <p class="asm__sum" id="asm-sum"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW DE WORKS · Confidence. Plain labels and the real person who answers. -->
+  <section class="how g-raised sc-section" aria-labelledby="how-h">
+    <div class="sc-wrap">
+      <figure class="who">
+        <div class="who__frame"><img src="assets/joe.webp" width="768" height="1024" alt="Joseph Petro, founder of Digerati Experts" loading="lazy" decoding="async" data-sc-parallax="-0.6"></div>
+        <figcaption><b>Joseph Petro</b>Founder. Principal-led cybersecurity and managed IT for Arizona businesses.</figcaption>
+      </figure>
+      <div>
+        <h2 id="how-h">What happens next</h2>
+        <ol class="steps" data-sc-in data-sc-stagger="70">
+          <li class="step"><span class="step__k">Step one</span><div><h3>Pick what is yours</h3><p>Start from a situation in the DE Store, or add families one at a time. Every pick can be undone.</p></div></li>
+          <li class="step"><span class="step__k">Step two</span><div><h3>Size it once</h3><p>Four counts and two facts: users, computers, mobile devices and sites, who owns the devices, and whether anyone does IT inside the company. Every package follows.</p></div></li>
+          <li class="step"><span class="step__k">Step three</span><div><h3>DE confirms a real quote</h3><p>Submit it as it is. DE recommends Standalone or Co-Managed with the reason shown, and you still see both. No payment here.</p></div></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLOSE · Resolve. The inquiry plate, typeset like a label, built from the visitor's set. It holds. -->
+  <section class="close g-well" id="close" data-sc-act="pin" data-sc-span="1.25" aria-labelledby="close-h">
+    <div data-sc-stage>
+      <img class="close__ground" src="assets/peak.webp" width="2000" height="1117" alt="" loading="lazy" decoding="async">
+      <div class="plate" data-sc-cue="0 1 0 0">
+        <h2 class="plate__title" id="close-h">Your solution</h2>
+        <dl>
+          <div><dt>Situations</dt><dd id="close-sits">Phishing got through, Our IT person left, Would we recover?</dd></div>
+          <div><dt>Families</dt><dd id="close-fams">7 families, one solution</dd></div>
+          <div><dt>Next step</dt><dd>A short call. DE confirms the packages and sends a real quote.</dd></div>
+        </dl>
+        <div class="plate__actions">
+          <a class="cta" href="https://digeratiexperts.com/contact">Talk to DE</a>
+          <a class="plate__link" href="tel:+13254809870">325-480-9870</a>
+          <a class="plate__link" href="https://digeratiexperts.com/store#situations">Build it in the Store</a>
+        </div>
+      </div>
+      <footer class="foot">
+        <img src="assets/mark.png" width="360" height="87" alt="Digerati Experts">
+        <span>Situations and families as published in the DE Store. Images are illustrative.</span>
+      </footer>
+    </div>
+  </section>
+
+</main>
+
+<script src="scrollcraft.js"></script>
+<script>ScrollCraft.mount(document.body);</script>
+<script>
+window.SG_DATA = {"families": {"it_operations": "IT Operations & Support", "endpoint_devices": "Endpoint & Device Management", "identity_access": "Identity & Access", "email_collaboration": "Email & Collaboration", "cybersecurity_operations": "Cybersecurity Operations", "network_connectivity": "Network & Connectivity", "backup_continuity": "Backup & Business Continuity", "compliance_risk": "Compliance & Risk Readiness", "security_awareness": "Security Awareness & Human Risk", "business_communications": "Business Communications", "hardware_lifecycle": "Hardware & Lifecycle", "documentation_standards": "Documentation & Standards", "technology_strategy": "Technology Strategy & Advisory"}, "objects": {"phishing-close-call": {"short": "Phishing got through", "img": "o10", "fams": ["security_awareness", "email_collaboration", "identity_access"], "room": "now"}, "it-person-left": {"short": "Our IT person left", "img": "o02", "fams": ["it_operations", "documentation_standards", "endpoint_devices"], "room": "now"}, "ransomware-recovery": {"short": "Would we recover?", "img": "o04", "fams": ["backup_continuity", "cybersecurity_operations", "endpoint_devices"], "room": "now"}, "second-location": {"short": "A second office", "img": "o05", "fams": ["network_connectivity", "business_communications", "hardware_lifecycle"], "room": "change"}, "new-hires-fast": {"short": "New hires, fast", "img": "o06", "fams": ["hardware_lifecycle", "endpoint_devices", "identity_access"], "room": "change"}, "hybrid-byod": {"short": "Own devices at home", "img": "o07", "fams": ["endpoint_devices", "identity_access", "email_collaboration"], "room": "change"}, "phone-contract-ending": {"short": "Old phone system", "img": "o08", "fams": ["business_communications", "network_connectivity"], "room": "change"}, "insurance-questionnaire": {"short": "Insurance questionnaire", "img": "o03", "fams": ["compliance_risk", "identity_access", "backup_continuity"], "room": "prove"}, "auditor-evidence": {"short": "Policies and evidence", "img": "o09", "fams": ["compliance_risk", "documentation_standards", "technology_strategy"], "room": "prove"}, "internal-it-stretched": {"short": "IT team stretched", "img": "o01", "fams": ["it_operations", "cybersecurity_operations", "endpoint_devices"], "room": "prove"}}, "order": ["phishing-close-call", "it-person-left", "ransomware-recovery", "second-location", "new-hires-fast", "hybrid-byod", "phone-contract-ending", "insurance-questionnaire", "auditor-evidence", "internal-it-stretched"]};
+(function () {
+  "use strict";
+  var D = window.SG_DATA;
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var KEY = "sg-kept-v1";
+  var DEFAULT_SET = ["phishing-close-call", "it-person-left", "ransomware-recovery"];
+  var kept = [];
+  try { kept = (JSON.parse(localStorage.getItem(KEY) || "[]") || []).filter(function (id) { return D.objects[id]; }); } catch (e) { kept = []; }
+
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var tray = $("#tray"), pile = $("#tray-pile"), count = $("#tray-count"), live = $("#live");
+  var closeSec = document.getElementById("close");
+  var asm = $("#assembly"), field = $("#asm-field"), frame = $("#asm-frame"), famsEl = $("#asm-fams"), sumEl = $("#asm-sum");
+  var img = function (id, small) { return "assets/" + D.objects[id].img + (small ? "-s" : "") + ".webp"; };
+  var clamp = function (v, a, b) { return Math.min(b, Math.max(a, v)); };
+  var smooth = function (t) { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
+  var back = function (t) { t = clamp(t, 0, 1); var c = 1.4; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+  var lerp = function (a, b, t) { return a + (b - a) * t; };
+
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(kept)); } catch (e) {} }
+  function theSet() { return kept.length ? D.order.filter(function (id) { return kept.indexOf(id) > -1; }) : DEFAULT_SET.slice(); }
+  function merged(set) {
+    var tally = {};
+    set.forEach(function (id) { D.objects[id].fams.forEach(function (f) { tally[f] = (tally[f] || 0) + 1; }); });
+    return Object.keys(tally).map(function (f) { return { id: f, n: tally[f] }; }).sort(function (a, b) { return b.n - a.n; });
+  }
+  function shortList(set) { return set.map(function (id) { return D.objects[id].short; }).join(", "); }
+
+  // ------------------------------------------------------------- render
+  var tiles = [];
+  function render() {
+    $$("[data-keep]").forEach(function (b) {
+      var on = kept.indexOf(b.getAttribute("data-keep")) > -1;
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      b.querySelector(".keep__text").textContent = on ? "Kept" : "Keep";
+      b.closest(".obj").classList.toggle("is-kept", on);
+    });
+    $$("[data-jump]").forEach(function (a) { a.classList.toggle("is-kept", kept.indexOf(a.getAttribute("data-jump")) > -1); });
+    pile.innerHTML = "";
+    kept.slice(-4).forEach(function (id, i) {
+      var s = document.createElement("span");
+      s.style.backgroundImage = "url(" + img(id, true) + ")";
+      s.style.transform = "translate(" + (i * 3) + "px," + (i * -1) + "px) rotate(" + ((i % 2 ? 1 : -1) * (4 + i * 3)) + "deg)";
+      pile.appendChild(s);
+    });
+    count.textContent = kept.length;
+    tray.classList.toggle("has-items", kept.length > 0);
+
+    var set = theSet(), fams = merged(set);
+    $("#silence-line").textContent = kept.length
+      ? "You kept " + kept.length + (kept.length === 1 ? " situation." : " situations.") + " Watch what they have in common."
+      : "You kept none. The next screen uses the three from the first room.";
+    $("#asm-sub").textContent = kept.length ? "Everything you kept, as it is now: separate." : "You kept none, so these are the first room's three. Separate, for now.";
+    $("#close-sits").textContent = shortList(set);
+    $("#close-fams").textContent = fams.length + " families, one solution";
+
+    famsEl.innerHTML = "";
+    fams.forEach(function (f) {
+      var li = document.createElement("li");
+      li.textContent = D.families[f.id];
+      if (f.n > 1) { var em = document.createElement("em"); em.textContent = "in " + f.n + " of yours"; li.appendChild(em); }
+      famsEl.appendChild(li);
+    });
+    var top = fams[0];
+    sumEl.innerHTML = "";
+    var b1 = document.createElement("b"); b1.textContent = set.length + (set.length === 1 ? " situation, " : " situations, ") + fams.length + " families. ";
+    sumEl.appendChild(b1);
+    sumEl.appendChild(document.createTextNode(top && top.n > 1
+      ? D.families[top.id] + " shows up in " + top.n + " of them. In one solution it is one package, not " + top.n + "."
+      : "Each family appears once in one solution, sized once for your business."));
+
+    field.innerHTML = "";
+    tiles = set.map(function (id) {
+      var t = document.createElement("div");
+      t.className = "asm-tile";
+      t.style.backgroundImage = "url(" + img(id, true) + ")";
+      var l = document.createElement("span"); l.textContent = D.objects[id].short; t.appendChild(l);
+      field.appendChild(t);
+      return t;
+    });
+    frameTick();
+  }
+
+  // --------------------------------------------------------------- keep
+  function flyToTray(fromEl, id) {
+    if (reduce || !fromEl) return;
+    var a = fromEl.getBoundingClientRect(), b = pile.getBoundingClientRect();
+    if (!a.width) return;
+    var f = document.createElement("div");
+    f.className = "flyer";
+    f.style.cssText = "left:" + a.left + "px;top:" + a.top + "px;width:" + a.width + "px;height:" + a.height + "px;background-image:url(" + img(id, true) + ")";
+    document.body.appendChild(f);
+    var dx = b.left + 6 - a.left, dy = b.top + 2 - a.top, s = 26 / a.width;
+    var anim = f.animate([
+      { transform: "translate(0,0) scale(1)", opacity: 1 },
+      { transform: "translate(" + (dx * 0.55) + "px," + (dy * 0.35 - 60) + "px) scale(" + (0.5 + s * 0.5) + ") rotate(-6deg)", opacity: 1, offset: 0.55 },
+      { transform: "translate(" + dx + "px," + dy + "px) scale(" + s + ") rotate(8deg)", opacity: 0.9 }
+    ], { duration: 560, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
+    anim.onfinish = function () { f.remove(); };
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-keep]");
+    if (!b) return;
+    var id = b.getAttribute("data-keep"), i = kept.indexOf(id);
+    if (i > -1) { kept.splice(i, 1); live.textContent = D.objects[id].short + " removed. " + kept.length + " in your set."; }
+    else { kept.push(id); flyToTray(b.closest(".obj").querySelector(".obj__frame"), id); live.textContent = D.objects[id].short + " kept. " + kept.length + " in your set."; }
+    save(); render();
+  });
+
+  // ------------------------------------------------------- index + jump
+  var idxBtn = $("#index-btn"), idx = $("#index");
+  function setIndex(open) { idx.classList.toggle("is-open", open); idxBtn.setAttribute("aria-expanded", open ? "true" : "false"); }
+  idxBtn.addEventListener("click", function () { var open = !idx.classList.contains("is-open"); setIndex(open); if (open) { var first = idx.querySelector("a"); first && first.focus(); } });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && idx.classList.contains("is-open")) { setIndex(false); idxBtn.focus(); } });
+  document.addEventListener("click", function (e) { if (idx.classList.contains("is-open") && !idx.contains(e.target) && !idxBtn.contains(e.target)) setIndex(false); });
+
+  function jumpTo(id) {
+    var o = document.getElementById("s-" + id);
+    if (!o) return;
+    var sec = o.closest("[data-sc-act]"), rail = sec.querySelector("[data-sc-pan]"), stage = sec.querySelector("[data-sc-stage]");
+    var vw = document.documentElement.clientWidth, vh = window.innerHeight;
+    var secTop = sec.getBoundingClientRect().top + window.scrollY;
+    if (reduce) {
+      window.scrollTo(0, secTop);
+      stage.scrollLeft = Math.max(0, o.offsetLeft - (vw - o.offsetWidth) / 2);
+    } else {
+      var overflow = Math.max(1, rail.scrollWidth - vw);
+      var p = clamp((o.offsetLeft + o.offsetWidth / 2 - vw / 2) / overflow, 0, 1);
+      window.scrollTo({ top: secTop + p * (sec.offsetHeight - vh), behavior: "smooth" });
+    }
+    var keep = o.querySelector("[data-keep]");
+    setTimeout(function () { keep && keep.focus({ preventScroll: true }); }, reduce ? 0 : 650);
+  }
+  idx.addEventListener("click", function (e) {
+    var a = e.target.closest("[data-jump]");
+    if (!a) return;
+    e.preventDefault(); setIndex(false); jumpTo(a.getAttribute("data-jump"));
+  });
+  tray.addEventListener("click", function () {
+    var top = asm.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top: top + (asm.offsetHeight - window.innerHeight) * 0.92, behavior: reduce ? "auto" : "smooth" });
+    asm.focus({ preventScroll: true });
+  });
+
+  // ----------------------------------------------------- frame: readout + assembly
+  var objs = $$(".obj"), where = $("#where"), current = null;
+  var roomName = { now: "Something just happened", change: "We're growing or changing", prove: "We have to prove it or keep up" };
+  function readout() {
+    var vw = window.innerWidth, vh = window.innerHeight, best = null, bestD = Infinity;
+    objs.forEach(function (o) {
+      var r = o.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > vh || r.right < 0 || r.left > vw) return;
+      var d = Math.abs(r.left + r.width / 2 - vw / 2) + Math.abs(r.top + r.height / 2 - vh / 2) * 0.5;
+      if (d < bestD) { bestD = d; best = o; }
+    });
+    if (!best || best === current) return;
+    current = best;
+    var id = best.getAttribute("data-obj");
+    where.innerHTML = "";
+    var b = document.createElement("b"); b.textContent = roomName[D.objects[id].room]; where.appendChild(b);
+    where.appendChild(document.createTextNode(" · " + D.objects[id].short));
+    $$("[data-jump]").forEach(function (a) { a.setAttribute("aria-current", a.getAttribute("data-jump") === id ? "true" : "false"); });
+  }
+
+  function frameTick() {
+    var r = asm.getBoundingClientRect(), vh = window.innerHeight;
+    var travel = Math.max(1, r.height - vh);
+    var p = clamp(-r.top / travel, 0, 1);
+    var active = r.top < vh * 0.6 && r.bottom > vh * 0.4;
+    var cr = closeSec.getBoundingClientRect();
+    tray.classList.toggle("is-away", active || cr.top < vh * 0.5);
+    if (reduce) p = r.top < vh ? 1 : 0;
+
+    var W = field.clientWidth, H = field.clientHeight, n = tiles.length;
+    if (!W || !n) return;
+    var a = smooth((p - 0.03) / 0.17);          // tray -> scattered
+    var b = back((p - 0.36) / 0.2);             // scattered -> aligned (the snap)
+    var bLin = clamp((p - 0.36) / 0.2, 0, 1);
+    var phone = W < 761;
+    var cols = n <= 5 ? n : Math.ceil(n / 2), rows = Math.ceil(n / cols);
+    var gap = phone ? 12 : 22;
+    var S = Math.min(phone ? 84 : 156, (W * (phone ? 0.86 : 0.62) - (cols - 1) * gap) / cols);
+    var rowH = S + 30;
+    var gw = cols * S + (cols - 1) * gap, gh = rows * rowH - 30;
+    var gx = (W - gw) / 2, gy = H * (phone ? 0.34 : 0.36) - gh / 2 + (phone ? 30 : 0);
+    var tr = tray.getBoundingClientRect(), fr = field.getBoundingClientRect();
+    var sx0 = tr.left + 30 - fr.left, sy0 = tr.top + tr.height / 2 - fr.top;
+
+    tiles.forEach(function (t, i) {
+      var c = i % cols, row = Math.floor(i / cols);
+      var inRow = Math.min(cols, n - row * cols), rowOff = (cols - inRow) * (S + gap) / 2;
+      var gxI = gx + rowOff + c * (S + gap), gyI = gy + row * rowH;
+      var fx = ((i * 0.618 + 0.21) % 1), fy = ((i * 0.382 + 0.57) % 1);
+      var scx = W * (0.08 + 0.78 * fx), scy = H * (0.2 + 0.52 * fy);
+      var rot = ((i * 0.73 + 0.1) % 1 - 0.5) * 38;
+      var scS = phone ? 1.15 : 1.45;
+      var x0 = sx0 - S / 2, y0 = sy0 - S / 2;
+      var x1 = lerp(x0, scx - S / 2, a), y1 = lerp(y0, scy - S / 2, a);
+      var s1 = lerp(0.22, scS, a), r1 = lerp(-12 + i * 5, rot, a);
+      var drift = Math.sin((p * 6 + i) * 1.3) * 6 * (1 - bLin);
+      var x = lerp(x1, gxI, b), y = lerp(y1 + drift, gyI, b), s = lerp(s1, 1, b), rr = lerp(r1, 0, b);
+      t.style.width = S + "px"; t.style.height = S + "px";
+      t.style.opacity = p <= 0.005 && !reduce ? 0 : 1;
+      t.style.transform = "translate3d(" + x.toFixed(1) + "px," + y.toFixed(1) + "px,0) rotate(" + rr.toFixed(2) + "deg) scale(" + s.toFixed(3) + ")";
+    });
+    var pad = phone ? 14 : 22;
+    frame.style.left = (gx - pad) + "px"; frame.style.top = (gy - pad) + "px";
+    frame.style.width = (gw + pad * 2) + "px"; frame.style.height = (gh + 30 + pad * 2) + "px";
+    var fIn = smooth((p - 0.5) / 0.1);
+    frame.style.opacity = fIn;
+    frame.style.transform = "scale(" + lerp(1.06, 1, fIn).toFixed(3) + ")";
+    asm.style.setProperty("--sg-snap", bLin.toFixed(3));
+    $$("li", famsEl).forEach(function (li, i) {
+      var k = smooth((p - 0.56 - i * 0.018) / 0.1);
+      li.style.opacity = k; li.style.transform = "translateY(" + ((1 - k) * 8).toFixed(1) + "px)";
+    });
+    sumEl.style.opacity = smooth((p - 0.72) / 0.1);
+  }
+
+  var queued = false;
+  function onScroll() { if (queued) return; queued = true; requestAnimationFrame(function () { queued = false; frameTick(); readout(); }); }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+  $$(".rail").forEach(function (r) { Array.prototype.forEach.call(r.children, function (c, i) { c.style.setProperty("--i", i); }); });
+  render(); readout();
+})();
+</script>
+</body>
+</html>
