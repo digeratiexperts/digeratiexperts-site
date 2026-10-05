@@ -133,8 +133,8 @@ export default function PortalTickets() {
           </Callout>
         )}
         {desk?.scope === "company" && desk.linked === false && !desk.error && (
-          <Callout tone="info" title="No DE Desk account linked yet">
-            This company has no matching account in DE Desk, so only tickets opened in the portal appear here.
+          <Callout tone="info" title="Not linked to DE Desk yet">
+            Nothing in DE Desk matches this company's name or its users' emails, so only tickets opened in the portal appear here.
           </Callout>
         )}
 
