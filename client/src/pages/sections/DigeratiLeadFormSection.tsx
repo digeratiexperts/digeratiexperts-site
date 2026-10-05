@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Loader2, Shield, Clock, CheckCircle } from "lucide-react";
+import { ArrowRight, Loader2, Shield, CheckCircle } from "lucide-react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -96,7 +96,6 @@ export const DigeratiLeadFormSection = (): JSX.Element => {
 
   const benefits = [
     { icon: Shield, text: "Complimentary security assessment" },
-    { icon: Clock, text: "Results in 24-48 hours" },
     { icon: CheckCircle, text: "No obligation, no credit card" },
   ];
 

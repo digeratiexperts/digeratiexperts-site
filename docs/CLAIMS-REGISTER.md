@@ -35,7 +35,7 @@ from how the site is built (canonical data, product capture) · **Unsupported**
 | Stats section | $392M internet-crime losses reported from Arizona in 2024 | FBI IC3 Annual Report 2024, URL in registry | Sourced | Re-verify when the 2025 IC3 report publishes |
 | Threats & insights (`DigeratiThreatsInsightsSection`) | 45-day Arizona breach-notification window | A.R.S. § 18-552 via Arizona Attorney General FAQ, URL in registry | Sourced | None |
 | Lead form and hero copy (`DigeratiLeadFormSection`, `DigeratiHeroSection`, `LeadCaptureBand`) | "24 hours to schedule your Cyber Risk Assessment" | No SLA or published document states a 24-hour scheduling commitment | Fixed 2026-10-05 | Now "within one business day" (PR #456; the live homepage Version 8 lead form in the follow-up) |
-| Lead form (`DigeratiLeadFormSection`, "48 hours") | 48-hour turnaround statement | No published basis found | Unsupported | Joe: confirm or remove |
+| Lead form (`DigeratiLeadFormSection`, "48 hours") | 48-hour turnaround statement | No published basis found | Fixed 2026-10-05 | Removed from `DigeratiLeadFormSection` (the /version-0 homepage); the live homepage (Version 8) never carried it |
 | Contact section (`DigeratiContactSection`) | "We'll get back to you within 24 hours" | No published basis; SLA standard tier is next business day | Fixed 2026-10-05 | Now "within one business day" (PR #456; the live homepage Version 8 contact footer in the follow-up) |
 | Services section, capability list (PR #178) | "SOC / MDR Monitoring: 24/7 detection and response" | Service definition; SLA lists 24/7/365 emergency incident response availability | Published | None |
 | Diagrams (PR #178): "DETECTION & RESPONSE · 24/7" (was "SECURITY OPERATIONS · 24/7"), "24/7 · vCIO" | 24/7 detection and response | Same basis as above; the frame is named for block 06 of the eight-block model | Published | None |
@@ -138,7 +138,7 @@ Every section of the live homepage, cleaned in the current DE theme (graphite / 
 | `client/src/pages/routes/locationPages.tsx` (Chandler) | "we deliver 15-minute response times" | Fixed 2026-10-03 | Now "a published SLA with a 15-minute response for critical incidents" |
 | `locationPages.tsx` (Chandler, Mesa) | "Same-day onsite support available", "Fast response times" | Fixed 2026-10-03 | Now "Onsite visits from our Chandler office, as your plan sets" (onsite support is a published plan line in `servicePages.tsx`) and the SLA's critical tier |
 | Solution pages (`BackupDisasterRecovery`, `ManagedWorkplace`, `OfficePage`) | "quote within 24 hours" | Fixed 2026-10-05 | Now "a quote within one business day" (PR #456) |
-| `ManagedWorkplace.tsx` FAQ | "fully productive within 1 business day" (onboarding) | Unsupported | Joe: confirm or soften |
+| `ManagedWorkplace.tsx` FAQ | "fully productive within 1 business day" (onboarding) | Fixed 2026-10-05 | Softened to a checklist with no timing; the "offboarding takes minutes" timing went too |
 
 ## Site-wide truth pass (2026-10-03)
 
