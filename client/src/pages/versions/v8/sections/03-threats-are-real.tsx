@@ -5,6 +5,7 @@ import { Link } from "wouter";
 import { getHomepageCyberFacts, type CyberAwarenessFact } from "@/data/cyberAwarenessFacts";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import "./03-threats-are-real.css";
+import { ChapterPattern } from "@/components/site/Atmosphere";
 
 /**
  * 03 · The threats are real, ported from
@@ -55,6 +56,7 @@ export function V8ThreatsAreReal(): JSX.Element {
 
   return (
     <section className="f-well v8-section" id="stats" aria-labelledby="stats-heading">
+      <ChapterPattern variant="lattice" />
       <div className="v8-canvas">
         <div className="v8-box stats-box">
           <motion.div

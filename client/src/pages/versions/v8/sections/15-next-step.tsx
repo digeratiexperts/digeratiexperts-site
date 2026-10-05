@@ -4,6 +4,7 @@ import { useBooking } from "@/contexts/BookingContext";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import "./15-next-step.css";
+import { ChapterPattern } from "@/components/site/Atmosphere";
 
 /**
  * Section 15 (mock: artifacts/design-concepts/homepage-sections-2026-10/sections/15-next-step.html).
@@ -27,6 +28,7 @@ export function V8NextStep(): JSX.Element {
 
   return (
     <section className="f-paper v8-section" aria-labelledby="cta-title">
+      <ChapterPattern variant="dots" />
       <div className="v8-canvas">
         <motion.div className="next" {...reveal}>
           <p className="v8-eyebrow">Cyber Risk Assessment</p>

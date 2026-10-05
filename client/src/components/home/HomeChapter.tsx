@@ -2,6 +2,7 @@ import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
+import { ChapterPattern, patternForTone, type PatternVariant } from "@/components/site/Atmosphere";
 
 /**
  * Homepage chapter grammar (Tier 2, design/UI-STYLE-RULES.md §2, §5, §6).
@@ -48,6 +49,8 @@ type HomeChapterProps<T extends ElementType> = {
   seam?: boolean;
   /** Tighter padding for strips and closing bands. */
   compact?: boolean;
+  /** Decorative background that drifts on scroll (site atmosphere). Defaults to the tone's pattern; "none" turns it off. */
+  pattern?: PatternVariant | "none";
   className?: string;
   children: ReactNode;
 } & Omit<ComponentPropsWithoutRef<T>, "as" | "className" | "children">;
@@ -57,15 +60,17 @@ export function HomeChapter<T extends ElementType = "section">({
   tone,
   seam = true,
   compact = false,
+  pattern,
   className,
   children,
   ...rest
 }: HomeChapterProps<T>) {
   const Tag = (as ?? "section") as ElementType;
+  const variant = pattern ?? patternForTone(tone);
   return (
     <Tag
       className={cn(
-        "relative",
+        "relative isolate",
         toneField[tone],
         seam && toneSeam[tone],
         compact ? "py-10 md:py-12" : chapterPadding,
@@ -73,6 +78,7 @@ export function HomeChapter<T extends ElementType = "section">({
       )}
       {...rest}
     >
+      {variant !== "none" ? <ChapterPattern variant={variant} /> : null}
       {children}
     </Tag>
   );

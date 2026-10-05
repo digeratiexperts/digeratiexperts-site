@@ -9,6 +9,7 @@ import { revealInitial, revealInView, revealTransition, revealViewport } from "@
 import "../v8.css";
 import { TipTag } from "./TipTag";
 import "./06-eight-blocks.css";
+import { ChapterPattern } from "@/components/site/Atmosphere";
 
 /**
  * Section 06: "What we protect" (the eight blocks) and "How protection works".
@@ -308,6 +309,7 @@ export function V8EightBlocks(): JSX.Element {
   return (
     <>
       <section className="f-paper v8-section protect" aria-labelledby="protect-heading">
+        <ChapterPattern variant="dots" />
         <div className="v8-canvas">
           <motion.div className="v8-head" {...reveal}>
             <p className="v8-eyebrow">What we protect</p>

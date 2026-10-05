@@ -9,6 +9,7 @@ import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { FieldOk, SubmitFace, submitPhase, useSentFlash } from "./SubmitFace";
 import "./13-lead-form.css";
+import { ChapterPattern } from "@/components/site/Atmosphere";
 
 /**
  * Section 13 (mock: artifacts/design-concepts/homepage-sections-2026-10/sections/13-lead-form.html).
@@ -109,6 +110,7 @@ export function V8LeadForm(): JSX.Element {
 
   return (
     <section className="f-paper v8-section" id="assessment-form" aria-labelledby="assessment-form-title">
+      <ChapterPattern variant="dots" />
       <div className="v8-canvas lead">
         <motion.div className="lead__statement" {...reveal()}>
           <p className="v8-eyebrow">Cyber Risk Assessment</p>
