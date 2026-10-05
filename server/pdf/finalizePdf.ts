@@ -7,7 +7,9 @@
  *  - 7.1-3  painting operators outside any marked content (rules, cell borders,
  *           backgrounds, running header and footer): wrapped as /Artifact;
  *  - 7.18.x link annotations without a text alternative: given /Contents;
- *  - 7.1-8/9 no XMP metadata with a title: written, with the PDF/UA identifier.
+ *  - 7.1-8/9 no XMP metadata with a title: written, with the PDF/UA identifier;
+ *  - 7.1-5  PDF 2.0 structure types (Chromium 151 tags <strong> as /Strong)
+ *           that PDF 1.7 lacks: role-mapped to their PDF 1.7 equivalent.
  * Plus DisplayDocTitle, so viewers show the title instead of the file name.
  *
  * The four Store templates were validated with veraPDF after this step
@@ -97,6 +99,51 @@ export function markArtifacts(src: string): { out: string; wrapped: number } {
   return { out: out + src.slice(copied), wrapped };
 }
 
+/** PDF 2.0 structure types and their nearest PDF 1.7 standard type (ISO 32000-2, 14.8.4). */
+const PDF2_ROLES: Record<string, string> = {
+  Strong: "Span",
+  Em: "Span",
+  Sub: "Span",
+  Title: "P",
+  FENote: "Note",
+  Aside: "Div",
+  DocumentFragment: "Div",
+};
+
+/** Structure types used in the tree (bounded walk; cycles are skipped). */
+function structTypes(doc: PDFDocument, root: PDFDict): Set<string> {
+  const ctx = doc.context;
+  const types = new Set<string>();
+  const seen = new Set<PDFObject>();
+  const stack: (PDFObject | undefined)[] = [root.get(PDFName.of("K"))];
+  while (stack.length && seen.size < 200_000) {
+    const raw = stack.pop();
+    const k = raw instanceof PDFRef ? ctx.lookup(raw) : raw;
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    if (k instanceof PDFArray) stack.push(...k.asArray());
+    else if (k instanceof PDFDict) {
+      const s = k.get(PDFName.of("S"));
+      if (s instanceof PDFName) types.add(s.decodeText());
+      stack.push(k.get(PDFName.of("K")));
+    }
+  }
+  return types;
+}
+
+/** Role-map PDF 2.0 types in use that the RoleMap does not already map. Returns the types added. */
+export function mapPdf2Roles(doc: PDFDocument): string[] {
+  const root = doc.catalog.lookupMaybe(PDFName.of("StructTreeRoot"), PDFDict);
+  if (!root) return [];
+  const used = [...structTypes(doc, root)].filter((t) => t in PDF2_ROLES);
+  const roleMap = root.lookupMaybe(PDFName.of("RoleMap"), PDFDict) ?? doc.context.obj({});
+  const added = used.filter((t) => !roleMap.has(PDFName.of(t)));
+  if (!added.length) return [];
+  for (const t of added) roleMap.set(PDFName.of(t), PDFName.of(PDF2_ROLES[t]));
+  root.set(PDFName.of("RoleMap"), roleMap);
+  return added;
+}
+
 function linkDescription(uri: string): string {
   if (uri.startsWith("mailto:")) return `Email Digerati Experts at ${uri.slice(7)}`;
   if (uri.startsWith("tel:")) return `Call Digerati Experts at ${uri.slice(4)}`;
@@ -170,6 +217,8 @@ export async function finalizePdf(pdf: Buffer, meta: { title: string; lang?: str
       a.set(PDFName.of("Contents"), PDFString.of(target ? linkDescription(target) : "Go to section"));
     }
   }
+
+  mapPdf2Roles(doc);
 
   // Claim PDF/UA only for a tagged file (an older WeasyPrint renders untagged).
   const markInfo = doc.catalog.lookupMaybe(PDFName.of("MarkInfo"), PDFDict);

@@ -46,6 +46,7 @@ The Hub (`artifacts/api-server/src/lib/de-pdf-brand.ts`) and the RIC Master Plan
 - **Artifacts:** painting outside marked content (rules, cell borders, backgrounds, the running header and footer) is wrapped as `/Artifact`.
 - **Links:** every link annotation gets `/Contents`, for example "Email Digerati Experts at …".
 - **Metadata:** XMP with `dc:title`, the language and the PDF/UA identifier, plus `DisplayDocTitle`.
+- **PDF 2.0 tags:** Chromium 151 tags `<strong>` as `/Strong`, a type PDF 1.7 does not define. The order template's billing name is one such tag. Such types are role-mapped to their PDF 1.7 equivalent (`Strong`/`Em` → `Span`), which fixes veraPDF 7.1-5. The CI guard found this on 2026-10-05: production order and receipt PDFs had been failing it since Chromium 151.
 
 The PDF/UA identifier is written only when the file is tagged. If finishing fails, the PDF is returned as rendered.
 
