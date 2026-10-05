@@ -35,9 +35,12 @@ const quotes = new Map<string, StoredQuoteRequest>();
  */
 export class QuoteDurabilityError extends Error {
   readonly code = "DURABLE_DATABASE_REQUIRED";
-  constructor(message = "Quote requests require durable database storage.") {
+  /** The request as built, so the route can save it outside the database (#240). */
+  readonly record?: StoredQuoteRequest;
+  constructor(message = "Quote requests require durable database storage.", record?: StoredQuoteRequest) {
     super(message);
     this.name = "QuoteDurabilityError";
+    this.record = record;
   }
 }
 
@@ -51,6 +54,45 @@ function remember(record: StoredQuoteRequest) {
   quotes.set(record.id, record);
   quotes.set(record.quoteNumber, record);
   return record;
+}
+
+/**
+ * Serves a request saved outside the database (spool, CRM or email) to its
+ * confirmation page and PDF until the replay worker writes the row (#240).
+ */
+export function rememberQuoteRequest(record: StoredQuoteRequest): StoredQuoteRequest {
+  return remember(record);
+}
+
+/** Writes a spooled request back once Postgres is reachable. Idempotent by id. */
+export async function persistSpooledQuoteRequest(record: StoredQuoteRequest): Promise<boolean> {
+  await initPromise;
+  if (!dbReady || !db) return false;
+  try {
+    await db
+      .insert(storeQuoteRequests)
+      .values({
+        id: record.id,
+        quoteNumber: record.quoteNumber,
+        userId: record.userId,
+        clientId: record.clientId,
+        contactName: record.contactName,
+        contactEmail: record.contactEmail,
+        contactPhone: record.contactPhone,
+        companyName: record.companyName,
+        requestedItems: record.requestedItems,
+        message: record.message,
+        status: record.status,
+        quoteSentAt: new Date(record.quoteSentAt ?? record.createdAt),
+        createdAt: new Date(record.createdAt),
+        updatedAt: new Date(record.updatedAt),
+      })
+      .onConflictDoNothing({ target: storeQuoteRequests.id });
+    return true;
+  } catch (error: any) {
+    console.error("[store-quote] spooled request not written back:", error?.message || error);
+    return false;
+  }
 }
 
 function rowToQuote(row: any): StoredQuoteRequest {
@@ -108,7 +150,7 @@ export async function insertQuoteRequest(input: {
   };
   await initPromise;
   if (!dbReady || !db) {
-    throw new QuoteDurabilityError();
+    throw new QuoteDurabilityError(undefined, record);
   }
 
   // Only a row that the database returned is remembered. Remembering before
@@ -132,12 +174,13 @@ export async function insertQuoteRequest(input: {
         })
         .returning();
     if (row) return remember(rowToQuote(row));
-    throw new QuoteDurabilityError("The quote request was not written to durable storage.");
+    throw new QuoteDurabilityError("The quote request was not written to durable storage.", record);
   } catch (error: any) {
     if (error instanceof QuoteDurabilityError) throw error;
     console.error("[store-quote] database insert failed:", error?.message || error);
     throw new QuoteDurabilityError(
       `Quote request storage failed: ${error?.message || "database error"}`,
+      record,
     );
   }
 }

@@ -204,6 +204,45 @@ export const notificationService = {
     });
   },
 
+  /** A store quote request the database refused (#240): sales acts on it from this email. */
+  async sendQuoteRequestFallback(request: {
+    quoteNumber: string;
+    contactName: string;
+    contactEmail: string;
+    contactPhone: string;
+    companyName: string;
+    description: string;
+  }): Promise<boolean> {
+    const row = (label: string, value: string) =>
+      value ? `<tr><td style="padding: 8px 0; color: #888;">${label}:</td><td>${escapeHtml(value)}</td></tr>` : "";
+    const content = `
+      <h2>Quote request ${escapeHtml(request.quoteNumber)} (saved outside the database)</h2>
+      <p>The website database was unavailable when this quote was requested. It is held on the server and will be written to the database automatically when it recovers. Act on it from this email.</p>
+      <table style="width: 100%; margin: 20px 0;">
+        ${row("Quote", request.quoteNumber)}
+        ${row("Name", request.contactName)}
+        ${row("Email", request.contactEmail)}
+        ${row("Phone", request.contactPhone)}
+        ${row("Company", request.companyName)}
+      </table>
+      <p style="background: #1a1a2e; padding: 15px; border-radius: 6px; white-space: pre-wrap;">${escapeHtml(request.description)}</p>
+    `;
+    return sendEmail({
+      to: solutionFallbackRecipients(),
+      subject: `Quote request ${request.quoteNumber}: ${request.companyName || request.contactName}`,
+      htmlBody: baseEmailTemplate(content, "Quote request"),
+      textBody: [
+        `Quote request ${request.quoteNumber} (saved outside the database)`,
+        `Name: ${request.contactName}`,
+        `Email: ${request.contactEmail}`,
+        `Phone: ${request.contactPhone}`,
+        `Company: ${request.companyName}`,
+        "",
+        request.description,
+      ].join("\n"),
+    });
+  },
+
   /** The visitor's own confirmation with their reference (#243 owner decision: always). */
   async sendSolutionRequestAcknowledgement(request: {
     reference: string;
