@@ -1,7 +1,8 @@
 import { ChangeEvent, DragEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, BookOpen, ExternalLink, FileText, LockKeyhole, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageFlip } from "@/lib/pageFlip";
+import "@/styles/page-flip.css";
 
 type PdfViewport = { width: number; height: number };
 type PdfRenderTask = { promise: Promise<void>; cancel?: () => void };
@@ -82,16 +83,13 @@ function looksLikeOfficeDocument(file: File): boolean {
   return /\.(doc|docx|ppt|pptx)$/i.test(file.name);
 }
 
-function pageLabel(start: number, pageCount: number, spread: boolean): string {
-  if (!spread || start >= pageCount) return `Page ${start} of ${pageCount}`;
-  return `Pages ${start}–${Math.min(start + 1, pageCount)} of ${pageCount}`;
-}
-
 export function DocumentFlipbook(): JSX.Element {
-  const prefersReducedMotion = useReducedMotion();
   const inputRef = useRef<HTMLInputElement>(null);
-  const leftCanvasRef = useRef<HTMLCanvasElement>(null);
-  const rightCanvasRef = useRef<HTMLCanvasElement>(null);
+  // The flip engine owns the DOM inside this host: two static sides, a turning
+  // leaf, and the lighting layers. React does not render into it, which is why
+  // the host carries no children in JSX.
+  const bookHostRef = useRef<HTMLDivElement>(null);
+  const flipRef = useRef<PageFlip | null>(null);
   const documentRef = useRef<PdfDocument | null>(null);
   const loadingTaskRef = useRef<PdfLoadingTask | null>(null);
   const objectUrlRef = useRef<string | null>(null);
@@ -100,96 +98,98 @@ export function DocumentFlipbook(): JSX.Element {
   const [fileName, setFileName] = useState("");
   const [originalUrl, setOriginalUrl] = useState("");
   const [pageCount, setPageCount] = useState(0);
-  const [pageStart, setPageStart] = useState(1);
-  const [isWide, setIsWide] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRendering, setIsRendering] = useState(false);
   const [error, setError] = useState("");
   const [dragActive, setDragActive] = useState(false);
+  // Mirrors the engine's position so the toolbar and the page label stay in
+  // step with it. The engine is the single source of truth for which pages are
+  // showing — it knows about leaves, spreads and the lone cover; React does not.
+  const [flipState, setFlipState] = useState({ leaf: 0, leaves: 0, label: "" });
 
-  useEffect(() => {
-    const media = window.matchMedia("(min-width: 768px)");
-    const update = () => setIsWide(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
-
-  useEffect(() => {
-    setPageStart((current) => {
-      const step = isWide ? 2 : 1;
-      const aligned = Math.floor((Math.max(current, 1) - 1) / step) * step + 1;
-      return Math.min(aligned, Math.max(1, pageCount));
-    });
-  }, [isWide, pageCount]);
-
+  // Build the flip engine once per document. It owns the page DOM from here, so
+  // this effect only hands it one renderer per page and lets it ask for what it
+  // needs; it calls them lazily, so a long PDF does not rasterise up front.
   useEffect(() => {
     const pdf = documentRef.current;
-    if (!pdf || pageCount === 0) return;
+    const host = bookHostRef.current;
+    if (!pdf || pageCount === 0 || !host) return;
 
     const generation = ++renderGeneration.current;
     let cancelled = false;
     const tasks: PdfRenderTask[] = [];
 
-    const renderPage = async (pageNumber: number, canvas: HTMLCanvasElement | null) => {
-      if (!canvas || pageNumber > pageCount) {
-        if (canvas) {
-          const context = canvas.getContext("2d");
-          context?.clearRect(0, 0, canvas.width, canvas.height);
-          canvas.style.display = "none";
+    /**
+     * Draw one PDF page into a canvas. Returns the canvas immediately and fills
+     * the bitmap in after, because the engine needs an element the moment it
+     * mounts a slot — a promise would leave a hole in the book mid-turn.
+     */
+    const renderPageCanvas = (pageNumber: number): HTMLCanvasElement => {
+      const canvas = document.createElement("canvas");
+      canvas.className = "rounded-[3px] bg-white";
+      canvas.setAttribute("role", "img");
+      canvas.setAttribute("aria-label", `Page ${pageNumber} of ${pageCount}`);
+
+      void (async () => {
+        try {
+          const page = await pdf.getPage(pageNumber);
+          if (cancelled || generation !== renderGeneration.current) return;
+
+          const baseViewport = page.getViewport({ scale: 1 });
+          // Size off the slot the canvas will occupy, not the whole host: in a
+          // spread each page gets half the book.
+          const hostWidth = Math.max(host.clientWidth, 280);
+          const slotWidth = host.clientWidth >= 820 ? hostWidth / 2 : hostWidth;
+          const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+          const viewport = page.getViewport({
+            scale: (Math.min(slotWidth, 720) / baseViewport.width) * pixelRatio,
+          });
+
+          const context = canvas.getContext("2d", { alpha: false });
+          if (!context) throw new Error("Canvas rendering is unavailable in this browser.");
+
+          canvas.width = Math.ceil(viewport.width);
+          canvas.height = Math.ceil(viewport.height);
+          context.save();
+          context.fillStyle = "#ffffff";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.restore();
+
+          const task = page.render({ canvasContext: context, viewport });
+          tasks.push(task);
+          await task.promise;
+        } catch (reason: unknown) {
+          // A cancelled render is expected when a new file is chosen mid-draw,
+          // so only a real failure reaches the user.
+          if (!cancelled && generation === renderGeneration.current) {
+            setError(reason instanceof Error ? reason.message : "This page could not be rendered.");
+          }
         }
-        return;
-      }
+      })();
 
-      canvas.style.display = "block";
-      const page = await pdf.getPage(pageNumber);
-      if (cancelled || generation !== renderGeneration.current) return;
-
-      const baseViewport = page.getViewport({ scale: 1 });
-      const hostWidth = Math.max(canvas.parentElement?.clientWidth ?? 600, 280);
-      const availableWidth = isWide ? Math.max((hostWidth - 18) / 2, 260) : hostWidth;
-      const cssWidth = Math.min(availableWidth, 720);
-      const cssScale = cssWidth / baseViewport.width;
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-      const viewport = page.getViewport({ scale: cssScale * pixelRatio });
-      const context = canvas.getContext("2d", { alpha: false });
-      if (!context) throw new Error("Canvas rendering is unavailable in this browser.");
-
-      canvas.width = Math.ceil(viewport.width);
-      canvas.height = Math.ceil(viewport.height);
-      canvas.style.width = `${Math.round(viewport.width / pixelRatio)}px`;
-      canvas.style.height = `${Math.round(viewport.height / pixelRatio)}px`;
-      context.save();
-      context.fillStyle = "#ffffff";
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      context.restore();
-
-      const task = page.render({ canvasContext: context, viewport });
-      tasks.push(task);
-      await task.promise;
+      return canvas;
     };
 
     setIsRendering(true);
     setError("");
 
-    void Promise.all([
-      renderPage(pageStart, leftCanvasRef.current),
-      renderPage(isWide ? pageStart + 1 : pageCount + 1, rightCanvasRef.current),
-    ])
-      .catch((reason: unknown) => {
-        if (!cancelled) {
-          setError(reason instanceof Error ? reason.message : "This page could not be rendered.");
-        }
-      })
-      .finally(() => {
-        if (!cancelled && generation === renderGeneration.current) setIsRendering(false);
-      });
+    const flip = new PageFlip(host, {
+      pages: Array.from({ length: pageCount }, (_, i) => () => renderPageCanvas(i + 1)),
+      onChange: (state) => setFlipState(state),
+      // The toolbar below already shows this label, and it sits next to the
+      // file name where a reader looks for it. One live region, not two.
+      status: false,
+    });
+    flipRef.current = flip;
+    setIsRendering(false);
 
     return () => {
       cancelled = true;
       tasks.forEach((task) => task.cancel?.());
+      flip.destroy();
+      flipRef.current = null;
     };
-  }, [isWide, pageCount, pageStart]);
+  }, [pageCount]);
 
   useEffect(() => {
     return () => {
@@ -212,7 +212,7 @@ export function DocumentFlipbook(): JSX.Element {
     }
     setOriginalUrl("");
     setPageCount(0);
-    setPageStart(1);
+    setFlipState({ leaf: 0, leaves: 0, label: "" });
   };
 
   const loadFile = async (file: File) => {
@@ -245,7 +245,6 @@ export function DocumentFlipbook(): JSX.Element {
       setOriginalUrl(objectUrl);
       setFileName(file.name);
       setPageCount(pdf.numPages);
-      setPageStart(1);
     } catch (reason: unknown) {
       await clearCurrentDocument();
       setFileName("");
@@ -268,29 +267,32 @@ export function DocumentFlipbook(): JSX.Element {
     if (file) void loadFile(file);
   };
 
-  const step = isWide ? 2 : 1;
-  const canGoPrevious = pageStart > 1;
-  const canGoNext = pageStart + step <= pageCount;
-  const goPrevious = () => setPageStart((current) => Math.max(1, current - step));
-  const goNext = () => setPageStart((current) => Math.min(Math.max(1, pageCount), current + step));
+  // The engine is authoritative: it knows about leaves, spreads and the lone
+  // cover, so the toolbar asks it rather than recomputing page arithmetic here.
+  const canGoPrevious = flipState.leaf > 0;
+  const canGoNext = flipState.leaves > 0 && flipState.leaf < flipState.leaves - 1;
+  const goPrevious = () => flipRef.current?.prev();
+  const goNext = () => flipRef.current?.next();
 
+  // The engine binds the same keys on its own focusable book element. This
+  // handler covers the case where focus is on the outer section instead, and
+  // delegates rather than duplicating the page arithmetic — the engine is the
+  // one that knows where the leaves are.
   const onViewerKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (event.key === "ArrowLeft" && canGoPrevious) {
+    const flip = flipRef.current;
+    if (!flip || pageCount === 0) return;
+
+    const actions: Record<string, () => void> = {
+      ArrowLeft: () => flip.prev(),
+      ArrowRight: () => flip.next(),
+      Home: () => flip.goToLeaf(0),
+      End: () => flip.goToLeaf(Number.MAX_SAFE_INTEGER), // clamped by the engine
+    };
+
+    const run = actions[event.key];
+    if (run) {
       event.preventDefault();
-      goPrevious();
-    }
-    if (event.key === "ArrowRight" && canGoNext) {
-      event.preventDefault();
-      goNext();
-    }
-    if (event.key === "Home" && pageCount > 0) {
-      event.preventDefault();
-      setPageStart(1);
-    }
-    if (event.key === "End" && pageCount > 0) {
-      event.preventDefault();
-      const lastStart = isWide ? Math.max(1, pageCount % 2 === 0 ? pageCount - 1 : pageCount) : pageCount;
-      setPageStart(lastStart);
+      run();
     }
   };
 
@@ -376,8 +378,8 @@ export function DocumentFlipbook(): JSX.Element {
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-white" title={fileName}>{fileName}</p>
-                <p className="mt-0.5 text-xs text-de-muted-soft">
-                  {pageLabel(pageStart, pageCount, isWide)}{isRendering ? " · rendering" : ""}
+                <p className="mt-0.5 text-xs text-de-muted-soft" role="status" aria-live="polite">
+                  {flipState.label}{isRendering ? " · rendering" : ""}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -418,39 +420,27 @@ export function DocumentFlipbook(): JSX.Element {
             </div>
 
             <div
-              className="relative overflow-hidden rounded-2xl border border-de-hairline bg-de-bg p-3 shadow-inner sm:p-5"
+              /* No overflow clip. A leaf rotating under perspective genuinely
+                 projects past the page block, the way a real page rises off the
+                 book; clipping it would shear the leaf off mid-turn, which is
+                 the one moment this engine exists to show. */
+              className="relative rounded-2xl border border-de-hairline bg-de-bg p-3 shadow-inner sm:p-5"
               tabIndex={0}
               aria-label="PDF flipbook. Use left and right arrow keys to change pages."
             >
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={`${pageStart}-${isWide ? "spread" : "single"}`}
-                  initial={prefersReducedMotion ? false : { opacity: 0.72, rotateY: 4, x: 8 }}
-                  animate={{ opacity: 1, rotateY: 0, x: 0 }}
-                  exit={prefersReducedMotion ? undefined : { opacity: 0.72, rotateY: -4, x: -8 }}
-                  transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeOut" }}
-                  className="mx-auto flex w-full items-start justify-center gap-4"
-                  style={{ perspective: 1400, minHeight: 288 }}
-                >
-                  <canvas
-                    ref={leftCanvasRef}
-                    className="max-w-full rounded-md bg-white shadow-xl"
-                    aria-label={`PDF page ${pageStart}`}
-                  />
-                  <canvas
-                    ref={rightCanvasRef}
-                    className="hidden rounded-md bg-white shadow-xl md:block"
-                    style={{ maxWidth: isWide ? "calc(50% - 9px)" : "100%" }}
-                    aria-label={isWide && pageStart + 1 <= pageCount ? `PDF page ${pageStart + 1}` : undefined}
-                  />
-                </motion.div>
-              </AnimatePresence>
+              {/* The engine owns everything inside this host: the two static
+                  sides, the turning leaf and the lighting layers. Childless in
+                  JSX on purpose — React must not reconcile nodes the engine is
+                  mid-animation on. */}
+              <div ref={bookHostRef} style={{ minHeight: 288 }} />
             </div>
 
             <div className="mt-4 flex items-center justify-center gap-3 text-xs text-de-muted-soft">
               <span>← / → pages</span>
               <span aria-hidden="true">·</span>
               <span>Home / End jump</span>
+              <span aria-hidden="true">·</span>
+              <span>drag a page corner</span>
             </div>
           </div>
         ) : (
