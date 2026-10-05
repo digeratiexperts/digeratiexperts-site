@@ -1,11 +1,15 @@
 /**
  * Plan match for the /quote-wizard flow.
  *
- * Moved verbatim out of LeadQuoteWizard.tsx when the wizard became a
- * one-question-per-screen room (issue 419). The rules and reasons are a
- * business decision, not a design one: quoteMatch.test.ts pins every branch,
- * so a restyle can never quietly move a lead to a different plan. Three plans
- * only (Office, Business, Enterprise); never add one here.
+ * Rules are a business decision, not a design one: quoteMatch.test.ts pins
+ * every branch so a restyle can never quietly move a lead to a different plan.
+ *
+ * Joe-approved (2026-10-03) — aligns with ProActive IT as the 1–10 entry depth:
+ * - enterpriseToggle or seats > 30 → Enterprise
+ * - seats ≤ 10 → IT (remote / devices do not upgrade past IT)
+ * - seats 11–30 + connectivity === "yes" → Business
+ * - otherwise → Office
+ * - devices alone never upgrades the tier
  */
 export type TriState = "yes" | "no" | "not-sure";
 
@@ -24,59 +28,68 @@ export interface QuoteMatch {
 /** Above this many seats the match is Enterprise. */
 export const ENTERPRISE_SEAT_THRESHOLD = 30;
 
+/** At or below this many seats the match stays ProActive IT. */
+export const IT_SEAT_MAX = 10;
+
+const IT_REASONS = [
+  "Service desk & issue ownership with a documented baseline",
+  "DE Security Foundation — endpoint, identity, email, and security monitoring",
+  "Security awareness and a clear upgrade path into Office when the environment grows",
+];
+
+const ENTERPRISE_REASONS = [
+  "Full compliance modules (HIPAA, GDPR, FTC Safeguards)",
+  "Penetration testing, DR runbooks, and privileged access controls",
+  "AI & Cloud Automation + vCIO strategic guidance",
+];
+
+const BUSINESS_BOTH_REASONS = [
+  "Deeper security operations + 24/7 managed threat response",
+  "BCDR + compliance/risk reporting + Security Awareness Training",
+  "Technology + security business reviews + Cyber Insurance Readiness",
+];
+
+const BUSINESS_CONNECTIVITY_REASONS = [
+  "24/7 managed threat response with deeper security operations",
+  "Advanced identity controls + BCDR / risk reporting depth",
+  "Cyber insurance readiness and recurring security reviews",
+];
+
+const OFFICE_DEVICES_REASONS = [
+  "Email + Calendar + Team Chat with MFA + SSO",
+  "Endpoint Security + Email Protection + 24/7 MDR",
+  "Managed Network + Service Desk + Endpoint Backup",
+];
+
+const OFFICE_BASE_REASONS = [
+  "Security-first IT with MFA, SSO, and Password Manager",
+  "Endpoint Security + Email Protection + 24/7 MDR",
+  "Service Desk + Managed Network + Endpoint Backup",
+];
+
 export const getPlanMatch = (data: QuoteMatchInput): QuoteMatch => {
   if (data.enterpriseToggle || data.seats > ENTERPRISE_SEAT_THRESHOLD) {
-    return {
-      plan: 'Enterprise',
-      reasons: [
-        'Full compliance modules (HIPAA, GDPR, FTC Safeguards)',
-        'Penetration testing, DR runbooks, and privileged access controls',
-        'AI & Cloud Automation + vCIO strategic guidance'
-      ]
-    };
+    return { plan: "Enterprise", reasons: ENTERPRISE_REASONS };
   }
 
-  if (data.connectivity === 'yes' && data.devices === 'yes') {
-    return {
-      plan: 'Business',
-      reasons: [
-        'Deeper security operations + 24/7 managed threat response',
-        'BCDR + compliance/risk reporting + Security Awareness Training',
-        'Technology + security business reviews + Cyber Insurance Readiness'
-      ]
-    };
+  // Entry depth: 1–10 people stay on ProActive IT even with remote / devices.
+  if (data.seats <= IT_SEAT_MAX) {
+    return { plan: "IT", reasons: IT_REASONS };
   }
 
-  if (data.connectivity === 'yes') {
-    return {
-      plan: 'Business',
-      reasons: [
-        '24/7 managed threat response with deeper security operations',
-        'Advanced identity controls + BCDR / risk reporting depth',
-        'Cyber insurance readiness and recurring security reviews'
-      ]
-    };
+  if (data.connectivity === "yes" && data.devices === "yes") {
+    return { plan: "Business", reasons: BUSINESS_BOTH_REASONS };
   }
 
-  if (data.devices === 'yes') {
-    return {
-      plan: 'Office',
-      reasons: [
-        'Email + Calendar + Team Chat with MFA + SSO',
-        'Endpoint Security + Email Protection + 24/7 MDR',
-        'Managed Network + Service Desk + Endpoint Backup'
-      ]
-    };
+  if (data.connectivity === "yes") {
+    return { plan: "Business", reasons: BUSINESS_CONNECTIVITY_REASONS };
   }
 
-  return {
-    plan: 'Office',
-    reasons: [
-      'Security-first IT with MFA, SSO, and Password Manager',
-      'Endpoint Security + Email Protection + 24/7 MDR',
-      'Service Desk + Managed Network + Endpoint Backup'
-    ]
-  };
+  if (data.devices === "yes") {
+    return { plan: "Office", reasons: OFFICE_DEVICES_REASONS };
+  }
+
+  return { plan: "Office", reasons: OFFICE_BASE_REASONS };
 };
 
 /** "Based on …" line for the quiz's match screen, from the answers that shaped the match. */
