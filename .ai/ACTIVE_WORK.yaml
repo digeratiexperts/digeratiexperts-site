@@ -2342,6 +2342,28 @@ claims:
       documentation: DE-SYSTEM-INTEGRATION.md now lists the Tech Tool, licence
       and Microsoft Admin worker paths, and the Tool's command-line cheat sheet
       has the Hub sends and the job worker.
+  - id: a11y-gate-serious
+    owner: claude
+    subsystem: tooling-ci
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: f4a9bc3
+    files:
+      - scripts/a11y-smoke.mjs, scripts/public-routes.mjs (new)
+      - scripts/public-route-smoke.mjs (route list moved to public-routes.mjs only)
+      - .github/workflows/ci.yml (comment on the smoke:a11y line only)
+      - docs/CONTENT-TOOLING-PLAN.md (accessibility CI paragraph only)
+    status: active
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "Keep building" (plan step 1 follow-up). The 6
+      serious color-contrast groups from 2026-10-04 were axe reading
+      scroll-reveal text mid-fade; with reduced motion, 30 routes x 390/1440
+      report 0 violations. Scan settled, gate on critical+serious, cover
+      every public route plus Store / quote / portal entry pages. No client/
+      code changes. First CI run found 6 critical aria-required-attr nodes on
+      /book that only appear when the Zoho Bookings iframe
+      (meet.digerati-experts.com) loads; cross-origin embeds are now scanned
+      report-only, verified with a two-origin fixture.
   - id: site-atmosphere-and-plates
     owner: claude
     subsystem: public-marketing-visual-layer
