@@ -487,7 +487,9 @@ On a real Windows 10 or 11 laptop (not a VM), with the enforced release from ste
    `Hub refused: account not mapped`.
 10. Run headless from an elevated 32-bit prompt (`%SystemRoot%\SysWOW64\WindowsPowerShell\v1.0\powershell.exe`):
     `console\DETechConsole.ps1 -Headless -Client <id> -ResultFile C:\DE\result.json`. The result file is written and
-    the exit code comes through.
+    the exit code comes through. With the signing secret set (`DE_SECRET_DE_HUB_SIGNING_SECRET` or the vault), the
+    run's evidence has `hub.push` and `hub.warranty` lines, and the device shows on the Hub's Devices from DE Tech Tool
+    panel with its warranty.
 11. Boot the rescue USB (F1) on the same laptop with BitLocker on: unlock with the recovery password, back up a
     profile to a second USB, save the handoff and send it. Boot Windows and confirm DE Tech Tool shows **Review what
     the boot rescue did** first.

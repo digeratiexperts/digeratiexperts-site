@@ -2381,6 +2381,8 @@ claims:
     files:
       - .claude/skills/msp-ai-kit/windows/GO-LIVE.md (D5 verify bullet and the Part H device row only)
       - docs/DE-SYSTEM-INTEGRATION.md (one "Where staff see it" bullet in the DE Tech Tool section only)
+      - .claude/skills/msp-ai-kit/windows/console/DETechConsole.ps1 (the headless run's Hub send only: one Send-DEHubWarranty line)
+      - .claude/skills/msp-ai-kit/windows/console/VERSION (1.10.4), DE-TECH-TOOL-ARCHITECTURE.md (1.10.4 line only), README-WINDOWS.md (the Hub warranty bullet only), GO-LIVE.md (Part G step 10)
     status: active
     started: 2026-10-05
     note: >-
@@ -2390,3 +2392,8 @@ claims:
       landed under the right account; DE-SYSTEM-INTEGRATION.md names where
       staff see Tool devices, migrations, licences and jobs. Overlap check
       2026-10-05: no open PR touches these two files.
+      Joe, 2026-10-05: "Make sure we do the full scope". DE Tech Tool 1.10.4:
+      a headless run sends the warranty lookup to the Hub right after the
+      device record it already sends (same terms as the Evidence page button;
+      -WhatIf sends nothing; a send that cannot happen is a WARN and never
+      changes the exit code). Overlap check: no open PR touches these files.
