@@ -27,6 +27,10 @@
 #
 # Overridable environment variables (defaults set per target below):
 #   DEPLOY_BRANCH        git branch to deploy            (default: main)
+#   DEPLOY_COMMIT        exact commit to deploy; must be on DEPLOY_BRANCH. The CI
+#                        deploy job passes the SHA its checks passed on, so a
+#                        commit that lands mid-deploy is never shipped untested
+#                        (#391). Unset: the branch head, as before.
 #   SITE_HOME            website home directory
 #   APP_PORT             private 127.0.0.1 port the app listens on
 #   SERVICE_NAME         systemd service to restart
@@ -62,6 +66,7 @@ esac
 
 REPO_URL="${REPO_URL:-https://github.com/digeratiexperts/digeratiexperts-site.git}"
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
+DEPLOY_COMMIT="${DEPLOY_COMMIT:-}"
 KEEP_RELEASES="${KEEP_RELEASES:-3}"
 NO_SYSTEMD="${NO_SYSTEMD:-0}"
 
@@ -133,13 +138,16 @@ VERIFIED_ORIGIN="$(git --git-dir="$MIRROR_DIR" remote get-url origin 2>/dev/null
 
 log "Fetching latest $DEPLOY_BRANCH from $VERIFIED_ORIGIN"
 git --git-dir="$MIRROR_DIR" fetch --prune origin
-COMMIT="$(git --git-dir="$MIRROR_DIR" rev-parse "refs/heads/$DEPLOY_BRANCH")"
-log "Deploying $DEPLOY_BRANCH @ $COMMIT"
+COMMIT="$(bash "$(dirname "${BASH_SOURCE[0]}")/resolve-deploy-commit.sh" "$MIRROR_DIR" "$DEPLOY_BRANCH" "$DEPLOY_COMMIT")" \
+  || fail "could not resolve the commit to deploy (DEPLOY_COMMIT=${DEPLOY_COMMIT:-<branch head>})"
+log "Deploying $DEPLOY_BRANCH @ $COMMIT${DEPLOY_COMMIT:+ (pinned by DEPLOY_COMMIT)}"
 
 # ---------------------------------------------------------------- build
 log "Checking out release into $NEW_RELEASE"
 mkdir -p "$NEW_RELEASE"
-git --git-dir="$MIRROR_DIR" --work-tree="$NEW_RELEASE" checkout -f "$DEPLOY_BRANCH" -- .
+# Check out the resolved commit, never the branch name: the branch can move
+# between the fetch above and this line.
+git --git-dir="$MIRROR_DIR" --work-tree="$NEW_RELEASE" checkout -f "$COMMIT" -- .
 
 cd "$NEW_RELEASE"
 log "Installing dependencies (npm ci)"
