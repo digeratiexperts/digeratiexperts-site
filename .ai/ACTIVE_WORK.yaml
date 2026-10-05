@@ -2382,8 +2382,23 @@ claims:
       - scrollcraft/builds/situation-gallery/** (new scrollcraft build), scrollcraft/FINGERPRINTS.md (row appended)
       - public/scrollcraft/situation-gallery/** (published lab copy), public/scrollcraft/index.html (one entry added), artifacts/visual-qa/situation-gallery/**
       - client/src/components/site/PlateBand.tsx (new), HomeChapter.tsx (plate prop), and one plate="..." attribute on a chapter in GenericServicePage, SolutionsIndex, ManagedWorkplace, CoManagedIT, BackupDisasterRecovery, StandaloneServices, ProActiveEcosystemPricing, MissionValues and the six industry pages; artifacts/visual-qa/plate-bands/**
-    status: in-review
+    status: verified-live
     started: 2026-10-05
+    released: 2026-10-05
+    merge_sha: 828fa3242bd2c644e4f7ad70497abe88dfe7a6db
+    verification: >-
+      Merged on Joe's "Merge" (2026-10-05) as 828fa32 after CI passed on
+      59ec20e (main reconciled twice; only the ledger conflicted, both claims
+      kept). Main CI and the deploy job ran on 828fa32; release.txt reads
+      828fa32 on digeratiexperts.com. The live entry CSS index-CAU6PE2l.css is
+      byte-identical to a local build of 828fa32 and carries .de-plate-band;
+      the live entry JS carries the plate band, and BusinessNeedsIndex carries
+      d2-flag-hero__plate, d2-flag-backdrop and d2-flag-close__plate. The JS
+      chunk hashes differ from the local build only in the names of imported
+      chunks (production build environment), not in this PR's code.
+      /scrollcraft/situation-gallery/ returns 200 and its HTML matches the
+      repository file. VERIFIED LIVE (bundle). Limit: no rendered screenshot
+      of production from the session environment.
     note: >-
       Joe, 2026-10-05: "make a parallax effect on pages upon scroll and make
       background patterns and artistic things" and "all approved, keep going"
