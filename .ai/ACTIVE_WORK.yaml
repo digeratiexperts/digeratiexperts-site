@@ -2360,7 +2360,7 @@ claims:
       - scripts/public-route-smoke.mjs (route list moved to public-routes.mjs only)
       - .github/workflows/ci.yml (comment on the smoke:a11y line only)
       - docs/CONTENT-TOOLING-PLAN.md (accessibility CI paragraph only)
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       Joe, 2026-10-05: "Keep building" (plan step 1 follow-up). The 6
@@ -2372,6 +2372,10 @@ claims:
       /book that only appear when the Zoho Bookings iframe
       (meet.digerati-experts.com) loads; cross-origin embeds are now scanned
       report-only, verified with a two-origin fixture.
+      RELEASED 2026-10-05: merged as 4d7aa08 (PR 467, Joe "Merge 467").
+      Main CI run 37264996819 passed every job (its deploy step coalesced by
+      newer main); /api/health reports release 2fa6768, which contains
+      4d7aa08.
   - id: site-atmosphere-and-plates
     owner: claude
     subsystem: public-marketing-visual-layer
