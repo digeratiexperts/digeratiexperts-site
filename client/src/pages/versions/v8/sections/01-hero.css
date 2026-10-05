@@ -1,5 +1,5 @@
 .v8 .v8s-01 .hero { position: relative; isolation: isolate; overflow: hidden; background: linear-gradient(110deg, #050312 0%, #060617 52%, #090924 100%); }
-.v8 .v8s-01 .hero__plate { position: absolute; top: -6%; left: 38%; right: 0; height: 112%; z-index: -3; will-change: transform; background-position: center 85%; background-size: cover; background-repeat: no-repeat; /* image: imported in 01-hero.tsx (@assets/de-hero-arizona-dusk-1600.webp) */ opacity: 0.5;
+.v8 .v8s-01 .hero__plate { position: absolute; top: -6%; left: 38%; right: 0; height: 112%; z-index: -3; will-change: transform; background-position: center 85%; background-size: cover; background-repeat: no-repeat; /* image: imported in 01-hero.tsx (assets/flagship/home-managed-core, approved by Joe 2026-10-05) */ opacity: 0.75; background-position: 70% 55%;
     -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 40%), linear-gradient(to bottom, #000 72%, transparent 100%); -webkit-mask-composite: source-in;
             mask-image: linear-gradient(to right, transparent 0%, #000 40%), linear-gradient(to bottom, #000 72%, transparent 100%); mask-composite: intersect; }
 .v8 .v8s-01 .hero__grid { position: absolute; inset: 0 0 0 42%; z-index: -2; opacity: 0.15;

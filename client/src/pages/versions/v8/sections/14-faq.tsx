@@ -4,6 +4,7 @@ import { revealInitial, revealInView, revealTransition, revealViewport } from "@
 import { FAQJsonLd } from "@/components/JsonLd";
 import { GREATER_PHOENIX_CITIES } from "@/data/greaterPhoenixCities";
 import "./14-faq.css";
+import { ChapterPattern } from "@/components/site/Atmosphere";
 
 /**
  * Section 14 (mock: artifacts/design-concepts/homepage-sections-2026-10/sections/14-faq.html).
@@ -77,6 +78,7 @@ export function V8Faq(): JSX.Element {
   return (
     <>
       <section className="f-paper v8-section faq-band" aria-labelledby="faq-title">
+        <ChapterPattern variant="dots" />
         <FAQJsonLd faqs={faqs} />
         <div className="v8-canvas faq">
           <motion.div className="v8-head" {...reveal()}>
@@ -115,6 +117,7 @@ export function V8Faq(): JSX.Element {
       </section>
 
       <section className="f-surface v8-section" id="compliance" aria-labelledby="compliance-title">
+        <ChapterPattern variant="contour" />
         <div className="v8-canvas">
           <motion.div className="v8-grid v8-grid--2 comp" {...reveal()}>
             <div>

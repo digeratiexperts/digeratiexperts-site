@@ -1,0 +1,13 @@
+{
+  "prompt": "Arizona locations: grounded and local. Product photograph at golden hour, 85mm lens, f/5.6, ISO 100. Three tiles, one white ceramic, one graphite and one electric-blue glass, rest on a slab of warm red Arizona sandstone with natural texture, low warm sunlight raking from the right, long soft shadows, a softly out-of-focus warm desert-toned background with no recognisable landmarks. Rounded-square tiles about 9 cm across and 2 cm thick with generous corner radius like premium app-icon blanks, faces completely blank and smooth. Finishes: deep electric-blue glass (#1D6FF2, translucent, faint internal refraction, thin white specular line on the bevel), graphite anodized aluminium (near-black, fine brushed grain, crisp chamfer) and matte white ceramic (soft subsurface glow, faint pores). Tiles in the lower right third; upper left calm and empty for text. No people, no buildings. Do not add any symbols or text to the tiles.",
+  "negative_prompt": "text, letters, numbers, logos, icons, symbols, engraved glyphs, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, CGI sheen, oversaturated, blurry, distorted geometry, melted edges",
+  "api_parameters": {
+    "resolution": "2K",
+    "output_format": "jpg",
+    "aspect_ratio": "16:9"
+  },
+  "settings": {
+    "style": "premium studio product photography, physically based materials",
+    "quality": "tack sharp, true material texture, controlled highlights"
+  }
+}

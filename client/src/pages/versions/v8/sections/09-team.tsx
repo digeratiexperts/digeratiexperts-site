@@ -4,6 +4,7 @@ import { ArrowRight, MapPin } from "lucide-react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useBooking } from "@/contexts/BookingContext";
 import "./09-team.css";
+import { ChapterPattern } from "@/components/site/Atmosphere";
 
 /**
  * 09 · The people behind your technology (mock: sections/09-team.html).
@@ -31,6 +32,7 @@ export function V8Team(): JSX.Element {
 
   return (
     <section className="f-well v8-section team" aria-labelledby="team-title" data-testid="section-meet-experts">
+      <ChapterPattern variant="lattice" />
       <div className="v8-canvas">
         <motion.div className="team__head" {...reveal}>
           <header className="v8-head">

@@ -1,0 +1,13 @@
+{
+  "prompt": "Clean bright studio product photograph in the Apple product-page style, 90mm lens, f/8, ISO 100, front three-quarter view. Five tiles resting on a seamless very light cool-grey sweep (#F5F5F7): three matte white ceramic tiles, one electric-blue glass tile and one graphite aluminium tile, arranged in a relaxed diagonal line with one white tile leaning on another. Rounded-square tiles about 9 cm across and 2 cm thick with generous corner radius like premium app-icon blanks, faces completely blank and smooth. Three finishes only: deep electric-blue glass (#1D6FF2 core, translucent, faint internal refraction, polished bevel catching a thin white specular line), graphite anodized aluminium (near-black, fine brushed grain, crisp chamfer), and matte white ceramic (soft subsurface glow, faint pores). Lighting: large soft overhead softbox, gentle shadows directly under each tile, the blue glass tile casting a faint blue caustic onto the grey sweep. The group sits in the lower centre third; the top half is clean light negative space for a headline. No harsh reflections. Do not add any symbols or text.",
+  "negative_prompt": "text, letters, numbers, logos, icons, symbols, engraved glyphs, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, CGI sheen, oversaturated, blurry, distorted geometry, melted edges",
+  "api_parameters": {
+    "resolution": "2K",
+    "output_format": "jpg",
+    "aspect_ratio": "16:9"
+  },
+  "settings": {
+    "style": "premium studio product photography, physically based materials",
+    "quality": "tack sharp, true material texture, controlled highlights"
+  }
+}

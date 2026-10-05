@@ -5,6 +5,7 @@ import { Link } from "wouter";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import "./02-why-we-exist.css";
+import { ChapterPattern } from "@/components/site/Atmosphere";
 
 /**
  * 02 · Why we exist, ported from
@@ -56,6 +57,7 @@ export function V8WhyWeExist(): JSX.Element {
 
   return (
     <section className="f-paper v8-section" id="why-we-exist" aria-labelledby="why-we-exist-title">
+      <ChapterPattern variant="dots" />
       <div className="v8-canvas why">
         <motion.div className="why__statement" {...reveal}>
           <p className="v8-eyebrow">Why we exist</p>

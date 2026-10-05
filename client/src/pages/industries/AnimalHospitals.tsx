@@ -119,7 +119,7 @@ export default function AnimalHospitals() {
         </Container>
       </Chapter>
 
-      <Chapter tone="paper" data-testid="section-challenges">
+      <Chapter plate="white" tone="paper" data-testid="section-challenges">
         <Container>
           <ChapterHeader
             tone="paper"

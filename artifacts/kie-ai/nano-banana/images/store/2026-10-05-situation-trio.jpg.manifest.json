@@ -1,0 +1,19 @@
+{
+  "provider": "kie.ai",
+  "taskId": "d356411b193c0b86c23a11b225db404a",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/store/2026-10-05-situation-trio.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Macro product photograph, 85mm lens, f/5.6, ISO 100, slightly low camera angle. Three tiles arranged as a loose stack on a matte black surface: an electric-blue glass tile tilted on the left, a matte white ceramic tile raised in the centre and slightly forward, a graphite aluminium tile on the right rotated ten degrees. Rounded-square tiles about 9 cm across and 2 cm thick with generous corner radius like premium app-icon blanks, faces completely blank and smooth. Three finishes only: deep electric-blue glass (#1D6FF2 core, translucent, faint internal refraction, polished bevel catching a thin white specular line), graphite anodized aluminium (near-black, fine brushed grain, crisp chamfer), and matte white ceramic (soft subsurface glow, faint pores). Lighting: a single soft key light from the upper left, a soft blue underglow beneath the glass tile spilling onto the surface, a thin magenta rim light from behind right, dark seamless background falling off to black. The trio sits in the lower half of the frame, upper half is clean dark negative space for a title. Micro scratches and real dust specks visible on the graphite. Do not add any symbols or text.\", \"negative_prompt\": \"text, letters, numbers, logos, icons, symbols, engraved glyphs, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, CGI sheen, oversaturated, blurry, distorted geometry, melted edges\", \"settings\": {\"style\": \"premium studio product photography, physically based materials\", \"quality\": \"tack sharp, true material texture, controlled highlights\"}}",
+    "aspect_ratio": "4:5",
+    "resolution": "2K",
+    "output_format": "jpg"
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/models/nano-banana-2/1791159734759-yvjo5h4ltvn.jpg"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-05T00:22:17.060712+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}
