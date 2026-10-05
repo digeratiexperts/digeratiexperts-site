@@ -91,6 +91,7 @@ artifacts/de-tech-tool/
 artifacts/visual-qa/*-review/*.png
 artifacts/visual-qa/*-directions/shots/*.png
 artifacts/design-concepts/*/shots/*.png
+artifacts/design-concepts/*/shots-integrated/*.png
 .claude/skills/msp-ai-kit/windows/packaging/out/
 .claude/skills/msp-ai-kit/windows/integrity.json
 .claude/skills/msp-ai-kit/windows/community/
