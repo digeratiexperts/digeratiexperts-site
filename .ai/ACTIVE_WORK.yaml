@@ -2175,3 +2175,27 @@ claims:
       documentation: DE-SYSTEM-INTEGRATION.md now lists the Tech Tool, licence
       and Microsoft Admin worker paths, and the Tool's command-line cheat sheet
       has the Hub sends and the job worker.
+  - id: site-atmosphere-and-plates
+    owner: claude
+    subsystem: public-marketing-visual-layer
+    branch: claude/lucid-dijkstra-s3v2s3
+    pr: 454
+    base_sha: 12c3b5f4785183593013430925425f92b89673ed
+    files:
+      - client/src/components/site/Atmosphere.tsx (new; parallax loop, HeroArt, ChapterPattern)
+      - client/src/index.css (appended atmosphere block)
+      - client/src/components/site/chapters.tsx (PageHero gets HeroArt)
+      - client/src/components/home/HomeChapter.tsx (pattern prop)
+      - client/src/pages/versions/v8/sections/*.tsx, v8.css, 01-hero.css (ChapterPattern; homepage hero plate)
+      - client/src/pages/solutions/BusinessNeedsIndex.tsx, client/src/styles/store-builder.css (Store image plates)
+      - client/src/assets/flagship/** (approved generated plates, resized)
+      - artifacts/kie-ai/nano-banana/**, artifacts/visual-qa/site-atmosphere/**, artifacts/visual-qa/store-flagship/**
+    status: in-review
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "make a parallax effect on pages upon scroll and make
+      background patterns and artistic things" and "all approved, keep going"
+      (the generated plates approved for placement). Concurrency audit
+      2026-10-05: open PRs 455, 453, 448, 445, 444, 441, 433 touch none of
+      these files; 453, 444 and 433 also edit this ledger (claims added
+      elsewhere, this one is appended at the end).
