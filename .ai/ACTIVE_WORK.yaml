@@ -30,28 +30,27 @@
 
 version: 2
 claims:
-  - id: paynow-tax-readiness
+  - id: document-flipbook-page-turn
     owner: claude
-    subsystem: store-warehouse
-    branch: claude/awesome-bardeen-4pbl2m
-    base_sha: f4a9bc3
+    subsystem: resources-flipbook
+    branch: claude/unfinished-threads-survey-y92doz
+    base_sha: 48f4a0a
     files:
-      - server/services/stripeTaxReadiness.ts (new), server/services/stripeTaxReadiness.test.ts (new)
-      - server/warehouseRoutes.ts (the tax-status route only), server/warehouseRoutes.test.ts (one case)
-      - client/src/hooks/useStripeTaxReadiness.ts (new)
-      - client/src/pages/store/WarehouseVendors.tsx (Site integrations section only)
-      - client/src/pages/store/Checkout.tsx (the Pay Now tax status line only), client/src/pages/store/Checkout.tax.test.ts
-      - docs/STORE-WAREHOUSE.md (readiness bullet), deploy/vps/env.production.example (key permission comment)
-      - artifacts/visual-qa/paynow-tax-readiness/**
+      - client/src/pages/resources/DocumentFlipbook.tsx (the page-display block and its render effect only)
+      - client/src/lib/pageFlip.ts (new)
+      - client/src/styles/page-flip.css (new)
+      - artifacts/design-concepts/page-flip/** (prototype, PR 470)
     status: active
     started: 2026-10-05
     note: >-
-      Joe, 2026-10-05: "Keep building", after the Stripe Tax step shipped
-      switched off. A staff-only, read-only readiness check (Stripe Tax
-      settings + active Arizona registration, cached 5 min) shown on the
-      Warehouse Vendors page and as one line under Staff Pay Now, so the
-      Stripe setup confirms itself without a test charge. Never reads READY
-      on a failed check. Public Store never asks for it.
+      Replacing the flipbook's page change with a real page turn. The component
+      is named a flipbook but crossfades: opacity, rotateY(4deg) and an 8px
+      slide over 200ms. Engine prototyped in PR 470 with no new dependency;
+      this claim covers wiring it into the shipped route on Joe's 2026-10-05
+      go-ahead. The pdf.js loader, the 75MB guard, the Office-file rejection,
+      the upload and drag-drop paths, the original-file link and the toolbar
+      are preserved unchanged — only the page-display block and the render
+      effect that drove the two canvases are touched.
   - id: unsupported-timing-claims
     owner: claude
     subsystem: marketing-copy
@@ -2292,3 +2291,25 @@ claims:
       documentation: DE-SYSTEM-INTEGRATION.md now lists the Tech Tool, licence
       and Microsoft Admin worker paths, and the Tool's command-line cheat sheet
       has the Hub sends and the job worker.
+  - id: paynow-tax-readiness
+    owner: claude
+    subsystem: store-warehouse
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: f4a9bc3
+    files:
+      - server/services/stripeTaxReadiness.ts (new), server/services/stripeTaxReadiness.test.ts (new)
+      - server/warehouseRoutes.ts (the tax-status route only), server/warehouseRoutes.test.ts (one case)
+      - client/src/hooks/useStripeTaxReadiness.ts (new)
+      - client/src/pages/store/WarehouseVendors.tsx (Site integrations section only)
+      - client/src/pages/store/Checkout.tsx (the Pay Now tax status line only), client/src/pages/store/Checkout.tax.test.ts
+      - docs/STORE-WAREHOUSE.md (readiness bullet), deploy/vps/env.production.example (key permission comment)
+      - artifacts/visual-qa/paynow-tax-readiness/**
+    status: active
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "Keep building", after the Stripe Tax step shipped
+      switched off. A staff-only, read-only readiness check (Stripe Tax
+      settings + active Arizona registration, cached 5 min) shown on the
+      Warehouse Vendors page and as one line under Staff Pay Now, so the
+      Stripe setup confirms itself without a test charge. Never reads READY
+      on a failed check. Public Store never asks for it.
