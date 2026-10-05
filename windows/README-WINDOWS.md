@@ -294,7 +294,8 @@ handoffs and warranty. The shared contracts are in `console/contracts/`.
   active or expired with an end date (status and days left worked out again on the day it is sent), or
   not-applicable for a virtual machine. With no lookup yet, or one that fell back to the maker's check page
   (`manual`) or could not say (`unknown`), nothing is sent, and the evidence line and status line say why. The
-  status line reports both sends. No new automatic network call: the warranty goes only from this button.
+  status line reports both sends. A headless run sends the warranty the same way, right after the device record
+  it already sends at the end of every run (same Hub, secret and account number; `-WhatIf` sends nothing).
 - **Account number.** The client profile needs the client's Hub account number, set as
   `"hub": { "accountId": 123 }`. Without it the signed send is refused and the record is saved for
   manual upload.

@@ -219,6 +219,8 @@ if ($Headless) { & {
     } else { $null = Invoke-DEAudit -Mode $Mode }
     $b = Export-DEEvidenceBundle -Snapshot $snap -ClientProfile $clientProf
     $null = Send-DEHubPayload -Payload (New-DEHubPayload -Record $b.record -BundleSha256 $b.sha256 -BundlePath $b.zip)
+    # then the warranty, on the same terms as the Evidence page button: only a confirmed lookup is sent, otherwise a WARN says why
+    try { $null = Send-DEHubWarranty -Serial "$($b.record.serial)" -Manufacturer "$($b.record.manufacturer)" } catch { Write-Host "HUB: warranty not sent: $($_.Exception.Message)" }
     $r = Get-DEReadiness
     $next = Get-DENextAction -Mode $Mode
     $nextText = $(if ($restart) { 'Restart the device, then run the same command again; it continues where it stopped. (' + ((@(Get-DERebootQueue) | ForEach-Object { $_['reason'] }) -join '; ') + ')' } else { "$($next.title) ($($next.why))" })
