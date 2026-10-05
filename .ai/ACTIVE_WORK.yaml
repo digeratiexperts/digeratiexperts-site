@@ -30,6 +30,24 @@
 
 version: 2
 claims:
+  - id: portal-chat-sessions
+    owner: claude
+    subsystem: portal-chat
+    branch: claude/portal-chat-sessions
+    base_sha: 29834cd
+    files:
+      - server/portalChatSessions.ts (new)
+      - server/portalChatStore.ts (session resolution, listing and the session_id column)
+      - server/routes.ts (the three /api/portal/chat endpoints only)
+      - client/src/pages/portal/PortalChat.tsx (the portal live-chat panel only)
+    status: active
+    started: 2026-10-05
+    note: >-
+      The portal live chat was one endless transcript per user, keyed live-{userId}:
+      a message today appended to one from weeks ago with nothing marking the gap.
+      This splits it into runs on a 12-hour idle rule, keeps every closed run, and
+      collapses the past ones in the UI to a date, preview and count. The website
+      DE Desk store, its routes and the desk panel in this page are untouched.
   - id: document-flipbook-page-turn
     owner: claude
     subsystem: resources-flipbook
