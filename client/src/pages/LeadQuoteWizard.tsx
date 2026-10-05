@@ -208,7 +208,7 @@ export default function LeadQuoteWizard() {
   useSEO({
     title: 'Find Your Plan - Managed IT & Cybersecurity',
     description:
-      "Answer a few questions about your team and setup, and we'll match you to the DE plan that fits: Office, Business or Enterprise.",
+      "Answer a few questions about your team and setup, and we'll match you to the DE plan that fits: IT, Office, Business or Enterprise.",
     canonical: '/quote-wizard',
   });
 
