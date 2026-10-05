@@ -2235,4 +2235,7 @@ claims:
       scroll-reveal text mid-fade; with reduced motion, 30 routes x 390/1440
       report 0 violations. Scan settled, gate on critical+serious, cover
       every public route plus Store / quote / portal entry pages. No client/
-      code changes.
+      code changes. First CI run found 6 critical aria-required-attr nodes on
+      /book that only appear when the Zoho Bookings iframe
+      (meet.digerati-experts.com) loads; cross-origin embeds are now scanned
+      report-only, verified with a two-origin fixture.
