@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { MouseEvent } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import {
@@ -7,10 +7,12 @@ import {
   CheckCircle,
   CheckCircle2,
   ClipboardCheck,
+  Clock,
   FileCheck,
   Lock,
   Mail,
   MapPin,
+  Phone,
   Play,
   Server,
   Shield,
@@ -22,6 +24,7 @@ import { useBooking } from "@/contexts/BookingContext";
 import { analytics } from "@/lib/analytics";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
+import { PronunciationCard } from "@/components/PronunciationCard";
 import heroCityLights from "@/assets/flagship/home-managed-core.jpg?w=2000&format=webp";
 import { TipTag } from "./TipTag";
 import "./01-hero.css";
@@ -35,6 +38,66 @@ import "./01-hero.css";
  */
 
 const ICON = { size: 20, strokeWidth: 1.8, "aria-hidden": true } as const;
+
+/*
+ * Joe, 2026-10-05 (phone screenshot of the live V8 hero): "This didn't look
+ * good change it back", for the reassurance lines, the positioning line and the
+ * pronunciation row only. On phones the hero below the buttons is the previous
+ * homepage's (ReferenceHeroSection): icon reassurance list, dotted positioning
+ * line and the compact PronunciationCard. Wider screens keep V8's.
+ * Read synchronously so the first paint already shows the right block.
+ */
+const PHONE_QUERY = "(max-width: 767px)";
+const subscribePhone = (onChange: () => void) => {
+  const mql = window.matchMedia(PHONE_QUERY);
+  mql.addEventListener("change", onChange);
+  return () => mql.removeEventListener("change", onChange);
+};
+function useIsPhone(): boolean {
+  return useSyncExternalStore(subscribePhone, () => window.matchMedia(PHONE_QUERY).matches, () => false);
+}
+
+function PhoneHeroMeta(): JSX.Element {
+  return (
+    <>
+      <ul className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/75">
+        <li className="inline-flex items-center gap-2">
+          <Check className="h-4 w-4 text-de-magenta-ink" aria-hidden="true" />
+          No obligation
+        </li>
+        <li className="inline-flex items-center gap-2">
+          <Clock className="h-4 w-4 text-de-magenta-ink" aria-hidden="true" />
+          Response within one business day
+        </li>
+        <li>
+          <a
+            href={PRIMARY_PHONE.telHref}
+            className="inline-flex min-h-11 items-center gap-2 font-medium text-white/85 underline decoration-white/25 underline-offset-4 transition-colors hover:text-white hover:decoration-white/50"
+            data-testid="link-hero-phone"
+          >
+            <Phone className="h-4 w-4 text-de-magenta-ink" aria-hidden="true" />
+            Call {PRIMARY_PHONE.display}
+          </a>
+        </li>
+      </ul>
+      <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-white/55">
+        {POSITIONING.map((item, index) => (
+          <span key={item} className="inline-flex items-center gap-2.5">
+            {index > 0 && (
+              <span aria-hidden="true" className="text-white/30">
+                ·
+              </span>
+            )}
+            {item}
+          </span>
+        ))}
+      </p>
+      <div className="mt-7 max-w-[600px]">
+        <PronunciationCard variant="compact" />
+      </div>
+    </>
+  );
+}
 
 /* ---- Pronunciation (logic from client/src/components/PronunciationCard.tsx) ---- */
 const AUDIO_SRC = "/audio/digerati-pronunciation.wav";
@@ -351,6 +414,7 @@ const POSITIONING = ["Assessment-led", "Client-owned access", "Fully managed or 
 export function V8Hero(): JSX.Element {
   const { openBooking } = useBooking();
   const prefersReducedMotion = useReducedMotion();
+  const isPhone = useIsPhone();
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end start"] });
   const plateY = useTransform(scrollYProgress, [0, 1], prefersReducedMotion ? ["0%", "0%"] : ["0%", "9%"]);
@@ -412,30 +476,36 @@ export function V8Hero(): JSX.Element {
               </Link>
             </div>
 
-            <ul className="hero__checks">
-              <li className="v8-check">
-                <Check {...ICON} />
-                No obligation
-              </li>
-              <li className="v8-check">
-                <Check {...ICON} />
-                Response within one business day
-              </li>
-              <li>
-                <a className="v8-link--quiet" href={PRIMARY_PHONE.telHref} data-testid="link-hero-phone">
-                  Call {PRIMARY_PHONE.display}
-                </a>
-              </li>
-            </ul>
+            {isPhone ? (
+              <PhoneHeroMeta />
+            ) : (
+              <>
+                <ul className="hero__checks">
+                  <li className="v8-check">
+                    <Check {...ICON} />
+                    No obligation
+                  </li>
+                  <li className="v8-check">
+                    <Check {...ICON} />
+                    Response within one business day
+                  </li>
+                  <li>
+                    <a className="v8-link--quiet" href={PRIMARY_PHONE.telHref} data-testid="link-hero-phone">
+                      Call {PRIMARY_PHONE.display}
+                    </a>
+                  </li>
+                </ul>
 
-            <div className="hero__meta">
-              <ul className="hero__position" aria-label="How we work">
-                {POSITIONING.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-              <SayRow />
-            </div>
+                <div className="hero__meta">
+                  <ul className="hero__position" aria-label="How we work">
+                    {POSITIONING.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                  <SayRow />
+                </div>
+              </>
+            )}
           </motion.div>
 
           <AssessmentPreview />
