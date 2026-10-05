@@ -2382,7 +2382,7 @@ claims:
       - client/src/pages/store/Checkout.tsx (the Pay Now tax status line only), client/src/pages/store/Checkout.tax.test.ts
       - docs/STORE-WAREHOUSE.md (readiness bullet), deploy/vps/env.production.example (key permission comment)
       - artifacts/visual-qa/paynow-tax-readiness/**
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       Joe, 2026-10-05: "Keep building", after the Stripe Tax step shipped
@@ -2400,3 +2400,12 @@ claims:
       from 12c3b5f4. Item 4 shipped in Intelligence-Hub PR 343 (master
       44185ad8: regenerated API client, frontend bundle byte-identical).
       VERIFIED LIVE as a Tool release. Files released.
+      RELEASED 2026-10-05: squash-merged as ba5022f (PR 466). Production
+      runs 828fa32, which contains it (/api/health release, built 04:44Z).
+      The staff route answers 404 to anonymous visitors. Playwright at 1440
+      and 390 against production code (staff session and tax-status replies
+      stubbed) rendered the Vendors card and the Staff Pay Now line for
+      NOT_CONFIGURED, INCOMPLETE and READY, with no overflow or page errors.
+      Expected live state until the Stripe key is set: NOT_CONFIGURED.
+      Evidence: artifacts/visual-qa/paynow-tax-readiness/live/. VERIFIED
+      LIVE. Files released.
