@@ -2474,3 +2474,31 @@ claims:
       and "Deploy and verify production VPS". The DE Tech Tool 1.10.4 release
       zip (build DE-1.10.4-202610050518-568c45, sourceCommit f0c31343) was
       built from f0c31343. VERIFIED LIVE as a Tool release. Files released.
+  - id: paynow-tax-zoho-books
+    owner: claude
+    subsystem: store-warehouse
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 61cded1
+    files:
+      - server/services/salesTax.ts, server/services/salesTax.test.ts (the Pay Now provider: Stripe Tax replaced by Zoho Books)
+      - server/services/zohoBooksTax.ts (new), server/services/zohoBooksTax.test.ts (new)
+      - server/services/salesTaxReadiness.ts (new, replaces stripeTaxReadiness.ts), server/services/salesTaxReadiness.test.ts (new, replaces stripeTaxReadiness.test.ts)
+      - shared/storeTaxCodes.ts, shared/storeTaxCodes.test.ts (Stripe tax codes replaced by Books service-item mapping)
+      - server/secureStoreCheckout.ts (the tax-provider check and the order note only)
+      - server/warehouseRoutes.ts (the tax-status route only), server/warehouseRoutes.test.ts (the tax-status case only)
+      - client/src/hooks/useSalesTaxReadiness.ts (new, replaces useStripeTaxReadiness.ts)
+      - client/src/pages/store/WarehouseVendors.tsx (the sales tax integration card only)
+      - client/src/pages/store/Checkout.tsx (the Pay Now tax status line only), client/src/pages/store/Checkout.tax.test.ts
+      - docs/STORE-WAREHOUSE.md (Pay Now sales tax section), deploy/vps/env.production.example (the sales tax lines only)
+      - artifacts/visual-qa/paynow-tax-zoho-books/**
+    status: active
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "yes switch to zoho books", after confirming Zoho
+      Payments keeps processing the card. Staff Pay Now asks Zoho Books Sales
+      Tax Automation for the tax (a draft estimate on a dedicated contact,
+      read, then deleted) instead of Stripe Tax; Zoho Payments still charges.
+      Stripe Tax code, key and readiness check are removed. Fail-closed is
+      unchanged: no Books connection, a failed answer, or a Books org without
+      a tax registration switches the cart to a quote. Overlap check
+      2026-10-05: no active claim and no open PR touches these files.

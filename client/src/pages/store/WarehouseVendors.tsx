@@ -4,12 +4,13 @@ import { storeProducts } from "@/data/storeProducts";
 import { listVendorsForProducts } from "@/data/storeMerchandising";
 import { StorePageAtmosphere } from "@/components/store/StorePageAtmosphere";
 import { VENDOR_LOGO_BASE } from "@/data/vendorLogos";
-import { useStripeTaxReadiness } from "@/hooks/useStripeTaxReadiness";
+import { useSalesTaxReadiness } from "@/hooks/useSalesTaxReadiness";
 
 const TAX_CHECK_ROWS = [
-  ["key", "Stripe key on the server"],
-  ["originAddress", "Origin address in Stripe Tax"],
-  ["arizona", "Arizona registration"],
+  ["connection", "Zoho Books connection on the server"],
+  ["taxRegistration", "Sales tax registration in Books"],
+  ["serviceItem", "Service tax item"],
+  ["taxContact", "Tax-check contact"],
 ] as const;
 
 type ConnectorHealth = {
@@ -33,7 +34,7 @@ export default function WarehouseVendors() {
   const vendors = useMemo(() => listVendorsForProducts(storeProducts), []);
   const [connectors, setConnectors] = useState<ConnectorHealth[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const taxReadiness = useStripeTaxReadiness();
+  const taxReadiness = useSalesTaxReadiness();
 
   useEffect(() => {
     let cancelled = false;
@@ -108,11 +109,11 @@ export default function WarehouseVendors() {
           <ul className="grid gap-3 sm:grid-cols-2" data-testid="warehouse-site-integrations">
             <li
               className="rounded-2xl border border-de-hairline bg-de-raised px-4 py-4"
-              data-testid="integration-stripe-tax"
+              data-testid="integration-sales-tax"
               data-status={taxReadiness?.status ?? "LOADING"}
             >
               <div className="flex items-baseline justify-between gap-3">
-                <p className="font-semibold text-white">Stripe Tax (Pay Now sales tax)</p>
+                <p className="font-semibold text-white">Zoho Books (Pay Now sales tax)</p>
                 <p className="font-mono text-xs text-de-accent-ink">{taxReadiness?.status ?? "CHECKING"}</p>
               </div>
               {taxReadiness ? (
@@ -128,9 +129,15 @@ export default function WarehouseVendors() {
                       </div>
                     ))}
                   </dl>
+                  {taxReadiness.missingSettings?.length ? (
+                    <p className="mt-3 text-xs text-white/45" data-testid="tax-missing-settings">
+                      Not set on the server yet:{" "}
+                      <span className="font-mono break-words">{taxReadiness.missingSettings.join(", ")}</span>
+                    </p>
+                  ) : null}
                   {taxReadiness.quoteOnlyCategories.length ? (
                     <p className="mt-3 text-xs text-white/45">
-                      Quote-only until a tax code is confirmed:{" "}
+                      Quote-only until a Books tax item is confirmed:{" "}
                       <span className="font-mono">{taxReadiness.quoteOnlyCategories.join(", ")}</span>
                     </p>
                   ) : null}

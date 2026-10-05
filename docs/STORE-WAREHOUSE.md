@@ -72,26 +72,26 @@ Do not invent Hub tenant catalogs or prices. Do not put distributor secrets in t
 
 ## Pay Now sales tax
 
-Decided 2026-10-03 (Joe delegated the choice; PR 407 and its follow-up).
+Decided 2026-10-03 (Joe delegated the choice; PR 407 and its follow-up). Provider switched from Stripe Tax to Zoho Books on 2026-10-05 (Joe: "yes switch to zoho books").
 
-- **Stripe Tax calculates; Zoho Payments charges.** Pay Now calls Stripe's Calculations API ($0.05 a call, no monthly fee) and never its Transactions API ($0.50 a call). Code: `server/services/salesTax.ts`.
-- **Tax codes per Store category** live in `shared/storeTaxCodes.ts`. People-delivered services use `txcd_20030000` (General - Services).
-  - Digital assessments, templates and training, and hardware handling, have no confirmed code yet. They stay quote-only for Pay Now.
-  - A confirmed code can be added without a deploy through `STRIPE_TAX_CODES`.
-- **Billing address.** Staff checkout asks for one when Pay Now is selected; Stripe needs it for the rate.
+- **Zoho Books calculates; Zoho Payments charges.** Books Sales Tax Automation works out US sales tax from DE's state registrations, the customer's address and the item's tax category. Books has no calculate-only call, so the server drafts an estimate on one tax-check contact, reads the tax, and deletes the estimate. Nothing is sent to the customer. No Stripe account or per-call fee is involved. Code: `server/services/zohoBooksTax.ts`, `server/services/salesTax.ts`.
+- **Tax items per Store category** live in `shared/storeTaxCodes.ts`. People-delivered services use one Books service item (`ZOHO_BOOKS_SERVICE_ITEM_ID`); its tax category in Books decides how they are taxed.
+  - Digital assessments, templates and training, and hardware handling, have no confirmed Books item yet. They stay quote-only for Pay Now.
+  - A confirmed item can be added without a deploy through `ZOHO_BOOKS_TAX_ITEMS`.
+- **Billing address.** Staff checkout asks for one when Pay Now is selected; it goes on the estimate as the address Books taxes against.
 - **Fail closed.** Pay Now steps aside to Request Quote (`TAX_RATE_UNAVAILABLE`) when:
-  - `STRIPE_TAX_SECRET_KEY` is unset and no verified table is set;
-  - Stripe errors, times out after 8s, or returns totals that don't add up;
-  - a line has no code;
-  - an Arizona client comes back `not_collecting`, which means the Stripe account has no Arizona registration yet.
-- **The order record** keeps the billing address and a one-line note with the Stripe calculation id and taxability reasons.
-- **Setup, once.** Done by Joe or whoever has the Stripe login:
-  1. Create a restricted key limited to Tax.
-  2. Set it as `STRIPE_TAX_SECRET_KEY` on the production server.
-  3. In Stripe Tax settings, set DE's Phoenix origin address and add the Arizona registration.
-- **Readiness check** (2026-10-05). Code: `server/services/stripeTaxReadiness.ts`, `GET /api/internal/warehouse/tax-status`. It is staff-only and returns a generic 404 to anyone else.
-  - It reads Stripe's Tax settings (origin address) and active registrations (Arizona) with the same key. It never charges or changes anything, and the answer is cached for 5 minutes.
-  - Statuses: `READY`, `NOT_CONFIGURED`, `AUTH_REQUIRED`, `INCOMPLETE` or `UNKNOWN`. A failed check never reads READY.
+  - the Books settings are not set and no verified table is set;
+  - the readiness check below does not read `READY` (a Books organization without a tax registration answers zero tax instead of an error, so its number is never trusted);
+  - Books refuses the estimate, times out after 8s, or returns totals that don't add up or a rate above 20%;
+  - a line has no Books item.
+- **The order record** keeps the billing address and a one-line note with the Books tax lines and the draft estimate number, and says if the draft could not be deleted.
+- **Setup, once.** Done by Joe or whoever has the Books admin login:
+  1. In Zoho Books (org "Digerati Experts", 693714437): Settings → Taxes → turn on Sales Tax Automation and add DE's Arizona registration.
+  2. Create one service item for website services and set its tax category; create one contact for tax checks.
+  3. In the Zoho API Console self-client, generate a code with `ZohoBooks.estimates.CREATE,ZohoBooks.estimates.DELETE,ZohoBooks.settings.READ,ZohoBooks.contacts.READ` and exchange it for a refresh token.
+  4. On the production server set `ZOHO_BOOKS_ORGANIZATION_ID`, `ZOHO_BOOKS_REFRESH_TOKEN`, `ZOHO_BOOKS_TAX_CONTACT_ID` and `ZOHO_BOOKS_SERVICE_ITEM_ID` (and `ZOHO_BOOKS_CLIENT_ID`/`_SECRET` if the token came from a different self-client than `ZOHO_CLIENT_ID_API`).
+- **Readiness check** (2026-10-05). Code: `server/services/salesTaxReadiness.ts`, `GET /api/internal/warehouse/tax-status`. It is staff-only and returns a generic 404 to anyone else.
+  - It reads the Books organization (is a sales tax registration on?), the service item and the tax-check contact with the same token. It never creates or changes anything, and the answer is cached for 5 minutes.
+  - Statuses: `READY`, `NOT_CONFIGURED`, `AUTH_REQUIRED`, `INCOMPLETE` or `UNKNOWN`. A failed check never reads READY. `NOT_CONFIGURED` names the missing settings, never their values.
   - Staff see it in two places: the full card under **Vendors → Site integrations**, and one line under Staff Pay Now on the checkout.
-  - The restricted key needs **Tax Calculations and Transactions: Write** (Pay Now) plus **Tax Settings: Read** and **Tax Registrations: Read** (this check). Everything else stays None.
-- **The public Store never reaches any of this.** `server/services/salesTax.test.ts` guards it.
+- **Sales records.** Pay Now does not yet record the paid order as a Books invoice. Until it does, Arizona TPT returns need the Pay Now orders added from the order records.
