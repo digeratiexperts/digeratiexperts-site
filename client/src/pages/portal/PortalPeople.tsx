@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Building2, Lock, Users } from "lucide-react";
 import { PortalLayout } from "./PortalLayout";
@@ -14,6 +15,9 @@ import {
 } from "@/components/ui/select";
 import { canManageOrg, readImpersonatingCompany, readPortalUser } from "@/lib/portalRoles";
 import { Callout, DataTable, EmptyState, Field, Panel, Token, type DataColumn } from "@/components/portal/ui";
+import { portalGet } from "@/lib/portalApi";
+import { PROVISIONING_POLL_IDLE_MS, PROVISIONING_POLL_LIVE_MS, provisioningLabel } from "@/components/portal/ProvisioningStatus";
+import type { ProvisioningSummary } from "@shared/provisioning";
 
 type Person = {
   id: string;
@@ -48,6 +52,15 @@ export function PortalPeople() {
   // (GET ?clientId=, departments POST body clientId). Everyone else is pinned
   // to their own company server-side and sends nothing.
   const companyQuery = viewingCompanyId ? `?clientId=${encodeURIComponent(viewingCompanyId)}` : "";
+  // Live provisioning per person (latest JumpCloud + Blackpoint run), polled
+  // faster while any run is in progress.
+  const { data: provisioning } = useQuery<{ byEmail: Record<string, ProvisioningSummary> }>({
+    queryKey: ["/api/portal/org/provisioning", viewingCompanyId],
+    queryFn: () => portalGet(`/api/portal/org/provisioning${companyQuery}`),
+    enabled: allowed && !needsCompany,
+    refetchInterval: (query) =>
+      Object.values(query.state.data?.byEmail || {}).some((p) => p.overall === "in_progress") ? PROVISIONING_POLL_LIVE_MS : PROVISIONING_POLL_IDLE_MS,
+  });
   const [people, setPeople] = useState<Person[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -194,6 +207,23 @@ export function PortalPeople() {
           <p className="mt-0.5 truncate text-xs text-muted-foreground">{p.email}</p>
         </div>
       ),
+    },
+    {
+      key: "provisioning",
+      header: "Provisioning",
+      cell: (p) => {
+        const summary = provisioning?.byEmail[p.email.toLowerCase()];
+        if (!summary) return <span className="text-xs text-muted-foreground">…</span>;
+        const { label, tone } = provisioningLabel[summary.overall];
+        const failed = summary.steps.filter((s) => s.state === "failed");
+        return (
+          <div className="min-w-0">
+            <CellLabel>Provisioning</CellLabel>
+            <Token label={label} tone={tone} dot={summary.overall === "in_progress"} title={summary.steps.map((s) => `${s.label}: ${s.detail}`).join("\n")} />
+            {failed.length > 0 && <p className="mt-1 break-words text-xs text-muted-foreground">{failed.map((s) => `${s.label}: ${s.detail}`).join(" · ")}</p>}
+          </div>
+        );
+      },
     },
     {
       key: "orgRole",

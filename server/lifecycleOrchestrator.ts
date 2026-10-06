@@ -206,3 +206,44 @@ export async function listLifecycleEvents(limit = 50): Promise<LifecycleEvent[]>
   }
   return memory.slice(0, limit);
 }
+
+/** Latest lifecycle run per email (lower-cased), for profile provisioning status. */
+export async function latestLifecycleByEmail(emails: string[]): Promise<Map<string, LifecycleEvent>> {
+  const wanted = Array.from(new Set(emails.map((e) => e.trim().toLowerCase()).filter(Boolean))).slice(0, 500);
+  const out = new Map<string, LifecycleEvent>();
+  if (!wanted.length) return out;
+  await ensureSchema();
+  if (dbReady && db && schemaReady) {
+    try {
+      const rows = await db.execute(sql`
+        SELECT DISTINCT ON (email) * FROM portal_lifecycle_events
+        WHERE email IN (${sql.join(wanted.map((e) => sql`${e}`), sql`, `)})
+        ORDER BY email, created_at DESC
+      `);
+      const list = (rows as any).rows || rows;
+      for (const r of list as any[]) {
+        out.set(r.email, {
+          id: r.id,
+          action: r.action,
+          email: r.email,
+          companyName: r.company_name,
+          firstName: r.first_name,
+          lastName: r.last_name,
+          jumpcloud: typeof r.jumpcloud === "string" ? JSON.parse(r.jumpcloud) : r.jumpcloud || {},
+          blackpoint: typeof r.blackpoint === "string" ? JSON.parse(r.blackpoint) : r.blackpoint || {},
+          success: !!r.success,
+          requestedBy: r.requested_by,
+          createdAt: new Date(r.created_at).toISOString(),
+        });
+      }
+      return out;
+    } catch (err: any) {
+      console.warn("[lifecycle] latest-by-email failed:", err?.message);
+    }
+  }
+  // memory is newest first, so the first hit per email is the latest
+  for (const ev of memory) {
+    if (wanted.includes(ev.email) && !out.has(ev.email)) out.set(ev.email, ev);
+  }
+  return out;
+}
