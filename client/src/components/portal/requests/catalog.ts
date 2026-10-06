@@ -13,7 +13,7 @@ export type CatalogItem = {
   blurb: string;
   href: string;
   /** lucide icon name, resolved by the page */
-  icon: "laptop" | "return" | "key" | "monitor" | "user-plus" | "wrench" | "server" | "cart";
+  icon: "laptop" | "return" | "key" | "monitor" | "user-plus" | "wrench" | "server" | "cart" | "license";
   keywords: string[];
 };
 
@@ -33,6 +33,14 @@ export const CATALOG_ITEMS: CatalogItem[] = [
     href: TYPE_ROUTES.return_computer,
     icon: "return",
     keywords: ["return", "leaving", "offboarding", "dispose", "computer", "laptop", "pickup"],
+  },
+  {
+    id: "license_request",
+    title: "Request a Software License",
+    blurb: "Microsoft 365, Google Workspace or Zoho licences and add-ons like Visio or Project.",
+    href: TYPE_ROUTES.license_request,
+    icon: "license",
+    keywords: ["license", "licence", "microsoft 365", "office", "e5", "e3", "f3", "g5", "google workspace", "zoho", "visio", "project", "power bi", "copilot"],
   },
   {
     id: "form-access",

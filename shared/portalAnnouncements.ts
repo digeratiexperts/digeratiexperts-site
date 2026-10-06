@@ -58,7 +58,7 @@ export function builtInAnnouncements(today: string): PortalAnnouncement[] {
       title: "Cybersecurity Awareness Month",
       body: "This month we're focusing on how to spot suspicious messages and stay ahead of phishing attempts. If something looks off, report it before you click.",
       ctaLabel: "Tips to stay safe",
-      ctaHref: "/portal/kb?q=security",
+      ctaHref: "/portal/kb/KB0000003",
       art: "security",
       source: "de",
     });

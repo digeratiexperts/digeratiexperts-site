@@ -13,6 +13,8 @@ import {
 } from "./serviceRequestStore";
 import { queueServiceRequestForHub } from "./serviceRequestHubSync";
 import { listManualRecords } from "./portalManualRecords";
+import { classificationFor, getLicensePolicy } from "./licensingStore";
+import { accountTypeLabel, platformLabel, requestableLicenses, type AccountType } from "@shared/licensing";
 import { announcementFromRecord, builtInAnnouncements, type PortalAnnouncement } from "@shared/portalAnnouncements";
 import {
   BASKET_STATUS,
@@ -25,6 +27,8 @@ import {
   returnReasonLabel,
   todayIso,
   validateServiceRequestFields,
+  type AnyRequestFields,
+  type LicenseFields,
   type LoanerFields,
   type ReturnFields,
   type ServiceRequestAsset,
@@ -212,7 +216,18 @@ function deskDescription(deps: ServiceRequestRouteDeps, r: StoredServiceRequest)
     `Submitted by: ${person(deps, r.submittedByUserId).name}`,
     `Contact phone: ${p.contactPhone ?? ""}`,
   ];
-  if (r.type === "loaner_computer") {
+  if (r.type === "license_request") {
+    lines.push(
+      `Operation: ${p.operation === "remove" ? "Remove" : "Add"} licence`,
+      `Account: ${p.accountKind === "person" ? person(deps, r.requestedForUserId).name : `${p.accountName} (${accountTypeLabel(String(p.accountKind))})`}`,
+      `Account type: ${accountTypeLabel(String(p.accountType))}${p.tier ? ` · ${p.tier}` : ""}`,
+      `Platform: ${platformLabel(String(p.platform))}`,
+      `Licence: ${p.licenseName}`,
+      `Group: ${p.group || "(not set in the policy)"}`,
+      `Approval: ${p.approval}`,
+      `Business justification: ${p.businessJustification}`,
+    );
+  } else if (r.type === "loaner_computer") {
     lines.push(`Device: ${p.deviceKind}`, `Needed from: ${p.neededFrom}`, `Loan until: ${p.loanUntil}`, `Reason: ${p.reason}`);
     if (p.accessories) lines.push(`Accessories: ${p.accessories}`);
     if (p.additionalNotes) lines.push(`Notes: ${p.additionalNotes}`);
@@ -259,15 +274,46 @@ async function resolveSubmission(
   deps: ServiceRequestRouteDeps,
   clientId: string,
   type: ServiceRequestType,
-  fields: LoanerFields | ReturnFields,
+  input: AnyRequestFields,
 ): Promise<
   | { ok: true; payload: Record<string, unknown>; site: ServiceRequestSite | null; requestedForUserId: string }
   | { ok: false; status: number; errors: Record<string, string> }
 > {
-  const target = deps.findUser(fields.requestedForUserId);
+  const target = deps.findUser(input.requestedForUserId);
   if (!target || target.clientId !== clientId || target.isActive === false) {
     return { ok: false, status: 400, errors: { requestedForUserId: "Choose a person in your company" } };
   }
+
+  if (type === "license_request") {
+    // The licence must be one the company's policy offers this account; the
+    // group comes from the policy, never from the browser.
+    const f = input as LicenseFields;
+    const policy = await getLicensePolicy(clientId);
+    const who =
+      f.accountKind === "person"
+        ? await classificationFor(target.id, clientId)
+        : { accountType: f.accountKind as AccountType, tier: null };
+    const match = requestableLicenses(policy, who).find((l) => l.platform === f.platform && l.licenseKey === f.licenseKey);
+    if (!match) return { ok: false, status: 400, errors: { licenseKey: "That licence isn't offered to this account in your company's policy" } };
+    if (f.operation === "add" && match.assignment === "automatic") {
+      return { ok: false, status: 400, errors: { licenseKey: "This account is licensed automatically. No request is needed." } };
+    }
+    if (f.operation === "add" && match.assignment === "not_eligible") {
+      return { ok: false, status: 400, errors: { licenseKey: "This account type isn't eligible for that licence" } };
+    }
+    const payload: Record<string, unknown> = {
+      ...f,
+      accountName: f.accountKind === "person" ? "" : f.accountName,
+      accountType: who.accountType,
+      tier: who.tier,
+      licenseName: match.name,
+      licenseKind: match.kind,
+      group: match.group,
+      approval: match.approval,
+    };
+    return { ok: true, payload, site: null, requestedForUserId: target.id };
+  }
+  const fields = input as LoanerFields | ReturnFields;
 
   let site: ServiceRequestSite | null = null;
   if (!fields.addressNotClientLocation) {
@@ -445,7 +491,8 @@ export function registerServiceRequestRoutes(app: Express, deps: ServiceRequestR
       payload: resolved.payload,
       siteId: resolved.site?.id ?? null,
       site: resolved.site,
-      customAddress: checked.data.addressNotClientLocation ? checked.data.customAddress ?? null : null,
+      customAddress:
+        "addressNotClientLocation" in checked.data && checked.data.addressNotClientLocation ? checked.data.customAddress ?? null : null,
       statusHistory: [historyEvent(status, "requester", t)],
       submittedAt: mode === "submit" ? t.toISOString() : null,
     });

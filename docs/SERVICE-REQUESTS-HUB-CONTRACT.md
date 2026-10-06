@@ -78,8 +78,8 @@ The Portal never blocks a submission on the Hub. `service_requests.hub_sync_stat
       "properties": {
         "contractVersion": { "const": 1 },
         "requestId": { "type": "string" },
-        "number": { "type": "string", "pattern": "^(LNR|RTN)-\\d{6}$" },
-        "type": { "enum": ["loaner_computer", "return_computer"] },
+        "number": { "type": "string", "pattern": "^(LNR|RTN|LIC)-\\d{6}$" },
+        "type": { "enum": ["loaner_computer", "return_computer", "license_request"] },
         "status": { "$ref": "#/$defs/status" },
         "revision": { "type": "integer", "minimum": 1 },
         "portalClientId": { "type": "string" },
@@ -126,10 +126,13 @@ The Portal never blocks a submission on the Hub. `service_requests.hub_sync_stat
 
 **return_computer**: `requestedForUserId`, `contactPhone`, `returnReason` (`user_leaving` | `device_refresh` | `no_longer_needed` | `damaged` | `loaner_end` | `other`), `assetId` (string | null), `assetNotListed` (boolean), `asset` ({ id, assetTag, serialNumber, model } | null; snapshot of the assigned asset), `manualAsset` ({ assetTag, serialNumber, description } | null), `accessories`, `preferredReturnDate` (YYYY-MM-DD | null), `additionalComments`, `siteId`, `addressNotClientLocation`.
 
+**license_request** (number prefix `LIC`): `accountKind` (`person` | `admin` | `service` | `shared`), `requestedForUserId` (the person, or the requester for a non-person account), `accountName` (non-person accounts only), `platform` (`microsoft_commercial` | `microsoft_gcc` | `microsoft_gcc_high` | `google_workspace` | `zoho_workplace`), `licenseKey` (catalog key, e.g. `m365_e5`, `visio_p2`), `operation` (`add` | `remove`), `businessJustification`. The Portal resolves the company licence policy at submission and adds: `accountType` (`standard` | `frontline` | `contractor` | `admin` | `service` | `shared`), `tier` (string | null), `licenseName`, `licenseKind` (`base` | `addon`), `group` (the licence group to change, string | null) and `approval` (`none` | `manager` | `it_contact` | `request`). Licences the policy assigns automatically, and ones the account type is not eligible for, are refused at the Portal and never reach the Hub. No prices are sent.
+
 ### Status lifecycles
 
 - Loaner: submitted → under_review → device_assigned → delivered → return_due → returned → closed; rejected; cancelled (requester, before device_assigned).
 - Return: submitted → under_review → pickup_scheduled → received → restocked | disposed → closed; rejected; cancelled (requester, before pickup_scheduled).
+- Licence: submitted → under_review → approved → fulfilled ("Licence assigned") → closed; submitted → approved directly; rejected; cancelled (requester, before approved; staff, before fulfilled).
 
 ## Hub → Portal status write-back
 

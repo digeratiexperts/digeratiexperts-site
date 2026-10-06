@@ -59,13 +59,14 @@ const useDb = () => Boolean(dbReady && db);
 
 const memRequests = new Map<string, StoredServiceRequest>();
 const memAttachments = new Map<string, StoredAttachment & { data: Buffer }>();
-const memSeq: Record<ServiceRequestType, number> = { loaner_computer: 0, return_computer: 0 };
+const memSeq: Record<ServiceRequestType, number> = { loaner_computer: 0, return_computer: 0, license_request: 0 };
 
 export function _resetServiceRequestMemory() {
   memRequests.clear();
   memAttachments.clear();
   memSeq.loaner_computer = 0;
   memSeq.return_computer = 0;
+  memSeq.license_request = 0;
 }
 
 // ---------- schema check ----------
@@ -121,7 +122,7 @@ async function nextNumber(type: ServiceRequestType): Promise<string> {
     memSeq[type] += 1;
     return formatServiceRequestNumber(type, memSeq[type]);
   }
-  const seq = type === "loaner_computer" ? "service_request_lnr_seq" : "service_request_rtn_seq";
+  const seq = { loaner_computer: "service_request_lnr_seq", return_computer: "service_request_rtn_seq", license_request: "service_request_lic_seq" }[type];
   const result: any = await db.execute(sql`SELECT nextval(${seq}::regclass) AS n`);
   const row = Array.isArray(result) ? result[0] : result?.rows?.[0];
   return formatServiceRequestNumber(type, Number(row?.n));

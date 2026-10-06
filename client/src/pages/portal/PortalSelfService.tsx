@@ -49,7 +49,7 @@ import { AnnouncementCarousel } from "@/components/portal/selfservice/Announceme
  * is sample data.
  */
 
-type KBArticle = { id: string; title: string; category: string; excerpt: string; updatedAt: string; readTime?: string };
+type KBArticle = { id: string; title: string; category: string; excerpt: string; updatedAt: string; readTime?: string; views?: number };
 type Ticket = { id: string; status: string };
 
 const ICONS: Record<CatalogItem["icon"], ComponentType<{ className?: string }>> = {
@@ -61,6 +61,7 @@ const ICONS: Record<CatalogItem["icon"], ComponentType<{ className?: string }>> 
   wrench: Wrench,
   server: Server,
   cart: ShoppingCart,
+  license: KeyRound,
 };
 
 const OPEN_TICKET = new Set(["open", "new", "in_progress", "in progress", "pending", "pending_client", "on_hold", "escalated"]);
@@ -251,7 +252,10 @@ export default function PortalSelfService() {
   const waiting = ticketList.filter((t) => WAITING_ON_YOU.has(String(t.status).toLowerCase())).length;
   const pendingApprovals = (approvals.data?.approvals ?? []).filter((a) => String(a.status).toLowerCase() === "pending").length;
   const articles = useMemo(
-    () => [...(kb.data ?? [])].sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))),
+    () =>
+      [...(kb.data ?? [])].sort(
+        (a, b) => (b.views ?? 0) - (a.views ?? 0) || String(b.updatedAt).localeCompare(String(a.updatedAt)),
+      ),
     [kb.data],
   );
 
@@ -264,7 +268,7 @@ export default function PortalSelfService() {
     : [];
   const hits: Array<{ key: string; label: string; detail: string; href: string }> = [
     ...catalogHits.map((c) => ({ key: c.id, label: c.title, detail: "Request", href: c.href })),
-    ...articleHits.map((a) => ({ key: `kb:${a.id}`, label: a.title, detail: "Article", href: `/portal/kb?q=${encodeURIComponent(a.title)}` })),
+    ...articleHits.map((a) => ({ key: `kb:${a.id}`, label: a.title, detail: "Article", href: `/portal/kb/${a.id}` })),
   ];
   const go = (href: string) => {
     setQ("");
@@ -290,7 +294,7 @@ export default function PortalSelfService() {
     .map((id) => {
       if (id.startsWith("kb:")) {
         const a = articles.find((x) => `kb:${x.id}` === id);
-        return a ? { id, label: a.title, href: `/portal/kb?q=${encodeURIComponent(a.title)}`, kind: "Article" } : null;
+        return a ? { id, label: a.title, href: `/portal/kb/${a.id}`, kind: "Article" } : null;
       }
       const c = CATALOG_ITEMS.find((x) => x.id === id);
       return c ? { id, label: c.title, href: c.href, kind: "Request" } : null;
@@ -542,7 +546,7 @@ export default function PortalSelfService() {
               })}
             </Rail>
 
-            <Rail id="ss-articles" title="Latest Articles">
+            <Rail id="ss-articles" title="Most Viewed Articles">
               {kb.isLoading ? (
                 <p className="text-sm text-muted-foreground">Loading…</p>
               ) : articles.length === 0 ? (
@@ -551,7 +555,7 @@ export default function PortalSelfService() {
                 articles.slice(0, 10).map((a) => (
                   <div key={a.id} role="listitem" className="w-[260px] shrink-0 snap-start sm:w-[300px]">
                     <Link
-                      href={`/portal/kb?q=${encodeURIComponent(a.title)}`}
+                      href={`/portal/kb/${a.id}`}
                       className="flex h-full flex-col rounded-lg border border-border bg-card p-4 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <span className="flex items-center justify-between">

@@ -31,3 +31,14 @@ export function ReturnComputerIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function LicenseIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 120 100" className={className} aria-hidden="true" fill="none" stroke="currentColor">
+      <rect x="14" y="10" width="62" height="80" rx="4" strokeWidth="6" />
+      <path d="M26 30h38M26 44h38M26 58h22" strokeWidth="5" strokeLinecap="round" />
+      <circle cx="84" cy="62" r="14" strokeWidth="6" className="fill-card" />
+      <path d="M95 72l16 16M104 81l-6 6M110 87l-5 5" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

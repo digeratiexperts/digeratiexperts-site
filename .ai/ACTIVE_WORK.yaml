@@ -2618,3 +2618,32 @@ claims:
       Ask DE help chat, with the Portal DB as the source of truth and a signed
       copy to the Hub (Hub side in Intelligence-Hub, separate change). Draft
       PR for diff review; no merge, deploy or production migration.
+  - id: portal-licensing-kb
+    owner: claude
+    subsystem: portal-licensing-kb
+    branch: claude/portal-licensing-kb
+    base_sha: 51aa624
+    files:
+      - shared/licensing.ts, shared/kb.ts, shared/kbSeed.ts (new) + tests
+      - shared/serviceRequests.ts (license_request type, LIC prefix, approved/fulfilled statuses)
+      - shared/schema.ts (license policy, user account, kb tables only)
+      - migrations/0010_licensing_and_kb.sql (new)
+      - server/licensingStore.ts, licensingRoutes.ts, kbStore.ts, kbRoutes.ts (new) + tests
+      - server/serviceRequestRoutes.ts, serviceRequestStore.ts (licence request branch only)
+      - server/routes.ts (licensing + kb registration; the old hard-coded /api/portal/kb handler removed)
+      - server/services/notificationService.ts (sendKbArticleUpdate appended only)
+      - client/src/pages/portal/PortalLicensing.tsx, pages/portal/kb/** , components/portal/kb/**, components/portal/licensing/**, lib/licensingApi.ts (new)
+      - client/src/pages/portal/requests/PortalLicenseRequest.tsx (new) + requests catalog/detail/form hook (licence branch only)
+      - client/src/pages/portal/PortalKB.tsx, PortalSelfService.tsx (article links, ratings, Most Viewed)
+      - client/src/App.tsx (four routes only), client/src/components/portal/shell/portalNav.ts (Licenses + Knowledge Authoring items only)
+      - shared/portalAnnouncements.ts (cyber slide link only), docs/SERVICE-REQUESTS-HUB-CONTRACT.md (license_request)
+    status: active
+    started: 2026-10-06
+    note: >-
+      Joe, 2026-10-06: licence types by account type (birthright / frontline /
+      contractor / admin / service / shared) and company tier for Microsoft 365
+      commercial, GCC, GCC High, Google Workspace and Zoho; a licence request
+      form; a knowledge base with KB numbers, subscribe, views, star ratings,
+      Most Viewed / Most Useful and DE authoring. Stacked on
+      portal-service-requests. No prices; draft PR for diff review; no merge,
+      deploy or production migration.

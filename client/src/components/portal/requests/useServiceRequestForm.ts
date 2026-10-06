@@ -16,6 +16,9 @@ import { PORTAL_TICKET_MAX_FILES, PORTAL_TICKET_MAX_FILE_BYTES, isAllowedPortalT
 export type FormValues = Record<string, any>;
 
 export function initialValues(type: ServiceRequestType): FormValues {
+  if (type === "license_request") {
+    return { requestedForUserId: "", accountKind: "person", accountName: "", platform: "", licenseKey: "", operation: "add", businessJustification: "" };
+  }
   const common = {
     requestedForUserId: "",
     contactPhone: "",
@@ -53,6 +56,17 @@ export function getPath(obj: FormValues, path: string): any {
 
 /** What the server receives: UI-only values dropped, unused branches nulled. */
 export function toSubmission(type: ServiceRequestType, v: FormValues): Record<string, unknown> {
+  if (type === "license_request") {
+    return {
+      requestedForUserId: v.requestedForUserId,
+      accountKind: v.accountKind,
+      accountName: v.accountKind === "person" ? "" : v.accountName,
+      platform: v.platform || undefined,
+      licenseKey: v.licenseKey,
+      operation: v.operation,
+      businessJustification: v.businessJustification,
+    };
+  }
   const out: Record<string, unknown> = { ...v };
   out.siteId = v.addressNotClientLocation ? null : v.siteId || null;
   out.customAddress = v.addressNotClientLocation ? v.customAddress : null;
@@ -288,6 +302,10 @@ export const FIELD_DOM_IDS: Record<string, string> = {
   "manualAsset.serialNumber": "sr-manual-asset-serial",
   "manualAsset.description": "sr-manual-asset-description",
   preferredReturnDate: "sr-preferred-return",
+  accountName: "sr-account-name",
+  platform: "sr-platform",
+  licenseKey: "sr-license",
+  businessJustification: "sr-justification",
   additionalComments: "sr-comments",
 };
 
@@ -313,6 +331,10 @@ const LABELS: Record<string, string> = {
   "manualAsset.assetTag": "Computer details",
   accessories: "Accessories",
   preferredReturnDate: "Preferred return date",
+  accountName: "Account name",
+  platform: "Platform",
+  licenseKey: "License",
+  businessJustification: "Business justification",
   "customAddress.street": "Street",
   "customAddress.city": "City",
   "customAddress.state": "State",
