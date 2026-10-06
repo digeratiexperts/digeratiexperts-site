@@ -2500,6 +2500,7 @@ claims:
       - client/src/assets/industries/cpa-calculator-2026-10-06.webp (new)
       - .claude/kie-budget/ledger.jsonl (job home-cpa-card-2026-10-06)
       - artifacts/visual-qa/home-imagery-match/**
+      - package-lock.json (ported verbatim from PR 490 so the production audit passes; no-op once 490 merges)
     status: implemented
     started: 2026-10-06
     note: >-
