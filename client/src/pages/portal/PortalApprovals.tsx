@@ -7,6 +7,7 @@ import { canApprovals, readPortalUser } from "@/lib/portalRoles";
 import { cn } from "@/lib/utils";
 import { Callout, EmptyState, Field, GenericStatus, Panel, Priority, Token } from "@/components/portal/ui";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ServiceRequestApprovals } from "@/components/portal/approvals/ServiceRequestApprovals";
 
 type Step = {
   id: string;
@@ -114,6 +115,7 @@ export function PortalApprovals() {
       width="wide"
     >
       <div className="space-y-4">
+        {!selected && <ServiceRequestApprovals />}
         {showQueues && !selected && (
           <div role="group" aria-label="Approval queue" className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0 lg:pb-0">
             {SCOPES.map((s) => {

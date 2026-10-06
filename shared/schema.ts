@@ -1,5 +1,5 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, integer, jsonb, pgEnum, decimal, customType } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, integer, jsonb, pgEnum, decimal, customType, date } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -384,6 +384,43 @@ export const clientUserAccounts = pgTable("client_user_accounts", {
     .references(() => portalClients.id, { onDelete: "cascade" }),
   accountType: text("account_type").notNull(),
   tier: text("tier"),
+  updatedBy: varchar("updated_by"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const clientOrgProfiles = pgTable("client_org_profiles", {
+  clientId: varchar("client_id")
+    .primaryKey()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  profile: jsonb("profile").notNull(),
+  updatedBy: varchar("updated_by"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Primary key (client_id, unit_kind, unit_id) is in migrations/0011.
+export const clientUnitLeaders = pgTable("client_unit_leaders", {
+  clientId: varchar("client_id")
+    .notNull()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  unitKind: text("unit_kind").notNull(),
+  unitId: varchar("unit_id").notNull(),
+  leaderUserId: varchar("leader_user_id"),
+  backupUserId: varchar("backup_user_id"),
+  ccLeader: boolean("cc_leader").notNull().default(true),
+  updatedBy: varchar("updated_by"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const clientPeople = pgTable("client_people", {
+  userId: varchar("user_id").primaryKey(),
+  clientId: varchar("client_id")
+    .notNull()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  dePersonId: text("de_person_id").notNull().unique(),
+  companyPersonId: text("company_person_id"),
+  siteId: varchar("site_id"),
+  supportTier: text("support_tier").notNull().default("standard"),
+  awayUntil: date("away_until", { mode: "string" }),
   updatedBy: varchar("updated_by"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

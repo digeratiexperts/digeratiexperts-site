@@ -127,6 +127,7 @@ import { requireDeSyncAuth } from "./integrations/deSyncAuth";
 import { registerPortalAssistRoutes } from "./portalAssistRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
 import { registerKbRoutes } from "./kbRoutes";
+import { registerOrgDirectoryRoutes } from "./orgDirectoryRoutes";
 import { registerPortalDataSourceRoutes } from "./portalDataSources";
 import { registerPortalVpnRoutes } from "./integrations/vpn/routes";
 import { registerPortalPhoneRoutes } from "./integrations/phone/routes";
@@ -1178,23 +1179,31 @@ export async function registerRoutes(app: Express) {
   registerManualRecordAdminRoutes(app, { guards: [authMiddleware, requireAdmin, validateInput] });
 
   // Service requests (Request Loaner Computer, Return Computer): server/serviceRequestRoutes.ts.
+  const directoryUser = (u: any) => ({
+    id: u.id,
+    clientId: u.clientId ?? null,
+    fullName: u.fullName,
+    email: u.email,
+    isActive: u.isActive,
+    departmentId: u.departmentId ?? null,
+    managerUserId: u.managerUserId ?? null,
+    isCompanyItContact: u.isCompanyItContact ?? null,
+    orgRole: u.orgRole ?? null,
+  });
   const serviceRequestDeps: ServiceRequestRouteDeps = {
     guards: [authMiddleware, validateInput],
     adminGuards: [authMiddleware, requireAdmin, validateInput],
     getClient: (id) => portalClients.get(id),
     findUser: (id) => {
       const u: any = findUserById(id);
-      if (!u) return undefined;
-      return { id: u.id, clientId: u.clientId ?? null, fullName: u.fullName, email: u.email, isActive: u.isActive };
+      return u ? directoryUser(u) : undefined;
     },
-    listClientUsers: (clientId) =>
-      listClientUsers(clientId).map((u: any) => ({
-        id: u.id,
-        clientId: u.clientId ?? null,
-        fullName: u.fullName,
-        email: u.email,
-        isActive: u.isActive,
-      })),
+    listClientUsers: (clientId) => listClientUsers(clientId).map((u: any) => directoryUser(u)),
+    listDepartments: async (clientId) => (await listDepartments(clientId)).map((d: any) => ({ id: d.id, name: d.name })),
+    notify: {
+      approvalNeeded: (input) => notificationService.sendServiceRequestApprovalNeeded(input),
+      leaderCopy: (input) => notificationService.sendServiceRequestLeaderCopy(input),
+    },
     // Linked Zoho Desk ticket, as for portal tickets: skipped when Zoho is not
     // configured, and a Desk failure never fails the request (no ticket id is stored).
     createDeskTicket: async ({ subject, description, email }) => {
@@ -1233,6 +1242,17 @@ export async function registerRoutes(app: Express) {
     findUser: serviceRequestDeps.findUser,
     listClientUsers: serviceRequestDeps.listClientUsers,
     canManagePeople: (user: any) => Boolean(user) && (user.role === "admin" || canManageOrg(user as OrgUserFields)),
+  });
+
+  // Company structure (site / department leaders) and the people directory (server/orgDirectoryRoutes.ts).
+  registerOrgDirectoryRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    getClient: serviceRequestDeps.getClient,
+    findUser: serviceRequestDeps.findUser,
+    listClientUsers: serviceRequestDeps.listClientUsers,
+    listDepartments: serviceRequestDeps.listDepartments,
+    canManage: (user: any) => Boolean(user) && (user.role === "admin" || canManageOrg(user as OrgUserFields)),
+    setDepartment: (userId, departmentId) => updateUserOrgFields(userId, { departmentId }),
   });
 
   // Knowledge base (server/kbRoutes.ts): articles, views, ratings, subscriptions, DE authoring.

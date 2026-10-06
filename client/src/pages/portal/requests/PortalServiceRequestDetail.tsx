@@ -22,6 +22,10 @@ import {
 } from "@shared/serviceRequests";
 import { PORTAL_TICKET_ACCEPT } from "@shared/portalTicketFileRules";
 import { accountTypeLabel, platformLabel } from "@shared/licensing";
+import { APPROVER_ROLE_LABELS, type ApprovalFlow, type ContactPlan } from "@shared/orgDirectory";
+import { ApprovalDecision, approvalSummary } from "@/components/portal/approvals/ServiceRequestApprovals";
+import { readPortalUser } from "@/lib/portalRoles";
+import { useQueryClient } from "@tanstack/react-query";
 
 function Detail({ label, children }: { label: string; children: ReactNode }) {
   if (children === undefined || children === null || children === "") return null;
@@ -81,8 +85,9 @@ function fieldRows(r: ServiceRequestRecord): Array<[string, ReactNode]> {
 
 /** Status timeline: the happy path with reached steps checked, plus the event log. */
 function Timeline({ r }: { r: ServiceRequestRecord }) {
-  const path = TIMELINE_BY_TYPE[r.type];
   const reached = new Set(r.statusHistory.map((e) => e.status));
+  // Requests that went through a leader's approval show that step first.
+  const path = reached.has("pending_approval") || r.status === "pending_approval" ? ["pending_approval" as const, ...TIMELINE_BY_TYPE[r.type]] : TIMELINE_BY_TYPE[r.type];
   const stoppedAt = r.status === "rejected" || r.status === "cancelled" ? r.status : null;
   return (
     <div className="space-y-5">
@@ -229,6 +234,8 @@ export default function PortalServiceRequestDetail() {
             </Panel>
           </div>
           <div className="space-y-4">
+            <ApprovalPanel r={r} />
+            <ContactPanel r={r} />
             <Panel id="request-location" title="Location">
               {address ? (
                 <address className="text-sm not-italic">
@@ -288,5 +295,66 @@ export default function PortalServiceRequestDetail() {
       )}
       <PortalHelpChat page={{ kind: "service_request_detail", title, requestNumber: r?.number }} />
     </PortalLayout>
+  );
+}
+
+function ApprovalPanel({ r }: { r: ServiceRequestRecord }) {
+  const qc = useQueryClient();
+  const flow = r.payload.approvalFlow as ApprovalFlow | undefined;
+  if (!flow || !flow.required) return null;
+  const me = readPortalUser();
+  const canDecide = r.status === "pending_approval" && flow.state === "pending" && (me?.role === "admin" || flow.approvers.some((a) => a.userId === me?.id));
+  return (
+    <Panel id="request-approval" title="Approval">
+      <p className="text-sm">{approvalSummary(flow)}</p>
+      {flow.state === "pending" && (
+        <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+          {flow.approvers.map((a) => (
+            <li key={a.userId}>
+              {a.name} · {APPROVER_ROLE_LABELS[a.role]}
+            </li>
+          ))}
+        </ul>
+      )}
+      {canDecide && (
+        <div className="mt-3 border-t border-border pt-3">
+          <ApprovalDecision request={r} onDone={(u) => qc.setQueryData(["/api/portal/service-requests", r.id], { success: true, request: u })} />
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+function ContactPanel({ r }: { r: ServiceRequestRecord }) {
+  const plan = r.payload.contactPlan as ContactPlan | undefined;
+  if (!plan) return null;
+  return (
+    <Panel id="request-contact" title="Who DE contacts">
+      <dl className="space-y-2 text-sm">
+        <div>
+          <dt className="text-xs uppercase tracking-[0.06em] text-muted-foreground">Person</dt>
+          <dd>
+            {plan.primary.name} <span className="pt-num text-muted-foreground">· {plan.personId}</span>
+            {plan.supportTier === "vip" && <span className="ml-1 rounded-full bg-muted px-2 py-0.5 text-xs">VIP</span>}
+          </dd>
+        </div>
+        {plan.fallback && (
+          <div>
+            <dt className="text-xs uppercase tracking-[0.06em] text-muted-foreground">If unavailable</dt>
+            <dd>
+              {plan.fallback.name} ({plan.fallback.role === "leader" ? "leader" : "backup leader"}
+              {plan.unit?.name ? `, ${plan.unit.name}` : ""})
+            </dd>
+          </div>
+        )}
+        {plan.cc.length > 0 && (
+          <div>
+            <dt className="text-xs uppercase tracking-[0.06em] text-muted-foreground">Copied</dt>
+            <dd>{plan.cc.map((c) => c.name).join(", ")}</dd>
+          </div>
+        )}
+      </dl>
+      <p className="mt-2 text-xs text-muted-foreground">{plan.summary}</p>
+    </Panel>
   );
 }
