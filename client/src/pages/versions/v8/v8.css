@@ -176,6 +176,6 @@
   .v8 a.v8-card:hover, .v8 .v8-lift:hover { transform: none; }
 }
 
-/* Site atmosphere (Joe, 2026-10-05): every section hosts a drifting pattern behind its content. */
+/* Site atmosphere (Joe, 2026-10-05): sections can host a drifting pattern behind their content. Situational, not every section (Joe, 2026-10-06; design/UI-STYLE-RULES.md). */
 .v8 .v8-section { position: relative; isolation: isolate; }
 .v8 .f-paper > .de-pattern { color: rgba(26, 18, 40, 0.1); }
