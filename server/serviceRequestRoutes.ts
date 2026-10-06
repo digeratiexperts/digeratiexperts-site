@@ -13,6 +13,7 @@ import {
 } from "./serviceRequestStore";
 import { queueServiceRequestForHub } from "./serviceRequestHubSync";
 import { listManualRecords } from "./portalManualRecords";
+import { announcementFromRecord, builtInAnnouncements, type PortalAnnouncement } from "@shared/portalAnnouncements";
 import {
   BASKET_STATUS,
   STATUS_LABELS,
@@ -364,6 +365,20 @@ export function registerServiceRequestRoutes(app: Express, deps: ServiceRequestR
       sites,
       defaultSiteId: sites.length === 1 ? sites[0].id : null,
     });
+  });
+
+  // Self-Service carousel: this company's active announcements first, then the built-in DE slides.
+  app.get("/api/portal/self-service/announcements", ...guards, async (req: AuthedRequest, res: Response) => {
+    const today = todayIso(now());
+    const clientId = effectiveClientId(req.user);
+    const company: PortalAnnouncement[] = [];
+    if (clientId && deps.getClient(clientId)) {
+      for (const r of await listManualRecords(clientId, "announcement")) {
+        const slide = announcementFromRecord(r.id, r.data as Record<string, unknown>, today);
+        if (slide) company.push(slide);
+      }
+    }
+    res.json({ success: true, announcements: [...company, ...builtInAnnouncements(today)] });
   });
 
   // Requested for: people in the same company only.

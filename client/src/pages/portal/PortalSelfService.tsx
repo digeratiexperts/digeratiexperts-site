@@ -36,6 +36,9 @@ import { CATALOG_ITEMS, searchCatalog, type CatalogItem } from "@/components/por
 import { useFavorites } from "@/components/portal/requests/favorites";
 import { BASKET_STATUS, TERMINAL_STATUSES } from "@shared/serviceRequests";
 import { PRIMARY_PHONE } from "@shared/companyContact";
+import { builtInAnnouncements, type PortalAnnouncement } from "@shared/portalAnnouncements";
+import { todayIso } from "@shared/serviceRequests";
+import { AnnouncementCarousel } from "@/components/portal/selfservice/AnnouncementCarousel";
 
 /**
  * Self-Service home (/portal/self-service): one page to start anything —
@@ -169,42 +172,6 @@ function Rail({ id, title, children }: { id: string; title: string; children: Re
   );
 }
 
-/** Illustrative hero: line icons for devices, the shop, security and support over the graphite field. No photo, no claims. */
-function Hero({ company }: { company: string }) {
-  return (
-    <div className="relative overflow-hidden rounded-xl border border-border bg-[#0b0915] text-white shadow-sm" aria-labelledby="ss-hero-title">
-      <div className="absolute inset-0 bg-[radial-gradient(90%_120%_at_85%_10%,rgba(124,58,237,0.22),transparent_60%),radial-gradient(70%_90%_at_10%_100%,rgba(211,18,106,0.20),transparent_60%)]" aria-hidden="true" />
-      <svg className="absolute inset-y-0 right-0 h-full w-[70%] opacity-70" viewBox="0 0 520 260" fill="none" aria-hidden="true">
-        <g stroke="currentColor" strokeWidth="1.6" className="text-[#f45ea3]" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="250" y="40" width="110" height="72" rx="6" />
-          <path d="M285 128h40M270 140h70" />
-          <path d="M392 52h40l-6 34h-30zM400 96a4 4 0 1 0 0 1M424 96a4 4 0 1 0 0 1" />
-          <rect x="430" y="140" width="44" height="34" rx="5" />
-          <path d="M440 140v-10a12 12 0 0 1 24 0v10" />
-        </g>
-        <g stroke="currentColor" strokeWidth="1.4" className="text-[#a78bfa]" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="180" y="150" width="64" height="44" rx="5" />
-          <path d="M196 166h32M196 178h20" />
-          <circle cx="330" cy="200" r="20" />
-          <path d="M322 200l6 6 12-12" />
-          <path d="M470 40h30v40h-30zM478 52h14M478 62h14" />
-          <path d="M120 60c20-10 40-10 60 0M140 76c10-6 20-6 30 0" />
-        </g>
-        <g fill="currentColor" className="text-white/40">
-          <circle cx="210" cy="60" r="2" /><circle cx="380" cy="230" r="2" /><circle cx="500" cy="120" r="2" /><circle cx="160" cy="120" r="2" />
-        </g>
-      </svg>
-      <div className="relative flex min-h-[220px] flex-col justify-end p-6 sm:min-h-[280px] sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/70">{company || "Client Portal"}</p>
-        <h2 id="ss-hero-title" className="mt-1 max-w-md font-['Space_Grotesk',sans-serif] text-2xl font-semibold sm:text-3xl">
-          Welcome to IT Support
-        </h2>
-        <p className="mt-1 max-w-md text-sm text-white/80">Requests, issues, devices and answers in one place, run by Digerati Experts.</p>
-      </div>
-    </div>
-  );
-}
-
 const DOORS = [
   {
     title: "Digital IT shop",
@@ -250,7 +217,6 @@ export default function PortalSelfService() {
   const { context, basketCount } = useRequestContext();
   const { favorites, isFavorite } = useFavorites();
   const me = context.data?.me ?? null;
-  const company = context.data?.company.name ?? "";
   const approvalsAllowed = canApprovals(user);
 
   const requests = useQuery({ queryKey: ["/api/portal/service-requests"], queryFn: srApi.list });
@@ -269,6 +235,13 @@ export default function PortalSelfService() {
     enabled: Boolean(me?.userId),
   });
   const kb = useQuery({ queryKey: ["/api/portal/kb"], queryFn: () => portalGet<KBArticle[]>("/api/portal/kb") });
+  const announcements = useQuery({
+    queryKey: ["/api/portal/self-service/announcements"],
+    queryFn: () => portalGet<{ announcements: PortalAnnouncement[] }>("/api/portal/self-service/announcements"),
+    staleTime: 5 * 60_000,
+  });
+  // The built-in DE slides show while loading or if the endpoint fails, so the carousel is never empty.
+  const slides = announcements.data?.announcements?.length ? announcements.data.announcements : builtInAnnouncements(todayIso());
 
   const ticketList: Ticket[] = Array.isArray(tickets.data) ? tickets.data : tickets.data?.tickets ?? [];
   const openRequests = (requests.data?.requests ?? []).filter(
@@ -518,7 +491,7 @@ export default function PortalSelfService() {
               </form>
             </Card>
 
-            <Hero company={company} />
+            <AnnouncementCarousel slides={slides} />
 
             <Card labelledBy="ss-doors" className="p-5">
               <h2 id="ss-doors" className="mb-4 text-lg font-semibold text-foreground">

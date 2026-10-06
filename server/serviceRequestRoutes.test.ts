@@ -363,3 +363,25 @@ describe("Hub delivery", () => {
     expect(detail.request.hubSyncStatus).toBe("retrying");
   });
 });
+
+describe("self-service announcements", () => {
+  it("shows a company's own active announcements first, never another company's, then the DE slides", async () => {
+    const { createManualRecord } = await import("./portalManualRecords");
+    await createManualRecord({
+      clientId: "acme",
+      kind: "announcement",
+      data: { title: "Acme office move", body: "We move on Friday.", ctaLabel: "Details", ctaHref: "/portal/kb?q=move" },
+    });
+    await createManualRecord({
+      clientId: "acme",
+      kind: "announcement",
+      data: { title: "Phishy", body: "Click here.", ctaLabel: "Go", ctaHref: "https://evil.example" },
+    });
+    const acme = await (await call("GET", "/api/portal/self-service/announcements", ANN)).json();
+    expect(acme.announcements[0]).toMatchObject({ title: "Acme office move", source: "company" });
+    expect(acme.announcements.some((a: any) => a.title === "Phishy")).toBe(false);
+    expect(acme.announcements.some((a: any) => a.source === "de")).toBe(true);
+    const globex = await (await call("GET", "/api/portal/self-service/announcements", GUS)).json();
+    expect(globex.announcements.some((a: any) => a.title === "Acme office move")).toBe(false);
+  });
+});

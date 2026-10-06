@@ -13,13 +13,15 @@ import { portalManualRecords } from "@shared/schema";
  *               the service request forms: { code, name?, street, city, state, country, zip }
  *   computer_asset  a computer assigned to a client user, for the Return Computer
  *               form: { assetTag, serialNumber?, model?, assignedUserId }
+ *   announcement  a Self-Service carousel slide for this client:
+ *               { title, body, ctaLabel, ctaHref (a /portal/... path), art?, startsOn?, endsOn? }
  *
  * Postgres when the database is up (table owned by
  * migrations/0003_portal_manual_records.sql, never created at runtime); an in-process map otherwise, so
  * the dev server's memory mode can exercise the same flow.
  */
 
-export const MANUAL_RECORD_KINDS = ["vpn_device", "shipment", "site", "computer_asset"] as const;
+export const MANUAL_RECORD_KINDS = ["vpn_device", "shipment", "site", "computer_asset", "announcement"] as const;
 export type ManualRecordKind = (typeof MANUAL_RECORD_KINDS)[number];
 
 export type ManualRecord = {
