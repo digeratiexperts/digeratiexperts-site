@@ -1,10 +1,11 @@
-import { useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useRef, type FormEvent, type ReactNode } from "react";
 import { Link } from "wouter";
 import { ChevronRight, Heart, Loader2, Paperclip, ShoppingCart, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Callout } from "@/components/portal/ui";
 import { PORTAL_TICKET_ACCEPT } from "@shared/portalTicketFileRules";
 import type { RequiredChip, ServiceRequestType } from "@shared/serviceRequests";
+import { readFavorites, useFavorites } from "./favorites";
 
 /**
  * Catalog item page frame shared by every service request form: card header
@@ -13,26 +14,6 @@ import type { RequiredChip, ServiceRequestType } from "@shared/serviceRequests";
  * one chip per unfilled required field). Under lg the rail becomes a chip
  * summary above the form and a fixed action bar at the bottom.
  */
-
-const FAV_KEY = "de-portal-request-favorites";
-
-function readFavorites(): string[] {
-  try {
-    const raw = window.localStorage.getItem(FAV_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeFavorites(list: string[]) {
-  try {
-    window.localStorage.setItem(FAV_KEY, JSON.stringify(list));
-  } catch {
-    /* private window: favourites just don't persist */
-  }
-}
 
 export function isFavoriteRequest(type: ServiceRequestType): boolean {
   return typeof window !== "undefined" && readFavorites().includes(type);
@@ -82,15 +63,11 @@ function Chips({ chips, onChipClick, className }: { chips: RequiredChip[]; onChi
 
 export function ServiceRequestShell(props: ServiceRequestShellProps) {
   const { type, chips, busy } = props;
-  const [favorite, setFavorite] = useState(() => isFavoriteRequest(type));
+  const { isFavorite, toggle } = useFavorites();
+  const favorite = isFavorite(type);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  const toggleFavorite = () => {
-    const list = readFavorites().filter((t) => t !== type);
-    if (!favorite) list.push(type);
-    writeFavorites(list);
-    setFavorite(!favorite);
-  };
+  const toggleFavorite = () => toggle(type);
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();

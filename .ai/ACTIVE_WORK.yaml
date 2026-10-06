@@ -2607,6 +2607,8 @@ claims:
       - client/src/lib/serviceRequestsApi.ts (new), client/src/App.tsx (the five /portal/requests routes only)
       - client/src/components/portal/shell/portalNav.ts + client/src/lib/portalRoles.ts (Service Requests nav item and its key only)
       - docs/SERVICE-REQUESTS-HUB-CONTRACT.md (new)
+      - client/src/pages/portal/PortalSelfService.tsx (new) + the /portal/self-service route and nav item
+      - client/src/pages/portal/PortalKB.tsx (initial search from ?q= only)
     status: active
     started: 2026-10-06
     note: >-
