@@ -2489,3 +2489,19 @@ claims:
       and "Deploy and verify production VPS". The DE Tech Tool 1.10.4 release
       zip (build DE-1.10.4-202610050518-568c45, sourceCommit f0c31343) was
       built from f0c31343. VERIFIED LIVE as a Tool release. Files released.
+  - id: audit-gate-proxy-addr-compression
+    owner: claude
+    subsystem: dependencies-security
+    branch: claude/lucid-dijkstra-s3v2s3
+    base_sha: d0d07e8a05404c624e46f9480f51152ef1d70a4d
+    files:
+      - package-lock.json (compression 1.8.1 -> 1.8.2, proxy-addr 2.0.7 -> 2.0.8; no package.json change)
+    status: in-review
+    started: 2026-10-06
+    note: >-
+      CI's npm audit gate (--omit=dev --audit-level=high) turned red on every
+      branch after advisories published 2026-10-05: proxy-addr GHSA-jqcg-44mw-7w3h
+      (critical, IP spoofing via IPv4-mapped IPv6 trust subnet) and compression
+      GHSA-vc2v-76pw-4v95 (high, memory-leak DoS). Both fixed versions sit inside
+      the existing ranges; npm update of those two packages only. Unblocks the
+      main deploy of d0d07e8 (PR 481) and 61cded1 (PR 488).
