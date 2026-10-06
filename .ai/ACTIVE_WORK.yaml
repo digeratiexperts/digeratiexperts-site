@@ -2567,3 +2567,25 @@ claims:
       8cbffda (built 03:00Z) and now f7e2662, which contains it; /, /store and
       /api/health answer 200. npm audit --omit=dev --audit-level=high exits
       0 on main. VERIFIED LIVE. Files released.
+  - id: portal-grey-ladder-concepts
+    owner: claude
+    subsystem: portal-design
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: 8cbffda
+    files:
+      - artifacts/design-concepts/portal-grey-ladder/** (new)
+      - client/src/styles/portal.css (dark + light portal tokens, active nav)
+      - client/src/styles/portalLightTheme.test.ts
+      - artifacts/visual-qa/portal-grey-ladder/** (new)
+    status: active
+    started: 2026-10-06
+    note: >-
+      Joe, 2026-10-04 (kie.ai billing screen: "the shades of grey in the
+      order they are with the blue ... you can do that") and 2026-10-06 ("do
+      all these", Client Portal dashboard first). Exploration Mode: three
+      standalone dashboard concepts (A neutral steps, B graphite steps, C
+      light steps) with EXAMPLE data and 390/768/1440 shots. Provisional
+      recommendation B (dark) + C (light); Joe approved B + C on 2026-10-06
+      ("all approved here"), implemented in portal.css with a before/after
+      set; C replaces the 2026-10-03 orchid light theme, so Joe confirms the
+      screenshots before merge.
