@@ -1,0 +1,92 @@
+{
+  "NOT_CONFIGURED-1440": {
+    "vendorsCard": 1,
+    "cardStatus": "NOT_CONFIGURED",
+    "checks": [
+      "missing",
+      "unknown",
+      "unknown",
+      "unknown"
+    ],
+    "checkoutLine": 1,
+    "lineStatus": "NOT_CONFIGURED",
+    "lineText": "Sales tax paused. Pay Now switches to a quote until the site is connected to Zoho Books. Status",
+    "overflowX": 0,
+    "errors": []
+  },
+  "NOT_CONFIGURED-390": {
+    "vendorsCard": 1,
+    "cardStatus": "NOT_CONFIGURED",
+    "checks": [
+      "missing",
+      "unknown",
+      "unknown",
+      "unknown"
+    ],
+    "checkoutLine": 1,
+    "lineStatus": "NOT_CONFIGURED",
+    "lineText": "Sales tax paused. Pay Now switches to a quote until the site is connected to Zoho Books. Status",
+    "overflowX": 0,
+    "errors": []
+  },
+  "INCOMPLETE-1440": {
+    "vendorsCard": 1,
+    "cardStatus": "INCOMPLETE",
+    "checks": [
+      "set",
+      "missing",
+      "set",
+      "set"
+    ],
+    "checkoutLine": 1,
+    "lineStatus": "INCOMPLETE",
+    "lineText": "Sales tax setup incomplete. Pay Now switches to a quote until Sales Tax Automation is on in Zoho Books. Status",
+    "overflowX": 0,
+    "errors": []
+  },
+  "INCOMPLETE-390": {
+    "vendorsCard": 1,
+    "cardStatus": "INCOMPLETE",
+    "checks": [
+      "set",
+      "missing",
+      "set",
+      "set"
+    ],
+    "checkoutLine": 1,
+    "lineStatus": "INCOMPLETE",
+    "lineText": "Sales tax setup incomplete. Pay Now switches to a quote until Sales Tax Automation is on in Zoho Books. Status",
+    "overflowX": 0,
+    "errors": []
+  },
+  "READY-1440": {
+    "vendorsCard": 1,
+    "cardStatus": "READY",
+    "checks": [
+      "set",
+      "active",
+      "set",
+      "set"
+    ],
+    "checkoutLine": 1,
+    "lineStatus": "READY",
+    "lineText": "Sales tax ready. Zoho Books adds sales tax when you pay. Status",
+    "overflowX": 0,
+    "errors": []
+  },
+  "READY-390": {
+    "vendorsCard": 1,
+    "cardStatus": "READY",
+    "checks": [
+      "set",
+      "active",
+      "set",
+      "set"
+    ],
+    "checkoutLine": 1,
+    "lineStatus": "READY",
+    "lineText": "Sales tax ready. Zoho Books adds sales tax when you pay. Status",
+    "overflowX": 0,
+    "errors": []
+  }
+}

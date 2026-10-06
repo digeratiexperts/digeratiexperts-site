@@ -18,7 +18,7 @@ import { readGuidedSession } from "@/lib/storeGuidedSession";
 import { writeContactHandoff } from "@/lib/warehouseContactHandoff";
 import { warehousePath } from "@/lib/warehousePaths";
 import { ADDRESS_ERRORS, missingBillingAddress } from "@/lib/billingAddress";
-import { STRIPE_TAX_STATUS_LABEL, checkoutTaxNote, useStripeTaxReadiness } from "@/hooks/useStripeTaxReadiness";
+import { SALES_TAX_STATUS_LABEL, checkoutTaxNote, useSalesTaxReadiness } from "@/hooks/useSalesTaxReadiness";
 
 import {
   ArrowLeft,
@@ -53,7 +53,7 @@ const Checkout = () => {
   const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("zoho");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const taxReadiness = useStripeTaxReadiness();
+  const taxReadiness = useSalesTaxReadiness();
 
   useSEO({
     title: "Staff Pay Now | Digital Warehouse",
@@ -173,9 +173,9 @@ const Checkout = () => {
             return;
           }
           if (errorData.code === "TAX_RATE_UNAVAILABLE") {
-            // Pay Now fails closed when sales tax cannot be calculated: no Stripe
-            // Tax key or verified table, an item without a confirmed tax code, or
-            // Stripe not answering (server/services/salesTax.ts). Step aside to a
+            // Pay Now fails closed when sales tax cannot be calculated: no Zoho
+            // Books connection or verified table, an item without a confirmed Books
+            // tax item, or Books not answering (server/services/salesTax.ts). Step aside to a
             // quote instead of a dead-end error: DE confirms tax on the quote.
             writeContactHandoff({ ...data, reason: "tax_unavailable" });
             toast({
@@ -473,10 +473,10 @@ const Checkout = () => {
                           Charge eligible workshop lines. Not a public Store default.
                         </p>
                         {taxReadiness ? (
-                          // Staff know before they try: a paused or incomplete Stripe Tax setup
-                          // means Pay Now will switch to a quote (server/services/stripeTaxReadiness.ts).
+                          // Staff know before they try: a paused or incomplete Zoho Books tax setup
+                          // means Pay Now will switch to a quote (server/services/salesTaxReadiness.ts).
                           <p className="text-xs text-white/55 mt-2" data-testid="text-paynow-tax-status" data-status={taxReadiness.status}>
-                            <span className="font-mono text-de-accent-ink">{STRIPE_TAX_STATUS_LABEL[taxReadiness.status]}.</span>{" "}
+                            <span className="font-mono text-de-accent-ink">{SALES_TAX_STATUS_LABEL[taxReadiness.status]}.</span>{" "}
                             {checkoutTaxNote(taxReadiness)}{" "}
                             <Link href="/internal/warehouse/vendors" className="underline underline-offset-2 hover:text-white">
                               Status
