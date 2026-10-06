@@ -2489,3 +2489,22 @@ claims:
       and "Deploy and verify production VPS". The DE Tech Tool 1.10.4 release
       zip (build DE-1.10.4-202610050518-568c45, sourceCommit f0c31343) was
       built from f0c31343. VERIFIED LIVE as a Tool release. Files released.
+  - id: npm-audit-fix-2026-10-06
+    owner: claude
+    subsystem: tooling-ci
+    branch: claude/npm-audit-fix
+    base_sha: d0d07e8
+    files:
+      - package-lock.json (npm audit fix --omit=dev --package-lock-only; package.json unchanged)
+    status: active
+    started: 2026-10-06
+    note: >-
+      Joe, 2026-10-06: "Separate small PR". CI's npm audit (--omit=dev
+      --audit-level=high) turned red on main from 61cded1 on new advisories:
+      proxy-addr 2.0.7 (critical, GHSA-jqcg-44mw-7w3h) and compression 1.8.1
+      (high, GHSA-vc2v-76pw-4v95), blocking every PR and the main deploy.
+      Lockfile-only fix within declared ranges: express 4.22.3, body-parser
+      1.20.8, qs 6.16.0, proxy-addr 2.0.8, compression 1.8.2, ip-address
+      10.7.3, @google-cloud/storage 7.22.0. Audit exits 0 (5 moderate
+      remain, below the gate). Overlap check: no other open PR touches the
+      lockfile.
