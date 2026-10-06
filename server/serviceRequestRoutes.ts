@@ -14,13 +14,18 @@ import {
 import { queueServiceRequestForHub } from "./serviceRequestHubSync";
 import { listManualRecords } from "./portalManualRecords";
 import { classificationFor, getLicensePolicy } from "./licensingStore";
-import { planRequestRouting, type OrgUser } from "./orgRouting";
+import { isItContact, personContext, planRequestRouting, type OrgUser } from "./orgRouting";
 import { APPROVER_ROLE_LABELS, type ApprovalFlow, type Approver, type ContactPlan, type RoutingPerson } from "@shared/orgDirectory";
 import { accountTypeLabel, platformLabel, requestableLicenses, type AccountType } from "@shared/licensing";
 import { announcementFromRecord, builtInAnnouncements, type PortalAnnouncement } from "@shared/portalAnnouncements";
 import {
+  AMENDABLE_STATUSES,
   APPROVAL_STATUS,
   BASKET_STATUS,
+  HOLD_STATUS,
+  canHold,
+  checkHoldUntil,
+  type ServiceRequestHold,
   STATUS_LABELS,
   TERMINAL_STATUSES,
   TYPE_LABELS,
@@ -283,7 +288,8 @@ function deskDescription(deps: ServiceRequestRouteDeps, r: StoredServiceRequest)
 /** Submit-time side effects: Desk ticket (optional, non-blocking), then the Hub copy. */
 async function afterSubmit(deps: ServiceRequestRouteDeps, r: StoredServiceRequest): Promise<StoredServiceRequest> {
   let current = r;
-  if (deps.createDeskTicket) {
+  // A request re-approved after an amendment already has its ticket.
+  if (deps.createDeskTicket && !r.deskTicketId) {
     try {
       const ticketId = await deps.createDeskTicket({
         subject: `${TYPE_LABELS[r.type]} ${r.number}`,
@@ -453,6 +459,116 @@ function historyEvent(status: ServiceRequestStatus, by: string, now: Date, note?
   return { status, at: now.toISOString(), by, note: note ?? null };
 }
 
+// ---------- hold, resume, amend ----------
+
+export type ActorRole = "de_admin" | "requester" | "leader" | "backup_leader" | "it_contact";
+
+export const ACTOR_ROLE_LABELS: Record<ActorRole | "staff" | "hub" | "system", string> = {
+  de_admin: "Digerati Experts",
+  requester: "Requester",
+  leader: "Leader",
+  backup_leader: "Backup leader",
+  it_contact: "IT contact",
+  staff: "Digerati Experts",
+  hub: "Digerati Experts (Hub)",
+  system: "Automatic",
+};
+
+/**
+ * Who may act on a request for someone: the requester or the person it's for,
+ * that person's site / department leader or backup, the company IT contact,
+ * or a DE admin. Null for anyone else (another company included).
+ */
+export async function actorRole(deps: ServiceRequestRouteDeps, user: ServiceRequestUser, r: StoredServiceRequest): Promise<ActorRole | null> {
+  if (user.role === "admin") return "de_admin";
+  if (!user.clientId || user.clientId !== r.accountId) return null;
+  if (r.submittedByUserId === user.id || r.requestedForUserId === user.id) return "requester";
+  try {
+    const ctx = await personContext(deps, r.accountId, r.requestedForUserId, r.site?.id ?? null);
+    if (ctx.unitLeader?.leaderUserId === user.id) return "leader";
+    if (ctx.unitLeader?.backupUserId === user.id) return "backup_leader";
+  } catch {
+    /* directory unavailable: fall through to the IT contact check */
+  }
+  return isItContact(deps.findUser(user.id)) ? "it_contact" : null;
+}
+
+export function holdOf(r: Pick<StoredServiceRequest, "payload">): ServiceRequestHold | null {
+  const h = (r.payload as Record<string, unknown>).hold as ServiceRequestHold | undefined;
+  return h && typeof h === "object" ? h : null;
+}
+
+type Actor = { userId: string | null; name: string; role: ActorRole | "staff" | "hub" | "system" };
+
+export async function placeHold(
+  deps: ServiceRequestRouteDeps,
+  r: StoredServiceRequest,
+  input: { until: string; reason: string },
+  by: Actor,
+  at: Date,
+): Promise<StoredServiceRequest | null> {
+  const hold: ServiceRequestHold = { until: input.until, reason: input.reason, resumeStatus: r.status, by, at: at.toISOString() };
+  const updated = await updateServiceRequest(r.id, r.revision, {
+    status: HOLD_STATUS,
+    payload: { ...r.payload, hold },
+    statusHistory: [
+      ...r.statusHistory,
+      historyEvent(HOLD_STATUS, `${by.name} (${ACTOR_ROLE_LABELS[by.role]})`, at, `Until ${input.until}${input.reason ? `: ${input.reason}` : ""}`),
+    ],
+  });
+  if (updated) await syncToHub(deps, updated);
+  return updated;
+}
+
+export async function resumeHold(deps: ServiceRequestRouteDeps, r: StoredServiceRequest, by: Actor, at: Date, note?: string | null): Promise<StoredServiceRequest | null> {
+  const hold = holdOf(r);
+  if (r.status !== HOLD_STATUS || !hold) return null;
+  const payload = { ...r.payload, lastHold: { ...hold, endedAt: at.toISOString(), endedBy: by } } as Record<string, unknown>;
+  delete payload.hold;
+  const updated = await updateServiceRequest(r.id, r.revision, {
+    status: hold.resumeStatus,
+    payload,
+    statusHistory: [
+      ...r.statusHistory,
+      historyEvent(hold.resumeStatus, `${by.name} (${ACTOR_ROLE_LABELS[by.role]})`, at, note || (by.role === "system" ? `Hold ended (${hold.until})` : "Hold lifted")),
+    ],
+  });
+  if (updated) await syncToHub(deps, updated);
+  return updated;
+}
+
+/** Resume a hold whose end date has come. Returns the current request either way. */
+export async function resumeIfDue(deps: ServiceRequestRouteDeps, r: StoredServiceRequest, at: Date): Promise<StoredServiceRequest> {
+  const hold = holdOf(r);
+  if (r.status !== HOLD_STATUS || !hold || hold.until > todayIso(at)) return r;
+  return (await resumeHold(deps, r, { userId: null, name: "Automatic", role: "system" }, at)) ?? (await getServiceRequest(r.id)) ?? r;
+}
+
+/** Resume due holds across all companies every few minutes. Returns a stop function. */
+export function startHoldSweeper(deps: ServiceRequestRouteDeps, everyMs = 10 * 60_000): () => void {
+  const tick = async () => {
+    try {
+      const at = (deps.now ?? (() => new Date()))();
+      for (const r of (await listServiceRequestsForAdmin(null)).filter((x) => x.status === HOLD_STATUS)) await resumeIfDue(deps, r, at);
+    } catch (error) {
+      console.warn("[service-requests] hold sweep failed:", error instanceof Error ? error.message : error);
+    }
+  };
+  const timer = setInterval(() => void tick(), everyMs);
+  (timer as { unref?: () => void }).unref?.();
+  void tick();
+  return () => clearInterval(timer);
+}
+
+const humanize = (k: string) => k.replace(/([A-Z])/g, " $1").toLowerCase();
+
+/** Field names that differ between two payloads (routing and server snapshots ignored). */
+export function changedFields(before: Record<string, unknown>, after: Record<string, unknown>): string[] {
+  const skip = new Set(["contactPlan", "approvalFlow", "hold", "lastHold", "asset"]);
+  const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+  return [...keys].filter((k) => !skip.has(k) && JSON.stringify(before[k] ?? null) !== JSON.stringify(after[k] ?? null)).map(humanize);
+}
+
 /**
  * Apply a staff or Hub status change. Same status twice is a no-op (a Hub
  * retry), anything outside the transition table is 409.
@@ -460,7 +576,7 @@ function historyEvent(status: ServiceRequestStatus, by: string, now: Date, note?
 export async function applyStaffStatus(
   deps: ServiceRequestRouteDeps,
   id: string,
-  input: { status: unknown; note?: unknown; revision?: unknown },
+  input: { status: unknown; note?: unknown; revision?: unknown; holdUntil?: unknown },
   by: "staff" | "hub",
 ): Promise<{ status: number; body: Record<string, unknown> }> {
   const r = await getServiceRequest(id);
@@ -472,6 +588,21 @@ export async function applyStaffStatus(
     return { status: 409, body: { error: "This request changed since you loaded it", revision: r.revision } };
   }
   if (next === r.status) return { status: 200, body: { success: true, unchanged: true, request: await toRecord(deps, r) } };
+  const at = (deps.now ?? (() => new Date()))();
+  const actor: Actor = { userId: null, name: by === "hub" ? "Digerati Experts (Hub)" : "Digerati Experts", role: by };
+  if (next === HOLD_STATUS) {
+    if (!canHold(r.status)) return { status: 409, body: { error: `A request that is ${STATUS_LABELS[r.status].toLowerCase()} can't be put on hold` } };
+    const bad = checkHoldUntil(input.holdUntil, todayIso(at));
+    if (bad) return { status: 400, body: { error: bad } };
+    const held = await placeHold(deps, r, { until: String(input.holdUntil), reason: typeof input.note === "string" ? input.note.trim().slice(0, 500) : "" }, actor, at);
+    if (!held) return { status: 409, body: { error: "This request changed since you loaded it" } };
+    return { status: 200, body: { success: true, request: await toRecord(deps, held) } };
+  }
+  if (r.status === HOLD_STATUS && next === holdOf(r)?.resumeStatus) {
+    const resumed = await resumeHold(deps, r, actor, at, typeof input.note === "string" ? input.note.trim().slice(0, 1000) : null);
+    if (!resumed) return { status: 409, body: { error: "This request changed since you loaded it" } };
+    return { status: 200, body: { success: true, request: await toRecord(deps, resumed) } };
+  }
   if (!allowedStaffTransitions(r.type, r.status).includes(next)) {
     return { status: 409, body: { error: `Cannot move from ${STATUS_LABELS[r.status]} to ${STATUS_LABELS[next]}` } };
   }
@@ -565,7 +696,10 @@ export function registerServiceRequestRoutes(app: Express, deps: ServiceRequestR
     const clientId = requireCompany(req, res);
     if (!clientId) return;
     const rows = await listServiceRequestsForUser(clientId, req.user!.id);
-    const visible = rows.filter((r) => r.status !== BASKET_STATUS || r.submittedByUserId === req.user!.id);
+    const t = now();
+    const visible = await Promise.all(
+      rows.filter((r) => r.status !== BASKET_STATUS || r.submittedByUserId === req.user!.id).map((r) => resumeIfDue(deps, r, t)),
+    );
     res.json({ success: true, requests: await Promise.all(visible.map((r) => toRecord(deps, r))) });
   });
 
@@ -696,10 +830,115 @@ export function registerServiceRequestRoutes(app: Express, deps: ServiceRequestR
     res.json({ success: true, request: await toRecord(deps, (await getServiceRequest(final.id)) ?? final) });
   });
 
-  app.get(`${SERVICE_REQUESTS_PATH}/:id`, ...guards, async (req: AuthedRequest, res: Response) => {
+  // My team's requests: people in the sites / departments I lead (or back up), or the
+  // whole company for the IT contact. Leaders hold, amend or cancel on their behalf.
+  app.get(`${SERVICE_REQUESTS_PATH}/team`, ...guards, async (req: AuthedRequest, res: Response) => {
+    const clientId = requireCompany(req, res);
+    if (!clientId) return;
+    const rows = (await listServiceRequestsForAdmin(clientId)).filter((r) => r.accountId === clientId && r.status !== BASKET_STATUS);
+    const out: StoredServiceRequest[] = [];
+    for (const r of rows) {
+      const role = await actorRole(deps, req.user!, r);
+      if (role && role !== "requester") out.push(r);
+    }
+    res.json({ success: true, requests: await Promise.all(out.map((r) => toRecord(deps, r))) });
+  });
+
+  // Put on hold until a date; it resumes on that date (or when someone resumes it).
+  app.post(`${SERVICE_REQUESTS_PATH}/:id/hold`, ...guards, async (req: AuthedRequest, res: Response) => {
     const r = await getServiceRequest(req.params.id);
+    const role = r ? await actorRole(deps, req.user!, r) : null;
+    if (!r || !role) return res.status(404).json({ error: "Request not found" });
+    if (!canHold(r.status)) return res.status(409).json({ error: `A request that is ${STATUS_LABELS[r.status].toLowerCase()} can't be put on hold` });
+    const t = now();
+    const bad = checkHoldUntil(req.body?.until, todayIso(t));
+    if (bad) return res.status(400).json({ error: bad, fieldErrors: { until: bad } });
+    const reason = typeof req.body?.reason === "string" ? req.body.reason.trim().slice(0, 500) : "";
+    if (!reason) return res.status(400).json({ error: "Say why it's on hold", fieldErrors: { reason: "Say why it's on hold" } });
+    const held = await placeHold(deps, r, { until: String(req.body?.until), reason }, { ...person(deps, req.user!.id), role }, t);
+    if (!held) return res.status(409).json({ error: "This request changed; reload and try again" });
+    res.json({ success: true, request: await toRecord(deps, held) });
+  });
+
+  app.post(`${SERVICE_REQUESTS_PATH}/:id/resume`, ...guards, async (req: AuthedRequest, res: Response) => {
+    const r = await getServiceRequest(req.params.id);
+    const role = r ? await actorRole(deps, req.user!, r) : null;
+    if (!r || !role) return res.status(404).json({ error: "Request not found" });
+    if (r.status !== HOLD_STATUS) return res.status(409).json({ error: "This request is not on hold" });
+    const note = typeof req.body?.note === "string" ? req.body.note.trim().slice(0, 1000) : null;
+    const resumed = await resumeHold(deps, r, { ...person(deps, req.user!.id), role }, now(), note);
+    if (!resumed) return res.status(409).json({ error: "This request changed; reload and try again" });
+    res.json({ success: true, request: await toRecord(deps, resumed) });
+  });
+
+  // Amend: change the details until the work is under way. A change that needs approval
+  // again (made by someone who can't approve it) goes back to the approver.
+  app.patch(`${SERVICE_REQUESTS_PATH}/:id`, ...guards, async (req: AuthedRequest, res: Response) => {
+    const r = await getServiceRequest(req.params.id);
+    const role = r ? await actorRole(deps, req.user!, r) : null;
+    if (!r || !role) return res.status(404).json({ error: "Request not found" });
+    if (!AMENDABLE_STATUSES.includes(r.status)) {
+      return res.status(409).json({ error: `A request that is ${STATUS_LABELS[r.status].toLowerCase()} can no longer be amended. Contact the team, or cancel it.` });
+    }
+    if (req.body?.revision !== undefined && Number(req.body.revision) !== r.revision) {
+      return res.status(409).json({ error: "This request changed since you opened it; reload and try again" });
+    }
+    const t = now();
+    const checked = validateServiceRequestFields(r.type, req.body?.fields, todayIso(t));
+    if (!checked.data) return res.status(400).json({ error: "Please fix the highlighted fields", fieldErrors: checked.errors });
+    const resolved = await resolveSubmission(deps, r.accountId, r.type, checked.data);
+    if (!resolved.ok) return res.status(resolved.status).json({ error: "Please fix the highlighted fields", fieldErrors: resolved.errors });
+    const customAddress = "addressNotClientLocation" in checked.data && checked.data.addressNotClientLocation ? checked.data.customAddress ?? null : null;
+    const changed = changedFields(r.payload, resolved.payload);
+    if (resolved.requestedForUserId !== r.requestedForUserId) changed.unshift("requested for");
+    if (JSON.stringify(customAddress) !== JSON.stringify(r.customAddress ?? null) && !changed.includes("custom address")) changed.push("address");
+    if (!changed.length) return res.json({ success: true, unchanged: true, request: await toRecord(deps, r) });
+
+    const routing = await planRequestRouting(deps, {
+      clientId: r.accountId,
+      type: r.type,
+      requestedForUserId: resolved.requestedForUserId,
+      submittedByUserId: req.user!.role === "admin" ? r.submittedByUserId : req.user!.id,
+      payload: resolved.payload,
+      siteId: resolved.site?.id ?? null,
+      today: todayIso(t),
+      now: t,
+    }).catch(() => null);
+    const flow = routing?.approvalFlow ?? approvalFlowOf(r) ?? { required: false as const, reason: "Company structure unavailable; DE reviews it" };
+    const needsApproval = flow.required && flow.state === "pending" && role !== "de_admin";
+    // Waiting for approval and no longer needing it (an approver amended it, or the change removed the need): send it on.
+    const status: ServiceRequestStatus = needsApproval ? APPROVAL_STATUS : r.status === APPROVAL_STATUS ? "submitted" : r.status;
+    const by = `${person(deps, req.user!.id).name} (${ACTOR_ROLE_LABELS[role]})`;
+    const note = `Amended: ${changed.join(", ")}${needsApproval && r.status !== APPROVAL_STATUS ? ". Needs approval again." : ""}${typeof req.body?.note === "string" && req.body.note.trim() ? ` — ${req.body.note.trim().slice(0, 500)}` : ""}`;
+    const updated = await updateServiceRequest(r.id, r.revision, {
+      status,
+      requestedForUserId: resolved.requestedForUserId,
+      payload: { ...resolved.payload, ...(routing ? { contactPlan: routing.contactPlan } : {}), approvalFlow: flow },
+      siteId: resolved.site?.id ?? null,
+      site: resolved.site,
+      customAddress,
+      statusHistory: [...r.statusHistory, historyEvent(status, by, t, note)],
+    });
+    if (!updated) return res.status(409).json({ error: "This request changed; reload and try again" });
+    if (r.status === APPROVAL_STATUS && status === "submitted") await afterSubmit(deps, updated);
+    else await syncToHub(deps, updated);
+    if (needsApproval && deps.notify?.approvalNeeded && flow.required) {
+      try {
+        await deps.notify.approvalNeeded({ ...emailFor(deps, updated), to: flow.approvers });
+      } catch {
+        /* never fails the amendment */
+      }
+    }
+    res.json({ success: true, request: await toRecord(deps, (await getServiceRequest(r.id)) ?? updated) });
+  });
+
+  app.get(`${SERVICE_REQUESTS_PATH}/:id`, ...guards, async (req: AuthedRequest, res: Response) => {
+    let r = await getServiceRequest(req.params.id);
     // 404 rather than 403 for another company's request: do not confirm it exists.
-    if (!r || !canView(req.user!, r)) return res.status(404).json({ error: "Request not found" });
+    if (!r || (!canView(req.user!, r) && !(r.status !== BASKET_STATUS && (await actorRole(deps, req.user!, r))))) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+    r = await resumeIfDue(deps, r, now());
     if (r.status === BASKET_STATUS && r.submittedByUserId !== req.user!.id && req.user!.role !== "admin") {
       return res.status(404).json({ error: "Request not found" });
     }
@@ -709,14 +948,14 @@ export function registerServiceRequestRoutes(app: Express, deps: ServiceRequestR
   // Requester cancel (also removes a basket item).
   app.post(`${SERVICE_REQUESTS_PATH}/:id/cancel`, ...guards, async (req: AuthedRequest, res: Response) => {
     const r = await getServiceRequest(req.params.id);
-    if (!r || !canView(req.user!, r)) return res.status(404).json({ error: "Request not found" });
+    const role = r ? await actorRole(deps, req.user!, r) : null;
+    if (!r || !role) return res.status(404).json({ error: "Request not found" });
     if (r.status === BASKET_STATUS && r.submittedByUserId !== req.user!.id) {
       return res.status(404).json({ error: "Request not found" });
     }
-    if (r.submittedByUserId !== req.user!.id && r.requestedForUserId !== req.user!.id) {
-      return res.status(403).json({ error: "Only the requester can cancel this request" });
-    }
-    if (!USER_CANCELLABLE.includes(r.status)) {
+    // On hold: cancellable if it was when it was held.
+    const effective = r.status === HOLD_STATUS ? holdOf(r)?.resumeStatus ?? r.status : r.status;
+    if (!USER_CANCELLABLE.includes(effective)) {
       return res.status(409).json({ error: `A request that is ${STATUS_LABELS[r.status].toLowerCase()} can no longer be cancelled here. Contact the team.` });
     }
     const wasInBasket = r.status === BASKET_STATUS;
@@ -724,7 +963,10 @@ export function registerServiceRequestRoutes(app: Express, deps: ServiceRequestR
     const note = typeof req.body?.note === "string" ? req.body.note.trim().slice(0, 1000) : null;
     const updated = await updateServiceRequest(r.id, r.revision, {
       status: "cancelled",
-      statusHistory: [...r.statusHistory, historyEvent("cancelled", "requester", t, note)],
+      statusHistory: [
+        ...r.statusHistory,
+        historyEvent("cancelled", role === "requester" ? "requester" : `${person(deps, req.user!.id).name} (${ACTOR_ROLE_LABELS[role]})`, t, note),
+      ],
     });
     if (!updated) return res.status(409).json({ error: "This request changed; reload and try again" });
     if (!wasInBasket) await syncToHub(deps, updated);

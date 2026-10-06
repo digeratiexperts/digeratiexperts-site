@@ -1540,6 +1540,40 @@ export const storeOrders = pgTable("store_orders", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Store order controls (migrations/0012): a hold pauses fulfilment until a date;
+// change requests (cancel a paid order, amend) are reviewed by DE. Neither edits the order.
+export const storeOrderHolds = pgTable("store_order_holds", {
+  orderId: varchar("order_id")
+    .primaryKey()
+    .references(() => storeOrders.id, { onDelete: "cascade" }),
+  clientId: varchar("client_id"),
+  heldUntil: date("held_until", { mode: "string" }).notNull(),
+  reason: text("reason").notNull(),
+  heldByUserId: varchar("held_by_user_id"),
+  heldByName: text("held_by_name").notNull(),
+  heldByRole: text("held_by_role").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const storeOrderChangeRequests = pgTable("store_order_change_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id")
+    .notNull()
+    .references(() => storeOrders.id, { onDelete: "cascade" }),
+  orderNumber: text("order_number").notNull(),
+  clientId: varchar("client_id"),
+  kind: text("kind").notNull(),
+  details: text("details").notNull(),
+  status: text("status").notNull().default("open"),
+  requestedByUserId: varchar("requested_by_user_id"),
+  requestedByName: text("requested_by_name").notNull(),
+  requestedByRole: text("requested_by_role").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedByName: text("resolved_by_name"),
+  resolutionNote: text("resolution_note"),
+});
+
 // Quote requests for contract-only items
 export const storeQuoteRequests = pgTable("store_quote_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

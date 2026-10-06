@@ -63,6 +63,16 @@ export const srApi = {
       method: "POST",
       body: JSON.stringify({ note }),
     }),
+  team: () => request<{ requests: ServiceRequestRecord[] }>(`${SR_BASE}/team`),
+  hold: (id: string, until: string, reason: string) =>
+    request<{ request: ServiceRequestRecord }>(`${SR_BASE}/${encodeURIComponent(id)}/hold`, { method: "POST", body: JSON.stringify({ until, reason }) }),
+  resume: (id: string, note?: string) =>
+    request<{ request: ServiceRequestRecord }>(`${SR_BASE}/${encodeURIComponent(id)}/resume`, { method: "POST", body: JSON.stringify({ note }) }),
+  amend: (id: string, fields: Record<string, unknown>, revision: number, note?: string) =>
+    request<{ request: ServiceRequestRecord; unchanged?: boolean }>(`${SR_BASE}/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ fields, revision, note }),
+    }),
   attach: (id: string, file: File) =>
     request<{ attachment: { id: string; fileName: string } }>(`${SR_BASE}/${encodeURIComponent(id)}/attachments`, {
       method: "POST",

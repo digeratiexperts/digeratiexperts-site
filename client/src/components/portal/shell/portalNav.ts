@@ -141,6 +141,7 @@ export const PORTAL_ADMIN_GROUP: PortalNavGroup = {
     { href: "/portal/admin/agents", label: "Manage Agents", icon: Download, key: "other", hint: "Desktop agents", sample: true },
     { href: "/portal/admin/openai", label: "OpenAI Billing", icon: Settings, key: "other", hint: "Kill switch" },
     { href: "/portal/admin/kb", label: "Knowledge Authoring", icon: BookOpen, key: "other", hint: "Write and publish KB articles" },
+    { href: "/portal/admin/order-requests", label: "Order Change Requests", icon: Package, key: "other", hint: "Client cancellations and changes to Store orders" },
     { href: "/portal/sales-process", label: "Sales Process", icon: Briefcase, key: "other", hint: "Internal playbook" },
   ],
 };

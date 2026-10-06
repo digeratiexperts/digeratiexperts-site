@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { PortalLayout } from "../PortalLayout";
 import { Callout } from "@/components/portal/ui";
@@ -29,9 +29,14 @@ const TYPE = "return_computer" as const;
 
 export default function PortalReturnComputerRequest() {
   const form = useServiceRequestForm(TYPE);
+  const [, navigate] = useLocation();
   const { context, basketCount } = useRequestContext();
   const invalidate = useInvalidateRequests();
   const [person, setPerson] = useState<PersonOption | null>(null);
+  // Amend: show the person the request is for.
+  useEffect(() => {
+    if (form.amending) setPerson({ ...form.amending.requestedFor });
+  }, [form.amending]);
   const [done, setDone] = useState<Extract<SubmitResult, { kind: "submitted" }> | null>(null);
   const [basketNote, setBasketNote] = useState<string | null>(null);
   const { values, setField, errors } = form;
@@ -64,6 +69,7 @@ export default function PortalReturnComputerRequest() {
     const result = await form.submit(mode);
     if (!result) return;
     invalidate();
+    if (result.kind === "amended") return navigate(`/portal/requests/${result.request.id}`);
     if (result.kind === "submitted") {
       setDone(result);
       window.scrollTo({ top: 0 });
@@ -108,6 +114,8 @@ export default function PortalReturnComputerRequest() {
         </Callout>
       )}
       <ServiceRequestShell
+        amending={form.amending?.number}
+        amendError={form.amendError}
         type={TYPE}
         title="Return Computer"
         subtitle="Request return of computer"

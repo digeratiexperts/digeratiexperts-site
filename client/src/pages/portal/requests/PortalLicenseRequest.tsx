@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { PortalLayout } from "../PortalLayout";
 import { Callout } from "@/components/portal/ui";
@@ -36,9 +36,14 @@ const APPROVAL_TEXT = {
  */
 export default function PortalLicenseRequest() {
   const form = useServiceRequestForm(TYPE);
+  const [, navigate] = useLocation();
   const { context, basketCount } = useRequestContext();
   const invalidate = useInvalidateRequests();
   const [person, setPerson] = useState<PersonOption | null>(null);
+  // Amend: show the person the request is for.
+  useEffect(() => {
+    if (form.amending) setPerson({ ...form.amending.requestedFor });
+  }, [form.amending]);
   const [done, setDone] = useState<Extract<SubmitResult, { kind: "submitted" }> | null>(null);
   const [basketNote, setBasketNote] = useState<string | null>(null);
   const { values, setField, errors } = form;
@@ -68,7 +73,8 @@ export default function PortalLicenseRequest() {
   }, [platforms.length]);
   const onPlatform = licenses.filter((l) => l.platform === values.platform);
   useEffect(() => {
-    if (values.licenseKey && !onPlatform.some((l) => l.licenseKey === values.licenseKey)) setField("licenseKey", "");
+    // Only once the entitlements have loaded, so an amended request keeps its licence while they load.
+    if (ent.data && values.licenseKey && !onPlatform.some((l) => l.licenseKey === values.licenseKey)) setField("licenseKey", "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [values.platform, values.accountKind, values.requestedForUserId, licenses.length]);
 
@@ -81,6 +87,7 @@ export default function PortalLicenseRequest() {
     const result = await form.submit(mode);
     if (!result) return;
     invalidate();
+    if (result.kind === "amended") return navigate(`/portal/requests/${result.request.id}`);
     if (result.kind === "submitted") {
       setDone(result);
       window.scrollTo({ top: 0 });
@@ -118,6 +125,8 @@ export default function PortalLicenseRequest() {
         </Callout>
       )}
       <ServiceRequestShell
+        amending={form.amending?.number}
+        amendError={form.amendError}
         type={TYPE}
         title="Request a Software License"
         subtitle="Microsoft 365, Google Workspace, Zoho and add-on licences"

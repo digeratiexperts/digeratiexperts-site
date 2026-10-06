@@ -135,6 +135,8 @@ The Portal never blocks a submission on the Hub. `service_requests.hub_sync_stat
 
 ### Status lifecycles
 
+- Any open request may be put `on_hold` ("On hold") until a date, by the requester, their site / department leader or backup, the company IT contact, DE or the Hub. `fields.hold` then holds `{ until, reason, resumeStatus, by: { userId, name, role }, at }`; on `until` (or when someone resumes it) the request returns to `resumeStatus` and `fields.lastHold` records the hold. Holds last 1 to 180 days.
+- Requests can be amended while `pending_approval`, `submitted` or `under_review`; the change is a new revision whose latest status event notes what changed. An amendment that needs approval again returns the request to `pending_approval`.
 - Every type may start at `pending_approval` ("Awaiting approval") when the company needs a leader's (or IT contact's) approval: pending_approval → submitted (approved in the Portal) | rejected | cancelled. No Desk ticket exists until it is approved. Staff and the Hub may only reject or cancel it; approval happens in the Portal.
 - Loaner: submitted → under_review → device_assigned → delivered → return_due → returned → closed; rejected; cancelled (requester, before device_assigned).
 - Return: submitted → under_review → pickup_scheduled → received → restocked | disposed → closed; rejected; cancelled (requester, before pickup_scheduled).
@@ -147,7 +149,7 @@ The Portal stays the authority for status. A Hub staff change calls:
 `POST {PORTAL_ORIGIN}/api/integrations/v1/hub/service-requests/{requestId}/status`
 
 - Signed `hub_to_portal` (`HUB_TO_PORTAL_SECRET`, `X-DE-Source: techsales`), the same headers and canonical string with this path.
-- Body: `{ "status": "<status>", "note": "optional, ≤1000 chars", "revision": <optional expected revision> }`.
+- Body: `{ "status": "<status>", "note": "optional, ≤1000 chars", "revision": <optional expected revision>, "holdUntil": "YYYY-MM-DD, required when status is on_hold" }`. To put a request on hold send `status: "on_hold"` with `holdUntil` (the note is the reason); to resume early send the status in `fields.hold.resumeStatus`.
 - 200 `{ success, request }` on change; 200 `{ success, unchanged: true, request }` when the request is already in that status (safe to retry); 409 on a transition outside the lifecycle or a stale `revision`; 404 for an unknown id.
 - On success the Portal queues the new revision back to the Hub through the normal event above, so the Hub's copy updates from the Portal, not from its own write.
 

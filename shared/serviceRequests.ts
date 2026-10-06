@@ -40,8 +40,47 @@ export const BASKET_STATUS = "in_basket" as const;
  */
 export const APPROVAL_STATUS = "pending_approval" as const;
 
+/**
+ * Paused until a date (or until someone resumes it), then back to the status
+ * it was paused from (payload.hold.resumeStatus). Set by the requester, their
+ * site / department leader or backup, the IT contact, DE staff or the Hub.
+ */
+export const HOLD_STATUS = "on_hold" as const;
+export const HOLD_MAX_DAYS = 180;
+
+export type ServiceRequestHold = {
+  until: string;
+  reason: string;
+  resumeStatus: ServiceRequestStatus;
+  by: { userId: string | null; name: string; role: string };
+  at: string;
+};
+
+/** Requests can be amended until the work is under way (device or pickup arranged, licence approved by DE). */
+export const AMENDABLE_STATUSES: readonly ServiceRequestStatus[] = ["pending_approval", "submitted", "under_review"];
+
+export function canHold(status: ServiceRequestStatus): boolean {
+  return status !== "in_basket" && status !== "on_hold" && !TERMINAL_STATUSES.includes(status);
+}
+
+/** Days from today (YYYY-MM-DD) to a later YYYY-MM-DD; NaN when unparseable. */
+export function daysBetween(fromIso: string, toIso: string): number {
+  const a = Date.parse(`${fromIso}T00:00:00Z`);
+  const b = Date.parse(`${toIso}T00:00:00Z`);
+  return Math.round((b - a) / 86_400_000);
+}
+
+export function checkHoldUntil(until: unknown, today: string): string | null {
+  if (typeof until !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(until) || Number.isNaN(daysBetween(today, until))) return "Choose the date the hold ends";
+  const d = daysBetween(today, until);
+  if (d < 1) return "The hold must end tomorrow or later";
+  if (d > HOLD_MAX_DAYS) return `A hold can last up to ${HOLD_MAX_DAYS} days`;
+  return null;
+}
+
 export const LOANER_STATUSES = [
   "pending_approval",
+  "on_hold",
   "submitted",
   "under_review",
   "device_assigned",
@@ -55,6 +94,7 @@ export const LOANER_STATUSES = [
 
 export const RETURN_STATUSES = [
   "pending_approval",
+  "on_hold",
   "submitted",
   "under_review",
   "pickup_scheduled",
@@ -68,6 +108,7 @@ export const RETURN_STATUSES = [
 
 export const LICENSE_STATUSES = [
   "pending_approval",
+  "on_hold",
   "submitted",
   "under_review",
   "approved",
@@ -106,6 +147,8 @@ export const TERMINAL_STATUSES: readonly ServiceRequestStatus[] = ["closed", "re
 const LOANER_TRANSITIONS: Record<string, readonly ServiceRequestStatus[]> = {
   // Approval itself is the approver's (POST …/approval); staff can only stop it.
   pending_approval: ["rejected", "cancelled"],
+  // Resuming goes back to where it was held (payload.hold.resumeStatus); otherwise stop it.
+  on_hold: ["rejected", "cancelled"],
   submitted: ["under_review", "device_assigned", "rejected", "cancelled"],
   under_review: ["device_assigned", "rejected", "cancelled"],
   device_assigned: ["delivered", "cancelled"],
@@ -117,6 +160,8 @@ const LOANER_TRANSITIONS: Record<string, readonly ServiceRequestStatus[]> = {
 const RETURN_TRANSITIONS: Record<string, readonly ServiceRequestStatus[]> = {
   // Approval itself is the approver's (POST …/approval); staff can only stop it.
   pending_approval: ["rejected", "cancelled"],
+  // Resuming goes back to where it was held (payload.hold.resumeStatus); otherwise stop it.
+  on_hold: ["rejected", "cancelled"],
   submitted: ["under_review", "pickup_scheduled", "rejected", "cancelled"],
   under_review: ["pickup_scheduled", "rejected", "cancelled"],
   pickup_scheduled: ["received", "cancelled"],
@@ -128,6 +173,8 @@ const RETURN_TRANSITIONS: Record<string, readonly ServiceRequestStatus[]> = {
 const LICENSE_TRANSITIONS: Record<string, readonly ServiceRequestStatus[]> = {
   // Approval itself is the approver's (POST …/approval); staff can only stop it.
   pending_approval: ["rejected", "cancelled"],
+  // Resuming goes back to where it was held (payload.hold.resumeStatus); otherwise stop it.
+  on_hold: ["rejected", "cancelled"],
   submitted: ["under_review", "approved", "rejected", "cancelled"],
   under_review: ["approved", "rejected", "cancelled"],
   approved: ["fulfilled", "cancelled"],
@@ -151,6 +198,7 @@ export const USER_CANCELLABLE: readonly ServiceRequestStatus[] = [BASKET_STATUS,
 export const STATUS_LABELS: Record<ServiceRequestStatus, string> = {
   in_basket: "In basket",
   pending_approval: "Awaiting approval",
+  on_hold: "On hold",
   submitted: "Submitted",
   under_review: "Under review",
   device_assigned: "Device assigned",
