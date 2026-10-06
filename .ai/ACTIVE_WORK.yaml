@@ -2595,7 +2595,9 @@ claims:
     branch: claude/phone-hero-hotfix
     base_sha: e31bb8f2551a24820c9a86a364e9d49a2e82bdb3
     files:
-      - client/src/pages/versions/v8/sections/01-hero.css (hero plate hidden below 1180px; phone eyebrow wrap)
+      - client/src/pages/versions/v8/sections/01-hero.css (hero plate hidden below 1180px; phone tile ring above the card; phone eyebrow wrap)
+      - client/src/pages/versions/v8/sections/01-hero.tsx (--hero-plate custom property on the section only)
+      - artifacts/visual-qa/phone-hero-hotfix/**
     status: implemented
     started: 2026-10-06
     note: >-

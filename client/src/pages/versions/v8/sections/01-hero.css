@@ -118,7 +118,11 @@
   .v8 .v8s-01 .hero .v8-h1 { font-size: 2.45rem; }
   .v8 .v8s-01 .hero__sub { font-size: 17px; }
   .v8 .v8s-01 .hero__actions .v8-btn { width: 100%; }
-  .v8 .v8s-01 .win::before, .v8 .v8s-01 .win::after { display: none; }
+  .v8 .v8s-01 .win::after { display: none; }
+  /* The plate is off below 1180px, so on phones the tile ring rises behind the top of the assessment card, as it frames the card on desktop. --hero-plate is set in 01-hero.tsx. */
+  .v8 .v8s-01 .win::before { top: -96px; left: calc(-1 * var(--v8-gutter, 16px)); right: calc(-1 * var(--v8-gutter, 16px)); bottom: auto; width: auto; height: 260px; z-index: -1; border: 0; opacity: 0.75;
+    background: var(--hero-plate) 78% 30% / auto 100% no-repeat;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 40%); mask-image: linear-gradient(to bottom, transparent 0%, #000 40%); }
   .v8 .v8s-01 .win__sec { padding: 20px 18px; }
   .v8 .v8s-01 .win__bar .v8-tag { display: none; }
   .v8 .v8s-01 .win__tag-sm { display: inline-flex; margin-bottom: 12px; }
