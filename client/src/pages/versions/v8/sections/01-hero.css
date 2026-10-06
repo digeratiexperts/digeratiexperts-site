@@ -97,7 +97,8 @@
   .v8 .v8s-01 .hero .v8-h1 { font-size: clamp(2.45rem, 7vw, 4.25rem); }
   .v8 .v8s-01 .hero .v8-h1 span { white-space: normal; }
   .v8 .v8s-01 .win { max-width: 680px; }
-  .v8 .v8s-01 .hero__plate { left: 0; }
+  /* Stacked layout: the plate only reached the page as a blown-up tile behind the headline (its core sits behind the opaque card), so it is off below 1180px. Same rule as PR 492. */
+  .v8 .v8s-01 .hero__plate { display: none; }
   .v8 .v8s-01 .hero__grid { inset: 0; }
 }
 @media (max-width: 1023px) {
@@ -107,7 +108,9 @@
 }
 @media (max-width: 639px) {
   .v8 .v8s-01 .hero .v8-eyebrow .sep { display: none; }
-  .v8 .v8s-01 .hero .v8-eyebrow .l2 { display: block; margin-top: 4px; }
+  /* .v8-eyebrow is a flex row, so a block .l2 became a second squeezed column. Wrap it onto its own line, aligned with the text after the rule (24px rule + 12px gap). */
+  .v8 .v8s-01 .hero .v8-eyebrow { flex-wrap: wrap; row-gap: 4px; }
+  .v8 .v8s-01 .hero .v8-eyebrow .l2 { flex-basis: 100%; padding-left: 36px; }
   .v8 .v8s-01 .hero__position { flex-direction: column; gap: 4px; }
   .v8 .v8s-01 .hero__position li { padding: 0; }
   .v8 .v8s-01 .hero__position li + li { border-left: 0; }
