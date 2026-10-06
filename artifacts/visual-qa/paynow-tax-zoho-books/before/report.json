@@ -1,0 +1,86 @@
+{
+  "NOT_CONFIGURED-1440": {
+    "vendorsCard": 1,
+    "cardStatus": "NOT_CONFIGURED",
+    "checks": [
+      "missing",
+      "unknown",
+      "unknown"
+    ],
+    "checkoutLine": 1,
+    "lineStatus": "NOT_CONFIGURED",
+    "lineText": "Sales tax paused. Pay Now switches to a quote until Stripe Tax is set up. Status",
+    "overflowX": 0,
+    "errors": []
+  },
+  "NOT_CONFIGURED-390": {
+    "vendorsCard": 1,
+    "cardStatus": "NOT_CONFIGURED",
+    "checks": [
+      "missing",
+      "unknown",
+      "unknown"
+    ],
+    "checkoutLine": 1,
+    "lineStatus": "NOT_CONFIGURED",
+    "lineText": "Sales tax paused. Pay Now switches to a quote until Stripe Tax is set up. Status",
+    "overflowX": 0,
+    "errors": []
+  },
+  "INCOMPLETE-1440": {
+    "vendorsCard": 1,
+    "cardStatus": "INCOMPLETE",
+    "checks": [
+      "set",
+      "set",
+      "missing"
+    ],
+    "checkoutLine": 1,
+    "lineStatus": "INCOMPLETE",
+    "lineText": "Sales tax setup incomplete. Arizona clients switch to a quote until Arizona is registered in Stripe Tax. Status",
+    "overflowX": 0,
+    "errors": []
+  },
+  "INCOMPLETE-390": {
+    "vendorsCard": 1,
+    "cardStatus": "INCOMPLETE",
+    "checks": [
+      "set",
+      "set",
+      "missing"
+    ],
+    "checkoutLine": 1,
+    "lineStatus": "INCOMPLETE",
+    "lineText": "Sales tax setup incomplete. Arizona clients switch to a quote until Arizona is registered in Stripe Tax. Status",
+    "overflowX": 0,
+    "errors": []
+  },
+  "READY-1440": {
+    "vendorsCard": 1,
+    "cardStatus": "READY",
+    "checks": [
+      "set",
+      "set",
+      "active"
+    ],
+    "checkoutLine": 1,
+    "lineStatus": "READY",
+    "lineText": "Sales tax ready. Stripe Tax adds sales tax when you pay. Status",
+    "overflowX": 0,
+    "errors": []
+  },
+  "READY-390": {
+    "vendorsCard": 1,
+    "cardStatus": "READY",
+    "checks": [
+      "set",
+      "set",
+      "active"
+    ],
+    "checkoutLine": 1,
+    "lineStatus": "READY",
+    "lineText": "Sales tax ready. Stripe Tax adds sales tax when you pay. Status",
+    "overflowX": 0,
+    "errors": []
+  }
+}

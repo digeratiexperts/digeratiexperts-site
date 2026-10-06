@@ -320,8 +320,8 @@ export function registerSecureZohoStoreCheckout(
           return res.status(400).json({ error: "Valid billing name and email are required" });
         }
         const billingAddress = billingAddressValue(billing?.address);
-        const { isTaxAddress, quotePayNowSalesTax, stripeTaxKey } = await import("./services/salesTax");
-        if (stripeTaxKey() && !isTaxAddress(billingAddress)) {
+        const { booksTaxConnected, isTaxAddress, quotePayNowSalesTax } = await import("./services/salesTax");
+        if (booksTaxConnected() && !isTaxAddress(billingAddress)) {
           return res.status(400).json({
             code: "BILLING_ADDRESS_REQUIRED",
             error: "A complete US billing address is required to calculate sales tax.",
@@ -428,6 +428,7 @@ export function registerSecureZohoStoreCheckout(
           lines: taxableLines(lineItems),
           subtotal: trustedTotal,
           address: isTaxAddress(billingAddress) ? billingAddress : null,
+          reference: orderNumber,
         });
         if (!taxDecision.ok) {
           return res.status(503).json({

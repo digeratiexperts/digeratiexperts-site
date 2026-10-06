@@ -174,6 +174,21 @@ async function sendConfirmation(order: StoreOrder, items: LineItem[]): Promise<v
   }
 }
 
+/**
+ * Record the paid order as a Zoho Books invoice and payment
+ * (server/services/zohoBooksInvoice.ts). Best effort: the note says what
+ * happened, and Books trouble never stops fulfillment.
+ */
+async function recordInBooks(order: StoreOrder): Promise<string | null> {
+  try {
+    const { recordPaidOrderInBooks } = await import("./zohoBooksInvoice");
+    return await recordPaidOrderInBooks(order);
+  } catch (err: any) {
+    console.warn("[ORDER FULFILLMENT] Books invoice step failed:", err?.message || err);
+    return "booksInvoice:failed (unexpected error)";
+  }
+}
+
 async function loadOrder(id: string): Promise<StoreOrder | null> {
   const [order] = await db.select().from(storeOrders).where(eq(storeOrders.id, id)).limit(1);
   return order || null;
@@ -259,6 +274,7 @@ export async function fulfillPaidOrder(orderId: string | number): Promise<boolea
 
     await sendConfirmation(order, items);
     const deskTicketId = await createFulfillmentDeskTicket(order, items);
+    const booksNote = await recordInBooks(order);
 
     // The paid store.order_created command for the Hub is queued once, by the
     // Zoho Payments webhook at the paid transition (server/index.ts). Queuing it
@@ -269,6 +285,7 @@ export async function fulfillPaidOrder(orderId: string | number): Promise<boolea
       order.notes?.trim() || "",
       `${FULFILLED_NOTE_MARKER} at ${fulfilledAt}`,
       deskTicketId ? `deskTicket:${deskTicketId}` : "deskTicket:skipped",
+      booksNote ?? "",
     ].filter(Boolean);
 
     const [completed] = await db
