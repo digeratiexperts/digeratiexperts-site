@@ -87,11 +87,17 @@ Decided 2026-10-03 (Joe delegated the choice; PR 407 and its follow-up). Provide
 - **The order record** keeps the billing address and a one-line note with the Books tax lines and the draft estimate number, and says if the draft could not be deleted.
 - **Setup, once.** Done by Joe or whoever has the Books admin login:
   1. In Zoho Books (org "Digerati Experts", 693714437): Settings → Taxes → turn on Sales Tax Automation and add DE's Arizona registration.
-  2. Create one service item for website services and set its tax category; create one contact for tax checks.
-  3. In the Zoho API Console self-client, generate a code with `ZohoBooks.estimates.CREATE,ZohoBooks.estimates.DELETE,ZohoBooks.settings.READ,ZohoBooks.contacts.READ` and exchange it for a refresh token.
+  2. The service item and the tax-check contact already exist (created 2026-10-05): item "Website IT services (Pay Now)" `1957016000006629001` (SKU `DE-WEB-PAYNOW-SERVICES`) and contact "DE Website Tax Check" `1957016000006631001`. Once automation is on, set the item's tax category in Books.
+  3. In the Zoho API Console self-client, generate a code with `ZohoBooks.estimates.CREATE,ZohoBooks.estimates.DELETE,ZohoBooks.settings.READ,ZohoBooks.contacts.READ,ZohoBooks.contacts.CREATE,ZohoBooks.invoices.CREATE,ZohoBooks.invoices.READ,ZohoBooks.customerpayments.CREATE` and exchange it for a refresh token.
   4. On the production server set `ZOHO_BOOKS_ORGANIZATION_ID`, `ZOHO_BOOKS_REFRESH_TOKEN`, `ZOHO_BOOKS_TAX_CONTACT_ID` and `ZOHO_BOOKS_SERVICE_ITEM_ID` (and `ZOHO_BOOKS_CLIENT_ID`/`_SECRET` if the token came from a different self-client than `ZOHO_CLIENT_ID_API`).
 - **Readiness check** (2026-10-05). Code: `server/services/salesTaxReadiness.ts`, `GET /api/internal/warehouse/tax-status`. It is staff-only and returns a generic 404 to anyone else.
   - It reads the Books organization (is a sales tax registration on?), the service item and the tax-check contact with the same token. It never creates or changes anything, and the answer is cached for 5 minutes.
   - Statuses: `READY`, `NOT_CONFIGURED`, `AUTH_REQUIRED`, `INCOMPLETE` or `UNKNOWN`. A failed check never reads READY. `NOT_CONFIGURED` names the missing settings, never their values.
   - Staff see it in two places: the full card under **Vendors → Site integrations**, and one line under Staff Pay Now on the checkout.
-- **Sales records.** Pay Now does not yet record the paid order as a Books invoice. Until it does, Arizona TPT returns need the Pay Now orders added from the order records.
+- **Sales records in Books** (2026-10-05). When Zoho Payments confirms an order, fulfillment records it in Books once (`server/services/zohoBooksInvoice.ts`):
+  1. Find the customer by billing email, or create them with the billing address.
+  2. Create an invoice with the website order number as its reference, using the same Books items, so Sales Tax Automation taxes it the way checkout did. Books does not email it; DE's own confirmation already went out.
+  3. Only when the invoice total equals what Zoho Payments charged: mark it sent and record the payment against it (mode credit card, reference the Zoho payment id, deposit account `ZOHO_BOOKS_DEPOSIT_ACCOUNT_ID` or Books' default).
+  - A mismatch leaves the invoice as a draft for staff. A retried fulfillment finds the invoice by order number and creates nothing new.
+  - Books trouble never stops fulfillment. The order notes end with one line saying what happened, for example `booksInvoice:INV-000123 paid`, `booksInvoice:INV-000123 left as draft (Books total $…, paid $…)` or `booksInvoice:failed (…)`.
+  - Set `ZOHO_BOOKS_RECORD_PAID_ORDERS=false` to turn it off.

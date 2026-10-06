@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   eventEmit: vi.fn(),
   createTicket: vi.fn(),
   getContactByEmail: vi.fn(),
+  recordPaidOrderInBooks: vi.fn(),
 }));
 
 vi.mock("../db", () => ({ db: mocks.db }));
@@ -28,6 +29,9 @@ vi.mock("../zoho/zohoDesk", () => ({
     createTicket: mocks.createTicket,
     getContactByEmail: mocks.getContactByEmail,
   },
+}));
+vi.mock("./zohoBooksInvoice", () => ({
+  recordPaidOrderInBooks: mocks.recordPaidOrderInBooks,
 }));
 vi.mock("../eventBus", () => ({
   eventBus: { emit: mocks.eventEmit },
@@ -89,6 +93,7 @@ beforeEach(() => {
   mocks.eventEmit.mockReset().mockResolvedValue(undefined);
   mocks.createTicket.mockReset();
   mocks.getContactByEmail.mockReset();
+  mocks.recordPaidOrderInBooks.mockReset().mockResolvedValue(null);
 
   mocks.db.update.mockReset().mockImplementation(() => ({
     set: (values: Record<string, unknown>) => {
@@ -111,6 +116,24 @@ beforeEach(() => {
 });
 
 describe("paid-order fulfillment behavior", () => {
+  it("records the paid order in Zoho Books and keeps the outcome on the order notes", async () => {
+    mocks.recordPaidOrderInBooks.mockResolvedValueOnce("booksInvoice:INV-000123 paid");
+    updateResults.push([{ ...paidOrder }], [{ id: paidOrder.id }]);
+
+    await expect(fulfillPaidOrder(paidOrder.id)).resolves.toBe(true);
+    expect(mocks.recordPaidOrderInBooks).toHaveBeenCalledWith(expect.objectContaining({ orderNumber: "ORD-TEST-1" }));
+    expect(updateSets[1]).toMatchObject({ status: "completed" });
+    expect(String(updateSets[1].notes)).toMatch(/deskTicket:skipped \| booksInvoice:INV-000123 paid$/);
+  });
+
+  it("finishes fulfillment even when the Books step throws", async () => {
+    mocks.recordPaidOrderInBooks.mockRejectedValueOnce(new Error("books down"));
+    updateResults.push([{ ...paidOrder }], [{ id: paidOrder.id }]);
+
+    await expect(fulfillPaidOrder(paidOrder.id)).resolves.toBe(true);
+    expect(String(updateSets[1].notes)).toMatch(/booksInvoice:failed \(unexpected error\)$/);
+  });
+
   it("allows only one concurrent caller to own the paid -> provisioning claim", async () => {
     let releaseConfirmation!: () => void;
     const confirmationGate = new Promise<boolean>((resolve) => {

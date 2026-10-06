@@ -24,7 +24,7 @@ function zoho(answers: { token?: Answer; org?: Answer; item?: Answer; contact?: 
       url === ZOHO_ACCOUNTS_TOKEN_URL
         ? answers.token ?? { access_token: "1000.fake.access", expires_in: 3600 }
         : path === `/organizations/${ORG}`
-          ? answers.org ?? { code: 0, organization: { organization_id: ORG, is_tax_registered: true } }
+          ? answers.org ?? { code: 0, organization: { organization_id: ORG, tax_settings: { is_tax_registered: true, tax_reg_no: "" } } }
           : path === `/items/${ITEM}`
             ? answers.item ?? { code: 0, item: { item_id: ITEM, status: "active" } }
             : path === `/contacts/${CONTACT}`
@@ -87,9 +87,14 @@ describe("Zoho Books sales tax readiness for staff Pay Now", () => {
   });
 
   it("is INCOMPLETE until Books has a sales tax registration", async () => {
-    const r = await run(zoho({ org: { code: 0, organization: { organization_id: ORG, is_tax_registered: false } } }));
+    // The shape Books returned live for "Digerati Experts" on 2026-10-05, before setup.
+    const r = await run(zoho({ org: { code: 0, organization: { organization_id: ORG, tax_settings: { is_tax_registered: false, tax_reg_no: "" } } } }));
     expect(r).toMatchObject({ status: "INCOMPLETE", checks: { taxRegistration: "missing" } });
     expect(r.message).toMatch(/Sales Tax Automation/);
+    // A top-level flag is not where Books keeps it, so it never counts.
+    resetZohoBooksToken();
+    const topLevel = await run(zoho({ org: { code: 0, organization: { organization_id: ORG, is_tax_registered: true } } }));
+    expect(topLevel.checks.taxRegistration).toBe("missing");
   });
 
   it("is INCOMPLETE when the service item or the contact is missing or inactive", async () => {

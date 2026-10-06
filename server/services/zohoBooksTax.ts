@@ -11,11 +11,13 @@ import { BOOKS_ID_PATTERN, parseTaxItemOverrides, type StoreCategory } from "@sh
  * Nothing is sent to the customer. Zoho Payments still charges the card; Books
  * only supplies the number.
  *
- * The server's own Books token (a self-client refresh token) needs only:
+ * The server's own Books token (a self-client refresh token) needs, for tax:
  *   ZohoBooks.estimates.CREATE, ZohoBooks.estimates.DELETE,
  *   ZohoBooks.settings.READ, ZohoBooks.contacts.READ
- * It can create and delete estimates and read settings, nothing else: no
- * invoices, payments or customer changes.
+ * and, to record paid orders (server/services/zohoBooksInvoice.ts):
+ *   ZohoBooks.contacts.CREATE, ZohoBooks.invoices.CREATE,
+ *   ZohoBooks.invoices.READ, ZohoBooks.customerpayments.CREATE
+ * Nothing that deletes invoices, payments or customers, or changes settings.
  */
 
 export const ZOHO_BOOKS_API = "https://www.zohoapis.com/books/v3";

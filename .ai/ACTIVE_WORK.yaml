@@ -2350,6 +2350,15 @@ claims:
       documentation: DE-SYSTEM-INTEGRATION.md now lists the Tech Tool, licence
       and Microsoft Admin worker paths, and the Tool's command-line cheat sheet
       has the Hub sends and the job worker.
+      RELEASED 2026-10-05: Joe, "merge 438 and 343". Merged as 12c3b5f4 (PR
+      438). Tool-only: nothing deploys from this repository; it ships through
+      New-DEReleasePackage.ps1. All CI passed on a9d8b549 and on main at
+      12c3b5f4, including Windows PowerShell 5.1 and the WPF smoke render.
+      The DE Tech Tool 1.10.3 release zip (build DE-1.10.3-202610050024-63d4fc,
+      sourceCommit 12c3b5f4) and the DE Microsoft Admin 0.6.0 zip were built
+      from 12c3b5f4. Item 4 shipped in Intelligence-Hub PR 343 (master
+      44185ad8: regenerated API client, frontend bundle byte-identical).
+      VERIFIED LIVE as a Tool release. Files released.
   - id: a11y-gate-serious
     owner: claude
     subsystem: tooling-ci
@@ -2425,15 +2434,6 @@ claims:
       Warehouse Vendors page and as one line under Staff Pay Now, so the
       Stripe setup confirms itself without a test charge. Never reads READY
       on a failed check. Public Store never asks for it.
-      RELEASED 2026-10-05: Joe, "merge 438 and 343". Merged as 12c3b5f4 (PR
-      438). Tool-only: nothing deploys from this repository; it ships through
-      New-DEReleasePackage.ps1. All CI passed on a9d8b549 and on main at
-      12c3b5f4, including Windows PowerShell 5.1 and the WPF smoke render.
-      The DE Tech Tool 1.10.3 release zip (build DE-1.10.3-202610050024-63d4fc,
-      sourceCommit 12c3b5f4) and the DE Microsoft Admin 0.6.0 zip were built
-      from 12c3b5f4. Item 4 shipped in Intelligence-Hub PR 343 (master
-      44185ad8: regenerated API client, frontend bundle byte-identical).
-      VERIFIED LIVE as a Tool release. Files released.
       RELEASED 2026-10-05: squash-merged as ba5022f (PR 466). Production
       runs 828fa32, which contains it (/api/health release, built 04:44Z).
       The staff route answers 404 to anonymous visitors. Playwright at 1440
@@ -2482,6 +2482,8 @@ claims:
     files:
       - server/services/salesTax.ts, server/services/salesTax.test.ts (the Pay Now provider: Stripe Tax replaced by Zoho Books)
       - server/services/zohoBooksTax.ts (new), server/services/zohoBooksTax.test.ts (new)
+      - server/services/zohoBooksInvoice.ts (new), server/services/zohoBooksInvoice.test.ts (new)
+      - server/services/orderFulfillment.ts (the Books invoice step only), server/services/orderFulfillment.behavior.test.ts (the Books mock and two cases only)
       - server/services/salesTaxReadiness.ts (new, replaces stripeTaxReadiness.ts), server/services/salesTaxReadiness.test.ts (new, replaces stripeTaxReadiness.test.ts)
       - shared/storeTaxCodes.ts, shared/storeTaxCodes.test.ts (Stripe tax codes replaced by Books service-item mapping)
       - server/secureStoreCheckout.ts (the tax-provider check and the order note only)
@@ -2502,3 +2504,17 @@ claims:
       unchanged: no Books connection, a failed answer, or a Books org without
       a tax registration switches the cart to a quote. Overlap check
       2026-10-05: no active claim and no open PR touches these files.
+      Joe, 2026-10-06: "Yes and everything else you mention". Created in Books
+      org 693714437 through the Books connector: item "Website IT services
+      (Pay Now)" 1957016000006629001 and contact "DE Website Tax Check"
+      1957016000006631001. One draft estimate in the exact request shape the
+      site sends was created and deleted (EST-000001): Books kept the
+      estimate's own shipping address and returned estimate_id, sub_total,
+      tax_total, total and taxes; tax was $0 because automation is off. The
+      organization reads tax_settings.is_tax_registered=false, so the
+      readiness check now reads that nested flag. Paid Zoho Payments orders
+      are now recorded as a Books invoice plus payment at fulfillment (only
+      when Books' invoice total equals what was charged; otherwise a draft
+      for staff), never blocking fulfillment. Also moved the PR 438 release
+      paragraph from paynow-tax-readiness to de-techtool-unattended-and-warranty,
+      where it belongs.

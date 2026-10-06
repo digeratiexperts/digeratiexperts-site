@@ -46,12 +46,14 @@ function exists(reply: BooksReply, key: "item" | "contact"): Check {
 
 /**
  * Books marks an organization registered for sales tax once Sales Tax
- * Automation has DE's registration (is_tax_registered on the organization).
+ * Automation has DE's registration. GET /organizations/{id} nests the flag as
+ * organization.tax_settings.is_tax_registered (read live 2026-10-05: false for
+ * "Digerati Experts" before setup).
  */
 function registration(reply: BooksReply): SalesTaxReadiness["checks"]["taxRegistration"] {
   if (!reply.ok) return "unknown";
   const org = reply.body?.organization ?? {};
-  return org.is_tax_registered === true || org.is_registered_for_tax === true ? "active" : "missing";
+  return org.tax_settings?.is_tax_registered === true ? "active" : "missing";
 }
 
 export async function checkSalesTaxReadiness(
@@ -89,7 +91,7 @@ export async function checkSalesTaxReadiness(
       status: "AUTH_REQUIRED",
       checks: { connection: "set", taxRegistration: "unknown", serviceItem: "unknown", taxContact: "unknown" },
       missingSettings,
-      message: "Zoho refused the Books token. Generate a new self-client code with the four Books scopes and replace ZOHO_BOOKS_REFRESH_TOKEN on the server.",
+      message: "Zoho refused the Books token. Generate a new self-client code with the Books scopes in docs/STORE-WAREHOUSE.md and replace ZOHO_BOOKS_REFRESH_TOKEN on the server.",
     };
   }
 
@@ -135,7 +137,7 @@ export async function checkSalesTaxReadiness(
       checks,
       missingSettings,
       message: forbidden
-        ? "The Books token is missing a scope. It needs ZohoBooks.estimates.CREATE, estimates.DELETE, settings.READ and contacts.READ."
+        ? "The Books token is missing a scope. Generate it again with every Books scope listed in docs/STORE-WAREHOUSE.md."
         : "Zoho Books did not answer the readiness check. Pay Now still switches to a quote if Books cannot calculate tax.",
     };
   }
