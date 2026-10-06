@@ -335,7 +335,7 @@ describe("Hub delivery", () => {
       expect(envelope.eventType).toBe("service_request.upserted");
       expect(envelope.source).toBe("portal");
       expect(envelope.canonicalAccountId).toBe("41");
-      expect(envelope.payload).toMatchObject({ contractVersion: 1, requestId: request.id, number: request.number, status: "submitted", revision: 1 });
+      expect(envelope.payload).toMatchObject({ contractVersion: 1, requestId: request.id, number: request.number, status: "submitted", revision: request.revision });
       expect(mine!.headers["x-de-event-id"]).toBe(envelope.eventId);
       const bodyHash = createHash("sha256").update(mine!.body).digest("hex");
       const expected = createHmac("sha256", "portal-to-hub-test-secret")
