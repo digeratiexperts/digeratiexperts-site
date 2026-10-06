@@ -122,6 +122,9 @@ import { registerPortalDepartmentRoutes } from "./portalDepartmentRoutes";
 import { registerPortalTenantFileRoutes } from "./portalTenantFileRoutes";
 import { registerPortalIntegrationStatusRoute } from "./portalIntegrations";
 import { registerManualRecordAdminRoutes } from "./portalManualRecords";
+import { registerHubServiceRequestStatusRoute, registerServiceRequestRoutes, type ServiceRequestRouteDeps } from "./serviceRequestRoutes";
+import { requireDeSyncAuth } from "./integrations/deSyncAuth";
+import { registerPortalAssistRoutes } from "./portalAssistRoutes";
 import { registerPortalDataSourceRoutes } from "./portalDataSources";
 import { registerPortalVpnRoutes } from "./integrations/vpn/routes";
 import { registerPortalPhoneRoutes } from "./integrations/phone/routes";
@@ -1171,6 +1174,61 @@ export async function registerRoutes(app: Express) {
   registerPortalPhoneRoutes(app, { guards: [authMiddleware] });
   registerPortalShippingRoutes(app, { guards: [authMiddleware] });
   registerManualRecordAdminRoutes(app, { guards: [authMiddleware, requireAdmin, validateInput] });
+
+  // Service requests (Request Loaner Computer, Return Computer): server/serviceRequestRoutes.ts.
+  const serviceRequestDeps: ServiceRequestRouteDeps = {
+    guards: [authMiddleware, validateInput],
+    adminGuards: [authMiddleware, requireAdmin, validateInput],
+    getClient: (id) => portalClients.get(id),
+    findUser: (id) => {
+      const u: any = findUserById(id);
+      if (!u) return undefined;
+      return { id: u.id, clientId: u.clientId ?? null, fullName: u.fullName, email: u.email, isActive: u.isActive };
+    },
+    listClientUsers: (clientId) =>
+      listClientUsers(clientId).map((u: any) => ({
+        id: u.id,
+        clientId: u.clientId ?? null,
+        fullName: u.fullName,
+        email: u.email,
+        isActive: u.isActive,
+      })),
+    // Linked Zoho Desk ticket, as for portal tickets: skipped when Zoho is not
+    // configured, and a Desk failure never fails the request (no ticket id is stored).
+    createDeskTicket: async ({ subject, description, email }) => {
+      try {
+        const { zohoClient } = await import("./zoho/zohoClient");
+        if (!zohoClient.isConfigured()) return null;
+        const { zohoDeskService } = await import("./zoho/zohoDesk");
+        let contactId: string | undefined;
+        try {
+          contactId = email ? (await zohoDeskService.getContactByEmail(email))?.id : undefined;
+        } catch {
+          contactId = undefined;
+        }
+        const ticket = await zohoDeskService.createTicket({
+          source: "client-portal",
+          subject,
+          description,
+          contactId,
+          email: contactId ? undefined : email || undefined,
+          priority: "Medium",
+        });
+        return ticket?.id ? String(ticket.id) : null;
+      } catch (error: any) {
+        console.warn("[service-requests] Zoho Desk ticket not created:", error?.message || error);
+        return null;
+      }
+    },
+  };
+  registerServiceRequestRoutes(app, serviceRequestDeps);
+  registerHubServiceRequestStatusRoute(app, serviceRequestDeps, requireDeSyncAuth("hub_to_portal"));
+  // Ask DE help chat in the portal (server/portalAssistRoutes.ts, advisor portal mode).
+  registerPortalAssistRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    getClient: serviceRequestDeps.getClient,
+    findUser: serviceRequestDeps.findUser,
+  });
   registerPortalDataSourceRoutes(app, { guards: [authMiddleware, requireAdmin, validateInput] });
 
   // ----- Approvals -----

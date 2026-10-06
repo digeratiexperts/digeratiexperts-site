@@ -82,6 +82,7 @@ export type NavKey =
   | "dashboard"
   | "tickets"
   | "forms"
+  | "requests"
   | "infrastructure"
   | "chat"
   | "approvals"
@@ -104,6 +105,7 @@ export function navAllowed(user: PortalUserSession | null, key: NavKey): boolean
     "dashboard",
     "tickets",
     "forms",
+    "requests",
     "infrastructure",
     "contracts",
     "kb",

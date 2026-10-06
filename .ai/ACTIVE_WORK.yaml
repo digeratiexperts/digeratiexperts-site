@@ -2589,3 +2589,29 @@ claims:
       ("all approved here"), implemented in portal.css with a before/after
       set; C replaces the 2026-10-03 orchid light theme, so Joe confirms the
       screenshots before merge.
+  - id: portal-service-requests
+    owner: claude
+    subsystem: portal-service-requests
+    branch: claude/portal-service-requests
+    base_sha: e31bb8f
+    files:
+      - shared/serviceRequests.ts (new) + shared/serviceRequests.test.ts (new)
+      - shared/schema.ts (serviceRequests + serviceRequestAttachments tables only)
+      - migrations/0009_service_requests.sql (new)
+      - server/serviceRequestStore.ts, serviceRequestRoutes.ts, serviceRequestHubSync.ts, portalAssistRoutes.ts (new) + tests
+      - server/services/msp-advisor/portal-assist.ts (new) and index.ts (exports appended only)
+      - server/routes.ts (service request + portal assist registration block only)
+      - server/portalManualRecords.ts (site + computer_asset kinds only)
+      - server/integrations/deSyncContract.ts, deSyncContract.fixture.json, techSalesClient.ts, deSyncWorker.ts (service_request.upserted event, its Hub path, sync status hook)
+      - client/src/pages/portal/requests/** (new), client/src/components/portal/requests/** (new), client/src/components/portal/assist/** (new)
+      - client/src/lib/serviceRequestsApi.ts (new), client/src/App.tsx (the five /portal/requests routes only)
+      - client/src/components/portal/shell/portalNav.ts + client/src/lib/portalRoles.ts (Service Requests nav item and its key only)
+      - docs/SERVICE-REQUESTS-HUB-CONTRACT.md (new)
+    status: active
+    started: 2026-10-06
+    note: >-
+      Joe, 2026-10-06: build "Request Loaner Computer" and "Return Computer" in
+      the Client Portal from his reference screenshots, plus a bottom-right
+      Ask DE help chat, with the Portal DB as the source of truth and a signed
+      copy to the Hub (Hub side in Intelligence-Hub, separate change). Draft
+      PR for diff review; no merge, deploy or production migration.
