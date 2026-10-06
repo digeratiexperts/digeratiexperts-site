@@ -2489,3 +2489,25 @@ claims:
       and "Deploy and verify production VPS". The DE Tech Tool 1.10.4 release
       zip (build DE-1.10.4-202610050518-568c45, sourceCommit f0c31343) was
       built from f0c31343. VERIFIED LIVE as a Tool release. Files released.
+  - id: home-imagery-match
+    owner: claude
+    subsystem: public-marketing-visual-layer
+    branch: claude/home-imagery-match
+    base_sha: d0d07e8a05404c624e46f9480f51152ef1d70a4d
+    files:
+      - client/src/pages/versions/v8/sections/10-industries.tsx (CPA card image only)
+      - client/src/pages/versions/v8/sections/01-hero.css (hero plate hidden below 1180px)
+      - client/src/assets/industries/cpa-calculator-2026-10-06.webp (new)
+      - .claude/kie-budget/ledger.jsonl (job home-cpa-card-2026-10-06)
+      - artifacts/visual-qa/home-imagery-match/**
+    status: implemented
+    started: 2026-10-06
+    note: >-
+      Joe, 2026-10-06: "the imagery is still not smartly matched" then "yes do
+      both, generate the CPA image". Scope is the two mismatches only: the CPA
+      card showed Turkish law books; the hero plate showed as a blown-up tile
+      behind the phone headline. Desktop hero placement is left as is pending
+      Joe's choice (three placements tried, screenshots kept). Older homepage
+      versions (v1, v3, v7, sections/) still use the law-book photo and are
+      deliberately untouched. Concurrency audit 2026-10-06: open PRs 489 and
+      490 touch none of these files.
