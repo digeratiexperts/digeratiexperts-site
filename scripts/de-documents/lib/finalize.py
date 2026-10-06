@@ -79,6 +79,28 @@ def wrap_list_bodies(pdf):
     return len(moved)
 
 
+# PDF 2.0 structure types and their nearest PDF 1.7 standard type (ISO 32000-2, 14.8.4).
+PDF2_ROLES = {"Strong": "Span", "Em": "Span", "Sub": "Span", "Title": "P", "FENote": "Note", "Aside": "Div", "DocumentFragment": "Div"}
+
+
+def map_pdf2_roles(pdf):
+    """PDF/UA 7.1-5: Chromium 151 tags <b>/<strong> as /Strong (and <em> as
+    /Em), types PDF 1.7 does not define. Role-map the ones in use to their
+    PDF 1.7 equivalent; keep existing entries, never remap standard types.
+    Same mapping as server/pdf/finalizePdf.ts. Returns the types added."""
+    root = pdf.Root.get("/StructTreeRoot")
+    if root is None:
+        return []
+    used = {str(e.S)[1:] for e in _struct_elems(root.get("/K"), [])} & PDF2_ROLES.keys()
+    role_map = root.get("/RoleMap")
+    if role_map is None:
+        role_map = root.RoleMap = pikepdf.Dictionary()
+    added = sorted(t for t in used if "/" + t not in role_map)
+    for t in added:
+        role_map["/" + t] = pikepdf.Name("/" + PDF2_ROLES[t])
+    return added
+
+
 def describe_links(pdf, src):
     """PDF/UA 7.18.1 / 7.18.5: every link annotation needs a text alternative.
     Use the visible text under the link, plus where it goes."""
@@ -111,6 +133,7 @@ path, meta = sys.argv[1], json.loads(sys.argv[2])
 with pikepdf.open(path, allow_overwriting_input=True) as pdf:
     describe_links(pdf, path)  # reads text from the file as Chromium wrote it
     wrap_list_bodies(pdf)
+    map_pdf2_roles(pdf)
     mark_artifacts(pdf)
     with pdf.open_metadata(set_pikepdf_as_editor=False) as xmp:
         xmp["dc:title"] = meta["title"]

@@ -104,6 +104,7 @@ Evidence: `artifacts/visual-qa/resource-pdfs-redesign-2026-10/`.
 **Automated validation (machine-checkable rules only):**
 - All 13 PDFs **pass veraPDF 1.30.2, PDF/UA-1 profile** (ISO 14289-1). The originals failed 7 rules each, with 128–174 failed checks per file.
 - `finalize.py` makes them pass: link text alternatives, `LBody` inside list items, artifact marking, and the PDF/UA identifier.
+- Chromium 151 tags `<b>`/`<strong>` as the PDF 2.0 type `/Strong`, which PDF 1.7 does not define (veraPDF 7.1-5). `finalize.py` role-maps such types to their PDF 1.7 equivalent, the same mapping as `server/pdf/finalizePdf.ts`. Without it, all 13 failed when built with Chromium 151 (checked 2026-10-06). The published 13 predate Chromium 151 and pass as they are.
 - `verify.py` runs veraPDF when `VERAPDF` points at its CLI and fails the build on any PDF/UA-1 failure.
 - `finalize.py` writes the PDF/UA identifier on every build, so **publish only with `VERAPDF` set**. That way the identifier is backed by a passing check; the published 13 were built that way.
 
