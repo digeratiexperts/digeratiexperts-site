@@ -2508,3 +2508,20 @@ claims:
       10.7.3, @google-cloud/storage 7.22.0. Audit exits 0 (5 moderate
       remain, below the gate). Overlap check: no other open PR touches the
       lockfile.
+  - id: portal-grey-ladder-concepts
+    owner: claude
+    subsystem: portal-design
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: 8cbffda
+    files:
+      - artifacts/design-concepts/portal-grey-ladder/** (new; concepts only, no client/ change)
+    status: active
+    started: 2026-10-06
+    note: >-
+      Joe, 2026-10-04 (kie.ai billing screen: "the shades of grey in the
+      order they are with the blue ... you can do that") and 2026-10-06 ("do
+      all these", Client Portal dashboard first). Exploration Mode: three
+      standalone dashboard concepts (A neutral steps, B graphite steps, C
+      light steps) with EXAMPLE data and 390/768/1440 shots. Provisional
+      recommendation B (dark) + C (light); Joe picks before any portal.css
+      change.
