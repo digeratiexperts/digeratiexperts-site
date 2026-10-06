@@ -2508,7 +2508,7 @@ claims:
       - client/src/pages/store/Checkout.tsx (the Pay Now tax status line only), client/src/pages/store/Checkout.tax.test.ts
       - docs/STORE-WAREHOUSE.md (Pay Now sales tax section), deploy/vps/env.production.example (the sales tax lines only)
       - artifacts/visual-qa/paynow-tax-zoho-books/**
-    status: active
+    status: verified-live
     started: 2026-10-05
     note: >-
       Joe, 2026-10-05: "yes switch to zoho books", after confirming Zoho
@@ -2533,6 +2533,16 @@ claims:
       for staff), never blocking fulfillment. Also moved the PR 438 release
       paragraph from paynow-tax-readiness to de-techtool-unattended-and-warranty,
       where it belongs.
+      RELEASED 2026-10-06: Joe, "Continue". Merged as 6de916f (PR 489) after
+      CI passed on b631c8b. Production runs f7e2662, which contains it
+      (/api/health release, built 03:14Z). The staff tax-status route answers
+      404 to anonymous visitors. Playwright at 1440 and 390 against
+      production code (staff session and tax-status replies stubbed) rendered
+      the Zoho Books card and the Staff Pay Now line for NOT_CONFIGURED,
+      INCOMPLETE and READY, with no overflow or page errors. Expected live
+      state until the Books settings are on the server: NOT_CONFIGURED.
+      Evidence: artifacts/visual-qa/paynow-tax-zoho-books/live/. VERIFIED
+      LIVE. Files released.
   - id: npm-audit-fix-2026-10-06
     owner: claude
     subsystem: tooling-ci
@@ -2540,7 +2550,7 @@ claims:
     base_sha: d0d07e8
     files:
       - package-lock.json (npm audit fix --omit=dev --package-lock-only; package.json unchanged)
-    status: active
+    status: verified-live
     started: 2026-10-06
     note: >-
       Joe, 2026-10-06: "Separate small PR". CI's npm audit (--omit=dev
@@ -2552,6 +2562,11 @@ claims:
       10.7.3, @google-cloud/storage 7.22.0. Audit exits 0 (5 moderate
       remain, below the gate). Overlap check: no other open PR touches the
       lockfile.
+      RELEASED 2026-10-06: Joe, "Continue". Merged as 8cbffda (PR 490); main
+      CI passed, including "Deploy and verify production VPS". Production ran
+      8cbffda (built 03:00Z) and now f7e2662, which contains it; /, /store and
+      /api/health answer 200. npm audit --omit=dev --audit-level=high exits
+      0 on main. VERIFIED LIVE. Files released.
   - id: portal-grey-ladder-concepts
     owner: claude
     subsystem: portal-design
