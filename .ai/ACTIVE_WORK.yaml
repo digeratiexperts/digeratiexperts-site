@@ -2215,6 +2215,12 @@ claims:
       hosts, deploy job passed, live entry index-B14dCa_B.js and
       portal-D0pHb8rv.css match the local build and carry the new inks (no
       old ones). Files released.
+      SUPERSEDED 2026-10-06 (light field and glow only): Joe approved grey
+      ladder B (dark) + C (light), and aaf189e7 (claim
+      portal-grey-ladder-concepts) replaced the orchid field and the
+      .pt-canvas glow with neutral grey steps; the PR 412 state inks and
+      portalLightTheme.test.ts carry on there. Checked live 2026-10-07: the
+      portal CSS has the 412 inks and no orchid or glow. Nothing to revert.
     note: >-
       Joe, 2026-10-03: portal light mode is liked but "the light grey I would
       replace with an ambent color". Options rendered (A amber, B Ambient, C
