@@ -275,7 +275,7 @@ function New-DELocationCode {
     $parts.Add((ConvertTo-DELocationToken -Value $Region -Field 'region' -Min 2 -Max 3))
 
     if ($Remote) {
-        if ($Site.HasValue -or $Building.HasValue -or $Floor.HasValue -or $Room.HasValue -or $Station.HasValue) {
+        if ($null -ne $Site -or $null -ne $Building -or $null -ne $Floor -or $null -ne $Room -or $null -ne $Station) {
             throw 'remote location must not encode site/building/floor/room/station'
         }
         $parts.Add('REM')
@@ -283,21 +283,21 @@ function New-DELocationCode {
     }
 
     if (-not $City) { throw 'city is required for a physical location' }
-    if (-not $Site.HasValue) { throw 'site is required for a physical location' }
+    if ($null -eq $Site) { throw 'site is required for a physical location' }
 
     $parts.Add((ConvertTo-DELocationToken -Value $City -Field 'city' -Min 3 -Max 5))
-    $parts.Add((Format-DELocationOrdinal -Prefix 'S' -Value $Site.Value -Width 2 -Field 'site'))
+    $parts.Add((Format-DELocationOrdinal -Prefix 'S' -Value $Site -Width 2 -Field 'site'))
 
-    if ($Building.HasValue) { $parts.Add((Format-DELocationOrdinal -Prefix 'B' -Value $Building.Value -Width 2 -Field 'building')) }
-    if ($Floor.HasValue) { $parts.Add((Format-DELocationOrdinal -Prefix 'F' -Value $Floor.Value -Width 2 -Field 'floor')) }
-    if ($Room.HasValue) { $parts.Add((Format-DELocationOrdinal -Prefix 'R' -Value $Room.Value -Width 4 -Field 'room')) }
+    if ($null -ne $Building) { $parts.Add((Format-DELocationOrdinal -Prefix 'B' -Value $Building -Width 2 -Field 'building')) }
+    if ($null -ne $Floor) { $parts.Add((Format-DELocationOrdinal -Prefix 'F' -Value $Floor -Width 2 -Field 'floor')) }
+    if ($null -ne $Room) { $parts.Add((Format-DELocationOrdinal -Prefix 'R' -Value $Room -Width 4 -Field 'room')) }
 
-    if ($Station.HasValue -or $StationType) {
-        if (-not $Station.HasValue -or -not $StationType) {
+    if ($null -ne $Station -or $StationType) {
+        if ($null -eq $Station -or -not $StationType) {
             throw 'station and stationType must be supplied together'
         }
         $prefix = $(if ($StationType -eq 'desk') { 'D' } else { 'C' })
-        $parts.Add((Format-DELocationOrdinal -Prefix $prefix -Value $Station.Value -Width 3 -Field 'station'))
+        $parts.Add((Format-DELocationOrdinal -Prefix $prefix -Value $Station -Width 3 -Field 'station'))
     }
 
     return ($parts -join '-')
