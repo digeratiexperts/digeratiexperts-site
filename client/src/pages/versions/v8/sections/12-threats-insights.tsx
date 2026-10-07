@@ -95,91 +95,86 @@ export function V8ThreatsInsights(): JSX.Element {
 
   return (
     <>
-      <section className="f-well v8-section feed" aria-labelledby="insights-heading" data-testid="v8-insights">
-        <ChapterPattern variant="lattice" />
-        <div className="v8-canvas">
-          <motion.div className="feed-head" {...reveal()}>
-            <div className="v8-head">
-              <p className="v8-eyebrow">Security Updates</p>
-              <h2 className="v8-h2" id="insights-heading">
-                Recent Threats &amp; Insights<span className="v8-colon" aria-hidden="true">:</span>
-              </h2>
-              <p className="v8-lede">
-                Current items prioritized by active exploitation, exploit probability, and SMB relevance. Full stream,
-                dates, and sources live on{" "}
-                <Link className="v8-link--quiet" href="/resources/security-updates">
-                  Security Updates
+      {/* Nothing to show once loaded: drop the whole chapter rather than a "no items" box; Security Updates keeps the full stream. */}
+      {loading || items.length > 0 ? (
+        <section className="f-well v8-section feed" aria-labelledby="insights-heading" data-testid="v8-insights">
+          <ChapterPattern variant="lattice" />
+          <div className="v8-canvas">
+            <motion.div className="feed-head" {...reveal()}>
+              <div className="v8-head">
+                <p className="v8-eyebrow">Security Updates</p>
+                <h2 className="v8-h2" id="insights-heading">
+                  Recent Threats &amp; Insights<span className="v8-colon" aria-hidden="true">:</span>
+                </h2>
+                <p className="v8-lede">
+                  Current items prioritized by active exploitation, exploit probability, and SMB relevance. Full stream,
+                  dates, and sources live on{" "}
+                  <Link className="v8-link--quiet" href="/resources/security-updates">
+                    Security Updates
+                  </Link>
+                  .
+                </p>
+              </div>
+              <div className="feed-actions">
+                <Link className="v8-btn v8-btn--outline" href="/resources/security-updates" data-testid="view-all-updates">
+                  View All Security Updates <ArrowIcon />
                 </Link>
-                .
-              </p>
-            </div>
-            <div className="feed-actions">
-              <Link className="v8-btn v8-btn--outline" href="/resources/security-updates" data-testid="view-all-updates">
-                View All Security Updates <ArrowIcon />
-              </Link>
-              <Link className="v8-link" href="/resources/blog" data-testid="view-digerati-journal">
-                Read the Digerati Journal <ArrowIcon />
-              </Link>
-            </div>
-          </motion.div>
+                <Link className="v8-link" href="/resources/blog" data-testid="view-digerati-journal">
+                  Read the Digerati Journal <ArrowIcon />
+                </Link>
+              </div>
+            </motion.div>
 
-          {loading ? (
-            <div className="v8-card feed-state" data-testid="insights-loading" role="status">
-              <p className="v8-h4">Loading current threats…</p>
-              <p className="v8-body">Checking CISA, FIRST, NVD, and Microsoft MSRC. Nothing is invented while this loads.</p>
-            </div>
-          ) : items.length === 0 ? (
-            <div className="v8-card feed-state" data-testid="insights-empty">
-              <p className="v8-h4">No current items meet the homepage threshold.</p>
-              <p className="v8-body">
-                We only promote threats with confirmed exploitation, high exploit probability, or clear SMB relevance —
-                and only within the last 45 days. The full stream stays on Security Updates with dates and sources.
-              </p>
-            </div>
-          ) : (
-            <>
-              <p className="feed-caption" id="feed-caption">
-                <span className="v8-tag v8-tag--live">
-                  {captured ? `Live feed · Captured ${captured}` : "Live feed"}
-                </span>
-              </p>
-              <ul className="v8-grid v8-grid--2 feed-grid" aria-describedby="feed-caption">
-                {items.map((item, index) => (
-                  <motion.li key={item.id} {...reveal(index * 0.04)}>
-                    <article className="v8-card--paper feed-card" data-testid={`insight-card-${index}`}>
-                      <div className="feed-card__row">
-                        <span
-                          className={`v8-tag v8-tag--paper${item.severity === "critical" ? " feed-tag--critical" : ""}`}
-                        >
-                          {item.kicker}
-                        </span>
-                        <time className="feed-date" dateTime={item.publishedAt.slice(0, 10)}>
-                          {formatThreatDate(item.publishedAt)}
-                        </time>
-                      </div>
-                      <h3 className="v8-h3">{item.title}</h3>
-                      <p className="feed-card__excerpt">{item.excerpt}</p>
-                      <div className="feed-card__foot">
-                        <span className="feed-card__src">{sourceLine(item)}</span>
-                        <a className="v8-link" href={item.sourceUrl} target="_blank" rel="noopener noreferrer">
-                          Read source
-                          <span className="sr-only">
-                            {" "}
-                            for {item.cve ?? item.title} on {item.sourceName} (opens in new tab)
-                          </span>{" "}
-                          <ExternalIcon />
-                        </a>
-                      </div>
-                    </article>
-                  </motion.li>
-                ))}
-              </ul>
-            </>
-          )}
+            {loading ? (
+              <div className="v8-card feed-state" data-testid="insights-loading" role="status">
+                <p className="v8-h4">Loading current threats…</p>
+                <p className="v8-body">Checking CISA, FIRST, NVD, and Microsoft MSRC. Nothing is invented while this loads.</p>
+              </div>
+            ) : (
+              <>
+                <p className="feed-caption" id="feed-caption">
+                  <span className="v8-tag v8-tag--live">
+                    {captured ? `Live feed · Captured ${captured}` : "Live feed"}
+                  </span>
+                </p>
+                <ul className="v8-grid v8-grid--2 feed-grid" aria-describedby="feed-caption">
+                  {items.map((item, index) => (
+                    <motion.li key={item.id} {...reveal(index * 0.04)}>
+                      <article className="v8-card--paper feed-card" data-testid={`insight-card-${index}`}>
+                        <div className="feed-card__row">
+                          <span
+                            className={`v8-tag v8-tag--paper${item.severity === "critical" ? " feed-tag--critical" : ""}`}
+                          >
+                            {item.kicker}
+                          </span>
+                          <time className="feed-date" dateTime={item.publishedAt.slice(0, 10)}>
+                            {formatThreatDate(item.publishedAt)}
+                          </time>
+                        </div>
+                        <h3 className="v8-h3">{item.title}</h3>
+                        <p className="feed-card__excerpt">{item.excerpt}</p>
+                        <div className="feed-card__foot">
+                          <span className="feed-card__src">{sourceLine(item)}</span>
+                          <a className="v8-link" href={item.sourceUrl} target="_blank" rel="noopener noreferrer">
+                            Read source
+                            <span className="sr-only">
+                              {" "}
+                              for {item.cve ?? item.title} on {item.sourceName} (opens in new tab)
+                            </span>{" "}
+                            <ExternalIcon />
+                          </a>
+                        </div>
+                      </article>
+                    </motion.li>
+                  ))}
+                </ul>
+              </>
+            )}
 
-          <p className="v8-small feed-sources">{payload.attribution || THREAT_ATTRIBUTION}</p>
-        </div>
-      </section>
+            <p className="v8-small feed-sources">{payload.attribution || THREAT_ATTRIBUTION}</p>
+          </div>
+        </section>
+      ) : null}
 
       <section className="f-well v8-section monitor" aria-labelledby="monitor-heading">
         <ChapterPattern variant="lattice" />

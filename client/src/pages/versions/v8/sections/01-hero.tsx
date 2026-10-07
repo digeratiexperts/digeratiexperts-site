@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import type { CSSProperties, MouseEvent } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import type { MouseEvent } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
   Check,
@@ -25,7 +25,6 @@ import { analytics } from "@/lib/analytics";
 import { CTA } from "@/lib/ctaCopy";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { PronunciationCard } from "@/components/PronunciationCard";
-import heroCityLights from "@/assets/flagship/home-managed-core.jpg?w=2000&format=webp";
 import { TipTag } from "./TipTag";
 import "./01-hero.css";
 
@@ -416,8 +415,6 @@ export function V8Hero(): JSX.Element {
   const prefersReducedMotion = useReducedMotion();
   const isPhone = useIsPhone();
   const sectionRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end start"] });
-  const plateY = useTransform(scrollYProgress, [0, 1], prefersReducedMotion ? ["0%", "0%"] : ["0%", "9%"]);
 
   const openAssessment = (e: MouseEvent<HTMLAnchorElement>) => {
     // Modified clicks keep the /book href (new tab / window).
@@ -434,13 +431,7 @@ export function V8Hero(): JSX.Element {
         className="hero scroll-mt-[var(--de-nav-offset)]"
         id="home"
         aria-labelledby="hero-title"
-        style={{ "--hero-plate": `url(${heroCityLights})` } as CSSProperties}
       >
-        <motion.div
-          className="hero__plate"
-          aria-hidden="true"
-          style={{ y: plateY, backgroundImage: `url(${heroCityLights})` }}
-        />
         <div className="hero__grid" aria-hidden="true" />
         <div className="hero__glow" aria-hidden="true" />
 

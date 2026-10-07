@@ -2607,3 +2607,23 @@ claims:
       rendered as a squeezed side column (.v8-eyebrow is flex). The plate rule
       is the same one line as draft PR 492 (identical, so it merges cleanly
       either way); 492's CPA image and lockfile port are not included.
+  - id: homepage-polish
+    owner: claude
+    subsystem: public-marketing-visual-layer
+    branch: claude/homepage-polish
+    base_sha: 86efd68569c49cf1f535a78879e555c82a0225c7
+    files:
+      - client/src/pages/versions/v8/sections/01-hero.tsx (hero tile image removed)
+      - client/src/pages/versions/v8/sections/01-hero.css (plate rules removed; headline size cap)
+      - client/src/pages/versions/v8/sections/12-threats-insights.tsx (feed chapter hidden when empty)
+      - artifacts/visual-qa/homepage-polish/**
+    status: implemented
+    started: 2026-10-07
+    note: >-
+      Joe, 2026-10-07: "Fix all the UI issues and make the homepage finally
+      good. That background image doesn't look good in the hero it looked fine
+      with the old background that was blue with the white lines." The hero
+      returns to its navy gradient, grid lines and violet glow (the look on
+      Joe's phone screenshot) at every width; the headline cap from PR 503 is
+      folded in, and 503 is superseded. Structural duplicates on the page are
+      listed for Joe, not changed.
