@@ -2842,3 +2842,24 @@ claims:
       homepage; the hero background is still not as good as before; the
       industries photos look worse; the open eight-block panel should pop.
       Compared against /version-0 (the previous homepage) section by section.
+  - id: site-page-plates
+    owner: claude
+    subsystem: public-marketing-visual-layer
+    branch: claude/lucid-dijkstra-s3v2s3
+    base_sha: af222ffc2600c87960d3bbdc8b00a5f7f0ac6906
+    files:
+      - client/src/components/site/PlateBand.tsx (eleven page plates, plateForServiceKey, whole-fit plates)
+      - client/src/index.css (de-plate-band--whole)
+      - client/src/assets/flagship/** (eleven new resized plates)
+      - client/src/pages/GenericServicePage.tsx (band chosen by serviceKey), and one plate attribute in ProActiveEcosystemPricing, MissionValues, BackupDisasterRecovery, CoManagedIT, Healthcare, LawFirms, RealEstate, IndustriesIndex, ResourcesIndex, LocationServicePage
+      - artifacts/kie-ai/nano-banana/images/site/**, .claude/kie-budget/ledger.jsonl, artifacts/visual-qa/plate-bands/**
+    status: in-review
+    started: 2026-10-07
+    note: >-
+      Joe, 2026-10-07: "keep building", after his kie.ai top-up landed (10,000
+      credits). The eleven site plates prompted on 2026-10-05 were generated in
+      budget job site-tile-plates-2026-10-05 (spent $0.72 = projected; closed)
+      and placed one per page or service. Generated images stay ILLUSTRATIVE
+      until Joe approves them on this PR. Concurrency audit 2026-10-07: open PRs
+      512, 511, 510 and 509 touch none of these files; 512, 511 and 510 also edit
+      this ledger (this claim is appended at the end).

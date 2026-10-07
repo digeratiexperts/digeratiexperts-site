@@ -177,7 +177,7 @@ export default function ResourcesIndex() {
         </Container>
       </Chapter>
 
-      <Chapter tone="surface">
+      <Chapter plate="resources" tone="surface">
         <Container>
           <DocumentFlipbook />
         </Container>

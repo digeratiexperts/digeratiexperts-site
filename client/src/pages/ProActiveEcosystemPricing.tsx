@@ -580,7 +580,7 @@ export default function ProActiveEcosystemPricing() {
       </Chapter>
 
       {/* Relocated from homepage — keep tools, deepen pricing page */}
-      <Chapter plate="field" tone="well" aria-label="Pricing calculators">
+      <Chapter plate="pricing" tone="well" aria-label="Pricing calculators">
         <Container>
           <ChapterHeader
             tone="well"

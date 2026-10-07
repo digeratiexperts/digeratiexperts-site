@@ -153,7 +153,7 @@ export default function LawFirms() {
         </Container>
       </Chapter>
 
-      <Chapter plate="row" tone="well" data-testid="section-aba-checklist">
+      <Chapter plate="identity" tone="well" data-testid="section-aba-checklist">
         <Container>
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
             <div className="lg:col-span-4">

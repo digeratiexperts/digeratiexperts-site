@@ -1,0 +1,19 @@
+{
+  "provider": "kie.ai",
+  "taskId": "05fe9e6bd43058196e900e115699b88c",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/site/2026-10-05-assessment-lattice-scan.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Cyber Risk Assessment: a lattice scanned by a soft arc of light. Studio product photograph, isometric view, 100mm lens, f/8, ISO 100. A flat regular lattice of thirty small graphite and white tiles laid edge to edge on the ground; a single soft lavender-violet arc of light sweeps diagonally across the lattice, lighting the tiles it touches from the side while the rest stay dim; one electric-blue glass tile inside the lit band. Rounded-square tiles about 9 cm across and 2 cm thick with generous corner radius like premium app-icon blanks, faces completely blank and smooth. Finishes: deep electric-blue glass (#1D6FF2, translucent, faint internal refraction, thin white specular line on the bevel), graphite anodized aluminium (near-black, fine brushed grain, crisp chamfer) and matte white ceramic (soft subsurface glow, faint pores). Violet is light only, never paint. Left third empty for text. Pure black seamless studio ground, realistic contact shadows, deep falloff to black at the frame edges. Do not add any symbols or text to the tiles.\", \"negative_prompt\": \"text, letters, numbers, logos, icons, symbols, engraved glyphs, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, CGI sheen, oversaturated, blurry, distorted geometry, melted edges\", \"settings\": {\"style\": \"premium studio product photography, physically based materials\", \"quality\": \"tack sharp, true material texture, controlled highlights\"}}",
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "jpg"
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/workers/images/image_eef7d2b39f29fb8ac6b2e807d73b543d.jpg"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-07T03:13:34.974562+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}

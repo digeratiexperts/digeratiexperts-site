@@ -138,7 +138,7 @@ export default function MissionValues() {
         </Container>
       </Chapter>
 
-      <Chapter plate="white" tone="paper">
+      <Chapter plate="about" tone="paper">
         <Container>
           <ChapterHeader tone="paper" eyebrow="What we hold to" title="Our Core Values" />
           <FeatureGrid
