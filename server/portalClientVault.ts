@@ -280,7 +280,7 @@ export async function createDbVaultMetaStore(): Promise<VaultMetaStore> {
         .where(eq(clientVaultAudit.clientId, clientId))
         .orderBy(desc(clientVaultAudit.createdAt))
         .limit(limit);
-      return rows.map((r) => ({
+      return rows.map((r: typeof clientVaultAudit.$inferSelect) => ({
         clientId: r.clientId,
         itemId: r.itemId,
         action: r.action as VaultAuditEntry["action"],
