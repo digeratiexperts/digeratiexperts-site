@@ -1056,10 +1056,18 @@ html[data-dock-hidden="true"] .de-bottom-bar {
   line-height: 1.75;
 }
 
-.de-prose-dark h1,
-.de-prose-dark h2,
-.de-prose-dark h3,
-.de-prose-dark h4 {
+/* :where() for the same reason the paragraph rule above uses it, and it is the
+ * heading half of that fix. A bare `.de-prose-dark h2` is specificity 0,1,1, so
+ * it beat any single-class text utility on the element itself: a paper chapter
+ * placed inside the default PageTemplate layout rendered its headings WHITE on
+ * #f7f5f2 — about 1.1:1 — while looking perfectly correct in the source. Found
+ * on /the-box, 2026-10-05. Zero specificity keeps white as the default for dark
+ * prose while letting an explicit colour on the heading win, which is what
+ * anyone reading the JSX expects. */
+:where(.de-prose-dark) h1,
+:where(.de-prose-dark) h2,
+:where(.de-prose-dark) h3,
+:where(.de-prose-dark) h4 {
   color: #fff;
   letter-spacing: -0.02em;
   line-height: 1.25;
@@ -1086,10 +1094,11 @@ html[data-dock-hidden="true"] .de-bottom-bar {
   line-height: 1.75;
 }
 
-.de-prose-light h1,
-.de-prose-light h2,
-.de-prose-light h3,
-.de-prose-light h4 {
+/* Same treatment, so the light context is overridable on the same terms. */
+:where(.de-prose-light) h1,
+:where(.de-prose-light) h2,
+:where(.de-prose-light) h3,
+:where(.de-prose-light) h4 {
   color: #111827;
   letter-spacing: -0.02em;
 }

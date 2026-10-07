@@ -6,8 +6,14 @@
  * Select, Dialog, Table …) picks up the graphite system without a rewrite.
  *
  * Default is the dark graphite field from design/BRAND.md. `data-theme="light"`
- * swaps the content field to warm paper; the sidebar stays graphite in both so
- * the brand rail is constant. Values are HSL triplets because shadcn wraps them
+ * swaps the content field to a light grey; the sidebar stays graphite in both so
+ * the brand rail is constant.
+ *
+ * Grey ladder (Joe, 2026-10-06, concepts B + C in
+ * artifacts/design-concepts/portal-grey-ladder/): page, rail and card sit one even
+ * step apart; fields and action wells use the page token so they step back down
+ * inside a card; the selected nav item is the only near-white shape; magenta is
+ * the one accent (primary action, urgent counts). Values are HSL triplets because shadcn wraps them
  * in hsl(var(--x)); the `--pt-*` state colours are RGB triplets for rgb(var()/a).
  *
  * Dialogs, dropdowns and popovers render through Radix portals into <body>,
@@ -23,12 +29,12 @@ body.de-portal-scope {
   --background: 248 71% 4%;          /* #050312 graphite well */
   --foreground: 270 20% 96%;         /* #f5f3f7 */
 
-  --card: 276 12% 8%;                /* #151217 raised */
+  --card: 256 24% 9%;                /* #14111c raised, one step above the rail */
   --card-foreground: 270 20% 96%;
-  --popover: 267 16% 11%;            /* #1b1720 */
+  --popover: 257 22% 13%;            /* #1d1927 one step above the card */
   --popover-foreground: 270 20% 96%;
 
-  --muted: 267 16% 11%;
+  --muted: 257 22% 13%;
   --muted-foreground: 270 6% 68%;    /* ~7:1 on raised */
 
   --border: 270 12% 17%;             /* visible hairline on graphite */
@@ -37,20 +43,20 @@ body.de-portal-scope {
 
   --primary: 333 84% 45%;            /* #D3126A action colour */
   --primary-foreground: 0 0% 100%;
-  --secondary: 270 16% 14%;
+  --secondary: 257 22% 13%;
   --secondary-foreground: 270 20% 96%;
-  --accent: 270 12% 16%;
+  --accent: 257 22% 13%;             /* hover: the next step up */
   --accent-foreground: 270 20% 96%;
   --destructive: 350 80% 55%;
   --destructive-foreground: 0 0% 100%;
   --radius: 0.625rem;
 
   /* shell */
-  --sidebar-background: 240 20% 5%;  /* #0a0a0f */
-  --sidebar-foreground: 270 14% 78%;
+  --sidebar-background: 250 40% 6%;  /* #0b0915 one step above the page */
+  --sidebar-foreground: 270 14% 82%; /* group labels at /60 clear 4.5:1 on the #0b0915 rail */
   --sidebar-primary: 333 84% 45%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 270 12% 12%;
+  --sidebar-accent: 255 24% 10%;     /* rail hover */
   --sidebar-accent-foreground: 0 0% 100%;
   --sidebar-border: 270 12% 14%;
   --sidebar-ring: 333 84% 45%;
@@ -71,33 +77,33 @@ body.de-portal-scope {
 }
 
 /*
- * Light theme: "Ambient" (Joe, 2026-10-03, option B). Brand light instead of grey: a soft orchid
- * field and orchid wells, lit by a magenta and a violet glow from the top of the content area
- * (.pt-canvas below); cards stay white, the rail stays graphite.
+ * Light theme: "Light steps" (Joe, 2026-10-06, concept C). Replaces the 2026-10-03 orchid
+ * "Ambient" field and its glows: a light grey field, white cards one step up, wells and fields
+ * back on the field grey; the rail stays graphite.
  */
 .de-portal[data-theme="light"],
 body.de-portal-scope[data-portal-theme="light"] {
-  --background: 290 42% 96%;         /* #f8f1f9 orchid */
+  --background: 255 11% 93%;         /* #ecebef grey field */
   --foreground: 12 24% 8%;           /* #1a1210 */
   --card: 0 0% 100%;
   --card-foreground: 12 24% 8%;
   --popover: 0 0% 100%;
   --popover-foreground: 12 24% 8%;
-  --muted: 292 38% 92%;
-  --muted-foreground: 290 12% 30%;
-  --border: 290 20% 85%;
-  --input: 290 16% 74%;
+  --muted: 260 13% 95%;              /* #f3f2f5 */
+  --muted-foreground: 260 8% 32%;
+  --border: 257 11% 87%;             /* #dddbe2 */
+  --input: 260 8% 72%;
   --ring: 333 84% 35%;
   --primary: 333 84% 35%;            /* #A30E52 magenta paper ink */
   --primary-foreground: 0 0% 100%;
-  --secondary: 292 38% 92%;
+  --secondary: 260 13% 95%;
   --secondary-foreground: 12 24% 8%;
-  --accent: 300 36% 89%;
+  --accent: 252 11% 91%;             /* #e7e6eb hover */
   --accent-foreground: 12 24% 8%;
   --destructive: 0 84% 45%;
   --destructive-foreground: 0 0% 100%;
 
-  /* Inks clear 4.5:1 on their own 7-10% tint over the orchid field, wells and cards
+  /* Inks clear 4.5:1 on their own 7-10% tint over the grey field, wells and cards
      (portalLightTheme.test.ts checks every pair). */
   --pt-ok: 4 106 77;                 /* #046a4d */
   --pt-warn: 146 64 14;              /* #92400e */
@@ -105,17 +111,8 @@ body.de-portal-scope[data-portal-theme="light"] {
   --pt-info: 21 94 117;              /* #155e75 */
   --pt-brand: 163 14 82;
 
-  --pt-topbar: 290 42% 96% / 0.82;
+  --pt-topbar: 255 11% 93% / 0.82;
   color-scheme: light;
-}
-
-/* The ambient light: magenta from the top right, violet from the top left, fixed while content scrolls. */
-.de-portal[data-theme="light"] .pt-canvas,
-body.de-portal-scope[data-portal-theme="light"] .pt-canvas {
-  background-image:
-    radial-gradient(1000px 520px at 92% -6%, rgb(211 18 106 / 0.13), transparent 64%),
-    radial-gradient(900px 480px at 8% -10%, rgb(91 69 224 / 0.12), transparent 62%);
-  background-attachment: fixed;
 }
 
 /* The sidebar stays graphite in both themes, so its state colours stay the
@@ -130,12 +127,12 @@ body.de-portal-scope[data-portal-theme="light"] [data-sidebar="sidebar"] {
   /* Surfaces placed inside the rail (e.g. the admin company switcher) match it. */
   --background: 248 71% 4%;
   --foreground: 270 20% 96%;
-  --card: 276 12% 8%;
+  --card: 256 24% 9%;
   --card-foreground: 270 20% 96%;
   --muted-foreground: 270 6% 68%;
   --border: 270 12% 17%;
   --input: 270 12% 20%;
-  --accent: 270 12% 16%;
+  --accent: 257 22% 13%;
   --accent-foreground: 270 20% 96%;
 }
 
@@ -185,7 +182,19 @@ body.de-portal-scope[data-portal-theme="light"] [data-sidebar="sidebar"] {
 .pt-avatar-de { border-color: rgb(var(--pt-brand) / 0.45); background: rgb(var(--pt-brand) / 0.12); color: rgb(var(--pt-brand)); }
 .pt-note-internal { background: rgb(var(--pt-warn) / 0.05); }
 .pt-warn-strip { border-color: rgb(var(--pt-warn) / 0.35); background: rgb(var(--pt-warn) / 0.08); }
-.pt-active-nav[data-active="true"] { background: rgb(var(--pt-brand) / 0.16); color: #fff; box-shadow: inset 3px 0 0 hsl(var(--sidebar-primary)); }
+/* The selected nav item is the one near-white shape on the screen, in both themes (the rail is
+   graphite in both). Tags inside it switch to their paper inks so they stay legible on white. */
+.pt-active-nav[data-active="true"],
+.pt-active-nav[data-active="true"]:hover {
+  background: hsl(270 20% 96%);
+  color: hsl(250 40% 6%);
+  font-weight: 600;
+  --pt-ok: 4 106 77;
+  --pt-warn: 146 64 14;
+  --pt-bad: 182 17 58;
+  --pt-info: 21 94 117;
+  --pt-brand: 163 14 82;
+}
 .pt-login-glow { background: radial-gradient(60% 50% at 50% 0%, rgb(var(--pt-brand) / 0.14), transparent 70%); }
 .pt-login-line { background: linear-gradient(90deg, transparent, rgb(var(--pt-brand) / 0.6), transparent); }
 

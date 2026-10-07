@@ -115,15 +115,15 @@ export function registerWarehouseGates(app: Express): void {
     });
   });
 
-  /** Staff Pay Now sales tax readiness (Stripe Tax, read-only, cached). */
+  /** Staff Pay Now sales tax readiness (Zoho Books, read-only, cached). */
   app.get("/api/internal/warehouse/tax-status", async (req: Request, res: Response) => {
     applyPrivateCacheHeaders(res);
     if (!resolveWarehouseStaff(req)) {
       sendGenericNotFound(req, res);
       return;
     }
-    const { cachedStripeTaxReadiness } = await import("./services/stripeTaxReadiness");
-    res.json(await cachedStripeTaxReadiness());
+    const { cachedSalesTaxReadiness } = await import("./services/salesTaxReadiness");
+    res.json(await cachedSalesTaxReadiness());
   });
 
   app.get("/api/internal/warehouse/stock", (req, res) => {

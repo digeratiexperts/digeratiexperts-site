@@ -2350,6 +2350,15 @@ claims:
       documentation: DE-SYSTEM-INTEGRATION.md now lists the Tech Tool, licence
       and Microsoft Admin worker paths, and the Tool's command-line cheat sheet
       has the Hub sends and the job worker.
+      RELEASED 2026-10-05: Joe, "merge 438 and 343". Merged as 12c3b5f4 (PR
+      438). Tool-only: nothing deploys from this repository; it ships through
+      New-DEReleasePackage.ps1. All CI passed on a9d8b549 and on main at
+      12c3b5f4, including Windows PowerShell 5.1 and the WPF smoke render.
+      The DE Tech Tool 1.10.3 release zip (build DE-1.10.3-202610050024-63d4fc,
+      sourceCommit 12c3b5f4) and the DE Microsoft Admin 0.6.0 zip were built
+      from 12c3b5f4. Item 4 shipped in Intelligence-Hub PR 343 (master
+      44185ad8: regenerated API client, frontend bundle byte-identical).
+      VERIFIED LIVE as a Tool release. Files released.
   - id: a11y-gate-serious
     owner: claude
     subsystem: tooling-ci
@@ -2440,15 +2449,6 @@ claims:
       Warehouse Vendors page and as one line under Staff Pay Now, so the
       Stripe setup confirms itself without a test charge. Never reads READY
       on a failed check. Public Store never asks for it.
-      RELEASED 2026-10-05: Joe, "merge 438 and 343". Merged as 12c3b5f4 (PR
-      438). Tool-only: nothing deploys from this repository; it ships through
-      New-DEReleasePackage.ps1. All CI passed on a9d8b549 and on main at
-      12c3b5f4, including Windows PowerShell 5.1 and the WPF smoke render.
-      The DE Tech Tool 1.10.3 release zip (build DE-1.10.3-202610050024-63d4fc,
-      sourceCommit 12c3b5f4) and the DE Microsoft Admin 0.6.0 zip were built
-      from 12c3b5f4. Item 4 shipped in Intelligence-Hub PR 343 (master
-      44185ad8: regenerated API client, frontend bundle byte-identical).
-      VERIFIED LIVE as a Tool release. Files released.
       RELEASED 2026-10-05: squash-merged as ba5022f (PR 466). Production
       runs 828fa32, which contains it (/api/health release, built 04:44Z).
       The staff route answers 404 to anonymous visitors. Playwright at 1440
@@ -2489,6 +2489,124 @@ claims:
       and "Deploy and verify production VPS". The DE Tech Tool 1.10.4 release
       zip (build DE-1.10.4-202610050518-568c45, sourceCommit f0c31343) was
       built from f0c31343. VERIFIED LIVE as a Tool release. Files released.
+  - id: paynow-tax-zoho-books
+    owner: claude
+    subsystem: store-warehouse
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 61cded1
+    files:
+      - server/services/salesTax.ts, server/services/salesTax.test.ts (the Pay Now provider: Stripe Tax replaced by Zoho Books)
+      - server/services/zohoBooksTax.ts (new), server/services/zohoBooksTax.test.ts (new)
+      - server/services/zohoBooksInvoice.ts (new), server/services/zohoBooksInvoice.test.ts (new)
+      - server/services/orderFulfillment.ts (the Books invoice step only), server/services/orderFulfillment.behavior.test.ts (the Books mock and two cases only)
+      - server/services/salesTaxReadiness.ts (new, replaces stripeTaxReadiness.ts), server/services/salesTaxReadiness.test.ts (new, replaces stripeTaxReadiness.test.ts)
+      - shared/storeTaxCodes.ts, shared/storeTaxCodes.test.ts (Stripe tax codes replaced by Books service-item mapping)
+      - server/secureStoreCheckout.ts (the tax-provider check and the order note only)
+      - server/warehouseRoutes.ts (the tax-status route only), server/warehouseRoutes.test.ts (the tax-status case only)
+      - client/src/hooks/useSalesTaxReadiness.ts (new, replaces useStripeTaxReadiness.ts)
+      - client/src/pages/store/WarehouseVendors.tsx (the sales tax integration card only)
+      - client/src/pages/store/Checkout.tsx (the Pay Now tax status line only), client/src/pages/store/Checkout.tax.test.ts
+      - docs/STORE-WAREHOUSE.md (Pay Now sales tax section), deploy/vps/env.production.example (the sales tax lines only)
+      - artifacts/visual-qa/paynow-tax-zoho-books/**
+    status: verified-live
+    started: 2026-10-05
+    note: >-
+      Joe, 2026-10-05: "yes switch to zoho books", after confirming Zoho
+      Payments keeps processing the card. Staff Pay Now asks Zoho Books Sales
+      Tax Automation for the tax (a draft estimate on a dedicated contact,
+      read, then deleted) instead of Stripe Tax; Zoho Payments still charges.
+      Stripe Tax code, key and readiness check are removed. Fail-closed is
+      unchanged: no Books connection, a failed answer, or a Books org without
+      a tax registration switches the cart to a quote. Overlap check
+      2026-10-05: no active claim and no open PR touches these files.
+      Joe, 2026-10-06: "Yes and everything else you mention". Created in Books
+      org 693714437 through the Books connector: item "Website IT services
+      (Pay Now)" 1957016000006629001 and contact "DE Website Tax Check"
+      1957016000006631001. One draft estimate in the exact request shape the
+      site sends was created and deleted (EST-000001): Books kept the
+      estimate's own shipping address and returned estimate_id, sub_total,
+      tax_total, total and taxes; tax was $0 because automation is off. The
+      organization reads tax_settings.is_tax_registered=false, so the
+      readiness check now reads that nested flag. Paid Zoho Payments orders
+      are now recorded as a Books invoice plus payment at fulfillment (only
+      when Books' invoice total equals what was charged; otherwise a draft
+      for staff), never blocking fulfillment. Also moved the PR 438 release
+      paragraph from paynow-tax-readiness to de-techtool-unattended-and-warranty,
+      where it belongs.
+      RELEASED 2026-10-06: Joe, "Continue". Merged as 6de916f (PR 489) after
+      CI passed on b631c8b. Production runs f7e2662, which contains it
+      (/api/health release, built 03:14Z). The staff tax-status route answers
+      404 to anonymous visitors. Playwright at 1440 and 390 against
+      production code (staff session and tax-status replies stubbed) rendered
+      the Zoho Books card and the Staff Pay Now line for NOT_CONFIGURED,
+      INCOMPLETE and READY, with no overflow or page errors. Expected live
+      state until the Books settings are on the server: NOT_CONFIGURED.
+      Evidence: artifacts/visual-qa/paynow-tax-zoho-books/live/. VERIFIED
+      LIVE. Files released.
+  - id: npm-audit-fix-2026-10-06
+    owner: claude
+    subsystem: tooling-ci
+    branch: claude/npm-audit-fix
+    base_sha: d0d07e8
+    files:
+      - package-lock.json (npm audit fix --omit=dev --package-lock-only; package.json unchanged)
+    status: verified-live
+    started: 2026-10-06
+    note: >-
+      Joe, 2026-10-06: "Separate small PR". CI's npm audit (--omit=dev
+      --audit-level=high) turned red on main from 61cded1 on new advisories:
+      proxy-addr 2.0.7 (critical, GHSA-jqcg-44mw-7w3h) and compression 1.8.1
+      (high, GHSA-vc2v-76pw-4v95), blocking every PR and the main deploy.
+      Lockfile-only fix within declared ranges: express 4.22.3, body-parser
+      1.20.8, qs 6.16.0, proxy-addr 2.0.8, compression 1.8.2, ip-address
+      10.7.3, @google-cloud/storage 7.22.0. Audit exits 0 (5 moderate
+      remain, below the gate). Overlap check: no other open PR touches the
+      lockfile.
+      RELEASED 2026-10-06: Joe, "Continue". Merged as 8cbffda (PR 490); main
+      CI passed, including "Deploy and verify production VPS". Production ran
+      8cbffda (built 03:00Z) and now f7e2662, which contains it; /, /store and
+      /api/health answer 200. npm audit --omit=dev --audit-level=high exits
+      0 on main. VERIFIED LIVE. Files released.
+  - id: portal-grey-ladder-concepts
+    owner: claude
+    subsystem: portal-design
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: 8cbffda
+    files:
+      - artifacts/design-concepts/portal-grey-ladder/** (new)
+      - client/src/styles/portal.css (dark + light portal tokens, active nav)
+      - client/src/styles/portalLightTheme.test.ts
+      - artifacts/visual-qa/portal-grey-ladder/** (new)
+    status: active
+    started: 2026-10-06
+    note: >-
+      Joe, 2026-10-04 (kie.ai billing screen: "the shades of grey in the
+      order they are with the blue ... you can do that") and 2026-10-06 ("do
+      all these", Client Portal dashboard first). Exploration Mode: three
+      standalone dashboard concepts (A neutral steps, B graphite steps, C
+      light steps) with EXAMPLE data and 390/768/1440 shots. Provisional
+      recommendation B (dark) + C (light); Joe approved B + C on 2026-10-06
+      ("all approved here"), implemented in portal.css with a before/after
+      set; C replaces the 2026-10-03 orchid light theme, so Joe confirms the
+      screenshots before merge.
+  - id: phone-hero-hotfix
+    owner: claude
+    subsystem: homepage-hero
+    branch: claude/phone-hero-hotfix
+    base_sha: e31bb8f2551a24820c9a86a364e9d49a2e82bdb3
+    files:
+      - client/src/pages/versions/v8/sections/01-hero.css (hero plate hidden below 1180px; phone tile ring above the card; phone eyebrow wrap)
+      - client/src/pages/versions/v8/sections/01-hero.tsx (--hero-plate custom property on the section only)
+      - artifacts/visual-qa/phone-hero-hotfix/**
+    status: implemented
+    started: 2026-10-06
+    note: >-
+      Joe, 2026-10-06 (phone screenshot of the live hero): "why is it like
+      this". Two defects: the hero plate cropped to one grey tile and a light
+      streak behind the headline and buttons, and the eyebrow's second line
+      rendered as a squeezed side column (.v8-eyebrow is flex). The plate rule
+      is the same one line as draft PR 492 (identical, so it merges cleanly
+      either way); 492's CPA image and lockfile port are not included.
   - id: home-imagery-match
     owner: claude
     subsystem: public-marketing-visual-layer
@@ -2496,7 +2614,6 @@ claims:
     base_sha: d0d07e8a05404c624e46f9480f51152ef1d70a4d
     files:
       - client/src/pages/versions/v8/sections/10-industries.tsx (CPA card image only)
-      - client/src/pages/versions/v8/sections/01-hero.css (hero plate hidden below 1180px)
       - client/src/assets/industries/cpa-calculator-2026-10-06.webp (new)
       - .claude/kie-budget/ledger.jsonl (job home-cpa-card-2026-10-06)
       - artifacts/visual-qa/home-imagery-match/**
@@ -2505,9 +2622,9 @@ claims:
     started: 2026-10-06
     note: >-
       Joe, 2026-10-06: "the imagery is still not smartly matched" then "yes do
-      both, generate the CPA image". Scope is the two mismatches only: the CPA
-      card showed Turkish law books; the hero plate showed as a blown-up tile
-      behind the phone headline. Desktop hero placement is left as is pending
+      both, generate the CPA image". Scope is the CPA card (it showed Turkish law
+      books). The phone-hero change was dropped after PR 499 (Joe-merged) kept
+      the tile art framed above the card. Desktop hero placement is left as is pending
       Joe's choice (three placements tried, screenshots kept). Older homepage
       versions (v1, v3, v7, sections/) still use the law-book photo and are
       deliberately untouched. Concurrency audit 2026-10-06: open PRs 489 and

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import type { MouseEvent } from "react";
+import type { CSSProperties, MouseEvent } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import {
   ArrowRight,
@@ -434,6 +434,7 @@ export function V8Hero(): JSX.Element {
         className="hero scroll-mt-[var(--de-nav-offset)]"
         id="home"
         aria-labelledby="hero-title"
+        style={{ "--hero-plate": `url(${heroCityLights})` } as CSSProperties}
       >
         <motion.div
           className="hero__plate"

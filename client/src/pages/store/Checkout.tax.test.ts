@@ -3,7 +3,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { missingBillingAddress } from "@/lib/billingAddress";
-import { checkoutTaxNote } from "@/hooks/useStripeTaxReadiness";
+import { checkoutTaxNote, type SalesTaxReadiness } from "@/hooks/useSalesTaxReadiness";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const src = readFileSync(resolve(here, "Checkout.tsx"), "utf8");
@@ -34,30 +34,39 @@ describe("Pay Now billing address", () => {
 });
 
 describe("Pay Now sales tax readiness on staff checkout", () => {
-  it("tells staff before they pay whether Stripe Tax is ready", () => {
-    expect(src).toContain("useStripeTaxReadiness()");
+  it("tells staff before they pay whether Zoho Books sales tax is ready", () => {
+    expect(src).toContain("useSalesTaxReadiness()");
     expect(src).toMatch(/data-testid="text-paynow-tax-status" data-status=\{taxReadiness\.status\}/);
-    expect(src).toContain("STRIPE_TAX_STATUS_LABEL[taxReadiness.status]");
+    expect(src).toContain("SALES_TAX_STATUS_LABEL[taxReadiness.status]");
     expect(src).toContain("checkoutTaxNote(taxReadiness)");
+    expect(src).not.toMatch(/Stripe/);
   });
 
   it("gives staff one plain sentence per state, never a server setting name", () => {
-    const base = { message: "", quoteOnlyCategories: [], checkedAt: "" };
+    const base = { provider: "zoho_books" as const, message: "", missingSettings: [], quoteOnlyCategories: [], checkedAt: "" };
+    const checks = (c: Partial<SalesTaxReadiness["checks"]>): SalesTaxReadiness["checks"] => ({
+      connection: "set",
+      taxRegistration: "unknown",
+      serviceItem: "unknown",
+      taxContact: "unknown",
+      ...c,
+    });
     const notes = [
-      checkoutTaxNote({ ...base, status: "READY", checks: { key: "set", originAddress: "set", arizona: "active" } }),
-      checkoutTaxNote({ ...base, status: "NOT_CONFIGURED", checks: { key: "missing", originAddress: "unknown", arizona: "unknown" } }),
-      checkoutTaxNote({ ...base, status: "AUTH_REQUIRED", checks: { key: "set", originAddress: "unknown", arizona: "unknown" } }),
-      checkoutTaxNote({ ...base, status: "INCOMPLETE", checks: { key: "set", originAddress: "missing", arizona: "unknown" } }),
-      checkoutTaxNote({ ...base, status: "INCOMPLETE", checks: { key: "set", originAddress: "set", arizona: "missing" } }),
-      checkoutTaxNote({ ...base, status: "UNKNOWN", checks: { key: "set", originAddress: "unknown", arizona: "unknown" } }),
+      checkoutTaxNote({ ...base, status: "READY", checks: checks({ taxRegistration: "active", serviceItem: "set", taxContact: "set" }) }),
+      checkoutTaxNote({ ...base, status: "NOT_CONFIGURED", checks: checks({ connection: "missing" }) }),
+      checkoutTaxNote({ ...base, status: "AUTH_REQUIRED", checks: checks({}) }),
+      checkoutTaxNote({ ...base, status: "INCOMPLETE", checks: checks({ taxRegistration: "missing" }) }),
+      checkoutTaxNote({ ...base, status: "INCOMPLETE", checks: checks({ taxRegistration: "active", serviceItem: "missing" }) }),
+      checkoutTaxNote({ ...base, status: "UNKNOWN", checks: checks({}) }),
     ];
     expect(new Set(notes).size).toBe(notes.length);
-    for (const note of notes) expect(note).not.toMatch(/STRIPE_|_KEY|env/);
-    expect(notes[4]).toMatch(/Arizona/);
+    for (const note of notes) expect(note).not.toMatch(/ZOHO_|_TOKEN|_ID\b|env|Stripe/);
+    expect(notes[0]).toMatch(/Zoho Books adds sales tax/);
+    expect(notes[3]).toMatch(/Sales Tax Automation/);
   });
 
   it("stays in the Warehouse: the public Store never asks for the tax status", () => {
     const publicCheckout = readFileSync(resolve(here, "PublicStoreCheckout.tsx"), "utf8");
-    expect(publicCheckout).not.toMatch(/useStripeTaxReadiness|tax-status/);
+    expect(publicCheckout).not.toMatch(/useSalesTaxReadiness|tax-status/);
   });
 });

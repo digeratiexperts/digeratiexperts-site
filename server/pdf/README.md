@@ -72,6 +72,10 @@ VERAPDF="$(bash scripts/qa/install-verapdf.sh /tmp/verapdf | tail -1)" npm run c
 
 To add a template state, add a case to `storePdfCases.ts`.
 
+The suite also fails a multi-page sample when its last page holds only the "Next step" close. The close has `break-before: avoid`, so the last rows move to the next page with it (#488).
+
+**Live check (nightly):** `.github/workflows/live-pdf-check.yml` runs `scripts/qa/live_pdf_check.py` against production. It renders a solution packet through the live endpoint, fetches every resource PDF, and runs `verify.py` with veraPDF PDF/UA-1. This catches drift that no commit causes, such as production's Chromium changing (#480). A failure opens or updates one issue, titled "Live PDF check is failing". Run it by hand with `python3 scripts/qa/live_pdf_check.py <out-dir>`.
+
 **Not claimed:** the human-judgement PDF/UA checkpoints (alt-text quality, reading order) have had no independent or screen-reader test. WCAG is not claimed.
 
 **Letter spacing:** Inter caps labels stay at `.03em` or less. Production Chromium 151 splits wider-tracked runs ("SOLUTI ON") for copy/paste and screen readers.
