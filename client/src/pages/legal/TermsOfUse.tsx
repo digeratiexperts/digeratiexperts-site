@@ -433,7 +433,7 @@ export default function TermsOfUse() {
                 <p className="text-[#1A1228] font-semibold mb-2">Digerati Experts - Legal Department</p>
                 <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Email:</strong> legal@digeratiexperts.com</p>
                 <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Phone:</strong> {PRIMARY_PHONE.display}</p>
-                <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Address:</strong> 3165 S Alma School Rd Suite 29, Chandler, AZ 85248</p>
+                <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Address:</strong> Chandler, AZ</p>
               </div>
             </div>
 

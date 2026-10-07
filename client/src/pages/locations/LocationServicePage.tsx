@@ -31,7 +31,7 @@ import { SituationContinuityStrip } from "@/components/SituationContinuityStrip"
 import { situationSubmitPayload, useAnonymousSituation } from "@/lib/anonymousSituation";
 import { getCyberFact, formatFactSource } from "@/data/cyberAwarenessFacts";
 import { CTA } from "@/lib/ctaCopy";
-import { COMPANY, COMPANY_SOCIAL, PRIMARY_PHONE, formatAddressOneLine } from "@/data/companyContact";
+import { COMPANY, PRIMARY_PHONE, PUBLIC_SOCIAL_LINKS, formatAddressOneLine } from "@/data/companyContact";
 import { GREATER_PHOENIX_CITIES, cityPageSlug } from "@/data/greaterPhoenixCities";
 import { credentialsOfKind } from "@/data/credentials";
 import { IconWell } from "@/components/visual/IconWell";
@@ -117,16 +117,14 @@ export function LocationServicePage(props: LocationPageProps) {
       email: COMPANY.email,
       address: {
         "@type": "PostalAddress",
-        streetAddress: COMPANY.streetAddress,
         addressLocality: COMPANY.addressLocality,
         addressRegion: COMPANY.addressRegion,
-        postalCode: COMPANY.postalCode,
         addressCountry: COMPANY.addressCountry,
       },
       geo: {
         "@type": "GeoCoordinates",
-        latitude: 33.2826,
-        longitude: -111.8407,
+        latitude: 33.3062,
+        longitude: -111.8413,
       },
       areaServed: {
         "@type": "City",
@@ -146,7 +144,7 @@ export function LocationServicePage(props: LocationPageProps) {
       ],
       priceRange: "$$",
       image: "https://digeratiexperts.com/og-image.png",
-      sameAs: [COMPANY_SOCIAL.linkedin.href, COMPANY_SOCIAL.facebook.href, COMPANY_SOCIAL.twitter.href],
+      sameAs: PUBLIC_SOCIAL_LINKS.map((s) => s.href),
       hasOfferCatalog: {
         "@type": "OfferCatalog",
         name: "IT Services",
