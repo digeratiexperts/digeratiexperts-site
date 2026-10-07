@@ -68,7 +68,7 @@ export default function IndustriesIndex() {
       breadcrumbs={[{ label: "Industries" }]}
       actions={<HeroActions primary={{ label: CTA.primary, href: "/book" }} />}
     >
-      <Chapter tone="paper" seam={false} data-testid="section-industries">
+      <Chapter plate="industries" tone="paper" seam={false} data-testid="section-industries">
         <Container>
           <ChapterHeader
             tone="paper"

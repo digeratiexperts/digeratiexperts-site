@@ -20,6 +20,7 @@ import {
   inkClass,
 } from "@/components/site/chapters";
 import { Shield, Clock, Award, Users } from "lucide-react";
+import { plateForServiceKey } from "@/components/site/PlateBand";
 
 interface ServiceFeature {
   title: string;
@@ -213,7 +214,7 @@ export default function GenericServicePage({
       )}
 
       {process.length > 0 && (
-        <Chapter plate="row" tone="well" data-testid="section-process">
+        <Chapter plate={plateForServiceKey(serviceKey)} tone="well" data-testid="section-process">
           <Container>
             <ChapterHeader
               tone="well"

@@ -475,7 +475,7 @@ export function LocationServicePage(props: LocationPageProps) {
           </Container>
         </Chapter>
 
-        <Chapter tone="surface" aria-label="Arizona cybersecurity context" data-testid="section-location-context">
+        <Chapter plate="locations" tone="surface" aria-label="Arizona cybersecurity context" data-testid="section-location-context">
           <Container>
             <div className="grid gap-8 lg:grid-cols-12 lg:items-start lg:gap-14">
               <div className="lg:col-span-4">

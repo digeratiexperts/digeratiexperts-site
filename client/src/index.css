@@ -2189,6 +2189,13 @@ button, [role="button"], a {
 .de-plate-band__layer img {
   object-fit: cover;
 }
+/* Tall subjects (an aligned stack) are shown whole on the plate's own black ground. */
+.de-plate-band--whole {
+  background: #000;
+}
+.de-plate-band--whole .de-plate-band__layer img {
+  object-fit: contain;
+}
 @media (max-width: 640px) {
   .de-plate-band {
     border-radius: 20px;

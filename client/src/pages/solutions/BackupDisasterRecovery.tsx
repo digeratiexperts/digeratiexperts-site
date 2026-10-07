@@ -429,7 +429,7 @@ export default function BackupDisasterRecovery() {
         </Container>
       </Chapter>
 
-      <Chapter plate="ring" tone="well">
+      <Chapter plate="backup" tone="well">
         <Container>
           <ChapterHeader
             tone="well"
