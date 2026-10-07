@@ -321,7 +321,9 @@ function ApprovalPanel({ r }: { r: ServiceRequestRecord }) {
       )}
       {canDecide && (
         <div className="mt-3 border-t border-border pt-3">
-          <ApprovalDecision request={r} onDone={(u) => qc.setQueryData(["/api/portal/service-requests", r.id], { success: true, request: u })} />
+          <ApprovalDecision request={r} onDone={(u) => {
+              qc.setQueryData<{ success: boolean; request: ServiceRequestRecord }>(["/api/portal/service-requests", r.id], { success: true, request: u });
+            }} />
         </div>
       )}
     </Panel>
