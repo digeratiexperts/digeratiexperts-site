@@ -170,7 +170,9 @@ import {
   lifecycleIntegrationStatus,
   runLifecycle,
   listLifecycleEvents,
+  latestLifecycleByEmail,
 } from "./lifecycleOrchestrator";
+import { buildProvisioningSummary } from "@shared/provisioning";
 import {
   buildLearningPayload,
   resolveLearningAudience,
@@ -1135,6 +1137,27 @@ export async function registerRoutes(app: Express) {
       res.json({ success: true, people, departments });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Provisioning status (JumpCloud + Blackpoint lifecycle) for every person in
+  // the company, polled by People & Org. Same scoping as /org/people.
+  app.get("/api/portal/org/provisioning", [authMiddleware, requireOrgManage], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const clientId = req.user!.clientId;
+      const targetClient = (req.query.clientId as string) || clientId;
+      if (!targetClient) return res.status(400).json({ error: "clientId required" });
+      if (req.user!.role !== "admin" && targetClient !== clientId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      const emails = listClientUsers(targetClient).map((u) => String(u.email || "").toLowerCase()).filter(Boolean);
+      const runs = await latestLifecycleByEmail(emails);
+      const byEmail: Record<string, ReturnType<typeof buildProvisioningSummary>> = {};
+      for (const email of emails) byEmail[email] = buildProvisioningSummary({ email, latestRun: runs.get(email) || null });
+      res.json({ byEmail, checkedAt: new Date().toISOString() });
+    } catch (error: any) {
+      console.error("[ERROR] org provisioning:", error);
+      res.status(500).json({ error: "Failed to load provisioning status" });
     }
   });
 
@@ -3383,6 +3406,32 @@ export async function registerRoutes(app: Express) {
       });
     } catch (error: any) {
       return res.status(500).json({ message: "Failed to load profile" });
+    }
+  });
+
+  // The signed-in user's own provisioning: their latest lifecycle run plus the
+  // Store orders DE is setting up for them. Polled by Settings for live status.
+  app.get("/api/portal/profile/provisioning", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const email = String(req.user?.email || "").toLowerCase();
+      if (!email) return res.status(401).json({ message: "Not signed in" });
+      const runs = await latestLifecycleByEmail([email]);
+      let orders: any[] = [];
+      try {
+        orders = await storage.getStoreOrdersForAccount({ userId: req.userId, clientId: null });
+      } catch (e: any) {
+        console.error("[provisioning] store orders unavailable:", e?.message || e);
+      }
+      const summary = buildProvisioningSummary({
+        email,
+        latestRun: runs.get(email) || null,
+        orders: orders.map((o) => ({ id: o.id, orderNumber: o.orderNumber, status: o.status, createdAt: o.createdAt })),
+        includeOrders: true,
+      });
+      return res.json({ ...summary, checkedAt: new Date().toISOString() });
+    } catch (error: any) {
+      console.error("[ERROR] profile provisioning:", error);
+      return res.status(500).json({ message: "Failed to load provisioning status" });
     }
   });
 

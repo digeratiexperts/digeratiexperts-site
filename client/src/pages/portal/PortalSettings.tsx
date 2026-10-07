@@ -7,6 +7,7 @@ import MfaSetup from "@/components/portal/MfaSetup";
 import { portalFetch, portalGet } from "@/lib/portalApi";
 import { useToast } from "@/hooks/use-toast";
 import { Field, Panel } from "@/components/portal/ui";
+import { ProvisioningStatusPanel } from "@/components/portal/ProvisioningStatus";
 
 type ProfileManager = { id: string; email: string; fullName: string };
 
@@ -166,6 +167,8 @@ export default function PortalSettings() {
             </div>
           </form>
         </Panel>
+
+        <ProvisioningStatusPanel />
 
         <Panel
           id="settings-manager"
