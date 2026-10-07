@@ -8,9 +8,9 @@
  * layers, each tried whatever the others did:
  *   1. the local disk spool (replayed into Desk by API once the token works:
  *      server/deskTicketReplayWorker.ts);
- *   2. an email of the full ticket into the Desk inbox, which Desk's email
- *      channel turns into a ticket (reply-to = the client, so a reply from
- *      Desk reaches them);
+ *   2. an email of the full ticket to Desk's own incoming address, which Desk
+ *      turns into a ticket (reply-to = the client, so a reply from Desk
+ *      reaches them);
  *   3. an acknowledgement to the client with a reference.
  * The ticket is accepted when the spool or the Desk email held. Only when both
  * fail does the client see the retry message, and their draft is kept.
@@ -61,9 +61,18 @@ export type DeskFallbackDeps = {
   now: () => Date;
 };
 
+/**
+ * Zoho Desk's own incoming address for the Digerati Experts department. Mail
+ * to it always becomes a Desk ticket. support@digerati-experts.com is only a
+ * reply-from address in Desk: mail sent there reaches Desk only if that mailbox
+ * forwards to Desk, and no Desk ticket had ever arrived by email (checked
+ * 2026-10-07, tickets 104 to 132).
+ */
+export const DESK_INBOUND_ADDRESS = "support@thatsmytech.zohosupport.com";
+
 /** The Desk inbox that Desk's email channel turns into tickets. */
 export function deskFallbackInbox(env: NodeJS.ProcessEnv = process.env): string {
-  return env.DESK_FALLBACK_EMAIL?.trim() || "support@digerati-experts.com";
+  return env.DESK_FALLBACK_EMAIL?.trim() || DESK_INBOUND_ADDRESS;
 }
 
 /** A reference the client can quote: DE-W- for the website widget, DE-P- for the portal. */

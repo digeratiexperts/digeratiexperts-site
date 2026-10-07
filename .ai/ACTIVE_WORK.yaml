@@ -2784,7 +2784,7 @@ claims:
       - deploy/vps/env.production.example (DESK_FALLBACK_EMAIL only), docs/DE-SYSTEM-INTEGRATION.md (the Zoho Desk row only)
       - client/src/components/ZohoASAPWidget.desk-shell.test.ts (one guard test appended)
       - client/src/lib/deskTicketResponse.ts, client/src/lib/deskTicketResponse.test.ts (accept a queued ticket with its reference)
-    status: active
+    status: verified-live
     started: 2026-10-07
     note: >-
       Joe, 2026-10-07 (screenshot of the Get Support tab showing "Ticket
@@ -2801,6 +2801,40 @@ claims:
       2026-10-07: open PRs 501 and 502 touch server/routes.ts and
       notificationService.ts in other blocks; this claim keeps its edits there
       minimal (one catch block, two exports).
+      RELEASED 2026-10-07: Joe, "merge 506". Merged as af222ff (PR 506) after
+      CI passed on bc6beb0. Production runs effb16a, which contains it
+      (/api/health release, built 03:21Z). Playwright at 1440 and 390 against
+      production: Get Support shows no outage banner, no overflow, no page
+      errors (artifacts/visual-qa/desk-ticket-failover/live/). /api/health
+      reads zohoDesk auth_failed (the token is still refused) and
+      deskTicketSpool.pending 1: a real ticket was taken by the fallback
+      within 20 minutes of the deploy. The planned live test ticket was not
+      sent (the session's permission check refused a live submission). Found
+      on verification: no Desk ticket arrived by email (newest Desk ticket is
+      132, 2026-10-03), because support@digerati-experts.com is a Desk
+      reply-from address, not its incoming address; fixed under
+      desk-fallback-inbox. The spooled ticket is kept and replays into Desk by
+      API once the token works. VERIFIED LIVE (client-facing failover and
+      banner removal). Files released.
+  - id: desk-fallback-inbox
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: effb16a
+    files:
+      - server/deskTicketFallback.ts, server/deskTicketFallback.test.ts (the default fallback address only)
+      - deploy/vps/env.production.example (the DESK_FALLBACK_EMAIL comment only), docs/DE-SYSTEM-INTEGRATION.md (the Zoho Desk row only)
+    status: active
+    started: 2026-10-07
+    note: >-
+      Follow-up to desk-ticket-failover, found while verifying it live. The
+      fallback emailed support@digerati-experts.com, which Zoho Desk lists only
+      as a reply-from address (getReplyMailAddresses, org 641745124); every
+      Desk ticket so far arrived by web, none by email, so mail there is not
+      reaching Desk. The default is now support@thatsmytech.zohosupport.com,
+      Desk's own incoming address for the Digerati Experts department, which
+      always becomes a ticket. DESK_FALLBACK_EMAIL still overrides it. Overlap
+      check 2026-10-07: no active claim and no open PR touches these files.
   - id: homepage-polish
     owner: claude
     subsystem: public-marketing-visual-layer
