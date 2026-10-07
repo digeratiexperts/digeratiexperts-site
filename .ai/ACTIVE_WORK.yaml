@@ -2863,3 +2863,16 @@ claims:
       until Joe approves them on this PR. Concurrency audit 2026-10-07: open PRs
       512, 511, 510 and 509 touch none of these files; 512, 511 and 510 also edit
       this ledger (this claim is appended at the end).
+  - id: portal-organization-admin
+    owner: claude
+    subsystem: portal-org-directory
+    branch: claude/portal-organization-admin
+    base_sha: e7679b5
+    files:
+      - server/orgDirectoryRoutes.ts (GET /me for a DE admin with a company open) + test
+      - client/src/pages/portal/PortalOrganization.tsx (admin and no-company states only), client/src/lib/directoryApi.ts (type)
+    status: active
+    started: 2026-10-07
+    note: >-
+      Joe, 2026-10-07: "/portal/organization is not live". Deployed, but a DE admin got
+      "You are not in this company's directory" and never saw the management tabs.
