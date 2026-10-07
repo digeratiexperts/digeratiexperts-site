@@ -97,7 +97,8 @@
   .v8 .v8s-01 .hero .v8-h1 { font-size: clamp(2.45rem, 7vw, 4.25rem); }
   .v8 .v8s-01 .hero .v8-h1 span { white-space: normal; }
   .v8 .v8s-01 .win { max-width: 680px; }
-  .v8 .v8s-01 .hero__plate { left: 0; }
+  /* Stacked layout: the plate only reached the page as a blown-up tile behind the headline (its core sits behind the opaque card), so it is off below 1180px. Same rule as PR 492. */
+  .v8 .v8s-01 .hero__plate { display: none; }
   .v8 .v8s-01 .hero__grid { inset: 0; }
 }
 @media (max-width: 1023px) {
@@ -107,7 +108,9 @@
 }
 @media (max-width: 639px) {
   .v8 .v8s-01 .hero .v8-eyebrow .sep { display: none; }
-  .v8 .v8s-01 .hero .v8-eyebrow .l2 { display: block; margin-top: 4px; }
+  /* .v8-eyebrow is a flex row, so a block .l2 became a second squeezed column. Wrap it onto its own line, aligned with the text after the rule (24px rule + 12px gap). */
+  .v8 .v8s-01 .hero .v8-eyebrow { flex-wrap: wrap; row-gap: 4px; }
+  .v8 .v8s-01 .hero .v8-eyebrow .l2 { flex-basis: 100%; padding-left: 36px; }
   .v8 .v8s-01 .hero__position { flex-direction: column; gap: 4px; }
   .v8 .v8s-01 .hero__position li { padding: 0; }
   .v8 .v8s-01 .hero__position li + li { border-left: 0; }
@@ -115,7 +118,11 @@
   .v8 .v8s-01 .hero .v8-h1 { font-size: 2.45rem; }
   .v8 .v8s-01 .hero__sub { font-size: 17px; }
   .v8 .v8s-01 .hero__actions .v8-btn { width: 100%; }
-  .v8 .v8s-01 .win::before, .v8 .v8s-01 .win::after { display: none; }
+  .v8 .v8s-01 .win::after { display: none; }
+  /* The plate is off below 1180px, so on phones the tile ring rises behind the top of the assessment card, as it frames the card on desktop. --hero-plate is set in 01-hero.tsx. */
+  .v8 .v8s-01 .win::before { top: -96px; left: calc(-1 * var(--v8-gutter, 16px)); right: calc(-1 * var(--v8-gutter, 16px)); bottom: auto; width: auto; height: 260px; z-index: -1; border: 0; opacity: 0.75;
+    background: var(--hero-plate) 78% 30% / auto 100% no-repeat;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 40%); mask-image: linear-gradient(to bottom, transparent 0%, #000 40%); }
   .v8 .v8s-01 .win__sec { padding: 20px 18px; }
   .v8 .v8s-01 .win__bar .v8-tag { display: none; }
   .v8 .v8s-01 .win__tag-sm { display: inline-flex; margin-bottom: 12px; }
