@@ -6,7 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, Users, Plus, Eye, Loader, Search, ArrowRight, Building, FileText, Upload, Trash2, BarChart3, Ticket, Activity } from "lucide-react";
+import { Link } from "wouter";
+import { Building2, ShieldCheck, Users, Plus, Eye, Loader, Search, ArrowRight, Building, FileText, Upload, Trash2, BarChart3, Ticket, Activity } from "lucide-react";
 import { portalGet } from "@/lib/portalApi";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -223,7 +224,9 @@ export function AdminCompanies() {
 
   const impersonateMutation = useMutation({
     mutationFn: async (companyId: string) => {
-      return await apiRequest("/api/portal/admin/impersonate", "POST", { companyId });
+      // apiRequest resolves to the Response; the token and company are in its body.
+      const response = await apiRequest("/api/portal/admin/impersonate", "POST", { companyId });
+      return response.json();
     },
     onSuccess: (data: any) => {
       localStorage.setItem("portalToken", data.token);
@@ -314,7 +317,7 @@ export function AdminCompanies() {
       header: <span className="sr-only">Actions</span>,
       primary: true,
       align: "right",
-      className: "w-64",
+      className: "w-80",
       cell: (company) => (
         <div className="flex flex-wrap justify-end gap-2">
           <Button
@@ -326,6 +329,12 @@ export function AdminCompanies() {
           >
             <Eye className="h-4 w-4" aria-hidden="true" />
             Details
+          </Button>
+          <Button asChild variant="outline" size="sm" className="border-border bg-card hover:bg-accent">
+            <Link href={`/portal/admin/clients/${encodeURIComponent(company.id)}`} data-testid={`button-administer-${company.id}`}>
+              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+              Administer
+            </Link>
           </Button>
           <Button
             size="sm"
