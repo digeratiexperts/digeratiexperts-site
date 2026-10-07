@@ -352,20 +352,10 @@ export const ZohoASAPWidget = ({
     Partial<Record<"email" | "subject" | "message", string>>
   >({});
   const [ticketSubmitError, setTicketSubmitError] = useState<string | null>(null);
-  const [deskUnavailable, setDeskUnavailable] = useState(false);
-
-  useEffect(() => {
-    if (!isOpen || activeTab !== "ticket") return;
-    const controller = new AbortController();
-    // Only probe when someone opens Get Support, never on every page load.
-    void fetch("/api/zoho/desk/status", { signal: controller.signal, cache: "no-store" })
-      .then(async (response) => {
-        const data = await response.json().catch(() => null);
-        if (!controller.signal.aborted) setDeskUnavailable(data?.connected === false);
-      })
-      .catch(() => { /* Ticket submission remains authoritative if the probe is unreachable. */ });
-    return () => controller.abort();
-  }, [isOpen, activeTab]);
+  // No desk-outage banner for clients (Joe, 2026-10-07: "Clients cannot see
+  // this at all"). A ticket the Desk API cannot take goes to the server's
+  // failover (server/deskTicketFallback.ts) and the client sees it received.
+  // The server-side desk status probe stays for staff and monitors.
 
   const [canDrag, setCanDrag] = useState(false);
   const [isDeskFullscreen, setIsDeskFullscreen] = useState(false);
@@ -1439,7 +1429,6 @@ export const ZohoASAPWidget = ({
         }),
       });
       const data = await readDeskTicketResponse(response);
-      setDeskUnavailable(false);
 
       setTicketResult({
         ticketNumber: data.ticketNumber,
@@ -2125,13 +2114,6 @@ export const ZohoASAPWidget = ({
                           <h3>Direct Engineering Support</h3>
                           <p>Tell us what happened. We&apos;ll route your request straight to the Arizona desk.</p>
                         </div>
-
-                        {deskUnavailable ? (
-                          <div className="de-desk-form-error" role="status" data-testid="support-availability">
-                            Ticket submission is temporarily unavailable. You can keep drafting below or{" "}
-                            <a href={PRIMARY_PHONE.telHref}>call {PRIMARY_PHONE.display}</a> for help.
-                          </div>
-                        ) : null}
 
                         <button
                           type="button"

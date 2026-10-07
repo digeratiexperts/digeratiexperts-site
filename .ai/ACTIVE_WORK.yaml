@@ -2715,3 +2715,37 @@ claims:
       /api/health shows sessionRevocation "ready", solutionSpool and quoteSpool
       pending 0. VERIFIED LIVE. Issues 232, 240, 243, 393 closed with
       evidence (391 already closed). Files released.
+  - id: desk-ticket-failover
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 4bc8e5a
+    files:
+      - server/deskTicketFallback.ts (new), server/deskTicketFallback.test.ts (new)
+      - server/deskTicketReplayWorker.ts (new), server/deskTicketReplayWorker.test.ts (new)
+      - server/widgetTicketRoute.ts, server/widgetTicketRoute.test.ts (Desk failure paths only)
+      - server/publicSolutionSpool.ts (deskTicketSpoolDir only)
+      - server/services/notificationService.ts (export sendEmail and baseEmailTemplate; reply-to support only)
+      - server/routes.ts (the client-portal ticket Desk-sync catch only)
+      - server/index.ts (health spool count and replay worker start only)
+      - client/src/components/ZohoASAPWidget.tsx (remove the client-facing desk outage banner and its probe only)
+      - deploy/vps/env.production.example (DESK_FALLBACK_EMAIL only), docs/DE-SYSTEM-INTEGRATION.md (the Zoho Desk row only)
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts (one guard test appended)
+      - client/src/lib/deskTicketResponse.ts, client/src/lib/deskTicketResponse.test.ts (accept a queued ticket with its reference)
+    status: active
+    started: 2026-10-07
+    note: >-
+      Joe, 2026-10-07 (screenshot of the Get Support tab showing "Ticket
+      submission is temporarily unavailable"): "you need to correct this then
+      make sure you have a fail over for this DE Desk ticketing. Clients
+      cannot see this at all." Production /api/zoho/desk/status reads
+      reason auth_failed (Zoho refuses the server's Desk refresh token); Desk
+      itself answers through Joe's own connector. Failover: a ticket the Desk
+      API cannot take is spooled on disk, emailed into the Desk inbox
+      (support@digerati-experts.com, reply-to the client), acknowledged to
+      the client with a reference, and replayed into Desk by API when the
+      token works again; the client always sees "received" unless every layer
+      fails. The outage banner is removed from the widget. Overlap check
+      2026-10-07: open PRs 501 and 502 touch server/routes.ts and
+      notificationService.ts in other blocks; this claim keeps its edits there
+      minimal (one catch block, two exports).

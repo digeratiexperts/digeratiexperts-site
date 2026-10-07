@@ -50,6 +50,15 @@ export function quoteSpoolDir(): string {
   return path.join(os.tmpdir(), "de-quote-spool");
 }
 
+/** DE Desk tickets the Desk API could not take (desk-ticket-failover), in their own directory. */
+export function deskTicketSpoolDir(): string {
+  if (process.env.DESK_TICKET_SPOOL_DIR) return path.resolve(process.env.DESK_TICKET_SPOOL_DIR);
+  if (process.env.NODE_ENV === "production") {
+    return path.resolve(process.cwd(), "..", "shared", "spool", "desk-tickets");
+  }
+  return path.join(os.tmpdir(), "de-desk-ticket-spool");
+}
+
 function fileFor(dir: string, id: string): string | null {
   return SAFE_ID.test(id) ? path.join(dir, `${id}.json`) : null;
 }

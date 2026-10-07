@@ -1,0 +1,38 @@
+{
+  "390": {
+    "bannerShown": 0,
+    "bannerText": null,
+    "ticketReply": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "ticketNumber": "DE-W-MUXE3XJI-CD6437",
+        "queued": true,
+        "message": "Your support request has been received."
+      }
+    },
+    "submitError": 0,
+    "successRef": 1,
+    "panelText": "Support request received\n\nTICKET\nDE-W-MUXE3XJI-CD6437\n\nYour support request has been received.\n\nBack to Ask DE\nCreate another ticket",
+    "overflowX": 0,
+    "errors": []
+  },
+  "1440": {
+    "bannerShown": 0,
+    "bannerText": null,
+    "ticketReply": {
+      "status": 200,
+      "body": {
+        "success": true,
+        "ticketNumber": "DE-W-MUXE3R5E-28D9C1",
+        "queued": true,
+        "message": "Your support request has been received."
+      }
+    },
+    "submitError": 0,
+    "successRef": 1,
+    "panelText": "Support request received\n\nTICKET\nDE-W-MUXE3R5E-28D9C1\n\nYour support request has been received.\n\nBack to Ask DE\nCreate another ticket",
+    "overflowX": 0,
+    "errors": []
+  }
+}

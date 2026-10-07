@@ -24,9 +24,11 @@ export function solutionFallbackRecipients(): string[] {
   return Array.from(new Set([ADMIN_EMAIL, sales].map((address) => address.trim().toLowerCase()).filter(Boolean)));
 }
 
-interface EmailOptions {
+export interface EmailOptions {
   to: string | string[];
   subject: string;
+  /** Replies go here instead of the no-reply sender (DE Desk fallback: the client). */
+  replyTo?: { address: string; name?: string };
   htmlBody: string;
   textBody?: string;
   /** When true, add List-Unsubscribe headers (marketing/newsletter). */
@@ -39,7 +41,7 @@ interface ZeptoMailResponse {
   error?: any;
 }
 
-async function sendEmail(options: EmailOptions): Promise<boolean> {
+export async function sendEmail(options: EmailOptions): Promise<boolean> {
   // Review instances must never mail real leads/clients.
   if (shouldBlockMutation(`outbound email: ${options.subject}`)) {
     return false;
@@ -75,6 +77,7 @@ async function sendEmail(options: EmailOptions): Promise<boolean> {
     textbody: options.textBody || options.htmlBody.replace(/<[^>]*>/g, ''),
     track_clicks: false,
     track_opens: false,
+    ...(options.replyTo ? { reply_to: [{ address: options.replyTo.address, ...(options.replyTo.name ? { name: options.replyTo.name } : {}) }] } : {}),
   };
 
   // Deliverability: List-Unsubscribe for marketing/newsletter only (not transactional auth mail)
@@ -122,7 +125,7 @@ async function sendEmail(options: EmailOptions): Promise<boolean> {
 }
 
 // Email Templates
-function baseEmailTemplate(content: string, title: string): string {
+export function baseEmailTemplate(content: string, title: string): string {
   return `
 <!DOCTYPE html>
 <html>

@@ -5,6 +5,8 @@ describe("Desk ticket confirmation", () => {
   it.each([
     null, {}, { zohoTicketId: "123" }, { success: false, zohoTicketId: "123" },
     { success: true, zohoTicketId: {} }, { success: true, zohoTicketId: " " },
+    { success: true, ticketNumber: "DE-W-1" }, { success: true, queued: true },
+    { success: true, queued: true, ticketNumber: " " }, { success: false, queued: true, ticketNumber: "DE-W-1" },
   ])("rejects malformed or explicit failed success payload %j", async (body) => {
     await expect(readDeskTicketResponse(Response.json(body))).rejects.toThrow();
   });
@@ -14,6 +16,14 @@ describe("Desk ticket confirmation", () => {
   });
   it("does not accept a success body on an HTTP error", async () => {
     await expect(readDeskTicketResponse(Response.json({ success: true, zohoTicketId: "123" }, { status: 503 })))
+      .rejects.toThrow();
+  });
+  it("accepts a ticket the server's Desk failover queued, with its reference", async () => {
+    expect(await readDeskTicketResponse(Response.json({ success: true, queued: true, ticketNumber: "DE-W-MUXE2OMC-19CFC8" })))
+      .toEqual({ ticketNumber: "DE-W-MUXE2OMC-19CFC8", message: "Your support request has been received." });
+  });
+  it("does not accept a queued body on an HTTP error", async () => {
+    await expect(readDeskTicketResponse(Response.json({ success: true, queued: true, ticketNumber: "DE-W-1" }, { status: 503 })))
       .rejects.toThrow();
   });
   it("uses a confirmed Desk reference", async () => {

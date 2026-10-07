@@ -12,6 +12,11 @@ import { ZohoOAuthError } from "./zoho/zohoOAuthErrors";
  * ticket was rejected", with no retry guidance. Zoho itself was healthy (one
  * org, one department), the last widget ticket was 2026-06-01, and nothing
  * on this path had test coverage beyond splitVisitorName.
+ *
+ * 2026-10-07 (desk-ticket-failover, Joe: "Clients cannot see this at all"):
+ * every Desk failure now hands the ticket to the fallback (disk spool, email
+ * into the Desk inbox, client acknowledgement) and the visitor sees it
+ * received. Only when the fallback holds nothing does the 503 retry remain.
  */
 
 vi.mock("./zoho", () => ({
@@ -63,6 +68,7 @@ describe("DE Desk widget ticket route", () => {
   let createTicket: ReturnType<typeof vi.fn>;
   let isDeskConfigured: ReturnType<typeof vi.fn>;
   let getDeskClient: ReturnType<typeof vi.fn>;
+  const fallback = vi.fn();
 
   beforeAll(async () => {
     const { registerWidgetTicketRoute } = await import("./widgetTicketRoute");
@@ -73,7 +79,11 @@ describe("DE Desk widget ticket route", () => {
 
     const app = express();
     app.use(express.json());
-    registerWidgetTicketRoute(app, { ticketRateLimiter: passThrough, statusRateLimiter: passThrough });
+    registerWidgetTicketRoute(app, {
+      ticketRateLimiter: passThrough,
+      statusRateLimiter: passThrough,
+      fallback: (ticket, options) => fallback(ticket, options),
+    });
     server = createServer(app);
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
     const address = server.address();
@@ -88,6 +98,7 @@ describe("DE Desk widget ticket route", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     isDeskConfigured.mockReturnValue(true);
+    fallback.mockResolvedValue({ accepted: true, spooled: true, deskEmailed: true, clientAcknowledged: true });
     const { resetDeskStatusCacheForTests } = await import("./widgetTicketRoute");
     resetDeskStatusCacheForTests();
   });
@@ -101,23 +112,36 @@ describe("DE Desk widget ticket route", () => {
     return { status: response.status, body: (await response.json()) as Record<string, unknown> };
   }
 
-  it("the production failure: an OAuth refresh failure is reported as the desk being unavailable, with a retry path", async () => {
+  /** The visitor's view of a ticket the Desk API did not take: received, with a reference. */
+  function expectQueued(result: { status: number; body: Record<string, unknown> }, reason: string) {
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({ success: true, queued: true, message: "Your support request has been received." });
+    expect(String(result.body.ticketNumber)).toMatch(/^DE-W-[0-9A-Z]+-[0-9A-F]{6}$/);
+    expect(result.body).not.toHaveProperty("zohoTicketId");
+    expect(result.body).not.toHaveProperty("error");
+    expect(fallback).toHaveBeenCalledTimes(1);
+    const [ticket, options] = fallback.mock.calls[0];
+    expect(ticket).toMatchObject({
+      source: "website-widget",
+      email: validTicket.email,
+      name: validTicket.name,
+      subject: validTicket.subject,
+      description: validTicket.description,
+      priority: "Medium",
+      reason,
+      reference: result.body.ticketNumber,
+    });
+    expect(options).toEqual({ acknowledge: true });
+  }
+
+  it("the production failure: a refused Desk token hands the ticket to the fallback and the visitor sees it received", async () => {
     // zohoClient._doRefreshDeskToken throws exactly this when the refresh
     // token is expired, revoked, or lacks Desk scopes.
     createTicket.mockRejectedValueOnce(new Error("Failed to refresh Zoho Desk access token"));
-
-    const { status, body } = await post(validTicket);
-
-    expect(status).toBe(503);
-    expect(body.success).toBe(false);
-    expect(body.code).toBe("desk_auth_unavailable");
-    expect(body.error).toMatch(/temporarily unavailable/i);
-    expect(body.error).toContain(PRIMARY_PHONE.display);
-    expect(body.retryable).toBe(true);
-    expect(body.zohoTicketId).toBeUndefined();
+    expectQueued(await post(validTicket), "auth_failed");
   });
 
-  it("typed ZohoOAuthError(invalid_code) is unavailable with success:false — never a fake ticket", async () => {
+  it("typed ZohoOAuthError(invalid_code) goes to the fallback, never a fake Desk ticket id", async () => {
     const { ZohoOAuthError } = await import("./zoho/zohoOAuthErrors");
     createTicket.mockRejectedValueOnce(
       new ZohoOAuthError({
@@ -127,66 +151,63 @@ describe("DE Desk widget ticket route", () => {
         zohoError: "invalid_code",
       }),
     );
-
-    const { status, body } = await post(validTicket);
-
-    expect(status).toBe(503);
-    expect(body.success).toBe(false);
-    expect(body.code).toBe("desk_auth_unavailable");
-    expect(body.zohoTicketId).toBeUndefined();
+    expectQueued(await post(validTicket), "auth_failed");
   });
 
-  it("a 401 from Zoho is the same class: unavailable, not rejected", async () => {
+  it("a 401 from Zoho goes to the fallback as an auth failure", async () => {
     const err = Object.assign(new Error("Request failed with status code 401"), {
       response: { status: 401, data: { errorCode: "INVALID_OAUTH", message: "The access token is invalid" } },
     });
     createTicket.mockRejectedValueOnce(err);
-
-    const { status, body } = await post(validTicket);
-
-    expect(status).toBe(503);
-    expect(body.success).toBe(false);
-    expect(body.code).toBe("desk_auth_unavailable");
-    expect(body.error).toMatch(/temporarily unavailable/i);
+    expectQueued(await post(validTicket), "auth_failed");
   });
 
-  it("a validation rejection from Zoho stays a 502 'try again', not 'unavailable'", async () => {
+  it("a validation rejection from Zoho goes to the fallback too: the client's ticket is never lost", async () => {
     const err = Object.assign(new Error("Request failed with status code 422"), {
       response: { status: 422, data: { errorCode: "UNPROCESSABLE_ENTITY", message: "Extra field" } },
     });
     createTicket.mockRejectedValueOnce(err);
-
-    const { status, body } = await post(validTicket);
-
-    expect(status).toBe(502);
-    expect(body.success).toBe(false);
-    expect(body.code).toBe("desk_create_failed");
-    expect(body.error).toMatch(/couldn't open the ticket/i);
-    expect(body.retryable).toBe(true);
-    expect(body.zohoTicketId).toBeUndefined();
+    expectQueued(await post(validTicket), "rejected");
   });
 
-  it("never reports success without a Zoho ticket id", async () => {
+  it("a Desk answer with no ticket id goes to the fallback, never a success without a reference", async () => {
     createTicket.mockResolvedValueOnce({} as never);
-
-    const { status, body } = await post(validTicket);
-
-    expect(status).toBe(502);
-    expect(body.success).toBe(false);
-    expect(body.code).toBe("desk_create_failed");
-    expect(body.zohoTicketId).toBeUndefined();
+    expectQueued(await post(validTicket), "no_ticket_id");
   });
 
-  it("an unconfigured desk is unavailable, before any Zoho call", async () => {
+  it("an unconfigured desk goes straight to the fallback, before any Zoho call", async () => {
     isDeskConfigured.mockReturnValue(false);
+    expectQueued(await post(validTicket), "not_configured");
+    expect(createTicket).not.toHaveBeenCalled();
+  });
 
+  it("keeps the DE Desk session on the fallback ticket so staff can find the chat", async () => {
+    createTicket.mockRejectedValueOnce(new Error("Failed to refresh Zoho Desk access token"));
+    await post({ ...validTicket, sessionId: "desk-session-42" });
+    expect(fallback.mock.calls[0][0].description).toMatch(/DE Desk session: desk-session-42$/);
+  });
+
+  it("only when every fallback layer failed does the visitor get the retry message, with the phone number", async () => {
+    createTicket.mockRejectedValueOnce(new Error("Failed to refresh Zoho Desk access token"));
+    fallback.mockResolvedValueOnce({ accepted: false, spooled: false, deskEmailed: false, clientAcknowledged: false });
     const { status, body } = await post(validTicket);
+    expect(status).toBe(503);
+    expect(body).toMatchObject({ success: false, code: "desk_unavailable", retryable: true });
+    expect(String(body.error)).toContain(PRIMARY_PHONE.display);
+  });
 
+  it("a fallback that throws is treated as nothing held: retry message, no false success", async () => {
+    createTicket.mockRejectedValueOnce(new Error("Failed to refresh Zoho Desk access token"));
+    fallback.mockRejectedValueOnce(new Error("disk full"));
+    const { status, body } = await post(validTicket);
     expect(status).toBe(503);
     expect(body.success).toBe(false);
-    expect(body.code).toBe("desk_not_configured");
-    expect(body.error).toMatch(/temporarily unavailable/i);
-    expect(createTicket).not.toHaveBeenCalled();
+  });
+
+  it("does not touch the fallback when Desk takes the ticket", async () => {
+    createTicket.mockResolvedValueOnce({ id: "171003000009999002", ticketNumber: "122" } as never);
+    expect((await post(validTicket)).body.ticketNumber).toBe("122");
+    expect(fallback).not.toHaveBeenCalled();
   });
 
   it("reports success only when Zoho returned a ticket, carrying its number", async () => {
@@ -289,15 +310,12 @@ describe("DE Desk widget ticket route", () => {
     });
   });
 
-  it("preserves #290's typed invalid_code failure on #289's extracted route", async () => {
+  it("preserves #290's typed invalid_code failure on #289's extracted route: an auth failure for the fallback", async () => {
     createTicket.mockRejectedValueOnce(new ZohoOAuthError({
       message: "No access token in Zoho Desk response", product: "desk",
       code: "invalid_refresh_token", zohoError: "invalid_code",
     }));
-    const result = await post(validTicket);
-    expect(result.status).toBe(503);
-    expect(result.body).toMatchObject({ success: false, code: "desk_auth_unavailable" });
-    expect(result.body).not.toHaveProperty("zohoTicketId");
+    expectQueued(await post(validTicket), "auth_failed");
   });
 
   it.each([
@@ -315,9 +333,9 @@ describe("DE Desk widget ticket route", () => {
     expect(createTicket).toHaveBeenCalledWith(expect.objectContaining({ priority: "Urgent" }));
   });
 
-  it.each([429, 500, 503])("reports upstream %i as unavailable", async (status) => {
+  it.each([429, 500, 503])("hands upstream %i to the fallback as unavailable", async (status) => {
     createTicket.mockRejectedValueOnce({ response: { status } });
-    expect((await post(validTicket)).status).toBe(503);
+    expectQueued(await post(validTicket), "unavailable");
   });
 
   it("uses the real Desk id as a reference when no ticket number is returned", async () => {

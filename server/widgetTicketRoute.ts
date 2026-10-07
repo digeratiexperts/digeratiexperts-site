@@ -7,6 +7,7 @@ import { splitVisitorName, zohoClient, zohoDeskService } from "./zoho";
 import { isZohoOAuthError } from "./zoho/zohoOAuthErrors";
 import { PRIMARY_PHONE } from "@shared/companyContact";
 import { deskTicketSchema } from "@shared/deskTicket";
+import { fallbackTicket, saveTicketOutsideDesk, type DeskFallbackOutcome, type FallbackTicket } from "./deskTicketFallback";
 
 /**
  * The public DE Desk "Get Support" ticket, and a status probe for the desk it
@@ -18,6 +19,12 @@ import { deskTicketSchema } from "@shared/deskTicket";
  * splitVisitorName, and every Desk failure — an expired refresh token, a
  * missing scope, a rejected payload — was flattened into one generic 502 with
  * the cause visible only in the production log.
+ *
+ * Since 2026-10-07 (desk-ticket-failover) a Desk failure no longer reaches the
+ * visitor: the ticket goes to server/deskTicketFallback.ts (disk spool, an
+ * email into the Desk inbox, an acknowledgement with a reference) and the
+ * visitor sees it received. Only when every fallback layer fails do they get
+ * the retry message, with their draft kept.
  */
 
 export const WIDGET_TICKET_PATH = "/api/portal/zoho/ticket";
@@ -171,11 +178,14 @@ export interface WidgetTicketRouteOptions {
   /** Tests pass a pass-through so five requests do not trip the real limiter. */
   ticketRateLimiter?: RequestHandler;
   statusRateLimiter?: RequestHandler;
+  /** Where a ticket goes when the Desk API does not take it. Tests pass a stub. */
+  fallback?: (ticket: FallbackTicket, options: { acknowledge?: boolean }) => Promise<DeskFallbackOutcome>;
 }
 
 export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRouteOptions = {}): void {
   const ticketLimiter = options.ticketRateLimiter ?? widgetTicketRateLimiter;
   const statusLimiter = options.statusRateLimiter ?? deskStatusRateLimiter;
+  const fallback = options.fallback ?? ((ticket, opts) => saveTicketOutsideDesk(ticket, opts));
 
   app.get(DESK_STATUS_PATH, statusLimiter, async (_req: Request, res: Response) => {
     res.set("Cache-Control", "no-store");
@@ -205,15 +215,48 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
       const priorityValue = priority || "Medium";
       const priorityLower = String(priorityValue).toLowerCase();
 
-      if (!zohoClient.isDeskConfigured()) {
-        console.error("[WIDGET TICKET] Zoho Desk is not configured");
-        return res.status(503).json({ success: false, code: "desk_not_configured", error: DESK_UNAVAILABLE_MESSAGE, retryable: true });
-      }
-
       const { firstName, lastName } = splitVisitorName(
         typeof name === "string" ? name : undefined,
         String(email),
       );
+
+      // Every way the Desk API can fail ends here: the ticket goes to the
+      // fallback, and the visitor sees it received unless every layer failed.
+      const viaFallback = async (reason: string) => {
+        const visitorName = typeof name === "string" && name.trim() ? name.trim() : undefined;
+        const ticket = fallbackTicket({
+          source: "website-widget",
+          email: String(email),
+          ...(visitorName ? { name: visitorName } : {}),
+          subject,
+          description: typeof advisorSessionId === "string" && advisorSessionId.trim()
+            ? `${description}\n\n---\nDE Desk session: ${advisorSessionId.trim()}`
+            : description,
+          priority: priorityValue,
+          reason,
+        });
+        let outcome: DeskFallbackOutcome = { accepted: false, spooled: false, deskEmailed: false, clientAcknowledged: false };
+        try {
+          outcome = await fallback(ticket, { acknowledge: true });
+        } catch (fallbackErr: any) {
+          console.error("[WIDGET TICKET] Desk fallback failed:", fallbackErr?.message || fallbackErr);
+        }
+        if (!outcome.accepted) {
+          return res.status(503).json({ success: false, code: "desk_unavailable", error: DESK_UNAVAILABLE_MESSAGE, retryable: true });
+        }
+        logSecurityEvent("WIDGET_TICKET_QUEUED", req, { email, ticketNumber: ticket.reference, reason, ...outcome });
+        return res.json({
+          success: true,
+          ticketNumber: ticket.reference,
+          queued: true,
+          message: "Your support request has been received.",
+        });
+      };
+
+      if (!zohoClient.isDeskConfigured()) {
+        console.error("[WIDGET TICKET] Zoho Desk is not configured");
+        return viaFallback("not_configured");
+      }
 
       let zohoTicket: { id?: string; ticketNumber?: string } | undefined;
       try {
@@ -233,15 +276,12 @@ export function registerWidgetTicketRoute(app: Express, options: WidgetTicketRou
           kind: failure.kind,
           status: failure.status,
         });
-        if (failure.kind === "unavailable") {
-          return res.status(503).json({ success: false, code: failure.authFailure ? "desk_auth_unavailable" : "desk_unavailable", error: DESK_UNAVAILABLE_MESSAGE, retryable: true });
-        }
-        return res.status(502).json({ success: false, code: "desk_create_failed", error: TICKET_REJECTED_MESSAGE, retryable: true });
+        return viaFallback(failure.authFailure ? "auth_failed" : failure.kind);
       }
 
       if (typeof zohoTicket?.id !== "string" || !zohoTicket.id.trim()) {
         console.error("[WIDGET TICKET] Zoho Desk returned no ticket id");
-        return res.status(502).json({ success: false, code: "desk_create_failed", error: TICKET_REJECTED_MESSAGE, retryable: true });
+        return viaFallback("no_ticket_id");
       }
 
       const zohoTicketId = zohoTicket.id;
