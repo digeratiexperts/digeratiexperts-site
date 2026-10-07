@@ -310,14 +310,11 @@ jobs:
             // The release actually serving (asserted equal to the tested SHA
             // above), so files from any other commit cannot be missed (#391).
             const head = process.env.DE_DEPLOYED_RELEASE || context.sha;
-            if (prev === head) {
-              core.info("Same release redeployed; nothing to purge.");
-              return;
-            }
+            const sameRelease = prev === head;
 
             // null = the changed-file list is unknown, so purge everything.
-            let urls = null;
-            if (prev) {
+            let urls = sameRelease ? [] : null;
+            if (prev && !sameRelease) {
               try {
                 const { data } = await github.rest.repos.compareCommitsWithBasehead({
                   owner: context.repo.owner,
@@ -362,7 +359,12 @@ jobs:
                 await core.summary.addHeading("Cloudflare cache", 3).addRaw("Purged the whole zone.").write();
                 core.info("Purged the whole Cloudflare zone.");
               } else if (urls.length === 0) {
-                core.info("No client/public files changed; nothing to purge.");
+                // Nothing changed, but purge one uncached URL anyway so every
+                // deploy proves the token and zone still work (a bad or
+                // revoked token fails here, not silently on a later deploy).
+                const canary = `${SITE}/release.txt`;
+                await purge({ files: [canary] });
+                core.info(`${sameRelease ? "Same release redeployed" : "No client/public files changed"}; canary purge of ${canary} succeeded, so the Cloudflare token and zone are working.`);
               } else {
                 // Purge-by-URL takes at most 30 URLs per call.
                 for (let i = 0; i < urls.length; i += 30) await purge({ files: urls.slice(i, i + 30) });
