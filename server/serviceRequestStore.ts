@@ -231,7 +231,10 @@ export async function listServiceRequestsForAdmin(accountId?: string | null): Pr
 }
 
 export type ServiceRequestPatch = Partial<
-  Pick<StoredServiceRequest, "status" | "statusHistory" | "submittedAt" | "deskTicketId">
+  Pick<
+    StoredServiceRequest,
+    "status" | "statusHistory" | "submittedAt" | "deskTicketId" | "payload" | "requestedForUserId" | "siteId" | "site" | "customAddress"
+  >
 >;
 
 /**
@@ -251,6 +254,11 @@ export async function updateServiceRequest(
     if (patch.statusHistory !== undefined) values.statusHistory = patch.statusHistory;
     if (patch.submittedAt !== undefined) values.submittedAt = patch.submittedAt ? new Date(patch.submittedAt) : null;
     if (patch.deskTicketId !== undefined) values.deskTicketId = patch.deskTicketId;
+    if (patch.payload !== undefined) values.payload = patch.payload;
+    if (patch.requestedForUserId !== undefined) values.requestedForUserId = patch.requestedForUserId;
+    if (patch.siteId !== undefined) values.siteId = patch.siteId;
+    if (patch.site !== undefined) values.site = patch.site;
+    if (patch.customAddress !== undefined) values.customAddress = patch.customAddress;
     const [row] = await db
       .update(serviceRequests)
       .set(values)

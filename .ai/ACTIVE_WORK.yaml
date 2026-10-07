@@ -2647,6 +2647,58 @@ claims:
       Most Viewed / Most Useful and DE authoring. Stacked on
       portal-service-requests. No prices; draft PR for diff review; no merge,
       deploy or production migration.
+  - id: portal-approvals-directory
+    owner: claude
+    subsystem: portal-approvals-directory
+    branch: claude/portal-approvals-directory
+    base_sha: e119fbc
+    files:
+      - shared/orgDirectory.ts (new) + test
+      - shared/serviceRequests.ts (pending_approval status only)
+      - shared/schema.ts (client_org_profiles, client_unit_leaders, client_people only)
+      - migrations/0011_org_structure_people.sql (new)
+      - server/orgDirectoryStore.ts, orgRouting.ts, orgDirectoryRoutes.ts (new) + test
+      - server/serviceRequestRoutes.ts, serviceRequestStore.ts (routing at submission, approval decision, approver visibility, payload patch)
+      - server/routes.ts (directory registration, org fields on the request deps)
+      - server/services/notificationService.ts (two emails appended)
+      - client/src/pages/portal/PortalOrganization.tsx, components/portal/approvals/**, lib/directoryApi.ts (new)
+      - client/src/pages/portal/PortalApprovals.tsx (service request section at the top only)
+      - client/src/pages/portal/requests/PortalServiceRequestDetail.tsx (approval + contact panels), RequestStatusToken.tsx
+      - client/src/App.tsx (/portal/organization only), portalNav.ts (Structure & IDs item only)
+      - docs/SERVICE-REQUESTS-HUB-CONTRACT.md (routing fields, pending_approval)
+    status: active
+    started: 2026-10-06
+    note: >-
+      Joe, 2026-10-06: one site leader or department leader per unit
+      (company's choice), copied on and contacted for their team; VIPs get
+      direct support; standard users direct, leader if unavailable; leader
+      approval for requests; a unique ID per person (DE IDs or the company's
+      own, imported). Builds on the existing portal departments, IT contact
+      roles and Approvals page. Stacked on portal-licensing-kb. Draft PR; no
+      merge, deploy or production migration.
+  - id: portal-order-controls
+    owner: claude
+    subsystem: portal-order-controls
+    branch: claude/portal-order-controls
+    base_sha: 63dae25
+    files:
+      - shared/serviceRequests.ts (on_hold status, hold and amend rules), shared/storeOrderControls.ts (new) + tests
+      - server/serviceRequestRoutes.ts, serviceRequestStore.ts (hold, resume, amend, team list, hold sweeper, hold-aware cancel)
+      - server/storeOrderControls.ts (new) + test, migrations/0012_store_order_controls.sql, shared/schema.ts (two tables only)
+      - server/services/orderFulfillment.ts (skip held orders only)
+      - server/routes.ts (store order controls registration, hold sweeper start)
+      - client/src/components/portal/requests/RequestControls.tsx, components/portal/orders/OrderControls.tsx, pages/portal/AdminOrderRequests.tsx (new)
+      - client request form hook, shell and the three form pages (amend mode only), request detail and list pages, PortalOrderDetail.tsx (controls panel only)
+      - client/src/App.tsx (/portal/admin/order-requests only), portalNav.ts (one admin item), docs/SERVICE-REQUESTS-HUB-CONTRACT.md
+    status: active
+    started: 2026-10-06
+    note: >-
+      Joe, 2026-10-06: cancel, amend or hold service requests and Store
+      orders, and set for how long. Holds by the requester, their site /
+      department leader or backup, IT contact, DE and the Hub. Store prices,
+      line items and payment untouched: paid-order cancels and all order
+      amendments are requests DE applies. Stacked on portal-approvals-directory.
+      Draft PR; no merge, deploy or production migration.
   - id: phone-hero-hotfix
     owner: claude
     subsystem: homepage-hero
@@ -2749,3 +2801,24 @@ claims:
       2026-10-07: open PRs 501 and 502 touch server/routes.ts and
       notificationService.ts in other blocks; this claim keeps its edits there
       minimal (one catch block, two exports).
+  - id: homepage-polish
+    owner: claude
+    subsystem: public-marketing-visual-layer
+    branch: claude/homepage-polish
+    base_sha: 86efd68569c49cf1f535a78879e555c82a0225c7
+    files:
+      - client/src/pages/versions/v8/sections/01-hero.tsx (hero tile image removed)
+      - client/src/pages/versions/v8/sections/01-hero.css (plate rules removed; headline size cap)
+      - client/src/pages/versions/v8/sections/12-threats-insights.tsx (feed chapter hidden when empty)
+      - client/src/pages/versions/v8/sections/07-client-proof.tsx/.css (duplicate review and case-study surfaces removed; Joe 2026-10-07)
+      - artifacts/visual-qa/homepage-polish/**
+    status: implemented
+    started: 2026-10-07
+    note: >-
+      Joe, 2026-10-07: "Fix all the UI issues and make the homepage finally
+      good. That background image doesn't look good in the hero it looked fine
+      with the old background that was blue with the white lines." The hero
+      returns to its navy gradient, grid lines and violet glow (the look on
+      Joe's phone screenshot) at every width; the headline cap from PR 503 is
+      folded in, and 503 is superseded. Structural duplicates on the page are
+      listed for Joe, not changed.

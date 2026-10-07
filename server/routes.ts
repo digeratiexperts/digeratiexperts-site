@@ -122,11 +122,13 @@ import { registerPortalDepartmentRoutes } from "./portalDepartmentRoutes";
 import { registerPortalTenantFileRoutes } from "./portalTenantFileRoutes";
 import { registerPortalIntegrationStatusRoute } from "./portalIntegrations";
 import { registerManualRecordAdminRoutes } from "./portalManualRecords";
-import { registerHubServiceRequestStatusRoute, registerServiceRequestRoutes, type ServiceRequestRouteDeps } from "./serviceRequestRoutes";
+import { registerHubServiceRequestStatusRoute, registerServiceRequestRoutes, startHoldSweeper, type ServiceRequestRouteDeps } from "./serviceRequestRoutes";
 import { requireDeSyncAuth } from "./integrations/deSyncAuth";
 import { registerPortalAssistRoutes } from "./portalAssistRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
 import { registerKbRoutes } from "./kbRoutes";
+import { registerOrgDirectoryRoutes } from "./orgDirectoryRoutes";
+import { registerStoreOrderControlRoutes } from "./storeOrderControls";
 import { registerPortalDataSourceRoutes } from "./portalDataSources";
 import { registerPortalVpnRoutes } from "./integrations/vpn/routes";
 import { registerPortalPhoneRoutes } from "./integrations/phone/routes";
@@ -1178,23 +1180,31 @@ export async function registerRoutes(app: Express) {
   registerManualRecordAdminRoutes(app, { guards: [authMiddleware, requireAdmin, validateInput] });
 
   // Service requests (Request Loaner Computer, Return Computer): server/serviceRequestRoutes.ts.
+  const directoryUser = (u: any) => ({
+    id: u.id,
+    clientId: u.clientId ?? null,
+    fullName: u.fullName,
+    email: u.email,
+    isActive: u.isActive,
+    departmentId: u.departmentId ?? null,
+    managerUserId: u.managerUserId ?? null,
+    isCompanyItContact: u.isCompanyItContact ?? null,
+    orgRole: u.orgRole ?? null,
+  });
   const serviceRequestDeps: ServiceRequestRouteDeps = {
     guards: [authMiddleware, validateInput],
     adminGuards: [authMiddleware, requireAdmin, validateInput],
     getClient: (id) => portalClients.get(id),
     findUser: (id) => {
       const u: any = findUserById(id);
-      if (!u) return undefined;
-      return { id: u.id, clientId: u.clientId ?? null, fullName: u.fullName, email: u.email, isActive: u.isActive };
+      return u ? directoryUser(u) : undefined;
     },
-    listClientUsers: (clientId) =>
-      listClientUsers(clientId).map((u: any) => ({
-        id: u.id,
-        clientId: u.clientId ?? null,
-        fullName: u.fullName,
-        email: u.email,
-        isActive: u.isActive,
-      })),
+    listClientUsers: (clientId) => listClientUsers(clientId).map((u: any) => directoryUser(u)),
+    listDepartments: async (clientId) => (await listDepartments(clientId)).map((d: any) => ({ id: d.id, name: d.name })),
+    notify: {
+      approvalNeeded: (input) => notificationService.sendServiceRequestApprovalNeeded(input),
+      leaderCopy: (input) => notificationService.sendServiceRequestLeaderCopy(input),
+    },
     // Linked Zoho Desk ticket, as for portal tickets: skipped when Zoho is not
     // configured, and a Desk failure never fails the request (no ticket id is stored).
     createDeskTicket: async ({ subject, description, email }) => {
@@ -1224,6 +1234,8 @@ export async function registerRoutes(app: Express) {
     },
   };
   registerServiceRequestRoutes(app, serviceRequestDeps);
+  // Requests on hold resume on their end date, even if nobody opens them.
+  if (process.env.NODE_ENV !== "test") startHoldSweeper(serviceRequestDeps);
   registerHubServiceRequestStatusRoute(app, serviceRequestDeps, requireDeSyncAuth("hub_to_portal"));
   // Licensing: account types and the company licence policy (server/licensingRoutes.ts).
   registerLicensingRoutes(app, {
@@ -1233,6 +1245,51 @@ export async function registerRoutes(app: Express) {
     findUser: serviceRequestDeps.findUser,
     listClientUsers: serviceRequestDeps.listClientUsers,
     canManagePeople: (user: any) => Boolean(user) && (user.role === "admin" || canManageOrg(user as OrgUserFields)),
+  });
+
+  // Company structure (site / department leaders) and the people directory (server/orgDirectoryRoutes.ts).
+  registerOrgDirectoryRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    getClient: serviceRequestDeps.getClient,
+    findUser: serviceRequestDeps.findUser,
+    listClientUsers: serviceRequestDeps.listClientUsers,
+    listDepartments: serviceRequestDeps.listDepartments,
+    canManage: (user: any) => Boolean(user) && (user.role === "admin" || canManageOrg(user as OrgUserFields)),
+    setDepartment: (userId, departmentId) => updateUserOrgFields(userId, { departmentId }),
+  });
+
+  // Store orders: cancel (now if unpaid, else a request to DE), amend requests, holds (server/storeOrderControls.ts).
+  registerStoreOrderControlRoutes(app, {
+    guards: [authMiddleware, validateInput],
+    adminGuards: [authMiddleware, requireAdmin, validateInput],
+    getClient: serviceRequestDeps.getClient,
+    findUser: serviceRequestDeps.findUser,
+    listClientUsers: serviceRequestDeps.listClientUsers,
+    listDepartments: serviceRequestDeps.listDepartments,
+    getOrder: async (id) => {
+      const o: any = await storage.getStoreOrder(id);
+      return o ? { id: o.id, orderNumber: o.orderNumber, status: o.status ?? null, userId: o.userId ?? null, clientId: o.clientId ?? null } : undefined;
+    },
+    cancelUnpaidOrder: async (id, reason) => {
+      const { db: portalDb, dbReady: portalDbReady } = await import("./db");
+      if (!portalDbReady || !portalDb) return false;
+      const { storeOrders } = await import("@shared/schema");
+      const { and: dAnd, eq: dEq, inArray, sql: dSql } = await import("drizzle-orm");
+      const { UNPAID_CANCELLABLE } = await import("@shared/storeOrderControls");
+      const [row] = await portalDb
+        .update(storeOrders)
+        .set({ status: "cancelled", notes: dSql`coalesce(${storeOrders.notes} || E'\n', '') || ${`Cancelled in the portal: ${reason}`}`, updatedAt: new Date() })
+        .where(dAnd(dEq(storeOrders.id, id), inArray(storeOrders.status, [...UNPAID_CANCELLABLE] as any)))
+        .returning({ id: storeOrders.id });
+      return Boolean(row);
+    },
+    notifyDe: (r) =>
+      notificationService.sendSystemAlert({
+        type: "info",
+        title: `Store order ${r.kind === "cancel" ? "cancellation" : "change"} request: ${r.orderNumber}`,
+        message: r.details,
+        details: { order: r.orderNumber, requestedBy: `${r.requestedBy.name} (${r.requestedBy.role})`, review: "/portal/admin/order-requests" },
+      }),
   });
 
   // Knowledge base (server/kbRoutes.ts): articles, views, ratings, subscriptions, DE authoring.

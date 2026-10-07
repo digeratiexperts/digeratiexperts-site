@@ -36,6 +36,10 @@ export default function PortalServiceRequests() {
   const list = useQuery({ queryKey: ["/api/portal/service-requests"], queryFn: srApi.list });
   const requests = (list.data?.requests ?? []).filter((r) => r.status !== BASKET_STATUS);
   const basketCount = (list.data?.requests ?? []).filter((r) => r.status === BASKET_STATUS).length;
+  // Leaders, backups and IT contacts also see their team's requests (hold, amend or cancel for them).
+  const team = useQuery({ queryKey: ["/api/portal/service-requests/team"], queryFn: srApi.team, retry: false });
+  const mine = new Set(requests.map((r) => r.id));
+  const teamRequests = (team.data?.requests ?? []).filter((r) => !mine.has(r.id));
 
   return (
     <PortalLayout
@@ -145,6 +149,28 @@ export default function PortalServiceRequests() {
             </div>
           )}
         </section>
+        {teamRequests.length > 0 && (
+          <section aria-labelledby="team-requests">
+            <h2 id="team-requests" className="mb-1 text-base font-semibold">
+              My team's requests
+            </h2>
+            <p className="mb-3 text-sm text-muted-foreground">People you lead or back up, or your whole company if you are its IT contact. Open one to hold, amend or cancel it for them.</p>
+            <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+              {teamRequests.map((r) => (
+                <li key={r.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm">
+                  <Link href={`/portal/requests/${r.id}`} className="pt-num font-semibold text-[hsl(var(--primary))] hover:underline">
+                    {r.number}
+                  </Link>
+                  <span>{TYPE_LABELS[r.type]}</span>
+                  <span className="text-muted-foreground">For {r.requestedFor.name}</span>
+                  <span className="ml-auto">
+                    <RequestStatusToken status={r.status} />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
     </PortalLayout>
   );

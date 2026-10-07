@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Link } from "wouter";
-import { ArrowRight, ArrowUpRight, FileText, Scale, ShieldCheck, Star, type LucideIcon } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Scale, ShieldCheck, type LucideIcon } from "lucide-react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { useBooking } from "@/contexts/BookingContext";
 import { CTA } from "@/lib/ctaCopy";
@@ -75,15 +75,6 @@ type Surface = {
 
 const surfaces: Surface[] = [
   {
-    title: "Client reviews",
-    body: "Real client feedback from Google and other approved sources — shown only when we have live API data or verbatim published reviews.",
-    cta: "See reviews",
-    href: "/#google-reviews",
-    icon: Star,
-    testId: "link-proof-google-reviews",
-    hash: true,
-  },
-  {
     title: "Client Bill of Rights",
     body: "Your credentials, tenants, and licenses stay yours — with access transparency and a clear path if you ever need to transition.",
     cta: "Read the Bill of Rights",
@@ -98,14 +89,6 @@ const surfaces: Surface[] = [
     href: "/trust/trust-center",
     icon: ShieldCheck,
     testId: "link-proof-section-trust",
-  },
-  {
-    title: "Case studies",
-    body: "Real engagements with challenge, approach, and outcome — published with client permission.",
-    cta: "View case studies",
-    href: "/resources/case-studies",
-    icon: FileText,
-    testId: "link-proof-section-cases",
   },
 ];
 

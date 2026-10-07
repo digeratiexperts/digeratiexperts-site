@@ -1,7 +1,4 @@
 .v8 .v8s-01 .hero { position: relative; isolation: isolate; overflow: hidden; background: linear-gradient(110deg, #050312 0%, #060617 52%, #090924 100%); }
-.v8 .v8s-01 .hero__plate { position: absolute; top: -6%; left: 38%; right: 0; height: 112%; z-index: -3; will-change: transform; background-position: center 85%; background-size: cover; background-repeat: no-repeat; /* image: imported in 01-hero.tsx (assets/flagship/home-managed-core, approved by Joe 2026-10-05) */ opacity: 0.75; background-position: 70% 55%;
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 40%), linear-gradient(to bottom, #000 72%, transparent 100%); -webkit-mask-composite: source-in;
-            mask-image: linear-gradient(to right, transparent 0%, #000 40%), linear-gradient(to bottom, #000 72%, transparent 100%); mask-composite: intersect; }
 .v8 .v8s-01 .hero__grid { position: absolute; inset: 0 0 0 42%; z-index: -2; opacity: 0.15;
     background-image: linear-gradient(rgba(123,108,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(123,108,255,0.6) 1px, transparent 1px); background-size: 52px 52px;
     -webkit-mask-image: linear-gradient(to right, transparent, #000 40%, #000 80%, transparent); mask-image: linear-gradient(to right, transparent, #000 40%, #000 80%, transparent); }
@@ -9,7 +6,9 @@
 .v8 .v8s-01 .hero__body { display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(420px, 0.98fr); column-gap: 48px; align-items: center; padding: 64px var(--v8-gutter);
     /* Mock chrome omitted (the real MegaMenu is fixed above): clear it. --de-nav-offset = chrome + spy row + 0.75rem, so +3.25rem lands the mock's 64px below the chrome. */
     padding-top: calc(var(--de-nav-offset) + 3.25rem); }
-.v8 .v8s-01 .hero .v8-h1 { font-size: clamp(2.6rem, 4.6vw, 4.5rem); }
+/* The copy column stays ~665px while rem grows on wide screens; cap the size so the no-wrap first line never runs under the card. */
+.v8 .v8s-01 .hero__copy { container-type: inline-size; }
+.v8 .v8s-01 .hero .v8-h1 { font-size: min(clamp(2.6rem, 4.6vw, 4.5rem), 9.9cqi); }
 .v8 .v8s-01 .hero .v8-h1 span { display: block; white-space: nowrap; }
 .v8 .v8s-01 .hero .v8-h1 .v8-accent { display: inline-block; padding-bottom: 0.08em; }
 .v8 .v8s-01 .hero__sub { margin-top: 24px; max-width: 560px; font-size: 18px; line-height: 1.6; color: var(--v8-muted-soft); text-wrap: pretty; }
@@ -98,7 +97,6 @@
   .v8 .v8s-01 .hero .v8-h1 span { white-space: normal; }
   .v8 .v8s-01 .win { max-width: 680px; }
   /* Stacked layout: the plate only reached the page as a blown-up tile behind the headline (its core sits behind the opaque card), so it is off below 1180px. Same rule as PR 492. */
-  .v8 .v8s-01 .hero__plate { display: none; }
   .v8 .v8s-01 .hero__grid { inset: 0; }
 }
 @media (max-width: 1023px) {
@@ -119,10 +117,7 @@
   .v8 .v8s-01 .hero__sub { font-size: 17px; }
   .v8 .v8s-01 .hero__actions .v8-btn { width: 100%; }
   .v8 .v8s-01 .win::after { display: none; }
-  /* The plate is off below 1180px, so on phones the tile ring rises behind the top of the assessment card, as it frames the card on desktop. --hero-plate is set in 01-hero.tsx. */
-  .v8 .v8s-01 .win::before { top: -96px; left: calc(-1 * var(--v8-gutter, 16px)); right: calc(-1 * var(--v8-gutter, 16px)); bottom: auto; width: auto; height: 260px; z-index: -1; border: 0; opacity: 0.75;
-    background: var(--hero-plate) 78% 30% / auto 100% no-repeat;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 40%); mask-image: linear-gradient(to bottom, transparent 0%, #000 40%); }
+  .v8 .v8s-01 .win::before { display: none; }
   .v8 .v8s-01 .win__sec { padding: 20px 18px; }
   .v8 .v8s-01 .win__bar .v8-tag { display: none; }
   .v8 .v8s-01 .win__tag-sm { display: inline-flex; margin-bottom: 12px; }

@@ -1,5 +1,5 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, integer, jsonb, pgEnum, decimal, customType } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, integer, jsonb, pgEnum, decimal, customType, date } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -384,6 +384,43 @@ export const clientUserAccounts = pgTable("client_user_accounts", {
     .references(() => portalClients.id, { onDelete: "cascade" }),
   accountType: text("account_type").notNull(),
   tier: text("tier"),
+  updatedBy: varchar("updated_by"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const clientOrgProfiles = pgTable("client_org_profiles", {
+  clientId: varchar("client_id")
+    .primaryKey()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  profile: jsonb("profile").notNull(),
+  updatedBy: varchar("updated_by"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Primary key (client_id, unit_kind, unit_id) is in migrations/0011.
+export const clientUnitLeaders = pgTable("client_unit_leaders", {
+  clientId: varchar("client_id")
+    .notNull()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  unitKind: text("unit_kind").notNull(),
+  unitId: varchar("unit_id").notNull(),
+  leaderUserId: varchar("leader_user_id"),
+  backupUserId: varchar("backup_user_id"),
+  ccLeader: boolean("cc_leader").notNull().default(true),
+  updatedBy: varchar("updated_by"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const clientPeople = pgTable("client_people", {
+  userId: varchar("user_id").primaryKey(),
+  clientId: varchar("client_id")
+    .notNull()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  dePersonId: text("de_person_id").notNull().unique(),
+  companyPersonId: text("company_person_id"),
+  siteId: varchar("site_id"),
+  supportTier: text("support_tier").notNull().default("standard"),
+  awayUntil: date("away_until", { mode: "string" }),
   updatedBy: varchar("updated_by"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -1501,6 +1538,40 @@ export const storeOrders = pgTable("store_orders", {
   paidAt: timestamp("paid_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Store order controls (migrations/0012): a hold pauses fulfilment until a date;
+// change requests (cancel a paid order, amend) are reviewed by DE. Neither edits the order.
+export const storeOrderHolds = pgTable("store_order_holds", {
+  orderId: varchar("order_id")
+    .primaryKey()
+    .references(() => storeOrders.id, { onDelete: "cascade" }),
+  clientId: varchar("client_id"),
+  heldUntil: date("held_until", { mode: "string" }).notNull(),
+  reason: text("reason").notNull(),
+  heldByUserId: varchar("held_by_user_id"),
+  heldByName: text("held_by_name").notNull(),
+  heldByRole: text("held_by_role").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const storeOrderChangeRequests = pgTable("store_order_change_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id")
+    .notNull()
+    .references(() => storeOrders.id, { onDelete: "cascade" }),
+  orderNumber: text("order_number").notNull(),
+  clientId: varchar("client_id"),
+  kind: text("kind").notNull(),
+  details: text("details").notNull(),
+  status: text("status").notNull().default("open"),
+  requestedByUserId: varchar("requested_by_user_id"),
+  requestedByName: text("requested_by_name").notNull(),
+  requestedByRole: text("requested_by_role").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedByName: text("resolved_by_name"),
+  resolutionNote: text("resolution_note"),
 });
 
 // Quote requests for contract-only items

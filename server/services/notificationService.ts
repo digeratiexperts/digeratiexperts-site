@@ -408,6 +408,66 @@ export const notificationService = {
     });
   },
 
+  /** A site / department leader (or IT contact) has a service request to approve. */
+  async sendServiceRequestApprovalNeeded(data: {
+    to: Array<{ name: string; email: string }>;
+    requestId: string;
+    number: string;
+    typeLabel: string;
+    requestedForName: string;
+    submittedByName: string;
+  }): Promise<boolean> {
+    let ok = true;
+    for (const person of data.to) {
+      if (!person.email) continue;
+      const content = `
+        <h2>Approval needed</h2>
+        <p>Hi ${escapeEmailHtml(person.name)},</p>
+        <p>${escapeEmailHtml(data.submittedByName)} asked for <strong>${escapeEmailHtml(data.typeLabel)}</strong> for ${escapeEmailHtml(data.requestedForName)}. It is waiting for your approval before Digerati Experts starts.</p>
+        <p class="highlight">${escapeEmailHtml(data.number)}</p>
+        <a href="https://portal.digeratiexperts.com/portal/requests/${encodeURIComponent(data.requestId)}" class="button">Review the request</a>
+        <p style="color:#888;font-size:12px;">You receive this as a leader, backup leader or IT contact for this person. Any one approver can decide.</p>
+      `;
+      ok =
+        (await sendEmail({
+          to: person.email,
+          subject: `Approval needed: ${data.typeLabel} for ${data.requestedForName} [${data.number}]`,
+          htmlBody: baseEmailTemplate(content, "Approval needed"),
+        })) && ok;
+    }
+    return ok;
+  },
+
+  /** Copy to a site / department leader on a request for someone in their team (never for VIPs). */
+  async sendServiceRequestLeaderCopy(data: {
+    to: Array<{ name: string; email: string }>;
+    requestId: string;
+    number: string;
+    typeLabel: string;
+    requestedForName: string;
+    submittedByName: string;
+    contactSummary: string;
+  }): Promise<boolean> {
+    let ok = true;
+    for (const person of data.to) {
+      if (!person.email) continue;
+      const content = `
+        <h2>For your information</h2>
+        <p>Hi ${escapeEmailHtml(person.name)},</p>
+        <p>Digerati Experts received <strong>${escapeEmailHtml(data.typeLabel)}</strong> (${escapeEmailHtml(data.number)}) for ${escapeEmailHtml(data.requestedForName)}, submitted by ${escapeEmailHtml(data.submittedByName)}.</p>
+        <p>${escapeEmailHtml(data.contactSummary)}</p>
+        <p style="color:#888;font-size:12px;">You are copied as the leader for this person. No action is needed.</p>
+      `;
+      ok =
+        (await sendEmail({
+          to: person.email,
+          subject: `FYI: ${data.typeLabel} for ${data.requestedForName} [${data.number}]`,
+          htmlBody: baseEmailTemplate(content, "Request copy"),
+        })) && ok;
+    }
+    return ok;
+  },
+
   async sendSystemAlert(data: {
     type: 'error' | 'warning' | 'info';
     title: string;
