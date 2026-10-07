@@ -7,10 +7,8 @@ import { PRIMARY_PHONE } from "@/data/companyContact";
 
 const NAP = {
   name: "Digerati Experts",
-  street: "3165 S Alma School Rd Suite 29",
   city: "Chandler",
   region: "AZ",
-  postal: "85248",
   phone: PRIMARY_PHONE.display,
   email: "info@digeratiexperts.com",
 };
@@ -46,10 +44,8 @@ export default function Press() {
             telephone: PRIMARY_PHONE.schemaTelephone,
             address: {
               "@type": "PostalAddress",
-              streetAddress: NAP.street,
               addressLocality: NAP.city,
               addressRegion: NAP.region,
-              postalCode: NAP.postal,
               addressCountry: "US",
             },
           },
@@ -76,9 +72,7 @@ export default function Press() {
               <address className="max-w-[68ch] rounded-xl border border-[var(--de-paper-hairline)] bg-white p-6 not-italic leading-relaxed text-[#1A1228] lg:col-span-8">
                 {NAP.name}
                 <br />
-                {NAP.street}
-                <br />
-                {NAP.city}, {NAP.region} {NAP.postal}
+                {NAP.city}, {NAP.region} · serving Greater Phoenix
                 <br />
                 Phone:{" "}
                 <a className="inline-flex min-h-11 items-center text-de-magenta-paper-ink underline decoration-de-magenta-paper-ink/50 underline-offset-4 hover:decoration-de-magenta-paper-ink" href={PRIMARY_PHONE.telHref}>

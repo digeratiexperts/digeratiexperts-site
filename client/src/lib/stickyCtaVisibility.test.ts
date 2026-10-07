@@ -5,6 +5,7 @@ import {
   isPastStickyCtaThreshold,
   isStickyCtaPinnedRoute,
   isStickyCtaRouteAllowed,
+  isCookieFirst,
   isTooShortToReachStickyThreshold,
   rectOverlapsPageContent,
   shouldShowStickyCta,
@@ -74,6 +75,26 @@ describe("sticky CTA visibility", () => {
     expect(shouldShowStickyCta({ ...base, overlapping: true })).toBe(false);
     expect(shouldShowStickyCta({ ...base, autoHidden: true })).toBe(false);
     expect(shouldShowStickyCta({ ...base, dismissed: true })).toBe(false);
+  });
+
+  it("on phones waits for the cookie banner to be answered", () => {
+    expect(isCookieFirst(390, true)).toBe(true);
+    expect(isCookieFirst(390, false)).toBe(false);
+    expect(isCookieFirst(767, true)).toBe(true);
+    expect(isCookieFirst(768, true)).toBe(false);
+    expect(isCookieFirst(1440, true)).toBe(false);
+    const ready = {
+      dismissed: false,
+      routeAllowed: true,
+      pastThreshold: true,
+      scrolling: false,
+      overlapping: false,
+      autoHidden: false,
+    };
+    expect(shouldShowStickyCta({ ...ready, cookieFirst: true })).toBe(false);
+    expect(shouldShowStickyCta({ ...ready, cookieFirst: false })).toBe(true);
+    // A pinned checkout keeps its bar regardless.
+    expect(shouldShowStickyCta({ ...ready, pinned: true, cookieFirst: true })).toBe(true);
   });
 
   it("shows on a pinned checkout page without waiting for scroll or a long document", () => {

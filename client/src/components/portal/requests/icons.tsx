@@ -42,3 +42,16 @@ export function LicenseIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+
+export function MobileServiceIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 120 100" className={className} aria-hidden="true" fill="none" stroke="currentColor">
+      <rect x="31" y="5" width="50" height="86" rx="7" strokeWidth="6" />
+      <path d="M47 16h18" strokeWidth="4" strokeLinecap="round" />
+      <circle cx="56" cy="80" r="3" fill="currentColor" stroke="none" />
+      <path d="M88 31a20 20 0 0 1 0 34M96 23a31 31 0 0 1 0 50" strokeWidth="5" strokeLinecap="round" />
+      <path d="M23 36a16 16 0 0 0 0 24M15 29a27 27 0 0 0 0 38" strokeWidth="5" strokeLinecap="round" />
+    </svg>
+  );
+}

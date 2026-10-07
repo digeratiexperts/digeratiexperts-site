@@ -66,6 +66,12 @@ function Chips({ chips, onChipClick, className }: { chips: RequiredChip[]; onChi
 
 export function ServiceRequestShell(props: ServiceRequestShellProps) {
   const { type, chips, busy } = props;
+  const category =
+    type === "mobile_request"
+      ? { label: "Mobile & carrier", href: "/portal/requests#mobile" }
+      : type === "license_request"
+        ? { label: "Software & access", href: "/portal/requests#software" }
+        : { label: "Computers", href: "/portal/requests#computers" };
   const { isFavorite, toggle } = useFavorites();
   const favorite = isFavorite(type);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -119,8 +125,8 @@ export function ServiceRequestShell(props: ServiceRequestShellProps) {
           </li>
           <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <li>
-            <Link href="/portal/requests#computers" className="text-[hsl(var(--primary))] hover:underline">
-              Computers
+            <Link href={category.href} className="text-[hsl(var(--primary))] hover:underline">
+              {category.label}
             </Link>
           </li>
           <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />

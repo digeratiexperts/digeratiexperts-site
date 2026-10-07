@@ -31,7 +31,7 @@ export function StorePageAtmosphere({ intensity = 0.44 }: { intensity?: number }
   return (
     <div
       ref={ref}
-      className="pointer-events-none absolute inset-0 overflow-hidden"
+      className="d2-no-print pointer-events-none absolute inset-0 overflow-hidden"
       aria-hidden="true"
     >
       <motion.img

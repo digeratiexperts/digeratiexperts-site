@@ -16,7 +16,8 @@ describe("store checkout light chrome", () => {
     const src = readFileSync(resolve(dir, "../components/StickyCTABar.tsx"), "utf8");
     expect(src).toMatch(/isStickyCtaPinnedRoute\(location\)/);
     expect(src).toMatch(/useReducedMotion/);
-    expect(src).toMatch(/pinned \|\| shortPage \|\| isPastStickyCtaThreshold/);
+    // A short page counts as past the threshold once its height has settled.
+    expect(src).toMatch(/pinned \|\| settledShortPage\(\) \|\| isPastStickyCtaThreshold/);
   });
 
   it("paints the sticky assessment bar white on store routes", () => {

@@ -19,6 +19,9 @@ export function initialValues(type: ServiceRequestType): FormValues {
   if (type === "license_request") {
     return { requestedForUserId: "", accountKind: "person", accountName: "", platform: "", licenseKey: "", operation: "add", businessJustification: "" };
   }
+  if (type === "mobile_request") {
+    return { requestedForUserId: "", activity: "", mobileNumber: "", carrier: "", deviceIdentifier: "", effectiveDate: "", details: "" };
+  }
   const common = {
     requestedForUserId: "",
     contactPhone: "",
@@ -85,6 +88,17 @@ export function toSubmission(type: ServiceRequestType, v: FormValues): Record<st
       licenseKey: v.licenseKey,
       operation: v.operation,
       businessJustification: v.businessJustification,
+    };
+  }
+  if (type === "mobile_request") {
+    return {
+      requestedForUserId: v.requestedForUserId,
+      activity: v.activity,
+      mobileNumber: v.mobileNumber,
+      carrier: v.carrier,
+      deviceIdentifier: v.deviceIdentifier,
+      effectiveDate: v.effectiveDate,
+      details: v.details,
     };
   }
   const out: Record<string, unknown> = { ...v };
@@ -359,6 +373,12 @@ export const FIELD_DOM_IDS: Record<string, string> = {
   licenseKey: "sr-license",
   businessJustification: "sr-justification",
   additionalComments: "sr-comments",
+  activity: "sr-mobile-activity",
+  mobileNumber: "sr-mobile-number",
+  carrier: "sr-mobile-carrier",
+  deviceIdentifier: "sr-mobile-device",
+  effectiveDate: "sr-mobile-effective",
+  details: "sr-mobile-details",
 };
 
 const PAGE_ORDER = Object.keys(FIELD_DOM_IDS);
@@ -387,6 +407,12 @@ const LABELS: Record<string, string> = {
   platform: "Platform",
   licenseKey: "License",
   businessJustification: "Business justification",
+  activity: "Activity",
+  mobileNumber: "Mobile number",
+  carrier: "Carrier",
+  deviceIdentifier: "Device / IMEI / asset tag",
+  effectiveDate: "Effective date",
+  details: "What you need",
   "customAddress.street": "Street",
   "customAddress.city": "City",
   "customAddress.state": "State",

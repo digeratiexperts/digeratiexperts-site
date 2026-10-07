@@ -121,8 +121,6 @@ const socialIcons: Record<string, JSX.Element> = {
 
 const socialLinks = [
   { ...COMPANY_SOCIAL.linkedin, key: "linkedin", testId: "footer-linkedin" },
-  { ...COMPANY_SOCIAL.twitter, key: "twitter", testId: "footer-twitter" },
-  { ...COMPANY_SOCIAL.facebook, key: "facebook", testId: "footer-facebook" },
   { ...COMPANY_SOCIAL.instagram, key: "instagram", testId: "footer-instagram" },
 ];
 

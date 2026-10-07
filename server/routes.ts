@@ -134,6 +134,7 @@ import { registerPortalVpnRoutes } from "./integrations/vpn/routes";
 import { registerPortalPhoneRoutes } from "./integrations/phone/routes";
 import { registerPortalShippingRoutes } from "./integrations/shipping/routes";
 import { registerPortalDeskAgentRoutes } from "./portalDeskAgentRoutes";
+import { registerPortalUserInviteRoute } from "./portalUserInvite";
 import { canAccessPortalTicket } from "./portalTicketAccess";
 import {
   canSeeDeskTicket,
@@ -1201,6 +1202,12 @@ export async function registerRoutes(app: Express) {
   registerPortalPhoneRoutes(app, { guards: [authMiddleware] });
   registerPortalShippingRoutes(app, { guards: [authMiddleware] });
   registerManualRecordAdminRoutes(app, { guards: [authMiddleware, requireAdmin, validateInput] });
+
+  // Manage Companies "Add user": the person sets their own password from an emailed link.
+  registerPortalUserInviteRoute(app, {
+    guards: [authMiddleware, requireAdmin, validateInput],
+    deps: { logEvent: (event, req, data) => logSecurityEvent(event, req as AuthenticatedRequest, data) },
+  });
 
   // Service requests (Request Loaner Computer, Return Computer): server/serviceRequestRoutes.ts.
   const directoryUser = (u: any) => ({
