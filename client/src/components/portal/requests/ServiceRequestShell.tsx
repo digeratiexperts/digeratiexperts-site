@@ -37,6 +37,9 @@ export interface ServiceRequestShellProps {
   fileError: string | null;
   formError: string | null;
   announcement: string;
+  /** Request number when the form amends an existing request. */
+  amending?: string;
+  amendError?: string | null;
   children: ReactNode;
 }
 
@@ -75,7 +78,8 @@ export function ServiceRequestShell(props: ServiceRequestShellProps) {
   };
 
   const actions = (layout: "rail" | "bar") => (
-    <div className={cn(layout === "rail" ? "space-y-3" : "grid grid-cols-2 gap-2")}>
+    <div className={cn(layout === "rail" ? "space-y-3" : props.amending ? "grid grid-cols-1" : "grid grid-cols-2 gap-2")}>
+      {!props.amending && (
       <button
         type="button"
         onClick={props.onAddToCart}
@@ -85,6 +89,7 @@ export function ServiceRequestShell(props: ServiceRequestShellProps) {
         {busy === "basket" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ShoppingCart className="h-4 w-4" aria-hidden="true" />}
         Add to Cart
       </button>
+      )}
       <button
         type="submit"
         form="service-request-form"
@@ -92,7 +97,7 @@ export function ServiceRequestShell(props: ServiceRequestShellProps) {
         className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60"
       >
         {busy === "submit" && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-        Order Now
+        {props.amending ? "Save changes" : "Order Now"}
       </button>
     </div>
   );
@@ -162,6 +167,13 @@ export function ServiceRequestShell(props: ServiceRequestShellProps) {
               </span>
               Indicates required
             </p>
+
+            {props.amending && (
+              <Callout tone="info" title={`Amending ${props.amending}`}>
+                Change what you need and save. If the change needs approval, it goes back to the approver before DE continues.
+              </Callout>
+            )}
+            {props.amendError && <Callout tone="bad" title="This request can't be amended here">{props.amendError}</Callout>}
 
             {props.formError && (
               <Callout tone="bad" title="The request wasn't sent">

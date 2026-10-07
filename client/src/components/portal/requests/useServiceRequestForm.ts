@@ -41,6 +41,26 @@ export function initialValues(type: ServiceRequestType): FormValues {
   };
 }
 
+/** Form values from a stored request, for Amend. Unknown keys are ignored. */
+export function valuesFromRecord(type: ServiceRequestType, r: ServiceRequestRecord): FormValues {
+  const base = initialValues(type);
+  const p = r.payload as Record<string, any>;
+  const out: FormValues = { ...base };
+  for (const k of Object.keys(base)) {
+    if (p[k] !== undefined && p[k] !== null) out[k] = typeof base[k] === "object" && base[k] !== null ? { ...base[k], ...p[k] } : p[k];
+  }
+  out.requestedForUserId = r.requestedFor.userId;
+  if ("siteId" in base) out.siteId = r.site?.id ?? p.siteId ?? "";
+  if ("customAddress" in base && r.customAddress) out.customAddress = { ...base.customAddress, ...r.customAddress };
+  return out;
+}
+
+/** The request being amended, from ?amend=<id> on the form's URL. */
+function amendIdFromUrl(): string | null {
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get("amend");
+}
+
 /** Fields the help chat may fill (shared/serviceRequests.ts). */
 export const AI_FILLABLE = SERVICE_REQUEST_AI_FILLABLE;
 
@@ -80,7 +100,8 @@ export function toSubmission(type: ServiceRequestType, v: FormValues): Record<st
 
 export type SubmitResult =
   | { kind: "submitted"; request: ServiceRequestRecord; attachmentFailures: string[] }
-  | { kind: "basket"; request: ServiceRequestRecord; attachmentFailures: string[] };
+  | { kind: "basket"; request: ServiceRequestRecord; attachmentFailures: string[] }
+  | { kind: "amended"; request: ServiceRequestRecord; attachmentFailures: string[] };
 
 export function useServiceRequestForm(type: ServiceRequestType) {
   const [values, setValues] = useState<FormValues>(() => initialValues(type));
@@ -92,11 +113,32 @@ export function useServiceRequestForm(type: ServiceRequestType) {
   const [busy, setBusy] = useState<false | "submit" | "basket">(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
+  const [amendId] = useState(amendIdFromUrl);
+  const [amending, setAmending] = useState<ServiceRequestRecord | null>(null);
+  const [amendError, setAmendError] = useState<string | null>(null);
   const timers = useRef<number[]>([]);
   const valuesRef = useRef(values);
   valuesRef.current = values;
 
   useEffect(() => () => timers.current.forEach((t) => window.clearTimeout(t)), []);
+
+  // Amend: load the request and fill the form with what was submitted.
+  useEffect(() => {
+    if (!amendId) return;
+    let live = true;
+    srApi
+      .get(amendId)
+      .then(({ request }) => {
+        if (!live) return;
+        if (request.type !== type) return setAmendError("That request is a different kind of request.");
+        setAmending(request);
+        setValues(valuesFromRecord(type, request));
+      })
+      .catch((e) => live && setAmendError(e instanceof Error ? e.message : "The request couldn't be loaded"));
+    return () => {
+      live = false;
+    };
+  }, [amendId, type]);
 
   const today = todayIso();
 
@@ -216,7 +258,9 @@ export function useServiceRequestForm(type: ServiceRequestType) {
       }
       setBusy(mode);
       try {
-        const { request } = await srApi.create(type, toSubmission(type, current), mode);
+        const { request } = amending
+          ? await srApi.amend(amending.id, toSubmission(type, current), amending.revision)
+          : await srApi.create(type, toSubmission(type, current), mode);
         const attachmentFailures: string[] = [];
         for (const f of files) {
           try {
@@ -224,6 +268,10 @@ export function useServiceRequestForm(type: ServiceRequestType) {
           } catch {
             attachmentFailures.push(f.name);
           }
+        }
+        if (amending) {
+          setAnnouncement(`Request ${request.number} updated.`);
+          return { kind: "amended", request, attachmentFailures };
         }
         setAnnouncement(mode === "submit" ? `Request ${request.number} submitted.` : `Added ${request.number} to your request basket.`);
         return { kind: mode === "submit" ? "submitted" : "basket", request, attachmentFailures };
@@ -243,7 +291,7 @@ export function useServiceRequestForm(type: ServiceRequestType) {
         setBusy(false);
       }
     },
-    [files, focusField, today, type],
+    [amending, files, focusField, today, type],
   );
 
   const reset = useCallback(
@@ -258,6 +306,10 @@ export function useServiceRequestForm(type: ServiceRequestType) {
   );
 
   return {
+    /** Set when the form edits an existing request (?amend=<id>). */
+    amending,
+    amendError,
+    amendId,
     values,
     setField,
     patch,

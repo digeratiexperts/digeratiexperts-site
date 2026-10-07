@@ -10,6 +10,7 @@ import { AccountTeamCard } from "@/components/AccountTeamCard";
 import { usePortalAccountTeam } from "@/hooks/usePortalAccountTeam";
 import { formatDeskTimestamp } from "@/lib/deskTimestamp";
 import { Callout, DataTable, EmptyState, Panel, Token, type DataColumn, type TokenTone } from "@/components/portal/ui";
+import { OrderControls } from "@/components/portal/orders/OrderControls";
 
 interface LineItem {
   sku: string;
@@ -258,6 +259,9 @@ export default function PortalOrderDetail() {
         </div>
 
         <aside className="space-y-4">
+          <div className="print:hidden">
+            <OrderControls orderId={order.id} />
+          </div>
           <Panel
             id="payment-info"
             title={

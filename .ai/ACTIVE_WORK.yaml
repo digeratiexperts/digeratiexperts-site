@@ -2676,6 +2676,29 @@ claims:
       own, imported). Builds on the existing portal departments, IT contact
       roles and Approvals page. Stacked on portal-licensing-kb. Draft PR; no
       merge, deploy or production migration.
+  - id: portal-order-controls
+    owner: claude
+    subsystem: portal-order-controls
+    branch: claude/portal-order-controls
+    base_sha: 63dae25
+    files:
+      - shared/serviceRequests.ts (on_hold status, hold and amend rules), shared/storeOrderControls.ts (new) + tests
+      - server/serviceRequestRoutes.ts, serviceRequestStore.ts (hold, resume, amend, team list, hold sweeper, hold-aware cancel)
+      - server/storeOrderControls.ts (new) + test, migrations/0012_store_order_controls.sql, shared/schema.ts (two tables only)
+      - server/services/orderFulfillment.ts (skip held orders only)
+      - server/routes.ts (store order controls registration, hold sweeper start)
+      - client/src/components/portal/requests/RequestControls.tsx, components/portal/orders/OrderControls.tsx, pages/portal/AdminOrderRequests.tsx (new)
+      - client request form hook, shell and the three form pages (amend mode only), request detail and list pages, PortalOrderDetail.tsx (controls panel only)
+      - client/src/App.tsx (/portal/admin/order-requests only), portalNav.ts (one admin item), docs/SERVICE-REQUESTS-HUB-CONTRACT.md
+    status: active
+    started: 2026-10-06
+    note: >-
+      Joe, 2026-10-06: cancel, amend or hold service requests and Store
+      orders, and set for how long. Holds by the requester, their site /
+      department leader or backup, IT contact, DE and the Hub. Store prices,
+      line items and payment untouched: paid-order cancels and all order
+      amendments are requests DE applies. Stacked on portal-approvals-directory.
+      Draft PR; no merge, deploy or production migration.
   - id: phone-hero-hotfix
     owner: claude
     subsystem: homepage-hero

@@ -74,3 +74,17 @@ describe("service request rules", () => {
     expect(allowedStaffTransitions("return_computer", "closed")).toEqual([]);
   });
 });
+
+describe("holds", () => {
+  it("allows 1 to 180 days and only on open requests", async () => {
+    const { canHold, checkHoldUntil } = await import("./serviceRequests");
+    expect(checkHoldUntil("2026-10-07", "2026-10-06")).toBeNull();
+    expect(checkHoldUntil("2026-10-06", "2026-10-06")).toMatch(/tomorrow/);
+    expect(checkHoldUntil("2027-05-01", "2026-10-06")).toMatch(/180 days/);
+    expect(checkHoldUntil("soon", "2026-10-06")).toMatch(/date/);
+    expect(canHold("submitted")).toBe(true);
+    expect(canHold("on_hold")).toBe(false);
+    expect(canHold("closed")).toBe(false);
+    expect(canHold("in_basket")).toBe(false);
+  });
+});

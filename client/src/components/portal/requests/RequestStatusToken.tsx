@@ -5,6 +5,7 @@ import { STATUS_LABELS, type ServiceRequestStatus } from "@shared/serviceRequest
 const TONE: Record<ServiceRequestStatus, TokenTone> = {
   in_basket: "brand",
   pending_approval: "brand",
+  on_hold: "warn",
   submitted: "warn",
   under_review: "info",
   device_assigned: "info",

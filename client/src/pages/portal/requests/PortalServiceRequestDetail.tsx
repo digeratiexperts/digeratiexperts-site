@@ -24,6 +24,7 @@ import { PORTAL_TICKET_ACCEPT } from "@shared/portalTicketFileRules";
 import { accountTypeLabel, platformLabel } from "@shared/licensing";
 import { APPROVER_ROLE_LABELS, type ApprovalFlow, type ContactPlan } from "@shared/orgDirectory";
 import { ApprovalDecision, approvalSummary } from "@/components/portal/approvals/ServiceRequestApprovals";
+import { HoldBanner, RequestControls } from "@/components/portal/requests/RequestControls";
 import { readPortalUser } from "@/lib/portalRoles";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -197,7 +198,7 @@ export default function PortalServiceRequestDetail() {
       backLabel="Service Requests"
       width="default"
       actions={
-        r && USER_CANCELLABLE.includes(r.status) ? (
+        r && USER_CANCELLABLE.includes(r.status === "on_hold" ? (r.payload.hold as { resumeStatus: typeof r.status } | undefined)?.resumeStatus ?? r.status : r.status) ? (
           <button
             type="button"
             onClick={() => void cancel()}
@@ -220,6 +221,7 @@ export default function PortalServiceRequestDetail() {
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="space-y-4">
             {error && <Callout tone="bad">{error}</Callout>}
+            <HoldBanner r={r} />
             <Panel id="request-status" title="Status">
               <Timeline r={r} />
             </Panel>
@@ -234,6 +236,7 @@ export default function PortalServiceRequestDetail() {
             </Panel>
           </div>
           <div className="space-y-4">
+            <RequestControls r={r} />
             <ApprovalPanel r={r} />
             <ContactPanel r={r} />
             <Panel id="request-location" title="Location">
