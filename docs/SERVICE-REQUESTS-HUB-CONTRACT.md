@@ -1,6 +1,6 @@
 # Service requests: Portal → Hub contract (v1)
 
-The Portal database is the source of truth for service requests (Request Loaner Computer, Return Computer). The Hub keeps a synced copy and never creates these requests. Code: `shared/serviceRequests.ts`, `server/serviceRequestHubSync.ts`, `server/serviceRequestRoutes.ts`.
+The Portal database is the source of truth for service requests (computers, software licences, and mobile/carrier activities). The Hub keeps a synced copy and never creates these requests. Code: `shared/serviceRequests.ts`, `server/serviceRequestHubSync.ts`, `server/serviceRequestRoutes.ts`.
 
 ## Delivery
 
@@ -67,8 +67,8 @@ The Portal never blocks a submission on the Hub. `service_requests.hub_sync_stat
       "properties": { "id": { "type": "string" }, "code": { "type": "string", "description": "Site Location Code (LID), or HQ" }, "name": { "type": "string" } }
     },
     "status": {
-      "enum": ["submitted", "under_review", "device_assigned", "delivered", "return_due", "returned",
-               "pickup_scheduled", "received", "restocked", "disposed", "closed", "rejected", "cancelled"]
+      "enum": ["pending_approval", "on_hold", "submitted", "under_review", "device_assigned", "delivered", "return_due", "returned",
+               "pickup_scheduled", "received", "restocked", "disposed", "approved", "fulfilled", "completed", "closed", "rejected", "cancelled"]
     },
     "payload": {
       "type": "object",
@@ -78,8 +78,8 @@ The Portal never blocks a submission on the Hub. `service_requests.hub_sync_stat
       "properties": {
         "contractVersion": { "const": 1 },
         "requestId": { "type": "string" },
-        "number": { "type": "string", "pattern": "^(LNR|RTN|LIC)-\\d{6}$" },
-        "type": { "enum": ["loaner_computer", "return_computer", "license_request"] },
+        "number": { "type": "string", "pattern": "^(LNR|RTN|LIC|MOB)-\\d{6}$" },
+        "type": { "enum": ["loaner_computer", "return_computer", "license_request", "mobile_request"] },
         "status": { "$ref": "#/$defs/status" },
         "revision": { "type": "integer", "minimum": 1 },
         "portalClientId": { "type": "string" },
@@ -128,6 +128,8 @@ The Portal never blocks a submission on the Hub. `service_requests.hub_sync_stat
 
 **license_request** (number prefix `LIC`): `accountKind` (`person` | `admin` | `service` | `shared`), `requestedForUserId` (the person, or the requester for a non-person account), `accountName` (non-person accounts only), `platform` (`microsoft_commercial` | `microsoft_gcc` | `microsoft_gcc_high` | `google_workspace` | `zoho_workplace`), `licenseKey` (catalog key, e.g. `m365_e5`, `visio_p2`), `operation` (`add` | `remove`), `businessJustification`. The Portal resolves the company licence policy at submission and adds: `accountType` (`standard` | `frontline` | `contractor` | `admin` | `service` | `shared`), `tier` (string | null), `licenseName`, `licenseKind` (`base` | `addon`), `group` (the licence group to change, string | null) and `approval` (`none` | `manager` | `it_contact` | `request`). Licences the policy assigns automatically, and ones the account type is not eligible for, are refused at the Portal and never reach the Hub. No prices are sent.
 
+**mobile_request** (number prefix `MOB`): `requestedForUserId`, `activity` (one of the canonical mobile activity keys in `shared/serviceRequests.ts`), optional `mobileNumber`, `carrier`, `deviceIdentifier` (device / IMEI / EID / asset tag), optional `effectiveDate` (YYYY-MM-DD), and required `details`. The Portal also stores `activityLabel` as a human-readable snapshot. Mobile requests are vendor-neutral; carrier/provider execution is downstream operational detail.
+
 **Routing, on every type** (added by the Portal at submission from the company structure, `shared/orgDirectory.ts`):
 
 - `contactPlan`: `{ supportTier: "standard" | "vip", personId, primary: { userId, name, email, phone, awayUntil }, unit: { kind: "site" | "department", id, name } | null, fallback: { userId, name, email, role: "leader" | "backup_leader" } | null, cc: [{ userId, name, email }], summary }`. VIPs: `fallback` is null and `cc` is empty (direct support only). Standard users: contact directly, else `fallback`. `personId` is the company's employee ID when the company uses its own scheme, else the DE person ID.
@@ -141,6 +143,7 @@ The Portal never blocks a submission on the Hub. `service_requests.hub_sync_stat
 - Loaner: submitted → under_review → device_assigned → delivered → return_due → returned → closed; rejected; cancelled (requester, before device_assigned).
 - Return: submitted → under_review → pickup_scheduled → received → restocked | disposed → closed; rejected; cancelled (requester, before pickup_scheduled).
 - Licence: submitted → under_review → approved → fulfilled ("Licence assigned") → closed; submitted → approved directly; rejected; cancelled (requester, before approved; staff, before fulfilled).
+- Mobile & carrier: submitted → under_review → completed → closed; submitted → completed directly; rejected; cancelled before completed.
 
 ## Hub → Portal status write-back
 
