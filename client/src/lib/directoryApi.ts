@@ -23,7 +23,8 @@ type Who = RoutingPerson & { awayUntil: string | null };
 export type MyDirectoryCard = {
   structure: "site" | "department";
   companyIdLabel: string;
-  me: { userId: string; name: string; personId: string; dePersonId: string; companyPersonId: string | null; supportTier: SupportTier; awayUntil: string | null };
+  /** Null for a DE admin viewing a company they are not part of. */
+  me: null | { userId: string; name: string; personId: string; dePersonId: string; companyPersonId: string | null; supportTier: SupportTier; awayUntil: string | null };
   unit: RoutingUnit | null;
   leader: Who | null;
   backup: Who | null;
