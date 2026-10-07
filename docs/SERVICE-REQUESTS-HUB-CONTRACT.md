@@ -128,8 +128,14 @@ The Portal never blocks a submission on the Hub. `service_requests.hub_sync_stat
 
 **license_request** (number prefix `LIC`): `accountKind` (`person` | `admin` | `service` | `shared`), `requestedForUserId` (the person, or the requester for a non-person account), `accountName` (non-person accounts only), `platform` (`microsoft_commercial` | `microsoft_gcc` | `microsoft_gcc_high` | `google_workspace` | `zoho_workplace`), `licenseKey` (catalog key, e.g. `m365_e5`, `visio_p2`), `operation` (`add` | `remove`), `businessJustification`. The Portal resolves the company licence policy at submission and adds: `accountType` (`standard` | `frontline` | `contractor` | `admin` | `service` | `shared`), `tier` (string | null), `licenseName`, `licenseKind` (`base` | `addon`), `group` (the licence group to change, string | null) and `approval` (`none` | `manager` | `it_contact` | `request`). Licences the policy assigns automatically, and ones the account type is not eligible for, are refused at the Portal and never reach the Hub. No prices are sent.
 
+**Routing, on every type** (added by the Portal at submission from the company structure, `shared/orgDirectory.ts`):
+
+- `contactPlan`: `{ supportTier: "standard" | "vip", personId, primary: { userId, name, email, phone, awayUntil }, unit: { kind: "site" | "department", id, name } | null, fallback: { userId, name, email, role: "leader" | "backup_leader" } | null, cc: [{ userId, name, email }], summary }`. VIPs: `fallback` is null and `cc` is empty (direct support only). Standard users: contact directly, else `fallback`. `personId` is the company's employee ID when the company uses its own scheme, else the DE person ID.
+- `approvalFlow`: `{ required: false, reason }` or `{ required: true, rule: "leader" | "it_contact", state: "pending" | "approved" | "rejected", approvers: [{ userId, name, email, role: "leader" | "backup_leader" | "manager" | "it_contact" }], decidedBy?, decidedAt?, note? }`.
+
 ### Status lifecycles
 
+- Every type may start at `pending_approval` ("Awaiting approval") when the company needs a leader's (or IT contact's) approval: pending_approval → submitted (approved in the Portal) | rejected | cancelled. No Desk ticket exists until it is approved. Staff and the Hub may only reject or cancel it; approval happens in the Portal.
 - Loaner: submitted → under_review → device_assigned → delivered → return_due → returned → closed; rejected; cancelled (requester, before device_assigned).
 - Return: submitted → under_review → pickup_scheduled → received → restocked | disposed → closed; rejected; cancelled (requester, before pickup_scheduled).
 - Licence: submitted → under_review → approved → fulfilled ("Licence assigned") → closed; submitted → approved directly; rejected; cancelled (requester, before approved; staff, before fulfilled).

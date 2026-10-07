@@ -150,6 +150,7 @@ const PortalQBR = lazy(() => import("@/pages/portal/PortalQBR"));
 const PortalSelfService = lazy(() => import("@/pages/portal/PortalSelfService"));
 const PortalLicenseRequest = lazy(() => import("@/pages/portal/requests/PortalLicenseRequest"));
 const PortalLicensing = lazy(() => import("@/pages/portal/PortalLicensing"));
+const PortalOrganization = lazy(() => import("@/pages/portal/PortalOrganization"));
 const PortalKbArticle = lazy(() => import("@/pages/portal/kb/PortalKbArticle"));
 const AdminKb = lazy(() => import("@/pages/portal/kb/AdminKb"));
 const PortalServiceRequests = lazy(() => import("@/pages/portal/requests/PortalServiceRequests"));
@@ -954,6 +955,11 @@ function Router() {
       <Route path="/portal/requests/license" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <PortalLicenseRequest />
+        </Suspense>
+      )} />
+      <Route path="/portal/organization" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <PortalOrganization />
         </Suspense>
       )} />
       <Route path="/portal/licensing" component={() => (

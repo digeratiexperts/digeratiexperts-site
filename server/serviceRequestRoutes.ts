@@ -14,9 +14,12 @@ import {
 import { queueServiceRequestForHub } from "./serviceRequestHubSync";
 import { listManualRecords } from "./portalManualRecords";
 import { classificationFor, getLicensePolicy } from "./licensingStore";
+import { planRequestRouting, type OrgUser } from "./orgRouting";
+import { APPROVER_ROLE_LABELS, type ApprovalFlow, type Approver, type ContactPlan, type RoutingPerson } from "@shared/orgDirectory";
 import { accountTypeLabel, platformLabel, requestableLicenses, type AccountType } from "@shared/licensing";
 import { announcementFromRecord, builtInAnnouncements, type PortalAnnouncement } from "@shared/portalAnnouncements";
 import {
+  APPROVAL_STATUS,
   BASKET_STATUS,
   STATUS_LABELS,
   TERMINAL_STATUSES,
@@ -69,7 +72,8 @@ export type ServiceRequestUser = {
 
 type AuthedRequest = Request & { user?: ServiceRequestUser };
 
-export type DirectoryUser = { id: string; clientId: string | null; fullName: string; email: string; isActive?: boolean };
+/** A portal user as routes see them. The org fields drive leader / IT contact routing (server/orgRouting.ts). */
+export type DirectoryUser = OrgUser;
 export type DirectoryClient = { id: string; companyName: string; hubAccountId?: string | null };
 
 export type ServiceRequestRouteDeps = {
@@ -82,8 +86,17 @@ export type ServiceRequestRouteDeps = {
   listClientUsers: (clientId: string) => DirectoryUser[];
   /** Optional Zoho Desk ticket for a submitted request; returns the ticket id or null. Must not throw. */
   createDeskTicket?: (input: { subject: string; description: string; email: string }) => Promise<string | null>;
+  /** Existing portal departments (names for routing). Optional. */
+  listDepartments?: (clientId: string) => Promise<Array<{ id: string; name: string }>>;
+  /** Approval and leader-copy emails. Optional; must not throw. */
+  notify?: {
+    approvalNeeded?: (input: RequestEmail & { to: Approver[] }) => Promise<unknown>;
+    leaderCopy?: (input: RequestEmail & { to: RoutingPerson[]; contactSummary: string }) => Promise<unknown>;
+  };
   now?: () => Date;
 };
+
+export type RequestEmail = { requestId: string; number: string; typeLabel: string; requestedForName: string; submittedByName: string };
 
 export const SERVICE_REQUESTS_PATH = "/api/portal/service-requests";
 export const ADMIN_SERVICE_REQUESTS_PATH = "/api/portal/admin/service-requests";
@@ -186,10 +199,21 @@ async function toRecord(deps: ServiceRequestRouteDeps, r: StoredServiceRequest):
   };
 }
 
+export function approvalFlowOf(r: Pick<StoredServiceRequest, "payload">): ApprovalFlow | null {
+  const f = (r.payload as Record<string, unknown>).approvalFlow as ApprovalFlow | undefined;
+  return f && typeof f === "object" ? f : null;
+}
+
+function isApproverOf(userId: string, r: StoredServiceRequest): boolean {
+  const f = approvalFlowOf(r);
+  return Boolean(f && f.required && f.approvers.some((a) => a.userId === userId));
+}
+
 function canView(user: ServiceRequestUser, r: StoredServiceRequest): boolean {
   if (user.role === "admin") return true;
   if (!user.clientId || user.clientId !== r.accountId) return false;
-  return r.submittedByUserId === user.id || r.requestedForUserId === user.id;
+  // The approver (site / department leader, backup, manager or IT contact) sees what they decide on.
+  return r.submittedByUserId === user.id || r.requestedForUserId === user.id || (r.status !== BASKET_STATUS && isApproverOf(user.id, r));
 }
 
 async function syncToHub(deps: ServiceRequestRouteDeps, r: StoredServiceRequest, attachments?: StoredAttachment[]) {
@@ -241,6 +265,17 @@ function deskDescription(deps: ServiceRequestRouteDeps, r: StoredServiceRequest)
   }
   const a = r.site ?? r.customAddress;
   if (a) lines.push(`Location: ${r.site ? `${r.site.code} — ` : "(not a company location) "}${a.street}, ${a.city}, ${a.state} ${a.zip}, ${a.country}`);
+  const plan = p.contactPlan as ContactPlan | undefined;
+  if (plan) {
+    lines.push("", `Person ID: ${plan.personId}${plan.supportTier === "vip" ? " · VIP" : ""}`, `Contact: ${plan.summary}`);
+    if (plan.cc.length) lines.push(`CC: ${plan.cc.map((c) => `${c.name} <${c.email}>`).join(", ")}`);
+  }
+  const flow = approvalFlowOf(r);
+  if (flow?.required && flow.decidedBy) {
+    lines.push(`Approved by: ${flow.decidedBy.name} (${APPROVER_ROLE_LABELS[flow.decidedBy.role]})${flow.note ? ` — ${flow.note}` : ""}`);
+  } else if (flow && !flow.required) {
+    lines.push(`Approval: ${flow.reason}`);
+  }
   if (client?.hubAccountId) lines.push("", `canonicalAccountId: ${client.hubAccountId}`);
   return lines.join("\n");
 }
@@ -263,7 +298,82 @@ async function afterSubmit(deps: ServiceRequestRouteDeps, r: StoredServiceReques
     }
   }
   await syncToHub(deps, current);
+  const plan = (current.payload as Record<string, unknown>).contactPlan as ContactPlan | undefined;
+  if (plan?.cc.length && deps.notify?.leaderCopy) {
+    try {
+      await deps.notify.leaderCopy({ ...emailFor(deps, current), to: plan.cc, contactSummary: plan.summary });
+    } catch (error) {
+      console.warn("[service-requests] leader copy not sent:", error instanceof Error ? error.message : error);
+    }
+  }
   return (await getServiceRequest(current.id)) ?? current;
+}
+
+function emailFor(deps: ServiceRequestRouteDeps, r: StoredServiceRequest): RequestEmail {
+  return {
+    requestId: r.id,
+    number: r.number,
+    typeLabel: TYPE_LABELS[r.type],
+    requestedForName: person(deps, r.requestedForUserId).name,
+    submittedByName: person(deps, r.submittedByUserId).name,
+  };
+}
+
+/**
+ * Submission through the company structure: attach the contact plan and the
+ * approval flow, then either park the request for its approver (no Desk
+ * ticket yet; the Hub sees it as awaiting approval) or send it on.
+ * `r` is stored (new, with no history yet, or a basket item); its status is replaced here.
+ */
+async function submitThroughStructure(
+  deps: ServiceRequestRouteDeps,
+  r: StoredServiceRequest,
+  at: Date,
+): Promise<StoredServiceRequest> {
+  let routing: { contactPlan?: ContactPlan; approvalFlow: ApprovalFlow };
+  try {
+    routing = await planRequestRouting(deps, {
+      clientId: r.accountId,
+      type: r.type,
+      requestedForUserId: r.requestedForUserId,
+      submittedByUserId: r.submittedByUserId,
+      payload: r.payload,
+      siteId: r.site?.id ?? null,
+      today: todayIso(at),
+      now: at,
+    });
+  } catch (error) {
+    // A directory problem never blocks a request: it goes straight to DE.
+    console.warn("[service-requests] routing unavailable:", error instanceof Error ? error.message : error);
+    routing = { approvalFlow: { required: false, reason: "Company structure unavailable; DE reviews it" } };
+  }
+  const payload = { ...r.payload, ...(routing.contactPlan ? { contactPlan: routing.contactPlan } : {}), approvalFlow: routing.approvalFlow };
+  const flow = routing.approvalFlow;
+  const waiting = flow.required && flow.state === "pending";
+  const status: ServiceRequestStatus = waiting ? APPROVAL_STATUS : "submitted";
+  const note = waiting
+    ? `Waiting for approval from ${flow.approvers.map((a) => `${a.name} (${APPROVER_ROLE_LABELS[a.role]})`).join(" or ")}`
+    : flow.required && flow.decidedBy
+      ? "Approved by the person who submitted it"
+      : null;
+  const updated = await updateServiceRequest(r.id, r.revision, {
+    status,
+    payload,
+    submittedAt: at.toISOString(),
+    statusHistory: [...r.statusHistory, historyEvent(status, "requester", at, note)],
+  });
+  if (!updated) return r;
+  if (!waiting) return afterSubmit(deps, updated);
+
+  await syncToHub(deps, updated);
+  if (deps.notify?.approvalNeeded && flow.required) {
+    try {
+      await deps.notify.approvalNeeded({ ...emailFor(deps, updated), to: flow.approvers });
+    } catch (error) {
+      console.warn("[service-requests] approval email not sent:", error instanceof Error ? error.message : error);
+    }
+  }
+  return (await getServiceRequest(updated.id)) ?? updated;
 }
 
 /**
@@ -482,6 +592,7 @@ export function registerServiceRequestRoutes(app: Express, deps: ServiceRequestR
     if (!resolved.ok) return res.status(resolved.status).json({ error: "Please fix the highlighted fields", fieldErrors: resolved.errors });
 
     const status: ServiceRequestStatus = mode === "basket" ? BASKET_STATUS : "submitted";
+    // Submitted requests are stored as submitted, then routed (which may park them for approval).
     const created = await createServiceRequest({
       type,
       accountId: clientId,
@@ -493,10 +604,10 @@ export function registerServiceRequestRoutes(app: Express, deps: ServiceRequestR
       site: resolved.site,
       customAddress:
         "addressNotClientLocation" in checked.data && checked.data.addressNotClientLocation ? checked.data.customAddress ?? null : null,
-      statusHistory: [historyEvent(status, "requester", t)],
+      statusHistory: mode === "basket" ? [historyEvent(status, "requester", t)] : [],
       submittedAt: mode === "submit" ? t.toISOString() : null,
     });
-    const final = mode === "submit" ? await afterSubmit(deps, created) : created;
+    const final = mode === "submit" ? await submitThroughStructure(deps, created, t) : created;
     res.status(201).json({ success: true, request: await toRecord(deps, final) });
   });
 
@@ -525,15 +636,64 @@ export function registerServiceRequestRoutes(app: Express, deps: ServiceRequestR
 
     const submitted: ServiceRequestRecord[] = [];
     for (const r of items) {
-      const updated = await updateServiceRequest(r.id, r.revision, {
-        status: "submitted",
-        submittedAt: t.toISOString(),
-        statusHistory: [...r.statusHistory, historyEvent("submitted", "requester", t)],
-      });
-      if (!updated) continue;
-      submitted.push(await toRecord(deps, await afterSubmit(deps, updated)));
+      submitted.push(await toRecord(deps, await submitThroughStructure(deps, r, t)));
     }
     res.json({ success: true, requests: submitted });
+  });
+
+  // Requests waiting for me to approve (site / department leader, backup, manager, IT contact),
+  // and the ones I decided recently. A DE admin sees the open company's queue.
+  app.get(`${SERVICE_REQUESTS_PATH}/approvals`, ...guards, async (req: AuthedRequest, res: Response) => {
+    const clientId = requireCompany(req, res);
+    if (!clientId) return;
+    const me = req.user!.id;
+    const isAdmin = req.user!.role === "admin";
+    const rows = (await listServiceRequestsForAdmin(clientId)).filter((r) => r.accountId === clientId);
+    const pending = rows.filter((r) => r.status === APPROVAL_STATUS && (isAdmin || isApproverOf(me, r)));
+    const decided = rows
+      .filter((r) => {
+        const f = approvalFlowOf(r);
+        return Boolean(f?.required && f.decidedBy && f.decidedBy.userId === me && f.decidedBy.role !== "requester");
+      })
+      .slice(0, 20);
+    res.json({
+      success: true,
+      pending: await Promise.all(pending.map((r) => toRecord(deps, r))),
+      decided: await Promise.all(decided.map((r) => toRecord(deps, r))),
+    });
+  });
+
+  // Approve or reject. Only a listed approver in the same company, or a DE admin.
+  app.post(`${SERVICE_REQUESTS_PATH}/:id/approval`, ...guards, async (req: AuthedRequest, res: Response) => {
+    const r = await getServiceRequest(req.params.id);
+    if (!r || !canView(req.user!, r)) return res.status(404).json({ error: "Request not found" });
+    const flow = approvalFlowOf(r);
+    const isAdmin = req.user!.role === "admin";
+    if (r.status !== APPROVAL_STATUS || !flow?.required || flow.state !== "pending") {
+      return res.status(409).json({ error: "This request is not waiting for approval" });
+    }
+    const approver = flow.approvers.find((a) => a.userId === req.user!.id);
+    if (!approver && !isAdmin) return res.status(403).json({ error: "You are not an approver for this request" });
+    const decision = req.body?.decision;
+    if (decision !== "approve" && decision !== "reject") return res.status(400).json({ error: "Choose approve or reject" });
+    const note = typeof req.body?.note === "string" ? req.body.note.trim().slice(0, 1000) : "";
+    if (decision === "reject" && !note) return res.status(400).json({ error: "Say why, so the requester knows what to change" });
+
+    const t = now();
+    const decider = approver
+      ? { userId: approver.userId, name: approver.name, email: approver.email, role: approver.role }
+      : { ...person(deps, req.user!.id), role: "de_admin" as const };
+    const nextFlow: ApprovalFlow = { ...flow, state: decision === "approve" ? "approved" : "rejected", decidedBy: decider, decidedAt: t.toISOString(), note: note || null };
+    const status: ServiceRequestStatus = decision === "approve" ? "submitted" : "rejected";
+    const by = `${decider.name} (${APPROVER_ROLE_LABELS[decider.role]})`;
+    const updated = await updateServiceRequest(r.id, r.revision, {
+      status,
+      payload: { ...r.payload, approvalFlow: nextFlow },
+      statusHistory: [...r.statusHistory, historyEvent(status, by, t, decision === "approve" ? note || "Approved" : note)],
+    });
+    if (!updated) return res.status(409).json({ error: "This request changed; reload and try again" });
+    const final = decision === "approve" ? await afterSubmit(deps, updated) : (await syncToHub(deps, updated), updated);
+    res.json({ success: true, request: await toRecord(deps, (await getServiceRequest(final.id)) ?? final) });
   });
 
   app.get(`${SERVICE_REQUESTS_PATH}/:id`, ...guards, async (req: AuthedRequest, res: Response) => {
