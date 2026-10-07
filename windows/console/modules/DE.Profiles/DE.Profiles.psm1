@@ -198,6 +198,19 @@ function New-DEProvisioningContext {
     if ($ClientId) { $client = Get-DEClientProfile -Id $ClientId } else { $r = Resolve-DEClientContext -Snapshot $Snapshot; if ($r.best) { $client = Get-DEClientProfile -Id $r.best.id } }
     $eu = Resolve-DEEndUser -Snapshot $Snapshot -Technician $Technician
     if (-not $EndUser) { $EndUser = $eu.endUser }
+    $namingStatus = 'canonical'
+    $known = $null
+    if ($client -and $EndUser) {
+        $known = @(@(Get-DEHashPath -Object $client -Path 'knownUsers' | Where-Object { $null -ne $_ }) | Where-Object {
+            ("$(Get-DEHashPath -Object $_ -Path 'sourcePrincipal')" -and "$(Get-DEHashPath -Object $_ -Path 'sourcePrincipal')" -ieq $EndUser) -or
+            ("$(Get-DEHashPath -Object $_ -Path 'displayName')" -and "$(Get-DEHashPath -Object $_ -Path 'displayName')" -ieq (($EndUser -split '\\')[-1]))
+        }) | Select-Object -First 1
+    }
+    if (-not $LocalUserName -and $known -and $Mode -in @('takeover','repair','deprovision')) {
+        $legacyLocal = "$(Get-DEHashPath -Object $known -Path 'localUserName')"
+        if ($legacyLocal) { $LocalUserName = $legacyLocal; $namingStatus = 'inherited-exception' }
+        if (-not $JumpCloudUser) { $JumpCloudUser = "$(Get-DEHashPath -Object $known -Path 'jumpcloudUser')" }
+    }
     if (-not $LocalUserName -and $EndUser) {
         $conv = $(if ($client -and $client.identity.usernameConvention) { $client.identity.usernameConvention } else { 'firstname.lastname' })
         $LocalUserName = ConvertTo-DELocalUserName -DisplayOrPrincipal $EndUser -Convention $conv -PersonClass $PersonClass
@@ -211,7 +224,7 @@ function New-DEProvisioningContext {
         technician = $Technician; mode = $Mode
         client = $(if ($client) { $client.id } else { $null }); clientName = $(if ($client) { $client.name } else { $null }); tier = $(if ($client) { $client.tier } else { $null }); site = $Site
         endUser = $EndUser; endUserEmail = $EndUserEmail; endUserSource = $eu.endUserSource; sourcePrincipal = $(if ($eu.endUserIsEntraPrincipal) { $eu.endUser } elseif ($EndUser -match '\\') { $EndUser } else { $null })
-        localUserName = $LocalUserName; jumpcloudUser = $JumpCloudUser; personClass = $PersonClass
+        localUserName = $LocalUserName; jumpcloudUser = $JumpCloudUser; personClass = $PersonClass; namingStatus = $namingStatus
         device = @{ hostname = (Get-DEHashPath -Object $Snapshot -Path 'device.hostname'); serial = (Get-DEHashPath -Object $Snapshot -Path 'device.serial'); model = (Get-DEHashPath -Object $Snapshot -Path 'device.model'); role = $DeviceRole; assetTag = $AssetTag; orderNumber = $OrderNumber; warrantyEnd = $WarrantyEnd; desiredHostname = $DesiredHostname }
         hubAccountId = $(if ($client) { "$(Get-DEHashPath -Object $client -Path 'hub.accountId')" } else { '' })
         started = (Get-Date).ToString('o')
