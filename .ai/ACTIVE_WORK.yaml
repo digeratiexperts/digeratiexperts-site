@@ -2863,7 +2863,7 @@ claims:
       - server/publicSolutionSpool.ts, server/publicSolutionSpool.test.ts (the production spool folder, the stranded-entry rescue and the writable check only)
       - server/index.ts (the health spool fields and the startup rescue only)
       - deploy/vps/deploy.sh (the spool folders and the release prune only), deploy/vps/digeratiexperts-site.service (ReadWritePaths only)
-    status: active
+    status: verified-live
     started: 2026-10-07
     note: >-
       Found verifying PR 514 live: a DE Desk ticket spooled at about 03:30Z was
@@ -2880,6 +2880,13 @@ claims:
       must already differ from the repo copy, which mounts /home read-only,
       since production wrote a spool file). Overlap check 2026-10-07: no
       active claim and no open PR touches these files.
+      RELEASED 2026-10-07: Joe, "merge 517 and any others". Merged as 86936c5
+      (PR 517) after CI passed on 90cb0ce. Production runs bda8348, which
+      contains it (/api/health release, built 18:16Z). /api/health reads
+      writable true for solutionSpool, quoteSpool and deskTicketSpool, so the
+      installed unit lets the service write <site>/shared/spool; pending 0 on
+      all three. zohoDesk still auth_failed (the Desk refresh token is not yet
+      replaced). VERIFIED LIVE. Files released.
   - id: homepage-polish
     owner: claude
     subsystem: public-marketing-visual-layer
