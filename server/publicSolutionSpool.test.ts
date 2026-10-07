@@ -5,8 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   SPOOL_MAX_FILES,
   listSpoolEntries,
+  productionSpoolRoot,
   removeSpoolEntry,
+  rescueReleaseSpools,
   spoolPendingCount,
+  spoolWritable,
   updateSpoolEntry,
   writeSpoolEntry,
   type SpoolEntry,
@@ -64,3 +67,60 @@ describe("solution request disk spool (#243)", () => {
     expect(writeSpoolEntry(entry("req-ffffff"), dir)).toBe(false);
   });
 });
+
+describe("production spool location (spool-outside-releases)", () => {
+  let site: string;
+  beforeEach(() => {
+    site = fs.mkdtempSync(path.join(os.tmpdir(), "spool-site-"));
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+  afterEach(() => {
+    fs.rmSync(site, { recursive: true, force: true });
+    vi.restoreAllMocks();
+  });
+
+  it("keeps the spool in <site>/shared, never inside releases/, whichever path the process sees", () => {
+    // systemd starts in <site>/current; process.cwd() reports the release it points to.
+    expect(productionSpoolRoot("/home/digeratiexperts.com/releases/20261007115415")).toBe(
+      "/home/digeratiexperts.com/shared/spool",
+    );
+    expect(productionSpoolRoot("/home/digeratiexperts.com/current")).toBe("/home/digeratiexperts.com/shared/spool");
+  });
+
+  it("resolves a real symlinked release the way the server does", () => {
+    const release = path.join(site, "releases", "r1");
+    fs.mkdirSync(release, { recursive: true });
+    fs.symlinkSync(release, path.join(site, "current"));
+    const seen = fs.realpathSync(path.join(site, "current"));
+    expect(productionSpoolRoot(seen)).toBe(path.join(fs.realpathSync(site), "shared", "spool"));
+  });
+
+  it("moves entries stranded under releases/shared into the spool in use, and leaves a clash in place", () => {
+    const stranded = path.join(site, "releases", "shared", "spool", "desk-tickets");
+    const target = path.join(site, "shared", "spool");
+    writeSpoolEntry(entry("DE-W-AAAAAA-111111"), stranded);
+    writeSpoolEntry(entry("DE-W-BBBBBB-222222"), stranded);
+    writeSpoolEntry(entry("DE-W-BBBBBB-222222"), path.join(target, "desk-tickets"));
+    const moved = rescueReleaseSpools(path.join(site, "releases", "r1"), (folder) => path.join(target, folder));
+    expect(moved).toBe(1);
+    expect(listSpoolEntries(path.join(target, "desk-tickets")).map((e) => e.record.id).sort()).toEqual([
+      "DE-W-AAAAAA-111111",
+      "DE-W-BBBBBB-222222",
+    ]);
+    expect(fs.readdirSync(stranded)).toEqual(["DE-W-BBBBBB-222222.json"]);
+    expect((fs.statSync(path.join(target, "desk-tickets", "DE-W-AAAAAA-111111.json")).mode & 0o777).toString(8)).toBe("600");
+  });
+
+  it("does nothing outside a release directory", () => {
+    expect(rescueReleaseSpools(path.join(site, "current"), (folder) => path.join(site, "x", folder))).toBe(0);
+  });
+
+  it("reports whether the spool folder takes writes", () => {
+    expect(spoolWritable(path.join(site, "shared", "spool", "desk-tickets"))).toBe(true);
+    const locked = path.join(site, "locked");
+    fs.mkdirSync(locked, { mode: 0o500 });
+    const runningAsRoot = process.getuid?.() === 0;
+    expect(spoolWritable(path.join(locked, "desk-tickets"))).toBe(runningAsRoot);
+  });
+});
+

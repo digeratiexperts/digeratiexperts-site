@@ -41,7 +41,9 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=full
 ProtectHome=read-only
-ReadWritePaths=/home/digeratiexperts.com/logs
+# shared/spool holds requests and DE Desk tickets waiting for the database or
+# the Desk API (server/publicSolutionSpool.ts); /api/health reports writable.
+ReadWritePaths=/home/digeratiexperts.com/logs /home/digeratiexperts.com/shared/spool
 
 [Install]
 WantedBy=multi-user.target
