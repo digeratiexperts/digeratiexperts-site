@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { ClipboardList, Heart, ShoppingCart, Smartphone } from "lucide-react";
+import { ClipboardList, Heart, ShoppingCart } from "lucide-react";
 import { PortalLayout } from "../PortalLayout";
 import { Callout, EmptyState, Panel } from "@/components/portal/ui";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LicenseIcon, LoanerComputerIcon, ReturnComputerIcon } from "@/components/portal/requests/icons";
+import { LicenseIcon, LoanerComputerIcon, MobileServiceIcon, ReturnComputerIcon } from "@/components/portal/requests/icons";
 import { RequestStatusToken } from "@/components/portal/requests/RequestStatusToken";
 import { isFavoriteRequest } from "@/components/portal/requests/ServiceRequestShell";
 import { srApi } from "@/lib/serviceRequestsApi";
@@ -22,7 +22,7 @@ const MOBILE: Array<{ type: ServiceRequestType; blurb: string; Icon: typeof Loan
   {
     type: "mobile_request",
     blurb: "Phones, lines, plans, SIMs, carrier changes, travel, upgrades, warranty replacements and transfers of liability.",
-    Icon: Smartphone,
+    Icon: MobileServiceIcon,
   },
 ];
 
