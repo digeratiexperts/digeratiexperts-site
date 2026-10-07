@@ -8,6 +8,8 @@ import { formatThreatDate, THREAT_ATTRIBUTION, type ThreatItem } from "@shared/t
 import { TipTag } from "./TipTag";
 import "./12-threats-insights.css";
 import { ChapterPattern } from "@/components/site/Atmosphere";
+// The previous homepage's Arizona office photo, restored beside the hand-off steps (Joe, 2026-10-07).
+import officeEveningImg from "@assets/de-arizona-office-evening-960.webp";
 
 /**
  * Section 12 (mock: artifacts/design-concepts/homepage-sections-2026-10/sections/12-threats-insights.html).
@@ -237,6 +239,17 @@ export function V8ThreatsInsights(): JSX.Element {
           </motion.div>
 
           <motion.figure className="v8-card v8-card--inset monitor-figure" {...reveal(0.04)}>
+            <div className="monitor-photo">
+              <img
+                src={officeEveningImg}
+                alt="Arizona professional office where Digerati Experts supports local businesses"
+                width={960}
+                height={640}
+                loading="lazy"
+                decoding="async"
+              />
+              <span className="monitor-photo__tag">Arizona operations</span>
+            </div>
             <TipTag style={{ alignSelf: "flex-start" }} tip="Illustrates how monitoring hands off to a person. Not live telemetry.">
               Illustrative
             </TipTag>

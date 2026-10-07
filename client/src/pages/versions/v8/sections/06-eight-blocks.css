@@ -145,3 +145,15 @@
   .v8 .v8s-06 .steps > li:first-child { border-top: 0; }
   .v8 .v8s-06 .step, .v8 .v8s-06 .steps > li .step, .v8 .v8s-06 .steps > li:first-child .step { padding: 22px 0 26px; }
 }
+/* The open block reads as the lit stage (Joe, 2026-10-07: "should do something to pop"): a magenta-to-violet
+   edge, a low glow from the selected tab's side, a lit icon and a tinted boundary, so it no longer matches the rail. */
+.v8 .v8s-06 .pane { position: relative; isolation: isolate;
+  background: radial-gradient(ellipse 70% 55% at 0% 0%, rgba(211,18,106,0.14), transparent 70%), radial-gradient(ellipse 60% 50% at 100% 100%, rgba(87,68,255,0.12), transparent 70%), rgba(255,255,255,0.025); }
+.v8 .v8s-06 .pane::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: linear-gradient(90deg, var(--v8-magenta), #7b6cff 70%, transparent); pointer-events: none; }
+.v8 .v8s-06 .pane__head .v8-iconwell { background: linear-gradient(135deg, var(--v8-magenta), #7b6cff); border-color: transparent; color: #fff; box-shadow: 0 8px 24px -8px rgba(211,18,106,0.6); }
+.v8 .v8s-06 .pane__head .v8-h3 { font-size: clamp(1.35rem, 1.6vw, 1.6rem); }
+.v8 .v8s-06 .boundary { background: linear-gradient(180deg, rgba(211,18,106,0.06), rgba(87,68,255,0.05)); }
+.v8 .v8s-06 .node { border-color: rgba(169,156,255,0.28); box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 24px -16px rgba(87,68,255,0.55); }
+.v8 .v8s-06 .link-h { height: 2px; background: linear-gradient(90deg, rgba(211,18,106,0.8), rgba(123,108,255,0.8)); }
+.v8 .v8s-06 .gate__dot { box-shadow: 0 0 0 4px rgba(211,18,106,0.18); }
+@media (prefers-reduced-transparency: reduce) { .v8 .v8s-06 .pane { background: rgba(255,255,255,0.03); } }

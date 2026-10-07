@@ -2788,3 +2788,23 @@ claims:
       Joe's phone screenshot) at every width; the headline cap from PR 503 is
       folded in, and 503 is superseded. Structural duplicates on the page are
       listed for Joe, not changed.
+  - id: homepage-restore
+    owner: claude
+    subsystem: public-marketing-visual-layer
+    branch: claude/homepage-restore
+    base_sha: caeee0dd1277fbb687d8c7fb159a302cf31d062e
+    files:
+      - client/src/pages/versions/v8/sections/01-hero.tsx/.css (previous homepage city-lights field and plate)
+      - client/src/pages/versions/v8/sections/06-eight-blocks.css (open block panel lit)
+      - client/src/pages/versions/v8/sections/08-why-arizona.tsx/.css (assessment-desk photo restored under the report outline)
+      - client/src/pages/versions/v8/sections/10-industries.css (previous card shade)
+      - client/src/pages/versions/v8/sections/12-threats-insights.tsx/.css (Arizona office photo restored above the hand-off steps)
+      - client/src/assets/industries/cpa-calculator-2026-10-06.webp (toned down to the set's mid-tones)
+      - artifacts/visual-qa/homepage-restore/**
+    status: implemented
+    started: 2026-10-07
+    note: >-
+      Joe, 2026-10-07: keep the new changes but bring back the best of the old
+      homepage; the hero background is still not as good as before; the
+      industries photos look worse; the open eight-block panel should pop.
+      Compared against /version-0 (the previous homepage) section by section.
