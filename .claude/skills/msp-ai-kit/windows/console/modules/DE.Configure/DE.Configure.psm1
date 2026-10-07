@@ -152,7 +152,11 @@ function Get-DELogonNoticeDesired {
     $mode = "$(Get-DECfgProp $cfg 'mode')".Trim().ToLowerInvariant()
     if (-not $mode) { $mode = 'default' }
     if ($mode -notin @('default', 'custom', 'disabled')) { throw "windows.logonNotice.mode must be default, custom, or disabled (got '$mode')" }
-    if ($mode -eq 'disabled') { return [pscustomobject][ordered]@{ mode = $mode; enabled = $false; caption = ''; text = '' } }
+    if ($mode -eq 'disabled') {
+        $reason = "$(Get-DECfgProp $cfg 'disabledReason')".Trim()
+        if (-not $reason) { throw 'windows.logonNotice.disabledReason is required when mode is disabled' }
+        return [pscustomobject][ordered]@{ mode = $mode; enabled = $false; caption = ''; text = ''; disabledReason = $reason }
+    }
 
     $caption = "$(Get-DECfgProp $cfg 'caption')".Trim()
     if (-not $caption) { $caption = 'AUTHORIZED USE & SECURITY MONITORING NOTICE' }
