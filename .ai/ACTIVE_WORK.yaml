@@ -2647,3 +2647,21 @@ claims:
       Most Viewed / Most Useful and DE authoring. Stacked on
       portal-service-requests. No prices; draft PR for diff review; no merge,
       deploy or production migration.
+  - id: phone-hero-hotfix
+    owner: claude
+    subsystem: homepage-hero
+    branch: claude/phone-hero-hotfix
+    base_sha: e31bb8f2551a24820c9a86a364e9d49a2e82bdb3
+    files:
+      - client/src/pages/versions/v8/sections/01-hero.css (hero plate hidden below 1180px; phone tile ring above the card; phone eyebrow wrap)
+      - client/src/pages/versions/v8/sections/01-hero.tsx (--hero-plate custom property on the section only)
+      - artifacts/visual-qa/phone-hero-hotfix/**
+    status: implemented
+    started: 2026-10-06
+    note: >-
+      Joe, 2026-10-06 (phone screenshot of the live hero): "why is it like
+      this". Two defects: the hero plate cropped to one grey tile and a light
+      streak behind the headline and buttons, and the eyebrow's second line
+      rendered as a squeezed side column (.v8-eyebrow is flex). The plate rule
+      is the same one line as draft PR 492 (identical, so it merges cleanly
+      either way); 492's CPA image and lockfile port are not included.
