@@ -26,6 +26,7 @@ import { readImpersonatingCompany, type PortalUserSession } from "@/lib/portalRo
 import { usePortalHubEvents } from "@/hooks/usePortalHubEvents";
 import { cn } from "@/lib/utils";
 import { findNavItem, isNavItemActive, navGroupsFor } from "@/components/portal/shell/portalNav";
+import { usePortalIntegrations } from "@/lib/portalIntegrations";
 import { resetPortalSession, usePortalSession } from "@/components/portal/shell/portalSession";
 import { usePortalTheme } from "@/components/portal/shell/portalTheme";
 import { PortalCommandPalette } from "@/components/portal/shell/PortalCommandPalette";
@@ -97,10 +98,11 @@ export function PortalLayout({
     noIndex: true,
   });
 
+  const integrations = usePortalIntegrations(ready && !!user);
   const groups = useMemo(
-    () => navGroupsFor(user),
+    () => navGroupsFor(user, integrations),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user?.id, user?.orgRole, user?.role, user?.isCompanyItContact],
+    [user?.id, user?.orgRole, user?.role, user?.isCompanyItContact, integrations.vpn.mode, integrations.phone.mode, integrations.shipping.mode],
   );
   const current = findNavItem(location);
 
@@ -230,7 +232,7 @@ export function PortalLayout({
           <SidebarRail />
         </Sidebar>
 
-        <SidebarInset className="min-w-0 bg-background">
+        <SidebarInset className="pt-canvas min-w-0 bg-background">
           <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-[hsl(var(--pt-topbar))] px-3 backdrop-blur md:px-5">
             <SidebarTrigger className="h-9 w-9 text-foreground hover:bg-accent" aria-label="Toggle navigation" />
             <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-1.5 text-sm text-muted-foreground md:flex">

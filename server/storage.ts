@@ -15,6 +15,8 @@ import {
   portalUsers as portalUsersTable,
   portalTickets,
   portalTicketComments,
+  portalTenantFiles,
+  storeOrders as storeOrdersTable,
   type User,
   type InsertUser,
   type Workspace,
@@ -35,7 +37,7 @@ import {
   type PortalTicket,
   type PortalTicketComment,
 } from "@shared/schema";
-import { eq, and, desc, asc, sql } from "drizzle-orm";
+import { eq, and, or, desc, asc, sql, isNull } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -90,11 +92,15 @@ export interface IStorage {
   createPortalTicketComment(comment: any): Promise<PortalTicketComment>;
 
   getTenantFilesByClientId(clientId: string): Promise<any[]>;
+  findTenantFileByFileUrl(fileUrl: string): Promise<{ id: string; clientId: string; fileUrl: string } | undefined>;
   createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<any>;
-  deleteTenantFile(id: string): Promise<boolean>;
+  /** Tenant-scoped: only deletes when the file belongs to `clientId`. */
+  deleteTenantFile(id: string, clientId: string, deletedBy?: string): Promise<boolean>;
 
   getStoreOrders(): Promise<any[]>;
   getStoreOrder(id: string): Promise<any | undefined>;
+  /** Orders the account may see: placed by `userId` or belonging to `clientId`. Scoped in the query. */
+  getStoreOrdersForAccount(account: { userId?: string | null; clientId?: string | null }): Promise<any[]>;
   createStoreOrder(order: any): Promise<any>;
 }
 
@@ -687,6 +693,14 @@ export class MemStorage implements IStorage {
     return Array.from(this.tenantFiles.values()).filter(f => f.clientId === clientId);
   }
 
+  async findTenantFileByFileUrl(fileUrl: string): Promise<{ id: string; clientId: string; fileUrl: string } | undefined> {
+    // Deleted files are removed from the map, so they never resolve here.
+    // Same ambiguity rule as DatabaseStorage: two tenants on one path → no owner.
+    const matches = Array.from(this.tenantFiles.values()).filter((f) => f.fileUrl === fileUrl);
+    if (matches.some((f) => f.clientId !== matches[0].clientId)) return undefined;
+    return matches[0];
+  }
+
   async createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<TenantFile> {
     const newFile: TenantFile = {
       id: generateId(),
@@ -703,7 +717,9 @@ export class MemStorage implements IStorage {
     return newFile;
   }
 
-  async deleteTenantFile(id: string): Promise<boolean> {
+  async deleteTenantFile(id: string, clientId: string, _deletedBy?: string): Promise<boolean> {
+    const file = this.tenantFiles.get(id);
+    if (!file || file.clientId !== clientId) return false;
     return this.tenantFiles.delete(id);
   }
 
@@ -713,6 +729,14 @@ export class MemStorage implements IStorage {
 
   async getStoreOrder(id: string): Promise<any | undefined> {
     return this.storeOrdersMap.get(id);
+  }
+
+  async getStoreOrdersForAccount(account: { userId?: string | null; clientId?: string | null }): Promise<any[]> {
+    return Array.from(this.storeOrdersMap.values()).filter(
+      (o) =>
+        (Boolean(account.userId) && o.userId === account.userId) ||
+        (Boolean(account.clientId) && o.clientId === account.clientId),
+    );
   }
 
   async createStoreOrder(order: any): Promise<any> {
@@ -1125,108 +1149,300 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  private tenantFilesCache: Map<string, any> = new Map();
-  private storeOrdersMap: Map<string, MemStoreOrder> = new Map();
+  // Write-through mirror of live tenant file rows this process wrote durably.
+  // Only consulted by findTenantFileByFileUrl when the DB lookup *errors*
+  // (main's fallback path, kept): a row enters it only after its INSERT
+  // returned, and leaves it when it is soft-deleted, so the fallback can
+  // never resurrect a deleted file or answer for a row the DB never held.
+  private tenantFilesCache: Map<string, { id: string; clientId: string; fileUrl: string }> = new Map();
 
+  // Tenant file metadata is durable in portal_tenant_files (#259). Reads are
+  // tenant-scoped in SQL. Delete is a soft delete: the row keeps the object
+  // path (deleted_at/deleted_by set) so the blob is never silently orphaned;
+  // object removal is a deliberate, separate operation. Soft-deleted rows are
+  // excluded from every read, including the file-URL ownership lookup. DB
+  // errors on list/create/delete propagate: the routes return 5xx rather than
+  // a success with no durable record.
   async getTenantFilesByClientId(clientId: string): Promise<any[]> {
-    return Array.from(this.tenantFilesCache.values()).filter(f => f.clientId === clientId);
+    const db = await this.getDb();
+    return await db
+      .select()
+      .from(portalTenantFiles)
+      .where(and(eq(portalTenantFiles.clientId, clientId), isNull(portalTenantFiles.deletedAt)))
+      .orderBy(desc(portalTenantFiles.createdAt));
+  }
+
+  async findTenantFileByFileUrl(fileUrl: string): Promise<{ id: string; clientId: string; fileUrl: string } | undefined> {
+    // Durable read: the object-storage ACL asks whether this path belongs to a
+    // tenant, and that answer must survive a restart, so the persisted table
+    // is authoritative. A soft-deleted row is not an owner (#259): a deleted
+    // file stops being readable through tenant ownership. If live rows for
+    // one path name different tenants, ownership is ambiguous and the lookup
+    // returns nothing, so the object route denies (default deny). The cache
+    // is consulted only when the DB lookup throws (e.g. before the DB is
+    // reachable in dev); an empty DB answer is final.
+    try {
+      const db = await this.getDb();
+      const live = and(eq(portalTenantFiles.fileUrl, fileUrl), isNull(portalTenantFiles.deletedAt));
+      // Distinct OWNERS, not rows: a LIMIT on rows can return A1/A2 and miss
+      // B1, authorizing an ambiguous path. Two distinct owners are enough to
+      // know the path is ambiguous.
+      const owners: { clientId: string }[] = await db
+        .selectDistinct({ clientId: portalTenantFiles.clientId })
+        .from(portalTenantFiles)
+        .where(live)
+        .limit(2);
+      if (owners.length === 0) return undefined;
+      if (owners.length > 1) {
+        console.warn("[SECURITY] TENANT_FILE_URL_AMBIGUOUS", { fileUrl });
+        return undefined;
+      }
+      const [row] = await db
+        .select({
+          id: portalTenantFiles.id,
+          clientId: portalTenantFiles.clientId,
+          fileUrl: portalTenantFiles.fileUrl,
+        })
+        .from(portalTenantFiles)
+        .where(and(live, eq(portalTenantFiles.clientId, owners[0].clientId)))
+        .limit(1);
+      return row;
+    } catch (error) {
+      console.error("findTenantFileByFileUrl: DB lookup failed, falling back to cache", error);
+    }
+    const cached = Array.from(this.tenantFilesCache.values()).filter((f) => f.fileUrl === fileUrl);
+    if (cached.some((f) => f.clientId !== cached[0].clientId)) return undefined;
+    return cached[0];
   }
 
   async createTenantFile(data: { clientId: string; fileName: string; fileType: string; category: string; description: string; fileUrl: string; uploadedBy: string }): Promise<any> {
-    const newFile = {
-      id: crypto.randomUUID(),
-      clientId: data.clientId,
-      fileName: data.fileName,
-      fileType: data.fileType,
-      category: data.category,
-      description: data.description,
-      fileUrl: data.fileUrl,
-      uploadedBy: data.uploadedBy,
-      createdAt: new Date(),
-    };
-    this.tenantFilesCache.set(newFile.id, newFile);
-    return newFile;
+    const db = await this.getDb();
+    const [created] = await db
+      .insert(portalTenantFiles)
+      .values({
+        id: crypto.randomUUID(),
+        clientId: data.clientId,
+        fileName: data.fileName,
+        fileType: data.fileType,
+        category: data.category,
+        description: data.description,
+        fileUrl: data.fileUrl,
+        uploadedBy: data.uploadedBy,
+      })
+      .returning();
+    if (!created) throw new Error("Tenant file metadata was not persisted");
+    this.tenantFilesCache.set(created.id, { id: created.id, clientId: created.clientId, fileUrl: created.fileUrl });
+    return created;
   }
 
-  async deleteTenantFile(id: string): Promise<boolean> {
-    return this.tenantFilesCache.delete(id);
+  async deleteTenantFile(id: string, clientId: string, deletedBy?: string): Promise<boolean> {
+    const db = await this.getDb();
+    const now = new Date();
+    const updated = await db
+      .update(portalTenantFiles)
+      .set({ deletedAt: now, deletedBy: deletedBy || null, updatedAt: now })
+      .where(
+        and(
+          eq(portalTenantFiles.id, id),
+          eq(portalTenantFiles.clientId, clientId),
+          isNull(portalTenantFiles.deletedAt),
+        ),
+      )
+      .returning({ id: portalTenantFiles.id });
+    if (updated.length > 0) this.tenantFilesCache.delete(id);
+    return updated.length > 0;
   }
 
+  // Store orders are read from store_orders, the table secure checkout writes to (#233).
+  // Errors propagate: the portal reports the source as unavailable rather than "ok" and empty.
   async getStoreOrders(): Promise<any[]> {
-    return Array.from(this.storeOrdersMap.values());
+    const db = await this.getDb();
+    return await db.select().from(storeOrdersTable).orderBy(desc(storeOrdersTable.createdAt));
   }
 
   async getStoreOrder(id: string): Promise<any | undefined> {
-    return this.storeOrdersMap.get(id);
+    const db = await this.getDb();
+    const [row] = await db.select().from(storeOrdersTable).where(eq(storeOrdersTable.id, id)).limit(1);
+    return row;
+  }
+
+  async getStoreOrdersForAccount(account: { userId?: string | null; clientId?: string | null }): Promise<any[]> {
+    const clauses = [] as any[];
+    if (account.userId) clauses.push(eq(storeOrdersTable.userId, account.userId));
+    if (account.clientId) clauses.push(eq(storeOrdersTable.clientId, account.clientId));
+    if (clauses.length === 0) return [];
+    const db = await this.getDb();
+    return await db
+      .select()
+      .from(storeOrdersTable)
+      .where(or(...clauses))
+      .orderBy(desc(storeOrdersTable.createdAt));
   }
 
   async createStoreOrder(order: any): Promise<any> {
-    const newOrder: MemStoreOrder = {
-      id: order.id || crypto.randomUUID(),
-      orderNumber: order.orderNumber || `ORD-${Date.now()}`,
-      userId: order.userId || null,
-      clientId: order.clientId || null,
-      status: order.status || "pending",
-      paymentMethod: order.paymentMethod || null,
-      lineItems: order.lineItems || [],
-      subtotal: order.subtotal || "0",
-      tax: order.tax || "0",
-      total: order.total || "0",
-      stripeSessionId: order.stripeSessionId || null,
-      stripePaymentIntentId: order.stripePaymentIntentId || null,
-      zohoPaymentId: order.zohoPaymentId || null,
-      billingEmail: order.billingEmail || null,
-      billingName: order.billingName || null,
-      billingCompany: order.billingCompany || null,
-      billingAddress: order.billingAddress || null,
-      notes: order.notes || null,
-      paidAt: order.paidAt || null,
-      createdAt: order.createdAt || new Date(),
-      updatedAt: new Date(),
-    };
-    this.storeOrdersMap.set(newOrder.id, newOrder);
-    return newOrder;
+    const db = await this.getDb();
+    const [created] = await db
+      .insert(storeOrdersTable)
+      .values({
+        id: order.id || crypto.randomUUID(),
+        orderNumber: order.orderNumber || `ORD-${Date.now()}`,
+        userId: order.userId || null,
+        clientId: order.clientId || null,
+        status: order.status || "pending",
+        paymentMethod: order.paymentMethod || null,
+        lineItems: order.lineItems || [],
+        subtotal: order.subtotal || "0",
+        tax: order.tax || "0",
+        total: order.total || "0",
+        stripeSessionId: order.stripeSessionId || null,
+        stripePaymentIntentId: order.stripePaymentIntentId || null,
+        zohoPaymentId: order.zohoPaymentId || null,
+        billingEmail: order.billingEmail || null,
+        billingName: order.billingName || null,
+        billingCompany: order.billingCompany || null,
+        billingAddress: order.billingAddress || null,
+        notes: order.notes || null,
+        paidAt: order.paidAt || null,
+      } as any)
+      .returning();
+    if (!created) throw new Error("Store order was not persisted");
+    return created;
   }
 }
 
-let storageInstance: IStorage;
-let dbAvailable = false;
+/**
+ * Typed "durable storage is not available" failure (#248). Production never
+ * falls back to MemStorage for writes (or reads): a request that needs the
+ * database fails with this error and the gate answers 503.
+ */
+export class StorageUnavailableError extends Error {
+  readonly code = "STORAGE_UNAVAILABLE";
+  readonly status = 503;
+  constructor() {
+    super("Durable storage is unavailable.");
+    this.name = "StorageUnavailableError";
+  }
+}
 
-async function initializeStorage(): Promise<IStorage> {
+/** Production requires the database; dev/test may run on MemStorage. */
+function strictDurability(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.NODE_ENV === "production";
+}
+
+export type StorageMode = "database" | "memory" | "unavailable";
+
+let storageInstance: IStorage | null = null;
+let storageIsDatabase = false;
+let dbAvailable = false;
+let memStorageFallback: MemStorage | null = null;
+
+function memoryStorage(): MemStorage {
+  if (!memStorageFallback) memStorageFallback = new MemStorage();
+  return memStorageFallback;
+}
+
+async function initializeStorage(): Promise<IStorage | null> {
   try {
     const dbModule = await import("./db");
     await dbModule.initPromise;
-    
+
     // Check dbReady AFTER initPromise resolves (it's updated in the module)
     const status = dbModule.getDatabaseStatus();
-    
+
     if (status.connected) {
       dbAvailable = true;
+      storageIsDatabase = true;
       console.log(`✅ Database connected (${status.type}), using DatabaseStorage`);
       return new DatabaseStorage();
     }
   } catch (error) {
     console.log("⚠️ Database module error:", (error as Error).message);
   }
-  
+
+  if (strictDurability()) {
+    console.error("❌ Database unavailable in production: durable storage routes will answer 503 (no MemStorage fallback).");
+    return null;
+  }
   console.log("⚠️ Using MemStorage fallback (database endpoint disabled)");
-  return new MemStorage();
+  return memoryStorage();
 }
 
-const memStorageFallback = new MemStorage();
-storageInstance = memStorageFallback;
+const storageReady: Promise<void> = initializeStorage()
+  .then((s) => {
+    storageInstance = s;
+  })
+  .catch(() => {
+    if (!strictDurability()) {
+      console.log("⚠️ Storage initialization failed, using MemStorage");
+      storageInstance = memoryStorage();
+    }
+  });
 
-initializeStorage().then(s => {
-  storageInstance = s;
-}).catch(() => {
-  console.log("⚠️ Storage initialization failed, using MemStorage");
-  storageInstance = memStorageFallback;
-});
+if (!strictDurability()) {
+  // Preserve dev/test behaviour: usable immediately, before the DB probe settles.
+  storageInstance = memoryStorage();
+}
+
+/** Resolve the durable backend or throw StorageUnavailableError; retries the connection (throttled) so a recovered database is picked up. */
+async function resolveStorage(): Promise<IStorage> {
+  await storageReady;
+  if (storageInstance && (storageIsDatabase || !strictDurability())) return storageInstance;
+  try {
+    const dbModule = await import("./db");
+    if (await dbModule.reconnectDatabase()) {
+      dbAvailable = true;
+      storageIsDatabase = true;
+      storageInstance = new DatabaseStorage();
+      console.log("✅ Database reconnected, durable storage restored");
+      return storageInstance;
+    }
+  } catch (error) {
+    console.log("⚠️ Database reconnect failed:", (error as Error).message);
+  }
+  throw new StorageUnavailableError();
+}
+
+export function getStorageMode(): StorageMode {
+  if (storageIsDatabase) return "database";
+  if (strictDurability()) return "unavailable";
+  return "memory";
+}
 
 export const storage: IStorage = new Proxy({} as IStorage, {
   get(_, prop) {
-    return (storageInstance as any)[prop]?.bind(storageInstance);
-  }
+    if (typeof prop === "symbol" || prop === "then") return undefined;
+    if (!strictDurability()) {
+      const target = storageInstance as any;
+      return target?.[prop]?.bind(target);
+    }
+    // Production: every call goes through the availability gate.
+    return async (...args: unknown[]) => {
+      const target = (await resolveStorage()) as any;
+      return target[prop](...args);
+    };
+  },
 });
+
+/**
+ * Shared gate for durable-authoritative mutation routes (#248). In production
+ * it answers 503 before the handler runs when the database is not connected;
+ * dev/test pass straight through.
+ */
+export async function requireDurableStorage(_req: unknown, res: any, next: (err?: unknown) => void): Promise<void> {
+  if (!strictDurability()) return next();
+  try {
+    await resolveStorage();
+    return next();
+  } catch (error) {
+    if (error instanceof StorageUnavailableError) {
+      return res.status(503).json({
+        code: error.code,
+        message: "This service cannot save changes right now. Please try again in a moment.",
+        error: "This service cannot save changes right now. Please try again in a moment.",
+      });
+    }
+    return next(error);
+  }
+}
 
 export { dbAvailable };

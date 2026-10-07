@@ -3,7 +3,6 @@ import { useSearch, Link } from "wouter";
 import { parseOrderConfirmationParams } from "./orderConfirmationParams";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "../sections/DigeratiEnhancedFooterSection";
 import { Button } from "@/components/ui/button";
 import { useSEO } from "@/hooks/useSEO";
@@ -19,12 +18,13 @@ import {
   ShoppingBag,
   FileText,
   Clock,
-  Phone,
   MessageSquare,
   Loader2,
   AlertCircle,
+  Download,
 } from "lucide-react";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { AccountTeamCard } from "@/components/AccountTeamCard";
+import type { AccountTeam } from "@shared/accountManagers";
 
 interface OrderLineItem {
   productId: string;
@@ -50,6 +50,7 @@ interface Order {
   billingCompany: string | null;
   createdAt: string;
   paidAt: string | null;
+  accountTeam?: AccountTeam;
 }
 
 const OrderConfirmation = () => {
@@ -106,7 +107,6 @@ const OrderConfirmation = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a]">
-        <MegaMenu />
         <main className="de-nav-clear pb-20">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center min-h-[50vh]">
             <Loader2 className="w-12 h-12 text-de-accent-ink animate-spin mb-4" />
@@ -121,7 +121,6 @@ const OrderConfirmation = () => {
   if (error || (!order && !isLoading)) {
     return (
       <div className="min-h-screen bg-[#0a0a0a]">
-        <MegaMenu />
         <main className="de-nav-clear pb-20">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
@@ -132,7 +131,7 @@ const OrderConfirmation = () => {
             <Link href="/internal/warehouse">
               <Button className="bg-de-accent hover:bg-de-accent text-white" data-testid="button-back-to-store">
                 <ShoppingBag className="w-4 h-4 mr-2" />
-                Continue Shopping
+                Back to warehouse
               </Button>
             </Link>
           </div>
@@ -148,7 +147,6 @@ const OrderConfirmation = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
-      <MegaMenu />
 
       <main className="de-nav-clear pb-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -328,6 +326,24 @@ const OrderConfirmation = () => {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
+            {params.orderId && !isQuoteRequest && (
+              <a
+                href={`/api/store/orders/${encodeURIComponent(params.orderId)}/pdf${
+                  params.confirmationToken ? `?ct=${encodeURIComponent(params.confirmationToken)}` : ""
+                }`}
+                download
+              >
+                <Button
+                  variant="outline"
+                  className="border-white/20 text-white hover:bg-white/10"
+                  data-testid="button-download-order-pdf"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF
+                </Button>
+              </a>
+            )}
+
             <Link href="/internal/warehouse">
               <Button
                 variant="outline"
@@ -335,7 +351,7 @@ const OrderConfirmation = () => {
                 data-testid="button-continue-shopping"
               >
                 <ShoppingBag className="w-4 h-4 mr-2" />
-                Continue Shopping
+                Back to warehouse
               </Button>
             </Link>
 
@@ -356,16 +372,12 @@ const OrderConfirmation = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="mt-12 text-center"
           >
+            <div className="mx-auto mb-8 max-w-2xl rounded-xl border border-white/10 bg-white/5 p-6 text-left">
+              <h3 className="mb-4 text-lg font-semibold text-white">Your account team</h3>
+              <AccountTeamCard team={order?.accountTeam} tone="store" />
+            </div>
             <p className="text-white/60 mb-4">Need help with your order?</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href={PRIMARY_PHONE.telHref}
-                className="inline-flex items-center gap-2 text-de-accent-ink hover:text-de-accent-ink transition-colors"
-                data-testid="link-phone-support"
-              >
-                <Phone className="w-4 h-4" />
-                {PRIMARY_PHONE.display}
-              </a>
               <Link href="/support/submit-ticket">
                 <span className="inline-flex items-center gap-2 text-de-accent-ink hover:text-de-accent-ink transition-colors cursor-pointer" data-testid="link-submit-ticket">
                   <MessageSquare className="w-4 h-4" />

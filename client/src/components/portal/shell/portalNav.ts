@@ -21,6 +21,7 @@ import {
   MessageCircle,
   Package,
   Phone,
+  Plug,
   Receipt,
   Settings,
   Shield,
@@ -34,6 +35,7 @@ import {
   Warehouse,
 } from "lucide-react";
 import { navAllowed, type NavKey, type PortalUserSession } from "@/lib/portalRoles";
+import type { IntegrationArea, IntegrationMap } from "@/lib/portalIntegrations";
 
 export type PortalNavItem = {
   href: string;
@@ -46,6 +48,8 @@ export type PortalNavItem = {
   sample?: boolean;
   /** Match only the exact path, never children (e.g. /portal/orders vs /portal/order-form). */
   exact?: boolean;
+  /** Data source switch (server/portalIntegrations.ts): hidden drops the item, live clears `sample`. */
+  integration?: IntegrationArea;
 };
 
 export type PortalNavGroup = {
@@ -105,9 +109,9 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
     id: "tools",
     label: "Tools",
     items: [
-      { href: "/portal/vpn", label: "VPN Access", icon: Shield, key: "other", hint: "Remote access profiles", sample: true },
-      { href: "/portal/cytracom", label: "Cytracom Phone", icon: Phone, key: "other", hint: "Phone system", sample: true },
-      { href: "/portal/ship-center", label: "Ship Center", icon: Truck, key: "other", hint: "Shipments", sample: true },
+      { href: "/portal/vpn", label: "VPN Access", icon: Shield, key: "other", hint: "Remote access profiles", sample: true, integration: "vpn" },
+      { href: "/portal/cytracom", label: "Cytracom Phone", icon: Phone, key: "other", hint: "Phone system", sample: true, integration: "phone" },
+      { href: "/portal/ship-center", label: "Ship Center", icon: Truck, key: "other", hint: "Shipments", sample: true, integration: "shipping" },
       { href: "/portal/marketplace", label: "Client Marketplace", icon: ShoppingBag, key: "other", hint: "Approved products" },
       { href: "/portal/procurement", label: "Procurement Store", icon: Store, key: "other", hint: "Distributor links" },
       { href: "/portal/agent", label: "Desktop Agent", icon: Download, key: "other", hint: "Install the DE agent" },
@@ -120,11 +124,12 @@ export const PORTAL_ADMIN_GROUP: PortalNavGroup = {
   id: "admin",
   label: "DE Admin",
   items: [
-    { href: "/internal/warehouse", label: "Digital Warehouse", icon: Warehouse, key: "other", hint: "Staff store and stock" },
+    { href: "/internal/warehouse", label: "Digital Warehouse", icon: Warehouse, key: "other", hint: "Staff ops · SKUs · Hub feed" },
     { href: "/portal/admin/companies", label: "Companies", icon: Building2, key: "other", hint: "Tenants and impersonation" },
     { href: "/portal/admin/login-knocks", label: "Login Alerts", icon: Shield, key: "other", hint: "Door knocks" },
     { href: "/portal/admin/lifecycle", label: "Onboard / Offboard", icon: Users, key: "other", hint: "JumpCloud identity lifecycle" },
     { href: "/portal/admin/contracts", label: "Contracts", icon: FileSignature, key: "other", hint: "Send and countersign" },
+    { href: "/portal/admin/data-sources", label: "Data Sources", icon: Plug, key: "other", hint: "VPN, phone, shipping setup" },
     { href: "/portal/admin/import", label: "Data Import", icon: Upload, key: "other", hint: "External systems", sample: true },
     { href: "/portal/admin/agents", label: "Manage Agents", icon: Download, key: "other", hint: "Desktop agents", sample: true },
     { href: "/portal/admin/openai", label: "OpenAI Billing", icon: Settings, key: "other", hint: "Kill switch" },
@@ -139,10 +144,15 @@ export function isNavItemActive(item: PortalNavItem, location: string): boolean 
 }
 
 /** Groups visible to this user, admin group appended for DE admins. */
-export function navGroupsFor(user: PortalUserSession | null): PortalNavGroup[] {
+export function navGroupsFor(user: PortalUserSession | null, integrations?: IntegrationMap): PortalNavGroup[] {
   const groups = PORTAL_NAV_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => navAllowed(user, item.key)),
+    items: group.items
+      .filter((item) => navAllowed(user, item.key))
+      .filter((item) => !item.integration || integrations?.[item.integration]?.mode !== "hidden")
+      .map((item) =>
+        item.integration && integrations?.[item.integration]?.mode === "live" ? { ...item, sample: false } : item,
+      ),
   })).filter((group) => group.items.length > 0);
   if (user?.role === "admin") groups.push(PORTAL_ADMIN_GROUP);
   return groups;

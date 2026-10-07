@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MegaMenu } from "@/components/MegaMenu";
 import { DigeratiEnhancedFooterSection } from "../sections/DigeratiEnhancedFooterSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,10 +14,10 @@ import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { SolutionOrderSummary } from "@/components/store/SolutionOrderSummary";
 import { snapshotSubmitLines } from "@/lib/solutionSnapshotView";
-import { portalLoginWithReturn } from "@/lib/portalUrls";
 import { readGuidedSession } from "@/lib/storeGuidedSession";
 import { writeContactHandoff } from "@/lib/warehouseContactHandoff";
 import { warehousePath } from "@/lib/warehousePaths";
+import { ADDRESS_ERRORS, missingBillingAddress } from "@/lib/billingAddress";
 
 import {
   ArrowLeft,
@@ -35,7 +34,13 @@ const billingSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   company: z.string().optional(),
   phone: z.string().optional(),
+  // Billing address: required for Pay Now only (sales tax is calculated from it).
+  line1: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  postalCode: z.string().optional(),
 });
+
 
 type BillingFormData = z.infer<typeof billingSchema>;
 
@@ -49,8 +54,8 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useSEO({
-    title: "Checkout | Digerati Experts Store",
-    description: "Complete your purchase of IT services and solutions from Digerati Experts.",
+    title: "Staff Pay Now | Digital Warehouse",
+    description: "Staff Digital Warehouse checkout — Pay Now or quote. Not a public Store default.",
     canonical: "/internal/warehouse/checkout",
     noIndex: true,
   });
@@ -58,6 +63,7 @@ const Checkout = () => {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<BillingFormData>({
     resolver: zodResolver(billingSchema),
@@ -68,8 +74,18 @@ const Checkout = () => {
         (typeof window !== "undefined" ? window.localStorage.getItem("userEmail") || "" : ""),
       company: "",
       phone: "",
+      line1: "",
+      city: "",
+      state: "",
+      postalCode: "",
     },
   });
+
+  const flagMissingAddress = (data: BillingFormData): boolean => {
+    const missing = missingBillingAddress(data);
+    for (const field of missing) setError(field, { message: ADDRESS_ERRORS[field] }, { shouldFocus: field === missing[0] });
+    return missing.length > 0;
+  };
 
   useEffect(() => {
     if (items.length === 0) {
@@ -83,6 +99,8 @@ const Checkout = () => {
       const lineItems = snapshotSubmitLines(snapshot);
 
       if (paymentMethod === "zoho") {
+        if (flagMissingAddress(data)) return;
+        const { line1, city, state, postalCode, ...contact } = data;
         const response = await fetch("/api/store/checkout/zoho", {
           method: "POST",
           headers: {
@@ -91,7 +109,15 @@ const Checkout = () => {
           credentials: "include",
           body: JSON.stringify({
             lineItems,
-            billing: data,
+            billing: {
+              ...contact,
+              address: {
+                line1: line1?.trim(),
+                city: city?.trim(),
+                state: state?.trim().toUpperCase(),
+                postalCode: postalCode?.trim(),
+              },
+            },
           }),
         });
 
@@ -132,6 +158,28 @@ const Checkout = () => {
               title: "Hardware ships with a quote",
               description:
                 "Physical hardware needs a shipping address and tax, so we switched checkout to Request Quote instead of charging it directly. Your solution is intact.",
+            });
+            setPaymentMethod("quote_request");
+            return;
+          }
+          if (errorData.code === "BILLING_ADDRESS_REQUIRED") {
+            flagMissingAddress(data);
+            toast({
+              title: "Add a billing address to pay now",
+              description: "Sales tax is calculated from the billing address. Your solution is intact.",
+            });
+            return;
+          }
+          if (errorData.code === "TAX_RATE_UNAVAILABLE") {
+            // Pay Now fails closed when sales tax cannot be calculated: no Stripe
+            // Tax key or verified table, an item without a confirmed tax code, or
+            // Stripe not answering (server/services/salesTax.ts). Step aside to a
+            // quote instead of a dead-end error: DE confirms tax on the quote.
+            writeContactHandoff({ ...data, reason: "tax_unavailable" });
+            toast({
+              title: "Pay Now is paused while sales tax is set up",
+              description:
+                "Your solution is intact. We switched checkout to Request Quote, and DE will confirm any sales tax on your quote before you pay.",
             });
             setPaymentMethod("quote_request");
             return;
@@ -184,9 +232,7 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
-      <MegaMenu />
-
-      <main className="de-nav-clear pb-[calc(5rem+var(--de-cookie-h)+var(--de-sticky-cta-h)+var(--de-unified-bar-h))]">
+      <main className="pb-[calc(5rem+var(--de-cookie-h)+var(--de-sticky-cta-h)+var(--de-unified-bar-h))]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -199,11 +245,11 @@ const Checkout = () => {
             <ol className="flex items-center gap-2 text-sm text-white/50">
               <li>
                 <Link href="/internal/warehouse" className="hover:text-white transition-colors" data-testid="breadcrumb-store">
-                  Store
+                  Warehouse
                 </Link>
               </li>
               <li>/</li>
-              <li className="text-white" data-testid="breadcrumb-checkout">Checkout</li>
+              <li className="text-white" data-testid="breadcrumb-checkout">Staff checkout</li>
             </ol>
           </nav>
 
@@ -211,16 +257,16 @@ const Checkout = () => {
             <Link href="/internal/warehouse">
               <Button variant="ghost" className="text-white/60 hover:text-white" data-testid="button-back-to-store">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Store
+                Back to warehouse
               </Button>
             </Link>
           </div>
 
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-2" data-testid="text-checkout-title">
-              Checkout
+              Staff checkout
             </h1>
             <p className="text-white/60" data-testid="text-checkout-subtitle">
-              Complete your order for IT services and solutions
+              Pay Now is staff-only (`pay_now`). Quotes stay the path for hardware, recurring, or unsigned lines.
             </p>
 
                 <div className="bg-white/5 border border-white/10 rounded-xl p-6" data-testid="section-billing-info">
@@ -299,6 +345,100 @@ const Checkout = () => {
                         />
                       </div>
                     </div>
+
+                    {paymentMethod === "zoho" && (
+                      <fieldset className="space-y-4 border-t border-white/10 pt-4" data-testid="section-billing-address">
+                        <legend className="sr-only">Billing address</legend>
+                        <p className="text-sm text-white/60" data-testid="text-billing-address-why">
+                          Billing address. Pay Now calculates sales tax from it.
+                        </p>
+                        <div>
+                          <Label htmlFor="line1" className="text-white/80">
+                            Street Address *
+                          </Label>
+                          <Input
+                            id="line1"
+                            {...register("line1")}
+                            autoComplete="billing address-line1"
+                            aria-required={true}
+                            aria-invalid={!!errors.line1}
+                            placeholder="Street and suite"
+                            className="mt-1 bg-white/5 border-white/20 text-white placeholder:text-white/55 focus:border-de-hairline"
+                            data-testid="input-address-line1"
+                          />
+                          {errors.line1 && (
+                            <p className="text-red-400 text-sm mt-1" data-testid="error-address-line1">
+                              {errors.line1.message}
+                            </p>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-6 gap-4">
+                          <div className="col-span-6 md:col-span-3">
+                            <Label htmlFor="city" className="text-white/80">
+                              City *
+                            </Label>
+                            <Input
+                              id="city"
+                              {...register("city")}
+                              autoComplete="billing address-level2"
+                              aria-required={true}
+                              aria-invalid={!!errors.city}
+                              placeholder="City"
+                              className="mt-1 bg-white/5 border-white/20 text-white placeholder:text-white/55 focus:border-de-hairline"
+                              data-testid="input-address-city"
+                            />
+                            {errors.city && (
+                              <p className="text-red-400 text-sm mt-1" data-testid="error-address-city">
+                                {errors.city.message}
+                              </p>
+                            )}
+                          </div>
+                          <div className="col-span-2 md:col-span-1">
+                            <Label htmlFor="state" className="text-white/80">
+                              State *
+                            </Label>
+                            <Input
+                              id="state"
+                              {...register("state")}
+                              autoComplete="billing address-level1"
+                              aria-required={true}
+                              aria-invalid={!!errors.state}
+                              maxLength={2}
+                              placeholder="ST"
+                              className="mt-1 bg-white/5 border-white/20 text-white uppercase placeholder:text-white/55 focus:border-de-hairline"
+                              data-testid="input-address-state"
+                            />
+                          </div>
+                          <div className="col-span-4 md:col-span-2">
+                            <Label htmlFor="postalCode" className="text-white/80">
+                              ZIP *
+                            </Label>
+                            <Input
+                              id="postalCode"
+                              {...register("postalCode")}
+                              autoComplete="billing postal-code"
+                              inputMode="numeric"
+                              aria-required={true}
+                              aria-invalid={!!errors.postalCode}
+                              maxLength={10}
+                              placeholder="ZIP"
+                              className="mt-1 bg-white/5 border-white/20 text-white placeholder:text-white/55 focus:border-de-hairline"
+                              data-testid="input-address-postal"
+                            />
+                          </div>
+                        </div>
+                        {errors.state && (
+                          <p className="text-red-400 text-sm" data-testid="error-address-state">
+                            {errors.state.message}
+                          </p>
+                        )}
+                        {errors.postalCode && (
+                          <p className="text-red-400 text-sm" data-testid="error-address-postal">
+                            {errors.postalCode.message}
+                          </p>
+                        )}
+                      </fieldset>
+                    )}
                   </form>
                 </div>
 
@@ -325,10 +465,10 @@ const Checkout = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <CreditCard className="w-5 h-5 text-de-accent-ink" />
-                          <span className="font-medium text-white">Credit / Debit Card</span>
+                          <span className="font-medium text-white">Staff Pay Now (card)</span>
                         </div>
                         <p className="text-sm text-white/60 mt-1">
-                          Secure payment processing. All major cards accepted.
+                          Charge eligible workshop lines. Not a public Store default.
                         </p>
                       </div>
                       {paymentMethod === "zoho" && (
@@ -348,10 +488,10 @@ const Checkout = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <MessageSquare className="w-5 h-5 text-emerald-400" />
-                          <span className="font-medium text-white">Request Quote</span>
+                          <span className="font-medium text-white">Staff quote (no charge)</span>
                         </div>
                         <p className="text-sm text-white/60 mt-1">
-                          Get a custom quote from our team. We'll contact you within 1 business day.
+                          Hardware, recurring billing, or unsigned work — quote instead of charging.
                         </p>
                       </div>
                       {paymentMethod === "quote_request" && (
@@ -360,19 +500,7 @@ const Checkout = () => {
                     </label>
                   </RadioGroup>
                   <p className="mt-4 text-sm text-white/55">
-                    Already a co-managed client?{" "}
-                    <a
-                      href={portalLoginWithReturn(
-                        typeof window !== "undefined"
-                          ? `${window.location.origin}${warehousePath("/checkout")}`
-                          : warehousePath("/checkout"),
-                      )}
-                      className="text-de-accent-ink underline-offset-4 hover:underline"
-                      data-testid="checkout-portal-login"
-                    >
-                      Open Client Portal login
-                    </a>
-                    . Prospects should use Request Quote — card checkout still requires an existing store role.
+                    Cost and vendor identity stay on this staff path. Door 2 never receives this checkout.
                   </p>
                 </div>
               </div>

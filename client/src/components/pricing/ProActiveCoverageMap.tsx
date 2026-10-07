@@ -96,7 +96,7 @@ export function ProActiveCoverageMap({
                 }`}
                 data-testid={`coverage-select-${tier}`}
               >
-                {tier}
+                {tier === "it" ? "IT" : tier}
               </button>
             );
           })}
@@ -193,7 +193,7 @@ export function ProActiveCoverageMap({
                   role="tab"
                   aria-selected={active}
                   onClick={() => onComplianceChange?.(level.id)}
-                  className={`h-9 rounded-full border px-3 text-xs font-medium ${
+                  className={`min-h-11 rounded-full border px-4 text-sm font-medium ${
                     active
                       ? "border-[#D3126A] bg-[#D3126A] text-white"
                       : "border-de-hairline bg-de-raised text-white/70 hover:border-white/25 hover:text-white"
@@ -220,7 +220,7 @@ export function ProActiveCoverageMap({
                   role="tab"
                   aria-selected={active}
                   onClick={() => onCoverageHoursChange?.(hours.id)}
-                  className={`h-9 rounded-full border px-3 text-xs font-medium ${
+                  className={`min-h-11 rounded-full border px-4 text-sm font-medium ${
                     active
                       ? "border-[#D3126A] bg-[#D3126A] text-white"
                       : "border-de-hairline bg-de-raised text-white/70 hover:border-white/25 hover:text-white"
@@ -253,7 +253,7 @@ export function ProActiveCoverageMap({
           <button
             type="button"
             onClick={() => onSelect(recommendedTier)}
-            className="h-9 shrink-0 rounded-full border border-[#2DD4BF]/60 bg-[#2DD4BF]/15 px-4 text-xs font-semibold text-[#2DD4BF] hover:bg-[#2DD4BF]/25"
+            className="min-h-11 shrink-0 rounded-full border border-[#2DD4BF]/60 bg-[#2DD4BF]/15 px-5 text-sm font-semibold text-[#2DD4BF] hover:bg-[#2DD4BF]/25"
             data-testid="coverage-recommendation-jump"
           >
             Use {recommendedTier} instead

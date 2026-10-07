@@ -1,0 +1,24 @@
+{
+  "checked": "2026-10-03T19:45Z",
+  "site": "https://digeratiexperts.com",
+  "release": "97b3d86 (PR 407), CI run 37146933304: every job passed; production deploy finished 19:15:32Z",
+  "staffCheckoutChunk": {
+    "path": "/assets/Checkout-B1SAVqOH.js (loaded by /assets/WarehouseApp-sgZxx9ki.js)",
+    "lastModified": "Sat, 03 Oct 2026 19:15:20 GMT",
+    "carries": ["Pay Now is paused while sales tax is set up", "TAX_RATE_UNAVAILABLE", "tax_unavailable"]
+  },
+  "browserCheck": {
+    "how": "Playwright at 1440 against production code. The browser stubbed every API reply (staff session, signed-in client, solutions, and a 503 TAX_RATE_UNAVAILABLE from /api/store/checkout/**), so nothing reached the payment route.",
+    "url": "https://digeratiexperts.com/internal/warehouse/checkout",
+    "requestQuoteSelected": "checked",
+    "toast": "Pay Now is paused while sales tax is set up. Your solution is intact. We switched checkout to Request Quote, and DE will confirm any sales tax on your quote before you pay."
+  },
+  "separation": {
+    "publicStoreCheckoutChunk": "/assets/PublicStoreCheckout-hzhSgFND.js: 0 references to checkout/zoho, 1 to public/solutions/request",
+    "GET /internal/warehouse (anonymous)": 404,
+    "GET /api/internal/warehouse/session (anonymous)": 404,
+    "POST /api/store/checkout/zoho (anonymous)": 401
+  },
+  "before": "before/: the page before PR 407 (dev server, same stubbed 503): red Checkout Failed toast, still on Pay Now",
+  "after": "after/: PR 407 branch on the dev server"
+}

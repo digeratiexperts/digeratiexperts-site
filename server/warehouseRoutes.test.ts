@@ -16,6 +16,15 @@ vi.mock("./portalOrg", async () => {
   return { ...actual, findUserById: vi.fn() };
 });
 
+vi.mock("./integrations/techSalesClient", async () => {
+  const actual = await vi.importActual<typeof import("./integrations/techSalesClient")>("./integrations/techSalesClient");
+  return {
+    ...actual,
+    fetchStaffCatalog: vi.fn(async () => null),
+    fetchPax8ConnectorHealth: vi.fn(async () => null),
+  };
+});
+
 const STORE_PREVIEW_COOKIE = "de_store_preview";
 
 function sign(claims: Record<string, unknown>) {
@@ -117,6 +126,64 @@ describe("warehouse HTTP gates", () => {
     const api = await fetch(`${baseUrl}/api/store/solutions/current?sessionId=abc`, { headers });
     expect(api.status).toBe(200);
     expect(await api.json()).toEqual({ leaked: true });
+  });
+
+  it("keeps Hub catalog and connector staff APIs generic-404 when anonymous", async () => {
+    const catalog = await fetch(`${baseUrl}/api/internal/warehouse/catalog`);
+    expect(catalog.status).toBe(404);
+    expect(await catalog.json()).toEqual({ error: "Not found" });
+
+    const connectors = await fetch(`${baseUrl}/api/internal/warehouse/connectors`);
+    expect(connectors.status).toBe(404);
+    expect(await connectors.json()).toEqual({ error: "Not found" });
+  });
+
+  it("serves staff catalog fallback and connector list for a live admin", async () => {
+    getUser.mockReturnValue({
+      id: "a1",
+      email: "admin@digeratiexperts.com",
+      role: "admin",
+      isActive: true,
+    });
+    const token = sign({ userId: "a1", email: "admin@digeratiexperts.com" });
+    const headers = { cookie: `portalAuth=${token}` };
+
+    const catalog = await fetch(`${baseUrl}/api/internal/warehouse/catalog`, { headers });
+    expect(catalog.status).toBe(200);
+    const catalogBody = await catalog.json();
+    expect(catalogBody.status).toMatch(/CONNECTED|LOCAL_WORKSHOP|STALE|FAILED/);
+    expect(Array.isArray(catalogBody.tiers)).toBe(true);
+
+    const connectors = await fetch(`${baseUrl}/api/internal/warehouse/connectors`, { headers });
+    expect(connectors.status).toBe(200);
+    const connectorBody = await connectors.json();
+    expect(Array.isArray(connectorBody.connectors)).toBe(true);
+    expect(connectorBody.connectors[0]?.connector).toBe("pax8");
+  });
+
+  it("never reports the Hub feed or Pax8 as CONNECTED unless Hub says so", async () => {
+    const { fetchStaffCatalog, fetchPax8ConnectorHealth } = await import("./integrations/techSalesClient");
+    vi.mocked(fetchStaffCatalog).mockResolvedValueOnce({ tiers: [], skus: [] });
+    vi.mocked(fetchPax8ConnectorHealth).mockResolvedValueOnce({ connector: "pax8", status: "HEALTHY" } as never);
+    getUser.mockReturnValue({ id: "a1", email: "admin@digeratiexperts.com", role: "admin", isActive: true });
+    const headers = { cookie: `portalAuth=${sign({ userId: "a1", email: "admin@digeratiexperts.com" })}` };
+
+    const catalog = await (await fetch(`${baseUrl}/api/internal/warehouse/catalog`, { headers })).json();
+    expect(catalog.source).toBe("hub");
+    expect(catalog.status).toBe("UNKNOWN");
+
+    const connectors = await (await fetch(`${baseUrl}/api/internal/warehouse/connectors`, { headers })).json();
+    expect(connectors.connectors[0].status).toBe("UNKNOWN");
+  });
+
+  it("passes through a status Hub actually reports", async () => {
+    const { fetchStaffCatalog } = await import("./integrations/techSalesClient");
+    vi.mocked(fetchStaffCatalog).mockResolvedValueOnce({ status: "STALE", tiers: [], skus: [] });
+    getUser.mockReturnValue({ id: "a1", email: "admin@digeratiexperts.com", role: "admin", isActive: true });
+    const headers = { cookie: `portalAuth=${sign({ userId: "a1", email: "admin@digeratiexperts.com" })}` };
+
+    const catalog = await (await fetch(`${baseUrl}/api/internal/warehouse/catalog`, { headers })).json();
+    expect(catalog.status).toBe("STALE");
   });
 
   describe("the staff preview of the public Store (source of truth §16.10)", () => {

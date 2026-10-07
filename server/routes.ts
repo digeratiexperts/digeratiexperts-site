@@ -1,5 +1,22 @@
 import express, { type Express, type Request, type Response, NextFunction } from "express";
 import { storage } from "./storage";
+import {
+  isTokenRevoked,
+  issuedBeforeCutoff,
+  cutoffNow,
+  revokeToken,
+  loadRevokedSessions,
+} from "./portalSessionRevocation";
+import {
+  issueAuthToken,
+  consumeAuthToken,
+  releaseAuthToken,
+  hasFreshAuthToken,
+  EMAIL_VERIFICATION_TTL_MS,
+  PASSWORD_RESET_TTL_MS,
+} from "./portalAuthTokens";
+import { durableMutationGate } from "./durableMutationGate";
+import { buildCompanyMetrics } from "./adminCompanyMetrics";
 import { randomBytes, randomInt, createHash, timingSafeEqual } from "crypto";
 import rateLimit from "express-rate-limit";
 import bcrypt from "bcrypt";
@@ -39,6 +56,8 @@ import {
   getUser as portalAuthGetUser,
   hasUser as portalAuthHasUser,
   setUser as portalAuthSetUser,
+  commitUser as portalAuthCommitUser,
+  commitClient as portalAuthCommitClient,
   removeUserKeys as portalAuthRemoveUserKeys,
   listUniqueUsers as portalAuthListUsers,
   getClient as portalAuthGetClient,
@@ -46,6 +65,7 @@ import {
   listClients as portalAuthListClients,
   createProspectClientForUser,
   saveOrderForm,
+  PortalPersistenceError,
   updateUserOrgFields,
   ensureInternalMspClient,
 } from "./portalAuthStore";
@@ -80,9 +100,16 @@ import {
   type OrgUserFields,
 } from "./portalOrg";
 import { registerPortalDepartmentRoutes } from "./portalDepartmentRoutes";
+import { registerPortalTenantFileRoutes } from "./portalTenantFileRoutes";
+import { registerPortalIntegrationStatusRoute } from "./portalIntegrations";
+import { registerManualRecordAdminRoutes } from "./portalManualRecords";
+import { registerPortalDataSourceRoutes } from "./portalDataSources";
+import { registerPortalVpnRoutes } from "./integrations/vpn/routes";
+import { registerPortalPhoneRoutes } from "./integrations/phone/routes";
+import { registerPortalShippingRoutes } from "./integrations/shipping/routes";
 import { registerPortalDeskAgentRoutes } from "./portalDeskAgentRoutes";
 import { canAccessPortalTicket } from "./portalTicketAccess";
-import { hasFreshVerificationToken } from "./portalVerificationThrottle";
+import { RESEND_COOLDOWN_MS } from "./portalVerificationThrottle";
 import {
   initPortalApprovals,
   createApprovalRequest,
@@ -126,7 +153,20 @@ import { registerRetiredLegacyAuthRoutes } from "./legacyAuthRetired";
 import { loginRateLimiter, formSubmissionRateLimiter, apiGeneralRateLimiter, paymentRateLimiter } from "./middleware/rateLimiter";
 import { enqueueOutbox } from "./integrations/deSyncStore";
 import { COMPANY, PRIMARY_PHONE } from "@shared/companyContact";
+import {
+  ACCOUNT_MANAGERS,
+  DEFAULT_ACCOUNT_MANAGER_ID,
+  SALES_DEPARTMENT,
+  accountTeamFor,
+  isAccountManagerId,
+  resolveAccountManager,
+} from "@shared/accountManagers";
 import { appendSituationToDescription, parseAnonymousSituation } from "@shared/anonymousSituation";
+
+/** Assigned account manager + sales department for a prospect/client (default when unassigned). */
+function accountTeamForClient(clientId: string | null | undefined) {
+  return accountTeamFor(clientId ? portalAuthGetClient(clientId)?.accountManager : null);
+}
 
 // Canonical JWT secret — resolved per call so dotenv/env load order cannot
 // split signing and verification across different secrets (see config/authSecrets).
@@ -264,6 +304,12 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
       (live as any).isActive === false
     ) {
       return res.status(401).json({ error: "Account disabled or revoked" });
+    }
+
+    // Server-side revocation (#242): a logged-out token, or any token issued before the
+    // user's sessions-valid-after cutoff (password reset), is dead even though its signature is fine.
+    if (isTokenRevoked(token) || issuedBeforeCutoff(decoded.iat, (live as any).sessionsValidAfter)) {
+      return res.status(401).json({ error: "Session ended. Please log in again." });
     }
 
     // JWT proves the session; the live Portal record is authoritative for
@@ -551,8 +597,16 @@ const logSecurityEvent = (event: string, req: AuthenticatedRequest, data: any) =
 // ========== ROUTES ==========
 
 export async function registerRoutes(app: Express) {
-  // Register object storage routes for file uploads
-  registerObjectStorageRoutes(app, { auth: authMiddleware, admin: requireAdmin });
+  // Register object storage routes for file uploads (auth + per-object ownership ACL)
+  registerObjectStorageRoutes(app, {
+    auth: authMiddleware,
+    admin: requireAdmin,
+    // findTenantFileByFileUrl only answers for a live (not soft-deleted) row (#259).
+    resolveTenantOwnerClientId: async (objectPath) => {
+      const file = await storage.findTenantFileByFileUrl(objectPath);
+      return file?.clientId ?? null;
+    },
+  });
   registerDeSyncRoutes(app, authMiddleware as any);
 
   // Live MSP threat feed (CISA / FIRST / NVD / MSRC). Never invents CVEs.
@@ -670,6 +724,7 @@ export async function registerRoutes(app: Express) {
 
   // Durable portal auth (Neon) — Map-compatible shim for existing handlers
   await initPortalAuthStore();
+  await loadRevokedSessions();
   await initPortalOrg();
   await initPortalApprovals();
   await initPortalChatStore();
@@ -689,7 +744,20 @@ export async function registerRoutes(app: Express) {
       portalAuthSetUser(user);
       return portalUsers;
     },
+    /** Awaited durable write (#245): throws PortalPersistenceError if the DB did not confirm. */
+    commit: (user: any) => portalAuthCommitUser(user),
     values: () => portalAuthListUsers(),
+  };
+  /** 503 for a durable write the database did not confirm; false for any other error. */
+  const sendPersistenceFailure = (res: Response, error: unknown): boolean => {
+    if (!(error instanceof PortalPersistenceError)) return false;
+    logger.error("Durable write failed", error);
+    res.status(503).json({
+      code: error.code,
+      message: "We could not save that change just now. Nothing was changed; please try again in a moment.",
+      error: "We could not save that change just now. Nothing was changed; please try again in a moment.",
+    });
+    return true;
   };
   const portalClients = {
     get: (id: string) => portalAuthGetClient(id),
@@ -697,9 +765,13 @@ export async function registerRoutes(app: Express) {
       portalAuthSetClient(client);
       return portalClients;
     },
+    commit: (client: any) => portalAuthCommitClient(client),
     values: () => portalAuthListClients(),
   };
   
+  // Production: durable-authoritative writes fail closed (503) when the database is down (#248).
+  app.use(durableMutationGate);
+
   // ===== AUTHENTICATION ROUTES =====
   
   // Legacy generic register/login are retired (#236): they minted tokens for a
@@ -1292,6 +1364,7 @@ export async function registerRoutes(app: Express) {
           manager: mgr.manager,
           companyDomains: mgr.companyDomains,
         },
+        accountTeam: accountTeamForClient(live.clientId),
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -1334,7 +1407,7 @@ export async function registerRoutes(app: Express) {
           return res.status(400).json({ error: "User cannot be their own manager" });
         }
       }
-      const updated = updateUserOrgFields(target.id, {
+      const updated = await updateUserOrgFields(target.id, {
         orgRole,
         departmentId: departmentId === undefined ? undefined : departmentId || null,
         managerUserId: managerUserId === undefined ? undefined : managerUserId || null,
@@ -1343,12 +1416,21 @@ export async function registerRoutes(app: Express) {
       });
       res.json({ success: true, user: orgPublicUser(updated as OrgUserFields) });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
 
   // Department create/update: the company comes from the signed-in user, not the body (#254).
   registerPortalDepartmentRoutes(app, { guards: [authMiddleware, requireOrgManage, validateInput] });
+
+  // VPN, phone and shipping data sources: PORTAL_*_PROVIDER (server/portalIntegrations.ts).
+  registerPortalIntegrationStatusRoute(app, { guards: [authMiddleware] });
+  registerPortalVpnRoutes(app, { guards: [authMiddleware] });
+  registerPortalPhoneRoutes(app, { guards: [authMiddleware] });
+  registerPortalShippingRoutes(app, { guards: [authMiddleware] });
+  registerManualRecordAdminRoutes(app, { guards: [authMiddleware, requireAdmin, validateInput] });
+  registerPortalDataSourceRoutes(app, { guards: [authMiddleware, requireAdmin, validateInput] });
 
   // ----- Approvals -----
   app.get("/api/portal/approvals", [authMiddleware, requireApprovalsAccess], async (req: AuthenticatedRequest, res: Response) => {
@@ -1509,7 +1591,13 @@ export async function registerRoutes(app: Express) {
         entityType: "approval",
         entityId: req.params.id,
         canonicalAccountId: client?.hubAccountId || null,
-        payload: { action: "approve", note: req.body?.note || null, finalized: !!result.finalized },
+        payload: {
+          action: "approve",
+          note: req.body?.note || null,
+          finalized: !!result.finalized,
+          portalClientId: req.user?.clientId || null,
+          actorUserId: req.userId || null,
+        },
       });
       res.json({ success: true, ...result, fulfillmentTicketId });
     } catch (error: any) {
@@ -1534,7 +1622,12 @@ export async function registerRoutes(app: Express) {
         entityType: "approval",
         entityId: req.params.id,
         canonicalAccountId: client?.hubAccountId || null,
-        payload: { action: "reject", note: req.body?.note || null },
+        payload: {
+          action: "reject",
+          note: req.body?.note || null,
+          portalClientId: req.user?.clientId || null,
+          actorUserId: req.userId || null,
+        },
       });
       res.json({ success: true, ...result });
     } catch (error: any) {
@@ -1815,9 +1908,14 @@ export async function registerRoutes(app: Express) {
             console.warn("Could not look up Zoho Desk contact:", contactErr);
           }
 
+          const hubAccountId = resolvedClientId
+            ? portalClients.get(resolvedClientId)?.hubAccountId
+            : null;
           const zohoTicket = await zohoDeskService.createTicket({
             subject,
-            description,
+            description: hubAccountId
+              ? `${description}\n\ncanonicalAccountId: ${hubAccountId}`
+              : description,
             contactId,
             email: contactId ? undefined : userEmail,
             priority: priorityMap[priority] || "Medium",
@@ -2013,21 +2111,7 @@ export async function registerRoutes(app: Express) {
   // Note: portalUsers / portalClients are durable via portalAuthStore (initialized above)
   // sessionStore is module-level for authMiddleware access
   
-  // Email verification tokens storage
-  const emailVerificationTokens = new Map<string, { 
-    email: string; 
-    userId: string; 
-    createdAt: number;
-    expiresAt: number;
-  }>();
-
-  // Password reset tokens storage
-  const passwordResetTokens = new Map<string, {
-    email: string;
-    userId: string;
-    createdAt: number;
-    expiresAt: number;
-  }>();
+  // Email verification and password-reset tokens are durable and hashed (server/portalAuthTokens.ts, #251).
 
   // MFA pending challenges — stores temporary MFA session tokens during login
   const mfaChallenges = new Map<string, {
@@ -2087,31 +2171,34 @@ export async function registerRoutes(app: Express) {
         createdAt: new Date(),
       };
 
-      portalUsers.set(email, newUser);
       await createProspectClientForUser(newUser, companyName);
       // Reload after client link
       const saved = portalUsers.get(email) || newUser;
 
-      // Generate email verification token
-      const verificationToken = randomId();
-      const now = Date.now();
-      const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-      
-      emailVerificationTokens.set(verificationToken, {
-        email: saved.email,
-        userId: saved.id,
-        createdAt: now,
-        expiresAt: now + TWENTY_FOUR_HOURS,
-      });
+      // Generate email verification token (durable, hashed). The account is already
+      // committed; if the token cannot be stored the user can request a new link.
+      let verificationToken: string | null = null;
+      try {
+        verificationToken = await issueAuthToken({
+          purpose: "email_verification",
+          userId: saved.id,
+          email: saved.email,
+          ttlMs: EMAIL_VERIFICATION_TTL_MS,
+        });
+      } catch (tokenError) {
+        logger.warn("Could not store verification token at registration", { error: String((tokenError as Error)?.message || tokenError) });
+      }
 
       // Send email verification
       const baseUrl = process.env.APP_URL || "https://digeratiexperts.com";
-      const verificationLink = `${baseUrl}/api/portal/verify-email?token=${verificationToken}`;
-      notificationService.sendEmailVerification({
-        email: saved.email,
-        name: saved.fullName,
-        verificationLink,
-      }).catch(err => logger.warn("Failed to send verification email", err));
+      if (verificationToken) {
+        const verificationLink = `${baseUrl}/api/portal/verify-email?token=${verificationToken}`;
+        notificationService.sendEmailVerification({
+          email: saved.email,
+          name: saved.fullName,
+          verificationLink,
+        }).catch(err => logger.warn("Failed to send verification email", err));
+      }
 
       logSecurityEvent("PORTAL_USER_REGISTERED", req, {
         userId: saved.id,
@@ -2137,6 +2224,7 @@ export async function registerRoutes(app: Express) {
         },
       });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       console.error("[ERROR] Portal registration failed:", error);
       res.status(500).json({ message: "Registration failed" });
     }
@@ -2151,34 +2239,29 @@ export async function registerRoutes(app: Express) {
         return res.redirect('/portal/login?error=invalid_token&message=Invalid verification link');
       }
 
-      // Check if token exists
-      const tokenData = emailVerificationTokens.get(token);
-      if (!tokenData) {
-        return res.redirect('/portal/login?error=invalid_token&message=Verification link is invalid or has already been used');
+      // Single-use, atomic: a second click (or a replay) finds the token consumed.
+      const consumed = await consumeAuthToken("email_verification", token);
+      if (!consumed.ok) {
+        return consumed.reason === "expired"
+          ? res.redirect('/portal/login?error=expired_token&message=Verification link has expired. Please request a new one.')
+          : res.redirect('/portal/login?error=invalid_token&message=Verification link is invalid or has already been used');
       }
-
-      // Check if token has expired
-      if (Date.now() > tokenData.expiresAt) {
-        emailVerificationTokens.delete(token);
-        return res.redirect('/portal/login?error=expired_token&message=Verification link has expired. Please request a new one.');
-      }
+      const tokenData = { email: consumed.email };
 
       // Find and update user
       const user = portalUsers.get(tokenData.email);
       if (!user) {
-        emailVerificationTokens.delete(token);
         return res.redirect('/portal/login?error=user_not_found&message=User not found');
       }
 
-      // Mark user as verified
+      // Mark user as verified. If the durable write fails the link is released so the user can retry it.
       user.emailVerified = true;
-      portalUsers.set(tokenData.email, user);
-      if (user.username) {
-        portalUsers.set(user.username, user);
+      try {
+        await portalUsers.commit(user);
+      } catch (commitError) {
+        await releaseAuthToken(consumed.id).catch(() => undefined);
+        throw commitError;
       }
-
-      // Clear the token
-      emailVerificationTokens.delete(token);
 
       logSecurityEvent("EMAIL_VERIFIED", req, { userId: user.id, email: tokenData.email });
 
@@ -2214,27 +2297,16 @@ export async function registerRoutes(app: Express) {
 
       // Per-email cooldown: if a link was just sent, do not mint and send another,
       // so the inbox cannot be flooded by a caller rotating IPs past the rate limit.
-      if (hasFreshVerificationToken(emailVerificationTokens.values(), email, Date.now())) {
+      if (await hasFreshAuthToken("email_verification", user.email, RESEND_COOLDOWN_MS)) {
         return genericOk();
       }
 
-      // Delete any existing tokens for this user
-      Array.from(emailVerificationTokens.entries()).forEach(([token, data]) => {
-        if (data.email === email) {
-          emailVerificationTokens.delete(token);
-        }
-      });
-
-      // Generate new verification token
-      const verificationToken = randomId();
-      const now = Date.now();
-      const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-      
-      emailVerificationTokens.set(verificationToken, {
-        email: user.email,
+      // Issuing revokes any older unused verification token for this user.
+      const verificationToken = await issueAuthToken({
+        purpose: "email_verification",
         userId: user.id,
-        createdAt: now,
-        expiresAt: now + TWENTY_FOUR_HOURS,
+        email: user.email,
+        ttlMs: EMAIL_VERIFICATION_TTL_MS,
       });
 
       // Send verification email
@@ -2250,6 +2322,7 @@ export async function registerRoutes(app: Express) {
 
       return genericOk();
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       console.error("[ERROR] Resend verification failed:", error);
       res.status(500).json({ message: "Failed to resend verification email" });
     }
@@ -2266,15 +2339,13 @@ export async function registerRoutes(app: Express) {
       const user = portalUsers.get(email);
       if (!user) return res.json(SAFE_RESPONSE);
 
-      // Invalidate any existing reset tokens for this user
-      Array.from(passwordResetTokens.entries()).forEach(([tok, data]) => {
-        if (data.email === email) passwordResetTokens.delete(tok);
+      // Issuing revokes any older unused reset token for this user.
+      const resetToken = await issueAuthToken({
+        purpose: "password_reset",
+        userId: user.id,
+        email: user.email,
+        ttlMs: PASSWORD_RESET_TTL_MS,
       });
-
-      const resetToken = randomId();
-      const ONE_HOUR = 60 * 60 * 1000;
-      const now = Date.now();
-      passwordResetTokens.set(resetToken, { email, userId: user.id, createdAt: now, expiresAt: now + ONE_HOUR });
 
       const baseUrl = process.env.APP_URL || "https://digeratiexperts.com";
       const resetLink = `${baseUrl}/portal/reset-password?token=${resetToken}`;
@@ -2284,6 +2355,7 @@ export async function registerRoutes(app: Express) {
       logSecurityEvent("PASSWORD_RESET_REQUESTED", req, { email });
       return res.json(SAFE_RESPONSE);
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       logger.error("Forgot password failed", error);
       return res.status(500).json({ message: "Request failed" });
     }
@@ -2295,26 +2367,39 @@ export async function registerRoutes(app: Express) {
       const { token, password } = req.body;
       if (!token || !password) return res.status(400).json({ message: "Token and new password are required" });
 
-      const tokenData = passwordResetTokens.get(token);
-      if (!tokenData || Date.now() > tokenData.expiresAt) {
-        return res.status(400).json({ message: "Reset link is invalid or has expired. Please request a new one." });
-      }
-
+      // Policy first, so a weak password does not burn the link.
       if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
         return res.status(400).json({ message: "Password must be at least 8 characters with 1 uppercase letter and 1 number" });
       }
+
+      // Single-use, atomic consume; released again if the new password cannot be saved.
+      const consumed = await consumeAuthToken("password_reset", token);
+      if (!consumed.ok) {
+        return res.status(400).json({ message: "Reset link is invalid or has expired. Please request a new one." });
+      }
+      const tokenData = { email: consumed.email };
 
       const user = portalUsers.get(tokenData.email);
       if (!user) return res.status(400).json({ message: "Account not found" });
 
       const bcrypt = await import('bcrypt');
       user.password = await bcrypt.hash(password, 12);
-      portalUsers.set(tokenData.email, user);
-      passwordResetTokens.delete(token);
+      // Sign the account out everywhere: every token issued before this instant is rejected (#242).
+      (user as any).sessionsValidAfter = cutoffNow();
+      try {
+        await portalUsers.commit(user);
+      } catch (commitError) {
+        await releaseAuthToken(consumed.id).catch(() => undefined);
+        throw commitError;
+      }
+      for (const [sid, session] of Array.from(sessionStore.entries())) {
+        if (session.userId === user.id) sessionStore.delete(sid);
+      }
 
       logSecurityEvent("PASSWORD_RESET_COMPLETED", req, { email: tokenData.email });
       return res.json({ success: true, message: "Password updated successfully. You can now log in." });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       logger.error("Reset password failed", error);
       return res.status(500).json({ message: "Password reset failed" });
     }
@@ -2422,11 +2507,10 @@ export async function registerRoutes(app: Express) {
         emailVerified: true,
         isActive: true,
       };
-      portalUsers.set(email, user);
       if (!isMaster) {
         await createProspectClientForUser(user);
       } else {
-        portalUsers.set(username, user);
+        await portalUsers.commit(user);
       }
       logSecurityEvent("PORTAL_USER_PROVISIONED_ZOHO", req, {
         email,
@@ -2435,8 +2519,7 @@ export async function registerRoutes(app: Express) {
     } else if (isMasterPortalEmail(email) && user.role !== "admin") {
       user.role = "admin";
       user.storeRole = "admin";
-      portalUsers.set(email, user);
-      if (user.username) portalUsers.set(user.username, user);
+      await portalUsers.commit(user);
     }
 
     return user;
@@ -2753,8 +2836,7 @@ export async function registerRoutes(app: Express) {
           verified = true;
           backupCodes.splice(idx, 1);
           (user as any).mfaBackupCodes = backupCodes;
-          portalUsers.set(user.email, user);
-          if (user.username) portalUsers.set(user.username, user);
+          await portalUsers.commit(user);
         }
       }
 
@@ -2769,6 +2851,7 @@ export async function registerRoutes(app: Express) {
 
       return completeLogin(user, req, res);
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       console.error("[ERROR] MFA verify failed:", error);
       return res.status(500).json({ message: "Verification failed" });
     }
@@ -2785,10 +2868,46 @@ export async function registerRoutes(app: Express) {
         logSecurityEvent("SESSION_TERMINATED", req, { sessionId });
       }
 
+      // Revoke every token this request presents (cookie and Bearer) server-side (#242).
+      // A copied token is dead after this, not just removed from this browser.
+      const authHeader = req.headers.authorization;
+      const presented = new Set<string>();
+      if (typeof req.cookies?.[PORTAL_AUTH_COOKIE] === "string" && req.cookies[PORTAL_AUTH_COOKIE]) {
+        presented.add(req.cookies[PORTAL_AUTH_COOKIE]);
+      }
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const bearer = authHeader.slice("Bearer ".length).trim();
+        if (bearer) presented.add(bearer);
+      }
+      let revocationDurable = true;
+      let revokedUserId: string | null = null;
+      for (const token of presented) {
+        // Only a validly signed, unexpired token is worth recording; anything else is already dead.
+        let decoded: JWTPayload | null = null;
+        try {
+          decoded = jwt.verify(token, jwtSecret()) as JWTPayload;
+        } catch {
+          continue;
+        }
+        revokedUserId = decoded.userId || revokedUserId;
+        try {
+          await revokeToken(token, { userId: decoded.userId, expiresAtSec: decoded.exp });
+        } catch {
+          revocationDurable = false;
+        }
+      }
+
       clearPortalAuthCookies(res);
 
-      logSecurityEvent("PORTAL_USER_LOGOUT", req, { userId: req.user?.id || "unknown" });
+      logSecurityEvent("PORTAL_USER_LOGOUT", req, { userId: req.user?.id || revokedUserId || "unknown" });
 
+      if (!revocationDurable) {
+        // Signed out here and revoked in this process, but not recorded durably: say so.
+        return res.status(503).json({
+          code: "PERSISTENCE_UNAVAILABLE",
+          message: "You were signed out on this device, but we could not confirm the session was revoked everywhere.",
+        });
+      }
       return res.json({ success: true, message: "Logged out successfully" });
     } catch (error: any) {
       console.error("[ERROR] Portal logout failed:", error);
@@ -2914,8 +3033,7 @@ export async function registerRoutes(app: Express) {
       if (method === 'totp') {
         user.mfaTotpSecret = setup.secret;
       }
-      portalUsers.set(user.email, user);
-      if (user.username) portalUsers.set(user.username, user);
+      await portalUsers.commit(user);
 
       mfaPendingSetups.delete(setupToken);
       logSecurityEvent("MFA_ENABLED", req, { email: user.email, method });
@@ -2926,6 +3044,7 @@ export async function registerRoutes(app: Express) {
         backupCodes,
       });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       logger.error("MFA confirm failed", error);
       return res.status(500).json({ message: "MFA confirmation failed" });
     }
@@ -2948,12 +3067,12 @@ export async function registerRoutes(app: Express) {
       user.mfaMethod = null;
       user.mfaTotpSecret = null;
       user.mfaBackupCodes = [];
-      portalUsers.set(user.email, user);
-      if (user.username) portalUsers.set(user.username, user);
+      await portalUsers.commit(user);
 
       logSecurityEvent("MFA_DISABLED", req, { email: user.email });
       return res.json({ success: true, message: "MFA has been disabled" });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       logger.error("MFA disable failed", error);
       return res.status(500).json({ message: "Failed to disable MFA" });
     }
@@ -2974,12 +3093,12 @@ export async function registerRoutes(app: Express) {
 
       const backupCodes = generateBackupCodes(8);
       user.mfaBackupCodes = backupCodes;
-      portalUsers.set(user.email, user);
-      if (user.username) portalUsers.set(user.username, user);
+      await portalUsers.commit(user);
 
       logSecurityEvent("MFA_BACKUP_CODES_REGENERATED", req, { email: user.email });
       return res.json({ success: true, backupCodes });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       logger.error("Backup code regeneration failed", error);
       return res.status(500).json({ message: "Failed to regenerate backup codes" });
     }
@@ -3021,6 +3140,7 @@ export async function registerRoutes(app: Express) {
       if (!user) return res.status(404).json({ message: "User not found" });
 
       const { fullName, email } = req.body;
+      let pendingRemovedEmail: string | null = null;
       if (fullName && typeof fullName === "string") {
         user.fullName = fullName.trim();
       }
@@ -3032,11 +3152,11 @@ export async function registerRoutes(app: Express) {
         const previousEmail = user.email;
         user.email = nextEmail;
         user.emailVerified = false;
-        // Drop the old email from the index so it can no longer authenticate.
-        portalAuthRemoveUserKeys(user.id, [previousEmail]);
+        pendingRemovedEmail = previousEmail;
       }
-      portalUsers.set(user.email, user);
-      if (user.username) portalUsers.set(user.username, user);
+      await portalUsers.commit(user);
+      // Drop the old email from the index only after the new one is durable, so it can no longer authenticate.
+      if (pendingRemovedEmail) portalAuthRemoveUserKeys(user.id, [pendingRemovedEmail]);
 
       logSecurityEvent("PORTAL_PROFILE_UPDATED", req, { userId: user.id });
       return res.json({
@@ -3053,6 +3173,7 @@ export async function registerRoutes(app: Express) {
         },
       });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       logger.error("Profile update failed", error);
       return res.status(500).json({ message: "Failed to update profile" });
     }
@@ -3078,12 +3199,12 @@ export async function registerRoutes(app: Express) {
       if (!valid) return res.status(401).json({ message: "Current password is incorrect" });
 
       user.password = await bcryptMod.hash(newPassword, 12);
-      portalUsers.set(user.email, user);
-      if (user.username) portalUsers.set(user.username, user);
+      await portalUsers.commit(user);
 
       logSecurityEvent("PORTAL_PASSWORD_CHANGED", req, { userId: user.id });
       return res.json({ success: true, message: "Password updated successfully" });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       logger.error("Change password failed", error);
       return res.status(500).json({ message: "Failed to change password" });
     }
@@ -3108,28 +3229,60 @@ export async function registerRoutes(app: Express) {
         payableCheckout: validated.payableCheckout,
       };
 
+      const idempotencyKey = typeof payload.idempotencyKey === "string" ? payload.idempotencyKey : undefined;
+      delete payload.idempotencyKey;
       const saved = await saveOrderForm({
         userId: user.id,
         clientId: user.clientId || null,
         payload,
+        idempotencyKey,
       });
 
       const company = payload?.clientInfo?.legalName || user.fullName || user.email;
       logger.info("Portal order form submitted", { orderFormId: saved.id, email: user.email, company });
 
-      try {
-        await eventBus.emit(EventTypes.LEAD_CREATED, {
-          source: "portal-order-form",
+      // A retry of a submission that already committed must not fire a second quote.
+      if (!saved.replayed) try {
+        const { buildCommercialSnapshot } = await import("./integrations/commercialSnapshot");
+        const { getStoreProductBySku } = await import("../client/src/data/storeCatalog");
+        const client = user.clientId ? portalClients.get(user.clientId) : undefined;
+        await eventBus.emit(EventTypes.QUOTE_REQUESTED, {
+          id: saved.id,
+          source: "portal_order_form",
           email: user.email,
           name: user.fullName || user.username,
           company,
-          orderFormId: saved.id,
+          portalClientId: user.clientId || null,
+          canonicalAccountId: client?.hubAccountId || null,
+          commercial: buildCommercialSnapshot({
+            reference: saved.id,
+            status: "submitted",
+            portalClientId: user.clientId || null,
+            company,
+            email: user.email,
+            lineItems: validated.lines.map((line) => ({
+              productId: line.hubSku || line.id,
+              sku: line.hubSku || line.sku,
+              name: line.name,
+              quantity: line.quantity,
+              unitPrice: line.unitPrice,
+              pricingType: getStoreProductBySku(line.sku)?.pricingType || "one_time",
+              total: line.lineTotal,
+            })),
+          }),
         }, "portal-order-form");
+        await notificationService.sendNewLeadNotification({
+          name: user.fullName || user.username || user.email,
+          email: user.email,
+          company,
+          message: `Portal order form ${saved.id}`,
+          source: "portal_order_form",
+        });
       } catch {
         /* non-fatal */
       }
 
-      logSecurityEvent("PORTAL_ORDER_FORM_SUBMITTED", req, { userId: user.id, orderFormId: saved.id });
+      if (!saved.replayed) logSecurityEvent("PORTAL_ORDER_FORM_SUBMITTED", req, { userId: user.id, orderFormId: saved.id });
 
       return res.json({
         success: true,
@@ -3139,6 +3292,13 @@ export async function registerRoutes(app: Express) {
         orderFormId: saved.id,
       });
     } catch (error: any) {
+      if (error instanceof PortalPersistenceError) {
+        logger.error("Order form not persisted", error);
+        return res.status(503).json({
+          code: error.code,
+          message: "We could not save your order just now. Your selections are still on this page; please try again in a moment.",
+        });
+      }
       logger.error("Order form submit failed", error);
       return res.status(500).json({ message: "Failed to submit order form" });
     }
@@ -3730,7 +3890,7 @@ export async function registerRoutes(app: Express) {
       // Server-authoritative amount: the balance due is the source of truth;
       // a client-supplied `amount` may only match it, never underpay.
       const { resolveInvoicePayAmount } = await import("./portalInvoicePayment");
-      const amountResult = resolveInvoicePayAmount(inv.balance ?? inv.total, amount, COMPANY.billingEmail);
+      const amountResult = resolveInvoicePayAmount(inv.balance ?? inv.total, amount, COMPANY.billingEmail, inv.status);
       if (!amountResult.ok) {
         if (amountResult.reason === "amount_mismatch") {
           console.warn("[SECURITY] INVOICE_AMOUNT_MISMATCH", {
@@ -3797,10 +3957,16 @@ export async function registerRoutes(app: Express) {
       const statusFilter = typeof status === "string" && status !== "all" ? status : null;
 
       // --- Store orders ---
-      const allOrders = await storage.getStoreOrders();
-      let userOrders = allOrders.filter(
-        (order) => order.userId === userId || (clientId && order.clientId === clientId),
-      );
+      // The account scope is applied in the query. A failed read is reported as an
+      // unavailable source, never as "ok" with zero orders (#233).
+      let storeSource: "ok" | "unavailable" = "ok";
+      let userOrders: any[] = [];
+      try {
+        userOrders = await storage.getStoreOrdersForAccount({ userId, clientId });
+      } catch (e: any) {
+        storeSource = "unavailable";
+        console.error("[orders] store orders unavailable:", e?.message || e);
+      }
       if (statusFilter) {
         userOrders = userOrders.filter((order) => order.status === statusFilter);
       }
@@ -3948,7 +4114,7 @@ export async function registerRoutes(app: Express) {
         storeQuotes,
         companyName,
         matchedDeals,
-        sources: { store: "ok", hub: hubSource, storeQuotes: storeQuotes.length ? "ok" : "empty" },
+        sources: { store: storeSource, hub: hubSource, storeQuotes: storeQuotes.length ? "ok" : "empty" },
       });
     } catch (error: any) {
       console.error("[ERROR] Failed to fetch orders:", error);
@@ -4011,142 +4177,34 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Generate receipt HTML for order
+  // Branded order receipt (PDF). Falls back to the same branded document as
+  // print-ready HTML while no PDF renderer is installed, so the portal's
+  // Download button keeps working through the ops rollout.
   app.get("/api/portal/orders/:id/receipt", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
       const userId = req.userId;
       const clientId = req.user?.clientId;
-      
+
       const order = await storage.getStoreOrder(id);
-      
+
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
-      
+
       const isAdmin = req.user?.role === "admin";
       const ownsUser = Boolean(userId) && order.userId === userId;
       const ownsClient = Boolean(clientId) && order.clientId === clientId;
       if (!isAdmin && !ownsUser && !ownsClient) {
         return res.status(403).json({ error: "Access denied to this order" });
       }
-      
-      const lineItems = Array.isArray(order.lineItems) ? order.lineItems : [];
-      const billingAddress = order.billingAddress as { street?: string; city?: string; state?: string; zipCode?: string; country?: string } | null;
-      
-      // Generate HTML receipt
-      const receiptHtml = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Receipt - ${escapeHtml(order.orderNumber)}</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 20px; color: #333; }
-    .header { text-align: center; margin-bottom: 40px; }
-    .logo { font-size: 24px; font-weight: bold; color: #D3126A; margin-bottom: 8px; }
-    .receipt-title { font-size: 18px; color: #666; }
-    .order-info { display: flex; justify-content: space-between; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
-    .order-info div { }
-    .order-info .label { font-size: 12px; color: #666; margin-bottom: 4px; }
-    .order-info .value { font-weight: 600; }
-    table { width: 100%; border-collapse: collapse; margin: 30px 0; }
-    th { text-align: left; padding: 12px; border-bottom: 2px solid #e0e0e0; font-weight: 600; }
-    td { padding: 12px; border-bottom: 1px solid #e0e0e0; }
-    .text-right { text-align: right; }
-    .totals { margin-left: auto; width: 300px; }
-    .totals .row { display: flex; justify-content: space-between; padding: 8px 0; }
-    .totals .total { font-weight: bold; font-size: 18px; border-top: 2px solid #333; padding-top: 12px; margin-top: 8px; }
-    .billing { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
-    .billing h3 { margin: 0 0 12px 0; font-size: 14px; color: #666; }
-    .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; font-size: 12px; }
-    @media print { body { padding: 20px; } }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="logo">Digerati Experts</div>
-    <div class="receipt-title">Order Receipt</div>
-  </div>
-  
-  <div class="order-info">
-    <div>
-      <div class="label">Order Number</div>
-      <div class="value">${escapeHtml(order.orderNumber)}</div>
-    </div>
-    <div>
-      <div class="label">Order Date</div>
-      <div class="value">${new Date(order.createdAt).toLocaleDateString()}</div>
-    </div>
-    <div>
-      <div class="label">Status</div>
-      <div class="value">${(order.status || "pending").replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase())}</div>
-    </div>
-    ${order.paidAt ? `
-    <div>
-      <div class="label">Paid On</div>
-      <div class="value">${new Date(order.paidAt).toLocaleDateString()}</div>
-    </div>
-    ` : ""}
-  </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th class="text-right">Qty</th>
-        <th class="text-right">Unit Price</th>
-        <th class="text-right">Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${lineItems.map((item: any) => `
-        <tr>
-          <td>${escapeHtml(item.name || "Item")}<br><small style="color:#666">SKU: ${escapeHtml(item.sku || "N/A")}</small></td>
-          <td class="text-right">${item.quantity || 1}</td>
-          <td class="text-right">$${parseFloat(item.unitPrice || "0").toFixed(2)}</td>
-          <td class="text-right">$${parseFloat(item.total || "0").toFixed(2)}</td>
-        </tr>
-      `).join("")}
-    </tbody>
-  </table>
+      const { buildOrderPdfHtml, orderPdfFileBase } = await import("./pdf/storeOrderPdf");
+      const { renderHtmlToPdf, PdfRendererUnavailableError } = await import("./pdf/renderHtmlToPdf");
+      const html = buildOrderPdfHtml(order, { variant: "receipt", accountTeam: accountTeamForClient(order.clientId) });
+      const fileBase = orderPdfFileBase(order, "receipt");
 
-  <div class="totals">
-    <div class="row">
-      <span>Subtotal</span>
-      <span>$${parseFloat(order.subtotal).toFixed(2)}</span>
-    </div>
-    <div class="row">
-      <span>Tax</span>
-      <span>$${parseFloat(order.tax || "0").toFixed(2)}</span>
-    </div>
-    <div class="row total">
-      <span>Total</span>
-      <span>$${parseFloat(order.total).toFixed(2)}</span>
-    </div>
-  </div>
-
-  <div class="billing">
-    <h3>Billing Information</h3>
-    <div>${escapeHtml(order.billingName || "N/A")}</div>
-    ${order.billingCompany ? `<div>${escapeHtml(order.billingCompany)}</div>` : ""}
-    ${order.billingEmail ? `<div>${escapeHtml(order.billingEmail)}</div>` : ""}
-    ${billingAddress?.street ? `<div>${escapeHtml(billingAddress.street)}</div>` : ""}
-    ${billingAddress?.city || billingAddress?.state || billingAddress?.zipCode ? `
-      <div>${escapeHtml(billingAddress.city || "")}${billingAddress.city && billingAddress.state ? ", " : ""}${escapeHtml(billingAddress.state || "")} ${escapeHtml(billingAddress.zipCode || "")}</div>
-    ` : ""}
-  </div>
-
-  <div class="footer">
-    <p>Thank you for your business!</p>
-    <p>Digerati Experts | support@digeratiexperts.com | ${PRIMARY_PHONE.display}</p>
-  </div>
-</body>
-</html>
-      `;
-      
-      logSecurityEvent("RECEIPT_GENERATED", req, { 
+      logSecurityEvent("RECEIPT_GENERATED", req, {
         orderId: order.id,
         orderNumber: order.orderNumber,
         userId,
@@ -4154,10 +4212,20 @@ export async function registerRoutes(app: Express) {
         total: order.total,
         orderStatus: order.status
       });
-      
-      res.setHeader("Content-Type", "text/html");
-      res.setHeader("Content-Disposition", `attachment; filename="receipt-${order.orderNumber}.html"`);
-      res.send(receiptHtml);
+
+      res.setHeader("Cache-Control", "private, no-store");
+      try {
+        const pdf = await renderHtmlToPdf(html);
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename="${fileBase}.pdf"`);
+        return res.send(pdf);
+      } catch (err) {
+        if (!(err instanceof PdfRendererUnavailableError)) throw err;
+        console.error("[RECEIPT PDF] renderer unavailable, serving HTML:", err.message);
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        res.setHeader("Content-Disposition", `attachment; filename="${fileBase}.html"`);
+        return res.send(html);
+      }
     } catch (error: any) {
       console.error("[ERROR] Failed to generate receipt:", error);
       res.status(500).json({ message: "Failed to generate receipt" });
@@ -4359,6 +4427,8 @@ export async function registerRoutes(app: Express) {
         contactEmail: client.contactEmail,
         status: client.status || "active",
         type: client.type || "client", // "msp" for Digerati, "client" for customers
+        serviceType: client.serviceType || "prospect",
+        accountManager: resolveAccountManager(client.accountManager).id,
         userCount: Array.from(portalUsers.values()).filter(u => u.clientId === client.id).length,
         createdAt: client.createdAt,
       }));
@@ -4369,6 +4439,11 @@ export async function registerRoutes(app: Express) {
     }
   });
   
+  // Account manager profiles (shared/accountManagers.ts) for the assignment picker
+  app.get("/api/portal/admin/account-managers", [authMiddleware, requireAdmin], (_req: AuthenticatedRequest, res: Response) => {
+    res.json({ accountManagers: ACCOUNT_MANAGERS, defaultId: DEFAULT_ACCOUNT_MANAGER_ID, sales: SALES_DEPARTMENT });
+  });
+
   // Admin tenant selector - quick list for dropdown
   app.get("/api/portal/admin/tenants", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -4425,10 +4500,13 @@ export async function registerRoutes(app: Express) {
   // Create new company (admin only)
   app.post("/api/portal/admin/companies", [authMiddleware, requireAdmin, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { companyName, contactEmail, contactPhone, industry, primaryContact } = req.body;
+      const { companyName, contactEmail, contactPhone, industry, primaryContact, accountManager } = req.body;
       
       if (!companyName || !contactEmail) {
         return res.status(400).json({ error: "Company name and contact email are required" });
+      }
+      if (accountManager && !isAccountManagerId(accountManager)) {
+        return res.status(400).json({ error: "Unknown account manager" });
       }
       
       const newCompany = {
@@ -4438,16 +4516,18 @@ export async function registerRoutes(app: Express) {
         contactPhone: contactPhone || null,
         industry: industry || null,
         primaryContact: primaryContact || null,
+        accountManager: accountManager || DEFAULT_ACCOUNT_MANAGER_ID,
         status: "active",
         type: "client", // New companies are always clients, not MSP
         createdAt: new Date(),
       };
       
-      portalClients.set(newCompany.id, newCompany);
+      await portalClients.commit(newCompany);
       
       res.json({ success: true, company: newCompany });
       logSecurityEvent("COMPANY_CREATED", req, { companyId: newCompany.id, companyName });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
@@ -4460,7 +4540,10 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Company not found" });
       }
       
-      const { companyName, contactEmail, contactPhone, industry, primaryContact, status } = req.body;
+      const { companyName, contactEmail, contactPhone, industry, primaryContact, status, accountManager } = req.body;
+      if (accountManager && !isAccountManagerId(accountManager)) {
+        return res.status(400).json({ error: "Unknown account manager" });
+      }
       
       const updatedCompany = {
         ...company,
@@ -4470,13 +4553,15 @@ export async function registerRoutes(app: Express) {
         industry: industry !== undefined ? industry : company.industry,
         primaryContact: primaryContact !== undefined ? primaryContact : company.primaryContact,
         status: status || company.status,
+        accountManager: accountManager !== undefined ? accountManager || null : company.accountManager,
       };
       
-      portalClients.set(req.params.id, updatedCompany);
+      await portalClients.commit(updatedCompany);
       
       res.json({ success: true, company: updatedCompany });
       logSecurityEvent("COMPANY_UPDATED", req, { companyId: req.params.id });
     } catch (error: any) {
+      if (sendPersistenceFailure(res, error)) return;
       res.status(500).json({ error: error.message });
     }
   });
@@ -4547,106 +4632,15 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Get tenant-specific files for a company (admin only)
-  app.get("/api/portal/admin/companies/:id/files", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const company = portalClients.get(req.params.id);
-      if (!company) {
-        return res.status(404).json({ error: "Company not found" });
-      }
-      
-      // Get tenant files from storage - scoped to this company
-      const tenantFiles = await storage.getTenantFilesByClientId(req.params.id);
-      
-      res.json({ files: tenantFiles });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Get files for current user's company (regular users + admin impersonation)
-  app.get("/api/portal/my-files", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      let clientId: string | null = null;
-      let companyName: string = "";
-      
-      // Check if admin is impersonating a company
-      const impersonatingCompanyId = (req.user as any)?.impersonatingCompanyId;
-      if (impersonatingCompanyId) {
-        const company = portalClients.get(impersonatingCompanyId);
-        if (company) {
-          clientId = impersonatingCompanyId;
-          companyName = company.companyName;
-        }
-      } else {
-        // Regular user - get their company
-        const user = portalUsers.get(req.user?.email || "");
-        if (user && user.clientId) {
-          const company = portalClients.get(user.clientId);
-          if (company) {
-            clientId = user.clientId;
-            companyName = company.companyName;
-          }
-        }
-      }
-      
-      if (!clientId) {
-        return res.json({ files: [], companyName: "Your Company" });
-      }
-      
-      // Get tenant files from storage
-      const tenantFiles = await storage.getTenantFilesByClientId(clientId);
-      
-      res.json({ files: tenantFiles, companyName });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Upload file for a tenant (admin only)
-  app.post("/api/portal/admin/companies/:id/files", [authMiddleware, requireAdmin, validateInput], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const company = portalClients.get(req.params.id);
-      if (!company) {
-        return res.status(404).json({ error: "Company not found" });
-      }
-      
-      const { fileName, fileType, category, description, objectPath } = req.body;
-      
-      if (!fileName || !objectPath) {
-        return res.status(400).json({ error: "fileName and objectPath are required" });
-      }
-      
-      const tenantFile = await storage.createTenantFile({
-        clientId: req.params.id,
-        fileName,
-        fileType: fileType || "document",
-        category: category || "general",
-        description: description || "",
-        fileUrl: objectPath,
-        uploadedBy: req.userId || "",
-      });
-      
-      res.json({ success: true, file: tenantFile });
-      logSecurityEvent("TENANT_FILE_UPLOADED", req, { companyId: req.params.id, fileName });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // Delete tenant file (admin only)
-  app.delete("/api/portal/admin/companies/:companyId/files/:fileId", [authMiddleware, requireAdmin], async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const deleted = await storage.deleteTenantFile(req.params.fileId);
-      if (!deleted) {
-        return res.status(404).json({ error: "File not found" });
-      }
-      
-      res.json({ success: true });
-      logSecurityEvent("TENANT_FILE_DELETED", req, { companyId: req.params.companyId, fileId: req.params.fileId });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
+  // Tenant file list/upload/delete + my-files (server/portalTenantFileRoutes.ts, #259).
+  registerPortalTenantFileRoutes(app, {
+    auth: authMiddleware as any,
+    admin: requireAdmin as any,
+    validateInput: validateInput as any,
+    storage,
+    getCompany: (id) => portalClients.get(id),
+    getUserByEmail: (email) => portalUsers.get(email),
+    logSecurityEvent,
   });
 
   // Get company metrics/stats (admin only)
@@ -4658,65 +4652,13 @@ export async function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Company not found" });
       }
       
-      // Calculate metrics from portal data - get tickets from storage
+      // Only real portal data; service and billing figures are null/not_connected (#234).
       const allStoredTickets = await storage.getPortalTickets();
       const allTickets = allStoredTickets.filter((t: any) => t.clientId === companyId);
-      const openTickets = allTickets.filter((t: any) => t.status === "open").length;
-      const resolvedTickets = allTickets.filter((t: any) => t.status === "resolved").length;
-      const inProgressTickets = allTickets.filter((t: any) => t.status === "in_progress").length;
-      
       const users = Array.from(portalUsers.values()).filter(u => u.clientId === companyId);
       const tenantFiles = await storage.getTenantFilesByClientId(companyId);
-      
-      // Mock service and invoice data
-      const metrics = {
-        company: {
-          id: company.id,
-          name: company.companyName,
-          status: company.status,
-          createdAt: company.createdAt,
-        },
-        tickets: {
-          total: allTickets.length,
-          open: openTickets,
-          inProgress: inProgressTickets,
-          resolved: resolvedTickets,
-          avgResolutionTime: "4.2 hours",
-        },
-        users: {
-          total: users.length,
-          activeUsers: users.filter(u => u.isActive).length,
-          admins: users.filter(u => u.role === "admin").length,
-        },
-        files: {
-          total: tenantFiles.length,
-          agents: tenantFiles.filter(f => f.category === "agents").length,
-          documents: tenantFiles.filter(f => f.category === "documents").length,
-        },
-        services: {
-          activeServices: 3,
-          monthlyValue: "$1,250.00",
-          tier: "Business",
-        },
-        billing: {
-          pendingInvoices: 1,
-          totalOwed: "$450.00",
-          lastPayment: "2024-12-15",
-        },
-        activity: {
-          lastLogin: new Date().toISOString(),
-          ticketsThisMonth: allTickets.filter((t: any) => {
-            const ticketDate = new Date(t.createdAt);
-            const now = new Date();
-            return ticketDate.getMonth() === now.getMonth() && ticketDate.getFullYear() === now.getFullYear();
-          }).length,
-          filesUploadedThisMonth: tenantFiles.filter(f => {
-            const fileDate = new Date(f.createdAt);
-            const now = new Date();
-            return fileDate.getMonth() === now.getMonth() && fileDate.getFullYear() === now.getFullYear();
-          }).length,
-        },
-      };
+
+      const metrics = buildCompanyMetrics({ company, tickets: allTickets, users, files: tenantFiles });
       
       res.json(metrics);
     } catch (error: any) {
@@ -5457,6 +5399,7 @@ export async function registerRoutes(app: Express) {
           billingCompany: order.billingCompany,
           paidAt: order.paidAt,
           createdAt: order.createdAt,
+          accountTeam: accountTeamForClient(order.clientId),
         });
       }
 
@@ -5480,10 +5423,82 @@ export async function registerRoutes(app: Express) {
         return res.status(403).json({ error: "Access denied" });
       }
 
-      res.json(order);
+      res.json({ ...order, accountTeam: accountTeamForClient(order.clientId) });
     } catch (error: any) {
       console.error("[GET ORDER ERROR]", error);
       res.status(500).json({ error: error.message || "Failed to get order" });
+    }
+  });
+
+  // Branded order PDF for the post-checkout confirmation page. Same access rule
+  // as GET /api/store/orders/:id: the confirmation token (?ct=) gets the
+  // redacted view (no billing address); otherwise Bearer ownership or admin.
+  app.get("/api/store/orders/:id/pdf", paymentRateLimiter, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { db } = await import("./db");
+      const { storeOrders } = await import("@shared/schema");
+      const { eq, or } = await import("drizzle-orm");
+
+      const [order] = await db.select().from(storeOrders).where(
+        or(
+          eq(storeOrders.id, id),
+          eq(storeOrders.stripeSessionId, id),
+          eq(storeOrders.zohoPaymentSessionId, id)
+        )
+      ).limit(1);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      const { isValidOrderConfirmationToken } = await import("./orderConfirmationToken");
+      const viaConfirmationToken = isValidOrderConfirmationToken(order.id, req.query.ct);
+      if (!viaConfirmationToken) {
+        const authHeader = req.headers.authorization;
+        const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+        if (!token) {
+          return res.status(401).json({ error: "Authentication required" });
+        }
+        let decoded: JWTPayload;
+        try {
+          decoded = jwt.verify(token, jwtSecret()) as JWTPayload;
+        } catch {
+          return res.status(401).json({ error: "Invalid token" });
+        }
+        const isAdmin = decoded.role === "admin";
+        const ownsOrder =
+          (decoded.userId && order.userId === decoded.userId) ||
+          (decoded.clientId && order.clientId === decoded.clientId);
+        if (!isAdmin && !ownsOrder) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+      }
+
+      const { renderOrderPdf, orderPdfFileBase } = await import("./pdf/storeOrderPdf");
+      const { PdfRendererUnavailableError } = await import("./pdf/renderHtmlToPdf");
+      try {
+        const pdf = await renderOrderPdf(order, {
+          variant: "confirmation",
+          redactBillingAddress: viaConfirmationToken,
+          accountTeam: accountTeamForClient(order.clientId),
+        });
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${orderPdfFileBase(order, "confirmation")}.pdf"`,
+        );
+        res.setHeader("Cache-Control", "private, no-store");
+        return res.send(pdf);
+      } catch (err) {
+        if (err instanceof PdfRendererUnavailableError) {
+          console.error("[ORDER PDF] renderer unavailable:", err.message);
+          return res.status(503).json({ error: "PDF generation is temporarily unavailable." });
+        }
+        throw err;
+      }
+    } catch (error: any) {
+      console.error("[ORDER PDF ERROR]", error);
+      res.status(500).json({ error: "Failed to generate order PDF" });
     }
   });
 
@@ -5626,7 +5641,7 @@ export async function registerRoutes(app: Express) {
 
       res.setHeader("Cache-Control", "no-store");
       try {
-        const pdf = await buildQuotePdf(quoteRequest);
+        const pdf = await buildQuotePdf({ ...quoteRequest, accountTeam: accountTeamForClient(quoteRequest.clientId) });
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", `attachment; filename="${quoteRequest.quoteNumber}.pdf"`);
         return res.send(pdf);
@@ -5640,7 +5655,7 @@ export async function registerRoutes(app: Express) {
         console.error("[QUOTE PDF] renderer unavailable, serving HTML:", err.message);
         res.setHeader("Content-Type", "text/html; charset=utf-8");
         res.setHeader("Content-Disposition", `attachment; filename="${quoteRequest.quoteNumber}.html"`);
-        return res.send(buildQuotePdfHtml(quoteRequest));
+        return res.send(buildQuotePdfHtml({ ...quoteRequest, accountTeam: accountTeamForClient(quoteRequest.clientId) }));
       }
     } catch (error: any) {
       console.error("[GET QUOTE PDF ERROR]", error);
@@ -5674,6 +5689,7 @@ export async function registerRoutes(app: Express) {
         status: quoteRequest.status,
         createdAt: quoteRequest.createdAt,
         pdfUrl: `/api/store/quote-requests/${quoteRequest.id}/pdf`,
+        accountTeam: accountTeamForClient(quoteRequest.clientId),
       });
     } catch (error: any) {
       console.error("[GET QUOTE REQUEST ERROR]", error);

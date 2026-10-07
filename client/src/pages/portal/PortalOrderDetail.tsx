@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
-import { CreditCard, Download, HelpCircle, Mail, MapPin, Package, Phone, Printer } from "lucide-react";
+import { CreditCard, Download, HelpCircle, MapPin, Package, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PortalLayout } from "./PortalLayout";
 import { portalGet } from "@/lib/portalApi";
 import { useToast } from "@/hooks/use-toast";
-import { PRIMARY_PHONE } from "@/data/companyContact";
+import { AccountTeamCard } from "@/components/AccountTeamCard";
+import { usePortalAccountTeam } from "@/hooks/usePortalAccountTeam";
 import { formatDeskTimestamp } from "@/lib/deskTimestamp";
 import { Callout, DataTable, EmptyState, Panel, Token, type DataColumn, type TokenTone } from "@/components/portal/ui";
 
@@ -85,6 +86,7 @@ export default function PortalOrderDetail() {
   });
 
   const order = data?.order;
+  const accountTeam = usePortalAccountTeam();
 
   const formatStatus = (status: string) => {
     return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
@@ -130,10 +132,13 @@ export default function PortalOrderDetail() {
         return;
       }
       const blob = await response.blob();
+      // The server sends a PDF, or the same branded receipt as HTML while no
+      // PDF renderer is installed; the saved file must carry the real type.
+      const isPdf = (response.headers.get("Content-Type") || "").includes("application/pdf");
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `receipt-${order?.orderNumber || orderId}.html`;
+      a.download = `DE-receipt-${order?.orderNumber || orderId}.${isPdf ? "pdf" : "html"}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -332,17 +337,8 @@ export default function PortalOrderDetail() {
             }
           >
             <div className="space-y-4 text-sm">
-              <p className="text-muted-foreground">Have questions about this order? Contact our support team.</p>
-              <div className="space-y-2">
-                <a href="mailto:support@digeratiexperts.com" className="pt-link flex items-center gap-2 hover:underline" data-testid="link-support-email">
-                  <Mail className="h-4 w-4" aria-hidden="true" />
-                  support@digeratiexperts.com
-                </a>
-                <a href={PRIMARY_PHONE.telHref} className="pt-link flex items-center gap-2 hover:underline" data-testid="link-support-phone">
-                  <Phone className="h-4 w-4" aria-hidden="true" />
-                  {PRIMARY_PHONE.display}
-                </a>
-              </div>
+              <p className="text-muted-foreground">Questions about this order? Your account team can help.</p>
+              <AccountTeamCard team={accountTeam} stacked />
               <Button asChild variant="outline" className="w-full border-border bg-card hover:bg-accent">
                 <Link href="/portal/tickets/create" data-testid="button-create-ticket">
                   Create Support Ticket

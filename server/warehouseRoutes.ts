@@ -8,6 +8,17 @@ import {
   sendGenericNotFound,
 } from "./warehouseAccess";
 import { classifyLegacyStorePath, toWarehousePath } from "./storeLegacyRedirects";
+import { fetchStaffCatalog, fetchPax8ConnectorHealth } from "./integrations/techSalesClient";
+import { listWarehouseStock, recordWarehouseMovement } from "./warehouseStockStore";
+import type { StockMovementKind } from "./warehouseStock";
+
+const HUB_FEED_STATUSES = ["CONNECTED", "STALE", "FAILED", "UNKNOWN"] as const;
+const HUB_CONNECTOR_STATUSES = ["CONNECTED", "AUTH_REQUIRED", "FAILED", "UNKNOWN", "STALE"] as const;
+
+/** Pass through a Hub-reported status only when it is one we render; never default to healthy. */
+export function normalizeHubStatus<T extends string>(value: unknown, allowed: readonly T[]): T | "UNKNOWN" {
+  return typeof value === "string" && (allowed as readonly string[]).includes(value) ? (value as T) : "UNKNOWN";
+}
 
 function withQuery(req: Request, dest: string): string {
   const q = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
@@ -49,6 +60,88 @@ export function registerWarehouseGates(app: Express): void {
     }
     res.json({ ok: true });
   });
+
+  /** Staff-safe Hub catalog projection (ECO-014). Generic 404 unless warehouse staff. */
+  app.get("/api/internal/warehouse/catalog", async (req: Request, res: Response) => {
+    applyPrivateCacheHeaders(res);
+    if (!resolveWarehouseStaff(req)) {
+      sendGenericNotFound(req, res);
+      return;
+    }
+    const live = await fetchStaffCatalog();
+    if (live && typeof live === "object") {
+      // Only Hub can say the feed is CONNECTED; a missing or unrecognised status is UNKNOWN.
+      const status = normalizeHubStatus((live as { status?: unknown }).status, HUB_FEED_STATUSES);
+      res.json({
+        status,
+        source: "hub",
+        publishedAt: (live as { publishedAt?: string }).publishedAt ?? new Date().toISOString(),
+        message: (live as { message?: string }).message,
+        tiers: (live as { tiers?: unknown[] }).tiers ?? [],
+        skus: (live as { skus?: unknown[] }).skus ?? [],
+      });
+      return;
+    }
+    res.json({
+      status: "LOCAL_WORKSHOP",
+      source: "local_workshop_fallback",
+      publishedAt: null,
+      message:
+        "Hub staff-catalog is not available. Use the workshop SKU catalog in this warehouse until the Hub feed is configured and reachable.",
+      tiers: [],
+      skus: [],
+    });
+  });
+
+  /** Hub connector health for the warehouse Vendors page. */
+  app.get("/api/internal/warehouse/connectors", async (req: Request, res: Response) => {
+    applyPrivateCacheHeaders(res);
+    if (!resolveWarehouseStaff(req)) {
+      sendGenericNotFound(req, res);
+      return;
+    }
+    const pax8 = await fetchPax8ConnectorHealth();
+    res.json({
+      connectors: [
+        pax8 && typeof pax8 === "object"
+          ? { ...pax8, connector: "pax8", status: normalizeHubStatus(pax8.status, HUB_CONNECTOR_STATUSES) }
+          : {
+              connector: "pax8",
+              status: "UNKNOWN",
+              message: "Hub Pax8 health endpoint unreachable or unconfigured.",
+              checkedAt: new Date().toISOString(),
+            },
+      ],
+    });
+  });
+
+  app.get("/api/internal/warehouse/stock", (req, res) => {
+    requireWarehouseStaffApi(req, res, () => {
+      void listWarehouseStock()
+        .then((book) => res.json(book))
+        .catch(() => res.status(500).json({ error: "Stock could not be read." }));
+    });
+  });
+
+  for (const kind of ["receive", "pick", "ship"] as const satisfies readonly StockMovementKind[]) {
+    app.post(`/api/internal/warehouse/stock/${kind}`, (req, res) => {
+      requireWarehouseStaffApi(req, res, () => {
+        const body = req.body && typeof req.body === "object" ? (req.body as Record<string, unknown>) : {};
+        void recordWarehouseMovement({
+          sku: typeof body.sku === "string" ? body.sku : "",
+          kind,
+          quantity: Number(body.quantity),
+          carrier: typeof body.carrier === "string" ? body.carrier : undefined,
+          trackingNumber: typeof body.trackingNumber === "string" ? body.trackingNumber : undefined,
+        })
+          .then((book) => res.json(book))
+          .catch((error: unknown) => {
+            const message = error instanceof Error ? error.message : "Stock movement refused.";
+            res.status(400).json({ error: message });
+          });
+      });
+    });
+  }
 
   app.use((req, res, next) => {
     if (!isWarehouseCatalogApiPath(req.path)) return next();

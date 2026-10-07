@@ -1,0 +1,187 @@
+{
+  "390": {
+    "rest": {
+      "rootFont": "16px",
+      "chromeInset": "1.25rem",
+      "barRightGap": 20,
+      "barBottomGap": 20,
+      "button": "40x40",
+      "fab": {
+        "bg": "rgb(227, 178, 60)",
+        "border": "2px rgba(0, 0, 0, 0)",
+        "mark": "rgb(11, 11, 13)"
+      },
+      "focused": false,
+      "focusVisible": false,
+      "btnRadius": "9999px",
+      "btnShadow": "none",
+      "btnOutline": "none"
+    },
+    "hover": {
+      "bg": "rgb(237, 190, 76)",
+      "border": "2px rgba(0, 0, 0, 0)",
+      "mark": "rgb(11, 11, 13)"
+    },
+    "focus": {
+      "rootFont": "16px",
+      "chromeInset": "1.25rem",
+      "barRightGap": 20,
+      "barBottomGap": 20,
+      "button": "40x40",
+      "fab": {
+        "bg": "rgb(227, 178, 60)",
+        "border": "2px rgba(0, 0, 0, 0)",
+        "mark": "rgb(11, 11, 13)"
+      },
+      "focused": true,
+      "focusVisible": true,
+      "btnRadius": "9999px",
+      "btnShadow": "rgb(0, 0, 0) 0px 0px 0px 2px, rgb(245, 245, 244) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "btnOutline": "solid"
+    },
+    "chooser": {
+      "badgeBg": "rgb(227, 178, 60)",
+      "badgeBorder": "2px rgba(0, 0, 0, 0)",
+      "badgeMark": "rgb(11, 11, 13)",
+      "helpText": "Ask a Question | Get answers and guidance"
+    },
+    "deskOpens": true
+  },
+  "768": {
+    "rest": {
+      "rootFont": "16px",
+      "chromeInset": ".75rem",
+      "barRightGap": 12,
+      "barBottomGap": 12,
+      "button": "190x40",
+      "fab": {
+        "bg": "rgb(11, 11, 13)",
+        "border": "2px rgb(227, 178, 60)",
+        "mark": "rgb(245, 245, 244)"
+      },
+      "focused": false,
+      "focusVisible": false,
+      "btnRadius": "9999px",
+      "btnShadow": "none",
+      "btnOutline": "none"
+    },
+    "hover": {
+      "bg": "rgba(227, 178, 60, 0.1)",
+      "border": "2px rgb(237, 190, 76)",
+      "mark": "rgb(245, 245, 244)"
+    },
+    "focus": {
+      "rootFont": "16px",
+      "chromeInset": ".75rem",
+      "barRightGap": 12,
+      "barBottomGap": 12,
+      "button": "190x40",
+      "fab": {
+        "bg": "rgb(11, 11, 13)",
+        "border": "2px rgb(227, 178, 60)",
+        "mark": "rgb(245, 245, 244)"
+      },
+      "focused": true,
+      "focusVisible": true,
+      "btnRadius": "9999px",
+      "btnShadow": "rgb(0, 0, 0) 0px 0px 0px 2px, rgb(245, 245, 244) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "btnOutline": "solid"
+    },
+    "chooser": {
+      "badgeBg": "rgb(11, 11, 13)",
+      "badgeBorder": "2px rgb(227, 178, 60)",
+      "badgeMark": "rgb(245, 245, 244)",
+      "helpText": "Ask a Question | Get answers and guidance"
+    },
+    "deskOpens": true
+  },
+  "1440": {
+    "rest": {
+      "rootFont": "16px",
+      "chromeInset": ".75rem",
+      "barRightGap": 12,
+      "barBottomGap": 12,
+      "button": "190x40",
+      "fab": {
+        "bg": "rgb(11, 11, 13)",
+        "border": "2px rgb(227, 178, 60)",
+        "mark": "rgb(245, 245, 244)"
+      },
+      "focused": false,
+      "focusVisible": false,
+      "btnRadius": "9999px",
+      "btnShadow": "none",
+      "btnOutline": "none"
+    },
+    "hover": {
+      "bg": "rgba(227, 178, 60, 0.1)",
+      "border": "2px rgb(237, 190, 76)",
+      "mark": "rgb(245, 245, 244)"
+    },
+    "focus": {
+      "rootFont": "16px",
+      "chromeInset": ".75rem",
+      "barRightGap": 12,
+      "barBottomGap": 12,
+      "button": "190x40",
+      "fab": {
+        "bg": "rgb(11, 11, 13)",
+        "border": "2px rgb(227, 178, 60)",
+        "mark": "rgb(245, 245, 244)"
+      },
+      "focused": true,
+      "focusVisible": true,
+      "btnRadius": "9999px",
+      "btnShadow": "rgb(0, 0, 0) 0px 0px 0px 2px, rgb(245, 245, 244) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "btnOutline": "solid"
+    },
+    "chooser": {
+      "badgeBg": "rgb(11, 11, 13)",
+      "badgeBorder": "2px rgb(227, 178, 60)",
+      "badgeMark": "rgb(245, 245, 244)",
+      "helpText": "Ask a Question | Get answers and guidance"
+    },
+    "deskOpens": true
+  },
+  "phoneScrolled": {
+    "left": 268,
+    "right": 20,
+    "width": 102,
+    "overflowX": 0
+  },
+  "store-390": {
+    "rootFont": "16px",
+    "chromeInset": "1.25rem",
+    "barRightGap": 20,
+    "barBottomGap": 20,
+    "button": "40x40",
+    "fab": {
+      "bg": "rgb(227, 178, 60)",
+      "border": "2px rgba(0, 0, 0, 0)",
+      "mark": "rgb(11, 11, 13)"
+    },
+    "focused": false,
+    "focusVisible": false,
+    "btnRadius": "9999px",
+    "btnShadow": "none",
+    "btnOutline": "none"
+  },
+  "store-1440": {
+    "rootFont": "16px",
+    "chromeInset": ".75rem",
+    "barRightGap": 12,
+    "barBottomGap": 12,
+    "button": "40x40",
+    "fab": {
+      "bg": "rgb(227, 178, 60)",
+      "border": "2px rgba(0, 0, 0, 0)",
+      "mark": "rgb(11, 11, 13)"
+    },
+    "focused": false,
+    "focusVisible": false,
+    "btnRadius": "9999px",
+    "btnShadow": "none",
+    "btnOutline": "none"
+  },
+  "errors": []
+}

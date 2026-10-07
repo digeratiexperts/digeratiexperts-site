@@ -415,4 +415,43 @@ function Get-DERescueBuildPlan {
     return , $steps.ToArray()
 }
 
-Export-ModuleMember -Function Get-DERescueVersion, Join-DEWinPath, Write-DERescueLog, Get-DERescueLog, Invoke-DERescueNative, Test-DERecoveryPasswordFormat, ConvertFrom-DEManageBdeStatus, Get-DERescueBitLocker, Unlock-DERescueVolume, Get-DERescueVolumes, Find-DEWindowsVolume, Get-DERescueDestinations, Invoke-DEOfflineHive, Remove-DEOfflineHive, Set-DERescueTimeZone, Install-DERescueRootCertificates, Get-DERescueSystemPartition, Add-DERescueSystemPartitionLetter, Get-DERegValue, ConvertTo-DEOfflineProfile, Get-DERescueOfflineInfo, Get-DERescueHardware, Get-DERescueDiskHealth, Get-DEProfileExcludes, Test-DERobocopyExit, Get-DEFolderStats, Backup-DERescueProfile, Export-DERescueDrivers, Invoke-DERescueBootRepair, Get-DERescueRecommendations, Save-DERescueHandoff, Get-DERescueBuildPlan
+function Test-DEHubAccountId {
+    <# The Hub's account number for a client: a positive whole number. Never a name; the Hub has no name lookup. #>
+    param([AllowEmptyString()][AllowNull()][string]$Value)
+    return ("$Value".Trim() -match '^[1-9][0-9]{0,17}$')
+}
+function Send-DERescueHandoffToHub {
+    <#
+        Sends the handoff to the Intelligence Hub as a signed device.rescue_handoff event for one client account. The
+        Hub refuses a device event without its account number ("account not mapped"), so a missing or malformed
+        number stops here with a plain reason and nothing is sent. On a refusal the Hub's own reason is returned,
+        never the secret. Returns @{ sent; eventId; detail }.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]$Handoff,
+        [Parameter(Mandatory = $true)][string]$HubUrl,
+        [AllowEmptyString()][AllowNull()][string]$AccountId,
+        [Parameter(Mandatory = $true)][securestring]$Secret
+    )
+    if (-not (Test-DEHubAccountId $AccountId)) {
+        return [pscustomobject]@{ sent = $false; eventId = $null; detail = "not sent: the client's Hub account number is missing or not a number (got '$AccountId'); the Hub needs it to file this device" }
+    }
+    $ev = $null
+    try {
+        $ev = New-DEHubEvent -EventType 'device.rescue_handoff' -EntityId $Handoff.deviceKey -Payload $Handoff -AccountId "$AccountId".Trim()
+        $null = Send-DEHubEvent -BaseUrl $HubUrl -Event $ev -Secret $Secret
+        return [pscustomobject]@{ sent = $true; eventId = $ev.eventId; detail = "sent as event $($ev.eventId) for Hub account $("$AccountId".Trim())" }
+    } catch {
+        $why = $_.Exception.Message
+        $hub = $null
+        if ($_.ErrorDetails -and $_.ErrorDetails.Message) {
+            $hub = "$($_.ErrorDetails.Message)"
+            try { $j = $hub | ConvertFrom-Json; $hub = (@($j.error, $j.message) | Where-Object { $_ }) -join ': ' } catch { $null = $_ }   # not JSON: keep the Hub's text as it came
+        }
+        $detail = $(if ($hub) { "Hub refused: $hub ($why)" } else { $why })
+        if ($detail.Length -gt 400) { $detail = $detail.Substring(0, 400) }
+        return [pscustomobject]@{ sent = $false; eventId = $(if ($ev) { $ev.eventId } else { $null }); detail = $detail }
+    }
+}
+
+Export-ModuleMember -Function Get-DERescueVersion, Test-DEHubAccountId, Send-DERescueHandoffToHub, Join-DEWinPath, Write-DERescueLog, Get-DERescueLog, Invoke-DERescueNative, Test-DERecoveryPasswordFormat, ConvertFrom-DEManageBdeStatus, Get-DERescueBitLocker, Unlock-DERescueVolume, Get-DERescueVolumes, Find-DEWindowsVolume, Get-DERescueDestinations, Invoke-DEOfflineHive, Remove-DEOfflineHive, Set-DERescueTimeZone, Install-DERescueRootCertificates, Get-DERescueSystemPartition, Add-DERescueSystemPartitionLetter, Get-DERegValue, ConvertTo-DEOfflineProfile, Get-DERescueOfflineInfo, Get-DERescueHardware, Get-DERescueDiskHealth, Get-DEProfileExcludes, Test-DERobocopyExit, Get-DEFolderStats, Backup-DERescueProfile, Export-DERescueDrivers, Invoke-DERescueBootRepair, Get-DERescueRecommendations, Save-DERescueHandoff, Get-DERescueBuildPlan

@@ -1,0 +1,42 @@
+{
+  "390": {
+    "firstSuggestionAfterMs": 3193,
+    "firstSuggestionShown": true,
+    "placeholderColourWhileSuggesting": "rgba(0, 0, 0, 0)",
+    "hintingAtFirstSuggestion": 1,
+    "seen": [
+      "My Outlook keeps logging me out",
+      "A phishing email got through",
+      "Is our backup actually restorable?",
+      "Our Wi-Fi drops every afternoon",
+      "New laptop setup for a new hire"
+    ],
+    "placeholderAfterPass": "Type the issue…",
+    "suggestionGoneAfterPass": true,
+    "focusRestarts": true,
+    "typingHides": true,
+    "suggestionAriaHidden": true,
+    "errors": [],
+    "reducedMotionSuggestions": 0
+  },
+  "1440": {
+    "firstSuggestionAfterMs": 3975,
+    "firstSuggestionShown": true,
+    "placeholderColourWhileSuggesting": "rgba(0, 0, 0, 0)",
+    "hintingAtFirstSuggestion": 1,
+    "seen": [
+      "My Outlook keeps logging me out",
+      "A phishing email got through",
+      "Is our backup actually restorable?",
+      "Our Wi-Fi drops every afternoon",
+      "New laptop setup for a new hire"
+    ],
+    "placeholderAfterPass": "Type the issue…",
+    "suggestionGoneAfterPass": true,
+    "focusRestarts": true,
+    "typingHides": true,
+    "suggestionAriaHidden": true,
+    "errors": [],
+    "reducedMotionSuggestions": 0
+  }
+}

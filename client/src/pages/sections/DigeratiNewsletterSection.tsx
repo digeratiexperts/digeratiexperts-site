@@ -7,6 +7,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import { IconWell } from "@/components/visual/IconWell";
 import { GREATER_PHOENIX_CITIES } from "@/data/greaterPhoenixCities";
+import { credentialsOfKind } from "@/data/credentials";
 import {
   HomeChapter,
   HomeChapterHeader,
@@ -34,7 +35,9 @@ const complianceItems = [
   "Security and compliance reporting",
 ];
 
-const partnerMarks = ["Microsoft Partner", "Apple Consultants"];
+// Partner programs only from the verified list (each links to the issuer's
+// directory on /about/team); none are named here until one is verified.
+const partnerMarks = credentialsOfKind(["partner"]).map((c) => c.name);
 
 const locations = GREATER_PHOENIX_CITIES;
 

@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { CheckCircle, Calendar, Mail } from "lucide-react";
+import { Calendar, Mail } from "lucide-react";
 import { PageTemplate } from "@/components/PageTemplate";
-import { ConversionPathBar } from "@/components/ConversionPathBar";
+import {
+  Chapter,
+  Container,
+  ClosingCta,
+  CheckList,
+  buttonPrimary,
+  buttonSecondary,
+  Eyebrow,
+} from "@/components/site/chapters";
 import { useSEO } from "@/hooks/useSEO";
 import { CTA } from "@/lib/ctaCopy";
 import { COMPANY } from "@/data/companyContact";
-
-const cardClass = "rounded-2xl border border-de-hairline bg-de-raised";
-const insetClass = "rounded-xl border border-de-hairline bg-de-bg";
 
 interface ConfirmationData {
   plan: string;
@@ -41,12 +45,18 @@ export default function QuoteConfirmation() {
   if (!checked) {
     return (
       <PageTemplate
+        layout="chapters"
+        eyebrow="Quote"
         title="Quote Confirmation"
         subtitle="Loading your quote match…"
         breadcrumbs={[{ label: "Quote", href: "/quote-wizard" }, { label: "Confirmation" }]}
         showBackButton={false}
       >
-        <p className="text-center text-white/70">Please wait.</p>
+        <Chapter tone="paper" seam={false}>
+          <Container>
+            <p className="text-[#3A3448]">Please wait.</p>
+          </Container>
+        </Chapter>
       </PageTemplate>
     );
   }
@@ -54,26 +64,28 @@ export default function QuoteConfirmation() {
   if (!data) {
     return (
       <PageTemplate
+        layout="chapters"
+        eyebrow="Quote"
         title="Quote match not found"
         subtitle="We couldn’t find a saved quote in this session. Run the wizard again, or book a Cyber Risk Assessment."
         breadcrumbs={[{ label: "Quote", href: "/quote-wizard" }, { label: "Confirmation" }]}
         showBackButton={false}
       >
-        <div className="mx-auto max-w-xl space-y-6 text-center">
-          <p className="text-white/70">We couldn&apos;t find a saved quote in this session.</p>
-          <div className="flex flex-col justify-center gap-3 sm:flex-row">
-            <Button variant="brand" className="h-12" onClick={() => setLocation("/quote-wizard")}>
-              Start the quote wizard
-            </Button>
-            <Button
-              variant="outline"
-              className="h-12 border-white/20 text-white hover:bg-white/10"
-              onClick={() => setLocation("/")}
-            >
-              Back to Home
-            </Button>
-          </div>
-        </div>
+        <Chapter tone="paper" seam={false}>
+          <Container>
+            <div className="max-w-xl">
+              <p className="text-lg text-[#3A3448]">We couldn&apos;t find a saved quote in this session.</p>
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <button type="button" className={buttonPrimary("paper")} onClick={() => setLocation("/quote-wizard")}>
+                  Start the quote wizard
+                </button>
+                <button type="button" className={buttonSecondary("paper")} onClick={() => setLocation("/")}>
+                  Back to Home
+                </button>
+              </div>
+            </div>
+          </Container>
+        </Chapter>
       </PageTemplate>
     );
   }
@@ -86,87 +98,84 @@ export default function QuoteConfirmation() {
 
   return (
     <PageTemplate
+      layout="chapters"
+      eyebrow="Quote match"
       title="We've got your match"
       subtitle={`Hi ${data.firstName} — we analyzed your needs and found a fit for ${data.company}.`}
-      icon={<CheckCircle className="h-8 w-8" />}
       breadcrumbs={[{ label: "Quote", href: "/quote-wizard" }, { label: "Confirmation" }]}
       showBackButton={false}
     >
-      <div className="mx-auto max-w-2xl space-y-10">
-        <section className={`p-8 ${cardClass}`}>
-          <h2 className="mb-2 text-3xl font-bold text-de-accent-ink">{data.plan}</h2>
-          <p className="mb-6 text-white/55">Your personalized recommendation</p>
+      <Chapter tone="paper" seam={false}>
+        <Container>
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+            <section className="lg:col-span-7">
+              <Eyebrow tone="paper" className="mb-4">
+                Your personalized recommendation
+              </Eyebrow>
+              <h2 className="font-heading text-3xl font-semibold tracking-[-0.02em] text-de-magenta-paper-ink md:text-4xl">
+                {data.plan}
+              </h2>
+              <p className="mb-4 mt-8 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-black/55">
+                Why this fits you:
+              </p>
+              <ol className="border-t border-[var(--de-paper-hairline)]">
+                {data.reasons.map((reason, idx) => (
+                  <li key={reason} className="flex items-start gap-4 border-b border-[var(--de-paper-hairline)] py-4">
+                    <span className="font-mono text-sm font-semibold text-de-magenta-paper-ink">
+                      {String(idx + 1).padStart(2, "0")}
+                    </span>
+                    <p className="leading-relaxed text-[#1A1228]">{reason}</p>
+                  </li>
+                ))}
+              </ol>
+            </section>
 
-          <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-white/55">Why this fits you:</p>
-          <div className="mb-8 space-y-4">
-            {data.reasons.map((reason, idx) => (
-              <div key={reason} className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-de-hairline bg-de-bg text-sm font-semibold text-de-accent-ink">
-                  {idx + 1}
-                </span>
-                <p className="leading-relaxed text-white/80">{reason}</p>
+            <aside className="space-y-8 lg:col-span-5">
+              <div className="rounded-xl border border-[var(--de-paper-hairline)] bg-white p-6">
+                <p className="mb-4 text-sm text-[#3A3448]">
+                  Next steps: Our team will review your profile and follow up with:
+                </p>
+                <CheckList
+                  tone="paper"
+                  columns={1}
+                  items={[
+                    "Custom pricing for your company size",
+                    "Implementation timeline and options",
+                    "Answers to any questions",
+                  ]}
+                />
               </div>
-            ))}
+
+              <div className="flex flex-col gap-3">
+                <a href="/book" className={buttonPrimary("paper")} data-testid="button-schedule-call">
+                  <Calendar className="h-5 w-5" aria-hidden="true" />
+                  {CTA.primary}
+                </a>
+                <a href={mailtoHref} className={buttonSecondary("paper")} data-testid="button-email-details">
+                  <Mail className="h-5 w-5" aria-hidden="true" />
+                  Email us about this match
+                </a>
+              </div>
+
+              <p className="text-sm leading-relaxed text-[#3A3448]">
+                <span className="font-semibold text-[#1A1228]">We respect your privacy:</span> Your information is
+                secure and you&apos;ll only hear from our team about your specific plan match.{" "}
+                <a href="/legal/privacy-policy" className="font-medium text-de-magenta-paper-ink underline hover:no-underline">
+                  View our privacy policy
+                </a>
+                .
+              </p>
+            </aside>
           </div>
+        </Container>
+      </Chapter>
 
-          <div className={`border-t border-de-hairline p-6 ${insetClass}`}>
-            <p className="mb-4 text-sm text-white/60">
-              Next steps: Our team will review your profile and follow up with:
-            </p>
-            <ul className="space-y-2 text-white/80">
-              <li className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 shrink-0 text-de-accent-ink" aria-hidden="true" />
-                Custom pricing for your company size
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 shrink-0 text-de-accent-ink" aria-hidden="true" />
-                Implementation timeline and options
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 shrink-0 text-de-accent-ink" aria-hidden="true" />
-                Answers to any questions
-              </li>
-            </ul>
-          </div>
-        </section>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <Button asChild size="lg" variant="brand" className="h-12" data-testid="button-schedule-call">
-            <a href="/book">
-              <Calendar className="mr-2 h-5 w-5" aria-hidden="true" />
-              {CTA.primary}
-            </a>
-          </Button>
-          <Button
-            asChild
-            size="lg"
-            variant="outline"
-            className="h-12 border-de-hairline bg-de-raised text-white hover:bg-white/10 hover:text-white"
-            data-testid="button-email-details"
-          >
-            <a href={mailtoHref}>
-              <Mail className="mr-2 h-5 w-5" aria-hidden="true" />
-              Email us about this match
-            </a>
-          </Button>
-        </div>
-
-        <p className={`p-6 text-center text-sm text-white/60 ${insetClass}`}>
-          <span className="font-semibold text-white">We respect your privacy:</span> Your information is
-          secure and you&apos;ll only hear from our team about your specific plan match.{" "}
-          <a href="/legal/privacy-policy" className="font-medium text-de-accent-ink underline hover:no-underline">
-            View our privacy policy
-          </a>
-          .
-        </p>
-
-        <ConversionPathBar
-          headline="Ready to talk through the match?"
-          body="Book a Cyber Risk Assessment. We’ll confirm fit, pricing, and the right operating model — no hard sell."
-          primaryHref="/book"
-          primaryLabel={CTA.primary}
-        />
-      </div>
+      <ClosingCta
+        tone="well"
+        title="Ready to talk through the match?"
+        lede="Book a Cyber Risk Assessment. We’ll confirm fit, pricing, and the right operating model — no hard sell."
+        primary={{ label: CTA.primary, href: "/book" }}
+      />
     </PageTemplate>
   );
 }

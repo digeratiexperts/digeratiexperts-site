@@ -349,6 +349,9 @@ app.post(
   }
 );
 
+// Staff CSV import of manual portal records (server/portalManualRecords.ts):
+// up to 500 rows in one request, above the default 100kb body limit.
+app.use("/api/portal/admin/manual-records/import", express.json({ limit: "1mb" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -366,6 +369,11 @@ app.use((req, res, next) => {
   }
   if (req.path === "/about/mission") {
     return res.redirect(301, "/about/mission-values");
+  }
+  // Version 8 became the homepage (Joe, 2026-10-03); its preview URL folds into /.
+  if (req.path === "/version-8" || req.path === "/version-8/") {
+    const q = req.originalUrl.indexOf("?");
+    return res.redirect(301, q === -1 ? "/" : "/" + req.originalUrl.slice(q));
   }
   next();
 });

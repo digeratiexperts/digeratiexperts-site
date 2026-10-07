@@ -12,6 +12,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
 import { PortalLayout } from "./PortalLayout";
+import { ACCOUNT_MANAGERS, DEFAULT_ACCOUNT_MANAGER_ID, resolveAccountManager } from "@shared/accountManagers";
 import { DataTable, EmptyState, Field, GenericStatus, Panel, StatTile, Token, type DataColumn } from "@/components/portal/ui";
 
 interface Company {
@@ -19,6 +20,10 @@ interface Company {
   companyName: string;
   contactEmail: string;
   status: string;
+  /** prospect | managed | comanaged */
+  serviceType?: string;
+  /** shared/accountManagers.ts profile id (server resolves unassigned to the default). */
+  accountManager?: string;
   userCount: number;
   createdAt: string;
 }
@@ -31,6 +36,7 @@ interface CompanyDetail {
     contactPhone?: string;
     industry?: string;
     primaryContact?: string;
+    accountManager?: string | null;
     status: string;
   };
   users: Array<{
@@ -54,13 +60,16 @@ interface TenantFile {
 
 interface CompanyMetrics {
   company: { id: string; name: string; status: string; createdAt: string };
-  tickets: { total: number; open: number; inProgress: number; resolved: number; avgResolutionTime: string };
+  tickets: { total: number; open: number; inProgress: number; resolved: number; avgResolutionHours: number | null };
   users: { total: number; activeUsers: number; admins: number };
   files: { total: number; agents: number; documents: number };
-  services: { activeServices: number; monthlyValue: string; tier: string };
-  billing: { pendingInvoices: number; totalOwed: string; lastPayment: string };
-  activity: { lastLogin: string; ticketsThisMonth: number; filesUploadedThisMonth: number };
+  /** null = no authoritative source is connected for this figure (never a placeholder). */
+  services: { activeServices: number | null; monthlyValue: string | null; tier: string | null };
+  billing: { pendingInvoices: number | null; totalOwed: string | null; lastPayment: string | null };
+  activity: { lastLogin: string | null; ticketsThisMonth: number; filesUploadedThisMonth: number };
 }
+
+const NOT_CONNECTED = "Not connected";
 
 const fieldClass = "border-border bg-background";
 
@@ -102,6 +111,7 @@ export function AdminCompanies() {
     contactPhone: "",
     industry: "",
     primaryContact: "",
+    accountManager: DEFAULT_ACCOUNT_MANAGER_ID,
   });
 
   const { data: companiesData, isLoading } = useQuery<{ companies: Company[] }>({
@@ -161,11 +171,24 @@ export function AdminCompanies() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/portal/admin/companies"] });
       setShowAddDialog(false);
-      setNewCompany({ companyName: "", contactEmail: "", contactPhone: "", industry: "", primaryContact: "" });
+      setNewCompany({ companyName: "", contactEmail: "", contactPhone: "", industry: "", primaryContact: "", accountManager: DEFAULT_ACCOUNT_MANAGER_ID });
       toast({ title: "Success", description: "Company created successfully" });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message || "Failed to create company", variant: "destructive" });
+    },
+  });
+
+  const assignManagerMutation = useMutation({
+    mutationFn: async ({ companyId, accountManager }: { companyId: string; accountManager: string }) => {
+      return await apiRequest(`/api/portal/admin/companies/${companyId}`, "PUT", { accountManager });
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/portal/admin/companies"] });
+      toast({ title: "Account manager assigned", description: resolveAccountManager(vars.accountManager).name });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to assign account manager", variant: "destructive" });
     },
   });
 
@@ -219,6 +242,30 @@ export function AdminCompanies() {
       ),
     },
     { key: "status", header: "Status", primary: true, className: "w-32", cell: (company) => <GenericStatus status={company.status} /> },
+    {
+      key: "accountManager",
+      header: "Account manager",
+      primary: true,
+      className: "w-56",
+      cell: (company) => (
+        <div className="min-w-0">
+          <label className="sr-only" htmlFor={`am-${company.id}`}>Account manager for {company.companyName}</label>
+          <select
+            id={`am-${company.id}`}
+            value={company.accountManager || DEFAULT_ACCOUNT_MANAGER_ID}
+            onChange={(e) => assignManagerMutation.mutate({ companyId: company.id, accountManager: e.target.value })}
+            disabled={assignManagerMutation.isPending}
+            className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            data-testid={`select-account-manager-${company.id}`}
+          >
+            {ACCOUNT_MANAGERS.map((m) => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs capitalize text-muted-foreground">{company.serviceType || "prospect"}</p>
+        </div>
+      ),
+    },
     {
       key: "users",
       header: "Users",
@@ -334,6 +381,19 @@ export function AdminCompanies() {
                   data-testid="input-primary-contact"
                 />
               </Field>
+              <Field label="Account Manager" htmlFor="accountManager">
+                <select
+                  id="accountManager"
+                  value={newCompany.accountManager}
+                  onChange={(e) => setNewCompany({ ...newCompany, accountManager: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  data-testid="select-new-account-manager"
+                >
+                  {ACCOUNT_MANAGERS.map((m) => (
+                    <option key={m.id} value={m.id}>{m.name} — {m.title}</option>
+                  ))}
+                </select>
+              </Field>
               <Button
                 variant="brand"
                 onClick={handleCreateCompany}
@@ -443,6 +503,7 @@ export function AdminCompanies() {
                       ["Phone", companyDetail.company.contactPhone || "—"],
                       ["Industry", companyDetail.company.industry || "—"],
                       ["Primary Contact", companyDetail.company.primaryContact || "—"],
+                      ["Account Manager", resolveAccountManager(companyDetail.company.accountManager).name],
                     ].map(([label, value]) => (
                       <div key={label}>
                         <dt className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">{label}</dt>
@@ -644,7 +705,7 @@ export function AdminCompanies() {
                   <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Company figures">
                     <StatTile label="Open Tickets" value={companyMetrics.tickets.open} tone={companyMetrics.tickets.open > 0 ? "warn" : "neutral"} />
                     <StatTile label="Active Users" value={companyMetrics.users.activeUsers} tone="info" />
-                    <StatTile label="Monthly Value" value={companyMetrics.services.monthlyValue} tone="ok" />
+                    <StatTile label="Monthly Value" value={companyMetrics.services.monthlyValue ?? NOT_CONNECTED} tone="neutral" />
                     <StatTile label="Files" value={companyMetrics.files.total} />
                   </section>
 
@@ -662,7 +723,7 @@ export function AdminCompanies() {
                         <DetailRow label="Total Tickets" value={<span className="pt-num">{companyMetrics.tickets.total}</span>} />
                         <DetailRow label="In Progress" value={<span className="pt-num">{companyMetrics.tickets.inProgress}</span>} />
                         <DetailRow label="Resolved" value={<span className="pt-num pt-ink pt-tone-ok">{companyMetrics.tickets.resolved}</span>} />
-                        <DetailRow label="Avg. Resolution" value={companyMetrics.tickets.avgResolutionTime} />
+                        <DetailRow label="Avg. Resolution" value={companyMetrics.tickets.avgResolutionHours == null ? "No resolved tickets" : `${companyMetrics.tickets.avgResolutionHours} hours`} />
                       </dl>
                     </Panel>
 
@@ -676,10 +737,10 @@ export function AdminCompanies() {
                       }
                     >
                       <dl className="space-y-2">
-                        <DetailRow label="Service Tier" value={<Token label={companyMetrics.services.tier} tone="brand" />} />
-                        <DetailRow label="Active Services" value={<span className="pt-num">{companyMetrics.services.activeServices}</span>} />
+                        <DetailRow label="Service Tier" value={companyMetrics.services.tier ? <Token label={companyMetrics.services.tier} tone="brand" /> : NOT_CONNECTED} />
+                        <DetailRow label="Active Services" value={companyMetrics.services.activeServices == null ? NOT_CONNECTED : <span className="pt-num">{companyMetrics.services.activeServices}</span>} />
                         <DetailRow label="Tickets This Month" value={<span className="pt-num">{companyMetrics.activity.ticketsThisMonth}</span>} />
-                        <DetailRow label="Pending Invoices" value={<span className="pt-num pt-ink pt-tone-bad">{companyMetrics.billing.pendingInvoices}</span>} />
+                        <DetailRow label="Pending Invoices" value={companyMetrics.billing.pendingInvoices == null ? NOT_CONNECTED : <span className="pt-num pt-ink pt-tone-bad">{companyMetrics.billing.pendingInvoices}</span>} />
                       </dl>
                     </Panel>
                   </div>

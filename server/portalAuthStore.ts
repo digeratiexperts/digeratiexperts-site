@@ -2,6 +2,7 @@
  * Durable portal auth store — Neon-backed with in-memory cache.
  * Sync get/set API matches the former Map so routes can migrate cleanly.
  */
+import { createHash } from "node:crypto";
 import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { db, dbReady, initPromise } from "./db";
 import {
@@ -36,6 +37,8 @@ export type PortalAuthUser = {
   mfaTotpSecret?: string | null;
   mfaBackupCodes?: string[];
   lastLogin?: Date | null;
+  /** Tokens issued before this instant are rejected (#242). */
+  sessionsValidAfter?: Date | null;
   createdAt?: Date;
 };
 
@@ -50,6 +53,8 @@ export type PortalAuthClient = {
   type?: string;
   serviceType?: string | null;
   hubAccountId?: string | null;
+  /** shared/accountManagers.ts profile id; null = default manager. */
+  accountManager?: string | null;
   createdAt?: Date;
 };
 
@@ -57,7 +62,23 @@ const usersByKey = new Map<string, PortalAuthUser>();
 const clientsById = new Map<string, PortalAuthClient>();
 let initialized = false;
 
+/** Last state the database confirmed (or the cache loaded), per user id, for rollback on a failed commit. */
+const committedUsers = new Map<string, PortalAuthUser>();
+const committedClients = new Map<string, PortalAuthClient>();
+
+function cloneUser(user: PortalAuthUser): PortalAuthUser {
+  return { ...user, mfaBackupCodes: user.mfaBackupCodes ? [...user.mfaBackupCodes] : user.mfaBackupCodes };
+}
+
+/** Put a live object back to its last committed state (handlers mutate cached users in place). */
+function restoreInPlace<T extends object>(live: T, snapshot: T | undefined): void {
+  if (!snapshot) return;
+  for (const key of Object.keys(live)) delete (live as any)[key];
+  Object.assign(live, snapshot);
+}
+
 function indexUser(user: PortalAuthUser) {
+  committedUsers.set(user.id, cloneUser(user));
   usersByKey.set(user.email.toLowerCase(), user);
   usersByKey.set(user.email, user);
   if (user.username) {
@@ -99,6 +120,7 @@ function rowToUser(row: typeof portalUsersTable.$inferSelect): PortalAuthUser {
     mfaTotpSecret: decryptUserTotpSecret(row.id, row.mfaTotpSecret),
     mfaBackupCodes: Array.isArray(row.mfaBackupCodes) ? row.mfaBackupCodes : [],
     lastLogin: row.lastLogin,
+    sessionsValidAfter: (row as any).sessionsValidAfter ?? null,
     createdAt: row.createdAt,
   };
 }
@@ -114,6 +136,7 @@ function rowToClient(row: typeof portalClientsTable.$inferSelect): PortalAuthCli
     status: row.status,
     serviceType: row.serviceType,
     hubAccountId: (row as { hubAccountId?: string | null }).hubAccountId || null,
+    accountManager: row.accountManager || null,
     createdAt: row.createdAt,
   };
 }
@@ -156,10 +179,20 @@ async function ensureSchema() {
   }
 }
 
+/** Legacy best-effort write: failures are logged, not surfaced. Authoritative mutations use commitUser. */
 async function upsertUserDb(user: PortalAuthUser) {
+  try {
+    await writeUserDb(user);
+  } catch (err: any) {
+    console.warn("[portalAuthStore] upsert user failed:", err?.message);
+  }
+}
+
+/** Throws when the database write fails. No-op (not a failure) when there is no database. */
+async function writeUserDb(user: PortalAuthUser): Promise<void> {
   persistUserObserver?.(user);
   if (!dbReady || !db) return;
-  try {
+  {
     const values = {
       id: user.id,
       email: user.email,
@@ -180,6 +213,7 @@ async function upsertUserDb(user: PortalAuthUser) {
       mfaTotpSecret: encryptTotpSecret(user.mfaTotpSecret),
       mfaBackupCodes: prepareBackupCodesForStorage(user.mfaBackupCodes || []),
       lastLogin: user.lastLogin || null,
+      sessionsValidAfter: user.sessionsValidAfter || null,
     };
     await db
       .insert(portalUsersTable)
@@ -205,17 +239,24 @@ async function upsertUserDb(user: PortalAuthUser) {
           mfaTotpSecret: values.mfaTotpSecret,
           mfaBackupCodes: values.mfaBackupCodes,
           lastLogin: values.lastLogin,
+          sessionsValidAfter: values.sessionsValidAfter,
           updatedAt: new Date(),
         },
       });
-  } catch (err: any) {
-    console.warn("[portalAuthStore] upsert user failed:", err?.message);
   }
 }
 
 async function upsertClientDb(client: PortalAuthClient) {
-  if (!dbReady || !db) return;
   try {
+    await writeClientDb(client);
+  } catch (err: any) {
+    console.warn("[portalAuthStore] upsert client failed:", err?.message);
+  }
+}
+
+async function writeClientDb(client: PortalAuthClient): Promise<void> {
+  if (!dbReady || !db) return;
+  {
     await db
       .insert(portalClientsTable)
       .values({
@@ -228,6 +269,7 @@ async function upsertClientDb(client: PortalAuthClient) {
         status: client.status || "active",
         serviceType: client.serviceType || "prospect",
         hubAccountId: client.hubAccountId || null,
+        accountManager: client.accountManager || null,
       })
       .onConflictDoUpdate({
         target: portalClientsTable.id,
@@ -240,11 +282,10 @@ async function upsertClientDb(client: PortalAuthClient) {
           status: client.status || "active",
           serviceType: client.serviceType || "prospect",
           ...(client.hubAccountId ? { hubAccountId: client.hubAccountId } : {}),
+          accountManager: client.accountManager || null,
           updatedAt: new Date(),
         },
       });
-  } catch (err: any) {
-    console.warn("[portalAuthStore] upsert client failed:", err?.message);
   }
 }
 
@@ -286,6 +327,8 @@ export function resetPortalAuthStoreForTests(): void {
   }
   usersByKey.clear();
   clientsById.clear();
+  committedUsers.clear();
+  committedClients.clear();
   initialized = false;
   persistUserObserver = null;
 }
@@ -381,7 +424,7 @@ function seedDemoIfNotProduction() {
 }
 
 /** Update org hierarchy fields for a portal user (People & org admin). */
-export function updateUserOrgFields(
+export async function updateUserOrgFields(
   userId: string,
   patch: {
     orgRole?: PortalAuthUser["orgRole"];
@@ -390,7 +433,7 @@ export function updateUserOrgFields(
     isCompanyItContact?: boolean;
     fullName?: string;
   },
-): PortalAuthUser | null {
+): Promise<PortalAuthUser | null> {
   const existing = listUniqueUsers().find((u) => u.id === userId);
   if (!existing) return null;
   if (patch.isCompanyItContact && existing.clientId) {
@@ -398,7 +441,7 @@ export function updateUserOrgFields(
       if (u.clientId === existing.clientId && u.id !== userId && u.isCompanyItContact) {
         u.isCompanyItContact = false;
         if (u.orgRole === "company_it_contact") u.orgRole = "staff";
-        setUser(u);
+        await commitUser(u);
       }
     }
   }
@@ -412,7 +455,7 @@ export function updateUserOrgFields(
       patch.isCompanyItContact !== undefined ? patch.isCompanyItContact : existing.isCompanyItContact,
   };
   if (next.isCompanyItContact) next.orgRole = "company_it_contact";
-  setUser(next);
+  await commitUser(next);
   return next;
 }
 
@@ -480,6 +523,34 @@ export function setUser(user: PortalAuthUser): void {
 }
 
 /**
+ * Authoritative user mutation (#245): the database write is awaited and must
+ * succeed before the cache index is updated and the caller may report success.
+ * On failure the live (in-place mutated) user is restored to its last committed
+ * state and a PortalPersistenceError is thrown. With no database, production
+ * fails closed; dev/test keep working in memory.
+ */
+export async function commitUser(user: PortalAuthUser): Promise<void> {
+  await initPromise;
+  if (!dbReady || !db) {
+    if (!memoryOnlyWritesAllowed()) {
+      restoreInPlace(user, committedUsers.get(user.id));
+      throw new PortalPersistenceError();
+    }
+    persistUserObserver?.(user);
+    indexUser(user);
+    return;
+  }
+  try {
+    await writeUserDb(user);
+  } catch (err: any) {
+    console.error("[portalAuthStore] user commit failed:", err?.message);
+    restoreInPlace(user, committedUsers.get(user.id));
+    throw new PortalPersistenceError();
+  }
+  indexUser(user);
+}
+
+/**
  * Drop stale index keys (e.g. a previous email) that no longer point at the
  * user after a profile change, so the old address can't still authenticate.
  * Only removes a key when it currently resolves to this same user id.
@@ -514,7 +585,31 @@ export function getClient(id: string | undefined | null): PortalAuthClient | und
 
 export function setClient(client: PortalAuthClient): void {
   clientsById.set(client.id, client);
+  committedClients.set(client.id, { ...client });
   void upsertClientDb(client);
+}
+
+/** Authoritative client/company mutation: same contract as commitUser (#245). */
+export async function commitClient(client: PortalAuthClient): Promise<void> {
+  await initPromise;
+  if (!dbReady || !db) {
+    if (!memoryOnlyWritesAllowed()) {
+      restoreInPlace(client, committedClients.get(client.id));
+      throw new PortalPersistenceError();
+    }
+    clientsById.set(client.id, client);
+    committedClients.set(client.id, { ...client });
+    return;
+  }
+  try {
+    await writeClientDb(client);
+  } catch (err: any) {
+    console.error("[portalAuthStore] client commit failed:", err?.message);
+    restoreInPlace(client, committedClients.get(client.id));
+    throw new PortalPersistenceError();
+  }
+  clientsById.set(client.id, client);
+  committedClients.set(client.id, { ...client });
 }
 
 export function listClients(): PortalAuthClient[] {
@@ -564,10 +659,10 @@ export async function createProspectClientForUser(user: PortalAuthUser, companyN
     serviceType: "prospect",
     createdAt: new Date(),
   };
-  setClient(client);
+  await commitClient(client);
   user.clientId = client.id;
   user.storeRole = "prospect";
-  setUser(user);
+  await commitUser(user);
   void import("./integrations/linkPortalIdentity")
     .then(({ queuePortalIdentityLink }) =>
       queuePortalIdentityLink({
@@ -583,30 +678,73 @@ export async function createProspectClientForUser(user: PortalAuthUser, companyN
   return client;
 }
 
+/**
+ * A durable write the database did not confirm (#245/#246). Routes translate
+ * this to a 503 so the caller never sees success for a record that exists only
+ * in process memory.
+ */
+export class PortalPersistenceError extends Error {
+  readonly code = "PERSISTENCE_UNAVAILABLE";
+  constructor(message = "This change could not be saved. Please try again in a moment.") {
+    super(message);
+    this.name = "PortalPersistenceError";
+  }
+}
+
+/** Dev/test may keep running on memory when there is no database; production never does. */
+export function memoryOnlyWritesAllowed(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.NODE_ENV !== "production";
+}
+
+/** Stable id for a retried submission: same user + same key always names the same row. */
+function orderFormIdFor(userId: string | null | undefined, key: string): string {
+  const digest = createHash("sha256").update(`${userId || "anon"}\n${key}`).digest("hex").slice(0, 24);
+  return `order-${digest}`;
+}
+
 export async function saveOrderForm(opts: {
   userId?: string | null;
   clientId?: string | null;
   payload: Record<string, unknown>;
-}): Promise<{ id: string }> {
-  const id = `order-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-  if (dbReady && db) {
-    try {
-      const [row] = await db
-        .insert(portalOrderForms)
-        .values({
-          id,
-          userId: opts.userId || null,
-          clientId: opts.clientId || null,
-          payload: opts.payload,
-          status: "submitted",
-        })
-        .returning({ id: portalOrderForms.id });
-      return { id: row.id };
-    } catch (err: any) {
-      console.warn("[portalAuthStore] order form insert failed:", err?.message);
-    }
+  /** Client-generated per form; a retry with the same key returns the same record. */
+  idempotencyKey?: string | null;
+}): Promise<{ id: string; replayed?: boolean }> {
+  const key = typeof opts.idempotencyKey === "string" ? opts.idempotencyKey.trim().slice(0, 120) : "";
+  const id = key
+    ? orderFormIdFor(opts.userId, key)
+    : `order-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  await initPromise;
+  if (!dbReady || !db) {
+    // A submitted order is a commercial record: no durable store, no success.
+    if (!memoryOnlyWritesAllowed()) throw new PortalPersistenceError();
+    return { id };
   }
-  return { id };
+  try {
+    const [row] = await db
+      .insert(portalOrderForms)
+      .values({
+        id,
+        userId: opts.userId || null,
+        clientId: opts.clientId || null,
+        payload: opts.payload,
+        status: "submitted",
+      })
+      .onConflictDoNothing({ target: portalOrderForms.id })
+      .returning({ id: portalOrderForms.id });
+    if (row) return { id: row.id };
+    // Conflict: a retry of a submission that already committed.
+    const [existing] = await db
+      .select({ id: portalOrderForms.id, userId: portalOrderForms.userId })
+      .from(portalOrderForms)
+      .where(eq(portalOrderForms.id, id))
+      .limit(1);
+    if (existing && (existing.userId || null) === (opts.userId || null)) return { id: existing.id, replayed: true };
+    throw new PortalPersistenceError("The order form was not written to durable storage.");
+  } catch (err: any) {
+    if (err instanceof PortalPersistenceError) throw err;
+    console.error("[portalAuthStore] order form insert failed:", err?.message);
+    throw new PortalPersistenceError();
+  }
 }
 
 export async function findUserByEmailOrUsername(identifier: string): Promise<PortalAuthUser | undefined> {

@@ -4,11 +4,14 @@ import { initPromise, pool } from "./db";
 /**
  * Durable Save Progress for the public Solution Builder (#120).
  *
- * Self-provisioning on purpose: this repo has no automated `db:push` step in
- * deploy, and Drizzle's query builder assumes the table already exists. A
- * table created lazily via `CREATE TABLE IF NOT EXISTS` guarantees the
- * feature works on first deploy without a manual migration step. The whole
- * record is stored as one JSONB payload (not normalized columns) so adding
+ * Schema is owned by migrations/0003_public_solution_requests.sql (#253),
+ * applied by `npm run db:migrate` before a release is activated. This module
+ * only *verifies* the table exists; it never issues DDL, so the runtime
+ * credentials need no CREATE privilege and the migration ledger stays the
+ * single record of what exists. If the table is missing the feature reports
+ * durable persistence unavailable rather than creating schema behind the
+ * ledger's back. The whole record is stored as one JSONB payload (not
+ * normalized columns) so adding
  * fields to PublicSolutionRequest later (as already happened twice this
  * project — selectedNeeds, then fulfillment) never requires a migration.
  *
@@ -17,46 +20,38 @@ import { initPromise, pool } from "./db";
  */
 
 const DRAFT_TTL_DAYS = 30;
-let schemaPromise: Promise<void> | null = null;
+const TABLE = "public_solution_requests";
+let schemaVerified = false;
+let schemaPromise: Promise<boolean> | null = null;
 
+/** Verify (never create) the migrated table. Success is cached; failure is retried on the next call. */
 async function ensureSchema(): Promise<boolean> {
   if (!process.env.DATABASE_URL) return false;
   const ready = await initPromise;
   if (!ready || !pool) return false;
+  if (schemaVerified) return true;
   if (!schemaPromise) {
+    const activePool = pool;
     schemaPromise = (async () => {
-      const client = await pool.connect();
-      try {
-        await client.query(`CREATE TABLE IF NOT EXISTS public_solution_requests (
-          id varchar PRIMARY KEY,
-          session_id varchar NOT NULL,
-          status text NOT NULL,
-          payload jsonb NOT NULL,
-          created_at timestamptz NOT NULL,
-          updated_at timestamptz NOT NULL,
-          expires_at timestamptz
-        )`);
-        await client.query(`CREATE INDEX IF NOT EXISTS public_solution_requests_session_idx
-          ON public_solution_requests (session_id, updated_at DESC)`);
-        await client.query(`CREATE INDEX IF NOT EXISTS public_solution_requests_expiry_idx
-          ON public_solution_requests (status, expires_at)`);
-        await client.query(`CREATE INDEX IF NOT EXISTS public_solution_requests_reference_idx
-          ON public_solution_requests ((payload->>'reference'))`);
-      } finally {
-        client.release();
+      const result = await activePool.query(`SELECT to_regclass($1) AS present`, [`public.${TABLE}`]);
+      const present = Boolean(result.rows[0]?.present);
+      if (!present) {
+        console.error(
+          `[solution-request] required table ${TABLE} is missing; run \`npm run db:migrate\` (migrations/0003_public_solution_requests.sql). Durable persistence disabled.`,
+        );
       }
-    })().catch((error) => {
-      schemaPromise = null;
-      throw error;
-    });
+      schemaVerified = present;
+      return present;
+    })()
+      .catch((error: any) => {
+        console.warn("[solution-request] durable persistence unavailable:", error?.message || error);
+        return false;
+      })
+      .finally(() => {
+        schemaPromise = null;
+      });
   }
-  try {
-    await schemaPromise;
-    return true;
-  } catch (error: any) {
-    console.warn("[solution-request] durable persistence unavailable:", error?.message || error);
-    return false;
-  }
+  return schemaPromise;
 }
 
 function expiryFor(record: PublicSolutionRequest): Date | null {

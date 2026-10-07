@@ -18,7 +18,7 @@ export interface PendingStoreOrderValues {
   paymentMethod: string;
   lineItems: CanonicalCheckoutLineItem[];
   subtotal: string;
-  tax: string;
+  tax: null;
   total: string;
   billingEmail: string;
   billingName: string;
@@ -63,7 +63,7 @@ export function buildPendingStoreOrderValues(input: {
     paymentMethod: stringValue(body.paymentMethod, 50) || "quote_request",
     lineItems,
     subtotal: trustedTotal.toFixed(2),
-    tax: "0",
+    tax: null,
     total: trustedTotal.toFixed(2),
     billingEmail,
     billingName,

@@ -1,4 +1,3 @@
-import { Link } from "wouter";
 import {
   Star,
   Shield,
@@ -11,7 +10,7 @@ import {
 } from "lucide-react";
 import { PageTemplate } from "@/components/PageTemplate";
 import { IconWell } from "@/components/visual/IconWell";
-import { Button } from "@/components/ui/button";
+import { Chapter, Container, ChapterHeader, ClosingCta, Eyebrow } from "@/components/site/chapters";
 import { useSEO } from "@/hooks/useSEO";
 
 interface RightCard {
@@ -82,67 +81,86 @@ export default function ClientBillOfRights() {
 
   return (
     <PageTemplate
+      layout="chapters"
+      eyebrow="About · Our promise"
       title="Client Bill of Rights"
       subtitle="We greatly appreciate the trust and confidence our clients have placed in Digerati Experts. Your security is our mission, and exceptional service is our standard."
       breadcrumbs={[{ label: "About" }, { label: "Client Bill of Rights" }]}
     >
-      <div className="mx-auto max-w-5xl space-y-12">
-        <div className="rounded-xl border border-de-hairline bg-de-raised p-6 text-center">
-          <p className="text-white/85">
-            We pledge to uphold the <span className="font-semibold text-de-accent-ink">highest standards</span> of
-            technical support, cybersecurity excellence, and customer satisfaction
-          </p>
-        </div>
-
-        <div className="grid gap-6">
-          {rights.map((right, index) => (
-            <article
-              key={right.title}
-              className="de-interactive-card rounded-xl border border-de-hairline bg-de-raised p-6 md:p-8"
-              data-testid={`card-right-${index}`}
-            >
-              <div className="mb-5 flex items-start gap-5">
-                <IconWell icon={right.icon} size="md" surface="dark" />
-                <div>
-                  <h3 className="mb-3 text-xl font-semibold text-white">{right.title}</h3>
-                  <p className="leading-relaxed text-white/80">
-                    <span className="font-medium text-de-accent-ink">You have a right</span>{" "}
+      <Chapter tone="paper" seam={false}>
+        <Container>
+          <ChapterHeader
+            tone="paper"
+            eyebrow="Eight rights"
+            title="What you can hold us to"
+            lede={
+              <>
+                We pledge to uphold the <span className="font-semibold text-de-magenta-paper-ink">highest standards</span>{" "}
+                of technical support, cybersecurity excellence, and customer satisfaction
+              </>
+            }
+          />
+          <ol className="border-t border-[var(--de-paper-hairline)]">
+            {rights.map((right, index) => (
+              <li
+                key={right.title}
+                className="grid gap-5 border-b border-[var(--de-paper-hairline)] py-8 lg:grid-cols-12 lg:gap-14 lg:py-10"
+                data-testid={`card-right-${index}`}
+              >
+                <div className="flex items-start gap-4 lg:col-span-4">
+                  <IconWell icon={right.icon} size="md" surface="light" />
+                  <div>
+                    <span className="font-mono text-xs font-semibold tracking-[0.16em] text-black/55">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <h3 className="mt-1 font-heading text-xl font-semibold leading-snug text-[#1A1228]">{right.title}</h3>
+                  </div>
+                </div>
+                <div className="max-w-[68ch] lg:col-span-8">
+                  <p className="text-base leading-relaxed text-[#3A3448]">
+                    <span className="font-semibold text-de-magenta-paper-ink">You have a right</span>{" "}
                     {right.rightText.replace(/^You have (a |the )?right ?(to)?/i, "")}
                   </p>
+                  <p className="mt-4 border-l-2 border-[#D3126A] pl-4 text-base leading-relaxed text-[#1A1228]">
+                    <span className="font-semibold text-de-magenta-paper-ink">We Pledge</span>{" "}
+                    {right.pledgeText.replace(/^We Pledge /i, "")}
+                  </p>
                 </div>
-              </div>
-              <div className="rounded-r-lg border-l-2 border-[#D3126A] bg-de-bg py-3 pl-4 pr-4 md:ml-[68px]">
-                <p className="text-sm leading-relaxed text-white/75">
-                  <span className="font-semibold text-de-accent-ink">We Pledge</span>{" "}
-                  {right.pledgeText.replace(/^We Pledge /i, "")}
-                </p>
-              </div>
-            </article>
-          ))}
-        </div>
+              </li>
+            ))}
+          </ol>
+        </Container>
+      </Chapter>
 
-        <section className="rounded-2xl border border-de-hairline bg-de-raised p-8 text-center md:p-10">
-          <h2 className="mb-6 text-2xl font-bold text-white md:text-3xl" data-testid="heading-commitment">
-            Our Commitment to Excellence
-          </h2>
-          <p className="text-lg leading-relaxed text-white/80">
-            Most of our clients come from referrals from satisfied customers. We <span className="font-medium text-de-accent-ink">want</span> you to recommend us,
-            but we understand that you will only do this if you are extremely pleased with our services.
-            That's why we work so hard to go above and beyond. The establishment of our Client Bill of Rights,
-            along with our continual investment in people, processes, and technology, clearly demonstrates
-            our unwavering commitment to your success and security.
-          </p>
-        </section>
+      <Chapter tone="well">
+        <Container>
+          <div className="grid gap-8 lg:grid-cols-12 lg:gap-14">
+            <div className="lg:col-span-4">
+              <Eyebrow tone="well" className="mb-4">
+                Why we publish it
+              </Eyebrow>
+              <h2 className="font-heading text-3xl font-semibold leading-tight tracking-[-0.02em] text-white" data-testid="heading-commitment">
+                Our Commitment to Excellence
+              </h2>
+            </div>
+            <p className="max-w-[60ch] text-lg leading-relaxed text-white/80 lg:col-span-8">
+              Most of our clients come from referrals from satisfied customers. We{" "}
+              <span className="font-medium text-white">want</span> you to recommend us, but we understand that you will
+              only do this if you are extremely pleased with our services. That's why we work so hard to go above and
+              beyond. The establishment of our Client Bill of Rights, along with our continual investment in people,
+              processes, and technology, clearly demonstrates our unwavering commitment to your success and security.
+            </p>
+          </div>
+        </Container>
+      </Chapter>
 
-        <div className="rounded-2xl border border-[#D3126A]/40 bg-[#D3126A] px-8 py-10 text-center">
-          <p className="mb-6 text-white">See also our money-back guarantee</p>
-          <Button asChild size="lg" className="h-12 bg-white px-8 font-semibold text-[#D3126A] hover:bg-white/95">
-            <Link href="/about/guarantee" data-testid="link-guarantee">
-              100% Money-Back Guarantee
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <ClosingCta
+        tone="surface"
+        eyebrow="See also"
+        title="See also our money-back guarantee"
+        primary={{ label: "100% Money-Back Guarantee", href: "/about/guarantee", testId: "link-guarantee" }}
+        showPhone={false}
+      />
     </PageTemplate>
   );
 }

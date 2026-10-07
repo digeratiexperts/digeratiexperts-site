@@ -1,14 +1,22 @@
-import { Link } from "wouter";
-import { ArrowRight, Layers, Shield, Users, ClipboardCheck, GitBranch } from "lucide-react";
+import { Layers, Shield, Users, ClipboardCheck, GitBranch } from "lucide-react";
 import { EcosystemProgression } from "@/components/EcosystemProgression";
-import { IconWell } from "@/components/visual/IconWell";
-import { Button } from "@/components/ui/button";
+import {
+  Chapter,
+  Container,
+  ChapterHeader,
+  ClosingCta,
+  FactStrip,
+  FeatureGrid,
+  HeroActions,
+  HeroFacts,
+  IndexedList,
+  StepRail,
+} from "@/components/site/chapters";
 import { PageTemplate } from "@/components/PageTemplate";
 import { useSEO } from "@/hooks/useSEO";
 import { BreadcrumbJsonLd, ServiceJsonLd } from "@/components/JsonLd";
 import { CTA } from "@/lib/ctaCopy";
-import { pricing, formatUserPrice, formatPrice, PRICING_SCOPE_NOTE } from "@/data/pricing";
-import { ProofChip } from "@/components/evidence/ProofChip";
+import { pricing, pricingTiers, formatUserPrice, formatPrice, PRICING_SCOPE_NOTE } from "@/data/pricing";
 import { ProActiveEcosystemDiagram } from "@/components/visual/ProActiveEcosystemDiagram";
 import { AssessmentReportSample } from "@/components/evidence/AssessmentReportSample";
 import { ScrollStory } from "@/scrollstory/ScrollStory";
@@ -40,23 +48,65 @@ export default function ProActiveEcosystemPage() {
     canonical: "/solutions/proactive-ecosystem",
   });
 
+  const tierRows = [
+    {
+      name: "IT",
+      text: (
+        <>
+          Service desk plus the DE Security Foundation: managed endpoint, identity, email, awareness, and security monitoring baseline. Starts at {formatUserPrice("it")} ({formatPrice(pricing.it.monthlyMin)}/mo minimum).
+        </>
+      ),
+    },
+    {
+      name: "Office",
+      text: (
+        <>
+          Adds 24/7 managed detection and response, managed network, stronger identity/email protection, endpoint backup, and an annual technology + cyber review. Starts at {formatUserPrice("office")} ({formatPrice(pricing.office.monthlyMin)}/mo minimum).
+        </>
+      ),
+    },
+    {
+      name: "Business",
+      text: (
+        <>
+          Deepens security operations and response, adds BCDR posture, compliance/risk reporting support, and semi-annual reviews. Starts at {formatUserPrice("business")} ({formatPrice(pricing.business.monthlyMin)}/mo minimum).
+        </>
+      ),
+    },
+    {
+      name: "Enterprise",
+      text: (
+        <>
+          Adds unified posture reporting, deeper compliance reporting, custom BCDR architecture support, privileged access program elements, quarterly executive reviews. Starts at {formatUserPrice("enterprise")} ({formatPrice(pricing.enterprise.monthlyMin)}/mo minimum).
+        </>
+      ),
+    },
+  ];
+
   return (
     <PageTemplate
+      layout="chapters"
+      eyebrow="Solutions · Door 1"
       title="The ProActive Ecosystem"
       subtitle="ProActive is the umbrella — not a single “Office package.” It is a cybersecurity-first managed IT operating model that progresses IT → Office → Business → Enterprise. Each tier is a fit for a different environment, not a merchandising rank."
       breadcrumbs={[{ label: "Solutions", href: "/solutions" }, { label: "ProActive Ecosystem" }]}
       actions={
-        <div className="flex flex-wrap gap-3">
-          <Button asChild className="h-12 bg-[#D3126A] px-6 font-semibold text-white">
-            <Link href="/book">
-              {CTA.primary}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-12 border-white/20 px-6 font-semibold text-white hover:bg-white/10">
-            <Link href="/proactive-ecosystem-pricing">{CTA.secondary}</Link>
-          </Button>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <HeroActions
+            primary={{ label: CTA.primary, href: "/book" }}
+            secondary={{ label: CTA.secondary, href: "/proactive-ecosystem-pricing" }}
+          />
         </div>
+      }
+      heroAside={
+        <HeroFacts
+          title="Starting rates"
+          rows={pricingTiers.map((t) => ({
+            label: t.label,
+            value: `${formatUserPrice(t.id)} · ${formatPrice(t.monthlyMinimum)}/mo min`,
+          }))}
+          footnote="Four fit-based operating models — not a ranking. Final scope is confirmed after a Cyber Risk Assessment."
+        />
       }
     >
       <ServiceJsonLd
@@ -73,198 +123,145 @@ export default function ProActiveEcosystemPage() {
       />
 
       <ScrollStory chapters={CHAPTERS}>
-      <div className="space-y-16">
-          {/* Sourced Contextual Proof Chips */}
-          <div className="flex flex-wrap items-center gap-3">
-            <ProofChip metric="4 MODELS" label="IT · Office · Business · Enterprise" icon={Layers} />
-            <ProofChip metric="8 BLOCKS" label="Engineered Architecture" icon={Shield} />
-            <ProofChip metric="ARIZONA" label="Principal-Led Engagement" icon={Users} />
+        <FactStrip
+          label="ProActive Ecosystem at a glance"
+          facts={[
+            { icon: Layers, title: "4 models", text: "IT · Office · Business · Enterprise" },
+            { icon: Shield, title: "8 blocks", text: "Engineered architecture" },
+            { icon: Users, title: "Arizona", text: "Principal-led engagement" },
+          ]}
+        />
+
+        <Chapter
+          tone="well"
+          seam={false}
+          id="ch-model"
+          data-de-chapter="0"
+          data-sc-act="flow"
+          data-sc-in
+          data-sc-stagger="60"
+        >
+          <Container>
+            <ChapterHeader
+              tone="well"
+              eyebrow="The model"
+              title="Cybersecurity-first IT, one accountable relationship"
+            />
+            <FeatureGrid
+              tone="well"
+              items={[
+                { icon: Shield, title: "Cybersecurity-first IT", text: "Every ProActive tier includes the DE Security Foundation across identity, endpoint, email, awareness, and managed security monitoring. Higher tiers add deeper response, recovery, compliance, and governance." },
+                { icon: Layers, title: "One accountable model", text: "Support, workplace, security operations, and strategy sit in one operating relationship instead of a pile of vendors." },
+                { icon: GitBranch, title: "Fit, not upsell theater", text: "We match users, devices, locations, infrastructure, compliance, and whether you need fully managed or co-managed coverage." },
+              ]}
+            />
+          </Container>
+        </Chapter>
+
+        {/* The peak: the fragmented environment assembles under scroll.
+            Coded visual only; resolves into the real diagram below. */}
+        <section
+          id="ch-architecture"
+          data-de-chapter="1"
+          data-sc-act="pin"
+          data-sc-span="2.2"
+          className="de-peak"
+        >
+          <div data-sc-stage>
+            <EnvironmentAssembly />
+            <p className="de-peak__caption" data-sc-cue="0.5 0.95 0.2 0.3">
+              <strong>One accountable model.</strong> Support, workplace, security
+              operations, and strategy in one operating relationship instead of a
+              pile of vendors.
+            </p>
           </div>
+        </section>
 
-          <section
-            id="ch-model"
-            data-de-chapter="0"
-            data-sc-act="flow"
-            data-sc-in
-            data-sc-stagger="60"
-            className="grid gap-6 md:grid-cols-3"
-          >
-            {[
-              { icon: Shield, title: "Cybersecurity-first IT", body: "Every ProActive tier includes the DE Security Foundation across identity, endpoint, email, awareness, and managed security monitoring. Higher tiers add deeper response, recovery, compliance, and governance." },
-              { icon: Layers, title: "One accountable model", body: "Support, workplace, security operations, and strategy sit in one operating relationship instead of a pile of vendors." },
-              { icon: GitBranch, title: "Fit, not upsell theater", body: "We match users, devices, locations, infrastructure, compliance, and whether you need fully managed or co-managed coverage." },
-            ].map((item) => (
-              <div key={item.title} className="de-hud-card p-6 transition-all duration-200 hover:border-[#D3126A]/40">
-                <IconWell icon={item.icon} size="sm" surface="dark" />
-                <h2 className="mt-4 text-lg font-semibold text-white font-heading">{item.title}</h2>
-                <p className="mt-2 text-sm leading-relaxed text-white/70">{item.body}</p>
-              </div>
-            ))}
-          </section>
-
-          {/* The peak: the fragmented environment assembles under scroll.
-              Coded visual only; resolves into the real diagram below. */}
-          <section
-            id="ch-architecture"
-            data-de-chapter="1"
-            data-sc-act="pin"
-            data-sc-span="2.2"
-            className="de-peak"
-          >
-            <div data-sc-stage>
-              <EnvironmentAssembly />
-              <p className="de-peak__caption" data-sc-cue="0.5 0.95 0.2 0.3">
-                <strong>One accountable model.</strong> Support, workplace, security
-                operations, and strategy in one operating relationship instead of a
-                pile of vendors.
-              </p>
-            </div>
-          </section>
-
-          {/* Flagship Ecosystem Operating Architecture Diagram */}
-          <section className="mb-16">
+        <Chapter tone="surface">
+          <Container>
             <ProActiveEcosystemDiagram />
-          </section>
+          </Container>
+        </Chapter>
 
-          <section
-            id="ch-progression"
-            data-de-chapter="2"
-            data-sc-act="flow"
-            className="mb-16"
-          >
+        <Chapter tone="well" id="ch-progression" data-de-chapter="2" data-sc-act="flow">
+          <Container>
+            <ChapterHeader
+              tone="well"
+              eyebrow="ProActive Ecosystem"
+              title="Four operating models. One matched to your environment."
+              lede="We do not start with a package and pile on add-ons. If Office would need heavy modification, Business is the correct fit for that environment — not universally “better.” User count is a signal, never the sole criterion."
+            />
             <div data-sc-reveal="up" data-sc-reveal-at="0.04 0.4">
-              <EcosystemProgression />
+              <EcosystemProgression bare />
             </div>
-          </section>
+          </Container>
+        </Chapter>
 
-          {/* Discovery Deliverable Sample Excerpt */}
-          <section
-            id="ch-assessment"
-            data-de-chapter="3"
-            data-sc-act="flow"
-            className="mb-16"
-          >
+        <Chapter tone="surface" id="ch-assessment" data-de-chapter="3" data-sc-act="flow">
+          <Container>
             <div data-sc-parallax="-0.5">
               <AssessmentReportSample />
             </div>
-          </section>
+          </Container>
+        </Chapter>
 
-          <section
-            id="ch-capabilities"
-            data-de-chapter="4"
-            data-sc-act="flow"
-            data-sc-in
-            data-sc-stagger="70"
-            className="mb-16 grid gap-10 lg:grid-cols-2"
-          >
-            <div>
-              <h2 className="font-heading text-2xl font-semibold text-white">Capabilities added per tier</h2>
-              <ul className="mt-6 space-y-4">
-                <li className="text-sm leading-relaxed text-white/70">
-                  <span className="font-semibold text-white">IT</span> — service desk plus the DE Security Foundation: managed endpoint, identity, email, awareness, and security monitoring baseline. Starts at {formatUserPrice("it")} ({formatPrice(pricing.it.monthlyMin)}/mo minimum).
-                </li>
-                <li className="text-sm leading-relaxed text-white/70">
-                  <span className="font-semibold text-white">Office</span> — adds 24/7 managed detection and response, managed network, stronger identity/email protection, endpoint backup, and an annual technology + cyber review. Starts at {formatUserPrice("office")} ({formatPrice(pricing.office.monthlyMin)}/mo minimum).
-                </li>
-                <li className="text-sm leading-relaxed text-white/70">
-                  <span className="font-semibold text-white">Business</span> — deepens security operations and response, adds BCDR posture, compliance/risk reporting support, and semi-annual reviews. Starts at {formatUserPrice("business")} ({formatPrice(pricing.business.monthlyMin)}/mo minimum).
-                </li>
-                <li className="text-sm leading-relaxed text-white/70">
-                  <span className="font-semibold text-white">Enterprise</span> — adds unified posture reporting, deeper compliance reporting, custom BCDR architecture support, privileged access program elements, quarterly executive reviews. Starts at {formatUserPrice("enterprise")} ({formatPrice(pricing.enterprise.monthlyMin)}/mo minimum).
-                </li>
-              </ul>
-              <p className="mt-4 text-xs text-white/55">{PRICING_SCOPE_NOTE}</p>
-            </div>
-            <div>
-              <h2 className="font-heading text-2xl font-semibold text-white">How engagement works</h2>
-              <ol className="mt-6 space-y-5">
-                {lifecycle.map((step, i) => (
-                  <li key={step.title} className="flex gap-4">
-                    <span className="font-mono text-xs font-semibold tracking-[0.16em] text-[#F04C97]">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <div>
-                      <p className="font-semibold text-white">{step.title}</p>
-                      <p className="mt-1 text-sm leading-relaxed text-white/60">{step.body}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </section>
+        <Chapter
+          tone="paper"
+          id="ch-capabilities"
+          data-de-chapter="4"
+          data-sc-act="flow"
+          data-sc-in
+          data-sc-stagger="70"
+        >
+          <Container>
+            <ChapterHeader tone="paper" eyebrow="By tier" title="Capabilities added per tier" lede={PRICING_SCOPE_NOTE} />
+            <IndexedList tone="paper" columns={2} items={tierRows.map((r) => ({ title: r.name, text: r.text }))} />
 
-          <section
-            id="ch-fit"
-            data-de-chapter="5"
-            data-sc-act="flow"
-            className="mb-16 grid gap-6 md:grid-cols-2"
-          >
-            <div
-              data-sc-reveal="left"
-              data-sc-reveal-at="0.05 0.42"
-              className="rounded-2xl border border-de-hairline bg-de-raised p-6"
-            >
-              <div className="flex items-center gap-3">
-                <IconWell icon={ClipboardCheck} size="sm" surface="dark" />
-                <h2 className="text-lg font-semibold text-white">Standalone vs ProActive</h2>
-              </div>
-              <p className="mt-4 text-sm leading-relaxed text-white/65">
-                Standalone services solve a specific gap — backup, UCaaS, awareness, a project —
-                when a full operating relationship is not the right fit yet. ProActive is the
-                ongoing model: one accountable partner for day-to-day IT and cybersecurity.
-              </p>
-              <Link href="/solutions/standalone-services">
-                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#F04C97]">
-                  View standalone services
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </span>
-              </Link>
+            <div className="mt-16 border-t border-[var(--de-paper-hairline)] pt-14">
+              <ChapterHeader tone="paper" eyebrow="Engagement" title="How engagement works" layout="stack" />
+              <StepRail tone="paper" steps={lifecycle.map((l) => ({ title: l.title, text: l.body }))} />
             </div>
-            <div
-              data-sc-reveal="right"
-              data-sc-reveal-at="0.12 0.5"
-              className="rounded-2xl border border-de-hairline bg-de-raised p-6"
-            >
-              <div className="flex items-center gap-3">
-                <IconWell icon={Users} size="sm" surface="dark" />
-                <h2 className="text-lg font-semibold text-white">Co-managed vs ProActive</h2>
-              </div>
-              <p className="mt-4 text-sm leading-relaxed text-white/65">
-                Co-managed extends an internal IT team with DE operations, security coverage, and
-                escalation — you keep the team. Fully managed ProActive is for organizations that
-                want DE to own the operating model end to end.
-              </p>
-              <Link href="/solutions/co-managed-it">
-                <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#F04C97]">
-                  See co-managed IT
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </span>
-              </Link>
-            </div>
-          </section>
+          </Container>
+        </Chapter>
 
-          <section
-            id="ch-compare"
-            data-de-chapter="6"
-            data-sc-act="flow"
-            data-sc-in
-            className="rounded-2xl border border-de-hairline bg-de-raised p-6 md:flex md:items-center md:justify-between md:gap-8 md:p-8"
-          >
-            <div className="max-w-xl">
-              <h2 className="text-xl font-semibold text-white">Compare capabilities and operating depth</h2>
-              <p className="mt-2 text-sm leading-relaxed text-white/60">
-                The comparison matrix shows what is included at each tier — not which package is
-                “highest” or “best.” Final scope is confirmed after a Cyber Risk Assessment.
-              </p>
+        <Chapter tone="surface" id="ch-fit" data-de-chapter="5" data-sc-act="flow">
+          <Container>
+            <ChapterHeader tone="surface" eyebrow="Fit" title="Standalone and co-managed" layout="stack" />
+            <div data-sc-reveal="up" data-sc-reveal-at="0.05 0.42">
+              <FeatureGrid
+                tone="surface"
+                columns={2}
+                items={[
+                  {
+                    icon: ClipboardCheck,
+                    title: "Standalone vs ProActive",
+                    text: "Standalone services solve a specific gap — backup, UCaaS, awareness, a project — when a full operating relationship is not the right fit yet. ProActive is the ongoing model: one accountable partner for day-to-day IT and cybersecurity.",
+                    href: "/solutions/standalone-services",
+                    linkLabel: "View standalone services",
+                  },
+                  {
+                    icon: Users,
+                    title: "Co-managed vs ProActive",
+                    text: "Co-managed extends an internal IT team with DE operations, security coverage, and escalation — you keep the team. Fully managed ProActive is for organizations that want DE to own the operating model end to end.",
+                    href: "/solutions/co-managed-it",
+                    linkLabel: "See co-managed IT",
+                  },
+                ]}
+              />
             </div>
-            <Link href="/proactive-ecosystem-pricing">
-              <span className="mt-4 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#D3126A] px-6 text-base font-semibold text-white hover:bg-[#e01874] md:mt-0">
-                Compare all packages
-                <ArrowRight className="h-4 w-4" />
-              </span>
-            </Link>
-          </section>
-      </div>
+          </Container>
+        </Chapter>
+
+        <div id="ch-compare" data-de-chapter="6" data-sc-act="flow" data-sc-in>
+          <ClosingCta
+            tone="well"
+            eyebrow="Compare"
+            title="Compare capabilities and operating depth"
+            lede="The comparison matrix shows what is included at each tier — not which package is “highest” or “best.” Final scope is confirmed after a Cyber Risk Assessment."
+            primary={{ label: "Compare all packages", href: "/proactive-ecosystem-pricing" }}
+            secondary={{ label: CTA.primary, href: "/book" }}
+          />
+        </div>
       </ScrollStory>
     </PageTemplate>
   );

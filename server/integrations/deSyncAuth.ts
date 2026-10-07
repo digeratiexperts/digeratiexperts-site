@@ -114,17 +114,16 @@ export function buildSignedHeaders(input: {
     "X-DE-Timestamp": timestamp,
     "X-DE-Source": input.source,
     "X-DE-Signature": signature,
-    // Keep compatibility headers during the migration window. Receivers prefer
-    // HMAC when present; these can be removed after legacy auth is retired.
-    Authorization: `Bearer ${input.secret}`,
-    "x-de-sync-token": input.secret,
+    // No raw-secret copy (Authorization / x-de-sync-token): the Hub verifies
+    // the HMAC whenever it is present, and the raw secret beside it let anyone
+    // who saw one request skip the HMAC entirely.
   };
 }
 
 export function verifySignedRequest(
   req: Request,
   direction: SyncDirection,
-): { ok: true; eventId: string; source: string; legacy: boolean } | { ok: false; status: number; error: string } {
+): { ok: true; eventId: string; source: string; legacy: boolean; eventIdBound: boolean } | { ok: false; status: number; error: string } {
   const candidates = acceptedSecrets(direction);
   if (candidates.length === 0) {
     return { ok: false, status: 503, error: "Integration not configured" };
@@ -165,7 +164,7 @@ export function verifySignedRequest(
       if (candidate.legacy) {
         console.warn("[de-sync] legacy integration credential used");
       }
-      return { ok: true, eventId: rawEventId, source, legacy: candidate.legacy };
+      return { ok: true, eventId: rawEventId, source, legacy: candidate.legacy, eventIdBound: true };
     }
 
     return { ok: false, status: 401, error: "Invalid integration signature" };
@@ -194,7 +193,7 @@ export function verifySignedRequest(
     if (candidate.legacy) {
       console.warn("[de-sync] legacy integration credential used");
     }
-    return { ok: true, eventId, source, legacy: candidate.legacy };
+    return { ok: true, eventId, source, legacy: candidate.legacy, eventIdBound: false };
   }
 
   return { ok: false, status: 401, error: "Unauthorized" };
@@ -206,9 +205,10 @@ export function requireDeSyncAuth(direction: SyncDirection) {
     if (!result.ok) {
       return res.status(result.status).json({ error: result.error });
     }
-    (req as Request & { deSync?: { eventId: string; source: string } }).deSync = {
+    (req as Request & { deSync?: { eventId: string; source: string; eventIdBound: boolean } }).deSync = {
       eventId: result.eventId,
       source: result.source,
+      eventIdBound: result.eventIdBound,
     };
     return next();
   };

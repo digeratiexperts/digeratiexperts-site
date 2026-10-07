@@ -261,6 +261,37 @@ Describe 'Boot rescue' {
         ($plan | Where-Object { $_.id -eq 'startnet' }).write.text | Should -Match 'Start-DERescue.ps1'
         [array]::IndexOf($ids, 'unmount') | Should -BeLessThan ([array]::IndexOf($ids, 'iso'))
     }
+    It 'sends the rescue handoff to the Hub only with the client''s Hub account number, and records the Hub''s reason when refused' {
+        $h = New-DEHandoff -Serial 'PF3ABC12' -Manufacturer 'LENOVO' -Model 'X1' -Technician 'jrpetro' -Version '1.7.0'
+        $sec = ConvertTo-SecureString 'rescue-signing-secret-4321' -AsPlainText -Force
+        # no account number (or a name instead of a number): nothing is sent, and the reason says what is missing
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp { throw 'must not be called without an account' }
+        foreach ($bad in @('', '   ', 'alamo', '0', '-5', '12a')) {
+            $r = Send-DERescueHandoffToHub -Handoff $h -HubUrl 'https://hub.example' -AccountId $bad -Secret $sec
+            $r.sent | Should -Be $false; $r.detail | Should -Match 'account number'
+        }
+        Assert-MockCalled -ModuleName DE.Contracts Invoke-DEHubHttp -Scope It -Times 0
+        (Test-DEHubAccountId '1576') | Should -Be $true; (Test-DEHubAccountId ' 42 ') | Should -Be $true
+        # with the account number: one signed device.rescue_handoff the Hub can verify, filed under that account, never the secret
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp { $global:DETest.Sent = @{ Uri = $Uri; Headers = $Headers; Body = $Body }; @{ status = 'applied' } }
+        $r = Send-DERescueHandoffToHub -Handoff $h -HubUrl 'https://hub.example' -AccountId '1576' -Secret $sec
+        $r.sent | Should -Be $true; $r.detail | Should -Match 'Hub account 1576'
+        $s = $global:DETest.Sent
+        $ev = $s.Body | ConvertFrom-Json
+        $ev.eventType | Should -Be 'device.rescue_handoff'; $ev.canonicalAccountId | Should -Be '1576'; $ev.entityId | Should -Be $h.deviceKey; $ev.eventId | Should -Be $r.eventId
+        Get-DEHubSignature -Method POST -Path '/api/integrations/v1/techconsole/events' -Timestamp $s.Headers['X-DE-Timestamp'] -EventId $ev.eventId -Body $s.Body -Secret 'rescue-signing-secret-4321' | Should -Be $s.Headers['X-DE-Signature']
+        $s.Body | Should -Not -Match 'rescue-signing-secret-4321'; ($s.Headers.Values -join ' ') | Should -Not -Match 'rescue-signing-secret-4321'
+        # a refusal carries the Hub's own reason, not only the HTTP status
+        Mock -ModuleName DE.Contracts Invoke-DEHubHttp {
+            $e = New-Object System.Management.Automation.ErrorRecord ((New-Object System.Exception 'The remote server returned an error: (422) Unprocessable Entity.'), 'HubRefused', 'InvalidOperation', $null)
+            $e.ErrorDetails = New-Object System.Management.Automation.ErrorDetails '{"error":"account not mapped"}'
+            throw $e
+        }
+        $r = Send-DERescueHandoffToHub -Handoff $h -HubUrl 'https://hub.example' -AccountId '999999' -Secret $sec
+        $r.sent | Should -Be $false; $r.detail | Should -Match 'Hub refused: account not mapped'; $r.detail | Should -Match '422'
+        $r.detail | Should -Not -Match 'rescue-signing-secret-4321'
+        $sec.Dispose()
+    }
     It 'rescue scripts parse and use no PowerShell 7-only syntax' {
         foreach ($f in @(Get-ChildItem -LiteralPath (Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'rescue') -Include '*.ps1', '*.psm1' -Recurse)) {
             $tokens = $null; $errs = $null

@@ -33,34 +33,481 @@ claims:
   - id: codex-portal-claude-takeover
     issue: 365
     owner: codex
-    subsystem: portal-vendor-previews-and-marketing-claims
+    subsystem: portal-sample-actions-and-remaining-claims
     branch: chatgpt/portal-claude-takeover-20261002
-    base_sha: e2d4ffa4910a12bbe80521cd67fa6ef1aa3da758
+    base_sha: c99c3f5120abafc318d63f4c5c5d60ef4776830e
     files:
-      - VENDOR_SETUP_STATUS.md
-      - docs/CLAIMS-REGISTER.md
-      - docs/CLAUDE-TAKEOVER-20261002.md
-      - .env.example
-      - client/src/components/ExitIntentPopup.tsx
       - client/src/pages/portal/PortalVPN.tsx
       - client/src/pages/portal/PortalCytracom.tsx
       - client/src/pages/portal/PortalShipCenter.tsx
-      - client/src/pages/sections/ (assessment and enquiry deadline copy only)
-      - client/src/pages/solutions/ (quote and workplace timing copy only)
-      - client/src/pages/routes/ (Critical SLA qualifiers and onboarding copy only)
+      - client/src/pages/sections/ (remaining deadline copy only)
+      - client/src/pages/solutions/ (remaining deadline copy only)
+      - client/src/pages/routes/servicePages.tsx (onboarding copy only)
       - client/src/pages/locations/LocationServicePage.tsx
-      - client/src/pages/about/Team.tsx
-      - client/src/pages/about/MissionValues.tsx
       - client/src/pages/QuoteConfirmation.tsx
       - client/src/pages/versions/v7/sections/13-lead-form.tsx
       - client/src/pages/versions/v7/sections/16-contact-footer.tsx
+      - .env.example
+      - docs/CLAIMS-REGISTER.md
+      - docs/CLAUDE-TAKEOVER-20261002.md
     status: active
     started: 2026-10-02
     note: >-
-      Joe reassigned the supplied Claude handoff. PR 343 is merged.
-      Local decisions preserved, findings ownership explicit, unavailable vendor
-      actions disabled, unsupported deadlines removed. QA credentials and provider
-      API access remain external prerequisites. No new production release.
+      Joe reassigned the supplied handoff; 343 merged. Reconciled newer main,
+      preserving popup ownership, vendor adapters, staff records and claims fixes.
+      Only remaining unsupported deadlines and misleading sample controls changed.
+      Provider access and approved QA secrets remain external prerequisites.
+  - id: paynow-stripe-tax
+    owner: claude
+    subsystem: store-warehouse
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 4478a80
+    files:
+      - server/services/salesTax.ts, server/services/salesTax.test.ts
+      - shared/storeTaxCodes.ts (new), shared/storeTaxCodes.test.ts (new)
+      - server/secureStoreCheckout.ts (the Pay Now route's billing address and tax step only)
+      - client/src/pages/store/Checkout.tsx (billing address fields and the BILLING_ADDRESS_REQUIRED branch only)
+      - client/src/lib/billingAddress.ts (new), client/src/pages/store/Checkout.tax.test.ts
+      - deploy/vps/env.production.example (STRIPE_TAX_* lines), docs/STORE-WAREHOUSE.md (Pay Now sales tax section)
+      - artifacts/visual-qa/paynow-stripe-tax/**
+    status: verified-live
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: "merge it and build the stripe tax step", after
+      delegating the tax choice. Staff Pay Now asks Stripe Tax (Calculations
+      API only) for sales tax; Zoho Payments still charges. Ships switched
+      off: with STRIPE_TAX_SECRET_KEY unset, Pay Now behaves as today and
+      steps aside to a quote. Fails closed on any Stripe error, an item
+      without a confirmed tax code, or an Arizona client while Stripe has no
+      Arizona registration. Public Store (Door 2) never reaches it.
+      RELEASED 2026-10-03: merged as cdfe6e8 (PR 411, on Joe's "merge 411 AND
+      BRING IT TO PRODUCTION"). The CI run for cdfe6e8 passed every job,
+      including the production deploy (finished 21:10Z); the staff Checkout
+      chunk on production carried the billing address fields from 21:10:53Z.
+      Playwright at 390 and 1440 against production code (API replies stubbed
+      in the browser) confirmed the address fields, the empty-address check,
+      the address payload and the step-aside to a quote. Still switched off: no
+      STRIPE_TAX_SECRET_KEY on the server yet. Separation re-checked live.
+      Evidence: artifacts/visual-qa/paynow-stripe-tax/live/. VERIFIED LIVE.
+      Files released.
+  - id: de-msadmin-worker-loop
+    owner: claude
+    subsystem: msp-ai-kit
+    branch: claude/msp-ai-skills-prompts-htqi09
+    base_sha: 823e4d076073037e6f1cd028be8596e08638ef18
+    files:
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/DE-HubWorker.ps1 (new)
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/DE-Microsoft-Admin.psm1 (the header, the result version, the dot-source and the export line only)
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/DE-Microsoft-Admin.psd1
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/README.md
+      - .claude/skills/msp-ai-kit/windows/microsoft/DE-Microsoft-Admin/MIGRATION-STANDARD.md (the closing note only)
+      - .claude/skills/msp-ai-kit/windows/tests/HubWorker.Tests.ps1 (new)
+      - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md (the Intelligence Hub jobs subsection, one line of the tests list, and the boot rescue Hub-send lines only)
+      - .claude/skills/msp-ai-kit/windows/rescue/DE.Rescue.psm1 (Test-DEHubAccountId and Send-DERescueHandoffToHub, plus the export line)
+      - .claude/skills/msp-ai-kit/windows/rescue/Start-DERescue.ps1 (the -HubAccountId parameter, its config default and the Hub send)
+      - .claude/skills/msp-ai-kit/windows/rescue/New-DERescueMedia.ps1 (-HubAccountId into rescue.config.json)
+      - .claude/skills/msp-ai-kit/windows/console/tests/Components.Tests.ps1 (one new Boot rescue test)
+      - .claude/skills/msp-ai-kit/windows/console/VERSION, .claude/skills/msp-ai-kit/windows/DE-TECH-TOOL-ARCHITECTURE.md (1.10.1 line only)
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: "continue the tech tool work", decision 3A (build the
+      worker loop). Also Joe, 2026-10-03: "also fix the boot rescue bug": the
+      end-to-end rehearsal found the rescue's Hub send never passed the client's
+      Hub account number, so the Hub refused it every time (422 account not
+      mapped); fixed in DE Tech Tool 1.10.1. DE Microsoft Admin 0.5.0 adds Invoke-DEHubJobLoop, the
+      worker side of the Hub's job queue merged in Intelligence-Hub PR 313
+      (master 7ac27b00): claim, verify with Invoke-DEMicrosoftJob, run, post
+      a result with nothing secret in it (ConvertTo-DEHubSafeResult), keep an
+      unposted result on disk for the next run. Overlap check: no open PR;
+      open ACTIVE issues 270 and 272 (DE Tech Tool) touch DE.Security and
+      Loader.Tests.ps1, not DE-Microsoft-Admin.
+  - id: desk-composer-suggestions
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: cdfe6e8
+    files:
+      - client/src/lib/deskComposerSuggestions.ts (new), client/src/lib/deskComposerSuggestions.test.ts (new)
+      - client/src/components/ZohoASAPWidget.tsx (composer field wrapper, suggestion state/effects, the full-screen hint's composerHintShowing input, composer CSS only)
+      - client/src/components/ZohoASAPWidget.desk-shell.test.ts (two pinned regexes)
+      - .cursor/skills/de-desk-ui/tokens-and-structure.md (composer line), design/approved/ask-de-text-box-suggestions-2026-10-03.md (new)
+      - artifacts/visual-qa/desk-composer-suggestions/**
+    status: verified-live
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: "like how Suno mobile has in the user text box
+      suggestions of what they might say, do that for DE". Page-aware examples
+      rise into the empty Ask DE box one at a time; finite passes; gold inside
+      the text box hint; decoration only (aria-hidden); none under reduced
+      motion. Suno's exact motion could not be verified from the build
+      environment, so the effect is a common rotating-placeholder pattern
+      pending Joe's review.
+      RELEASED 2026-10-03: merged as 49a6247 (PR 414, on Joe's "merge 414 and
+      bring it to production"). The CI run for 49a6247 passed every job,
+      including the production deploy; the Desk chunk on production carried
+      the suggestions from 21:26:19Z. Playwright at 390 and 1440 on the live
+      homepage: first example 3.2s / 4.0s after the Desk opened, gold inside
+      the text box hint, all five in order, the textarea's placeholder hidden
+      under them, "Type the issue…" back after the pass, focus restarts a
+      pass, typing ends it, none under reduced motion, no page errors.
+      smoke:desk against production 88/88. Evidence:
+      artifacts/visual-qa/desk-composer-suggestions/live/. VERIFIED LIVE.
+      Files released.
+  - id: paynow-tax-step-aside
+    owner: claude
+    subsystem: store-warehouse
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 459e366
+    files:
+      - client/src/pages/store/Checkout.tsx (the TAX_RATE_UNAVAILABLE branch of the Pay Now error handling only)
+      - client/src/lib/warehouseContactHandoff.ts (one new handoff reason), client/src/lib/warehouseContactHandoff.test.ts
+      - client/src/pages/store/Checkout.tax.test.ts (new)
+      - artifacts/visual-qa/paynow-tax-step-aside/**
+    status: verified-live
+    started: 2026-10-03
+    note: >-
+      PR 280 made staff Digital Warehouse Pay Now fail closed on sales tax: with
+      no verified AZ TPT table on the server, checkout answers 503
+      TAX_RATE_UNAVAILABLE, and the page showed a red "Checkout Failed" with the
+      technical message, leaving the client on Pay Now. Joe asked to see the two
+      fixes (step aside to a quote, or charge untaxed as before PR 280) and then
+      delegated the choice ("pick the most optimized answers yourself"). Claude
+      chose the step-aside: Pay Now switches to Request Quote with the contact
+      handoff, like the existing hardware and recurring-billing cases. Nobody is
+      charged without tax; the server's fail-closed rule is unchanged. Public
+      Store (Door 2) is unaffected: it never calls the Pay Now endpoint.
+      RELEASED 2026-10-03: merged as 97b3d86 (PR 407, under Joe's delegation).
+      The CI run for 97b3d86 passed every job, including the production deploy
+      (finished 19:15Z). The staff Checkout chunk on production
+      (Checkout-B1SAVqOH.js, last-modified 19:15:20Z) carries the new message
+      and the tax_unavailable handoff. A Playwright check at 1440 against
+      production, with every API reply stubbed in the browser, showed Pay Now
+      switching to Request Quote with the new toast. Separation re-checked live:
+      the public Store checkout chunk never references the Pay Now route, and
+      /internal/warehouse and its session answer 404 to anonymous visitors.
+      Evidence: artifacts/visual-qa/paynow-tax-step-aside/. VERIFIED LIVE.
+      Files released.
+  - id: portal-bridge-signed-calls
+    owner: claude
+    subsystem: hub-integration-auth
+    branch: claude/portal-bridge-signed-calls
+    base_sha: 823e4d0
+    files:
+      - server/integrations/deSyncAuth.ts
+      - server/integrations/techSalesClient.ts (portal-bridge calls + signedGet only)
+      - server/integrations/portalBridgeSigning.test.ts
+    status: active
+    started: 2026-10-03
+    note: >-
+      Sign portal-bridge GETs to the Hub over pathname + search and stop sending
+      the raw sync token (Authorization / x-de-sync-token). Needs Hub PR 329
+      (live 2026-10-03). Overlaps staff-warehouse-ops-console on
+      techSalesClient.ts only in name: that branch is fully merged into main.
+  - id: staff-warehouse-ops-console
+    owner: cursor
+    subsystem: digital-warehouse
+    branch: cursor/staff-warehouse-ops-20261003
+    base_sha: 9e3c28599d46a63f340117a1d01292e210b1d874
+    files:
+      - client/src/pages/store/WarehouseApp.tsx
+      - client/src/pages/store/WarehouseShell.tsx
+      - client/src/pages/store/WarehouseHome.tsx
+      - client/src/pages/store/WarehouseHubCatalog.tsx
+      - client/src/pages/store/WarehouseVendors.tsx
+      - client/src/pages/store/warehouseIsolation.test.ts
+      - client/src/pages/store/ManagedStore.tsx
+      - client/src/pages/store/CoManagedStore.tsx
+      - client/src/pages/store/Checkout.tsx
+      - client/src/pages/store/ProductDetail.tsx
+      - client/src/pages/store/QuoteRequest.tsx
+      - client/src/pages/store/QuoteConfirmation.tsx
+      - client/src/pages/store/OrderConfirmation.tsx
+      - client/src/components/portal/shell/portalNav.ts
+      - server/warehouseRoutes.ts
+      - server/warehouseRoutes.test.ts
+      - server/integrations/techSalesClient.ts
+      - docs/STORE-WAREHOUSE.md
+    status: merged
+    started: 2026-10-03
+    note: >-
+      Phase 1 staff ops console for /internal/warehouse (replace old client
+      StoreLanding). Phase 2 staff Hub catalog proxy. Phase 3 Pax8 health
+      surface via Hub. Admin lock unchanged. Companion Hub work on
+      Intelligence-Hub staff-catalog + pax8-connector.
+      RELEASED 2026-10-03: merged as PR 371 (merge commit 60db03e,
+      18:22Z) and deployed with main 823e4d0 (18:40Z). Follow-up PR 409
+      (merge commit 1c9140a, 21:00Z, deployed 21:05Z): catalog and Pax8
+      status fall back to UNKNOWN instead of a default CONNECTED, and the
+      on-hand stock panel renders on ops home only. Production evidence:
+      anonymous /internal/warehouse and /api/internal/warehouse/{session,
+      catalog,connectors,stock} answer a generic 404 with no Location; Joe's
+      signed-in admin screenshot showed ops home with Hub catalog
+      LOCAL_WORKSHOP and Pax8 UNKNOWN. MERGED, not yet VERIFIED LIVE: the
+      admin views after PR 409 (stock panel placement, Hub feed, Vendors) are
+      unchecked. Companion Hub PR 325 is still an unmerged draft, so
+      LOCAL_WORKSHOP / UNKNOWN are expected until it merges. Files released.
+  - id: site-design-pass-2026-10-03
+    owner: claude
+    subsystem: marketing-pages
+    branch: claude/exciting-fermi-py7e0b
+    base_sha: 8c16090
+    files:
+      - client/src/components/site/** (new chapter primitives)
+      - client/src/components/PageTemplate.tsx, PremiumCTASection.tsx, LegalDocumentLayout.tsx, ServiceCapabilityMatrix.tsx (footer link)
+      - client/src/pages/** interior marketing pages (industries, locations, solutions, pricing, services, about, trust, legal, contact, book, support, resources, campaigns, 404)
+      - client/src/pages/marketingMainTarget.test.ts, ProActiveEcosystemPricing.landmark.test.ts, marketingFallbackNotFound.test.ts
+    status: verified-live
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: "go hard with design on all the pages of the website.
+      Like every single page." Run in Maintenance Mode (ambitious) per
+      DESIGN-AUTHORITY.md: every interior marketing page recomposed on shared
+      chapter primitives (well / surface / paper rhythm); homepage, /version-*,
+      Portal, Desk and Store colours out of scope. Rendered audit of 143 public
+      routes at 390 and 1440 before merge: horizontal overflow 17 -> 0 pages,
+      wrong h1 count 12 -> 0, sub-32px targets 242 -> 9 (8 false positives),
+      crashes 3 -> 0 (unknown brief/datasheet/campaign slugs recursed through
+      NotFound). RELEASED 2026-10-03: merged as 0cc9de28 (PR 370, Joe). The CI
+      run for 0cc9de28 passed every job, including "Deploy and verify
+      production VPS" (finished 17:08Z) and the Cloudflare purge. Production
+      verification: https://digeratiexperts.com serves the new bundle; the
+      live Healthcare chunk contains the recomposed page ("Program focus",
+      "Exposure check", "Digerati Experts manages") and the live
+      LegalDocumentLayout chunk contains the new "Legal documents" index.
+      Limit: rendered screenshots against production were not taken from the
+      agent environment (its headless browser does not trust the egress proxy
+      CA and TLS verification was not disabled); the 390/1440 render audit ran
+      on the merged code locally. VERIFIED LIVE (bundle). Files released.
+  - id: site-truth-pass
+    owner: claude
+    subsystem: marketing-claims
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: 2092d946
+    files:
+      - client/src/data/credentials.ts
+      - client/src/data/credentials.test.ts
+      - client/src/components/site/VerifiedCredentials.tsx
+      - client/src/pages/about/Team.tsx
+      - client/src/pages/about/ComplianceCertifications.tsx (credentials chapter only)
+      - client/src/pages/about/MissionValues.tsx (response value only)
+      - client/src/pages/about/Guarantee.tsx (superlative paragraph only)
+      - client/src/pages/legal/PrivacyPolicy.tsx (4.3 certifications line only)
+      - client/src/pages/ThankYouSuccess.tsx (trust badges only)
+      - client/src/pages/locations/LocationServicePage.tsx (stats and partner note only)
+      - client/src/pages/routes/locationPages.tsx (Chandler, Phoenix, Mesa entries)
+      - client/src/pages/routes/pageNarratives.ts (Operate step only)
+      - client/src/pages/routes/servicePages.tsx (first-response benefit only)
+      - client/src/pages/store/ManagedStore.tsx (stats row only)
+      - client/src/pages/support/RemoteSupport.tsx (availability card only)
+      - client/src/pages/sections/DigeratiNewsletterSection.tsx (partner chips only)
+      - client/src/pages/resources/CyberFacts.tsx
+      - client/src/pages/resources/Ebook.tsx (chapters 1 and 3 only)
+      - client/src/pages/support/SubmitTicket.tsx (response tiers only)
+      - client/src/pages/about/TwentyOneQuestions.tsx (question 18 note only)
+      - client/src/assets/images/ebook-defending-digital-realm-cover.webp
+      - design/source/ebook-cover/**
+      - docs/CLAIMS-REGISTER.md
+      - artifacts/visual-qa/site-truth-pass/**
+    status: verified-live
+    started: 2026-10-03
+    released: 2026-10-03
+    pr: 396
+    merge_sha: 333522bfaa2aa02699f1634bd96ab18b3aec3834
+    verification: >-
+      Merged on Joe's "merge 396" (2026-10-03). Main CI and the production
+      deploy passed; release.txt read 333522bf (equal to main). Fifteen public
+      routes at 390 and 1440 on production show none of the old claims; the
+      new ebook cover asset is served; the Team page renders the verified
+      credentials panel. Evidence: artifacts/visual-qa/site-truth-pass/live/.
+    note: >-
+      Joe, 2026-10-03: make the claims PR 370 flagged authentic, branded and
+      true rather than remove or flag them. Response times bound to the SLA's
+      critical tier; Phoenix and Mesa served from the Chandler office;
+      credentials only from a verified list with issuer links; Google Partner
+      badge replaced; ebook stories labelled as examples and tied to sourced
+      facts; new code-drawn ebook cover; developer notes off Cyber Facts.
+  - id: tenant-files-durable
+    issue: 259
+    owner: claude
+    subsystem: client-portal-files
+    branch: claude/fix-259-tenant-files-durable
+    base_sha: 05093e67
+    files:
+      - migrations/0004_portal_tenant_files_durable.sql (new)
+      - shared/schema.ts (portalTenantFiles deleted_at / deleted_by only)
+      - server/storage.ts (tenant file methods on IStorage + both impls; keeps findTenantFileByFileUrl from PR 310)
+      - server/portalTenantFileRoutes.ts (new; tenant file routes lifted from routes.ts unchanged + delete scoped to company)
+      - server/routes.ts (tenant file route block replaced by registerPortalTenantFileRoutes; object-route resolver kept verbatim)
+      - server/rawIntegrationRouteGuards.test.ts (deleteTenantFile calls pass the owning company)
+      - server/portalTenantFileRoutes.test.ts, server/storage.tenantFiles.test.ts, server/tenantFilesFakeDb.testkit.ts (new)
+    status: active
+    started: 2026-10-03
+    note: >-
+      PR 373. Tenant file metadata durable in portal_tenant_files with soft
+      delete. Reconciled by merge onto main 05093e67 after the release review
+      hold: main's file-URL tenant ownership (findTenantFileByFileUrl, PR 310)
+      and its cache fallback kept; soft-deleted rows excluded from every read
+      including the ownership lookup. PR 379 is stacked on this branch.
+  - id: portal-data-sources
+    owner: claude
+    subsystem: client-portal-integrations
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: e2d4ffa0
+    files:
+      - server/portalIntegrations.ts
+      - server/portalManualRecords.ts
+      - server/integrations/**
+      - server/routes.ts (registration lines only)
+      - shared/schema.ts (portalManualRecords only)
+      - migrations/0003_portal_manual_records.sql
+      - client/src/lib/portalIntegrations.ts
+      - client/src/components/portal/IntegrationNotices.tsx
+      - client/src/components/portal/shell/portalNav.ts
+      - client/src/pages/portal/PortalLayout.tsx
+      - client/src/pages/portal/PortalVPN.tsx
+      - client/src/pages/portal/PortalCytracom.tsx
+      - client/src/pages/portal/PortalShipCenter.tsx
+      - scripts/qa/portal-prod-check.mjs
+      - deploy/vps/env.production.example (portal data-source section)
+      - server/portalDataSources.ts
+      - server/portalDataSources.test.ts
+      - artifacts/visual-qa/portal-data-sources-prep/**
+      - client/src/pages/portal/PortalAdminDataSources.tsx
+      - client/src/App.tsx (one admin route line)
+      - client/src/lib/csv.ts
+      - docs/vendor-requests/TIMUS-API-REQUEST.md
+      - docs/runbooks/PORTAL-QA-LOGIN.md
+      - .github/workflows/portal-prod-check.yml
+      - client/src/pages/portal/PortalSignup.tsx (Turnstile token only)
+      - VENDOR_SETUP_STATUS.md (Test login paragraph only)
+      - server/index.ts (manual-records import body limit line only)
+      - client/src/lib/csv.test.ts
+    status: verified-live
+    started: 2026-10-03
+    released: 2026-10-03
+    pr: 375
+    merge_sha: 3097df07b7d98154437bf99770d9b4658882fe3d
+    verification: >-
+      Merged on Joe's "Merge 375" (2026-10-03). Main CI and the production
+      deploy passed; release.txt read 3097df07, then 2092d946 with the rest of
+      the batch. /api/portal/integrations and /api/portal/admin/data-sources
+      answer 401 signed out; PortalAdminDataSources, PortalShipCenter
+      (carrierStatus) and PortalSignup (turnstileToken) chunks are served.
+      Evidence: artifacts/visual-qa/live-2026-10-03/. Follow-ups: issue 395.
+    note: >-
+      Joe, 2026-10-03: "write all of them then i will tell you what to do from
+      there" (open answers 2a/2b/2c VPN, phone and shipping sources; 3 test
+      login; 5 popup). Every option is built and off by default: sample stays
+      until PORTAL_*_PROVIDER is set. The popup answer landed on main via
+      #369 ("Yours to keep") before this branch merged, so this branch keeps
+      main's popup and drops its own switch. #369 also records VPN = Timus
+      (no adapter possible until Timus sends API docs), phone = Cytracom UCaaS
+      and shipping = staff-entered: the cytracom and manual adapters here
+      match; the other adapters stay off unless Joe picks them. Joe,
+      2026-10-03: "build in preparation of getting each of these": Timus
+      provider slot and vendor request list, CSV import of staff-entered
+      records, UPS/FedEx/USPS tracking for staff-entered shipments, Cytracom
+      call history, a DE-admin Data Sources setup page, and a manual
+      production QA workflow. All off until their env vars are set.
+  - id: focus-keeps-shape
+    owner: claude
+    subsystem: a11y
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: a8d7e6c
+    files:
+      - client/src/index.css (the global :focus-visible rule, the duplicate *:focus-visible rule, and .focus-ring:focus-visible only)
+      - client/src/pages/sections/ReferenceHeroSection.tsx (the primary hero button's className and style only)
+      - client/src/focusVisible.test.ts (new)
+      - client/src/components/SiteBottomBar.tsx (one comment)
+      - design/UI-STYLE-RULES.md (the all-states line), .cursor/skills/de-desk-ui/tokens-and-structure.md (a11y line)
+      - artifacts/visual-qa/focus-shape/**
+    status: verified-live
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03, on the launcher's "rectangular focus outline": the same
+      rule squared off every rounded control. The global focus rules set
+      border-radius 4px, which beat Tailwind's rounded-* utilities while a
+      control had focus: 319 of 417 keyboard stops on /, /store and /contact at
+      1440 and 390 changed shape (pills, 8-12px buttons and cards to 4px). A
+      second, later *:focus-visible rule drew a violet outline on four Store
+      summaries. Both radius lines and the violet rule go; after the fix 0 of
+      417 stops change shape and every native outline is one colour. The
+      audit also found the hero's primary button had no visible focus at all:
+      an inline box-shadow (its glow) replaced the Button's focus ring. The
+      glow becomes a shadow class, so the ring and the glow compose. Joe
+      approved starting this ("All approved"); merge authority: Joe.
+      RELEASED 2026-10-03: merged as fca0009 (PR 386, on Joe's "Go-ahead merge
+      it all"). The CI run for fca0009 passed every job, including the
+      production deploy (finished 16:48Z); production showed the hero button's
+      focus ring from 16:51Z. The keyboard audit against
+      https://digeratiexperts.com (/, /store, /contact at 1440 and 390, 417
+      stops) found 0 stops changing shape on focus and no violet outline;
+      smoke:desk passed 88/88 against production. Evidence:
+      artifacts/visual-qa/focus-shape/live/. VERIFIED LIVE. Files released.
+  - id: de-object-storage-per-object-acl
+    owner: claude
+    subsystem: object-storage
+    branch: claude/object-storage-acl
+    base_sha: 8fc5524
+    files:
+      - server/replit_integrations/object_storage/objectAccess.ts
+      - server/replit_integrations/object_storage/objectAccess.test.ts
+      - server/replit_integrations/object_storage/objectStorageAcl.routes.test.ts
+      - server/replit_integrations/object_storage/routes.ts
+      - server/replit_integrations/object_storage/index.ts
+      - server/routes.ts (registerObjectStorageRoutes call only)
+      - server/storage.ts (findTenantFileByFileUrl on IStorage + both impls)
+    status: active
+    started: 2026-10-01
+    note: >-
+      Per-object read ACL for private object storage, the follow-up from the
+      closed PR 300 reconciliation (its invoice/rate-limiter pieces already
+      landed in PR 299). GET /objects/:path moves off blanket admin-only to a
+      default-deny per-object decision: DE admin, the object's GCS ACL
+      owner/grantee, or a member of the tenant (client) that owns the object's
+      path in portal_tenant_files may read; everyone else, including other
+      authenticated tenants, gets 403. Admin keeps full access, so this is a
+      strict, safe widening that enables non-admin tenant reads. Pure decision
+      function (authorizeObjectRead) plus a route integration test. The
+      tenant-owner evidence read (findTenantFileByFileUrl) is DB-backed
+      (portal_tenant_files) with a cache fallback so it survives restarts;
+      full reliability of the tenant-file flow still depends on durable writes
+      (tenant-file durability, issues 233/259). Reconciled onto main d5f3479.
+  - id: ask-de-launcher-gold
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: 9e3c285
+    files:
+      - client/src/components/SiteBottomBar.tsx (the Ask DE launcher button and badge, the chooser header badge, the "Get Help" choice label, the first-visit pulse colour)
+      - client/src/index.css (phones only: --de-chrome-inset 0.75rem to 1.25rem inside the existing max-width 639px block)
+      - client/src/components/SiteBottomBar.launcher.test.ts (new)
+      - scripts/desk-browser-smoke.mjs (launcher checks)
+      - design/DESIGN-AUTHORITY.md, design/UI-STYLE-RULES.md, brand/README.md, .cursor/rules/de-desk-design.mdc, .cursor/skills/de-desk-ui/tokens-and-structure.md, docs/SITE-VISUAL-TASKS.md (launcher lines)
+      - design/approved/ask-de-launcher-gold-2026-10-03.md (new)
+      - artifacts/visual-qa/ask-de-launcher/**
+    status: verified-live
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03, after the launcher mockup: "B on desktop, C on mobile,
+      with the same speech mark and gold tone throughout". Where "Ask DE" is
+      written beside it, the launcher is a Signal Gold ring on charcoal with a
+      white mark that stays white on hover; where it stands alone (phones, the
+      compact Store launcher) it is a solid gold disc with a dark mark. One
+      white focus ring that keeps the round shape. The chooser header uses the
+      same badge. "Get Help" becomes "Ask a Question". On phones the bottom
+      chrome moves to 20px from the edge, on the page's own margin. Merge
+      authority: Joe.
+      RELEASED 2026-10-03: merged as a8d7e6c (PR 348, on Joe's "All approved").
+      The CI run for a8d7e6c passed every job, including the production deploy
+      (finished 10:46Z). Production served the gold launcher from 10:46:53Z.
+      smoke:desk against https://digeratiexperts.com passed 88/88, including
+      the nine launcher checks. Live measurements: a 40px solid gold disc 20px
+      from the edge at 390; the gold ring with a white mark at 768 and 1440; a
+      round focus ring at every width; the chooser header badge matching; "Ask
+      a Question"; the compact Store launcher gold. Evidence:
+      artifacts/visual-qa/ask-de-launcher/live/. VERIFIED LIVE. Files released.
   - id: de-auth-token-identity-binding
     owner: claude
     subsystem: portal-auth
@@ -72,7 +519,7 @@ claims:
       - server/portalAuthFailClosed.test.ts (two added cases)
       - server/legacyAuthRetired.ts, server/legacyAuthRetired.test.ts (legacy /api/auth/register and /api/auth/login answer 410)
       - server/routes.ts (legacy register/login handlers and their now-unused helpers removed)
-    status: active
+    status: merged
     started: 2026-10-01
     note: >-
       Issue 236 (P0), confirmed on a local production build after Joe's "so
@@ -90,6 +537,7 @@ claims:
       /api/auth/register and /api/auth/login token minters are retired (410
       Gone, end-to-end test). Follow-up (own PR): gate the PATCH
       /api/portal/profile email change on a confirmation to the new address.
+      RELEASED 2026-10-03: merged as PR 329 (merge commit ae69ba0a, 2026-10-03T02:40Z). MERGED, not yet recorded as VERIFIED LIVE; production verification is pending. Files released.
   - id: de-desk-hardening
     owner: claude
     subsystem: de-desk
@@ -103,7 +551,7 @@ claims:
       - scripts/desk-browser-smoke.mjs, package.json (smoke:desk; tailwindcss-animate moved to devDependencies), package-lock.json (dev markers only), .github/workflows/ci.yml (one line after smoke:door2)
       - .cursor/skills/de-desk-ui/tokens-and-structure.md (a11y)
       - artifacts/visual-qa/desk-hardening/**
-    status: active
+    status: verified-live
     started: 2026-10-03
     note: >-
       Joe, 2026-10-03, on "nothing to act on": "nothing to improve, nothing to
@@ -118,6 +566,15 @@ claims:
       the production dependency audit (a new braces advisory with no patch,
       reaching prod only via the build-time plugin tailwindcss-animate); Joe
       chose to fold the fix into this PR: the plugin moves to devDependencies.
+      RELEASED 2026-10-03: merged as 8c16090 (PR 342, on Joe's "all
+      approved"). The CI run for 8c16090 passed every job: the production
+      dependency audit (now clean), smoke:desk 79/79 against the production
+      build, and "Deploy and verify production VPS" (01:30Z). VERIFIED LIVE
+      01:30:40Z: production serves ZohoASAPWidget-DRPXOS2H.js; smoke:desk run
+      against https://digeratiexperts.com passed 79/79 (fit at 390, 768, 1440,
+      844x390 and 720x450, keyboard trap and focus return, hint sequence,
+      polish invariants; network stubbed, nothing sent to production).
+      Screenshots: artifacts/visual-qa/desk-hardening/live/. Files released.
   - id: portal-people-pick-company
     owner: claude
     subsystem: client-portal-pages
@@ -209,7 +666,7 @@ claims:
       - .claude/skills/msp-ai-kit/windows/PROTECTING-THE-TOOL.md
       - .claude/skills/msp-ai-kit/windows/README-WINDOWS.md (the Licences section only)
       - .claude/skills/msp-ai-kit/windows/DE-TECH-TOOL-ARCHITECTURE.md (the version line only)
-    status: active
+    status: verified-live
     started: 2026-10-02
     note: >-
       Joe, 2026-10-02: "ALL APPROVED, CONTINUE" (decision 4A): the DE Tech
@@ -220,7 +677,12 @@ claims:
       revoked in either list; a release build refreshes the shipped
       trust/revoked.json; a licence pinned to another build (bid) is refused
       as wrong-build. Overlap check: no open PR and no remote branch touches
-      .claude/skills/msp-ai-kit on d5f3479a.
+      .claude/skills/msp-ai-kit on d5f3479a. RELEASED 2026-10-02: merged as
+      5162d737 (PR 341). A Tool-only change under
+      .claude/skills/msp-ai-kit/windows/ that ships through
+      New-DEReleasePackage.ps1, not a server deploy; the site main deploy
+      after it passed; the Windows PowerShell 5.1 + WPF CI job passed on the
+      PR head. Files released.
   - id: de-desk-expand-hint
     owner: claude
     subsystem: de-desk
@@ -481,7 +943,7 @@ claims:
       - server/campaignAliasRedirects.ts
       - server/campaignAliasRedirects.test.ts
       - server/index.ts (the campaign alias redirect registration only)
-    status: active
+    status: merged
     started: 2026-10-01
     note: >-
       Found by a link sweep after Joe's "so everything is complete and we cant
@@ -491,6 +953,7 @@ claims:
       /support/system-status rendered while answering HTTP 404 in production,
       and /ads/<slug> and /lp/<slug> answered 404 before a browser redirect
       that dropped the query string. Exact paths, so unknown slugs stay 404.
+      RELEASED 2026-10-03: merged as PR 328 (squash e7203266). MERGED, not yet recorded as VERIFIED LIVE; production verification is pending. Files released.
   - id: de-org-department-tenant-boundary
     owner: claude
     subsystem: portal-org
@@ -500,7 +963,7 @@ claims:
       - server/portalDepartmentRoutes.ts
       - server/portalDepartmentRoutes.test.ts
       - server/routes.ts (the two department routes and their imports only)
-    status: active
+    status: merged
     started: 2026-10-01
     note: >-
       Issue 254 (P0), verified still present on main 576aa76d after Joe's
@@ -512,6 +975,7 @@ claims:
       order; the company now comes from the signed-in user unless the caller is
       a DE admin, and the IT contact must be in the same company. The People
       page's only call (create with a name) is unaffected.
+      RELEASED 2026-10-03: merged as PR 326 (squash e5945de3). MERGED, not yet recorded as VERIFIED LIVE; production verification is pending. Files released.
   - id: de-desk-store-seed-door2
     owner: claude
     subsystem: de-desk
@@ -1303,3 +1767,70 @@ claims:
 # ZohoASAPWidget.tsx seeds STORE_ADVISOR_SEED on pathname.includes("/store")
 # instead of isDoor2Path, so /solutions/request pages miss it. Whoever takes
 # them claims the two files first.
+  - id: de-homepage-v8
+    owner: claude
+    subsystem: homepage-design-concepts
+    branch: claude/sleepy-archimedes-mccoav
+    base_sha: a2ef961d
+    files:
+      - client/src/pages/versions/v8/** (new; a copy of v7 renamed v8)
+      - client/src/pages/versions/registry.ts (the v8 entry)
+      - client/src/pages/versions/README.md (the v8 row)
+      - client/src/App.tsx (the /version-8 route and its own-bottom-bar exclusion)
+      - server/spaKnownPaths.ts (/version-0, /version-8)
+      - client/src/pages/DigeratiHomepage.tsx (optional structuredData prop only, default on)
+      - client/src/App.tsx (the / route renders HomepageV8; /version-8 redirects)
+      - server/index.ts (the /version-8 301 to /, beside the other path redirects)
+      - client/src/hooks/useDockAutohide.test.ts (the bottom-bar contract)
+    status: verified-live
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: "one main version based on version 7 but with my
+      preferences included", keeping the other two (the live homepage at /
+      and Version 7 at /version-7) exactly as they are; "start"; he approves
+      before merge. V8 is a renamed copy of V7 (.v8 scope, so the two
+      previews never share styles) with his notes applied: hero kept
+      ("perfect"); the trust strip takes the live homepage's layout on the
+      white band; the Why Arizona cards (and the example report) drop
+      #f4f4f5 for white; light-band icon tiles fixed from the dark tile to the
+      tinted accent. Noindex preview only; / unchanged. Joe's later notes
+      (rest of V7, then the live homepage) land here as he gives them.
+      Joe, later 2026-10-03: "anything i didnt include was fine on both
+      versions or the new one" (V8 notes complete); V8 is the fusion of the
+      best of V7 and the current homepage, and the current homepage is kept
+      as "version 0": /version-0 renders DigeratiHomepage noindex inside
+      VersionFrame without the homepage JSON-LD (not in the registry, which
+      numbers from 1). Merged via #368.
+      Joe, 2026-10-03, after #368: "its approved. do it. and keep the other 2
+      versions safe", then "bring everything we've worked on live". / now
+      renders Version 8 with the homepage title, description, canonical and
+      JSON-LD; /version-8 is a 301 to /; the previous homepage stays at
+      /version-0 and Version 7 at /version-7, both noindex, untouched.
+      Merged via #400; verified live 2026-10-03 on release e76a6777: / renders
+      Version 8 (index, follow; Organization/WebSite JSON-LD), /version-8 is a
+      301 to / (query kept), /version-0 and /version-7 answer 200 noindex.
+  - id: portal-light-ambient
+    owner: claude
+    subsystem: client-portal-shell
+    branch: claude/nifty-newton-uk9g7t
+    pr: 408
+    base_sha: cef31956cd747e3eac02a2e38ceb41c69a125054
+    files:
+      - client/src/styles/portal.css (light theme block and the .pt-canvas glow only)
+      - client/src/pages/portal/PortalLayout.tsx (pt-canvas class on SidebarInset only)
+      - client/src/styles/portalLightTheme.test.ts (new)
+      - artifacts/visual-qa/portal-light-ambient/**
+    status: active
+    started: 2026-10-03
+    note: >-
+      Joe, 2026-10-03: portal light mode is liked but "the light grey I would
+      replace with an ambent color". Options rendered (A amber, B Ambient, C
+      keep grey); Joe: "B, cards but show me first". The light field and
+      wells go orchid with a magenta and a violet glow over the content area;
+      cards stay white, the rail stays graphite, dark mode untouched. HELD for
+      Joe's approval of the built screens before merge. Concurrency audit
+      2026-10-03: no open PR touches these files (407, 406, 405 are
+      disjoint; 407 and 405 add ledger claims at the top, this one is at the
+      end); the claims that list PortalLayout.tsx (portal-data-sources,
+      portal-followups-2026-10-02, portal-redesign-control-room) are all
+      verified-live.

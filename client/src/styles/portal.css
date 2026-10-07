@@ -70,24 +70,29 @@ body.de-portal-scope {
   min-height: 100dvh;
 }
 
+/*
+ * Light theme: "Ambient" (Joe, 2026-10-03, option B). Brand light instead of grey: a soft orchid
+ * field and orchid wells, lit by a magenta and a violet glow from the top of the content area
+ * (.pt-canvas below); cards stay white, the rail stays graphite.
+ */
 .de-portal[data-theme="light"],
 body.de-portal-scope[data-portal-theme="light"] {
-  --background: 36 24% 96%;          /* #f7f5f2 paper */
+  --background: 290 42% 96%;         /* #f8f1f9 orchid */
   --foreground: 12 24% 8%;           /* #1a1210 */
   --card: 0 0% 100%;
   --card-foreground: 12 24% 8%;
   --popover: 0 0% 100%;
   --popover-foreground: 12 24% 8%;
-  --muted: 36 21% 92%;
-  --muted-foreground: 20 7% 33%;
-  --border: 33 12% 85%;
-  --input: 33 12% 80%;
+  --muted: 292 38% 92%;
+  --muted-foreground: 290 12% 30%;
+  --border: 290 20% 85%;
+  --input: 290 16% 74%;
   --ring: 333 84% 35%;
   --primary: 333 84% 35%;            /* #A30E52 magenta paper ink */
   --primary-foreground: 0 0% 100%;
-  --secondary: 36 21% 92%;
+  --secondary: 292 38% 92%;
   --secondary-foreground: 12 24% 8%;
-  --accent: 33 18% 90%;
+  --accent: 300 36% 89%;
   --accent-foreground: 12 24% 8%;
   --destructive: 0 84% 45%;
   --destructive-foreground: 0 0% 100%;
@@ -98,8 +103,17 @@ body.de-portal-scope[data-portal-theme="light"] {
   --pt-info: 21 94 117;              /* #155e75 */
   --pt-brand: 163 14 82;
 
-  --pt-topbar: 36 24% 96% / 0.85;
+  --pt-topbar: 290 42% 96% / 0.82;
   color-scheme: light;
+}
+
+/* The ambient light: magenta from the top right, violet from the top left, fixed while content scrolls. */
+.de-portal[data-theme="light"] .pt-canvas,
+body.de-portal-scope[data-portal-theme="light"] .pt-canvas {
+  background-image:
+    radial-gradient(1000px 520px at 92% -6%, rgb(211 18 106 / 0.13), transparent 64%),
+    radial-gradient(900px 480px at 8% -10%, rgb(91 69 224 / 0.12), transparent 62%);
+  background-attachment: fixed;
 }
 
 /* The sidebar stays graphite in both themes, so its state colours stay the

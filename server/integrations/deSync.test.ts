@@ -331,6 +331,22 @@ describe("lifecycle A–H", () => {
     expect(await getHubProjection("quote", "88")).toMatchObject({ status: "accepted", quoteId: 88 });
   });
 
+  it("rejects a signed event id that does not match the body", async () => {
+    const envelope = createDeSyncEnvelope({
+      eventType: "order.created",
+      source: "techsales",
+      entityType: "order",
+      entityId: "ord-mismatch",
+      payload: { orderNumber: "SO-9" },
+    });
+    const res = mockRes();
+    const req = mockReq({ body: envelope }) as Request & { deSync?: { eventId: string; eventIdBound: boolean } };
+    req.deSync = { eventId: "22222222-2222-4222-8222-222222222222", eventIdBound: true };
+    await handleHubEvents(req, res);
+    expect(res.statusCode).toBe(401);
+    expect(await getHubProjectionRecord("order", "ord-mismatch")).toBeNull();
+  });
+
   it("keeps portalClientId on a website lead envelope", async () => {
     await enqueueWebsiteCommand(
       {

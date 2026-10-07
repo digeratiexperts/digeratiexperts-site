@@ -6,6 +6,7 @@ vite.config.ts.*
 *.tar.gz
 .env
 .env.*
+server/data/warehouse-on-hand.json
 # the template is safe to track (no values)
 !.env.example
 *.pem

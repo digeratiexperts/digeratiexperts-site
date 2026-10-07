@@ -1,27 +1,15 @@
 import { useState } from "react";
 import { PageTemplate } from "@/components/PageTemplate";
-import { Button } from "@/components/ui/button";
-import { motion, useReducedMotion } from "framer-motion";
 import { useSEO } from "@/hooks/useSEO";
 import { ServiceJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
 import {
-  Shield,
-  Clock,
-  CheckCircle,
-  ArrowRight,
-  Server,
   Cloud,
   HardDrive,
-  FileCheck,
   AlertTriangle,
   RefreshCw,
   ClipboardCheck,
   Users,
-  Phone,
-  ChevronDown,
-  ChevronUp,
-  Check,
-  X,
+  Server,
   Zap,
   Database,
   MonitorCheck,
@@ -30,14 +18,28 @@ import {
   Timer,
   Play,
   Settings,
-  BarChart3
+  BarChart3,
+  ArrowRight,
 } from "lucide-react";
-import { PRIMARY_PHONE } from "@/data/companyContact";
 import { CTA } from "@/lib/ctaCopy";
-import { ProofChip } from "@/components/evidence/ProofChip";
 import { EvidenceFrame } from "@/components/evidence/EvidenceFrame";
-import { HUDFrame } from "@/components/evidence/HUDFrame";
-import { StatusToken } from "@/components/evidence/StatusToken";
+import { IconWell } from "@/components/visual/IconWell";
+import {
+  Chapter,
+  CheckList,
+  Container,
+  ChapterHeader,
+  ClosingCta,
+  FactStrip,
+  FaqChapter,
+  FeatureGrid,
+  HeroActions,
+  HeroFacts,
+  IndexedList,
+  StepRail,
+  buttonPrimary,
+  cardDark,
+} from "@/components/site/chapters";
 
 const bcdrData = {
   packages: [
@@ -192,36 +194,9 @@ const testingSteps = [
   { step: 3, title: "Report", description: "Document results, identify gaps, adjust procedures", icon: BarChart3 }
 ];
 
-function FAQItem({ question, answer, isOpen, onToggle, index }: { 
-  question: string; 
-  answer: string; 
-  isOpen: boolean; 
-  onToggle: () => void; 
-  index: number 
-}) {
-  return (
-    <div className="overflow-hidden rounded-xl border border-de-hairline bg-de-raised">
-      <button
-        onClick={onToggle}
-        className="flex w-full items-center justify-between p-5 text-left hover:bg-de-bg/60 transition-colors"
-        aria-expanded={isOpen}
-        data-testid={`faq-toggle-${index}`}
-      >
-        <span className="font-semibold text-white pr-4">{question}</span>
-        {isOpen ? (
-          <ChevronUp className="w-5 h-5 text-de-accent-ink flex-shrink-0" />
-        ) : (
-          <ChevronDown className="w-5 h-5 text-de-accent-ink flex-shrink-0" />
-        )}
-      </button>
-      {isOpen && (
-        <div className="px-5 pb-5 text-white/70 leading-relaxed">
-          {answer}
-        </div>
-      )}
-    </div>
-  );
-}
+const paperField =
+  "min-h-11 w-full rounded-lg border border-[var(--de-paper-hairline)] bg-white px-4 py-2.5 text-[#1A1228] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]";
+const paperLabel = "mb-2 block text-sm font-medium text-[#3A3448]";
 
 function RPOPickerComponent() {
   const [criticalSystems, setCriticalSystems] = useState<string>("1-5");
@@ -242,132 +217,104 @@ function RPOPickerComponent() {
   const recommendation = getRecommendation();
 
   return (
-    <div className="rounded-2xl border border-de-hairline bg-de-raised p-8">
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="rounded-xl border border-[var(--de-paper-hairline)] bg-white p-6 md:p-8">
+      <div className="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <div>
-          <label htmlFor="picker-systems" className="block text-white/70 text-sm mb-2">Critical Systems</label>
-          <select
-            id="picker-systems"
-            value={criticalSystems}
-            onChange={(e) => setCriticalSystems(e.target.value)}
-            className="w-full rounded-lg border border-de-hairline bg-de-bg px-4 py-3 text-white focus:border-[#D3126A] focus:outline-none"
-            data-testid="picker-systems"
-          >
+          <label htmlFor="picker-systems" className={paperLabel}>Critical Systems</label>
+          <select id="picker-systems" value={criticalSystems} onChange={(e) => setCriticalSystems(e.target.value)} className={paperField} data-testid="picker-systems">
             <option value="1-5">1–5 systems</option>
             <option value="6-15">6–15 systems</option>
             <option value="16+">16+ systems</option>
           </select>
         </div>
-        
+
         <div>
-          <label htmlFor="picker-rto" className="block text-white/70 text-sm mb-2">Target RTO</label>
-          <select
-            id="picker-rto"
-            value={targetRTO}
-            onChange={(e) => setTargetRTO(e.target.value)}
-            className="w-full rounded-lg border border-de-hairline bg-de-bg px-4 py-3 text-white focus:border-[#D3126A] focus:outline-none"
-            data-testid="picker-rto"
-          >
+          <label htmlFor="picker-rto" className={paperLabel}>Target RTO</label>
+          <select id="picker-rto" value={targetRTO} onChange={(e) => setTargetRTO(e.target.value)} className={paperField} data-testid="picker-rto">
             <option value="72h">72 hours</option>
             <option value="24h">24 hours</option>
             <option value="4h">4 hours</option>
             <option value="1h">1 hour</option>
           </select>
         </div>
-        
+
         <div>
-          <label htmlFor="picker-rpo" className="block text-white/70 text-sm mb-2">Target RPO</label>
-          <select
-            id="picker-rpo"
-            value={targetRPO}
-            onChange={(e) => setTargetRPO(e.target.value)}
-            className="w-full rounded-lg border border-de-hairline bg-de-bg px-4 py-3 text-white focus:border-[#D3126A] focus:outline-none"
-            data-testid="picker-rpo"
-          >
+          <label htmlFor="picker-rpo" className={paperLabel}>Target RPO</label>
+          <select id="picker-rpo" value={targetRPO} onChange={(e) => setTargetRPO(e.target.value)} className={paperField} data-testid="picker-rpo">
             <option value="24h">24 hours</option>
             <option value="8h">8 hours</option>
             <option value="1h">1 hour</option>
             <option value="15m">15 minutes</option>
           </select>
         </div>
-        
+
         <div>
-          <label id="picker-warm-standby-label" className="block text-white/70 text-sm mb-2">Warm Standby</label>
+          <label id="picker-warm-standby-label" className={paperLabel}>Warm Standby</label>
           <button
             type="button"
             aria-pressed={warmStandby}
             aria-labelledby="picker-warm-standby-label"
             onClick={() => setWarmStandby(!warmStandby)}
-            className={`w-full px-4 py-3 rounded-lg border transition-colors ${
-              warmStandby 
-                ? 'bg-de-accent border-de-hairline text-white' 
-                : 'border-de-hairline bg-de-bg text-white/80'
-            }`}
+            className={`${paperField} text-left transition-colors ${warmStandby ? "border-[#A30E52] bg-[#D3126A]/10 font-semibold" : ""}`}
             data-testid="picker-standby"
           >
-            {warmStandby ? 'Yes, Required' : 'No, Not Needed'}
+            {warmStandby ? "Yes, Required" : "No, Not Needed"}
           </button>
         </div>
       </div>
 
-      <div className="bg-de-raised border border-de-hairline rounded-xl p-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="rounded-xl border border-[var(--de-paper-hairline)] bg-[#F3EEE8] p-6">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <p className="text-white/60 text-sm mb-1">Recommended tier based on your selections:</p>
-            <p className="text-2xl font-bold text-white">BCDR {recommendation.tier}</p>
-            <p className="text-white/60 text-sm mt-2">{recommendation.notes}</p>
+            <p className="mb-1 text-sm text-[#3A3448]">Recommended tier based on your selections:</p>
+            <p className="font-heading text-2xl font-semibold text-[#1A1228]">BCDR {recommendation.tier}</p>
+            <p className="mt-2 text-sm text-[#3A3448]">{recommendation.notes}</p>
           </div>
-          <Button
-            asChild
-            className="font-semibold"
-            variant="brand"
-            data-testid="btn-picker-quote"
-          >
-            <a href="/book">
-              Get Exact Scope + Quote
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </a>
-          </Button>
+          <a href="/book" className={buttonPrimary("paper")} data-testid="btn-picker-quote">
+            Get Exact Scope + Quote
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </a>
         </div>
       </div>
     </div>
   );
 }
 
-export default function BackupDisasterRecovery() {
-  const prefersReducedMotion = useReducedMotion() ?? false;
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+const tierName = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
+export default function BackupDisasterRecovery() {
   useSEO({
     title: "Backup & Disaster Recovery (BCDR) | Digerati Experts",
     description: "Recover in hours, not days. BCDR with documented RPO/RTO targets, scheduled restore testing, and DR runbooks. Your business comes back up on a timeline you define.",
     canonical: "/solutions/backup-disaster-recovery"
   });
 
-  const fadeInUp = prefersReducedMotion ? {} : {
-    initial: { opacity: 0, y: 20 },
-    whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true },
-    transition: { duration: 0.5 }
-  };
+  const faqs = bcdrData.faqs;
 
   return (
-    <PageTemplate 
-      title="Backup & Disaster Recovery" 
+    <PageTemplate
+      layout="chapters"
+      eyebrow="Solutions · Business continuity"
+      title="Backup & Disaster Recovery"
       subtitle="Documented RPO/RTO targets, scheduled restore testing, and runbooks your team can follow. Your business comes back up on a timeline you define."
       breadcrumbs={[{ label: "Solutions", href: "/solutions" }, { label: "Backup & Disaster Recovery" }]}
       actions={
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild variant="brand" size="lg" className="h-12 px-6 font-semibold" data-testid="btn-hero-assessment">
-            <a href="/book">
-              {CTA.primary}
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </a>
-          </Button>
-          <Button asChild variant="outline" size="lg" className="h-12 border-white/20 px-6 font-semibold text-white hover:bg-white/10" data-testid="btn-hero-quote">
-            <a href="#packages">Get a BCDR Quote</a>
-          </Button>
+          <HeroActions
+            primary={{ label: CTA.primary, href: "/book", testId: "btn-hero-assessment" }}
+            secondary={{ label: "Get a BCDR Quote", href: "#packages", testId: "btn-hero-quote" }}
+          />
         </div>
+      }
+      heroAside={
+        <HeroFacts
+          title="Recovery targets by tier"
+          rows={bcdrData.packages.map((pkg) => ({
+            label: pkg.name.replace("BCDR ", ""),
+            value: `RPO ${pkg.rpo} · RTO ${pkg.rto}`,
+          }))}
+          footnote="Targets are documented in your agreement and proven by scheduled restore tests."
+        />
       }
     >
       <ServiceJsonLd
@@ -380,66 +327,47 @@ export default function BackupDisasterRecovery() {
         { name: "Solutions", url: "/solutions" },
         { name: "Backup & Disaster Recovery", url: "/solutions/backup-disaster-recovery" }
       ]} />
-      <div className="space-y-20">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="inline-flex items-center gap-2 rounded-full border border-de-hairline bg-de-raised px-3 py-1.5 text-sm font-medium text-white/80">
-            <AlertTriangle className="h-4 w-4 text-de-accent-ink" />
-            $1.53M average ransomware recovery cost (Sophos 2025)
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <ProofChip metric="IMMUTABLE" label="Air-Gapped Copies" icon={HardDrive} />
-            <ProofChip metric="TESTED" label="Verified Cadence" icon={RefreshCw} />
-            <ProofChip metric="ARIZONA" label="Local Recovery Team" icon={Users} />
-          </div>
-        </div>
+      <FactStrip
+        label="Backup and recovery at a glance"
+        facts={[
+          { icon: AlertTriangle, title: "$1.53M average ransomware recovery cost", text: "Sophos 2025" },
+          { icon: HardDrive, title: "Immutable, air-gapped copies", text: "Protection against ransomware" },
+          { icon: RefreshCw, title: "Tested on a verified cadence", text: "Annual, quarterly or monthly by tier" },
+          { icon: Users, title: "Arizona recovery team", text: "Local engineers who run your restores" },
+        ]}
+      />
 
-        {/* What We Protect */}
-        <motion.section {...fadeInUp}>
-          <div className="flex flex-wrap justify-center gap-6 md:gap-12">
-            {bcdrData.protectedSystems.map((system, index) => (
-              <div key={index} className="flex items-center gap-3 text-white/70">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-de-hairline bg-de-raised">
-                  <system.icon className="w-6 h-6 text-de-accent-ink" />
-                </div>
+      <Chapter tone="well" seam={false}>
+        <Container>
+          <ChapterHeader tone="well" eyebrow="Plain English" title="BCDR in 30 Seconds" />
+          <FeatureGrid
+            tone="well"
+            items={[
+              { icon: HardDrive, title: "Backup", text: "Copies of your data, stored securely, with immutable protection against ransomware" },
+              { icon: Timer, title: "Recovery Targets", text: "Agreed RPO (data loss limit) and RTO (downtime limit) documented in your agreement" },
+              { icon: ClipboardCheck, title: "Tested Recovery", text: "Regular restore tests with documented procedures—proven, not assumed" },
+            ]}
+          />
+          <ul className="mt-12 flex flex-wrap gap-x-10 gap-y-5 border-t border-[var(--de-hairline)] pt-8" aria-label="What we protect">
+            {bcdrData.protectedSystems.map((system) => (
+              <li key={system.name} className="flex items-center gap-3 text-white/80">
+                <IconWell icon={system.icon} surface="dark" size="sm" />
                 <span className="font-medium">{system.name}</span>
-              </div>
+              </li>
             ))}
-          </div>
-        </motion.section>
+          </ul>
+        </Container>
+      </Chapter>
 
-        {/* BCDR in Plain English */}
-        <motion.section {...fadeInUp}>
-          <div className="rounded-2xl border border-de-hairline bg-de-raised p-8 md:p-12">
-            <h2 className="text-3xl font-bold text-white mb-6 text-center">BCDR in 30 Seconds</h2>
-            <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-de-raised flex items-center justify-center mx-auto mb-4 border border-white/10">
-                  <HardDrive className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="font-semibold text-white mb-2 font-heading text-lg">Backup</h3>
-                <p className="text-white/60 text-sm">Copies of your data, stored securely, with immutable protection against ransomware</p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-de-raised flex items-center justify-center mx-auto mb-4 border border-white/10">
-                  <Timer className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="font-semibold text-white mb-2 font-heading text-lg">Recovery Targets</h3>
-                <p className="text-white/60 text-sm">Agreed RPO (data loss limit) and RTO (downtime limit) documented in your agreement</p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-de-raised flex items-center justify-center mx-auto mb-4 border border-white/10">
-                  <ClipboardCheck className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="font-semibold text-white mb-2 font-heading text-lg">Tested Recovery</h3>
-                <p className="text-white/60 text-sm">Regular restore tests with documented procedures—proven, not assumed</p>
-              </div>
-            </div>
-          </div>
-        </motion.section>
-
-        {/* Evidence Artifact: Restore Verification Drill */}
-        <motion.section {...fadeInUp}>
+      <Chapter tone="surface">
+        <Container>
+          <ChapterHeader
+            tone="surface"
+            eyebrow="Example evidence"
+            title="What a restore drill looks like"
+            lede="An example of the report a quarterly restore verification produces."
+          />
           <EvidenceFrame
             classification="EXAMPLE"
             title="Quarterly BCDR Restore Verification Runbook"
@@ -449,306 +377,181 @@ export default function BackupDisasterRecovery() {
             timestamp="Cadence: Quarterly"
             sourceNote="Digerati Experts Continuity Engineering Audit Spec"
             variant="dark"
-            className="max-w-4xl mx-auto"
+            className="max-w-4xl"
           >
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="rounded-lg border border-white/10 bg-black/40 p-3">
-                  <p className="font-mono text-[10px] text-white/50 uppercase">Tested Target</p>
-                  <p className="text-sm font-bold text-white font-mono mt-0.5">Primary Domain Controller & ERP</p>
+                  <p className="font-mono text-[10px] uppercase text-white/50">Tested Target</p>
+                  <p className="mt-0.5 font-mono text-sm font-bold text-white">Primary Domain Controller & ERP</p>
                 </div>
                 <div className="rounded-lg border border-white/10 bg-black/40 p-3">
-                  <p className="font-mono text-[10px] text-white/50 uppercase">Achieved RTO</p>
-                  <p className="text-sm font-bold text-emerald-400 font-mono mt-0.5">2h 14m (SLA: 4h)</p>
+                  <p className="font-mono text-[10px] uppercase text-white/50">Achieved RTO</p>
+                  <p className="mt-0.5 font-mono text-sm font-bold text-emerald-400">2h 14m (SLA: 4h)</p>
                 </div>
                 <div className="rounded-lg border border-white/10 bg-black/40 p-3">
-                  <p className="font-mono text-[10px] text-white/50 uppercase">Data Integrity Check</p>
-                  <p className="text-sm font-bold text-emerald-400 font-mono mt-0.5">100% Checksum Verified</p>
+                  <p className="font-mono text-[10px] uppercase text-white/50">Data Integrity Check</p>
+                  <p className="mt-0.5 font-mono text-sm font-bold text-emerald-400">100% Checksum Verified</p>
                 </div>
               </div>
 
-              <div className="rounded-lg border border-white/5 bg-[#0e0b14] p-4 font-mono text-xs text-white/80 space-y-2">
-                <p className="text-[11px] text-white/65 uppercase tracking-wider pb-1 border-b border-white/5">
+              <div className="space-y-2 rounded-lg border border-white/5 bg-[#0e0b14] p-4 font-mono text-xs text-white/80">
+                <p className="border-b border-white/5 pb-1 text-[11px] uppercase tracking-wider text-white/65">
                   EXECUTED RESTORE SEQUENCE
                 </p>
-                <div className="flex items-center justify-between text-xs pt-1">
+                <div className="flex items-center justify-between gap-3 pt-1 text-xs">
                   <span>1. Immutable snapshot mount in isolated hypervisor</span>
-                  <span className="text-emerald-400 font-semibold">PASS (14m)</span>
+                  <span className="shrink-0 font-semibold text-emerald-400">PASS (14m)</span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center justify-between gap-3 text-xs">
                   <span>2. Database integrity & transaction log consistency verification</span>
-                  <span className="text-emerald-400 font-semibold">PASS (38m)</span>
+                  <span className="shrink-0 font-semibold text-emerald-400">PASS (38m)</span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center justify-between gap-3 text-xs">
                   <span>3. Application mock login & critical record query validation</span>
-                  <span className="text-emerald-400 font-semibold">PASS (22m)</span>
+                  <span className="shrink-0 font-semibold text-emerald-400">PASS (22m)</span>
                 </div>
               </div>
             </div>
           </EvidenceFrame>
-        </motion.section>
+        </Container>
+      </Chapter>
 
-        {/* RPO/RTO Picker */}
-        <motion.section {...fadeInUp} id="picker">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-white mb-4">Find Your Recovery Targets</h2>
-            <p className="text-white/60 max-w-2xl mx-auto">
-              Answer a few questions to get a recommended tier and implementation notes
-            </p>
-          </div>
+      <Chapter tone="paper" id="picker" className="scroll-mt-28">
+        <Container>
+          <ChapterHeader
+            tone="paper"
+            eyebrow="Tier finder"
+            title="Find Your Recovery Targets"
+            lede="Answer a few questions to get a recommended tier and implementation notes"
+          />
           <RPOPickerComponent />
-        </motion.section>
+        </Container>
+      </Chapter>
 
-        {/* Key Features */}
-        <motion.section {...fadeInUp}>
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Key BCDR Capabilities</h2>
-            <p className="text-white/60">What you get with each tier</p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {bcdrData.features.map((feature, index) => (
-              <motion.div
-                key={index}
-                {...fadeInUp}
-                transition={{ delay: index * 0.1 }}
-                className="de-interactive-card rounded-xl border border-de-hairline bg-de-raised p-6"
-              >
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-de-raised flex items-center justify-center flex-shrink-0">
-                    <feature.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-white mb-1">{feature.title}</h3>
-                    <p className="text-white/60 text-sm">{feature.description}</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                  <div className="flex items-center gap-1 text-xs text-white/50">
-                    <FileCheck className="w-3 h-3" />
-                    {feature.deliverable}
-                  </div>
-                  <div className="flex gap-1">
-                    {feature.included_in.map((tier) => (
-                      <span 
-                        key={tier} 
-                        className={`text-xs px-2 py-0.5 rounded ${
-                          tier === 'enterprise' ? 'bg-de-raised text-de-accent-ink' :
-                          tier === 'business' ? 'bg-de-raised text-de-accent-ink' :
-                          'bg-de-raised text-de-accent-ink'
-                        }`}
-                      >
-                        {tier.charAt(0).toUpperCase()}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
+      <Chapter tone="well">
+        <Container>
+          <ChapterHeader
+            tone="well"
+            eyebrow="Capabilities"
+            title="Key BCDR Capabilities"
+            lede="What you get with each tier"
+          />
+          <FeatureGrid
+            tone="well"
+            items={bcdrData.features.map((f) => ({
+              icon: f.icon,
+              title: f.title,
+              text: (
+                <>
+                  {f.description}
+                  <span className="mt-3 block text-xs text-white/60">
+                    Deliverable: {f.deliverable} · Tiers: {f.included_in.map(tierName).join(", ")}
+                  </span>
+                </>
+              ),
+            }))}
+          />
+        </Container>
+      </Chapter>
 
-        {/* What You Get (Deliverables) */}
-        <motion.section {...fadeInUp}>
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-white mb-4">What You Get</h2>
-            <p className="text-white/60">Concrete deliverables, not vague promises</p>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {bcdrData.deliverables.map((item, index) => (
-              <motion.div
-                key={index}
-                {...fadeInUp}
-                transition={{ delay: index * 0.05 }}
-                className="flex items-start gap-3 rounded-xl border border-de-hairline bg-de-raised p-5"
-              >
-                <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-de-accent-ink" />
-                <div>
-                  <h3 className="font-semibold text-white text-sm">{item.name}</h3>
-                  <p className="text-white/50 text-xs">{item.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
+      <Chapter tone="paper">
+        <Container>
+          <ChapterHeader
+            tone="paper"
+            eyebrow="Deliverables"
+            title="What You Get"
+            lede="Concrete deliverables, not vague promises"
+          />
+          <IndexedList tone="paper" items={bcdrData.deliverables.map((d) => ({ title: d.name, text: d.description }))} />
+        </Container>
+      </Chapter>
 
-        {/* Packages Section */}
-        <motion.section {...fadeInUp} id="packages" className="scroll-mt-32" data-testid="section-packages">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-white mb-4">BCDR Packages</h2>
-            <p className="text-white/60">Choose the protection level that fits your recovery requirements</p>
-          </div>
+      <Chapter tone="surface" id="packages" className="scroll-mt-32" data-testid="section-packages">
+        <Container>
+          <ChapterHeader
+            tone="surface"
+            eyebrow="Packages"
+            title="BCDR Packages"
+            lede="Choose the protection level that fits your recovery requirements"
+          />
+          <ul className="grid gap-4 md:grid-cols-3 md:gap-5">
+            {bcdrData.packages.map((pkg) => (
+              <li key={pkg.sku} className={`${cardDark} flex flex-col p-6 md:p-7`}>
+                <h3 className="font-heading text-2xl font-semibold text-white">{pkg.name}</h3>
+                <p className="mt-1 font-mono text-sm font-medium text-de-accent-ink">{pkg.subtitle}</p>
+                <p className="mt-3 text-sm text-white/70">{pkg.best_for}</p>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {bcdrData.packages.map((pkg, index) => (
-              <motion.div
-                key={pkg.sku}
-                {...fadeInUp}
-                transition={{ delay: index * 0.1 }}
-                className="de-hud-card relative overflow-hidden"
-              >
-                <div className="p-8">
-                  <h3 className="text-2xl font-bold text-white font-heading">{pkg.name}</h3>
-                  <p className="text-de-accent-ink text-sm mb-2 font-mono font-medium">{pkg.subtitle}</p>
-                  <p className="text-white/60 text-sm mb-6">{pkg.best_for}</p>
-                  
-                  <div className="flex gap-4 mb-6">
-                    <div className="flex-1 rounded-lg border border-de-hairline bg-de-bg px-3 py-2 text-center">
-                      <p className="text-xs text-white/50 mb-1">RPO</p>
-                      <p className="text-sm font-semibold text-white">{pkg.rpo}</p>
+                <dl className="mt-6 grid grid-cols-3 divide-x divide-[var(--de-hairline)] rounded-lg border border-[var(--de-hairline)] bg-de-bg text-center">
+                  {[
+                    ["RPO", pkg.rpo],
+                    ["RTO", pkg.rto],
+                    ["Tests", pkg.test_cadence],
+                  ].map(([k, v]) => (
+                    <div key={k} className="px-2 py-3">
+                      <dt className="text-xs text-white/60">{k}</dt>
+                      <dd className="mt-1 text-sm font-semibold text-white">{v}</dd>
                     </div>
-                    <div className="flex-1 rounded-lg border border-de-hairline bg-de-bg px-3 py-2 text-center">
-                      <p className="text-xs text-white/50 mb-1">RTO</p>
-                      <p className="text-sm font-semibold text-white">{pkg.rto}</p>
-                    </div>
-                  </div>
+                  ))}
+                </dl>
 
-                  <div className="space-y-3 mb-6">
-                    {pkg.includes.map((item, i) => (
-                      <div key={i} className="flex items-start gap-3">
-                        <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-de-accent-ink" />
-                        <span className="text-white/80 text-sm">{item}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mb-6 rounded-lg border border-de-hairline bg-de-bg p-3 text-center">
-                    <p className="text-xs text-white/50">Test Cadence</p>
-                    <p className="text-sm font-semibold text-de-accent-ink">{pkg.test_cadence}</p>
-                  </div>
-
-                  <div className="mb-6 text-center">
-                    <p className="text-2xl font-bold text-white">{pkg.starting_price}</p>
-                    <p className="text-white/50 text-xs">{pkg.price_note}</p>
-                  </div>
-
-                  <Button
-                    asChild
-                    variant="brand"
-                    className="w-full font-semibold"
-                    data-testid={`btn-package-${pkg.sku}`}
-                  >
-                    <a href="/book">
-                      Get Started
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </a>
-                  </Button>
+                <div className="mt-6">
+                  <CheckList tone="surface" columns={1} items={pkg.includes} />
                 </div>
-              </motion.div>
+
+                <div className="mt-auto pt-6">
+                  <div className="mb-5 border-t border-[var(--de-hairline)] pt-5">
+                    <p className="font-heading text-xl font-semibold text-white">{pkg.starting_price}</p>
+                    <p className="text-xs text-white/60">{pkg.price_note}</p>
+                  </div>
+                  <a href="/book" className={`${buttonPrimary("surface")} w-full`} data-testid={`btn-package-${pkg.sku}`}>
+                    Get Started
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </a>
+                </div>
+              </li>
             ))}
-          </div>
-          
-          <p className="text-center text-white/50 text-sm mt-6">
+          </ul>
+          <p className="mt-8 max-w-3xl text-sm text-white/65">
             Pricing depends on protected systems, retention period, and recovery targets. Final quote after assessment.
           </p>
-        </motion.section>
+        </Container>
+      </Chapter>
 
-        {/* How Testing Works */}
-        <motion.section {...fadeInUp}>
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-white mb-4">How Testing Works</h2>
-            <p className="text-white/60">Restore testing is how we prove your backups actually work</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {testingSteps.map((step, index) => (
-              <motion.div
-                key={index}
-                {...fadeInUp}
-                transition={{ delay: index * 0.15 }}
-                className="relative"
-              >
-                <div className="h-full rounded-xl border border-de-hairline bg-de-raised p-8 text-center">
-                  <div className="w-16 h-16 rounded-full bg-de-raised flex items-center justify-center mx-auto mb-6">
-                    <span className="text-2xl font-bold text-white">{step.step}</span>
-                  </div>
-                  <step.icon className="w-8 h-8 text-de-accent-ink mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-white mb-3">{step.title}</h3>
-                  <p className="text-white/60">{step.description}</p>
-                </div>
-                {index < 2 && (
-                  <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2">
-                    <ArrowRight className="w-8 h-8 text-white/20" />
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
+      <Chapter tone="well">
+        <Container>
+          <ChapterHeader
+            tone="well"
+            eyebrow="Testing"
+            title="How Testing Works"
+            lede="Restore testing is how we prove your backups actually work"
+          />
+          <StepRail tone="well" steps={testingSteps.map((st) => ({ title: st.title, text: st.description }))} />
+        </Container>
+      </Chapter>
 
-        {/* FAQs */}
-        <motion.section {...fadeInUp}>
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-white mb-4">Frequently Asked Questions</h2>
-            <p className="text-white/60">Common questions about BCDR</p>
-          </div>
-          
-          <div className="max-w-3xl mx-auto space-y-3">
-            {bcdrData.faqs.map((faq, index) => (
-              <FAQItem
-                key={index}
-                index={index}
-                question={faq.question}
-                answer={faq.answer}
-                isOpen={openFaq === index}
-                onToggle={() => setOpenFaq(openFaq === index ? null : index)}
-              />
-            ))}
-          </div>
-        </motion.section>
+      <FaqChapter faqs={faqs} title="Frequently Asked Questions" lede="Common questions about BCDR" />
 
-        {/* What Happens Next */}
-        <motion.section {...fadeInUp}>
-          <div className="rounded-2xl border border-de-hairline bg-de-raised p-8 md:p-12">
-            <h2 className="text-2xl font-bold text-white mb-6 text-center">What Happens After You Book?</h2>
-            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              <div className="text-center">
-                <div className="w-12 h-12 rounded-full bg-de-raised border border-de-hairline flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-6 h-6 text-de-accent-ink" />
-                </div>
-                <h3 className="font-semibold text-white mb-2">BCDR Assessment</h3>
-                <p className="text-white/60 text-sm">We inventory your systems, current backup state, and recovery requirements</p>
-              </div>
-              <div className="text-center">
-                <div className="w-12 h-12 rounded-full bg-de-raised border border-de-hairline flex items-center justify-center mx-auto mb-4">
-                  <Target className="w-6 h-6 text-de-accent-ink" />
-                </div>
-                <h3 className="font-semibold text-white mb-2">RPO/RTO Agreement</h3>
-                <p className="text-white/60 text-sm">We define realistic recovery targets and document them in your agreement</p>
-              </div>
-              <div className="text-center">
-                <div className="w-12 h-12 rounded-full bg-de-raised border border-de-hairline flex items-center justify-center mx-auto mb-4">
-                  <Settings className="w-6 h-6 text-de-accent-ink" />
-                </div>
-                <h3 className="font-semibold text-white mb-2">Implementation</h3>
-                <p className="text-white/60 text-sm">We deploy backup agents, configure policies, and schedule your first restore test</p>
-              </div>
-            </div>
-          </div>
-        </motion.section>
+      <Chapter tone="well">
+        <Container>
+          <ChapterHeader tone="well" eyebrow="After you book" title="What Happens After You Book?" />
+          <StepRail
+            tone="well"
+            steps={[
+              { title: "BCDR Assessment", text: "We inventory your systems, current backup state, and recovery requirements" },
+              { title: "RPO/RTO Agreement", text: "We define realistic recovery targets and document them in your agreement" },
+              { title: "Implementation", text: "We deploy backup agents, configure policies, and schedule your first restore test" },
+            ]}
+          />
+        </Container>
+      </Chapter>
 
-        {/* Final CTA */}
-        <motion.section {...fadeInUp} className="rounded-2xl border border-de-hairline bg-de-raised p-8 text-center md:p-12">
-          <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl">
-            Ready to Know You Can Recover?
-          </h2>
-          <p className="mx-auto mb-8 max-w-2xl text-lg text-white/70">
-            Schedule a BCDR assessment. We'll scope your environment and prepare a quote.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Button asChild variant="brand" size="lg" className="h-12 px-8 font-semibold" data-testid="btn-final-assessment">
-              <a href="/book">
-                {CTA.primary}
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </a>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="h-12 border-white/20 px-8 font-semibold text-white hover:bg-white/10" data-testid="btn-final-call">
-              <a href={PRIMARY_PHONE.telHref}>
-                <Phone className="mr-2 h-5 w-5" />
-                Call {PRIMARY_PHONE.display}
-              </a>
-            </Button>
-          </div>
-        </motion.section>
-      </div>
+      <ClosingCta
+        title="Ready to Know You Can Recover?"
+        lede="Schedule a BCDR assessment. We'll scope your environment and prepare a quote."
+        primary={{ label: CTA.primary, href: "/book", testId: "btn-final-assessment" }}
+        phoneTestId="btn-final-call"
+      />
     </PageTemplate>
   );
 }

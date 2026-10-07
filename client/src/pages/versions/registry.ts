@@ -112,6 +112,17 @@ export const HOMEPAGE_VERSIONS: HomepageVersion[] = [
     kind: "build",
     source: "claude/sleepy-archimedes-mccoav",
   },
+  {
+    n: 8,
+    path: "/version-8",
+    title: "Version 7 with Joe's preferences",
+    date: "2026-10-03",
+    status: "The homepage at / since 2026-10-03 (Joe: \"its approved. do it.\"). /version-8 redirects to /; the previous homepage is kept at /version-0 and Version 7 at /version-7.",
+    summary:
+      "The main candidate: Version 7 (grey cards, charcoal, Inter, the element kit) with Joe's section-by-section notes applied. Hero kept exactly; the trust strip takes the live homepage's compact row; the Why Arizona cards drop the #f4f4f5 fill; light-band icon tiles fixed to the tinted accent.",
+    kind: "build",
+    source: "claude/sleepy-archimedes-mccoav",
+  },
 ];
 
 export function versionByNumber(n: number): HomepageVersion | undefined {
