@@ -140,7 +140,11 @@ describe("account types", () => {
   it("answers entitlements for a person in the company only", async () => {
     expect((await call("GET", "/api/portal/licensing/entitlements?accountKind=person&userId=u-gus", ANN)).status).toBe(404);
     const svc = await (await call("GET", "/api/portal/licensing/entitlements?accountKind=service", ANN)).json();
-    expect(svc.licenses).toEqual([expect.objectContaining({ licenseKey: "ms_o365_e1", assignment: "request" })]);
+    // Add-ons are listed too, marked not eligible, so the form can say why they can't be picked.
+    expect(svc.licenses).toEqual([
+      expect.objectContaining({ licenseKey: "ms_o365_e1", kind: "base", assignment: "request" }),
+      expect.objectContaining({ licenseKey: "ms_visio_p2", kind: "addon", assignment: "not_eligible" }),
+    ]);
   });
 });
 
