@@ -194,7 +194,7 @@ The scripts are generated from the catalog by `packaging\New-DEPlaybooks.ps1`. R
 
 ```powershell
 .\packaging\New-DEDropshipKit.ps1 -Client alamo -Bundle proactive-business -OrderId DE-ORD-2026-0142 `
-    -EndUserName 'Suzette Thompson' -EndUserUpn sthompson@alamo.example -Serial 7XK2Q14 -Model 'Latitude 7450' `
+    -EndUserName 'Suzette Thompson' -EndUserUpn suzette.thompson@alamo.example -Serial 7XK2Q14 -Model 'Latitude 7450' `
     -Hostname ALAMO-LAP-0231
 .\packaging\New-DEDropshipKit.ps1 -OrderFile .\order.json
 ```
