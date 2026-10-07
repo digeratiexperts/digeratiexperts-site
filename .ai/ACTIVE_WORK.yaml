@@ -687,8 +687,19 @@ claims:
       - server/services/notificationService.ts (sendPortalInvite only)
       - client/src/pages/portal/AdminCompanies.tsx (Add user form in the company details Users panel only)
       - artifacts/visual-qa/portal-add-user/** (new)
-    status: active
+    status: verified-live
     started: 2026-10-07
+    released: 2026-10-07
+    pr: 538
+    merge_sha: 1ca21b9a130ecf5ea35f63825a0dda72606eb8e3
+    verification: >-
+      Merged on Joe's "merge, then keep going" (2026-10-07). Main CI and the
+      production deploy passed; release.txt read 1ca21b9a (equal to main).
+      On production at 390 and 1440 (pricing, ebook, team): no sticky bar at
+      load, bar after scrolling, and on phones only after the cookie banner
+      is answered. POST /api/portal/admin/companies/:id/users answers 401
+      signed out, and the live AdminCompanies chunk carries the Add user
+      form. The invite email itself is untested until a real person is added.
     note: >-
       Joe, 2026-10-07 ("merge, then keep going"), items 3b and 3c. 3b: the
       sticky call-to-action bar no longer shows on page load (the short-page
