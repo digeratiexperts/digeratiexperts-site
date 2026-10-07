@@ -2842,3 +2842,17 @@ claims:
       homepage; the hero background is still not as good as before; the
       industries photos look worse; the open eight-block panel should pop.
       Compared against /version-0 (the previous homepage) section by section.
+  - id: home-pink-links
+    owner: claude
+    subsystem: public-marketing-visual-layer
+    branch: claude/home-pink-links
+    base_sha: af222ffc2600c87960d3bbdc8b00a5f7f0ac6906
+    files:
+      - client/src/pages/versions/v8/v8-dashboard.css (dark-band --v8-magenta-ink back to #F04C97)
+      - artifacts/visual-qa/home-pink-links/**
+    status: implemented
+    started: 2026-10-07
+    note: >-
+      Joe, 2026-10-07: "make the links pink like the old homepage". The dark-band
+      override (#e879f9 fuchsia) returns to the previous homepage's --de-magenta-ink
+      #F04C97 (4.7-5.6:1 on the v8 dark surfaces). Paper bands keep #A30E52.
