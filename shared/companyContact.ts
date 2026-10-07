@@ -35,17 +35,22 @@ export const COMPANY = {
   privacyEmail: "privacy@digeratiexperts.com",
   website: "https://digeratiexperts.com",
   bookingUrl: "https://meet.digerati-experts.com/",
-  streetAddress: "3165 S Alma School Rd Suite 29",
+  /** Public NAP is city only (Joe, 2026-10-07): no street or ZIP anywhere on the site. */
   addressLocality: "Chandler",
   addressRegion: "AZ",
-  postalCode: "85248",
   addressCountry: "US",
   areaServed: "Arizona and Greater Phoenix (Chandler, Phoenix, Scottsdale, Tempe, Mesa, Gilbert)",
   /** Verified Google Business Profile listing (CID — not a Place ID). */
   mapsUrl: "https://maps.google.com/?cid=1710856351091471339",
 } as const;
 
-/** Public social profiles already used on the site. Do not invent new handles. */
+/**
+ * Social profiles. Do not invent new handles.
+ * Only PUBLIC_SOCIAL_LINKS are rendered or put in schema `sameAs`.
+ * 2026-10-07 check: facebook.com/digeratiexperts shows "content isn't available"
+ * and x.com/digerati_experts is "profile not found"; both stay out until DE
+ * confirms the real URLs.
+ */
 export const COMPANY_SOCIAL = {
   linkedin: {
     name: "LinkedIn",
@@ -65,6 +70,12 @@ export const COMPANY_SOCIAL = {
   },
 } as const;
 
+/** The social profiles that are live and published (site links + schema sameAs). */
+export const PUBLIC_SOCIAL_LINKS = [
+  { key: "linkedin", ...COMPANY_SOCIAL.linkedin },
+  { key: "instagram", ...COMPANY_SOCIAL.instagram },
+] as const;
+
 /** Official public NAP — sales / business / click-to-call. */
 export const PRIMARY_PHONE: CompanyPhone = {
   role: "primary",
@@ -83,6 +94,7 @@ export const PHONE_REGISTRY = {
   primary: PRIMARY_PHONE,
 } as const;
 
+/** Public address line: city only (service-area business). */
 export function formatAddressOneLine(): string {
-  return `${COMPANY.streetAddress}, ${COMPANY.addressLocality}, ${COMPANY.addressRegion} ${COMPANY.postalCode}`;
+  return `${COMPANY.addressLocality}, ${COMPANY.addressRegion}`;
 }

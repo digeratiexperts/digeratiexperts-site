@@ -1,4 +1,4 @@
-import { Linkedin, Twitter, Facebook, Instagram, CheckCircle, Send, Loader2 } from "lucide-react";
+import { Linkedin, Instagram, CheckCircle, Send, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -116,8 +116,6 @@ export const DigeratiEnhancedFooterSection = ({
 
   const socialLinks = [
     { ...COMPANY_SOCIAL.linkedin, icon: Linkedin, testId: "footer-linkedin" },
-    { ...COMPANY_SOCIAL.twitter, icon: Twitter, testId: "footer-twitter" },
-    { ...COMPANY_SOCIAL.facebook, icon: Facebook, testId: "footer-facebook" },
     { ...COMPANY_SOCIAL.instagram, icon: Instagram, testId: "footer-instagram" },
   ];
 

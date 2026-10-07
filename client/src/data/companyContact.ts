@@ -4,6 +4,7 @@ export {
   COMPANY_SOCIAL,
   PHONE_REGISTRY,
   PRIMARY_PHONE,
+  PUBLIC_SOCIAL_LINKS,
   formatAddressOneLine,
   type CompanyPhone,
   type PhoneRole,
