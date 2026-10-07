@@ -2842,3 +2842,26 @@ claims:
       homepage; the hero background is still not as good as before; the
       industries photos look worse; the open eight-block panel should pop.
       Compared against /version-0 (the previous homepage) section by section.
+
+  - id: portal-provisioning-status-and-card-categories
+    owner: claude
+    subsystem: portal
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: af222ffc
+    files:
+      - shared/provisioning.ts (new)
+      - shared/provisioning.test.ts (new)
+      - server/lifecycleOrchestrator.ts (latestLifecycleByEmail)
+      - server/routes.ts (GET /api/portal/profile/provisioning, GET /api/portal/org/provisioning)
+      - client/src/components/portal/ProvisioningStatus.tsx (new)
+      - client/src/components/portal/ui/{Panel,StatTile,index}.tsx, ui/category.ts (new)
+      - client/src/pages/portal/{PortalDashboard,PortalSettings,PortalPeople}.tsx
+      - client/src/styles/portal.css (category tokens)
+      - artifacts/visual-qa/portal-categories-provisioning/** (new)
+    status: active
+    started: 2026-10-07
+    note: >-
+      Joe, 2026-10-06: show live user provisioning status and whether each
+      step succeeded on the user's profile (lifecycle JumpCloud + Blackpoint
+      and Store orders), and give dashboard cards vivid category colours with
+      specific hex values (tickets, services, billing, requests, account).
