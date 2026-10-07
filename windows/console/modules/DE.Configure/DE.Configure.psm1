@@ -169,12 +169,15 @@ function Get-DELogonNoticeDesired {
     } else {
         $organization = "$(Get-DEHashPath -Object $ClientProfile -Path 'name')".Trim()
         if (-not $organization) { $organization = 'this organization' }
+        $isDE = ($organization -ieq 'Digerati Experts')
+        $providerParagraph = $(if ($isDE) { 'Security and system activity may be collected, retained, and reviewed by authorized Digerati Experts personnel and approved technology service providers for the protection and operation of this environment.' } else { 'Security and system activity may be collected, retained, and reviewed by authorized personnel and approved technology service providers, including Digerati Experts where applicable, for the protection and operation of this environment.' })
+        $contactParagraph = $(if ($isDE) { 'If you are not an authorized user, do not continue. Contact Digerati Experts for assistance.' } else { "If you are not an authorized user, do not continue. Contact $organization or Digerati Experts for assistance." })
         $paragraphs = @(
             "This computer system and associated resources are for authorized $organization business use only. Access or use without authorization, or beyond the scope of granted authorization, is prohibited.",
             'By selecting OK and continuing, you acknowledge that use of this system may be monitored, logged, inspected, and remotely administered for cybersecurity, technical support, system management, compliance, and incident investigation purposes, consistent with applicable law and organizational policy.',
-            'Security and system activity may be collected, retained, and reviewed by authorized personnel and approved technology service providers, including Digerati Experts where applicable, for the protection and operation of this environment.',
+            $providerParagraph,
             'Unauthorized or improper use may result in loss of access or other action permitted by organizational policy or applicable law. Information concerning suspected unlawful activity may be preserved or disclosed as permitted or required by law.',
-            "If you are not an authorized user, do not continue. Contact $organization or Digerati Experts for assistance."
+            $contactParagraph
         )
         $body = ConvertTo-DELogonNoticeText -Text ($paragraphs -join "`r`n`r`n")
     }
