@@ -18,7 +18,7 @@
 
 .EXAMPLE
     .\New-DEDropshipKit.ps1 -Client alamo -Bundle proactive-business -OrderId DE-ORD-2026-0142 `
-        -EndUserName 'Suzette Thompson' -EndUserUpn sthompson@alamo.example -Serial 7XK2Q14 -Model 'Latitude 7450' `
+        -EndUserName 'Suzette Thompson' -EndUserUpn suzette.thompson@alamo.example -Serial 7XK2Q14 -Model 'Latitude 7450' `
         -Hostname ALAMO-LAP-0231 -AssetTag ALAMO-0231 -PoNumber PO-5512 -Distributor 'Ingram Micro'
     .\New-DEDropshipKit.ps1 -OrderFile .\order.json
 #>
@@ -33,6 +33,7 @@ param(
     [string]$EndUserName,
     [string]$EndUserUpn,
     [string]$LocalUserName,
+    [ValidateSet('internal','external')][string]$PersonClass = 'internal',
     [string]$Serial,
     [string]$Model,
     [string]$Manufacturer,
