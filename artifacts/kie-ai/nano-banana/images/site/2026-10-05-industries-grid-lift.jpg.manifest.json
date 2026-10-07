@@ -1,0 +1,19 @@
+{
+  "provider": "kie.ai",
+  "taskId": "5811774fe11b63794dc4d38c204dcf34",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/site/2026-10-05-industries-grid-lift.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Industries: one specialised piece lifted from a disciplined grid. Studio product photograph, isometric view, 100mm lens, f/8, ISO 100. A tidy grid of eighteen tiles in the three finishes lies on the ground; one electric-blue glass tile floats a few centimetres above its empty slot, casting a soft shadow back into it. Rounded-square tiles about 9 cm across and 2 cm thick with generous corner radius like premium app-icon blanks, faces completely blank and smooth. Finishes: deep electric-blue glass (#1D6FF2, translucent, faint internal refraction, thin white specular line on the bevel), graphite anodized aluminium (near-black, fine brushed grain, crisp chamfer) and matte white ceramic (soft subsurface glow, faint pores). Soft blue underglow beneath the lifted tile only. Right two thirds composition, left third empty. Pure black seamless studio ground, realistic contact shadows, deep falloff to black at the frame edges. Do not add any symbols or text to the tiles.\", \"negative_prompt\": \"text, letters, numbers, logos, icons, symbols, engraved glyphs, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, CGI sheen, oversaturated, blurry, distorted geometry, melted edges\", \"settings\": {\"style\": \"premium studio product photography, physically based materials\", \"quality\": \"tack sharp, true material texture, controlled highlights\"}}",
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "jpg"
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/models/nano-banana-2/1791343072568-1u9yqyairjt.jpg"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-07T03:17:57.326424+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}
