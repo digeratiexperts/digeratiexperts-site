@@ -30,6 +30,12 @@
 .v8 .v8s-07 .proof-foot__phone { color: #fff; font-weight: 600; white-space: nowrap; }
 .v8 .v8s-07 .proof-foot__links { display: flex; gap: 24px; font-size: 15px; }
 .v8 .v8s-07 .proof-foot__links a { min-height: 44px; display: inline-flex; align-items: center; }
+/* Leave-a-review QR: white tile keeps the code scannable on the graphite card. */
+.v8 .v8s-07 .proof-qr { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--v8-hairline); display: flex; align-items: center; gap: 16px; }
+.v8 .v8s-07 .proof-qr__code { flex: none; width: 96px; height: 96px; padding: 6px; border-radius: 8px; background: #fff; }
+.v8 .v8s-07 .proof-qr__copy { min-width: 0; }
+.v8 .v8s-07 .proof-qr__copy .v8-small { margin-top: 4px; color: var(--v8-muted-soft); }
+.v8 .v8s-07 .proof-qr__copy .v8-link { margin-top: 4px; min-height: 44px; }
 @media (max-width: 1023px) {
   .v8 .v8s-07 .proof-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .v8 .v8s-07 .proof-rail > li:nth-child(3) { border-left: 0; }

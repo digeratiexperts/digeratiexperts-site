@@ -10,6 +10,8 @@ import { ReviewsCarousel, ReviewSourceChips } from "@/components/ReviewsCarousel
 import {
   catalogEntriesToPublic,
   GOOGLE_MAPS_CID_URL,
+  GOOGLE_REVIEW_QR_SRC,
+  GOOGLE_REVIEW_URL,
   listingUrlFor,
   PRIMARY_REVIEW_SOURCES,
   REVIEW_SOURCE_LABELS,
@@ -180,6 +182,33 @@ export function V8ClientProof(): JSX.Element {
     </a>
   );
 
+  const leaveReview = (
+    <div className="proof-qr" data-testid="proof-google-review-qr">
+      <img
+        className="proof-qr__code"
+        src={GOOGLE_REVIEW_QR_SRC}
+        alt="QR code to leave Digerati Experts a Google review"
+        width={96}
+        height={96}
+        loading="lazy"
+        decoding="async"
+      />
+      <div className="proof-qr__copy">
+        <p className="v8-h4">Worked with us?</p>
+        <p className="v8-small">Scan with your phone, or use the link, to leave a Google review.</p>
+        <a
+          className="v8-link"
+          href={GOOGLE_REVIEW_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid="link-leave-google-review"
+        >
+          Leave a Google review <ArrowUpRight {...icon} />
+        </a>
+      </div>
+    </div>
+  );
+
   return (
     <section
       className="f-well v8-section proof"
@@ -250,6 +279,7 @@ export function V8ClientProof(): JSX.Element {
                 <div className="mt-4">
                   <ReviewsCarousel reviews={displayedReviews} prefersReducedMotion={prefersReducedMotion} />
                 </div>
+                {leaveReview}
                 <div className="proof-panel__actions">{listingLinks.map(readUsLink)}</div>
               </>
             ) : (
@@ -265,6 +295,7 @@ export function V8ClientProof(): JSX.Element {
                     Thumbtack appear here as a single feed when live API or approved catalog entries are available.
                   </p>
                 )}
+                {leaveReview}
                 <div className="proof-panel__actions">
                   {readUsLink({ id: "google", href: mapsHref, label: REVIEW_SOURCE_LABELS.google })}
                 </div>

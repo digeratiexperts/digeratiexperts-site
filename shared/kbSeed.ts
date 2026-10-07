@@ -161,4 +161,71 @@ Click **Need help? Chat with me…** at the bottom right. Ask DE can help you fi
   { number: "KB0000010", title: "Microsoft 365 Email Configuration", summary: "Email setup guide for Outlook, mobile apps, and web access.", category: "Email & Microsoft 365", tags: ["outlook", "email"], body: "Configure Microsoft 365 email on desktop and mobile devices." },
   { number: "KB0000011", title: "Multi-Factor Authentication (MFA) Setup", summary: "Protect your accounts with two-factor authentication.", category: "Security", tags: ["mfa", "2fa"], body: "Enable and configure MFA for enhanced account security." },
   { number: "KB0000012", title: "Remote Desktop Connection Guide", summary: "Access your work desktop from anywhere securely.", category: "Remote access", tags: ["rdp", "remote desktop"], body: "Connect to office computers remotely using RDP." },
+  {
+    number: "KB0000013",
+    title: "How to enroll your mobile device",
+    summary: "Enroll an iPhone, iPad or Android device for secure access to company email, apps and other work resources.",
+    category: "Devices",
+    tags: ["mobile device", "mdm", "intune", "company portal", "ios", "ipados", "android", "byod", "enrollment"],
+    body: `# Introduction
+Use this guide when Digerati Experts or your company asks you to enroll an iPhone, iPad or Android device for work.
+
+Enrollment registers the device with your company's mobile device management system so company email, apps and other work resources can be protected. The exact screens can vary based on your company's policy and whether the device is company-owned or personal.
+
+# Before you start
+- Connect the device to reliable Wi-Fi or cellular data.
+- Install any pending iOS, iPadOS or Android updates.
+- Make sure you know your normal work username and password and can complete MFA.
+- Make sure the device has a screen lock or passcode.
+- Use your normal day-to-day work account. Do **not** enroll with an admin, shared, service or emergency/break-glass account.
+
+> If this is a personal device, review the management and privacy information shown during enrollment before you continue. What your company can see or manage depends on the enrollment method and company policy.
+
+# Company-owned phones and tablets
+If the device is new or has been reset and setup shows **Remote Management**, **Set up for work**, or another company enrollment screen, follow that setup flow.
+
+Sign in with your normal work account when asked. Do not skip company enrollment or manually add a second management profile unless Digerati Experts tells you to.
+
+# iPhone or iPad
+1. Start from the enrollment link provided by your company or Digerati Experts. If you were instructed to use the app, install **Intune Company Portal** from the App Store and open it.
+2. Sign in with your work account and complete MFA.
+3. Follow the enrollment prompts. Depending on your company's configuration, enrollment may continue in Safari or in the Settings app.
+4. If iOS/iPadOS asks you to download a management profile, allow the download. Then open **Settings > General > VPN & Device Management**, select the downloaded management profile, and choose **Install**.
+5. Return to Company Portal or the browser and finish registration and any device-compliance checks.
+6. If you are asked to set a stronger passcode, enable a security setting, or update iOS/iPadOS, complete that requirement and check the device again.
+
+> Some companies use web-based Apple enrollment, so Company Portal may not be required. Follow the enrollment path presented to you rather than installing extra profiles on your own.
+
+# Android
+1. Start from the enrollment link provided by your company or Digerati Experts. If you were instructed to use the app, install **Intune Company Portal** from Google Play and open it.
+2. Sign in with your work account and complete MFA.
+3. Accept your company's terms if they are shown, then follow the prompts to register the device.
+4. On a personal Android device, you may be asked to create a **Work profile**. Allow Android to create and activate it. Work apps in that profile normally show a small briefcase badge.
+5. Complete any required device settings. If Company Portal shows **Resolve**, **Check status**, or a similar action, open it and follow the listed steps.
+6. Recheck the device until enrollment shows complete and work access is allowed.
+
+# Verify enrollment
+After setup:
+1. Open Company Portal or your company's enrollment page and confirm the device is registered and does not show an unresolved setup requirement.
+2. Open a company app such as Outlook or Teams and sign in.
+3. Confirm you can reach the company resource you were enrolling the device to use.
+
+# If enrollment does not work
+Do **not** remove the management profile, factory-reset the device, or repeatedly enroll it unless Digerati Experts tells you to.
+
+> ! If enrollment unexpectedly asks you to erase or factory-reset a device that already contains data, stop and contact Digerati Experts before continuing.
+
+[Open a support ticket](/portal/tickets/create) and include:
+- iPhone/iPad or Android.
+- Device manufacturer and model.
+- Whether the device is company-owned or personal.
+- The exact error message or a screenshot.
+- The step where enrollment stopped.
+
+# Removing management
+Removing management can immediately remove work data or block access to company resources. If the device is being replaced, returned, transferred, or is no longer used for work, [open a support ticket](/portal/tickets/create) so it can be retired correctly.
+
+# Last verified
+October 7, 2026 by Digerati Experts.`,
+  },
 ];
