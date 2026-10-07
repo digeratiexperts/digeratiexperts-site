@@ -2588,7 +2588,7 @@ claims:
       - client/src/styles/portal.css (dark + light portal tokens, active nav)
       - client/src/styles/portalLightTheme.test.ts
       - artifacts/visual-qa/portal-grey-ladder/** (new)
-    status: active
+    status: verified
     started: 2026-10-06
     note: >-
       Joe, 2026-10-04 (kie.ai billing screen: "the shades of grey in the
@@ -2600,6 +2600,7 @@ claims:
       ("all approved here"), implemented in portal.css with a before/after
       set; C replaces the 2026-10-03 orchid light theme, so Joe confirms the
       screenshots before merge.
+      Merged in PR 496; live in production release e7679b5 (2026-10-07).
   - id: portal-service-requests
     owner: claude
     subsystem: portal-service-requests
@@ -2996,10 +2997,11 @@ claims:
       - client/src/pages/portal/{PortalDashboard,PortalSettings,PortalPeople}.tsx
       - client/src/styles/portal.css (category tokens)
       - artifacts/visual-qa/portal-categories-provisioning/** (new)
-    status: active
+    status: verified
     started: 2026-10-07
     note: >-
       Joe, 2026-10-06: show live user provisioning status and whether each
       step succeeded on the user's profile (lifecycle JumpCloud + Blackpoint
       and Store orders), and give dashboard cards vivid category colours with
       specific hex values (tickets, services, billing, requests, account).
+      Merged in PR 512; live in production release bda8348 (2026-10-07).
