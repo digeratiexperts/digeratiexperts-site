@@ -12,11 +12,12 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
-import lawBooksImg from "@assets/Rectangle-152058_1767027918697.webp";
 import lawScalesImg from "@assets/Rectangle-152058-1_1767027918697.webp";
 import healthcareImg from "@assets/Rectangle-152058-2_1767027918698.webp";
 import realEstateImg from "@assets/Rectangle-152058-3_1767027918698.webp";
 import animalHospitalImg from "@assets/Rectangle-152058-4_1767027918698.webp";
+// Generated 2026-10-06 (kie.ai job home-cpa-card-2026-10-06, Joe: "generate the CPA image"); replaces a Turkish law-book photo.
+import cpaCalculatorImg from "@/assets/industries/cpa-calculator-2026-10-06.webp";
 import "./10-industries.css";
 import { ChapterPattern } from "@/components/site/Atmosphere";
 
@@ -54,7 +55,7 @@ const industries: Industry[] = [
     testId: "industry-cpa",
     slug: "accounting-finance",
     description: "Secure tax data and ensure IRS/FTC compliance",
-    image: lawBooksImg,
+    image: cpaCalculatorImg,
   },
   {
     icon: Stethoscope,

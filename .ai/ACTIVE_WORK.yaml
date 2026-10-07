@@ -2717,6 +2717,28 @@ claims:
       rendered as a squeezed side column (.v8-eyebrow is flex). The plate rule
       is the same one line as draft PR 492 (identical, so it merges cleanly
       either way); 492's CPA image and lockfile port are not included.
+  - id: home-imagery-match
+    owner: claude
+    subsystem: public-marketing-visual-layer
+    branch: claude/home-imagery-match
+    base_sha: d0d07e8a05404c624e46f9480f51152ef1d70a4d
+    files:
+      - client/src/pages/versions/v8/sections/10-industries.tsx (CPA card image only)
+      - client/src/assets/industries/cpa-calculator-2026-10-06.webp (new)
+      - .claude/kie-budget/ledger.jsonl (job home-cpa-card-2026-10-06)
+      - artifacts/visual-qa/home-imagery-match/**
+      - package-lock.json (ported verbatim from PR 490 so the production audit passes; no-op once 490 merges)
+    status: implemented
+    started: 2026-10-06
+    note: >-
+      Joe, 2026-10-06: "the imagery is still not smartly matched" then "yes do
+      both, generate the CPA image". Scope is the CPA card (it showed Turkish law
+      books). The phone-hero change was dropped after PR 499 (Joe-merged) kept
+      the tile art framed above the card. Desktop hero placement is left as is pending
+      Joe's choice (three placements tried, screenshots kept). Older homepage
+      versions (v1, v3, v7, sections/) still use the law-book photo and are
+      deliberately untouched. Concurrency audit 2026-10-06: open PRs 489 and
+      490 touch none of these files.
   - id: never-lose-and-release-hardening-2026-10-05
     owner: claude
     subsystem: platform-hardening
