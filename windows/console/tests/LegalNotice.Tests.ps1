@@ -112,6 +112,8 @@ Describe 'Windows pre-logon authorized-use notice' {
         $a.RequiresElevation | Should -Be $true
         @($a.Modes) | Should -Contain 'dropship'
         @($a.Modes) | Should -Contain 'takeover'
-        @($a.Modes) | Should -Not -Contain 'audit'
+        @($a.Modes) | Should -Contain 'co-managed'
+        @($a.Modes) | Should -Contain 'audit'
+        @($a.Modes) | Should -Not -Contain 'deprovision'
     }
 }
