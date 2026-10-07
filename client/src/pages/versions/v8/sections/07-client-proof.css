@@ -12,7 +12,8 @@
 .v8 .v8s-07 .proof-cells .v8-body { margin-top: 8px; }
 .v8 .v8s-07 .proof-verify { margin-top: 48px; padding-top: 0; border-top: 0; }
 .v8 .v8s-07 .proof-verify .v8-body { margin-top: 12px; max-width: 640px; }
-.v8 .v8s-07 .proof-rail { margin-top: 28px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* Two surfaces: client reviews and case studies already sit in the proof cards above. */
+.v8 .v8s-07 .proof-rail { margin-top: 28px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .v8 .v8s-07 .proof-rail > li { display: flex; flex-direction: column; }
 .v8 .v8s-07 .proof-rail .v8-h4 { margin-top: 18px; }
 .v8 .v8s-07 .proof-rail .v8-body { margin-top: 8px; }
