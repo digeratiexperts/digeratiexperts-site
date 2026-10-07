@@ -31,11 +31,14 @@ function Get-DEProfileDirectories {
 }
 
 function New-DEClientProfileTemplate {
-    <# Returns a complete, empty profile object with every supported key so the GUI can bind to it. #>
+    <# Returns a complete, empty profile object with every supported key so the GUI can bind to it. shortName is the 2-5 character hostname/client code candidate; confirm it against the Hub before deployment. #>
     param([string]$Id = 'new-client', [string]$Name = 'New client')
+    $codeCandidate = ($Id.ToUpperInvariant() -replace '[^A-Z0-9]', '')
+    if ($codeCandidate.Length -gt 5) { $codeCandidate = $codeCandidate.Substring(0, 5) }
+    if ($codeCandidate.Length -lt 2) { $codeCandidate = 'NEW' }
     return [ordered]@{
         schemaVersion = $script:ProfileSchemaVersion
-        id = $Id; name = $Name; shortName = $Name
+        id = $Id; name = $Name; shortName = $codeCandidate
         tier = 'Business'                                  # IT | Office | Business | Enterprise | Co-managed
         plan = @{ bundle = 'proactive-business'; addOns = @(); solutions = @() }   # catalog\bundles.json (tiers, variants, standalone solutions)
         coManaged = @{ deOwns = @() }                      # co-managed path: identity | security | apps | baseline | browser | updates | backup | network | support | mfa
