@@ -1069,8 +1069,24 @@ function Build-Identity {
     $tbLocal = New-El TextBox @{ Text = "$($ctx['localUserName'])"; Width = 200; Name = 'Destination local user' }
     $tbJc = New-El TextBox @{ Text = "$($ctx['jumpcloudUser'])"; Width = 200; Name = 'JumpCloud user' }
     $tbEmail = New-El TextBox @{ Text = "$($ctx['endUserEmail'])"; Width = 260; Name = 'End user email or UPN' }
+    $cbPersonClass = New-El ComboBox @{ Width = 150; Name = 'Person class' }
+    foreach ($pc in @('internal', 'external')) { [void]$cbPersonClass.Items.Add($pc) }
+    $cbPersonClass.SelectedIndex = $(if ("$($ctx['personClass'])" -eq 'external') { 1 } else { 0 })
+    $canonical = New-Button 'Use canonical naming' {
+        $personClass = "$($cbPersonClass.SelectedItem)"
+        $basis = $(if ("$($ctx['endUser'])") { "$($ctx['endUser'])" } else { $tbSource.Text })
+        if (-not $basis) { Set-Status 'Detect or enter the end user first.'; return }
+        try {
+            $local = ConvertTo-DELocalUserName -DisplayOrPrincipal $basis -Convention 'firstname.lastname' -PersonClass $personClass
+            $tbLocal.Text = $local; $tbJc.Text = $local
+            $domain = $(if ($S.Profile) { "$(Get-DEHashPath -Object $S.Profile -Path 'identity.primaryDomain')" } else { '' })
+            if ($domain) { $tbEmail.Text = "$local@$(Test-DEIdentityDomain -Domain $domain)" }
+            Set-DEContext -Values @{ personClass = $personClass; namingStatus = 'canonical' }
+            Set-Status "Canonical $personClass identity: $local$(if ($domain) { "@$domain" })"
+        } catch { Set-Status $_.Exception.Message }
+    }.GetNewClosure()
     $tbProt = New-El TextBox @{ Text = "$(Get-DEState -Path 'identity.bitlocker.expectedProtectorId')"; Width = 360; Name = 'BitLocker recovery protector id' }
-    $save = New-Button 'Save mapping' { Set-DEContext -Values @{ sourcePrincipal = $tbSource.Text; localUserName = $tbLocal.Text; jumpcloudUser = $tbJc.Text; endUserEmail = $tbEmail.Text }; Reset-DEGateCache; Show-Page 'Identity' }.GetNewClosure() -Primary
+    $save = New-Button 'Save mapping' { Set-DEContext -Values @{ sourcePrincipal = $tbSource.Text; localUserName = $tbLocal.Text; jumpcloudUser = $tbJc.Text; endUserEmail = $tbEmail.Text; personClass = "$($cbPersonClass.SelectedItem)" }; Reset-DEGateCache; Show-Page 'Identity' }.GetNewClosure() -Primary
     $check = New-Button 'Check preconditions' { $p = Test-DEMigrationPreconditions -SourcePrincipal $tbSource.Text -LocalUserName $tbLocal.Text; [System.Windows.MessageBox]::Show($Win, $(if ($p.ok) { "Ready.`n`nWarnings:`n$($p.warnings -join "`n")`n`nHello impact:`n$($p.helloImpact -join "`n")" } else { "Blocked:`n$($p.issues -join "`n")" }), 'Migration preconditions') | Out-Null }.GetNewClosure()
     $mapping = New-Button 'Check JumpCloud mapping' { Start-DEJob -Label 'JumpCloud mapping' -Params @{ u = $tbLocal.Text; s = $tbSource.Text } -Work { $m = Test-DEJumpCloudUserMapping -IntendedLocalUser $JobParams.u -SourcePrincipal $JobParams.s -QueryApi; Add-DEEvidence -Step 'jumpcloud.mapping-check' -Module 'jumpcloud' -Before 'mapping' -ActionTaken 'checked' -Result $(if ($m.status -eq 'READY') { 'PASS' } elseif ($m.status -eq 'WARN') { 'WARN' } else { 'BLOCKED' }) -Verification ($m.issues -join '; ') | Out-Null } }.GetNewClosure()
     $cbEscrow = New-El ComboBox @{ Width = 150; Name = 'Where the recovery key is escrowed' }; foreach ($loc in @('jumpcloud', 'hudu', 'itglue', 'vault', 'entra', 'other')) { [void]$cbEscrow.Items.Add($loc) }; $cbEscrow.SelectedIndex = 0
@@ -1080,9 +1096,9 @@ function Build-Identity {
     $bgv = New-Button 'Confirm break-glass verified' { if (-not (Test-DESecret -Name 'BREAKGLASS_PASSWORD')) { Set-Status 'Enter the break-glass password in Settings & secrets first.'; return }; if (Confirm-Gui 'Break-glass' "Did you just sign in interactively as .\DE-BreakGlass on this machine?") { $null = Confirm-DEBreakGlassVerified -Technician $Settings.technician; Reset-DEGateCache; Show-Page 'Identity' } }
     $odc = New-Button 'Confirm OneDrive synced and paused' { if (Confirm-Gui 'OneDrive' 'OneDrive shows Up to date and sync is paused?') { Confirm-DEOneDriveSynced; Reset-DEGateCache; Show-Page 'Identity' } }
     [void]$root.Children.Add((New-Card @(
-                (New-Text 'Identity mapping' 15 -Bold), (New-Text 'Source is the Windows principal today (for example AzureAD\SuzetteThompson). Destination is the local account ADMU creates and JumpCloud takes over (for example sthompson). C:\Users\<source> is preserved (UpdateHomePath off).' -Muted -Wrap),
-                (New-Wrap @((New-El StackPanel @{ Margin = '0,0,14,0' } @((New-Label 'Source principal'), $tbSource)), (New-El StackPanel @{ Margin = '0,0,14,0' } @((New-Label 'Destination local user'), $tbLocal)), (New-El StackPanel @{ Margin = '0,0,14,0' } @((New-Label 'JumpCloud user'), $tbJc)), (New-El StackPanel @{} @((New-Label 'Email / UPN'), $tbEmail)))),
-                (New-Wrap @($save, $check, $mapping, $bgv, $odc)),
+                (New-Text 'Identity mapping' 15 -Bold), (New-Text 'New W-2/owner identities use firstname.lastname; contractor/vendor identities keep -ext as the final class suffix. Existing takeover mappings may remain recorded exceptions. Admin and privileged identities are separate accounts, not technician levels. C:\Users\<source> is preserved during ADMU migration (UpdateHomePath off).' -Muted -Wrap),
+                (New-Wrap @((New-El StackPanel @{ Margin = '0,0,14,0' } @((New-Label 'Source principal'), $tbSource)), (New-El StackPanel @{ Margin = '0,0,14,0' } @((New-Label 'Person class'), $cbPersonClass)), (New-El StackPanel @{ Margin = '0,0,14,0' } @((New-Label 'Destination local user'), $tbLocal)), (New-El StackPanel @{ Margin = '0,0,14,0' } @((New-Label 'JumpCloud user'), $tbJc)), (New-El StackPanel @{} @((New-Label 'Email / UPN'), $tbEmail)))),
+                (New-Wrap @($canonical, $save, $check, $mapping, $bgv, $odc)),
                 (New-Wrap @((New-El StackPanel @{ Margin = '0,0,14,0' } @((New-Label 'BitLocker recovery protector id (verified against escrow; never the password)'), $tbProt)), (New-El StackPanel @{ Margin = '0,0,14,0' } @((New-Label 'Escrowed in'), $cbEscrow)), $prot, $blBackup, $strandBtn)),
                 (New-Text 'Before JumpCloud owns the device it leaves Microsoft (Entra ID and any AD domain). That step waits for a verified migration, a BitLocker key proven outside Entra (JumpCloud, or an escrow you record) and no unmigrated profiles.' -Muted -Wrap)
             )))
