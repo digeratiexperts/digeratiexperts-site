@@ -21,6 +21,7 @@ import {
   type ServiceRequestRecord,
 } from "@shared/serviceRequests";
 import { PORTAL_TICKET_ACCEPT } from "@shared/portalTicketFileRules";
+import { accountTypeLabel, platformLabel } from "@shared/licensing";
 
 function Detail({ label, children }: { label: string; children: ReactNode }) {
   if (children === undefined || children === null || children === "") return null;
@@ -39,6 +40,19 @@ function fieldRows(r: ServiceRequestRecord): Array<[string, ReactNode]> {
     ["Submitted by", r.submittedBy.name],
     ["Contact phone", p.contactPhone],
   ];
+  if (r.type === "license_request") {
+    return [
+      ["Requested for", r.requestedFor.name],
+      ["Submitted by", r.submittedBy.name],
+      ["Account", p.accountKind === "person" ? r.requestedFor.name : `${p.accountName} (${accountTypeLabel(String(p.accountKind))})`],
+      ["Account type", `${accountTypeLabel(String(p.accountType))}${p.tier ? ` · ${p.tier}` : ""}`],
+      ["Operation", p.operation === "remove" ? "Remove from licence group" : "Add to licence group"],
+      ["Platform", platformLabel(String(p.platform))],
+      ["Licence", p.licenseName],
+      ["Group", p.group],
+      ["Business justification", p.businessJustification],
+    ];
+  }
   if (r.type === "loaner_computer") {
     return [
       ...common,

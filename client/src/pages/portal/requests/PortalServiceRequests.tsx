@@ -4,11 +4,19 @@ import { ClipboardList, Heart, ShoppingCart } from "lucide-react";
 import { PortalLayout } from "../PortalLayout";
 import { Callout, EmptyState, Panel } from "@/components/portal/ui";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LoanerComputerIcon, ReturnComputerIcon } from "@/components/portal/requests/icons";
+import { LicenseIcon, LoanerComputerIcon, ReturnComputerIcon } from "@/components/portal/requests/icons";
 import { RequestStatusToken } from "@/components/portal/requests/RequestStatusToken";
 import { isFavoriteRequest } from "@/components/portal/requests/ServiceRequestShell";
 import { srApi } from "@/lib/serviceRequestsApi";
 import { BASKET_STATUS, TYPE_LABELS, TYPE_ROUTES, type ServiceRequestType } from "@shared/serviceRequests";
+
+const SOFTWARE: Array<{ type: ServiceRequestType; blurb: string; Icon: typeof LoanerComputerIcon }> = [
+  {
+    type: "license_request",
+    blurb: "Microsoft 365, Google Workspace or Zoho licences, and add-ons such as Visio or Project.",
+    Icon: LicenseIcon,
+  },
+];
 
 const CATALOG: Array<{ type: ServiceRequestType; blurb: string; Icon: typeof LoanerComputerIcon }> = [
   {
@@ -47,12 +55,16 @@ export default function PortalServiceRequests() {
       }
     >
       <div className="space-y-8">
-        <section id="computers" aria-labelledby="catalog-computers">
-          <h2 id="catalog-computers" className="mb-3 text-base font-semibold">
-            Computers
+        {[
+          { id: "computers", title: "Computers", items: CATALOG },
+          { id: "software", title: "Software & access", items: SOFTWARE },
+        ].map((group) => (
+        <section key={group.id} id={group.id} aria-labelledby={`catalog-${group.id}`}>
+          <h2 id={`catalog-${group.id}`} className="mb-3 text-base font-semibold">
+            {group.title}
           </h2>
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {CATALOG.map(({ type, blurb, Icon }) => (
+            {group.items.map(({ type, blurb, Icon }) => (
               <li key={type}>
                 <Link
                   href={TYPE_ROUTES[type]}
@@ -73,6 +85,7 @@ export default function PortalServiceRequests() {
             ))}
           </ul>
         </section>
+        ))}
 
         <section aria-labelledby="my-requests">
           <h2 id="my-requests" className="mb-3 text-base font-semibold">

@@ -367,6 +367,60 @@ export const serviceRequestAttachments = pgTable("service_request_attachments", 
   uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
 });
 
+/** Licensing and knowledge base (migrations/0010_licensing_and_kb.sql; shared/licensing.ts, shared/kb.ts). */
+export const clientLicensePolicies = pgTable("client_license_policies", {
+  clientId: varchar("client_id")
+    .primaryKey()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  policy: jsonb("policy").notNull(),
+  updatedBy: varchar("updated_by"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const clientUserAccounts = pgTable("client_user_accounts", {
+  userId: varchar("user_id").primaryKey(),
+  clientId: varchar("client_id")
+    .notNull()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  accountType: text("account_type").notNull(),
+  tier: text("tier"),
+  updatedBy: varchar("updated_by"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const kbArticles = pgTable("kb_articles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  number: text("number").notNull().unique(),
+  title: text("title").notNull(),
+  summary: text("summary").notNull().default(""),
+  category: text("category").notNull(),
+  body: text("body").notNull(),
+  tags: text("tags").array().notNull().default(sql`'{}'::text[]`),
+  audienceClientId: varchar("audience_client_id").references(() => portalClients.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("draft"),
+  revisedByName: text("revised_by_name").notNull().default(""),
+  revisedAt: timestamp("revised_at").defaultNow().notNull(),
+  views: integer("views").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const kbArticleRatings = pgTable("kb_article_ratings", {
+  articleId: varchar("article_id")
+    .notNull()
+    .references(() => kbArticles.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull(),
+  stars: integer("stars").notNull(),
+  ratedAt: timestamp("rated_at").defaultNow().notNull(),
+});
+
+export const kbArticleSubscriptions = pgTable("kb_article_subscriptions", {
+  articleId: varchar("article_id")
+    .notNull()
+    .references(() => kbArticles.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull(),
+  subscribedAt: timestamp("subscribed_at").defaultNow().notNull(),
+});
+
 // Portal users table (durable auth — Neon)
 export const portalUsers = pgTable("portal_users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

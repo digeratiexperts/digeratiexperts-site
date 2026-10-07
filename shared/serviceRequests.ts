@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LICENSE_PLATFORMS, type LicensePlatform } from "./licensing";
 
 /**
  * Portal service requests (client + server + Hub contract).
@@ -12,7 +13,7 @@ import { z } from "zod";
  * lifecycle per type and one payload schema per type, all defined here.
  */
 
-export const SERVICE_REQUEST_TYPES = ["loaner_computer", "return_computer"] as const;
+export const SERVICE_REQUEST_TYPES = ["loaner_computer", "return_computer", "license_request"] as const;
 export type ServiceRequestType = (typeof SERVICE_REQUEST_TYPES)[number];
 
 export function isServiceRequestType(v: unknown): v is ServiceRequestType {
@@ -23,6 +24,7 @@ export function isServiceRequestType(v: unknown): v is ServiceRequestType {
 export const SERVICE_REQUEST_NUMBER_PREFIX: Record<ServiceRequestType, string> = {
   loaner_computer: "LNR",
   return_computer: "RTN",
+  license_request: "LIC",
 };
 
 export function formatServiceRequestNumber(type: ServiceRequestType, seq: number): string {
@@ -56,20 +58,33 @@ export const RETURN_STATUSES = [
   "cancelled",
 ] as const;
 
+export const LICENSE_STATUSES = [
+  "submitted",
+  "under_review",
+  "approved",
+  "fulfilled",
+  "closed",
+  "rejected",
+  "cancelled",
+] as const;
+
 export type ServiceRequestStatus =
   | typeof BASKET_STATUS
   | (typeof LOANER_STATUSES)[number]
-  | (typeof RETURN_STATUSES)[number];
+  | (typeof RETURN_STATUSES)[number]
+  | (typeof LICENSE_STATUSES)[number];
 
 export const STATUSES_BY_TYPE: Record<ServiceRequestType, readonly ServiceRequestStatus[]> = {
   loaner_computer: LOANER_STATUSES,
   return_computer: RETURN_STATUSES,
+  license_request: LICENSE_STATUSES,
 };
 
 /** The happy path, in order, for the status timeline on the detail page. */
 export const TIMELINE_BY_TYPE: Record<ServiceRequestType, readonly ServiceRequestStatus[]> = {
   loaner_computer: ["submitted", "under_review", "device_assigned", "delivered", "return_due", "returned", "closed"],
   return_computer: ["submitted", "under_review", "pickup_scheduled", "received", "restocked", "closed"],
+  license_request: ["submitted", "under_review", "approved", "fulfilled", "closed"],
 };
 
 export const TERMINAL_STATUSES: readonly ServiceRequestStatus[] = ["closed", "rejected", "cancelled"];
@@ -97,8 +112,21 @@ const RETURN_TRANSITIONS: Record<string, readonly ServiceRequestStatus[]> = {
   disposed: ["closed"],
 };
 
+const LICENSE_TRANSITIONS: Record<string, readonly ServiceRequestStatus[]> = {
+  submitted: ["under_review", "approved", "rejected", "cancelled"],
+  under_review: ["approved", "rejected", "cancelled"],
+  approved: ["fulfilled", "cancelled"],
+  fulfilled: ["closed"],
+};
+
+const TRANSITIONS_BY_TYPE: Record<ServiceRequestType, Record<string, readonly ServiceRequestStatus[]>> = {
+  loaner_computer: LOANER_TRANSITIONS,
+  return_computer: RETURN_TRANSITIONS,
+  license_request: LICENSE_TRANSITIONS,
+};
+
 export function allowedStaffTransitions(type: ServiceRequestType, from: ServiceRequestStatus): readonly ServiceRequestStatus[] {
-  const table = type === "loaner_computer" ? LOANER_TRANSITIONS : RETURN_TRANSITIONS;
+  const table = TRANSITIONS_BY_TYPE[type];
   return table[from] ?? [];
 }
 
@@ -117,6 +145,8 @@ export const STATUS_LABELS: Record<ServiceRequestStatus, string> = {
   received: "Received",
   restocked: "Restocked",
   disposed: "Disposed",
+  approved: "Approved",
+  fulfilled: "Licence assigned",
   closed: "Closed",
   rejected: "Rejected",
   cancelled: "Cancelled",
@@ -125,11 +155,13 @@ export const STATUS_LABELS: Record<ServiceRequestStatus, string> = {
 export const TYPE_LABELS: Record<ServiceRequestType, string> = {
   loaner_computer: "Request Loaner Computer",
   return_computer: "Return Computer",
+  license_request: "Request a Software License",
 };
 
 export const TYPE_ROUTES: Record<ServiceRequestType, string> = {
   loaner_computer: "/portal/requests/loaner-computer",
   return_computer: "/portal/requests/return-computer",
+  license_request: "/portal/requests/license",
 };
 
 // ---------- field helpers ----------
@@ -268,6 +300,26 @@ export const returnFieldsSchema = z.object({
 });
 export type ReturnFields = z.infer<typeof returnFieldsSchema>;
 
+const PLATFORM_KEYS = LICENSE_PLATFORMS.map((p) => p.key) as [LicensePlatform, ...LicensePlatform[]];
+
+/**
+ * Request a Software License. The account is a person in the company, or a
+ * non-person account (admin, service, shared) named by the requester, who is
+ * then its owner (requestedForUserId).
+ */
+export const licenseFieldsSchema = z.object({
+  accountKind: z.enum(["person", "admin", "service", "shared"]).default("person"),
+  requestedForUserId: z.string().trim().min(1, "Requested for is required").max(80),
+  accountName: z.string().trim().max(200).optional().default(""),
+  platform: z.enum(PLATFORM_KEYS, { errorMap: () => ({ message: "Choose a platform" }) }),
+  licenseKey: z.string().trim().min(1, "Choose a licence").max(60),
+  operation: z.enum(["add", "remove"]).default("add"),
+  businessJustification: z.string().trim().min(1, "Business justification is required").max(2000),
+});
+export type LicenseFields = z.infer<typeof licenseFieldsSchema>;
+
+export type AnyRequestFields = LoanerFields | ReturnFields | LicenseFields;
+
 export type FieldErrors = Record<string, string>;
 
 /**
@@ -277,10 +329,16 @@ export type FieldErrors = Record<string, string>;
  */
 export function crossFieldErrors(
   type: ServiceRequestType,
-  fields: LoanerFields | ReturnFields,
+  input: AnyRequestFields,
   today: string,
 ): FieldErrors {
   const errors: FieldErrors = {};
+  if (type === "license_request") {
+    const f = input as LicenseFields;
+    if (f.accountKind !== "person" && !f.accountName) errors.accountName = "Name the account (for example svc-backup or helpdesk@)";
+    return errors;
+  }
+  const fields = input as LoanerFields | ReturnFields;
   if (fields.addressNotClientLocation) {
     const parsed = addressSchema.safeParse(fields.customAddress ?? {});
     if (!parsed.success) {
@@ -316,6 +374,7 @@ export function crossFieldErrors(
 }
 
 export function fieldsSchemaFor(type: ServiceRequestType) {
+  if (type === "license_request") return licenseFieldsSchema;
   return type === "loaner_computer" ? loanerFieldsSchema : returnFieldsSchema;
 }
 
@@ -324,7 +383,7 @@ export function validateServiceRequestFields(
   type: ServiceRequestType,
   input: unknown,
   today: string,
-): { data?: LoanerFields | ReturnFields; errors: FieldErrors } {
+): { data?: AnyRequestFields; errors: FieldErrors } {
   const parsed = fieldsSchemaFor(type).safeParse(input);
   if (!parsed.success) {
     const errors: FieldErrors = {};
@@ -334,7 +393,7 @@ export function validateServiceRequestFields(
     }
     return { errors };
   }
-  const errors = crossFieldErrors(type, parsed.data, today);
+  const errors = crossFieldErrors(type, parsed.data as AnyRequestFields, today);
   return Object.keys(errors).length ? { errors } : { data: parsed.data, errors };
 }
 
@@ -432,6 +491,7 @@ export const SERVICE_REQUEST_AI_FILLABLE: Record<ServiceRequestType, readonly st
     "manualAsset.serialNumber",
     "manualAsset.description",
   ],
+  license_request: ["businessJustification", "accountName"],
 };
 
 // ---------- required-information chips ----------
@@ -443,6 +503,13 @@ export function unfilledRequiredChips(type: ServiceRequestType, f: Record<string
   const out: RequiredChip[] = [];
   const blank = (v: unknown) => v === undefined || v === null || String(v).trim() === "";
   if (blank(f.requestedForUserId)) out.push({ field: "requestedForUserId", label: "Requested for" });
+  if (type === "license_request") {
+    if (f.accountKind && f.accountKind !== "person" && blank(f.accountName)) out.push({ field: "accountName", label: "Account name" });
+    if (blank(f.platform)) out.push({ field: "platform", label: "Platform" });
+    if (blank(f.licenseKey)) out.push({ field: "licenseKey", label: "License" });
+    if (blank(f.businessJustification)) out.push({ field: "businessJustification", label: "Business justification" });
+    return out;
+  }
   if (type === "loaner_computer") {
     if (blank(f.contactPhone)) out.push({ field: "contactPhone", label: "Contact phone number" });
     if (blank(f.neededFrom)) out.push({ field: "neededFrom", label: "Needed from date" });

@@ -387,6 +387,24 @@ export const notificationService = {
     });
   },
 
+  /** A knowledge article someone subscribed to was revised. */
+  async sendKbArticleUpdate(data: { email: string; name: string; number: string; title: string; summary: string }): Promise<boolean> {
+    const content = `
+      <h2>Knowledge article updated</h2>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
+      <p>An article you subscribed to was revised:</p>
+      <p class="highlight">${escapeEmailHtml(data.number)}: ${escapeEmailHtml(data.title)}</p>
+      <p>${escapeEmailHtml(data.summary)}</p>
+      <a href="https://portal.digeratiexperts.com/portal/kb/${escapeEmailHtml(data.number)}" class="button">Read the article</a>
+      <p style="color:#888;font-size:12px;">You can unsubscribe from the article page.</p>
+    `;
+    return sendEmail({
+      to: data.email,
+      subject: `Updated: ${data.title} [${data.number}]`,
+      htmlBody: baseEmailTemplate(content, "Knowledge article updated"),
+    });
+  },
+
   async sendSystemAlert(data: {
     type: 'error' | 'warning' | 'info';
     title: string;
