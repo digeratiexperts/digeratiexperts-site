@@ -1783,3 +1783,46 @@ export type DocumentPacketItem = typeof documentPacketItems.$inferSelect;
 export type InsertDocumentPacketItem = z.infer<typeof insertDocumentPacketItemSchema>;
 export type ClientOnboardingData = typeof clientOnboardingData.$inferSelect;
 export type InsertClientOnboardingData = z.infer<typeof insertClientOnboardingDataSchema>;
+
+// Client vault (DE admins only): contracts, provisioning scripts, agent
+// installers and PII documents per client. The bytes are AES-256-GCM
+// ciphertext in object storage under a per-item data key; this row holds the
+// wrapped data key and metadata only. See server/portalClientVault.ts.
+export const clientVaultItems = pgTable("client_vault_items", {
+  id: varchar("id").primaryKey(),
+  clientId: varchar("client_id").notNull().references(() => portalClients.id, { onDelete: "restrict" }),
+  kind: text("kind").notNull(), // contract | script | agent | pii
+  title: text("title").notNull(),
+  fileName: text("file_name").notNull(),
+  contentType: text("content_type").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  sha256: text("sha256").notNull(),
+  objectKey: text("object_key").notNull(),
+  wrappedKey: text("wrapped_key").notNull(),
+  keyVersion: integer("key_version").notNull().default(1),
+  dataIv: text("data_iv").notNull(),
+  dataTag: text("data_tag").notNull(),
+  notes: text("notes"),
+  createdByUserId: varchar("created_by_user_id"),
+  createdByEmail: text("created_by_email"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  deletedAt: timestamp("deleted_at"),
+  deletedByEmail: text("deleted_by_email"),
+});
+
+export const clientVaultAudit = pgTable("client_vault_audit", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id").notNull(),
+  itemId: varchar("item_id"),
+  action: text("action").notNull(), // list | upload | download | delete | denied
+  outcome: text("outcome").notNull(), // ok | denied | error
+  detail: text("detail"),
+  actorUserId: varchar("actor_user_id"),
+  actorEmail: text("actor_email"),
+  ip: text("ip"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type ClientVaultItemRow = typeof clientVaultItems.$inferSelect;
+export type ClientVaultAuditRow = typeof clientVaultAudit.$inferSelect;

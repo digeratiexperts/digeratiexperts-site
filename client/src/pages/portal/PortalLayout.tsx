@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { findNavItem, isNavItemActive, navGroupsFor } from "@/components/portal/shell/portalNav";
 import { usePortalIntegrations } from "@/lib/portalIntegrations";
 import { resetPortalSession, usePortalSession } from "@/components/portal/shell/portalSession";
+import { AdminModeSwitch } from "@/components/portal/AdminModeSwitch";
 import { usePortalTheme } from "@/components/portal/shell/portalTheme";
 import { PortalCommandPalette } from "@/components/portal/shell/PortalCommandPalette";
 import { PortalActivityPopover } from "@/components/portal/shell/PortalActivityPopover";
@@ -270,6 +271,8 @@ export function PortalLayout({
               <PortalUserMenu user={user} themePreference={themePreference} onTheme={setThemePreference} onSignOut={handleLogout} />
             </div>
           </header>
+
+          {user?.role === "admin" && <AdminModeSwitch viewingAs={impersonatingCompany} />}
 
           {impersonatingCompany && (
             <div className="pt-warn-strip border-b px-4 py-1.5 text-xs" role="status">
