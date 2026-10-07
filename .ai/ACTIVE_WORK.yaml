@@ -2607,3 +2607,19 @@ claims:
       rendered as a squeezed side column (.v8-eyebrow is flex). The plate rule
       is the same one line as draft PR 492 (identical, so it merges cleanly
       either way); 492's CPA image and lockfile port are not included.
+  - id: hero-ultrawide
+    owner: claude
+    subsystem: public-marketing-visual-layer
+    branch: claude/hero-ultrawide
+    base_sha: 86efd68569c49cf1f535a78879e555c82a0225c7
+    files:
+      - client/src/pages/versions/v8/sections/01-hero.css (headline size cap; plate anchor at 2400px and up)
+      - artifacts/visual-qa/hero-ultrawide/**
+    status: implemented
+    started: 2026-10-07
+    note: >-
+      Joe, 2026-10-07, with a photo of an ultrawide monitor: "This look good on
+      mobile but not on desktop." Two defects reproduced at 1920-5120px: the
+      no-wrap headline grew with rem (90px) past its fixed ~665px column and ran
+      under the assessment card; the hero plate was pinned to the viewport edge
+      while the content stays centred. Below 2400px the plate is unchanged.

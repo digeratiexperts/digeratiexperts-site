@@ -9,7 +9,9 @@
 .v8 .v8s-01 .hero__body { display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(420px, 0.98fr); column-gap: 48px; align-items: center; padding: 64px var(--v8-gutter);
     /* Mock chrome omitted (the real MegaMenu is fixed above): clear it. --de-nav-offset = chrome + spy row + 0.75rem, so +3.25rem lands the mock's 64px below the chrome. */
     padding-top: calc(var(--de-nav-offset) + 3.25rem); }
-.v8 .v8s-01 .hero .v8-h1 { font-size: clamp(2.6rem, 4.6vw, 4.5rem); }
+/* The copy column stays ~665px while rem grows on wide screens; cap the size so the no-wrap first line never runs under the card. */
+.v8 .v8s-01 .hero__copy { container-type: inline-size; }
+.v8 .v8s-01 .hero .v8-h1 { font-size: min(clamp(2.6rem, 4.6vw, 4.5rem), 9.9cqi); }
 .v8 .v8s-01 .hero .v8-h1 span { display: block; white-space: nowrap; }
 .v8 .v8s-01 .hero .v8-h1 .v8-accent { display: inline-block; padding-bottom: 0.08em; }
 .v8 .v8s-01 .hero__sub { margin-top: 24px; max-width: 560px; font-size: 18px; line-height: 1.6; color: var(--v8-muted-soft); text-wrap: pretty; }
@@ -135,4 +137,10 @@
   .v8 .v8s-01 .trust .v8-cells { grid-template-columns: minmax(0, 1fr); }
   .v8 .v8s-01 .trust .v8-cells > li { border-left: 0; }
   .v8 .v8s-01 .trust .v8-cells > li:nth-child(n+2) { border-top: 1px solid var(--v8-paper-hairline); }
+}
+/* Ultrawide: anchor the plate to the centred content, not the viewport edge, so the magenta core sits just right of the card and fades out on both sides. */
+@media (min-width: 2400px) {
+  .v8 .v8s-01 .hero__plate { left: calc(50% - 260px); right: calc(50% - 1300px); background-position: 40% 55%;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 30%, #000 78%, transparent 100%), linear-gradient(to bottom, #000 72%, transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0%, #000 30%, #000 78%, transparent 100%), linear-gradient(to bottom, #000 72%, transparent 100%); }
 }
