@@ -81,7 +81,22 @@ export function registerOrgDirectoryRoutes(app: Express, deps: OrgDirectoryRoute
     const clientId = company(req, res);
     if (!clientId) return;
     const me = inCompany(clientId, req.user!.id);
-    if (!me) return res.status(404).json({ error: "You are not in this company's directory" });
+    if (!me) {
+      // A DE admin with a company open isn't one of its people: no card, but they manage it.
+      if (!deps.canManage(req.user)) return res.status(404).json({ error: "You are not in this company's directory" });
+      const profile = await getOrgProfile(clientId, deps.getClient(clientId)!.companyName);
+      return res.json({
+        success: true,
+        structure: profile.structure,
+        companyIdLabel: profile.companyIdLabel,
+        me: null,
+        unit: null,
+        leader: null,
+        backup: null,
+        leads: [],
+        canManage: true,
+      });
+    }
     const ctx = await personContext(deps, clientId, me.id);
     const leads = (await listUnitLeaders(clientId)).filter((l) => l.leaderUserId === me.id || l.backupUserId === me.id);
     const all = await units(clientId);

@@ -59,10 +59,22 @@ function MyCard() {
   const q = useQuery({ queryKey: ["/api/portal/directory/me"], queryFn: directoryApi.me });
   const [away, setAway] = useState("");
   const [state, setState] = useState("idle");
-  useEffect(() => setAway(q.data?.me.awayUntil ?? ""), [q.data?.me.awayUntil]);
+  useEffect(() => setAway(q.data?.me?.awayUntil ?? ""), [q.data?.me?.awayUntil]);
   if (q.isLoading) return <Skeleton className="h-40 rounded-xl" />;
-  if (q.isError || !q.data) return <Callout tone="bad" title="Your profile couldn't be loaded">{q.error instanceof Error ? q.error.message : ""}</Callout>;
-  const d = q.data;
+  if (q.isError || !q.data) {
+    const message = q.error instanceof Error ? q.error.message : "";
+    // A DE admin with no company open: say how to open one rather than show an error.
+    if (/open a company/i.test(message)) {
+      return (
+        <Callout tone="info" title="Choose a company first">
+          Pick the company from the company selector at the top of the portal, then come back here to set its leaders and people IDs.
+        </Callout>
+      );
+    }
+    return <Callout tone="bad" title="Your profile couldn't be loaded">{message}</Callout>;
+  }
+  if (!q.data.me) return null;
+  const d = { ...q.data, me: q.data.me };
   const unitWord = d.structure === "site" ? "Site" : "Department";
   const refresh = () => void qc.invalidateQueries({ queryKey: ["/api/portal/directory/me"] });
   return (

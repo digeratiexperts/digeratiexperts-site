@@ -162,6 +162,14 @@ describe("directory", () => {
     expect(dir.people.map((p: any) => p.userId)).not.toContain("u-gus");
   });
 
+  it("lets a DE admin with the company open manage it without being one of its people", async () => {
+    const me = await (await call("GET", "/api/portal/directory/me", DE_ADMIN)).json();
+    expect(me).toMatchObject({ success: true, me: null, leads: [], canManage: true });
+    const none = await call("GET", "/api/portal/directory/me", { ...DE_ADMIN, impersonatingCompanyId: null });
+    expect(none.status).toBe(400);
+    expect((await none.json()).error).toMatch(/open a company/i);
+  });
+
   it("validates leaders", async () => {
     const put = (body: object) => call("PUT", "/api/portal/directory/leaders", IVY, { unitKind: "site", unitId: siteId, ...body });
     expect((await put({ leaderUserId: "u-gus" })).status).toBe(400);
