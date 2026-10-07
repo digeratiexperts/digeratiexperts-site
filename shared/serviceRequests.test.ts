@@ -87,6 +87,7 @@ describe("service request rules", () => {
     };
     expect(validateServiceRequestFields("mobile_request", valid, TODAY).errors).toEqual({});
     expect(validateServiceRequestFields("mobile_request", { ...valid, activity: "made_up_activity" }, TODAY).errors.activity).toBeTruthy();
+    expect(validateServiceRequestFields("mobile_request", { ...valid, effectiveDate: "2026-10-05" }, TODAY).errors.effectiveDate).toBeTruthy();
     expect(unfilledRequiredChips("mobile_request", { requestedForUserId: "u1", activity: "", details: "" }).map((x) => x.field)).toEqual(["activity", "details"]);
     expect(allowedStaffTransitions("mobile_request", "submitted")).toContain("completed");
     expect(allowedStaffTransitions("mobile_request", "completed")).toEqual(["closed"]);
