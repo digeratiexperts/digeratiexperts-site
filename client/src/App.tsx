@@ -158,6 +158,7 @@ const AdminOrderRequests = lazy(() => import("@/pages/portal/AdminOrderRequests"
 const PortalServiceRequests = lazy(() => import("@/pages/portal/requests/PortalServiceRequests"));
 const PortalLoanerComputerRequest = lazy(() => import("@/pages/portal/requests/PortalLoanerComputerRequest"));
 const PortalReturnComputerRequest = lazy(() => import("@/pages/portal/requests/PortalReturnComputerRequest"));
+const PortalMobileRequest = lazy(() => import("@/pages/portal/requests/PortalMobileRequest"));
 const PortalRequestBasket = lazy(() => import("@/pages/portal/requests/PortalRequestBasket"));
 const PortalServiceRequestDetail = lazy(() => import("@/pages/portal/requests/PortalServiceRequestDetail"));
 const ProActiveEcosystemPricing = lazy(() => import("@/pages/ProActiveEcosystemPricing"));
@@ -957,6 +958,11 @@ function Router() {
       <Route path="/portal/requests/return-computer" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <PortalReturnComputerRequest />
+        </Suspense>
+      )} />
+      <Route path="/portal/requests/mobile" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <PortalMobileRequest />
         </Suspense>
       )} />
       <Route path="/portal/requests/license" component={() => (

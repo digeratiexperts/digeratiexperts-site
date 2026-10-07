@@ -7,7 +7,7 @@ import { RequestStatusToken } from "@/components/portal/requests/RequestStatusTo
 import { directoryApi } from "@/lib/directoryApi";
 import { cn } from "@/lib/utils";
 import { APPROVER_ROLE_LABELS, type ApprovalFlow, type ContactPlan } from "@shared/orgDirectory";
-import { TYPE_LABELS, type ServiceRequestRecord } from "@shared/serviceRequests";
+import { TYPE_LABELS, mobileActivityLabel, type ServiceRequestRecord } from "@shared/serviceRequests";
 
 /**
  * Approve or reject a service request waiting on you (site / department
@@ -108,6 +108,11 @@ export function ServiceRequestApprovals() {
                     {r.type === "license_request" && (
                       <p className="text-sm">
                         {String(r.payload.licenseName ?? "")} — {String(r.payload.businessJustification ?? "")}
+                      </p>
+                    )}
+                    {r.type === "mobile_request" && (
+                      <p className="text-sm">
+                        {String(r.payload.activityLabel ?? mobileActivityLabel(String(r.payload.activity ?? "")))} — {String(r.payload.details ?? "")}
                       </p>
                     )}
                   </div>

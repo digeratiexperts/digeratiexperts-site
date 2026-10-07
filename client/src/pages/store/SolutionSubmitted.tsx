@@ -14,7 +14,8 @@ import {
   StoreChapter,
 } from "@/components/store/door2/primitives";
 import { buildSolutionPacketPayload, ProposalSheet } from "@/components/store/door2/ProposalSheet";
-import { downloadSolutionPacketPdf } from "@/lib/downloadSolutionPacketPdf";
+import { downloadSolutionPacketPdf, PRINT_DOWNLOADED, printSolutionPacketPdf } from "@/lib/downloadSolutionPacketPdf";
+import { SolutionPrintFrame } from "@/components/store/door2/SolutionPrintFrame";
 import { BUSINESS_NEEDS_INDEX_PATH, getFamilyById } from "@/lib/businessNeeds";
 import {
   clearSubmittedArchive,
@@ -173,7 +174,29 @@ export default function SolutionSubmitted() {
   const [retryCount, setRetryCount] = useState(0);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [printBusy, setPrintBusy] = useState(false);
+  const [printNote, setPrintNote] = useState<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+
+  // Print the branded packet (the same PDF as Download). If it cannot be
+  // fetched, print the page itself, which prints branded too (#526).
+  async function printPacket() {
+    if (!archive) return;
+    setPdfError(null);
+    setPrintNote(null);
+    setPrintBusy(true);
+    try {
+      const payload = buildSolutionPacketPayload(
+        { archive },
+        { title: "Your Solution", statusLabel: "Submitted", reference },
+      );
+      const result = await printSolutionPacketPdf(payload, `DE-Your-Solution-${reference}.pdf`);
+      if ("error" in result) window.print();
+      else if (result.mode === "download") setPrintNote(PRINT_DOWNLOADED);
+    } finally {
+      setPrintBusy(false);
+    }
+  }
 
   async function downloadPacketPdf() {
     if (!archive) return;
@@ -324,7 +347,9 @@ export default function SolutionSubmitted() {
                 {archive ? (
                   <>
                     <div className="mt-8">
-                      <ProposalSheet source={{ archive }} title={SHEET_TITLE} reference={reference} />
+                      <SolutionPrintFrame status="Submitted" reference={reference}>
+                        <ProposalSheet source={{ archive }} title={SHEET_TITLE} reference={reference} />
+                      </SolutionPrintFrame>
                     </div>
                     <div className="mt-4 d2-no-print flex flex-wrap items-center gap-x-6 gap-y-3">
                       <StoreAction
@@ -336,11 +361,16 @@ export default function SolutionSubmitted() {
                         <Download className="h-4 w-4" aria-hidden="true" />
                         {pdfBusy ? "Preparing PDF…" : DOWNLOAD_PDF}
                       </StoreAction>
-                      <StoreAction variant="quiet" onClick={() => window.print()} testId="print-save">
+                      <StoreAction variant="quiet" onClick={() => void printPacket()} ariaBusy={printBusy} testId="print-save">
                         <Printer className="h-4 w-4" aria-hidden="true" />
-                        {PRINT_SAVE}
+                        {printBusy ? "Preparing to print…" : PRINT_SAVE}
                       </StoreAction>
                     </div>
+                    {printNote ? (
+                      <p className="d2-small d2-ink-soft mt-3 d2-no-print" role="status" data-testid="solution-print-note">
+                        {printNote}
+                      </p>
+                    ) : null}
                     {pdfError ? (
                       <p className="d2-small mt-3 text-red-700 d2-no-print" data-testid="solution-pdf-error">
                         {pdfError}

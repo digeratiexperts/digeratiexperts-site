@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  MOBILE_ACTIVITIES,
   allowedStaffTransitions,
   formatServiceRequestNumber,
   isValidPhone,
@@ -25,6 +26,7 @@ describe("service request rules", () => {
   it("formats numbers per type", () => {
     expect(formatServiceRequestNumber("loaner_computer", 123)).toBe("LNR-000123");
     expect(formatServiceRequestNumber("return_computer", 7)).toBe("RTN-000007");
+    expect(formatServiceRequestNumber("mobile_request", 42)).toBe("MOB-000042");
   });
 
   it("accepts common phone formats and refuses junk", () => {
@@ -72,6 +74,30 @@ describe("service request rules", () => {
     expect(allowedStaffTransitions("loaner_computer", "submitted")).not.toContain("returned");
     expect(allowedStaffTransitions("return_computer", "received")).toEqual(["restocked", "disposed"]);
     expect(allowedStaffTransitions("return_computer", "closed")).toEqual([]);
+  });
+
+  it("keeps all 22 canonical mobile activities unique", () => {
+    expect(MOBILE_ACTIVITIES).toHaveLength(22);
+    expect(new Set(MOBILE_ACTIVITIES.map((a) => a.key)).size).toBe(22);
+    expect(MOBILE_ACTIVITIES.map((a) => a.label)).toContain("Transfer Personal Line to Corporate");
+  });
+
+  it("validates the canonical mobile request family and activity", () => {
+    const valid = {
+      requestedForUserId: "u1",
+      activity: "equipment_swap",
+      mobileNumber: "602-555-0100",
+      carrier: "Example Carrier",
+      deviceIdentifier: "IMEI-EXAMPLE",
+      effectiveDate: "2026-10-07",
+      details: "Replace the assigned phone and keep the existing line.",
+    };
+    expect(validateServiceRequestFields("mobile_request", valid, TODAY).errors).toEqual({});
+    expect(validateServiceRequestFields("mobile_request", { ...valid, activity: "made_up_activity" }, TODAY).errors.activity).toBeTruthy();
+    expect(validateServiceRequestFields("mobile_request", { ...valid, effectiveDate: "2026-10-05" }, TODAY).errors.effectiveDate).toBeTruthy();
+    expect(unfilledRequiredChips("mobile_request", { requestedForUserId: "u1", activity: "", details: "" }).map((x) => x.field)).toEqual(["activity", "details"]);
+    expect(allowedStaffTransitions("mobile_request", "submitted")).toContain("completed");
+    expect(allowedStaffTransitions("mobile_request", "completed")).toEqual(["closed"]);
   });
 });
 

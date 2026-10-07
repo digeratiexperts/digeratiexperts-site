@@ -5,6 +5,7 @@ import { assertNoInternalLeak } from "./actions";
 import { INTERNAL_REFUSAL } from "./prompt";
 import { appendDeskMessage, getDeskSessionMessages, isDeskAgentLive } from "./persist";
 import {
+  MOBILE_ACTIVITIES,
   RETURN_REASONS,
   SERVICE_REQUEST_AI_FILLABLE,
   STATUS_LABELS,
@@ -98,7 +99,8 @@ export function sanitizeFill(type: ServiceRequestType, proposed: unknown, today:
     if (!v) continue;
     if (k === "deviceKind" && v !== "laptop" && v !== "desktop") continue;
     if (k === "returnReason" && !RETURN_REASONS.some((r) => r.key === v)) continue;
-    if (["neededFrom", "loanUntil", "preferredReturnDate"].includes(k)) {
+    if (k === "activity" && !MOBILE_ACTIVITIES.some((a) => a.key === v)) continue;
+    if (["neededFrom", "loanUntil", "preferredReturnDate", "effectiveDate"].includes(k)) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || v < today) continue;
     }
     if (!assertNoInternalLeak(v)) continue;
@@ -127,8 +129,12 @@ function buildPortalSystemPrompt(input: PortalAssistInput, today: string): strin
     );
     if (type === "loaner_computer") {
       lines.push("deviceKind is laptop or desktop. neededFrom must be today or later; loanUntil on or after neededFrom.");
-    } else {
+    } else if (type === "return_computer") {
       lines.push(`returnReason is one of: ${RETURN_REASONS.map((r) => r.key).join(", ")}. Use manualAsset.* only when the computer is not in their assigned assets.`);
+    } else if (type === "mobile_request") {
+      lines.push(`activity must be one of these stable keys: ${MOBILE_ACTIVITIES.map((a) => a.key).join(", ")}. effectiveDate, when supplied, must be today or later. Never invent an IMEI, EID, phone number, carrier, or device identifier.`);
+    } else {
+      lines.push("For software licences, use only the fields already present on the form and facts the person stated.");
     }
     lines.push(`Current form values: ${JSON.stringify(input.form?.values ?? {}).slice(0, 1500)}`);
     lines.push(`Still required: ${(input.form?.missing ?? []).join(", ") || "nothing"}.`);
