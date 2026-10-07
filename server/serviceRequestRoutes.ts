@@ -245,8 +245,8 @@ function deskDescription(deps: ServiceRequestRouteDeps, r: StoredServiceRequest)
     `Company: ${company}`,
     `Requested for: ${person(deps, r.requestedForUserId).name}`,
     `Submitted by: ${person(deps, r.submittedByUserId).name}`,
-    `Contact phone: ${p.contactPhone ?? ""}`,
   ];
+  if (p.contactPhone) lines.push(`Contact phone: ${p.contactPhone}`);
   if (r.type === "license_request") {
     lines.push(
       `Operation: ${p.operation === "remove" ? "Remove" : "Add"} licence`,
