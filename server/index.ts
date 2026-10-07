@@ -19,7 +19,7 @@ import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
 import { cacheControlFor } from "./staticCacheControl";
-import { quoteSpoolDir, spoolPendingCount } from "./publicSolutionSpool";
+import { deskTicketSpoolDir, quoteSpoolDir, spoolPendingCount } from "./publicSolutionSpool";
 import { registerCampaignAliasRedirects } from "./campaignAliasRedirects";
 import { createServer as createViteServer } from "vite";
 import path from "path";
@@ -133,6 +133,8 @@ app.all("/api/health", async (_req, res) => {
       solutionSpool: { pending: spoolPendingCount() },
       // Store quote requests waiting on disk for the database (#240). A count only.
       quoteSpool: { pending: spoolPendingCount(quoteSpoolDir()) },
+      // DE Desk tickets the Desk API did not take (desk-ticket-failover). A count only.
+      deskTicketSpool: { pending: spoolPendingCount(deskTicketSpoolDir()) },
     },
     // Lets a reviewer confirm outbound mutations are locked down.
     stagingReview: stagingReviewStatus(),
@@ -679,6 +681,12 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       .then(({ startQuoteReplayWorker }) => startQuoteReplayWorker())
       .catch((error) => {
         log(`⚠️ quote replay worker not started: ${error?.message || error}`);
+      });
+    // DE Desk tickets the Desk API did not take go in by API once it works (desk-ticket-failover).
+    void import("./deskTicketReplayWorker")
+      .then(({ startDeskTicketReplayWorker }) => startDeskTicketReplayWorker())
+      .catch((error) => {
+        log(`⚠️ desk ticket replay worker not started: ${error?.message || error}`);
       });
     void import("./services/threat-intel/ingest")
       .then(({ startThreatIntelScheduler }) => startThreatIntelScheduler())

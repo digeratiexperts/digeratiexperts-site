@@ -517,3 +517,11 @@ describe("DE Desk shell positioning", () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe("DE Desk Get Support never shows clients a desk outage (desk-ticket-failover)", () => {
+  it("has no outage banner and no client-side desk status probe", () => {
+    expect(src).not.toMatch(/Ticket submission is temporarily unavailable/);
+    expect(src).not.toMatch(/support-availability/);
+    expect(src).not.toMatch(/\/api\/zoho\/desk\/status/);
+  });
+});

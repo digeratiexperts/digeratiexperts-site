@@ -1893,6 +1893,27 @@ export async function registerRoutes(app: Express) {
       } catch (zohoError: any) {
         console.warn("Could not sync ticket to Zoho Desk:", zohoError?.message || zohoError);
       }
+      if (!zohoTicketId) {
+        // desk-ticket-failover: the portal keeps its own row, and the Desk gets
+        // the ticket by email now and by API when the token works again.
+        try {
+          const { fallbackTicket, saveTicketOutsideDesk } = await import("./deskTicketFallback");
+          await saveTicketOutsideDesk(
+            fallbackTicket({
+              source: "client-portal",
+              email: userEmail,
+              subject,
+              description: `${description}\n\n---\nPortal ticket ${ticketNumber} (client ${resolvedClientId}).`,
+              priority: priorityMap[priority] || "Medium",
+              reason: "desk_sync_failed",
+              reference: ticketNumber,
+            }),
+            { acknowledge: false },
+          );
+        } catch (fallbackError: any) {
+          console.error("Desk fallback for portal ticket failed:", fallbackError?.message || fallbackError);
+        }
+      }
 
       res.status(201).json({
         success: true,
