@@ -1724,11 +1724,19 @@ html.de-store-jelly .d2-sheet-panel[data-state="open"] {
   nav {
     display: none !important;
   }
+  html,
+  body,
+  .de-site-canvas,
   .d2-page,
   .d2-chapter--paper,
   .d2-profile-panel {
     background: #fff !important;
     color: #000 !important;
+  }
+  /* With "Background graphics" on, the cookie banner would print. */
+  [data-testid="cookie-consent-banner"],
+  [data-testid="cookie-preferences-panel"] {
+    display: none !important;
   }
   .d2-print-only {
     display: block !important;
@@ -1737,6 +1745,59 @@ html.de-store-jelly .d2-sheet-panel[data-state="open"] {
     border-top-color: #ccc;
   }
   .d2-qty {
+    color: #000;
+  }
+  /* The rail does not print, so its column must not either. */
+  .d2-layout {
+    display: block !important;
+  }
+  /* The sheet prints flat: no card border, radius, shadow or side inset (claim 526). */
+  .d2-chapter--paper {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  .d2-print-head {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid #ccc;
+    font-size: 11px;
+    color: #000;
+  }
+  .d2-print-head__logo {
+    height: 32px;
+    width: auto;
+  }
+  .d2-print-head__meta {
+    text-align: right;
+  }
+  .d2-print-head__title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #000;
+  }
+  .d2-print-close {
+    margin-top: 18px;
+    padding-top: 10px;
+    border-top: 1px solid #ccc;
+    font-size: 11px;
+    color: #000;
+    break-inside: avoid;
+  }
+  .d2-print-close__heading {
+    font-size: 13px;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 4px;
+  }
+  .d2-print-close__contact {
+    margin-top: 6px;
     color: #000;
   }
 }

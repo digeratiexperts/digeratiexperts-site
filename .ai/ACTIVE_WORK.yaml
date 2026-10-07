@@ -2594,7 +2594,7 @@ claims:
       - client/src/styles/portal.css (dark + light portal tokens, active nav)
       - client/src/styles/portalLightTheme.test.ts
       - artifacts/visual-qa/portal-grey-ladder/** (new)
-    status: active
+    status: verified
     started: 2026-10-06
     note: >-
       Joe, 2026-10-04 (kie.ai billing screen: "the shades of grey in the
@@ -2606,6 +2606,7 @@ claims:
       ("all approved here"), implemented in portal.css with a before/after
       set; C replaces the 2026-10-03 orchid light theme, so Joe confirms the
       screenshots before merge.
+      Merged in PR 496; live in production release e7679b5 (2026-10-07).
   - id: portal-service-requests
     owner: claude
     subsystem: portal-service-requests
@@ -2627,7 +2628,7 @@ claims:
       - client/src/pages/portal/PortalSelfService.tsx (new) + the /portal/self-service route and nav item
       - client/src/pages/portal/PortalKB.tsx (initial search from ?q= only)
       - shared/portalAnnouncements.ts (new), client/src/components/portal/selfservice/** (new), announcement manual-record kind
-    status: active
+    status: verified-live
     started: 2026-10-06
     note: >-
       Joe, 2026-10-06: build "Request Loaner Computer" and "Return Computer" in
@@ -2654,7 +2655,7 @@ claims:
       - client/src/pages/portal/PortalKB.tsx, PortalSelfService.tsx (article links, ratings, Most Viewed)
       - client/src/App.tsx (four routes only), client/src/components/portal/shell/portalNav.ts (Licenses + Knowledge Authoring items only)
       - shared/portalAnnouncements.ts (cyber slide link only), docs/SERVICE-REQUESTS-HUB-CONTRACT.md (license_request)
-    status: active
+    status: verified-live
     started: 2026-10-06
     note: >-
       Joe, 2026-10-06: licence types by account type (birthright / frontline /
@@ -2683,7 +2684,7 @@ claims:
       - client/src/pages/portal/requests/PortalServiceRequestDetail.tsx (approval + contact panels), RequestStatusToken.tsx
       - client/src/App.tsx (/portal/organization only), portalNav.ts (Structure & IDs item only)
       - docs/SERVICE-REQUESTS-HUB-CONTRACT.md (routing fields, pending_approval)
-    status: active
+    status: verified-live
     started: 2026-10-06
     note: >-
       Joe, 2026-10-06: one site leader or department leader per unit
@@ -2707,7 +2708,7 @@ claims:
       - client/src/components/portal/requests/RequestControls.tsx, components/portal/orders/OrderControls.tsx, pages/portal/AdminOrderRequests.tsx (new)
       - client request form hook, shell and the three form pages (amend mode only), request detail and list pages, PortalOrderDetail.tsx (controls panel only)
       - client/src/App.tsx (/portal/admin/order-requests only), portalNav.ts (one admin item), docs/SERVICE-REQUESTS-HUB-CONTRACT.md
-    status: active
+    status: verified-live
     started: 2026-10-06
     note: >-
       Joe, 2026-10-06: cancel, amend or hold service requests and Store
@@ -2981,7 +2982,7 @@ claims:
     files:
       - server/orgDirectoryRoutes.ts (GET /me for a DE admin with a company open) + test
       - client/src/pages/portal/PortalOrganization.tsx (admin and no-company states only), client/src/lib/directoryApi.ts (type)
-    status: active
+    status: verified-live
     started: 2026-10-07
     note: >-
       Joe, 2026-10-07: "/portal/organization is not live". Deployed, but a DE admin got
@@ -3002,10 +3003,11 @@ claims:
       - client/src/pages/portal/{PortalDashboard,PortalSettings,PortalPeople}.tsx
       - client/src/styles/portal.css (category tokens)
       - artifacts/visual-qa/portal-categories-provisioning/** (new)
-    status: active
+    status: verified
     started: 2026-10-07
     note: >-
       Joe, 2026-10-06: show live user provisioning status and whether each
       step succeeded on the user's profile (lifecycle JumpCloud + Blackpoint
       and Store orders), and give dashboard cards vivid category colours with
       specific hex values (tickets, services, billing, requests, account).
+      Merged in PR 512; live in production release bda8348 (2026-10-07).
