@@ -218,6 +218,8 @@
    like the old homepage"), 5.4:1 on #111113. Magenta stays the CTA fill; paper bands keep --v8-magenta-paper-ink. */
 .v8 { --v8-magenta-ink: #F04C97; }
 .v8 .v8-link:hover { color: #ff7ab4; }
+/* One step lighter surfaces (#29292d inset cards) lift the same pink to keep AA: #ff6aac is 5.5:1 there. */
+.v8 .v8-card--inset, .v8 .v8-box .v8-card { --v8-magenta-ink: #ff6aac; }
 
 /* =====================================================================
    Element kit (Joe, 2026-10-02: "we need this level of work" → "all of it").
