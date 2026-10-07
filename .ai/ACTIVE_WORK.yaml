@@ -670,6 +670,34 @@ claims:
       credentials only from a verified list with issuer links; Google Partner
       badge replaced; ebook stories labelled as examples and tied to sourced
       facts; new code-drawn ebook cover; developer notes off Cyber Facts.
+
+  - id: overlays-and-portal-add-user
+    owner: claude
+    subsystem: site-overlays-and-portal-admin
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: 12b016cb
+    files:
+      - client/src/components/StickyCTABar.tsx
+      - client/src/lib/stickyCtaVisibility.ts
+      - client/src/lib/stickyCtaVisibility.test.ts
+      - client/src/lib/storeLightChrome.test.ts (sticky bar source check only)
+      - server/portalUserInvite.ts (new)
+      - server/portalUserInvite.test.ts (new)
+      - server/routes.ts (one import and the registerPortalUserInviteRoute call only)
+      - server/services/notificationService.ts (sendPortalInvite only)
+      - client/src/pages/portal/AdminCompanies.tsx (Add user form in the company details Users panel only)
+      - artifacts/visual-qa/portal-add-user/** (new)
+    status: active
+    started: 2026-10-07
+    note: >-
+      Joe, 2026-10-07 ("merge, then keep going"), items 3b and 3c. 3b: the
+      sticky call-to-action bar no longer shows on page load (the short-page
+      check ran once against the loading skeleton), and on phones it waits
+      until the cookie banner is answered. 3c: Manage Companies, company
+      details, "Add user" creates the person in that company and emails a
+      single-use, 7-day link to choose their own password; nobody else sees
+      it. Shares AdminCompanies.tsx and routes.ts with PR 536 on separate
+      lines.
   - id: tenant-files-durable
     issue: 259
     owner: claude
