@@ -32,12 +32,14 @@ import {
   USER_CANCELLABLE,
   allowedStaffTransitions,
   isServiceRequestType,
+  mobileActivityLabel,
   returnReasonLabel,
   todayIso,
   validateServiceRequestFields,
   type AnyRequestFields,
   type LicenseFields,
   type LoanerFields,
+  type MobileFields,
   type ReturnFields,
   type ServiceRequestAsset,
   type ServiceRequestPerson,
@@ -56,7 +58,7 @@ import {
 } from "@shared/portalTicketFileRules";
 
 /**
- * Portal service requests: Request Loaner Computer and Return Computer.
+ * Portal service requests: computers, software licences, and mobile/carrier activities.
  *
  * Tenant rule: the company always comes from the signed-in user (or, for a DE
  * admin, the company they are impersonating), never from the request body. A
@@ -256,6 +258,13 @@ function deskDescription(deps: ServiceRequestRouteDeps, r: StoredServiceRequest)
       `Approval: ${p.approval}`,
       `Business justification: ${p.businessJustification}`,
     );
+  } else if (r.type === "mobile_request") {
+    lines.push(`Activity: ${p.activityLabel || mobileActivityLabel(String(p.activity))}`);
+    if (p.mobileNumber) lines.push(`Mobile number: ${p.mobileNumber}`);
+    if (p.carrier) lines.push(`Carrier: ${p.carrier}`);
+    if (p.deviceIdentifier) lines.push(`Device / IMEI / EID / asset tag: ${p.deviceIdentifier}`);
+    if (p.effectiveDate) lines.push(`Requested effective date: ${p.effectiveDate}`);
+    lines.push(`Details: ${p.details}`);
   } else if (r.type === "loaner_computer") {
     lines.push(`Device: ${p.deviceKind}`, `Needed from: ${p.neededFrom}`, `Loan until: ${p.loanUntil}`, `Reason: ${p.reason}`);
     if (p.accessories) lines.push(`Accessories: ${p.accessories}`);
@@ -428,6 +437,15 @@ async function resolveSubmission(
       approval: match.approval,
     };
     return { ok: true, payload, site: null, requestedForUserId: target.id };
+  }
+  if (type === "mobile_request") {
+    const f = input as MobileFields;
+    return {
+      ok: true,
+      payload: { ...f, activityLabel: mobileActivityLabel(f.activity) },
+      site: null,
+      requestedForUserId: target.id,
+    };
   }
   const fields = input as LoanerFields | ReturnFields;
 
