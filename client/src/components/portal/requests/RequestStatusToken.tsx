@@ -18,6 +18,7 @@ const TONE: Record<ServiceRequestStatus, TokenTone> = {
   disposed: "ok",
   approved: "info",
   fulfilled: "ok",
+  completed: "ok",
   closed: "ok",
   rejected: "bad",
   cancelled: "neutral",
