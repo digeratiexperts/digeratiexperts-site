@@ -1,8 +1,10 @@
 .v8 .v8s-01 .hero { position: relative; isolation: isolate; overflow: hidden; background: linear-gradient(110deg, #050312 0%, #060617 52%, #090924 100%); }
-.v8 .v8s-01 .hero__grid { position: absolute; inset: 0 0 0 42%; z-index: -2; opacity: 0.15;
-    background-image: linear-gradient(rgba(123,108,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(123,108,255,0.6) 1px, transparent 1px); background-size: 52px 52px;
-    -webkit-mask-image: linear-gradient(to right, transparent, #000 40%, #000 80%, transparent); mask-image: linear-gradient(to right, transparent, #000 40%, #000 80%, transparent); }
-.v8 .v8s-01 .hero__glow { position: absolute; z-index: -1; width: 880px; height: 720px; right: -80px; top: 40px; background: radial-gradient(closest-side, rgba(87,68,255,0.24), transparent); pointer-events: none; }
+/* Field and city-lights plate, as on the previous homepage hero (ReferenceHeroSection): violet light top-right, magenta warmth low-right, Phoenix at dusk on the right, masked under the copy. */
+.v8 .v8s-01 .hero__field { position: absolute; inset: 0; z-index: -3; pointer-events: none; background: radial-gradient(ellipse 40% 60% at 80% 20%, rgba(87,68,255,0.22), transparent 70%), radial-gradient(ellipse 30% 40% at 95% 85%, rgba(211,18,106,0.12), transparent 70%); }
+.v8 .v8s-01 .hero__city { position: absolute; inset: 0; z-index: -2; overflow: hidden; pointer-events: none; }
+.v8 .v8s-01 .hero__city-img { position: absolute; top: -6%; left: 0; width: 100%; height: 112%; object-fit: cover; object-position: center 60%; opacity: 0.42;
+    -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.3) 38%, rgba(0,0,0,0.9) 62%, #000 100%); mask-image: linear-gradient(to right, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.3) 38%, rgba(0,0,0,0.9) 62%, #000 100%); }
+.v8 .v8s-01 .hero__city-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5,3,18,0.6) 0%, rgba(5,3,18,0.08) 30%, rgba(5,3,18,0.08) 62%, rgba(5,3,18,0.85) 100%); }
 .v8 .v8s-01 .hero__body { display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(420px, 0.98fr); column-gap: 48px; align-items: center; padding: 64px var(--v8-gutter);
     /* Mock chrome omitted (the real MegaMenu is fixed above): clear it. --de-nav-offset = chrome + spy row + 0.75rem, so +3.25rem lands the mock's 64px below the chrome. */
     padding-top: calc(var(--de-nav-offset) + 3.25rem); }
@@ -97,7 +99,6 @@
   .v8 .v8s-01 .hero .v8-h1 span { white-space: normal; }
   .v8 .v8s-01 .win { max-width: 680px; }
   /* Stacked layout: the plate only reached the page as a blown-up tile behind the headline (its core sits behind the opaque card), so it is off below 1180px. Same rule as PR 492. */
-  .v8 .v8s-01 .hero__grid { inset: 0; }
 }
 @media (max-width: 1023px) {
   .v8 .v8s-01 .trust .v8-cells { grid-template-columns: repeat(2, minmax(0, 1fr)); }

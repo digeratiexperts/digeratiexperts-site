@@ -61,3 +61,7 @@
 /* Port: the live loading / empty shells (DigeratiThreatsInsightsSection) on the v8 card. */
 .v8 .v8s-12 .feed-state { margin-top: 40px; max-width: 720px; }
 .v8 .v8s-12 .feed-state .v8-body { margin-top: 8px; }
+/* Restored photo (previous homepage) heading the hand-off steps. */
+.v8 .v8s-12 .monitor-photo { position: relative; aspect-ratio: 3 / 2; margin: -8px -8px 24px; overflow: hidden; border-radius: calc(var(--v8-radius-lg) - 4px); background: #0c0a12; }
+.v8 .v8s-12 .monitor-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.v8 .v8s-12 .monitor-photo__tag { position: absolute; top: 14px; left: 14px; padding: 4px 10px; border-radius: 999px; background: rgba(5,3,18,0.72); border: 1px solid rgba(255,255,255,0.14); font-size: 12px; font-weight: 600; color: #fff; }

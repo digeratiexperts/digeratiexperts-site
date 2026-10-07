@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { MouseEvent } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+// Phoenix city lights at dusk: the previous homepage hero plate (Joe, 2026-10-07: "it looked fine with the old background").
+import heroCityLights from "@assets/de-hero-arizona-dusk-1600.webp";
 import {
   ArrowRight,
   Check,
@@ -415,6 +417,8 @@ export function V8Hero(): JSX.Element {
   const prefersReducedMotion = useReducedMotion();
   const isPhone = useIsPhone();
   const sectionRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end start"] });
+  const cityLightsY = useTransform(scrollYProgress, [0, 1], prefersReducedMotion ? ["0%", "0%"] : ["0%", "8%"]);
 
   const openAssessment = (e: MouseEvent<HTMLAnchorElement>) => {
     // Modified clicks keep the /book href (new tab / window).
@@ -432,8 +436,21 @@ export function V8Hero(): JSX.Element {
         id="home"
         aria-labelledby="hero-title"
       >
-        <div className="hero__grid" aria-hidden="true" />
-        <div className="hero__glow" aria-hidden="true" />
+        <div className="hero__field" aria-hidden="true" />
+        <div className="hero__city" aria-hidden="true">
+          <motion.img
+            src={heroCityLights}
+            alt=""
+            width={1600}
+            height={1067}
+            loading="eager"
+            decoding="async"
+            {...({ fetchpriority: "low" } as Record<string, string>)}
+            className="hero__city-img"
+            style={{ y: cityLightsY }}
+          />
+          <div className="hero__city-shade" />
+        </div>
 
         <div className="v8-canvas hero__body">
           <motion.div

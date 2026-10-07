@@ -6,7 +6,7 @@
 .v8 .v8s-10 .ind-rail { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; }
 .v8 .v8s-10 .ind-card__link { position: relative; display: block; height: 300px; overflow: hidden; border-radius: var(--v8-radius-lg); border: 1px solid var(--v8-hairline); isolation: isolate; transition: border-color 200ms ease-out; }
 .v8 .v8s-10 .ind-card__img { position: absolute; inset: 0; background-size: cover; background-position: center; filter: grayscale(1); transform: scale(1); transition: filter 300ms ease-out, transform 600ms cubic-bezier(.2,.8,.2,1); z-index: -2; }
-.v8 .v8s-10 .ind-card__shade { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 48%, rgba(0,0,0,0.05) 100%); z-index: -1; }
+.v8 .v8s-10 .ind-card__shade { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.2) 100%); /* the previous homepage's shade */ z-index: -1; }
 .v8 .v8s-10 .ind-card__body { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; }
 .v8 .v8s-10 .ind-card__body .v8-iconwell { margin-bottom: 14px; background: rgba(10,10,10,0.72); }
 .v8 .v8s-10 .ind-card__name { font-family: var(--v8-font-heading); font-weight: 600; font-size: 19px; line-height: 1.25; letter-spacing: -0.01em; color: #fff; }

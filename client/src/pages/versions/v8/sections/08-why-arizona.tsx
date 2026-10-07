@@ -6,6 +6,8 @@ import { CTA } from "@/lib/ctaCopy";
 import { TipTag } from "./TipTag";
 import "./08-why-arizona.css";
 import { ChapterPattern } from "@/components/site/Atmosphere";
+// The previous homepage's assessment-desk photo, restored behind the report outline (Joe, 2026-10-07).
+import trustDeskImg from "@assets/de-trust-assessment-desk-960.webp";
 
 /**
  * 08 · Why Arizona businesses work with us (mock: sections/08-why-arizona.html).
@@ -96,6 +98,20 @@ export function V8WhyArizona(): JSX.Element {
           aria-label="Example format: outline of a Cyber Risk Assessment findings report"
           {...reveal}
         >
+          <div className="docfig__photo">
+            <img
+              src={trustDeskImg}
+              alt="Principal-led cyber risk assessment work for an Arizona business"
+              width={960}
+              height={640}
+              loading="lazy"
+              decoding="async"
+            />
+            <figcaption>
+              <p className="docfig__cap">Principal-led assessments sized to how your business runs</p>
+              <p className="docfig__sub">Arizona MSP · Cybersecurity &amp; Managed IT</p>
+            </figcaption>
+          </div>
           <div className="doc">
             <div className="doc__bar">
               <img className="doc__logo" src={DE_LOGO_PRIMARY} alt="Digerati Experts" />
@@ -115,10 +131,6 @@ export function V8WhyArizona(): JSX.Element {
               </div>
             ))}
           </div>
-          <figcaption>
-            <p className="v8-small">Principal-led assessments sized to how your business runs</p>
-            <p className="v8-small">Arizona MSP · Cybersecurity &amp; Managed IT</p>
-          </figcaption>
         </motion.figure>
       </div>
     </section>
