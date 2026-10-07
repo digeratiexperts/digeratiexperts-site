@@ -46,6 +46,15 @@ Describe 'Windows pre-logon authorized-use notice' {
         $d.text | Should -Not -Match 'owned by Digerati Experts'
     }
 
+    It 'uses clean wording on DE-owned internal endpoints' {
+        $p = New-DEClientProfileTemplate -Id 'de-internal' -Name 'Digerati Experts'
+        $d = Get-DELogonNoticeDesired -ClientProfile $p
+        $d.text | Should -Match 'authorized Digerati Experts business use'
+        $d.text | Should -Match 'authorized Digerati Experts personnel'
+        $d.text | Should -Match 'Contact Digerati Experts for assistance'
+        $d.text | Should -Not -Match 'Digerati Experts or Digerati Experts'
+    }
+
     It 'accepts an approved custom caption and body and normalizes line endings' {
         $p = New-DEClientProfileTemplate -Id 'custom' -Name 'Custom Client'
         $p.windows.logonNotice.mode = 'custom'
@@ -63,6 +72,17 @@ Describe 'Windows pre-logon authorized-use notice' {
         $p.windows.logonNotice.mode = 'custom'
         $p.windows.logonNotice.body = ''
         { Get-DELogonNoticeDesired -ClientProfile $p } | Should -Throw
+    }
+
+    It 'refuses to save invalid custom or unexplained disabled policy states' {
+        $p = New-DEClientProfileTemplate -Id 'bad-save' -Name 'Bad Save'
+        $p.windows.logonNotice.mode = 'custom'
+        $p.windows.logonNotice.body = ''
+        { Save-DEClientProfile -Profile $p -Confirm:$false } | Should -Throw
+
+        $p.windows.logonNotice.mode = 'disabled'
+        $p.windows.logonNotice.disabledReason = ''
+        { Save-DEClientProfile -Profile $p -Confirm:$false } | Should -Throw
     }
 
     It 'applies and verifies the notice, then restores the exact pre-DE values' {
@@ -89,6 +109,7 @@ Describe 'Windows pre-logon authorized-use notice' {
     It 'supports an explicit client disabled state and rolls that change back' {
         $p = New-DEClientProfileTemplate -Id 'exception' -Name 'Exception Client'
         $p.windows.logonNotice.mode = 'disabled'
+        $p.windows.logonNotice.disabledReason = 'Client legal policy requires no pre-logon notice.'
         $global:DELegalTest.Registry['LegalNoticeCaption'] = 'Existing caption'
         $global:DELegalTest.Registry['LegalNoticeText'] = 'Existing body'
 
