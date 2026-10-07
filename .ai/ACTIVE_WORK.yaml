@@ -529,8 +529,19 @@ claims:
       - server/integrations/deSyncAuth.ts
       - server/integrations/techSalesClient.ts (portal-bridge calls + signedGet only)
       - server/integrations/portalBridgeSigning.test.ts
-    status: merged
+    status: verified-live
     started: 2026-10-03
+    released: 2026-10-03
+    pr: 404
+    merge_sha: 09ae4962ee1defe2c6fee8ed53bd9597f2650a11
+    verification: >-
+      Merged on Joe's "approved, merge #404" (2026-10-03). PR CI passed; the
+      production deploy shipped it in release 97b3d864 (2026-10-03), and
+      release.txt on digeratiexperts.com and portal.digeratiexperts.com still
+      reads a descendant (e7679b5f, 2026-10-07) whose techSalesClient.ts carries
+      portalBridgeHeaders. Not yet exercised by an agent: a signed-in portal
+      Company > Documents / Orders load and a contract download (DE to run).
+      Next: DE_SYNC_REQUIRE_SIGNED=1 on the Hub once that check passes.
     note: >-
       Sign portal-bridge GETs to the Hub over pathname + search and stop sending
       the raw sync token (Authorization / x-de-sync-token). Needs Hub PR 329
