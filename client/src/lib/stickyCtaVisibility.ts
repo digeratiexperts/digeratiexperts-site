@@ -96,6 +96,19 @@ export function isPageFooterOnScreen(footerTop: number, viewportH: number): bool
   return Number.isFinite(footerTop) && footerTop < viewportH;
 }
 
+/** Below this width the cookie banner goes first and the bar waits for it. */
+export const STICKY_CTA_COOKIE_FIRST_MAX_WIDTH = 768;
+
+/**
+ * Phones: the cookie banner, the Ask DE bar and this bar together covered a
+ * third of a 390px screen (Joe, 2026-10-07: "show the cookie bar first and the
+ * Risk Assessment bar only after it's dismissed"). Wider screens keep stacking
+ * the banner under the bar via --de-cookie-h.
+ */
+export function isCookieFirst(viewportW: number, cookieBannerBlocking: boolean): boolean {
+  return cookieBannerBlocking && viewportW < STICKY_CTA_COOKIE_FIRST_MAX_WIDTH;
+}
+
 export function shouldShowStickyCta(input: {
   dismissed: boolean;
   routeAllowed: boolean;
@@ -104,6 +117,7 @@ export function shouldShowStickyCta(input: {
   overlapping: boolean;
   autoHidden: boolean;
   pinned?: boolean;
+  cookieFirst?: boolean;
 }): boolean {
   if (input.dismissed || !input.routeAllowed) return false;
   if (input.overlapping) return false;
@@ -112,6 +126,7 @@ export function shouldShowStickyCta(input: {
     // no “park because the footer is already in view.”
     return true;
   }
+  if (input.cookieFirst) return false;
   return input.pastThreshold && !input.scrolling && !input.autoHidden;
 }
 

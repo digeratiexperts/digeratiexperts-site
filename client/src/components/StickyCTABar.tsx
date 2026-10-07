@@ -17,10 +17,12 @@ import {
   isPastStickyCtaThreshold,
   isStickyCtaPinnedRoute,
   isStickyCtaRouteAllowed,
+  isCookieFirst,
   isTooShortToReachStickyThreshold,
   rectOverlapsPageContent,
   shouldShowStickyCta,
 } from "@/lib/stickyCtaVisibility";
+import { isCookieBannerBlocking } from "@/lib/deskAskDeMotion";
 
 function publishStickyCtaHeight(px: number) {
   document.documentElement.style.setProperty("--de-sticky-cta-h", `${Math.round(px)}px`);
@@ -35,6 +37,7 @@ export function StickyCTABar() {
   const [scrolling, setScrolling] = useState(false);
   const [overlapping, setOverlapping] = useState(false);
   const [autoHidden, setAutoHidden] = useState(false);
+  const [cookieFirst, setCookieFirst] = useState(false);
   const { openBooking } = useBooking();
   const barRef = useRef<HTMLDivElement>(null);
   const lastShowScroll = useRef(0);
@@ -52,6 +55,7 @@ export function StickyCTABar() {
     overlapping,
     autoHidden,
     pinned,
+    cookieFirst,
   });
 
   useEffect(() => {
@@ -72,6 +76,22 @@ export function StickyCTABar() {
 
     let idleTimer: number | undefined;
     let ticking = false;
+    // A lazy route mounts as a short skeleton, so "too short to scroll" must
+    // hold on two reads with the same height before it counts. Read once at
+    // mount, it showed the bar over the hero on every page until a scroll.
+    let lastScrollH = -1;
+    const settledShortPage = () => {
+      const scrollH = document.documentElement.scrollHeight;
+      const stable = scrollH === lastScrollH;
+      lastScrollH = scrollH;
+      return stable && isTooShortToReachStickyThreshold(window.innerHeight, scrollH);
+    };
+    const evaluateThreshold = () => {
+      setPastThreshold(
+        pinned || settledShortPage() || isPastStickyCtaThreshold(window.scrollY, window.innerHeight),
+      );
+      setCookieFirst(isCookieFirst(window.innerWidth, isCookieBannerBlocking()));
+    };
 
     const measureOverlap = () => {
       const bar = barRef.current;
@@ -117,6 +137,7 @@ export function StickyCTABar() {
           document.documentElement.scrollHeight,
         );
       setOverlapping(Boolean(overlayHits || footerHits || endHits));
+      evaluateThreshold();
     };
 
     const markScrolling = (on: boolean) => {
@@ -126,13 +147,7 @@ export function StickyCTABar() {
 
     const onScroll = () => {
       const scrollY = window.scrollY;
-      const shortPage = isTooShortToReachStickyThreshold(
-        window.innerHeight,
-        document.documentElement.scrollHeight,
-      );
-      setPastThreshold(
-        pinned || shortPage || isPastStickyCtaThreshold(scrollY, window.innerHeight),
-      );
+      evaluateThreshold();
       if (!pinned) {
         markScrolling(true);
       }
@@ -158,12 +173,14 @@ export function StickyCTABar() {
     onScroll();
     window.addEventListener("scroll", onScrollRaf, { passive: true });
     window.addEventListener("resize", measureOverlap);
+    window.addEventListener("de-cookie-consent", measureOverlap);
     const overlapPoll = window.setInterval(measureOverlap, 500);
     return () => {
       window.clearTimeout(idleTimer);
       window.clearInterval(overlapPoll);
       window.removeEventListener("scroll", onScrollRaf);
       window.removeEventListener("resize", measureOverlap);
+      window.removeEventListener("de-cookie-consent", measureOverlap);
       document.documentElement.dataset.stickyCtaScrolling = "false";
     };
   }, [dismissed, routeAllowed, pinned]);

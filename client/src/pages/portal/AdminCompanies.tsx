@@ -14,6 +14,9 @@ import { useUpload } from "@/hooks/use-upload";
 import { PortalLayout } from "./PortalLayout";
 import { ACCOUNT_MANAGERS, DEFAULT_ACCOUNT_MANAGER_ID, resolveAccountManager } from "@shared/accountManagers";
 import { DataTable, EmptyState, Field, GenericStatus, Panel, StatTile, Token, type DataColumn } from "@/components/portal/ui";
+// Add user (Manage Companies > company details).
+import { UserPlus } from "lucide-react";
+import { portalPost } from "@/lib/portalApi";
 
 interface Company {
   id: string;
@@ -89,6 +92,8 @@ export function AdminCompanies() {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [detailTab, setDetailTab] = useState("overview");
   const [newFile, setNewFile] = useState({ fileName: "", category: "documents", description: "" });
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUser, setNewUser] = useState({ fullName: "", email: "" });
   const { uploadFile, isUploading, progress } = useUpload({
     onSuccess: (response) => {
       if (selectedCompanyId) {
@@ -179,6 +184,30 @@ export function AdminCompanies() {
     },
   });
 
+  // The person chooses their own password from the emailed link; nobody here sees it.
+  const addUserMutation = useMutation({
+    mutationFn: async (data: typeof newUser) => {
+      return await portalPost<{ emailSent: boolean }>(`/api/portal/admin/companies/${selectedCompanyId}/users`, data);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/portal/admin/companies"] });
+      const email = newUser.email.trim();
+      setShowAddUser(false);
+      setNewUser({ fullName: "", email: "" });
+      toast(
+        data?.emailSent
+          ? { title: "User added", description: `We emailed ${email} a link to set their password.` }
+          : {
+              title: "User added, email not sent",
+              description: `Ask ${email} to use "Forgot password" on the sign-in page to set their password.`,
+            },
+      );
+    },
+    onError: (error: any) => {
+      toast({ title: "Could not add user", description: error.message || "Please try again.", variant: "destructive" });
+    },
+  });
+
   const assignManagerMutation = useMutation({
     mutationFn: async ({ companyId, accountManager }: { companyId: string; accountManager: string }) => {
       return await apiRequest(`/api/portal/admin/companies/${companyId}`, "PUT", { accountManager });
@@ -224,6 +253,8 @@ export function AdminCompanies() {
   const closeDetail = () => {
     setSelectedCompanyId(null);
     setDetailTab("overview");
+    setShowAddUser(false);
+    setNewUser({ fullName: "", email: "" });
   };
 
   const companyColumns: DataColumn<Company>[] = [
@@ -520,8 +551,80 @@ export function AdminCompanies() {
                         Users ({companyDetail.users.length})
                       </span>
                     }
+                    actions={
+                      !showAddUser && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setShowAddUser(true)}
+                          data-testid="button-add-user"
+                        >
+                          <UserPlus className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                          Add user
+                        </Button>
+                      )
+                    }
                     flush
                   >
+                    {showAddUser && (
+                      <form
+                        className="space-y-3 border-b border-border px-4 py-4"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          addUserMutation.mutate(newUser);
+                        }}
+                        data-testid="form-add-user"
+                      >
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <Field label="Full name" htmlFor="newUserName" required>
+                            <Input
+                              id="newUserName"
+                              value={newUser.fullName}
+                              onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
+                              autoComplete="off"
+                              className={fieldClass}
+                              data-testid="input-new-user-name"
+                            />
+                          </Field>
+                          <Field label="Email" htmlFor="newUserEmail" required>
+                            <Input
+                              id="newUserEmail"
+                              type="email"
+                              value={newUser.email}
+                              onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                              autoComplete="off"
+                              className={fieldClass}
+                              data-testid="input-new-user-email"
+                            />
+                          </Field>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          They get an email with a link to choose their own password. The link works once and lasts 7 days.
+                        </p>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setShowAddUser(false);
+                              setNewUser({ fullName: "", email: "" });
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="submit"
+                            size="sm"
+                            disabled={!newUser.fullName.trim() || !newUser.email.trim() || addUserMutation.isPending}
+                            data-testid="button-send-invite"
+                          >
+                            {addUserMutation.isPending && <Loader className="mr-1.5 h-4 w-4 animate-spin" aria-hidden="true" />}
+                            Add and email link
+                          </Button>
+                        </div>
+                      </form>
+                    )}
                     <div className="max-h-48 overflow-y-auto">
                       {companyDetail.users.length === 0 ? (
                         <EmptyState compact icon={Users} title="No users yet" />
