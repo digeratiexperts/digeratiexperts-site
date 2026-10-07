@@ -49,8 +49,7 @@ build the AI packs, and the AI Toolkit page offers to install it for the current
    It shows why it chose that client, and the technician confirms or picks another.
 3. **The technician stays separate from the end user.** The first time DE Tech Tool opens on a machine it
    asks who is running it (Enter keeps `jrpetro`) and remembers the answer; RMM runs pass `-Technician`.
-   Evidence and the Hub record name that person. The end user is detected separately: for example `AzureAD\SuzetteThompson` at Alamo becomes the
-   local account `sthompson`.
+   Evidence and the Hub record name that person. The end user is detected separately. New identities follow the canonical `firstname.lastname` convention; inherited takeover mappings are preserved when recorded. For example, the existing Alamo mapping `AzureAD\SuzetteThompson` → `sthompson` remains an inherited exception instead of being renamed during takeover.
 4. **Pick a plan and a mode.** The plan is a ProActive tier, a variant (GCC High, Co-Managed IT), or a
    standalone solution; the client profile's `plan` section is the default. The modes are audit, new,
    dropship, takeover, replacement, repair, co-managed and deprovision. After the scan the tool recommends
