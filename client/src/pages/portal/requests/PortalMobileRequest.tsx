@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Smartphone } from "lucide-react";
 import { PortalLayout } from "../PortalLayout";
@@ -21,7 +21,16 @@ export default function PortalMobileRequest() {
   const [person, setPerson] = useState<PersonOption | null>(null);
   const [done, setDone] = useState<Extract<SubmitResult, { kind: "submitted" }> | null>(null);
   const [basketNote, setBasketNote] = useState<string | null>(null);
+  const [activityQuery, setActivityQuery] = useState("");
   const { values, setField, errors } = form;
+  const visibleActivityGroups = useMemo(() => {
+    const q = activityQuery.trim().toLowerCase();
+    if (!q) return MOBILE_ACTIVITY_GROUPS;
+    return MOBILE_ACTIVITY_GROUPS.map((group) => ({
+      ...group,
+      activities: group.activities.filter(([, label]) => label.toLowerCase().includes(q)),
+    })).filter((group) => group.activities.length > 0);
+  }, [activityQuery]);
   const ctx = context.data;
 
   useEffect(() => {
@@ -109,28 +118,51 @@ export default function PortalMobileRequest() {
           error={errors.requestedForUserId}
         />
 
-        <div>
-          <FieldLabel htmlFor="sr-mobile-activity" required>Activity</FieldLabel>
-          <select
+        <fieldset aria-describedby={errors.activity ? "sr-mobile-activity-error" : undefined}>
+          <FieldLabel id="sr-mobile-activity-label" required>Activity</FieldLabel>
+          <input
             id="sr-mobile-activity"
-            value={values.activity}
-            onChange={(e) => setField("activity", e.target.value)}
-            aria-required="true"
-            aria-invalid={errors.activity ? true : undefined}
-            aria-describedby={errors.activity ? "sr-mobile-activity-error" : undefined}
+            type="search"
+            value={activityQuery}
+            onChange={(e) => setActivityQuery(e.target.value)}
+            placeholder="Search mobile activities"
+            aria-labelledby="sr-mobile-activity-label"
             className={controlClass}
-          >
-            <option value="">Choose an activity</option>
-            {MOBILE_ACTIVITY_GROUPS.map((group) => (
-              <optgroup key={group.key} label={group.label}>
-                {group.activities.map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
-                ))}
-              </optgroup>
+          />
+          <div className="mt-3 space-y-4">
+            {visibleActivityGroups.map((group) => (
+              <section key={group.key} aria-labelledby={`sr-mobile-group-${group.key}`}>
+                <h3 id={`sr-mobile-group-${group.key}`} className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  {group.label}
+                </h3>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {group.activities.map(([key, label]) => {
+                    const selected = values.activity === key;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => setField("activity", key)}
+                        className={`min-h-[48px] rounded-md border px-3 py-2 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                          selected
+                            ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.10)] text-foreground"
+                            : "border-border bg-card text-foreground hover:bg-accent"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
             ))}
-          </select>
+            {visibleActivityGroups.length === 0 && (
+              <p className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">No mobile activities match that search.</p>
+            )}
+          </div>
           <FieldError id="sr-mobile-activity-error" error={errors.activity} />
-        </div>
+        </fieldset>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField
