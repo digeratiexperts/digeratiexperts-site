@@ -17,6 +17,7 @@ import {
   FolderOpen,
   GraduationCap,
   LayoutDashboard,
+  LayoutGrid,
   Map,
   MessageCircle,
   Package,
@@ -70,8 +71,10 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
     label: "Support",
     items: [
       { href: "/portal/dashboard", label: "Dashboard", icon: LayoutDashboard, key: "dashboard", hint: "Overview of what needs you" },
+      { href: "/portal/self-service", label: "Self-Service", icon: LayoutGrid, key: "requests", hint: "Start a request, fix an issue, find an answer" },
       { href: "/portal/tickets", label: "Support Tickets", icon: Ticket, key: "tickets", hint: "Open, track and reply" },
       { href: "/portal/forms", label: "Request Forms", icon: ClipboardList, key: "forms", hint: "Access, devices, onboarding" },
+      { href: "/portal/requests", label: "Service Requests", icon: Package, key: "requests", hint: "Loaner and return computers, my requests" },
       { href: "/portal/infrastructure", label: "Infrastructure Issues", icon: AlertTriangle, key: "infrastructure", hint: "Report an outage or fault" },
       { href: "/portal/chat", label: "Chats / DE Desk", icon: MessageCircle, key: "chat", hint: "Live chat and website desk" },
       { href: "/portal/approvals", label: "Approvals", icon: FileStack, key: "approvals", hint: "Decide pending requests" },

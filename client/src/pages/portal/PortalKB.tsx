@@ -25,7 +25,10 @@ const chipClass = (active: boolean) =>
   );
 
 export default function PortalKB() {
-  const [search, setSearch] = useState("");
+  // ?q= opens the page pre-searched (Self-Service search and article cards link here).
+  const [search, setSearch] = useState(() =>
+    typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("q") ?? "",
+  );
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const { data: articles = [], isLoading, isError, error } = useQuery<KBArticle[]>({

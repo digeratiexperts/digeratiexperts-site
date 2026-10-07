@@ -52,6 +52,7 @@ export const DE_SYNC_EVENT_TYPES = [
   "device.rescue_handoff",
   "device.warranty",
   "email_migration.recorded",
+  "service_request.upserted",
 ] as const;
 
 export type DeSyncEventType = (typeof DE_SYNC_EVENT_TYPES)[number];

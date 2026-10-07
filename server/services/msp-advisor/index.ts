@@ -20,3 +20,13 @@ export {
 } from "./persist";
 export type { DeskChatRole, DeskChatMessage, DeskChatSessionSummary } from "./persist";
 export type * from "./types";
+export {
+  handlePortalAssistChat,
+  portalAssistSessionId,
+  sanitizePageInput,
+  sanitizeFill,
+  materializePortalActions,
+  fallbackPortalReply,
+  PORTAL_ASSIST_FILLABLE,
+} from "./portal-assist";
+export type { PortalAssistAction, PortalAssistPage, PortalAssistResponse } from "./portal-assist";
