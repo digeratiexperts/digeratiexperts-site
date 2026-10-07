@@ -104,8 +104,9 @@ describe("DE Desk ticket failover", () => {
     expect(d.acknowledgeClient).not.toHaveBeenCalled();
   });
 
-  it("emails the Desk inbox by default, or the one named in DESK_FALLBACK_EMAIL", () => {
-    expect(deskFallbackInbox({})).toBe("support@digerati-experts.com");
+  it("emails Desk's own incoming address by default, or the one named in DESK_FALLBACK_EMAIL", () => {
+    expect(deskFallbackInbox({})).toBe("support@thatsmytech.zohosupport.com");
+    expect(deskFallbackInbox({ DESK_FALLBACK_EMAIL: "  " })).toBe("support@thatsmytech.zohosupport.com");
     expect(deskFallbackInbox({ DESK_FALLBACK_EMAIL: "help@example.com" })).toBe("help@example.com");
   });
 
