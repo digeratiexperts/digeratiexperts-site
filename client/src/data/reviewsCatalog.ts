@@ -53,6 +53,15 @@ export const GOOGLE_MAPS_CID_URL =
   "https://maps.google.com/?cid=1710856351091471339";
 
 /**
+ * Official "leave a review" link from the verified Google Business Profile
+ * (GBP → Ask for reviews). Opens the review form directly.
+ */
+export const GOOGLE_REVIEW_URL = "https://g.page/r/Ceszh2zJLr4XEBM/review";
+
+/** Static QR code that encodes GOOGLE_REVIEW_URL (generated, verified to scan). */
+export const GOOGLE_REVIEW_QR_SRC = "/images/reviews/google-review-qr.svg";
+
+/**
  * Official Yelp biz URL. Leave empty until DE pastes the real listing.
  * // TODO: Await actual client copy from Joseph Petro
  */

@@ -13,6 +13,7 @@ import {
   Package,
   Plus,
   Receipt,
+  Star,
   Ticket,
   Users,
   Zap,
@@ -26,6 +27,7 @@ import { usePortalAccountTeam } from "@/hooks/usePortalAccountTeam";
 import { readPortalUser } from "@/lib/portalRoles";
 import { formatDeskTimestamp } from "@/lib/deskTimestamp";
 import { Callout, EmptyState, Panel, Priority, StatTile, TicketStatus, GenericStatus } from "@/components/portal/ui";
+import { GOOGLE_REVIEW_QR_SRC, GOOGLE_REVIEW_URL } from "@/data/reviewsCatalog";
 
 interface DashboardTicket {
   id: string;
@@ -334,6 +336,29 @@ export default function PortalDashboard() {
 
             <Panel id="account-team" category="account" icon={Users} title="Your account team">
               <AccountTeamCard team={accountTeam} stacked />
+            </Panel>
+
+            <Panel id="google-review" category="account" icon={Star} title="Review DE on Google" description="A minute of your time helps other Arizona businesses find us">
+              <div className="flex items-center gap-4" data-testid="portal-google-review">
+                <img
+                  src={GOOGLE_REVIEW_QR_SRC}
+                  alt="QR code to leave Digerati Experts a Google review"
+                  width={96}
+                  height={96}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-24 w-24 shrink-0 rounded-lg bg-white p-1.5"
+                />
+                <div className="min-w-0 space-y-2">
+                  <p className="text-sm text-muted-foreground">Scan with your phone, or open the review form here.</p>
+                  <Button asChild size="sm" variant="outline" className="border-border bg-card hover:bg-accent">
+                    <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer" data-testid="button-portal-google-review">
+                      Leave a Google review
+                      <ExternalLink aria-hidden="true" />
+                    </a>
+                  </Button>
+                </div>
+              </div>
             </Panel>
           </div>
         </div>
