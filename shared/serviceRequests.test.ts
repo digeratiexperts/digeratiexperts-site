@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  MOBILE_ACTIVITIES,
   allowedStaffTransitions,
   formatServiceRequestNumber,
   isValidPhone,
@@ -73,6 +74,12 @@ describe("service request rules", () => {
     expect(allowedStaffTransitions("loaner_computer", "submitted")).not.toContain("returned");
     expect(allowedStaffTransitions("return_computer", "received")).toEqual(["restocked", "disposed"]);
     expect(allowedStaffTransitions("return_computer", "closed")).toEqual([]);
+  });
+
+  it("keeps all 22 canonical mobile activities unique", () => {
+    expect(MOBILE_ACTIVITIES).toHaveLength(22);
+    expect(new Set(MOBILE_ACTIVITIES.map((a) => a.key)).size).toBe(22);
+    expect(MOBILE_ACTIVITIES.map((a) => a.label)).toContain("Transfer Personal Line to Corporate");
   });
 
   it("validates the canonical mobile request family and activity", () => {
