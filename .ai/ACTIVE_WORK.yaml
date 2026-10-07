@@ -2835,7 +2835,7 @@ claims:
     files:
       - server/deskTicketFallback.ts, server/deskTicketFallback.test.ts (the default fallback address only)
       - deploy/vps/env.production.example (the DESK_FALLBACK_EMAIL comment only), docs/DE-SYSTEM-INTEGRATION.md (the Zoho Desk row only)
-    status: active
+    status: verified-live
     started: 2026-10-07
     note: >-
       Follow-up to desk-ticket-failover, found while verifying it live. The
@@ -2846,6 +2846,40 @@ claims:
       Desk's own incoming address for the Digerati Experts department, which
       always becomes a ticket. DESK_FALLBACK_EMAIL still overrides it. Overlap
       check 2026-10-07: no active claim and no open PR touches these files.
+      RELEASED 2026-10-07: Joe, "Merge 514". Merged as fe780af (PR 514) after
+      CI passed on 94a3ab0. Production runs fe780af (/api/health release,
+      built 11:54Z). Not exercised by a live ticket (no live submission from
+      this session). Found on verification: deskTicketSpool.pending went from
+      1 to 0 across the deploy with Desk still auth_failed and no Desk ticket
+      created, so the spooled ticket was deleted, not replayed: the spool
+      lived under releases/ (see spool-outside-releases). VERIFIED LIVE (the
+      default address). Files released.
+  - id: spool-outside-releases
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: fe780af
+    files:
+      - server/publicSolutionSpool.ts, server/publicSolutionSpool.test.ts (the production spool folder, the stranded-entry rescue and the writable check only)
+      - server/index.ts (the health spool fields and the startup rescue only)
+      - deploy/vps/deploy.sh (the spool folders and the release prune only), deploy/vps/digeratiexperts-site.service (ReadWritePaths only)
+    status: active
+    started: 2026-10-07
+    note: >-
+      Found verifying PR 514 live: a DE Desk ticket spooled at about 03:30Z was
+      gone after the 11:54Z deploy. systemd starts the site in <site>/current,
+      a symlink to <site>/releases/<timestamp>, and process.cwd() returns the
+      resolved path, so "../shared/spool" was <site>/releases/shared/spool,
+      which deploy.sh's release prune (ls releases/*/, rm -rf) can delete. The
+      solution-request (#243) and quote-request (#240) spools had the same
+      path. Fix: productionSpoolRoot steps out of releases/ to
+      <site>/shared/spool (the folders deploy.sh already creates); startup
+      moves any entries left in releases/shared into it; the prune never
+      deletes releases/shared; /api/health reports writable per spool; the
+      repo unit file gains ReadWritePaths for shared/spool (the installed unit
+      must already differ from the repo copy, which mounts /home read-only,
+      since production wrote a spool file). Overlap check 2026-10-07: no
+      active claim and no open PR touches these files.
   - id: homepage-polish
     owner: claude
     subsystem: public-marketing-visual-layer
