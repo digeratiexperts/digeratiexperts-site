@@ -219,9 +219,12 @@ function Undo-DELogonNotice {
     if (-not $PSCmdlet.ShouldProcess('Windows sign-in', 'restore the pre-DE pre-logon notice values')) { return 'planned' }
     $prev = Get-DEState -Path 'logonNotice.previous'
     if (-not $prev) { return @{ ok = $false; detail = 'no previous pre-logon notice values were recorded' } }
-    foreach ($pair in @(@($script:LogonNoticeCaptionName, 'caption'), @($script:LogonNoticeTextName, 'text'))) {
-        $entry = Get-DEHashPath -Object $prev -Path $pair[1]
-        if (Get-DEHashPath -Object $entry -Path 'existed') { Set-DERegistryValue -Path $script:LogonNoticePath -Name $pair[0] -Value "$(Get-DEHashPath -Object $entry -Path 'value')" -Type String -Confirm:$false } else { Remove-ItemProperty -Path $script:LogonNoticePath -Name $pair[0] -ErrorAction SilentlyContinue }
+    foreach ($pair in @(
+        @{ name = $script:LogonNoticeCaptionName; key = 'caption' },
+        @{ name = $script:LogonNoticeTextName; key = 'text' }
+    )) {
+        $entry = Get-DEHashPath -Object $prev -Path $pair.key
+        if (Get-DEHashPath -Object $entry -Path 'existed') { Set-DERegistryValue -Path $script:LogonNoticePath -Name $pair.name -Value "$(Get-DEHashPath -Object $entry -Path 'value')" -Type String -Confirm:$false } else { Remove-ItemProperty -Path $script:LogonNoticePath -Name $pair.name -ErrorAction SilentlyContinue }
     }
     $captionPrev = Get-DEHashPath -Object $prev -Path 'caption'; $textPrev = Get-DEHashPath -Object $prev -Path 'text'
     $captionNow = Get-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeCaptionName; $textNow = Get-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeTextName
@@ -254,7 +257,7 @@ function Register-DEBaselineActions {
     # the Windows automatic-update setting is DE Tech Tool's to enforce only when the client's update authority is
     # 'windows'; JumpCloud (the default) and Intune enforce their own, and maint.update-authority checks whichever it is
     $authority = "$(Get-DEHashPath -Object $ClientProfile -Path 'updates.authority')"; if (-not $authority) { $authority = 'jumpcloud' }
-    Register-DEAction -Id 'baseline.logon-notice' -Module 'baseline' -Title 'Pre-logon authorized-use and security-monitoring notice' -Phase 11 -Gates @('gate.elevated') -RequiresElevation -Modes @('new', 'dropship', 'takeover', 'replacement', 'repair') `
+    Register-DEAction -Id 'baseline.logon-notice' -Module 'baseline' -Title 'Pre-logon authorized-use and security-monitoring notice' -Phase 11 -Gates @('gate.elevated') -RequiresElevation `
         -Detect { $s = Get-DELogonNoticeState -ClientProfile $ClientProfile; @{ ok = $s.ok; mode = $s.mode; enabled = $s.enabled; detail = $s.detail } }.GetNewClosure() `
         -Desired { @{ ok = $true } } `
         -Compare { param($d, $w) if ($d.ok) { @() } else { @("$($d.detail)") } } `
