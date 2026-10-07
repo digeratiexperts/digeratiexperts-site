@@ -3003,3 +3003,34 @@ claims:
       step succeeded on the user's profile (lifecycle JumpCloud + Blackpoint
       and Store orders), and give dashboard cards vivid category colours with
       specific hex values (tickets, services, billing, requests, account).
+  - id: desk-chat-person-handoff
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: a9025cb
+    files:
+      - server/services/msp-advisor/advisor.ts (the person handoff, the declined-name path and the model context lines only)
+      - server/services/msp-advisor/classify.ts (wantsPerson and namesJoe appended; askedForHuman unchanged)
+      - server/services/msp-advisor/profile.ts (the not-a-name check only)
+      - server/services/msp-advisor/fallback.ts (the after-handoff reply only), types.ts (two session flags), prompt.ts (two HARD RULES lines)
+      - server/services/msp-advisor/msp-advisor.test.ts (one describe block appended)
+      - server/routes.ts (the advisor leave_message Desk failover only)
+      - artifacts/visual-qa/desk-chat-handoff/**
+    status: active
+    started: 2026-10-07
+    note: >-
+      Joe, 2026-10-07, pasting an Ask DE transcript: "I need Joe" got "Before
+      we continue, what's your name?", then "Thanks, Me." for "me", a walk-in
+      line for "none", and "How can I assist you today?"; "The Chatbot for DE
+      Desk should be smarter than this." Fix: a request for Joe, the owner, a
+      human or a callback is handed off at once (call, callback, message the
+      desk) with no name or company gate; answers that are not names (me,
+      none, "it's about…") are never taken as names, and a declined name ends
+      the identity questions; the prompt forbids the generic reset while an
+      ask is open. Also found: the chat's leave_message created the Desk
+      ticket by API and swallowed the failure (the token is refused), so it
+      now goes through the desk-ticket failover. Overlap check 2026-10-07:
+      portal-service-requests owns portal-assist.ts and index.ts, which this
+      claim does not touch (askedForHuman is left as it is); no open PR
+      touches these files.
+

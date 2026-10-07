@@ -5156,18 +5156,39 @@ export async function registerRoutes(app: Express) {
           return res.status(400).json({ error: "email and message are required" });
         }
         const summary = buildLeadSummary(session.profile, session.messages);
+        const deskSubject = `Advisor chat message from ${email}`;
+        const deskDescription = `${visitorMessage}\n\n---\n${summary}`;
+        let deskTicketId: string | undefined;
         try {
           if (zohoDeskService?.createTicket) {
-            await zohoDeskService.createTicket({
+            const created = await zohoDeskService.createTicket({
               source: "advisor-chat",
-              subject: `Advisor chat message from ${email}`,
-              description: `${visitorMessage}\n\n---\n${summary}`,
+              subject: deskSubject,
+              description: deskDescription,
               email,
               priority: "Medium",
             } as any);
+            if (typeof created?.id === "string" && created.id) deskTicketId = created.id;
           }
         } catch (e: any) {
           console.error("[msp-advisor] desk ticket failed (non-blocking):", e?.message);
+        }
+        if (!deskTicketId) {
+          // The visitor is told "Message received": when the Desk API did not
+          // take it (refused token, outage), it goes through the same failover
+          // as Get Support (spool, Desk's own address, replay). Never throws.
+          const { fallbackTicket, saveTicketOutsideDesk } = await import("./deskTicketFallback");
+          await saveTicketOutsideDesk(
+            fallbackTicket({
+              source: "website-widget",
+              email,
+              ...(name ? { name } : {}),
+              subject: deskSubject,
+              description: deskDescription,
+              priority: "Medium",
+              reason: "advisor_chat_desk_failed",
+            }),
+          );
         }
         await notificationService.sendNewLeadNotification({
           name: name || email,

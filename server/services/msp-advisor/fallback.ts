@@ -43,6 +43,8 @@ export type HeuristicInput = {
   justCollectedInformalCompany?: boolean;
   cannedComplaint?: boolean;
   askedForHuman?: boolean;
+  /** Visitor already asked for a person and has the call, callback and message options. */
+  humanRequested?: boolean;
 };
 
 function walkInPrefix(input: HeuristicInput): string {
@@ -139,6 +141,23 @@ export function buildHeuristicReply(input: HeuristicInput): ModelAdvisorOutput {
       reply,
       mode: input.mode,
       proposedActions: [{ type: "open_portal" }, { type: "leave_message" }],
+      analyticsEvents: ["support_routed"],
+    };
+  }
+
+  if (input.humanRequested) {
+    const reply = pick(
+      [
+        `Noted. Leave a message or request a callback below and the desk gets it with this chat. Anything urgent: ${DE_COMPANY.phoneDisplay}.`,
+        `Got it. The message and callback buttons below send this to the desk with the chat. For anything urgent, call ${DE_COMPANY.phoneDisplay}.`,
+      ],
+      input.fallbackVariant,
+      input.lastAssistantReply,
+    );
+    return {
+      reply,
+      mode: input.mode,
+      proposedActions: [{ type: "request_callback" }, { type: "leave_message" }],
       analyticsEvents: ["support_routed"],
     };
   }

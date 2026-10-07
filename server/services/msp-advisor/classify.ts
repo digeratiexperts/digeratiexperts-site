@@ -108,6 +108,42 @@ export function askedForHuman(message: string): boolean {
   );
 }
 
+/**
+ * The visitor wants a person, not an answer from the desk: Joe (DE's founder)
+ * by name, the owner, a human, or a callback. "I need Joe" was put through the
+ * name and company questions and then a generic pitch (Joe, 2026-10-07).
+ * A bare "Joe" is not a request: it is how a visitor named Joe answers
+ * "what's your name?". Stricter than askedForHuman, which also matches "phone"
+ * and "book" in ordinary IT questions.
+ */
+const JOE = "(?:joe(?:\\s+petro)?|joseph(?:\\s+petro)?|joey|mr\\.?\\s*petro)";
+/** A specific person or role. "Someone" only counts after talk/speak/reach:
+ * "I need someone to fix our printer" is an IT request, not a handoff. */
+const NAMED_PERSON =
+  `(?:${JOE}|the\\s+(?:owner|boss|founder|manager)|a\\s+(?:real\\s+|live\\s+|actual\\s+)?(?:human|person|tech|technician|engineer)(?!\\s+(?:to|who|that)\\b)|a\\s+manager)`;
+const ANY_PERSON = `(?:${NAMED_PERSON}|someone|somebody|anyone)`;
+const WANTS_PERSON = new RegExp(
+  [
+    `\\b(?:talk|speak|chat)\\s+(?:to|with)\\s+${ANY_PERSON}`,
+    `\\b(?:reach|contact|get\\s+(?:hold\\s+of|ahold\\s+of))\\s+${ANY_PERSON}`,
+    `\\b(?:need|want|get\\s+me|ask\\s+for|looking\\s+for|connect\\s+me\\s+(?:to|with)|put\\s+me\\s+through\\s+to|transfer\\s+me\\s+to)\\s+${NAMED_PERSON}`,
+    `\\bis\\s+${JOE}\\s+(?:there|in|around|available|on|free|working|back)\\b`,
+    `\\bwhere(?:(?:'|’)?s|\\s+is)\\s+${JOE}\\b`,
+    `\\b(?:real|live|actual)\\s+(?:person|human|agent)\\b`,
+    `\\b(?:human|person)\\s+please\\b`,
+    `\\b(?:call|ring)\\s+me(?:\\s+back)?\\b`,
+  ].join("|"),
+  "i",
+);
+
+export function wantsPerson(message: string): boolean {
+  return WANTS_PERSON.test(message);
+}
+
+export function namesJoe(message: string): boolean {
+  return new RegExp(`\\b${JOE}\\b`, "i").test(message);
+}
+
 export function isThinFollowUp(message: string): boolean {
   const text = message.trim();
   if (isMetaDialogue(text) || isCannedLanguageComplaint(text)) return true;
