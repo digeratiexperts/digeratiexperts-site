@@ -2724,6 +2724,7 @@ claims:
       - client/src/pages/versions/v8/sections/01-hero.tsx (hero tile image removed)
       - client/src/pages/versions/v8/sections/01-hero.css (plate rules removed; headline size cap)
       - client/src/pages/versions/v8/sections/12-threats-insights.tsx (feed chapter hidden when empty)
+      - client/src/pages/versions/v8/sections/07-client-proof.tsx/.css (duplicate review and case-study surfaces removed; Joe 2026-10-07)
       - artifacts/visual-qa/homepage-polish/**
     status: implemented
     started: 2026-10-07
