@@ -8,6 +8,7 @@ import { getClient, setClient } from "../portalAuthStore";
 import { assertMutationAllowed } from "../stagingReviewGuard";
 import { buildSignedHeaders, newEventId, resolveScopedSecret } from "./deSyncAuth";
 import type { DeSyncEnvelope, DeSyncEventType } from "./deSyncContract";
+import { SERVICE_REQUEST_HUB_EVENT, SERVICE_REQUEST_HUB_PATH } from "@shared/serviceRequests";
 
 export type HubCompanyDocumentsResponse = {
   success?: boolean;
@@ -344,6 +345,11 @@ export async function fetchHubContractDownload(
 
 const PORTAL_COMMANDS_PATH = "/api/integrations/v1/portal/commands";
 
+/** Portal-sourced events with their own Hub intake route (signed portal_to_hub, same headers). */
+const PORTAL_PATHS: Partial<Record<DeSyncEventType, string>> = {
+  [SERVICE_REQUEST_HUB_EVENT]: SERVICE_REQUEST_HUB_PATH,
+};
+
 export function websitePathForEvent(eventType: DeSyncEventType): string {
   return WEBSITE_PATHS[eventType] || PORTAL_COMMANDS_PATH;
 }
@@ -362,7 +368,7 @@ export function hubPathForEnvelope(source: DeSyncEnvelope["source"], eventType: 
     if (WEBSITE_PATHS[eventType]) {
       throw new Error(`Portal-sourced ${eventType} has no Hub portal route`);
     }
-    return PORTAL_COMMANDS_PATH;
+    return PORTAL_PATHS[eventType] || PORTAL_COMMANDS_PATH;
   }
   return websitePathForEvent(eventType);
 }

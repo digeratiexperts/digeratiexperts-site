@@ -4,6 +4,7 @@ import { recoverStaleOutboxLocks } from "./deSyncOutboxRecovery";
 import { deliverEnvelopeToHub, persistHubAccountId } from "./techSalesClient";
 import type { DeSyncEnvelope } from "./deSyncContract";
 import { ensureDeSyncSchema } from "./ensureDeSyncSchema";
+import { recordServiceRequestDelivery } from "../serviceRequestHubSync";
 
 const TICK_MS = 15_000;
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -59,12 +60,14 @@ export async function processDeSyncOutbox(
         await persistHubAccountId(portalClientId, result.canonicalAccountId);
       }
       await markOutboxDelivered(record.eventId);
+      await recordServiceRequestDelivery(record, "synced");
       delivered += 1;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const outcome = await markOutboxRetry(record.eventId, message);
       if (outcome === "dlq") dlq += 1;
       else retried += 1;
+      await recordServiceRequestDelivery(record, outcome === "dlq" ? "failed" : "retrying");
       logger.warn("de-sync outbox delivery failed", { eventId: record.eventId, message, outcome });
     }
   }

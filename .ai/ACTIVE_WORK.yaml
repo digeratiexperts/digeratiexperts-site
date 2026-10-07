@@ -2589,6 +2589,35 @@ claims:
       ("all approved here"), implemented in portal.css with a before/after
       set; C replaces the 2026-10-03 orchid light theme, so Joe confirms the
       screenshots before merge.
+  - id: portal-service-requests
+    owner: claude
+    subsystem: portal-service-requests
+    branch: claude/portal-service-requests
+    base_sha: e31bb8f
+    files:
+      - shared/serviceRequests.ts (new) + shared/serviceRequests.test.ts (new)
+      - shared/schema.ts (serviceRequests + serviceRequestAttachments tables only)
+      - migrations/0009_service_requests.sql (new)
+      - server/serviceRequestStore.ts, serviceRequestRoutes.ts, serviceRequestHubSync.ts, portalAssistRoutes.ts (new) + tests
+      - server/services/msp-advisor/portal-assist.ts (new) and index.ts (exports appended only)
+      - server/routes.ts (service request + portal assist registration block only)
+      - server/portalManualRecords.ts (site + computer_asset kinds only)
+      - server/integrations/deSyncContract.ts, deSyncContract.fixture.json, techSalesClient.ts, deSyncWorker.ts (service_request.upserted event, its Hub path, sync status hook)
+      - client/src/pages/portal/requests/** (new), client/src/components/portal/requests/** (new), client/src/components/portal/assist/** (new)
+      - client/src/lib/serviceRequestsApi.ts (new), client/src/App.tsx (the five /portal/requests routes only)
+      - client/src/components/portal/shell/portalNav.ts + client/src/lib/portalRoles.ts (Service Requests nav item and its key only)
+      - docs/SERVICE-REQUESTS-HUB-CONTRACT.md (new)
+      - client/src/pages/portal/PortalSelfService.tsx (new) + the /portal/self-service route and nav item
+      - client/src/pages/portal/PortalKB.tsx (initial search from ?q= only)
+      - shared/portalAnnouncements.ts (new), client/src/components/portal/selfservice/** (new), announcement manual-record kind
+    status: active
+    started: 2026-10-06
+    note: >-
+      Joe, 2026-10-06: build "Request Loaner Computer" and "Return Computer" in
+      the Client Portal from his reference screenshots, plus a bottom-right
+      Ask DE help chat, with the Portal DB as the source of truth and a signed
+      copy to the Hub (Hub side in Intelligence-Hub, separate change). Draft
+      PR for diff review; no merge, deploy or production migration.
   - id: phone-hero-hotfix
     owner: claude
     subsystem: homepage-hero
@@ -2629,3 +2658,31 @@ claims:
       versions (v1, v3, v7, sections/) still use the law-book photo and are
       deliberately untouched. Concurrency audit 2026-10-06: open PRs 489 and
       490 touch none of these files.
+  - id: never-lose-and-release-hardening-2026-10-05
+    owner: claude
+    subsystem: platform-hardening
+    branch: claude/solution-request-never-lose (+ retire-legacy-generic-routes, escape-notification-emails, revocation-load-fail-closed, pin-deploy-commit, quote-request-never-lose)
+    base_sha: f4a9bc30
+    files:
+      - server/legacyGenericRetired.ts (+ routes.ts handlers removed; PR 441)
+      - server/publicSolutionSpool.ts, publicSolutionFallback.ts, publicSolutionReplayWorker.ts (PR 445)
+      - server/services/emailEscape.ts, notificationService.ts (PRs 448, 445, 453)
+      - server/portalSessionRevocation.ts, routes.ts authMiddleware (PR 455)
+      - deploy/vps/resolve-deploy-commit.sh, deploy.sh, .github/workflows/ci.yml (PR 459)
+      - server/storeQuoteFallback.ts, storeQuoteReplayWorker.ts, storeQuoteStore.ts, quote POST in routes.ts (PR 453)
+    status: verified-live
+    started: 2026-10-03
+    note: >-
+      Joe's decisions: retire the legacy generic data routes and /api/chat
+      (issue 232); a submitted solution request or store quote is saved in
+      any situation, with the fallback email to ADMIN_EMAIL and
+      sales@digerati-experts.com (confirmed 2026-10-05) and the visitor
+      acknowledged (issues 243, 240). Also fixed release blockers 393
+      (revocation load fails closed) and 391 (deploy pinned to the CI-tested
+      SHA). RELEASED 2026-10-05: Joe, "Merge". Merged as 029c92ca (PR 441),
+      fd7c085e (445), bef7cc7f (448), 630c14ae (455), 302edd2b (459) and
+      f62d9d74 (453). Production release 828fa324 contains all six; deploy run
+      37264502809 passed every step including the pinned-commit release check;
+      /api/health shows sessionRevocation "ready", solutionSpool and quoteSpool
+      pending 0. VERIFIED LIVE. Issues 232, 240, 243, 393 closed with
+      evidence (391 already closed). Files released.

@@ -33,6 +33,10 @@ describe("Hub routing by (source, eventType)", () => {
     expect(hubPathForEnvelope("portal", "quote.response_submitted")).toBe(PORTAL_PATH);
   });
 
+  it("sends a portal service request to the Hub service-request intake", () => {
+    expect(hubPathForEnvelope("portal", "service_request.upserted")).toBe("/api/ingest/service-requests");
+  });
+
   it("every accepted portal command has a deliverable portal route", () => {
     expect(PORTAL_COMMANDS).not.toContain("quote.requested");
     for (const type of PORTAL_COMMANDS) {

@@ -46,7 +46,8 @@
     "device.observed",
     "device.rescue_handoff",
     "device.warranty",
-    "email_migration.recorded"
+    "email_migration.recorded",
+    "service_request.upserted"
   ],
   "envelopeFields": [
     "eventId",

@@ -1,5 +1,5 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, integer, jsonb, pgEnum, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, integer, jsonb, pgEnum, decimal, customType } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -323,6 +323,48 @@ export const portalManualRecords = pgTable("portal_manual_records", {
   createdBy: varchar("created_by"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+/** Portal service requests (migrations/0009_service_requests.sql; shared/serviceRequests.ts). */
+export const serviceRequests = pgTable("service_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  number: text("number").notNull().unique(),
+  type: text("type").notNull(),
+  accountId: varchar("account_id")
+    .notNull()
+    .references(() => portalClients.id, { onDelete: "cascade" }),
+  requestedForUserId: varchar("requested_for_user_id").notNull(),
+  submittedByUserId: varchar("submitted_by_user_id").notNull(),
+  status: text("status").notNull(),
+  payload: jsonb("payload").notNull().default({}),
+  siteId: varchar("site_id"),
+  site: jsonb("site"),
+  customAddress: jsonb("custom_address"),
+  statusHistory: jsonb("status_history").notNull().default([]),
+  revision: integer("revision").notNull().default(1),
+  hubSyncStatus: text("hub_sync_status").notNull().default("not_sent"),
+  hubSyncedAt: timestamp("hub_synced_at"),
+  hubLastEventId: varchar("hub_last_event_id"),
+  deskTicketId: text("desk_ticket_id"),
+  submittedAt: timestamp("submitted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
+
+export const serviceRequestAttachments = pgTable("service_request_attachments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  requestId: varchar("request_id")
+    .notNull()
+    .references(() => serviceRequests.id, { onDelete: "cascade" }),
+  accountId: varchar("account_id").notNull(),
+  fileName: text("file_name").notNull(),
+  contentType: text("content_type").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  data: bytea("data").notNull(),
+  uploadedBy: varchar("uploaded_by").notNull(),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
 });
 
 // Portal users table (durable auth — Neon)
