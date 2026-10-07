@@ -17,6 +17,7 @@ import {
   TIMELINE_BY_TYPE,
   TYPE_LABELS,
   USER_CANCELLABLE,
+  mobileActivityLabel,
   returnReasonLabel,
   type ServiceRequestRecord,
 } from "@shared/serviceRequests";
@@ -56,6 +57,18 @@ function fieldRows(r: ServiceRequestRecord): Array<[string, ReactNode]> {
       ["Licence", p.licenseName],
       ["Group", p.group],
       ["Business justification", p.businessJustification],
+    ];
+  }
+  if (r.type === "mobile_request") {
+    return [
+      ["Requested for", r.requestedFor.name],
+      ["Submitted by", r.submittedBy.name],
+      ["Activity", p.activityLabel || mobileActivityLabel(String(p.activity))],
+      ["Mobile number", p.mobileNumber],
+      ["Carrier", p.carrier],
+      ["Device / IMEI / EID / asset tag", p.deviceIdentifier],
+      ["Requested effective date", p.effectiveDate],
+      ["What you need", p.details],
     ];
   }
   if (r.type === "loaner_computer") {
@@ -239,20 +252,22 @@ export default function PortalServiceRequestDetail() {
             <RequestControls r={r} />
             <ApprovalPanel r={r} />
             <ContactPanel r={r} />
-            <Panel id="request-location" title="Location">
-              {address ? (
-                <address className="text-sm not-italic">
-                  {r.site ? <p className="font-semibold">{r.site.code}</p> : <p className="text-muted-foreground">Not a company location</p>}
-                  <p>{address.street}</p>
-                  <p>
-                    {address.city}, {address.state} {address.zip}
-                  </p>
-                  <p>{address.country}</p>
-                </address>
-              ) : (
-                <p className="text-sm text-muted-foreground">No location on file.</p>
-              )}
-            </Panel>
+            {r.type !== "license_request" && r.type !== "mobile_request" && (
+              <Panel id="request-location" title="Location">
+                {address ? (
+                  <address className="text-sm not-italic">
+                    {r.site ? <p className="font-semibold">{r.site.code}</p> : <p className="text-muted-foreground">Not a company location</p>}
+                    <p>{address.street}</p>
+                    <p>
+                      {address.city}, {address.state} {address.zip}
+                    </p>
+                    <p>{address.country}</p>
+                  </address>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No location on file.</p>
+                )}
+              </Panel>
+            )}
             <Panel id="request-attachments" title="Attachments">
               {r.attachments.length ? (
                 <ul className="space-y-1 text-sm">
