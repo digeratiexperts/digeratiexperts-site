@@ -2842,6 +2842,19 @@ claims:
       homepage; the hero background is still not as good as before; the
       industries photos look worse; the open eight-block panel should pop.
       Compared against /version-0 (the previous homepage) section by section.
+  - id: portal-organization-admin
+    owner: claude
+    subsystem: portal-org-directory
+    branch: claude/portal-organization-admin
+    base_sha: e7679b5
+    files:
+      - server/orgDirectoryRoutes.ts (GET /me for a DE admin with a company open) + test
+      - client/src/pages/portal/PortalOrganization.tsx (admin and no-company states only), client/src/lib/directoryApi.ts (type)
+    status: active
+    started: 2026-10-07
+    note: >-
+      Joe, 2026-10-07: "/portal/organization is not live". Deployed, but a DE admin got
+      "You are not in this company's directory" and never saw the management tabs.
 
   - id: portal-provisioning-status-and-card-categories
     owner: claude
