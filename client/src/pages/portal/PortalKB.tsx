@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
+import { Stars } from "@/components/portal/kb/kbUi";
 import { Input } from "@/components/ui/input";
 import { PortalLayout } from "./PortalLayout";
 import { Search, BookOpen, Eye } from "lucide-react";
@@ -10,12 +12,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Callout, EmptyState, Panel, Token } from "@/components/portal/ui";
 
 interface KBArticle {
+  /** The article number (KB0000001); the article page is /portal/kb/:id. */
   id: string;
   title: string;
-  slug: string;
+  summary?: string;
   category: string;
   tags: string[];
   views: number;
+  rating?: { average: number; count: number };
 }
 
 const chipClass = (active: boolean) =>
@@ -25,8 +29,13 @@ const chipClass = (active: boolean) =>
   );
 
 export default function PortalKB() {
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  // ?q= opens the page pre-searched (Self-Service search and article cards link here).
+  const [search, setSearch] = useState(() =>
+    typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("q") ?? "",
+  );
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("category"),
+  );
 
   const { data: articles = [], isLoading, isError, error } = useQuery<KBArticle[]>({
     queryKey: ["/api/portal/kb"],
@@ -36,9 +45,12 @@ export default function PortalKB() {
   const categories = Array.from(new Set(articles.map((a) => a.category).filter(Boolean)));
 
   const filteredArticles = articles.filter((article) => {
-    const matchesSearch = article.title
-      .toLowerCase()
-      .includes(search.toLowerCase());
+    const q = search.toLowerCase();
+    const matchesSearch =
+      !q ||
+      article.title.toLowerCase().includes(q) ||
+      (article.summary ?? "").toLowerCase().includes(q) ||
+      (article.tags ?? []).some((t) => t.toLowerCase().includes(q));
     const matchesCategory =
       !selectedCategory || article.category === selectedCategory;
     return matchesSearch && matchesCategory;
@@ -119,7 +131,10 @@ export default function PortalKB() {
                       <BookOpen className="pt-link h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                       <span>{article.category}</span>
                     </p>
-                    <p className="font-medium text-foreground">{article.title}</p>
+                    <Link href={`/portal/kb/${article.id}`} className="font-medium text-foreground hover:text-[hsl(var(--primary))] hover:underline">
+                      {article.title}
+                    </Link>
+                    {article.summary && <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{article.summary}</p>}
                     {article.tags && article.tags.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {article.tags.map((tag) => (
@@ -128,10 +143,13 @@ export default function PortalKB() {
                       </div>
                     )}
                   </div>
-                  <div className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground" title={`${article.views} views`}>
+                  <div className="flex shrink-0 flex-col items-end gap-1 text-xs text-muted-foreground">
+                  {article.rating && <Stars rating={article.rating} />}
+                  <div className="flex items-center gap-1" title={`${article.views} views`}>
                     <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                     <span className="pt-num">{article.views}</span>
                     <span className="sr-only">views</span>
+                  </div>
                   </div>
                 </li>
               ))}

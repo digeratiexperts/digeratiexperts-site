@@ -17,6 +17,8 @@ import {
   FolderOpen,
   GraduationCap,
   LayoutDashboard,
+  KeyRound,
+  LayoutGrid,
   Map,
   MessageCircle,
   Package,
@@ -70,8 +72,11 @@ export const PORTAL_NAV_GROUPS: PortalNavGroup[] = [
     label: "Support",
     items: [
       { href: "/portal/dashboard", label: "Dashboard", icon: LayoutDashboard, key: "dashboard", hint: "Overview of what needs you" },
+      { href: "/portal/self-service", label: "Self-Service", icon: LayoutGrid, key: "requests", hint: "Start a request, fix an issue, find an answer" },
       { href: "/portal/tickets", label: "Support Tickets", icon: Ticket, key: "tickets", hint: "Open, track and reply" },
       { href: "/portal/forms", label: "Request Forms", icon: ClipboardList, key: "forms", hint: "Access, devices, onboarding" },
+      { href: "/portal/requests", label: "Service Requests", icon: Package, key: "requests", hint: "Loaner and return computers, licences, my requests" },
+      { href: "/portal/licensing", label: "Licenses", icon: KeyRound, key: "requests", hint: "Licence policy, account types, request a licence" },
       { href: "/portal/infrastructure", label: "Infrastructure Issues", icon: AlertTriangle, key: "infrastructure", hint: "Report an outage or fault" },
       { href: "/portal/chat", label: "Chats / DE Desk", icon: MessageCircle, key: "chat", hint: "Live chat and website desk" },
       { href: "/portal/approvals", label: "Approvals", icon: FileStack, key: "approvals", hint: "Decide pending requests" },
@@ -133,6 +138,7 @@ export const PORTAL_ADMIN_GROUP: PortalNavGroup = {
     { href: "/portal/admin/import", label: "Data Import", icon: Upload, key: "other", hint: "External systems", sample: true },
     { href: "/portal/admin/agents", label: "Manage Agents", icon: Download, key: "other", hint: "Desktop agents", sample: true },
     { href: "/portal/admin/openai", label: "OpenAI Billing", icon: Settings, key: "other", hint: "Kill switch" },
+    { href: "/portal/admin/kb", label: "Knowledge Authoring", icon: BookOpen, key: "other", hint: "Write and publish KB articles" },
     { href: "/portal/sales-process", label: "Sales Process", icon: Briefcase, key: "other", hint: "Internal playbook" },
   ],
 };
