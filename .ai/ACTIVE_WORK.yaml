@@ -2607,3 +2607,31 @@ claims:
       rendered as a squeezed side column (.v8-eyebrow is flex). The plate rule
       is the same one line as draft PR 492 (identical, so it merges cleanly
       either way); 492's CPA image and lockfile port are not included.
+  - id: never-lose-and-release-hardening-2026-10-05
+    owner: claude
+    subsystem: platform-hardening
+    branch: claude/solution-request-never-lose (+ retire-legacy-generic-routes, escape-notification-emails, revocation-load-fail-closed, pin-deploy-commit, quote-request-never-lose)
+    base_sha: f4a9bc30
+    files:
+      - server/legacyGenericRetired.ts (+ routes.ts handlers removed; PR 441)
+      - server/publicSolutionSpool.ts, publicSolutionFallback.ts, publicSolutionReplayWorker.ts (PR 445)
+      - server/services/emailEscape.ts, notificationService.ts (PRs 448, 445, 453)
+      - server/portalSessionRevocation.ts, routes.ts authMiddleware (PR 455)
+      - deploy/vps/resolve-deploy-commit.sh, deploy.sh, .github/workflows/ci.yml (PR 459)
+      - server/storeQuoteFallback.ts, storeQuoteReplayWorker.ts, storeQuoteStore.ts, quote POST in routes.ts (PR 453)
+    status: verified-live
+    started: 2026-10-03
+    note: >-
+      Joe's decisions: retire the legacy generic data routes and /api/chat
+      (issue 232); a submitted solution request or store quote is saved in
+      any situation, with the fallback email to ADMIN_EMAIL and
+      sales@digerati-experts.com (confirmed 2026-10-05) and the visitor
+      acknowledged (issues 243, 240). Also fixed release blockers 393
+      (revocation load fails closed) and 391 (deploy pinned to the CI-tested
+      SHA). RELEASED 2026-10-05: Joe, "Merge". Merged as 029c92ca (PR 441),
+      fd7c085e (445), bef7cc7f (448), 630c14ae (455), 302edd2b (459) and
+      f62d9d74 (453). Production release 828fa324 contains all six; deploy run
+      37264502809 passed every step including the pinned-commit release check;
+      /api/health shows sessionRevocation "ready", solutionSpool and quoteSpool
+      pending 0. VERIFIED LIVE. Issues 232, 240, 243, 393 closed with
+      evidence (391 already closed). Files released.
