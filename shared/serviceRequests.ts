@@ -514,7 +514,13 @@ export function crossFieldErrors(
     if (f.accountKind !== "person" && !f.accountName) errors.accountName = "Name the account (for example svc-backup or helpdesk@)";
     return errors;
   }
-  if (type === "mobile_request") return errors;
+  if (type === "mobile_request") {
+    const f = input as MobileFields;
+    if (f.effectiveDate && isIsoDate(f.effectiveDate) && f.effectiveDate < today) {
+      errors.effectiveDate = "Requested effective date must be today or later";
+    }
+    return errors;
+  }
   const fields = input as LoanerFields | ReturnFields;
   if (fields.addressNotClientLocation) {
     const parsed = addressSchema.safeParse(fields.customAddress ?? {});
