@@ -841,6 +841,14 @@ function Set-DERegistryValue {
         New-ItemProperty -Path $Path -Name $Name -Value $Value -PropertyType $Type -Force | Out-Null
     }
 }
+function Remove-DERegistryValue {
+    <# Deletes one registry value if present; a missing value or key is not an error (mirrors Set-DERegistryValue, mockable in tests). #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param([Parameter(Mandatory = $true)][string]$Path, [Parameter(Mandatory = $true)][string]$Name)
+    if ($PSCmdlet.ShouldProcess("$Path\$Name", 'Remove value')) {
+        Remove-ItemProperty -Path $Path -Name $Name -ErrorAction SilentlyContinue
+    }
+}
 function Backup-DERegistryKey {
     <# reg export of a key into the backups folder; returns the file path (used by rollback). #>
     param([Parameter(Mandatory = $true)][string]$Key, [string]$Label = 'key')

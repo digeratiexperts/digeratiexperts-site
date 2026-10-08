@@ -49,6 +49,7 @@
     "remove": []
   },
   "updates": { "authority": "jumpcloud", "_note": "jumpcloud (default) | intune for Microsoft-only clients | windows when DE Tech Tool sets the automatic-update policy" },
+  "windows": { "logonNotice": { "mode": "default", "caption": "ALAMO INDUSTRIES | AUTHORIZED USE & SECURITY NOTICE", "body": "", "disabledReason": "" } },
   "m365": { "tenantDomain": "", "licenseSku": "", "verifyUpn": true },
   "branding": {
     "clientLogo": "asset:clients/alamo/alamo-mark.png",

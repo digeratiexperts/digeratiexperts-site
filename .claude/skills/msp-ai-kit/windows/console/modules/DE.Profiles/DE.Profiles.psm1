@@ -46,6 +46,7 @@ function New-DEClientProfileTemplate {
         security = @{ mdr = @{ primary = 'guardz'; backup = 'blackpoint'; deploy = @('guardz') }; edr = 'sentinelone'; browserSecurity = @('pabx'); emailSecurity = 'mimecast'; siem = 'wazuh'; awareness = 'ninjio'; baselineProfile = 'de-windows-baseline' }
         cloudStorage = @{ standard = 'onedrive'; removeConflicting = $false; allowBoth = $false }   # onedrive | dropbox | both | none
         updates = @{ authority = 'jumpcloud' }   # jumpcloud (default) | intune (Microsoft-only clients) | windows (DE Tech Tool sets the policy)
+        windows = @{ logonNotice = @{ mode = 'default'; caption = ''; body = ''; disabledReason = '' } }
         browser = @{ default = 'edge'; policyProfile = 'de-browser-policy'; homepage = 'https://portal.digeratiexperts.com/portal/login'; startupPages = @(); managedBookmarksFromVendors = $false; extraBookmarks = @() }
         apps = @{ required = @('m365-apps', 'teams', 'onedrive', 'edge', 'chrome', 'pdf-reader'); optional = @(); lineOfBusiness = @(); remove = @() }
         m365 = @{ tenantDomain = ''; licenseSku = ''; verifyUpn = $true }
@@ -94,6 +95,10 @@ function Save-DEClientProfile {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param([Parameter(Mandatory = $true)]$Profile)
     if (-not $Profile.id -or "$($Profile.id)" -notmatch '^[a-z0-9][a-z0-9\-]*$') { throw 'profile.id must be a lowercase slug' }
+    $noticeMode = "$(Get-DEHashPath -Object $Profile -Path 'windows.logonNotice.mode')".Trim().ToLowerInvariant()
+    if ($noticeMode -and $noticeMode -notin @('default', 'custom', 'disabled')) { throw "windows.logonNotice.mode must be default, custom, or disabled (got '$noticeMode')" }
+    if ($noticeMode -eq 'custom' -and -not "$(Get-DEHashPath -Object $Profile -Path 'windows.logonNotice.body')".Trim()) { throw 'windows.logonNotice.body is required when mode is custom' }
+    if ($noticeMode -eq 'disabled' -and -not "$(Get-DEHashPath -Object $Profile -Path 'windows.logonNotice.disabledReason')".Trim()) { throw 'windows.logonNotice.disabledReason is required when mode is disabled' }
     $secrets = Test-DEProfileHasSecrets -Profile $Profile
     if ($secrets.Count) { throw "refusing to save profile '$($Profile.id)': secret-looking keys present ($($secrets -join ', ')). Secrets are runtime-only." }
     $dirs = Get-DEProfileDirectories
