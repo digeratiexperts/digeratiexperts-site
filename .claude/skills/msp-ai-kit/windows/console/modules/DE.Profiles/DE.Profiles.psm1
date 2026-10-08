@@ -242,25 +242,7 @@ function ConvertTo-DELocalUserName {
         [string]$Convention = 'firstname.lastname',
         [ValidateSet('internal','external')][string]$PersonClass = 'internal'
     )
-    $name = ($DisplayOrPrincipal -split '\\')[-1] -replace '@.*
-function Get-DETierDefaults {
-    <# Internal DE tier defaults. Source of truth is catalog\bundles.json; no prices are carried here. #>
-    param([Parameter(Mandatory = $true)][ValidateSet('IT', 'Office', 'Business', 'Enterprise')][string]$Tier, [switch]$Gcch)
-    $path = Join-Path (Get-DEConsole).Root 'catalog\bundles.json'
-    if (-not (Test-Path -LiteralPath $path)) { throw "DE Tech Tool bundle catalog missing: $path" }
-    $catalog = Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json
-    $prop = $catalog.proactive.PSObject.Properties[$Tier]
-    if (-not $prop) { throw "unknown ProActive tier '$Tier'" }
-    $bundle = $prop.Value
-    $included = ConvertTo-DEHashtable $bundle.defaults
-    $optional = @($bundle.optional | Where-Object { $null -ne $_ })
-    $rules = @($bundle.rules | Where-Object { $null -ne $_ })
-    if ($Gcch) { $rules += 'GCC High: verify each vendor component is authorised for the GCCH boundary before deployment; commercial packaging does not transfer automatically.' }
-    return @{ tier = $Tier; included = $included; optional = $optional; rules = $rules; capabilities = @($bundle.capabilities); label = "$($bundle.label)" }
-}
-
-Export-ModuleMember -Function New-DEClientProfileTemplate, Test-DEProfileHasSecrets, Get-DEClientProfiles, Get-DEClientProfile, Save-DEClientProfile, Resolve-DEClientContext, Resolve-DEEndUser, New-DEProvisioningContext, ConvertTo-DELocalUserName, Get-DETierDefaults
-, ''
+    $name = ($DisplayOrPrincipal -split '\\')[-1] -replace '@.*$', ''
     # split CamelCase or spaced names: SuzetteThompson -> Suzette Thompson
     $parts = @(($name -creplace '([a-z])([A-Z])', '$1 $2') -split '[\s._\-]+' | Where-Object { $_ })
     if ($parts.Count -lt 2) {
