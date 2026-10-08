@@ -720,8 +720,18 @@ claims:
       - client/src/components/SiteBottomBar.nudge.test.ts
       - client/src/components/MegaMenu.tsx (scrolled nav background only)
       - artifacts/visual-qa/ask-de-nudge-overlays/** (new)
-    status: active
+    status: verified-live
     started: 2026-10-08
+    released: 2026-10-08
+    pr: 546
+    merge_sha: 912e97ac7de3978b0cdd02dc2393e2643e32c52c
+    verification: >-
+      Merged on Joe's "Fix the overlays then merge" (2026-10-08). Main CI and
+      the production deploy passed; release.txt read 912e97ac (equal to
+      main). On production: the nudge clears the sticky bar by 12px on Team
+      at 1440 and Pricing at 390, is gone 20 seconds after showing, and
+      leaves on a 300px scroll at 1440. The hero call button under the
+      scrolled nav measures 0 brightness (was 7/255).
     note: >-
       Joe, 2026-10-08 ("Fix the overlays then merge"). The "Stuck on
       something?" nudge sat on the sticky assessment bar (over its phone
