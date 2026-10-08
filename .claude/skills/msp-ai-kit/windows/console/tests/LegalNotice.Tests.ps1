@@ -24,7 +24,7 @@ Describe 'Windows pre-logon authorized-use notice' {
             $global:DELegalTest.Registry[$Name] = $Value
         } -ParameterFilter { $Path -eq $global:DELegalTest.Path }
 
-        Mock -ModuleName DE.Configure Remove-ItemProperty {
+        Mock -ModuleName DE.Configure Remove-DERegistryValue {
             $null = $global:DELegalTest.Registry.Remove($Name)
         } -ParameterFilter { $Path -eq $global:DELegalTest.Path }
 
