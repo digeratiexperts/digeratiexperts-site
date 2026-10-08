@@ -12,16 +12,35 @@
  * record of what is held and where it is meant to go.
  */
 
+/**
+ * "license": counted seats DE buys from a vendor.
+ * "app": software a company is allowed to run (LOB apps, a PDF reader, an
+ * agent). No seat count: dropping it on a company turns it on there, and it
+ * can then go to any number of people and machines.
+ */
+export type PoolItemKind = "license" | "app";
+
 export type LicensePoolItem = {
   id: string;
+  kind: PoolItemKind;
   vendor: string;
   product: string;
+  /** Shelf category, e.g. "Productivity", "Security", "Baseline apps". */
+  category: string;
   /** shared/licensing LICENSE_CATALOG key when the product is in the catalog. */
   catalogKey: string | null;
-  /** Seats DE holds with the vendor. */
+  /** The vendor or Hub SKU code, when there is one. */
+  sku: string | null;
+  /** Chocolatey package id (apps): what JumpCloud Software Management installs on Windows. */
+  chocoPackage: string | null;
+  /** Seats DE holds with the vendor (licences only; 0 for apps). */
   quantity: number;
   createdAt: string;
 };
+
+/** A machine target that stands for every machine in the company (apps only). */
+export const EVERY_MACHINE_ID = "device:*";
+export const EVERY_MACHINE_LABEL = "Every machine";
 
 export type SeatSource = "pool" | "order";
 
@@ -59,6 +78,10 @@ export type PoolItemSummary = LicensePoolItem & {
 
 export function summarizePool(items: LicensePoolItem[], allocations: LicenseAllocation[]): PoolItemSummary[] {
   return items.map((item) => {
+    if (item.kind === "app") {
+      const companies = allocations.filter((a) => a.itemId === item.id).length;
+      return { ...item, allocated: companies, toOrder: 0, free: 0 };
+    }
     let allocated = 0;
     let toOrder = 0;
     for (const a of allocations) {
@@ -86,18 +109,22 @@ export type CompanySeatSummary = {
   assigned: number;
   /** Seats the company holds that nobody uses yet: its own free pool. */
   free: number;
+  /** An app: turned on for the company, with no seat limit. */
+  unlimited: boolean;
 };
 
 export function summarizeCompany(
   clientId: string,
   allocations: LicenseAllocation[],
   assignments: LicenseAssignment[],
+  /** Item ids that are apps (no seat count). */
+  appIds: ReadonlySet<string> = new Set(),
 ): CompanySeatSummary[] {
   const byItem = new Map<string, CompanySeatSummary>();
   const row = (itemId: string) => {
     let r = byItem.get(itemId);
     if (!r) {
-      r = { itemId, held: 0, toOrder: 0, assigned: 0, free: 0 };
+      r = { itemId, held: 0, toOrder: 0, assigned: 0, free: 0, unlimited: appIds.has(itemId) };
       byItem.set(itemId, r);
     }
     return r;
@@ -112,7 +139,10 @@ export function summarizeCompany(
     if (a.clientId !== clientId) continue;
     row(a.itemId).assigned++;
   }
-  for (const r of Array.from(byItem.values())) r.free = Math.max(0, r.held - r.assigned);
+  for (const r of Array.from(byItem.values())) {
+    if (r.unlimited) r.held = Math.min(r.held, 1);
+    r.free = r.unlimited ? 0 : Math.max(0, r.held - r.assigned);
+  }
   return Array.from(byItem.values()).filter((r) => r.held > 0 || r.assigned > 0);
 }
 

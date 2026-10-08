@@ -5,9 +5,15 @@
 
 CREATE TABLE IF NOT EXISTS license_pool_items (
   id varchar PRIMARY KEY,
+  -- 'license': counted seats; 'app': software turned on per company, no seat count.
+  kind text NOT NULL DEFAULT 'license' CHECK (kind IN ('license', 'app')),
   vendor text NOT NULL,
   product text NOT NULL,
+  category text NOT NULL DEFAULT 'Other',
   catalog_key text,
+  sku text,
+  -- Chocolatey package id: what JumpCloud Software Management installs on Windows.
+  choco_package text,
   quantity integer NOT NULL DEFAULT 0 CHECK (quantity >= 0),
   created_at timestamptz NOT NULL DEFAULT now()
 );

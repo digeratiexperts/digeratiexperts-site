@@ -1,0 +1,14 @@
+{
+  "acme": "Acme Corp\nOpen ›\n7-Zip\non\nSage 100 Contractor\non\nMicrosoft 365 Business Premium\n1/1",
+  "every": "Every machine\n\nThe baseline: apps every machine in Acme Corp gets.\n\n7-Zip",
+  "john": "John Smith\n\njohn.smith@acme.com\n\nSage 100 Contractor",
+  "bpEveryMachineTarget": 0,
+  "errors1440": [],
+  "overflow1440": 0,
+  "overflow-390-pool": 0,
+  "errors-390-pool": [],
+  "overflow-390-company": 0,
+  "errors-390-company": [],
+  "overflow-768-pool": 0,
+  "errors-768-pool": []
+}

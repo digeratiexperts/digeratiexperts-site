@@ -44,6 +44,7 @@ describe("license patch bay routes", () => {
       getClient: (id) => clients.find((c) => c.id === id),
       listClientUsers: (clientId) => people.filter((p) => p.clientId === clientId),
       listDepartments: async (clientId) => (clientId === "c1" ? [{ id: "d1", name: "Sales" }] : []),
+      fetchHubCatalog: async () => ({ status: "CONNECTED", skus: [{ sku: "DE-MIT-PRO", name: "Managed IT Pro", category: "Managed IT" }] }),
     });
     server = createServer(app);
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -86,7 +87,7 @@ describe("license patch bay routes", () => {
     const board = await call("GET", "");
     expect(board.body.items[0]).toMatchObject({ allocated: 2, toOrder: 1, free: 0 });
     expect(board.body.clients.find((c: any) => c.id === "c1").seats).toEqual([
-      { itemId, held: 3, toOrder: 1, assigned: 0, free: 3 },
+      { itemId, held: 3, toOrder: 1, assigned: 0, free: 3, unlimited: false },
     ]);
 
     // The pool cannot shrink below the seats already with companies.
@@ -114,7 +115,8 @@ describe("license patch bay routes", () => {
     expect(company.pool[0]).toMatchObject({ product: "Managed EDR", held: 2, assigned: 2, free: 0 });
     const dana = company.people.find((p: any) => p.id === "u1");
     expect(dana.licenses).toHaveLength(1);
-    expect(company.devices[0]).toMatchObject({ label: "FRONT-DESK-01" });
+    const frontDesk = company.devices.find((d: any) => d.label === "FRONT-DESK-01");
+    expect(frontDesk.licenses).toHaveLength(1);
     expect((await call("POST", "/release", { itemId, clientId: "c1" })).status).toBe(409);
 
     // Unassigning Dana's seat returns it to Sales, not the company pool.
@@ -124,8 +126,52 @@ describe("license patch bay routes", () => {
     expect(company.departments[0].seats).toEqual([{ itemId, count: 1 }]);
 
     // Free the device seat and give it back to DE's pool.
-    await call("DELETE", `/clients/c1/assignments/${company.devices[0].licenses[0].assignmentId}`);
+    const desk = company.devices.find((d: any) => d.label === "FRONT-DESK-01");
+    await call("DELETE", `/clients/c1/assignments/${desk.licenses[0].assignmentId}`);
     expect((await call("POST", "/release", { itemId, clientId: "c1" })).body.released).toBe("pool");
     expect((await call("GET", "")).body.items[0]).toMatchObject({ allocated: 1, free: 4 });
+  });
+
+  it("serves a parts bin of starter items, the catalog and Hub SKUs", async () => {
+    const { body } = await call("GET", "/shelf");
+    expect(body.hubConnected).toBe(true);
+    const keys = body.entries.map((e: any) => e.key);
+    expect(keys).toContain("starter:7zip");
+    expect(keys).toContain("catalog:ms_m365_bp");
+    expect(body.entries.find((e: any) => e.key === "hub:DE-MIT-PRO")).toMatchObject({ sku: "DE-MIT-PRO", category: "Hub SKUs" });
+    expect(body.entries.find((e: any) => e.key === "starter:7zip")).toMatchObject({ kind: "app", chocoPackage: "7zip" });
+  });
+
+  it("turns an app on for a company once, then sends it to any number of people and every machine", async () => {
+    const add = await call("POST", "/items", { kind: "app", vendor: "Igor Pavlov", product: "7-Zip", category: "Baseline apps", chocoPackage: "7zip" });
+    expect(add.body.item).toMatchObject({ kind: "app", quantity: 0, chocoPackage: "7zip" });
+    expect((await call("POST", "/items", { kind: "app", vendor: "igor pavlov", product: "7-zip" })).status).toBe(409);
+    expect((await call("POST", "/items", { kind: "app", vendor: "X", product: "Bad", chocoPackage: "rm -rf /" })).status).toBe(400);
+    const itemId = add.body.item.id;
+
+    // Not on yet: cannot go to a person.
+    expect((await call("POST", "/clients/c1/assign", { itemId, targetType: "user", targetId: "u1" })).status).toBe(409);
+    expect((await call("POST", "/allocate", { itemId, clientId: "c1" })).body).toMatchObject({ app: true });
+    expect((await call("POST", "/allocate", { itemId, clientId: "c1" })).status).toBe(409);
+
+    for (const targetId of ["u1", "u2"]) {
+      expect((await call("POST", "/clients/c1/assign", { itemId, targetType: "user", targetId })).status).toBe(201);
+    }
+    expect((await call("POST", "/clients/c1/assign", { itemId, targetType: "device", targetId: "device:*" })).status).toBe(201);
+    expect((await call("POST", "/clients/c1/assign", { itemId, targetType: "department", targetId: "d1" })).status).toBe(400);
+
+    const company = (await call("GET", "/clients/c1")).body;
+    expect(company.pool[0]).toMatchObject({ kind: "app", unlimited: true, held: 1, assigned: 3 });
+    expect(company.devices[0]).toMatchObject({ id: "device:*", label: "Every machine" });
+    expect(company.devices[0].licenses).toHaveLength(1);
+
+    // Still in use: cannot be turned off for the company.
+    expect((await call("POST", "/release", { itemId, clientId: "c1" })).status).toBe(409);
+  });
+
+  it("keeps counted licences off 'Every machine'", async () => {
+    const itemId = (await call("POST", "/items", { vendor: "Huntress", product: "Managed EDR", quantity: 5 })).body.item.id;
+    await call("POST", "/allocate", { itemId, clientId: "c1", quantity: 1 });
+    expect((await call("POST", "/clients/c1/assign", { itemId, targetType: "device", targetId: "device:*" })).status).toBe(400);
   });
 });

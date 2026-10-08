@@ -52,9 +52,13 @@ const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : new Date(Stri
 
 const toItem = (r: any): LicensePoolItem => ({
   id: String(r.id),
+  kind: r.kind === "app" ? "app" : "license",
   vendor: String(r.vendor),
   product: String(r.product),
+  category: String(r.category || "Other"),
   catalogKey: r.catalog_key ? String(r.catalog_key) : null,
+  sku: r.sku ? String(r.sku) : null,
+  chocoPackage: r.choco_package ? String(r.choco_package) : null,
   quantity: Number(r.quantity) || 0,
   createdAt: iso(r.created_at),
 });
@@ -95,8 +99,9 @@ export async function createPoolItem(input: Omit<LicensePoolItem, "id" | "create
   const item: LicensePoolItem = { ...input, id: randomUUID(), createdAt: new Date().toISOString() };
   if (await ensureSchema()) {
     await db.execute(sql`
-      INSERT INTO license_pool_items (id, vendor, product, catalog_key, quantity, created_at)
-      VALUES (${item.id}, ${item.vendor}, ${item.product}, ${item.catalogKey}, ${item.quantity}, ${new Date(item.createdAt)})
+      INSERT INTO license_pool_items (id, kind, vendor, product, category, catalog_key, sku, choco_package, quantity, created_at)
+      VALUES (${item.id}, ${item.kind}, ${item.vendor}, ${item.product}, ${item.category}, ${item.catalogKey}, ${item.sku},
+              ${item.chocoPackage}, ${item.quantity}, ${new Date(item.createdAt)})
     `);
   } else {
     mem.items.set(item.id, item);
@@ -104,13 +109,14 @@ export async function createPoolItem(input: Omit<LicensePoolItem, "id" | "create
   return item;
 }
 
-export async function updatePoolItem(id: string, patch: Partial<Pick<LicensePoolItem, "vendor" | "product" | "quantity">>): Promise<LicensePoolItem | null> {
+export async function updatePoolItem(id: string, patch: Partial<Pick<LicensePoolItem, "vendor" | "product" | "quantity" | "chocoPackage">>): Promise<LicensePoolItem | null> {
   const current = await getPoolItem(id);
   if (!current) return null;
   const next = { ...current, ...patch };
   if (await ensureSchema()) {
     await db.execute(sql`
-      UPDATE license_pool_items SET vendor = ${next.vendor}, product = ${next.product}, quantity = ${next.quantity}
+      UPDATE license_pool_items SET vendor = ${next.vendor}, product = ${next.product}, quantity = ${next.quantity},
+        choco_package = ${next.chocoPackage}
       WHERE id = ${id}
     `);
   } else {

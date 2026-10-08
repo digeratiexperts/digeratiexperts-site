@@ -12,9 +12,13 @@ import {
 
 const item = (id: string, quantity: number): LicensePoolItem => ({
   id,
+  kind: "license",
   vendor: "Microsoft",
   product: id,
+  category: "Productivity",
   catalogKey: null,
+  sku: null,
+  chocoPackage: null,
   quantity,
   createdAt: "2026-10-08T00:00:00.000Z",
 });
@@ -61,7 +65,7 @@ describe("license patch bay counts", () => {
     const allocations = [alloc("a1", "bp", "c1", "pool"), alloc("a2", "bp", "c1", "pool"), alloc("a3", "bp", "c1", "order"), alloc("a4", "bp", "c2", "pool")];
     const assignments = [assign("s1", "bp", "department", "sales"), assign("s2", "bp", "user", "u1")];
     expect(summarizeCompany("c1", allocations, assignments)).toEqual([
-      { itemId: "bp", held: 3, toOrder: 1, assigned: 2, free: 1 },
+      { itemId: "bp", held: 3, toOrder: 1, assigned: 2, free: 1, unlimited: false },
     ]);
     expect(departmentSeats("c1", "sales", assignments).get("bp")).toBe(1);
   });
@@ -73,5 +77,15 @@ describe("license patch bay counts", () => {
       alloc("order", "bp", "c1", "order", "2026-10-02T00:00:00.000Z"),
     ]).map((a) => a.id);
     expect(order).toEqual(["order", "new-pool", "old-pool"]);
+  });
+
+  it("treats an app as on or off for a company, with no seat limit", () => {
+    const [row] = summarizeCompany(
+      "c1",
+      [alloc("a1", "7zip", "c1", "pool")],
+      [assign("s1", "7zip", "user", "u1"), assign("s2", "7zip", "user", "u2"), assign("s3", "7zip", "device", "device:*")],
+      new Set(["7zip"]),
+    );
+    expect(row).toEqual({ itemId: "7zip", held: 1, toOrder: 0, assigned: 3, free: 0, unlimited: true });
   });
 });

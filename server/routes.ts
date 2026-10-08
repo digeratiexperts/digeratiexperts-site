@@ -1290,6 +1290,7 @@ export async function registerRoutes(app: Express) {
     getClient: serviceRequestDeps.getClient,
     listClientUsers: serviceRequestDeps.listClientUsers,
     listDepartments: serviceRequestDeps.listDepartments!,
+    fetchHubCatalog: async () => (await import("./integrations/techSalesClient")).fetchStaffCatalog(),
   });
 
   // Company structure (site / department leaders) and the people directory (server/orgDirectoryRoutes.ts).

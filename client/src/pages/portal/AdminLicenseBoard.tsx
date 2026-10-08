@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Building2, Cpu, Loader2, Minus, Plus, Search, Trash2, Users, X } from "lucide-react";
+import { AppWindow, ArrowLeft, Building2, Cpu, KeyRound, Minus, Monitor, Package, Plus, Search, Trash2, Users, X } from "lucide-react";
 import { PortalLayout } from "./PortalLayout";
 import { Callout } from "@/components/portal/ui";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,7 +15,8 @@ import {
   type PatchCable,
 } from "@/components/portal/licensing/PatchBay";
 import { licenseBoardApi, type Board, type CompanyBoard } from "@/lib/licenseBoardApi";
-import { deviceTargetId } from "@shared/licenseBoard";
+import { PartsBin } from "@/components/portal/licensing/PartsBin";
+import { EVERY_MACHINE_ID, deviceTargetId } from "@shared/licenseBoard";
 
 /**
  * License patch bay (DE admin). Level 1: DE's pool of vendor licences on the
@@ -60,84 +61,6 @@ function SeatMeter({ free, total, toOrder }: { free: number; total: number; toOr
 
 /* ------------------------------------------------------------------ level 1 */
 
-function AddLicenceForm({ board, onDone }: { board: Board; onDone: () => void }) {
-  const [vendor, setVendor] = useState("");
-  const [product, setProduct] = useState("");
-  const [quantity, setQuantity] = useState("10");
-  const [saving, setSaving] = useState(false);
-  const fail = useErrorToast();
-  const catalogMatch = board.catalog.find((c) => c.name.toLowerCase() === product.trim().toLowerCase());
-
-  return (
-    <form
-      className="space-y-2 rounded-xl border border-dashed border-white/15 p-3"
-      onSubmit={async (e) => {
-        e.preventDefault();
-        setSaving(true);
-        try {
-          await licenseBoardApi.addItem({
-            vendor: vendor.trim() || undefined,
-            product: product.trim(),
-            catalogKey: catalogMatch?.key ?? null,
-            quantity: Number(quantity) || 0,
-          });
-          setVendor("");
-          setProduct("");
-          setQuantity("10");
-          onDone();
-        } catch (err) {
-          fail("Could not add the licence", err);
-        } finally {
-          setSaving(false);
-        }
-      }}
-    >
-      <p className="text-xs font-semibold text-white/70">Add a vendor licence to DE's pool</p>
-      <input
-        value={vendor}
-        onChange={(e) => setVendor(e.target.value)}
-        placeholder={catalogMatch ? "Vendor (from the catalog)" : "Vendor, e.g. Huntress"}
-        aria-label="Vendor"
-        className="h-10 w-full rounded-md border border-white/15 bg-black/30 px-3 text-sm text-white placeholder:text-white/35"
-      />
-      <input
-        value={product}
-        onChange={(e) => setProduct(e.target.value)}
-        list="license-board-catalog"
-        required
-        placeholder="Product, e.g. Microsoft 365 Business Premium"
-        aria-label="Product"
-        className="h-10 w-full rounded-md border border-white/15 bg-black/30 px-3 text-sm text-white placeholder:text-white/35"
-      />
-      <datalist id="license-board-catalog">
-        {board.catalog.map((c) => (
-          <option key={c.key} value={c.name} />
-        ))}
-      </datalist>
-      <div className="flex gap-2">
-        <label className="flex min-w-0 flex-1 items-center gap-2 text-xs text-white/60">
-          Seats DE holds
-          <input
-            type="number"
-            min={0}
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
-            className="h-10 w-20 rounded-md border border-white/15 bg-black/30 px-2 text-sm text-white"
-          />
-        </label>
-        <button
-          type="submit"
-          disabled={saving || !product.trim() || (!vendor.trim() && !catalogMatch)}
-          className="inline-flex min-h-10 items-center gap-1.5 rounded-md bg-[#D3126A] px-3 text-sm font-semibold text-white hover:bg-[#A30E52] disabled:opacity-50"
-        >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Plus className="h-4 w-4" aria-hidden />}
-          Add
-        </button>
-      </div>
-    </form>
-  );
-}
-
 function PoolItemCard({ item, onChanged }: { item: Board["items"][number]; onChanged: () => void }) {
   const [editing, setEditing] = useState(false);
   const [qty, setQty] = useState(String(item.quantity));
@@ -152,7 +75,12 @@ function PoolItemCard({ item, onChanged }: { item: Board["items"][number]; onCha
           <p className="line-clamp-2 hyphens-auto text-sm font-semibold leading-snug text-white" title={item.product}>
             {item.product}
           </p>
-          {editing ? (
+          {item.kind === "app" ? (
+            <p className="font-[Oxanium] text-xs text-white/60">
+              <span className="text-white">∞</span> app · on for {item.allocated} {item.allocated === 1 ? "company" : "companies"}
+              {item.chocoPackage ? <span className="ml-1.5 font-mono text-[#6EE7B7]">choco {item.chocoPackage}</span> : null}
+            </p>
+          ) : editing ? (
             <form
               className="mt-1 flex items-center gap-1.5"
               onSubmit={async (e) => {
@@ -208,7 +136,13 @@ function PoolItemCard({ item, onChanged }: { item: Board["items"][number]; onCha
           source={`item:${item.id}`}
           label={item.product}
           tone={tone}
-          hint={item.free > 0 ? `${item.free} free in DE's pool` : "DE's pool is empty: drops are recorded to order"}
+          hint={
+            item.kind === "app"
+              ? "An app: drop it on a company to turn it on there"
+              : item.free > 0
+                ? `${item.free} free in DE's pool`
+                : "DE's pool is empty: drops are recorded to order"
+          }
         />
       </div>
     </PatchCard>
@@ -253,13 +187,13 @@ function CompanyCard({
                   {item.product}
                 </span>
                 <span className="shrink-0 font-[Oxanium] tabular-nums" style={{ color }}>
-                  {s.free}/{s.held}
+                  {s.unlimited ? "on" : `${s.free}/${s.held}`}
                 </span>
                 <button
                   type="button"
-                  disabled={s.free === 0}
-                  aria-label={`Give one ${item.product} seat back from ${company.name}`}
-                  title={s.free === 0 ? "Every seat is in use" : "Give one unused seat back"}
+                  disabled={!s.unlimited && s.free === 0}
+                  aria-label={s.unlimited ? `Turn ${item.product} off for ${company.name}` : `Give one ${item.product} seat back from ${company.name}`}
+                  title={s.unlimited ? "Turn the app off for this company" : s.free === 0 ? "Every seat is in use" : "Give one unused seat back"}
                   onClick={async () => {
                     try {
                       await licenseBoardApi.release(s.itemId, company.id);
@@ -288,7 +222,9 @@ function PoolLevel({ board, onOpenCompany }: { board: Board; onOpenCompany: (id:
   const { toast } = useToast();
   const fail = useErrorToast();
   const [filter, setFilter] = useState("");
-  const [adding, setAdding] = useState(board.items.length === 0);
+  const [binOpen, setBinOpen] = useState(board.items.length === 0);
+  const licences = board.items.filter((i) => i.kind !== "app");
+  const apps = board.items.filter((i) => i.kind === "app");
   const refresh = () => void qc.invalidateQueries({ queryKey: BOARD_KEY });
 
   const companies = board.clients.filter((c) => c.name.toLowerCase().includes(filter.trim().toLowerCase()));
@@ -301,6 +237,7 @@ function PoolLevel({ board, onOpenCompany }: { board: Board; onOpenCompany: (id:
           const item = itemsById.get(s.itemId);
           if (!item) return [];
           const tone = toneFor(item.vendor.toLowerCase());
+          if (s.unlimited) return [{ id: `${c.id}:${s.itemId}`, from: `item:${s.itemId}`, to: `client:${c.id}`, tone }];
           const out: PatchCable[] = [];
           if (s.held - s.toOrder > 0)
             out.push({ id: `${c.id}:${s.itemId}`, from: `item:${s.itemId}`, to: `client:${c.id}`, tone, label: `×${s.held - s.toOrder}` });
@@ -319,7 +256,11 @@ function PoolLevel({ board, onOpenCompany }: { board: Board; onOpenCompany: (id:
         const r = await licenseBoardApi.allocate(source.slice(5), target.slice(7));
         toast({
           title: `${r.product} → ${r.company}`,
-          description: r.toOrder ? "DE's pool is empty for this licence: the seat is recorded to order from the vendor." : "One seat from DE's pool.",
+          description: r.app
+            ? "Turned on for the company. Open it to send the app to people or every machine."
+            : r.toOrder
+              ? "DE's pool is empty for this licence: the seat is recorded to order from the vendor."
+              : "One seat from DE's pool.",
         });
         refresh();
       } catch (err) {
@@ -331,26 +272,47 @@ function PoolLevel({ board, onOpenCompany }: { board: Board; onOpenCompany: (id:
   );
 
   return (
-    <PatchBay cables={cables} canPatch={canPatch} onPatch={onPatch} layoutKey={`${filter}:${adding}`}>
+    <PatchBay cables={cables} canPatch={canPatch} onPatch={onPatch} layoutKey={`${filter}:${binOpen}:${board.items.length}`}>
+      {binOpen ? (
+        <PartsBin board={board} onAdded={refresh} onClose={() => setBinOpen(false)} />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setBinOpen(true)}
+          className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#F04C97]/40 bg-[#D3126A]/10 px-4 text-sm font-semibold text-white shadow-[0_0_18px_rgba(211,18,106,0.25)] hover:bg-[#D3126A]/20"
+        >
+          <Package className="h-4 w-4 text-[#F04C97]" aria-hidden /> Open the parts bin
+          <span className="hidden text-xs font-normal text-white/55 sm:inline">licences, vendor SKUs, apps, agents</span>
+        </button>
+      )}
       <div className="grid grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] sm:grid-cols-[minmax(0,1fr)_96px_minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_200px_minmax(0,1fr)]">
         <section aria-label="DE licence pool">
-          <ColumnHeading icon={Cpu} title="DE pool" hint="Vendor licences DE holds. Pull a cable from a jack." />
-          <div className="space-y-2.5">
-            {board.items.map((item) => (
-              <PoolItemCard key={item.id} item={item} onChanged={refresh} />
-            ))}
-            {adding ? (
-              <AddLicenceForm board={board} onDone={refresh} />
-            ) : (
-              <button
-                type="button"
-                onClick={() => setAdding(true)}
-                className="inline-flex min-h-10 items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-[#F04C97] hover:bg-white/5"
-              >
-                <Plus className="h-4 w-4" aria-hidden /> Add a vendor licence
-              </button>
-            )}
-          </div>
+          <ColumnHeading icon={Cpu} title="DE pool" hint="What DE holds. Pull a cable from a jack." />
+          {board.items.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-white/15 p-3 text-sm text-white/55">
+              The pool is empty. Add licences and apps from the parts bin.
+            </p>
+          ) : null}
+          {licences.length ? (
+            <div className="space-y-2.5">
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">
+                <KeyRound className="h-3 w-3" aria-hidden /> Licences
+              </p>
+              {licences.map((item) => (
+                <PoolItemCard key={item.id} item={item} onChanged={refresh} />
+              ))}
+            </div>
+          ) : null}
+          {apps.length ? (
+            <div className="mt-5 space-y-2.5">
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/40">
+                <AppWindow className="h-3 w-3" aria-hidden /> Apps
+              </p>
+              {apps.map((item) => (
+                <PoolItemCard key={item.id} item={item} onChanged={refresh} />
+              ))}
+            </div>
+          ) : null}
         </section>
         <div aria-hidden />
         <section aria-label="Client companies">
@@ -458,11 +420,20 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
     return out;
   }, [data, devices, toneOf]);
 
-  const canPatch = useCallback((source: string, target: string) => {
-    if (source.startsWith("item:")) return /^(dept|user|device):/.test(target);
-    if (source.startsWith("seat:")) return /^(user|device):/.test(target);
-    return false;
-  }, []);
+  const appIds = useMemo(() => new Set((data?.pool ?? []).filter((p) => p.kind === "app").map((p) => p.itemId)), [data?.pool]);
+  const canPatch = useCallback(
+    (source: string, target: string) => {
+      const everyMachine = target === `device:${EVERY_MACHINE_ID}`;
+      if (source.startsWith("item:")) {
+        // Apps go to people and machines (every machine too); counted licences never to "every machine".
+        if (appIds.has(source.slice(5))) return /^(user|device):/.test(target);
+        return /^(dept|user|device):/.test(target) && !everyMachine;
+      }
+      if (source.startsWith("seat:")) return /^(user|device):/.test(target) && !everyMachine;
+      return false;
+    },
+    [appIds],
+  );
 
   const onPatch = useCallback(
     async (source: string, target: string) => {
@@ -522,14 +493,21 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
                   <p className="line-clamp-2 hyphens-auto text-sm font-semibold leading-snug text-white" title={p.product}>
                     {p.product}
                   </p>
-                  <SeatMeter free={p.free} total={p.held} toOrder={p.toOrder} />
+                  {p.unlimited ? (
+                    <p className="font-[Oxanium] text-xs text-white/60">
+                      <span className="text-white">∞</span> app · on {p.assigned} {p.assigned === 1 ? "target" : "targets"}
+                      {p.chocoPackage ? <span className="ml-1.5 font-mono text-[#6EE7B7]">choco {p.chocoPackage}</span> : null}
+                    </p>
+                  ) : (
+                    <SeatMeter free={p.free} total={p.held} toOrder={p.toOrder} />
+                  )}
                 </div>
                 <PatchJack
                   source={`item:${p.itemId}`}
                   label={p.product}
                   tone={toneOf(p.itemId)}
-                  disabled={p.free === 0}
-                  hint={p.free === 0 ? "No free seats in this company's pool" : `${p.free} free`}
+                  disabled={!p.unlimited && p.free === 0}
+                  hint={p.unlimited ? "An app: send it to people, machines or every machine" : p.free === 0 ? "No free seats in this company's pool" : `${p.free} free`}
                 />
               </div>
             </PatchCard>
@@ -609,13 +587,28 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
         </div>
       </div>
       <div>
-        <ColumnHeading icon={Cpu} title="Devices" hint="For device-licensed products (EDR, RMM)." />
+        <ColumnHeading icon={Cpu} title="Devices" hint="Machine-licensed products (EDR, RMM) and apps. Every machine is the baseline." />
         <div className="space-y-2">
           {devices.map((d) => (
-            <PatchCard key={d.id} id={`device:${d.id}`} className="p-2.5 pl-4">
+            <PatchCard
+              key={d.id}
+              id={`device:${d.id}`}
+              className={`p-2.5 pl-4 ${d.id === EVERY_MACHINE_ID ? "border-[#34D399]/40 bg-gradient-to-r from-[#34D399]/[0.07] to-transparent" : ""}`}
+            >
               <PatchTarget id={`device:${d.id}`} name={d.label} />
-              <p className="truncate font-[Oxanium] text-sm text-white">{d.label}</p>
-              {d.licenses.length === 0 ? <p className="text-xs text-white/40">Patch a licence here to save it</p> : null}
+              {d.id === EVERY_MACHINE_ID ? (
+                <>
+                  <p className="flex items-center gap-1.5 text-sm font-semibold text-white">
+                    <Monitor className="h-4 w-4 text-[#6EE7B7]" aria-hidden /> Every machine
+                  </p>
+                  <p className="text-xs text-white/45">The baseline: apps every machine in {data.company.name} gets.</p>
+                </>
+              ) : (
+                <p className="truncate font-[Oxanium] text-sm text-white">{d.label}</p>
+              )}
+              {d.licenses.length === 0 && d.id !== EVERY_MACHINE_ID ? (
+                <p className="text-xs text-white/40">Patch a licence here to save it</p>
+              ) : null}
               <HeldChips licenses={d.licenses} data={data} onRemove={(id) => void unassign(id)} />
             </PatchCard>
           ))}
