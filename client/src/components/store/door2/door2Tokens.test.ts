@@ -94,6 +94,12 @@ describe("Door 2 tokens match the V4 vocabulary", () => {
     expect(form).toContain('data-state="expanded"\n      className="d2-profile-panel"');
   });
 
+  it("drops the count steppers under the number when the card is too narrow, so typed counts stay readable", () => {
+    // Visual status 2026-10-08: on a 390px phone "25" showed as "2" behind the - / + buttons.
+    expect(block(".d2-flag-config__form .d2-field")).toContain("container-type: inline-size");
+    expect(css).toMatch(/@container \(max-width: 17rem\) \{\s*\.d2-dial \{\s*flex-wrap: wrap;[\s\S]*?\.d2-dial \.d2-input \{\s*flex-basis: 100%;/);
+  });
+
   it("draws numbered steps as stations: a check when ready, a white station and 'You are here' when current", () => {
     // Joe, 2026-10-01: concept B "Stations" — thick lines and clear done / current / ahead states.
     expect(block(".d2-journey__bar")).toContain("height: 6px");

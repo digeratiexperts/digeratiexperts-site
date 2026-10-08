@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { KeyRound, Loader2, Plus, Trash2 } from "lucide-react";
+import { Cable, KeyRound, Loader2, Plus, Trash2 } from "lucide-react";
 import { PortalLayout } from "./PortalLayout";
 import { Callout, Panel } from "@/components/portal/ui";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,6 +9,7 @@ import { DocTable } from "@/components/portal/kb/DocTable";
 import { AssignmentToken, PolicyTables } from "@/components/portal/licensing/LicensePolicyTables";
 import { licensingApi, type LicensingPerson } from "@/lib/licensingApi";
 import { cn } from "@/lib/utils";
+import { usePortalSession } from "@/components/portal/shell/portalSession";
 import {
   ACCOUNT_TYPES,
   ASSIGNMENTS,
@@ -354,6 +355,7 @@ export default function PortalLicensing() {
     void qc.invalidateQueries({ queryKey: ["/api/portal/licensing/people"] });
   };
   const d = overview.data;
+  const isDeAdmin = usePortalSession().user?.role === "admin";
 
   return (
     <PortalLayout
@@ -361,9 +363,16 @@ export default function PortalLicensing() {
       description="Which licence each kind of account gets, how it is assigned, and how to ask for more."
       width="wide"
       actions={
-        <Link href="/portal/requests/license" className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
-          <KeyRound className="h-4 w-4" aria-hidden="true" /> Request a licence
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          {isDeAdmin ? (
+            <Link href="/portal/admin/license-board" className="inline-flex min-h-[40px] items-center gap-2 rounded-md border border-[#D3126A]/50 px-4 text-sm font-semibold hover:bg-[#D3126A]/10">
+              <Cable className="h-4 w-4" aria-hidden="true" /> License Patch Bay
+            </Link>
+          ) : null}
+          <Link href="/portal/requests/license" className="inline-flex min-h-[40px] items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+            <KeyRound className="h-4 w-4" aria-hidden="true" /> Request a licence
+          </Link>
+        </div>
       }
     >
       {overview.isLoading ? (
@@ -371,6 +380,15 @@ export default function PortalLicensing() {
       ) : overview.isError || !d ? (
         <Callout tone="bad" title="Licensing couldn't be loaded">
           {overview.error instanceof Error ? overview.error.message : ""}
+          {isDeAdmin ? (
+            <>
+              {" "}To give companies seats from DE's pool, use the{" "}
+              <Link href="/portal/admin/license-board" className="font-semibold text-[#F04C97] underline-offset-2 hover:underline">
+                License Patch Bay
+              </Link>
+              .
+            </>
+          ) : null}
         </Callout>
       ) : (
         <div className="space-y-6">

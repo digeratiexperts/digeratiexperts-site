@@ -11,7 +11,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
  */
 
 const mem = vi.hoisted(() => ({
-  sessions: new Map<string, { id: string; email: string | null; claimedBy?: string | null; released?: boolean }>(),
+  sessions: new Map<string, { id: string; email: string | null; claimedBy?: string | null; released?: boolean; archiveFolder?: string | null }>(),
+  archived: [] as string[][],
   appended: [] as Array<{ sessionId: string; role: string; content: string; senderName: string }>,
 }));
 
@@ -31,6 +32,25 @@ vi.mock("./services/msp-advisor", () => ({
     mem.appended.push(input);
     return { id: `m${mem.appended.length}`, ...input };
   },
+}));
+
+vi.mock("./services/msp-advisor/persist", () => ({
+  getDeskSessionMessages: async (id: string) => ({ session: mem.sessions.get(id) ?? null, messages: [] }),
+  sessionIdsInSameCompany: async (id: string) => [id, "s2"],
+  archiveDeskSessions: async (ids: string[]) => {
+    mem.archived.push(ids);
+    return ids.map((id) => {
+      const s = mem.sessions.get(id);
+      if (s) s.archiveFolder = "Acme";
+      return { ...s, archiveFolder: "Acme" };
+    });
+  },
+  unarchiveDeskSession: async (id: string) => {
+    const s = mem.sessions.get(id);
+    if (s) s.archiveFolder = null;
+    return s ?? null;
+  },
+  deleteDeskSession: async (id: string) => mem.sessions.delete(id),
 }));
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret-desk-agent";
@@ -73,6 +93,7 @@ describe("DE Desk agent routes are admin-only", () => {
   beforeEach(() => {
     mem.sessions.clear();
     mem.appended.length = 0;
+    mem.archived.length = 0;
     mem.sessions.set("s1", { id: "s1", email: "visitor@client.test", claimedBy: null, released: false });
   });
 
@@ -125,5 +146,47 @@ describe("DE Desk agent routes are admin-only", () => {
   it("rejects empty or over-long reply content for an admin", async () => {
     expect((await post("/api/portal/desk-chats/s1/reply", ADMIN, { content: "   " })).status).toBe(400);
     expect((await post("/api/portal/desk-chats/s1/reply", ADMIN, { content: "x".repeat(8001) })).status).toBe(400);
+  });
+
+  const del = (path: string, user: object | null) =>
+    fetch(`${baseUrl}${path}`, {
+      method: "DELETE",
+      headers: user ? { "x-test-user": JSON.stringify(user) } : {},
+    });
+
+  for (const action of ["archive", "unarchive"] as const) {
+    it(`refuses an IT contact on ${action}`, async () => {
+      const res = await post(`/api/portal/desk-chats/s1/${action}`, IT_CONTACT);
+      expect(res.status).toBe(403);
+      expect(mem.archived).toHaveLength(0);
+    });
+  }
+
+  it("refuses an IT contact and an anonymous caller on delete", async () => {
+    expect((await del("/api/portal/desk-chats/s1", IT_CONTACT)).status).toBe(403);
+    expect((await del("/api/portal/desk-chats/s1", null)).status).toBe(401);
+    expect(mem.sessions.has("s1")).toBe(true);
+  });
+
+  it("lets a DE admin archive one chat, or every chat from its company", async () => {
+    const one = await post("/api/portal/desk-chats/s1/archive", ADMIN);
+    expect(one.status).toBe(200);
+    expect(await one.json()).toMatchObject({ success: true, folder: "Acme" });
+    expect(mem.archived[0]).toEqual(["s1"]);
+
+    const company = await post("/api/portal/desk-chats/s1/archive", ADMIN, { company: true });
+    expect(company.status).toBe(200);
+    expect(mem.archived[1]).toEqual(["s1", "s2"]);
+
+    const restore = await post("/api/portal/desk-chats/s1/unarchive", ADMIN);
+    expect(restore.status).toBe(200);
+    expect(mem.sessions.get("s1")!.archiveFolder).toBeNull();
+  });
+
+  it("lets a DE admin delete a chat, and 404s one that is gone", async () => {
+    expect((await del("/api/portal/desk-chats/s1", ADMIN)).status).toBe(200);
+    expect(mem.sessions.has("s1")).toBe(false);
+    expect((await del("/api/portal/desk-chats/s1", ADMIN)).status).toBe(404);
+    expect((await post("/api/portal/desk-chats/nope/archive", ADMIN)).status).toBe(404);
   });
 });

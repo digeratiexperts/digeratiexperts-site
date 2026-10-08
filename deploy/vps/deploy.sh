@@ -90,6 +90,28 @@ NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
 
 [ -f "$SHARED_ENV" ] || fail "$SHARED_ENV missing — create it before deploying (see deploy/vps/env.production.example)"
 mkdir -p "$RELEASES_DIR" "$LOG_DIR"
+
+# Client vault master key (server/portalClientVault.ts). One key for the whole
+# server: every client's vault uses it, each item with its own wrapped data key.
+# Created here once if it is missing or blank; an existing key is NEVER replaced,
+# because a new key cannot open files stored under the old one. Back it up off
+# this server (password manager): without it no vault file can ever be opened.
+if ! grep -Eq '^VAULT_ENCRYPTION_KEY=.{32,}$' "$SHARED_ENV"; then
+  VAULT_KEY="$(openssl rand -base64 48 2>/dev/null || node -e 'process.stdout.write(require("crypto").randomBytes(48).toString("base64"))')"
+  [ "${#VAULT_KEY}" -ge 32 ] || fail "could not generate VAULT_ENCRYPTION_KEY"
+  if grep -q '^VAULT_ENCRYPTION_KEY=' "$SHARED_ENV"; then
+    sed -i "s|^VAULT_ENCRYPTION_KEY=.*|VAULT_ENCRYPTION_KEY=$VAULT_KEY|" "$SHARED_ENV"
+  else
+    printf '\nVAULT_ENCRYPTION_KEY=%s\n' "$VAULT_KEY" >> "$SHARED_ENV"
+  fi
+  unset VAULT_KEY
+  log "Created VAULT_ENCRYPTION_KEY in $SHARED_ENV. BACK IT UP off this server now (password manager)."
+fi
+if ! grep -Eq '^VAULT_STORAGE_DIR=.+' "$SHARED_ENV"; then
+  printf 'VAULT_STORAGE_DIR=%s\n' "$SITE_HOME/shared/client-vault" >> "$SHARED_ENV"
+fi
+VAULT_DIR_LINE="$(grep -E '^VAULT_STORAGE_DIR=' "$SHARED_ENV" | tail -n 1)"
+mkdir -p "${VAULT_DIR_LINE#VAULT_STORAGE_DIR=}" && chmod 700 "${VAULT_DIR_LINE#VAULT_STORAGE_DIR=}"
 # Solution requests (#243) and store quote requests (#240) the database could not
 # take, and DE Desk tickets the Desk API could not take, are held here until it
 # recovers. Outside the release folders so a deploy never drops them; owner-only.

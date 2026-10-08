@@ -1,0 +1,41 @@
+{
+  "archivedBySwipe": true,
+  "deleteDialog": true,
+  "longPressMenu": true,
+  "folders": [
+    "Acme Corp\n1",
+    "Bluebird Dental\n2"
+  ],
+  "overflowX390": 0,
+  "errors390": [],
+  "menu768": [
+    "Open conversation",
+    "Claim for live handoff",
+    "Release to AI",
+    "Copy session ID",
+    "Copy email",
+    "Copy page path",
+    "Create support ticket",
+    "Close tab",
+    "Archive to Acme Corp",
+    "Archive all from Acme Corp",
+    "Delete chat"
+  ],
+  "errors768": [],
+  "overflowX768": 0,
+  "menu1440": [
+    "Open conversation",
+    "Claim for live handoff",
+    "Release to AI",
+    "Copy session ID",
+    "Copy email",
+    "Copy page path",
+    "Create support ticket",
+    "Close tab",
+    "Archive to Acme Corp",
+    "Archive all from Acme Corp",
+    "Delete chat"
+  ],
+  "errors1440": [],
+  "overflowX1440": 0
+}

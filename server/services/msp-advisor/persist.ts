@@ -28,9 +28,42 @@ export type DeskChatSessionSummary = {
   agentActive: boolean;
   agentName: string | null;
   agentJoinedAt: string | null;
+  /** Set once DE staff archive the chat; archived chats leave the live list. */
+  archivedAt: string | null;
+  /** The company folder an archived chat is filed under (see archiveFolderFor). */
+  archiveFolder: string | null;
   createdAt: string;
   updatedAt: string;
 };
+
+/** Folder for archived chats whose visitor gave no usable company. */
+export const NO_COMPANY_FOLDER = "No company";
+
+/**
+ * Answers the desk records for "what company are you with?" that are not a
+ * company ("none", "walk-in", "just myself"). These all file into one folder
+ * instead of a folder each.
+ */
+const NOT_A_COMPANY = new Set([
+  "none", "no", "no company", "n/a", "na", "-", "nothing", "walk-in", "walk in",
+  "walkin", "myself", "just myself", "me", "self", "individual", "personal",
+  "home", "unknown", "not given", "none given",
+]);
+
+/**
+ * The company folder an archived chat drops into. Spelling variants of one
+ * company ("Acme  Corp", "acme corp.") land in the same folder: the key is
+ * case- and whitespace-insensitive, and the folder keeps the first spelling.
+ */
+export function archiveFolderFor(companyName: string | null | undefined): string {
+  const name = String(companyName || "").replace(/\s+/g, " ").trim().replace(/[.,]+$/, "");
+  if (!name || NOT_A_COMPANY.has(name.toLowerCase())) return NO_COMPANY_FOLDER;
+  return name.slice(0, 120);
+}
+
+export function archiveFolderKey(folder: string): string {
+  return folder.toLowerCase();
+}
 
 /** Agent claim stays live for this long after the last agent message. */
 export const AGENT_LIVE_MS = 45 * 60 * 1000;
@@ -45,6 +78,8 @@ const memorySessions = new Map<
     agentActive: boolean;
     agentName: string | null;
     agentJoinedAt: string | null;
+    archivedAt: string | null;
+    archiveFolder: string | null;
     createdAt: string;
     updatedAt: string;
     messages: DeskChatMessage[];
@@ -120,6 +155,14 @@ async function ensureSchema(): Promise<void> {
       ADD COLUMN IF NOT EXISTS sender_name text
     `);
     await db.execute(sql`
+      ALTER TABLE de_desk_chat_sessions
+      ADD COLUMN IF NOT EXISTS archived_at timestamptz
+    `);
+    await db.execute(sql`
+      ALTER TABLE de_desk_chat_sessions
+      ADD COLUMN IF NOT EXISTS archive_folder text
+    `);
+    await db.execute(sql`
       CREATE INDEX IF NOT EXISTS idx_de_desk_sessions_email
       ON de_desk_chat_sessions (email, updated_at DESC)
     `);
@@ -152,6 +195,8 @@ function emptyMemSession(now: string) {
     agentActive: false,
     agentName: null as string | null,
     agentJoinedAt: null as string | null,
+    archivedAt: null as string | null,
+    archiveFolder: null as string | null,
     createdAt: now,
     updatedAt: now,
     messages: [] as DeskChatMessage[],
@@ -182,6 +227,8 @@ function mapSessionRow(
     agentActive,
     agentName: row.agent_name ? String(row.agent_name) : null,
     agentJoinedAt,
+    archivedAt: row.archived_at ? toIso(row.archived_at) : null,
+    archiveFolder: row.archived_at ? String(row.archive_folder || NO_COMPANY_FOLDER) : null,
     createdAt: toIso(row.created_at),
     updatedAt,
   };
@@ -212,6 +259,8 @@ function memSummary(sessionId: string, s: ReturnType<typeof emptyMemSession>): D
     agentActive: isAgentLive(s.agentActive, s.updatedAt, lastAgent?.createdAt || s.agentJoinedAt),
     agentName: s.agentName,
     agentJoinedAt: s.agentJoinedAt,
+    archivedAt: s.archivedAt,
+    archiveFolder: s.archivedAt ? s.archiveFolder || NO_COMPANY_FOLDER : null,
     createdAt: s.createdAt,
     updatedAt: s.updatedAt,
   };
@@ -294,6 +343,11 @@ export async function appendDeskMessage(input: {
   mem.messages.push(message);
   if (mem.messages.length > 100) mem.messages = mem.messages.slice(-100);
   mem.updatedAt = message.createdAt;
+  if (input.role === "user" && mem.archivedAt) {
+    // The visitor came back: the chat returns to the live list.
+    mem.archivedAt = null;
+    mem.archiveFolder = null;
+  }
   if (input.role === "agent") {
     mem.agentActive = true;
     mem.agentName = message.senderName || mem.agentName || "DE Agent";
@@ -320,6 +374,14 @@ export async function appendDeskMessage(input: {
               agent_active = true,
               agent_name = ${mem.agentName},
               agent_joined_at = ${new Date(message.createdAt)}
+          WHERE session_id = ${input.sessionId}
+        `);
+      } else if (input.role === "user") {
+        await db.execute(sql`
+          UPDATE de_desk_chat_sessions
+          SET updated_at = ${new Date(message.createdAt)},
+              archived_at = NULL,
+              archive_folder = NULL
           WHERE session_id = ${input.sessionId}
         `);
       } else {
@@ -422,10 +484,18 @@ export async function isDeskAgentLive(sessionId: string): Promise<{
 export async function listDeskSessions(opts?: {
   email?: string;
   limit?: number;
+  /**
+   * true: only archived chats; false/omitted: only live (unarchived) ones;
+   * "all": both. The archive is a DE-staff filing tool, so a client's own
+   * list ignores it ("all").
+   */
+  archived?: boolean | "all";
 }): Promise<DeskChatSessionSummary[]> {
   await ensureSchema();
-  const limit = Math.min(Math.max(opts?.limit || 50, 1), 200);
+  const limit = Math.min(Math.max(opts?.limit || 50, 1), opts?.archived === true ? 500 : 200);
   const email = opts?.email?.toLowerCase();
+  const all = opts?.archived === "all";
+  const archived = opts?.archived === true;
 
   if (dbReady && db && schemaReady) {
     try {
@@ -433,6 +503,7 @@ export async function listDeskSessions(opts?: {
         ? await db.execute(sql`
             SELECT s.session_id, s.email, s.contact_name, s.company_name, s.page_path,
                    s.agent_active, s.agent_name, s.agent_joined_at,
+                   s.archived_at, s.archive_folder,
                    s.created_at, s.updated_at,
                    (SELECT COUNT(*)::int FROM de_desk_chat_messages m WHERE m.session_id = s.session_id) AS message_count,
                    (SELECT m.content FROM de_desk_chat_messages m
@@ -440,18 +511,21 @@ export async function listDeskSessions(opts?: {
                       ORDER BY m.created_at DESC LIMIT 1) AS preview
             FROM de_desk_chat_sessions s
             WHERE lower(s.email) = ${email}
+              AND (${all} OR (s.archived_at IS NOT NULL) = ${archived})
             ORDER BY s.updated_at DESC
             LIMIT ${limit}
           `)
         : await db.execute(sql`
             SELECT s.session_id, s.email, s.contact_name, s.company_name, s.page_path,
                    s.agent_active, s.agent_name, s.agent_joined_at,
+                   s.archived_at, s.archive_folder,
                    s.created_at, s.updated_at,
                    (SELECT COUNT(*)::int FROM de_desk_chat_messages m WHERE m.session_id = s.session_id) AS message_count,
                    (SELECT m.content FROM de_desk_chat_messages m
                       WHERE m.session_id = s.session_id AND m.role = 'user'
                       ORDER BY m.created_at DESC LIMIT 1) AS preview
             FROM de_desk_chat_sessions s
+            WHERE ${all} OR (s.archived_at IS NOT NULL) = ${archived}
             ORDER BY s.updated_at DESC
             LIMIT ${limit}
           `);
@@ -468,7 +542,7 @@ export async function listDeskSessions(opts?: {
     }
   }
 
-  let entries = Array.from(memorySessions.entries());
+  let entries = Array.from(memorySessions.entries()).filter(([, s]) => all || !!s.archivedAt === archived);
   if (email) {
     entries = entries.filter(([, s]) => s.email === email);
   }
@@ -487,7 +561,8 @@ export async function getDeskSessionMessages(
     try {
       const sessionResult = await db.execute(sql`
         SELECT session_id, email, contact_name, company_name, page_path,
-               agent_active, agent_name, agent_joined_at, created_at, updated_at
+               agent_active, agent_name, agent_joined_at, archived_at, archive_folder,
+               created_at, updated_at
         FROM de_desk_chat_sessions
         WHERE session_id = ${sessionId}
         LIMIT 1
@@ -513,6 +588,8 @@ export async function getDeskSessionMessages(
         mem.agentActive = !!row.agent_active;
         mem.agentName = row.agent_name ? String(row.agent_name) : null;
         mem.agentJoinedAt = row.agent_joined_at ? toIso(row.agent_joined_at) : null;
+        mem.archivedAt = row.archived_at ? toIso(row.archived_at) : null;
+        mem.archiveFolder = row.archive_folder ? String(row.archive_folder) : null;
         mem.createdAt = toIso(row.created_at);
         mem.updatedAt = toIso(row.updated_at);
         mem.messages = messages;
@@ -567,6 +644,105 @@ export async function getDeskMessagesSince(
     agentLive,
     agentName: agentLive ? session.agentName || lastAgent?.senderName || "DE Agent" : null,
   };
+}
+
+/**
+ * File chats into their company folder. A visitor who writes again in an
+ * archived chat brings it back to the live list (appendDeskMessage), so an
+ * archive never hides someone waiting on a reply. Folder names reuse an existing folder's spelling when one matches,
+ * so "acme corp" and "Acme Corp" never split into two folders.
+ */
+export async function archiveDeskSessions(sessionIds: string[]): Promise<DeskChatSessionSummary[]> {
+  await ensureSchema();
+  const now = new Date().toISOString();
+  const existingFolders = new Map<string, string>();
+  for (const s of await listDeskSessions({ archived: true, limit: 500 })) {
+    if (s.archiveFolder) {
+      const key = archiveFolderKey(s.archiveFolder);
+      if (!existingFolders.has(key)) existingFolders.set(key, s.archiveFolder);
+    }
+  }
+  const out: DeskChatSessionSummary[] = [];
+  // Oldest chat first, so a new folder takes the spelling of the company's first chat.
+  const found: DeskChatSessionSummary[] = [];
+  for (const sessionId of sessionIds) {
+    const { session } = await getDeskSessionMessages(sessionId);
+    if (session) found.push(session);
+  }
+  found.sort((x, y) => Date.parse(x.createdAt) - Date.parse(y.createdAt) || x.sessionId.localeCompare(y.sessionId));
+  for (const session of found) {
+    const sessionId = session.sessionId;
+    const proposed = archiveFolderFor(session.companyName);
+    const key = archiveFolderKey(proposed);
+    const folder = existingFolders.get(key) || proposed;
+    existingFolders.set(key, folder);
+    const mem = memorySessions.get(sessionId);
+    if (mem) {
+      mem.archivedAt = now;
+      mem.archiveFolder = folder;
+    }
+    if (dbReady && db && schemaReady) {
+      try {
+        await db.execute(sql`
+          UPDATE de_desk_chat_sessions
+          SET archived_at = ${new Date(now)}, archive_folder = ${folder}
+          WHERE session_id = ${sessionId}
+        `);
+      } catch (err: any) {
+        console.warn("[de-desk-persist] archive failed:", err?.message);
+        continue;
+      }
+    }
+    out.push({ ...session, archivedAt: now, archiveFolder: folder });
+  }
+  return out;
+}
+
+/** Every live chat whose company files into the same folder as this one. */
+export async function sessionIdsInSameCompany(sessionId: string): Promise<string[]> {
+  const { session } = await getDeskSessionMessages(sessionId);
+  if (!session) return [];
+  const key = archiveFolderKey(archiveFolderFor(session.companyName));
+  const live = await listDeskSessions({ limit: 200 });
+  const ids = live
+    .filter((s) => archiveFolderKey(archiveFolderFor(s.companyName)) === key)
+    .map((s) => s.sessionId);
+  return ids.includes(sessionId) ? ids : [sessionId, ...ids];
+}
+
+export async function unarchiveDeskSession(sessionId: string): Promise<DeskChatSessionSummary | null> {
+  await ensureSchema();
+  const mem = memorySessions.get(sessionId);
+  if (mem) {
+    mem.archivedAt = null;
+    mem.archiveFolder = null;
+  }
+  if (dbReady && db && schemaReady) {
+    try {
+      await db.execute(sql`
+        UPDATE de_desk_chat_sessions
+        SET archived_at = NULL, archive_folder = NULL
+        WHERE session_id = ${sessionId}
+      `);
+    } catch (err: any) {
+      console.warn("[de-desk-persist] unarchive failed:", err?.message);
+    }
+  }
+  const { session } = await getDeskSessionMessages(sessionId);
+  return session;
+}
+
+/** Permanently remove a chat and its messages. Returns false if it did not exist. */
+export async function deleteDeskSession(sessionId: string): Promise<boolean> {
+  await ensureSchema();
+  const { session } = await getDeskSessionMessages(sessionId);
+  if (!session) return false;
+  memorySessions.delete(sessionId);
+  if (dbReady && db && schemaReady) {
+    await db.execute(sql`DELETE FROM de_desk_chat_messages WHERE session_id = ${sessionId}`);
+    await db.execute(sql`DELETE FROM de_desk_chat_sessions WHERE session_id = ${sessionId}`);
+  }
+  return true;
 }
 
 export function getDeskStoreStatus(): { durable: boolean } {

@@ -15,6 +15,10 @@ import type { Express, Request, RequestHandler, Response } from "express";
  * claim and release are now admin-only, and the agent name is the signed-in
  * agent's own, never a value from the request body.
  *
+ * Archive and delete are the same DE-staff tier: archive files a chat (or
+ * every live chat from the same company) into that company's folder; delete
+ * removes the chat and its messages for good.
+ *
  * The read routes (list, and a single conversation) stay in routes.ts: a
  * client may see their own linked Desk thread, scoped to their email.
  */
@@ -85,6 +89,47 @@ export function registerPortalDeskAgentRoutes(
       res.json({ success: true, session: updated });
     } catch (error: any) {
       res.status(500).json({ error: error.message || "Failed to release conversation" });
+    }
+  });
+
+  // Archive one chat, or with { company: true } every live chat from the same
+  // company, into that company's folder.
+  app.post(`${DESK_CHATS_BASE}/:sessionId/archive`, actionGuards, async (req: DeskAgentRequest, res: Response) => {
+    try {
+      const { getDeskSessionMessages, archiveDeskSessions, sessionIdsInSameCompany } = await import(
+        "./services/msp-advisor/persist"
+      );
+      const sessionId = req.params.sessionId;
+      const { session } = await getDeskSessionMessages(sessionId);
+      if (!session) return res.status(404).json({ error: "Conversation not found" });
+      const ids = req.body?.company === true ? await sessionIdsInSameCompany(sessionId) : [sessionId];
+      const sessions = await archiveDeskSessions(ids);
+      res.json({ success: true, sessions, folder: sessions[0]?.archiveFolder ?? null });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to archive conversation" });
+    }
+  });
+
+  app.post(`${DESK_CHATS_BASE}/:sessionId/unarchive`, actionGuards, async (req: DeskAgentRequest, res: Response) => {
+    try {
+      const { getDeskSessionMessages, unarchiveDeskSession } = await import("./services/msp-advisor/persist");
+      const { session } = await getDeskSessionMessages(req.params.sessionId);
+      if (!session) return res.status(404).json({ error: "Conversation not found" });
+      const updated = await unarchiveDeskSession(req.params.sessionId);
+      res.json({ success: true, session: updated });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to restore conversation" });
+    }
+  });
+
+  app.delete(`${DESK_CHATS_BASE}/:sessionId`, actionGuards, async (req: DeskAgentRequest, res: Response) => {
+    try {
+      const { deleteDeskSession } = await import("./services/msp-advisor/persist");
+      const deleted = await deleteDeskSession(req.params.sessionId);
+      if (!deleted) return res.status(404).json({ error: "Conversation not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to delete conversation" });
     }
   });
 }

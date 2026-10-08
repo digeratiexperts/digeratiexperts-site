@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Cable,
   Network,
   Activity,
   AlertTriangle,
@@ -133,6 +134,7 @@ export const PORTAL_ADMIN_GROUP: PortalNavGroup = {
   items: [
     { href: "/internal/warehouse", label: "Digital Warehouse", icon: Warehouse, key: "other", hint: "Staff ops · SKUs · Hub feed" },
     { href: "/portal/admin/companies", label: "Companies", icon: Building2, key: "other", hint: "Tenants and impersonation" },
+    { href: "/portal/admin/license-board", label: "License Patch Bay", icon: Cable, key: "other", hint: "Patch vendor licences to companies and people" },
     { href: "/portal/admin/login-knocks", label: "Login Alerts", icon: Shield, key: "other", hint: "Door knocks" },
     { href: "/portal/admin/lifecycle", label: "Onboard / Offboard", icon: Users, key: "other", hint: "JumpCloud identity lifecycle" },
     { href: "/portal/admin/contracts", label: "Contracts", icon: FileSignature, key: "other", hint: "Send and countersign" },
