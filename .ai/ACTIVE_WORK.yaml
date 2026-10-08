@@ -3091,8 +3091,8 @@ claims:
       - server/services/msp-advisor/fallback.ts (the after-handoff reply only), types.ts (two session flags), prompt.ts (two HARD RULES lines)
       - server/services/msp-advisor/msp-advisor.test.ts (one describe block appended)
       - server/routes.ts (the advisor leave_message Desk failover only)
-      - artifacts/visual-qa/desk-chat-handoff/**
-    status: active
+      - artifacts/visual-qa/desk-chat-handoff/** (live/ added with the release record)
+    status: verified-live
     started: 2026-10-07
     note: >-
       Joe, 2026-10-07, pasting an Ask DE transcript: "I need Joe" got "Before
@@ -3109,3 +3109,16 @@ claims:
       portal-service-requests owns portal-assist.ts and index.ts, which this
       claim does not touch (askedForHuman is left as it is); no open PR
       touches these files.
+      RELEASED 2026-10-08: Joe, "merge 537". Merged as 1d7095c (PR 537) after
+      CI passed on e14f530; production runs 1d7095c (/api/health release,
+      built 09:59Z). Checked on digeratiexperts.com at 390 and 1440 (Joe's
+      own phone test at about 09:57Z ran a minute before this build went
+      live and showed the old replies): "I need Joe" and "I need Joe your
+      CEO" get the handoff with Call 325-480-9870, Request a callback and
+      Leave Joe a message, and no name question; after "what's your name?",
+      "me" gets no "Thanks, Me." and no company question, and the reply
+      answers the question already asked. No horizontal overflow, no page
+      errors (artifacts/visual-qa/desk-chat-handoff/live/). The leave_message
+      failover was not exercised live; the Desk API still refuses the token
+      (auth_failed), so chat messages reach Desk through the failover until
+      it is replaced. VERIFIED LIVE. Files released.
