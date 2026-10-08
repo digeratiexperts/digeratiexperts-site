@@ -355,7 +355,7 @@ export default function PrivacyPolicy() {
                 <p className="text-[#1A1228] font-semibold mb-2">Digerati Experts - Privacy Team</p>
                 <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Email:</strong> privacy@digeratiexperts.com</p>
                 <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Phone:</strong> {PRIMARY_PHONE.display}</p>
-                <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Address:</strong> 3165 S Alma School Rd Suite 29, Chandler, AZ 85248</p>
+                <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Address:</strong> Chandler, AZ</p>
                 <p className="text-[#3A3448] mt-3"><strong className="text-[#1A1228]">Office Hours:</strong> Monday-Friday 7:00 AM - 6:00 PM MST</p>
                 <p className="text-[#3A3448]"><strong className="text-[#1A1228]">Emergency Contact:</strong> Available 24/7 for active clients</p>
               </div>

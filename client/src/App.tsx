@@ -135,6 +135,7 @@ const AdminImportPage = lazy(() => import("@/pages/portal/AdminImport").then(m =
 const AdminAgentsPage = lazy(() => import("@/pages/portal/AdminAgents").then(m => ({ default: m.AdminAgents })));
 const AdminOpenAIPage = lazy(() => import("@/pages/portal/AdminOpenAI").then(m => ({ default: m.AdminOpenAI })));
 const AdminCompaniesPage = lazy(() => import("@/pages/portal/AdminCompanies").then(m => ({ default: m.AdminCompanies })));
+const AdminClientWorkspacePage = lazy(() => import("@/pages/portal/AdminClientWorkspace").then(m => ({ default: m.AdminClientWorkspace })));
 const AdminDataSourcesPage = lazy(() => import("@/pages/portal/PortalAdminDataSources").then(m => ({ default: m.PortalAdminDataSources })));
 const AdminLoginKnocksPage = lazy(() => import("@/pages/portal/AdminLoginKnocks").then(m => ({ default: m.AdminLoginKnocks })));
 const AdminLifecyclePage = lazy(() => import("@/pages/portal/AdminLifecycle").then(m => ({ default: m.AdminLifecycle })));
@@ -157,6 +158,7 @@ const AdminOrderRequests = lazy(() => import("@/pages/portal/AdminOrderRequests"
 const PortalServiceRequests = lazy(() => import("@/pages/portal/requests/PortalServiceRequests"));
 const PortalLoanerComputerRequest = lazy(() => import("@/pages/portal/requests/PortalLoanerComputerRequest"));
 const PortalReturnComputerRequest = lazy(() => import("@/pages/portal/requests/PortalReturnComputerRequest"));
+const PortalMobileRequest = lazy(() => import("@/pages/portal/requests/PortalMobileRequest"));
 const PortalRequestBasket = lazy(() => import("@/pages/portal/requests/PortalRequestBasket"));
 const PortalServiceRequestDetail = lazy(() => import("@/pages/portal/requests/PortalServiceRequestDetail"));
 const ProActiveEcosystemPricing = lazy(() => import("@/pages/ProActiveEcosystemPricing"));
@@ -888,6 +890,11 @@ function Router() {
           <AdminCompaniesPage />
         </Suspense>
       )} />
+      <Route path="/portal/admin/clients/:id" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <AdminClientWorkspacePage />
+        </Suspense>
+      )} />
       <Route path="/portal/admin/data-sources" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <AdminDataSourcesPage />
@@ -951,6 +958,11 @@ function Router() {
       <Route path="/portal/requests/return-computer" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <PortalReturnComputerRequest />
+        </Suspense>
+      )} />
+      <Route path="/portal/requests/mobile" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <PortalMobileRequest />
         </Suspense>
       )} />
       <Route path="/portal/requests/license" component={() => (

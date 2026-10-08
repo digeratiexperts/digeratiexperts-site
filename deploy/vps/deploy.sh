@@ -91,12 +91,14 @@ NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
 [ -f "$SHARED_ENV" ] || fail "$SHARED_ENV missing — create it before deploying (see deploy/vps/env.production.example)"
 mkdir -p "$RELEASES_DIR" "$LOG_DIR"
 # Solution requests (#243) and store quote requests (#240) the database could not
-# take are held here until it recovers. Outside the release folders so a deploy
-# never drops them; owner-only.
+# take, and DE Desk tickets the Desk API could not take, are held here until it
+# recovers. Outside the release folders so a deploy never drops them; owner-only.
+# The app finds them through productionSpoolRoot (server/publicSolutionSpool.ts).
 SPOOL_DIR="$SITE_HOME/shared/spool/solution-requests"
 QUOTE_SPOOL_DIR="$SITE_HOME/shared/spool/quote-requests"
-mkdir -p "$SPOOL_DIR" "$QUOTE_SPOOL_DIR"
-chmod 700 "$SITE_HOME/shared/spool" "$SPOOL_DIR" "$QUOTE_SPOOL_DIR"
+DESK_SPOOL_DIR="$SITE_HOME/shared/spool/desk-tickets"
+mkdir -p "$SPOOL_DIR" "$QUOTE_SPOOL_DIR" "$DESK_SPOOL_DIR"
+chmod 700 "$SITE_HOME/shared/spool" "$SPOOL_DIR" "$QUOTE_SPOOL_DIR" "$DESK_SPOOL_DIR"
 
 if [ "$NO_SYSTEMD" != "1" ]; then
   # Fail fast if passwordless least-privilege sudo is missing (do not prompt).
@@ -332,6 +334,9 @@ fi
 log "Pruning old releases (keeping $KEEP_RELEASES + current)"
 ls -1dt "$RELEASES_DIR"/*/ 2>/dev/null | tail -n "+$((KEEP_RELEASES + 1))" | while read -r old; do
   [ "$(readlink -f "$old")" = "$(readlink -f "$CURRENT_LINK")" ] && continue
+  # Builds before the spool-outside-releases fix wrote spooled requests to
+  # releases/shared; the new build moves them to shared/ at startup. Never prune it.
+  [ "$(basename "$old")" = "shared" ] && continue
   log "Removing old release $old"
   rm -rf "$old"
 done

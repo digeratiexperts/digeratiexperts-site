@@ -520,6 +520,27 @@ export const notificationService = {
     });
   },
 
+  async sendPortalInvite(data: {
+    email: string;
+    name: string;
+    companyName: string;
+    setPasswordLink: string;
+  }): Promise<boolean> {
+    const content = `
+      <h2>Your client portal account is ready</h2>
+      <p>Hi ${escapeEmailHtml(data.name)},</p>
+      <p>Digerati Experts has added you to the client portal for ${escapeEmailHtml(data.companyName)}. Choose your password to sign in:</p>
+      <a href="${escapeEmailHtml(data.setPasswordLink)}" class="button">Set your password</a>
+      <p style="color: #888; font-size: 12px; margin-top: 20px;">This link works once and expires in 7 days. If it has expired, use "Forgot password" on the sign-in page. If you were not expecting this, you can ignore this email.</p>
+    `;
+
+    return sendEmail({
+      to: data.email,
+      subject: "Set your Digerati Experts portal password",
+      htmlBody: baseEmailTemplate(content, "Portal Invitation"),
+    });
+  },
+
   async sendWelcomeEmail(data: {
     email: string;
     name: string;

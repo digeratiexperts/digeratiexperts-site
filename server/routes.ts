@@ -120,6 +120,7 @@ import {
 } from "./portalOrg";
 import { registerPortalDepartmentRoutes } from "./portalDepartmentRoutes";
 import { registerPortalTenantFileRoutes } from "./portalTenantFileRoutes";
+import { createDbVaultMetaStore, createConfiguredVaultBlobStore, registerClientVaultRoutes } from "./portalClientVault";
 import { registerPortalIntegrationStatusRoute } from "./portalIntegrations";
 import { registerManualRecordAdminRoutes } from "./portalManualRecords";
 import { registerHubServiceRequestStatusRoute, registerServiceRequestRoutes, startHoldSweeper, type ServiceRequestRouteDeps } from "./serviceRequestRoutes";
@@ -134,6 +135,7 @@ import { registerPortalVpnRoutes } from "./integrations/vpn/routes";
 import { registerPortalPhoneRoutes } from "./integrations/phone/routes";
 import { registerPortalShippingRoutes } from "./integrations/shipping/routes";
 import { registerPortalDeskAgentRoutes } from "./portalDeskAgentRoutes";
+import { registerPortalUserInviteRoute } from "./portalUserInvite";
 import { canAccessPortalTicket } from "./portalTicketAccess";
 import {
   canSeeDeskTicket,
@@ -170,7 +172,9 @@ import {
   lifecycleIntegrationStatus,
   runLifecycle,
   listLifecycleEvents,
+  latestLifecycleByEmail,
 } from "./lifecycleOrchestrator";
+import { buildProvisioningSummary } from "@shared/provisioning";
 import {
   buildLearningPayload,
   resolveLearningAudience,
@@ -1138,6 +1142,27 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Provisioning status (JumpCloud + Blackpoint lifecycle) for every person in
+  // the company, polled by People & Org. Same scoping as /org/people.
+  app.get("/api/portal/org/provisioning", [authMiddleware, requireOrgManage], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const clientId = req.user!.clientId;
+      const targetClient = (req.query.clientId as string) || clientId;
+      if (!targetClient) return res.status(400).json({ error: "clientId required" });
+      if (req.user!.role !== "admin" && targetClient !== clientId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      const emails = listClientUsers(targetClient).map((u) => String(u.email || "").toLowerCase()).filter(Boolean);
+      const runs = await latestLifecycleByEmail(emails);
+      const byEmail: Record<string, ReturnType<typeof buildProvisioningSummary>> = {};
+      for (const email of emails) byEmail[email] = buildProvisioningSummary({ email, latestRun: runs.get(email) || null });
+      res.json({ byEmail, checkedAt: new Date().toISOString() });
+    } catch (error: any) {
+      console.error("[ERROR] org provisioning:", error);
+      res.status(500).json({ error: "Failed to load provisioning status" });
+    }
+  });
+
   app.patch("/api/portal/org/people/:userId", [authMiddleware, requireOrgManage, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const target = findUserById(req.params.userId);
@@ -1178,6 +1203,12 @@ export async function registerRoutes(app: Express) {
   registerPortalPhoneRoutes(app, { guards: [authMiddleware] });
   registerPortalShippingRoutes(app, { guards: [authMiddleware] });
   registerManualRecordAdminRoutes(app, { guards: [authMiddleware, requireAdmin, validateInput] });
+
+  // Manage Companies "Add user": the person sets their own password from an emailed link.
+  registerPortalUserInviteRoute(app, {
+    guards: [authMiddleware, requireAdmin, validateInput],
+    deps: { logEvent: (event, req, data) => logSecurityEvent(event, req as AuthenticatedRequest, data) },
+  });
 
   // Service requests (Request Loaner Computer, Return Computer): server/serviceRequestRoutes.ts.
   const directoryUser = (u: any) => ({
@@ -3386,6 +3417,32 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // The signed-in user's own provisioning: their latest lifecycle run plus the
+  // Store orders DE is setting up for them. Polled by Settings for live status.
+  app.get("/api/portal/profile/provisioning", [authMiddleware], async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const email = String(req.user?.email || "").toLowerCase();
+      if (!email) return res.status(401).json({ message: "Not signed in" });
+      const runs = await latestLifecycleByEmail([email]);
+      let orders: any[] = [];
+      try {
+        orders = await storage.getStoreOrdersForAccount({ userId: req.userId, clientId: null });
+      } catch (e: any) {
+        console.error("[provisioning] store orders unavailable:", e?.message || e);
+      }
+      const summary = buildProvisioningSummary({
+        email,
+        latestRun: runs.get(email) || null,
+        orders: orders.map((o) => ({ id: o.id, orderNumber: o.orderNumber, status: o.status, createdAt: o.createdAt })),
+        includeOrders: true,
+      });
+      return res.json({ ...summary, checkedAt: new Date().toISOString() });
+    } catch (error: any) {
+      console.error("[ERROR] profile provisioning:", error);
+      return res.status(500).json({ message: "Failed to load provisioning status" });
+    }
+  });
+
   app.patch("/api/portal/profile", [authMiddleware, validateInput], async (req: AuthenticatedRequest, res: Response) => {
     try {
       const user = portalUsers.get(req.user?.email || "");
@@ -4828,6 +4885,20 @@ export async function registerRoutes(app: Express) {
     storage,
     getCompany: (id) => portalClients.get(id),
     getUserByEmail: (email) => portalUsers.get(email),
+    logSecurityEvent,
+  });
+
+  // Client vault: contracts, scripts, agent installers, PII (DE admin + MFA, never via View as)
+  registerClientVaultRoutes(app, {
+    auth: authMiddleware as any,
+    admin: requireAdmin as any,
+    getCompany: (id) => portalClients.get(id),
+    hasMfa: ({ id, email }) => {
+      const live = (email ? portalUsers.get(email) : null) as any;
+      return Boolean(live && live.id === id && live.mfaEnabled);
+    },
+    meta: createDbVaultMetaStore,
+    blobs: createConfiguredVaultBlobStore,
     logSecurityEvent,
   });
 

@@ -13,7 +13,7 @@ import { LICENSE_PLATFORMS, type LicensePlatform } from "./licensing";
  * lifecycle per type and one payload schema per type, all defined here.
  */
 
-export const SERVICE_REQUEST_TYPES = ["loaner_computer", "return_computer", "license_request"] as const;
+export const SERVICE_REQUEST_TYPES = ["loaner_computer", "return_computer", "license_request", "mobile_request"] as const;
 export type ServiceRequestType = (typeof SERVICE_REQUEST_TYPES)[number];
 
 export function isServiceRequestType(v: unknown): v is ServiceRequestType {
@@ -25,6 +25,7 @@ export const SERVICE_REQUEST_NUMBER_PREFIX: Record<ServiceRequestType, string> =
   loaner_computer: "LNR",
   return_computer: "RTN",
   license_request: "LIC",
+  mobile_request: "MOB",
 };
 
 export function formatServiceRequestNumber(type: ServiceRequestType, seq: number): string {
@@ -118,16 +119,29 @@ export const LICENSE_STATUSES = [
   "cancelled",
 ] as const;
 
+export const MOBILE_STATUSES = [
+  "pending_approval",
+  "on_hold",
+  "submitted",
+  "under_review",
+  "completed",
+  "closed",
+  "rejected",
+  "cancelled",
+] as const;
+
 export type ServiceRequestStatus =
   | typeof BASKET_STATUS
   | (typeof LOANER_STATUSES)[number]
   | (typeof RETURN_STATUSES)[number]
-  | (typeof LICENSE_STATUSES)[number];
+  | (typeof LICENSE_STATUSES)[number]
+  | (typeof MOBILE_STATUSES)[number];
 
 export const STATUSES_BY_TYPE: Record<ServiceRequestType, readonly ServiceRequestStatus[]> = {
   loaner_computer: LOANER_STATUSES,
   return_computer: RETURN_STATUSES,
   license_request: LICENSE_STATUSES,
+  mobile_request: MOBILE_STATUSES,
 };
 
 /** The happy path, in order, for the status timeline on the detail page. */
@@ -135,6 +149,7 @@ export const TIMELINE_BY_TYPE: Record<ServiceRequestType, readonly ServiceReques
   loaner_computer: ["submitted", "under_review", "device_assigned", "delivered", "return_due", "returned", "closed"],
   return_computer: ["submitted", "under_review", "pickup_scheduled", "received", "restocked", "closed"],
   license_request: ["submitted", "under_review", "approved", "fulfilled", "closed"],
+  mobile_request: ["submitted", "under_review", "completed", "closed"],
 };
 
 export const TERMINAL_STATUSES: readonly ServiceRequestStatus[] = ["closed", "rejected", "cancelled"];
@@ -181,10 +196,19 @@ const LICENSE_TRANSITIONS: Record<string, readonly ServiceRequestStatus[]> = {
   fulfilled: ["closed"],
 };
 
+const MOBILE_TRANSITIONS: Record<string, readonly ServiceRequestStatus[]> = {
+  pending_approval: ["rejected", "cancelled"],
+  on_hold: ["rejected", "cancelled"],
+  submitted: ["under_review", "completed", "rejected", "cancelled"],
+  under_review: ["completed", "rejected", "cancelled"],
+  completed: ["closed"],
+};
+
 const TRANSITIONS_BY_TYPE: Record<ServiceRequestType, Record<string, readonly ServiceRequestStatus[]>> = {
   loaner_computer: LOANER_TRANSITIONS,
   return_computer: RETURN_TRANSITIONS,
   license_request: LICENSE_TRANSITIONS,
+  mobile_request: MOBILE_TRANSITIONS,
 };
 
 export function allowedStaffTransitions(type: ServiceRequestType, from: ServiceRequestStatus): readonly ServiceRequestStatus[] {
@@ -211,6 +235,7 @@ export const STATUS_LABELS: Record<ServiceRequestStatus, string> = {
   disposed: "Disposed",
   approved: "Approved",
   fulfilled: "Licence assigned",
+  completed: "Completed",
   closed: "Closed",
   rejected: "Rejected",
   cancelled: "Cancelled",
@@ -220,12 +245,14 @@ export const TYPE_LABELS: Record<ServiceRequestType, string> = {
   loaner_computer: "Request Loaner Computer",
   return_computer: "Return Computer",
   license_request: "Request a Software License",
+  mobile_request: "Mobile & Carrier Service",
 };
 
 export const TYPE_ROUTES: Record<ServiceRequestType, string> = {
   loaner_computer: "/portal/requests/loaner-computer",
   return_computer: "/portal/requests/return-computer",
   license_request: "/portal/requests/license",
+  mobile_request: "/portal/requests/mobile",
 };
 
 // ---------- field helpers ----------
@@ -291,6 +318,76 @@ const RETURN_REASON_KEYS = RETURN_REASONS.map((r) => r.key) as [ReturnReasonKey,
 export function returnReasonLabel(key: string, company: string): string {
   return RETURN_REASONS.find((r) => r.key === key)?.label(company) ?? key;
 }
+
+export const MOBILE_ACTIVITY_GROUPS = [
+  {
+    key: "line_service",
+    label: "Line & service",
+    activities: [
+      ["add_service_existing_device", "Add Service to Existing Device"],
+      ["assign_line", "Assign Line"],
+      ["change_phone_number", "Change Phone Number"],
+      ["change_plan", "Change Plan"],
+      ["disconnect_service", "Disconnect Service"],
+      ["reactivate_line", "Reactivate Line"],
+      ["suspend_service", "Suspend Service"],
+      ["unsuspend_service", "Unsuspend Service"],
+    ],
+  },
+  {
+    key: "device_sim",
+    label: "Device & SIM",
+    activities: [
+      ["assign_device", "Assign Device"],
+      ["equipment_swap", "Equipment Swap"],
+      ["new_device_without_service", "New Device (Without Service)"],
+      ["order_iccid_sim", "Order ICCID/SIM Card"],
+      ["order_new_device", "Order New Device"],
+      ["upgrade_device", "Upgrade Device"],
+      ["upgrade_eligibility_check", "Upgrade Eligibility Check"],
+      ["warranty_replacement", "Warranty Replacement"],
+    ],
+  },
+  {
+    key: "features",
+    label: "Features & voicemail",
+    activities: [
+      ["add_remove_features", "Add/Remove Features"],
+      ["reset_voicemail_password", "Reset Voicemail Password"],
+    ],
+  },
+  {
+    key: "carrier",
+    label: "Carrier",
+    activities: [["change_carrier", "Change Carrier"]],
+  },
+  {
+    key: "travel",
+    label: "Travel",
+    activities: [["travel_request", "Travel Request"]],
+  },
+  {
+    key: "liability",
+    label: "Transfers of Liability",
+    activities: [
+      ["transfer_corporate_to_personal", "Transfer Corporate Line to Personal"],
+      ["transfer_personal_to_corporate", "Transfer Personal Line to Corporate"],
+    ],
+  },
+] as const;
+
+export const MOBILE_ACTIVITIES = MOBILE_ACTIVITY_GROUPS.flatMap((g) => g.activities.map(([key, label]) => ({ key, label, group: g.key }))) as readonly {
+  key: string;
+  label: string;
+  group: string;
+}[];
+export type MobileActivityKey = (typeof MOBILE_ACTIVITY_GROUPS)[number]["activities"][number][0];
+const MOBILE_ACTIVITY_KEYS = MOBILE_ACTIVITIES.map((a) => a.key) as [MobileActivityKey, ...MobileActivityKey[]];
+
+export function mobileActivityLabel(key: string): string {
+  return MOBILE_ACTIVITIES.find((a) => a.key === key)?.label ?? key;
+}
+
 
 // ---------- address ----------
 
@@ -382,7 +479,22 @@ export const licenseFieldsSchema = z.object({
 });
 export type LicenseFields = z.infer<typeof licenseFieldsSchema>;
 
-export type AnyRequestFields = LoanerFields | ReturnFields | LicenseFields;
+export const mobileFieldsSchema = z.object({
+  requestedForUserId: z.string().trim().min(1, "Requested for is required").max(80),
+  activity: z.enum(MOBILE_ACTIVITY_KEYS, { errorMap: () => ({ message: "Choose a mobile activity" }) }),
+  mobileNumber: z.string().trim().max(40).optional().default(""),
+  carrier: z.string().trim().max(120).optional().default(""),
+  deviceIdentifier: z.string().trim().max(200).optional().default(""),
+  effectiveDate: z
+    .string()
+    .optional()
+    .default("")
+    .refine((v) => !v || isIsoDate(v), "Effective date must be YYYY-MM-DD"),
+  details: z.string().trim().min(1, "Tell us what you need changed").max(4000),
+});
+export type MobileFields = z.infer<typeof mobileFieldsSchema>;
+
+export type AnyRequestFields = LoanerFields | ReturnFields | LicenseFields | MobileFields;
 
 export type FieldErrors = Record<string, string>;
 
@@ -400,6 +512,13 @@ export function crossFieldErrors(
   if (type === "license_request") {
     const f = input as LicenseFields;
     if (f.accountKind !== "person" && !f.accountName) errors.accountName = "Name the account (for example svc-backup or helpdesk@)";
+    return errors;
+  }
+  if (type === "mobile_request") {
+    const f = input as MobileFields;
+    if (f.effectiveDate && isIsoDate(f.effectiveDate) && f.effectiveDate < today) {
+      errors.effectiveDate = "Requested effective date must be today or later";
+    }
     return errors;
   }
   const fields = input as LoanerFields | ReturnFields;
@@ -439,6 +558,7 @@ export function crossFieldErrors(
 
 export function fieldsSchemaFor(type: ServiceRequestType) {
   if (type === "license_request") return licenseFieldsSchema;
+  if (type === "mobile_request") return mobileFieldsSchema;
   return type === "loaner_computer" ? loanerFieldsSchema : returnFieldsSchema;
 }
 
@@ -556,6 +676,7 @@ export const SERVICE_REQUEST_AI_FILLABLE: Record<ServiceRequestType, readonly st
     "manualAsset.description",
   ],
   license_request: ["businessJustification", "accountName"],
+  mobile_request: ["activity", "mobileNumber", "carrier", "deviceIdentifier", "effectiveDate", "details"],
 };
 
 // ---------- required-information chips ----------
@@ -572,6 +693,11 @@ export function unfilledRequiredChips(type: ServiceRequestType, f: Record<string
     if (blank(f.platform)) out.push({ field: "platform", label: "Platform" });
     if (blank(f.licenseKey)) out.push({ field: "licenseKey", label: "License" });
     if (blank(f.businessJustification)) out.push({ field: "businessJustification", label: "Business justification" });
+    return out;
+  }
+  if (type === "mobile_request") {
+    if (blank(f.activity)) out.push({ field: "activity", label: "Activity" });
+    if (blank(f.details)) out.push({ field: "details", label: "What you need" });
     return out;
   }
   if (type === "loaner_computer") {

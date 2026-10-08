@@ -19,7 +19,7 @@ import { registerPortalMarketplaceRoutes } from "./portalMarketplaceRoutes";
 import { registerPublicSupportChat } from "./publicSupportChat";
 import { isKnownSpaPath } from "./spaKnownPaths";
 import { cacheControlFor } from "./staticCacheControl";
-import { deskTicketSpoolDir, quoteSpoolDir, spoolPendingCount } from "./publicSolutionSpool";
+import { deskTicketSpoolDir, quoteSpoolDir, spoolDir, spoolPendingCount, spoolWritable } from "./publicSolutionSpool";
 import { registerCampaignAliasRedirects } from "./campaignAliasRedirects";
 import { createServer as createViteServer } from "vite";
 import path from "path";
@@ -129,12 +129,12 @@ app.all("/api/health", async (_req, res) => {
       // OAuth refresh rejects the configured refresh token (e.g. invalid_code).
       zohoDesk: zohoClient.getDeskAuthStatus(),
       openai: openaiConfigured ? "configured" : "not_configured",
-      // Solution requests waiting on disk for the database (#243). A count only.
-      solutionSpool: { pending: spoolPendingCount() },
-      // Store quote requests waiting on disk for the database (#240). A count only.
-      quoteSpool: { pending: spoolPendingCount(quoteSpoolDir()) },
-      // DE Desk tickets the Desk API did not take (desk-ticket-failover). A count only.
-      deskTicketSpool: { pending: spoolPendingCount(deskTicketSpoolDir()) },
+      // Solution requests waiting on disk for the database (#243). A count, and whether the folder takes writes.
+      solutionSpool: { pending: spoolPendingCount(), writable: spoolWritable(spoolDir()) },
+      // Store quote requests waiting on disk for the database (#240).
+      quoteSpool: { pending: spoolPendingCount(quoteSpoolDir()), writable: spoolWritable(quoteSpoolDir()) },
+      // DE Desk tickets the Desk API did not take (desk-ticket-failover).
+      deskTicketSpool: { pending: spoolPendingCount(deskTicketSpoolDir()), writable: spoolWritable(deskTicketSpoolDir()) },
     },
     // Lets a reviewer confirm outbound mutations are locked down.
     stagingReview: stagingReviewStatus(),
@@ -670,6 +670,17 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       .catch((error) => {
         log(`⚠️ de-sync worker not started: ${error?.message || error}`);
       });
+    // Spool files written under releases/ by an earlier build move to shared/ before the deploy prunes releases.
+    if (process.env.NODE_ENV === "production") {
+      void import("./publicSolutionSpool")
+        .then(({ rescueReleaseSpools }) => {
+          const moved = rescueReleaseSpools();
+          if (moved) log(`📦 moved ${moved} spooled request(s) out of the release folders`);
+        })
+        .catch((error) => {
+          log(`⚠️ spool rescue not run: ${error?.message || error}`);
+        });
+    }
     // Solution requests saved outside the database are written back once it is reachable (#243).
     void import("./publicSolutionReplayWorker")
       .then(({ startSolutionReplayWorker }) => startSolutionReplayWorker())

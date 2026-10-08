@@ -8,3 +8,4 @@ export { Callout } from "./Callout";
 export { DataTable } from "./DataTable";
 export type { DataColumn } from "./DataTable";
 export { Field } from "./Field";
+export type { PortalCategory } from "./category";

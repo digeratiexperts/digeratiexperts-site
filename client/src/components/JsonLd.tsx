@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { COMPANY, PRIMARY_PHONE } from "@/data/companyContact";
+import { COMPANY, PRIMARY_PHONE, PUBLIC_SOCIAL_LINKS } from "@/data/companyContact";
 
 const SITE_URL = COMPANY.website;
 
@@ -33,10 +33,7 @@ const ORGANIZATION = {
   "name": COMPANY.legalName,
   "url": SITE_URL,
   "logo": `${SITE_URL}/favicon-512x512.png`,
-  "sameAs": [
-    "https://www.linkedin.com/company/digerati-experts",
-    "https://www.facebook.com/digeratiexperts"
-  ],
+  "sameAs": PUBLIC_SOCIAL_LINKS.map((s) => s.href),
   "contactPoint": {
     "@type": "ContactPoint",
     "telephone": PRIMARY_PHONE.schemaTelephone || PRIMARY_PHONE.e164,
@@ -61,16 +58,14 @@ const LOCAL_BUSINESS = {
   "priceRange": "$$",
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "3165 S Alma School Rd Suite 29",
     "addressLocality": "Chandler",
     "addressRegion": "AZ",
-    "postalCode": "85248",
     "addressCountry": "US"
   },
   "geo": {
     "@type": "GeoCoordinates",
-    "latitude": 33.2826,
-    "longitude": -111.8407
+    "latitude": 33.3062,
+    "longitude": -111.8413
   },
   "areaServed": [
     { "@type": "State", "name": "Arizona" },

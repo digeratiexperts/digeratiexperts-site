@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Phone, MapPin, Linkedin, Facebook, Twitter, Loader2, Clock, Shield, ArrowRight } from "lucide-react";
+import { Mail, Phone, MapPin, Linkedin, Instagram, Loader2, Clock, Shield, ArrowRight } from "lucide-react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -87,8 +87,7 @@ const directoryItems = [
 
 const contactSocials = [
   { ...COMPANY_SOCIAL.linkedin, icon: Linkedin, testId: "social-linkedin" },
-  { ...COMPANY_SOCIAL.facebook, icon: Facebook, testId: "social-facebook" },
-  { ...COMPANY_SOCIAL.twitter, icon: Twitter, testId: "social-twitter" },
+  { ...COMPANY_SOCIAL.instagram, icon: Instagram, testId: "social-instagram" },
 ] as const;
 
 const fieldClass =

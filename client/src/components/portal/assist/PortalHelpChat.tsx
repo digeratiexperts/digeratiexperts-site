@@ -69,6 +69,12 @@ const FIELD_LABELS: Record<string, string> = {
   "manualAsset.assetTag": "Asset tag",
   "manualAsset.serialNumber": "Serial number",
   "manualAsset.description": "Computer description",
+  activity: "Activity",
+  mobileNumber: "Mobile number",
+  carrier: "Carrier",
+  deviceIdentifier: "Device / IMEI / EID / asset tag",
+  effectiveDate: "Effective date",
+  details: "What you need",
 };
 
 function readDismissed(): boolean {
@@ -129,7 +135,15 @@ export function PortalHelpChat({ page, form }: { page: Page; form?: FormBridge }
 
   const prompts =
     page.kind === "service_request_form"
-      ? ["Help me fill this out", page.requestType === "return_computer" ? "What's my return status?" : "What's my loaner status?", "Talk to the team"]
+      ? [
+          "Help me fill this out",
+          page.requestType === "return_computer"
+            ? "What's my return status?"
+            : page.requestType === "loaner_computer"
+              ? "What's my loaner status?"
+              : "What's the status of my request?",
+          "Talk to the team",
+        ]
       : page.kind === "service_request_detail"
         ? ["What happens next?", "Show my requests", "Talk to the team"]
         : ["Show my requests", "Talk to the team"];
