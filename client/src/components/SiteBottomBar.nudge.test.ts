@@ -14,8 +14,11 @@ function nudgeBottom(): string {
 }
 
 describe("Ask DE nudge position", () => {
-  it("clears the unified bar, the store cart and the cookie banner", () => {
+  it("clears the unified bar, the store cart, the cookie banner and the sticky bar", () => {
     const bottom = nudgeBottom();
+    expect(bottom).toMatch(/var\(--de-sticky-cta-h, 0px\)/);
+    // The sticky bar and the unified bar both sit on the chrome inset.
+    expect(bottom).toMatch(/var\(--de-chrome-inset, 0px\)/);
     expect(bottom).toMatch(/var\(--de-unified-bar-h, 3\.5rem\)/);
     expect(bottom).toMatch(/var\(--de-store-cart-h, 0px\)/);
     expect(bottom).toMatch(/var\(--de-cookie-h, 0px\)/);
@@ -33,10 +36,12 @@ describe("Ask DE nudge on phones", () => {
     expect(bottomBarSrc).toMatch(/phone\.matches && window\.scrollY < window\.innerHeight/);
   });
 
-  it("steps a shown nudge away on scroll or typing, without dismissing it for good", () => {
-    const block = bottomBarSrc.match(/if \(!showNudge \|\| !window\.matchMedia\(NUDGE_PHONE_QUERY\)\.matches\) return;[\s\S]*?\}, \[showNudge\]\);/)?.[0] ?? "";
-    expect(block).toMatch(/NUDGE_PHONE_SCROLL_AWAY/);
+  it("steps a shown nudge away on scroll, typing or time, at every width, without dismissing it for good", () => {
+    const block = bottomBarSrc.match(/if \(!showNudge\) return;[\s\S]*?\}, \[showNudge\]\);/)?.[0] ?? "";
+    expect(block).toMatch(/NUDGE_SCROLL_AWAY/);
+    expect(block).toMatch(/NUDGE_VISIBLE_MS/);
     expect(block).toMatch(/focusin/);
+    expect(block).not.toMatch(/NUDGE_PHONE_QUERY/);
     expect(block).not.toMatch(/markDeskNudgeDismissed/);
   });
 });

@@ -1,0 +1,29 @@
+{
+  "site": "https://digeratiexperts.com",
+  "release": "1d7095cda9814abd1022f5e1f2059730c9c0bda7",
+  "builtAt": "2026-10-08T09:59:15Z",
+  "capturedAt": "2026-10-08T10:01Z to 10:05Z",
+  "390-joe": {
+    "turns": [
+      { "sent": "I need Joe", "reply": "I can get this to Joe. The fastest way is a call: 325-480-9870. If he's tied up, request a callback or leave him a message below, and it reaches the desk with this chat. What's it about?", "actions": ["Call 325-480-9870", "Request a callback", "Leave Joe a message"] },
+      { "sent": "I need Joe your CEO", "reply": "(same handoff)", "actions": ["Call 325-480-9870", "Request a callback", "Leave Joe a message"] }
+    ],
+    "overflowX": 0,
+    "pageErrors": []
+  },
+  "1440-joe": {
+    "turns": [
+      { "sent": "I need Joe", "reply": "(same handoff)", "actions": ["Call 325-480-9870", "Request a callback", "Leave Joe a message"] }
+    ],
+    "overflowX": 0,
+    "pageErrors": []
+  },
+  "390-me": {
+    "turns": [
+      { "sent": "Do you do managed IT for small offices?", "reply": "Before we continue, what's your name?" },
+      { "sent": "me", "reply": "Yes, we do manage IT for small offices. Our Core IT Office package is tailored for environments with up to 25 users, providing essential IT management, 24/7 monitoring, help desk support, and more. What's driving your interest in managed IT right now?", "note": "no \"Thanks, Me.\" and no company question" }
+    ],
+    "overflowX": 0,
+    "pageErrors": []
+  }
+}
