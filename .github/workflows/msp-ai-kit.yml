@@ -65,7 +65,7 @@ jobs:
   windows-loader:
     name: Windows loader and Technician Console (PowerShell 5.1 + WPF)
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 30   # full 5.1 Pester suite plus build/install smoke runs 12-20+ min on hosted runners
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

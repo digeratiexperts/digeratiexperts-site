@@ -34,6 +34,7 @@ Task ledger: `docs/SITE-VISUAL-TASKS.md` (Tier 3 for design decisions; its owner
 - Full authority matrix: `docs/REPOSITORY-AUTHORITY.md`.
 - Website source-of-truth details: `docs/SOURCE-OF-TRUTH.md`.
 - Ecosystem rule (always apply): `.cursor/rules/de-ecosystem.mdc`. This website is a GitHub-owned **content/application projection**. Intelligence Hub is the **operational control plane**.
+- Canonical identity/location/network rule: Intelligence Hub `docs/de-canonical/08_DE_IDENTITY_LOCATION_NETWORK_STANDARD.md` is authoritative. This repo projects it through `shared/canonicalIdentityLocationNetwork.ts`; DE Tech Tool projects it through `windows/CANONICAL-IDENTITY-LOCATION-NETWORK.md` + `DE.Naming`. Do not invent a different username suffix, privilege-account class, hostname/location code, VLAN convention, or client CIDR rule in website/Store/Portal/Tech Tool code.
 - Ecosystem **scoreboard** is Hub Issue [#122](https://github.com/digeratiexperts/Intelligence-Hub/issues/122) (charter `docs/DE-ECOSYSTEM-CHARTER.md`, ratified PR #123 / `5354a8b`). Do **not** copy ECO-001â€“030 into this repo. Do **not** call the ecosystem finished until #122â€™s completion gate passes.
 
 If an old Cursor task, chat, PR description, screenshot, or migration note conflicts with current GitHub state and the authority files above, treat the old instruction as stale and re-check before acting.

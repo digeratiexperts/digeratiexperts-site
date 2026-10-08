@@ -109,7 +109,7 @@ Describe 'Profiles: technician versus end user, client detection, no secrets' {
             identity = @{ dsreg = (ConvertFrom-DEDsregcmd -Text (Get-Content (Join-Path $script:Fixtures 'dsregcmd-entra-joined.txt') -Raw)); interactiveUser = 'AzureAD\SuzetteThompson'; currentPrincipal = 'ALAMO-LAP-0231\DE-BreakGlass'; profiles = @(@{ path = 'C:\Users\SuzetteThompson'; sid = 'S-1-12-1-1'; lastUse = '2026-09-27' }, @{ path = 'C:\Users\DE-BreakGlass'; sid = 'S-1-5-21-9'; lastUse = '2026-09-28' }) }
         }
     }
-    It 'turns an Entra principal into the DE local user name' { ConvertTo-DELocalUserName -DisplayOrPrincipal 'AzureAD\SuzetteThompson' | Should -Be 'sthompson' }
+    It 'turns an Entra principal into the canonical DE local user name' { ConvertTo-DELocalUserName -DisplayOrPrincipal 'AzureAD\SuzetteThompson' | Should -Be 'suzette.thompson' }
     It 'detects Alamo from tenant, hostname and profile folder with high confidence' {
         $m = Resolve-DEClientContext -Snapshot $script:Snap
         $m.best.id | Should -Be 'alamo'

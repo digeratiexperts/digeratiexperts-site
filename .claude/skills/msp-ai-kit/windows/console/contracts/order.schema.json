@@ -75,6 +75,17 @@
             "string",
             "null"
           ]
+        },
+        "personClass": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "internal",
+            "external",
+            null
+          ]
         }
       }
     },
