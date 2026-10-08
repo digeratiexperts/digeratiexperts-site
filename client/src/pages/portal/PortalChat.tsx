@@ -26,9 +26,26 @@ import {
   UserCheck,
   Bot,
   ChevronDown,
+  Archive,
+  ArchiveRestore,
+  Trash2,
+  Folder,
+  FolderOpen,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ToastAction } from "@/components/ui/toast";
+import { SwipeableDeskRow } from "@/components/portal/desk/SwipeableDeskRow";
 import { Link, useLocation } from "wouter";
-import { portalGet, portalPost } from "@/lib/portalApi";
+import { portalFetch, portalGet, portalPost } from "@/lib/portalApi";
 import { usePortalSession } from "@/components/portal/shell/portalSession";
 import { useToast } from "@/hooks/use-toast";
 
@@ -51,6 +68,9 @@ interface DeskSession {
   preview: string | null;
   agentActive?: boolean;
   agentName?: string | null;
+  /** Set when DE staff archived the chat into its company folder. */
+  archivedAt?: string | null;
+  archiveFolder?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -84,7 +104,13 @@ type DeskSessionAction =
   | "copy-email"
   | "copy-path"
   | "create-ticket"
-  | "close-tab";
+  | "close-tab"
+  | "archive"
+  | "archive-company"
+  | "unarchive"
+  | "delete";
+
+type DeskView = "live" | "archive";
 
 type FloatingSessionMenu = {
   session: DeskSession;
@@ -92,7 +118,6 @@ type FloatingSessionMenu = {
   y: number;
 };
 
-const LONG_PRESS_MS = 480;
 const DESK_TICKET_DRAFT_KEY = "de-portal-desk-ticket-draft";
 
 function sessionNameLabel(s: DeskSession): string {
@@ -103,6 +128,24 @@ function sessionNameLabel(s: DeskSession): string {
 function sessionCompanyLabel(s: DeskSession): string | null {
   const company = s.companyName?.trim();
   return company || null;
+}
+
+/** Archived chats grouped into their company folders, folders A–Z with "No company" last. */
+function groupArchiveFolders(sessions: DeskSession[]): { folder: string; sessions: DeskSession[] }[] {
+  const byFolder = new Map<string, DeskSession[]>();
+  for (const s of sessions) {
+    const folder = s.archiveFolder || "No company";
+    const list = byFolder.get(folder) || [];
+    list.push(s);
+    byFolder.set(folder, list);
+  }
+  return Array.from(byFolder.entries())
+    .map(([folder, list]) => ({ folder, sessions: list }))
+    .sort((a, b) => {
+      if (a.folder === "No company") return 1;
+      if (b.folder === "No company") return -1;
+      return a.folder.localeCompare(b.folder, undefined, { sensitivity: "base" });
+    });
 }
 
 function viewerLabel(s: DeskSession): string {
@@ -170,6 +213,14 @@ export default function PortalChat() {
   const [deskSending, setDeskSending] = useState(false);
   const [channel, setChannel] = useState<OpsChannel>("website");
   const [floatingMenu, setFloatingMenu] = useState<FloatingSessionMenu | null>(null);
+  const [deskView, setDeskView] = useState<DeskView>("live");
+  const [archivedSessions, setArchivedSessions] = useState<DeskSession[]>([]);
+  const [openFolders, setOpenFolders] = useState<Set<string>>(() => new Set());
+  const [pendingDelete, setPendingDelete] = useState<DeskSession | null>(null);
+  // Touchscreens get the swipe hint; a mouse gets the right-click one.
+  const [coarsePointer] = useState(
+    () => typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches,
+  );
   // The chat in progress. Past ones stay collapsed until asked for, so the
   // pane shows a conversation rather than a lifetime of them.
   const [liveSessionId, setLiveSessionId] = useState<string | null>(null);
@@ -187,12 +238,6 @@ export default function PortalChat() {
   const selectedDeskRef = useRef<string | null>(null);
   const openDeskIdsRef = useRef<string[]>([]);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const suppressNextClickRef = useRef(false);
-  const longPressRef = useRef<{
-    timer: number | null;
-    startX: number;
-    startY: number;
-  }>({ timer: null, startX: 0, startY: 0 });
 
   useEffect(() => {
     liveMessagesRef.current = messages;
@@ -305,6 +350,21 @@ export default function PortalChat() {
     }
   }, []);
 
+  const loadArchivedSessions = useCallback(async () => {
+    try {
+      const data = await portalGet<{ success: boolean; sessions: DeskSession[] }>(
+        "/api/portal/desk-chats?archived=1",
+      );
+      if (data.success) setArchivedSessions(data.sessions || []);
+    } catch (err) {
+      console.error("Failed to load archived DE Desk chats:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isDeskAgent) void loadArchivedSessions();
+  }, [isDeskAgent, loadArchivedSessions]);
+
   const refreshDeskThread = useCallback(async (sessionId: string) => {
     try {
       const data = await portalGet<{
@@ -374,13 +434,6 @@ export default function PortalChat() {
   useEffect(() => {
     deskEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [selectedDesk, deskThreads]);
-
-  const clearLongPress = useCallback(() => {
-    if (longPressRef.current.timer != null) {
-      window.clearTimeout(longPressRef.current.timer);
-      longPressRef.current.timer = null;
-    }
-  }, []);
 
   useEffect(() => {
     if (!floatingMenu) return;
@@ -475,6 +528,91 @@ export default function PortalChat() {
     }
   };
 
+  const dropFromLists = (ids: string[]) => {
+    const gone = new Set(ids);
+    setDeskSessions((prev) => prev.filter((s) => !gone.has(s.sessionId)));
+    setArchivedSessions((prev) => prev.filter((s) => !gone.has(s.sessionId)));
+    setOpenDeskIds((prev) => prev.filter((id) => !gone.has(id)));
+    setSelectedDesk((cur) => (cur && gone.has(cur) ? null : cur));
+  };
+
+  const unarchiveDeskSession = async (sessionId: string, quiet = false) => {
+    try {
+      const data = await portalPost<{ success: boolean; session: DeskSession | null }>(
+        `/api/portal/desk-chats/${sessionId}/unarchive`,
+        {},
+      );
+      setArchivedSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
+      if (data.session) mergeDeskSession(data.session);
+      if (!quiet) toast({ title: "Restored to live chats" });
+    } catch (err) {
+      toast({
+        title: "Could not restore chat",
+        description: err instanceof Error ? err.message : "Try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  /** File one chat, or every live chat from the same company, into its company folder. */
+  const archiveDeskSession = async (session: DeskSession, wholeCompany: boolean) => {
+    try {
+      const data = await portalPost<{
+        success: boolean;
+        sessions: DeskSession[];
+        folder: string | null;
+      }>(`/api/portal/desk-chats/${session.sessionId}/archive`, { company: wholeCompany });
+      const moved = data.sessions || [];
+      // Leave any open tab alone: archiving files the chat, it does not close it.
+      setDeskSessions((prev) => prev.filter((s) => !moved.some((m) => m.sessionId === s.sessionId)));
+      setArchivedSessions((prev) => [
+        ...moved,
+        ...prev.filter((s) => !moved.some((m) => m.sessionId === s.sessionId)),
+      ]);
+      const folder = data.folder || "No company";
+      toast({
+        title: moved.length > 1 ? `Archived ${moved.length} chats` : "Chat archived",
+        description: `Filed under ${folder}.`,
+        action: (
+          <ToastAction
+            altText="Undo archive"
+            onClick={() => {
+              for (const m of moved) void unarchiveDeskSession(m.sessionId, true);
+            }}
+          >
+            Undo
+          </ToastAction>
+        ),
+      });
+    } catch (err) {
+      toast({
+        title: "Could not archive chat",
+        description: err instanceof Error ? err.message : "Try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteDeskSession = async (session: DeskSession) => {
+    try {
+      const res = await portalFetch(`/api/portal/desk-chats/${session.sessionId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Delete failed");
+      }
+      dropFromLists([session.sessionId]);
+      toast({ title: "Chat deleted", description: `${viewerLabel(session)} was removed for good.` });
+    } catch (err) {
+      toast({
+        title: "Could not delete chat",
+        description: err instanceof Error ? err.message : "Try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const copyDeskText = async (label: string, value: string) => {
     try {
       await navigator.clipboard.writeText(value);
@@ -537,26 +675,21 @@ export default function PortalChat() {
       case "close-tab":
         closeDeskTab(session.sessionId);
         break;
+      case "archive":
+        void archiveDeskSession(session, false);
+        break;
+      case "archive-company":
+        void archiveDeskSession(session, true);
+        break;
+      case "unarchive":
+        void unarchiveDeskSession(session.sessionId);
+        break;
+      case "delete":
+        setPendingDelete(session);
+        break;
       default:
         break;
     }
-  };
-
-  const startSessionLongPress = (session: DeskSession, clientX: number, clientY: number) => {
-    clearLongPress();
-    longPressRef.current.startX = clientX;
-    longPressRef.current.startY = clientY;
-    longPressRef.current.timer = window.setTimeout(() => {
-      suppressNextClickRef.current = true;
-      setFloatingMenu({ session, x: clientX, y: clientY });
-      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-        try {
-          navigator.vibrate?.(12);
-        } catch {
-          /* ignore */
-        }
-      }
-    }, LONG_PRESS_MS);
   };
 
   const handleDeskReply = async (e?: React.FormEvent) => {
@@ -685,9 +818,227 @@ export default function PortalChat() {
     [messageText, sending, token, chatAllowed],
   );
 
-  const activeSession = deskSessions.find((s) => s.sessionId === selectedDesk) || null;
+  const activeSession =
+    deskSessions.find((s) => s.sessionId === selectedDesk) ||
+    archivedSessions.find((s) => s.sessionId === selectedDesk) ||
+    null;
+  // A visitor who writes again un-archives the chat on the server; the live
+  // poll picks it up first, so never show it in both places.
+  const liveIds = new Set(deskSessions.map((s) => s.sessionId));
+  const archiveFolders = groupArchiveFolders(archivedSessions.filter((s) => !liveIds.has(s.sessionId)));
+  /** The folder a live chat would be filed under; the server makes the final call
+   *  and reuses an existing folder's spelling, so this does too. */
+  const companyFolderLabel = (s: DeskSession) => {
+    const company = sessionCompanyLabel(s)?.replace(/\s+/g, " ").replace(/[.,]+$/, "");
+    if (!company || /^(none|no company|n\/a|na|walk-?\s?in|just myself|myself|me)$/i.test(company)) {
+      return "No company";
+    }
+    const existing = archiveFolders.find((f) => f.folder.toLowerCase() === company.toLowerCase());
+    const label = existing?.folder || company;
+    return label.length > 24 ? `${label.slice(0, 23)}…` : label;
+  };
   const activeMessages = selectedDesk ? deskThreads[selectedDesk] || [] : [];
   const liveCount = deskSessions.filter((s) => s.agentActive).length;
+
+  const renderDeskRow = (s: DeskSession) => {
+    const active = selectedDesk === s.sessionId;
+    const open = openDeskIds.includes(s.sessionId);
+    const archived = !!s.archivedAt;
+    return (
+          <li key={s.sessionId}>
+            <ContextMenu>
+              <ContextMenuTrigger asChild>
+                <SwipeableDeskRow
+                  onClick={() => void openDeskSession(s.sessionId)}
+                  onContextMenu={() => setFloatingMenu(null)}
+                  onLongPress={(x, y) => setFloatingMenu({ session: s, x, y })}
+                  swipeRight={
+                    !isDeskAgent
+                      ? null
+                      : archived
+                        ? {
+                            label: "Restore",
+                            icon: ArchiveRestore,
+                            tone: "emerald",
+                            run: () => runDeskSessionAction(s, "unarchive"),
+                          }
+                        : {
+                            label: "Archive",
+                            icon: Archive,
+                            tone: "violet",
+                            run: () => runDeskSessionAction(s, "archive"),
+                          }
+                  }
+                  swipeLeft={
+                    isDeskAgent
+                      ? {
+                          label: "Delete",
+                          icon: Trash2,
+                          tone: "magenta",
+                          run: () => runDeskSessionAction(s, "delete"),
+                        }
+                      : null
+                  }
+                  className={`w-full px-4 py-3.5 text-left select-none ${
+                    active
+                      ? "bg-[#3B1228]"
+                      : open
+                        ? "bg-[#1C191E]"
+                        : "bg-[#151217] hover:bg-[#1E1B20]"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-white">
+                        {sessionNameLabel(s)}
+                      </span>
+                      {sessionCompanyLabel(s) ? (
+                        <span className="mt-0.5 block truncate text-sm font-normal text-white/55">
+                          {sessionCompanyLabel(s)}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="inline-flex shrink-0 items-center gap-1 text-xs text-white/55">
+                      <Clock3 className="h-3 w-3" aria-hidden />
+                      {formatClock(s.updatedAt)}
+                    </span>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-xs text-white/50">
+                    {s.preview || "DE Desk conversation"}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+                    <span className="rounded-full bg-white/5 px-2 py-0.5 text-white/55">
+                      {s.messageCount} msgs
+                    </span>
+                    {s.agentActive && (
+                      <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 font-semibold text-emerald-300">
+                        Live
+                      </span>
+                    )}
+                    {open && !active && (
+                      <span className="rounded-full bg-[#F04C97]/20 px-2 py-0.5 font-semibold text-[#F04C97]">
+                        Open
+                      </span>
+                    )}
+                    {s.pagePath && (
+                      <span className="truncate rounded-full bg-white/5 px-2 py-0.5 text-white/55">
+                        {s.pagePath}
+                      </span>
+                    )}
+                  </div>
+                </SwipeableDeskRow>
+              </ContextMenuTrigger>
+              <ContextMenuContent className="w-56 border-white/10 bg-[#151217] text-white">
+                <ContextMenuItem
+                  className="gap-2 focus:bg-white/10 focus:text-white"
+                  onSelect={() => runDeskSessionAction(s, "open")}
+                >
+                  <MessageSquare className="h-4 w-4" aria-hidden />
+                  Open conversation
+                </ContextMenuItem>
+                {isDeskAgent && (
+                  <>
+                    <ContextMenuItem
+                      className="gap-2 focus:bg-white/10 focus:text-white"
+                      disabled={!!s.agentActive}
+                      onSelect={() => runDeskSessionAction(s, "claim")}
+                    >
+                      <UserCheck className="h-4 w-4" aria-hidden />
+                      Claim for live handoff
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      className="gap-2 focus:bg-white/10 focus:text-white"
+                      disabled={!s.agentActive}
+                      onSelect={() => runDeskSessionAction(s, "release")}
+                    >
+                      <Bot className="h-4 w-4" aria-hidden />
+                      Release to AI
+                    </ContextMenuItem>
+                  </>
+                )}
+                <ContextMenuSeparator className="bg-white/10" />
+                <ContextMenuItem
+                  className="gap-2 focus:bg-white/10 focus:text-white"
+                  onSelect={() => runDeskSessionAction(s, "copy-id")}
+                >
+                  <Copy className="h-4 w-4" aria-hidden />
+                  Copy session ID
+                </ContextMenuItem>
+                <ContextMenuItem
+                  className="gap-2 focus:bg-white/10 focus:text-white"
+                  disabled={!s.email}
+                  onSelect={() => runDeskSessionAction(s, "copy-email")}
+                >
+                  <Copy className="h-4 w-4" aria-hidden />
+                  Copy email
+                </ContextMenuItem>
+                <ContextMenuItem
+                  className="gap-2 focus:bg-white/10 focus:text-white"
+                  disabled={!s.pagePath}
+                  onSelect={() => runDeskSessionAction(s, "copy-path")}
+                >
+                  <Copy className="h-4 w-4" aria-hidden />
+                  Copy page path
+                </ContextMenuItem>
+                <ContextMenuSeparator className="bg-white/10" />
+                <ContextMenuItem
+                  className="gap-2 focus:bg-white/10 focus:text-white"
+                  onSelect={() => runDeskSessionAction(s, "create-ticket")}
+                >
+                  <Ticket className="h-4 w-4" aria-hidden />
+                  Create support ticket
+                </ContextMenuItem>
+                <ContextMenuItem
+                  className="gap-2 focus:bg-white/10 focus:text-white"
+                  disabled={!open}
+                  onSelect={() => runDeskSessionAction(s, "close-tab")}
+                >
+                  <X className="h-4 w-4" aria-hidden />
+                  Close tab
+                </ContextMenuItem>
+                {isDeskAgent && (
+                  <>
+                    <ContextMenuSeparator className="bg-white/10" />
+                    {archived ? (
+                      <ContextMenuItem
+                        className="gap-2 focus:bg-white/10 focus:text-white"
+                        onSelect={() => runDeskSessionAction(s, "unarchive")}
+                      >
+                        <ArchiveRestore className="h-4 w-4" aria-hidden />
+                        Restore to live chats
+                      </ContextMenuItem>
+                    ) : (
+                      <>
+                        <ContextMenuItem
+                          className="gap-2 focus:bg-white/10 focus:text-white"
+                          onSelect={() => runDeskSessionAction(s, "archive")}
+                        >
+                          <Archive className="h-4 w-4" aria-hidden />
+                          Archive to {companyFolderLabel(s)}
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                          className="gap-2 focus:bg-white/10 focus:text-white"
+                          onSelect={() => runDeskSessionAction(s, "archive-company")}
+                        >
+                          <Folder className="h-4 w-4" aria-hidden />
+                          Archive all from {companyFolderLabel(s)}
+                        </ContextMenuItem>
+                      </>
+                    )}
+                    <ContextMenuItem
+                      className="gap-2 text-[#F04C97] focus:bg-[#D3126A]/20 focus:text-[#FFD1E6]"
+                      onSelect={() => runDeskSessionAction(s, "delete")}
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden />
+                      Delete chat
+                    </ContextMenuItem>
+                  </>
+                )}
+              </ContextMenuContent>
+            </ContextMenu>
+          </li>
+    );
+  };
 
   return (
     <PortalLayout title="Chats / DE Desk" hideHeader width="wide">
@@ -728,6 +1079,7 @@ export default function PortalChat() {
                 className="border-white/15 bg-white/[0.04] text-white hover:bg-white/10 hover:text-white"
                 onClick={() => {
                   void loadDeskSessions();
+                  if (isDeskAgent) void loadArchivedSessions();
                   if (token) void loadLiveMessages(token);
                   if (selectedDesk) void refreshDeskThread(selectedDesk);
                 }}
@@ -801,7 +1153,9 @@ export default function PortalChat() {
             {openDeskIds.length > 0 && (
               <div className="flex gap-1.5 overflow-x-auto border-b border-white/10 bg-[#151217]/80 px-2 py-2">
                 {openDeskIds.map((id) => {
-                  const s = deskSessions.find((d) => d.sessionId === id);
+                  const s =
+                    deskSessions.find((d) => d.sessionId === id) ||
+                    archivedSessions.find((d) => d.sessionId === id);
                   const label = s ? viewerLabel(s) : id.slice(0, 8);
                   const active = selectedDesk === id;
                   return (
@@ -842,7 +1196,7 @@ export default function PortalChat() {
 
             <div className="grid min-h-[520px] grid-cols-1 lg:grid-cols-[300px_1fr]">
               <aside className="max-h-[640px] overflow-y-auto border-b border-white/10 lg:border-b-0 lg:border-r lg:border-white/10">
-                {deskSessions.length === 0 ? (
+                {deskSessions.length === 0 && archivedSessions.length === 0 ? (
                   <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
                     <MessageSquare className="h-8 w-8 text-white/25" aria-hidden />
                     <p className="text-sm text-white/55">
@@ -851,164 +1205,111 @@ export default function PortalChat() {
                   </div>
                 ) : (
                   <>
+                    {isDeskAgent && (
+                      <div
+                        className="grid grid-cols-2 gap-1 border-b border-white/10 p-2"
+                        role="tablist"
+                        aria-label="Website chats view"
+                      >
+                        {(
+                          [
+                            { view: "live" as const, label: "Live", count: deskSessions.length, icon: MessageSquare },
+                            {
+                              view: "archive" as const,
+                              label: "Archive",
+                              count: archiveFolders.reduce((n, f) => n + f.sessions.length, 0),
+                              icon: Archive,
+                            },
+                          ] as const
+                        ).map(({ view, label, count, icon: Icon }) => (
+                          <button
+                            key={view}
+                            type="button"
+                            role="tab"
+                            aria-selected={deskView === view}
+                            onClick={() => {
+                              setDeskView(view);
+                              if (view === "archive") void loadArchivedSessions();
+                            }}
+                            className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-semibold transition motion-reduce:transition-none ${
+                              deskView === view
+                                ? "bg-[#D3126A]/20 text-white shadow-[inset_0_0_0_1px_rgba(240,76,151,0.45)]"
+                                : "text-white/55 hover:bg-white/5 hover:text-white"
+                            }`}
+                          >
+                            <Icon className="h-4 w-4" aria-hidden />
+                            {label}
+                            <span className="rounded-full bg-white/10 px-1.5 text-xs font-medium text-white/70">
+                              {count}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <p className="border-b border-white/5 px-4 py-2 text-xs uppercase tracking-[0.14em] text-white/40">
-                      Long-press or right-click for options
+                      {isDeskAgent && coarsePointer
+                        ? deskView === "archive"
+                          ? "Swipe right to restore · left to delete · hold for options"
+                          : "Swipe right to archive · left to delete · hold for options"
+                        : "Right-click or long-press for options"}
                     </p>
-                    <ul className="divide-y divide-white/5">
-                      {deskSessions.map((s) => {
-                        const active = selectedDesk === s.sessionId;
-                        const open = openDeskIds.includes(s.sessionId);
-                        return (
-                          <li key={s.sessionId}>
-                            <ContextMenu>
-                              <ContextMenuTrigger asChild>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (suppressNextClickRef.current) {
-                                      suppressNextClickRef.current = false;
-                                      return;
-                                    }
-                                    void openDeskSession(s.sessionId);
-                                  }}
-                                  onContextMenu={() => setFloatingMenu(null)}
-                                  onTouchStart={(event) => {
-                                    const touch = event.touches[0];
-                                    if (!touch) return;
-                                    startSessionLongPress(s, touch.clientX, touch.clientY);
-                                  }}
-                                  onTouchMove={(event) => {
-                                    const touch = event.touches[0];
-                                    if (!touch) return;
-                                    const dx = touch.clientX - longPressRef.current.startX;
-                                    const dy = touch.clientY - longPressRef.current.startY;
-                                    if (Math.hypot(dx, dy) > 12) clearLongPress();
-                                  }}
-                                  onTouchEnd={clearLongPress}
-                                  onTouchCancel={clearLongPress}
-                                  className={`w-full px-4 py-3.5 text-left transition select-none ${
-                                    active
-                                      ? "bg-[#D3126A]/20"
-                                      : open
-                                        ? "bg-white/[0.03]"
-                                        : "hover:bg-white/[0.04]"
+                    {deskView === "live" ? (
+                      deskSessions.length === 0 ? (
+                        <p className="px-4 py-8 text-center text-sm text-white/55">
+                          No live chats. Archived chats are in their company folders.
+                        </p>
+                      ) : (
+                        <ul className="divide-y divide-white/5">{deskSessions.map(renderDeskRow)}</ul>
+                      )
+                    ) : archiveFolders.length === 0 ? (
+                      <p className="px-4 py-8 text-center text-sm text-white/55">
+                        Nothing archived yet. Swipe a chat right, or right-click it, to file it under
+                        its company.
+                      </p>
+                    ) : (
+                      <ul className="divide-y divide-white/5">
+                        {archiveFolders.map(({ folder, sessions }) => {
+                          const expanded = openFolders.has(folder);
+                          const FolderIcon = expanded ? FolderOpen : Folder;
+                          return (
+                            <li key={folder}>
+                              <button
+                                type="button"
+                                aria-expanded={expanded}
+                                onClick={() =>
+                                  setOpenFolders((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(folder)) next.delete(folder);
+                                    else next.add(folder);
+                                    return next;
+                                  })
+                                }
+                                className="flex min-h-11 w-full items-center gap-2.5 px-4 py-3 text-left hover:bg-white/[0.04]"
+                              >
+                                <FolderIcon className="h-4 w-4 shrink-0 text-[#C4B5FD]" aria-hidden />
+                                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">
+                                  {folder}
+                                </span>
+                                <span className="rounded-full bg-white/5 px-2 py-0.5 text-xs text-white/55">
+                                  {sessions.length}
+                                </span>
+                                <ChevronDown
+                                  className={`h-4 w-4 shrink-0 text-white/40 transition-transform motion-reduce:transition-none ${
+                                    expanded ? "rotate-180" : ""
                                   }`}
-                                >
-                                  <div className="flex items-start justify-between gap-2">
-                                    <span className="min-w-0">
-                                      <span className="block truncate text-sm font-semibold text-white">
-                                        {sessionNameLabel(s)}
-                                      </span>
-                                      {sessionCompanyLabel(s) ? (
-                                        <span className="mt-0.5 block truncate text-sm font-normal text-white/55">
-                                          {sessionCompanyLabel(s)}
-                                        </span>
-                                      ) : null}
-                                    </span>
-                                    <span className="inline-flex shrink-0 items-center gap-1 text-xs text-white/55">
-                                      <Clock3 className="h-3 w-3" aria-hidden />
-                                      {formatClock(s.updatedAt)}
-                                    </span>
-                                  </div>
-                                  <p className="mt-1 line-clamp-2 text-xs text-white/50">
-                                    {s.preview || "DE Desk conversation"}
-                                  </p>
-                                  <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
-                                    <span className="rounded-full bg-white/5 px-2 py-0.5 text-white/55">
-                                      {s.messageCount} msgs
-                                    </span>
-                                    {s.agentActive && (
-                                      <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 font-semibold text-emerald-300">
-                                        Live
-                                      </span>
-                                    )}
-                                    {open && !active && (
-                                      <span className="rounded-full bg-[#F04C97]/20 px-2 py-0.5 font-semibold text-[#F04C97]">
-                                        Open
-                                      </span>
-                                    )}
-                                    {s.pagePath && (
-                                      <span className="truncate rounded-full bg-white/5 px-2 py-0.5 text-white/55">
-                                        {s.pagePath}
-                                      </span>
-                                    )}
-                                  </div>
-                                </button>
-                              </ContextMenuTrigger>
-                              <ContextMenuContent className="w-56 border-white/10 bg-[#151217] text-white">
-                                <ContextMenuItem
-                                  className="gap-2 focus:bg-white/10 focus:text-white"
-                                  onSelect={() => runDeskSessionAction(s, "open")}
-                                >
-                                  <MessageSquare className="h-4 w-4" aria-hidden />
-                                  Open conversation
-                                </ContextMenuItem>
-                                {isDeskAgent && (
-                                  <>
-                                    <ContextMenuItem
-                                      className="gap-2 focus:bg-white/10 focus:text-white"
-                                      disabled={!!s.agentActive}
-                                      onSelect={() => runDeskSessionAction(s, "claim")}
-                                    >
-                                      <UserCheck className="h-4 w-4" aria-hidden />
-                                      Claim for live handoff
-                                    </ContextMenuItem>
-                                    <ContextMenuItem
-                                      className="gap-2 focus:bg-white/10 focus:text-white"
-                                      disabled={!s.agentActive}
-                                      onSelect={() => runDeskSessionAction(s, "release")}
-                                    >
-                                      <Bot className="h-4 w-4" aria-hidden />
-                                      Release to AI
-                                    </ContextMenuItem>
-                                  </>
-                                )}
-                                <ContextMenuSeparator className="bg-white/10" />
-                                <ContextMenuItem
-                                  className="gap-2 focus:bg-white/10 focus:text-white"
-                                  onSelect={() => runDeskSessionAction(s, "copy-id")}
-                                >
-                                  <Copy className="h-4 w-4" aria-hidden />
-                                  Copy session ID
-                                </ContextMenuItem>
-                                <ContextMenuItem
-                                  className="gap-2 focus:bg-white/10 focus:text-white"
-                                  disabled={!s.email}
-                                  onSelect={() => runDeskSessionAction(s, "copy-email")}
-                                >
-                                  <Copy className="h-4 w-4" aria-hidden />
-                                  Copy email
-                                </ContextMenuItem>
-                                <ContextMenuItem
-                                  className="gap-2 focus:bg-white/10 focus:text-white"
-                                  disabled={!s.pagePath}
-                                  onSelect={() => runDeskSessionAction(s, "copy-path")}
-                                >
-                                  <Copy className="h-4 w-4" aria-hidden />
-                                  Copy page path
-                                </ContextMenuItem>
-                                <ContextMenuSeparator className="bg-white/10" />
-                                <ContextMenuItem
-                                  className="gap-2 focus:bg-white/10 focus:text-white"
-                                  onSelect={() => runDeskSessionAction(s, "create-ticket")}
-                                >
-                                  <Ticket className="h-4 w-4" aria-hidden />
-                                  Create support ticket
-                                </ContextMenuItem>
-                                <ContextMenuItem
-                                  className="gap-2 focus:bg-white/10 focus:text-white"
-                                  disabled={!open}
-                                  onSelect={() => runDeskSessionAction(s, "close-tab")}
-                                >
-                                  <X className="h-4 w-4" aria-hidden />
-                                  Close tab
-                                </ContextMenuItem>
-                              </ContextMenuContent>
-                            </ContextMenu>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                                  aria-hidden
+                                />
+                              </button>
+                              {expanded ? (
+                                <ul className="divide-y divide-white/5 border-l-2 border-[#A78BFA]/40 bg-black/20">
+                                  {sessions.map(renderDeskRow)}
+                                </ul>
+                              ) : null}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
                   </>
                 )}
               </aside>
@@ -1024,7 +1325,8 @@ export default function PortalChat() {
                     </p>
                     <p className="max-w-sm text-xs text-white/55">
                       Keep multiple viewers open as tabs. Long-press or right-click a session for
-                      claim, release, copy, or ticket. Enter sends · Shift+Enter for a new line.
+                      claim, release, copy, ticket, archive or delete; on touch, swipe right to
+                      archive and left to delete. Enter sends · Shift+Enter for a new line.
                     </p>
                   </div>
                 ) : (
@@ -1357,66 +1659,78 @@ export default function PortalChat() {
         (() => {
           const session = floatingMenu.session;
           const open = openDeskIds.includes(session.sessionId);
-          const pos = clampMenuPosition(floatingMenu.x, floatingMenu.y);
+          const pos = clampMenuPosition(floatingMenu.x, floatingMenu.y, 256, 520);
           return (
             <div
               data-desk-session-menu
               role="menu"
               aria-label={`Options for ${viewerLabel(session)}`}
-              className="fixed z-[80] w-56 overflow-hidden rounded-xl border border-white/15 bg-[#151217] p-1 text-white shadow-2xl"
+              className="fixed z-[80] max-h-[calc(100vh-16px)] w-64 overflow-y-auto rounded-xl border border-white/15 bg-[#151217] p-1 text-white shadow-2xl"
               style={{ left: pos.left, top: pos.top }}
             >
               {(
                 [
+                  { action: "open", label: "Open conversation", icon: MessageSquare, disabled: false },
+                  ...(isDeskAgent
+                    ? ([
+                        {
+                          action: "claim",
+                          label: "Claim for live handoff",
+                          icon: UserCheck,
+                          disabled: !!session.agentActive,
+                        },
+                        {
+                          action: "release",
+                          label: "Release to AI",
+                          icon: Bot,
+                          disabled: !session.agentActive,
+                        },
+                      ] as const)
+                    : []),
+                  { action: "copy-id", label: "Copy session ID", icon: Copy, disabled: false },
+                  { action: "copy-email", label: "Copy email", icon: Copy, disabled: !session.email },
                   {
-                    action: "open" as const,
-                    label: "Open conversation",
-                    icon: MessageSquare,
-                    disabled: false,
-                  },
-                  {
-                    action: "claim" as const,
-                    label: "Claim for live handoff",
-                    icon: UserCheck,
-                    disabled: !!session.agentActive,
-                  },
-                  {
-                    action: "release" as const,
-                    label: "Release to AI",
-                    icon: Bot,
-                    disabled: !session.agentActive,
-                  },
-                  {
-                    action: "copy-id" as const,
-                    label: "Copy session ID",
-                    icon: Copy,
-                    disabled: false,
-                  },
-                  {
-                    action: "copy-email" as const,
-                    label: "Copy email",
-                    icon: Copy,
-                    disabled: !session.email,
-                  },
-                  {
-                    action: "copy-path" as const,
+                    action: "copy-path",
                     label: "Copy page path",
                     icon: Copy,
                     disabled: !session.pagePath,
                   },
                   {
-                    action: "create-ticket" as const,
+                    action: "create-ticket",
                     label: "Create support ticket",
                     icon: Ticket,
                     disabled: false,
                   },
-                  {
-                    action: "close-tab" as const,
-                    label: "Close tab",
-                    icon: X,
-                    disabled: !open,
-                  },
-                ] as const
+                  { action: "close-tab", label: "Close tab", icon: X, disabled: !open },
+                  ...(isDeskAgent
+                    ? session.archivedAt
+                      ? ([
+                          {
+                            action: "unarchive",
+                            label: "Restore to live chats",
+                            icon: ArchiveRestore,
+                            disabled: false,
+                          },
+                        ] as const)
+                      : ([
+                          {
+                            action: "archive",
+                            label: `Archive to ${companyFolderLabel(session)}`,
+                            icon: Archive,
+                            disabled: false,
+                          },
+                          {
+                            action: "archive-company",
+                            label: `Archive all from ${companyFolderLabel(session)}`,
+                            icon: Folder,
+                            disabled: false,
+                          },
+                        ] as const)
+                    : []),
+                  ...(isDeskAgent
+                    ? ([{ action: "delete", label: "Delete chat", icon: Trash2, disabled: false }] as const)
+                    : []),
+                ] as { action: DeskSessionAction; label: string; icon: typeof Copy; disabled: boolean }[]
               ).map((item) => {
                 const Icon = item.icon;
                 return (
@@ -1425,7 +1739,9 @@ export default function PortalChat() {
                     type="button"
                     role="menuitem"
                     disabled={item.disabled}
-                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-white/90 hover:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
+                    className={`flex min-h-11 w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm hover:bg-white/10 disabled:pointer-events-none disabled:opacity-40 ${
+                      item.action === "delete" ? "text-[#F04C97]" : "text-white/90"
+                    }`}
                     onClick={() => runDeskSessionAction(session, item.action)}
                   >
                     <Icon className="h-4 w-4 shrink-0" aria-hidden />
@@ -1436,6 +1752,48 @@ export default function PortalChat() {
             </div>
           );
         })()}
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(next) => !next && setPendingDelete(null)}>
+        <AlertDialogContent className="border-[#D3126A]/40 bg-[#151217] text-white shadow-[0_0_0_1px_rgba(211,18,106,0.25),0_0_40px_rgba(211,18,106,0.25)]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this chat?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/65">
+              {pendingDelete
+                ? `${viewerLabel(pendingDelete)}${
+                    sessionCompanyLabel(pendingDelete) ? ` (${sessionCompanyLabel(pendingDelete)})` : ""
+                  } and all ${pendingDelete.messageCount} messages are removed for good. Archive keeps a copy; delete does not.`
+                : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white">
+              Cancel
+            </AlertDialogCancel>
+            {pendingDelete && !pendingDelete.archivedAt ? (
+              <AlertDialogAction
+                className="border border-[#A78BFA]/40 bg-[#A78BFA]/15 text-white hover:bg-[#A78BFA]/25"
+                onClick={() => {
+                  const target = pendingDelete;
+                  setPendingDelete(null);
+                  if (target) void archiveDeskSession(target, false);
+                }}
+              >
+                Archive instead
+              </AlertDialogAction>
+            ) : null}
+            <AlertDialogAction
+              className="bg-[#D3126A] text-white hover:bg-[#A30E52]"
+              onClick={() => {
+                const target = pendingDelete;
+                setPendingDelete(null);
+                if (target) void deleteDeskSession(target);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PortalLayout>
   );
 };

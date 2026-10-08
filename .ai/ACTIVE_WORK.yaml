@@ -3079,3 +3079,25 @@ claims:
       required; AES-256-GCM envelope encryption with VAULT_ENCRYPTION_KEY,
       ciphertext on disk (VAULT_STORAGE_DIR) or object storage, metadata + audit in Postgres. Joe said
       "merge" in-session.
+  - id: desk-chat-archive-swipe
+    owner: claude
+    subsystem: de-desk
+    branch: claude/exciting-cannon-ttx8m8
+    base_sha: ac45aad
+    files:
+      - client/src/pages/portal/PortalChat.tsx (Website DE Desk list, menus, delete dialog)
+      - client/src/components/portal/desk/SwipeableDeskRow.tsx (new)
+      - server/services/msp-advisor/persist.ts (archive columns, archive/unarchive/delete)
+      - server/services/msp-advisor/persistArchive.test.ts (new)
+      - server/portalDeskAgentRoutes.ts, server/portalDeskAgentRoutes.test.ts (archive/unarchive/delete routes)
+      - server/routes.ts (the desk-chats list ?archived=1 only)
+      - artifacts/visual-qa/desk-archive-swipe/**
+    status: active
+    started: 2026-10-08
+    note: >-
+      Joe, 2026-10-08, with a screenshot of the Chats / DE Desk right-click
+      menu: add archive and delete to the menu, archive drops a company's chats
+      into that company's folder, and on touchscreens swipe left / right with
+      neon effects and long-press as the right-click. Overlap check: PR 537
+      (desk-chat-person-handoff) touches advisor.ts/classify.ts/profile.ts and
+      the advisor leave_message block of routes.ts, none of these files' lines.

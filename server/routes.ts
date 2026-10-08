@@ -1056,9 +1056,13 @@ export async function registerRoutes(app: Express) {
       const { listDeskSessions, getDeskStoreStatus } = await import("./services/msp-advisor");
       const isAdmin = req.user?.role === "admin";
       const email = req.user?.email;
+      // ?archived=1 is the staff archive (company folders). Clients always see
+      // their own threads, archived or not.
+      const wantsArchive = isAdmin && String(req.query.archived || "") === "1";
       const sessions = await listDeskSessions({
         email: isAdmin ? undefined : email,
-        limit: isAdmin ? 100 : 50,
+        limit: isAdmin ? (wantsArchive ? 500 : 100) : 50,
+        archived: isAdmin ? wantsArchive : "all",
       });
       // Non-admin: only sessions linked to their email (listDeskSessions already filtered)
       res.json({
