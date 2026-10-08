@@ -151,6 +151,7 @@ const PortalQBR = lazy(() => import("@/pages/portal/PortalQBR"));
 const PortalSelfService = lazy(() => import("@/pages/portal/PortalSelfService"));
 const PortalLicenseRequest = lazy(() => import("@/pages/portal/requests/PortalLicenseRequest"));
 const PortalLicensing = lazy(() => import("@/pages/portal/PortalLicensing"));
+const AdminLicenseBoard = lazy(() => import("@/pages/portal/AdminLicenseBoard"));
 const PortalOrganization = lazy(() => import("@/pages/portal/PortalOrganization"));
 const PortalKbArticle = lazy(() => import("@/pages/portal/kb/PortalKbArticle"));
 const AdminKb = lazy(() => import("@/pages/portal/kb/AdminKb"));
@@ -883,6 +884,11 @@ function Router() {
       <Route path="/portal/admin/openai" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <AdminOpenAIPage />
+        </Suspense>
+      )} />
+      <Route path="/portal/admin/license-board" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <AdminLicenseBoard />
         </Suspense>
       )} />
       <Route path="/portal/admin/companies" component={() => (

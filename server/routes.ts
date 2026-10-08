@@ -127,6 +127,7 @@ import { registerHubServiceRequestStatusRoute, registerServiceRequestRoutes, sta
 import { requireDeSyncAuth } from "./integrations/deSyncAuth";
 import { registerPortalAssistRoutes } from "./portalAssistRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
+import { registerLicenseBoardRoutes } from "./licenseBoardRoutes";
 import { registerKbRoutes } from "./kbRoutes";
 import { registerOrgDirectoryRoutes } from "./orgDirectoryRoutes";
 import { registerStoreOrderControlRoutes } from "./storeOrderControls";
@@ -1280,6 +1281,15 @@ export async function registerRoutes(app: Express) {
     findUser: serviceRequestDeps.findUser,
     listClientUsers: serviceRequestDeps.listClientUsers,
     canManagePeople: (user: any) => Boolean(user) && (user.role === "admin" || canManageOrg(user as OrgUserFields)),
+  });
+
+  // License patch bay: DE's vendor licence pool, company seats, assignments (server/licenseBoardRoutes.ts).
+  registerLicenseBoardRoutes(app, {
+    adminGuards: [authMiddleware, requireAdmin, validateInput],
+    listClients: () => portalClients.values().map((c: any) => ({ id: c.id, companyName: c.companyName })),
+    getClient: serviceRequestDeps.getClient,
+    listClientUsers: serviceRequestDeps.listClientUsers,
+    listDepartments: serviceRequestDeps.listDepartments!,
   });
 
   // Company structure (site / department leaders) and the people directory (server/orgDirectoryRoutes.ts).

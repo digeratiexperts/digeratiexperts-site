@@ -3101,3 +3101,27 @@ claims:
       neon effects and long-press as the right-click. Overlap check: PR 537
       (desk-chat-person-handoff) touches advisor.ts/classify.ts/profile.ts and
       the advisor leave_message block of routes.ts, none of these files' lines.
+  - id: license-patch-bay
+    owner: claude
+    subsystem: licensing
+    branch: claude/exciting-cannon-ttx8m8
+    base_sha: ac45aad
+    files:
+      - shared/licenseBoard.ts (new), shared/licenseBoard.test.ts (new)
+      - migrations/0015_license_patch_bay.sql (new)
+      - server/licenseBoardStore.ts, server/licenseBoardRoutes.ts, server/licenseBoardRoutes.test.ts (new)
+      - server/routes.ts (registerLicenseBoardRoutes call only)
+      - client/src/pages/portal/AdminLicenseBoard.tsx, client/src/components/portal/licensing/PatchBay.tsx, client/src/lib/licenseBoardApi.ts (new)
+      - client/src/App.tsx (one route), client/src/components/portal/shell/portalNav.ts (one admin nav item)
+      - client/src/pages/portal/PortalLicensing.tsx (admin link to the patch bay only)
+      - artifacts/visual-qa/license-patch-bay/**
+    status: active
+    started: 2026-10-08
+    note: >-
+      Joe, 2026-10-08, from the Licenses page ("Open a company (impersonate)
+      first"): drag a vendor licence from DE's pool (pool first) onto a client
+      company like patching Reason's rack or a node web, open the company and
+      drag its free seats to departments then users, or to users and devices.
+      Records only; nothing is provisioned at the vendor. Follow-ups Joe raised:
+      bulk vendor SKUs (Hub catalog), LOB/baseline apps, JumpCloud software
+      deployment (Chocolatey on Windows).
