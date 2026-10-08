@@ -31,32 +31,82 @@ type AnyEntry = SpoolEntry<{ id: string }>;
 export const SPOOL_MAX_FILES = 5000;
 const SAFE_ID = /^[A-Za-z0-9_-]{6,80}$/;
 
+/**
+ * <site>/shared/spool, outside the release folders, in production.
+ *
+ * systemd starts the site in <site>/current, a symlink to
+ * <site>/releases/<timestamp>, and process.cwd() returns the resolved path. So
+ * "../shared" from the working directory is <site>/releases/shared: inside the
+ * folder deploy/vps/deploy.sh prunes. That deleted a spooled DE Desk ticket on
+ * 2026-10-07. A release directory therefore steps out of releases/ first.
+ */
+export function productionSpoolRoot(cwd: string = process.cwd()): string {
+  const parent = path.dirname(path.resolve(cwd));
+  const site = path.basename(parent) === "releases" ? path.dirname(parent) : parent;
+  return path.join(site, "shared", "spool");
+}
+
 export function spoolDir(): string {
   if (process.env.SOLUTION_SPOOL_DIR) return path.resolve(process.env.SOLUTION_SPOOL_DIR);
-  // Production runs from <site>/current; shared/ is its sibling and survives deploys.
-  if (process.env.NODE_ENV === "production") {
-    return path.resolve(process.cwd(), "..", "shared", "spool", "solution-requests");
-  }
+  if (process.env.NODE_ENV === "production") return path.join(productionSpoolRoot(), "solution-requests");
   return path.join(os.tmpdir(), "de-solution-spool");
 }
 
 /** Store quote requests (#240) spool beside solution requests, in their own directory. */
 export function quoteSpoolDir(): string {
   if (process.env.QUOTE_SPOOL_DIR) return path.resolve(process.env.QUOTE_SPOOL_DIR);
-  // Production runs from <site>/current; shared/ is its sibling and survives deploys.
-  if (process.env.NODE_ENV === "production") {
-    return path.resolve(process.cwd(), "..", "shared", "spool", "quote-requests");
-  }
+  if (process.env.NODE_ENV === "production") return path.join(productionSpoolRoot(), "quote-requests");
   return path.join(os.tmpdir(), "de-quote-spool");
 }
 
 /** DE Desk tickets the Desk API could not take (desk-ticket-failover), in their own directory. */
 export function deskTicketSpoolDir(): string {
   if (process.env.DESK_TICKET_SPOOL_DIR) return path.resolve(process.env.DESK_TICKET_SPOOL_DIR);
-  if (process.env.NODE_ENV === "production") {
-    return path.resolve(process.cwd(), "..", "shared", "spool", "desk-tickets");
-  }
+  if (process.env.NODE_ENV === "production") return path.join(productionSpoolRoot(), "desk-tickets");
   return path.join(os.tmpdir(), "de-desk-ticket-spool");
+}
+
+const SPOOL_FOLDERS = {
+  "solution-requests": spoolDir,
+  "quote-requests": quoteSpoolDir,
+  "desk-tickets": deskTicketSpoolDir,
+} as const;
+
+/**
+ * Moves spool files left in <site>/releases/shared/spool (where they were
+ * written before productionSpoolRoot) into the spool folders in use, so the
+ * deploy's release pruning cannot delete them. Runs once at startup, before the
+ * deploy prunes. Returns how many files it moved; never throws.
+ */
+export function rescueReleaseSpools(
+  cwd: string = process.cwd(),
+  dirFor: (folder: keyof typeof SPOOL_FOLDERS) => string = (folder) => SPOOL_FOLDERS[folder](),
+): number {
+  const parent = path.dirname(path.resolve(cwd));
+  if (path.basename(parent) !== "releases") return 0;
+  let moved = 0;
+  for (const folder of Object.keys(SPOOL_FOLDERS) as (keyof typeof SPOOL_FOLDERS)[]) {
+    const from = path.join(parent, "shared", "spool", folder);
+    const to = dirFor(folder);
+    if (path.resolve(from) === path.resolve(to)) continue;
+    for (const name of spoolFiles(from)) {
+      try {
+        fs.mkdirSync(to, { recursive: true, mode: 0o700 });
+        if (fs.existsSync(path.join(to, name))) continue;
+        try {
+          fs.renameSync(path.join(from, name), path.join(to, name));
+        } catch (error: any) {
+          if (error?.code !== "EXDEV") throw error;
+          fs.copyFileSync(path.join(from, name), path.join(to, name), fs.constants.COPYFILE_EXCL);
+          fs.unlinkSync(path.join(from, name));
+        }
+        moved += 1;
+      } catch (error: any) {
+        console.error("[solution-spool] could not move a stranded entry:", name, error?.message || error);
+      }
+    }
+  }
+  return moved;
 }
 
 function fileFor(dir: string, id: string): string | null {
@@ -137,6 +187,21 @@ export function removeSpoolEntry(id: string, dir: string = spoolDir()): void {
     fs.unlinkSync(file);
   } catch {
     // Already gone.
+  }
+}
+
+/**
+ * Whether the spool folder takes writes (it exists or can be made, and the
+ * service may write to it, which a read-only systemd mount refuses). Safe to
+ * expose on the health endpoint.
+ */
+export function spoolWritable(dir: string = spoolDir()): boolean {
+  try {
+    fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+    fs.accessSync(dir, fs.constants.W_OK);
+    return true;
+  } catch {
+    return false;
   }
 }
 

@@ -23,7 +23,8 @@ import {
   type SolutionPrimary,
   type SolutionStatusLine,
 } from "@/components/store/door2/SolutionChrome";
-import { downloadSolutionPacketPdf } from "@/lib/downloadSolutionPacketPdf";
+import { downloadSolutionPacketPdf, PRINT_DOWNLOADED, printSolutionPacketPdf } from "@/lib/downloadSolutionPacketPdf";
+import { SolutionPrintFrame } from "@/components/store/door2/SolutionPrintFrame";
 import { composeScenario, solutionScenarios, type SolutionScenario } from "@/data/solutionScenarios";
 import type { CuratedSolutionFamily } from "@/data/curatedSolutions";
 import {
@@ -287,6 +288,24 @@ export default function PublicSolutionWorkspace() {
   const [seededFromLink, setSeededFromLink] = useState<CuratedSolutionFamily | null>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [printBusy, setPrintBusy] = useState(false);
+  const [printNote, setPrintNote] = useState<string | null>(null);
+
+  // Print the branded packet (the same PDF as Download). If it cannot be
+  // fetched, print the page itself, which prints branded too (#526).
+  async function printPacket() {
+    setPdfError(null);
+    setPrintNote(null);
+    setPrintBusy(true);
+    try {
+      const payload = buildSolutionPacketPayload({ draft }, { statusLabel: "Draft" });
+      const result = await printSolutionPacketPdf(payload, "DE-Your-Solution-draft.pdf");
+      if ("error" in result) window.print();
+      else if (result.mode === "download") setPrintNote(PRINT_DOWNLOADED);
+    } finally {
+      setPrintBusy(false);
+    }
+  }
 
   async function downloadPacketPdf() {
     setPdfError(null);
@@ -1250,10 +1269,15 @@ export default function PublicSolutionWorkspace() {
                       >
                         {pdfBusy ? "Preparing PDF…" : "Download PDF"}
                       </StoreAction>
-                      <StoreAction variant="quiet" onClick={() => window.print()} testId="print-solution">
-                        Print
+                      <StoreAction variant="quiet" onClick={() => void printPacket()} ariaBusy={printBusy} testId="print-solution">
+                        {printBusy ? "Preparing to print…" : "Print"}
                       </StoreAction>
                     </div>
+                    {printNote ? (
+                      <p className="d2-small d2-ink-soft mt-3" role="status" data-testid="solution-print-note">
+                        {printNote}
+                      </p>
+                    ) : null}
                     {pdfError ? (
                       <p className="d2-small mt-3 text-red-700" data-testid="solution-pdf-error">
                         {pdfError}
@@ -1272,7 +1296,9 @@ export default function PublicSolutionWorkspace() {
               )}
 
               <div className="d2-print-only" aria-hidden="true">
-                <ProposalSheet source={{ draft }} title="Solution summary · draft" />
+                <SolutionPrintFrame status="Draft">
+                  <ProposalSheet source={{ draft }} title="Solution summary · draft" />
+                </SolutionPrintFrame>
               </div>
             </div>
 

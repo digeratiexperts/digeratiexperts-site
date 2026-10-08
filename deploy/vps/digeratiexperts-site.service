@@ -41,7 +41,12 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=full
 ProtectHome=read-only
-ReadWritePaths=/home/digeratiexperts.com/logs
+# shared/spool holds requests and DE Desk tickets waiting for the database or
+# the Desk API (server/publicSolutionSpool.ts); /api/health reports writable.
+# shared/client-vault holds client vault ciphertext (VAULT_STORAGE_DIR,
+# server/portalClientVault.ts). Create it 0700 owned by diger7051; the
+# leading "-" keeps the unit starting if the directory does not exist yet.
+ReadWritePaths=/home/digeratiexperts.com/logs /home/digeratiexperts.com/shared/spool -/home/digeratiexperts.com/shared/client-vault
 
 [Install]
 WantedBy=multi-user.target

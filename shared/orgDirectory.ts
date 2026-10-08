@@ -33,7 +33,7 @@ export const ID_SCHEMES = [
 export type IdScheme = (typeof ID_SCHEMES)[number]["key"];
 
 /** Request types whose approval follows the company's choice (licences follow the licence policy). */
-export const APPROVABLE_REQUEST_TYPES = ["loaner_computer", "return_computer"] as const;
+export const APPROVABLE_REQUEST_TYPES = ["loaner_computer", "return_computer", "mobile_request"] as const;
 
 export const orgProfileSchema = z.object({
   structure: z.enum(["site", "department"]).default("site"),

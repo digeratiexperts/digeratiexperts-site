@@ -12,7 +12,11 @@ import {
   KeyRound,
   Package,
   Plus,
+  Receipt,
+  Star,
   Ticket,
+  Users,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,6 +27,7 @@ import { usePortalAccountTeam } from "@/hooks/usePortalAccountTeam";
 import { readPortalUser } from "@/lib/portalRoles";
 import { formatDeskTimestamp } from "@/lib/deskTimestamp";
 import { Callout, EmptyState, Panel, Priority, StatTile, TicketStatus, GenericStatus } from "@/components/portal/ui";
+import { GOOGLE_REVIEW_QR_SRC, GOOGLE_REVIEW_URL } from "@/data/reviewsCatalog";
 
 interface DashboardTicket {
   id: string;
@@ -199,15 +204,17 @@ export default function PortalDashboard() {
         )}
 
         <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Key figures">
-          <StatTile label="Open tickets" value={stats?.openTickets ?? 0} hint={stats ? (stats.openTickets > 0 ? "with DE engineers" : "none open") : undefined} tone={stats && stats.openTickets > 0 ? "warn" : "neutral"} href="/portal/tickets" loading={isLoading} testId="stat-open-tickets" />
-          <StatTile label="Resolved tickets" value={stats?.resolvedTickets ?? 0} hint="all time" tone="ok" href="/portal/tickets?status=resolved" loading={isLoading} testId="stat-resolved-tickets" />
-          <StatTile label="Active services" value={stats?.activeServices ?? 0} hint={stats?.zohoConnected === false ? "billing not linked yet" : "subscriptions"} tone={stats?.zohoConnected === false ? "neutral" : "info"} href="/portal/services" loading={isLoading} testId="stat-active-services" />
-          <StatTile label="Pending invoices" value={stats?.pendingInvoices ?? 0} hint={stats ? (stats.pendingInvoices > 0 ? "payment due" : "nothing due") : undefined} tone={stats && stats.pendingInvoices > 0 ? "warn" : "neutral"} href="/portal/invoices" loading={isLoading} testId="stat-pending-invoices" />
+          <StatTile label="Open tickets" category="tickets" icon={Ticket} value={stats?.openTickets ?? 0} hint={stats ? (stats.openTickets > 0 ? "with DE engineers" : "none open") : undefined} tone={stats && stats.openTickets > 0 ? "warn" : "neutral"} href="/portal/tickets" loading={isLoading} testId="stat-open-tickets" />
+          <StatTile label="Resolved tickets" category="tickets" icon={CheckCircle2} value={stats?.resolvedTickets ?? 0} hint="all time" tone="ok" href="/portal/tickets?status=resolved" loading={isLoading} testId="stat-resolved-tickets" />
+          <StatTile label="Active services" category="services" icon={Package} value={stats?.activeServices ?? 0} hint={stats?.zohoConnected === false ? "billing not linked yet" : "subscriptions"} tone={stats?.zohoConnected === false ? "neutral" : "info"} href="/portal/services" loading={isLoading} testId="stat-active-services" />
+          <StatTile label="Pending invoices" category="billing" icon={Receipt} value={stats?.pendingInvoices ?? 0} hint={stats ? (stats.pendingInvoices > 0 ? "payment due" : "nothing due") : undefined} tone={stats && stats.pendingInvoices > 0 ? "warn" : "neutral"} href="/portal/invoices" loading={isLoading} testId="stat-pending-invoices" />
         </section>
 
         <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
           <Panel
             id="recent-tickets"
+            category="tickets"
+            icon={Ticket}
             title="Recent tickets"
             description="Your latest ticket activity"
             flush
@@ -261,6 +268,8 @@ export default function PortalDashboard() {
           <div className="space-y-4">
             <Panel
               id="services"
+              category="services"
+              icon={Package}
               title="Your services"
               description="Currently active"
               flush
@@ -300,7 +309,7 @@ export default function PortalDashboard() {
               )}
             </Panel>
 
-            <Panel id="do-something" title="Do something">
+            <Panel id="do-something" category="requests" icon={Zap} title="Do something">
               <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
                 {[
                   { href: "/portal/infrastructure", icon: AlertTriangle, label: "Report an outage", hint: "Phone first if it's urgent" },
@@ -312,7 +321,7 @@ export default function PortalDashboard() {
                   return (
                     <li key={a.href}>
                       <Link href={a.href} className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2.5 transition-colors pt-hover-brand hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid={a.testId}>
-                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                        <Icon className="h-4 w-4 shrink-0 pt-cat-ink" aria-hidden="true" />
                         <span className="min-w-0">
                           <span className="block text-sm font-medium">{a.label}</span>
                           <span className="block text-xs text-muted-foreground">{a.hint}</span>
@@ -325,8 +334,31 @@ export default function PortalDashboard() {
               </ul>
             </Panel>
 
-            <Panel id="account-team" title="Your account team">
+            <Panel id="account-team" category="account" icon={Users} title="Your account team">
               <AccountTeamCard team={accountTeam} stacked />
+            </Panel>
+
+            <Panel id="google-review" category="account" icon={Star} title="Review DE on Google" description="A minute of your time helps other Arizona businesses find us">
+              <div className="flex items-center gap-4" data-testid="portal-google-review">
+                <img
+                  src={GOOGLE_REVIEW_QR_SRC}
+                  alt="QR code to leave Digerati Experts a Google review"
+                  width={96}
+                  height={96}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-24 w-24 shrink-0 rounded-lg bg-white p-1.5"
+                />
+                <div className="min-w-0 space-y-2">
+                  <p className="text-sm text-muted-foreground">Scan with your phone, or open the review form here.</p>
+                  <Button asChild size="sm" variant="outline" className="border-border bg-card hover:bg-accent">
+                    <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer" data-testid="button-portal-google-review">
+                      Leave a Google review
+                      <ExternalLink aria-hidden="true" />
+                    </a>
+                  </Button>
+                </div>
+              </div>
             </Panel>
           </div>
         </div>

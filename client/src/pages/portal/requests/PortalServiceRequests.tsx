@@ -4,7 +4,7 @@ import { ClipboardList, Heart, ShoppingCart } from "lucide-react";
 import { PortalLayout } from "../PortalLayout";
 import { Callout, EmptyState, Panel } from "@/components/portal/ui";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LicenseIcon, LoanerComputerIcon, ReturnComputerIcon } from "@/components/portal/requests/icons";
+import { LicenseIcon, LoanerComputerIcon, MobileServiceIcon, ReturnComputerIcon } from "@/components/portal/requests/icons";
 import { RequestStatusToken } from "@/components/portal/requests/RequestStatusToken";
 import { isFavoriteRequest } from "@/components/portal/requests/ServiceRequestShell";
 import { srApi } from "@/lib/serviceRequestsApi";
@@ -15,6 +15,14 @@ const SOFTWARE: Array<{ type: ServiceRequestType; blurb: string; Icon: typeof Lo
     type: "license_request",
     blurb: "Microsoft 365, Google Workspace or Zoho licences, and add-ons such as Visio or Project.",
     Icon: LicenseIcon,
+  },
+];
+
+const MOBILE: Array<{ type: ServiceRequestType; blurb: string; Icon: typeof LoanerComputerIcon }> = [
+  {
+    type: "mobile_request",
+    blurb: "Phones, lines, plans, SIMs, carrier changes, travel, upgrades, warranty replacements and transfers of liability.",
+    Icon: MobileServiceIcon,
   },
 ];
 
@@ -61,6 +69,7 @@ export default function PortalServiceRequests() {
       <div className="space-y-8">
         {[
           { id: "computers", title: "Computers", items: CATALOG },
+          { id: "mobile", title: "Mobile & carrier", items: MOBILE },
           { id: "software", title: "Software & access", items: SOFTWARE },
         ].map((group) => (
         <section key={group.id} id={group.id} aria-labelledby={`catalog-${group.id}`}>

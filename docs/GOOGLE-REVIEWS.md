@@ -169,3 +169,11 @@ curl -fsS https://digeratiexperts.com/api/google-reviews | jq .
 
 - GBP Business Profile API OAuth for automated pull without Place ID
 - Third-party review widgets (Elfsight, etc.) — only if DE chooses a vendor
+
+---
+
+## Asking for reviews (QR + link)
+
+`GOOGLE_REVIEW_URL` in `reviewsCatalog.ts` is the GBP "Ask for reviews" link (`https://g.page/r/Ceszh2zJLr4XEBM/review`). `client/public/images/reviews/google-review-qr.svg` encodes it (generated with the repo's `qrcode` package, decode-verified 2026-10-07). Both appear in the homepage Client Proof reviews panel and the portal dashboard ("Review DE on Google"). If the GBP review link ever changes, regenerate the SVG and update the constant together.
+
+2026-10-07 re-check: GBP is verified with 0 reviews; Places Place Details still returns `NOT_FOUND` for the listing's `ChIJu8WOnBIsw28R6zOHbMkuvhc` (the same ID GBP's own review link resolves to), and Places API (New) is blocked on the server key. The service-area guidance above still holds.

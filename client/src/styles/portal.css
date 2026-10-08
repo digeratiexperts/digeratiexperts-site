@@ -195,6 +195,22 @@ body.de-portal-scope[data-portal-theme="light"] [data-sidebar="sidebar"] {
   --pt-info: 21 94 117;
   --pt-brand: 163 14 82;
 }
+/* Category colours (Joe, 2026-10-06): one vivid hex per kind of card, used only on the card's top
+   edge and its icon well, never for text or status. Status keeps --pt-ok/warn/bad/info.
+   Dark values sit on the #14111c card; light values are deeper inks that clear 3:1 on white. */
+.pt-cat[data-cat="tickets"]  { --pt-cat: 61 123 255; }   /* #3D7BFF electric blue */
+.pt-cat[data-cat="services"] { --pt-cat: 0 212 160; }    /* #00D4A0 jade */
+.pt-cat[data-cat="billing"]  { --pt-cat: 169 116 255; }  /* #A974FF violet */
+.pt-cat[data-cat="requests"] { --pt-cat: 255 122 47; }   /* #FF7A2F tangerine */
+.pt-cat[data-cat="account"]  { --pt-cat: 155 226 45; }   /* #9BE22D lime */
+:is(.de-portal[data-theme="light"], body.de-portal-scope[data-portal-theme="light"]) .pt-cat[data-cat="tickets"]  { --pt-cat: 31 91 224; }   /* #1F5BE0 */
+:is(.de-portal[data-theme="light"], body.de-portal-scope[data-portal-theme="light"]) .pt-cat[data-cat="services"] { --pt-cat: 0 128 95; }    /* #00805F */
+:is(.de-portal[data-theme="light"], body.de-portal-scope[data-portal-theme="light"]) .pt-cat[data-cat="billing"]  { --pt-cat: 124 58 237; }  /* #7C3AED */
+:is(.de-portal[data-theme="light"], body.de-portal-scope[data-portal-theme="light"]) .pt-cat[data-cat="requests"] { --pt-cat: 194 65 12; }   /* #C2410C */
+:is(.de-portal[data-theme="light"], body.de-portal-scope[data-portal-theme="light"]) .pt-cat[data-cat="account"]  { --pt-cat: 77 124 15; }   /* #4D7C0F */
+.pt-cat-edge { box-shadow: inset 0 3px 0 rgb(var(--pt-cat)); }
+.pt-cat-well { background: rgb(var(--pt-cat) / 0.14); color: rgb(var(--pt-cat)); }
+.pt-cat-ink  { color: rgb(var(--pt-cat)); }
 .pt-login-glow { background: radial-gradient(60% 50% at 50% 0%, rgb(var(--pt-brand) / 0.14), transparent 70%); }
 .pt-login-line { background: linear-gradient(90deg, transparent, rgb(var(--pt-brand) / 0.6), transparent); }
 

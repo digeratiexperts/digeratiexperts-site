@@ -670,6 +670,45 @@ claims:
       credentials only from a verified list with issuer links; Google Partner
       badge replaced; ebook stories labelled as examples and tied to sourced
       facts; new code-drawn ebook cover; developer notes off Cyber Facts.
+
+  - id: overlays-and-portal-add-user
+    owner: claude
+    subsystem: site-overlays-and-portal-admin
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: 12b016cb
+    files:
+      - client/src/components/StickyCTABar.tsx
+      - client/src/lib/stickyCtaVisibility.ts
+      - client/src/lib/stickyCtaVisibility.test.ts
+      - client/src/lib/storeLightChrome.test.ts (sticky bar source check only)
+      - server/portalUserInvite.ts (new)
+      - server/portalUserInvite.test.ts (new)
+      - server/routes.ts (one import and the registerPortalUserInviteRoute call only)
+      - server/services/notificationService.ts (sendPortalInvite only)
+      - client/src/pages/portal/AdminCompanies.tsx (Add user form in the company details Users panel only)
+      - artifacts/visual-qa/portal-add-user/** (new)
+    status: verified-live
+    started: 2026-10-07
+    released: 2026-10-07
+    pr: 538
+    merge_sha: 1ca21b9a130ecf5ea35f63825a0dda72606eb8e3
+    verification: >-
+      Merged on Joe's "merge, then keep going" (2026-10-07). Main CI and the
+      production deploy passed; release.txt read 1ca21b9a (equal to main).
+      On production at 390 and 1440 (pricing, ebook, team): no sticky bar at
+      load, bar after scrolling, and on phones only after the cookie banner
+      is answered. POST /api/portal/admin/companies/:id/users answers 401
+      signed out, and the live AdminCompanies chunk carries the Add user
+      form. The invite email itself is untested until a real person is added.
+    note: >-
+      Joe, 2026-10-07 ("merge, then keep going"), items 3b and 3c. 3b: the
+      sticky call-to-action bar no longer shows on page load (the short-page
+      check ran once against the loading skeleton), and on phones it waits
+      until the cookie banner is answered. 3c: Manage Companies, company
+      details, "Add user" creates the person in that company and emails a
+      single-use, 7-day link to choose their own password; nobody else sees
+      it. Shares AdminCompanies.tsx and routes.ts with PR 536 on separate
+      lines.
   - id: tenant-files-durable
     issue: 259
     owner: claude
@@ -2215,6 +2254,12 @@ claims:
       hosts, deploy job passed, live entry index-B14dCa_B.js and
       portal-D0pHb8rv.css match the local build and carry the new inks (no
       old ones). Files released.
+      SUPERSEDED 2026-10-06 (light field and glow only): Joe approved grey
+      ladder B (dark) + C (light), and aaf189e7 (claim
+      portal-grey-ladder-concepts) replaced the orchid field and the
+      .pt-canvas glow with neutral grey steps; the PR 412 state inks and
+      portalLightTheme.test.ts carry on there. Checked live 2026-10-07: the
+      portal CSS has the 412 inks and no orchid or glow. Nothing to revert.
     note: >-
       Joe, 2026-10-03: portal light mode is liked but "the light grey I would
       replace with an ambent color". Options rendered (A amber, B Ambient, C
@@ -2588,7 +2633,7 @@ claims:
       - client/src/styles/portal.css (dark + light portal tokens, active nav)
       - client/src/styles/portalLightTheme.test.ts
       - artifacts/visual-qa/portal-grey-ladder/** (new)
-    status: active
+    status: verified
     started: 2026-10-06
     note: >-
       Joe, 2026-10-04 (kie.ai billing screen: "the shades of grey in the
@@ -2600,6 +2645,7 @@ claims:
       ("all approved here"), implemented in portal.css with a before/after
       set; C replaces the 2026-10-03 orchid light theme, so Joe confirms the
       screenshots before merge.
+      Merged in PR 496; live in production release e7679b5 (2026-10-07).
   - id: portal-service-requests
     owner: claude
     subsystem: portal-service-requests
@@ -2621,7 +2667,7 @@ claims:
       - client/src/pages/portal/PortalSelfService.tsx (new) + the /portal/self-service route and nav item
       - client/src/pages/portal/PortalKB.tsx (initial search from ?q= only)
       - shared/portalAnnouncements.ts (new), client/src/components/portal/selfservice/** (new), announcement manual-record kind
-    status: active
+    status: verified-live
     started: 2026-10-06
     note: >-
       Joe, 2026-10-06: build "Request Loaner Computer" and "Return Computer" in
@@ -2648,7 +2694,7 @@ claims:
       - client/src/pages/portal/PortalKB.tsx, PortalSelfService.tsx (article links, ratings, Most Viewed)
       - client/src/App.tsx (four routes only), client/src/components/portal/shell/portalNav.ts (Licenses + Knowledge Authoring items only)
       - shared/portalAnnouncements.ts (cyber slide link only), docs/SERVICE-REQUESTS-HUB-CONTRACT.md (license_request)
-    status: active
+    status: verified-live
     started: 2026-10-06
     note: >-
       Joe, 2026-10-06: licence types by account type (birthright / frontline /
@@ -2677,7 +2723,7 @@ claims:
       - client/src/pages/portal/requests/PortalServiceRequestDetail.tsx (approval + contact panels), RequestStatusToken.tsx
       - client/src/App.tsx (/portal/organization only), portalNav.ts (Structure & IDs item only)
       - docs/SERVICE-REQUESTS-HUB-CONTRACT.md (routing fields, pending_approval)
-    status: active
+    status: verified-live
     started: 2026-10-06
     note: >-
       Joe, 2026-10-06: one site leader or department leader per unit
@@ -2701,7 +2747,7 @@ claims:
       - client/src/components/portal/requests/RequestControls.tsx, components/portal/orders/OrderControls.tsx, pages/portal/AdminOrderRequests.tsx (new)
       - client request form hook, shell and the three form pages (amend mode only), request detail and list pages, PortalOrderDetail.tsx (controls panel only)
       - client/src/App.tsx (/portal/admin/order-requests only), portalNav.ts (one admin item), docs/SERVICE-REQUESTS-HUB-CONTRACT.md
-    status: active
+    status: verified-live
     started: 2026-10-06
     note: >-
       Joe, 2026-10-06: cancel, amend or hold service requests and Store
@@ -2835,7 +2881,7 @@ claims:
     files:
       - server/deskTicketFallback.ts, server/deskTicketFallback.test.ts (the default fallback address only)
       - deploy/vps/env.production.example (the DESK_FALLBACK_EMAIL comment only), docs/DE-SYSTEM-INTEGRATION.md (the Zoho Desk row only)
-    status: active
+    status: verified-live
     started: 2026-10-07
     note: >-
       Follow-up to desk-ticket-failover, found while verifying it live. The
@@ -2846,6 +2892,47 @@ claims:
       Desk's own incoming address for the Digerati Experts department, which
       always becomes a ticket. DESK_FALLBACK_EMAIL still overrides it. Overlap
       check 2026-10-07: no active claim and no open PR touches these files.
+      RELEASED 2026-10-07: Joe, "Merge 514". Merged as fe780af (PR 514) after
+      CI passed on 94a3ab0. Production runs fe780af (/api/health release,
+      built 11:54Z). Not exercised by a live ticket (no live submission from
+      this session). Found on verification: deskTicketSpool.pending went from
+      1 to 0 across the deploy with Desk still auth_failed and no Desk ticket
+      created, so the spooled ticket was deleted, not replayed: the spool
+      lived under releases/ (see spool-outside-releases). VERIFIED LIVE (the
+      default address). Files released.
+  - id: spool-outside-releases
+    owner: claude
+    subsystem: de-desk
+    branch: claude/awesome-bardeen-4pbl2m
+    base_sha: fe780af
+    files:
+      - server/publicSolutionSpool.ts, server/publicSolutionSpool.test.ts (the production spool folder, the stranded-entry rescue and the writable check only)
+      - server/index.ts (the health spool fields and the startup rescue only)
+      - deploy/vps/deploy.sh (the spool folders and the release prune only), deploy/vps/digeratiexperts-site.service (ReadWritePaths only)
+    status: verified-live
+    started: 2026-10-07
+    note: >-
+      Found verifying PR 514 live: a DE Desk ticket spooled at about 03:30Z was
+      gone after the 11:54Z deploy. systemd starts the site in <site>/current,
+      a symlink to <site>/releases/<timestamp>, and process.cwd() returns the
+      resolved path, so "../shared/spool" was <site>/releases/shared/spool,
+      which deploy.sh's release prune (ls releases/*/, rm -rf) can delete. The
+      solution-request (#243) and quote-request (#240) spools had the same
+      path. Fix: productionSpoolRoot steps out of releases/ to
+      <site>/shared/spool (the folders deploy.sh already creates); startup
+      moves any entries left in releases/shared into it; the prune never
+      deletes releases/shared; /api/health reports writable per spool; the
+      repo unit file gains ReadWritePaths for shared/spool (the installed unit
+      must already differ from the repo copy, which mounts /home read-only,
+      since production wrote a spool file). Overlap check 2026-10-07: no
+      active claim and no open PR touches these files.
+      RELEASED 2026-10-07: Joe, "merge 517 and any others". Merged as 86936c5
+      (PR 517) after CI passed on 90cb0ce. Production runs bda8348, which
+      contains it (/api/health release, built 18:16Z). /api/health reads
+      writable true for solutionSpool, quoteSpool and deskTicketSpool, so the
+      installed unit lets the service write <site>/shared/spool; pending 0 on
+      all three. zohoDesk still auth_failed (the Desk refresh token is not yet
+      replaced). VERIFIED LIVE. Files released.
   - id: homepage-polish
     owner: claude
     subsystem: public-marketing-visual-layer
@@ -2934,8 +3021,61 @@ claims:
     files:
       - server/orgDirectoryRoutes.ts (GET /me for a DE admin with a company open) + test
       - client/src/pages/portal/PortalOrganization.tsx (admin and no-company states only), client/src/lib/directoryApi.ts (type)
-    status: active
+    status: verified-live
     started: 2026-10-07
     note: >-
       Joe, 2026-10-07: "/portal/organization is not live". Deployed, but a DE admin got
       "You are not in this company's directory" and never saw the management tabs.
+
+  - id: portal-provisioning-status-and-card-categories
+    owner: claude
+    subsystem: portal
+    branch: claude/gifted-cray-mfxf3k
+    base_sha: af222ffc
+    files:
+      - shared/provisioning.ts (new)
+      - shared/provisioning.test.ts (new)
+      - server/lifecycleOrchestrator.ts (latestLifecycleByEmail)
+      - server/routes.ts (GET /api/portal/profile/provisioning, GET /api/portal/org/provisioning)
+      - client/src/components/portal/ProvisioningStatus.tsx (new)
+      - client/src/components/portal/ui/{Panel,StatTile,index}.tsx, ui/category.ts (new)
+      - client/src/pages/portal/{PortalDashboard,PortalSettings,PortalPeople}.tsx
+      - client/src/styles/portal.css (category tokens)
+      - artifacts/visual-qa/portal-categories-provisioning/** (new)
+    status: verified
+    started: 2026-10-07
+    note: >-
+      Joe, 2026-10-06: show live user provisioning status and whether each
+      step succeeded on the user's profile (lifecycle JumpCloud + Blackpoint
+      and Store orders), and give dashboard cards vivid category colours with
+      specific hex values (tickets, services, billing, requests, account).
+      Merged in PR 512; live in production release bda8348 (2026-10-07).
+  - id: portal-admin-mode-client-vault
+    owner: claude
+    subsystem: portal-admin
+    branch: ccr-4ddd6954-9xjp62
+    base_sha: 228f13b6
+    files:
+      - shared/clientVault.ts (new)
+      - shared/schema.ts (client_vault_items, client_vault_audit appended)
+      - migrations/0014_client_vault.sql (new)
+      - server/portalClientVault.ts (new)
+      - server/portalClientVault.test.ts (new)
+      - server/routes.ts (registerClientVaultRoutes call only)
+      - client/src/components/portal/AdminModeSwitch.tsx (new)
+      - client/src/pages/portal/AdminClientWorkspace.tsx (new)
+      - client/src/pages/portal/PortalLayout.tsx (AdminModeSwitch mount only)
+      - client/src/pages/portal/AdminCompanies.tsx (Administer button, impersonate response fix)
+      - client/src/App.tsx (/portal/admin/clients/:id route)
+      - .env.example, deploy/vps/env.production.example (VAULT_ENCRYPTION_KEY, VAULT_STORAGE_DIR)
+      - deploy/vps/digeratiexperts-site.service (ReadWritePaths gains -shared/client-vault)
+    status: active
+    started: 2026-10-07
+    note: >-
+      Joe, 2026-10-07: a choice at the top of the portal between administering a
+      client and viewing as them, and a per-client place for provisioning
+      scripts, vendor agents/apps and PII such as contracts that is locked and
+      protected. DE admins only (clients never, including via View as); MFA
+      required; AES-256-GCM envelope encryption with VAULT_ENCRYPTION_KEY,
+      ciphertext on disk (VAULT_STORAGE_DIR) or object storage, metadata + audit in Postgres. Joe said
+      "merge" in-session.
