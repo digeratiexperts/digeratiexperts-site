@@ -135,6 +135,112 @@ function Set-DEBaselineControl {
     return 'set'
 }
 
+# ---- Windows pre-logon authorized-use notice
+$script:LogonNoticePath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
+$script:LogonNoticeCaptionName = 'LegalNoticeCaption'
+$script:LogonNoticeTextName = 'LegalNoticeText'
+
+function ConvertTo-DELogonNoticeText {
+    param([AllowNull()][AllowEmptyString()][string]$Text)
+    if ($null -eq $Text) { return '' }
+    return (($Text -replace "`r`n", "`n" -replace "`r", "`n").Trim())
+}
+
+function Get-DELogonNoticeDesired {
+    param([Parameter(Mandatory = $true)]$ClientProfile)
+    $cfg = Get-DEHashPath -Object $ClientProfile -Path 'windows.logonNotice'
+    $mode = "$(Get-DECfgProp $cfg 'mode')".Trim().ToLowerInvariant()
+    if (-not $mode) { $mode = 'default' }
+    if ($mode -notin @('default', 'custom', 'disabled')) { throw "windows.logonNotice.mode must be default, custom, or disabled (got '$mode')" }
+    if ($mode -eq 'disabled') {
+        $reason = "$(Get-DECfgProp $cfg 'disabledReason')".Trim()
+        if (-not $reason) { throw 'windows.logonNotice.disabledReason is required when mode is disabled' }
+        return [pscustomobject][ordered]@{ mode = $mode; enabled = $false; caption = ''; text = ''; disabledReason = $reason }
+    }
+
+    $caption = "$(Get-DECfgProp $cfg 'caption')".Trim()
+    if (-not $caption) { $caption = 'AUTHORIZED USE & SECURITY MONITORING NOTICE' }
+    if ($caption.IndexOf([char]0) -ge 0) { throw 'windows.logonNotice.caption cannot contain a NUL character' }
+
+    $body = "$(Get-DECfgProp $cfg 'body')"
+    if ($mode -eq 'custom') {
+        $body = ConvertTo-DELogonNoticeText -Text $body
+        if (-not $body) { throw 'windows.logonNotice.body is required when mode is custom' }
+    } else {
+        $organization = "$(Get-DEHashPath -Object $ClientProfile -Path 'name')".Trim()
+        if (-not $organization) { $organization = 'this organization' }
+        $isDE = ($organization -ieq 'Digerati Experts')
+        $providerParagraph = $(if ($isDE) { 'Security and system activity may be collected, retained, and reviewed by authorized Digerati Experts personnel and approved technology service providers for the protection and operation of this environment.' } else { 'Security and system activity may be collected, retained, and reviewed by authorized personnel and approved technology service providers, including Digerati Experts where applicable, for the protection and operation of this environment.' })
+        $contactParagraph = $(if ($isDE) { 'If you are not an authorized user, do not continue. Contact Digerati Experts for assistance.' } else { "If you are not an authorized user, do not continue. Contact $organization or Digerati Experts for assistance." })
+        $paragraphs = @(
+            "This computer system and associated resources are for authorized $organization business use only. Access or use without authorization, or beyond the scope of granted authorization, is prohibited.",
+            'By selecting OK and continuing, you acknowledge that use of this system may be monitored, logged, inspected, and remotely administered for cybersecurity, technical support, system management, compliance, and incident investigation purposes, consistent with applicable law and organizational policy.',
+            $providerParagraph,
+            'Unauthorized or improper use may result in loss of access or other action permitted by organizational policy or applicable law. Information concerning suspected unlawful activity may be preserved or disclosed as permitted or required by law.',
+            $contactParagraph
+        )
+        $body = ConvertTo-DELogonNoticeText -Text ($paragraphs -join "`r`n`r`n")
+    }
+    if ($body.IndexOf([char]0) -ge 0) { throw 'windows.logonNotice.body cannot contain a NUL character' }
+    return [pscustomobject][ordered]@{ mode = $mode; enabled = $true; caption = $caption; text = $body }
+}
+
+function Get-DELogonNoticeState {
+    param([Parameter(Mandatory = $true)]$ClientProfile)
+    $want = Get-DELogonNoticeDesired -ClientProfile $ClientProfile
+    $caption = Get-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeCaptionName
+    $text = Get-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeTextName
+    $haveCaption = $(if ($null -eq $caption) { '' } else { "$caption".Trim() })
+    $haveText = ConvertTo-DELogonNoticeText -Text $(if ($null -eq $text) { '' } else { "$text" })
+    $ok = $(if (-not $want.enabled) { (-not $haveCaption -and -not $haveText) } else { ($haveCaption -ceq $want.caption) -and ($haveText -ceq $want.text) })
+    $detail = $(if ($ok -and $want.enabled) { "pre-logon notice matches the $($want.mode) client policy" } elseif ($ok) { 'pre-logon notice is disabled by client policy and no notice is configured' } elseif (-not $want.enabled) { 'client policy disables the pre-logon notice, but Windows still has notice text configured' } elseif (-not $haveCaption -and -not $haveText) { 'Windows has no pre-logon notice configured' } else { 'Windows pre-logon notice differs from the client policy' })
+    return [pscustomobject][ordered]@{ ok = [bool]$ok; mode = $want.mode; enabled = [bool]$want.enabled; caption = $haveCaption; text = $haveText; desiredCaption = $want.caption; desiredText = $want.text; detail = $detail }
+}
+
+function Set-DELogonNotice {
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param([Parameter(Mandatory = $true)]$ClientProfile)
+    $want = Get-DELogonNoticeDesired -ClientProfile $ClientProfile
+    if (-not $PSCmdlet.ShouldProcess('Windows sign-in', $(if ($want.enabled) { 'set the pre-logon authorized-use notice' } else { 'remove the pre-logon notice per client policy' }))) { return 'planned' }
+    if (-not (Get-DEState -Path 'logonNotice.previous')) {
+        $oldCaption = Get-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeCaptionName
+        $oldText = Get-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeTextName
+        $backup = Backup-DERegistryKey -Key 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Label 'logon-notice'
+        Set-DEStateValue -Path 'logonNotice.previous' -Value @{ caption = @{ existed = ($null -ne $oldCaption); value = $oldCaption }; text = @{ existed = ($null -ne $oldText); value = $oldText }; backup = $backup; at = (Get-Date).ToString('o') }
+    }
+    if ($want.enabled) {
+        Set-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeCaptionName -Value $want.caption -Type String -Confirm:$false
+        Set-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeTextName -Value $want.text -Type String -Confirm:$false
+    } else {
+        Remove-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeCaptionName -Confirm:$false
+        Remove-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeTextName -Confirm:$false
+    }
+    $after = Get-DELogonNoticeState -ClientProfile $ClientProfile
+    if (-not $after.ok) { throw "pre-logon notice did not verify after apply: $($after.detail)" }
+    return $after.detail
+}
+
+function Undo-DELogonNotice {
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param()
+    if (-not $PSCmdlet.ShouldProcess('Windows sign-in', 'restore the pre-DE pre-logon notice values')) { return 'planned' }
+    $prev = Get-DEState -Path 'logonNotice.previous'
+    if (-not $prev) { return @{ ok = $false; detail = 'no previous pre-logon notice values were recorded' } }
+    foreach ($pair in @(
+        @{ name = $script:LogonNoticeCaptionName; key = 'caption' },
+        @{ name = $script:LogonNoticeTextName; key = 'text' }
+    )) {
+        $entry = Get-DEHashPath -Object $prev -Path $pair.key
+        if (Get-DEHashPath -Object $entry -Path 'existed') { Set-DERegistryValue -Path $script:LogonNoticePath -Name $pair.name -Value "$(Get-DEHashPath -Object $entry -Path 'value')" -Type String -Confirm:$false } else { Remove-DERegistryValue -Path $script:LogonNoticePath -Name $pair.name -Confirm:$false }
+    }
+    $captionPrev = Get-DEHashPath -Object $prev -Path 'caption'; $textPrev = Get-DEHashPath -Object $prev -Path 'text'
+    $captionNow = Get-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeCaptionName; $textNow = Get-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeTextName
+    $captionOk = $(if (Get-DEHashPath -Object $captionPrev -Path 'existed') { "$captionNow" -ceq "$(Get-DEHashPath -Object $captionPrev -Path 'value')" } else { $null -eq $captionNow })
+    $textOk = $(if (Get-DEHashPath -Object $textPrev -Path 'existed') { (ConvertTo-DELogonNoticeText -Text "$textNow") -ceq (ConvertTo-DELogonNoticeText -Text "$(Get-DEHashPath -Object $textPrev -Path 'value')") } else { $null -eq $textNow })
+    $ok = [bool]($captionOk -and $textOk)
+    if ($ok) { Set-DEStateValue -Path 'logonNotice.previous' -Value $null }
+    return @{ ok = $ok; detail = $(if ($ok) { 'pre-DE pre-logon notice values restored' } else { 'pre-logon notice rollback could not be verified' }) }
+}
 function Invoke-DEBaselineAssessment {
     <# Before/after snapshot of every control with the exception list applied; writes a baseline report into evidence. #>
     param([Alias('Profile')][string]$BaselineProfile = 'de-windows-baseline', [string]$Label = 'assessment')
@@ -158,6 +264,14 @@ function Register-DEBaselineActions {
     # the Windows automatic-update setting is DE Tech Tool's to enforce only when the client's update authority is
     # 'windows'; JumpCloud (the default) and Intune enforce their own, and maint.update-authority checks whichever it is
     $authority = "$(Get-DEHashPath -Object $ClientProfile -Path 'updates.authority')"; if (-not $authority) { $authority = 'jumpcloud' }
+    Register-DEAction -Id 'baseline.logon-notice' -Module 'baseline' -Title 'Pre-logon authorized-use and security-monitoring notice' -Phase 11 -Gates @('gate.elevated') -RequiresElevation `
+        -Detect { $s = Get-DELogonNoticeState -ClientProfile $ClientProfile; @{ ok = $s.ok; mode = $s.mode; enabled = $s.enabled; detail = $s.detail } }.GetNewClosure() `
+        -Desired { @{ ok = $true } } `
+        -Compare { param($d, $w) if ($d.ok) { @() } else { @("$($d.detail)") } } `
+        -Verify { param($after) $s = Get-DELogonNoticeState -ClientProfile $ClientProfile; @{ ok = $s.ok; detail = $s.detail } }.GetNewClosure() `
+        -Apply { param($s) Set-DELogonNotice -ClientProfile $ClientProfile -Confirm:$false }.GetNewClosure() `
+        -Rollback { param($s) Undo-DELogonNotice -Confirm:$false } `
+        -ManualAction 'Default wording is DE-maintained. Client-specific approved wording lives in windows.logonNotice; custom mode requires an explicit body.'
     foreach ($c in Get-DEBaselineControls -Profile $profileName) {
         $ctl = $c
         if ($ctl.id -eq 'wu-auto' -and $authority -ne 'windows') { continue }
@@ -858,4 +972,4 @@ function Register-DEBrandingActions {
         -Apply { param($s) $want = $s.Detected.want; Rename-Computer -NewName $want -Force; "renamed to $want (restart required)" }
 }
 
-Export-ModuleMember -Function Get-DEWindowsEdition, Get-DELockScreenState, Set-DELockScreen, Undo-DELockScreen, Clear-DEStaleUserHives, Open-DEUserHives, Close-DEUserHives, Get-DEUserScopeState, Set-DEUserScopeControl, Undo-DEUserScopeControl, Get-DEColorLuminance, Get-DEBrandingOptions, Get-DEBrandingLayout, Get-DEPrimaryScreenSize, Get-DEImageLuminance, New-DEOemLogo, Get-DEBrowserControlCatalog, Get-DEChromiumBrowsers, Get-DEBrowserExtensionPlan, ConvertTo-DEChromiumForceEntry, Test-DEFirefoxInstalled, Get-DEFirefoxDesiredPolicy, Compare-DEFirefoxPolicy, Set-DEFirefoxPolicy, Get-DEInstalledBrowserExtensions, Test-DEBrowserExtensionConflicts, Get-DEBaselineControls, Get-DEBaselineControlState, Set-DEBaselineControl, Invoke-DEBaselineAssessment, Register-DEBaselineActions, Get-DEBrowserPolicyProfile, Get-DEBrowserDesiredPolicy, Compare-DEBrowserPolicy, Set-DEBrowserPolicy, Set-DEDefaultBrowserAssociations, Register-DEBrowserActions, Get-DEBrandingAssets, New-DEBrandedWallpaper, Get-DEBrandingState, Set-DEBranding, Undo-DEBranding, New-DEHostname, Get-DEShortcutDefinitions, Set-DESupportShortcuts, Register-DEBrandingActions
+Export-ModuleMember -Function ConvertTo-DELogonNoticeText, Get-DELogonNoticeDesired, Get-DELogonNoticeState, Set-DELogonNotice, Undo-DELogonNotice, Get-DEWindowsEdition, Get-DELockScreenState, Set-DELockScreen, Undo-DELockScreen, Clear-DEStaleUserHives, Open-DEUserHives, Close-DEUserHives, Get-DEUserScopeState, Set-DEUserScopeControl, Undo-DEUserScopeControl, Get-DEColorLuminance, Get-DEBrandingOptions, Get-DEBrandingLayout, Get-DEPrimaryScreenSize, Get-DEImageLuminance, New-DEOemLogo, Get-DEBrowserControlCatalog, Get-DEChromiumBrowsers, Get-DEBrowserExtensionPlan, ConvertTo-DEChromiumForceEntry, Test-DEFirefoxInstalled, Get-DEFirefoxDesiredPolicy, Compare-DEFirefoxPolicy, Set-DEFirefoxPolicy, Get-DEInstalledBrowserExtensions, Test-DEBrowserExtensionConflicts, Get-DEBaselineControls, Get-DEBaselineControlState, Set-DEBaselineControl, Invoke-DEBaselineAssessment, Register-DEBaselineActions, Get-DEBrowserPolicyProfile, Get-DEBrowserDesiredPolicy, Compare-DEBrowserPolicy, Set-DEBrowserPolicy, Set-DEDefaultBrowserAssociations, Register-DEBrowserActions, Get-DEBrandingAssets, New-DEBrandedWallpaper, Get-DEBrandingState, Set-DEBranding, Undo-DEBranding, New-DEHostname, Get-DEShortcutDefinitions, Set-DESupportShortcuts, Register-DEBrandingActions
