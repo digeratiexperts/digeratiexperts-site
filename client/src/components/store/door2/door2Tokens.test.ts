@@ -94,10 +94,35 @@ describe("Door 2 tokens match the V4 vocabulary", () => {
     expect(form).toContain('data-state="expanded"\n      className="d2-profile-panel"');
   });
 
+  // A rule inside the narrow count-card container query, by its exact (indented) selector.
+  function narrowCard(selector: string): string {
+    const query = css.match(/\n@container \(max-width: 17rem\) \{[\s\S]*?\n\}/)?.[0] ?? "";
+    const start = query.indexOf(`\n  ${selector} {`);
+    expect(start, `${selector} inside the 17rem container query`).toBeGreaterThan(-1);
+    return query.slice(start, query.indexOf("}", start));
+  }
+
   it("drops the count steppers under the number when the card is too narrow, so typed counts stay readable", () => {
     // Visual status 2026-10-08: on a 390px phone "25" showed as "2" behind the - / + buttons.
     expect(block(".d2-flag-config__form .d2-field")).toContain("container-type: inline-size");
-    expect(css).toMatch(/@container \(max-width: 17rem\) \{\s*\.d2-dial \{\s*flex-wrap: wrap;[\s\S]*?\.d2-dial \.d2-input \{\s*flex-basis: 100%;/);
+    expect(narrowCard(".d2-dial")).toContain("flex-wrap: wrap;");
+    expect(narrowCard(".d2-dial .d2-input")).toContain("flex-basis: 100%;");
+  });
+
+  it("keeps the stacked steps with their number, not with the chips or hint below", () => {
+    // Live review 2026-10-08: stacked, the steps sat ~27px under the digits and 4-8px over the hint.
+    expect(narrowCard(".d2-dial")).toContain("row-gap: 0.25rem;");
+    expect(narrowCard(".d2-dial")).toContain("margin-bottom: 1rem;");
+    // A 44px tap row (2.75rem), so the number's box no longer floats the digits in 57-77px.
+    expect(narrowCard(".d2-dial .d2-input")).toContain("min-height: 2.75rem;");
+    expect(narrowCard(".d2-dial .d2-input")).toContain("line-height: 1.15;");
+  });
+
+  it("eases the count down on the narrowest phones so six digits still fit the card", () => {
+    // Live check 2026-10-08: under ~358px the card's content is 97-115px and "999999" needs 116px at the base size.
+    expect(narrowCard(".d2-dial .d2-input")).toContain("font-size: min(clamp(2.2rem, 4vw, 3rem), 29cqi);");
+    // The base size is the same clamp, so from 375px up nothing changes.
+    expect(block(".d2-flag-config__form .d2-input")).toContain("font-size: clamp(2.2rem, 4vw, 3rem);");
   });
 
   it("draws numbered steps as stations: a check when ready, a white station and 'You are here' when current", () => {

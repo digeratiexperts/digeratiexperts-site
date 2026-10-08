@@ -2737,15 +2737,22 @@ html.d2-reveal-ready .d2-gcard[data-d2-reveal="in"]:hover {
   cursor: not-allowed;
 }
 /* When a count card is too narrow for the number and both steps side by side (two-up cards on
-   phones, the four-up row at 1024-1068px), the steps drop under the number, so a typed count is
-   never cut off behind the buttons. */
+   phones, the four-up row at 1024-1068px and the two-up cards from 1069px), the steps drop under
+   the number, so a typed count is never cut off behind the buttons. The number's box tightens
+   to a 44px tap row and the dial keeps 1rem below it, so the steps sit with the number they change
+   rather than with the chips or the hint underneath. Under about 370px the number also eases down
+   so six digits (0.55em each) still fit the card; from 375px up its size is unchanged. */
 @container (max-width: 17rem) {
   .d2-dial {
     flex-wrap: wrap;
-    row-gap: 0.5rem;
+    row-gap: 0.25rem;
+    margin-bottom: 1rem;
   }
   .d2-dial .d2-input {
     flex-basis: 100%;
+    min-height: 2.75rem;
+    line-height: 1.15;
+    font-size: min(clamp(2.2rem, 4vw, 3rem), 29cqi);
   }
 }
 .d2-flag-config__form .d2-input:hover {

@@ -3207,14 +3207,45 @@ claims:
     base_sha: 5fe8cbf7
     files:
       - client/src/styles/store-builder.css (container-type on the count card, one @container rule for .d2-dial only)
-      - client/src/components/store/door2/door2Tokens.test.ts (one test appended)
+      - client/src/components/store/door2/door2Tokens.test.ts (three tests appended)
       - artifacts/visual-qa/store-counts-phone/**
     status: active
     started: 2026-10-08
+    merge_sha: c4a0c248629e837a05ad593dc30cbedc00d10f14
+    verification: >-
+      PR 545 merged on Joe's "Merge" (2026-10-08) with main unchanged since
+      the branch (5fe8cbf7) and green CI. The main CI and the deploy job passed;
+      release.txt and /api/health read c4a0c248 on digeratiexperts.com and
+      portal.digeratiexperts.com. /store loads StorePageAtmosphere-C3pmrIs1.css,
+      the same file as the local build of the merged tree, carrying
+      container-type: inline-size and the @container (max-width: 17rem) rule.
+      Live at 390, 414, 768, 1024, 1068, 1280 and 1440 with 25, 1000 and 999999
+      in all four counts: no number cut, steps never over the number, the
+      steppers step, tab order number then - then +, axe clean, no overflow, no
+      runtime errors; 768 unchanged (steps stay beside the number). PR 545
+      VERIFIED LIVE. Evidence: artifacts/visual-qa/store-counts-phone/live/.
+      FOLLOW-UP found by the live check at 320px (the board stopped at 390):
+      before PR 545 the number there was 0px wide; after it 25 and 1000 show
+      but 999999 still clips (97px card content, 116px needed). Commit 3e16faee
+      eases the number to min(base clamp, 29cqi) inside the same container rule:
+      28px at 320, 33.9px at 360, unchanged from 375px up; it covers 300-357px,
+      where production cuts six digits (box 97-115px for 116px). Evidence:
+      artifacts/visual-qa/store-counts-phone/narrow-320/. An independent
+      12-agent live review (each finding re-tested by a refuter) also confirmed
+      that, stacked, the steps sat ~27px under the digits and 4-8px over the
+      chips or hint, so they read with the text below; the follow-up tightens
+      the number's box to a 44px tap row (min-height 2.75rem, line-height 1.15),
+      row-gap 0.25rem and 1rem under the dial: 14-17px above the steps, 16px
+      below, cards 4-7px shorter. A 300-1920px sweep with 999999 shows no cut
+      in either axis and no overflow. Evidence:
+      artifacts/visual-qa/store-counts-phone/spacing/. Out of scope and older
+      than PR 545: the Match users chip wraps at 320, the count placeholders are
+      1.52:1, and the Ask DE nudge can cover the Sites steps on landscape phones.
+      PR 547, not merged.
     note: >-
       Visual status board 2026-10-08 (Joe: "Yes" to starting with the Store
       phone fix): on /store at 390 and 414 the "Your counts" cards are two-up
-      and the − / + steps sit beside the number, leaving it 24-36px, so "25"
+      and the - / + steps sit beside the number, leaving it 24-36px, so "25"
       shows as "2" and "1000" as "1(". A 6-digit count was also cut at
       1024-1440. The count card is now a size container; when it is narrower
       than 17rem the steps drop under the number. No markup, copy or token
