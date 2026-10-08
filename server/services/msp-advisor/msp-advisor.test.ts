@@ -1,6 +1,6 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { classifyMode, isPromptInjectionAttempt } from "./classify";
+import { classifyMode, isPromptInjectionAttempt, namesJoe, wantsPerson } from "./classify";
 import {
   getCanonicalPricingKnowledge,
   selectKnowledgeSlice,
@@ -9,7 +9,7 @@ import {
   listKnownServiceNames,
   inferPageType,
 } from "./knowledge";
-import { extractProfileFromText, mergeProfile, createEmptyProfile, knownFactsList, extractContactNameFromText, extractCompanyNameFromText, isInformalCompanyName, isDeInternalCompanyAnswer } from "./profile";
+import { extractProfileFromText, mergeProfile, createEmptyProfile, knownFactsList, extractContactNameFromText, extractCompanyNameFromText, isInformalCompanyName, isDeInternalCompanyAnswer, isNotAName } from "./profile";
 import { BANNED_CANNED_OPENER } from "./prompt";
 import { sanitizeActions, sanitizePath, assertNoInternalLeak, isAllowedActionType, ensureLoginAction } from "./actions";
 import { handleAdvisorChat } from "./advisor";
@@ -433,3 +433,113 @@ describe("handleAdvisorChat acceptance (heuristic / no LLM required)", () => {
     }
   });
 });
+
+// Joe, 2026-10-07, on the live desk: "I need Joe" → "Before we continue, what's
+// your name?" → "me" → "Thanks, Me. What company are you with?" → "none" →
+// a walk-in line and "How can I assist you today?". "The Chatbot for DE Desk
+// should be smarter than this."
+describe("asking for a person (Joe transcript 2026-10-07)", () => {
+  it("recognizes a request for Joe, the owner, or a human, but not a visitor named Joe", () => {
+    for (const ask of [
+      "I need Joe",
+      "I want to talk to Joe",
+      "is Joe there",
+      "Is Joe available?",
+      "where's Joe?",
+      "I'm looking for Joe Petro",
+      "get me the owner",
+      "Can I speak with someone?",
+      "I need a real person",
+      "human please",
+      "can someone call me back",
+    ]) {
+      assert.equal(wantsPerson(ask), true, ask);
+    }
+    for (const notAsk of [
+      "Joe",
+      "I'm Joe",
+      "This is Joe",
+      "my name is Joe",
+      "Joe told me to reach out",
+      "my phone won't sync email",
+      "I need someone to fix our printer",
+      "we want a person to manage our IT",
+      "How do I book a call?",
+    ]) {
+      assert.equal(wantsPerson(notAsk), false, notAsk);
+    }
+    assert.equal(namesJoe("I need Joe"), true);
+    assert.equal(namesJoe("can I talk to someone"), false);
+  });
+
+  it("does not take me, none or 'it's about…' as a name", () => {
+    for (const raw of ["me", "Me.", "none", "none of your business", "why?"]) {
+      assert.equal(isNotAName(raw), true, raw);
+      assert.equal(extractContactNameFromText(raw), undefined, raw);
+    }
+    assert.equal(extractContactNameFromText("it's about my invoice"), undefined);
+    assert.equal(extractContactNameFromText("Jordan Hale"), "Jordan Hale");
+    assert.equal(extractContactNameFromText("Joe"), "Joe");
+    assert.equal(extractContactNameFromText("it's Dana Ruiz"), "Dana Ruiz");
+  });
+
+  it("hands 'I need Joe' to a person at once, and never gates it on name and company", async () => {
+    const first = await handleAdvisorChat({ message: "I need Joe" });
+    assert.match(first.reply, /Joe/);
+    assert.ok(first.reply.includes(PRIMARY_PHONE.display));
+    assert.doesNotMatch(first.reply, /what'?s your name|what company/i);
+    const types = first.actions.map((a) => a.type);
+    assert.ok(types.includes("request_callback"));
+    assert.ok(types.includes("leave_message"));
+    assert.ok(first.analyticsEvents.includes("support_routed"));
+
+    const second = await handleAdvisorChat({ sessionId: first.sessionId, message: "me" });
+    const third = await handleAdvisorChat({ sessionId: first.sessionId, message: "none" });
+    for (const turn of [second, third]) {
+      assert.doesNotMatch(turn.reply, /what'?s your name|what company|Thanks, Me|walk-in|how can i assist/i);
+      assert.equal(turn.profile.contactName, undefined);
+      const turnTypes = turn.actions.map((a) => a.type);
+      assert.ok(turnTypes.includes("request_callback") && turnTypes.includes("leave_message"));
+    }
+    assert.notEqual(second.reply, third.reply);
+
+    const topic = await handleAdvisorChat({ sessionId: first.sessionId, message: "it's about my invoice" });
+    assert.equal(topic.profile.contactName, undefined);
+  });
+
+  it("moves on when the answer to the name question is not a name, and never asks for the company", async () => {
+    const first = await handleAdvisorChat({ message: "hello" });
+    assert.match(first.reply, /what'?s your name/i);
+    const second = await handleAdvisorChat({ sessionId: first.sessionId, message: "me" });
+    assert.doesNotMatch(second.reply, /Thanks, Me|what company|what'?s your name/i);
+    assert.equal(second.profile.contactName, undefined);
+    const third = await handleAdvisorChat({
+      sessionId: first.sessionId,
+      message: "how much is managed IT for 10 users?",
+    });
+    assert.doesNotMatch(third.reply, /what company|what'?s your name/i);
+    assert.equal(third.mode, "pricing");
+  });
+
+  it("answers a held question after a declined name instead of asking for the company", async () => {
+    const first = await handleAdvisorChat({ message: "How do I protect Microsoft 365 from phishing?" });
+    assert.match(first.reply, /what'?s your name/i);
+    const second = await handleAdvisorChat({ sessionId: first.sessionId, message: "none of your business" });
+    assert.doesNotMatch(second.reply, /what company|what'?s your name|None Of Your/i);
+    assert.equal(second.profile.contactName, undefined);
+  });
+
+  it("still asks a real visitor for their name and then their company", async () => {
+    const first = await handleAdvisorChat({ message: "hi" });
+    const second = await handleAdvisorChat({ sessionId: first.sessionId, message: "Joe" });
+    assert.equal(second.profile.contactName, "Joe");
+    assert.match(second.reply, /Thanks, Joe\. What company/);
+  });
+
+  it("lets an active incident keep its emergency lane even when they ask for a person", async () => {
+    const res = await handleAdvisorChat({ message: "we got hit by ransomware, I need Joe now" });
+    assert.equal(res.mode, "security_incident");
+    assert.ok(res.actions.some((a) => a.type === "request_callback"));
+  });
+});
+

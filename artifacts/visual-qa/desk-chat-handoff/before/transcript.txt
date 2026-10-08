@@ -1,0 +1,12 @@
+DE Desk (Ask DE) on production, reported by Joe 2026-10-07 15:28 (no screenshot; transcript as pasted).
+
+DE Desk here. Tell me what broke, what you're evaluating, or what you're trying to protect — you'll get a clear read and the sensible next step.
+> I need Joe
+DE: Before we continue, what's your name?
+> me
+DE: Thanks, Me. What company are you with?
+> none
+DE: I'll put you down as a walk-in for now. How can I assist you today? Are you looking for help with IT services or cybersecurity?
+DE: Message received. The desk will reply to me@gmail.com.   (the "leave a message" form; the Desk API refused the ticket and the error was swallowed)
+
+Joe: "The Chatbot for DE Desk should be smarter than this. Several issues show in just the few back and forth messages here."

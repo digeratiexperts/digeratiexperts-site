@@ -94,6 +94,10 @@ export interface AdvisorSession {
   heldUserMessage?: string;
   /** First real ask — kept after identity so later turns do not forget it. */
   originalIntent?: string;
+  /** Visitor asked for a person (Joe, a human, a callback): no name/company gate after that. */
+  humanRequested?: boolean;
+  /** Visitor's answer to the name question was not a name: never ask for name or company again. */
+  nameDeclined?: boolean;
   lastAssistantReply?: string;
   fallbackVariant?: number;
 }

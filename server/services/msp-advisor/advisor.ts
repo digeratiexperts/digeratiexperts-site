@@ -7,6 +7,8 @@ import {
   isCannedLanguageComplaint,
   askedForHuman,
   isThinFollowUp,
+  namesJoe,
+  wantsPerson,
 } from "./classify";
 import { selectKnowledgeSlice } from "./knowledge";
 import {
@@ -28,7 +30,9 @@ import {
   updateProfile,
 } from "./session";
 import { appendDeskMessage, isDeskAgentLive } from "./persist";
+import { PRIMARY_PHONE } from "@shared/companyContact";
 import type {
+  AdvisorAction,
   AdvisorChatRequest,
   AdvisorChatResponse,
   ConversationProfile,
@@ -114,6 +118,41 @@ async function callModel(system: string, history: Array<{ role: "user" | "assist
 
 function identityNamePrompt(): string {
   return "Before we continue, what's your name?";
+}
+
+/**
+ * The visitor asked for a person: Joe, a human, or a callback. Give them the
+ * ways to reach one right away, before any name or company question, and keep
+ * the ask open (Joe, 2026-10-07: "I need Joe" got a name prompt, "Thanks, Me",
+ * a walk-in line and a generic pitch). Every option reaches a person: the phone,
+ * the callback form, or a message that lands on the desk with this chat.
+ */
+function personHandoff(message: string): { reply: string; actions: AdvisorAction[] } {
+  const joe = namesJoe(message);
+  const reply = joe
+    ? `I can get this to Joe. The fastest way is a call: ${PRIMARY_PHONE.display}. If he's tied up, request a callback or leave him a message below, and it reaches the desk with this chat. What's it about?`
+    : `You'll get a person. The fastest way is a call: ${PRIMARY_PHONE.display}. Or request a callback or leave a message below, and it reaches the desk with this chat. What's it about?`;
+  const actions = [
+    materializeAction("contact_sales", `Call ${PRIMARY_PHONE.display}`),
+    materializeAction("request_callback", "Request a callback"),
+    materializeAction("leave_message", joe ? "Leave Joe a message" : "Leave a message"),
+  ].filter((a): a is AdvisorAction => Boolean(a));
+  return { reply, actions };
+}
+
+/** After a person was asked for, the callback and message options stay on screen. */
+function withPersonActions(actions: AdvisorAction[]): AdvisorAction[] {
+  const out = [...actions];
+  for (const [type, label] of [
+    ["leave_message", "Leave a message"],
+    ["request_callback", "Request a callback"],
+  ] as const) {
+    if (!out.some((a) => a.type === type)) {
+      const action = materializeAction(type, label);
+      if (action) out.unshift(action);
+    }
+  }
+  return out.slice(0, 3);
 }
 
 function identityCompanyPrompt(contactName?: string): string {
@@ -232,7 +271,69 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
     };
   }
 
-  const skipIdentity = mode === "security_incident" || mode === "existing_client";
+  // Asked for a person: hand off now, never gate it on name and company.
+  // An active incident keeps its own emergency lane.
+  if (mode !== "security_incident" && wantsPerson(message)) {
+    session.humanRequested = true;
+    session.originalIntent = session.originalIntent || message;
+    session.heldUserMessage = undefined;
+    const { reply, actions } = personHandoff(message);
+    appendMessage(session, "user", message);
+    appendMessage(session, "assistant", reply);
+    session.lastAssistantReply = reply;
+    session.lastMode = mode === "off_topic" ? "msp_discovery" : mode;
+    const persisted = await persistTurn(session.id, message, reply, profile, page?.pathname);
+    const analyticsEvents = ["support_routed"];
+    if (!session.analyticsFlags.conversation_started) {
+      session.analyticsFlags.conversation_started = true;
+      analyticsEvents.unshift("conversation_started");
+    }
+    return {
+      sessionId: session.id,
+      reply,
+      mode: session.lastMode,
+      profile,
+      actions,
+      analyticsEvents,
+      knownFacts: knownFactsList(profile),
+      ...persisted,
+    };
+  }
+
+  // Whatever answered "what's your name?" was not a name ("me", "none", "why?"):
+  // never ask for name or company again, and never address them by it.
+  let declinedNameThisTurn = false;
+  if (!profile.contactName && !session.nameDeclined && session.lastAssistantReply === identityNamePrompt()) {
+    session.nameDeclined = true;
+    declinedNameThisTurn = true;
+  }
+
+  const skipIdentity =
+    mode === "security_incident" ||
+    mode === "existing_client" ||
+    Boolean(session.humanRequested) ||
+    Boolean(session.nameDeclined);
+
+  // Declined the name and asked nothing yet: move on without another form question.
+  if (declinedNameThisTurn && !session.heldUserMessage && !isSubstantiveAdvisorQuestion(userTurn)) {
+    const reply = "No problem. What can I help with?";
+    appendMessage(session, "user", message);
+    appendMessage(session, "assistant", reply);
+    session.lastAssistantReply = reply;
+    session.lastMode = mode === "off_topic" ? "msp_discovery" : mode;
+    const persisted = await persistTurn(session.id, message, reply, profile, page?.pathname);
+    return {
+      sessionId: session.id,
+      reply,
+      mode: session.lastMode,
+      profile,
+      actions: [],
+      analyticsEvents: ["conversation_started"],
+      knownFacts: knownFactsList(profile),
+      ...persisted,
+    };
+  }
+
   if (!skipIdentity && !profile.contactName) {
     if (isSubstantiveAdvisorQuestion(message) && !session.heldUserMessage) {
       session.heldUserMessage = message;
@@ -359,6 +460,12 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
     profile.companyInformal
       ? "Company was given informally — treat as a walk-in. Do not moralize or dump a sales pitch."
       : "",
+    session.humanRequested
+      ? `Visitor asked to reach a person (Joe or a human). They already have the call (${PRIMARY_PHONE.display}), callback and message options. Answer what they say next briefly; do not run discovery or ask for their company.`
+      : "",
+    session.nameDeclined
+      ? "Visitor chose not to give a name. Do not ask for their name or company again, and do not address them by name."
+      : "",
     profile.deInternal
       ? "Visitor indicated they work at Digerati Experts. Acknowledge as staff/internal. Do not treat them as a client. Do not invent portal features. Never echo throwaway company words like yours, us, here, or DE as an outside company name."
       : "",
@@ -377,6 +484,7 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
     justCollectedInformalCompany,
     cannedComplaint,
     askedForHuman: askedForHuman(userTurn),
+    humanRequested: Boolean(session.humanRequested),
   };
 
   let modelOut: ModelAdvisorOutput | null = null;
@@ -458,6 +566,7 @@ export async function handleAdvisorChat(req: AdvisorChatRequest): Promise<Adviso
     }
   }
   actions = ensureLoginAction(actions, userTurn, mode);
+  if (session.humanRequested) actions = withPersonActions(actions);
   const analyticsEvents = Array.from(
     new Set(
       (modelOut.analyticsEvents || []).filter((e) =>

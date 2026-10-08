@@ -264,9 +264,32 @@ function extractNameAndCompany(text: string): { contactName?: string; companyNam
   };
 }
 
+/**
+ * Answers to "what's your name?" that are not a name. "me" became "Thanks, Me."
+ * (Joe transcript, 2026-10-07). A first word from this list rejects the whole
+ * answer, so "none of your business" is not the name "None Of Your".
+ */
+const NOT_A_NAME = new Set([
+  "me", "myself", "i", "you", "him", "her", "them", "it", "none", "no", "nope",
+  "nah", "nobody", "noone", "anonymous", "anon", "unknown", "idk", "dunno",
+  "skip", "pass", "test", "testing", "guest", "user", "visitor", "customer",
+  "client", "private", "nothing", "whatever", "why", "who", "what", "na", "n/a",
+  "secret", "null", "undefined", "asdf",
+  // "It's about my invoice" answers "what's it about?", it is not the name "About".
+  "about", "regarding", "re", "for", "the", "a", "an", "my", "our", "your",
+  "just", "that", "this", "not", "here", "there", "fine", "good", "urgent",
+  "important", "something", "nothing", "all", "still", "also",
+]);
+
+/** The visitor's answer is not a usable name ("me", "none", "why?"). */
+export function isNotAName(raw: string): boolean {
+  const first = raw.replace(/\s+/g, " ").trim().replace(/[.,!?]+$/, "").split(" ")[0]?.toLowerCase() || "";
+  return !first || NOT_A_NAME.has(first);
+}
+
 function cleanPersonName(raw: string): string | undefined {
   const name = raw.replace(/\s+/g, " ").trim().replace(/[.,!]+$/, "");
-  if (!name || NAME_STOPWORDS.has(name.toLowerCase())) return undefined;
+  if (!name || NAME_STOPWORDS.has(name.toLowerCase()) || isNotAName(name)) return undefined;
   return name
     .split(" ")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
