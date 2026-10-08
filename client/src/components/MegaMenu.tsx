@@ -776,7 +776,9 @@ export function MegaMenu() {
           useSolidChrome
             ? 'bg-[#050312] border-b border-white/[0.10] shadow-[0_10px_28px_rgba(0,0,0,0.45)]'
             : isScrolled
-              ? 'bg-black/95 backdrop-blur-xl border-b border-white/[0.08]'
+              ? // Fully opaque once scrolled: at /95 a bright hero button under
+                // the bar showed through faintly (Team page, 2026-10-08).
+                'bg-black backdrop-blur-xl border-b border-white/[0.08]'
               : 'bg-black/90 backdrop-blur-xl border-b border-white/[0.05]'
         }`}
         ref={menuContainerRef}

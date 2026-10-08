@@ -36,8 +36,10 @@ const EXPAND_S = 0.4;
 const EXPAND_EASE = "easeOut" as const;
 /** Phones: where the Ask DE nudge waits for the reader to leave the first screen. */
 const NUDGE_PHONE_QUERY = "(max-width: 767px)";
-/** Phones: scroll distance after which a shown nudge steps away. */
-const NUDGE_PHONE_SCROLL_AWAY = 160;
+/** Scroll distance after which a shown nudge steps away (every width). */
+const NUDGE_SCROLL_AWAY = 160;
+/** A shown nudge steps away on its own after this long, so it never sits over page copy. */
+const NUDGE_VISIBLE_MS = 12000;
 
 type QuickMenuItem = {
   title: string;
@@ -137,15 +139,18 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
     };
   }, [showMenu, showNudge]);
 
-  // Phones: once shown, the nudge steps away when the reader keeps scrolling
-  // or starts typing, instead of covering what they are reading. It counts as
-  // shown (once per session) but not dismissed, so the launcher keeps its cue.
+  // Once shown, the nudge steps away when the reader keeps scrolling, starts
+  // typing, or after NUDGE_VISIBLE_MS, instead of covering what they are
+  // reading (it floats over page copy at every width; Joe, 2026-10-08). It
+  // counts as shown (once per session) but not dismissed, so the launcher keeps
+  // its cue.
   useEffect(() => {
-    if (!showNudge || !window.matchMedia(NUDGE_PHONE_QUERY).matches) return;
+    if (!showNudge) return;
     const startY = window.scrollY;
     const hide = () => setShowNudge(false);
+    const timer = window.setTimeout(hide, NUDGE_VISIBLE_MS);
     const onScroll = () => {
-      if (Math.abs(window.scrollY - startY) > NUDGE_PHONE_SCROLL_AWAY) hide();
+      if (Math.abs(window.scrollY - startY) > NUDGE_SCROLL_AWAY) hide();
     };
     const onFocusIn = (event: FocusEvent) => {
       const el = event.target;
@@ -154,6 +159,7 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
     window.addEventListener("scroll", onScroll, { passive: true });
     document.addEventListener("focusin", onFocusIn);
     return () => {
+      window.clearTimeout(timer);
       window.removeEventListener("scroll", onScroll);
       document.removeEventListener("focusin", onFocusIn);
     };
@@ -239,10 +245,12 @@ function AskDELauncherButton({ compact = false }: { compact?: boolean }) {
             // Fixed outside document flow so the nudge cannot cause CLS.
             // Same lift as the unified bar (--de-cookie-h). The nudge only arms
             // after consent today, so this keeps the two in step if it ever
-            // shows while the cookie banner is up.
+            // shows while the cookie banner is up. It also clears the sticky
+            // assessment bar, which it used to sit on (its phone number); the
+            // min() adds the bar's own 0.5rem lift only while the bar is there.
             right: "max(1rem, env(safe-area-inset-right))",
             bottom:
-              "calc(var(--de-unified-bar-h, 3.5rem) + var(--de-store-cart-h, 0px) + var(--de-cookie-h, 0px) + 0.75rem + env(safe-area-inset-bottom, 0px))",
+              "calc(var(--de-chrome-inset, 0px) + var(--de-unified-bar-h, 3.5rem) + var(--de-store-cart-h, 0px) + var(--de-cookie-h, 0px) + var(--de-sticky-cta-h, 0px) + min(var(--de-sticky-cta-h, 0px), 0.5rem) + 0.75rem + env(safe-area-inset-bottom, 0px))",
           }}
           data-testid="ask-de-nudge"
         >

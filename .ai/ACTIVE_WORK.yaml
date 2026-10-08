@@ -709,6 +709,27 @@ claims:
       single-use, 7-day link to choose their own password; nobody else sees
       it. Shares AdminCompanies.tsx and routes.ts with PR 536 on separate
       lines.
+
+  - id: ask-de-nudge-and-nav-overlays
+    owner: claude
+    subsystem: site-overlays
+    branch: claude/client-portal-access-ukxrnn
+    base_sha: c4a0c248
+    files:
+      - client/src/components/SiteBottomBar.tsx (Ask DE nudge position and step-away only)
+      - client/src/components/SiteBottomBar.nudge.test.ts
+      - client/src/components/MegaMenu.tsx (scrolled nav background only)
+      - artifacts/visual-qa/ask-de-nudge-overlays/** (new)
+    status: active
+    started: 2026-10-08
+    note: >-
+      Joe, 2026-10-08 ("Fix the overlays then merge"). The "Stuck on
+      something?" nudge sat on the sticky assessment bar (over its phone
+      number) and over page copy on desktop. It now clears the bar and the
+      chrome inset, and steps away on scroll, typing or after 12 seconds at
+      every width (phones only before). The scrolled main nav goes from 95%
+      to fully opaque black so the hero's call button no longer shows
+      through faintly.
   - id: tenant-files-durable
     issue: 259
     owner: claude
