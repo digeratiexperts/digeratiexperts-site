@@ -663,9 +663,15 @@ export async function archiveDeskSessions(sessionIds: string[]): Promise<DeskCha
     }
   }
   const out: DeskChatSessionSummary[] = [];
+  // Oldest chat first, so a new folder takes the spelling of the company's first chat.
+  const found: DeskChatSessionSummary[] = [];
   for (const sessionId of sessionIds) {
     const { session } = await getDeskSessionMessages(sessionId);
-    if (!session) continue;
+    if (session) found.push(session);
+  }
+  found.sort((x, y) => Date.parse(x.createdAt) - Date.parse(y.createdAt) || x.sessionId.localeCompare(y.sessionId));
+  for (const session of found) {
+    const sessionId = session.sessionId;
     const proposed = archiveFolderFor(session.companyName);
     const key = archiveFolderKey(proposed);
     const folder = existingFolders.get(key) || proposed;

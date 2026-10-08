@@ -38,7 +38,10 @@ describe("DE Desk archive folders", () => {
     assert.deepEqual([...sameCompany].sort(), [a, b].sort());
 
     const archived = await archiveDeskSessions(sameCompany);
-    assert.deepEqual([...new Set(archived.map((s) => s.archiveFolder))], [`Acme ${tag}`]);
+    // "Acme x" and "acme  x" share one folder (whichever spelling came first names it).
+    const folders = [...new Set(archived.map((s) => s.archiveFolder))];
+    assert.equal(folders.length, 1);
+    assert.equal(folders[0]?.toLowerCase(), `acme ${tag}`);
 
     const live = (await listDeskSessions({ limit: 200 })).map((s) => s.sessionId);
     assert.ok(live.includes(c));
