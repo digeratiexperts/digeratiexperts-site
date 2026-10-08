@@ -212,8 +212,8 @@ function Set-DELogonNotice {
         Set-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeCaptionName -Value $want.caption -Type String -Confirm:$false
         Set-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeTextName -Value $want.text -Type String -Confirm:$false
     } else {
-        Remove-ItemProperty -Path $script:LogonNoticePath -Name $script:LogonNoticeCaptionName -ErrorAction SilentlyContinue
-        Remove-ItemProperty -Path $script:LogonNoticePath -Name $script:LogonNoticeTextName -ErrorAction SilentlyContinue
+        Remove-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeCaptionName -Confirm:$false
+        Remove-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeTextName -Confirm:$false
     }
     $after = Get-DELogonNoticeState -ClientProfile $ClientProfile
     if (-not $after.ok) { throw "pre-logon notice did not verify after apply: $($after.detail)" }
@@ -231,7 +231,7 @@ function Undo-DELogonNotice {
         @{ name = $script:LogonNoticeTextName; key = 'text' }
     )) {
         $entry = Get-DEHashPath -Object $prev -Path $pair.key
-        if (Get-DEHashPath -Object $entry -Path 'existed') { Set-DERegistryValue -Path $script:LogonNoticePath -Name $pair.name -Value "$(Get-DEHashPath -Object $entry -Path 'value')" -Type String -Confirm:$false } else { Remove-ItemProperty -Path $script:LogonNoticePath -Name $pair.name -ErrorAction SilentlyContinue }
+        if (Get-DEHashPath -Object $entry -Path 'existed') { Set-DERegistryValue -Path $script:LogonNoticePath -Name $pair.name -Value "$(Get-DEHashPath -Object $entry -Path 'value')" -Type String -Confirm:$false } else { Remove-DERegistryValue -Path $script:LogonNoticePath -Name $pair.name -Confirm:$false }
     }
     $captionPrev = Get-DEHashPath -Object $prev -Path 'caption'; $textPrev = Get-DEHashPath -Object $prev -Path 'text'
     $captionNow = Get-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeCaptionName; $textNow = Get-DERegistryValue -Path $script:LogonNoticePath -Name $script:LogonNoticeTextName
