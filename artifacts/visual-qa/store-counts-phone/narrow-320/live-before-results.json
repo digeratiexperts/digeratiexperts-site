@@ -1,0 +1,475 @@
+[
+  {
+    "w": 320,
+    "cardWidth": 132,
+    "containerType": "normal",
+    "sheet": [
+      "StorePageAtmosphere-d1qthMye.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [
+          "users(0<39)",
+          "computers(0<39)",
+          "mobile(0<39)",
+          "sites(0<39)"
+        ],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "1000": {
+        "cut": [
+          "users(0<77)",
+          "computers(0<77)",
+          "mobile(0<77)",
+          "sites(0<77)"
+        ],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "999999": {
+        "cut": [
+          "users(0<116)",
+          "computers(0<116)",
+          "mobile(0<116)",
+          "sites(0<116)"
+        ],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 390,
+    "cardWidth": 167,
+    "containerType": "normal",
+    "sheet": [
+      "StorePageAtmosphere-d1qthMye.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [
+          "users(24<39)",
+          "computers(24<39)",
+          "mobile(24<39)",
+          "sites(24<39)"
+        ],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "1000": {
+        "cut": [
+          "users(24<77)",
+          "computers(24<77)",
+          "mobile(24<77)",
+          "sites(24<77)"
+        ],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "999999": {
+        "cut": [
+          "users(24<116)",
+          "computers(24<116)",
+          "mobile(24<116)",
+          "sites(24<116)"
+        ],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 414,
+    "cardWidth": 179,
+    "containerType": "normal",
+    "sheet": [
+      "StorePageAtmosphere-d1qthMye.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [
+          "users(36<39)",
+          "computers(36<39)",
+          "mobile(36<39)",
+          "sites(36<39)"
+        ],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "1000": {
+        "cut": [
+          "users(36<77)",
+          "computers(36<77)",
+          "mobile(36<77)",
+          "sites(36<77)"
+        ],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "999999": {
+        "cut": [
+          "users(36<116)",
+          "computers(36<116)",
+          "mobile(36<116)",
+          "sites(36<116)"
+        ],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 768,
+    "cardWidth": 356,
+    "containerType": "normal",
+    "sheet": [
+      "StorePageAtmosphere-d1qthMye.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "1000": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "999999": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 1024,
+    "cardWidth": 234,
+    "containerType": "normal",
+    "sheet": [
+      "StorePageAtmosphere-d1qthMye.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "1000": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "999999": {
+        "cut": [
+          "users(91<135)",
+          "computers(91<135)",
+          "mobile(91<135)",
+          "sites(91<135)"
+        ],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 1068,
+    "cardWidth": 245,
+    "containerType": "normal",
+    "sheet": [
+      "StorePageAtmosphere-d1qthMye.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "1000": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "999999": {
+        "cut": [
+          "users(102<140)",
+          "computers(102<140)",
+          "mobile(102<140)",
+          "sites(102<140)"
+        ],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "cardWidth": 290,
+    "containerType": "normal",
+    "sheet": [
+      "StorePageAtmosphere-d1qthMye.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "1000": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "999999": {
+        "cut": [
+          "users(147<158)",
+          "computers(147<158)",
+          "mobile(147<158)",
+          "sites(147<158)"
+        ],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 1440,
+    "cardWidth": 290,
+    "containerType": "normal",
+    "sheet": [
+      "StorePageAtmosphere-d1qthMye.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "1000": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "999999": {
+        "cut": [
+          "users(147<158)",
+          "computers(147<158)",
+          "mobile(147<158)",
+          "sites(147<158)"
+        ],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  }
+]

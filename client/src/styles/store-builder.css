@@ -2738,7 +2738,8 @@ html.d2-reveal-ready .d2-gcard[data-d2-reveal="in"]:hover {
 }
 /* When a count card is too narrow for the number and both steps side by side (two-up cards on
    phones, the four-up row at 1024-1068px), the steps drop under the number, so a typed count is
-   never cut off behind the buttons. */
+   never cut off behind the buttons. On the narrowest phones (under about 370px) the number also
+   eases down so six digits (0.55em each) still fit the card; from 390px up the size is unchanged. */
 @container (max-width: 17rem) {
   .d2-dial {
     flex-wrap: wrap;
@@ -2746,6 +2747,7 @@ html.d2-reveal-ready .d2-gcard[data-d2-reveal="in"]:hover {
   }
   .d2-dial .d2-input {
     flex-basis: 100%;
+    font-size: min(clamp(2.2rem, 4vw, 3rem), 29cqi);
   }
 }
 .d2-flag-config__form .d2-input:hover {

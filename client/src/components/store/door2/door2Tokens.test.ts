@@ -100,6 +100,14 @@ describe("Door 2 tokens match the V4 vocabulary", () => {
     expect(css).toMatch(/@container \(max-width: 17rem\) \{\s*\.d2-dial \{\s*flex-wrap: wrap;[\s\S]*?\.d2-dial \.d2-input \{\s*flex-basis: 100%;/);
   });
 
+  it("eases the count down on the narrowest phones so six digits still fit the card", () => {
+    // Live check 2026-10-08: at 320px the card's content is ~97px and "999999" needs 116px at the base size.
+    const narrow = css.match(/@container \(max-width: 17rem\) \{[\s\S]*?\n\}/)?.[0] ?? "";
+    expect(narrow).toContain("font-size: min(clamp(2.2rem, 4vw, 3rem), 29cqi);");
+    // The base size is the same clamp, so from 390px up nothing changes.
+    expect(block(".d2-flag-config__form .d2-input")).toContain("font-size: clamp(2.2rem, 4vw, 3rem);");
+  });
+
   it("draws numbered steps as stations: a check when ready, a white station and 'You are here' when current", () => {
     // Joe, 2026-10-01: concept B "Stations" — thick lines and clear done / current / ahead states.
     expect(block(".d2-journey__bar")).toContain("height: 6px");
