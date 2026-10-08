@@ -21,7 +21,7 @@
 Set-StrictMode -Version 1.0
 $ErrorActionPreference = 'Stop'
 
-$script:ProfileSchemaVersion = 1
+$script:ProfileSchemaVersion = 2
 $script:Modes = @('new', 'dropship', 'takeover', 'replacement', 'repair', 'co-managed', 'audit', 'deprovision')
 $script:Tiers = @('IT', 'Office', 'Business', 'Enterprise')
 
@@ -31,31 +31,35 @@ function Get-DEProfileDirectories {
 }
 
 function New-DEClientProfileTemplate {
-    <# Returns a complete, empty profile object with every supported key so the GUI can bind to it. #>
+    <# Returns a complete, empty profile object with every supported key so the GUI can bind to it. shortName is the 2-5 character hostname/client code candidate; confirm it against the Hub before deployment. #>
     param([string]$Id = 'new-client', [string]$Name = 'New client')
+    $codeCandidate = ($Id.ToUpperInvariant() -replace '[^A-Z0-9]', '')
+    if ($codeCandidate.Length -gt 5) { $codeCandidate = $codeCandidate.Substring(0, 5) }
+    if ($codeCandidate.Length -lt 2) { $codeCandidate = 'NEW' }
     return [ordered]@{
         schemaVersion = $script:ProfileSchemaVersion
-        id = $Id; name = $Name; shortName = $Name
+        id = $Id; name = $Name; shortName = $codeCandidate
         tier = 'Business'                                  # IT | Office | Business | Enterprise | Co-managed
         plan = @{ bundle = 'proactive-business'; addOns = @(); solutions = @() }   # catalog\bundles.json (tiers, variants, standalone solutions)
         coManaged = @{ deOwns = @() }                      # co-managed path: identity | security | apps | baseline | browser | updates | backup | network | support | mfa
         packages = @('Core IT', 'Security Operations')     # DE package lines included
         gcch = $false                                      # GCC High eligibility rules apply
-        identity = @{ authority = 'jumpcloud'; jumpcloudDeviceTrust = $false; entraTenantName = ''; entraTenantId = ''; leaveEntra = $true; keepEntraRegistration = $false; jumpcloudSystemGroups = @(); jumpcloudUserGroups = @(); usernameConvention = 'first-initial-lastname' }
+        identity = @{ authority = 'jumpcloud'; jumpcloudDeviceTrust = $false; entraTenantName = ''; entraTenantId = ''; leaveEntra = $true; keepEntraRegistration = $false; jumpcloudSystemGroups = @(); jumpcloudUserGroups = @(); usernameConvention = 'firstname.lastname'; primaryDomain = ''; naming = @{ standardVersion = '1.0.0'; externalSuffix = '-ext'; adminSuffix = '-admin'; privilegedSuffix = '-priv'; tenantEmergencyAccounts = @('emergency-admin-01', 'emergency-admin-02'); techLevelIsRbac = $true } }
         mdm = @{ authority = 'jumpcloud'; allowCoManagement = $false; removeStaleEnrollments = $true }
         security = @{ mdr = @{ primary = 'guardz'; backup = 'blackpoint'; deploy = @('guardz') }; edr = 'sentinelone'; browserSecurity = @('pabx'); emailSecurity = 'mimecast'; siem = 'wazuh'; awareness = 'ninjio'; baselineProfile = 'de-windows-baseline' }
         cloudStorage = @{ standard = 'onedrive'; removeConflicting = $false; allowBoth = $false }   # onedrive | dropbox | both | none
         updates = @{ authority = 'jumpcloud' }   # jumpcloud (default) | intune (Microsoft-only clients) | windows (DE Tech Tool sets the policy)
+        windows = @{ logonNotice = @{ mode = 'default'; caption = ''; body = ''; disabledReason = '' } }
         browser = @{ default = 'edge'; policyProfile = 'de-browser-policy'; homepage = 'https://portal.digeratiexperts.com/portal/login'; startupPages = @(); managedBookmarksFromVendors = $false; extraBookmarks = @() }
         apps = @{ required = @('m365-apps', 'teams', 'onedrive', 'edge', 'chrome', 'pdf-reader'); optional = @(); lineOfBusiness = @(); remove = @() }
         m365 = @{ tenantDomain = ''; licenseSku = ''; verifyUpn = $true }
         hub = @{ accountId = '' }                            # Intelligence Hub canonical account number; no secrets
-        branding = @{ clientLogo = ''; wallpaperStyle = 'dual-logo'; accent = '#D3126A'; supportText = 'Support: support@digeratiexperts.com'; hostnamePattern = '{CLIENT}-{ROLE}-{SERIAL4}'; shortcuts = @('client-portal', 'support-ticket', 'remote-support') }
-        network = @{ wifiProfiles = @(); printers = @(); shares = @(); certificates = @(); vpn = @(); sase = @{ provider = 'timus'; required = $false } }
+        branding = @{ clientLogo = ''; wallpaperStyle = 'dual-logo'; accent = '#D3126A'; supportText = 'Support: support@digeratiexperts.com'; hostnamePattern = '{CLIENT}-{ROLE}-{ASSET4}'; shortcuts = @('client-portal', 'support-ticket', 'remote-support') }
+        network = @{ addressPlan = @{ standardVersion = '1.0.0'; mode = 'adopt-existing'; clientCidr = ''; sitePrefix = 20; segmentPrefix = 24 }; wifiProfiles = @(); printers = @(); shares = @(); certificates = @(); vpn = @(); sase = @{ provider = 'timus'; required = $false } }
         backup = @{ provider = 'msp360'; required = $true }
         remoteSupport = @{ provider = 'jumpcloud-remote-assist'; required = $true }
         rmm = @{ provider = 'msp360'; required = $false }
-        sites = @()                                        # @{ id; name; address; wifi; gateway; notes }
+        sites = @()                                        # @{ id; code='S01'; ordinal=1; name; country; region; cityCode; address; buildings; notes }
         vendorTenants = @{ hudu_host = ''; wazuh_cloud_id = ''; qualys_platform_url = ''; s1_console = ''; pabx_console = ''; optix_portal = '' }
         detection = @{ hostnamePatterns = @(); entraTenantNames = @(); entraTenantIds = @(); jumpcloudSystemGroups = @(); profileFolderHints = @() }
         clientSafe = @{ serviceNames = @{ mdr = 'Managed detection and response'; edr = 'Endpoint protection'; backup = 'Managed backup'; emailSecurity = 'Email security' } }
@@ -94,6 +98,27 @@ function Save-DEClientProfile {
     [CmdletBinding(SupportsShouldProcess = $true)]
     param([Parameter(Mandatory = $true)]$Profile)
     if (-not $Profile.id -or "$($Profile.id)" -notmatch '^[a-z0-9][a-z0-9\-]*$') { throw 'profile.id must be a lowercase slug' }
+    $noticeMode = "$(Get-DEHashPath -Object $Profile -Path 'windows.logonNotice.mode')".Trim().ToLowerInvariant()
+    if ($noticeMode -and $noticeMode -notin @('default', 'custom', 'disabled')) { throw "windows.logonNotice.mode must be default, custom, or disabled (got '$noticeMode')" }
+    if ($noticeMode -eq 'custom' -and -not "$(Get-DEHashPath -Object $Profile -Path 'windows.logonNotice.body')".Trim()) { throw 'windows.logonNotice.body is required when mode is custom' }
+    if ($noticeMode -eq 'disabled' -and -not "$(Get-DEHashPath -Object $Profile -Path 'windows.logonNotice.disabledReason')".Trim()) { throw 'windows.logonNotice.disabledReason is required when mode is disabled' }
+    $policy = Get-DECanonicalNamingPolicy
+    $namingVersion = "$(Get-DEHashPath -Object $Profile -Path 'identity.naming.standardVersion')".Trim()
+    if ($namingVersion -and $namingVersion -ne $policy.version) { throw "identity.naming.standardVersion '$namingVersion' does not match DE canonical version $($policy.version)" }
+    $domain = "$(Get-DEHashPath -Object $Profile -Path 'identity.primaryDomain')".Trim()
+    if ($domain) { $null = Test-DEIdentityDomain -Domain $domain }
+    $addressMode = "$(Get-DEHashPath -Object $Profile -Path 'network.addressPlan.mode')".Trim().ToLowerInvariant()
+    if ($addressMode -and $addressMode -notin @('de-net-new', 'adopt-existing')) { throw "network.addressPlan.mode must be de-net-new or adopt-existing (got '$addressMode')" }
+    if ($addressMode -eq 'de-net-new') {
+        $clientCidr = "$(Get-DEHashPath -Object $Profile -Path 'network.addressPlan.clientCidr')".Trim()
+        if (-not $clientCidr) { throw 'network.addressPlan.clientCidr is required when mode is de-net-new' }
+        $null = New-DESiteNetworkPlan -ClientCidr $clientCidr -SiteOrdinal 1
+    }
+    $hostPattern = "$(Get-DEHashPath -Object $Profile -Path 'branding.hostnamePattern')"
+    if ($hostPattern -match '\{ASSET4\}') {
+        $short = "$(Get-DEHashPath -Object $Profile -Path 'shortName')" -replace '[^A-Za-z0-9]', ''
+        if ($short.Length -lt 2 -or $short.Length -gt 5) { throw 'shortName must be 2-5 letters/numbers for the canonical {CLIENT}-{ROLE}-{ASSET4} hostname pattern' }
+    }
     $secrets = Test-DEProfileHasSecrets -Profile $Profile
     if ($secrets.Count) { throw "refusing to save profile '$($Profile.id)': secret-looking keys present ($($secrets -join ', ')). Secrets are runtime-only." }
     $dirs = Get-DEProfileDirectories
@@ -169,22 +194,40 @@ function New-DEProvisioningContext {
         [string]$ClientId,
         [ValidateSet('new', 'dropship', 'takeover', 'replacement', 'repair', 'co-managed', 'audit', 'deprovision')][string]$Mode = 'audit',
         [string]$EndUser, [string]$EndUserEmail, [string]$JumpCloudUser, [string]$LocalUserName,
+        [ValidateSet('internal', 'external')][string]$PersonClass = 'internal',
         [string]$Site = '', [string]$DeviceRole = 'laptop', [string]$AssetTag = '', [string]$OrderNumber = '', [string]$WarrantyEnd = '', [string]$DesiredHostname = ''
     )
     $client = $null
     if ($ClientId) { $client = Get-DEClientProfile -Id $ClientId } else { $r = Resolve-DEClientContext -Snapshot $Snapshot; if ($r.best) { $client = Get-DEClientProfile -Id $r.best.id } }
     $eu = Resolve-DEEndUser -Snapshot $Snapshot -Technician $Technician
     if (-not $EndUser) { $EndUser = $eu.endUser }
+    $namingStatus = 'canonical'
+    $known = $null
+    if ($client -and $EndUser) {
+        $known = @(@(Get-DEHashPath -Object $client -Path 'knownUsers' | Where-Object { $null -ne $_ }) | Where-Object {
+            ("$(Get-DEHashPath -Object $_ -Path 'sourcePrincipal')" -and "$(Get-DEHashPath -Object $_ -Path 'sourcePrincipal')" -ieq $EndUser) -or
+            ("$(Get-DEHashPath -Object $_ -Path 'displayName')" -and "$(Get-DEHashPath -Object $_ -Path 'displayName')" -ieq (($EndUser -split '\\')[-1]))
+        }) | Select-Object -First 1
+    }
+    if (-not $LocalUserName -and $known -and $Mode -in @('takeover','repair','deprovision')) {
+        $legacyLocal = "$(Get-DEHashPath -Object $known -Path 'localUserName')"
+        if ($legacyLocal) { $LocalUserName = $legacyLocal; $namingStatus = 'inherited-exception' }
+        if (-not $JumpCloudUser) { $JumpCloudUser = "$(Get-DEHashPath -Object $known -Path 'jumpcloudUser')" }
+    }
     if (-not $LocalUserName -and $EndUser) {
-        $conv = $(if ($client -and $client.identity.usernameConvention) { $client.identity.usernameConvention } else { 'first-initial-lastname' })
-        $LocalUserName = ConvertTo-DELocalUserName -DisplayOrPrincipal $EndUser -Convention $conv
+        $conv = $(if ($client -and $client.identity.usernameConvention) { $client.identity.usernameConvention } else { 'firstname.lastname' })
+        $LocalUserName = ConvertTo-DELocalUserName -DisplayOrPrincipal $EndUser -Convention $conv -PersonClass $PersonClass
     }
     if (-not $JumpCloudUser) { $JumpCloudUser = $LocalUserName }
+    if (-not $EndUserEmail -and $client -and $LocalUserName) {
+        $primaryDomain = "$(Get-DEHashPath -Object $client -Path 'identity.primaryDomain')".Trim()
+        if ($primaryDomain) { $EndUserEmail = "$LocalUserName@$(Test-DEIdentityDomain -Domain $primaryDomain)" }
+    }
     $ctx = @{
         technician = $Technician; mode = $Mode
         client = $(if ($client) { $client.id } else { $null }); clientName = $(if ($client) { $client.name } else { $null }); tier = $(if ($client) { $client.tier } else { $null }); site = $Site
         endUser = $EndUser; endUserEmail = $EndUserEmail; endUserSource = $eu.endUserSource; sourcePrincipal = $(if ($eu.endUserIsEntraPrincipal) { $eu.endUser } elseif ($EndUser -match '\\') { $EndUser } else { $null })
-        localUserName = $LocalUserName; jumpcloudUser = $JumpCloudUser
+        localUserName = $LocalUserName; jumpcloudUser = $JumpCloudUser; personClass = $PersonClass; namingStatus = $namingStatus
         device = @{ hostname = (Get-DEHashPath -Object $Snapshot -Path 'device.hostname'); serial = (Get-DEHashPath -Object $Snapshot -Path 'device.serial'); model = (Get-DEHashPath -Object $Snapshot -Path 'device.model'); role = $DeviceRole; assetTag = $AssetTag; orderNumber = $OrderNumber; warrantyEnd = $WarrantyEnd; desiredHostname = $DesiredHostname }
         hubAccountId = $(if ($client) { "$(Get-DEHashPath -Object $client -Path 'hub.accountId')" } else { '' })
         started = (Get-Date).ToString('o')
@@ -194,17 +237,32 @@ function New-DEProvisioningContext {
 }
 
 function ConvertTo-DELocalUserName {
-    param([Parameter(Mandatory = $true)][string]$DisplayOrPrincipal, [string]$Convention = 'first-initial-lastname')
+    param(
+        [Parameter(Mandatory = $true)][string]$DisplayOrPrincipal,
+        [string]$Convention = 'firstname.lastname',
+        [ValidateSet('internal','external')][string]$PersonClass = 'internal'
+    )
     $name = ($DisplayOrPrincipal -split '\\')[-1] -replace '@.*$', ''
     # split CamelCase or spaced names: SuzetteThompson -> Suzette Thompson
     $parts = @(($name -creplace '([a-z])([A-Z])', '$1 $2') -split '[\s._\-]+' | Where-Object { $_ })
-    if ($parts.Count -lt 2) { return ($name.ToLowerInvariant() -replace '[^a-z0-9]', '') }
-    $first = $parts[0].ToLowerInvariant(); $last = $parts[-1].ToLowerInvariant()
+    if ($parts.Count -lt 2) {
+        $single = ($name.ToLowerInvariant() -replace '[^a-z0-9]', '')
+        return "$(if ($PersonClass -eq 'external') { "$single-ext" } else { $single })"
+    }
+    $first = $parts[0]; $last = $parts[-1]
     switch ($Convention) {
-        'first-initial-lastname' { return (($first.Substring(0, 1) + $last) -replace '[^a-z0-9]', '') }
-        'firstname-lastname' { return (("$first.$last") -replace '[^a-z0-9.]', '') }
-        'firstname' { return ($first -replace '[^a-z0-9]', '') }
-        default { return (($first.Substring(0, 1) + $last) -replace '[^a-z0-9]', '') }
+        'firstname.lastname' { return (New-DEHumanAccountStem -FirstName $first -LastName $last -PersonClass $PersonClass) }
+        'firstname-lastname' { return (New-DEHumanAccountStem -FirstName $first -LastName $last -PersonClass $PersonClass) } # legacy alias
+        'first-initial-lastname' {
+            $f = ConvertTo-DEAccountToken -Value $first -Field 'firstName'; $l = ConvertTo-DEAccountToken -Value $last -Field 'lastName'
+            $legacy = "$($f.Substring(0,1))$l"
+            return "$(if ($PersonClass -eq 'external') { "$legacy-ext" } else { $legacy })"
+        }
+        'firstname' {
+            $legacy = ConvertTo-DEAccountToken -Value $first -Field 'firstName'
+            return "$(if ($PersonClass -eq 'external') { "$legacy-ext" } else { $legacy })"
+        }
+        default { throw "unsupported username convention '$Convention'" }
     }
 }
 
