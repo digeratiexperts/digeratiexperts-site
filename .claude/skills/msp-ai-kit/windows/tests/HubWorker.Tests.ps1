@@ -358,7 +358,7 @@ Describe 'DE Microsoft Admin Hub job loop' {
         $b = $global:HwT.ExoBound
         $b.AppId | Should -Be 'app-id'; $b.CertificateThumbprint | Should -Be 'ABCDEF'; $b.Organization | Should -Be 'alamoindustries.onmicrosoft.com'; $b.ShowBanner.IsPresent | Should -Be $false
         @($b.Keys | Where-Object { $_ -match $secretParams }).Count | Should -Be 0
-        $r.status | Should -Be 'Succeeded'; $r.data.mode | Should -Be 'app'; $r.version | Should -Be '0.6.0'
+        $r.status | Should -Be 'Succeeded'; $r.data.mode | Should -Be 'app'; $r.version | Should -Be '0.7.0'
         { Connect-DEExchange -AppId 'app-id' -CertificateThumbprint 'ABCDEF' -Organization 'alamo-industries.com' } | Should -Throw
         $null = Connect-DEExchange -UserPrincipalName 'admin@alamo-industries.com'
         $global:HwT.ExoBound.UserPrincipalName | Should -Be 'admin@alamo-industries.com'; $global:HwT.ExoBound.ContainsKey('AppId') | Should -Be $false

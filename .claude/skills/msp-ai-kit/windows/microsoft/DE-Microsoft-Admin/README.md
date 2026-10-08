@@ -1,4 +1,4 @@
-# DE Microsoft Admin (v0.6.0)
+# DE Microsoft Admin (v0.7.0)
 
 A standalone PowerShell module that Digerati Experts uses to administer Microsoft 365, Entra ID, Exchange
 Online, Intune, Windows Autopilot and Azure.
@@ -8,6 +8,14 @@ Online, Intune, Windows Autopilot and Azure.
 - The Intelligence Hub can run it through signed jobs.
 
 It works on Windows PowerShell 5.1 and PowerShell 7.
+
+**0.7.0:**
+- `Import-DEAutopilotDevice` registers a device in Autopilot from its hardware hash, with an optional group tag and
+  assigned user, and waits until Autopilot lists it. It is on the Hub job allowlist, so the Hub can send an approved
+  import (Hub: **Tech Center > Microsoft 365 admin jobs**, which loads DE Deploy's CSV). The hash goes to Graph only:
+  never into the result, the audit log or the message. See [Autopilot import](#autopilot-import).
+- `Import-DEAutopilotCsv` imports every row of an Autopilot CSV (DE Deploy's, or `Get-WindowsAutopilotInfo`'s) at a
+  prompt, one result per row.
 
 **0.6.0:**
 - The Hub worker runs Exchange Online and Azure jobs unattended. `Invoke-DEHubJobLoop` signs in to Exchange Online
@@ -65,6 +73,7 @@ Get-DETenantSummary
 Get-DEUser -Search suzette
 Test-DEEntraBitLockerEscrow -DeviceId <DeviceId from dsregcmd /status> -KeyProtectorId <protector id>
 Remove-DEAutopilotDevice -Serial PF3ABC12 -WhatIf
+Import-DEAutopilotCsv -Path E:\autopilot\dell_PF3ABC12-autopilot.csv -GroupTag ALAMO-STD -WhatIf   # -Scenario Autopilot
 
 # a new hire (Users scenario): the temporary password comes back once, as a SecureString
 $r = New-DEUser -DisplayName 'New Hire' -UserPrincipalName new.hire@alamo-industries.com -UsageLocation US
@@ -81,7 +90,7 @@ $r = New-DEUser -DisplayName 'New Hire' -UserPrincipalName new.hire@alamo-indust
 | Exchange | `Connect-DEExchange` (user sign-in, or app-only with a certificate), `Get-DEMailbox`, `New-DESharedMailbox`, `Set-DEMailboxPermission` (FullAccess, SendAs, SendOnBehalf), `Set-DEMailboxAlias` (add or remove), `Set-DEMailboxForwarding` (set or stop), `Get-DETransportRule` (risky rules flagged) |
 | Azure | `Connect-DEAzure` (interactive, or a service principal with a certificate), `Get-DEAzureSubscription`, `Get-DEAzureInventory`, `New-DEAzureResourceGroup`, `New-DEAzureResourceLock` |
 | Intune | `Get-DEIntuneDevice` (by serial or user, filtered on the server), `Get-DEIntuneCompliancePolicy`, `Get-DEIntuneConfigurationProfile` (classic and Settings Catalog), `Sync-DEIntuneDevice`, `Invoke-DEIntuneDeviceAction` (Sync, Restart, Lock, Retire, Wipe, FreshStart) |
-| Autopilot | `Get-DEAutopilotDevice`, `Get-DEAutopilotProfile` (Graph beta), `Set-DEAutopilotGroupTag`, `Remove-DEAutopilotDevice` |
+| Autopilot | `Get-DEAutopilotDevice`, `Get-DEAutopilotProfile` (Graph beta), `Import-DEAutopilotDevice`, `Import-DEAutopilotCsv`, `Set-DEAutopilotGroupTag`, `Remove-DEAutopilotDevice` |
 | Results | `New-DEResult`, `Export-DEResult` (UTF-8 without a BOM), `Set-DEMsAuditPath` |
 | Email migration | `New-DEMigrationProject`, `Get-DEMigrationProject`, `Get-DEMigrationSourceType`, `Add-DEMigrationUser`, `Test-DEGmailImapAccess`, `Set-DEMigrationSharedMailbox`, `Test-DEMigrationSharedMailbox`, `New-DEMigrationBatch`, `Get-DEMigrationStatus`, `Confirm-DEMigrationPilot`, `Complete-DEMigrationBatch`, `Import-DEMigrationContacts`, `Import-DEMigrationCalendar`, `Get-DEMailClientInventory`, `Import-DEMailClientInventory`, `Get-DEMigrationNextStep`, `Test-DEMigrationDns`, `Test-DEMigrationMailFlow`, `Test-DEMigrationMfa`, `Invoke-DEBounceDiagnostic`, `Resolve-DEMigrationBounce`, `Set-DEMigrationCheck`, `New-DEMigrationSignoff`, `Close-DEMigrationProject`, `Export-DEMigrationRecord`, `Set-DEMigrationDirectory` |
 | Hub jobs | `Invoke-DEHubJobLoop` (claim, verify, run, post), `ConvertTo-DEHubSafeResult`, `New-DEMicrosoftJob`, `Invoke-DEMicrosoftJob`, `Get-DEJobSignature`, `ConvertTo-DEJobCanonical` |
@@ -100,6 +109,7 @@ records, MFA registration), `Reports`.
 | `Set-DEMailboxAlias` | an address on a domain Exchange doesn't accept, an address another recipient already has, or removing the primary address |
 | `Set-DEMailboxForwarding` | forwarding outside the tenant without `-AllowExternal` (the classic exfiltration move, and blocked by Microsoft's outbound spam policy by default). A copy stays in the mailbox unless `-KeepCopy $false`. |
 | `Invoke-DEIntuneDeviceAction` | Retire, Wipe or Fresh Start without `-ConfirmDeviceName` set to the device's exact name; remote lock on Windows (Intune doesn't support it) |
+| `Import-DEAutopilotDevice` | a hash that isn't base64 of a plausible size; a placeholder firmware serial (`Default string`, `System Serial Number`, ...); a serial already registered with a different group tag (`Set-DEAutopilotGroupTag` changes it); a serial already being imported. A serial already registered with the same tag is a no-op. |
 | `Set-DEAutopilotGroupTag` | a serial that matches no record or more than one. It uses `updateDeviceProperties` (a PATCH is accepted and ignored by Graph) and reads the tag back. |
 | `New-DEAzureResourceLock` | a lock on one resource without `-ResourceType`, or a same-named lock at another level; warns that ReadOnly also blocks routine operations |
 
@@ -109,6 +119,34 @@ records, MFA registration), `Reports`.
 - If Intune still holds the device, it refuses unless you pass `-RemoveIntuneRecord`. It then deletes the
   Intune record first, as Microsoft requires.
 - It waits until the Autopilot record is gone, and reports `Partial` if Autopilot is still slow to drop it.
+
+## Autopilot import
+
+Registers a device in Autopilot from its hardware hash. DE Deploy captures the hash (WinPE menu 2, or first boot
+option 3) into an Intune CSV: `Device Serial Number`, `Windows Product ID`, `Hardware Hash`, `Group Tag`,
+`Assigned User`.
+
+```powershell
+Connect-DEMicrosoft -TenantId alamo-industries.com -Scenario Autopilot
+Import-DEAutopilotCsv -Path .\dell_PF3ABC12-autopilot.csv -GroupTag ALAMO-STD            # every row; a row's own Group Tag wins
+Import-DEAutopilotDevice -Serial PF3ABC12 -HardwareHash $hash -GroupTag ALAMO-STD -AssignedUser helen@alamo-industries.com
+```
+
+What `Import-DEAutopilotDevice` does:
+
+1. Checks the hash and serial, and whether the serial is already registered or already being imported. A dry run
+   stops here.
+2. Removes an earlier failed import of this serial, then imports (`importedWindowsAutopilotDeviceIdentities`).
+3. Waits up to `-WaitSeconds` (default 600) for Intune to finish. Intune's refusal is `Failed` with the reason (for
+   example, a device still registered to its seller's or previous owner's tenant).
+4. Removes the finished import record, asks Autopilot to sync, and reads the device back. `Succeeded` means
+   Autopilot lists it; still processing at the deadline is `Partial`.
+
+The group tag's dynamic group assigns the deployment profile, usually within minutes. Then the device can go through
+OOBE (DE Deploy's Autopilot setup mode, or **Seal for Autopilot** at first boot).
+
+As a Hub job the hash travels in the job's parameters. The Hub keeps it only until the job is finished, denied or
+expired, then removes it from the stored job.
 
 ## Email migration (Gmail to Microsoft 365)
 
