@@ -51,6 +51,7 @@ export const DE_SYNC_EVENT_TYPES = [
   "device.observed",
   "device.rescue_handoff",
   "device.warranty",
+  "device.deployment",
   "email_migration.recorded",
   "service_request.upserted",
 ] as const;

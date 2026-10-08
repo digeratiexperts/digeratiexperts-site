@@ -62,7 +62,7 @@ function New-DEResult {
     <# One result shape for every operation: Succeeded | DryRun | Failed | Refused | Partial. #>
     param([Parameter(Mandatory = $true)][string]$Operation, [ValidateSet('Succeeded', 'DryRun', 'Failed', 'Refused', 'Partial')][string]$Status = 'Succeeded', [object]$Data, [string]$Message = '', [string]$Target = '', [string]$JobId)
     Write-DEMsAudit -Operation $Operation -Status $Status -Target $Target -Message $Message -JobId $JobId
-    return [pscustomobject][ordered]@{ product = 'DE Microsoft Admin'; version = '0.6.0'; operation = $Operation; status = $Status; target = $Target; tenant = $script:Ctx.TenantId; at = (Get-Date).ToUniversalTime().ToString('o'); message = $Message; data = $Data }
+    return [pscustomobject][ordered]@{ product = 'DE Microsoft Admin'; version = '0.7.0'; operation = $Operation; status = $Status; target = $Target; tenant = $script:Ctx.TenantId; at = (Get-Date).ToUniversalTime().ToString('o'); message = $Message; data = $Data }
 }
 function Export-DEResult {
     <# Writes a result as UTF-8 JSON without a BOM (Node, Python and the Hub reject one). #>
@@ -677,6 +677,113 @@ function Remove-DEAutopilotDevice {
     return (New-DEResult -Operation 'Remove-DEAutopilotDevice' -Status $(if ($gone) { 'Succeeded' } else { 'Partial' }) -Target $Serial -Message $(if ($gone) { 'removed from Autopilot (read back)' } else { "delete accepted but still listed after $WaitSeconds s; Autopilot can take up to 30 minutes" }) -Data $plan)
 }
 
+# Serials that firmware ships unfilled: shared by unrelated devices, so Autopilot cannot tell one from another.
+$script:GenericSerials = @('default string', 'system serial number', 'to be filled by o.e.m.', 'not specified', 'none', '0', '0123456789', '123456789')
+# Autopilot import errors a technician can act on (Graph importedWindowsAutopilotDeviceIdentityState.deviceErrorName).
+$script:AutopilotImportErrors = @{
+    ZtdDeviceAlreadyAssigned = 'the device is registered to another organization: its seller or previous owner must deregister it first'
+    ZtdDeviceDuplicated      = 'the device is already registered in this tenant'
+    ZtdDeviceAssignedToOtherTenant = 'the device is registered to another tenant: its seller or previous owner must deregister it first'
+}
+function Test-DEAutopilotHash {
+    <# The hardware hash as Graph takes it: base64 of 100 bytes to 16 KB (OA3Tool and the MDM bridge give about 4 KB). Returns the reason it is not, or ''. #>
+    param([AllowEmptyString()][string]$HardwareHash)
+    $h = "$HardwareHash".Trim()
+    if (-not $h) { return 'no hardware hash' }
+    if ($h -notmatch '^[A-Za-z0-9+/]+={0,2}$' -or ($h.Length % 4) -ne 0) { return 'the hardware hash is not base64 (copy the "Hardware Hash" column whole)' }
+    $n = [Convert]::FromBase64String($h).Length
+    if ($n -lt 100 -or $n -gt 16384) { return "the hardware hash is $n bytes; a real one is about 4 KB" }
+    return ''
+}
+function Import-DEAutopilotDevice {
+    <#
+        Registers one device in Autopilot from its hardware hash (DE Deploy's capture, Get-WindowsAutopilotInfo or the
+        Intune CSV), with an optional group tag and assigned user, and waits for Intune to finish.
+          * Refuses a hash that is not base64, a generic firmware serial, and an import of this serial already running.
+          * A serial already registered with the same group tag (or none asked) is Succeeded with nothing changed; with a
+            different tag it is Refused (Set-DEAutopilotGroupTag changes a tag).
+          * A failed earlier import of this serial is removed before importing again.
+          * Done when the import is complete and the device is listed in Autopilot (read back). Still processing at
+            -WaitSeconds is Partial; an import Intune rejects is Failed with Intune's reason.
+        The hash is sent to Graph only: it is never in the result, the audit log or the message.
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param(
+        [Parameter(Mandatory = $true)][ValidatePattern('^[A-Za-z0-9 ._/-]{1,64}$')][string]$Serial,
+        [Parameter(Mandatory = $true)][string]$HardwareHash,
+        [AllowEmptyString()][ValidatePattern('^[A-Za-z0-9 _.-]{0,200}$')][string]$GroupTag = '',
+        [AllowEmptyString()][ValidatePattern('^$|^[A-Za-z0-9._''-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}$')][string]$AssignedUser = '',
+        [ValidateRange(0, 1800)][int]$WaitSeconds = 600,
+        [switch]$DryRun
+    )
+    $op = 'Import-DEAutopilotDevice'; $Serial = $Serial.Trim()
+    $bad = Test-DEAutopilotHash -HardwareHash $HardwareHash
+    if ($bad) { return (New-DEResult -Operation $op -Status Refused -Target $Serial -Message "$bad; nothing imported") }
+    if ($script:GenericSerials -contains $Serial.ToLowerInvariant()) { return (New-DEResult -Operation $op -Status Refused -Target $Serial -Message "'$Serial' is a placeholder firmware serial that other devices share; Autopilot needs the device's real serial (the maker can set it); nothing imported") }
+    $plan = [ordered]@{ serial = $Serial; groupTag = $GroupTag; assignedUser = $AssignedUser; importId = $null; importStatus = $null; autopilotId = $null }
+    $exact = @(Find-DEAutopilotBySerial -Serial $Serial)
+    if ($exact.Count -gt 1) { return (New-DEResult -Operation $op -Status Refused -Target $Serial -Message "$($exact.Count) Autopilot records already have this serial; nothing imported") }
+    if ($exact.Count -eq 1) {
+        $plan.autopilotId = $exact[0].id; $have = "$($exact[0].groupTag)"
+        if (-not $GroupTag -or $have -ceq $GroupTag) { return (New-DEResult -Operation $op -Target $Serial -Message "already registered in Autopilot$(if ($have) { " with group tag '$have'" }); nothing changed" -Data ([pscustomobject]$plan)) }
+        return (New-DEResult -Operation $op -Status Refused -Target $Serial -Message "already registered with group tag '$have', not '$GroupTag'; nothing imported (Set-DEAutopilotGroupTag changes the tag)" -Data ([pscustomobject]$plan))
+    }
+    $earlier = @(Invoke-DEGraphRequest -Uri 'deviceManagement/importedWindowsAutopilotDeviceIdentities' -All | Where-Object { "$($_.serialNumber)".Trim() -ieq $Serial })
+    $running = @($earlier | Where-Object { "$($_.state.deviceImportStatus)" -in @('unknown', 'pending', 'partial') })
+    if ($running.Count) { return (New-DEResult -Operation $op -Status Refused -Target $Serial -Message "an import of this serial is already processing ($($running[0].state.deviceImportStatus)); nothing imported" -Data ([pscustomobject]$plan)) }
+    $stale = @($earlier | Where-Object { "$($_.state.deviceImportStatus)" -in @('error', 'complete') })
+    if ($DryRun -or -not $PSCmdlet.ShouldProcess($Serial, "import into Autopilot$(if ($GroupTag) { " with group tag '$GroupTag'" })$(if ($AssignedUser) { " for $AssignedUser" })")) {
+        return (New-DEResult -Operation $op -Status DryRun -Target $Serial -Message "no change applied$(if ($stale.Count) { " ($($stale.Count) earlier import record(s) would be removed first)" })" -Data ([pscustomobject]$plan))
+    }
+    foreach ($s in $stale) { $null = Invoke-DEGraphRequest -Method DELETE -Uri "deviceManagement/importedWindowsAutopilotDeviceIdentities/$($s.id)" }
+    $body = [ordered]@{ '@odata.type' = '#microsoft.graph.importedWindowsAutopilotDeviceIdentity'; serialNumber = $Serial; hardwareIdentifier = $HardwareHash.Trim(); groupTag = $GroupTag; assignedUserPrincipalName = $AssignedUser; productKey = '' }
+    $created = Invoke-DEGraphRequest -Method POST -Uri 'deviceManagement/importedWindowsAutopilotDeviceIdentities' -Body $body
+    $plan.importId = "$($created.id)"
+    if (-not $plan.importId) { return (New-DEResult -Operation $op -Status Failed -Target $Serial -Message 'Graph accepted the import but returned no import id; check Intune (Devices > Windows > Enrollment > Devices) before trying again' -Data ([pscustomobject]$plan)) }
+    $deadline = (Get-Date).AddSeconds($WaitSeconds); $state = $created.state
+    while ("$($state.deviceImportStatus)" -notin @('complete', 'error') -and (Get-Date) -lt $deadline) {
+        Start-Sleep -Seconds 10
+        $state = (Invoke-DEGraphRequest -Uri "deviceManagement/importedWindowsAutopilotDeviceIdentities/$($plan.importId)").state
+    }
+    $plan.importStatus = "$($state.deviceImportStatus)"
+    if ($plan.importStatus -eq 'error') {
+        $name = "$($state.deviceErrorName)"; $why = $(if ($name -and $script:AutopilotImportErrors.ContainsKey($name)) { "$($script:AutopilotImportErrors[$name]) ($name)" } else { "Intune refused it ($name, code $($state.deviceErrorCode)); if the hash is at fault, capture it again from the device's own Windows" })
+        return (New-DEResult -Operation $op -Status Failed -Target $Serial -Message "import failed: $why" -Data ([pscustomobject]$plan))
+    }
+    if ($plan.importStatus -ne 'complete') { return (New-DEResult -Operation $op -Status Partial -Target $Serial -Message "import accepted; Intune still shows '$($plan.importStatus)' after $WaitSeconds s (it can take 15 minutes): check with Get-DEAutopilotDevice" -Data ([pscustomobject]$plan)) }
+    # the import record has done its job (Microsoft's own scripts remove it too); then ask Autopilot to list the device now
+    try { $null = Invoke-DEGraphRequest -Method DELETE -Uri "deviceManagement/importedWindowsAutopilotDeviceIdentities/$($plan.importId)" } catch { Write-Verbose "import record left: $($_.Exception.Message)" }
+    try { $null = Invoke-DEGraphRequest -Method POST -Uri 'deviceManagement/windowsAutopilotSettings/sync' } catch { Write-Verbose "sync not requested (Autopilot allows one every few minutes): $($_.Exception.Message)" }
+    do {
+        $now = @(Find-DEAutopilotBySerial -Serial $Serial)
+        if ($now.Count) { $plan.autopilotId = $now[0].id; break }
+        if ((Get-Date) -ge $deadline) { break }
+        Start-Sleep -Seconds 10
+    } while ($true)
+    if (-not $plan.autopilotId) { return (New-DEResult -Operation $op -Status Partial -Target $Serial -Message 'import complete; Autopilot does not list the device yet (it can take 15 minutes): check with Get-DEAutopilotDevice' -Data ([pscustomobject]$plan)) }
+    return (New-DEResult -Operation $op -Target $Serial -Message "registered in Autopilot (read back)$(if ($GroupTag) { " with group tag '$GroupTag'" }); a profile is assigned by the tag's group, usually within minutes" -Data ([pscustomobject]$plan))
+}
+function Import-DEAutopilotCsv {
+    <#
+        Imports every row of an Intune Autopilot CSV (DE Deploy's capture or Get-WindowsAutopilotInfo: Device Serial
+        Number, Hardware Hash, and optional Group Tag and Assigned User) through Import-DEAutopilotDevice, one result per
+        row. -GroupTag fills rows that have none. Not a Hub job: the Hub sends one device per job.
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param([Parameter(Mandatory = $true)][string]$Path, [AllowEmptyString()][string]$GroupTag = '', [ValidateRange(0, 1800)][int]$WaitSeconds = 600, [switch]$DryRun)
+    if (-not (Test-Path -LiteralPath $Path)) { return (New-DEResult -Operation 'Import-DEAutopilotCsv' -Status Failed -Target $Path -Message 'file not found') }
+    $rows = @(Import-Csv -LiteralPath $Path)
+    $cols = @(if ($rows.Count) { $rows[0].PSObject.Properties.Name })
+    if (-not $rows.Count -or $cols -notcontains 'Device Serial Number' -or $cols -notcontains 'Hardware Hash') { return (New-DEResult -Operation 'Import-DEAutopilotCsv' -Status Refused -Target $Path -Message 'not an Autopilot CSV: it needs "Device Serial Number" and "Hardware Hash" columns and at least one row') }
+    foreach ($row in $rows) {
+        $tag = $(if ($cols -contains 'Group Tag' -and "$($row.'Group Tag')") { "$($row.'Group Tag')" } else { $GroupTag })
+        $user = $(if ($cols -contains 'Assigned User') { "$($row.'Assigned User')".Trim() } else { '' })
+        $p = @{ Serial = "$($row.'Device Serial Number')".Trim(); HardwareHash = "$($row.'Hardware Hash')"; GroupTag = $tag; AssignedUser = $user; WaitSeconds = $WaitSeconds; DryRun = $DryRun }
+        if ($WhatIfPreference) { $p['WhatIf'] = $true } else { $p['Confirm'] = $false }
+        try { Import-DEAutopilotDevice @p } catch { New-DEResult -Operation 'Import-DEAutopilotDevice' -Status Refused -Target $p.Serial -Message "row not imported: $($_.Exception.Message -replace '[A-Za-z0-9+/]{200,}={0,2}', '[hash]')" }
+    }
+}
+
 # ============================================================ signed Hub jobs
 # Operations a Hub job may run. mutating = needs approvedBy and mode 'apply' to change anything.
 $script:JobAllowlist = @{
@@ -685,7 +792,7 @@ $script:JobAllowlist = @{
     'Get-DEAutopilotDevice' = $false; 'Get-DEAutopilotProfile' = $false; 'Get-DEMailbox' = $false; 'Get-DEAzureInventory' = $false; 'Get-DETransportRule' = $false; 'Get-DEAzureSubscription' = $false
     'Set-DEUserAccountState' = $true; 'Add-DEGroupMember' = $true; 'Sync-DEIntuneDevice' = $true; 'Remove-DEAutopilotDevice' = $true; 'New-DESharedMailbox' = $true; 'Set-DEMailboxPermission' = $true; 'New-DEAzureResourceGroup' = $true
     'New-DEUser' = $true; 'New-DEGroup' = $true; 'Set-DEConditionalAccessPolicyState' = $true; 'Set-DEMailboxAlias' = $true; 'Set-DEMailboxForwarding' = $true
-    'Invoke-DEIntuneDeviceAction' = $true; 'Set-DEAutopilotGroupTag' = $true; 'New-DEAzureResourceLock' = $true
+    'Invoke-DEIntuneDeviceAction' = $true; 'Set-DEAutopilotGroupTag' = $true; 'New-DEAzureResourceLock' = $true; 'Import-DEAutopilotDevice' = $true
 }
 # The service an allowlisted operation signs in to besides Graph (every operation not listed here is Graph only).
 # The Hub worker connects that service only when a job for it has verified (Invoke-DEMicrosoftJob -BeforeRun).
@@ -813,6 +920,6 @@ Export-ModuleMember -Function Set-DEMsAuditPath, Get-DEMsAuditPath, New-DEResult
     Get-DETenantSummary, Get-DEUser, New-DEUser, Set-DEUserAccountState, Get-DEGroup, New-DEGroup, Add-DEGroupMember, Get-DELicenseInventory, Get-DEConditionalAccessPolicy, Set-DEConditionalAccessPolicyState, Get-DEMfaRegistration,
     Get-DEEntraDevice, Test-DEEntraBitLockerEscrow, Connect-DEExchange, Get-DEMailbox, New-DESharedMailbox, Set-DEMailboxPermission, Set-DEMailboxAlias, Set-DEMailboxForwarding, Get-DETransportRule,
     Connect-DEAzure, Get-DEAzureSubscription, Get-DEAzureInventory, New-DEAzureResourceGroup, New-DEAzureResourceLock,
-    Get-DEIntuneDevice, Get-DEIntuneCompliancePolicy, Get-DEIntuneConfigurationProfile, Sync-DEIntuneDevice, Invoke-DEIntuneDeviceAction, Get-DEAutopilotDevice, Get-DEAutopilotProfile, Set-DEAutopilotGroupTag, Remove-DEAutopilotDevice,
+    Get-DEIntuneDevice, Get-DEIntuneCompliancePolicy, Get-DEIntuneConfigurationProfile, Sync-DEIntuneDevice, Invoke-DEIntuneDeviceAction, Get-DEAutopilotDevice, Get-DEAutopilotProfile, Set-DEAutopilotGroupTag, Remove-DEAutopilotDevice, Import-DEAutopilotDevice, Import-DEAutopilotCsv,
     ConvertTo-DEJobCanonical, Get-DEJobSignature, New-DEMicrosoftJob, Invoke-DEMicrosoftJob, Invoke-DEHubJobLoop, ConvertTo-DEHubSafeResult,
     Get-DEMigrationProject, Get-DEMigrationSourceType, New-DEMigrationProject, Add-DEMigrationUser, Test-DEGmailImapAccess, Set-DEMigrationSharedMailbox, Test-DEMigrationSharedMailbox, New-DEMigrationBatch, Get-DEMigrationStatus, Confirm-DEMigrationPilot, Complete-DEMigrationBatch, Import-DEMigrationContacts, Import-DEMigrationCalendar, Test-DEMigrationDns, Test-DEMigrationMailFlow, Test-DEMigrationMfa, Get-DEMailClientInventory, Import-DEMailClientInventory, Get-DEMigrationNextStep, Invoke-DEBounceDiagnostic, Resolve-DEMigrationBounce, Set-DEMigrationCheck, New-DEMigrationSignoff, Close-DEMigrationProject, Export-DEMigrationRecord, Set-DEMigrationDirectory

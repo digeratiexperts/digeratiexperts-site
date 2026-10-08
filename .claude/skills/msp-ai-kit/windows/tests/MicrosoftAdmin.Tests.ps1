@@ -201,6 +201,96 @@ Describe 'DE Microsoft Admin' {
         (Set-DEAutopilotGroupTag -Serial 'PF3ABC12' -GroupTag 'ALAMO-STD' -Confirm:$false).message | Should -Match 'nothing changed'
         (Set-DEAutopilotGroupTag -Serial 'PF3ABC' -GroupTag 'X' -Confirm:$false).status | Should -Be 'Refused'
     }
+    It 'Autopilot import refuses a bad hash, a placeholder serial, a registered serial with another tag and a running import' {
+        Mock -ModuleName DE-Microsoft-Admin Get-MgContext { @{ TenantId = 't1' } }
+        Mock -ModuleName DE-Microsoft-Admin Start-Sleep { throw 'nothing here may wait' }
+        $hash = [Convert]::ToBase64String([byte[]](1..300 | ForEach-Object { $_ % 256 }))
+        $global:MsT.Posts = @(); $global:MsT.Registered = @(); $global:MsT.Imports = @()
+        Mock -ModuleName DE-Microsoft-Admin Invoke-MgGraphRequest {
+            if ($Method -ne 'GET') { $global:MsT.Posts += , "$Method $Uri"; return $null }
+            if ($Uri -like '*importedWindowsAutopilotDeviceIdentities*') { return @{ value = @($global:MsT.Imports) } }
+            if ($Uri -like '*windowsAutopilotDeviceIdentities*') { return @{ value = @($global:MsT.Registered) } }
+            throw "unexpected $Uri"
+        }
+        (Import-DEAutopilotDevice -Serial 'PF3ABC12' -HardwareHash 'not a hash!' -Confirm:$false).status | Should -Be 'Refused'
+        (Import-DEAutopilotDevice -Serial 'PF3ABC12' -HardwareHash 'QUJD' -Confirm:$false).message | Should -Match 'bytes'
+        (Import-DEAutopilotDevice -Serial 'Default string' -HardwareHash $hash -Confirm:$false).message | Should -Match 'placeholder'
+        $global:MsT.Registered = @(@{ id = 'a1'; serialNumber = 'PF3ABC12'; groupTag = 'ALAMO-STD' })
+        $r = Import-DEAutopilotDevice -Serial 'PF3ABC12' -HardwareHash $hash -GroupTag 'ALAMO-STD' -Confirm:$false
+        $r.status | Should -Be 'Succeeded'; $r.message | Should -Match 'nothing changed'
+        (Import-DEAutopilotDevice -Serial 'PF3ABC12' -HardwareHash $hash -GroupTag 'OTHER' -Confirm:$false).status | Should -Be 'Refused'
+        $global:MsT.Registered = @(@{ id = 'a2'; serialNumber = 'PF3ABC123'; groupTag = '' })   # 'contains' near miss is not this device
+        $global:MsT.Imports = @(@{ id = 'i0'; serialNumber = 'PF3ABC12'; state = @{ deviceImportStatus = 'pending' } })
+        (Import-DEAutopilotDevice -Serial 'PF3ABC12' -HardwareHash $hash -Confirm:$false).message | Should -Match 'already processing'
+        $global:MsT.Posts.Count | Should -Be 0
+    }
+    It 'Autopilot import posts the hash to Graph only, waits for completion, cleans up and reads the device back' {
+        Mock -ModuleName DE-Microsoft-Admin Get-MgContext { @{ TenantId = 't1' } }
+        Mock -ModuleName DE-Microsoft-Admin Start-Sleep { }
+        $hash = [Convert]::ToBase64String([byte[]](1..300 | ForEach-Object { $_ % 256 }))
+        $global:MsT.Posts = @(); $global:MsT.Body = $null; $global:MsT.Polls = 0; $global:MsT.Listed = $false
+        $global:MsT.Imports = @(@{ id = 'old'; serialNumber = 'PF3ABC12'; state = @{ deviceImportStatus = 'error' } })
+        Mock -ModuleName DE-Microsoft-Admin Invoke-MgGraphRequest {
+            if ($Method -eq 'POST' -and $Uri -like '*importedWindowsAutopilotDeviceIdentities') { $global:MsT.Posts += , "POST import"; $global:MsT.Body = $Body; return @{ id = 'i1'; state = @{ deviceImportStatus = 'pending' } } }
+            if ($Method -ne 'GET') { $global:MsT.Posts += , "$Method $($Uri -replace '^.*/(beta|v1\.0)/', '')"; if ($Uri -like '*windowsAutopilotSettings/sync') { $global:MsT.Listed = $true }; return $null }
+            if ($Uri -like '*importedWindowsAutopilotDeviceIdentities/i1') { $global:MsT.Polls++; return @{ id = 'i1'; state = @{ deviceImportStatus = $(if ($global:MsT.Polls -ge 2) { 'complete' } else { 'pending' }) } } }
+            if ($Uri -like '*importedWindowsAutopilotDeviceIdentities') { return @{ value = @($global:MsT.Imports) } }
+            if ($Uri -like '*windowsAutopilotDeviceIdentities*') { return @{ value = @($(if ($global:MsT.Listed) { @{ id = 'a9'; serialNumber = 'PF3ABC12'; groupTag = 'ALAMO-STD' } })) } }
+            throw "unexpected $Uri"
+        }
+        (Import-DEAutopilotDevice -Serial 'PF3ABC12' -HardwareHash $hash -GroupTag 'ALAMO-STD' -WhatIf).status | Should -Be 'DryRun'
+        (Import-DEAutopilotDevice -Serial 'PF3ABC12' -HardwareHash $hash -GroupTag 'ALAMO-STD' -DryRun).message | Should -Match '1 earlier import'
+        $global:MsT.Posts.Count | Should -Be 0
+        $r = Import-DEAutopilotDevice -Serial 'PF3ABC12' -HardwareHash $hash -GroupTag 'ALAMO-STD' -AssignedUser 'helen@alamo-industries.com' -Confirm:$false
+        $r.status | Should -Be 'Succeeded'; $r.data.autopilotId | Should -Be 'a9'; $r.data.importStatus | Should -Be 'complete'
+        $global:MsT.Posts[0] | Should -Be 'DELETE deviceManagement/importedWindowsAutopilotDeviceIdentities/old'
+        $global:MsT.Posts[1] | Should -Be 'POST import'
+        $global:MsT.Posts | Should -Contain 'DELETE deviceManagement/importedWindowsAutopilotDeviceIdentities/i1'
+        $global:MsT.Posts | Should -Contain 'POST deviceManagement/windowsAutopilotSettings/sync'
+        $sent = $global:MsT.Body | ConvertFrom-Json
+        $sent.hardwareIdentifier | Should -Be $hash; $sent.groupTag | Should -Be 'ALAMO-STD'; $sent.assignedUserPrincipalName | Should -Be 'helen@alamo-industries.com'
+        (ConvertTo-Json -InputObject $r -Depth 10) | Should -Not -Match ([regex]::Escape($hash.Substring(0, 40)))
+        (Get-Content -LiteralPath (Get-DEMsAuditPath) -Raw) | Should -Not -Match ([regex]::Escape($hash.Substring(0, 40)))
+    }
+    It 'Autopilot import reports Intune''s refusal and a slow import honestly' {
+        Mock -ModuleName DE-Microsoft-Admin Get-MgContext { @{ TenantId = 't1' } }
+        Mock -ModuleName DE-Microsoft-Admin Start-Sleep { }
+        $hash = [Convert]::ToBase64String([byte[]](1..300 | ForEach-Object { $_ % 256 }))
+        $global:MsT.Status = 'error'
+        Mock -ModuleName DE-Microsoft-Admin Invoke-MgGraphRequest {
+            if ($Method -eq 'POST') { return @{ id = 'i1'; state = @{ deviceImportStatus = 'pending' } } }
+            if ($Method -ne 'GET') { return $null }
+            if ($Uri -like '*importedWindowsAutopilotDeviceIdentities/i1') { return @{ id = 'i1'; state = @{ deviceImportStatus = $global:MsT.Status; deviceErrorName = 'ZtdDeviceAlreadyAssigned'; deviceErrorCode = 806 } } }
+            return @{ value = @() }
+        }
+        $r = Import-DEAutopilotDevice -Serial 'PF3ABC12' -HardwareHash $hash -Confirm:$false
+        $r.status | Should -Be 'Failed'; $r.message | Should -Match 'another organization'
+        $global:MsT.Status = 'pending'
+        $r = Import-DEAutopilotDevice -Serial 'PF3ABC12' -HardwareHash $hash -WaitSeconds 0 -Confirm:$false
+        $r.status | Should -Be 'Partial'; $r.message | Should -Match 'still shows'
+    }
+    It 'Autopilot CSV import reads DE Deploy''s CSV, one result per row' {
+        Mock -ModuleName DE-Microsoft-Admin Get-MgContext { @{ TenantId = 't1' } }
+        Mock -ModuleName DE-Microsoft-Admin Invoke-MgGraphRequest { if ($Method -ne 'GET') { throw 'a dry run must not change anything' }; @{ value = @() } }
+        $hash = [Convert]::ToBase64String([byte[]](1..300 | ForEach-Object { $_ % 256 }))
+        $csv = Join-Path $global:MsT.Dir 'ap.csv'
+        Set-Content -LiteralPath $csv -Encoding UTF8 -Value @('"Device Serial Number","Windows Product ID","Hardware Hash","Group Tag","Assigned User"', "`"PF1`",`"`",`"$hash`",`"`",`"`"", "`"PF2`",`"`",`"$hash`",`"OWN-TAG`",`"`"")
+        $r = @(Import-DEAutopilotCsv -Path $csv -GroupTag 'ALAMO-STD' -DryRun)
+        $r.Count | Should -Be 2; @($r | Where-Object { $_.status -eq 'DryRun' }).Count | Should -Be 2
+        $r[0].data.groupTag | Should -Be 'ALAMO-STD'; $r[1].data.groupTag | Should -Be 'OWN-TAG'
+        Set-Content -LiteralPath $csv -Encoding UTF8 -Value 'Serial,Hash'
+        (Import-DEAutopilotCsv -Path $csv).status | Should -Be 'Refused'
+    }
+    It 'a Hub plan job for Import-DEAutopilotDevice runs as a dry run' {
+        Mock -ModuleName DE-Microsoft-Admin Get-MgContext { @{ TenantId = 't1' } }
+        Mock -ModuleName DE-Microsoft-Admin Invoke-MgGraphRequest { if ($Method -ne 'GET') { throw 'a plan job must not change anything' }; @{ value = @() } }
+        Mock -ModuleName DE-Microsoft-Admin Connect-MgGraph { }
+        $null = Connect-DEMicrosoft -TenantId 't1' -Scenario Autopilot
+        $hash = [Convert]::ToBase64String([byte[]](1..300 | ForEach-Object { $_ % 256 }))
+        $job = New-DEMicrosoftJob -TenantId 't1' -Operation 'Import-DEAutopilotDevice' -Parameters @{ Serial = 'PF3ABC12'; HardwareHash = $hash; GroupTag = 'ALAMO-STD'; WaitSeconds = 60 } -Mode plan -RequestedBy 'tech' -Secret $global:MsT.Secret
+        $r = Invoke-DEMicrosoftJob -JobJson ($job | ConvertTo-Json -Depth 5) -Secret $global:MsT.Secret -LedgerPath (Join-Path $global:MsT.Dir 'ledger-ap.txt')
+        $r.status | Should -Be 'DryRun'; $r.operation | Should -Be 'Import-DEAutopilotDevice'
+    }
     It 'Exchange: forwarding keeps a copy, external forwarding needs approval, aliases need an accepted and unused address' {
         Mock -ModuleName DE-Microsoft-Admin Get-AcceptedDomain { @([pscustomobject]@{ DomainName = 'alamo.com' }) }
         $global:MsT.Fwd = $null; $global:MsT.Set = @()
