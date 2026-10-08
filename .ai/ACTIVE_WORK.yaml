@@ -3159,6 +3159,7 @@ claims:
     owner: claude
     subsystem: store-door2
     branch: claude/nifty-newton-uk9g7t
+    pr: 545
     base_sha: 5fe8cbf7
     files:
       - client/src/styles/store-builder.css (container-type on the count card, one @container rule for .d2-dial only)
