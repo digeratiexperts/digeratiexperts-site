@@ -120,6 +120,7 @@ import {
 } from "./portalOrg";
 import { registerPortalDepartmentRoutes } from "./portalDepartmentRoutes";
 import { registerPortalTenantFileRoutes } from "./portalTenantFileRoutes";
+import { createDbVaultMetaStore, createConfiguredVaultBlobStore, registerClientVaultRoutes } from "./portalClientVault";
 import { registerPortalIntegrationStatusRoute } from "./portalIntegrations";
 import { registerManualRecordAdminRoutes } from "./portalManualRecords";
 import { registerHubServiceRequestStatusRoute, registerServiceRequestRoutes, startHoldSweeper, type ServiceRequestRouteDeps } from "./serviceRequestRoutes";
@@ -4884,6 +4885,20 @@ export async function registerRoutes(app: Express) {
     storage,
     getCompany: (id) => portalClients.get(id),
     getUserByEmail: (email) => portalUsers.get(email),
+    logSecurityEvent,
+  });
+
+  // Client vault: contracts, scripts, agent installers, PII (DE admin + MFA, never via View as)
+  registerClientVaultRoutes(app, {
+    auth: authMiddleware as any,
+    admin: requireAdmin as any,
+    getCompany: (id) => portalClients.get(id),
+    hasMfa: ({ id, email }) => {
+      const live = (email ? portalUsers.get(email) : null) as any;
+      return Boolean(live && live.id === id && live.mfaEnabled);
+    },
+    meta: createDbVaultMetaStore,
+    blobs: createConfiguredVaultBlobStore,
     logSecurityEvent,
   });
 

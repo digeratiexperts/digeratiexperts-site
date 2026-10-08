@@ -3050,6 +3050,35 @@ claims:
       and Store orders), and give dashboard cards vivid category colours with
       specific hex values (tickets, services, billing, requests, account).
       Merged in PR 512; live in production release bda8348 (2026-10-07).
+  - id: portal-admin-mode-client-vault
+    owner: claude
+    subsystem: portal-admin
+    branch: ccr-4ddd6954-9xjp62
+    base_sha: 228f13b6
+    files:
+      - shared/clientVault.ts (new)
+      - shared/schema.ts (client_vault_items, client_vault_audit appended)
+      - migrations/0014_client_vault.sql (new)
+      - server/portalClientVault.ts (new)
+      - server/portalClientVault.test.ts (new)
+      - server/routes.ts (registerClientVaultRoutes call only)
+      - client/src/components/portal/AdminModeSwitch.tsx (new)
+      - client/src/pages/portal/AdminClientWorkspace.tsx (new)
+      - client/src/pages/portal/PortalLayout.tsx (AdminModeSwitch mount only)
+      - client/src/pages/portal/AdminCompanies.tsx (Administer button, impersonate response fix)
+      - client/src/App.tsx (/portal/admin/clients/:id route)
+      - .env.example, deploy/vps/env.production.example (VAULT_ENCRYPTION_KEY, VAULT_STORAGE_DIR)
+      - deploy/vps/digeratiexperts-site.service (ReadWritePaths gains -shared/client-vault)
+    status: active
+    started: 2026-10-07
+    note: >-
+      Joe, 2026-10-07: a choice at the top of the portal between administering a
+      client and viewing as them, and a per-client place for provisioning
+      scripts, vendor agents/apps and PII such as contracts that is locked and
+      protected. DE admins only (clients never, including via View as); MFA
+      required; AES-256-GCM envelope encryption with VAULT_ENCRYPTION_KEY,
+      ciphertext on disk (VAULT_STORAGE_DIR) or object storage, metadata + audit in Postgres. Joe said
+      "merge" in-session.
   - id: desk-chat-person-handoff
     owner: claude
     subsystem: de-desk
