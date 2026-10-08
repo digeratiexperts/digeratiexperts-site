@@ -3197,7 +3197,7 @@ claims:
     base_sha: 5fe8cbf7
     files:
       - client/src/styles/store-builder.css (container-type on the count card, one @container rule for .d2-dial only)
-      - client/src/components/store/door2/door2Tokens.test.ts (two tests appended)
+      - client/src/components/store/door2/door2Tokens.test.ts (three tests appended)
       - artifacts/visual-qa/store-counts-phone/**
     status: active
     started: 2026-10-08
@@ -3218,8 +3218,20 @@ claims:
       before PR 545 the number there was 0px wide; after it 25 and 1000 show
       but 999999 still clips (97px card content, 116px needed). Commit 3e16faee
       eases the number to min(base clamp, 29cqi) inside the same container rule:
-      28px at 320, 33.9px at 360, unchanged from 375px up. Evidence:
-      artifacts/visual-qa/store-counts-phone/narrow-320/. Not merged.
+      28px at 320, 33.9px at 360, unchanged from 375px up; it covers 300-357px,
+      where production cuts six digits (box 97-115px for 116px). Evidence:
+      artifacts/visual-qa/store-counts-phone/narrow-320/. An independent
+      12-agent live review (each finding re-tested by a refuter) also confirmed
+      that, stacked, the steps sat ~27px under the digits and 4-8px over the
+      chips or hint, so they read with the text below; the follow-up tightens
+      the number's box to a 44px tap row (min-height 2.75rem, line-height 1.15),
+      row-gap 0.25rem and 1rem under the dial: 14-17px above the steps, 16px
+      below, cards 4-7px shorter. A 300-1920px sweep with 999999 shows no cut
+      in either axis and no overflow. Evidence:
+      artifacts/visual-qa/store-counts-phone/spacing/. Out of scope and older
+      than PR 545: the Match users chip wraps at 320, the count placeholders are
+      1.52:1, and the Ask DE nudge can cover the Sites steps on landscape phones.
+      PR 547, not merged.
     note: >-
       Visual status board 2026-10-08 (Joe: "Yes" to starting with the Store
       phone fix): on /store at 390 and 414 the "Your counts" cards are two-up
