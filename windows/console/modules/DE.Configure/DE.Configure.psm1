@@ -916,11 +916,23 @@ function Undo-DELockScreen {
 
 function New-DEHostname {
     param($ClientProfile, [string]$Role = 'LAP')
-    $pattern = Get-DEHashPath -Object $ClientProfile -Path 'branding.hostnamePattern'; if (-not $pattern) { $pattern = '{CLIENT}-{ROLE}-{SERIAL4}' }
+    $pattern = "$(Get-DEHashPath -Object $ClientProfile -Path 'branding.hostnamePattern')"; if (-not $pattern) { $pattern = '{CLIENT}-{ROLE}-{ASSET4}' }
     $serial = "$((Get-DEDeviceInventory).serial)" -replace '[^A-Za-z0-9]', ''
+    $serial4 = $(if ($serial.Length -ge 4) { $serial.Substring($serial.Length - 4).ToUpperInvariant() } else { $serial.ToUpperInvariant() })
+    $ctx = Get-DEContext
+    $tag = "$(Get-DEHashPath -Object $ctx -Path 'device.assetTag')" -replace '[^A-Za-z0-9]', ''
+    $asset4 = $(if ($tag.Length -eq 4) { $tag.ToUpperInvariant() } else { $serial4 })
     $client = "$(Get-DEHashPath -Object $ClientProfile -Path 'shortName')" -replace '[^A-Za-z0-9]', ''
-    $name = $pattern.Replace('{CLIENT}', $client.ToUpperInvariant()).Replace('{ROLE}', $Role.ToUpperInvariant()).Replace('{SERIAL4}', $(if ($serial.Length -ge 4) { $serial.Substring($serial.Length - 4).ToUpperInvariant() } else { $serial.ToUpperInvariant() })).Replace('{SERIAL}', $serial.ToUpperInvariant())
-    if ($name.Length -gt 15) { $name = $name.Substring(0, 15) }
+    $roleCode = ConvertTo-DEDeviceRoleCode -Role $Role
+
+    if ($pattern -eq '{CLIENT}-{ROLE}-{ASSET4}') {
+        return (New-DECanonicalHostname -ClientCode $client -Role $roleCode -AssetToken $asset4)
+    }
+
+    # Legacy/client override patterns remain supported. ASSET4 is the preferred stable token;
+    # SERIAL4/SERIAL stay available only for inherited conventions.
+    $name = $pattern.Replace('{CLIENT}', $client.ToUpperInvariant()).Replace('{ROLE}', $roleCode).Replace('{ASSET4}', $asset4).Replace('{SERIAL4}', $serial4).Replace('{SERIAL}', $serial.ToUpperInvariant())
+    if ($name.Length -gt 15) { throw "hostname '$name' exceeds the Windows 15-character limit; shorten the client pattern instead of truncating a unique identifier" }
     return $name.TrimEnd('-')
 }
 

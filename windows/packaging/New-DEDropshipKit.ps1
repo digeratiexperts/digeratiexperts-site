@@ -18,7 +18,7 @@
 
 .EXAMPLE
     .\New-DEDropshipKit.ps1 -Client alamo -Bundle proactive-business -OrderId DE-ORD-2026-0142 `
-        -EndUserName 'Suzette Thompson' -EndUserUpn sthompson@alamo.example -Serial 7XK2Q14 -Model 'Latitude 7450' `
+        -EndUserName 'Suzette Thompson' -EndUserUpn suzette.thompson@alamo.example -Serial 7XK2Q14 -Model 'Latitude 7450' `
         -Hostname ALAMO-LAP-0231 -AssetTag ALAMO-0231 -PoNumber PO-5512 -Distributor 'Ingram Micro'
     .\New-DEDropshipKit.ps1 -OrderFile .\order.json
 #>
@@ -33,6 +33,7 @@ param(
     [string]$EndUserName,
     [string]$EndUserUpn,
     [string]$LocalUserName,
+    [ValidateSet('internal','external')][string]$PersonClass = 'internal',
     [string]$Serial,
     [string]$Model,
     [string]$Manufacturer,
@@ -59,11 +60,13 @@ if ($OrderFile) {
     $order = ConvertTo-DEHashtable (Get-Content -LiteralPath $OrderFile -Raw -Encoding UTF8 | ConvertFrom-Json)
 } else {
     foreach ($req in @('Client', 'OrderId')) { if (-not (Get-Variable -Name $req -ValueOnly)) { throw "-$req is required (or pass -OrderFile)" } }
-    if (-not $LocalUserName -and $EndUserName) { $LocalUserName = ConvertTo-DELocalUserName -DisplayOrPrincipal $EndUserName }
+    $baseProfile = Get-DEClientProfile -Id $Client
+    if (-not $LocalUserName -and $EndUserName) { $LocalUserName = ConvertTo-DELocalUserName -DisplayOrPrincipal $EndUserName -PersonClass $PersonClass }
+    if (-not $EndUserUpn -and $LocalUserName) { $domain = "$(Get-DEHashPath -Object $baseProfile -Path 'identity.primaryDomain')".Trim(); if ($domain) { $EndUserUpn = "$LocalUserName@$(Test-DEIdentityDomain -Domain $domain)" } }
     $order = [ordered]@{
         schema = 'de.techconsole.order/v1'; orderId = $OrderId; client = $Client; bundle = $Bundle
         addOns = @($AddOn | Where-Object { $_ }); solutions = @($Solution | Where-Object { $_ })
-        endUser = [ordered]@{ displayName = $EndUserName; upn = $EndUserUpn; localUserName = $LocalUserName; jumpcloudUser = $LocalUserName }
+        endUser = [ordered]@{ displayName = $EndUserName; personClass = $PersonClass; upn = $EndUserUpn; localUserName = $LocalUserName; jumpcloudUser = $LocalUserName }
         device = [ordered]@{ manufacturer = $Manufacturer; model = $Model; serial = $Serial; assetTag = $AssetTag; hostname = $Hostname; role = 'laptop' }
         procurement = [ordered]@{ distributor = $Distributor; poNumber = $PoNumber; dropship = $true }
         technician = $Technician; created = (Get-Date).ToString('o')

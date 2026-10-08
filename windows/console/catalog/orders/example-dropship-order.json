@@ -1,14 +1,32 @@
 {
   "schema": "de.techconsole.order/v1",
-  "_comment": "Example dropship order. No secrets ever go in an order: connect keys, site tokens and passwords are entered at first boot (RMM secure variables, the DE vault, or typed by the technician on the call).",
+  "_comment": "Example dropship order. No secrets ever go in an order: connect keys, site tokens and passwords are entered at first boot (RMM secure variables, the DE vault, or typed by the technician on the call). New identities follow canonical firstname.lastname naming; inherited takeover identities may retain documented legacy names.",
   "orderId": "DE-ORD-2026-0142",
   "client": "alamo",
   "bundle": "proactive-business",
   "addOns": [],
   "solutions": [],
-  "endUser": { "displayName": "Suzette Thompson", "upn": "sthompson@alamo.example", "localUserName": "sthompson", "jumpcloudUser": "sthompson" },
-  "device": { "manufacturer": "Dell Inc.", "model": "Latitude 7450", "serial": "", "assetTag": "ALAMO-0231", "hostname": "ALAMO-LAP-0231", "role": "laptop" },
-  "procurement": { "distributor": "Ingram Micro", "poNumber": "PO-5512", "dropship": true, "expectedArrival": "" },
+  "endUser": {
+    "displayName": "Suzette Thompson",
+    "upn": "suzette.thompson@alamo.example",
+    "localUserName": "suzette.thompson",
+    "jumpcloudUser": "suzette.thompson",
+    "personClass": "internal"
+  },
+  "device": {
+    "manufacturer": "Dell Inc.",
+    "model": "Latitude 7450",
+    "serial": "",
+    "assetTag": "ALAMO-0231",
+    "hostname": "ALAMO-LAP-0231",
+    "role": "laptop"
+  },
+  "procurement": {
+    "distributor": "Ingram Micro",
+    "poNumber": "PO-5512",
+    "dropship": true,
+    "expectedArrival": ""
+  },
   "technician": "jrpetro",
   "created": "2026-09-28T00:00:00Z"
 }
