@@ -2682,6 +2682,8 @@ html.d2-reveal-ready .d2-gcard[data-d2-reveal="in"]:hover {
   padding: 1rem 1.1rem 0.9rem;
   border-radius: var(--f-r-lg);
   background: var(--f-mist);
+  /* A size container, so the dial can fold when the card is narrow (see the @container rule below). */
+  container-type: inline-size;
 }
 .d2-flag-config__form .d2-input {
   min-height: 3.6rem;
@@ -2733,6 +2735,18 @@ html.d2-reveal-ready .d2-gcard[data-d2-reveal="in"]:hover {
 .d2-dial__step:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+/* When a count card is too narrow for the number and both steps side by side (two-up cards on
+   phones, the four-up row at 1024-1068px), the steps drop under the number, so a typed count is
+   never cut off behind the buttons. */
+@container (max-width: 17rem) {
+  .d2-dial {
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+  }
+  .d2-dial .d2-input {
+    flex-basis: 100%;
+  }
 }
 .d2-flag-config__form .d2-input:hover {
   border: 0;
