@@ -3155,3 +3155,23 @@ claims:
       portal-service-requests owns portal-assist.ts and index.ts, which this
       claim does not touch (askedForHuman is left as it is); no open PR
       touches these files.
+  - id: store-counts-phone
+    owner: claude
+    subsystem: store-door2
+    branch: claude/nifty-newton-uk9g7t
+    base_sha: 5fe8cbf7
+    files:
+      - client/src/styles/store-builder.css (container-type on the count card, one @container rule for .d2-dial only)
+      - client/src/components/store/door2/door2Tokens.test.ts (one test appended)
+      - artifacts/visual-qa/store-counts-phone/**
+    status: active
+    started: 2026-10-08
+    note: >-
+      Visual status board 2026-10-08 (Joe: "Yes" to starting with the Store
+      phone fix): on /store at 390 and 414 the "Your counts" cards are two-up
+      and the − / + steps sit beside the number, leaving it 24-36px, so "25"
+      shows as "2" and "1000" as "1(". A 6-digit count was also cut at
+      1024-1440. The count card is now a size container; when it is narrower
+      than 17rem the steps drop under the number. No markup, copy or token
+      change. Overlap check 2026-10-08: no open PR or active claim touches
+      these files.
