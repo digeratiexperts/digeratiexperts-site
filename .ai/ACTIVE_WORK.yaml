@@ -3203,15 +3203,16 @@ claims:
     owner: claude
     subsystem: store-door2
     branch: claude/nifty-newton-uk9g7t
-    pr: 545
+    pr: 545, 547
     base_sha: 5fe8cbf7
     files:
       - client/src/styles/store-builder.css (container-type on the count card, one @container rule for .d2-dial only)
       - client/src/components/store/door2/door2Tokens.test.ts (three tests appended)
       - artifacts/visual-qa/store-counts-phone/**
-    status: active
+    status: verified-live
     started: 2026-10-08
-    merge_sha: c4a0c248629e837a05ad593dc30cbedc00d10f14
+    released: 2026-10-08
+    merge_sha: c4a0c248629e837a05ad593dc30cbedc00d10f14 (PR 545), 020e4a31e7d64edd26ca0cabd00f270f5fa10e3f (PR 547)
     verification: >-
       PR 545 merged on Joe's "Merge" (2026-10-08) with main unchanged since
       the branch (5fe8cbf7) and green CI. The main CI and the deploy job passed;
@@ -3241,7 +3242,19 @@ claims:
       artifacts/visual-qa/store-counts-phone/spacing/. Out of scope and older
       than PR 545: the Match users chip wraps at 320, the count placeholders are
       1.52:1, and the Ask DE nudge can cover the Sites steps on landscape phones.
-      PR 547, not merged.
+      PR 547 merged on Joe's "Merge if it's safe to do so" (2026-10-08) after
+      merging main 33cf7e07 in (ledger only) and green CI on that head. Main CI
+      and the deploy job passed; release.txt and /api/health read 020e4a31 on
+      digeratiexperts.com and portal.digeratiexperts.com. /store serves
+      StorePageAtmosphere-o1x8RMr2.css, byte-identical to the local build, with
+      the 29cqi cap, the 44px tap row and the 1rem under the dial. Live at 320,
+      390, 414, 768, 1024, 1068, 1280 and 1440 with 25, 1000 and 999999: no cut,
+      steps never over the number, steppers step, tab order number then - then
+      +, axe clean, no overflow, no runtime errors; a 300-1920px sweep with
+      999999 finds no cut in either axis (it cut at 300-355px before the merge),
+      and stacked steps sit 14-17px under the digits with 16px below (24-33px
+      and 4px before). PR 547 VERIFIED LIVE. Evidence:
+      artifacts/visual-qa/store-counts-phone/live-547/. Files released.
     note: >-
       Visual status board 2026-10-08 (Joe: "Yes" to starting with the Store
       phone fix): on /store at 390 and 414 the "Your counts" cards are two-up

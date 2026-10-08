@@ -1,0 +1,410 @@
+[
+  {
+    "w": 320,
+    "cardWidth": 132,
+    "containerType": "inline-size",
+    "sheet": [
+      "StorePageAtmosphere-o1x8RMr2.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      },
+      "1000": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      },
+      "999999": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 390,
+    "cardWidth": 167,
+    "containerType": "inline-size",
+    "sheet": [
+      "StorePageAtmosphere-o1x8RMr2.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      },
+      "1000": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      },
+      "999999": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 414,
+    "cardWidth": 179,
+    "containerType": "inline-size",
+    "sheet": [
+      "StorePageAtmosphere-o1x8RMr2.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      },
+      "1000": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      },
+      "999999": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 768,
+    "cardWidth": 356,
+    "containerType": "inline-size",
+    "sheet": [
+      "StorePageAtmosphere-o1x8RMr2.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "1000": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      },
+      "999999": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": false,
+          "computers": false,
+          "mobile": false,
+          "sites": false
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 1024,
+    "cardWidth": 234,
+    "containerType": "inline-size",
+    "sheet": [
+      "StorePageAtmosphere-o1x8RMr2.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      },
+      "1000": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      },
+      "999999": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 1068,
+    "cardWidth": 245,
+    "containerType": "inline-size",
+    "sheet": [
+      "StorePageAtmosphere-o1x8RMr2.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      },
+      "1000": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      },
+      "999999": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 1280,
+    "cardWidth": 290,
+    "containerType": "inline-size",
+    "sheet": [
+      "StorePageAtmosphere-o1x8RMr2.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      },
+      "1000": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      },
+      "999999": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "w": 1440,
+    "cardWidth": 290,
+    "containerType": "inline-size",
+    "sheet": [
+      "StorePageAtmosphere-o1x8RMr2.css"
+    ],
+    "perValue": {
+      "25": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      },
+      "1000": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      },
+      "999999": {
+        "cut": [],
+        "overlap": [],
+        "wrapped": {
+          "users": true,
+          "computers": true,
+          "mobile": true,
+          "sites": true
+        }
+      }
+    },
+    "steppers": {
+      "afterPlus": "11",
+      "afterMinus": "9"
+    },
+    "tabOrder": [
+      "Fewer users",
+      "More users"
+    ],
+    "axe": [],
+    "overflow": false,
+    "errors": []
+  }
+]
