@@ -391,6 +391,15 @@ export function readHubDeliveryResult(body: unknown): {
   return { canonicalAccountId, duplicate: record.duplicate === true };
 }
 
+export function legacyLeadWebhookAllowed(url: string): boolean {
+  if (!url || process.env.DE_SYNC_REQUIRE_SIGNED === "1") return false;
+  try {
+    return new URL(url).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export async function deliverEnvelopeToHub(
   envelope: DeSyncEnvelope,
   destination: "hub" | "website" | "portal",
@@ -426,9 +435,12 @@ export async function deliverEnvelopeToHub(
   }
 
   // Compatibility: lead-like website commands can still hit the live webhook.
+  // That webhook takes the raw secret as a bearer token, so it is refused once
+  // DE_SYNC_REQUIRE_SIGNED=1 (signed-only on both directions) and never sent
+  // over plain HTTP.
   const legacyUrl = (process.env.TECHSALES_SYNC_URL || "").trim();
   const isLeadLike = envelope.eventType === "lead.created" || envelope.eventType === "assessment.submitted" || envelope.eventType === "consultation.booked" || envelope.eventType === "referral.submitted";
-  if (legacyUrl && isLeadLike && (response.status === 404 || response.status === 405)) {
+  if (legacyLeadWebhookAllowed(legacyUrl) && isLeadLike && (response.status === 404 || response.status === 405)) {
     const payload = envelope.payload || {};
     const legacyBody = JSON.stringify({
       id: envelope.entityId,
