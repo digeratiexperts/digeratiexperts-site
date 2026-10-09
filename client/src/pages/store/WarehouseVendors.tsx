@@ -16,7 +16,7 @@ const TAX_CHECK_ROWS = [
 
 const STATUS_CLASS: Record<OfferingDeStatus, string> = {
   in_use: "border-emerald-400/40 text-emerald-200",
-  legacy: "border-amber-300/40 text-amber-200",
+  alternate: "border-sky-300/40 text-sky-200",
   available: "border-white/20 text-white/60",
 };
 

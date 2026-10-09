@@ -4,11 +4,13 @@
  * only; nothing here is quoteable and no prices belong here (this repository
  * is public).
  *
- * Mirrors Intelligence Hub lib/db/src/utils/vendor-offerings.ts (Hub PR #394),
- * which writes the same profile onto the Hub vendor row. Change both together.
+ * The Hub is the source of truth for the vendor itself: its "Cytracom" vendor
+ * row, ControlOne's role as the Cloud Edge / SASE alternate to Timus
+ * (lib/db/src/utils/solution-providers.ts) and, once imported, Cytracom's
+ * catalog and prices. Keep the statuses here in step with it.
  */
 
-export type OfferingDeStatus = "in_use" | "legacy" | "available";
+export type OfferingDeStatus = "in_use" | "alternate" | "available";
 
 export interface VendorOffering {
   product: string;
@@ -31,7 +33,7 @@ export interface VendorProfile {
 
 export const OFFERING_STATUS_LABEL: Record<OfferingDeStatus, string> = {
   in_use: "In use",
-  legacy: "Legacy · migration only",
+  alternate: "Alternate provider",
   available: "Available · not adopted",
 };
 
@@ -68,8 +70,8 @@ export const VENDOR_PROFILES: VendorProfile[] = [
         deCapability: "Secure Access & Zero Trust",
         summary:
           "Software-defined networking and zero trust network access that follows the user rather than the device, with least-privilege policies and hardware plus software components.",
-        deStatus: "legacy",
-        deNote: "Legacy / migration only. Timus Networks is DE's preferred Secure Access platform (Hub decision 2026-09-09).",
+        deStatus: "alternate",
+        deNote: "Active alternate (backup) provider for Cloud Edge / SASE; Timus Networks (CyberFOX) is primary. Its 2022 price sheet is stale: re-verify pricing before quoting.",
       },
       {
         product: "Telivy Assess",
