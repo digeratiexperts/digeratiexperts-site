@@ -35,7 +35,7 @@ import { SolutionBar, SolutionRail, type SolutionChromeProps } from "@/component
 import { IconWell } from "@/components/visual/IconWell";
 import { useSEO } from "@/hooks/useSEO";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { useStoreReveal } from "@/hooks/useStoreGuidance";
+import { useAttention, useStoreReveal } from "@/hooks/useStoreGuidance";
 import { useSolutionDraft } from "@/hooks/useSolutionDraft";
 import { curatedSolutionFamilies, type CuratedSolutionFamily } from "@/data/curatedSolutions";
 import { composeScenario, SCENARIO_GROUPS, solutionScenarios, type ScenarioGroupId, type SolutionScenario } from "@/data/solutionScenarios";
@@ -318,6 +318,8 @@ export default function BusinessNeedsIndex() {
   const [scenarioMoment, setScenarioMoment] = useState<ScenarioMoment | null>(null);
   const [familyUndo, setFamilyUndo] = useState<FamilyUndo | null>(null);
   const [pulseKey, setPulseKey] = useState(0);
+  // The sticky Your Solution pill is the forward action the buyer can see when they add (the rail sits far below).
+  const pillAttention = useAttention(pulseKey);
   const [expandKey, setExpandKey] = useState(0);
   const [storageOk, setStorageOk] = useState(true);
   const timers = useRef<number[]>([]);
@@ -540,7 +542,12 @@ export default function BusinessNeedsIndex() {
               <a href="#ways">How it works</a>
               <a href="#why">Why DE</a>
             </nav>
-            <Link href={SOLUTION_WORKSPACE_PATH} className="d2-flag-lnav__solution" data-testid="store-local-solution">
+            <Link
+              href={SOLUTION_WORKSPACE_PATH}
+              className="d2-flag-lnav__solution"
+              data-testid="store-local-solution"
+              data-d2-attn={pillAttention ? "true" : undefined}
+            >
               Your Solution
               <span className="d2-flag-lnav__count" aria-label={needCount === 1 ? "1 need" : `${needCount} needs`}>
                 {needCount}
@@ -818,7 +825,7 @@ export default function BusinessNeedsIndex() {
           </div>
         </section>
 
-        <section id="why" className="d2-flag-sec" aria-labelledby="why-heading">
+        <section id="why" className="d2-flag-sec d2-light" aria-labelledby="why-heading">
           <div className="d2-flag-wrap">
             <div className="d2-flag-head" data-d2-reveal="">
               <h2 id="why-heading" className="d2-flag-head__title">

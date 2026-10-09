@@ -11,6 +11,13 @@ import TurnstileWidget from "@/components/TurnstileWidget";
 export default function PortalForgotPassword() {
   const [email, setEmail] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
+  // Turnstile tokens are single-use: remount the widget after a failed
+  // attempt so a retry sends a fresh one.
+  const [turnstileKey, setTurnstileKey] = useState(0);
+  const resetTurnstile = () => {
+    setTurnstileToken("");
+    setTurnstileKey((k) => k + 1);
+  };
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -30,13 +37,15 @@ export default function PortalForgotPassword() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Request failed");
+        setError(data.message || data.error || "Request failed");
+        resetTurnstile();
         return;
       }
 
       setSuccess(true);
     } catch {
       setError("Connection error. Please try again.");
+      resetTurnstile();
     } finally {
       setLoading(false);
     }
@@ -99,7 +108,7 @@ export default function PortalForgotPassword() {
                   </div>
                 </div>
 
-                <TurnstileWidget onVerify={setTurnstileToken} />
+                <TurnstileWidget key={turnstileKey} onVerify={setTurnstileToken} />
 
                 <Button
                   type="submit"

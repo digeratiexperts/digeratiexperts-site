@@ -1438,7 +1438,10 @@ function shouldIncludeCsra(answers: GuidedBuyingAnswers): boolean {
 }
 
 function estimateLine(product: StoreProduct, seats: number): { recurring: number; oneTime: number } {
+  // A one-time fee priced per unit (provisioning per device or phone) scales with the count like a seat price.
+  const perUnitOneTime = product.pricingType === "one_time" && !!product.pricingUnit;
   const qty =
+    perUnitOneTime ||
     product.pricingType === "per_endpoint" ||
     product.pricingType === "per_user" ||
     product.pricingType === "per_seat" ||
@@ -1446,7 +1449,7 @@ function estimateLine(product: StoreProduct, seats: number): { recurring: number
       ? seats
       : 1;
   if (product.pricingType === "one_time") {
-    return { recurring: 0, oneTime: product.basePrice };
+    return { recurring: 0, oneTime: product.basePrice * qty };
   }
   if (product.pricingType === "per_hour") {
     return { recurring: 0, oneTime: 0 };

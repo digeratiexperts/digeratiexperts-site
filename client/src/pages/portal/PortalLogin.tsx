@@ -175,7 +175,7 @@ export default function PortalLogin() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Login failed");
+        setError(data.message || data.error || "Login failed");
         resetTurnstile();
         return;
       }

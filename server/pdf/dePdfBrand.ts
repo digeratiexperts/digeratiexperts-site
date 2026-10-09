@@ -157,22 +157,22 @@ tr,.keep,.pkg-head,.rec,.team,.panel{break-inside:avoid;page-break-inside:avoid}
    unaffected. */
 
 /* ---------- brief band (page 1, full bleed) ---------- */
-.band{background:${T.ink};color:#fff;padding:26pt 50pt 18pt}
+.band{background:${T.ink};color:#fff;padding:20pt 50pt 13pt}
 .band-top{width:100%;border-collapse:collapse}
 .band-top td{padding:0;vertical-align:middle}
 .band-top td.r{text-align:right}
 .band .logo{height:22pt;width:auto;display:block}
 .band .brand-fallback{font-family:${DE_FONT.display};font-weight:600;font-size:13pt;letter-spacing:.04em}
 .band .k{font-family:${DE_FONT.label};font-size:7pt;letter-spacing:.08em;text-transform:uppercase;color:#cfccd8}
-.band .eyebrow{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:#cfccd8;margin-top:16pt}
-.band h1{font-family:${DE_FONT.display};font-weight:600;font-size:28pt;line-height:1.05;letter-spacing:-.02em;color:#fff;margin-top:5pt}
+.band .eyebrow{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:#cfccd8;margin-top:12pt}
+.band h1{font-family:${DE_FONT.display};font-weight:600;font-size:26pt;line-height:1.05;letter-spacing:-.02em;color:#fff;margin-top:4pt}
 .band .q{font-size:10.4pt;color:#e6e4ea;margin-top:7pt}
-.band .stamp{display:inline-block;margin-top:12pt;border:1pt solid #fff;padding:2pt 7pt;font-size:7.2pt;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
+.band .stamp{display:inline-block;margin-top:9pt;border:1pt solid #fff;padding:2pt 7pt;font-size:7.2pt;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
 .band-rule{height:3pt;background:${T.mag}}
 
 /* spec strip: document identification under the band */
 .specstrip{width:100%;border-collapse:collapse;border-bottom:.6pt solid ${T.rule}}
-.specstrip td{padding:7pt 10pt 7pt 0;vertical-align:top;border-right:.6pt solid ${T.rule};padding-left:10pt}
+.specstrip td{padding:6pt 10pt 6pt 0;vertical-align:top;border-right:.6pt solid ${T.rule};padding-left:10pt}
 .specstrip td:first-child{padding-left:50pt}
 .specstrip td:last-child{border-right:0;padding-right:50pt}
 .specstrip .lbl{display:block}
@@ -181,8 +181,8 @@ tr,.keep,.pkg-head,.rec,.team,.panel{break-inside:avoid;page-break-inside:avoid}
 .wrap{padding:0 50pt}
 
 /* ---------- spec register ---------- */
-.sec{margin-top:14pt}
-.sec-head{border-top:.8pt solid ${T.ink};padding-top:7pt;margin-bottom:8pt;break-after:avoid;page-break-after:avoid}
+.sec{margin-top:12pt}
+.sec-head{border-top:.8pt solid ${T.ink};padding-top:6pt;margin-bottom:6pt;break-after:avoid;page-break-after:avoid}
 .sec-head .no{font-family:${DE_FONT.label};font-weight:500;font-size:7.8pt;color:${T.magText};margin-right:9pt}
 h2{display:inline;font-family:${DE_FONT.display};font-weight:600;font-size:12.5pt;line-height:1.2}
 .empty{color:${T.muted};font-size:9pt;margin:4pt 0}
@@ -192,7 +192,7 @@ h2{display:inline;font-family:${DE_FONT.display};font-weight:600;font-size:12.5p
 table.items{width:100%;border-collapse:collapse;font-size:8.8pt;line-height:1.42}
 table.items thead{display:table-header-group}
 table.items th{font-family:${DE_FONT.label};font-weight:500;font-size:7pt;letter-spacing:.06em;text-transform:uppercase;color:${T.muted};text-align:left;padding:0 8pt 5pt 0;border-bottom:1pt solid ${T.ink}}
-table.items td{padding:6pt 8pt 6pt 0;border-bottom:.5pt solid ${T.rule};vertical-align:top}
+table.items td{padding:4pt 8pt 4.5pt 0;border-bottom:.5pt solid ${T.rule};vertical-align:top}
 table.items th.num,table.items td.num{text-align:right;white-space:nowrap}
 table.items th:last-child,table.items td:last-child{padding-right:0}
 table.items .item-name{font-weight:600}
@@ -205,8 +205,8 @@ table.items td.amount{font-weight:600}
 .chip.recurring{border-color:${T.ink};color:${T.ink}}
 
 /* totals: right column, total ruled (no filled cells: they seam in viewers) */
-table.totals{width:230pt;margin:8pt 0 0 auto;border-collapse:collapse}
-table.totals td{padding:4pt 0;font-size:9pt;color:${T.ink2};border-bottom:.5pt solid ${T.rule}}
+table.totals{width:230pt;margin:6pt 0 0 auto;border-collapse:collapse}
+table.totals td{padding:3pt 0;font-size:9pt;color:${T.ink2};border-bottom:.5pt solid ${T.rule}}
 table.totals td.num{text-align:right;color:${T.ink};font-weight:500}
 table.totals tr.total td{border-top:1.4pt solid ${T.ink};border-bottom:0;padding-top:7pt;color:${T.ink}}
 table.totals tr.total .lbl{color:${T.ink}}
@@ -224,7 +224,7 @@ table.facts td{width:33.33%;vertical-align:top;padding:6pt 12pt 6pt 0;border-bot
 table.facts .v{font-weight:600;font-size:9.6pt;margin-top:2pt}
 
 /* two panels (billed to / what happens next) */
-table.two{width:100%;border-collapse:collapse;margin-top:13pt}
+table.two{width:100%;border-collapse:collapse;margin-top:10pt}
 table.two > tbody > tr > td{width:50%;vertical-align:top}
 table.two > tbody > tr > td:first-child{padding-right:12pt}
 table.two > tbody > tr > td:last-child{padding-left:12pt}
@@ -249,10 +249,10 @@ table.lines td.qty{text-align:right;white-space:nowrap;color:${T.ink2};padding-r
 /* ---------- brief close ---------- */
 /* The close never starts a page on its own: when it does not fit, the last
    rows travel to the next page with it (break-before:avoid). */
-table.rec{width:100%;border-collapse:collapse;margin-top:14pt;background:${T.paper};break-before:avoid;page-break-before:avoid}
+table.rec{width:100%;border-collapse:collapse;margin-top:10pt;background:${T.paper};break-before:avoid;page-break-before:avoid}
 /* account team row inside the close panel */
-table.team{width:100%;border-collapse:collapse;margin-top:7pt;border-top:.6pt solid ${T.paperRule}}
-table.team td{vertical-align:top;padding-top:6pt}
+table.team{width:100%;border-collapse:collapse;margin-top:6pt;border-top:.6pt solid ${T.paperRule}}
+table.team td{vertical-align:top;padding-top:5pt}
 table.team td.dept{width:36%;padding-left:14pt;border-left:.6pt solid ${T.paperRule}}
 .team .eyebrow{margin-bottom:3pt}
 .team td.ph{width:30pt;padding:0 9pt 0 0;vertical-align:middle}
@@ -262,11 +262,11 @@ table.team td.dept{width:36%;padding-left:14pt;border-left:.6pt solid ${T.paperR
 .team .ct{font-size:8.4pt;margin-top:3pt}
 .team .ct a{margin-right:12pt}
 table.rec td.bar{width:4pt;background:${T.mag};padding:0}
-table.rec td.in{padding:9pt 15pt 10pt}
+table.rec td.in{padding:8pt 15pt 9pt}
 .rec .eyebrow{font-size:7.2pt;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:${T.magText}}
-.rec h2{display:block;font-size:14pt;margin:3pt 0 4pt}
+.rec h2{display:block;font-size:13pt;margin:2pt 0 3pt}
 .rec p{color:${T.ink2}}
-.rec .ct{margin-top:8pt;font-weight:600;font-size:8.8pt}
+.rec .ct{margin-top:5pt;font-weight:600;font-size:8.8pt}
 .rec .ct a{margin-right:16pt}
 `;
 }

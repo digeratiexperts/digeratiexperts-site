@@ -168,6 +168,7 @@ const StoreLanding = () => {
     products.forEach((product) => {
       const { price } = getProductPrice(product.id, product.basePrice);
       const qty =
+        (product.pricingType === "one_time" && !!product.pricingUnit) ||
         product.pricingType === "per_endpoint" ||
         product.pricingType === "per_user" ||
         product.pricingType === "per_seat" ||

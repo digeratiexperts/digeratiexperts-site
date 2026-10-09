@@ -23,7 +23,7 @@ export function useStoreReveal(): void {
           io.unobserve(entry.target);
         }
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
+      { rootMargin: "0px 0px -4% 0px", threshold: 0 },
     );
     const watch = () => {
       document.querySelectorAll<HTMLElement>('[data-d2-reveal]:not([data-d2-reveal="in"])').forEach((el) => io.observe(el));

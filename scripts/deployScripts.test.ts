@@ -23,6 +23,23 @@ describe("production deployment scripts", () => {
     expect(() => execFileSync("bash", ["-n", resolve(root, "deploy/vps/resolve-deploy-commit.sh")], { stdio: "pipe" })).not.toThrow();
   });
 
+  it("loads the shared env before the build so public VITE_* keys reach the bundle", () => {
+    const deploy = readFileSync(deployScript, "utf8");
+    const lines = deploy.split("\n").map((line) => line.trim());
+    const sourced = lines.indexOf('. "$SHARED_ENV"');
+    const build = lines.indexOf("npm run build");
+    expect(sourced).toBeGreaterThan(-1);
+    expect(build).toBeGreaterThan(-1);
+    expect(sourced).toBeLessThan(build);
+  });
+
+  it("refuses a bundle holding the Turnstile secret and flags a missing site key", () => {
+    const deploy = readFileSync(deployScript, "utf8");
+    expect(deploy).toMatch(/grep -rqF -e "\$TURNSTILE_SECRET_KEY" dist\/public\/assets\/; then\n\s*fail /);
+    expect(deploy).toMatch(/! grep -rqF -e "\$VITE_TURNSTILE_SITE_KEY" dist\/public\/assets\//);
+    expect(deploy).toContain("TURNSTILE_SECRET_KEY is set but VITE_TURNSTILE_SITE_KEY is not");
+  });
+
   it("pins production to the canonical digeratiexperts-site repository", () => {
     const deploy = readFileSync(deployScript, "utf8");
     const runner = readFileSync(runnerScript, "utf8");
