@@ -235,6 +235,7 @@ function FamilyCard({
   onToggle,
   onUndo,
   revealIndex,
+  revealed = false,
 }: {
   family: CuratedSolutionFamily;
   included: boolean;
@@ -242,6 +243,8 @@ function FamilyCard({
   onToggle: () => void;
   onUndo: () => void;
   revealIndex: number;
+  /** Mounted by a lineup switch while the buyer is looking at it: skip the entrance. */
+  revealed?: boolean;
 }) {
   const lead = family.offers[0]?.outcomes[0];
   // The jelly settle keys on a transient attribute set on the tap, never on the steady aria-pressed state (§9).
@@ -256,7 +259,7 @@ function FamilyCard({
       className="d2-fcard"
       data-testid={`family-card-${family.id}`}
       data-state={included ? "added" : "idle"}
-      data-d2-reveal=""
+      data-d2-reveal={revealed ? "in" : ""}
       style={{ "--d2-delay": `${(revealIndex % 2) * 70}ms` } as CSSProperties}
     >
       <Glyph familyId={family.id} className="d2-fcard__glyph" />
@@ -484,6 +487,14 @@ export default function BusinessNeedsIndex() {
   );
   const total = families.length;
   const narrowed = searching || goalFilter !== "all";
+  // Switching between the goal panels and the flat list remounts every card. Cards
+  // rise in once per visit, so after the first switch they mount already shown.
+  const [lineupNarrowed, setLineupNarrowed] = useState(narrowed);
+  const [lineupSwitched, setLineupSwitched] = useState(false);
+  if (narrowed !== lineupNarrowed) {
+    setLineupNarrowed(narrowed);
+    setLineupSwitched(true);
+  }
   const countText = !narrowed ? `${total} solutions shown` : total === 1 ? "1 solution matches" : `${total} solutions match`;
 
   // The count line is plain text; the page's one live region hears it after the buyer pauses typing.
@@ -494,7 +505,7 @@ export default function BusinessNeedsIndex() {
   }, [announce, countText, query, searching, total]);
 
   const helpCard = (
-    <li className="d2-fcard d2-fcard--help" data-d2-reveal="">
+    <li className="d2-fcard d2-fcard--help" data-d2-reveal={lineupSwitched ? "in" : ""}>
       <span className="d2-glyph d2-glyph--magenta d2-fcard__glyph" aria-hidden="true">
         <PhoneCall strokeWidth={1.5} />
       </span>
@@ -773,6 +784,7 @@ export default function BusinessNeedsIndex() {
                       onToggle={() => toggleFamily(family)}
                       onUndo={undoRemove}
                       revealIndex={index}
+                      revealed={lineupSwitched}
                     />
                   ))}
                   {helpCard}
@@ -799,6 +811,7 @@ export default function BusinessNeedsIndex() {
                               onToggle={() => toggleFamily(family)}
                               onUndo={undoRemove}
                               revealIndex={index}
+                              revealed={lineupSwitched}
                             />
                           ))}
                         </ul>
