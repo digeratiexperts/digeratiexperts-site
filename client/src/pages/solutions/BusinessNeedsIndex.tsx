@@ -16,6 +16,7 @@ import {
   ShieldAlert,
   type LucideIcon,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
@@ -490,6 +491,21 @@ export default function BusinessNeedsIndex() {
     return () => window.clearTimeout(timer);
   }, [announce, countText, query, searching, total]);
 
+  const helpCard = (
+    <li className="d2-fcard d2-fcard--help" data-d2-reveal="">
+      <span className="d2-glyph d2-glyph--magenta d2-fcard__glyph" aria-hidden="true">
+        <PhoneCall strokeWidth={1.5} />
+      </span>
+      <h3 className="d2-fcard__title">Not sure which one?</h3>
+      <p className="d2-fcard__detail">Tell us what is going on and DE points you at the right families.</p>
+      <div className="d2-fcard__acts">
+        <a href={PRIMARY_PHONE.telHref} className="d2-fcard__add" aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
+          Call {PRIMARY_PHONE.display}
+        </a>
+      </div>
+    </li>
+  );
+
   const showAll = () => {
     setQuery("");
     setGoalFilter("all");
@@ -600,6 +616,12 @@ export default function BusinessNeedsIndex() {
               </h2>
               <p className="d2-flag-head__aside">It adds the needs that situation calls for, and you can undo.</p>
             </div>
+            {needCount === 0 ? (
+              <p className="d2-cue d2-cue--flag" data-testid="store-start-here">
+                <ChevronDown className="d2-cue__chevron h-3.5 w-3.5" aria-hidden="true" />
+                Start here · choose one below
+              </p>
+            ) : null}
             <div className="d2-flag-seg" role="group" aria-label="Situation groups">
               <button type="button" aria-pressed={groupFilter === "all"} onClick={() => setGroupFilter("all")}>
                 All situations
@@ -733,31 +755,54 @@ export default function BusinessNeedsIndex() {
               )}
             </LiveLine>
             <div className="d2-flag-shop">
-              <ul className="d2-lineup">
-                {families.map((family, index) => (
-                  <FamilyCard
-                    key={family.id}
-                    family={family}
-                    included={includedIds.has(family.id)}
-                    undo={familyUndo?.familyId === family.id}
-                    onToggle={() => toggleFamily(family)}
-                    onUndo={undoRemove}
-                    revealIndex={index}
-                  />
-                ))}
-                <li className="d2-fcard d2-fcard--help" data-d2-reveal="">
-                  <span className="d2-glyph d2-glyph--magenta d2-fcard__glyph" aria-hidden="true">
-                    <PhoneCall strokeWidth={1.5} />
-                  </span>
-                  <h3 className="d2-fcard__title">Not sure which one?</h3>
-                  <p className="d2-fcard__detail">Tell us what is going on and DE points you at the right families.</p>
-                  <div className="d2-fcard__acts">
-                    <a href={PRIMARY_PHONE.telHref} className="d2-fcard__add" aria-label={`Call ${PRIMARY_PHONE.display} (${PRIMARY_PHONE.label})`}>
-                      Call {PRIMARY_PHONE.display}
-                    </a>
-                  </div>
-                </li>
-              </ul>
+              {narrowed ? (
+                <ul className="d2-lineup">
+                  {families.map((family, index) => (
+                    <FamilyCard
+                      key={family.id}
+                      family={family}
+                      included={includedIds.has(family.id)}
+                      undo={familyUndo?.familyId === family.id}
+                      onToggle={() => toggleFamily(family)}
+                      onUndo={undoRemove}
+                      revealIndex={index}
+                    />
+                  ))}
+                  {helpCard}
+                </ul>
+              ) : (
+                <div className="d2-goalstack" data-testid="families-by-goal">
+                  {BUSINESS_GOALS.map((goal) => {
+                    const members = families.filter((family) => FAMILY_GOAL.get(family.id)?.id === goal.id);
+                    return (
+                      <section key={goal.id} className="d2-goalcard" aria-labelledby={`goal-${goal.id}-heading`} data-testid={`goal-card-${goal.id}`}>
+                        <div className="d2-goalcard__head">
+                          <h3 id={`goal-${goal.id}-heading`} className="d2-goalcard__title">
+                            {goal.label}
+                          </h3>
+                          <span className="d2-goalcard__count">{members.length === 1 ? "1 solution" : `${members.length} solutions`}</span>
+                        </div>
+                        <ul className="d2-lineup">
+                          {members.map((family, index) => (
+                            <FamilyCard
+                              key={family.id}
+                              family={family}
+                              included={includedIds.has(family.id)}
+                              undo={familyUndo?.familyId === family.id}
+                              onToggle={() => toggleFamily(family)}
+                              onUndo={undoRemove}
+                              revealIndex={index}
+                            />
+                          ))}
+                        </ul>
+                      </section>
+                    );
+                  })}
+                  <ul className="d2-lineup">
+                    {helpCard}
+                  </ul>
+                </div>
+              )}
               <SolutionRail {...chrome} />
             </div>
             <p className="d2-small d2-ink-soft d2-measure mt-10" data-testid="store-close">
