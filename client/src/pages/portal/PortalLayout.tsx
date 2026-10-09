@@ -27,7 +27,9 @@ import { usePortalHubEvents } from "@/hooks/usePortalHubEvents";
 import { cn } from "@/lib/utils";
 import { findNavItem, isNavItemActive, navGroupsFor } from "@/components/portal/shell/portalNav";
 import { usePortalIntegrations } from "@/lib/portalIntegrations";
-import { resetPortalSession, usePortalSession } from "@/components/portal/shell/portalSession";
+import { resetPortalSession, signOutOfPortal, usePortalSession } from "@/components/portal/shell/portalSession";
+import { PortalTour } from "@/components/portal/shell/PortalTour";
+import { AGREEMENT_GATE_PATH, mustVisitGate, useAgreementGate } from "@/lib/portalAgreementGate";
 import { AdminModeSwitch } from "@/components/portal/AdminModeSwitch";
 import { usePortalTheme } from "@/components/portal/shell/portalTheme";
 import { PortalCommandPalette } from "@/components/portal/shell/PortalCommandPalette";
@@ -76,8 +78,15 @@ export function PortalLayout({
   width = "default",
   titleTestId,
 }: PortalLayoutProps) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { ready, user } = usePortalSession();
+  // Agreement gate (shared/portalAgreements.ts): while enforced, anyone with an
+  // outstanding agreement is sent to onboarding first. A failed check fails open.
+  const gate = useAgreementGate(ready && !!user && user.role !== "admin");
+  const gateBlocks = mustVisitGate(gate.data);
+  useEffect(() => {
+    if (gateBlocks) setLocation(AGREEMENT_GATE_PATH, { replace: true });
+  }, [gateBlocks, setLocation]);
   const [theme, themePreference, setThemePreference] = usePortalTheme();
   // Portalled overlays (dialogs, menus, popovers) render into <body>; give
   // <body> the portal token scope while a portal page is mounted.
@@ -127,21 +136,9 @@ export function PortalLayout({
     }
   }, []);
 
-  const handleLogout = useCallback(async () => {
-    try {
-      await fetch("/api/portal/logout", { method: "POST", credentials: "include" });
-    } catch {
-      /* still clear local */
-    }
-    localStorage.removeItem("portalUser");
-    localStorage.removeItem("portalToken");
-    localStorage.removeItem("portalUserId");
-    localStorage.removeItem("impersonatingCompany");
-    resetPortalSession();
-    window.location.href = "/portal/login";
-  }, []);
+  const handleLogout = useCallback(() => void signOutOfPortal(), []);
 
-  if (!ready) {
+  if (!ready || gateBlocks) {
     return (
       <div className="de-portal flex h-dvh items-center justify-center text-sm text-muted-foreground" data-theme={theme} role="status">
         Checking session…
@@ -192,7 +189,7 @@ export function PortalLayout({
                             tooltip={item.label}
                             className="pt-active-nav"
                           >
-                            <Link href={item.href} aria-current={active ? "page" : undefined}>
+                            <Link href={item.href} aria-current={active ? "page" : undefined} data-tour={`nav-${item.href.split("/").pop()}`}>
                               <Icon aria-hidden="true" />
                               <span>{item.label}</span>
                               {item.sample && (
@@ -249,12 +246,13 @@ export function PortalLayout({
                 onClick={() => setPaletteOpen(true)}
                 className="hidden h-9 w-64 justify-start gap-2 border-border bg-card px-3 font-normal text-muted-foreground hover:bg-accent hover:text-foreground md:flex"
                 data-testid="button-command-palette"
+                data-tour="search"
               >
                 <Search className="h-4 w-4" aria-hidden="true" />
                 <span className="flex-1 text-left text-sm">Search or jump to…</span>
                 <kbd className="rounded border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">⌘K</kbd>
               </Button>
-              <Button variant="outline" size="icon" onClick={() => setPaletteOpen(true)} className="h-9 w-9 border-border bg-card hover:bg-accent md:hidden" aria-label="Search or jump to a page">
+              <Button variant="outline" size="icon" onClick={() => setPaletteOpen(true)} className="h-9 w-9 border-border bg-card hover:bg-accent md:hidden" aria-label="Search or jump to a page" data-tour="search">
                 <Search className="h-4 w-4" aria-hidden="true" />
               </Button>
               {user?.role === "admin" && (
@@ -297,6 +295,7 @@ export function PortalLayout({
           </main>
         </SidebarInset>
       </SidebarProvider>
+      <PortalTour user={user} enabled={ready && !gateBlocks && !gate.isLoading} />
       <PortalCommandPalette groups={groups} open={paletteOpen} onOpenChange={setPaletteOpen} onSignOut={handleLogout} />
     </div>
   );

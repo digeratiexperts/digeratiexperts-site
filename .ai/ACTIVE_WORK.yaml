@@ -30,6 +30,28 @@
 
 version: 2
 claims:
+  - id: portal-agreement-gate
+    owner: claude
+    subsystem: portal-onboarding
+    branch: claude/dreamy-einstein-mbqa0w
+    base_sha: 5da3faf
+    files:
+      - shared/portalAgreements.ts (new)
+      - server/portalAgreementRoutes.ts, server/portalAgreementStore.ts (new)
+      - migrations/0016_portal_agreements.sql (new), shared/schema.ts (one table)
+      - client/src/pages/portal/PortalAgreementGate.tsx (new)
+      - client/src/components/portal/shell/PortalTour.tsx (new)
+      - client/src/pages/portal/PortalLayout.tsx (gate redirect, tour mount, data-tour hooks only)
+      - scripts/de-documents (policy family + three portal agreement PDFs)
+      - docs/vendors/cytracom/agreements/ (new)
+    status: active
+    started: 2026-10-09
+    note: >-
+      Joe, 2026-10-09: /agreement-gate onboarding mode with welcome videos (company
+      and user), Portal Terms / Rules of Engagement (company), Acceptable Use and
+      Portal Guide (each user), and a first-login guided tour. Enforcement ships
+      off (PORTAL_AGREEMENT_GATE=enforce turns it on) until Joe approves the
+      AI-drafted legal text.
   - id: quote-match-include-it
     issue: 417
     owner: cursor

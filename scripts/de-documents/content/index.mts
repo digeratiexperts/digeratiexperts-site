@@ -6,6 +6,7 @@ import { proactiveIt } from "./proactive-it.mts";
 import { proactiveBusiness, proactiveEnterprise, proactiveOffice } from "./proactive-tiers.mts";
 import { complianceReports, qbrSample } from "./reports.mts";
 import { securityChecklist } from "./security-readiness-checklist.mts";
+import { portalAcceptableUse, portalGuide, portalTerms } from "./portal-agreements.mts";
 import { coManaged, ecosystemOverview, managedWorkplace, ucaas } from "./services.mts";
 
 export const DOCUMENTS: Doc[] = [
@@ -22,4 +23,8 @@ export const DOCUMENTS: Doc[] = [
   ucaas,
   complianceReports,
   qbrSample,
+  // Client Portal agreements (not in resourceRegistry; served from assets/legal/portal/).
+  portalTerms,
+  portalAcceptableUse,
+  portalGuide,
 ];

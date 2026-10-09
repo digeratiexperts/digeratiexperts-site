@@ -97,3 +97,6 @@ artifacts/design-concepts/*/shots-integrated/*.png
 .claude/skills/msp-ai-kit/windows/community/
 artifacts/visual-qa/the-box/shots/*.png
 artifacts/visual-qa/*-history/shots/*.png
+
+# Cytracom partner pricing is confidential (Partner Agreement s.1.1); this repo is public.
+docs/vendors/cytracom/agreements/ControlOne_Pricing_2022.pdf
