@@ -1926,7 +1926,8 @@ html.de-store-jelly .d2-sheet-panel[data-state="open"] {
     transform: translateX(1px);
   }
 }
-.d2-action--primary[data-d2-attn="true"] {
+.d2-action--primary[data-d2-attn="true"],
+.d2-flag-lnav__solution[data-d2-attn="true"] {
   animation: d2-attn 1.3s var(--d2-ease) 3;
 }
 @keyframes d2-attn {
@@ -1999,7 +2000,8 @@ html.d2-reveal-ready .d2-grid--cards > [data-d2-reveal="in"]:hover {
   }
   .d2-cue__chevron,
   .d2-action__arrow,
-  .d2-action--primary[data-d2-attn="true"] {
+  .d2-action--primary[data-d2-attn="true"],
+  .d2-flag-lnav__solution[data-d2-attn="true"] {
     animation: none !important;
   }
   .d2-grid--cards > .d2-cell:hover,

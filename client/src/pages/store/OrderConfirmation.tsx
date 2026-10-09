@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearch, Link } from "wouter";
 import { parseOrderConfirmationParams } from "./orderConfirmationParams";
 import { motion } from "framer-motion";
@@ -58,6 +58,44 @@ const OrderConfirmation = () => {
   const { clearCart } = useCart();
 
   const params = useMemo(() => parseOrderConfirmationParams(search), [search]);
+  const [pdfState, setPdfState] = useState<{ busy: boolean; error: string | null }>({ busy: false, error: null });
+
+  // Fetch the PDF and check the answer first: an expired link or a server
+  // without a renderer must show a message, never save a JSON error as "pdf.json".
+  const downloadOrderPdf = async () => {
+    if (!params.orderId) return;
+    setPdfState({ busy: true, error: null });
+    try {
+      const token = localStorage.getItem("portalToken");
+      const ctQuery = params.confirmationToken ? `?ct=${encodeURIComponent(params.confirmationToken)}` : "";
+      const response = await fetch(`/api/store/orders/${encodeURIComponent(params.orderId)}/pdf${ctQuery}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: "include",
+      });
+      if (!response.ok || !(response.headers.get("Content-Type") || "").includes("application/pdf")) {
+        setPdfState({
+          busy: false,
+          error:
+            response.status === 401 || response.status === 403 || response.status === 404
+              ? "This order link has expired or is not valid. Sign in to the client portal to download your receipt."
+              : "We couldn't create the PDF right now. Please try again in a few minutes, or contact support.",
+        });
+        return;
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `DE-order-${(order?.orderNumber || params.orderId).replace(/[^A-Za-z0-9_-]/g, "")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      setPdfState({ busy: false, error: null });
+    } catch {
+      setPdfState({ busy: false, error: "We couldn't reach the server. Check your connection and try again." });
+    }
+  };
 
   useSEO({
     title: "Order Confirmation | Digerati Experts Store",
@@ -327,21 +365,24 @@ const OrderConfirmation = () => {
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
             {params.orderId && !isQuoteRequest && (
-              <a
-                href={`/api/store/orders/${encodeURIComponent(params.orderId)}/pdf${
-                  params.confirmationToken ? `?ct=${encodeURIComponent(params.confirmationToken)}` : ""
-                }`}
-                download
-              >
+              <div className="flex flex-col items-center gap-2">
                 <Button
                   variant="outline"
                   className="border-white/20 text-white hover:bg-white/10"
+                  onClick={downloadOrderPdf}
+                  disabled={pdfState.busy}
+                  aria-busy={pdfState.busy}
                   data-testid="button-download-order-pdf"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Download PDF
+                  {pdfState.busy ? "Preparing PDF…" : "Download PDF"}
                 </Button>
-              </a>
+                {pdfState.error ? (
+                  <p role="alert" className="max-w-xs text-center text-sm text-white/80" data-testid="order-pdf-error">
+                    {pdfState.error}
+                  </p>
+                ) : null}
+              </div>
             )}
 
             <Link href="/internal/warehouse">
