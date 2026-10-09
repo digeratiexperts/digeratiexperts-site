@@ -174,6 +174,34 @@ export function storePdfCases(): StorePdfCase[] {
       mustExclude: ["100 Main St", "85225"],
     },
     {
+      // A typical 4-line order with the full billing address keeps the close on page 1.
+      name: "receipt-4-lines-full-address",
+      kind: "receipt",
+      html: buildOrderPdfHtml(
+        {
+          ...order,
+          lineItems: Array.from({ length: 4 }, (_, i) => ({
+            name: `Catalog line ${i + 1}`,
+            sku: `SKU-${2000 + i}`,
+            quantity: 18,
+            unitPrice: 100,
+            total: 1800,
+            pricingType: i % 2 ? "monthly" : "one_time",
+          })),
+        },
+        { variant: "receipt" },
+      ),
+      pages: { exact: 1 },
+      mustInclude: [DE_STORE_DOC_ID.receipt, "SKU-2003", "100 Main St"],
+    },
+    {
+      name: "quote-3-items-notes",
+      kind: "quote",
+      html: buildQuotePdfHtml({ ...quoteBase, requestedItems: catalogLines(3), message: "Need endpoint coverage for two clinics." }),
+      pages: { exact: 1 },
+      mustInclude: [DE_STORE_DOC_ID.quote, catalogLines(3)[2].sku],
+    },
+    {
       name: "receipt",
       kind: "receipt",
       html: buildOrderPdfHtml(order, { variant: "receipt" }),

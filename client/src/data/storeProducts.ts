@@ -697,7 +697,8 @@ export const storeProducts: StoreProduct[] = [
     sortOrder: 49,
   },
 
-  // E) Physical Products - mandatory provisioning
+  // E) Physical Products - mandatory provisioning. One-time fee per device or phone (DE, 2026-10-08);
+  //    pricingUnit keeps the per-unit quantity and price label ("$149.00 / device, one-time").
   {
     id: "prod-050",
     sku: "DE-HW-PROV-ENDPOINT-OT",
@@ -705,7 +706,7 @@ export const storeProducts: StoreProduct[] = [
     shortDescription: "Hardening + enrollment",
     description: "Secure endpoint provisioning with enterprise hardening and enrollment in management systems.",
     category: "hardware_provisioning",
-    pricingType: "per_device",
+    pricingType: "one_time",
     basePrice: 149,
     pricingUnit: "device",
     isContractOnly: false,
@@ -723,7 +724,7 @@ export const storeProducts: StoreProduct[] = [
     shortDescription: "Firewall/switch/AP setup",
     description: "Network device provisioning including firewall, switch, and access point configuration.",
     category: "hardware_provisioning",
-    pricingType: "per_device",
+    pricingType: "one_time",
     basePrice: 199,
     pricingUnit: "device",
     isContractOnly: false,
@@ -741,7 +742,7 @@ export const storeProducts: StoreProduct[] = [
     shortDescription: "Phone setup and configuration",
     description: "VoIP phone provisioning with user configuration and system integration.",
     category: "hardware_provisioning",
-    pricingType: "per_device",
+    pricingType: "one_time",
     basePrice: 49,
     pricingUnit: "phone",
     isContractOnly: false,
@@ -1305,6 +1306,9 @@ export const formatPrice = (product: StoreProduct, unitPrice = product.basePrice
   const money = `$${unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   if (product.pricingType === "per_device" && product.pricingUnit && product.pricingUnit !== "device") {
     return `${money} / ${product.pricingUnit}`;
+  }
+  if (product.pricingType === "one_time" && product.pricingUnit) {
+    return `${money} / ${product.pricingUnit}, one-time`;
   }
   const unit = PRICE_UNIT_BY_TYPE[product.pricingType];
   return unit ? `${money} / ${unit}` : money;

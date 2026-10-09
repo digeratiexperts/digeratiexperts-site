@@ -29,4 +29,13 @@ describe("client price resolution", () => {
   it("ships no catalog entry whose displayed price is $0.00", () => {
     for (const p of storeProducts) expect(formatPrice(p)).not.toMatch(/^\$0\.00/);
   });
+
+  it("prices provisioning as a one-time fee per device or phone (DE, 2026-10-08)", () => {
+    const bySku = (sku: string) => storeProducts.find((p) => p.sku === sku)!;
+    for (const sku of ["DE-HW-PROV-ENDPOINT-OT", "DE-HW-PROV-NET-OT", "DE-HW-PROV-VOIP-OT"]) {
+      expect(bySku(sku).pricingType, sku).toBe("one_time");
+    }
+    expect(formatPrice(bySku("DE-HW-PROV-ENDPOINT-OT"))).toBe("$149.00 / device, one-time");
+    expect(formatPrice(bySku("DE-HW-PROV-VOIP-OT"))).toBe("$49.00 / phone, one-time");
+  });
 });

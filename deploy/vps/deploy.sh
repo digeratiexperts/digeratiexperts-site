@@ -198,17 +198,34 @@ if [ "${SKIP_PDF_BROWSER:-0}" != "1" ]; then
   fi
 fi
 
+# Load the shared env BEFORE the build. Vite bakes public VITE_* values (the
+# Cloudflare Turnstile site key, analytics IDs) into the bundle at build time,
+# and the build reads them from the process environment; sourcing the env only
+# afterwards shipped every bundle without them (portal sign-in reported
+# "VITE_TURNSTILE_SITE_KEY is not set"). Only VITE_* values reach the client;
+# the credential scan below still guards the bundle.
+set -a
+# shellcheck disable=SC1090
+. "$SHARED_ENV"
+set +a
+# Turnstile needs both keys from the same Cloudflare widget: the site key in
+# the bundle (renders the challenge) and the secret on the server (verifies
+# it). A secret without the site key rejects every portal sign-in.
+if [ -z "${VITE_TURNSTILE_SITE_KEY:-}" ] && [ -n "${TURNSTILE_SECRET_KEY:-}" ]; then
+  log "WARN: TURNSTILE_SECRET_KEY is set but VITE_TURNSTILE_SITE_KEY is not in $SHARED_ENV; portal sign-in will reject every attempt"
+elif [ -z "${VITE_TURNSTILE_SITE_KEY:-}" ]; then
+  log "WARN: VITE_TURNSTILE_SITE_KEY is not set in $SHARED_ENV; portal sign-in ships without bot protection"
+elif [ -z "${TURNSTILE_SECRET_KEY:-}" ]; then
+  log "WARN: TURNSTILE_SECRET_KEY is not set in $SHARED_ENV; the challenge shows but the server does not verify it"
+fi
+
 log "Building production bundle"
 npm run build
 
 # Apply additive, versioned migrations before activating the new release. Each
 # file is transactional and checksum-protected; a failure leaves the currently
-# active application untouched.
+# active application untouched. (The shared env was loaded before the build.)
 log "Applying database migrations"
-set -a
-# shellcheck disable=SC1090
-. "$SHARED_ENV"
-set +a
 npm run db:migrate
 
 # ---------------------------------------------------------------- validate
@@ -227,6 +244,12 @@ if grep -rqE 'internal/(pricing-tiers|sales-process|security-stack|usp-worksheet
 fi
 if grep -rqE 'sk_live_[A-Za-z0-9]|whsec_[A-Za-z0-9]|jca_[A-Za-z0-9]{20}|client_secret["'"'"']?\s*[:=]\s*["'"'"'][a-f0-9]{30}' dist/public/assets/; then
   fail "bundle appears to contain credentials — refusing to deploy"
+fi
+if [ -n "${TURNSTILE_SECRET_KEY:-}" ] && grep -rqF -e "$TURNSTILE_SECRET_KEY" dist/public/assets/; then
+  fail "bundle contains TURNSTILE_SECRET_KEY — refusing to deploy"
+fi
+if [ -n "${VITE_TURNSTILE_SITE_KEY:-}" ] && ! grep -rqF -e "$VITE_TURNSTILE_SITE_KEY" dist/public/assets/; then
+  log "WARN: VITE_TURNSTILE_SITE_KEY is set but missing from the built bundle; portal sign-in ships without the challenge"
 fi
 
 # link the shared env into the release for tooling that expects a local .env

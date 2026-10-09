@@ -35,38 +35,41 @@ export function AccountTeamCard({
       className={`grid gap-5 ${stacked ? "" : "sm:grid-cols-[minmax(0,1fr)_auto]"} ${className}`}
       data-testid="account-team"
     >
-      <div className="flex items-start gap-4 min-w-0">
-        <picture className="shrink-0">
-          <source srcSet={manager.photo.webp} type="image/webp" />
-          <img
-            src={manager.photo.jpg}
-            alt={manager.photo.alt}
-            width={64}
-            height={64}
-            loading="lazy"
-            decoding="async"
-            className="h-16 w-16 rounded-full object-cover"
-          />
-        </picture>
-        <div className="min-w-0 text-sm">
-          <p className={`text-xs uppercase tracking-wide ${muted}`}>Your account manager</p>
-          <p className={`font-semibold ${strong}`} data-testid="account-manager-name">{manager.name}</p>
-          <p className={`mb-2 ${muted}`}>{manager.title}</p>
-          <a href={`mailto:${manager.email}`} className={`flex items-center gap-2 break-all ${link}`} data-testid="account-manager-email">
-            <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
-            {manager.email}
-          </a>
-          <a href={manager.phoneHref} className={`mt-1 flex items-center gap-2 ${link}`} data-testid="account-manager-phone">
-            <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
-            {manager.phoneDisplay}
-          </a>
+      <div className="min-w-0 text-sm">
+        <div className="flex items-center gap-4 min-w-0">
+          <picture className="shrink-0">
+            <source srcSet={manager.photo.webp} type="image/webp" />
+            <img
+              src={manager.photo.jpg}
+              alt={manager.photo.alt}
+              width={64}
+              height={64}
+              loading="lazy"
+              decoding="async"
+              className="h-16 w-16 rounded-full object-cover"
+            />
+          </picture>
+          <div className="min-w-0">
+            <p className={`text-xs uppercase tracking-wide ${muted}`}>Your account manager</p>
+            <p className={`font-semibold ${strong}`} data-testid="account-manager-name">{manager.name}</p>
+            <p className={muted}>{manager.title}</p>
+          </div>
         </div>
+        {/* Contact lines run the card's full width under the photo, so an address only wraps when it truly cannot fit. */}
+        <a href={`mailto:${manager.email}`} className={`mt-3 flex items-center gap-2 break-words ${link}`} data-testid="account-manager-email">
+          <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="min-w-0">{manager.email}</span>
+        </a>
+        <a href={manager.phoneHref} className={`mt-1 flex items-center gap-2 ${link}`} data-testid="account-manager-phone">
+          <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
+          {manager.phoneDisplay}
+        </a>
       </div>
       <div className={`text-sm border-t pt-4 ${stacked ? "" : "sm:border-t-0 sm:border-l sm:pt-0 sm:pl-5"} ${divider}`}>
         <p className={`text-xs uppercase tracking-wide ${muted}`}>{sales.name}</p>
-        <a href={`mailto:${sales.email}`} className={`mt-2 flex items-center gap-2 break-all ${link}`} data-testid="sales-email">
+        <a href={`mailto:${sales.email}`} className={`mt-2 flex items-center gap-2 break-words ${link}`} data-testid="sales-email">
           <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
-          {sales.email}
+          <span className="min-w-0">{sales.email}</span>
         </a>
         <a href={sales.phoneHref} className={`mt-1 flex items-center gap-2 ${link}`} data-testid="sales-phone">
           <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
