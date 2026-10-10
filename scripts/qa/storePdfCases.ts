@@ -104,7 +104,7 @@ export function storePdfCases(): StorePdfCase[] {
       name: "quote-5-items",
       kind: "quote",
       html: buildQuotePdfHtml({ ...quoteBase, requestedItems: catalogLines(5) }),
-      pages: { min: 1, max: 2 },
+      pages: { exact: 1 },
       mustInclude: [DE_STORE_DOC_ID.quote, catalogLines(5)[4].sku],
     },
     {
@@ -227,7 +227,7 @@ export function storePdfCases(): StorePdfCase[] {
           pkg("Compliance", "HIPAA Readiness", 2),
         ],
       }),
-      pages: { min: 1, max: 2 },
+      pages: { exact: 1 },
       mustInclude: [DE_STORE_DOC_ID.solution, "Managed Endpoint Defense", "HIPAA Readiness"],
     },
   ];

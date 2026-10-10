@@ -286,7 +286,10 @@ export function CookieConsentBanner() {
                 <p
                   className={cn(
                     "min-w-0 flex-1 text-base leading-relaxed",
-                    light ? "hidden" : "hidden lg:block",
+                    // Full disclosure from 1280px. Between 1024 and 1279 it shared the row
+                    // with the buttons, wrapped to eleven lines and covered 311px of a
+                    // 768px-tall screen; those widths get the short line tablets use.
+                    light ? "hidden" : "hidden xl:block",
                     light ? "text-slate-700" : "text-gray-200",
                   )}
                 >
@@ -306,7 +309,7 @@ export function CookieConsentBanner() {
                 <p
                   className={cn(
                     "min-w-0 flex-1 text-sm font-medium leading-snug",
-                    light ? "" : "lg:hidden",
+                    light ? "" : "xl:hidden",
                     light ? "text-slate-800" : "text-gray-200",
                   )}
                 >
