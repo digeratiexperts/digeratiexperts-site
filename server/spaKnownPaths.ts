@@ -154,6 +154,14 @@ const EXACT = new Set([
   "/resources/reports/sample-quarterly-business-review",
   "/resources/checklists/security-readiness-checklist",
   "/resources/checklists/backup-bcdr-checklist",
+  // Live sessions (client/src/data/deEvents.ts). Exact paths for the same
+  // reason as /go: an unknown session slug answers 404.
+  "/events",
+  "/events/cyber-insurance-renewal-readiness",
+  "/events/holiday-invoice-fraud-and-phishing",
+  "/events/ransomware-restore-readiness-2027",
+  "/events/co-managed-it-for-internal-teams",
+  "/events/world-backup-day-restore-drill",
 ]);
 
 const PREFIXES = [

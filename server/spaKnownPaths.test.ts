@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { isKnownSpaPath, normalizeSpaPath } from "./spaKnownPaths";
 import { CAMPAIGN_SLUGS } from "@/data/campaigns";
 import { EXECUTIVE_BRIEFS } from "@/data/executiveBriefs";
+import { DE_EVENT_SESSIONS } from "@/data/deEvents";
 import resourceRegistry from "@/data/resourceRegistry.v2.json";
 
 describe("spaKnownPaths", () => {
@@ -73,6 +74,8 @@ describe("spaKnownPaths", () => {
       "/resources/briefs",
       ...EXECUTIVE_BRIEFS.map((brief) => `/resources/briefs/${brief.slug}`),
       ...resourceRegistry.resources.map((resource) => resource.route),
+      "/events",
+      ...DE_EVENT_SESSIONS.map((session) => `/events/${session.slug}`),
     ];
     expect(rendered.length).toBeGreaterThan(25);
     expect(rendered.filter((p) => !isKnownSpaPath(p))).toEqual([]);
