@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { SceneBackdrop } from "../scene/SceneBackdrop";
 import { motion, useReducedMotion } from "framer-motion";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -464,6 +465,7 @@ export function V10ContactFooter(): JSX.Element {
           aria-hidden="true"
         />
         <div className="contact__drift" aria-hidden="true" />
+        <SceneBackdrop frame="close" />
         <div className="v10-canvas contact__grid">
           <motion.div className="contact__copy" {...reveal()}>
             <p className="v10-eyebrow">Contact</p>

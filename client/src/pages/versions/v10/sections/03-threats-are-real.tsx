@@ -5,7 +5,7 @@ import { Link } from "wouter";
 import { getHomepageCyberFacts, type CyberAwarenessFact } from "@/data/cyberAwarenessFacts";
 import { revealInitial, revealInView, revealTransition, revealViewport } from "@/lib/animations";
 import "./03-threats-are-real.css";
-import { ChapterPattern } from "@/components/site/Atmosphere";
+import { SceneBackdrop } from "../scene/SceneBackdrop";
 
 /**
  * 03 · The threats are real, ported from
@@ -56,7 +56,7 @@ export function V10ThreatsAreReal(): JSX.Element {
 
   return (
     <section className="f-well v10-section" id="stats" aria-labelledby="stats-heading">
-      <ChapterPattern variant="lattice" />
+      <SceneBackdrop frame="exposure" />
       <div className="v10-canvas">
         <div className="v10-box stats-box">
           <motion.div

@@ -1,0 +1,70 @@
+/* The scene story (Version 10): see SceneBackdrop.tsx. */
+
+.v10 .scene {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.v10 .scene__img {
+  position: absolute;
+  top: 0;
+  right: max(0px, calc((100% - 1560px) / 2));
+  width: min(68%, 1240px);
+  height: auto;
+  aspect-ratio: 1600 / 893;
+  max-width: none;
+  opacity: 0.92;
+  -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent 98%);
+  mask-image: linear-gradient(to bottom, #000 62%, transparent 98%);
+}
+
+/* A section that carries the scene becomes a black stage, whatever field it had. */
+.v10 section:has(> .scene) { background: #000; color: #fff; }
+
+/* Paper chapters keep their light cards as islands; only the copy outside them turns light. */
+.v10 section.f-paper:has(> .scene) :is(.why__statement, .why__ask, .tackle__head, .v10-head) { color: #fff; }
+.v10 section.f-paper:has(> .scene) :is(.why__statement, .why__ask, .tackle__head, .v10-head) .v10-eyebrow { color: var(--v10-magenta-ink); }
+.v10 section.f-paper:has(> .scene) :is(.why__statement, .why__ask, .tackle__head, .v10-head) :is(.v10-lede, .v10-body) { color: rgba(255, 255, 255, 0.8); }
+.v10 section.f-paper:has(> .scene) :is(.why__statement, .why__ask, .tackle__head, .v10-head) .v10-link { color: var(--v10-magenta-ink); }
+.v10 section.f-paper:has(> .scene) .why__ask { border-top-color: rgba(255, 255, 255, 0.14); }
+.v10 section.f-paper:has(> .scene) :is(.claims > *, .problems > .problem, .tackle__ask) { color: var(--v10-ink); }
+
+/* Boxed chapter: let the scene read through the panel's right side. */
+.v10 .v10s-03 .stats-box {
+  background: linear-gradient(100deg, rgba(24, 24, 27, 0.95) 0%, rgba(24, 24, 27, 0.88) 48%, rgba(24, 24, 27, 0.5) 100%);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+/* Contact: the closing frame replaces the dusk photo and drift. */
+.v10 .v10s-16 .contact:has(> .scene) > :is(.contact__plate, .contact__drift) { display: none; }
+.v10 .v10s-16 .contact > .scene { z-index: 0; }
+.v10 .v10s-16 .contact > .scene .scene__img {
+  top: auto;
+  bottom: 0;
+  -webkit-mask-image: linear-gradient(to top, #000 60%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 60%, transparent 100%);
+}
+
+/* The scene settles in as its chapter arrives. Decorative: progressive enhancement only. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports ((animation-timeline: view()) and (animation-range: entry)) {
+    @keyframes scene-settle { from { opacity: 0.35; scale: 1.06; } }
+    .v10 .scene { view-timeline: --scene block; }
+    .v10 .scene__img {
+      transform-origin: 70% 40%;
+      animation: scene-settle linear both;
+      animation-timeline: --scene;
+      animation-range: entry 0% cover 40%;
+    }
+  }
+}
+
+@media (max-width: 1023px) {
+  .v10 .scene__img { width: 112%; right: -18%; opacity: 0.6; }
+}
+@media (max-width: 639px) {
+  .v10 .scene__img { width: 190%; right: -62%; opacity: 0.45; }
+}
