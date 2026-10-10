@@ -29,6 +29,7 @@ import compression from "compression";
 import { resolveWarehouseStaff } from "./warehouseAccess";
 import { zohoPayments } from "./zohoPayments";
 import { zohoClient } from "./zoho/zohoClient";
+import { zohoHealthStates } from "./zoho/zohoHealth";
 import { evaluatePaymentSucceeded } from "./zohoPaymentWebhook";
 import { setupCrossServiceHandlers } from "./crossServiceHandler";
 import { eventBus, EventTypes } from "./eventBus";
@@ -126,8 +127,13 @@ app.all("/api/health", async (_req, res) => {
         };
       })(),
       // Presence ≠ valid refresh token. auth_failed is set after a live Desk
-      // OAuth refresh rejects the configured refresh token (e.g. invalid_code).
+      // OAuth refresh rejects the configured refresh token (e.g. invalid_code);
+      // degraded when Zoho throttled us or was unreachable (#418). Kept for
+      // existing monitors; `zoho` below is the four-state map.
       zohoDesk: zohoClient.getDeskAuthStatus(),
+      // Token health per product from stored state (no Zoho call): connected,
+      // degraded, needs_reconnect, not_configured, or unknown before first use.
+      zoho: await zohoHealthStates().catch(() => null),
       openai: openaiConfigured ? "configured" : "not_configured",
       // Solution requests waiting on disk for the database (#243). A count, and whether the folder takes writes.
       solutionSpool: { pending: spoolPendingCount(), writable: spoolWritable(spoolDir()) },
@@ -692,6 +698,16 @@ function listEndpoints(): Array<{ method: string; path: string }> {
       .then(({ startQuoteReplayWorker }) => startQuoteReplayWorker())
       .catch((error) => {
         log(`⚠️ quote replay worker not started: ${error?.message || error}`);
+      });
+    // Zoho Connect grant presence for the synchronous isConfigured() checks
+    // (server/zoho/oauth). After the database is up; never throws.
+    void Promise.all([import("./db"), import("./zoho/oauth")])
+      .then(async ([{ initPromise }, { refreshZohoConnectSnapshot }]) => {
+        await initPromise;
+        await refreshZohoConnectSnapshot();
+      })
+      .catch((error) => {
+        log(`⚠️ Zoho Connect snapshot not loaded: ${error?.message || error}`);
       });
     // DE Desk tickets the Desk API did not take go in by API once it works (desk-ticket-failover).
     void import("./deskTicketReplayWorker")
