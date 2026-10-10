@@ -33,3 +33,7 @@
 {"at":"2026-10-10T03:55:02.662Z","type":"spend","job":"homepage-story-concepts-2026-10-10","model":"nano-banana-2","credits":12,"usd":0.06,"task":"5333adbecb65cb564db7d57a9936a987","file":"artifacts/kie-ai/nano-banana/images/site/2026-10-10-scene-3-gaps.jpg"}
 {"at":"2026-10-10T03:55:02.837Z","type":"spend","job":"homepage-story-concepts-2026-10-10","model":"nano-banana-2","credits":12,"usd":0.06,"task":"24bc105cb2be267b246ed29ffd501668","file":"artifacts/kie-ai/nano-banana/images/site/2026-10-10-scene-2-exposure.jpg"}
 {"at":"2026-10-10T03:56:51.934Z","type":"close","job":"homepage-story-concepts-2026-10-10","spentUsd":0.24}
+{"at":"2026-10-10T18:56:14.443Z","type":"open","job":"homepage-scene-story-2026-10-10","model":"nano-banana-2","count":2,"resolution":"2K","projectedCredits":24,"projectedUsd":0.12,"note":"Version 10 scene story: six-gap frame and closing frame"}
+{"at":"2026-10-10T18:56:52.012Z","type":"spend","job":"homepage-scene-story-2026-10-10","model":"nano-banana-2","credits":12,"usd":0.06,"task":"22ed34af02351bf9ec3902287e5c035b","file":"artifacts/kie-ai/nano-banana/images/site/2026-10-10-scene-5-close.jpg"}
+{"at":"2026-10-10T18:56:52.707Z","type":"spend","job":"homepage-scene-story-2026-10-10","model":"nano-banana-2","credits":12,"usd":0.06,"task":"95a4dfbc77dc84f50d2a5e611088cc05","file":"artifacts/kie-ai/nano-banana/images/site/2026-10-10-scene-3b-six-gaps.jpg"}
+{"at":"2026-10-10T18:57:16.291Z","type":"close","job":"homepage-scene-story-2026-10-10","spentUsd":0.12}
