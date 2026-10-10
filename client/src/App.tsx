@@ -62,6 +62,8 @@ const Datasheets = lazy(() => import("@/pages/resources/Datasheets"));
 const DowntimeCalculator = lazy(() => import("@/pages/resources/DowntimeCalculator"));
 const ResourcesIndex = lazy(() => import("@/pages/resources/ResourcesIndex"));
 const TheBox = lazy(() => import("@/pages/TheBox"));
+const EventsIndex = lazy(() => import("@/pages/events/EventsIndex"));
+const EventSession = lazy(() => import("@/pages/events/EventSession"));
 const KnowledgeBase = lazy(() => import("@/pages/support/KnowledgeBase"));
 const RemoteSupport = lazy(() => import("@/pages/support/RemoteSupport"));
 const PayInvoice = lazy(() => import("@/pages/support/PayInvoice"));
@@ -446,6 +448,19 @@ function Router() {
       <Route path="/the-box" component={() => (
         <Suspense fallback={<PageLoadingSkeleton />}>
           <TheBox />
+        </Suspense>
+      )} />
+
+      {/* Live sessions: public webinars only (client/src/data/deEvents.ts).
+          The internal operating calendar lives in docs/marketing/. */}
+      <Route path="/events" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <EventsIndex />
+        </Suspense>
+      )} />
+      <Route path="/events/:slug" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <EventSession />
         </Suspense>
       )} />
 

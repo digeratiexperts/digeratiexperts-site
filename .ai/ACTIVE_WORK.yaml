@@ -30,6 +30,30 @@
 
 version: 2
 claims:
+  - id: de-events-calendar
+    owner: claude
+    subsystem: marketing-events
+    branch: claude/inspiring-franklin-1o69vr
+    base_sha: 067d2b2
+    files:
+      - client/src/data/deEvents.ts (new)
+      - client/src/data/deEvents.test.ts (new)
+      - client/src/lib/ics.ts (new)
+      - client/src/pages/events/EventsIndex.tsx (new)
+      - client/src/pages/events/EventSession.tsx (new)
+      - client/src/App.tsx (the two /events route registrations only)
+      - scripts/de-events/program.ts (new)
+      - scripts/de-events/build.ts (new)
+      - docs/marketing/ (generated calendar .md, .ics, .html)
+    status: active
+    started: 2026-10-10
+    note: >-
+      Public live-session pages (/events, /events/:slug) with countdown, time-zone
+      switch, .ics download and a registration form posting to /api/contact. All
+      sessions are planned (noindex, out of sitemap) until Joe confirms date,
+      presenter and platform. The internal operating calendar (prospects, clients,
+      internal; weekly to annual) is generated into docs/marketing/ and never
+      bundled into the site. Copies go to WorkDrive 4. Event & Strategic Planning.
   - id: quote-match-include-it
     issue: 417
     owner: cursor
