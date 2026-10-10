@@ -72,3 +72,26 @@ A task is released only when its actual status is recorded as one of:
 - `LOST LOCAL IMPLEMENTATION — REQUIREMENT PRESERVED`
 
 Close the active GitHub issue/claim only when the state above is explicit and no recovery work remains.
+
+## Current open PRs and owners (snapshot)
+
+**Refreshed:** 2026-10-10 from GitHub, `origin/main` at `7b1b4197` (merge of #551). This table is a
+snapshot for orientation; the live PR list is still the lock. Each PR is owned by the session that
+opened it (session link at the bottom of its body). Do not push to, rebase, close or merge it.
+
+| PR | Draft | Branch | What it changes | Owner session |
+| --- | --- | --- | --- | --- |
+| #555 | yes | `claude/awesome-bardeen-4pbl2m` | Zoho Desk gets its own OAuth client (`server/zoho/zohoClient.ts` + tests, env example, `.ai/ACTIVE_WORK.yaml` claim `desk-oauth-client`) | Claude Code `session_01DpGjiCZTGCKrihFTHJKUay` |
+| #554 | yes | `claude/charming-faraday-rrlyzq` | `artifacts/branch-cleanup/delete-merged-branches.sh` skips moved branches | Claude Code `session_01YMDnpncWwwq7aXEDfnHHpp` |
+| #553 | yes | `claude/dreamy-einstein-mbqa0w` | Client Portal agreement gate, first-login tour, Cytracom vendor profile (portal pages, `migrations/0016`, warehouse vendors; claim `portal-agreement-gate`) | Claude Code `session_01Jt6Sn1CsXD7p7wFtG7b12a` |
+| #550 | yes | `claude/nifty-newton-uk9g7t` | Ledger only: `store-counts-phone` claim → verified-live | Claude Code `session_01PxcA8RVur1v39SbYpkmzMY` |
+| #542 | yes | `claude/store-pdfs-de-system` | Hide `.scroll-progress` in print (`client/src/index.css`) | Claude Code `session_017jXyuGTxDWJZzDNLP4dHYj` |
+| this PR | yes | `claude/t10-agent-governance-docs` | Agent docs + secret diff check (`AGENTS.md`, this file, `.github/workflows/secret-diff-check.yml`, `scripts/security/check-added-secrets.mjs`) | DE backlog thread T10 |
+
+Backlog threads starting 2026-10-10 (T1, T2, T7 in this repo) add their PRs here or appear in the
+live PR list. Cross-repo pending decisions and secrets: Intelligence Hub
+[`docs/OPEN-ITEMS-FOR-DE.md`](https://github.com/digeratiexperts/Intelligence-Hub/blob/master/docs/OPEN-ITEMS-FOR-DE.md).
+
+How to refresh this table: list open PRs (`gh pr list --state open` or the GitHub MCP
+`list_pull_requests`), read each one's changed files and session link, and replace the rows.
+Keep the "Refreshed" line honest: date plus the `origin/main` SHA you checked against.
