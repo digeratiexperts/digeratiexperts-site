@@ -8,6 +8,20 @@ import type {
   SeatSource,
   AssignmentTarget,
 } from "@shared/licenseBoard";
+import type { JumpCloudLink } from "@shared/jumpcloudPlan";
+
+export type JumpCloudPush = {
+  id: string;
+  clientId: string;
+  itemId: string;
+  product: string;
+  chocoPackage: string;
+  targetKind: "group" | "machine";
+  targetLabel: string;
+  ok: boolean;
+  detail: string | null;
+  createdAt: string;
+};
 
 /**
  * License patch bay storage. Postgres when the database is up
@@ -20,12 +34,16 @@ const mem = {
   items: new Map<string, LicensePoolItem>(),
   allocations: new Map<string, LicenseAllocation>(),
   assignments: new Map<string, LicenseAssignment>(),
+  links: new Map<string, JumpCloudLink>(),
+  pushes: [] as JumpCloudPush[],
 };
 
 export function _resetLicenseBoardMemory() {
   mem.items.clear();
   mem.allocations.clear();
   mem.assignments.clear();
+  mem.links.clear();
+  mem.pushes.length = 0;
 }
 
 let verified = false;
@@ -214,3 +232,80 @@ export async function deleteAssignment(id: string): Promise<void> {
     mem.assignments.delete(id);
   }
 }
+
+/* JumpCloud links and the push log (migrations/0018_license_jumpcloud_links.sql). */
+
+let linksVerified = false;
+async function linksTablesReady(): Promise<boolean> {
+  if (!(await ensureSchema())) return false;
+  if (linksVerified) return true;
+  try {
+    const [row] = rows(await db.execute(sql`SELECT to_regclass('public.license_jumpcloud_links') AS present`));
+    if (row && !row.present) {
+      console.error("[license-board] table license_jumpcloud_links is missing; run `npm run db:migrate` (migrations/0018).");
+      return false;
+    }
+    linksVerified = true;
+    return true;
+  } catch (error: any) {
+    console.warn("[license-board] could not verify JumpCloud tables:", error?.message || error);
+    return false;
+  }
+}
+
+export async function getJumpCloudLink(clientId: string): Promise<JumpCloudLink | null> {
+  if (await linksTablesReady()) {
+    const [r] = rows(await db.execute(sql`SELECT * FROM license_jumpcloud_links WHERE client_id = ${clientId} LIMIT 1`));
+    return r ? { orgId: r.org_id ? String(r.org_id) : null, systemGroupId: r.system_group_id ? String(r.system_group_id) : null } : null;
+  }
+  return mem.links.get(clientId) ?? null;
+}
+
+export async function setJumpCloudLink(clientId: string, link: JumpCloudLink, updatedBy: string | null): Promise<void> {
+  if (await linksTablesReady()) {
+    await db.execute(sql`
+      INSERT INTO license_jumpcloud_links (client_id, org_id, system_group_id, updated_by, updated_at)
+      VALUES (${clientId}, ${link.orgId}, ${link.systemGroupId}, ${updatedBy}, now())
+      ON CONFLICT (client_id) DO UPDATE SET org_id = EXCLUDED.org_id, system_group_id = EXCLUDED.system_group_id,
+        updated_by = EXCLUDED.updated_by, updated_at = now()
+    `);
+    return;
+  }
+  mem.links.set(clientId, link);
+}
+
+export async function recordJumpCloudPush(p: Omit<JumpCloudPush, "id" | "createdAt">, createdBy: string | null): Promise<JumpCloudPush> {
+  const push: JumpCloudPush = { ...p, id: randomUUID(), createdAt: new Date().toISOString() };
+  if (await linksTablesReady()) {
+    await db.execute(sql`
+      INSERT INTO license_jumpcloud_pushes
+        (id, client_id, item_id, product, choco_package, target_kind, target_label, ok, detail, created_by, created_at)
+      VALUES (${push.id}, ${push.clientId}, ${push.itemId}, ${push.product}, ${push.chocoPackage}, ${push.targetKind},
+              ${push.targetLabel}, ${push.ok}, ${push.detail}, ${createdBy}, ${new Date(push.createdAt)})
+    `);
+  } else {
+    mem.pushes.unshift(push);
+  }
+  return push;
+}
+
+export async function listJumpCloudPushes(clientId: string, limit = 20): Promise<JumpCloudPush[]> {
+  if (await linksTablesReady()) {
+    return rows(
+      await db.execute(sql`SELECT * FROM license_jumpcloud_pushes WHERE client_id = ${clientId} ORDER BY created_at DESC LIMIT ${limit}`),
+    ).map((r: any) => ({
+      id: String(r.id),
+      clientId: String(r.client_id),
+      itemId: String(r.item_id),
+      product: String(r.product),
+      chocoPackage: String(r.choco_package),
+      targetKind: r.target_kind === "machine" ? "machine" : "group",
+      targetLabel: String(r.target_label),
+      ok: Boolean(r.ok),
+      detail: r.detail ? String(r.detail) : null,
+      createdAt: iso(r.created_at),
+    }));
+  }
+  return mem.pushes.filter((p) => p.clientId === clientId).slice(0, limit);
+}
+

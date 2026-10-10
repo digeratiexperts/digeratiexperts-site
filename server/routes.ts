@@ -130,6 +130,12 @@ import { requireDeSyncAuth } from "./integrations/deSyncAuth";
 import { registerPortalAssistRoutes } from "./portalAssistRoutes";
 import { registerLicensingRoutes } from "./licensingRoutes";
 import { registerLicenseBoardRoutes } from "./licenseBoardRoutes";
+import {
+  jumpcloudAssociateSoftware,
+  jumpcloudConfigured,
+  jumpcloudEnsureChocoApp,
+  jumpcloudFindSystem,
+} from "./integrations/jumpcloud";
 import { registerKbRoutes } from "./kbRoutes";
 import { registerOrgDirectoryRoutes } from "./orgDirectoryRoutes";
 import { registerStoreOrderControlRoutes } from "./storeOrderControls";
@@ -1293,6 +1299,12 @@ export async function registerRoutes(app: Express) {
     listClientUsers: serviceRequestDeps.listClientUsers,
     listDepartments: serviceRequestDeps.listDepartments!,
     fetchHubCatalog: async () => (await import("./integrations/techSalesClient")).fetchStaffCatalog(),
+    jumpcloud: {
+      configured: () => jumpcloudConfigured(),
+      ensureChocoApp: (name, pkg, orgId) => jumpcloudEnsureChocoApp(name, pkg, orgId),
+      associate: (appId, target, orgId) => jumpcloudAssociateSoftware(appId, target, orgId),
+      findSystem: (name, orgId) => jumpcloudFindSystem(name, orgId),
+    },
   });
 
   // Company structure (site / department leaders) and the people directory (server/orgDirectoryRoutes.ts).
