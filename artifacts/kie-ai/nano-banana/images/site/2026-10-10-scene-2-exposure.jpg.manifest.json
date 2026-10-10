@@ -1,0 +1,22 @@
+{
+  "provider": "kie.ai",
+  "taskId": "24bc105cb2be267b246ed29ffd501668",
+  "model": "nano-banana-2",
+  "promptFile": "/home/user/digeratiexperts-site/artifacts/kie-ai/nano-banana/prompts/site/2026-10-10-scene-2-exposure.json",
+  "input": {
+    "prompt": "{\"prompt\": \"Same diorama, same camera, same composition, same materials and lighting as the reference image. Now the network is under pressure: thin streaks of magenta-violet light arrive from the black edges of the frame at low angles and strike the plinth rim and several of the small tiles, leaving small glowing hot spots; a few of the etched network lines flicker magenta. Everything else unchanged. The left 40% of the frame is plain empty black with nothing in it. Absolutely no text, letters or writing anywhere in the image.\", \"negative_prompt\": \"text, letters, numbers, logos, icons, symbols, watermark, people, hands, faces, padlock, shield, laptop, server rack, circuit board, binary code, hologram, neon grid, cyberpunk, matrix, rainbow gradient, lens flare, bokeh balls, plastic toy look, cartoon, busy composition, blurry, distorted geometry, any writing, captions, headlines, typography\"}",
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "jpg",
+    "image_input": [
+      "https://tempfile.aiquickdraw.com/workers/images/image_b158d4a180adbf86b8d0120914f197d1.jpg"
+    ]
+  },
+  "resultUrls": [
+    "https://tempfile.aiquickdraw.com/workers/images/image_2ea3dcf41f089532132cdab86f5b2ccb.jpg"
+  ],
+  "creditsConsumed": 12.0,
+  "generatedAt": "2026-10-10T03:55:02.850377+00:00",
+  "classification": "ILLUSTRATIVE",
+  "approvalStatus": "candidate"
+}
