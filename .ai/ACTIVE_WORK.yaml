@@ -42,6 +42,7 @@ claims:
       - client/src/pages/events/EventsIndex.tsx (new)
       - client/src/pages/events/EventSession.tsx (new)
       - client/src/App.tsx (the two /events route registrations only)
+      - server/spaKnownPaths.ts (the /events entries only)
       - scripts/de-events/program.ts (new)
       - scripts/de-events/build.ts (new)
       - docs/marketing/ (generated calendar .md, .ics, .html)
