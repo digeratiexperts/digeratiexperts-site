@@ -3379,7 +3379,7 @@ claims:
       - server/deskTicketFallback.ts (the restore sentence only)
       - .github/workflows/production-health.yml (the desk state in the issue text only)
       - deploy/vps/env.production.example, docs/ZOHO-OAUTH-INVENTORY.md (new), docs/STORE-WAREHOUSE.md (one step)
-    status: active
+    status: merged
     started: 2026-10-10
     note: >-
       Thread T1 (DE backlog, taken over from Cursor): port Intelligence Hub
@@ -3400,7 +3400,7 @@ claims:
     base_sha: 660a4db
     files:
       - shared/starterKits.ts (new), shared/jumpcloudPlan.ts (new) and their tests
-      - migrations/0016_license_jumpcloud_links.sql (new)
+      - migrations/0018_license_jumpcloud_links.sql (new)
       - server/licenseBoardStore.ts, server/licenseBoardRoutes.ts, server/licenseBoardRoutes.test.ts
       - server/integrations/jumpcloud.ts (software-app helpers appended; onboard/offboard untouched)
       - server/routes.ts (registerLicenseBoardRoutes deps only)
@@ -3414,3 +3414,20 @@ claims:
       (regular, regulated, GCC High). PR 540 (desk-chat-archive-swipe,
       license-patch-bay) verified live 2026-10-08: deploy of c4a0c24 created
       the vault key and applied migration 0015.
+  - id: zoho-agent-rules
+    owner: claude
+    subsystem: agent-docs
+    branch: claude/zoho-agent-rules
+    base_sha: b24a7dab
+    files:
+      - AGENTS.md (one new section after Hosts only)
+      - CLAUDE.md (one pointer line only)
+      - docs/ZOHO-OAUTH-INVENTORY.md (the rules section and the status line)
+    status: active
+    started: 2026-10-10
+    note: >-
+      Joe, 2026-10-10: "write these rules to other agents that might not
+      know". Zoho Connect is live (PR 562, approved by Joe at 03:58Z); the
+      rules stop agents from spending refresh-token slots, calling the token
+      endpoint directly, or rotating tokens on degraded. Placed away from PR
+      557's AGENTS.md insertion point to avoid a conflict. Docs only.

@@ -14,6 +14,8 @@ That role does not permit bypassing PR review, concurrency audits, visual QA, pr
 
 Never develop directly on `main`. Use an isolated branch/worktree. Reconcile against current `origin/main` before merge. Treat `MERGED` and `LIVE` as separate states.
 
+**Zoho:** never generate Zoho grant codes or call `/oauth/v2/token` directly. All Zoho access goes through `server/zoho/oauth` on the one Zoho Connect grant. `degraded` means wait; `needs_reconnect` means Joe clicks `/api/zoho/connect`. Rules: `docs/ZOHO-OAUTH-INVENTORY.md` → "Rules for every agent and person".
+
 **Content and webmaster tools:** `docs/CONTENT-TOOLING-PLAN.md` decides which outside tools to use (and which not) for images, icons, video, voice, SEO data, Lighthouse, accessibility and image optimization. Read it before adopting any.
 
 ## Project skills (`.claude/skills/`)
