@@ -32,7 +32,7 @@ Startup logs a warning without these; the named feature degrades.
 
 ## Zoho (CRM, Desk, OAuth, Payments, Books)
 
-Optional per feature. Thread T1 is refactoring the Zoho token code; check `server/zoho/*` on main before relying on the fallbacks noted here.
+Optional per feature. Since PR #562 one token manager (`server/zoho/oauth/`) serves CRM, Desk, Books and Payments; `docs/ZOHO-OAUTH-INVENTORY.md` is the authority on which client and token each service uses and in what order the fallbacks below apply.
 
 | Name | Kind | Where used | Notes |
 |---|---|---|---|
@@ -68,6 +68,12 @@ Optional per feature. Thread T1 is refactoring the Zoho token code; check `serve
 | `ZOHO_BOOKS_RECORD_PAID_ORDERS` | config | `server/services/zohoBooksInvoice.ts` | Flag: record paid Store orders in Books. |
 | `ZOHO_BOOKS_DEPOSIT_ACCOUNT_ID` | config | `server/services/zohoBooksInvoice.ts` | Deposit account for recorded payments. |
 | `ZOHO_HUB_WEBHOOK_SECRET` | secret | `server/integrations/zohoAgentsReadiness.ts` | Read through `secretEnv` for Zoho agent readiness. |
+| `ZOHO_CONNECT_ENABLED` | config | `server/routes.ts`, `server/zoho/oauth/manager.ts` | Turns on owner-only Zoho Connect (one consent for CRM, Desk, Books and Payments). |
+| `ZOHO_CONNECT_CLIENT_ID` | config | `server/zoho/oauth/connect.ts`, `server/zoho/oauth/manager.ts` | Zoho Connect's own "Server-based Application" client; never the portal sign-in client. Required when Connect is enabled. |
+| `ZOHO_CONNECT_CLIENT_SECRET` | secret | `server/zoho/oauth/connect.ts`, `server/zoho/oauth/manager.ts` | Secret for the above. |
+| `ZOHO_CONNECT_REDIRECT_URI` | config | `server/zoho/oauth/connect.ts` | Override for the Connect callback URL; derived from the site origin otherwise. |
+| `ZOHO_TOKEN_ENCRYPTION_KEY` | secret | `server/zoho/oauth/db-store.ts` | Encrypts stored Zoho refresh and access tokens; falls back to `MFA_ENCRYPTION_KEY`. |
+| `ZOHO_ACCOUNTS_SERVER` | config | `server/portalZohoAuth.ts`, `server/services/zohoBooksTax.ts` | Zoho accounts host for the data center (US by default). |
 
 ## Intelligence Hub / TechSales sync
 
@@ -184,6 +190,7 @@ Safe defaults; set only to override.
 | `MAIN_DOMAIN` | config | `server/production.config.ts` | Default `digeratiexperts.com`. |
 | `PORTAL_DOMAIN` | config | `server/production.config.ts` | Default `portal.digeratiexperts.com`. |
 | `APP_URL` | config | `server/services/notificationService.ts`, `server/portalUserInvite.ts` | Public base URL for links in email. |
+| `PUBLIC_SITE_URL` | config | `server/zohoConnectRoutes.ts` | Public origin for the Zoho Connect callback; falls back to `https://$MAIN_DOMAIN`. |
 | `ALLOWED_ORIGINS` | config | `server/production.config.ts` | Extra CORS origins, comma-separated. |
 | `WEBAUTHN_RP_ID` | config | `server/portalPasskeys.ts` | Passkey relying-party id; defaults to the registrable domain. |
 | `JWT_EXPIRY` | config | `server/production.config.ts` | Default `24h`. |
