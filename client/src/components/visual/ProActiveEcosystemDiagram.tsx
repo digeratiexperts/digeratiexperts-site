@@ -80,7 +80,7 @@ export const ProActiveEcosystemDiagram: React.FC = () => {
               data-testid={`ecosystem-stage-${stage.id}`}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="font-mono text-xs font-bold text-[#F04C97]">{stage.num}</span>
+                <span className="font-mono text-sm font-bold text-[#F04C97]">{stage.num}</span>
                 {isSelected ? (
                   <span
                     className={`h-2 w-2 rounded-full bg-[#D3126A]${prefersReducedMotion ? "" : " animate-pulse"}`}
@@ -88,8 +88,8 @@ export const ProActiveEcosystemDiagram: React.FC = () => {
                   />
                 ) : null}
               </div>
-              <p className="font-heading text-sm font-bold text-white mb-1">{stage.title}</p>
-              <p className="font-mono text-[10px] text-white/50">{stage.output}</p>
+              <p className="font-heading text-lg font-bold leading-snug text-white mb-1.5">{stage.title}</p>
+              <p className="font-mono text-[13px] leading-snug text-white/75">{stage.output}</p>
             </button>
           );
         })}
@@ -106,19 +106,19 @@ export const ProActiveEcosystemDiagram: React.FC = () => {
           className="rounded-xl border border-white/10 bg-black/50 p-5 font-sans"
         >
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3 mb-3">
-            <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#F04C97]">
+            <span className="font-mono text-sm font-bold uppercase tracking-wider text-[#F04C97]">
               STAGE {stages[activeStage].num} // {stages[activeStage].title}
             </span>
-            <span className="font-mono text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
+            <span className="font-mono text-[13px] text-emerald-400 font-semibold flex items-center gap-1">
               <CheckCircle2 className="h-3.5 w-3.5" />
               Verified Milestone
             </span>
           </div>
-          <p className="text-sm text-white/80 leading-relaxed mb-4">
+          <p className="text-lg text-white/90 leading-relaxed mb-4">
             {stages[activeStage].detail}
           </p>
-          <div className="flex items-center gap-2 rounded-lg border border-white/5 bg-[#151217] px-3.5 py-2 font-mono text-xs text-white/90">
-            <span className="text-white/65">Concrete Deliverable:</span>
+          <div className="flex items-center gap-2 rounded-lg border border-white/5 bg-[#151217] px-3.5 py-2.5 font-mono text-sm text-white/90">
+            <span className="text-white/80">Concrete Deliverable:</span>
             <strong className="text-white">{stages[activeStage].output}</strong>
           </div>
         </motion.div>

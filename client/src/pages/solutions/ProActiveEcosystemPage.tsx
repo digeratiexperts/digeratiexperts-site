@@ -86,6 +86,7 @@ export default function ProActiveEcosystemPage() {
   return (
     <PageTemplate
       layout="chapters"
+      readable
       eyebrow="Solutions · Door 1"
       title="The ProActive Ecosystem"
       subtitle="ProActive is the umbrella — not a single “Office package.” It is a cybersecurity-first managed IT operating model that progresses IT → Office → Business → Enterprise. Each tier is a fit for a different environment, not a merchandising rank."

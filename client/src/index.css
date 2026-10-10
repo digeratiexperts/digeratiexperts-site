@@ -360,6 +360,41 @@ html.de-marketing-canvas body {
 }
 
 /*
+ * Readable page modifier (PageTemplate `readable`; Joe, 2026-10-10: "more in
+ * your face but not crazy ... read all letters and words without an issue").
+ * Scoped to <main>, so the nav and footer keep the site defaults.
+ * - Muted body ink (50-75% white on dark, #3A3448/#5A5368 on paper) lifts to
+ *   85-88% white / #241E33: every text run at least 7:1 on its field.
+ * - 16px body copy becomes 17px, 18px from 768px; text already set larger
+ *   (md:text-xl and up) keeps its size.
+ * - 10-11px labels become 13px.
+ */
+.de-readable :is(.text-white\/50, .text-white\/55, .text-white\/60, .text-white\/65, .text-white\/70) {
+  color: rgb(255 255 255 / 0.85);
+}
+.de-readable .text-white\/75 {
+  color: rgb(255 255 255 / 0.88);
+}
+.de-readable :is(.text-\[\#3A3448\], .text-\[\#5A5368\], .text-black\/55, .text-black\/60) {
+  color: #241e33;
+}
+.de-readable :is(p, li, dd):is(.text-base, .text-sm, .text-\[0\.95rem\]):not([class*="md:text-xl"], [class*="md:text-2xl"], [class*="lg:text-xl"], .font-mono) {
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+@media (min-width: 768px) {
+  .de-readable :is(p, li, dd):is(.text-base, .text-sm, .text-\[0\.95rem\]):not([class*="md:text-xl"], [class*="md:text-2xl"], [class*="lg:text-xl"], .font-mono) {
+    font-size: 1.125rem;
+  }
+}
+.de-readable :is(.text-\[10px\], .text-\[11px\]) {
+  font-size: 0.8125rem;
+}
+.de-readable :is(p, dd).text-xs:not(.font-mono) {
+  font-size: 0.9375rem;
+}
+
+/*
  * Bottom chrome: one unified capsule (menu + scroll-top + Ask DE).
  * Sticky CTA / compare sit above that shell so close controls stay clear.
  */

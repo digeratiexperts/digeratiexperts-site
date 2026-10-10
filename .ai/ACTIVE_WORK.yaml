@@ -3356,3 +3356,27 @@ claims:
       Not run with --apply. Items 68 and 69 skipped with evidence in the PR:
       68 is the existing salesTaxReadiness check (Warehouse Vendors card); 69's
       Stripe Tax path was retired by Joe on 2026-10-05 (commit e125b0a).
+  - id: proactive-readability
+    owner: claude
+    subsystem: marketing-pages
+    branch: claude/proactive-readability
+    base_sha: 97e49043
+    files:
+      - client/src/components/PageTemplate.tsx (readable prop, one class on <main>)
+      - client/src/components/PageTemplate.readable.test.ts (new)
+      - client/src/index.css (the .de-readable block only)
+      - client/src/pages/solutions/ProActiveEcosystemPage.tsx (readable on)
+      - client/src/components/visual/ProActiveEcosystemDiagram.tsx, evidence/AssessmentReportSample.tsx (text sizes and ink only)
+      - client/src/components/evidence/EvidenceFrame.tsx (badge, status, subtitle, source sizes and ink only; 8 users)
+      - client/src/components/EcosystemProgression.tsx (text sizes and ink only; also on the pricing section)
+      - artifacts/visual-qa/proactive-readability/** (new)
+    status: active
+    started: 2026-10-10
+    note: >-
+      Joe, 2026-10-10, on /solutions/proactive-ecosystem: all the text "more in
+      your face but not crazy ... way more readable". Maintenance Mode: no copy,
+      layout, colour token or font change. Body copy 16 -> 17/18px, muted ink to
+      85% white (>= 7:1), 10-11px labels to 13px. Shared chapter primitives are
+      untouched; the page opts in with PageTemplate `readable`, which any similar
+      page can turn on. Overlap check 2026-10-10: open PR 566 adds an unrelated
+      rule to index.css; no other open PR touches these files.
