@@ -30,6 +30,44 @@
 
 version: 2
 claims:
+  - id: t2-ops-hardening
+    owner: claude
+    subsystem: ci-and-ops
+    branch: claude/t2-ops-hardening
+    base_sha: 7b1b4197
+    files:
+      - .github/workflows/ci.yml (check-test-build: checkout depth, change classifier, step guards only)
+      - .github/workflows/production-health.yml (new canonical-host probe step only)
+      - .github/workflows/portal-prod-check.yml (default base URL only)
+      - scripts/qa/portal-prod-check.mjs (default base URL only)
+      - docs/runbooks/PORTAL-QA-LOGIN.md (portal host URLs only)
+      - server/middleware/security.ts (setSecurityHeaders: X-XSS-Protection, /api/portal no-store)
+      - server/middleware/securityHeaders.test.ts (new)
+      - docs/SECRETS-REQUIRED.md (new)
+      - docs/proposals/downloads-cache.md (new)
+      - docs/proposals/portal-security-headers.md (new)
+    status: active
+    started: 2026-10-10
+    note: >-
+      Thread T2 of the DE backlog (tasks 13-20), taken over from Cursor. 13, 14
+      and 16 were already on main and are skipped with evidence in the PR. Does
+      not touch server/zoho/* (thread T1). Draft PR only; Joe merges.
+  - id: t2-npm-audit
+    owner: claude
+    subsystem: dependencies
+    branch: claude/t2-npm-audit
+    base_sha: 7b1b4197
+    files:
+      - package.json (overrides block only)
+      - package-lock.json
+    status: active
+    started: 2026-10-10
+    note: >-
+      Backlog task 11: npm audit fix plus four scoped overrides (uuid under
+      gaxios and teeny-request, tinypool under vitest, sharp under
+      vite-imagetools). Removes both criticals; the rest need major upgrades
+      and are listed for DE in the PR. Claimed here because the audit PR does
+      not edit this file.
   - id: quote-match-include-it
     issue: 417
     owner: cursor

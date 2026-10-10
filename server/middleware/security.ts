@@ -383,14 +383,24 @@ export function setSecurityHeaders(req: Request, res: Response, next: NextFuncti
     res.setHeader("X-Robots-Tag", "noindex, nofollow");
   }
 
+  // Portal API answers are per-user (tickets, invoices, people, files). Default
+  // them to no-store so a browser or proxy never keeps a copy on disk or serves
+  // it back from the back/forward cache on a shared machine. A route that sets
+  // its own Cache-Control later overrides this.
+  if (p.startsWith("/api/portal/")) {
+    res.setHeader("Cache-Control", "no-store");
+  }
+
   // Prevent clickjacking
   res.setHeader("X-Frame-Options", "SAMEORIGIN");
 
   // Prevent MIME type sniffing
   res.setHeader("X-Content-Type-Options", "nosniff");
 
-  // XSS protection (legacy browsers)
-  res.setHeader("X-XSS-Protection", "1; mode=block");
+  // Turn the legacy XSS auditor off. Modern browsers ignore the header; the
+  // old auditors it enabled could be abused to leak or blank page content, so
+  // OWASP now recommends "0" and relying on the CSP above.
+  res.setHeader("X-XSS-Protection", "0");
 
   // Referrer policy
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");

@@ -77,8 +77,8 @@ values.
 ## 3. Run the check and read the report
 
 1. GitHub > Actions > **Portal production check** > Run workflow. Leave the
-   base URL as `https://digeratiexperts.com` (it must stay on
-   digeratiexperts.com). The run takes a few minutes; the limit is 20.
+   base URL as `https://portal.digeratiexperts.com`, the canonical portal host
+   (it must stay on digeratiexperts.com; the apex redirects `/portal/*` there). The run takes a few minutes; the limit is 20.
 2. With no secrets set the run finishes green and prints "Add PORTAL_QA_EMAIL
    and PORTAL_QA_PASSWORD as repository secrets". That means skipped, not
    passed.
@@ -96,10 +96,10 @@ Production keeps Cloudflare Turnstile on the login form and the script does
 not bypass it. A GitHub runner's headless browser may be challenged and fail
 with "Sign-in did not reach the dashboard". Then use the cookie fallback:
 
-1. In a normal browser, sign in at `https://digeratiexperts.com/portal/login`
+1. In a normal browser, sign in at `https://portal.digeratiexperts.com/portal/login`
    as the test user.
 2. Open developer tools > Application (Chrome/Edge) or Storage (Firefox) >
-   Cookies > `https://digeratiexperts.com`, and copy the **Value** of the
+   Cookies > `https://portal.digeratiexperts.com`, and copy the **Value** of the
    cookie named `portalAuth`. It is HttpOnly, so it does not show in the
    console; read it from this panel.
 3. Save it as the `PORTAL_QA_TOKEN` repository secret (replace the old value).

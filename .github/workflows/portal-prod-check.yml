@@ -21,9 +21,9 @@ on:
   workflow_dispatch:
     inputs:
       base_url:
-        description: "Portal base URL (must be on digeratiexperts.com)"
+        description: "Portal base URL (must be on digeratiexperts.com; the apex redirects /portal/* to the portal host)"
         required: false
-        default: "https://digeratiexperts.com"
+        default: "https://portal.digeratiexperts.com"
         type: string
 
 permissions:
@@ -71,7 +71,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          BASE="${INPUT_BASE_URL:-https://digeratiexperts.com}"
+          BASE="${INPUT_BASE_URL:-https://portal.digeratiexperts.com}"
           if ! printf '%s' "$BASE" | grep -Eq '^https://([a-z0-9-]+\.)*digeratiexperts\.com/?$'; then
             echo "base_url must be an https URL on digeratiexperts.com (got: $BASE)" >&2
             exit 1
