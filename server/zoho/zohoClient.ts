@@ -1,93 +1,51 @@
 import axios, { AxiosInstance } from 'axios';
 import { isStagingReview } from '../stagingReviewGuard';
 import {
-  ZohoOAuthError,
-  classifyZohoTokenFailure,
-} from './zohoOAuthErrors';
+  isZohoAuthUnavailableError,
+  type ZohoAccess,
+  type ZohoProductAuth,
+  type ZohoProductHealth,
+} from './oauth';
+import {
+  createCrmAuth,
+  createDeskAuth,
+  crmCredentialsPresent,
+  deskCredentialsPresent,
+  resolveDeskOAuthConfig,
+} from './zohoAuth';
+import { isZohoOAuthError } from './zohoOAuthErrors';
 
-interface ZohoTokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  api_domain: string;
-  scope?: string;
-}
+export { resolveDeskOAuthConfig, type DeskOAuthConfig } from './zohoAuth';
 
+/**
+ * Last known Desk OAuth state, synchronous, for /api/health's legacy
+ * `zohoDesk` field. "degraded" (throttled or unreachable) is never
+ * "auth_failed" (issue #418). The four-state health comes from deskHealth().
+ */
 export type DeskAuthStatus =
   | 'not_configured'
   | 'credentials_present'
   | 'ok'
+  | 'degraded'
   | 'auth_failed';
 
 /**
- * The OAuth client and refresh token the Desk refreshes with.
- *
- * - ZOHO_DESK_CLIENT_ID / ZOHO_DESK_CLIENT_SECRET set: the Desk has its own
- *   Zoho client (a Self Client of its own). Then all three Desk values must be
- *   set, ZOHO_DESK_REFRESH_TOKEN included, and none is borrowed from CRM: a
- *   refresh token only works with the client that issued it.
- * - Neither set: the legacy shared client (ZOHO_CLIENT_ID_API /
- *   ZOHO_CLIENT_SECRET_API) with ZOHO_DESK_REFRESH_TOKEN, then
- *   ZOHO_FORM_OAUTH, then ZOHO_REFRESH_TOKEN.
- *
- * "incomplete" names the missing variables only, never a value.
+ * CRM and Desk access for the website. Tokens come from the token manager
+ * (server/zoho/oauth): cached and persisted access tokens, one refresh in
+ * flight per token, at most 5 refreshes per 10 minutes, classified errors and
+ * the issuing client pinned per credential. API hosts come from the account's
+ * data center, never a hardcoded zoho.com.
  */
-export type DeskOAuthConfig =
-  | {
-      state: 'ready';
-      clientId: string;
-      clientSecret: string;
-      refreshToken: string;
-      dedicatedClient: boolean;
-    }
-  | { state: 'incomplete'; missing: string[] }
-  | { state: 'missing' };
-
-export function resolveDeskOAuthConfig(env: NodeJS.ProcessEnv = process.env): DeskOAuthConfig {
-  const deskClientId = env.ZOHO_DESK_CLIENT_ID?.trim() || '';
-  const deskClientSecret = env.ZOHO_DESK_CLIENT_SECRET?.trim() || '';
-  if (deskClientId || deskClientSecret) {
-    const deskRefreshToken = env.ZOHO_DESK_REFRESH_TOKEN?.trim() || '';
-    const missing = [
-      ['ZOHO_DESK_CLIENT_ID', deskClientId],
-      ['ZOHO_DESK_CLIENT_SECRET', deskClientSecret],
-      ['ZOHO_DESK_REFRESH_TOKEN', deskRefreshToken],
-    ]
-      .filter(([, value]) => !value)
-      .map(([name]) => name);
-    if (missing.length) return { state: 'incomplete', missing };
-    return {
-      state: 'ready',
-      clientId: deskClientId,
-      clientSecret: deskClientSecret,
-      refreshToken: deskRefreshToken,
-      dedicatedClient: true,
-    };
-  }
-  const clientId = env.ZOHO_CLIENT_ID_API || '';
-  const clientSecret = env.ZOHO_CLIENT_SECRET_API || '';
-  const refreshToken = env.ZOHO_DESK_REFRESH_TOKEN || env.ZOHO_FORM_OAUTH || env.ZOHO_REFRESH_TOKEN || '';
-  if (!(clientId && clientSecret && refreshToken)) return { state: 'missing' };
-  return { state: 'ready', clientId, clientSecret, refreshToken, dedicatedClient: false };
-}
-
 export class ZohoClient {
-  private accessToken: string | null = null;
-  private tokenExpiry: number = 0;
-  private deskAccessToken: string | null = null;
-  private deskTokenExpiry: number = 0;
-  private apiDomain: string = 'https://www.zohoapis.com';
   private deskAuthStatus: DeskAuthStatus = 'not_configured';
-  
-  private readonly clientId: string;
-  private readonly clientSecret: string;
-  private readonly refreshToken: string;
+  private deskTokenExpiry = 0;
+  readonly crmAuth: ZohoProductAuth;
+  readonly deskAuth: ZohoProductAuth;
+
   constructor() {
-    this.clientId = process.env.ZOHO_CLIENT_ID_API || '';
-    this.clientSecret = process.env.ZOHO_CLIENT_SECRET_API || '';
-    this.refreshToken = process.env.ZOHO_REFRESH_TOKEN || '';
-    
-    if (!this.clientId || !this.clientSecret || !this.refreshToken) {
+    this.crmAuth = createCrmAuth();
+    this.deskAuth = createDeskAuth();
+    if (!crmCredentialsPresent()) {
       console.warn('⚠️ Zoho API credentials not fully configured');
     }
     const desk = resolveDeskOAuthConfig();
@@ -106,7 +64,7 @@ export class ZohoClient {
   /** Last known Desk OAuth state — presence only until a refresh is attempted. */
   getDeskAuthStatus(): DeskAuthStatus {
     if (isStagingReview()) return 'not_configured';
-    if (resolveDeskOAuthConfig().state !== 'ready') {
+    if (!deskCredentialsPresent()) {
       return 'not_configured';
     }
     return this.deskAuthStatus === 'not_configured' ||
@@ -115,215 +73,114 @@ export class ZohoClient {
       : this.deskAuthStatus;
   }
 
-  private crmRefreshPromise: Promise<string> | null = null;
-
-  // Dedup concurrent refreshes (Zoho rate-limits refresh-token grants) and
-  // send credentials in the POST body so they never land in URL/proxy logs.
-  private async refreshAccessToken(): Promise<string> {
-    if (this.crmRefreshPromise) {
-      return this.crmRefreshPromise;
-    }
-    this.crmRefreshPromise = this._doRefreshCrmToken();
-    try {
-      return await this.crmRefreshPromise;
-    } finally {
-      this.crmRefreshPromise = null;
-    }
+  async getAccessToken(): Promise<string> {
+    return (await this.crmAuth.getAccess()).token;
   }
 
-  private async _doRefreshCrmToken(): Promise<string> {
+  private async deskAccess(opts: { rejectedToken?: string } = {}): Promise<ZohoAccess> {
     try {
-      const response = await axios.post<ZohoTokenResponse>(
-        'https://accounts.zoho.com/oauth/v2/token',
-        new URLSearchParams({
-          grant_type: 'refresh_token',
-          client_id: this.clientId,
-          client_secret: this.clientSecret,
-          refresh_token: this.refreshToken,
-        }).toString(),
-        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 10000 }
-      );
-
-      if (typeof response.data?.access_token !== 'string' || !response.data.access_token.trim() ||
-          !Number.isFinite(response.data.expires_in) || response.data.expires_in <= 0) {
-        const code = classifyZohoTokenFailure(response.data);
-        throw new ZohoOAuthError({
-          message: 'No access token in Zoho CRM response',
-          code,
-          product: 'crm',
-          zohoError:
-            response.data && typeof response.data === 'object' && 'error' in response.data
-              ? String((response.data as { error?: unknown }).error || '')
-              : undefined,
-        });
-      }
-
-      this.accessToken = response.data.access_token;
-      this.tokenExpiry = Date.now() + (response.data.expires_in * 1000) - 60000;
-      this.apiDomain = response.data.api_domain || this.apiDomain;
-      
-      console.log('✅ Zoho CRM access token refreshed');
-      return this.accessToken;
-    } catch (error: any) {
-      if (error instanceof ZohoOAuthError) throw error;
-      const payload = error.response?.data;
-      console.error('❌ Failed to refresh Zoho CRM token:', classifyZohoTokenFailure(payload));
-      throw new ZohoOAuthError({
-        message: 'Failed to refresh Zoho access token',
-        code: classifyZohoTokenFailure(payload),
-        product: 'crm',
-        zohoError:
-          payload && typeof payload === 'object' && 'error' in payload
-            ? String(payload.error || '')
-            : undefined,
-      });
-    }
-  }
-
-  private deskRefreshPromise: Promise<string> | null = null;
-  private deskRefreshFailure: { error: ZohoOAuthError; retryAt: number } | null = null;
-
-  private async refreshDeskAccessToken(): Promise<string> {
-    if (this.deskRefreshPromise) {
-      return this.deskRefreshPromise;
-    }
-    // A revoked credential must not create an OAuth storm across visitors.
-    if (this.deskRefreshFailure && Date.now() < this.deskRefreshFailure.retryAt) {
-      throw this.deskRefreshFailure.error;
-    }
-    
-    this.deskRefreshPromise = this._doRefreshDeskToken();
-    try {
-      return await this.deskRefreshPromise;
+      const access = await this.deskAuth.getAccess(opts);
+      this.deskAuthStatus = 'ok';
+      this.deskTokenExpiry = access.expiresAt;
+      return access;
     } catch (error) {
-      if (error instanceof ZohoOAuthError) {
-        this.deskRefreshFailure = { error, retryAt: Date.now() + 15000 };
+      if (isZohoAuthUnavailableError(error)) {
+        this.deskAuthStatus = 'degraded';
+      } else if (isZohoOAuthError(error)) {
+        this.deskAuthStatus = error.code === 'not_configured' ? 'not_configured' : 'auth_failed';
+        // Code only: never the refresh token, a secret or Zoho's own text.
+        console.error('❌ Zoho Desk token unavailable:', error.code);
       }
       throw error;
-    } finally {
-      this.deskRefreshPromise = null;
     }
-  }
-
-  private async _doRefreshDeskToken(): Promise<string> {
-    const desk = resolveDeskOAuthConfig();
-    if (desk.state !== 'ready') {
-      // Callers check isDeskConfigured() first; never send a half-set pair to Zoho.
-      throw new Error('Zoho Desk OAuth is not configured');
-    }
-    try {
-      const response = await axios.post<ZohoTokenResponse>(
-        'https://accounts.zoho.com/oauth/v2/token',
-        new URLSearchParams({
-          grant_type: 'refresh_token',
-          client_id: desk.clientId,
-          client_secret: desk.clientSecret,
-          refresh_token: desk.refreshToken,
-        }).toString(),
-        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 10000 }
-      );
-
-      if (typeof response.data?.access_token !== 'string' || !response.data.access_token.trim() ||
-          !Number.isFinite(response.data.expires_in) || response.data.expires_in <= 0) {
-        const code = classifyZohoTokenFailure(response.data);
-        this.deskAuthStatus = 'auth_failed';
-        // Log error name only — never the refresh token or full client secret.
-        console.error(
-          '❌ Zoho Desk token response missing access_token:',
-          code,
-        );
-        throw new ZohoOAuthError({
-          message: 'No access token in Zoho Desk response',
-          code,
-          product: 'desk',
-          zohoError:
-            response.data && typeof response.data === 'object' && 'error' in response.data
-              ? String((response.data as { error?: unknown }).error || '')
-              : undefined,
-        });
-      }
-      this.deskAccessToken = response.data.access_token;
-      this.deskTokenExpiry = Date.now() + (response.data.expires_in * 1000) - 60000;
-      this.deskAuthStatus = 'ok';
-      this.deskRefreshFailure = null;
-      
-      console.log('✅ Zoho Desk access token refreshed');
-      return this.deskAccessToken;
-    } catch (error: any) {
-      if (error instanceof ZohoOAuthError) {
-        this.deskAuthStatus = 'auth_failed';
-        throw error;
-      }
-      const payload = error.response?.data;
-      this.deskAuthStatus = 'auth_failed';
-      console.error(
-        '❌ Failed to refresh Zoho Desk token:',
-        classifyZohoTokenFailure(payload),
-      );
-      throw new ZohoOAuthError({
-        message: 'Failed to refresh Zoho Desk access token',
-        code: classifyZohoTokenFailure(payload),
-        product: 'desk',
-        zohoError:
-          payload && typeof payload === 'object' && 'error' in payload
-            ? String(payload.error || '')
-            : undefined,
-      });
-    }
-  }
-
-  async getAccessToken(): Promise<string> {
-    if (!this.accessToken || Date.now() >= this.tokenExpiry) {
-      return this.refreshAccessToken();
-    }
-    return this.accessToken;
   }
 
   async getDeskAccessToken(): Promise<string> {
-    if (!this.deskAccessToken || Date.now() >= this.deskTokenExpiry) {
-      return this.refreshDeskAccessToken();
-    }
-    return this.deskAccessToken;
+    return (await this.deskAccess()).token;
+  }
+
+  /**
+   * An axios client for one product. A 401 asks the manager for a new token
+   * once (it refuses when the token is brand new: that is a scope problem)
+   * and replays the request; a 401 rejects before Zoho acts on the request.
+   */
+  private authedClient(
+    auth: ZohoProductAuth,
+    access: ZohoAccess,
+    renew: (rejectedToken: string) => Promise<ZohoAccess>,
+    config: { baseURL: string; timeout?: number; json: boolean; maxBodyLength?: number; maxContentLength?: number },
+  ): AxiosInstance {
+    const { json, ...rest } = config;
+    const instance = axios.create({
+      ...rest,
+      headers: {
+        Authorization: `Zoho-oauthtoken ${access.token}`,
+        ...(json ? { 'Content-Type': 'application/json' } : {}),
+      },
+    });
+    instance?.interceptors?.response.use(
+      (response) => {
+        auth.noteApiResult(response.status);
+        return response;
+      },
+      async (error) => {
+        const original = error?.config;
+        if (error?.response?.status === 401 && original && !original.__zohoRetried) {
+          const next = await renew(access.token).catch(() => null);
+          if (next && next.token !== access.token) {
+            original.__zohoRetried = true;
+            const authorization = `Zoho-oauthtoken ${next.token}`;
+            if (typeof original.headers?.set === 'function') original.headers.set('Authorization', authorization);
+            else original.headers = { ...original.headers, Authorization: authorization };
+            return instance.request(original);
+          }
+        }
+        if (error?.response?.status) auth.noteApiResult(error.response.status);
+        throw error;
+      },
+    );
+    return instance;
   }
 
   async getClient(): Promise<AxiosInstance> {
-    const token = await this.getAccessToken();
-    
-    return axios.create({
-      baseURL: this.apiDomain,
-      headers: {
-        'Authorization': `Zoho-oauthtoken ${token}`,
-        'Content-Type': 'application/json',
-      },
+    const access = await this.crmAuth.getAccess();
+    return this.authedClient(this.crmAuth, access, (rejectedToken) => this.crmAuth.getAccess({ rejectedToken }), {
+      baseURL: access.apiDomain,
+      json: true,
     });
   }
 
   async getDeskClient(): Promise<AxiosInstance> {
-    const token = await this.getDeskAccessToken();
-    
-    return axios.create({
-      baseURL: 'https://desk.zoho.com/api/v1',
+    const access = await this.deskAccess();
+    return this.authedClient(this.deskAuth, access, (rejectedToken) => this.deskAccess({ rejectedToken }), {
+      baseURL: `${access.dc.desk}/api/v1`,
       timeout: 15000,
-      headers: {
-        'Authorization': `Zoho-oauthtoken ${token}`,
-        'Content-Type': 'application/json',
-      },
+      json: true,
     });
   }
 
   /** Desk client without JSON Content-Type so multipart uploads can set their own boundary. */
   async getDeskUploadClient(): Promise<AxiosInstance> {
-    const token = await this.getDeskAccessToken();
-
-    return axios.create({
-      baseURL: "https://desk.zoho.com/api/v1",
+    const access = await this.deskAccess();
+    return this.authedClient(this.deskAuth, access, (rejectedToken) => this.deskAccess({ rejectedToken }), {
+      baseURL: `${access.dc.desk}/api/v1`,
       timeout: 15000,
-      headers: {
-        Authorization: `Zoho-oauthtoken ${token}`,
-      },
+      json: false,
       maxBodyLength: 12 * 1024 * 1024,
       maxContentLength: 12 * 1024 * 1024,
     });
+  }
+
+  /** CRM health from stored state (no Zoho call): connected / degraded / needs_reconnect / not_configured. */
+  async crmHealth(): Promise<ZohoProductHealth> {
+    if (isStagingReview()) return { configured: false, state: 'not_configured', source: null };
+    return this.crmAuth.status();
+  }
+
+  /** Desk health from stored state (no Zoho call). */
+  async deskHealth(): Promise<ZohoProductHealth> {
+    if (isStagingReview()) return { configured: false, state: 'not_configured', source: null };
+    return this.deskAuth.status();
   }
 
   // Staging review mode reports "not configured" so every existing caller
@@ -332,12 +189,12 @@ export class ZohoClient {
   // See server/stagingReviewGuard.ts.
   isConfigured(): boolean {
     if (isStagingReview()) return false;
-    return !!(this.clientId && this.clientSecret && this.refreshToken);
+    return crmCredentialsPresent();
   }
 
   isDeskConfigured(): boolean {
     if (isStagingReview()) return false;
-    return resolveDeskOAuthConfig().state === 'ready';
+    return deskCredentialsPresent();
   }
 }
 

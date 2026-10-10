@@ -1,4 +1,13 @@
 import { BOOKS_ID_PATTERN, parseTaxItemOverrides, type StoreCategory } from "@shared/storeTaxCodes";
+import {
+  isZohoAuthUnavailableError,
+  resetZohoOAuthForTests,
+  zohoConnectCovers,
+  zohoDefaultDc,
+  zohoOAuthDeps,
+  ZohoProductAuth,
+  type ZohoProductHealth,
+} from "../zoho/oauth";
 
 /**
  * Zoho Books sales tax for staff Pay Now (Joe, 2026-10-05: "yes switch to zoho
@@ -18,10 +27,15 @@ import { BOOKS_ID_PATTERN, parseTaxItemOverrides, type StoreCategory } from "@sh
  *   ZohoBooks.contacts.CREATE, ZohoBooks.invoices.CREATE,
  *   ZohoBooks.invoices.READ, ZohoBooks.customerpayments.CREATE
  * Nothing that deletes invoices, payments or customers, or changes settings.
+ *
+ * Tokens come from the token manager (server/zoho/oauth): the Zoho Connect
+ * grant when it covers Books, else ZOHO_BOOKS_REFRESH_TOKEN with the client
+ * below. Throttling and Zoho outages read as "unreachable", never "auth".
  */
 
-export const ZOHO_BOOKS_API = "https://www.zohoapis.com/books/v3";
-export const ZOHO_ACCOUNTS_TOKEN_URL = "https://accounts.zoho.com/oauth/v2/token";
+/** Books API and token endpoint for the server's data center (ZOHO_ACCOUNTS_SERVER; US by default). */
+export const ZOHO_BOOKS_API = `${zohoDefaultDc().api}/books/v3`;
+export const ZOHO_ACCOUNTS_TOKEN_URL = `${zohoDefaultDc().accounts}/oauth/v2/token`;
 const BOOKS_TIMEOUT_MS = 8000;
 
 export interface ZohoBooksTaxConfig {
@@ -58,14 +72,19 @@ function clientCredentials(env: NodeJS.ProcessEnv): { clientId: string; clientSe
   };
 }
 
-/** Which settings are missing or malformed. Empty means Pay Now can ask Books. */
+/**
+ * Which settings are missing or malformed. Empty means Pay Now can ask Books.
+ * With a Zoho Connect grant that covers Books, the refresh token and client
+ * settings are not needed.
+ */
 export function missingZohoBooksTaxSettings(env: NodeJS.ProcessEnv = process.env): string[] {
   const { clientId, clientSecret } = clientCredentials(env);
+  const viaConnect = zohoConnectCovers("books");
   const missing: string[] = [];
   if (!BOOKS_ID_PATTERN.test(setting(env, "ZOHO_BOOKS_ORGANIZATION_ID"))) missing.push("ZOHO_BOOKS_ORGANIZATION_ID");
-  if (!setting(env, "ZOHO_BOOKS_REFRESH_TOKEN")) missing.push("ZOHO_BOOKS_REFRESH_TOKEN");
-  if (!clientId) missing.push("ZOHO_BOOKS_CLIENT_ID");
-  if (!clientSecret) missing.push("ZOHO_BOOKS_CLIENT_SECRET");
+  if (!viaConnect && !setting(env, "ZOHO_BOOKS_REFRESH_TOKEN")) missing.push("ZOHO_BOOKS_REFRESH_TOKEN");
+  if (!viaConnect && !clientId) missing.push("ZOHO_BOOKS_CLIENT_ID");
+  if (!viaConnect && !clientSecret) missing.push("ZOHO_BOOKS_CLIENT_SECRET");
   if (!BOOKS_ID_PATTERN.test(setting(env, "ZOHO_BOOKS_TAX_CONTACT_ID"))) missing.push("ZOHO_BOOKS_TAX_CONTACT_ID");
   if (!BOOKS_ID_PATTERN.test(setting(env, "ZOHO_BOOKS_SERVICE_ITEM_ID"))) missing.push("ZOHO_BOOKS_SERVICE_ITEM_ID");
   return missing;
@@ -96,13 +115,48 @@ export type BooksFailure = "auth" | "forbidden" | "not_found" | "rejected" | "un
 
 export type BooksReply = { ok: true; body: any } | { ok: false; failure: BooksFailure; status?: number; code?: unknown };
 
-let token: { value: string; expiresAt: number; refreshToken: string } | null = null;
-let refreshing: Promise<string | null> | null = null;
+/** Thrown by the Books token manager when there is no usable credential. */
+class BooksAuthError extends Error {}
+
+/**
+ * The Books token manager for this config. Built per call so the config (and
+ * the test seams in `options`) decide the legacy credential; the access token,
+ * single-flight refresh, budget and backoff are shared per refresh token
+ * inside the manager, so building one is cheap and never mints a token.
+ */
+function booksAuth(config: ZohoBooksTaxConfig, options: BooksCallOptions): ZohoProductAuth {
+  return new ZohoProductAuth(
+    {
+      product: "books",
+      legacySources: () =>
+        config.refreshToken
+          ? [{ label: "ZOHO_BOOKS_REFRESH_TOKEN", refreshToken: config.refreshToken, client: { id: config.clientId, secret: config.clientSecret } }]
+          : [],
+      notConfigured: (message) => new BooksAuthError(message),
+    },
+    {
+      store: zohoOAuthDeps.store,
+      log: zohoOAuthDeps.log,
+      ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}),
+      ...(options.nowMs !== undefined ? { now: () => options.nowMs! } : {}),
+    },
+  );
+}
+
+/**
+ * Books token health from stored state (no Zoho call): connected, degraded,
+ * needs_reconnect or not_configured. Separate from Pay Now tax readiness
+ * (salesTaxReadiness.ts), which also checks Books' own settings.
+ */
+export async function zohoBooksTokenHealth(env: NodeJS.ProcessEnv = process.env): Promise<ZohoProductHealth> {
+  const config = zohoBooksTaxConfig(env);
+  if (!config) return { configured: false, state: "not_configured", source: null };
+  return booksAuth(config, {}).status();
+}
 
 /** Test seam. */
 export function resetZohoBooksToken(): void {
-  token = null;
-  refreshing = null;
+  resetZohoOAuthForTests();
 }
 
 async function withTimeout<T>(timeoutMs: number, run: (signal: AbortSignal) => Promise<T>): Promise<T> {
@@ -115,44 +169,6 @@ async function withTimeout<T>(timeoutMs: number, run: (signal: AbortSignal) => P
   }
 }
 
-/** A Books access token from the refresh token, cached until a minute before it expires. */
-async function accessToken(config: ZohoBooksTaxConfig, options: BooksCallOptions): Promise<string | null> {
-  const now = options.nowMs ?? Date.now();
-  if (token && token.refreshToken === config.refreshToken && token.expiresAt - 60_000 > now) return token.value;
-  if (refreshing) return refreshing;
-  const fetchImpl = options.fetchImpl ?? fetch;
-  refreshing = withTimeout(options.timeoutMs ?? BOOKS_TIMEOUT_MS, async (signal) => {
-    try {
-      const response = await fetchImpl(ZOHO_ACCOUNTS_TOKEN_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          grant_type: "refresh_token",
-          client_id: config.clientId,
-          client_secret: config.clientSecret,
-          refresh_token: config.refreshToken,
-        }).toString(),
-        signal,
-      });
-      const body = (await response.json().catch(() => ({}))) as { access_token?: unknown; expires_in?: unknown; error?: unknown };
-      if (!response.ok || typeof body.access_token !== "string") {
-        // Never log the token or the secret: the error name is enough.
-        console.warn("[TAX] BOOKS_TOKEN_REJECTED", { status: response.status, error: typeof body.error === "string" ? body.error : null });
-        return null;
-      }
-      const seconds = typeof body.expires_in === "number" && body.expires_in > 0 ? body.expires_in : 3600;
-      token = { value: body.access_token, expiresAt: now + seconds * 1000, refreshToken: config.refreshToken };
-      return token.value;
-    } catch (error: any) {
-      console.warn("[TAX] BOOKS_TOKEN_UNREACHABLE", { reason: error?.name === "AbortError" ? "timeout" : "network" });
-      throw error;
-    }
-  }).finally(() => {
-    refreshing = null;
-  });
-  return refreshing;
-}
-
 /** One Books API call. A 401 drops the cached token and retries once. */
 export async function booksCall(
   config: ZohoBooksTaxConfig,
@@ -160,16 +176,28 @@ export async function booksCall(
   options: BooksCallOptions = {},
 ): Promise<BooksReply> {
   const fetchImpl = options.fetchImpl ?? fetch;
+  const auth = booksAuth(config, options);
+  let rejected: string | undefined;
   for (let attempt = 0; attempt < 2; attempt++) {
-    let bearer: string | null;
+    let bearer: string;
+    let apiBase = ZOHO_BOOKS_API;
     try {
-      bearer = await accessToken(config, options);
-    } catch {
+      const access = await auth.getAccess(rejected ? { rejectedToken: rejected } : {});
+      bearer = access.token;
+      apiBase = `${access.apiDomain}/books/v3`;
+    } catch (error) {
+      if (error instanceof BooksAuthError) {
+        // Zoho refused the credential (or there is none): the error name only.
+        console.warn("[TAX] BOOKS_TOKEN_REJECTED", { reason: "needs_reconnect" });
+        return { ok: false, failure: "auth" };
+      }
+      // Throttled, backing off, or Zoho unreachable: not an auth problem (#418).
+      console.warn("[TAX] BOOKS_TOKEN_UNREACHABLE", { reason: isZohoAuthUnavailableError(error) ? "degraded" : "network" });
       return { ok: false, failure: "unreachable" };
     }
-    if (!bearer) return { ok: false, failure: "auth" };
+    if (rejected && bearer === rejected) return { ok: false, failure: "auth" };
 
-    const url = `${ZOHO_BOOKS_API}${request.path}${request.path.includes("?") ? "&" : "?"}organization_id=${config.organizationId}`;
+    const url = `${apiBase}${request.path}${request.path.includes("?") ? "&" : "?"}organization_id=${config.organizationId}`;
     let response: Response;
     let body: any;
     try {
@@ -189,8 +217,9 @@ export async function booksCall(
       return { ok: false, failure: "unreachable" };
     }
 
+    auth.noteApiResult(response.status);
     if (response.status === 401 && attempt === 0) {
-      token = null;
+      rejected = bearer;
       continue;
     }
     if (response.ok && body && body.code === 0) return { ok: true, body };
