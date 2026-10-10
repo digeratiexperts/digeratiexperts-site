@@ -3335,6 +3335,27 @@ claims:
       only claim listing zohoClient.ts (de-desk-reliability-followup) is
       verified-live; open PRs 542, 550, 553 and 554 touch none of these files.
       Not merged or deployed: Joe asked for the PR and validation first.
+  - id: t7-desk-alamo-link
+    owner: claude
+    subsystem: de-desk-admin-scripts
+    branch: claude/t7-desk-alamo-link
+    base_sha: 7b1b4197
+    files:
+      - server/deskContactAccountLink.ts, deskContactAccountLink.test.ts (new)
+      - scripts/desk-link-alamo-contacts.mts (new)
+    status: active
+    started: 2026-10-10
+    note: >-
+      DE backlog thread T7, item 70: a script that files the three Alamo
+      contacts under the "Alamo Industries" Desk account once DE creates it.
+      Dry run by default and offline (no Zoho Desk call); --apply reads Desk
+      live and writes, and writes nothing when the account is missing or
+      ambiguous; a contact under another account is reported, never moved.
+      Calls only exported zohoClient methods (getDeskClient, isDeskConfigured)
+      and pickDeskAccount; server/zoho/** is untouched (thread T1 and PR 555).
+      Not run with --apply. Items 68 and 69 skipped with evidence in the PR:
+      68 is the existing salesTaxReadiness check (Warehouse Vendors card); 69's
+      Stripe Tax path was retired by Joe on 2026-10-05 (commit e125b0a).
   - id: homepage-v9-signal-thread
     owner: claude
     subsystem: homepage-versions
