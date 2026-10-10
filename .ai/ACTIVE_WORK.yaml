@@ -3251,6 +3251,39 @@ claims:
       than 17rem the steps drop under the number. No markup, copy or token
       change. Overlap check 2026-10-08: no open PR or active claim touches
       these files.
+  - id: t7-copy-overlays-pdfs
+    owner: claude
+    subsystem: marketing-copy, site-overlays, store-pdfs
+    branch: claude/t7-copy-overlays-pdfs
+    base_sha: 7b1b4197
+    files:
+      - client/src/pages/versions/v1/sections/DigeratiLeadFormSection.tsx, DigeratiContactSection.tsx (the success toast only)
+      - client/src/pages/versions/v3/sections/DigeratiLeadFormSection.tsx, DigeratiContactSection.tsx (the success toast only)
+      - client/src/pages/versions/v7/sections/13-lead-form.tsx, 16-contact-footer.tsx (the success toast only)
+      - server/services/notificationService.ts (the quote-request acknowledgement sentence only)
+      - client/src/lib/stickyCtaVisibility.ts, stickyCtaVisibility.test.ts (isCookieFirst only)
+      - client/src/components/StickyCTABar.tsx (the isCookieFirst call only)
+      - client/src/components/CookieConsentBanner.tsx (the two disclosure breakpoints only)
+      - client/src/lib/storeLightChrome.test.ts (the cookie breakpoint assertion only)
+      - server/pdf/dePdfBrand.ts (vertical spacing values only)
+      - scripts/qa/storePdfCases.ts (two page expectations only)
+      - client/src/pages/versions/v8/sections/01-hero.phone.test.ts (new)
+      - artifacts/visual-qa/t7-cookie-and-bar/**, artifacts/visual-qa/t7-pdf-one-page/** (new)
+    status: active
+    started: 2026-10-10
+    note: >-
+      DE backlog thread T7 (taken over from Cursor), items 61, 62, 64 and 65.
+      61 (3a): the last "within 24 hours" reply promises (quote-request email,
+      the /version-1, /version-3 and /version-7 toasts) now say "within one
+      business day"; PRs 456 and 461 did the rest. 62 (3b): PR 538 made the
+      Risk Assessment bar wait for the cookie banner on phones only; it now
+      waits at every width, and 1024-1279px get the short cookie line
+      (the full disclosure there was 311-319px tall). 64: the 5-item quote and
+      3-package solution PDFs fit one page (vertical spacing only) and the
+      regression cases now expect exactly one page. 65: a source test guards
+      the phone hero rules from PR 499 that PR 505 kept. Item 63 (3c, Add user)
+      was already live via PR 538. Overlap check 2026-10-10: open PRs 542,
+      550, 553, 554 and 555 touch none of these files.
   - id: t7-contact-audit-team-config
     owner: claude
     subsystem: docs, about-team

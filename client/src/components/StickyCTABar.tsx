@@ -90,7 +90,7 @@ export function StickyCTABar() {
       setPastThreshold(
         pinned || settledShortPage() || isPastStickyCtaThreshold(window.scrollY, window.innerHeight),
       );
-      setCookieFirst(isCookieFirst(window.innerWidth, isCookieBannerBlocking()));
+      setCookieFirst(isCookieFirst(isCookieBannerBlocking()));
     };
 
     const measureOverlap = () => {
