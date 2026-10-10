@@ -39,6 +39,24 @@ Task ledger: `docs/SITE-VISUAL-TASKS.md` (Tier 3 for design decisions; its owner
 
 If an old Cursor task, chat, PR description, screenshot, or migration note conflicts with current GitHub state and the authority files above, treat the old instruction as stale and re-check before acting.
 
+## Who owns what right now (check before editing)
+
+Other agent sessions work this repo at the same time. Before editing, check:
+
+1. **All open PRs** (drafts included) and their changed files — the authoritative lock (`docs/ACTIVE-WORK-COORDINATION.md`). An open PR owns its files until it merges or closes.
+2. **Intelligence Hub [`docs/OPEN-ITEMS-FOR-DE.md`](https://github.com/digeratiexperts/Intelligence-Hub/blob/master/docs/OPEN-ITEMS-FOR-DE.md)** — every pending DE decision, secret and manual step, the thread/PR each blocks, and the "Not for agents to touch" PR list. Read it before asking Joe anything. (Added by Hub PR #397; until that merges, read it on that PR.)
+3. The **current open PRs and owners** table in `docs/ACTIVE-WORK-COORDINATION.md`, then `.ai/ACTIVE_WORK.yaml` as a mirror.
+
+Never push to, rebase, close, merge or approve another session's branch or PR.
+
+DE backlog round 2026-10-10 (Claude Code cloud sessions tagged `de-backlog-20261010`): **T1, T2, T7** work in this repo; **T3, T4, T5, T6, T9** in Intelligence-Hub (T5 owns Hub `docs/CURRENT-STATE.md`); **T8** in `de-platform`; **T10** owns the agent docs (`AGENTS.md`, `docs/ACTIVE-WORK-COORDINATION.md`, PR template) in all three. Listed as other sessions' PRs, do not touch: Intelligence-Hub #346, #347, #351, #359, #361 and this repo's #505 (all six were already merged or closed on 2026-10-10).
+
+**Cursor is paused** and off the DE AI team (2026-10-10). Where this file or `CLAUDE.md` names Cursor as a specialist/review agent, that role is vacant until Joe reassigns it; `.cursorrules` and `.cursor/rules/*` remain the design/policy text every agent reads.
+
+## Zoho APIs (cross-project rule)
+
+Intelligence Hub [`docs/ZOHO-OAUTH-STANDARD.md`](https://github.com/digeratiexperts/Intelligence-Hub/blob/master/docs/ZOHO-OAUTH-STANDARD.md) is the DE-wide rule for every Zoho API call (CRM, Desk, Books, WorkDrive, Mail, Sign, Projects): one server-based client and one consent covering every product's scopes, refresh only with the client that issued the token, cached access tokens with back-off, and requests through one shared auth module instead of hand-rolled token calls or env fallback chains. New Zoho work here ports that module (its "Porting to another project" section). Any deviation (for example a separate client per product) needs Joe's explicit decision, recorded in the PR.
+
 ## Company naming
 
 Customer-facing company naming is **Digerati Experts** or **DE**, never standalone **Digerati** as the company label. See `.cursor/rules/digerati-naming.mdc`.
