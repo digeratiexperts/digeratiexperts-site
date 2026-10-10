@@ -90,6 +90,14 @@ A task is not finished until reviewed, merged, production-verified, and marked L
 - Site: `https://digeratiexperts.com`
 - Portal login: `https://portal.digeratiexperts.com/portal/login` (never `//login`)
 
+## Zoho tokens: rules for every agent (mandatory)
+
+The website's Zoho CRM, Desk, Books and Payments run on **one Zoho Connect grant** (`ZOHO_CONNECT_CLIENT_ID`, a Server-based client), approved by Joe on 2026-10-10. Read **`docs/ZOHO-OAUTH-INVENTORY.md` → "Rules for every agent and person"** before any Zoho work. The short version:
+
+- **Never generate grant codes** on the Connect client or on the legacy Self Clients, and never reuse the website's clients in the Hub, scripts or MCP servers. Zoho keeps 20 refresh tokens per client, and the 21st revokes a live one.
+- **All Zoho calls go through `server/zoho/oauth`.** No direct `/oauth/v2/token` calls, no per-request tokens, no hardcoded Zoho hosts, and health checks never request a token.
+- **`degraded` means do nothing**: it is throttling or an outage and recovers by itself. **`needs_reconnect` means Joe clicks `https://digeratiexperts.com/api/zoho/connect`.** Agents never ask for or paste grant codes, tokens or secrets; env var names only.
+
 ## Next steps (out of scope here)
 
 - Figma MCP + Code Connect
