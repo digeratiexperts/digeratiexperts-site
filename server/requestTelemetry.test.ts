@@ -1,6 +1,10 @@
 import express from "express";
 import { once } from "node:events";
 import type { AddressInfo } from "node:net";
+import { request as httpRequest } from "node:http";
+import { readFileSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { describe, it } from "vitest";
 import assert from "node:assert/strict";
 import { requestTelemetry, releaseIdentity, routeTemplate, applicationForPath } from "./requestTelemetry";
@@ -65,6 +69,91 @@ describe("request telemetry", () => {
 });
 
 describe("request telemetry with Express", () => {
+  it("mounts production telemetry before handlers and parsers without raw request/error logging", () => {
+    const source = readFileSync(new URL("./index.ts", import.meta.url), "utf8");
+    const mount = source.indexOf("app.use(requestTelemetry(");
+    assert.ok(mount >= 0, "production must mount the telemetry adapter");
+    assert.ok(mount < source.indexOf('app.all("/api/health"'));
+    assert.ok(mount < source.indexOf("express.json("));
+    assert.ok(source.includes("release: releaseIdentity().commit"));
+    assert.ok(!source.includes("req.originalUrl.replace"));
+    assert.ok(!/log\(`[^\n]*err\.message/.test(source));
+    assert.ok(!/console\.(?:warn|error)\([^\n]*,\s*(?:reason|error|errorStr)/.test(source.slice(0, source.indexOf("const app = express()"))));
+  });
+  it("records success, server failure, static files and mounted routers once without request data", async () => {
+    const events: Event[] = [];
+    const emit = (event: object) => { events.push(event as Event); };
+    const app = express();
+    app.use(requestTelemetry({ info: emit, warn: emit, error: emit }, { environment: "test", release: "abcdef123" }));
+    app.use(express.json());
+    app.post("/success", (_req, res) => { res.sendStatus(201); });
+    app.get("/failure", (_req, res) => { res.sendStatus(503); });
+    const router = express.Router();
+    router.get("/records/:id", (_req, res) => { res.sendStatus(200); });
+    app.use("/accounts/:accountId", router);
+    const staticDir = mkdtempSync(path.join(tmpdir(), "de-telemetry-"));
+    writeFileSync(path.join(staticDir, "sample.txt"), "public content");
+    app.use("/static", express.static(staticDir));
+    const server = app.listen(0, "127.0.0.1");
+    try {
+      await once(server, "listening");
+      const address = server.address() as AddressInfo;
+      for (const [route, status, template] of [["/success", 201, "/success"], ["/failure", 503, "/failure"], ["/accounts/private-account/records/private-record", 200, "/records/:id"], ["/static/sample.txt", 200, "unmatched"]] as const) {
+        const previous = events.length;
+        const response = await fetch(`http://127.0.0.1:${address.port}${route}?token=query-secret`, {
+          method: route === "/success" ? "POST" : "GET",
+          headers: { authorization: "Bearer header-secret", "x-request-id": "caller-secret", "content-type": "application/json" },
+          ...(route === "/success" ? { body: JSON.stringify({ password: "body-secret" }) } : {}),
+        });
+        await response.text();
+        assert.equal(response.status, status);
+        assert.equal(events.length, previous + 1);
+        const event = events.at(-1)!;
+        assert.equal(event.route, template);
+        assert.equal(event.requestId, response.headers.get("x-request-id"));
+        assert.equal(event.outcome, status >= 400 ? "failure" : "success");
+      }
+      const output = JSON.stringify(events);
+      assert.ok(!/secret|private-account|private-record/.test(output));
+      assert.equal(new Set(events.map(event => event.requestId)).size, 4);
+    } finally {
+      server.closeAllConnections();
+      await new Promise<void>((resolve, reject) => { server.close(err => err ? reject(err) : resolve()); });
+      rmSync(staticDir, { recursive: true, force: true });
+    }
+  });
+  it("records a real client disconnect with its response ID and no success event", async () => {
+    const events: Event[] = [];
+    let recorded!: () => void;
+    const completion = new Promise<void>(resolve => { recorded = resolve; });
+    const emit = (event: object) => { events.push(event as Event); recorded(); };
+    const app = express();
+    app.use(requestTelemetry({ info: emit, warn: emit, error: emit }, { environment: "test", release: undefined }));
+    app.get("/stream/:id", (_req, res) => { res.write("started"); });
+    const server = app.listen(0, "127.0.0.1");
+    try {
+      await once(server, "listening");
+      const address = server.address() as AddressInfo;
+      const requestId = await new Promise<string>((resolve, reject) => {
+        const req = httpRequest(`http://127.0.0.1:${address.port}/stream/private-stream?token=secret`, res => {
+          const id = String(res.headers["x-request-id"]);
+          res.once("data", () => { resolve(id); res.destroy(); req.destroy(); });
+          res.on("error", () => {});
+        });
+        req.once("error", reject);
+        req.end();
+      });
+      await completion;
+      assert.equal(events.length, 1);
+      assert.equal(events[0].requestId, requestId);
+      assert.equal(events[0].statusCode, null);
+      assert.equal(events[0].outcome, "aborted");
+      assert.ok(!/private-stream|secret/.test(JSON.stringify(events)));
+    } finally {
+      server.closeAllConnections();
+      await new Promise<void>((resolve, reject) => { server.close(err => err ? reject(err) : resolve()); });
+    }
+  });
   it("returns the generated ID and logs templates rather than request secrets", async () => {
     const events: Event[] = [];
     const emit = (event: object) => { events.push(event as Event); };
@@ -116,3 +205,4 @@ describe("request telemetry with Express", () => {
     }
   });
 });
+
