@@ -3356,3 +3356,25 @@ claims:
       Not run with --apply. Items 68 and 69 skipped with evidence in the PR:
       68 is the existing salesTaxReadiness check (Warehouse Vendors card); 69's
       Stripe Tax path was retired by Joe on 2026-10-05 (commit e125b0a).
+  - id: exit-popup-navy-split
+    owner: claude
+    subsystem: site-overlays
+    branch: claude/exit-popup-navy-split
+    base_sha: 97e49043
+    files:
+      - client/src/components/ExitIntentPopup.tsx (colour theme table and variant only; copy, form and behaviour unchanged)
+      - client/src/lib/exitPopupVariant.ts, exitPopupVariant.test.ts (new)
+      - client/src/lib/analytics.ts (exitIntentShown / exitIntentConverted take a variant)
+      - client/src/index.css (the .de-exit-navy background only)
+      - artifacts/design-concepts/exit-popup-background/**, artifacts/visual-qa/exit-popup-split/** (new)
+    status: active
+    started: 2026-10-10
+    note: >-
+      Joe, 2026-10-10: the exit popup's warm paper background is "an ugly bg
+      color"; three concepts shown (A navy grid, B graphite aurora, C brand
+      gradient); Joe chose "A, split-tested vs current". Each browser draws
+      paper or navy 50/50 and keeps it; exit_intent_shown and generate_lead
+      (exit_intent) carry the variant so conversion can be compared.
+      ?exit_variant=navy|paper forces a version for review. Lead source sent to
+      the server is unchanged. Overlap check 2026-10-10: open PR 542 edits the
+      print block of index.css; this adds a rule elsewhere in the file.

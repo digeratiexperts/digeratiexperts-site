@@ -5,7 +5,8 @@ import { X, ArrowRight, Mail, CheckCircle2, Phone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { CTA } from "@/lib/ctaCopy";
-import { DE_LOGO_PRIMARY } from "@/lib/brandAssets";
+import { DE_LOGO_PRIMARY, DE_LOGO_REVERSE } from "@/lib/brandAssets";
+import { getExitPopupVariant, type ExitPopupVariant } from "@/lib/exitPopupVariant";
 import { PRIMARY_PHONE } from "@/data/companyContact";
 import { isDoor2Path } from "@/lib/isDoor2Path";
 import { isWarehousePath } from "@/lib/warehousePaths";
@@ -63,6 +64,45 @@ const toneClass: Record<(typeof EXAMPLE_ROWS)[number]["tone"], string> = {
   ok: "border-emerald-600/40 bg-emerald-50 text-emerald-800",
 };
 
+/**
+ * Colours per split-test version. "paper" is the popup as it was; "navy" is
+ * concept A: the homepage hero's navy gradient, a fine white grid and violet /
+ * magenta light (artifacts/design-concepts/exit-popup-background/). The
+ * findings card and the email field stay white on both, as documents.
+ */
+const THEMES = {
+  paper: {
+    dialog: "border-[var(--de-paper-hairline)] bg-[var(--de-paper)]",
+    logo: DE_LOGO_PRIMARY,
+    close: "text-[#5A5368] hover:bg-black/5 hover:text-[#1A1228] focus-visible:ring-offset-[var(--de-paper)]",
+    eyebrow: "text-[#A30E52]",
+    title: "text-[#1A1228]",
+    body: "text-[#2A2438]",
+    strong: "text-[#1A1228]",
+    label: "text-[#1A1228]",
+    muted: "text-[#5A5368]",
+    error: "text-rose-700",
+    ringOffset: "focus-visible:ring-offset-[var(--de-paper)]",
+    phone: "text-[#1A1228] hover:text-[#A30E52]",
+    success: "text-emerald-600",
+  },
+  navy: {
+    dialog: "de-exit-navy border-white/15",
+    logo: DE_LOGO_REVERSE,
+    close: "text-[#C9C4D6] hover:bg-white/10 hover:text-white focus-visible:ring-offset-[#060617]",
+    eyebrow: "text-[#FF5AA5]",
+    title: "text-white",
+    body: "text-[#E4E1EC]",
+    strong: "text-white",
+    label: "text-white",
+    muted: "text-[#C9C4D6]",
+    error: "text-rose-300",
+    ringOffset: "focus-visible:ring-offset-[#060617]",
+    phone: "text-white hover:text-[#FF5AA5]",
+    success: "text-emerald-400",
+  },
+} as const satisfies Record<ExitPopupVariant, Record<string, string>>;
+
 function ExampleFindings() {
   return (
     <figure
@@ -102,6 +142,9 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  // Drawn once per mount; the browser keeps its version (lib/exitPopupVariant.ts).
+  const [variant] = useState<ExitPopupVariant>(() => getExitPopupVariant());
+  const t = THEMES[variant];
   const prefersReducedMotion = useReducedMotion();
   const titleId = useId();
   const descId = useId();
@@ -129,12 +172,12 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
 
     shownRef.current = true;
     try {
-      analytics.exitIntentShown();
+      analytics.exitIntentShown(variant);
     } catch {
       /* tracking must never block the offer */
     }
     setIsVisible(true);
-  }, []);
+  }, [variant]);
 
   useEffect(() => {
     try {
@@ -256,7 +299,7 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
         website_url: "",
       });
 
-      analytics.exitIntentConverted();
+      analytics.exitIntentConverted(variant);
       setIsSuccess(true);
 
       window.setTimeout(() => {
@@ -303,13 +346,14 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
                 aria-modal="true"
                 aria-labelledby={titleId}
                 aria-describedby={descId}
-                className="relative max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-2xl border border-[var(--de-paper-hairline)] bg-[var(--de-paper)] shadow-[0_28px_80px_rgba(0,0,0,0.55)]"
+                className={`relative max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-2xl border shadow-[0_28px_80px_rgba(0,0,0,0.55)] ${t.dialog}`}
+                data-variant={variant}
               >
                 <div className="sticky top-0 z-[1] h-1 bg-[#D3126A]" aria-hidden="true" />
 
                 <div className="flex items-center justify-between gap-3 px-5 pt-4 md:px-7">
                   <img
-                    src={DE_LOGO_PRIMARY}
+                    src={t.logo}
                     alt="Digerati Experts"
                     className="h-6 w-auto md:h-7"
                     width={140}
@@ -319,7 +363,7 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
                     ref={closeRef}
                     type="button"
                     onClick={handleClose}
-                    className="-mr-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-[#5A5368] transition-colors hover:bg-black/5 hover:text-[#1A1228] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-paper)]"
+                    className={`-mr-2 inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 ${t.close}`}
                     aria-label="Close"
                     data-testid="button-close-exit-popup"
                   >
@@ -331,18 +375,18 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
                   {!isSuccess ? (
                     <div className="grid gap-6 sm:grid-cols-[1fr_16rem] sm:gap-7">
                       <div className="min-w-0">
-                        <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[#A30E52]">
+                        <p className={`text-[12px] font-semibold uppercase tracking-[0.16em] ${t.eyebrow}`}>
                           Before you go
                         </p>
                         <h2
                           id={titleId}
-                          className="mt-2 font-heading text-[1.6rem] font-semibold leading-[1.15] tracking-[-0.02em] text-[#1A1228] md:text-[1.9rem]"
+                          className={`mt-2 font-heading text-[1.6rem] font-semibold leading-[1.15] tracking-[-0.02em] md:text-[1.9rem] ${t.title}`}
                         >
                           Who checks the people who run your IT?
                         </h2>
                         <p
                           id={descId}
-                          className="mt-3 text-[15px] font-medium leading-relaxed text-[#2A2438] md:text-[16px]"
+                          className={`mt-3 text-[15px] font-medium leading-relaxed md:text-[16px] ${t.body}`}
                         >
                           Get a second opinion. An independent Cyber Risk Assessment from Arizona
                           engineers, ranked by what could actually hurt you. Nothing changes unless
@@ -351,10 +395,10 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
 
                         <ul className="mt-4 space-y-2">
                           {FACTS.map((fact) => (
-                            <li key={fact.lead} className="flex items-baseline gap-2.5 text-[14px] leading-snug text-[#2A2438]">
+                            <li key={fact.lead} className={`flex items-baseline gap-2.5 text-[14px] leading-snug ${t.body}`}>
                               <span className="mt-[0.55em] h-px w-2.5 shrink-0 bg-[#D3126A]" aria-hidden="true" />
                               <span>
-                                <strong className="font-semibold text-[#1A1228]">{fact.lead}</strong> {fact.rest}
+                                <strong className={`font-semibold ${t.strong}`}>{fact.lead}</strong> {fact.rest}
                               </span>
                             </li>
                           ))}
@@ -364,7 +408,7 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
                           <div>
                             <label
                               htmlFor="exit-intent-email"
-                              className="mb-1.5 block text-sm font-semibold text-[#1A1228]"
+                              className={`mb-1.5 block text-sm font-semibold ${t.label}`}
                             >
                               Work email
                             </label>
@@ -390,12 +434,12 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
                               />
                             </div>
                             {fieldError ? (
-                              <p id={errorId} role="alert" className="mt-2 text-sm font-medium text-rose-700">
+                              <p id={errorId} role="alert" className={`mt-2 text-sm font-medium ${t.error}`}>
                                 {fieldError}
                               </p>
                             ) : null}
                             {submitError ? (
-                              <p role="alert" className="mt-2 text-sm font-medium text-rose-700">
+                              <p role="alert" className={`mt-2 text-sm font-medium ${t.error}`}>
                                 {submitError}
                               </p>
                             ) : null}
@@ -404,7 +448,7 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
                           <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#D3126A] text-[15px] font-semibold text-white md:text-[16px] transition-colors hover:bg-[#f0187a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--de-paper)] disabled:opacity-60"
+                            className={`inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[#D3126A] text-[15px] font-semibold text-white md:text-[16px] transition-colors hover:bg-[#f0187a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A] focus-visible:ring-offset-2 disabled:opacity-60 ${t.ringOffset}`}
                             data-testid="button-get-checklist"
                           >
                             {isSubmitting ? (
@@ -416,7 +460,7 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
                               </>
                             )}
                           </button>
-                          <p className="text-[12px] font-medium leading-relaxed text-[#5A5368]">
+                          <p className={`text-[12px] font-medium leading-relaxed ${t.muted}`}>
                             A DE engineer follows up to scope it. No spam. Follow-up on the assessment only.
                           </p>
                         </form>
@@ -424,11 +468,11 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
 
                       <div className="sm:pt-8">
                         <ExampleFindings />
-                        <p className="mt-4 text-[14px] font-medium text-[#2A2438]">
+                        <p className={`mt-4 text-[14px] font-medium ${t.body}`}>
                           Rather talk it through?{" "}
                           <a
                             href={PRIMARY_PHONE.telHref}
-                            className="whitespace-nowrap font-semibold text-[#1A1228] underline-offset-2 hover:text-[#A30E52] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]"
+                            className={`whitespace-nowrap font-semibold underline-offset-2 hover:underline ${t.phone} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D3126A]`}
                           >
                             <Phone className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />
                             {PRIMARY_PHONE.display}
@@ -439,12 +483,12 @@ export function ExitIntentPopup({ delay = 30000 }: ExitIntentPopupProps) {
                   ) : (
                     <div className="py-6">
                       <div className="flex items-start gap-3">
-                        <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-emerald-600" aria-hidden="true" />
+                        <CheckCircle2 className={`mt-0.5 h-6 w-6 shrink-0 ${t.success}`} aria-hidden="true" />
                         <div>
-                          <h2 className="font-heading text-xl font-semibold tracking-[-0.02em] text-[#1A1228]">
+                          <h2 className={`font-heading text-xl font-semibold tracking-[-0.02em] ${t.title}`}>
                             Got it. A DE engineer will be in touch.
                           </h2>
-                          <p className="mt-2 text-[16px] font-medium leading-relaxed text-[#2A2438]">
+                          <p className={`mt-2 text-[16px] font-medium leading-relaxed ${t.body}`}>
                             We’ll reach out from a digeratiexperts.com address to scope your assessment. No spam, just that follow-up.
                           </p>
                         </div>
