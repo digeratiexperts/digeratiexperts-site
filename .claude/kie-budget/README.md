@@ -15,6 +15,22 @@ Every kie.ai generator in this repo (`/nano-banana-images`, `/excalidraw-visuals
 
 Joe changes the numbers in `limits.json`. Prices per model are in the same file (`usdPerCredit` 0.005: Nano Banana 2 at 1K is 8 credits ≈ $0.04). Video models are priced per second and are estimates until the first real run.
 
+## Before you open a job (Joe, 2026-10-08)
+
+The limits below stop a job spending too much. They do not stop it generating an image
+nobody wanted, which is the more common way the money goes. Joe's rule: consult first,
+with options, and show the work before and after.
+
+1. Put 2-3 concrete directions to DE and get a pick — not an open "what should I make?".
+2. State the prompt you are about to send and what you expect back. DE can cancel here
+   for free.
+3. After the run, show the image against that stated intent, and say plainly when the
+   result missed it.
+4. Variants are for a deliberate series or set only. Anything else gets its own brief,
+   so the site does not fill with near-duplicates.
+
+`estimate` costs nothing and is the right way to price step 2 before asking.
+
 ## Running a job
 
 ```bash

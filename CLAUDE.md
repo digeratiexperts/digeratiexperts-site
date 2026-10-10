@@ -42,6 +42,30 @@ The Trigger.dev MCP server is declared in the root `.mcp.json`; enable it only w
 
 Generated images are ILLUSTRATIVE candidates until they pass `design/IMAGERY.md` review; only optimized derivatives go under `client/public/images/`.
 
+## Image generation needs DE's go-ahead first (Joe, 2026-10-08)
+
+The budget gate in `.claude/kie-budget/` controls *how much* a job may spend. It does
+not decide whether an image should exist, which is where the money actually goes to
+waste. Joe: "you consult with me with its usage before you do it with multiple choice
+questions and images before and after... this way we avoid the same images all over the
+place... Don't spend all my money on stuff we end up trashing."
+
+So before opening a kie.ai job:
+
+1. **Ask, with options.** Put the choice to DE as a small set of concrete directions —
+   subject, framing, mood — not an open question. Get a pick.
+2. **Show the "before".** State the prompt you intend to send and what you expect back,
+   in plain words, so DE can kill it while it still costs nothing.
+3. **Show the "after".** Put the generated image next to that intent. If the result is
+   not what the "before" described, say so rather than quietly shipping it.
+4. **No incidental variants.** A variant of an existing image is only for a deliberate
+   series or set. Every other image gets its own brief, or the site fills up with
+   near-duplicates of the same picture.
+
+This is the same working agreement as the Hub's "Design and paid-API approval" section;
+it lives here too because the kie.ai skills are in this repo and an agent working here
+would not otherwise see it.
+
 <!-- >>> DE token-discipline (managed; edit in DE\Governance\repo-kit) >>> -->
 ## Token discipline (DE operating standard)
 Follow the "Token discipline" section in `AGENTS.md` in this repo. Key rules: one slice = one fresh session started from a handoff Â· declare the slice before coding Â· search before reading Â· stop after two failed attempts and checkpoint Â· economy models for mechanical work Â· end with the handoff block (`C:\Users\Joe\DE\Governance\AI-HANDOFF-STANDARD.md`). Spend/routing policy: `C:\Users\Joe\DE\Governance\AI-STACK.md` â€” not in this repo.
