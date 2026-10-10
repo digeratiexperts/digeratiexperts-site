@@ -1,6 +1,6 @@
 # Review: security headers and CSP on portal pages
 
-Status: **two small fixes in this PR, the rest for DE review.** Backlog task 19 (T2), 2026-10-10.
+Status: **one small fix in this PR, the rest for DE review.** Backlog task 19 (T2), 2026-10-10.
 
 Scope: the headers `setSecurityHeaders` (`server/middleware/security.ts`) puts on
 every response, read for the client portal (`/portal/*` pages on
@@ -8,20 +8,22 @@ every response, read for the client portal (`/portal/*` pages on
 not be fetched from the review sandbox, so this reads the code, not production
 responses; confirm with `curl -sSI https://portal.digeratiexperts.com/portal/login`.
 
-## Fixed in this PR (clear bugs, small)
+## Fixed in this PR (clear bug, small)
 
-1. **`X-XSS-Protection: 1; mode=block` → `0`.** Current browsers ignore the
-   header; the legacy auditors it switches on in old ones could be abused to
-   blank or probe page content. OWASP's secure-headers guidance is `0` (or
-   omit) with a CSP doing the work, which this site has.
-2. **Portal API responses default to `Cache-Control: no-store`.** `/api/portal/*`
-   answers are per-user (tickets, invoices, people, files) and most routes set
-   no cache header, so a browser or an intermediary was free to store them.
-   The middleware now sets `no-store` for `/api/portal/` paths; a route that
-   sets its own header still overrides it. None of the 61 `/api/portal`
-   routes set a public cache today.
+**`X-XSS-Protection: 1; mode=block` → `0`.** Current browsers ignore the
+header; the legacy auditors it switches on in old ones could be abused to
+blank or probe page content. OWASP's secure-headers guidance is `0` (or omit)
+with a CSP doing the work, which this site has. Covered by
+`server/middleware/securityHeaders.test.ts`.
 
-Both are covered by `server/middleware/securityHeaders.test.ts`.
+## Tried and backed out
+
+A blanket `Cache-Control: no-store` on every `/api/portal/*` response. In CI's
+a11y smoke, `/portal/login` then never reached network idle: the page fires
+`/api/portal/me` and `/api/portal/login-knocks/ping` without reading their
+bodies, and Chromium keeps an unread `no-store` response open (a cacheable one
+is drained into the cache). Reproduced locally; main without the header idles
+normally. Item 11 below has the safer route.
 
 ## For review (not changed)
 
@@ -39,6 +41,7 @@ Ordered by how much they matter for the portal.
 | 8 | **`style-src 'unsafe-inline'`.** | CSS injection is a weaker risk than script, but can still leak attribute values. | Leave for now; Radix/Tailwind runtime styles need it. | Not worth it yet. |
 | 9 | **HSTS `includeSubDomains; preload`.** | Correct for the site; every `*.digeratiexperts.com` subdomain must serve HTTPS forever once preloaded. | Confirm no subdomain (staging, mail, legacy) still needs plain HTTP before submitting to the preload list. | Check only. |
 | 10 | **`Cross-Origin-Opener-Policy: same-origin`.** | Breaks `window.opener` for any payment or OAuth popup. Current flows are redirects, so it looks fine. | If a popup flow is added (Zoho Payments, Zoho OAuth), use `same-origin-allow-popups` on that page. | Check only. |
+| 11 | **Most `/api/portal/*` responses carry no `Cache-Control`.** | Per-user data (tickets, invoices, people, files) may be stored by the browser on a shared machine. Cloudflare does not cache JSON by default, so shared caches are not the main risk. | Set `private, no-store` per route on the sensitive reads, and have the login page read (or cancel) the bodies of its `me` and ping fetches first; see "Tried and backed out". | Small, but per route. |
 
 Headers that are correct and stay: `Strict-Transport-Security`,
 `X-Frame-Options: SAMEORIGIN` with `frame-ancestors 'self'`,

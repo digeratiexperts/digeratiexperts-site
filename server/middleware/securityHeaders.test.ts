@@ -24,16 +24,6 @@ describe("setSecurityHeaders", () => {
     expect(run("/").headers["x-xss-protection"]).toBe("0");
   });
 
-  it("defaults portal API responses to no-store", () => {
-    expect(run("/api/portal/tickets").headers["cache-control"]).toBe("no-store");
-  });
-
-  it("leaves cache headers on other paths to their routes", () => {
-    expect(run("/").headers["cache-control"]).toBeUndefined();
-    expect(run("/api/payments/availability").headers["cache-control"]).toBeUndefined();
-    expect(run("/portal/dashboard").headers["cache-control"]).toBeUndefined();
-  });
-
   it("keeps the CSP's framing and plugin locks", () => {
     const { headers, nextCalled } = run("/portal/login");
     expect(nextCalled).toBe(true);
