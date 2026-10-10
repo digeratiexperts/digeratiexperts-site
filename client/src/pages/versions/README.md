@@ -32,6 +32,7 @@ one lands and any of them can be referenced in future development.
 | 6 | `/version-6` | Live homepage cleaned in the current DE theme (Claude layouts). Version 5 stays at `/version-5`. | build |
 | 7 | `/version-7` | Every live section built from Joe's reviewed mockups (PR #315), live interactions kept, bottom bar with autohide | build |
 | 8 | `/version-8` | Version 7 with Joe's 2026-10-03 preferences (live trust strip, Why Arizona cards, light icon tiles); the homepage at `/` since 2026-10-03; `/version-8` is a 301 to `/` | build |
+| 9 | `/version-9` | Version 8 with the Signal Thread: one thread through every section, step nodes, content motifs and four kie.ai plates (concept, draft PR; does not replace `/`) | build |
 
 `/version-0` (not in the registry, which numbers from 1): the previous homepage (`DigeratiHomepage`) rendered as a noindex reference, without structured data. Joe, 2026-10-03: kept when Version 8 replaced `/`.
 

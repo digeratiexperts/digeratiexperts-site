@@ -183,6 +183,7 @@ const HomepageV5 = lazy(() => import("@/pages/versions/v5/HomepageV5"));
 const HomepageV6 = lazy(() => import("@/pages/versions/v6/HomepageV6"));
 const HomepageV7 = lazy(() => import("@/pages/versions/v7/HomepageV7"));
 const HomepageV8 = lazy(() => import("@/pages/versions/v8/HomepageV8"));
+const HomepageV9 = lazy(() => import("@/pages/versions/v9/HomepageV9"));
 
 const WarehouseGate = lazy(() => import("@/pages/store/WarehouseGate"));
 const PublicStoreCheckout = lazy(() => import("@/pages/store/PublicStoreCheckout"));
@@ -273,6 +274,14 @@ function Router() {
       )} />
       {/* Version 8 is the homepage now; the server answers /version-8 with a 301 to /. */}
       <Route path="/version-8" component={() => <Redirect to="/" replace />} />
+      {/* Version 9: Version 8 with the Signal Thread section backgrounds. Preview only; Joe decides whether it replaces /. */}
+      <Route path="/version-9" component={() => (
+        <Suspense fallback={<PageLoadingSkeleton />}>
+          <VersionFrame n={9}>
+            <HomepageV9 />
+          </VersionFrame>
+        </Suspense>
+      )} />
 
       {/* Solutions Pages */}
       <Route path="/solutions" component={() => (
@@ -1117,8 +1126,8 @@ function AppContent() {
   useStoreChromeGestures(location);
   const isPortal = location.startsWith("/portal");
   const isHome = location === "/";
-  // / (Version 8), /version-0 (the previous homepage) and /version-7 mount their own bottom bar.
-  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7";
+  // / (Version 8), /version-0 (the previous homepage), /version-7 and /version-9 mount their own bottom bar.
+  const ownsBottomBar = isHome || location === "/version-0" || location === "/version-7" || location === "/version-9";
   const hideDoor2HelpDock = isDoor2Path(location) && location.split("?")[0] !== "/store";
   const hideWarehouseChrome = isWarehousePath(location);
   const accent = isPortal ? undefined : accentFor(location);

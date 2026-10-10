@@ -123,6 +123,17 @@ export const HOMEPAGE_VERSIONS: HomepageVersion[] = [
     kind: "build",
     source: "claude/sleepy-archimedes-mccoav",
   },
+  {
+    n: 9,
+    path: "/version-9",
+    title: "Version 8 with the Signal Thread",
+    date: "2026-10-10",
+    status: "Concept (draft PR). Preview only; does not replace /. Joe decides whether it does.",
+    summary:
+      "The live homepage (Version 8) with section backgrounds that tell one story: a single thread runs down the page, each chapter picks it up where the last one left it, a numbered node names the step (your business, the exposure, the gaps, the paths, the layers, the proof, the place, the people, your fit, the watch, the start), and a faint line-art motif behind each section previews what it explains. Dark chapters carry kie.ai environment plates (ILLUSTRATIVE). Content, copy, forms and links are Version 8's, unchanged.",
+    kind: "build",
+    source: "claude/loving-edison-epagrb",
+  },
 ];
 
 export function versionByNumber(n: number): HomepageVersion | undefined {
