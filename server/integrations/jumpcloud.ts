@@ -16,7 +16,7 @@ export type JcUser = {
   activated?: boolean;
 };
 
-function jcHeaders(): Record<string, string> | null {
+function jcHeaders(orgId?: string | null): Record<string, string> | null {
   const key = (process.env.JUMPCLOUD_API_KEY || "").trim();
   if (!key) return null;
   const h: Record<string, string> = {
@@ -24,7 +24,7 @@ function jcHeaders(): Record<string, string> | null {
     Accept: "application/json",
     "x-api-key": key,
   };
-  const org = (process.env.JUMPCLOUD_ORG_ID || "").trim();
+  const org = (orgId || process.env.JUMPCLOUD_ORG_ID || "").trim();
   if (org) h["x-org-id"] = org;
   return h;
 }
@@ -33,8 +33,12 @@ export function jumpcloudConfigured(): boolean {
   return !!jcHeaders();
 }
 
-async function jcFetch<T>(path: string, init?: RequestInit): Promise<{ ok: boolean; status: number; data?: T; error?: string }> {
-  const headers = jcHeaders();
+async function jcFetch<T>(
+  path: string,
+  init?: RequestInit,
+  orgId?: string | null,
+): Promise<{ ok: boolean; status: number; data?: T; error?: string }> {
+  const headers = jcHeaders(orgId);
   if (!headers) return { ok: false, status: 0, error: "JUMPCLOUD_API_KEY not configured" };
   try {
     const res = await fetch(`${JC_BASE}${path}`, {
@@ -171,3 +175,70 @@ export async function jumpcloudOffboardUser(input: {
   if (!suspend.ok) return { success: false, userId: existing.id, message: suspend.error || "Suspend failed" };
   return { success: true, userId: existing.id, action: "suspended", message: "JumpCloud user suspended" };
 }
+
+/* ------------------------------------------------------------------
+ * Software Management (License Patch Bay). JumpCloud installs Windows apps
+ * through Chocolatey: a software app names the package, and is bound to
+ * machines or machine groups. `orgId` targets one client org from DE's MSP
+ * key; null uses JUMPCLOUD_ORG_ID / the key's own org.
+ * ------------------------------------------------------------------ */
+
+type JcSoftwareApp = { id: string; displayName?: string; settings?: Array<{ packageId?: string; packageManager?: string }> };
+
+/** The org's Chocolatey software app for a package, created if it does not exist yet. */
+export async function jumpcloudEnsureChocoApp(
+  displayName: string,
+  packageId: string,
+  orgId: string | null,
+): Promise<{ ok: boolean; id?: string; error?: string; created?: boolean }> {
+  const list = await jcFetch<JcSoftwareApp[]>("/v2/softwareapps?limit=100", undefined, orgId);
+  if (!list.ok) return { ok: false, error: list.error };
+  const found = (Array.isArray(list.data) ? list.data : []).find((app) =>
+    (app.settings || []).some(
+      (s) => (s.packageId || "").toLowerCase() === packageId.toLowerCase() && (s.packageManager || "").toUpperCase() === "CHOCOLATEY",
+    ),
+  );
+  if (found) return { ok: true, id: found.id, created: false };
+  const created = await jcFetch<JcSoftwareApp>(
+    "/v2/softwareapps",
+    {
+      method: "POST",
+      body: JSON.stringify({ displayName, settings: [{ packageId, packageManager: "CHOCOLATEY", autoUpdate: false }] }),
+    },
+    orgId,
+  );
+  if (!created.ok || !created.data?.id) return { ok: false, error: created.error || "JumpCloud did not return an app id" };
+  return { ok: true, id: created.data.id, created: true };
+}
+
+/** Bind a software app to a machine group or a single machine (an existing binding is not an error). */
+export async function jumpcloudAssociateSoftware(
+  appId: string,
+  target: { type: "system_group" | "system"; id: string },
+  orgId: string | null,
+): Promise<{ ok: boolean; error?: string }> {
+  const r = await jcFetch(
+    `/v2/softwareapps/${encodeURIComponent(appId)}/associations`,
+    { method: "POST", body: JSON.stringify({ op: "add", type: target.type, id: target.id }) },
+    orgId,
+  );
+  if (r.ok || r.status === 409) return { ok: true };
+  return { ok: false, error: r.error };
+}
+
+/** A JumpCloud machine by hostname (or display name), within the org. */
+export async function jumpcloudFindSystem(name: string, orgId: string | null): Promise<{ ok: boolean; id?: string; error?: string }> {
+  for (const field of ["hostname", "displayName"]) {
+    const r = await jcFetch<{ results?: Array<{ _id?: string; id?: string }> }>(
+      `/systems?limit=2&filter=${encodeURIComponent(`${field}:$eq:${name}`)}`,
+      undefined,
+      orgId,
+    );
+    if (!r.ok) return { ok: false, error: r.error };
+    const hit = r.data?.results?.[0];
+    const id = hit?._id || hit?.id;
+    if (id) return { ok: true, id };
+  }
+  return { ok: false, error: `No JumpCloud machine named ${name}` };
+}
+

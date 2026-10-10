@@ -2,6 +2,7 @@ import { portalFetch } from "@/lib/portalApi";
 import type { CompanySeatSummary, PoolItemSummary } from "@shared/licenseBoard";
 import type { CatalogLicense } from "@shared/licensing";
 import type { SHELF_CATEGORIES, ShelfEntry } from "@shared/licenseShelf";
+import type { JumpCloudLink, PlanStep } from "@shared/jumpcloudPlan";
 
 /** License patch bay API client (server/licenseBoardRoutes.ts). DE admin only. */
 
@@ -48,7 +49,43 @@ export type CompanyBoard = {
   devices: Array<{ id: string; label: string; licenses: HeldLicense[] }>;
 };
 
+export type JumpCloudPush = {
+  id: string;
+  product: string;
+  chocoPackage: string;
+  targetKind: "group" | "machine";
+  targetLabel: string;
+  ok: boolean;
+  detail: string | null;
+  createdAt: string;
+};
+export type JumpCloudView = { configured: boolean; link: JumpCloudLink | null; plan: PlanStep[]; pushes: JumpCloudPush[] };
+export type Kit = {
+  key: string;
+  name: string;
+  blurb: string;
+  note?: string;
+  apps: ShelfEntry[];
+  licenses: ShelfEntry[];
+};
+export type KitResult = {
+  kit: string;
+  addedToPool: number;
+  appsOn: number;
+  onEveryMachine: number;
+  recommended: Array<{ itemId: string; product: string }>;
+  note: string | null;
+};
+
 export const licenseBoardApi = {
+  kits: () => request<{ kits: Kit[] }>(`${BASE}/kits`),
+  applyKit: (clientId: string, kit: string) =>
+    send<KitResult>(`${BASE}/clients/${encodeURIComponent(clientId)}/kit`, "POST", { kit }),
+  jumpcloud: (clientId: string) => request<JumpCloudView>(`${BASE}/clients/${encodeURIComponent(clientId)}/jumpcloud`),
+  linkJumpCloud: (clientId: string, link: JumpCloudLink) =>
+    send(`${BASE}/clients/${encodeURIComponent(clientId)}/jumpcloud`, "PUT", link),
+  pushJumpCloud: (clientId: string) =>
+    send<{ sent: number; failed: number }>(`${BASE}/clients/${encodeURIComponent(clientId)}/jumpcloud/push`, "POST", {}),
   board: () => request<Board>(BASE),
   shelf: () => request<Shelf>(`${BASE}/shelf`),
   addItem: (input: NewPoolItem) => send<{ item: PoolItemSummary }>(`${BASE}/items`, "POST", input),

@@ -3123,7 +3123,7 @@ claims:
       - server/portalDeskAgentRoutes.ts, server/portalDeskAgentRoutes.test.ts (archive/unarchive/delete routes)
       - server/routes.ts (the desk-chats list ?archived=1 only)
       - artifacts/visual-qa/desk-archive-swipe/**
-    status: merged-pr-540-not-live
+    status: verified-live
     started: 2026-10-08
     note: >-
       Joe, 2026-10-08, with a screenshot of the Chats / DE Desk right-click
@@ -3146,7 +3146,7 @@ claims:
       - client/src/App.tsx (one route), client/src/components/portal/shell/portalNav.ts (one admin nav item)
       - client/src/pages/portal/PortalLicensing.tsx (admin link to the patch bay only)
       - artifacts/visual-qa/license-patch-bay/**
-    status: merged-pr-540-not-live
+    status: verified-live
     started: 2026-10-08
     note: >-
       Joe, 2026-10-08, from the Licenses page ("Open a company (impersonate)
@@ -3393,3 +3393,24 @@ claims:
       session), whose Desk client rule is kept unchanged; merge 555 first.
       Thread T7 adds a Books tax readiness check: zohoBooksTax.ts signatures
       are unchanged. Not merged or deployed; nothing registered in Zoho.
+  - id: license-jumpcloud-kits
+    owner: claude
+    subsystem: licensing
+    branch: claude/exciting-cannon-ttx8m8
+    base_sha: 660a4db
+    files:
+      - shared/starterKits.ts (new), shared/jumpcloudPlan.ts (new) and their tests
+      - migrations/0016_license_jumpcloud_links.sql (new)
+      - server/licenseBoardStore.ts, server/licenseBoardRoutes.ts, server/licenseBoardRoutes.test.ts
+      - server/integrations/jumpcloud.ts (software-app helpers appended; onboard/offboard untouched)
+      - server/routes.ts (registerLicenseBoardRoutes deps only)
+      - client/src/pages/portal/AdminLicenseBoard.tsx, client/src/components/portal/licensing/* , client/src/lib/licenseBoardApi.ts
+      - artifacts/visual-qa/license-patch-bay/**
+    status: active
+    started: 2026-10-10
+    note: >-
+      Joe, 2026-10-08/10 ("continue everything"): JumpCloud / Chocolatey
+      installs from the License Patch Bay and starter kits by business type
+      (regular, regulated, GCC High). PR 540 (desk-chat-archive-swipe,
+      license-patch-bay) verified live 2026-10-08: deploy of c4a0c24 created
+      the vault key and applied migration 0015.

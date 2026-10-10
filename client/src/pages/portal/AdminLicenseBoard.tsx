@@ -16,6 +16,7 @@ import {
 } from "@/components/portal/licensing/PatchBay";
 import { licenseBoardApi, type Board, type CompanyBoard } from "@/lib/licenseBoardApi";
 import { PartsBin } from "@/components/portal/licensing/PartsBin";
+import { JumpCloudPanel, StarterKitPanel } from "@/components/portal/licensing/CompanyTools";
 import { EVERY_MACHINE_ID, deviceTargetId } from "@shared/licenseBoard";
 
 /**
@@ -642,7 +643,11 @@ function CompanyLevel({ clientId, onBack }: { clientId: string; onBack: () => vo
       <button type="button" onClick={onBack} className="mb-4 inline-flex min-h-10 items-center gap-1.5 rounded-md px-1 text-sm text-white/65 hover:text-white">
         <ArrowLeft className="h-4 w-4" aria-hidden /> All companies
       </button>
-      <h2 className="mb-5 text-xl font-bold text-white">{data.company.name}</h2>
+      <h2 className="mb-4 text-xl font-bold text-white">{data.company.name}</h2>
+      <div className="mb-6 grid gap-3 xl:grid-cols-2">
+        <StarterKitPanel clientId={clientId} companyName={data.company.name} onApplied={refresh} />
+        <JumpCloudPanel clientId={clientId} refreshKey={q.dataUpdatedAt} />
+      </div>
       <PatchBay
         cables={cables}
         canPatch={canPatch}

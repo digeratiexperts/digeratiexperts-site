@@ -1,0 +1,11 @@
+{
+  "kitResult": "STARTER KIT\n\nSets the company up for its business type: turns on the kit's apps for Every machine and lists the licences to give it. Seats are never allocated for you. Applying twice changes nothing.\n\nRegular business\n\nOffice, a browser, a PDF reader and zip on every machine; Business Premium and endpoint protection.\n\n7 apps · 3 licences\n\nUse this kit\n\nRegulated (HIPAA, legal, finance)\n\nThe regular kit plus managed detection, identity protection and device management.\n\n8 apps · 7 licences\n\nRecord the client's BAA or engagement terms in the vault before go-live.\n\nUse this kit\n\nGCC High (CUI / ITAR)\n\nGCC High licences and a minimal, reviewed app set. Data stays in the client's GCC High tenant.\n\n3 apps · 2 licences\n\nDo not store CUI in DE's own vault. Every tool on these machines needs a FedRAMP / CMMC review first.\n\nUse this kit\n\nRegular business applied\n\n7 apps turned on · 7 on Every machine · 10 new parts in DE's pool\n\nLicences to give: Microsoft 365 Business Premium, Coro Cybersecurity, JumpCloud Platform. Drag them from the company pool, or patch seats from DE's pool on the main board.",
+  "jumpcloud": "JUMPCLOUD INSTALLS\n\nJumpCloud is not connected on this server (JUMPCLOUD_API_KEY). You can link and preview; sending needs the key.\n\nFill in the organization id if this client has its own JumpCloud org, the device group id for the group that holds its machines, or both. Every machine installs go to that group.\n\nSave link\nMicrosoft 365 Appsoffice365business → Every machine\nGoogle Chromegooglechrome → Every machine\nAdobe Acrobat Readeradobereader → Every machine\n7-Zip7zip → Every machine\nJumpCloud Agent → Every machine\nNo Chocolatey package id on this app\nDE Desktop Agent → Every machine\nNo Chocolatey package id on this app\nCoro Agent → Every machine\nNo Chocolatey package id on this app\nSend 4 to JumpCloud",
+  "everyMachine": "Every machine\n\nThe baseline: apps every machine in Acme Corp gets.\n\nMicrosoft 365 Apps\nGoogle Chrome\nAdobe Acrobat Reader\n7-Zip\nJumpCloud Agent\nDE Desktop Agent\nCoro Agent",
+  "errors1440": [],
+  "overflow1440": 0,
+  "overflow390": 0,
+  "errors390": [],
+  "overflow768": 0,
+  "errors768": []
+}

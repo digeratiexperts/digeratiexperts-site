@@ -13,6 +13,8 @@ import {
 import { LICENSE_CATALOG, catalogLicense } from "@shared/licensing";
 import { SHELF_CATEGORIES, catalogShelf, hubShelf, starterShelf } from "@shared/licenseShelf";
 import * as store from "./licenseBoardStore";
+import { JC_ID, planJumpCloudInstalls } from "@shared/jumpcloudPlan";
+import { STARTER_KITS, shelfEntry, starterKit } from "@shared/starterKits";
 
 /**
  * License patch bay (DE admin only).
@@ -45,6 +47,15 @@ export type LicenseBoardRouteDeps = {
   listDepartments: (clientId: string) => Promise<{ id: string; name: string }[]>;
   /** Hub staff catalog ({ status, skus }) or null when the feed is not reachable. */
   fetchHubCatalog?: () => Promise<Record<string, unknown> | null>;
+  /** JumpCloud Software Management (server/integrations/jumpcloud.ts); tests pass a fake. */
+  jumpcloud: JumpCloudClient;
+};
+
+export type JumpCloudClient = {
+  configured: () => boolean;
+  ensureChocoApp: (displayName: string, packageId: string, orgId: string | null) => Promise<{ ok: boolean; id?: string; error?: string }>;
+  associate: (appId: string, target: { type: "system_group" | "system"; id: string }, orgId: string | null) => Promise<{ ok: boolean; error?: string }>;
+  findSystem: (name: string, orgId: string | null) => Promise<{ ok: boolean; id?: string; error?: string }>;
 };
 
 const SHELF_CATEGORY_KEYS = new Set<string>(SHELF_CATEGORIES.map((c) => c.key));
@@ -225,46 +236,50 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
     }
   });
 
+  /** One company's free pool, departments, people and devices (the page's level 2). */
+  const companyView = async (client: Client) => {
+    const [items, allocations, assignments, departments] = await Promise.all([
+      store.listPoolItems(),
+      store.listAllocations(client.id),
+      store.listAssignments(client.id),
+      deps.listDepartments(client.id).catch(() => []),
+    ]);
+    const seats = summarizeCompany(client.id, allocations, assignments, appIdsOf(items));
+    const byId = new Map(items.map((i) => [i.id, i]));
+    const people = deps
+      .listClientUsers(client.id)
+      .filter((u) => u.clientId === client.id && u.isActive !== false)
+      .map((u) => ({ id: u.id, name: u.fullName, email: u.email, departmentId: u.departmentId ?? null }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const holding = (type: AssignmentTarget, id: string) =>
+      assignments
+        .filter((a) => a.targetType === type && a.targetId === id)
+        .map((a) => ({ assignmentId: a.id, itemId: a.itemId, viaDepartmentId: a.viaDepartmentId }));
+    const devices = new Map<string, string>([[EVERY_MACHINE_ID, EVERY_MACHINE_LABEL]]);
+    for (const a of assignments) if (a.targetType === "device") devices.set(a.targetId, a.targetLabel);
+    return {
+      company: { id: client.id, name: client.companyName },
+      pool: seats
+        .filter((s) => byId.has(s.itemId))
+        .map((s) => {
+          const i = byId.get(s.itemId)!;
+          return { ...s, kind: i.kind, vendor: i.vendor, product: i.product, category: i.category, chocoPackage: i.chocoPackage };
+        }),
+      departments: departments.map((d) => ({
+        id: d.id,
+        name: d.name,
+        seats: Array.from(departmentSeats(client.id, d.id, assignments).entries()).map(([itemId, count]) => ({ itemId, count })),
+      })),
+      people: people.map((p) => ({ ...p, licenses: holding("user", p.id) })),
+      devices: Array.from(devices.entries()).map(([id, label]) => ({ id, label, licenses: holding("device", id) })),
+    };
+  };
+
   app.get(`${BASE}/clients/:clientId`, ...guard, async (req: AdminRequest, res: Response) => {
     try {
       const client = deps.getClient(req.params.clientId);
       if (!client) return res.status(404).json({ error: "Company not found" });
-      const [items, allocations, assignments, departments] = await Promise.all([
-        store.listPoolItems(),
-        store.listAllocations(client.id),
-        store.listAssignments(client.id),
-        deps.listDepartments(client.id).catch(() => []),
-      ]);
-      const seats = summarizeCompany(client.id, allocations, assignments, appIdsOf(items));
-      const byId = new Map(items.map((i) => [i.id, i]));
-      const people = deps
-        .listClientUsers(client.id)
-        .filter((u) => u.clientId === client.id && u.isActive !== false)
-        .map((u) => ({ id: u.id, name: u.fullName, email: u.email, departmentId: u.departmentId ?? null }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-      const holding = (type: AssignmentTarget, id: string) =>
-        assignments
-          .filter((a) => a.targetType === type && a.targetId === id)
-          .map((a) => ({ assignmentId: a.id, itemId: a.itemId, viaDepartmentId: a.viaDepartmentId }));
-      const devices = new Map<string, string>([[EVERY_MACHINE_ID, EVERY_MACHINE_LABEL]]);
-      for (const a of assignments) if (a.targetType === "device") devices.set(a.targetId, a.targetLabel);
-      res.json({
-        success: true,
-        company: { id: client.id, name: client.companyName },
-        pool: seats
-          .filter((s) => byId.has(s.itemId))
-          .map((s) => {
-            const i = byId.get(s.itemId)!;
-            return { ...s, kind: i.kind, vendor: i.vendor, product: i.product, category: i.category, chocoPackage: i.chocoPackage };
-          }),
-        departments: departments.map((d) => ({
-          id: d.id,
-          name: d.name,
-          seats: Array.from(departmentSeats(client.id, d.id, assignments).entries()).map(([itemId, count]) => ({ itemId, count })),
-        })),
-        people: people.map((p) => ({ ...p, licenses: holding("user", p.id) })),
-        devices: Array.from(devices.entries()).map(([id, label]) => ({ id, label, licenses: holding("device", id) })),
-      });
+      res.json({ success: true, ...(await companyView(client)) });
     } catch (error) {
       fail(res, error, "load the company");
     }
@@ -368,6 +383,179 @@ export function registerLicenseBoardRoutes(app: Express, deps: LicenseBoardRoute
       res.json({ success: true, returnedTo: assignment.viaDepartmentId ? "department" : "company" });
     } catch (error) {
       fail(res, error, "unassign the seat");
+    }
+  });
+
+  /* ---------------------------------------------------------- JumpCloud */
+
+  app.get(`${BASE}/clients/:clientId/jumpcloud`, ...guard, async (req: AdminRequest, res: Response) => {
+    try {
+      const client = deps.getClient(req.params.clientId);
+      if (!client) return res.status(404).json({ error: "Company not found" });
+      const [view, link, pushes] = await Promise.all([
+        companyView(client),
+        store.getJumpCloudLink(client.id),
+        store.listJumpCloudPushes(client.id),
+      ]);
+      res.json({ success: true, configured: deps.jumpcloud.configured(), link, plan: planJumpCloudInstalls(view, link), pushes });
+    } catch (error) {
+      fail(res, error, "load the JumpCloud plan");
+    }
+  });
+
+  app.put(`${BASE}/clients/:clientId/jumpcloud`, ...guard, async (req: AdminRequest, res: Response) => {
+    try {
+      const client = deps.getClient(req.params.clientId);
+      if (!client) return res.status(404).json({ error: "Company not found" });
+      const orgId = text(req.body?.orgId, 40) || null;
+      const systemGroupId = text(req.body?.systemGroupId, 40) || null;
+      for (const [label, value] of [["Organization id", orgId], ["Device group id", systemGroupId]] as const) {
+        if (value && !JC_ID.test(value)) return res.status(400).json({ error: `${label} should be the id from the JumpCloud admin console` });
+      }
+      await store.setJumpCloudLink(client.id, { orgId, systemGroupId }, req.user?.id ?? null);
+      res.json({ success: true, link: { orgId, systemGroupId } });
+    } catch (error) {
+      fail(res, error, "save the JumpCloud link");
+    }
+  });
+
+  /** Send the ready installs to JumpCloud. Only on an admin's press; never on a schedule. */
+  app.post(`${BASE}/clients/:clientId/jumpcloud/push`, ...guard, async (req: AdminRequest, res: Response) => {
+    try {
+      const client = deps.getClient(req.params.clientId);
+      if (!client) return res.status(404).json({ error: "Company not found" });
+      if (!deps.jumpcloud.configured()) {
+        return res.status(409).json({ error: "JumpCloud is not connected on this server (JUMPCLOUD_API_KEY is not set)" });
+      }
+      const link = await store.getJumpCloudLink(client.id);
+      const steps = planJumpCloudInstalls(await companyView(client), link).filter((st) => st.status === "ready");
+      if (!steps.length) return res.status(409).json({ error: "Nothing is ready to send" });
+      const orgId = link?.orgId ?? null;
+      const by = req.user?.id ?? null;
+      const results = [];
+      for (const step of steps) {
+        let detail: string | null = null;
+        let ok = false;
+        const app = await deps.jumpcloud.ensureChocoApp(step.product, step.chocoPackage!, orgId);
+        if (!app.ok || !app.id) {
+          detail = app.error || "Could not create the software app";
+        } else {
+          let target: { type: "system_group" | "system"; id: string } | null = null;
+          if (step.target.kind === "group" && step.target.id) target = { type: "system_group", id: step.target.id };
+          else if (step.target.kind === "machine") {
+            const sys = await deps.jumpcloud.findSystem(step.target.label, orgId);
+            if (sys.ok && sys.id) target = { type: "system", id: sys.id };
+            else detail = sys.error || `No JumpCloud machine named ${step.target.label}`;
+          }
+          if (target) {
+            const bound = await deps.jumpcloud.associate(app.id, target, orgId);
+            ok = bound.ok;
+            detail = bound.ok ? "Sent: JumpCloud installs it at the machine's next check-in" : bound.error || "JumpCloud refused the binding";
+          }
+        }
+        results.push(
+          await store.recordJumpCloudPush(
+            {
+              clientId: client.id,
+              itemId: step.itemId,
+              product: step.product,
+              chocoPackage: step.chocoPackage!,
+              targetKind: step.target.kind === "group" ? "group" : "machine",
+              targetLabel: step.target.label,
+              ok,
+              detail,
+            },
+            by,
+          ),
+        );
+      }
+      res.json({ success: true, sent: results.filter((r) => r.ok).length, failed: results.filter((r) => !r.ok).length, results });
+    } catch (error) {
+      fail(res, error, "send to JumpCloud");
+    }
+  });
+
+  /* ------------------------------------------------------- starter kits */
+
+  app.get(`${BASE}/kits`, ...guard, (_req: AdminRequest, res: Response) => {
+    res.json({
+      success: true,
+      kits: STARTER_KITS.map((k) => ({
+        ...k,
+        apps: k.apps.map((key) => shelfEntry(key)).filter(Boolean),
+        licenses: k.licenses.map((key) => shelfEntry(key)).filter(Boolean),
+      })),
+    });
+  });
+
+  /**
+   * Apply a kit: missing parts go into DE's pool (licences with 0 seats), the
+   * kit's apps are turned on for the company and sent to Every machine.
+   * Licences are recommended, never allocated. Safe to apply twice.
+   */
+  app.post(`${BASE}/clients/:clientId/kit`, ...guard, async (req: AdminRequest, res: Response) => {
+    try {
+      const client = deps.getClient(req.params.clientId);
+      if (!client) return res.status(404).json({ error: "Company not found" });
+      const kit = starterKit(text(req.body?.kit, 20));
+      if (!kit) return res.status(400).json({ error: "Unknown starter kit" });
+      const by = req.user?.id ?? null;
+      const items = await store.listPoolItems();
+      const ensure = async (key: string) => {
+        const entry = shelfEntry(key)!;
+        const hit = items.find(
+          (i) => i.vendor.toLowerCase() === entry.vendor.toLowerCase() && i.product.toLowerCase() === entry.product.toLowerCase(),
+        );
+        if (hit) return { item: hit, added: false };
+        const item = await store.createPoolItem({
+          kind: entry.kind,
+          vendor: entry.vendor,
+          product: entry.product,
+          category: entry.category,
+          catalogKey: entry.catalogKey ?? null,
+          sku: entry.sku ?? null,
+          chocoPackage: entry.chocoPackage ?? null,
+          quantity: 0,
+        });
+        items.push(item);
+        return { item, added: true };
+      };
+      let addedToPool = 0;
+      let appsOn = 0;
+      let onEveryMachine = 0;
+      for (const key of kit.apps) {
+        const { item, added } = await ensure(key);
+        if (added) addedToPool++;
+        const allocations = await store.listAllocations(client.id);
+        if (!allocations.some((a) => a.itemId === item.id)) {
+          await store.addAllocations({ itemId: item.id, clientId: client.id, source: "pool", count: 1 }, by);
+          appsOn++;
+        }
+        const assignments = await store.listAssignments(client.id);
+        if (!assignments.some((a) => a.itemId === item.id && a.targetType === "device" && a.targetId === EVERY_MACHINE_ID)) {
+          await store.addAssignment(
+            {
+              clientId: client.id,
+              itemId: item.id,
+              targetType: "device",
+              targetId: EVERY_MACHINE_ID,
+              targetLabel: EVERY_MACHINE_LABEL,
+              viaDepartmentId: null,
+            },
+            by,
+          );
+          onEveryMachine++;
+        }
+      }
+      const recommended = [];
+      for (const key of kit.licenses) {
+        const { item, added } = await ensure(key);
+        if (added) addedToPool++;
+        recommended.push({ itemId: item.id, product: item.product });
+      }
+      res.json({ success: true, kit: kit.name, addedToPool, appsOn, onEveryMachine, recommended, note: kit.note ?? null });
+    } catch (error) {
+      fail(res, error, "apply the starter kit");
     }
   });
 }
