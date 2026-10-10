@@ -104,9 +104,12 @@ describe("ZohoPaymentsService readiness (#263)", () => {
     ZOHO_PAYMENTS_SIGNING_KEY: "sign-1",
   };
 
-  afterEach(() => {
+  afterEach(async () => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
+    // Token state is shared per refresh token (server/zoho/oauth): a token
+    // revoked in one case stays revoked for the next case that reuses it.
+    (await import("./zoho/oauth")).resetZohoOAuthForTests();
   });
 
   async function service() {
