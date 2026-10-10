@@ -40,13 +40,47 @@ describe("Zoho Books client for Pay Now tax", () => {
       }
       const auth = (init?.headers as Record<string, string>).Authorization;
       seen.push(auth);
-      return auth === "Zoho-oauthtoken tok-1"
+      // Books accepts tok-1 at first, then refuses it (revoked on Zoho's side).
+      return auth === "Zoho-oauthtoken tok-1" && seen.length > 1
         ? new Response(JSON.stringify({ code: 57, message: "invalid" }), { status: 401 })
         : new Response(JSON.stringify({ code: 0, item: {} }), { status: 200 });
     });
-    const reply = await booksCall(config, { method: "GET", path: "/items/1" }, { fetchImpl: fetchImpl as unknown as typeof fetch });
+    const f = fetchImpl as unknown as typeof fetch;
+    expect((await booksCall(config, { method: "GET", path: "/items/1" }, { fetchImpl: f, nowMs: 0 })).ok).toBe(true);
+    // Five minutes later tok-1 is no longer brand new, so a 401 means "dead token": refresh once.
+    const reply = await booksCall(config, { method: "GET", path: "/items/1" }, { fetchImpl: f, nowMs: 5 * 60_000 });
     expect(reply.ok).toBe(true);
-    expect(seen).toEqual(["Zoho-oauthtoken tok-1", "Zoho-oauthtoken tok-2"]);
+    expect(seen).toEqual(["Zoho-oauthtoken tok-1", "Zoho-oauthtoken tok-1", "Zoho-oauthtoken tok-2"]);
+  });
+
+  it("does not refresh again when a brand-new token is rejected (a scope problem)", async () => {
+    let issued = 0;
+    const fetchImpl = vi.fn(async (url: string) => {
+      if (url === ZOHO_ACCOUNTS_TOKEN_URL) {
+        issued++;
+        return new Response(JSON.stringify({ access_token: `tok-${issued}`, expires_in: 3600 }), { status: 200 });
+      }
+      return new Response(JSON.stringify({ code: 57, message: "invalid" }), { status: 401 });
+    });
+    const reply = await booksCall(config, { method: "GET", path: "/items/1" }, { fetchImpl: fetchImpl as unknown as typeof fetch, nowMs: 0 });
+    expect(reply).toMatchObject({ ok: false, failure: "auth" });
+    expect(issued).toBe(1);
+  });
+
+  it("reads throttling and Zoho outages as unreachable, never auth (#418)", async () => {
+    const throttled = vi.fn(async () =>
+      new Response(JSON.stringify({ error: "Access Denied", error_description: "You have made too many requests continuously." }), { status: 400 }),
+    );
+    const reply = await booksCall(config, { method: "GET", path: "/items/1" }, { fetchImpl: throttled as unknown as typeof fetch, nowMs: 0 });
+    expect(reply).toMatchObject({ ok: false, failure: "unreachable" });
+    // Backing off: no second token request inside the cool-down.
+    await booksCall(config, { method: "GET", path: "/items/1" }, { fetchImpl: throttled as unknown as typeof fetch, nowMs: 60_000 });
+    expect(throttled).toHaveBeenCalledTimes(1);
+
+    resetZohoBooksToken();
+    const down = vi.fn(async () => new Response("<html>bad gateway</html>", { status: 502 }));
+    expect(await booksCall(config, { method: "GET", path: "/items/1" }, { fetchImpl: down as unknown as typeof fetch, nowMs: 0 }))
+      .toMatchObject({ ok: false, failure: "unreachable" });
   });
 
   it("never logs the refresh token or the client secret", async () => {
